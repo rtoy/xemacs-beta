@@ -3310,6 +3310,27 @@ assert_failed (const char *file, int line, const char *expr)
 }
 #endif /* USE_ASSERTIONS */
 
+
+#ifdef DEBUG_XEMACS
+
+DEFUN ("force-debugging-signal", Fforce_debugging_signal, 0, 1, 0, /*
+Cause XEmacs to enter the debugger.
+On some systems, there may be no way to do this gracefully; if so,
+nothing happens unless ABORT is non-nil, in which case XEmacs will
+abort() -- a sure-fire way to immediately get back to the debugger,
+but also a sure-fire way to kill XEmacs (and dump core on Unix
+systems)!
+*/
+       (abort_))
+{
+  enter_debugger ();
+  if (!NILP (abort_))
+    abort ();
+  return Qnil;
+}
+
+#endif /* DEBUG_XEMACS */
+
 #ifdef QUANTIFY
 DEFUN ("quantify-start-recording-data", Fquantify_start_recording_data,
        0, 0, "", /*
@@ -3354,6 +3375,10 @@ syms_of_emacs (void)
   DEFSUBR (Finvocation_directory);
   DEFSUBR (Fkill_emacs);
   DEFSUBR (Fnoninteractive);
+
+#ifdef DEBUG_XEMACS
+  DEFSUBR (Fforce_debugging_signal);
+#endif
 
 #ifdef QUANTIFY
   DEFSUBR (Fquantify_start_recording_data);

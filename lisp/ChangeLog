@@ -1,3 +1,33 @@
+2001-05-10  Ben Wing  <ben@xemacs.org>
+
+	* mule\mule-coding.el:
+	* mule\mule-coding.el (coding-system-charset): New.
+	Move this function into Lisp to avoid doc warnings.
+
+2001-05-10  Ben Wing  <ben@xemacs.org>
+
+	* autoload.el:
+	* autoload.el (update-autoloads-from-directory):
+	* autoload.el (fixup-autoload-buffer):
+	* autoload.el (batch-update-autoloads): Removed.
+	* autoload.el (update-autoload-files): New.
+	* autoload.el (batch-force-update-one-directory): New.
+	* packages.el (packages-useful-lisp):
+	* startup.el:
+	* startup.el (normal-top-level):
+	* startup.el (startup-load-autoloads): New.
+	* update-elc-2.el (batch-update-elc-2):
+	* update-elc.el:
+	* update-elc.el (need-to-rebuild-autoloads): New.
+	* update-elc.el (need-to-rebuild-mule-autoloads): New.
+	* update-elc.el (need-to-recompile-autoloads): New.
+	* update-elc.el (need-to-recompile-mule-autoloads): New.
+	* update-elc.el (update-elc-chop-extension): New.
+	Rewrite much of the bootstrapping process to be more robust,
+	and in particular to rebuild the auto-autoloads and custom-loads
+	files no matter what state (including missing) they're currently
+	in.
+
 2001-05-09  Ben Wing  <ben@xemacs.org>
 
 	* files.el (find-file-noselect):

@@ -851,7 +851,8 @@ TEMACS_BROWSE=$(TEMACS_DIR)\temacs.bsc
 TEMACS_SRC=$(SRC)
 TEMACS_LIBS=$(LASTFILE) $(LWLIB) $(X_LIBS) $(MSW_LIBS) \
  oldnames.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib \
- shell32.lib wsock32.lib winmm.lib winspool.lib ole32.lib uuid.lib $(LIBC_LIB)
+ shell32.lib wsock32.lib netapi32.lib winmm.lib winspool.lib ole32.lib \
+ uuid.lib $(LIBC_LIB)
 TEMACS_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS) -base:0x1000000\
  -stack:0x800000 $(TEMACS_ENTRYPOINT) -subsystem:windows\
  -pdb:$(TEMACS_DIR)\temacs.pdb -map:$(TEMACS_DIR)\temacs.map \
@@ -1400,7 +1401,7 @@ $(PROGNAME) : $(TEMACS) $(TEMACS_DIR)\NEEDTODUMP
 # use this rule to build the complete system
 all:	installation $(OUTDIR)\nul $(LASTFILE) $(LWLIB) \
 	$(LIB_SRC_TOOLS) $(TEMACS) update-elc $(DOC) $(PROGNAME) \
-	update-elc-2 update-auto-and-custom info
+	update-elc-2 info
 
 temacs: $(LASTFILE) $(TEMACS)
 
@@ -1591,20 +1592,6 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=\") configured for `$(EMACS_
 # Update out-of-date .elcs, other than needed for dumping.
 update-elc-2:
 	$(XEMACS_BATCH) -l update-elc-2.el -f batch-update-elc-2 $(LISP)
-
-# Update auto-autoloads.el and custom-load.el, similar to what
-# XEmacs.rules does for xemacs-packages.  This used to delete
-# auto-autoloads.el first, but that's a bad idea, because it forces
-# rebuilding from scratch, which is time-consuming; and the autoload
-# code is specifically written to do in-place updating.  However, if
-# your auto-autoload file is messed up and you want it rebuilt from
-# scratch, delete it from the command line and then nmake with this
-# target.
-update-auto-and-custom:
-#       Combine into one invocation to avoid repeated startup penalty.
-	$(XEMACS_BATCH) -l autoload -f batch-update-one-directory $(LISP) -f batch-byte-compile-one-file $(LISP)\auto-autoloads.el -l cus-dep -f Custom-make-one-dependency $(LISP) -f batch-byte-compile-one-file $(LISP)\custom-load.el
-	$(DEL) $(LISP)\auto-autoloads.el~
-	$(DEL) $(LISP)\custom-load.el~
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

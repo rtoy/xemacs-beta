@@ -1286,18 +1286,6 @@ Lisp_Object coding_system_charset (Lisp_Object coding_system, int gnum)
 
   return CHARSETP (cs) ? XCHARSET_NAME (cs) : Qnil;
 }
-
-DEFUN ("coding-system-charset", Fcoding_system_charset, 2, 2, 0, /*
-Return initial charset of CODING-SYSTEM designated to GNUM.
-GNUM allows 0 .. 3.
-*/
-       (coding_system, gnum))
-{
-  coding_system = Fget_coding_system (coding_system);
-  CHECK_INT (gnum);
-
-  return coding_system_charset (coding_system, XINT (gnum));
-}
 #endif /* MULE */
 
 DEFUN ("coding-system-property", Fcoding_system_property, 2, 2, 0, /*
@@ -5619,9 +5607,6 @@ syms_of_file_coding (void)
 
   DEFSUBR (Fcoding_system_type);
   DEFSUBR (Fcoding_system_doc_string);
-#ifdef MULE
-  DEFSUBR (Fcoding_system_charset);
-#endif
   DEFSUBR (Fcoding_system_property);
 
   DEFSUBR (Fcoding_category_list);

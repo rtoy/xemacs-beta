@@ -449,17 +449,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 			   debug-paths)
       (startup-setup-paths-warning))
 
-    (if (and (not inhibit-autoloads)
-	     lisp-directory)
-	(load (expand-file-name (file-name-sans-extension autoload-file-name)
-				lisp-directory) nil t))
-
-    (if (not inhibit-autoloads)
-	(progn
-	  (if (not inhibit-early-packages)
-	      (packages-load-package-auto-autoloads early-package-load-path))
-	  (packages-load-package-auto-autoloads late-package-load-path)
-	  (packages-load-package-auto-autoloads last-package-load-path)))
+    (startup-load-autoloads)
 
     (unwind-protect
 	(command-line)
@@ -1426,5 +1416,18 @@ It's idempotent, so call this as often as you like!"
 	(princ (buffer-string) 'external-debugging-output)
 	(erase-buffer)
 	t)))))
+
+(defun startup-load-autoloads ()
+  (if (and (not inhibit-autoloads)
+	   lisp-directory)
+      (load (expand-file-name (file-name-sans-extension autoload-file-name)
+			      lisp-directory) nil t))
+
+  (if (not inhibit-autoloads)
+      (progn
+	(if (not inhibit-early-packages)
+	    (packages-load-package-auto-autoloads early-package-load-path))
+	(packages-load-package-auto-autoloads late-package-load-path)
+	(packages-load-package-auto-autoloads last-package-load-path))))
 
 ;;; startup.el ends here

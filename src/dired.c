@@ -35,6 +35,13 @@ Boston, MA 02111-1307, USA.  */
 #include "opaque.h"
 #include "syntax.h"
 
+#ifdef WIN32_NATIVE
+#include "syswindows.h"
+#include <lmaccess.h>
+#include <lmapibuf.h>
+#include <lmerr.h>
+#endif
+
 Lisp_Object Vcompletion_ignored_extensions;
 Lisp_Object Qdirectory_files;
 Lisp_Object Qfile_name_completion;
@@ -510,11 +517,6 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
 }
 
 
-
-/* The *pwent() functions do not exist on NT.  #### The NT equivalent
-   is NetUserEnum(), and rewriting to use it is not hard.*/
-#ifndef  WIN32_NATIVE
-
 static Lisp_Object user_name_completion (Lisp_Object user,
                                          int all_flag,
                                          int *uniq);
@@ -589,8 +591,10 @@ free_user_cache (struct user_cache *cache)
 static Lisp_Object
 user_name_completion_unwind (Lisp_Object cache_incomplete_p)
 {
+#ifndef WIN32_NATIVE
   endpwent ();
   speed_up_interrupts ();
+#endif
 
   if (! NILP (XCAR (cache_incomplete_p)))
     free_user_cache (&user_cache);
@@ -630,13 +634,21 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 
   if (!user_cache.user_names)
     {
+#ifndef WIN32_NATIVE
       struct passwd *pwd;
+#else
+      DWORD entriesread;
+      DWORD totalentries;
+      DWORD resume_handle = 0;
+#endif
+
       Lisp_Object cache_incomplete_p = noseeum_cons (Qt, Qnil);
       int speccount = specpdl_depth ();
 
+      record_unwind_protect (user_name_completion_unwind, cache_incomplete_p);
+#ifndef WIN32_NATIVE
       slow_down_interrupts ();
       setpwent ();
-      record_unwind_protect (user_name_completion_unwind, cache_incomplete_p);
       while ((pwd = getpwent ()))
         {
           QUIT;
@@ -649,6 +661,47 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 			      Qnative);
 	  user_cache.length++;
         }
+#else
+      do
+	{
+	  USER_INFO_0 *bufptr;
+	  NET_API_STATUS status_status_statui_statum_statu;
+	  int i;
+
+          QUIT;
+	  status_status_statui_statum_statu =
+	    NetUserEnum (NULL, 0, 0, (LPBYTE *) &bufptr, 1024, &entriesread,
+			 &totalentries, &resume_handle);
+	  if (status_status_statui_statum_statu != NERR_Success &&
+	      status_status_statui_statum_statu != ERROR_MORE_DATA)
+	    invalid_operation ("Error enumerating users",
+			       make_int (GetLastError ()));
+	  for (i = 0; i < entriesread; i++)
+	    {
+	      int nout =
+		WideCharToMultiByte (CP_ACP, WC_COMPOSITECHECK,
+				     bufptr[i].usri0_name,
+				     -1, 0, 0, "~", 0);
+	      void *outp = alloca (nout);
+	      WideCharToMultiByte (CP_ACP, WC_COMPOSITECHECK,
+				   bufptr[i].usri0_name, -1,
+				   (LPSTR) outp, nout, "~", 0);
+	      DO_REALLOC (user_cache.user_names, user_cache.size,
+			  user_cache.length + 1, struct user_name);
+	      TO_INTERNAL_FORMAT (C_STRING, outp,
+				  MALLOC,
+				  (user_cache.
+				   user_names[user_cache.length].ptr,
+				   user_cache.
+				   user_names[user_cache.length].len),
+				  Qmswindows_tstr);
+	      user_cache.length++;
+	    }
+	  NetApiBufferFree (bufptr);
+	}
+      while (entriesread != totalentries);
+#endif
+
       XCAR (cache_incomplete_p) = Qnil;
       unbind_to (speccount, Qnil);
 
@@ -713,7 +766,6 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
     return Qt;
   return Fsubstring (bestmatch, Qzero, make_int (bestmatchsize));
 }
-#endif   /* ! defined WIN32_NATIVE */
 
 
 Lisp_Object
@@ -879,11 +931,9 @@ syms_of_dired (void)
   DEFSUBR (Fdirectory_files);
   DEFSUBR (Ffile_name_completion);
   DEFSUBR (Ffile_name_all_completions);
-#ifndef  WIN32_NATIVE
   DEFSUBR (Fuser_name_completion);
   DEFSUBR (Fuser_name_completion_1);
   DEFSUBR (Fuser_name_all_completions);
-#endif
   DEFSUBR (Ffile_attributes);
 }
 

@@ -1,3 +1,12 @@
+2001-05-10  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.mak (TEMACS_LIBS):
+	need another lib (netapi32.lib) for user-name-all-completions.
+	
+	* xemacs.mak (all):
+	* xemacs.mak (OS):
+	remove autoload-building target.
+
 2001-05-09  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.mak (OS):

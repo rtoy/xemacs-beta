@@ -2952,7 +2952,6 @@ EXFUN (Fclear_range_table, 1);
 EXFUN (Fcoding_category_list, 0);
 EXFUN (Fcoding_category_system, 1);
 EXFUN (Fcoding_priority_list, 0);
-EXFUN (Fcoding_system_charset, 2);
 EXFUN (Fcoding_system_doc_string, 1);
 EXFUN (Fcoding_system_list, 0);
 EXFUN (Fcoding_system_name, 1);

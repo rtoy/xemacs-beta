@@ -61,6 +61,16 @@
   "Return the 'lock-shift property of CODING-SYSTEM."
   (coding-system-property coding-system 'lock-shift))
 
+(defun coding-system-charset (coding-system register)
+"Return the charset initially designated to REGISTER in CODING-SYSTEM.
+The allowable range of REGISTER is 0 through 3."
+  (if (or (< register 0) (> register 3))
+      (error 'args-out-of-range "coding-system-charset REGISTER" register 0 3))
+  (coding-system-property coding-system (nth register '(charset-g0
+							charset-g1
+							charset-g2
+							charset-g3))))
+
 ;;(defun coding-system-use-japanese-jisx0201-roman (coding-system)
 ;;  "Return the 'use-japanese-jisx0201-roman property of CODING-SYSTEM."
 ;;  (coding-system-property coding-system 'use-japanese-jisx0201-roman))

@@ -1,3 +1,22 @@
+2001-05-10  Ben Wing  <ben@xemacs.org>
+
+	* dired.c:
+	* dired.c (user_name_completion_unwind):
+	* dired.c (user_name_completion):
+	* dired.c (syms_of_dired):
+	implement user-name-all-completions under Windows.
+	
+	* emacs.c:
+	* emacs.c (syms_of_emacs):
+	create new function force-debugging-signal (only when DEBUG_XEMACS)
+	to breakpoint or abort to the debugger.
+	
+	* file-coding.c:
+	* file-coding.c (syms_of_file_coding):
+	* file-coding.h:
+	* lisp.h:
+	move coding-system-charset to lisp to avoid doc warning.
+
 2001-05-09  William M. Perry  <wmperry@gnu.org>
 
 	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Fix the

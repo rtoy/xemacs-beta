@@ -468,7 +468,10 @@ This function refuses to update autoloads files."
 This runs `update-file-autoloads' on each .el file in DIR.
 Obsolete autoload entries for files that no longer exist are deleted.
 Note that, if this function is called from `batch-update-directory',
-`generated-autoload-file' was rebound in that function."
+`generated-autoload-file' was rebound in that function.
+
+You don't really want to be calling this function.  Try using
+`update-autoload-files' instead."
   (interactive "DUpdate autoloads for directory: ")
   (setq dir (expand-file-name dir))
   (let ((simple-dir (file-name-as-directory
@@ -498,37 +501,6 @@ Note that, if this function is called from `batch-update-directory',
       (unless noninteractive
 	(save-buffer)))))
 
-;;;###autoload
-(defun batch-update-autoloads ()
-  "Update the autoloads for the files or directories on the command line.
-Runs `update-file-autoloads' on files and `update-directory-autoloads'
-on directories.  Must be used only with -batch, and kills Emacs on completion.
-Each file will be processed even if an error occurred previously.
-For example, invoke `xemacs -batch -f batch-update-autoloads *.el'.
-The directory to which the auto-autoloads.el file must be the first parameter
-on the command line."
-  (unless noninteractive
-    (error "batch-update-autoloads is to be used only with -batch"))
-  (let ((defdir default-directory)
-	(enable-local-eval nil))	; Don't query in batch mode.
-    ;; (message "Updating autoloads in %s..." generated-autoload-file)
-    (dolist (arg command-line-args-left)
-      (setq arg (expand-file-name arg defdir))
-      (cond
-       ((file-directory-p arg)
-	(message "Updating autoloads for directory %s..." arg)
-	(update-autoloads-from-directory arg))
-       ((file-exists-p arg)
-	(update-file-autoloads arg))
-       (t (error "No such file or directory: %s" arg))))
-    (fixup-autoload-buffer (concat (if autoload-package-name
-				       autoload-package-name
-				     (file-name-nondirectory defdir))
-				   "-autoloads"))
-    (save-some-buffers t)
-    ;; (message "Done")
-    (kill-emacs 0)))
-
 (defun fixup-autoload-buffer (sym)
   (save-excursion
     (set-buffer (find-file-noselect generated-autoload-file))
@@ -544,11 +516,73 @@ on the command line."
 
 (defvar autoload-package-name nil)
 
-;; #### this function is almost identical to, but subtly different from,
-;; batch-update-autoloads.  Both of these functions, unfortunately, are
-;; used in various build scripts in xemacs-packages.  They should be
-;; merged. (However, it looks like no scripts pass more than one arg,
-;; making merging easy.) --ben
+;;;###autoload
+(defun update-autoload-files (files-or-dirs &optional all-into-one-file force)
+  "Update all the autoload files associated with FILES-OR-DIRS.
+FILES-OR-DIRS should be a list of files or directories to be
+processed.  If ALL-INTO-ONE-FILE is not given, the appropriate
+autoload file for each file or directory (located in that directory,
+or in the directory of the specified file) will be updated with the
+directory's or file's autoloads, some additional fixup text will be
+added, and the files will be saved.  If ALL-INTO-ONE-FILE is given,
+`generated-autoload-file' should be set to the name of the autoload
+file into which the autoloads will be generated, and the autoloads
+for all files and directories will go into that same file.
+
+If FORCE is non-nil, always save out the autoload files even if unchanged."
+  (let ((defdir default-directory)
+	(enable-local-eval nil))	; Don't query in batch mode.
+    ;; (message "Updating autoloads in %s..." generated-autoload-file)
+    (dolist (arg files-or-dirs)
+      (setq arg (expand-file-name arg defdir))
+      (let ((generated-autoload-file
+	     (if all-into-one-file generated-autoload-file
+	       (expand-file-name autoload-file-name
+				 (if (file-directory-p arg) arg
+				   (file-name-directory arg))))))
+	(cond
+	 ((file-directory-p arg)
+	  (message "Updating autoloads for directory %s..." arg)
+	  (update-autoloads-from-directory arg))
+	 ((file-exists-p arg)
+	  (update-file-autoloads arg))
+	 (t (error "No such file or directory: %s" arg)))
+	(when (not all-into-one-file)
+	  (fixup-autoload-buffer (concat (if autoload-package-name
+					     autoload-package-name
+					   (file-name-nondirectory defdir))
+					 "-autoloads"))
+	  (if force (set-buffer-modified-p
+		     t (find-file-noselect generated-autoload-file))))))
+    (when all-into-one-file
+      (fixup-autoload-buffer (concat (if autoload-package-name
+					 autoload-package-name
+				       (file-name-nondirectory defdir))
+				     "-autoloads"))
+      (if force (set-buffer-modified-p
+		 t (find-file-noselect generated-autoload-file))))
+    (save-some-buffers t)
+    ;; (message "Done")
+    ))
+
+;; #### these entry points below are a big mess, especially the
+;; first two.  there don't seem to be very many packages that use the
+;; first one (the "all-into-one-file" variety), and do they actually
+;; rely on this functionality? --ben
+
+;;;###autoload
+(defun batch-update-autoloads ()
+  "Update the autoloads for the files or directories on the command line.
+Runs `update-file-autoloads' on files and `update-directory-autoloads'
+on directories.  Must be used only with -batch, and kills Emacs on completion.
+Each file will be processed even if an error occurred previously.
+For example, invoke `xemacs -batch -f batch-update-autoloads *.el'.
+The directory to which the auto-autoloads.el file must be the first parameter
+on the command line."
+  (unless noninteractive
+    (error "batch-update-autoloads is to be used only with -batch"))
+  (update-autoload-files command-line-args-left t)
+  (kill-emacs 0))
 
 ;;;###autoload
 (defun batch-update-directory ()
@@ -557,29 +591,9 @@ Runs `update-file-autoloads' on each file in the given directory, and must
 be used only with -batch."
   (unless noninteractive
     (error "batch-update-directory is to be used only with -batch"))
-  (let ((defdir default-directory)
-	(enable-local-eval nil))	; Don't query in batch mode.
-    (dolist (arg command-line-args-left)
-      (setq arg (expand-file-name arg defdir))
-      (let ((generated-autoload-file (expand-file-name autoload-file-name
-							arg)))
-	(cond
-	 ((file-directory-p arg)
-	  (message "Updating autoloads in directory %s..." arg)
-	  (update-autoloads-from-directory arg))
-	 (t (error "No such file or directory: %s" arg)))
-	(fixup-autoload-buffer (concat (if autoload-package-name
-					   autoload-package-name
-					 (file-name-nondirectory arg))
-				"-autoloads"))
-	(save-some-buffers t))
-      ;; (message "Done")
-      ;; (kill-emacs 0)
-      )
-    (setq command-line-args-left nil)))
-
-;; #### i created the following.  this one and the last should be merged into
-;; batch-update-autoloads and batch-update-one-directory. --ben
+  (update-autoload-files command-line-args-left)
+  ;; (kill-emacs 0)
+  (setq command-line-args-left nil))
 
 ;;;###autoload
 (defun batch-update-one-directory ()
@@ -588,25 +602,21 @@ Runs `update-file-autoloads' on each file in the given directory, and must
 be used only with -batch."
   (unless noninteractive
     (error "batch-update-directory is to be used only with -batch"))
-  (let ((defdir default-directory)
-	(enable-local-eval nil))	; Don't query in batch mode.
-    (let ((arg (car command-line-args-left)))
-      (setq command-line-args-left (cdr command-line-args-left))
-      (setq arg (expand-file-name arg defdir))
-      (let ((generated-autoload-file (expand-file-name autoload-file-name
-							arg)))
-	(cond
-	 ((file-directory-p arg)
-	  (message "Updating autoloads in directory %s..." arg)
-	  (update-autoloads-from-directory arg))
-	 (t (error "No such file or directory: %s" arg)))
-	(fixup-autoload-buffer (concat (if autoload-package-name
-					   autoload-package-name
-					 (file-name-nondirectory arg))
-				"-autoloads"))
-	(save-some-buffers t))
-      ;; (message "Done")
-      )))
+  (let ((arg (car command-line-args-left)))
+    (setq command-line-args-left (cdr command-line-args-left))
+    (update-autoload-files (list arg))))
+
+;;;###autoload
+(defun batch-force-update-one-directory ()
+  "Update the autoloads for a single directory on the command line.
+Runs `update-file-autoloads' on each file in the given directory, and must
+be used only with -batch.  Always rewrite the autoloads file, even if
+unchanged."
+  (unless noninteractive
+    (error "batch-update-directory is to be used only with -batch"))
+  (let ((arg (car command-line-args-left)))
+    (setq command-line-args-left (cdr command-line-args-left))
+    (update-autoload-files (list arg) t)))
 
 (provide 'autoload)
 

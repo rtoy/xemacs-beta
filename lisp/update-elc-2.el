@@ -142,7 +142,22 @@
 	     dir)
     (message "Recompiling updated .els in directory tree `%s'..." dir)
     (do-update-elc-2 dir t nil)
-    (message "Recompiling updated .els in directory tree `%s'...done" dir))
+    (message "Recompiling updated .els in directory tree `%s'...done" dir)
+    ;; don't depend on being able to autoload `update-autoload-files'!
+    (load "autoload")
+    (update-autoload-files (list dir))
+    (byte-recompile-file (expand-file-name "auto-autoloads.el" dir) 0)
+    (when (featurep 'mule)
+      (update-autoload-files (list (expand-file-name "mule" dir)))
+      (byte-recompile-file (expand-file-name "mule/auto-autoloads.el" dir) 0))
+    ;; likewise here.
+    (load "cus-dep")
+    (Custom-make-dependencies dir)
+    (byte-recompile-file (expand-file-name "custom-load.el" dir) 0)
+    (when (featurep 'mule)
+      (Custom-make-dependencies (expand-file-name "mule" dir))
+      (byte-recompile-file (expand-file-name "mule/custom-load.el" dir) 0))
+    )
   (setq command-line-args-left nil))
 
 ;;; update-elc-2.el ends here

@@ -164,6 +164,7 @@ in dumped-lisp.el and is not itself listed.")
 (defvar packages-useful-lisp
   '("bytecomp"
     "byte-optimize"
+    "autoload"
     "shadow"
     "cl-macs")
   "Lisp packages that need early byte compilation.")
