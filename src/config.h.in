@@ -627,6 +627,9 @@ things are arranged in config.h.in.  In particular:
    definitions isn't right with 64-bit systems.  */
 #undef USE_UNION_TYPE
 
+/* If defined, use experimental pdump-based GC algorithms. */
+#undef USE_KKCC
+
 /* Enable special GNU Make features in the Makefiles. */
 #undef USE_GNU_MAKE
 
