@@ -1,3 +1,7 @@
+2005-03-09  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* database.c (berkdb_map): Add typecasts.
+
 2005-03-01  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* alloc.c: Add functionality for backtracing the KKCC mark

@@ -510,9 +510,9 @@ berkdb_map (Lisp_Database *db, Lisp_Object func)
        status == 0;
        status = dbp->seq (dbp, &keydatum, &valdatum, R_NEXT))
     {
-      key = make_ext_string (keydatum.data, keydatum.size,
+      key = make_ext_string ((const Extbyte *) keydatum.data, keydatum.size,
 			     db->coding_system);
-      val = make_ext_string (valdatum.data, valdatum.size,
+      val = make_ext_string ((const Extbyte *) valdatum.data, valdatum.size,
 			     db->coding_system);
       call2 (func, key, val);
     }
