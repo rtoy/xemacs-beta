@@ -1,3 +1,7 @@
+2004-01-20  Jerry James  <james@xemacs.org>
+
+	* configure.in: The icc compiler pretends to be gcc.  It isn't.
+
 2003-11-18  Jerry James  <james@xemacs.org>
 
 	* configure.in: Check for the typeof extension.

@@ -1792,7 +1792,9 @@ return 0;
   11) echo "You appear to be using the SunPro C compiler." ; __SUNPRO_C=yes ;;
   12) echo "You appear to be using the DEC C compiler."    ; __DECC=yes ;;
   13) echo "You appear to be using the SCO C compiler."    ; __USLC__=yes ;;
-  14) echo "You appear to be using the Intel C++ compiler."; __ICC=yes ;;
+  14) echo "You appear to be using the Intel C++ compiler."; __ICC=yes
+      dnl Newer versions of icc claim to be GCC
+      GCC=no ;;
 esac])
 
 
