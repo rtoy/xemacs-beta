@@ -1,3 +1,13 @@
+2002-02-11  Mike Sperber  <mike@xemacs.org>
+
+	* device-x.c: 
+	(x_IO_error_handler):
+	(x_init_device): Temporarily keep device in static variable
+	`device_being_initialized' so we can recover gracefully from
+	internal XOpenDevice failure.  (XOpenDevice is documented to
+	return NULL on failure, but sometimes calls the IO error handler
+	instead.)
+
 2002-02-12  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* fileio.c (Ffind_file_name_handler): Improve docstring.
