@@ -123,7 +123,7 @@ proceed essentially independently one from the other, as in `start-process'."
 		 (and (or (bufferp thebuf) (stringp thebuf))
 		      (get-buffer thebuf)
 		      (symbol-value-in-buffer
-		       'buffer-file-coding-system-for-read thebuf)))
+		       'buffer-file-coding-system-for-read (get-buffer thebuf))))
 	       (car default-process-coding-system)
 	       'undecided))
 	  (coding-system-for-write

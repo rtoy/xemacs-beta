@@ -1,3 +1,8 @@
+2002-05-30  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* code-process.el (call-process): Ensure that the argument to
+	`symbol-value-in-buffer' is a buffer even if `buffer' is a string.
+
 2002-05-28  Ben Wing  <ben@xemacs.org>
 
 	* code-init.el:
