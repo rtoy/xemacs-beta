@@ -48,6 +48,11 @@ XEMACSDIRSTRING=$(MAKEDIRSTRING:\\nt=)
 # Define a variable for the 'del' command to use
 DEL=-del
 
+# Define a variable for 'copy' command to use
+# Suppress confirmation for overwriting files
+COPY=xcopy /q /y
+COPYDIR=xcopy /q /y /e
+
 # Program name and version
 
 !include "$(XEMACS)\version.sh"
@@ -325,13 +330,13 @@ DEPEND=0
 ! if defined(_)
 !  if [perl -p -e "s/^\\x23if defined(.+)/!if defined$$1/; s/^\\x23e/!e/;" \
 	-e "s/([\\s=^])([\\w\\d\\.\\-^]+\\.[ch^])/$$1$(SRC:\=\\\\)\\\\$$2/g;" \
-	-e "s/^(.+)\\.o:(.+)/$(OUTDIR:\=\\\\)\\\\$$1.obj:$$2 $(NT:\=\\\\)\\\\config.inc/;" \
+	-e "s/^(.+)\\.o:(.+)/$(OUTDIR:\=\\\\)\\\\$$1.obj:$$2/;" \
 	< $(SRC)\depend > $(OUTDIR)\depend.tmp]
 !  endif
 ! else
 !  if [perl -p -e "s/^\x23if defined(.+)/!if defined$$1/; s/^\x23e/!e/;" \
 	-e "s/([\s=^])([\w\d\.\-^]+\.[ch^])/$$1$(SRC:\=\\)\\$$2/g;" \
-	-e "s/^(.+)\.o:(.+)/$(OUTDIR:\=\\)\\$$1.obj:$$2 $(NT:\=\\)\\config.inc/;" \
+	-e "s/^(.+)\.o:(.+)/$(OUTDIR:\=\\)\\$$1.obj:$$2/;" \
 	< $(SRC)\depend > $(OUTDIR)\depend.tmp]
 !  endif
 ! endif
@@ -502,13 +507,13 @@ XEMACS_INCLUDES=\
  $(SRC)\paths.h
 
 $(SRC)\config.h:	config.h
-	copy config.h $(SRC)
+	@$(COPY) config.h $(SRC)
 
 $(SRC)\Emacs.ad.h:	Emacs.ad.h
-	copy Emacs.ad.h $(SRC)
+	@$(COPY) Emacs.ad.h $(SRC)
 
 $(SRC)\paths.h:	paths.h
-	copy paths.h $(SRC)
+	@$(COPY) paths.h $(SRC)
 
 #------------------------------------------------------------------------------
 
@@ -605,7 +610,7 @@ $(LASTFILE): $(XEMACS_INCLUDES) $(LASTFILE_OBJS)
 	link.exe -lib -nologo -out:$@ $(LASTFILE_OBJS)
 
 $(OUTDIR)\lastfile.obj:	$(LASTFILE_SRC)\lastfile.c
-	 $(CCV) $(LASTFILE_FLAGS) $(LASTFILE_SRC)\$(@B).c
+	 $(CCV) $(LASTFILE_FLAGS) $**
 
 !endif
 
@@ -632,22 +637,22 @@ $(LWLIB): $(LWLIB_OBJS)
 	link.exe -lib -nologo -out:$@ $(LWLIB_OBJS)
 
 $(OUTDIR)\lwlib-utils.obj:	$(LWLIB_SRCDIR)\lwlib-utils.c
-	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 $(OUTDIR)\lwlib-Xaw.obj:	$(LWLIB_SRCDIR)\lwlib-Xaw.c
-	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 $(OUTDIR)\lwlib-Xlw.obj:	$(LWLIB_SRCDIR)\lwlib-Xlw.c
-	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 $(OUTDIR)\lwlib.obj:		$(LWLIB_SRCDIR)\lwlib.c
-	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 $(OUTDIR)\xlwmenu.obj:		$(LWLIB_SRCDIR)\xlwmenu.c
-	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 $(OUTDIR)\xlwscrollbar.obj:	$(LWLIB_SRCDIR)\xlwscrollbar.c
-	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
+	 $(CCV) $(LWLIB_FLAGS) $**
 
 !endif
 #------------------------------------------------------------------------------
@@ -696,7 +701,6 @@ DOC_SRC3=\
  $(SRC)\getloadavg.c \
  $(SRC)\glyphs.c \
  $(SRC)\glyphs-eimage.c \
- $(SRC)\glyphs-shared.c \
  $(SRC)\glyphs-widget.c \
  $(SRC)\gui.c  \
  $(SRC)\gutter.c \
@@ -988,7 +992,6 @@ TEMACS_OBJS= \
 	$(OUTDIR)\getloadavg.obj \
 	$(OUTDIR)\glyphs.obj \
 	$(OUTDIR)\glyphs-eimage.obj \
-	$(OUTDIR)\glyphs-shared.obj \
 	$(OUTDIR)\glyphs-widget.obj \
 	$(OUTDIR)\gui.obj \
 	$(OUTDIR)\gutter.obj \
@@ -1053,10 +1056,10 @@ TEMACS_OBJS= \
 $(OUTDIR)\emacs.obj:	$(XEMACS)\version.sh
 
 $(OUTDIR)\TopLevelEmacsShell.obj:	$(TEMACS_SRC)\EmacsShell-sub.c
-	$(CCV) $(TEMACS_CPP_FLAGS) -DDEFINE_TOP_LEVEL_EMACS_SHELL $(TEMACS_SRC)\$(@B).c -Fo$@
+	$(CCV) $(TEMACS_CPP_FLAGS) -DDEFINE_TOP_LEVEL_EMACS_SHELL $** -Fo$@
 
 $(OUTDIR)\TransientEmacsShell.obj: $(TEMACS_SRC)\EmacsShell-sub.c
-	$(CCV) $(TEMACS_CPP_FLAGS) -DDEFINE_TRANSIENT_EMACS_SHELL $(TEMACS_SRC)\$(@B).c -Fo$@
+	$(CCV) $(TEMACS_CPP_FLAGS) -DDEFINE_TRANSIENT_EMACS_SHELL $** -Fo$@
 
 $(OUTDIR)\alloc.obj: $(TEMACS_SRC)\alloc.c
 
@@ -1407,22 +1410,22 @@ install:	all
 	cd $(NT)
 	@echo Installing in $(INSTALL_DIR) ...
 	@echo PlaceHolder > PlaceHolder
-	@xcopy /q PROBLEMS "$(INSTALL_DIR)\"
-	@xcopy /q PlaceHolder "$(INSTALL_DIR)\lock\"
+	@$(COPY) PROBLEMS "$(INSTALL_DIR)\"
+	@$(COPY) PlaceHolder "$(INSTALL_DIR)\lock\"
 	$(DEL) "$(INSTALL_DIR)\lock\PlaceHolder"
-	@xcopy /q $(LIB_SRC)\*.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
-	@copy $(LIB_SRC)\DOC "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
-	@copy $(CONFIG_VALUES) "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
-	@copy $(SRC)\xemacs.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
-	@xcopy /e /q $(XEMACS)\etc  "$(INSTALL_DIR)\etc\"
-	@xcopy /e /q $(XEMACS)\info "$(INSTALL_DIR)\info\"
-	@xcopy /e /q $(XEMACS)\lisp "$(INSTALL_DIR)\lisp\"
+	@$(COPY) $(LIB_SRC)\*.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
+	@$(COPY) $(LIB_SRC)\DOC "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
+	@$(COPY) $(CONFIG_VALUES) "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
+	@$(COPY) $(SRC)\xemacs.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
+	@$(COPYDIR) $(XEMACS)\etc  "$(INSTALL_DIR)\etc\"
+	@$(COPYDIR) $(XEMACS)\info "$(INSTALL_DIR)\info\"
+	@$(COPYDIR) $(XEMACS)\lisp "$(INSTALL_DIR)\lisp\"
 	@echo Making skeleton package tree in $(PACKAGE_PREFIX) ...
-	@xcopy /q PlaceHolder "$(PACKAGE_PREFIX)\site-packages\"
+	@$(COPY) PlaceHolder "$(PACKAGE_PREFIX)\site-packages\"
 	$(DEL) "$(PACKAGE_PREFIX)\site-packages\PlaceHolder"
-	@xcopy /q PlaceHolder "$(PACKAGE_PREFIX)\mule-packages\"
+	@$(COPY) PlaceHolder "$(PACKAGE_PREFIX)\mule-packages\"
 	$(DEL) "$(PACKAGE_PREFIX)\mule-packages\PlaceHolder"
-	@xcopy /q PlaceHolder "$(PACKAGE_PREFIX)\xemacs-packages\"
+	@$(COPY) PlaceHolder "$(PACKAGE_PREFIX)\xemacs-packages\"
 	$(DEL) "$(PACKAGE_PREFIX)\xemacs-packages\PlaceHolder"
 	$(DEL) PlaceHolder
 
