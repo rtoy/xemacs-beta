@@ -1129,6 +1129,7 @@ display a particular character.  (This is what redisplay does, in fact.)
 @var{second-stage-p} means to ignore the font's registry and instead
 look at the characters in the font to see if the font can support the
 charset.  This currently only makes sense under MS Windows.
+@end itemize
 @end defun
 
 @defun specifier-instance-from-inst-list specifier domain inst-list &optional default
