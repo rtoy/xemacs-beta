@@ -1,3 +1,11 @@
+2002-01-31  John H. Palmieri  <palmieri@math.washington.edu>
+
+	* dired.c (Ffile_name_all_completions): Change documentation --
+	remove reference to completion-ignored-extensions.
+	* dired.c (vars_of_dired): Change documentation for
+	completion-ignored-extensions -- remove reference to
+	file-name-all-completions.
+
 2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.5 "beets" is released.
