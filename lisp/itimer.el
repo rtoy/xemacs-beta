@@ -222,15 +222,12 @@ ITIMER's function is called with these arguments each time ITIMER expires."
 
 (defun set-itimer-name (itimer name)
   "Set the name of ITIMER to be NAME.
-NAME is an identifier for the itimer.  It must be a string.  If an itimer
-already exists with this name, NAME will be modified slightly to make it
-unique."
+NAME is an identifier for the itimer.  It must be a string.  If an active
+itimer already exists with this name, an error is signaled."
   (check-string name)
-  (let ((oname name)
-	(num 2))
-    (while (get-itimer name)
-      (setq name (format "%s<%d>" oname num))
-      (itimer-increment num)))
+  (and (itimer-live-p itimer)
+       (get-itimer name)
+       (error "itimer named \"%s\" already existing and activated" name))
   (setcar itimer name))
 
 (defun set-itimer-value (itimer value)

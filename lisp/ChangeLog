@@ -1,3 +1,8 @@
+2004-09-22  Jerry James  <james@xemacs.org>
+
+	* itimer.el (set-itimer-name): Do not uniquify names, as requested
+	by Kyle Jones.
+
 2004-09-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* code-init.el: Add to header comment.
