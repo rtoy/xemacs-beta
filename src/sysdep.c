@@ -3669,7 +3669,7 @@ const char *sys_siglist[NSIG + 1] =
     "bad argument to system call",	/* 12 SIGSYS */
     "write on a pipe with no one to read it", /* 13 SIGPIPE */
     "alarm clock",			/* 14 SIGALRM */
-    "software termination signum",	/* 15 SIGTERM */
+    "software termination signal",	/* 15 SIGTERM */
     "user defined signal 1",		/* 16 SIGUSR1 */
     "user defined signal 2",		/* 17 SIGUSR2 */
     "death of a child",			/* 18 SIGCLD */
@@ -3710,7 +3710,7 @@ const char *sys_siglist[NSIG + 1] =
     "bad argument to system call",	/* 12 SIGSYS */
     "write on a pipe with no one to read it", /* 13 SIGPIPE */
     "alarm clock",			/* 14 SIGALRM */
-    "software termination signum",	/* 15 SIGTERM */
+    "software termination signal",	/* 15 SIGTERM */
     "user defined signal 1",		/* 16 SIGUSR1 */
     "user defined signal 2",		/* 17 SIGUSR2 */
     "death of a child",			/* 18 SIGCLD */
