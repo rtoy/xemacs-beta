@@ -634,67 +634,76 @@ static unsigned long
 magic_data_hash (Lisp_Object obj, int depth)
 {assert(0); return 1;}
 
-DEFINE_LRECORD_IMPLEMENTATION ("key-data", key_data,
-			       0, /*dumpable-flag*/
-                               mark_key_data, 
-                               print_key_data, 0, 
-                               key_data_equal, key_data_hash, key_data_description, 
-                               Lisp_Key_Data);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("key-data", key_data,
+				     0, /*dumpable-flag*/
+				     mark_key_data, 
+				     print_key_data, 0, 
+				     key_data_equal, key_data_hash,
+				     key_data_description, 
+				     Lisp_Key_Data);
 
-DEFINE_LRECORD_IMPLEMENTATION ("button-data", button_data,
-			       0, /*dumpable-flag*/
-                               mark_button_data, print_button_data, 0, 
-                               button_data_equal, button_data_hash, button_data_description, 
-                               Lisp_Button_Data);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("button-data", button_data,
+				     0, /*dumpable-flag*/
+				     mark_button_data, print_button_data, 0, 
+				     button_data_equal, button_data_hash,
+				     button_data_description, 
+				     Lisp_Button_Data);
 
-DEFINE_LRECORD_IMPLEMENTATION ("motion-data", motion_data,
-			       0, /*dumpable-flag*/
-                               mark_motion_data, print_motion_data, 0, 
-                               motion_data_equal, motion_data_hash, motion_data_description,
-                               Lisp_Motion_Data);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("motion-data", motion_data,
+				     0, /*dumpable-flag*/
+				     mark_motion_data, print_motion_data, 0, 
+				     motion_data_equal, motion_data_hash,
+				     motion_data_description,
+				     Lisp_Motion_Data);
 
-DEFINE_LRECORD_IMPLEMENTATION ("process-data", process_data,
-			       0, /*dumpable-flag*/
-                               mark_process_data, 
-                               print_process_data, 0,
-                               process_data_equal, process_data_hash, process_data_description,
-                               Lisp_Process_Data);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("process-data", process_data,
+				     0, /*dumpable-flag*/
+				     mark_process_data, 
+				     print_process_data, 0,
+				     process_data_equal, process_data_hash,
+				     process_data_description,
+				     Lisp_Process_Data);
 
-DEFINE_LRECORD_IMPLEMENTATION ("timeout-data", timeout_data,
-			       0, /*dumpable-flag*/
-                               mark_timeout_data,
-                               print_timeout_data, 0,
-                               timeout_data_equal, timeout_data_hash, timeout_data_description,
-                               Lisp_Timeout_Data);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("timeout-data", timeout_data,
+				     0, /*dumpable-flag*/
+				     mark_timeout_data,
+				     print_timeout_data, 0,
+				     timeout_data_equal, timeout_data_hash,
+				     timeout_data_description,
+				     Lisp_Timeout_Data);
 
-DEFINE_LRECORD_IMPLEMENTATION ("eval-data", eval_data,
-			       0, /*dumpable-flag*/
-                               mark_eval_data, 
-                               print_eval_data, 0, 
-                               eval_data_equal, eval_data_hash, eval_data_description,
-                               Lisp_Eval_Data);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("eval-data", eval_data,
+				     0, /*dumpable-flag*/
+				     mark_eval_data, 
+				     print_eval_data, 0, 
+				     eval_data_equal, eval_data_hash,
+				     eval_data_description,
+				     Lisp_Eval_Data);
 
-DEFINE_LRECORD_IMPLEMENTATION ("misc-user-data", misc_user_data,
-			       0, /*dumpable-flag*/
-                               mark_misc_user_data,
-                               print_misc_user_data,
-                               0, misc_user_data_equal, 
-                               misc_user_data_hash, misc_user_data_description, 
-                               Lisp_Misc_User_Data);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("misc-user-data", misc_user_data,
+				     0, /*dumpable-flag*/
+				     mark_misc_user_data,
+				     print_misc_user_data,
+				     0, misc_user_data_equal, 
+				     misc_user_data_hash,
+				     misc_user_data_description, 
+				     Lisp_Misc_User_Data);
 
-DEFINE_LRECORD_IMPLEMENTATION ("magic-eval-data", magic_eval_data,
-			       0, /*dumpable-flag*/
-                               mark_magic_eval_data, 
-                               print_magic_eval_data, 0, 
-                               magic_eval_data_equal,
-                               magic_eval_data_hash, magic_eval_data_description, 
-                               Lisp_Magic_Eval_Data);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("magic-eval-data", magic_eval_data,
+				     0, /*dumpable-flag*/
+				     mark_magic_eval_data, 
+				     print_magic_eval_data, 0, 
+				     magic_eval_data_equal,
+				     magic_eval_data_hash,
+				     magic_eval_data_description, 
+				     Lisp_Magic_Eval_Data);
 
-DEFINE_LRECORD_IMPLEMENTATION ("magic-data", magic_data,
-			       0, /*dumpable-flag*/
-                               mark_magic_data, print_magic_data, 0,
-                               magic_data_equal, magic_data_hash, magic_data_description,
-                               Lisp_Magic_Data);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("magic-data", magic_data,
+				     0, /*dumpable-flag*/
+				     mark_magic_data, print_magic_data, 0,
+				     magic_data_equal, magic_data_hash,
+				     magic_data_description,
+				     Lisp_Magic_Data);
 
 
 
