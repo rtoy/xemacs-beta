@@ -1,3 +1,7 @@
+2004-12-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* EmacsManager.c (EmacsManagerChangeSize): Respect XtGeometryNo.
+
 2004-12-07  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* Makefile.in.in: Always refer to make as $(MAKE) and use
