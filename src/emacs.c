@@ -36,103 +36,141 @@ Boston, MA 02111-1307, USA.  */
 
 -- A time line for Lucid Emacs/XEmacs is
 
-version 19.0 shipped with Energize 1.0, April 1992.
-version 19.1 released June 4, 1992.
-version 19.2 released June 19, 1992.
-version 19.3 released September 9, 1992.
-version 19.4 released January 21, 1993.
-version 19.5 was a repackaging of 19.4 with a few bug fixes and
-  shipped with Energize 2.0.  Never released to the net.
-version 19.6 released April 9, 1993.
-version 19.7 was a repackaging of 19.6 with a few bug fixes and
+Version 19.0 shipped with Energize 1.0, April 1992.
+Version 19.1 released June 4, 1992.
+Version 19.2 released June 19, 1992.
+Version 19.3 released September 9, 1992.
+Version 19.4 released January 21, 1993.
+Version 19.5 released February 5, 1993.  This was a repackaging of 19.4 with a
+  few bug fixes and shipped with Energize 2.0.  It was a trade-show giveaway
+  and never released to the net.
+Version 19.6 released April 9, 1993.
+Version 19.7 was a repackaging of 19.6 with a few bug fixes and
   shipped with Energize 2.1.  Never released to the net.
-version 19.8 released September 6, 1993.
-version 19.9 released January 12, 1994.
-version 19.10 released May 27, 1994.
-version 19.11 (first XEmacs) released September 13, 1994.
-version 19.12 released June 23, 1995.
-version 19.13 released September 1, 1995.
-version 19.14 released June 23, 1996.
-version 20.0 released February 9, 1997.
-version 19.15 released March 28, 1997.
-version 20.1 (not released to the net) April 15, 1997.
-version 20.2 released May 16, 1997.
-version 19.16 released October 31, 1997.
-version 20.3 (the first stable version of XEmacs 20.x) released November 30,
-1997.
-version 20.4 released February 28, 1998.
-version 21.0.60 released December 10, 1998. (The version naming scheme was
-changed at this point: [a] the second version number is odd for stable
-versions, even for beta versions; [b] a third version number is added,
-replacing the "beta xxx" ending for beta versions and allowing for
-periodic maintenance releases for stable versions.  Therefore, 21.0 was
-never "officially" released; similarly for 21.2, etc.)
-version 21.0.61 released January 4, 1999.
-version 21.0.63 released February 3, 1999.
-version 21.0.64 released March 1, 1999.
-version 21.0.65 released March 5, 1999.
-version 21.0.66 released March 12, 1999.
-version 21.0.67 released March 25, 1999.
-version 21.1.2 released May 14, 1999; on comp.emacs, May 28. (This is
+Version 19.8 released September 6, 1993. (Epoch merger, preliminary I18N
+  support)
+Version 19.9 released January 12, 1994. (Scrollbars, Athena.)
+Version 19.10 released May 27, 1994.  Known as "Lucid Emacs" when
+  shipped by Lucid, and as "XEmacs" when shipped by Sun; but Lucid
+  went out of business a few days later and it's unclear very many
+  copies of 19.10 were released by Lucid. (Last release by Jamie Zawinski.)
+Version 19.11 (first XEmacs) released September 13, 1994.
+Version 19.12 released June 23, 1995.
+Version 19.13 released September 1, 1995.
+Version 19.14 released June 23, 1996.
+Version 20.0 released February 9, 1997.
+Version 19.15 released March 28, 1997.
+Version 20.1 (not released to the net) April 15, 1997.
+Version 20.2 released May 16, 1997.
+Version 19.16 released October 31, 1997; retiring of v19 series.
+Version 20.3 (the first stable version of XEmacs 20.x) released November 30,
+  1997.
+Version 20.4 released February 28, 1998. (Jamie claims this version is the
+  "first reasonably stable release with MULE support" and says that "XEmacs
+  'core' and 'packages' now packaged separately.")
+Version 21.0-pre5 released July 18, 1998. (Jamie says "Numbering scheme goes
+  wonky due to switch to stable + unstable branches.")
+Version 21.0.60 released December 10, 1998. (The version naming scheme was
+  changed at this point: [a] the second version number is odd for stable
+  versions, even for beta versions; [b] a third version number is added,
+  replacing the "beta xxx" ending for beta versions and allowing for
+  periodic maintenance releases for stable versions.  Therefore, 21.0 was
+  never "officially" released; similarly for 21.2, etc.)
+Version 21.0.61 released January 4, 1999.
+Version 21.0.63 released February 3, 1999.
+Version 21.0.64 released March 1, 1999.
+Version 21.0.65 released March 5, 1999.
+Version 21.0.66 released March 12, 1999.
+Version 21.0.67 released March 25, 1999.
+Version 21.1.2 released May 14, 1999; on comp.emacs, May 28. (This is
  the followup to 21.0.67.  The second version number was bumped to indicate
  the beginning of the "stable" series.)
-version 21.1.3 released June 26, 1999.
-version 21.1.4 released July 8, 1999.
-version 21.1.6 released August 14, 1999. (There was no 21.1.5.)
-version 21.1.7 released September 26, 1999.
-version 21.1.8 released November 2, 1999.
-version 21.1.9 released February 13, 2000.
-version 21.1.10 released May 7, 2000.
-version 21.1.10a released June 24, 2000.
-version 21.1.11 released July 18, 2000.
-version 21.1.12 released August 5, 2000.
-version 21.1.13 released January 7, 2001.
-version 21.1.14 released January 27, 2001.
-version 21.2.9 released February 3, 1999.
-version 21.2.10 released February 5, 1999.
-version 21.2.11 released March 1, 1999.
-version 21.2.12 released March 5, 1999.
-version 21.2.13 released March 12, 1999.
-version 21.2.14 released May 14, 1999.
-version 21.2.15 released June 4, 1999.
-version 21.2.16 released June 11, 1999.
-version 21.2.17 released June 22, 1999.
-version 21.2.18 released July 14, 1999.
-version 21.2.19 released July 30, 1999.
-version 21.2.20 released November 10, 1999.
-version 21.2.21 released November 28, 1999.
-version 21.2.22 released November 29, 1999.
-version 21.2.23 released December 7, 1999.
-version 21.2.24 released December 14, 1999.
-version 21.2.25 released December 24, 1999.
-version 21.2.26 released December 31, 1999.
-version 21.2.27 released January 18, 2000.
-version 21.2.28 released February 7, 2000.
-version 21.2.29 released February 16, 2000.
-version 21.2.30 released February 21, 2000.
-version 21.2.31 released February 23, 2000.
-version 21.2.32 released March 20, 2000.
-version 21.2.33 released May 1, 2000.
-version 21.2.34 released May 28, 2000.
-version 21.2.35 released July 19, 2000.
-version 21.2.36 released October 4, 2000.
-version 21.2.37 released November 14, 2000.
-version 21.2.38 released December 5, 2000.
-version 21.2.39 released December 31, 2000.
-version 21.2.40 released January 8, 2001.
-version 21.2.41 "Polyhymnia" released January 17, 2001.
-version 21.2.42 "Poseidon" released January 20, 2001.
-version 21.2.43 "Terspichore" released January 26, 2001.
-version 21.2.44 "Thalia" released February 8, 2001.
-version 21.2.45 "Thelxepeia" released February 23, 2001.
-version 21.2.46 "Urania" released March 21, 2001.
-version 21.5.0 "alfalfa" released April 18, 2001.
-version 21.5.1 "anise" released May 9, 2001.
-version 21.5.2 "artichoke" released July 28, 2001.
-version 21.5.3 "asparagus" released September 7, 2001.
-version 21.5.4 "bamboo" released January 8, 2002.
-version 21.5.5 "beets" released March 5, 2002.
-version 21.5.6 "bok choi" released April 5, 2002.
+Version 21.1.3 released June 26, 1999.
+Version 21.1.4 released July 8, 1999.
+Version 21.1.6 released August 14, 1999. (There was no 21.1.5.)
+Version 21.1.7 released September 26, 1999.
+Version 21.1.8 released November 2, 1999.
+Version 21.1.9 released February 13, 2000.
+Version 21.1.10 released May 7, 2000.
+Version 21.1.10a released June 24, 2000.
+Version 21.1.11 released July 18, 2000.
+Version 21.1.12 released August 5, 2000.
+Version 21.1.13 released January 7, 2001.
+Version 21.1.14 released January 27, 2001.
+Version 21.2.9 released February 3, 1999.
+Version 21.2.10 released February 5, 1999.
+Version 21.2.11 released March 1, 1999.
+Version 21.2.12 released March 5, 1999.
+Version 21.2.13 released March 12, 1999.
+Version 21.2.14 released May 14, 1999.
+Version 21.2.15 released June 4, 1999.
+Version 21.2.16 released June 11, 1999.
+Version 21.2.17 released June 22, 1999.
+Version 21.2.18 released July 14, 1999.
+Version 21.2.19 released July 30, 1999.
+Version 21.2.20 released November 10, 1999.
+Version 21.2.21 released November 28, 1999.
+Version 21.2.22 released November 29, 1999.
+Version 21.2.23 released December 7, 1999.
+Version 21.2.24 released December 14, 1999.
+Version 21.2.25 released December 24, 1999.
+Version 21.2.26 released December 31, 1999.
+Version 21.2.27 released January 18, 2000.
+Version 21.2.28 released February 7, 2000.
+Version 21.2.29 released February 16, 2000.
+Version 21.2.30 released February 21, 2000.
+Version 21.2.31 released February 23, 2000.
+Version 21.2.32 released March 20, 2000.
+Version 21.2.33 released May 1, 2000.
+Version 21.2.34 released May 28, 2000.
+Version 21.2.35 released July 19, 2000.
+Version 21.2.36 released October 4, 2000.
+Version 21.2.37 released November 14, 2000.
+Version 21.2.38 released December 5, 2000.
+Version 21.2.39 released December 31, 2000.
+Version 21.2.40 released January 8, 2001.
+Version 21.2.41 "Polyhymnia" released January 17, 2001.
+Version 21.2.42 "Poseidon" released January 20, 2001.
+Version 21.2.43 "Terspichore" released January 26, 2001.
+Version 21.2.44 "Thalia" released February 8, 2001.
+Version 21.2.45 "Thelxepeia" released February 23, 2001.
+Version 21.2.46 "Urania" released March 21, 2001.
+Version 21.2.47 "Zephir" released April 14, 2001.
+Version 21.4.0 "Solid Vapor" released April 16, 2001.
+Version 21.4.1 "Copyleft" released April 19, 2001.
+Version 21.4.2 "Developer-Friendly Unix APIs" released May 10, 2001.
+Version 21.4.3 "Academic Rigor" released May 17, 2001.
+Version 21.4.4 "Artificial Intelligence" released July 28, 2001.
+Version 21.4.5 "Civil Service" released October 23, 2001.
+Version 21.4.6 "Common Lisp" released December 17, 2001.
+Version 21.4.7 "Economic Science" released May 4, 2002.
+Version 21.4.8 "Honest Recruiter" released May 9, 2002.
+Version 21.4.9 "Informed Management" released August 23, 2002.
+Version 21.4.10 "Military Intelligence" released November 2, 2002.
+Version 21.4.11 "Native Windows TTY Support" released January 3, 2003.
+Version 21.4.12 "Portable Code" released January 15, 2003.
+Version 21.4.13 "Rational FORTRAN" released May 25, 2003.
+Version 21.4.14 "Reasonable Discussion" released September 3, 2003.
+Version 21.4.15 "Security Through Obscurity" released February 2, 2004.
+Version 21.5.0 "alfalfa" released April 18, 2001.
+Version 21.5.1 "anise" released May 9, 2001.
+Version 21.5.2 "artichoke" released July 28, 2001.
+Version 21.5.3 "asparagus" released September 7, 2001.
+Version 21.5.4 "bamboo" released January 8, 2002.
+Version 21.5.5 "beets" released March 5, 2002.
+Version 21.5.6 "bok choi" released April 5, 2002.
+Version 21.5.7 "broccoflower" released July 2, 2002.
+Version 21.5.8 "broccoli" released July 27, 2002.
+Version 21.5.9 "brussels sprouts" released August 30, 2002.
+Version 21.5.10 "burdock" released January 4, 2003.
+Version 21.5.11 "cabbage" released February 16, 2003.
+Version 21.5.12 "carrot" released April 24, 2003.
+Version 21.5.13 "cauliflower" released May 10, 2003.
+Version 21.5.14 "cassava" released June 1, 2003.
+Version 21.5.15 "celery" released September 3, 2003.
+Version 21.5.16 "celeriac" released September 26, 2003.
+Version 21.5.17 "chayote" released March 22, 2004.
+Version 21.5.18 "chestnut" released October 22, 2004.
 
 
 -- A time line for GNU Emacs version 19 is
@@ -175,6 +213,8 @@ version 20.2 released September 20, 1997.
 version 20.3 released August 19, 1998.
 version 20.4 released July 12, 1999; on comp.emacs, July 27.
 version 21.1 released October 20, 2001.
+Version 21.2 released March 16, 2002.
+Version 21.3 released March 19, 2003.
 
 
 -- A time line for GNU Emacs version 18 and older is
@@ -233,6 +273,15 @@ version 18.56 released on January 17, 1991.
 version 18.57 released late January, 1991.
 version 18.58 released ?????.
 version 18.59 released October 31, 1992.
+
+
+-- A time line for Epoch is
+
+Epoch 1.0 released December 14, 1989. (by Simon Kaplan, Chris Love, et al.)
+Epoch 2.0 released December 23, 1989.
+Epoch 3.1 released February 6, 1990.
+Epoch 3.2 released December[????] 11, 1990.
+Epoch 4.0 released August 27, 1990.
 
 */
 

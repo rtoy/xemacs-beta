@@ -1,5 +1,10 @@
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
+	* emacs.c:
+	Update history section.
+
+2005-01-26  Ben Wing  <ben@xemacs.org>
+
 	* lisp.h:
 	Clean up and generalize creation of string hash tables.
 	Use Hashcode rather than unsigned long.
@@ -44,12 +49,6 @@
 	Add fillers for easier temporary profiling.
 	Add RETURN_UNGCPRO_EXIT_PROFILING, RETURN_EXIT_PROFILING.
 
-2004-11-17  Ben Wing  <ben@xemacs.org>
-
-	* emacs.c:
-	Update history section.
-	
-	
 2004-11-13  Ben Wing  <ben@xemacs.org>
 
 	* nt.c:
