@@ -934,8 +934,8 @@ pdump_dump_root_objects (void)
       obj.value   = * obj.address;
 
       if (POINTER_TYPE_P (XTYPE (obj.value)))
-	obj.value = wrap_record_1 ((void *)
-				   pdump_get_entry (XRECORD_LHEADER
+	obj.value =
+	  wrap_pointer_1 ((void *) pdump_get_entry (XRECORD_LHEADER
 						    (obj.value))->save_offset);
 
       PDUMP_WRITE (pdump_static_Lisp_Object, obj);
@@ -962,7 +962,7 @@ pdump_dump_root_objects (void)
 
 	  obj.value = *(Lisp_Object *)(desc[pos].offset + (char *)(XRECORD_LHEADER (obj.value)));
 	}
-      obj.value = wrap_record_1 ((void *) elt->save_offset);
+      obj.value = wrap_pointer_1 ((void *) elt->save_offset);
 
       PDUMP_WRITE (pdump_static_Lisp_Object, obj);
     }
@@ -1149,7 +1149,7 @@ pdump_load_finish (void)
       pdump_static_Lisp_Object obj = PDUMP_READ (p, pdump_static_Lisp_Object);
 
       if (POINTER_TYPE_P (XTYPE (obj.value)))
-	obj.value = wrap_record_1 ((char *) XPNTR (obj.value) + delta);
+	obj.value = wrap_pointer_1 ((char *) XPNTR (obj.value) + delta);
 
       (* obj.address) = obj.value;
     }

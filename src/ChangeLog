@@ -1,5 +1,11 @@
 2001-06-18  Ben Wing  <ben@xemacs.org>
 
+	* dumper.c (pdump_dump_root_objects):
+	* dumper.c (pdump_load_finish):
+	wrap_record_1 -> wrap_pointer_1.
+
+2001-06-18  Ben Wing  <ben@xemacs.org>
+
 	* window.c:
 	* window.c (mark_window_as_deleted):
 	* window.c (WINDOW_SLOT):
