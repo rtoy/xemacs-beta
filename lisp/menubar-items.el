@@ -1717,16 +1717,16 @@ Write your filter like this:
 
 (defun init-menubar-at-startup ()
   "Don't call this.
-Adds `Load .emacs' button to menubar when starting up with -q."
-  (when (and (not load-user-init-file-p)
-	     (file-exists-p (expand-file-name ".emacs" "~")))
+Adds `Load init files' button to menubar when starting up with -q."
+  ;; load-user-init-file finds the init files itself now
+  (when (not load-user-init-file-p)
     (add-menu-button
      nil
-     ["%_Load .emacs"
+     ["%_Load init files"
       (progn
 	(mapc #'(lambda (buf)
 		 (with-current-buffer buf
-		   (delete-menu-item '("Load .emacs"))))
+		   (delete-menu-item '("Load init files"))))
 	      (buffer-list))
 	(load-user-init-file))
       ]
@@ -2044,35 +2044,6 @@ items by redefining the function `format-buffers-menu-line'."
   (funcall (if (fboundp list-all-buffers-function)
 	       list-all-buffers-function
 	     'list-buffers)))
-
-
-;;; The Options menu
-
-;; We'll keep those variables here for a while, in order to provide a
-;; function for porting the old options file that a user may own to Custom.
-
-(defvar options-save-faces nil
-  "*Non-nil value means save-options will save information about faces.
-A nil value means save-options will not save face information.
-Set this non-nil only if you use M-x edit-faces to change face
-settings.  If you use M-x customize-face or the \"Browse Faces...\"
-menu entry, you will see a button in the Customize Face buffer that you
-can use to permanently save your face changes.
-
-M-x edit-faces is deprecated.  Support for it and this variable will
-be discontinued in a future release.")
-
-(defvar save-options-init-file nil
-  "File into which to save forms to load the options file (nil for .emacs).
-Normally this is nil, which means save into your .emacs file (the value
-of `user-init-file'.")
-
-(defvar save-options-file ".xemacs-options"
-  "File to save options into.
-This file is loaded from your .emacs file.
-If this is a relative filename, it is put into the same directory as your
-.emacs file.")
-
 
 
 ;;; The Help menu
