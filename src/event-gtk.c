@@ -97,10 +97,23 @@ static int last_quit_check_signal_tick_count;
 Lisp_Object Qkey_mapping;
 Lisp_Object Qsans_modifiers;
 
+/*
+ * Identify if the keysym is a modifier.  This implementation mirrors x.org's
+ * IsModifierKey(), but for GDK keysyms.
+ */
+#ifdef GDK_ISO_Lock
+#define IS_MODIFIER_KEY(keysym)  \
+  ((((keysym) >= GDK_Shift_L) && ((keysym) <= GDK_Hyper_R)) \
+   || (((keysym) >= GDK_ISO_Lock) && \
+       ((keysym) <= GDK_ISO_Last_Group_Lock)) \
+   || ((keysym) == GDK_Mode_switch) \
+   || ((keysym) == GDK_Num_Lock))
+#else
 #define IS_MODIFIER_KEY(keysym)  \
   ((((keysym) >= GDK_Shift_L) && ((keysym) <= GDK_Hyper_R)) \
    || ((keysym) == GDK_Mode_switch) \
    || ((keysym) == GDK_Num_Lock))
+#endif
 
 #define THIS_IS_GTK
 #include "event-xlike-inc.c"

@@ -1,3 +1,7 @@
+2005-01-20  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* event-gtk.c: Recognise AltGr as a valid modifier.
+
 2005-01-12  Ville Skyttä  <scop@xemacs.org>
 
 	* console-x.h: #include X11/keysym.h before xintrinsic.h.
