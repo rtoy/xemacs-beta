@@ -1,5 +1,37 @@
 2003-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* search.c (search_regs): Make comment reflect reality.
+	(clear_search_regs): Unconditionally clear global regs.
+	(set_search_regs): Call clear_search_regs to clear unused regs.
+	(looking_at_1):
+	(string_match_1):
+	(search_buffer):
+	(simple_search):
+	(boyer_moore):
+	Don't call clear_search_regs directly.
+	(Flooking_at):
+	(Fposix_looking_at):
+	(Fstring_match):
+	(Fposix_string_match):
+	(Fsearch_backward):
+	(Fsearch_forward):
+	(Fword_search_backward):
+	(Fword_search_forward):
+	(Fre_search_backward): 
+	(Fre_search_forward): 
+	(Fposix_search_backward):
+	(Fposix_search_forward):
+	Document that search/match failure preserves match data.
+	(Freplace_match):
+	(Fstore_match_data):
+	Improve docstrings.
+
+	* regex.c (re_match_2_internal): Init syn1, syn2 to quiet compiler.
+
+	* regex.h (struct re_registers): Add comment.
+
+2003-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	Various cleanups against the possibility that <sys/stat.h> does
 	#define stat ... .
 

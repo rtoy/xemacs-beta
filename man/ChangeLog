@@ -1,3 +1,7 @@
+2003-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/searching.texi (Match Data): Failed match preserves data.
+
 2003-04-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs-faq.texi (Q6.4.3): New: auxiliary programs for Windows.

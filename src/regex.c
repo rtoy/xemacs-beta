@@ -6080,7 +6080,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	       emch1, emch2 is the character at d, and syn2 is the
 	       syntax of emch2. */
 	    Ichar emch1, emch2;
-	    int syn1, syn2;
+	    int syn1 = 0,
+	        syn2 = 0;
 	    re_char *d_before, *d_after;
 	    int result,
 		at_beg = AT_STRINGS_BEG (d),

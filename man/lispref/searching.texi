@@ -1058,11 +1058,19 @@ that you can search for a complex pattern, such as a date in an Rmail
 message, and then extract parts of the match under control of the
 pattern.
 
-  Because the match data normally describe the most recent search only,
-you must be careful not to do another search inadvertently between the
-search you wish to refer back to and the use of the match data.  If you
-can't avoid another intervening search, you must save and restore the
-match data around it, to prevent it from being overwritten.
+  Because the match data normally describe the most recent successful
+search only, you must be careful not to do another search inadvertently
+between the search you wish to refer back to and the use of the match
+data.  If you can't avoid another intervening search, you must save and
+restore the match data around it, to prevent it from being overwritten.
+
+To make it possible to write iterative or recursive code that repeatedly
+searches, and uses the data from the last successful search when no more
+matches can be found, a search or match which fails will preserve the
+match data from the last successful search.  (You must not depend on
+match data being preserved in case the search or match signals an
+error.)  If for some reason you need to clear the match data, you may
+use @code{(store-match-data nil)}.
 
 @menu
 * Simple Match Data::     Accessing single items of match data,

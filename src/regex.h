@@ -418,7 +418,7 @@ typedef int regoff_t;
    regex.texinfo for a full description of what registers match.  */
 struct re_registers
 {
-  int num_regs;
+  int num_regs;			/* number of registers allocated */
   regoff_t *start;
   regoff_t *end;
 };

@@ -93,29 +93,20 @@ static struct regexp_cache *searchbuf_head;
    */
 static struct re_registers search_regs;
 
-/* Every function that _may_ set the match data _must_ clear the search
-   registers on entry.  An unsuccessful search should leave the search
-   registers cleared.  Applications that are no-ops by definition (eg,
-   searches with a repetition count of 0) _must not_ clear the search
+/* Every function that sets the match data _must_ clear unused search
+   registers on success.  An unsuccessful search or match _must_ preserve
+   the search registers.  The traditional documentation implied that
+   any match operation might trash the registers, but in fact failures
+   have always preserved the match data (in GNU Emacs as well).  Some
+   plausible code depends on this behavior (cf. `w3-configuration-data'
+   in library "w3-cfg").
+
+   Ordinary string searchs use set_search_regs to set the whole-string
+   match.  That function takes care of clearing the unused subexpression
    registers.
-
-   XEmacs 21.5 up to beta 11 may have permitted the following idiom to
-   "win" in the sense that the match data was set to the last successful
-   match's match data, and not cleared as the current implemenation does:
-
-   (while (search_forward "string"))
-   (use-match-data-of-last-successful-search)
-
-   This no longer can work.  You must use save-match-data to preserve the
-   match data:
-
-   (let (md)
-     (while (when (search-forward "string") (setq md (match-data))))
-     (set-match-data md))
-   (use-match-data-of-last-successful-search)
    */
 static void set_search_regs (struct buffer *buf, Charbpos beg, Charcount len);
-static void clear_search_regs (struct re_registers *regp);
+static void clear_search_regs (void);
 
 /* The buffer in which the last search was performed, or
    Qt if the last search was done in a string;
@@ -326,9 +317,6 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
   struct syntax_cache scache_struct;
   struct syntax_cache *scache = &scache_struct;
   
-  /* clear search registers *now*.  no mercy, not even for errors */
-  clear_search_regs (&search_regs);
-
   CHECK_STRING (string);
   bufp = compile_pattern (string, &search_regs,
 			  (!NILP (buf->case_fold_search)
@@ -382,9 +370,11 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
 
 DEFUN ("looking-at", Flooking_at, 1, 2, 0, /*
 Return t if text after point matches regular expression REGEXP.
-This function modifies the match data that `match-beginning',
-`match-end' and `match-data' access; save and restore the match
-data if you want to preserve them.
+When the match is successful, this function modifies the match data
+that `match-beginning', `match-end' and `match-data' access; save the
+match data with `match-data' and restore it with `store-match-data' if
+you want to preserve them.  If the match fails, the match data from the
+previous success match is preserved.
 
 Optional argument BUFFER defaults to the current buffer.
 */
@@ -396,9 +386,11 @@ Optional argument BUFFER defaults to the current buffer.
 DEFUN ("posix-looking-at", Fposix_looking_at, 1, 2, 0, /*
 Return t if text after point matches regular expression REGEXP.
 Find the longest match, in accord with Posix regular expression rules.
-This function modifies the match data that `match-beginning',
-`match-end' and `match-data' access; save and restore the match
-data if you want to preserve them.
+When the match is successful, this function modifies the match data
+that `match-beginning', `match-end' and `match-data' access; save the
+match data with `match-data' and restore it with `store-match-data' if
+you want to preserve them.  If the match fails, the match data from the
+previous success match is preserved.
 
 Optional argument BUFFER defaults to the current buffer.
 */
@@ -418,9 +410,6 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   /* Some FSF junk with running_asynch_code, to preserve the match
      data.  Not necessary because we don't call process filters
      asynchronously (i.e. from within QUIT). */
-
-  /* clear search registers *now*.  no mercy, not even for errors */
-  clear_search_regs (&search_regs);
 
   CHECK_STRING (regexp);
   CHECK_STRING (string);
@@ -491,9 +480,14 @@ or unspecified, it defaults *NOT* to the current buffer but instead:
          (string-match "^foo.*bar" string))
 
    but the case, syntax, and category tables come from the standard tables,
-   which are accessed through functions `default-{case,syntax,category}-table' and serve as the parents of the
-   tables in particular buffer
+   which are accessed through functions `default-{case,syntax,category}-table'
+   and serve as the parents of the tables in particular buffer.
 
+When the match is successful, this function modifies the match data
+that `match-beginning', `match-end' and `match-data' access; save the
+match data with `match-data' and restore it with `store-match-data' if
+you want to preserve them.  If the match fails, the match data from the
+previous success match is preserved.
 */
        (regexp, string, start, buffer))
 {
@@ -513,6 +507,12 @@ matched by parenthesis constructs in the pattern.
 Optional arg BUFFER controls how case folding is done (according to
 the value of `case-fold-search' in that buffer and that buffer's case
 tables) and defaults to the current buffer.
+
+When the match is successful, this function modifies the match data
+that `match-beginning', `match-end' and `match-data' access; save the
+match data with `match-data' and restore it with `store-match-data' if
+you want to preserve them.  If the match fails, the match data from the
+previous success match is preserved.
 */
        (regexp, string, start, buffer))
 {
@@ -1251,9 +1251,6 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
   if (n == 0)
     return charbpos;
 
-  /* clear the search regs now */
-  clear_search_regs (&search_regs);
-
   /* Null string is found at starting position.  */
   if (len == 0)
     {
@@ -1647,9 +1644,6 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
     simple_translate[i] = (Ibyte) i;
   i = 0;
 
-  /* clear search regs now */
-  clear_search_regs (&search_regs);
-
   while (i != infinity)
     {
       Ibyte *ptr = base_pat + i;
@@ -2004,23 +1998,22 @@ set_search_regs (struct buffer *buf, Charbpos beg, Charcount len)
       search_regs.num_regs = 1;
     }
 
+  clear_search_regs ();
   search_regs.start[0] = beg;
   search_regs.end[0] = beg + len;
   last_thing_searched = wrap_buffer (buf);
 }
 
-/* Clear search registers so match data will be null.
-   REGP is a pointer to the register structure to clear, usually the global
-   search_regs. */
+/* Clear search registers so match data will be null. */
 
 static void
-clear_search_regs (struct re_registers *regp)
+clear_search_regs (void)
 {
   /* This function has been Mule-ized. */
   int i;
 
-  for (i = 0; i < regp->num_regs; i++)
-    regp->start[i] = regp->end[i] = -1;
+  for (i = 0; i < search_regs.num_regs; i++)
+    search_regs.start[i] = search_regs.end[i] = -1;
 }
 
 
@@ -2106,7 +2099,13 @@ successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
 defaults to the current buffer.
 
-See also the functions `match-beginning', `match-end' and `replace-match'.
+When the match is successful, this function modifies the match data
+that `match-beginning', `match-end' and `match-data' access; save the
+match data with `match-data' and restore it with `store-match-data' if
+you want to preserve them.  If the match fails, the match data from the
+previous success match is preserved.
+
+See also the function `replace-match'.
 */
        (string, limit, noerror, count, buffer))
 {
@@ -2131,7 +2130,13 @@ successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
 defaults to the current buffer.
 
-See also the functions `match-beginning', `match-end' and `replace-match'.
+When the match is successful, this function modifies the match data
+that `match-beginning', `match-end' and `match-data' access; save the
+match data with `match-data' and restore it with `store-match-data' if
+you want to preserve them.  If the match fails, the match data from the
+previous success match is preserved.
+
+See also the function `replace-match'.
 */
        (string, limit, noerror, count, buffer))
 {
@@ -2157,7 +2162,13 @@ successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
 defaults to the current buffer.
 
-See also the functions `match-beginning', `match-end' and `replace-match'.
+When the match is successful, this function modifies the match data
+that `match-beginning', `match-end' and `match-data' access; save the
+match data with `match-data' and restore it with `store-match-data' if
+you want to preserve them.  If the match fails, the match data from the
+previous success match is preserved.
+
+See also the function `replace-match'.
 */
        (string, limit, noerror, count, buffer))
 {
@@ -2183,7 +2194,13 @@ successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
 defaults to the current buffer.
 
-See also the functions `match-beginning', `match-end' and `replace-match'.
+When the match is successful, this function modifies the match data
+that `match-beginning', `match-end' and `match-data' access; save the
+match data with `match-data' and restore it with `store-match-data' if
+you want to preserve them.  If the match fails, the match data from the
+previous success match is preserved.
+
+See also the function `replace-match'.
 */
        (string, limit, noerror, count, buffer))
 {
@@ -2212,7 +2229,13 @@ successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
 defaults to the current buffer.
 
-See also the functions `match-beginning', `match-end' and `replace-match'.
+When the match is successful, this function modifies the match data
+that `match-beginning', `match-end' and `match-data' access; save the
+match data with `match-data' and restore it with `store-match-data' if
+you want to preserve them.  If the match fails, the match data from the
+previous success match is preserved.
+
+See also the function `replace-match'.
 */
        (regexp, limit, noerror, count, buffer))
 {
@@ -2237,7 +2260,13 @@ successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
 defaults to the current buffer.
 
-See also the functions `match-beginning', `match-end' and `replace-match'.
+When the match is successful, this function modifies the match data
+that `match-beginning', `match-end' and `match-data' access; save the
+match data with `match-data' and restore it with `store-match-data' if
+you want to preserve them.  If the match fails, the match data from the
+previous success match is preserved.
+
+See also the function `replace-match'.
 */
        (regexp, limit, noerror, count, buffer))
 {
@@ -2266,7 +2295,13 @@ successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
 defaults to the current buffer.
 
-See also the functions `match-beginning', `match-end' and `replace-match'.
+When the match is successful, this function modifies the match data
+that `match-beginning', `match-end' and `match-data' access; save the
+match data with `match-data' and restore it with `store-match-data' if
+you want to preserve them.  If the match fails, the match data from the
+previous success match is preserved.
+
+See also the function `replace-match'.
 */
        (regexp, limit, noerror, count, buffer))
 {
@@ -2292,7 +2327,13 @@ successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
 defaults to the current buffer.
 
-See also the functions `match-beginning', `match-end' and `replace-match'.
+When the match is successful, this function modifies the match data
+that `match-beginning', `match-end' and `match-data' access; save the
+match data with `match-data' and restore it with `store-match-data' if
+you want to preserve them.  If the match fails, the match data from the
+previous success match is preserved.
+
+See also the function `replace-match'.
 */
        (regexp, limit, noerror, count, buffer))
 {
@@ -2351,11 +2392,11 @@ the match.  It says to replace just that subexpression instead of the
 whole match.  This is useful only after a regular expression search or
 match since only regular expressions have distinguished subexpressions.
 
-If no match (including searches) has been conducted, the last match
-operation failed, or the requested subexpression was not matched, an
-`args-out-of-range' error will be signaled.  (If no match has ever been
-conducted in this instance of XEmacs, an `invalid-operation' error will
-be signaled.  This is very rare.)
+If no match (including searches) has been conducted or the requested
+subexpression was not matched, an `args-out-of-range' error will be
+signaled.  (If no match has ever been conducted in this instance of
+XEmacs, an `invalid-operation' error will be signaled.  This is very
+rare.)
 */
        (replacement, fixedcase, literal, string, strbuffer))
 {
@@ -2919,7 +2960,8 @@ to hold all the values, and if INTEGERS is non-nil, no consing is done.
 
 DEFUN ("store-match-data", Fstore_match_data, 1, 1, 0, /*
 Set internal data on last search match from elements of LIST.
-LIST should have been created by calling `match-data' previously.
+LIST should have been created by calling `match-data' previously,
+or be nil, to clear the internal match data.
 */
        (list))
 {
