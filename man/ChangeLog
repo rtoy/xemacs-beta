@@ -1,3 +1,17 @@
+2003-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (detail menu): Reformat "Current Events" caption.
+	(Legacy Versions): New section.
+	(Q8.0.1): New question.
+
+2003-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/searching.texi (Regexp Search): Update split-string for
+	new specification.
+
+	* lispref/strings.texi (Creating Strings): Xref split-string
+	(this is where GNU Emacs documents it).
+
 2003-05-10  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.13 "cauliflower" is released.

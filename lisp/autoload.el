@@ -852,7 +852,7 @@ You don't really want to be calling this function.  Try using
 	(progn
 	  (insert ";;; DO NOT MODIFY THIS FILE\n")
 	  (insert "(if (featurep '" sym ")")
-	  (insert " (error \"Already loaded\"))\n")
+	  (insert " (error \"Feature " sym " already loaded\"))\n")
 	  (goto-char (point-max))
 	  (insert "\n(provide '" sym ")\n")))))
 

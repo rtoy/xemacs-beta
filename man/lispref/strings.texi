@@ -288,6 +288,10 @@ of @code{mapconcat} in @ref{Mapping Functions}, @code{vconcat} in
 in @ref{Building Lists}.
 @end defun
 
+The function @code{split-string}, in @ref{Regexp Search}, generates a
+list of strings by splitting a string on occurances of a regular
+expression.
+
 @node Predicates for Characters
 @section The Predicates for Characters
 

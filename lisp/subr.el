@@ -619,6 +619,11 @@ likely to have undesired semantics.")
 ;; specification for `split-string' agreed with rms 2003-04-23
 ;; xemacs design <87vfx5vor0.fsf@tleepslib.sk.tsukuba.ac.jp>
 
+;; The specification says that if both SEPARATORS and OMIT-NULLS are
+;; defaulted, OMIT-NULLS should be treated as t.  Simplifying the logical
+;; expression leads to the equivalent implementation that if SEPARATORS
+;; is defaulted, OMIT-NULLS is treated as t.
+
 (defun split-string (string &optional separators omit-nulls)
   "Splits STRING into substrings bounded by matches for SEPARATORS.
 
@@ -627,24 +632,24 @@ splitting points.  The substrings matching SEPARATORS are removed, and
 the substrings between the splitting points are collected as a list,
 which is returned.
 
-If SEPARATORS is nil, it defaults to the value of
-`split-string-default-separators', normally \"[ \\f\\t\\n\\r\\v]+\".
+If SEPARATORS is non-nil, it should be a regular expression matching text
+which separates, but is not part of, the substrings.  If nil it defaults to
+`split-string-default-separators', normally \"[ \\f\\t\\n\\r\\v]+\", and
+OMIT-NULLS is forced to t.
 
 If OMIT-NULLs is t, zero-length substrings are omitted from the list \(so
 that for the default value of SEPARATORS leading and trailing whitespace
 are effectively trimmed).  If nil, all zero-length substrings are retained,
 which correctly parses CSV format, for example.
 
-As a special case, if both SEPARATORS and OMIT-NULLS are nil, white-space
-will be trimmed (ie, the effect of `(split-string STRING)' is the same as
-`(split-string STRING split-string-default-separators t)').  In the very
-rare case that you need to retain zero-length substrings when splitting on
-the default separators, use
-`(split-string STRING split-string-default-separators)'.
+Note that the effect of `(split-string STRING)' is the same as
+`(split-string STRING split-string-default-separators t)').  In the rare
+case that you wish to retain zero-length substrings when splitting on
+whitespace, use `(split-string STRING split-string-default-separators nil)'.
 
 Modifies the match data; use `save-match-data' if necessary."
 
-  (let ((keep-nulls (if separators (not omit-nulls) nil))
+  (let ((keep-nulls (not (if separators omit-nulls t)))
 	(rexp (or separators split-string-default-separators))
 	(start 0)
 	notfirst

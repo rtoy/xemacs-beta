@@ -772,31 +772,75 @@ the match is available as @code{(match-end 0)}.  @xref{Match Data}.
 @end example
 @end defun
 
-@defun split-string string &optional pattern
-This function splits @var{string} to substrings delimited by
-@var{pattern}, and returns a list of substrings.  If @var{pattern} is
-omitted, it defaults to @samp{[ \f\t\n\r\v]+}, which means that it
-splits @var{string} by white--space.
+The function @code{split-string} can be used to parse a string into
+components delimited by text matching a regular expression.
+
+@defvar split-string-default-separators
+The default value of @var{separators} for @code{split-string}, initially
+@samp{"[ \f\t\n\r\v]+"}.
+@end defvar
+
+@defun split-string string &optional separators omit-nulls
+This function splits @var{string} into substrings delimited by matches
+for the regular expression @var{separators}.  Each match for
+@var{separators} defines a splitting point; the substrings between the
+splitting points are made into a list, which is the value returned by
+@code{split-string}.  If @var{omit-nulls} is @code{t}, null strings will
+be removed from the result list.  Otherwise, null strings are left in
+the result.  If @var{separators} is @code{nil} (or omitted), the default
+is the value of @code{split-string-default-separators}.
+
+As a special case, when @var{separators} is @code{nil} (or omitted),
+null strings are always omitted from the result.  Thus:
+
+@example
+(split-string "  two words ")
+     @result{} ("two" "words")
+@end example
+
+The result is not @samp{("" "two" "words" "")}, which would rarely be
+useful.  If you need such a result, use an explict value for
+@var{separators}:
+
+@example
+(split-string "  two words " split-string-default-separators)
+     @result{} ("" "two" "words" "")
+@end example
+
+A few examples (there are more in the regression tests):
 
 @example
 @group
-(split-string "foo bar")
+(split-string "foo" "")
+     @result{} ("" "f" "o" "o" "")
+@end group
+@group
+(split-string "foo" "^")
+     @result{} ("" "foo")
+@end group
+@group
+(split-string "foo" "$")
+     @result{} ("foo" ""))
+@end group
+@group
+(split-string "foo,bar" ",")
      @result{} ("foo" "bar")
 @end group
-
 @group
-(split-string "something")
-     @result{} ("something")
+(split-string ",foo,bar," ",")
+     @result{} ("" "foo" "bar" "")
 @end group
-
 @group
-(split-string "a:b:c" ":")
-     @result{} ("a" "b" "c")
+(split-string ",foo,bar," "^,")
+     @result{} ("" "foo,bar,")
 @end group
-
 @group
-(split-string ":a::b:c" ":")
-     @result{} ("" "a" "" "b" "c")
+(split-string "foo,bar" "," t)
+     @result{} ("foo" "bar")
+@end group
+@group
+(split-string ",foo,bar," "," t)
+     @result{} ("foo" "bar")
 @end group
 @end example
 @end defun

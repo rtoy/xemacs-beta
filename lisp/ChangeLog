@@ -1,3 +1,12 @@
+2003-05-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* autoload.el (autoload-featurep-protect-autoloads):
+	Make the error message say which sym was checked.
+
+2003-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* subr.el (split-string): Update dox, tweak logic, to synch to GNU.
+
 2003-05-15  Steve Youngs  <youngs@xemacs.org>
 
 	* package-get.el (package-get-package-index-file-location): New,

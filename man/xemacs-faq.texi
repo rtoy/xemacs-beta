@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/05/02 06:00:43 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/05/22 07:41:21 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -84,6 +84,7 @@ library directory>/info/}. For example in
 * Miscellaneous::       The Miscellaneous Stuff.
 * MS Windows::          XEmacs on Microsoft Windows.
 * Current Events::      What the Future Holds.
+* Legacy Versions::     New information about old XEmacsen.
 
 @detailmenu
 
@@ -417,14 +418,20 @@ Troubleshooting:
 * Q6.4.2::      Why do I get a blank toolbar on Windows 95?
 * Q6.4.3::      XEmacs complains "No such file or directory, diff"
 
+What the Future Holds
 
-Current Events:
 * Q7.0.1::      What new features will be in XEmacs soon?
 * Q7.0.2::      What's new in XEmacs 21.4?
 * Q7.0.3::      What's new in XEmacs 21.1?
 * Q7.0.4::      What's new in XEmacs 20.4?
 * Q7.0.5::      What's new in XEmacs 20.3?
 * Q7.0.6::      What's new in XEmacs 20.2?
+
+New information about old XEmacsen.
+
+XEmacs 21.1:
+* Q8.0.1::      Gnus 5.10 won't display smileys in XEmacs 21.1.
+
 @end detailmenu
 @end menu
 
@@ -6906,7 +6913,7 @@ please let us know!
 
 
 
-@node Current Events,  , MS Windows, Top
+@node Current Events, Legacy Versions, MS Windows, Top
 @unnumbered 7 What the Future Holds
 
 This is part 7 of the XEmacs Frequently Asked Questions list.  This
@@ -7237,5 +7244,61 @@ considered unstable.
 
 For older news, see the file @file{ONEWS} in the @file{etc} directory of
 the XEmacs distribution.
+
+
+
+@node Legacy Versions, , Current Events, Top
+@unnumbered 8 New information about old XEmacsen
+
+This is part 8 of the XEmacs Frequently Asked Questions list.  It will
+occasionally be updated to reflect new information about versions which
+are no longer being revised by the XEmacs Project.  The primary purpose
+is advice on compatibility of older XEmacsen with new packages and
+updated versions of packages, but bug fixes (which will not be applied
+to released XEmacsen, but users can apply themselves) are also accepted.
+
+
+@menu
+* Q8.0.1::      Gnus 5.10 won't display smileys in XEmacs 21.1.
+@end menu
+
+@node Q8.0.1, , , Legacy Versions
+@unnumberedsubsec Q8.0.1: Gnus 5.10 won't display smileys in XEmacs 21.1.
+
+@email{eeide@@cs.utah.edu, Eric Eide} wrote:
+
+@quotation
+Previously I wrote:
+
+    Eric> Summary: with Gnus 5.10.1 in XEmacs 21.1.14, I don't see
+    Eric> any smileys :-(.
+
+After a bit of sleuthing, I discovered the essence of the problem.
+For me, the form:
+
+@lisp
+    	(with-temp-buffer
+    	  (insert-file-contents "foo.xpm")
+    	  (buffer-string))
+@end lisp
+
+returns the empty string.  This is because something somewhere
+replaces the XPM data with a glyph --- I haven't figured out where
+this occurs.
+@end quotation
+
+@email{kyle_jones@@wonderworks.com, Kyle Jones} replies:
+
+@quotation
+Do this:
+
+@lisp
+    (setq format-alist nil)
+@end lisp
+
+The image-mode stuff is gone from format-alist in the 21.4
+branch, praise be.
+@end quotation
+
 
 @bye

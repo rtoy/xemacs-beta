@@ -107,6 +107,9 @@ int	gettimeofday (struct timeval *, struct timezone *);
 
 /*********************** file-system functions *********************/
 
+/* Ilya Golubev reports that stat can be a #define on some systems.
+   Presumably none of the systems this file is used for, and I don't
+   know what file to include on a system known to be broken, anyway. */
 struct stat;
 #include </usr/include/sys/types.h>
 
