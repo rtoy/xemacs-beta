@@ -45,12 +45,12 @@ or whole modules, or reimplementation of existing functions, to XEmacs.
 In the descriptions below, the word LIST (all uppercase) is a
 variable.  Substitute "beta", "design", or "patches" as appropriate
 (to get "xemacs-beta" as the mailbox for the XEmacs Beta mailing list,
-or http://www.xemacs.org/Lists/#xemacs-beta for its URL).
+or <http://www.xemacs.org/Lists/#xemacs-beta> for its URL).
 
 The XEmacs mailing lists are managed by the Mailman mailing list
 package, and the usual Mailman commands work.  Do not send mailing
-list requests to the main address (xemacs-LIST@xemacs.org), always
-send them to xemacs-LIST-request@xemacs.org.  If you have problems
+list requests to the main address (<xemacs-LIST@xemacs.org>), always
+send them to <xemacs-LIST-request@xemacs.org>.  If you have problems
 with the list itself, they should be brought to the attention of the
 XEmacs Mailing List manager <list-manager@xemacs.org> (the same
 mailbox, "list-manager", for all lists).  All public mailing lists
@@ -66,18 +66,18 @@ Mailman software; it is NOT a synonym for xemacs-LIST-request.
 
 Subscription, unsubscription, and options (such as digests and
 temporarily suspending delivery) can be accomplished via the web
-interface at http://www.xemacs.org/Lists/#xemacs-LIST.
+interface at <http://www.xemacs.org/Lists/#xemacs-LIST>.
 
 *** Subscribing by e-mail
 -------------------------
 
-Send an email message to xemacs-LIST-request@xemacs.org with
+Send an email message to <xemacs-LIST-request@xemacs.org> with
 `subscribe' (without the quotes) as the BODY of the message.
 
 *** Unsubscribing by e-mail
 ---------------------------
 
-Send an email message to xemacs-LIST-request@xemacs.org with
+Send an email message to <xemacs-LIST-request@xemacs.org> with
 `unsubscribe' (without the quotes) as the BODY of the message.
 
 ** Beta Release Schedule
@@ -386,7 +386,7 @@ consuming.
 $ cvs -d :pserver:cvs@cvs.xemacs.org:/pack/xemacscvs login
  [password: "cvs" (sans quotes)]
 
-$ cvs -d :pserver:cvs@cvs.xemacs.org:/pack/xemacscvc co -d xemacs-21.5 xemacs
+$ cvs -d :pserver:cvs@cvs.xemacs.org:/pack/xemacscvs co -d xemacs-21.5 xemacs
 
 $ cvs -d :pserver:cvs@cvs.xemacs.org:/pack/xemacscvs co packages
 
@@ -581,10 +581,10 @@ rapid acceptance of the package.
 
 For help in creating new packages, see the (rather sparse) discussions
 in the XEmacs User's Guide and the Lisp Reference Manual.  The XEmacs
-Package Release Engineer (Ville Skyttä <scop@xemacs.org> is
-currently serving with Peter Brown <rendhalver@xemacs.org>
-assisting; Steve Youngs <youngs@xemacs.org> and Stephen Turnbull
-<stephen@xemacs.org> also can help) is the most likely source of advice.
+Package Release Engineer (Ville Skyttä <scop@xemacs.org> is currently
+serving with Peter Brown <rendhalver@xemacs.org> assisting; Steve
+Youngs <youngs@xemacs.org> and Stephen Turnbull <stephen@xemacs.org>
+also can help) are the most likely sources of advice.
 
 *** Syncing with GNU Emacs
 --------------------------
@@ -612,7 +612,7 @@ purpose, we use comments of the form
 
 in the source file itself, as the last element of the prefatory
 material (copyright notice and commentary).  Obviously the comment
-market needs to be changed to leading semicolons for Lisp, but
+marker needs to be changed to leading semicolons for Lisp, but
 otherwise the format is the same.
 
 Of course you should note syncing as the purpose in the ChangeLog,

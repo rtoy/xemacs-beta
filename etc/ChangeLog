@@ -1,3 +1,8 @@
+2003-02-13  Chris Palmer  <chris@nodewarrior.org>
+
+	* BETA: Fixed typos and made consistent use of <...> for Internet
+	addresses.
+
 2003-02-12  Jerry James  <james@xemacs.org>
 
 	* photos/james.png, photos/jamesm.png: New files.
