@@ -1,4 +1,4 @@
-;;; register.el --- register commands for Emacs.
+;;; register.el --- register commands for Emacs
 
 ;; Copyright (C) 1985, 1993, 1994, 1997 Free Software Foundation, Inc.
 
@@ -22,7 +22,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: FSF 20.3
+;;; Synched up with: FSF 21.3
 
 ;;; Commentary:
 
@@ -57,8 +57,7 @@ See the documentation of the variable `register-alist' for possible VALUE."
   (let ((aelt (assq register register-alist)))
     (if aelt
 	(setcdr aelt value)
-      (setq aelt (cons register value))
-      (setq register-alist (cons aelt register-alist)))
+      (push (cons register value) register-alist))
     value))
 
 (defun point-to-register (register &optional arg)
@@ -67,6 +66,8 @@ With prefix argument, store current frame configuration.
 Use \\[jump-to-register] to go to that location or restore that configuration.
 Argument is a character, naming the register."
   (interactive "cPoint to register: \nP")
+  ;; Turn the marker into a file-ref if the buffer is killed.
+  (add-hook 'kill-buffer-hook 'register-swap-out nil t)
   (set-register register
 		(if arg (list (current-frame-configuration) (point-marker))
 		  (point-marker))))
@@ -125,20 +126,16 @@ delete any existing frames that the frame configuration doesn't mention.
      (t
       (error "Register doesn't contain a buffer position or configuration")))))
 
-;; Turn markers into file-query references when a buffer is killed.
 (defun register-swap-out ()
+  "Turn markers into file-query references when a buffer is killed."
   (and buffer-file-name
-       (let ((tail register-alist))
-	 (while tail
-	   (and (markerp (cdr (car tail)))
-		(eq (marker-buffer (cdr (car tail))) (current-buffer))
-		(setcdr (car tail)
-			(list 'file-query
-			      buffer-file-name
-			      (marker-position (cdr (car tail))))))
-	   (setq tail (cdr tail))))))
-
-(add-hook 'kill-buffer-hook 'register-swap-out)
+       (dolist (elem register-alist)
+	 (and (markerp (cdr elem))
+	      (eq (marker-buffer (cdr elem)) (current-buffer))
+	      (setcdr elem
+		      (list 'file-query
+			    buffer-file-name
+			    (marker-position (cdr elem))))))))
 
 (defun number-to-register (number register)
   "Store a number in a register.
@@ -147,7 +144,7 @@ If NUMBER is nil, a decimal number is read from the buffer starting
 at point, and point moves to the end of that number.
 Interactively, NUMBER is the prefix arg (none means nil)."
   (interactive "P\ncNumber to register: ")
-  (set-register register 
+  (set-register register
 		(if number
 		    (prefix-numeric-value number)
 		  (if (looking-at "\\s-*-?[0-9]+")
@@ -172,54 +169,89 @@ The Lisp value REGISTER is a character."
     (if (null val)
 	(message "Register %s is empty" (single-key-description register))
       (with-output-to-temp-buffer "*Output*"
-	(princ "Register ")
-	(princ (single-key-description register))
-	(princ " contains ")
+	(describe-register-1 register t)))))
+
+(defun list-registers ()
+  "Display a list of nonempty registers saying briefly what they contain."
+  (interactive)
+  (let ((list (copy-sequence register-alist)))
+    (setq list (sort list (lambda (a b) (< (car a) (car b)))))
+    (with-output-to-temp-buffer "*Output*"
+      (dolist (elt list)
+	(when (get-register (car elt))
+	  (describe-register-1 (car elt))
+	  (terpri))))))
+
+(defun describe-register-1 (register &optional verbose)
+  (princ "Register ")
+  (princ (single-key-description register))
+  (princ " contains ")
+  (let ((val (get-register register)))
+    (cond
+     ((numberp val)
+      (princ val))
+
+     ((markerp val)
+      (let ((buf (marker-buffer val)))
+	(if (null buf)
+	    (princ "a marker in no buffer")
+	  (princ "a buffer position:\n    buffer ")
+	  (princ (buffer-name buf))
+	  (princ ", position ")
+	  (princ (marker-position val)))))
+
+     ((and (consp val) (window-configuration-p (car val)))
+      (princ "a window configuration."))
+
+     ((and (consp val) (frame-configuration-p (car val)))
+      (princ "a frame configuration."))
+
+     ((and (consp val) (eq (car val) 'file))
+      (princ "the file ")
+      (prin1 (cdr val))
+      (princ "."))
+
+     ((and (consp val) (eq (car val) 'file-query))
+      (princ "a file-query reference:\n    file ")
+      (prin1 (car (cdr val)))
+      (princ ",\n    position ")
+      (princ (car (cdr (cdr val))))
+      (princ "."))
+
+     ((consp val)
+      (if verbose
+	  (progn
+	    (princ "the rectangle:\n")
+	    (while val
+	      (princ "    ")
+	      (princ (car val))
+	      (terpri)
+	      (setq val (cdr val))))
+	(princ "a rectangle starting with ")
+	(princ (car val))))
+
+     ((stringp val)
+      (remove-list-of-text-properties 0 (length val)
+                                      yank-excluded-properties val)
+      (if verbose
+	  (progn
+	    (princ "the text:\n")
+	    (princ val))
 	(cond
-	 ((numberp val)
-	  (princ val))
-
-	 ((markerp val)
-	  (let ((buf (marker-buffer val)))
-	    (if (null buf)
-		(princ "a marker in no buffer")
-	      (princ "a buffer position:\nbuffer ")
-	      (princ (buffer-name buf))
-	      (princ ", position ")
-	      (princ (marker-position val)))))
-
-	 ((and (consp val) (window-configuration-p (car val)))
-	  (princ "a window configuration."))
-
-	 ((and (consp val) (frame-configuration-p (car val)))
-	  (princ "a frame configuration."))
-
-	 ((and (consp val) (eq (car val) 'file))
-	  (princ "the file ")
-	  (prin1 (cdr val))
-	  (princ "."))
-
-	 ((and (consp val) (eq (car val) 'file-query))
-	  (princ "a file-query reference:\nfile ")
-	  (prin1 (car (cdr val)))
-	  (princ ",\nposition ")
-	  (princ (car (cdr (cdr val))))
-	  (princ "."))
-
-	 ((consp val)
-	  (princ "the rectangle:\n")
-	  (while val
-	    (princ (car val))
-	    (terpri)
-	    (setq val (cdr val))))
-
-	 ((stringp val)
-	  (princ "the text:\n")
-	  (princ val))
-
+	 ;; Extract first N characters starting with first non-whitespace.
+	 ((string-match (format "[^ \t\n].\\{,%d\\}"
+				;; Deduct 6 for the spaces inserted below.
+				(min 20 (max 0 (- (window-width) 6))))
+			val)
+	  (princ "text starting with\n    ")
+	  (princ (match-string 0 val)))
+	 ((string-match "^[ \t\n]+$" val)
+	  (princ "whitespace"))
 	 (t
-	  (princ "Garbage:\n")
-	  (prin1 val)))))))
+	  (princ "the empty string")))))
+     (t
+      (princ "Garbage:\n")
+      (if verbose (prin1 val))))))
 
 (defun insert-register (register &optional arg)
   "Insert contents of register REGISTER.  (REGISTER is a character.)
@@ -233,7 +265,7 @@ Interactively, second arg is non-nil if prefix arg is supplied."
      ((consp val)
       (insert-rectangle val))
      ((stringp val)
-      (insert val))
+      (insert-for-yank val))
      ((numberp val)
       (princ val (current-buffer)))
      ((and (markerp val) (marker-position val))

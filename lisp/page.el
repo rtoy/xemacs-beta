@@ -1,9 +1,10 @@
-;;; page.el --- page motion commands for emacs.
+;;; page.el --- page motion commands for Emacs
 
 ;; Copyright (C) 1985, 1997 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: extensions, dumped
+;; Keywords: wp convenience
 
 ;; This file is part of XEmacs.
 
@@ -22,7 +23,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 21.3.
 
 ;;; Commentary:
 
@@ -94,15 +95,28 @@ thus showing a page other than the one point was originally in."
     (if (> arg 0)
 	(forward-page arg)
       (if (< arg 0)
-	  (forward-page (1- arg))))
+	  (let ((adjust 0)
+		(opoint (point)))
+	    ;; If we are not now at the beginning of a page,
+	    ;; move back one extra time, to get to the start of this page.
+	    (save-excursion
+	      (beginning-of-line)
+	      (or (and (looking-at page-delimiter)
+		       (eq (match-end 0) opoint))
+		  (setq adjust 1)))
+	    (forward-page (- arg adjust)))))
     ;; Find the end of the page.
+    (set-match-data nil)
     (forward-page)
     ;; If we stopped due to end of buffer, stay there.
     ;; If we stopped after a page delimiter, put end of restriction
     ;; at the beginning of that line.
-    (if (save-excursion
-	  (goto-char (match-beginning 0)) ; was (beginning-of-line)
-	  (looking-at page-delimiter))
+    ;; Before checking the match that was found,
+    ;; verify that forward-page actually set the match data.
+    (if (and (match-beginning 0)
+	     (save-excursion
+	       (goto-char (match-beginning 0)) ; was (beginning-of-line)
+	       (looking-at page-delimiter)))
 	(beginning-of-line))
     (narrow-to-region (point)
 		      (progn

@@ -1,5 +1,27 @@
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
+	* fill.el:
+	* fill.el (canonically-space-region):
+	* fill.el (fill-region-as-paragraph):
+	* fill.el (justify-current-line):
+	* fill.el (fill-individual-paragraphs):
+	Sync for real to FSF 19.34.
+
+	* page.el:
+	* page.el (narrow-to-page):
+	* register.el:
+	* register.el (set-register):
+	* register.el (point-to-register):
+	* register.el (register-swap-out):
+	* register.el (number-to-register):
+	* register.el (view-register):
+	* register.el (list-registers): New.
+	* register.el (describe-register-1): New.
+	* register.el (insert-register):
+	Sync to FSF 21.3.
+
+2005-01-26  Ben Wing  <ben@xemacs.org>
+
 	* frame.el (display-mouse-p):
 	Fix warning.
 
@@ -18,13 +40,6 @@
 
 2004-11-17  Ben Wing  <ben@xemacs.org>
 
-	* fill.el:
-	* fill.el (canonically-space-region):
-	* fill.el (fill-region-as-paragraph):
-	* fill.el (justify-current-line):
-	* fill.el (fill-individual-paragraphs):
-	Sync for real to FSF 19.34.
-	
 	* newcomment.el:
 	* newcomment.el (comment):
 	* newcomment.el (comment-fill-column): New.
@@ -44,18 +59,6 @@
 	* newcomment.el (comment-auto-fill-only-comments):
 	* newcomment.el (comment-valid-prefix): New.
 	* newcomment.el (comment-indent-new-line):
-	* page.el:
-	* page.el (narrow-to-page):
-	* register.el:
-	* register.el (set-register):
-	* register.el (point-to-register):
-	* register.el (register-swap-out):
-	* register.el (number-to-register):
-	* register.el (view-register):
-	* register.el (list-registers): New.
-	* register.el (describe-register-1): New.
-	* register.el (insert-register):
-	Sync to FSF 21.3.
 
 2005-01-25  Ben Wing  <ben@xemacs.org>
 

@@ -23,6 +23,10 @@
 ;; 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.34.
+;;; NOTE: Merging past 19.34 is currently impossible.  Later versions
+;;; contain FSF's own Kinsoku processing, conflicting with the current code
+;;; and depending on various features of their Mule implementation that
+;;; do not currently exist.
 
 ;;; Commentary:
 
@@ -201,9 +205,7 @@ Remove indentation from each line."
       ;; We insert before markers in case a caller such as
       ;; do-auto-fill has done a save-excursion with point at the end
       ;; of the line and wants it to stay at the end of the line.
-      (insert ? ))))
-;; XEmacs: we don't have this function.
-;; (insert-before-markers-and-inherit ? ))))
+      (insert-before-markers-and-inherit ? ))))
 
 ;; XEmacs -- added DONT-SKIP-FIRST.  Port of older code changes by Stig.
 ;; #### probably this junk is broken -- do-auto-fill doesn't actually use
@@ -377,8 +379,7 @@ space does not end a sentence, so don't break a line there."
 	  ;; Make sure sentences ending at end of line get an extra space.
 	  ;; loses on split abbrevs ("Mr.\nSmith")
 	  (while (re-search-forward "[.?!][])}\"']*$" nil t)
-	    ;; XEmacs change (no insert-and-inherit)
-	    (or (eobp) (insert ?\  ?\ )))
+	    (or (eobp) (insert-and-inherit ?\  ?\ )))
 	  (goto-char from)
 	  (skip-chars-forward " \t")
 	  ;; Then change all newlines to spaces.
@@ -423,8 +424,7 @@ space does not end a sentence, so don't break a line there."
 	    (canonically-space-region (or squeeze-after (point)) (point-max))
 	    (goto-char (point-max))
 	    (delete-horizontal-space)
-	    ;; XEmacs change (no insert-and-inherit)
-	    (insert " "))
+	    (insert-and-inherit " "))
 	  (goto-char (point-min))
 
 	  ;; This is the actual filling loop.
@@ -572,7 +572,7 @@ space does not end a sentence, so don't break a line there."
 		  ;; Set prefixcol so whitespace in the prefix won't get lost.
 		  (and fill-prefix (not (equal fill-prefix ""))
 		       (progn
-			 (insert fill-prefix)
+			 (insert-and-inherit fill-prefix)
 			 (setq prefixcol (current-column))))))
 	      ;; Justify the line just ended, if desired.
 	      (if justify
@@ -930,8 +930,7 @@ otherwise it is made canonical."
 				       (find-space-insertable-point))) ;(search-backward " ")))
 				 (skip-chars-backward " ")
 				 (setq nmove (1- nmove))))
-			     ;; XEmacs change
-			     (insert " ")
+			     (insert-and-inherit " ")
 			     (skip-chars-backward " ")
 			     (setq ncols (1- ncols)))))))
 		(t (error "Unknown justification value"))))
@@ -1046,7 +1045,7 @@ MAIL-FLAG for a mail message, i. e. don't fill header lines."
 			     fill-prefix-regexp (regexp-quote fill-prefix)))
 		   (forward-line 1)
 		   (if (bolp)
-		       ;; If forward-line went past a newline
+		       ;; If forward-line went past a newline,
 		       ;; move further to the left margin.
 		       (move-to-left-margin))
 		   ;; Now stop the loop if end of paragraph.
