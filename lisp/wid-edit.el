@@ -2130,7 +2130,7 @@ and `:help-echo' members."
   "Open the url specified by WIDGET."
   (if-fboundp 'browse-url
       (browse-url (widget-value widget))
-    (error 'missing-package "Cannot browse URLs in this Emacs" 'browse-url)))
+    (error 'missing-package "Cannot browse URLs in this XEmacs" 'browse-url)))
 
 ;;; The `function-link' Widget.
 

@@ -1,3 +1,7 @@
+2003-03-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* wid-edit.el (widget-url-link-action): Typo fix.  Thx, Adrian!
+
 2003-03-23  Adrian Aichner  <adrian@xemacs.org>
 
 	* menubar-items.el (default-menubar): Reword "Add Download Site"
