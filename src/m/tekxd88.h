@@ -67,9 +67,6 @@ Boston, MA 02111-1307, USA.  */
 #undef LIB_X11_LIB	/* Don't use shared libraries defined in usg5-3.h */
 #undef LIBX11_SYSTEM
 
-#define HAVE_PTYS	/* XD88 SysV has PTYs. */
-#define SYSV_PTYS	/* Requires <termios.h> */
-
 #ifdef ghs  /* Stands for "Green Hills Software", defined only in /bin/cc */ 
 /* -X18 means do not allocate programmer-defined local variables to a
    register unless they are declared register.  (Copied from perl-4.036

@@ -5,10 +5,6 @@
 
 #include "usg5-3.h"
 
-/* Some versions of V.3 have this, but not all. ESIX does. */
-#define HAVE_PTYS
-#define SYSV_PTYS
-
 /* Have -lg be used for debugging. */
 #undef LIBS_DEBUG
 #define LIBS_DEBUG "-lg"

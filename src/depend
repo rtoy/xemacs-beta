@@ -105,7 +105,7 @@ debug.o: $(LISP_H) bytecode.h debug.h
 device.o: $(LISP_H) buffer.h bufslots.h casetab.h chartab.h conslots.h console.h device.h elhash.h events.h faces.h frame.h frameslots.h glyphs.h gui.h keymap.h mule-charset.h redisplay.h scrollbar.h specifier.h sysdep.h syssignal.h systime.h toolbar.h window.h winslots.h
 dgif_lib.o: $(LISP_H) gifrlib.h sysfile.h
 dialog.o: $(LISP_H) conslots.h console.h device.h frame.h frameslots.h glyphs.h gui.h redisplay.h scrollbar.h specifier.h toolbar.h window.h winslots.h
-dired.o: $(LISP_H) buffer.h bufslots.h casetab.h chartab.h commands.h elhash.h mule-charset.h ndir.h opaque.h regex.h syntax.h sysdep.h sysdir.h sysfile.h syspwd.h systime.h
+dired.o: $(LISP_H) buffer.h bufslots.h casetab.h chartab.h commands.h elhash.h mule-charset.h ndir.h opaque.h regex.h syntax.h sysdep.h sysdir.h sysfile.h syspwd.h systime.h syswindows.h
 doc.o: $(LISP_H) buffer.h bufslots.h bytecode.h casetab.h chartab.h insdel.h keymap.h mule-charset.h sysfile.h
 doprnt.o: $(LISP_H) buffer.h bufslots.h casetab.h chartab.h lstream.h mule-charset.h
 dragdrop.o: $(LISP_H) dragdrop.h

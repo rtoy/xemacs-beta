@@ -73,5 +73,4 @@ Boston, MA 02111-1307, USA.  */
 /* omit next three lines if no TCP installed */
 
 #define select gnu_select		/* avoid select() name clash */
-#define HAVE_PTYS			/* we do have PTYs if we have TCP */
 #define LIBS_SYSTEM "-lsocket"		/* get TCP networking functions */

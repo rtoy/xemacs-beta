@@ -145,10 +145,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define STACK_DIRECTION -1
 
-/* we also have this */
-#define HAVE_PTYS
-#define SYSV_PTYS
-
 /* on bos2.00.45 there is a bug that makes the F_SETOWN fcntl() call
    enters in an infinite loop. Avoid calling it  */
 #define F_SETOWN_BUG

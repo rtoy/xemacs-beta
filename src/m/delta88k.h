@@ -76,12 +76,6 @@ Boston, MA 02111-1307, USA.  */
 #define STACK_DIRECTION -1  /* The stack grows towards lower addresses. */
 #endif /* __GNUC__ */
 
-/* Motorola SysV has PTYs.  Not all usg3-5 systems do, so this is defined
-   here. */
-
-#define HAVE_PTYS 
-#define SYSV_PTYS
-
 /*
  * we have the wrong name for networking libs
  */
@@ -106,10 +100,6 @@ Boston, MA 02111-1307, USA.  */
 #endif /* USG5_4 */
 
 #define NO_SIOCTL_H
-
-/* XEmacs change -- removed crap about random and bstring */
-
-#define NO_PTY_H
 
 /* XEmacs change -- smarch@quaver.urbana.mcd.mot.com */
 #ifndef NOT_C_CODE

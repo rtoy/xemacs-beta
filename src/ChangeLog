@@ -1,3 +1,63 @@
+2001-05-11  Martin Buchholz  <martin@xemacs.org>
+
+	Eliminate the need to define HAVE_PTYS in s&m files.
+
+	* config.h.in:
+	* event-msw.c (emacs_mswindows_create_stream_pair):
+	* event-stream.c (execute_internal_event):
+	* event-unixoid.c (event_stream_unixoid_create_stream_pair):
+	* process-unix.c:
+	* process-unix.c (unix_create_process):
+	* sysdep.c:
+	* sysdep.c (set_descriptor_non_blocking):
+	* sysdep.c (setup_pty): Delete ancient FIONBIO code.
+	* systty.h:
+	* s/aix3-1.h:
+	* s/bsd4-1.h:
+	* s/bsd4-2.h:
+	* s/cxux.h:
+	* s/dgux.h:
+	* s/cygwin32.h:
+	* s/esix.h:
+	* s/hpux.h:
+	* s/iris3-5.h:
+	* s/iris3-6.h:
+	* s/irix3-3.h:
+	* s/isc2-2.h:
+	* s/linux.h:
+	* s/ptx.h:
+	* s/rtu.h:
+	* s/sco4.h:
+	* s/sco5.h:
+	* s/template.h:
+	* s/umax.h:
+	* s/umips.h:
+	* s/unipl5-0.h:
+	* s/unipl5-2.h:
+	* s/usg5-0.h:
+	* s/usg5-3.h:
+	* s/usg5-4.h:
+	* s/windowsnt.h:
+	* s/xenix.h:
+	* m/7300.h:
+	* m/delta.h:
+	* m/delta88k.h:
+	* m/dpx2.h:
+	* m/hp800.h:
+	* m/ibmps2-aix.h:
+	* m/ibmrt-aix.h:
+	* m/mips.h:
+	* m/pfa50.h:
+	* m/sps7.h:
+	* m/stride.h:
+	* m/tad68k.h:
+	* m/tekxd88.h:
+	* m/wicat.h:
+	Nuke all references to HAVE_PTYS, SYSV_PTYS, NEED_BSDTTY.
+	All current Unix systems have ptys, and even on systems without
+	ptys, the basic functionality has been sufficiently
+	autoconfiscated that everything should just work anyways.
+
 2001-05-11  Mike Alexander  <mta@arbortext.com>
 
 	* event-msw.c (mswindows_need_event_in_modal_loop): 

@@ -41,17 +41,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define SYSTEM_TYPE "xenix"
 
-/* Letter to use in finding device name of first pty,
-  if system supports pty's.  'p' means it is /dev/ptyp0  */
-
-/* #define FIRST_PTY_LETTER 'p' */
-
-/*
- *	Define HAVE_PTYS if the system supports pty devices.
- */
-
-/* #define HAVE_PTYS */
-
 /* If your system uses COFF (Common Object File Format) then define the
    preprocessor symbol "COFF". */
 

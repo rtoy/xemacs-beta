@@ -44,8 +44,6 @@
    so don't use it.  */
 #define BROKEN_SELECT
 
-#define HAVE_PTYS
-
 /* ??? */
 #define IRIS
 

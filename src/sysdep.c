@@ -188,7 +188,7 @@ set_descriptor_non_blocking (int fd)
      It seems that O_NONBLOCK applies only to FIFOs?  From
      lowry@watson.ibm.com (Andy Lowry). */
   /* #### Should this be conditionalized on FIONBIO? */
-#if defined (STRIDE) || (defined (pfa) && defined (HAVE_PTYS)) || defined (AIX)
+#if defined (STRIDE) || defined (pfa) || defined (AIX)
   {
     int one = 1;
     ioctl (fd, FIONBIO, &one);
@@ -889,42 +889,11 @@ set_window_size (int fd, int height, int width)
 #endif
 }
 
-#ifdef HAVE_PTYS
-
 /* Set up the proper status flags for use of a pty.  */
 
 void
 setup_pty (int fd)
 {
-  /* I'm told that TIOCREMOTE does not mean control chars
-     "can't be sent" but rather that they don't have
-     input-editing or signaling effects.
-     That should be good, because we have other ways
-     to do those things in Emacs.
-     However, telnet mode seems not to work on 4.2.
-     So TIOCREMOTE is turned off now. */
-
-  /* Under hp-ux, if TIOCREMOTE is turned on, some calls
-     will hang.  In particular, the "timeout" feature (which
-     causes a read to return if there is no data available)
-     does this.  Also it is known that telnet mode will hang
-     in such a way that Emacs must be stopped (perhaps this
-     is the same problem).
-
-     If TIOCREMOTE is turned off, then there is a bug in
-     hp-ux which sometimes loses data.  Apparently the
-     code which blocks the master process when the internal
-     buffer fills up does not work.  Other than this,
-     though, everything else seems to work fine.
-
-     Since the latter lossage is more benign, we may as well
-     lose that way.  -- cph */
-#if defined (FIONBIO) && defined (SYSV_PTYS)
-  {
-    int on = 1;
-    ioctl (fd, FIONBIO, &on);
-  }
-#endif
 #ifdef IBMRTAIX
   /* On AIX, the parent gets SIGHUP when a pty attached child dies.  So, we */
   /* ignore SIGHUP once we've started a child on a pty.  Note that this may */
@@ -932,7 +901,8 @@ setup_pty (int fd)
   /* tty goes away.  I've complained to the AIX developers, and they may    */
   /* change this behavior, but I'm not going to hold my breath.             */
   signal (SIGHUP, SIG_IGN);
-#endif
+#endif /* IBMRTAIX */
+
 #ifdef TIOCPKT
   /* In some systems (Linux through 2.0.0, at least), packet mode doesn't
      get cleared when a pty is closed, so we need to clear it here.
@@ -944,9 +914,8 @@ setup_pty (int fd)
     int off = 0;
     ioctl (fd, TIOCPKT, (char *)&off);
   }
-#endif
+#endif /* TIOCPKT */
 }
-#endif /* HAVE_PTYS */
 
 
 /************************************************************************/

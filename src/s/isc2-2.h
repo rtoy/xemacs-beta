@@ -26,7 +26,6 @@
 
 #define NO_FCHMOD
 
-#define HAVE_PTYS
 #define MAXNAMLEN 512
 #define O_NDELAY O_NONBLOCK
 #define MEMORY_IN_STRING_H

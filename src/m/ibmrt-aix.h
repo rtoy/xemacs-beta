@@ -76,7 +76,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* AIX has PTYs, so define here, along with macros needed to make them work. */
 
-#define HAVE_PTYS
 #define PTY_ITERATION for (i=0; i<256; i++)
 #define PTY_NAME_SPRINTF sprintf (ptyname, "/dev/ptc%d", i);
 

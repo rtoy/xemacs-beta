@@ -61,9 +61,6 @@ Boston, MA 02111-1307, USA.  */
 
 #endif
 
-/* If you have the PD pty driver installed, uncomment the following line.  */
-/* #define HAVE_PTYS */
-
 /* We don't have memmove.  */
 #define memmove(d, s, n) safe_bcopy (s, d, n)
 

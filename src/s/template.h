@@ -45,13 +45,7 @@ Boston, MA 02111-1307, USA.  */
 /* Letter to use in finding device name of first pty,
   if system supports pty's.  'a' means it is /dev/ptya0  */
 
-#define FIRST_PTY_LETTER 'a'
-
-/*
- *	Define HAVE_PTYS if the system supports pty devices.
- */
-
-#define HAVE_PTYS
+#define FIRST_PTY_LETTER 'p'
 
 /* If your system uses COFF (Common Object File Format) then define the
    preprocessor symbol "COFF". */

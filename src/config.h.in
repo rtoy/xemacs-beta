@@ -338,7 +338,7 @@ void *alloca ();
 #undef HAVE_WAITPID
 #undef HAVE_VSNPRINTF
 
-/* PTY support functions */
+/* Many flavors of PTY support */
 #undef HAVE_GETPT	/* glibc's easy pty allocation function */
 #undef HAVE__GETPTY	/*   SGI's easy pty allocation function */
 #undef HAVE_OPENPTY	/*   BSD's easy pty allocation function */
@@ -348,7 +348,9 @@ void *alloca ();
 #undef HAVE_KILLPG	/* BSD */
 #undef HAVE_TCGETPGRP	/* Posix 1 */
 #undef HAVE_ISASTREAM	/* SysV streams */
-#undef HAVE_PTY_H	/* Linux, Tru64 openpty */
+#undef HAVE_SYS_PTY_H	/* AIX */
+#undef HAVE_SYS_PTYIO_H	/* HP-UX */
+#undef HAVE_PTY_H	/* Linux, Tru64 */
 #undef HAVE_LIBUTIL_H	/* BSD openpty */
 #undef HAVE_UTIL_H	/* NetBSD openpty */
 #undef HAVE_STROPTS_H	/* SysV streams */

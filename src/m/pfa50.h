@@ -56,8 +56,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define TERMINFO
 
-#define HAVE_PTYS
-
 /* SX/A use SystemV style getdents/readdir. */
 
 #define NO_SIOCTL_H

@@ -43,7 +43,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 /* SCO has ptys with unusual names.  */
-#define HAVE_PTYS
 
 #define PTY_ITERATION \
    for (i = 0; ; i++)

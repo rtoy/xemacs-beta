@@ -93,10 +93,6 @@ so disable it for them.  */
 /* This page was added in June 1990.  It may be incorrect for some versions
    of aix, so delete it if it causes trouble.  */
 
-/* AIX386 has BSD4.3 PTYs */
-
-#define HAVE_PTYS
-
 /* #define SKTPAIR */ /* SKTPAIR works, but what is advantage over pipes? */
 
 /* Specify the font for X to use.  */

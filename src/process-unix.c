@@ -198,7 +198,6 @@ connect_to_file_descriptor (Lisp_Object name, Lisp_Object buffer,
   return proc;
 }
 
-#ifdef HAVE_PTYS
 static int allocate_pty_the_old_fashioned_way (void);
 
 /* The file name of the (slave) pty opened by allocate_pty().  */
@@ -410,7 +409,6 @@ allocate_pty_the_old_fashioned_way (void)
       } /* iteration */
   return -1;
 }
-#endif /* HAVE_PTYS */
 
 static int
 create_bidirectional_pipe (int *inchannel, int *outchannel,
@@ -854,7 +852,6 @@ unix_create_process (Lisp_Process *p,
   volatile int forkout  = -1;
   volatile int pty_flag = 0;
 
-#ifdef HAVE_PTYS
   if (!NILP (Vprocess_connection_type))
     {
       /* find a new pty, open the master side, return the opened
@@ -863,7 +860,7 @@ unix_create_process (Lisp_Process *p,
       outchannel = inchannel = allocate_pty ();
     }
 
-  if (inchannel >= 0)
+  if (inchannel >= 0)		/* We successfully allocated a pty. */
     {
       /* You're "supposed" to now open the slave in the child.
 	 On some systems, we can open it here; this allows for
@@ -884,7 +881,6 @@ unix_create_process (Lisp_Process *p,
       UNIX_DATA(p)->pty_flag = pty_flag = 1;
     }
   else
-#endif /* HAVE_PTYS */
     if (create_bidirectional_pipe (&inchannel, &outchannel,
 				   &forkin, &forkout) < 0)
       goto io_failure;
@@ -924,7 +920,6 @@ unix_create_process (Lisp_Process *p,
 
 	disconnect_controlling_terminal ();
 
-#ifdef HAVE_PTYS
 	if (pty_flag)
 	  {
 	    /* Open the pty connection and make the pty's terminal
@@ -1040,13 +1035,11 @@ unix_create_process (Lisp_Process *p,
 	       process group.
 	    */
 	    signal (SIGHUP, SIG_DFL);
-	  }
 
-	if (pty_flag)
-	  /* Set up the terminal characteristics of the pty. */
-	  child_setup_tty (xforkout);
+	    /* Set up the terminal characteristics of the pty. */
+	    child_setup_tty (xforkout);
+	  } /* if (pty_flag) */
 
-#endif /* HAVE_PTYS */
 
 	signal (SIGINT,  SIG_DFL);
 	signal (SIGQUIT, SIG_DFL);
@@ -1098,12 +1091,7 @@ unix_create_process (Lisp_Process *p,
   if (forkin != forkout && forkout >= 0)
     close (forkout);
 
-#ifdef HAVE_PTYS
-  if (pty_flag)
-    UNIX_DATA (p)->tty_name = build_string (pty_name);
-  else
-#endif
-    UNIX_DATA (p)->tty_name = Qnil;
+  UNIX_DATA (p)->tty_name = pty_flag ? build_string (pty_name) : Qnil;
 
   /* Notice that SIGCHLD was not blocked. (This is not possible on
      some systems.) No biggie if SIGCHLD occurs right around the

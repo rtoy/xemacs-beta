@@ -37,9 +37,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define SYSTEM_TYPE "linux"		/* All the best software is free. */
 
-#define FIRST_PTY_LETTER 'p'
-#define HAVE_PTYS
-
 /* define MAIL_USE_FLOCK if the mailer uses flock
    to interlock access to /usr/spool/mail/$USER.
    The alternative is that a lock file named

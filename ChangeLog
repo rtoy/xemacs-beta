@@ -1,3 +1,8 @@
+2001-05-11  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: 
+	Check for sys/ptyio.h on HPUX, else for pty.h or perhaps sys/pty.h
+
 2001-05-10  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (all):

@@ -100,8 +100,6 @@ Boston, MA 02111-1307, USA.  */
 #define LIBS_MACHINE
 #define LIBS_DEBUG
 
-/* Include the file bsdtty.h, since this machine has job control.  */
-#define NEED_BSDTTY
 
 /* The symbol in the kernel where the load average is found
    is named _avenrun.  At this time there are two major flavors

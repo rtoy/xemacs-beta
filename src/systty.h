@@ -114,39 +114,23 @@ Boston, MA 02111-1307, USA.  */
 /*                 miscellaneous includes                */
 /* ----------------------------------------------------- */
 
-#ifdef AIXHFT
+#ifdef AIXHFT /* obsolete - only found in AIX version 3. */
 /* Get files for keyboard remapping */
 #define HFNKEYS 2
 #include <sys/hft.h>
 #include <sys/devinfo.h>
 #endif
 
-/* XEmacs: We don't support BSD 4.1 any more */
-
-#ifdef NEED_BSDTTY
-#include <sys/bsdtty.h>
-#endif
-
 /* Include files for PTY's */
 
-#if defined (HPUX) && defined (HAVE_PTYS)
+#if defined (HAVE_SYS_PTYIO_H) /* HP-UX */
 #include <sys/ptyio.h>
 #endif
 
-#ifdef AIX
+#if defined (HAVE_PTY_H)
+#include <pty.h>
+#elif defined (HAVE_SYS_PTY_H)
 #include <sys/pty.h>
-#endif /* AIX */
-
-#ifdef SYSV_PTYS
-# include <sys/types.h>
-# include <sys/tty.h>
-# ifdef titan
-#  include <sys/ttyhw.h>
-#  include <sys/stream.h>
-# endif
-# ifndef NO_PTY_H
-#  include <sys/pty.h>
-# endif
 #endif
 
 /* XEmacs: removed some random if defined (pfa) crap for FASYNC (SIGIO).

@@ -57,15 +57,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define SYSTEM_TYPE "aix"
 
-/* In AIX, you allocate a pty by opening /dev/ptc to get the master side.
-   To get the name of the slave side, you just ttyname() the master side.  */
-
-/*
- *	Define HAVE_PTYS if the system supports pty devices.
- */
-
-#define HAVE_PTYS
-
 /* If your system uses COFF (Common Object File Format) then define the
    preprocessor symbol "COFF". */
 

@@ -98,7 +98,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* For WICAT version supporting PTYs and select (currently internal only) */
 
-#ifdef HAVE_PTYS
 #undef FIRST_PTY_LETTER
 #define FIRST_PTY_LETTER 'q'
 #endif

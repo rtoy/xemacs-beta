@@ -50,7 +50,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* The STRIDE system is more powerful than standard USG5.  */
 
-#define HAVE_PTYS
 #define SKTPAIR
 
 #define MAIL_USE_FLOCK

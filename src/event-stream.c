@@ -2977,7 +2977,7 @@ execute_internal_event (Lisp_Object event)
 		      the filter function forces this by returning 0.
 		      Emacs must not interpret this as a closed pipe. */
 		   connected_via_filedesc_p (XPROCESS (p))))
-#ifdef HAVE_PTYS
+
 		 /* On some OSs with ptys, when the process on one end of
 		    a pty exits, the other end gets an error reading with
 		    errno = EIO instead of getting an EOF (0 bytes read).
@@ -2985,8 +2985,10 @@ execute_internal_event (Lisp_Object event)
 		    EIO, just continue, because the child process has
 		    exited and should clean itself up soon (e.g. when we
 		    get a SIGCHLD). */
+#ifdef EIO
 		 || (readstatus == -1 && errno == EIO)
 #endif
+
 		 )
 	  {
 	    /* Currently, we rely on SIGCHLD to indicate that the

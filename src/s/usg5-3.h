@@ -24,10 +24,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define USG5_3
 
-/* Some versions of V.3 have this, but not all.
-   #define HAVE_PTYS
-   #define SYSV_PTYS  */
-
 /* 5.3 apparently makes close() interruptible */
 
 #define INTERRUPTIBLE_CLOSE

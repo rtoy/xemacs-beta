@@ -3554,7 +3554,7 @@ emacs_mswindows_create_stream_pair (void* inhandle, void* outhandle,
 		? make_filedesc_output_stream (fdo, 0, -1, LSTR_BLOCKED_OK)
 		: Qnil);
 
-#if defined(HAVE_UNIX_PROCESSES) && defined(HAVE_PTYS)
+#if defined(HAVE_UNIX_PROCESSES)
   /* FLAGS is process->pty_flag for UNIX_PROCESSES */
   if ((flags & STREAM_PTY_FLUSHING) && fdo >= 0)
     {

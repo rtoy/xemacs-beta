@@ -146,12 +146,6 @@ typedef int pid_t;
 
 /* #define HAVE_SELECT */
 
-/*
- *      Define HAVE_PTYS if the system supports pty devices.
- */
-
-/* #define HAVE_PTYS */
-
 /* If your system uses COFF (Common Object File Format) then define the
    preprocessor symbol "COFF". */
 

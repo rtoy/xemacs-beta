@@ -104,10 +104,6 @@ struct timezone
 #undef BROKEN_TIOCGWINSZ
 #undef BROKEN_TIOCGETC
 
-/* PTX has pty's but not like System V */
-#define HAVE_PTYS
-#undef SYSV_PTYS
-
 /* Provide pty support which is defined into process.c:allocate_pty.
    Basic ideas for handling getpseudotty were lifted from process.c in
    Emacs 18.57 included on the Sequent Public Software tape.  However, this

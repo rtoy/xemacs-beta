@@ -101,7 +101,6 @@ Boston, MA 02111-1307, USA.  */
 #define USG_SHARED_LIBRARIES
 #endif
 
-#define HAVE_PTYS
 #undef BROKEN_TIOCGWINSZ
 #undef BROKEN_TIOCGETC
 

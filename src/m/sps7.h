@@ -44,12 +44,6 @@ Boston, MA 02111-1307, USA.  */
 #define SMX
 #define	V3x
 
-/*
- *	Define HAVE_PTYS if the system supports pty devices.
- */
-
-#define HAVE_PTYS
-
 /*	Have the socketpair call
 */
 
