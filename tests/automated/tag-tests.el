@@ -40,9 +40,9 @@
     (insert
 "
 tag-test.c,99
-struct mystruct mystruct2,1
+struct mystruct mystruct2,1
 struct mystruct *foo\(4,23
-DEFUN \(\"require\", Frequire,require,7,51
+DEFUN \(\"require\", Frequire,require,7,51
 "))
 
   ;; Create the test file

@@ -1,3 +1,7 @@
+2004-05-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/tag-tests.el (first form): Put non-ASCII chars back.
+
 2004-05-13  Jerry James  <james@xemacs.org>
 
 	* automated/lisp-tests:el: Another test fix because
