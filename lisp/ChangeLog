@@ -1,3 +1,9 @@
+2001-05-03  Adrian Aichner  <adrian@xemacs.org>
+
+	* build-report.el: Remove CVS keywords since this file has been in
+	core lisp for a while now.
+	* build-report.el (build-report-make-output-files): Fix typo.
+
 2001-04-30  Ben Wing  <ben@xemacs.org>
 
 	* printer.el:
