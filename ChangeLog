@@ -1,3 +1,7 @@
+2003-08-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.usage (Window System): `lucid' option often means `Motif'.
+
 2003-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.usage (--cflags-warning): Change underscore to hyphen.
