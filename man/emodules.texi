@@ -3,6 +3,11 @@
 @c %**start of header
 @setfilename ../info/emodules.info
 @settitle Extending Emacs using C Modules
+@direntry
+* Emodules: (emodules).      XEmacs dynamically loadable module support.
+@end direntry
+@c footnotestyle separate
+@c paragraphindent 2
 @c %**end of header
 
 @c
@@ -113,8 +118,8 @@ instead of in the original English.
 
 @ifinfo
 @node Top, Introduction, (dir), (dir)
-This Info file contains v1.0 of the @value{emacs} dynamic loadable module
-support documentation.
+This Info file contains v1.0 of the @value{emacs} dynamically loadable
+module support documentation.
 @menu
 * Introduction::                Introducing Emacs Modules
 * Anatomy of a Module::         Basic module layout and technology
@@ -174,12 +179,12 @@ access to a system or need to be as quick as possible.
 @cindex DLL
 @cindex DSO
 @cindex shared object
-  This manual describes a new way of extending @value{emacs}, by using dynamic
-loadable modules (also known as dynamically loadable libraries (DLLs),
-dynamic shared objects (DSOs) or just simply shared objects), which can
-be written in C or C++ and loaded into @value{emacs} at any time.  I sometimes
-refer to this technology as @dfn{CEmacs}, which is short for @dfn{C
-Extensible Emacs}.
+  This manual describes a new way of extending @value{emacs}, by using
+dynamically loadable modules (also known as dynamically loadable
+libraries (DLLs), dynamic shared objects (DSOs) or just simply shared
+objects), which can be written in C or C++ and loaded into @value{emacs}
+at any time.  I sometimes refer to this technology as @dfn{CEmacs},
+which is short for @dfn{C Extensible Emacs}.
 
   @value{emacs} modules are configured into and installed with @value{emacs} by
 default on all systems that support loading of shared objects.  From a

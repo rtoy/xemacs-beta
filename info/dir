@@ -47,7 +47,7 @@ Other Documentation:
 
 * CL::              A Common Lisp compatibility package for Emacs-Lisp.
 * Custom::          Customization Library for Emacs.
-* Emodules::        XEmacs dynamic loadable module support.
+* Emodules::        XEmacs dynamically loadable module support.
 * External-Widget:: Use XEmacs as a text widget inside of another program.
 * Standards::       GNU coding standards.
 * Term::            A mode to control inferior processes (a comint replacement)

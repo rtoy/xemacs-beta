@@ -1,3 +1,8 @@
+2002-01-02  Adrian Aichner  <adrian@xemacs.org>
+
+	* info/dir (File): Reword entry for Emodules according to
+	../man/emodules.texi.
+
 2001-12-29  Steve Youngs  <youngs@xemacs.org>
 
 	* etc/package-index.LATEST.gpg: Update.
