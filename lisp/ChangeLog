@@ -1,4 +1,10 @@
 2005-03-25  Ralf Angeli  <angeli@iwi.uni-sb.de> 
+
+	* easymenu.el (easy-menu-remove): As described in 
+	E1D4Nn5-0001lq-EU@neutrino.iwi.uni-sb.de; don't strip everything
+	except the "Command" menu from mode-popup-menu. 
+
+2005-03-25  Ralf Angeli  <angeli@iwi.uni-sb.de> 
  
         * font.el (font-spatial-to-canonical): Correct calculation of 
         return value for pixel-based input value. 
