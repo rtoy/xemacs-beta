@@ -1270,7 +1270,6 @@ DO_XEMACS = "$(BLDLIB_SRC)\i" "$(DUMP_TARGET)"
 BATCH = -no-packages -batch
 BATCH_PACKAGES = -vanilla -batch
 TEMACS_BATCH = $(DO_TEMACS) -nd $(BATCH)
-TEMACS_BATCH_PACKAGES = $(DO_TEMACS) -nd $(BATCH_PACKAGES)
 XEMACS_BATCH = $(DO_XEMACS) $(BATCH)
 XEMACS_BATCH_PACKAGES = $(DO_XEMACS) $(BATCH_PACKAGES)
 temacs_loadup_args = -l $(LISP)/loadup.el
@@ -1414,7 +1413,7 @@ check:
 
 check-temacs:
 	cd $(BLDSRC)
-	$(TEMACS_BATCH_PACKAGES) $(run_temacs_args) $(batch_test_emacs)
+	$(TEMACS_BATCH) $(run_temacs_args) $(batch_test_emacs)
 
 check-features: all
 	cd $(BLDSRC)

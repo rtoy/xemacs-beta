@@ -1,3 +1,10 @@
+2003-09-13  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs.mak (TEMACS_BATCH_PACKAGES): Removed.
+	* xemacs.mak (check-temacs): Reverting to run with -no-packages
+	since it would cause package lisp to shadow core lisp (as happened
+	with unicode.el).
+
 2003-09-03  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.15 "celery" is released.
