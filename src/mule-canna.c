@@ -159,11 +159,13 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef CANNA2
 #define IROHA_BC
+#define CANNA_NEW_WCHAR_AWARE
 #include "canna/jrkanji.h"
 #include "canna/RK.h"
 #else /* !CANNA2 */
 #include "iroha/jrkanji.h"
 #include "iroha/RK.h"
+extern int (*jrBeepFunc) (void);
 #endif /* !CANNA2 */
 extern char *jrKanjiError;
 
@@ -339,10 +341,11 @@ No separator will be used otherwise.
 }
 
 /* For whatever reason, calling Fding directly from libCanna loses */
-static void
+static int
 call_Fding (void)
 {
   Fding (Qnil, Qnil, Qnil);
+  return 0;
 }
 
 DEFUN ("canna-initialize", Fcanna_initialize, 0, 3, 0, /*
@@ -435,8 +438,6 @@ If nil is specified for each arg, the default value will be used.
     }
   else
     {
-      extern void (*jrBeepFunc) (void);
-
       jrBeepFunc = call_Fding;
 
 #ifdef KC_SETAPPNAME

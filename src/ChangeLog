@@ -1,5 +1,14 @@
 2004-09-14  Jerry James  <james@xemacs.org>
 
+	* mule-canna.c (CANNA_NEW_WCHAR_AWARE): Define to use new wchar
+	interface.
+	* mule-canna.c (call_Fding): Return an int to match the jrBeepFunc
+	prototype.
+	* mule-canna.c (Fcanna_initialize): The jrBeepFunc prototype is
+	now given in the Canna headers.
+
+2004-09-14  Jerry James  <james@xemacs.org>
+
 	* gifrlib.h: Remove redundant extern declarations.
 
 2004-09-14  Jerry James  <james@xemacs.org>
