@@ -27,7 +27,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <sheap-adjust.h>
 
 #define STATIC_HEAP_BASE	0x800000
-#define STATIC_HEAP_SLOP	0x500000
+#define STATIC_HEAP_SLOP	0x40000
 #define STATIC_HEAP_SIZE \
 (STATIC_HEAP_BASE + SHEAP_ADJUSTMENT + STATIC_HEAP_SLOP)
 #define BLOCKSIZE	(1<<12)
@@ -129,17 +129,17 @@ report_sheap_usage (int die_if_pure_storage_exceeded)
   Bytecount lost = STATIC_HEAP_SIZE
     - (static_heap_ptr - static_heap_buffer);
   char buf[200];
-  sprintf (buf, "Static heap usage: %ld of %ld, slop is %ld",
-               (long) (static_heap_ptr - static_heap_buffer),
-	   (long) (STATIC_HEAP_SIZE),
-	   (long) STATIC_HEAP_SLOP);
+  sprintf (buf, "Static heap usage: %ldk of %ldk, slop is %ldk",
+               (long) ((static_heap_ptr - static_heap_buffer) /1024),
+	   (long) (STATIC_HEAP_SIZE / 1024),
+	   (long) STATIC_HEAP_SLOP / 1024);
 
   if (lost > STATIC_HEAP_SLOP) {
     sprintf (buf + strlen (buf), " -- %ldk wasted", (long)(lost/1024));
     if (die_if_pure_storage_exceeded) {
       sheap_adjust_h(STATIC_HEAP_SLOP - lost);
       sprintf (buf + strlen (buf), " -- reset to %ldk", 
-	       (long) (STATIC_HEAP_SIZE + STATIC_HEAP_SLOP - lost));
+	       (long) ((STATIC_HEAP_SIZE + STATIC_HEAP_SLOP - lost) / 1024));
       rc = -1;
     }
     message ("%s", buf);

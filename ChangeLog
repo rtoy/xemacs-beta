@@ -1,3 +1,8 @@
+2002-07-08  Andy Piper  <andy@xemacs.org>
+
+	* Makefile.in.in (src/sheap-adjust.h): reset back to zero. Making
+	this anything other than zero was misguided.
+
 2002-12-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.in: Make --pdump default per opsys; move Darwin's
