@@ -1,3 +1,20 @@
+2002-05-29  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* mule/japan-util.el (setup-japanese-environment-internal): Use
+	proper coding-systems.
+
+2002-05-28  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* mule/japan-util.el: Use `characterp' instead of `integerp' while
+	defining char properties for katakana.
+
+	* mule/mule-category.el: Clear the category table before defining
+	categories for `predefined-category-list'.
+
+	* mule/mule-cmds.el (finish-set-language-environment): Fit the
+	charsets preferences in unicode conversions for the language
+	environment.  Suggested by ARISAWA Akihiro <ari@mbf.sphere.ne.jp>.
+
 2002-08-02  Ville Skyttä  <ville.skytta@xemacs.org>
 
 	* font-lock.el: Some faces and doc typo fixes from GNU Emacs.

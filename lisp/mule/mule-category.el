@@ -266,7 +266,7 @@ Each element is a list of a charset, a designator, and maybe a doc string.")
     (if (and (nth 2 (car l))
 	     (not (defined-category-p (nth 2 (car l)))))
 	(define-category (nth 1 (car l)) (nth 2 (car l))))
-    (modify-category-entry (car (car l)) (nth 1 (car l)))
+    (modify-category-entry (car (car l)) (nth 1 (car l)) nil t)
     (setq l (cdr l))))
 
 ;;; Setting word boundary.

@@ -753,6 +753,11 @@ the language environment for the major languages of Western Europe."
   (let ((func (get-language-info language-name 'setup-function)))
     (if (fboundp func)
 	(funcall func)))
+
+  ;; Fit the charsets preferences in unicode conversions for the
+  ;; language environment.
+  (set-language-unicode-precedence-list (charset-list))
+
   (run-hooks 'set-language-environment-hook)
   (force-mode-line-update t))
 

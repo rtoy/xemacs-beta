@@ -35,9 +35,9 @@
 ;;;###autoload
 (defun setup-japanese-environment-internal ()
   (cond ((eq system-type 'ms-dos)
-	 (prefer-coding-system 'japanese-shift-jis))
+	 (prefer-coding-system 'shift_jis))
 	((eq system-type 'usg-unix-v)
-	 (prefer-coding-system 'japanese-iso-8bit)))
+	 (prefer-coding-system 'euc-jp)))
   (setq sentence-end-save sentence-end)
   (setq sentence-end (concat sentence-end "\\|[。？！]")))
 
@@ -89,7 +89,7 @@ HANKAKU-KATAKANA belongs to `japanese-jisx0201-kana'.")
 			 (get-char-code-property hira 'kana-composition)))))
 	  (put-char-code-property hiragana 'katakana katakana)
 	  (put-char-code-property hiragana 'jisx0201 jisx0201)))
-    (when (integerp katakana)
+    (when (characterp katakana)
       (put-char-code-property katakana 'hiragana hiragana)
       (put-char-code-property katakana 'jisx0201 jisx0201))
     (if jisx0201
