@@ -193,27 +193,27 @@ To make a hook variable buffer-local, always use
 	  (null function))		;function is nil, then
       nil				;Do nothing.
     (flet ((hook-remove
-	    (function hook-value)
-	    (flet ((hook-test
-		    (fn hel)
-		    (or (equal fn hel)
-			(and (symbolp hel)
-			     (equal fn
-				    (get hel 'one-shot-hook-fun))))))
-	      (if (and (consp hook-value)
-		       (not (functionp hook-value)))
-		  (if (member* function hook-value :test 'hook-test)
-		      (setq hook-value
-			    (delete* function (copy-sequence hook-value)
-				     :test 'hook-test)))
-		(if (equal hook-value function)
-		    (setq hook-value nil)))
-	      hook-value)))
+	     (function hook-value)
+	     (flet ((hook-test
+		      (fn hel)
+		      (or (equal fn hel)
+			  (and (symbolp hel)
+			       (equal fn
+				      (get hel 'one-shot-hook-fun))))))
+	       (if (and (consp hook-value)
+		     (not (functionp hook-value)))
+		   (if (member* function hook-value :test 'hook-test)
+		     (setq hook-value
+			   (delete* function (copy-sequence hook-value)
+				    :test 'hook-test)))
+		 (if (equal hook-value function)
+		   (setq hook-value nil)))
+	       hook-value)))
       (if (or local
-	      ;; Detect the case where make-local-variable was used on a hook
-	      ;; and do what we used to do.
-	      (and (local-variable-p hook (current-buffer))
-		   (not (memq t (symbol-value hook)))))
+	    ;; Detect the case where make-local-variable was used on a hook
+	    ;; and do what we used to do.
+	    (and (local-variable-p hook (current-buffer))
+		 (not (memq t (symbol-value hook)))))
 	  (set hook (hook-remove function (symbol-value hook)))
 	(set-default hook (hook-remove function (default-value hook)))))))
 
@@ -401,18 +401,20 @@ Otherwise treat `\\' in NEWTEXT as special:
   (check-argument-type 'stringp str)
   (check-argument-type 'stringp newtext)
   (if (> (length str) 50)
-      (with-temp-buffer
-	(insert str)
-	(goto-char 1)
+      (let ((cfs case-fold-search))
+	(with-temp-buffer
+	  (setq case-fold-search cfs)
+	  (insert str)
+	  (goto-char 1)
 	  (while (re-search-forward regexp nil t)
 	    (replace-match newtext t literal))
-	  (buffer-string))
-  (let ((start 0) newstr)
-    (while (string-match regexp str start)
-      (setq newstr (replace-match newtext t literal str)
-	    start (+ (match-end 0) (- (length newstr) (length str)))
-	    str newstr))
-    str)))
+	  (buffer-string)))
+    (let ((start 0) newstr)
+      (while (string-match regexp str start)
+	(setq newstr (replace-match newtext t literal str)
+	      start (+ (match-end 0) (- (length newstr) (length str)))
+	      str newstr))
+      str)))
 
 (defun split-string (string &optional pattern)
   "Return a list of substrings of STRING which are separated by PATTERN.
@@ -464,8 +466,8 @@ it as a string."
 The value returned is the value of the last form in BODY.
 See also `with-temp-buffer'."
   `(save-current-buffer
-    (set-buffer ,buffer)
-    ,@body))
+     (set-buffer ,buffer)
+     ,@body))
 
 (defmacro with-temp-file (filename &rest forms)
   "Create a new buffer, evaluate FORMS there, and write the buffer to FILENAME.
@@ -672,7 +674,7 @@ the string occupies exactly END-COLUMN columns."
 	       ;; width.  the padding computed will get us exactly up to
 	       ;; the shorted width, which is right -- it just gets added
 	       ;; to the right of the ellipses.
-	     (setq end-column (- end-column (string-width ellipses)))))
+	       (setq end-column (- end-column (string-width ellipses)))))
 
 	;; find the index of END-COLUMN; bail out if end of string reached.
 	(condition-case nil
@@ -967,12 +969,12 @@ to ARGUMENT.  Otherwise, this function signals a non-continuable
 `args-out-of-range' error if the returned value is out of range."
   (if (symbolp argument)
       `(if (not (argument-in-range-p ,argument ,min ,max))
-	(setq ,argument
-	      (args-out-of-range ,argument ,min ,max)))
+	   (setq ,argument
+		 (args-out-of-range ,argument ,min ,max)))
     (let ((newsym (gensym)))
       `(let ((,newsym ,argument))
-	(if (not (argument-in-range-p ,newsym ,min ,max))
-	    (signal-error 'args-out-of-range ,newsym ,min ,max))))))
+	 (if (not (argument-in-range-p ,newsym ,min ,max))
+	     (signal-error 'args-out-of-range ,newsym ,min ,max))))))
 
 (defun signal-error (error-symbol data)
   "Signal a non-continuable error.  Args are ERROR-SYMBOL, and associated DATA.
@@ -1158,11 +1160,12 @@ properties to add to the result."
 (if (not (fboundp 'define-abbrev-table))
     (progn
       (setq abbrev-table-name-list '())
-      (fset 'define-abbrev-table (function (lambda (name defs)
-                                   ;; These are fixed-up when abbrev.el loads.
-                                   (setq abbrev-table-name-list
-                                         (cons (cons name defs)
-                                               abbrev-table-name-list)))))))
+      (fset 'define-abbrev-table
+	    (function (lambda (name defs)
+			;; These are fixed-up when abbrev.el loads.
+			(setq abbrev-table-name-list
+			      (cons (cons name defs)
+				    abbrev-table-name-list)))))))
 
 ;;; `functionp' has been moved into C.
 
@@ -1270,7 +1273,7 @@ FILE should be the name of a library, with no directory name."
 ; alternate names (not obsolete)
 (if (not (fboundp 'mod)) (define-function 'mod '%))
 (define-function 'move-marker 'set-marker)
-(define-function 'beep 'ding)  ; preserve lingual purity
+(define-function 'beep 'ding)		; preserve lingual purity
 (define-function 'indent-to-column 'indent-to)
 (define-function 'backward-delete-char 'delete-backward-char)
 (define-function 'search-forward-regexp (symbol-function 're-search-forward))

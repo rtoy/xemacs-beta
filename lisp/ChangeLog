@@ -1,3 +1,9 @@
+2002-07-16  Didier Verna  <didier@xemacs.org>
+
+	* subr.el (replace-in-string): fix case fold bug introduced by
+	"2000-07-30  Ben Wing  <ben@xemacs.org>": honor the value of
+	case-fold-search in temporary buffers.
+
 2002-07-01  Mike Alexander  <mta@arbortext.com>
 
 	* code-process.el (call-process-region): Don't delete the process
@@ -118,7 +124,7 @@
 
 	* mule/mule-msw-init-late.el:
 	Specify charset->windows-registry conversion.
-	
+
 	* mule/mule-x-init.el:
 	* mule/mule-x-init.el (x-use-halfwidth-roman-font):
 	* mule/mule-x-init.el (init-mule-x-win):
@@ -130,7 +136,7 @@
 	* cl-macs.el (defmacro*):
 	* cl-macs.el (destructuring-bind):
 	Document better.
-	
+
 	* font-lock.el (lisp-font-lock-keywords-1):
 	Move Lisp function regexp to lisp-mode.el.
 
@@ -140,12 +146,12 @@
 	* lisp-mode.el (lisp-indent-function):
 	* lisp-mode.el (lisp-indent-quoteform): New.
 	Various indentation fixes:
-	
+
 	Handle flet functions better.
 	Handle argument lists in defuns and flets.
 	Handle quoted lists, e.g. property lists -- don't indent like
 	function calls.  Distinguish between lambdas and other lists.
-	
+
 	* lisp-mode.el (save-selected-device): Handle this form.
 
 	* faces.el:
@@ -235,12 +241,12 @@
 	written code).  This also means that we need to work with font
 	names at all times and not font instances, because a font instance
 	is essentially a truenamed font.
-	
+
 	-- Total rewrite of extremely junky code in msw-faces.el.  Work
 	with names as well as font instances, and return names; stop
 	truenaming when canonicalizing and frobbing; fix handling of the
 	combined style field, i.e. weight/slant (also fixed in font.el).
-	
+
 	-- Totally rewrite the frobbing functions in faces.el.  This time,
 	we frob all the instantiators rather than just computing a single
 	instance value and working backwards.  That way, e.g., `bold' will
@@ -272,10 +278,10 @@
 	-- Correct weight names in font.el.
 
 	-- Lots more font fixups in objects*.c.
-	
+
 	* Printer.el (generic-print-region):
 	Warning fix.
-	
+
 	* specifier.el:
 	* specifier.el (map-specifier):
 	* specifier.el (modify-specifier-instances):
@@ -297,7 +303,7 @@
 	* subr.el (argument-in-range-p): New.
 	* subr.el (check-argument-range): New.
 	New functions.
-	
+
 
 2002-06-04  Andy Piper  <andy@xemacs.org>
 
@@ -366,7 +372,7 @@
 2001-11-30  Jan Vroonhof  <jan@xemacs.org>
 
 	* font.el (font-window-system-mappings): Add mapping for Gtk
-	(assume identical to X)	
+	(assume identical to X)
 
 2001-11-30  Jan Vroonhof  <jan@xemacs.org>
 
@@ -448,7 +454,7 @@
 	misunderstood the basic point of this function, which is work in
 	*columns* not chars.  i dumped ours and copied the version from
 	FSF 21.1.  Also added truncate-string-with-continuation-dots,
-	since this idiom is used often.  
+	since this idiom is used often.
 
 2002-04-07  William M. Perry  <wmperry@gnu.org>
 
@@ -493,7 +499,7 @@
 	* code-init.el (coding-system-variable-default-value):
 	Don't use CRLF conversion by default on process output.  CMD.EXE and
 	friends work both ways but Cygwin programs don't like the CRs.
-	
+
 	* code-process.el:
 	* code-process.el (process-coding-system-alist):
 	* code-process.el (call-process):
@@ -526,7 +532,7 @@
 
 	open-multicast-group now does similar coding-system frobbing to
 	open-network-stream.
-	
+
 	* dumped-lisp.el (preloaded-file-list):
 	* faces.el (init-global-faces):
 	* msw-faces.el (mswindows-init-global-faces): New.
@@ -546,7 +552,7 @@
 	* files.el (Recover-session-files-from-auto-save-list-file): New.
 	Recover-session improvements: Only show session files where some
 	files can actually be recovered, and show in chronological order.
-	
+
 	* subr.el:
 	* subr.el (truncate-string-to-width):
 	* subr.el (BUG): New.
@@ -556,7 +562,7 @@
 	As promised to rms, the functionality in
 	truncate-string-with-continuation-dots has been merged into
 	truncate-string-to-width.  Change callers in menubar-items.el.
-	
+
 	* select.el:
 	* select.el (copy-primary-selection):
 	* select.el (kill-primary-selection):
@@ -580,7 +586,7 @@
 	Save customized values MUCH faster by keeping often used lambdas
 	in cache `custom-save-resets-mapper-alist' instead of building them
 	on the fly in `custom-save-resets'.
-	
+
 	* cus-edit.el (custom-save-pretty-print): New variable
 	(custom-save-variable-p): New function
 	(custom-save-variable-internal): New function
@@ -598,7 +604,7 @@
 	multiple-choice question, automatically choosing a dialog box or
 	minibuffer representation as necessary.  Generalized version of
 	yes-or-no-p, y-or-n-p.
-	
+
 	* files.el:
 	* files.el (recover-file-diff-program): New.
 	* files.el (recover-file-diff-arguments): New.
@@ -608,7 +614,7 @@
 	autosave. (Converts/deconverts escape-quoted as necessary.  No more
 	complaints from you, Mr. Turnbull!) One known problem: when a dialog
 	is used, it's modal, so you can't scroll the diff.  Will fix soon.
-	
+
 	* lisp-mode.el (lisp-fill-paragraph):
 	If we're filling a string, don't treat semicolon as a comment,
 	which would give very unfriendly results.
@@ -630,7 +636,7 @@
 
 	* menubar-items.el (default-menubar):
 	Add option corresponding to kill-word-into-kill-ring.
-	
+
 2002-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	This patch is based on Jerry James's patch and analysis.
@@ -650,7 +656,7 @@
 
 	* files.el (revert-buffer):
 	Andy's patch from 21.4.  Fix evil nasty problems with revert-buffer.
-	
+
 	* menubar-items.el (default-menubar):
 	Add Append to Register to Rectangles/Register menu.
 
@@ -810,7 +816,7 @@
 
 	* lisp-mode.el (construct-lisp-mode-menu):
 	Rearrange and add items for macro expanding.
-	
+
 	* menubar-items.el (menu-split-long-menu):
 	* menubar-items.el (menu-sort-menu):
 	Document connection between these two functions.
@@ -830,7 +836,7 @@
 	* mule/english.el (ascii-right-to-left):
 	Define this charset now, since a bug was fixed that formerly
 	prevented it.
-	
+
 	* mule/ethio-util.el (ethio-fidel-to-java-buffer):
 	* mule/ethio-util.el (ethio-java-to-fidel-buffer):
 	Fix compile errors involving Unicode `characters', which should be
@@ -867,7 +873,7 @@
 	down.  Extend mouse-track{,adjust,insert,delete-and-insert} this
 	way.  Move mouse-track-do-rectangle to meta-button2; not nearly so
 	useful (and doesn't really work correctly currently).
-	
+
 	* auto-save.el:
 	* auto-save.el (make-auto-save-file-name):
 	* auto-save.el (recover-all-files):
@@ -908,7 +914,7 @@
 	catching all errors and displaying a warning, including a
 	backtrace showing where the error occurred.  Modify various files
 	to use this.
-	
+
 	Show all warnings in the echo area (in a format convenient for
 	this) as well as the Warnings buffer.  Change the interpretation
 	of display-warning-minimum-level so that warnings below this level
@@ -922,13 +928,13 @@
 	various files consistent with the new definitions.
 
 	Mark all warnings with extents.
- 	
+
 	* startup.el (load-init-file):
 	Modify so that a backtrace is seen when an error occurs.
-	
+
 	* help.el (view-warnings): New.
 	New function for viewing warnings buffer.
-	
+
 	* help.el:
 	* help.el (print-recent-messages):
 	* simple.el:
@@ -936,12 +942,12 @@
 	Integrate show-message-log with view-lossage.  Add option to
 	view-lossage to view only the messages.  Clear message first so
 	latest message is seen.
-	
+
 	* menubar-items.el:
 	* menubar-items.el (default-menubar):
 	* menubar-items.el (bookmark-menu-filter): Removed.
 	Various rearrangements and fixes.
-	
+
 	* msw-faces.el:
 	* msw-faces.el (gui-element):
 	* msw-faces.el (mswindows-init-device-faces):
@@ -971,7 +977,7 @@
 	* mule\mule-category.el (with-category-table): New.
 	Start implementing a category API compatible with FSF.  Not there yet.
 	We need improvements to char-tables.
-	
+
 	* mule\mule-charset.el:
 	* mule\mule-charset.el ((translation-table): New.
 	* mule\mule-charset.el (make-translation-table): New.
@@ -1035,7 +1041,7 @@
 	* mule\lao.el (?):
 	* mule\lao.el (lao):
 	Convert stuff to XEmacs-style.
-	
+
 	* mule\thai-xtis.el:
 	* mule\thai-xtis.el (thai-xtis):
 	* mule\thai-xtis.el (?x): New.
@@ -1056,7 +1062,7 @@
 	* dumped-lisp.el (preloaded-file-list):
 	Load the remaining languages -- lao, indian, devanagari, tibetan.
 	Load new file mule-msw-init-late.
-	
+
 	* unicode.el (load-unicode-tables):
 	* unicode.el (init-unicode-at-startup):
 	Load the new tables for Ethiopic, Vietnamese, and other languages
@@ -1126,14 +1132,14 @@
 	* autoload.el (generate-autoload-cookie):
 	* autoload.el (defun*):
 	Support defun*, defmacro*.
-	
+
 	* mule/mule-composite.el: New file, from FSF.
 	* mule/mule-composite-stub.el: New file, stubs for nonexistent
 	composition funs/vars.
 	* mule/viet-chars.el: Deleted, moved into vietnamese.el.
 	* dumped-lisp.el (preloaded-file-list):
 	Account for these changes.
-	
+
 	* font.el (mswindows-font-create-object):
 	* mouse.el (mouse-begin-drag-n-drop):
 	* msw-font-menu.el (mswindows-font-regexp):
@@ -1187,7 +1193,7 @@
 	* behavior-defs.el (func-menu):
 	* behavior-defs.el (filladapt):
 	fix errors with require.
-	
+
 	* bytecomp-runtime.el:
 	* bytecomp-runtime.el (with-boundp):
 	* bytecomp-runtime.el (if-boundp):
@@ -1206,7 +1212,7 @@
 
 	* cus-edit.el (custom-save-variables):
 	pretty-print values.
-	
+
 	* dump-paths.el:
 	* dump-paths.el (startup-setup-paths): New.
 	* find-paths.el:
@@ -1228,7 +1234,7 @@
 	* lisp-mode.el (while):
 	indent macrolet and labels correctly.  update comments about
 	lisp-indent-function.  flet already handled in cl.
-	
+
 	* apropos.el (apropos-safe-documentation):
 	* auto-save.el (make-auto-save-file-name):
 	* buff-menu.el (default-list-buffers-identification):
@@ -1298,7 +1304,7 @@
 	* toolbar.el (default-toolbar-position): but I tested it! typo fix.
 
 2002-03-05  Mats Lidell  <matsl@contactor.se>
- 
+
  	* help-nomule.el (tutorial-supported-languages): Added Swedish
  	tutorial. Sorted languages.
 
@@ -1392,15 +1398,15 @@
 
 2001-12-27  David A. Panariti  <davep@who.net>
 
-	* hyper-apropos.el (hyper-apropos-find-variable): 
+	* hyper-apropos.el (hyper-apropos-find-variable):
 	Added this function based on hyper-apropos-find-function.
 
-	* hyper-apropos.el (hyper-apropos-help-map): 
+	* hyper-apropos.el (hyper-apropos-help-map):
 	Added binding of "v" to hyper-apropos-find-variable.
 
 2001-12-27  John Paul Wallington  <jpw@shootybangbang.com>
 
-	* obsolete.el (interactive-form): new compatibility alias for 
+	* obsolete.el (interactive-form): new compatibility alias for
 	function-interactive.
 
 2001-12-26  Adrian Aichner  <adrian@xemacs.org>
@@ -1416,11 +1422,11 @@
 
 2001-12-18  John Paul Wallington  <jpw@shootybangbang.com>
 
-	* gnuserv.el: 
+	* gnuserv.el:
 	(gnuserv-mode-line-string): new customizable variable
 	(gnuserv-minor-mode): make variable buffer-local
 	* isearch-mode.el:
-	(isearch-mode-line-string): new customizable variable	
+	(isearch-mode-line-string): new customizable variable
 
 2001-12-16  Andy Piper  <andy@xemacs.org>
 
@@ -1438,13 +1444,13 @@
 
 	* gui.el (gui-button-face): Ditto.
 
-	* faces.el (text-cursor): 
-	(highlight): 
-	(zmacs-region): 
-	(list-mode-item-selected): 
-	(primary-selection): 
-	(secondary-selection): 
-	(isearch): 
+	* faces.el (text-cursor):
+	(highlight):
+	(zmacs-region):
+	(list-mode-item-selected):
+	(primary-selection):
+	(secondary-selection):
+	(isearch):
 	(isearch-secondary): Condense old window-system specific settings
 	into one specifier using the 'win default' tags.
 
@@ -1469,7 +1475,7 @@
 2001-11-30  Jan Vroonhof  <jan@xemacs.org>
 
 	* font.el (font-window-system-mappings): Add mapping for Gtk
-	(assume identical to X)	
+	(assume identical to X)
 
 2001-11-30  Jan Vroonhof  <jan@xemacs.org>
 
@@ -1506,7 +1512,7 @@
 
 2002-03-26  John Paul Wallington  <jpw@xemacs.org>
 
-	* obsolete.el (assq-delete-all): New compatibility alias for 
+	* obsolete.el (assq-delete-all): New compatibility alias for
 	remassq.
 
 2002-01-09  Simon Josefsson  <jas@extundo.com>
@@ -1529,7 +1535,7 @@
 	"system default" Xdefaults and friends get xrdb-mode.
 
 2002-03-05  Mats Lidell  <matsl@contactor.se>
- 
+
  	* help-nomule.el (tutorial-supported-languages): Added Swedish
  	tutorial. Sorted languages.
 
@@ -1553,7 +1559,7 @@
 
 2001-12-27  John Paul Wallington  <jpw@shootybangbang.com>
 
-	* obsolete.el (interactive-form): new compatibility alias for 
+	* obsolete.el (interactive-form): new compatibility alias for
 	function-interactive.
 
 2001-11-29  Adrian Aichner  <adrian@xemacs.org>
@@ -1599,7 +1605,7 @@
 
 	* dialog-gtk.el (popup-builtin-question-dialog):
 	Conform to API in gui.c.
-	
+
 2001-11-12  Andy Piper  <andy@xemacs.org>
 
 	* cus-edit.el (custom-save-face-internal): make sure we save
@@ -1641,8 +1647,8 @@
 
 2001-11-29  John Paul Wallington <jpw@shootybangbang.com>
 
-	* gtk-faces.el (gtk-init-device-faces): Replaced device locale 
-	argument in set-face-background/foreground forms with 
+	* gtk-faces.el (gtk-init-device-faces): Replaced device locale
+	argument in set-face-background/foreground forms with
 	'(default gtk) tag set to make the faces customizable, as
 	suggested by Jan Vroonhof.
 
@@ -1680,7 +1686,7 @@
 
 2001-12-04  John Paul Wallington  <jpw@shootybangbang.com>
 
-	* paragraphs.el (mark-paragraph): synched with FSF; 
+	* paragraphs.el (mark-paragraph): synched with FSF;
         added optional argument.
 
 2001-12-03  Didier Verna  <didier@xemacs.org>
