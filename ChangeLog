@@ -1,14 +1,29 @@
+2002-10-31  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* info/dir (File): button1 on a highlighted word doesn't 
+	follow that cross-reference.
+
+2002-10-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* PROBLEMS (Running/IRIX): Irix 6.5 coredumps.  Thanks, Valdis.
+
+2002-10-19  Stephen Turnbull  <stephen@xemacs.org>
+
+	* Makefile.in.in (clean): Delete auto-autoloads.e* and custom-load.*
+	in lisp, lisp/mule, and modules.
+	ChangeLog: Fix my bogus email addresses.
+
 2002-10-25  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.in (Check for POSIX functions):  New section head.
 	getaddrinfo is detected on HP-UX 11.XX, but appears to be
 	non-functional.  Disable it.  Based on work by Darryl Okahata.
 	
-2002-10-18  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
+2002-10-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* PROBLEMS (Running/Cygwin): "No cygXpm-noX" fatal error.
 
-2002-10-17  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
+2002-10-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* PROBLEMS (Missing charsets): Remove ambiguity.
 
