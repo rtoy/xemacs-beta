@@ -67,8 +67,9 @@ enum device_metrics
   DM_size_menu, DM_size_toolbar, DM_size_toolbar_button,
   DM_size_toolbar_border, DM_size_icon, DM_size_icon_small, DM_size_device,
   DM_size_workspace, DM_offset_workspace, DM_size_device_mm, DM_device_dpi,
-  DM_num_bit_planes, DM_num_color_cells, DM_mouse_buttons, DM_swap_buttons,
-  DM_show_sounds, DM_slow_device, DM_security
+  DM_num_bit_planes, DM_num_color_cells, DM_num_screens, DM_mouse_buttons,
+  DM_swap_buttons, DM_show_sounds, DM_slow_device, DM_security,
+  DM_backing_store, DM_save_under
 };
 
 struct console;

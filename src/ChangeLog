@@ -1,3 +1,13 @@
+2004-02-26  Jerry James  <james@xemacs.org>
+
+	* console.h (device_metrics): New metrics num_screens,
+	backing_store, save_under.
+	* device-x.c (x_device_system_metrics): Support the new metrics.
+	* device.c: Add symbols for the new metrics.
+	* device.c (Fdevice_system_metric): Support the new metrics.
+	* device.c (Fdevice_system_metrics): Ditto.
+	* device.c (syms_of_device): Define symbols for the new metrics.
+
 2004-02-25  Jerry James  <james@xemacs.org>
 
 	* sysdep.h: Declare interrupt/quit-related symbols as C symbols.

@@ -75,8 +75,9 @@ Lisp_Object
   Qsize_menu, Qsize_toolbar, Qsize_toolbar_button,
   Qsize_toolbar_border, Qsize_icon, Qsize_icon_small, Qsize_device,
   Qsize_workspace, Qoffset_workspace, Qsize_device_mm, Qdevice_dpi,
-  Qnum_bit_planes, Qnum_color_cells, Qmouse_buttons, Qswap_buttons,
-  Qshow_sounds, Qslow_device, Qsecurity;
+  Qnum_bit_planes, Qnum_color_cells, Qnum_screens, Qmouse_buttons,
+  Qsave_under, Qswap_buttons, Qshow_sounds, Qslow_device, Qsecurity,
+  Qbacking_store;
 
 Lisp_Object Qdevicep, Qdevice_live_p;
 Lisp_Object Qcreate_device_hook;
@@ -1110,6 +1111,7 @@ size-device-mm        Device screen size in millimeters.
 device-dpi            Device resolution, in dots per inch.
 num-bit-planes        Integer, number of device bit planes.
 num-color-cells       Integer, number of device color cells.
+num-screens           Integer, number of device screens.
 
 FEATURES.  This group reports various device features.  If a feature is
 present, integer 1 (one) is returned, if it is not present, then integer
@@ -1167,11 +1169,14 @@ security              Non-zero if user environment is secure.
   FROB (device_dpi);
   FROB (num_bit_planes);
   FROB (num_color_cells);
+  FROB (num_screens);
   FROB (mouse_buttons);
   FROB (swap_buttons);
   FROB (show_sounds);
   FROB (slow_device);
   FROB (security);
+  FROB (backing_store);
+  FROB (save_under);
   else
     invalid_constant ("Invalid device metric symbol", metric);
 
@@ -1230,11 +1235,14 @@ DEVICE defaults to selected device when omitted.
   FROB (device_dpi);
   FROB (num_bit_planes);
   FROB (num_color_cells);
+  FROB (num_screens);
   FROB (mouse_buttons);
   FROB (swap_buttons);
   FROB (show_sounds);
   FROB (slow_device);
   FROB (security);
+  FROB (backing_store);
+  FROB (save_under);
 
   return plist;
 
@@ -1415,6 +1423,7 @@ syms_of_device (void)
   DEFSYMBOL (Qmono);
 
   /* Device metrics symbols */
+  DEFSYMBOL (Qbacking_store);
   DEFSYMBOL (Qcolor_default);
   DEFSYMBOL (Qcolor_select);
   DEFSYMBOL (Qcolor_balloon);
@@ -1446,8 +1455,10 @@ syms_of_device (void)
   DEFSYMBOL (Qsize_device_mm);
   DEFSYMBOL (Qnum_bit_planes);
   DEFSYMBOL (Qnum_color_cells);
+  DEFSYMBOL (Qnum_screens);
   DEFSYMBOL (Qdevice_dpi);
   DEFSYMBOL (Qmouse_buttons);
+  DEFSYMBOL (Qsave_under);
   DEFSYMBOL (Qswap_buttons);
   DEFSYMBOL (Qshow_sounds);
   DEFSYMBOL (Qslow_device);

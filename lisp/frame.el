@@ -1,6 +1,7 @@
 ;;; frame.el --- multi-frame management independent of window systems.
 
-;; Copyright (C) 1993-4, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 1994, 1996, 1997, 2000, 2001, 2003
+;;   Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
@@ -20,10 +21,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, 59 Temple Place - Suite 330,
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 21.3.
 
 ;;; Commentary:
 
@@ -31,12 +32,14 @@
 
 ;;; Code:
 
+;; XEmacs addition
 (defgroup frames nil
   "Support for Emacs frames and window systems."
   :group 'environment)
 
-; No need for `frame-creation-function'.
+;; XEmacs change: No need for `frame-creation-function'.
 
+;; XEmacs change: Emacs no longer specifies the minibuffer property here.
 ;;; The initial value given here for this must ask for a minibuffer.
 ;;; There must always exist a frame with a minibuffer, and after we
 ;;; delete the terminal frame, this will be the only frame.
@@ -65,7 +68,7 @@ as it appears, you need to use this three-step process:
   :group 'frames)
 
 (defcustom minibuffer-frame-plist '(width 80 height 2 menubar-visible-p nil
-				       default-toolbar-visible-p nil)
+				    default-toolbar-visible-p nil)
   "Plist of frame properties for initially creating a minibuffer frame.
 You can set this in your `.emacs' file; for example,
   (setq minibuffer-frame-plist '(top 1 left 1 width 80 height 2))
@@ -80,14 +83,14 @@ The format of this can also be an alist for backward compatibility."
 Pop-up frames are used for completions, help, and the like.
 This variable can be set in your init file, like this:
   (setq pop-up-frame-plist '(width 80 height 20))
-These supersede the values given in `default-frame-plist'.
+These supersede the values given in `default-frame-plist', for pop-up frames.
 The format of this can also be an alist for backward compatibility."
   :type 'plist
   :group 'frames)
 
 (setq pop-up-frame-function
-      (function (lambda ()
-		  (make-frame pop-up-frame-plist))))
+      #'(lambda ()
+	  (make-frame pop-up-frame-plist)))
 
 (defcustom special-display-frame-plist '(height 14 width 80 unsplittable t)
   "*Plist of frame properties used when creating special frames.
@@ -101,46 +104,59 @@ The format of this can also be an alist for backward compatibility."
   :type 'plist
   :group 'frames)
 
+;; XEmacs addition
 (defun safe-alist-to-plist (cruftiness)
   (if (consp (car cruftiness))
       (alist-to-plist cruftiness)
     cruftiness))
 
-;; Display BUFFER in its own frame, reusing an existing window if any.
-;; Return the window chosen.
-;; Currently we do not insist on selecting the window within its frame.
-;; If ARGS is a plist, use it as a list of frame property specs.
-;; #### Change, not compatible with FSF: This stuff is all so incredibly
-;; junky anyway that I doubt it makes any difference.
-;; If ARGS is a list whose car is t,
-;; use (cadr ARGS) as a function to do the work.
-;; Pass it BUFFER as first arg, and (cddr ARGS) gives the rest of the args.
+;; XEmacs change: require args to be a plist instead of an alist.
 (defun special-display-popup-frame (buffer &optional args)
+  "Display BUFFER in its own frame, reusing an existing window if any.
+Return the window chosen.
+Currently we do not insist on selecting the window within its frame.
+If ARGS is a plist, use it as a list of frame property specs.
+If ARGS is a list whose car is t,
+use (cadr ARGS) as a function to do the work.
+Pass it BUFFER as first arg, and (cddr ARGS) gives the rest of the args."
   ;; if we can't display simultaneous multiple frames, just return
   ;; nil and let the normal behavior take over.
   (and (device-on-window-system-p)
        (if (and args (eq t (car args)))
 	   (apply (cadr args) buffer (cddr args))
 	 (let ((window (get-buffer-window buffer t)))
-	   (if window
-	       ;; If we have a window already, make it visible.
-	       (let ((frame (window-frame window)))
-		 (make-frame-visible frame)
-		 (raise-frame frame)
-		 window)
-	     ;; If no window yet, make one in a new frame.
-	     (let ((frame
-		    (make-frame (append (safe-alist-to-plist args)
-					(safe-alist-to-plist
-					 special-display-frame-plist)))))
-	       (set-window-buffer (frame-selected-window frame) buffer)
-	       (set-window-dedicated-p (frame-selected-window frame) t)
-	       (frame-selected-window frame)))))))
+	   (setq args (safe-alist-to-plist args))
+	   (or
+	    ;; If we have a window already, make it visible.
+	    (when window
+	      (let ((frame (window-frame window)))
+		(make-frame-visible frame)
+		(raise-frame frame)
+		window))
+	    ;; Reuse the current window if the user requested it.
+	    (when (lax-plist-get args 'same-window)
+	      (condition-case nil
+		  (progn (switch-to-buffer buffer) (selected-window))
+		(error nil)))
+	    ;; Stay on the same frame if requested.
+	    (when (or (lax-plist-get args 'same-frame)
+		      (lax-plist-get args 'same-window))
+	      (let* ((pop-up-frames nil) (pop-up-windows t)
+		     special-display-regexps special-display-buffer-names
+		     (window (display-buffer buffer)))
+		;; (set-window-dedicated-p window t)
+		window))
+	    ;; If no window yet, make one in a new frame.
+	    (let ((frame (make-frame (append args
+					     (safe-alist-to-plist
+					      special-display-frame-plist)))))
+	      (set-window-buffer (frame-selected-window frame) buffer)
+	      (set-window-dedicated-p (frame-selected-window frame) t)
+	      (frame-selected-window frame)))))))
 
-(setq special-display-function 'special-display-popup-frame)
-
-;;; Handle delete-frame events from the X server.
+;; XEmacs change: comment out
 ;(defun handle-delete-frame (event)
+;  "Handle delete-frame events from the X server."
 ;  (interactive "e")
 ;  (let ((frame (posn-window (event-start event)))
 ;	(i 0)
@@ -152,21 +168,27 @@ The format of this can also be an alist for backward compatibility."
 ;      (setq tail (cdr tail)))
 ;    (if (> i 0)
 ;	(delete-frame frame t)
-;      (kill-emacs))))
-
+;      ;; Gildea@x.org says it is ok to ask questions before terminating.
+;      (save-buffers-kill-emacs))))
 
 ;;;; Arrangement of frames at startup
 
-;;; 1) Load the window system startup file from the lisp library and read the
-;;; high-priority arguments (-q and the like).  The window system startup
-;;; file should create any frames specified in the window system defaults.
-;;;
-;;; 2) If no frames have been opened, we open an initial text frame.
-;;;
-;;; 3) Once the init file is done, we apply any newly set properties
-;;; in initial-frame-plist to the frame.
+;; 1) Load the window system startup file from the lisp library and read the
+;; high-priority arguments (-q and the like).  The window system startup
+;; file should create any frames specified in the window system defaults.
+;;
+;; 2) If no frames have been opened, we open an initial text frame.
+;;
+;; 3) Once the init file is done, we apply any newly set properties
+;; in initial-frame-plist to the frame.
 
-;;; If we create the initial frame, this is it.
+;; These are now called explicitly at the proper times,
+;; since that is easier to understand.
+;; Actually using hooks within Emacs is bad for future maintenance. --rms.
+;; (add-hook 'before-init-hook 'frame-initialize)
+;; (add-hook 'window-setup-hook 'frame-notice-user-settings)
+
+;; If we create the initial frame, this is it.
 (defvar frame-initial-frame nil)
 
 ;; Record the properties used in frame-initialize to make the initial frame.
@@ -174,19 +196,24 @@ The format of this can also be an alist for backward compatibility."
 
 (defvar frame-initial-geometry-arguments nil)
 
+;; XEmacs addition
 (defun canonicalize-frame-plists ()
   (setq initial-frame-plist (safe-alist-to-plist initial-frame-plist))
   (setq default-frame-plist (safe-alist-to-plist default-frame-plist)))
 
-;;; startup.el calls this function before loading the user's init
-;;; file - if there is no frame with a minibuffer open now, create
-;;; one to display messages while loading the init file.
+;; startup.el calls this function before loading the user's init
+;; file - if there is no frame with a minibuffer open now, create
+;; one to display messages while loading the init file.
 (defun frame-initialize ()
+  "Create an initial frame if necessary."
   ;; In batch mode, we actually use the initial terminal device for output.
+  ;; XEmacs addition
   (canonicalize-frame-plists)
+
   (if (not (noninteractive))
       (progn
-	;; Don't call select-frame here - focus is a matter of WM policy.
+	;; Turn on special-display processing only if there's a window system.
+	(setq special-display-function 'special-display-popup-frame)
 
 	;; If there is no frame with a minibuffer besides the terminal
 	;; frame, then we need to create the opening frame.  Make sure
@@ -196,7 +223,11 @@ The format of this can also be an alist for backward compatibility."
 	    (progn
 	      (setq frame-initial-frame-plist
 		    (append initial-frame-plist default-frame-plist))
-	      ;; FSFmacs has scroll-bar junk here that we don't need.
+	      ;; XEmacs change: omit the scrollbar settings
+; 	      (or (assq 'horizontal-scroll-bars frame-initial-frame-alist)
+; 		  (setq frame-initial-frame-alist
+; 			(cons '(horizontal-scroll-bars . t)
+; 			      frame-initial-frame-alist)))
 	      (setq default-minibuffer-frame
 		    (setq frame-initial-frame
 			  (make-frame initial-frame-plist
@@ -209,23 +240,59 @@ The format of this can also be an alist for backward compatibility."
 	      (setq initial-frame-plist
 		    (frame-remove-geometry-props initial-frame-plist))))
 	;; At this point, we know that we have a frame open, so we
-	;; can delete the terminal device.
-	;; (delete-device terminal-device)
-	;; Do it the same way Fkill_emacs does it. -slb
+	;; can delete the terminal frame.
+	;; XEmacs change: Do it the same way Fkill_emacs does it. -slb
 	(delete-console terminal-console)
-	(setq terminal-frame nil)
+	(setq terminal-frame nil))
 
-	;; FSFmacs sets frame-creation-function here, but no need.
-	)))
+    ;; XEmacs change: omit the pc window-system stuff.
+;    ;; No, we're not running a window system.  Use make-terminal-frame if
+;    ;; we support that feature, otherwise arrange to cause errors.
+;     (or (eq window-system 'pc)
+; 	(setq frame-creation-function
+; 	      (if (fboundp 'tty-create-frame-with-faces)
+; 		  'tty-create-frame-with-faces
+; 		(function
+; 		 (lambda (parameters)
+; 		   (error
+; 		    "Can't create multiple frames without a window system"))))))
+    ))
 
-;;; startup.el calls this function after loading the user's init
-;;; file.  Now default-frame-plist and initial-frame-plist contain
-;;; information to which we must react; do what needs to be done.
+(defvar frame-notice-user-settings t
+  "Non-nil means function `frame-notice-user-settings' wasn't run yet.")
+
+;; startup.el calls this function after loading the user's init
+;; file.  Now default-frame-plist and initial-frame-plist contain
+;; information to which we must react; do what needs to be done.
 (defun frame-notice-user-settings ()
-
-  ;; FSFmacs has menu-bar junk here that we don't need.
-
+  "Act on user's init file settings of frame parameters.
+React to settings of `default-frame-plist', `initial-frame-plist' there."
+  ;; XEmacs addition
   (canonicalize-frame-plists)
+
+  ;; XEmacs change: omit menu-bar manipulations.
+;   ;; Make menu-bar-mode and default-frame-alist consistent.
+;   (when (boundp 'menu-bar-mode)
+;     (let ((default (assq 'menu-bar-lines default-frame-alist)))
+;       (if default
+; 	  (setq menu-bar-mode (not (eq (cdr default) 0)))
+; 	(setq default-frame-alist
+; 	      (cons (cons 'menu-bar-lines (if menu-bar-mode 1 0))
+; 		    default-frame-alist)))))
+
+  ;; XEmacs change: omit tool-bar manipulations.
+;   ;; Make tool-bar-mode and default-frame-alist consistent.  Don't do
+;   ;; it in batch mode since that would leave a tool-bar-lines
+;   ;; parameter in default-frame-alist in a dumped Emacs, which is not
+;   ;; what we want.
+;   (when (and (boundp 'tool-bar-mode)
+; 	     (not noninteractive))
+;     (let ((default (assq 'tool-bar-lines default-frame-alist)))
+;       (if default
+; 	  (setq tool-bar-mode (not (eq (cdr default) 0)))
+; 	(setq default-frame-alist
+; 	      (cons (cons 'tool-bar-lines (if tool-bar-mode 1 0))
+; 		    default-frame-alist)))))
 
   ;; Creating and deleting frames may shift the selected frame around,
   ;; and thus the current buffer.  Protect against that.  We don't
@@ -234,9 +301,96 @@ The format of this can also be an alist for backward compatibility."
   ;; window is the minibuffer.
   (let ((old-buffer (current-buffer)))
 
+    ;; XEmacs change: omit special handling for MS-DOS
+;     (when (and frame-notice-user-settings
+; 	       (null frame-initial-frame))
+;       ;; This case happens when we don't have a window system, and
+;       ;; also for MS-DOS frames.
+;       (let ((parms (frame-parameters frame-initial-frame)))
+; 	;; Don't change the frame names.
+; 	(setq parms (delq (assq 'name parms) parms))
+; 	;; Can't modify the minibuffer parameter, so don't try.
+; 	(setq parms (delq (assq 'minibuffer parms) parms))
+; 	(modify-frame-parameters nil
+; 				 (if (null window-system)
+; 				     (append initial-frame-alist
+; 					     default-frame-alist
+; 					     parms
+; 					     nil)
+; 				   ;; initial-frame-alist and
+; 				   ;; default-frame-alist were already
+; 				   ;; applied in pc-win.el.
+; 				   parms))
+; 	(if (null window-system) ;; MS-DOS does this differently in pc-win.el
+; 	    (let ((newparms (frame-parameters))
+; 		  (frame (selected-frame)))
+; 	      (tty-handle-reverse-video frame newparms)
+; 	      ;; If we changed the background color, we need to update
+; 	      ;; the background-mode parameter, and maybe some faces,
+; 	      ;; too.
+; 	      (when (assq 'background-color newparms)
+; 		(unless (or (assq 'background-mode initial-frame-alist)
+; 			    (assq 'background-mode default-frame-alist))
+; 		  (frame-set-background-mode frame))
+; 		(face-set-after-frame-default frame))))))
+
     ;; If the initial frame is still around, apply initial-frame-plist
     ;; and default-frame-plist to it.
-    (if (frame-live-p frame-initial-frame)
+    (when (frame-live-p frame-initial-frame)
+
+      ;; XEmacs change: omit the tool-bar manipulations
+;       ;; When tool-bar has been switched off, correct the frame size
+;       ;; by the lines added in x-create-frame for the tool-bar and
+;       ;; switch `tool-bar-mode' off.
+;       (when (display-graphic-p)
+; 	(let ((tool-bar-lines (or (assq 'tool-bar-lines initial-frame-alist)
+; 				  (assq 'tool-bar-lines default-frame-alist))))
+; 	  (when (and tool-bar-originally-present
+;                      (or (null tool-bar-lines)
+;                          (null (cdr tool-bar-lines))
+;                          (eq 0 (cdr tool-bar-lines))))
+; 	    (let* ((char-height (frame-char-height frame-initial-frame))
+; 		   (image-height tool-bar-images-pixel-height)
+; 		   (margin (cond ((and (consp tool-bar-button-margin)
+; 				       (integerp (cdr tool-bar-button-margin))
+; 				       (> tool-bar-button-margin 0))
+; 				  (cdr tool-bar-button-margin))
+; 				 ((and (integerp tool-bar-button-margin)
+; 				       (> tool-bar-button-margin 0))
+; 				  tool-bar-button-margin)
+; 				 (t 0)))
+; 		   (relief (if (and (integerp tool-bar-button-relief)
+; 				    (> tool-bar-button-relief 0))
+; 			       tool-bar-button-relief 3))
+; 		   (lines (/ (+ image-height
+; 				(* 2 margin)
+; 				(* 2 relief)
+; 				(1- char-height))
+; 			     char-height))
+; 		   (height (frame-parameter frame-initial-frame 'height))
+; 		   (newparms (list (cons 'height (- height lines))))
+; 		   (initial-top (cdr (assq 'top
+; 					   frame-initial-geometry-arguments)))
+; 		   (top (frame-parameter frame-initial-frame 'top)))
+; 	      (when (and (consp initial-top) (eq '- (car initial-top)))
+; 		(let ((adjusted-top
+; 		       (cond ((and (consp top)
+; 				   (eq '+ (car top)))
+; 			      (list '+
+; 				    (+ (cadr top)
+; 				       (* lines char-height))))
+; 			     ((and (consp top)
+; 				   (eq '- (car top)))
+; 			      (list '-
+; 				    (- (cadr top)
+; 				       (* lines char-height))))
+; 			     (t (+ top (* lines char-height))))))
+; 		  (setq newparms
+; 			(append newparms
+; 				`((top . ,adjusted-top))
+; 				nil))))
+; 	      (modify-frame-parameters frame-initial-frame newparms)
+; 	      (tool-bar-mode -1)))))
 
 	;; The initial frame we create above always has a minibuffer.
 	;; If the user wants to remove it, or make it a minibuffer-only
@@ -261,30 +415,36 @@ The format of this can also be an alist for backward compatibility."
 			 '(t)))
 		     t))
 	    ;; Create the new frame.
-	    (let (props
-		  )
+	    (let (props new)
 	      ;; If the frame isn't visible yet, wait till it is.
 	      ;; If the user has to position the window,
 	      ;; Emacs doesn't know its real position until
 	      ;; the frame is seen to be visible.
 
+	      ;; XEmacs change: check the initially-unmapped property
 	      (if (frame-property frame-initial-frame 'initially-unmapped)
 		  nil
 		(while (not (frame-visible-p frame-initial-frame))
 		  (sleep-for 1)))
 	      (setq props (frame-properties frame-initial-frame))
+
 	      ;; Get rid of `name' unless it was specified explicitly before.
 	      (or (lax-plist-member frame-initial-frame-plist 'name)
 		  (setq props (lax-plist-remprop props 'name)))
-	      (setq props (append initial-frame-plist default-frame-plist
+
+	      (setq props (append initial-frame-plist
+				  default-frame-plist
 				  props
 				  nil))
+
 	      ;; Get rid of `reverse', because that was handled
 	      ;; when we first made the frame.
 	      (laxputf props 'reverse nil)
-	      ;; Get rid of `window-id', otherwise make-frame will
-	      ;; think we're trying to setup an external widget.
+
+	      ;; XEmacs addition: Get rid of `window-id', otherwise make-frame
+	      ;; will think we're trying to setup an external widget.
 	      (laxremf props 'window-id)
+
 	      (if (lax-plist-member frame-initial-geometry-arguments 'height)
 		  (laxremf props 'height))
 	      (if (lax-plist-member frame-initial-geometry-arguments 'width)
@@ -293,14 +453,14 @@ The format of this can also be an alist for backward compatibility."
 		  (laxremf props 'left))
 	      (if (lax-plist-member frame-initial-geometry-arguments 'top)
 		  (laxremf props 'top))
-
 	      ;; Now create the replacement initial frame.
-	      (make-frame
-	       ;; Use the geometry args that created the existing
-	       ;; frame, rather than the props we get for it.
-	       (append '(user-size t user-position t)
-		       frame-initial-geometry-arguments
-		       props))
+	      (setq new
+		    (make-frame
+		     ;; Use the geometry args that created the existing
+		     ;; frame, rather than the props we get for it.
+		     (append '(user-size t user-position t)
+			     frame-initial-geometry-arguments
+			     props)))
 	      ;; The initial frame, which we are about to delete, may be
 	      ;; the only frame with a minibuffer.  If it is, create a
 	      ;; new one.
@@ -338,11 +498,10 @@ The format of this can also be an alist for backward compatibility."
 		      ;; Wean the frames using frame-initial-frame as
 		      ;; their minibuffer frame.
 		      (mapcar
-		       #'
-			(lambda (frame)
-			  (set-frame-property frame 'minibuffer
-					      new-minibuffer))
-			users-of-initial))))
+		       #'(lambda (frame)
+			   (set-frame-property frame 'minibuffer
+					       new-minibuffer))
+		       users-of-initial))))
 
 	      ;; Redirect events enqueued at this frame to the new frame.
 	      ;; Is this a good idea?
@@ -384,10 +543,14 @@ The format of this can also be an alist for backward compatibility."
 		    (laxputf newprops (car tail) newval)))
 	      (setq tail (cddr tail)))
 	    (set-frame-properties frame-initial-frame newprops)
-	    ;silly FSFmacs junk
-	    ;if (lax-plist-member newprops 'font)
-	    ;   (frame-update-faces frame-initial-frame))
-
+	    ;; XEmacs change: omit the background manipulation
+; 	    ;; If we changed the background color,
+; 	    ;; we need to update the background-mode parameter
+; 	    ;; and maybe some faces too.
+; 	    (when (assq 'background-color newparms)
+; 	      (unless (assq 'background-mode newparms)
+; 		(frame-set-background-mode frame-initial-frame))
+; 	      (face-set-after-frame-default frame-initial-frame)))))
 	    )))
 
     ;; Restore the original buffer.
@@ -395,6 +558,7 @@ The format of this can also be an alist for backward compatibility."
 
     ;; Make sure the initial frame can be GC'd if it is ever deleted.
     ;; Make sure frame-notice-user-settings does nothing if called twice.
+    (setq frame-notice-user-settings nil)
     (setq frame-initial-frame nil)))
 
 (defun make-initial-minibuffer-frame (device)
@@ -405,8 +569,31 @@ The format of this can also be an alist for backward compatibility."
 
 ;;;; Creation of additional frames, and other frame miscellanea
 
+(defun modify-all-frames-properties (plist)
+  "Modify all current and future frames' parameters according to PLIST.
+This changes `default-frame-plist' and possibly `initial-frame-plist'.
+See `set-frame-properties' for more information."
+  (dolist (frame (frame-list))
+    (set-frame-properties frame plist))
+
+  ;; XEmacs change: iterate over plists instead of alists
+  (map-plist
+   #'(lambda (prop val)
+       ;; initial-frame-plist needs setting only when
+       ;; frame-notice-user-settings is true
+       (and frame-notice-user-settings
+	    (lax-plist-remprop initial-frame-plist prop))
+       (lax-plist-remprop default-frame-plist prop))
+   plist)
+
+  (and frame-notice-user-settings
+       (setq initial-frame-plist (append initial-frame-plist plist)))
+  (setq default-frame-plist (append default-frame-plist plist)))
+
 (defun get-other-frame ()
- "Return some frame other than the selected frame, creating one if necessary."
+  "Return some frame other than the current frame.
+Create one if necessary.  Note that the minibuffer frame, if separate,
+is not considered (see `next-frame')."
   (let* ((this (selected-frame))
 	 ;; search visible frames first
 	 (next (next-frame this 'visible-nomini)))
@@ -423,15 +610,22 @@ The format of this can also be an alist for backward compatibility."
   (interactive)
   (select-window (next-window (selected-window)
 			      (> (minibuffer-depth) 0)
-			      t)))
+			      t))
+  ;; XEmacs change: select-window already selects the containing frame
+  ;(select-frame-set-input-focus (selected-frame))
+  )
 
 (defun previous-multiframe-window ()
   "Select the previous window, regardless of which frame it is on."
   (interactive)
   (select-window (previous-window (selected-window)
 				  (> (minibuffer-depth) 0)
-				  t)))
+				  t))
+  ;; XEmacs change: select-window already selects the containing frame
+  ;(select-frame-set-input-focus (selected-frame))
+  )
 
+;; XEmacs change: Emacs has make-frame-on-display
 (defun make-frame-on-device (type connection &optional props)
   "Create a frame of type TYPE on CONNECTION.
 TYPE should be a symbol naming the device type, i.e. one of
@@ -458,12 +652,28 @@ If a connection to CONNECTION already exists, it is reused; otherwise,
 a new connection is opened."
   (make-frame props (make-device type connection props)))
 
+;; XEmacs omission: Emacs has make-frame-command here, but it reduces to
+;; make-frame for us.
+
+;; XEmacs omission: the following 2 variables are not yet implemented.
+;(defvar before-make-frame-hook nil
+;  "Functions to run before a frame is created.")
+;
+;(defvar after-make-frame-functions nil
+;  "Functions to run after a frame is created.
+;The functions are run with one arg, the newly created frame.")
+;
+(defvar after-setting-font-hook nil
+  "Functions to run after a frame's font has been changed.")
+
 ;; Alias, kept temporarily.
 (defalias 'new-frame 'make-frame)
+(make-obsolete 'new-frame 'make-frame)
 
-; FSFmacs has make-frame here.  We have it in C, so no need for
-; frame-creation-function.
+;; XEmacs change: Emacs has make-frame here.  We have it in C, so no need for
+;; frame-creation-function.
 
+;; XEmacs addition: support optional DEVICE argument.
 (defun filtered-frame-list (predicate &optional device)
   "Return a list of all live frames which satisfy PREDICATE.
 If optional second arg DEVICE is non-nil, restrict the frames
@@ -477,6 +687,7 @@ If optional second arg DEVICE is non-nil, restrict the frames
       (setq frames (cdr frames)))
     good-frames))
 
+;; XEmacs addition: support optional DEVICE argument.
 (defun minibuffer-frame-list (&optional device)
   "Return a list of all frames with their own minibuffers.
 If optional second arg DEVICE is non-nil, restrict the frames
@@ -486,6 +697,48 @@ If optional second arg DEVICE is non-nil, restrict the frames
 	       (eq frame (window-frame (minibuffer-window frame))))
    device))
 
+;; XEmacs omission: Emacs has frames-on-display-list here, but that is
+;; essentially equivalent to supplying the optional DEVICE argument to
+;; filtered-frame-list.
+
+;; XEmacs addition: the following two functions make life a lot simpler below.
+(defsubst display-frame (display)
+  "Return the active frame for DISPLAY.
+DISPLAY may be a frame, a device, or a console.  If it is omitted or nil,
+it defaults to the selected frame."
+  (cond
+   ((null display) (selected-frame))
+   ((framep display) display)
+   ((devicep display) (selected-frame display))
+   ((consolep display) (selected-frame (car (console-device-list display))))
+   (t (error 'wrong-type-argument "Not a frame, device, or console" display))))
+
+(defsubst display-device (display)
+  "Return the device for DISPLAY.
+DISPLAY may be a frame, a device, or a console.  If it is omitted or nil,
+it defaults to the selected frame."
+  (cond
+   ((null display) (selected-device))
+   ((framep display) (frame-device display))
+   ((devicep display) display)
+   ((consolep display) (car (console-device-list display)))
+   (t (error 'wrong-type-argument "Not a frame, device, or console" display))))
+
+;; Emacs compatibility function.  We do not allow display names of the type
+;; HOST:SERVER.SCREEN as Emacs does, but we do handle devices and consoles.
+(defun framep-on-display (&optional display)
+  "Return the type of frames on DISPLAY.
+DISPLAY may be a frame, a device, or a console.  If it is a frame, its type
+is returned.  If DISPLAY is omitted or nil, it defaults to the selected
+frame.  All frames on a given device or console are of the same type."
+  (cond
+   ((null display) (frame-type (selected-frame)))
+   ((framep display) (frame-type display))
+   ((devicep display) (device-type display))
+   ((consolep display) (console-type display))
+   (t (error 'wrong-type-argument "Not a frame, device, or console" display))))
+
+;; XEmacs addition: Emacs does not have this function.
 (defun frame-minibuffer-only-p (frame)
   "Return non-nil if FRAME is a minibuffer-only frame."
   (eq (frame-root-window frame) (minibuffer-window frame)))
@@ -508,33 +761,86 @@ the user during startup."
 	  '(height width top left user-size user-position))
   plist)
 
+;; XEmacs change: Emacs has focus-follows-mouse here, which lets them
+;; Customize it.  XEmacs has it builtin.  Should that change?
+
+;; XEmacs change: we have focus-frame instead of multiple foo-focus-frame
+;; functions.
+(defun select-frame-set-input-focus (frame)
+  "Select FRAME, raise it, and set input focus, if possible."
+  (raise-frame frame)
+  (focus-frame frame)  ;; This also selects FRAME
+  ;; XEmacs change: This is a bad idea; you should in general never warp the
+  ;; pointer unless the user asks for it.
+  ;;(if focus-follows-mouse
+  ;;    (set-mouse-position (selected-window) (1- (frame-width frame)) 0)))
+  )
+
 (defun other-frame (arg)
   "Select the ARG'th different visible frame, and raise it.
 All frames are arranged in a cyclic order.
 This command selects the frame ARG steps away in that order.
 A negative ARG moves in the opposite order.
 
-This sets the window system focus, regardless of the value
-of `focus-follows-mouse'."
+To make this command work properly, you must tell Emacs
+how the system (or the window manager) generally handles
+focus-switching between windows.  If moving the mouse onto a window
+selects it (gives it focus), set `focus-follows-mouse' to t.
+Otherwise, that variable should be nil."
   (interactive "p")
   (let ((frame (selected-frame)))
     (while (> arg 0)
       (setq frame (next-frame frame 'visible-nomini))
+      (while (not (eq (frame-visible-p frame) t))
+	(setq frame (next-frame frame 'visible-nomini)))
       (setq arg (1- arg)))
     (while (< arg 0)
       (setq frame (previous-frame frame 'visible-nomini))
+      (while (not (eq (frame-visible-p frame) t))
+	(setq frame (previous-frame frame 'visible-nomini)))
       (setq arg (1+ arg)))
-    (raise-frame frame)
-    (focus-frame frame)
-    ;this is a bad idea; you should in general never warp the
-    ;pointer unless the user asks for this.  Furthermore,
-    ;our version of `set-mouse-position' takes a window,
-    ;not a frame.
-    ;(set-mouse-position (selected-frame) (1- (frame-width)) 0)
-    ;some weird FSFmacs randomness
-    ;(if (fboundp 'unfocus-frame)
-    ;	(unfocus-frame))))
-    ))
+    (select-frame-set-input-focus frame)))
+
+(defun iconify-or-deiconify-frame ()
+  "Iconify the selected frame, or deiconify if it's currently an icon."
+  (interactive)
+  (if (lax-plist-get (frame-properties) 'visibility)
+      (iconify-frame)
+    (make-frame-visible)))
+
+(defun make-frame-names-alist ()
+  (let* ((current-frame (selected-frame))
+	 (falist
+	  (cons
+	   (cons (frame-property current-frame 'name) current-frame) nil))
+	 (frame (next-frame current-frame t)))
+    (while (not (eq frame current-frame))
+      (progn
+	(setq falist (cons (cons (frame-property frame 'name) frame) falist))
+	(setq frame (next-frame frame t))))
+    falist))
+
+(defvar frame-name-history nil)
+(defun select-frame-by-name (name)
+  "Select the frame on the current terminal whose name is NAME and raise it.
+If there is no frame by that name, signal an error."
+  (interactive
+   (let* ((frame-names-alist (make-frame-names-alist))
+	   (default (car (car frame-names-alist)))
+	   (input (completing-read
+		   (format "Select Frame (default %s): " default)
+		   frame-names-alist nil t nil 'frame-name-history default)))
+     ;; XEmacs change: use the last param of completing-read to simplify.
+     (list input)))
+  (let* ((frame-names-alist (make-frame-names-alist))
+	 (frame (cdr (assoc name frame-names-alist))))
+    (or frame
+	(error "There is no frame named `%s'" name))
+    (make-frame-visible frame)
+    ;; XEmacs change: make-frame-visible implies (raise-frame)
+    ;; (raise-frame frame)
+    ;; XEmacs change: we defined this function, might as well use it.
+    (select-frame-set-input-focus frame)))
 
 ;; XEmacs-added utility functions
 
@@ -554,7 +860,7 @@ The value returned is the value of the last form in BODY."
      (select-frame ,frame)
      ,@body))
 
-; this is in C in FSFmacs
+; This is in C in Emacs
 (defun frame-list ()
   "Return a list of all frames on all devices/consoles."
   ;; Lists are copies, so nconc is safe here.
@@ -623,30 +929,30 @@ is given and non-nil, the unwanted frames are iconified instead."
   (or (frame-configuration-p configuration)
       (signal 'wrong-type-argument
 	      (list 'frame-configuration-p configuration)))
-  (let ((config-plist (cdr configuration))
+  (let ((config-alist (cdr configuration))
 	frames-to-delete)
-    (mapc (lambda (frame)
-	    (let ((properties (assq frame config-plist)))
-	      (if properties
-		  (progn
-		    (set-frame-properties
-		     frame
-		     ;; Since we can't set a frame's minibuffer status,
-		     ;; we might as well omit the parameter altogether.
-		     (lax-plist-remprop (nth 1 properties) 'minibuffer))
-		    (set-window-configuration (nth 2 properties)))
-		(setq frames-to-delete (cons frame frames-to-delete)))))
+    (mapc #'(lambda (frame)
+	      (let ((properties (assq frame config-alist)))
+		(if properties
+		    (progn
+		      (set-frame-properties
+		       frame
+		       ;; Since we can't set a frame's minibuffer status,
+		       ;; we might as well omit the parameter altogether.
+		       (lax-plist-remprop (nth 1 properties) 'minibuffer))
+		      (set-window-configuration (nth 2 properties)))
+		  (setq frames-to-delete (cons frame frames-to-delete)))))
 	  (frame-list))
     (if nodelete
 	;; Note: making frames invisible here was tried
 	;; but led to some strange behavior--each time the frame
 	;; was made visible again, the window manager asked afresh
 	;; for where to put it.
-	(mapc 'iconify-frame frames-to-delete)
-      (mapc 'delete-frame frames-to-delete))))
+	(mapc #'iconify-frame frames-to-delete)
+      (mapc #'delete-frame frames-to-delete))))
 
-; this function is in subr.el in FSFmacs.
-; that's because they don't always include frame.el, while we do.
+; XEmacs change: this function is in subr.el in Emacs.
+; That's because they don't always include frame.el, while we do.
 
 (defun frame-configuration-p (object)
   "Return non-nil if OBJECT seems to be a frame configuration.
@@ -656,50 +962,520 @@ configuration."
        (eq (car object) 'frame-configuration)))
 
 
-;; FSFmacs has functions `frame-width', `frame-height' here.
-;; We have them in C.
+;;;; Convenience functions for accessing and interactively changing
+;;;; frame parameters.
 
-;; FSFmacs has weird functions `set-default-font', `set-background-color',
-;; `set-foreground-color' here.  They don't do sensible things like
-;; set faces; instead they set frame properties (??!!) and call
-;; useless functions such as `frame-update-faces' and
-;; `frame-update-face-colors'.
+(defun frame-height (&optional frame)
+  "Return number of lines available for display on FRAME.
+If FRAME is omitted, describe the currently selected frame."
+  (frame-property frame 'height))
 
-;; FSFmacs has functions `set-cursor-color', `set-mouse-color', and
-;; `set-border-color', which refer to frame properties.
-;; #### We need to use specifiers here.
+(defun frame-width (&optional frame)
+  "Return number of columns available for display on FRAME.
+If FRAME is omitted, describe the currently selected frame."
+  (frame-property frame 'width))
 
-;(defun auto-raise-mode (arg)
-;  "Toggle whether or not the selected frame should auto-raise.
-;With arg, turn auto-raise mode on if and only if arg is positive.
-;Note that this controls Emacs's own auto-raise feature.
-;Some window managers allow you to enable auto-raise for certain windows.
-;You can use that for Emacs windows if you wish, but if you do,
-;that is beyond the control of Emacs and this command has no effect on it."
-;  (interactive "P")
-;  (if (null arg)
-;      (setq arg
-;	    (if (frame-property (selected-frame) 'auto-raise)
-;		-1 1)))
-;  (set-frame-property (selected-frame) 'auto-raise (> arg 0)))
+(defalias 'set-default-font 'set-frame-font)
 
-;(defun auto-lower-mode (arg)
-;  "Toggle whether or not the selected frame should auto-lower.
-;With arg, turn auto-lower mode on if and only if arg is positive.
-;Note that this controls Emacs's own auto-lower feature.
-;Some window managers allow you to enable auto-lower for certain windows.
-;You can use that for Emacs windows if you wish, but if you do,
-;that is beyond the control of Emacs and this command has no effect on it."
-;  (interactive "P")
-;  (if (null arg)
-;      (setq arg
-;	    (if (frame-property (selected-frame) 'auto-lower)
-;		-1 1)))
-;  (set-frame-property (selected-frame) 'auto-lower (> arg 0)))
+;; XEmacs change: this function differs significantly from Emacs.
+(defun set-frame-font (font-name &optional keep-size)
+  "Set the font of the selected frame to FONT-NAME.
+When called interactively, prompt for the name of the font to use.
+To get the frame's current default font, use `(face-font-name 'default)'.
 
-;; FSFmacs has silly functions `toggle-scroll-bar',
-;; `toggle-horizontal-scrollbar'
+The default behavior is to keep the numbers of lines and columns in
+the frame, thus may change its pixel size. If optional KEEP-SIZE is
+non-nil (interactively, prefix argument) the current frame size (in
+pixels) is kept by adjusting the numbers of the lines and columns."
+  (interactive
+   (let* ((frame (selected-frame))
+	  (completion-ignore-case t)
+	  (font (completing-read "Font name: "
+			 (mapcar #'list
+				 (list-fonts "*" frame))
+			 nil nil nil nil
+			 (face-font-name 'default frame))))
+     (list font current-prefix-arg)))
+  (let* ((frame (selected-frame))
+	 (fht (frame-pixel-height frame))
+	 (fwd (frame-pixel-width frame))
+	 (face-list-to-change (face-list)))
+    (when (eq (device-type) 'mswindows)
+      (setq face-list-to-change
+	    (delq 'border-glyph face-list-to-change)))
+    ;; FIXME: Is it sufficient to just change the default face, due to
+    ;; face inheritance?
+    (dolist (face face-list-to-change)
+      (when (face-font-instance face)
+	(condition-case c
+	    (set-face-font face font-name frame)
+	  (error
+	   (display-error c nil)
+	   (sit-for 1)))))
+    (if keep-size
+	(set-frame-pixel-size frame fwd fht)))
+  (run-hooks 'after-setting-font-hook))
+
+(defun set-frame-property (frame prop val)
+  "Set property PROP of FRAME to VAL.  See `set-frame-properties'."
+  (set-frame-properties frame (list prop val)))
+
+;; XEmacs change: this function differs significantly from Emacs.
+(defun set-background-color (color-name)
+  "Set the background color of the selected frame to COLOR-NAME.
+When called interactively, prompt for the name of the color to use.
+To get the frame's current background color, use
+`(face-background-name 'default)'."
+  (interactive (list (read-color "Color: ")))
+  ;; (set-face-foreground 'text-cursor color-name (selected-frame))
+  (set-face-background 'default color-name (selected-frame)))
+
+;; XEmacs change: this function differs significantly from Emacs.
+(defun set-foreground-color (color-name)
+  "Set the foreground color of the selected frame to COLOR-NAME.
+When called interactively, prompt for the name of the color to use.
+To get the frame's current foreground color, use
+`(face-foreground-name 'default)'."
+  (interactive (list (read-color "Color: ")))
+  (set-face-foreground 'default color-name (selected-frame)))
+
+;; XEmacs change: this function differs significantly from Emacs.
+(defun set-cursor-color (color-name)
+  "Set the text cursor color of the selected frame to COLOR-NAME.
+When called interactively, prompt for the name of the color to use.
+To get the frame's current cursor color, use
+'(face-background-name 'text-cursor)'."
+  (interactive (list (read-color "Color: ")))
+  (set-face-background 'text-cursor color-name (selected-frame)))
+
+;; XEmacs change: this function differs significantly from Emacs.
+(defun set-mouse-color (color-name)
+  "Set the color of the mouse pointer of the selected frame to COLOR-NAME.
+When called interactively, prompt for the name of the color to use.
+To get the frame's current mouse color, use
+`(face-foreground-name 'pointer)'."
+  (interactive (list (read-color "Color: ")))
+  (set-face-foreground 'pointer color-name (selected-frame)))
+
+;; XEmacs change: this function differs significantly from Emacs.
+(defun set-border-color (color-name)
+  "Set the color of the border of the selected frame to COLOR-NAME.
+When called interactively, prompt for the name of the color to use.
+To get the frame's current border color, use
+`(face-foreground-name 'border-glyph)'."
+  (interactive (list (read-color "Color: ")))
+  (set-face-foreground 'border-glyph color-name (selected-frame)))
 
+;;; BEGIN XEmacs addition
+;;; This is the traditional XEmacs auto-raise and auto-lower, which applies
+;;; to all frames.
+
+(defcustom auto-raise-frame nil
+  "*If true, frames will be raised to the top when selected.
+Under X, most ICCCM-compliant window managers will have an option to do this
+for you, but this variable is provided in case you're using a broken WM."
+  :type 'boolean
+  :group 'frames)
+
+(defcustom auto-lower-frame nil
+  "*If true, frames will be lowered to the bottom when no longer selected.
+Under X, most ICCCM-compliant window managers will have an option to do this
+for you, but this variable is provided in case you're using a broken WM."
+  :type 'boolean
+  :group 'frames)
+
+(defun default-select-frame-hook ()
+  "Implement the `auto-raise-frame' variable.
+For use as the value of `select-frame-hook'."
+  (if auto-raise-frame (raise-frame (selected-frame))))
+
+(defun default-deselect-frame-hook ()
+  "Implement the `auto-lower-frame' variable.
+For use as the value of `deselect-frame-hook'."
+  (if auto-lower-frame (lower-frame (selected-frame)))
+  (highlight-extent nil nil))
+
+(or select-frame-hook
+    (add-hook 'select-frame-hook 'default-select-frame-hook))
+
+(or deselect-frame-hook
+    (add-hook 'deselect-frame-hook 'default-deselect-frame-hook))
+
+;;; END XEmacs addition
+;;; Following is the Emacs auto-raise/auto-lower interface, which lets the
+;;; user select individual frames to auto-raise and auto-lower
+
+;; XEmacs addition: the next two variables do not appear in Emacs
+(defvar auto-raise-specifier (make-boolean-specifier auto-raise-frame)
+  "Specifier that determines which frames should auto-raise.
+A value of `t' means that a frame auto-raises; `nil' means it does not.")
+
+(defvar auto-lower-specifier (make-boolean-specifier auto-lower-frame)
+  "Specifier that determines which frames should auto-lower.
+A value of `t' means that a frame auto-lowers; `nil' means it does not.")
+
+;; XEmacs change: use specifiers instead of frame-parameters
+(defun auto-raise-mode (arg)
+  "Toggle whether or not the selected frame should auto-raise.
+With arg, turn auto-raise mode on if and only if arg is positive.
+Note that this controls Emacs's own auto-raise feature.
+Some window managers allow you to enable auto-raise for certain windows.
+You can use that for Emacs windows if you wish, but if you do,
+that is beyond the control of Emacs and this command has no effect on it."
+  (interactive "P")
+  (if (null arg)
+      (setq arg
+	    (if (specifier-instance auto-raise-specifier (selected-frame))
+		-1 1)))
+  (if (> arg 0)
+      (progn
+	(raise-frame (selected-frame))
+	(add-hook 'select-frame-hook 'default-select-frame-hook))
+    (set-specifier auto-raise-specifier (> arg 0) (selected-frame))))
+
+;; XEmacs change: use specifiers instead of frame-parameters
+(defun auto-lower-mode (arg)
+  "Toggle whether or not the selected frame should auto-lower.
+With arg, turn auto-lower mode on if and only if arg is positive.
+Note that this controls Emacs's own auto-lower feature.
+Some window managers allow you to enable auto-lower for certain windows.
+You can use that for Emacs windows if you wish, but if you do,
+that is beyond the control of Emacs and this command has no effect on it."
+  (interactive "P")
+  (if (null arg)
+      (setq arg
+	    (if (specifier-instance auto-lower-specifier (selected-frame))
+		-1 1)))
+  (if (> arg 0)
+      (progn
+	(lower-frame (selected-frame))
+	(add-hook 'deselect-frame-hook 'default-deselect-frame-hook))
+    (set-specifier auto-lower-specifier (> arg 0) (selected-frame))))
+
+;; XEmacs omission: XEmacs does not support changing the frame name
+;(defun set-frame-name (name)
+;  "Set the name of the selected frame to NAME.
+;When called interactively, prompt for the name of the frame.
+;The frame name is displayed on the modeline if the terminal displays only
+;one frame, otherwise the name is displayed on the frame's caption bar."
+;  (interactive "sFrame name: ")
+;  (modify-frame-parameters (selected-frame)
+;			   (list (cons 'name name))))
+
+;; XEmacs omission: XEmacs attaches scrollbars to windows, not frames.
+;; See window-hscroll and ... what? window-start?
+;(defun frame-current-scroll-bars (&optional frame)
+;  "Return the current scroll-bar settings in frame FRAME.
+;Value is a cons (VERTICAL . HORISONTAL) where VERTICAL specifies the
+;current location of the vertical scroll-bars (left, right, or nil),
+;and HORISONTAL specifies the current location of the horisontal scroll
+;bars (top, bottom, or nil)."
+;  (let ((vert (frame-parameter frame 'vertical-scroll-bars))
+;	(hor nil))
+;    (unless (memq vert '(left right nil))
+;      (setq vert default-frame-scroll-bars))
+;    (cons vert hor)))
+
+;;;; Frame/display capabilities.
+(defun display-mouse-p (&optional display)
+  "Return non-nil if DISPLAY has a mouse available.
+DISPLAY can be a frame, a device, a console, or nil (meaning the
+selected frame)."
+  (case (framep-on-display display)
+    ;; We assume X, NeXTstep, and GTK *always* have a pointing device
+    ((x ns gtk) t)
+    (mswindows (> mswindows-num-mouse-buttons 0))
+    (tty
+     (and 
+      (fboundp 'gpm-is-supported-p)
+      (gpm-is-supported-p (display-device display))))
+    (t nil)))
+
+(defun display-popup-menus-p (&optional display)
+  "Return non-nil if popup menus are supported on DISPLAY.
+DISPLAY can be a frame, a device, a console, or nil (meaning the selected
+frame).  Support for popup menus requires that the mouse be available."
+  (and
+   (memq (framep-on-display display) '(x ns gtk mswindows))
+   (display-mouse-p display)))
+
+(defun display-graphic-p (&optional display)
+  "Return non-nil if DISPLAY is a graphic display.
+Graphical displays are those which are capable of displaying several
+frames and several different fonts at once.  This is true for displays
+that use a window system such as X, and false for text-only terminals.
+DISPLAY can be a frame, a device, a console, or nil (meaning the selected
+frame)."
+  (memq (framep-on-display display) '(x ns gtk mswindows)))
+
+(defun display-images-p (&optional display)
+  "Return non-nil if DISPLAY can display images.
+DISPLAY can be a frame, a device, a console, or nil (meaning the selected
+frame)."
+  (display-graphic-p display))
+
+(defalias 'display-multi-frame-p 'display-graphic-p)
+(defalias 'display-multi-font-p 'display-graphic-p)
+
+(defun display-selections-p (&optional display)
+  "Return non-nil if DISPLAY supports selections.
+A selection is a way to transfer text or other data between programs
+via special system buffers called `selection' or `cut buffer' or
+`clipboard'.
+DISPLAY can be a frame, a device, a console, or nil (meaning the selected
+frame)."
+  (memq (framep-on-display display) '(x ns gtk mswindows)))
+
+(defun display-screens (&optional display)
+  "Return the number of screens associated with DISPLAY."
+  (device-num-screens (display-device display)))
+
+(defun display-pixel-height (&optional display)
+  "Return the height of DISPLAY's screen in pixels.
+For character terminals, each character counts as a single pixel."
+  (device-pixel-height (display-device display)))
+
+(defun display-pixel-width (&optional display)
+  "Return the width of DISPLAY's screen in pixels.
+For character terminals, each character counts as a single pixel."
+  (device-pixel-width (display-device display)))
+
+(defun display-mm-height (&optional display)
+  "Return the height of DISPLAY's screen in millimeters.
+If the information is unavailable, value is nil."
+  (device-mm-height (display-device display)))
+
+(defun display-mm-width (&optional display)
+  "Return the width of DISPLAY's screen in millimeters.
+If the information is unavailable, value is nil."
+  (device-mm-width (display-device display)))
+
+(defun display-backing-store (&optional display)
+  "Return the backing store capability of DISPLAY's screen.
+The value may be `always', `when-mapped', `not-useful', or nil if
+the question is inapplicable to a certain kind of display."
+  (device-backing-store (display-device display)))
+
+(defun display-save-under (&optional display)
+  "Return non-nil if DISPLAY's screen supports the SaveUnder feature."
+  (device-save-under (display-device display)))
+
+(defun display-planes (&optional display)
+  "Return the number of planes supported by DISPLAY."
+  (device-bitplanes (display-device display)))
+
+(defun display-color-cells (&optional display)
+  "Return the number of color cells supported by DISPLAY."
+  (device-color-cells (display-device display)))
+
+(defun display-visual-class (&optional display)
+  "Returns the visual class of DISPLAY.
+The value is one of the symbols `static-gray', `gray-scale',
+`static-color', `pseudo-color', `true-color', or `direct-color'."
+  (case (framep-on-display display)
+    (x (x-display-visual-class (display-device display)))
+    (gtk (gtk-display-visual-class (display-device display)))
+    (mswindows (let ((planes (display-planes display)))
+		 (cond ((eq planes 1) 'static-gray)
+		       ((eq planes 4) 'static-color)
+		       ((> planes 8) 'true-color)
+		       (t 'pseudo-color))))
+    (t 'static-gray)))
+
+
+;; XEmacs change: omit the Emacs 18 compatibility functions:
+;; screen-height, screen-width, set-screen-height, and set-screen-width.
+
+(defun delete-other-frames (&optional frame)
+  "Delete all frames except FRAME.
+If FRAME uses another frame's minibuffer, the minibuffer frame is
+left untouched.  FRAME nil or omitted means use the selected frame."
+  (interactive)
+  (unless frame
+    (setq frame (selected-frame)))
+  (let* ((mini-frame (window-frame (minibuffer-window frame)))
+	 (frames (delq mini-frame (delq frame (frame-list)))))
+    (mapc 'delete-frame frames)))
+
+;; XEmacs change: we still use delete-frame-hook
+;; miscellaneous obsolescence declarations
+;(defvaralias 'delete-frame-hook 'delete-frame-functions)
+;(make-obsolete-variable 'delete-frame-hook 'delete-frame-functions "21.4")
+
+
+;; Highlighting trailing whitespace.
+;; XEmacs omission: this functionality is provided by whitespace-mode in the
+;; text-modes package.
+
+;(make-variable-buffer-local 'show-trailing-whitespace)
+
+;(defcustom show-trailing-whitespace nil
+;  "*Non-nil means highlight trailing whitespace in face `trailing-whitespace'.
+;
+;Setting this variable makes it local to the current buffer."
+;  :tag "Highlight trailing whitespace."
+;  :type 'boolean
+;  :group 'font-lock)
+
+
+;; Scrolling
+;; XEmacs omission: This functionality is always enabled on XEmacs.
+
+;(defgroup scrolling nil
+;  "Scrolling windows."
+;  :version "21.1"
+;  :group 'frames)
+
+;(defcustom auto-hscroll-mode t
+;  "*Allow or disallow automatic scrolling windows horizontally.
+;If non-nil, windows are automatically scrolled horizontally to make
+;point visible."
+;  :version "21.1"
+;  :type 'boolean
+;  :group 'scrolling)
+;(defvaralias 'automatic-hscrolling 'auto-hscroll-mode)
+
+
+;; Blinking cursor
+;; XEmacs omission: this functionality is provided by blink-cursor in the
+;; edit-utils package.
+
+; (defgroup cursor nil
+;   "Displaying text cursors."
+;   :version "21.1"
+;   :group 'frames)
+
+; (defcustom blink-cursor-delay 0.5
+;   "*Seconds of idle time after which cursor starts to blink."
+;   :tag "Delay in seconds."
+;   :type 'number
+;   :group 'cursor)
+
+; (defcustom blink-cursor-interval 0.5
+;   "*Length of cursor blink interval in seconds."
+;   :tag "Blink interval in seconds."
+;   :type 'number
+;   :group 'cursor)
+
+; (defvar blink-cursor-idle-timer nil
+;   "Timer started after `blink-cursor-delay' seconds of Emacs idle time.
+; The function `blink-cursor-start' is called when the timer fires.")
+
+; (defvar blink-cursor-timer nil
+;   "Timer started from `blink-cursor-start'.
+; This timer calls `blink-cursor' every `blink-cursor-interval' seconds.")
+
+; (defvar blink-cursor-mode nil
+;   "Non-nil means blinking cursor is active.")
+
+; (defun blink-cursor-mode (arg)
+;   "Toggle blinking cursor mode.
+; With a numeric argument, turn blinking cursor mode on iff ARG is positive.
+; When blinking cursor mode is enabled, the cursor of the selected
+; window blinks.
+
+; Note that this command is effective only when Emacs
+; displays through a window system, because then Emacs does its own
+; cursor display.  On a text-only terminal, this is not implemented."
+;   (interactive "P")
+;   (let ((on-p (if (null arg)
+; 		  (not blink-cursor-mode)
+; 		(> (prefix-numeric-value arg) 0))))
+;     (if blink-cursor-idle-timer
+; 	(cancel-timer blink-cursor-idle-timer))
+;     (if blink-cursor-timer
+; 	(cancel-timer blink-cursor-timer))
+;     (setq blink-cursor-idle-timer nil
+; 	  blink-cursor-timer nil
+; 	  blink-cursor-mode nil)
+;     (if on-p
+; 	(progn
+; 	  ;; Hide the cursor.
+; 	  ;(internal-show-cursor nil nil)
+; 	  (setq blink-cursor-idle-timer
+; 		(run-with-idle-timer blink-cursor-delay
+; 				     blink-cursor-delay
+; 				     'blink-cursor-start))
+; 	  (setq blink-cursor-mode t))
+;       (internal-show-cursor nil t))))
+
+; ;; Note that this is really initialized from startup.el before
+; ;; the init-file is read.
+
+; (defcustom blink-cursor nil
+;   "*Non-nil means blinking cursor mode is active."
+;   :group 'cursor
+;   :tag "Blinking cursor"
+;   :type 'boolean
+;   :set #'(lambda (symbol value)
+; 	   (set-default symbol value)
+; 	   (blink-cursor-mode (or value 0))))
+
+; (defun blink-cursor-start ()
+;   "Timer function called from the timer `blink-cursor-idle-timer'.
+; This starts the timer `blink-cursor-timer', which makes the cursor blink
+; if appropriate.  It also arranges to cancel that timer when the next
+; command starts, by installing a pre-command hook."
+;   (when (null blink-cursor-timer)
+;     (add-hook 'pre-command-hook 'blink-cursor-end)
+;     (setq blink-cursor-timer
+; 	  (run-with-timer blink-cursor-interval blink-cursor-interval
+; 			  'blink-cursor-timer-function))))
+
+; (defun blink-cursor-timer-function ()
+;   "Timer function of timer `blink-cursor-timer'."
+;   (internal-show-cursor nil (not (internal-show-cursor-p))))
+
+; (defun blink-cursor-end ()
+;   "Stop cursor blinking.
+; This is installed as a pre-command hook by `blink-cursor-start'.
+; When run, it cancels the timer `blink-cursor-timer' and removes
+; itself as a pre-command hook."
+;   (remove-hook 'pre-command-hook 'blink-cursor-end)
+;   (internal-show-cursor nil t)
+;   (cancel-timer blink-cursor-timer)
+;   (setq blink-cursor-timer nil))
+
+
+;; Hourglass pointer
+;; XEmacs omission: this functionality is provided elsewhere.
+
+; (defcustom display-hourglass t
+;   "*Non-nil means show an hourglass pointer when running under a window system."
+;   :tag "Hourglass pointer"
+;   :type 'boolean
+;   :group 'cursor)
+
+; (defcustom hourglass-delay 1
+;   "*Seconds to wait before displaying an hourglass pointer."
+;   :tag "Hourglass delay"
+;   :type 'number
+;   :group 'cursor)
+
+; 
+; (defcustom cursor-in-non-selected-windows t
+;   "*Non-nil means show a hollow box cursor in non-selected-windows.
+; If nil, don't show a cursor except in the selected window.
+; Use Custom to set this variable to get the display updated."
+;   :tag "Cursor in non-selected windows"
+;   :type 'boolean
+;   :group 'cursor
+;   :set #'(lambda (symbol value)
+; 	   (set-default symbol value)
+; 	   (force-mode-line-update t)))
+
+
+;;;; Key bindings
+;; XEmacs change: these keybindings are in keydef.el.
+
+;(define-key ctl-x-5-map "2" 'make-frame-command)
+;(define-key ctl-x-5-map "1" 'delete-other-frames)
+;(define-key ctl-x-5-map "0" 'delete-frame)
+;(define-key ctl-x-5-map "o" 'other-frame)
+
+
+;;; XEmacs addition: nothing below this point appears in the Emacs version.
+
 ;;; Iconifying emacs.
 ;;;
 ;;; The function iconify-emacs replaces every non-iconified emacs window
@@ -797,40 +1573,6 @@ all frames that were visible, and iconify all frames that were not."
 	 (suspend-console (selected-console)))
 	(t
 	 (suspend-emacs))))
-
-
-;;; auto-raise and auto-lower
-
-(defcustom auto-raise-frame nil
-  "*If true, frames will be raised to the top when selected.
-Under X, most ICCCM-compliant window managers will have an option to do this
-for you, but this variable is provided in case you're using a broken WM."
-  :type 'boolean
-  :group 'frames)
-
-(defcustom auto-lower-frame nil
-  "*If true, frames will be lowered to the bottom when no longer selected.
-Under X, most ICCCM-compliant window managers will have an option to do this
-for you, but this variable is provided in case you're using a broken WM."
-  :type 'boolean
-  :group 'frames)
-
-(defun default-select-frame-hook ()
-  "Implement the `auto-raise-frame' variable.
-For use as the value of `select-frame-hook'."
-  (if auto-raise-frame (raise-frame (selected-frame))))
-
-(defun default-deselect-frame-hook ()
-  "Implement the `auto-lower-frame' variable.
-For use as the value of `deselect-frame-hook'."
-  (if auto-lower-frame (lower-frame (selected-frame)))
-  (highlight-extent nil nil))
-
-(or select-frame-hook
-    (add-hook 'select-frame-hook 'default-select-frame-hook))
-
-(or deselect-frame-hook
-    (add-hook 'deselect-frame-hook 'default-deselect-frame-hook))
 
 
 ;;; Application-specific frame-management
@@ -1121,10 +1863,6 @@ is normally set to `get-frame-for-buffer' (which see)."
 
 
 ;; from Bob Weiner <bweiner@pts.mot.com>, modified by Ben Wing
-(defun delete-other-frames (&optional frame)
-  "Delete all but FRAME (or the selected frame)."
-  (interactive)
-  (mapc 'delete-frame (delq (or frame (selected-frame)) (frame-list))))
 
 ;; By adding primitives to directly access the window hierarchy,
 ;; we can move many functions into Lisp.  We do it this way
@@ -1259,18 +1997,6 @@ If there is no window at the given POSITION, return nil."
 
 
 ;; frame properties.
-
-(defun set-frame-property (frame prop val)
-  "Set property PROP of FRAME to VAL.  See `set-frame-properties'."
-  (set-frame-properties frame (list prop val)))
-
-(defun frame-height (&optional frame)
-  "Return number of lines available for display on FRAME."
-  (frame-property frame 'height))
-
-(defun frame-width (&optional frame)
-  "Return number of columns available for display on FRAME."
-  (frame-property frame 'width))
 
 (put 'cursor-color 'frame-property-alias [text-cursor background])
 (put 'modeline 'frame-property-alias 'has-modeline-p)

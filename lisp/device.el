@@ -104,6 +104,20 @@ it is nil, it is assumes to be the value returned by emacs-pid."
   "Return the number of color cells of DEVICE, or nil if unknown."
   (device-system-metric device 'num-color-cells))
 
+(defun device-num-screens (&optional device)
+  "Return the number of display screens available on DEVICE, or 1 if unknown."
+  (device-system-metric device 'num-screens 1))
+
+(defun device-backing-store (&optional device)
+  "Return the backing store capability of DEVICE.
+The value may be `always', `when-mapped', `not-useful', or nil if
+the question is inapplicable to a certain kind of display."
+  (device-system-metric device 'backing-store))
+
+(defun device-save-under (&optional device)
+  "Return non-nil if DEVICE supports the SaveUnder feature."
+  (device-system-metric device 'save-under))
+
 (defun make-gtk-device ()
   "Create a new GTK device."
   (make-device 'gtk nil))

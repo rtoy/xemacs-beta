@@ -1,3 +1,10 @@
+2004-02-26  Jerry James  <james@xemacs.org>
+
+	* device.el (device-num-screens): New.
+	* device.el (device-backing-store): New.
+	* device.el (device-save-under): New.
+	* frame.el: Synch with Emacs 21.3.
+
 2004-02-23  Steve Youngs  <sryoungs@bigpond.net.au>
  
 	* package-get.el (package-get-update-base-from-buffer): Force

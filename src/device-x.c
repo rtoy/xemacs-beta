@@ -1693,6 +1693,21 @@ x_device_system_metrics (struct device *d,
       return make_int (DisplayPlanes (dpy, DefaultScreen (dpy)));
     case DM_num_color_cells:
       return make_int (DisplayCells (dpy, DefaultScreen (dpy)));
+    case DM_num_screens:
+      return make_int (ScreenCount (dpy));
+    case DM_backing_store:
+      switch (DoesBackingStore (DefaultScreenOfDisplay (dpy)))
+	{
+	case Always:
+	  return intern ("always");
+	case WhenMapped:
+	  return intern ("when-mapped");
+	default:
+	  return intern ("not-useful");
+	}
+    case DM_save_under:
+      return (DoesSaveUnders (DefaultScreenOfDisplay (dpy)) == True)
+	? Qt : Qnil;
     default: /* No such device metric property for X devices  */
       return Qunbound;
     }
