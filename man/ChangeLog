@@ -1,3 +1,82 @@
+2003-08-28  Steve Youngs  <youngs@xemacs.org>
+
+	* xemacs-faq.texi (Q2.0.2): Rewrite, mentioning the correct way to
+	remove a package.
+	(Q3.8.2): big-menubar is in the edit-utils package.
+	(Q4.3.2): Add a comment about not needing TM for things like Gnus,
+	MH-E and VM.
+	(Q5.3.3): State correct location of ps-print.el.
+
+	* xemacs/packages.texi (Packages): Remove "Creating Packages" menu
+	entry.
+	(Package Terminology): Whitespace clean up.
+	(Installing Packages): Whitespace clean up and add some @code
+	formatters. 
+	Re-organise the menu so that installation via PUI is first and
+	Sumo is last.
+	(Automatically): mule-base is no longer a requirement for using
+	PUI.
+	Mention optionally requiring mailcrypt.
+	(Note): Removed.
+	(Manually): Move to below the PUI installation method.
+	(Sumo): Move to below the manual installation method.
+	(Which Packages): Add mailcrypt.
+	(Building Packages): Remove duplicated stuff that is in
+	lispref/packaging.texi, xref to it instead.
+	(Local.rules File): xref to the appropriate node in
+	lispref/packaging.texi. 
+	(Available Packages): Update to current reality.
+	(all): Removed.
+	(srckit): Removed.
+	(binkit): Removed.
+	
+	* xemacs/reading.texi (Reading Mail): Mention Gnus and MEW.
+
+	* new-users-guide/custom2.texi (Init File): big-menubar.el is in
+	the edit-utils package.
+
+	* lispref/packaging.texi (Packaging):
+	(The User View):
+	(The Library Maintainer View):
+	(Infrastructure):
+	(Control Files):
+	(Obtaining):
+	(The Package Release Engineer View):
+	(Package Terminology):
+	(Building Packages):
+	(Makefile Targets):
+	(packages): New.
+	(Local.rules File):
+	(XEMACS_PACKAGES): Removed.
+	(XEMACS_INSTALLED_PACKAGES_ROOT): New.
+	(NONMULE_PACKAGES): New.
+	(EXCLUDES): New.
+	(Creating Packages):
+	(BATCH): New.
+	(VERSION): Removed.
+	(AUTHOR_VERSION): Removed.
+	(MAINTAINER): Removed.
+	(PACKAGE): Removed.
+	(PKG_TYPE): Removed.
+	(REQUIRES): Removed.
+	(CATEGORY): Removed.
+	(ELS): Removed.
+	(ELCS): Removed.
+	(all): Removed.
+	(srckit): Removed.
+	(binkit): Removed.
+	(are): New.
+	(STANDARD_DOCS): New.
+	(ELCS_1_DEST): New.
+	(example): New.
+	(PACKAGE_SUPPRESS): New.
+	(EXPLICIT_DOCS): New.
+	(DATA_DEST): New.
+	(Documenting Packages):
+
+	Not quite a total rewrite, but a fairly thorough audit
+	nonetheless.
+
 2003-07-31  René Kyllingstad  <listmailxemacs@kyllingstad.com>
 
 	* lispref/display.texi (Invisible Text):

@@ -419,7 +419,7 @@ If you want an extensive menu-bar use the following expression in your
 @noindent
 If you want to write your own menus, you can look at some of the
 examples in
-@file{/usr/local/lib/xemacs-VERSION/lisp/packages/big-menubar.el} file.
+@file{/usr/local/lib/xemacs/xemacs-packages/lisp/edit-utils/big-menubar.el} file.
 
 @end itemize
 

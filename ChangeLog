@@ -1,3 +1,7 @@
+2003-08-28  Steve Youngs  <youngs@xemacs.org>
+
+	* README.packages: Update.
+
 2003-08-18  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in (GENERATED_HEADERS): Add xemacs.def.

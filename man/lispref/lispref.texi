@@ -275,9 +275,8 @@ The Library Maintainer's View
 
 Creating Packages
 
-* package-compile.el::
-* package-info.in Fields::
-* Makefile Variables::
+* package-info.in::             package-info.in
+* Makefile::                    @file{Makefile}
 * Makefile Targets::
 
 Lisp Data Types
