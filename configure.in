@@ -2304,19 +2304,6 @@ if test "$doug_lea_malloc" = "yes" -a "$GNU_MALLOC" = "yes" ; then
   fi
 fi
 
-define([XE_REALLOC_NULLPTR_BUG],[
-AC_MSG_CHECKING(whether realloc accepts null pointers)
-AC_TRY_RUN([int main ()
-  { char *x = 0;
-    x = realloc (x, 16); if (!x) return 1; x[15] = 'y';
-    x = realloc (x, 64); if (!x) return 1; x[63] = 'z';
-    return 0;
-  }],
- [AC_MSG_RESULT(yes)], 
- [AC_MSG_RESULT(no); AC_DEFINE(REALLOC_NULLPTR_BUG) ])])
-
-XE_REALLOC_NULLPTR_BUG
-
 dnl #### mcheck is broken in all versions of Linux libc and glibc.
 dnl Try this again when 2.1 hits the streets.
 dnl Avoid using free-hook.c if support exists for malloc debugging in libc

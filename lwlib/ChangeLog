@@ -1,3 +1,8 @@
+2001-05-21  Martin Buchholz  <martin@xemacs.org>
+
+	* lwlib-config.c: Remove.
+	* Makefile.in.in: Remove references to lwlib-config.
+
 2001-05-09  Martin Buchholz <martin@xemacs.org>
 
 	* XEmacs 21.5.1 "anise" is released.

@@ -27,21 +27,19 @@ Boston, MA 02111-1307, USA.  */
 
 #include <string.h>
 
+#undef realloc
+#undef malloc
+#undef free
 #define realloc xrealloc
 #define malloc xmalloc
 #define free xfree
 extern void *xmalloc (size_t size);
 extern void *xrealloc (void *, size_t size);
 
-#else /* emacs */
+#else /* !emacs */
 
-#ifdef STDC_HEADERS
 #include <stdlib.h>
 #include <string.h>
-#else
-extern char *malloc ();
-extern char *realloc ();
-#endif
 
 #endif /* !emacs */
 

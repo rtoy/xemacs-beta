@@ -1,3 +1,7 @@
+2001-05-21  Martin Buchholz  <martin@xemacs.org>
+
+	* xemacs.mak: Remove references to lwlib-config.
+
 2001-05-01  Kirill 'Big K' Katsnelson  <kkm@dtmx.com>
 
 	* xemacs.mak: Use link to make .rsrc writable, not editbin.

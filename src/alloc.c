@@ -271,12 +271,10 @@ xmalloc_and_zero (size_t size)
 void *
 xrealloc (void *block, size_t size)
 {
-  /* We must call malloc explicitly when BLOCK is 0, since some
-     reallocs don't do this.  */
-  void *val = block ? realloc (block, size) : malloc (size);
+  block = realloc (block, size);
 
-  if (!val && (size != 0)) memory_full ();
-  return val;
+  if (!block && (size != 0)) memory_full ();
+  return block;
 }
 
 void

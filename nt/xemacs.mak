@@ -621,7 +621,6 @@ LWLIB_FLAGS=$(CFLAGS) $(INCLUDES) $(DEFINES) \
  -D_WINDOWS -DMENUBARS_LUCID -DSCROLLBARS_LUCID -DDIALOGS_ATHENA \
  -Fo$@ -c
 LWLIB_OBJS= \
-	$(OUTDIR)\lwlib-config.obj \
 	$(OUTDIR)\lwlib-utils.obj \
 	$(OUTDIR)\lwlib-Xaw.obj \
 	$(OUTDIR)\lwlib-Xlw.obj \
@@ -631,9 +630,6 @@ LWLIB_OBJS= \
 
 $(LWLIB): $(LWLIB_OBJS)
 	link.exe -lib -nologo -out:$@ $(LWLIB_OBJS)
-
-$(OUTDIR)\lwlib-config.obj:	$(LWLIB_SRCDIR)\lwlib-config.c
-	 $(CCV) $(LWLIB_FLAGS) $**
 
 $(OUTDIR)\lwlib-utils.obj:	$(LWLIB_SRCDIR)\lwlib-utils.c
 	 $(CCV) $(LWLIB_FLAGS) $**

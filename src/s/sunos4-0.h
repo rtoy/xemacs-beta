@@ -110,6 +110,23 @@ void * __builtin_alloca(int);
   int mkdir (const char *dpath, unsigned short dmode)
 # endif /* __GNUC__ */
 
+/* ANSI C requires that realloc accept a null pointer argument,
+   but ancient implementations such as SunOS 4 don't allow this.
+   We redefine realloc here so that the source code can be written to
+   use the ANSI C API. */
+#include <sys/types.h>
+#ifdef __GNUC__
+inline	/* Suppress warning: realloc_accepting_nullptr defined but not used */
+#endif
+static void*
+realloc_accepting_nullptr (void *ptr, size_t size)
+{
+  extern char *realloc ();
+  extern char *malloc ();
+  return ptr ? (void *) realloc (ptr, size) : (void *) malloc (size);
+}
+#define realloc(ptr, size) realloc_accepting_nullptr (ptr, size)
+
 #endif /* C_CODE */
 
 #endif /* _S_SUNOS4_H_ */

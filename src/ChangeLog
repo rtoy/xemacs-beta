@@ -1,3 +1,24 @@
+2001-05-21  Martin Buchholz  <martin@xemacs.org>
+
+	* gui-x.c (sanity_check_lwlib): Remove.
+
+2001-05-14  Martin Buchholz  <martin@xemacs.org>
+
+	realloc() was being called with a null pointer, causing a crash in
+	etags running `make TAGS' on SunOS 4.
+	The realloc bug should be handled in the config infrastructure,
+	not the regular code.  It's actually a feature to make the regular
+	code less defensive, since we *want* it to crash faster.
+	* s/sunos4.h (realloc_accepting_nullptr): Safe version of realloc.
+	* s/sunos4.h (realloc): Re-#define realloc to realloc_accepting_nullptr.
+	* regex.c (RETALLOC_IF): Remove.  Use RETALLOC instead.
+	* regex.c (RETALLOC): Code as if realloc() is ANSI-compliant.
+	* alloc.c (xrealloc): Code as if realloc() is ANSI-compliant.
+	* gmalloc.c: Undef functions to be defined here, in case system
+	header files or the config infrastructure have #define'd them.
+	* tparam.c: Likewise.
+	* tparam.c: Assume standard C header files.
+
 2001-05-12  Craig Lanning  <CraigL@Knology.net>
 
         * s\mingw32.h:

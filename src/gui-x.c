@@ -663,64 +663,6 @@ gui_items_to_widget_values (Lisp_Object gui_object_instance, Lisp_Object items,
   return control;
 }
 
-/* This is a kludge to make sure emacs can only link against a version of
-   lwlib that was compiled in the right way.  Emacs references symbols which
-   correspond to the way it thinks lwlib was compiled, and if lwlib wasn't
-   compiled in that way, then somewhat meaningful link errors will result.
-   The alternatives to this range from obscure link errors, to obscure
-   runtime errors that look a lot like bugs.
- */
-
-static void
-sanity_check_lwlib (void)
-{
-#define MACROLET(v) { extern int v; v = 1; }
-
-#if (XlibSpecificationRelease == 4)
-  MACROLET (lwlib_uses_x11r4);
-#elif (XlibSpecificationRelease == 5)
-  MACROLET (lwlib_uses_x11r5);
-#elif (XlibSpecificationRelease == 6)
-  MACROLET (lwlib_uses_x11r6);
-#else
-  MACROLET (lwlib_uses_unknown_x11);
-#endif
-#ifdef LWLIB_USES_MOTIF
-  MACROLET (lwlib_uses_motif);
-#else
-  MACROLET (lwlib_does_not_use_motif);
-#endif
-#if (XmVersion >= 1002)
-  MACROLET (lwlib_uses_motif_1_2);
-#else
-  MACROLET (lwlib_does_not_use_motif_1_2);
-#endif
-#ifdef LWLIB_MENUBARS_LUCID
-  MACROLET (lwlib_menubars_lucid);
-#elif defined (HAVE_MENUBARS)
-  MACROLET (lwlib_menubars_motif);
-#endif
-#ifdef LWLIB_SCROLLBARS_LUCID
-  MACROLET (lwlib_scrollbars_lucid);
-#elif defined (LWLIB_SCROLLBARS_MOTIF)
-  MACROLET (lwlib_scrollbars_motif);
-#elif defined (HAVE_SCROLLBARS)
-  MACROLET (lwlib_scrollbars_athena);
-#endif
-#ifdef LWLIB_DIALOGS_MOTIF
-  MACROLET (lwlib_dialogs_motif);
-#elif defined (HAVE_DIALOGS)
-  MACROLET (lwlib_dialogs_athena);
-#endif
-#ifdef LWLIB_WIDGETS_MOTIF
-  MACROLET (lwlib_widgets_motif);
-#elif defined (HAVE_WIDGETS)
-  MACROLET (lwlib_widgets_athena);
-#endif
-
-#undef MACROLET
-}
-
 void
 syms_of_gui_x (void)
 {
@@ -734,9 +676,6 @@ reinit_vars_of_gui_x (void)
 #ifdef HAVE_POPUPS
   popup_up_p = 0;
 #endif
-
-  /* this makes only safe calls as in emacs.c */
-  sanity_check_lwlib ();
 }
 
 void

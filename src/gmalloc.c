@@ -96,6 +96,10 @@ extern "C"
    apparently fails.  Curses on all this shit. */
 #define __free_ret_t void
 
+#undef malloc
+#undef realloc
+#undef calloc
+#undef free
 /* XEmacs: I tried commenting these out and including stdlib.h,
    but that fails badly.  Urk!  This sucks. */
 /* Allocate SIZE bytes of memory.  */

@@ -48,7 +48,7 @@ vpath %.h @srcdir@
 VPATH=@srcdir@
 #endif
 
-objs = lwlib.o lwlib-utils.o lwlib-config.o @lwlib_objs@
+objs = lwlib.o lwlib-utils.o @lwlib_objs@
 
 all: liblw.a
 
@@ -100,7 +100,6 @@ xlwgauge.h xlwcheckbox.h
 lwlib-Xlw.o:	$(CONFIG_H) lwlib-Xlw.h lwlib-internal.h lwlib.h xlwmenu.h xlwscrollbar.h \
 xlwtabs.h xlwgcs.h
 lwlib-Xm.o:	$(CONFIG_H) lwlib-Xm.h lwlib-internal.h lwlib-utils.h lwlib.h xlwmenu.h
-lwlib-config.o:	$(CONFIG_H) lwlib.h xlwmenu.h
 lwlib-utils.o:	$(CONFIG_H) lwlib-utils.h
 lwlib.o:	$(CONFIG_H) lwlib-Xaw.h lwlib-Xlw.h lwlib-Xm.h lwlib-internal.h lwlib-utils.h lwlib.h xlwmenu.h
 xlwmenu.o:	$(CONFIG_H) lwlib.h xlwmenu.h xlwmenuP.h

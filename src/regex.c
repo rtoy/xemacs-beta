@@ -131,12 +131,7 @@ complex_vars_of_regex (void)
 #endif
 #endif
 
-#if defined (STDC_HEADERS) || defined (_LIBC)
 #include <stdlib.h>
-#else
-char *malloc ();
-char *realloc ();
-#endif
 
 #define charptr_emchar(str)		((Emchar) (str)[0])
 
@@ -369,8 +364,6 @@ void *alloca ();
 /* (Re)Allocate N items of type T using malloc, or fail.  */
 #define TALLOC(n, t) ((t *) malloc ((n) * sizeof (t)))
 #define RETALLOC(addr, n, t) ((addr) = (t *) realloc (addr, (n) * sizeof (t)))
-#define RETALLOC_IF(addr, n, t) \
-  if (addr) RETALLOC((addr), (n), t); else (addr) = TALLOC ((n), t)
 #define REGEX_TALLOC(n, t) ((t *) REGEX_ALLOCATE ((n) * sizeof (t)))
 
 #define BYTEWIDTH 8 /* In bits.  */
@@ -1878,15 +1871,15 @@ regex_grow_registers (int num_regs)
 {
   if (num_regs > regs_allocated_size)
     {
-      RETALLOC_IF (regstart,	   num_regs, re_char *);
-      RETALLOC_IF (regend,	   num_regs, re_char *);
-      RETALLOC_IF (old_regstart,   num_regs, re_char *);
-      RETALLOC_IF (old_regend,	   num_regs, re_char *);
-      RETALLOC_IF (best_regstart,  num_regs, re_char *);
-      RETALLOC_IF (best_regend,	   num_regs, re_char *);
-      RETALLOC_IF (reg_info,	   num_regs, register_info_type);
-      RETALLOC_IF (reg_dummy,	   num_regs, re_char *);
-      RETALLOC_IF (reg_info_dummy, num_regs, register_info_type);
+      RETALLOC (regstart,	num_regs, re_char *);
+      RETALLOC (regend,		num_regs, re_char *);
+      RETALLOC (old_regstart,	num_regs, re_char *);
+      RETALLOC (old_regend,	num_regs, re_char *);
+      RETALLOC (best_regstart,	num_regs, re_char *);
+      RETALLOC (best_regend,	num_regs, re_char *);
+      RETALLOC (reg_info,	num_regs, register_info_type);
+      RETALLOC (reg_dummy,	num_regs, re_char *);
+      RETALLOC (reg_info_dummy, num_regs, register_info_type);
 
       regs_allocated_size = num_regs;
     }
