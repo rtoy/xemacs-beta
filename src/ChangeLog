@@ -1,5 +1,10 @@
 2003-09-15  Jerry James  <james@xemacs.org>
 
+	* event-msw.c (debug_mswin_messages): Conditionally compile
+	messages missing from the Cygwin headers.
+
+2003-09-15  Jerry James  <james@xemacs.org>
+
 	* event-msw.c (mswindows_wnd_proc): Use new w32api macros.
 	* syswindows.h: Define w32api macros as 0 for non-Cygwin.
 	* unexcw.c (CHECK_AOUT_POS): Add cast to quiet compiler.
