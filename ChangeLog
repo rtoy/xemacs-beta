@@ -1,3 +1,7 @@
+2002-06-04  Jerry James  <james@xemacs.org>
+
+	* configure.usage: Identify --with-modules as autodetecting.
+
 2002-07-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* PROBLEMS: Add two basic configuration questions.
