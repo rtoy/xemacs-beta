@@ -227,10 +227,7 @@ anything.  When called interactively, use a prefix arg to suppress the
 display of the print dialog box.
 
 If BUFFER is nil or omitted, the current buffer is used."
-  ;; #### for some reason, displaying a dialog box makes the printing
-  ;; fail unless y-or-n-p is called (see below).  when this is fixed,
-  ;; remove one of the calls to `not' in the following line.
-  (interactive (list nil (not (not current-prefix-arg))))
+  (interactive (list nil (not current-prefix-arg)))
   (if (or (not (valid-specifier-tag-p 'msprinter))
 	  (not display-print-dialog))
       (generic-print-region (point-min buffer) (point-max buffer) buffer)
@@ -342,22 +339,6 @@ Recognized properties are the same as those in `make-dialog-box':
 			 ;; only actually print the page if it's in the
 			 ;; range.
 			 (when (>= pageno from-page)
-			   ;; none of these work.
-; 			   (mapcar #'(lambda (foo)
-; 				       (redisplay-device foo t))
-; 				   (delete-if #'(lambda (foo)
-; 						  (eq (device-type foo)
-; 						      'msprinter))
-; 					      (device-list)))
-; 			   (mapcar #'(lambda (foo)
-; 				       (redraw-device foo t))
-; 				   (delete-if #'(lambda (foo)
-; 						  (eq (device-type foo)
-; 						      'msprinter))
-; 					      (device-list)))
-; 			   (sit-for 0.01)
-			   ;; but this one sure as hell does.
-; 			   (y-or-n-p "continue")
 			   (when printer-page-header
 			     (with-current-buffer header-buffer
 			       (erase-buffer)
@@ -375,7 +356,7 @@ Recognized properties are the same as those in `make-dialog-box':
 			       (goto-char (point-min))
 			       (set-window-start footer-window (point-min))))
 
-			   (redisplay-frame f)
+			   (redisplay-frame f t)
 			   (print-job-eject-page f)
 			   )
 			 ;; but use the GUARANTEE argument to `window-end'
@@ -413,6 +394,6 @@ Recognized properties are the same as those in `make-dialog-box':
 	     (and footer-buffer (kill-buffer footer-buffer))
 	     )))
 	((and (not (eq system-type 'windows-nt))
-	      (fboundp 'lpr-buffer))
+	      (fboundp 'lpr-region))
 	 (lpr-region buffer))
 	(t (error "No print support available"))))

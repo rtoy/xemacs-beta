@@ -1116,8 +1116,7 @@ Repeating \\[universal-argument] without digits or minus sign
 (defcustom kill-whole-line nil
   "*If non-nil, kill the whole line if point is at the beginning.
 Otherwise, `kill-line' kills only up to the end of the line, but not
-the terminating newline.  Note: This only applies when `kill-line' is
-called interactively.
+the terminating newline.
 
 WARNING: This is a misnamed variable!  It should be called something
 like `kill-whole-line-when-at-beginning'.  If you simply want
@@ -1126,7 +1125,7 @@ like `kill-whole-line-when-at-beginning'.  If you simply want
   :type 'boolean
   :group 'killing)
 
-(defun kill-line-1 (arg entire-line interactive-p)
+(defun kill-line-1 (arg entire-line)
   (kill-region (if entire-line
 		   (save-excursion
 		     (beginning-of-line)
@@ -1148,8 +1147,7 @@ like `kill-whole-line-when-at-beginning'.  If you simply want
 		       (signal 'end-of-buffer nil))
 		   (if (or (looking-at "[ \t]*$")
 			   (or entire-line
-			       (and interactive-p
-				    (and kill-whole-line (bolp)))))
+			       (and kill-whole-line (bolp))))
 		       (forward-line 1)
 		     (end-of-line)))
 		 (point))))
@@ -1162,7 +1160,7 @@ arguments kill lines backward.
 When calling from a program, nil means \"no arg\",
 a number counts as a prefix arg."
   (interactive "*P")
-  (kill-line-1 arg t (interactive-p)))
+  (kill-line-1 arg t))
 
 (defun kill-line (&optional arg)
   "Kill the rest of the current line, or the entire line.
@@ -1178,7 +1176,7 @@ current line, use `kill-entire-line'.
 When calling from a program, nil means \"no arg\",
 a number counts as a prefix arg."
   (interactive "*P")
-  (kill-line-1 arg nil (interactive-p)))
+  (kill-line-1 arg nil))
 
 ;; XEmacs
 (defun backward-kill-line nil

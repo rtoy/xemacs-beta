@@ -35,8 +35,9 @@ if [ ! -d "/bin" ]; then
 	mkdir /bin
 	mount -b $distdir /bin
     fi
-elif [ "$distdir" != "/bin" ]; then
-    echo "Warning: you have /bin but it's not the cygwin installation."
+#this appears bogus. --ben
+#elif [ "$distdir" != "/bin" ]; then
+#    echo "Warning: you have /bin but it's not the cygwin installation."
 fi
 
 if [ ! -d "/tmp" ]; then
@@ -129,19 +130,20 @@ then
 	echo "you have /etc/group"
     fi
 
-    if [ ! -f "/etc/hosts" ]; then
-	echo -n "You don't have /etc/hosts - create it?"
-	if yorn; then
-	    mname=`uname -n`
-	    echo "Machine name is $mname"
-	    echo -n "Please enter your ip address "
-	    read mipaddr junk
-	    echo "$mname $mipaddr" > /etc/hosts
-	    echo "localhost 127.0.0.1" >> /etc/hosts
-	fi
-    else
-	echo "you have /etc/hosts"
-    fi
+# this is bogus.  i have no hosts file and no problems. --ben
+#    if [ ! -f "/etc/hosts" ]; then
+#	echo -n "You don't have /etc/hosts - create it?"
+#	if yorn; then
+#	    mname=`uname -n`
+#	    echo "Machine name is $mname"
+#	    echo -n "Please enter your ip address "
+#	    read mipaddr junk
+#	    echo "$mname $mipaddr" > /etc/hosts
+#	    echo "localhost 127.0.0.1" >> /etc/hosts
+#	fi
+#    else
+#	echo "you have /etc/hosts"
+#    fi
 else
     echo "Can't create /etc files because /etc does not exist"
 fi
@@ -181,8 +183,11 @@ else
     echo "TERM is $TERM"
 fi
 
-if echo $CYGWIN32 | grep -w tty; then
-    echo "CYGWIN32 is $CYGWIN32"
+if echo $CYGWIN | grep -w tty > /dev/null; then
+    echo "CYGWIN is $CYGWIN"
 else 
-    echo "CYGWIN32 does not contain \"tty\" terminal may be deficient"
+    echo "CYGWIN does not contain \"tty\"; you may experience problems with
+subprocess or terminal handling.  To rectify this add CYGWIN=tty to
+your environment. (Note this cannot be done in bash as it needs to be
+read when cygwin1.dll initializes.)"
 fi

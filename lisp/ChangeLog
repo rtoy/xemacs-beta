@@ -1,3 +1,16 @@
+2001-05-04  Ben Wing  <ben@xemacs.org>
+
+	* printer.el (generic-print-buffer):
+	* printer.el (generic-print-region):
+	Enable dialog boxes.  Apply workaround recommended by Kirill.
+	
+	* simple.el (kill-whole-line):
+	* simple.el (kill-line-1):
+	* simple.el (kill-entire-line):
+	* simple.el (kill-line):
+	* simple.el (backward-kill-line):
+	Take out interactive dependence of kill-whole-line.
+
 2001-04-22  Ben Wing  <ben@xemacs.org>
 
 	----------------------- byte-comp warning fixes -----------------
