@@ -1,3 +1,8 @@
+2002-12-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* wid-edit.el: Synch trivia to GNU Emacs 21.3.50.  Make docstrings
+	from comments, fix typos & whitespace, add some comments and fixmes.
+
 2002-12-15  Ben Wing  <ben@xemacs.org>
 
 	* ChangeLog: Combine all ChangeLog files.
