@@ -754,7 +754,14 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
 	      /* #### Warning, dependency here on current_buffer and point */
 	      where_is_to_char (callback, buf);
 
-	      keys = eimake_string (buf);
+	      if (eilen (buf) > 0)
+		keys = eimake_string (buf);
+	      else
+		{
+		  
+		  keys = Qnil;
+		}
+
 	      eifree (buf);
 	    }
 	}
@@ -852,7 +859,13 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
 
 	  if (STRINGP (keys) && XSTRING_LENGTH (keys))
 	    {
-	      l->accel_string = g_strdup (XSTRING_DATA (keys));
+	      C_STRING_TO_EXTERNAL_MALLOC (XSTRING_DATA (keys), l->accel_string,
+					   Qctext);
+	      stderr_out ("accel: %s\n", l->accel_string);
+	    }
+	  else
+	    {
+	      // l->accel_string = "";
 	    }
 	}
 

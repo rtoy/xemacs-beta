@@ -186,8 +186,8 @@
 		("NONE" "OBJECT" "STRING" "STRING")
 		("NONE" "OBJECT" "STRING")
 		("NONE" "OBJECT")
-		("NONE" "POINTER" "INT")
 		("NONE" "POINTER" "INT" "INT")
+		("NONE" "POINTER" "INT")
 		("NONE" "POINTER" "POINTER" "BOOL" "INT" "INT" "INT" "INT" "INT" "INT")
 		("NONE" "POINTER" "POINTER" "BOOL" "INT" "INT" "INT" "INT")
 		("NONE" "POINTER" "POINTER" "INT" "INT" "INT" "INT")
@@ -239,6 +239,7 @@
 		("POINTER" "OBJECT" "POINTER")
 		("POINTER" "OBJECT")
 		("POINTER" "POINTER")
+		("POINTER" "STRING" "INT")
 		("POINTER")
 		("STRING" "INT" "INT" "INT")
 		("STRING" "INT")
@@ -268,7 +269,7 @@ our_string_eq (const void *st1, const void *st2)
     return !strcmp ( (const char *) st1, (const char *) st2);
 }
 
-unsigned long
+static unsigned long
 our_string_hash (const void *xv)
 {
   unsigned int h = 0;
