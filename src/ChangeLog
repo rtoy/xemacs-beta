@@ -1,3 +1,9 @@
+2001-06-11  Martin Buchholz  <martin@xemacs.org>
+
+	* lisp.h (DECIMAL_PRINT_SIZE): Don't use floating point.
+	Sun cc (buggily?) cannot use floating point computations to define
+	a compile-time integral constant.
+
 2001-06-10  Ben Wing  <ben@xemacs.org>
 
 

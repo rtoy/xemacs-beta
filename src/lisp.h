@@ -2856,9 +2856,13 @@ void print_string (Lisp_Object, Lisp_Object, int);
 /* The number of bytes required to store the decimal printed
    representation of an integral type.  Add a few bytes for truncation,
    optional sign prefix, and null byte terminator.
-   2.40824 == log (256) / log (10).  */
+   2.40824 == log (256) / log (10).
+
+   We don't use floating point since Sun cc (buggily?) cannot use
+   floating point computations to define a compile-time integral
+   constant. */
 #define DECIMAL_PRINT_SIZE(integral_type) \
-((size_t) (2.40824 * sizeof (integral_type)) + 3)
+(((2410824 * sizeof (integral_type)) / 1000000) + 3)
 void long_to_string (char *, long);
 
 void print_internal (Lisp_Object, Lisp_Object, int);
