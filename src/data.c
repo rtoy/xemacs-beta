@@ -1271,6 +1271,9 @@ Floating point numbers always use base 10.
 #ifdef HAVE_BIGFLOAT
       else
 	{
+	  /* GMP bigfloat_set_string returns random values with initial + */
+	  if (*p == '+')
+	    p++;
 	  bigfloat_set_prec (scratch_bigfloat, bigfloat_get_default_prec ());
 	  bigfloat_set_string (scratch_bigfloat, (const char *) p, b);
 	  return make_bigfloat_bf (scratch_bigfloat);
@@ -1281,12 +1284,19 @@ Floating point numbers always use base 10.
 #ifdef HAVE_RATIO
   if (qxestrchr (p, '/') != NULL)
     {
+      /* GMP ratio_set_string returns random values with initial + sign */
+      if (*p == '+')
+	p++;
       ratio_set_string (scratch_ratio, (const char *) p, b);
       return make_ratio_rt (scratch_ratio);
     }
 #endif /* HAVE_RATIO */
 
 #ifdef HAVE_BIGNUM
+  /* GMP bignum_set_string returns random values when the string starts with a
+     plus sign */
+  if (*p == '+')
+    p++;
   /* GMP bignum_set_string returns random values when fed an empty string */
   if (*p == '\0')
     return make_int (0);

@@ -1851,6 +1851,9 @@ read_atom (Lisp_Object readcharfun,
 #ifdef HAVE_RATIO
       if (isratio_string (read_ptr))
 	{
+	  /* GMP ratio_set_string returns random values with initial + sign */
+	  if (*read_ptr == '+')
+	    read_ptr++;
 	  ratio_set_string (scratch_ratio, read_ptr, 0);
 	  ratio_canonicalize (scratch_ratio);
 	  return Fcanonicalize_number (make_ratio_rt (scratch_ratio));
@@ -2673,8 +2676,8 @@ isfloat_string (const char *cp)
 int
 isratio_string (const char *cp)
 {
-  /* Possible minus sign */
-  if (*cp == '-')
+  /* Possible minus/plus sign */
+  if (*cp == '-' || *cp == '+')
     cp++;
 
   /* Numerator */

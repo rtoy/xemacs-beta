@@ -1,3 +1,11 @@
+2004-04-13  Jerry James  <james@xemacs.org>
+
+	* data.c (Fstring_to_number): Skip leading + sign to avoid
+	triggering random GMP behavior.
+	* lread.c (read_atom): Ditto.
+	* lread.c (isratio_string): Recognize ratio with leading + sign.
+	* number.c (string_to_bignum): Skip leading + sign.
+
 2004-01-30  Glynn Clements  <glynn.clements@virgin.net>
 
 	* device-x.c (x_error_handler): Don't call stderr_out
