@@ -7,6 +7,10 @@
 	* wid-edit.el: Synch trivia to GNU Emacs 21.3.50.  Make docstrings
 	from comments, fix typos & whitespace, add some comments and fixmes.
 
+2002-12-17  Daiki Ueno  <daiki@xemacs.org>
+
+	* process.el (shell-command-to-string): Synch with GNU Emacs 21.
+
 2002-12-15  Ben Wing  <ben@xemacs.org>
 
 	* ChangeLog: Combine all ChangeLog files.

@@ -512,7 +512,8 @@ In either case, the output is inserted after point (leaving mark after it)."
 (defun shell-command-to-string (command)
   "Execute shell command COMMAND and return its output as a string."
   (with-output-to-string
-    (call-process shell-file-name nil t nil shell-command-switch command)))
+    (with-current-buffer standard-output
+      (call-process shell-file-name nil t nil shell-command-switch command))))
 
 (defalias 'exec-to-string 'shell-command-to-string)
 
