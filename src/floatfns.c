@@ -491,16 +491,16 @@ Return the exponential NUMBER1 ** NUMBER2.
 #if defined(HAVE_BIGFLOAT) && defined(bigfloat_pow)
   if (BIGFLOATP (number1) && INTEGERP (number2))
     {
-      unsigned long exp;
+      unsigned long exponent;
 
 #ifdef HAVE_BIGNUM
       if (BIGNUMP (number2))
-	exp = bignum_to_ulong (XBIGNUM_DATA (number2));
+	exponent = bignum_to_ulong (XBIGNUM_DATA (number2));
       else
 #endif
-	exp = XUINT (number2);
+	exponent = XUINT (number2);
       bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number1));
-      bigfloat_pow (scratch_bigfloat, XBIGFLOAT_DATA (number1), exp);
+      bigfloat_pow (scratch_bigfloat, XBIGFLOAT_DATA (number1), exponent);
       return make_bigfloat_bf (scratch_bigfloat);
     }
 #endif

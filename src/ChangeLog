@@ -1,3 +1,10 @@
+2004-05-03  Jerry James  <james@xemacs.org>
+
+	* floatfns.c (Fexpt): Don't shadow the global symbol exp.
+	* number.c: Remove unused testing function string_to_bignum and
+	extraneous semicolon; thanks to Vin.
+	* number.h: Add make_floating prototype.
+
 2004-04-20  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
 
 	* console-gtk-impl.h: Include X11.h.

@@ -81,25 +81,6 @@ DEFINE_LRECORD_IMPLEMENTATION ("bignum", bignum, 0, 0,
 			       bignum_print, bignum_finalize, bignum_equal,
 			       bignum_hash, bignum_description, Lisp_Bignum);
 
-Lisp_Object
-string_to_bignum (const Ibyte *str, Bytecount len, int base)
-{
-  Lisp_Object b = make_bignum (0L);
-  /* GMP bignum_set_string has no effect with initial + sign */
-  if (*str == '+')
-    str++;
-  /* GMP bignum_set_string has no effect when fed an empty string */
-  if (*str == '\0')
-    return make_int (0);
-  return (bignum_set_string (XBIGNUM_DATA (b), (const char *) str, base) < 0)
-    ? Fsignal (Qinvalid_read_syntax,
-	       list3 (build_msg_string
-		      ("Invalid integer constant in reader"),
-		      make_string (str, len),
-		      make_int (10)))
-    : b;
-}
-
 #else /* !HAVE_BIGNUM */
 
 Lisp_Object Qbignump;
@@ -165,7 +146,6 @@ ratio_finalize (void *header, int for_disksave)
 		       VOID_TO_LISP (header));
   ratio_fini (((Lisp_Ratio *)header)->data);
 }
-;
 
 static int
 ratio_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
