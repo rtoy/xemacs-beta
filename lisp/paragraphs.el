@@ -149,7 +149,11 @@ without a period."
    ;; This is a bit stupid since it's not auto-updated when the
    ;; other variables are changed, but it's still useful info.
    (concat (if sentence-end-without-period "\\w  \\|")
-	   "[.?!$B!#!%!)!*$A!##.#?#!$(0!$!%!)!*$(G!$!%!)!*(B][]\"')}]*"
+	   "[.?!"
+	   (if (featurep 'mule)
+	       (decode-coding-string "\033$B!#!%!)!*\033$A!##.#?#!\033$(0!$!%!)!*\033$(G!$!%!)!*\033(B" 'iso-2022-7bit)
+	     "")
+	   "][]\"')}]*"
 	   (if sentence-end-double-space
 	       "\\($\\| $\\|\t\\|  \\)" "\\($\\|[\t ]\\)")
 	   "[ \t\n]*"))

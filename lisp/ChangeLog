@@ -1,3 +1,9 @@
+2005-02-09  Ben Wing  <ben@xemacs.org>
+
+	* paragraphs.el (sentence-end):
+	Don't have literal chars in the string and don't put the extended
+	chars in the string unless (featurep 'mule).
+
 2005-02-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/european.el: Fix a comment typo pointed out by Jerry James
