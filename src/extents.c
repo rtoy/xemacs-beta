@@ -1,6 +1,6 @@
 /* Copyright (c) 1994, 1995 Free Software Foundation, Inc.
    Copyright (c) 1995 Sun Microsystems, Inc.
-   Copyright (c) 1995, 1996, 2000 Ben Wing.
+   Copyright (c) 1995, 1996, 2000, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -938,7 +938,7 @@ allocate_extent_auxiliary (EXTENT ext)
     alloc_lcrecord_type (struct extent_auxiliary, &lrecord_extent_auxiliary);
 
   copy_lcrecord (data, &extent_auxiliary_defaults);
-  XSETEXTENT_AUXILIARY (extent_aux, data);
+  extent_aux = wrap_extent_auxiliary (data);
   ext->plist = Fcons (extent_aux, ext->plist);
   ext->flags.has_aux = 1;
 }
@@ -994,9 +994,8 @@ mark_extent_info (Lisp_Object obj)
       for (i = 0; i < extent_list_num_els (list); i++)
 	{
 	  struct extent *extent = extent_list_at (list, i, 0);
-	  Lisp_Object exobj;
+	  Lisp_Object exobj = wrap_extent (extent);
 
-	  XSETEXTENT (exobj, extent);
 	  mark_object (exobj);
 	}
     }
@@ -1036,7 +1035,7 @@ allocate_extent_info (void)
   struct extent_info *data =
     alloc_lcrecord_type (struct extent_info, &lrecord_extent_info);
 
-  XSETEXTENT_INFO (extent_info, data);
+  extent_info = wrap_extent_info (data);
   data->extents = allocate_extent_list ();
   data->soe = 0;
   return extent_info;
@@ -1074,7 +1073,7 @@ static Lisp_Object
 decode_buffer_or_string (Lisp_Object object)
 {
   if (NILP (object))
-    XSETBUFFER (object, current_buffer);
+    object = wrap_buffer (current_buffer);
   else if (BUFFERP (object))
     CHECK_LIVE_BUFFER (object);
   else if (STRINGP (object))
@@ -1105,7 +1104,7 @@ buffer_or_string_extent_info (Lisp_Object object)
 {
   if (STRINGP (object))
     {
-      Lisp_Object plist = XSTRING (object)->plist;
+      Lisp_Object plist = XSTRING_PLIST (object);
       if (!CONSP (plist) || !EXTENT_INFOP (XCAR (plist)))
 	return 0;
       return XEXTENT_INFO (XCAR (plist));
@@ -1147,7 +1146,7 @@ buffer_or_string_extent_info_force (Lisp_Object object)
 				    destroyed buffers, or special
 				    Lisp-inaccessible buffer objects. */
       extent_info = allocate_extent_info ();
-      XSTRING (object)->plist = Fcons (extent_info, XSTRING (object)->plist);
+      XSTRING_PLIST (object) = Fcons (extent_info, XSTRING_PLIST (object));
       return XEXTENT_INFO (extent_info);
     }
 
@@ -1281,7 +1280,7 @@ print_extent_2 (EXTENT e)
   Lisp_Object extent;
   char buf[200];
 
-  XSETEXTENT (extent, e);
+  extent = wrap_extent (e);
   print_extent_1 (buf, extent);
   fputs (buf, stdout);
 }
@@ -2801,7 +2800,7 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 	  struct glyph_block gb;
 
 	  gb.glyph = glyph;
-	  XSETEXTENT (gb.extent, e);
+	  gb.extent = wrap_extent (e);
 	  Dynarr_add (ef->begin_glyphs, gb);
 	}
     }
@@ -2816,7 +2815,7 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 	  struct glyph_block gb;
 
 	  gb.glyph = glyph;
-	  XSETEXTENT (gb.extent, e);
+	  gb.extent = wrap_extent (e);
 	  Dynarr_add (ef->end_glyphs, gb);
 	}
     }
@@ -2901,12 +2900,12 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 
 	      /* FIXME: One should probably inhibit the displaying of
 		 this extent to reduce flicker */
-	      extent_in_red_event_p(e) = 1;
+	      extent_in_red_event_p (e) = 1;
 
 	      /* call the function */
-	      XSETEXTENT(obj,e);
-	      if(!NILP(function))
-	         Fenqueue_eval_event(function,obj);
+	      obj = wrap_extent (e);
+	      if (!NILP (function))
+	         Fenqueue_eval_event (function, obj);
 	    }
 	}
     }
@@ -3341,7 +3340,6 @@ Note: The display order is not necessarily the order that `map-extents'
 */
        (extent))
 {
-  Lisp_Object val;
   EXTENT next;
 
   if (EXTENTP (extent))
@@ -3351,8 +3349,7 @@ Note: The display order is not necessarily the order that `map-extents'
 
   if (!next)
     return Qnil;
-  XSETEXTENT (val, next);
-  return val;
+  return wrap_extent (next);
 }
 
 DEFUN ("previous-extent", Fprevious_extent, 1, 1, 0, /*
@@ -3363,7 +3360,6 @@ This function is analogous to `next-extent'.
 */
        (extent))
 {
-  Lisp_Object val;
   EXTENT prev;
 
   if (EXTENTP (extent))
@@ -3373,8 +3369,7 @@ This function is analogous to `next-extent'.
 
   if (!prev)
     return Qnil;
-  XSETEXTENT (val, prev);
-  return val;
+  return wrap_extent (prev);
 }
 
 #ifdef DEBUG_XEMACS
@@ -3386,7 +3381,6 @@ If EXTENT is a buffer return the first extent in the buffer; likewise
 */
        (extent))
 {
-  Lisp_Object val;
   EXTENT next;
 
   if (EXTENTP (extent))
@@ -3396,8 +3390,7 @@ If EXTENT is a buffer return the first extent in the buffer; likewise
 
   if (!next)
     return Qnil;
-  XSETEXTENT (val, next);
-  return val;
+  return wrap_extent (next);
 }
 
 DEFUN ("previous-e-extent", Fprevious_e_extent, 1, 1, 0, /*
@@ -3408,7 +3401,6 @@ This function is analogous to `next-e-extent'.
 */
        (extent))
 {
-  Lisp_Object val;
   EXTENT prev;
 
   if (EXTENTP (extent))
@@ -3418,8 +3410,7 @@ This function is analogous to `next-e-extent'.
 
   if (!prev)
     return Qnil;
-  XSETEXTENT (val, prev);
-  return val;
+  return wrap_extent (prev);
 }
 
 #endif
@@ -3531,7 +3522,7 @@ See `extent-parent'.
   Lisp_Object cur_parent = extent_parent (e);
   Lisp_Object rest;
 
-  XSETEXTENT (extent, e);
+  extent = wrap_extent (e);
   if (!NILP (parent))
     CHECK_LIVE_EXTENT (parent);
   if (EQ (parent, cur_parent))
@@ -3600,8 +3591,8 @@ set_extent_endpoints_1 (EXTENT extent, Membpos start, Membpos end)
     {
       if (extent_duplicable_p (extent))
 	{
-	  Lisp_Object extent_obj;
-	  XSETEXTENT (extent_obj, extent);
+	  Lisp_Object extent_obj = wrap_extent (extent);
+
 	  record_extent (extent_obj, 1);
 	}
     }
@@ -3681,7 +3672,7 @@ copy_extent (EXTENT original, Bytebpos from, Bytebpos to, Lisp_Object object)
 			     &lrecord_extent_auxiliary);
 
       copy_lcrecord (data, XEXTENT_AUXILIARY (XCAR (original->plist)));
-      XSETEXTENT_AUXILIARY (XCAR (e->plist), data);
+      XCAR (e->plist) = wrap_extent_auxiliary (data);
     }
 
   {
@@ -3689,8 +3680,8 @@ copy_extent (EXTENT original, Bytebpos from, Bytebpos to, Lisp_Object object)
     Lisp_Object parent = extent_parent (e);
     if (!NILP (parent))
       {
-	Lisp_Object extent;
-	XSETEXTENT (extent, e);
+	Lisp_Object extent = wrap_extent (e);
+
 	add_extent_to_children_list (XEXTENT (parent), extent);
       }
   }
@@ -3713,7 +3704,7 @@ destroy_extent (EXTENT extent)
       LIST_LOOP_DELETING (rest, nextrest, XWEAK_LIST_LIST (children))
 	Fset_extent_parent (XCAR (rest), Qnil);
     }
-  XSETEXTENT (extent_obj, extent);
+  extent_obj = wrap_extent (extent);
   Fset_extent_parent (extent_obj, Qnil);
   /* mark the extent as destroyed */
   extent_object (extent) = Qt;
@@ -3739,7 +3730,7 @@ meaning the extent is in no buffer and no string.
     {
       if (NILP (buffer_or_string))
 	obj = Qnil;
-      XSETEXTENT (extent_obj, make_extent_detached (obj));
+      extent_obj = wrap_extent (make_extent_detached (obj));
     }
   else
     {
@@ -3747,7 +3738,7 @@ meaning the extent is in no buffer and no string.
 
       get_buffer_or_string_range_byte (obj, from, to, &start, &end,
 				       GB_ALLOW_PAST_ACCESSIBLE);
-      XSETEXTENT (extent_obj, make_extent_internal (obj, start, end));
+      extent_obj = wrap_extent (make_extent_internal (obj, start, end));
     }
   return extent_obj;
 }
@@ -3765,8 +3756,7 @@ Optional argument BUFFER-OR-STRING defaults to EXTENT's buffer or string.
   else
     buffer_or_string = decode_buffer_or_string (buffer_or_string);
 
-  XSETEXTENT (extent, copy_extent (ext, -1, -1, buffer_or_string));
-  return extent;
+  return wrap_extent (copy_extent (ext, -1, -1, buffer_or_string));
 }
 
 DEFUN ("delete-extent", Fdelete_extent, 1, 1, 0, /*
@@ -3943,9 +3933,8 @@ slow_map_extents_function (EXTENT extent, void *arg)
 {
   /* This function can GC */
   struct slow_map_extents_arg *closure = (struct slow_map_extents_arg *) arg;
-  Lisp_Object extent_obj;
+  Lisp_Object extent_obj = wrap_extent (extent);
 
-  XSETEXTENT (extent_obj, extent);
 
   /* make sure this extent qualifies according to the PROPERTY
      and VALUE args */
@@ -4137,7 +4126,7 @@ slow_map_extent_children_function (EXTENT extent, void *arg)
 	return 0;
       /* corner case:  prev_end can be -1 if there is no prev */
     }
-  XSETEXTENT (extent_obj, extent);
+  extent_obj = wrap_extent (extent);
 
   /* make sure this extent qualifies according to the PROPERTY
      and VALUE args */
@@ -4284,8 +4273,8 @@ extent_at_mapper (EXTENT e, void *arg)
      if it has a non-nil value for that property. */
   if (!NILP (closure->prop))
     {
-      Lisp_Object extent;
-      XSETEXTENT (extent, e);
+      Lisp_Object extent = wrap_extent (e);
+
       if (NILP (Fextent_property (extent, closure->prop, Qnil)))
 	return 0;
     }
@@ -4311,15 +4300,14 @@ extent_at_mapper (EXTENT e, void *arg)
       else
 	return 0;
     accept:
-      XSETEXTENT (closure->best_match, e);
+      closure->best_match = wrap_extent (e);
       closure->best_start = extent_start (e);
       closure->best_end = extent_end (e);
     }
   else
     {
-      Lisp_Object extent;
+      Lisp_Object extent = wrap_extent (e);
 
-      XSETEXTENT (extent, e);
       closure->best_match = Fcons (extent, closure->best_match);
     }
 
@@ -4718,9 +4706,9 @@ report_extent_modification_mapper (EXTENT extent, void *arg)
   if (NILP (hook))
     return 0;
 
-  XSETEXTENT (exobj, extent);
-  XSETINT (startobj, closure->start);
-  XSETINT (endobj, closure->end);
+  exobj = wrap_extent (extent);
+  startobj = make_int (closure->start);
+  endobj = make_int (closure->end);
 
   /* Now that we are sure to call elisp, set up an unwind-protect so
      inside_change_hook gets restored in case we throw.  Also record
@@ -5530,7 +5518,7 @@ Do not modify this list; use `set-extent-property' instead.
     return cons3 (Qdestroyed, Qt, Qnil);
 
   anc = extent_ancestor (e);
-  XSETEXTENT (anc_obj, anc);
+  anc_obj = wrap_extent (anc);
 
   /* For efficiency, use the ancestor for all properties except detached */
 
@@ -5644,7 +5632,7 @@ on extents without the `mouse-face' property.
   if (NILP (extent))
     highlight_p = Qnil;
   else
-    XSETEXTENT (extent, decode_extent (extent, DE_MUST_BE_ATTACHED));
+    extent = wrap_extent (decode_extent (extent, DE_MUST_BE_ATTACHED));
   do_highlight (extent, !NILP (highlight_p));
   return Qnil;
 }
@@ -5679,7 +5667,7 @@ run_extent_copy_paste_internal (EXTENT e, Charbpos from, Charbpos to,
   /* This function can GC */
   Lisp_Object extent;
   Lisp_Object copy_fn;
-  XSETEXTENT (extent, e);
+  extent = wrap_extent (e);
   copy_fn = Fextent_property (extent, prop, Qnil);
   if (!NILP (copy_fn))
     {
@@ -5735,8 +5723,6 @@ insert_extent (EXTENT extent, Bytebpos new_start, Bytebpos new_end,
 	       Lisp_Object object, int run_hooks)
 {
   /* This function can GC */
-  Lisp_Object tmp;
-
   if (!EQ (extent_object (extent), object))
     goto copy_it;
 
@@ -5765,8 +5751,7 @@ insert_extent (EXTENT extent, Bytebpos new_start, Bytebpos new_end,
 	}
     }
 
-  XSETEXTENT (tmp, extent);
-  return tmp;
+  return wrap_extent (extent);
 
  copy_it:
   if (run_hooks &&
@@ -5774,10 +5759,7 @@ insert_extent (EXTENT extent, Bytebpos new_start, Bytebpos new_end,
     /* The paste-function said don't attach a copy of the extent here. */
     return Qnil;
   else
-    {
-      XSETEXTENT (tmp, copy_extent (extent, new_start, new_end, object));
-      return tmp;
-    }
+    return wrap_extent (copy_extent (extent, new_start, new_end, object));
 }
 
 DEFUN ("insert-extent", Finsert_extent, 1, 5, 0, /*
@@ -5928,9 +5910,8 @@ splice_in_string_extents (Lisp_Object string, struct buffer *buf,
 {
   struct splice_in_string_extents_arg closure;
   struct gcpro gcpro1, gcpro2;
-  Lisp_Object buffer;
+  Lisp_Object buffer = wrap_buffer (buf);
 
-  buffer = wrap_buffer (buf);
   closure.opoint = opoint;
   closure.pos = pos;
   closure.length = length;
@@ -6178,7 +6159,7 @@ put_text_prop_mapper (EXTENT e, void *arg)
   Lisp_Object extent, e_val;
   int is_eq;
 
-  XSETEXTENT (extent, e);
+  extent = wrap_extent (e);
 
   /* Note: in some cases when the property itself is 'start-open
      or 'end-closed, the checks to set the openness may do a bit
@@ -6335,8 +6316,8 @@ put_text_prop_openness_mapper (EXTENT e, void *arg)
   Bytebpos e_start, e_end;
   Bytebpos start = closure->start;
   Bytebpos end   = closure->end;
-  Lisp_Object extent;
-  XSETEXTENT (extent, e);
+  Lisp_Object extent = wrap_extent (e);
+
   e_start = extent_endpoint_bytebpos (e, 0);
   e_end   = extent_endpoint_bytebpos (e, 1);
 
@@ -6408,9 +6389,8 @@ put_text_prop (Bytebpos start, Bytebpos end, Lisp_Object object,
    */
   if (!NILP (value) && NILP (closure.the_extent))
     {
-      Lisp_Object extent;
+      Lisp_Object extent = wrap_extent (make_extent_internal (object, start, end));
 
-      XSETEXTENT (extent, make_extent_internal (object, start, end));
       closure.changed_p = 1;
       Fset_extent_property (extent, Qtext_prop, prop);
       Fset_extent_property (extent, prop, value);

@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1992 by Sebastian Kremer <sk@thp.uni-koeln.de>
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2002 Ben Wing.
 
 ;; Author: Sebastian Kremer <sk@thp.uni-koeln.de>
 ;; Maintainer: XEmacs Development Team
@@ -11,7 +11,7 @@
 
 ;; XEmacs is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; XEmacs is distributed in the hope that it will be useful, but
@@ -254,75 +254,69 @@ See also function `auto-save-file-name-p'."
 		      buffer-file-truename
 		      (and buffer-file-name
 			   (expand-file-name buffer-file-name))))
-  (condition-case error-data
-      (let (
-	    ;; So autosavename looks like #%...#, roughly as with the
-	    ;; old make-auto-save-file-name function.  The
-	    ;; make-temp-name inserts the pid of this Emacs: this
-	    ;; avoids autosaving from two Emacses into the same file.
-	    ;; It cannot be recovered automatically then because in
-	    ;; the next Emacs session (the one after the crash) the
-	    ;; pid will be different, but file-less buffers like
-	    ;; *mail* must be recovered manually anyway.
+  (with-trapping-errors
+    :operation 'make-auto-save-file-name
+    :error-form
+    (let ((fname
+	   (if file-name
+	       (concat (file-name-directory file-name)
+		       "#"
+		       (file-name-nondirectory file-name)
+		       "#")
+	     (expand-file-name
+	      (concat "#%" (auto-save-escape-name (buffer-name))
+		      "#")))))
+      (if (or (file-writable-p fname)
+	      (file-exists-p fname))
+	  fname
+	(expand-file-name (concat "~/"
+				  (file-name-nondirectory fname)))))
+    (let (
+	  ;; So autosavename looks like #%...#, roughly as with the
+	  ;; old make-auto-save-file-name function.  The
+	  ;; make-temp-name inserts the pid of this Emacs: this
+	  ;; avoids autosaving from two Emacses into the same file.
+	  ;; It cannot be recovered automatically then because in
+	  ;; the next Emacs session (the one after the crash) the
+	  ;; pid will be different, but file-less buffers like
+	  ;; *mail* must be recovered manually anyway.
 
-	    ;; jwz: putting the emacs PID in the auto-save file name is bad
-	    ;; news, because that defeats auto-save-recovery of *mail*
-	    ;; buffers -- the (sensible) code in sendmail.el calls
-	    ;; (make-auto-save-file-name) to determine whether there is
-	    ;; unsent, auto-saved mail to recover. If that mail came from a
-	    ;; previous emacs process (far and away the most likely case)
-	    ;; then this can never succeed as the pid differs.
-	    ;;(name-prefix (if file-name nil (make-temp-name "#%")))
-	    (name-prefix (if file-name nil "#%"))
+	  ;; jwz: putting the emacs PID in the auto-save file name is bad
+	  ;; news, because that defeats auto-save-recovery of *mail*
+	  ;; buffers -- the (sensible) code in sendmail.el calls
+	  ;; (make-auto-save-file-name) to determine whether there is
+	  ;; unsent, auto-saved mail to recover. If that mail came from a
+	  ;; previous emacs process (far and away the most likely case)
+	  ;; then this can never succeed as the pid differs.
+	  ;;(name-prefix (if file-name nil (make-temp-name "#%")))
+	  (name-prefix (if file-name nil "#%"))
 
-	    (save-name (or file-name
-			   ;; Prevent autosave errors.  Buffername
-			   ;; (to become non-dir part of filename) will
-			   ;; be escaped twice.  Don't care.
-			   (auto-save-escape-name (buffer-name))))
-	    (remote-p (and-fboundp 'efs-ftp-path
-			(stringp file-name)
-			(efs-ftp-path file-name))))
-	;; Return the appropriate auto save file name:
-	(expand-file-name;; a buffername needs this, a filename not
-	 (cond (remote-p
-		(if efs-auto-save-remotely
-		    (auto-save-name-in-same-directory save-name)
-		  ;; We have to use the `fixed-directory' now since the
-		  ;; `same-directory' would be remote.
-		  ;; It will use the fallback if needed.
-		  (auto-save-name-in-fixed-directory save-name)))
-	       ;; Else it is a local file (or a buffer without a file,
-	       ;; hence the name-prefix).
-	       ((or auto-save-directory auto-save-hash-p)
-		;; Hashed files always go into the special hash dir,
-		;; never in the same directory, to make recognizing
-		;; reliable.
-		(auto-save-name-in-fixed-directory save-name name-prefix))
-	       (t
-		(auto-save-name-in-same-directory save-name name-prefix)))))
-
-    ;; If any error occurs in the above code, return what the old
-    ;; version of this function would have done.  It is not ok to
-    ;; return nil, e.g., when after-find-file tests
-    ;; file-newer-than-file-p, nil would bomb.
-
-    (error (warn "Error caught in `make-auto-save-file-name':\n%s"
-		 (error-message-string error-data))
-	   (let ((fname
-		  (if file-name
-		      (concat (file-name-directory file-name)
-			      "#"
-			      (file-name-nondirectory file-name)
-			      "#")
-		    (expand-file-name
-		     (concat "#%" (auto-save-escape-name (buffer-name))
-			     "#")))))
-	     (if (or (file-writable-p fname)
-		     (file-exists-p fname))
-		 fname
-	       (expand-file-name (concat "~/"
-					 (file-name-nondirectory fname))))))))
+	  (save-name (or file-name
+			 ;; Prevent autosave errors.  Buffername
+			 ;; (to become non-dir part of filename) will
+			 ;; be escaped twice.  Don't care.
+			 (auto-save-escape-name (buffer-name))))
+	  (remote-p (and-fboundp 'efs-ftp-path
+		      (stringp file-name)
+		      (efs-ftp-path file-name))))
+      ;; Return the appropriate auto save file name:
+      (expand-file-name;; a buffername needs this, a filename not
+       (cond (remote-p
+	      (if efs-auto-save-remotely
+		  (auto-save-name-in-same-directory save-name)
+		;; We have to use the `fixed-directory' now since the
+		;; `same-directory' would be remote.
+		;; It will use the fallback if needed.
+		(auto-save-name-in-fixed-directory save-name)))
+	     ;; Else it is a local file (or a buffer without a file,
+	     ;; hence the name-prefix).
+	     ((or auto-save-directory auto-save-hash-p)
+	      ;; Hashed files always go into the special hash dir,
+	      ;; never in the same directory, to make recognizing
+	      ;; reliable.
+	      (auto-save-name-in-fixed-directory save-name name-prefix))
+	     (t
+	      (auto-save-name-in-same-directory save-name name-prefix)))))))
 
 (defun auto-save-file-name-p (filename)
   "Return non-nil if FILENAME can be yielded by `make-auto-save-file-name'.
@@ -570,7 +564,7 @@ Hashed files (see `auto-save-hash-p') are not understood, use
 	    file (auto-save-original-name afile)
 	    savefiles (cdr savefiles))
       (cond ((and file (not (file-newer-than-file-p afile file)))
-	     (warn "Autosave file \"%s\" is not current." afile))
+	     (warn "Autosave file \"%s\" is not current" afile))
 	    (t
 	     (incf total)
 	     (with-output-to-temp-buffer "*Directory*"

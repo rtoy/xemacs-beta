@@ -232,12 +232,10 @@ You can manipulate it using `put-range-table', `get-range-table',
 */
        ())
 {
-  Lisp_Object obj;
   Lisp_Range_Table *rt = alloc_lcrecord_type (Lisp_Range_Table,
 					      &lrecord_range_table);
   rt->entries = Dynarr_new (range_table_entry);
-  XSETRANGE_TABLE (obj, rt);
-  return obj;
+  return wrap_range_table (rt);
 }
 
 DEFUN ("copy-range-table", Fcopy_range_table, 1, 1, 0, /*
@@ -248,7 +246,6 @@ The values will not themselves be copied.
        (range_table))
 {
   Lisp_Range_Table *rt, *rtnew;
-  Lisp_Object obj;
 
   CHECK_RANGE_TABLE (range_table);
   rt = XRANGE_TABLE (range_table);
@@ -258,8 +255,7 @@ The values will not themselves be copied.
 
   Dynarr_add_many (rtnew->entries, Dynarr_atp (rt->entries, 0),
 		   Dynarr_length (rt->entries));
-  XSETRANGE_TABLE (obj, rtnew);
-  return obj;
+  return wrap_range_table (rtnew);
 }
 
 DEFUN ("get-range-table", Fget_range_table, 2, 3, 0, /*

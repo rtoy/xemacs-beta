@@ -1,6 +1,6 @@
 /* "intern" and friends -- moved here from lread.c and data.c
    Copyright (C) 1985-1989, 1992-1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 2000, 2001 Ben Wing.
+   Copyright (C) 1995, 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -90,12 +90,10 @@ static Lisp_Object
 mark_symbol (Lisp_Object obj)
 {
   Lisp_Symbol *sym = XSYMBOL (obj);
-  Lisp_Object pname;
 
   mark_object (sym->value);
   mark_object (sym->function);
-  XSETSTRING (pname, sym->name);
-  mark_object (pname);
+  mark_object (sym->name);
   if (!symbol_next (sym))
     return sym->plist;
   else
@@ -103,8 +101,7 @@ mark_symbol (Lisp_Object obj)
     mark_object (sym->plist);
     /* Mark the rest of the symbols in the obarray hash-chain */
     sym = symbol_next (sym);
-    XSETSYMBOL (obj, sym);
-    return obj;
+    return wrap_symbol (sym);
   }
 }
 
@@ -209,7 +206,7 @@ it defaults to the value of the variable `obarray'.
        (string, obarray))
 {
   Lisp_Object object, *ptr;
-  Lisp_Symbol *symbol;
+  Lisp_Object symbol;
   Bytecount len;
 
   if (NILP (obarray)) obarray = Vobarray;
@@ -226,21 +223,21 @@ it defaults to the value of the variable `obarray'.
   ptr = &XVECTOR_DATA (obarray)[XINT (object)];
 
   object = Fmake_symbol (string);
-  symbol = XSYMBOL (object);
+  symbol = object;
 
   if (SYMBOLP (*ptr))
-    symbol_next (symbol) = XSYMBOL (*ptr);
+    XSYMBOL_NEXT (symbol) = XSYMBOL (*ptr);
   else
-    symbol_next (symbol) = 0;
+    XSYMBOL_NEXT (symbol) = 0;
   *ptr = object;
 
-  if (string_byte (symbol_name (symbol), 0) == ':' && EQ (obarray, Vobarray))
+  if (XSTRING_BYTE (XSYMBOL_NAME (symbol), 0) == ':' && EQ (obarray, Vobarray))
     {
       /* The LISP way is to put keywords in their own package, but we
 	 don't have packages, so we do something simpler.  Someday,
 	 maybe we'll have packages and then this will be reworked.
 	 --Stig. */
-      symbol_value (symbol) = object;
+      XSYMBOL_VALUE (symbol) = object;
     }
 
   return object;
@@ -258,7 +255,7 @@ it defaults to the value of the variable `obarray'.
   /* #### Bug!  (intern-soft "nil") returns nil.  Perhaps we should
      add a DEFAULT-IF-NOT-FOUND arg, like in get.  */
   Lisp_Object tem;
-  Lisp_String *string;
+  Lisp_Object string;
 
   if (NILP (obarray)) obarray = Vobarray;
   obarray = check_obarray (obarray);
@@ -266,12 +263,12 @@ it defaults to the value of the variable `obarray'.
   if (!SYMBOLP (name))
     {
       CHECK_STRING (name);
-      string = XSTRING (name);
+      string = name;
     }
   else
     string = symbol_name (XSYMBOL (name));
 
-  tem = oblookup (obarray, string_data (string), string_length (string));
+  tem = oblookup (obarray, XSTRING_DATA (string), XSTRING_LENGTH (string));
   if (INTP (tem) || (SYMBOLP (name) && !EQ (name, tem)))
     return Qnil;
   else
@@ -288,7 +285,7 @@ OBARRAY defaults to the value of the variable `obarray'.
        (name, obarray))
 {
   Lisp_Object tem;
-  Lisp_String *string;
+  Lisp_Object string;
   int hash;
 
   if (NILP (obarray)) obarray = Vobarray;
@@ -299,10 +296,10 @@ OBARRAY defaults to the value of the variable `obarray'.
   else
     {
       CHECK_STRING (name);
-      string = XSTRING (name);
+      string = name;
     }
 
-  tem = oblookup (obarray, string_data (string), string_length (string));
+  tem = oblookup (obarray, XSTRING_DATA (string), XSTRING_LENGTH (string));
   if (INTP (tem))
     return Qnil;
   /* If arg was a symbol, don't delete anything but that symbol itself.  */
@@ -314,7 +311,7 @@ OBARRAY defaults to the value of the variable `obarray'.
   if (EQ (XVECTOR_DATA (obarray)[hash], tem))
     {
       if (XSYMBOL (tem)->next)
-	XSETSYMBOL (XVECTOR_DATA (obarray)[hash], XSYMBOL (tem)->next);
+	XVECTOR_DATA (obarray)[hash] = wrap_symbol (XSYMBOL (tem)->next);
       else
 	XVECTOR_DATA (obarray)[hash] = Qzero;
     }
@@ -326,7 +323,7 @@ OBARRAY defaults to the value of the variable `obarray'.
 	   XSYMBOL (tail)->next;
 	   tail = following)
 	{
-	  XSETSYMBOL (following, XSYMBOL (tail)->next);
+	  following = wrap_symbol (XSYMBOL (tail)->next);
 	  if (EQ (following, tem))
 	    {
 	      XSYMBOL (tail)->next = XSYMBOL (following)->next;
@@ -366,11 +363,10 @@ oblookup (Lisp_Object obarray, const Intbyte *ptr, Bytecount size)
   else
     for (tail = XSYMBOL (bucket); ;)
       {
-	if (string_length (tail->name) == size &&
-	    !memcmp (string_data (tail->name), ptr, size))
+	if (XSTRING_LENGTH (tail->name) == size &&
+	    !memcmp (XSTRING_DATA (tail->name), ptr, size))
 	  {
-	    XSETSYMBOL (bucket, tail);
-	    return bucket;
+	    return wrap_symbol (tail);
 	  }
 	tail = symbol_next (tail);
 	if (!tail)
@@ -416,7 +412,7 @@ map_obarray (Lisp_Object obarray,
 	    next = symbol_next (XSYMBOL (tail));
 	    if (!next)
 	      break;
-	    XSETSYMBOL (tail, next);
+	    tail = wrap_symbol (next);
 	  }
     }
 }
@@ -667,11 +663,8 @@ Return SYMBOL's name, a string.
 */
        (symbol))
 {
-  Lisp_Object name;
-
   CHECK_SYMBOL (symbol);
-  XSETSTRING (name, XSYMBOL (symbol)->name);
-  return name;
+  return XSYMBOL (symbol)->name;
 }
 
 DEFUN ("fset", Ffset, 2, 2, 0, /*
@@ -1373,7 +1366,7 @@ set_up_buffer_local_cache (Lisp_Object sym,
     new_val = Fcdr (new_alist_el);
 
   bfwd->current_alist_element = new_alist_el;
-  XSETBUFFER (bfwd->current_buffer, buf);
+  bfwd->current_buffer = wrap_buffer (buf);
 
   /* Now store the value into the current-value slot.
      We don't simply write it there, because the current-value
@@ -1446,7 +1439,7 @@ flush_all_buffer_local_cache (void)
 	    next = symbol_next (XSYMBOL (sym));
 	    if (!next)
 	      break;
-	    XSETSYMBOL (sym, next);
+	    sym = wrap_symbol (next);
 	  }
     }
 }
@@ -1867,7 +1860,7 @@ Set SYMBOL's value to NEWVAL, and return NEWVAL.
 	    /* Cache the new buffer's assoc in CURRENT-ALIST-ELEMENT.  */
 	    bfwd->current_alist_element = aelt;
 	    /* Set BUFFER, now that CURRENT-ALIST-ELEMENT is accurate.  */
-	    XSETBUFFER (bfwd->current_buffer, current_buffer);
+	    bfwd->current_buffer = wrap_buffer (current_buffer);
 	    valcontents = bfwd->current_value;
 	  }
 	break;
@@ -2158,7 +2151,7 @@ sets it.
     bfwd->current_value = valcontents;
     bfwd->current_alist_element = Qnil;
     bfwd->current_buffer = Fcurrent_buffer ();
-    XSETSYMBOL_VALUE_MAGIC (foo, bfwd);
+    foo = wrap_symbol_value_magic (bfwd);
     *value_slot_past_magic (variable) = foo;
 #if 1				/* #### Yuck!   FSFmacs bug-compatibility*/
     /* This sets the default-value of any make-variable-buffer-local to nil.
@@ -2275,7 +2268,7 @@ Use `make-local-hook' instead.
     bfwd->default_value = Qnil; /* Yuck! */
 #endif
 
-  XSETSYMBOL_VALUE_MAGIC (valcontents, bfwd);
+  valcontents = wrap_symbol_value_magic (bfwd);
   *value_slot_past_magic (variable) = valcontents;
 
  already_local_to_some_other_buffer:
@@ -2286,7 +2279,7 @@ Use `make-local-hook' instead.
   if (UNBOUNDP (bfwd->default_value))
     {
       /* If default value is unbound, set local value to nil. */
-      XSETBUFFER (bfwd->current_buffer, current_buffer);
+      bfwd->current_buffer = wrap_buffer (current_buffer);
       bfwd->current_alist_element = Fcons (variable, Qnil);
       current_buffer->local_var_alist =
 	Fcons (bfwd->current_alist_element, current_buffer->local_var_alist);
@@ -2988,7 +2981,7 @@ pity, thereby invalidating your code.
 	  bfwd->harg[i] = Qnil;
 	}
       bfwd->shadowed = valcontents;
-      XSETSYMBOL_VALUE_MAGIC (XSYMBOL (variable)->value, bfwd);
+      XSYMBOL (variable)->value = wrap_symbol_value_magic (bfwd);
     }
   else
     bfwd = XSYMBOL_VALUE_LISP_MAGIC (valcontents);
@@ -3122,7 +3115,7 @@ has a buffer-local value in any buffer, or the symbols nil or t.
   bfwd->aliasee = alias;
   bfwd->shadowed = valcontents;
 
-  XSETSYMBOL_VALUE_MAGIC (valcontents, bfwd);
+  valcontents = wrap_symbol_value_magic (bfwd);
   XSYMBOL (variable)->value = valcontents;
   return Qnil;
 }
@@ -3224,7 +3217,7 @@ init_symbols_once_early (void)
   /* Bootstrapping problem: Qnil isn't set when make_string_nocopy is
      called the first time. */
   Qnil = Fmake_symbol (make_string_nocopy ((const Intbyte *) "nil", 3));
-  XSYMBOL (Qnil)->name->plist = Qnil;
+  XSTRING_PLIST (XSYMBOL (Qnil)->name) = Qnil;
   XSYMBOL (Qnil)->value = Qnil; /* Nihil ex nihil */
   XSYMBOL (Qnil)->plist = Qnil;
 
@@ -3233,7 +3226,7 @@ init_symbols_once_early (void)
   staticpro (&initial_obarray);
   /* Intern nil in the obarray */
   {
-    unsigned int hash = hash_string (string_data (XSYMBOL (Qnil)->name), 3);
+    unsigned int hash = hash_string (XSTRING_DATA (XSYMBOL (Qnil)->name), 3);
     XVECTOR_DATA (Vobarray)[hash % OBARRAY_SIZE] = Qnil;
   }
 
@@ -3242,7 +3235,7 @@ init_symbols_once_early (void)
        architectures */
     const struct symbol_value_magic *tem = &guts_of_unbound_marker;
 
-    XSETSYMBOL_VALUE_MAGIC (Qunbound, tem);
+    Qunbound = wrap_symbol_value_magic (tem);
   }
 
   XSYMBOL (Qnil)->function = Qunbound;
@@ -3422,7 +3415,7 @@ defsubr (Lisp_Subr *subr)
   check_sane_subr (subr, sym);
   check_module_subr ();
 
-  XSETSUBR (fun, subr);
+  fun = wrap_subr (subr);
   XSYMBOL (sym)->function = fun;
 }
 
@@ -3436,7 +3429,7 @@ defsubr_macro (Lisp_Subr *subr)
   check_sane_subr (subr, sym);
   check_module_subr();
 
-  XSETSUBR (fun, subr);
+  fun = wrap_subr (subr);
   XSYMBOL (sym)->function = Fcons (Qmacro, fun);
 }
 
@@ -3591,7 +3584,7 @@ defvar_magic (const char *symbol_name, const struct symbol_value_forward *magic)
     sym = Fintern (make_string_nocopy ((const Intbyte *) symbol_name,
 				       strlen (symbol_name)), Qnil);
 
-  XSETOBJ (XSYMBOL (sym)->value, magic);
+  XSYMBOL (sym)->value = wrap_pointer_1 (magic);
 }
 
 void

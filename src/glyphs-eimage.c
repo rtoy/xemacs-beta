@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994, 1998 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing
    Copyright (C) 1995 Sun Microsystems
 
 This file is part of XEmacs.
@@ -997,7 +997,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     png_read_image (png_ptr, row_pointers);
     png_read_end (png_ptr, info_ptr);
 
-#ifdef PNG_SHOW_COMMENTS
+#if 1 /* def PNG_SHOW_COMMENTS */
     /* ####
      * I turn this off by default now, because the !%^@#!% comments
      * show up every time the image is instantiated, which can get
@@ -1005,6 +1005,8 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
      * type of data down into the glyph code, where you can get to it
      * from lisp anyway. - WMP
      */
+    /* #### I've turned this on, since these warnings are now
+       unobtrusive. */
     {
       int i;
 

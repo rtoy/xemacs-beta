@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1991, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -667,7 +667,7 @@ begin_multiple_change (struct buffer *buf, Charbpos start, Charbpos end)
       buf->text->changes->mc_orig_end = buf->text->changes->mc_new_end = end;
       buf->text->changes->mc_begin_signaled = 0;
       count = specpdl_depth ();
-      XSETBUFFER (buffer, buf);
+      buffer = wrap_buffer (buf);
       record_unwind_protect (multiple_change_finish_up, buffer);
     }
   buf->text->changes->in_multiple_change++;
@@ -714,8 +714,8 @@ static void
 signal_first_change (struct buffer *buf)
 {
   /* This function can GC */
-  Lisp_Object buffer;
-  XSETBUFFER (buffer, current_buffer);
+  Lisp_Object buffer = wrap_buffer (current_buffer);
+
 
   if (!in_first_change)
     {
@@ -788,7 +788,7 @@ signal_before_change (struct buffer *buf, Charbpos start, Charbpos end)
 
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
-	  XSETBUFFER (buffer, mbuf);
+	  buffer = wrap_buffer (mbuf);
 	  if (!NILP (symbol_value_in_buffer (Qbefore_change_functions, buffer))
 	      /* Obsolete, for compatibility */
 	      || !NILP (symbol_value_in_buffer (Qbefore_change_function, buffer)))
@@ -811,7 +811,7 @@ signal_before_change (struct buffer *buf, Charbpos start, Charbpos end)
 
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
-	  XSETBUFFER (buffer, mbuf);
+	  buffer = wrap_buffer (mbuf);
 	  report_extent_modification (buffer, start, end, 0);
 	}
       unbind_to (speccount);
@@ -869,7 +869,7 @@ signal_after_change (struct buffer *buf, Charbpos start, Charbpos orig_end,
       inside_change_hook = 1;
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
-	  XSETBUFFER (buffer, mbuf);
+	  buffer = wrap_buffer (mbuf);
 
 	  if (!NILP (symbol_value_in_buffer (Qafter_change_functions, buffer))
 	      /* Obsolete, for compatibility */
@@ -899,7 +899,7 @@ signal_after_change (struct buffer *buf, Charbpos start, Charbpos orig_end,
 
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
-	  XSETBUFFER (buffer, mbuf);
+	  buffer = wrap_buffer (mbuf);
 	  report_extent_modification (buffer, start, new_end, 1);
 	}
       unbind_to (speccount); /* sets inside_change_hook back to 0 */
@@ -930,7 +930,7 @@ prepare_to_modify_buffer (struct buffer *buf, Charbpos start, Charbpos end,
 
   /* if this is the first modification, see about locking the buffer's
      file */
-  XSETBUFFER (buffer, buf);
+  buffer = wrap_buffer (buf);
   GCPRO1 (buffer);
   if (!NILP (buf->filename) && lockit &&
       BUF_SAVE_MODIFF (buf) >= BUF_MODIFF (buf))
@@ -1085,7 +1085,7 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
   /* string may have been relocated up to this point */
   if (STRINGP (reloc))
     {
-      cclen = XSTRING_OFFSET_BYTE_TO_CHAR_LEN (reloc, offset, length);
+      cclen = string_offset_byte_to_char_len (reloc, offset, length);
       nonreloc = XSTRING_DATA (reloc);
     }
   else
@@ -1669,7 +1669,7 @@ barf_if_buffer_read_only (struct buffer *buf, Charbpos from, Charbpos to)
   Lisp_Object buffer;
   Lisp_Object iro;
 
-  XSETBUFFER (buffer, buf);
+  buffer = wrap_buffer (buf);
  back:
   iro = (buf == current_buffer ? Vinhibit_read_only :
 	 symbol_value_in_buffer (Qinhibit_read_only, buffer));

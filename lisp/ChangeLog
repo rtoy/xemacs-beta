@@ -1,3 +1,132 @@
+2002-03-24  Ben Wing  <ben@xemacs.org>
+
+	* mule/english.el (ascii-right-to-left):
+	Define this charset now, since a bug was fixed that formerly
+	prevented it.
+	
+	* mule/ethio-util.el (ethio-fidel-to-java-buffer):
+	* mule/ethio-util.el (ethio-java-to-fidel-buffer):
+	Fix compile errors involving Unicode `characters', which should be
+	integers.
+
+2002-03-24  Ben Wing  <ben@xemacs.org>
+
+	* sound.el:
+	* sound.el (sound-default-alist):
+	Correct docs.
+
+	* msw-glyphs.el:
+
+	Set glyph-contrib-p to nil on hscroll, continuation, truncation so
+	that we don't get line jumpiness from them being larger than the
+	line height.
+
+	* mouse.el:
+	* mouse.el ((meta button1)):
+	* mouse.el (mouse-consolidated-yank):
+	* mouse.el (mouse-yank):
+	* mouse.el (mouse-track):
+	* mouse.el (variables): Removed.
+	* mouse.el (default-mouse-track-normalize-point):
+	* mouse.el (default-mouse-track-return-dragged-selection):
+	* mouse.el (mouse-track-by-lines): New.
+	* mouse.el (mouse-track-insert): Removed.
+	* mouse.el (mouse-track-adjust-by-lines): New.
+	* mouse.el (mouse-track-insert-1): New.
+	* mouse.el (mouse-track-insert-by-lines): New.
+	* mouse.el (mouse-track-delete-and-insert-by-lines): New.
+
+	New functions for line-oriented mouse selection, with meta held
+	down.  Extend mouse-track{,adjust,insert,delete-and-insert} this
+	way.  Move mouse-track-do-rectangle to meta-button2; not nearly so
+	useful (and doesn't really work correctly currently).
+	
+	* auto-save.el:
+	* auto-save.el (make-auto-save-file-name):
+	* auto-save.el (recover-all-files):
+	* check-features.el:
+	* check-features.el ((featurep 'tooltalk)):
+	* check-features.el ((featurep 'sparcworks)):
+	* code-files.el:
+	* code-files.el (insert-file-contents):
+	* etags.el (find-tag-default):
+	* files.el (normal-mode):
+	* files.el (backup-buffer):
+	* files.el (recover-session-finish):
+	* finder.el (finder-compile-keywords):
+	* font-lock.el (font-lock-pre-idle-hook):
+	* info.el (Info-suffixed-file):
+	* package-get.el:
+	* package-get.el (package-get-load-package-file):
+	* package-get.el (package-get):
+	* packages.el:
+	* packages.el (packages-load-package-lisps):
+	* simple.el:
+	* simple.el (show-message-log):
+	* simple.el (log-message):
+	* simple.el (remove-message):
+	* simple.el (log-warning-minimum-level):
+	* simple.el (display-warning-minimum-level):
+	* simple.el (warning-level-alist):
+	* simple.el (warning-level-<): New.
+	* simple.el (display-warning):
+	* simple.el (NOTE): New.
+	* simple.el (warn):
+	* simple.el (lwarn):
+	* subr.el:
+	* subr.el (backtrace-in-condition-handler-eliminating-handler): New.
+	* subr.el (with-trapping-errors): New.
+
+	New form with-trapping-errors; a consistent way to execute code,
+	catching all errors and displaying a warning, including a
+	backtrace showing where the error occurred.  Modify various files
+	to use this.
+	
+	Show all warnings in the echo area (in a format convenient for
+	this) as well as the Warnings buffer.  Change the interpretation
+	of display-warning-minimum-level so that warnings below this level
+	(now set at `warning') do not force the Warnings buffer to be
+	displayed, but still appear in the echo area.  The motivation for
+	this was `Unable to instantiate font' warnings, which should be
+	visible but are very annoying when the Warnings buffer pops up.
+
+	Change the meaning of warning level `alert' and define clearly
+	what the purpose of the various warning levels are.  Modify
+	various files consistent with the new definitions.
+
+	Mark all warnings with extents.
+ 	
+	* startup.el (load-init-file):
+	Modify so that a backtrace is seen when an error occurs.
+	
+	* help.el (view-warnings): New.
+	New function for viewing warnings buffer.
+	
+	* help.el:
+	* help.el (print-recent-messages):
+	* simple.el:
+	* simple.el (show-message-log):
+	Integrate show-message-log with view-lossage.  Add option to
+	view-lossage to view only the messages.  Clear message first so
+	latest message is seen.
+	
+	* menubar-items.el:
+	* menubar-items.el (default-menubar):
+	* menubar-items.el (bookmark-menu-filter): Removed.
+	Various rearrangements and fixes.
+	
+	* msw-faces.el:
+	* msw-faces.el (gui-element):
+	* msw-faces.el (mswindows-init-device-faces):
+	Set gui-element font globally instead of on each device.
+
+	* msw-font-menu.el (mswindows-font-menu-font-data): Fix bug.
+
+	* simple.el (debug-print-1): New.
+	* simple.el (debug-print):
+	* simple.el (debug-backtrace): New.
+	New debugging functions.
+
 2002-03-20  John Paul Wallington  <jpw@shootybangbang.com>
 
 	* menubar-items.el (list-all-buffers): New function.

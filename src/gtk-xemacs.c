@@ -185,7 +185,7 @@ smash_scrollbar_specifiers (struct frame *f, GtkStyle *style)
   int hsize, vsize;
   GtkRangeClass *klass;
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   klass = (GtkRangeClass *) gtk_type_class (GTK_TYPE_SCROLLBAR);
   slider_size = klass->slider_width;
@@ -209,7 +209,7 @@ smash_toolbar_specifiers(struct frame *f, GtkStyle *style)
   Lisp_Object frame;
   GtkStyleClass *klass = (GtkStyleClass *) style->klass;
 
-  XSETFRAME (frame,f);
+  frame = wrap_frame (f);
 
   Fadd_spec_to_specifier (Vtoolbar_shadow_thickness, make_int (klass->xthickness),
 			  Qnil, list2 (Qgtk, Qdefault), Qprepend);

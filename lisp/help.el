@@ -843,6 +843,7 @@ The maximum number of available keys is governed by `recent-keys-ring-size'."
 (defun print-recent-messages (n)
   "Print N most recent messages to standard-output, most recent first.
 If N is nil, all messages will be printed."
+  (clear-message) ;; make sure current message goes into log
   (save-excursion
     (let ((buffer (get-buffer-create " *Message-Log*"))
 	  oldpoint extent)
@@ -860,25 +861,42 @@ If N is nil, all messages will be printed."
 	  (forward-line -1 buffer))
 	(insert-buffer-substring buffer (point buffer) oldpoint)))))
 
-(defun view-lossage ()
+(defun view-warnings ()
+  "Display warnings issued."
+  (interactive)
+  (with-displaying-help-buffer
+   (lambda ()
+     (let ((buf (get-buffer "*Warnings*")))
+       (when buf
+	 (save-excursion
+	   (set-buffer standard-output)
+	   (map-extents
+	    #'(lambda (extent arg)
+		(goto-char (point-min))
+		(insert (extent-string extent)))
+	    buf)))))
+   "warnings"))
+
+(defun view-lossage (&optional no-keys)
   "Display recent input keystrokes and recent minibuffer messages.
 The number of keys shown is controlled by `view-lossage-key-count'.
 The number of messages shown is controlled by `view-lossage-message-count'."
   (interactive)
   (with-displaying-help-buffer
    (lambda ()
-     (princ (key-description (recent-keys view-lossage-key-count)))
-     (save-excursion
-       (set-buffer standard-output)
-       (goto-char (point-min))
-       (insert "Recent keystrokes:\n\n")
-       (while (progn (move-to-column 50) (not (eobp)))
-	 (search-forward " " nil t)
-	 (insert "\n")))
-     ;; XEmacs addition: copy the messages from " *Message-Log*",
-     ;; reversing their order and handling multiline messages
-     ;; correctly.
-     (princ "\n\n\nRecent minibuffer messages (most recent first):\n\n")
+     (unless no-keys
+       (princ (key-description (recent-keys view-lossage-key-count)))
+       (save-excursion
+	 (set-buffer standard-output)
+	 (goto-char (point-min))
+	 (insert "Recent keystrokes:\n\n")
+	 (while (progn (move-to-column 50) (not (eobp)))
+	   (search-forward " " nil t)
+	   (insert "\n")))
+       (princ "\n\n\n"))
+     ;; Copy the messages from " *Message-Log*", reversing their order and
+     ;; handling multiline messages correctly.
+     (princ "Recent minibuffer messages (most recent first):\n\n")
      (print-recent-messages view-lossage-message-count))
    "lossage"))
 

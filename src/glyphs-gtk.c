@@ -1202,7 +1202,7 @@ extract_xpm_color_names (Lisp_Object device,
       if (STRINGP (value))
 	value =
 	  Fmake_color_instance
-	  (value, device, encode_error_behavior_flag (ERROR_ME_NOT));
+	  (value, device, encode_error_behavior_flag (ERROR_ME_DEBUG_WARN));
       else
         {
           assert (COLOR_SPECIFIERP (value));
@@ -1343,8 +1343,8 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
 	/* #### Gtk does not give us access to the hotspots of a pixmap */
 	xhot = yhot = 1;
-	XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), xhot);
-	XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), yhot);
+	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (xhot);
+	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (yhot);
 
 	check_pointer_sizes (w, h, instantiator);
 
@@ -2126,9 +2126,8 @@ gtk_redisplay_widget (Lisp_Image_Instance *p)
   gtk_widget_show_all (IMAGE_INSTANCE_GTK_CLIPWIDGET (p));
   if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (p))
     {
-      Lisp_Object image_instance;
+      Lisp_Object image_instance = wrap_image_instance (p);
 
-      XSETIMAGE_INSTANCE (image_instance, p);
 
       /* Need to update GtkArgs that might have changed... */
       /* #### FIXME!!! */

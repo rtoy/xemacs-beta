@@ -84,9 +84,7 @@ make_opaque (const void *data, Bytecount size)
     memcpy (p->data, data, size);
 
   {
-    Lisp_Object val;
-    XSETOPAQUE (val, p);
-    return val;
+    return wrap_opaque (p);
   }
 }
 

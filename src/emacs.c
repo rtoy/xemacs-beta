@@ -3367,6 +3367,8 @@ fatal_error_signal (int sig)
 static DWORD
 mswindows_handle_hardware_exceptions_1 (void)
 {
+  inhibit_non_essential_printing_operations = 1;
+  preparing_for_armageddon = 1;
   pause_so_user_can_read_messages (0);
   return EXCEPTION_EXECUTE_HANDLER;
 }

@@ -60,7 +60,6 @@ struct popup_data
 
 DECLARE_LRECORD (popup_data, struct popup_data);
 #define XPOPUP_DATA(x) XRECORD (x, popup_data, struct popup_data)
-#define XSETPOPUP_DATA(x, p) XSETRECORD (x, p, popup_data)
 #define wrap_popup_data(p) wrap_record (p, popup_data)
 #define POPUP_DATAP(x) RECORDP (x, popup_data)
 #define CHECK_POPUP_DATA(x) CHECK_RECORD (x, popup_data)

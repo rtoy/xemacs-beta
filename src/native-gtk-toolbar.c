@@ -152,7 +152,8 @@ gtk_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	  /* #### It is currently possible for users to trash us by directly
 	     changing the toolbar glyphs.  Avoid crashing in that case. */
 	  if (GLYPHP (glyph))
-	    instance = glyph_image_instance (glyph, window, ERROR_ME_NOT, 1);
+	    instance = glyph_image_instance (glyph, window,
+					     ERROR_ME_DEBUG_WARN, 1);
 	  else
 	    instance = Qnil;
 	  

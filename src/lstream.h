@@ -32,7 +32,6 @@ Boston, MA 02111-1307, USA.  */
 
 DECLARE_LRECORD (lstream, struct lstream);
 #define XLSTREAM(x) XRECORD (x, lstream, struct lstream)
-#define XSETLSTREAM(x, p) XSETRECORD (x, p, lstream)
 #define wrap_lstream(p) wrap_record (p, lstream)
 #define LSTREAMP(x) RECORDP (x, lstream)
 /* #define CHECK_LSTREAM(x) CHECK_RECORD (x, lstream)

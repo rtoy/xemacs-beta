@@ -1,6 +1,6 @@
 /* Specifier implementation
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -490,7 +490,7 @@ make_specifier_internal (struct specifier_methods *spec_meths,
   sp->caching = 0;
   sp->next_specifier = Vall_specifiers;
 
-  XSETSPECIFIER (specifier, sp);
+  specifier = wrap_specifier (sp);
   Vall_specifiers = specifier;
 
   if (call_create_meth)
@@ -867,8 +867,8 @@ canonicalize_tag_set (Lisp_Object tag_set)
     {
       j = i - 1;
       while (j >= 0 &&
-	     strcmp ((char *) string_data (XSYMBOL (tags[j])->name),
-		     (char *) string_data (XSYMBOL (tags[j+1])->name)) > 0)
+	     qxestrcmp (XSTRING_DATA (XSYMBOL (tags[j])->name),
+			XSTRING_DATA (XSYMBOL (tags[j+1])->name)) > 0)
 	{
 	  Lisp_Object tmp = tags[j];
 	  tags[j] = tags[j+1];
@@ -1019,9 +1019,8 @@ void
 setup_device_initial_specifier_tags (struct device *d)
 {
   Lisp_Object rest, rest2;
-  Lisp_Object device;
+  Lisp_Object device = wrap_device (d);
 
-  XSETDEVICE (device, d);
 
   DEVICE_USER_DEFINED_TAGS (d) = Fcopy_alist (Vuser_defined_tags);
 
@@ -2692,6 +2691,12 @@ device being instantiated over, or because the specification is not
 valid for the device of the given domain (e.g. the font or color name
 does not exist for this particular X server).
 
+NOTE: When errors occur in the process of trying a particular instantiator,
+and the instantiator is thus skipped, warnings will be issued at level
+`debug'.  Normally, such warnings are ignored entirely, but you can change
+this by setting `log-warning-minimum-level'.  This is useful if you're
+trying to debug why particular instantiators are not being processed.
+
 The returned value is dependent on the type of specifier.  For example,
 for a font specifier (as returned by the `face-font' function), the returned
 value will be a font-instance object.  For glyphs, the returned value
@@ -2858,7 +2863,7 @@ recompute_one_cached_specifier_in_window (Lisp_Object specifier,
 
   assert (!GHOST_SPECIFIER_P (XSPECIFIER (specifier)));
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
   newval = specifier_instance (specifier, Qunbound, window, ERROR_ME_WARN,
 			       0, 0, Qzero);
@@ -2893,7 +2898,7 @@ recompute_one_cached_specifier_in_frame (Lisp_Object specifier,
 
   assert (!GHOST_SPECIFIER_P (XSPECIFIER (specifier)));
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   newval = specifier_instance (specifier, Qunbound, frame, ERROR_ME_WARN,
 			       0, 0, Qzero);

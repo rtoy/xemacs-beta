@@ -1,6 +1,7 @@
 /* Minibuffer input and completion.
    Copyright (C) 1985, 1986, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -400,7 +401,7 @@ or the symbol from the obarray.
 	      elt = bucket;
 	      eltstring = Fsymbol_name (elt);
               if (next)
-		XSETSYMBOL (bucket, next);
+		bucket = wrap_symbol (next);
 	      else
 		bucket = Qzero;
 	    }
@@ -601,7 +602,7 @@ or the symbol from the obarray.
 	      elt = bucket;
 	      eltstring = Fsymbol_name (elt);
               if (next)
-		XSETSYMBOL (bucket, next);
+		bucket = wrap_symbol (next);
 	      else
 		bucket = Qzero;
             }
@@ -621,8 +622,8 @@ or the symbol from the obarray.
           /* Reject alternatives that start with space
 	     unless the input starts with space.  */
 	  && ((XSTRING_CHAR_LENGTH (string) > 0 &&
-	       string_char (XSTRING (string), 0) == ' ')
-	      || string_char (XSTRING (eltstring), 0) != ' ')
+	       XSTRING_CHAR (string, 0) == ' ')
+	      || XSTRING_CHAR (eltstring, 0) != ' ')
 	  && (0 > scmp (XSTRING_DATA (eltstring),
                         XSTRING_DATA (string),
                         slength)))
@@ -680,9 +681,8 @@ clear_echo_area_internal (struct frame *f, Lisp_Object label, int from_print,
   /* This function can call lisp */
   if (!NILP (Ffboundp (Qclear_message)))
     {
-      Lisp_Object frame;
+      Lisp_Object frame = wrap_frame (f);
 
-      XSETFRAME (frame, f);
       return call4 (Qclear_message, label, frame, from_print ? Qt : Qnil,
 		    no_restore ? Qt : Qnil);
     }
@@ -746,7 +746,7 @@ echo_area_append (struct frame *f, const Intbyte *nonreloc, Lisp_Object reloc,
 	  obj = make_string (nonreloc + offset, length);
 	}
 
-      XSETFRAME (frame, f);
+      frame = wrap_frame (f);
       GCPRO1 (obj);
       call4 (Qappend_message, label, obj, frame,
 	     EQ (label, Qprint) ? Qt : Qnil);
@@ -786,9 +786,8 @@ echo_area_status (struct frame *f)
   /* This function can call lisp */
   if (!NILP (Ffboundp (Qcurrent_message_label)))
     {
-      Lisp_Object frame;
+      Lisp_Object frame = wrap_frame (f);
 
-      XSETFRAME (frame, f);
       return call1 (Qcurrent_message_label, frame);
     }
   else

@@ -659,7 +659,7 @@ Import a function into the XEmacs namespace.
   data->function_ptr = name_func;
   data->marshal = marshaller_func;
 
-  XSETFFI (rval, data);
+  rval = wrap_ffi (data);
   return (rval);
 }
 
@@ -908,8 +908,8 @@ emacs_gtk_object_finalizer (void *header, int for_disksave)
 
   if (for_disksave)
     {
-      Lisp_Object obj;
-      XSETGTK_OBJECT (obj, data);
+      Lisp_Object obj = wrap_gtk_object (data);
+
 
       invalid_operation
 	("Can't dump an emacs containing GtkObject objects", obj);
@@ -977,7 +977,7 @@ Lisp_Object build_gtk_object (GtkObject *obj)
 
       data->object = obj;
       data->alive_p = TRUE;
-      XSETGTK_OBJECT (retval, data);
+      retval = wrap_gtk_object (data);
 
       id = new_gui_id ();
       gtk_object_set_data (obj, "xemacs::gui_id", (gpointer) id);
@@ -1165,7 +1165,7 @@ Lisp_Object build_gtk_boxed (void *obj, GtkType t)
   data->object = obj;
   data->object_type = t;
 
-  XSETGTK_BOXED (retval, data);
+  retval = wrap_gtk_boxed (data);
 
   return (retval);
 }
@@ -1625,7 +1625,8 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	  if (GLYPHP (obj))
 	    {
 	      Lisp_Object window = Fselected_window (Qnil);
-	      Lisp_Object instance = glyph_image_instance (obj, window, ERROR_ME_NOT, 1);
+	      Lisp_Object instance =
+		glyph_image_instance (obj, window, ERROR_ME_DEBUG_WARN, 1);
 	      struct Lisp_Image_Instance *p = XIMAGE_INSTANCE (instance);
 
 	      switch (XIMAGE_INSTANCE_TYPE (instance))

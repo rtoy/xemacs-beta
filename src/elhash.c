@@ -540,7 +540,7 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
   /* We leave room for one never-occupied sentinel hentry at the end.  */
   ht->hentries = xnew_array_and_zero (hentry, ht->size + 1);
 
-  XSETHASH_TABLE (hash_table, ht);
+  hash_table = wrap_hash_table (ht);
 
   if (weakness == HASH_TABLE_NON_WEAK)
     ht->next_weak = Qunbound;
@@ -944,7 +944,7 @@ The keys and values will not themselves be copied.
   ht->hentries = xnew_array (hentry, ht_old->size + 1);
   memcpy (ht->hentries, ht_old->hentries, (ht_old->size + 1) * sizeof (hentry));
 
-  XSETHASH_TABLE (hash_table, ht);
+  hash_table = wrap_hash_table (ht);
 
   if (! EQ (ht->next_weak, Qunbound))
     {

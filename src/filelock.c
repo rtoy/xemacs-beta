@@ -318,7 +318,7 @@ lock_file (Lisp_Object fn)
   if (inhibit_clash_detection)
     return;
 
-  XSETBUFFER (old_current_buffer, current_buffer);
+  old_current_buffer = wrap_buffer (current_buffer);
   subject_buf = Qnil;
   GCPRO3 (fn, subject_buf, old_current_buffer);
   orig_fn = fn;

@@ -1,6 +1,6 @@
 /* Generic GUI code. (menubars, scrollbars, toolbars, dialogs)
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
@@ -23,8 +23,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* This file not quite Mule-ized yet but will be when merged with my
-   Mule workspace. --ben */
+/* This file Mule-ized by Ben Wing, 3-24-02. */
 
 #include <config.h>
 #include "lisp.h"
@@ -133,13 +132,13 @@ gui_item_add_keyval_pair (Lisp_Object gui_item,
 	  pgui_item->name   = val;
 	}
     }
-#define FROB(slot) \
+#define FROB(slot)				\
   else if (EQ (key, Q_##slot))			\
   {						\
-    if (!EQ (pgui_item->slot, val))			\
+    if (!EQ (pgui_item->slot, val))		\
       {						\
 	retval = 1;				\
-	pgui_item->slot   = val;			\
+	pgui_item->slot   = val;		\
       }						\
   }
   FROB (suffix)
@@ -168,8 +167,7 @@ gui_item_add_keyval_pair (Lisp_Object gui_item,
 	}
     }
   else if (ERRB_EQ (errb, ERROR_ME))
-    invalid_argument_2 ("Unknown keyword in gui item", key,
-			   pgui_item->name);
+    invalid_argument_2 ("Unknown keyword in gui item", key, pgui_item->name);
   return retval;
 }
 
@@ -200,7 +198,7 @@ allocate_gui_item (void)
   Lisp_Object val;
 
   zero_lcrecord (lp);
-  XSETGUI_ITEM (val, lp);
+  val = wrap_gui_item (lp);
 
   gui_item_init (val);
 
@@ -263,7 +261,7 @@ make_gui_item_from_keywords_internal (Lisp_Object item,
       if ((length - start) & 1)
 	sferror (
 		"GUI item descriptor has an odd number of keywords and values",
-			     item);
+		 item);
 
       for (i = start; i < length;)
 	{
@@ -332,7 +330,7 @@ update_gui_item_keywords (Lisp_Object gui_item, Lisp_Object item)
     {
       Lisp_Object key = contents [i++];
       Lisp_Object val = contents [i++];
-      if (gui_item_add_keyval_pair (gui_item, key, val, ERROR_ME_NOT))
+      if (gui_item_add_keyval_pair (gui_item, key, val, ERROR_ME_DEBUG_WARN))
 	retval = 1;
     }
   return retval;
@@ -347,7 +345,7 @@ gui_parse_item_keywords (Lisp_Object item)
 Lisp_Object
 gui_parse_item_keywords_no_errors (Lisp_Object item)
 {
-  return make_gui_item_from_keywords_internal (item, ERROR_ME_NOT);
+  return make_gui_item_from_keywords_internal (item, ERROR_ME_DEBUG_WARN);
 }
 
 /* convert a gui item into plist properties */
@@ -536,10 +534,13 @@ gui_item_display_flush_right (Lisp_Object gui_item)
   /* See if we can derive keys out of callback symbol */
   if (SYMBOLP (pgui_item->callback))
     {
-      char buf2[1024]; /* #### */
-
-      where_is_to_char (pgui_item->callback, buf2);
-      return build_string (buf2);
+      DECLARE_EISTRING_MALLOC (buf);
+      Lisp_Object str;
+      
+      where_is_to_char (pgui_item->callback, buf);
+      str = eimake_string (buf);
+      eifree (buf);
+      return str;
     }
 
   /* No keys - no right flush display */
@@ -651,14 +652,11 @@ static void
 print_gui_item (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Gui_Item *g = XGUI_ITEM (obj);
-  char buf[20];
 
   if (print_readably)
     printing_unreadable_object ("#<gui-item 0x%x>", g->header.uid);
 
-  write_c_string ("#<gui-item ", printcharfun);
-  sprintf (buf, "0x%x>", g->header.uid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, "#<gui-item 0x%x>", g->header.uid);
 }
 
 Lisp_Object
@@ -767,7 +765,7 @@ parse_gui_item_tree_list (Lisp_Object list)
 }
 
 static void
-finalize_gui_item (void* header, int for_disksave)
+finalize_gui_item (void *header, int for_disksave)
 {
 }
 
@@ -780,13 +778,13 @@ DEFINE_LRECORD_IMPLEMENTATION ("gui-item", gui_item,
 
 
 DOESNT_RETURN
-gui_error (const char *reason, Lisp_Object frob)
+gui_error (const Char_ASCII *reason, Lisp_Object frob)
 {
   signal_error (Qgui_error, reason, frob);
 }
 
 DOESNT_RETURN
-gui_error_2 (const char *reason, Lisp_Object frob0, Lisp_Object frob1)
+gui_error_2 (const Char_ASCII *reason, Lisp_Object frob0, Lisp_Object frob1)
 {
   signal_error_2 (Qgui_error, reason, frob0, frob1);
 }

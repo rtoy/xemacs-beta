@@ -126,7 +126,7 @@ handle_focus_event_1 (struct frame *f, int in_p)
 	Lisp_Object conser;
 	struct gcpro gcpro1;
 
-	XSETFRAME (frm, f);
+	frm = wrap_frame (f);
 	conser = Fcons (frm, Fcons (FRAME_DEVICE (f), in_p ? Qt : Qnil));
 	GCPRO1 (conser);
 
@@ -142,9 +142,8 @@ handle_focus_event_1 (struct frame *f, int in_p)
 static void
 change_frame_visibility (struct frame *f, int is_visible)
 {
-  Lisp_Object frame;
+  Lisp_Object frame = wrap_frame (f);
 
-  XSETFRAME (frame, f);
 
   if (!FRAME_VISIBLE_P (f) && is_visible)
     {
@@ -173,9 +172,8 @@ change_frame_visibility (struct frame *f, int is_visible)
 static void
 handle_map_event (struct frame *f, GdkEvent *event)
 {
-  Lisp_Object frame;
+  Lisp_Object frame = wrap_frame (f);
 
-  XSETFRAME (frame, f);
   if (event->any.type == GDK_MAP)
     {
       FRAME_GTK_TOTALLY_VISIBLE_P (f) = 1;
@@ -194,9 +192,8 @@ handle_map_event (struct frame *f, GdkEvent *event)
 static void
 handle_client_message (struct frame *f, GdkEvent *event)
 {
-  Lisp_Object frame;
+  Lisp_Object frame = wrap_frame (f);
 
-  XSETFRAME (frame, f);
 
   /* The event-Xt code used to handle WM_DELETE_WINDOW here, but we
      handle that directly in frame-gtk.c */
@@ -269,9 +266,8 @@ emacs_gtk_handle_magic_event (struct Lisp_Event *emacs_event)
     case GDK_ENTER_NOTIFY:
       if (event->crossing.detail != GDK_NOTIFY_INFERIOR)
 	{
-	  Lisp_Object frame;
+	  Lisp_Object frame = wrap_frame (f);
 
-	  XSETFRAME (frame, f);
 	  /* FRAME_X_MOUSE_P (f) = 1; */
 	  va_run_hook_with_args (Qmouse_enter_frame_hook, 1, frame);
 	}
@@ -280,9 +276,8 @@ emacs_gtk_handle_magic_event (struct Lisp_Event *emacs_event)
     case GDK_LEAVE_NOTIFY:
       if (event->crossing.detail != GDK_NOTIFY_INFERIOR)
 	{
-	  Lisp_Object frame;
+	  Lisp_Object frame = wrap_frame (f);
 
-	  XSETFRAME (frame, f);
 	  /* FRAME_X_MOUSE_P (f) = 0; */
 	  va_run_hook_with_args (Qmouse_leave_frame_hook, 1, frame);
 	}
@@ -788,7 +783,7 @@ emacs_gtk_select_process (struct Lisp_Process *p)
   Lisp_Object process;
   int infd = event_stream_unixoid_select_process (p);
 
-  XSETPROCESS (process, p);
+  process = wrap_process (p);
   select_filedesc (infd, process);
 }
 
@@ -872,7 +867,7 @@ emacs_gtk_select_console (struct console *con)
   if (CONSOLE_GTK_P (con))
     return; /* Gtk consoles are automatically selected for when we initialize them */
   infd = event_stream_unixoid_select_console (con);
-  XSETCONSOLE (console, con);
+  console = wrap_console (con);
   select_filedesc (infd, console);
 }
 
@@ -885,7 +880,7 @@ emacs_gtk_unselect_console (struct console *con)
   if (CONSOLE_GTK_P (con))
 	return; /* X consoles are automatically selected for when we initialize them */
   infd = event_stream_unixoid_unselect_console (con);
-  XSETCONSOLE (console, con);
+  console = wrap_console (con);
   unselect_filedesc (infd);
 }
 
@@ -954,7 +949,7 @@ dragndrop_data_received (GtkWidget          *widget,
   ev->event_type = misc_user_event;
   ev->timestamp = time;
 
-  XSETFRAME (ev->channel, f);
+  ev->channel = wrap_frame (f);
 
   ev->event.misc.x = x;
   ev->event.misc.y = y;
@@ -1159,7 +1154,7 @@ emacs_gtk_next_event (struct Lisp_Event *emacs_event)
   if (!NILP (dispatch_event_queue))
     {
       Lisp_Object event, event2;
-      XSETEVENT (event2, emacs_event);
+      event2 = wrap_event (emacs_event);
       event = dequeue_gtk_dispatch_event ();
       Fcopy_event (event, event2);
       Fdeallocate_event (event);
@@ -1365,7 +1360,7 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 	else                    /* Mouse press/release event */
 	  {
 	    GdkEventButton *button_event = &gdk_event->button;
-	    XSETFRAME (emacs_event->channel, frame);
+	    emacs_event->channel = wrap_frame (frame);
 
 	    emacs_event->event_type = (button_event->type == GDK_BUTTON_RELEASE) ?
 	      button_release_event : button_press_event;
@@ -1400,7 +1395,7 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 
         DEVICE_GTK_MOUSE_TIMESTAMP (d) = ev->time;
 
-        XSETFRAME (emacs_event->channel, frame);
+        emacs_event->channel = wrap_frame (frame);
         emacs_event->event_type	    = pointer_motion_event;
         emacs_event->timestamp      = ev->time;
         emacs_event->event.motion.x = x;
@@ -1510,19 +1505,19 @@ emacs_shell_event_handler (GtkWidget *wid /* unused */,
 #undef FROB
 
     emacs_event->event_type = magic_event;
-    XSETFRAME (emacs_event->channel, frame);
+    emacs_event->channel = wrap_frame (frame);
 
     if (ignore_p)
-    {
+      {
 	stderr_out ("Ignoring event... (%s)\n", event_name (event));
 	Fdeallocate_event (lisp_event);
 	return (FALSE);
-    }
+      }
     else
-    {
+      {
 	enqueue_gtk_dispatch_event (lisp_event);
 	return (TRUE);
-    }
+      }
 }
 
 

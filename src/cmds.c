@@ -171,7 +171,7 @@ This function does not move point.
   struct buffer *b = decode_buffer (buffer, 1);
   REGISTER int orig, end;
 
-  XSETBUFFER (buffer, b);
+  buffer = wrap_buffer (b);
   if (NILP (count))
     count = make_int (0);
   else

@@ -1,5 +1,6 @@
 /* Various functions for X11R5+ input methods, using the Xlib interface.
    Copyright (C) 1996 Sun Microsystems.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -219,7 +220,9 @@ XIM_init_device (struct device *d)
   DEVICE_X_XIM (d) = xim = XOpenIM (dpy, XtDatabase (dpy), name, class);
   if (xim == NULL)
     {
-      xintl_warn ("XOpenIM() failed...no input server available\n");
+      warn_when_safe
+	(Qxintl, Qerror,
+	 "Can't initialize XIM: XOpenIM() failed, no input server available");
       return;
     }
   else
@@ -309,7 +312,9 @@ XIM_init_frame (struct frame *f)
 			     NULL, 0);
   if (!xic_vars.fontset)
     {
-      xintl_warn ("Can't get fontset resource for Input Method\n");
+      warn_when_safe
+	(Qxintl, Qerror,
+	 "Can't initialize XIM: Can't get fontset resource for Input Method");
       FRAME_X_XIC (f) = NULL;
       return;
     }
@@ -347,7 +352,8 @@ XIM_init_frame (struct frame *f)
 
   if (!xic)
     {
-      xintl_warn ("Warning: XCreateIC failed.\n");
+      warn_when_safe (Qxintl, Qerror,
+		      "Can't initialize XIM: XCreateIC failed");
       return;
     }
 
@@ -363,8 +369,8 @@ XIM_init_frame (struct frame *f)
 
 #ifdef HAVE_XREGISTERIMINSTANTIATECALLBACK
   /* when frame is going to be destroyed (closed) */
-  XtAddCallback (FRAME_X_TEXT_WIDGET(f), XNDestroyCallback,
-		 XIM_delete_frame, (XtPointer)f);
+  XtAddCallback (FRAME_X_TEXT_WIDGET (f), XNDestroyCallback,
+		 XIM_delete_frame, (XtPointer)f );
 #endif
 }
 

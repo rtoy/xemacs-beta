@@ -945,25 +945,35 @@ directory which will load the relocated initialization code.")
 	  (progn
 	    ;; Do this without a condition-case if the user wants to debug.
 	    (load-user-init-file))
-	(condition-case error
-	    (progn
-	      (if load-user-init-file-p
-		  (load-user-init-file))
-	      (setq init-file-had-error nil))
-          (error
-	   (message "Error in init file: %s" (error-message-string error))
-	   (display-warning 'initialization
-	     (format "\
+	(condition-case nil
+	    (call-with-condition-handler
+		#'(lambda (__load_init_file_arg__)
+		    (let ((errstr (error-message-string
+				   __load_init_file_arg__)))
+		      (message "Error in init file: %s" errstr)
+		      (lwarn 'initialization 'error
+			"\
 An error has occurred while loading %s:
+
+%s
+
+Backtrace follows:
 
 %s
 
 To ensure normal operation, you should investigate the cause of the error
 in your initialization file and remove it.  Use the `-debug-init' option
-to XEmacs to view a complete error backtrace."
-		     user-init-file (error-message-string error))
-	     'error)
-	   (setq init-file-had-error t))))
+to XEmacs to enter the debugger when the error occurs and investigate the
+exact problem."
+			user-init-file errstr
+			(backtrace-in-condition-handler-eliminating-handler
+			 '__load_init_file_arg__)))
+		    (setq init-file-had-error t))
+		#'(lambda ()
+		    (if load-user-init-file-p
+			(load-user-init-file))
+		    (setq init-file-had-error nil)))
+	  (error nil)))
       ;; If we can tell that the init file altered debug-on-error,
       ;; arrange to preserve the value that it set up.
       (or (eq debug-on-error debug-on-error-initial)

@@ -1,7 +1,7 @@
 /* Define X specific console, device, and frame object for XEmacs.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -481,9 +481,6 @@ void describe_Status	 (Status status);
 #endif /* HAVE_XIM */
 
 extern Lisp_Object Qxintl;
-#define xintl_warn(str) warn_when_safe (Qxintl, Qwarning, str)
-#define xintl_warn1(fmt, str) warn_when_safe (Qxintl, Qwarning, fmt, str)
-#define xintl_info(str) warn_when_safe (Qxintl, Qinfo, str)
 
 extern int in_resource_setting;
 extern int in_specifier_change_function;

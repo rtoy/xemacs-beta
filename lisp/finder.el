@@ -186,10 +186,11 @@ arguments compiles from `load-path'."
 		  (buffer-disable-undo (current-buffer))
 		  (erase-buffer)
 		  (insert-file-contents (expand-file-name f d))
-		  (condition-case err
-		      (setq summary  (lm-synopsis)
-			    keywords (lm-keywords))
-		    (t (message "finder: error processing %s %S" f err))))
+		  (with-trapping-errors
+		    :operation (format "processing %s in finder" f)
+		    :class 'finder
+		    (setq summary  (lm-synopsis)
+			  keywords (lm-keywords))))
 		(when summary
 		  (insert (format "    (\"%s\"\n        " f))
 		  (prin1 summary (current-buffer))

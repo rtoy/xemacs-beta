@@ -1473,26 +1473,26 @@ versions of NAME. Only the suffixes are tried."
 	  file files)
       (setq name (file-name-nondirectory name))
       (setq files
-	    (condition-case data ;; protect against invalid directory
-		;; First, try NAME[.<suffix>]
-		(append
+	    (with-trapping-errors ;; protect against invalid directory
+	      :operation (format "directory `%s'" dir)
+	      :class 'info
+	      :error-form nil
+	      :no-backtrace t
+	      ;; First, try NAME[.<suffix>]
+	      (append
+	       (directory-files dir 'fullname
+				(concat "^" (regexp-quote name) suff-match)
+				nil t)
+	       (if exact
+		   nil
+		 ;; Then, try to match the name independantly of the
+		 ;; characters case.
 		 (directory-files dir 'fullname
-				  (concat "^" (regexp-quote name) suff-match)
-				  nil t)
-		 (if exact
-		     nil
-		   ;; Then, try to match the name independantly of the
-		   ;; characters case.
-		   (directory-files dir 'fullname
-				    (Info-all-case-regexp
-				     (concat "^"
-					     (regexp-quote name)
-					     suff-match))
-				    nil t)))
-	      (t
-	       (display-warning 'info
-		 (format "directory `%s' error: %s" dir data))
-	       nil)))
+				  (Info-all-case-regexp
+				   (concat "^"
+					   (regexp-quote name)
+					   suff-match))
+				  nil t)))))
       (while (setq file (pop files))
 	(and (file-regular-p file)
 	     (throw 'found file)))

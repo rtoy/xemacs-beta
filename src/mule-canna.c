@@ -511,8 +511,7 @@ Register Kanji words into kana-to-kanji conversion dictionary.
 #endif /* CANNA_MULE */
   ksv.ks = &ks;
   len = jrKanjiControl (0, KC_DEFINEKANJI, (char *)&ksv);
-  val = storeResults (key_buffer, ksv.val, ksv.ks);
-  return val;
+  return storeResults (key_buffer, ksv.val, ksv.ks);
 }
 
 DEFUN ("canna-set-width", Fcanna_set_width, 1, 1, 0, /*
@@ -543,8 +542,7 @@ Change Japanese pre-edit mode.
   ksv.ks = &ks;
   ksv.val = XINT (num);
   jrKanjiControl (0, KC_CHANGEMODE,  (char *)&ksv);
-  val = storeResults (key_buffer, ksv.val, ksv.ks);
-  return val;
+  return storeResults (key_buffer, ksv.val, ksv.ks);
 }
 
 static Lisp_Object
@@ -639,8 +637,7 @@ Do specified function at current mode.
   ksv.ks = &ks;
   ksv.val = XINT (num);
   jrKanjiControl (0, KC_DO, (char *) &ksv);
-  val = storeResults (key_buffer, ksv.val, ksv.ks);
-  return val;
+  return storeResults (key_buffer, ksv.val, ksv.ks);
 }
 
 DEFUN ("canna-parse", Fcanna_parse, 1, 1, 0, /*

@@ -189,8 +189,7 @@ make_tooltalk_message (Tt_message m)
   msg->m = m;
   msg->callback = Qnil;
   msg->plist_sym = Fmake_symbol (Tooltalk_Message_plist_str);
-  XSETTOOLTALK_MESSAGE (val, msg);
-  return val;
+  return wrap_tooltalk_message (msg);
 }
 
 Tt_message
@@ -263,8 +262,7 @@ make_tooltalk_pattern (Tt_pattern p)
   pat->callback = Qnil;
   pat->plist_sym = Fmake_symbol (Tooltalk_Pattern_plist_str);
 
-  XSETTOOLTALK_PATTERN (val, pat);
-  return val;
+  return wrap_tooltalk_pattern (pat);
 }
 
 static Tt_pattern
@@ -1262,7 +1260,7 @@ init_tooltalk (void)
     {
       /* Don't ask the user for confirmation when exiting Emacs */
       Fprocess_kill_without_query (lp, Qnil);
-      XSETSUBR (fil, &SFreceive_tooltalk_message);
+      fil = wrap_subr (&SFreceive_tooltalk_message);
       set_process_filter (lp, fil, 1);
     }
   else

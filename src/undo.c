@@ -80,7 +80,7 @@ undo_prelude (struct buffer *b, int hack_pending_boundary)
 	  != BUFFER_BASE_BUFFER (XBUFFER (last_undo_buffer))))
     {
       undo_boundary (b);
-      XSETBUFFER (last_undo_buffer, b);
+      last_undo_buffer = wrap_buffer (b);
     }
 
   /* Allocate a cons cell to be the undo boundary after this command.  */

@@ -617,7 +617,7 @@ extern Lisp_Object (*lrecord_markers[]) (Lisp_Object);
 
    struct lcrecord_header header;
 
-   2. Put the "standard junk" (DECLARE_RECORD()/XFOO/XSETFOO/etc.) below the
+   2. Put the "standard junk" (DECLARE_RECORD()/XFOO/etc.) below the
       struct definition -- see below.
 
    3. Add this header file to inline.c.
@@ -675,7 +675,6 @@ struct toolbar_button
 
 DECLARE_LRECORD (toolbar_button, struct toolbar_button);
 #define XTOOLBAR_BUTTON(x) XRECORD (x, toolbar_button, struct toolbar_button)
-#define XSETTOOLBAR_BUTTON(x, p) XSETRECORD (x, p, toolbar_button)
 #define wrap_toolbar_button(p) wrap_record (p, toolbar_button)
 #define TOOLBAR_BUTTONP(x) RECORDP (x, toolbar_button)
 #define CHECK_TOOLBAR_BUTTON(x) CHECK_RECORD (x, toolbar_button)
@@ -791,19 +790,13 @@ extern Lisp_Object Q##c_name##p
 # define XNONRECORD(x, c_name, type_enum, structtype) \
   error_check_##c_name (x, __FILE__, __LINE__)
 
-# define XSETRECORD(var, p, c_name) do				\
-{								\
-  XSETOBJ (var, p);						\
-  assert (RECORD_TYPEP (var, lrecord_type_##c_name));		\
-} while (0)
-
 INLINE_HEADER Lisp_Object wrap_record_1 (void *ptr, enum lrecord_type ty,
 					 const char *file, int line);
 INLINE_HEADER Lisp_Object
 wrap_record_1 (void *ptr, enum lrecord_type ty, const char *file, int line)
 {
-  Lisp_Object obj;
-  XSETOBJ (obj, ptr);
+  Lisp_Object obj = wrap_pointer_1 (ptr);
+
   assert_at_line (RECORD_TYPEP (obj, ty), file, line);
   return obj;
 }
@@ -825,7 +818,6 @@ extern Lisp_Object Q##c_name##p
 # define XRECORD(x, c_name, structtype) ((structtype *) XPNTR (x))
 # define XNONRECORD(x, c_name, type_enum, structtype)		\
   ((structtype *) XPNTR (x))
-# define XSETRECORD(var, p, c_name) XSETOBJ (var, p)
 /* wrap_pointer_1 is so named as a suggestion not to use it unless you
    know what you're doing. */
 #define wrap_record(ptr, ty) wrap_pointer_1 (ptr)

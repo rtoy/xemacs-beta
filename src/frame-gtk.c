@@ -175,7 +175,7 @@ struct frame *
 decode_gtk_frame (Lisp_Object frame)
 {
   if (NILP (frame))
-    XSETFRAME (frame, selected_frame ());
+    frame = wrap_frame (selected_frame ());
   CHECK_LIVE_FRAME (frame);
   /* this will also catch dead frames, but putting in the above check
      results in a more useful error */
@@ -384,7 +384,7 @@ gtk_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      {
 		  Lisp_Object frm, font_spec;
 
-		  XSETFRAME (frm, f);
+		  frm = wrap_frame (f);
 		  font_spec = Fget (Fget_face (Qdefault), Qfont, Qnil);
 
 		  Fadd_spec_to_specifier (font_spec, val, frm, Qnil, Qnil);
@@ -455,14 +455,14 @@ gtk_set_frame_properties (struct frame *f, Lisp_Object plist)
       {
 	if (size_specified_p)
 	  {
-	    Lisp_Object frame;
-	    XSETFRAME (frame, f);
+	    Lisp_Object frame = wrap_frame (f);
+
 	    Fset_frame_size (frame, make_int (width), make_int (height), Qnil);
 	  }
 	if (position_specified_p)
 	  {
-	    Lisp_Object frame;
-	    XSETFRAME (frame, f);
+	    Lisp_Object frame = wrap_frame (f);
+
 	    Fset_frame_position (frame, make_int (x), make_int (y));
 	  }
       }
@@ -620,8 +620,8 @@ resize_event_cb (GtkWidget *w, GtkAllocation *allocation, gpointer user_data)
 
   if (FRAME_GTK_TEXT_WIDGET (f)->window)
     {
-      Lisp_Object frame;
-      XSETFRAME (frame, f);
+      Lisp_Object frame = wrap_frame (f);
+
       Fredraw_frame (frame, Qt);
     }
 
@@ -632,9 +632,8 @@ static gboolean
 delete_event_cb (GtkWidget *w, GdkEvent *ev, gpointer user_data)
 {
     struct frame *f = (struct frame *) user_data;
-    Lisp_Object frame;
+    Lisp_Object frame = wrap_frame (f);
 
-    XSETFRAME (frame, f);
     enqueue_misc_user_event (frame, Qeval, list3 (Qdelete_frame, frame, Qt));
 
     /* See if tickling the event queue helps us with our delays when
@@ -656,9 +655,8 @@ static void
 cleanup_deleted_frame (gpointer data)
 {
   struct frame *f = (struct frame *) data;
-  Lisp_Object frame;
+  Lisp_Object frame = wrap_frame (f);
 
-  XSETFRAME (frame, f);
   Fdelete_frame (frame, Qt);
 }
 
@@ -1169,7 +1167,7 @@ gtk_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
 
     if (!f) return (0);
 
-    XSETFRAME (*frame, f);
+    *frame = wrap_frame (f);
 
     gdk_window_get_pointer (GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f)),
 			    &win_x, &win_y, NULL);
@@ -1314,7 +1312,7 @@ gtk_update_frame_external_traits (struct frame* frm, Lisp_Object name)
 {
   Lisp_Object frame = Qnil;
 
-  XSETFRAME(frame, frm);
+  frame = wrap_frame (frm);
 
   if (EQ (name, Qforeground))
    {

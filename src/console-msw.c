@@ -1,5 +1,5 @@
 /* Console functions for mswindows.
-   Copyright (C) 1996, 2000, 2001 Ben Wing.
+   Copyright (C) 1996, 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -353,7 +353,7 @@ Intbyte *DSYMNAME (Lisp_Object obj);
 Intbyte *
 DSYMNAME (Lisp_Object obj)
 {
-  return SYMBOLP (obj) ? string_data (XSYMBOL (obj)->name) : NULL;
+  return SYMBOLP (obj) ? XSTRING_DATA (XSYMBOL (obj)->name) : NULL;
 }
 
 #endif /* DEBUG_XEMACS */

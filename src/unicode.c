@@ -1300,7 +1300,7 @@ Unicode tables:
 	   sscanf (p, "%i %i %i%n", &dummy, &cp1, &cp2, &endcount) < 3)
 	  || *(p + endcount + strspn (p + endcount, " \t\n\r\f")))
 	{
-	  warn_when_safe (intern ("unicode"), Qnotice,
+	  warn_when_safe (Qunicode, Qwarning,
 			  "Unrecognized line in translation file %s:\n%s",
 			  XSTRING_DATA (filename), line);
 	  continue;
@@ -1311,8 +1311,9 @@ Unicode tables:
 	  if (cp1 < 0 || cp1 >= 65536)
 	    {
 	    out_of_range:
-	      warn_when_safe (intern ("unicode"), Qnotice,
-			      "Out of range first codepoint 0x%x in translation file %s:\n%s",
+	      warn_when_safe (Qunicode, Qwarning,
+			      "Out of range first codepoint 0x%x in "
+			      "translation file %s:\n%s",
 			      cp1, XSTRING_DATA (filename), line);
 	      continue;
 	    }
@@ -1324,8 +1325,10 @@ Unicode tables:
 	    {
 	      Emchar ch = decode_big5_char (cp1high, cp1low);
 	      if (ch == -1)
-		warn_when_safe (intern ("unicode"), Qnotice,
-				"Out of range Big5 codepoint 0x%x in translation file %s:\n%s",
+
+		warn_when_safe (Qunicode, Qwarning,
+				"Out of range Big5 codepoint 0x%x in "
+				"translation file %s:\n%s",
 				cp1, XSTRING_DATA (filename), line);
 	      else
 		set_unicode_conversion (ch, cp2);

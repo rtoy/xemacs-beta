@@ -430,9 +430,7 @@ gtk_own_selection (Lisp_Object selection_name, Lisp_Object selection_value,
 
      Opaque pointers are the clean way to go here.
   */
-  selection_time = make_opaque (&thyme, sizeof (thyme));
-
-  return selection_time;
+  return make_opaque (&thyme, sizeof (thyme));
 }
 
 static void

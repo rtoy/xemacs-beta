@@ -1,5 +1,5 @@
 /* Console functions for X windows.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -193,7 +193,7 @@ x_semi_canonicalize_console_connection (Lisp_Object connection,
   connection = x_device_to_console_connection (connection, errb);
 
   /* Check for a couple of standard special cases */
-  if (string_char (XSTRING (connection), 0) == ':')
+  if (XSTRING_CHAR (connection, 0) == ':')
     connection = concat2 (build_string ("localhost"), connection);
   else
     {

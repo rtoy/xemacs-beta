@@ -1,7 +1,7 @@
 /* Generic glyph/image implementation + display tables
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing
+   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1998, 1999, 2000 Andy Piper
 
@@ -655,9 +655,8 @@ check_instance_cache_mapper (Lisp_Object key, Lisp_Object value,
 void
 check_window_subwindow_cache (struct window* w)
 {
-  Lisp_Object window;
+  Lisp_Object window = wrap_window (w);
 
-  XSETWINDOW (window, w);
 
   assert (!NILP (w->subwindow_instance_cache));
   elisp_maphash (check_instance_cache_mapper,
@@ -1286,7 +1285,7 @@ allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
   lp->layout_changed = 1;
   lp->initialized = 0;
 
-  XSETIMAGE_INSTANCE (val, lp);
+  val = wrap_image_instance (lp);
   MARK_GLYPHS_CHANGED;
 
   return val;
@@ -1418,6 +1417,7 @@ decode_error_behavior_flag (Lisp_Object noerror)
 {
   if (NILP (noerror))        return ERROR_ME;
   else if (EQ (noerror, Qt)) return ERROR_ME_NOT;
+  else if (EQ (noerror, Qdebug)) return ERROR_ME_DEBUG_WARN;
   else                       return ERROR_ME_WARN;
 }
 
@@ -1428,6 +1428,8 @@ encode_error_behavior_flag (Error_Behavior errb)
     return Qnil;
   else if (ERRB_EQ (errb, ERROR_ME_NOT))
     return Qt;
+  else if (ERRB_EQ (errb, ERROR_ME_DEBUG_WARN))
+    return Qdebug;
   else
     {
       assert (ERRB_EQ (errb, ERROR_ME_WARN));
@@ -2116,9 +2118,10 @@ invalidate_glyph_geometry_maybe (Lisp_Object glyph_or_ii, struct window* w)
 
       if (GLYPHP (glyph_or_ii))
 	{
-	  Lisp_Object window;
-	  XSETWINDOW (window, w);
-	  image = glyph_image_instance (glyph_or_ii, window, ERROR_ME_NOT, 1);
+	  Lisp_Object window = wrap_window (w);
+
+	  image = glyph_image_instance (glyph_or_ii, window,
+					ERROR_ME_DEBUG_WARN, 1);
 	}
 
       if (TEXT_IMAGE_INSTANCEP (image))
@@ -3453,7 +3456,7 @@ image_going_to_add (Lisp_Object specifier, Lisp_Object locale,
       Lisp_Object contype = XCAR (rest);
       Lisp_Object newinst = call_with_suspended_errors
 	((lisp_fn_t) normalize_image_instantiator,
-	 Qnil, Qimage, ERROR_ME_NOT, 3, instantiator, contype,
+	 Qnil, Qimage, ERROR_ME_DEBUG_WARN, 3, instantiator, contype,
 	 make_int (XIMAGE_SPECIFIER_ALLOWED (specifier)));
 
       if (!NILP (newinst))
@@ -3749,7 +3752,7 @@ allocate_glyph (enum glyph_type type,
     g->face = Qnil;
     g->plist = Qnil;
     g->after_change = after_change;
-    XSETGLYPH (obj, g);
+    obj = wrap_glyph (g);
 
     set_image_attached_to (g->image, obj, Qimage);
     UNGCPRO;
@@ -3881,7 +3884,8 @@ glyph_image_instance_maybe (Lisp_Object glyph_or_image, Lisp_Object window)
   Lisp_Object instance = glyph_or_image;
 
   if (GLYPHP (glyph_or_image))
-    instance = glyph_image_instance (glyph_or_image, window, ERROR_ME_NOT, 1);
+    instance = glyph_image_instance (glyph_or_image, window,
+				     ERROR_ME_DEBUG_WARN, 1);
 
   return instance;
 }
@@ -3917,7 +3921,7 @@ that redisplay will.
 */
        (glyph, window))
 {
-  XSETWINDOW (window, decode_window (window));
+  window = wrap_window (decode_window (window));
   CHECK_GLYPH (glyph);
 
   return make_int (glyph_width (glyph, window));
@@ -3989,7 +3993,7 @@ that redisplay will.
 */
        (glyph, window))
 {
-  XSETWINDOW (window, decode_window (window));
+  window = wrap_window (decode_window (window));
   CHECK_GLYPH (glyph);
 
   return make_int (glyph_ascent (glyph, window));
@@ -4002,7 +4006,7 @@ that redisplay will.
 */
        (glyph, window))
 {
-  XSETWINDOW (window, decode_window (window));
+  window = wrap_window (decode_window (window));
   CHECK_GLYPH (glyph);
 
   return make_int (glyph_descent (glyph, window));
@@ -4016,7 +4020,7 @@ that redisplay will.
 */
        (glyph, window))
 {
-  XSETWINDOW (window, decode_window (window));
+  window = wrap_window (decode_window (window));
   CHECK_GLYPH (glyph);
 
   return make_int (glyph_height (glyph, window));
@@ -4032,7 +4036,7 @@ set_glyph_dirty_p (Lisp_Object glyph_or_image, Lisp_Object window, int dirty)
       if (GLYPHP (glyph_or_image))
 	{
 	  instance = glyph_image_instance (glyph_or_image, window,
-					   ERROR_ME_NOT, 1);
+					   ERROR_ME_DEBUG_WARN, 1);
 	  XGLYPH_DIRTYP (glyph_or_image) = dirty;
 	}
 
@@ -4070,8 +4074,8 @@ glyph_baseline (Lisp_Object glyph, Lisp_Object domain)
     {
       Lisp_Object retval =
 	specifier_instance_no_quit (GLYPH_BASELINE (XGLYPH (glyph)),
-				    /* #### look into ERROR_ME_NOT */
-				    Qunbound, domain, ERROR_ME_NOT,
+				    /* #### look into error flag */
+				    Qunbound, domain, ERROR_ME_DEBUG_WARN,
 				    0, Qzero);
       if (!NILP (retval) && !INTP (retval))
 	retval = Qnil;
@@ -4101,8 +4105,8 @@ glyph_contrib_p (Lisp_Object glyph, Lisp_Object domain)
   else
     return !NILP (specifier_instance_no_quit
 		  (GLYPH_CONTRIB_P (XGLYPH (glyph)), Qunbound, domain,
-		   /* #### look into ERROR_ME_NOT */
-		   ERROR_ME_NOT, 0, Qzero));
+		   /* #### look into error flag */
+		   ERROR_ME_DEBUG_WARN, 0, Qzero));
 }
 
 static void
@@ -4120,7 +4124,8 @@ glyph_query_geometry (Lisp_Object glyph_or_image, int* width, int* height,
   Lisp_Object instance = glyph_or_image;
 
   if (GLYPHP (glyph_or_image))
-    instance = glyph_image_instance (glyph_or_image, domain, ERROR_ME_NOT, 1);
+    instance = glyph_image_instance (glyph_or_image, domain,
+				     ERROR_ME_DEBUG_WARN, 1);
 
   image_instance_query_geometry (instance, width, height, disp, domain);
 }
@@ -4132,7 +4137,8 @@ glyph_do_layout (Lisp_Object glyph_or_image, int width, int height,
   Lisp_Object instance = glyph_or_image;
 
   if (GLYPHP (glyph_or_image))
-    instance = glyph_image_instance (glyph_or_image, domain, ERROR_ME_NOT, 1);
+    instance = glyph_image_instance (glyph_or_image, domain,
+				     ERROR_ME_DEBUG_WARN, 1);
 
   image_instance_layout (instance, width, height, xoffset, yoffset, domain);
 }
@@ -4178,12 +4184,12 @@ update_glyph_cachel_data (struct window *w, Lisp_Object glyph,
     {
       Lisp_Object window, instance;
 
-      XSETWINDOW (window, w);
+      window = wrap_window (w);
 
       cachel->glyph   = glyph;
       /* Speed things up slightly by grabbing the glyph instantiation
 	 and passing it to the size functions. */
-      instance = glyph_image_instance (glyph, window, ERROR_ME_NOT, 1);
+      instance = glyph_image_instance (glyph, window, ERROR_ME_DEBUG_WARN, 1);
 
       if (!IMAGE_INSTANCEP (instance))
 	return;
@@ -4283,8 +4289,8 @@ void
 mark_glyph_cachels_as_clean (struct window* w)
 {
   int elt;
-  Lisp_Object window;
-  XSETWINDOW (window, w);
+  Lisp_Object window = wrap_window (w);
+
   for (elt = 0; elt < Dynarr_length (w->glyph_cachels); elt++)
     {
       struct glyph_cachel *cachel = Dynarr_atp (w->glyph_cachels, elt);
@@ -4312,7 +4318,7 @@ compute_glyph_cachel_usage (glyph_cachel_dynarr *glyph_cachels,
 
 
 /*****************************************************************************
- *                     subwindow cachel functions                         	     *
+ *                     subwindow cachel functions                     	     *
  *****************************************************************************/
 /* Subwindows are curious in that you have to physically unmap them to
    not display them. It is problematic deciding what to do in
@@ -4641,7 +4647,8 @@ update_widget_instances (Lisp_Object frame)
 }
 
 /* remove a subwindow from its frame */
-void unmap_subwindow (Lisp_Object subwindow)
+void
+unmap_subwindow (Lisp_Object subwindow)
 {
   Lisp_Image_Instance* ii = XIMAGE_INSTANCE (subwindow);
   struct frame* f;
@@ -4671,8 +4678,9 @@ void unmap_subwindow (Lisp_Object subwindow)
 }
 
 /* show a subwindow in its frame */
-void map_subwindow (Lisp_Object subwindow, int x, int y,
-		    struct display_glyph_area *dga)
+void
+map_subwindow (Lisp_Object subwindow, int x, int y,
+	       struct display_glyph_area *dga)
 {
   Lisp_Image_Instance* ii = XIMAGE_INSTANCE (subwindow);
   struct frame* f;
@@ -4907,9 +4915,9 @@ display_table_entry (Emchar ch, Lisp_Object face_table,
     }
 }
 
-/*****************************************************************************
- *                              timeouts for animated glyphs                      *
- *****************************************************************************/
+/****************************************************************************
+ *                        timeouts for animated glyphs                      *
+ ****************************************************************************/
 static Lisp_Object Qglyph_animated_timeout_handler;
 
 DEFUN ("glyph-animated-timeout-handler", Fglyph_animated_timeout_handler, 1, 1, 0, /*
@@ -4952,7 +4960,8 @@ Don't use this.
   return Qnil;
 }
 
-Lisp_Object add_glyph_animated_timeout (EMACS_INT tickms, Lisp_Object image)
+Lisp_Object
+add_glyph_animated_timeout (EMACS_INT tickms, Lisp_Object image)
 {
   Lisp_Object ret = Qnil;
 
@@ -4974,12 +4983,10 @@ Lisp_Object add_glyph_animated_timeout (EMACS_INT tickms, Lisp_Object image)
   return ret;
 }
 
-void disable_glyph_animated_timeout (int i)
+void
+disable_glyph_animated_timeout (int i)
 {
-  Lisp_Object id;
-  XSETINT (id, i);
-
-  Fdisable_timeout (id);
+  Fdisable_timeout (make_int (i));
 }
 
 

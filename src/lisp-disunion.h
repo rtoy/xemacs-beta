@@ -96,9 +96,6 @@ typedef EMACS_INT Lisp_Object;
 #define Qzero make_int (0)
 #define Qnull_pointer ((Lisp_Object) 0)
 #define EQ(x,y) ((x) == (y))
-#define XSETINT(var, value) ((void) ((var) = make_int (value)))
-#define XSETCHAR(var, value) ((void) ((var) = make_char (value)))
-#define XSETOBJ(var, value) ((void) ((var) = wrap_pointer_1 (value)))
 
 /* Convert between a (void *) and a Lisp_Object, as when the
    Lisp_Object is passed to a toolkit callback function */

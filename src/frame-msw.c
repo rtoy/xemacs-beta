@@ -60,9 +60,10 @@ Boston, MA 02111-1307, USA.  */
 #define POPUP_WIDTH 30
 #define POPUP_HEIGHT 10
 
-/* Default regular frame size, in characters */
+/* Default regular frame size, in characters; if too big, it will get
+   shrunk to the workspace size */
 #define DEFAULT_FRAME_WIDTH 80
-#define DEFAULT_FRAME_HEIGHT 35
+#define DEFAULT_FRAME_HEIGHT 50
 
 #ifdef HAVE_MENUBARS
 #define ADJR_MENUFLAG TRUE
@@ -196,7 +197,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
 
   AdjustWindowRectEx (&rect, style, ADJR_MENUFLAG, exstyle);
 
-  XSETFRAME (frame_obj, f);
+  frame_obj = wrap_frame (f);
 
   Vmswindows_frame_being_created = frame_obj;
   {
@@ -599,7 +600,7 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
 		{
 		  Lisp_Object frm, font_spec;
 
-		  XSETFRAME (frm, f);
+		  frm = wrap_frame (f);
 		  font_spec = Fget (Fget_face (Qdefault), Qfont, Qnil);
 
 		  Fadd_spec_to_specifier (font_spec, val, frm, Qnil, Qnil);
@@ -796,8 +797,8 @@ msprinter_start_page (struct frame *f)
 static void
 error_frame_unsizable (struct frame *f)
 {
-  Lisp_Object frame;
-  XSETFRAME (frame, f);
+  Lisp_Object frame = wrap_frame (f);
+
   invalid_change ("Cannot resize frame (margins) after print job has started.",
 		  frame);
 }

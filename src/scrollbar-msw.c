@@ -358,7 +358,7 @@ mswindows_handle_mousewheel_event (Lisp_Object frame, int keys, int delta,
 
   if (needle_in_haystack)
     {
-      XSETWINDOW (win, needle_in_haystack);
+      win = wrap_window (needle_in_haystack);
       /* stderr_out ("found needle\n");
 	 debug_print (win); */
     }

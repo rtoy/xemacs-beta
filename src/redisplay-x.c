@@ -2,6 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -331,7 +332,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
   Lisp_Object charset = Qunbound; /* Qnil is a valid charset when
 				     MULE is not defined */
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
   rb = Dynarr_atp (rba, start);
 
   if (!rb)
@@ -443,9 +444,9 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 						 start_pixpos, rb->width,
 						 &dbox, &dga);
 
-	      XSETWINDOW (window, w);
+	      window = wrap_window (w);
 	      instance = glyph_image_instance (rb->object.dglyph.glyph,
-					       window, ERROR_ME_NOT, 1);
+					       window, ERROR_ME_DEBUG_WARN, 1);
 	      findex = rb->findex;
 
 	      if (IMAGE_INSTANCEP (instance))
@@ -796,8 +797,8 @@ x_output_string (struct window *w, struct display_line *dl,
   int i;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
 
-  XSETDEVICE (device, d);
-  XSETWINDOW (window, w);
+  device = wrap_device (d);
+  window = wrap_window (w);
 
   if (width < 0)
     width = x_text_width (f, cachel, Dynarr_atp (buf, 0), Dynarr_length (buf));
@@ -1861,7 +1862,7 @@ x_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
   int cursor_height, cursor_y;
   int defheight, defascent;
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
   redisplay_clear_region (window, findex, x, y, width, height);
 
   if (NILP (w->text_cursor_visible_p))
@@ -1956,7 +1957,7 @@ x_clear_frame (struct frame *f)
 
   XClearArea (dpy, x_win, x, y, width, height, False);
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   if (!UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vdefault_face, frame))
       || !UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vleft_margin_face, frame))
@@ -1985,7 +1986,7 @@ x_flash (struct device *d)
   Widget shell = FRAME_X_SHELL_WIDGET (f);
   int flash_height;
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   tmp_pixel = FACE_FOREGROUND (Vdefault_face, frame);
   tmp_fcolor = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (tmp_pixel));

@@ -81,23 +81,6 @@ union Lisp_Object
 Lisp_Object;
 
 #define XCHARVAL(x) ((x).gu.val)
-
-# define XSETINT(var, value) do {	\
-  EMACS_INT xset_value = (value);	\
-  Lisp_Object *xset_var = &(var);	\
-  xset_var->s.bits = 1;			\
-  xset_var->s.val = xset_value;		\
-} while (0)
-# define XSETCHAR(var, value) do {	\
-  Emchar xset_value = (value);		\
-  Lisp_Object *xset_var = &(var);	\
-  xset_var->gu.type = Lisp_Type_Char;	\
-  xset_var->gu.val = xset_value;	\
-} while (0)
-# define XSETOBJ(var, value) do {		\
-  EMACS_UINT xset_value = (EMACS_UINT) (value);	\
-  (var).ui = xset_value;			\
-} while (0)
 # define XPNTRVAL(x) ((x).ui)
 
 INLINE_HEADER Lisp_Object make_int (EMACS_INT val);
@@ -105,7 +88,8 @@ INLINE_HEADER Lisp_Object
 make_int (EMACS_INT val)
 {
   Lisp_Object obj;
-  XSETINT (obj, val);
+  obj.s.bits = 1;
+  obj.s.val = val;
   return obj;
 }
 
@@ -114,7 +98,8 @@ INLINE_HEADER Lisp_Object
 make_char (Emchar val)
 {
   Lisp_Object obj;
-  XSETCHAR (obj, val);
+  obj.gu.type = Lisp_Type_Char;
+  obj.gu.val = val;
   return obj;
 }
 
@@ -123,7 +108,7 @@ INLINE_HEADER Lisp_Object
 wrap_pointer_1 (void *ptr)
 {
   Lisp_Object obj;
-  XSETOBJ (obj, ptr);
+  obj.ui = (EMACS_UINT) ptr;
   return obj;
 }
 

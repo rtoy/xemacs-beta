@@ -482,31 +482,33 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
 
    (a) it is Mule-correct
    (b) it does dynamic allocation so you never have to worry about size
-       restrictions (and all allocation is stack-local using alloca(), so
-       there is no need to explicitly clean up)
-   (c) it knows its own length, so it does not suffer from standard null
-       byte brain-damage
-   (d) it provides a much more powerful set of operations and knows about
+       restrictions
+   (c) it comes in an alloca() variety (all allocation is stack-local,
+       so there is no need to explicitly clean up) as well as a malloc()
+       variety
+   (d) it knows its own length, so it does not suffer from standard null
+       byte brain-damage -- but it null-terminates the data anyway, so
+       it can be passed to standard routines
+   (e) it provides a much more powerful set of operations and knows about
        all the standard places where string data might reside: Lisp_Objects,
        other Eistrings, Intbyte * data with or without an explicit length,
        ASCII strings, Emchars, etc.
-   (e) it provides easy operations to convert to/from externally-formatted
-       data, and is much easier to use than the standard TO_INTERNAL_FORMAT
+   (f) it provides easy operations to convert to/from externally-formatted
+       data, and is easier to use than the standard TO_INTERNAL_FORMAT
        and TO_EXTERNAL_FORMAT macros. (An Eistring can store both the internal
        and external version of its data, but the external version is only
        initialized or changed when you call eito_external().)
 
-   The idea is to make it as easy to write Mule-correct string
-   manipulation code as it is to write normal string manipulation
-   code.  We also make the API sufficiently general that it can handle
-   multiple internal data formats (e.g. some fixed-width optimizing
-   formats and a default variable width format) and allows for *ANY*
-   data format we might choose in the future for the default format,
-   including UCS2. (In other words, we can't assume that the internal
-   format is ASCII-compatible and we can't assume it doesn't have
-   embedded null bytes.  We do assume, however, that any chosen format
-   will have the concept of null-termination.) All of this is hidden
-   from the user.
+   The idea is to make it as easy to write Mule-correct string manipulation
+   code as it is to write normal string manipulation code.  We also make
+   the API sufficiently general that it can handle multiple internal data
+   formats (e.g. some fixed-width optimizing formats and a default variable
+   width format) and allows for *ANY* data format we might choose in the
+   future for the default format, including UCS2. (In other words, we can't
+   assume that the internal format is ASCII-compatible and we can't assume
+   it doesn't have embedded null bytes.  We do assume, however, that any
+   chosen format will have the concept of null-termination.) All of this is
+   hidden from the user.
 
    #### It is really too bad that we don't have a real object-oriented
    language, or at least a language with polymorphism!
@@ -529,20 +531,23 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
         data.  This is a standard local variable declaration and can go
         anywhere in the variable declaration section.  Once you initialize
 	the Eistring, you will have to free it using eifree() to avoid
-	memory leaks.
+	memory leaks.  You will need to use this form if you are passing
+	an Eistring to any function that modifies it (otherwise, the
+	modified data may be in stack space and get overwritten when the
+	function returns).
 
    or use
 
-   Eistring name;
-   void eiinit (Eistring name);
-   void eiinit_malloc (Eistring name);
+   Eistring ei;
+   void eiinit (Eistring *ei);
+   void eiinit_malloc (Eistring *einame);
         If you need to put an Eistring elsewhere than in a local variable
         declaration (e.g. in a structure), declare it as shown and then
         call one of the init macros.
 
    Also note:
 
-   void eifree (Eistring ei);
+   void eifree (Eistring *ei);
         If you declared an Eistring to use malloc() to hold its data,
 	or converted it to the heap using eito_malloc(), then this
 	releases any data in it and afterwards resets the Eistring
@@ -574,7 +579,7 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
    void eicpy_lstr (Eistring *eistr, Lisp_Object lisp_string);
         ... from a Lisp_Object string.
    void eicpy_ch (Eistring *eistr, Emchar ch);
-        ... from an Emchar.
+        ... from an Emchar (this can be a conventional C character).
 
    void eicpy_lstr_off (Eistring *eistr, Lisp_Object lisp_string,
                         Bytecount off, Charcount charoff,
@@ -636,9 +641,11 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
         Make an alloca() copy of the data in the Eistring, using the
         default internal format.  Due to the nature of alloca(), this
         must be a macro, with all lvalues passed in as parameters.
-        A pointer to the alloca()ed data is stored in PTR_OUT, and
-        the length of the data (not including the terminating zero)
-        is stored in LEN_OUT.
+	(More specifically, not all compilers correctly handle using
+	alloca() as the argument to a function call -- GCC on x86
+	didn't used to, for example.) A pointer to the alloca()ed data
+	is stored in PTR_OUT, and the length of the data (not including
+	the terminating zero) is stored in LEN_OUT.
 
    void eicpyout_alloca_fmt (Eistring *eistr, LVALUE: Intbyte *ptr_out,
                              LVALUE: Bytecount len_out,
@@ -1017,12 +1024,12 @@ extern Eistring the_eistring_zero_init, the_eistring_malloc_zero_init;
 
 #define eiinit(ei)				\
 do {						\
-  (ei) = the_eistring_zero_init;		\
+  *(ei) = the_eistring_zero_init;		\
 } while (0)
 
 #define eiinit_malloc(ei)			\
 do {						\
-  (ei) = the_eistring_malloc_zero_init;		\
+  *(ei) = the_eistring_malloc_zero_init;	\
 } while (0)
 
 
@@ -1269,7 +1276,6 @@ do {								\
   *ei23ptrout = alloca_array (Intbyte, (eistr)->bytelen_ + 1);	\
   memcpy (*ei23ptrout, (eistr)->data_, (eistr)->bytelen_ + 1);	\
 } while (0)
-
 
 /*   ----- Moving to the heap -----   */
 

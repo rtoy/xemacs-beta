@@ -765,8 +765,7 @@ Get bunsetsu information specified by BUN-NUMBER.
   val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
   jl_get_kanji (wnnfns_buf[snum], bun_no, bun_no + 1, wbuf);
   w2m (wbuf, cbuf, lb);
-  val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
-  return val;
+  return Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
 }
 
 

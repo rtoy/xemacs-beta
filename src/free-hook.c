@@ -376,8 +376,8 @@ A no-op if the free hook is disabled.
       memset (free_queue, 0, sizeof (free_queue_entry) * FREE_QUEUE_LIMIT);
       current_free = 0;
       __free_hook = check_free;
-      XSETINT (lisp_count[0], count[0]);
-      XSETINT (lisp_count[1], count[1]);
+      lisp_count[0] = make_int (count[0]);
+      lisp_count[1] = make_int (count[1]);
       return Fcons (lisp_count[0], lisp_count[1]);
     }
   else

@@ -435,7 +435,7 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
     return;
 
   /* make sure f is the selected frame */
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
   Fselect_frame (frame);
 
   if (client_data)
@@ -579,7 +579,7 @@ set_frame_menubar (struct frame *f, int deep_p, int first_time_p)
       mdata->id = new_lwlib_id ();
       mdata->last_menubar_buffer = Qnil;
       mdata->menubar_contents_up_to_date = 0;
-      XSETPOPUP_DATA (FRAME_MENUBAR_DATA (f), mdata);
+      FRAME_MENUBAR_DATA (f) = wrap_popup_data (mdata);
     }
 
   /***** now store into the menubar widget, creating it if necessary *****/
@@ -780,9 +780,8 @@ x_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   Widget menu;
   Lisp_Event *eev = NULL;
   XEvent xev;
-  Lisp_Object frame;
+  Lisp_Object frame = wrap_frame (f);
 
-  XSETFRAME (frame, f);
   CHECK_X_FRAME (frame);
   parent = FRAME_X_SHELL_WIDGET (f);
 

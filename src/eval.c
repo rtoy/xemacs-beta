@@ -1,7 +1,7 @@
 /* Evaluator for XEmacs Lisp interpreter.
    Copyright (C) 1985-1987, 1992-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -140,6 +140,15 @@ Lisp_Object Vcurrent_error_state;
    Only meaningful when Vcurrent_error_state is non-nil.
    See call_with_suspended_errors(). */
 Lisp_Object Vcurrent_warning_class;
+
+/* Current warning level when warnings occur, or nil for no warnings.
+   Only meaningful when Vcurrent_error_state is non-nil.
+   See call_with_suspended_errors(). */
+Lisp_Object Vcurrent_warning_level;
+
+/* Minimum level at which warnings are logged.  Below this, they're ignored
+   entirely -- not even generated. */
+Lisp_Object Vlog_warning_minimum_level;
 
 /* Special catch tag used in call_with_suspended_errors(). */
 Lisp_Object Qunbound_suspended_errors_tag;
@@ -1170,7 +1179,7 @@ for the variable is `*'.
     ((INTP (documentation) && XINT (documentation) < 0) ||
 
      (STRINGP (documentation) &&
-      (string_byte (XSTRING (documentation), 0) == '*')) ||
+      (XSTRING_BYTE (documentation, 0) == '*')) ||
 
      /* If (STRING . INTEGER), a negative integer means a user variable. */
      (CONSP (documentation)
@@ -1422,7 +1431,7 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
 #ifdef DEFEND_AGAINST_THROW_RECURSION
   /* die if we recurse more than is reasonable */
   if (++throw_level > 20)
-    abort();
+    abort ();
 #endif
 
   /* If bomb_out_p is t, this is being called from Fsignal as a
@@ -2103,8 +2112,8 @@ user invokes the "return from signal" option.
   GCPRO1 (data);
   if (!NILP (Vcurrent_error_state))
     {
-      if (!NILP (Vcurrent_warning_class))
-	warn_when_safe_lispobj (Vcurrent_warning_class, Qwarning,
+      if (!NILP (Vcurrent_warning_class) && !NILP (Vcurrent_warning_level))
+	warn_when_safe_lispobj (Vcurrent_warning_class, Vcurrent_warning_level,
 				Fcons (error_symbol, data));
       Fthrow (Qunbound_suspended_errors_tag, Qnil);
       abort (); /* Better not get here! */
@@ -2148,6 +2157,13 @@ restore_current_warning_class (Lisp_Object warning_class)
 }
 
 static Lisp_Object
+restore_current_warning_level (Lisp_Object warning_level)
+{
+  Vcurrent_warning_level = warning_level;
+  return Qnil;
+}
+
+static Lisp_Object
 restore_current_error_state (Lisp_Object error_state)
 {
   Vcurrent_error_state = error_state;
@@ -2159,17 +2175,16 @@ call_with_suspended_errors_1 (Lisp_Object opaque_arg)
 {
   Lisp_Object val;
   Lisp_Object *kludgy_args = (Lisp_Object *) get_opaque_ptr (opaque_arg);
-  Lisp_Object no_error = kludgy_args[2];
   int speccount = specpdl_depth ();
 
-  if (!EQ (Vcurrent_error_state, no_error))
+  if (NILP (Vcurrent_error_state))
     {
       record_unwind_protect (restore_current_error_state,
 			     Vcurrent_error_state);
-      Vcurrent_error_state = no_error;
+      Vcurrent_error_state = Qt;
     }
   PRIMITIVE_FUNCALL (val, get_opaque_ptr (kludgy_args[0]),
-		     kludgy_args + 3, XINT (kludgy_args[1]));
+		     kludgy_args + 2, XINT (kludgy_args[1]));
   return unbind_to_1 (speccount, val);
 }
 
@@ -2195,37 +2210,30 @@ call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
 {
   va_list vargs;
   int speccount;
-  Lisp_Object kludgy_args[23];
-  Lisp_Object *args = kludgy_args + 3;
+  Lisp_Object kludgy_args[22];
+  Lisp_Object *args = kludgy_args + 2;
   int i;
-  Lisp_Object no_error;
 
   assert (SYMBOLP (class)); /* sanity-check */
   assert (!NILP (class));
   assert (nargs >= 0 && nargs < 20);
 
-  /* ERROR_ME means don't trap errors. (However, if errors are
-     already trapped, we leave them trapped.)
-
-     Otherwise, we trap errors, and trap warnings if ERROR_ME_WARN.
-
-     If ERROR_ME_NOT, it causes no warnings even if warnings
-     were previously enabled.  However, we never change the
-     warning class from one to another. */
-  if (!ERRB_EQ (errb, ERROR_ME))
-    {
-      if (ERRB_EQ (errb, ERROR_ME_NOT)) /* person wants no warnings */
-	class = Qnil;
-      errb = ERROR_ME_NOT;
-      no_error = Qt;
-    }
-  else
-    no_error = Qnil;
-
   va_start (vargs, nargs);
   for (i = 0; i < nargs; i++)
     args[i] = va_arg (vargs, Lisp_Object);
   va_end (vargs);
+
+  /* ERROR_ME means don't trap errors. (However, if errors are
+     already trapped, we leave them trapped.)
+
+     Otherwise, we trap errors, and display as warnings if ERROR_ME_WARN.
+
+     If ERROR_ME_NOT, we silently fail.
+     
+     If ERROR_ME_DEBUG_WARN, we display a warning, but at warning level to
+     `debug'.  Normally these disappear, but can be seen if we changed
+     log-warning-minimum-level.
+     */
 
   /* If error-checking is not disabled, just call the function.
      It's important not to override disabled error-checking with
@@ -2239,16 +2247,22 @@ call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
     }
 
   speccount = specpdl_depth ();
-  if (NILP (class) || NILP (Vcurrent_warning_class))
+  if (NILP (Vcurrent_warning_class))
     {
-      /* If we're currently calling for no warnings, then make it so.
-	 If we're currently calling for warnings and we weren't
-	 previously, then set our warning class; otherwise, leave
-	 the existing one alone. */
+      /* Don't change the existing class.
+	 #### Should we be consing the two together? */
       record_unwind_protect (restore_current_warning_class,
 			     Vcurrent_warning_class);
       Vcurrent_warning_class = class;
     }
+
+  record_unwind_protect (restore_current_warning_level,
+			 Vcurrent_warning_level);
+  Vcurrent_warning_level =
+    (ERRB_EQ (errb, ERROR_ME_NOT) ? Qnil :
+     ERRB_EQ (errb, ERROR_ME_DEBUG_WARN) ? Qdebug :
+     Qwarning);
+  
 
   {
     int threw;
@@ -2260,7 +2274,6 @@ call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
     GCPRO2 (opaque1, opaque2);
     kludgy_args[0] = opaque2;
     kludgy_args[1] = make_int (nargs);
-    kludgy_args[2] = no_error;
     the_retval = internal_catch (Qunbound_suspended_errors_tag,
 				 call_with_suspended_errors_1,
 				 opaque1, &threw);
@@ -2286,6 +2299,8 @@ maybe_signal_error_1 (Lisp_Object sig, Lisp_Object data, Lisp_Object class,
 {
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return;
+  else if (ERRB_EQ (errb, ERROR_ME_DEBUG_WARN))
+    warn_when_safe_lispobj (class, Qdebug, Fcons (sig, data));
   else if (ERRB_EQ (errb, ERROR_ME_WARN))
     warn_when_safe_lispobj (class, Qwarning, Fcons (sig, data));
   else
@@ -2302,6 +2317,11 @@ maybe_signal_continuable_error_1 (Lisp_Object sig, Lisp_Object data,
 {
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return Qnil;
+  else if (ERRB_EQ (errb, ERROR_ME_DEBUG_WARN))
+    {
+      warn_when_safe_lispobj (class, Qdebug, Fcons (sig, data));
+      return Qnil;
+    }
   else if (ERRB_EQ (errb, ERROR_ME_WARN))
     {
       warn_when_safe_lispobj (class, Qwarning, Fcons (sig, data));
@@ -4502,7 +4522,7 @@ eval_in_buffer_trapping_errors (const CIntbyte *warning_string,
   Lisp_Object opaque;
   struct gcpro gcpro1, gcpro2;
 
-  XSETBUFFER (buffer, buf);
+  buffer = wrap_buffer (buf);
 
   specbind (Qinhibit_quit, Qt);
   /* begin_gc_forbidden(); Currently no reason to do this; */
@@ -5267,6 +5287,12 @@ void
 warn_when_safe_lispobj (Lisp_Object class, Lisp_Object level,
 			Lisp_Object obj)
 {
+  /* Don't even generate debug warnings if they're going to be discarded,
+     to avoid excessive consing. */
+  if (EQ (level, Qdebug) && !NILP (Vlog_warning_minimum_level) &&
+      !EQ (Vlog_warning_minimum_level, Qdebug))
+    return;
+  
   obj = list1 (list3 (class, level, obj));
   if (NILP (Vpending_warnings))
     Vpending_warnings = Vpending_warnings_tail = obj;
@@ -5290,6 +5316,12 @@ warn_when_safe (Lisp_Object class, Lisp_Object level, const CIntbyte *fmt, ...)
   Lisp_Object obj;
   va_list args;
 
+  /* Don't even generate debug warnings if they're going to be discarded,
+     to avoid excessive consing. */
+  if (EQ (level, Qdebug) && !NILP (Vlog_warning_minimum_level) &&
+      !EQ (Vlog_warning_minimum_level, Qdebug))
+    return;
+  
   va_start (args, fmt);
   obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
@@ -5529,6 +5561,9 @@ If due to `eval' entry, one arg, t.
   dump_add_root_object (&Vpending_warnings_tail);
   Vpending_warnings_tail = Qnil;
 
+  DEFVAR_LISP ("log-warning-minimum-level", &Vlog_warning_minimum_level);
+  Vlog_warning_minimum_level = Qinfo;
+
   staticpro (&Vautoload_queue);
   Vautoload_queue = Qnil;
 
@@ -5536,6 +5571,9 @@ If due to `eval' entry, one arg, t.
 
   staticpro (&Vcurrent_warning_class);
   Vcurrent_warning_class = Qnil;
+
+  staticpro (&Vcurrent_warning_level);
+  Vcurrent_warning_level = Qnil;
 
   staticpro (&Vcurrent_error_state);
   Vcurrent_error_state = Qnil; /* errors as normal */

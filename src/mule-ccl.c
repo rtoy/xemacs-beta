@@ -2013,7 +2013,7 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
     signal_error (Qccl_error, "Error in CCL program at code numbered ...", make_int (ccl.ic));
 
   for (i = 0; i < 8; i++)
-    XSETINT (XVECTOR (reg)->contents[i], ccl.reg[i]);
+    XVECTOR (reg)->contents[i] = make_int (ccl.reg[i]);
   return Qnil;
 }
 
@@ -2063,7 +2063,7 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
   for (i = 0; i < 8; i++)
     {
       if (NILP (XVECTOR_DATA (status)[i]))
-	XSETINT (XVECTOR_DATA (status)[i], 0);
+	XVECTOR_DATA (status)[i] = make_int (0);
       if (INTP (XVECTOR_DATA (status)[i]))
 	ccl.reg[i] = XINT (XVECTOR_DATA (status)[i]);
     }
@@ -2080,8 +2080,8 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
 			 (int *) 0,
 			 CCL_MODE_DECODING);
   for (i = 0; i < 8; i++)
-    XSETINT (XVECTOR_DATA (status)[i], ccl.reg[i]);
-  XSETINT (XVECTOR_DATA (status)[8], ccl.ic);
+    XVECTOR_DATA (status)[i] = make_int (ccl.reg[i]);
+  XVECTOR_DATA (status)[8] = make_int (ccl.ic);
   UNGCPRO;
 
   val = make_string (Dynarr_atp (outbuf, 0), produced);

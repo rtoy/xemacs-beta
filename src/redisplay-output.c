@@ -1,6 +1,6 @@
 /* Synchronize redisplay structures and output changes.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
    Copyright (C) 1999 Andy Piper.
 
@@ -248,9 +248,9 @@ compare_runes (struct window *w, struct rune *crb, struct rune *drb)
          then clear in redisplay_output_layout (). */
       Lisp_Object window, image;
       Lisp_Image_Instance* ii;
-      XSETWINDOW (window, w);
+      window = wrap_window (w);
       image = glyph_image_instance (crb->object.dglyph.glyph,
-				    window, ERROR_ME_NOT, 1);
+				    window, ERROR_ME_DEBUG_WARN, 1);
 
       if (!IMAGE_INSTANCEP (image))
 	return 0;
@@ -376,7 +376,7 @@ get_cursor_size_and_location (struct window *w, struct display_block *db,
   if (Dynarr_length (db->runes) <= cursor_location)
     abort ();
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
   rb = Dynarr_atp (db->runes, cursor_location);
   *cursor_start = rb->xpos;
@@ -536,9 +536,8 @@ static void
 clear_left_border (struct window *w, int y, int height)
 {
   struct frame *f = XFRAME (w->frame);
-  Lisp_Object window;
+  Lisp_Object window = wrap_window (w);
 
-  XSETWINDOW (window, w);
   redisplay_clear_region (window, DEFAULT_INDEX,
 		FRAME_LEFT_BORDER_START (f), y,
 		FRAME_BORDER_WIDTH (f), height);
@@ -553,9 +552,8 @@ static void
 clear_right_border (struct window *w, int y, int height)
 {
   struct frame *f = XFRAME (w->frame);
-  Lisp_Object window;
+  Lisp_Object window = wrap_window (w);
 
-  XSETWINDOW (window, w);
   redisplay_clear_region (window, DEFAULT_INDEX,
 		FRAME_RIGHT_BORDER_START (f),
 		y, FRAME_BORDER_WIDTH (f), height);
@@ -725,9 +723,8 @@ output_display_line (struct window *w, display_line_dynarr *cdla,
 
 		  if (findex != (face_index) -1)
 		    {
-		      Lisp_Object window;
+		      Lisp_Object window = wrap_window (w);
 
-		      XSETWINDOW (window, w);
 
 		      /* Clear the empty area. */
 		      redisplay_clear_region (window, findex, x, y, width, height);
@@ -1243,7 +1240,7 @@ redisplay_output_subwindow (struct window *w,
   if (!redisplay_normalize_glyph_area (db, dga))
     return;
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
   /* Clear the area the subwindow is going into. */
   redisplay_clear_clipped_region (window, findex,
@@ -1394,7 +1391,7 @@ redisplay_output_layout (Lisp_Object domain,
   LIST_LOOP (rest, IMAGE_INSTANCE_LAYOUT_CHILDREN (p))
     {
       Lisp_Object child = glyph_image_instance (XCAR (rest), image_instance,
-						ERROR_ME_NOT, 1);
+						ERROR_ME_DEBUG_WARN, 1);
 
       struct display_box cdb;
       /* For losing HP-UX */
@@ -1543,8 +1540,8 @@ redisplay_output_pixmap (struct window *w,
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
-  Lisp_Object window;
-  XSETWINDOW (window, w);
+  Lisp_Object window = wrap_window (w);
+
 
   dga->height = IMAGE_INSTANCE_PIXMAP_HEIGHT (p);
   dga->width = IMAGE_INSTANCE_PIXMAP_WIDTH (p);
@@ -1918,8 +1915,8 @@ redisplay_calculate_display_boxes (struct display_line *dl, int xpos,
 void
 redisplay_clear_top_of_window (struct window *w)
 {
-  Lisp_Object window;
-  XSETWINDOW (window, w);
+  Lisp_Object window = wrap_window (w);
+
 
   if (!NILP (Fwindow_highest_p (window)))
     {
@@ -1970,7 +1967,7 @@ redisplay_clear_to_window_end (struct window *w, int ypos1, int ypos2)
 	  layout_bounds bounds;
 
 	  bounds = calculate_display_line_boundaries (w, bflag);
-	  XSETWINDOW (window, w);
+	  window = wrap_window (w);
 
 	  if (window_is_leftmost (w))
 	    redisplay_clear_region (window, DEFAULT_INDEX, FRAME_LEFT_BORDER_START (f),

@@ -278,14 +278,14 @@ Symbols are also allowed; their print names are used instead.
        (string1, string2))
 {
   Bytecount len;
-  Lisp_String *p1, *p2;
+  Lisp_Object p1, p2;
 
   if (SYMBOLP (string1))
     p1 = XSYMBOL (string1)->name;
   else
     {
       CHECK_STRING (string1);
-      p1 = XSTRING (string1);
+      p1 = string1;
     }
 
   if (SYMBOLP (string2))
@@ -293,11 +293,11 @@ Symbols are also allowed; their print names are used instead.
   else
     {
       CHECK_STRING (string2);
-      p2 = XSTRING (string2);
+      p2 = string2;
     }
 
-  return (((len = string_length (p1)) == string_length (p2)) &&
-	  !memcmp (string_data (p1), string_data (p2), len)) ? Qt : Qnil;
+  return (((len = XSTRING_LENGTH (p1)) == XSTRING_LENGTH (p2)) &&
+	  !memcmp (XSTRING_DATA (p1), XSTRING_DATA (p2), len)) ? Qt : Qnil;
 }
 
 DEFUN ("string-lessp", Fstring_lessp, 2, 2, 0, /*
@@ -315,16 +315,16 @@ is implemented.
 */
        (string1, string2))
 {
-  Lisp_String *p1, *p2;
+  Lisp_Object p1, p2;
   Charcount end, len2;
   int i;
 
   if (SYMBOLP (string1))
     p1 = XSYMBOL (string1)->name;
-  else
-    {
+  else   
+    { 
       CHECK_STRING (string1);
-      p1 = XSTRING (string1);
+      p1 = string1;
     }
 
   if (SYMBOLP (string2))
@@ -332,17 +332,17 @@ is implemented.
   else
     {
       CHECK_STRING (string2);
-      p2 = XSTRING (string2);
+      p2 = string2;
     }
 
-  end  = string_char_length (p1);
-  len2 = string_char_length (p2);
+  end  = XSTRING_CHAR_LENGTH (p1);
+  len2 = XSTRING_CHAR_LENGTH (p2);
   if (end > len2)
     end = len2;
 
   {
-    Intbyte *ptr1 = string_data (p1);
-    Intbyte *ptr2 = string_data (p2);
+    Intbyte *ptr1 = XSTRING_DATA (p1);
+    Intbyte *ptr2 = XSTRING_DATA (p2);
 
     /* #### It is not really necessary to do this: We could compare
        byte-by-byte and still get a reasonable comparison, since this
@@ -371,12 +371,9 @@ of the string are changed (e.g. with `aset').  It wraps around occasionally.
 */
        (string))
 {
-  Lisp_String *s;
-
   CHECK_STRING (string);
-  s = XSTRING (string);
-  if (CONSP (s->plist) && INTP (XCAR (s->plist)))
-    return XCAR (s->plist);
+  if (CONSP (XSTRING_PLIST (string)) && INTP (XCAR (XSTRING_PLIST (string))))
+    return XCAR (XSTRING_PLIST (string));
   else
     return Qzero;
 }
@@ -384,8 +381,7 @@ of the string are changed (e.g. with `aset').  It wraps around occasionally.
 void
 bump_string_modiff (Lisp_Object str)
 {
-  Lisp_String *s = XSTRING (str);
-  Lisp_Object *ptr = &s->plist;
+  Lisp_Object *ptr = &XSTRING_PLIST (str);
 
 #ifdef I18N3
   /* #### remove the `string-translatable' property from the string,
@@ -395,7 +391,7 @@ bump_string_modiff (Lisp_Object str)
   if (CONSP (*ptr) && EXTENT_INFOP (XCAR (*ptr)))
     ptr = &XCDR (*ptr);
   if (CONSP (*ptr) && INTP (XCAR (*ptr)))
-    XSETINT (XCAR (*ptr), 1+XINT (XCAR (*ptr)));
+    XCAR (*ptr) = make_int (1+XINT (XCAR (*ptr)));
   else
     *ptr = Fcons (make_int (1), *ptr);
 }
@@ -891,8 +887,8 @@ Relevant parts of the string-extent-data are copied to the new string.
   CHECK_INT (start);
   get_string_range_char (string, start, end, &ccstart, &ccend,
 			 GB_HISTORICAL_STRING_BEHAVIOR);
-  bstart = XSTRING_INDEX_CHAR_TO_BYTE (string, ccstart);
-  blen = XSTRING_OFFSET_CHAR_TO_BYTE_LEN (string, bstart, ccend - ccstart);
+  bstart = string_index_char_to_byte (string, ccstart);
+  blen = string_offset_char_to_byte_len (string, bstart, ccend - ccstart);
   val = make_string (XSTRING_DATA (string) + bstart, blen);
   /* Copy any applicable extent information into the new string. */
   copy_string_extents (val, string, 0, bstart, blen);
@@ -2133,6 +2129,10 @@ bad_bad_bunny (Lisp_Object *plist, Lisp_Object *badplace, Error_Behavior errb)
 	     list2 (build_msg_string
 		    ("Malformed property list -- list has been truncated"),
 		    *plist));
+	  /* #### WARNING: This is more dangerous than it seems; perhaps
+             not a good idea.  It also violates the principle of least
+             surprise -- passing in ERROR_ME_WARN causes truncation, but
+             ERROR_ME and ERROR_ME_NOT don't. */
 	  *badplace = Qnil;
 	}
       return Qunbound;
@@ -2160,6 +2160,10 @@ bad_bad_turtle (Lisp_Object *plist, Lisp_Object *badplace, Error_Behavior errb)
 	     list2 (build_msg_string
 		    ("Circular property list -- list has been truncated"),
 		    *plist));
+	  /* #### WARNING: This is more dangerous than it seems; perhaps
+             not a good idea.  It also violates the principle of least
+             surprise -- passing in ERROR_ME_WARN causes truncation, but
+             ERROR_ME and ERROR_ME_NOT don't. */
 	  *badplace = Qnil;
 	}
       return Qunbound;
@@ -2795,8 +2799,7 @@ ARRAY is a vector, bit vector, or string.
  retry:
   if (STRINGP (array))
     {
-      Lisp_String *s = XSTRING (array);
-      Bytecount old_bytecount = string_length (s);
+      Bytecount old_bytecount = XSTRING_LENGTH (array);
       Bytecount new_bytecount;
       Bytecount item_bytecount;
       Intbyte item_buf[MAX_EMCHAR_LEN];
@@ -2808,20 +2811,20 @@ ARRAY is a vector, bit vector, or string.
 
       sledgehammer_check_ascii_begin (array);
       item_bytecount = set_charptr_emchar (item_buf, XCHAR (item));
-      new_bytecount = item_bytecount * string_char_length (s);
+      new_bytecount = item_bytecount * XSTRING_CHAR_LENGTH (array);
 
-      resize_string (s, -1, new_bytecount - old_bytecount);
+      resize_string (array, -1, new_bytecount - old_bytecount);
 
-      for (p = string_data (s), end = p + new_bytecount;
+      for (p = XSTRING_DATA (array), end = p + new_bytecount;
 	   p < end;
 	   p += item_bytecount)
 	memcpy (p, item_buf, item_bytecount);
       *p = '\0';
 
-      set_string_ascii_begin (s,
-			      item_bytecount == 1 ?
-			      min (new_bytecount, MAX_STRING_ASCII_BEGIN) :
-			      0);
+      XSET_STRING_ASCII_BEGIN (array,
+			       item_bytecount == 1 ?
+			       min (new_bytecount, MAX_STRING_ASCII_BEGIN) :
+			       0);
       bump_string_modiff (array);
       sledgehammer_check_ascii_begin (array);
     }

@@ -1,7 +1,7 @@
 ;;; msw-faces.el --- mswindows-specific face stuff.
 
 ;;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-;;; Copyright (C) 1995, 1996 Ben Wing.
+;;; Copyright (C) 1995, 1996, 2002 Ben Wing.
 
 ;; Author: Jamie Zawinski
 ;; Modified by:  Chuck Thompson
@@ -29,6 +29,8 @@
 ;; This file does the magic to parse mswindows font names, and make sure that
 ;; the default and modeline attributes of new frames are specified enough.
 
+(set-face-font 'gui-element "MS Sans Serif:Regular:8" nil 'mswindows)
+
 (defun mswindows-init-device-faces (device)
   (let ((color-default (device-system-metric device 'color-default))
 	(color-3d-face (device-system-metric device 'color-3d-face)))
@@ -45,7 +47,7 @@
 	(set-face-foreground 'gui-element (car color-3d-face)) device)
     (if (cdr color-3d-face)
 	(set-face-background 'gui-element (cdr color-3d-face)) device)
-    (set-face-font 'gui-element "MS Sans Serif:Regular:8" device)))
+    ))
 
 (defun mswindows-init-frame-faces (frame)
   )

@@ -1,7 +1,7 @@
 /* toolbar implementation -- "Generic" (X or GTK) redisplay interface.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -188,7 +188,7 @@ common_output_toolbar_button (struct frame *f, Lisp_Object button)
       height_adj = - 2 * border_width;
     }
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
   window = FRAME_LAST_NONMINIBUF_WINDOW (f);
   w = XWINDOW (window);
 
@@ -217,7 +217,7 @@ common_output_toolbar_button (struct frame *f, Lisp_Object button)
   /* #### It is currently possible for users to trash us by directly
      changing the toolbar glyphs.  Avoid crashing in that case. */
   if (GLYPHP (glyph))
-    instance = glyph_image_instance (glyph, window, ERROR_ME_NOT, 1);
+    instance = glyph_image_instance (glyph, window, ERROR_ME_DEBUG_WARN, 1);
   else
     instance = Qnil;
 
@@ -560,9 +560,8 @@ common_output_toolbar (struct frame *f, enum toolbar_pos pos)
 
   if (!vert)
     {
-      Lisp_Object frame;
+      Lisp_Object frame = wrap_frame (f);
 
-      XSETFRAME (frame, f);
       redisplay_clear_region (frame,
 			      DEFAULT_INDEX, FRAME_PIXWIDTH (f) - 1, y, 1,
 			      bar_height);
@@ -579,7 +578,7 @@ common_clear_toolbar (struct frame *f, enum toolbar_pos pos, int thickness_chang
   int x, y, width, height, vert;
 
   get_toolbar_coords (f, pos, &x, &y, &width, &height, &vert, 1);
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   /* The thickness_change parameter is used by the toolbar resize routines
      to clear any excess toolbar if the size shrinks. */

@@ -355,7 +355,6 @@ void check_valid_string (Lisp_Object data);
 void check_valid_int (Lisp_Object data);
 void check_valid_face (Lisp_Object data);
 void check_valid_vector (Lisp_Object data);
-void check_valid_item_list (Lisp_Object items);
 
 void initialize_subwindow_image_instance (Lisp_Image_Instance*);
 void subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
@@ -398,7 +397,6 @@ DECLARE_DOESNT_RETURN (signal_double_image_error_2 (const char *string1,
 
 DECLARE_SPECIFIER_TYPE (image);
 #define XIMAGE_SPECIFIER(x) XSPECIFIER_TYPE (x, image)
-#define XSETIMAGE_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, image)
 #define IMAGE_SPECIFIERP(x) SPECIFIER_TYPEP (x, image)
 #define CHECK_IMAGE_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, image)
 #define CONCHECK_IMAGE_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, image)
@@ -428,7 +426,6 @@ struct image_specifier
 
 DECLARE_LRECORD (image_instance, Lisp_Image_Instance);
 #define XIMAGE_INSTANCE(x) XRECORD (x, image_instance, Lisp_Image_Instance)
-#define XSETIMAGE_INSTANCE(x, p) XSETRECORD (x, p, image_instance)
 #define wrap_image_instance(p) wrap_record (p, image_instance)
 #define IMAGE_INSTANCEP(x) RECORDP (x, image_instance)
 #define CHECK_IMAGE_INSTANCE(x) CHECK_RECORD (x, image_instance)
@@ -938,7 +935,6 @@ typedef struct Lisp_Glyph Lisp_Glyph;
 
 DECLARE_LRECORD (glyph, Lisp_Glyph);
 #define XGLYPH(x) XRECORD (x, glyph, Lisp_Glyph)
-#define XSETGLYPH(x, p) XSETRECORD (x, p, glyph)
 #define wrap_glyph(p) wrap_record (p, glyph)
 #define GLYPHP(x) RECORDP (x, glyph)
 #define CHECK_GLYPH(x) CHECK_RECORD (x, glyph)

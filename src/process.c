@@ -471,7 +471,7 @@ make_process_internal (Lisp_Object name)
   p->process_data = 0;
   MAYBE_PROCMETH (alloc_process_data, (p));
 
-  XSETPROCESS (val, p);
+  val = wrap_process (p);
 
   Vprocess_list = Fcons (val, Vprocess_list);
   return val;
@@ -518,7 +518,7 @@ init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
   if (usid != USID_DONTHASH)
     {
       Lisp_Object process = Qnil;
-      XSETPROCESS (process, p);
+      process = wrap_process (p);
       puthash ((const void *) usid, LISP_TO_VOID (process), usid_to_process);
     }
 
@@ -1156,7 +1156,7 @@ from processes can arrive in between chunks.
   Charbpos bstart, bend;
   struct buffer *buf = decode_buffer (buffer, 0);
 
-  XSETBUFFER (buffer, buf);
+  buffer = wrap_buffer (buf);
   process = get_process (process);
   get_buffer_range_char (buf, start, end, &bstart, &bend, 0);
 
@@ -1376,8 +1376,8 @@ status_message (Lisp_Process *p)
 	string2 = build_msg_string (" (core dumped)\n");
       else
 	string2 = build_string ("\n");
-      set_string_char (XSTRING (string), 0,
-		       DOWNCASE (0, string_char (XSTRING (string), 0)));
+      set_string_char (string, 0,
+		       DOWNCASE (0, XSTRING_CHAR (string, 0)));
       return concat2 (string, string2);
     }
   else if (EQ (symbol, Qexit))
@@ -1508,8 +1508,8 @@ status_notify (void)
 	      else
 		BUF_SET_PT (current_buffer, BUF_ZV (current_buffer));
 	      if (BUF_PT (current_buffer) <= opoint)
-		opoint += (string_char_length (XSTRING (msg))
-                           + string_char_length (XSTRING (p->name))
+		opoint += (XSTRING_CHAR_LENGTH (msg)
+                           + XSTRING_CHAR_LENGTH (p->name)
                            + 10);
 
 	      old_read_only = current_buffer->read_only;
@@ -1601,11 +1601,11 @@ decode_signal (Lisp_Object signal_)
       Intbyte *name;
 
       CHECK_SYMBOL (signal_);
-      name = string_data (XSYMBOL (signal_)->name);
+      name = XSTRING_DATA (XSYMBOL (signal_)->name);
 
-#define handle_signal(sym) do {				\
-	if (!strcmp ((const char *) name, #sym))	\
-	  return sym;					\
+#define handle_signal(sym) do {			\
+	if (!qxestrcmp_c ( name, #sym))		\
+	  return sym;				\
       } while (0)
 
       handle_signal (SIGINT);  /* ANSI */

@@ -1018,7 +1018,7 @@ static struct subsidiary_type coding_subsidiary_list[] =
 static void
 setup_eol_coding_systems (Lisp_Object codesys)
 {
-  int len = string_length (XSYMBOL (XCODING_SYSTEM_NAME (codesys))->name);
+  int len = XSTRING_LENGTH (XSYMBOL (XCODING_SYSTEM_NAME (codesys))->name);
   Intbyte *codesys_name = (Intbyte *) alloca (len + 7);
   int mlen = -1;
   Intbyte *codesys_mnemonic = 0;
@@ -1026,7 +1026,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
   int i;
 
   memcpy (codesys_name,
-	  string_data (XSYMBOL (XCODING_SYSTEM_NAME (codesys))->name), len);
+	  XSTRING_DATA (XSYMBOL (XCODING_SYSTEM_NAME (codesys))->name), len);
 
   if (STRINGP (XCODING_SYSTEM_MNEMONIC (codesys)))
     {
@@ -1177,7 +1177,7 @@ make_coding_system_1 (Lisp_Object name_or_existing, Char_ASCII *prefix,
 
   cs = allocate_coding_system (meths, meths->extra_data_size,
 			       name_or_existing);
-  XSETCODING_SYSTEM (csobj, cs);
+  csobj = wrap_coding_system (cs);
 
   cs->internal_p = !!prefix;
 
@@ -1457,9 +1457,9 @@ ignored:
 The following additional property is recognized if TYPE is 'convert-eol:
 
 'subtype
-     One of `lf', `crlf', `cr' or `autodetect'.  When decoding, the
-     corresponding sequence will be converted to LF.  When encoding, the
-     opposite happens.  This coding system converts characters to
+     One of `lf', `crlf', `cr' or nil (for autodetection).  When decoding,
+     the corresponding sequence will be converted to LF.  When encoding,
+     the opposite happens.  This coding system converts characters to
      characters.
 
 
@@ -1645,12 +1645,12 @@ Use `define-coding-system-alias' instead.
     UNBOUNDP (new_name) ? Qnil : Ffind_coding_system (new_name);
   if (NILP (new_coding_system))
     {
-      XSETCODING_SYSTEM
-	(new_coding_system,
-	 allocate_coding_system
-	 (XCODING_SYSTEM (old_coding_system)->methods,
-	  XCODING_SYSTEM (old_coding_system)->methods->extra_data_size,
-	  new_name));
+      new_coding_system =
+	wrap_coding_system
+	  (allocate_coding_system
+	   (XCODING_SYSTEM (old_coding_system)->methods,
+	    XCODING_SYSTEM (old_coding_system)->methods->extra_data_size,
+	    new_name));
       if (!UNBOUNDP (new_name))
 	Fputhash (new_name, new_coding_system, Vcoding_system_hash_table);
     }
@@ -2306,7 +2306,6 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
 {
   Lstream *lstr = Lstream_new (lstream_coding, mode);
   struct coding_stream *str = CODING_STREAM_DATA (lstr);
-  Lisp_Object obj;
 
   codesys = Fget_coding_system (codesys);
   xzero (*str);
@@ -2318,8 +2317,7 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
   str->convert_from = Dynarr_new (unsigned_char);
   str->direction = direction;
   set_coding_stream_coding_system (lstr, codesys);
-  XSETLSTREAM (obj, lstr);
-  return obj;
+  return wrap_lstream (lstr);
 }
 
 Lisp_Object
@@ -2961,7 +2959,7 @@ This is unavoidable because we don't know whether the output of the
 main encoding routine is ASCII compatible (Unicode is definitely not,
 for example).
 
-There is one parameter: `subtype', either `cr', `lf', `crlf', or `autodetect'.
+There is one parameter: `subtype', either `cr', `lf', `crlf', or nil.
 */
 
 DEFINE_CODING_SYSTEM_TYPE (convert_eol);
@@ -2996,7 +2994,7 @@ convert_eol_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
 		    data->subtype == EOL_LF ? "lf" :
 		    data->subtype == EOL_CRLF ? "crlf" :
 		    data->subtype == EOL_CR ? "cr" :
-		    data->subtype == EOL_AUTODETECT ? "autodetect" :
+		    data->subtype == EOL_AUTODETECT ? "nil" :
 		    (abort(), ""));
 }
 
@@ -3022,7 +3020,7 @@ convert_eol_putprop (Lisp_Object codesys,
 	data->subtype = EOL_CRLF;
       else if (EQ (value, Qcr) /* || EQ (value, Qmac) */)
 	data->subtype = EOL_CR;
-      else if (EQ (value, Qautodetect) /* || EQ (value, Qmac) */)
+      else if (EQ (value, Qnil))
 	data->subtype = EOL_AUTODETECT;
       else invalid_constant ("Unrecognized eol type", value);
     }
@@ -3044,7 +3042,7 @@ convert_eol_getprop (Lisp_Object coding_system, Lisp_Object prop)
 	case EOL_LF: return Qlf;
 	case EOL_CRLF: return Qcrlf;
 	case EOL_CR: return Qcr;
-	case EOL_AUTODETECT: return Qautodetect;
+	case EOL_AUTODETECT: return Qnil;
 	default: abort ();
 	}
     }
@@ -3664,7 +3662,7 @@ detected_coding_system (struct detection_state *st)
 		  if (likelihood < DET_AS_LIKELY_AS_UNLIKELY)
 		    warn_when_safe_lispobj
 		      (intern ("detection"),
-		       Qerror,
+		       Qwarning,
 		       emacs_sprintf_string_lisp
 		       (
 "Detected coding %s is unlikely to be correct (likelihood == `%s')",
@@ -4797,7 +4795,7 @@ complex_vars_of_file_coding (void)
 		    build_msg_string (
 "Autodetect the end-of-line type."),
 		    Qmnemonic, build_string ("Auto-EOL"),
-		    Qsubtype, Qautodetect),
+		    Qsubtype, Qnil),
 	     /* VERY IMPORTANT!  Tell make-coding-system not to generate
 		subsidiaries -- it needs the coding systems we're creating
 		to do so! */

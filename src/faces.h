@@ -224,7 +224,6 @@ struct face_cachel
 
 DECLARE_LRECORD (face, Lisp_Face);
 #define XFACE(x) XRECORD (x, face, Lisp_Face)
-#define XSETFACE(x, p) XSETRECORD (x, p, face)
 #define wrap_face(p) wrap_record (p, face)
 #define FACEP(x) RECORDP (x, face)
 #define CHECK_FACE(x) CHECK_RECORD (x, face)
@@ -328,7 +327,7 @@ void default_face_height_and_width_1 (Lisp_Object domain,
 		      domain, errb, 1, no_fallback, depth)
 
 #define FACE_PROPERTY_INSTANCE(face, property, domain, no_fallback, depth)	\
-  FACE_PROPERTY_INSTANCE_1 (face, property, domain, ERROR_ME_NOT, \
+  FACE_PROPERTY_INSTANCE_1 (face, property, domain, ERROR_ME_DEBUG_WARN, \
 			    no_fallback, depth)
 
 Lisp_Object face_property_matching_instance (Lisp_Object face,
@@ -352,7 +351,7 @@ Lisp_Object face_property_matching_instance (Lisp_Object face,
   FACE_PROPERTY_INSTANCE (face, Qbackground, domain, 0, Qzero)
 #define FACE_FONT(face, domain, charset)				\
   face_property_matching_instance (face, Qfont, charset, domain,	\
-				   ERROR_ME_NOT, 0, Qzero)
+				   ERROR_ME_DEBUG_WARN, 0, Qzero)
 #define FACE_DISPLAY_TABLE(face, domain)				\
   FACE_PROPERTY_INSTANCE (face, Qdisplay_table, domain, 0, Qzero)
 #define FACE_BACKGROUND_PIXMAP(face, domain)				\

@@ -94,9 +94,7 @@ signal_ldap_error (LDAP *ld, LDAPMessage *res, int ldap_err)
 static Lisp_Object
 make_ldap (Lisp_LDAP *ldap)
 {
-  Lisp_Object lisp_ldap;
-  XSETLDAP (lisp_ldap, ldap);
-  return lisp_ldap;
+  return wrap_ldap (ldap);
 }
 
 static Lisp_Object

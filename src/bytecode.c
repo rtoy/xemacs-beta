@@ -1147,8 +1147,8 @@ execute_optimized_program (const Opbyte *program,
 
 	case Bcurrent_buffer:
 	  {
-	    Lisp_Object buffer;
-	    XSETBUFFER (buffer, current_buffer);
+	    Lisp_Object buffer = wrap_buffer (current_buffer);
+
 	    PUSH (buffer);
 	    break;
 	  }

@@ -563,7 +563,7 @@ __generic_button_callback (GtkMenuItem *item, gpointer user_data)
 {
   Lisp_Object callback, function, data, channel;
 
-  XSETFRAME (channel, __get_channel (GTK_WIDGET (item)));
+  channel = wrap_frame (__get_channel (GTK_WIDGET (item)));
 
   VOID_TO_LISP (callback, user_data);
 
@@ -748,12 +748,13 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
 	    }
 	  else if (SYMBOLP (callback))
 	    {
-	      char buf[1024];
+	      DECLARE_EISTRING_MALLOC (buf);
 
 	      /* #### Warning, dependency here on current_buffer and point */
 	      where_is_to_char (callback, buf);
 
-	      keys = build_string (buf);
+	      keys = eimake_string (buf);
+	      eifree (buf);
 	    }
 	}
 

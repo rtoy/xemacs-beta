@@ -24,7 +24,6 @@ Boston, MA 02111-1307, USA.  */
 #if defined (NO_SUBPROCESSES)
 #undef XPROCESS
 #undef CHECK_PROCESS
-#undef XSETPROCESS
 #define PROCESSP(x) 0
 #define PROCESS_LIVE_P(x) 0
 #define Fprocess_status(x) Qnil
@@ -42,7 +41,6 @@ void wait_without_blocking (void);
 
 DECLARE_LRECORD (process, Lisp_Process);
 #define XPROCESS(x) XRECORD (x, process, Lisp_Process)
-#define XSETPROCESS(x, p) XSETRECORD (x, p, process)
 #define wrap_process(p) wrap_record (p, process)
 #define PROCESSP(x) RECORDP (x, process)
 #define CHECK_PROCESS(x) CHECK_RECORD (x, process)

@@ -1,6 +1,7 @@
 ;;; package-get.el --- Retrieve XEmacs package
 
 ;; Copyright (C) 1998 by Pete Ware
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Pete Ware <ware@cis.ohio-state.edu>
 ;; Heavy-Modifications: Greg Klanderman <greg@alphatech.com>
@@ -670,14 +671,11 @@ required by PACKAGES."
 (defun package-get-load-package-file (lispdir file)
   (let (pathname)
     (setq pathname (expand-file-name file lispdir))
-    (condition-case err
-	(progn
-	  (load pathname t)
-	  t)
-      (t
-       (message "Error loading package file \"%s\" %s!" pathname err)
-       nil))
-    ))
+    (with-trapping-errors
+      :operation (format "loading package file \"%s\"" pathname)
+      :error-form nil
+      (load pathname t)
+      t)))
 
 (defun package-get-init-package (lispdir)
   "Initialize the package.
@@ -766,10 +764,12 @@ successfully installed but errors occurred during initialization, or
                    (string-to-number latest)
                  latest))
             (if (not (null version))
-                (warn "Installing %s package version %s, you had a newer version %s"
-                      package latest installed)
-              (warn "Skipping %s package, you have a newer version %s"
-                    package installed)
+                (lwarn 'packages
+		    "Installing %s package version %s, you had a newer version %s"
+		  package latest installed)
+              (lwarn 'packages
+		  "Skipping %s package, you have a newer version %s"
+		package installed)
               (throw 'skip-update t))))
 
     ;; Contrive a list of possible package filenames.

@@ -307,7 +307,7 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
   Lisp_Object charset = Qunbound; /* Qnil is a valid charset when
 				     MULE is not defined */
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
   rb = Dynarr_atp (rba, start);
 
   if (!rb)
@@ -424,9 +424,9 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
 						 start_pixpos, rb->width,
 						 &dbox, &dga);
 
-	      XSETWINDOW (window, w);
+	      window = wrap_window (w);
 	      instance = glyph_image_instance (rb->object.dglyph.glyph,
-					       window, ERROR_ME_NOT, 1);
+					       window, ERROR_ME_DEBUG_WARN, 1);
 	      findex = rb->findex;
 
 	      if (IMAGE_INSTANCEP (instance))
@@ -688,8 +688,8 @@ gtk_output_string (struct window *w, struct display_line *dl,
   int i;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
 
-  XSETDEVICE (device, d);
-  XSETWINDOW (window, w);
+  device = wrap_device (d);
+  window = wrap_window (w);
 
   if (width < 0)
     width = gtk_text_width (f, cachel, Dynarr_atp (buf, 0), Dynarr_length (buf));
@@ -1129,7 +1129,7 @@ gtk_output_pixmap (struct window *w,
 
   GdkWindow *x_win = GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f));
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
   /* Output the pixmap. */
   {
@@ -1439,7 +1439,7 @@ gtk_clear_to_window_end (struct window *w, int ypos1, int ypos2)
       layout_bounds bounds;
 
       bounds = calculate_display_line_boundaries (w, bflag);
-      XSETWINDOW (window, w);
+      window = wrap_window (w);
 
       if (window_is_leftmost (w))
 	redisplay_clear_region (window, DEFAULT_INDEX, FRAME_LEFT_BORDER_START (f),
@@ -1657,7 +1657,7 @@ gtk_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
   int cursor_height, cursor_y;
   int defheight, defascent;
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
   redisplay_clear_region (window, findex, x, y, width, height);
 
   if (NILP (w->text_cursor_visible_p))
@@ -1745,7 +1745,7 @@ gtk_clear_frame (struct frame *f)
 
   gdk_window_clear_area (x_win, x, y, width, height);
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   if (!UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vdefault_face, frame))
       || !UNBOUNDP (FACE_BACKGROUND_PIXMAP (Vleft_margin_face, frame))
@@ -1765,7 +1765,7 @@ gtk_flash (struct device *d)
   struct frame *f = device_selected_frame (d);
   struct window *w = XWINDOW (FRAME_ROOT_WINDOW (f));
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   tmp_pixel = FACE_FOREGROUND (Vdefault_face, frame);
   tmp_fcolor = * (COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (tmp_pixel)));

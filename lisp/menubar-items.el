@@ -282,7 +282,7 @@ Write your filter like this:
       ["%_Revert Buffer" revert-buffer
        :active (or buffer-file-name revert-buffer-function)
        :suffix (if put-buffer-names-in-file-menu (buffer-name) "")]
-      ("%_Rever%_t/Recover"
+      ("Rever%_t/Recover"
       ("Revert Buffer with Specified %_Encoding"
        :filter
        (lambda (menu)
@@ -346,6 +346,9 @@ Write your filter like this:
        :active (not (one-window-p t))]
       ["Un-Split (Keep %_Others)" delete-window
        :active (not (one-window-p t))]
+      ["Balance %_Windows" balance-windows
+       :active (not (one-window-p t))]
+      ["Shrink Window to %_Fit" shrink-window-if-larger-than-buffer]
       "----"
       ("N%_arrow"
        ["%_Narrow to Region" narrow-to-region :active (region-exists-p)]
@@ -356,16 +359,57 @@ Write your filter like this:
 				    (/= (point-max) (1+ (buffer-size))))]
        )
       "----"
-      ["Show Message %_Log" show-message-log]
-      "----"
       ["%_Goto Line..." goto-line]
-      ["%_What Line" what-line]
-      ("%_Bookmarks"
-       :filter bookmark-menu-filter)
+      ["Beginning of %_Defun" beginning-of-defun]
+      ["%_End of Defun" end-of-defun]
+      ["%_Count Lines in Buffer" count-lines-buffer
+       :included (not (region-active-p))]
+      ["%_Count Lines in Region" count-lines-region
+       :included (region-active-p)]
       "----"
       ["%_Jump to Previous Mark" (set-mark-command t)
        :active (mark t)]
+      ["Se%_t Bookmark" bookmark-set
+       :active (fboundp 'bookmark-set)]
+      ("%_Bookmarks"
+       :filter
+       (lambda (menu)
+	 (let ((alist (and-boundp 'bookmark-alist
+			bookmark-alist)))
+	   (if (not alist)
+	       menu
+	     (let ((items
+		    (submenu-generate-accelerator-spec
+		     (mapcar #'(lambda (bmk)
+				 `[,bmk (bookmark-jump ',bmk)])
+			     (bookmark-all-names)))))
+	       (append menu '("---") items)))))
+       "---"
+       ["Insert %_Contents" bookmark-menu-insert
+	:active (fboundp 'bookmark-menu-insert)]
+       ["Insert L%_ocation" bookmark-menu-locate
+	:active (fboundp 'bookmark-menu-locate)]
+       "---"
+       ["%_Rename Bookmark" bookmark-menu-rename
+	:active (fboundp 'bookmark-menu-rename)]
+       ("%_Delete Bookmark"
+	 :filter (lambda (menu)
+		   (submenu-generate-accelerator-spec
+		    (mapcar #'(lambda (bmk)
+				`[,bmk (bookmark-delete ',bmk)])
+			    (bookmark-all-names)))))
+       ["%_Edit Bookmark List" bookmark-bmenu-list
+	:active (and-boundp 'bookmark-alist bookmark-alist)]
+       "---"
+       ["%_Save Bookmarks"        bookmark-save
+	:active (and-boundp 'bookmark-alist bookmark-alist)]
+       ["Save Bookmarks %_As..."  bookmark-write
+	:active (and-boundp 'bookmark-alist bookmark-alist)]
+       ["%_Load a Bookmark File" bookmark-load
+	:active (fboundp 'bookmark-load)]
+       )
       )
+
 
      ("C%_mds"
       ["Repeat %_Last Complex Command..." repeat-complex-command]
@@ -379,15 +423,11 @@ Write your filter like this:
       ["E%_xecute Last Macro" call-last-kbd-macro
        :active last-kbd-macro]
       ("%_Other Macro"
+       ["Edit %_Last Macro" edit-last-kbd-macro
+	:active last-kbd-macro]
+       ["%_Edit Macro..." edit-kbd-macro]
        ["%_Append to Last Macro" (start-kbd-macro t)
 	:active (and (not defining-kbd-macro) last-kbd-macro)]
-       ["%_Query User During Macro" kbd-macro-query
-	:active defining-kbd-macro]
-       ["Enter %_Recursive Edit During Macro" (kbd-macro-query t)
-	:active defining-kbd-macro]
-       "---"
-       ["E%_xecute Last Macro on Region Lines"
-	:active (and last-kbd-macro (region-exists-p))]
        "---"
        ["%_Name Last Macro..." name-last-kbd-macro
 	:active last-kbd-macro]
@@ -395,9 +435,13 @@ Write your filter like this:
 	:active (and last-kbd-macro
 		     (fboundp 'assign-last-kbd-macro-to-key))]
        "---"
-       ["%_Edit Macro..." edit-kbd-macro]
-       ["Edit %_Last Macro" edit-last-kbd-macro
-	:active last-kbd-macro]
+       ["E%_xecute Last Macro on Region Lines"
+	:active (and last-kbd-macro (region-exists-p))]
+       "---"
+       ["%_Query User During Macro" kbd-macro-query
+	:active defining-kbd-macro]
+       ["Enter %_Recursive Edit During Macro" (kbd-macro-query t)
+	:active defining-kbd-macro]
        "---"
        ["%_Insert Named Macro into Buffer..." insert-kbd-macro]
        ["Read Macro from Re%_gion" read-kbd-macro
@@ -565,7 +609,7 @@ Write your filter like this:
        ["Grep %_All Files in Current Directory..."
 	grep-all-files-in-current-directory
 	:active (fboundp 'grep-all-files-in-current-directory)]
-       ["G%_rep All Files in Current Directory and Below..."
+       ["Grep All Files in Current Directory %_Recursively..."
 	grep-all-files-in-current-directory-and-below
 	:active (fboundp 'grep-all-files-in-current-directory-and-below)]
        "---"
@@ -1536,9 +1580,7 @@ Write your filter like this:
       ["%_About XEmacs..." about-xemacs]
       ["%_Home Page (www.xemacs.org)" xemacs-www-page
        :active (fboundp 'browse-url)]
-      "-----"
       ["What's %_New in XEmacs" view-emacs-news]
-      ["%_Obtaining XEmacs" describe-distribution]
       "-----"
       ("%_Info (Online Docs)"
        ["Info Con%_tents" (Info-goto-node "(dir)")]
@@ -1590,7 +1632,6 @@ Write your filter like this:
        ["Describe %_Key..." describe-key]
        ["Show %_Bindings" describe-bindings]
        ["Show M%_ouse Bindings" describe-pointer]
-       ["%_Recent Keys" view-lossage]
        "-----"
        ["Describe %_Function..." describe-function]
        ["Describe %_Variable..." describe-variable]
@@ -1620,7 +1661,7 @@ Write your filter like this:
 	     ["Show %_Diagnosis for MULE" mule-diag :active nil]
 	     ["Show \"%_hello\" in Many Languages" view-hello-file]
 	     )))
-      ("%_Misc"
+      ("%_Other"
        ["%_Current Installation Info" describe-installation
 	:active (boundp 'Installation-string)]
        ["%_No Warranty" describe-no-warranty]
@@ -1629,7 +1670,9 @@ Write your filter like this:
        ["View %_Splash Screen" xemacs-splash-buffer]
        ["%_Unix Manual..." manual-entry])
       "-----"
-      ["%_Recent Messages" view-lossage]
+      ["Recent %_Messages" (view-lossage t)]
+      ["Recent %_Keystrokes" view-lossage]
+      ["Recent %_Warnings" view-warnings]
       ["Send %_Bug Report..." report-xemacs-bug
        :active (fboundp 'report-xemacs-bug)])))
 
@@ -1655,47 +1698,6 @@ Adds `Load .emacs' button to menubar when starting up with -q."
 ;;; The File menu
 
 (defvar put-buffer-names-in-file-menu t)
-
-
-;;; The Bookmarks menu
-
-(defun bookmark-menu-filter (&rest ignore)
-  (declare (special bookmark-alist))
-  (let ((definedp (and (boundp 'bookmark-alist)
-		       bookmark-alist
-		       t)))
-    `(,(if definedp
-	   '("%_Jump to Bookmark"
-	     :filter (lambda (&rest junk)
-		       (submenu-generate-accelerator-spec
-			(mapcar #'(lambda (bmk)
-				    `[,bmk (bookmark-jump ',bmk)])
-				(bookmark-all-names)))))
-	 ["%_Jump to Bookmark" nil nil])
-      ["Set %_Bookmark" bookmark-set
-       :active (fboundp 'bookmark-set)]
-      "---"
-      ["Insert %_Contents" bookmark-menu-insert
-       :active (fboundp 'bookmark-menu-insert)]
-      ["Insert L%_ocation" bookmark-menu-locate
-       :active (fboundp 'bookmark-menu-locate)]
-      "---"
-      ["%_Rename Bookmark" bookmark-menu-rename
-       :active (fboundp 'bookmark-menu-rename)]
-      ,(if definedp
-	   '("%_Delete Bookmark"
-	     :filter (lambda (&rest junk)
-		       (submenu-generate-accelerator-spec
-			(mapcar #'(lambda (bmk)
-				    `[,bmk (bookmark-delete ',bmk)])
-				(bookmark-all-names)))))
-	 ["%_Delete Bookmark" nil nil])
-      ["%_Edit Bookmark List" bookmark-bmenu-list	,definedp]
-      "---"
-      ["%_Save Bookmarks"        bookmark-save		,definedp]
-      ["Save Bookmarks %_As..."  bookmark-write		,definedp]
-      ["%_Load a Bookmark File" bookmark-load
-       :active (fboundp 'bookmark-load)])))
 
 ;;; The Buffers menu
 

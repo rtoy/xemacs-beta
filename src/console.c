@@ -150,7 +150,7 @@ allocate_console (void)
 
   copy_lcrecord (con, XCONSOLE (Vconsole_defaults));
 
-  XSETCONSOLE (console, con);
+  console = wrap_console (con);
   GCPRO1 (console);
 
   con->quit_char = 7; /* C-g */
@@ -473,7 +473,7 @@ create_console (Lisp_Object name, Lisp_Object type, Lisp_Object connection,
     return console;
 
   con = allocate_console ();
-  XSETCONSOLE (console, con);
+  console = wrap_console (con);
 
   GCPRO1 (console);
 
@@ -605,7 +605,7 @@ delete_console_internal (struct console *con, int force,
   if (!CONSOLE_LIVE_P (con))
     return;
 
-  XSETCONSOLE (console, con);
+  console = wrap_console (con);
   GCPRO1 (console);
 
   if (!called_from_kill_emacs)
@@ -1273,8 +1273,8 @@ common_init_complex_vars_of_console (void)
 
   staticpro_nodump (&Vconsole_defaults);
   staticpro_nodump (&Vconsole_local_symbols);
-  XSETCONSOLE (Vconsole_defaults, defs);
-  XSETCONSOLE (Vconsole_local_symbols, syms);
+  Vconsole_defaults = wrap_console (defs);
+  Vconsole_local_symbols = wrap_console (syms);
 
   nuke_all_console_slots (syms, Qnil);
   nuke_all_console_slots (defs, Qnil);

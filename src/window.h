@@ -167,7 +167,6 @@ struct window
 
 DECLARE_LRECORD (window, struct window);
 #define XWINDOW(x) XRECORD (x, window, struct window)
-#define XSETWINDOW(x, p) XSETRECORD (x, p, window)
 #define wrap_window(p) wrap_record (p, window)
 #define WINDOWP(x) RECORDP (x, window)
 #define CHECK_WINDOW(x) CHECK_RECORD (x, window)
@@ -219,7 +218,6 @@ struct window_mirror
 
 DECLARE_LRECORD (window_mirror, struct window_mirror);
 #define XWINDOW_MIRROR(x) XRECORD (x, window_mirror, struct window_mirror)
-#define XSETWINDOW_MIRROR(x, p) XSETRECORD (x, p, window_mirror)
 #define wrap_window_mirror(p) wrap_record (p, window_mirror)
 #define WINDOW_MIRRORP(x) RECORDP (x, window_mirror)
 #define CHECK_WINDOW_MIRROR(x) CHECK_RECORD (x, window_mirror)

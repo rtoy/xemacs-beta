@@ -400,7 +400,7 @@ output_gutter (struct frame *f, enum gutter_pos pos, int force)
   cdla = f->current_display_lines[pos];
   cdla_len = Dynarr_length (cdla);
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   get_gutter_coords (f, pos, &x, &y, &width, &height);
   /* generate some display lines */

@@ -1,5 +1,6 @@
 /* Primitives for word-abbrev mode.
    Copyright (C) 1985, 1986, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -92,7 +93,7 @@ abbrev_match_mapper (Lisp_Object symbol, void *arg)
     (struct abbrev_match_mapper_closure *)arg;
   Charcount abbrev_length;
   Lisp_Symbol *sym = XSYMBOL (symbol);
-  Lisp_String *abbrev;
+  Lisp_Object abbrev;
 
   /* symbol_value should be OK here, because abbrevs are not expected
      to contain any SYMBOL_MAGIC stuff.  */
@@ -102,7 +103,7 @@ abbrev_match_mapper (Lisp_Object symbol, void *arg)
       return 0;
     }
   abbrev = symbol_name (sym);
-  abbrev_length = string_char_length (abbrev);
+  abbrev_length = XSTRING_CHAR_LENGTH (abbrev);
   if (abbrev_length > closure->maxlen)
     {
       /* This abbrev is too large -- it wouldn't fit. */
@@ -112,16 +113,17 @@ abbrev_match_mapper (Lisp_Object symbol, void *arg)
      normally want to expand it.  OTOH, if the abbrev begins with
      non-word syntax (e.g. `#if'), it is OK to abbreviate it anywhere.  */
   if (abbrev_length < closure->maxlen && abbrev_length > 0
-      && (WORD_SYNTAX_P (closure->chartab, string_char (abbrev, 0)))
+      && (WORD_SYNTAX_P (closure->chartab, XSTRING_CHAR (abbrev, 0)))
       && (WORD_SYNTAX_P (closure->chartab,
 			 BUF_FETCH_CHAR (closure->buf,
-					 closure->point - (abbrev_length + 1)))))
+					 closure->point -
+					 (abbrev_length + 1)))))
     {
       return 0;
     }
   /* Match abbreviation string against buffer text.  */
   {
-    Intbyte *ptr = string_data (abbrev);
+    Intbyte *ptr = XSTRING_DATA (abbrev);
     Charcount idx;
 
     for (idx = 0; idx < abbrev_length; idx++)
@@ -285,7 +287,6 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
   Lisp_Symbol *(*fun) (struct buffer *, Lisp_Object);
 
   Lisp_Symbol *abbrev_symbol;
-  Lisp_String *abbrev_string;
   Lisp_Object expansion, count, hook;
   Charcount abbrev_length;
   int lccount, uccount;
@@ -328,8 +329,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
   /* OK, we're out of the must-be-fast part.  An abbreviation matched.
      Now find the parameters, insert the expansion, and make it all
      look pretty.  */
-  abbrev_string = symbol_name (abbrev_symbol);
-  abbrev_length = string_char_length (abbrev_string);
+  abbrev_length = XSTRING_CHAR_LENGTH (symbol_name (abbrev_symbol));
   abbrev_start = point - abbrev_length;
 
   expansion = symbol_value (abbrev_symbol);
@@ -346,7 +346,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
   abbrev_count_case (buf, abbrev_start, abbrev_length, &lccount, &uccount);
 
   /* Remember the last abbrev text, location, etc. */
-  XSETSYMBOL (Vlast_abbrev, abbrev_symbol);
+  Vlast_abbrev = wrap_symbol (abbrev_symbol);
   Vlast_abbrev_text =
     make_string_from_buffer (buf, abbrev_start, abbrev_length);
   last_abbrev_location = abbrev_start;

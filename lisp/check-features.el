@@ -1,6 +1,7 @@
 ;;; check-features.el --- Do a sanity check on an XEmacs build
 
 ;; Copyright (C) 1998 by Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: SL Baur <steve@xemacs.org>
 ;; Keywords: internal
@@ -40,18 +41,20 @@
       (package-require 'tooltalk 1.0)
     (t (progn
 	 ;; (setq build-error 1)
-	 (message "Warning:  This XEmacs is built with tooltalk support but")
-	 (message "does not have a tooltalk package installed.  Without the")
-	 (message "tooltalk lisp package, Tooltalk support is broken.")))))
+	 (lwarn 'tooltalk 'alert
+	   "Warning:  This XEmacs is built with tooltalk support but
+does not have a tooltalk package installed.  Without the
+tooltalk lisp package, Tooltalk support is broken.")))))
 
 (when (featurep 'sparcworks)
   (condition-case nil
       (package-require 'Sun 1.0)
     (t (progn
 	 ;; (setq build-error 1)
-	 (message "Warning:  This XEmacs is built with sparcworks support but")
-	 (message "does not have the Sun package installed.  Without the Sun")
-	 (message "lisp package, Sparcworks support will be broken.")))))
+	 (lwarn 'sparcworks 'alert
+	   "Warning:  This XEmacs is built with sparcworks support but
+does not have the Sun package installed.  Without the Sun
+lisp package, Sparcworks support will be broken.")))))
 
 (kill-emacs build-error)
 

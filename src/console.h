@@ -468,7 +468,6 @@ struct console
 
 DECLARE_LRECORD (console, struct console);
 #define XCONSOLE(x) XRECORD (x, console, struct console)
-#define XSETCONSOLE(x, p) XSETRECORD (x, p, console)
 #define wrap_console(p) wrap_record (p, console)
 #define CONSOLEP(x) RECORDP (x, console)
 #define CHECK_CONSOLE(x) CHECK_RECORD (x, console)

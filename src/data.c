@@ -1,7 +1,7 @@
 /* Primitive operations on Lisp data types for XEmacs Lisp interpreter.
    Copyright (C) 1985, 1986, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -722,7 +722,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
   else if (STRINGP (array))
     {
       if (idx >= XSTRING_CHAR_LENGTH (array)) goto range_error;
-      return make_char (string_char (XSTRING (array), idx));
+      return make_char (XSTRING_CHAR (array, idx));
     }
 #ifdef LOSING_BYTECODE
   else if (COMPILED_FUNCTIONP (array))
@@ -780,7 +780,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
     {
       CHECK_CHAR_COERCE_INT (newval);
       if (idx >= XSTRING_CHAR_LENGTH (array)) goto range_error;
-      set_string_char (XSTRING (array), idx, XCHAR (newval));
+      set_string_char (array, idx, XCHAR (newval));
       bump_string_modiff (array);
     }
   else
@@ -1625,7 +1625,7 @@ make_weak_list (enum weak_list_type type)
 
   wl->list = Qnil;
   wl->type = type;
-  XSETWEAK_LIST (result, wl);
+  result = wrap_weak_list (wl);
   wl->next_weak = Vall_weak_lists;
   Vall_weak_lists = result;
   return result;

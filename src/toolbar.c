@@ -290,7 +290,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
     {
       tb = alloc_lcrecord_type (struct toolbar_button, &lrecord_toolbar_button);
       tb->next = Qnil;
-      XSETFRAME (tb->frame, f);
+      tb->frame = wrap_frame (f);
       tb->up_glyph = Qnil;
       tb->down_glyph = Qnil;
       tb->disabled_glyph = Qnil;
@@ -308,7 +308,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
       tb->x = tb->y = tb->width = tb->height = -1;
       tb->dirty = 1;
     }
-  XSETTOOLBAR_BUTTON (retval, tb);
+  retval = wrap_toolbar_button (tb);
 
   /* Let's make sure nothing gets mucked up by the potential call to
      eval farther down. */
@@ -768,7 +768,7 @@ init_frame_toolbars (struct frame *f)
       int pos;
 
       compute_frame_toolbars_data (f);
-      XSETFRAME (frame, f);
+      frame = wrap_frame (f);
       call_critical_lisp_code (XDEVICE (FRAME_DEVICE (f)),
 			       Qinit_toolbar_from_resources,
 			       frame);
@@ -786,9 +786,8 @@ init_frame_toolbars (struct frame *f)
 void
 init_device_toolbars (struct device *d)
 {
-  Lisp_Object device;
+  Lisp_Object device = wrap_device (d);
 
-  XSETDEVICE (device, d);
   if (DEVICE_SUPPORTS_TOOLBARS_P (d))
     call_critical_lisp_code (d,
 			     Qinit_toolbar_from_resources,

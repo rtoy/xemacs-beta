@@ -159,7 +159,7 @@ emacs_tty_next_event (Lisp_Event *emacs_event)
 		  Lisp_Process *p = get_process_from_usid (FD_TO_USID(i));
 
 		  assert (p);
-		  XSETPROCESS (process, p);
+		  process = wrap_process (p);
 		  emacs_event->event_type = process_event;
 		  /* process events have nil as channel */
 		  emacs_event->timestamp  = 0; /* #### */

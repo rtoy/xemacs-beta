@@ -398,9 +398,7 @@ EmacsFrameSetValues (Widget cur_widget, Widget req_widget, Widget new_widget,
   EmacsFrame cur = (EmacsFrame) cur_widget;
   EmacsFrame new = (EmacsFrame) new_widget;
   struct frame *f = new->emacs_frame.frame;
-  Lisp_Object frame;
-
-  XSETFRAME (frame, f);
+  Lisp_Object frame = wrap_frame (f);
   in_resource_setting++;
   /* This function does not need to do much.  Pretty much everything
      interesting will get done in the resize method, which will

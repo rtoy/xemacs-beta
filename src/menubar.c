@@ -328,7 +328,6 @@ This removes %_'s (accelerator indications) and converts %% to %.
        (name, buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
-  Lisp_String *n;
   Charcount end;
   int i;
   Intbyte *name_data;
@@ -339,9 +338,8 @@ This removes %_'s (accelerator indications) and converts %% to %.
 
   CHECK_STRING (name);
 
-  n = XSTRING (name);
-  end = string_char_length (n);
-  name_data = string_data (n);
+  end = XSTRING_CHAR_LENGTH (name);
+  name_data = XSTRING_DATA (name);
 
   string_result = (Intbyte *) alloca (end * MAX_EMCHAR_LEN);
   string_result_ptr = string_result;

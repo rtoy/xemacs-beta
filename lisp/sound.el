@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal
@@ -40,7 +41,8 @@
 	(buffer-bound	:sound drum)
 	;; buffer-read-only error
 	(read-only	        :sound drum)
-	;; non-interactive function or lambda called
+	;; any error other than those handled by undefined-key,
+	;; undefined-click, buffer-bound, read-only
 	(command-error	:sound bass)
 	(y-or-n-p		:sound quiet)
 	(yes-or-no-p		:sound quiet)

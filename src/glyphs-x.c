@@ -1143,7 +1143,7 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
       if (STRINGP (value))
 	value =
 	  Fmake_color_instance
-	    (value, device, encode_error_behavior_flag (ERROR_ME_NOT));
+	    (value, device, encode_error_behavior_flag (ERROR_ME_DEBUG_WARN));
       else
         {
           assert (COLOR_SPECIFIERP (value));
@@ -1404,12 +1404,12 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	if (xpmattrs.valuemask & XpmHotspot)
 	  {
 	    xhot = xpmattrs.x_hotspot;
-	    XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), xpmattrs.x_hotspot);
+	    IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (xpmattrs.x_hotspot);
 	  }
 	if (xpmattrs.valuemask & XpmHotspot)
 	  {
 	    yhot = xpmattrs.y_hotspot;
-	    XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), xpmattrs.y_hotspot);
+	    IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (xpmattrs.y_hotspot);
 	  }
 	check_pointer_sizes (xs, w, h, instantiator);
 
@@ -2107,9 +2107,8 @@ x_redisplay_widget (Lisp_Image_Instance *p)
      need to update most other things after the items have changed.*/
   if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (p))
     {
-      Lisp_Object image_instance;
+      Lisp_Object image_instance = wrap_image_instance (p);
 
-      XSETIMAGE_INSTANCE (image_instance, p);
       wv = gui_items_to_widget_values
 	(image_instance, IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (p),
 	 /* #### this is not right; we need to keep track of which widgets
@@ -2167,8 +2166,8 @@ x_redisplay_widget (Lisp_Image_Instance *p)
       if (IMAGE_INSTANCE_X_WIDGET_ID (p)->core.being_destroyed
 	  || !XtIsManaged(IMAGE_INSTANCE_X_WIDGET_ID (p)))
 	{
-	  Lisp_Object sw;
-	  XSETIMAGE_INSTANCE (sw, p);
+	  Lisp_Object sw = wrap_image_instance (p);
+
 	  signal_error (Qinternal_error,
 			     "XEmacs bug: subwindow is deleted", sw);
 	}

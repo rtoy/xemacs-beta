@@ -31,8 +31,7 @@ Boston, MA 02111-1307, USA.  */
    Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0.
  */
 
-/* This function mostly Mule-ized (except perhaps some Unicode splitting).
-   5-2000. */
+/* This function Mule-ized by Ben Wing, 3-24-02. */
 
 /* TODO: palette handling */
 
@@ -1268,12 +1267,11 @@ mswindows_print_color_instance (Lisp_Color_Instance *c,
 				Lisp_Object printcharfun,
 				int escapeflag)
 {
-  Char_ASCII buf[32];
   COLORREF color = COLOR_INSTANCE_MSWINDOWS_COLOR (c);
-  sprintf (buf, " %06ld=(%04X,%04X,%04X)", color & 0xffffff,
-	   GetRValue (color) * 257, GetGValue (color) * 257,
-	   GetBValue (color) * 257);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun,
+		    " %06ld=(%04X,%04X,%04X)", color & 0xffffff,
+		    GetRValue (color) * 257, GetGValue (color) * 257,
+		    GetBValue (color) * 257);
 }
 
 static void
@@ -1291,14 +1289,14 @@ mswindows_color_instance_equal (Lisp_Color_Instance *c1,
 				Lisp_Color_Instance *c2,
 				int depth)
 {
-  return (COLOR_INSTANCE_MSWINDOWS_COLOR(c1) ==
-	  COLOR_INSTANCE_MSWINDOWS_COLOR(c2));
+  return (COLOR_INSTANCE_MSWINDOWS_COLOR (c1) ==
+	  COLOR_INSTANCE_MSWINDOWS_COLOR (c2));
 }
 
 static unsigned long
 mswindows_color_instance_hash (Lisp_Color_Instance *c, int depth)
 {
-  return (unsigned long) COLOR_INSTANCE_MSWINDOWS_COLOR(c);
+  return (unsigned long) COLOR_INSTANCE_MSWINDOWS_COLOR (c);
 }
 
 static Lisp_Object
@@ -1678,10 +1676,10 @@ mswindows_print_font_instance (Lisp_Font_Instance *f,
 			       Lisp_Object printcharfun,
 			       int escapeflag)
 {
-  Intbyte buf[10];
-  qxesprintf (buf, " 0x%lx",
-	      (unsigned long)FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f,0,0));
-  write_string (buf, printcharfun);
+  write_fmt_string (printcharfun, " 0x%lx",
+		    (unsigned long)
+		    FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f, 0, 0));
+
 }
 
 static Lisp_Object
@@ -1729,12 +1727,12 @@ mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
      with initialize_font_instance(). */
 
   int nsep = 0;
-  CIntbyte *ptr = (CIntbyte *) XSTRING_DATA (f->name);
-  CIntbyte *name = (CIntbyte *) alloca (XSTRING_LENGTH (f->name) + 19);
+  Intbyte *ptr = (Intbyte *) XSTRING_DATA (f->name);
+  Intbyte *name = (Intbyte *) alloca (XSTRING_LENGTH (f->name) + 19);
 
-  strcpy (name, ptr);
+  qxestrcpy (name, ptr);
 
-  while ((ptr = strchr (ptr, ':')) != 0)
+  while ((ptr = qxestrchr (ptr, ':')) != 0)
     {
       ptr++;
       nsep++;
@@ -1743,16 +1741,16 @@ mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
   switch (nsep)
     {
     case 0:
-      strcat (name, ":Regular:10::Western");
+      qxestrcat (name, ":Regular:10::Western");
       break;
     case 1:
-      strcat (name, ":10::Western");
+      qxestrcat (name, ":10::Western");
       break;
     case 2:
-      strcat (name, "::Western");
+      qxestrcat (name, "::Western");
       break;
     case 3:
-      strcat (name, ":Western");
+      qxestrcat (name, ":Western");
       break;
     default:;
     }
@@ -1870,7 +1868,8 @@ mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 	HDC hdc = CreateCompatibleDC (NULL);
 	Lisp_Object font_list = DEVICE_MSWINDOWS_FONTLIST (d);
 	HFONT hfont = create_hfont_from_font_spec (the_nonreloc, hdc, Qnil,
-						   font_list, ERROR_ME_NOT);
+						   font_list,
+						   ERROR_ME_DEBUG_WARN);
 
 	if (!hfont || !(hfont = (HFONT) SelectObject (hdc, hfont)))
 	  {

@@ -71,7 +71,6 @@ struct toolbar_button
 
 DECLARE_LRECORD (toolbar_button, struct toolbar_button);
 #define XTOOLBAR_BUTTON(x) XRECORD (x, toolbar_button, struct toolbar_button)
-#define XSETTOOLBAR_BUTTON(x, p) XSETRECORD (x, p, toolbar_button)
 #define wrap_toolbar_button(p) wrap_record (p, toolbar_button)
 #define TOOLBAR_BUTTONP(x) RECORDP (x, toolbar_button)
 #define CHECK_TOOLBAR_BUTTON(x) CHECK_RECORD (x, toolbar_button)
@@ -84,7 +83,6 @@ Lisp_Object toolbar_button_at_pixpos (struct frame *f, int x_coord,
 				      int y_coord);
 DECLARE_SPECIFIER_TYPE (toolbar);
 #define XTOOLBAR_SPECIFIER(x) XSPECIFIER_TYPE (x, toolbar)
-#define XSETTOOLBAR_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, toolbar)
 #define TOOLBAR_SPECIFIERP(x) SPECIFIER_TYPEP (x, toolbar)
 #define CHECK_TOOLBAR_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, toolbar)
 #define CONCHECK_TOOLBAR_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, toolbar)

@@ -173,9 +173,7 @@ Lisp_Object Qpgconnp;
 static Lisp_Object
 make_pgconn (Lisp_PGconn *pgconn)
 {
-  Lisp_Object lisp_pgconn;
-  XSETPGCONN (lisp_pgconn, pgconn);
-  return lisp_pgconn;
+  return wrap_pgconn (pgconn);
 }
 
 static Lisp_Object
@@ -277,9 +275,7 @@ Lisp_Object Qpgresultp;
 static Lisp_Object
 make_pgresult (Lisp_PGresult *pgresult)
 {
-  Lisp_Object lisp_pgresult;
-  XSETPGRESULT (lisp_pgresult, pgresult);
-  return lisp_pgresult;
+  return wrap_pgresult (pgresult);
 }
 
 static Lisp_Object

@@ -25,7 +25,6 @@ Boston, MA 02111-1307, USA.  */
 
 DECLARE_LRECORD (extent, struct extent);
 #define XEXTENT(x) XRECORD (x, extent, struct extent)
-#define XSETEXTENT(x, p) XSETRECORD (x, p, extent)
 #define wrap_extent(p) wrap_record (p, extent)
 #define EXTENTP(x) RECORDP (x, extent)
 #define CHECK_EXTENT(x) CHECK_RECORD (x, extent)
@@ -145,7 +144,6 @@ extern struct extent_auxiliary extent_auxiliary_defaults;
 DECLARE_LRECORD (extent_auxiliary, struct extent_auxiliary);
 #define XEXTENT_AUXILIARY(x) \
   XRECORD (x, extent_auxiliary, struct extent_auxiliary)
-#define XSETEXTENT_AUXILIARY(x, p) XSETRECORD (x, p, extent_auxiliary)
 #define wrap_extent_auxiliary(p) wrap_record (p, extent_auxiliary)
 #define EXTENT_AUXILIARYP(x) RECORDP (x, extent_auxiliary)
 #define CHECK_EXTENT_AUXILIARY(x) CHECK_RECORD (x, extent_auxiliary)
@@ -161,7 +159,6 @@ struct extent_info
 
 DECLARE_LRECORD (extent_info, struct extent_info);
 #define XEXTENT_INFO(x) XRECORD (x, extent_info, struct extent_info)
-#define XSETEXTENT_INFO(x, p) XSETRECORD (x, p, extent_info)
 #define wrap_extent_info(p) wrap_record (p, extent_info)
 #define EXTENT_INFOP(x) RECORDP (x, extent_info)
 #define CHECK_EXTENT_INFO(x) CHECK_RECORD (x, extent_info)

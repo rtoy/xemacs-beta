@@ -135,10 +135,11 @@ mark_event (Lisp_Object obj)
 static void
 print_event_1 (const char *str, Lisp_Object obj, Lisp_Object printcharfun)
 {
-  char buf[255];
+  DECLARE_EISTRING_MALLOC (ei);
   write_c_string (str, printcharfun);
-  format_event_object (buf, XEVENT (obj), 0);
-  write_c_string (buf, printcharfun);
+  format_event_object (ei, XEVENT (obj), 0);
+  write_eistring (ei, printcharfun);
+  eifree (ei);
 }
 
 static void
@@ -164,14 +165,13 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       break;
     case pointer_motion_event:
       {
-	char buf[64];
 	Lisp_Object Vx, Vy;
 	Vx = Fevent_x_pixel (obj);
 	assert (INTP (Vx));
 	Vy = Fevent_y_pixel (obj);
 	assert (INTP (Vy));
-	sprintf (buf, "#<motion-event %ld, %ld", (long) XINT (Vx), (long) XINT (Vy));
-	write_c_string (buf, printcharfun);
+	write_fmt_string (printcharfun, "#<motion-event %ld, %ld",
+			  (long) XINT (Vx), (long) XINT (Vy));
 	break;
       }
     case process_event:
@@ -1193,7 +1193,7 @@ nth_of_key_sequence_as_event (Lisp_Object seq, int n, Lisp_Object event)
 
   if (STRINGP (seq))
     {
-      Emchar ch = string_char (XSTRING (seq), n);
+      Emchar ch = XSTRING_CHAR (seq, n);
       Fcharacter_to_event (make_char (ch), event, Qnil, Qnil);
     }
   else
@@ -1223,8 +1223,11 @@ key_sequence_to_event_chain (Lisp_Object seq)
   return head;
 }
 
+/* Concatenate a string description of EVENT onto the end of BUF.  If
+   BRIEF, use short forms for keys, e.g. C- instead of control-. */
+
 void
-format_event_object (char *buf, Lisp_Event *event, int brief)
+format_event_object (Eistring *buf, Lisp_Event *event, int brief)
 {
   int mouse_p = 0;
   int mod = 0;
@@ -1238,7 +1241,8 @@ format_event_object (char *buf, Lisp_Event *event, int brief)
         key = event->event.key.keysym;
         /* Hack. */
         if (! brief && CHARP (key) &&
-            mod & (XEMACS_MOD_CONTROL | XEMACS_MOD_META | XEMACS_MOD_SUPER | XEMACS_MOD_HYPER))
+            mod & (XEMACS_MOD_CONTROL | XEMACS_MOD_META | XEMACS_MOD_SUPER |
+		   XEMACS_MOD_HYPER))
 	{
 	  int k = XCHAR (key);
 	  if (k >= 'a' && k <= 'z')
@@ -1267,26 +1271,26 @@ format_event_object (char *buf, Lisp_Event *event, int brief)
 	stream = make_resizing_buffer_output_stream ();
 	event_stream_format_magic_event (event, stream);
 	Lstream_flush (XLSTREAM (stream));
-	strncpy (buf, resizing_buffer_stream_ptr (XLSTREAM (stream)),
-		 Lstream_byte_count (XLSTREAM (stream)));
+	eicat_raw (buf, resizing_buffer_stream_ptr (XLSTREAM (stream)),
+		   Lstream_byte_count (XLSTREAM (stream)));
 	Lstream_delete (XLSTREAM (stream));
 	UNGCPRO;
 	return;
       }
-    case magic_eval_event:	strcpy (buf, "magic-eval"); return;
-    case pointer_motion_event:	strcpy (buf, "motion");	    return;
-    case misc_user_event:	strcpy (buf, "misc-user");  return;
-    case eval_event:		strcpy (buf, "eval");	    return;
-    case process_event:		strcpy (buf, "process");    return;
-    case timeout_event:		strcpy (buf, "timeout");    return;
-    case empty_event:		strcpy (buf, "empty");	    return;
-    case dead_event:		strcpy (buf, "DEAD-EVENT"); return;
+    case magic_eval_event:	eicat_c (buf, "magic-eval"); return;
+    case pointer_motion_event:	eicat_c (buf, "motion");     return;
+    case misc_user_event:	eicat_c (buf, "misc-user");  return;
+    case eval_event:		eicat_c (buf, "eval");	     return;
+    case process_event:		eicat_c (buf, "process");    return;
+    case timeout_event:		eicat_c (buf, "timeout");    return;
+    case empty_event:		eicat_c (buf, "empty");	     return;
+    case dead_event:		eicat_c (buf, "DEAD-EVENT"); return;
     default:
       abort ();
       return;
     }
-#define modprint1(x)  do { strcpy (buf, (x)); buf += sizeof (x)-1; } while (0)
-#define modprint(x,y) do { if (brief) modprint1 (y); else modprint1 (x); } while (0)
+#define modprint(x,y) \
+  do { if (brief) eicat_c (buf, (y)); else eicat_c (buf, (x)); } while (0)
   if (mod & XEMACS_MOD_CONTROL) modprint ("control-", "C-");
   if (mod & XEMACS_MOD_META)    modprint ("meta-",    "M-");
   if (mod & XEMACS_MOD_SUPER)   modprint ("super-",   "S-");
@@ -1295,21 +1299,17 @@ format_event_object (char *buf, Lisp_Event *event, int brief)
   if (mod & XEMACS_MOD_SHIFT)   modprint ("shift-",   "Sh-");
   if (mouse_p)
     {
-      modprint1 ("button");
+      eicat_c (buf, "button");
       --mouse_p;
     }
 
 #undef modprint
-#undef modprint1
 
   if (CHARP (key))
-    {
-      buf += set_charptr_emchar ((Intbyte *) buf, XCHAR (key));
-      *buf = 0;
-    }
+    eicat_ch (buf, XCHAR (key));
   else if (SYMBOLP (key))
     {
-      const char *str = 0;
+      const Char_ASCII *str = 0;
       if (brief)
 	{
 	  if      (EQ (key, QKlinefeed))  str = "LFD";
@@ -1321,22 +1321,14 @@ format_event_object (char *buf, Lisp_Event *event, int brief)
 	  else if (EQ (key, QKbackspace)) str = "BS";
 	}
       if (str)
-	{
-	  int i = strlen (str);
-	  memcpy (buf, str, i+1);
-	  str += i;
-	}
+	eicat_c (buf, str);
       else
-	{
-	  Lisp_String *name = XSYMBOL (key)->name;
-	  memcpy (buf, string_data (name), string_length (name) + 1);
-	  str += string_length (name);
-	}
+	eicat_lstr (buf, XSYMBOL (key)->name);
     }
   else
     abort ();
   if (mouse_p)
-    strncpy (buf, "up", 4);
+    eicat_c (buf, "up");
 }
 
 DEFUN ("eventp", Feventp, 1, 1, 0, /*
@@ -1948,10 +1940,7 @@ The modeline is considered to be within the window it describes.
     return Qnil;
   else
     {
-      Lisp_Object window;
-
-      XSETWINDOW (window, w);
-      return window;
+      return wrap_window (w);
     }
 }
 

@@ -1626,7 +1626,7 @@ START and END optionally delimit a substring of STRING from which to read;
      At least our reader is reentrant ... */
   tem =
     (Fcons (tem, make_int
-	    (XSTRING_INDEX_BYTE_TO_CHAR
+	    (string_index_byte_to_char
 	     (string,
 	      startval + Lstream_byte_count (XLSTREAM (lispstream))))));
   Lstream_delete (XLSTREAM (lispstream));

@@ -1,6 +1,7 @@
 /* Sound functions.
    Copyright (C) 1992, 1993, 1994 Lucid Inc.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -278,7 +279,20 @@ parse_sound_alist_elt (Lisp_Object elt,
 
 DEFUN ("play-sound", Fplay_sound, 1, 3, 0, /*
 Play a sound of the provided type.
-See the variable `sound-alist'.
+
+SOUND can a symbol, specifying a sound to be looked up in `sound-alist'
+\(generally, either the symbol directly maps to a sound or is an "abstract"
+symbol that maps to another symbol and is used to specify the sound that is
+played when a particular behavior occurs.  `ding' lists the built-in
+abstract sounds and their intended purpose.
+
+SOUND can also be a string, which directly encodes the sound data to be played.
+
+If SOUND is nil, the abstract sound `default' will be used.
+
+VOLUME controls the volume (max is around 150? not sure).
+
+DEVICE is the device to play the sound on (defaults to the selected device).
 
 If the sound cannot be played in any other way, the standard "bell" will sound.
 */
@@ -402,23 +416,61 @@ Return t if DEVICE is able to play sound.  Defaults to selected device.
 
 DEFUN ("ding", Fding, 0, 3, 0, /*
 Beep, or flash the frame.
-Also, unless an argument is given,
-terminate any keyboard macro currently executing.
-When called from lisp, the second argument is what sound to make, and
-the third argument is the device to make it in (defaults to the selected
-device).
+
+\(See `visible-bell'; setting this makes the frame flash instead of
+beeping.)  Also, unless NO-TERMINATE is given, terminate any keyboard macro
+currently executing.  SOUND specifies the sound to make and DEVICE the
+device to make it on (defaults to the selected device).
+
+SOUND is either a string (raw data to be played directly), a symbol, or
+`nil' (equivalent to the symbol `default').  Sound symbols are looked up in
+`sound-alist', and resolve either to strings of data or to other symbols.
+Sound symbols that map directly to data should be considered named sounds;
+sound symbols that map to other sounds should be considered abstract
+sounds, and are used when a particular behavior or state occurs.
+
+Rremember that the sound symbol is the *second* argument to `ding', not the
+first.
+
+The following abstract sounds are used by XEmacs itself:
+
+    alarm		when a package wants to remind the user
+    auto-save-error	when an auto-save does not succeed
+    buffer-bound	when you attempt to move off the end of a buffer
+    command-error	any uncaught error (i.e. any error that the user
+                        sees) except those handled by undefined-click,
+			undefined-key, buffer-bound, or read-only
+    default		used when nothing else is appropriate.
+    isearch-failed      unable to locate search text during incremental search
+    isearch-quit        when you delete chars past the beginning of the search
+                        text in isearch
+    no-completion	during completing-read
+    quit		when C-g is typed
+    read-only           when you try to modify a read-only buffer
+    ready		when a compile or other time-consuming task is done
+    undefined-click	when you use an undefined mouse-click combination
+    undefined-key	when you type a key that is undefined
+    warp		XEmacs has changed the selected-window or frame
+			asynchronously -- e.g. a debugger breakpoint is hit
+			in an asynchronous process filter
+    y-or-n-p		when you type something other than 'y' or 'n'
+    yes-or-no-p  	when you type something other than 'yes' or 'no'
+    
+Other lisp packages may use other beep types, but these are the ones that
+the C kernel of Emacs uses.
+
 */
-       (arg, sound, device))
+       (no_terminate, sound, device))
 {
   static time_t last_bell_time;
   static struct device *last_bell_device;
   time_t now;
   struct device *d = decode_device (device);     
 
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
   now = time (0);
 
-  if (NILP (arg) && !NILP (Vexecuting_macro))
+  if (NILP (no_terminate) && !NILP (Vexecuting_macro))
     /* Stop executing a keyboard macro. */
     invalid_operation ("Keyboard macro terminated by a command ringing the bell", Qunbound);
   
@@ -635,19 +687,10 @@ Caveats:
  - The pitch, duration, and volume options are available everywhere, but
    many X servers ignore the `pitch' option.
 
-The following beep-types are used by emacs itself:
-
-    auto-save-error	when an auto-save does not succeed
-    command-error	when the emacs command loop catches an error
-    undefined-key	when you type a key that is undefined
-    undefined-click	when you use an undefined mouse-click combination
-    no-completion	during completing-read
-    y-or-n-p		when you type something other than 'y' or 'n'
-    yes-or-no-p  	when you type something other than 'yes' or 'no'
-    default		used when nothing else is appropriate.
-
-Other lisp packages may use other beep types, but these are the ones that
-the C kernel of Emacs uses.
+Sound symbols that map directly to data should be considered named sounds;
+sound symbols that map to other sounds should be considered abstract
+sounds, and are used when a particular behavior or state occurs.  See
+`ding' for a list of the standard abstract sounds.
 */ );
   Vsound_alist = Qnil;
 

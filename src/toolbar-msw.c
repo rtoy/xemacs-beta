@@ -1,7 +1,7 @@
 /* toolbar implementation -- mswindows interface.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
    Copyright (C) 1998 Andy Piper.
 
@@ -253,7 +253,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	      
 	      if (GLYPHP (glyph))
 		instance = glyph_image_instance (glyph, window, 
-						 ERROR_ME_NOT, 1);
+						 ERROR_ME_DEBUG_WARN, 1);
 	      else
 		instance = Qnil;
 	      
@@ -632,7 +632,7 @@ mswindows_handle_toolbar_wm_command (struct frame *f, HWND ctrl, WORD id)
 
   /* Ok, this is our one. Enqueue it. */
   get_gui_callback (data, &fn, &arg);
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
   mswindows_enqueue_misc_user_event (frame, fn, arg);
 
   return Qt;

@@ -573,8 +573,8 @@ init_frame_scrollbars (struct frame *f)
   if (HAS_DEVMETH_P (d, create_scrollbar_instance))
     {
       int depth = unlock_ghost_specifiers_protected ();
-      Lisp_Object frame;
-      XSETFRAME (frame, f);
+      Lisp_Object frame = wrap_frame (f);
+
       call_critical_lisp_code (XDEVICE (FRAME_DEVICE (f)),
 			       Qinit_scrollbar_from_resources,
 			       frame);
@@ -588,8 +588,8 @@ init_device_scrollbars (struct device *d)
   if (HAS_DEVMETH_P (d, create_scrollbar_instance))
     {
       int depth = unlock_ghost_specifiers_protected ();
-      Lisp_Object device;
-      XSETDEVICE (device, d);
+      Lisp_Object device = wrap_device (d);
+
       call_critical_lisp_code (d,
 			       Qinit_scrollbar_from_resources,
 			       device);

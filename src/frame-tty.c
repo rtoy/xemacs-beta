@@ -72,9 +72,8 @@ tty_select_frame_if_unhidden (Lisp_Object frame)
 static void
 tty_schedule_frame_select (struct frame *f)
 {
-  Lisp_Object frame;
+  Lisp_Object frame = wrap_frame (f);
 
-  XSETFRAME (frame, f);
   enqueue_magic_eval_event (tty_select_frame_if_unhidden, frame);
 }
 

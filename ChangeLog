@@ -1,3 +1,38 @@
+2002-03-28  Ben Wing  <ben@xemacs.org>
+
+	* etc/ChangeLog: New file.
+
+	Separated out all entries for etc/ into their own ChangeLog.
+	Includes entries for the following files:
+
+	etc/BABYL, etc/BETA, etc/CHARSETS, etc/DISTRIB, etc/Emacs.ad,
+	etc/FTP, etc/GNUS-NEWS, etc/GOATS, etc/HELLO, etc/INSTALL,
+	etc/MACHINES, etc/MAILINGLISTS, etc/MSDOS, etc/MYTHOLOGY, etc/NEWS,
+	etc/OXYMORONS, etc/PACKAGES, etc/README, etc/TUTORIAL,
+	etc/TUTORIAL.de, etc/TUTORIAL.ja, etc/TUTORIAL.ko, etc/TUTORIAL.se,
+	etc/aliases.ksh, etc/altrasoft-logo.xpm, etc/check_cygwin_setup.sh,
+	etc/custom/example-themes/europe-theme.el,
+	etc/custom/example-themes/ex-custom-file,
+	etc/custom/example-themes/example-theme.el, etc/e/eterm.ti,
+	etc/edt-user.doc, etc/enriched.doc, etc/etags.1, etc/gnuserv.1,
+	etc/gnuserv.README, etc/package-index.LATEST.gpg,
+	etc/package-index.LATEST.pgp, etc/photos/jan.png, etc/recycle.xpm,
+	etc/refcard.tex, etc/sample.Xdefaults, etc/sample.emacs,
+	etc/sgml/CATALOG, etc/sgml/HTML32.dtd, etc/skk/SKK.tut.E,
+	etc/smilies/Face_ase.xbm, etc/smilies/Face_ase2.xbm,
+	etc/smilies/Face_ase3.xbm, etc/smilies/Face_smile.xbm,
+	etc/smilies/Face_weep.xbm, etc/sounds, etc/toolbar,
+	etc/toolbar/workshop-cap-up.xpm, etc/xemacs-ja.1, etc/xemacs.1,
+	etc/yow.lines, etc\BETA, etc\NEWS, etc\README, etc\TUTORIAL,
+	etc\TUTORIAL.de, etc\check_cygwin_setup.sh, etc\sample.init.el,
+	etc\unicode\README, etc\unicode\mule-ucs\*, etc\unicode\other\*
+
+2002-03-24  Ben Wing  <ben@xemacs.org>
+
+	* TODO.ben-mule-21-5 (bugs):
+	* TODO.ben-mule-21-5 (Signaling): New.
+	Add stuff from Frank Schmitt.
+
 2002-03-20  Ben Wing  <ben@xemacs.org>
 
 	* TODO.ben-mule-21-5:
@@ -12,15 +47,6 @@
 	larger document, a "Getting Started with Developing XEmacs".  ####
 	Does such a document exist?
 
-	* etc\unicode\mule-ucs\*: New directory, containing translation
-	files for the remaining charsets that are not in
-	unicode\unicode-consortium but are in mule-ucs.
-
-	* etc\unicode\other\*: New directory, containing translation
-	files made up on an ad-hoc basis.
-
-	* etc\unicode\README: Update.
-
 2002-03-18  Ben Wing  <ben@xemacs.org>
 
 	* Some ChangeLog entries from stuff that got applied long ago
@@ -29,31 +55,10 @@
 
 2001-05-04  Ben Wing  <ben@xemacs.org>
 
-       * etc\check_cygwin_setup.sh (distdir): Update for current
-       Cygwin reality.
-
-       * etc\NEWS: Remove kill-whole-line changes.
-
-2001-05-04  Ben Wing  <ben@xemacs.org>
-
        * PROBLEMS:
        * PROBLEMS (Note):
        Correct general info about init file.
        Fix up Cygwin, Windows sections.
-
-2001-04-17  Ben Wing  <ben@xemacs.org>
-
-       * etc\NEWS: More changes.
-
-       * etc\sample.init.el (grep-all-files-in-current-directory-and-below):
-       Missing argument.
-
-2001-04-15  Ben Wing  <ben@xemacs.org>
-
-       * etc\NEWS:
-       * etc\NEWS (C):
-       * etc\NEWS (commands):
-       Many, many changes for XEmacs 21.4.
 
 2002-03-15  Ben Wing  <ben@xemacs.org>
 
@@ -82,19 +87,6 @@
 
 	* CHANGES-beta: Prune pre-21.5 information.
 
-2002-02-28  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* etc/TUTORIAL.se: New from Mats Lidell.
-
-2002-02-04  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* etc/BETA: General update.  Fix some broken URLs.
-
-2002-01-23  Jarl Friis  <jarl@diku.dk>
-
-	* etc/BETA (http): Informing of xemacs-patches mailing list. Added
-	note on patch etiquette.
-
 2002-01-07  Jan Vroonhof  <jan@xemacs.org>
 
 	* configure.in: Make explicit "--with-widgets" mean "=yes".
@@ -107,10 +99,6 @@
 2001-05-17  Andrew Begel  <abegel@eecs.berkeley.edu>
 
 	* aclocal.m4 (LTLD): Don't use "gcc", use the ld reported by gcc.
-
-2001-05-27  Kazuo Oishi  <oishi@n-pl.org>
-
-	* etc/xemacs-ja.1: Replace with new translation.
 
 2001-08-19  Charles Wilson  <cwilson@ece.gatech.edu>
 
@@ -141,19 +129,9 @@
 	* info/dir (File): Reword entry for Emodules according to
 	../man/emodules.texi.
 
-2001-12-29  Steve Youngs  <youngs@xemacs.org>
-
-	* etc/package-index.LATEST.gpg: Update.
-
-	* etc/package-index.LATEST.pgp: Update.
-
 2001-12-18  Adrian Aichner  <adrian@xemacs.org>
 
 	* info\.cvsignore: Correct pattern to match all info files.
-
-2001-12-18  Jan Vroonhof  <jan@xemacs.org>
-
-	* etc/photos/jan.png: Add mug shot.
 
 2001-12-16  Adrian Aichner  <adrian@xemacs.org>
 
@@ -163,10 +141,6 @@
 2001-12-15  Adrian Aichner  <adrian@xemacs.org>
 
 	* info\dir (File): Update version to 21.5.
-
-2001-12-03  Didier Verna  <didier@xemacs.org>
-
-	* etc/NEWS: advertise `C-x r p' (replace-rectangle) in global map.
 
 2001-08-29  Jered Floyd  <jered@MIT.EDU>
 
@@ -215,16 +189,6 @@
 
 	* configure.in: Document that autoconf 2.5x is unsupported.
 
-2001-09-19  Ben Wing  <ben@xemacs.org>
-
-	* etc\TUTORIAL.de: Translate TERMINOLOGY section for TUTORIAL.de,
-	change menu entry separator from / to ->.  Change SPC to <Space>.
-
-2001-10-07  Adrian Aichner  <adrian@xemacs.org>
-
-	* etc\TUTORIAL.de: Update of TUTORIAL.de according to Ben's
-	Updates and Syncing with Emacs 21.0.106.
-
 2001-09-17  Ben Wing  <ben@xemacs.org>
 
 	* configure.in (TAB):
@@ -239,10 +203,6 @@
 	g++ or you get buried in silly warnings.
 	* configure.in (XE_COMPUTE_RUNPATH): Fix compile problems when
 	compiling --with-msw, --with-x=no, --with-tty=no.
-
-2001-08-21  Adrian Aichner  <adrian@xemacs.org>
-
-	* etc\BETA (writing): Advertise use of build-report.
 
 2001-09-07  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -260,17 +220,6 @@
 2001-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.2 "artichoke" is released.
-
-2001-07-26  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* etc/MYTHOLOGY, etc/OXYMORONS: Remove.
-	etc/VEGETABLES: Copied from xemacs-builds module, file Codenames-21.5.
-	Bring codenames into synch with reality.
-
-2001-07-18  Adrian Aichner  <adrian@xemacs.org>
-
-	* etc\TUTORIAL: Fix minor typo.
-	* etc\TUTORIAL.de: Sync with TUTORIAL.
 
 2001-06-21  Ben Wing  <ben@xemacs.org>
 
@@ -320,28 +269,6 @@
 
 	* configure.in: See if mkstemp is available for movemail.c
 
-2001-05-24  Yoshiki Hayashi  <yoshiki@xemacs.org>
-
-	* etc/xemacs-ja.1: Removed.
-
-2001-05-23  Ben Wing  <ben@xemacs.org>
-
-	* etc\sample.init.el:
-	* etc\sample.init.el (Init-safe-require): New.
-	* etc\sample.init.el ((fboundp 'pending-delete-mode)):
-	* etc\sample.init.el ((eq system-type 'windows-nt)):
-	* etc\sample.init.el (dired):
-	* etc\sample.init.el ((Init-safe-require 'efs-auto)):
-	* etc\sample.init.el (completer):
-	* etc\sample.init.el (crypt):
-	* etc\sample.init.el (filladapt):
-	* etc\sample.init.el ((fboundp 'turn-on-lazy-lock)):
-	* etc\sample.init.el ((fboundp 'resize-minibuffer-mode)):
-	* etc\sample.init.el ((Init-safe-require 'scroll-in-place)):
-	Rewrite to be much more careful about loading features -- now
-	it decays gracefully even in the complete absence of packages.
-	Also avoid doing obnoxious things when loading efs.
-
 2001-05-23  Ben Wing  <ben@xemacs.org>
 
 	* configure.in (AC_INIT_PARSE_ARGS):
@@ -359,16 +286,12 @@
 
 2001-05-10  Paul Stodghill  <stodghil@cs.cornell.edu>
 
-	* etc/PACKAGES: Update to reflect new package dir tree.
 	* configure.in: Reverse the order of Windows and Linux sound tests
 	so that	Cygwin will find Windows first.
 
 2001-05-14  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in (XE_REALLOC_NULLPTR_BUG): New.
-2001-05-15  Steve Youngs  <youngs@xemacs.org>
-
-	* etc/PACKAGES: Update to reflect new package dir tree.
 
 2001-05-11  Martin Buchholz  <martin@xemacs.org>
 
@@ -391,10 +314,6 @@
 
 	* XEmacs 21.5.1 "anise" is released.
 
-2001-01-31  Jason R. Mastaler  <jason@xemacs.org>
-
-	* etc/FTP: Updated FTP mirrors list.
-
 2001-05-04  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in (opsys):
@@ -410,38 +329,9 @@
 
 	* configure.in: Don't #define __STDC__ in confdefs.h
 
-2001-03-30  Ben Wing  <ben@xemacs.org>
-
-	* etc\sample.init.el:
-	* etc\sample.init.el (Init-kill-entire-line):
-	* etc\sample.init.el (describe-foo-at-point):
-	* etc\sample.init.el (kill-current-buffer):
-	* etc\sample.init.el (kill-current-buffer-and-window):
-	* etc\sample.init.el (grep-c-files): Removed.
-	* etc\sample.init.el (grep-all-files-history): New.
-	* etc\sample.init.el (grep-all-files-omitted-expressions): New.
-	* etc\sample.init.el (grep-all-files-omitted-directories): New.
-	* etc\sample.init.el (construct-grep-all-files-command): New.
-	* etc\sample.init.el (grep-all-files-in-current-directory): New.
-	* etc\sample.init.el (grep-lisp-files): Removed.
-	* etc\sample.init.el (grep-all-files-in-current-directory-and-below): New.
-	* etc\sample.init.el (clear-select):
-	* etc\sample.init.el ((control kp-add)):
-	* etc\sample.init.el (pause):
-	* etc\sample.init.el ((eq system-type 'windows-nt)):
-
-	Add documentation for defined functions.  Change grep functions to
-	be more generally useful.  Document more specifically what the
-	`menu-force' setting actually does -- what commands are overridden
-	and how to access them.
-
 2001-03-30  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.usage:  Document --with-file-coding.
-
-	* etc/OXYMORONS: Add 2 oxymorons, clean up numbering, close RFC.
-
-	* etc/NEWS: Fix typo.
 
 	* configure.in:
 	* configure:
@@ -449,15 +339,8 @@
 
 2001-03-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
-	* etc/gnuserv.1 (UNIX_DOMAIN_SOCKETS:
 	* PROBLEMS (Problems with running XEmacs):
 	Document TMPDIR lossage in gnuserv/gnuclient.
-
-2001-03-06  Ben Wing  <ben@xemacs.org>
-
-	* etc\sample.init.el:
-	* etc\sample.init.el (Init-kill-entire-line): New.
-	Fix to take into account the removed kill-whole-line changes.
 
 2001-03-21  Martin Buchholz <martin@xemacs.org>
 
@@ -477,10 +360,6 @@
 
 	* configure.usage: Untabify --with-{gtk,gnome}.
 
-2001-03-15  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* etc/OXYMORONS: New file of 21.4 codenames.
-
 2001-03-12  Andy Piper  <andy@xemacs.org>
 
 	* configure.in: only pick up mingw directory.
@@ -490,10 +369,6 @@
 	* info\dir: Update to 21.4; clean up descriptions of manuals;
 	replace misnomer "Local Packages" with more correct "Other
 	Documentation".
-
-2001-03-02  Ben Wing  <ben@xemacs.org>
-
-	* etc\README: sample.emacs -> sample.init.el.
 
 2001-03-09  William M. Perry  <wmperry@aventail.com>
 
@@ -520,10 +395,6 @@
 2001-02-12  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in: No need for NON_GNU_CPP on SCO.
-
-2001-02-10  Martin Buchholz  <martin@xemacs.org>
-
-	* etc/MACHINES: Rewritten.  Bitrot discarded.
 
 2001-02-09  Martin Buchholz  <martin@xemacs.org>
 
@@ -567,15 +438,11 @@
 
 2001-01-21  Steve Youngs  <youngs@xemacs.org>
 
-	* ./etc/PACKAGES: Doc fix.
-
 	* README.packages: Doc fix.
 
 2001-01-17  Steve Youngs  <youngs@xemacs.org>
 
 	* README.packages: Update.
-
-	* ./etc/PACKAGES: Update.
 
 2001-01-20  Martin Buchholz <martin@xemacs.org>
 
@@ -679,8 +546,6 @@
 
 	* README.packages: Add "uninstalled package" FAQ.
 
-	* etc/PACKAGES: Add details on os-utils contents.
-
 2000-11-01  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in: Handle alloca with Compaq C on Alpha Linux.
@@ -700,10 +565,6 @@
 	Add check for XRegisterIMInstantiateCallback.
 	Add check for XRegisterIMInstantiateCallback's prototype.
 
-2000-10-04  Yoshiki Hayashi  <yoshiki@xemacs.org>
-
-	* etc/NEWS: Change lprogress-display to progress-feedback.
-
 2000-10-08  Karl M. Hegbloom  <karlheg@debian.org>
 
 	* configure.in: Typo - missing paren.
@@ -722,20 +583,12 @@
 
 	* XEmacs 21.2.36 is released.
 
-2000-08-29  Robert Pluim  <rpluim@bigfoot.com>
-
-	*  etc/NEWS: fix reference to progress-feedback-use-echo-area
-
 2000-09-27  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in: Big signal/process handling overhaul.
 	Autoconfiscate lots of functions and headers:
 	getpt _getpt grantpt unlockpt ptsname killpg tcgetpgrp
 	openpty pty.h libutil.h sys/stropts.h sys/strtio.h isastream
-
-2000-09-20  Martin Buchholz  <martin@xemacs.org>
-
-	* etc/xemacs.1: Spelling fixes.  Remove stuff that doesn't belong.
 
 2000-09-19  Martin Buchholz  <martin@xemacs.org>
 
@@ -744,8 +597,6 @@
 2000-09-16  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in: Remove strcasecmp.
-
-	* etc/Emacs.ad: Remove Energize from comments.
 
 2000-09-16  Martin Buchholz  <martin@xemacs.org>
 
@@ -775,10 +626,6 @@
 	* configure.in: with_widgets is incompatible with X11 R4.
 
 	* configure.in: Make Balloon Help conditional on finding shape.h
-
-2000-08-02  Stephen J. Turnbull <stephen@xemacs.org>
-
-	* etc/Emacs.ad: Document usage of FontSet resource for menubar.
 
 2000-08-09  Vin Shelton  <acs@xemacs.org>
 
@@ -952,10 +799,6 @@
 
 	* configure.in: Remove lockdir.
 
-2000-04-15  Andy Piper  <andy@xemacs.org>
-
-	* etc/Emacs.ad: add select-start() back into text translations.
-
 2000-05-01  Martin Buchholz <martin@xemacs.org>
 
 	* XEmacs 21.2.33 is released.
@@ -988,11 +831,6 @@
 2000-04-06  Andy Piper  <andy@xemacs.org>
 
 	* configure.in: fix typo.
-
-2000-04-12  Andy Piper  <andy@xemacs.org>
-
-	* etc/Emacs.ad: give the gui-element face the same font as the
-	menubar and popups. Add translations for text widgets.
 
 2000-04-03  Yoshiki Hayashi  <yoshiki@xemacs.org>
 
@@ -1056,10 +894,6 @@
 	* aclocal.m4 (XE_SHLIB_STUFF): Define ld_shlibs to yes
 	when C compiler can produce shared libraries.
 
-2000-03-01  Didier Verna  <didier@xemacs.org>
-
-	* etc/NEWS: update the rect.el entry.
-
 2000-02-26  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in: Unconditionally define SHELL, to allow working
@@ -1102,10 +936,6 @@
 2000-02-16  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in: Test for arm simply using arm* instead of arm-*
-
-2000-01-05  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
-
-	* etc/TUTORIAL.ja: Synch with English version.
 
 2000-02-16  Martin Buchholz <martin@xemacs.org>
 
@@ -1201,10 +1031,6 @@
 
 	* XEmacs 21.2.27 is released.
 
-2000-01-15  Adrian Aichner  <aichner@ecf.teradyne.com>
-
-	* etc/TUTORIAL.de: Update copyright and fix typo.
-
 2000-01-14  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in: Create a .dbxrc in the src directory, like .gdbinit.
@@ -1230,8 +1056,6 @@
 	* config.guess: Upgrade to 1.158, imported from autoconf's CVS
 
 2000-01-03  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
-
-	* etc/NEWS: Document mail spool locking overhaul.
 
 	* configure.usage (--mail-locking):
 	* configure.in: Handle --mail-locking option correctly in
@@ -1340,10 +1164,6 @@
 	* configure.in (native_sound_lib, *-sgi-*): Check for audio.h.
 	(LIBS): Check for libCsup.
 
-	* etc/sample.Xdefaults: adds a reference to beNiceToColormap,
-	  so that the user can guess what to do if xemacs' dialogs are
-	  butt ugly.
-
 1999-10-24  Jan Vroonhof  <vroonhof@math.ethz.ch>
 
 	* config.h.in: define HAVE_ESD_SOUND
@@ -1369,16 +1189,6 @@
 	CC: Warning: Option -Wl,-Bdynamic passed to ld, if ld is invoked, ignored otherwise
 	/usr/ccs/bin/ld: illegal option -- W
 
-
-1999-11-13  Jason R Mastaler  <jason@mastaler.com>
-
-	* etc/FTP: Updated FTP mirrors list.  Replaced GNU FTP document
- 	with a URL.
-
-1999-11-13  Jason R Mastaler  <jason@mastaler.com>
-
-	* etc/MAILINGLISTS: Updated mailing list subscription information.
-  	Replaced GNU MAILINGLISTS document with a URL.
 
 1999-11-10  XEmacs Build Bot <builds@cvs.xemacs.org>
 
@@ -1407,11 +1217,6 @@
 1999-10-06  Andy Piper  <andy@xemacs.org>
 
 	* Makefile.in.in: use WINDOWSNT for mingw install.
-
-1999-08-01  Adrian Aichner  <adrian@xemacs.org>
-
-	* etc/DISTRIB: Update IP address of ftp.xemacs.org.
-	* etc/NEWS: Fix typo
 
 1999-09-25  Andy Piper  <andy@xemacs.org>
 
@@ -1488,17 +1293,6 @@
 	consistency with the other two options that use that name.
 
 	* configure.usage (--with-modules): Document it.
-
-1999-07-23  Jan Vroonhof  <vroonhof@math.ethz.ch>
-
-	* etc/custom/example-themes/example-theme.el:
-	* etc/custom/example-themes/europe-theme.el:
-	* etc/custom/example-themes/ex-custom-file: Some simple examples
-	illustrating the custom theme support.
-
-1999-07-17  MORIOKA Tomohiko  <tomo@etl.go.jp>
-
-	* etc/HELLO (Thai): Modify for new font.
 
 1999-07-22  SL Baur  <steve@beopen.com>
 
@@ -1658,13 +1452,6 @@
 	* configure.in: add mingw32 as a target platform. add nt process
  	support options.
 
-1999-03-30  MORIOKA Tomohiko  <tomo@etl.go.jp>
-
-	* etc/HELLO (Amharic): New language.
-	(Slovak): Likewise.
-	(Thai): Likewise (by Virach Sornlertlamvanich).
-	(Greek): Fixed (by Yannis Haralambous).
-
 1998-09-04  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
 	* configure.in: Delete mule-coding.o.
@@ -1776,11 +1563,6 @@
 1999-02-02  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.9 is released
-
-1999-02-01  Glynn Clements  <glynn@sensei.co.uk>
-
-	* etc/recycle.xpm: Fix colours so that they work on TrueColor
-	and DirectColor displays
 
 1999-01-21  Andy Piper  <andy@xemacs.org>
 
@@ -1909,10 +1691,6 @@
 	* configure.in: don't enable shared lib support for cygwin unless
 	explititly told to.
 
-1998-10-02  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
-
-	* etc/xemacs.1: Remove misplace "\".
-
 1998-09-29  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.2-beta2 is released.
@@ -1936,32 +1714,12 @@
 	* configure.in: Better detection of AIX 4.3.
 	AIX xlc can do -g and -Ox at the same time.
 
-1998-09-05  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/check_cygwin_setup.sh: grammar fix.
-
-1998-09-02  Andy Piper  <andyp@parallax.co.uk>
-
-	* etc/check_cygwin_setup.sh: fix a couple of buglets.
-
-1998-08-23  Adrian Aichner  <adrian@xemacs.org>
-
-	* etc/sample.emacs: Enable sound support on mswindows devices.
-
 1998-08-17  P. E. Jareth Hein  <jareth@camelot.co.jp>
 
 	* configure.in: Alter configure so that it checks for mismatched PNG
 	header/libs, screams a little louder on old/mismatched library
 	conditions for both PNG and XPM, stop screaming if png is not found and
 	no window-system is selected, and fixed a bug in the XPM checking.
-
-1998-08-06  Adrian Aichner  <adrian@xemacs.org>
-
-	* etc/TUTORIAL.de: Fixing typos and grammatical errors.  Fixing
-	inconsistent usage of RET, <Return>, and <return> (only using
-	<Return> now).  Changing TUTORIAL to TUTORIAL.de throughout
-	itself.  Adding english equivalent to german translation of all
-	concepts used in TUTORIAL.de.
 
 1998-08-07  P. E. Jareth Hein  <jareth@camelot.co.jp>
 
@@ -2010,15 +1768,11 @@
 
 1998-07-12  SL Baur  <steve@altair.xemacs.org>
 
-	* etc/GOATS: Removed.
-
 	* README: Bump version numbers.
 	* info/dir: Ditto.
-	* etc/README: Ditto.
-	* etc/NEWS: Ditto and purge pre-21.0 stuff.
 	* version.sh: Ditto.
 
-	* XEmacs 21.0-pre5 is released.
+ 	* XEmacs 21.0-pre5 is released.
 
 1998-07-10  SL Baur  <steve@altair.xemacs.org>
 
@@ -2033,50 +1787,18 @@
 
 	* configure.in: Fix test for InfoDock sources.
 
-	* etc/BETA (writing): Update patch creation instructions.
-
-	* etc/FTP: Update FTP mirror list.
-
-	* etc/DISTRIB: Remove duplicated FTP mirror list.
-	* etc/xemacs.1 (ftp): Ditto.
-
 1998-07-09  Oliver Graf <ograf@fga.de>
 
 	* configure.usage: added warning to --with-offix
-
-1998-06-29  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/gnuserv.1 (this): Email address for Ben Wing is ben@xemacs.org.
-	* etc/gnuserv.README (README): Ditto.
-	* etc/xemacs-ja.1: Ditto.
 
 1998-06-28  SL Baur  <steve@altair.xemacs.org>
 
 	* configure.in: Berkeley DB autodetection fixes
 	From Martin Buchholz <martin@xemacs.org>
 
-	* etc/BABYL: Moved to rmail package
-
-	* etc/enriched.doc: Moved to xemacs-base package
-
-	* etc/MSDOS:
-	* etc/GNUS-NEWS: deleted
-
-1998-06-21  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
-
-	* etc/NEWS: Added references to documentation about packages and
-	path setup.
-
-	* etc/README: Synched.
-
 1998-06-19  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre3 is released.
-
-1998-06-20  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
-
-	* etc/PACKAGES:
-	* etc/BETA: Moved some package stuff into Texinfo docs.  Other nitpicks
 
 1998-06-20  Kazuyuki IENAGA <ienaga@jsys.co.jp>
 
@@ -2095,12 +1817,6 @@
 
 	* XEmacs 21.0-pre1 is released.
 
-1998-06-14  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
-
-	* etc/NEWS: Updated information about customization of the
-	automatic info dir file generation using
-	`Info-auto-generate-directory' and `Info-save-auto-generated-dir'
-
 1998-06-11  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-beta43 is released.
@@ -2118,11 +1834,6 @@
 	* tests/Dnd/droptest.el: extra start-drag-region function
 	changed the experimental- stuff
 
-1998-06-02  Andy Piper  <andyp@parallax.co.uk>
-
-	* etc/check_cygwin_setup.sh: set more intelligent defaults for
-	windows 95.
-
 1998-06-07  SL Baur  <steve@altair.xemacs.org>
 
 	* lwlib/xlwmenu.c: Add room for the 0 byte sentinel.
@@ -2135,14 +1846,9 @@
 
 	* XEmacs 21.0-beta42 is released.
 
-	* etc/sounds: Removed, now in the sounds-au package.
-
 1998-05-29  Andy Piper  <andyp@parallax.co.uk>
 
 	* configure.in: don't use -O3 for cygwin.
-
-	* etc/check_cygwin_setup.sh: new file to check that cygwin is setup
-	correctly for XEmacs operation.
 
 1998-05-28  P. E. Jareth Hein  <jareth@camelot-soft.com>
 
@@ -2253,10 +1959,6 @@
 	* tests/Dnd/README: created, info about new protocol
 	* tests/Dnd/dragtest.el: comment change
 
-1998-05-07  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/altrasoft-logo.xpm: Removed.
-
 1998-05-02  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-beta38 is released.
@@ -2278,11 +1980,6 @@
 	`xemacs'.
 	CPPFLAGS was being set correctly in ${subdir}/Makefiles and
 	overridden by the empty one set in the toplevel Makefile.
-
-1998-04-26  Jason R Mastaler  <jason@4b.org>
-
-	* etc/BETA: Replaced SmartList references in favor of
-	Majordomo.
 
 1998-04-25  SL Baur  <steve@altair.xemacs.org>
 
@@ -2328,8 +2025,6 @@ Wed Apr 22 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
 	if libXpm exists, and is of the FOR_MSW flavor, define FOR_MSW.
 
 1998-04-19  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
-
-	* etc/NEWS: Documented info dir rebuilding and LDAP support.
 
 	* info/dir: Fixed the explanatory notes for
 	`Info-default-directory-list' removal and the new automatic dir
@@ -2380,10 +2075,6 @@ Thu Apr 16 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
 
 1998-04-11  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
 
-	* etc/xemacs.1: -no-packages -> -no-early-packages.
-
-	* etc/NEWS: Clarified site-lisp status.
-
 	* configure.in: Re-instated src/paths.h generation from
 	src/paths.h.in.
 
@@ -2395,9 +2086,6 @@ Thu Apr 16 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
 	* XEmacs 21.0-beta35 is released.
 
 1998-04-10  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
-
-	* etc/NEWS: Documented that Info-default-directory-list and
-	site-directory are gone.
 
 	* configure.usage: Clarified --package-path documentation.
 
@@ -2626,13 +2314,6 @@ Mon Mar 09 13:00:55 1998  Andy Piper  <andyp@parallax.co.uk>
 	tagbits and indexed lrecords.
 	Suggested by Andreas Jaeger <aj@arthur.rhein-neckar.de>
 
-1998-03-09  Kyle Jones  <kyle_jones@wonderworks.com>
-
-	* etc/Emacs.ad: Example using leading dot resources to
-	  initalize faces changes to use Emacs.foo since the
-	  leading dot syntax doesn't work.  Initialization of
-	  text-cursor face moved to faces.el.
-
 1998-03-07  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta30 is released.
@@ -2655,9 +2336,6 @@ Wed Mar 04 08:55:12 1998  Andy Piper  <andyp@parallax.co.uk>
 	* configure.in: Add substitutable variable ld_dynamic_link_flags
 	for special required linker flags for building DLL capable
 	binaries.
-
-	* etc/Emacs.ad: Remove explicit `Emacs' application resource
-	name.
 
 1998-02-28  SL Baur  <steve@altair.xemacs.org>
 
@@ -2764,26 +2442,9 @@ Wed Jan 28 13:41:22 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* XEmacs 20.5-beta23 is released.
 
-1998-02-01  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/aliases.ksh: igrep from the shell command line.
-	From Karl M. Hegbloom <karlheg@bittersweet.inetarena.com>
-
-1998-01-31  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/aliases.ksh: Add `mak' function to create beta.err for
-	build-report.
-	From Adrian Aichner <adrian@xemacs.org>
-	Suggested by Karl M. Hegbloom <karlheg@bittersweet.inetarena.com>
-
 1998-01-27  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta22 is released.
-
-1998-01-26  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/aliases.ksh: New file.  Start tracking useful Maintainer
-	XEmacs commands.
 
 1998-01-25  SL Baur  <steve@altair.xemacs.org>
 
@@ -2804,12 +2465,7 @@ Wed Jan 21 10:49:47 1998  Andy Piper  <andyp@parallax.co.uk>
 1998-01-13  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.usage:
-	* etc/NEWS:
 	Remove doc for configure-time INFOPATH, no longer used.
-
-	* etc/BETA: Update ftp addresses.
-	* etc/INSTALL: Update ftp addresses.
-	* etc/MAILINGLISTS: Sync with Emacs 20.2. Update ftp addresses.
 
 	* configure.in:
 	* src/config.h.in:
@@ -2825,8 +2481,6 @@ Wed Jan 21 10:49:47 1998  Andy Piper  <andyp@parallax.co.uk>
 	* src/menubar-x.c:
 	Prepend LWLIB_ to (SCROLLBARS|MENUBARS|DIALOGS)_(MOTIF|LUCID|ATHENA).
 	Maintain only one set of variables.
-
-	* etc/xemacs.1: Update author list.
 
 	* Makefile.in (install-arch-dep): Simplify.
 	Replace construct  `test -d $dir && foo'  with
@@ -2852,8 +2506,6 @@ Wed Jan 21 10:49:47 1998  Andy Piper  <andyp@parallax.co.uk>
 1998-01-10  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta18 is released.
-
-	* etc/FTP: Update address of what was formerly ftp.ibp.fr.
 
 1998-01-08  Didier Verna  <didier@xemacs.org>
 
@@ -2916,11 +2568,6 @@ Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
 
 	* XEmacs 20.5-beta13 is released.
 
-1997-12-21  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/BETA (Prerequisite): Add cookbook procedures for maintaining
-	package lisp directories.
-
 1997-12-20  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta 12 is released.
@@ -2930,25 +2577,11 @@ Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
 	* configure.in (bitmapdir): Reenable --with-session by default for
 	testing.
 
-1997-12-18  Kyle Jones  <kyle_jones@wonderworks.com>
-
-	* etc/Emacs.ad: Don't specify a default toolbar specific
-	  background color.
-
-1997-12-18  Kyle Jones  <kyle_jones@wonderworks.com>
-
-	* etc/toolbar: Added support for foregroundToolBarColor
-	  symbol to most icons.
-
 1997-12-17  SL Baur  <steve@altair.xemacs.org>
 
 	* info/dir (File): Skk and Gnats are packaged.
 
 	* PROBLEMS (Note): Update version numbers.
-
-	* etc/BETA: Update version numbers.
-
-	* etc/NEWS: Update version number.
 
 	* info/dir (File): Update version number.
 
@@ -3008,10 +2641,6 @@ Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
 	  motif menubars to at least compile.  Motif menubars are still
 	  very broken.
 
-1997-12-05  Aki Vehtari  <Aki.Vehtari@hut.fi>
-
-	* etc/refcard.tex: Updated for 20.3
-
 1997-12-02  P E Jareth Hein  <jareth@camelot-soft.com>
 
 	* lwlib/xlwscrollbar.c: fixed colormap/visual handling to work
@@ -3020,10 +2649,6 @@ Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
 	* lwlib/xlwmenu.c: fixed colormap/visual handling to work properly with
 	the information in the core, and fixed a potental problem with
 	parentage.
-
-1997-12-02  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/skk/SKK.tut.E (Hint): Fix typos.
 
 1997-12-01  SL Baur  <steve@altair.xemacs.org>
 
@@ -3089,11 +2714,6 @@ Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
 
 	* PROBLEMS: Removed IRIX entry about xemacs core dumps when using
 	xemacs dumped on one machine on another. Problem was fixed by 20.3.
-
-1997-11-19  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/xemacs.1: Document -no-packages, -vanilla.
-	Document -h.
 
 1997-11-18  SL Baur  <steve@altair.xemacs.org>
 
@@ -3187,57 +2807,9 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 	* lwlib/lwlib-Xm.c(update_one_menu_entry): Add missing variable.
 	From Skip Montanaro <skip@calendar.com>
 
-1997-11-04  Adrian Aichner  <adrian@xemacs.org>
-
-	* etc/TUTORIAL.de:
-	Updated copyright information. Translated most of the COPYING
-	section. Translated the <<.*>> didactic line.
-
-1997-10-22  Adrian Aichner  <adrian@xemacs.org>
-
-	* etc/TUTORIAL.de: Fixed two issues reported by
-	Achim Oppelt <aoppelt@theorie3.physik.uni-erlangen.de>
-
-	* etc/TUTORIAL.de:
-	Manually applied rejected patch hunks from Marc Aurel's patch.
-	Some more fixes.
-
-	* etc/TUTORIAL.de:
-	Applied patches supplied by Marc Aurel <4-tea-2@bong.saar.de>.
-	They fix yet more typos and quite a few awkward sentences.
-
-1997-10-21  Adrian Aichner  <adrian@xemacs.org>
-
-	* etc/TUTORIAL.de: Manually merged a few more corrections by
-	Carsten Leonhardt <leo@arioch.oche.de>
-
-1997-10-20  Adrian Aichner  <adrian@xemacs.org>
-
-	* etc/TUTORIAL.de:
-	Applied patches from Andreas Jaeger <aj@arthur.rhein-neckar.de> to 1.2,
-	then merged them with 1.3 via ediff-buffers.
-	Andreas found some quite nasty typos still and added many missing commas.
-
-	* etc/TUTORIAL.de: Re-fill-ed paragraphs after patching.
-
-	* etc/TUTORIAL.de: Applied the excellent patches courtesy of
-	Carsten Leonhardt <leo@arioch.oche.de>.
-
 1997-11-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
 	* Delete etc/TUTORIAL.th because Thai is not supported yet.
-
-1997-11-02  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
-
-	* etc/TUTORIAL.ko: Renamed from etc/TUTORIAL.kr to fit with ISO
-	639 (two letter language code).
-
-	* etc/TUTORIAL.ja: Renamed from etc/TUTORIAL.jp to fit with ISO
-	639 (two letter language code).
-
-1997-11-02  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/CHARSETS:  New file imported from Emacs 20.1.
 
 1997-11-02  Kyle Jones  <kyle_jones@wonderworks.com>
 
@@ -3267,9 +2839,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 1997-10-30  Kyle Jones  <kyle_jones@wonderworks.com>
 
-	* etc/Emacs.ad: Added *XlwMenu*highlightForeground entry.
-	  Added *XlwMenu*titleForeground entry.
-
 	* lwlib/xlwmenu.h: Added string macro declarations for
 	  titleForeground and highlightForeground properties.
 
@@ -3279,12 +2848,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 	* lwlib/xlwmenu.c: Added initialization and usage code
 	  for the new titleForeground and highlightForeground
 	  properties.
-
-1997-10-29  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
-
-	* etc/HELLO: Add Czech.
-
-	* etc/HELLO: Delete Amharic, Thai and Tigrigna.
 
 1997-10-28  SL Baur  <steve@altair.xemacs.org>
 
@@ -3344,10 +2907,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 	* XEmacs 20.3-beta91 is released.
 
-1997-10-16  Hrvoje Niksic <hniksic@srce.hr>
-
-	* etc/NEWS:  document changed package load semantics.
-
 1997-10-15  Olivier Galibert  <olivier.galibert@mines.u-nancy.fr>
 
 	* configure.in: Removed -Olimit=2000 from cc for IRIX.
@@ -3386,10 +2945,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 	* info/dir: Cosmetic changes to info/dir
 
-1997-10-13  Hrvoje Niksic  <hniksic@srce.hr>
-
-	* etc/NEWS: Updates
-
 1997-10-12  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta1 is released.
@@ -3414,8 +2969,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
  	and lockdir
 	* '' added a line to the report for infopath and lockdir
 
-	* etc/NEWS: Draft entry for the info changes.
-
 1997-10-10  Karl M. Hegbloom  <karlheg@inetarena.com>
 
 	* Makefile.in.in (INFOPATH): Added variable and put it into
@@ -3430,17 +2983,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 1997-10-10  Martin Buchholz  <mrb@eng.sun.com>
 
 	* Makefile.in: Add `make configure' target
-
-	* etc/BETA:
-	  - remove Chuck as contact name
-	  - random small improvements
-	  - remove I/me references - the message should be that XEmacs
-	    maintenance is an inclusive community effort.
-
-1997-10-10  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/BETA (Prerequisite): Add further documentation for
-	package installation.
 
 1997-10-07  SL Baur  <steve@altair.xemacs.org>
 
@@ -3500,10 +3042,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 	* Makefile.in (install-arch-dep): Install the `Installation' for
 	future reference.
 
-	* etc/BETA: Document existence of `Installation' file.
-	- Document requirement of rebuilding finder-inf.el when building
-	from the full tarball.
-
 	* Makefile.in (top_distclean): Remove finder-inf.el*.
 
 	* configure.in (use_union_type): Default to "yes".
@@ -3525,11 +3063,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 	* Makefile.in (custom-loads): New target.
 
-1997-09-24  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/BETA (XEmacs 20.3 packages): Added explanation of package
-	hierarchy.
-
 1997-09-23  SL Baur  <steve@altair.xemacs.org>
 
 	* lwlib/xlwmenu.c: Fix compilation problem with USE_XFONTSET.
@@ -3546,11 +3079,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 1997-09-19  SL Baur <steve@altair.xemacs.org>
 
 	* XEmacs 19.16-pre3 is released.
-
-1997-09-18  Colin Rafferty  <craffert@ml.com>
-
-	* etc/NEWS: Various spelling corrections and some grammar
-		  corrections (which/that).
 
 1997-09-19  Martin Buchholz  <mrb@eng.sun.com>
 
@@ -3650,17 +3178,9 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 	* XEmacs 20.3-beta18 is released.
 
-1997-08-11  Karl M. Hegbloom  <karlheg@inetarena.com>
-
-	* etc/NEWS: add a section telling about the Info changes.
-
 1997-08-09  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta17 is released.
-
-1997-08-07  Jan Vroonhof  <vroonhof@math.ethz.ch>
-
-	* etc/gnuserv.1: Described Hrvoje's mods in manpage
 
 1997-08-09  Martin Buchholz  <mrb@eng.sun.com>
 
@@ -3695,10 +3215,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 	* regex.c:  Use (void *) 0 instead of NULL in varargs function calls
 	* src/s/freebsd.h: Wrap #include X11/Xlocale.h inside #ifndef
 	NOT_C_CODE
-
-1997-07-27  SL Baur  <steve@altair.xemacs.org>
-
-	* etc/BETA: Update patching instructions.
 
 1997-07-26  SL Baur  <steve@altair.xemacs.org>
 
@@ -3976,9 +3492,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 	* lib-src/update-autoloads.sh: Search lisp/mule/.
 
-	* etc/HELLO: final byte for ethiopic was changed to sync with
-	Emacs/mule-19.34.94-zeta.
-
 	* lisp/x11/x-menubar.el: Fix "Describe language support" and "Set
 	language environment" of Mule menu.
 
@@ -4022,10 +3535,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 	(quail-map-p): Use `characterp' instead of `integerp'.
 
-1997-06-23  Steven L Baur  <steve@altair.xemacs.org>
-
-	* etc/NEWS (Commands): Various updates by Hrvoje Niksic.
-
 1997-06-21  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in: Missing FRC.info.
@@ -4038,11 +3547,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 	* lwlib/lwlib-Xaw.c, lwlib/lwlib-Xlw.c, lwlib/lwlib-Xm.c,
 	lwlib/lwlib.c:  Make 64 bit clean.
-
-1997-06-20  Steven L Baur  <steve@altair.xemacs.org>
-
-	* etc/gnuserv.1: Updates and cleanup.
-	From Hrvoje Niksic <hniksic@srce.hr>
 
 1997-06-19  Martin Buchholz  <mrb@eng.sun.com>
 
@@ -4075,11 +3579,6 @@ Wed Jun 18 16:41:43 1997  Steven L Baur  <steve@altair.xemacs.org>
 1997-06-14  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta7 is released.
-
-1997-06-12  Steven L Baur  <steve@altair.xemacs.org>
-
-	* etc/TUTORIAL (things): Synched by Hrvoje Niksic with previous
-	XEmacs version.
 
 1997-06-13  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
@@ -4183,12 +3682,6 @@ Tue Jun 10 15:11:16 1997  Steven L Baur  <steve@altair.xemacs.org>
 	iso-8859-1, hz-gb-2312, cn-gb-2312, gb2312, cn-big5 and koi8-r
 	were defined as coding-system.
 
-1997-06-08  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
-
-	* etc/smilies/Face_smile.xbm, etc/smilies/Face_weep.xbm,
-	etc/smilies/Face_ase2.xbm, etc/smilies/Face_ase3.xbm,
-	etc/smilies/Face_ase.xbm: Add Japanese smiley faces.
-
 1997-06-07  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
 	* lisp/gnus/smiley.el (smiley-deformed-regexp-alist): Add Japanese
@@ -4220,11 +3713,6 @@ Tue Jun 10 15:11:16 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-b5 is released.
 
-1997-06-08  Steven L Baur  <steve@altair.xemacs.org>
-
-	* etc/NEWS: Updates for early beta20.3 stuffs.
-	From Hrvoje Niksic <hniksic@srce.hr>
-
 1997-06-05  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-b4 is released.
@@ -4250,8 +3738,6 @@ Tue Jun 10 15:11:16 1997  Steven L Baur  <steve@altair.xemacs.org>
 	* lib-src/Makefile.in.in: Remove unused -DCONFIG_BROKETS flag
 	- Fix up compile flags for new etags version
 
-	* etc/NEWS:
-	* etc/etags.1:
 	* man/xemacs/programs.texi:
 	* lib-src/etags.c:  Upgraded to etags 12.11
 
@@ -4441,10 +3927,6 @@ Thu May 29 15:35:07 1997  Martin Buchholz  <mrb@eng.sun.com>
 
 	* configure.in: Delete mocklisp support.
 
-	* etc/FTP: Update mirror info.
-
-	* etc/DISTRIB: Update mirror info.
-
 1997-05-29  Martin Buchholz  <mrb@eng.sun.com>
 
 	* configure.in: Replace standard Autoconf MMAP test with Neal
@@ -4466,12 +3948,6 @@ Thu May 29 15:35:07 1997  Martin Buchholz  <mrb@eng.sun.com>
 	Remove spurious blanks from various SUBST-ituted variables.
 	Fix conditional creation of gdbinit.
 	Conditionally create .sbinit for Sunpro C.
-
-1997-05-26  Steven L Baur  <steve@altair.xemacs.org>
-
-	* etc/FTP: Correct typo in ftp.cenatls.cena.dgac.fr.
-
-	* etc/DISTRIB: Ditto.
 
 1997-05-22  Steven L Baur  <steve@altair.xemacs.org>
 
@@ -4500,10 +3976,6 @@ Thu May 22 04:19:09 1997  Martin Buchholz  <mrb@eng.sun.com>
 	dynodump.  Remove core when cleaning.  Remove config.log.
 	make distclean now functional.
 
-Tue Jun  4 10:15:54 1996  Per Bothner  <bothner@deneb.cygnus.com>
-
-	* etc/e/eterm.ti:  Add kcub1, kcuf1, kcuu1, kcud1 capabilities.
-
 Sun May 18 13:03:20 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* lwlib/Makefile.in.in (distclean): Clean up config.h.
@@ -4518,8 +3990,6 @@ Sat May 17 20:30:54 1997  Steven L Baur  <steve@altair.xemacs.org>
 Fri May 16 20:38:19 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* info/dir (Packages): Update minor version number.
-
-	* etc/README: Update minor version number.
 
 	* README: Update minor version number.
 
@@ -4553,11 +4023,6 @@ Wed Apr 23 10:33:58 1997  Steven L Baur  <steve@altair.xemacs.org>
 	* XEmacs 20.2-b2 is released.
 
 	* configure.in (beta): OPENWINHOME misspelled.
-
-Mon Apr 21 14:48:29 1997  Steven L Baur  <steve@altair.xemacs.org>
-
-	* etc/BETA (writing): Update with information about how to create
-	patches.
 
 Sat Apr 19 16:13:16 1997  Steven L Baur  <steve@altair.xemacs.org>
 
@@ -4649,10 +4114,6 @@ Sun Mar 23 17:24:38 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 19.15-b104 is released.
 
-Sat Mar 22 19:56:36 1997  Steven L Baur  <steve@altair.xemacs.org>
-
-	* etc/sgml/CATALOG: Default to html-3.2final.
-
 Sat Mar 22 17:55:15 1997  Darrell Kindred  <dkindred@cmu.edu>
 
 	* configure.in (beta): Add configure support for the -rpath flag
@@ -4696,8 +4157,6 @@ Sat Mar 15 17:15:18 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs-20.1-b7 is released.
 	* XEmacs-19.15-b99 is released.
-
-	* etc/sgml/CATALOG: Added IE3 DTDs and htmlpro DTD.
 
 Thu Mar 13 10:40:11 1997  Steven L Baur  <steve@altair.xemacs.org>
 
@@ -4746,11 +4205,6 @@ Fri Feb 28 20:38:46 1997  Steven L Baur  <steve@altair.xemacs.org>
 	* Makefile.in (distclean): Create lock and site-lisp directories
 	when they don't exist (after being pruned by CVS).
 
-Tue Mar  4 00:41:38 1997  Hrvoje Niksic  <hniksic@srce.hr>
-
-	* etc/sample.Xdefaults: Added customization of foreground and
-	background colors for the `default' face.
-
 Wed Feb 26 22:12:12 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in (top_distclean): Reset src/PURESIZE.h for
@@ -4767,8 +4221,6 @@ Sat Feb 22 14:29:44 1997  Steven L Baur  <steve@altair.xemacs.org>
 	* XEmacs 19-15-b'95 is released.
 
 Fri Feb 21 22:29:51 1997  Martin Buchholz  <mrb@eng.sun.com>
-
-	* etc/toolbar/workshop-cap-up.xpm:  Moved caption up one pixel.
 
 	* lwlib/xlwscrollbar.c : Fix many scrollbar bugs:
 	- "knob" renamed to "slider"
@@ -4858,8 +4310,6 @@ Tue Jan 21 20:01:19 1997  Steven L. Baur  <steve@altair.xemacs.org>
 	* configure.in (beta): Add LWLIB_USES_ATHENA for odd
 	configurations that use both Motif and Athena.
 
-	* etc/sgml/HTML32.dtd: html-3.2 final dtd added.
-
 Wed Jan 15 12:55:19 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* info/dir (Gnus): Updated spelling and info.
@@ -4874,9 +4324,6 @@ Mon Jan 13 00:36:01 1997  Martin Buchholz  <mrb@eng.sun.com>
 	warnings for ccl-read-*
 
 Sat Jan 11 12:05:31 1997  Steven L Baur  <steve@altair.xemacs.org>
-
-	* etc/sample.emacs: Remove code snippet that wipes out the cycle
-	buffer modeline feature.
 
 	* XEmacs 20.0 beta90 (prerelease 1) is released.
 	* XEmacs 19.15 beta90 (prerelease 1) is released.
@@ -4956,8 +4403,6 @@ Sun Dec 29 05:37:43 1996  Martin Buchholz  <mrb@eng.sun.com>
 	* Makefile.in: replace list of info files with *.info* - one less
 	  maintenance headache
 
-	* etc/sample.emacs: Add sample code to highlight continuation glyph
-
 	* man/oo-browser.texi: Fix TeXability
 
 	* man/hyperbole.texi: Fix TeXability
@@ -5018,8 +4463,6 @@ Sun Dec 29 05:37:43 1996  Martin Buchholz  <mrb@eng.sun.com>
 	* lib-src/update-elc.sh: XEmacs sometimes re-byte-compiled elisp
 	  files in dirs that have their own Makefiles.
 
-
-
 Sun Dec 29 17:02:49 1996  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in (install-arch-indep): Force compression with `gzip -f'.
@@ -5033,10 +4476,6 @@ Sat Dec 28 15:33:27 1996 Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.0 beta 33 is released.
 	* XEmacs 19.15 beta 6 is released.
-
-Fri Dec 27 20:34:58 1996  Richard Mlynarik  <mly@adoc.xerox.com>
-
-	* etc/yow.lines: 20k of new zippy quotes.
 
 Fri Dec 27 01:02:41 1996  Martin Buchholz  <mrb@eng.sun.com>
 
@@ -5084,10 +4523,6 @@ Tue Dec 10 09:17:22 1996  David Worenklein  <dcw@gcm.com>
 Sat Dec  7 16:28:10 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
 
 	* configure.in: Configure for POSIX getcwd if available.
-
-Thu Dec  5 20:42:35 1996  Steven L Baur  <steve@altair.xemacs.org>
-
-	* etc/edt-user.doc (File): New file from Emacs 19.34.
 
 Thu Dec  5 11:56:05 1996  Joseph J Nuspl <nuspl@nvwls.cc.purdue.edu>
 

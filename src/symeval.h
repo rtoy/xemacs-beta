@@ -1,6 +1,6 @@
 /* Definitions of symbol-value forwarding for XEmacs Lisp interpreter.
    Copyright (C) 1985, 1986, 1987, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -84,7 +84,7 @@ struct symbol_value_magic
  XRECORD_LHEADER (x)->type <= lrecord_type_max_symbol_value_magic)
 #define XSYMBOL_VALUE_MAGIC_TYPE(v) \
 	(((struct symbol_value_magic *) XPNTR (v))->type)
-#define XSETSYMBOL_VALUE_MAGIC(s, p) XSETOBJ (s, p)
+#define wrap_symbol_value_magic(p) wrap_pointer_1 (p)
 void print_symbol_value_magic (Lisp_Object, Lisp_Object, int);
 
 /********** The various different symbol-value-magic types ***********/

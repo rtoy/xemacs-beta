@@ -1,7 +1,7 @@
 /* String search routines for XEmacs.
    Copyright (C) 1985, 1986, 1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -314,12 +314,12 @@ fixup_search_regs_for_string (Lisp_Object string)
       if (search_regs.start[i] > 0)
 	{
 	  search_regs.start[i] =
-	    XSTRING_INDEX_BYTE_TO_CHAR (string, search_regs.start[i]);
+	    string_index_byte_to_char (string, search_regs.start[i]);
 	}
       if (search_regs.end[i] > 0)
 	{
 	  search_regs.end[i] =
-	    XSTRING_INDEX_BYTE_TO_CHAR (string, search_regs.end[i]);
+	    string_index_byte_to_char (string, search_regs.end[i]);
 	}
     }
 }
@@ -377,7 +377,7 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
 	  search_regs.end[i] += BI_BUF_BEGV (buf);
 	}
   }
-  XSETBUFFER (last_thing_searched, buf);
+  last_thing_searched = wrap_buffer (buf);
   fixup_search_regs_for_buffer (buf);
   return unbind_to_1 (count, val);
 }
@@ -446,7 +446,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
 			  0, ERROR_ME);
   QUIT;
   {
-    Bytecount bis = XSTRING_INDEX_CHAR_TO_BYTE (string, s);
+    Bytecount bis = string_index_char_to_byte (string, s);
     regex_match_object = string;
     regex_emacs_buffer = buf;
     val = re_search (bufp, (char *) XSTRING_DATA (string),
@@ -461,7 +461,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   fixup_search_regs_for_string (string);
   return
     unbind_to_1 (count,
-	       make_int (XSTRING_INDEX_BYTE_TO_CHAR (string, val)));
+	       make_int (string_index_byte_to_char (string, val)));
 }
 
 DEFUN ("string-match", Fstring_match, 2, 4, 0, /*
@@ -754,12 +754,12 @@ find_next_newline (struct buffer *buf, Charbpos from, int count)
 }
 
 Bytebpos
-bi_find_next_emchar_in_string (Lisp_String* str, Emchar target, Bytebpos st,
+bi_find_next_emchar_in_string (Lisp_Object str, Emchar target, Bytebpos st,
 			       EMACS_INT count)
 {
   /* This function has been Mule-ized. */
-  Bytebpos lim = string_length (str) -1;
-  Intbyte* s = string_data (str);
+  Bytebpos lim = XSTRING_LENGTH (str) -1;
+  Intbyte *s = XSTRING_DATA (str);
 
   assert (count >= 0);
 
@@ -773,7 +773,7 @@ bi_find_next_emchar_in_string (Lisp_String* str, Emchar target, Bytebpos st,
     {
       while (st < lim && count > 0)
 	{
-	  if (string_char (str, st) == target)
+	  if (XSTRING_CHAR (str, st) == target)
 	    count--;
 	  INC_CHARBYTEBPOS (s, st);
 	}
@@ -1239,7 +1239,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 		    search_regs.start[i] += j;
 		    search_regs.end[i] += j;
 		  }
-	      XSETBUFFER (last_thing_searched, buf);
+	      last_thing_searched = wrap_buffer (buf);
 	      /* Set pos to the new position. */
 	      pos = search_regs.start[0];
 	      fixup_search_regs_for_buffer (buf);
@@ -1277,7 +1277,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 		    search_regs.start[i] += j;
 		    search_regs.end[i] += j;
 		  }
-	      XSETBUFFER (last_thing_searched, buf);
+	      last_thing_searched = wrap_buffer (buf);
 	      /* Set pos to the new position. */
 	      pos = search_regs.end[0];
 	      fixup_search_regs_for_buffer (buf);
@@ -1966,7 +1966,7 @@ set_search_regs (struct buffer *buf, Charbpos beg, Charcount len)
 
   search_regs.start[0] = beg;
   search_regs.end[0] = beg + len;
-  XSETBUFFER (last_thing_searched, buf);
+  last_thing_searched = wrap_buffer (buf);
 }
 
 
@@ -1986,14 +1986,14 @@ wordify (Lisp_Object buffer, Lisp_Object string)
   len = XSTRING_CHAR_LENGTH (string);
 
   for (i = 0; i < len; i++)
-    if (!WORD_SYNTAX_P (syntax_table, string_char (XSTRING (string), i)))
+    if (!WORD_SYNTAX_P (syntax_table, XSTRING_CHAR (string, i)))
       {
 	punct_count++;
 	if (i > 0 && WORD_SYNTAX_P (syntax_table,
-				    string_char (XSTRING (string), i - 1)))
+				    XSTRING_CHAR (string, i - 1)))
           word_count++;
       }
-  if (WORD_SYNTAX_P (syntax_table, string_char (XSTRING (string), len - 1)))
+  if (WORD_SYNTAX_P (syntax_table, XSTRING_CHAR (string, len - 1)))
     word_count++;
   if (!word_count) return build_string ("");
 
@@ -2010,13 +2010,13 @@ wordify (Lisp_Object buffer, Lisp_Object string)
 
     for (i = 0; i < len; i++)
       {
-	Emchar ch = string_char (XSTRING (string), i);
+	Emchar ch = XSTRING_CHAR (string, i);
 
 	if (WORD_SYNTAX_P (syntax_table, ch))
 	  o += set_charptr_emchar (o, ch);
 	else if (i > 0
 		 && WORD_SYNTAX_P (syntax_table,
-				   string_char (XSTRING (string), i - 1))
+				   XSTRING_CHAR (string, i - 1))
 		 && --word_count)
 	  {
 	    *o++ = '\\';
@@ -2332,7 +2332,7 @@ match since only regular expressions have distinguished subexpressions.
 	 the last string matched and the buffer used for that
 	 matching.  But of course we can't change it as it is. */
       buf = decode_buffer (strbuffer, 0);
-      XSETBUFFER (buffer, buf);
+      buffer = wrap_buffer (buf);
     }
   else
     {
@@ -2394,7 +2394,7 @@ match since only regular expressions have distinguished subexpressions.
 	  if (NILP (string))
 	    c = BUF_FETCH_CHAR (buf, pos);
 	  else
-	    c = string_char (XSTRING (string), pos);
+	    c = XSTRING_CHAR (string, pos);
 
 	  if (LOWERCASEP (buf, c))
 	    {
@@ -2479,10 +2479,10 @@ match since only regular expressions have distinguished subexpressions.
 	      Charcount substart = -1;
 	      Charcount subend   = -1;
 
-	      c = string_char (XSTRING (replacement), strpos);
+	      c = XSTRING_CHAR (replacement, strpos);
 	      if (c == '\\' && strpos < stlen - 1)
 		{
-		  c = string_char (XSTRING (replacement), ++strpos);
+		  c = XSTRING_CHAR (replacement, ++strpos);
 		  if (c == '&')
 		    {
 		      literal_end = strpos - 1;
@@ -2572,7 +2572,7 @@ match since only regular expressions have distinguished subexpressions.
 
 	  for (strpos = 0; strpos < stlen; strpos++)
 	    {
-	      Emchar curchar = string_char (XSTRING (replacement), strpos);
+	      Emchar curchar = XSTRING_CHAR (replacement, strpos);
 	      Emchar newchar = -1;
 	      if (i < Dynarr_length (ul_pos_dynarr) &&
 		  strpos == Dynarr_at (ul_pos_dynarr, i))
@@ -2596,7 +2596,7 @@ match since only regular expressions have distinguished subexpressions.
 		    newchar = curchar;
 		}
 	      if (newchar != curchar)
-		set_string_char (XSTRING (replacement), strpos, newchar);
+		set_string_char (replacement, strpos, newchar);
 	    }
 	}
 
@@ -2633,7 +2633,7 @@ match since only regular expressions have distinguished subexpressions.
 	   */
 	  Charcount offset = BUF_PT (buf) - search_regs.start[sub];
 
-	  c = string_char (XSTRING (replacement), strpos);
+	  c = XSTRING_CHAR (replacement, strpos);
 	  if (c == '\\' && strpos < stlen - 1)
 	    {
 	      /* XXX FIXME: replacing just a substring non-literally
@@ -2642,7 +2642,7 @@ match since only regular expressions have distinguished subexpressions.
 		 <duwe@caldera.de> claims Finsert_buffer_substring already
 		 handles this correctly.
 	      */
-	      c = string_char (XSTRING (replacement), ++strpos);
+	      c = XSTRING_CHAR (replacement, ++strpos);
 	      if (c == '&')
 		Finsert_buffer_substring
                   (buffer,
@@ -2915,7 +2915,7 @@ LIST should have been created by calling `match-data' previously.
 	      if (XMARKER (marker)->buffer == 0)
 		marker = Qzero;
 	      else
-		XSETBUFFER (last_thing_searched, XMARKER (marker)->buffer);
+		last_thing_searched = wrap_buffer (XMARKER (marker)->buffer);
 	    }
 
 	  CHECK_INT_COERCE_MARKER (marker);

@@ -1,6 +1,6 @@
 /* Call a Lisp function interactively.
    Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -308,8 +308,8 @@ when reading the arguments.
 #ifdef IT_SEEMS_THAT_MLY_DOESNT_LIKE_THIS
   Lisp_Object enable;
 #endif
-  /* If SPECS is a string, we reset prompt_data to string_data
-   * (XSTRING (specs)) every time a GC might have occurred */
+  /* If SPECS is a string, we reset prompt_data to XSTRING_DATA (specs)
+     every time a GC might have occurred */
   const char *prompt_data = 0;
   int prompt_index = 0;
   int argcount;
@@ -891,7 +891,7 @@ when reading the arguments.
 		   */
 		  tem = Fintern (tem, Qnil);
 		  args[argnum] = tem;
-		  if (string_length (XSYMBOL (tem)->name) > 0)
+		  if (XSTRING_LENGTH (XSYMBOL (tem)->name) > 0)
 		    /* Don't accept the empty-named symbol.  If the loser
 		       really wants this s/he can call completing-read
                        directly */
@@ -991,7 +991,7 @@ when reading the arguments.
        temporarily, convert it to an integer now.  */
     for (argnum = 0; argnum < argcount; argnum++)
       if (!NILP (varies[argnum]))
-	XSETINT (args[argnum], marker_position (args[argnum]));
+	args[argnum] = make_int (marker_position (args[argnum]));
 
     single_console_state ();
     specbind (Qcommand_debug_status, Qnil);

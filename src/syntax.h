@@ -1,5 +1,6 @@
 /* Declarations having to do with XEmacs syntax tables.
    Copyright (C) 1985, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -330,7 +331,7 @@ void update_syntax_cache (int pos, int count, int init);
   (! lookup_syntax_properties						\
    ? 0									\
    : STRINGP (syntax_cache.object)					\
-   ? XSTRING_INDEX_BYTE_TO_CHAR (syntax_cache.object, bytepos)		\
+   ? string_index_byte_to_char (syntax_cache.object, bytepos)		\
    : (BUFFERP (syntax_cache.object) || NILP (syntax_cache.object))	\
    ? bytebpos_to_charbpos (syntax_cache.buffer,				\
 		       bytepos + BI_BUF_BEGV (syntax_cache.buffer))	\
@@ -340,7 +341,7 @@ void update_syntax_cache (int pos, int count, int init);
   (! lookup_syntax_properties					\
    ? 0								\
    : STRINGP (obj)						\
-   ? XSTRING_INDEX_BYTE_TO_CHAR (obj, bytepos)			\
+   ? string_index_byte_to_char (obj, bytepos)			\
    : (BUFFERP (obj) || NILP (obj))				\
    ? bytebpos_to_charbpos (buf, bytepos + BI_BUF_BEGV (buf))	\
    : (bytepos))

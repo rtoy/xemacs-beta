@@ -48,7 +48,7 @@ mark_marker (Lisp_Object obj)
   if (!marker->buffer)
     return (Qnil);
 
-  XSETBUFFER (buf, marker->buffer);
+  buf = wrap_buffer (marker->buffer);
   return (buf);
 }
 
@@ -120,9 +120,7 @@ Return nil if MARKER points into a dead buffer or doesn't point anywhere.
   /* Return marker's buffer only if it is not dead.  */
   if ((buf = XMARKER (marker)->buffer) && BUFFER_LIVE_P (buf))
     {
-      Lisp_Object buffer;
-      XSETBUFFER (buffer, buf);
-      return buffer;
+      return wrap_buffer (buf);
     }
   return Qnil;
 }
@@ -531,9 +529,8 @@ syms_of_marker (void)
 void
 init_buffer_markers (struct buffer *b)
 {
-  Lisp_Object buf;
+  Lisp_Object buf = wrap_buffer (b);
 
-  XSETBUFFER (buf, b);
   b->mark = Fmake_marker ();
   BUF_MARKERS (b) = 0;
   b->point_marker = Fmake_marker ();

@@ -1,6 +1,7 @@
 /* Indentation functions.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
+   Copyright (C) 2002 Ben Wing.
    Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -69,7 +70,7 @@ last_visible_position (Charbpos pos, struct buffer *buf)
   Lisp_Object buffer;
   Lisp_Object value;
 
-  XSETBUFFER (buffer, buf);
+  buffer = wrap_buffer (buf);
   value = Fprevious_single_property_change (make_int (pos), Qinvisible,
 					    buffer, Qnil);
   if (NILP (value))
@@ -195,7 +196,7 @@ column_at_point (struct buffer *buf, Charbpos init_pos, int cur_col)
 }
 
 int
-string_column_at_point (Lisp_String* s, Charbpos init_pos, int tab_width)
+string_column_at_point (Lisp_Object s, Charbpos init_pos, int tab_width)
 {
   int col;
   int tab_seen;
@@ -212,7 +213,7 @@ string_column_at_point (Lisp_String* s, Charbpos init_pos, int tab_width)
 	break;
 
       pos--;
-      c = string_char (s, pos);
+      c = XSTRING_CHAR (s, pos);
       if (c == '\t')
 	{
 	  if (tab_seen)
@@ -291,7 +292,7 @@ If BUFFER is nil, the current buffer is assumed.
   else
     CHECK_INT (minimum);
 
-  XSETBUFFER (buffer, buf);
+  buffer = wrap_buffer (buf);
 
   fromcol = current_column (buf);
   mincol = fromcol + XINT (minimum);
@@ -371,7 +372,7 @@ following any initial whitespace.
   struct buffer *buf = decode_buffer (buffer, 0);
   Charbpos pos = find_next_newline (buf, BUF_PT (buf), -1);
 
-  XSETBUFFER (buffer, buf);
+  buffer = wrap_buffer (buf);
 
   if (!NILP (Fextent_at (make_int (pos), buffer, Qinvisible, Qnil, Qnil)))
     return Qzero;
@@ -411,7 +412,7 @@ Returns the actual column that it moved to.
   int prev_col = 0;
   Emchar c = 0;
 
-  XSETBUFFER (buffer, buf);
+  buffer = wrap_buffer (buf);
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
   CHECK_NATNUM (column);
   goal = XINT (column);
@@ -569,10 +570,10 @@ visible section of the buffer, and pass LINE and COL as TOPOS.
 			XINT (XCAR (topos)),
 			XINT (width), hscroll, tab_offset, w);
 
-  XSETINT (charbpos, pos->charbpos);
-  XSETINT (hpos, pos->hpos);
-  XSETINT (vpos, pos->vpos);
-  XSETINT (prevhpos, pos->prevhpos);
+  charbpos = make_int (pos->charbpos);
+  hpos = make_int (pos->hpos);
+  vpos = make_int (pos->vpos);
+  prevhpos = make_int (pos->prevhpos);
 
   return list5 (charbpos, hpos, vpos, prevhpos,
 		pos->contin ? Qt : Qnil);

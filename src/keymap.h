@@ -28,7 +28,6 @@ typedef struct Lisp_Keymap Lisp_Keymap;
 
 DECLARE_LRECORD (keymap, Lisp_Keymap);
 #define XKEYMAP(x) XRECORD (x, keymap, Lisp_Keymap)
-#define XSETKEYMAP(x, p) XSETRECORD (x, p, keymap)
 #define wrap_keymap(p) wrap_record (p, keymap)
 #define KEYMAPP(x) RECORDP (x, keymap)
 #define CHECK_KEYMAP(x) CHECK_RECORD (x, keymap)

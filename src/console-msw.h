@@ -85,7 +85,6 @@ typedef struct Lisp_Devmode
 
 DECLARE_LRECORD (devmode, Lisp_Devmode);
 #define XDEVMODE(x) XRECORD (x, devmode, Lisp_Devmode)
-#define XSETDEVMODE(x, p) XSETRECORD (x, p, devmode)
 #define wrap_devmode(p) wrap_record (p, devmode)
 #define DEVMODEP(x) RECORDP (x, devmode)
 #define CHECK_DEVMODE(x) CHECK_RECORD (x, devmode)
@@ -416,7 +415,6 @@ struct mswindows_dialog_id
 
 DECLARE_LRECORD (mswindows_dialog_id, struct mswindows_dialog_id);
 #define XMSWINDOWS_DIALOG_ID(x) XRECORD (x, mswindows_dialog_id, struct mswindows_dialog_id)
-#define XSETMSWINDOWS_DIALOG_ID(x, p) XSETRECORD (x, p, mswindows_dialog_id)
 #define wrap_mswindows_dialog_id(p) wrap_record (p, mswindows_dialog_id)
 #define MSWINDOWS_DIALOG_IDP(x) RECORDP (x, mswindows_dialog_id)
 #define CHECK_MSWINDOWS_DIALOG_ID(x) CHECK_RECORD (x, mswindows_dialog_id)

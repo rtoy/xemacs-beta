@@ -163,7 +163,7 @@ int purify_flag;
 
 #ifdef ERROR_CHECK_TYPECHECK
 
-Error_Behavior ERROR_ME, ERROR_ME_NOT, ERROR_ME_WARN;
+Error_Behavior ERROR_ME, ERROR_ME_NOT, ERROR_ME_WARN, ERROR_ME_DEBUG_WARN;
 
 #endif
 
@@ -211,7 +211,7 @@ malloc_warning (const char *str)
     return;
 
   warn_when_safe
-    (Qmemory, Qcritical,
+    (Qmemory, Qemergency,
      "%s\n"
      "Killing some buffers may delay running out of memory.\n"
      "However, certainly by the time you receive the 95%% warning,\n"
@@ -347,7 +347,22 @@ strdup (const char *s)
 static void *
 allocate_lisp_storage (Bytecount size)
 {
-  return xmalloc (size);
+  void *val = xmalloc (size);
+  /* We don't increment the cons counter anymore.  Calling functions do
+     that now because we have two different kinds of cons counters -- one
+     for normal objects, and one for no-see-um conses (and possibly others
+     similar) where the conses are used totally internally, never escape,
+     and are created and then freed and shouldn't logically increment the
+     cons counting. #### (Or perhaps, we should decrement it when an object
+     get freed?)  */
+
+  /* But we do now (as of 3-27-02) go and zero out the memory.  This is a
+     good thing, as it will guarantee we won't get any intermittent bugs
+     coming from an uninitiated field.  The speed loss if unnoticeable,
+     esp. as the object are not large -- large stuff like buffer text and
+     redisplay structures and allocated separately. */
+  memset (val, 0, size);
+  return val;
 }
 
 
@@ -895,7 +910,7 @@ Create a new cons, give it CAR and CDR as components, and return it.
 
   ALLOCATE_FIXED_TYPE (cons, Lisp_Cons, c);
   set_lheader_implementation (&c->lheader, &lrecord_cons);
-  XSETCONS (val, c);
+  val = wrap_cons (c);
   c->car = car;
   c->cdr = cdr;
   return val;
@@ -912,7 +927,7 @@ noseeum_cons (Lisp_Object car, Lisp_Object cdr)
 
   NOSEEUM_ALLOCATE_FIXED_TYPE (cons, Lisp_Cons, c);
   set_lheader_implementation (&c->lheader, &lrecord_cons);
-  XSETCONS (val, c);
+  val = wrap_cons (c);
   XCAR (val) = car;
   XCDR (val) = cdr;
   return val;
@@ -1019,7 +1034,6 @@ DECLARE_FIXED_TYPE_ALLOC (float, Lisp_Float);
 Lisp_Object
 make_float (double float_value)
 {
-  Lisp_Object val;
   Lisp_Float *f;
 
   ALLOCATE_FIXED_TYPE (float, Lisp_Float, f);
@@ -1030,8 +1044,7 @@ make_float (double float_value)
 
   set_lheader_implementation (&f->lheader, &lrecord_float);
   float_data (f) = float_value;
-  XSETFLOAT (val, f);
-  return val;
+  return wrap_float (f);
 }
 
 #endif /* LISP_FLOAT_TYPE */
@@ -1121,11 +1134,7 @@ make_vector (Elemcount length, Lisp_Object object)
   while (length--)
     *p++ = object;
 
-  {
-    Lisp_Object vector;
-    XSETVECTOR (vector, vecp);
-    return vector;
-  }
+  return wrap_vector (vecp);
 }
 
 DEFUN ("make-vector", Fmake_vector, 2, 2, 0, /*
@@ -1150,11 +1159,7 @@ Any number of arguments, even zero arguments, are allowed.
   while (nargs--)
     *p++ = *args++;
 
-  {
-    Lisp_Object vector;
-    XSETVECTOR (vector, vecp);
-    return vector;
-  }
+  return wrap_vector (vecp);
 }
 
 Lisp_Object
@@ -1281,7 +1286,7 @@ make_bit_vector_internal (Elemcount sizei)
   /* make sure the extra bits in the last long are 0; the calling
      functions might not set them. */
   p->bits[num_longs - 1] = 0;
-  XSETBIT_VECTOR (all_bit_vectors, p);
+  all_bit_vectors = wrap_bit_vector (p);
   return p;
 }
 
@@ -1305,11 +1310,7 @@ make_bit_vector (Elemcount length, Lisp_Object bit)
 	p->bits[num_longs - 1] &= (1 << bits_in_last) - 1;
     }
 
-  {
-    Lisp_Object bit_vector;
-    XSETBIT_VECTOR (bit_vector, p);
-    return bit_vector;
-  }
+  return wrap_bit_vector (p);
 }
 
 Lisp_Object
@@ -1321,11 +1322,7 @@ make_bit_vector_from_byte_vector (unsigned char *bytevec, Elemcount length)
   for (i = 0; i < length; i++)
     set_bit_vector_bit (p, i, bytevec[i]);
 
-  {
-    Lisp_Object bit_vector;
-    XSETBIT_VECTOR (bit_vector, p);
-    return bit_vector;
-  }
+  return wrap_bit_vector (p);
 }
 
 DEFUN ("make-bit-vector", Fmake_bit_vector, 2, 2, 0, /*
@@ -1355,11 +1352,7 @@ Each argument must be one of the integers 0 or 1.
       set_bit_vector_bit (p, i, !ZEROP (args[i]));
     }
 
-  {
-    Lisp_Object bit_vector;
-    XSETBIT_VECTOR (bit_vector, p);
-    return bit_vector;
-  }
+  return wrap_bit_vector (p);
 }
 
 
@@ -1374,7 +1367,6 @@ static Lisp_Object
 make_compiled_function (void)
 {
   Lisp_Compiled_Function *f;
-  Lisp_Object fun;
 
   ALLOCATE_FIXED_TYPE (compiled_function, Lisp_Compiled_Function, f);
   set_lheader_implementation (&f->lheader, &lrecord_compiled_function);
@@ -1391,8 +1383,7 @@ make_compiled_function (void)
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   f->annotated = Qnil;
 #endif
-  XSETCOMPILED_FUNCTION (fun, f);
-  return fun;
+  return wrap_compiled_function (f);
 }
 
 DEFUN ("make-byte-code", Fmake_byte_code, 4, MANY, 0, /*
@@ -1517,20 +1508,18 @@ Its value and function definition are void, and its property list is nil.
 */
        (name))
 {
-  Lisp_Object val;
   Lisp_Symbol *p;
 
   CHECK_STRING (name);
 
   ALLOCATE_FIXED_TYPE (symbol, Lisp_Symbol, p);
   set_lheader_implementation (&p->lheader, &lrecord_symbol);
-  p->name     = XSTRING (name);
+  p->name     = name;
   p->plist    = Qnil;
   p->value    = Qunbound;
   p->function = Qunbound;
   symbol_next (p) = 0;
-  XSETSYMBOL (val, p);
-  return val;
+  return wrap_symbol (p);
 }
 
 
@@ -1573,14 +1562,12 @@ DECLARE_FIXED_TYPE_ALLOC (event, Lisp_Event);
 Lisp_Object
 allocate_event (void)
 {
-  Lisp_Object val;
   Lisp_Event *e;
 
   ALLOCATE_FIXED_TYPE (event, Lisp_Event, e);
   set_lheader_implementation (&e->lheader, &lrecord_event);
 
-  XSETEVENT (val, e);
-  return val;
+  return wrap_event (e);
 }
 
 
@@ -1596,7 +1583,6 @@ Return a new marker which does not point at any place.
 */
        ())
 {
-  Lisp_Object val;
   Lisp_Marker *p;
 
   ALLOCATE_FIXED_TYPE (marker, Lisp_Marker, p);
@@ -1606,14 +1592,12 @@ Return a new marker which does not point at any place.
   marker_next (p) = 0;
   marker_prev (p) = 0;
   p->insertion_type = 0;
-  XSETMARKER (val, p);
-  return val;
+  return wrap_marker (p);
 }
 
 Lisp_Object
 noseeum_make_marker (void)
 {
-  Lisp_Object val;
   Lisp_Marker *p;
 
   NOSEEUM_ALLOCATE_FIXED_TYPE (marker, Lisp_Marker, p);
@@ -1623,8 +1607,7 @@ noseeum_make_marker (void)
   marker_next (p) = 0;
   marker_prev (p) = 0;
   p->insertion_type = 0;
-  XSETMARKER (val, p);
-  return val;
+  return wrap_marker (p);
 }
 
 
@@ -1653,11 +1636,9 @@ DECLARE_FIXED_TYPE_ALLOC (string, Lisp_String);
 static Lisp_Object
 mark_string (Lisp_Object obj)
 {
-  Lisp_String *ptr = XSTRING (obj);
-
-  if (CONSP (ptr->plist) && EXTENT_INFOP (XCAR (ptr->plist)))
-    flush_cached_extent_info (XCAR (ptr->plist));
-  return ptr->plist;
+  if (CONSP (XSTRING_PLIST (obj)) && EXTENT_INFOP (XCAR (XSTRING_PLIST (obj))))
+    flush_cached_extent_info (XCAR (XSTRING_PLIST (obj)));
+  return XSTRING_PLIST (obj);
 }
 
 static int
@@ -1669,8 +1650,8 @@ string_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 }
 
 static const struct lrecord_description string_description[] = {
-  { XD_BYTECOUNT,       offsetof (Lisp_String, size) },
-  { XD_OPAQUE_DATA_PTR, offsetof (Lisp_String, data), XD_INDIRECT(0, 1) },
+  { XD_BYTECOUNT,       offsetof (Lisp_String, size_) },
+  { XD_OPAQUE_DATA_PTR, offsetof (Lisp_String, data_), XD_INDIRECT(0, 1) },
   { XD_LISP_OBJECT,     offsetof (Lisp_String, plist) },
   { XD_END }
 };
@@ -1688,7 +1669,7 @@ static const struct lrecord_description string_description[] = {
 static Lisp_Object *
 string_plist_ptr (Lisp_Object string)
 {
-  Lisp_Object *ptr = &XSTRING (string)->plist;
+  Lisp_Object *ptr = &XSTRING_PLIST (string);
 
   if (CONSP (*ptr) && EXTENT_INFOP (XCAR (*ptr)))
     ptr = &XCDR (*ptr);
@@ -1793,7 +1774,7 @@ init_string_chars_alloc (void)
 }
 
 static struct string_chars *
-allocate_string_chars_struct (Lisp_String *string_it_goes_with,
+allocate_string_chars_struct (Lisp_Object string_it_goes_with,
 			      EMACS_INT fullsize)
 {
   struct string_chars *s_chars;
@@ -1822,7 +1803,7 @@ allocate_string_chars_struct (Lisp_String *string_it_goes_with,
 	current_string_chars_block->string_chars;
     }
 
-  s_chars->string = string_it_goes_with;
+  s_chars->string = XSTRING (string_it_goes_with);
 
   INCREMENT_CONS_COUNTER (fullsize, "string chars");
 
@@ -1849,7 +1830,7 @@ sledgehammer_check_ascii_begin (Lisp_Object str)
 #endif
 
 /* You do NOT want to be calling this! (And if you do, you must call
-   set_string_ascii_begin() after modifying the string.) Use alloca()
+   XSET_STRING_ASCII_BEGIN() after modifying the string.) Use alloca()
    instead and then call make_string() like the rest of the world. */
 
 Lisp_Object
@@ -1857,26 +1838,24 @@ make_uninit_string (Bytecount length)
 {
   Lisp_String *s;
   EMACS_INT fullsize = STRING_FULLSIZE (length);
-  Lisp_Object val;
 
   assert (length >= 0 && fullsize > 0);
 
   /* Allocate the string header */
   ALLOCATE_FIXED_TYPE (string, Lisp_String, s);
+  xzero (*s);
   set_lheader_implementation (&s->u.lheader, &lrecord_string);
-
+  
   set_string_data (s, BIG_STRING_FULLSIZE_P (fullsize)
 		   ? xnew_array (Intbyte, length + 1)
-		   : allocate_string_chars_struct (s, fullsize)->chars);
+		   : allocate_string_chars_struct (wrap_string (s),
+						   fullsize)->chars);
 
   set_string_length (s, length);
   s->plist = Qnil;
-  set_string_ascii_begin (s, 0);
+  set_string_byte (wrap_string (s), length, 0);
 
-  set_string_byte (s, length, 0);
-
-  XSETSTRING (val, s);
-  return val;
+  return wrap_string (s);
 }
 
 #ifdef VERIFY_STRING_CHARS_INTEGRITY
@@ -1890,7 +1869,7 @@ static void verify_string_chars_integrity (void);
 */
 
 void
-resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
+resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
 {
   Bytecount oldfullsize, newfullsize;
 #ifdef VERIFY_STRING_CHARS_INTEGRITY
@@ -1900,14 +1879,14 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
 #ifdef ERROR_CHECK_CHARBPOS
   if (pos >= 0)
     {
-      assert (pos <= string_length (s));
+      assert (pos <= XSTRING_LENGTH (s));
       if (delta < 0)
-	assert (pos + (-delta) <= string_length (s));
+	assert (pos + (-delta) <= XSTRING_LENGTH (s));
     }
   else
     {
       if (delta < 0)
-	assert ((-delta) <= string_length (s));
+	assert ((-delta) <= XSTRING_LENGTH (s));
     }
 #endif /* ERROR_CHECK_CHARBPOS */
 
@@ -1921,8 +1900,8 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
        so convert this to the appropriate form. */
     pos += -delta;
 
-  oldfullsize = STRING_FULLSIZE (string_length (s));
-  newfullsize = STRING_FULLSIZE (string_length (s) + delta);
+  oldfullsize = STRING_FULLSIZE (XSTRING_LENGTH (s));
+  newfullsize = STRING_FULLSIZE (XSTRING_LENGTH (s) + delta);
 
   if (BIG_STRING_FULLSIZE_P (oldfullsize))
     {
@@ -1933,28 +1912,31 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
 	     memmove() _before_ realloc(), and if growing, we have to
 	     memmove() _after_ realloc() - otherwise the access is
 	     illegal, and we might crash. */
-	  Bytecount len = string_length (s) + 1 - pos;
+	  Bytecount len = XSTRING_LENGTH (s) + 1 - pos;
 
 	  if (delta < 0 && pos >= 0)
-	    memmove (string_data (s) + pos + delta, string_data (s) + pos, len);
-	  set_string_data (s, (Intbyte *) xrealloc (string_data (s),
-						    string_length (s) + delta + 1));
+	    memmove (XSTRING_DATA (s) + pos + delta,
+		     XSTRING_DATA (s) + pos, len);
+	  XSET_STRING_DATA
+	    (s, (Intbyte *) xrealloc (XSTRING_DATA (s),
+				      XSTRING_LENGTH (s) + delta + 1));
 	  if (delta > 0 && pos >= 0)
-	    memmove (string_data (s) + pos + delta, string_data (s) + pos, len);
+	    memmove (XSTRING_DATA (s) + pos + delta, XSTRING_DATA (s) + pos,
+		     len);
 	}
       else /* String has been demoted from BIG_STRING. */
 	{
 	  Intbyte *new_data =
 	    allocate_string_chars_struct (s, newfullsize)->chars;
-	  Intbyte *old_data = string_data (s);
+	  Intbyte *old_data = XSTRING_DATA (s);
 
 	  if (pos >= 0)
 	    {
 	      memcpy (new_data, old_data, pos);
 	      memcpy (new_data + pos + delta, old_data + pos,
-		      string_length (s) + 1 - pos);
+		      XSTRING_LENGTH (s) + 1 - pos);
 	    }
-	  set_string_data (s, new_data);
+	  XSET_STRING_DATA (s, new_data);
 	  xfree (old_data);
 	}
     }
@@ -1969,28 +1951,28 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
 	     constraints). */
 	  if (pos >= 0)
 	    {
-	      Intbyte *addroff = pos + string_data (s);
+	      Intbyte *addroff = pos + XSTRING_DATA (s);
 
 	      memmove (addroff + delta, addroff,
 		       /* +1 due to zero-termination. */
-		       string_length (s) + 1 - pos);
+		       XSTRING_LENGTH (s) + 1 - pos);
 	    }
 	}
       else
 	{
-	  Intbyte *old_data = string_data (s);
+	  Intbyte *old_data = XSTRING_DATA (s);
 	  Intbyte *new_data =
 	    BIG_STRING_FULLSIZE_P (newfullsize)
-	    ? xnew_array (Intbyte, string_length (s) + delta + 1)
+	    ? xnew_array (Intbyte, XSTRING_LENGTH (s) + delta + 1)
 	    : allocate_string_chars_struct (s, newfullsize)->chars;
 
 	  if (pos >= 0)
 	    {
 	      memcpy (new_data, old_data, pos);
 	      memcpy (new_data + pos + delta, old_data + pos,
-		      string_length (s) + 1 - pos);
+		      XSTRING_LENGTH (s) + 1 - pos);
 	    }
-	  set_string_data (s, new_data);
+	  XSET_STRING_DATA (s, new_data);
 
 	  {
 	    /* We need to mark this chunk of the string_chars_block
@@ -2000,7 +1982,7 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
 	      ((char *) old_data - offsetof (struct string_chars, chars));
 	    /* Sanity check to make sure we aren't hosed by strange
 	       alignment/padding. */
-	    assert (old_s_chars->string == s);
+	    assert (old_s_chars->string == XSTRING (s));
 	    MARK_STRING_CHARS_AS_FREE (old_s_chars);
 	    ((struct unused_string_chars *) old_s_chars)->fullsize =
 	      oldfullsize;
@@ -2008,23 +1990,17 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
 	}
     }
 
-  set_string_length (s, string_length (s) + delta);
+  XSET_STRING_LENGTH (s, XSTRING_LENGTH (s) + delta);
   /* If pos < 0, the string won't be zero-terminated.
      Terminate now just to make sure. */
-  string_data (s)[string_length (s)] = '\0';
+  XSTRING_DATA (s)[XSTRING_LENGTH (s)] = '\0';
 
   if (pos >= 0)
-    {
-      Lisp_Object string;
-
-      XSETSTRING (string, s);
-      /* We also have to adjust all of the extent indices after the
-	 place we did the change.  We say "pos - 1" because
-	 adjust_extents() is exclusive of the starting position
-	 passed to it. */
-      adjust_extents (string, pos - 1, string_length (s),
-		      delta);
-    }
+    /* We also have to adjust all of the extent indices after the
+       place we did the change.  We say "pos - 1" because
+       adjust_extents() is exclusive of the starting position
+       passed to it. */
+    adjust_extents (s, pos - 1, XSTRING_LENGTH (s), delta);
 
 #ifdef VERIFY_STRING_CHARS_INTEGRITY
   verify_string_chars_integrity ();
@@ -2036,37 +2012,37 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
 /* WARNING: If you modify an existing string, you must call
    CHECK_LISP_WRITEABLE() before and bump_string_modiff() afterwards. */
 void
-set_string_char (Lisp_String *s, Charcount i, Emchar c)
+set_string_char (Lisp_Object s, Charcount i, Emchar c)
 {
   Intbyte newstr[MAX_EMCHAR_LEN];
   Bytecount bytoff = string_index_char_to_byte (s, i);
-  Bytecount oldlen = charcount_to_bytecount (string_data (s) + bytoff, 1);
+  Bytecount oldlen = charcount_to_bytecount (XSTRING_DATA (s) + bytoff, 1);
   Bytecount newlen = set_charptr_emchar (newstr, c);
 
-  sledgehammer_check_ascii_begin (wrap_string (s));
+  sledgehammer_check_ascii_begin (s);
   if (oldlen != newlen)
     resize_string (s, bytoff, newlen - oldlen);
-  /* Remember, string_data (s) might have changed so we can't cache it. */
-  memcpy (string_data (s) + bytoff, newstr, newlen);
+  /* Remember, XSTRING_DATA (s) might have changed so we can't cache it. */
+  memcpy (XSTRING_DATA (s) + bytoff, newstr, newlen);
   if (oldlen != newlen) 
     {
-      if (newlen > 1 && i <= (Charcount) string_ascii_begin (s))
+      if (newlen > 1 && i <= (Charcount) XSTRING_ASCII_BEGIN (s))
       /* Everything starting with the new char is no longer part of
 	 ascii_begin */
-	set_string_ascii_begin (s, i);
-      else if (newlen == 1 && i == (Charcount) string_ascii_begin (s))
+	XSET_STRING_ASCII_BEGIN (s, i);
+      else if (newlen == 1 && i == (Charcount) XSTRING_ASCII_BEGIN (s))
 	/* We've extended ascii_begin, and we have to figure out how much by */
 	{
 	  Bytecount j;
-	  for (j = i + 1; j < string_length (s); j++)
+	  for (j = i + 1; j < XSTRING_LENGTH (s); j++)
 	    {
-	      if (!BYTE_ASCII_P (string_data (s)[j]))
+	      if (!BYTE_ASCII_P (XSTRING_DATA (s)[j]))
 		break;
 	    }
-	  set_string_ascii_begin (s, min (j, MAX_STRING_ASCII_BEGIN));
+	  XSET_STRING_ASCII_BEGIN (s, min (j, MAX_STRING_ASCII_BEGIN));
 	}
     }
-  sledgehammer_check_ascii_begin (wrap_string (s));
+  sledgehammer_check_ascii_begin (s);
 }
 
 #endif /* MULE */
@@ -2088,8 +2064,8 @@ LENGTH must be a non-negative integer.
       {
 	/* Optimize the single-byte case */
 	memset (XSTRING_DATA (val), XCHAR (character), XSTRING_LENGTH (val));
-	set_string_ascii_begin (XSTRING (val), min (MAX_STRING_ASCII_BEGIN,
-						    len * XINT (length)));
+	XSET_STRING_ASCII_BEGIN (val, min (MAX_STRING_ASCII_BEGIN,
+					   len * XINT (length)));
       }
     else
       {
@@ -2145,10 +2121,10 @@ init_string_ascii_begin (Lisp_Object string)
       if (!BYTE_ASCII_P (contents[i]))
 	break;
     }
-  set_string_ascii_begin (XSTRING (string), min (i, MAX_STRING_ASCII_BEGIN));
+  XSET_STRING_ASCII_BEGIN (string, min (i, MAX_STRING_ASCII_BEGIN));
 #else
-  set_string_ascii_begin (XSTRING (string), min (XSTRING_LENGTH (string),
-						 MAX_STRING_ASCII_BEGIN));
+  XSET_STRING_ASCII_BEGIN (string, min (XSTRING_LENGTH (string),
+					MAX_STRING_ASCII_BEGIN));
 #endif
   sledgehammer_check_ascii_begin (string);
 }
@@ -2237,7 +2213,7 @@ make_string_nocopy (const Intbyte *contents, Bytecount length)
   s->plist = Qnil;
   set_string_data (s, (Intbyte *) contents);
   set_string_length (s, length);
-  XSETSTRING (val, s);
+  val = wrap_string (s);
   init_string_ascii_begin (val);
   sledgehammer_check_ascii_begin (val);
 
@@ -2325,13 +2301,11 @@ make_lcrecord_list (Elemcount size,
     /* Avoid infinite recursion allocating this */
     alloc_unmanaged_lcrecord_type (struct lcrecord_list,
 				   &lrecord_lcrecord_list);
-  Lisp_Object val;
 
   p->implementation = implementation;
   p->size = size;
   p->free = Qnil;
-  XSETLCRECORD_LIST (val, p);
-  return val;
+  return wrap_lcrecord_list (p);
 }
 
 Lisp_Object
@@ -2365,12 +2339,7 @@ allocate_managed_lcrecord (Lisp_Object lcrecord_list)
       return val;
     }
   else
-    {
-      Lisp_Object val;
-
-      XSETOBJ (val, alloc_lcrecord (list->size, list->implementation));
-      return val;
-    }
+    return wrap_pointer_1 (alloc_lcrecord (list->size, list->implementation));
 }
 
 /* "Free" a Lisp object LCRECORD by placing it on its associated free list
@@ -3078,7 +3047,7 @@ sweep_markers (void)
 #define UNMARK_marker(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
 #define ADDITIONAL_FREE_marker(ptr)					\
   do { Lisp_Object tem;							\
-       XSETMARKER (tem, ptr);						\
+       tem = wrap_marker (ptr);						\
        unchain_marker (tem);						\
      } while (0)
 
@@ -3133,11 +3102,11 @@ verify_string_chars_integrity (void)
 	  /* Must be 32-bit aligned. */
 	  assert ((((int) string) & 3) == 0);
 
-          size = string_length (string);
+          size = string->size_;
           fullsize = STRING_FULLSIZE (size);
 
           assert (!BIG_STRING_FULLSIZE_P (fullsize));
-	  assert (string_data (string) == s_chars->chars);
+	  assert (string->data_ == s_chars->chars);
 	  pos += fullsize;
         }
       assert (pos == sb->pos);
@@ -3188,7 +3157,7 @@ compact_string_chars (void)
           string = from_s_chars->string;
 	  assert (!(LRECORD_FREE_P (string)));
 
-          size = string_length (string);
+          size = string->size_;
           fullsize = STRING_FULLSIZE (size);
 
           gc_checking_assert (! BIG_STRING_FULLSIZE_P (fullsize));
@@ -3249,14 +3218,14 @@ compact_string_chars (void)
 static int debug_string_purity;
 
 static void
-debug_string_purity_print (Lisp_String *p)
+debug_string_purity_print (Lisp_Object p)
 {
   Charcount i;
-  Charcount s = string_char_length (p);
+  Charcount s = XSTRING_CHAR_LENGTH (p);
   stderr_out ("\"");
   for (i = 0; i < s; i++)
   {
-    Emchar ch = string_char (p, i);
+    Emchar ch = XSTRING_CHAR (p, i);
     if (ch < 32 || ch >= 126)
       stderr_out ("\\%03o", ch);
     else if (ch == '\\' || ch == '\"')
@@ -3276,23 +3245,23 @@ sweep_strings (void)
   Bytecount num_small_bytes = 0, num_bytes = 0;
   int debug = debug_string_purity;
 
-#define UNMARK_string(ptr) do {			\
-    Lisp_String *p = (ptr);			\
-    Bytecount size = string_length (p);		\
-    UNMARK_RECORD_HEADER (&(p->u.lheader));	\
-    num_bytes += size;				\
-    if (!BIG_STRING_SIZE_P (size))		\
-      {						\
-	num_small_bytes += size;		\
-        num_small_used++;			\
-      }						\
-    if (debug)					\
-      debug_string_purity_print (p);		\
+#define UNMARK_string(ptr) do {				\
+    Lisp_String *p = (ptr);				\
+    Bytecount size = p->size_;				\
+    UNMARK_RECORD_HEADER (&(p->u.lheader));		\
+    num_bytes += size;					\
+    if (!BIG_STRING_SIZE_P (size))			\
+      {							\
+	num_small_bytes += size;			\
+        num_small_used++;				\
+      }							\
+    if (debug)						\
+      debug_string_purity_print (wrap_string (p));	\
   } while (0)
 #define ADDITIONAL_FREE_string(ptr) do {	\
-    Bytecount size = string_length (ptr);	\
+    Bytecount size = ptr->size_;		\
     if (BIG_STRING_SIZE_P (size))		\
-      xfree (ptr->data);			\
+      xfree (ptr->data_);			\
   } while (0)
 
   SWEEP_FIXED_TYPE_BLOCK_1 (string, Lisp_String, u.lheader);
@@ -4101,7 +4070,7 @@ common_init_alloc_once_early (void)
 #ifndef Qnull_pointer
   /* C guarantees that Qnull_pointer will be initialized to all 0 bits,
      so the following is actually a no-op.  */
-  XSETOBJ (Qnull_pointer, 0);
+  Qnull_pointer = wrap_pointer_1 (0);
 #endif
 
   gc_generation_number[0] = 0;
@@ -4163,6 +4132,9 @@ common_init_alloc_once_early (void)
   ERROR_ME_WARN.
     really_unlikely_name_to_have_accidentally_in_a_non_errb_structure =
       3333632;
+  ERROR_ME_DEBUG_WARN.
+    really_unlikely_name_to_have_accidentally_in_a_non_errb_structure =
+      8675309;
 #endif /* ERROR_CHECK_TYPECHECK */
 }
 

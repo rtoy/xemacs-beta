@@ -2739,7 +2739,7 @@ under Mule, is very difficult.)
   /* #### dmoore - should probably check in various places to see if
      curbuf was killed and if so signal an error? */
 
-  XSETBUFFER (curbuf, buf);
+  curbuf = wrap_buffer (buf);
 
   GCPRO5 (filename, val, visit, handler, curbuf);
 
@@ -3193,9 +3193,8 @@ here because write-region handler writers need to be aware of it.
   Charbpos start1, end1;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
   struct gcpro ngcpro1, ngcpro2;
-  Lisp_Object curbuf;
+  Lisp_Object curbuf = wrap_buffer (current_buffer);
 
-  XSETBUFFER (curbuf, current_buffer);
 
   /* start, end, visit, and append are never modified in this fun
      so we don't protect them. */
@@ -3498,9 +3497,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
   Lisp_Object annotations;
   Lisp_Object p, res;
   struct gcpro gcpro1, gcpro2;
-  Lisp_Object original_buffer;
+  Lisp_Object original_buffer = wrap_buffer (current_buffer);
 
-  XSETBUFFER (original_buffer, current_buffer);
 
   annotations = Qnil;
   p = Vwrite_region_annotate_functions;
@@ -3860,7 +3858,7 @@ static Lisp_Object
 auto_save_expand_name_error (Lisp_Object condition_object, Lisp_Object ignored)
 {
   warn_when_safe_lispobj
-    (Qfile, Qwarning,
+    (Qfile, Qerror,
      Fcons (build_msg_string ("Invalid auto-save list-file"),
 			  Fcons (Vauto_save_list_file_name,
 				 condition_object)));
@@ -3928,7 +3926,7 @@ Non-nil second argument means save only current buffer.
   int speccount = specpdl_depth ();
   struct gcpro gcpro1, gcpro2, gcpro3;
 
-  XSETBUFFER (old, current_buffer);
+  old = wrap_buffer (current_buffer);
   GCPRO3 (oquit, listfile, old);
   check_quit (); /* make Vquit_flag accurate */
   /* Ordinarily don't quit within this function,
@@ -4103,7 +4101,7 @@ Non-nil second argument means save only current buffer.
 	      }
 	      /* Handler killed our saved current-buffer!  Pick any. */
 	      if (!BUFFER_LIVE_P (XBUFFER (old)))
-		XSETBUFFER (old, current_buffer);
+		old = wrap_buffer (current_buffer);
 
 	      set_buffer_internal (XBUFFER (old));
 	      auto_saved++;

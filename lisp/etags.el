@@ -581,12 +581,10 @@ Make it buffer-local in a mode hook.  The function is called with no
 ;; Return a default tag to search for, based on the text at point.
 (defun find-tag-default ()
   (or (and (not (memq find-tag-default-hook '(nil find-tag-default)))
-	   (condition-case data
-	       (funcall find-tag-default-hook)
-	     (error
-	      (warn "Error in find-tag-default-hook signalled error: %s"
-		    (error-message-string data))
-	      nil)))
+	   (with-trapping-errors 
+	     :function 'find-tag-default-hook
+	     :error-form nil
+	     (funcall find-tag-default-hook)))
       (symbol-near-point)))
 
 ;; This function depends on the following symbols being bound properly:

@@ -366,8 +366,7 @@ will be signaled.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  XSETBUFFER (buffer, b);
-  return buffer;
+  return wrap_buffer (b);
 }
 
 #if 0 /* FSFmacs */
@@ -551,9 +550,7 @@ allocate_buffer (void)
 static Lisp_Object
 finish_init_buffer (struct buffer *b, Lisp_Object name)
 {
-  Lisp_Object buf;
-
-  XSETBUFFER (buf, b);
+  Lisp_Object buf = wrap_buffer (b);
 
   name = Fcopy_sequence (name);
   /* #### This really does not need to be called.  We already
@@ -566,7 +563,7 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
   b->last_window_start = 1;
 
   b->name = name;
-  if (string_byte (XSTRING (name), 0) != ' ')
+  if (XSTRING_BYTE (name, 0) != ' ')
     b->undo_list = Qnil;
   else
     b->undo_list = Qt;
@@ -1004,7 +1001,7 @@ VISIBLE-OK.
     {
       struct frame *f = decode_frame (frame);
 
-      XSETFRAME (frame, f);
+      frame = wrap_frame (f);
       alist = f->buffer_alist;
     }
 
@@ -1013,7 +1010,7 @@ VISIBLE-OK.
       buf = Fcdr (Fcar (tail));
       if (EQ (buf, buffer))
 	continue;
-      if (string_byte (XSTRING (XBUFFER (buf)->name), 0) == ' ')
+      if (XSTRING_BYTE (XBUFFER (buf)->name, 0) == ' ')
 	continue;
       /* If FRAME has a buffer_predicate,
 	 disregard buffers that don't fit the predicate.  */
@@ -1399,9 +1396,7 @@ Return the current buffer as a Lisp object.
 */
        ())
 {
-  Lisp_Object buffer;
-  XSETBUFFER (buffer, current_buffer);
-  return buffer;
+  return wrap_buffer (current_buffer);
 }
 
 /* Set the current buffer to B.  */
@@ -1568,7 +1563,7 @@ will be placed, instead of being placed at the end.
      breaks mh-e and TeX and such packages. */
   if (NILP (buffer))
     switch_to_buffer (Fother_buffer (Fcurrent_buffer (), Qnil, Qnil), Qnil);
-  XSETBUFFER (buffer, buf);
+  buffer = wrap_buffer (buf);
 
   if (!NILP (before))
     before = get_buffer (before, 1);
@@ -2033,8 +2028,8 @@ common_init_complex_vars_of_buffer (void)
 
   staticpro_nodump (&Vbuffer_defaults);
   staticpro_nodump (&Vbuffer_local_symbols);
-  XSETBUFFER (Vbuffer_defaults, defs);
-  XSETBUFFER (Vbuffer_local_symbols, syms);
+  Vbuffer_defaults = wrap_buffer (defs);
+  Vbuffer_local_symbols = wrap_buffer (syms);
 
   nuke_all_buffer_slots (syms, Qnil);
   nuke_all_buffer_slots (defs, Qnil);

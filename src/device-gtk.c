@@ -75,7 +75,7 @@ static void gtk_device_init_x_specific_cruft (struct device *d);
 struct device *
 decode_gtk_device (Lisp_Object device)
 {
-  XSETDEVICE (device, decode_device (device));
+  device = wrap_device (decode_device (device));
   CHECK_GTK_DEVICE (device);
   return XDEVICE (device);
 }
@@ -183,7 +183,7 @@ gtk_init_device (struct device *d, Lisp_Object props)
   GdkVisual *visual = NULL;
   GdkColormap *cmap = NULL;
 
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
 
   /* gtk_init() and even gtk_check_init() are so brain dead that
      getting an empty argv array causes them to abort. */
@@ -339,7 +339,7 @@ gtk_delete_device (struct device *d)
   int checking_free;
 #endif
 
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
   if (1)
     {
 #ifdef FREE_CHECKING

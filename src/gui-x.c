@@ -1,6 +1,6 @@
 /* General GUI code -- X-specific. (menubars, scrollbars, toolbars, dialogs)
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
@@ -113,7 +113,7 @@ gcpro_popup_callbacks (LWLIB_ID id)
   pdata->id = id;
   pdata->last_menubar_buffer = Qnil;
   pdata->menubar_contents_up_to_date = 0;
-  XSETPOPUP_DATA (lpdata, pdata);
+  lpdata = wrap_popup_data (pdata);
   Vpopup_callbacks = Fcons (Fcons (lid, lpdata), Vpopup_callbacks);
 }
 
@@ -228,7 +228,7 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
   if (((EMACS_INT) client_data) == 0)
     return;
   VOID_TO_LISP (data, client_data);
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
 #if 0
   /* #### What the hell?  I can't understand why this call is here,
@@ -476,13 +476,14 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
     }
   else if (SYMBOLP (pgui->callback))	/* Show the binding of this command. */
     {
-      char buf[1024]; /* #### */
+      DECLARE_EISTRING_MALLOC (buf);
       /* #### Warning, dependency here on current_buffer and point */
       where_is_to_char (pgui->callback, buf);
-      if (buf [0])
-	C_STRING_TO_EXTERNAL_MALLOC (buf, wv->key, Qlwlib_encoding);
+      if (eilen (buf) > 0)
+	C_STRING_TO_EXTERNAL_MALLOC (eidata (buf), wv->key, Qlwlib_encoding);
       else
 	wv->key = 0;
+      eifree (buf);
     }
 
   CHECK_SYMBOL (pgui->style);

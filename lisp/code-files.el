@@ -3,7 +3,7 @@
 ;; Copyright (C) 1992,93,94,95 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2002 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -394,7 +394,7 @@ and `insert-file-contents-post-hook'."
 	      (setq return-val coding-system)
 	    (if (null (find-coding-system coding-system))
 		(progn
-		  (message
+		  (lwarn 'coding-system 'notice
 		   "Invalid coding-system (%s), using 'undecided"
 		   coding-system)
 		  (setq coding-system 'undecided)))

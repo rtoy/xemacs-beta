@@ -45,7 +45,6 @@ struct color_specifier
 
 DECLARE_SPECIFIER_TYPE (color);
 #define XCOLOR_SPECIFIER(x) XSPECIFIER_TYPE (x, color)
-#define XSETCOLOR_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, color)
 #define COLOR_SPECIFIERP(x) SPECIFIER_TYPEP (x, color)
 #define CHECK_COLOR_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, color)
 #define CONCHECK_COLOR_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, color)
@@ -70,7 +69,6 @@ struct font_specifier
 
 DECLARE_SPECIFIER_TYPE (font);
 #define XFONT_SPECIFIER(x) XSPECIFIER_TYPE (x, font)
-#define XSETFONT_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, font)
 #define FONT_SPECIFIERP(x) SPECIFIER_TYPEP (x, font)
 #define CHECK_FONT_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, font)
 #define CONCHECK_FONT_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, font)
@@ -96,8 +94,6 @@ struct face_boolean_specifier
 DECLARE_SPECIFIER_TYPE (face_boolean);
 extern Lisp_Object Qface_boolean;
 #define XFACE_BOOLEAN_SPECIFIER(x) XSPECIFIER_TYPE (x, face_boolean)
-#define XSETFACE_BOOLEAN_SPECIFIER(x, p) \
-  XSETSPECIFIER_TYPE (x, p, face_boolean)
 #define FACE_BOOLEAN_SPECIFIERP(x) SPECIFIER_TYPEP (x, face_boolean)
 #define CHECK_FACE_BOOLEAN_SPECIFIER(x) \
   CHECK_SPECIFIER_TYPE (x, face_boolean)
@@ -127,7 +123,6 @@ struct Lisp_Color_Instance
 
 DECLARE_LRECORD (color_instance, Lisp_Color_Instance);
 #define XCOLOR_INSTANCE(x) XRECORD (x, color_instance, Lisp_Color_Instance)
-#define XSETCOLOR_INSTANCE(x, p) XSETRECORD (x, p, color_instance)
 #define wrap_color_instance(p) wrap_record (p, color_instance)
 #define COLOR_INSTANCEP(x) RECORDP (x, color_instance)
 #define CHECK_COLOR_INSTANCE(x) CHECK_RECORD (x, color_instance)
@@ -142,7 +137,6 @@ DECLARE_LRECORD (color_instance, Lisp_Color_Instance);
 
 DECLARE_LRECORD (font_instance, Lisp_Font_Instance);
 #define XFONT_INSTANCE(x) XRECORD (x, font_instance, Lisp_Font_Instance)
-#define XSETFONT_INSTANCE(x, p) XSETRECORD (x, p, font_instance)
 #define wrap_font_instance(p) wrap_record (p, font_instance)
 #define FONT_INSTANCEP(x) RECORDP (x, font_instance)
 #define CHECK_FONT_INSTANCE(x) CHECK_RECORD (x, font_instance)

@@ -451,7 +451,6 @@ typedef struct Lisp_Timeout Lisp_Timeout;
 
 DECLARE_LRECORD (timeout, Lisp_Timeout);
 #define XTIMEOUT(x) XRECORD (x, timeout, Lisp_Timeout)
-#define XSETTIMEOUT(x, p) XSETRECORD (x, p, timeout)
 #define wrap_timeout(p) wrap_record (p, timeout)
 #define TIMEOUTP(x) RECORDP (x, timeout)
 #define CHECK_TIMEOUT(x) CHECK_RECORD (x, timeout)
@@ -520,7 +519,6 @@ struct Lisp_Event
 
 DECLARE_LRECORD (event, Lisp_Event);
 #define XEVENT(x) XRECORD (x, event, Lisp_Event)
-#define XSETEVENT(x, p) XSETRECORD (x, p, event)
 #define wrap_event(p) wrap_record (p, event)
 #define EVENTP(x) RECORDP (x, event)
 #define CHECK_EVENT(x) CHECK_RECORD (x, event)
@@ -592,7 +590,7 @@ extern Lisp_Object Vmodifier_keys_sticky_time;
 #define KEYSYM(x) (intern (x))
 
 /* from events.c */
-void format_event_object (char *buf, Lisp_Event *e, int brief);
+void format_event_object (Eistring *buf, Lisp_Event *event, int brief);
 void character_to_event (Emchar c, Lisp_Event *event,
                          struct console *con,
                          int use_console_meta_flag,

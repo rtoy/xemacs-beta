@@ -1261,7 +1261,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 
 	    if (! frame)
 	      return 0;	/* not for us */
-	    XSETFRAME (emacs_event->channel, frame);
+	    emacs_event->channel = wrap_frame (frame);
 
 	    emacs_event->event_type = (x_event->type == ButtonPress) ?
 	      button_press_event : button_release_event;
@@ -1308,7 +1308,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 
         DEVICE_X_MOUSE_TIMESTAMP (d) = ev->time;
 
-        XSETFRAME (emacs_event->channel, frame);
+        emacs_event->channel = wrap_frame (frame);
         emacs_event->event_type	    = pointer_motion_event;
         emacs_event->timestamp      = ev->time;
         emacs_event->event.motion.x = ev->x;
@@ -1353,7 +1353,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	      return 0;	/* not for us */
 
 	    GCPRO4 (l_type, l_data, l_dndlist, l_item);
-	    XSETFRAME (emacs_event->channel, frame);
+	    emacs_event->channel = wrap_frame (frame);
 
 	    emacs_event->event_type = misc_user_event;
 	    emacs_event->timestamp  = DEVICE_X_LAST_SERVER_TIMESTAMP (d);
@@ -1517,7 +1517,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
           return 0;
 
         emacs_event->event_type = magic_event;
-        XSETFRAME (emacs_event->channel, frame);
+        emacs_event->channel = wrap_frame (frame);
 
         break;
       }
@@ -1583,7 +1583,7 @@ handle_focus_event_1 (struct frame *f, int in_p)
     Lisp_Object conser;
     struct gcpro gcpro1;
 
-    XSETFRAME (frm, f);
+    frm = wrap_frame (f);
     conser = Fcons (frm, Fcons (FRAME_DEVICE (f), in_p ? Qt : Qnil));
     GCPRO1 (conser);
     emacs_handle_focus_change_preliminary (conser);
@@ -1639,9 +1639,8 @@ emacs_Xt_handle_focus_event (XEvent *event)
 static void
 change_frame_visibility (struct frame *f, int is_visible)
 {
-  Lisp_Object frame;
+  Lisp_Object frame = wrap_frame (f);
 
-  XSETFRAME (frame, f);
 
   if (!FRAME_VISIBLE_P (f) && is_visible)
     {
@@ -1676,9 +1675,6 @@ update_frame_iconify_status (struct frame *f)
 static void
 handle_map_event (struct frame *f, XEvent *event)
 {
-  Lisp_Object frame;
-
-  XSETFRAME (frame, f);
 
   /* It seems that, given the multiplicity of window managers and X
      implementations, plus the fact that X was designed without
@@ -1753,7 +1749,7 @@ handle_map_event (struct frame *f, XEvent *event)
 	 rather than consulting some internal (and likely
 	 inaccurate) state flag.  Therefore, ignoring the MapNotify
 	 is correct. */
-      if (!FRAME_VISIBLE_P (f) && NILP (Fframe_iconified_p (frame)))
+      if (!FRAME_VISIBLE_P (f) && NILP (Fframe_iconified_p (wrap_frame (f))))
 #endif /* 0 */
 	change_frame_visibility (f, 1);
     }
@@ -1768,9 +1764,7 @@ static void
 handle_client_message (struct frame *f, XEvent *event)
 {
   struct device *d = XDEVICE (FRAME_DEVICE (f));
-  Lisp_Object frame;
-
-  XSETFRAME (frame, f);
+  Lisp_Object frame = wrap_frame (f);
 
   if (event->xclient.message_type == DEVICE_XATOM_WM_PROTOCOLS (d) &&
       (Atom) (event->xclient.data.l[0]) == DEVICE_XATOM_WM_DELETE_WINDOW (d))
@@ -1950,9 +1944,8 @@ emacs_Xt_handle_magic_event (Lisp_Event *emacs_event)
     case EnterNotify:
       if (event->xcrossing.detail != NotifyInferior)
 	{
-	  Lisp_Object frame;
+	  Lisp_Object frame = wrap_frame (f);
 
-	  XSETFRAME (frame, f);
 	  /* FRAME_X_MOUSE_P (f) = 1; */
 	  va_run_hook_with_args (Qmouse_enter_frame_hook, 1, frame);
 	}
@@ -1961,9 +1954,8 @@ emacs_Xt_handle_magic_event (Lisp_Event *emacs_event)
     case LeaveNotify:
       if (event->xcrossing.detail != NotifyInferior)
 	{
-	  Lisp_Object frame;
+	  Lisp_Object frame = wrap_frame (f);
 
-	  XSETFRAME (frame, f);
 	  /* FRAME_X_MOUSE_P (f) = 0; */
 	  va_run_hook_with_args (Qmouse_leave_frame_hook, 1, frame);
 	}
@@ -2320,7 +2312,7 @@ emacs_Xt_select_process (Lisp_Process *p)
   Lisp_Object process;
   int infd = event_stream_unixoid_select_process (p);
 
-  XSETPROCESS (process, p);
+  process = wrap_process (p);
   select_filedesc (infd, process);
 }
 
@@ -2407,7 +2399,7 @@ emacs_Xt_select_console (struct console *con)
     return; /* X consoles are automatically selected for when we
 	       initialize them in Xt */
   infd = event_stream_unixoid_select_console (con);
-  XSETCONSOLE (console, con);
+  console = wrap_console (con);
   select_filedesc (infd, console);
 }
 
@@ -2421,7 +2413,7 @@ emacs_Xt_unselect_console (struct console *con)
     return; /* X consoles are automatically selected for when we
 	       initialize them in Xt */
   infd = event_stream_unixoid_unselect_console (con);
-  XSETCONSOLE (console, con);
+  console = wrap_console (con);
   unselect_filedesc (infd);
 }
 
@@ -2774,7 +2766,7 @@ emacs_Xt_next_event (Lisp_Event *emacs_event)
   if (!NILP (dispatch_event_queue))
     {
       Lisp_Object event, event2;
-      XSETEVENT (event2, emacs_event);
+      event2 = wrap_event (emacs_event);
       event = dequeue_Xt_dispatch_event ();
       Fcopy_event (event, event2);
       Fdeallocate_event (event);

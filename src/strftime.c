@@ -195,13 +195,11 @@ add_num_time_t (char *string, int max, time_t num)
      (including the trailing NUL) of any unsigned decimal quantity
      whose binary representation fits in 128 bits.  */
   char buf[40];
-  int length;
 
   if (sizeof (num) > 16)
     abort ();
   sprintf (buf, "%lu", (unsigned long) num);
-  length = add_str (string, buf, max);
-  return length;
+  return add_str (string, buf, max);
 }
 
 /* Return the week in the year of the time in TM, with the weeks

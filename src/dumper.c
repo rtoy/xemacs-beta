@@ -1057,7 +1057,7 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 
 	    if (POINTER_TYPE_P (XTYPE (*pobj))
 		&& ! EQ (*pobj, Qnull_pointer))
-	      XSETOBJ (*pobj, (char *) XPNTR (*pobj) + delta);
+	      *pobj = wrap_pointer_1 ((char *) XPNTR (*pobj) + delta);
 
 	    break;
 	  }
@@ -1074,7 +1074,7 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 
 		if (POINTER_TYPE_P (XTYPE (*pobj))
 		    && ! EQ (*pobj, Qnull_pointer))
-		  XSETOBJ (*pobj, (char *) XPNTR (*pobj) + delta);
+		  *pobj = wrap_pointer_1 ((char *) XPNTR (*pobj) + delta);
 	      }
 	    break;
 	  }

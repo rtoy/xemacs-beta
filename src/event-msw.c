@@ -306,7 +306,6 @@ slurp_thread (LPVOID vparam)
 static Lisp_Object
 make_ntpipe_input_stream (HANDLE hpipe, LPARAM param)
 {
-  Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_ntpipe_slurp, "r");
   struct ntpipe_slurp_stream *s = NTPIPE_SLURP_STREAM_DATA (lstr);
   DWORD thread_id_unused;
@@ -349,8 +348,7 @@ make_ntpipe_input_stream (HANDLE hpipe, LPARAM param)
   CloseHandle (hthread);
 
   lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
-  XSETLSTREAM (obj, lstr);
-  return obj;
+  return wrap_lstream (lstr);
 }
 
 static LPARAM
@@ -536,7 +534,6 @@ shove_thread (LPVOID vparam)
 static Lisp_Object
 make_ntpipe_output_stream (HANDLE hpipe, LPARAM param)
 {
-  Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_ntpipe_shove, "w");
   struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA (lstr);
   DWORD thread_id_unused;
@@ -572,8 +569,7 @@ make_ntpipe_output_stream (HANDLE hpipe, LPARAM param)
   ResumeThread (s->hthread);
 
   lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
-  XSETLSTREAM (obj, lstr);
-  return obj;
+  return wrap_lstream (lstr);
 }
 
 static LPARAM
@@ -833,7 +829,6 @@ winsock_was_blocked_p (Lstream *stream)
 static Lisp_Object
 make_winsock_stream_1 (SOCKET s, LPARAM param, const char *mode)
 {
-  Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_winsock, mode);
   struct winsock_stream *str = WINSOCK_STREAM_DATA (lstr);
 
@@ -850,8 +845,7 @@ make_winsock_stream_1 (SOCKET s, LPARAM param, const char *mode)
     }
 
   lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
-  XSETLSTREAM (obj, lstr);
-  return obj;
+  return wrap_lstream (lstr);
 }
 
 static Lisp_Object
@@ -961,8 +955,8 @@ mswindows_enqueue_process_event (Lisp_Process *p)
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
   Lisp_Event *event = XEVENT (emacs_event);
-  Lisp_Object process;
-  XSETPROCESS (process, p);
+  Lisp_Object process = wrap_process (p);
+
 
   event->event_type = process_event;
   event->timestamp  = GetTickCount ();
@@ -3985,7 +3979,7 @@ emacs_mswindows_next_event (Lisp_Event *emacs_event)
   mswindows_need_event (1);
 
   event = mswindows_dequeue_dispatch_event ();
-  XSETEVENT (event2, emacs_event);
+  event2 = wrap_event (emacs_event);
   Fcopy_event (event, event2);
   Fdeallocate_event (event);
 }
@@ -4099,7 +4093,7 @@ static HANDLE
 get_process_input_waitable (Lisp_Process *process)
 {
   Lisp_Object instr, outstr, p;
-  XSETPROCESS (p, process);
+  p = wrap_process (process);
   get_process_streams (process, &instr, &outstr);
   assert (!NILP (instr));
 #if defined (HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
@@ -4121,8 +4115,8 @@ emacs_mswindows_select_process (Lisp_Process *process)
 
 #ifdef HAVE_WIN32_PROCESSES
   {
-    Lisp_Object p;
-    XSETPROCESS (p, process);
+    Lisp_Object p = wrap_process (process);
+
     if (!network_connection_p (p))
       {
 	HANDLE hprocess = get_nt_process_handle (process);

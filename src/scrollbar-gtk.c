@@ -424,9 +424,8 @@ scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
 static void
 gtk_scrollbar_pointer_changed_in_window (struct window *w)
 {
-  Lisp_Object window;
+  Lisp_Object window = wrap_window (w);
 
-  XSETWINDOW (window, w);
   gtk_scrollbar_loop (GTK_SET_SCROLLBAR_POINTER, window,
 		      find_window_mirror (w), 0, (GdkWindow *) NULL);
 }

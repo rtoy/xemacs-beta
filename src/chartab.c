@@ -154,6 +154,8 @@ mark_char_table (Lisp_Object obj)
   for (i = 0; i < NUM_LEADING_BYTES; i++)
     mark_object (ct->level1[i]);
 #endif
+  mark_object (ct->parent);
+  mark_object (ct->default_);
   return ct->mirror_table;
 }
 
@@ -320,12 +322,9 @@ static void
 print_char_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (obj);
-  char buf[200];
 
-  sprintf (buf, "#s(char-table type %s data (",
-	   string_data (symbol_name (XSYMBOL
-				     (char_table_type_to_symbol (ct->type)))));
-  write_c_string (buf, printcharfun);
+  write_fmt_string_lisp (printcharfun, "#s(char-table type %s data (",
+			 1, char_table_type_to_symbol (ct->type));
 
   /* Now write out the ASCII/Control-1 stuff. */
   {
@@ -431,6 +430,8 @@ static const struct lrecord_description char_table_description[] = {
 #ifdef MULE
   { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Char_Table, level1), NUM_LEADING_BYTES },
 #endif
+  { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, parent) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, default_) },
   { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, mirror_table) },
   { XD_LO_LINK,     offsetof (Lisp_Char_Table, next_table) },
   { XD_END }
@@ -614,7 +615,9 @@ and 'syntax.  See `valid-char-table-type-p'.
   else
     ct->mirror_table = Qnil;
   ct->next_table = Qnil;
-  XSETCHAR_TABLE (obj, ct);
+  ct->parent = Qnil;
+  ct->default_ = Qnil;
+  obj = wrap_char_table (ct);
   if (ty == CHAR_TABLE_TYPE_SYNTAX)
     {
       ct->next_table = Vall_syntax_tables;
@@ -629,7 +632,6 @@ and 'syntax.  See `valid-char-table-type-p'.
 static Lisp_Object
 make_char_table_entry (Lisp_Object initval)
 {
-  Lisp_Object obj;
   int i;
   Lisp_Char_Table_Entry *cte =
     alloc_lcrecord_type (Lisp_Char_Table_Entry, &lrecord_char_table_entry);
@@ -637,15 +639,13 @@ make_char_table_entry (Lisp_Object initval)
   for (i = 0; i < 96; i++)
     cte->level2[i] = initval;
 
-  XSETCHAR_TABLE_ENTRY (obj, cte);
-  return obj;
+  return wrap_char_table_entry (cte);
 }
 
 static Lisp_Object
 copy_char_table_entry (Lisp_Object entry)
 {
   Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (entry);
-  Lisp_Object obj;
   int i;
   Lisp_Char_Table_Entry *ctenew =
     alloc_lcrecord_type (Lisp_Char_Table_Entry, &lrecord_char_table_entry);
@@ -659,8 +659,7 @@ copy_char_table_entry (Lisp_Object entry)
 	ctenew->level2[i] = new;
     }
 
-  XSETCHAR_TABLE_ENTRY (obj, ctenew);
-  return obj;
+  return wrap_char_table_entry (ctenew);
 }
 
 #endif /* MULE */
@@ -680,6 +679,8 @@ as CHAR-TABLE.  The values will not themselves be copied.
   ct = XCHAR_TABLE (char_table);
   ctnew = alloc_lcrecord_type (Lisp_Char_Table, &lrecord_char_table);
   ctnew->type = ct->type;
+  ctnew->parent = ct->parent;
+  ctnew->default_ = ct->default_;
 
   for (i = 0; i < NUM_ASCII_CHARS; i++)
     {
@@ -708,7 +709,7 @@ as CHAR-TABLE.  The values will not themselves be copied.
   else
     ctnew->mirror_table = ct->mirror_table;
   ctnew->next_table = Qnil;
-  XSETCHAR_TABLE (obj, ctnew);
+  obj = wrap_char_table (ctnew);
   if (ctnew->type == CHAR_TABLE_TYPE_SYNTAX)
     {
       ctnew->next_table = Vall_syntax_tables;

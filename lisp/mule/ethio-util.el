@@ -1790,8 +1790,8 @@ Otherwise, [0-9A-F]."
 
     (goto-char (point-min))
     (while (re-search-forward "\\ce" nil t)
-      (setq ucode (+ ?\x1200 (ethio-char-to-ethiocode (preceding-char))))
-      (if (> ucode ?\x13bc)
+      (setq ucode (+ #x1200 (ethio-char-to-ethiocode (preceding-char))))
+      (if (> ucode #x13bc)
 	  (setq ucode (+ ucode 59952)))
       (delete-backward-char 1)
       (if ethio-java-save-lowercase
@@ -1807,13 +1807,13 @@ Otherwise, [0-9A-F]."
       (setq ucode
 	    (read
 	     (concat
-	      "?\\x"
+	      "#x"
 	      (buffer-substring (match-beginning 1) (match-end 1)))))
       (cond
-       ((and (>= ucode ?\x1200) (<= ucode ?\x13bc))
+       ((and (>= ucode #x1200) (<= ucode #x13bc))
 	(replace-match "")
-	(insert (ethio-ethiocode-to-char (- ucode ?\x1200))))
-       ((and (>= ucode ?\xfdf1) (<= ucode ?\xfdff))
+	(insert (ethio-ethiocode-to-char (- ucode #x1200))))
+       ((and (>= ucode #xfdf1) (<= ucode #xfdff))
 	(replace-match "")
 	(insert (ethio-ethiocode-to-char (- ucode 64560))))
        (t

@@ -1,6 +1,6 @@
 /* Database access routines
    Copyright (C) 1996, William M. Perry
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -106,7 +106,6 @@ struct Lisp_Database
 };
 
 #define XDATABASE(x) XRECORD (x, database, Lisp_Database)
-#define XSETDATABASE(x, p) XSETRECORD (x, p, database)
 #define wrap_database(p) wrap_record (p, database)
 #define DATABASEP(x) RECORDP (x, database)
 #define CHECK_DATABASE(x) CHECK_RECORD (x, database)
@@ -150,22 +149,20 @@ mark_database (Lisp_Object object)
 static void
 print_database (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  char buf[64];
   Lisp_Database *db = XDATABASE (obj);
 
   if (print_readably)
     printing_unreadable_object ("#<database 0x%x>", db->header.uid);
 
-  write_c_string ("#<database \"", printcharfun);
-  print_internal (db->fname, printcharfun, 0);
-  sprintf (buf, "\" (%s/%s/%s) 0x%x>",
-	   (char *) string_data (XSYMBOL (db->funcs->get_type (db))->name),
-	   (char *) string_data (XSYMBOL (db->funcs->get_subtype (db))->name),
-	   (!DATABASE_LIVE_P (db)    ? "closed"    :
-	    (db->access_ & O_WRONLY) ? "writeonly" :
-	    (db->access_ & O_RDWR)   ? "readwrite" : "readonly"),
-	   db->header.uid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string_lisp (printcharfun, "#<database \"%s\" (%s/%s/",
+			 3, db->fname, db->funcs->get_type (db),
+			 db->funcs->get_subtype (db));
+
+  write_fmt_string (printcharfun, "%s) 0x%x>",
+		    (!DATABASE_LIVE_P (db)    ? "closed"    :
+		     (db->access_ & O_WRONLY) ? "writeonly" :
+		     (db->access_ & O_RDWR)   ? "readwrite" : "readonly"),
+		    db->header.uid);
 }
 
 static void
@@ -175,11 +172,9 @@ finalize_database (void *header, int for_disksave)
 
   if (for_disksave)
     {
-      Lisp_Object object;
-      XSETDATABASE (object, db);
-
       invalid_operation
-	("Can't dump an emacs containing database objects", object);
+	("Can't dump an emacs containing database objects",
+	 wrap_database (db));
     }
   db->funcs->close (db);
 }
@@ -733,11 +728,7 @@ variable `database-coding-system'.
   db->mode = modemask;
   db->access_ = accessmask;
 
-  {
-    Lisp_Object retval;
-    XSETDATABASE (retval, db);
-    return retval;
-  }
+  return wrap_database (db);
 }
 
 DEFUN ("put-database", Fput_database, 3, 4, 0, /*

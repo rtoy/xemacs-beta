@@ -160,7 +160,7 @@ allocate_device (Lisp_Object console)
   struct device *d = alloc_lcrecord_type (struct device, &lrecord_device);
   struct gcpro gcpro1;
 
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
   GCPRO1 (device);
 
   nuke_all_device_slots (d, Qnil);
@@ -277,7 +277,7 @@ If DEVICE is the selected device, this makes FRAME the selected frame.
 */
        (device, frame))
 {
-  XSETDEVICE (device, decode_device (device));
+  device = wrap_device (decode_device (device));
   CHECK_LIVE_FRAME (frame);
 
   if (! EQ (device, FRAME_DEVICE (XFRAME (frame))))
@@ -558,7 +558,7 @@ have no effect.
 
   con = XCONSOLE (console);
   d = allocate_device (console);
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
 
   d->devmeths = con->conmeths;
 
@@ -691,7 +691,7 @@ delete_device_internal (struct device *d, int force,
   if (!DEVICE_LIVE_P (d))
     return;
 
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
   GCPRO1 (device);
 
   c = XCONSOLE (DEVICE_CONSOLE (d));
@@ -870,7 +870,7 @@ behavior cannot necessarily be determined automatically.
        (device, class))
 {
   struct device *d = decode_device (device);
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
   if (!DEVICE_TTY_P (d))
     gui_error ("Cannot change the class of this device", device);
   if (!EQ (class, Qcolor) && !EQ (class, Qmono) && !EQ (class, Qgrayscale))

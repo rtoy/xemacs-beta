@@ -1,7 +1,7 @@
 /* Generic Objects and Functions.
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -43,8 +43,8 @@ Lisp_Object Vthe_null_color_instance, Vthe_null_font_instance;
 void
 finalose (void *ptr)
 {
-  Lisp_Object obj;
-  XSETOBJ (obj, ptr);
+  Lisp_Object obj = wrap_pointer_1 (ptr);
+
 
   invalid_operation
     ("Can't dump an emacs containing window system objects", obj);
@@ -151,11 +151,10 @@ is deallocated as well.
        (name, device, noerror))
 {
   Lisp_Color_Instance *c;
-  Lisp_Object val;
   int retval;
 
   CHECK_STRING (name);
-  XSETDEVICE (device, decode_device (device));
+  device = wrap_device (decode_device (device));
 
   c = alloc_lcrecord_type (Lisp_Color_Instance, &lrecord_color_instance);
   c->name = name;
@@ -168,8 +167,7 @@ is deallocated as well.
   if (!retval)
     return Qnil;
 
-  XSETCOLOR_INSTANCE (val, c);
-  return val;
+  return wrap_color_instance (c);
 }
 
 DEFUN ("color-instance-p", Fcolor_instance_p, 1, 1, 0, /*
@@ -287,15 +285,18 @@ static int
 font_instance_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
   /* #### should this be moved into a device method? */
-  return internal_equal (font_instance_truename_internal (obj1, ERROR_ME_NOT),
-			 font_instance_truename_internal (obj2, ERROR_ME_NOT),
+  return internal_equal (font_instance_truename_internal
+			 (obj1, ERROR_ME_DEBUG_WARN),
+			 font_instance_truename_internal
+			 (obj2, ERROR_ME_DEBUG_WARN),
 			 depth + 1);
 }
 
 static unsigned long
 font_instance_hash (Lisp_Object obj, int depth)
 {
-  return internal_hash (font_instance_truename_internal (obj, ERROR_ME_NOT),
+  return internal_hash (font_instance_truename_internal
+			(obj, ERROR_ME_DEBUG_WARN),
 			depth + 1);
 }
 
@@ -319,7 +320,6 @@ these objects are GCed, the underlying X data is deallocated as well.
        (name, device, noerror))
 {
   Lisp_Font_Instance *f;
-  Lisp_Object val;
   int retval = 0;
   Error_Behavior errb = decode_error_behavior_flag (noerror);
 
@@ -328,7 +328,7 @@ these objects are GCed, the underlying X data is deallocated as well.
   else if (!STRINGP (name))
     return Qnil;
 
-  XSETDEVICE (device, decode_device (device));
+  device = wrap_device (decode_device (device));
 
   f = alloc_lcrecord_type (Lisp_Font_Instance, &lrecord_font_instance);
   f->name = name;
@@ -348,8 +348,7 @@ these objects are GCed, the underlying X data is deallocated as well.
   if (!retval)
     return Qnil;
 
-  XSETFONT_INSTANCE (val, f);
-  return val;
+  return wrap_font_instance (f);
 }
 
 DEFUN ("font-instance-p", Ffont_instance_p, 1, 1, 0, /*
@@ -468,7 +467,7 @@ currently selected device.
        (pattern, device))
 {
   CHECK_STRING (pattern);
-  XSETDEVICE (device, decode_device (device));
+  device = wrap_device (decode_device (device));
 
   return MAYBE_LISP_DEVMETH (XDEVICE (device), list_fonts, (pattern, device));
 }
@@ -1094,7 +1093,7 @@ reinit_vars_of_objects (void)
     c->device = Qnil;
     c->data = 0;
 
-    XSETCOLOR_INSTANCE (Vthe_null_color_instance, c);
+    Vthe_null_color_instance = wrap_color_instance (c);
   }
 
   staticpro_nodump (&Vthe_null_font_instance);
@@ -1110,7 +1109,7 @@ reinit_vars_of_objects (void)
     f->width = 0;
     f->proportional_p = 0;
 
-    XSETFONT_INSTANCE (Vthe_null_font_instance, f);
+    Vthe_null_font_instance = wrap_font_instance (f);
   }
 }
 

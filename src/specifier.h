@@ -1,6 +1,6 @@
 /* Generic specifier list implementation
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995 Ben Wing
+   Copyright (C) 1995, 2002 Ben Wing
 
 This file is part of XEmacs.
 
@@ -256,7 +256,6 @@ typedef struct Lisp_Specifier Lisp_Specifier;
 
 DECLARE_LRECORD (specifier, Lisp_Specifier);
 #define XSPECIFIER(x) XRECORD (x, specifier, Lisp_Specifier)
-#define XSETSPECIFIER(x, p) XSETRECORD (x, p, specifier)
 #define wrap_specifier(p) wrap_record (p, specifier)
 #define SPECIFIERP(x) RECORDP (x, specifier)
 #define CHECK_SPECIFIER(x) CHECK_RECORD (x, specifier)
@@ -373,14 +372,8 @@ do {									\
 #ifdef ERROR_CHECK_TYPECHECK
 # define XSPECIFIER_TYPE(x, type)	\
    error_check_##type##_specifier_type (x)
-# define XSETSPECIFIER_TYPE(x, p, type)	do		\
-{							\
-  XSETSPECIFIER (x, p);					\
-  assert (SPECIFIER_TYPEP (XSPECIFIER(x), type));	\
-} while (0)
 #else
 # define XSPECIFIER_TYPE(x, type) XSPECIFIER (x)
-# define XSETSPECIFIER_TYPE(x, p, type) XSETSPECIFIER (x, p)
 #endif /* ERROR_CHECK_TYPE_CHECK */
 
 #define SPECIFIER_TYPEP(x, type)			\
@@ -522,35 +515,30 @@ void kill_specifier_buffer_locals (Lisp_Object buffer);
 
 DECLARE_SPECIFIER_TYPE (generic);
 #define XGENERIC_SPECIFIER(x) XSPECIFIER_TYPE (x, generic)
-#define XSETGENERIC_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, generic)
 #define GENERIC_SPECIFIERP(x) SPECIFIER_TYPEP (x, generic)
 #define CHECK_GENERIC_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, generic)
 #define CONCHECK_GENERIC_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, generic)
 
 DECLARE_SPECIFIER_TYPE (integer);
 #define XINTEGER_SPECIFIER(x) XSPECIFIER_TYPE (x, integer)
-#define XSETINTEGER_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, integer)
 #define INTEGER_SPECIFIERP(x) SPECIFIER_TYPEP (x, integer)
 #define CHECK_INTEGER_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, integer)
 #define CONCHECK_INTEGER_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, integer)
 
 DECLARE_SPECIFIER_TYPE (natnum);
 #define XNATNUM_SPECIFIER(x) XSPECIFIER_TYPE (x, natnum)
-#define XSETNATNUM_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, natnum)
 #define NATNUM_SPECIFIERP(x) SPECIFIER_TYPEP (x, natnum)
 #define CHECK_NATNUM_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, natnum)
 #define CONCHECK_NATNUM_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, natnum)
 
 DECLARE_SPECIFIER_TYPE (boolean);
 #define XBOOLEAN_SPECIFIER(x) XSPECIFIER_TYPE (x, boolean)
-#define XSETBOOLEAN_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, boolean)
 #define BOOLEAN_SPECIFIERP(x) SPECIFIER_TYPEP (x, boolean)
 #define CHECK_BOOLEAN_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, boolean)
 #define CONCHECK_BOOLEAN_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, boolean)
 
 DECLARE_SPECIFIER_TYPE (display_table);
 #define XDISPLAYTABLE_SPECIFIER(x) XSPECIFIER_TYPE (x, display_table)
-#define XSETDISPLAYTABLE_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, display_table)
 #define DISPLAYTABLE_SPECIFIERP(x) SPECIFIER_TYPEP (x, display_table)
 #define CHECK_DISPLAYTABLE_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, display_table)
 #define CONCHECK_DISPLAYTABLE_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, display_table)

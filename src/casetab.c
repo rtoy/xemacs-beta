@@ -1,6 +1,7 @@
 /* XEmacs routines to deal with case tables.
    Copyright (C) 1987, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -96,7 +97,6 @@ DEFINE_LRECORD_IMPLEMENTATION ("case-table", case_table,
 static Lisp_Object
 allocate_case_table (void)
 {
-  Lisp_Object val;
   Lisp_Case_Table *ct =
     alloc_lcrecord_type (Lisp_Case_Table, &lrecord_case_table);
 
@@ -105,8 +105,7 @@ allocate_case_table (void)
   SET_CASE_TABLE_CANON (ct, Qnil);
   SET_CASE_TABLE_EQV (ct, Qnil);
 
-  XSETCASE_TABLE (val, ct);
-  return val;
+  return wrap_case_table (ct);
 }
 
 DEFUN ("case-table-p", Fcase_table_p, 1, 1, 0, /*
@@ -348,7 +347,7 @@ set_case_table (Lisp_Object table, int standard)
       temp = down;
       down = MAKE_TRT_TABLE ();
       for (i = 0; i < 256; i++)
-	SET_TRT_TABLE_CHAR_1 (down, i, string_char (XSTRING (temp), i));
+	SET_TRT_TABLE_CHAR_1 (down, i, XSTRING_CHAR (temp, i));
 
       if (NILP (up))
 	{
@@ -360,7 +359,7 @@ set_case_table (Lisp_Object table, int standard)
 	  temp = up;
 	  up = MAKE_TRT_TABLE ();
 	  for (i = 0; i < 256; i++)
-	    SET_TRT_TABLE_CHAR_1 (up, i, string_char (XSTRING (temp), i));
+	    SET_TRT_TABLE_CHAR_1 (up, i, XSTRING_CHAR (temp, i));
 	}
       if (NILP (canon))
 	{
@@ -382,7 +381,7 @@ set_case_table (Lisp_Object table, int standard)
 	  temp = canon;
 	  canon = MAKE_TRT_TABLE ();
 	  for (i = 0; i < 256; i++)
-	    SET_TRT_TABLE_CHAR_1 (canon, i, string_char (XSTRING (temp), i));
+	    SET_TRT_TABLE_CHAR_1 (canon, i, XSTRING_CHAR (temp, i));
 	}
 
       if (NILP (eqv))
@@ -395,7 +394,7 @@ set_case_table (Lisp_Object table, int standard)
 	  temp = eqv;
 	  eqv = MAKE_TRT_TABLE ();
 	  for (i = 0; i < 256; i++)
-	    SET_TRT_TABLE_CHAR_1 (eqv, i, string_char (XSTRING (temp), i));
+	    SET_TRT_TABLE_CHAR_1 (eqv, i, XSTRING_CHAR (temp, i));
 	}
 
       if (standard)

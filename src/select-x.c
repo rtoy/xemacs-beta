@@ -1,6 +1,6 @@
 /* X Selection processing for XEmacs
    Copyright (C) 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -796,8 +796,11 @@ x_handle_property_notify (XPropertyEvent *event)
 	{
 #if 0
 	  stderr_out ("Saw expected prop-%s on %s\n",
-		   (event->state == PropertyDelete ? "delete" : "change"),
-		      (char *) string_data (XSYMBOL (x_atom_to_symbol (get_device_from_display (event->display), event->atom))->name);
+		      (event->state == PropertyDelete ? "delete" : "change"),
+		      XSTRING_DATA
+		      (XSYMBOL (x_atom_to_symbol
+				(get_device_from_display (event->display),
+				 event->atom))->name);
 #endif
 	  if (prev)
 	    prev->next = rest->next;
@@ -811,8 +814,10 @@ x_handle_property_notify (XPropertyEvent *event)
     }
 #if 0
   stderr_out ("Saw UNexpected prop-%s on %s\n",
-	   (event->state == PropertyDelete ? "delete" : "change"),
-	   (char *) string_data (XSYMBOL (x_atom_to_symbol (get_device_from_display (event->display), event->atom))->name));
+	      (event->state == PropertyDelete ? "delete" : "change"),
+	      XSTRING_DATA (XSYMBOL (x_atom_to_symbol
+				     (get_device_from_display (event->display),
+				      event->atom))->name));
 #endif
 }
 

@@ -673,8 +673,8 @@ ensure_not_printing (struct device *d)
 {
   if (!NILP (DEVICE_FRAME_LIST (d)))
   {
-    Lisp_Object device;
-    XSETDEVICE (device, d);
+    Lisp_Object device = wrap_device (d);
+
     invalid_operation ("Cannot change settings while print job is active",
 		       device);
   }
@@ -911,7 +911,7 @@ original one. Use `msprinter-settings-copy' to create a copy of it.
 	(device))
 {
   struct device *d = decode_device (device);
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
   CHECK_MSPRINTER_DEVICE (device);
   return DEVICE_MSPRINTER_DEVMODE (d);
 }
@@ -941,7 +941,7 @@ Return value is the previously selected settings object.
   struct gcpro gcpro1;
   GCPRO1 (settings);
 
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
   CHECK_MSPRINTER_DEVICE (device);
   CHECK_DEVMODE (settings);
   ldm = XDEVMODE (settings);
@@ -1013,7 +1013,7 @@ Return value is the currently selected settings object.
   struct gcpro gcpro1;
   GCPRO1 (settings);
 
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
   CHECK_MSPRINTER_DEVICE (device);
   CHECK_DEVMODE (settings);
   ldm_new = XDEVMODE (settings);
@@ -1091,8 +1091,8 @@ finalize_devmode (void *header, int for_disksave)
 
   if (for_disksave)
     {
-      Lisp_Object devmode;
-      XSETDEVMODE (devmode, dm);
+      Lisp_Object devmode = wrap_devmode (dm);
+
       invalid_operation
 	("Cannot dump XEmacs containing an msprinter-settings object",
 	 devmode);
@@ -1138,12 +1138,11 @@ allocate_devmode (DEVMODEW* src_devmode, int do_copy,
 		  Lisp_Object src_name, struct device *d)
 {
   Lisp_Devmode *dm;
-  Lisp_Object ob;
 
   dm = alloc_lcrecord_type (Lisp_Devmode, &lrecord_devmode);
 
   if (d)
-    XSETDEVICE (dm->device, d);
+    dm->device = wrap_device (d);
   else
     dm->device = Qnil;
 
@@ -1159,8 +1158,7 @@ allocate_devmode (DEVMODEW* src_devmode, int do_copy,
       dm->devmode = src_devmode;
     }
 
-  XSETDEVMODE (ob, dm);
-  return ob;
+  return wrap_devmode (dm);
 }
 
 DEFUN ("msprinter-settings-copy", Fmsprinter_settings_copy, 1, 1, 0, /*

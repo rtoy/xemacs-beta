@@ -148,7 +148,7 @@ tty_init_console (struct console *con, Lisp_Object props)
     if (tty_pg == controlling_tty_pg)
       {
 	tty_con->controlling_terminal = 1;
-	XSETCONSOLE (Vcontrolling_terminal, con);
+	Vcontrolling_terminal = wrap_console (con);
 	munge_tty_process_group ();
       }
     else
@@ -208,7 +208,7 @@ tty_delete_console (struct console *con)
 static struct console *
 decode_tty_console (Lisp_Object console)
 {
-  XSETCONSOLE (console, decode_console (console));
+  console = wrap_console (decode_console (console));
   CHECK_TTY_CONSOLE (console);
   return XCONSOLE (console);
 }

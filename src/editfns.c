@@ -130,12 +130,10 @@ An empty string will return the constant `nil'.
 */
        (string))
 {
-  Lisp_String *p;
   CHECK_STRING (string);
 
-  p = XSTRING (string);
-  if (string_length (p) != 0)
-    return make_char (string_char (p, 0));
+  if (XSTRING_LENGTH (string) != 0)
+    return make_char (XSTRING_CHAR (string, 0));
   else
     /* This used to return Qzero.  That is broken, broken, broken. */
     /* It might be kinder to signal an error directly. -slb */
@@ -705,7 +703,7 @@ ignored and this function returns the login name for that UID, or nil.
    for the user running XEmacs will be returned.  This
    corresponds to a nil argument to Fuser_login_name.
 
-   WARNING: The string returned comes from the data of a Lisp_String and
+   WARNING: The string returned comes from the data of a Lisp string and
    therefore will become garbage after the next GC.
 */
 Intbyte *
@@ -761,8 +759,7 @@ This ignores the environment variables LOGNAME and USER, so it differs from
   struct passwd *pw = qxe_getpwuid (getuid ());
   /* #### - I believe this should return nil instead of "unknown" when pw==0 */
 
-  Lisp_Object tem = build_string (pw ? pw->pw_name : "unknown");
-  return tem;
+  return build_string (pw ? pw->pw_name : "unknown");
 }
 
 DEFUN ("user-uid", Fuser_uid, 0, 0, 0, /*
@@ -1858,16 +1855,15 @@ Returns the number of substitutions performed.
   mc_count = begin_multiple_change (buf, pos, stop);
   if (STRINGP (table))
     {
-      Lisp_String *stable = XSTRING (table);
-      Charcount size = string_char_length (stable);
+      Charcount size = XSTRING_CHAR_LENGTH (table);
 #ifdef MULE
-      /* Under Mule, string_char(n) is O(n), so for large tables or
+      /* Under Mule, XSTRING_CHAR(n) is O(n), so for large tables or
          large regions it makes sense to create an array of Emchars.  */
       if (size * (stop - pos) > 65536)
 	{
 	  Emchar *etable = alloca_array (Emchar, size);
 	  convert_intbyte_string_into_emchar_string
-	    (string_data (stable), string_length (stable), etable);
+	    (XSTRING_DATA (table), XSTRING_LENGTH (table), etable);
 	  for (; pos < stop && (oc = BUF_FETCH_CHAR (buf, pos), 1); pos++)
 	    {
 	      if (oc < size)
@@ -1888,7 +1884,7 @@ Returns the number of substitutions performed.
 	    {
 	      if (oc < size)
 		{
-		  Emchar nc = string_char (stable, oc);
+		  Emchar nc = XSTRING_CHAR (table, oc);
 		  if (nc != oc)
 		    {
 		      buffer_replace_char (buf, pos, nc, 0, 0);

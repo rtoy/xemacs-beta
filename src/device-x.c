@@ -1,7 +1,7 @@
 /* Device functions for X windows.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -154,7 +154,7 @@ get_device_from_display (Display *dpy)
 struct device *
 decode_x_device (Lisp_Object device)
 {
-  XSETDEVICE (device, decode_device (device));
+  device = wrap_device (decode_device (device));
   CHECK_X_DEVICE (device);
   return XDEVICE (device);
 }
@@ -540,7 +540,7 @@ x_init_device (struct device *d, Lisp_Object props)
 	/* If we found it, warn the user in big, nasty, unfriendly letters */
 	if (xaw_function_handle != NULL)
 	  {
-	    warn_when_safe (Qdevice, Qerror, "\n"
+	    warn_when_safe (Qdevice, Qcritical, "\n"
 "It seems that XEmacs is built dynamically linked to the flat Athena widget\n"
 "library but it finds a 3D Athena variant with the same name at runtime.\n"
 "\n"
@@ -568,7 +568,7 @@ x_init_device (struct device *d, Lisp_Object props)
 #endif /* HAVE_SHLIB and LWLIB_USES_ATHENA and not HAVE_ATHENA_3D */
 
 
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
   display = DEVICE_CONNECTION (d);
 
   allocate_x_device_struct (d);
@@ -879,7 +879,7 @@ x_delete_device (struct device *d)
   int checking_free;
 #endif
 
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
   display = DEVICE_X_DISPLAY (d);
 
   if (display)
@@ -1070,7 +1070,7 @@ x_error_handler (Display *disp, XErrorEvent *event)
 
 	if (f->being_deleted)
 	  return 0;
-	XSETFRAME (frame, f);
+	frame = wrap_frame (f);
 	if (!NILP (condition_case_1 (Qerror, x_error_handler_do_enqueue,
 				     frame, x_error_handler_error, Qnil)))
 	  {
@@ -1150,7 +1150,7 @@ x_IO_error_handler (Display *disp)
     d = device_being_initialized;
 
   assert (d != NULL);
-  XSETDEVICE (dev, d);
+  dev = wrap_device (d);
 
   if (NILP (find_nonminibuffer_frame_not_on_device (dev)))
     {

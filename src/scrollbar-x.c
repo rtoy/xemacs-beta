@@ -673,9 +673,8 @@ x_update_horizontal_scrollbar_callback (Widget widget, LWLIB_ID id,
 static void
 x_scrollbar_pointer_changed_in_window (struct window *w)
 {
-  Lisp_Object window;
+  Lisp_Object window = wrap_window (w);
 
-  XSETWINDOW (window, w);
   x_scrollbar_loop (X_SET_SCROLLBAR_POINTER, window, find_window_mirror (w),
 		    0, (Window) NULL);
 }

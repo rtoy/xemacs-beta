@@ -36,7 +36,6 @@ typedef struct Lisp_PGconn Lisp_PGconn;
 DECLARE_LRECORD (pgconn, Lisp_PGconn);
 
 #define XPGCONN(x) XRECORD (x, pgconn, Lisp_PGconn)
-#define XSETPGCONN(x, p) XSETRECORD (x, p, pgconn)
 #define wrap_pgconn(p) wrap_record (p, pgconn)
 #define PGCONNP(x) RECORDP (x, pgconn)
 #define CHECK_PGCONN(x) CHECK_RECORD (x, pgconn)
@@ -57,7 +56,6 @@ typedef struct Lisp_PGresult Lisp_PGresult;
 DECLARE_LRECORD (pgresult, Lisp_PGresult);
 
 #define XPGRESULT(x) XRECORD (x, pgresult, Lisp_PGresult)
-#define XSETPGRESULT(x, p) XSETRECORD (x, p, pgresult)
 #define wrap_pgresult(p) wrap_record (p, pgresult)
 #define PGRESULTP(x) RECORDP (x, pgresult)
 #define CHECK_PGRESULT(x) CHECK_RECORD (x, pgresult)

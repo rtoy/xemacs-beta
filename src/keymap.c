@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1991-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
    Totally redesigned by jwz in 1991.
 
 This file is part of XEmacs.
@@ -478,10 +478,10 @@ keymap_lookup_directly (Lisp_Object keymap,
   k = XKEYMAP (keymap);
 
   /* If the keysym is a one-character symbol, use the char code instead. */
-  if (SYMBOLP (keysym) && string_char_length (XSYMBOL (keysym)->name) == 1)
+  if (SYMBOLP (keysym) && XSTRING_CHAR_LENGTH (XSYMBOL (keysym)->name) == 1)
     {
       Lisp_Object i_fart_on_gcc =
-	make_char (string_char (XSYMBOL (keysym)->name, 0));
+	make_char (XSTRING_CHAR (XSYMBOL (keysym)->name, 0));
       keysym = i_fart_on_gcc;
     }
 
@@ -656,8 +656,8 @@ keymap_store (Lisp_Object keymap, const struct key_data *key,
 			 | XEMACS_MOD_ALT | XEMACS_MOD_SHIFT)) == 0);
 
   /* If the keysym is a one-character symbol, use the char code instead. */
-  if (SYMBOLP (keysym) && string_char_length (XSYMBOL (keysym)->name) == 1)
-    keysym = make_char (string_char (XSYMBOL (keysym)->name, 0));
+  if (SYMBOLP (keysym) && XSTRING_CHAR_LENGTH (XSYMBOL (keysym)->name) == 1)
+    keysym = make_char (XSTRING_CHAR (XSYMBOL (keysym)->name, 0));
 
   if (modifiers & XEMACS_MOD_META)     /* Utterly hateful ESC lossage */
     {
@@ -759,7 +759,7 @@ make_keymap (Elemcount size)
   Lisp_Object result;
   Lisp_Keymap *keymap = alloc_lcrecord_type (Lisp_Keymap, &lrecord_keymap);
 
-  XSETKEYMAP (result, keymap);
+  result = wrap_keymap (keymap);
 
   keymap->parents         = Qnil;
   keymap->prompt          = Qnil;
@@ -1264,10 +1264,10 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
   /* Now, check and massage the trailing keysym specifier. */
   if (SYMBOLP (*keysym))
     {
-      if (string_char_length (XSYMBOL (*keysym)->name) == 1)
+      if (XSTRING_CHAR_LENGTH (XSYMBOL (*keysym)->name) == 1)
 	{
 	  Lisp_Object ream_gcc_up_the_ass =
-	    make_char (string_char (XSYMBOL (*keysym)->name, 0));
+	    make_char (XSTRING_CHAR (XSYMBOL (*keysym)->name, 0));
 	  *keysym = ream_gcc_up_the_ass;
 	  goto fixnum_keysym;
 	}
@@ -1294,7 +1294,7 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 
   if (SYMBOLP (*keysym))
     {
-      char *name = (char *) string_data (XSYMBOL (*keysym)->name);
+      Intbyte *name = XSTRING_DATA (XSYMBOL (*keysym)->name);
 
       /* FSFmacs uses symbols with the printed representation of keysyms in
 	 their names, like 'M-x, and we use the syntax '(meta x).  So, to avoid
@@ -1310,7 +1310,7 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	 sanitize the Sun keyboards, and would make it trickier to
 	 conditionalize a .emacs file for multiple X servers.
 	 */
-      if (((int) strlen (name) >= 2 && name[1] == '-')
+      if (((int) qxestrlen (name) >= 2 && name[1] == '-')
 #if 1
           ||
 	  /* Ok, this is a bit more dubious - prevent people from doing things
@@ -1318,14 +1318,14 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	     same problem as above.  (Gag!)  Maybe we should just silently
 	     accept these as aliases for the "real" names?
 	     */
-	  (string_length (XSYMBOL (*keysym)->name) <= 3 &&
-	   (!strcmp (name, "LFD") ||
-	    !strcmp (name, "TAB") ||
-	    !strcmp (name, "RET") ||
-	    !strcmp (name, "ESC") ||
-	    !strcmp (name, "DEL") ||
-	    !strcmp (name, "SPC") ||
-	    !strcmp (name, "BS")))
+	  (XSTRING_LENGTH (XSYMBOL (*keysym)->name) <= 3 &&
+	   (!qxestrcmp_c (name, "LFD") ||
+	    !qxestrcmp_c (name, "TAB") ||
+	    !qxestrcmp_c (name, "RET") ||
+	    !qxestrcmp_c (name, "ESC") ||
+	    !qxestrcmp_c (name, "DEL") ||
+	    !qxestrcmp_c (name, "SPC") ||
+	    !qxestrcmp_c (name, "BS")))
 #endif /* unused */
           )
 	invalid_argument
@@ -1337,17 +1337,15 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	 otherwise have the same problem as above.  (Gag!)  We silently
 	 accept these as aliases for the "real" names.
 	 */
-      else if (!strncmp(name, "kp_", 3)) {
-	/* Likewise, the obsolete keysym binding of kp_.* should not lose. */
-	char temp[50];
-
-	strncpy(temp, name, sizeof (temp));
-	temp[sizeof (temp) - 1] = '\0';
-	temp[2] = '-';
-	*keysym = Fintern_soft(make_string((Intbyte *)temp,
-					   strlen(temp)),
-			       Qnil);
-      } else if (EQ (*keysym, QLFD))
+      else if (!qxestrncmp_c (name, "kp_", 3))
+	{
+	  /* Likewise, the obsolete keysym binding of kp_.* should not lose. */
+	  DECLARE_EISTRING (temp);
+	  eicpy_raw (temp, name, qxestrlen (name));
+	  eisetch_char (temp, 2, '-');
+	  *keysym = Fintern_soft (eimake_string (temp), Qnil);
+	}
+      else if (EQ (*keysym, QLFD))
 	*keysym = QKlinefeed;
       else if (EQ (*keysym, QTAB))
 	*keysym = QKtab;
@@ -1525,7 +1523,7 @@ key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
 	fn = Qcall_interactively;
       else
 	fn = Qeval;
-      XSETFRAME (XEVENT (event)->channel, selected_frame ());
+      XEVENT (event)->channel = wrap_frame (selected_frame ());
       XEVENT (event)->event_type = misc_user_event;
       XEVENT (event)->event.eval.function = fn;
       XEVENT (event)->event.eval.object = arg;
@@ -1904,7 +1902,7 @@ what's in `function-key-map' and `key-translation-map'.
       struct key_data raw_key2;
 
       if (STRINGP (keys))
-	c = make_char (string_char (XSTRING (keys), idx));
+	c = make_char (XSTRING_CHAR (keys, idx));
       else
 	c = XVECTOR_DATA (keys) [idx];
 
@@ -2230,7 +2228,7 @@ reach a non-prefix command.
 
       for (i = 0; i < length; i++)
 	{
-          Emchar n = string_char (XSTRING (keys), i);
+          Emchar n = XSTRING_CHAR (keys, i);
 	  define_key_parser (make_char (n), &(raw_keys[i]));
 	}
       return raw_lookup_key (keymap, raw_keys, length, 0,
@@ -2331,8 +2329,8 @@ get_relevant_keymaps (Lisp_Object keys,
            || (XEVENT (terminal)->event_type != button_press_event
                && XEVENT (terminal)->event_type != button_release_event))
     {
-      Lisp_Object tem;
-      XSETBUFFER (tem, current_buffer);
+      Lisp_Object tem = wrap_buffer (current_buffer);
+
       /* It's not a mouse event; order of keymaps searched is:
 	 o  keymap of any/all extents under the mouse
 	 o  minor-mode maps
@@ -2502,8 +2500,7 @@ minor_mode_keymap_predicate (Lisp_Object assoc, Lisp_Object buffer)
 	  Lisp_Object val = symbol_value_in_buffer (sym, buffer);
 	  if (!NILP (val) && !UNBOUNDP (val))
 	    {
-	      Lisp_Object map = get_keymap (XCDR (assoc), 0, 1);
-	      return map;
+	      return get_keymap (XCDR (assoc), 0, 1);
 	    }
 	}
     }
@@ -2928,9 +2925,9 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
 
   /* otherwise, string-sort them. */
   {
-    char *s1 = (char *) string_data (XSYMBOL (obj1)->name);
-    char *s2 = (char *) string_data (XSYMBOL (obj2)->name);
-    return 0 > strcmp  (s1, s2) ? 1 : -1;
+    Intbyte *s1 = XSTRING_DATA (XSYMBOL (obj1)->name);
+    Intbyte *s2 = XSTRING_DATA (XSYMBOL (obj2)->name);
+    return 0 > qxestrcmp (s1, s2) ? 1 : -1;
   }
 }
 
@@ -3246,7 +3243,7 @@ spaces are put between sequence elements, etc...
 	{
 	  Lisp_Object s2 = Fsingle_key_description
 	    (STRINGP (keys)
-	     ? make_char (string_char (XSTRING (keys), i))
+	     ? make_char (XSTRING_CHAR (keys, i))
 	     : XVECTOR_DATA (keys)[i]);
 
 	  if (i == 0)
@@ -3275,7 +3272,9 @@ of a key read from the user rather than a character from a buffer.
 
   if (EVENTP (key) || CHAR_OR_CHAR_INTP (key))
     {
-      char buf [255];
+      DECLARE_EISTRING_MALLOC (buf);
+      Lisp_Object str;
+      
       if (!EVENTP (key))
 	{
 	  Lisp_Event event;
@@ -3287,51 +3286,47 @@ of a key read from the user rather than a character from a buffer.
 	}
       else
 	format_event_object (buf, XEVENT (key), 1);
-      return build_string (buf);
+      str = eimake_string (buf);
+      eifree (buf);
+      return str;
     }
 
   if (CONSP (key))
     {
-      char buf[255];
-      char *bufp = buf;
+      DECLARE_EISTRING (bufp);
+
       Lisp_Object rest;
-      buf[0] = 0;
       LIST_LOOP (rest, key)
 	{
 	  Lisp_Object keysym = XCAR (rest);
-	  if (EQ (keysym, Qcontrol))    strcpy (bufp, "C-"), bufp += 2;
-	  else if (EQ (keysym, Qctrl))  strcpy (bufp, "C-"), bufp += 2;
-	  else if (EQ (keysym, Qmeta))  strcpy (bufp, "M-"), bufp += 2;
-	  else if (EQ (keysym, Qsuper)) strcpy (bufp, "S-"), bufp += 2;
-	  else if (EQ (keysym, Qhyper)) strcpy (bufp, "H-"), bufp += 2;
-	  else if (EQ (keysym, Qalt))	strcpy (bufp, "A-"), bufp += 2;
-	  else if (EQ (keysym, Qshift)) strcpy (bufp, "Sh-"), bufp += 3;
+	  if (EQ (keysym, Qcontrol))    eicat_c (bufp, "C-");
+	  else if (EQ (keysym, Qctrl))  eicat_c (bufp, "C-");
+	  else if (EQ (keysym, Qmeta))  eicat_c (bufp, "M-");
+	  else if (EQ (keysym, Qsuper)) eicat_c (bufp, "S-");
+	  else if (EQ (keysym, Qhyper)) eicat_c (bufp, "H-");
+	  else if (EQ (keysym, Qalt))	eicat_c (bufp, "A-");
+	  else if (EQ (keysym, Qshift)) eicat_c (bufp, "Sh-");
 	  else if (CHAR_OR_CHAR_INTP (keysym))
-	    {
-	      bufp += set_charptr_emchar ((Intbyte *) bufp,
-					  XCHAR_OR_CHAR_INT (keysym));
-	      *bufp = 0;
-	    }
+	    eicat_ch (bufp, XCHAR_OR_CHAR_INT (keysym));
 	  else
 	    {
 	      CHECK_SYMBOL (keysym);
 #if 0                           /* This is bogus */
-	      if (EQ (keysym, QKlinefeed))	 strcpy (bufp, "LFD");
-	      else if (EQ (keysym, QKtab))	 strcpy (bufp, "TAB");
-	      else if (EQ (keysym, QKreturn))	 strcpy (bufp, "RET");
-	      else if (EQ (keysym, QKescape))	 strcpy (bufp, "ESC");
-	      else if (EQ (keysym, QKdelete))	 strcpy (bufp, "DEL");
-	      else if (EQ (keysym, QKspace))	 strcpy (bufp, "SPC");
-	      else if (EQ (keysym, QKbackspace)) strcpy (bufp, "BS");
+	      if (EQ (keysym, QKlinefeed))	 eicat_c (bufp, "LFD");
+	      else if (EQ (keysym, QKtab))	 eicat_c (bufp, "TAB");
+	      else if (EQ (keysym, QKreturn))	 eicat_c (bufp, "RET");
+	      else if (EQ (keysym, QKescape))	 eicat_c (bufp, "ESC");
+	      else if (EQ (keysym, QKdelete))	 eicat_c (bufp, "DEL");
+	      else if (EQ (keysym, QKspace))	 eicat_c (bufp, "SPC");
+	      else if (EQ (keysym, QKbackspace)) eicat_c (bufp, "BS");
 	      else
 #endif
-		strcpy (bufp, (char *) string_data (XSYMBOL (keysym)->name));
+		eicat_lstr (bufp, XSYMBOL (keysym)->name);
 	      if (!NILP (XCDR (rest)))
-		invalid_argument ("Invalid key description",
-				     key);
+		invalid_argument ("Invalid key description", key);
 	    }
 	}
-      return build_string (buf);
+      return eimake_string (bufp);
     }
   return Fsingle_key_description
     (wrong_type_argument (intern ("char-or-event-p"), key));
@@ -3421,7 +3416,7 @@ of a character from a buffer rather than a key read from the user.
 
 static Lisp_Object
 where_is_internal (Lisp_Object definition, Lisp_Object *maps, int nmaps,
-                   Lisp_Object firstonly, char *target_buffer);
+                   Lisp_Object firstonly, Eistring *target_buffer);
 
 DEFUN ("where-is-internal", Fwhere_is_internal, 1, 5, 0, /*
 Return list of keys that invoke DEFINITION in KEYMAPS.
@@ -3494,7 +3489,7 @@ If optional 4th arg NOINDIRECT is non-nil, don't follow indirections
    very fast.  This is used by menubar.c.
  */
 void
-where_is_to_char (Lisp_Object definition, char *buffer)
+where_is_to_char (Lisp_Object definition, Eistring *buffer)
 {
   /* This function can GC */
   Lisp_Object maps[100];
@@ -3509,7 +3504,6 @@ where_is_to_char (Lisp_Object definition, char *buffer)
       nmaps = get_relevant_keymaps (Qnil, nmaps, gubbish);
     }
 
-  buffer[0] = 0;
   where_is_internal (definition, maps, nmaps, Qt, buffer);
 }
 
@@ -3525,7 +3519,7 @@ raw_keys_to_keys (struct key_data *keys, int count)
 
 
 static void
-format_raw_keys (struct key_data *keys, int count, char *buf)
+format_raw_keys (struct key_data *keys, int count, Eistring *buf)
 {
   int i;
   Lisp_Event event;
@@ -3536,9 +3530,8 @@ format_raw_keys (struct key_data *keys, int count, char *buf)
       event.event.key.keysym    = keys[i].keysym;
       event.event.key.modifiers = keys[i].modifiers;
       format_event_object (buf, &event, 1);
-      buf += strlen (buf);
-      if (i < count-1)
-	buf[0] = ' ', buf++;
+      if (i < count - 1)
+	eicat_c (buf, " ");
     }
 }
 
@@ -3571,7 +3564,7 @@ struct where_is_closure
     int firstonly;
     int keys_count;
     int modifiers_so_far;
-    char *target_buffer;
+    Eistring *target_buffer;
     struct key_data *keys_so_far;
     int keys_so_far_total_size;
     int keys_so_far_malloced;
@@ -3588,7 +3581,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
   const int firstonly = c->firstonly;
   const int keys_count = c->keys_count;
   const int modifiers_so_far = c->modifiers_so_far;
-  char *target_buffer = c->target_buffer;
+  Eistring *target_buffer = c->target_buffer;
   Lisp_Object keys = Fgethash (definition,
                                XKEYMAP (map)->inverse_table,
                                Qnil);
@@ -3736,7 +3729,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 
 static Lisp_Object
 where_is_internal (Lisp_Object definition, Lisp_Object *maps, int nmaps,
-                   Lisp_Object firstonly, char *target_buffer)
+                   Lisp_Object firstonly, Eistring *target_buffer)
 {
   /* This function can GC */
   Lisp_Object result = Qnil;

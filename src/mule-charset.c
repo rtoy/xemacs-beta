@@ -139,7 +139,7 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   if (print_readably)
     printing_unreadable_object ("#<charset %s 0x%x>",
-				string_data (XSYMBOL (CHARSET_NAME (cs))->
+				XSTRING_DATA (XSYMBOL (CHARSET_NAME (cs))->
 					     name),
 				cs->header.uid);
 
@@ -215,7 +215,7 @@ make_charset (int id, Lisp_Object name, int rep_bytes,
     {
       cs = alloc_lcrecord_type (Lisp_Charset, &lrecord_charset);
       zero_lcrecord (cs);
-      XSETCHARSET (obj, cs);
+      obj = wrap_charset (cs);
 
       if (final)
 	{
@@ -591,15 +591,11 @@ character set.  Recognized properties are:
   else
     type = (chars == 94) ? CHARSET_TYPE_94X94 : CHARSET_TYPE_96X96;
 
-  existing_charset = CHARSET_BY_ATTRIBUTES (type, final,
-					    CHARSET_LEFT_TO_RIGHT);
-  if (NILP (existing_charset))
-    existing_charset = CHARSET_BY_ATTRIBUTES (type, final,
-					      CHARSET_RIGHT_TO_LEFT);
+  existing_charset = CHARSET_BY_ATTRIBUTES (type, final, direction);
 
   if (!NILP (existing_charset) && !XCHARSET (existing_charset)->temporary)
     invalid_argument
-      ("Character set already defined for this DIMENSION/CHARS/FINAL combo",
+      ("Character set already defined for this DIMENSION/CHARS/FINAL/DIRECTION combo",
        existing_charset);
 
   if (!NILP (existing_charset))
@@ -620,7 +616,7 @@ character set.  Recognized properties are:
   if (NILP (registry))
     registry = build_string ("");
   if (NILP (short_name))
-    XSETSTRING (short_name, XSYMBOL (name)->name);
+    short_name = XSYMBOL (name)->name;
   if (NILP (long_name))
     long_name = doc_string;
   if (columns == -1)
@@ -633,6 +629,18 @@ character set.  Recognized properties are:
   XCHARSET (charset)->temporary = temporary;
   if (!NILP (ccl_program))
     XCHARSET_CCL_PROGRAM (charset) = ccl_program;
+
+  {
+    Lisp_Object revdircs =
+      CHARSET_BY_ATTRIBUTES (type, final,
+			     direction == CHARSET_LEFT_TO_RIGHT ?
+			     CHARSET_RIGHT_TO_LEFT : CHARSET_LEFT_TO_RIGHT);
+    if (!NILP (revdircs))
+      {
+	XCHARSET_REVERSE_DIRECTION_CHARSET (revdircs) = charset;
+	XCHARSET_REVERSE_DIRECTION_CHARSET (charset) = revdircs;
+      }
+  }
 
   return charset;
 }
@@ -654,7 +662,7 @@ NEW-NAME is the name of the new charset.  Return the new charset.
   charset = Fget_charset (charset);
   if (!NILP (XCHARSET_REVERSE_DIRECTION_CHARSET (charset)))
     invalid_operation ("Charset already has reverse-direction charset",
-			 charset);
+		       charset);
 
   CHECK_SYMBOL (new_name);
   if (!NILP (Ffind_charset (new_name)))
@@ -687,8 +695,6 @@ NEW-NAME is the name of the new charset.  Return the new charset.
   return new_charset;
 }
 
-/* #### Reverse direction charsets not yet implemented.  */
-#if 0
 DEFUN ("charset-reverse-direction-charset", Fcharset_reverse_direction_charset,
        1, 1, 0, /*
 Return the reverse-direction charset parallel to CHARSET, if any.
@@ -701,7 +707,6 @@ CHARSET but whose characters are displayed in the opposite direction.
   charset = Fget_charset (charset);
   return XCHARSET_REVERSE_DIRECTION_CHARSET (charset);
 }
-#endif
 
 DEFUN ("charset-from-attributes", Fcharset_from_attributes, 3, 4, 0, /*
 Return a charset with the given DIMENSION, CHARS, FINAL, and DIRECTION.
@@ -832,7 +837,7 @@ Return charset identification number of CHARSET.
 */
 	(charset))
 {
-  return make_int(XCHARSET_LEADING_BYTE (Fget_charset (charset)));
+  return make_int (XCHARSET_LEADING_BYTE (Fget_charset (charset)));
 }
 
 /* #### We need to figure out which properties we really want to
@@ -963,7 +968,7 @@ syms_of_mule_charset (void)
   DEFSUBR (Fcharset_name);
   DEFSUBR (Fmake_charset);
   DEFSUBR (Fmake_reverse_direction_charset);
-  /*  DEFSUBR (Freverse_direction_charset); */
+  DEFSUBR (Fcharset_reverse_direction_charset);
   DEFSUBR (Fcharset_from_attributes);
   DEFSUBR (Fcharset_short_name);
   DEFSUBR (Fcharset_long_name);

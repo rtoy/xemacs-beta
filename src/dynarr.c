@@ -177,8 +177,8 @@ Dynarr_resize (void *d, int size)
 void
 Dynarr_insert_many (void *d, const void *el, int len, int start)
 {
-  Dynarr *dy = (Dynarr *) d;
-
+  Dynarr *dy = (Dynarr *) Dynarr_verify (d);
+  
   Dynarr_resize (dy, dy->cur+len);
   /* Silently adjust start to be valid. */
   if (start > dy->cur)

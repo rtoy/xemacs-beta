@@ -143,7 +143,7 @@ X11_libs = $(LIBI18N)
 ## needed (e.g. native sound support) and it would be pointless to
 ## duplicate that code.
 
-gui_objs=
+gui_objs= gui.o
 #ifdef HAVE_MENUBARS
 gui_objs += menubar.o
 #endif
@@ -155,9 +155,6 @@ gui_objs += dialog.o
 #endif
 #ifdef HAVE_TOOLBARS
 gui_objs += toolbar.o
-#endif
-#ifdef HAVE_GUI_OBJECTS
-gui_objs += gui.o
 #endif
 
 #ifdef HAVE_X_WINDOWS
@@ -320,7 +317,8 @@ objs=\
  faces.o file-coding.o fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o \
  font-lock.o frame.o\
  general.o $(gif_objs) glyphs.o glyphs-eimage.o glyphs-shared.o\
- glyphs-widget.o $(gpm_objs) $(gtk_objs) $(gtk_gui_objs) $(gui_objs) gutter.o\
+ glyphs-widget.o $(gpm_objs) $(gtk_objs) $(gtk_gui_objs) $(gui_objs) \
+ gutter.o\
  hash.o imgproc.o indent.o insdel.o intl.o\
  keymap.o $(RTC_patch_objs) line-number.o $(ldap_objs) lread.o lstream.o\
  macros.o marker.o md5.o minibuf.o $(mswindows_objs) $(mswindows_gui_objs)\

@@ -189,7 +189,7 @@ allocate_frame_core (Lisp_Object device)
   struct frame *f = alloc_lcrecord_type (struct frame, &lrecord_frame);
 
   nuke_all_frame_slots (f);
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   f->device = device;
   f->framemeths = XDEVICE (device)->devmeths;
@@ -229,7 +229,7 @@ allocate_frame_core (Lisp_Object device)
     buf = Fcurrent_buffer ();
     /* If buf is a 'hidden' buffer (i.e. one whose name starts with
        a space), try to find another one.  */
-    if (string_char (XSTRING (Fbuffer_name (buf)), 0) == ' ')
+    if (XSTRING_CHAR (Fbuffer_name (buf), 0) == ' ')
       buf = Fother_buffer (buf, Qnil, Qnil);
     Fset_window_buffer (root_window, buf, Qnil);
   }
@@ -241,9 +241,8 @@ static void
 setup_normal_frame (struct frame *f)
 {
   Lisp_Object mini_window;
-  Lisp_Object frame;
+  Lisp_Object frame = wrap_frame (f);
 
-  XSETFRAME (frame, f);
 
   mini_window = allocate_window ();
   XWINDOW (f->root_window)->next = mini_window;
@@ -309,9 +308,8 @@ setup_minibuffer_frame (struct frame *f)
   /* This function can GC */
   /* First make a frame containing just a root window, no minibuffer.  */
   Lisp_Object mini_window;
-  Lisp_Object frame;
+  Lisp_Object frame = wrap_frame (f);
 
-  XSETFRAME (frame, f);
 
   f->no_split = 1;
   f->has_minibuffer = 1;
@@ -380,7 +378,7 @@ See `set-frame-properties', `default-x-frame-plist', and
   int frame_name_is_defaulted = 1;
 
   d = decode_device (device);
-  XSETDEVICE (device, d);
+  device = wrap_device (d);
 
   /* PROPS and NAME may be freshly-created, so make sure to GCPRO. */
   GCPRO3 (frame, props, name);
@@ -411,7 +409,7 @@ See `set-frame-properties', `default-x-frame-plist', and
     syntax_error (". not allowed in frame names", name);
 
   f = allocate_frame_core (device);
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   specbind (Qframe_being_created, name);
   f->name = name;
@@ -646,8 +644,8 @@ void
 adjust_frame_size (struct frame *f)
 {
   int keep_char_size = 0;
-  Lisp_Object frame;
-  XSETFRAME (frame, f);
+  Lisp_Object frame = wrap_frame (f);
+
 
   if (!f->size_slipped)
     return;
@@ -812,8 +810,8 @@ device_selected_frame (struct device *d)
   Lisp_Object frame = DEVICE_SELECTED_FRAME (d);
   if (NILP (frame))
     {
-      Lisp_Object device;
-      XSETDEVICE (device, d);
+      Lisp_Object device = wrap_device (d);
+
       gui_error ("No frames exist on device", device);
     }
   return XFRAME (frame);
@@ -904,7 +902,7 @@ CONSOLE defaults to the selected console if omitted.
 {
   Lisp_Object result;
 
-  XSETCONSOLE (console, decode_console (console));
+  console = wrap_console (decode_console (console));
   /* Just in case the machinations in delete_frame_internal() resulted
      in the last-nonminibuf-frame getting out of sync, make sure and
      return the selected frame if it's acceptable. */
@@ -959,7 +957,7 @@ If FRAME is the selected frame, this makes WINDOW the selected window.
 */
        (frame, window))
 {
-  XSETFRAME (frame, decode_frame (frame));
+  frame = wrap_frame (decode_frame (frame));
   CHECK_LIVE_WINDOW (window);
 
   if (! EQ (frame, WINDOW_FRAME (XWINDOW (window))))
@@ -1230,7 +1228,7 @@ Any other non-nil value means search all devices.
 */
        (frame, which_frames, which_devices))
 {
-  XSETFRAME (frame, decode_frame (frame));
+  frame = wrap_frame (decode_frame (frame));
 
   return next_frame (frame, which_frames, which_devices);
 }
@@ -1248,7 +1246,7 @@ arguments.
 */
        (frame, which_frames, which_devices))
 {
-  XSETFRAME (frame, decode_frame (frame));
+  frame = wrap_frame (decode_frame (frame));
 
   return previous_frame (frame, which_frames, which_devices);
 }
@@ -1285,9 +1283,8 @@ find_some_frame (int (*predicate) (Lisp_Object, void *),
 int
 other_visible_frames (struct frame *f)
 {
-  Lisp_Object frame;
+  Lisp_Object frame = wrap_frame (f);
 
-  XSETFRAME (frame, f);
   if (FRAME_STREAM_P (f))
     return !EQ (frame, next_frame (frame, Qt, Qt));
   return !EQ (frame, next_frame (frame, Qvisible_iconic_nomini, Qt));
@@ -1324,7 +1321,7 @@ delete_frame_internal (struct frame *f, int force,
   if (! FRAME_LIVE_P (f))
     return;
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
   GCPRO1 (frame);
 
   device = FRAME_DEVICE (f);
@@ -1700,7 +1697,7 @@ will automatically call `save-buffers-kill-emacs'.)
   if (NILP (frame))
     {
       f = selected_frame ();
-      XSETFRAME (frame, f);
+      frame = wrap_frame (f);
     }
   else
     {
@@ -1766,13 +1763,13 @@ the device's selected window for WINDOW and nil for X and Y.
 	find_window_by_pixel_pos (intx, inty, XFRAME (frame)->root_window);
       if (w)
 	{
-	  XSETWINDOW (window, w);
+	  window = wrap_window (w);
 
 	  /* Adjust the position to be relative to the window. */
 	  intx -= w->pixel_left;
 	  inty -= w->pixel_top;
-	  XSETINT (x, intx);
-	  XSETINT (y, inty);
+	  x = make_int (intx);
+	  y = make_int (inty);
 	}
     }
   else if (FRAMEP (frame))
@@ -1814,7 +1811,7 @@ the device's selected window for WINDOW and nil for X and Y.
 	{
 	  lisp_x = make_int (x);
 	  lisp_y = make_int (y);
-	  XSETWINDOW (window, w);
+	  window = wrap_window (w);
 	}
     }
   else if (FRAMEP (frame))
@@ -2161,8 +2158,8 @@ static void internal_set_frame_size (struct frame *f, int cols, int rows,
 static void
 store_minibuf_frame_prop (struct frame *f, Lisp_Object val)
 {
-  Lisp_Object frame;
-  XSETFRAME (frame, f);
+  Lisp_Object frame = wrap_frame (f);
+
 
   if (WINDOWP (val))
     {
@@ -2204,7 +2201,7 @@ dissect_as_face_setting (Lisp_Object sym, Lisp_Object *face_out,
 			 Lisp_Object *face_prop_out)
 {
   Lisp_Object list = Vbuilt_in_face_specifiers;
-  Lisp_String *s;
+  Lisp_Object s;
 
   if (!SYMBOLP (sym))
     return 0;
@@ -2214,23 +2211,23 @@ dissect_as_face_setting (Lisp_Object sym, Lisp_Object *face_out,
   while (!NILP (list))
     {
       Lisp_Object prop = Fcar (list);
-      Lisp_String *prop_name;
+      Lisp_Object prop_name;
 
       if (!SYMBOLP (prop))
 	continue;
       prop_name = symbol_name (XSYMBOL (prop));
-      if (string_length (s) > string_length (prop_name) + 1
-	  && !memcmp (string_data (prop_name),
-		      string_data (s) + string_length (s)
-		      - string_length (prop_name),
-		      string_length (prop_name))
-	  && string_data (s)[string_length (s) - string_length (prop_name)
+      if (XSTRING_LENGTH (s) > XSTRING_LENGTH (prop_name) + 1
+	  && !memcmp (XSTRING_DATA (prop_name),
+		      XSTRING_DATA (s) + XSTRING_LENGTH (s)
+		      - XSTRING_LENGTH (prop_name),
+		      XSTRING_LENGTH (prop_name))
+	  && XSTRING_DATA (s)[XSTRING_LENGTH (s) - XSTRING_LENGTH (prop_name)
 			     - 1] == '-')
 	{
 	  Lisp_Object face =
-	    Ffind_face (make_string (string_data (s),
-				     string_length (s)
-				     - string_length (prop_name)
+	    Ffind_face (make_string (XSTRING_DATA (s),
+				     XSTRING_LENGTH (s)
+				     - XSTRING_LENGTH (prop_name)
 				     - 1));
 	  if (!NILP (face))
 	    {
@@ -2355,7 +2352,7 @@ recognized for particular types of frames.
   Lisp_Object *tailp;
   struct gcpro gcpro1, gcpro2;
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
   GCPRO2 (frame, plist);
   Fcheck_valid_plist (plist);
   plist = Fcopy_sequence (plist);
@@ -2443,7 +2440,7 @@ See `set-frame-properties' for the built-in property names.
   struct frame *f = decode_frame (frame);
   Lisp_Object value;
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   property = get_property_alias (property);
 
@@ -2522,7 +2519,7 @@ Do not modify this list; use `set-frame-property' instead.
 
   GCPRO1 (result);
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   /* #### for the moment (since old code uses `frame-parameters'),
      we call `copy-sequence' on f->plist.  That allows frame-parameters
@@ -2635,7 +2632,7 @@ but that the idea of the actual height of the frame should not be changed.
 {
   struct frame *f = decode_frame (frame);
   int height, width;
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
   CHECK_INT (lines);
 
   if (window_system_pixelated_geometry (frame))
@@ -2662,7 +2659,7 @@ but that the idea of the actual width of the frame should not be changed.
 {
   struct frame *f = decode_frame (frame);
   int width, height;
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
   CHECK_INT (cols);
 
   if (window_system_pixelated_geometry (frame))
@@ -2689,7 +2686,7 @@ but that the idea of the actual size of the frame should not be changed.
 {
   struct frame *f = decode_frame (frame);
   int height, width;
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
   CHECK_INT (cols);
   CHECK_INT (rows);
 
@@ -2740,7 +2737,7 @@ frame_conversion_internal (struct frame *f, int pixel_to_char,
   int obw, obh, bdr;
   Lisp_Object frame, window;
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
   if (real_face)
     default_face_height_and_width (frame, &cph, &cpw);
   else
@@ -2871,7 +2868,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
   if (in_display)
     abort ();
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   default_face_height_and_width (frame, &real_font_height, 0);
   default_face_height_and_width_1 (frame, &font_height, &font_width);
@@ -3170,7 +3167,7 @@ update_frame_icon (struct frame *f)
       Lisp_Object frame;
       Lisp_Object new_icon;
 
-      XSETFRAME (frame, f);
+      frame = wrap_frame (f);
       new_icon = glyph_image_instance (Vframe_icon_glyph, frame,
 				       ERROR_ME_WARN, 0);
       if (!EQ (new_icon, f->icon))

@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1988, 1992-4, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems
-;; Copyright (C) 1995, 1996, 2000 Ben Wing.
+;; Copyright (C) 1995, 1996, 2000, 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: mouse, dumped
@@ -45,10 +45,15 @@
 
 (global-set-key 'button1 'mouse-track)
 (global-set-key '(shift button1) 'mouse-track-adjust)
+(global-set-key '(meta button1) 'mouse-track-by-lines)
+(global-set-key '(meta shift button1) 'mouse-track-adjust-by-lines)
 (global-set-key '(control button1) 'mouse-track-insert)
 (global-set-key '(control shift button1) 'mouse-track-delete-and-insert)
-(global-set-key '(meta button1) 'mouse-track-do-rectangle)
+(global-set-key '(meta control button1) 'mouse-track-insert-by-lines)
+(global-set-key '(meta shift control button1)
+  'mouse-track-delete-and-insert-by-lines)
 (global-set-key 'button2 'mouse-track)
+(global-set-key '(meta button2) 'mouse-track-do-rectangle)
 
 (defgroup mouse nil
   "Window system-independent mouse support."
@@ -84,9 +89,11 @@ If set to `symbol', double-click will always attempt to highlight a
   "Function that is called upon by `mouse-yank' to actually insert text.")
 
 (defun mouse-consolidated-yank ()
-  "Insert the current selection or, if there is none under X insert
-the X cutbuffer.  A mark is pushed, so that the inserted text lies
-between point and mark."
+  "Insert the current selection at point.
+\(Under X Windows, if there is none, insert the X cutbuffer.)  A mark is
+pushed, so that the inserted text lies between point and mark.  This is the
+default value of `mouse-yank-function', and as such is called by
+`mouse-yank' to do the actual work."
   (interactive)
   (if (and (not (console-on-window-system-p))
 	   (and (featurep 'gpm)
@@ -176,7 +183,10 @@ between point and mark."
   "Paste text with the mouse.
 If the variable `mouse-yank-at-point' is nil, then pasting occurs at the
 location of the click; otherwise, pasting occurs at the current cursor
-location."
+location.  This calls the value of the variable `mouse-yank-function'
+(normally the function `mouse-consolidated-yank') to do the actual work.
+This is normally called as a result of a click of button2 by
+`default-mouse-track-click-hook'."
   (interactive "e")
   (and (not mouse-yank-at-point)
        (mouse-set-point event))
@@ -627,9 +637,14 @@ Return true if the function was activated."
 )
 
 (defun mouse-track (event &optional overriding-hooks)
-  "Generalized mouse-button handler.  This should be bound to a mouse button.
-The behavior of this function is customizable using various hooks and
-variables: see `mouse-track-click-hook', `mouse-track-drag-hook',
+  "Generalized mouse-button handler.
+This is the function that handles standard mouse behavior -- moving point
+when clicked, selecting text when dragged, etc. -- and should be bound to a
+mouse button (normally, button1 and button2).
+
+This allows for overloading of different mouse strokes with different
+commands.  The behavior of this function is customizable using various
+hooks and variables: see `mouse-track-click-hook', `mouse-track-drag-hook',
 `mouse-track-drag-up-hook', `mouse-track-down-hook', `mouse-track-up-hook',
 `mouse-track-cleanup-hook', `mouse-track-multi-click-time',
 `mouse-track-scroll-delay', `mouse-track-x-threshold', and
@@ -661,9 +676,12 @@ If you drag the mouse off the top or bottom of the window, you can select
 pieces of text which are larger than the visible part of the buffer; the
 buffer will scroll as necessary.
 
-The selected text becomes the current X Selection.  The point will be left
-at the position at which you released the button, and the mark will be left
-at the initial click position."
+The point will be left at the position at which you released the button,
+and the mark will be left at the initial click position.
+
+Under X Windows, the selected text becomes the current X Selection, and can
+be immediately inserted elsewhere using button2.  Under MS Windows, this
+also works, because the behavior is emulated."
   (interactive "e")
   (let ((mouse-down t)
 	(xthresh (eval mouse-track-x-threshold))
@@ -842,7 +860,7 @@ at the initial click position."
 ;; This remembers the last position at which the user clicked, for the
 ;; benefit of mouse-track-adjust (for example, button1; scroll until the
 ;; position of the click is off the frame; then Sh-button1 to select the
-;; new region.
+;; new region).
 (defvar default-mouse-track-previous-point nil)
 
 (defun default-mouse-track-set-point (event window)
@@ -919,7 +937,16 @@ at the initial click position."
 	       (default-mouse-track-beginning-of-word
 		 (default-mouse-track-symbolp type))))))
 	((eq type 'line)
-	 (if forwardp (end-of-line) (beginning-of-line)))
+	 (if forwardp
+	     ;; Counter-kludge.  If we are adjusting a line-oriented
+	     ;; selection, default-mouse-track-return-dragged-selection
+	     ;; fixed it to include the final newline.  Unfortunately, that
+	     ;; will cause us to add another line at the end (the wrong
+	     ;; side of the selection) unless we take evasive action.
+	     (unless (and default-mouse-track-adjust
+			  (bolp))
+	       (end-of-line))
+	   (beginning-of-line)))
 	((eq type 'buffer)
 	 (if forwardp (end-of-buffer) (beginning-of-buffer)))))
 
@@ -1268,12 +1295,14 @@ at the initial click position."
 	  (extent
 	   (setq result (cons (extent-start-position extent)
 			      (extent-end-position extent)))))
-    ;; Minor kludge: if we're selecting in line-mode, include the
-    ;; final newline.  It's hard to do this in *-normalize-point.
+    ;; Minor kludge: if we're selecting in line-mode, include the final
+    ;; newline.  It's hard to do this in *-normalize-point.  Unfortunately
+    ;; this necessitates a counter-kludge in
+    ;; default-mouse-track-normalize-point.
     (if (and result (eq default-mouse-track-type 'line))
 	(let ((end-p (= (point) (cdr result))))
 	  (goto-char (cdr result))
-	  (if (not (eobp))
+	  (if (and (eolp) (not (eobp)))
 	      (setcdr result (1+ (cdr result))))
 	  (goto-char (if end-p (cdr result) (car result)))))
 ;;;	  ;; Minor kludge sub 2.  If in char mode, and we drag the
@@ -1362,6 +1391,14 @@ at the initial click position."
   (let ((mouse-track-rectangle-p t))
 	(mouse-track event)))
 
+(defun mouse-track-by-lines (event)
+  "Make a line-by-line selection with the mouse.
+This actually works the same as `mouse-track' (which handles all
+mouse-button behavior) but forces whole lines to be selected."
+  (interactive "e")
+  (let ((default-mouse-track-type-list '(line)))
+    (mouse-track event)))
+
 (defun mouse-track-adjust (event)
   "Extend the existing selection.  This should be bound to a mouse button.
 The selection will be enlarged or shrunk so that the point of the mouse
@@ -1385,13 +1422,23 @@ custom mouse-track handlers that the user may have installed."
   (let ((default-mouse-track-adjust t))
     (mouse-track-default event)))
 
-(defun mouse-track-insert (event &optional delete)
-  "Make a selection with the mouse and insert it at point.
-This is exactly the same as the `mouse-track' command on \\[mouse-track],
-except that point is not moved; the selected text is immediately inserted
-after being selected\; and the selection is immediately disowned afterwards."
+(defun mouse-track-adjust-by-lines (event)
+  "Extend the existing selection by lines.
+This works the same as `mouse-track-adjust' (bound to \\[mouse-track-adjust])
+but forces whole lines to be selected."
+  (interactive "e")
+  (let ((default-mouse-track-type-list '(line))
+	(default-mouse-track-adjust t))
+    (mouse-track event)))
+
+(defun mouse-track-insert-1 (event &optional delete line-p)
+  "Guts of mouse-track-insert and friends.
+If DELETE, delete the selection as well as inserting it at the new place.
+If LINE-P, select by lines and insert before current line."
   (interactive "*e")
-  (let (s selreg)
+  (let ((default-mouse-track-type-list
+	  (if line-p '(line) default-mouse-track-type-list))
+	s selreg)
     (flet ((Mouse-track-insert-drag-up-hook (event count)
 	     (setq selreg
 		   (default-mouse-track-return-dragged-selection event))
@@ -1415,15 +1462,44 @@ after being selected\; and the selection is immediately disowned afterwards."
 			    (buffer-substring (car pair) (cdr pair))
 			  (if delete
 			      (kill-region (car pair) (cdr pair))))))))))
-    (or (null s) (equal s "") (insert s))))
+    (or (null s) (equal s "")
+	(progn
+	  (if line-p (beginning-of-line))
+	  (insert s)))))
+
+(defun mouse-track-insert (event)
+  "Make a selection with the mouse and insert it at point.
+This works the same as just selecting text using the mouse (the
+`mouse-track' command), except that point is not moved; the selected text
+is immediately inserted after being selected\; and the selection is
+immediately disowned afterwards."
+  (interactive "*e")
+  (mouse-track-insert-1 event))
 
 (defun mouse-track-delete-and-insert (event)
-  "Make a selection with the mouse and insert it at point.
-This is exactly the same as the `mouse-track' command on \\[mouse-track],
-except that point is not moved; the selected text is immediately inserted
-after being selected\; and the text of the selection is deleted."
+  "Make a selection with the mouse and move it to point.
+This works the same as just selecting text using the mouse (the
+`mouse-track' command), except that point is not moved; the selected text
+is immediately inserted after being selected\; and the text of the
+selection is deleted."
   (interactive "*e")
-  (mouse-track-insert event t))
+  (mouse-track-insert-1 event t))
+
+(defun mouse-track-insert-by-lines (event)
+  "Make a line-oriented selection with the mouse and insert it at line start.
+This is similar to `mouse-track-insert' except that it always selects
+entire lines and inserts the lines before the current line rather than at
+point."
+  (interactive "*e")
+  (mouse-track-insert-1 event nil t))
+
+(defun mouse-track-delete-and-insert-by-lines (event)
+  "Make a line-oriented selection with the mouse and move it to line start.
+This is similar to `mouse-track-insert' except that it always selects
+entire lines and inserts the lines before the current line rather than at
+point."
+  (interactive "*e")
+  (mouse-track-insert-1 event nil t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 

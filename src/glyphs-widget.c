@@ -167,7 +167,7 @@ check_valid_string_or_vector (Lisp_Object data)
 	invalid_argument (":descriptor must be a string or a vector", data);
 }
 
-void
+static void
 check_valid_item_list (Lisp_Object items)
 {
   Lisp_Object rest;

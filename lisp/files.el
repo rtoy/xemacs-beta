@@ -1209,17 +1209,17 @@ otherwise, we query.  `enable-local-variables' is ignored if you
 run `normal-mode' explicitly."
   (interactive)
   (or find-file (funcall (or default-major-mode 'fundamental-mode)))
-  (and (condition-case err
-           (progn (set-auto-mode)
-                  t)
-         (error (message "File mode specification error: %s"
-                         (prin1-to-string err))
-                nil))
-       (condition-case err
-           (hack-local-variables (not find-file))
-         (error (lwarn 'local-variables 'warning
-		  "File local-variables error: %s"
-		  (error-message-string err))))))
+  (and (with-trapping-errors
+	 :operation "File mode specification"
+	 :class 'file-mode-spec
+	 :error-form nil
+	 (set-auto-mode)
+	 t)
+       (with-trapping-errors
+	 :operation "File local-variables"
+	 :class 'local-variables
+	 :error-form nil
+	 (hack-local-variables (not find-file)))))
 
 ;; #### This variable sucks in the package model.  There should be a
 ;; way for new packages to add their entries to auto-mode-alist in a
@@ -2064,7 +2064,7 @@ of the new file to agree with the old modes."
 			     (setq backupname
 				   (expand-file-name
 				    (convert-standard-filename "~/%backup%~")))
-			     (message "Cannot write backup file; backing up in ~/%%backup%%~")
+			     (lwarn 'file 'alert "Cannot write backup file; backing up in ~/%%backup%%~")
 			     (sleep-for 1)
 			     (condition-case ()
 				 (copy-file real-file-name backupname t t)
@@ -3073,7 +3073,7 @@ This command is used in the special Dired buffer created by
 			       (condition-case nil
 				   (save-excursion (recover-file file))
 				 (error
-				  "Failed to recover `%s'" file)))
+				  (lwarn 'recover 'alert "Failed to recover `%s'" file))))
 			     files
 			     '("file" "files" "recover"))
 	    (message "No files can be recovered from this session now")))

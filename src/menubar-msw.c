@@ -775,7 +775,7 @@ mswindows_handle_wm_command (struct frame *f, WORD id)
 
   /* Ok, this is our one. Enqueue it. */
   get_gui_callback (data, &fn, &arg);
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
   /* this used to call mswindows_enqueue_misc_user_event but that
      breaks customize because the misc_event gets eval'ed in some
      circumstances. Don't change it back unless you can fix the

@@ -2136,8 +2136,8 @@ get_buffer_pos_char (struct buffer *b, Lisp_Object pos, unsigned int flags)
 	ind = -1;
       else
 	{
-	  Lisp_Object buffer;
-	  XSETBUFFER (buffer, b);
+	  Lisp_Object buffer = wrap_buffer (b);
+
 	  args_out_of_range (buffer, pos);
 	}
     }
@@ -2189,8 +2189,8 @@ get_buffer_range_char (struct buffer *b, Lisp_Object from, Lisp_Object to,
 
   if ((*from_out < 0 || *to_out < 0) && !(flags & GB_NO_ERROR_IF_BAD))
     {
-      Lisp_Object buffer;
-      XSETBUFFER (buffer, b);
+      Lisp_Object buffer = wrap_buffer (b);
+
       args_out_of_range_3 (buffer, from, to);
     }
 
@@ -2265,7 +2265,7 @@ get_string_pos_byte (Lisp_Object string, Lisp_Object pos, unsigned int flags)
   Charcount ccpos = get_string_pos_char (string, pos, flags);
   if (ccpos < 0) /* could happen with GB_NO_ERROR_IF_BAD */
     return -1;
-  return XSTRING_INDEX_CHAR_TO_BYTE (string, ccpos);
+  return string_index_char_to_byte (string, ccpos);
 }
 
 void
@@ -2315,11 +2315,11 @@ get_string_range_byte (Lisp_Object string, Lisp_Object from, Lisp_Object to,
 
   get_string_range_char (string, from, to, &s, &e, flags);
   if (s >= 0)
-    *from_out = XSTRING_INDEX_CHAR_TO_BYTE (string, s);
+    *from_out = string_index_char_to_byte (string, s);
   else /* could happen with GB_NO_ERROR_IF_BAD */
     *from_out = -1;
   if (e >= 0)
-    *to_out = XSTRING_INDEX_CHAR_TO_BYTE (string, e);
+    *to_out = string_index_char_to_byte (string, e);
   else
     *to_out = -1;
 

@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1610,7 +1610,7 @@ unix_canonicalize_host_name (Lisp_Object host)
       EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error,
 			    Qstrerror_encoding);
       maybe_signal_error (Qio_error, gai_error, host,
-			  Qprocess, ERROR_ME_NOT);
+			  Qprocess, ERROR_ME_DEBUG_WARN);
       canonname = host;
     }
   else

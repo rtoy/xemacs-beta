@@ -1,6 +1,7 @@
 ;;; packages.el --- Low level support for XEmacs packages
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Steven L Baur <steve@xemacs.org>
 ;; Maintainer: Steven L Baur <steve@xemacs.org>
@@ -502,15 +503,12 @@ PACKAGES is a list of package directories."
   "Load all Lisp files of a certain name along a load path.
 BASE is the base name of the files."
   (mapcar #'(lambda (dir)
-	    (let ((file-name (expand-file-name base dir)))
-	      (condition-case error
-		  (load file-name t t)
-		(error
-		 (warn (format "Autoload error in: %s:\n\t%s"
-			       file-name
-			       (with-output-to-string
-				 (display-error error nil))))))))
-	package-load-path))
+	      (let ((file-name (expand-file-name base dir)))
+		(with-trapping-errors
+		  :operation (format "Autoload %s" file-name)
+		  :class 'packages
+		  (load file-name t t))))
+	  package-load-path))
 
 (defun packages-load-package-auto-autoloads (package-load-path)
   "Load auto-autoload files along a load path."

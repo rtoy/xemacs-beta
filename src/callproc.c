@@ -1,6 +1,6 @@
 /* Old synchronous subprocess invocation for XEmacs.
    Copyright (C) 1985, 86, 87, 88, 93, 94, 95 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -134,7 +134,7 @@ call_process_cleanup (Lisp_Object fdpid)
     {
       HANDLE pHandle = OpenProcess (PROCESS_ALL_ACCESS, 0, pid);
       if (pHandle == NULL)
-	warn_when_safe (Qprocess, Qwarning,
+	warn_when_safe (Qprocess, Qnotice,
 			"cannot open process (PID %d) for cleanup", pid);
       else
 	wait_for_termination (pHandle);
@@ -387,7 +387,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	if (pHandle == NULL)
 	  {
 	    /* #### seems to cause crash in unbind_to_1(...) below. APA */
-	    warn_when_safe (Qprocess, Qwarning,
+	    warn_when_safe (Qprocess, Qnotice,
 			    "cannot open process to wait for");
 	  }
 #endif
@@ -463,7 +463,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     /* FSFmacs calls Fset_buffer() here.  We don't have to because
        we can insert into buffers other than the current one. */
     if (EQ (buffer, Qt))
-      XSETBUFFER (buffer, current_buffer);
+      buffer = wrap_buffer (current_buffer);
     instream = make_filedesc_input_stream (fd[0], 0, -1, LSTR_ALLOW_QUIT);
     instream =
       make_coding_input_stream

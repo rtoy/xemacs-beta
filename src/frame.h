@@ -236,7 +236,6 @@ extern Lisp_Object Vmouse_motion_handler;
 
 DECLARE_LRECORD (frame, struct frame);
 #define XFRAME(x) XRECORD (x, frame, struct frame)
-#define XSETFRAME(x, p) XSETRECORD (x, p, frame)
 #define wrap_frame(p) wrap_record (p, frame)
 #define FRAMEP(x) RECORDP (x, frame)
 #define CHECK_FRAME(x) CHECK_RECORD (x, frame)

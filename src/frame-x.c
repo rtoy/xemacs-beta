@@ -188,7 +188,7 @@ struct frame *
 decode_x_frame (Lisp_Object frame)
 {
   if (NILP (frame))
-    XSETFRAME (frame, selected_frame ());
+    frame = wrap_frame (selected_frame ());
   CHECK_LIVE_FRAME (frame);
   /* this will also catch dead frames, but putting in the above check
      results in a more useful error */
@@ -360,7 +360,7 @@ x_wm_maybe_store_wm_command (struct frame *f)
       make_argc_argv (Vcommand_line_args, &argc, &argv);
       XSetCommand (XtDisplay (w), XtWindow (w), argv, argc);
       free_argc_argv (argv);
-      XSETFRAME (DEVICE_X_WM_COMMAND_FRAME (d), f);
+      DEVICE_X_WM_COMMAND_FRAME (d) = wrap_frame (f);
     }
 }
 
@@ -436,7 +436,7 @@ x_frame_iconified_p (struct frame *f)
 
 /* Connect the frame-property names (symbols) to the corresponding
    X Resource Manager names.  The name of a property, as a Lisp symbol,
-   has an `x-resource-name' property which is a Lisp_String. */
+   has an `x-resource-name' property which is a Lisp string. */
 
 static void
 init_x_prop_symbols (void)
@@ -802,7 +802,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 		    {
 		      Lisp_Object frm, font_spec;
 
-		      XSETFRAME (frm, f);
+		      frm = wrap_frame (f);
 		      font_spec = Fget (Fget_face (Qdefault), Qfont, Qnil);
 
 		      Fadd_spec_to_specifier (font_spec, val, frm, Qnil, Qnil);
@@ -933,15 +933,15 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
       {
 	if (size_specified_p || internal_border_width_specified)
 	  {
-	    Lisp_Object frame;
-	    XSETFRAME (frame, f);
+	    Lisp_Object frame = wrap_frame (f);
+
 	    Fset_frame_size (frame, make_int (width),
 			      make_int (height), Qnil);
 	  }
 	if (position_specified_p)
 	  {
-	    Lisp_Object frame;
-	    XSETFRAME (frame, f);
+	    Lisp_Object frame = wrap_frame (f);
+
 	    Fset_frame_position (frame, make_int (x), make_int (y));
 	  }
       }
@@ -2417,7 +2417,7 @@ x_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
   f = x_any_window_to_frame (d, win);
   if (!f)
     return 0;
-  XSETFRAME (*frame, f);
+  *frame = wrap_frame (f);
 
   if (XTranslateCoordinates (display, win,
 			     XtWindow (FRAME_X_TEXT_WIDGET (f)),
@@ -2716,9 +2716,8 @@ x_update_frame_external_traits (struct frame* frm, Lisp_Object name)
 {
   Arg al[10];
   int ac = 0;
-  Lisp_Object frame;
+  Lisp_Object frame = wrap_frame (frm);
 
-  XSETFRAME(frame, frm);
 
   if (EQ (name, Qforeground))
    {

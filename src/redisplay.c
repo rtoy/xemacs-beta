@@ -91,7 +91,7 @@ Boston, MA 02111-1307, USA.  */
 /* The following structures are completely private to redisplay.c so
    we put them here instead of in a header file, for modularity. */
 
-/* NOTE: Bytebposs not Charbpos's in this structure. */
+/* NOTE: Bytebpos's not Charbpos's in this structure. */
 
 typedef struct position_redisplay_data_type
 {
@@ -480,7 +480,7 @@ redisplay_text_width_emchar_string (struct window *w, int findex,
   Lisp_Object window;
 
   find_charsets_in_emchar_string (charsets, str, len);
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
   ensure_face_cachel_complete (WINDOW_FACE_CACHEL (w, findex), window,
 			       charsets);
   return DEVMETH (XDEVICE (FRAME_DEVICE (XFRAME (WINDOW_FRAME (w)))),
@@ -528,7 +528,7 @@ redisplay_frame_text_width_string (struct frame *f, Lisp_Object face,
   find_charsets_in_intbyte_string (charsets, nonreloc, len);
   reset_face_cachel (&cachel);
   cachel.face = face;
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
   ensure_face_cachel_complete (&cachel, frame, charsets);
   return DEVMETH (XDEVICE (FRAME_DEVICE (f)),
 		  text_width, (f, &cachel, Dynarr_atp (rtw_emchar_dynarr, 0),
@@ -809,12 +809,14 @@ add_hscroll_rune (pos_data *data)
   return retval;
 }
 
-/* Adds a character rune to a display block.  If there is not enough
-   room to fit the rune on the display block (as determined by the
-   MAX_PIXPOS) then it adds nothing and returns ADD_FAILED. */
+/* Adds a character rune to a display block.  If there is not enough room
+   to fit the rune on the display block (as determined by the MAX_PIXPOS)
+   then it adds nothing and returns ADD_FAILED.  If
+   NO_CONTRIBUTE_TO_LINE_HEIGHT is non-zero, don't allow the char's height
+   to affect the total line height. (See add_intbyte_string_runes()). */
 
 static prop_block_dynarr *
-add_emchar_rune (pos_data *data)
+add_emchar_rune_1 (pos_data *data, int no_contribute_to_line_height)
 {
   struct rune rb, *crb;
   int width, local;
@@ -871,8 +873,11 @@ add_emchar_rune (pos_data *data)
 	    }
 	  else
 	    data->last_char_width = -1;
-	  data->new_ascent  = max (data->new_ascent,  (int) fi->ascent);
-	  data->new_descent = max (data->new_descent, (int) fi->descent);
+	  if (!no_contribute_to_line_height)
+	    {
+	      data->new_ascent  = max (data->new_ascent,  (int) fi->ascent);
+	      data->new_descent = max (data->new_descent, (int) fi->descent);
+	    }
 	  data->last_charset = charset;
 	  data->last_findex = data->findex;
 	}
@@ -907,11 +912,12 @@ add_emchar_rune (pos_data *data)
     {
       if (NILP (data->string))
 	crb->charbpos =
-	  bytebpos_to_charbpos (XBUFFER (WINDOW_BUFFER (XWINDOW (data->window))),
-			    data->bi_charbpos);
+	  bytebpos_to_charbpos (XBUFFER (WINDOW_BUFFER
+					 (XWINDOW (data->window))),
+				data->bi_charbpos);
       else
 	crb->charbpos =
-	  XSTRING_INDEX_BYTE_TO_CHAR (data->string, data->bi_charbpos);
+	  string_index_byte_to_char (data->string, data->bi_charbpos);
     }
   else if (data->is_modeline)
     crb->charbpos = data->modeline_charpos;
@@ -953,13 +959,24 @@ add_emchar_rune (pos_data *data)
   return NULL;
 }
 
-/* Given a string C_STRING of length C_LENGTH, call add_emchar_rune
-   for each character in the string.  Propagate any left-over data
-   unless NO_PROP is non-zero. */
+static prop_block_dynarr *
+add_emchar_rune (pos_data *data)
+{
+  return add_emchar_rune_1 (data, 0);
+}
+
+/* Given a string C_STRING of length C_LENGTH, call add_emchar_rune for
+   each character in the string.  Propagate any left-over data unless
+   NO_PROP is non-zero.  If NO_CONTRIBUTE_TO_LINE_HEIGHT is non-zero, don't
+   allow this character to increase the total height of the line. (This is
+   used when the character is part of a text glyph.  In that case, the
+   glyph code itself adjusts the line height as necessary, depending on
+   whether glyph-contrib-p is true.) */
 
 static prop_block_dynarr *
 add_intbyte_string_runes (pos_data *data, Intbyte *c_string,
-			  Bytecount c_length, int no_prop)
+			  Bytecount c_length, int no_prop,
+			  int no_contribute_to_line_height)
 {
   Intbyte *pos, *end = c_string + c_length;
   prop_block_dynarr *prop;
@@ -976,7 +993,7 @@ add_intbyte_string_runes (pos_data *data, Intbyte *c_string,
 
       data->ch = charptr_emchar (pos);
 
-      prop = add_emchar_rune (data);
+      prop = add_emchar_rune_1 (data, no_contribute_to_line_height);
 
       if (prop)
 	{
@@ -1261,7 +1278,7 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
       prop = add_intbyte_string_runes (data,
 				       XSTRING_DATA   (entry),
 				       XSTRING_LENGTH (entry),
-				       0);
+				       0, 0);
     }
   else if (GLYPHP (entry))
     {
@@ -1320,7 +1337,7 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 		    }
 		}
 	    }
-	  prop = add_intbyte_string_runes (data, result, dst - result, 0);
+	  prop = add_intbyte_string_runes (data, result, dst - result, 0, 0);
 	}
     }
 
@@ -1665,7 +1682,7 @@ add_glyph_rune (pos_data *data, struct glyph_block *gb, int pos_type,
 	findex = get_builtin_face_cache_index (w, face);
 
       instance = glyph_image_instance (gb->glyph, data->window,
-				       ERROR_ME_NOT, 1);
+				       ERROR_ME_DEBUG_WARN, 1);
       if (TEXT_IMAGE_INSTANCEP (instance))
 	{
 	  Lisp_Object string = XIMAGE_INSTANCE_TEXT_STRING (instance);
@@ -1678,7 +1695,7 @@ add_glyph_rune (pos_data *data, struct glyph_block *gb, int pos_type,
 	  if (!allow_cursor)
 	    data->bi_charbpos = 0;
 	  add_intbyte_string_runes (data, XSTRING_DATA (string),
-				    XSTRING_LENGTH (string), 0);
+				    XSTRING_LENGTH (string), 0, 1);
 	  data->findex = orig_findex;
 	  data->bi_charbpos = orig_charbpos;
 	  data->bi_start_col_enabled = orig_start_col_enabled;
@@ -1906,7 +1923,7 @@ create_text_block (struct window *w, struct display_line *dl,
   /* These values are used by all of the rune addition routines.  We add
      them to this structure for ease of passing. */
   data.d = d;
-  XSETWINDOW (data.window, w);
+  data.window = wrap_window (w);
   data.string = Qnil;
   data.db = db;
   data.dl = dl;
@@ -2679,7 +2696,7 @@ create_overlay_glyph_block (struct window *w, struct display_line *dl)
   xzero (data);
   data.ef = NULL;
   data.d = d;
-  XSETWINDOW (data.window, w);
+  data.window = wrap_window (w);
   data.db = get_display_block_from_line (dl, OVERWRITE);
   data.dl = dl;
   data.pixpos = dl->bounds.left_in;
@@ -2700,7 +2717,7 @@ create_overlay_glyph_block (struct window *w, struct display_line *dl)
 	(&data,
 	 XSTRING_DATA   (Voverlay_arrow_string),
 	 XSTRING_LENGTH (Voverlay_arrow_string),
-	 1);
+	 1, 0);
     }
   else if (GLYPHP (Voverlay_arrow_string))
     {
@@ -2856,7 +2873,7 @@ create_left_glyph_block (struct window *w, struct display_line *dl,
 
   struct display_block *odb, *idb;
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
   /* We have to add the glyphs to the line in the order outside,
      inside, whitespace.  However the precedence dictates that we
@@ -3177,7 +3194,7 @@ create_right_glyph_block (struct window *w, struct display_line *dl)
 
   struct display_block *odb, *idb;
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
   /* We have to add the glyphs to the line in the order outside,
      inside, whitespace.  However the precedence dictates that we
@@ -3497,7 +3514,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
   data.result_str = result_str;
   data.is_modeline = 1;
   data.string = Qnil;
-  XSETWINDOW (data.window, w);
+  data.window = wrap_window (w);
 
   Dynarr_reset (formatted_string_extent_dynarr);
   Dynarr_reset (formatted_string_extent_start_dynarr);
@@ -3546,7 +3563,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
 
       sledgehammer_check_ascii_begin (result_str);
       detach_all_extents (result_str);
-      resize_string (XSTRING (result_str), -1,
+      resize_string (result_str, -1,
                      data.bytepos - XSTRING_LENGTH (result_str));
 
       strdata = XSTRING_DATA (result_str);
@@ -3571,7 +3588,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
           Lisp_Object extent = Qnil;
           Lisp_Object child;
 
-          XSETEXTENT (extent, Dynarr_at (formatted_string_extent_dynarr, elt));
+          extent = wrap_extent (Dynarr_at (formatted_string_extent_dynarr, elt));
           child = Fgethash (extent, buf->modeline_extent_table, Qnil);
           if (NILP (child))
             {
@@ -3961,9 +3978,9 @@ tail_recurse:
   else if (GENERIC_SPECIFIERP (elt))
     {
       Lisp_Object window, tem;
-      XSETWINDOW (window, w);
+      window = wrap_window (w);
       tem = specifier_instance_no_quit (elt, Qunbound, window,
-					ERROR_ME_NOT, 0, Qzero);
+					ERROR_ME_DEBUG_WARN, 0, Qzero);
       if (!UNBOUNDP (tem))
 	{
 	  elt = tem;
@@ -4001,7 +4018,7 @@ tail_recurse:
 	    tem = symbol_value_in_buffer (car, w->buffer);
 	  else
 	    tem = specifier_instance_no_quit (car, Qunbound, wrap_window (w),
-					      ERROR_ME_NOT, 0, Qzero);
+					      ERROR_ME_DEBUG_WARN, 0, Qzero);
 	  /* elt is now the cdr, and we know it is a cons cell.
 	     Use its car if CAR has a non-nil value.  */
 	  if (!UNBOUNDP (tem) && !NILP (tem))
@@ -4287,12 +4304,11 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
      against this case. */
   struct buffer *b = BUFFERP (w->buffer) ? XBUFFER (w->buffer) : 0;
   struct device *d = XDEVICE (f->device);
-  Lisp_String* s = XSTRING (disp_string);
 
   /* we're working with these a lot so precalculate them */
   Bytecount slen = XSTRING_LENGTH (disp_string);
   Bytecount bi_string_zv = slen;
-  Bytebpos bi_start_pos = string_index_char_to_byte (s, start_pos);
+  Bytebpos bi_start_pos = string_index_char_to_byte (disp_string, start_pos);
 
   pos_data data;
 
@@ -4391,7 +4407,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
   /* These values are used by all of the rune addition routines.  We add
      them to this structure for ease of passing. */
   data.d = d;
-  XSETWINDOW (data.window, w);
+  data.window = wrap_window (w);
   data.db = db;
   data.dl = dl;
 
@@ -4469,7 +4485,8 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	{
 	  /* Now compute the face and begin/end-glyph information. */
 	  data.findex =
-	    /* Remember that the extent-fragment routines deal in Bytebpos's. */
+	    /* Remember that the extent-fragment routines deal in
+               Bytebpos's. */
 	    extent_fragment_update (w, data.ef, data.bi_charbpos);
 	  /* This is somewhat cheesy but the alternative is to
              propagate default_face into extent_fragment_update. */
@@ -4532,7 +4549,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	  if (data.bi_charbpos == bi_string_zv)
 	    goto done;
 	  else
-	    INC_CHARBYTEBPOS (string_data (s), data.bi_charbpos);
+	    INC_CHARBYTEBPOS (XSTRING_DATA (disp_string), data.bi_charbpos);
 	}
 
       /* If there is propagation data, then it represents the current
@@ -4552,7 +4569,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	    /* #### urk urk urk! Aborts are not very fun! Fix this please! */
 	    data.bi_charbpos = 0;
 	  else
-	    INC_CHARBYTEBPOS (string_data (s), data.bi_charbpos);
+	    INC_CHARBYTEBPOS (XSTRING_DATA (disp_string), data.bi_charbpos);
 	}
 
       /* If there are end glyphs, add them to the line.  These are
@@ -4585,7 +4602,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	{
 	  Lisp_Object entry = Qnil;
 	  /* Get the character at the current buffer position. */
-	  data.ch = string_char (s, data.bi_charbpos);
+	  data.ch = XSTRING_CHAR (disp_string, data.bi_charbpos);
 	  if (!NILP (face_dt) || !NILP (window_dt))
 	    entry = display_table_entry (data.ch, face_dt, window_dt);
 
@@ -4700,7 +4717,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 		goto done;
 	    }
 
-	  INC_CHARBYTEBPOS (string_data (s), data.bi_charbpos);
+	  INC_CHARBYTEBPOS (XSTRING_DATA (disp_string), data.bi_charbpos);
 	}
     }
 
@@ -4723,7 +4740,7 @@ done:
          position. */
       if (data.ch == '\n')
 	{
-	  INC_CHARBYTEBPOS (string_data (s), data.bi_charbpos);
+	  INC_CHARBYTEBPOS (XSTRING_DATA (disp_string), data.bi_charbpos);
 	}
 
       /* Otherwise we have a buffer line which cannot fit on one display
@@ -4746,7 +4763,8 @@ done:
 	      Bytebpos bi_pos;
 
 	      /* Now find the start of the next line. */
-	      bi_pos = bi_find_next_emchar_in_string (s, '\n', data.bi_charbpos, 1);
+	      bi_pos = bi_find_next_emchar_in_string (disp_string, '\n',
+						      data.bi_charbpos, 1);
 
 	      data.cursor_type = NO_CURSOR;
 	      data.bi_charbpos = bi_pos;
@@ -4770,7 +4788,8 @@ done:
 
 	  if (truncate_win && data.bi_charbpos == bi_string_zv)
 	    {
-	      const Intbyte* endb = charptr_n_addr (string_data (s), bi_string_zv);
+	      const Intbyte *endb = charptr_n_addr (XSTRING_DATA (disp_string),
+						    bi_string_zv);
 	      DEC_CHARPTR (endb);
 	      if (charptr_emchar (endb) != '\n')
 		{
@@ -4884,12 +4903,16 @@ done:
   dl->cursor_elt = data.cursor_x;
   /* #### lossage lossage lossage! Fix this shit! */
   if (data.bi_charbpos > bi_string_zv)
-    dl->end_charbpos = buffer_or_string_bytebpos_to_charbpos (disp_string, bi_string_zv);
+    dl->end_charbpos = buffer_or_string_bytebpos_to_charbpos (disp_string,
+							      bi_string_zv);
   else
-    dl->end_charbpos = buffer_or_string_bytebpos_to_charbpos (disp_string, data.bi_charbpos) - 1;
+    dl->end_charbpos =
+      buffer_or_string_bytebpos_to_charbpos (disp_string,
+					     data.bi_charbpos) - 1;
   if (truncate_win)
     data.dl->num_chars =
-      string_column_at_point (s, dl->end_charbpos, b ? XINT (b->tab_width) : 8);
+      string_column_at_point (disp_string, dl->end_charbpos,
+			      b ? XINT (b->tab_width) : 8);
   else
     /* This doesn't correctly take into account tabs and control
        characters but if the window isn't being truncated then this
@@ -4918,9 +4941,10 @@ done:
      this function if we are already at EOB. */
 
   if (data.bi_charbpos == bi_string_zv && bi_start_pos == bi_string_zv)
-    return string_index_byte_to_char (s, data.bi_charbpos) + 1; /* Yuck! */
+    return string_index_byte_to_char (disp_string,
+				      data.bi_charbpos) + 1; /* Yuck! */
   else
-    return string_index_byte_to_char (s, data.bi_charbpos);
+    return string_index_byte_to_char (disp_string, data.bi_charbpos);
 }
 
 /* Given a display line and a starting position, ensure that the
@@ -6266,8 +6290,8 @@ call_redisplay_end_triggers (struct window *w, void *closure)
 
       if (lrpos >= pos)
 	{
-	  Lisp_Object window;
-	  XSETWINDOW (window, w);
+	  Lisp_Object window = wrap_window (w);
+
 	  va_run_hook_with_args_in_buffer (XBUFFER (w->buffer),
 					   Qredisplay_end_trigger_functions,
 					   2, window,
@@ -6305,7 +6329,7 @@ redisplay_frame (struct frame *f, int preemption_check)
 
       f->old_buffer_alist = Freplace_list (f->old_buffer_alist,
 					   f->buffer_alist);
-      XSETFRAME (frame, f);
+      frame = wrap_frame (f);
       va_run_hook_with_args (Qbuffer_list_changed_hook, 1, frame);
     }
 
@@ -7773,7 +7797,7 @@ start_with_point_on_display_line (struct window *w, Charbpos point, int line)
 	  Lisp_Object window;
 	  int defheight;
 
-	  XSETWINDOW (window, w);
+	  window = wrap_window (w);
 	  default_face_height_and_width (window, &defheight, 0);
 
 	  cur_elt = Dynarr_length (w->line_start_cache) - 1;
@@ -8079,7 +8103,7 @@ glyph_to_pixel_translation (struct window *w, int char_x, int char_y,
   Lisp_Object window;
   int defheight, defwidth;
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
   default_face_height_and_width (window, &defheight, &defwidth);
 
   /* If we get a bogus value indicating somewhere above or to the left of
@@ -8752,7 +8776,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 	  Lisp_Object lwin;
 	  int defheight;
 
-	  XSETWINDOW (lwin, *w);
+	  lwin = wrap_window (*w);
 	  default_face_height_and_width (lwin, 0, &defheight);
 
 	  *row += (adj_area / defheight);

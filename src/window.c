@@ -1,7 +1,7 @@
 /* Window creation, deletion and examination for XEmacs.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -241,7 +241,7 @@ allocate_window (void)
   struct window *p = alloc_lcrecord_type (struct window, &lrecord_window);
 
   zero_lcrecord (p);
-  XSETWINDOW (val, p);
+  val = wrap_window (p);
 
   p->dead = 0;
 
@@ -636,7 +636,7 @@ window_is_leftmost (struct window *w)
 {
   Lisp_Object parent, current_ancestor, window;
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
   parent = XWINDOW (window)->parent;
   current_ancestor = window;
@@ -659,7 +659,7 @@ window_is_rightmost (struct window *w)
 {
   Lisp_Object parent, current_ancestor, window;
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
   parent = XWINDOW (window)->parent;
   current_ancestor = window;
@@ -688,7 +688,7 @@ window_is_highest (struct window *w)
 {
   Lisp_Object parent, current_ancestor, window;
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
   parent = XWINDOW (window)->parent;
   current_ancestor = window;
@@ -716,7 +716,7 @@ window_is_lowest (struct window *w)
 {
   Lisp_Object parent, current_ancestor, window;
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
   parent = XWINDOW (window)->parent;
   current_ancestor = window;
@@ -994,7 +994,7 @@ margin_width_internal (struct window *w, int left_margin)
   if (MINI_WINDOW_P (w))
     return 0;
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
   b = XBUFFER (w->buffer);
   margin_cwidth = (left_margin ? XINT (w->left_margin_width) :
 		   XINT (w->right_margin_width));
@@ -2285,7 +2285,7 @@ acceptable windows, eventually ending up back at the window you started with.
 		   If that happens, go back to the selected frame
 		   so we can complete the cycle.  */
 		if (EQ (tem, tem1))
-		  XSETFRAME (tem, selected_frame ());
+		  tem = wrap_frame (selected_frame ());
 	      }
 
 	    tem = FRAME_ROOT_WINDOW (XFRAME (tem));
@@ -2440,7 +2440,7 @@ acceptable windows, eventually ending up back at the window you started with.
 		   If that happens, go back to the selected frame
 		   so we can complete the cycle.  */
 		if (EQ (tem, tem1))
-		  XSETFRAME (tem, selected_frame ());
+		  tem = wrap_frame (selected_frame ());
 	      }
 
 	    /* If this frame has a minibuffer, find that window first,
@@ -2489,7 +2489,7 @@ Return the next window which is vertically after WINDOW.
 {
   Lisp_Object root;
   struct window *w = decode_window (window);
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
   if (MINI_WINDOW_P (XWINDOW (window)))
     return Qnil;
@@ -2647,7 +2647,7 @@ window_loop (enum window_loop type,
       Lisp_Object the_frame;
 
       if (frame)
-	XSETFRAME (the_frame, frame);
+	the_frame = wrap_frame (frame);
       else
 	the_frame = DEVICE_SELECTED_FRAME (XDEVICE (device));
 
@@ -2859,8 +2859,8 @@ buffer_window_count (struct buffer *b, struct frame *f)
 {
   Lisp_Object buffer, frame;
 
-  XSETFRAME (frame, f);
-  XSETBUFFER (buffer, b);
+  frame = wrap_frame (f);
+  buffer = wrap_buffer (b);
 
   return XINT (window_loop (GET_BUFFER_WINDOW_COUNT, buffer, 0, frame, 1,
 			    Qnil));
@@ -3040,7 +3040,7 @@ value is reasonable when this function is called.
   Charbpos start_pos;
   int old_top = WINDOW_TOP (w);
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
   if (MINI_WINDOW_P (w) && old_top > 0)
     invalid_operation ("Can't expand minibuffer to full frame", Qunbound);
@@ -3126,8 +3126,8 @@ list_windows (struct window *w, Lisp_Object value)
 	value = list_windows (XWINDOW (w->vchild), value);
       else
 	{
-	  Lisp_Object window;
-	  XSETWINDOW (window, w);
+	  Lisp_Object window = wrap_window (w);
+
 	  value = Fcons (window, value);
 	}
       if (NILP (w->next))
@@ -3663,7 +3663,7 @@ make_dummy_parent (Lisp_Object window)
   struct window *o = XWINDOW (window);
   struct window *p = alloc_lcrecord_type (struct window, &lrecord_window);
 
-  XSETWINDOW (new, p);
+  new = wrap_window (p);
   copy_lcrecord (p, o);
 
   /* Don't copy the pointers to the line start cache or the face
@@ -3899,9 +3899,8 @@ window_pixel_height_to_char_height (struct window *w, int pixel_height,
   int avail_height;
   int defheight, defwidth;
   int char_height;
-  Lisp_Object window;
+  Lisp_Object window = wrap_window (w);
 
-  XSETWINDOW (window, w);
 
   avail_height = (pixel_height -
 		  (include_gutters_p ? 0 :
@@ -3928,9 +3927,8 @@ window_char_height_to_pixel_height (struct window *w, int char_height,
   int defheight, defwidth;
   int pixel_height;
 
-  Lisp_Object window;
+  Lisp_Object window = wrap_window (w);
 
-  XSETWINDOW (window, w);
 
   default_face_height_and_width (window, &defheight, &defwidth);
 
@@ -3991,7 +3989,7 @@ window_displayed_height (struct window *w)
       Lisp_Object window;
       int defheight, defwidth;
 
-      XSETWINDOW (window, w);
+      window = wrap_window (w);
 
       if (dl->modeline)
 	{
@@ -4045,9 +4043,8 @@ window_pixel_width_to_char_width (struct window *w, int pixel_width,
   int avail_width;
   int char_width;
   int defheight, defwidth;
-  Lisp_Object window;
+  Lisp_Object window = wrap_window (w);
 
-  XSETWINDOW (window, w);
 
   avail_width = (pixel_width -
 		 window_left_gutter_width (w, 0) -
@@ -4074,9 +4071,8 @@ window_char_width_to_pixel_width (struct window *w, int char_width,
   int avail_width;
   int pixel_width;
   int defheight, defwidth;
-  Lisp_Object window;
+  Lisp_Object window = wrap_window (w);
 
-  XSETWINDOW (window, w);
 
   default_face_height_and_width (window, &defheight, &defwidth);
 
@@ -4156,7 +4152,7 @@ change_window_height (Lisp_Object window, int delta, Lisp_Object horizontalp,
 
   check_min_window_sizes ();
 
-  XSETWINDOW (window, win);
+  window = wrap_window (win);
   f = XFRAME (win->frame);
   if (EQ (window, FRAME_ROOT_WINDOW (f)))
     invalid_operation ("Won't change only window", Qunbound);
@@ -4819,7 +4815,7 @@ If WINDOW is nil, the selected window is used.
       /* #### Is this going to work right when at eob? */
       arg = Fprefix_numeric_value (arg);
       if (XINT (arg) < 0)
-	XSETINT (arg, XINT (arg) + height);
+	arg = make_int (XINT (arg) + height);
     }
 
   start = marker_position (w->start[CURRENT_DISP]);
@@ -5104,7 +5100,6 @@ struct window_config
 
 #define SAVED_WINDOW_N(conf, n) (&((conf)->saved_windows[(n)]))
 #define XWINDOW_CONFIGURATION(x) XRECORD (x, window_configuration, struct window_config)
-#define XSETWINDOW_CONFIGURATION(x, p) XSETRECORD (x, p, window_configuration)
 #define wrap_window_configuration(p) wrap_record (p, window_configuration)
 #define WINDOW_CONFIGURATIONP(x) RECORDP (x, window_configuration)
 #define CHECK_WINDOW_CONFIGURATION(x) CHECK_RECORD (x, window_configuration)
@@ -5948,7 +5943,7 @@ its value is -not- saved.
     config = (struct window_config *)
       alloc_lcrecord (sizeof_window_config_for_n_windows (n_windows),
 		      &lrecord_window_configuration);
-  XSETWINDOW_CONFIGURATION (result, config);
+  result = wrap_window_configuration (config);
   /*
   config->frame_width = FRAME_WIDTH (f);
   config->frame_height = FRAME_HEIGHT (f); */
@@ -5966,7 +5961,7 @@ its value is -not- saved.
     config->current_window = FRAME_LAST_NONMINIBUF_WINDOW (f);
 #endif
   config->current_window = FRAME_SELECTED_WINDOW (f);
-  XSETBUFFER (config->current_buffer, current_buffer);
+  config->current_buffer = wrap_buffer (current_buffer);
   config->minibuffer_scroll_window = Vminibuffer_scroll_window;
   config->root_window = FRAME_ROOT_WINDOW (f);
   config->min_height = window_min_height;
@@ -5977,7 +5972,7 @@ its value is -not- saved.
   /* save the minibuffer height using the heuristics from
      change_frame_size_1 */
 
-  XSETFRAME (frame, f); /* frame could have been nil ! */
+  frame = wrap_frame (f); /* frame could have been nil ! */
   default_face_height_and_width (frame, &real_font_height, 0);
   assert(real_font_height > 0);
 

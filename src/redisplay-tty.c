@@ -1,7 +1,7 @@
 /* Communication module for TTY terminals.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -323,9 +323,9 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 	      Lisp_Object window;
 	      Lisp_Object instance;
 
-	      XSETWINDOW (window, w);
+	      window = wrap_window (w);
 	      instance = glyph_image_instance (rb->object.dglyph.glyph,
-					       window, ERROR_ME_NOT, 1);
+					       window, ERROR_ME_DEBUG_WARN, 1);
 
 	      if (IMAGE_INSTANCEP (instance))
 		{
@@ -475,9 +475,8 @@ tty_clear_to_window_end (struct window *w, int ypos1, int ypos2)
     }
   else
     {
-      Lisp_Object window;
+      Lisp_Object window = wrap_window (w);
 
-      XSETWINDOW (window, w);
       redisplay_clear_region (window, DEFAULT_INDEX, x, ypos1, width, ypos2 - ypos1);
     }
 }
@@ -796,7 +795,7 @@ tty_turn_on_frame_face (struct frame *f, Lisp_Object face)
   Lisp_Object frame;
   struct console *c = XCONSOLE (FRAME_CONSOLE (f));
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
   tty_turn_on_face_1 (c,
 		      FACE_HIGHLIGHT_P (face, frame),
 		      FACE_BLINKING_P (face, frame),
@@ -820,7 +819,7 @@ tty_turn_off_frame_face (struct frame *f, Lisp_Object face)
   Lisp_Object frame;
   struct console *c = XCONSOLE (FRAME_CONSOLE (f));
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   if (FACE_REVERSE_P (face, frame))
     {

@@ -223,7 +223,6 @@ struct buffer
 
 DECLARE_LRECORD (buffer, struct buffer);
 #define XBUFFER(x) XRECORD (x, buffer, struct buffer)
-#define XSETBUFFER(x, p) XSETRECORD (x, p, buffer)
 #define wrap_buffer(p) wrap_record (p, buffer)
 #define BUFFERP(x) RECORDP (x, buffer)
 #define CHECK_BUFFER(x) CHECK_RECORD (x, buffer)
@@ -391,21 +390,21 @@ membpos_to_bytebpos (struct buffer *buf, Membpos x)
 
 #define buffer_or_string_charbpos_to_bytebpos(obj, pos)		\
   (BUFFERP (obj) ? charbpos_to_bytebpos (XBUFFER (obj), pos) :	\
-   (Bytebpos) XSTRING_INDEX_CHAR_TO_BYTE (obj, pos))
+   (Bytebpos) string_index_char_to_byte (obj, pos))
 
 #define buffer_or_string_bytebpos_to_charbpos(obj, ind)		\
   (BUFFERP (obj) ? bytebpos_to_charbpos (XBUFFER (obj), ind) :	\
-   (Charbpos) XSTRING_INDEX_BYTE_TO_CHAR (obj, ind))
+   (Charbpos) string_index_byte_to_char (obj, ind))
 
 /* Similar for Charbpos's and Membposs. */
 
 #define buffer_or_string_charbpos_to_membpos(obj, pos)		\
   (BUFFERP (obj) ? charbpos_to_membpos (XBUFFER (obj), pos) :	\
-   (Membpos) XSTRING_INDEX_CHAR_TO_BYTE (obj, pos))
+   (Membpos) string_index_char_to_byte (obj, pos))
 
 #define buffer_or_string_membpos_to_charbpos(obj, ind)		\
   (BUFFERP (obj) ? membpos_to_charbpos (XBUFFER (obj), ind) :	\
-   (Charbpos) XSTRING_INDEX_BYTE_TO_CHAR (obj, ind))
+   (Charbpos) string_index_byte_to_char (obj, ind))
 
 /************************************************************************/
 /*                                                                      */

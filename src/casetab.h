@@ -34,7 +34,6 @@ typedef struct Lisp_Case_Table Lisp_Case_Table;
   
 DECLARE_LRECORD (case_table, Lisp_Case_Table);
 #define XCASE_TABLE(x) XRECORD (x, case_table, Lisp_Case_Table)
-#define XSETCASE_TABLE(x, p) XSETRECORD (x, p, case_table)
 #define wrap_case_table(p) wrap_record (p, case_table)
 #define CASE_TABLEP(x) RECORDP (x, case_table)
 #define CHECK_CASE_TABLE(x) CHECK_RECORD (x, case_table)

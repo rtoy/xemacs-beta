@@ -9,11 +9,32 @@ bugs:
    the screen won't get off the startup, key commands don't cause anything
    to happen. STATUS: In progress.
 
--- Problem loading mule-ucs/reldata/iso8859-6.el or the languages/hebrew.el
-   file from GNU 21 sources.  Probably the escape sequences specify reverse
-   direction and we can't handle that yet.
-
 -- Memory ballooning in some cases.  Not yet understood.
+
+-- Occasional crash when freeing display structures.  The problem seems to
+   be this: A window has a "display line dynarr"; each display line has a
+   "display block dynarr".  Sometimes this display block dynarr is getting
+   freed twice.  It appears from looking at the code that sometimes a
+   display line from somewhere in the dynarr gets added to the end -- hence
+   two pointers to the same display block dynarr.  need to review this
+   code.
+
+-- md5 doesn't work. (Lstream not open errors) Causes w3 to fail.
+
+-- other test suite failures?
+
+-- need to review the handling of sounds.  seems that not everything is
+   documented, not everything is consistently used where it's supposed to,
+   some sounds are ugly, etc.  add sounds to `completer' as well.
+
+-- redo with-trapping-errors so that the backtrace is stored away and only
+   outputted when an error actually occurs (i.e. in the condition-case
+   handler).  test. (use ding of various sorts as a helpful way of checking
+   out what's going on.)
+
+-- problems with process input: |uniq (for example) leaves ^M's at end of
+   line.
+
 
 August 29, 2001.
 

@@ -2,7 +2,7 @@
    Also takes args differently: pass one pointer to an array of strings
    in addition to the format string which is separate.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
    Rewritten by mly to use varargs.h.
    Rewritten from scratch by Ben Wing (February 1995) for Mule; expanded
    to full printf spec.
@@ -24,7 +24,7 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* Synched up with: Rewritten.  Not in FSF. */
+/* Synched up with: Rewritten by Ben Wing.  Not in FSF. */
 
 #include <config.h>
 #include "lisp.h"
@@ -140,14 +140,15 @@ parse_off_posnum (const Intbyte *start, const Intbyte *end, int *returned_num)
   return start;
 }
 
-#define NEXT_ASCII_BYTE(ch)					\
-  do {								\
-    if (fmt == fmt_end)						\
-      syntax_error ("Premature end of format string", Qunbound);			\
-    ch = *fmt;							\
-    if (ch >= 0200)						\
-      syntax_error ("Non-ASCII character in format converter spec", Qunbound);	\
-    fmt++;							\
+#define NEXT_ASCII_BYTE(ch)						\
+  do {									\
+    if (fmt == fmt_end)							\
+      syntax_error ("Premature end of format string", Qunbound);	\
+    ch = *fmt;								\
+    if (ch >= 0200)							\
+      syntax_error ("Non-ASCII character in format converter spec",	\
+		    Qunbound);						\
+    fmt++;								\
   } while (0)
 
 #define RESOLVE_FLAG_CONFLICTS(spec)				\
@@ -528,25 +529,25 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 	  else
 	    {
 	      Lisp_Object obj = largs[spec->argnum - 1];
-	      Lisp_String *ls;
+	      Lisp_Object ls;
 
 	      if (ch == 'S')
 		{
 		  /* For `S', prin1 the argument and then treat like
 		     a string.  */
-		  ls = XSTRING (Fprin1_to_string (obj, Qnil));
+		  ls = Fprin1_to_string (obj, Qnil);
 		}
 	      else if (STRINGP (obj))
-		ls = XSTRING (obj);
+		ls = obj;
 	      else if (SYMBOLP (obj))
 		ls = XSYMBOL (obj)->name;
 	      else
 		{
 		  /* convert to string using princ. */
-		  ls = XSTRING (Fprin1_to_string (obj, Qt));
+		  ls = Fprin1_to_string (obj, Qt);
 		}
-	      string = string_data (ls);
-	      string_len = string_length (ls);
+	      string = XSTRING_DATA (ls);
+	      string_len = XSTRING_LENGTH (ls);
 	    }
 
 	  doprnt_2 (stream, string, string_len, spec->minwidth,
@@ -569,8 +570,9 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 		obj = make_int (XCHAR (obj));
 	      if (!INT_OR_FLOATP (obj))
 		{
-		  syntax_error ("format specifier %%%c doesn't match argument type",
-			 make_char (ch));
+		  syntax_error
+		    ("format specifier %%%c doesn't match argument type",
+		     make_char (ch));
 		}
 	      else if (strchr (double_converters, ch))
 		arg.d = XFLOATINT (obj);
@@ -596,7 +598,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 	      a = (Emchar) arg.l;
 
 	      if (!valid_char_p (a))
-	 syntax_error ("invalid character value %d to %%c spec", make_char (a));
+		syntax_error ("invalid character value %d to %%c spec",
+			      make_char (a));
 
 	      charlen = set_charptr_emchar (charbuf, a);
 	      doprnt_2 (stream, charbuf, charlen, spec->minwidth,

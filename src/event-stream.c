@@ -311,7 +311,6 @@ static Lisp_Object recursive_sit_for;
 
 #define XCOMMAND_BUILDER(x) \
   XRECORD (x, command_builder, struct command_builder)
-#define XSETCOMMAND_BUILDER(x, p) XSETRECORD (x, p, command_builder)
 #define wrap_command_builder(p) wrap_record (p, command_builder)
 #define COMMAND_BUILDERP(x) RECORDP (x, command_builder)
 #define CHECK_COMMAND_BUILDER(x) CHECK_RECORD (x, command_builder)
@@ -549,7 +548,7 @@ event_stream_next_event (Lisp_Event *event)
 
   check_event_stream_ok (EVENT_STREAM_READ);
 
-  XSETEVENT (event_obj, event);
+  event_obj = wrap_event (event);
   zero_event (event);
   /* If C-g was pressed, treat it as a character to be read.
      Note that if C-g was pressed while we were blocking,
@@ -706,7 +705,7 @@ echo_key_event (struct command_builder *command_builder,
 		Lisp_Object event)
 {
   /* This function can GC */
-  char buf[255];
+  DECLARE_EISTRING_MALLOC (buf);
   Bytecount buf_index = command_builder->echo_buf_index;
   Intbyte *e;
   Bytecount len;
@@ -718,13 +717,17 @@ echo_key_event (struct command_builder *command_builder,
     }
 
   format_event_object (buf, XEVENT (event), 1);
-  len = strlen (buf);
+  len = eilen (buf);
 
   if (len + buf_index + 4 > command_builder->echo_buf_length)
-    return;
+    {
+      eifree (buf);
+      return;
+    }
   e = command_builder->echo_buf + buf_index;
-  memcpy (e, buf, len);
+  memcpy (e, eidata (buf), len);
   e += len;
+  eifree (buf);
 
   e[0] = ' ';
   e[1] = '-';
@@ -3235,8 +3238,7 @@ munge_keymap_translate (struct command_builder *builder,
 
 	  *did_munge = 1;
 
-	  result = command_builder_find_leaf_1 (builder);
-	  return result;
+	  return command_builder_find_leaf_1 (builder);
 	}
 
       signal_error (Qinvalid_key_binding,
@@ -4125,7 +4127,7 @@ static void
 pre_command_hook (void)
 {
   last_point_position = BUF_PT (current_buffer);
-  XSETBUFFER (last_point_position_buffer, current_buffer);
+  last_point_position_buffer = wrap_buffer (current_buffer);
   /* This function can GC */
   safe_run_hook_trapping_errors
     ("Error in `pre-command-hook' (setting hook to nil)",
@@ -4573,7 +4575,7 @@ dribble_out_event (Lisp_Object event)
 	  Bytecount len = set_charptr_emchar (str, ch);
 	  Lstream_write (XLSTREAM (Vdribble_file), str, len);
 	}
-      else if (string_char_length (XSYMBOL (keysym)->name) == 1)
+      else if (XSTRING_CHAR_LENGTH (XSYMBOL (keysym)->name) == 1)
 	/* one-char key events are printed with just the key name */
 	Fprinc (keysym, Vdribble_file);
       else if (EQ (keysym, Qreturn))

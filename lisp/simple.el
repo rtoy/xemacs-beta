@@ -4217,7 +4217,7 @@ See `display-message' for some common labels.  See also `log-message'."
 (defun show-message-log ()
   "Show the \" *Message-Log*\" buffer, which contains old messages and errors."
   (interactive)
-  (pop-to-buffer (get-buffer-create " *Message-Log*")))
+  (view-lossage t))
 
 (defvar log-message-filter-function 'log-message-filter
   "Value must be a function of two arguments: a symbol (label) and
@@ -4258,9 +4258,11 @@ For use on `remove-message-hook'."
       (let (extent)
 	;; Mark multiline message with an extent, which `view-lossage'
 	;; will recognize.
-	(when (string-match "\n" message)
-	  (setq extent (make-extent (point) (point)))
-	  (set-extent-properties extent '(end-open nil message-multiline t)))
+	(save-match-data
+	  (when (string-match "\n" message)
+	    (setq extent (make-extent (point) (point)))
+	    (set-extent-properties extent '(end-open nil message-multiline t)))
+	  )
 	(insert message "\n")
 	(when extent
 	  (set-extent-property extent 'end-open t)))
@@ -4334,16 +4336,16 @@ you should just use (message nil)."
 	    (setq s (cdr s))))))
     ;; (possibly) log each removed message
     (while log
-      (condition-case e
-	  (run-hook-with-args 'remove-message-hook
-			      (car (car log)) (cdr (car log)))
-	(error (setq remove-message-hook nil)
-	       (lwarn 'message-log 'warning
-		 "Error caught in `remove-message-hook': %s"
-		 (error-message-string e))
-	       (let ((inhibit-read-only t))
-		 (erase-buffer " *Echo Area*"))
-	       (signal (car e) (cdr e))))
+      (with-trapping-errors
+	:operation 'remove-message-hook
+	:class 'message-log
+	:error-form (progn
+		      (setq remove-message-hook nil)
+		      (let ((inhibit-read-only t))
+			(erase-buffer " *Echo Area*")))
+	:resignal t
+	(run-hook-with-args 'remove-message-hook
+			    (car (car log)) (cdr (car log))))
       (setq log (cdr log)))))
 
 (defun append-message (label message &optional frame stdout-p)
@@ -4440,35 +4442,41 @@ The warnings in levels below this are completely ignored, as if they never
 happened.
 
 The recognized warning levels, in decreasing order of priority, are
-'emergency, 'alert, 'critical, 'error, 'warning, 'notice, 'info, and
+'emergency, 'critical, 'error, 'warning, 'alert, 'notice, 'info, and
 'debug.
 
 See also `display-warning-minimum-level'.
 
 You can also control which warnings are displayed on a class-by-class
 basis.  See `display-warning-suppressed-classes' and
-`log-warning-suppressed-classes'."
-  :type '(choice (const emergency) (const alert) (const critical)
-		 (const error) (const warning) (const notice)
+`log-warning-suppressed-classes'.
+
+For a description of the meaning of the levels, see `display-warning.'"
+  :type '(choice (const emergency) (const critical)
+		 (const error) (const warning) (const alert) (const notice)
 		 (const info) (const debug))
   :group 'warnings)
 
-(defcustom display-warning-minimum-level 'info
-  "Minimum level of warnings that should be displayed.
-The warnings in levels below this will be generated, but not
-displayed.
+(defcustom display-warning-minimum-level 'warning
+  "Minimum level of warnings that cause the warnings buffer to be displayed.
+Warnings at this level or higher will force the *Warnings* buffer, in which
+the warnings are logged, to be displayed.  The warnings in levels below
+this, but at least as high as `log-warning-suppressed-classes', will be
+shown in the minibuffer.
 
 The recognized warning levels, in decreasing order of priority, are
-'emergency, 'alert, 'critical, 'error, 'warning, 'notice, 'info, and
+'emergency, 'critical, 'error, 'warning, 'alert, 'notice, 'info, and
 'debug.
 
 See also `log-warning-minimum-level'.
 
 You can also control which warnings are displayed on a class-by-class
 basis.  See `display-warning-suppressed-classes' and
-`log-warning-suppressed-classes'."
-  :type '(choice (const emergency) (const alert) (const critical)
-		 (const error) (const warning) (const notice)
+`log-warning-suppressed-classes'.
+
+For a description of the meaning of the levels, see `display-warning.'"
+  :type '(choice (const emergency) (const critical)
+		 (const error) (const warning) (const alert) (const notice)
 		 (const info) (const debug))
   :group 'warnings)
 
@@ -4500,10 +4508,10 @@ See also `log-warning-minimum-level' and `display-warning-minimum-level'."
   "Count of the number of warning messages displayed so far.")
 
 (defconst warning-level-alist '((emergency . 8)
-				(alert . 7)
-				(critical . 6)
-				(error . 5)
-				(warning . 4)
+				(critical . 7)
+				(error . 6)
+				(warning . 5)
+				(alert . 4)
 				(notice . 3)
 				(info . 2)
 				(debug . 1)))
@@ -4511,6 +4519,13 @@ See also `log-warning-minimum-level' and `display-warning-minimum-level'."
 (defun warning-level-p (level)
   "Non-nil if LEVEL specifies a warning level."
   (and (symbolp level) (assq level warning-level-alist)))
+
+(defun warning-level-< (level1 level2)
+  "Non-nil if warning level LEVEL1 is lower than LEVEL2."
+  (check-argument-type 'warning-level-p level1)
+  (check-argument-type 'warning-level-p level2)
+  (< (cdr (assq level1 warning-level-alist))
+     (cdr (assq level2 warning-level-alist))))
 
 ;; If you're interested in rewriting this function, be aware that it
 ;; could be called at arbitrary points in a Lisp program (when a
@@ -4535,14 +4550,85 @@ suppression in the .emacs file will be honored."
 
 (defun display-warning (class message &optional level)
   "Display a warning message.
-CLASS should be a symbol describing what sort of warning this is, such
-as `resource' or `key-mapping'.  A list of such symbols is also
-accepted. (Individual classes can be suppressed; see
-`display-warning-suppressed-classes'.)  Optional argument LEVEL can
-be used to specify a priority for the warning, other than default priority
-`warning'. (See `display-warning-minimum-level').  The message is
-inserted into the *Warnings* buffer, which is made visible at appropriate
-times."
+
+\[This is the most basic entry point for displaying a warning.  In practice,
+`lwarn' or `warn' are probably more convenient for most usages.]
+
+CLASS should be a symbol describing what sort of warning this is, such as
+`resource' or `key-mapping' -- this refers, more or less, to the module in
+which the warning is generated and serves to group warnings together with
+similar semantics.  A list of such symbols is also accepted.
+
+Optional argument LEVEL can be used to specify a priority for the warning,
+other than default priority `warning'.  The currently defined levels are,
+from highest to lowest:
+
+Level        Meaning                                                        
+-----------------------------------------------------------------------------
+emergency    A fatal or near-fatal error.  XEmacs is likely to crash.
+
+critical     A serious, nonrecoverable problem has occurred -- e.g., the
+             loss of a major subsystem, such as the crash of the X server
+	     when XEmacs is connected to the server.
+
+error        A warning about a problematic condition that should be fixed,
+             and XEmacs cannot work around it -- it causes a failure of an
+	     operation. (In most circumstances, consider just signalling
+             an error). However, there is no permanent damage and the
+             situation is ultimately recoverable.
+
+warning      A warning about a problematic condition that should be fixed,
+             but XEmacs can work around it.
+
+\[By default, warnings above here, as well as being logged, cause the
+*Warnings* buffer to be forcibly displayed, so that the warning (and
+previous warnings, since often a whole series of warnings are issued at
+once) can be examined in detail.  Also, the annoying presence of the
+*Warnings* buffer will encourage people to go out and fix the
+problem. Warnings below here are displayed in the minibuffer as well as
+logged in the *Warnings* buffer. but the *Warnings* buffer will not be
+forcibly shown, as these represent conditions the user is not expected to
+fix.]
+
+alert        A warning about a problematic condition that can't easily be
+             fixed (often having to do with the external environment), and
+             causes a failure.  We don't force the *Warnings* buffer to be
+	     displayed because the purpose of doing that is to force the
+             user to fix the problem so that the buffer no longer appears.
+             When the problem is outside the user's control, forcing the
+             buffer is pointless and annoying.
+
+notice       A warning about a problematic condition that can't easily be
+             fixed (often having to do with the external environment),
+             but XEmacs can work around it.
+
+info         Random info about something new or unexpected that was noticed;
+             does not generally indicate a problem.
+
+\[By default, warnings below here are ignored entirely.  All warnings above
+here are logged in the *Warnings* buffer.]
+
+debug        A debugging notice; normally, not seen at all.
+
+NOTE: `specifier-instance' outputs warnings at level `debug' when errors occur
+in the process of trying to instantiate a particular instantiator.  If you
+want to see these, change `log-warning-minimum-level'.
+
+There are two sets of variables.  One controls the lower level (see the
+above diagram) -- i.e. ignored entirely.  One controls the upper level --
+whether the *Warnings* buffer is forcibly displayed.  In particular:
+
+`display-warning-minimum-level' sets the upper level (see above), and
+`log-warning-minimum-level' the lower level.
+
+Individual classes can be suppressed. `log-warning-suppressed-classes'
+specifies a list of classes where warnings on those classes will be treated
+as if their level is below `log-warning-minimum-level' (i.e. they will be
+ignored completely), regardless of their actual level.  Similarly,
+`display-warning-suppressed-classes' specifies a list of classes where
+warnings on those classes will be treated as if their level is below
+`display-warning-minimum-level', but above `log-warning-minimum-level' so
+long as they're not listed in that variable as well."
   (or level (setq level 'warning))
   (or (listp class) (setq class (list class)))
   (check-argument-type 'warning-level-p level)
@@ -4573,35 +4659,38 @@ times."
 	  (with-current-buffer buffer
 	    (goto-char (point-max))
 	    (incf warning-count)
-	    (princ (format "(%d) (%s/%s) "
-			   warning-count
-			   (mapconcat 'symbol-name class ",")
-			   level)
-		   buffer)
-	    (princ message buffer)
-	    (terpri buffer)
-	    (terpri buffer)))))))
+	    (let ((start (point)))
+	      (princ (format "(%d) (%s/%s) "
+			     warning-count
+			     (mapconcat 'symbol-name class ",")
+			     level)
+		     buffer)
+	      (princ message buffer)
+	      (terpri buffer)
+	      (terpri buffer)
+	      (let ((ex (make-extent start (point))))
+		(set-extent-properties ex
+				       `(warning t warning-count ,warning-count
+						 warning-class ,class
+						 warning-level ,level)))))
+	  (message "%s: %s" (capitalize (symbol-name level)) message))))))
 
 (defun warn (&rest args)
-  "Display a warning message.
+  "Display a formatted warning message at default class and level.
 The message is constructed by passing all args to `format'.  The message
 is placed in the *Warnings* buffer, which will be popped up at the next
-redisplay.  The class of the warning is `warning'.  See also
-`display-warning'."
-  (display-warning 'warning (apply 'format args)))
+redisplay.  The class of the warning is `general'; the level is `warning'.
+
+See `display-warning' for more info."
+  (display-warning 'default (apply 'format args)))
 
 (defun lwarn (class level &rest args)
-  "Display a labeled warning message.
-CLASS should be a symbol describing what sort of warning this is, such
-as `resource' or `key-mapping'.  A list of such symbols is also
-accepted. (Individual classes can be suppressed; see
-`display-warning-suppressed-classes'.)  If non-nil, LEVEL can be used
-to specify a priority for the warning, other than default priority
-`warning'. (See `display-warning-minimum-level').  The message is
-inserted into the *Warnings* buffer, which is made visible at appropriate
-times.
+  "Display a formatted warning message at specified class and level.
+The message is constructed by passing all args to `format'.  The message
+is placed in the *Warnings* buffer, which will be popped up at the next
+redisplay.
 
-The rest of the arguments are passed to `format'."
+See `display-warning' for more info."
   (display-warning class (apply 'format args)
 		   (or level 'warning)))
 
@@ -4638,9 +4727,43 @@ The C code calls this periodically, right before redisplay."
 	((featurep 'xemacs) "XEmacs")
 	(t "Emacs")))
 
-(defun debug-print (format &rest args)
+(defun debug-print-1 (&rest args)
+  "Send a debugging-type string to standard output.
+If the first argument is a string, it is considered to be a format
+specifier if there are sufficient numbers of other args, and the string is
+formatted using (apply #'format args).  Otherwise, each argument is printed
+individually in a numbered list."
+  (let ((standard-output 'external-debugging-output)
+	(fmt (condition-case nil
+		 (and (stringp (first args))
+		      (apply #'format args))
+	       (error nil))))
+    (if fmt
+	(progn
+	  (prin1 (apply #'format args))
+	  (terpri))
+      (princ "--> ")
+      (let ((i 1))
+	(dolist (sgra args)
+	  (if (> i 1) (princ "  "))
+	  (princ (format "%d. " i))
+	  (prin1 sgra)
+	  (incf i))
+	(terpri)))))
+
+(defun debug-print (&rest args)
   "Send a string to the debugging output.
-The string is formatted using (apply #'format FORMAT ARGS)."
-  (princ (apply #'format format args) 'external-debugging-output))
+If the first argument is a string, it is considered to be a format
+specifier if there are sufficient numbers of other args, and the string is
+formatted using (apply #'format args).  Otherwise, each argument is printed
+individually in a numbered list."
+  (let ((standard-output 'external-debugging-output))
+    (apply #'debug-print-1 args)))
+
+(defun debug-backtrace ()
+  "Send a backtrace to the debugging output."
+  (let ((standard-output 'external-debugging-output))
+    (backtrace nil t)
+    (terpri)))
 
 ;;; simple.el ends here

@@ -749,7 +749,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
       alloc_lcrecord_type (struct mswindows_dialog_id,
 			   &lrecord_mswindows_dialog_id);
     
-    XSETMSWINDOWS_DIALOG_ID (dialog_data, did);
+    dialog_data = wrap_mswindows_dialog_id (did);
     
     did->frame = wrap_frame (f);
     did->callbacks = make_vector (Dynarr_length (dialog_items), Qunbound);

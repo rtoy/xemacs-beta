@@ -247,9 +247,8 @@ void
 Lstream_delete (Lstream *lstr)
 {
   int i;
-  Lisp_Object val;
+  Lisp_Object val = wrap_lstream (lstr);
 
-  XSETLSTREAM (val, lstr);
   for (i = 0; i < lstream_type_count; i++)
     {
       if (lstream_types[i] == lstr->imp)
@@ -861,14 +860,12 @@ DEFINE_LSTREAM_IMPLEMENTATION ("stdio", stdio);
 static Lisp_Object
 make_stdio_stream_1 (FILE *stream, int flags, const char *mode)
 {
-  Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_stdio, mode);
   struct stdio_stream *str = STDIO_STREAM_DATA (lstr);
   str->file = stream;
   str->closing = flags & LSTR_CLOSING;
   lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
-  XSETLSTREAM (obj, lstr);
-  return obj;
+  return wrap_lstream (lstr);
 }
 
 Lisp_Object
@@ -998,7 +995,6 @@ static Lisp_Object
 make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
 			const char *mode)
 {
-  Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_filedesc, mode);
   struct filedesc_stream *fstr = FILEDESC_STREAM_DATA (lstr);
   fstr->fd = filedesc;
@@ -1015,8 +1011,7 @@ make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
   else
     fstr->end_pos = fstr->starting_pos + count;
   lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
-  XSETLSTREAM (obj, lstr);
-  return obj;
+  return wrap_lstream (lstr);
 }
 
 Lisp_Object
@@ -1270,7 +1265,6 @@ Lisp_Object
 make_lisp_string_input_stream (Lisp_Object string, Bytecount offset,
 			       Bytecount len)
 {
-  Lisp_Object obj;
   Lstream *lstr;
   struct lisp_string_stream *str;
 
@@ -1287,8 +1281,7 @@ make_lisp_string_input_stream (Lisp_Object string, Bytecount offset,
   str->end = offset + len;
   str->init_offset = offset;
   str->obj = string;
-  XSETLSTREAM (obj, lstr);
-  return obj;
+  return wrap_lstream (lstr);
 }
 
 static Bytecount
@@ -1360,25 +1353,21 @@ DEFINE_LSTREAM_IMPLEMENTATION ("fixed-buffer", fixed_buffer);
 Lisp_Object
 make_fixed_buffer_input_stream (const void *buf, Bytecount size)
 {
-  Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_fixed_buffer, "r");
   struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (lstr);
   str->inbuf = (const unsigned char *) buf;
   str->size = size;
-  XSETLSTREAM (obj, lstr);
-  return obj;
+  return wrap_lstream (lstr);
 }
 
 Lisp_Object
 make_fixed_buffer_output_stream (void *buf, Bytecount size)
 {
-  Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_fixed_buffer, "w");
   struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (lstr);
   str->outbuf = (unsigned char *) buf;
   str->size = size;
-  XSETLSTREAM (obj, lstr);
-  return obj;
+  return wrap_lstream (lstr);
 }
 
 static Bytecount
@@ -1449,9 +1438,7 @@ DEFINE_LSTREAM_IMPLEMENTATION ("resizing-buffer", resizing_buffer);
 Lisp_Object
 make_resizing_buffer_output_stream (void)
 {
-  Lisp_Object obj;
-  XSETLSTREAM (obj, Lstream_new (lstream_resizing_buffer, "w"));
-  return obj;
+  return wrap_lstream (Lstream_new (lstream_resizing_buffer, "w"));
 }
 
 static Bytecount
@@ -1517,8 +1504,8 @@ DEFINE_LSTREAM_IMPLEMENTATION ("dynarr", dynarr);
 Lisp_Object
 make_dynarr_output_stream (unsigned_char_dynarr *dyn)
 {
-  Lisp_Object obj;
-  XSETLSTREAM (obj, Lstream_new (lstream_dynarr, "w"));
+  Lisp_Object obj = wrap_lstream (Lstream_new (lstream_dynarr, "w"));
+
   DYNARR_STREAM_DATA (XLSTREAM (obj))->dyn = dyn;
   return obj;
 }
@@ -1569,7 +1556,6 @@ static Lisp_Object
 make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
 			   int flags, const char *mode)
 {
-  Lisp_Object obj;
   Lstream *lstr;
   struct lisp_buffer_stream *str;
   Charbpos bmin, bmax;
@@ -1607,9 +1593,8 @@ make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
   str = LISP_BUFFER_STREAM_DATA (lstr);
   {
     Lisp_Object marker;
-    Lisp_Object buffer;
+    Lisp_Object buffer = wrap_buffer (buf);
 
-    XSETBUFFER (buffer, buf);
     marker = Fmake_marker ();
     Fset_marker (marker, make_int (start), buffer);
     str->start = marker;
@@ -1627,8 +1612,7 @@ make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
     str->buffer = buffer;
   }
   str->flags = flags;
-  XSETLSTREAM (obj, lstr);
-  return obj;
+  return wrap_lstream (lstr);
 }
 
 Lisp_Object

@@ -175,74 +175,7 @@ typedef long intptr_t;
 typedef unsigned long uintptr_t;
 #endif
 
-/* ------------------------ dynamic arrays ------------------- */
-
-#define Dynarr_declare(type)	\
-  type *base;			\
-  int elsize;			\
-  int cur;			\
-  int largest;			\
-  int max
-
-typedef struct dynarr
-{
-  Dynarr_declare (void);
-} Dynarr;
-
-void *Dynarr_newf (int elsize);
-void Dynarr_resize (void *dy, int size);
-void Dynarr_insert_many (void *d, const void *el, int len, int start);
-void Dynarr_delete_many (void *d, int start, int len);
-void Dynarr_free (void *d);
-
-#define Dynarr_new(type) ((type##_dynarr *) Dynarr_newf (sizeof (type)))
-#define Dynarr_new2(dynarr_type, type) \
-  ((dynarr_type *) Dynarr_newf (sizeof (type)))
-#define Dynarr_at(d, pos) ((d)->base[pos])
-#define Dynarr_atp(d, pos) (&Dynarr_at (d, pos))
-#define Dynarr_begin(d) Dynarr_atp (d, 0)
-#define Dynarr_end(d) Dynarr_atp (d, Dynarr_length (d))
-#define Dynarr_sizeof(d) ((d)->cur * (d)->elsize)
-#define Dynarr_length(d) ((d)->cur)
-#define Dynarr_largest(d) ((d)->largest)
-#define Dynarr_reset(d) ((d)->cur = 0)
-#define Dynarr_add_many(d, el, len) Dynarr_insert_many (d, el, len, (d)->cur)
-#define Dynarr_insert_many_at_start(d, el, len)	\
-  Dynarr_insert_many (d, el, len, 0)
-#define Dynarr_add_literal_string(d, s) Dynarr_add_many (d, s, sizeof (s) - 1)
-#define Dynarr_add_lisp_string(d, s, codesys)		\
-do {							\
-  Lisp_Object dyna_ls_s = (s);				\
-  Lisp_Object dyna_ls_cs = (codesys);			\
-  Extbyte *dyna_ls_eb;					\
-  Bytecount dyna_ls_bc;					\
-							\
-  TO_EXTERNAL_FORMAT (LISP_STRING, dyna_ls_s,		\
-                      ALLOCA, (dyna_ls_eb, dyna_ls_bc),	\
-		      dyna_ls_cs);			\
-  Dynarr_add_many (d, dyna_ls_eb, dyna_ls_bc);		\
-} while (0)
-
-#define Dynarr_add(d, el) (						\
-  (d)->cur >= (d)->max ? Dynarr_resize ((d), (d)->cur+1) : (void) 0,	\
-  ((d)->base)[(d)->cur++] = (el),					\
-  (d)->cur > (d)->largest ? (d)->largest = (d)->cur : (int) 0)
-
-/* The following defines will get you into real trouble if you aren't
-   careful.  But they can save a lot of execution time when used wisely. */
-#define Dynarr_increment(d) ((d)->cur++)
-#define Dynarr_set_size(d, n) ((d)->cur = n)
-
-#define Dynarr_pop(d) \
-  (assert ((d)->cur > 0), (d)->cur--, Dynarr_at (d, (d)->cur))
-#define Dynarr_delete(d, i) Dynarr_delete_many (d, i, len)
-#define Dynarr_delete_by_pointer(d, p) \
-  Dynarr_delete_many (d, (p) - ((d)->base), 1)
-
-#ifdef MEMORY_USAGE_STATS
-struct overhead_stats;
-Bytecount Dynarr_memory_usage (void *d, struct overhead_stats *stats);
-#endif
+/* ------------------------ basic compiler defines ------------------- */
 
 /* Also define min() and max(). (Some compilers put them in strange
    places that won't be referenced by the above include files, such
@@ -254,54 +187,6 @@ Bytecount Dynarr_memory_usage (void *d, struct overhead_stats *stats);
 #ifndef max
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #endif
-
-/* Memory allocation */
-void malloc_warning (const char *);
-void *xmalloc (Bytecount size);
-void *xmalloc_and_zero (Bytecount size);
-void *xrealloc (void *, Bytecount size);
-char *xstrdup (const char *);
-/* generally useful */
-#define countof(x) ((int) (sizeof(x)/sizeof((x)[0])))
-#define xnew(type) ((type *) xmalloc (sizeof (type)))
-#define xnew_array(type, len) ((type *) xmalloc ((len) * sizeof (type)))
-#define xnew_and_zero(type) ((type *) xmalloc_and_zero (sizeof (type)))
-#define xzero(lvalue) ((void) memset (&(lvalue), '\0', sizeof (lvalue)))
-#define xnew_array_and_zero(type, len) ((type *) xmalloc_and_zero ((len) * sizeof (type)))
-#define XREALLOC_ARRAY(ptr, type, len) ((void) (ptr = (type *) xrealloc (ptr, (len) * sizeof (type))))
-#define alloca_new(type) ((type *) alloca (sizeof (type)))
-#define alloca_array(type, len) ((type *) alloca ((len) * sizeof (type)))
-
-/* also generally useful if you want to avoid arbitrary size limits
-   but don't need a full dynamic array.  Assumes that BASEVAR points
-   to a malloced array of TYPE objects (or possibly a NULL pointer,
-   if SIZEVAR is 0), with the total size stored in SIZEVAR.  This
-   macro will realloc BASEVAR as necessary so that it can hold at
-   least NEEDED_SIZE objects.  The reallocing is done by doubling,
-   which ensures constant amortized time per element. */
-#define DO_REALLOC(basevar, sizevar, needed_size, type)	do {	\
-  Bytecount do_realloc_needed_size = (needed_size);		\
-  if ((sizevar) < do_realloc_needed_size)			\
-    {								\
-      if ((sizevar) < 32)					\
-	(sizevar) = 32;						\
-      while ((sizevar) < do_realloc_needed_size)		\
-	(sizevar) *= 2;						\
-      XREALLOC_ARRAY (basevar, type, (sizevar));		\
-    }								\
-} while (0)
-
-#ifdef ERROR_CHECK_MALLOC
-void xfree_1 (void *);
-#define xfree(lvalue) do			\
-{						\
-  void **xfree_ptr = (void **) &(lvalue);	\
-  xfree_1 (*xfree_ptr);				\
-  *xfree_ptr = (void *) 0xDEADBEEF;		\
-} while (0)
-#else
-void xfree (void *);
-#endif /* ERROR_CHECK_MALLOC */
 
 #ifndef PRINTF_ARGS
 # if defined (__GNUC__) && (__GNUC__ >= 2)
@@ -347,6 +232,23 @@ void xfree (void *);
 #define RETURN_SANS_WARNINGS return
 #define RETURN_NOT_REACHED(value) return value;
 #endif
+
+#ifndef DO_NOTHING
+#define DO_NOTHING do {} while (0)
+#endif
+
+#ifndef DECLARE_NOTHING
+#define DECLARE_NOTHING struct nosuchstruct
+#endif
+
+/*#ifdef DEBUG_XEMACS*/
+#define REGISTER
+#define register
+/*#else*/
+/*#define REGISTER register*/
+/*#endif*/
+
+/* ------------------------ alignment definitions ------------------- */
 
 /* No type has a greater alignment requirement than max_align_t.
    (except perhaps for types we don't use, like long double) */
@@ -404,13 +306,7 @@ template<typename T> struct alignment_trick { char c; T member; };
 #define ALIGN_PTR(ptr, unit) \
   ((void *) ALIGN_SIZE ((size_t) (ptr), unit))
 
-#ifndef DO_NOTHING
-#define DO_NOTHING do {} while (0)
-#endif
-
-#ifndef DECLARE_NOTHING
-#define DECLARE_NOTHING struct nosuchstruct
-#endif
+/* ------------------------ assertions ------------------- */
 
 /* We define assert iff USE_ASSERTIONS or DEBUG_XEMACS is defined.
    Otherwise we define it to be empty.  Quantify has shown that the
@@ -458,13 +354,143 @@ void assert_failed (const char *, int, const char *);
 #endif
 #endif /* 0 */
 
-/*#ifdef DEBUG_XEMACS*/
-#define REGISTER
-#define register
-/*#else*/
-/*#define REGISTER register*/
-/*#endif*/
+/* ------------------------ simple memory allocation ------------------- */
 
+/* Memory allocation */
+void malloc_warning (const char *);
+void *xmalloc (Bytecount size);
+void *xmalloc_and_zero (Bytecount size);
+void *xrealloc (void *, Bytecount size);
+char *xstrdup (const char *);
+/* generally useful */
+#define countof(x) ((int) (sizeof(x)/sizeof((x)[0])))
+#define xnew(type) ((type *) xmalloc (sizeof (type)))
+#define xnew_array(type, len) ((type *) xmalloc ((len) * sizeof (type)))
+#define xnew_and_zero(type) ((type *) xmalloc_and_zero (sizeof (type)))
+#define xzero(lvalue) ((void) memset (&(lvalue), '\0', sizeof (lvalue)))
+#define xnew_array_and_zero(type, len) ((type *) xmalloc_and_zero ((len) * sizeof (type)))
+#define XREALLOC_ARRAY(ptr, type, len) ((void) (ptr = (type *) xrealloc (ptr, (len) * sizeof (type))))
+#define alloca_new(type) ((type *) alloca (sizeof (type)))
+#define alloca_array(type, len) ((type *) alloca ((len) * sizeof (type)))
+
+/* also generally useful if you want to avoid arbitrary size limits
+   but don't need a full dynamic array.  Assumes that BASEVAR points
+   to a malloced array of TYPE objects (or possibly a NULL pointer,
+   if SIZEVAR is 0), with the total size stored in SIZEVAR.  This
+   macro will realloc BASEVAR as necessary so that it can hold at
+   least NEEDED_SIZE objects.  The reallocing is done by doubling,
+   which ensures constant amortized time per element. */
+#define DO_REALLOC(basevar, sizevar, needed_size, type)	do {	\
+  Bytecount do_realloc_needed_size = (needed_size);		\
+  if ((sizevar) < do_realloc_needed_size)			\
+    {								\
+      if ((sizevar) < 32)					\
+	(sizevar) = 32;						\
+      while ((sizevar) < do_realloc_needed_size)		\
+	(sizevar) *= 2;						\
+      XREALLOC_ARRAY (basevar, type, (sizevar));		\
+    }								\
+} while (0)
+
+#ifdef ERROR_CHECK_MALLOC
+void xfree_1 (void *);
+#define xfree(lvalue) do			\
+{						\
+  void **xfree_ptr = (void **) &(lvalue);	\
+  xfree_1 (*xfree_ptr);				\
+  *xfree_ptr = (void *) 0xDEADBEEF;		\
+} while (0)
+#else
+void xfree (void *);
+#endif /* ERROR_CHECK_MALLOC */
+
+/* ------------------------ dynamic arrays ------------------- */
+
+#define Dynarr_declare(type)	\
+  type *base;			\
+  int elsize;			\
+  int cur;			\
+  int largest;			\
+  int max
+
+typedef struct dynarr
+{
+  Dynarr_declare (void);
+} Dynarr;
+
+void *Dynarr_newf (int elsize);
+void Dynarr_resize (void *dy, int size);
+void Dynarr_insert_many (void *d, const void *el, int len, int start);
+void Dynarr_delete_many (void *d, int start, int len);
+void Dynarr_free (void *d);
+
+#define Dynarr_new(type) ((type##_dynarr *) Dynarr_newf (sizeof (type)))
+#define Dynarr_new2(dynarr_type, type) \
+  ((dynarr_type *) Dynarr_newf (sizeof (type)))
+#define Dynarr_at(d, pos) ((d)->base[pos])
+#define Dynarr_atp(d, pos) (&Dynarr_at (d, pos))
+#define Dynarr_begin(d) Dynarr_atp (d, 0)
+#define Dynarr_end(d) Dynarr_atp (d, Dynarr_length (d))
+#define Dynarr_sizeof(d) ((d)->cur * (d)->elsize)
+
+#ifdef ERROR_CHECK_TYPECHECK
+DECLARE_INLINE_HEADER (
+Dynarr *
+Dynarr_verify_1 (void *d, const char *file, int line)
+)
+{
+  Dynarr *dy = (Dynarr *) d;
+  assert_at_line (dy->cur >= 0 && dy->cur <= dy->largest &&
+		  dy->largest <= dy->max, file, line);
+  return dy;
+}
+
+#define Dynarr_verify(d) Dynarr_verify_1 (d, __FILE__, __LINE__)
+#else
+#define Dynarr_verify(d) (d)
+#endif /* ERROR_CHECK_TYPECHECK */
+
+#define Dynarr_length(d) (Dynarr_verify (d)->cur)
+#define Dynarr_largest(d) (Dynarr_verify (d)->largest)
+#define Dynarr_reset(d) (Dynarr_verify (d)->cur = 0)
+#define Dynarr_add_many(d, el, len) Dynarr_insert_many (d, el, len, (d)->cur)
+#define Dynarr_insert_many_at_start(d, el, len)	\
+  Dynarr_insert_many (d, el, len, 0)
+#define Dynarr_add_literal_string(d, s) Dynarr_add_many (d, s, sizeof (s) - 1)
+#define Dynarr_add_lisp_string(d, s, codesys)		\
+do {							\
+  Lisp_Object dyna_ls_s = (s);				\
+  Lisp_Object dyna_ls_cs = (codesys);			\
+  Extbyte *dyna_ls_eb;					\
+  Bytecount dyna_ls_bc;					\
+							\
+  TO_EXTERNAL_FORMAT (LISP_STRING, dyna_ls_s,		\
+                      ALLOCA, (dyna_ls_eb, dyna_ls_bc),	\
+		      dyna_ls_cs);			\
+  Dynarr_add_many (d, dyna_ls_eb, dyna_ls_bc);		\
+} while (0)
+
+#define Dynarr_add(d, el) (						 \
+  Dynarr_verify (d)->cur >= (d)->max ? Dynarr_resize ((d), (d)->cur+1) : \
+      (void) 0,								 \
+  ((d)->base)[(d)->cur++] = (el),					 \
+  (d)->cur > (d)->largest ? (d)->largest = (d)->cur : (int) 0)
+
+/* The following defines will get you into real trouble if you aren't
+   careful.  But they can save a lot of execution time when used wisely. */
+#define Dynarr_increment(d) ((d)->cur++)
+#define Dynarr_set_size(d, n) ((d)->cur = n)
+
+#define Dynarr_pop(d) \
+  (assert ((d)->cur > 0), (d)->cur--, Dynarr_at (d, (d)->cur))
+#define Dynarr_delete(d, i) Dynarr_delete_many (d, i, len)
+#define Dynarr_delete_by_pointer(d, p) \
+  Dynarr_delete_many (d, (p) - ((d)->base), 1)
+
+#ifdef MEMORY_USAGE_STATS
+struct overhead_stats;
+Bytecount Dynarr_memory_usage (void *d, struct overhead_stats *stats);
+#endif
 
 
 /************************************************************************/
@@ -488,7 +514,8 @@ typedef enum error_behavior
 {
   ERROR_ME,
   ERROR_ME_NOT,
-  ERROR_ME_WARN
+  ERROR_ME_WARN,
+  ERROR_ME_DEBUG_WARN
 } Error_Behavior;
 
 #define ERRB_EQ(a, b) ((a) == (b))
@@ -506,6 +533,7 @@ typedef struct _error_behavior_struct_
 extern Error_Behavior ERROR_ME;
 extern Error_Behavior ERROR_ME_NOT;
 extern Error_Behavior ERROR_ME_WARN;
+extern Error_Behavior ERROR_ME_DEBUG_WARN;
 
 #define ERRB_EQ(a, b)							   \
  ((a).really_unlikely_name_to_have_accidentally_in_a_non_errb_structure == \
@@ -828,7 +856,6 @@ struct Lisp_Buffer_Cons
 
 DECLARE_LRECORD (cons, Lisp_Cons);
 #define XCONS(x) XRECORD (x, cons, Lisp_Cons)
-#define XSETCONS(x, p) XSETRECORD (x, p, cons)
 #define wrap_cons(p) wrap_record (p, cons)
 #define CONSP(x) RECORDP (x, cons)
 #define CHECK_CONS(x) CHECK_RECORD (x, cons)
@@ -1323,8 +1350,8 @@ struct Lisp_String
 	  unsigned int ascii_begin :21;
 	} v;
     } u;
-  Bytecount size;
-  Intbyte *data;
+  Bytecount size_;
+  Intbyte *data_;
   Lisp_Object plist;
 };
 typedef struct Lisp_String Lisp_String;
@@ -1333,7 +1360,6 @@ typedef struct Lisp_String Lisp_String;
 
 DECLARE_LRECORD (string, Lisp_String);
 #define XSTRING(x) XRECORD (x, string, Lisp_String)
-#define XSETSTRING(x, p) XSETRECORD (x, p, string)
 #define wrap_string(p) wrap_record (p, string)
 #define STRINGP(x) RECORDP (x, string)
 #define CHECK_STRING(x) CHECK_RECORD (x, string)
@@ -1351,33 +1377,27 @@ Bytecount charcount_to_bytecount (const Intbyte *ptr, Charcount len);
 
 #endif /* not MULE */
 
-#define string_length(s) ((s)->size)
-#define XSTRING_LENGTH(s) string_length (XSTRING (s))
-#define string_data(s) ((s)->data + 0)
-#define XSTRING_DATA(s) string_data (XSTRING (s))
-#define string_ascii_begin(s) ((s)->u.v.ascii_begin + 0)
-#define XSTRING_ASCII_BEGIN(s) string_ascii_begin (XSTRING (s))
-#define string_char_length(s) string_index_byte_to_char (s, string_length (s))
-#define XSTRING_CHAR_LENGTH(s) string_char_length (XSTRING (s))
-#define string_byte(s, i) ((s)->data[i] + 0)
-#define XSTRING_BYTE(s, i) string_byte (XSTRING (s), i)
-#define string_byte_addr(s, i) (&((s)->data[i]))
-#define string_char(s, i) charptr_emchar (string_char_addr (s, i))
-#define XSTRING_CHAR(s, i) string_char (XSTRING (s), i)
-#define XSTRING_INDEX_CHAR_TO_BYTE(s, idx) \
-  string_index_char_to_byte (XSTRING (s), idx)
-#define XSTRING_INDEX_BYTE_TO_CHAR(s, idx) \
-  string_index_byte_to_char (XSTRING (s), idx)
-#define XSTRING_OFFSET_BYTE_TO_CHAR_LEN(s, off, len) \
-  string_offset_byte_to_char_len (XSTRING (s), off, len)
-#define XSTRING_OFFSET_CHAR_TO_BYTE_LEN(s, off, len) \
-  string_offset_char_to_byte_len (XSTRING (s), off, len)
-#define set_string_length(s, len) ((void) ((s)->size = (len)))
-#define set_string_data(s, ptr) ((void) ((s)->data = (ptr)))
+/* Operations on Lisp_String *'s; only ones left */
+#define set_string_length(s, len) ((void) ((s)->size_ = (len)))
+#define set_string_data(s, ptr) ((void) ((s)->data_ = (ptr)))
+
+#define XSTRING_LENGTH(s) (XSTRING (s)->size_)
+#define XSTRING_PLIST(s) (XSTRING (s)->plist)
+#define XSTRING_DATA(s) (XSTRING (s)->data_ + 0)
+#define XSTRING_ASCII_BEGIN(s) (XSTRING (s)->u.v.ascii_begin + 0)
+#define XSTRING_CHAR_LENGTH(s) \
+  string_index_byte_to_char (s, XSTRING_LENGTH (s))
+#define XSTRING_BYTE(s, i) (XSTRING (s)->data_[i] + 0)
+#define set_string_byte(s, i, c) (XSTRING (s)->data_[i] = (c))
+
+#define string_byte_addr(s, i) (&((XSTRING (s))->data_[i]))
+#define XSTRING_CHAR(s, i) charptr_emchar (string_char_addr (s, i))
+#define XSET_STRING_LENGTH(s, ptr) set_string_length (XSTRING (s), ptr)
+#define XSET_STRING_DATA(s, ptr) set_string_data (XSTRING (s), ptr)
 /* WARNING: If you modify an existing string, you must call
    bump_string_modiff() afterwards. */
-#define set_string_byte(s, i, b) ((void) ((s)->data[i] = (b)))
-#define set_string_ascii_begin(s, val) ((void) ((s)->u.v.ascii_begin = (val)))
+#define XSET_STRING_ASCII_BEGIN(s, val) \
+  ((void) (XSTRING (s)->u.v.ascii_begin = (val)))
 
 #ifdef ERROR_CHECK_CHARBPOS
 #define SLEDGEHAMMER_CHECK_ASCII_BEGIN
@@ -1411,25 +1431,26 @@ do {							\
 #define alloca_intbytes(num) alloca_array (Intbyte, num)
 #define alloca_extbytes(num) alloca_array (Extbyte, num)
 
-void resize_string (Lisp_String *s, Bytecount pos, Bytecount delta);
+void resize_string (Lisp_Object s, Bytecount pos, Bytecount delta);
 
 #ifdef MULE
 
 /* Convert a byte index into a string into a char index. */
 DECLARE_INLINE_HEADER (
 Charcount
-string_index_byte_to_char (Lisp_String *s, Bytecount idx)
+string_index_byte_to_char (Lisp_Object s, Bytecount idx)
 )
 {
   Charcount retval;
-  if (idx <= (Bytecount) string_ascii_begin (s))
+  if (idx <= (Bytecount) XSTRING_ASCII_BEGIN (s))
     retval = idx;
   else
-    retval = (string_ascii_begin (s) +
-	      bytecount_to_charcount (string_data (s) + string_ascii_begin (s),
-				      idx - string_ascii_begin (s)));
+    retval = (XSTRING_ASCII_BEGIN (s) +
+	      bytecount_to_charcount (XSTRING_DATA (s) +
+				      XSTRING_ASCII_BEGIN (s),
+				      idx - XSTRING_ASCII_BEGIN (s)));
 #ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
-  assert (retval == bytecount_to_charcount (string_data (s), idx));
+  assert (retval == bytecount_to_charcount (XSTRING_DATA (s), idx));
 #endif
   return retval;
 }
@@ -1437,18 +1458,19 @@ string_index_byte_to_char (Lisp_String *s, Bytecount idx)
 /* Convert a char index into a string into a byte index. */
 DECLARE_INLINE_HEADER (
 Bytecount
-string_index_char_to_byte (Lisp_String *s, Charcount idx)
+string_index_char_to_byte (Lisp_Object s, Charcount idx)
 )
 {
   Bytecount retval;
-  if (idx <= (Charcount) string_ascii_begin (s))
+  if (idx <= (Charcount) XSTRING_ASCII_BEGIN (s))
     retval = idx;
   else
-    retval = (string_ascii_begin (s) +
-	      charcount_to_bytecount (string_data (s) + string_ascii_begin (s),
-				      idx - string_ascii_begin (s)));
+    retval = (XSTRING_ASCII_BEGIN (s) +
+	      charcount_to_bytecount (XSTRING_DATA (s) +
+				      XSTRING_ASCII_BEGIN (s),
+				      idx - XSTRING_ASCII_BEGIN (s)));
 #ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
-  assert (retval == charcount_to_bytecount (string_data (s), idx));
+  assert (retval == charcount_to_bytecount (XSTRING_DATA (s), idx));
 #endif
   return retval;
 }
@@ -1457,21 +1479,21 @@ string_index_char_to_byte (Lisp_String *s, Charcount idx)
    chars. */
 DECLARE_INLINE_HEADER (
 Charcount
-string_offset_byte_to_char_len (Lisp_String *s, Bytecount off, Bytecount len)
+string_offset_byte_to_char_len (Lisp_Object s, Bytecount off, Bytecount len)
 )
 {
   Charcount retval;
-  if (off + len <= (Bytecount) string_ascii_begin (s))
+  if (off + len <= (Bytecount) XSTRING_ASCII_BEGIN (s))
     retval = len;
-  else if (off < (Bytecount) string_ascii_begin (s))
+  else if (off < (Bytecount) XSTRING_ASCII_BEGIN (s))
     retval =
-      string_ascii_begin (s) - off +
-	bytecount_to_charcount (string_data (s) + string_ascii_begin (s),
-				len - (string_ascii_begin (s) - off));
+      XSTRING_ASCII_BEGIN (s) - off +
+	bytecount_to_charcount (XSTRING_DATA (s) + XSTRING_ASCII_BEGIN (s),
+				len - (XSTRING_ASCII_BEGIN (s) - off));
   else
-    retval = bytecount_to_charcount (string_data (s) + off, len);
+    retval = bytecount_to_charcount (XSTRING_DATA (s) + off, len);
 #ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
-  assert (retval == bytecount_to_charcount (string_data (s) + off, len));
+  assert (retval == bytecount_to_charcount (XSTRING_DATA (s) + off, len));
 #endif
   return retval;
 }
@@ -1480,34 +1502,34 @@ string_offset_byte_to_char_len (Lisp_String *s, Bytecount off, Bytecount len)
    bytes. */
 DECLARE_INLINE_HEADER (
 Bytecount
-string_offset_char_to_byte_len (Lisp_String *s, Bytecount off, Charcount len)
+string_offset_char_to_byte_len (Lisp_Object s, Bytecount off, Charcount len)
 )
 {
   Bytecount retval;
-  if (off + len <= (Bytecount) string_ascii_begin (s))
+  if (off + len <= (Bytecount) XSTRING_ASCII_BEGIN (s))
     retval = len;
-  else if (off < (Bytecount) string_ascii_begin (s))
+  else if (off < (Bytecount) XSTRING_ASCII_BEGIN (s))
     retval =
-      string_ascii_begin (s) - off +
-	charcount_to_bytecount (string_data (s) + string_ascii_begin (s),
-				len - (string_ascii_begin (s) - off));
+      XSTRING_ASCII_BEGIN (s) - off +
+	charcount_to_bytecount (XSTRING_DATA (s) + XSTRING_ASCII_BEGIN (s),
+				len - (XSTRING_ASCII_BEGIN (s) - off));
   else
-    retval = charcount_to_bytecount (string_data (s) + off, len);
+    retval = charcount_to_bytecount (XSTRING_DATA (s) + off, len);
 #ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
-  assert (retval == charcount_to_bytecount (string_data (s) + off, len));
+  assert (retval == charcount_to_bytecount (XSTRING_DATA (s) + off, len));
 #endif
   return retval;
 }
 
 DECLARE_INLINE_HEADER (
 Intbyte *
-string_char_addr (Lisp_String *s, Charcount idx)
+string_char_addr (Lisp_Object s, Charcount idx)
 )
 {
-  return string_data (s) + string_index_char_to_byte (s, idx);
+  return XSTRING_DATA (s) + string_index_char_to_byte (s, idx);
 }
 
-void set_string_char (Lisp_String *s, Charcount i, Emchar c);
+void set_string_char (Lisp_Object s, Charcount i, Emchar c);
 
 #else /* not MULE */
 
@@ -1518,7 +1540,7 @@ void set_string_char (Lisp_String *s, Charcount i, Emchar c);
 # define string_char_addr(s, i) string_byte_addr (s, i)
 /* WARNING: If you modify an existing string, you must call
    bump_string_modiff() afterwards. */
-# define set_string_char(s, i, c) set_string_byte (s, i, (Intbyte) c)
+# define set_string_char(s, i, c) set_string_byte (s, i, c)
 
 #endif /* not MULE */
 
@@ -1560,7 +1582,6 @@ typedef struct Lisp_Vector Lisp_Vector;
 
 DECLARE_LRECORD (vector, Lisp_Vector);
 #define XVECTOR(x) XRECORD (x, vector, Lisp_Vector)
-#define XSETVECTOR(x, p) XSETRECORD (x, p, vector)
 #define wrap_vector(p) wrap_record (p, vector)
 #define VECTORP(x) RECORDP (x, vector)
 #define CHECK_VECTOR(x) CHECK_RECORD (x, vector)
@@ -1599,7 +1620,6 @@ typedef struct Lisp_Bit_Vector Lisp_Bit_Vector;
 
 DECLARE_LRECORD (bit_vector, Lisp_Bit_Vector);
 #define XBIT_VECTOR(x) XRECORD (x, bit_vector, Lisp_Bit_Vector)
-#define XSETBIT_VECTOR(x, p) XSETRECORD (x, p, bit_vector)
 #define wrap_bit_vector(p) wrap_record (p, bit_vector)
 #define BIT_VECTORP(x) RECORDP (x, bit_vector)
 #define CHECK_BIT_VECTOR(x) CHECK_RECORD (x, bit_vector)
@@ -1650,22 +1670,21 @@ struct Lisp_Symbol
   struct lrecord_header lheader;
   /* next symbol in this obarray bucket */
   Lisp_Symbol *next;
-  Lisp_String *name;
+  Lisp_Object name;
   Lisp_Object value;
   Lisp_Object function;
   Lisp_Object plist;
 };
 
 #define SYMBOL_IS_KEYWORD(sym)						\
-  ((string_byte (symbol_name (XSYMBOL (sym)), 0) == ':')		\
+  ((XSTRING_BYTE (symbol_name (XSYMBOL (sym)), 0) == ':')		\
    && EQ (sym, oblookup (Vobarray,					\
-			 string_data (symbol_name (XSYMBOL (sym))),	\
-			 string_length (symbol_name (XSYMBOL (sym))))))
+			 XSTRING_DATA (symbol_name (XSYMBOL (sym))),	\
+			 XSTRING_LENGTH (symbol_name (XSYMBOL (sym))))))
 #define KEYWORDP(obj) (SYMBOLP (obj) && SYMBOL_IS_KEYWORD (obj))
 
 DECLARE_LRECORD (symbol, Lisp_Symbol);
 #define XSYMBOL(x) XRECORD (x, symbol, Lisp_Symbol)
-#define XSETSYMBOL(x, p) XSETRECORD (x, p, symbol)
 #define wrap_symbol(p) wrap_record (p, symbol)
 #define SYMBOLP(x) RECORDP (x, symbol)
 #define CHECK_SYMBOL(x) CHECK_RECORD (x, symbol)
@@ -1676,6 +1695,13 @@ DECLARE_LRECORD (symbol, Lisp_Symbol);
 #define symbol_value(s) ((s)->value)
 #define symbol_function(s) ((s)->function)
 #define symbol_plist(s) ((s)->plist)
+
+#define XSYMBOL_NEXT(s) (XSYMBOL (s)->next)
+#define XSYMBOL_NAME(s) (XSYMBOL (s)->name)
+#define XSYMBOL_VALUE(s) (XSYMBOL (s)->value)
+#define XSYMBOL_FUNCTION(s) (XSYMBOL (s)->function)
+#define XSYMBOL_PLIST(s) (XSYMBOL (s)->plist)
+
 
 /*------------------------------- subr ---------------------------------*/
 
@@ -1695,7 +1721,6 @@ typedef struct Lisp_Subr Lisp_Subr;
 
 DECLARE_LRECORD (subr, Lisp_Subr);
 #define XSUBR(x) XRECORD (x, subr, Lisp_Subr)
-#define XSETSUBR(x, p) XSETRECORD (x, p, subr)
 #define wrap_subr(p) wrap_record (p, subr)
 #define SUBRP(x) RECORDP (x, subr)
 #define CHECK_SUBR(x) CHECK_RECORD (x, subr)
@@ -1722,7 +1747,6 @@ struct Lisp_Marker
 
 DECLARE_LRECORD (marker, Lisp_Marker);
 #define XMARKER(x) XRECORD (x, marker, Lisp_Marker)
-#define XSETMARKER(x, p) XSETRECORD (x, p, marker)
 #define wrap_marker(p) wrap_record (p, marker)
 #define MARKERP(x) RECORDP (x, marker)
 #define CHECK_MARKER(x) CHECK_RECORD (x, marker)
@@ -1778,7 +1802,6 @@ typedef struct Lisp_Float Lisp_Float;
 
 DECLARE_LRECORD (float, Lisp_Float);
 #define XFLOAT(x) XRECORD (x, float, Lisp_Float)
-#define XSETFLOAT(x, p) XSETRECORD (x, p, float)
 #define wrap_float(p) wrap_record (p, float)
 #define FLOATP(x) RECORDP (x, float)
 #define CHECK_FLOAT(x) CHECK_RECORD (x, float)
@@ -1804,7 +1827,6 @@ DECLARE_LRECORD (float, Lisp_Float);
 #else /* not LISP_FLOAT_TYPE */
 
 #define XFLOAT(x) --- error!  No float support. ---
-#define XSETFLOAT(x, p) --- error!  No float support. ---
 #define FLOATP(x) 0
 #define CHECK_FLOAT(x) --- error!  No float support. ---
 #define CONCHECK_FLOAT(x) --- error!  No float support. ---
@@ -1982,7 +2004,6 @@ struct weak_list
 
 DECLARE_LRECORD (weak_list, struct weak_list);
 #define XWEAK_LIST(x) XRECORD (x, weak_list, struct weak_list)
-#define XSETWEAK_LIST(x, p) XSETRECORD (x, p, weak_list)
 #define wrap_weak_list(p) wrap_record (p, weak_list)
 #define WEAK_LISTP(x) RECORDP (x, weak_list)
 #define CHECK_WEAK_LIST(x) CHECK_RECORD (x, weak_list)
@@ -2008,7 +2029,6 @@ struct lcrecord_list
 
 DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
 #define XLCRECORD_LIST(x) XRECORD (x, lcrecord_list, struct lcrecord_list)
-#define XSETLCRECORD_LIST(x, p) XSETRECORD (x, p, lcrecord_list)
 #define wrap_lcrecord_list(p) wrap_record (p, lcrecord_list)
 #define LCRECORD_LISTP(x) RECORDP (x, lcrecord_list)
 /* #define CHECK_LCRECORD_LIST(x) CHECK_RECORD (x, lcrecord_list)
@@ -3219,7 +3239,7 @@ DECLARE_DOESNT_RETURN (gui_error_2 (const char *reason,
 /* Defined in indent.c */
 int bi_spaces_at_point (struct buffer *, Bytebpos);
 int column_at_point (struct buffer *, Charbpos, int);
-int string_column_at_point (Lisp_String *, Charbpos, int);
+int string_column_at_point (Lisp_Object, Charbpos, int);
 int current_column (struct buffer *);
 void invalidate_current_column (void);
 Charbpos vmotion (struct window *, Charbpos, int, int *);
@@ -3242,7 +3262,7 @@ extern Lisp_Object Qmswindows_tstr, Qmswindows_unicode;
 extern Lisp_Object Qmswindows_multibyte, Qmswindows_multibyte_to_unicode;
 
 /* Defined in keymap.c */
-void where_is_to_char (Lisp_Object, char *);
+void where_is_to_char (Lisp_Object, Eistring *);
 
 /* Defined in lread.c */
 void ebolify_bytecode_constants (Lisp_Object);
@@ -3326,6 +3346,7 @@ void write_c_string (const CIntbyte *str, Lisp_Object stream);
 void write_string (const Intbyte *str, Lisp_Object stream);
 /* Same goes for this function. */
 void write_string_1 (const Intbyte *str, Bytecount size, Lisp_Object stream);
+void write_eistring (const Eistring *ei, Lisp_Object stream);
 
 /* Higher-level (printf-style) ways to output data: */
 void write_fmt_string (Lisp_Object stream, const CIntbyte *fmt, ...);
@@ -3394,7 +3415,7 @@ Charbpos scan_buffer (struct buffer *, Emchar, Charbpos, Charbpos, EMACS_INT, EM
 Charbpos find_next_newline (struct buffer *, Charbpos, int);
 Charbpos find_next_newline_no_quit (struct buffer *, Charbpos, int);
 Bytebpos bi_find_next_newline_no_quit (struct buffer *, Bytebpos, int);
-Bytebpos bi_find_next_emchar_in_string (Lisp_String*, Emchar, Bytebpos, EMACS_INT);
+Bytebpos bi_find_next_emchar_in_string (Lisp_Object, Emchar, Bytebpos, EMACS_INT);
 Charbpos find_before_next_newline (struct buffer *, Charbpos, Charbpos, int);
 struct re_pattern_buffer *compile_pattern (Lisp_Object, struct re_registers *,
 					   Lisp_Object, int, Error_Behavior);

@@ -1,7 +1,7 @@
 /* "Face" primitives
    Copyright (C) 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -571,19 +571,19 @@ face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 				  XFACE (face)->charsets_warned_about)))
 	    {
 #ifdef MULE
-	      if (! UNBOUNDP (charset))
+	      if (!UNBOUNDP (charset))
 		warn_when_safe
-		  (Qfont, Qwarning,
-		   "Unable to instantiate font for face %s, charset %s",
-		   string_data (symbol_name
-				(XSYMBOL (XFACE (face)->name))),
-		   string_data (symbol_name
-				(XSYMBOL (XCHARSET_NAME (charset)))));
+		  (Qfont, Qnotice,
+		   "Unable to instantiate font for charset %s, face %s",
+		   XSTRING_DATA (symbol_name
+				(XSYMBOL (XCHARSET_NAME (charset)))),
+		   XSTRING_DATA (symbol_name
+				(XSYMBOL (XFACE (face)->name))));
 	      else
 #endif
-		warn_when_safe (Qfont, Qwarning,
+		warn_when_safe (Qfont, Qnotice,
 				"Unable to instantiate font for face %s",
-				string_data (symbol_name
+				XSTRING_DATA (symbol_name
 					     (XSYMBOL (XFACE (face)->name))));
 	      XFACE (face)->charsets_warned_about =
 		Fcons (charset, XFACE (face)->charsets_warned_about);
@@ -783,7 +783,7 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use.
     return face;
 
   f = allocate_face ();
-  XSETFACE (face, f);
+  face = wrap_face (f);
 
   f->name = name;
   f->doc_string = doc_string;
@@ -886,8 +886,8 @@ init_device_faces (struct device *d)
      loaded, so we can't do this. */
   if (initialized)
     {
-      Lisp_Object tdevice;
-      XSETDEVICE (tdevice, d);
+      Lisp_Object tdevice = wrap_device (d);
+
       call_critical_lisp_code (d, Qinit_device_faces, tdevice);
     }
 }
@@ -899,8 +899,8 @@ init_frame_faces (struct frame *frm)
      loaded, so we can't do this. */
   if (initialized)
     {
-      Lisp_Object tframe;
-      XSETFRAME (tframe, frm);
+      Lisp_Object tframe = wrap_frame (frm);
+
 
       /* DO NOT change the selected frame here.  If the debugger goes off
          it will try and display on the frame being created, but it is not
@@ -1084,16 +1084,17 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
     }
 
   new_val = face_property_matching_instance (face, Qfont, charset, domain,
-					     /* #### look into ERROR_ME_NOT */
-					     ERROR_ME_NOT, 1, Qzero);
+					     /* #### look into error flag */
+					     ERROR_ME_DEBUG_WARN, 1, Qzero);
   if (UNBOUNDP (new_val))
     {
       bound = 0;
       new_val = face_property_matching_instance (face, Qfont,
 						 charset, domain,
-						 /* #### look into
-						    ERROR_ME_NOT */
-						 ERROR_ME_NOT, 0, Qzero);
+						 /* #### look into error
+                                                    flag */
+						 ERROR_ME_DEBUG_WARN, 0,
+						 Qzero);
     }
   if (!UNBOUNDP (cachel->font[offs]) && !EQ (new_val, cachel->font[offs]))
     cachel->dirty = 1;
@@ -1207,7 +1208,7 @@ add_face_cachel (struct window *w, Lisp_Object face)
   Lisp_Object domain;
 
   reset_face_cachel (&new_cachel);
-  XSETWINDOW (domain, w);
+  domain = wrap_window (w);
   update_face_cachel_data (&new_cachel, domain, face);
   Dynarr_add (w->face_cachels, new_cachel);
 
@@ -1414,8 +1415,8 @@ get_builtin_face_cache_index (struct window *w, Lisp_Object face)
 
       if (EQ (cachel->face, face))
 	{
-	  Lisp_Object window;
-	  XSETWINDOW (window, w);
+	  Lisp_Object window = wrap_window (w);
+
 	  if (!cachel->updated)
 	    update_face_cachel_data (cachel, window, face);
 	  return elt;
@@ -1571,8 +1572,6 @@ get_extent_fragment_face_cache_index (struct window *w,
   struct face_cachel cachel;
   int len = Dynarr_length (ef->extents);
   face_index findex = 0;
-  Lisp_Object window;
-  XSETWINDOW (window, w);
 
   /* Optimize the default case. */
   if (len == 0)
@@ -1695,9 +1694,8 @@ update_EmacsFrames (Lisp_Object locale, Lisp_Object name)
 void
 update_frame_face_values (struct frame *f)
 {
-  Lisp_Object frm;
+  Lisp_Object frm = wrap_frame (f);
 
-  XSETFRAME (frm, f);
   update_EmacsFrame (frm, Qforeground);
   update_EmacsFrame (frm, Qbackground);
   update_EmacsFrame (frm, Qfont);
@@ -2041,6 +2039,12 @@ complex_vars_of_faces (void)
  				    build_string (*mswfontptr)),
  			     inst_list);
  	}
+       /* Use Lucida Console rather than Courier New if it exists -- the
+          line spacing is much less, so many more lines fit with the same
+          size font. (And it's specifically designed for screens.) */
+       inst_list = Fcons (Fcons (list1 (Qmswindows), 
+				 build_string ("Lucida Console:Regular:10::")),
+			  inst_list);
     }
 #endif /* HAVE_MS_WINDOWS */
 

@@ -790,8 +790,8 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
       }
       if (NILP (FONT_INSTANCE_X_TRUENAME (f)))
 	{
-	  Lisp_Object font_instance;
-	  XSETFONT_INSTANCE (font_instance, f);
+	  Lisp_Object font_instance = wrap_font_instance (f);
+
 
 	  maybe_signal_error (Qgui_error, "Couldn't determine font truename",
 			      font_instance, Qfont, errb);

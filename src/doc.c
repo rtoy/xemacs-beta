@@ -1,7 +1,7 @@
 /* Record indices of function doc strings stored in a file.
    Copyright (C) 1985, 1986, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -398,7 +398,7 @@ weird_doc (Lisp_Object sym, const CIntbyte *weirdness, const CIntbyte *type,
 {
   if (!strcmp (weirdness, GETTEXT ("duplicate"))) return;
   message ("Note: Strange doc (%s) for %s %s @ %d",
-           weirdness, type, string_data (XSYMBOL (sym)->name), pos);
+           weirdness, type, XSTRING_DATA (XSYMBOL (sym)->name), pos);
 }
 
 
@@ -657,10 +657,10 @@ static int
 kludgily_ignore_lost_doc_p (Lisp_Object sym)
 {
 # define kludge_prefix "ad-Orig-"
-  Lisp_String *name = XSYMBOL (sym)->name;
-  return (string_length (name) > (Bytecount) (sizeof (kludge_prefix)) &&
-	  !strncmp ((char *) string_data (name), kludge_prefix,
-		    sizeof (kludge_prefix) - 1));
+  Lisp_Object name = XSYMBOL (sym)->name;
+  return (XSTRING_LENGTH (name) > (Bytecount) (sizeof (kludge_prefix)) &&
+	  !qxestrncmp_c (XSTRING_DATA (name), kludge_prefix,
+			 sizeof (kludge_prefix) - 1));
 # undef kludge_prefix
 }
 #else
@@ -671,7 +671,7 @@ kludgily_ignore_lost_doc_p (Lisp_Object sym)
 static int
 verify_doc_mapper (Lisp_Object sym, void *arg)
 {
-  Lisp_Object closure = *(Lisp_Object *)arg;
+  Lisp_Object closure = * (Lisp_Object *) arg;
 
   if (!NILP (Ffboundp (sym)))
     {
@@ -715,7 +715,7 @@ verify_doc_mapper (Lisp_Object sym, void *arg)
       if (doc == 0 && !kludgily_ignore_lost_doc_p (sym))
 	{
 	  message ("Warning: doc lost for function %s.",
-		   string_data (XSYMBOL (sym)->name));
+		   XSTRING_DATA (XSYMBOL (sym)->name));
 	  XCDR (closure) = Qt;
 	}
     }
@@ -725,7 +725,7 @@ verify_doc_mapper (Lisp_Object sym, void *arg)
       if (ZEROP (doc))
 	{
 	  message ("Warning: doc lost for variable %s.",
-		   string_data (XSYMBOL (sym)->name));
+		   XSTRING_DATA (XSYMBOL (sym)->name));
 	  XCDR (closure) = Qt;
 	}
     }

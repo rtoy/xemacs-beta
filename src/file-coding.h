@@ -2,7 +2,7 @@
    #### rename me to coding-system.h
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -261,7 +261,6 @@ typedef struct Lisp_Coding_System Lisp_Coding_System;
 
 DECLARE_LRECORD (coding_system, Lisp_Coding_System);
 #define XCODING_SYSTEM(x) XRECORD (x, coding_system, Lisp_Coding_System)
-#define XSETCODING_SYSTEM(x, p) XSETRECORD (x, p, coding_system)
 #define wrap_coding_system(p) wrap_record (p, coding_system)
 #define CODING_SYSTEMP(x) RECORDP (x, coding_system)
 #define CHECK_CODING_SYSTEM(x) CHECK_RECORD (x, coding_system)
@@ -562,12 +561,15 @@ do {								\
    error_check_##type##_coding_system_type (x)
 # define XSETCODING_SYSTEM_OF_TYPE(x, p, type)	do		\
 {								\
-  XSETCODING_SYSTEM (x, p);					\
-  assert (CODING_SYSTEM_TYPEP (XCODING_SYSTEM(x), type));	\
+  x = wrap_coding_system (p);					\
+  assert (CODING_SYSTEM_TYPEP (XCODING_SYSTEM (x), type));	\
 } while (0)
 #else
 # define XCODING_SYSTEM_OF_TYPE(x, type) XCODING_SYSTEM (x)
-# define XSETCODING_SYSTEM_OF_TYPE(x, p, type) XSETCODING_SYSTEM (x, p)
+# define XSETCODING_SYSTEM_OF_TYPE(x, p, type) do	\
+{							\
+  x = wrap_coding_system (p);				\
+} while (0)
 #endif /* ERROR_CHECK_TYPE_CHECK */
 
 #define CODING_SYSTEM_TYPEP(x, type)					  \

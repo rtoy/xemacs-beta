@@ -34,6 +34,8 @@ typedef void *POINTER;
 
 #include "mem-limits.h"
 
+#ifndef _NO_MALLOC_WARNING_
+
 /*
   Level number of warnings already issued.
   0 -- no warnings issued.
@@ -134,13 +136,17 @@ check_memory_limits (void)
     }
 }
 
+#endif /* not _NO_MALLOC_WARNING_ */
+
 /* Cause reinitialization based on job parameters;
    also declare where the end of pure storage is. */
 
 void
 memory_warnings (void *start, void (*warnfun) (const char *))
 {
+#ifndef _NO_MALLOC_WARNING_
   extern void (* __after_morecore_hook) (void);	/* From gmalloc.c */
+#endif
 
   if (start)
     data_space_start = (char*) start;

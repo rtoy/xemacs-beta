@@ -1,6 +1,7 @@
 /* Declarations having to do with Mule char tables.
    Copyright (C) 1992 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -53,7 +54,6 @@ typedef struct Lisp_Char_Table_Entry Lisp_Char_Table_Entry;
 DECLARE_LRECORD (char_table_entry, Lisp_Char_Table_Entry);
 #define XCHAR_TABLE_ENTRY(x) \
   XRECORD (x, char_table_entry, Lisp_Char_Table_Entry)
-#define XSETCHAR_TABLE_ENTRY(x, p) XSETRECORD (x, p, char_table_entry)
 #define wrap_char_table_entry(p) wrap_record (p, char_table_entry)
 #define CHAR_TABLE_ENTRYP(x) RECORDP (x, char_table_entry)
 /* #define CHECK_CHAR_TABLE_ENTRY(x) CHECK_RECORD (x, char_table_entry)
@@ -83,7 +83,9 @@ struct Lisp_Char_Table
   struct lcrecord_header header;
 
   Lisp_Object ascii[NUM_ASCII_CHARS];
-
+  Lisp_Object default_; /* #### not yet implemented */
+  Lisp_Object parent; /* #### not yet implemented */
+  
 #ifdef MULE
   /* We basically duplicate the Mule vectors-of-vectors implementation.
      We can do this because we know a great deal about the sorts of
@@ -124,7 +126,6 @@ typedef struct Lisp_Char_Table Lisp_Char_Table;
 
 DECLARE_LRECORD (char_table, Lisp_Char_Table);
 #define XCHAR_TABLE(x) XRECORD (x, char_table, Lisp_Char_Table)
-#define XSETCHAR_TABLE(x, p) XSETRECORD (x, p, char_table)
 #define wrap_char_table(p) wrap_record (p, char_table)
 #define CHAR_TABLEP(x) RECORDP (x, char_table)
 #define CHECK_CHAR_TABLE(x) CHECK_RECORD (x, char_table)

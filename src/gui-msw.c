@@ -46,7 +46,7 @@ mswindows_handle_gui_wm_command (struct frame *f, HWND ctrl, LPARAM id)
   /* Try to map the command id through the proper hash table */
   Lisp_Object callback, callback_ex, image_instance, frame, event;
 
-  XSETFRAME (frame, f);
+  frame = wrap_frame (f);
 
   /* #### make_int should assert that --kkm */
   assert (XINT (make_int (id)) == id);

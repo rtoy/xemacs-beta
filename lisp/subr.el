@@ -869,6 +869,93 @@ yourself.]"
   "Returns non-nil if SYM names a currently-defined error."
   (and (symbolp sym) (not (null (get sym 'error-conditions)))))
 
+(defun backtrace-in-condition-handler-eliminating-handler (handler-arg-name)
+  "Return a backtrace inside of a condition handler, eliminating the handler.
+This is for use in the condition handler inside of call-with-condition-handler,
+when written like this:
+
+\(call-with-condition-handler
+    #'(lambda (__some_weird_arg__)
+	do the handling ...)
+    #'(lambda ()
+	do the stuff that might cause an error))
+
+Pass in the name (a symbol) of the argument used in the lambda function
+that specifies the handler, and make sure the argument name is unique, and
+this function generates a backtrace and strips off the part above where the
+error occurred (i.e. the handler itself)."
+  (let* ((bt (with-output-to-string (backtrace nil t)))
+	 (bt (save-match-data
+	       ;; Try to eliminate the part of the backtrace
+	       ;; above where the error occurred.
+	       (if (string-match
+		    (concat "bind (\\(?:.* \\)?" (symbol-name handler-arg-name)
+			    "\\(?:.* \\)?)[ \t\n]*\\(?:(lambda \\|#<compiled-function \\)("
+			    (symbol-name handler-arg-name)
+			    ").*\n\\(\\(?:.\\|\n\\)*\\)$")
+		    bt) (match-string 1 bt) bt))))
+    bt))
+
+(put 'with-trapping-errors 'lisp-indent-function 0)
+(defmacro with-trapping-errors (&rest keys-body)
+  "Trap errors in BODY, outputting a warning and a backtrace.
+Usage looks like
+
+\(with-trapping-errors
+    [:operation OPERATION]
+    [:error-form ERROR-FORM]
+    [:no-backtrace NO-BACKTRACE]
+    [:class CLASS]
+    [:level LEVEL]
+    [:resignal RESIGNAL]
+    BODY)
+
+Return value without error is whatever BODY returns.  With error, return
+result of ERROR-FORM (which will be evaluated only when the error actually
+occurs), which defaults to nil.  OPERATION is given in the warning message.
+CLASS and LEVEL are the warning class and level (default to class
+`general', level `warning').  If NO-BACKTRACE is given, no backtrace is
+displayed.  If RESIGNAL is given, the error is resignaled after the warning
+is displayed and the ERROR-FORM is executed."
+  (let ((operation "unknown")
+	(error-form nil)
+	(no-backtrace nil)
+	(class ''general)
+	(level ''warning)
+	(resignal nil))
+    (let* ((keys '(operation error-form no-backtrace class level resignal))
+	   (keys-with-colon
+	    (mapcar #'(lambda (sym)
+			(intern (concat ":" (symbol-name sym)))) keys)))
+      (while (memq (car keys-body) keys-with-colon)
+	(let* ((key-with-colon (pop keys-body))
+	       (key (intern (substring (symbol-name key-with-colon) 1))))
+	  (set key (pop keys-body)))))
+    `(condition-case ,(if resignal '__cte_cc_var__ nil)
+	 (call-with-condition-handler
+	     #'(lambda (__call_trapping_errors_arg__)
+		 (let ((errstr (error-message-string
+				__call_trapping_errors_arg__)))
+		   ,(if no-backtrace
+			`(lwarn ,class ,level
+			   (if (warning-level-<
+				,level
+				display-warning-minimum-level)
+			       "Error in %s: %s"
+			     "Error in %s:\n%s\n")
+			   ,operation errstr)
+		      `(lwarn ,class ,level
+			 "Error in %s: %s\n\nBacktrace follows:\n\n%s"
+			 ,operation errstr
+			 (backtrace-in-condition-handler-eliminating-handler
+			  '__call_trapping_errors_arg__)))))
+	     #'(lambda ()
+		 (progn ,@keys-body)))
+       (error
+	,error-form
+	,@(if resignal '((signal (car __cte_cc_var__) (cdr __cte_cc_var__)))))
+       )))
+
 ;;;; Miscellanea.
 
 ;; This is now in C.

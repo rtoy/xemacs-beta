@@ -388,8 +388,8 @@ init_image_instance_from_dibitmap (Lisp_Image_Instance *ii,
   IMAGE_INSTANCE_MSWINDOWS_BITMAP_REAL_HEIGHT (ii) =
     bmp_info->bmiHeader.biHeight;
   IMAGE_INSTANCE_PIXMAP_DEPTH (ii)   = bmp_info->bmiHeader.biBitCount;
-  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), x_hot);
-  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), y_hot);
+  IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (x_hot);
+  IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (y_hot);
   init_image_instance_geometry (ii);
 
   if (create_mask)
@@ -752,7 +752,7 @@ extract_xpm_color_names (Lisp_Object device,
       if (STRINGP (value))
 	value =
 	  Fmake_color_instance
-	  (value, device, encode_error_behavior_flag (ERROR_ME_NOT));
+	  (value, device, encode_error_behavior_flag (ERROR_ME_DEBUG_WARN));
       else
         {
           assert (COLOR_SPECIFIERP (value));
@@ -1279,8 +1279,8 @@ mswindows_resource_instantiate (Lisp_Object image_instance,
       GetIconInfo ((HICON)himage, &iconinfo);
       IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = iconinfo.hbmColor;
       IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = iconinfo.hbmMask;
-      XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), iconinfo.xHotspot);
-      XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), iconinfo.yHotspot);
+      IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (iconinfo.xHotspot);
+      IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (iconinfo.yHotspot);
       IMAGE_INSTANCE_MSWINDOWS_ICON (ii) = (HICON) himage;
     }
   else
@@ -1288,8 +1288,8 @@ mswindows_resource_instantiate (Lisp_Object image_instance,
       IMAGE_INSTANCE_MSWINDOWS_ICON (ii) = NULL;
       IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = (HBITMAP) himage;
       IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = NULL;
-      XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), 0);
-      XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), 0);
+      IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (0);
+      IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (0);
     }
 }
 
@@ -1470,8 +1470,8 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
   IMAGE_INSTANCE_MSWINDOWS_BITMAP_REAL_WIDTH (ii) = width;
   IMAGE_INSTANCE_MSWINDOWS_BITMAP_REAL_HEIGHT (ii) = height;
   IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = 1;
-  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), 0);
-  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), 0);
+  IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (0);
+  IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (0);
   init_image_instance_geometry (ii);
 
   IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = mask ? mask :

@@ -2,7 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -453,7 +453,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
   RECT rect;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
 
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
 
 #if 0	/* #### FIXME? */
   /* We can't work out the width before we've set the font in the DC */
@@ -690,9 +690,6 @@ mswindows_output_pixmap (struct window *w, Lisp_Object image_instance,
   HDC hdc = get_frame_dc (f, 1);
 
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
-  Lisp_Object window;
-
-  XSETWINDOW (window, w);
 
   /* Output the pixmap. Have to do this as many times as is required
    to fill the given area */
@@ -1037,7 +1034,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
   int xpos, width;
   Lisp_Object charset = Qunbound; /* Qnil is a valid charset when
 				     MULE is not defined */
-  XSETWINDOW (window, w);
+  window = wrap_window (w);
   rb = Dynarr_atp (rba, start);
 
   if (!rb)
@@ -1150,9 +1147,9 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 						 start_pixpos, rb->width,
 						 &dbox, &dga);
 
-	      XSETWINDOW (window, w);
+	      window = wrap_window (w);
 	      instance = glyph_image_instance (rb->object.dglyph.glyph,
-					       window, ERROR_ME_NOT, 1);
+					       window, ERROR_ME_DEBUG_WARN, 1);
 	      findex = rb->findex;
 
 	      if (IMAGE_INSTANCEP (instance))
