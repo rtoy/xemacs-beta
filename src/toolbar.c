@@ -750,7 +750,7 @@ update_frame_toolbars_geometry (struct frame *f)
 	  || f->frame_changed
 	  || f->clear))
     {
-      int pos;
+      int pos, frame_size_changed = 0;
 
       /* We're not officially "in redisplay", so we still have a
 	 chance to re-layout toolbars and windows. This is done here,
@@ -763,14 +763,7 @@ update_frame_toolbars_geometry (struct frame *f)
       for (pos = 0; pos < 4; pos++)
 	if (FRAME_REAL_TOOLBAR_SIZE (f, pos)
 	    != FRAME_CURRENT_TOOLBAR_SIZE (f, pos))
-	  {
-	    int width, height;
-	    pixel_to_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
-				&width, &height);
-	    change_frame_size (f, height, width, 0);
-	    MARK_FRAME_LAYOUT_CHANGED (f);
-	    break;
-	  }
+	  frame_size_changed = 1;
 
       for (pos = 0; pos < 4; pos++) {
 	f->current_toolbar_size[pos] = FRAME_REAL_TOOLBAR_SIZE (f, pos);
@@ -781,11 +774,24 @@ update_frame_toolbars_geometry (struct frame *f)
 	 FRAME_LAST_NONMINIBUF_WINDOW instead of FRAME_SELECTED_WINDOW
 	 throughout the toolbar code. */
       compute_frame_toolbars_data (f);
+
+      if (frame_size_changed)
+	{
+	  int width, height;
+	  pixel_to_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
+			      &width, &height);
+	  if (!HAS_FRAMEMETH_P (f, set_frame_size))
+	    change_frame_size (f, height, width, 0);
+	  else
+	    FRAMEMETH (f, set_frame_size, (f, width, height));
+	  MARK_FRAME_LAYOUT_CHANGED (f);
+	}
       
       /* Clear the previous toolbar locations. If we do it later
 	 (after redisplay) we end up clearing what we have just
 	 displayed. */
       MAYBE_DEVMETH (d, clear_frame_toolbars, (f));
+
     }
 }
 

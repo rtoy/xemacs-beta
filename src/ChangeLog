@@ -1,3 +1,9 @@
+2003-07-02  Mike Sperber  <mike@xemacs.org>
+
+	* toolbar.c (update_frame_toolbars_geometry): Update the frame
+	size when correct information to compute it is actually available.
+	Moreover, do it right via the frame method if it's available.
+
 2003-06-30  Ilya N. Golubev  <gin@mo.msk.ru>
 
 	* faces.c (complex_vars_of_faces): Fix missing commas in `fonts'
