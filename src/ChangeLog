@@ -1,3 +1,8 @@
+2003-02-14  Ben Wing  <ben@xemacs.org>
+
+	* scrollbar.c (specifier_vars_of_scrollbar):
+	Don't generate fallbacks for TTY's when not HAVE_TTY.
+
 2003-02-13  Martin Buchholz  <martin@xemacs.org>
 
 	Make XEmacs redisplay 10 times faster.

@@ -976,8 +976,13 @@ This is a specifier; use `set-specifier' to change it.
   Vscrollbar_width = make_magic_specifier (Qnatnum);
   set_specifier_fallback
     (Vscrollbar_width,
+#ifdef HAVE_TTY
      list2 (Fcons (list1 (Qtty), make_int (0)),
-	    Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_WIDTH))));
+	    Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_WIDTH)))
+#else
+     list1 (Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_WIDTH)))
+#endif
+     );
   set_specifier_caching (Vscrollbar_width,
 			 offsetof (struct window, scrollbar_width),
 			 vertical_scrollbar_changed_in_window,
@@ -991,8 +996,13 @@ This is a specifier; use `set-specifier' to change it.
   Vscrollbar_height = make_magic_specifier (Qnatnum);
   set_specifier_fallback
     (Vscrollbar_height,
+#ifdef HAVE_TTY
      list2 (Fcons (list1 (Qtty), make_int (0)),
-	    Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_HEIGHT))));
+	    Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_HEIGHT)))
+#else
+     list1 (Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_HEIGHT)))
+#endif
+     );
   set_specifier_caching (Vscrollbar_height,
 			 offsetof (struct window, scrollbar_height),
 			 some_window_value_changed,
