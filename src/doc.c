@@ -245,7 +245,6 @@ get_doc_string (Lisp_Object filepos)
 		 XSTRING_DATA (name_reloc), O_RDONLY | OPEN_BINARY, 0);
   if (fd < 0)
     {
-#ifndef CANNOT_DUMP
       if (purify_flag)
 	{
 	    /* sizeof ("../lib-src/") == 12 */
@@ -257,7 +256,6 @@ get_doc_string (Lisp_Object filepos)
 
 	  fd = qxe_open (name_nonreloc, O_RDONLY | OPEN_BINARY, 0);
 	}
-#endif /* CANNOT_DUMP */
 
       if (fd < 0)
 	report_file_error ("Cannot open doc string file",
@@ -456,28 +454,15 @@ when doc strings are referred to in the dumped Emacs.
      ISO 2022 data because our pointers will reflect internal format, not
      external format. */
   
-#ifndef CANNOT_DUMP
   if (!purify_flag)
     invalid_operation ("Snarf-documentation can only be called in an undumped Emacs", Qunbound);
-#endif
 
   CHECK_STRING (filename);
 
-#ifdef CANNOT_DUMP
-  if (!NILP (Vdoc_directory))
-    {
-      CHECK_STRING (Vdoc_directory);
-      name = alloca_ibytes (XSTRING_LENGTH (filename)
-			      + XSTRING_LENGTH (Vdoc_directory)
-			      + 1);
-      qxestrcpy (name, XSTRING_DATA (Vdoc_directory));
-    }
-  else
-#endif /* CANNOT_DUMP */
-    {
-      name = alloca_ibytes (XSTRING_LENGTH (filename) + 14);
-      qxestrcpy (name, (Ibyte *) "../lib-src/");
-    }
+  {
+    name = alloca_ibytes (XSTRING_LENGTH (filename) + 14);
+    qxestrcpy (name, (Ibyte *) "../lib-src/");
+  }
 
   qxestrcat (name, XSTRING_DATA (filename));
 

@@ -27,23 +27,10 @@
 .PHONY: all
 all: build-the-mofo
 
-PROGNAME=@PROGNAME@
-
 #define NOT_C_CODE
 #include "config.h"
 
-#ifdef PDUMP
-DUMP_TARGET = ${PROGNAME}.dmp
-EXE_TARGET  = ${PROGNAME}
-DUMP_ID     = dump-id.o
-#else
-DUMP_TARGET = ${PROGNAME}
-EXE_TARGET  = temacs
-#endif
-
-## For performance and consistency, no built-in rules.
-.SUFFIXES:
-.SUFFIXES: .c .h .o .i .s .dep
+## Here are the things that we expect ../configure to edit.
 
 #ifdef USE_GNU_MAKE
 RECURSIVE_MAKE=$(MAKE)
@@ -52,17 +39,9 @@ RECURSIVE_MAKE=$(MAKE)
 RECURSIVE_MAKE=@RECURSIVE_MAKE@
 #endif
 
-SHELL=/bin/sh
-RM = rm -f
-
-lispdir = ${srcdir}/../lisp/
-moduledir = ${srcdir}/../modules/
-libsrc = ../lib-src/
-etcdir = ../etc/
-
-## Here are the things that we expect ../configure to edit.
+PROGNAME=@PROGNAME@
 prefix=@prefix@
-srcdir=@srcdir@
+SRC=@srcdir@
 blddir=@blddir@
 version=@version@
 CC=@XEMACS_CC@
@@ -114,26 +93,20 @@ vpath dump-id.c
 VPATH=@srcdir@
 #endif
 
+SHELL=/bin/sh
 RM = rm -f
 
-LWLIB_SRCDIR = ${srcdir}/../lwlib
-
-#ifdef HAVE_X_WINDOWS
-lwlib_libs = ../lwlib/liblw.a
-lwlib_deps = $(lwlib_libs)
-$(lwlib_libs) :
-	cd ../lwlib && $(RECURSIVE_MAKE)
-
-#  ifdef AIX4
-LIBI18N = -li18n
-#  endif
-
-X11_libs = $(LIBI18N)
-#endif /* HAVE_X_WINDOWS */
+LISP = $(SRC)/../lisp
+ETC = $(SRC)/../etc
+SRCMODULES = $(SRC)/../modules
+LIB_SRC = ../lib-src
+BLDSRC = .
+BLDMODULES = ../modules
+LWLIB_SRCDIR = $(SRC)/../lwlib
 
 #########################################################################
-
-## Object files needed for compilation, and other rebuilt files.
+##         Definitions of object files and other dependencies          ##
+#########################################################################
 
 ## NOTE: Some of the object files are specified in this file, and others in
 ## configure.in.  The general rule is that they be specified here whenever
@@ -216,7 +189,7 @@ gpm_objs=gpmevent.o
 #endif
 
 #if defined(HAVE_LDAP) && !defined(HAVE_SHLIB)
-ldap_objs=../modules/ldap/eldap.o
+ldap_objs=$(BLDMODULES)/ldap/eldap.o
 #endif
 
 #ifdef MULE
@@ -232,7 +205,7 @@ mule_wnn_objs=mule-wnnfns.o
 #endif
 
 #if defined(HAVE_POSTGRESQL) && !defined(HAVE_SHLIB)
-postgresql_objs=../modules/postgresql/postgresql.o
+postgresql_objs=$(BLDMODULES)/postgresql/postgresql.o
 #endif
 
 #ifdef HAVE_WIN32_PROCESSES
@@ -265,43 +238,6 @@ tooltalk_objs=tooltalk.o
 win32_objs=win32.o intl-win32.o intl-auto-encap-win32.o intl-encap-win32.o \
  xemacs_res.o
 #endif
-
-## -Demacs is needed to make some files produce the correct version
-## for use in Emacs.
-
-cppflags = $(CPPFLAGS) -Demacs -I. $(c_switch_all)
-cflags   = $(CFLAGS) $(cppflags)
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
-ldflags  = $(LDFLAGS) -mwindows -e _mainCRTStartup $(ld_switch_all) $(ld_dynamic_link_flags)
-# if defined (CYGWIN)
-ldflags += -Wl,--script=s/cygwin.sc
-# endif
-#else
-ldflags  = $(LDFLAGS) $(ld_switch_all) $(ld_dynamic_link_flags)
-#endif
-
-#ifdef SOLARIS2
-%.o : %.c
-#else
-.c.o:
-#endif
-	$(CC) -c $(cflags) $<
-
-## Create preprocessor output (debugging purposes only)
-.c.i:
-#ifdef __GNUC__
-	$(CC) -E $(cppflags) -o $@ $<
-#else /* works on Solaris; what about other systems? */
-	$(CC) -P $(cppflags) $<
-#endif /* compiler */
-
-## Create assembler output (debugging purposes only)
-.c.s:
-	$(CC) -S -c $(cflags) $<
-
-## Create RTL files
-%.c.rtl : %.c
-	$(CC) -dr -c $(cflags) $<
 
 ## lastfile must follow all files whose initialized data areas should
 ## be dumped as pure by dump-emacs.
@@ -374,6 +310,8 @@ malloclib = -ldmalloc
 
 #ifdef HAVE_X_WINDOWS
 
+lwlib_lib = ../lwlib/liblw.a
+
 # ifdef EXTERNAL_WIDGET
 external_widget_objs = ExternalShell.o extw-Xt-nonshared.o extw-Xlib-nonshared.o
 
@@ -389,9 +327,9 @@ motif_other_files = libextcli_Xm.a
 shared_other_files = libextcli_Xt.so.1 libextcli_Xlib.so.1
 #  endif
 other_files=\
- ${motif_other_files}\
+ $(motif_other_files)\
  libextcli_Xt.a libextcli_Xlib.a\
- ${shared_other_files}
+ $(shared_other_files)
 
 # endif /* EXTERNAL_WIDGET */
 
@@ -408,20 +346,72 @@ otherobjs = lastfile.o $(mallocobjs) $(rallocobjs) $(X11_objs)
 otherrtls = $(otherobjs:.o=.c.rtl)
 othersrcs = $(otherobjs:.o=.c)
 
-LIBES = $(lwlib_libs) $(malloclib) $(ld_libs_all) $(lib_gcc)
+LIBES = $(lwlib_lib) $(malloclib) $(ld_libs_all) $(lib_gcc)
 
 #ifdef I18N3
-mo_dir = ${etcdir}
-mo_file = ${mo_dir}emacs.mo
+mo_file = $(LIB_SRC)/emacs.mo
 #endif
 
 #########################################################################
+##                           Implicit rules                            ##
+#########################################################################
 
-## Primary rebuilding process
+## For performance and consistency, no built-in rules.
+.SUFFIXES:
+.SUFFIXES: .c .h .o .i .s .dep
 
-DO_TEMACS = ${DUMPENV} ./${EXE_TARGET}
-DO_XEMACS = ./${PROGNAME}
-LISP = ${srcdir}/../lisp
+## -Demacs is needed to make some files produce the correct version
+## for use in Emacs.
+
+cppflags = $(CPPFLAGS) -Demacs -I. $(c_switch_all)
+cflags   = $(CFLAGS) $(cppflags)
+#if defined (WIN32_NATIVE) || defined (CYGWIN)
+ldflags  = $(LDFLAGS) -mwindows -e _mainCRTStartup $(ld_switch_all) $(ld_dynamic_link_flags)
+# if defined (CYGWIN)
+ldflags += -Wl,--script=s/cygwin.sc
+# endif
+#else
+ldflags  = $(LDFLAGS) $(ld_switch_all) $(ld_dynamic_link_flags)
+#endif
+
+#ifdef SOLARIS2
+%.o : %.c
+#else
+.c.o:
+#endif
+	$(CC) -c $(cflags) $<
+
+## Create preprocessor output (debugging purposes only)
+.c.i:
+#ifdef __GNUC__
+	$(CC) -E $(cppflags) -o $@ $<
+#else /* works on Solaris; what about other systems? */
+	$(CC) -P $(cppflags) $<
+#endif /* compiler */
+
+## Create assembler output (debugging purposes only)
+.c.s:
+	$(CC) -S -c $(cflags) $<
+
+## Create RTL files
+%.c.rtl : %.c
+	$(CC) -dr -c $(cflags) $<
+
+#########################################################################
+##                     Primary rebuilding process                      ##
+#########################################################################
+
+#ifdef PDUMP
+DUMP_TARGET = $(PROGNAME).dmp
+RAW_EXE  = $(PROGNAME)
+DUMP_ID     = dump-id.o
+#else
+DUMP_TARGET = $(PROGNAME)
+RAW_EXE  = temacs
+#endif
+
+DO_TEMACS = $(DUMPENV) ./$(RAW_EXE)
+DO_XEMACS = ./$(PROGNAME)
 
 BATCH = -no-packages -batch
 BATCH_PACKAGES = -vanilla -batch
@@ -433,68 +423,134 @@ dump_temacs_args   = $(temacs_loadup_args) dump
 run_temacs_args = $(temacs_loadup_args) run-temacs
 dump_temacs = $(TEMACS_BATCH) $(dump_temacs_args)
 
-debug_temacs = gdb $(EXE_TARGET)
-
-.PHONY : build-the-mofo release update-elc update-elc-2 load-shadows
-
 ## Compile, dump, and make sure all .elc files are up-to-date.
 
-## NOTE: The dependencies would (should) look like the following
-## commented-out statement in linear order, but apparently this causes
-## problems with some versions of `make' because there is insufficient
-## serialization of the build steps.  Evidently the .NO_PARALLEL directive
-## doesn't help.  `make' really seems to be designed to have all
-## dependencies proceed upward, not across, and to be all calculable before
-## actually running anything.  The problem here is that update-elc may
-## touch NEEDTODUMP and thus create an additional dependency
-## -- but *NOT UNTIL* that step is run.  There is no way I can come up with
-## to express such a dependency in upward fashion.
+## NOTE NOTE NOTE: There appears to be a fundamental but non-obvious
+## difference between the way that standard `make', GNU Make, and `nmake'
+## handle dependencies, and this means we have to write the dependencies in
+## Makefile.in.in and xemacs.mak differently.  To illustrate this, consider
+## the following first:
 
-## build-the-mofo: ${EXE_TARGET} update-elc ${libsrc}DOC $(mo_file) ${other_files} ${DUMP_TARGET} update-elc-2 $(LISP)/finder-inf.el load-shadows
+##.PHONY: all (`make' only)
+## all: test.exe
+##
+##.PHONY: FRC.test.c (`make' only)
+##FRC.test.c:
+##
+##test.c: FRC.test.c
+##	if test ! -f foo ; then touch test.c; fi (`make' only)
+##	if not exist foo touch test.c (`nmake' only)
+##
+##test.obj: test.c
+##	touch test.obj
+##
+##test.exe: test.obj
+##	touch test.exe
 
-build-the-mofo: ${EXE_TARGET} ${libsrc}DOC $(mo_file) ${other_files} ${DUMP_TARGET} load-shadows
-.NO_PARALLEL: ${EXE_TARGET} update-elc ${libsrc}DOC ${DUMP_TARGET} update-elc-2
+## (GNU Make doesn't need the .PHONY declarations, but evidently some versions
+## of `make' do.  nmake doesn't need them and doesn't allow them, either.)
+
+## Running `make' rebuilds test.exe only if `foo' doesn't exist.
+## Running `nmake -f Makefile' rebuilds it regardless.
+
+## Both conclude that test.c needs to be rebuilt since its dependent is
+## non-existent.  But `make' recalculates its dependencies after running
+## the commands for test.c, and notices that test.c hasn't changed, and
+## thus test.obj and test.exe are up-to-date.  `nmake' doesn't.
+
+## On the other hand, consider the following:
+
+##.PHONY: all (`make' only)
+##all: check-foo test.exe
+##
+##.PHONY: check-foo (`make' only)
+##check-foo:
+##	if test ! -f foo; then touch test.c; fi (`make' only)
+##	if not exist foo touch test.c (`nmake' only)
+##
+##test.c:
+##	touch test.c
+##
+##test.obj: test.c
+##	touch test.obj
+##
+##test.exe: test.c test.obj
+##	touch test.exe
+##
+
+## Running `nmake -f Makefile' (and `GNU make') rebuilds test.exe only if
+## `foo' doesn't exist.
+## Running some versions of non-GNU `make' does nothing at all once test.c,
+## test.obj and test.exe all exist.
+
+## It appears that `nmake' doesn't check dependencies for test.exe until it
+## actually needs to be rebuilt, so this "sideways" dependency script
+## works.  GNU make evidently recalculates *all* dependencies after each
+## command so has no problem, either.  But some makes apparently calculate
+## all dependencies at startup and then, after executing a command to build
+## a dependency, only recheck relationships involving that particular
+## dependency.
+
+## In XEmacs-land, the above situation exists wrt the `NEEDTODUMP'
+## dependency, recalculated by `update-elc.el'.  Thus, Makefile.in.in must
+## use the method #1 above, and nmake must use method #2.
+
+## -ben
+
+.PHONY: build-the-mofo
+build-the-mofo: $(DUMP_TARGET) $(mo_file) $(other_files) update-elc-2 $(LISP)/finder-inf.el load-shadows
+.NO_PARALLEL: $(DUMP_TARGET) update-elc-2 $(LISP)/finder-inf.el load-shadows
 
 release: all
 	-if [ -w $(LISP) ]; then \
-	  w=`pwd`; cd ${srcdir} && $${w}/${EXE_TARGET} -nd ${BATCH} -l $(LISP)/inc-vers; \
+	  w=`pwd`; cd $(SRC) && $$w/$(RAW_EXE) -nd $(BATCH) -l $(LISP)/inc-vers; \
 	else true; fi
-	-${dump_temacs}
+	-$(dump_temacs)
 	touch release
 
-update-elc: $(EXE_TARGET)
-	$(TEMACS_BATCH) -l $(LISP)/update-elc.el
-
 ## Update out-of-date .elcs, other than needed for dumping.
-update-elc-2: update-elc $(EXE_TARGET) $(DUMP_TARGET)
+.PHONY: update-elc-2
+update-elc-2:
 	$(XEMACS_BATCH) -no-autoloads -l update-elc-2.el -f batch-update-elc-2 $(LISP)
 
-$(LISP)/finder-inf.el: update-elc-2 $(EXE_TARGET) $(DUMP_TARGET)
+$(LISP)/finder-inf.el:
 	@echo "Building finder database ..."
-	$(XEMACS_BATCH) -eval '(setq finder-compile-keywords-quiet t)' \
+	$(XEMACS_BATCH)	-eval "(setq finder-compile-keywords-quiet t)" \
 		-l finder -f finder-compile-keywords
 	@echo "Building finder database ...(done)"
 
-load-shadows: $(LISP)/finder-inf.el $(EXE_TARGET) $(DUMP_TARGET)
+.PHONY: load-shadows
+load-shadows:
 #ifndef QUICK_BUILD
 	@echo "Testing for Lisp shadows ..."
 	@$(XEMACS_BATCH) -f list-load-path-shadows
 #endif
 
-## This file is touched by update-elc.el when redumping is necessary.
-NEEDTODUMP:
-	touch NEEDTODUMP
+.PHONY: FRC.needtodump
+FRC.needtodump:
 
-${DUMP_TARGET}: ${EXE_TARGET} NEEDTODUMP
+## This file is touched by update-elc.el when redumping is necessary.
+## We use $(BLDSRC) == `.' here to help keep sync with nt/xemacs.mak,
+## where $(BLDSRC) is not `.'.
+$(BLDSRC)/NEEDTODUMP: FRC.needtodump
+	$(TEMACS_BATCH) -l $(LISP)/update-elc.el
+
+$(DUMP_TARGET): $(RAW_EXE) $(BLDSRC)/NEEDTODUMP $(LIB_SRC)/DOC
 #ifdef HEAP_IN_DATA
 	@$(RM) $@ && touch SATISFIED
-	${dump_temacs}
+	$(dump_temacs)
 	@if test -f SATISFIED; then $(RM) SATISFIED; else $(RM) $@; \
 	$(RECURSIVE_MAKE) $@; fi
 #else
 	@$(RM) $@
-	${dump_temacs}
+	$(dump_temacs)
 #endif
+
+#ifdef HAVE_X_WINDOWS
+lwlib_deps = $(lwlib_lib)
+$(lwlib_lib):
+	cd ../lwlib && $(RECURSIVE_MAKE)
+#endif /* HAVE_X_WINDOWS */
 
 #ifdef DYNODUMP
 dynodump_deps = ../dynodump/dynodump.so
@@ -502,43 +558,43 @@ dynodump_deps = ../dynodump/dynodump.so
 	cd ../dynodump && $(RECURSIVE_MAKE)
 #endif /* DYNODUMP */
 
-link_deps = $(start_files) ${objs} ${otherobjs} $(lwlib_deps) $(dynodump_deps)
+link_deps = $(start_files) $(objs) $(otherobjs) $(lwlib_deps) $(dynodump_deps)
 
-temacs_deps = $(link_deps) ${DUMP_ID}
+temacs_deps = $(link_deps) $(DUMP_ID)
 
 temacs_link_args = \
- ${start_flags} ${ldflags} \
- -o $@ ${start_files} ${objs} ${otherobjs} ${DUMP_ID} ${LIBES}
+ $(start_flags) $(ldflags) \
+ -o $@ $(start_files) $(objs) $(otherobjs) $(DUMP_ID) $(LIBES)
 
-${EXE_TARGET}: $(temacs_deps)
+$(RAW_EXE): $(temacs_deps)
 	$(LD) $(temacs_link_args)
 
-dump-id.c: ${libsrc}make-dump-id ${link_deps}
-	${libsrc}make-dump-id
+dump-id.c: $(LIB_SRC)/make-dump-id $(link_deps)
+	$(LIB_SRC)/make-dump-id
 
 obj_src = $(objs:.o=.c)
 
-${libsrc}DOC: ${libsrc}make-docfile NEEDTODUMP ${temacs_deps} ${EXE_TARGET}
+$(LIB_SRC)/DOC: $(LIB_SRC)/make-docfile $(BLDSRC)/NEEDTODUMP $(temacs_deps)
 #ifdef QUICK_BUILD
 	if test ! -f $@ ; then \
 #else
 	if true ; then \
 #endif
 	$(TEMACS_BATCH) -l $(LISP)/make-docfile.el -- \
-		-o ${libsrc}DOC -d ${srcdir} -i ${libsrc}../site-packages \
-		${obj_src} ${mallocdocsrc} ${rallocdocsrc} \
-		${extra_doc_files} ; fi
+		-o $(LIB_SRC)/DOC -d $(SRC) -i $(LIB_SRC)/../site-packages \
+		$(obj_src) $(mallocdocsrc) $(rallocdocsrc) \
+		$(extra_doc_files) ; fi
 
-${libsrc}make-dump-id:
-	cd ${libsrc} && $(RECURSIVE_MAKE) make-dump-id
+$(LIB_SRC)/make-dump-id:
+	cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-dump-id
 
-${libsrc}make-docfile:
-	cd ${libsrc} && $(RECURSIVE_MAKE) make-docfile
+$(LIB_SRC)/make-docfile:
+	cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-docfile
 
 .PHONY: fastdump
-fastdump: ${EXE_TARGET}
-	@$(RM) ${DUMP_TARGET} && touch SATISFIED
-	-${dump_temacs}
+fastdump: $(RAW_EXE)
+	@$(RM) $(DUMP_TARGET) && touch SATISFIED
+	-$(dump_temacs)
 	@$(XEMACS_BATCH) -f list-load-path-shadows
 
 .PHONY: all-elc
@@ -546,8 +602,8 @@ all-elc:
 	cd .. && $(RECURSIVE_MAKE)
 
 #########################################################################
-
-## Subsidiary dependency rules
+##                     Subsidiary dependency rules                     ##
+#########################################################################
 
 #ifdef I18N3
 
@@ -561,37 +617,37 @@ all-elc:
    msgfmt=		 msgfmt
 #endif
 
-${mo_dir}emacs.po: ${libsrc}make-msgfile ${libsrc}make-po ${objs}
-	${libsrc}make-msgfile -o ${libsrc}messages ${objs}
-	cd ${libsrc} && ${xgettext} ${xgettext_args}
-	$(RM) ${mo_dir}emacs.po
-	cd ${libsrc} && ${libsrc}make-po -a ${mo_dir}emacs.po DOC
+$(LIB_SRC)/emacs.po: $(LIB_SRC)/make-msgfile $(LIB_SRC)/make-po $(objs)
+	$(LIB_SRC)/make-msgfile -o $(LIB_SRC)/messages $(objs)
+	cd $(LIB_SRC) && $(xgettext) $(xgettext_args)
+	$(RM) $(LIB_SRC)/emacs.po
+	cd $(LIB_SRC) && $(LIB_SRC)/make-po -a $(LIB_SRC)/emacs.po DOC
 
-${mo_dir}emacs.mo: ${mo_dir}emacs.po
-	cd ${mo_dir} && ${msgfmt} -o emacs.mo emacs.po
+$(LIB_SRC)/emacs.mo: $(LIB_SRC)/emacs.po
+	cd $(LIB_SRC)/ && $(msgfmt) -o emacs.mo emacs.po
 
-${libsrc}make-msgfile:
-	cd ${libsrc} && $(RECURSIVE_MAKE) make-msgfile
+$(LIB_SRC)/make-msgfile:
+	cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-msgfile
 
-${libsrc}make-po:
-	cd ${libsrc} && $(RECURSIVE_MAKE) make-po
+$(LIB_SRC)/make-po:
+	cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-po
 
 #endif /* I18N3 */
 
-TopLevelEmacsShell.o : ${srcdir}/EmacsShell-sub.c config.h xintrinsicp.h EmacsShellP.h
-	$(CC) -c $(cflags) -DDEFINE_TOP_LEVEL_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
+TopLevelEmacsShell.o : $(SRC)/EmacsShell-sub.c config.h xintrinsicp.h EmacsShellP.h
+	$(CC) -c $(cflags) -DDEFINE_TOP_LEVEL_EMACS_SHELL $(SRC)/EmacsShell-sub.c
 	mv EmacsShell-sub.o TopLevelEmacsShell.o
 
-TopLevelEmacsShell.c.rtl : ${srcdir}/EmacsShell-sub.c config.h xintrinsicp.h EmacsShellP.h
-	$(CC) -dr -c $(cflags) -DDEFINE_TOP_LEVEL_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
+TopLevelEmacsShell.c.rtl : $(SRC)/EmacsShell-sub.c config.h xintrinsicp.h EmacsShellP.h
+	$(CC) -dr -c $(cflags) -DDEFINE_TOP_LEVEL_EMACS_SHELL $(SRC)/EmacsShell-sub.c
 	mv EmacsShell-sub.c.rtl TopLevelEmacsShell.c.rtl
 
-TransientEmacsShell.o : ${srcdir}/EmacsShell-sub.c TopLevelEmacsShell.o config.h xintrinsicp.h EmacsShellP.h
-	$(CC) -c $(cflags) -DDEFINE_TRANSIENT_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
+TransientEmacsShell.o : $(SRC)/EmacsShell-sub.c TopLevelEmacsShell.o config.h xintrinsicp.h EmacsShellP.h
+	$(CC) -c $(cflags) -DDEFINE_TRANSIENT_EMACS_SHELL $(SRC)/EmacsShell-sub.c
 	mv EmacsShell-sub.o TransientEmacsShell.o
 
-TransientEmacsShell.c.rtl : ${srcdir}/EmacsShell-sub.c TopLevelEmacsShell.o config.h xintrinsicp.h EmacsShellP.h
-	$(CC) -dr -c $(cflags) -DDEFINE_TRANSIENT_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
+TransientEmacsShell.c.rtl : $(SRC)/EmacsShell-sub.c TopLevelEmacsShell.o config.h xintrinsicp.h EmacsShellP.h
+	$(CC) -dr -c $(cflags) -DDEFINE_TRANSIENT_EMACS_SHELL $(SRC)/EmacsShell-sub.c
 	mv EmacsShell-sub.c.rtl TransientEmacsShell.c.rtl
 
 ## The above rules are subject to a race condition if using a parallel make.
@@ -617,58 +673,58 @@ external_client_xt_objs_nonshared    = ExternalClient-Xt-nonshared.o extw-Xt-non
 external_client_xlib_objs_nonshared  = ExternalClient-Xlib-nonshared.o extw-Xlib-nonshared.o
 
 ## Add dependencies so things work right with a parallel make
-ExternalClient-Xm-shared.o: ${srcdir}/ExternalClient.c ExternalClient-Xt-shared.o ExternalClient-Xm-nonshared.o
-	$(CC) -c $(pic_arg) $(cflags) -DEXTW_USES_MOTIF ${srcdir}/ExternalClient.c
+ExternalClient-Xm-shared.o: $(SRC)/ExternalClient.c ExternalClient-Xt-shared.o ExternalClient-Xm-nonshared.o
+	$(CC) -c $(pic_arg) $(cflags) -DEXTW_USES_MOTIF $(SRC)/ExternalClient.c
 	mv ExternalClient.o ExternalClient-Xm-shared.o
 
-ExternalClient-Xt-shared.o: ${srcdir}/ExternalClient.c ExternalClient-Xt-nonshared.o
-	$(CC) -c $(pic_arg) $(cflags) ${srcdir}/ExternalClient.c
+ExternalClient-Xt-shared.o: $(SRC)/ExternalClient.c ExternalClient-Xt-nonshared.o
+	$(CC) -c $(pic_arg) $(cflags) $(SRC)/ExternalClient.c
 	mv ExternalClient.o ExternalClient-Xt-shared.o
 
-ExternalClient-Xlib-shared.o: ${srcdir}/ExternalClient-Xlib.c ExternalClient-Xlib-nonshared.o
-	$(CC) -c $(pic_arg) $(cflags) ${srcdir}/ExternalClient-Xlib.c
+ExternalClient-Xlib-shared.o: $(SRC)/ExternalClient-Xlib.c ExternalClient-Xlib-nonshared.o
+	$(CC) -c $(pic_arg) $(cflags) $(SRC)/ExternalClient-Xlib.c
 	mv ExternalClient-Xlib.o ExternalClient-Xlib-shared.o
 
-ExternalClient-Xm-nonshared.o: ${srcdir}/ExternalClient.c ExternalClient-Xt-nonshared.o
-	$(CC) -c $(cflags) -DEXTW_USES_MOTIF ${srcdir}/ExternalClient.c
+ExternalClient-Xm-nonshared.o: $(SRC)/ExternalClient.c ExternalClient-Xt-nonshared.o
+	$(CC) -c $(cflags) -DEXTW_USES_MOTIF $(SRC)/ExternalClient.c
 	mv ExternalClient.o ExternalClient-Xm-nonshared.o
 
-ExternalClient-Xt-nonshared.o: ${srcdir}/ExternalClient.c
-	$(CC) -c $(cflags) ${srcdir}/ExternalClient.c
+ExternalClient-Xt-nonshared.o: $(SRC)/ExternalClient.c
+	$(CC) -c $(cflags) $(SRC)/ExternalClient.c
 	mv ExternalClient.o ExternalClient-Xt-nonshared.o
 
-ExternalClient-Xlib-nonshared.o: ${srcdir}/ExternalClient-Xlib.c
-	$(CC) -c $(cflags) ${srcdir}/ExternalClient-Xlib.c
+ExternalClient-Xlib-nonshared.o: $(SRC)/ExternalClient-Xlib.c
+	$(CC) -c $(cflags) $(SRC)/ExternalClient-Xlib.c
 	mv ExternalClient-Xlib.o ExternalClient-Xlib-nonshared.o
 
 ## We compile the common files twice (once with PIC and once without)
 ## because on some systems, compiling with PIC but not linking into
 ## a shared library messes things up.
 
-extw-Xt-shared.o: ${srcdir}/extw-Xt.c extw-Xt-nonshared.o
-	$(CC) -c $(pic_arg) $(cflags) ${srcdir}/extw-Xt.c
+extw-Xt-shared.o: $(SRC)/extw-Xt.c extw-Xt-nonshared.o
+	$(CC) -c $(pic_arg) $(cflags) $(SRC)/extw-Xt.c
 	mv extw-Xt.o extw-Xt-shared.o
 
-extw-Xlib-shared.o: ${srcdir}/extw-Xlib.c extw-Xlib-nonshared.o
-	$(CC) -c $(pic_arg) $(cflags) ${srcdir}/extw-Xlib.c
+extw-Xlib-shared.o: $(SRC)/extw-Xlib.c extw-Xlib-nonshared.o
+	$(CC) -c $(pic_arg) $(cflags) $(SRC)/extw-Xlib.c
 	mv extw-Xlib.o extw-Xlib-shared.o
 
-extw-Xt-nonshared.o: ${srcdir}/extw-Xt.c
-	$(CC) -c $(cflags) ${srcdir}/extw-Xt.c
+extw-Xt-nonshared.o: $(SRC)/extw-Xt.c
+	$(CC) -c $(cflags) $(SRC)/extw-Xt.c
 	mv extw-Xt.o extw-Xt-nonshared.o
 
-extw-Xlib-nonshared.o: ${srcdir}/extw-Xlib.c
-	$(CC) -c $(cflags) ${srcdir}/extw-Xlib.c
+extw-Xlib-nonshared.o: $(SRC)/extw-Xlib.c
+	$(CC) -c $(cflags) $(SRC)/extw-Xlib.c
 	mv extw-Xlib.o extw-Xlib-nonshared.o
 
-libextcli_Xm.a: ${external_client_motif_objs_nonshared}
-	ar r libextcli_Xm.a ${external_client_motif_objs_nonshared}
+libextcli_Xm.a: $(external_client_motif_objs_nonshared)
+	ar r libextcli_Xm.a $(external_client_motif_objs_nonshared)
 
-libextcli_Xt.a: ${external_client_xt_objs_nonshared}
-	ar r libextcli_Xt.a ${external_client_xt_objs_nonshared}
+libextcli_Xt.a: $(external_client_xt_objs_nonshared)
+	ar r libextcli_Xt.a $(external_client_xt_objs_nonshared)
 
-libextcli_Xlib.a: ${external_client_xlib_objs_nonshared}
-	ar r libextcli_Xlib.a ${external_client_xlib_objs_nonshared}
+libextcli_Xlib.a: $(external_client_xlib_objs_nonshared)
+	ar r libextcli_Xlib.a $(external_client_xlib_objs_nonshared)
 
 ## Now we try to figure out how to link a shared library.
 ## If we cannot figure it out, leave EXTW_LINK undefined and a shared
@@ -689,8 +745,8 @@ extw_link_end =
 #  endif
 # elif defined (USG5)
 #  if defined (IRIX)
-#   define EXTW_LINK(objs, output) $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations objs -o output
-extw_link_beg = $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations
+#   define EXTW_LINK(objs, output) $(LD) -shared -g -check_registry $(TOOLROOT)/usr/lib/so_locations objs -o output
+extw_link_beg = $(LD) -shared -g -check_registry $(TOOLROOT)/usr/lib/so_locations
 extw_link_mid =  -o
 extw_link_end =
 #  else /* not IRIX */
@@ -715,21 +771,21 @@ extw_link_end =
 
 #ifdef EXTW_LINK
 
-libextcli_Xm.so.1: ${external_client_motif_objs_shared}
-	${extw_link_beg} ${external_client_motif_objs_shared} ${extw_link_mid} libextcli_Xm.so.1 ${extw_link_end}
+libextcli_Xm.so.1: $(external_client_motif_objs_shared)
+	$(extw_link_beg) $(external_client_motif_objs_shared) $(extw_link_mid) libextcli_Xm.so.1 $(extw_link_end)
 
-libextcli_Xt.so.1: ${external_client_xt_objs_shared}
-	${extw_link_beg} ${external_client_xt_objs_shared} ${extw_link_mid} libextcli_Xt.so.1 ${extw_link_end}
+libextcli_Xt.so.1: $(external_client_xt_objs_shared)
+	$(extw_link_beg) $(external_client_xt_objs_shared) $(extw_link_mid) libextcli_Xt.so.1 $(extw_link_end)
 
-libextcli_Xlib.so.1: ${external_client_xlib_objs_shared}
-	${extw_link_beg} ${external_client_xlib_objs_shared} ${extw_link_mid} libextcli_Xlib.so.1 ${extw_link_end}
+libextcli_Xlib.so.1: $(external_client_xlib_objs_shared)
+	$(extw_link_beg) $(external_client_xlib_objs_shared) $(extw_link_mid) libextcli_Xlib.so.1 $(extw_link_end)
 
 #endif /* EXTW_LINK */
 
 #endif /* EXTERNAL_WIDGET */
 
-config.h: ${srcdir}/config.h.in
-Emacs.ad.h: ${srcdir}/${etcdir}Emacs.ad
+config.h: $(SRC)/config.h.in
+Emacs.ad.h: $(ETC)/Emacs.ad
 
 config.h sheap-adjust.h paths.h Emacs.ad.h :
 	@echo "The file $@ needs to be re-generated."
@@ -748,10 +804,10 @@ config.h sheap-adjust.h paths.h Emacs.ad.h :
 #ifdef C_ALLOCA
 #else
 #ifndef HAVE_ALLOCA
-allocax.o : ${srcdir}/alloca.s config.h
+allocax.o : $(SRC)/alloca.s config.h
 ## $(CPP) is cc -E, which may get confused by filenames
 ## that do not end in .c.  So copy file to a safe name.  */
-##	cp ${srcdir}/alloca.s allocatem.c
+##	cp $(SRC)/alloca.s allocatem.c
 ## Remove any ^L, blank lines, and preprocessor comments,
 ## since some assemblers barf on them.  Use a different basename for the
 ## output file, since some stupid compilers (Green Hill) use that
@@ -768,10 +824,10 @@ allocax.o : ${srcdir}/alloca.s config.h
 
 #ifdef HAVE_NATIVE_SOUND
 sound_cflags=@sound_cflags@
-sunplay.o: ${srcdir}/sunplay.c
-	$(CC) -c  $(sound_cflags) $(cflags) ${srcdir}/sunplay.c
-hpplay.o: ${srcdir}/hpplay.c
-	$(CC) -c -Demacs $(sound_cflags) $(cflags) ${srcdir}/hpplay.c
+sunplay.o: $(SRC)/sunplay.c
+	$(CC) -c  $(sound_cflags) $(cflags) $(SRC)/sunplay.c
+hpplay.o: $(SRC)/hpplay.c
+	$(CC) -c -Demacs $(sound_cflags) $(cflags) $(SRC)/hpplay.c
 #endif /* HAVE_NATIVE_SOUND */
 
 #if defined(HAVE_GLADE_GLADE_H) || defined(HAVE_GLADE_H)
@@ -782,12 +838,12 @@ glade_files=glade.c
 extra_doc_files=emacs-widget-accessors.c ui-byhand.c $(glade_files)
 #endif
 
-xemacs_res.o: ${srcdir}/../nt/xemacs.rc
-	windres --include-dir ${srcdir}/../nt -i ${srcdir}/../nt/xemacs.rc -o $@
+xemacs_res.o: $(SRC)/../nt/xemacs.rc
+	windres --include-dir $(SRC)/../nt -i $(SRC)/../nt/xemacs.rc -o $@
 
 #########################################################################
-
-## Other random crap
+##                          Other random crap                          ##
+#########################################################################
 
 dortl : $(obj_rtl) $(otherrtls)
 	echo "(defvar source-files '(" > $(LISP)/source-files.el
@@ -796,7 +852,7 @@ dortl : $(obj_rtl) $(otherrtls)
 	done)
 	echo "))" >> $(LISP)/source-files.el
 
-## Lint Section
+###################### Lint
 LINT.c=$(LINT) $(LINTFLAGS) $(LINTINCLUDES)
 LINTFILES= $(objs:.o=.ln)
 LINTINCLUDES = $(cppflags)
@@ -805,11 +861,10 @@ LINTFLAGS= -fd -m -s -u -v -x
 .PHONY: lint
 lint: $(LINTFILES)
 	$(LINT.c) $(LINTFILES)
-## end of Lint Section
 
-## We have automated tests!!
-testdir = ${srcdir}/../tests/automated
-batch_test_emacs = ${BATCH_PACKAGES} -l ${testdir}/test-harness.el -f batch-test-emacs ${testdir}
+###################### Automated tests
+testdir = $(SRC)/../tests/automated
+batch_test_emacs = $(BATCH_PACKAGES) -l $(testdir)/test-harness.el -f batch-test-emacs $(testdir)
 
 .PHONY: check check-temacs check-features
 check:
@@ -819,8 +874,8 @@ check-temacs:
 check-features: all
 	$(XEMACS_BATCH) -l check-features.el
 
-## Debugging targets:
-##
+###################### Debugging targets
+
 ## None of the debugging products work with a dumped xemacs binary,
 ## because it does unexpected things like free memory that has been
 ## malloc'ed in a *different* process!!  So we need to run these on
@@ -831,8 +886,8 @@ rtc_patch.o:
 	rtc_patch_area -o $@
 
 rtcmacs: $(temacs_deps) rtc_patch.o
-	$(RM) ${EXE_TARGET}; $(RECURSIVE_MAKE) ${EXE_TARGET} RTC_patch_objs=rtc_patch.o
-	mv ${EXE_TARGET} rtcmacs
+	$(RM) $(RAW_EXE); $(RECURSIVE_MAKE) $(RAW_EXE) RTC_patch_objs=rtc_patch.o
+	mv $(RAW_EXE) rtcmacs
 
 .PHONY: run-rtcmacs
 run-rtcmacs: rtcmacs
@@ -842,11 +897,11 @@ run-rtcmacs: rtcmacs
 	ignore POLL; \
 	check -access; \
 	suppress rui; \
-	runargs -nd ${BATCH} ${run_temacs_args} -vanilla; \
+	runargs -nd $(BATCH) $(run_temacs_args) -vanilla; \
 	run' rtcmacs
 
-debug-temacs: ${EXE_TARGET}
-	-${debug_temacs}
+debug-temacs: $(RAW_EXE)
+	-gdb $(RAW_EXE)
 
 ## Purify, Quantify, PureCoverage are software quality products from
 ## Rational, formerly Pure Atria, formerly Pure Software.
@@ -859,11 +914,11 @@ PURIFY_FLAGS =\
  -search-mmaps=yes\
 #endif
  -chain-length=32 -ignore-signals=SIGPOLL\
- -cache-dir=${blddir}/purecache -always-use-cache-dir=yes
+ -cache-dir=$(blddir)/purecache -always-use-cache-dir=yes
 
 puremacs: $(temacs_deps)
 	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) $(temacs_link_args) $(PURIFY_LIBS)
-	cp $@ ${EXE_TARGET}
+	cp $@ $(RAW_EXE)
 
 ## Quantify
 #ifdef  QUANTIFY
@@ -875,29 +930,39 @@ temacs_link_args += $(QUANTIFY_HOME)/quantify_stubs.a
 
 quantmacs: $(temacs_deps)
 	$(QUANTIFY_PROG) $(QUANTIFY_FLAGS) $(LD) $(temacs_link_args)
-	cp $@ ${EXE_TARGET}
+	cp $@ $(RAW_EXE)
 #endif /* QUANTIFY */
 
 PURECOV_PROG=purecov
 covmacs: $(temacs_deps)
 	$(PURECOV_PROG) $(LD) $(temacs_link_args)
 
+###################### Clean
+
 .PHONY: mostlyclean clean distclean realclean versionclean extraclean
 mostlyclean:
-	$(RM) temacs puremacs quantmacs *.o *.i  \
-	  core temacs.exe sheap-adjust.h
+	$(RM) *.o *.i *.rtl *.ln core \
+	temacs puremacs quantmacs covmacs rtcmacs temacs.exe \
+	sheap-adjust.h dump-id.c $(BLDSRC)/NEEDTODUMP SATISFIED \
+	$(LIB_SRC)/*.po $(LIB_SRC)/*.mo
+versionclean:
+	$(RM) $(RAW_EXE) $(DUMP_TARGET) $(LIB_SRC)/DOC
+##      Remove the generated load files here; they cause lots of problems
+##      when they don't work right.
 clean: mostlyclean versionclean
-	$(RM) libextcli*
+	$(RM) libextcli* $(LISP)/auto-autoloads.el* $(LISP)/custom-load.el* \
+	$(LISP)/mule/auto-autoloads.el* $(LISP)/mule/custom-load.el* \
+	$(SRCMODULES)/auto-autoloads.el* $(SRCMODULES)/custom-load.el*
 ## This is used in making a distribution.
 ## Do not use it on development directories!
 distclean: clean
-	$(RM) config.h paths.h Emacs.ad.h \
-	  GNUmakefile Makefile Makefile.in TAGS ${PROGNAME}.*
+	$(RM) config.h paths.h Emacs.ad.h $(LISP)/finder-inf.el* \
+	  GNUmakefile Makefile Makefile.in TAGS $(PROGNAME).*
 realclean: distclean
-versionclean:
-	$(RM) ${EXE_TARGET} ${DUMP_TARGET} ${libsrc}DOC
 extraclean: realclean
 	$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#*
+
+###################### Lock, unlock
 
 .PHONY : lock unlock
 SOURCES = *.[chm] *.pswm [sm]/* COPYING paths.h.in Makefile.in.in \
@@ -908,14 +973,16 @@ unlock:
 relock:
 	chmod -w $(SOURCES)
 
+###################### Installation
+
 ## Header files for ellcc
 #ifdef HAVE_SHLIB
 MAKEPATH=../lib-src/make-path
-install: ${PROGNAME}
-	${MAKEPATH} ${archlibdir}/include ${archlibdir}/include/m ${archlibdir}/include/s
+install: $(PROGNAME)
+	$(MAKEPATH) $(archlibdir)/include $(archlibdir)/include/m $(archlibdir)/include/s
 	-@echo "Copying include files for ellcc..."
 	-@hdir=`pwd`; \
-	cd ${srcdir}; hdrdir2=`pwd`; cd $$hdir; \
+	cd $(SRC); hdrdir2=`pwd`; cd $$hdir; \
 	test "$$hdrdir2" != "$$hdir" && hdir="$$hdir $$hdrdir2"; \
 	(for thisdir in $$hdir; do \
 		cd $$thisdir && \
@@ -926,22 +993,32 @@ install: ${PROGNAME}
 		test -d s && hdrtars="$$hdrtars s/*"; \
 		test -d m && hdrtars="$$hdrtars m/*"; \
 		test -n "$$hdrtars" && (tar cf - $$hdrtars) | \
-			(cd ${archlibdir}/include && umask 022 && tar xf -); \
-		chmod 755 ${archlibdir}/include; \
-		test -d ${archlibdir}/include/s && \
-		  chmod 755 ${archlibdir}/include/s; \
-		test -d ${archlibdir}/include/m && \
-		  chmod 755 ${archlibdir}/include/s;) \
+			(cd $(archlibdir)/include && umask 022 && tar xf -); \
+		chmod 755 $(archlibdir)/include; \
+		test -d $(archlibdir)/include/s && \
+		  chmod 755 $(archlibdir)/include/s; \
+		test -d $(archlibdir)/include/m && \
+		  chmod 755 $(archlibdir)/include/s;) \
 	done)
 #endif
+
+###################### Dependencies
 
 ## Dependency processing using home-grown script, not makedepend
 .PHONY: depend
 FRC.depend:
 depend: FRC.depend
-	cd ${srcdir} && $(RM) depend.tmp && \
+	cd $(SRC) && $(RM) depend.tmp && \
 	perl ./make-src-depend > depend.tmp && \
 	if cmp -s depend depend.tmp; \
 	then $(RM) depend.tmp; \
 	else $(RM) depend && mv depend.tmp depend; \
 	fi
+
+###################### Unicode encapsulation
+
+.PHONY: unicode-encapsulate
+FRC.unicode-encapsulate:
+unicode-encapsulate: FRC.unicode-encapsulate
+	cd $(SRC) && \
+	perl ../lib-src/make-mswin-unicode.pl --c-output intl-auto-encap-win32.c --h-output intl-auto-encap-win32.h intl-encap-win32.c

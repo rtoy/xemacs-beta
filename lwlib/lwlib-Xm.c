@@ -131,6 +131,8 @@ make_destroyed_instance (char* name, char* type, Widget widget, Widget parent,
   return instance;
 }
 
+#ifdef LWLIB_DIALOGS_MOTIF
+
 static void
 free_destroyed_instance (destroyed_instance* instance)
 {
@@ -138,6 +140,8 @@ free_destroyed_instance (destroyed_instance* instance)
   free (instance->type);
   free (instance);
 }
+
+#endif /* LWLIB_DIALOGS_MOTIF */
 
 /* motif utility functions */
 Widget
@@ -1019,6 +1023,8 @@ xm_update_one_value (widget_instance* instance, Widget widget,
 }
 
 
+#ifdef LWLIB_DIALOGS_MOTIF
+
 /* This function is for activating a button from a program.  It's wrong because
    we pass a NULL argument in the call_data which is not Motif compatible.
    This is used from the XmNdefaultAction callback of the List widgets to
@@ -1033,8 +1039,6 @@ activate_button (Widget widget, XtPointer closure, XtPointer call_data)
 }
 
 /* creation functions */
-
-#ifdef LWLIB_DIALOGS_MOTIF
 
 /* dialogs */
 

@@ -34,12 +34,6 @@ Boston, MA 02111-1307, USA.  */
 /* No load average information appears in the AIX kernel.  VRM has this
    info, and if anyone desires they should fix fns.c to get it out of VRM */
 
-/* Define CANNOT_DUMP on machines where unexec does not work.
-   Then the function dump-emacs will not be defined
-   and temacs will do (load "loadup") automatically unless told otherwise.  */
-
-/* #define CANNOT_DUMP */
-
 /* Define addresses, macros, change some setup for dump */
 
 #undef COFF

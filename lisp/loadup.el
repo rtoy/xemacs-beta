@@ -39,6 +39,11 @@
 (setq stack-trace-on-error t
       load-always-display-messages t)
 
+;(princ (format "command-line-args: %s\n" command-line-args))
+;(princ (format "configure-lisp-directory: %S\n" configure-lisp-directory))
+;(princ (format "configure-data-directory: %S\n" configure-data-directory))
+;(princ (format "lisp-directory: %S\n" lisp-directory))
+
 (when (fboundp 'error)
   (error "loadup.el already loaded!"))
 
@@ -49,6 +54,12 @@
 
 (defvar Installation-string nil
   "Description of XEmacs installation.")
+
+(defvar build-root (expand-file-name ".." invocation-directory))
+(defvar source-lisp (file-name-directory (expand-file-name
+					  (nth 2 command-line-args))))
+(defvar source-root (expand-file-name ".." source-lisp))
+;(defvar build-lib-src (expand-file-name "lib-src" build-root))
 
 ;(start-profiling)
 
@@ -76,14 +87,14 @@
 		;; insert-file-contents-internal bogusly calls
 		;; format-decode without checking if it's defined.
 		(fset 'format-decode #'(lambda (f l &optional v) l))
-		(insert-file-contents-internal "../Installation")
+		(insert-file-contents-internal
+		 (expand-file-name "Installation" build-root))
 		(fmakunbound 'format-decode)
 		(prog1 (buffer-substring)
 		  (kill-buffer (current-buffer)))))
 
-	(let ((build-root (expand-file-name ".." invocation-directory)))
-	  (setq load-path (list (expand-file-name "lisp" build-root)))
-	  (setq module-load-path (list (expand-file-name "modules" build-root))))
+	(setq load-path (list source-lisp))
+	(setq module-load-path (list (expand-file-name "modules" build-root)))
 
 	;; message not defined yet ...
 	(external-debugging-output (format "\nUsing load-path %s" load-path))
@@ -133,7 +144,7 @@
 	      ;;(print (format "guessed-data-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-data-root-p)))
 	      nil)))
 
-	(load (expand-file-name "../lisp/dumped-lisp.el"))
+	(load (expand-file-name "dumped-lisp.el" source-lisp))
 
 	(let ((files preloaded-file-list)
 	      file)
@@ -211,69 +222,6 @@
 ) ;; (let ((gc-cons-threshold [frequent garbage collection when dumping])))
 
 ;(stop-profiling)
-
-;; yuck!  need to insert the function def here, and rewrite the dolist
-;; loop below.
-
-;(defun loadup-profile-results (&optional info stream)
-;  "Print profiling info INFO to STREAM in a pretty format.
-;If INFO is omitted, the current profiling info is retrieved using
-; `get-profiling-info'.
-;If STREAM is omitted, either a *Profiling Results* buffer or standard
-; output are used, depending on whether the function was called
-; interactively or not."
-;  (interactive)
-;  (setq info (if info
-;		 (copy-alist info)
-;	       (get-profiling-info)))
-;  (when (and (not stream)
-;	     (interactive-p))
-;    (pop-to-buffer (get-buffer-create "*Profiling Results*"))
-;    (erase-buffer))
-;  (let ((standard-output (or stream (if (interactive-p)
-;					(current-buffer)
-;				      standard-output)))
-;	;; Calculate the longest function
-;	(maxfunlen (apply #'max
-;			  (length "Function Name")
-;			  (mapcar
-;			   (lambda (el)
-;			     ;; Functions longer than 50 characters (usually
-;			     ;; anonymous functions) don't qualify
-;			     (let ((l (length (format "%s" (car el)))))
-;			       (if (< l 50)
-;				   l 0)))
-;			   info))))
-;    (princ (format "%-*s    Ticks    %%/Total   Call Count\n"
-;		   maxfunlen "Function Name"))
-;    (princ (make-string maxfunlen ?=))
-;    (princ "    =====    =======   ==========\n")
-;    (let ((sum (float (apply #'+ (mapcar #'cdr info)))))
-;      (let (entry
-;	    (entry-list (nreverse (sort info #'cdr-less-than-cdr))))
-;	(while entry-list
-;	  (setq entry (car entry-list))
-;	  (princ (format "%-*s    %-5d    %-6.3f    %s\n"
-;			 maxfunlen (car entry) (cdr entry)
-;			 (* 100 (/ (cdr entry) sum))
-;			 (or (gethash (car entry) call-count-profile-table)
-;			     "")))
-;	  (setq entry-list (cdr entry-list))))
-;      (princ (make-string maxfunlen ?-))
-;      (princ "---------------------------------\n")
-;      (princ (format "%-*s    %-5d    %-6.2f\n" maxfunlen "Total" sum 100.0))
-;      (princ (format "\n\nOne tick = %g ms\n"
-;		     (/ default-profiling-interval 1000.0)))
-;      (and (boundp 'internal-error-checking)
-;	   internal-error-checking
-;	   (princ "
-;WARNING: Error checking is turned on in this XEmacs.  This might make
-;         the measurements very unreliable.\n"))))
-;  (when (and (not stream)
-;	     (interactive-p))
-;    (goto-char (point-min))))
-
-;(loadup-profile-results nil 'external-debugging-output)
 
 ;; Dump into the name `xemacs' (only)
 (when (member "dump" command-line-args)

@@ -1,7 +1,7 @@
 ;;; packages.el --- Low level support for XEmacs packages
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2003 Ben Wing.
 
 ;; Author: Steven L Baur <steve@xemacs.org>
 ;; Maintainer: Steven L Baur <steve@xemacs.org>
@@ -158,31 +158,7 @@ the directory to be ignored."
 (defvar autoload-file-name "auto-autoloads.el"
   "Filename that autoloads are expected to be found in.")
 
-(defvar packages-hardcoded-lisp
-  '(
-    ;; Nothing at this time
-    )
-  "Lisp packages that are always dumped with XEmacs.
-This includes every package that is loaded directly by a package listed
-in dumped-lisp.el and is not itself listed.")
-
-(defvar packages-useful-lisp
-  '("bytecomp"
-    "byte-optimize"
-    "autoload"
-    "shadow"
-    "cl-macs")
-  "Lisp packages that need early byte compilation.")
-
-(defvar packages-unbytecompiled-lisp
-  '("paths.el"
-    "dumped-lisp.el"
-    "dumped-pkg-lisp.el"
-    "version.el")
-  "Lisp packages that should not be byte compiled.")
-
-
-;; Copied from help.el, could possibly move it to here permanently.
+;; Moved from help.el.
 ;; Unlike the FSF version, our `locate-library' uses the `locate-file'
 ;; primitive, which should make it lightning-fast.
 

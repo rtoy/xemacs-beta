@@ -3,7 +3,7 @@
 ;; Copyright (C) 1985-1986, 1990, 1992-1997 Free Software Foundation, Inc.
 ;; Copyright (c) 1993, 1994 Sun Microsystems, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
-;; Copyright (C) 2001, 2002 Ben Wing.
+;; Copyright (C) 2001, 2002, 2003 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, dumped
@@ -129,42 +129,6 @@ the user's init file.")
 
 (defconst initial-major-mode 'lisp-interaction-mode
   "Major mode command symbol to use for the initial *scratch* buffer.")
-
-(defvar emacs-roots nil
-  "List of plausible roots of the XEmacs hierarchy.")
-
-(defvar emacs-data-roots nil
-  "List of plausible data roots of the XEmacs hierarchy.")
-
-(defvar user-init-directory-base ".xemacs"
-  "Base of directory where user-installed init files may go.")
-
-(defvar user-init-directory
-  (file-name-as-directory
-   (paths-construct-path (list "~" user-init-directory-base)))
-  "Directory where user-installed init files may go.")
-
-(defvar user-init-file-base "init.el"
-  "Default name of the user init file if uncompiled.
-This should be used for migration purposes only.")
-
-(defvar user-init-file-base-list '("init.elc" "init.el")
-  "List of allowed init files in the user's init directory.
-The first one found takes precedence.")
-
-(defvar user-home-init-file-base-list
-  (append '(".emacs.elc" ".emacs.el" ".emacs")
-	  (and (eq system-type 'windows-nt)
-	       '("_emacs.elc" "_emacs.el" "_emacs")))
-  "List of allowed init files in the user's home directory.
-The first one found takes precedence.")
-
-(defvar load-home-init-file nil
-  "Non-nil if XEmacs should load the init file from the home directory.
-Otherwise, XEmacs will offer migration to the init directory.")
-
-(defvar load-user-init-file-p t
-  "Non-nil if XEmacs should load the user's init file.")
 
 ;; #### called `site-run-file' in FSFmacs
 
@@ -514,33 +478,11 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
     (initialize-xemacs-paths)
 
     (startup-set-invocation-environment)
-
-    (let ((debug-paths (or debug-paths
-			   (and (getenv "EMACSDEBUGPATHS")
-				t))))
-
-      (setq emacs-roots (paths-find-emacs-roots invocation-directory
-						invocation-name
-						#'paths-emacs-root-p))
-      (setq emacs-data-roots (paths-find-emacs-roots invocation-directory
-						     invocation-name
-						     #'paths-emacs-data-root-p))
-
-      (if debug-paths
-	  (princ (format "emacs-roots:\n%S\n" emacs-roots)
-		 'external-debugging-output))
-
-      (if (null emacs-roots)
-	  (startup-find-roots-warning))
-      (startup-setup-paths emacs-roots emacs-data-roots
-			   user-init-directory
-			   (cond (inhibit-all-packages t)
-				 (inhibit-early-packages '(early))
-				 (t nil))
-			   inhibit-site-lisp
-			   debug-paths
-			   nil)
-      (startup-setup-paths-warning))
+    (startup-setup-paths (cond (inhibit-all-packages t)
+			       (inhibit-early-packages '(early))
+			       (t nil))
+			 nil)
+    (startup-setup-paths-warning)
 
     ;; Either we need to inhibit messages from do_autoloads, or this
     ;; should go into (command-line) after the initialization of the
@@ -798,24 +740,42 @@ If this is nil, no message will be displayed.")
 	    (setq term (substring term 0 hyphend))
 	  (setq term nil))))))
 
+(defun find-init-file-1 (dir base-list)
+  (catch 'found
+    (dolist (file base-list)
+      (let ((expanded (expand-file-name file dir)))
+	  (if (string-match "el$" expanded)
+	      (let* ((elc (concat expanded "c"))
+		     (el-ok (file-readable-p expanded))
+		     (elc-ok (file-readable-p elc)))
+		(cond
+		 ((and el-ok elc-ok (file-newer-than-file-p expanded elc))
+		  (lwarn 'initialization 'warning
+		    "\
+The compiled initialization file `%s' exists
+but is out-of-date with respect to the uncompiled initialization
+file `%s'.  XEmacs will load the uncompiled
+version.  You should correct the problem as soon as possible by
+loading the uncompiled version and compiling it using
+`M-x byte-compile-file' (or `Lisp->Byte-Compile This File' on
+the menubar)."
+		    elc expanded)
+		  (throw 'found expanded))
+		 (elc-ok (throw 'found elc))
+		 (el-ok (throw 'found expanded))))
+	    (when (file-readable-p 
+		   (when (file-readable-p expanded)
+		     (throw 'found expanded)))))))))
+
 (defun find-user-init-directory-init-file (&optional init-directory)
   "Determine the user's init file if in the init directory."
-  (let ((init-directory (or init-directory user-init-directory)))
-    (catch 'found
-      (dolist (file user-init-file-base-list)
-	(let ((expanded (expand-file-name file init-directory)))
-	  (when (file-readable-p expanded)
-	    (throw 'found expanded)))))))
+  (find-init-file-1 (or init-directory user-init-directory)
+		    user-init-file-base-list))
 
 (defun find-user-home-directory-init-file (&optional home-directory)
   "Determine the user's init file if in the home directory."
-  (let ((home-directory (or home-directory "~")))
-    (catch 'found
-      (dolist (file user-home-init-file-base-list)
-	(let ((expanded (expand-file-name file home-directory)))
-	  (when (file-readable-p expanded)
-	    (throw 'found expanded))))
-      nil)))
+  (find-init-file-1 (or home-directory "~")
+		    user-home-init-file-base-list))
 
 (defun find-user-init-file (&optional init-directory home-directory)
   "Determine the user's init file."
@@ -1387,18 +1347,6 @@ Copyright (C) 1995-1996 Ben Wing\n"))
   (setq invocation-directory
 	;; don't let /tmp_mnt/... get into the load-path or exec-path.
 	(abbreviate-file-name invocation-directory)))
-
-(defun startup-find-roots-warning ()
-  (save-excursion
-    (set-buffer (get-buffer-create " *warning-tmp*"))
-    (erase-buffer)
-    (buffer-disable-undo (current-buffer))
-
-    (insert "Couldn't find an obvious default for the root of the\n"
-	    "XEmacs hierarchy.")
-
-    (princ "\nWARNING:\n" 'external-debugging-output)
-    (princ (buffer-string) 'external-debugging-output)))
 
 (defun startup-setup-paths-warning ()
   (let ((warnings '()))

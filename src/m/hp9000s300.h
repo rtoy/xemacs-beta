@@ -46,12 +46,6 @@ NOTE-END */
 #define hp9000s300
 #endif
 
-/* Define CANNOT_DUMP on machines where unexec does not work.
-   Then the function dump-emacs will not be defined
-   and temacs will do (load "loadup") automatically unless told otherwise.  */
-
-/* #define CANNOT_DUMP */
-
 /* Let the OS header file determine this if not HPUX. */
 #ifdef HPUX
 # define UNEXEC "unexhp9k3.o"

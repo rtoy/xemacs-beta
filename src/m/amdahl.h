@@ -49,12 +49,6 @@ compiler is so brain damaged that it is not even worth trying to use it.
 
 /*#define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0)*/
 
-/* Define CANNOT_DUMP on machines where unexec does not work.
-   Then the function dump-emacs will not be defined
-   and temacs will do (load "loadup") automatically unless told otherwise.  */
-
-/* #define CANNOT_DUMP
-
 /* Define C_ALLOCA if this machine does not support a true alloca
    and the one written in C should be used instead.
    Define HAVE_ALLOCA to say that the system provides a properly

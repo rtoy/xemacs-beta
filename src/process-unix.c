@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -823,9 +823,7 @@ unix_alloc_process_data (Lisp_Process *p)
 static void
 unix_init_process (void)
 {
-#ifndef CANNOT_DUMP
   if (! noninteractive || initialized)
-#endif
     EMACS_SIGNAL (SIGCHLD, sigchld_handler);
 }
 #endif /* SIGCHLD */

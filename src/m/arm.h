@@ -65,12 +65,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 
-/* Define CANNOT_DUMP on machines where unexec does not work.
-   Then the function dump-emacs will not be defined
-   and temacs will do (load "loadup") automatically unless told otherwise.  */
-
-#undef CANNOT_DUMP
-
 /* this brings in alloca() if we're using cc */
 #ifdef USG
 #define NO_REMAP 

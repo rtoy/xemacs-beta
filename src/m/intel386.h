@@ -106,12 +106,6 @@ NOTE-END */
 #endif
 #endif /* not SOLARIS2 */
 
-/* Define CANNOT_DUMP on machines where unexec does not work.
-   Then the function dump-emacs will not be defined
-   and temacs will do (load "loadup") automatically unless told otherwise.  */
-
-/* #define CANNOT_DUMP */
-
 #ifdef XENIX
 
 /* Define NO_REMAP if memory segmentation makes it not work well

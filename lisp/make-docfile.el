@@ -4,7 +4,7 @@
 ;; Copyright (C) 2002, 2003 Ben Wing.
 
 ;; Author: Unknown
-;; Maintainer: Steven L Baur <steve@xemacs.org>
+;; Maintainer: XEmacs Development Team
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -45,6 +45,12 @@
 (defvar site-file-list nil)
 (defvar docfile-out-of-date nil)
 
+(defvar build-root (expand-file-name ".." invocation-directory))
+(defvar build-lib-src (expand-file-name "lib-src" build-root))
+(defvar source-lisp (file-name-directory (expand-file-name
+					  (nth 2 command-line-args))))
+(defvar source-src (expand-file-name "../src" source-lisp))
+
 (defun message (fmt &rest args)
   (princ (apply #'format fmt args))
   (terpri))
@@ -73,7 +79,7 @@
 ;; (message (concat "Options: " (prin1-to-string options)))
 
 ;; insert-file-contents-internal calls out to `format-decode' afterwards,
-;; so it must be defined.  if non-zero, it tries to be a bunch more stuff
+;; so it must be defined.  if non-zero, it tries to do a bunch more stuff
 ;; so say, "NOOOOOOOOOOOOO!  Basta!  Ca soufit!   Enough, already, OK?"
 (defun format-decode (fuck me harder) 0)
 
@@ -118,33 +124,34 @@
 	(when (and (not (string-match "\\(NEEDTODUMP\\|\\.exe$\\)" arg))
 		   (not (member arg processed)))
 	  (when (string-match "\\(.*\\)\\.obj$" arg)
-	    (setq arg (concat (file-name-nondirectory
-			       ;; no match-string so use its implementation.
-			       (substring arg (match-beginning 1)
-					  (match-end 1)))
-			      ".c")))
+	    (setq arg (expand-file-name
+		       (concat 
+			(file-name-nondirectory
+			 ;; no match-string so use its implementation.
+			 (substring arg (match-beginning 1)
+				    (match-end 1)))
+			".c")
+		       source-src)))
 	  (if (and (null docfile-out-of-date)
 		   (file-newer-than-file-p arg docfile))
 	      (setq docfile-out-of-date t))
 	  (setq processed (cons arg processed))))
       (setq args (cdr args)))))
 
+;; Then process the list of Lisp files.
 (process-args command-line-args)
 
-;; Then process the list of Lisp files.
-(let ((build-root (expand-file-name ".." invocation-directory)))
-  (setq load-path (list (expand-file-name "lisp" build-root))))
+(setq load-path (list source-lisp))
 
 ;; Then process the autoloads
 (setq autoload-file-name "auto-autoloads.elc")
 (load "find-paths.el")
 (load "packages.el")
 (load "setup-paths.el")
-(load "dump-paths.el")
 (load "raw-process.el")
 
 (let (preloaded-file-list)
-  (load (expand-file-name "../lisp/dumped-lisp.el"))
+  (load (expand-file-name "dumped-lisp.el" source-lisp))
 
   (let ((package-preloaded-file-list
 	 (packages-collect-package-dumped-lisps late-package-load-path)))
@@ -216,7 +223,7 @@
   (message "Spawning make-docfile ...")
   ;; (message (prin1-to-string (append options processed)))
 
-  (setq exec-path (list (concat default-directory "../lib-src")))
+  (setq exec-path (list build-lib-src))
 
   ;; (locate-file-clear-hashing nil)
   (if (memq system-type '(berkeley-unix next-mach))
@@ -232,12 +239,13 @@
        (mapconcat
 	#'identity
 	(append
-	 (list (concat default-directory "../lib-src/make-docfile"))
+	 (list (expand-file-name "make-docfile" build-lib-src))
 	 options processed)
 	" "))
     ;; (message (prin1-to-string (append options processed)))
     (apply 'call-process-internal
-	   ;; (concat default-directory "../lib-src/make-docfile")
+	   ;; exec-path is set.
+	   ;; (expand-file-name "make-docfile" build-lib-src)
 	   "make-docfile"
 	   nil
 	   t
@@ -247,7 +255,6 @@
   (message "Spawning make-docfile ...done")
   ;; (write-region-internal (point-min) (point-max) "/tmp/DOC")
   )
-(message "DOC file is up to date")
 
 (kill-emacs)
 

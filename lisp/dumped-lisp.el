@@ -1,3 +1,11 @@
+(defvar packages-hardcoded-lisp
+  '(
+    ;; Nothing at this time
+    )
+  "Lisp packages that are always dumped with XEmacs.
+This includes every package that is loaded directly by a package listed
+in dumped-lisp.el and is not itself listed.")
+
 (setq preloaded-file-list
       (list
        "backquote" 		; needed for defsubst etc.
@@ -5,7 +13,6 @@
        "find-paths"
        "packages"		; Bootstrap run-time lisp environment
        "setup-paths"
-       "dump-paths"
        "subr" 			; load the most basic Lisp functions
        "post-gc"
        "replace" 		; match-string used in version.el.

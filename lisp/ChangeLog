@@ -1,3 +1,132 @@
+2003-02-28  Ben Wing  <ben@xemacs.org>
+
+	* dump-paths.el:
+	* dump-paths.el (startup-setup-paths): Removed.
+	* dumped-lisp.el (preloaded-file-list):
+	Delete.  Combine stuff into setup-paths.el.
+	
+	* find-paths.el:
+	* find-paths.el (paths-chase-symlink):
+	* find-paths.el (paths-emacs-root-p): Removed.
+	* find-paths.el (paths-construct-path):
+	* find-paths.el (paths-find-emacs-root): Removed.
+	* find-paths.el (paths-emacs-data-root-p): Removed.
+	* find-paths.el (paths-find-emacs-roots): Removed.
+	Make this file contain generic routines only.  Move stuff to
+	compute Emacs roots to setup-paths.el.
+	
+	* startup.el:
+	* startup.el (emacs-roots): Removed.
+	* startup.el (emacs-data-roots): Removed.
+	* startup.el (user-init-directory-base): Removed.
+	* startup.el (user-init-directory): Removed.
+	* startup.el (user-init-file-base): Removed.
+	* startup.el (user-init-file-base-list): Removed.
+	* startup.el (user-home-init-file-base-list): Removed.
+	* startup.el (load-home-init-file): Removed.
+	* startup.el (load-user-init-file-p): Removed.
+	Move these variables into setup-paths.el.
+
+	* setup-paths.el:
+	* setup-paths.el (emacs-roots): New.
+	* setup-paths.el (emacs-data-roots): New.
+	* setup-paths.el (user-init-directory-base): New.
+	* setup-paths.el (user-init-directory): New.
+	* setup-paths.el (user-init-file-base): New.
+	* setup-paths.el (user-init-file-base-list): New.
+	* setup-paths.el (user-home-init-file-base-list): New.
+	* setup-paths.el (load-home-init-file): New.
+	* setup-paths.el (load-user-init-file-p): New.
+	* setup-paths.el (paths-emacs-root-p): New.
+	* setup-paths.el (paths-emacs-data-root-p): New.
+	* setup-paths.el (paths-find-emacs-root): New.
+	* setup-paths.el (paths-find-emacs-roots): New.
+	* setup-paths.el (startup-find-load-path): New.
+	* setup-paths.el (startup-setup-paths): New.
+	* setup-paths.el (configure-package-path): New.
+	* setup-paths.el (startup-find-load-path-for-packages): New.
+	* startup.el (normal-top-level):
+	* startup.el (startup-find-roots-warning): Removed.
+	Combine all high-level code for computing the paths into
+	setup-paths.el.  Create new function startup-find-load-path to
+	encapsulate all logic for computing `load-path'.  Eliminate
+	invocation-directory and invocation-name parameters since
+	there is no point (false generality) -- the code references
+	other globals, which cannot be specified.  Eliminate some code
+	duplicated between setup-paths.el and startup.el.  Clean up
+	the debug-paths code and output load-path in addition.
+	Add logic to paths-emacs-root-p to support separated source
+	and build trees.
+
+	* loadup.el:
+	* loadup.el (build-root): New.
+	* loadup.el (source-lisp): New.
+	* loadup.el (source-root): New.
+	* loadup.el (really-early-error-handler):
+	* make-docfile.el:
+	* make-docfile.el (build-root): New.
+	* make-docfile.el (build-lib-src): New.
+	* make-docfile.el (source-lisp): New.
+	* make-docfile.el (source-src): New.
+	* make-docfile.el (process-args):
+	* make-docfile.el (load-path):
+	* make-docfile.el ("raw-process.el"):
+	* make-docfile.el ((preloaded-file-list)):
+	* make-docfile.el (docfile-out-of-date):
+	* update-elc-2.el (batch-update-elc-2):
+	* update-elc.el:
+	* update-elc.el (undumped-exe): Removed.
+	* update-elc.el (dumped-exe-out-of-date-wrt-dump-files): Removed.
+	* update-elc.el (exe-target): New.
+	* update-elc.el (dump-target): New.
+	* update-elc.el (dump-target-out-of-date-wrt-dump-files): New.
+	* update-elc.el (build-root): New.
+	* update-elc.el (source-lisp): New.
+	* update-elc.el (source-lisp-mule): New.
+	* update-elc.el (source-root): New.
+	* update-elc.el (aa-lisp): New.
+	* update-elc.el (aac-lisp): New.
+	* update-elc.el (aa-lisp-mule): New.
+	* update-elc.el (aac-lisp-mule): New.
+	* update-elc.el ((preloaded-file-list site-load-packages files-to-process)):
+	Rewrite to allow for separated source and build trees, as may occur
+	in MS Windows.
+	
+	NOTE TO BUILD HACKERS:
+	
+	loadup.el, make-docfile.el, update-elc.el and update-elc-2.el made two
+	assumptions that are no longer correct:
+	
+	(1) The source and build trees are in the same place.
+	(2) They can make assumptions about where `.' is.
+	
+	These files now compute the locations of the source and build
+	roots at the top of the file.  *ALL* constant file names or path
+	snippets must now be made absolute using expand-file-name and one
+	of these roots.
+
+	* dumped-lisp.el:
+	* dumped-lisp.el (packages-hardcoded-lisp): New.
+	* packages.el:
+	* packages.el (packages-hardcoded-lisp): Removed.
+	* packages.el (packages-useful-lisp): Removed.
+	* packages.el (packages-unbytecompiled-lisp): Removed.
+	Remove some unused lists of Lisp files.  packages-hardcoded-lisp
+	(empty, in any case) moved to dumped-lisp.el.
+	
+	* startup.el (find-init-file-1): New.
+	* startup.el (find-user-home-directory-init-file):
+	When a compiled init file is out-of-date wrt the uncompiled
+	version, load the uncompiled version and issue a nasty warning.
+	
+	* update-elc-2.el (batch-update-elc-2):
+	Force touching of auto-autoloads files when REBUILD_AUTOLOADS
+	was set.
+
+	* update-elc.el ((preloaded-file-list site-load-packages files-to-process)):
+	Fix code that checks whether dumping is necessary to check against
+	xemacs.dmp, not xemacs.exe, when Unix and pdump.
+	
 2003-02-20  Ben Wing  <ben@xemacs.org>
 
 	* mule/mule-cmds.el:

@@ -41,7 +41,6 @@ Boston, MA 02111-1307, USA.  */
 
 #undef TERMINFO
 
-#undef CANNOT_DUMP
 #define TERMCAP
 
 #define LIBS_TERMCAP "-ltermlib"

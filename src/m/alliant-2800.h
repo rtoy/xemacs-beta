@@ -50,11 +50,6 @@ Boston, MA 02111-1307, USA.  */
 /* include <sys/param.h> for the definition of LOADAVG_SCALE, and also
    LOADAVG_SIZE, the number of items in the Loadavg array. */
 
-/* Define CANNOT_DUMP on machines where unexec does not work.
-   Then the function dump-emacs will not be defined
-   and temacs will do (load "loadup") automatically unless told otherwise.  */
-
-/* #define CANNOT_DUMP */
 #define UNEXEC "unexfx2800.o"
 #define LIBS_MACHINE "-lalliant"
 

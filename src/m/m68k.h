@@ -27,12 +27,6 @@ Boston, MA 02111-1307, USA.  */
 #define m68k
 #endif
 
-/* Define CANNOT_DUMP on machines where unexec does not work.
-   Then the function dump-emacs will not be defined
-   and temacs will do (load "loadup") automatically unless told otherwise.  */
-
-/* #define CANNOT_DUMP */
-
 #ifdef linux
 
 #define NO_REMAP

@@ -1474,11 +1474,13 @@ void pdump_backtrace (void);
 extern unsigned int dump_id;
 extern char *pdump_start, *pdump_end;
 
-#define DUMPEDP(adr) ((((char *)(adr)) < pdump_end) && (((char *)(adr)) >= pdump_start))
-
+#define DUMPEDP(adr) ((((char *) (adr)) < pdump_end) && \
+                      (((char *) (adr)) >= pdump_start))
 #else
 #define DUMPEDP(adr) 0
 #endif
+
+#define OBJECT_DUMPED_P(obj) DUMPEDP (XPNTR (obj))
 
 /***********************************************************************/
 /*                           data descriptions                         */

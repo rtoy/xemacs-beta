@@ -29,10 +29,8 @@ Boston, MA 02111-1307, USA.  */
 
 #define IBMR2AIX
 
-/* Define CANNOT_DUMP on machines where unexec does not work.
-   Then the function dump-emacs will not be defined
-   and temacs will do (load "loadup") automatically unless told otherwise.  */
 #ifdef USG5_4
+/* Just use PDUMP. */
 #define CANNOT_DUMP
 #endif
 

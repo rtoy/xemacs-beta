@@ -1,3 +1,152 @@
+2003-02-28  Ben Wing  <ben@xemacs.org>
+
+	* README:
+	* README (NOTE): Removed.
+	* config.inc.samp (HAVE_MS_WINDOWS):
+	* config.inc.samp (HAVE_X_WINDOWS): Removed.
+	* config.inc.samp (X11_DIR): Removed.
+	* config.inc.samp (COMPFACE_DIR):
+	* xemacs.mak (XEMACS): Removed.
+	* xemacs.mak (LISP): Removed.
+	* xemacs.mak (LIB_SRC): Removed.
+	* xemacs.mak (MODULES): Removed.
+	* xemacs.mak (NT): Removed.
+	* xemacs.mak (OUTDIR): Removed.
+	* xemacs.mak (SRC): Removed.
+	* xemacs.mak (LWLIB_SRCDIR): Removed.
+	* xemacs.mak (MAKEDIRSTRING): Removed.
+	* xemacs.mak (XEMACSDIRSTRING): Removed.
+	* xemacs.mak (MAKEROOT): New.
+	* xemacs.mak (COPYDIR):
+	* xemacs.mak (INFODOCK_VERSION_STRING): Removed.
+	* xemacs.mak (XEMACS_VERSION_STRING): Removed.
+	* xemacs.mak (SEPARATE_BUILD): New.
+	* xemacs.mak (SRCROOT): New.
+	* xemacs.mak (BLDROOT): New.
+	* xemacs.mak (PROGRAM_DEFINES): Removed.
+	* xemacs.mak (INSTALL_DIR): Removed.
+	* xemacs.mak (ETC): New.
+	* xemacs.mak (BLDLIB_SRC): New.
+	* xemacs.mak (BLDNT): New.
+	* xemacs.mak (BLDSRC): New.
+	* xemacs.mak (PACKAGE_PREFIX): Removed.
+	* xemacs.mak (PACKAGE_PATH): Removed.
+	* xemacs.mak (PATH_PACKAGEPATH): Removed.
+	* xemacs.mak (HAVE_X_WINDOWS): Removed.
+	* xemacs.mak (USE_CRTDLL):
+	* xemacs.mak (CONFIG_ERROR):
+	* xemacs.mak (OS): Removed.
+	* xemacs.mak (EMACS_CONFIGURATION): Removed.
+	* xemacs.mak (STACK_TRACE_EYE_CATCHER): Removed.
+	* xemacs.mak (CCV): Removed.
+	* xemacs.mak (DEBUG_FLAGS_COMPILE): Removed.
+	* xemacs.mak (DEBUG_FLAGS_LINK): Removed.
+	* xemacs.mak (DEBUG_DEFINES): Removed.
+	* xemacs.mak (BROWSERFLAGS): Removed.
+	* xemacs.mak (C_LIBFLAG): Removed.
+	* xemacs.mak (LIBC_LIB): Removed.
+	* xemacs.mak (OPTFLAGS_FASTCALL): Removed.
+	* xemacs.mak (OPTFLAGS_CDECL): Removed.
+	* xemacs.mak (PATH_PREFIX): New.
+	* xemacs.mak (OPTFLAGS): Removed.
+	* xemacs.mak (PROFILE_FLAGS): Removed.
+	* xemacs.mak (PATH_DEFINES): New.
+	* xemacs.mak (MSW_DEFINES):
+	* xemacs.mak (TEMACS_MSW_OBJS): New.
+	* xemacs.mak (CPLUSPLUS_COMPILE_FLAGS): Removed.
+	* xemacs.mak (CFLAGS_NO_OPT): Removed.
+	* xemacs.mak (CFLAGS_NO_LIB): Removed.
+	* xemacs.mak (CFLAGS): Removed.
+	* xemacs.mak (CFLAGS_CDECL_NO_LIB): Removed.
+	* xemacs.mak (CFLAGS_CDECL): Removed.
+	* xemacs.mak (X_DEFINES): Removed.
+	* xemacs.mak (TEMACS_MULE_OBJS): New.
+	* xemacs.mak (X_INCLUDES): Removed.
+	* xemacs.mak (X_LIBS): Removed.
+	* xemacs.mak (TEMACS_DEBUG_OBJS): New.
+	* xemacs.mak (TEMACS_DUMP_OBJS): New.
+	* xemacs.mak (TEMACS_ALLOC_OBJS): New.
+	* xemacs.mak (XEMACS_INCLUDES): Removed.
+	* xemacs.mak (LIB_SRC_DEFINES): Removed.
+	* xemacs.mak (INCLUDES):
+	* xemacs.mak (DEFINES):
+	* xemacs.mak (CONFIG_VALUES): Removed.
+	* xemacs.mak (TEMACS_CPP_FLAGS_NO_CFLAGS):
+	* xemacs.mak (TEMACS_ENTRYPOINT): Removed.
+	* xemacs.mak (TEMACS_DIR): Removed.
+	* xemacs.mak (TEMACS): Removed.
+	* xemacs.mak (TEMACS_BROWSE): Removed.
+	* xemacs.mak (TEMACS_SRC): Removed.
+	* xemacs.mak (TEMACS_CPP_CDECL_FLAGS):
+	* xemacs.mak (TEMACS_LIBS): Removed.
+	* xemacs.mak (TEMACS_OBJS):
+	* xemacs.mak (TEMACS_LFLAGS): Removed.
+	* xemacs.mak (LINK_DEPENDENCY_ARGS): Removed.
+	* xemacs.mak (LINK_STANDARD_LIBRARY_ARGS): Removed.
+	* xemacs.mak (ETAGS_DEPS): Removed.
+	* xemacs.mak (TEMACS_X_OBJS): Removed.
+	* xemacs.mak (LIB_SRC_TOOLS): Removed.
+	* xemacs.mak (LASTFILE): Removed.
+	* xemacs.mak (LASTFILE_SRC): Removed.
+	* xemacs.mak (LASTFILE_FLAGS): Removed.
+	* xemacs.mak (LASTFILE_OBJS): Removed.
+	* xemacs.mak (LWLIB): Removed.
+	* xemacs.mak (LWLIB_FLAGS): Removed.
+	* xemacs.mak (LWLIB_OBJS): Removed.
+	* xemacs.mak (.SUFFIXES):
+	* xemacs.mak (create-list-file): Removed.
+	* xemacs.mak (compile-list-file): Removed.
+	* xemacs.mak (TEMACS_DUMP_ID_OBJ): Removed.
+	* xemacs.mak (PROGNAME): Removed.
+	* xemacs.mak (DO_TEMACS): Removed.
+	* xemacs.mak (DO_XEMACS): Removed.
+	* xemacs.mak (BATCH): Removed.
+	* xemacs.mak (BATCH_PACKAGES): Removed.
+	* xemacs.mak (TEMACS_BATCH): Removed.
+	* xemacs.mak (XEMACS_BATCH): Removed.
+	* xemacs.mak (XEMACS_BATCH_PACKAGES): Removed.
+	* xemacs.mak (temacs_loadup_args): Removed.
+	* xemacs.mak (dump_temacs_args): Removed.
+	* xemacs.mak (run_temacs_args): Removed.
+	* xemacs.mak (dump_temacs): Removed.
+	* xemacs.mak (testdir): Removed.
+	* xemacs.mak (batch_test_emacs): Removed.
+	* xemacs.mak (check): Removed.
+	* xemacs.mak (check-temacs): Removed.
+	* xemacs.mak (MANDIR):
+	* xemacs.mak (check-features): Removed.
+	* xemacs.mak (tagslisp): Removed.
+	* xemacs.mak (tags): Removed.
+	* xemacs.mak (NEW_USERS_GUIDE_SRCS):
+	* xemacs.mak (makeinfo-test):
+	* xemacs.mak (installation): New.
+	* xemacs.mak (RAW_EXE): New.
+	* xemacs.mak (DUMP_TARGET): New.
+	* xemacs.mak (all): New.
+	* xemacs.mak (TEMACS_DUMP_DEP): New.
+	* xemacs.mak (DOC):
+	* xemacs.mak (docfile):
+	* xemacs.mak (update-elc):
+	* xemacs.mak (update-elc-2):
+	* xemacs.mak (load-shadows):
+	* xemacs.mak (temacs): Removed.
+	* xemacs.mak (install):
+	* xemacs.mak (versionclean): New.
+	* xemacs.mak (distclean):
+	* xemacs.mak (realclean):
+	* xemacs.mak (extraclean):
+	* xemacs.mak (depend):
+	* xemacs.mak (unicode-encapsulate):
+	-- Major reorganization and cleanup.
+	-- Add support for separated build tree and source tree.
+	-- Delete all support for X Windows building, since it's
+	   totally bit-rotten and will never be fixed up.  Instruct
+	   people to use Cygwin if they want such support.
+
+	* make-build-dir:
+	New script to create a skeleton build tree for use with
+	separated build and source tree compilation.
+	
 2003-02-20  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.dsp (CFG):

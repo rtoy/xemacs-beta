@@ -147,17 +147,22 @@
     ;; update-elc.el signals us to rebuild the autoloads when necessary.
     ;; in some cases it will rebuild the autoloads itself, but doing it this
     ;; way is slow, so we avoid it when possible.
-    (when (file-exists-p "../src/REBUILD_AUTOLOADS")
+    (when (file-exists-p (expand-file-name "REBUILD_AUTOLOADS"
+					   invocation-directory))
       (let ((generated-autoload-file (expand-file-name "auto-autoloads.el" dir))
 	    (autoload-package-name "auto")) ; feature prefix
-	(update-autoload-files (list dir))
+	;; if we were instructed to rebuild the autoloads, force the file
+	;; to be touched even w/o changes; otherwise, we won't ever stop
+	;; being told to rebuild them.
+	(update-autoload-files (list dir) nil t)
 	(byte-recompile-file generated-autoload-file 0))
       (when (featurep 'mule)
 	(let* ((muledir (expand-file-name "../lisp/mule" (file-truename dir)))
 	       (generated-autoload-file
 		(expand-file-name "auto-autoloads.el" muledir))
 	       (autoload-package-name "mule")) ; feature prefix
-	  (update-autoload-files (list muledir))
+	  ;; force here just like above.
+	  (update-autoload-files (list muledir) nil t)
 	  (byte-recompile-file generated-autoload-file 0))))
     (when (featurep 'modules)
       (let* ((moddir (expand-file-name "../modules" (file-truename dir)))
@@ -172,9 +177,9 @@
 	(byte-recompile-file generated-autoload-file 0)))
     ;; now load the (perhaps newly rebuilt) autoloads; we were called with
     ;; -no-autoloads so they're not already loaded.
-    (load "../lisp/auto-autoloads")
+    (load (expand-file-name "auto-autoloads" lisp-directory))
     (when (featurep 'mule)
-      (load "../lisp/mule/auto-autoloads"))
+      (load (expand-file-name "mule/auto-autoloads" lisp-directory)))
     ;; We remove all the bad .elcs before any byte-compilation, because
     ;; there may be dependencies between one .el and another (even across
     ;; directories), and we don't want to load an out-of-date .elc while

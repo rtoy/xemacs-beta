@@ -1,3 +1,11 @@
+2003-02-28  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (mostlyclean):
+	* Makefile.in.in (clean):
+	* Makefile.in.in (top_distclean):
+	* Makefile.in.in (distclean):
+	Move src deletions to src/Makefile.in.in.
+
 2003-02-20  Ben Wing  <ben@xemacs.org>
 
 	* PROBLEMS:

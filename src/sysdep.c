@@ -2085,11 +2085,7 @@ hft_reset (struct console *con)
 
 /* Need start_of_data() as much as possible now, for total_data_usage();
    but with PDUMP and WIN32_NATIVE, can't currently do it. */
-#if !defined (CANNOT_DUMP) && (!defined (PDUMP) || !defined (WIN32_NATIVE))
-#define NEED_STARTS
-#endif
-
-#if !defined (SYSTEM_MALLOC) && !defined (NEED_STARTS)
+#if ! (defined (PDUMP) && defined (WIN32_NATIVE) && defined (SYSTEM_MALLOC))
 #define NEED_STARTS
 #endif
 
@@ -2173,7 +2169,7 @@ start_of_data (void)
 #endif /* ORDINARY_LINK */
 #endif /* DATA_START */
 }
-#endif /* NEED_STARTS (not CANNOT_DUMP or not SYSTEM_MALLOC) */
+#endif /* NEED_STARTS aka !(PDUMP && WIN32_NATIVE && SYSTEM_MALLOC) */
 
 extern void *minimum_address_seen; /* from xmalloc() */
 extern void *maximum_address_seen; /* from xmalloc() */
@@ -2255,9 +2251,7 @@ init_system_name (void)
   /* Turn the hostname into the official, fully-qualified hostname.
      Don't do this if we're going to dump; this can confuse system
      libraries on some machines and make the dumped emacs core dump. */
-#  ifndef CANNOT_DUMP
   if (initialized)
-#  endif /* not CANNOT_DUMP */
     if (!strchr (hostname, '.'))
       {
 #  if !(defined(HAVE_GETADDRINFO) && defined(HAVE_GETNAMEINFO))

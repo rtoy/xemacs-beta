@@ -89,10 +89,8 @@ init_editfns (void)
   /* Set up system_name even when dumping.  */
   init_system_name ();
 
-#ifndef CANNOT_DUMP
   if (!initialized)
     return;
-#endif
 
   if ((p = egetenv ("NAME")))
     /* I don't think it's the right thing to do the ampersand

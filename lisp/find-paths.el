@@ -3,6 +3,7 @@
 ;; Copyright (C) 1985-1986, 1990, 1992-1997 Free Software Foundation, Inc.
 ;; Copyright (c) 1993, 1994 Sun Microsystems, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
+;; Copyright (C) 2003 Ben Wing.
 
 ;; Author: Mike Sperber <sperber@informatik.uni-tuebingen.de>
 ;; Maintainer: XEmacs Development Team
@@ -99,35 +100,6 @@ from the search."
   (paths-find-recursive-path directories
 			     max-depth paths-no-lisp-directory-regexp))
 
-(defun paths-emacs-root-p (directory)
-  "Check if DIRECTORY is a plausible installation root."
-  (or
-   ;; installed
-   (paths-file-readable-directory-p (paths-construct-path (list directory
-								"lib"
-								(construct-emacs-version-name))))
-   ;; in-place or windows-nt
-   (and
-    (paths-file-readable-directory-p (paths-construct-path (list directory "lisp")))
-    (paths-file-readable-directory-p (paths-construct-path (list directory "etc"))))))
-
-(defun paths-emacs-data-root-p (directory)
-  "Check if DIRECTORY is a plausible data installation root.
-A data installation root is one containing data files that may be shared
-among multiple different versions of XEmacs, the packages in particular."
-  (or
-   ;; installed
-   (paths-file-readable-directory-p (paths-construct-path (list directory
-								"lib"
-								emacs-program-name)))
-   (paths-file-readable-directory-p (paths-construct-path (list directory
-								"lib"
-								(construct-emacs-version-name))))
-   ;; in-place or windows-nt
-   (and
-    (paths-file-readable-directory-p (paths-construct-path (list directory "lisp")))
-    (paths-file-readable-directory-p (paths-construct-path (list directory "etc"))))))
-
 (defun paths-chase-symlink (file-name)
   "Chase a symlink until the bitter end."
       (let ((maybe-symlink (file-symlink-p file-name)))
@@ -136,22 +108,6 @@ among multiple different versions of XEmacs, the packages in particular."
 		   (destination (expand-file-name maybe-symlink directory)))
 	      (paths-chase-symlink destination))
 	  file-name)))
-
-(defun paths-find-emacs-root
-  (invocation-directory invocation-name)
-  "Find the run-time root of XEmacs."
-  (let* ((executable-file-name (paths-chase-symlink
-				(concat invocation-directory
-					invocation-name)))
-	 (executable-directory (file-name-directory executable-file-name))
-	 (maybe-root-1 (file-name-as-directory
-			(paths-construct-path '("..") executable-directory)))
-	 (maybe-root-2 (file-name-as-directory
-			(paths-construct-path '(".." "..") executable-directory))))
-    (or (and (paths-emacs-root-p maybe-root-1)
-	     maybe-root-1)
-	(and (paths-emacs-root-p maybe-root-2)
-	     maybe-root-2))))
 
 (defun paths-construct-path (components &optional expand-directory)
   "Convert list of path components COMPONENTS into a path.
@@ -297,31 +253,5 @@ Otherwise, they are left alone."
 			  (null (string-equal "" component)))
 		      directories)
       directories)))
-
-(defun paths-find-emacs-roots (invocation-directory
-			       invocation-name
-			       root-p)
-  "Find all plausible installation roots for XEmacs.
-INVOCATION-DIRECTORY is the directory from which XEmacs was started.
-INVOCATION-NAME is the name of the XEmacs executable that was originally
-started.
-ROOT-P is a function that tests whether a root is plausible."
-  (let* ((potential-invocation-root
-	  (paths-find-emacs-root invocation-directory invocation-name))
-	 (invocation-roots
-	  (and potential-invocation-root
-	       (list potential-invocation-root)))
-	 (potential-installation-roots
-	  (paths-uniq-append
-	   (and configure-exec-prefix-directory
-		(list (file-name-as-directory
-		       configure-exec-prefix-directory)))
-	   (and configure-prefix-directory
-		(list (file-name-as-directory
-		       configure-prefix-directory)))))
-	 (installation-roots
-	  (paths-filter root-p potential-installation-roots)))
-    (paths-uniq-append invocation-roots
-		       installation-roots)))
 
 ;;; find-paths.el ends here

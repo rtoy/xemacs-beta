@@ -224,7 +224,7 @@ sbrk (unsigned long increment)
   return result;
 }
 
-#if !defined (CANNOT_DUMP) && !defined (HEAP_IN_DATA) && !defined (PDUMP)
+#if !defined (HEAP_IN_DATA) && !defined (PDUMP)
 
 /* Recreate the heap from the data that was dumped to the executable.
    EXECUTABLE_PATH tells us where to find the executable.  */
@@ -286,7 +286,8 @@ recreate_heap (Extbyte *executable_path)
   /* Update system version information to match current system.  */
   cache_system_info ();
 }
-#endif /* CANNOT_DUMP */
+
+#endif /* !defined (HEAP_IN_DATA) && !defined (PDUMP) */
 
 /* Round the heap up to the given alignment.  */
 void

@@ -18,15 +18,7 @@ MULE=0
 # Native MS Windows support.
 HAVE_MS_WINDOWS=1
 
-# X Windows support.  Not working at all and probably never will.  If you
-# want X support under MS Windows, compile with Cygwin instead.
-HAVE_X_WINDOWS=0
-X11_DIR=
-
-# GTK support. Do NOT set this to 1; as of xemacs-21.5-b6
-# gtk-xemacs is not supported on MSWindows (mingw or msvc).
-# Yes, we know that gtk has been ported to native MSWindows
-# but XEmacs is not yet ready to use that port.
+# GTK support.  Do NOT set this to 1; this does not currently work.
 HAVE_GTK=0
 GTK_DIR=
 
@@ -73,6 +65,36 @@ COMPFACE_DIR=
 ############################################################################
 #                            Build settings                                #
 ############################################################################
+
+# If you want to the built files to be placed outside of the source tree
+# (e.g. this allows you to build multiple versions of XEmacs, with
+# different configuration settings, from the same source tree), run
+# `make-build-dir' to create a skeleton build tree, giving it the name of a
+# path.  This creates the specified directory and the `nt' directory below
+# it, copies config.inc (if it exists), config.inc.samp and xemacs.mak into
+# the `nt' directory, and modifies the config files to contain the path of
+# the source tree in SOURCE_DIR.  This will not overwrite files that
+# already exist, so it can safely be run more than once on the same tree.
+#
+# Running nmake in the skeleton build tree will then build XEmacs in that
+# directory tree, using the source files as specified.  The paths of the
+# `lisp' and `etc' directories in the source tree will be compiled into the
+# executable as "last-resort" values -- i.e. they will be used if you
+# simply run the executable as-is, but will not override any local copy of
+# the `lisp' and/or `etc' directories that you may have made.
+#
+# Alternatively, you can just uncomment the line below for BUILD_DIR and
+# specify a (possibly non-existent) path.  Running nmake will then put its
+# build files into a parallel directory structure underneath the specified
+# path, creating the directories as necessary.  The problem with this is
+# that the first method above allows you to have a different copy of
+# `config.inc' for each build directory, but doing it this way means you
+# have only one version of config.inc, and have to manually change it for
+# each different build.
+
+# SOURCE_DIR=c:\src\xemacs\working
+
+# BUILD_DIR=c:\src\xemacs\msbuilds\working
 
 # Set this to specify the location of makeinfo. (If not set, XEmacs will
 # attempt to use its built-in, much slower texinfo support when building

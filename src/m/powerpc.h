@@ -57,10 +57,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define NO_REMAP
 
-#ifdef CANNOT_DUMP
-
-#endif /* CANNOT_DUMP */
-
 #define N_BADMAG(x) BADMAG(x)
 #define N_TXTOFF(x) A_TEXTPOS(x)
 #define N_SYMOFF(x) A_SYMPOS(x)

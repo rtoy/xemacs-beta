@@ -42,12 +42,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define LOAD_AVE_CVT(x) ((int) ((x) * 100.0))
 
-/* Define CANNOT_DUMP on machines where unexec does not work.
-   Then the function dump-emacs will not be defined
-   and temacs will do (load "loadup") automatically unless told otherwise.  */
-
-#undef CANNOT_DUMP
-
 /* The STRIDE system is more powerful than standard USG5.  */
 
 #define SKTPAIR

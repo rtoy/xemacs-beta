@@ -1,3 +1,193 @@
+2003-02-28  Ben Wing  <ben@xemacs.org>
+
+	* m/acorn.h:
+	* m/alliant-2800.h (UNEXEC):
+	* m/alliant.h:
+	* m/altos.h (TERMCAP):
+	* m/amdahl.h:
+	* m/arm.h:
+	* m/att3b.h:
+	* m/aviion.h:
+	* m/clipper.h:
+	* m/cnvrgnt.h:
+	* m/convex.h:
+	* m/cydra5.h:
+	* m/delta.h:
+	* m/delta88k.h:
+	* m/dpx2.h:
+	* m/elxsi.h:
+	* m/ews4800r.h:
+	* m/gould.h:
+	* m/hp800.h:
+	* m/hp9000s300.h:
+	* m/i860.h:
+	* m/ibmps2-aix.h:
+	* m/ibmrs6000.h:
+	* m/ibmrt-aix.h:
+	* m/ibmrt.h:
+	* m/intel386.h:
+	* m/iris4d.h:
+	* m/iris5d.h:
+	* m/iris6d.h:
+	* m/irist.h:
+	* m/m68k.h:
+	* m/masscomp.h:
+	* m/mg1.h:
+	* m/mips-nec.h:
+	* m/mips-siemens.h:
+	* m/mips.h:
+	* m/nh3000.h:
+	* m/nh4000.h:
+	* m/ns32000.h:
+	* m/plexus.h:
+	* m/powerpc.h (N_BADMAG):
+	* m/sequent-ptx.h:
+	* m/sequent.h:
+	* m/sgi-challenge.h:
+	* m/stride.h:
+	* m/tad68k.h:
+	* m/targon31.h:
+	* m/tekxd88.h:
+	* m/template.h:
+	* m/tower32.h:
+	* m/tower32v3.h:
+	* m/ustation.h:
+	* m/wicat.h:
+	* m/xps100.h:
+	* data.c:
+	* data.c (init_data_very_early):
+	* doc.c (get_doc_string):
+	* doc.c (Fsnarf_documentation):
+	* editfns.c (init_editfns):
+	* emacs.c:
+	* emacs.c (main_1):
+	* emacs.c (syms_of_emacs):
+	* lrecord.h (DUMPEDP):
+	* ntheap.c:
+	* process-unix.c:
+	* process-unix.c (unix_init_process):
+	* sysdep.c:
+	* sysdep.c (init_system_name):
+	* unexec.c:
+	Delete all support for bit-rotten CANNOT_DUMP.  Just use pdump.
+
+2003-02-28  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (all):
+	* Makefile.in.in (PROGNAME): Removed.
+	* Makefile.in.in (DUMP_ID): Removed.
+	* Makefile.in.in (DUMP_TARGET): Removed.
+	* Makefile.in.in (RECURSIVE_MAKE):
+	* Makefile.in.in (EXE_TARGET): Removed.
+	* Makefile.in.in (SHELL): Removed.
+	* Makefile.in.in (RM): Removed.
+	* Makefile.in.in (lispdir): Removed.
+	* Makefile.in.in (moduledir): Removed.
+	* Makefile.in.in (.SUFFIXES): Removed.
+	* Makefile.in.in (libsrc): Removed.
+	* Makefile.in.in (etcdir): Removed.
+	* Makefile.in.in (srcdir): Removed.
+	* Makefile.in.in (SRC): New.
+	* Makefile.in.in (lwlib_libs): Removed.
+	* Makefile.in.in (lwlib_deps): Removed.
+	* Makefile.in.in (LWLIB_SRCDIR):
+	* Makefile.in.in (LIBI18N): Removed.
+	* Makefile.in.in (X11_libs): Removed.
+	* Makefile.in.in (LISP): New.
+	* Makefile.in.in (ETC): New.
+	* Makefile.in.in (SRCMODULES): New.
+	* Makefile.in.in (LIB_SRC): New.
+	* Makefile.in.in (BLDSRC): New.
+	* Makefile.in.in (BLDMODULES): New.
+	* Makefile.in.in (ldap_objs):
+	* Makefile.in.in (postgresql_objs):
+	* Makefile.in.in (win32_objs):
+	* Makefile.in.in (cppflags): Removed.
+	* Makefile.in.in (cflags): Removed.
+	* Makefile.in.in (ldflags): Removed.
+	* Makefile.in.in (.c.o): Removed.
+	* Makefile.in.in (.c.i): Removed.
+	* Makefile.in.in (.c.s): Removed.
+	* Makefile.in.in (lwlib_lib): New.
+	* Makefile.in.in (other_files):
+	* Makefile.in.in (LIBES):
+	* Makefile.in.in (mo_file):
+	* Makefile.in.in (mo_dir): Removed.
+	* Makefile.in.in (DO_TEMACS):
+	* Makefile.in.in (RAW_EXE): New.
+	* Makefile.in.in (dump_temacs):
+	* Makefile.in.in (debug_temacs): Removed.
+	* Makefile.in.in (.NO_PARALLEL):
+	* Makefile.in.in (release):
+	* Makefile.in.in (update-elc-2):
+	* Makefile.in.in (.PHONY):
+	* Makefile.in.in (update-elc): Removed.
+	* Makefile.in.in (FRC.needtodump): New.
+	* Makefile.in.in (NEEDTODUMP): Removed.
+	* Makefile.in.in (link_deps):
+	* Makefile.in.in (temacs_deps):
+	* Makefile.in.in (temacs_link_args):
+	* Makefile.in.in (dump-id.c):
+	* Makefile.in.in (obj_src):
+	* Makefile.in.in (fastdump):
+	* Makefile.in.in (all-elc):
+	* Makefile.in.in (TopLevelEmacsShell.o):
+	* Makefile.in.in (TopLevelEmacsShell.c.rtl):
+	* Makefile.in.in (TransientEmacsShell.o):
+	* Makefile.in.in (TransientEmacsShell.c.rtl):
+	* Makefile.in.in (ExternalClient-Xm-shared.o):
+	* Makefile.in.in (ExternalClient-Xt-shared.o):
+	* Makefile.in.in (ExternalClient-Xlib-shared.o):
+	* Makefile.in.in (ExternalClient-Xm-nonshared.o):
+	* Makefile.in.in (ExternalClient-Xt-nonshared.o):
+	* Makefile.in.in (ExternalClient-Xlib-nonshared.o):
+	* Makefile.in.in (extw-Xt-shared.o):
+	* Makefile.in.in (extw-Xlib-shared.o):
+	* Makefile.in.in (extw-Xt-nonshared.o):
+	* Makefile.in.in (extw-Xlib-nonshared.o):
+	* Makefile.in.in (libextcli_Xm.a):
+	* Makefile.in.in (libextcli_Xt.a):
+	* Makefile.in.in (libextcli_Xlib.a):
+	* Makefile.in.in (extw_link_end):
+	* Makefile.in.in (libextcli_Xm.so.1):
+	* Makefile.in.in (libextcli_Xt.so.1):
+	* Makefile.in.in (libextcli_Xlib.so.1):
+	* Makefile.in.in (config.h):
+	* Makefile.in.in (allocax.o):
+	* Makefile.in.in (sunplay.o):
+	* Makefile.in.in (xemacs_res.o):
+	* Makefile.in.in (dortl):
+	* Makefile.in.in (lint):
+	* Makefile.in.in (check-features):
+	* Makefile.in.in (rtcmacs):
+	* Makefile.in.in (run-rtcmacs):
+	* Makefile.in.in (debug-temacs):
+	* Makefile.in.in (PURIFY_FLAGS):
+	* Makefile.in.in (puremacs):
+	* Makefile.in.in (quantmacs):
+	* Makefile.in.in (covmacs):
+	* Makefile.in.in (extraclean):
+	* Makefile.in.in (relock):
+	* Makefile.in.in (install):
+	* Makefile.in.in (depend):
+	* Makefile.in.in (FRC.unicode-encapsulate): New.
+	* Makefile.in.in (unicode-encapsulate): New.
+	Lots o' cleanup.  Use names like LISP, SRC instead of
+	lispdir, srcdir, for consistency with xemacs.mak and the
+	conventions in the rest of the file.  Eliminate use of ${...}
+	in favor of $(...), to make it easier to move code between
+	this file and xemacs.mak.  Fix dependency handling wrt
+	NEEDTODUMP to eliminate problems some people (e.g. Vin) have
+	been seeing with non-GNU makes.  Write a long section about
+	the subtle but oh-so-important differences in dependency
+	processing between nmake, make, and GNU make.  Add
+	unicode-encapsulate target, from xemacs.mak.
+
+	* chartab.c (fill_char_table):
+	* chartab.c (put_char_table):
+	* lrecord.h:
+	Fix crash due to attempt to free objects across dump/undump.
+
 2003-02-20  Mike Sperber  <mike@xemacs.org>
 
 	* Makefile.in.in (update-elc-2): Sequentialize dependencies even

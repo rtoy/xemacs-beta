@@ -58,10 +58,10 @@
 (defvar need-to-rebuild-mule-autoloads nil)
 (defvar need-to-recompile-autoloads nil)
 (defvar need-to-recompile-mule-autoloads nil)
-(defvar undumped-exe nil)
-;(defvar dumped-exe nil)
-(defvar dumped-exe-out-of-date-wrt-dump-files nil)
-;(defvar dumped-exe-out-of-date-wrt-undumped-exe nil)
+(defvar exe-target nil)
+(defvar dump-target nil)
+(defvar dump-target-out-of-date-wrt-dump-files nil)
+;(defvar dump-target-out-of-date-wrt-exe-target nil)
 
 ;(setq update-elc-files-to-compile
 ;      (delq nil
@@ -78,13 +78,22 @@
 ;		    ;; -batch gets filtered out.
 ;		    (nthcdr 3 command-line-args))))
 
-(let ((build-root (expand-file-name ".." invocation-directory)))
-  (setq load-path (list (expand-file-name "lisp" build-root))))
+
+(defvar build-root (expand-file-name ".." invocation-directory))
+(defvar source-lisp (file-name-directory (expand-file-name
+					  (nth 2 command-line-args))))
+(defvar source-lisp-mule (expand-file-name "mule" source-lisp))
+(defvar source-root (expand-file-name ".." source-lisp))
+(defvar aa-lisp (expand-file-name "auto-autoloads.el" source-lisp))
+(defvar aac-lisp (expand-file-name "auto-autoloads.elc" source-lisp))
+(defvar aa-lisp-mule (expand-file-name "auto-autoloads.el" source-lisp-mule))
+(defvar aac-lisp-mule (expand-file-name "auto-autoloads.elc" source-lisp-mule))
+
+(setq load-path (list source-lisp))
 
 (load "find-paths.el")
 (load "packages.el")
 (load "setup-paths.el")
-(load "dump-paths.el") ;; #### take out in my fixup ws
 
 ;; Lisp files loaded in order to byte compile anything.  If any are out of
 ;; date, we need to load them as .el's, byte compile them, and reload as
@@ -126,38 +135,39 @@
 
 (let (preloaded-file-list site-load-packages files-to-process)
   
-  (load (expand-file-name "../lisp/dumped-lisp.el"))
+  (load (expand-file-name "dumped-lisp.el" source-lisp))
 
-  (setq dumped-exe
-	(cond ((file-exists-p "../src/xemacs.exe") "../src/xemacs.exe")
-	      ((file-exists-p "../src/xemacs") "../src/xemacs")
-	      (t nil)))
+  ;; two setups here:
+  ;; (1) temacs.exe is undumped, dumped into xemacs.exe.  Happens with
+  ;;     unexec, but also with pdump under MS Windows native, since
+  ;;     the dumped data is stored as a resource in the xemacs.exe
+  ;;     executable.
+  ;; (2) xemacs.exe is dumped or undumped.  Running `xemacs -nd' gets
+  ;;     you the equivalent of `temacs'.  Dumping creates a file
+  ;;     `xemacs.dmp'.
 
-  ;; Not currently used but might be at some point.
-;   (let ((temacs-exe
-; 	 (cond ((file-exists-p "../src/temacs.exe") "../src/temacs.exe")
-; 	       ((file-exists-p "../src/temacs") "../src/temacs")
-; 	       (t nil)))
-; 	(data-file
-; 	 (cond ((file-exists-p "../src/xemacs.dmp") "../src/xemacs.dmp")
-; 	       (t nil))))
+  (cond ((eq system-type 'windows-nt)
+	 (setq exe-target "src/temacs.exe"
+	       dump-target "src/xemacs.exe"))
+	;; #### need better ways of getting config params
+	((not (memq 'pdump (emacs-run-status)))
+	 (setq exe-target "src/temacs"
+	       dump-target "src/xemacs"))
+	(t
+	 (setq exe-target "src/xemacs"
+	       dump-target "src/xemacs.dmp")))
 
-;     ;; two setups here:
-;     ;; (1) temacs.exe is undumped, dumped into xemacs.exe.  Happens with
-;     ;;     unexec, but also with pdump under MS Windows native, since
-;     ;;     the dumped data is stored as a resource in the xemacs.exe
-;     ;;     executable.
-;     ;; (2) xemacs.exe is dumped or undumped.  Running `xemacs -nd' gets
-;     ;;     you the equivalent of `temacs'.  Dumping creates a file
-;     ;;     `xemacs.dmp'.
+  (setq exe-target (expand-file-name exe-target build-root))
+  (setq dump-target (expand-file-name dump-target build-root))
 
-;     (setq dumped-exe-out-of-date-wrt-undumped-exe
-; 	  (cond ((not dumped-exe) t)
-; 		(temacs-exe (file-newer-than-file-p temacs-exe dumped-exe))
-; 		((not data-file) t)
-; 		(t (file-newer-than-file-p dumped-exe data-file))))
-;     (setq dumped-exe-exists (or (and temacs-exe dumped-exe)
-; 				(and data-file dumped-exe))))
+  ;; Not currently used.
+;   (setq dump-target-out-of-date-wrt-exe-target
+; 	(cond ((not dump-target) t)
+; 	      (temacs-exe (file-newer-than-file-p temacs-exe dump-target))
+; 	      ((not data-file) t)
+; 	      (t (file-newer-than-file-p dump-target data-file))))
+;   (setq dump-target-exists (or (and temacs-exe dump-target)
+; 			       (and data-file dump-target))))
 
   ;; Path setup
   (let ((package-preloaded-file-list
@@ -168,7 +178,7 @@
  		  preloaded-file-list
  		  packages-hardcoded-lisp)))
 
-  (load (concat default-directory "../site-packages") t t)
+  (load (expand-file-name "site-packages" source-root) t t)
   (setq preloaded-file-list
 	(append packages-hardcoded-lisp
 		preloaded-file-list
@@ -203,12 +213,12 @@
 
       ;; now check if .el or .elc is newer than the dumped exe.
       ;; if so, need to redump.
-      (when (and dumped-exe arg-is-preloaded
+      (when (and dump-target arg-is-preloaded
 		 ;; no need to check for existence of either of the files
 		 ;; because of the definition of file-newer-than-file-p.
-		 (or (file-newer-than-file-p full-arg-el dumped-exe)
-		     (file-newer-than-file-p full-arg-elc dumped-exe)))
-	(setq dumped-exe-out-of-date-wrt-dump-files t))
+		 (or (file-newer-than-file-p full-arg-el dump-target)
+		     (file-newer-than-file-p full-arg-elc dump-target)))
+	(setq dump-target-out-of-date-wrt-dump-files t))
 
       (if (and (not (member (file-name-nondirectory arg)
 			    unbytecompiled-lisp-files))
@@ -222,14 +232,14 @@
 
   ;; Check if we need to rebuild the auto-autoloads.el files -- that is,
   ;; if ANY .el files have changed.
-  (let ((dirs-to-check '("../lisp" "../lisp/mule")))
+  (let ((dirs-to-check (list source-lisp source-lisp-mule)))
     (while dirs-to-check
       (let* ((dir (car dirs-to-check))
 	     (full-dir (expand-file-name dir))
 	     (all-files-in-dir (directory-files full-dir t "\\.el$" nil t))
 	     (autoload-file
 	      (expand-file-name "auto-autoloads.el" full-dir))
-	     (autoload-is-mule (equal dir "../lisp/mule")))
+	     (autoload-is-mule (equal dir source-lisp-mule)))
 	(while all-files-in-dir
 	  (let* ((full-arg (car all-files-in-dir)))
 	    ;; custom-load.el always gets regenerated so don't let that
@@ -246,9 +256,10 @@
 	  (setq all-files-in-dir (cdr all-files-in-dir))))
       (setq dirs-to-check (cdr dirs-to-check))))
 
-  (if dumped-exe-out-of-date-wrt-dump-files
+  (if dump-target-out-of-date-wrt-dump-files
       (condition-case nil
-	  (write-region-internal "foo" nil "../src/NEEDTODUMP")
+	  (write-region-internal
+	   "foo" nil (expand-file-name "src/NEEDTODUMP" build-root))
 	(file-error nil)))
 
   )
@@ -258,20 +269,18 @@
 	  ;; doesn't exist, need-to-rebuild-autoloads gets set above.  but
 	  ;; it's only one call, so it won't slow things down much and it keeps
 	  ;; the logic cleaner.
-	  (not (file-exists-p "../lisp/auto-autoloads.el"))
+	  (not (file-exists-p aa-lisp))
 	  ;; no need to check for file-exists of .elc due to definition
 	  ;; of file-newer-than-file-p
-	  (file-newer-than-file-p "../lisp/auto-autoloads.el"
-				  "../lisp/auto-autoloads.elc"))
+	  (file-newer-than-file-p aa-lisp aac-lisp))
   (setq need-to-recompile-autoloads t))
 
 (when (or need-to-rebuild-mule-autoloads
 	  ;; not necessary but ...  see comment above.
-	  (not (file-exists-p "../lisp/mule/auto-autoloads.el"))
+	  (not (file-exists-p aa-lisp-mule))
 	  ;; no need to check for file-exists of .elc due to definition
 	  ;; of file-newer-than-file-p
-	  (file-newer-than-file-p "../lisp/mule/auto-autoloads.el"
-				  "../lisp/mule/auto-autoloads.elc"))
+	  (file-newer-than-file-p aa-lisp-mule aac-lisp-mule))
   (setq need-to-recompile-mule-autoloads t))
 
 (when (not (featurep 'mule))
@@ -288,21 +297,21 @@
        (append
 	(if (or need-to-rebuild-autoloads
 		need-to-rebuild-mule-autoloads)
-	    '("-l" "autoload"))
+	    (list "-l" "autoload"))
 	(if need-to-rebuild-autoloads
-	    '("-f" "autoload-update-directory-autoloads"
-	      "auto" "../lisp"))
+	    (list "-f" "autoload-update-directory-autoloads"
+		  "auto" source-lisp))
 	(if need-to-rebuild-mule-autoloads
-	    '("-f" "autoload-update-directory-autoloads"
-	      "mule" "../lisp/mule"))
+	    (list "-f" "autoload-update-directory-autoloads"
+		  "mule" source-lisp-mule))
 	(if need-to-recompile-autoloads
-	    '("-f" "batch-byte-compile-one-file"
-	      "../lisp/auto-autoloads.el"))
+	    (list "-f" "batch-byte-compile-one-file"
+		  aa-lisp))
 	(if need-to-recompile-mule-autoloads
-	    '("-f" "batch-byte-compile-one-file"
-		   "../lisp/mule/auto-autoloads.el")))))
+	    (list "-f" "batch-byte-compile-one-file"
+		  aa-lisp-mule)))))
   (condition-case nil
-      (delete-file "../src/REBUILD_AUTOLOADS")
+      (delete-file (expand-file-name "src/REBUILD_AUTOLOADS" build-root))
     (file-error nil))
   (cond ((and (not update-elc-files-to-compile)
 	      (not need-to-rebuild-autoloads)
@@ -319,7 +328,8 @@
 	 ;;     the autoloads here when we have files to compile, since
 	 ;;     they may depend on the updated autoloads.)
 	 (condition-case nil
-	     (write-region-internal "foo" nil "../src/REBUILD_AUTOLOADS")
+	     (write-region-internal
+	      "foo" nil (expand-file-name "src/REBUILD_AUTOLOADS" build-root))
 	   (file-error nil))
 	 )
 	(t

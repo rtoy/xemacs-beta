@@ -65,8 +65,9 @@ while (<>)
 
     # add obj path to object filenames
     # rewrite .o to .obj
-    # add dependency on config.inc to all objects (this might be too broad)
-    s/^(.+)\.o:(.+)/$obj\\$1.obj:$2 $config\\config.inc/;
+    s/^(.+)\.o:(.+)/$obj\\$1.obj:$2/;
 
+    # add dependency on config.inc wherever config.h is.
+    s/\\config.h/\\config.h $config\\config.inc/;
    print;
   }

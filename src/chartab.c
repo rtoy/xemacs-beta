@@ -470,9 +470,11 @@ fill_char_table (Lisp_Char_Table *ct, Lisp_Object value)
 #ifdef MULE
   for (i = 0; i < NUM_LEADING_BYTES; i++)
     {
-      /* Don't get stymied when initting the table */
+      /* Don't get stymied when initting the table, or when trying to
+	 free a pdump object. */
       if (!EQ (ct->level1[i], Qnull_pointer) &&
-	  CHAR_TABLE_ENTRYP (ct->level1[i]))
+	  CHAR_TABLE_ENTRYP (ct->level1[i]) &&
+	  !OBJECT_DUMPED_P (ct->level1[1]))
 	free_lcrecord (ct->level1[i]);
       ct->level1[i] = value;
     }
@@ -1050,7 +1052,8 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
       else
 	{
 	  int lb = XCHARSET_LEADING_BYTE (range->charset) - MIN_LEADING_BYTE;
-	  if (CHAR_TABLE_ENTRYP (ct->level1[lb]))
+	  if (CHAR_TABLE_ENTRYP (ct->level1[lb]) &&
+	      !OBJECT_DUMPED_P (ct->level1[lb]))
 	    free_lcrecord (ct->level1[lb]);
 	  ct->level1[lb] = val;
 	}

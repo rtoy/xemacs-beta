@@ -1,3 +1,8 @@
+2003-02-28  Ben Wing  <ben@xemacs.org>
+
+	* lwlib-Xm.c:
+	Fix compile warning.
+
 2003-02-16  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.11 "cabbage" is released.

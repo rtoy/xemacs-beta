@@ -53,12 +53,6 @@ NOTE-END */
 /* USG systems do not actually support the load average,
 so disable it for them.  */
 
-/* Define CANNOT_DUMP on machines where unexec does not work.
-   Then the function dump-emacs will not be defined
-   and temacs will do (load "loadup") automatically unless told otherwise.  */
-
-/* #define CANNOT_DUMP */
-
 /* Define addresses, macros, change some setup for dump */
 
 #define NO_REMAP

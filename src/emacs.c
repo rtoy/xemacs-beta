@@ -1132,8 +1132,11 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
      We try to do things in an order that minimizes the non-obvious
      dependencies between functions. */
 
-  /* purify_flag 1 is correct even if CANNOT_DUMP.
-   * loadup.el will set to nil at end. */
+  /* purify_flag is set to indicate we are dumping (its name refers to
+     purespace, which no longer exists and was a way of marking some
+     areas read-only so they could be shared among many processes).
+
+     loadup.el will set to nil at end. */
 
   purify_flag = 0;
 #ifdef PDUMP
@@ -2906,8 +2909,6 @@ main (int argc, char **argv, char **envp)
 /*                 dumping XEmacs (to a new EXE file)                   */
 /************************************************************************/
 
-#ifndef CANNOT_DUMP
-
 #if !defined (PDUMP) || !defined (SYSTEM_MALLOC)
 extern Char_Binary my_edata[];
 #endif
@@ -3011,8 +3012,6 @@ and announce itself normally when it is run.
   UNGCPRO;
   return Qnil;
 }
-
-#endif /* not CANNOT_DUMP */
 
 
 /************************************************************************/
@@ -3802,9 +3801,7 @@ Clear all Quantify data.
 void
 syms_of_emacs (void)
 {
-#ifndef CANNOT_DUMP
   DEFSUBR (Fdump_emacs);
-#endif /* !CANNOT_DUMP */
 
   DEFSUBR (Frun_emacs_from_temacs);
   DEFSUBR (Frunning_temacs_p);
