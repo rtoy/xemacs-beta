@@ -1,3 +1,8 @@
+2004-09-10  Jerry James  <james@xemacs.org>
+
+	* intl-encap-win32.c (qxeDocumentProperties): Conditionalize
+	Cygwin bug workaround on w32api header version.
+
 2004-08-18  Felix H. Gatzemeier  <f.g@tzemeier.info>
 
 	* alloc.c (malloced_storage_size): Renamed log to log2, twice,

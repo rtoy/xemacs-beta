@@ -1795,8 +1795,8 @@ qxeDocumentProperties (HWND hWnd, HANDLE hPrinter, Extbyte *pDeviceName,
 		       DWORD fMode)
 {
   if (XEUNICODE_P)
-#ifdef CYGWIN_HEADERS
-    /* Cygwin mistakenly declares the fourth and fifth arguments as
+#if defined (CYGWIN_HEADERS) && W32API_INSTALLED_VER < W32API_VER(3,1)
+    /* Cygwin used to mistakenly declare the fourth and fifth arguments as
        PDEVMODEA. */
     return DocumentPropertiesW (hWnd, hPrinter, (LPWSTR) pDeviceName,
 				(DEVMODEA *) pDevModeOutput,
