@@ -395,11 +395,13 @@ install-arch-dep: mkdir
 	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}
 	-chmod 0755 ${bindir}/${PROGNAME}
 #else
-	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}-${version}
-	-chmod 0755 ${bindir}/${PROGNAME}-${version}
 # ifdef CYGWIN
+	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}-${version}.exe
+	-chmod 0755 ${bindir}/${PROGNAME}-${version}.exe
 	cd ${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version}.exe ./${PROGNAME}
 # else
+	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}-${version}
+	-chmod 0755 ${bindir}/${PROGNAME}-${version}
 	cd ${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${PROGNAME}
 # endif /* CYGWIN */
 #endif /* WIN32_NATIVE */

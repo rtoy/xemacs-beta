@@ -1,3 +1,7 @@
+2004-11-12  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* Makefile.in.in: Fix pdump build for Cygwin.
+
 2004-11-12  Ben Wing  <ben@xemacs.org>
 
 	* text.c (find_pos_of_existing_active_alloca_convert):

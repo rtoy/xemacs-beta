@@ -419,7 +419,11 @@ RAW_EXE  = $(PROGNAME)
 DUMP_ID     = dump-id.o
 #ifndef WIN32_NATIVE
 DUMP_TARGET = $(PROGNAME)
+#ifndef CYGWIN
 RAW_EXE  = temacs
+#else
+RAW_EXE  = temacs.exe
+#endif
 #endif
 #else
 DUMP_TARGET = $(PROGNAME)
