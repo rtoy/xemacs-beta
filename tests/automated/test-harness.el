@@ -48,6 +48,9 @@
   (and (not noninteractive) (> (device-baud-rate) search-slow-speed))
   "*Non-nil means print messages describing progress of emacs-tester.")
 
+(defvar test-harness-risk-infloops nil
+  "*Non-nil to run tests that may loop infinitely in buggy implementations.")
+
 (defvar test-harness-current-file nil)
 
 (defvar emacs-lisp-file-regexp (purecopy "\\.el\\'")

@@ -1,3 +1,16 @@
+2003-04-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-risk-infloops):
+	New variable.
+
+	* automated/lisp-tests.el (split-string): Add tests for new API
+	spec.  Conditionally re-enable potential infloops.
+
+2003-04-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el (stale match data): Update comment.
+	(replace-match): Check-Error after failed match.
+
 2003-04-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/test-harness.el (test-harness-known-bug): Deleted.

@@ -205,14 +205,13 @@
 
 ;; (test-regex-charset-mule-paranoid)
 
-;; Test replace-match
+;; Test that replace-match errors after a failed match
 (with-temp-buffer
   (insert "This is a test buffer.")
   (goto-char (point-min))
   (search-forward "this is a test ")
   (looking-at "Unmatchable text")
-  (replace-match "")
-  (Assert (looking-at "^buffer.$")))
+  (Check-Error args-out-of-range (replace-match "")))
 
 ;; Test that trivial regexps reset unused registers
 ;; Thanks to Martin Sternholm for the report.
@@ -282,6 +281,8 @@
 
 ;; More stale match data tests.
 ;; Thanks to <bjacob@ca.metsci.com>.
+;; These tests used to fail because we cleared match data only on success.
+;; Fixed 2003-04-17.
 (Assert (not (progn (string-match "a" "a")
 		    (string-match "b" "a")
 		    (match-string 0 "a"))))

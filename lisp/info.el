@@ -574,6 +574,9 @@ File: dir	Node: Top	This is the top of the INFO tree
 Optional argument FILE specifies the file to examine;
 the default is the top-level directory of Info.
 
+Called from a program, FILE may specify an Info node of the form
+`(FILENAME)NODENAME'.
+
 In interactive use, a prefix argument directs this command
 to read a file name from the minibuffer."
   (interactive (if current-prefix-arg
@@ -592,7 +595,15 @@ to read a file name from the minibuffer."
 ;  (Info-setup-x) ??? What was this going to be?  Can anyone tell karlheg?
   (if file
       (unwind-protect
-	  (Info-goto-node (concat "(" file ")"))
+	  (progn
+	   (pop-to-buffer "*info*")
+	   ;; If argument already contains parentheses, don't add another set
+	   ;; since the argument will then be parsed improperly.  This also
+	   ;; has the added benefit of allowing node names to be included
+	   ;; following the parenthesized filename.
+	   (if (and (stringp file) (string-match "(.*)" file))
+	       (Info-goto-node file)
+	     (Info-goto-node (concat "(" file ")"))))
 	(and Info-standalone (info)))
     (if (get-buffer "*info*")
 	(switch-to-buffer "*info*")

@@ -1,3 +1,13 @@
+2003-04-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* subr.el (split-string): Revert to regular behavior, except when
+	both separators and omit-nulls are nil.
+	(split-string-default-separators): New constant.
+
+2003-04-15  Reiner Steib  <Reiner.Steib@gmx.de>
+
+	* info.el (info): Support `(filename)nodename' as argument.
+
 2003-04-14  Steve Youngs  <youngs@xemacs.org>
 
 	* package-admin.el (package-admin-find-top-directory): Use

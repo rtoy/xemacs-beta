@@ -93,6 +93,30 @@ static struct regexp_cache *searchbuf_head;
    */
 static struct re_registers search_regs;
 
+/* Every function that _may_ set the match data _must_ clear the search
+   registers on entry.  An unsuccessful search should leave the search
+   registers cleared.  Applications that are no-ops by definition (eg,
+   searches with a repetition count of 0) _must not_ clear the search
+   registers.
+
+   XEmacs 21.5 up to beta 11 may have permitted the following idiom to
+   "win" in the sense that the match data was set to the last successful
+   match's match data, and not cleared as the current implemenation does:
+
+   (while (search_forward "string"))
+   (use-match-data-of-last-successful-search)
+
+   This no longer can work.  You must use save-match-data to preserve the
+   match data:
+
+   (let (md)
+     (while (when (search-forward "string") (setq md (match-data))))
+     (set-match-data md))
+   (use-match-data-of-last-successful-search)
+   */
+static void set_search_regs (struct buffer *buf, Charbpos beg, Charcount len);
+static void clear_search_regs (struct re_registers *regp);
+
 /* The buffer in which the last search was performed, or
    Qt if the last search was done in a string;
    Qnil if no searching has been done yet.  */
@@ -110,8 +134,6 @@ Fixnum warn_about_possibly_incompatible_back_references;
 /* range table for use with skip_chars.  Only needed for Mule. */
 Lisp_Object Vskip_chars_range_table;
 
-static void set_search_regs (struct buffer *buf, Charbpos beg, Charcount len);
-static void clear_unused_search_regs (struct re_registers *regp, int no_sub);
 static Charbpos simple_search (struct buffer *buf, Ibyte *base_pat,
 			       Bytecount len, Bytebpos pos, Bytebpos lim,
 			       EMACS_INT n, Lisp_Object trt);
@@ -304,6 +326,9 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
   struct syntax_cache scache_struct;
   struct syntax_cache *scache = &scache_struct;
   
+  /* clear search registers *now*.  no mercy, not even for errors */
+  clear_search_regs (&search_regs);
+
   CHECK_STRING (string);
   bufp = compile_pattern (string, &search_regs,
 			  (!NILP (buf->case_fold_search)
@@ -393,6 +418,9 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   /* Some FSF junk with running_asynch_code, to preserve the match
      data.  Not necessary because we don't call process filters
      asynchronously (i.e. from within QUIT). */
+
+  /* clear search registers *now*.  no mercy, not even for errors */
+  clear_search_regs (&search_regs);
 
   CHECK_STRING (regexp);
   CHECK_STRING (string);
@@ -1219,17 +1247,19 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
      data.  Not necessary because we don't call process filters
      asynchronously (i.e. from within QUIT). */
 
+  /* Searching 0 times means noop---don't move, don't touch registers.  */
+  if (n == 0)
+    return charbpos;
+
+  /* clear the search regs now */
+  clear_search_regs (&search_regs);
+
   /* Null string is found at starting position.  */
   if (len == 0)
     {
       set_search_regs (buf, charbpos, 0);
-      clear_unused_search_regs (&search_regs, 0);
       return charbpos;
     }
-
-  /* Searching 0 times means noop---don't move, don't touch registers.  */
-  if (n == 0)
-    return charbpos;
 
   pos = charbpos_to_bytebpos (buf, charbpos);
   lim = charbpos_to_bytebpos (buf, buflim);
@@ -1483,7 +1513,6 @@ simple_search (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	  end = bytebpos_to_charbpos (buf, pos + buf_len);
 	}
       set_search_regs (buf, beg, end - beg);
-      clear_unused_search_regs (&search_regs, 0);
 
       return retval;
     }
@@ -1617,6 +1646,10 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
   for (i = 0; i < 0400; i++)
     simple_translate[i] = (Ibyte) i;
   i = 0;
+
+  /* clear search regs now */
+  clear_search_regs (&search_regs);
+
   while (i != infinity)
     {
       Ibyte *ptr = base_pat + i;
@@ -1847,7 +1880,6 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 		    Charbpos bufend = bytebpos_to_charbpos (buf, bytstart + len);
 
 		    set_search_regs (buf, bufstart, bufend - bufstart);
-		    clear_unused_search_regs (&search_regs, 0);
 		  }
 
 		  if ((n -= direction) != 0)
@@ -1938,7 +1970,6 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 		    Charbpos bufend = bytebpos_to_charbpos (buf, bytstart + len);
 
 		    set_search_regs (buf, bufstart, bufend - bufstart);
-		    clear_unused_search_regs (&search_regs, 0);
 		  }
 
 		  if ((n -= direction) != 0)
@@ -1978,21 +2009,17 @@ set_search_regs (struct buffer *buf, Charbpos beg, Charcount len)
   last_thing_searched = wrap_buffer (buf);
 }
 
-/* Clear unused search registers so match data will be null.
+/* Clear search registers so match data will be null.
    REGP is a pointer to the register structure to clear, usually the global
-   search_regs.
-   NO_SUB is the number of subexpressions to allow for.  (Does not count
-   the whole match, ie, for a string search NO_SUB == 0.)
-   It is an error if NO_SUB > REGP.num_regs - 1. */
+   search_regs. */
 
 static void
-clear_unused_search_regs (struct re_registers *regp, int no_sub)
+clear_search_regs (struct re_registers *regp)
 {
   /* This function has been Mule-ized. */
   int i;
 
-  assert (no_sub >= 0 && no_sub < regp->num_regs);
-  for (i = no_sub + 1; i < regp->num_regs; i++)
+  for (i = 0; i < regp->num_regs; i++)
     regp->start[i] = regp->end[i] = -1;
 }
 
@@ -2323,6 +2350,12 @@ When fourth argument is nil, STRBUFFER specifies a subexpression of
 the match.  It says to replace just that subexpression instead of the
 whole match.  This is useful only after a regular expression search or
 match since only regular expressions have distinguished subexpressions.
+
+If no match (including searches) has been conducted, the last match
+operation failed, or the requested subexpression was not matched, an
+`args-out-of-range' error will be signaled.  (If no match has ever been
+conducted in this instance of XEmacs, an `invalid-operation' error will
+be signaled.  This is very rare.)
 */
        (replacement, fixedcase, literal, string, strbuffer))
 {

@@ -607,19 +607,45 @@ STRING should be given if the last search was by `string-match' on STRING."
 	(buffer-substring-no-properties (match-beginning num)
 					(match-end num)))))
 
-(defun split-string (string &optional separators)
-  "Splits STRING into substrings where there are matches for SEPARATORS.
-Each match for SEPARATORS is a splitting point.
-The substrings between the splitting points are made into a list
-which is returned.
-If SEPARATORS is absent, it defaults to \"[ \\f\\t\\n\\r\\v]+\".
+(defconst split-string-default-separators "[ \f\t\n\r\v]+"
+  "The default value of separators for `split-string'.
 
-If there is match for SEPARATORS at the beginning of STRING, we do not
-include a null substring for that.  Likewise, if there is a match
-at the end of STRING, we don't include a null substring for that.
+A regexp matching strings of whitespace.  May be locale-dependent
+\(as yet unimplemented).  Should not match non-breaking spaces.
+
+Warning: binding this to a different value and using it as default is
+likely to have undesired semantics.")
+
+;; specification for `split-string' agreed with rms 2003-04-23
+;; xemacs design <87vfx5vor0.fsf@tleepslib.sk.tsukuba.ac.jp>
+
+(defun split-string (string &optional separators omit-nulls)
+  "Splits STRING into substrings bounded by matches for SEPARATORS.
+
+The beginning and end of STRING, and each match for SEPARATORS, are
+splitting points.  The substrings matching SEPARATORS are removed, and
+the substrings between the splitting points are collected as a list,
+which is returned.
+
+If SEPARATORS is nil, it defaults to the value of
+`split-string-default-separators', normally \"[ \\f\\t\\n\\r\\v]+\".
+
+If OMIT-NULLs is t, zero-length substrings are omitted from the list \(so
+that for the default value of SEPARATORS leading and trailing whitespace
+are effectively trimmed).  If nil, all zero-length substrings are retained,
+which correctly parses CSV format, for example.
+
+As a special case, if both SEPARATORS and OMIT-NULLS are nil, white-space
+will be trimmed (ie, the effect of `(split-string STRING)' is the same as
+`(split-string STRING split-string-default-separators t)').  In the very
+rare case that you need to retain zero-length substrings when splitting on
+the default separators, use
+`(split-string STRING split-string-default-separators)'.
 
 Modifies the match data; use `save-match-data' if necessary."
-  (let ((rexp (or separators "[ \f\t\n\r\v]+"))
+
+  (let ((keep-nulls (if separators (not omit-nulls) nil))
+	(rexp (or separators split-string-default-separators))
 	(start 0)
 	notfirst
 	(list nil))
@@ -628,16 +654,14 @@ Modifies the match data; use `save-match-data' if necessary."
 				       (= start (match-beginning 0))
 				       (< start (length string)))
 				  (1+ start) start))
-		(< (match-beginning 0) (length string)))
+		(< start (length string)))
       (setq notfirst t)
-      (or (eq (match-beginning 0) 0)
-	  (and (eq (match-beginning 0) (match-end 0))
-	       (eq (match-beginning 0) start))
+      (if (or keep-nulls (< start (match-beginning 0)))
 	  (setq list
 		(cons (substring string start (match-beginning 0))
 		      list)))
       (setq start (match-end 0)))
-    (or (eq start (length string))
+    (if (or keep-nulls (< start (length string)))
 	(setq list
 	      (cons (substring string start)
 		    list)))

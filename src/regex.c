@@ -5209,7 +5209,10 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
 	       It would be possible to require the caller to do this, but we'd
 	       have to change the API for this function to reflect that, and
-	       audit all callers. */
+	       audit all callers.  Note: as of 2003-04-17 callers in XEmacs
+	       do clear the registers, but it's safer to leave this code in
+	       because of reallocation.
+	    */
 	    if (regs && regs->num_regs > 0)
 	      for (mcnt = num_nonshy_regs; mcnt < regs->num_regs; mcnt++)
 		regs->start[mcnt] = regs->end[mcnt] = -1;

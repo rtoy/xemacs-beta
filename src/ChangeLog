@@ -1,3 +1,20 @@
+2003-04-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Fix stale match data after failed search bug.
+
+	* search.c (search_buffer):
+	Don't find null string if repetition count is 0.
+	(string_match_1): 
+	(looking_at_1): 
+	(search_buffer): 
+	(simple_search):
+	(boyer_moore):
+	Clear all search regs as start, not unused ones on success.
+	* regex.c (re_match_2_internal): Fix comment about clearing regs.
+
+	* search.c (Freplace_match): Document error conditions in docstring.
+	(These actually error now after a failed match.)
+
 2003-04-16  Chris Palmer  <chris@nodewarrior.org>
 
 	* sysdll.c (dll_open): Removed Objective C-ism to fix Mac build.

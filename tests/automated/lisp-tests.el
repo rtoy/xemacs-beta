@@ -852,10 +852,13 @@
 ;;-----------------------------------------------------
 ;; Test split-string
 ;;-----------------------------------------------------
-;; Hrvoje didn't like these tests so I'm disabling them for now. -sb
-;(Assert (equal (split-string "foo" "") '("" "f" "o" "o" "")))
-;(Assert (equal (split-string "foo" "^") '("" "foo")))
-;(Assert (equal (split-string "foo" "$") '("foo" "")))
+;; Keep nulls, explicit SEPARATORS
+;; Hrvoje didn't like the next 3 tests so I'm disabling them for now. -sb
+;; I assume Hrvoje worried about the possibility of infloops. -sjt
+(when test-harness-risk-infloops
+  (Assert (equal (split-string "foo" "") '("" "f" "o" "o" "")))
+  (Assert (equal (split-string "foo" "^") '("" "foo")))
+  (Assert (equal (split-string "foo" "$") '("foo" ""))))
 (Assert (equal (split-string "foo,bar" ",") '("foo" "bar")))
 (Assert (equal (split-string ",foo,bar," ",") '("" "foo" "bar" "")))
 (Assert (equal (split-string ",foo,bar," "^,") '("" "foo,bar,")))
@@ -865,6 +868,47 @@
 (Assert (equal (split-string "foo,,bar,," ",") '("foo" "" "bar" "" "")))
 (Assert (equal (split-string "foo,,bar" ",+") '("foo" "bar")))
 (Assert (equal (split-string ",foo,,bar," ",+") '("" "foo" "bar" "")))
+;; Omit nulls, explicit SEPARATORS
+(when test-harness-risk-infloops
+  (Assert (equal (split-string "foo" "" t) '("f" "o" "o")))
+  (Assert (equal (split-string "foo" "^" t) '("foo")))
+  (Assert (equal (split-string "foo" "$" t) '("foo"))))
+(Assert (equal (split-string "foo,bar" "," t) '("foo" "bar")))
+(Assert (equal (split-string ",foo,bar," "," t) '("foo" "bar")))
+(Assert (equal (split-string ",foo,bar," "^," t) '("foo,bar,")))
+(Assert (equal (split-string ",foo,bar," ",$" t) '(",foo,bar")))
+(Assert (equal (split-string ",foo,,bar," "," t) '("foo" "bar")))
+(Assert (equal (split-string "foo,,,bar" "," t) '("foo" "bar")))
+(Assert (equal (split-string "foo,,bar,," "," t) '("foo" "bar")))
+(Assert (equal (split-string "foo,,bar" ",+" t) '("foo" "bar")))
+(Assert (equal (split-string ",foo,,bar," ",+" t) '("foo" "bar")))
+;; "Double-default" case
+(Assert (equal (split-string "foo bar") '("foo" "bar")))
+(Assert (equal (split-string " foo bar ") '("foo" "bar")))
+(Assert (equal (split-string " foo  bar ") '("foo" "bar")))
+(Assert (equal (split-string "foo   bar") '("foo" "bar")))
+(Assert (equal (split-string "foo  bar  ") '("foo" "bar")))
+(Assert (equal (split-string "foobar") '("foobar")))
+;; Semantics are identical to "double-default" case!  Fool ya?
+(Assert (equal (split-string "foo bar" nil t) '("foo" "bar")))
+(Assert (equal (split-string " foo bar " nil t) '("foo" "bar")))
+(Assert (equal (split-string " foo  bar " nil t) '("foo" "bar")))
+(Assert (equal (split-string "foo   bar" nil t) '("foo" "bar")))
+(Assert (equal (split-string "foo  bar  " nil t) '("foo" "bar")))
+(Assert (equal (split-string "foobar" nil t) '("foobar")))
+;; Perverse "anti-double-default" case
+(Assert (equal (split-string "foo bar" split-string-default-separators)
+	       '("foo" "bar")))
+(Assert (equal (split-string " foo bar " split-string-default-separators)
+	       '("" "foo" "bar" "")))
+(Assert (equal (split-string " foo  bar " split-string-default-separators)
+	       '("" "foo" "bar" "")))
+(Assert (equal (split-string "foo   bar" split-string-default-separators)
+	       '("foo" "bar")))
+(Assert (equal (split-string "foo  bar  " split-string-default-separators)
+	       '("foo" "bar" "")))
+(Assert (equal (split-string "foobar" split-string-default-separators)
+	       '("foobar")))
 
 (Assert (not (string-match "\\(\\.\\=\\)" ".")))
 (Assert (string= "" (let ((str "test string"))
