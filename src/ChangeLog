@@ -1,3 +1,11 @@
+2005-04-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* chartab.c (Fchar_table_p):
+	(Fget_range_char_table):
+	(Fput_char_table):
+	(Fmap_char_table):
+	Describe range representation and fix typo.
+
 2005-04-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-ccl.c (ccl_driver): Calculate the charset and position code

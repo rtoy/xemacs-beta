@@ -542,15 +542,17 @@ once per character).
 When Mule support exists, the types of ranges that can be assigned
 values are
 
--- all characters
+-- all characters (represented by t)
 -- an entire charset
--- a single row in a two-octet charset
+-- a single row in a two-octet charset (represented by a vector of two
+   elements: a two-octet charset and a row number; the row must be an
+   integer, not a character)
 -- a single character
 
 When Mule support is not present, the types of ranges that can be
 assigned values are
 
--- all characters
+-- all characters (represented by t)
 -- a single character
 
 To create a char table, use `make-char-table'.
@@ -912,8 +914,11 @@ updating_mirror_get_range_char_table (struct chartab_range *range,
 #endif /* ERROR_CHECK_TYPES */
 
 DEFUN ("get-range-char-table", Fget_range_char_table, 2, 3, 0, /*
-Find value for a range in CHAR-TABLE.
+Find value for RANGE in CHAR-TABLE.
 If there is more than one value, return MULTI (defaults to nil).
+
+Valid values for RANGE are single characters, charsets, a row in a
+two-octet charset, and all characters.  See `put-char-table'.
 */
        (range, char_table, multi))
 {
@@ -1128,8 +1133,9 @@ one of the following:
 
 -- t (all characters are affected)
 -- A charset (only allowed when Mule support is present)
--- A vector of two elements: a two-octet charset and a row number
-   (only allowed when Mule support is present)
+-- A vector of two elements: a two-octet charset and a row number; the row
+   must be an integer, not a character (only allowed when Mule support is
+   present)
 -- A single character
 
 VALUE must be a value appropriate for the type of CHAR-TABLE.
@@ -1456,8 +1462,8 @@ Map FUNCTION over entries in CHAR-TABLE, calling it with two args,
 each key and value in the table.
 
 RANGE specifies a subrange to map over and is in the same format as
-the RANGE argument to `put-range-table'.  If omitted or t, it defaults to
-the entire table.
+the RANGE argument to `put-char-table'.  If omitted or t, it defaults to
+the entire table.  See also `char-table-p'.
 */
        (function, char_table, range))
 {
