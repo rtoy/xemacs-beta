@@ -1,3 +1,11 @@
+2005-03-23  Vin Shelton  <acs@xemacs.org>
+
+	* configure.in: Remove -fno-gnu-linker option from Solaris
+	dynodump builds; it doesn't do anything.
+
+	Don't use 'head -1' - it's deprecated by coreutils-5.3.0 on some
+	platforms.
+
 2005-03-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure: Regenerate. 

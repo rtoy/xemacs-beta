@@ -8028,7 +8028,6 @@ _ACEOF
     *86*    ) dynodump_arch=i386  ;;
     powerpc ) dynodump_arch=ppc   ;;
   esac
-    test "$GCC" = "yes" && ld_switch_site="$ld_switch_site -fno-gnu-linker" &&  if test "$verbose" = "yes"; then echo "    Appending \"-fno-gnu-linker\" to \$ld_switch_site"; fi
 fi
 
 
@@ -8145,11 +8144,11 @@ echo "$as_me:$LINENO: checking for compiler version information" >&5
 echo $ECHO_N "checking for compiler version information... $ECHO_C" >&6
 
 if test "$GCC" = "yes"; then
-  compiler_version=`$XEMACS_CC --version | head -1`
-  gcc_compiler_specs=`$XEMACS_CC -v 2>&1 | sed 's/.* \([^ ]\)/\1/' | head -1`
+  compiler_version=`$XEMACS_CC --version | sed 1q`
+  gcc_compiler_specs=`$XEMACS_CC -v 2>&1 | sed 's/.* \([^ ]\)/\1/' | sed 1q`
 else case "$XEMACS_CC" in
     ic*)
-    compiler_version=`icc -V 2>&1 | head -1`
+    compiler_version=`icc -V 2>&1 | sed 1q`
     ;;
     *) case "$ac_cv_build" in
 	*-*-aix*   )
@@ -8174,7 +8173,7 @@ else case "$XEMACS_CC" in
 	;;
 
 	*-*-solaris*)
-	  compiler_version=`$XEMACS_CC -V 2>&1 | head -1`
+	  compiler_version=`$XEMACS_CC -V 2>&1 | sed 1q`
 	;;
 
 	alpha*-dec-osf*)

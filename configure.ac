@@ -2302,8 +2302,6 @@ else
     *86*    ) dynodump_arch=i386  ;;
     powerpc ) dynodump_arch=ppc   ;;
   esac
-  dnl Dynodump requires the system linker
-  test "$GCC" = "yes" && XE_APPEND(-fno-gnu-linker, ld_switch_site)
 fi
 
 dnl Feed s&m crud to src/Makefile
@@ -2359,12 +2357,12 @@ dnl #### Is this code correct if $XEMACS_CC != $CC?  XEMACS_CC hasn't been
 dnl run through the AC_PROG_CC mill.
 dnl Would anybody really build libsrc with GCC and XEmacs with non-GCC?
 if test "$GCC" = "yes"; then
-  compiler_version=`$XEMACS_CC --version | head -1`
-  gcc_compiler_specs=`$XEMACS_CC -v 2>&1 | sed 's/.* \([[^ ]]\)/\1/' | head -1`
+  compiler_version=`$XEMACS_CC --version | sed 1q`
+  gcc_compiler_specs=`$XEMACS_CC -v 2>&1 | sed 's/.* \([[^ ]]\)/\1/' | sed 1q`
 else case "$XEMACS_CC" in
   dnl The Intel cc compiler
   ic*)
-    compiler_version=`icc -V 2>&1 | head -1`
+    compiler_version=`icc -V 2>&1 | sed 1q`
     ;;
   dnl non-gcc machine-specific magic - contributions welcome
   *) case "$ac_cv_build" in
@@ -2393,7 +2391,7 @@ else case "$XEMACS_CC" in
 	;;
 
 	*-*-solaris*)
-	  compiler_version=`$XEMACS_CC -V 2>&1 | head -1`
+	  compiler_version=`$XEMACS_CC -V 2>&1 | sed 1q`
 	;;
 
 	alpha*-dec-osf*)
