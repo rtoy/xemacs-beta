@@ -393,7 +393,13 @@ baaaa
   (Assert (string= (progn (string-match "\\(a\\)" a)
 			  (string-match "b" a)
 			  (match-string 1 a))
-		   a)))
+		   a))
+  ;; in 21.4.16, registers from num_shy_groups to num_groups were not cleared,
+  ;; resulting in stale match data
+  (Assert (progn (string-match "\\(a\\)" a)  
+		 (string-match "\\(?:a\\)" a)  
+		 (not (match-beginning 1))))
+  )
 
 ;; bug identified by Katsumi Yamaoka 2004-09-03 <b9ywtzbbpue.fsf_-_@jpl.org>
 ;; fix submitted by sjt 2004-09-08
@@ -421,5 +427,35 @@ baaaa
   (Assert (null (match-string 2 text)))				; ab
   (Assert (null (match-string 3 text)))				; c
   (Assert (null (match-string 4 text)))				; nil
+)
+
+;; trivial subpatterns and backreferences with shy groups
+(let ((text1 "abb")
+      (text2 "aba")
+      (re0 "\\(a\\)\\(b\\)\\2")
+      (re1 "\\(?:a\\)\\(b\\)\\2")
+      (re2 "\\(?:a\\)\\(b\\)\\1")
+      (re3 "\\(a\\)\\(?:b\\)\\1"))
+
+  (Assert (eq 0 (string-match re0 text1)))
+  (Assert (string= text1 (match-string 0 text1)))
+  (Assert (string= "a" (match-string 1 text1)))
+  (Assert (string= "b" (match-string 2 text1)))
+  (Assert (null (string-match re0 text2)))
+
+  (Check-Error-Message 'invalid-regexp "Invalid back reference"
+		       (string-match re1 text1))
+
+  (Assert (eq 0 (string-match re2 text1)))
+  (Assert (string= text1 (match-string 0 text1)))
+  (Assert (string= "b" (match-string 1 text1)))
+  (Assert (null (match-string 2 text1)))
+  (Assert (null (string-match re2 text2)))
+
+  (Assert (null (string-match re3 text1)))
+  (Assert (eq 0 (string-match re3 text2)))
+  (Assert (string= text2 (match-string 0 text2)))
+  (Assert (string= "a" (match-string 1 text2)))
+  (Assert (null (match-string 2 text2)))
 )
 

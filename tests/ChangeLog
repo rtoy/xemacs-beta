@@ -1,3 +1,13 @@
+2005-02-01  Vin Shelton  <acs@xemacs.org>
+
+	* automated/regexp-tests.el: Added test for stale match data with
+	shy groups authored by Arnaud Giersch <arnaud.giersch@free.fr>
+
+2005-01-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el:
+	Test trivial subpatterns and backreferences with shy groups.
+
 2004-10-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/os-tests.el: New file.  Add tests for bug reported by
