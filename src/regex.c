@@ -4847,93 +4847,94 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
           DEBUG_PRINT1 ("Accepting match.\n");
 
           /* If caller wants register contents data back, do it.  */
-          if (regs && !bufp->no_sub)
-	    {
-	      int num_nonshy_regs = bufp->re_nsub + 1;
-              /* Have the register data arrays been allocated?  */
-              if (bufp->regs_allocated == REGS_UNALLOCATED)
-                { /* No.  So allocate them with malloc.  We need one
-                     extra element beyond `num_regs' for the `-1' marker
-                     GNU code uses.  */
-                  regs->num_regs = MAX (RE_NREGS, num_nonshy_regs + 1);
-                  regs->start = TALLOC (regs->num_regs, regoff_t);
-                  regs->end = TALLOC (regs->num_regs, regoff_t);
-                  if (regs->start == NULL || regs->end == NULL)
-		    {
-		      FREE_VARIABLES ();
-		      return -2;
-		    }
-                  bufp->regs_allocated = REGS_REALLOCATE;
-                }
-              else if (bufp->regs_allocated == REGS_REALLOCATE)
-                { /* Yes.  If we need more elements than were already
-                     allocated, reallocate them.  If we need fewer, just
-                     leave it alone.  */
-                  if (regs->num_regs < num_nonshy_regs + 1)
-                    {
-                      regs->num_regs = num_nonshy_regs + 1;
-                      RETALLOC (regs->start, regs->num_regs, regoff_t);
-                      RETALLOC (regs->end, regs->num_regs, regoff_t);
-                      if (regs->start == NULL || regs->end == NULL)
-			{
-			  FREE_VARIABLES ();
-			  return -2;
-			}
-                    }
-                }
-              else
-		{
-		  /* These braces fend off a "empty body in an else-statement"
-		     warning under GCC when assert expands to nothing.  */
-		  assert (bufp->regs_allocated == REGS_FIXED);
-		}
+	  {
+	    int num_nonshy_regs = bufp->re_nsub + 1;
+	    if (regs && !bufp->no_sub)
+	      {
+		/* Have the register data arrays been allocated?  */
+		if (bufp->regs_allocated == REGS_UNALLOCATED)
+		  { /* No.  So allocate them with malloc.  We need one
+		       extra element beyond `num_regs' for the `-1' marker
+		       GNU code uses.  */
+		    regs->num_regs = MAX (RE_NREGS, num_nonshy_regs + 1);
+		    regs->start = TALLOC (regs->num_regs, regoff_t);
+		    regs->end = TALLOC (regs->num_regs, regoff_t);
+		    if (regs->start == NULL || regs->end == NULL)
+		      {
+			FREE_VARIABLES ();
+			return -2;
+		      }
+		    bufp->regs_allocated = REGS_REALLOCATE;
+		  }
+		else if (bufp->regs_allocated == REGS_REALLOCATE)
+		  { /* Yes.  If we need more elements than were already
+		       allocated, reallocate them.  If we need fewer, just
+		       leave it alone.  */
+		    if (regs->num_regs < num_nonshy_regs + 1)
+		      {
+			regs->num_regs = num_nonshy_regs + 1;
+			RETALLOC (regs->start, regs->num_regs, regoff_t);
+			RETALLOC (regs->end, regs->num_regs, regoff_t);
+			if (regs->start == NULL || regs->end == NULL)
+			  {
+			    FREE_VARIABLES ();
+			    return -2;
+			  }
+		      }
+		  }
+		else
+		  {
+		    /* The braces fend off a "empty body in an else-statement"
+		       warning under GCC when assert expands to nothing.  */
+		    assert (bufp->regs_allocated == REGS_FIXED);
+		  }
 
-              /* Convert the pointer data in `regstart' and `regend' to
-                 indices.  Register zero has to be set differently,
-                 since we haven't kept track of any info for it.  */
-              if (regs->num_regs > 0)
-                {
-                  regs->start[0] = pos;
-                  regs->end[0] = (MATCHING_IN_FIRST_STRING
-				  ? ((regoff_t) (d - string1))
-			          : ((regoff_t) (d - string2 + size1)));
-                }
+		/* Convert the pointer data in `regstart' and `regend' to
+		   indices.  Register zero has to be set differently,
+		   since we haven't kept track of any info for it.  */
+		if (regs->num_regs > 0)
+		  {
+		    regs->start[0] = pos;
+		    regs->end[0] = (MATCHING_IN_FIRST_STRING
+				    ? ((regoff_t) (d - string1))
+				    : ((regoff_t) (d - string2 + size1)));
+		  }
 
-              /* Go through the first `min (num_regs, regs->num_regs)'
-                 registers, since that is all we initialized.  */
-	      for (mcnt = 1; mcnt < MIN (num_nonshy_regs, regs->num_regs);
-		   mcnt++)
-		{
-		  int internal_reg = bufp->external_to_internal_register[mcnt];
-                  if (REG_UNSET (regstart[internal_reg]) ||
-		      REG_UNSET (regend[internal_reg]))
-                    regs->start[mcnt] = regs->end[mcnt] = -1;
-                  else
-                    {
-		      regs->start[mcnt] =
-			(regoff_t) POINTER_TO_OFFSET (regstart[internal_reg]);
-                      regs->end[mcnt] =
-			(regoff_t) POINTER_TO_OFFSET (regend[internal_reg]);
-                    }
-		}
-	    } /* regs && !bufp->no_sub */
+		/* Go through the first `min (num_regs, regs->num_regs)'
+		   registers, since that is all we initialized.  */
+		for (mcnt = 1; mcnt < MIN (num_nonshy_regs, regs->num_regs);
+		     mcnt++)
+		  {
+		    int internal_reg = bufp->external_to_internal_register[mcnt];
+		    if (REG_UNSET (regstart[internal_reg]) ||
+			REG_UNSET (regend[internal_reg]))
+		      regs->start[mcnt] = regs->end[mcnt] = -1;
+		    else
+		      {
+			regs->start[mcnt] =
+			  (regoff_t) POINTER_TO_OFFSET (regstart[internal_reg]);
+			regs->end[mcnt] =
+			  (regoff_t) POINTER_TO_OFFSET (regend[internal_reg]);
+		      }
+		  }
+	      } /* regs && !bufp->no_sub */
 
-	  /* If we have regs and the regs structure has more elements than
-             were in the pattern, set the extra elements to -1.  If we
-	     (re)allocated the registers, this is the case, because we
-	     always allocate enough to have at least one -1 at the end.
+	    /* If we have regs and the regs structure has more elements than
+	       were in the pattern, set the extra elements to -1.  If we
+	       (re)allocated the registers, this is the case, because we
+	       always allocate enough to have at least one -1 at the end.
 
-	     We do this even when no_sub is set because some applications
-             (XEmacs) reuse register structures which may contain stale
-	     information, and permit attempts to access those registers.
+	       We do this even when no_sub is set because some applications
+	       (XEmacs) reuse register structures which may contain stale
+	       information, and permit attempts to access those registers.
 
-	     It would be possible to require the caller to do this, but we'd
-	     have to change the API for this function to reflect that, and
-	     audit all callers. */
-	  if (regs && regs->num_regs > 0)
-	    for (mcnt = num_nonshy_regs; mcnt < regs->num_regs; mcnt++)
-	      regs->start[mcnt] = regs->end[mcnt] = -1;
-
+	       It would be possible to require the caller to do this, but we'd
+	       have to change the API for this function to reflect that, and
+	       audit all callers. */
+	    if (regs && regs->num_regs > 0)
+	      for (mcnt = num_nonshy_regs; mcnt < regs->num_regs; mcnt++)
+		regs->start[mcnt] = regs->end[mcnt] = -1;
+	  }
           DEBUG_PRINT4 ("%u failure points pushed, %u popped (%u remain).\n",
                         nfailure_points_pushed, nfailure_points_popped,
                         nfailure_points_pushed - nfailure_points_popped);

@@ -1,3 +1,8 @@
+2002-10-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* regex.c (re_match_2_internal): Declare num_nonshy_regs in
+	enclosing scope.
+
 2002-09-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* search.c (clear_unused_search_regs): New static function.
