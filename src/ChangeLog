@@ -1,5 +1,10 @@
 2004-08-26  Jerry James  <james@xemacs.org>
 
+	* event-Xt.c (emacs_Xt_unselect_console): Remove unused variable
+	console.
+
+2004-08-26  Jerry James  <james@xemacs.org>
+
 	* event-stream.c (munge_keymap_translate): Remove unused variable n.
 
 2004-08-26  Jerry James  <james@xemacs.org>

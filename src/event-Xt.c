@@ -2476,14 +2476,12 @@ emacs_Xt_select_console (struct console *con)
 static void
 emacs_Xt_unselect_console (struct console *con)
 {
-  Lisp_Object console;
   int infd;
 
   if (CONSOLE_X_P (con))
     return; /* X consoles are automatically selected for when we
 	       initialize them in Xt */
   infd = event_stream_unixoid_unselect_console (con);
-  console = wrap_console (con);
   unselect_filedesc (infd);
 }
 
