@@ -263,9 +263,9 @@ Packaging
 
 Package Overview
 
-* The User's View::
-* The Library Maintainer's View::
-* The Package Release Engineer's View::
+* The User View::
+* The Library Maintainer View::
+* The Package Release Engineer View::
 
 The Library Maintainer's View
 

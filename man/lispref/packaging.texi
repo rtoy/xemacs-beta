@@ -304,8 +304,8 @@ tree are given below, @ref{Control Files}.
 
 The @file{packages} directory contains some auxiliary Lisp libraries
 used in the compilation and packaging process.  The content of these
-libraries is of interest primarily to the packaging engineers, @ref{The
-Package Release Engineer's View}.
+libraries is of interest primarily to the packaging engineers, @ref{The 
+Package Release Engineer View}.
 
 Finally, the @file{packages}, @file{packages/xemacs-packages}, and
 @file{packages/mule-packages} directories contain @file{Makefile}s and
