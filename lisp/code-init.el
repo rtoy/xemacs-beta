@@ -56,11 +56,14 @@ detection on Windows!  Your files will have lots of annoying ^M's in them
 if you do this."
   (dolist (x '(buffer-file-coding-system-for-read
 	       keyboard
-	       default-process-coding-system-read
-	       no-conversion-coding-system-mapping))
+	       default-process-coding-system-read))
     (set-coding-system-variable
      x (coding-system-change-eol-conversion (get-coding-system-variable x)
-					    (if flag nil 'lf)))))
+					    (if flag nil 'lf))))
+  (set-coding-category-system
+   'no-conversion
+   (coding-system-change-eol-conversion (coding-category-system 'no-conversion)
+					(if flag nil 'lf))))
 
 (defun coding-system-current-system-configuration ()
   (cond ((memq system-type '(windows-nt cygwin32))
