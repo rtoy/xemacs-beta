@@ -61,27 +61,31 @@ static OSVERSIONINFO verinfo;
 
 static char *iconname;
 static char *batname;
+static char *uninstname;
 
 static void
-make_link (char *linkpath, char *title, char *target)
+make_link (char *linkpath, char *title, char *target, char* args)
 {
+#if 0
   char argbuf[_MAX_PATH];
+#endif
   char *fname = concat (linkpath, "/", title, ".lnk", 0);
 
   if (_access (fname, 0) == 0)
     return; /* already exists */
 
-  msg ("make_link %s, %s, %s\n", fname, title, target);
+  msg ("make_link %s, %s, %s, %s\n", fname, title, target, args);
 
   mkdir_p (0, fname);
 
-  char *exepath, *args;
-
+  char *exepath;
+#if 0
   /* If we are running Win9x, build a command line. */
   if (verinfo.dwPlatformId == VER_PLATFORM_WIN32_NT)
     {
+#endif
       exepath = target;
-      args = "";
+#if 0
     }
   else
     {
@@ -92,9 +96,9 @@ make_link (char *linkpath, char *title, char *target)
       sprintf (argbuf, "%s %s", COMMAND9XARGS, target);
       args = argbuf;
     }
-
+#endif
   msg ("make_link_2 (%s, %s, %s, %s)", exepath, args, iconname, fname);
-  make_link_2 (exepath, args, iconname, fname);
+  make_link_2 (backslash (exepath), args, iconname, fname);
 }
 
 static char* 
@@ -108,7 +112,7 @@ find_xemacs_exe_path ()
 			      "\\", XEMACS_NATIVE_ARCH_NAME, 0));
 }
 
-static char* 
+char* 
 find_xemacs_exe_name ()
 {
   /* Hack to support older versions. */
@@ -126,17 +130,25 @@ find_xemacs_exe_name ()
 static void
 remove_link (char *linkpath, char* title)
 {
-  char *fname = concat (linkpath, "/", title, ".lnk", 0);
-
-  if (_access (fname, 0) != 0)
-    return; /* doesn't exist */
-
-  msg ("remove_link %s, %s, %s\n", fname, title);
-  _unlink (fname);
+  if (title)
+    {
+      char *fname = backslash (concat (linkpath, "/", title, ".lnk", 0));
+      msg ("remove_link %s, %s\n", fname, title);
+      if (_access (fname, 0) != 0)
+	return; /* doesn't exist */
+      _unlink (fname);
+    }
+  else 
+    {
+      msg ("remove_link %s\n", linkpath);
+      if (_access (linkpath, 0) != 0)
+	return; /* doesn't exist */
+      _rmdir (linkpath);
+    }
 }
 
 static void
-start_menu (char *title, char *target, int remove)
+start_menu (char *title, char *target, int rem, char* args)
 {
   char path[_MAX_PATH];
   LPITEMIDLIST id;
@@ -152,16 +164,16 @@ start_menu (char *title, char *target, int remove)
      msg("Program directory for program link changed to: %s",path);
   }
 // end of Win95 addition
-  strcat (path, "/");
+  strcat (path, "\\");
   strcat (path, XEMACS_INFO_XEMACS_ORG_REGISTRY_NAME);
-  if (remove == 0)
-    make_link (path, title, target);
+  if (rem == 0)
+    make_link (path, title, target, args);
   else
     remove_link (path, title);
 }
 
 static void
-desktop_icon (char *title, char *target, int remove)
+desktop_icon (char *title, char *target, int rem)
 {
   char path[_MAX_PATH];
   LPITEMIDLIST id;
@@ -178,8 +190,8 @@ desktop_icon (char *title, char *target, int remove)
      msg("Desktop directory for deskop link changed to: %s",path);
   }
 // end of Win95 addition
-  if (remove == 0)
-    make_link (path, title, target);
+  if (rem == 0)
+    make_link (path, title, target, "");
   else
     remove_link (path, title);
 }
@@ -210,15 +222,15 @@ save_icon ()
 void
 remove_desktop_setup()
 {
-  start_menu ("XEmacs", 0, 1);
+  start_menu ("XEmacs", 0, 1, 0);
+  start_menu ("Uninstall XEmacs", 0, 1, 0);
+  start_menu (0, 0, 1, 0);
   desktop_icon ("XEmacs", 0, 1);
 
   if (xemacs_package != 0)
     {
-      int issystem = (root_scope == IDC_ROOT_SYSTEM ? 1 : 0);
-#define FROB(exe)	  remove_app_path ((exe), \
-			issystem)
-      /*      FROB (find_xemacs_exe_name ()); */
+#define FROB(exe)	  remove_app_path (exe)
+      FROB (find_xemacs_exe_name ());
       FROB ("runemacs.exe");
       FROB ("xemacs.exe");
 #undef FROB
@@ -231,7 +243,8 @@ do_desktop_setup()
   save_icon ();
 
   if (root_menu && batname) {
-    start_menu ("XEmacs", batname, 0);
+    start_menu ("XEmacs", batname, 0, "");
+    start_menu ("Uninstall XEmacs", uninstname, 0, "-u");
   }
 
   if (root_desktop && batname) {
@@ -380,14 +393,14 @@ static int check_startmenu (char *title, char *target)
      msg ("Program directory for program link changed to: %s",path);
   }
   // end of Win95 addition
-  strcat (path, "/");
+  strcat (path, "\\");
   strcat (path, XEMACS_INFO_XEMACS_ORG_REGISTRY_NAME);
-  char *fname = concat (path, "/", title, ".lnk", 0);
+  char *fname = concat (path, "\\", title, ".lnk", 0);
 
   if (_access (fname, 0) == 0)
     return 0; /* already exists */
   
-  fname = concat (path, "/", title, ".pif", 0); /* check for a pif as well */
+  fname = concat (path, "\\", title, ".pif", 0); /* check for a pif as well */
   
   if (_access (fname, 0) == 0)
     return 0; /* already exists */
@@ -459,12 +472,14 @@ do_desktop (HINSTANCE h)
   verinfo.dwOSVersionInfoSize = sizeof (verinfo);
   GetVersionEx (&verinfo);
   batname = 0;
+  uninstname = 0;
 
   if (xemacs_package != 0 && xemacs_package->type != TY_GENERIC)
     {
       batname = concat (find_xemacs_exe_path (), "\\",
 			find_xemacs_exe_name (), 
 			0);
+      uninstname = concat (find_xemacs_exe_path (), "\\", "setup.exe", 0);
       root_desktop = check_desktop ("XEmacs", batname);
       root_menu = check_startmenu ("XEmacs", batname);
       reg_c = IDC_C_TYPE;

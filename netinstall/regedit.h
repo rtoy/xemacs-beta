@@ -25,6 +25,6 @@ void	remove_xemacs_root ();
 void	set_app_path (char *exe, char* path, int issystem);
 void 	set_install_path (char* path, int issystem);
 void	setup_explorer (char* file_type, char* name, char *exe);
-void	remove_app_path (char *exe, int issystem);
+void	remove_app_path (char *exe);
 void	remove_uninstall_path ();
 

@@ -323,7 +323,10 @@ remove1 (HKEY rkey)
   sprintf (buf, "Software\\%s\\%s",
 	   XEMACS_INFO_XEMACS_ORG_REGISTRY_NAME,
 	   XEMACS_INFO_XEMACS_REGISTRY_NAME);
+  RegDeleteKey (rkey, buf);
 
+  sprintf (buf, "Software\\%s",
+	   XEMACS_INFO_XEMACS_ORG_REGISTRY_NAME);
   RegDeleteKey (rkey, buf);
 }
 
@@ -335,14 +338,14 @@ remove_xemacs_root ()
 }
 
 void
-remove_app_path (char *exe, int issystem)
+remove_app_path (char *exe)
 {
   char buf[1000];
   sprintf (buf, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\%s",
 	   exe);
 
-  HKEY kr = issystem ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER;
-  RegDeleteKey (kr, buf);
+  RegDeleteKey (HKEY_LOCAL_MACHINE, buf);
+  RegDeleteKey (HKEY_CURRENT_USER, buf);
 }
 
 void

@@ -1,3 +1,30 @@
+2001-09-24  Andy Piper  <andy@xemacs.org>
+
+	* desktop.cc:
+	* desktop.cc (make_link):
+	* desktop.cc (find_xemacs_exe_name):
+	* desktop.cc (remove_link):
+	* desktop.cc (start_menu):
+	* desktop.cc (desktop_icon):
+	* desktop.cc (remove_desktop_setup):
+	* desktop.cc (FROB):
+	* desktop.cc (do_desktop_setup):
+	* desktop.cc (check_startmenu):
+	* desktop.cc (do_desktop): Be more exacting about removal of
+	desktop things.
+	* regedit.cc (remove1):
+	* regedit.cc (remove_app_path):
+	* regedit.h (remove_app_path): remove more registry pieces.
+	* res.rc:
+	* setup.mak (APPVER):
+	* setup.mak (CCV):
+	* setup.mak (OBJS):
+	* setup.mak (LIBS):
+	* setup.mak (distclean):
+	* uninstall.cc:
+	* uninstall.cc (read_installed_db):
+	* uninstall.cc (uninstall_all): Cleanup.
+
 2001-09-08  Andy Piper  <andy@xemacs.org>
 
 	* Makefile.in.in (OBJS):
@@ -278,6 +305,6 @@
 
 	* all: port from cygwin setup.
 
-%%% $Id: ChangeLog,v 1.7 2001/09/09 04:37:46 andyp Exp $
-$Revision: 1.7 $
+%%% $Id: ChangeLog,v 1.8 2001/09/25 02:35:32 andyp Exp $
+$Revision: 1.8 $
 

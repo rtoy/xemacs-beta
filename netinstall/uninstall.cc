@@ -68,6 +68,7 @@ static int uninstall_started = 0;
 extern char * map_filename (char *fn, int type);
 void remove_desktop_setup ();
 static void start_uninstall ();
+extern char* find_xemacs_exe_name();
 
 char *
 base (char *s);
@@ -281,7 +282,10 @@ read_installed_db ()
       if (pkg != 0)
 	if (strncmp ("xemacs-i686", pkg, 11) == 0
 	    || (strncmp ("xemacs-i586", pkg, 11) == 0))
-	  np->type = install_type;
+	  {
+	    np->type = install_type;
+	    xemacs_package = np;
+	  }
     }
   fclose (db);
 }
@@ -306,13 +310,10 @@ uninstall_all (void *)
 
   PostMessage (unins_dialog, XM_DONE, 0, 0);
 
+  remove (concat (root_dir, XEMACS_SETUP_DIR, "installed.db.old", 0));
+  remove (concat (root_dir, XEMACS_SETUP_DIR, "installed.db", 0));
+
   remove_desktop_setup();
-  char *odbn = concat (root_dir, XEMACS_SETUP_DIR, "installed.db", 0);
-  char *sdbn = concat (root_dir, XEMACS_SETUP_DIR, "installed.db.old", 0);
-
-  remove (sdbn);
-  remove (odbn);
-
   remove_xemacs_root();
   remove_uninstall_path();
 
