@@ -45,5 +45,26 @@
 
 (add-hook 'post-gc-hook 'run-finalizers)
 
+(defvar simple-finalizer-ephemerons '()
+  "List of ephemerons for objects that have a finalizer attached..")
 
-	  
+(defun add-finalizer (object func)
+  "Add FUNC as a finalizer for object OBJECT."
+  (setq simple-finalizer-ephemerons
+	(cons (make-ephemeron object object func)
+	      simple-finalizer-ephemerons)))
+
+(defun cleanup-simple-finalizers (alist)
+  "Clean up `simple-finalizer-ephemerons'."
+  ;; We have to do this by hand because DELETE-IF isn't defined yet.
+  (let ((current simple-finalizer-ephemerons)
+	(prev nil))
+    (while (not (null current))
+      (if (not (ephemeron-ref (car current)))
+	  (if (null prev)
+	      (setq simple-finalizer-ephemerons (cdr current))
+	    (setcdr prev (cdr current)))
+	(setq prev current))
+      (setq current (cdr current)))))
+
+(add-hook 'post-gc-hook 'cleanup-simple-finalizers)
