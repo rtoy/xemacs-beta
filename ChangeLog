@@ -1,3 +1,9 @@
+2003-02-09  Ville Skyttä  <scop@xemacs.org>
+
+	* configure: Remove pkgdir and all references to it (unused).
+	* configure.in: Ditto.
+	* Makefile.in.in: Ditto.
+
 2003-03-03  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* INSTALL: Reorganize, synch to configure.usage.

@@ -235,7 +235,6 @@ lispdir='${datadir}/${instvardir}/lisp'
 moduledir='${libdir}/${instvardir}/${configuration}/modules'
 sitelispdir='${datadir}/${inststaticdir}/site-lisp'
 sitemoduledir='${libdir}/${inststaticdir}/site-modules'
-pkgdir='${datadir}/${instvardir}/lisp'
 package_path=''
 etcdir='${datadir}/${instvardir}/etc'
 archlibdir='${libdir}/${instvardir}/${configuration}'
@@ -600,7 +599,7 @@ echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
 
 				
 		prefix | exec_prefix | bindir | datadir | statedir | libdir | \
-	mandir | infodir | infopath | lispdir | etcdir | pkgdir | \
+	mandir | infodir | infopath | lispdir | etcdir | \
 	archlibdir | docdir | package_path | moduledir )
 	   	   if test "$valomitted" = "yes"; then
 	     if test "$#" = 0; then
@@ -16186,7 +16185,6 @@ s%@canonical@%$canonical%g
 s%@inststaticdir@%$inststaticdir%g
 s%@instvardir@%$instvardir%g
 s%@srcdir@%$srcdir%g
-s%@pkgdir@%$pkgdir%g
 s%@statedir@%$statedir%g
 s%@extra_includes@%$extra_includes%g
 s%@PREFIX_USER_DEFINED@%$PREFIX_USER_DEFINED%g

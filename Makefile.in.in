@@ -120,9 +120,6 @@ bindir=@bindir@
 ## ${lispdir} and ${etcdir} are subdirectories of this.
 datadir=@datadir@
 
-## Where to find XEmacs packages.
-pkgdir=@pkgdir@
-
 ## Where to install and expect the files that XEmacs modifies as it runs.
 ## These files are all architecture-independent. Right now, the
 ## only such data is the locking directory;
@@ -472,7 +469,7 @@ gzip-el:
 ## make-path instead of mkdir.  Not all mkdirs have the `-p' flag.
 mkdir: FRC.mkdir
 	${MAKEPATH} ${COPYDESTS} ${docdir} ${infodir} ${archlibdir} \
-	  ${mandir} ${bindir} ${datadir} ${libdir} ${pkgdir} \
+	  ${mandir} ${bindir} ${datadir} ${libdir} \
 #ifdef HAVE_SHLIB
 	  ${moduledir} ${sitemoduledir} \
 #endif
