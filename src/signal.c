@@ -1,6 +1,6 @@
 /* Handling asynchronous signals.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -693,163 +693,11 @@ begin_do_check_for_quit (void)
    The C-g or Sh-C-g is discarded, so it won't be noticed again. 
 */
 
+
+
 void
 check_quit (void)
 {
-  /* dont_check_for_quit is set in three circumstances:
-
-     (1) when we are in the process of changing the window
-     configuration.  The frame might be in an inconsistent state,
-     which will cause assertion failures if we check for QUIT.
-
-     (2) when we are reading events, and want to read the C-g
-     as an event.  The normal check for quit will discard the C-g,
-     which would be bad.
-
-     (3) when we're going down with a fatal error.  we're most likely
-     in an inconsistent state, and we definitely don't want to be
-     interrupted. */
-
-  /* We should *not* conditionalize on Vinhibit_quit, or
-     critical-quit (Control-Shift-G) won't work right. */
-
-  /* WARNING: Even calling check_quit(), without actually dispatching
-     a quit signal, can result in arbitrary Lisp code getting executed
-     -- at least under Windows. (Not to mention obvious Lisp
-     invocations like asynchronous timer callbacks.) Here's a sample
-     stack trace to demonstrate:
-
- NTDLL! DbgBreakPoint@0 address 0x77f9eea9
-assert_failed(const char * 0x012d036c, int 4596, const char * 0x012d0354) line 3478
-re_match_2_internal(re_pattern_buffer * 0x012d6780, const unsigned char * 0x00000000, int 0, const unsigned char * 0x022f9328, int 34, int 0, re_registers * 0x012d53d0 search_regs, int 34) line 4596 + 41 bytes
-re_search_2(re_pattern_buffer * 0x012d6780, const char * 0x00000000, int 0, const char * 0x022f9328, int 34, int 0, int 34, re_registers * 0x012d53d0 search_regs, int 34) line 4269 + 37 bytes
-re_search(re_pattern_buffer * 0x012d6780, const char * 0x022f9328, int 34, int 0, int 34, re_registers * 0x012d53d0 search_regs) line 4031 + 37 bytes
-string_match_1(long 31222628, long 30282164, long 28377092, buffer * 0x022fde00, int 0) line 413 + 69 bytes
-Fstring_match(long 31222628, long 30282164, long 28377092, long 28377092) line 436 + 34 bytes
-Ffuncall(int 3, long * 0x008297f8) line 3488 + 168 bytes
-execute_optimized_program(const unsigned char * 0x020ddc50, int 6, long * 0x020ddf50) line 744 + 16 bytes
-funcall_compiled_function(long 34407748, int 1, long * 0x00829aec) line 516 + 53 bytes
-Ffuncall(int 2, long * 0x00829ae8) line 3523 + 17 bytes
-execute_optimized_program(const unsigned char * 0x020ddc90, int 4, long * 0x020ddf90) line 744 + 16 bytes
-funcall_compiled_function(long 34407720, int 1, long * 0x00829e28) line 516 + 53 bytes
-Ffuncall(int 2, long * 0x00829e24) line 3523 + 17 bytes
-mapcar1(long 15, long * 0x00829e48, long 34447820, long 34187868) line 2929 + 11 bytes
-Fmapcar(long 34447820, long 34187868) line 3035 + 21 bytes
-Ffuncall(int 3, long * 0x00829f20) line 3488 + 93 bytes
-execute_optimized_program(const unsigned char * 0x020c2b70, int 7, long * 0x020dd010) line 744 + 16 bytes
-funcall_compiled_function(long 34407580, int 2, long * 0x0082a210) line 516 + 53 bytes
-Ffuncall(int 3, long * 0x0082a20c) line 3523 + 17 bytes
-execute_optimized_program(const unsigned char * 0x020cf810, int 6, long * 0x020cfb10) line 744 + 16 bytes
-funcall_compiled_function(long 34407524, int 0, long * 0x0082a580) line 516 + 53 bytes
-Ffuncall(int 1, long * 0x0082a57c) line 3523 + 17 bytes
-run_hook_with_args_in_buffer(buffer * 0x022fde00, int 1, long * 0x0082a57c, int 0) line 3980 + 13 bytes
-run_hook_with_args(int 1, long * 0x0082a57c, int 0) line 3993 + 23 bytes
-Frun_hooks(int 1, long * 0x0082a57c) line 3847 + 19 bytes
-run_hook(long 34447484) line 4094 + 11 bytes
-unsafe_handle_wm_initmenu_1(frame * 0x01dbb000) line 736 + 11 bytes
-unsafe_handle_wm_initmenu(long 28377092) line 807 + 11 bytes
-condition_case_1(long 28377116, long (long)* 0x0101c827 unsafe_handle_wm_initmenu(long), long 28377092, long (long, long)* 0x01005fa4 mswindows_modal_loop_error_handler(long, long), long 28377092) line 1692 + 7 bytes
-mswindows_protect_modal_loop(long (long)* 0x0101c827 unsafe_handle_wm_initmenu(long), long 28377092) line 1194 + 32 bytes
-mswindows_handle_wm_initmenu(HMENU__ * 0x00010199, frame * 0x01dbb000) line 826 + 17 bytes
-mswindows_wnd_proc(HWND__ * 0x000501da, unsigned int 278, unsigned int 65945, long 0) line 3089 + 31 bytes
-USER32! UserCallWinProc@20 + 24 bytes
-USER32! DispatchClientMessage@20 + 47 bytes
-USER32! __fnDWORD@4 + 34 bytes
-NTDLL! KiUserCallbackDispatcher@12 + 19 bytes
-USER32! DispatchClientMessage@20 address 0x77e163cc
-USER32! DefWindowProcW@16 + 34 bytes
-qxeDefWindowProc(HWND__ * 0x000501da, unsigned int 274, unsigned int 61696, long 98) line 1188 + 22 bytes
-mswindows_wnd_proc(HWND__ * 0x000501da, unsigned int 274, unsigned int 61696, long 98) line 3362 + 21 bytes
-USER32! UserCallWinProc@20 + 24 bytes
-USER32! DispatchClientMessage@20 + 47 bytes
-USER32! __fnDWORD@4 + 34 bytes
-NTDLL! KiUserCallbackDispatcher@12 + 19 bytes
-USER32! DispatchClientMessage@20 address 0x77e163cc
-USER32! DefWindowProcW@16 + 34 bytes
-qxeDefWindowProc(HWND__ * 0x000501da, unsigned int 262, unsigned int 98, long 540016641) line 1188 + 22 bytes
-mswindows_wnd_proc(HWND__ * 0x000501da, unsigned int 262, unsigned int 98, long 540016641) line 3362 + 21 bytes
-USER32! UserCallWinProc@20 + 24 bytes
-USER32! DispatchMessageWorker@8 + 244 bytes
-USER32! DispatchMessageW@4 + 11 bytes
-qxeDispatchMessage(const tagMSG * 0x0082c684 {msg=0x00000106 wp=0x00000062 lp=0x20300001}) line 989 + 10 bytes
-mswindows_drain_windows_queue() line 1345 + 9 bytes
-emacs_mswindows_quit_p() line 3947
-event_stream_quit_p() line 666
-check_quit() line 686
-check_what_happened() line 437
-re_match_2_internal(re_pattern_buffer * 0x012d5a18, const unsigned char * 0x00000000, int 0, const unsigned char * 0x02235000, int 23486, int 14645, re_registers * 0x012d53d0 search_regs, int 23486) line 4717 + 14 bytes
-re_search_2(re_pattern_buffer * 0x012d5a18, const char * 0x02235000, int 23486, const char * 0x0223b38e, int 0, int 14645, int 8841, re_registers * 0x012d53d0 search_regs, int 23486) line 4269 + 37 bytes
-search_buffer(buffer * 0x022fde00, long 29077572, long 13789, long 23487, long 1, int 1, long 28377092, long 28377092, int 0) line 1224 + 89 bytes
-search_command(long 29077572, long 46975, long 28377116, long 28377092, long 28377092, int 1, int 1, int 0) line 1054 + 151 bytes
-Fre_search_forward(long 29077572, long 46975, long 28377116, long 28377092, long 28377092) line 2147 + 31 bytes
-Ffuncall(int 4, long * 0x0082ceb0) line 3488 + 216 bytes
-execute_optimized_program(const unsigned char * 0x02047810, int 13, long * 0x02080c10) line 744 + 16 bytes
-funcall_compiled_function(long 34187208, int 3, long * 0x0082d1b8) line 516 + 53 bytes
-Ffuncall(int 4, long * 0x0082d1b4) line 3523 + 17 bytes
-execute_optimized_program(const unsigned char * 0x01e96a10, int 6, long * 0x020ae510) line 744 + 16 bytes
-funcall_compiled_function(long 34186676, int 3, long * 0x0082d4a0) line 516 + 53 bytes
-Ffuncall(int 4, long * 0x0082d49c) line 3523 + 17 bytes
-execute_optimized_program(const unsigned char * 0x02156b50, int 4, long * 0x020c2db0) line 744 + 16 bytes
-funcall_compiled_function(long 34186564, int 2, long * 0x0082d780) line 516 + 53 bytes
-Ffuncall(int 3, long * 0x0082d77c) line 3523 + 17 bytes
-execute_optimized_program(const unsigned char * 0x0082d964, int 3, long * 0x020c2d70) line 744 + 16 bytes
-Fbyte_code(long 29405156, long 34352480, long 7) line 2392 + 38 bytes
-Feval(long 34354440) line 3290 + 187 bytes
-condition_case_1(long 34354572, long (long)* 0x01087232 Feval(long), long 34354440, long (long, long)* 0x01084764 run_condition_case_handlers(long, long), long 28377092) line 1692 + 7 bytes
-condition_case_3(long 34354440, long 28377092, long 34354572) line 1779 + 27 bytes
-execute_rare_opcode(long * 0x0082dc7c, const unsigned char * 0x01b090af, int 143) line 1269 + 19 bytes
-execute_optimized_program(const unsigned char * 0x01b09090, int 6, long * 0x020ae590) line 654 + 17 bytes
-funcall_compiled_function(long 34186620, int 0, long * 0x0082df68) line 516 + 53 bytes
-Ffuncall(int 1, long * 0x0082df64) line 3523 + 17 bytes
-execute_optimized_program(const unsigned char * 0x02195470, int 1, long * 0x020c2df0) line 744 + 16 bytes
-funcall_compiled_function(long 34186508, int 0, long * 0x0082e23c) line 516 + 53 bytes
-Ffuncall(int 1, long * 0x0082e238) line 3523 + 17 bytes
-execute_optimized_program(const unsigned char * 0x01e5d410, int 6, long * 0x0207d410) line 744 + 16 bytes
-funcall_compiled_function(long 34186312, int 1, long * 0x0082e524) line 516 + 53 bytes
-Ffuncall(int 2, long * 0x0082e520) line 3523 + 17 bytes
-execute_optimized_program(const unsigned char * 0x02108fb0, int 2, long * 0x020c2e30) line 744 + 16 bytes
-funcall_compiled_function(long 34186340, int 0, long * 0x0082e7fc) line 516 + 53 bytes
-Ffuncall(int 1, long * 0x0082e7f8) line 3523 + 17 bytes
-execute_optimized_program(const unsigned char * 0x020fe150, int 2, long * 0x01e6f510) line 744 + 16 bytes
-funcall_compiled_function(long 31008124, int 0, long * 0x0082ebd8) line 516 + 53 bytes
-Ffuncall(int 1, long * 0x0082ebd4) line 3523 + 17 bytes
-run_hook_with_args_in_buffer(buffer * 0x022fde00, int 1, long * 0x0082ebd4, int 0) line 3980 + 13 bytes
-run_hook_with_args(int 1, long * 0x0082ebd4, int 0) line 3993 + 23 bytes
-Frun_hooks(int 1, long * 0x0082ebd4) line 3847 + 19 bytes
-Ffuncall(int 2, long * 0x0082ebd0) line 3509 + 14 bytes
-execute_optimized_program(const unsigned char * 0x01ef2210, int 5, long * 0x01da8e10) line 744 + 16 bytes
-funcall_compiled_function(long 31020440, int 2, long * 0x0082eeb8) line 516 + 53 bytes
-Ffuncall(int 3, long * 0x0082eeb4) line 3523 + 17 bytes
-execute_optimized_program(const unsigned char * 0x0082f09c, int 3, long * 0x01d89390) line 744 + 16 bytes
-Fbyte_code(long 31102388, long 30970752, long 7) line 2392 + 38 bytes
-Feval(long 31087568) line 3290 + 187 bytes
-condition_case_1(long 30961240, long (long)* 0x01087232 Feval(long), long 31087568, long (long, long)* 0x01084764 run_condition_case_handlers(long, long), long 28510180) line 1692 + 7 bytes
-condition_case_3(long 31087568, long 28510180, long 30961240) line 1779 + 27 bytes
-execute_rare_opcode(long * 0x0082f450, const unsigned char * 0x01ef23ec, int 143) line 1269 + 19 bytes
-execute_optimized_program(const unsigned char * 0x01ef2310, int 6, long * 0x01da8f10) line 654 + 17 bytes
-funcall_compiled_function(long 31020412, int 1, long * 0x0082f740) line 516 + 53 bytes
-Ffuncall(int 2, long * 0x0082f73c) line 3523 + 17 bytes
-execute_optimized_program(const unsigned char * 0x020fe650, int 3, long * 0x01d8c490) line 744 + 16 bytes
-funcall_compiled_function(long 31020020, int 2, long * 0x0082fa14) line 516 + 53 bytes
-Ffuncall(int 3, long * 0x0082fa10) line 3523 + 17 bytes
-Fcall_interactively(long 29685180, long 28377092, long 28377092) line 1008 + 22 bytes
-Fcommand_execute(long 29685180, long 28377092, long 28377092) line 2929 + 17 bytes
-execute_command_event(command_builder * 0x01be1900, long 36626492) line 4048 + 25 bytes
-Fdispatch_event(long 36626492) line 4341 + 70 bytes
-Fcommand_loop_1() line 582 + 9 bytes
-command_loop_1(long 28377092) line 495
-condition_case_1(long 28377188, long (long)* 0x01064fb9 command_loop_1(long), long 28377092, long (long, long)* 0x010649d0 cmd_error(long, long), long 28377092) line 1692 + 7 bytes
-command_loop_3() line 256 + 35 bytes
-command_loop_2(long 28377092) line 269
-internal_catch(long 28457612, long (long)* 0x01064b20 command_loop_2(long), long 28377092, int * volatile 0x00000000) line 1317 + 7 bytes
-initial_command_loop(long 28377092) line 305 + 25 bytes
-STACK_TRACE_EYE_CATCHER(int 1, char * * 0x01b63ff0, char * * 0x01ca5300, int 0) line 2501
-main(int 1, char * * 0x01b63ff0, char * * 0x01ca5300) line 2938
-XEMACS! mainCRTStartup + 180 bytes
-_start() line 171
-KERNEL32! BaseProcessStart@4 + 115547 bytes
-
-*/
   int specdepth;
   
   if (dont_check_for_quit)
@@ -860,10 +708,28 @@ KERNEL32! BaseProcessStart@4 + 115547 bytes
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
       /* Since the code below can call Lisp, make sure that proper wrapping is
 	 in place during redisplay. */
+#if 0
       assert_with_message
 	(proper_redisplay_wrapping_in_place (),
 	 "QUIT called from within redisplay without being properly wrapped");
-#endif
+#else
+    /* FUCKME!  It looks like we cannot even check for QUIT, *EVER*, during
+       redisplay.  Checking for quit can dispatch events, which can enter
+       redisplay recursively, which can trip on 
+
+Fatal error: assertion failed, file c:\xemacs\build\src\redisplay.c, line 5532,
+!dy->locked
+
+Backtrace given in
+
+  (Info-goto-node "(internals)Nasty Bugs due to Reentrancy in Redisplay Structures handling QUIT")
+
+    */
+      assert_with_message
+	(!in_display,
+	 "QUIT called from within redisplay without being properly wrapped");
+#endif /* 0 */
+#endif /* ERROR_CHECK_TRAPPING_PROBLEMS */
 
       /* Since arbitrary Lisp code may be executed (e.g. through a menu
          filter, see backtrace directly above), GC might happen,

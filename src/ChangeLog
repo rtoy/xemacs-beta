@@ -1,5 +1,19 @@
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
+	* redisplay.c:
+	* redisplay.c (generate_displayable_area):
+	* redisplay.c (regenerate_window):
+	* redisplay.h:
+	* signal.c:
+	* signal.c (check_quit):
+	Move backtraces to internals manual.  Fix some race conditions
+	leading to crashes due to incomplete protection of critical
+	sections.  In signal.c, be more aggressive in catching incomplete
+	critical section protection -- we cannot even check for QUIT,
+	*EVER*, in a critical section.
+
+2005-01-26  Ben Wing  <ben@xemacs.org>
+
 	* emacs.c:
 	Update history section.
 
@@ -125,18 +139,6 @@
 	Renamed from readlink_and_correct_case.  Fix some problems with
 	Windows implementation due to incorrect understanding of workings
 	of the function.
-
-	* redisplay.c:
-	* redisplay.c (generate_displayable_area):
-	* redisplay.c (regenerate_window):
-	* redisplay.h:
-	* signal.c:
-	* signal.c (check_quit):
-	Move backtraces to internals manual.  Fix some race conditions
-	leading to crashes due to incomplete protection of critical
-	sections.  In signal.c, be more aggressive in catching incomplete
-	critical section protection -- we cannot even check for QUIT,
-	*EVER*, in a critical section.
 	
 	* sound.c (Fplay_sound_file):
 	* ntplay.c (nt_play_sound_file):

@@ -1,7 +1,7 @@
 /* Redisplay data structures.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1996 Chuck Thompson.
-   Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -840,5 +840,7 @@ int enter_redisplay_critical_section (void);
 void exit_redisplay_critical_section (int);
 int enter_redisplay_critical_section_maybe (void);
 void exit_redisplay_critical_section_maybe (int depth);
+int enter_redisplay_critical_section_if (Boolint from_outside);
+void exit_redisplay_critical_section_if (Boolint from_outside, int depth);
 
 #endif /* INCLUDED_redisplay_h_ */

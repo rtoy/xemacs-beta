@@ -5285,112 +5285,11 @@ generate_string_display_line (struct window *w, Lisp_Object disp_string,
   return ret_charcount;
 }
 
+/*
 
-/* Tricky tricky tricky.  generate_displayable_area() can (could) be called reentrantly, and redisplay is not prepared to handle this:
+Info on Re-entrancy crashes, with backtraces given:
 
-assert_failed(const char * 0x0129c8c8 `string', int 5328, const char * 0x01274068 `string') line 3620
-Dynarr_verify_mod_1(void * 0x0250f228, const char * 0x0129c8c8 `string', int 5328) line 1256 + 36 bytes
-generate_displayable_area(window * 0x02480028, long 38776292, int 0, int 0, int 265, int 169, display_line_dynarr * 0x0250f228, long 0, int 2) line 5328 + 25 bytes
-output_gutter(frame * 0x0228ad90, gutter_pos TOP_GUTTER, int 1) line 409 + 69 bytes
-redraw_exposed_gutter(frame * 0x0228ad90, gutter_pos TOP_GUTTER, int 8, int 23, int 249, int 127) line 687 + 15 bytes
-redraw_exposed_gutters(frame * 0x0228ad90, int 8, int 23, int 249, int 127) line 703 + 29 bytes
-mswindows_redraw_exposed_area(frame * 0x0228ad90, int 8, int 23, int 249, int 127) line 862 + 25 bytes
-mswindows_handle_paint(frame * 0x0228ad90) line 2176 + 25 bytes
-mswindows_wnd_proc(HWND__ * 0x001003e2, unsigned int 15, unsigned int 0, long 0) line 3233 + 45 bytes
-intercepted_wnd_proc(HWND__ * 0x001003e2, unsigned int 15, unsigned int 0, long 0) line 2488
-USER32! 77e3a244()
-USER32! 77e14730()
-USER32! 77e1558a()
-NTDLL! KiUserCallbackDispatcher@12 + 19 bytes
-USER32! 77e14680()
-USER32! 77e1a792()
-qxeIsDialogMessage(HWND__ * 0x001003e2, tagMSG * 0x0082a93c {msg=0x0000000f wp=0x00000000 lp=0x00000000}) line 2298 + 14 bytes
-mswindows_is_dialog_msg(tagMSG * 0x0082a93c {msg=0x0000000f wp=0x00000000 lp=0x00000000}) line 165 + 13 bytes
-mswindows_drain_windows_queue(int 0) line 1282 + 9 bytes
-emacs_mswindows_drain_queue() line 1326 + 7 bytes
-event_stream_drain_queue() line 1887
-event_stream_quit_p() line 1992
-check_quit() line 993
-unbind_to_hairy(int 35) line 5963
-unbind_to_1(int 35, long 20888208) line 5945 + 200 bytes
-specifier_instance_from_inst_list(long 21379344, long 38135616, long 36220304, long 20888208, _error_behavior_struct_ {...}, int 1, long 3) line 2522 + 16 bytes
-specifier_instance(long 21379344, long 38135616, long 36220304, _error_behavior_struct_ {...}, int 1, int 0, long 3) line 2625 + 65 bytes
-specifier_instance_no_quit(long 21379344, long 38135616, long 36220304, _error_behavior_struct_ {...}, int 0, long 1) line 2658 + 31 bytes
-face_property_matching_instance(long 22612340, long 20860632, long 22530956, long 36220304, _error_behavior_struct_ {...}, int 0, long 1) line 565 + 48 bytes
-ensure_face_cachel_contains_charset(face_cachel * 0x0082b014, long 36220304, long 22530956) line 1104 + 35 bytes
-update_face_cachel_data(face_cachel * 0x0082b014, long 36220304, long 22612340) line 1304 + 19 bytes
-query_string_geometry(long 21110576, long 22612340, int * 0x00000000, int * 0x0082b5b4, int * 0x00000000, long 38852960) line 2370 + 23 bytes
-mswindows_widget_query_string_geometry(long 21110576, long 22612340, int * 0x0082b5b8, int * 0x0082b5b4, long 38852960) line 2914 + 25 bytes
-widget_query_string_geometry(long 21110576, long 22612340, int * 0x0082b5b8, int * 0x0082b5b4, long 38852960) line 514 + 32 bytes
-edit_field_query_geometry(long 38857648, int * 0x0082b7b4, int * 0x0082b7b8, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38852960) line 920 + 390 bytes
-widget_query_geometry(long 38857648, int * 0x0082b7b4, int * 0x0082b7b8, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38852960) line 567 + 26 bytes
-image_instance_query_geometry(long 38857648, int * 0x0082b7b4, int * 0x0082b7b8, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38852960) line 2015 + 26 bytes
-glyph_query_geometry(long 38853384, int * 0x0082b7b4, int * 0x0082b7b8, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38852960) line 4197 + 25 bytes
-layout_query_geometry(long 38852960, int * 0x0082b9cc, int * 0x0082b9d0, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38404624) line 1351 + 25 bytes
-widget_query_geometry(long 38852960, int * 0x0082b9cc, int * 0x0082b9d0, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38404624) line 567 + 26 bytes
-image_instance_query_geometry(long 38852960, int * 0x0082b9cc, int * 0x0082b9d0, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38404624) line 2015 + 26 bytes
-glyph_query_geometry(long 38537976, int * 0x0082b9cc, int * 0x0082b9d0, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38404624) line 4197 + 25 bytes
-layout_layout(long 38404624, int 265, int 156, int -2, int -2, long 38273064) line 1468 + 23 bytes
-widget_layout(long 38404624, int 265, int 156, int -2, int -2, long 38273064) line 626 + 30 bytes
-image_instance_layout(long 38404624, int 265, int 156, int -2, int -2, long 38273064) line 2102 + 51 bytes
-glyph_ascent(long 38404624, long 38273064) line 4009 + 21 bytes
-update_glyph_cachel_data(window * 0x02480028, long 36201168, glyph_cachel * 0x0248c3d8) line 4272 + 13 bytes
-get_glyph_cachel_index(window * 0x02480028, long 36201168) line 4306 + 17 bytes
-add_glyph_rune(position_redisplay_data_type * 0x0082bf2c, glyph_block * 0x024bd028, int 0, int 0, glyph_cachel * 0x00000000) line 1800 + 15 bytes
-add_glyph_runes(position_redisplay_data_type * 0x0082bf2c, int 0) line 2085 + 31 bytes
-create_string_text_block(window * 0x02480028, long 38776292, display_line * 0x02514500, long 0, prop_block_dynarr * * 0x0082c13c, int 2) line 4907 + 14 bytes
-generate_string_display_line(window * 0x02480028, long 38776292, display_line * 0x02514500, long 0, prop_block_dynarr * * 0x0082c13c, int 2) line 5293 + 29 bytes
-generate_displayable_area(window * 0x02480028, long 38776292, int 0, int 0, int 265, int 169, display_line_dynarr * 0x0250f228, long 0, int 2) line 5372 + 29 bytes
-output_gutter(frame * 0x0228ad90, gutter_pos TOP_GUTTER, int 0) line 409 + 69 bytes
-update_frame_gutters(frame * 0x0228ad90) line 639 + 15 bytes
-redisplay_frame(frame * 0x0228ad90, int 1) line 6792 + 9 bytes
-redisplay_device(device * 0x0171df00, int 1) line 6911 + 11 bytes
-redisplay_without_hooks() line 6957 + 11 bytes
-redisplay_no_pre_idle_hook() line 7029
-redisplay() line 7011
-mswindows_wnd_proc(HWND__ * 0x001003e2, unsigned int 5, unsigned int 0, long 10223881) line 3424
-intercepted_wnd_proc(HWND__ * 0x001003e2, unsigned int 5, unsigned int 0, long 10223881) line 2488
-USER32! 77e3a244()
-USER32! 77e16362()
-USER32! 77e14c1a()
-USER32! 77e1dd30()
-mswindows_wnd_proc(HWND__ * 0x001003e2, unsigned int 71, unsigned int 0, long 8578308) line 3926 + 21 bytes
-intercepted_wnd_proc(HWND__ * 0x001003e2, unsigned int 71, unsigned int 0, long 8578308) line 2488
-USER32! 77e3a244()
-USER32! 77e14730()
-USER32! 77e174b4()
-NTDLL! KiUserCallbackDispatcher@12 + 19 bytes
-mswindows_set_frame_size(frame * 0x0228ad90, int 265, int 156) line 355
-internal_set_frame_size(frame * 0x0228ad90, int 265, int 156, int 0) line 2754 + 24 bytes
-Fset_frame_displayable_pixel_size(long 36220304, long 531, long 313, long 20888208) line 3004 + 32 bytes
-Ffuncall(int 4, long * 0x0082e778) line 3844 + 168 bytes
-execute_optimized_program(const unsigned char * 0x02286e48, int 40, long * 0x01529b80) line 609 + 16 bytes
-funcall_compiled_function(long 22433308, int 0, long * 0x0082ec08) line 3452 + 85 bytes
-Ffuncall(int 1, long * 0x0082ec04) line 3883 + 17 bytes
-execute_optimized_program(const unsigned char * 0x02286d40, int 6, long * 0x01548ddc) line 609 + 16 bytes
-funcall_compiled_function(long 22505864, int 11, long * 0x0082f00c) line 3452 + 85 bytes
-Ffuncall(int 12, long * 0x0082f008) line 3883 + 17 bytes
-execute_optimized_program(const unsigned char * 0x02503e38, int 47, long * 0x0152dc48) line 609 + 16 bytes
-funcall_compiled_function(long 22436784, int 0, long * 0x0082f534) line 3452 + 85 bytes
-Ffuncall(int 1, long * 0x0082f530) line 3883 + 17 bytes
-apply1(long 22436784, long 20888208) line 4458 + 11 bytes
-Fcall_interactively(long 20742816, long 20888208, long 20888208) line 460 + 13 bytes
-Ffuncall(int 2, long * 0x0082f8ec) line 3844 + 127 bytes
-call1(long 20854392, long 20742816) line 4489 + 11 bytes
-execute_command_event(command_builder * 0x01798f98, long 24439276) line 4198 + 69 bytes
-Fdispatch_event(long 24439276) line 4569 + 13 bytes
-Fcommand_loop_1() line 569 + 9 bytes
-command_loop_1(long 20888208) line 489
-condition_case_1(long 20886024, long (long)* 0x010955a0 command_loop_1(long), long 20888208, long (long, long)* 0x01095150 cmd_error(long, long), long 20888208) line 1917 + 7 bytes
-command_loop_3() line 251 + 35 bytes
-command_loop_2(long 20888208) line 264
-internal_catch(long 20650992, long (long)* 0x010952c0 command_loop_2(long), long 20888208, int * volatile 0x00000000, long * volatile 0x00000000) line 1527 + 7 bytes
-initial_command_loop(long 20888208) line 300 + 28 bytes
-xemacs_21_5_b10_i586_pc_win32(int 1, char * * 0x00e52620, char * * 0x00e52bb0, int 0) line 2356
-main(int 1, char * * 0x00e52620, char * * 0x00e52bb0) line 2733
-mainCRTStartup() line 338 + 17 bytes
-KERNEL32! 77ea847c()
-
+  (Info-goto-node "(internals)Nasty Bugs due to Reentrancy in Redisplay Structures handling QUIT")
 */
 
 
@@ -5406,16 +5305,21 @@ generate_displayable_area (struct window *w, Lisp_Object disp_string,
 {
   int yend = ypos + height;
   Charcount s_zv;
-
   prop_block_dynarr *prop = 0;
   layout_bounds bounds;
-  assert (dla);
+  int depth = -1;
 
-  Dynarr_reset (dla);
   /* if there's nothing to do then do nothing. code after this assumes
      there is something to do. */
   if (NILP (disp_string))
     return;
+
+  /* See comment in regenerate_window() */
+  if (!in_display)
+    depth = enter_redisplay_critical_section ();
+
+  assert (dla);
+  Dynarr_reset (dla);
 
   s_zv = string_char_length (disp_string);
 
@@ -5496,6 +5400,9 @@ generate_displayable_area (struct window *w, Lisp_Object disp_string,
 
   if (prop)
     Dynarr_free (prop);
+
+  if (depth >= 0)
+    exit_redisplay_critical_section (depth);
 }
 
 
@@ -5512,7 +5419,8 @@ generate_displayable_area (struct window *w, Lisp_Object disp_string,
    changed it to the echo area buffer. */
 
 static void
-regenerate_window (struct window *w, Charbpos start_pos, Charbpos point, int type)
+regenerate_window (struct window *w, Charbpos start_pos, Charbpos point,
+		   int type)
 {
   struct frame *f = XFRAME (w->frame);
   struct buffer *b = XBUFFER (w->buffer);
@@ -5520,6 +5428,7 @@ regenerate_window (struct window *w, Charbpos start_pos, Charbpos point, int typ
   int yend;	/* set farther down */
   int yclip = WINDOW_TEXT_TOP_CLIP (w);
   int force;
+  int depth = -1;
 
   prop_block_dynarr *prop;
   layout_bounds bounds;
@@ -5529,6 +5438,19 @@ regenerate_window (struct window *w, Charbpos start_pos, Charbpos point, int typ
   /* The lines had better exist by this point. */
   if (!(dla = window_display_lines (w, type)))
     ABORT ();
+
+  if (!in_display)
+    depth = enter_redisplay_critical_section ();
+
+  /* This is one spot where a re-entrancy crash will occur, due to a check
+     in the dynarr to make sure it isn't "locked" */
+/*
+
+Info on Re-entrancy crashes, with backtraces given:
+
+  (Info-goto-node "(internals)Nasty Bugs due to Reentrancy in Redisplay Structures handling QUIT")
+*/
+
   Dynarr_reset (dla);
   w->max_line_len = 0;
 
@@ -5709,6 +5631,9 @@ regenerate_window (struct window *w, Charbpos start_pos, Charbpos point, int typ
          there when we first started working in this function. */
       generate_modeline (w, Dynarr_atp (dla, 0), type);
     }
+
+  if (depth >= 0)
+    exit_redisplay_critical_section (depth);
 }
 
 #define REGEN_INC_FIND_START_END					      \
