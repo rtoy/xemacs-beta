@@ -1,3 +1,12 @@
+2001-08-02  Peter Brown  <rendhalver@users.sourceforge.net>
+
+	* configure.usage (--with-dialogs): added lucid to list of options
+	* configure.usage (--with-widgets): added lucid to list of options
+	* configure.usage (--with-dragndrop): added GTK to list of protocols
+	* configure.usage (--mail-locking): added `locking' or `mmdf' to
+	list of options syncing options documentation with those in
+	configure.in
+
 2001-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.2 "artichoke" is released.
