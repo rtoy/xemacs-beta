@@ -460,25 +460,29 @@ Example: (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
   "*String to display in the modeline when `abbrev-mode' is active.
 Set this to nil if you don't want a modeline indicator."
   :type '(choice string
-		 (const :tag "none" nil)))
+		 (const :tag "none" nil))
+  :group 'abbrev-mode)
 
 (defcustom overwrite-mode-line-string " Ovwrt"
   "*String to display in the modeline when `overwrite-mode' is active.
 Set this to nil if you don't want a modeline indicator."
   :type '(choice string
-		 (const :tag "none" nil)))
+		 (const :tag "none" nil))
+  :group 'editing-basics)
 
 (defcustom auto-fill-mode-line-string " Fill"
   "*String to display in the modeline when `auto-fill-mode' is active.
 Set this to nil if you don't want a modeline indicator."
   :type '(choice string
-		 (const :tag "none" nil)))
+		 (const :tag "none" nil))
+  :group 'fill)
 
 (defcustom defining-kbd-macro-mode-line-string " Def"
   "*String to display in the modeline when `defining-kbd-macro' is active.
 Set this to nil if you don't want a modeline indicator."
   :type '(choice string
-		 (const :tag "none" nil)))
+		 (const :tag "none" nil))
+  :group 'keyboard)
 
 ;; #### TODO: Add `:menu-tag' keyword to add-minor-mode.  Or create a
 ;; separate function to manage the minor mode menu.

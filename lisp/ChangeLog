@@ -1,3 +1,10 @@
+2002-01-10  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* modeline.el (abbrev-mode-line-string): add custom group keyword.
+	(overwrite-mode-line-string): ditto.
+	(auto-fill-mode-line-string): ditto.
+	(defining-kbd-macro-mode-line-string): ditto.
+
 2002-01-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* coding.el: Fix typo in comment.
