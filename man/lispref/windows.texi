@@ -1049,6 +1049,7 @@ non-@code{nil}, and nondedicated otherwise.
 @cindex window point
 @cindex position in window
 @cindex point in window
+@cindex cursor in window
 
   Each window has its own value of point, independent of the value of
 point in other windows displaying the same buffer.  This makes it useful
@@ -1097,6 +1098,74 @@ forms.  But that value is hard to find.
 @defun set-window-point window position
 This function positions point in @var{window} at position
 @var{position} in @var{window}'s buffer.
+@end defun
+
+@defun current-pixel-row &optional window pos
+@defunx current-pixel-column &optional window pos
+@cindex cursor pixel row
+@cindex window point pixel row
+@cindex cursor pixel column
+@cindex window point pixel column
+The function, @code{current-pixel-row}, returns the vertical location,
+in pixels, of the point @var{pos} within the specified @var{window};
+similarly, @code{current-pixel-column} returns the corresponding
+horizontal location.  The position returned is that of the upper-left
+corner of the cursor, and is relative to the upper-left location of the
+window.  If @var{window} is @code{nil}, the function uses the selected
+window.  If @var{pos} is @code{nil}, the value of @code{window-point} is
+used.
+
+Note that the coordinates are relative to the current XEmacs window, and
+are not relative to the XEmacs X11 window.  To obtain the coordinates
+relative to the X11 window, you must also take into account the spacings
+of any menubars, gutters, toolbars, margins, etc., as well as any window
+offsets.  The function, @code{window-pixel-edges} (@pxref{Position of
+Window}), can be used to help calculate the location relative to the
+frame.
+
+@emph{Important note}: in order for these functions to return a correct,
+non-nil value, two criteria @emph{must} be satisfied:
+
+@itemize @bullet
+
+@item
+The location of @code{pos} must be visible within the specified window.
+If @var{pos} is outside the visible area, @code{nil} is returned.
+
+@item
+As the pixel location is determined from the redisplay tables, the
+redisplay tables must be up-to-date.  In other words, the XEmacs
+window(s), as seen by the user, must be correct (to improve performance,
+XEmacs generally defers display updates until control returns back to
+the idle loop).  To insure that the redisplay tables are up-to-date, one
+of the following must generally be done @emph{before} calling
+@code{current-pixel-row} or @code{current-pixel-column}:
+
+@itemize @bullet
+
+@item
+If the window in question is not in a new frame, you can force a
+redisplay using @code{(sit-for 0)}.  See @code{sit-for} in
+@ref{Waiting}.
+
+@item
+If the window in question is in a new frame, you must call code like the
+following:
+
+@example
+@group
+(while (not (frame-visible-p frame))
+  (sleep-for .5))
+@end group
+@end example
+
+@end itemize
+
+@end itemize
+
+If one of these is not done, the return value may be incorrect, even if
+it is non-nil.
+
 @end defun
 
 @node Window Start

@@ -5212,26 +5212,23 @@ Does not restore the value of point in current buffer.
   return unbind_to_1 (speccount, Fprogn (args));
 }
 
-DEFUN ("current-pixel-column", Fcurrent_pixel_column, 0, 2, 0, /*
-Return the horizontal pixel position of POS in window.
-Beginning of line is column 0. This is calculated using the redisplay
-display tables.  If WINDOW is nil, the current window is assumed.
-If POS is nil, point is assumed. Note that POS must be visible for
-a non-nil result to be returned.
-*/
-       (window, pos))
+static int
+get_current_pixel_pos (Lisp_Object window, Lisp_Object pos,
+		       struct window **w,
+		       struct rune **rb, struct display_line **dl)
 {
-  struct window* w = decode_window (window);
-  display_line_dynarr *dla = window_display_lines (w, CURRENT_DISP);
+  display_line_dynarr *dla;
+  struct display_block *db = NULL;
+  int x, y;
 
-  struct display_line *dl = 0;
-  struct display_block *db = 0;
-  struct rune* rb = 0;
-  int y = w->last_point_y[CURRENT_DISP];
-  int x = w->last_point_x[CURRENT_DISP];
-
-  if (MINI_WINDOW_P (w))
-    return Qnil;
+  *rb = NULL;
+  *dl = NULL;
+  *w = decode_window (window);
+  dla = window_display_lines (*w, CURRENT_DISP);
+  x = (*w)->last_point_x[CURRENT_DISP];    
+  y = (*w)->last_point_y[CURRENT_DISP];
+  if (MINI_WINDOW_P (*w))
+    return 0;
 
   if (y<0 || x<0 || y >= Dynarr_length (dla) || !NILP (pos))
     {
@@ -5251,37 +5248,83 @@ a non-nil result to be returned.
 
       for (i = first_line; i < Dynarr_length (dla); i++)
 	{
-	  dl = Dynarr_atp (dla, i);
+	  *dl = Dynarr_atp (dla, i);
 	  /* find the vertical location first */
-	  if (point >= dl->charpos && point <= dl->end_charpos)
+	  if (point >= (*dl)->charpos && point <= (*dl)->end_charpos)
 	    {
-	      db = get_display_block_from_line (dl, TEXT);
+	      db = get_display_block_from_line (*dl, TEXT);
 	      for (i = 0; i < Dynarr_length (db->runes); i++)
 		{
-		  rb = Dynarr_atp (db->runes, i);
-		  if (point <= rb->charpos)
+		  *rb = Dynarr_atp (db->runes, i);
+		  if (point <= *rb->charpos)
 		    goto found_charpos;
 		}
-	      return Qnil;
+	      return 0;
 	    }
 	}
-      return Qnil;
+      return 0;
     found_charpos:
       ;
     }
   else
     {
       /* optimized case */
-      dl = Dynarr_atp (dla, y);
-      db = get_display_block_from_line (dl, TEXT);
+      *dl = Dynarr_atp (dla, y);
+      db = get_display_block_from_line (*dl, TEXT);
 
       if (x >= Dynarr_length (db->runes))
-	return Qnil;
+	return 0;
 
-      rb = Dynarr_atp (db->runes, x);
+      *rb = Dynarr_atp (db->runes, x);
     }
 
+  return 1;
+}
+
+DEFUN ("current-pixel-column", Fcurrent_pixel_column, 0, 2, 0, /*
+Return the horizontal pixel position of point POS in window.
+Beginning of line is column 0.  If WINDOW is nil, the current window
+is assumed.  If POS is nil, point is assumed.  Note that POS must be
+visible for a non-nil result to be returned.  This is calculated using
+the redisplay display tables; because of this, the returned value will
+only be correct if the redisplay tables are up-to-date.  Use
+\"(sit-for 0)\" to insure that they are; however, if WINDOW is part of
+a new frame, use the following instead:
+    (while (not (frame-visible-p frame)) (sleep-for .5))
+*/
+       (window, pos))
+{
+  struct window* w;
+  struct display_line *dl;
+  struct rune* rb;
+
+  if (!get_current_pixel_pos(window, pos, &w, &rb, &dl))
+    return Qnil;
+
   return make_int (rb->xpos - WINDOW_LEFT (w));
+}
+
+DEFUN ("current-pixel-row", Fcurrent_pixel_row, 0, 2, 0, /*
+Return the vertical pixel position of point POS in window.  Top of
+window is row 0.  If WINDOW is nil, the current window is assumed.  If
+POS is nil, point is assumed.  Note that POS must be visible for a
+non-nil result to be returned.  This is calculated using the redisplay
+display tables; because of this, the returned value will only be
+correct if the redisplay tables are up-to-date.  Use \"(sit-for 0)\"
+to insure that they are; however, if WINDOW is part of a new frame,
+use the following instead:
+    (while (not (frame-visible-p frame)) (sleep-for .5))
+*/
+       (window, pos))
+{
+  struct window* w;
+  struct display_line *dl;
+  struct rune* rb;
+
+  if (!get_current_pixel_pos(window, pos, &w, &rb, &dl))
+    return Qnil;
+
+  return make_int (dl->ypos - dl->ascent - WINDOW_TOP (w));
 }
 
 
@@ -5431,6 +5474,7 @@ syms_of_window (void)
 #endif
   DEFSUBR (Fsave_window_excursion);
   DEFSUBR (Fcurrent_pixel_column);
+  DEFSUBR (Fcurrent_pixel_row);
 }
 
 void
