@@ -1,3 +1,8 @@
+2002-11-27  Ben Wing  <ben@xemacs.org>
+
+	* .cvsignore:
+	Windows shit.
+	
 2002-10-13  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs.mak (OS): Remove obsolete quoting of double-quote in the

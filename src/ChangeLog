@@ -1,3 +1,74 @@
+2002-11-27  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (garbage_collect_1):
+	Better redisplay-related assert.
+	
+	* elhash.c (xhash_table): Comment change.
+	
+	* eval.c:
+	* eval.c (signal_call_debugger):
+	* eval.c (throw_or_bomb_out):
+	* eval.c (check_proper_critical_section_gc_protection):
+	* eval.c (Fsignal):
+	* eval.c (Feval):
+	* eval.c (Ffuncall):
+	* eval.c (flagged_a_squirmer):
+	* eval.c (call_trapping_problems):
+	* eval.c (warning_will_be_discarded):
+	* eval.c (warn_when_safe_lispobj):
+	* eval.c (warn_when_safe):
+	* eval.c (vars_of_eval):
+	Don't generate large warning strings (e.g. backtraces) when they will
+	be discarded.
+
+	Implement debug-on-error as documented -- it will enter the
+	debugger and crash when an uncaught signal happens noninteractively
+	and we are --debug.
+
+	Better redisplay-related asserts.
+	
+	* frame-msw.c (mswindows_init_frame_1):
+	* frame.c (enter_redisplay_critical_section):
+	* lisp.h:
+	* redisplay.c (redisplay_frame):
+	* scrollbar-gtk.c (gtk_update_frame_scrollbars):
+	* scrollbar-x.c (x_update_frame_scrollbars):
+	* signal.c (check_quit):
+	* sysdep.c:
+	* sysdep.c (qxe_interruptible_open):
+
+	Fix up documentation related to QUIT (which CANNOT garbage-collect
+	under any circumstances), and to redisplay critical sections.
+	
+	* lread.c:
+	* lread.c (Fload_internal):
+	* lread.c (PRINT_LOADING_MESSAGE_1):
+	* lread.c (locate_file_open_or_access_file):
+	* lread.c (locate_file_in_directory_mapper):
+	* lread.c (vars_of_lread):
+	Add load-ignore-out-of-date-elc-files,
+	load-always-display-messages, load-show-full-path-in-messages for
+	more robust package compilation and debugging.
+	
+	* profile.c:
+	* profile.c (create_call_count_profile_table):
+	* profile.c (profile_increase_call_count):
+	* profile.c (Fstart_profiling):
+	* profile.c (Fclear_profiling_info):
+	* profile.c (get_profiling_info_timing_maphash):
+	* profile.c (Fget_profiling_info):
+	* profile.c (set_profiling_info_timing_maphash):
+	* profile.c (Fset_profiling_info):
+	* profile.c (Fprofiling_active_p):
+	* profile.c (syms_of_profile):
+	* profile.c (vars_of_profile):
+	Overhaul profile code.  Change format to include call count and be
+	extensible for further info.  Remove call-count-profile-table.
+	Add set-profiling-info.  See related profile.el changes (which
+	SHOULD ABSOLUTELY be in the core!  Get rid of xemacs-devel and
+	xemacs-base packages *yesterday*!).
+	
 2002-11-22  Ben Wing  <ben@xemacs.org>
 
 	* fileio.c: Fix crashes due to incorrectly ported code from

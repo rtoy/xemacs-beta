@@ -2843,6 +2843,18 @@ extern int specpdl_depth_counter;
 /*			   Checking for QUIT				*/
 /************************************************************************/
 
+/* NOTE NOTE NOTE: Invoking QUIT can cause random Lisp code to be executed!
+   This can happen in numerous ways.  For example, on many platforms, QUIT
+   needs to drain the event queue to see whether there's a C-g in the works.
+   A side effect of this is that, if there's a menu-press event, menu filters
+   (i.e. Lisp code) will be invoked.  Lisp code could also happen if there's
+   an asynchronous timeout, or if the debugger is invoked as a result of
+   debug-on-quit and the user returns by hitting `r', etc. etc.
+
+   However, GC CANNOT HAPPEN.  It is forbidden everywhere within the QUIT-
+   processing code, because most callers cannot tolerate GC during QUIT
+   since it's just too prevalent. */
+
 /* The exact workings of this mechanism are described in detail in signal.c. */
 
 /* Asynchronous events set something_happened, and then are processed
@@ -2897,8 +2909,9 @@ int begin_do_check_for_quit (void);
    However, this mechanism is inherently approximate, so it really
    doesn't matter much.) In the future, it might also include doing a
    thread context switch.  Callers of QUITP generally don't except
-   random side effects to happen, so we have this different
-   version. */
+   random side effects to happen (#### unfortunately, random side effects
+   can happen anyway, e.g. through menu filters -- see comment above),
+   so we have this different version. */
 #define INTERNAL_QUITP						\
   ((something_happened ? check_what_happened () : (void) 0),	\
    QUIT_FLAG_SAYS_SHOULD_QUIT)
@@ -3004,6 +3017,16 @@ struct gcpro
    to nest another level, use nngcpro1, nngcpro2, ... and use
    NNGCPROn().  If you need to nest yet another level, create
    the appropriate macros. */
+
+/* NOTE: About comments like "This function does not GC": These are there to
+   try to track whether GCPROing is necessary.  Strictly speaking, some
+   functions that say this might actually GC, but only when it is never
+   possible to return (more specifically, in the process of signalling an
+   error, the debugger may be invoked, and could GC).  For GCPRO purposes,
+   you only have to worry about functions that can GC and then return.
+   The QUIT macro cannot GC any more, although this wasn't true at some point,
+   and so some "This function can GC" comments may be inaccurate.
+*/
 
 #ifdef DEBUG_GCPRO
 
@@ -3684,6 +3707,7 @@ Lisp_Object save_current_buffer_restore (Lisp_Object);
 /* Defined in emacs.c */
 EXFUN (Fkill_emacs, 1);
 EXFUN (Frunning_temacs_p, 0);
+EXFUN (Fforce_debugging_signal, 1);
 
 SIGTYPE fatal_error_signal (int);
 Lisp_Object make_arg_list (int, Extbyte **);

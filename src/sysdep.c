@@ -2576,7 +2576,8 @@ qxe_open (const Ibyte *path, int oflag, ...)
 /* Like qxe_open, only when open() is interrupted by EINTR, check for
    QUIT.  This allows the callers of this function to be interrupted
    with C-g when, say, reading from named pipes.  However, this should
-   be used with caution, as it can GC.
+   be used with caution, as it can run random Lisp code (although it
+   cannot GC).
 
    This function will not function as expected on systems where open()
    is not interrupted by C-g.  However, the worst that can happen is

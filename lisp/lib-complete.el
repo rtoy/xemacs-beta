@@ -1,7 +1,8 @@
 ;;; lib-complete.el --- Completion on the lisp search path
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
-;; Copyright (C) Mike Williams <mike-w@cs.aukuni.ac.nz> 1991
+;; Copyright (C) 1991 Mike Williams <mike-w@cs.aukuni.ac.nz>.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Mike Williams <mike-w@cs.aukuni.ac.nz>
 ;; Maintainer: XEmacs Development Team
@@ -31,27 +32,8 @@
 
 ;; This file is dumped with XEmacs.
 
-;; ========================================================================
-;; lib-complete.el --  Completion on a search path
-;; Author          : Mike Williams <mike-w@cs.aukuni.ac.nz>
-;; Created On      : Sat Apr 20 17:47:21 1991
-;; Last Modified By: Heiko M|nkel <muenkel@tnt.uni-hannover.de>
-;; Additional XEmacs integration By: Chuck Thompson <cthomp@cs.uiuc.edu>
-;; Last Modified On: Thu Jul 1 14:23:00 1994
-;; ========================================================================
-;; NOTE: XEmacs must be redumped if this file is changed.
-;;
-;; Copyright (C) Mike Williams <mike-w@cs.aukuni.ac.nz> 1991
-;;
-;; Keywords: utility, lisp
-
 ;; Many thanks to Hallvard Furuseth <hallvard@ifi.uio.no> for his
 ;; helpful suggestions.
-
-;; The function locate-file is removed, because of its incompatibility
-;; with the buildin function of the lemacs 19.10 (Heiko M|nkel).
-
-;; There is now the new function find-library in this package.
 
 ;;; ChangeLog:
 
@@ -295,17 +277,23 @@ This is an interface to the function `load'."
 
 ;;=== find-library with completion (Author: Bob Weiner) ===================
 
+;; should be called find-lisp-source-path!
 (defcustom find-library-source-path nil
   "The default list of directories where find-library searches.
 
 If this variable is `nil' then find-library searches `load-path' by
 default.
 
+If this is set to a function, it will be called the first time this value
+is needed, to compute the actual list, which will then be substituted into
+the variable.
+
 A good way to set this variable is like this:
 
 \(setq find-library-source-path
-  (paths-find-recursive-load-path
-    (list lisp-directory \"/src/xemacs/xemacs-packages-src/\")))
+  #'(lambda ()
+     (paths-find-recursive-load-path
+      (list lisp-directory \"/src/xemacs/xemacs-packages-src/\"))))
 "
   :type '(repeat directory)
   :group 'find-function)
@@ -327,6 +315,11 @@ if this is nil (the default), then `load-path' is searched."
 	     (read-coding-system "Coding System: "))))
   (let ((path (if (or (null library) (equal library ""))
 		   nil
+		(when (functionp find-library-source-path)
+		  (message "Computing find-library-source-path...")
+		  (setq find-library-source-path
+			(funcall find-library-source-path))
+		  (message "Computing find-library-source-path... done."))
 		(locate-file library (or find-library-source-path load-path)
 			       ":.el:.el.gz:.el.Z:.elc"))))
     (if path (funcall (if (fboundp display-function)

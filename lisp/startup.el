@@ -538,10 +538,23 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
     (startup-load-autoloads)
 
     (let (error-data)
-      (condition-case data
+      ;; if noninteractive, an error will kill us.  by catching and
+      ;; resignalling, we don't accomplish much, but do make it difficult
+      ;; to determine where the error really occurred.  when interactive,
+      ;; however, an error processing the command line does NOT kill us;
+      ;; instead, the error handler tries to display an error on the frame.
+      ;; In that case, we must make sure that all the remaining initialization
+      ;; gets done!!!
+      ;;
+      ;; #### A better solution in the interactive case is to use
+      ;; call-with-condition-handler, which would let us do the rest of
+      ;; the initialization AND allow the user to get an accurate backtrace.
+      (if (noninteractive)
 	  (command-line)
-	;; catch non-error signals, especially quit
-	(t (setq error-data data)))
+	(condition-case data
+	    (command-line)
+	  ;; catch non-error signals, especially quit
+	  (t (setq error-data data))))
       ;; Do this again, in case the init file defined more abbreviations.
       (setq default-directory (abbreviate-file-name default-directory))
       ;; Specify the file for recording all the auto save files of

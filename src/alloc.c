@@ -180,7 +180,7 @@ static int lrecord_uid_counter;
 
 /* Nonzero when calling certain hooks or doing other things where
    a GC would be bad */
-static int gc_currently_forbidden;
+int gc_currently_forbidden;
 
 /* Hooks. */
 Lisp_Object Vpre_gc_hook, Qpre_gc_hook;
@@ -4238,6 +4238,8 @@ garbage_collect_1 (void)
   int cursor_changed;
   Lisp_Object pre_gc_cursor;
   struct gcpro gcpro1;
+
+  assert (!in_display || gc_currently_forbidden);
 
   if (gc_in_progress
       || gc_currently_forbidden

@@ -1,3 +1,32 @@
+2002-11-27  Ben Wing  <ben@xemacs.org>
+
+	* cl-macs.el (loop): Document better.
+	
+	* cmdloop.el:
+	* cmdloop.el (command-error):
+	* cmdloop.el (breakpoint-on-error): Removed.
+	Remove nonworking breakpoint-on-error now that debug-on-error
+	works as documented.
+	
+	* help.el:
+	* help.el (temp-buffer-mode): New.
+	* help.el (Commands): New.
+	* help.el (temp-buffer-mode-map): New.
+	* help.el (mode-for-temp-buffer): New.
+	* help.el (with-displaying-help-buffer): Removed.
+	* help.el (with-displaying-temp-buffer): New.
+	Extract out with-displaying-help-buffer into a more general
+	mechanism.
+
+	* lib-complete.el:
+	* lib-complete.el (find-library-source-path):
+	* lib-complete.el (find-library):
+	Support thunks in find-library-source-path.
+	
+	* startup.el (normal-top-level):
+	Don't catch errors when noninteractive, because that makes
+	stack traces from stack-trace-on-error useless.
+
 2002-11-17  Ben Wing  <ben@xemacs.org>
 
 	* code-files.el (load):

@@ -740,7 +740,25 @@ and plists using
 
 Destructuring is forgiving in that mismatches in the number of elements on
 either size will be handled gracefully, either by ignoring or initializing
-to nil.
+to nil.  Destructuring is extremely powerful, and is probably the single
+most useful feature of `loop'.
+
+Other useful features of loops are iterating over hash-tables, collecting values into lists, and being able to modify lists in-place as you iterate over them.  As an example of the first two,
+
+\(loop for x being the hash-key in table using (hash-value y)
+  collect (cons x y))
+
+converts hash-table TABLE to an alist. (What `collect' actually does is
+push its value onto the end of an internal list and establish this list as
+the default return value of the loop.  See below for more information.)
+
+An example of in-place modification is
+
+\(setq foo '(1 3 5))
+\(loop for x in-ref foo do
+  (setf x (* x x)))
+
+after which foo will contain '(1 9 25).
 
 If you don't understand how a particular loop clause works, create an
 example and use `macroexpand-sexp' to expand the macro.

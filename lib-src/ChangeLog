@@ -1,3 +1,8 @@
+2002-11-27  Ben Wing  <ben@xemacs.org>
+
+	* .cvsignore:
+	Add .idb, .ilk for MS Windows VC++.
+
 2002-11-17  Ben Wing  <ben@xemacs.org>
 
 	* ellcc.c (do_init_mode):

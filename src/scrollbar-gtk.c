@@ -436,8 +436,9 @@ gtk_scrollbar_pointer_changed_in_window (struct window *w)
 void
 gtk_update_frame_scrollbars (struct frame *f)
 {
-  /* Consider this code to be "in_display" so that we abort() if Fsignal()
-     gets called. */
+  /* Consider this code to be "in_display" (in a critical section) so we
+     abort() if elisp or QUIT is not properly wrapped -- see
+     enter_redisplay_critical_section(). */
   in_display++;
   gtk_scrollbar_loop (GTK_UPDATE_FRAME_SCROLLBARS, f->root_window,
 		      XWINDOW_MIRROR (f->root_mirror),

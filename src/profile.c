@@ -1,5 +1,5 @@
 /* Why the hell is XEmacs so fucking slow?
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2002 Ben Wing.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -51,7 +51,6 @@ Boston, MA 02111-1307, USA.  */
    safe, and trying to make it safe would be much more work than it's
    worth.
 
-
    Jan 1998: In addition to this, I have added code to remember call
    counts of Lisp funcalls.  The profile_increase_call_count()
    function is called from Ffuncall(), and serves to add data to
@@ -77,11 +76,33 @@ static Lisp_Object QSin_garbage_collection;
 static Lisp_Object QSprocessing_events_at_top_level;
 static Lisp_Object QSunknown;
 
+static Lisp_Object Qtiming, Qcall_count;
+
 /* We use inside_profiling to prevent the handler from writing to
    the table while another routine is operating on it.  We also set
    inside_profiling in case the timeout between signal calls is short
    enough to catch us while we're already in there. */
 static volatile int inside_profiling;
+
+static void
+create_call_count_profile_table (void)
+{
+  if (NILP (Vcall_count_profile_table))
+    Vcall_count_profile_table =
+      make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+}
+
+static void
+create_timing_profile_table (void)
+{
+  /* #### The hash code can safely be called from a signal handler
+     except when it has to grow the hash table.  In this case, it calls
+     realloc(), which is not (in general) re-entrant.  We'll just be
+     sleazy and make the table large enough that it (hopefully) won't
+     need to be realloc()ed. */
+  if (!big_profile_table)
+    big_profile_table = make_hash_table (10000);
+}
 
 /* Increase the value of OBJ in Vcall_count_profile_table hash table.
    If the hash table is nil, create it first.  */
@@ -90,9 +111,7 @@ profile_increase_call_count (Lisp_Object obj)
 {
   Lisp_Object count;
 
-  if (NILP (Vcall_count_profile_table))
-    Vcall_count_profile_table =
-      make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+  create_call_count_profile_table ();
 
   count = Fgethash (obj, Vcall_count_profile_table, Qzero);
   if (!INTP (count))
@@ -159,6 +178,7 @@ Start profiling, with profile queries every MICROSECS.
 If MICROSECS is nil or omitted, the value of `default-profiling-interval'
 is used.
 
+Information on function timings and call counts is currently recorded.
 You can retrieve the recorded profiling info using `get-profiling-info'.
 
 Starting and stopping profiling does not clear the currently recorded
@@ -176,8 +196,7 @@ will be properly accumulated.
      realloc(), which is not (in general) re-entrant.  We'll just be
      sleazy and make the table large enough that it (hopefully) won't
      need to be realloc()ed. */
-  if (!big_profile_table)
-    big_profile_table = make_hash_table (10000);
+  create_timing_profile_table ();
 
   if (NILP (microsecs))
     msecs = default_profiling_interval;
@@ -217,15 +236,34 @@ Stop profiling.
   return Qnil;
 }
 
+DEFUN ("clear-profiling-info", Fclear_profiling_info, 0, 0, "", /*
+Clear out the recorded profiling info.
+This clears both the internal timing information and the call counts in
+`call-count-profile-table'.
+*/
+       ())
+{
+  /* This function does not GC */
+  if (big_profile_table)
+    {
+      inside_profiling = 1;
+      clrhash (big_profile_table);
+      inside_profiling = 0;
+    }
+  if (!NILP (Vcall_count_profile_table))
+    Fclrhash (Vcall_count_profile_table);
+  return Qnil;
+}
+
 struct get_profiling_info_closure
 {
-  Lisp_Object accum;
+  Lisp_Object timing;
 };
 
 static int
-get_profiling_info_maphash (const void *void_key,
-			    void *void_val,
-			    void *void_closure)
+get_profiling_info_timing_maphash (const void *void_key,
+				   void *void_val,
+				   void *void_closure)
 {
   /* This function does not GC */
   Lisp_Object key;
@@ -236,26 +274,98 @@ get_profiling_info_maphash (const void *void_key,
   key = VOID_TO_LISP (void_key);
   val = (EMACS_INT) void_val;
 
-  closure->accum = Fcons (Fcons (key, make_int (val)), closure->accum);
+  Fputhash (key, make_int (val), closure->timing);
   return 0;
 }
 
 DEFUN ("get-profiling-info", Fget_profiling_info, 0, 0, 0, /*
-Return the profiling info as an alist.
+Return the currently recorded profiling info.
+The format is a plist of symbols describing type of info recorded and
+an associated type-specific entry.  Currently, the following info types
+are recorded
+
+`timing'
+  A hash table of funcallable objects or strings describing internal processing
+  operations \(redisplay, garbage collection, etc.), along with associated
+  tick counts (the frequency of ticks is controlled by
+  `default-profiling-interval' or the argument to `start-profiling').
+
+`call-count'
+  A hash table of funcallable objects and associated call counts.
 */
        ())
 {
   /* This function does not GC */
   struct get_profiling_info_closure closure;
 
-  closure.accum = Qnil;
+  closure.timing =
+    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+
   if (big_profile_table)
     {
       int count = internal_bind_int ((int *) &inside_profiling, 1);
-      maphash (get_profiling_info_maphash, big_profile_table, &closure);
+      maphash (get_profiling_info_timing_maphash, big_profile_table, &closure);
       unbind_to (count);
     }
-  return closure.accum;
+
+  return list4 (Qtiming, closure.timing, Qcall_count,
+		!NILP (Vcall_count_profile_table) ?
+		Fcopy_hash_table (Vcall_count_profile_table) :
+		make_lisp_hash_table (100, HASH_TABLE_NON_WEAK,
+				      HASH_TABLE_EQ));
+}
+
+struct set_profiling_info_closure
+{
+  Lisp_Object timing;
+};
+
+static int
+set_profiling_info_timing_maphash (Lisp_Object key,
+				   Lisp_Object val,
+				   void *void_closure)
+{
+  /* This function does not GC */
+  if (!INTP (val))
+    invalid_argument_2
+      ("Function timing count is not an integer in given entry",
+       key, val);
+
+  puthash (LISP_TO_VOID (key), (void *) XINT (val), big_profile_table);
+
+  return 0;
+}
+
+DEFUN ("set-profiling-info", Fset_profiling_info, 1, 1, 0, /*
+Set the currently recorded profiling info.
+INFO should be in the same format returned by `get-profiling-info',
+as described there.
+*/
+       (info))
+{
+  /* This function does not GC */
+  Fclear_profiling_info ();
+
+  {
+    EXTERNAL_PROPERTY_LIST_LOOP_3 (key, value, info)
+      {
+	if (EQ (key, Qtiming))
+	  {
+	    CHECK_HASH_TABLE (value);
+	    create_timing_profile_table ();
+	    elisp_maphash_unsafe (set_profiling_info_timing_maphash, value,
+				  NULL);
+	  }
+	else if (EQ (key, Qcall_count))
+	  {
+	    Vcall_count_profile_table = Fcopy_hash_table (value);
+	  }
+	else
+	  invalid_constant ("Unrecognized profiling-info keyword", key);
+      }
+  }
+
+  return Qnil;
 }
 
 static int
@@ -282,23 +392,6 @@ mark_profiling_info (void)
     }
 }
 
-DEFUN ("clear-profiling-info", Fclear_profiling_info, 0, 0, "", /*
-Clear out the recorded profiling info.
-*/
-       ())
-{
-  /* This function does not GC */
-  if (big_profile_table)
-    {
-      inside_profiling = 1;
-      clrhash (big_profile_table);
-      inside_profiling = 0;
-    }
-  if (!NILP (Vcall_count_profile_table))
-    Fclrhash (Vcall_count_profile_table);
-  return Qnil;
-}
-
 DEFUN ("profiling-active-p", Fprofiling_active_p, 0, 0, 0, /*
 Return non-nil if profiling information is currently being recorded.
 */
@@ -313,6 +406,7 @@ syms_of_profile (void)
   DEFSUBR (Fstart_profiling);
   DEFSUBR (Fstop_profiling);
   DEFSUBR (Fget_profiling_info);
+  DEFSUBR (Fset_profiling_info);
   DEFSUBR (Fclear_profiling_info);
   DEFSUBR (Fprofiling_active_p);
 }
@@ -324,15 +418,12 @@ vars_of_profile (void)
 Default CPU time in microseconds between profiling sampling.
 Used when the argument to `start-profiling' is nil or omitted.
 Note that the time in question is CPU time (when the program is executing
-or the kernel is executing on behalf of the program) and not real time.
+or the kernel is executing on behalf of the program) and not real time, and
+there is usually a machine-dependent limit on how small this value can be.
 */ );
   default_profiling_interval = 1000;
 
-  DEFVAR_LISP ("call-count-profile-table", &Vcall_count_profile_table /*
-The table where call-count information is stored by the profiling primitives.
-This is a hash table whose keys are funcallable objects, and whose
-values are their call counts (integers).
-*/ );
+  staticpro (&Vcall_count_profile_table);
   Vcall_count_profile_table = Qnil;
 
   inside_profiling = 0;
@@ -346,4 +437,7 @@ values are their call counts (integers).
   QSprocessing_events_at_top_level =
     build_msg_string ("(processing events at top level)");
   staticpro (&QSprocessing_events_at_top_level);
+
+  DEFSYMBOL (Qtiming);
+  DEFSYMBOL (Qcall_count);
 }

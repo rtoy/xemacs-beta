@@ -6564,8 +6564,9 @@ redisplay_frame (struct frame *f, int preemption_check)
 
   /* The menubar, toolbar, and icon updates must be done before
      enter_redisplay_critical_section is called and we are officially
-     'in_display'.  They may eval lisp code which may call Fsignal.
-     If in_display is set Fsignal will abort. */
+     'in_display'.  They may eval lisp code which may call QUIT.
+     If in_display is set, QUIT will abort (unless the code is wrapped
+     to protect against errors). */
 
 #ifdef HAVE_MENUBARS
   /* Update the menubar.  It is done first since it could change
@@ -6614,21 +6615,25 @@ redisplay_frame (struct frame *f, int preemption_check)
      following cannot happen:
 
      1) garbage collection
-     2) Lisp code evaluation
-     3) frame size changes
+     2) QUIT
+     3) Any non-local exits
+     4) frame size changes
 
-     We ensure (3) by calling enter_redisplay_critical_section(), which
+     We ensure (4) by calling enter_redisplay_critical_section(), which
      will cause any pending frame size changes to get put on hold
-     till after the end of the critical section.  (1) follows
-     automatically if (2) is met.  #### Unfortunately, there are
-     some places where Lisp code can be called within this section.
-     We need to remove them.
+     till after the end of the critical section.  (2) is required because
+     of the possibility of (3).  (2) and (3) mean that any place that
+     can execute QUIT (e.g. internal_equal()), and especially any place
+     that executes Lisp code, need to be properly wrapped to protect
+     against these possibilities.  This wrapping happens using 
+     call_trapping_problems(..., INHIBIT_GC), or related functions.
 
-     If Fsignal() is called during this critical section, we
-     will abort().
-
-     If garbage collection is called during this critical section,
-     we simply return. #### We should abort instead.
+     To help debug potential problems, we arrange (when
+     ERROR_CHECK_TRAPPING_PROBLEMS is set) to crash automatically every
+     time we execute QUIT or check to see whether garbage collection is
+     necessary, inside of an unprotected critical section, as well as
+     further checks when we actually Fsignal(), Fthrow(),
+     garbage_collect_1().
 
      #### If a frame-size change does occur we should probably
      actually be preempting redisplay. */

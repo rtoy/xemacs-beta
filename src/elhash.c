@@ -449,6 +449,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("hash-table", hash_table,
 static Lisp_Hash_Table *
 xhash_table (Lisp_Object hash_table)
 {
+  /* #### What's going on here?  Why the gc_in_progress check? */
   if (!gc_in_progress)
     CHECK_HASH_TABLE (hash_table);
   check_hash_table_invariants (XHASH_TABLE (hash_table));

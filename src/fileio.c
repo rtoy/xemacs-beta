@@ -3328,7 +3328,6 @@ here because write-region handler writers need to be aware of it.
     Lisp_Object desc_locative = Fcons (make_int (desc), Qnil);
     Lisp_Object instream = Qnil, outstream = Qnil;
     struct gcpro nngcpro1, nngcpro2;
-    /* need to gcpro; QUIT could happen out of call to retry_write() */
     NNGCPRO2 (instream, outstream);
 
     record_unwind_protect (close_file_unwind, desc_locative);

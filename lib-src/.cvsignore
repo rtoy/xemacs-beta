@@ -24,3 +24,5 @@ ootags
 ellcc
 DOC
 *.pdb
+*.idb
+*.ilk

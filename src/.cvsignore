@@ -14,11 +14,15 @@ puresize-adjust.h
 sheap-adjust.h
 temacs
 temacs.bsc
+temacs.ilk
 temacs.map
-temacs.pdb
 temacs.opt
+temacs.pdb
 update-elc.stamp
 xemacs
 xemacs.dmp
+xemacs.ilk
+xemacs.map
 xemacs.opt
 *.tmp
+makeinfo_test.bat

@@ -413,6 +413,9 @@ static Lisp_Object Vcondition_handlers;
 static int throw_level;
 #endif
 
+static int warning_will_be_discarded (Lisp_Object level);
+static void check_proper_critical_section_nonlocal_exit_protection (void);
+
 
 /************************************************************************/
 /*			The subr object type				*/
@@ -744,6 +747,12 @@ signal_call_debugger (Lisp_Object conditions,
       && !skip_debugger (conditions, temp_data))
     {
       debug_on_quit &= ~2;	/* reset critical bit */
+
+#ifdef DEBUG_XEMACS
+      if (noninteractive)
+	Fforce_debugging_signal (Qt);
+#endif
+
       specbind (Qdebug_on_error,	Qnil);
       specbind (Qstack_trace_on_error,	Qnil);
       specbind (Qdebug_on_signal,	Qnil);
@@ -779,6 +788,12 @@ signal_call_debugger (Lisp_Object conditions,
 	  : wants_debugger (Vdebug_on_signal, conditions)))
     {
       debug_on_quit &= ~2;	/* reset critical bit */
+
+#ifdef DEBUG_XEMACS
+      if (noninteractive)
+	Fforce_debugging_signal (Qt);
+#endif
+
       specbind (Qdebug_on_error,	Qnil);
       specbind (Qstack_trace_on_error,	Qnil);
       specbind (Qdebug_on_signal,	Qnil);
@@ -1592,6 +1607,8 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
     abort ();
 #endif
 
+  check_proper_critical_section_nonlocal_exit_protection ();
+
   /* If bomb_out_p is t, this is being called from Fsignal as a
      "last resort" when there is no handler for this error and
       the debugger couldn't be invoked, so we are throwing to
@@ -2113,6 +2130,7 @@ return_from_signal (Lisp_Object value)
 }
 
 extern int in_display;
+extern int gc_currently_forbidden;
 
 
 /************************************************************************/
@@ -2129,6 +2147,24 @@ void signal_1 (void);
 void
 signal_1 (void)
 {
+}
+
+static void
+check_proper_critical_section_gc_protection (void)
+{
+  assert_with_message
+    (!in_display || gc_currently_forbidden,
+     "Potential GC from within redisplay without being properly wrapped");
+}
+
+static void
+check_proper_critical_section_nonlocal_exit_protection (void)
+{
+  assert_with_message
+    (!in_display
+     || ((get_inhibit_flags () & INTERNAL_INHIBIT_ERRORS)
+	 && (get_inhibit_flags () & INTERNAL_INHIBIT_THROWS)),
+     "Attempted non-local exit from within redisplay without being properly wrapped");
 }
 
 /* #### This function has not been synched with FSF.  It diverges
@@ -2181,20 +2217,14 @@ user invokes the "return from signal" option.
       abort ();
     }
 
-  if (gc_in_progress)
-    /* We used to abort if in_display:
+  assert (!gc_in_progress);
 
-       [[This is one of many reasons why you can't run lisp code from
-       redisplay.  There is no sensible way to handle errors there.]]
+  /* We abort if in_display and we are not protected, as garbage
+     collections and non-local exits will invariably be fatal, but in
+     messy, difficult-to-debug ways.  See enter_redisplay_critical_section().
+  */
 
-       The above comment is not correct.
-
-       Inhibit GC until the redisplay code is careful enough to properly
-       GCPRO their structures;
-
-       Surround all calls to Lisp code with error-trapping wrappers that
-       catch all errors. --ben */
-    abort ();
+  check_proper_critical_section_nonlocal_exit_protection ();
 
   conditions = Fget (error_symbol, Qerror_conditions, Qnil);
 
@@ -3462,6 +3492,9 @@ Evaluate FORM and return its value.
     }
 
   QUIT;
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+  check_proper_critical_section_gc_protection ();
+#endif
   if (need_to_garbage_collect)
     {
       struct gcpro gcpro1;
@@ -3706,6 +3739,9 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
 
   if (funcall_allocation_flag)
     {
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+      check_proper_critical_section_gc_protection ();
+#endif
       if (need_to_garbage_collect)
 	/* Callers should gcpro lexpr args */
 	garbage_collect_1 ();
@@ -4750,7 +4786,8 @@ flagged_a_squirmer (Lisp_Object error_conditions, Lisp_Object data,
   Lisp_Object errstr;
   int speccount = specpdl_depth ();
 
-  if (! (inhibit_flags & INHIBIT_WARNING_ISSUE))
+  if (!(inhibit_flags & INHIBIT_WARNING_ISSUE)
+      && !warning_will_be_discarded (current_warning_level ()))
     {
       /* We're no longer protected against errors or quit here, so at
 	 least let's temporarily inhibit quit.  We definitely do not
@@ -4781,7 +4818,6 @@ flagged_a_squirmer (Lisp_Object error_conditions, Lisp_Object data,
 			      errstr);
 
       unbind_to (speccount);
-
     }
   else
     p->backtrace = Qnil;
@@ -4847,8 +4883,7 @@ call_trapping_problems_1 (Lisp_Object opaque)
    higher-level caller.
 
    If FLAGS contains INHIBIT_GC, garbage collection is inhibited.
-   This is useful for Lisp called within redisplay or inside of the
-   QUIT macro (where GC is generally not expected), for example.
+   This is useful for Lisp called within redisplay, for example.
 
    If FLAGS contains INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION,
    Lisp code is not allowed to delete any window, buffers, frames, devices,
@@ -5022,7 +5057,8 @@ call_trapping_problems (Lisp_Object warning_class,
     tem = (fun) (arg);
 
   if (thrown && !EQ (thrown_tag, package.catchtag)
-      && (!flags & INHIBIT_WARNING_ISSUE))
+      && (!flags & INHIBIT_WARNING_ISSUE)
+      && !warning_will_be_discarded (current_warning_level ()))
     {
       Lisp_Object errstr;
 
@@ -6186,16 +6222,22 @@ If NFRAMES is more than the number of frames, the value is nil.
 /*			      Warnings					*/
 /************************************************************************/
 
+static int
+warning_will_be_discarded (Lisp_Object level)
+{
+  /* Don't even generate debug warnings if they're going to be discarded,
+     to avoid excessive consing. */
+  return (EQ (level, Qdebug) && !NILP (Vlog_warning_minimum_level) &&
+	  !EQ (Vlog_warning_minimum_level, Qdebug));
+}
+
 void
 warn_when_safe_lispobj (Lisp_Object class, Lisp_Object level,
 			Lisp_Object obj)
 {
-  /* Don't even generate debug warnings if they're going to be discarded,
-     to avoid excessive consing. */
-  if (EQ (level, Qdebug) && !NILP (Vlog_warning_minimum_level) &&
-      !EQ (Vlog_warning_minimum_level, Qdebug))
+  if (warning_will_be_discarded (level))
     return;
-  
+
   obj = list1 (list3 (class, level, obj));
   if (NILP (Vpending_warnings))
     Vpending_warnings = Vpending_warnings_tail = obj;
@@ -6219,12 +6261,9 @@ warn_when_safe (Lisp_Object class, Lisp_Object level, const CIbyte *fmt, ...)
   Lisp_Object obj;
   va_list args;
 
-  /* Don't even generate debug warnings if they're going to be discarded,
-     to avoid excessive consing. */
-  if (EQ (level, Qdebug) && !NILP (Vlog_warning_minimum_level) &&
-      !EQ (Vlog_warning_minimum_level, Qdebug))
+  if (warning_will_be_discarded (level))
     return;
-  
+
   va_start (args, fmt);
   obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
@@ -6421,12 +6460,21 @@ If the value is a list, an error only means to enter the debugger
 if one of its condition symbols appears in the list.
 This variable is overridden by `debug-ignored-errors'.
 See also variables `debug-on-quit' and `debug-on-signal'.
-If this variable is set while XEmacs is running noninteractively,
-an unhandled error will cause a backtrace to be output and the C
-debugger entered using `force-debugging-signal'.  This can be very
-useful when debugging noninteractive errors in tricky situations,
-e.g. makefiles, since you can set this variable using an environment
-variable, like this:
+
+If this variable is set while XEmacs is running noninteractively (using
+`-batch'), and XEmacs was configured with `--debug' (#define XEMACS_DEBUG
+in the C code), instead of trying to invoke the Lisp debugger (which
+obviously won't work), XEmacs will break out to a C debugger using
+\(force-debugging-signal t).  This is useful because debugging
+noninteractive runs of XEmacs is often very difficult, since they typically
+happen as part of sometimes large and complex make suites (e.g. rebuilding
+the XEmacs packages).  NOTE: This runs abort()!!! (As well as and after
+executing INT 3 under MS Windows, which should invoke a debugger if it's
+active.) This is guaranteed to kill XEmacs! (But in this situation, XEmacs
+is about to die anyway, and if no debugger is present, this will usefully
+dump core.) The most useful way to set this flag when debugging
+noninteractive runs, especially in makefiles, is using the environment
+variable XEMACSDEBUG, like this:
 
 \(using csh)      setenv XEMACSDEBUG '(setq debug-on-error t)'
 \(using bash)     export XEMACSDEBUG='(setq debug-on-error t)'
@@ -6440,6 +6488,9 @@ a `condition-case'.
 If the value is a list, an error only means to enter the debugger
 if one of its condition symbols appears in the list.
 See also variable `debug-on-quit'.
+
+This will attempt to enter a C debugger when XEmacs is run noninteractively
+and under the same conditions as described in `debug-on-error'.
 */ );
   Vdebug_on_signal = Qnil;
 

@@ -89,6 +89,14 @@ int load_warn_when_source_newer;
 int load_warn_when_source_only;
 /* Whether Fload_internal() should ignore .elc files when no suffix is given */
 int load_ignore_elc_files;
+/* Whether Fload_internal() should ignore out-of-date .elc files when no
+   suffix is given */
+int load_ignore_out_of_date_elc_files;
+/* Always display messages showing when a file is loaded, regardless of
+   whether the flag to `load' tries to suppress them. */
+int load_always_display_messages;
+/* Show the full path in loading messages. */
+int load_show_full_path_in_messages;
 
 /* Search path for files to be loaded. */
 Lisp_Object Vload_path;
@@ -199,6 +207,7 @@ static int saved_doc_string_length;
 static int saved_doc_string_position;
 #endif
 
+static int locate_file_open_or_access_file (Ibyte *fn, int access_mode);
 EXFUN (Fread_from_string, 3);
 
 /* When errors are signaled, the actual readcharfun should not be used
@@ -482,18 +491,22 @@ encoding detection or end-of-line detection.
   int fd = -1;
   int speccount = specpdl_depth ();
   int source_only = 0;
+  /* NEWER and OLDER are filenames w/o directory, used in loading messages
+     to e.g. warn of newer .el files when the .elc is being loaded. */
   Lisp_Object newer   = Qnil;
+  Lisp_Object older   = Qnil;
   Lisp_Object handler = Qnil;
   Lisp_Object found   = Qnil;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   int reading_elc = 0;
   int from_require = EQ (nomessage, Qrequire);
-  int message_p = NILP (nomessage) || from_require;
+  int message_p =
+    NILP (nomessage) || from_require || load_always_display_messages;
 /*#ifdef DEBUG_XEMACS*/
   static Lisp_Object last_file_loaded;
 /*#endif*/
   struct stat s1, s2;
-  GCPRO3 (file, newer, found);
+  GCPRO4 (file, newer, older, found);
 
   CHECK_STRING (file);
 
@@ -551,10 +564,9 @@ encoding detection or end-of-line detection.
       /* The omniscient JWZ thinks this is worthless, but I beg to
 	 differ. --ben */
       if (load_ignore_elc_files)
-	{
-	  newer = Ffile_name_nondirectory (found);
-	}
-      else if (load_warn_when_source_newer &&
+	newer = Ffile_name_nondirectory (found);
+      else if ((load_warn_when_source_newer ||
+		load_ignore_out_of_date_elc_files) &&
 	       !memcmp (".elc", foundstr + foundlen - 4, 4))
 	{
 	  if (! qxe_fstat (fd, &s1))	/* can't fail, right? */
@@ -565,14 +577,28 @@ encoding detection or end-of-line detection.
 	      result = qxe_stat (foundstr, &s2);
 	      if (result >= 0 &&
 		  (unsigned) s1.st_mtime < (unsigned) s2.st_mtime)
-              {
-		Lisp_Object newer_name = make_string (foundstr,
-						      foundlen - 1);
-                struct gcpro nngcpro1;
-                NNGCPRO1 (newer_name);
-		newer = Ffile_name_nondirectory (newer_name);
-                NNUNGCPRO;
-              }
+		{
+		  /* .elc exists and is out-of-date wrt .el */
+		  Lisp_Object el_name = make_string (foundstr, foundlen - 1);
+		  struct gcpro nngcpro1;
+		  NNGCPRO1 (el_name);
+		  newer = Ffile_name_nondirectory (el_name);
+		  if (load_ignore_out_of_date_elc_files)
+		    {
+		      int newfd =
+			locate_file_open_or_access_file
+			(XSTRING_DATA (el_name), -1);
+
+		      if (newfd >= 0)
+			{
+			  older = Ffile_name_nondirectory (found);
+			  found = el_name;
+			  retry_close (fd);
+			  fd = newfd;
+			}
+		    }
+		  NNUNGCPRO;
+		}
 	      /* put the 'c' back on (kludge-o-rama) */
 	      foundstr[foundlen - 1] = 'c';
 	    }
@@ -584,30 +610,43 @@ encoding detection or end-of-line detection.
 	       memcmp (".el",
 		       XSTRING_DATA (file) + XSTRING_LENGTH (file) - 3,
 		       3))
-	{
-	  source_only = 1;
-	}
+	source_only = 1;
 
       if (!memcmp (".elc", foundstr + foundlen - 4, 4))
 	reading_elc = 1;
     }
 
-#define PRINT_LOADING_MESSAGE_1(loading, done) do {		\
-  if (load_ignore_elc_files)					\
-    {								\
-      if (message_p)						\
-	message (loading done, XSTRING_DATA (newer));		\
-    }								\
-  else if (!NILP (newer))					\
-    message (loading done " (file %s is newer)",		\
-	     XSTRING_DATA (file),				\
-	     XSTRING_DATA (newer));				\
-  else if (source_only)						\
-    message (loading done " (file %s.elc does not exist)",	\
-	     XSTRING_DATA (file),				\
-	     XSTRING_DATA (Ffile_name_nondirectory (file)));	\
-  else if (message_p)						\
-    message (loading done, XSTRING_DATA (file));		\
+#define PRINT_LOADING_MESSAGE_1(loading, done)				\
+ do {									\
+  if (load_ignore_elc_files)						\
+    {									\
+      if (message_p)							\
+	message (loading done,						\
+		 XSTRING_DATA (load_show_full_path_in_messages ?	\
+			       found : newer));				\
+    }									\
+  else if (!NILP (older))						\
+    {									\
+      assert (load_ignore_out_of_date_elc_files);			\
+      message (loading done " (file %s is out-of-date)",		\
+	       XSTRING_DATA (load_show_full_path_in_messages ?		\
+			     found : newer),				\
+	       XSTRING_DATA (older));					\
+    }									\
+  else if (!NILP (newer))						\
+    message (loading done " (file %s is newer)",			\
+	     XSTRING_DATA (load_show_full_path_in_messages ?		\
+			   found : file),				\
+	     XSTRING_DATA (newer));					\
+  else if (source_only)							\
+    message (loading done " (file %s.elc does not exist)",		\
+	     XSTRING_DATA (load_show_full_path_in_messages ?		\
+			   found : file),				\
+	     XSTRING_DATA (Ffile_name_nondirectory (file)));		\
+  else if (message_p)							\
+    message (loading done,						\
+	     XSTRING_DATA (load_show_full_path_in_messages ?		\
+			   found : file));				\
   } while (0)
 
 #define PRINT_LOADING_MESSAGE(done)			\
@@ -694,10 +733,8 @@ do {							\
     /* via `load-path' search. */
     Lisp_Object name = file;
 
-    if (!NILP(Ffile_name_absolute_p(file)))
-      {
-	name = Ffile_name_nondirectory(file);
-      }
+    if (!NILP (Ffile_name_absolute_p (file)))
+	name = Ffile_name_nondirectory (file);
 
     {
       struct gcpro ngcpro1;
@@ -718,13 +755,13 @@ do {							\
       }
   }
 
-/*#ifdef DEBUG_XEMACS*/
+/* #ifdef DEBUG_XEMACS */
   if (purify_flag && noninteractive)
     {
       if (!EQ (last_file_loaded, file))
 	message ("Loading %s ...done", XSTRING_DATA (file));
     }
-/*#endif / * DEBUG_XEMACS */
+/* #endif / * DEBUG_XEMACS */
 
   if (!noninteractive)
     PRINT_LOADING_MESSAGE ("done");
@@ -948,6 +985,35 @@ struct locate_file_in_directory_mapper_closure
   int mode;
 };
 
+/* open() or access() a file to be returned by locate_file().  if
+   ACCESS_MODE >= 0, do an access() with that mode, else open().  Does
+   various magic, e.g. opening the file read-only and binary and setting
+   the close-on-exec flag on the file. */
+
+static int
+locate_file_open_or_access_file (Ibyte *fn, int access_mode)
+{
+  int val;
+
+  /* Check that we can access or open it.  */
+  if (access_mode >= 0)
+    val = qxe_access (fn, access_mode);
+  else
+    {
+      val = qxe_open (fn, O_RDONLY | OPEN_BINARY, 0);
+
+#ifndef WIN32_NATIVE
+      if (val >= 0)
+	/* If we actually opened the file, set close-on-exec flag
+	   on the new descriptor so that subprocesses can't whack
+	   at it.  */
+	(void) fcntl (val, F_SETFD, FD_CLOEXEC);
+#endif
+    }
+
+  return val;
+}
+
 static int
 locate_file_in_directory_mapper (Ibyte *fn, void *arg)
 {
@@ -960,24 +1026,13 @@ locate_file_in_directory_mapper (Ibyte *fn, void *arg)
       && (st.st_mode & S_IFMT) != S_IFDIR)
     {
       /* Check that we can access or open it.  */
-      if (closure->mode >= 0)
-	closure->fd = qxe_access (fn, closure->mode);
-      else
-	closure->fd = qxe_open (fn, O_RDONLY | OPEN_BINARY, 0);
+      closure->fd = locate_file_open_or_access_file (fn, closure->mode);
 
       if (closure->fd >= 0)
 	{
 	  /* We succeeded; return this descriptor and filename.  */
 	  if (closure->storeptr)
 	    *closure->storeptr = build_intstring (fn);
-
-#ifndef WIN32_NATIVE
-	  /* If we actually opened the file, set close-on-exec flag
-	     on the new descriptor so that subprocesses can't whack
-	     at it.  */
-	  if (closure->mode < 0)
-	    (void) fcntl (closure->fd, F_SETFD, FD_CLOEXEC);
-#endif
 
 	  return 1;
 	}
@@ -3077,6 +3132,30 @@ no warning will be printed.
 This is normally used only to bootstrap the `.elc' files when building XEmacs.
 */ );
   load_ignore_elc_files = 0;
+
+  DEFVAR_BOOL ("load-ignore-out-of-date-elc-files",
+	       &load_ignore_out_of_date_elc_files /*
+*Whether `load' should ignore out-of-date `.elc' files when no suffix is given.
+This is normally used when compiling packages of elisp files that may have
+complex dependencies.  Ignoring all elc files with `load-ignore-elc-files'
+would also be safe, but much slower.
+*/ );
+  load_ignore_out_of_date_elc_files = 0;
+
+  DEFVAR_BOOL ("load-always-display-messages",
+	       &load_always_display_messages /*
+*Whether `load' should always display loading messages.
+If this is true, every file loaded will be shown, regardless of the setting
+of the NOMESSAGE parameter, and even when files are loaded indirectly, e.g.
+due to `requre'.
+*/ );
+  load_always_display_messages = 0;
+
+  DEFVAR_BOOL ("load-show-full-path-in-messages",
+	       &load_show_full_path_in_messages /*
+*Whether `load' should show the full path in all loading messages.
+*/ );
+  load_show_full_path_in_messages = 0;
 
 #ifdef LOADHIST
   DEFVAR_LISP ("load-history", &Vload_history /*

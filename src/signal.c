@@ -977,7 +977,8 @@ KERNEL32! BaseProcessStart@4 + 115547 bytes
 
   if (quit_check_signal_happened)
     {
-      /* Since arbitrary Lisp code may be executed, GC might happen,
+      /* Since arbitrary Lisp code may be executed (e.g. through a menu
+         filter, see backtrace directly above), GC might happen,
          which would majorly fuck a lot of things, e.g. re_match()
          [string gets relocated] and lots of other code that's not
          prepared to handle GC in QUIT. */

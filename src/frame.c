@@ -647,8 +647,14 @@ enter_redisplay_critical_section (void)
 {
   int depth = specpdl_depth ();
 
+  /* NOTE NOTE NOTE: Inside the redisplay critical section, every place
+     that could QUIT or call Lisp code needs to be wrapped, since GC
+     or a non-local exit will be fatal.  The way to do this is with
+     call_trapping_problems(..., INHIBIT_GC), or the like. */
+
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
-  /* force every call to QUIT to check for in_displayness */
+  /* Force every call to QUIT to check for in_displayness.  This will
+     verify proper wrapping, as in the previous comment, aborting if not. */
   something_happened++;
   record_unwind_protect (commit_ritual_suicide, Qnil);
 #endif

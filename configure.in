@@ -1675,6 +1675,20 @@ elif test "$with_gcc" = "yes" -a "$GCC" != "yes" ; then
 fi
 CFLAGS="$xe_save_CFLAGS"
 
+dnl Determine GCC version.
+if test "$GCC" = "yes"; then
+AC_TRY_RUN([int main () {
+#if __GNUC__ >= 3
+return 11;
+#else
+return 0;
+#endif
+}], [],
+[case "$conftest_rc" in
+  11) echo "You appear to be using GCC version 3 or above."; __GCC3=yes ;;
+esac])
+fi
+
 dnl Figure out what C preprocessor to use.
 
 dnl On Sun systems, people sometimes set up the variable CPP
@@ -1945,7 +1959,7 @@ dnl Use either command line flag, environment var, or autodetection
 if test "$cflags_specified" = "no"; then
   dnl Following values of CFLAGS are known to work well.
   dnl Should we take debugging options into consideration?
-  if   test "$GCC" = "yes"; then
+  if test "$GCC" = "yes"; then
     CFLAGS="-g -O3"
     dnl I'm not convinced this is a good idea any more. -sb
     dnl test "$opsys $machine" = "linux intel386" && \
@@ -1971,14 +1985,17 @@ dnl by everyone.
 
 if test "$cflags_warning_specified" = "no"; then
   dnl Following warning flags are known to work well.
-  if   test "$GCC" = "yes"; then
+  if test "$GCC" = "yes"; then
     cflags_warning="-Wall -Wno-switch -Winline -Wmissing-prototypes"
     dnl Yuck, bad compares have been worth at least 3 crashes!
     cflags_warning="$cflags_warning -Wsign-compare"
     dnl NOTE: The following three, as well as -Wmissing-declarations and
     dnl -Weffc++ below, have been recently added.  If you are getting
     dnl grief from them, please notify ben@xemacs.org!
-    cflags_warning="$cflags_warning -Wundef -Wstrict-prototypes -Wpacked"
+    cflags_warning="$cflags_warning -Wundef -Wstrict-prototypes"
+    if test "$__GCC3" = "yes"; then
+      cflags_warning="$cflags_warning -Wpacked"
+    fi
     dnl With g++, -Wshadow produces five zillion utterly random warnings --
     dnl a local var named `buffer' conflicts with `struct buffer' for
     dnl example.  Even with gcc, -Wshadow is questionable because of its
