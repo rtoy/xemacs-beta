@@ -1,3 +1,8 @@
+2002-07-14  Mike Alexander  <mta@arbortext.com>
+
+	* process.el (shell-command-on-region): Don't delete the region
+	before giving it to call-process-region
+
 2002-07-14  Adrian Aichner  <adrian@xemacs.org>
 
 	* ChangeLog: It's XEmacs, not Xemacs.
