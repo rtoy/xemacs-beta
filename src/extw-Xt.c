@@ -28,10 +28,7 @@ Boston, MA 02111-1307, USA. */
 ERROR!  This ought not be getting compiled if EXTERNAL_WIDGET is undefined
 #endif
 
-EXTERN_C
-{
-void fatal (const char *fmt, ...);
-}
+EXTERN_C void fatal (const char *fmt, ...);
 #else /* not emacs */
 static void fatal (char *msg);
 #endif
@@ -48,16 +45,14 @@ static void fatal (char *msg);
    for real? */
 
 #if (XT_REVISION > 5)
-EXTERN_C
-{
-  int _XtWaitForSomething (XtAppContext app, _XtBoolean ignoreEvents,
-			   _XtBoolean ignoreTimers, _XtBoolean ignoreInputs,
-			   _XtBoolean ignoreSignals, _XtBoolean block,
+EXTERN_C int
+_XtWaitForSomething (XtAppContext app, _XtBoolean ignoreEvents,
+		     _XtBoolean ignoreTimers, _XtBoolean ignoreInputs,
+		     _XtBoolean ignoreSignals, _XtBoolean block,
 #ifdef XTHREADS
-			   _XtBoolean drop_lock,
+		     _XtBoolean drop_lock,
 #endif
-			   unsigned long *howlong);
-}
+		     unsigned long *howlong);
 
 # ifndef XTHREADS
 #  define _XT_WAIT_FOR_SOMETHING(timers,inputs,events,block,howlong,appCtx) \
@@ -67,12 +62,10 @@ EXTERN_C
           _XtWaitForSomething (appCtx,events,timers,inputs,0,block,1,howlong)
 # endif
 #else
-EXTERN_C
-{
-  int _XtwaitForSomething (Boolean ignoreTimers, Boolean ignoreInputs,
-			   Boolean ignoreEvents, Boolean block,
-			   unsigned long *howlong, XtAppContext app);
-}
+EXTERN_C int
+_XtwaitForSomething (Boolean ignoreTimers, Boolean ignoreInputs,
+		     Boolean ignoreEvents, Boolean block,
+		     unsigned long *howlong, XtAppContext app);
 #endif
 
 #ifdef DEBUG_WIDGET
