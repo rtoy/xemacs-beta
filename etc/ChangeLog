@@ -1,3 +1,8 @@
+2004-04-19  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* NEWS (Introduction): Rewording.
+	(Changes in XEmacs 21.5): New section.
+
 2004-08-10  Jerry James  <james@xemacs.org>
 
 	* ETAGS.EBNF: New file.  Describes the syntax of an ETAGS file.
