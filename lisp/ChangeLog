@@ -1,3 +1,15 @@
+2003-07-19  Stephen Turnbull  <stephen@xemacs.org>
+
+	* etags.el: Change `\\s ' in comments to `\\s-'.
+	(tags-explicit-name-pattern, tags-DEFUN-pattern, tags-def-pattern):
+	Comment the use of groups.
+
+	* etags.el: Fix bad parsing for completion of good TAGS files.
+	(tags-explicit-name-pattern): New constant.
+	(tags-DEFUN-pattern, tags-def-pattern): Use it.
+	(tags-schemish-pattern): New constant.
+	(add-to-tag-completion-table): Intern explicit names when found.
+
 2003-06-18  Nickolay Pakoulin  <npak@ispras.ru>
 
 	* cl-macs.el (cl-transform-lambda): Place doc on Common Lisp

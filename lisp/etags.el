@@ -1,6 +1,6 @@
 ;;; etags.el --- etags facility for Emacs
 
-;; Copyright 1985, 1986, 1988, 1990, 1997 Free Software Foundation, Inc.
+;; Copyright 1985, 1986, 1988, 1990, 1997, 2003 Free Software Foundation, Inc.
 
 ;; Author: Their Name is Legion (see list below)
 ;; Maintainer: XEmacs Development Team
@@ -482,15 +482,29 @@ this buffer uses."
      (or (memq tag-table-symbol tag-symbol-tables)
 	 (set tag-symbol (cons tag-table-symbol tag-symbol-tables)))))
 
-;; Can't use "\\s " in these patterns because that will include newline
+;; Can't use "\\s-" in these patterns because that will include newline
+;; \2 matches an explicit name.
+(defconst tags-explicit-name-pattern "\177\\(\\([^\n\001]+\\)\001\\)?")
+;; \1 matches Lisp-name, \2 matches C-name, \5 (from
+;; tags-explicit-name-pattern) matches explicit name.
 (defconst tags-DEFUN-pattern
-          "DEFUN[ \t]*(\"\\([^\"]+\\)\",[ \t]*\\(\\(\\sw\\|\\s_\\)+\\),\C-?")
+  (concat "DEFUN[ \t]*(\"\\([^\"]+\\)\",[ \t]*\\(\\(\\sw\\|\\s_\\)+\\),"
+	  tags-explicit-name-pattern))
+;; \1 matches an array name.  Explicit names unused?
 (defconst tags-array-pattern ".*[ \t]+\\([^ \[]+\\)\\[")
+;; \2 matches a Lispish name, \5 (from tags-explicit-name-pattern) matches
+;; explicit name.
 (defconst tags-def-pattern
-          "\\(.*[ \t]+\\)?\\**\\(\\(\\sw\\|\\s_\\)+\\)[ ();,\t]*\C-?"
-;; "\\(.*[ \t]+\\)?\\(\\(\\sw\\|\\s_\\)+\\)[ ()]*\C-?"
-;; "\\(\\sw\\|\\s_\\)+[ ()]*\C-?"
+  (concat "\\(.*[ \t]+\\)?\\**\\(\\(\\sw\\|\\s_\\)+\\)[ ();,\t]*"
+;; "\\(.*[ \t]+\\)?\\(\\(\\sw\\|\\s_\\)+\\)[ ()]*"
+;; "\\(\\sw\\|\\s_\\)+[ ()]*"
+	  tags-explicit-name-pattern)
       )
+;; \1 matches Schemish name, \4 (from tags-explicit-name-pattern) matches
+;; explicit name
+(defconst tags-schemish-pattern
+  (concat "\\s-*(\\s-*def\\sw*\\s-*(?\\s-*\\(\\(\\sw\\|\\s_\\|:\\)+\\))?\\s-*"
+	  tags-explicit-name-pattern))
 (defconst tags-file-pattern "^\f\n\\(.+\\),[0-9]+\n")
 
 ;; #### Should make it work with the `include' directive!
@@ -500,7 +514,7 @@ this buffer uses."
   (goto-char (point-min))
   (let ((tag-table-symbol (intern buffer-file-name tag-completion-table))
 	;; tag-table-symbol is used by intern-tag-symbol
-	filename file-type name name2 tag-symbol
+	filename file-type name name2 name3 tag-symbol
 	tag-symbol-tables
 	(case-fold-search nil))
     ;; Loop over the files mentioned in the TAGS file for each file,
@@ -529,7 +543,7 @@ this buffer uses."
 			       lisp-mode-syntax-table)
 			      (t (standard-syntax-table))))
       ;; Clear loop variables.
-      (setq name nil name2 nil)
+      (setq name nil name2 nil name3 nil)
       (lmessage 'progress "%s..." filename)
       ;; Loop over the individual tag lines.
       (while (not (or (eobp) (eq (char-after) ?\f)))
@@ -539,8 +553,9 @@ this buffer uses."
 	       (or (looking-at tags-DEFUN-pattern)
 		   (error "DEFUN doesn't fit pattern"))
 	       (setq name (match-string 1)
-		     name2 (match-string 2)))
-	      ;;((looking-at "\\s ")
+		     name2 (match-string 2)
+		     name3 (match-string 5)))
+	      ;;((looking-at "\\s-")
 	      ;; skip probably bogus entry:
 	      ;;)
 	      ((and (eq file-type 'c-mode)
@@ -552,15 +567,18 @@ this buffer uses."
 		     (t
 		      (setq name (match-string 1)))))
 	      ((and (eq file-type 'scheme-mode)
-		    (looking-at "\\s-*(\\s-*def\\sw*\\s-*(?\\s-*\\(\\(\\sw\\|\\s_\\|:\\)+\\))?\\s-*\C-?"))
+		    (looking-at tags-schemish-pattern))
 	       ;; Something Schemish (is this really necessary??)
-	       (setq name (match-string 1)))
+	       (setq name (match-string 1)
+		     name2 (match-string 4)))
 	      ((looking-at tags-def-pattern)
 	       ;; ???
-	       (setq name (match-string 2))))
+	       (setq name (match-string 2)
+		     name2 (match-string 5))))
 	;; add the tags we found to the completion table
 	(and name (intern-tag-symbol name))
 	(and name2 (intern-tag-symbol name2))
+	(and name3 (intern-tag-symbol name3))
 	(forward-line 1)))
     (or (eobp) (error "Bad TAGS file")))
   (message "Adding %s to tags completion table...done" buffer-file-name))
