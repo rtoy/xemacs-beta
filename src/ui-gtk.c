@@ -659,7 +659,7 @@ Import a function into the XEmacs namespace.
   data->function_ptr = name_func;
   data->marshal = marshaller_func;
 
-  rval = wrap_ffi (data);
+  rval = wrap_emacs_ffi (data);
   return (rval);
 }
 
@@ -908,7 +908,7 @@ emacs_gtk_object_finalizer (void *header, int for_disksave)
 
   if (for_disksave)
     {
-      Lisp_Object obj = wrap_gtk_object (data);
+      Lisp_Object obj = wrap_emacs_gtk_object (data);
 
 
       invalid_operation
@@ -977,7 +977,7 @@ Lisp_Object build_gtk_object (GtkObject *obj)
 
       data->object = obj;
       data->alive_p = TRUE;
-      retval = wrap_gtk_object (data);
+      retval = wrap_emacs_gtk_object (data);
 
       id = new_gui_id ();
       gtk_object_set_data (obj, "xemacs::gui_id", (gpointer) id);
@@ -1165,7 +1165,7 @@ Lisp_Object build_gtk_boxed (void *obj, GtkType t)
   data->object = obj;
   data->object_type = t;
 
-  retval = wrap_gtk_boxed (data);
+  retval = wrap_emacs_gtk_boxed (data);
 
   return (retval);
 }

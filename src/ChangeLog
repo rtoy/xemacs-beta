@@ -1,3 +1,11 @@
+2002-03-29  William M. Perry  <wmperry@gnu.org>
+
+	* ui-gtk.c (Fgtk_import_function_internal): 
+	(emacs_gtk_object_finalizer): 
+	(build_gtk_object): 
+	(build_gtk_boxed): Use wrap_emacs_*() instead of wrap_*()
+	for gtk_boxed, gtk_object, ffi
+
 2002-03-24  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (gui_objs):
