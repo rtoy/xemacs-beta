@@ -1,3 +1,7 @@
+2001-04-20  Ben Wing  <ben@xemacs.org>
+
+	* .cvsignore: Added stuff for Windows.
+
 2001-04-18  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.5.0 "alfalfa" is released.

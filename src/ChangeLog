@@ -1,3 +1,23 @@
+2001-04-20  Ben Wing  <ben@xemacs.org>
+
+	* .cvsignore: Added stuff for Windows.
+
+2001-04-15  Ben Wing  <ben@xemacs.org>
+
+	* cmdloop.c (call_command_loop):
+	Fix braino in bit-rotting code.
+	
+	* event-stream.c:
+	* event-stream.c (Fnext_event):
+	* event-stream.c (is_scrollbar_event):
+	* event-stream.c (execute_command_event):
+	Better fix for Yoshiki's `C-x @ h <scrollbar-drag> x causes a
+	crash' problem.  His fix introduces other problems.  We filter
+	out scrollbar events specifically, making them somewhat invisible
+	to command-building, and not appearing in `this-command-keys'.
+	More work is still needed (see comments in event-stream.c), but
+	this fixes all the major problems.
+
 2001-04-15  Gunnar Evermann  <ge204@eng.cam.ac.uk>
 
 	* process-unix.c (unix_open_network_stream): If connect() fails

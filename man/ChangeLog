@@ -1,3 +1,10 @@
+2001-04-15  Ben Wing  <ben@xemacs.org>
+
+	* xemacs-faq.texi (Q1.0.1):
+	* xemacs-faq.texi (Q1.0.2):
+	Rewrite description of XEmacs to match what's on web page,
+	in about.el.
+
 2001-04-18  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.5.0 "alfalfa" is released.
