@@ -408,6 +408,13 @@ This order is important as not to keep the client waiting."
   (eval form))
 
 
+
+(defun make-x-device-with-gtk-fallback (device)
+  (or (condition-case ()
+          (make-x-device device)
+        (error nil))
+      (make-gtk-device)))
+
 ;; "Execute" a client connection, called by gnuclient.  This is the
 ;; backbone of gnuserv.el.
 (defun gnuserv-edit-files (type list &rest flags)
@@ -440,7 +447,7 @@ If a flag is `view', view the files read-only."
 			  (case (car type)
 			    (tty (apply 'make-tty-device (cdr type)))
 			    (gtk (make-gtk-device))
-			    (x   (make-x-device (cadr type)))
+			    (x   (make-x-device-with-gtk-fallback (cadr type)))
 			    (mswindows   (make-mswindows-device))
 			    (t   (error "Invalid device type"))))
 			 (t

@@ -1,3 +1,9 @@
+2002-09-20  James LewisMoss  <dres@lewismoss.org>
+
+	* gnuserv.el (gnuserv-edit-files): fallback to gtk if x device
+	fails.  Fixes problem where gnuclient fails for gtk instances when
+	gnuclient was built with X configure.
+
 2003-09-20  Mike Alexander  <mta@arbortext.com>
 
 	* code-init.el (eol-detection-enabled-p): eval the initialization
