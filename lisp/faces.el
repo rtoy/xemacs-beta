@@ -234,7 +234,7 @@ matching process."
 	(setq value (if (or (charsetp matchspec)
 			    (and (symbolp matchspec)
 				 (find-charset matchspec)))
-			(or 
+			(or
 			 (specifier-matching-instance
 			  value (cons matchspec nil) domain default
 			  no-fallback)
@@ -624,6 +624,25 @@ If PIXMAP is an alist, LOCALE must be omitted.  If PIXMAP is a
 See `set-face-property' for more information."
   (interactive (face-interactive "background-pixmap"))
   (set-face-property face 'background-pixmap pixmap locale tag-set how-to-add))
+
+(defvar background-pixmap-file-history nil
+  ;; History for `set-face-background-pixmap-file'
+  )
+
+(defun set-face-background-pixmap-file (face file)
+  "Read (and set) the background pixmap of FACE from FILE.
+This function is a simplified version of `set-face-background-pixmap',
+designed for interactive use."
+  (interactive
+   (let* ((face (read-face-name "Set background pixmap of face: "))
+	  (file (read-file-name
+		 (format "Set background pixmap of face %s to: "
+			 (symbol-name face))
+		 nil (image-instance-file-name
+		      (face-background-pixmap-instance face)) t nil
+		      'background-pixmap-file-history)))
+     (list face (if (equal file "") nil file))))
+  (set-face-property face 'background-pixmap file))
 
 (defun face-display-table (face &optional locale tag-set exact-p)
   "Return the display table of FACE in LOCALE.
@@ -1136,7 +1155,7 @@ STAGE 2: (if called for) Ensure that *some* setting exists in the locale
          behavior -- changes to the global value, to other locales, won't
          affect this locale, (b) the face will actually look bold in
          the locale.
-STAGE 3: (if called for) 
+STAGE 3: (if called for)
 
 The way the frobbing works depends on the device type -- first on whether
 or not it's TTY, and second, if it's a window-system device type, on which
@@ -1295,7 +1314,7 @@ specifics on exactly how this function works."
 
 ;; Size frobbing
 ;; Thx Jan Vroonhof, Ref xemacs-beta <87oflypbum.fsf@petteflet.ntlworld.com>
-;; Jan had a separate helper function 
+;; Jan had a separate helper function
 (defun make-face-size (face size &optional locale tags exact-p)
   "Adjust FACE to SIZE in LOCALE, if possible."
   (interactive (list (read-face-name "Set size of which face: ")

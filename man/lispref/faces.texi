@@ -375,6 +375,12 @@ be a list of the form @code{(@var{width} @var{height} @var{data})} where
 string, containing the raw bits of the bitmap.
 @end deffn
 
+@deffn Command set-face-background-pixmap-file face file
+This function sets the background pixmap of face @var{face} to the image
+contained in @var{file}. This is just a simplified version of
+@code{set-face-background-pixmap} which provides filename completion.
+@end deffn
+
 @deffn Command set-face-font face font &optional locale tag-set how-to-add
 This function sets the font of face @var{face}.  The argument @var{font}
 should be a string or a font object as returned by @code{make-font}

@@ -1,3 +1,13 @@
+2002-12-03  Didier Verna  <didier@xemacs.org>
+
+	* xemacs/custom.texi (Faces): document
+	`set-face-background-pixmap-file'.
+
+2002-12-03  Didier Verna  <didier@xemacs.org>
+
+	* lispref/faces.texi (Face Convenience Functions): ditto.
+	* lispref/glyphs.texi (Creating Glyphs): reference it.
+
 2002-11-29  Stephen Turnbull  <stephen@xemacs.org>
 
 	* lispref/specifiers.texi (Simple Specifier Usage): New node.
@@ -72,11 +82,11 @@
 	how to skip and warn about tests that depend on packages.
 
 2002-08-16  Stephen J. Turnbull  <stephen@xemacs.org>
- 
+
 	* internals/internals.texi (Regression Testing XEmacs): Fix typo.
 
 2002-08-15  Stephen J. Turnbull  <stephen@xemacs.org>
- 
+
 	* internals/internals.texi (GCPROing): Add comment on GCPRO.
 	(Regression Testing XEmacs): New node.
 	(Modules for Regression Testing): New node.
@@ -198,7 +208,7 @@
 	* lispref/glyphs.texi:
 	lispref/lispref.texi: Add examples of how to insert graphics into a
 	buffer.
-	
+
 2001-12-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs/packages.texi (Packages):
@@ -225,7 +235,7 @@
 2001-11-27  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs-faq.texi: Hyperlink fixes.
-	
+
 2002-02-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs-faq.texi (Q4.7.7): New FAQ on remote files.
@@ -258,7 +268,7 @@
 	* xemacs/packages.texi (Automatically): Don't mention "Options"
 	menu.
 	(Installing Packages): Don't mention getting list of packages via
-	customize. 
+	customize.
 
 2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -294,7 +304,7 @@
 
 	* emodules.texi (Using DEFUN): Add @ref{Lisp Primitives}.
 
-	* lispref/mule.texi (Unicode Support): 
+	* lispref/mule.texi (Unicode Support):
 	* xemacs/custom.texi (Behaviors):
 	* lispref/customize.texi (Enabling Behavior):
 	New nodes.
@@ -384,7 +394,7 @@
 	* glyphs.texi:
 	lispref.texi: Add examples of how to insert graphics into a
 	buffer.
-	
+
 2002-01-02  Adrian Aichner  <adrian@xemacs.org>
 
 	* emodules.texi: Add missing direntry, reword "dynamic loadable"
@@ -430,7 +440,7 @@
 	* lispref/intro.texi (Introduction): Next -> Packaging.
 	* lispref/objects.texi (Lisp Data Types): Previous -> Packaging.
 	* Makefile (lispref-srcs): Depend on lispref/packaging.texi.
-	
+
 2001-11-26  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs-faq.texi (Top): Remove duplicate node "Introduction".
@@ -586,7 +596,7 @@
 	* xemacs-faq.texi (Q2.1.18):
 	* xemacs-faq.texi (Q2.1.19):
 	document how to debug X errors
-	
+
 2001-05-15  Steve Youngs  <youngs@xemacs.org>
 
 	* xemacs/packages.texi (Local.rules): Update to reflect new dir tree.
@@ -826,7 +836,7 @@
 	* standards.texi (References):
 	* standards.texi (Index):
 	Update to latest GNU version.
-	
+
 	* xemacs-faq.texi (Q6.3.3):
 	* xemacs-faq.texi (Q6.4.1):
 	Improve questions on current Windows activity.
@@ -927,13 +937,13 @@
 	location.  Update information about the MS Windows port.  Change
 	description of XEmacs at beginning to match the web site.  Update
 	info about current developers.
-	
+
 
 2001-02-25  Ben Wing  <ben@xemacs.org>
 
 	* lispref\help.texi (Describing Characters):
 	kp- not kp_.
-	
+
 2001-02-25  Ben Wing  <ben@xemacs.org>
 
 	* new-users-guide\custom1.texi (Customization Basics):
@@ -947,7 +957,7 @@
 	* new-users-guide\modes.texi (Minor Modes):
 	* new-users-guide\new-users-guide.texi (Top):
 	Fix up references to .emacs to take into account init.el.
-	
+
 2001-02-23  Martin Buchholz <martin@xemacs.org>
 
 	* XEmacs 21.2.45 "Thelxepeia" is released.

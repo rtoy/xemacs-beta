@@ -1,3 +1,8 @@
+2002-12-03  Didier Verna  <didier@xemacs.org>
+
+	* faces.el (background-pixmap-file-history): New.
+	* faces.el (set-face-background-pixmap-file): New.
+
 2002-11-28  Mike Sperber <mike@xemacs.org>
 
 	* window.el (save-window-excursion): New macro to eventually
@@ -23,13 +28,13 @@
 2002-11-27  Ben Wing  <ben@xemacs.org>
 
 	* cl-macs.el (loop): Document better.
-	
+
 	* cmdloop.el:
 	* cmdloop.el (command-error):
 	* cmdloop.el (breakpoint-on-error): Removed.
 	Remove nonworking breakpoint-on-error now that debug-on-error
 	works as documented.
-	
+
 	* help.el:
 	* help.el (temp-buffer-mode): New.
 	* help.el (Commands): New.
@@ -44,7 +49,7 @@
 	* lib-complete.el (find-library-source-path):
 	* lib-complete.el (find-library):
 	Support thunks in find-library-source-path.
-	
+
 	* startup.el (normal-top-level):
 	Don't catch errors when noninteractive, because that makes
 	stack traces from stack-trace-on-error useless.
@@ -73,7 +78,7 @@
 
 	* font-menu.el (font-menu-set-font): Make sure values for family,
 	size, and weight are defaulted non-nil.  Fix indentation.
-	(font-menu-size-scaling): 
+	(font-menu-size-scaling):
 	(font-menu-preferred-resolution):
 	Provide specs for GTK+.
 
@@ -281,7 +286,7 @@
 
 2002-07-21  John Paul Wallington  <jpw@xemacs.org>
 
-	* process.el (substitute-env-vars): New function; sync with 
+	* process.el (substitute-env-vars): New function; sync with
 	GNU Emacs 21.1.50.
 	(setenv): Add optional arg SUBSTITUTE-ENV-VARS; sync with
 	GNU Emacs 21.1.50.

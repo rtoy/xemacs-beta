@@ -226,13 +226,14 @@ and to provide other features required under Mule.
 To use a glyph as the background pixmap of a face: Note that the
 background pixmap of a face is actually an image specifier -- probably
 the only place in XEmacs where an image specifier occurs outside of a
-glyph.  Similarly to how the glyph's image specifier works, you don't
+glyph. Similarly to how the glyph's image specifier works, you don't
 create your own image specifier, but rather add specifications to the
-existing one (using @code{set-face-background-pixmap}).  Note that the
-image instance that is generated in order to actually display the
-background pixmap is of type @code{mono-pixmap}, meaning that it's a
-two-color image and the foreground and background of the image get
-filled in with the corresponding colors from the face.
+existing one (using @code{set-face-background-pixmap-file} or
+@code{set-face-background-pixmap}). Note that the image instance that is
+generated in order to actually display the background pixmap is of type
+@code{mono-pixmap}, meaning that it's a two-color image and the
+foreground and background of the image get filled in with the
+corresponding colors from the face.
 @end itemize
 
 It is extremely rare that you will ever have to specify a value for
@@ -1454,7 +1455,7 @@ Once you have a glyph, you can then insert it into a buffer.  Example:
 ;; current buffer.  Any existing glyph at this location is replaced.
 (defun insert-glyph (gl)
   "Insert a glyph at the left edge of point."
-  (let ( (prop 'myimage)        ;; myimage is an arbitrary name, chosen 
+  (let ( (prop 'myimage)        ;; myimage is an arbitrary name, chosen
                                 ;; to (hopefully) not conflict with any
                                 ;; other properties.  Change it if
                                 ;; necessary.
