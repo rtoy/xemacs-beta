@@ -64,10 +64,12 @@ main (int argc, char *argv[])
       return EXIT_FAILURE;
     }
 
-  /* dump_id is declared as extern "C" in lrecord.h */
-  fprintf (f, "#if defined (__cplusplus)\n");
-  fprintf (f, "extern \"C\"\n");
-  fprintf (f, "#endif /* __cplusplus */\n");
+  /* dump_id is declared as extern "C" in dumper.h */
+  fputs ("extern\n", f);
+  fputs ("#ifdef __cplusplus\n", f);
+  fputs ("\"C\"\n", f);
+  fputs ("#endif\n", f);
+  fputs ("unsigned int dump_id;\n", f);
   fprintf (f, "unsigned int dump_id = %uU;\n", generate_dump_id ());
 
   if ((fclose (f)) != 0)

@@ -1510,14 +1510,7 @@ void dump_add_weak_object_chain (Lisp_Object *);
 extern MODULE_API int initialized;
 
 #ifdef PDUMP
-
-void pdump_objects_unmark (void);
-void pdump (void);
-int pdump_load (const char *argv0);
-void pdump_backtrace (void);
-extern unsigned int dump_id;
-extern char *pdump_start, *pdump_end;
-
+#include "dumper.h"
 #define DUMPEDP(adr) ((((char *) (adr)) < pdump_end) && \
                       (((char *) (adr)) >= pdump_start))
 #else

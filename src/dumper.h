@@ -23,9 +23,19 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_dumper_h
 #define INCLUDED_dumper_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void pdump_objects_unmark (void);
 void pdump (void);
 int pdump_load (const char *argv0);
+void pdump_backtrace (void);
 extern unsigned int dump_id;
+extern char *pdump_start, *pdump_end;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDED_dumper_h */
