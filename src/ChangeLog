@@ -1,3 +1,10 @@
+2004-04-14  Jerry James  <james@xemacs.org>
+
+	* data.c (Fstring_to_number): Work around limitations of GMP
+	string to number converting functions.
+	* lread.c (read_atom): Comment fix: the behavior is not random.
+	* number.c (string_to_bignum): Ditto.
+
 2004-04-13  Jerry James  <james@xemacs.org>
 
 	* data.c (Fstring_to_number): Skip leading + sign to avoid

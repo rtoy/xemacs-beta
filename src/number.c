@@ -85,10 +85,10 @@ Lisp_Object
 string_to_bignum (const Ibyte *str, Bytecount len, int base)
 {
   Lisp_Object b = make_bignum (0L);
-  /* GMP bignum_set_string returns random values with initial + sign */
+  /* GMP bignum_set_string has no effect with initial + sign */
   if (*str == '+')
     str++;
-  /* GMP bignum_set_string returns random values when fed an empty string */
+  /* GMP bignum_set_string has no effect when fed an empty string */
   if (*str == '\0')
     return make_int (0);
   return (bignum_set_string (XBIGNUM_DATA (b), (const char *) str, base) < 0)

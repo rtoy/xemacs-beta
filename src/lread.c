@@ -1851,7 +1851,7 @@ read_atom (Lisp_Object readcharfun,
 #ifdef HAVE_RATIO
       if (isratio_string (read_ptr))
 	{
-	  /* GMP ratio_set_string returns random values with initial + sign */
+	  /* GMP ratio_set_string has no effect with initial + sign */
 	  if (*read_ptr == '+')
 	    read_ptr++;
 	  ratio_set_string (scratch_ratio, read_ptr, 0);

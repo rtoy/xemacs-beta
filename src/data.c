@@ -1271,7 +1271,10 @@ Floating point numbers always use base 10.
 #ifdef HAVE_BIGFLOAT
       else
 	{
-	  /* GMP bigfloat_set_string returns random values with initial + */
+	  /* The GMP version of bigfloat_set_string (mpf_set_str) has the
+	     following limitation: if p starts with a '+' sign, it does
+	     nothing; i.e., it leaves its bigfloat argument untouched.
+	     Therefore, move p past any leading '+' signs. */
 	  if (*p == '+')
 	    p++;
 	  bigfloat_set_prec (scratch_bigfloat, bigfloat_get_default_prec ());
@@ -1284,24 +1287,81 @@ Floating point numbers always use base 10.
 #ifdef HAVE_RATIO
   if (qxestrchr (p, '/') != NULL)
     {
-      /* GMP ratio_set_string returns random values with initial + sign */
+      /* The GMP version of ratio_set_string (mpq_set_str) has the following
+	 limitations:
+	 - If p starts with a '+' sign, it does nothing; i.e., it leaves its
+	   ratio argument untouched.
+	 - If p has a '+' sign after the '/' (e.g., 300/+400), it sets the
+	   numerator from the string, but *leaves the denominator unchanged*.
+         - If p has trailing nonnumeric characters, it sets the numerator from
+           the string, but leaves the denominator unchanged.
+         - If p has more than one '/', (e.g., 1/2/3), then it sets the
+           numerator from the string, but leaves the denominator unchanged.
+
+         Therefore, move p past any leading '+' signs, temporarily drop a null
+         after the numeric characters we are trying to convert, and then put
+         the nulled character back afterward.  I am not going to fix problem
+         #2; just don't write ratios that look like that. */
+      Ibyte *end, save;
+
       if (*p == '+')
 	p++;
+
+      for (end = p;
+	   (*end >= '0' && *end <= '9') ||
+	     (b > 10 && *end >= 'a' && *end <= 'a' + b - 11) ||
+	     (b > 10 && *end >= 'A' && *end <= 'A' + b - 11);
+	   end++);
+      if (*end == '/')
+	for (end++;
+	     (*end >= '0' && *end <= '9') ||
+	       (b > 10 && *end >= 'a' && *end <= 'a' + b - 11) ||
+	       (b > 10 && *end >= 'A' && *end <= 'A' + b - 11);
+	     end++);
+
+      save = *end;
+      *end = '\0';
       ratio_set_string (scratch_ratio, (const char *) p, b);
+      *end = save;
+      ratio_canonicalize (scratch_ratio);
       return make_ratio_rt (scratch_ratio);
     }
 #endif /* HAVE_RATIO */
 
 #ifdef HAVE_BIGNUM
-  /* GMP bignum_set_string returns random values when the string starts with a
-     plus sign */
-  if (*p == '+')
-    p++;
-  /* GMP bignum_set_string returns random values when fed an empty string */
-  if (*p == '\0')
-    return make_int (0);
-  bignum_set_string (scratch_bignum, (const char *) p, b);
-  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+  {
+    /* The GMP version of bignum_set_string (mpz_set_str) has the following
+       limitations:
+       - If p starts with a '+' sign, it does nothing; i.e., it leaves its
+         bignum argument untouched.
+       - If p is the empty string, it does nothing.
+       - If p has trailing nonnumeric characters, it does nothing.
+
+       Therefore, move p past any leading '+' signs, temporarily drop a null
+       after the numeric characters we are trying to convert, special case the
+       empty string, and then put the nulled character back afterward. */
+    Ibyte *end, save;
+    Lisp_Object retval;
+
+    if (*p == '+')
+      p++;
+    for (end = p;
+	 (*end >= '0' && *end <= '9') ||
+	   (b > 10 && *end >= 'a' && *end <= 'a' + b - 11) ||
+	   (b > 10 && *end >= 'A' && *end <= 'A' + b - 11);
+	 end++);
+    save = *end;
+    *end = '\0';
+    if (*p == '\0')
+      retval = make_int (0);
+    else
+      {
+	bignum_set_string (scratch_bignum, (const char *) p, b);
+	retval = Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+      }
+    *end = save;
+    return retval;
+  }
 #else
   if (b == 10)
     {
