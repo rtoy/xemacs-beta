@@ -302,7 +302,7 @@ gtk_xemacs_size_allocate (GtkWidget *widget, GtkAllocation *allocation)
     children = fixed->children;
     while (children)
       {
-	GtkFixedChild* child = children->data;
+	GtkFixedChild* child = (GtkFixedChild*) children->data;
 	children = children->next;
       
 	/*

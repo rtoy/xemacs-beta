@@ -1,3 +1,7 @@
+2004-10-16  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* gtk-xemacs.c (gtk_xemacs_size_allocate): Cast pointer to right type.
+
 2004-10-14  Jerry James  <james@xemacs.org>
 
 	* compiler.h: New USED_IF_MULE and USED_IF_MULE_OR_CHECK_TEXT macros.
