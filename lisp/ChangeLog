@@ -11,6 +11,30 @@
 	* package-get.el (package-get-update-all): Make sure installed.db
 	gets updated after updating packages.
 
+2001-12-13  William M. Perry  <wmperry@gnu.org>
+
+	* gtk-faces.el (gtk-init-device-faces): Better way of munging the
+	default faces from a style.  Do not use 'device' as the locale
+	when setting it, or it makes it very difficult for a user to
+	override.  Now munges highlight, zmacs-region, and toolbar from
+	the appropriate information in the default GtkStyle for the
+	device.
+
+	* gui.el (gui-button-face): Ditto.
+
+	* faces.el (text-cursor): 
+	(highlight): 
+	(zmacs-region): 
+	(list-mode-item-selected): 
+	(primary-selection): 
+	(secondary-selection): 
+	(isearch): 
+	(isearch-secondary): Condense old window-system specific settings
+	into one specifier using the 'win default' tags.
+
+	* dialog-gtk.el (popup-builtin-question-dialog): Deal gracefully
+	with buttons of length 1, 2, and 3.  Fixed yes-or-no-p lossage.
+
 2001-12-11  Andy Piper  <andy@xemacs.org>
 
 	* menubar.el (get-popup-menu-response): re-order so that it works

@@ -89,10 +89,8 @@ Normally it also has no modelines, menubars, or toolbars."
 (if (not (face-differs-from-default-p 'gui-button-face))
     (progn
       (set-face-reverse-p 'gui-button-face t)
-      (set-face-background 'gui-button-face '(((x color) . "grey75")
-					      ((mswindows color) . "grey75")))
-      (set-face-foreground 'gui-button-face '(((x color) . "black")
-					      ((mswindows color) . "black")))))
+      (set-face-background 'gui-button-face '(((win color) . "grey75")))
+      (set-face-foreground 'gui-button-face '(((win color) . "black")))))
 
 
 (defun gui-button-action (instance action user-data)

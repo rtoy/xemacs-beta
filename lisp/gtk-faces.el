@@ -42,14 +42,10 @@
    gtk-font-selection-dialog-cancel-button gtk-widget-show-all
    gtk-main))
 
-(defun gtk-init-find-device ()
-  (let ((dev nil)
-	(devices (device-list)))
-    (while (and (not dev) devices)
-      (if (eq (device-type (car devices)) 'gtk)
-	  (setq dev (car devices)))
-      (setq devices (cdr devices)))
-    dev))
+(eval-when-compile
+  (defmacro gtk-style-munge-face (face attribute value)
+    (let ((func (intern (format "face-%s" (eval attribute)))))
+      `(add-spec-to-specifier (,func ,face) ,value nil '(gtk default) 'prepend))))
 
 ;;; gtk-init-device-faces is responsible for initializing default
 ;;; values for faces on a newly created device.
@@ -58,29 +54,30 @@
   ;;
   ;; If the "default" face didn't have a font specified, try to pick one.
   ;;
-  (if (not (eq (device-type device) 'gtk))
-      nil
-    (gtk-init-pointers)
+  (when (eq (device-type device) 'gtk)
     (let* ((style (gtk-style-info device))
-	   ;;(normal 0)			; GTK_STATE_NORMAL
+	   (normal 0)			; GTK_STATE_NORMAL
 	   ;;(active 1)			; GTK_STATE_ACTIVE
 	   (prelight 2)			; GTK_STATE_PRELIGHT
 	   (selected 3)			; GTK_STATE_SELECTED
 	   ;;(insensitive 4)		; GTK_STATE_INSENSITIVE
 	   )
-      (set-face-foreground 'highlight
-			   (nth prelight (plist-get style 'text))
-			   nil '(gtk default))
-      (set-face-background 'highlight
-			   (nth prelight (plist-get style 'background))
-			   nil '(gtk default))
-      (set-face-foreground 'zmacs-region
-			   (nth selected (plist-get style 'text))
-			   nil '(gtk default))
-      (set-face-background 'zmacs-region
-			   (nth selected (plist-get style 'background))
-			   nil '(gtk default)))
-    (set-face-background 'text-cursor "red3" device)))
+      (gtk-style-munge-face 'highlight 'foreground
+			    (nth prelight (plist-get style 'text)))
+      (gtk-style-munge-face 'highlight 'background
+			    (nth prelight (plist-get style 'background)))
+      (gtk-style-munge-face 'zmacs-region 'foreground
+			    (nth selected (plist-get style 'text)))
+      (gtk-style-munge-face 'zmacs-region 'background
+			    (nth selected (plist-get style 'background)))
+      (gtk-style-munge-face 'toolbar 'background
+			    (nth normal (plist-get style 'base)))
+      (gtk-style-munge-face 'toolbar 'foreground
+			    (nth normal (plist-get style 'text)))
+      (set-face-background 'modeline [toolbar background] '(gtk default))
+      (set-face-foreground 'modeline [toolbar foreground] '(gtk default))
+      )
+    (gtk-init-pointers)))
 
 ;;; This is called from `init-frame-faces', which is called from
 ;;; init_frame_faces() which is called from Fmake_frame(), to perform
@@ -94,9 +91,9 @@
 ;;; specified.
 ;;;
 (defun gtk-init-global-faces ()
-  (let* ((dev (gtk-init-find-device))
+  (let* ((dev nil)
 	 (default-font (or (face-font 'default 'global)
-			   ;(plist-get (gtk-style-info dev) 'font)
+			   ;;(plist-get (gtk-style-info dev) 'font)
 			   "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*"))
 	 (italic-font (or (gtk-make-font-italic default-font dev) default-font))
 	 (bold-font (or (gtk-make-font-bold default-font dev) default-font))

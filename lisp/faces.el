@@ -1812,96 +1812,62 @@ in that frame; otherwise change each frame."
 ;; the first non-stream device.
 
 (set-face-background 'text-cursor
-		     '(((x default) . "Red3")
-		       ((mswindows default) . "Red3"))
+		     '(((win default) . "Red3"))
 		     'global)
 
 ;; some older X servers don't recognize "darkseagreen2"
 (set-face-background 'highlight
-		     '(((x default color) . "darkseagreen2")
-		       ((x default color) . "green")
-		       ((x default grayscale) . "gray53")
-		       ((mswindows default color) . "darkseagreen2")
-		       ((mswindows default color) . "green")
-		       ((mswindows default grayscale) . "gray53"))
+		     '(((win default color) . "darkseagreen2")
+		       ((win default color) . "green")
+		       ((win default grayscale) . "gray53"))
 		     'global)
 (set-face-background-pixmap 'highlight
-			    '(((x default mono) . "gray1")
-;; 			      ((gtk default mono) . "gray1")
-			      ((mswindows default mono) . "gray1"))
+			    '(((win default mono) . "gray1"))
 			    'global)
 
 (set-face-background 'zmacs-region
-		     '(((x default color) . "gray65")
-		       ((x default grayscale) . "gray65")
-		       ((mswindows default color) . "gray65")
-		       ((mswindows default grayscale) . "gray65"))
+		     '(((win default color) . "gray65")
+		       ((win default grayscale) . "gray65"))
 		     'global)
 (set-face-background-pixmap 'zmacs-region
-			    '(((x default mono) . "gray3")
-;; 			      ((gtk default mono) . "gray3")
-			      ((mswindows default mono) . "gray3"))
+			    '(((win default mono) . "gray3"))
 			    'global)
 
 (set-face-background 'list-mode-item-selected
-		     '(((x default color) . "gray68")
-		       ((x default grayscale) . "gray68")
-		       ((x default mono) . [default foreground])
-;; 		       ((gtk default color) . "gray68")
-;; 		       ((gtk default grayscale) . "gray68")
-;; 		       ((gtk default mono) . [default foreground])
-		       ((mswindows default color) . "gray68")
-		       ((mswindows default grayscale) . "gray68")
-		       ((mswindows default mono) . [default foreground]))
+		     '(((win default color) . "gray68")
+		       ((win default grayscale) . "gray68")
+		       ((win default mono) . [default foreground]))
 		     'global)
 (set-face-foreground 'list-mode-item-selected
-		     '(((x default mono) . [default background])
-		       ((mswindows default mono) . [default background]))
+		     '(((win default mono) . [default background]))
 		     'global)
 
 (set-face-background 'primary-selection
-		     '(((x default color) . "gray65")
-		       ((x default grayscale) . "gray65")
-		       ((mswindows default color) . "gray65")
-		       ((mswindows default grayscale) . "gray65"))
+		     '(((win default color) . "gray65")
+		       ((win default grayscale) . "gray65"))
 		     'global)
 (set-face-background-pixmap 'primary-selection
-			    '(((x default mono) . "gray3")
-			      ;;((gtk default mono) . "gray3")
-			      ((mswindows default mono) . "gray3"))
+			    '(((win default mono) . "gray3"))
 			    'global)
 
 (set-face-background 'secondary-selection
-		     '(((x default color) . "paleturquoise")
-		       ((x default color) . "green")
-		       ((x default grayscale) . "gray53")
-		       ;;((gtk default color) . "paleturquoise")
-		       ;;((gtk default color) . "green")
-		       ;;((gtk default grayscale) . "gray53")
-		       ((mswindows default color) . "paleturquoise")
-		       ((mswindows default color) . "green")
-		       ((mswindows default grayscale) . "gray53"))
+		     '(((win default color) . "paleturquoise")
+		       ((win default color) . "green")
+		       ((win default grayscale) . "gray53"))
 		     'global)
 (set-face-background-pixmap 'secondary-selection
-			    '(((x default mono) . "gray1")
-			      ;;((gtk default mono) . "gray1")
-			      ((mswindows default mono) . "gray1"))
+			    '(((win default mono) . "gray1"))
 			    'global)
 
 (set-face-background 'isearch
-		     '(((x default color) . "paleturquoise")
-		       ((x default color) . "green")
-		       ;;((gtk default color) . "paleturquoise")
-		       ;;((gtk default color) . "green")
-		       ((mswindows default color) . "paleturquoise")
-		       ((mswindows default color) . "green"))
+		     '(((win default color) . "paleturquoise")
+		       ((win default color) . "green"))
 		     'global)
 
 ;; #### This should really, I mean *really*, be converted to some form
 ;; of `defface' one day.
 (set-face-foreground 'isearch-secondary
-		     '(((x default color) . "red3")
-		       ((mswindows default color) . "red3"))
+		     '(((win default color) . "red3"))
 		     'global)
 
 ;; Define some logical color names to be used when reading the pixmap files.
