@@ -1,3 +1,10 @@
+2005-02-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select-x.c (x_reply_selection_request): Use XtRegisterDrawable 
+        to tell Xt not to drop PropertyChange events destined for the 
+        selection request target window. This makes incremental selection 
+        transfer work, instead of looping until interrupted.  
+
 2005-01-06  Andrey Slusar  <anrays@gmail.com>
 
 	* s/freebsd.h: fix build on the FreeBSD 6

@@ -521,12 +521,22 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
     {
       /* Send an INCR selection. */
       int prop_id;
+      Widget widget = FRAME_X_TEXT_WIDGET (DEVICE_SELECTED_FRAME(d));
 
       if (x_window_to_frame (d, window)) /* #### debug */
- invalid_operation ("attempt to transfer an INCR to ourself!", Qunbound);
+	invalid_operation ("attempt to transfer an INCR to ourself!",
+			   Qunbound);
 #if 0
       stderr_out ("\nINCR %d\n", bytes_remaining);
 #endif
+
+      /* Tell Xt not to drop PropertyNotify events that arrive for the
+         target window, rather, pass them to us. This would be a hack, but
+         the Xt selection routines are broken for our purposes--we can't
+         pass them callbacks from Lisp, for example. Let's call it a
+         workaround. */
+      XtRegisterDrawable(display, (Drawable)window, widget);
+
       prop_id = expect_property_change (display, window, reply.property,
 					PropertyDelete);
 
@@ -570,8 +580,10 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
       stderr_out ("  INCR done\n");
 #endif
       if (! waiting_for_other_props_on_window (display, window))
+      {
 	XSelectInput (display, window, 0L);
-
+	XtUnregisterDrawable(display, (Drawable)window);
+      }
       XChangeProperty (display, window, reply.property, type, format,
 		       PropModeReplace, data, 0);
     }
