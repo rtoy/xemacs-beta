@@ -614,11 +614,15 @@ emacs_doprnt_1 (Lisp_Object stream, const Bufbyte *format_nonreloc,
 	      if (spec->zero_flag)   *p++ = '0';
 
 	      if (spec->minwidth >= 0)
-		p = long_to_string (p, spec->minwidth);
+		{
+		  long_to_string (p, spec->minwidth);
+		  p += strlen (p);
+		}
 	      if (spec->precision >= 0)
 		{
 		  *p++ = '.';
-		  p = long_to_string (p, spec->precision);
+		  long_to_string (p, spec->precision);
+		  p += strlen (p);
 		}
 	      
 	      if (strchr (double_converters, ch))

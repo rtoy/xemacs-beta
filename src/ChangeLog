@@ -1,3 +1,11 @@
+2001-05-24  Hrvoje Niksic  <hniksic@arsdigita.com>
+
+	* doprnt.c (emacs_doprnt_1): long_to_string doesn't return a
+	value.
+
+	* print.c (long_to_string): New, faster implementation.  Revert
+	change from 2000-11-22.
+
 2001-05-25  Martin Buchholz  <martin@xemacs.org>
 
 	* process-unix.c (unix_canonicalize_host_name): Fix compile warnings.

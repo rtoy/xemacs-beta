@@ -2835,7 +2835,7 @@ void write_string_1 (const Bufbyte *, Bytecount, Lisp_Object);
 void print_cons (Lisp_Object, Lisp_Object, int);
 void print_vector (Lisp_Object, Lisp_Object, int);
 void print_string (Lisp_Object, Lisp_Object, int);
-char *long_to_string (char *, long);
+void long_to_string (char *, long);
 void print_internal (Lisp_Object, Lisp_Object, int);
 void print_symbol (Lisp_Object, Lisp_Object, int);
 void print_float (Lisp_Object, Lisp_Object, int);
