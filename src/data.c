@@ -2004,6 +2004,118 @@ Change the list contained in a weak-list object.
   return new_list;
 }
 
+/************************************************************************/
+/*                              weak boxes                              */
+/************************************************************************/
+
+static Lisp_Object Vall_weak_boxes; /* Gemarke es niemals ever!!! */
+
+void
+prune_weak_boxes (void)
+{
+  Lisp_Object rest, prev = Qnil;
+
+  for (rest = Vall_weak_boxes;
+       !NILP(rest);
+       rest = XWEAK_BOX (rest)->next_weak_box)
+    {
+      if (! (marked_p (rest)))
+	/* This weak box itself is garbage.  Remove it from the list. */
+	if (NILP (prev))
+	  Vall_weak_boxes = XWEAK_BOX (rest)->next_weak_box;
+	else
+	  XWEAK_BOX (prev)->next_weak_box = XWEAK_BOX (rest)->next_weak_box;
+      else if (!marked_p(XWEAK_BOX (rest)->value))
+	XSET_WEAK_BOX (rest, Qnil);
+    }
+}
+
+static Lisp_Object
+mark_weak_box (Lisp_Object obj) 
+{
+  return Qnil;
+}
+
+static void
+print_weak_box (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  if (print_readably)
+    printing_unreadable_object ("#<weak_box>");
+  write_fmt_string (printcharfun, "#<weak_box>");
+}
+
+static int
+weak_box_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  struct weak_box *b1 = XWEAK_BOX (obj1);
+  struct weak_box *b2 = XWEAK_BOX (obj2);
+
+  return (internal_equal (b1->value, b2->value, depth + 1));
+}
+
+static Hashcode
+weak_box_hash (Lisp_Object obj, int depth)
+{
+  struct weak_box *b = XWEAK_BOX (obj);
+
+  return internal_hash (b->value, depth + 1);
+}
+
+Lisp_Object
+make_weak_box (Lisp_Object value)
+{
+  Lisp_Object result;
+
+  struct weak_box *wb =
+    alloc_lcrecord_type (struct weak_box, &lrecord_weak_box);
+
+  wb->value = value;
+  result = wrap_weak_box (wb);
+  wb->next_weak_box = Vall_weak_boxes;
+  Vall_weak_boxes = result;
+  return result;
+}
+
+static const struct lrecord_description weak_box_description[] = { 
+  { XD_LO_LINK, offsetof (struct weak_box, value) },
+  { XD_END} 
+};
+
+DEFINE_LRECORD_IMPLEMENTATION ("weak_box", weak_box,
+			       mark_weak_box, print_weak_box,
+			       0, weak_box_equal, weak_box_hash,
+			       weak_box_description,
+			       struct weak_box);
+
+DEFUN ("make-weak-box", Fmake_weak_box, 1, 1, 0, /*
+Return a new weak box from value CONTENTS.
+The weak box is a reference to CONTENTS which may be extracted with
+`weak-box-ref'.  However, the weak box does not contribute to the
+reachability of CONTENTS.  When CONTENTS is garbage-collected,
+`weak-box-ref' will return NIL.
+*/
+       (value))
+{
+  return make_weak_box(value);
+}
+
+DEFUN ("weak-box-ref", Fweak_box_ref, 1, 1, 0, /*
+Return the contents of weak box WEAK-BOX.
+If the contents have been GCed, return NIL.
+*/
+       (box))
+{
+  return XWEAK_BOX(box)->value;
+}
+
+DEFUN ("weak-box-p", Fweak_boxp, 1, 1, 0, /*
+Return non-nil if OBJECT is a weak box.
+*/
+       (object))
+{
+  return WEAK_BOXP (object) ? Qt : Qnil;
+}
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -2112,6 +2224,7 @@ void
 syms_of_data (void)
 {
   INIT_LRECORD_IMPLEMENTATION (weak_list);
+  INIT_LRECORD_IMPLEMENTATION (weak_box);
 
   DEFSYMBOL (Qquote);
   DEFSYMBOL (Qlambda);
@@ -2228,6 +2341,10 @@ syms_of_data (void)
   DEFSUBR (Fweak_list_type);
   DEFSUBR (Fweak_list_list);
   DEFSUBR (Fset_weak_list_list);
+
+  DEFSUBR (Fmake_weak_box);
+  DEFSUBR (Fweak_box_ref);
+  DEFSUBR (Fweak_boxp);
 }
 
 void
@@ -2236,6 +2353,9 @@ vars_of_data (void)
   /* This must not be staticpro'd */
   Vall_weak_lists = Qnil;
   dump_add_weak_object_chain (&Vall_weak_lists);
+
+  Vall_weak_boxes = Qnil;
+  dump_add_weak_object_chain (&Vall_weak_boxes);
 
 #ifdef DEBUG_XEMACS
   DEFVAR_BOOL ("debug-issue-ebola-notices", &debug_issue_ebola_notices /*

@@ -1,3 +1,24 @@
+2002-05-28  Martin Köbele <mkoebele@mkoebele.de>, Jens Müller <jmueller@informatik.uni-tuebingen.de>
+
+	* lrecord.h (lrecord_type): Add lrecord_type_weak_box to
+	lrecord_type enumeration.
+
+	* alloc.c (garbage_collect_1): Call prune_weak_boxes().
+
+	* lisp.h (struct weak_box): 
+	* data.c: 
+	(prune_weak_boxes): 
+	(mark_weak_box): 
+	(print_weak_box): 
+	(weak_box_equal): 
+	(weak_box_hash): 
+	(make_weak_box): 
+	(Fmake_weak_box): 
+	(Fweak_box_ref): 
+	(Fweak_boxp): 
+	(syms_of_data): 
+	(vars_of_data): Add implementation of weak boxes.
+
 2002-05-29  Ben Wing  <ben@xemacs.org>
 
 	* event-msw.c:

@@ -3780,6 +3780,8 @@ garbage_collect_1 (void)
   prune_specifiers ();
   prune_syntax_tables ();
 
+  prune_weak_boxes ();
+
   gc_sweep ();
 
   consing_since_gc = 0;

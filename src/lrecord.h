@@ -196,6 +196,7 @@ enum lrecord_type
   lrecord_type_emacs_ffi,
   lrecord_type_emacs_gtk_object,
   lrecord_type_emacs_gtk_boxed,
+  lrecord_type_weak_box,
   lrecord_type_free, /* only used for "free" lrecords */
   lrecord_type_undefined, /* only used for debugging */
   lrecord_type_last_built_in_type /* must be last */
