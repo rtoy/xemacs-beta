@@ -1,3 +1,9 @@
+2003-09-08  Mike Sperber  <mike@xemacs.org>
+
+	* symbols.c (Fvariable_binding_locus): Add, as per suggestion from
+	RMS at:
+	http://article.gmane.org/gmane.emacs.pretest.bugs/1010
+
 2003-09-03  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.15 "celery" is released.
