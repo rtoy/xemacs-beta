@@ -40,6 +40,9 @@ Boston, MA 02111-1307, USA.  */
 /* Define process implementation */
 #define HAVE_WIN32_PROCESSES
 
+/* Wide characters are supported */
+#define HAVE_WCHAR_H
+
 /* These two are used in etags.c. */
 #define popen _popen
 #define pclose _pclose

@@ -1,3 +1,7 @@
+2002-07-29  Jonathan Harris  <jonathan@xemacs.org>
+
+	* s/win32-native.h: Define HAVE_WCHAR_H for native Win32 build.
+
 2002-07-17  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 	    Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
 	    Mike Sperber <mike@xemacs.org>
