@@ -2238,7 +2238,9 @@ column, or at the end of the line if it is not long enough.
 If there is no line in the buffer after this one, behavior depends on the
 value of `next-line-add-newlines'.  If non-nil, it inserts a newline character
 to create a line, and moves the cursor to that line.  Otherwise it moves the
-cursor to the end of the buffer.
+cursor to the end of the buffer.  If `signal-error-on-buffer-boundary' is
+non-nil and you attempt to move past a buffer boundary, XEmacs will ring the
+bell using `ding'.
 
 The command \\[set-goal-column] can be used to create
 a semipermanent goal column to which this command always moves.
@@ -2285,6 +2287,9 @@ The characters that are moved over may be added to the current selection
 \(i.e. active region) if the Shift key is held down, a motion key is used
 to invoke this command, and `shifted-motion-keys-select-region' is t; see
 the documentation for this variable for more details.
+
+If `signal-error-on-buffer-boundary' is non-nil and you attempt to move past
+a buffer boundary, XEmacs will ring the bell using `ding'.
 
 If you are thinking of using this in a Lisp program, consider using
 `forward-line' with a negative argument instead.  It is usually easier
