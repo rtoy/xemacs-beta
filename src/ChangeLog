@@ -1,5 +1,12 @@
 2003-11-14  Jerry James  <james@xemacs.org>
 
+	* emacs.c (voodoo_free_hook): ICC understands typeof.
+	* emacs.c (Fkill_emacs): Ditto.
+	* ralloc.c (init_ralloc): Ditto.
+	* ralloc.c (r_alloc_reinit): Ditto.
+
+2003-11-14  Jerry James  <james@xemacs.org>
+
 	* config.h.in: Remove last traces of GNU DLD.
 
 2003-11-01  Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
