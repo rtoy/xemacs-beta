@@ -37,7 +37,7 @@
 	* autoconf: New directory for tests for configure.
 	* autoconf/regressiontest.pl: New file from Malcolm Purvis.
 
-004-10-28  Stephen J. Turnbull  <stephen@xemacs.org>
+2004-10-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/os-tests.el: New file.  Add tests for bug reported by
 	Katsumi Yamaoka 2004-10-26 <b9yvfcyuscf.fsf@jpl.org>.  Test
