@@ -446,20 +446,16 @@ If PATTERN is omitted, it defaults to \"[ \\f\\t\\n\\r\\v]+\"."
 ;					      path-separator))))
 ;  (split-string-by-char path (aref separator 0)))
 
-(defmacro with-output-to-string (&rest forms)
-  "Collect output to `standard-output' while evaluating FORMS and return
-it as a string."
-  ;; by "William G. Dubuque" <wgd@zurich.ai.mit.edu> w/ mods from Stig
-  `(with-current-buffer (get-buffer-create
-			 (generate-new-buffer-name " *string-output*"))
-     (setq buffer-read-only nil)
-     (buffer-disable-undo (current-buffer))
-     (erase-buffer)
-     (let ((standard-output (current-buffer)))
-       ,@forms)
-     (prog1
-	 (buffer-string)
-       (erase-buffer))))
+(defmacro with-output-to-string (&rest body)
+  "Execute BODY, return the text it sent to `standard-output', as a string."
+  `(let ((standard-output
+	  (get-buffer-create (generate-new-buffer-name " *string-output*"))))
+     (let ((standard-output standard-output))
+       ,@body)
+     (with-current-buffer standard-output
+       (prog1
+	   (buffer-string)
+	 (kill-buffer nil)))))
 
 (defmacro with-current-buffer (buffer &rest body)
   "Temporarily make BUFFER the current buffer and execute the forms in BODY.

@@ -1,3 +1,10 @@
+2002-09-03  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* subr.el (with-output-to-string): Synch with GNU Emacs 21;
+	avoids leaking temp buffers by killing rather than erasing
+	them, and doesn't execute BODY in temporary `standard-output'
+	buffer.
+
 2002-10-07  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* keydefs.el (global-map): Bind C-xrd to delete-rectangle per GNU.
