@@ -1,6 +1,6 @@
 /* Declarations having to do with XEmacs syntax tables.
    Copyright (C) 1985, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -72,9 +72,43 @@ enum syntaxcode
 enum syntaxcode charset_syntax (struct buffer *buf, Lisp_Object charset,
 				int *multi_p_out);
 
+void update_syntax_table (Lisp_Object table);
+
+DECLARE_INLINE_HEADER (
+void
+update_mirror_syntax_if_dirty (Lisp_Object table)
+)
+{
+  if (XCHAR_TABLE (table)->dirty)
+    update_syntax_table (table);
+}
+
 /* Return the syntax code for a particular character and mirror table. */
 
-#define SYNTAX_CODE(table, c) XINT (get_char_table (c, table))
+DECLARE_INLINE_HEADER (
+enum syntaxcode
+SYNTAX_CODE (Lisp_Object table, Ichar c)
+)
+{
+  type_checking_assert (XCHAR_TABLE (table)->mirror_table_p);
+  update_mirror_syntax_if_dirty (table);
+  return (enum syntaxcode) XINT (get_char_table_1 (c, table));
+}
+
+#ifdef NOT_WORTH_THE_EFFORT
+
+/* Same but skip the dirty check. */
+
+DECLARE_INLINE_HEADER (
+enum syntaxcode
+SYNTAX_CODE_1 (Lisp_Object table, Ichar c)
+)
+{
+  type_checking_assert (XCHAR_TABLE (table)->mirror_table_p);
+  return (enum syntaxcode) XINT (get_char_table_1 (c, table));
+}
+
+#endif /* NOT_WORTH_THE_EFFORT */
 
 #define SYNTAX_FROM_CODE(code) ((enum syntaxcode) ((code) & 0177))
 
@@ -246,8 +280,6 @@ Lisp_Object syntax_match (Lisp_Object table, Ichar ch);
 
 extern int no_quit_in_re_search;
 
-void update_syntax_table (Lisp_Object table);
-
 
 /****************************** syntax caches ********************************/
 
@@ -264,8 +296,8 @@ extern int lookup_syntax_properties;
 struct syntax_cache
 {
   int use_code;				/* Whether to use syntax_code or
-					   current_syntax_table.  This is
-					   set depending on whether the
+					   syntax_table.  This is set
+					   depending on whether the
 					   syntax-table property is a
 					   syntax table or a syntax
 					   code. */
@@ -286,7 +318,8 @@ struct syntax_cache
 					   OBJECT is a buffer, this will
 					   always be the same buffer. */
   int syntax_code;			/* Syntax code of current char. */
-  Lisp_Object current_syntax_table;	/* Syntax table for current pos. */
+  Lisp_Object syntax_table;		/* Syntax table for current pos. */
+  Lisp_Object mirror_table;		/* Mirror table for this table. */
   Lisp_Object start, end;		/* Markers to keep track of the
 					   known region in a buffer.
 					   Formerly we used an internal
@@ -299,6 +332,8 @@ struct syntax_cache
   Charxpos prev_change;			/* Position of the previous extent
 					   change. */
 };
+
+extern const struct sized_memory_description syntax_cache_description;
 
 /* Note that the external interface to the syntax-cache uses charpos's, but
    intnernally we use bytepos's, for speed. */
@@ -348,7 +383,23 @@ UPDATE_SYNTAX_CACHE (struct syntax_cache *cache, Charxpos pos)
 
 #define SYNTAX_CODE_FROM_CACHE(cache, c)				\
   ((cache)->use_code ? (cache)->syntax_code				\
-   : SYNTAX_CODE ((cache)->current_syntax_table, c))
+   : SYNTAX_CODE ((cache)->mirror_table, c))
+
+#ifdef NOT_WORTH_THE_EFFORT
+/* If we really cared about the theoretical performance hit of the dirty
+   check in SYNTAX_CODE, we could use SYNTAX_CODE_1 and endeavor to always
+   keep the mirror table clean, e.g. by checking for dirtiness at the time
+   we set up the syntax cache.  There are lots of potential problems, of
+   course -- incomplete understanding of the possible pathways into the
+   code, with some that are bypassing the setups, Lisp code being executed
+   in the meantime that could change things (e.g. QUIT is called in many
+   functions and could execute arbitrary Lisp very easily), etc.  The QUIT
+   problem is the biggest one, probably, and one of the main reasons it's
+   probably just not worth it. */
+#define SYNTAX_CODE_FROM_CACHE(cache, c)				\
+  ((cache)->use_code ? (cache)->syntax_code				\
+   : SYNTAX_CODE_1 ((cache)->mirror_table, c))
+#endif
 
 
 /***************************** syntax code macros ****************************/

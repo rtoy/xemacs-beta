@@ -1,7 +1,7 @@
 /* Declarations having to do with Mule char tables.
    Copyright (C) 1992 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -119,8 +119,12 @@ struct Lisp_Char_Table
   enum char_table_type type;
 
   /* stuff used for syntax tables */
-  Lisp_Object mirror_table;
+  Lisp_Object mirror_table; /* points to mirror table for this table
+			       (a cache for quicker access), or a back
+			       pointer if MIRROR_TABLE_P. */
   Lisp_Object next_table; /* DO NOT mark through this. */
+  char dirty; /* nonzero if mirror dirty and needs updating. */
+  char mirror_table_p; /* nonzero if this is a mirror table. */
 };
 typedef struct Lisp_Char_Table Lisp_Char_Table;
 
@@ -140,7 +144,7 @@ Lisp_Object get_non_ascii_char_table_value (Lisp_Char_Table *ct,
 
 DECLARE_INLINE_HEADER (
 Lisp_Object
-get_char_table (Ichar ch, Lisp_Object table)
+get_char_table_1 (Ichar ch, Lisp_Object table)
 )
 {
   Lisp_Object retval;
@@ -164,6 +168,19 @@ get_char_table (Ichar ch, Lisp_Object table)
   else
     return ct->default_;
 }
+
+#ifdef ERROR_CHECK_TYPES
+DECLARE_INLINE_HEADER (
+Lisp_Object
+get_char_table (Ichar ch, Lisp_Object table)
+)
+{
+  assert (!XCHAR_TABLE (table)->mirror_table_p);
+  return get_char_table_1 (ch, table);
+}
+#else
+#define get_char_table(ch, table) get_char_table_1 (ch, table)
+#endif
 
 enum chartab_range_type
 {
@@ -195,6 +212,13 @@ int map_char_table (Lisp_Object table,
 void prune_syntax_tables (void);
 Lisp_Object get_range_char_table (struct chartab_range *range,
 				  Lisp_Object table, Lisp_Object multi);
+#ifdef ERROR_CHECK_TYPES
+Lisp_Object updating_mirror_get_range_char_table (struct chartab_range *range,
+						  Lisp_Object table,
+						  Lisp_Object multi);
+#else
+#define updating_mirror_get_range_char_table get_range_char_table
+#endif
 void copy_char_table_range (Lisp_Object from, Lisp_Object to,
 			    struct chartab_range *range);
 int word_boundary_p (Ichar c1, Ichar c2);

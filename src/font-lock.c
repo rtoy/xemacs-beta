@@ -1,7 +1,7 @@
 /* Routines to compute the current syntactic context, for font-lock mode.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -562,7 +562,7 @@ find_context (struct buffer *buf, Charbpos pt)
             else if (context_cache.context == context_none)
 	      {
 		Lisp_Object stringtermobj =
-		  syntax_match (scache->current_syntax_table, c);
+		  syntax_match (scache->syntax_table, c);
 		Ichar stringterm;
 
 		if (CHARP (stringtermobj))

@@ -1,7 +1,7 @@
 /* XEmacs routines to deal with char tables.
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
    Copyright (C) 1995, 1997, 1999 Electrotechnical Laboratory, JAPAN.
    Licensed to the Free Software Foundation.
 
@@ -444,13 +444,20 @@ See `make-char-table'.
   return char_table_type_to_symbol (XCHAR_TABLE (char_table)->type);
 }
 
+static void
+set_char_table_dirty (Lisp_Object table)
+{
+  assert (!XCHAR_TABLE (table)->mirror_table_p);
+  XCHAR_TABLE (XCHAR_TABLE (table)->mirror_table)->dirty = 1;
+}
+
 void
 set_char_table_default (Lisp_Object table, Lisp_Object value)
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (table);
   ct->default_ = value;
   if (ct->type == CHAR_TABLE_TYPE_SYNTAX)
-    update_syntax_table (table);
+    set_char_table_dirty (table);
 }
 
 static void
@@ -462,11 +469,17 @@ fill_char_table (Lisp_Char_Table *ct, Lisp_Object value)
     ct->ascii[i] = value;
 #ifdef MULE
   for (i = 0; i < NUM_LEADING_BYTES; i++)
-    ct->level1[i] = value;
+    {
+      /* Don't get stymied when initting the table */
+      if (!EQ (ct->level1[i], Qnull_pointer) &&
+	  CHAR_TABLE_ENTRYP (ct->level1[i]))
+	free_lcrecord (ct->level1[i]);
+      ct->level1[i] = value;
+    }
 #endif /* MULE */
 
   if (ct->type == CHAR_TABLE_TYPE_SYNTAX)
-    update_syntax_table (wrap_char_table (ct));
+    set_char_table_dirty (wrap_char_table (ct));
 }
 
 DEFUN ("reset-char-table", Freset_char_table, 1, 1, 0, /*
@@ -576,19 +589,21 @@ sorts of values.  The different char table types are
 
   ct = alloc_lcrecord_type (Lisp_Char_Table, &lrecord_char_table);
   ct->type = ty;
+  obj = wrap_char_table (ct);
   if (ty == CHAR_TABLE_TYPE_SYNTAX)
     {
       /* Qgeneric not Qsyntax because a syntax table has a mirror table
 	 and we don't want infinite recursion */
       ct->mirror_table = Fmake_char_table (Qgeneric);
       set_char_table_default (ct->mirror_table, make_int (Spunct));
+      XCHAR_TABLE (ct->mirror_table)->mirror_table_p = 1;
+      XCHAR_TABLE (ct->mirror_table)->mirror_table = obj;
     }
   else
     ct->mirror_table = Qnil;
   ct->next_table = Qnil;
   ct->parent = Qnil;
   ct->default_ = Qnil;
-  obj = wrap_char_table (ct);
   if (ty == CHAR_TABLE_TYPE_SYNTAX)
     {
       ct->next_table = Vall_syntax_tables;
@@ -652,6 +667,8 @@ as CHAR-TABLE.  The values will not themselves be copied.
   ctnew->type = ct->type;
   ctnew->parent = ct->parent;
   ctnew->default_ = ct->default_;
+  ctnew->mirror_table_p = ct->mirror_table_p;
+  obj = wrap_char_table (ctnew);
 
   for (i = 0; i < NUM_ASCII_CHARS; i++)
     {
@@ -675,12 +692,14 @@ as CHAR-TABLE.  The values will not themselves be copied.
 
 #endif /* MULE */
 
-  if (CHAR_TABLEP (ct->mirror_table))
-    ctnew->mirror_table = Fcopy_char_table (ct->mirror_table);
+  if (!ct->mirror_table_p && CHAR_TABLEP (ct->mirror_table))
+    {
+      ctnew->mirror_table = Fcopy_char_table (ct->mirror_table);
+      XCHAR_TABLE (ctnew->mirror_table)->mirror_table = obj;
+    }
   else
     ctnew->mirror_table = ct->mirror_table;
   ctnew->next_table = Qnil;
-  obj = wrap_char_table (ctnew);
   if (ctnew->type == CHAR_TABLE_TYPE_SYNTAX)
     {
       ctnew->next_table = Vall_syntax_tables;
@@ -772,9 +791,9 @@ copy_char_table_range (Lisp_Object from, Lisp_Object to,
   map_char_table (from, range, copy_mapper, LISP_TO_VOID (to));
 }
 
-Lisp_Object
-get_range_char_table (struct chartab_range *range, Lisp_Object table,
-		      Lisp_Object multi)
+static Lisp_Object
+get_range_char_table_1 (struct chartab_range *range, Lisp_Object table,
+			Lisp_Object multi)
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (table);
   Lisp_Object retval = Qnil;
@@ -862,6 +881,32 @@ get_range_char_table (struct chartab_range *range, Lisp_Object table,
     return ct->default_;
   return retval;
 }
+
+Lisp_Object
+get_range_char_table (struct chartab_range *range, Lisp_Object table,
+		      Lisp_Object multi)
+{
+  if (range->type == CHARTAB_RANGE_CHAR)
+    return get_char_table (range->ch, table);
+  else
+    return get_range_char_table_1 (range, table, multi);
+}
+
+#ifdef ERROR_CHECK_TYPES
+
+/* Only exists so as not to trip an assert in get_char_table(). */
+Lisp_Object
+updating_mirror_get_range_char_table (struct chartab_range *range,
+				      Lisp_Object table,
+				      Lisp_Object multi)
+{
+  if (range->type == CHARTAB_RANGE_CHAR)
+    return get_char_table_1 (range->ch, table);
+  else
+    return get_range_char_table_1 (range, table, multi);
+}
+
+#endif /* ERROR_CHECK_TYPES */
 
 DEFUN ("get-range-char-table", Fget_range_char_table, 2, 3, 0, /*
 Find value for a range in CHAR-TABLE.
@@ -986,8 +1031,7 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
     {
     case CHARTAB_RANGE_ALL:
       fill_char_table (ct, val);
-      return; /* avoid the duplicate call to update_syntax_table() below,
-		 since fill_char_table() also did that. */
+      return; /* fill_char_table() recorded the table as dirty. */
 
 #ifdef MULE
     case CHARTAB_RANGE_CHARSET:
@@ -1006,6 +1050,8 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
       else
 	{
 	  int lb = XCHARSET_LEADING_BYTE (range->charset) - MIN_LEADING_BYTE;
+	  if (CHAR_TABLE_ENTRYP (ct->level1[lb]))
+	    free_lcrecord (ct->level1[lb]);
 	  ct->level1[lb] = val;
 	}
       break;
@@ -1067,7 +1113,7 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
     }
 
   if (ct->type == CHAR_TABLE_TYPE_SYNTAX)
-    update_syntax_table (wrap_char_table (ct));
+    set_char_table_dirty (wrap_char_table (ct));
 }
 
 DEFUN ("put-char-table", Fput_char_table, 3, 3, 0, /*

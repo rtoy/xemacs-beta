@@ -1,5 +1,56 @@
 2003-02-14  Ben Wing  <ben@xemacs.org>
 
+	* buffer.c:
+	* syntax.c:
+	Move syntax table description from buffer.c to syntax.c.
+	
+	* chartab.c:
+	* chartab.c (set_char_table_dirty):
+	* chartab.c (fill_char_table):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (Fcopy_char_table):
+	* chartab.c (get_range_char_table_1):
+	* chartab.c (get_range_char_table):
+	* chartab.c (put_char_table):
+	* chartab.h:
+	* chartab.h (struct Lisp_Char_Table):
+	Free extra char table entries to avoid excessive garbage.
+	Add flags for dirty and mirror_table_p to char tables.
+	Add a back pointer from mirror tables to the original syntax table.
+	When modifying a syntax table, don't update the mirror table right
+	away, just mark as dirty.
+	Add various asserts to make sure we are dealing with the right type
+	of table (mirror or non-mirror).
+	
+	* font-lock.c:
+	* font-lock.c (find_context):
+	* syntax.c (init_syntax_cache):
+	* syntax.c (setup_syntax_cache):
+	* syntax.c (mark_buffer_syntax_cache):
+	* syntax.c (init_buffer_syntax_cache):
+	* syntax.c (syntax_cache_table_was_changed):
+	* syntax.c (update_syntax_cache):
+	* syntax.c (scan_lists):
+	* syntax.c (scan_sexps_forward):
+	* syntax.c (copy_if_not_already_present):
+	* syntax.c (update_just_this_syntax_table):
+	* syntax.c (update_syntax_table):
+	* syntax.c (vars_of_syntax):
+	* syntax.h:
+	* syntax.h (struct syntax_cache):
+	Add entry to syntax caches for the non-mirror table.  Set it
+	appropriately when initializing the syntax table.  Use it, not
+	the mirror table, for calls to syntax_match().
+	Don't create a bogus float each time, just once at startup.
+	Add some asserts, as in chartab.c.
+
+	* syntax.h (SYNTAX_CODE_FROM_CACHE):
+	When retrieving the syntax code, check the dirty flag and update
+	the mirror tables as appropriate.
+	Add some asserts, as above.
+	
+2003-02-14  Ben Wing  <ben@xemacs.org>
+
 	* scrollbar.c (specifier_vars_of_scrollbar):
 	Don't generate fallbacks for TTY's when not HAVE_TTY.
 

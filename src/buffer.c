@@ -238,20 +238,6 @@ static const struct sized_memory_description buffer_text_description = {
   buffer_text_description_1
 };
 
-static const struct memory_description syntax_cache_description_1 [] = {
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, object) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, buffer) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, current_syntax_table) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, start) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, end) },
-  { XD_END }
-};
-
-static const struct sized_memory_description syntax_cache_description = {
-  sizeof (struct syntax_cache),
-  syntax_cache_description_1
-};
-
 static const struct memory_description buffer_description [] = {
 #define MARKED_SLOT(x) { XD_LISP_OBJECT, offsetof (struct buffer, x) },
 #include "bufslots.h"
