@@ -1,5 +1,41 @@
 2005-01-25  Ben Wing  <ben@xemacs.org>
 
+	* startup.el:
+	* startup.el (splash-frame-timeout): Removed.
+	* startup.el (command-line-1):
+	* startup.el (startup-presentation-hack-keymap): Removed.
+	* startup.el (startup-presentation-hack-help):
+	* startup.el (startup-presentation-hack): Removed.
+	* startup.el (splash-frame-present): Removed.
+	* startup.el (splash-screen-present): New.
+	* startup.el (splash-frame-present-hack): Removed.
+	* startup.el (startup-presentation-activate): New.
+	* startup.el (splash-screen-present-hack): New.
+	* startup.el (startup-center-spaces):
+	* startup.el (splash-frame-body): Removed.
+	* startup.el (splash-screen-window-body): New.
+	* startup.el (splash-screen-tty-body): New.
+	* startup.el (splash-frame-static-body): Removed.
+	* startup.el (circulate-splash-frame-elements): Removed.
+	* startup.el (display-splash-frame): Removed.
+	* startup.el (splash-screen-static-body): New.
+	* startup.el ('splash-frame-static-body): New.
+	* startup.el (display-splash-screen): New.
+	* startup.el (xemacs-splash-buffer): New.
+	Rename "splash-frame" -> "splash-screen" (its change
+	long ago from screen to frame happened during the general
+	screen->frame sub and was a mistake).	Compress all info
+	onto one screen rather than cycling through 3 of them.
+	Update copyright years and some other random stuff.
+
+	* menubar-items.el:
+	* menubar-items.el (default-menubar):
+	* menubar-items.el (xemacs-splash-buffer): Removed.
+	frame->screen and rewrite to fix bugginess.
+	Add menu items for beta and distribution info.
+
+2005-01-25  Ben Wing  <ben@xemacs.org>
+
 	* mouse.el:
 	* mouse.el (mouse-track-activate-strokes):
 	* mouse.el (mouse-track-conservative-activate-strokes): New.
@@ -11,40 +47,6 @@
 	Redo mouse-track activation to separate out a "conservative"
 	activation that is only triggered by button2 or button1 double-click
 	and a regular activation also triggered by button1.
-
-2004-11-01  Ben Wing  <ben@xemacs.org>
-
-	* menubar-items.el (xemacs-splash-buffer):
-	frame->screen and rewrite to fix bugginess.
-
-	* startup.el:
-	* startup.el (splash-frame-timeout): Removed.
-	* startup.el (splash-screen-timeout): New.
-	* startup.el (splash-screen-circulate): New.
-	* startup.el (command-line-1):
-	* startup.el (splash-frame-present-hack): Removed.
-	* startup.el (splash-screen-present-hack): New.
-	* startup.el (splash-frame-present): Removed.
-	* startup.el (splash-screen-present): New.
-	* startup.el (splash-frame-body): Removed.
-	* startup.el (splash-screen-body): New.
-	* startup.el (splash-frame-static-body): Removed.
-	* startup.el (splash-screen-static-body): New.
-	* startup.el ('splash-frame-static-body): New.
-	* startup.el (circulate-splash-frame-elements): Removed.
-	* startup.el (circulate-splash-screen-elements): New.
-	* startup.el (display-splash-frame): Removed.
-	* startup.el (display-splash-screen): New.
-	Rename "splash-frame" -> "splash-screen" (its change
-	long ago from screen to frame happened during the general
-	screen->frame sub and was a mistake).  Provide obsolete
-	compatibility var for existing locale .el files.
-	Change so that it no longer automatically cycles every 7
-	seconds or so -- instead, it lets you cycle yourself by
-	pressing `n', or any other key to clear (and displays
-	a message stating this).  Update copyright years and some
-	other random stuff.  New variable splash-screen-circulate
-	which can be set (sufficiently early) to get the old behavior.
 
 2005-01-25  Ben Wing  <ben@xemacs.org>
 

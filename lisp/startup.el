@@ -3,7 +3,7 @@
 ;; Copyright (C) 1985-1986, 1990, 1992-1997 Free Software Foundation, Inc.
 ;; Copyright (c) 1993, 1994 Sun Microsystems, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
-;; Copyright (C) 2001, 2002, 2003 Ben Wing.
+;; Copyright (C) 2001, 2002, 2003, 2004, 2005 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, dumped
@@ -72,7 +72,6 @@
 (defvar command-line-processed nil "t once command line has been processed")
 
 (defconst startup-message-timeout 12000) ; More or less disable the timeout
-(defconst splash-frame-timeout 7) ; interval between splash frame elements
 
 (defconst inhibit-startup-message nil
   "*Non-nil inhibits the initial startup message.
@@ -1059,7 +1058,7 @@ a new format, when variables have changed, etc."
       (when (string= (buffer-name) "*scratch*")
 	(unless (or inhibit-startup-message
 		    (input-pending-p))
-	  (let (tmout circ-tmout)
+	  (let (tmout)
 	    (unwind-protect
 		;; Guts of with-timeout
 		(catch 'tmout
@@ -1069,13 +1068,12 @@ a new format, when variables have changed, etc."
 						 (throw 'tmout t)
 					       (error nil)))
 					   nil))
-		  (setq circ-tmout (display-splash-frame))
+		  (display-splash-screen)
 		  (or nil;; (pos-visible-in-window-p (point-min))
 		      (goto-char (point-min)))
 		  (sit-for 0)
 		  (setq unread-command-event (next-command-event)))
-	      (when tmout (disable-timeout tmout))
-	      (when circ-tmout (disable-timeout circ-tmout)))))
+	      (when tmout (disable-timeout tmout)))))
 	(with-current-buffer (get-buffer "*scratch*")
 	  ;; In case the XEmacs server has already selected
 	  ;; another buffer, erase the one our message is in.
@@ -1125,55 +1123,20 @@ a new format, when variables have changed, etc."
 	    (goto-line line)
 	    (setq line nil))))))))
 
-(defvar startup-presentation-hack-keymap
-  (let ((map (make-sparse-keymap)))
-    (set-keymap-name map 'startup-presentation-hack-keymap)
-    (define-key map '[button1] 'startup-presentation-hack)
-    (define-key map '[button2] 'startup-presentation-hack)
-    map)
-  "Putting yesterday in the future tomorrow.")
-
-(defun startup-presentation-hack ()
-  (interactive)
-  (let ((e last-command-event))
-    (and (button-press-event-p e)
-         (setq e (extent-at (event-point e)
-                            (event-buffer e)
-                            'startup-presentation-hack))
-         (setq e (extent-property e 'startup-presentation-hack))
-         (if (consp e)
-             (apply (car e) (cdr e))
-	   (while (keymapp (indirect-function e))
-	     (let ((map e)
-		   (overriding-local-map (indirect-function e)))
-	       (setq e (read-key-sequence
-			(let ((p (keymap-prompt map t)))
-			  (cond ((symbolp map)
-				 (if p
-				     (format "%s %s " map p)
-				   (format "%s " map)))
-				(p)
-				(t
-				 (prin1-to-string map))))))
-	       (if (and (button-release-event-p (elt e 0))
-			(null (key-binding e)))
-		   (setq e map)		; try again
-		 (setq e (key-binding e)))))
-	   (call-interactively e)))))
-
+
 (defun startup-presentation-hack-help (e)
   (setq e (extent-property e 'startup-presentation-hack))
-  (if (consp e)
-      (format "Evaluate %S" e)
-    (symbol-name e)))
+  (symbol-name e))
 
-(defun splash-frame-present-hack (e v)
-  ;;   (set-extent-property e 'mouse-face 'highlight)
-  ;;   (set-extent-property e 'keymap
-  ;;    		       startup-presentation-hack-keymap)
-  ;;   (set-extent-property e 'startup-presentation-hack v)
-  ;;   (set-extent-property e 'help-echo
-  ;;    		       'startup-presentation-hack-help)
+(defun startup-presentation-activate (ev ex)
+  (call-interactively (extent-property ex 'startup-presentation-hack)))
+
+(defun splash-screen-present-hack (e v)
+;   (set-extent-property e 'mouse-face 'highlight)
+;   (set-extent-property e 'startup-presentation-hack v)
+;   (set-extent-property e 'help-echo
+;     		       'startup-presentation-hack-help)
+;   (set-extent-property e 'activate-function 'startup-presentation-activate)
   )
 
 (defun splash-hack-version-string ()
@@ -1193,35 +1156,34 @@ a new format, when variables have changed, etc."
       (when (search-forward "." nil t)
 	(delete-region (1- (point)) (point-max))))))
 
-(defun splash-frame-present (l)
+;; parse one page description (see `splash-screen-body') and display
+;; at point.
+(defun splash-screen-present (l)
   (cond ((stringp l)
          (insert l))
         ((eq (car-safe l) 'face)
          ;; (face name string)
          (let ((p (point)))
-           (splash-frame-present (elt l 2))
-           (if (fboundp 'set-extent-face)
-               (set-extent-face (make-extent p (point))
-                                (elt l 1)))))
+           (splash-screen-present (elt l 2))
+	   (set-extent-face (make-extent p (point))
+			    (elt l 1))))
         ((eq (car-safe l) 'key)
          (let* ((c (elt l 1))
                 (p (point))
                 (k (where-is-internal c nil t)))
            (insert (if k (key-description k)
 		     (format "M-x %s" c)))
-           (if (fboundp 'set-extent-face)
-               (let ((e (make-extent p (point))))
-                 (set-extent-face e 'bold)
-                 (splash-frame-present-hack e c)))))
+	   (let ((e (make-extent p (point))))
+	     (set-extent-face e 'bold)
+	     (splash-screen-present-hack e c))))
         ((eq (car-safe l) 'funcall)
          ;; (funcall (fun . args) string)
          (let ((p (point)))
-           (splash-frame-present (elt l 2))
-           (if (fboundp 'set-extent-face)
-               (splash-frame-present-hack (make-extent p (point))
-					  (elt l 1)))))
+           (splash-screen-present (elt l 2))
+	   (splash-screen-present-hack (make-extent p (point))
+				       (elt l 1))))
 	((consp l)
-	 (mapcar 'splash-frame-present l))
+	 (mapcar 'splash-screen-present l))
         (t
          (error "WTF!?"))))
 
@@ -1241,9 +1203,6 @@ a new format, when variables have changed, etc."
 	 (fill-area-width  (* avg-pixwidth (- fill-column left-margin)))
 	 (glyph-pixwidth   (cond ((stringp glyph)
 				  (* avg-pixwidth (length glyph)))
-				 ;; #### the pixmap option should be removed
-				 ;;((pixmapp glyph)
-				 ;; (pixmap-width glyph))
 				 ((glyphp glyph)
 				  (glyph-width glyph))
 				 (t
@@ -1251,10 +1210,49 @@ a new format, when variables have changed, etc."
     (+ left-margin
        (round (/ (/ (- fill-area-width glyph-pixwidth) 2) avg-pixwidth)))))
 
-(defun splash-frame-body ()
-  `[((face (blue bold underline)
-	   "\nDistribution, copying license, warranty:\n\n")
-     "Please visit the XEmacs website at http://www.xemacs.org/ !\n\n"
+;; the splash screen originated in 19.10 as splash-screen-*.  When
+;; Chuck made the global screen->frame change for 19.12, he
+;; accidentally changed these too.  This randomness is getting on my
+;; nerves, so let's fix it and provide minimal aliases for the
+;; `locale' mule package. --ben
+
+;; returns either of vector of page descriptions, each describing one
+;; screenful of information, or just one such page descriptions  Each
+;; page description is a list of textual elements describing how to
+;; display a section of text.  The elements are processed in turn and
+;; the results inserted one after the previous in a buffer.  Each
+;; textual element is either:
+
+;; -- a string, inserted as-is with no decoration.
+;; -- a list of (face FACES "text"), where FACES is the name of a face
+;;    or a list of such names, and specifies the face(s) used when
+;;    displaying the text.
+;; -- a list of (key COMMAND-NAME); the key sequence corresponding to
+;;    the command will be inserted, in boldface.
+;; -- a list of textual elements.
+
+(defun splash-screen-window-body ()
+  `(
+     (face (blue bold underline)
+	   "Useful Help-menu entries:\n\n")
+     ,@(if (string-match "beta" emacs-version)
+	   `((face bold "Beta Info:")
+	     (face (red bold)
+		   "                      This is an Experimental version of XEmacs.\n"))
+	 `( ""))
+     (face bold "XEmacs FAQ:")
+     "                     Read the XEmacs FAQ.\n"
+     (face bold "Info (Online Docs):")
+     "             Read the on-line documentation.\n"
+     (face bold "Tutorial:")
+     "                       XEmacs tutorial.\n"
+     (face bold "Samples->View Sample init.el:")
+     "   A useful initialization file.\n"
+     (face bold "About XEmacs:")
+     "                   See who's developing XEmacs.\n"
+     "\n"
+     (face (bold blue) "XEmacs website:")
+     "                 http://www.xemacs.org/\n\n"
      ,@(if (featurep 'sparcworks)
 	   `( "\
 Sun provides support for the WorkShop/XEmacs integration package only.
@@ -1263,8 +1261,6 @@ All other XEmacs packages are provided to you \"AS IS\".\n"
 				(getenv "LANG"))))
 		  (if (and
 		       (not (featurep 'mule)) ;; Already got mule?
-		       ;; No Mule support on tty's yet
-		       (not (eq 'tty (console-type)))
 		       lang ;; Non-English locale?
 		       (not (string= lang "C"))
 		       (not (string-match "^en" lang))
@@ -1276,46 +1272,47 @@ To handle other languages you need to run a Multi-lingual (`Mule') version of
 XEmacs, by either running the command `xemacs-mule', or by using the X resource
 `ESERVE*defaultXEmacsPath: xemacs-mule' when starting XEmacs from Sun WorkShop.
 \n")))))
-     ((key describe-no-warranty)
-      ": "(face (red bold) "XEmacs comes with ABSOLUTELY NO WARRANTY\n"))
-     ((key describe-copying)
-      ": conditions to give out copies of XEmacs\n")
-     ((key describe-distribution)
-      ": how to get the latest version\n")
-     "\n--\n"
      (face italic "\
 Copyright (C) 1985-1999 Free Software Foundation, Inc.
 Copyright (C) 1990-1994 Lucid, Inc.
 Copyright (C) 1993-1997 Sun Microsystems, Inc. All Rights Reserved.
-Copyright (C) 1994-1996 Board of Trustees, University of Illinois
-Copyright (C) 1995-1996 Ben Wing\n"))
+Copyright (C) 1994-1996 Board of Trustees, University of Illinois.
+Copyright (C) 1995-2005 Ben Wing.\n")
+     ))
 
-    ((face (blue bold underline) "\nInformation, on-line help:\n\n")
-     "XEmacs comes with plenty of documentation...\n\n"
+(defun splash-screen-tty-body ()
+  `(
+    (face italic "[`C-' means the control key, `M-' means the meta key]\n\n")
      ,@(if (string-match "beta" emacs-version)
 	   `((key describe-beta)
 	     ": " (face (red bold)
 			"This is an Experimental version of XEmacs.\n"))
 	 `( "\n"))
      ((key xemacs-local-faq)
-      ": read the XEmacs FAQ (a " (face underline "capital") " F!)\n")
-     ((key help-with-tutorial)
-      ": read the XEmacs tutorial (also available through the "
-      (face bold "Help") " menu)\n")
+      ": Read the XEmacs FAQ. (A " (face underline "capital") " F!)\n")
+     ((key info) ": Read the on-line documentation.\n")
      ((key help-command)
-      ": get help on using XEmacs (also available through the "
-      (face bold "Help") " menu)\n")
-     ((key info) ": read the on-line documentation\n\n")
-     ((key describe-project) ": read about the GNU project\n")
-     ((key about-xemacs) ": see who's developing XEmacs\n"))
-
-    ((face (blue bold underline) "\nUseful stuff:\n\n")
-     "Things that you should learn rather quickly...\n\n"
-     ((key find-file) ": visit a file\n")
-     ((key save-buffer) ": save changes\n")
-     ((key undo) ": undo changes\n")
-     ((key save-buffers-kill-emacs) ": exit XEmacs\n"))
-    ])
+      ": Get help on using XEmacs.\n")
+     ((key help-with-tutorial)
+      ": Read the XEmacs tutorial.\n")
+     ((key view-sample-init-el)
+      ": View the sample init.el file.\n")
+     ((key about-xemacs) ": See who's developing XEmacs.\n")
+     ((key save-buffers-kill-emacs)
+      ": exit XEmacs\n")
+     "\n"
+     (face (bold blue) "XEmacs website: ") 
+     "http://www.xemacs.org/\n\n"
+     (face italic "\
+Copyright (C) 1985-1999 Free Software Foundation, Inc.
+Copyright (C) 1990-1994 Lucid, Inc.
+Copyright (C) 1993-1997 Sun Microsystems, Inc. All Rights Reserved.
+Copyright (C) 1994-1996 Board of Trustees, University of Illinois.
+Copyright (C) 1995-2004 Ben Wing.")
+;      ((key find-file) ": visit a file; ")
+;      ((key save-buffer) ": save changes; ")
+;      ((key undo) ": undo changes; ")
+     ))
 
 ;; I really hate global variables, oh well.
 ;(defvar xemacs-startup-logo-function nil
@@ -1323,67 +1320,58 @@ Copyright (C) 1995-1996 Ben Wing\n"))
 ;This function should return an initialized glyph if it is used.")
 
 ;; This will hopefully go away when gettext is functional.
-(defconst splash-frame-static-body
-  `(,(emacs-version) "\n\n"
-    (face italic "`C-' means the control key,`M-' means the meta key\n\n")))
+(defconst splash-screen-static-body
+  `(,(emacs-version) "\n\n"))
+;; temporary support for old locale files.
+(define-obsolete-variable-alias 'splash-frame-static-body
+  'splash-screen-static-body)
 
-
-(defun circulate-splash-frame-elements (client-data)
-  (with-current-buffer (aref client-data 2)
-    (let ((buffer-read-only nil)
-	  (elements (aref client-data 3))
-	  (indice (aref client-data 0)))
-      (goto-char (aref client-data 1))
-      (delete-region (point) (point-max))
-      (splash-frame-present (aref elements indice))
-      (set-buffer-modified-p nil)
-      (aset client-data 0
-	    (if (= indice (- (length elements) 1))
-		0
-	      (1+ indice )))
-      )))
-
-;; #### This function now returns the (possibly nil) timeout circulating the
-;; splash-frame elements
-(defun display-splash-frame ()
+(defun display-splash-screen ()
+  ;; display the splash screen in the current buffer and put it in the
+  ;; current window.
   (let ((logo xemacs-logo)
 	(buffer-read-only nil)
-        (cramped-p (eq 'tty (console-type))))
-    (unless cramped-p (insert "\n"))
-    (indent-to (startup-center-spaces logo))
-    (set-extent-begin-glyph (make-extent (point) (point)) logo)
-    ;;(splash-frame-present-hack (make-extent p (point)) 'about-xemacs))
-    (insert "\n\n")
-    (splash-frame-present splash-frame-static-body)
+        (tty (eq 'tty (console-type))))
+    (unless tty
+      (insert "\n")
+      (indent-to (startup-center-spaces logo))
+      (set-extent-begin-glyph (make-extent (point) (point)) logo)
+      ;;(splash-screen-present-hack (make-extent p (point)) 'about-xemacs))
+      (insert "\n\n"))
+    (splash-screen-present splash-screen-static-body)
     (splash-hack-version-string)
     (goto-char (point-max))
     (let* ((after-change-functions nil) ; no font-lock, thank you
-	   (elements (splash-frame-body))
-	   (client-data `[ 1 ,(point) ,(current-buffer) ,elements ])
-	   tmout)
-      (if (listp  elements) ;; A single element to display
-	  (splash-frame-present (splash-frame-body))
-	;; several elements to rotate
-	(splash-frame-present (aref elements 0))
-	(setq tmout (add-timeout splash-frame-timeout
-				 'circulate-splash-frame-elements
-				 client-data splash-frame-timeout)))
-      (set-buffer-modified-p nil)
-      tmout)))
+	   (elements (cond (tty (splash-screen-tty-body))
+			   (t (splash-screen-window-body)))))
+      (pop-to-buffer (current-buffer))
+      (delete-other-windows)
+      (splash-screen-present elements)
+      (set-buffer-modified-p nil))))
+
+(defun xemacs-splash-buffer ()
+  "Display XEmacs splash screen in a buffer."
+  (interactive)
+  (let ((buffer (get-buffer-create "*Splash*")))
+    (set-buffer buffer)
+    (setq buffer-read-only nil)
+    (erase-buffer buffer)
+    (display-splash-screen)))
 
 ;;  (let ((present-file
 ;;         #'(lambda (f)
-;;             (splash-frame-present
+;;             (splash-screen-present
 ;;	      (list 'funcall
 ;;		    (list 'find-file-other-window
 ;;			  (expand-file-name f data-directory))
 ;;		    f)))))
 ;;    (insert "For customization examples, see the files ")
-;;    (funcall present-file "sample.emacs")
+;;    (funcall present-file "sample.init.el")
 ;;    (insert " and ")
 ;;    (funcall present-file "sample.Xresources")
 ;;    (insert (format "\nin the directory %s." data-directory)))
 
+
 (defun startup-set-invocation-environment ()
   ;; XEmacs -- Steven Baur says invocation directory is nil if you
   ;; try to use XEmacs as a login shell.

@@ -1619,6 +1619,8 @@ Write your filter like this:
       ["%_Home Page (www.xemacs.org)" xemacs-www-page
        :active (fboundp 'browse-url)]
       ["What's %_New in XEmacs" view-emacs-news]
+      ["B%_eta Info" describe-beta
+	:included (string-match "beta" emacs-version)]
       "-----"
       ("%_Info (Online Docs)"
        ["%_Info Contents" (Info-goto-node "(dir)")]
@@ -1702,6 +1704,7 @@ Write your filter like this:
       ("%_Other"
        ["%_Current Installation Info" describe-installation
 	:active (boundp 'Installation-string)]
+       ["%_Obtaining the Latest Version" describe-distribution]
        ["%_No Warranty" describe-no-warranty]
        ["XEmacs %_License" describe-copying]
        ["Find %_Packages" finder-by-keyword]
@@ -2105,27 +2108,6 @@ items by redefining the function `format-buffers-menu-line'."
 ;; In an effort to avoid massive menu clutter, this mostly worthless menu is
 ;; superseded by any local popup menu...
 (setq-default mode-popup-menu default-popup-menu)
-
-
-;; misc
-
-(defun xemacs-splash-buffer ()
-  "Redisplay XEmacs splash screen in a buffer."
-  (interactive)
-  (let ((buffer (get-buffer-create "*Splash*"))
-	tmout)
-    (set-buffer buffer)
-    (setq buffer-read-only t)
-    (erase-buffer buffer)
-    (setq tmout (display-splash-frame))
-    (when tmout
-      (make-local-hook 'kill-buffer-hook)
-      (add-hook 'kill-buffer-hook
-		`(lambda ()
-		   (disable-timeout ,tmout))
-		nil t))
-    (pop-to-buffer buffer)
-    (delete-other-windows)))
 
 
 ;;; backwards compatibility
