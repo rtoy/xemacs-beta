@@ -150,6 +150,8 @@ Keymap for characters following C-c.")
 (define-key global-map "\C-x52" 'make-frame)
 (define-key global-map "\C-x50" 'delete-frame)
 (define-key global-map "\C-x5o" 'other-frame)
+;; New FSF21 binding:
+(define-key global-map "\C-x51" 'delete-other-frames)
 
 ;; FSFmacs help.el
 

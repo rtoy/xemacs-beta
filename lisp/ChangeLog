@@ -1,3 +1,8 @@
+2001-12-26  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* keydefs.el (global-map): add a defn for C-x 5 1, previously
+	undefined, to run delete-other-frames.
+
 2001-12-18  John Paul Wallington  <jpw@shootybangbang.com>
 
 	* gnuserv.el: 
