@@ -1,3 +1,7 @@
+2002-03-06  Jerry James  <james@xemacs.org>
+
+	* emodules.c (emodules_load): Fix multiple loading of same module.
+
 2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.6 "bok choi" is released.
