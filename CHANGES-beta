@@ -1,3 +1,113 @@
+to 21.5.12 "carrot"
+
+Lots of updates, fixes, and features from Ben Wing (he never stops).
+Also, a lot of work has gone into cleaning up the test suite.  Thanks
+to Steve Turnbull, Jerry James, Daiki Ueno because now all tests from
+'make check' pass 100% (at least on GNU/Linux).
+
+Here are the highlights:
+
+Build
+
+-- Updates to configure.in - Steuck, James, Skyttä, Wing.
+-- Major updates to Makefile.in.in - Wing.
+-- Allow for separate build and source directories - Wing. 
+-- Fix some compiler warnings - Wing.
+-- Major clean up of xemacs.mak and friends - Wing, Aichner. 
+-- Fix some Solaris 2.7 CC compiler warnings - Persico.
+-- Fix for building on Mac - Palmer.
+-- Work around a problem compiling with '--use-union-type' on Intel's
+     ICC compiler - Buchholz.
+-- Fix problems with rel-alloc compilation - Wing.
+-- Sequentialize dependencies even more in update-elc-2 - Sperber.
+-- Don't fatal() in 'report_sheap_usage' when need to rerun Make -
+     Wing. 
+-- Various updates to the test suite - Turnbull.
+
+Documentation
+
+-- Updates to
+	INSTALL - Turnbull, Wing.
+	PROBLEMS - Turnbull, Wing.
+-- Global substition of .Xresources for .Xdefaults - Turnbull.
+-- Update packages in ./etc/BETA - Skyttä.
+-- Doc string updates - Korytov, Turnbull, Wing.
+-- TeXinfo updates - Aichner, Turnbull, Wing, Youngs.
+
+Internals
+
+-- Fix stale match data after failed search bug - Turnbull.
+-- Reformat function definitions correctly in menubar-gtk.c and
+     event-gtk.c - Turnbull.
+-- Fix bug matching ASCII character classes to Mule characters -
+     Ueno. 
+-- Frame updates for MS Win - Alexander.
+-- Add .dylib as an acceptable shared library file extension to
+     support MacOS X - Begel.
+-- Fix bug in database.c for Berkdb 4.1 - Turnbull.
+-- Regex fixes - Turnbull, Wing.
+-- Coding system updates - Wing.
+-- Add clear-left-side functionality in print.c - Wing.
+-- Seg fault rather than abort on Cygwin in 'assert_failed' - Wing.
+-- Delete popup-data object - Wing.  
+-- Delete menubar_data field from frames - Wing.
+-- Clean up handling of lwlib callback data GCPRO'ing - Wing.
+-- Use ALLOCA() in regex.c to avoid excessive stack allocation -
+     Wing. 
+-- Fix subtle problem with REL_ALLOC() - Wing.
+-- Change *run_hook*_trapping_problems to take a warning class, not a
+     string - Wing.
+-- Mule-ize encrypt/decrypt-string code - Wing.
+-- Delete all support for bit-rotten CANNOT_DUMP - Wing.
+-- Fix crash due to attempt to free objects across dump/undump -
+     Wing. 
+-- Don't get in an infinite loop running post-redisplay actions -
+     Wing. 
+-- Make gc_currently_forbidden static - Wing.
+-- Defer redrawing if already in redisplay - Wing.
+-- Add debug code for locking a dynarr to catch invalid mods - Wing.
+-- Ensure that various glyph functions that eval within redisplay
+     protect the evals - Wing.
+-- Defer specifier-changed updating till after redisplay - Wing.
+-- Require that every place inside of redisplay catch errors itself -
+     Wing. 
+-- Introduce separate means of holding frame-size changes - Wing.
+-- Introduce "post-redisplay" methods for deferring things till after
+     redisplay - Wing.
+-- Disable all quit checking in redisplay - Wing.
+-- Use _wexecve() when under Windows NT for Unicode correctness -
+     Wing.
+-- Update list of possibly valid console types - Wing.
+-- Turn on Vstack_trace_on_error 'Frun_emacs_from_temacs' so that
+     errors are debuggable even when occurring extremely early in
+     reinitialization - Wing.
+-- Define new function `emacs-run-status' - Wing.
+-- Fix crash caused by an edge condition in the syntax-cache macros -
+     Wing. 
+-- Eliminate HAVE_WIN32_CODING_SYSTEMS, use WIN32_ANY instead - Wing.
+-- Don't check_quit() unless we're unbinding a real Lisp
+     `unwind-protect' - Wing.
+-- Make absolutely sure there is no quit checking while we are in a
+     "critical section" during frame deletion - Wing.
+
+Lisp API
+
+-- Fix infloop in font-lock for java files - Choi.
+-- Fix split-string - Turnbull.
+-- Support '(filename)nodename' as argument to 'info' - Steib.
+-- Major clean up of the PUI code - Youngs.
+-- Use 'equal' instead of '=' in 'saved-window-equal' - James.
+-- Updates to wid-edit.el - Turnbull.
+-- Better layout for Tools -> Packages -> Download Site menu -
+     Aichner. 
+-- More sites added to packages download sites menu - Aichner.
+-- Byte-compiler warning clean up and lots of synching with FSF 21.2
+     code - Wing.
+-- Move lots of high-level code for computing paths into
+   setup-paths.el from various places - Wing.
+-- Mule and coding system updates - Wing, Turnbull.
+
+
 to 21.5.11 "cabbage"
 
 Lots of improvements and fixes this time around.  One of our key

@@ -1,3 +1,7 @@
+2003-04-24  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.12 "carrot" is released.
+
 2003-04-24  Matthew O. Persico  <persicom@acedsl.com>
 
         * unicode.c: Removed trailing commas in some enums; older

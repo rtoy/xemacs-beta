@@ -1,5 +1,9 @@
 2003-04-24  Steve Youngs  <youngs@xemacs.org>
 
+	* XEmacs 21.5.12 "carrot" is released.
+
+2003-04-24  Steve Youngs  <youngs@xemacs.org>
+
 	* font-lock.el (font-lock-match-java-declarations): Move
 	save-restriction, narrow-to-region to beginning of function to
 	avoid going beyond the limit and causing an infloop.
@@ -281,7 +285,7 @@
 
 2003-03-03  Stephen J. Turnbull  <stephen@xemacs.org>
 
-	*  files.el (save-abbrevs): Fixup whitespace.
+	* files.el (save-abbrevs): Fixup whitespace.
 
 2003-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -475,10 +479,6 @@
 
 	* make-docfile.el (custom-declare-variable-list): Defvar to prevent
 	custom (required from raw-process) from barfing a void-variable error.
-
-2003-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* view-less.el (view-minor-mode): Add autoload cookie.
 
 2003-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -682,8 +682,6 @@
 
 	* msw-glyphs.el:
 	Comment clarification.
-
-2003-02-18  Ben Wing  <ben@xemacs.org>
 
 2003-02-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
