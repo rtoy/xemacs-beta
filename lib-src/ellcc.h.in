@@ -8,7 +8,7 @@
 #ifndef ELLCC_HDR
 #define ELLCC_HDR
 
-#define ELLCC_CC            "@CC@"
+#define ELLCC_CC            "@XEMACS_CC@"
 #define ELLCC_CFLAGS        "@CFLAGS@"
 #define ELLCC_CPPFLAGS      "@CPPFLAGS@"
 #define ELLCC_LDFLAGS       "@LDFLAGS@"

@@ -296,72 +296,87 @@ extern __inline void *GetFiberData (void);
 #define CBEMAXSTRLEN 260
 #endif
 
-typedef struct {
-        NMHDR hdr;
-        BOOL fChanged;
-        int iNewSelection;
-        WCHAR szText[CBEMAXSTRLEN];
-        int iWhy;
+#ifndef NMCBEENDEDIT
+
+typedef struct
+{
+  NMHDR hdr;
+  BOOL fChanged;
+  int iNewSelection;
+  WCHAR szText[CBEMAXSTRLEN];
+  int iWhy;
 } NMCBEENDEDITW, *LPNMCBEENDEDITW, *PNMCBEENDEDITW;
 
-typedef struct {
-        NMHDR hdr;
-        BOOL fChanged;
-        int iNewSelection;
-        char szText[CBEMAXSTRLEN];
-        int iWhy;
+typedef struct
+{
+  NMHDR hdr;
+  BOOL fChanged;
+  int iNewSelection;
+  char szText[CBEMAXSTRLEN];
+  int iWhy;
 } NMCBEENDEDITA, *LPNMCBEENDEDITA,*PNMCBEENDEDITA;
+
+#endif /* not NMCBEENDEDIT */
 
 #if (_WIN32_IE >= 0x0400)
 
-typedef struct {
-    NMHDR hdr;
-    int   iItemid;
-    WCHAR szText[CBEMAXSTRLEN];
-}NMCBEDRAGBEGINW, *LPNMCBEDRAGBEGINW, *PNMCBEDRAGBEGINW;
+#ifndef NMCBEDRAGBEGIN
 
-typedef struct {
-    NMHDR hdr;
-    int   iItemid;
-    char szText[CBEMAXSTRLEN];
-}NMCBEDRAGBEGINA, *LPNMCBEDRAGBEGINA, *PNMCBEDRAGBEGINA;
+typedef struct
+{
+  NMHDR hdr;
+  int   iItemid;
+  WCHAR szText[CBEMAXSTRLEN];
+} NMCBEDRAGBEGINW, *LPNMCBEDRAGBEGINW, *PNMCBEDRAGBEGINW;
+
+typedef struct
+{
+  NMHDR hdr;
+  int   iItemid;
+  char szText[CBEMAXSTRLEN];
+} NMCBEDRAGBEGINA, *LPNMCBEDRAGBEGINA, *PNMCBEDRAGBEGINA;
+
+#endif /* not NMCBEDRAGBEGIN */
+
 typedef struct tagNMDATETIMEFORMATA
 {
-    NMHDR nmhdr;
-    LPCSTR  pszFormat;
-    SYSTEMTIME st;
-    LPCSTR pszDisplay;
-    CHAR szDisplay[64];
+  NMHDR nmhdr;
+  LPCSTR  pszFormat;
+  SYSTEMTIME st;
+  LPCSTR pszDisplay;
+  CHAR szDisplay[64];
 } NMDATETIMEFORMATA, FAR * LPNMDATETIMEFORMATA;
 
 typedef struct tagNMDATETIMEFORMATW
 {
-    NMHDR nmhdr;
-    LPCWSTR pszFormat;
-    SYSTEMTIME st;
-    LPCWSTR pszDisplay;
-    WCHAR szDisplay[64];
+  NMHDR nmhdr;
+  LPCWSTR pszFormat;
+  SYSTEMTIME st;
+  LPCWSTR pszDisplay;
+  WCHAR szDisplay[64];
 } NMDATETIMEFORMATW, FAR * LPNMDATETIMEFORMATW;
 
-typedef struct tagNMTTDISPIFNOA {
-    NMHDR hdr;
-    LPSTR lpszText;
-    char szText[80];
-    HINSTANCE hinst;
-    UINT uFlags;
+typedef struct tagNMTTDISPIFNOA
+{
+  NMHDR hdr;
+  LPSTR lpszText;
+  char szText[80];
+  HINSTANCE hinst;
+  UINT uFlags;
 #if (_WIN32_IE >= 0x0300)
-    LPARAM lParam;
+  LPARAM lParam;
 #endif
 } NMTTDISPINFOA, FAR *LPNMTTDISPINFOA;
 
-typedef struct tagNMTTDISPINFOW {
-    NMHDR hdr;
-    LPWSTR lpszText;
-    WCHAR szText[80];
-    HINSTANCE hinst;
-    UINT uFlags;
+typedef struct tagNMTTDISPINFOW
+{
+  NMHDR hdr;
+  LPWSTR lpszText;
+  WCHAR szText[80];
+  HINSTANCE hinst;
+  UINT uFlags;
 #if (_WIN32_IE >= 0x0300)
-    LPARAM lParam;
+  LPARAM lParam;
 #endif
 } NMTTDISPINFOW, FAR *LPNMTTDISPINFOW;
 
@@ -537,6 +552,12 @@ LRESULT qxeDefMDIChildProc (HWND hWnd, UINT uMsg, WPARAM wParam,
 Extbyte * qxeGetEnvironmentStrings (void);
 
 /* would be encapsulatable but for Cygwin problems */
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef DdeCreateStringHandle
+#define DdeCreateStringHandle error use qxeDdeCreateStringHandle or DdeCreateStringHandleA/DdeCreateStringHandleW
+#endif
+HSZ qxeDdeCreateStringHandle (DWORD idInst, const Extbyte * psz, int iCodePage);
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef RegConnectRegistry

@@ -1,6 +1,6 @@
 /* system description file for mingw32.
    Copyright (C) 1993, 1994, 1995, 1999 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -20,6 +20,15 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* based on cygwin32.h by Andy Piper <andy@xemacs.org> */
+
+/* NOTE: MinGW is a way of using GCC to target the native Windows
+   environment.  This works similarly to building with Cygwin, but the
+   resulting executable does not use the Cygwin DLL.  Instead, MINGW
+   provides import libraries for the standard C library DLL's (specifically
+   CRTDLL -- #### how does this differ from MSVCRT and LIBC.LIB?).  This
+   means that code for MinGW will be very similar to code written for
+   VC++.  See comment in windowsnt.h for more information on how Cygwin
+   and native Windows relate. */
 
 #include "win32-native.h"
 

@@ -174,10 +174,6 @@ extern volatile int process_tick;
 
 extern int windowed_process_io;
 
-#ifdef HAVE_MULTICAST
-extern Lisp_Object Qmulticast;
-#endif
-
 #ifdef PROCESS_IO_BLOCKING
 extern Lisp_Object network_stream_blocking_port_list;
 #endif  /* PROCESS_IO_BLOCKING */

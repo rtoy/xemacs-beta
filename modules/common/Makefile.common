@@ -25,6 +25,8 @@
 ## source tree, and to support both module and non-module building inside the
 ## source tree.
 
+## Note: This will be appended to the individual module Makefiles by configure.
+
 SRC_SRCS=$(SRCS:%=$(srcdir)/%)
 OBJS=$(SRCS:.c=.o)
 

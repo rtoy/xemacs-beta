@@ -469,7 +469,7 @@ dup_file_area (int a_out, int a_new, long size)
   long n;
   for (; size > 0; size -= sizeof (page))
     {
-      n = size > (long) sizeof (page) ? sizeof (page) : size;
+      n = size > (long) sizeof (page) ? (long) sizeof (page) : size;
       if (read (a_out, page, n) != n || write (a_new, page, n) != n)
 	PERROR ("dump_out()");
     }

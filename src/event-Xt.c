@@ -1684,8 +1684,10 @@ handle_focus_event_2 (Window win, struct frame *f, int in_p)
 }
 
 /* Create a synthetic X focus event. */
+void emacs_Xt_enqueue_focus_event (Widget wants_it, Lisp_Object frame,
+				   int in_p);
 void
-enqueue_focus_event (Widget wants_it, Lisp_Object frame, int in_p)
+emacs_Xt_enqueue_focus_event (Widget wants_it, Lisp_Object frame, int in_p)
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
   Lisp_Event *ev          = XEVENT (emacs_event);

@@ -154,7 +154,7 @@ is nil, raise an error."
       (setq load-history (delq elt load-history)))
     ;; If it is a module, really unload it.
     (if unloading-module
-	(unload-module (symbol-name feature)))))
+	(declare-fboundp (unload-module (symbol-name feature))))))
 
 (provide 'loadhist)
 

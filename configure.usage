@@ -31,7 +31,12 @@ Compilation options:
 --compiler=PROG         C compiler to use
 --xemacs-compiler=PROG  compiler to use to compile just the xemacs executable
 --with-gcc (*)          Use GCC to compile XEmacs.
---cflags=FLAGS          Compiler flags (such as -O)
+--cflags=FLAGS          Compiler flags (such as -O); setting this overrides
+                        all default compiler flags except those that control
+                        warnings.
+--cflags_warning=FLAGS  Override compiler flags used to control warnings.
+                        Normally, don't set this, as XEmacs already turns on
+                        the maximum safe warning level.
 --cpp=PROG              C preprocessor to use (e.g. /usr/ccs/lib/cpp or cc -E)
 --cppflags=FLAGS        C preprocessor flags (e.g. -I/foo or -Dfoo=bar)
 --libs=LIBS             Additional libraries (e.g. -lfoo)

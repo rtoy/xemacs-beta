@@ -2,7 +2,7 @@
 # This is only used for independent module building.
 AC_INIT([PostgreSQL module], [1.0], [xemacs-beta@xemacs.org])
 AC_PREREQ(2.53)
-AC_REVISION($Revision: 1.1 $)
+AC_REVISION($Revision: 1.2 $)
 AC_COPYRIGHT([Configuration script for the PostgreSQL module.
 Copyright (C) 2002 Jerry James.
 
@@ -24,15 +24,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.])
 
 AC_CONFIG_SRCDIR([postgresql.c])
-AC_PROG_CC
-AC_PROG_INSTALL
-AC_SUBST(CFLAGS)
-AC_SUBST(LDFLAGS)
 
-# Find ELLCC
-AC_ARG_VAR([ELLCC], [The path to the ellcc module compiler])
-AC_PATH_PROG([ELLCC], [ellcc], ["FAIL"])
-AS_IF([test "$ELLCC" = "FAIL"], [AS_ERROR([Cannot find ellcc])])
+m4_include([../common/configure-pre.ac])
 
 dnl On many Linux systems, PostgreSQL is packaged to be installed in /usr;
 dnl in this case, configure will easily detect it there.
@@ -58,15 +51,4 @@ AC_CHECK_LIB(pq,PQconnectStart, [
              AC_DEFINE(HAVE_POSTGRESQLV7)])
 AC_SUBST(postgresql_libs, "$LIBS")
 
-# This part should appear unchanged in every module configure.ac
-AC_SUBST(PROGNAME, "module")
-AC_SUBST(MOD_CC, "@ELLCC@")
-AC_SUBST(MODARCHDIR, "\$(shell @ELLCC@ --mod-archdir)")
-AC_SUBST(MAKE_DOCFILE, "\$(MODARCHDIR)/make-docfile")
-AC_SUBST(MODCFLAGS, "\$(CFLAGS) --mode=compile --mod-output=\$@ -I\$(MODARCHDIR)/include")
-AC_SUBST(INSTALLPATH, "\$(shell @ELLCC@ --mod-site-location)")
-AC_SUBST(MOD_INSTALL_PROGRAM, "@INSTALL_PROGRAM@")
-AC_SUBST(OBJECT_TO_BUILD, "\$(MODNAME).ell")
-
-AC_CONFIG_FILES([Makefile.in Makefile])
-AC_OUTPUT
+m4_include([../common/configure-post.ac])

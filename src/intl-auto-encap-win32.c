@@ -1407,14 +1407,7 @@ qxeDdeInitialize (LPDWORD pidInst, PFNCALLBACK pfnCallback, DWORD afCmd, DWORD u
     return DdeInitializeA (pidInst, pfnCallback, afCmd, ulRes);
 }
 
-HSZ
-qxeDdeCreateStringHandle (DWORD idInst, const Extbyte * psz, int iCodePage)
-{
-  if (XEUNICODE_P)
-    return DdeCreateStringHandleW (idInst, (LPCWSTR) psz, iCodePage);
-  else
-    return DdeCreateStringHandleA (idInst, (LPCSTR) psz, iCodePage);
-}
+/* Skipping DdeCreateStringHandle because error in Cygwin prototype */
 
 DWORD
 qxeDdeQueryString (DWORD idInst, HSZ hsz, Extbyte * psz, DWORD cchMax, int iCodePage)

@@ -339,13 +339,13 @@ struct charset_lookup
   Ibyte next_allocated_2_byte_leading_byte;
 };
 
+extern struct charset_lookup *chlook;
+
 DECLARE_INLINE_HEADER (
 Lisp_Object
 charset_by_leading_byte (int lb)
 )
 {
-  extern struct charset_lookup *chlook;
-
 #ifdef ERROR_CHECK_TEXT
   /* When error-checking is on, x86 GCC 2.95.2 -O3 miscompiles the
      following unless we introduce `tem'. */
@@ -360,8 +360,6 @@ Lisp_Object
 charset_by_attributes (int type, int final, int dir)
 )
 {
-  extern struct charset_lookup *chlook;
-
   type_checking_assert (type  < countof (chlook->charset_by_attributes) &&
 			final < countof (chlook->charset_by_attributes[0]) &&
 			dir   < countof (chlook->charset_by_attributes[0][0]));

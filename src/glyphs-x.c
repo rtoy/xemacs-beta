@@ -142,17 +142,16 @@ static void cursor_font_instantiate (Lisp_Object image_instance,
 				     Lisp_Object domain);
 
 #ifdef HAVE_X_WIDGETS
-static void
-update_widget_face (widget_value* wv,
-		    Lisp_Image_Instance* ii, Lisp_Object domain);
-static void
-update_tab_widget_face (widget_value* wv,
-			Lisp_Image_Instance* ii, Lisp_Object domain);
+static void update_widget_face (widget_value* wv,
+				Lisp_Image_Instance* ii, Lisp_Object domain);
+static void update_tab_widget_face (widget_value* wv,
+				    Lisp_Image_Instance* ii,
+				    Lisp_Object domain);
 #endif
-void
-emacs_Xt_handle_widget_losing_focus (struct frame* f, Widget losing_widget);
-void
-enqueue_focus_event (Widget wants_it, Lisp_Object frame, int in_p);
+void emacs_Xt_handle_widget_losing_focus (struct frame* f,
+					  Widget losing_widget);
+void emacs_Xt_enqueue_focus_event (Widget wants_it, Lisp_Object frame,
+				   int in_p);
 
 #include "bitmaps.h"
 
@@ -2081,13 +2080,14 @@ x_map_subwindow (Lisp_Image_Instance *p, int x, int y,
       if (!IMAGE_INSTANCE_SUBWINDOW_DISPLAYEDP (p))
 	XtMapWidget (IMAGE_INSTANCE_X_CLIPWIDGET (p));
       /* See comments in glyphs-msw.c about keyboard focus. */
-      if (IMAGE_INSTANCE_WANTS_INITIAL_FOCUS (p)) {
-	/* #### FIXME to pop-up the find dialog we map the text-field
-	   seven times! This doesn't show on a fast linux box but does
-	   under X on windows. */
-	enqueue_focus_event (IMAGE_INSTANCE_X_WIDGET_ID (p),
-			     IMAGE_INSTANCE_FRAME (p), 1);
-      }
+      if (IMAGE_INSTANCE_WANTS_INITIAL_FOCUS (p))
+	{
+	  /* #### FIXME to pop-up the find dialog we map the text-field
+	     seven times! This doesn't show on a fast linux box but does
+	     under X on windows. */
+	  emacs_Xt_enqueue_focus_event (IMAGE_INSTANCE_X_WIDGET_ID (p),
+					IMAGE_INSTANCE_FRAME (p), 1);
+	}
     }
 }
 

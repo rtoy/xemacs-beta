@@ -1,3 +1,95 @@
+2002-11-17  Ben Wing  <ben@xemacs.org>
+
+	* postgresql/Makefile.in.in:
+	* postgresql/Makefile.in.in (SRCS):
+	* postgresql/Makefile.in.in (SRC_SRCS): Removed.
+	* postgresql/Makefile.in.in (OBJS): Removed.
+	* postgresql/Makefile.in.in (SHELL): Removed.
+	* postgresql/Makefile.in.in (RM): Removed.
+	* postgresql/Makefile.in.in (PROGNAME): Removed.
+	* postgresql/Makefile.in.in (CFLAGS): Removed.
+	* postgresql/Makefile.in.in (INSTALL): Removed.
+	* postgresql/Makefile.in.in (version): Removed.
+	* postgresql/Makefile.in.in (prefix): Removed.
+	* postgresql/Makefile.in.in (exec_prefix): Removed.
+	* postgresql/Makefile.in.in (libdir): Removed.
+	* postgresql/Makefile.in.in (instvardir): Removed.
+	* postgresql/Makefile.in.in (configuration): Removed.
+	* postgresql/Makefile.in.in (moduledir): Removed.
+	* postgresql/Makefile.in.in (with_modules): Removed.
+	* postgresql/Makefile.in.in (srcdir): Removed.
+	* postgresql/Makefile.in.in (VPATH): Removed.
+	* postgresql/Makefile.in.in (CC): Removed.
+	* postgresql/Makefile.in.in (MODARCHDIR): Removed.
+	* postgresql/Makefile.in.in (MAKE_DOCFILE): Removed.
+	* postgresql/Makefile.in.in (MODCFLAGS): Removed.
+	* postgresql/Makefile.in.in (INSTALLPATH): Removed.
+	* postgresql/Makefile.in.in (INSTALL_PROGRAM): Removed.
+	* postgresql/Makefile.in.in (OBJECT_TO_BUILD): Removed.
+	* postgresql/Makefile.in.in (.PHONY): Removed.
+	* postgresql/Makefile.in.in (all): Removed.
+	* postgresql/Makefile.in.in (.c.o): Removed.
+	* postgresql/Makefile.in.in (clean): Removed.
+	* postgresql/Makefile.in.in (distclean): Removed.
+	* postgresql/Makefile.in.in (install): Removed.
+	Move common stuff into modues/common/Makefile.common. (Also
+	add extraclean target and a couple of other fixes in that file.)
+
+	* postgresql/configure.ac:
+	Extract out common configure stuff into
+	modules/common/configure-{pre,post}.ac.
+
+	* postgresql/postgresql.c (WARNING):
+	Fix warning.
+
+2002-11-17  Ben Wing  <ben@xemacs.org>
+
+	* ldap/Makefile.in.in:
+	* ldap/Makefile.in.in (SRCS):
+	* ldap/Makefile.in.in (SRC_SRCS): Removed.
+	* ldap/Makefile.in.in (OBJS): Removed.
+	* ldap/Makefile.in.in (SHELL): Removed.
+	* ldap/Makefile.in.in (RM): Removed.
+	* ldap/Makefile.in.in (PROGNAME): Removed.
+	* ldap/Makefile.in.in (CFLAGS): Removed.
+	* ldap/Makefile.in.in (INSTALL): Removed.
+	* ldap/Makefile.in.in (version): Removed.
+	* ldap/Makefile.in.in (prefix): Removed.
+	* ldap/Makefile.in.in (exec_prefix): Removed.
+	* ldap/Makefile.in.in (libdir): Removed.
+	* ldap/Makefile.in.in (instvardir): Removed.
+	* ldap/Makefile.in.in (configuration): Removed.
+	* ldap/Makefile.in.in (moduledir): Removed.
+	* ldap/Makefile.in.in (with_modules): Removed.
+	* ldap/Makefile.in.in (srcdir): Removed.
+	* ldap/Makefile.in.in (VPATH): Removed.
+	* ldap/Makefile.in.in (CC): Removed.
+	* ldap/Makefile.in.in (MODARCHDIR): Removed.
+	* ldap/Makefile.in.in (MAKE_DOCFILE): Removed.
+	* ldap/Makefile.in.in (MODCFLAGS): Removed.
+	* ldap/Makefile.in.in (INSTALLPATH): Removed.
+	* ldap/Makefile.in.in (INSTALL_PROGRAM): Removed.
+	* ldap/Makefile.in.in (OBJECT_TO_BUILD): Removed.
+	* ldap/Makefile.in.in (.PHONY): Removed.
+	* ldap/Makefile.in.in (all): Removed.
+	* ldap/Makefile.in.in (.c.o): Removed.
+	* ldap/Makefile.in.in (clean): Removed.
+	* ldap/Makefile.in.in (distclean): Removed.
+	* ldap/Makefile.in.in (install): Removed.
+	Move common stuff into modues/common/Makefile.common. (Also
+	add extraclean target and a couple of other fixes in that file.)
+
+	* ldap/configure.ac:
+	* ldap/configure.ac (have_ldap):
+	Extract out common configure stuff into
+	modules/common/configure-{pre,post}.ac.
+
+2002-11-17  Ben Wing  <ben@xemacs.org>
+
+	* common/Makefile.common:
+	* common/Makefile.common (SHELL):
+	Common stuff is here.
+
 2002-09-20  Steve Youngs  <youngs@xemacs.org>
 
 	* postgresql/Makefile.in.in (LDFLAGS): Add @ld_switch_all@ to pick

@@ -1,3 +1,49 @@
+2002-11-17  Ben Wing  <ben@xemacs.org>
+
+	* aclocal.m4 (cygwin_warn): New.
+	Disable shared library modules under Cygwin for the moment,
+	since we need some more tricky coding done and I don't have the
+	time right now.
+
+	* configure.in:
+	* configure.in (need_modules_common): New.
+	* configure.in (quoted_arguments):
+	* configure.in (stack_trace_eye_catcher):
+	* configure.in (CPP):
+	* configure.in (CFLAGS): New.
+	* configure.in (bitmapdir):
+	* configure.in (ldap_libs):
+	* configure.in (postgresql_libs):
+	* configure.in (all_widgets):
+	* configure.in (SUBDIR_MAKEFILES):
+	* configure.in (RECURSIVE_MAKE):
+	* configure.in (null_string):
+	* configure.in (Mail):
+	* configure.usage (--cflags):
+	* configure.usage (--cflags_warning): New.
+
+	Make sure we use the compiler in --xemacs-compiler to compile
+	the modules, too, or we will get link errors when trying to do
+	a C++ build.
+
+	Create a directory modules/common, in which is code common to all
+	the module Makefiles and configure.ac's.  We create a separate
+	directory because we may be building in a separate source tree,
+	and need a way of accessing the common code (at least in the case
+	of the Makefile).  Either we create symlinks for all necessary
+	files or one just for the directory -- the latter is more robust.
+
+	Add code to create the symlink for modules/common as necessary.
+	When creating the modules Makefiles, append the common code.
+
+	Check for wcslen/wcscmp; apparently missing sometimes in Cygwin and
+	G++ v3.
+
+	Output correct compiler name in messages.
+
+	Separate warning flags from other C flags so that user-specified
+	--cflags doesn't disable warnings.
+
 2002-11-12  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* PROBLEMS (Running/Linux): Lesstif 0.93.36 info, from F. McIngvale.

@@ -1837,7 +1837,8 @@ Set SYMBOL's value to NEWVAL, and return NEWVAL.
 #ifdef HAVE_SHLIB
 	  if (unloading_module)
 	    {
-	      unstaticpro_nodump (symbol_value_forward_forward
+	      unstaticpro_nodump ((Lisp_Object *)
+				  symbol_value_forward_forward
 				  (XSYMBOL_VALUE_FORWARD (valcontents)));
 	      sym->value = newval;
 	      return newval;

@@ -3353,7 +3353,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
       {
 	LPNMHDR nmhdr = (LPNMHDR) lParam;
 
-	if ((int) nmhdr->code == TTN_NEEDTEXT)
+	if (nmhdr->code == TTN_NEEDTEXT)
 	  {
 #ifdef HAVE_TOOLBARS
 	    LPTOOLTIPTEXTW tttextw = (LPTOOLTIPTEXTW) lParam;
@@ -3383,14 +3383,14 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 #endif
 	  }
 	/* handle tree view callbacks */
-	else if ((int) nmhdr->code == TVN_SELCHANGED)
+	else if (nmhdr->code == TVN_SELCHANGED)
 	  {
 	    NM_TREEVIEW *ptree = (NM_TREEVIEW *) lParam;
 	    frame = XFRAME (mswindows_find_frame (hwnd));
 	    mswindows_handle_gui_wm_command (frame, 0, ptree->itemNew.lParam);
 	  }
 	/* handle tab control callbacks */
-	else if ((int) nmhdr->code == TCN_SELCHANGE)
+	else if (nmhdr->code == TCN_SELCHANGE)
 	  {
 	    TC_ITEM item;
 	    int idx = qxeSendMessage (nmhdr->hwndFrom, TCM_GETCURSEL, 0, 0);
@@ -4225,8 +4225,8 @@ mswindows_modifier_state (BYTE *keymap, DWORD fwKeys, int has_AltGr)
       mods |= (keymap [VK_CONTROL] & 0x80) ? XEMACS_MOD_CONTROL : 0;
     }
 
-  mods |= (keys_is_real ? fwKeys & MK_SHIFT : (keymap [VK_SHIFT] & 0x80))
-    ? XEMACS_MOD_SHIFT : 0;
+  mods |= (keys_is_real ? (int) (fwKeys & MK_SHIFT) :
+	   (keymap [VK_SHIFT] & 0x80)) ? XEMACS_MOD_SHIFT : 0;
   mods |= fwKeys & MK_LBUTTON ? XEMACS_MOD_BUTTON1 : 0;
   mods |= fwKeys & MK_MBUTTON ? XEMACS_MOD_BUTTON2 : 0;
   mods |= fwKeys & MK_RBUTTON ? XEMACS_MOD_BUTTON3 : 0;

@@ -1,3 +1,71 @@
+2002-11-17  Ben Wing  <ben@xemacs.org>
+
+	* s/cygwin32.h:
+	* s/cygwin32.h (TEXT_START):
+	-fvtable-thunks is obsolete in GCC 3 and generates warnings.
+
+	* s/mingw32.h:
+	* s/windowsnt.h:
+	Comment fixes.
+
+2002-11-17  Ben Wing  <ben@xemacs.org>
+
+	* emodules.h:
+	Fix warnings from redefining symbols.
+	
+	* eval.c:
+	* eval.c (call_with_condition_handler):
+	* eval.c (run_post_gc_hook):
+	* eval.c (Ffuncall):
+	Fix C++ errors -- no automatic casting between function pointers
+	and void *, function declarations inside of functions not allowed.
+	
+	* event-Xt.c (emacs_Xt_enqueue_focus_event):
+	Warning fixes.
+	
+	* fileio.c (Ffile_truename):
+	Warning fixes.
+	Use LOCAL_TO_WIN32_FILE_FORMAT rather than duplicating it.
+	
+	* glyphs-x.c:
+	* glyphs-x.c (x_map_subwindow):
+	Fix style.
+	
+	* intl-auto-encap-win32.c:
+	* intl-auto-encap-win32.h:
+	* intl-encap-win32.c:
+	* intl-encap-win32.c (qxeRegConnectRegistry):
+	* syswindows.h (RegConnectRegistry):
+	DdeCreateStringHandle needs to be manual due to new Cygwin bug.
+	
+	* intl-win32.c:
+	* intl-win32.c (wcscmp):
+	* intl-win32.c (wcslen):
+	wcslen/wcscmp don't seem to exist under G++ 3, Cygwin.
+	
+	* lisp.h:
+	* lisp-union.h:
+	* lisp-disunion.h:
+	* process-unix.c (unix_send_process):
+	Ugh, C needs volatile and C++ must not have volatile.  Remove
+	previous volatile hacks, which don't seem to be working any more.
+	
+	* sheap.c (STATIC_HEAP_SLOP):
+	Try to get a working Cygwin build with old unexec.
+	
+	* sheap.c (more_static_core):
+	No NL's in literals allowed.
+	
+	* symbols.c (Fset):
+	Fix C++ errors.
+	
+	* syswindows.h:
+	* syswindows.h (struct):
+	* syswindows.h (tagNMDATETIMEFORMATW):
+	* syswindows.h (tagNMTTDISPIFNOA):
+	* syswindows.h (tagNMTTDISPINFOW):
+	Fix Cygwin complaints now that some missing structs have been added.
+
 2002-10-14  Jerry James  <james@xemacs.org>
 
 	* alloc.c: Unconditionally use LISP_FLOAT_TYPE code.

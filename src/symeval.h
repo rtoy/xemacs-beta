@@ -361,7 +361,8 @@ do									\
 	  lrecord_type_symbol_value_forward, /* lrecord_type_index */	\
 	  1, /* mark bit */						\
 	  1, /* c_readonly bit */					\
-	  1  /* lisp_readonly bit */					\
+	  1, /* lisp_readonly bit */					\
+          0  /* unused */                                               \
 	},								\
 	0, /* next */							\
 	0, /* uid  */							\

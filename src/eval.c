@@ -2063,11 +2063,11 @@ call_with_condition_handler (Lisp_Object (*handler) (Lisp_Object, Lisp_Object,
 			     Lisp_Object arg)
 {
   /* This function can GC */
-  int speccount = specpdl_depth();
+  int speccount = specpdl_depth ();
   Lisp_Object tem;
 
   /* ((handler-fun . (handler-arg . nil)) ... ) */
-  tem = noseeum_cons (noseeum_cons (make_opaque_ptr (handler),
+  tem = noseeum_cons (noseeum_cons (make_opaque_ptr ((void *) handler),
 				    noseeum_cons (handler_arg, Qnil)),
 		      Vcondition_handlers);
   record_unwind_protect (condition_bind_unwind, tem);
@@ -3673,6 +3673,22 @@ Evaluate FORM and return its value.
 }
 
 
+
+static void
+run_post_gc_hook (void)
+{
+  Lisp_Object args[2];
+
+  args[0] = Qpost_gc_hook;
+  args[1] = Fcons (Fcons (Qfinalize_list, zap_finalize_list ()), Qnil);
+  
+  run_hook_with_args_trapping_problems
+    ("Error in post-gc-hook",
+     2, args,
+     RUN_HOOKS_TO_COMPLETION,
+     INHIBIT_QUIT | NO_INHIBIT_ERRORS);
+}
+
 DEFUN ("funcall", Ffuncall, 1, MANY, 0, /*
 Call first argument as a function, passing the remaining arguments to it.
 Thus, (funcall 'cons 'x 'y) returns (x . y).
@@ -3703,11 +3719,9 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
 	}
       if (need_to_signal_post_gc)
 	{
-	  static void run_post_gc_hook(void); /* forward */
-
 	  need_to_signal_post_gc = 0;
-	  recompute_funcall_allocation_flag();
-	  run_post_gc_hook();
+	  recompute_funcall_allocation_flag ();
+	  run_post_gc_hook ();
 	}
     }
 
@@ -5537,20 +5551,6 @@ va_run_hook_with_args_in_buffer_trapping_problems (const CIbyte *
 		   RUN_HOOKS_TO_COMPLETION, flags));
 }
 
-static void
-run_post_gc_hook()
-{
-  Lisp_Object args[2];
-
-  args[0] = Qpost_gc_hook;
-  args[1] = Fcons (Fcons (Qfinalize_list, zap_finalize_list()), Qnil);
-  
-  run_hook_with_args_trapping_problems
-    ("Error in post-gc-hook",
-     2, args,
-     RUN_HOOKS_TO_COMPLETION,
-     INHIBIT_QUIT | NO_INHIBIT_ERRORS);
-}
 
 /************************************************************************/
 /*		       The special binding stack			*/

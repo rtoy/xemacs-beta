@@ -233,6 +233,7 @@ Print messages at start and end of loading unless
 If optional fourth arg NOSUFFIX is non-nil, don't try adding
  suffixes .elc, .el, or .ell to the specified name FILE.
 Return t if file exists."
+  (declare (special load-modules-quietly))
   (let* ((filename (substitute-in-file-name file))
 	 (handler (find-file-name-handler filename 'load))
 	 (path nil))
@@ -278,7 +279,7 @@ Return t if file exists."
 				   '(".ell" ".dll" ".so" ""))))
 	    (if (featurep 'modules)
 		(let ((load-modules-quietly nomessage))
-		  (load-module filename))
+		  (declare-fboundp (load-module filename)))
 	      (signal 'file-error '("This XEmacs does not support modules")))
 	  (and (null noerror)
 	       (signal 'file-error (list "Cannot open load file" filename))))

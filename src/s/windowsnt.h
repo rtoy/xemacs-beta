@@ -44,12 +44,8 @@ Boston, MA 02111-1307, USA.  */
    that give you direct access to the Win32 API -- XEmacs uses this to
    provide GUI support under Cygwin.  The two environments also use
    different compilers -- Native Windows uses Visual C++, and Cygwin uses
-   GCC.  (MINGW, however, is a way of using GCC to target the Native
-   Windows environment.  This works similarly to building with Cygwin, but
-   the resulting executable does not use the Cygwin DLL.  Instead, MINGW
-   provides import libraries for the standard C library DLL's
-   (specifically CRTDLL -- #### how does this differ from MSVCRT and
-   LIBC.LIB?).)
+   GCC.  (MinGW, however, is a way of using GCC to target the Native
+   Windows environment.  See comment in mingw32.h.)
 
 2. There are two windowing environments we can target XEmacs for when
    running under MS Windows -- Windows native, and X. (It may seem strange

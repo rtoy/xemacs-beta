@@ -1,3 +1,15 @@
+2002-11-17  Ben Wing  <ben@xemacs.org>
+
+	* code-files.el (load):
+	* loadhist.el (unload-feature):
+	Fix warnings.
+
+	* package-get.el (package-get-update-base-from-buffer):
+	Fix warnings.
+
+	NOTE: This was already fixed awhile ago, but reverted by Steve Y.
+	Please be careful.
+
 2002-10-14  Jerry James  <james@xemacs.org>
 
 	* gtk-font-menu.el (gtk-reset-device-font-menus): Simplify code

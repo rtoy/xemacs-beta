@@ -1494,10 +1494,10 @@ send_process_trap (int signum)
 static void
 unix_send_process (Lisp_Object proc, struct lstream *lstream)
 {
-  /* Use volatile to protect variables from being clobbered by longjmp.  */
-  SIGTYPE (*volatile old_sigpipe) (int) = 0;
-  volatile Lisp_Object vol_proc = proc;
-  Lisp_Process *volatile p = XPROCESS (proc);
+  /* See comment lisp.h circa line 787 */
+  SIGTYPE (*VOLATILE_IF_NOT_CPP old_sigpipe) (int) = 0;
+  VOLATILE_IF_NOT_CPP Lisp_Object vol_proc = proc;
+  Lisp_Process *VOLATILE_IF_NOT_CPP p = XPROCESS (proc);
 
   /* #### JV: layering violation?
 
@@ -1544,7 +1544,7 @@ unix_send_process (Lisp_Object proc, struct lstream *lstream)
 	      /* Buffer is full.  Wait, accepting input;
 		 that may allow the program
 		 to finish doing output and read more.  */
-	      Faccept_process_output (Qnil, volatile_make_int (1), Qnil);
+	      Faccept_process_output (Qnil, make_int (1), Qnil);
 	      /* It could have *really* finished, deleting the process */
 	      if (NILP(p->pipe_outstream))
 		return;

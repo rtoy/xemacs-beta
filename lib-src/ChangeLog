@@ -1,3 +1,17 @@
+2002-11-17  Ben Wing  <ben@xemacs.org>
+
+	* ellcc.c (do_init_mode):
+	Use full prototypes.
+
+	* ellcc.h.in:
+	Use the correct user-specified compiler.
+	
+	* make-docfile.c:
+	* make-docfile.c (read_c_string):
+	* make-docfile.c (scan_c_file):
+	Fix shadowing warnings.  NOTE: This was already fixed
+	awhile ago, but reverted by Jerry.  Please be careful.
+
 2002-08-08  Jerry James  <james@xemacs.org>
 
 	* config.values.in: Regenerate.

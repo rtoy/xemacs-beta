@@ -454,21 +454,22 @@ used interactively, for example from a mail or news buffer."
 		  (progn
 		    (setq package-get-continue-update-base nil)
 		    (autoload 'mc-setversion "mc-setversion")
-		    (cond ((locate-file "gpg" exec-path
-					'("" ".btm" ".bat" ".cmd" ".exe" ".com")
-					'executable)
-			   (mc-setversion "gpg"))
-			  ((locate-file "pgpe" exec-path
-					'("" ".btm" ".bat" ".cmd" ".exe" ".com")
-					'executable)
-			   (mc-setversion "5.0"))
-			  ((locate-file "pgp" exec-path
-					'("" ".btm" ".bat" ".cmd" ".exe" ".com")
-					'executable)
-			   (mc-setversion "2.6"))
-			  (t
-			   (error 'search-failed 
-				  "Can't find a suitable PGP executable")))
+		    (with-fboundp 'mc-setversion
+		      (cond ((locate-file "gpg" exec-path
+					  '("" ".btm" ".bat" ".cmd" ".exe"
+					    ".com") 'executable)
+			     (mc-setversion "gpg"))
+			    ((locate-file "pgpe" exec-path
+					  '("" ".btm" ".bat" ".cmd" ".exe"
+					    ".com") 'executable)
+			     (mc-setversion "5.0"))
+			    ((locate-file "pgp" exec-path
+					  '("" ".btm" ".bat" ".cmd" ".exe"
+					    ".com") 'executable)
+			     (mc-setversion "2.6"))
+			    (t
+			     (error 'search-failed 
+				    "Can't find a suitable PGP executable"))))
 		    (autoload 'mc-verify "mc-toplev")
 		    (declare-fboundp (mc-verify))
 		    (setq package-get-continue-update-base t))

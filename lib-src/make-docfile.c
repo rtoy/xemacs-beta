@@ -373,7 +373,7 @@ getc_iso2022 (FILE *file)
 }
 
 
-char buf[128];
+char globalbuf[128];
 
 /* Skip a C string from INFILE,
  and return the character that follows the closing ".
@@ -387,7 +387,7 @@ static int
 read_c_string (FILE *infile, int printflag, int c_docstring)
 {
   register int prevc = 0, c = 0;
-  char *p = buf;
+  char *p = globalbuf;
   int start = -1;	/* XEmacs addition */
 
   MDGET;
@@ -774,7 +774,7 @@ scan_c_file (const char *filename, const char *mode)
 	      if (c < 0)
 		goto eof;
 	      if (defunflag && c == '(')
-		fatal ("Missing doc string for DEFUN %s\n", buf);
+		fatal ("Missing doc string for DEFUN %s\n", globalbuf);
 	      c = getc (infile);
 	    }
 	  c = getc (infile);
@@ -804,12 +804,12 @@ scan_c_file (const char *filename, const char *mode)
 	  /* XEmacs change: the original code is in the "else" clause */
 	  if (ellcc)
 	    fprintf (outfile, "  CDOC%s(\"%s\", \"\\\n",
-		     defvarflag ? "SYM" : "SUBR", buf);
+		     defvarflag ? "SYM" : "SUBR", globalbuf);
 	  else
 	    {
 	      putc (037, outfile);
 	      putc (defvarflag ? 'V' : 'F', outfile);
-	      fprintf (outfile, "%s\n", buf);
+	      fprintf (outfile, "%s\n", globalbuf);
 	    }
 	  c = read_c_string (infile, 1, defunflag || defvarflag);
 
@@ -850,7 +850,7 @@ scan_c_file (const char *filename, const char *mode)
 		fprintf (outfile, "\\n\\\n\\n\\\n");
 	      else
 		fprintf (outfile, "\n\n");
-	      write_c_args (outfile, buf, argbuf, minargs, maxargs);
+	      write_c_args (outfile, globalbuf, argbuf, minargs, maxargs);
 	    }
 	  if (ellcc)
 	    fprintf (outfile, "\\n\");\n\n");

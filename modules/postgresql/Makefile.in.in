@@ -18,12 +18,7 @@
 ## the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ## Boston, MA 02111-1307, USA.
 
-## Synched up with: Not synched with FSF.
-
-## This is more complicated than would normally be the case, as this makefile
-## has been tailored to work both inside and independently of the XEmacs
-## source tree, and to support both module and non-module building inside the
-## source tree.
+## Synched up with: Not in FSF.
 
 ### Specialize this part for your module
 MODNAME=postgresql
@@ -32,54 +27,4 @@ MODTITLE="PostgreSQL Client Interface for XEmacs"
 LDFLAGS=@LDFLAGS@ @ld_switch_all@ @postgresql_libs@
 SRCS=postgresql.c
 
-### You should not need to modify anything below this line
-SRC_SRCS=$(SRCS:%=$(srcdir)/%)
-OBJS=$(SRCS:.c=.o)
-
-SHELL=/bin/sh
-RM=rm -f
-PROGNAME=@PROGNAME@
-CFLAGS=@CFLAGS@
-INSTALL=@INSTALL@
-version=@version@
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-libdir=@libdir@
-instvardir=@instvardir@
-configuration=@configuration@
-moduledir=@moduledir@
-with_modules=@with_modules@
-
-srcdir=@srcdir@
-VPATH=@srcdir@
-
-CC=@MOD_CC@
-MODARCHDIR=@MODARCHDIR@
-MAKE_DOCFILE=@MAKE_DOCFILE@
-MODCFLAGS=@MODCFLAGS@
-INSTALLPATH=@INSTALLPATH@
-INSTALL_PROGRAM=@MOD_INSTALL_PROGRAM@
-OBJECT_TO_BUILD=@OBJECT_TO_BUILD@
-
-.PHONY:	clean distclean install
-all: $(OBJECT_TO_BUILD)
-
-.c.o:
-	$(CC) $(MODCFLAGS) -c $<
-
-$(MODNAME).ell: $(OBJS) $(MODNAME)_i.o
-	$(CC) --mode=link --mod-output=$@ $^ $(LDFLAGS)
-
-$(MODNAME)_i.c: $(SRCS)
-	ELLMAKEDOC=$(MAKE_DOCFILE) $(CC) --mode=init --mod-output=$@ \
-	--mod-name=$(MODNAME) --mod-version=$(MODVER) \
-	--mod-title=$(MODTITLE) $(SRC_SRCS)
-
-clean:
-	$(RM) $(MODNAME).ell $(OBJS) $(MODNAME)_i.* *~
-
-distclean: clean
-	$(RM) Makefile config.* configure
-
-install: $(OBJECT_TO_BUILD)
-	$(INSTALL_PROGRAM) $< $(INSTALLPATH)
+## Note: modules/common/Makefile.common will be appended by configure

@@ -898,7 +898,7 @@ file DDE.H
 file DDEML.H
 
 yes DdeInitialize
-yes DdeCreateStringHandle
+skip DdeCreateStringHandle error in Cygwin prototype
 yes DdeQueryString
 // #### split-sized (or split-simple??? not completely obvious) structure MONHSZSTRUCT, used when DDE event MF_HSZ_INFO is sent as part of the XTYP_MONITOR transaction sent to a DDE callback; not yet handled
 
@@ -1280,6 +1280,16 @@ qxeRegConnectRegistry (const Extbyte * lpMachineName, HKEY hKey, PHKEY phkResult
     return RegConnectRegistryW ((LPWSTR) lpMachineName, hKey, phkResult);
   else
     return RegConnectRegistryA ((LPSTR) lpMachineName, hKey, phkResult);
+}
+
+HSZ
+qxeDdeCreateStringHandle (DWORD idInst, const Extbyte * psz, int iCodePage)
+{
+  /* Cygwin mistakenly omits const in second argument. */
+  if (XEUNICODE_P)
+    return DdeCreateStringHandleW (idInst, (LPWSTR) psz, iCodePage);
+  else
+    return DdeCreateStringHandleA (idInst, (LPSTR) psz, iCodePage);
 }
 
 /* NOTE: NT 4.0+ only */

@@ -62,7 +62,12 @@ int killpg (int pgrp, int sig);
 #define ORDINARY_LINK
 #endif
 
+#if __GNUC__ >= 3
+#define C_SWITCH_SYSTEM -fno-caller-saves
+#else
 #define C_SWITCH_SYSTEM -fno-caller-saves -fvtable-thunks
+#endif
+
 #define LIBS_SYSTEM -lwinmm
 #define WIN32_LEAN_AND_MEAN
 

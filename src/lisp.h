@@ -782,6 +782,27 @@ typedef unsigned long uintptr_t;
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
+/* Sim, senhor, prefiro toma-lo no cu.
+
+   Regular C complains about possible clobbering of local vars NOT declared
+   as volatile if there's a longjmp() in a function.  C++ complains if such
+   vars ARE volatile; or more correctly, sans volatile no problem even when
+   you longjmp, avec volatile you get unfixable compile errors like
+
+/src/xemacs/lilfix/src/process-unix.c: In function `void
+   unix_send_process(Lisp_Object, lstream*)':
+/src/xemacs/lilfix/src/process-unix.c:1577: no matching function for call to `
+   Lisp_Object::Lisp_Object(volatile Lisp_Object&)'
+/src/xemacs/lilfix/src/lisp-union.h:32: candidates are:
+   Lisp_Object::Lisp_Object(const Lisp_Object&)
+*/
+
+#ifdef __cplusplus
+#define VOLATILE_IF_NOT_CPP
+#else
+#define VOLATILE_IF_NOT_CPP volatile
+#endif
+
 #ifndef PRINTF_ARGS
 # if defined (__GNUC__) && (__GNUC__ >= 2)
 #  define PRINTF_ARGS(string_index,first_to_check) \
@@ -2765,7 +2786,8 @@ Lisp_Object,Lisp_Object,Lisp_Object
       lrecord_type_subr, /* lrecord_type_index */			\
       1, /* mark bit */							\
       1, /* c_readonly bit */						\
-      1  /* lisp_readonly bit */					\
+      1, /* lisp_readonly bit */					\
+      0  /* unused */                                                   \
     },									\
     min_args,								\
     max_args,								\
@@ -2837,7 +2859,6 @@ void check_quit (void);
 
 void signal_quit (void);
 
-extern int dont_check_for_quit;
 int begin_dont_check_for_quit (void);
 int begin_do_check_for_quit (void);
 
@@ -3451,7 +3472,6 @@ void switch_to_buffer (Lisp_Object, Lisp_Object);
 extern int find_file_compare_truenames;
 extern int find_file_use_truenames;
 Ibyte *get_initial_directory (Ibyte *pathname, Bytecount size);
-extern Lisp_Object Vbuffer_alist;
 void set_buffer_internal (struct buffer *b);
 struct buffer *decode_buffer (Lisp_Object buffer, int allow_string);
 
@@ -4076,9 +4096,6 @@ extern Lisp_Object Vcoding_system_for_write;
 extern Lisp_Object Vfile_name_coding_system, Vkeyboard_coding_system;
 extern Lisp_Object Vterminal_coding_system;
 extern Lisp_Object Qcanonicalize_after_coding;
-void init_charset_unicode_tables (Lisp_Object charset);
-void free_charset_unicode_tables (Lisp_Object charset);
-void recalculate_unicode_precedence (void);
 int coding_system_is_for_text_file (Lisp_Object coding_system);
 Lisp_Object find_coding_system_for_text_file (Lisp_Object name, int eol_wrap);
 Lisp_Object get_coding_system_for_text_file (Lisp_Object name, int eol_wrap);
@@ -4994,7 +5011,7 @@ extern Lisp_Object Qerror_conditions, Qerror_lacks_explanatory_string;
 extern Lisp_Object Qerror_message, Qevent_live_p, Qexit, Qextent_live_p;
 extern Lisp_Object Qexternal_debugging_output, Qfeaturep, Qfile_error;
 extern Lisp_Object Qfile_name_sans_extension, Qfinal;
-extern Lisp_Object Qforeground, Qformat, Qframe_live_p, Qgraphic, Qgtk;
+extern Lisp_Object Qforeground, Qformat, Qframe_live_p, Qgraphic;
 extern Lisp_Object Qgui_error, Qicon_glyph_p, Qidentity, Qinhibit_quit;
 extern Lisp_Object Qinhibit_read_only, Qinteger_char_or_marker_p;
 extern Lisp_Object Qinteger_or_char_p, Qinteger_or_marker_p, Qintegerp;
@@ -5002,13 +5019,13 @@ extern Lisp_Object Qinteractive, Qinternal_error, Qinvalid_argument;
 extern Lisp_Object Qinvalid_byte_code, Qinvalid_change, Qinvalid_constant;
 extern Lisp_Object Qinvalid_function, Qinvalid_operation;
 extern Lisp_Object Qinvalid_read_syntax, Qinvalid_state, Qio_error, Qlambda;
-extern Lisp_Object Qlayout, Qlist_formation_error, Qlistp, Qload, Qlock_shift;
+extern Lisp_Object Qlayout, Qlist_formation_error, Qlistp, Qload;
 extern Lisp_Object Qlong_name, Qmacro, Qmakunbound, Qmalformed_list;
 extern Lisp_Object Qmalformed_property_list, Qmark, Qmodule;
 extern Lisp_Object Qmono_pixmap_image_instance_p, Qmouse_leave_buffer_hook;
 extern Lisp_Object Qnative_layout, Qnatnump, Qnetwork_error, Qno_catch;
 extern Lisp_Object Qnothing_image_instance_p, Qnumber_char_or_marker_p;
-extern Lisp_Object Qnumberp, Qout_of_memory, Qoutput_charset_conversion;
+extern Lisp_Object Qnumberp, Qout_of_memory;
 extern Lisp_Object Qoverflow_error, Qpoint, Qpointer_glyph_p;
 extern Lisp_Object Qpointer_image_instance_p, Qprint_length;
 extern Lisp_Object Qprint_string_length, Qprinting_unreadable_object;

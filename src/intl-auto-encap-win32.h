@@ -1003,11 +1003,7 @@ UINT qxeImmEnumRegisterWord (HKL arg1, REGISTERWORDENUMPROCW arg2, const Extbyte
 #endif
 UINT qxeDdeInitialize (LPDWORD pidInst, PFNCALLBACK pfnCallback, DWORD afCmd, DWORD ulRes);
 
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef DdeCreateStringHandle
-#define DdeCreateStringHandle error use qxeDdeCreateStringHandle or DdeCreateStringHandleA/DdeCreateStringHandleW
-#endif
-HSZ qxeDdeCreateStringHandle (DWORD idInst, const Extbyte * psz, int iCodePage);
+/* Skipping DdeCreateStringHandle because error in Cygwin prototype */
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef DdeQueryString

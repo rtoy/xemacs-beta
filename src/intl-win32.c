@@ -1300,7 +1300,9 @@ Set the REGISTRY for the CHARSET.
   return Qnil;
 }
 
-Lisp_Object 
+#if 0 /* Unused */
+
+static Lisp_Object 
 mswindows_get_registry_charset (Ibyte *registry)
 {
   Lisp_Object charset_tail;
@@ -1320,6 +1322,8 @@ mswindows_get_registry_charset (Ibyte *registry)
     }
   return charset;
 }
+
+#endif /* 0 */
 
 
 
@@ -1610,7 +1614,38 @@ mswindows_locale_to_code_page (LCID lcid)
 
 #ifdef CYGWIN
 
-/* based on newlib strncpy, strcpy */
+/* based on newlib str*() */
+
+#ifndef HAVE_WCSCMP
+
+int
+wcscmp (const wchar_t *s1, const wchar_t *s2)
+{
+  while (*s1 != '\0' && *s1 == *s2)
+    {
+      s1++;
+      s2++;
+    }
+
+  return *s1 - *s2;
+}
+
+#endif /* not HAVE_WCSCMP */
+
+#ifndef HAVE_WCSLEN
+
+size_t
+wcslen (const wchar_t *str)
+{
+  const wchar_t *start = str;
+
+  while (*str)
+    str++;
+
+  return str - start;
+}
+
+#endif /* not HAVE_WCSLEN */
 
 wchar_t *
 wcsncpy (wchar_t *dst0, const wchar_t *src0, size_t count)

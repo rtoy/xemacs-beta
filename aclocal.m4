@@ -84,6 +84,7 @@ AC_MSG_CHECKING(how to produce PIC code)
 wl=
 
 can_build_shared=yes
+cygwin_warn=
 if test "$XEGCC" = yes; then
   wl='-Wl,'
 
@@ -103,6 +104,10 @@ if test "$XEGCC" = yes; then
     ;;
   *cygwin* | *mingw* )
     # PIC is the default
+    cygwin_warn=yes
+    # #### Need some trickery involving import libraries that we don't
+    # currently support.
+    can_build_shared=no
     ;;
   *)
     dll_cflags='-fPIC'
@@ -198,6 +203,10 @@ if test -n "$dll_cflags"; then
   CFLAGS="$save_CFLAGS"
 else
   AC_MSG_RESULT(none)
+fi
+
+if test -n "$cygwin_warn"; then
+  AC_MSG_WARN([Cannot currently build modules under Cygwin.])
 fi
 
 dnl

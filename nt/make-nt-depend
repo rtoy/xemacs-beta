@@ -46,6 +46,10 @@ The dependencies are written to stdout.
 
 while (<>)
   {
+    # must hack away CRLF junk.  wouldn't it be nice if perl handled this
+    # right??  really can't be that hard!!!
+    s/\r\n/\n/g;
+
     # rewrite references to generating script
     s/make-src-depend/make-nt-depend/;
 
@@ -64,5 +68,5 @@ while (<>)
     # add dependency on config.inc to all objects (this might be too broad)
     s/^(.+)\.o:(.+)/$obj\\$1.obj:$2 $config\\config.inc/;
 
-    print;
+   print;
   }
