@@ -739,10 +739,17 @@ qxestrncasecmp_c (const Intbyte *s1, const Char_ASCII *s2, Bytecount len)
   return qxestrncasecmp (s1, (const Intbyte *) s2, len);
 }
 
+/* Compare LEN_FROM_S1 worth of characters from S1 with the same number of
+   characters from S2, case insensitive.  NOTE: Downcasing can convert
+   characters from one length in bytes to another, so reversing S1 and S2
+   is *NOT* a symmetric operations!  You must choose a length that agrees
+   with S1. */
+
 int
-qxestrncasecmp_i18n (const Intbyte *s1, const Intbyte *s2, Bytecount len)
+qxestrncasecmp_i18n (const Intbyte *s1, const Intbyte *s2,
+		     Bytecount len_from_s1)
 {
-  while (len > 0)
+  while (len_from_s1 > 0)
     {
       const Intbyte *old_s1 = s1;
       int diff = (DOWNCASE (0, charptr_emchar (s1)) -
@@ -753,7 +760,7 @@ qxestrncasecmp_i18n (const Intbyte *s1, const Intbyte *s2, Bytecount len)
 	return 0;
       INC_CHARPTR (s1);
       INC_CHARPTR (s2);
-      len -= s1 - old_s1;
+      len_from_s1 -= s1 - old_s1;
     }
 
   return 0;
@@ -763,6 +770,16 @@ int
 qxememcmp (const Intbyte *s1, const Intbyte *s2, Bytecount len)
 {
   return memcmp (s1, s2, len);
+}
+
+int
+qxememcmp4 (const Intbyte *s1, Bytecount len1,
+	    const Intbyte *s2, Bytecount len2)
+{
+  int retval = qxememcmp (s1, s2, min (len1, len2));
+  if (retval)
+    return retval;
+  return len1 - len2;
 }
 
 int
@@ -782,21 +799,122 @@ qxememcasecmp (const Intbyte *s1, const Intbyte *s2, Bytecount len)
 }
 
 int
-qxememcasecmp_i18n (const Intbyte *s1, const Intbyte *s2, Bytecount len)
+qxememcasecmp4 (const Intbyte *s1, Bytecount len1,
+		const Intbyte *s2, Bytecount len2)
 {
-  while (len > 0)
+  int retval = qxememcasecmp (s1, s2, min (len1, len2));
+  if (retval)
+    return retval;
+  return len1 - len2;
+}
+
+/* Do a character-by-character comparison, returning "which is greater" by
+   comparing the Emchar values. (#### Should have option to compare Unicode
+   points) */
+
+int
+qxetextcmp (const Intbyte *s1, Bytecount len1,
+	    const Intbyte *s2, Bytecount len2)
+{
+  while (len1 > 0 && len2 > 0)
     {
       const Intbyte *old_s1 = s1;
+      const Intbyte *old_s2 = s2;
+      int diff = charptr_emchar (s1) - charptr_emchar (s2);
+      if (diff != 0)
+	return diff;
+      INC_CHARPTR (s1);
+      INC_CHARPTR (s2);
+      len1 -= s1 - old_s1;
+      len2 -= s2 - old_s2;
+    }
+
+  assert (len1 >= 0 && len2 >= 0);
+  return len1 - len2;
+}
+
+int
+qxetextcmp_matching (const Intbyte *s1, Bytecount len1,
+		     const Intbyte *s2, Bytecount len2,
+		     Charcount *matching)
+{
+  *matching = 0;
+  while (len1 > 0 && len2 > 0)
+    {
+      const Intbyte *old_s1 = s1;
+      const Intbyte *old_s2 = s2;
+      int diff = charptr_emchar (s1) - charptr_emchar (s2);
+      if (diff != 0)
+	return diff;
+      INC_CHARPTR (s1);
+      INC_CHARPTR (s2);
+      len1 -= s1 - old_s1;
+      len2 -= s2 - old_s2;
+      (*matching)++;
+    }
+
+  assert (len1 >= 0 && len2 >= 0);
+  return len1 - len2;
+}
+
+/* Do a character-by-character comparison, returning "which is greater" by
+   comparing the Emchar values, case insensitively (by downcasing both
+   first). (#### Should have option to compare Unicode points)
+
+   In this case, both lengths must be specified becaused downcasing can
+   convert characters from one length in bytes to another; therefore, two
+   blocks of text of different length might be equal.  If both compare
+   equal up to the limit in length of one but not the other, the longer one
+   is "greater". */
+
+int
+qxetextcasecmp (const Intbyte *s1, Bytecount len1,
+		const Intbyte *s2, Bytecount len2)
+{
+  while (len1 > 0 && len2 > 0)
+    {
+      const Intbyte *old_s1 = s1;
+      const Intbyte *old_s2 = s2;
       int diff = (DOWNCASE (0, charptr_emchar (s1)) -
 		  DOWNCASE (0, charptr_emchar (s2)));
       if (diff != 0)
 	return diff;
       INC_CHARPTR (s1);
       INC_CHARPTR (s2);
-      len -= s1 - old_s1;
+      len1 -= s1 - old_s1;
+      len2 -= s2 - old_s2;
     }
 
-  return 0;
+  assert (len1 >= 0 && len2 >= 0);
+  return len1 - len2;
+}
+
+/* Like qxetextcasecmp() but also return number of characters at
+   beginning that match. */
+
+int
+qxetextcasecmp_matching (const Intbyte *s1, Bytecount len1,
+			 const Intbyte *s2, Bytecount len2,
+			 Charcount *matching)
+{
+  *matching = 0;
+  while (len1 > 0 && len2 > 0)
+    {
+      const Intbyte *old_s1 = s1;
+      const Intbyte *old_s2 = s2;
+      int diff = (DOWNCASE (0, charptr_emchar (s1)) -
+		  DOWNCASE (0, charptr_emchar (s2)));
+      if (diff != 0)
+	return diff;
+      INC_CHARPTR (s1);
+      INC_CHARPTR (s2);
+      len1 -= s1 - old_s1;
+      len2 -= s2 - old_s2;
+      (*matching)++;
+    }
+
+  assert (len1 >= 0 && len2 >= 0);
+  return len1 - len2;
 }
 
 int
@@ -826,29 +944,8 @@ lisp_strcasecmp (Lisp_Object s1, Lisp_Object s2)
 int
 lisp_strcasecmp_i18n (Lisp_Object s1, Lisp_Object s2)
 {
-  Intbyte *p1 = XSTRING_DATA (s1);
-  Intbyte *p2 = XSTRING_DATA (s2);
-  Intbyte *e1 = p1 + XSTRING_LENGTH (s1);
-  Intbyte *e2 = p2 + XSTRING_LENGTH (s2);
-
-  /* again, we use a symmetric algorithm and favor clarity over
-     nanosecond improvements. */
-  while (1)
-    {
-      /* if we reached the end of either string, compare lengths.
-	 do NOT compare the final null byte against anything, in case
-	 the other string also has a null byte at that position. */
-      assert (p1 <= e1);
-      assert (p2 <= e2);
-      if (p1 == e1 || p2 == e2)
-	return e1 - e2;
-      if (DOWNCASE (0, charptr_emchar (p1)) !=
-	  DOWNCASE (0, charptr_emchar (p2)))
-	return (DOWNCASE (0, charptr_emchar (p1)) -
-		DOWNCASE (0, charptr_emchar (p2)));
-      INC_CHARPTR (p1);
-      INC_CHARPTR (p2);
-    }
+  return qxetextcasecmp (XSTRING_DATA (s1), XSTRING_LENGTH (s1),
+			 XSTRING_DATA (s2), XSTRING_LENGTH (s2));
 }
 
 
@@ -1148,9 +1245,7 @@ eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
 
   {
     Bytecount dstlen;
-    int result;
     const Intbyte *src = ei->data_, *dst;
-    Bytecount cmplen;
 
     if (data)
       {
@@ -1166,15 +1261,9 @@ eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
     if (is_c)
       EI_ASSERT_ASCII ((Char_ASCII *) dst, dstlen);
 
-    cmplen = min (len, dstlen);
-    result = (fold_case == 0 ? qxememcmp (src, dst, cmplen) :
-	      fold_case == 1 ? qxememcasecmp (src, dst, cmplen) :
-    	      qxememcasecmp_i18n (src, dst, cmplen));
-
-    if (result)
-      return result;
-
-    return len - dstlen;
+    return (fold_case == 0 ? qxememcmp4 (src, len, dst, dstlen) :
+	    fold_case == 1 ? qxememcasecmp4 (src, len, dst, dstlen) :
+	    qxetextcasecmp (src, len, dst, dstlen));
   }
 }
 

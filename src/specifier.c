@@ -719,7 +719,7 @@ decode_locale_type (Lisp_Object locale_type)
 
   invalid_argument ("Invalid specifier locale type",
 		     locale_type);
-  return LOCALE_GLOBAL; /* not reached */
+  RETURN_NOT_REACHED (LOCALE_GLOBAL)
 }
 
 Lisp_Object
@@ -1339,7 +1339,7 @@ decode_how_to_add_specification (Lisp_Object how_to_add)
 
   invalid_constant ("Invalid `how-to-add' flag", how_to_add);
 
-  return SPEC_PREPEND;		/* not reached */
+  RETURN_NOT_REACHED (SPEC_PREPEND)
 }
 
 /* Given a specifier object SPEC, return bodily specifier if SPEC is a

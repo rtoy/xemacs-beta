@@ -214,7 +214,7 @@ symbol_to_char_table_type (Lisp_Object symbol)
 #endif
 
   invalid_constant ("Unrecognized char table type", symbol);
-  return CHAR_TABLE_TYPE_GENERIC; /* not reached */
+  RETURN_NOT_REACHED (CHAR_TABLE_TYPE_GENERIC)
 }
 
 static void
@@ -926,7 +926,7 @@ If there is more than one value, return MULTI (defaults to nil).
       abort ();
     }
 
-  return Qnil; /* not reached */
+  return Qnil; /* not (usually) reached */
 }
 
 static int
@@ -977,7 +977,7 @@ check_valid_char_table_value (Lisp_Object value, enum char_table_type type,
       abort ();
     }
 
-  return 0; /* not reached */
+  return 0; /* not (usually) reached */
 }
 
 static Lisp_Object

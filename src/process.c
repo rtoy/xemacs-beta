@@ -1747,7 +1747,7 @@ decode_signal (Lisp_Object signal_)
 #undef handle_signal
 
       invalid_constant ("Undefined signal name", signal_);
-      return 0; /* Unreached */
+      RETURN_NOT_REACHED (0)
     }
 }
 

@@ -300,6 +300,52 @@ Symbols are also allowed; their print names are used instead.
 	  !memcmp (XSTRING_DATA (p1), XSTRING_DATA (p2), len)) ? Qt : Qnil;
 }
 
+DEFUN ("compare-strings", Fcompare_strings, 6, 7, 0, /*
+Compare the contents of two strings, maybe ignoring case.
+In string STR1, skip the first START1 characters and stop at END1.
+In string STR2, skip the first START2 characters and stop at END2.
+END1 and END2 default to the full lengths of the respective strings.
+
+Case is significant in this comparison if IGNORE-CASE is nil.
+
+The value is t if the strings (or specified portions) match.
+If string STR1 is less, the value is a negative number N;
+  - 1 - N is the number of characters that match at the beginning.
+If string STR1 is greater, the value is a positive number N;
+  N - 1 is the number of characters that match at the beginning.
+*/
+     (str1, start1, end1, str2, start2, end2, ignore_case))
+{
+  Charcount ccstart1, ccend1, ccstart2, ccend2;
+  Bytecount bstart1, blen1, bstart2, blen2;
+  Charcount matching;
+  int res;
+
+  CHECK_STRING (str1);
+  CHECK_STRING (str2);
+  get_string_range_char (str1, start1, end1, &ccstart1, &ccend1,
+			 GB_HISTORICAL_STRING_BEHAVIOR);
+  get_string_range_char (str2, start2, end2, &ccstart2, &ccend2,
+			 GB_HISTORICAL_STRING_BEHAVIOR);
+
+  bstart1 = string_index_char_to_byte (str1, ccstart1);
+  blen1 = string_offset_char_to_byte_len (str1, bstart1, ccend1 - ccstart1);
+  bstart2 = string_index_char_to_byte (str2, ccstart2);
+  blen2 = string_offset_char_to_byte_len (str2, bstart2, ccend2 - ccstart2);
+
+  res = ((NILP (ignore_case) ? qxetextcmp_matching : qxetextcasecmp_matching)
+	 (XSTRING_DATA (str1) + bstart1, blen1,
+	  XSTRING_DATA (str2) + bstart2, blen2,
+	  &matching));
+
+  if (!res)
+    return Qt;
+  else if (res > 0)
+    return make_int (1 + matching);
+  else
+    return make_int (-1 - matching);
+}
+
 DEFUN ("string-lessp", Fstring_lessp, 2, 2, 0, /*
 Return t if first arg string is less than second in lexicographic order.
 Comparison is simply done on a character-by-character basis using the
@@ -2743,6 +2789,36 @@ internal_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   return 0;
 }
 
+int
+internal_equalp (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  if (depth > 200)
+    stack_overflow ("Stack overflow in equalp", Qunbound);
+  QUIT;
+  if (EQ_WITH_EBOLA_NOTICE (obj1, obj2))
+    return 1;
+  if ((INTP (obj1) && FLOATP (obj2)) || (FLOATP (obj1) && INTP (obj2)))
+    return extract_float (obj1) == extract_float (obj2);
+  if (CHARP (obj1) && CHARP (obj2))
+    return DOWNCASE (0, XCHAR (obj1)) == DOWNCASE (0, XCHAR (obj2));
+  if (XTYPE (obj1) != XTYPE (obj2))
+    return 0;
+  if (LRECORDP (obj1))
+    {
+      const struct lrecord_implementation
+	*imp1 = XRECORD_LHEADER_IMPLEMENTATION (obj1),
+	*imp2 = XRECORD_LHEADER_IMPLEMENTATION (obj2);
+
+      /* #### not yet implemented properly, needs another flag to specify
+	 equalp-ness */
+      return (imp1 == imp2) &&
+	/* EQ-ness of the objects was noticed above */
+	(imp1->equal && (imp1->equal) (obj1, obj2, depth));
+    }
+
+  return 0;
+}
+
 /* Note that we may be calling sub-objects that will use
    internal_equal() (instead of internal_old_equal()).  Oh well.
    We will get an Ebola note if there's any possibility of confusion,
@@ -3888,6 +3964,7 @@ syms_of_fns (void)
   DEFSUBR (Flength);
   DEFSUBR (Fsafe_length);
   DEFSUBR (Fstring_equal);
+  DEFSUBR (Fcompare_strings);
   DEFSUBR (Fstring_lessp);
   DEFSUBR (Fstring_modified_tick);
   DEFSUBR (Fappend);

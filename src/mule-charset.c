@@ -829,7 +829,7 @@ Recognized properties are those listed in `make-charset', as well as
       return CHARSETP (obj) ? XCHARSET_NAME (obj) : obj;
     }
   invalid_constant ("Unrecognized charset property name", prop);
-  return Qnil; /* not reached */
+  RETURN_NOT_REACHED (Qnil)
 }
 
 DEFUN ("charset-id", Fcharset_id, 1, 1, 0, /*

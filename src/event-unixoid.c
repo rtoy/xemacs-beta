@@ -3,7 +3,7 @@
    Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -239,7 +239,7 @@ poll_fds_for_input (SELECT_TYPE mask)
       /* else, we got interrupted by a signal, so try again. */
     }
 
-  RETURN_NOT_REACHED(0) /* not reached */
+  RETURN_NOT_REACHED (0)
 }
 
 /****************************************************************************/

@@ -2612,7 +2612,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
   report_sheap_usage (0);
 #endif
   LONGJMP (run_temacs_catch, 1);
-  return Qnil; /* not reached; warning suppression */
+  RETURN_NOT_REACHED (Qnil)
 }
 
 /* ARGSUSED */
@@ -2755,7 +2755,7 @@ main (int argc, char **argv, char **envp)
   __except (mswindows_handle_hardware_exceptions (GetExceptionCode ())) {}
 #endif
 
-  return 0; /* unreached */
+  RETURN_NOT_REACHED (0)
 }
 
 

@@ -223,7 +223,7 @@ decode_toolbar_position (Lisp_Object position)
   if (EQ (position, Qright))  return RIGHT_TOOLBAR;
   invalid_constant ("Invalid toolbar position", position);
 
-  return TOP_TOOLBAR; /* not reached */
+  RETURN_NOT_REACHED (TOP_TOOLBAR)
 }
 
 DEFUN ("set-default-toolbar-position", Fset_default_toolbar_position, 1, 1, 0, /*

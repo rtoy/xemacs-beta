@@ -32,12 +32,6 @@ Boston, MA 02111-1307, USA.  */
 #include "console.h"
 #include "opaque.h"
 
-#ifdef ERROR_CHECK_GC
-int always_gc;			/* Debugging hack */
-#else
-#define always_gc 0
-#endif
-
 struct backtrace *backtrace_list;
 
 /* Note: you must always fill in all of the fields in a backtrace structure
@@ -3213,7 +3207,7 @@ Evaluate FORM and return its value.
     }
 
   QUIT;
-  if ((consing_since_gc > gc_cons_threshold) || always_gc)
+  if (need_to_garbage_collect ())
     {
       struct gcpro gcpro1;
       GCPRO1 (form);
@@ -3437,7 +3431,7 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
   Lisp_Object *fun_args = args + 1;
 
   QUIT;
-  if ((consing_since_gc > gc_cons_threshold) || always_gc)
+  if (need_to_garbage_collect ())
     /* Callers should gcpro lexpr args */
     garbage_collect_1 ();
 

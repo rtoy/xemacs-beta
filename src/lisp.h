@@ -201,6 +201,7 @@ typedef unsigned long uintptr_t;
 #ifndef DOESNT_RETURN
 # if defined __GNUC__
 #  if ((__GNUC__ > 2) || (__GNUC__ == 2) && (__GNUC_MINOR__ >= 5))
+#   define RETURN_NOT_REACHED(value)
 #   define DOESNT_RETURN void
 #   define DECLARE_DOESNT_RETURN(decl) \
            extern void decl __attribute__ ((noreturn))
@@ -229,9 +230,14 @@ typedef unsigned long uintptr_t;
 #if defined __SUNPRO_C || defined __USLC__
 #define RETURN_SANS_WARNINGS if (1) return
 #define RETURN_NOT_REACHED(value)
-#else
-#define RETURN_SANS_WARNINGS return
+#endif
+
+#ifndef RETURN_NOT_REACHED
 #define RETURN_NOT_REACHED(value) return value;
+#endif
+
+#ifndef RETURN_SANS_WARNINGS
+#define RETURN_SANS_WARNINGS return
 #endif
 
 #ifndef DO_NOTHING
@@ -2301,14 +2307,6 @@ unsigned long internal_array_hash (Lisp_Object *arr, int size, int depth);
 /*		     Garbage collection / GC-protection			*/
 /************************************************************************/
 
-/* number of bytes of structure consed since last GC */
-
-extern EMACS_INT consing_since_gc;
-
-/* threshold for doing another gc */
-
-extern Fixnum gc_cons_threshold;
-
 /* Structure for recording stack slots that need marking */
 
 /* This is a chain of structures, each of which points at a Lisp_Object
@@ -2698,6 +2696,7 @@ void free_marker (Lisp_Marker *);
 int object_dead_p (Lisp_Object);
 void mark_object (Lisp_Object obj);
 int marked_p (Lisp_Object obj);
+int need_to_garbage_collect (void);
 
 #ifdef MEMORY_USAGE_STATS
 Bytecount malloced_storage_size (void *, Bytecount, struct overhead_stats *);
@@ -3207,6 +3206,7 @@ void external_plist_put (Lisp_Object *, Lisp_Object,
 			 Lisp_Object, int, Error_Behavior);
 int external_remprop (Lisp_Object *, Lisp_Object, int, Error_Behavior);
 int internal_equal (Lisp_Object, Lisp_Object, int);
+int internal_equalp (Lisp_Object obj1, Lisp_Object obj2, int depth);
 Lisp_Object concat2 (Lisp_Object, Lisp_Object);
 Lisp_Object concat3 (Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object vconcat2 (Lisp_Object, Lisp_Object);
@@ -3759,8 +3759,21 @@ int qxestrncasecmp_i18n (const Intbyte *s1, const Intbyte *s2, Bytecount len);
 int ascii_strncasecmp (const Char_ASCII *s1, const Char_ASCII *s2,
 		       Bytecount len);
 int qxememcmp (const Intbyte *s1, const Intbyte *s2, Bytecount len);
+int qxememcmp4 (const Intbyte *s1, Bytecount len1,
+		const Intbyte *s2, Bytecount len2);
 int qxememcasecmp (const Intbyte *s1, const Intbyte *s2, Bytecount len);
-int qxememcasecmp_i18n (const Intbyte *s1, const Intbyte *s2, Bytecount len);
+int qxememcasecmp4 (const Intbyte *s1, Bytecount len1,
+		    const Intbyte *s2, Bytecount len2);
+int qxetextcmp (const Intbyte *s1, Bytecount len1,
+		const Intbyte *s2, Bytecount len2);
+int qxetextcmp_matching (const Intbyte *s1, Bytecount len1,
+			 const Intbyte *s2, Bytecount len2,
+			 Charcount *matching);
+int qxetextcasecmp (const Intbyte *s1, Bytecount len1,
+		    const Intbyte *s2, Bytecount len2);
+int qxetextcasecmp_matching (const Intbyte *s1, Bytecount len1,
+			     const Intbyte *s2, Bytecount len2,
+			     Charcount *matching);
 
 void buffer_mule_signal_inserted_region (struct buffer *buf, Charbpos start,
 					 Bytecount bytelength,

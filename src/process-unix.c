@@ -1115,7 +1115,7 @@ io_failure:
     close_descriptor_pair (inchannel, outchannel);
     errno = save_errno;
     report_process_error ("Opening pty or pipe", Qunbound);
-    return 0; /* not reached */
+    RETURN_NOT_REACHED (0)
   }
 }
 

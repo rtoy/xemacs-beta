@@ -4253,7 +4253,7 @@ decode_extent_at_flag (Lisp_Object at_flag)
   if (EQ (at_flag, Qat))     return EXTENT_AT_AT;
 
   invalid_constant ("Invalid AT-FLAG in `extent-at'", at_flag);
-  return EXTENT_AT_AFTER; /* unreached */
+  RETURN_NOT_REACHED (EXTENT_AT_AFTER)
 }
 
 static int
@@ -5058,7 +5058,7 @@ symbol_to_glyph_layout (Lisp_Object layout_obj)
   if (EQ (layout_obj, Qtext))		return GL_TEXT;
 
   invalid_constant ("Unknown glyph layout type", layout_obj);
-  return GL_TEXT; /* unreached */
+  RETURN_NOT_REACHED (GL_TEXT)
 }
 
 static Lisp_Object

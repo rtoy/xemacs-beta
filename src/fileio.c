@@ -143,7 +143,7 @@ report_file_type_error (Lisp_Object errtype, Lisp_Object oserrmess,
   errdata = Fcons (build_msg_string (string),
 		   Fcons (oserrmess, errdata));
   signal_error_1 (errtype, errdata);
-  UNGCPRO; /* not reached */
+  /* UNGCPRO; not reached */
 }
 
 DOESNT_RETURN
@@ -1639,8 +1639,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
   syntax_error_2 ("Substituting nonexistent environment variable",
 		  filename, build_intstring (target));
 
-  /* NOTREACHED */
-  return Qnil;	/* suppress compiler warning */
+  RETURN_NOT_REACHED (Qnil)
 }
 
 /* A slightly faster and more convenient way to get

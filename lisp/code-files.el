@@ -246,7 +246,7 @@ Return t if file exists."
 	(load-internal
 	 file noerror nomessage nosuffix
 	 (let ((elc ; use string= instead of string-match to keep match-data.
-		(string= ".elc" (downcase (substring path -4)))))
+		(equalp ".elc" (substring path -4))))
 	   (or (and (not elc) coding-system-for-read) ; prefer for source file
 	       ;; find magic-cookie
 	       (let ((codesys (find-coding-system-magic-cookie-in-file path)))

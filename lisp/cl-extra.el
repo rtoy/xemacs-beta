@@ -1,6 +1,7 @@
 ;;; cl-extra.el --- Common Lisp extensions for XEmacs Lisp (part two)
 
 ;; Copyright (C) 1993 Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;; Maintainer: XEmacs Development Team
@@ -99,9 +100,8 @@ numbers of different types (float vs. integer), and also compares
 strings case-insensitively."
   (cond ((eq x y) t)
 	((stringp x)
-	 (and (stringp y) (= (length x) (length y))
-	      (or (string-equal x y)
-		  (string-equal (downcase x) (downcase y)))))   ; lazy but simple!
+	 ;; avoids downcase
+	 (eq t (compare-strings x nil nil y nil nil t)))
 	((characterp x)
 	 (and (characterp y)
 	      (or (char-equal x y)

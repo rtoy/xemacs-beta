@@ -338,12 +338,11 @@ X fonts can be specified (by the user) in either pixels or 10ths of points,
       (let ((rest available)
 	    (last nil)
 	    result)
-	(setq font (downcase font))
 	(while rest
-	  (cond ((and (not up-p) (equal font (downcase (nth 2 (car rest)))))
+	  (cond ((and (not up-p) (equalp font (nth 2 (car rest))))
 		 (setq result last
 		       rest nil))
-		((and up-p (equal font (and last (downcase (nth 2 last)))))
+		((and up-p (equalp font (and last (nth 2 last))))
 		 (setq result (car rest)
 		       rest nil)))
 	  (setq last (car rest))
@@ -702,8 +701,8 @@ Otherwise, it returns the next larger version of this font that is defined."
   (let ((fg (face-foreground-instance 'default device))
 	(bg (face-background-instance 'default device)))
     (if (not (and fg bg))
-	(if (or (and fg (equal (downcase (color-instance-name fg)) "white"))
-		(and bg (equal (downcase (color-instance-name bg)) "black")))
+	(if (or (and fg (equalp (color-instance-name fg) "white"))
+		(and bg (equalp (color-instance-name bg) "black")))
 	    (progn
 	      (or fg (set-face-foreground 'default "white" device))
 	      (or bg (set-face-background 'default "black" device)))

@@ -2134,14 +2134,14 @@ hft_reset (struct console *con)
 /*                    limits of text/data segments                      */
 /************************************************************************/
 
-#if !defined(CANNOT_DUMP) && !defined(PDUMP)
+/* Need start_of_data() as much as possible now, for total_data_usage();
+   but with PDUMP and WIN32_NATIVE, can't currently do it. */
+#if !defined (CANNOT_DUMP) && (!defined (PDUMP) || !defined (WIN32_NATIVE))
 #define NEED_STARTS
 #endif
 
-#ifndef SYSTEM_MALLOC
-#ifndef NEED_STARTS
+#if !defined (SYSTEM_MALLOC) && !defined (NEED_STARTS)
 #define NEED_STARTS
-#endif
 #endif
 
 #ifdef NEED_STARTS
@@ -2154,7 +2154,7 @@ hft_reset (struct console *con)
  *
  */
 
-#if !defined(HAVE_TEXT_START) && !defined(PDUMP)
+#if !defined (HAVE_TEXT_START) && !defined (PDUMP)
 
 EXTERN_C int _start (void);
 
@@ -2195,7 +2195,7 @@ start_of_text (void)
  *
  */
 
-#if defined(ORDINARY_LINK) && !defined(MINGW)
+#if defined (ORDINARY_LINK) && !defined (MINGW)
 extern char **environ;
 #endif
 
@@ -2217,7 +2217,7 @@ start_of_data (void)
   if (!initialized)
     return static_heap_base;
 #endif
-  return((char *) &environ);
+  return ((char *) &environ);
 #else
   extern int data_start;
   return ((char *) &data_start);
@@ -2225,6 +2225,55 @@ start_of_data (void)
 #endif /* DATA_START */
 }
 #endif /* NEED_STARTS (not CANNOT_DUMP or not SYSTEM_MALLOC) */
+
+extern void *minimum_address_seen; /* from xmalloc() */
+extern void *maximum_address_seen; /* from xmalloc() */
+
+extern EMACS_INT consing_since_gc;
+
+Bytecount
+total_data_usage (void)
+{
+  static EMACS_INT last_consing_since_gc;
+  static void *last_sbrk;
+
+#ifdef NEED_STARTS
+  void *data_start = start_of_data ();
+#else
+  void *data_start = minimum_address_seen;
+#endif
+  
+#if !defined (WIN32_NATIVE) && !defined (CYGWIN)
+  void *data_end;
+
+  /* Random hack to avoid calling sbrk constantly (every funcall).  #### Is
+     it worth it? */
+  if (!last_sbrk || !(consing_since_gc >= last_consing_since_gc &&
+		      (consing_since_gc - last_consing_since_gc) < 1000))
+    {
+      last_sbrk = sbrk (0);
+      last_consing_since_gc = consing_since_gc;
+    }
+  data_end = last_sbrk;
+#else
+  void *data_end = maximum_address_seen;
+#endif
+
+  /* Sanity checking -- the min determined by malloc() should always be
+     greater than data start determined by other means.  We could do the
+     same check on the max, except that things like rel-alloc might
+     invalidate it. */
+  if (minimum_address_seen &&
+      (char *) minimum_address_seen < (char *) data_start)
+    data_start = minimum_address_seen;
+
+  if (data_end < data_start) /* Huh?????????? */
+    data_end = maximum_address_seen;
+
+  /* #### Doesn't seem to give good results on Windows; values are much
+     higher than actual memory usage.  How to fix??? */
+  return (char *) data_end - (char *) data_start;
+}
 
 
 /************************************************************************/

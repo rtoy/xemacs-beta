@@ -406,7 +406,7 @@ process_image_string_instantiator (Lisp_Object data,
   invalid_argument ("Unable to interpret glyph instantiator",
 		       data);
 
-  return Qnil;
+  RETURN_NOT_REACHED (Qnil)
 }
 
 Lisp_Object

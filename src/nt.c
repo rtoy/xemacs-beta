@@ -1538,7 +1538,7 @@ mswindows_stat (const Intbyte *path, struct stat *buf)
 	}
       if (dir_find_handle != INVALID_HANDLE_VALUE
 	  && dir_pathname
-	  && qxestrncasecmp_i18n (name, dir_pathname, len) == 0
+	  && qxestrncasecmp_i18n (dir_pathname, name, len) == 0
 	  && IS_DIRECTORY_SEP (name[len])
 	  && qxestrcasecmp_i18n (name + len + 1,
 				 (Intbyte *) dir_static.d_name) == 0)

@@ -1009,22 +1009,29 @@ when the language environment is made current."
 ;; auto-language-alist deleted.  We have a more sophisticated system,
 ;; with the locales stored in the language data.
 
+(defconst langenv-to-locale-hash (make-hash-table :test 'equal))
+
 (defun get-language-environment-from-locale (locale)
   "Convert LOCALE into a language environment.
 LOCALE is a C library locale string, as returned by `current-locale'.
 Uses the `locale' property of the language environment."
-  (block langenv
-    (dolist (langcons language-info-alist)
-      (let* ((lang (car langcons))
-	     (locs (get-language-info lang 'locale))
-	     (case-fold-search t))
-	(dolist (loc (if (listp locs) locs (list locs)))
-	  (if (cond ((functionp loc)
-		     (funcall loc locale))
-		    ((stringp loc)
-		     (string-match (concat "^" loc "\\([^A-Za-z0-9]\\|$\\)")
-				   locale)))
-	      (return-from langenv lang)))))))
+  (or (gethash locale langenv-to-locale-hash)
+      (let ((retval
+	     (block langenv
+	       (dolist (langcons language-info-alist)
+		 (let* ((lang (car langcons))
+			(locs (get-language-info lang 'locale))
+			(case-fold-search t))
+		   (dolist (loc (if (listp locs) locs (list locs)))
+		     (if (cond ((functionp loc)
+				(funcall loc locale))
+			       ((stringp loc)
+				(string-match
+				 (concat "^" loc "\\([^A-Za-z0-9]\\|$\\)")
+				 locale)))
+			 (return-from langenv lang))))))))
+	(puthash locale retval langenv-to-locale-hash)
+	retval)))
 
 (defun mswindows-get-language-environment-from-locale (ms-locale)
   "Convert MS-LOCALE (an MS Windows locale) into a language environment.

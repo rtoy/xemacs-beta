@@ -1,5 +1,92 @@
 2002-03-31  Ben Wing  <ben@xemacs.org>
 
+	* alloc.c:
+	* alloc.c (INCREMENT_CONS_COUNTER):
+	* alloc.c (xmalloc):
+	* alloc.c (xcalloc):
+	* alloc.c (xrealloc):
+	* alloc.c (Fmemory_limit):
+	* alloc.c (Fmemory_usage):
+	* alloc.c (common_init_alloc_once_early):
+	* alloc.c (syms_of_alloc):
+	* alloc.c (vars_of_alloc):
+	* bytecode.c:
+	* bytecode.c (Ffetch_bytecode):
+	* chartab.c (symbol_to_char_table_type):
+	* chartab.c (Fget_range_char_table):
+	* chartab.c (check_valid_char_table_value):
+	* data.c (Faref):
+	* data.c (Faset):
+	* data.c (Fquo):
+	* data.c (Fmod):
+	* data.c (decode_weak_list_type):
+	* data.c (encode_weak_list_type):
+	* elhash.c (decode_hash_table_weakness):
+	* elhash.c (decode_hash_table_test):
+	* emacs.c (main):
+	* eval.c:
+	* eval.c (Feval):
+	* eval.c (Ffuncall):
+	* event-Xt.c (x_to_emacs_keysym):
+	* event-unixoid.c:
+	* event-unixoid.c (poll_fds_for_input):
+	* extents.c (decode_extent_at_flag):
+	* extents.c (symbol_to_glyph_layout):
+	* file-coding.c (symbol_to_eol_type):
+	* file-coding.c (Fcoding_system_aliasee):
+	* file-coding.c (coding_category_symbol_to_id):
+	* fileio.c (report_file_type_error):
+	* fileio.c (Fsubstitute_in_file_name):
+	* fns.c:
+	* fns.c (Fcompare_strings):
+	* fns.c (internal_equalp):
+	* fns.c (syms_of_fns):
+	* glyphs.c (process_image_string_instantiator):
+	* gutter.c (decode_gutter_position):
+	* lisp-union.h:
+	* lisp.h:
+	* lisp.h (RETURN_NOT_REACHED):
+	* mule-charset.c (Fcharset_property):
+	* nt.c (mswindows_stat):
+	* process-unix.c (unix_create_process):
+	* process.c (decode_signal):
+	* specifier.c (decode_locale_type):
+	* specifier.c (decode_how_to_add_specification):
+	* symbols.c (decode_magic_handler_type):
+	* symbols.c (handler_type_from_function_symbol):
+	* sysdep.c:
+	* sysdep.c (start_of_data):
+	* sysdep.c (total_data_usage):
+	* sysdep.h (total_data_usage):
+	* text.c:
+	* text.c (qxestrncasecmp_i18n):
+	* text.c (qxememcmp4):
+	* text.c (qxememcasecmp4):
+	* text.c (qxetextcmp):
+	* text.c (qxetextcmp_matching):
+	* text.c (qxetextcasecmp):
+	* text.c (qxetextcasecmp_matching):
+	* text.c (lisp_strcasecmp_i18n):
+	* text.c (eicmp_1):
+	* toolbar.c (decode_toolbar_position):
+	* toolbar.c (Fset_default_toolbar_position):
+	Try to implement GC triggering based on percentage of total memory
+	usage.  Not currently activated (percentage set to 0) because not
+	quite working.  Add `memory-usage' primitive to return XEmacs'
+	idea of its memory usage.
+
+	Add primitive compare-strings, compatible with FSF 21.1 -- can
+	compare any part of two strings, optionally ignoring case.
+	Improve qxe() functions in text.c for text comparison.
+
+	Use RETURN_NOT_REACHED to try to avoid warnings about unreachable
+	code.
+
+	Add volatile_make_int() to fix warning in unix_send_process().
+
+	
+2002-03-31  Ben Wing  <ben@xemacs.org>
+
 	* s/windowsnt.h:
 	Use new ERROR_CHECK_ALL; not related to DEBUG_XEMACS.
 

@@ -363,6 +363,19 @@ NOTE: At some point, this will be moved into C and will be very fast."
 ;;;; String functions.
 
 ;; XEmacs
+(defun string-equal-ignore-case (str1 str2)
+  "Return t if two strings have identical contents, ignoring case differences.
+Case is not significant.  Text properties and extents are ignored.
+Symbols are also allowed; their print names are used instead.
+
+See also `equalp'."
+  (if (symbolp str1)
+      (setq str1 (symbol-name str1)))
+  (if (symbolp str2)
+      (setq str2 (symbol-name str2)))
+  (eq t (compare-strings str1 nil nil str2 nil nil t)))
+
+;; XEmacs
 (defun replace-in-string (str regexp newtext &optional literal)
   "Replace all matches in STR for REGEXP with NEWTEXT string,
  and returns the new string.
@@ -591,6 +604,7 @@ the resulting string may be narrower than END-COLUMN."
     (concat (substring str (min start-column len) (min end-column len))
 	    (and padding (> end-column len)
 		 (make-string (- end-column len) padding)))))
+
 
 
 ;; alist/plist functions

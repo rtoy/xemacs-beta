@@ -1087,7 +1087,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
       bufsiz = len+1;
       goto Lookup_String;
     }
-  return Qnil; /* not reached */
+  return Qnil; /* not (usually) reached */
 #endif /* HAVE_XIM */
 }
 

@@ -617,7 +617,7 @@ decode_hash_table_weakness (Lisp_Object obj)
   if (EQ (obj, Qvalue_weak))		return HASH_TABLE_VALUE_WEAK;
 
   invalid_constant ("Invalid hash table weakness", obj);
-  return HASH_TABLE_NON_WEAK; /* not reached */
+  RETURN_NOT_REACHED (HASH_TABLE_NON_WEAK)
 }
 
 static int
@@ -643,7 +643,7 @@ decode_hash_table_test (Lisp_Object obj)
   if (EQ (obj, Qeql))	return HASH_TABLE_EQL;
 
   invalid_constant ("Invalid hash table test", obj);
-  return HASH_TABLE_EQ; /* not reached */
+  RETURN_NOT_REACHED (HASH_TABLE_EQ)
 }
 
 static int

@@ -2835,8 +2835,7 @@ decode_magic_handler_type (Lisp_Object symbol)
   if (EQ (symbol, Qmake_local))      return MAGIC_HANDLER_MAKE_LOCAL;
 
   invalid_constant ("Unrecognized symbol value handler type", symbol);
-  abort ();
-  return MAGIC_HANDLER_MAX;
+  RETURN_NOT_REACHED (MAGIC_HANDLER_MAX)
 }
 
 static enum lisp_magic_handler
@@ -2870,7 +2869,7 @@ handler_type_from_function_symbol (Lisp_Object funsym, int abort_if_not_found)
   if (abort_if_not_found)
     abort ();
   invalid_argument ("Unrecognized symbol-value function", funsym);
-  return MAGIC_HANDLER_MAX;
+  RETURN_NOT_REACHED (MAGIC_HANDLER_MAX)
 }
 
 static int

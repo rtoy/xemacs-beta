@@ -1,5 +1,20 @@
 2002-03-31  Ben Wing  <ben@xemacs.org>
 
+	* Makefile.in.in (all):
+	* Makefile.in.in (finder):
+	* Makefile.in.in (Makefile):
+	* Makefile.in.in (SOURCES):
+	Try to make the Makefile notice if its source Makefile.in.in is
+	changed, and regenerate and run itself.
+
+	Use a bigger default SHEAP_ADJUSTMENT on Cygwin; otherwise you
+	can't compile under Mule if a Lisp file has changed. (can't run
+	temacs)
+
+	* TODO.ben-mule-21-5 (bugs): update.
+
+2002-03-31  Ben Wing  <ben@xemacs.org>
+
 	* TODO.ben-mule-21-5 (bugs): Update.
 	
 	* configure.in (USAGE_ERROR):

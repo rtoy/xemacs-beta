@@ -3626,13 +3626,7 @@ when it is off screen."
 
 (defun assoc-ignore-case (key alist)
   "Like `assoc', but assumes KEY is a string and ignores case when comparing."
-  (setq key (downcase key))
-  (let (element)
-    (while (and alist (not element))
-      (if (equal key (downcase (car (car alist))))
-	  (setq element (car alist)))
-      (setq alist (cdr alist)))
-    element))
+  (assoc* key alist :test #'equalp))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

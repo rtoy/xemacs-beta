@@ -985,7 +985,7 @@ symbol_to_eol_type (Lisp_Object symbol)
   if (EQ (symbol, Qcr))   return EOL_CR;
 
   invalid_constant ("Unrecognized eol type", symbol);
-  return EOL_AUTODETECT; /* not reached */
+  RETURN_NOT_REACHED (EOL_AUTODETECT)
 }
 
 static Lisp_Object
@@ -1697,7 +1697,7 @@ Return the coding-system symbol for which symbol ALIAS is an alias.
     return aliasee;
   else
     invalid_argument ("Symbol is not a coding system alias", alias);
-  return Qnil;		/* To keep the compiler happy */
+  RETURN_NOT_REACHED (Qnil)
 }
 
 /* A maphash function, for removing dangling coding system aliases. */
@@ -3398,7 +3398,7 @@ coding_category_symbol_to_id (Lisp_Object symbol)
     }
   
   invalid_constant ("Unrecognized coding category", symbol);
-  return 0; /* not reached */
+  RETURN_NOT_REACHED (0)
 }
 
 static Lisp_Object

@@ -740,7 +740,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
 
  range_error:
   args_out_of_range (array, index_);
-  return Qnil; /* not reached */
+  RETURN_NOT_REACHED (Qnil)
 }
 
 DEFUN ("aset", Faset, 3, 3, 0, /*
@@ -793,7 +793,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
 
  range_error:
   args_out_of_range (array, index_);
-  return Qnil; /* not reached */
+  RETURN_NOT_REACHED (Qnil)
 }
 
 
@@ -1265,7 +1265,7 @@ With one argument, reciprocates the argument.
 
  divide_by_zero:
   Fsignal (Qarith_error, Qnil);
-  return Qnil; /* not reached */
+  return Qnil; /* not (usually) reached */
 }
 
 DEFUN ("max", Fmax, 1, MANY, 0, /*
@@ -1490,7 +1490,7 @@ If either argument is a float, a float will be returned.
 
  divide_by_zero:
   Fsignal (Qarith_error, Qnil);
-  return Qnil; /* not reached */
+  return Qnil; /* not (usually) reached */
 }
 
 DEFUN ("ash", Fash, 2, 2, 0, /*
@@ -1913,7 +1913,7 @@ decode_weak_list_type (Lisp_Object symbol)
   if (EQ (symbol, Qfull_assoc))  return WEAK_LIST_FULL_ASSOC;
 
   invalid_constant ("Invalid weak list type", symbol);
-  return WEAK_LIST_SIMPLE; /* not reached */
+  RETURN_NOT_REACHED (WEAK_LIST_SIMPLE)
 }
 
 static Lisp_Object
@@ -1930,7 +1930,7 @@ encode_weak_list_type (enum weak_list_type type)
       abort ();
     }
 
-  return Qnil; /* not reached */
+  return Qnil; /* not (usually) reached */
 }
 
 DEFUN ("weak-list-p", Fweak_list_p, 1, 1, 0, /*

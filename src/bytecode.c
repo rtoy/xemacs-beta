@@ -1,6 +1,7 @@
 /* Execution of byte code produced by bytecomp.el.
    Implementation of compiled-function objects.
    Copyright (C) 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1995 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -2336,7 +2337,7 @@ If the byte code for compiled function FUNCTION is lazy-loaded, fetch it now.
       return function;
     }
   abort ();
-  return Qnil; /* not reached */
+  return Qnil; /* not (usually) reached */
 }
 
 DEFUN ("optimize-compiled-function", Foptimize_compiled_function, 1, 1, 0, /*

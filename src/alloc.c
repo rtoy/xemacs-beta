@@ -100,20 +100,22 @@ do {								\
 } while (0)
 
 #ifdef DEBUG_XEMACS
-#define INCREMENT_CONS_COUNTER(foosize, type)			\
-  do {								\
-    if (debug_allocation)					\
-      {								\
-	stderr_out ("allocating %s (size %ld)\n", type, (long)foosize);	\
-	debug_allocation_backtrace ();				\
-      }								\
-    INCREMENT_CONS_COUNTER_1 (foosize);				\
+#define INCREMENT_CONS_COUNTER(foosize, type)		\
+  do {							\
+    if (debug_allocation)				\
+      {							\
+	stderr_out ("allocating %s (size %ld)\n", type,	\
+		    (long) foosize);			\
+	debug_allocation_backtrace ();			\
+      }							\
+    INCREMENT_CONS_COUNTER_1 (foosize);			\
   } while (0)
 #define NOSEEUM_INCREMENT_CONS_COUNTER(foosize, type)		\
   do {								\
     if (debug_allocation > 1)					\
       {								\
-	stderr_out ("allocating noseeum %s (size %ld)\n", type, (long)foosize); \
+	stderr_out ("allocating noseeum %s (size %ld)\n", type,	\
+		    (long) foosize);				\
 	debug_allocation_backtrace ();				\
       }								\
     INCREMENT_CONS_COUNTER_1 (foosize);				\
@@ -131,7 +133,16 @@ do {								\
 } while (0)
 
 /* Number of bytes of consing since gc before another gc should be done. */
-EMACS_INT gc_cons_threshold;
+static EMACS_INT gc_cons_threshold;
+
+/* Percentage of consing of total data size before another GC. */
+static EMACS_INT gc_cons_percentage;
+
+#ifdef ERROR_CHECK_GC
+int always_gc;			/* Debugging hack */
+#else
+#define always_gc 0
+#endif
 
 /* Nonzero during gc */
 int gc_in_progress;
@@ -166,6 +177,11 @@ int purify_flag;
 Error_Behavior ERROR_ME, ERROR_ME_NOT, ERROR_ME_WARN, ERROR_ME_DEBUG_WARN;
 
 #endif
+
+/* Very cheesy ways of figuring out how much memory is being used for
+   data. #### Need better (system-dependent) ways. */
+void *minimum_address_seen;
+void *maximum_address_seen;
 
 int
 c_readonly (Lisp_Object obj)
@@ -239,15 +255,33 @@ memory_full (void)
   out_of_memory ("Memory exhausted", Qunbound);
 }
 
-/* like malloc and realloc but check for no memory left, and block input. */
+static void
+set_alloc_mins_and_maxes (void *val, Bytecount size)
+{
+  if (!val)
+    return;
+  if ((char *) val + size > (char *) maximum_address_seen)
+    maximum_address_seen = (char *) val + size;
+  if (!minimum_address_seen)
+    minimum_address_seen =
+#if SIZEOF_VOID_P == 8
+      (void *) 0xFFFFFFFFFFFFFFFF;
+#else
+      (void *) 0xFFFFFFFF;
+#endif
+  if ((char *) val < (char *) minimum_address_seen)
+    minimum_address_seen = (char *) val;
+}
+
+/* like malloc and realloc but check for no memory left. */
 
 #undef xmalloc
 void *
 xmalloc (Bytecount size)
 {
   void *val = malloc (size);
-
   if (!val && (size != 0)) memory_full ();
+  set_alloc_mins_and_maxes (val, size);
   return val;
 }
 
@@ -258,6 +292,7 @@ xcalloc (Elemcount nelem, Bytecount elsize)
   void *val = calloc (nelem, elsize);
 
   if (!val && (nelem != 0)) memory_full ();
+  set_alloc_mins_and_maxes (val, nelem * elsize);
   return val;
 }
 
@@ -274,6 +309,7 @@ xrealloc (void *block, Bytecount size)
   block = realloc (block, size);
 
   if (!block && (size != 0)) memory_full ();
+  set_alloc_mins_and_maxes (block, size);
   return block;
 }
 
@@ -3900,8 +3936,8 @@ If this value exceeds `gc-cons-threshold', a garbage collection happens.
 
 #if 0
 DEFUN ("memory-limit", Fmemory_limit, 0, 0, 0, /*
-Return the address of the last byte Emacs has allocated, divided by 1024.
-This may be helpful in debugging Emacs's memory usage.
+Return the address of the last byte XEmacs has allocated, divided by 1024.
+This may be helpful in debugging XEmacs's memory usage.
 The value is divided by 1024 to make sure it will fit in a lisp integer.
 */
        ())
@@ -3909,6 +3945,27 @@ The value is divided by 1024 to make sure it will fit in a lisp integer.
   return make_int ((EMACS_INT) sbrk (0) / 1024);
 }
 #endif
+
+DEFUN ("memory-usage", Fmemory_usage, 0, 0, 0, /*
+Return the total number of bytes used by the data segment in XEmacs.
+This may be helpful in debugging XEmacs's memory usage.
+*/
+       ())
+{
+  return make_int (total_data_usage ());
+}
+
+/* True if it's time to garbage collect now. */
+int
+need_to_garbage_collect (void)
+{
+  if (always_gc)
+    return 1;
+  
+  return (consing_since_gc > gc_cons_threshold &&
+	  (100 * consing_since_gc) / total_data_usage () >=
+	  gc_cons_percentage);
+}
 
 
 int
@@ -4117,6 +4174,9 @@ common_init_alloc_once_early (void)
 #else
   gc_cons_threshold = 15000; /* debugging */
 #endif
+  gc_cons_percentage = 0; /* #### 20; Don't have an accurate measure of
+			     memory usage on Windows; not verified on other
+			     systems */
   lrecord_uid_counter = 259;
   debug_string_purity = 0;
   gcprolist = 0;
@@ -4215,6 +4275,7 @@ syms_of_alloc (void)
 #if 0
   DEFSUBR (Fmemory_limit);
 #endif
+  DEFSUBR (Fmemory_usage);
   DEFSUBR (Fconsing_since_gc);
 }
 
@@ -4227,6 +4288,25 @@ vars_of_alloc (void)
 of all different kinds of objects, not just conses.
 Garbage collection can happen automatically once this many bytes have been
 allocated since the last garbage collection.  All data types count.
+
+Garbage collection happens automatically when `eval' or `funcall' are
+called.  (Note that `funcall' is called implicitly as part of evaluation.)
+By binding this temporarily to a large number, you can effectively
+prevent garbage collection during a part of the program.
+
+See also `consing-since-gc'.
+*/ );
+
+  DEFVAR_INT ("gc-cons-percentage", &gc_cons_percentage /*
+*Percentage of memory allocated between garbage collections.
+
+Garbage collection will happen if this percentage of the total amount of
+memory used for data has been allocated since the last garbage collection.
+However, it will not happen if less than `gc-cons-threshold' bytes have
+been allocated -- this sets an absolute minimum in case very little data
+has been allocated or the percentage is set very low.  Set this to 0 to
+have garbage collection always happen after `gc-cons-threshold' bytes have
+been allocated, regardless of current memory usage.
 
 Garbage collection happens automatically when `eval' or `funcall' are
 called.  (Note that `funcall' is called implicitly as part of evaluation.)

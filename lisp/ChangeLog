@@ -1,5 +1,31 @@
 2002-03-31  Ben Wing  <ben@xemacs.org>
 
+	* mule/mule-cmds.el:
+	* mule/mule-cmds.el (langenv-to-locale-hash): New.
+	* mule/mule-cmds.el (mswindows-get-language-environment-from-locale):
+	Hash the result of mswindows-get-language-environment-from-locale,
+	since it's very expensive (and causes huge ballooning of memory
+	under X Windows, since it's called from x-get-resource).
+
+2002-03-31  Ben Wing  <ben@xemacs.org>
+
+	* cl-extra.el:
+	* cl-extra.el (equalp):
+	* code-files.el (load):
+	* files.el (hack-local-variables-last-page):
+	* files.el (hack-local-variables-prop-line):
+	* simple.el (assoc-ignore-case):
+	* subr.el:
+	* subr.el (string-equal-ignore-case): New.
+	* x-faces.el (x-frob-font-size):
+	* x-faces.el (x-init-device-faces):
+	Create new string-equal-ignore-case, based on built-in
+	compare-strings -- compare strings ignoring case without the need
+	to generate garbage by calling downcase.  Use it in equalp and
+	elsewhere.
+
+2002-03-31  Ben Wing  <ben@xemacs.org>
+
 	* behavior.el:
 	* behavior.el (within-behavior-enabling-disabling): New.
 	* behavior.el (behaviors): New.

@@ -1601,7 +1601,7 @@ for current buffer."
 		   (var (read str))
 		  val)
 	      ;; Setting variable named "end" means end of list.
-	      (if (string-equal (downcase str) "end")
+	      (if (equalp str "end")
 		  (setq continue nil)
 		;; Otherwise read the variable value.
 		(skip-chars-forward "^:")
@@ -1665,7 +1665,7 @@ for current buffer."
 			      (narrow-to-region (point) end)
 			      (read (current-buffer)))))
 		   ;; Case sensitivity!  Icepicks in my forehead!
-		   (if (equal (downcase (symbol-name key)) "mode")
+		   (if (equalp (symbol-name key) "mode")
 		       (setq key 'mode))
 		   (setq result (cons (cons key val) result))
 		   (skip-chars-forward " \t;")))

@@ -94,8 +94,21 @@ make_int (EMACS_INT val)
   return obj;
 }
 
+
+#ifdef __cplusplus
+
+#define volatile_make_int(val) make_int (val)
+
+#else
+
 /* Ugh, need different definition to avoid compiler complaint in
-   unix_send_process() */
+   unix_send_process().  Furthermore, there's no way under C++, it seems,
+   to declare something volatile and then return it.  Perhaps I'd have to
+   assign to something else instead?  But in any case, the warnings about
+   volatile clobbering doesn't occur in C++.  I bet the thing is that C++
+   already has a built-in system for dealing with non-local exits and such,
+   in a smart way that doesn't clobber registers, and incorporates
+   longjmp() into that.  */
 INLINE_HEADER Lisp_Object volatile_make_int (EMACS_INT val);
 INLINE_HEADER Lisp_Object
 volatile_make_int (EMACS_INT val)
@@ -105,6 +118,9 @@ volatile_make_int (EMACS_INT val)
   obj.s.val = val;
   return obj;
 }
+
+#endif /* __cplusplus */
+
 
 INLINE_HEADER Lisp_Object make_char (Emchar val);
 INLINE_HEADER Lisp_Object

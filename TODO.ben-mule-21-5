@@ -33,6 +33,12 @@ bugs:
 -- review use of escape-quoted in auto_save_1() vs. the buffer's own coding
    system.
 
+-- figure out how to get the total amount of data memory (i.e. everything
+   but the code, or even including the code if can't distinguish) used by
+   the process on each different OS, and use it in a new algorithm for
+   triggering GC: trigger only when a certain % of the data size has been
+   consed up; in addition, have a minimum.
+
 fixed bugs???
 
 -- Occasional crash when freeing display structures.  The problem seems to
