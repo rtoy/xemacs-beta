@@ -829,7 +829,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
   if (argmatch (argv, argc, "-si", "--show-inline-info", 0, NULL, &skip_args))
     {
 #if defined(PDUMP) && !defined(WIN32_NATIVE)
-      printf ("%d %d\n", dumped_data_max_size(), dumped_data_align_offset());
+      printf ("%u %u\n", dumped_data_max_size(), dumped_data_align_offset());
 #else
       printf ("Portable dumper not configured or windows native; -si just forces exit.\n");
 #endif

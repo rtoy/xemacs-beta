@@ -1,5 +1,10 @@
 2004-04-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* emacs.c (main_1): dumped_data_max_size and dumped_data_align_offset
+	return size_t, so need %u format conversion.
+
+2004-04-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* Makefile.in.in ($(LISP)/finder-inf.el): Force removal.
 
 2004-02-22  Stephen J. Turnbull  <stephen@xemacs.org>
