@@ -1,3 +1,8 @@
+2002-07-01  Mike Alexander  <mta@arbortext.com>
+
+	* code-process.el (call-process-region): Don't delete the process
+	output if start equals end
+
 2002-07-14  Mike Alexander  <mta@arbortext.com>
 
 	* process.el (shell-command-on-region): Don't delete the region

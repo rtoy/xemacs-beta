@@ -175,7 +175,9 @@ the same as for `call-process'."
 	(e (and deletep (copy-marker end))))
     (apply #'call-process program (list (current-buffer) start end)
 	   buffer displayp args)
-    (if deletep (delete-region s e))))
+    ; If start and end were the same originally, s will be beyond e now
+    (if (and deletep (> e s))
+	(delete-region s e))))
 
 (defun start-process (name buffer program &rest program-args)
   "Start a program in a subprocess.  Return the process object for it.
