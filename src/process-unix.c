@@ -72,6 +72,7 @@ Boston, MA 02111-1307, USA.  */
  * Implementation-specific data. Pointed to by Lisp_Process->process_data
  */
 
+#ifndef USE_KKCC
 struct unix_process_data
 {
   /* Non-0 if this is really a ToolTalk channel. */
@@ -89,7 +90,7 @@ struct unix_process_data
   /* Non-false if communicating through a pty.  */
   char pty_flag;
 };
-
+#endif /* not USE_KKCC */
 #define UNIX_DATA(p) ((struct unix_process_data*) ((p)->process_data))
 
 
