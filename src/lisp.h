@@ -2740,7 +2740,8 @@ extern Lisp_Object Q_resource_type, Q_resource_id;
 /* Defined in gui.c */
 DECLARE_DOESNT_RETURN (gui_error (const char *reason,
 				  Lisp_Object frob));
-
+DECLARE_DOESNT_RETURN (gui_error_2 (const char *reason,
+				    Lisp_Object frob0, Lisp_Object frob1));
 /* Defined in indent.c */
 int bi_spaces_at_point (struct buffer *, Bytind);
 int column_at_point (struct buffer *, Bufpos, int);

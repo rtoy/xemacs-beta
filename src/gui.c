@@ -832,6 +832,12 @@ gui_error (const char *reason, Lisp_Object frob)
   signal_error (Qgui_error, reason, frob);
 }
 
+DOESNT_RETURN
+gui_error_2 (const char *reason, Lisp_Object frob0, Lisp_Object frob1)
+{
+  signal_error_2 (Qgui_error, reason, frob0, frob1);
+}
+
 void
 syms_of_gui (void)
 {

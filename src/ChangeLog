@@ -1,3 +1,8 @@
+2001-05-24  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* gui.c (gui_error_2): New function.
+	* lisp.h (gui_error_2): Declare it.
+
 2001-05-24  Norbert Koch  <nk@LF.net>
 
 	* doprnt.c (emacs_doprnt_1): forgotten sons of Ben's error patch
