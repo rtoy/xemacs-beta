@@ -1,3 +1,9 @@
+2005-03-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (The XEmacs Split):
+	* standards.texi (Option Table):
+	Shut up makeinfo and hack-local-variables.
+
 2005-03-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (How Lisp Objects Are Represented in C):

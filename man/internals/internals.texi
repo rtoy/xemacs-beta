@@ -1871,7 +1871,7 @@ Author: @uref{mailto:ben@@xemacs.org,Ben Wing}
 
 @subheading Ben Wing's attempts
 
-@strong{NOTE NOTE NOTE}: The following is a @strong{highly} opinionated
+@strong{Nota bene:} The following is a @strong{highly} opinionated
 piece written by one of the main authors of XEmacs.  This reflects his
 opinions, and his only!  It is included here because it may help to
 clarify some of the issues that are keeping the two versions of Emacs

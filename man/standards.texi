@@ -2,7 +2,8 @@
 @c %**start of header
 @setfilename ../info/standards.info
 @settitle GNU Coding Standards
-@c This date is automagically updated when you save this file:
+@c In GNU Emacs, this date is automagically updated when this file is
+@c saved, but in XEmacs you must set it when synching:
 @set lastupdate February 21, 2001
 @c %**end of header
 
@@ -1676,8 +1677,8 @@ Specify an HTTP proxy.
 @samp{-q} in Make.
 
 @item quiet
-Used in many programs to inhibit the usual output.  @strong{Note:} every
-program accepting @samp{--quiet} should accept @samp{--silent} as a
+Used in many programs to inhibit the usual output.  @strong{Every
+program accepting @samp{--quiet}} should accept @samp{--silent} as a
 synonym.
 
 @item quiet-unshar
@@ -1791,8 +1792,8 @@ Used by @code{recode} to chose files or pipes for sequencing passes.
 
 @item silent
 Used in many programs to inhibit the usual output.
-@strong{Note:} every program accepting
-@samp{--silent} should accept @samp{--quiet} as a synonym.
+@strong{Every program accepting
+@samp{--silent}} should accept @samp{--quiet} as a synonym.
 
 @item size
 @samp{-s} in @code{ls}.
@@ -3645,10 +3646,3 @@ free.
 @contents
 
 @bye
-Local variables:
-update-date-leading-regexp: "@c This date is automagically updated when you save this file:\n@set lastupdate "
-update-date-trailing-regexp: ""
-eval: (load "/gd/gnuorg/update-date.el")
-eval: (add-hook 'write-file-hooks 'update-date)
-compile-command: "make just-standards"
-End:
