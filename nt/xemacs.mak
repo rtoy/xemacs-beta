@@ -1147,7 +1147,7 @@ $(INFODIR)\new-users-guide.info: $(NEW_USERS_GUIDE_SRCS)
 	$(MAKEINFO) new-users-guide.texi
 	cd ..
 
-info:	$(INFO_FILES)
+info:	makeinfo-test $(INFO_FILES)
 
 makeinfo-test:
 	@<<makeinfo_test.bat
