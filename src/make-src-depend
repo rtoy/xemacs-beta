@@ -35,9 +35,6 @@ Usage: $myName
 
 Generates Makefile dependencies for the XEmacs src directory.
 The dependencies are written to stdout.
-
-If --quick-build, don't include config.h and lisp.h in the dependencies,
-for faster rebuilding.
 ";
 
 die $usage if @ARGV;

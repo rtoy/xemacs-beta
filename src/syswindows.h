@@ -151,6 +151,12 @@ extern __inline void *GetFiberData (void);
 
 #ifdef CYGWIN_HEADERS
 
+#include <w32api.h> /* for version info */
+
+#if __W32API_MAJOR_VERSION > 2 || (__W32API_MAJOR_VERSION == 2 && __W32API_MINOR_VERSION >= 2)
+#define W32API_2_2
+#endif
+
 /* Various brokennesses in various versions of Cygwin */
 
 /* windows.h defines. */
@@ -356,6 +362,8 @@ typedef struct tagNMDATETIMEFORMATW
   WCHAR szDisplay[64];
 } NMDATETIMEFORMATW, FAR * LPNMDATETIMEFORMATW;
 
+#ifndef W32API_2_2
+
 typedef struct tagNMTTDISPIFNOA
 {
   NMHDR hdr;
@@ -379,6 +387,8 @@ typedef struct tagNMTTDISPINFOW
   LPARAM lParam;
 #endif
 } NMTTDISPINFOW, FAR *LPNMTTDISPINFOW;
+
+#endif /* not W32API_2_2 */
 
 #endif /* (_WIN32_IE >= 0x0400) */
 

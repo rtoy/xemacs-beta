@@ -17,6 +17,13 @@
 	Nothing but niggly spacing changes -- one space before a paren
 	starting a function-call arglist, please.
 
+	* make-src-depend:
+	When QUICK_BUILD, don't put lisp.h, config.h, and related as
+	dependencies of all source files, so that changes to these files
+	don't trigger total rebuilding of the src directory.
+	Update info on what's a GTK-only and X-only file and use HAVE_XLIKE
+	for files shared between GTK and X.
+
 2003-02-14  Ben Wing  <ben@xemacs.org>
 
 	* buffer.c:
