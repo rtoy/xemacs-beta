@@ -1,3 +1,54 @@
+to 21.5.20 "cilantro"
+
+Major Features
+
+-- New: Handle various X selection targets properly.  (Aidan Kehoe)
+
+User-Visible Bug Fixes and Minor Improvements
+
+-- Fix: Handle active regions properly. (Adrian Aichner)
+-- Fix: pui-list-packages handles longer filenames. (Norbert Koch)
+
+Build Infrastructure
+
+-- Improve: Port configure to autoconf 2.59. (Malcolm Purvis)
+-- Fix: make-docfile.c misparsed UNUSED macro in defuns. (Stephen Turnbull)
+-- Fix: Don't copy non-existent BUGS file on NT. (Adrian Aichner)
+-- Fix: Typo in PDUMP section of Makefile.in.in. (Mike Alexander)
+
+Documentation
+
+-- Improve: Update info/dir. (Adrian Aichner)
+-- Improve: Automate updating of release date in about.el. (Stephen Turnbull)
+-- New: about.el entry for Simon Josefsson.  (Simon Joseffson)
+-- Fix: Typos.  (Adrian Aichner)
+-- Improve: Sort memory usage report sections by usage. (Adrian Aichner)
+-- Improve: Glyphs documentation. (Ben Wing)
+-- Improve: Description of build configuration system. (Malcolm Purvis)
+-- New: Description of build configuration system. (Stephen Turnbull)
+-- New: Lispref node on CCL Example. (Aidan Kehoe)
+-- Improve: Describe \c and \C in Syntax of Regexps. (Aidan Kehoe)
+-- Improve: Future Work -- Better Rendering Support. (Stephen Turnbull)
+-- Improve: Comments. (Stephen Turnbull, Aidan Kehoe)
+
+Lisp API
+
+-- New: GNU semi-compatible decode-char and encode-char.  (Aidan Kehoe)
+
+Internal API and Implementation
+
+-- Fix: Avoid consing in operate-on-matching-lines. (Adrian Aichner)
+-- Fix: Correctly disable geometry negotiation in tabs widget. (Stephen Turnbull)
+-- New: Backtrace feature for KKCC. (Marcus Crestani)
+-- Fix: Type casts in database.c. (Marcus Crestani)
+-- Fix: Adjust s&m to FreeBSD 6.x reality. (Andrey Slusar)
+
+Quality Assurance Infrastructure
+
+-- New: USED_IF_BIGFLOAT macro. (Jerry James)
+-- New: region-tests.el. (Adrian Aichner)
+-- New: autoconf/regressiontest.pl. (Malcolm Purvis)
+
 to 21.5.19 "chives"
 
 Major Features
