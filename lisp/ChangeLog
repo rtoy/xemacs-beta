@@ -1,3 +1,9 @@
+2004-03-23  Adrian Aichner  <adrian@xemacs.org>
+
+	* code-process.el (call-process-region): Correct start and end
+	marker construction, delete regions before and after insertion
+	point.
+
 2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.17 "chayote" is released.

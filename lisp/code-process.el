@@ -169,16 +169,22 @@ the same as for `call-process'."
   ;; a temporary file was used to pass the text to call-process.  Now that
   ;; we don't do that, we delete the text afterward; if it's being inserted
   ;; in the same buffer, make sure we track the insertion, and don't get
-  ;; any of it in the deleted region if insertion happens at either end
-  ;; of the region.
-  (let ((s (and deletep (copy-marker start t)))
-	(e (and deletep (copy-marker end))))
+  ;; any of it in the deleted region.  We keep marker s before the
+  ;; insertion and e afterward.  Finally we delete the regions before
+  ;; and after the insertion.
+  (let ((s (and deletep (copy-marker (point))))
+	(e (and deletep (copy-marker (point) t))))
     (let ((retval
 	   (apply #'call-process program (list (current-buffer) start end)
 		  buffer displayp args)))
-      ;; If start and end were the same originally, s will be beyond e now
-      (if (and deletep (> e s))
-	  (delete-region s e))
+      ;; If start and end were the same originally, e will be beyond s now
+      (when (and deletep (> e s))
+	;; APA: Is it always correct to honor narrowing, which affects
+	;; (point-min) and (point-max)?
+	;; Delete region before insertion.
+	(delete-region (point-min) s)
+	;; Delete region after insertion.
+	(delete-region e (point-max)))
       retval)))
 
 (defun start-process (name buffer program &rest program-args)
