@@ -1,3 +1,8 @@
+2005-03-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (How Lisp Objects Are Represented in C):
+	Document compiler warnings when assert expands to empty statement.
+
 2005-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.20 "cilantro" is released.

@@ -7318,6 +7318,10 @@ performance is an issue, use @code{type_checking_assert},
 nothing unless the corresponding configure error checking flag was
 specified.
 
+Note that in some cases @samp{assert}s will expand to nothing in a
+context where that produces an empty statement.  Some compilers will
+warn about this.
+
 @node Allocation of Objects in XEmacs Lisp, The Lisp Reader and Compiler, How Lisp Objects Are Represented in C, Top
 @chapter Allocation of Objects in XEmacs Lisp
 @cindex allocation of objects in XEmacs Lisp
