@@ -1,11 +1,11 @@
-Building and Installing XEmacs on Windows 95/98/NT/2000    -*- mode:outline -*-
+Building and Installing XEmacs on Windows 95/98/NT/2000/XP -*- mode:outline -*-
 
 			     David Hobley
 			     Marc Paquette
 			    Jonathan Harris
 			       Ben Wing
 
-This is a port of XEmacs to Windows 95/98/NT/2000.  If you are looking for a
+This is a port of XEmacs to Windows 95/98/NT/2000/XP.  If you are looking for a
 port of GNU Emacs, see http://www.cs.washington.edu/homes/voelker/ntemacs.html.
 NT 4.0 or later is required for building on Windows NT.  Note that the
 developers typically use NT 4.0 and Windows 2000, and there may possibly be
@@ -16,20 +16,24 @@ systems listed.
 * Required tools and sources
 ============================
 
-1.  You will need Visual C++ V6.0 or later to compile everything.
+1.  You will need Visual C++ V6.0, Visual Studio .NET or later to compile
+    everything.
 
     Note that Visual C++ assumes that the environment variables INCLUDE and
     LIB are set to specify the location of the includes and libraries.
     Your PATH environment variable also needs to include the Visual Studio
     vc\bin and sharedide\bin directories.
 
-    Visual C++ V5.0 and later install a batch file called vcvars32.bat in
+    Visual C++ V6.0 installs a batch file called vcvars32.bat in
     c:\Program Files\Microsoft Visual Studio\VC98\bin\ (or wherever you
     installed it) that you can run before building to set up all of these
     environment variables.  Alternatively, you can choose at setup time to
     have these environment variables automatically set up in the registry,
     which is generally a good idea.
 
+    Visual Studio .NET calls this batch file vsvars32.bat and installs it in
+    $Installdir\Common7\Tools, but doesn't offer at install time to
+    automatically set these environment variables up in the registry.
 
 2.  Grab the latest XEmacs source from
 
@@ -238,13 +242,13 @@ If you want support for X you will also need:
     You may want to create a shortcut to the file from your Desktop or
     Start Menu.
 
-4.  To build using MS Developer Studio, you can use the workspace file
+4.  To build using MS Visual Studio, you can use the workspace file
     `nt/xemacs.dsw'. This was prepared for Visual C++ 6.0. If you have a
     different version and neither file works, just open up `nt/xemacs.mak'
-    from within MS Developer Studio and it will offer to wrap this Makefile
-    in a workspace file, from which you can build. Assuming you want to run
-    from the build directory (which you will want to do if you are planning
-    on doing any development work on XEmacs), use the following settings in
+    from within Visual Studio and it will offer to wrap this Makefile in a
+    workspace file, from which you can build. Assuming you want to run from
+    the build directory (which you will want to do if you are planning on
+    doing any development work on XEmacs), use the following settings in
     Project/Settings...:
 
     Under the General tab:
