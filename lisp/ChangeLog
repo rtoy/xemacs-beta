@@ -1,3 +1,10 @@
+2005-02-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* buffer.el (pop-to-buffer):
+	* window-xemacs.el (display-buffer):
+	Document use of `same-window-buffer-names,' `same-window-regexps'
+	by pop-to-buffer and display-buffer. 
+	
 2005-02-09  Ben Wing  <ben@xemacs.org>
 
 	* dumped-lisp.el (preloaded-file-list):
