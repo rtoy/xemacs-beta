@@ -59,7 +59,8 @@ Normally, don't set it directly; use `enable-behavior' or `disable-behavior'."
 		 (disable-behavior b t))
 	       (dolist (b enable-list)
 		 (enable-behavior b t))
-	       (assert (equal enabled-behavior-list val)))))
+	       (assert (equal (sort (copy-sequence enabled-behavior-list) 'string-lessp)
+			      (sort (copy-sequence val) 'string-lessp))))))
   :type '(repeat (symbol :tag "Behavior"))
   :group 'behaviors)
 

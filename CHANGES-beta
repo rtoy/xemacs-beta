@@ -82,9 +82,8 @@ Lisp API
    bound-and-true-p, propertize, delete-and-extract-region, add-to-list,
    string-to-char-list, find-non-ascii-charset-region,
    find-non-ascii-charset-string, truncate-string-to-width, plist-to-alist,
-   kill-ring-max, kill-new
-   -- John Paul Wallington, youngs, ben, james
-   set-frame-pixel-width, set-frame-pixel-size -- andy
+   kill-ring-max, kill-new -- John Paul Wallington, youngs, ben, james, ville
+-- Add: set-frame-pixel-width, set-frame-pixel-size -- andy
 -- Add: args to map-specifier, various "heuristic" specifier functions -- ben
 -- Fix: call-process moves to Lisp -- ben
    -- allows a buffer to be specified for input and stderr output

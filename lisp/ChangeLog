@@ -1,3 +1,8 @@
+2002-06-27  Olivier Galibert  <galibert@pobox.com>
+
+	* behavior.el (enabled-behavior-list): Sort the lists for the
+	assert comparison.
+
 2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.7 "broccoflower" is released.

@@ -26,7 +26,8 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include <X11/Xlocale.h>        /* More portable than <locale.h> ? */
 #include "lisp.h"
-#include "console-x.h"
+#include "frame-impl.h"
+#include "console-x-impl.h"
 #include "device.h"
 #include "frame.h"
 #include "EmacsFrame.h"
