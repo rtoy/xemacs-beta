@@ -694,6 +694,7 @@ See also `set-process-filter' and `set-process-stderr-filter'.
   Lisp_Object buffer, stderr_buffer, name, program, process, current_dir;
   int separate_stderr;
   Lisp_Object tem;
+  int i;
   int speccount = specpdl_depth ();
   struct gcpro gcpro1, gcpro2, gcpro3;
 
@@ -730,6 +731,8 @@ See also `set-process-filter' and `set-process-stderr-filter'.
 
   CHECK_STRING (name);
   CHECK_STRING (program);
+  for (i = 3; i < nargs; ++i)
+    CHECK_STRING (args[i]);
 
   /* Make sure that the child will be able to chdir to the current
      buffer's current directory, or its unhandled equivalent. [[ We
