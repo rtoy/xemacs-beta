@@ -1,3 +1,10 @@
+2005-03-26  Jerry James  <james@xemacs.org>
+
+	* dumper.c (BACKTRACE_MAX): New constant defining length of static
+	backtrace array.
+	* dumper.c (pdump_bump_depth): Use it, and avoid buffer overflow
+	by fixing comparison.
+
 2005-02-24  Andrey Slusar  <anrays@gmail.com>
 
         * unexelf.c: define `Elfw(type)' for FreeBSD alpha and amd64. 

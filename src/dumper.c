@@ -520,12 +520,14 @@ pdump_find_in_cv_ptr_dynarr(const void *object)
   return 0;
 }
 
+#define BACKTRACE_MAX 65536
+
 static struct
 {
   struct lrecord_header *obj;
   int position;
   int offset;
-} backtrace[65536];
+} backtrace[BACKTRACE_MAX];
 
 static int pdump_depth;
 
@@ -568,7 +570,7 @@ static void
 pdump_bump_depth (void)
 {
   int me = pdump_depth++;
-  if (me > 65536)
+  if (me >= BACKTRACE_MAX)
     {
       stderr_out ("Backtrace overflow, loop ?\n");
       ABORT ();
