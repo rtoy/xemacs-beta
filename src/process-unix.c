@@ -1834,11 +1834,11 @@ unix_canonicalize_host_name (Lisp_Object host)
   retval = getaddrinfo (ext_host, NULL, &hints, &res);
   if (retval != 0)
     {
-      CIntbyte *gai_error;
+      CIntbyte *gai_err;
 
-      EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error,
+      EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_err,
 			    Qstrerror_encoding);
-      maybe_signal_error (Qio_error, gai_error, host,
+      maybe_signal_error (Qio_error, gai_err, host,
 			  Qprocess, ERROR_ME_DEBUG_WARN);
       canonname = host;
     }
@@ -1930,11 +1930,11 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     retval = getaddrinfo (ext_host, portstring, &hints, &res);
     if (retval != 0)
       {
-	CIntbyte *gai_error;
+	CIntbyte *gai_err;
 
-	EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error,
+	EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_err,
 			      Qstrerror_encoding);
-	signal_error (Qio_error, gai_error, list2 (host, service));
+	signal_error (Qio_error, gai_err, list2 (host, service));
       }
 
     /* address loop */

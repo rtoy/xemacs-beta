@@ -1,3 +1,9 @@
+2002-05-29  Didier Verna  <didier@xemacs.org>
+
+	* process-unix.c (unix_canonicalize_host_name): change gai_error
+	to gai_err to avoid shadow declaration.
+	* process-unix.c (unix_open_network_stream): ditto.
+
 2002-05-28  Didier Verna  <didier@xemacs.org>
 
 	* emacs.c: comment the inclusion order of syssignal.h and sysproc.h.
@@ -8329,7 +8335,7 @@
 	Fix compile warnings.
 
 	* menubar.c (vars_of_menubar):
-	Provide `menu-accelerator-support' to indicate that we properly
+	Provide `menu-accelerator-support' to indicate that we Properly
 	support %_ in menu specifications, so that package code can
 	conditionalize on this (and remove %_ from menu specifications
 	on older versions).
@@ -12376,7 +12382,7 @@ Fatal error: assertion failed, file /project/xemacs/ws/dev/src/frame.h, line 245
 
 	* mule-canna.c (CANNA_mode_keys): make static.
 	Use proper prototypes, even for functions of no arguments.
-	Remove external prototype for Fding().
+	RemOve external prototype for Fding().
 
 	* symsinit.h: Add missing prototype for reinit_vars_of_mule_wnn.
 
