@@ -1,3 +1,9 @@
+2001-09-16  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs-faq.texi (Q1.3.7): Update moved link.
+	* xemacs-faq.texi (Q7.0.2): Comment out empty list of bullets to
+	avoid HTML error in texi2html translation.
+
 2001-09-15  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs-faq.texi (Q4.6.1): Infodock is now hosted on SourceForge,

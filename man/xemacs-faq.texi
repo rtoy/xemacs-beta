@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/09/15 14:26:30 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/09/16 10:09:54 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -1055,8 +1055,7 @@ modification to @email{ava@@math.jhu.ed, Valery Alexeev's} @file{russian.el}
 which can be obtained from
 @end quotation
 
-@uref{http://ftpsearch.ntnu.no/?query=russian.el.Z}.
-@c dead link above
+@uref{http://ftpsearch.lycos.com/?query=russian.el.Z&form=medium}.
 
 @email{d.barsky@@ee.surrey.ac.uk, Dima Barsky} writes:
 
@@ -1076,7 +1075,7 @@ There is another cyrillic mode for both GNU Emacs and XEmacs by
 
 @quotation
 The fullest resource I found on Russian language use (in and out of
-XEmacs) is @uref{http://sunsite.oit.unc.edu/sergei/Software/Software.html}
+XEmacs) is @uref{http://www.ibiblio.org/sergei/Software/Software.html}
 @end quotation
 
 @node Q1.4.1, Q1.4.2, Q1.3.7, Introduction
@@ -6692,8 +6691,10 @@ Etags changes.  See @file{NEWS} for full details.
 
 Not yet written.
 
-@itemize @bullet
-@end itemize
+@c APA: Texi2html produces invalid HTML from an empty list of bullets!
+@c Please uncomment following list when it does contain bullets.
+@c @itemize @bullet
+@c @end itemize
 
 @node Q7.0.3, Q7.0.4, Q7.0.2, Current Events
 @unnumberedsubsec Q7.0.3: What's new in XEmacs 21.1?
