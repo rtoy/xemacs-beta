@@ -1,3 +1,12 @@
+2002-03-05  Mats Lidell  <matsl@contactor.se>
+ 
+ 	* help-nomule.el (tutorial-supported-languages): Added Swedish
+ 	tutorial. Sorted languages.
+
+2001-12-03  Christoph Wedler  <Christoph.Wedler@sap.com>
+
+	* minibuf.el (completing-read): Update docstring.
+
 2002-02-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* toolbar.el (toolbar-visible-p):
