@@ -23,13 +23,12 @@
 
 #include <zlib.h>
 
-static int
+static void
 Usage (char *name)
 {
   fprintf (stderr, "Usage: %s file.tar.gz [base-dir]\n", name);
   fprintf (stderr, "\tExtracts the contents compressed tar file to base-dir\n");
   exit (-1);
-  return 0;
 }
 
 
@@ -223,7 +222,9 @@ main (int argc, char **argv)
 	      if (size==0)	/* file of size 0 is done */
 		in_block = 0;
 	    }
-	} else { /* write or continue writing file contents */
+	}
+      else
+	{ /* write or continue writing file contents */
 	  nbytes = size>512? 512:size;
       
 	  nwritten = fwrite (block, 1, nbytes, outfile);

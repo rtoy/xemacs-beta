@@ -1,3 +1,9 @@
+2003-11-06  Adrian Aichner  <adrian@xemacs.org>
+
+	* minitar.c (Usage): Change return type to void.
+	* minitar.c (main): Fix inconsistent indentation, use return
+	instead of exit to fix compiler warning.
+
 2003-10-27  Jerry James  <james@xemacs.org>
 
 	* README: Update library versions.  Delete irrelevant text.
