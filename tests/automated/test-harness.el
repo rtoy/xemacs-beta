@@ -353,7 +353,9 @@ BODY is a sequence of expressions and may contain several tests."
       (fmakunbound 'Check-Error-Message)
       (fmakunbound 'Ignore-Ebola)
       (fmakunbound 'Int-to-Marker)
-      )))
+      (and noninteractive
+	   (message "%s" (buffer-substring-no-properties
+			  nil nil "*Test-Log*"))))))
 
 (defvar test-harness-results-point-max nil)
 (defmacro displaying-emacs-test-results (&rest body)
@@ -432,7 +434,6 @@ For example, invoke \"xemacs -batch -f batch-test-emacs tests/*.el\""
 		  (setq error t))))
 	(or (batch-test-emacs-1 file)
 	    (setq error t))))
-    ;;(message "%s" (buffer-string nil nil "*Test-Log*"))
     (message "Done")
     (kill-emacs (if error 1 0))))
 
