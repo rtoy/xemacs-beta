@@ -1667,7 +1667,6 @@ static Bytecount
 lisp_buffer_reader (Lstream *stream, Intbyte *data, Bytecount size)
 {
   struct lisp_buffer_stream *str = LISP_BUFFER_STREAM_DATA (stream);
-  Intbyte *orig_data = data;
   Bytebpos start;
   Bytebpos end;
   struct buffer *buf = XBUFFER (str->buffer);
@@ -1694,7 +1693,7 @@ lisp_buffer_reader (Lstream *stream, Intbyte *data, Bytecount size)
     {
       /* What a kludge.  What a kludge.  What a kludge. */
       Intbyte *p;
-      for (p = orig_data; p < data; p++)
+      for (p = data; p < data + src_used; p++)
 	if (*p == '\r')
 	  *p = '\n';
     }

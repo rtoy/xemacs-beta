@@ -1,3 +1,19 @@
+2002-05-14  Ben Wing  <ben@xemacs.org>
+
+	* callproc.c (Fold_call_process_internal):
+	Use Fget_buffer_create() with a string buffer, as documented.
+	
+	* extents.c (signal_extent_changed): indentation.
+
+	* lstream.c (lisp_buffer_reader): fix a bug in selective-display
+	handling; not the crash we're seeing.
+
+	* marker.c:
+	* marker.c (byte_marker_position):
+	* marker.c (set_byte_marker_position):
+	delete superfluous error-checking -- it's already there in
+	bytebpos_to_membpos() and vice-versa.
+
 2002-05-13  Ben Wing  <ben@xemacs.org>
 
 	* config.h.in:

@@ -336,11 +336,6 @@ byte_marker_position (Lisp_Object marker)
      positions. */
   pos = membpos_to_bytebpos (buf, m->membpos);
 
-#ifdef ERROR_CHECK_TEXT
-  if (pos < BYTE_BUF_BEG (buf) || pos > BYTE_BUF_Z (buf))
-    abort ();
-#endif
-
   return pos;
 }
 
@@ -363,11 +358,6 @@ set_byte_marker_position (Lisp_Object marker, Bytebpos pos)
 
   if (!buf)
     invalid_argument ("Marker does not point anywhere", Qunbound);
-
-#ifdef ERROR_CHECK_TEXT
-  if (pos < BYTE_BUF_BEG (buf) || pos > BYTE_BUF_Z (buf))
-    abort ();
-#endif
 
   m->membpos = bytebpos_to_membpos (buf, pos);
 }
