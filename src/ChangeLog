@@ -1,3 +1,27 @@
+2002-08-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* eval.c (do_autoload): GCPRO both arguments and a local Lisp_Object.
+
+	* callint.c (Fcall_interactively):
+	* eval.c (function_argcount):
+	(Fmacroexpand_internal):
+	(Fcommand_execute):
+	(Feval):
+	(Ffuncall):
+	* keymap.c (get_keymap):
+	* lisp.h (do_autoload):
+	Add comment that do_autoload GCPROs both arguments.
+
+2002-08-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* extents.c (SOE_DEBUG): Warn not to use this until debugging
+	functions are rewritten.
+
+2001-08-13  Dmitry Astapov  <adept@umc.com.ua>
+
+	* event-Xt.c (maybe_define_x_key_as_self_inserting_character):
+	Don't bogusly reinitialize ascii_character property.
+
 2002-08-13  David Bush  <David.Bush@intel.com>
 
 	* device-msw.c: Correct initialization list for devmode_description
