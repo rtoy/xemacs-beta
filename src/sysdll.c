@@ -160,7 +160,7 @@ dll_error (dll_handle h)
   return "Generic shared library error";
 }
 
-#elif defined(HAVE_INIT_DLD)
+#elif defined(HAVE_DLD_INIT)
 #include <dld.h>
 int
 dll_init (const char *arg)

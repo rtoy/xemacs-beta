@@ -1,3 +1,7 @@
+2003-07-30  Jerry James  <james@xemacs.org>
+
+	* sysdll.c: configure sets HAVE_DLD_INIT, not HAVE_INIT_DLD.
+
 2003-07-24  Mike Sperber  <mike@xemacs.org>
 
 	* lisp.h: 
