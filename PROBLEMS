@@ -21,9 +21,19 @@ Also, Try finding the things you need using one of the search commands
 XEmacs provides (e.g. `C-s').
 
 General advice:
+
     WATCH OUT for your init file! (~/.xemacs/init.el or ~/.emacs)  If
     you observe strange problems, invoke XEmacs with the `-vanilla'
     option and see if you can repeat the problem.
+
+    Note that most of the problems described here manifest at RUN
+    time, even those described as BUILD problems.  It is quite unusual
+    for a released XEmacs to fail to build.  So a "build problem"
+    requires you to tweak the build environment, then rebuild XEmacs.
+    A "runtime problem" is one that can be fixed by proper
+    configuration of the existing build.  Compatibility problems and
+    Mule issues are generally runtime problems, but are treated
+    separately for convenience.
 
 
 * Problems with building XEmacs
