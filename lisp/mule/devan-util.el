@@ -228,7 +228,7 @@ of '$(5!*!&!'(B' and nukta sign.")
 	  "\\)\\|\\(" devanagari-cons-vowel-syllable
 	  "\\)\\|\\(" devanagari-other-sign
 	  "\\)\\|\\(" devanagari-digit-viram-visarga "\\)")
-  "Regexp matching to Devanagari string to be composed form one glyph.")
+  "Regexp matching Devanagari string to be composed from one glyph.")
 
 ;;(put-charset-property charset-devanagari-1-column
 ;;		      'char-to-glyph 'devanagari-compose-string)
