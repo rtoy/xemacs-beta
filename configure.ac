@@ -3942,7 +3942,7 @@ if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
 #if HAVE_X11_XFUNCPROTO_H
 #include <X11/Xfuncproto.h>
 #endif
-#include <X11/Intrinsic.h.>
+#include <X11/Intrinsic.h>
 ])
 
     dnl Is the variant specific header directory directly under include?

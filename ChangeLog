@@ -1,3 +1,8 @@
+2005-03-31  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Aidan's 2005-03-30 patch, but against
+	configure.ac.
+
 2005-03-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure: #include <X11/Intrinsic.h.> -> #include
