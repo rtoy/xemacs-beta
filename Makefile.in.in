@@ -252,7 +252,7 @@ ${PROGNAME}:	${GENERATED_HEADERS} ${MAKE_SUBDIR} ${GENERATED_LISP}
 .SUFFIXES:
 
 .NO_PARALLEL:	${GENERATED_HEADERS} ${MAKE_SUBDIR} dump-elcs
-.PHONY: ${SUBDIR} all beta all-elc all-elcs dump-elc dump-elcs autoloads finder
+.PHONY: ${SUBDIR} all beta all-elc all-elcs dump-elc dump-elcs finder
 
 ## Convenience target for XEmacs beta testers
 beta: clean all-elc finder info
@@ -289,22 +289,6 @@ all-elc all-elcs: lib-src lwlib dump-elcs src
 ## Sub-target for all-elc.
 dump-elc dump-elcs: ${GENERATED_HEADERS} FRC.dump-elcs
 	cd ./src && $(RECURSIVE_MAKE) dump-elcs
-
-autoloads: lisp/auto-autoloads.el lisp/custom-load.el
-
-FRC.lisp.auto.autoloads.el:
-lisp/auto-autoloads.el:	FRC.lisp.auto.autoloads.el
-	$(RM) lisp/auto-autoloads.el
-	${blddir}/src/${PROGNAME} -batch -vanilla \
-		-l autoload -f batch-update-directory lisp
-	${blddir}/src/${PROGNAME} -batch -vanilla \
-		-f batch-byte-compile lisp/auto-autoloads.el
-	@$(RM) lisp/auto-autoloads.el~
-
-FRC.lisp.custom.load.el:
-lisp/custom-load.el: FRC.lisp.custom.load.el
-	${blddir}/src/${PROGNAME} -batch -vanilla -l cus-dep \
-		-f Custom-make-dependencies lisp
 
 finder: src
 	@echo "Building finder database ..."

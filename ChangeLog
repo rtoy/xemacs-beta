@@ -1,3 +1,10 @@
+2001-05-10  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (all):
+	* Makefile.in.in (configure):
+	* Makefile.in.in (finder):
+	remove autoload targets.
+
 2001-04-26  Malcolm Purvis <malcolmpurvis@optushome.com.au>
 
 	* configure.in: Check gtk version validity only when gtk-config
