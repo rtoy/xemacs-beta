@@ -545,8 +545,24 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
          target window, rather, pass them to us. This would be a hack, but
          the Xt selection routines are broken for our purposes--we can't
          pass them callbacks from Lisp, for example. Let's call it a
-         workaround. */
-      XtRegisterDrawable(display, (Drawable)window, widget);
+         workaround.
+
+	 The call to wait_for_property_change means we can break out of that
+	 function, switch to another frame on the same display (which will
+	 be another Xt widget), select a huge amount of text, and have the
+	 same (foreign) app ask for another incremental selection
+	 transfer. Programming like X11 made sense, would mean that, in that
+	 case, XtRegisterDrawable is called twice with different widgets.
+
+	 Since the results of calling XtRegisterDrawable when the drawable
+	 is already registered with another widget are undefined, we want to
+	 avoid that--so, only call it when XtWindowToWidget returns NULL,
+	 which it will only do with a valid Window if it's not already
+	 registered. */
+      if (NULL == XtWindowToWidget(display, window))
+      {
+	XtRegisterDrawable(display, (Drawable)window, widget);
+      }
 
       prop_id = expect_property_change (display, window, reply.property,
 					PropertyDelete);

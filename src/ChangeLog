@@ -1,5 +1,11 @@
 2005-03-02  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* select-x.c (x_reply_selection_request): Check that
+	XtWindowToWidget returns NULL before calling XtRegisterDrawable,
+	document why. 
+
+2005-03-02  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* select-x.c (x_reply_selection_request): Make the error message
 	in the absence of HAVE_XTREGISTERDRAWABLE more polite, pass a
 	second argument to invalid_operation to have it actually compile
