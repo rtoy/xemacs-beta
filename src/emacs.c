@@ -3338,9 +3338,9 @@ voodoo_free_hook (void *mem)
   /* Disable all calls to free() when XEmacs is exiting and it doesn't */
   /* matter. */
   __free_hook =
-#if defined (__GNUC__) || defined (__ICC)
+#ifdef TYPEOF
     /* prototype of __free_hook varies with glibc version */
-    (__typeof__ (__free_hook))
+    (TYPEOF (__free_hook))
 #endif
     voodoo_free_hook;
 }
@@ -3404,9 +3404,9 @@ all of which are called before XEmacs is actually killed.
 
 #if defined (GNU_MALLOC)
   __free_hook =
-#if defined (__GNUC__) || defined (__ICC)
+#ifdef TYPEOF
     /* prototype of __free_hook varies with glibc version */
-    (__typeof__ (__free_hook))
+    (TYPEOF (__free_hook))
 #endif
     voodoo_free_hook;
 #endif

@@ -1127,8 +1127,8 @@ init_ralloc (void)
   r_alloc_initialized = 1;
   real_morecore = (POINTER (*) (ptrdiff_t)) __morecore;
   __morecore =
-#if defined (__GNUC__) || defined (__ICC)
-    (__typeof__ (__morecore))
+#ifdef TYPEOF
+    (TYPEOF (__morecore))
 #endif
     r_alloc_sbrk;
 
@@ -1185,8 +1185,8 @@ r_alloc_reinit (void)
     {
       real_morecore = (POINTER (*) (ptrdiff_t)) __morecore;
       __morecore =
-#if defined (__GNUC__) || defined (__ICC)
-	(__typeof__ (__morecore))
+#ifdef TYPEOF
+	(TYPEOF (__morecore))
 #endif
 	r_alloc_sbrk;
     }

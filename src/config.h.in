@@ -121,6 +121,9 @@ things are arranged in config.h.in.  In particular:
 /* Make all functions available on Solaris 2 systems. */
 #undef __EXTENSIONS__
 
+/* Define to the name of the typeof extension, if the compiler supports one */
+#undef TYPEOF
+
 /* Used to identify the XEmacs version in stack traces. */
 #undef STACK_TRACE_EYE_CATCHER
 
