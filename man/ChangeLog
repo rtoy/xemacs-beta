@@ -1,3 +1,7 @@
+2003-04-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q6.4.3): New: auxiliary programs for Windows.
+
 2003-04-24  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.12 "carrot" is released.

@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/03/27 12:57:48 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/05/02 06:00:43 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -415,6 +415,7 @@ Miscellaneous:
 Troubleshooting:
 * Q6.4.1::      XEmacs won't start on Windows.
 * Q6.4.2::      Why do I get a blank toolbar on Windows 95?
+* Q6.4.3::      XEmacs complains "No such file or directory, diff"
 
 
 Current Events:
@@ -6237,6 +6238,8 @@ Miscellaneous:
 Troubleshooting:
 * Q6.4.1::      XEmacs won't start on Windows.
 * Q6.4.2::      Why do I get a blank toolbar on Windows 95?
+* Q6.4.3::      XEmacs complains "No such file or directory, diff"
+
 @end menu
 
 @node Q6.0.1, Q6.0.2, MS Windows, MS Windows
@@ -6877,7 +6880,7 @@ eliminates the problem altogether.  We recommend you use the 21.4
 binaries, but you can use the 21.1 binaries if you are very paranoid
 about stability.  @xref{Q6.0.3}.
 
-@node Q6.4.2, , Q6.4.1, MS Windows
+@node Q6.4.2, Q6.4.3, Q6.4.1, MS Windows
 @unnumberedsubsec Q6.4.2 Why do I get a blank toolbar on Windows 95?
 
 You need at least version 4.71 of the system file @file{comctl32.dll}.
@@ -6885,6 +6888,21 @@ The updated version is supplied with Internet Explorer 4 and later but if
 you are avoiding IE you can also download it from the Microsoft web
 site.  Go into support and search for @file{comctl32.dll}.  The download
 is a self-installing executable.
+
+@node Q6.4.3, , Q6.4.2, MS Windows
+@unnumberedsubsec Q6.4.3 XEmacs complains "No such file or directory, diff"
+
+or "ispell" or other commands that seem related to whatever you just
+tried to do (M-x ediff or M-$, for example).
+
+There are a large number of common (in the sense that "everyone has
+these, they really do") Unix utilities that are not provided with
+XEmacs.  The GNU Project's implementations are available for Windows in
+the the Cygwin distribution (@uref{http://www.cygwin.com/}), which also
+provides a complete Unix emulation environment (and thus makes ports of
+Unix utilities nearly trivial).  Another implementation is that from
+MinGW (@uref{http://www.mingw.org/msys.shtml}).  If you know of others,
+please let us know!
 
 
 

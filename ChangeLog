@@ -1,3 +1,13 @@
+2003-04-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* PROBLEMS (Windows): New: auxiliary programs for Windows.
+
+2003-03-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Makefile.in.in (TAGS tags): Make DEFUNed functions be tags.
+	Patch by Martin Buchholz <martin@xemacs.org>.
+	<15410.44105.753590.169241@gargle.gargle.HOWL>
+
 2003-04-24  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.12 "carrot" is released.

@@ -613,7 +613,9 @@ TAGS tags: FRC.tags
 	  echo "Using etags from `which etags`."
 	PATH=`$(pwd)`/lib-src:$$PATH ; export PATH; cd ${srcdir} && \
 	find src lwlib lib-src modules ${PRUNE_VC} -name '*.[ch]' -print | \
-	  xargs etags -a -r '/[ 	]*DEF\(VAR\|INE\)_[A-Z_]+[ 	]*([ 	]*"\([^"]+\)"/\2/'; \
+	  xargs etags -a \
+		-r '/[ 	]*DEF\(VAR\|INE\)_[A-Z_]+[ 	]*([ 	]*"\([^"]+\)"/\2/' \
+	        -r '/^DEFUN[	]*([	]*"\([^"]+\)"[	]*,[ 	]*\([A-Za-z0-9_]+\)/\2/'; \
 	find ${tagslisp} ${PRUNE_VC} -name '*.el' ! -name 'auto-autoloads.el' -print | \
 	  xargs etags -a -l none -r "/^(def\\(var\\|un\\|alias\\|const\\|macro\\|subst\\|struct\\|face\\|group\\|custom\\|ine-\\(function\\|compiler-macro\\|[a-z-]+alias\\)\\)[ 	]+'?\\([^ 	]+\\)/\\3/"
 

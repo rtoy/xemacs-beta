@@ -740,6 +740,19 @@ and later.
 
 ** Windows
 
+*** XEmacs complains "No such file or directory, diff"
+
+or "ispell" or other commands that seem related to whatever you just
+tried to do.
+
+There are a large number of common (in the sense that "everyone has
+these, really") Unix utilities that are not provided with XEmacs.  The
+GNU Project's implementations are available for Windows in the the
+Cygwin distribution (http://www.cygwin.com/), which also provides a
+complete Unix emulation environment (and thus makes ports of Unix
+utilities nearly trivial).  Another implementation is that from MinGW
+(http://www.mingw.org/msys.shtml).
+
 *** Weird crashes in pdump load or shortly after pdump load.
 
 This can happen with incremental linking.  Check if you have set
