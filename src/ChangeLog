@@ -1,3 +1,7 @@
+2004-04-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lisp.h (Other numeric types): Band-aid: #define make_integer.
+
 2004-04-05  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in (number_objs): New.

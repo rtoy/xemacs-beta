@@ -3381,6 +3381,8 @@ END_C_DECLS
 /************************************************************************/
 #ifdef WITH_NUMBER_TYPES
 #include "number.h"
+#else
+#define make_integer(x) make_int(x)
 #endif
 
 
