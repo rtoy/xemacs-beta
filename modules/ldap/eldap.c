@@ -767,18 +767,20 @@ or `replace'. ATTR is the LDAP attribute type to modify.
 	ldap_mods[i].mod_vals.modv_bvals =
 	  alloca_array (struct berval *, 1 + len);
 	j = 0;
-	EXTERNAL_LIST_LOOP_2 (cur2, values)
-	  {
-	    CHECK_STRING (cur2);
-	    ldap_mods[i].mod_vals.modv_bvals[j] = &(bervals[j]);
-	    TO_EXTERNAL_FORMAT (LISP_STRING, cur2,
-				ALLOCA, (bervals[j].bv_val,
-					 bervals[j].bv_len),
-				Qnative);
-	    j++;
-	  }
-	ldap_mods[i].mod_vals.modv_bvals[j] = NULL;
-	i++;
+	{
+	  EXTERNAL_LIST_LOOP_2 (cur2, values)
+	    {
+	      CHECK_STRING (cur2);
+	      ldap_mods[i].mod_vals.modv_bvals[j] = &(bervals[j]);
+	      TO_EXTERNAL_FORMAT (LISP_STRING, cur2,
+				  ALLOCA, (bervals[j].bv_val,
+					   bervals[j].bv_len),
+				  Qnative);
+	      j++;
+	    }
+	  ldap_mods[i].mod_vals.modv_bvals[j] = NULL;
+	  i++;
+	}
       }
   }
   ldap_mods_ptrs[i] = NULL;
