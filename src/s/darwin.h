@@ -10,3 +10,5 @@
 
 /* If you don't use the system malloc, you get an obscure link error. */
 #define SYSTEM_MALLOC
+
+#define DLSYM_NEEDS_UNDERSCORE
