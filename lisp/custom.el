@@ -186,7 +186,7 @@ The following KEYWORD's are defined:
         `custom-initialize-set'
 :set    VALUE should be a function to set the value of the symbol.
         It takes two arguments, the symbol to set and the value to
-        give it.  The default is `set-default'.
+        give it.  The default is `custom-set-default'.
 :get    VALUE should be a function to extract the value of symbol.
         The function takes one argument, a symbol, and should return
         the current value for that symbol.  The default is
@@ -472,10 +472,18 @@ following keyword arguments
         (setq old (cdr old)))
     (put symbol prop (cons (list theme mode value) old))))
 
+(defvar custom-local-buffer nil
+  "Non-nil, in a Customization buffer, means customize a specific buffer.
+If this variable is non-nil, it should be a buffer,
+and it means customize the local bindings of that buffer.
+This variable is a permanent local, and it normally has a local binding
+in every Customization buffer.")
+(put 'custom-local-buffer 'permanent-local t)
+
 (defun custom-set-variables (&rest args)
   "Initialize variables according to user preferences.
 The settings are registered as theme `user'.
-The arguments should be a list where each entry has the form:
+Each argument should be a list of the form:
 
   (SYMBOL VALUE [NOW [REQUEST [COMMENT]]])
 
@@ -514,7 +522,7 @@ See `custom-set-variables' for a description of the arguments ARGS."
 			;; values.
 			(t (nth 3 a2)))))))
   (let ((immediate (get theme 'theme-immediate)))
-    (while args * etc/custom/example-themes/example-theme.el:
+    (while args
       (let ((entry (car args)))
         (if (listp entry)
             (let* ((symbol (nth 0 entry))
@@ -522,10 +530,13 @@ See `custom-set-variables' for a description of the arguments ARGS."
                    (now (nth 2 entry))
                    (requests (nth 3 entry))
                    (comment (nth 4 entry))
-                   (set (or (get symbol 'custom-set) 'set-default)))
+                   (set (or (get symbol 'custom-set) 'custom-set-default)))
               (put symbol 'saved-value (list value))
               (custom-push-theme 'theme-value symbol theme 'set value)
               (put symbol 'saved-variable-comment comment)
+	  ;; Allow for errors in the case where the setter has
+	  ;; changed between versions, say, but let the user know.
+	      (condition-case data
               (cond ((or now immediate)
                      ;; Rogue variable, set it now.
                      (put symbol 'force-value (if now 'rogue 'immediate))
@@ -533,6 +544,8 @@ See `custom-set-variables' for a description of the arguments ARGS."
                     ((default-boundp symbol)
                      ;; Something already set this, overwrite it.
                      (funcall set symbol (eval value))))
+	      (error 
+	       (message "Error setting %s: %s" symbol data)))
               (and (or now (default-boundp symbol))
                  (put symbol 'variable-comment comment))
               (when requests
@@ -688,6 +701,15 @@ Associate this setting with the `user' theme.
 The ARGS are as in `custom-theme-reset-variables'."
     (apply #'custom-theme-reset-variables 'user args))
 
+(defun custom-set-default (variable value)
+  "Default :set function for a customizable variable.
+Normally, this sets the default value of VARIABLE to VALUE,
+but if `custom-local-buffer' is non-nil,
+this sets the local binding in that buffer instead."
+  (if custom-local-buffer
+      (with-current-buffer custom-local-buffer
+	(set variable value))
+    (set-default variable value)))
 
 ;;; The End.
 

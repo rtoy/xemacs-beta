@@ -1,3 +1,20 @@
+2002-07-12  Andy Piper  <andy@xemacs.org>
+
+	* custom.el (custom-theme-set-variables): remove bogus
+	arguments. Use custom-set-default to set defaults.
+	(custom-set-variables): update doc.
+	(custom-local-buffer): new, synced from FSF.
+	(custom-set-default): ditto.
+	(defcustom): update doc.
+
+2002-07-23  Andy Piper  <andy@xemacs.org>
+
+	* about.el (about-personal-info): update me.
+
+2002-08-28  Andy Piper  <andy@xemacs.org>
+
+	* files.el (revert-buffer): propagate revert-without-query-status.
+
 2002-08-31  Seiichi Ikiuo  <ikiuo@polyphony.co.jp>
 
 	* code-init.el (reset-coding-categories-to-default): Add new

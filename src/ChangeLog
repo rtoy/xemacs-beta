@@ -1,3 +1,11 @@
+2002-08-19  Andy Piper  <andy@xemacs.org>
+
+	* fileio.c (Ffile_truename): on cygwin using win32 normalize to
+	win32 format.
+
+	* realpath.c (xrealpath): normalize drive spec also so that dir
+	sep chars are not mixed on cygwin.
+
 2002-09-01  Mike Alexander  <mta@arbortext.com>
 
 	* event-msw.c (winsock_closer): Use closesocket, not CloseHandle

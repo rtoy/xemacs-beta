@@ -1348,6 +1348,21 @@ No component of the resulting pathname will be a symbolic link, as
     Ibyte *p;
 
     LISP_STRING_TO_ALLOCA (expanded_name, path);
+
+#if defined(WIN32_FILENAMES) && defined(CYGWIN)
+    /* When using win32 filenames in cygwin we want file-truename to
+       detect that c:/windows == /windows for example. */
+    if ((IS_DIRECTORY_SEP (path[0]) 
+	 && (elen == 1 || !IS_DIRECTORY_SEP (path[1])))
+	|| (isalpha (path[0])
+	    && (elen == 1 || !IS_DEVICE_SEP (path[1])))) {
+      int ltwff2 =
+	cygwin_posix_to_win32_path_list_buf_size (path);
+      p = (Ibyte *) alloca (ltwff2);
+      cygwin_posix_to_win32_path_list (path, p);
+      path = p;
+    }
+#endif
     p = path;
 
     /* Try doing it all at once. */

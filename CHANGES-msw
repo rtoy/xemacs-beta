@@ -10,6 +10,11 @@ platforms. Caveat Emptor.
 
 See the file 'CHANGES-release' for a full list of mainline changes.
 
+to XEmacs 21.4.9 "Informed Management (Windows)"
+
+  - Fix layout of widgets so that the search dialog works.
+  - Fix focus capture of widgets under X.
+
 to XEmacs 21.4.8 "Honest Recruiter (Windows)"
 
   - All changes from 21.4.6 and 21.4.7.
@@ -19,6 +24,11 @@ to XEmacs 21.4.8 "Honest Recruiter (Windows)"
   - Fix printer metrics on windows 95 from Jonathan Harris.
   - Fix layout of widgets so that the search dialog works.
   - Fix focus capture of widgets under X.
+  - Buffers tab doc fixes from John Palmieri.
+  - Sync with FSF custom :set-after behavior.
+  - Virtual window manager freeze fix from Rick Rankin.
+  - Fix various printing problems.
+  - Enable windows printing on cygwin.
 
 to XEmacs 21.4.7 "Economic Science (Windows)"
 
@@ -35,7 +45,7 @@ to XEmacs 21.4.6 "Common Lisp (Windows)"
   - Fixed some printing problems.
   - Netinstaller updated to support kit revisions.
   - Fixed customize popup menus.
-  - Fixed problems wiht too many dialog popups.
+  - Fixed problems with too many dialog popups.
   - Netinstaller fixed to correctly upgrade shortcuts when upgrading
     core XEmacs.
   - Fix for virtual window managers from Adrian Aichner.

@@ -216,14 +216,23 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
     ;
 #ifdef WIN32_FILENAMES
   /* Check for c:/... or //server/... */
-  else if (abslen == 2 || abslen == 3)
+  else if (abslen == 3 || abslen == 2)
     {
-      qxestrncpy (new_path, path, abslen);
       /* Make sure drive letter is lowercased. */
-      if (abslen == 3)
-	*new_path = tolower (*new_path);
-      new_path += abslen;
-      path += abslen;
+      if (abslen == 3) {
+	*new_path = tolower (*path);
+	new_path++;
+	path++;
+	abslen--;
+      }
+      /* Coerce directory chars. */
+      while (abslen-- > 0) {
+	if (IS_DIRECTORY_SEP (*path))
+	  *new_path++ = DIRECTORY_SEP;
+	else
+	  *new_path++ = *path;
+	path++;
+      }
     }
 #endif
 #ifdef WIN32_NATIVE
