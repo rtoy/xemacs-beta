@@ -1,3 +1,8 @@
+2001-12-02  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-update-base-from-buffer): Use
+	exec-suffix-list with locate-file.
+
 2001-12-03  Steve Youngs  <youngs@xemacs.org>
 
 	* package-get.el (package-get-update-base-from-buffer): Add
