@@ -3355,23 +3355,27 @@ wcslen(const wchar_t *s)
 char *
 strlwr (char *s)
 {
-  while (*s)
+  REGISTER char *c;
+
+  for (c = s; *c; c++)
     {
-      *s = tolower (*s);
-      ++s;
+      *c = tolower (*c);
     }
+  return s;
 }
 #endif
 
-#ifndef HAVE_STRLWR
+#ifndef HAVE_STRUPR
 char *
 strupr (char *s)
 {
-  while (*s)
+  REGISTER char *c;
+
+  for (c = s; *c; c++)
     {
-      *s = toupper (*s);
-      ++s;
+      *c = toupper (*c);
     }
+  return s;
 }
 #endif
 

@@ -1,3 +1,8 @@
+2003-02-07  Jerry James  <james@xemacs.org>
+
+	* sysdep.c (strlwr): Return the parameter.
+	* sysdep.c (strupr): Ditto.  Depend on !HAVE_STRUPR.
+
 2003-02-07  Ben Wing  <ben@xemacs.org>
 
 	This contains two related changes:
