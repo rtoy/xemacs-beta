@@ -1,5 +1,21 @@
 2003-04-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* menubar-gtk.c (gtk_xemacs_menubar_class_init):
+	(gtk_xemacs_menubar_init):
+	(gtk_xemacs_menubar_size_request):
+	(menu_descriptor_to_widget_1):
+	(menu_descriptor_to_widget):
+	(popdown_menu_cb):
+	(reinit_vars_of_menubar_gtk):
+	* event-gtk.c (emacs_gtk_key_event_handler):
+	(emacs_gtk_button_event_handler):
+	(emacs_gtk_motion_event_handler):
+	(reinit_vars_of_event_gtk):
+	(event_name):
+	Reformat function definitions correctly.
+
+2003-04-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* symsinit.h (reinit_console_type_create_gtk):
 	(reinit_vars_of_menubar_gtk):
 	(reinit_vars_of_event_gtk):

@@ -115,7 +115,8 @@ gtk_xemacs_menubar_get_type (void)
 
 static GtkWidgetClass *parent_class;
 
-static void gtk_xemacs_menubar_class_init	(GtkXEmacsMenubarClass *klass)
+static void
+gtk_xemacs_menubar_class_init	(GtkXEmacsMenubarClass *klass)
 {
   GtkWidgetClass *widget_class;
 
@@ -125,11 +126,13 @@ static void gtk_xemacs_menubar_class_init	(GtkXEmacsMenubarClass *klass)
   widget_class->size_request = gtk_xemacs_menubar_size_request;
 }
 
-static void gtk_xemacs_menubar_init		(GtkXEmacsMenubar *xemacs)
+static void
+gtk_xemacs_menubar_init		(GtkXEmacsMenubar *xemacs)
 {
 }
 
-static void gtk_xemacs_menubar_size_request	(GtkWidget *widget, GtkRequisition *requisition)
+static void
+gtk_xemacs_menubar_size_request	(GtkWidget *widget, GtkRequisition *requisition)
 {
   GtkXEmacsMenubar *x = GTK_XEMACS_MENUBAR (widget);
   GtkRequisition frame_size;
@@ -579,7 +582,8 @@ __generic_button_callback (GtkMenuItem *item, gpointer user_data)
 /* This function cannot GC.
    It is only called from menu_item_descriptor_to_widget_value, which
    prohibits GC. */
-static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
+static GtkWidget *
+menu_descriptor_to_widget_1 (Lisp_Object descr)
 {
   if (STRINGP (descr))
     {
@@ -880,7 +884,8 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
     }
 }
 
-static GtkWidget *menu_descriptor_to_widget (Lisp_Object descr)
+static GtkWidget *
+menu_descriptor_to_widget (Lisp_Object descr)
 {
   GtkWidget *rval = NULL;
   int count = begin_gc_forbidden ();
@@ -1220,7 +1225,8 @@ gtk_free_frame_menubars (struct frame *f)
     }
 }
 
-static void popdown_menu_cb (GtkMenuShell *menu, gpointer user_data)
+static void 
+popdown_menu_cb (GtkMenuShell *menu, gpointer user_data)
 {
   popup_up_p--;
 }
@@ -1304,7 +1310,8 @@ console_type_create_menubar_gtk (void)
   CONSOLE_HAS_METHOD (gtk, popup_menu);
 }
 
-void reinit_vars_of_menubar_gtk (void)
+void
+reinit_vars_of_menubar_gtk (void)
 {
   dockable_menubar = 1;
 #ifdef TEAR_OFF_MENUS

@@ -1476,17 +1476,20 @@ generic_event_handler (GtkWidget *widget, GdkEvent *event)
     return (FALSE);
 }
 
-gint emacs_gtk_key_event_handler(GtkWidget *widget, GdkEventKey *event)
+gint
+emacs_gtk_key_event_handler (GtkWidget *widget, GdkEventKey *event)
 {
     return (generic_event_handler (widget, (GdkEvent *) event));
 }
 
-gint emacs_gtk_button_event_handler(GtkWidget *widget, GdkEventButton *event)
+gint
+emacs_gtk_button_event_handler (GtkWidget *widget, GdkEventButton *event)
 {
     return (generic_event_handler (widget, (GdkEvent *) event));
 }
 
-gint emacs_gtk_motion_event_handler (GtkWidget *widget, GdkEventMotion *event)
+gint
+emacs_gtk_motion_event_handler (GtkWidget *widget, GdkEventMotion *event)
 {
     return (generic_event_handler (widget, (GdkEvent *) event));
 }
@@ -1594,7 +1597,8 @@ syms_of_event_gtk (void)
   DEFSYMBOL (Qsans_modifiers);
 }
 
-void reinit_vars_of_event_gtk (void)
+void
+reinit_vars_of_event_gtk (void)
 {
   gtk_event_stream = xnew_and_zero (struct event_stream);
   gtk_event_stream->event_pending_p 	= emacs_gtk_event_pending_p;
@@ -1653,7 +1657,8 @@ init_event_gtk_late (void) /* called when already initialized */
 }
 
 /* Bogus utility routines */
-static const char *event_name (GdkEvent *ev)
+static const char *
+event_name (GdkEvent *ev)
 {
   return (gtk_event_name (ev->any.type));
 }
