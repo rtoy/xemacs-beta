@@ -5537,7 +5537,7 @@ run_post_gc_hook()
     ("Error in post-gc-hook",
      2, args,
      RUN_HOOKS_TO_COMPLETION,
-     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
+     INHIBIT_QUIT | NO_INHIBIT_ERRORS);
 }
 
 /************************************************************************/

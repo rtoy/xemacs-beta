@@ -1,3 +1,10 @@
+2002-07-21  John Paul Wallington  <jpw@xemacs.org>
+
+	* process.el (substitute-env-vars): New function; sync with 
+	GNU Emacs 21.1.50.
+	(setenv): Add optional arg SUBSTITUTE-ENV-VARS; sync with
+	GNU Emacs 21.1.50.
+
 2002-07-17  Steve Youngs  <youngs@xemacs.org>
 
 	* package-get.el (package-get-update-base-from-buffer): Re-write

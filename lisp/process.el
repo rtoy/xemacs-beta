@@ -535,10 +535,39 @@ If it is also not t, RET does not exit if it does non-null completion."
 ;; History list for VALUE argument to setenv.
 (defvar setenv-history nil)
 
-(defun setenv (variable &optional value unset)
+(defun substitute-env-vars (string)
+  "Substitute environment variables referred to in STRING.
+`$FOO' where FOO is an environment variable name means to substitute
+the value of that variable.  The variable name should be terminated
+with a character not a letter, digit or underscore; otherwise, enclose
+the entire variable name in braces.  Use `$$' to insert a single
+dollar sign."
+  (let ((start 0))
+    (while (string-match
+	    ;; XEmacs change - FSF use their rx macro to generate this regexp
+	    "\\(?:\\$\\(\\(?:[a-zA-Z0-9_]\\)+\\)\\)\\|\\(?:\\${\\(\\(?:.\\|\n\\)*?\\)}\\)\\|\\$\\$"
+	    string start)
+      (cond ((match-beginning 1)
+	     (let ((value (getenv (match-string 1 string))))
+	       (setq string (replace-match (or value "") t t string)
+		     start (+ (match-beginning 0) (length value)))))
+	    ((match-beginning 2)
+	     (let ((value (getenv (match-string 2 string))))
+	       (setq string (replace-match (or value "") t t string)
+		     start (+ (match-beginning 0) (length value)))))
+	    (t
+	     (setq string (replace-match "$" t t string)
+		   start (+ (match-beginning 0) 1)))))
+    string))
+
+(defun setenv (variable &optional value unset substitute-env-vars)
   "Set the value of the environment variable named VARIABLE to VALUE.
 VARIABLE should be a string.  VALUE is optional; if not provided or is
 `nil', the environment variable VARIABLE will be removed.  
+
+UNSET, if non-nil, means to remove VARIABLE from the environment.
+SUBSTITUTE-ENV-VARS, if non-nil, means to substitute environment
+variables in VALUE using `substitute-env-vars'.
 
 Interactively, a prefix argument means to unset the variable.
 Interactively, the current value (if any) of the variable
@@ -553,7 +582,10 @@ This function works by modifying `process-environment'."
        (list var (read-from-minibuffer (format "Set %s to value: " var)
 				       nil nil nil 'setenv-history
 				       (getenv var))))))
-  (if unset (setq value nil))
+  (if unset 
+      (setq value nil)
+    (if substitute-env-vars
+	(setq value (substitute-env-vars value))))
   (if (string-match "=" variable)
       (error "Environment variable name `%s' contains `='" variable)
     (let ((pattern (concat "\\`" (regexp-quote (concat variable "="))))

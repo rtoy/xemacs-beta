@@ -1,3 +1,27 @@
+2002-07-20  Mike Sperber <mike@xemacs.org>
+
+	* eval.c (run_post_gc_hook): Use more correct flags when running
+	post-gc-hook.
+
+2002-07-20  Mike Sperber <mike@xemacs.org>
+
+	* process-unix.c (child_setup): Don't try to close file
+	descriptors for chid process once again---it's already being done
+	in close_process_descs.
+	(unix_create_process): Call begin_dont_check_for_quit to inhibit
+	unwanted interaction (and thus breaking of X event synchronicity)
+	in the child.
+
+2002-07-15  Jerry James  <james@xemacs.org>
+
+	* lisp.h: Make Qdll_error visible globally.
+	* symbols.c (check_sane_subr): Revert 2002-06-26 change.
+	Check only if !initialized.
+	* symbols.c (check_module_subr): Add parameter.  Duplicate
+	check_sane_subr checks, but signal an error instead of asserting.
+	* symbols.c (defsubr): Use check_module_subr parameter.
+	* symbols.c (defsubr_macro): Ditto.
+
 2002-07-09  Mike Sperber <mike@xemacs.org>
 
 	* config.h.in: Add USE_KKCC variable to enable upcoming new GC

@@ -1,3 +1,20 @@
+2002-07-15  Jerry James  <james@xemacs.org>
+
+	* make-docfile.c: Change whitespace and organization to reduce the
+	size of the diff against FSF Emacs sources and synch to Emacs 21.2.
+	Remove unused DO_REALLOC.
+	Mark XEmacs changes and additions more clearly.
+	Reintroduce previously deleted Emacs code inside #if 0 ... #endif.
+	* make-docfile.c (next_extra_elc): Replace goto with do-while.
+	* make-docfile.c (main): Put XEmacs-only args in one place.
+	* make-docfile.c (write_c_args): Change buff to buf to match
+	Emacs.  Replace pointer arithmetic with simpler array syntax.
+	* make-docfile.c (scan_c_file): Note that DEFSIMPLE and DEFPRED no
+	longer exist.  Correct the "name too long" test (off by one).
+	Die with message if a DEFUN has no docstring instead of hanging.
+	* make-docfile.c (scan_lisp_file): Introduce while loops used in
+	Emacs sources to skip consecutive blank lines.
+
 2002-07-14  Adrian Aichner  <adrian@xemacs.org>
 
 	* etags.c: It's XEmacs, not Xemacs.
