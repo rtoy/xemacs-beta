@@ -1,27 +1,12 @@
-2005-01-31  Ben Wing  <ben@xemacs.org>
-
-	* xemacs.mak (install):
-	Also copy BUGS, README, COPYING and Installation.
-
-2005-01-28  Ben Wing  <ben@xemacs.org>
+2005-02-03  Ben Wing  <ben@xemacs.org>
 
 	* config.inc.samp (COMPFACE_DIR):
 	Change version to 1.5.1 in accordance with FTP site.
 
-2004-11-17  Ben Wing  <ben@xemacs.org>
+2005-01-31  Ben Wing  <ben@xemacs.org>
 
-	* config.inc.samp:
-	* xemacs.mak (HAVE_WIDGETS):
-	* xemacs.mak (MSW_DEFINES):
-	* xemacs.mak (  NOTE):
-
-2004-11-13  Ben Wing  <ben@xemacs.org>
-
-	* config.inc.samp:
-	* xemacs.mak (HAVE_WIDGETS):
-	* xemacs.mak (MSW_DEFINES):
-	* xemacs.mak (  NOTE):
-	Support HAVE_WINDOWS_SHORTCUTS_AS_LINKS.
+	* xemacs.mak (install):
+	Also copy BUGS, README, COPYING and Installation.
 
 2005-01-27  Ben Wing  <ben@xemacs.org>
 
