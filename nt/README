@@ -6,8 +6,9 @@ Building and Installing XEmacs on Windows 95/98/NT/2000/XP -*- mode:outline -*-
 			       Ben Wing
 
 This is a port of XEmacs to Windows 95/98/NT/2000/XP.  If you are looking for a
-port of GNU Emacs, see http://www.cs.washington.edu/homes/voelker/ntemacs.html.
-NT 4.0 or later is required for building on Windows NT.  Note that the
+port of GNU Emacs, get the latest release of the 21.x series from gnu.org.
+(At the time of writing, GNU Emacs does not support images but does support
+Mule.)  NT 4.0 or later is required for building on Windows NT.  Note that the
 developers typically use NT 4.0 and Windows 2000, and there may possibly be
 problems under Windows 95/98.  If so, please report them to
 xemacs-nt@xemacs.org; we are committed to maintaining compatibility with all

@@ -1,3 +1,7 @@
+2002-07-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* README: Reference GNU Emacs 21.x.
+
 2002-07-05  Jonathan Harris  <jonathan@xemacs.org>
 
 	* README: Document Visual Studio .NET setup
