@@ -8,7 +8,10 @@
 	Add long form of Lisp Reference Manual to links.
 	Add links pointing to Lisp Reference Manual for more detailed
 	package discussion.
-	
+
+	* xemacs/xemacs-faq.texi:
+	As per Adrian's suggestion, mention that Pitts Jarvis is deceased.
+
 2004-12-05  Ben Wing  <ben@xemacs.org>
 
 	* lispref/range-tables.texi (Range Tables):
