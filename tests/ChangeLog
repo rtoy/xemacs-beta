@@ -1,3 +1,13 @@
+2003-10-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el: Whitespace/readability tweaks.
+	(Copyright): Update.
+	(test-harness-file-summary-template): New constant.
+	(test-harness-null-summary-template): New constant.
+	(test-harness-from-buffer):
+	(batch-test-emacs):
+	Improve report formatting.
+
 2003-09-28  Adrian Aichner  <adrian@xemacs.org>
 
 	* automated/test-harness.el (batch-test-emacs): Emergency fix for

@@ -1,6 +1,6 @@
 ;; test-harness.el --- Run Emacs Lisp test suites.
 
-;;; Copyright (C) 1998 Free Software Foundation, Inc.
+;;; Copyright (C) 1998, 2002, 2003 Free Software Foundation, Inc.
 ;;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Martin Buchholz
@@ -64,6 +64,18 @@ TESTS is a non-negative integer, the number of tests run.")
 (defvar emacs-lisp-file-regexp (purecopy "\\.el\\'")
   "*Regexp which matches Emacs Lisp source files.")
 
+(defconst test-harness-file-summary-template
+  (format "%%-%ds %%%dd of %%%dd tests successful (%%3d%%%%)."
+	  (length "byte-compiler-tests.el:") ; use the longest file name
+	  5
+	  5)
+  "Format for summary lines printed after each file is run.")
+
+(defconst test-harness-null-summary-template
+  (format "%%-%ds             No tests run."
+	  (length "byte-compiler-tests.el:")) ; use the longest file name
+  "Format for \"No tests\" lines printed after a file is run.")
+
 ;;;###autoload
 (defun test-emacs-test-file (filename)
   "Test a file of Lisp code named FILENAME.
@@ -118,7 +130,8 @@ The output file's name is made by appending `c' to the end of FILENAME."
 	  (setq body (cons (read buffer) body)))
       (end-of-file nil)
       (error
-       (princ (format "Unexpected error %S reading forms from buffer\n" error-info))))
+       (princ (format "Unexpected error %S reading forms from buffer\n"
+		      error-info))))
     `(lambda ()
        (defvar passes)
        (defvar assertion-failures)
@@ -337,9 +350,11 @@ BODY is a sequence of expressions and may contain several tests."
 	     (basename (file-name-nondirectory filename))
 	     (summary-msg
 	      (if (> total 0)
-		  (format "%s: %d of %d tests successful (%d%%)."
-			  basename passes total (/ (* 100 passes) total))
-		(format "%s: No tests run" basename)))
+		  (format test-harness-file-summary-template
+			  (concat basename ":")
+			  passes total (/ (* 100 passes) total))
+		(format test-harness-null-summary-template
+			(concat basename ":"))))
 	     (reasons ""))
 	(maphash (lambda (key value)
 		   (setq reasons
@@ -366,7 +381,8 @@ BODY is a sequence of expressions and may contain several tests."
       (fmakunbound 'Int-to-Marker)
       (and noninteractive
 	   (message "%s" (buffer-substring-no-properties
-			  nil nil "*Test-Log*"))))))
+			  nil nil "*Test-Log*")))
+      )))
 
 (defvar test-harness-results-point-max nil)
 (defmacro displaying-emacs-test-results (&rest body)
@@ -468,22 +484,20 @@ For example, invoke \"xemacs -batch -f batch-test-emacs tests/*.el\""
 	    (when (> tt testlen) (setq testlen tt)))
 	  (setq results (cdr results))))
       ;; create format and print
-      (let ((template
-	     (format "%%-%ds %%%dd of %%%dd tests successful (%%d%%%%)"
-		     (1+ namelen) succlen testlen))
-	    (results (reverse test-harness-file-results-alist)))
+      (let ((results (reverse test-harness-file-results-alist)))
 	(while results
 	  (let* ((head (car results))
-		 (fname (file-name-nondirectory (first head)))
+		 (basename (file-name-nondirectory (first head)))
 		 (nsucc (second head))
 		 (ntest (third head)))
 	    (if (> ntest 0)
-		(message template
-			 (concat fname ":")
+		(message test-harness-file-summary-template
+			 (concat basename ":")
 			 nsucc
 			 ntest
 			 (/ (* 100 nsucc) ntest))
-	      (message "%s: No tests run\n" fname))
+	      (message test-harness-null-summary-template
+		       (concat basename ":")))
 	    (setq results (cdr results))))))
     (message "\nDone")
     (kill-emacs (if error 1 0))))
