@@ -1,3 +1,11 @@
+2005-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.c: The Mule character encoding model means that extant
+	Unicode coding systems will lose data. Make this clear in the
+	docstring of unicode-to-char, give sample code to implement
+	support for some desired code points should our distributors want
+	to do that. 
+
 2005-02-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select-gtk.c (emacs_gtk_selection_handle):

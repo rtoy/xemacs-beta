@@ -1281,6 +1281,38 @@ Otherwise, the default ordering of all charsets will be given (see
 When there is no international support (i.e. the 'mule feature is not
 present), this function simply does `int-to-char' and ignores the CHARSETS
 argument.
+
+Note that the current XEmacs internal encoding has no mapping for many
+Unicode code points, and if you use characters that are vaguely obscure with
+XEmacs' Unicode coding systems, you will lose data.
+
+To add support for some desired code point in the short term--note that our
+intention is to move to a Unicode-compatible internal encoding soon, for
+some value of soon--if you are a distributor, add something like the
+following to `site-start.el.'
+
+(make-charset 'distro-name-private 
+	      "Private character set for DISTRO"
+	      '(dimension 1
+		chars 96
+		columns 1
+		final ?5 ;; Change this--see docs for make-charset
+		long-name "Private charset for some Unicode char support."
+		short-name "Distro-Private"))
+
+(set-unicode-conversion 
+ (make-char 'distro-name-private #x20) #x263A) ;; WHITE SMILING FACE
+
+(set-unicode-conversion 
+ (make-char 'distro-name-private #x21) #x3030) ;; WAVY DASH
+
+;; ... 
+;;; Repeat as necessary. 
+
+Redisplay will work on the sjt-xft branch, but not with server-side X11
+fonts as is the default.  However, data read in will be preserved when they
+are written out again.
+
 */
        (code, USED_IF_MULE (charsets)))
 {
