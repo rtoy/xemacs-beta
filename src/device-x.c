@@ -36,6 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #include "events.h"
 #include "faces.h"
 #include "frame-impl.h"
+#include "process.h"		/* for egetenv */
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
