@@ -1111,7 +1111,7 @@ static size_t
 tiff_memory_write (thandle_t data, tdata_t buf, tsize_t size)
 {
   abort();
-  return 0;			/* Shut up warnings. */
+  RETURN_NOT_REACHED (0);
 }
 
 static toff_t

@@ -1,5 +1,9 @@
 2004-08-26  Jerry James  <james@xemacs.org>
 
+	* glyphs-eimage.c (tiff_memory_write): Use RETURN_NOT_REACHED.
+
+2004-08-26  Jerry James  <james@xemacs.org>
+
 	* gutter.c (output_gutter): Removed unused variable frame.
 
 2004-08-25  Jerry James  <james@xemacs.org>
