@@ -1,3 +1,10 @@
+2001-05-10   Daiki Ueno  <ueno@unixuser.org>
+
+	* font-lock.el (font-lock-compile-keywords): Rewrite as a side
+	effect free function.
+	(font-lock-fontify-keywords-region): Supply the argument to
+	font-lock-compile-keywords.
+
 2001-05-24  Ben Wing  <ben@xemacs.org>
 
 	* subr.el:

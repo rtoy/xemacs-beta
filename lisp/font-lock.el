@@ -1592,10 +1592,12 @@ LIMIT can be modified by the value of its PRE-MATCH-FORM."
 START should be at the beginning of a line."
   (let ((loudly (and font-lock-verbose
 		     (>= (- end start) font-lock-message-threshold))))
+    ;; If `font-lock-keywords' is not compiled, compile it.
+    (unless (eq (car-safe font-lock-keywords) t)
+      (setq font-lock-keywords (font-lock-compile-keywords
+				font-lock-keywords)))
     (let* ((case-fold-search font-lock-keywords-case-fold-search)
-	   (keywords (cdr (if (eq (car-safe font-lock-keywords) t)
-			      font-lock-keywords
-			    (font-lock-compile-keywords))))
+	   (keywords (cdr font-lock-keywords))
 	   (bufname (buffer-name)) 
 	   (progress 5) (old-progress 5)
 	   (iter 0)
@@ -1669,14 +1671,12 @@ START should be at the beginning of a line."
 
 ;; Various functions.
 
-(defun font-lock-compile-keywords (&optional keywords)
+(defun font-lock-compile-keywords (keywords)
   ;; Compile `font-lock-keywords' into the form (t KEYWORD ...) where KEYWORD
   ;; is the (MATCHER HIGHLIGHT ...) shown in the variable's doc string.
-  (let ((keywords (or keywords font-lock-keywords)))
-    (setq font-lock-keywords 
-     (if (eq (car-safe keywords) t)
-	 keywords
-       (cons t (mapcar 'font-lock-compile-keyword keywords))))))
+  (if (eq (car-safe keywords) t)
+      keywords
+    (cons t (mapcar 'font-lock-compile-keyword keywords))))
 
 (defun font-lock-compile-keyword (keyword)
   (cond ((nlistp keyword)		; Just MATCHER
