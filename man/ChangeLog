@@ -1,3 +1,8 @@
+2002-02-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/packaging.texi (The User View, The Library Maintainer
+	View, The Package Release Engineer View): Remove apostrophes.
+
 2002-02-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* external-widget.texi

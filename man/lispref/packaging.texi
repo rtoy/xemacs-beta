@@ -97,14 +97,14 @@ easier.  This manual documents the requirements and the tools that the
 @xpms{} provides to ensure that a package satisfies them.
 
 @menu
-* The User's View::
-* The Library Maintainer's View::
-* The Package Release Engineer's View::
+* The User View::
+* The Library Maintainer View::
+* The Package Release Engineer View::
 @end menu
 
 
-@node The User's View, The Library Maintainer's View, , Package Overview
-@section The User's View
+@node The User View, The Library Maintainer View, , Package Overview
+@section The User View
 
 @strong{N.B.}  Much of the discussion in this section undoubtedly
 belongs elsewhere, @ref{Packages,,,xemacs}.
@@ -239,8 +239,8 @@ easiest to think of the package hierarchy searching algorithm as
 receiving a @code{load-path} initialized to the core Lisp directories.
 
 
-@node The Library Maintainer's View, The Package Release Engineer's View, The User's View, Package Overview
-@section The Library Maintainer's View
+@node The Library Maintainer View, The Package Release Engineer View, The User View, Package Overview
+@section The Library Maintainer View
 
 From the library maintainer's viewpoint, the advantages to the @xpms{}
 stem from the convenience to the user of installation and upgrade.
@@ -272,7 +272,7 @@ package's source tree and provide administrative information.
 * Obtaining::         Obtaining the @xpms{} and required utilities.
 @end menu
 
-@node Infrastructure, Control Files, , The Library Maintainer's View
+@node Infrastructure, Control Files, , The Library Maintainer View
 @subsection Infrastructure
 
 In order to get the greatest benefit from the @xpms{}, a library
@@ -355,7 +355,7 @@ modifications to @file{package-compile.el} need to be done for each
 package and are discussed in the next section, @ref{Control Files}.
 
 
-@node Control Files, Obtaining, Infrastructure, The Library Maintainer's View
+@node Control Files, Obtaining, Infrastructure, The Library Maintainer View
 @subsection Control Files
 
 Each package source must contain a number of control files in the
@@ -405,7 +405,7 @@ forms for the usre configuration variables of the package.
 @end table
 
 
-@node Obtaining, , Control Files, The Library Maintainer's View
+@node Obtaining, , Control Files, The Library Maintainer View
 @subsection Obtaining the @xpms{} and Required Utilities
 
 Currently both the infrastructure for creating XEmacs packages and the
@@ -417,8 +417,8 @@ The @xpms{} currently requires GNU @file{make}, and probably XEmacs, to
 build packages.
 
 
-@node The Package Release Engineer's View, , The Library Maintainer's View, Package Overview
-@subsection The Package Release Engineer's View
+@node The Package Release Engineer View, , The Library Maintainer View, Package Overview
+@subsection The Package Release Engineer View
 
 The XEmacs Package Release Engineer is responsible for keeping the
 system coherent.  The changes to @file{packages/package-compile.el} and
