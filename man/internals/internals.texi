@@ -1,4 +1,4 @@
-\input texinfo  @c -*-texinfo-*-
+        \input texinfo  @c -*-texinfo-*-
 @c %**start of header
 @setfilename ../../info/internals.info
 @settitle XEmacs Internals Manual
@@ -1022,6 +1022,12 @@ At this point we pick up with a time line of events. (A broader timeline
 is available at @uref{http://http://www.jwz.org/doc/emacs-timeline.html,
 ``Emacs Timeline''}.)
 
+@strong{NOTE}: Sometimes there are two release dates listed below.  In
+this case, the first one is the date listed in the source code, and
+the second one is when the official announcement was made on
+Usenet. (Sometimes, one or the other of the dates is missing, and then
+the date below reflects the only existing one.)
+
 @itemize @bullet
 @item
 Unipress Emacs, a $395 commercial product, was released on May 6, 1983.
@@ -1029,9 +1035,81 @@ This was an outgrowth of the Emacs-in-C collaboration written by Gosling
 and RMS.
 
 @item
-GNU Emacs version 13.0? was released on March 20, 1985.  This may have
-been the initial public release.  This was also based on this same
-Emacs-in-C collaboration.
+The first entry on @file{net.emacs} available on Google is dated
+August 20, 1984:
+
+@example
+From: B.BURGER (btb@@hogpc.UUCP)
+Subject: Arrow Key Problems 
+Newsgroups: net.emacs
+Date: 1984-08-20 11:15:46 PST 
+
+I would greatly appreciate some help getting my arrow keys to work
+with EMACS 4.5 on an AT&T 3B20.  My terminal is an AT&T PC6300
+(IBM-compatible) using an AT&T 4410 terminal emulator.  While this
+may not yet be a common configuration, I believe the same problem
+has come up using an hp2621 emulator or a real live vt100.
+
+The problem is that, when I press an arrow key, it isn't
+transmitted/read by emacs (one or the other) correctly.
+The 4410 terminal description that I'm using defines up=M-[A
+(it appears as ^[[A, with the initial ^[ as one character).
+Pressting cntrl-Q up_arrow while in emacs shows me the same thing.
+On the vt100 the same thing happens but the terminal file says up=M-A
+(it appears as ^[A).  I've tried every other imaginable up= but get
+the same results.  I've also been unsuccessful writing a macro that
+understands what my keyboard is saying.
+
+Any ideas on how I can get the arrow keys to do somethingt? 
+Anything?  Thanks in advance.
+
+--Bruce Burger     AT&T-Information Systems     Freehold, NJ
+  @{...ihnp4!@}hogpc!btb    (201) 577-5230
+@end example
+
+@item
+GNU Emacs versions 1.0 through 1.12 were apparently released in early
+1985.  The next version after this was 13.0; there were no GNU Emacs
+versions 2 through 12.
+
+@item
+GNU Emacs version 13.0? 1.0? was released on March 20, 1985.  This
+appears to be the initial public release.  This was also based on this
+same Emacs-in-C collaboration.
+
+Here is the release notice:
+
+@example
+From: Chuck Wegrzyn (wegrzyn@@encore.UUCP)
+Subject: Public Domain EMACS available from GNU Project 
+Newsgroups: net.emacs, net.general, net.unix, net.unix-wizards
+Date: 1985-03-20 08:03:20 PST 
+
+ The GNU project has released its first major subsystem,
+ the EMACS editor. This editor is a sophisticated screen
+ editor that is compatible and comparable with the EMACS
+ editors being sold by UniPress and CCA. It comes with
+ Mock Lisp ( did you know that UniPress trademarked MLISP??),
+ and all the little bells and features most of us expect
+ with EMACS.
+
+ The GNU version of EMACS, written by Richard Stallman, is
+ available for distribution. The distribution includes all
+ source code for EMACS and a source code level debugger.
+ Furthermore, under the GNU project banner, the EMACS system
+ can be distributed (in source code form) by one and all.
+
+ I was thinking of sending out the source code over the net,
+ but resisted : it is over 1Mbyte of code. If there is
+ enough demand, I will add a UUCP dial-in to our system, or
+ send out tapes, or ... ?
+
+ Is anyone interested in EMACS? If so, please tell me how
+ you think I should distribute it?
+
+   Chuck Wegrzyn
+  @{allegra,decvax,ihnp4,princeton@}!encore!wegrzyn
+@end example
 
 @item
 GNU Emacs version 15.10 was released on April 11, 1985.
@@ -1064,7 +1142,7 @@ Version 17.45 released on January 30, 1986.
 @item
 Version 17.46 released on February 4, 1986.
 @item
-Version 17.48 released on February 10, 1986.
+Version 17.48 released on February 10, 1986 (February 9 on net.emacs).
 @item
 Version 17.49 released on February 12, 1986.
 @item
@@ -1074,7 +1152,7 @@ Version 17.57 released on March 27, 1986.
 @item
 Version 17.58 released on April 4, 1986.
 @item
-Version 17.61 released on April 12, 1986.
+Version 17.61 released on April 12 (?), 1986 (April 22 on net.emacs).
 @item
 Version 17.63 released on May 7, 1986.
 @item
@@ -1086,7 +1164,7 @@ Version 18.30 (a beta version) released on November 15, 1986.
 @item
 Version 18.31 (a beta version) released on November 23, 1986.
 @item
-Version 18.32 (a beta version) released on December 7, 1986.
+Version 18.32 (a beta version) released on December 6 or 7, 1986.
 @item
 Version 18.33 (a beta version) released on December 12, 1986.
 @item
@@ -1097,9 +1175,9 @@ Version 18.36 (a beta version) released on January 21, 1987.
 January 27, 1987: The Great Usenet Renaming.  net.emacs is now
 comp.emacs.
 @item
-Version 18.37 (a beta version) released on February 12, 1987.
+Version 18.37 (a beta version) released on February 9 or 12, 1987.
 @item
-Version 18.38 (a beta version) released on March 3, 1987.
+Version 18.38 (a beta version) released on March 2 or 3, 1987.
 @item
 Version 18.39 (a beta version) released on March 14, 1987.
 @item
@@ -1110,34 +1188,34 @@ Version 18.41 (the first ``official'' release) released on March 22,
 @item
 Version 18.45 released on June 2, 1987.
 @item
-Version 18.46 released on June 9, 1987.
+Version 18.46 released on June 8 or 9, 1987.
 @item
-Version 18.47 released on June 18, 1987.
+Version 18.47 released on June 10 or 18, 1987.
 @item
-Version 18.48 released on September 3, 1987.
+Version 18.48 released on August 30 or September 3, 1987.
 @item
-Version 18.49 released on September 18, 1987.
+Version 18.49 released on September 16 or 18, 1987.
 @item
-Version 18.50 released on February 13, 1988.
+Version 18.50 released on February 11 or 13, 1988.
 @item
-Version 18.51 released on May 7, 1988.
+Version 18.51 released on May 6 or 7, 1988.
 @item
 Version 18.52 released on September 1, 1988.
 @item
-Version 18.53 released on February 24, 1989.
+Version 18.53 released on February 23 or 24, 1989.
 @item
 Version 18.54 released on April 26, 1989.
 @item
-Version 18.55 released on August 23, 1989.  This is the earliest version
+Version 18.55 released on August 18 or 23, 1989.  This is the earliest version
 that is still available by FTP. (Verified in November 2004.)
 @item
-Version 18.56 released on January 17, 1991.
+Version 18.56 released on January 16 or 17, 1991.
 @item
-Version 18.57 released late January, 1991.
+Version 18.57 released on January 25, 1991.
 @item
-Version 18.58 released sometime in 1991.
+Version 18.58 released on February 18, 1991.
 @item
-Version 18.59 released October 31, 1992.
+Version 18.59 released on October 30 or 31, 1992.
 @end itemize
 
 
@@ -1254,7 +1332,7 @@ Emacs'').  By this time, the current version of Lucid Emacs was
 @item
 Version 19.7 beta released May 22, 1993.  First public beta v19 release.
 @item
-Version 19.8 beta released May 27, 1993.
+Version 19.8 beta released May 25 or 27, 1993.
 @item
 Version 19.9 beta released May 27, 1993.
 @item
@@ -1262,7 +1340,7 @@ Version 19.10 beta released May 30, 1993.
 @item
 Version 19.11 beta released June 1, 1993.
 @item
-Version 19.12 beta released June 2, 1993.
+Version 19.12 beta released June 1 or 2, 1993.
 @item
 Version 19.13 beta released June 8, 1993.
 @item
@@ -1272,31 +1350,31 @@ Version 19.15 beta released June 19, 1993.
 @item
 Version 19.16 beta released July 6, 1993.
 @item
-Version 19.17 beta released late July, 1993.
+Version 19.17 beta released July 17, 1993.
 @item
-Version 19.18 beta released August 9, 1993.
+Version 19.18 beta released August 8 or 9, 1993.
 @item
-Version 19.19 beta released August 15, 1993.
+Version 19.19 beta released August 14 or 15, 1993.
 @item
-Version 19.20 beta released November 17, 1993.
+Version 19.20 beta released November 11 or 17, 1993.
 @item
-Version 19.21 beta released November 17, 1993.
+Version 19.21 beta released November 16 or 17, 1993.
 @item
-Version 19.22 beta released November 28, 1993.
+Version 19.22 beta released November 27 or 28, 1993.
 @item
 Version 19.23 beta released May 17, 1994.
 @item
-Version 19.24 beta released May 16, 1994.
+Version 19.24 beta released May 23 or 16 (?), 1994.
 @item
-Version 19.25 beta released June 3, 1994.
+Version 19.25 beta released May 30 or June 3, 1994.
 @item
-Version 19.26 beta released September 11, 1994.
+Version 19.26 beta released September 7 or 11, 1994.
 @item
-Version 19.27 beta released September 14, 1994.
+Version 19.27 beta released September 11 or 14, 1994.
 @item
 Version 19.28 (first ``official'' release) released November 1, 1994.
 @item
-Version 19.29 released June 21, 1995.
+Version 19.29 released June 19 or 21, 1995.
 @item
 Version 19.30 released November 24, 1995.
 @item
@@ -1336,19 +1414,19 @@ A timeline for GNU Emacs 20 is
 
 @itemize @bullet
 @item
-Version 20.1 released September 17, 1997.
+Version 20.1 released September 15 or 17, 1997.
 @item
-Version 20.2 released September 20, 1997.
+Version 20.2 released September 19 or 20, 1997.
 @item
 Version 20.3 released August 19, 1998.
 @item
 version 20.4 released July 12, 1999; on comp.emacs, July 27.
 @item
-version 20.5 released ???.
+version 20.5 released December 4, 1999.
 @item
-version 20.6 released ???.
+version 20.6 released February 26, 2000.
 @item
-version 20.7 released ???.
+version 20.7 released June 13, 2000.
 @end itemize
 
 A timeline for GNU Emacs 21 is
@@ -12661,27 +12739,125 @@ According to Microsoft documentation, only the following functions are
 provided under Windows 9x to support Unicode (see MSDN page "Windows
 95/98/Me General Limitations"):
 
-EnumResourceLanguages 
-EnumResourceNames 
-EnumResourceTypes 
-ExtTextOut 
-FindResource 
-FindResourceEx 
-GetCharWidth
-GetCommandLine
-GetTextExtentPoint 
-GetTextExtentPoint32 
-lstrcat 
-lstrcpy 
-lstrlen 
-MessageBox 
-MessageBoxEx 
+EnumResourceLanguagesW
+EnumResourceNamesW
+EnumResourceTypesW
+ExtTextOutW
+FindResourceW
+FindResourceExW
+GetCharWidthW
+GetCommandLineW
+GetTextExtentPointW
+GetTextExtentPoint32W
+lstrcatW
+lstrcpyW
+lstrlenW
+MessageBoxW
+MessageBoxExW
 MultiByteToWideChar
-TextOut 
+TextOutW
 WideCharToMultiByte
 
 also maybe GetTextExtentExPoint? (KB Q125671 "Unicode Functions Supported
 by Windows 95")
+
+Q210341 says this in addition:
+
+@quotation
+SUMMARY:
+
+Although Windows 95 is an eight-bit ANSI, or for Far East Windows, a
+Multibyte (MBCS) character set operating system, it implements a few
+Unicode functions. Windows 98 has added support for a few more
+functions and there are techniques to implement additional Unicode
+support.
+
+MORE INFORMATION:
+
+Windows 95 is natively an eight-bit character code operating
+system. That is, it fundamentally processes all character strings one
+byte at a time. Far East versions of Windows 95 are called Multibyte
+Character Set (MBCS) systems because they use a signal or lead byte
+combined with a second trailing byte to expand the character code
+range beyond the 256 limitation of a one-byte representation.
+
+The Unicode standard offers application developers an opportunity to
+work with text without the limitations of character set based
+systems. For more information on the Unicode standard see the
+"References" section of this article. Windows NT is a fully Unicode
+capable operating system so it may be desirable to write software that
+supports Unicode on Windows 95.
+
+Even though Windows 95 and Windows 98 are not Unicode based, they do
+provide some limited Unicode functionality. Drawing of Unicode text is
+possible because the TrueType fonts that are used by Windows are
+encoded using Unicode. Therefore, a small subset of Win32 functions
+have wide character (Unicode) equivalents that are implemented in
+Windows 95. To review the list of these functions that was first
+published for Windows 95 see the white paper listed in the
+"References" section of this article.
+
+The Quick Info information in the Platform SDK describes the following
+wide character functions as implemented on Windows 95:
+
+[same list as above minus GetTextExtentExPoint, and minus lstrcpy/lstrcat]
+
+For Windows 98, there have been two more functions implemented:
+
+[lstrcpyW/lstrcatW]
+
+Also available to applications on Windows 95 and later is the
+CF_UNICODETEXT clipboard format for exchanging/converting Unicode text
+across the clipboard. See Nadine Kano's book listed in the
+"References" section of this article.
+
+With this API subset, an application can read, write, display, and
+convert Unicode data. However, in some cases an application developer
+working with Unicode may find a need to work directly with the glyphs
+in the TrueType font file.
+
+Such a case arises if a software developer would like to use the
+services of the GetGlyphOutline() function. Unfortunately, there is no
+wide character implementation of this function on Windows 95. However,
+this function does work with TrueType glyph indices so the solution is
+convert the Unicode character code to a glyph index.
+
+A developer might also want to take advantage of the TrueType Open
+tables of a font to perform ligature or contextual glyph
+substitution. To do this, the application would need to work with
+glyph indices. See the "References" section of this article for more
+information on converting Unicode to glyph indices.
+
+REFERENCES:
+
+For additional information about Unicode and the GetGlyphOutline
+function, click the article number below to view the article in the
+Microsoft Knowledge Base:
+
+241358 PRB: The GetGlyphOutlineW Function Fails on Windows 95 and
+Windows 98
+
+For additional information about converting Unicode character codes,
+click the article number below to view the article in the Microsoft
+Knowledge Base:
+
+241020 HOWTO: Translate Unicode Character Codes to TrueType Glyph
+Indices in Windows 95
+
+For information on writing applications for world wide markets, please
+see the following book:
+
+Developing International Software for Windows 95 and Windows NT by
+Nadine Kano.
+ISBN 1-55615-840-8 
+Microsoft Press. 
+Also available on MSDN in the Books section.
+
+Background white paper: Differences in Win32 API Implementations Among
+Windows Operating Systems by Noel Nyman.
+
+Available on MSDN in the Windows Platform Guidelines section
+@end quotation
 
 However, the C runtime library provides some additional support (according
 to the CRT sources, as the docs are not very clear on this):

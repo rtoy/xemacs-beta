@@ -1,3 +1,14 @@
+2005-01-26  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi:
+	* internals/internals.texi (Through Version 18):
+	* internals/internals.texi (GNU Emacs 19):
+	* internals/internals.texi (GNU Emacs 20):
+	Update History.
+
+	* internals/internals.texi (Unicode support under Windows):
+	Redo section on Windows 95 support for Unicode.
+
 2005-01-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* man/lispref/functions.texi (Functions): Rename to "Functions and
