@@ -1,3 +1,7 @@
+2004-08-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/positions.texi (Text Lines):  makeinfo doesn't like Note:.
+
 2004-07-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/glyphs.texi: Complete reorganization, some content updated.
@@ -14,7 +18,7 @@
 
 	* internals/internals.texi (Techniques for XEmacs Developers): Be
 	specific when discussing optimization.
-	(Techniques for XEmacs Developers): Fragments that are meaningly
+	(Techniques for XEmacs Developers): Fragments that are meaningful
 	by themselves or contain placeholders should be @samp, not @code.
 	(Modules for Internationalization): Add description of mule-coding.c
 	and further deprecate mule.c.
