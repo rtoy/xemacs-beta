@@ -1,5 +1,11 @@
 2002-03-18  Ben Wing  <ben@xemacs.org>
 
+	* process.c:
+	* process.c (init_process_io_handles):
+	Obey coding-system-for-{read,write} if set.
+
+2002-03-18  Ben Wing  <ben@xemacs.org>
+
 	* fns.c:
 	* fns.c (Frequire):
 	* fns.c (vars_of_fns):

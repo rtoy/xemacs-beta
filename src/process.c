@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -491,6 +491,20 @@ init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
     signal_error (Qinvalid_state,
 		  "Bogus value for `default-process-coding-system'",
 		  Vdefault_process_coding_system);
+
+  if (!NILP (Vcoding_system_for_read) &&
+      NILP (incode = (find_coding_system_for_text_file
+		      (Vcoding_system_for_read, 1))))
+    signal_error (Qinvalid_state,
+		  "Bogus value for `coding-system-for-read'",
+		  Vcoding_system_for_read);
+
+  if (!NILP (Vcoding_system_for_write) &&
+      NILP (outcode = (find_coding_system_for_text_file
+		       (Vcoding_system_for_write, 0))))
+    signal_error (Qinvalid_state,
+		  "Bogus value for `coding-system-for-write'",
+		  Vcoding_system_for_write);
 
   usid = event_stream_create_stream_pair (in, out,
 					  &p->pipe_instream,

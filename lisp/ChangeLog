@@ -1,3 +1,14 @@
+2002-03-18  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list): Add debug.el.
+
+2002-03-18  Ben Wing  <ben@xemacs.org>
+
+	* subr.el:
+	* subr.el (map-plist): New.
+
+	* debug.el: New.  New function show-memory-usage.
+
 2002-03-18  Adrian Aichner  <adrian@xemacs.org>
 
 	* cus-edit.el (customize-save-variable): Fix typo in prompt.
