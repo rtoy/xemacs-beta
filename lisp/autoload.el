@@ -1,6 +1,6 @@
 ;;; autoload.el --- maintain autoloads in auto-autoloads files.
 
-;; Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1991-1994, 1997, 2003 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1996, 2000, 2002, 2003 Ben Wing.
 
