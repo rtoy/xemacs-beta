@@ -1,3 +1,8 @@
+2001-05-02  Jerry James <james@xemacs.org>
+
+	* faces.h (SET_FACE_PROPERTY): pass parameters to
+	Fadd_spec_to_specifier in the correct order.
+
 2001-05-01  Martin Buchholz  <martin@xemacs.org>
 
 	Fix link error with gcc 3.0 on Linux.
