@@ -1102,21 +1102,6 @@ $(INFODIR)\new-users-guide.info: $(NEW_USERS_GUIDE_SRCS)
 
 info:	makeinfo-test $(INFO_FILES)
 
-makeinfo-test:
-	@<<makeinfo_test.bat
-@echo off
-if exist "$(MAKEINFO)" goto test_done
-@$(XEMACS_BATCH_PACKAGES) -eval "(condition-case nil (require (quote texinfo)) (t (kill-emacs 1)))"
-@if not errorlevel 1 goto suggest_makeinfo
-@echo XEmacs 'info' cannot be built!
-@echo Install XEmacs package 'texinfo' (see README.packages).
-:suggest_makeinfo
-@echo Consider specifying path to 'makeinfo' in config.inc.
-@echo as this will build the info docs much faster than XEmacs using 'texinfo'.
-@if errorlevel 1 exit 1
-:test_done
-<<NOKEEP
-
 ########################### Create the Installation file
 
 $(BLDROOT)\Installation::	installation
@@ -1285,6 +1270,7 @@ DO_XEMACS = "$(BLDLIB_SRC)\i" "$(DUMP_TARGET)"
 BATCH = -no-packages -batch
 BATCH_PACKAGES = -vanilla -batch
 TEMACS_BATCH = $(DO_TEMACS) -nd $(BATCH)
+TEMACS_BATCH_PACKAGES = $(DO_TEMACS) -nd $(BATCH_PACKAGES)
 XEMACS_BATCH = $(DO_XEMACS) $(BATCH)
 XEMACS_BATCH_PACKAGES = $(DO_XEMACS) $(BATCH_PACKAGES)
 temacs_loadup_args = -l $(LISP)/loadup.el
@@ -1428,7 +1414,7 @@ check:
 
 check-temacs:
 	cd $(BLDSRC)
-	$(TEMACS_BATCH) $(run_temacs_args) $(batch_test_emacs)
+	$(TEMACS_BATCH_PACKAGES) $(run_temacs_args) $(batch_test_emacs)
 
 check-features: all
 	cd $(BLDSRC)
@@ -1467,6 +1453,8 @@ install:	all
 	@$(COPY) $(BLDLIB_SRC)\DOC "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
 	@$(COPY) $(CONFIG_VALUES) "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
 	@$(COPY) $(BLDSRC)\xemacs.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
+# APA: This is not good enough!  It copies all .#* CVS files
+# and the CVS directory too!
 	@$(COPYDIR) $(SRCROOT)\etc  "$(INSTALL_DIR)\etc\"
 	@$(COPYDIR) $(SRCROOT)\info "$(INSTALL_DIR)\info\"
 	@$(COPYDIR) $(SRCROOT)\lisp "$(INSTALL_DIR)\lisp\"
@@ -1574,3 +1562,18 @@ unicode-encapsulate:
 	cd $(SRC)
 	perl ../lib-src/make-mswin-unicode.pl --c-output intl-auto-encap-win32.c --h-output intl-auto-encap-win32.h intl-encap-win32.c
 
+makeinfo-test: $(DUMP_TARGET)
+	@<<makeinfo_test.bat
+@echo off
+@"$(MAKEINFO)" --version
+@if not errorlevel 1 goto test_done
+@$(XEMACS_BATCH_PACKAGES) -eval "(condition-case nil (require (quote texinfo)) (t (kill-emacs 1)))"
+@if not errorlevel 1 goto suggest_makeinfo
+@echo XEmacs 'info' cannot be built!
+@echo Install XEmacs package 'texinfo' (see README.packages).
+:suggest_makeinfo
+@echo Consider specifying path to 'makeinfo' in config.inc.
+@echo as this will build the info docs much faster than XEmacs using 'texinfo'.
+@if errorlevel 1 exit 1
+:test_done
+<<NOKEEP

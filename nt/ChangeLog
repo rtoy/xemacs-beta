@@ -1,3 +1,11 @@
+2003-08-31  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs.mak (makeinfo-test): Moved after variable initialization
+	to make test actually work.
+	* xemacs.mak (TEMACS_BATCH_PACKAGES): New.
+	* xemacs.mak (check-temacs): Use TEMACS_BATCH_PACKAGES to enable
+	regression tests requiring packages.
+
 2003-06-15  Adrian Aichner  <adrian@xemacs.org>
 
 	* minitar.c (main): Handle 0 size files correctly.
