@@ -4,6 +4,7 @@
 ;;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Martin Buchholz
+;; Maintainer: Stephen J. Turnbull <stephen@xemacs.org>
 ;; Keywords: testing
 
 ;; This file is part of XEmacs.
