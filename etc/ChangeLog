@@ -1,3 +1,13 @@
+2004-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gnuserv.1: Various fixes and improvements.
+	* gnuserv.README: Strengthen self-deprecation.
+
+2004-11-22  Adrian Aichner  <adrian@xemacs.org>
+
+	* TUTORIAL: Typo fixes, courtesy of Andreas Eder
+	<Andreas.Eder@gmx.net>.
+
 2004-11-07  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* photos/purvis.png, photos/purvism.png: New files.

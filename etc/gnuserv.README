@@ -1,5 +1,6 @@
-This file is not meant to be proper documentation. See the file gnuserv.1 for
-more information.
+**** WARNING ****
+This file was never meant to be proper documentation, and now is bitrotted.
+See the file gnuserv.1 and/or the sources for more information.
 
 ****
 NOTE: This version of gnuserv has some enhancements over the original version 

@@ -419,11 +419,14 @@ This order is important as not to keep the client waiting."
 ;; backbone of gnuserv.el.
 (defun gnuserv-edit-files (type list &rest flags)
   "For each (line-number . file) pair in LIST, edit the file at line-number.
-The visited buffers are memorized, so that when \\[gnuserv-edit] is invoked
+The visited buffers are recorded, so that when \\[gnuserv-edit] is invoked
 in such a buffer, or when it is killed, or the client's device deleted, the
-client will be invoked that the edit is finished.
+client will be informed that the edit is finished.
 
-TYPE should either be a (tty TTY TERM PID) list, or (x DISPLAY) list.
+TYPE should be a list in one of the forms (tty TTY TERM PID), (x DISPLAY),
+\(gtk DISPLAY), or (mswindows DISPLAY).  Currently GTK and MS Windows do not
+support multiple displays, so the DISPLAY member is ignored.  Conventionally
+it is set to nil.
 If a flag is `quick', just edit the files in Emacs.
 If a flag is `view', view the files read-only."
   (let (quick view)

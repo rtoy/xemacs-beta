@@ -1,3 +1,13 @@
+2004-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gnuserv.el (gnuserv-edit-files): Improve docstring.
+
+2004-12-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* simple.el (next-line):
+	(previous-line):
+	Document effect of `signal-error-on-buffer-boundary'.
+
 2004-12-11  Ben Wing  <ben@xemacs.org>
 
 	* files.el (find-coding-system-magic-cookie-in-file):

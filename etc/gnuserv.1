@@ -17,29 +17,32 @@ Removed as of gnuserv 3.x
 .SH DESCRIPTION
 
 .PP
+\fIgnuserv\fP is a server program run as a subprocess of XEmacs to handle
+all incoming and outgoing requests from \fIgnuclient\fP. It is not usually
+invoked directly, but is started from XEmacs by loading the \fIgnuserv\fP
+package and evaluating the Lisp form (gnuserv-start).
+.PP
 \fIgnuclient\fP allows the user to request a running XEmacs process to
 edit the named files or directories and/or evaluate lisp forms.
-Depending on your environment, it can be an X frame or a TTY frame.
+Depending on your environment, TTY, X, GTK, or MS Windows frames, as well as
+batch (frameless) execution of Lisp may be available.
 One typical use for this is with a dialup connection to a machine on
 which an XEmacs process is currently running.
 .PP
 \fIgnudoit\fP is a shell script frontend to ``gnuclient -batch -eval form''.
 Its use is deprecated. Try to get used to calling gnuclient directly.
 .PP
-\fIgnuserv\fP is the server program that is set running by XEmacs to
-handle all incoming and outgoing requests. It is not usually invoked
-directly, but is started from XEmacs by loading the \fIgnuserv\fP
-package and evaluating the Lisp form (gnuserv-start).
-.PP
 \fIgnuattach\fP no longer exists. Its functionality has been replaced by
 \fIgnuclient -nw\fP.
 .SH OPTIONS
 .PP 
-\fIgnuclient\fP supports as much of the command line options of Emacs as
-makes sense in this context. In addition it adds a few of its own. 
+\fIgnuclient\fP supports as many of the command line options of Emacs as
+make sense in this context. In addition it adds a few of its own. 
 .br
-Options with long names can also be specified using a double
-hyphen instead of a single one.
+For backward compatibility, ``long'' options (\fi.e.\fP, with doubled hyphen)
+may be specified using a single hyphen instead of a doubled one.  Similarly,
+the ``-nw'' option is a historical artifact: a multiletter option with no
+double-hyphen version.
 .TP 8
 .BI \-nw
 This option makes \fIgnuclient\fP act as a frontend such that XEmacs
@@ -49,7 +52,7 @@ the ``-nw'' option. It currently only works if XEmacs is running on
 the same machine as gnuclient. This is the default if the `DISPLAY'
 environment variable is not set.
 .TP 8
-.BI \-display " display, " \--display " display" 
+.BI \--display " display, " \-display " display" 
 If this option is given or the `DISPLAY' environment variable is set
 then gnuclient will tell XEmacs to edit files in a frame on the
 specified X device.
@@ -59,7 +62,8 @@ This option informs \fIgnuclient\fP to exit once connection has been
 made with the XEmacs process.  Normally \fIgnuclient\fP waits until
 all of the files on the command line have been finished with (their
 buffers killed) by the XEmacs process, and all the forms have been
-evaluated.
+evaluated.  Note that this is \fIdifferent\fP from XEmacs itself, where
+this option means to inhibit loading of the user init file.
 .TP 8
 .BI \-v
 When this option is specified \fIgnuclient\fP will request for the
@@ -81,26 +85,25 @@ options, then forms to eval are read from STDIN.
 .BI \-f " function," 
 Make Emacs execute the lisp function.
 .TP 8
-.BI \-eval " form"
-Make Emacs execute the lisp form.
+.BI \--eval " form, " \-eval " form" 
+Make Emacs execute the Lisp form.
 .TP 8
 .BI \-h " hostname"
 Used only with Internet-domain sockets, this option specifies the host
 machine which should be running \fIgnuserv\fP. If this option is not
 specified then the value of the environment variable GNU_HOST is used
 if set. If no hostname is specified, and the GNU_HOST variable is not
-set, an internet connection will not be attempted. N\.B.:
-\fIgnuserv\fP does NOT allow internet connections unless XAUTH
+set, an Internet connection will not be attempted. N\.B.:
+\fIgnuserv\fP does NOT allow Internet connections unless XAUTH
 authentication is used or the GNU_SECURE variable has been specified
 and points at a file listing all trusted hosts. (See SECURITY below.)
 
 .br
-Note that an internet address may be specified instead of a hostname
-which can speed up connections to the server by quite a bit,
-especially if the client machine is running YP.
+An Internet address (``dotted-quad'') may be specified instead of a
+hostname.  IPv6 support is not robust.
 
 .br
-Note also that a hostname of \fBunix\fP can be used to specify that
+A hostname of \fBunix\fP can be used to specify that
 the connection to the server should use a Unix-domain socket (if
 supported) rather than an Internet-domain socket.
 .TP 8
@@ -133,16 +136,15 @@ the directory browsers dired or monkey are usually invoked instead.
 The cursor is put at line number 'n' if specified.
 
 .SH SETUP
-\fIgnuserv\fP is packaged standardly with recent versions of XEmacs.
-Therefore, you should be able to start the server simply by evaluating
-the XEmacs Lisp form (gnuserv-start), or equivalently by typing
-`M-x gnuserv-start'.
+\fIgnuserv\fP is included with recent versions of XEmacs; no installation
+is required.  The server must be started before clients may attempt to
+connect.  Start the server by evaluating the Lisp form (gnuserv-start), or
+interactively by typing `M-x gnuserv-start'.
 
 .SH CONFIGURATION
-The behavior of this suite of program is mostly controlled on the lisp 
-side in Emacs and its behavior can be customized to a large extent.
-Type `M-x customize-group RET gnuserv RET' for easy access. More
-documentation can be found in the file `gnuserv.el'
+The behavior of this suite of programs can be customized to a large extent.
+Type `M-x customize-group RET gnuserv RET'.  More documentation can be found
+in the file `gnuserv.el'
 
 .SH EXAMPLE
 .RS 4
@@ -156,62 +158,63 @@ gnuclient -nw ../src/listproc.c
 
 .br
 More examples and sample wrapper scripts are provided in the
-etc/gnuserv directory of the Emacs installation.
+etc/gnuserv directory of the XEmacs installation.
 
 
 .SH SYSV IPC
-SysV IPC is used to communicate between \fIgnuclient\fP and
-\fIgnuserv\fP if the symbol SYSV_IPC is defined at the top of
-gnuserv.h. This is incompatible with both Unix-domain and
+SysV IPC is a build-time option, enabled by defining the symbol SYSV_IPC
+at the top of gnuserv.h.  It is used to communicate between \fIgnuclient\fP
+and \fIgnuserv\fP.  It is incompatible with both Unix-domain and
 Internet-domain socket communication as described below. A file called
 /tmp/gsrv??? is created as a key for the message queue, and if removed
 will cause the communication between server and client to fail until
 the server is restarted.
 .SH UNIX-DOMAIN SOCKETS
-A Unix-domain socket is used to communicate between \fIgnuclient\fP
-and \fIgnuserv\fP if the symbol UNIX_DOMAIN_SOCKETS is defined at the
-top of gnuserv.h.  A file called /tmp/gsrvdir????/gsrv is created for
+Unix-domain sockets are a build-time option, enabled by defining the symbol
+UNIX_DOMAIN_SOCKETS at the top of gnuserv.h.  A Unix-domain socket is used
+to communicate between \fIgnuclient\fP
+and \fIgnuserv\fP.  A file called /tmp/gsrvdir????/gsrv is created for
 communication.  If the symbol USE_TMPDIR is set at the top of gnuserv.h,
 $TMPDIR, when set, is used instead of /tmp.  If that file is deleted,
 or TMPDIR has different values for the server and the client, communication
 between server and client will fail.  Only the user running gnuserv will be
 able to connect to the socket.
 .SH INTERNET-DOMAIN SOCKETS
-Internet-domain sockets are used to communicate between
-\fIgnuclient\fP and \fIgnuserv\fP if the symbol
-INTERNET_DOMAIN_SOCKETS is defined at the top of gnuserv.h. Both
-Internet-domain and Unix-domain sockets can be used at the same
-time. If a hostname is specified via -h or via the GNU_HOST
+Internet-domain sockets are a build-time option, enabled by defining the
+symbol INTERNET_DOMAIN_SOCKETS at the top of gnuserv.h.  Internet-domain
+sockets are used to communicate between \fIgnuclient\fP and \fIgnuserv\fP.
+Both Internet-domain and Unix-domain sockets can be used at the same
+time.  If a hostname is specified via -h or via the GNU_HOST
 environment variable, \fIgnuclient\fP establish connections using an
-internet domain socket. If not, a local connection is attempted via
-either a unix-domain socket or SYSV IPC.
+Internet domain socket. If not, a local connection is attempted via
+either a Unix-domain socket or SYSV IPC.
 .SH SECURITY
 Using Internet-domain sockets, a more robust form of security is
 needed that wasn't necessary with either Unix-domain sockets or SysV
 IPC. Currently, two authentication protocols are supported to provide
 this: MIT-MAGIC-COOKIE-1 (based on the X11 xauth(1) program) and a
 simple host-based access control mechanism, hereafter called
-GNUSERV-1. The GNUSERV-1 protocol is always available, whereas support
-for MIT-MAGIC-COOKIE-1 may or may not have been enabled (via a #define
-at the top of gnuserv.h) at compile-time.
+GNUSERV-1. The GNUSERV-1 protocol is always available.  Support
+for MIT-MAGIC-COOKIE-1 is enabled (by defining AUTH_MAGIC_COOKIE
+at the top of gnuserv.h.
 .PP
 \fIgnuserv\fP, using GNUSERV-1, performs a limited form of access
-control at the machine level. By default no internet-domain socket is
+control at the machine level. By default no Internet-domain socket is
 opened.  If the variable GNU_SECURE can be found in \fIgnuserv\fP's
 environment, and it names a readable filename, then this file is
 opened and assumed to be a list of hosts, one per line, from which the
 server will allow requests. Connections from any other host will be
 rejected. Even the machine on which \fIgnuserv\fP is running is not
-permitted to make connections via the internet socket unless its
+permitted to make connections via the Internet socket unless its
 hostname is explicitly specified in this file.  Note that a host may
 be either a numeric IP address or a hostname, and that
 .I any
 user on an approved host may connect to your gnuserv and execute arbitrary
-elisp (e.g., delete all your files).
+Lisp (e.g., delete all your files).
 If this file contains a lot of
-hostnames then the server may take quite a time to start up.
+hostnames then the server may take quite a long time to start up.
 .PP
-When the MIT-MAGIC-COOKIE-1 protocol is enabled, an internet socket
+When the MIT-MAGIC-COOKIE-1 protocol is enabled, an Internet socket
 \fIis\fP opened by default. \fIgnuserv\fP will accept a connection from
 any host, and will wait for a "magic cookie" (essentially, a password)
 to be presented by the client. If the client doesn't present the
@@ -267,7 +270,7 @@ significant!
 .PP
 .TP 8
 .B DISPLAY
-Default X device to put edit frame.
+Default X (or GTK) device for display of edit frame.
 
 .SH FILES
 .PP
@@ -278,7 +281,7 @@ Default X device to put edit frame.
 .B /tmp/gsrvdir???/gsrv
 (unix domain sockets only)
 .TP 8
-.B ~/.emacs
+.B ~/.xemacs/init.el
 XEmacs customization file, see xemacs(1).
 .SH SEE ALSO
 .PP
