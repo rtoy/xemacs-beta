@@ -1,3 +1,8 @@
+2004-03-15  Jerry James  <james@xemacs.org>
+
+	* eval.c (grow_specpdl): Add some specpdl space, even when not
+	debug-on-error or debug-on-signal.
+
 2004-03-08  Lutz Euler  <lutz.euler@freenet.de>
 
 	* lstream.c (Lstream_pseudo_close): Fix test for LSTREAM_FL_IS_OPEN.

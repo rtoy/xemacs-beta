@@ -5707,10 +5707,14 @@ grow_specpdl (EMACS_INT reserved)
 	max_specpdl_size = min_max_specpdl_size;
       if (size_needed >= max_specpdl_size)
 	{
-	  if (!NILP (Vdebug_on_error) ||
-	      !NILP (Vdebug_on_signal))
-	    /* Leave room for some specpdl in the debugger.  */
-	    max_specpdl_size = size_needed + 100;
+	  /* Leave room for some specpdl in the debugger. */
+	  max_specpdl_size = size_needed + 100;
+	  if (max_specpdl_size > specpdl_size)
+	    {
+	      specpdl_size = max_specpdl_size;
+	      XREALLOC_ARRAY (specpdl, struct specbinding, specpdl_size);
+	      specpdl_ptr = specpdl + specpdl_depth();
+	    }
 	  signal_continuable_error
 	    (Qstack_overflow,
 	     "Variable binding depth exceeds max-specpdl-size", Qunbound);
