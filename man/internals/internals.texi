@@ -116,6 +116,7 @@ This Info file contains v1.4 of the XEmacs Internals Manual, March 2001.
 * XEmacs From the Inside::
 * The XEmacs Object System (Abstractly Speaking)::
 * How Lisp Objects Are Represented in C::
+* Major Textual Changes::
 * Rules When Writing New C Code::
 * CVS Techniques::
 * A Summary of the Various XEmacs Modules::
@@ -1759,7 +1760,7 @@ reading some Lisp code), or because they can't be created at all
 nor do most complex objects, which contain too much state to be easily
 initialized through a read syntax.
 
-@node How Lisp Objects Are Represented in C, Rules When Writing New C Code, The XEmacs Object System (Abstractly Speaking), Top
+@node How Lisp Objects Are Represented in C, Major Textual Changes, The XEmacs Object System (Abstractly Speaking), Top
 @chapter How Lisp Objects Are Represented in C
 @cindex Lisp objects are represented in C, how
 @cindex objects are represented in C, how Lisp
@@ -1846,7 +1847,335 @@ performance is an issue, use @code{type_checking_assert},
 nothing unless the corresponding configure error checking flag was
 specified.
 
-@node Rules When Writing New C Code, CVS Techniques, How Lisp Objects Are Represented in C, Top
+@node Major Textual Changes, Rules When Writing New C Code, How Lisp Objects Are Represented in C, Top
+@chapter Major Textual Changes
+@cindex textual changes, major
+@cindex major textual changes
+
+Sometimes major textual changes are made to the source.  This means that
+a search-and-replace is done to change type names and such.  Some people
+disagree with such changes, and certainly if done without good reason
+will just lead to headaches.  But it's important to keep the code clean
+and understable, and consistent naming goes a long way towards this.
+
+An example of the right way to do this was the so-called "great integral
+type renaming".
+
+@menu
+* Great Integral Type Renaming::
+* Text/Char Type Renaming::
+@end menu
+
+@node Great Integral Type Renaming
+@section Great Integral Type Renaming
+@cindex Great Integral Type Renaming
+@cindex integral type renaming, great
+@cindex type renaming, integral
+@cindex renaming, integral types
+
+The purpose of this is to rationalize the names used for various
+integral types, so that they match their intended uses and follow
+consist conventions, and eliminate types that were not semantically
+different from each other.
+
+The conventions are:
+
+@itemize @bullet
+@item
+All integral types that measure quantities of anything are signed.  Some
+people disagree vociferously with this, but their arguments are mostly
+theoretical, and are vastly outweighed by the practical headaches of
+mixing signed and unsigned values, and more importantly by the far
+increased likelihood of inadvertent bugs: Because of the broken "viral"
+nature of unsigned quantities in C (operations involving mixed
+signed/unsigned are done unsigned, when exactly the opposite is nearly
+always wanted), even a single error in declaring a quantity unsigned
+that should be signed, or even the even more subtle error of comparing
+signed and unsigned values and forgetting the necessary cast, can be
+catastrophic, as comparisons will yield wrong results.  -Wsign-compare
+is turned on specifically to catch this, but this tends to result in a
+great number of warnings when mixing signed and unsigned, and the casts
+are annoying.  More has been written on this elsewhere.
+
+@item
+All such quantity types just mentioned boil down to EMACS_INT, which is
+32 bits on 32-bit machines and 64 bits on 64-bit machines.  This is
+guaranteed to be the same size as Lisp objects of type `int', and (as
+far as I can tell) of size_t (unsigned!) and ssize_t.  The only type
+below that is not an EMACS_INT is Hashcode, which is an unsigned value
+of the same size as EMACS_INT.
+
+@item
+Type names should be relatively short (no more than 10 characters or
+so), with the first letter capitalized and no underscores if they can at
+all be avoided.
+
+@item
+"count" == a zero-based measurement of some quantity.  Includes sizes,
+offsets, and indexes.
+
+@item
+"bpos" == a one-based measurement of a position in a buffer.  "Charbpos"
+and "Bytebpos" count text in the buffer, rather than bytes in memory;
+thus Bytebpos does not directly correspond to the memory representation.
+Use "Membpos" for this.
+
+@item
+"Char" refers to internal-format characters, not to the C type "char",
+which is really a byte.
+@end itemize
+
+For the actual name changes, see the script below.
+
+I ran the following script to do the conversion. (NOTE: This script is
+idempotent.  You can safely run it multiple times and it will not screw
+up previous results -- in fact, it will do nothing if nothing has
+changed.  Thus, it can be run repeatedly as necessary to handle patches
+coming in from old workspaces, or old branches.)  There are two tags,
+just before and just after the change: @samp{pre-integral-type-rename}
+and @samp{post-integral-type-rename}.  When merging code from the main
+trunk into a branch, the best thing to do is first merge up to
+@samp{pre-integral-type-rename}, then apply the script and associated
+changes, then merge from @samp{post-integral-type-change} to the
+present. (Alternatively, just do the merging in one operation; but you
+may then have a lot of conflicts needing to be resolved by hand.)
+
+Script @samp{fixtypes.sh} follows:
+
+@example
+----------------------------------- cut ------------------------------------
+files="*.[ch] s/*.h m/*.h config.h.in ../configure.in Makefile.in.in ../lib-src/*.[ch] ../lwlib/*.[ch]"
+gr Memory_Count Bytecount $files
+gr Lstream_Data_Count Bytecount $files
+gr Element_Count Elemcount $files
+gr Hash_Code Hashcode $files
+gr extcount bytecount $files
+gr bufpos charbpos $files
+gr bytind bytebpos $files
+gr memind membpos $files
+gr bufbyte intbyte $files
+gr Extcount Bytecount $files
+gr Bufpos Charbpos $files
+gr Bytind Bytebpos $files
+gr Memind Membpos $files
+gr Bufbyte Intbyte $files
+gr EXTCOUNT BYTECOUNT $files
+gr BUFPOS CHARBPOS $files
+gr BYTIND BYTEBPOS $files
+gr MEMIND MEMBPOS $files
+gr BUFBYTE INTBYTE $files
+gr MEMORY_COUNT BYTECOUNT $files
+gr LSTREAM_DATA_COUNT BYTECOUNT $files
+gr ELEMENT_COUNT ELEMCOUNT $files
+gr HASH_CODE HASHCODE $files
+----------------------------------- cut ------------------------------------
+@end example
+
+The @samp{gr} script, and the scripts it uses, are documented in
+@file{README.global-renaming}, because if placed in this file they would
+need to have their @@ characters doubled, meaning you couldn't easily
+cut and paste from the source.
+
+In addition to those programs, I needed to fix up a few other
+things, particularly relating to the duplicate definitions of
+types, now that some types merged with others.  Specifically:
+
+@enumerate
+@item
+in lisp.h, removed duplicate declarations of Bytecount.  The changed
+code should now look like this: (In each code snippet below, the first
+and last lines are the same as the original, as are all lines outside of
+those lines.  That allows you to locate the section to be replaced, and
+replace the stuff in that section, verifying that there isn't anything
+new added that would need to be kept.)
+
+@example
+--------------------------------- snip -------------------------------------
+/* Counts of bytes or chars */
+typedef EMACS_INT Bytecount;
+typedef EMACS_INT Charcount;
+
+/* Counts of elements */
+typedef EMACS_INT Elemcount;
+
+/* Hash codes */
+typedef unsigned long Hashcode;
+
+/* ------------------------ dynamic arrays ------------------- */
+--------------------------------- snip -------------------------------------
+@end example
+
+@item 
+in lstream.h, removed duplicate declaration of Bytecount.  Rewrote the
+comment about this type.  The changed code should now look like this:
+
+@example
+--------------------------------- snip -------------------------------------
+#endif
+
+/* The have been some arguments over the what the type should be that
+   specifies a count of bytes in a data block to be written out or read in,
+   using Lstream_read(), Lstream_write(), and related functions.
+   Originally it was long, which worked fine; Martin "corrected" these to
+   size_t and ssize_t on the grounds that this is theoretically cleaner and
+   is in keeping with the C standards.  Unfortunately, this practice is
+   horribly error-prone due to design flaws in the way that mixed
+   signed/unsigned arithmetic happens.  In fact, by doing this change,
+   Martin introduced a subtle but fatal error that caused the operation of
+   sending large mail messages to the SMTP server under Windows to fail.
+   By putting all values back to be signed, avoiding any signed/unsigned
+   mixing, the bug immediately went away.  The type then in use was
+   Lstream_Data_Count, so that it be reverted cleanly if a vote came to
+   that.  Now it is Bytecount.
+
+   Some earlier comments about why the type must be signed: This MUST BE
+   SIGNED, since it also is used in functions that return the number of
+   bytes actually read to or written from in an operation, and these
+   functions can return -1 to signal error.
+
+   Note that the standard Unix read() and write() functions define the
+   count going in as a size_t, which is UNSIGNED, and the count going
+   out as an ssize_t, which is SIGNED.  This is a horrible design
+   flaw.  Not only is it highly likely to lead to logic errors when a
+   -1 gets interpreted as a large positive number, but operations are
+   bound to fail in all sorts of horrible ways when a number in the
+   upper-half of the size_t range is passed in -- this number is
+   unrepresentable as an ssize_t, so code that checks to see how many
+   bytes are actually written (which is mandatory if you are dealing
+   with certain types of devices) will get completely screwed up.
+
+   --ben
+*/
+
+typedef enum lstream_buffering
+--------------------------------- snip -------------------------------------
+@end example
+
+@item
+in dumper.c, there are four places, all inside of switch() statements,
+where XD_BYTECOUNT appears twice as a case tag.  In each case, the two
+case blocks contain identical code, and you should *REMOVE THE SECOND*
+and leave the first.
+@end enumerate
+
+@node Text/Char Type Renaming
+@section Text/Char Type Renaming
+@cindex Text/Char Type Renaming
+@cindex type renaming, text/char
+@cindex renaming, text/char types
+
+The purpose of this was
+
+@enumerate
+@item
+To distinguish between ``charptr'' when it refers to operations on
+the pointer itself and when it refers to operations on text
+@item
+To use consistent naming for everything referring to internal format, i.e.
+@end enumerate
+
+@example
+	Itext == text in internal format
+	Ibyte == a byte in such text
+	Ichar == a char as represented in internal character format
+@end example
+
+Thus e.g.
+
+@example
+	set_charptr_emchar -> set_itext_ichar
+@end example
+ 
+This was done using a script like this: 
+
+@example
+files="*.[ch] s/*.h m/*.h config.h.in ../configure.in Makefile.in.in ../lib-src/*.[ch] ../lwlib/*.[ch]"
+gr Intbyte Ibyte $files
+gr INTBYTE IBYTE $files
+gr intbyte ibyte $files
+gr EMCHAR ICHAR $files
+gr emchar ichar $files
+gr Emchar Ichar $files
+gr INC_CHARPTR INC_IBYTEPTR $files
+gr DEC_CHARPTR DEC_IBYTEPTR $files
+gr VALIDATE_CHARPTR VALIDATE_IBYTEPTR $files
+gr valid_charptr valid_ibyteptr $files
+gr CHARPTR ITEXT $files
+gr charptr itext $files
+gr Charptr Itext $files
+@end example
+
+See above for the source to @samp{gr}.
+
+As in the integral-types change, there are pre and post tags before and
+after the change:
+
+@example
+	pre-internal-format-textual-renaming
+	post-internal-format-textual-renaming
+@end example
+
+When merging a large branch, follow the same sort of procedure
+documented above, using these tags -- essentially sync up to the pre
+tag, then apply the script yourself, then sync from the post tag to the
+present.  You can probably do the same if you don't have a separate
+workspace, but do have lots of outstanding changes and you'd rather not
+just merge all the textual changes directly.  Use something like this:
+
+(WARNING: I'm not a CVS guru; before trying this, or any large operation
+that might potentially mess things up, *DEFINITELY* make a backup of
+your existing workspace.)
+
+@example
+cup -r pre-internal-format-textual-renaming
+<apply script>
+cup -A -j post-internal-format-textual-renaming -j HEAD
+@end example
+
+This might also work:
+
+@example
+cup -j pre-internal-format-textual-renaming
+<apply script>
+cup -j post-internal-format-textual-renaming -j HEAD
+@end example
+
+ben
+
+The following is a script to go in the opposite direction:
+
+@example
+files="*.[ch] s/*.h m/*.h config.h.in ../configure.in Makefile.in.in ../lib-src/*.[ch] ../lwlib/*.[ch]"
+
+# Evidently Perl considers _ to be a word char ala \b, even though XEmacs
+# doesn't.  We need to be careful here with ibyte/ichar because of words
+# like Richard, eicharlen(), multibyte, HIBYTE, etc.
+
+gr Ibyte Intbyte $files
+gr '\bIBYTE' INTBYTE $files
+gr '\bibyte' intbyte $files
+gr '\bICHAR' EMCHAR $files
+gr '\bichar' emchar $files
+gr '\bIchar' Emchar $files
+gr '\bIBYTEPTR' CHARPTR $files
+gr '\bibyteptr' charptr $files
+gr '\bITEXT' CHARPTR $files
+gr '\bitext' charptr $files
+gr '\bItext' CHARPTR $files
+
+gr '_IBYTE' _INTBYTE $files
+gr '_ibyte' _intbyte $files
+gr '_ICHAR' _EMCHAR $files
+gr '_ichar' _emchar $files
+gr '_Ichar' _Emchar $files
+gr '_IBYTEPTR' _CHARPTR $files
+gr '_ibyteptr' _charptr $files
+gr '_ITEXT' _CHARPTR $files
+gr '_itext' _charptr $files
+gr '_Itext' _CHARPTR $files
+@end example
+
+@node Rules When Writing New C Code, CVS Techniques, Major Textual Changes, Top
 @chapter Rules When Writing New C Code
 @cindex writing new C code, rules when
 @cindex C code, rules when writing new

@@ -1,5 +1,17 @@
 2002-06-05  Ben Wing  <ben@xemacs.org>
 
+	* README.integral-types: Removed.
+	* README.global-renaming: Added.
+
+	Stuff specific to the integral types rename was moved to the
+	Internals Manual.  The general scripts, suitable for any type
+	of global search-and-replace, were moved to README.global-renaming.
+	(In the internals manual, they need to be munged by replacing @
+	with @@, and this precludes just cutting and pasting from the source
+	file, which is what people are naturally going to do.)
+
+2002-06-05  Ben Wing  <ben@xemacs.org>
+
 	* abbrev.c (abbrev_match_mapper):
 	* abbrev.c (abbrev_oblookup):
 	* abbrev.c (obarray_has_blank_p):
@@ -6054,7 +6066,12 @@
 	* dumper.c: remove duplicate case tag XD_BYTECOUNT, and the
 	accompanying duplicate code, from 4 switchs tatements.
 
-	See README.integral-types in this directory for more details.
+	[[See README.integral-types in this directory for more
+	details.]] --invalid.
+
+	See the Internals Manual, under Major Type Changes, and also
+	README.global-renaming.
+	
 
 2001-09-17  Ben Wing  <ben@xemacs.org>
 

@@ -1,3 +1,13 @@
+2002-06-05  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Top):
+	* internals/internals.texi (The XEmacs Object System (Abstractly Speaking)):
+	* internals/internals.texi (How Lisp Objects Are Represented in C):
+	* internals/internals.texi (Major Textual Changes):
+	* internals/internals.texi (Great Integral Type Renaming):
+	* internals/internals.texi (Text/Char Type Renaming):
+	* internals/internals.texi (files): New.
+
 2002-05-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* custom.texi (The Init File): Rewrite completely.
