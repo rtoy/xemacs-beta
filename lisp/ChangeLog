@@ -1,3 +1,10 @@
+2004-08-15  Jan Rychter <jwr@xemacs.org>
+
+	* window-xemacs.el (really-set-window-configuration): deal
+	gracefully with the case when the buffer previously saved in the
+	configuration (and that we want to switch to) has been
+	killed. Switch to the next buffer on the buffer-list in that case.
+
 2004-08-13  Jerry James  <james@xemacs.org>
 
 	* bytecomp.el (forward-word): Tell the byte compiler the correct

@@ -309,7 +309,10 @@ by `current-window-configuration'."
   (setq window-min-width (window-configuration-min-width configuration))
   (setq window-min-height (window-configuration-min-height configuration))
 
-  (set-buffer (window-configuration-current-buffer configuration)))
+  (let ((buffer (window-configuration-current-buffer configuration)))
+    (if (buffer-live-p buffer)
+	(set-buffer buffer)
+	(set-buffer (car (buffer-list))))))
 
 (defun set-window-configuration-frame-size (configuration)
   "Restore the frame size of a window configuration."
