@@ -145,11 +145,9 @@ int DGifCloseFile(GifFileType *GifFile);
 ******************************************************************************/
 extern void GifSetErrorFunc(GifFileType *GifFile, Gif_error_func func, VoidPtr data);
 extern void GifSetWarningFunc(GifFileType *GifFile, Gif_error_func func, VoidPtr data);
-extern DECLARE_DOESNT_RETURN (GifInternError(GifFileType *GifFile,
-					     int errnum));
+DECLARE_DOESNT_RETURN (GifInternError(GifFileType *GifFile, int errnum));
 extern void GifInternWarning(GifFileType *GifFile, int errnum);
-extern DECLARE_DOESNT_RETURN (GifError(GifFileType *GifFile,
-				       const char *err_str));
+DECLARE_DOESNT_RETURN (GifError(GifFileType *GifFile, const char *err_str));
 extern void GifWarning(GifFileType *GifFile, const char *err_str);
 
 /*****************************************************************************

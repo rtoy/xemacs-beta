@@ -1,5 +1,9 @@
 2004-09-14  Jerry James  <james@xemacs.org>
 
+	* gifrlib.h: Remove redundant extern declarations.
+
+2004-09-14  Jerry James  <james@xemacs.org>
+
 	* doprnt.c (emacs_doprnt_1): Change message to msg to eliminate a
 	gcc shadow warning.
 	* glyphs-gtk.c:
