@@ -1,5 +1,10 @@
 2003-08-18  Jerry James  <james@xemacs.org>
 
+	* bytecode.c (execute_optimized_program): Setting a buffer-local
+	variable with no default binding sets the default.
+
+2003-08-18  Jerry James  <james@xemacs.org>
+
 	* opaque.h: Remove unused (X)OPAQUE_MARKFUN definitions.
 
 2003-08-12  Mike Sperber  <mike@xemacs.org>
