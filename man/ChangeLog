@@ -1,3 +1,8 @@
+2003-09-22  Adrian Aichner  <adrian@xemacs.org>
+
+	* lispref/backups.texi (Reverting): Fix the PRINTED-MANUAL-TITLE
+	argument for a cross reference to  "The XEmacs User's Manual".
+
 2003-08-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi: Update copyright notice.
