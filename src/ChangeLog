@@ -1,3 +1,13 @@
+2001-06-01  Martin Buchholz  <martin@xemacs.org>
+
+	* lisp.h (DECIMAL_PRINT_SIZE): New.
+	* data.c (Fnumber_to_string): Use DECIMAL_PRINT_SIZE
+	* print.c (print_internal): Likewise.
+	* redisplay.c (window_line_number): Likewise.
+	* redisplay.c (decode_mode_spec): Likewise.
+	* tooltalk.c (tt_message_arg_ival_string): Likewise.
+	Fix a bunch of 128-bit bugs; make code more readable && efficient.
+
 2001-05-30  Ben Wing  <ben@xemacs.org>
 
 	* s\cygwin32.h:

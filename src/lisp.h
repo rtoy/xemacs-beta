@@ -2839,7 +2839,15 @@ void write_string_1 (const Bufbyte *, Bytecount, Lisp_Object);
 void print_cons (Lisp_Object, Lisp_Object, int);
 void print_vector (Lisp_Object, Lisp_Object, int);
 void print_string (Lisp_Object, Lisp_Object, int);
+
+/* The number of bytes required to store the decimal printed
+   representation of an integral type.  Add a few bytes for truncation,
+   optional sign prefix, and null byte terminator.
+   2.40824 == log (256) / log (10).  */
+#define DECIMAL_PRINT_SIZE(integral_type) \
+((size_t) (2.40824 * sizeof (integral_type)) + 3)
 void long_to_string (char *, long);
+
 void print_internal (Lisp_Object, Lisp_Object, int);
 void print_symbol (Lisp_Object, Lisp_Object, int);
 void print_float (Lisp_Object, Lisp_Object, int);

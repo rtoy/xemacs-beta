@@ -6626,8 +6626,6 @@ redisplay (void)
 }
 
 
-static char window_line_number_buf[32];
-
 /* Efficiently determine the window line number, and return a pointer
    to its printed representation.  Do this regardless of whether
    line-number-mode is on.  The first line in the buffer is counted as
@@ -6652,9 +6650,13 @@ window_line_number (struct window *w, int type)
 
   line = buffer_line_number (b, pos, 1);
 
-  long_to_string (window_line_number_buf, line + 1);
+  {
+    static char window_line_number_buf[DECIMAL_PRINT_SIZE (long)];
 
-  return window_line_number_buf;
+    long_to_string (window_line_number_buf, line + 1);
+
+    return window_line_number_buf;
+  }
 }
 
 
@@ -6698,7 +6700,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
                     ? BUF_PT (b)
                     : marker_position (w->pointm[type]);
 	int col = column_at_point (b, pt, 1) + !!column_number_start_at_one;
-	char buf[32];
+	char buf[DECIMAL_PRINT_SIZE (long)];
 
 	long_to_string (buf, col);
 

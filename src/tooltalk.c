@@ -520,7 +520,7 @@ tt_opnum_string (int n)
 static Lisp_Object
 tt_message_arg_ival_string (Tt_message m, int n)
 {
-  char buf[32];
+  char buf[DECIMAL_PRINT_SIZE (long)];
   int value;
 
   check_status (tt_message_arg_ival (m, n, &value));

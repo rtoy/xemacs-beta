@@ -1288,7 +1288,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       for (i = 0; i < print_depth; i++)
 	if (EQ (obj, being_printed[i]))
 	  {
-	    char buf[32];
+	    char buf[DECIMAL_PRINT_SIZE (long) + 1];
 	    *buf = '#';
 	    long_to_string (buf + 1, i);
 	    write_c_string (buf, printcharfun);
@@ -1307,9 +1307,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case Lisp_Type_Int_Even:
     case Lisp_Type_Int_Odd:
       {
-	/* ASCII Decimal representation uses 2.4 times as many bits as
-	   machine binary.  */
-	char buf[3 * sizeof (EMACS_INT) + 5];
+	char buf[DECIMAL_PRINT_SIZE (EMACS_INT)];
 	long_to_string (buf, XINT (obj));
 	write_c_string (buf, printcharfun);
 	break;

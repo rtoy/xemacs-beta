@@ -1013,8 +1013,6 @@ NUMBER may be an integer or a floating point number.
 */
        (number))
 {
-  char buffer[VALBITS];
-
   CHECK_INT_OR_FLOAT (number);
 
 #ifdef LISP_FLOAT_TYPE
@@ -1027,8 +1025,12 @@ NUMBER may be an integer or a floating point number.
     }
 #endif /* LISP_FLOAT_TYPE */
 
-  long_to_string (buffer, XINT (number));
-  return build_string (buffer);
+  {
+    char buffer[DECIMAL_PRINT_SIZE (long)];
+
+    long_to_string (buffer, XINT (number));
+    return build_string (buffer);
+  }
 }
 
 static int
