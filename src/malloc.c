@@ -339,7 +339,7 @@ morecore (nu)			/* ask system for more memory */
 {
   char *cp;
   int nblks;
-  unsigned int siz;
+  unsigned long siz;
   int oldmask;
 
 #ifdef BSD
