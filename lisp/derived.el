@@ -220,12 +220,11 @@ The new mode runs the hook constructed by the function
 			 (get (quote ,parent) 'mode-class)))
 					; Set up maps and tables.
 		(unless (keymap-parent ,map)
-		  (set-keymap-parent ,map (current-local-map)))
+		  (set-keymap-parents ,map (list (current-local-map))))
 		,(when declare-syntax
-		   `(let ((parent (char-table-parent ,syntax)))
-		      (unless (and parent
-				   (not (eq parent (standard-syntax-table))))
-			(set-char-table-parent ,syntax (syntax-table)))))))
+		   ;; XEmacs change: we do not have char-table-parent
+		   `(derived-mode-merge-syntax-tables
+		     ,syntax (syntax-table)))))
 
 	  (use-local-map ,map)
 	  ,(when syntax `(set-syntax-table ,syntax))
