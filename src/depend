@@ -226,7 +226,7 @@ sunpro.o: $(LISP_H)
 symbols.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h console-impl.h console.h elhash.h
 syntax.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h extents.h syntax.h
 sysdep.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h console-impl.h console-stream-impl.h console-stream.h console-tty-impl.h console-tty.h console.h device-impl.h device.h devslots.h events.h frame.h intl-auto-encap-win32.h ndir.h process.h redisplay.h scrollbar.h sysdep.h sysdir.h sysfile.h sysproc.h syspwd.h syssignal.h systime.h systty.h syswait.h syswindows.h window.h
-sysdll.o: $(LISP_H) sysdll.h
+sysdll.o: $(LISP_H) intl-auto-encap-win32.h sysdll.h sysfile.h syswindows.h
 termcap.o: $(LISP_H) console.h device.h
 terminfo.o: $(CONFIG_H)
 tests.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h elhash.h lstream.h opaque.h
