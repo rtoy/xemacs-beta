@@ -813,7 +813,11 @@ typedef unsigned long uintptr_t;
 #ifndef DOESNT_RETURN
 # if defined __GNUC__
 #  if ((__GNUC__ > 2) || (__GNUC__ == 2) && (__GNUC_MINOR__ >= 5))
-#   define RETURN_NOT_REACHED(value) DO_NOTHING
+#   if __GNUC__ < 3
+      /* GCC 3.2 -O3 issues complaints in Fcommand_loop_1 about no return
+	 statement if we have this definition */
+#     define RETURN_NOT_REACHED(value) DO_NOTHING
+#   endif
 #   define DOESNT_RETURN void
 #   define DECLARE_DOESNT_RETURN(decl) \
            extern void decl __attribute__ ((noreturn))
@@ -4038,6 +4042,7 @@ void warn_when_safe (Lisp_Object, Lisp_Object, const CIbyte *,
 		     ...) PRINTF_ARGS (3, 4);
 extern int backtrace_with_internal_sections;
 
+extern Lisp_Object Vstack_trace_on_error;
 
 /* Defined in event-stream.c */
 EXFUN (Faccept_process_output, 3);

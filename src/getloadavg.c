@@ -750,7 +750,7 @@ getloadavg (double loadavg[], int nelem)
        : (load_ave.tl_avenrun.l[0] / (double) load_ave.tl_lscale));
 #endif	/* OSF_MIPS */
 
-#if !defined (LDAV_DONE) && (defined (WIN32_NATIVE) || defined (CYGWIN))
+#if !defined (LDAV_DONE) && defined (WIN32_ANY)
 #define LDAV_DONE
 
   /* A faithful emulation is going to have to be saved for a rainy day.  */

@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "frame.h"
 #include "EmacsFrame.h"
-#include <Xm/Xm.h>
+#include "xmotif.h"
 
 #ifndef XIM_MOTIF
 #error  XIM_MOTIF is not defined??

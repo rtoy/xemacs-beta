@@ -1,3 +1,34 @@
+2003-02-19  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.mak (DO_TEMACS): New.
+	* xemacs.mak (DO_XEMACS): New.
+	* xemacs.mak (TEMACS_BATCH):
+	* xemacs.mak (temacs_loadup_args): New.
+	* xemacs.mak (dump_temacs_args): New.
+	* xemacs.mak (run_temacs_args): New.
+	* xemacs.mak (dump_temacs):
+	* xemacs.mak (blddir): Removed.
+	* xemacs.mak (temacs_loadup): Removed.
+	* xemacs.mak (run_temacs): Removed.
+	* xemacs.mak (check):
+	* xemacs.mak (check-temacs):
+	* xemacs.mak (check-features): New.
+	* xemacs.mak (makeinfo-test):
+	* xemacs.mak (LOADPATH): Removed.
+	* xemacs.mak (update-elc):
+	* xemacs.mak (update-elc-2):
+	* xemacs.mak (load-shadows): New.
+	* xemacs.mak (all):
+	* xemacs.mak (OS):
+	Add macros DO_TEMACS, DO_XEMACS, and a few others; this macro
+	section is now completely in sync with src/Makefile.in.in.  Copy
+	check-features, load-shadows, and rebuilding finder-inf.el from
+	src/Makefile.in.in.  The main build/dump/recompile process is now
+	synchronized with src/Makefile.in.in.  Change `WARNING' to `NOTE'
+	and `error checking' to `error-checking' TO avoid tripping
+	faux warnings and errors in the VC++ IDE.
+	
+
 2003-02-16  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.11 "cabbage" is released.

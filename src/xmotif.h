@@ -1,5 +1,5 @@
-/* This file just includes the Motif header file ManagerP.h, but does
-   the necessary magic to do this properly.
+/* This file just includes the Motif header file Xm.h, but does
+   the necessary magic to do this properly without warnings.
 
 This file is part of XEmacs.
 
@@ -20,17 +20,12 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* ManagerP.h doesn't exist in old versions of Motif; the stuff is
-   in XmP.h instead */
+#ifndef INCLUDED_xmotif_h_
+#define INCLUDED_xmotif_h_
 
-#ifndef INCLUDED_xmmanagerp_h_
-#define INCLUDED_xmmanagerp_h_
+/* Kludge around shadowing warnings */
+#define time time_
+#include <Xm/Xm.h>
+#undef time
 
-#include "xmotif.h"	/* to get XmVersion */
-#if (XmVersion >= 1002)
-# include <Xm/ManagerP.h>
-#else
-# include "xmprimitivep.h"
-#endif
-
-#endif /* INCLUDED_xmmanagerp_h_ */
+#endif /* INCLUDED_xmotif_h_ */

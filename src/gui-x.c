@@ -42,7 +42,7 @@ Boston, MA 02111-1307, USA.  */
 #include "gui-x.h"
 
 #ifdef LWLIB_USES_MOTIF
-#include <Xm/Xm.h> /* for XmVersion */
+#include "xmotif.h" /* for XmVersion */
 #endif
 
 /* we need a unique id for each popup menu, dialog box, and scrollbar */

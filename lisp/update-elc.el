@@ -81,7 +81,6 @@
 (let ((build-root (expand-file-name ".." invocation-directory)))
   (setq load-path (list (expand-file-name "lisp" build-root))))
 
-(load "very-early-lisp.el")
 (load "find-paths.el")
 (load "packages.el")
 (load "setup-paths.el")
@@ -108,8 +107,7 @@
     "dumped-lisp.el"
     "dumped-pkg-lisp.el"
     "raw-process.el"
-    "version.el"
-    "very-early-lisp.el")
+    "version.el")
   "Lisp files that should not be byte compiled.")
 
 (defvar lisp-files-ignored-when-checking-for-autoload-updating
@@ -311,13 +309,8 @@
 	      (not need-to-rebuild-mule-autoloads)
 	      (not need-to-recompile-autoloads)
 	      (not need-to-recompile-mule-autoloads))
-	 ;; (1) Nothing to do at all.  BYTECOMPILE_CHANGE is used (only by
-	 ;;     the Unix makefile) to indicate whether some files needed
-	 ;;     for dump got recompiled, and hence the executable must be
-	 ;;     redumped.  We remove it if there were no files to compile.
-	 (condition-case nil
-	     (delete-file "../src/BYTECOMPILE_CHANGE")
-	   (file-error nil)))
+	 ;; (1) Nothing to do at all.
+	 )
 	((not update-elc-files-to-compile)
 	 ;; (2) We have no files to byte-compile, but we do need to
 	 ;;     regenerate and compile the auto-autoloads file, so signal
@@ -328,9 +321,7 @@
 	 (condition-case nil
 	     (write-region-internal "foo" nil "../src/REBUILD_AUTOLOADS")
 	   (file-error nil))
-	 (condition-case nil
-	     (delete-file "../src/BYTECOMPILE_CHANGE")
-	   (file-error nil)))
+	 )
 	(t
 	 (let ((bc-bootstrap
 		(mapcar #'(lambda (arg) 

@@ -262,7 +262,7 @@ valid_console_type_p (Lisp_Object type)
 
 DEFUN ("valid-console-type-p", Fvalid_console_type_p, 1, 1, 0, /*
 Return t if CONSOLE-TYPE is a valid console type.
-Valid types are 'x, 'tty, and 'stream.
+Valid types are 'x, 'tty, 'mswindows, 'gtk, and 'stream.
 */
        (console_type))
 {

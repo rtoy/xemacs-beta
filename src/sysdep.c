@@ -2187,7 +2187,7 @@ total_data_usage (void)
   void *data_start = minimum_address_seen;
 #endif
 
-#if !defined (WIN32_NATIVE) && !defined (CYGWIN)
+#ifndef WIN32_ANY
   void *data_end = sbrk (0);
 #else
   void *data_end = maximum_address_seen;

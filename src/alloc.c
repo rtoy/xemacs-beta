@@ -313,7 +313,9 @@ set_alloc_mins_and_maxes (void *val, Bytecount size)
 
 /* like malloc and realloc but check for no memory left. */
 
+#ifdef ERROR_CHECK_MALLOC
 static int in_malloc;
+#endif
 
 #undef xmalloc
 void *

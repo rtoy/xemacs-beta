@@ -66,8 +66,7 @@
     "^site-start\\.el$"
     "^site-load\\.el$"
     "^site-init\\.el$"
-    "^version\\.el$"
-    "^very-early-lisp\\.el$"))
+    "^version\\.el$"))
 
 (defvar dirfiles-table (make-hash-table :test 'equal))
 

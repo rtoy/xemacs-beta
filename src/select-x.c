@@ -45,7 +45,11 @@ Lisp_Object time_to_lisp (time_t);
 #endif
 
 #ifdef MOTIF_CLIPBOARDS
+# include "xmotif.h"
+/* Kludge around shadowing warnings */
+# define index index_
 # include <Xm/CutPaste.h>
+# undef index
 static void hack_motif_clipboard_selection (Atom selection_atom,
 					    Lisp_Object selection_value,
 					    Time thyme, Display *display,

@@ -1029,7 +1029,7 @@ DECLARE_CODING_SYSTEM_TYPE (gzip);
 
 DECLARE_CODING_SYSTEM_TYPE (unicode);
 
-#ifdef HAVE_WIN32_CODING_SYSTEMS
+#ifdef WIN32_ANY
 DECLARE_CODING_SYSTEM_TYPE (mswindows_multibyte_to_unicode);
 DECLARE_CODING_SYSTEM_TYPE (mswindows_multibyte);
 #endif

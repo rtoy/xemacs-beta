@@ -1,3 +1,48 @@
+2003-02-19  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-msw-init.el:
+	* mule/mule-msw-init.el ('mswindows-multibyte-system-default): Removed.
+	Delete this file.
+
+	* mule/mule-win32-init.el:
+	New file, with stuff from mule-msw-init.el -- not just for MS Windows
+	native,	boys and girls!
+
+	* bytecomp.el (byte-compile-insert-header):
+	Change code inserted to catch trying to load a Mule-only .elc
+	file in a non-Mule XEmacs.  Formerly you got the rather cryptic
+	"The required feature `mule' cannot be provided".  Now you get
+	"Loading this file requires Mule support".
+	
+	* finder.el (finder-compile-keywords):
+	Remove dependency on which directory this function is invoked
+	from.
+
+	* update-elc.el:
+	Don't mess around with ../src/BYTECOMPILE_CHANGE.  Now that
+	Makefile.in.in and xemacs.mak are in sync, both of them use
+	NEEDTODUMP and the other one isn't used.
+
+	* dumped-lisp.el:
+	* dumped-lisp.el (preloaded-file-list):
+	Rewrite in terms of `list' and `nconc' instead of assemble-list, so
+	we can have arbitrary forms, not just `when-feature'.
+
+	* very-early-lisp.el: Nuke this file.
+
+	* finder-inf.el:
+	* packages.el:
+	* update-elc.el:
+	* update-elc-2.el:
+	* loadup.el:
+	* make-docfile.el:
+	Eliminate references to very-early-lisp.
+
+	* msw-glyphs.el:
+	Comment clarification.
+
+2003-02-18  Ben Wing  <ben@xemacs.org>
+
 2003-02-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* mule/mule-charset.el (charsets-in-region): Remove broken

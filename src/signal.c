@@ -292,7 +292,7 @@ int
 qxe_setitimer (int kind, const struct itimerval *itnew,
 	       struct itimerval *itold)
 {
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
+#ifdef WIN32_ANY
   /* setitimer() does not exist on native MS Windows, and appears broken
      on Cygwin.  See win32.c.
      

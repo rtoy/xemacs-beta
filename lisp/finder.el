@@ -153,7 +153,7 @@ Optional arguments are a list of Emacs Lisp directories to compile from; no
 arguments compiles from `load-path'."
   (save-excursion
     ;; XEmacs change
-    (find-file "finder-inf.el")
+    (find-file (expand-file-name "finder-inf.el" lisp-directory))
     (let ((processed nil)
 	  (directory-abbrev-alist
 	   (append

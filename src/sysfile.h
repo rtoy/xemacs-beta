@@ -60,7 +60,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <sys/stat.h>
 
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
+#ifdef WIN32_ANY
 # include <io.h>
 #endif
 
@@ -452,7 +452,7 @@ DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 #endif /* WIN32_NATIVE */
 
 
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
+#ifdef WIN32_ANY
 
 #define DEVICE_SEP ':'
 
@@ -468,13 +468,13 @@ DECLARE_INLINE_HEADER (int IS_ANY_SEP (Ichar c))
   return (c == '/' || c == '\\' || c == ':');
 }
 
-#else /* not (defined (WIN32_NATIVE) || defined (CYGWIN)) */
+#else /* not WIN32_ANY */
 
 #define IS_DEVICE_SEP(c) 0
 #define IS_DIRECTORY_SEP(c) ((c) == DIRECTORY_SEP)
 #define IS_ANY_SEP(c) IS_DIRECTORY_SEP (c)
 
-#endif /* defined (WIN32_NATIVE) || defined (CYGWIN) */
+#endif /* WIN32_ANY */
 
 #endif /* emacs */
 

@@ -1091,20 +1091,20 @@ void sledgehammer_check_ascii_begin (Lisp_Object str);
 /* Make an alloca'd copy of a Lisp string */
 #define LISP_STRING_TO_ALLOCA(s, lval)					\
 do {									\
-  Ibyte **_lta_ = (Ibyte **) &(lval);				\
+  Ibyte **_lta_ = (Ibyte **) &(lval);					\
   Lisp_Object _lta_2 = (s);						\
   *_lta_ = alloca_array (Ibyte, 1 + XSTRING_LENGTH (_lta_2));		\
   memcpy (*_lta_, XSTRING_DATA (_lta_2), 1 + XSTRING_LENGTH (_lta_2));	\
 } while (0)
 
-/* Make an alloca'd copy of a Ibyte * */
+/* Make an alloca'd copy of a Ibyte * */	\
 #define IBYTE_STRING_TO_ALLOCA(p, lval)		\
-do {							\
+do {						\
   Ibyte **_bsta_ = (Ibyte **) &(lval);		\
-  const Ibyte *_bsta_2 = (p);				\
-  Bytecount _bsta_3 = qxestrlen (_bsta_2);		\
+  const Ibyte *_bsta_2 = (p);			\
+  Bytecount _bsta_3 = qxestrlen (_bsta_2);	\
   *_bsta_ = alloca_array (Ibyte, 1 + _bsta_3);	\
-  memcpy (*_bsta_, _bsta_2, 1 + _bsta_3);		\
+  memcpy (*_bsta_, _bsta_2, 1 + _bsta_3);	\
 } while (0)
 
 

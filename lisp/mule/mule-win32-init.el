@@ -1,4 +1,4 @@
-;;; mule-msw-init.el --- initialization code for MS Windows under MULE
+;;; mule-win32-init.el --- initialization code for MS Windows/Cygwin under MULE
 ;;; Copyright (C) 2001, 2002 Ben Wing.
 
 ;; This file is part of XEmacs.

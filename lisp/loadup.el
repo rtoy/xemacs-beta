@@ -93,9 +93,6 @@
 	;; We don't want to have any undo records in the dumped XEmacs.
 	(buffer-disable-undo (get-buffer "*scratch*"))
 
-	;; Load our first bootstrap support
-	(load "very-early-lisp.el")
-
 	;; lread.c (or src/Makefile.in.in) has prepended
 	;; "${srcdir}/../lisp/" to load-path, which is how this file
 	;; has been found.  At this point, enough of XEmacs has been

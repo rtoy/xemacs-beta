@@ -28,6 +28,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/StringDefs.h>
 #include "EmacsManagerP.h"
 #ifdef LWLIB_MENUBARS_MOTIF
+#include "xmotif.h"
 #include <Xm/RowColumn.h>
 #endif /* LWLIB_MENUBARS_MOTIF */
 

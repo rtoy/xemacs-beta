@@ -178,8 +178,7 @@ in dumped-lisp.el and is not itself listed.")
   '("paths.el"
     "dumped-lisp.el"
     "dumped-pkg-lisp.el"
-    "version.el"
-    "very-early-lisp.el")
+    "version.el")
   "Lisp packages that should not be byte compiled.")
 
 

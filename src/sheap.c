@@ -134,21 +134,26 @@ report_sheap_usage (int die_if_pure_storage_exceeded)
 	   (long) (STATIC_HEAP_SIZE / 1024),
 	   (long) STATIC_HEAP_SLOP / 1024);
 
-  if (lost > STATIC_HEAP_SLOP) {
-    sprintf (buf + strlen (buf), " -- %ldk wasted", (long)(lost/1024));
-    if (die_if_pure_storage_exceeded) {
-      sheap_adjust_h(STATIC_HEAP_SLOP - lost);
-      sprintf (buf + strlen (buf), " -- reset to %ldk", 
-	       (long) ((STATIC_HEAP_SIZE + STATIC_HEAP_SLOP - lost) / 1024));
-      rc = -1;
+  if (lost > STATIC_HEAP_SLOP)
+    {
+      sprintf (buf + strlen (buf), " -- %ldk wasted", (long)(lost/1024));
+      if (die_if_pure_storage_exceeded)
+	{
+	  sheap_adjust_h(STATIC_HEAP_SLOP - lost);
+	  sprintf (buf + strlen (buf), " -- reset to %ldk", 
+		   (long) ((STATIC_HEAP_SIZE + STATIC_HEAP_SLOP - lost) /
+			   1024));
+	  rc = -1;
+	}
+      message ("%s\n", buf);
     }
-    message ("%s", buf);
-  }
 
-  if (rc < 0) {
-    unlink("SATISFIED");
-    fatal ("Static heap size adjusted, Don't Panic!  I will restart the `make'");
-  }
+  if (rc < 0)
+    {
+      unlink ("SATISFIED");
+      stderr_out ("Static heap size adjusted, don't panic!  I will restart the `make'\n");
+      exit (0);
+    }
 }
 
 

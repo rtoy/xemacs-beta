@@ -81,7 +81,7 @@ Boston, MA 02111-1307, USA.  */
 #include <setjmp.h>
 
 #ifdef LWLIB_WIDGETS_MOTIF
-#include <Xm/Xm.h>
+#include "xmotif.h"
 #include <Xm/Scale.h>
 #endif
 #include <X11/IntrinsicP.h>

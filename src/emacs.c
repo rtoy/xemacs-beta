@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1992, 1993, 1994
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -268,7 +268,7 @@ version 18.59 released October 31, 1992.
 #include TT_C_H_FILE
 #endif
 
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
+#ifdef WIN32_ANY
 #include "console-msw.h"
 #endif
 
@@ -465,6 +465,8 @@ static void sort_args (int argc, char **argv);
 
 Lisp_Object Qkill_emacs_hook;
 Lisp_Object Qsave_buffers_kill_emacs;
+
+Lisp_Object Qtemacs, Qdumping, Qrestarted, Qpdump, Qbatch;
 
 /* Nonzero if handling a fatal error already. */
 int fatal_error_in_progress;
@@ -678,6 +680,15 @@ argmatch (char **argv, int argc, char *sstr, char *lstr,
     }
 }
 
+static void
+check_compatible_window_system (char *must)
+{
+  if (display_use && strcmp (display_use, must))
+    fatal ("Incompatible window system type `%s': `%s' already specified",
+	   must, display_use);
+  display_use = must;
+}
+
 
 /************************************************************************/
 /*                   main and friends: XEmacs startup                   */
@@ -703,7 +714,6 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
   char stack_bottom_variable;
   int skip_args = 0;
   Lisp_Object load_me;
-  int inhibit_window_system;
 #ifdef NeXT
   extern int malloc_cookie;
 #endif
@@ -730,6 +740,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #endif /* not SYSTEM_MALLOC or HAVE_LIBMCHECK or DOUG_LEA_MALLOC */
 
   noninteractive = 0;
+  display_use = 0;
   inhibit_non_essential_printing_operations = 1;
 
 #ifdef NeXT
@@ -803,12 +814,6 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
   EXTRA_INITIALIZE;
 #endif
 
-#ifdef HAVE_WINDOW_SYSTEM
-  inhibit_window_system = 0;
-#else
-  inhibit_window_system = 1;
-#endif
-
   /* NOTE NOTE NOTE: Keep the following args in sync with the big list of
      arguments below in standard_args[], with the help text in startup.el,
      and with the list of non-clobbered variables near where pdump_load()
@@ -826,35 +831,10 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       exit (0);
     }
 
-  /* Handle the -t switch, which specifies filename to use as terminal */
-  {
-    Extbyte *term;
-    if (argmatch (argv, argc, "-t", "--terminal", 0, &term, &skip_args))
-      {
-	retry_close (0);
-	retry_close (1);
-	if (open (term, O_RDWR | OPEN_BINARY, 2) < 0)
-	  fatal ("%s: %s", term, strerror (errno));
-	dup (0);
-	if (! isatty (0))
-	  fatal ("%s: not a tty", term);
-
-#if 0
-	stderr_out ("Using %s", ttyname (0));
-#endif
-	stderr_out ("Using %s", term);
-	inhibit_window_system = 1;	/* -t => -nw */
-      }
-  }
-
   /* Handle the --no-dump-file/-nd switch, which means don't load the dump
      file (ignored when not using pdump) */
   if (argmatch (argv, argc, "-nd", "--no-dump-file", 0, NULL, &skip_args))
     nodumpfile = 1;
-
-  /* Handle -nw switch */
-  if (argmatch (argv, argc, "-nw", "--no-windows", 0, NULL, &skip_args))
-    inhibit_window_system = 1;
 
   /* Handle the -batch switch, which means don't do interactive display.  */
   if (argmatch (argv, argc, "-batch", "--batch", 0, NULL, &skip_args))
@@ -950,35 +930,85 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 
   /* Now, figure out which type of console is our first console. */
 
-  display_arg = 0;
-
   if (noninteractive)
     display_use = "stream";
-  else
-    display_use = "tty";
 
+  if (argmatch (argv, argc, "-nw", "--no-windows", 0, NULL, &skip_args) ||
+      argmatch (argv, argc, "-tty", "--use-tty", 0, NULL, &skip_args))
+    {
+      check_compatible_window_system ("tty");
 #ifndef HAVE_TTY
-  if (inhibit_window_system)
-    fatal ("Sorry, this XEmacs was not compiled with TTY support");
+      fatal ("Sorry, this XEmacs was not compiled with TTY support");
+#endif
+    }
+
+  if (argmatch (argv, argc, "-x", "--use-x", 0, NULL, &skip_args))
+    {
+      check_compatible_window_system ("x");
+#ifndef HAVE_X_WINDOWS
+      fatal ("Sorry, this XEmacs was not compiled with X support");
+#endif
+    }
+
+  if (argmatch (argv, argc, "-gtk", "--use-gtk", 0, NULL, &skip_args) ||
+      argmatch (argv, argc, "-gnome", "--use-gnome", 0, NULL, &skip_args))
+    {
+      check_compatible_window_system ("gtk");
+#ifndef HAVE_GTK
+      fatal ("Sorry, this XEmacs was not compiled with GTK support");
+#endif
+    }
+
+  if (argmatch (argv, argc, "-msw", "--use-ms-windows", 0, NULL, &skip_args))
+    {
+      check_compatible_window_system ("mswindows");
+#ifndef HAVE_MS_WINDOWS
+      fatal ("Sorry, this XEmacs was not compiled with MS Windows support");
+#endif
+    }
+
+  /* Handle other switches implying particular window systems: */
+
+  /* Handle the -t switch, which specifies filename to use as terminal */
+  {
+    Extbyte *term;
+    if (argmatch (argv, argc, "-t", "--terminal", 0, &term, &skip_args))
+      {
+	check_compatible_window_system ("tty");
+#ifndef HAVE_TTY
+	fatal ("Sorry, this XEmacs was not compiled with TTY support");
 #endif
 
-#ifdef HAVE_WINDOW_SYSTEM
+	retry_close (0);
+	retry_close (1);
+	if (open (term, O_RDWR | OPEN_BINARY, 2) < 0)
+	  fatal ("%s: %s", term, strerror (errno));
+	dup (0);
+	if (! isatty (0))
+	  fatal ("%s: not a tty", term);
+
+#if 0
+	stderr_out ("Using %s", ttyname (0));
+#endif
+	stderr_out ("Using %s", term);
+      }
+  }
+
   /* Stupid kludge to catch command-line display spec.  We can't
      handle this argument entirely in window-system-dependent code
      because we don't even know which window-system-dependent code
      to run until we've recognized this argument.  */
-  if (!inhibit_window_system && !noninteractive)
-    {
+  {
 #ifdef HAVE_X_WINDOWS
-      char *dpy = 0;
-      int count_before = skip_args;
+    char *dpy = 0;
+    int count_before = skip_args;
 
-      if (argmatch (argv, argc, "-d", "--display", 3, &dpy, &skip_args) ||
-	  argmatch (argv, argc, "-display", 0,     3, &dpy, &skip_args))
-	{
-	  display_arg = 1;
-	  display_use = "x";
-	}
+    if (argmatch (argv, argc, "-d", "--display", 3, &dpy, &skip_args) ||
+	argmatch (argv, argc, "-display", 0,     3, &dpy, &skip_args))
+      {
+	check_compatible_window_system ("x");
+	display_arg = 1;
+      }
       /* If we have the form --display=NAME,
 	 convert it into  -d name.
 	 This requires inserting a new element into argv.  */
@@ -1003,27 +1033,43 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 
       /* Don't actually discard this arg.  */
       skip_args = count_before;
-
-      /* If there is a non-empty environment var DISPLAY, set
-         `display_use', but not `display_arg', which is only to be set
-         if the display was specified on the command line. */
-      if ((dpy = getenv ("DISPLAY")) && dpy[0])
-	display_use = "x";
-
 #endif /* HAVE_X_WINDOWS */
-#ifdef HAVE_GTK
-      {
-	char *dpy = getenv ("DISPLAY");
-	if (dpy && dpy[0])
-	  display_use = "gtk";
-      }
+  }
+
+  /* If no switch telling us which window system to use, try other
+     possibilities: */
+
+#if defined (HAVE_X_WINDOWS) || defined (HAVE_GTK)
+  if (!display_use)
+    {
+      char *dpy;
+      /* If there is a non-empty environment var DISPLAY, assume X or GTK,
+	 but don't set `display_arg', which is only to be set if the
+	 display was specified on the command line. */
+      if ((dpy = getenv ("DISPLAY")) && dpy[0])
+#ifdef HAVE_X_WINDOWS
+	/* #### Who gets precedence?  X or GTK?  For the moment, GTK support is
+	   unstable so use X.  Maybe eventually we will switch this. */
+	display_use = "x";
+#else
+	display_use = "gtk";
 #endif
-#ifdef HAVE_MS_WINDOWS
-      if (strcmp (display_use, "x") != 0)
-	display_use = "mswindows";
-#endif /* HAVE_MS_WINDOWS */
     }
-#endif /* HAVE_WINDOW_SYSTEM */
+#endif /* defined (HAVE_X_WINDOWS) || defined (HAVE_GTK) */
+
+#ifdef HAVE_MS_WINDOWS
+  if (!display_use)
+    display_use = "mswindows";
+#endif /* HAVE_MS_WINDOWS */
+
+#ifdef HAVE_TTY
+  if (!display_use)
+    display_use = "tty";
+#endif /* HAVE_MS_WINDOWS */
+
+  if (!display_use)
+    fatal ("No window systems and no TTY's in this XEmacs: Must specify "
+	   "-batch");
 
   noninteractive1 = noninteractive;
 
@@ -1069,7 +1115,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 				       As early as possible, of course,
 				       so we can be fairly accurate. */
 
-#ifdef HAVE_WIN32_CODING_SYSTEMS
+#ifdef WIN32_ANY
   init_win32_very_early ();
 #endif
 #ifdef HAVE_MS_WINDOWS
@@ -1137,7 +1183,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       inhibit_site_modules   = inhibit_site_modules_save;
 
       if (initialized)
-	run_temacs_argc = -1;
+	run_temacs_argc = restart ? -2 : -1;
       else
 	purify_flag = 1;
     }
@@ -1373,7 +1419,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       syms_of_dired_mswindows ();
       syms_of_nt ();
 #endif
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
+#ifdef WIN32_ANY
       syms_of_win32 ();
 #endif
 
@@ -1391,7 +1437,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #endif /* HAVE_CANNA */
 #endif /* MULE */
 
-#ifdef HAVE_WIN32_CODING_SYSTEMS
+#ifdef WIN32_ANY
       syms_of_intl_win32 ();
 #endif
 
@@ -1556,7 +1602,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 
       coding_system_type_create ();
       coding_system_type_create_unicode ();
-#ifdef HAVE_WIN32_CODING_SYSTEMS
+#ifdef WIN32_ANY
       coding_system_type_create_intl_win32 ();
 #endif
 #ifdef MULE
@@ -1751,7 +1797,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       vars_of_indent ();
       vars_of_insdel ();
       vars_of_intl ();
-#ifdef HAVE_WIN32_CODING_SYSTEMS
+#ifdef WIN32_ANY
       vars_of_intl_win32 ();
 #endif
 #ifdef HAVE_XIM
@@ -1813,7 +1859,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #endif
       vars_of_undo ();
       vars_of_window ();
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
+#ifdef WIN32_ANY
       vars_of_win32 ();
 #endif
 
@@ -1967,7 +2013,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 	 complex_vars_of_(), for example if a charset appears anywhere,
 	 then we suddenly have dependence on the previous call. */
       complex_vars_of_file_coding ();
-#ifdef HAVE_WIN32_CODING_SYSTEMS
+#ifdef WIN32_ANY
       complex_vars_of_intl_win32 ();
 #endif
 
@@ -2089,7 +2135,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 
       reinit_coding_system_type_create ();
       reinit_coding_system_type_create_unicode ();
-#ifdef HAVE_WIN32_CODING_SYSTEMS
+#ifdef WIN32_ANY
       reinit_coding_system_type_create_intl_win32 ();
 #endif
 #ifdef MULE
@@ -2205,7 +2251,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
      to be done both at dump time and at run time.  Some will be done
      only at run time, by querying the `initialized' variable. */
 
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
+#ifdef WIN32_ANY
   init_intl_win32 (); /* Under Windows, determine whether we use Unicode
 			 or ANSI to call the system routines -- i.e.
 			 determine what the coding system `mswindows-tstr'
@@ -2258,7 +2304,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #ifdef SUNPRO
   init_sunpro (); /* Set up Sunpro usage tracking */
 #endif
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
+#ifdef WIN32_ANY
   init_win32 ();
 #endif
 #if defined (HAVE_NATIVE_SOUND) && defined (hp9000s800)
@@ -2374,9 +2420,7 @@ static const struct standard_args standard_args[] =
   /* Handled by main_1 above: Each must have its own priority and must be
      in the order mentioned in main_1. */
   { "-sd", "--show-dump-id", 105, 0 },
-  { "-t", "--terminal", 100, 1 },
   { "-nd", "--no-dump-file", 95, 0 },
-  { "-nw", "--no-windows", 90, 0 },
   { "-batch", "--batch", 88, 0 },
 #ifdef WIN32_NATIVE
   { "-mswindows-termination-handle", 0, 84, 1 },
@@ -2391,8 +2435,15 @@ static const struct standard_args standard_args[] =
   { "-help", "--help", 72, 0 },
   { "-version", "--version", 70, 0 },
   { "-V", 0, 68, 0 },
-  { "-d", "--display", 66, 1 },
-  { "-display", 0, 64, 1 },
+  { "-nw", "--no-windows", 66, 0 },
+  { "-tty", "--use-tty", 65, 0 },
+  { "-x", "--use-x", 64, 0 },
+  { "-gtk", "--use-gtk", 63, 0 },
+  { "-gnome", "--use-gnome", 62, 0 },
+  { "-msw", "--use-ms-windows", 61, 0 },
+  { "-t", "--terminal", 58, 1 },
+  { "-d", "--display", 57, 1 },
+  { "-display", 0, 56, 1 },
 
   /* Handled by command-line-early in startup.el: */
   { "-q", "--no-init-file", 50, 0 },
@@ -2560,7 +2611,8 @@ sort_args (int argc, char **argv)
       if (best < 0)
 	abort ();
 
-      /* Copy the highest priority remaining option, with its args, to NEW_ARGV.  */
+      /* Copy the highest priority remaining option, with its args, to
+	 NEW_ARGV.  */
       new_argv[to++] = argv[best];
       for (i = 0; i < options[best]; i++)
 	new_argv[to++] = argv[best + i + 1];
@@ -2585,6 +2637,48 @@ becomes false once `run-emacs-from-temacs' is run.
        ())
 {
   return run_temacs_argc >= 0 ? Qt : Qnil;
+}
+
+DEFUN ("emacs-run-status", Femacs_run_status, 0, 0, 0, /*
+Plist of values indicating the current run status of this XEmacs.
+Currently defined values:
+
+`temacs'
+  If non-nil, we are running a "raw temacs" (no dump data is present
+  and `run-emacs-from-temacs' not called). (same as `running-temacs-p')
+
+`dumping'
+  If non-nil, we are in the process of creating dump data. (same as
+  `purify-flag')
+
+`restarted'
+  If non-nil, `run-emacs-from-temacs' was called.
+
+`pdump'
+  If non-nil, we were compiled with pdump (portable dumping) support.
+
+`batch'
+  If non-nil, we are running non-interactively. (same as `noninteractive')
+*/
+       ())
+{
+  Lisp_Object plist = Qnil;
+
+#define ADD_PLIST(key, val) plist = Fcons (val, Fcons (key, plist))
+  if (run_temacs_argc >= 0)
+    ADD_PLIST (Qtemacs, Qt);
+  if (purify_flag)
+    ADD_PLIST (Qdumping, Qt);
+  if (run_temacs_argc == -2)
+    ADD_PLIST (Qrestarted, Qt);
+#ifdef PDUMP
+    ADD_PLIST (Qpdump, Qt);
+#endif
+    if (noninteractive)
+    ADD_PLIST (Qbatch, Qt);
+
+#undef ADD_PLIST
+    return Fnreverse (plist);
 }
 
 DEFUN ("run-emacs-from-temacs", Frun_emacs_from_temacs, 0, MANY, 0, /*
@@ -2654,6 +2748,12 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
 #if defined (HEAP_IN_DATA) && !defined (PDUMP)
   report_sheap_usage (0);
 #endif
+
+  /* run-temacs usually only occurs as a result of building, and in all such
+     cases we want a backtrace, even if it occurs very early. */
+  if (NILP (Vstack_trace_on_error))
+    Vstack_trace_on_error = Qt;
+
   LONGJMP (run_temacs_catch, 1);
   RETURN_NOT_REACHED (Qnil);
 }
@@ -2750,7 +2850,7 @@ main (int argc, char **argv, char **envp)
       {
 	extern char **_environ;
 	if ((unsigned) environ == 0)
-	  environ=_environ;
+	  environ = _environ;
       }
 #endif /* _SCO_DS */
       vol_envp = environ;
@@ -2787,7 +2887,7 @@ main (int argc, char **argv, char **envp)
     }
 #endif /* DOUG_LEA_MALLOC */
 
-  run_temacs_argc = -1;
+  run_temacs_argc = -2;
 
   main_1 (vol_argc, vol_argv, vol_envp, restarted);
 
@@ -2984,7 +3084,7 @@ debug_break (void)
   debugging_breakpoint ();
 }
 
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
+#ifdef WIN32_ANY
 
 /* Return whether all bytes in the specified memory block can be read. */
 int
@@ -2993,7 +3093,7 @@ debug_can_access_memory (void *ptr, Bytecount len)
   return !IsBadReadPtr (ptr, len);
 }
 
-#else /* !(defined (WIN32_NATIVE) || defined (CYGWIN)) */
+#else /* !WIN32_ANY */
 
 /* #### There must be a better way!!!! */
 
@@ -3041,7 +3141,7 @@ debug_can_access_memory (void *ptr, Bytecount len)
   return retval;
 }
 
-#endif /* defined (WIN32_NATIVE) || defined (CYGWIN) */
+#endif /* WIN32_ANY */
 
 #ifdef DEBUG_XEMACS
 
@@ -3082,7 +3182,7 @@ pause_so_user_can_read_messages (int allow_further)
 {
   static int already_paused;
 
-  if (already_paused || !noninteractive)
+  if (already_paused)
     return;
   if (!allow_further)
     already_paused = 1;
@@ -3090,7 +3190,11 @@ pause_so_user_can_read_messages (int allow_further)
      user to see this message.  This may be unnecessary, but can't hurt,
      and we can't necessarily check arg; e.g. xemacs --help kills with
      argument 0. */
-  if (mswindows_message_outputted)
+  if (mswindows_message_outputted &&
+      /* noninteractive, we always show the box.  Else,
+	 do it when there is not yet an initial frame -- in such case,
+	 XEmacs will just die immediately and we wouldn't see anything. */
+      (noninteractive || NILP (Fselected_frame (Qnil))))
     Fmswindows_message_box
       (build_msg_string ("Messages outputted.  XEmacs is exiting."),
        Qnil, Qnil);
@@ -3704,6 +3808,7 @@ syms_of_emacs (void)
 
   DEFSUBR (Frun_emacs_from_temacs);
   DEFSUBR (Frunning_temacs_p);
+  DEFSUBR (Femacs_run_status);
   DEFSUBR (Finvocation_name);
   DEFSUBR (Finvocation_directory);
   DEFSUBR (Fkill_emacs);
@@ -3721,6 +3826,12 @@ syms_of_emacs (void)
 
   DEFSYMBOL (Qkill_emacs_hook);
   DEFSYMBOL (Qsave_buffers_kill_emacs);
+
+  DEFSYMBOL (Qtemacs);
+  DEFSYMBOL (Qdumping);
+  DEFSYMBOL (Qrestarted);
+  DEFSYMBOL (Qpdump);
+  DEFSYMBOL (Qbatch);
 }
 
 /* Yuck!  These variables may get set from command-line options when

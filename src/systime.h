@@ -266,12 +266,12 @@ struct itimerval
 
 #endif /* WIN32_NATIVE */
 
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
+#ifdef WIN32_ANY
 
 int mswindows_setitimer (int kind, const struct itimerval *itnew,
 			 struct itimerval *itold);
 
-#endif /* defined (WIN32_NATIVE) || defined (CYGWIN) */
+#endif /* WIN32_ANY */
 
 /* #### Move this comment elsewhere when we figure out the place.
 

@@ -2288,7 +2288,7 @@ unicode_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
 int
 dfc_coding_system_is_unicode (Lisp_Object codesys)
 {
-#ifdef HAVE_WIN32_CODING_SYSTEMS
+#ifdef WIN32_ANY
   codesys = Fget_coding_system (codesys);
   return (EQ (XCODING_SYSTEM_TYPE (codesys), Qunicode) &&
 	  XCODING_SYSTEM_UNICODE_TYPE (codesys) == UNICODE_UTF_16 &&

@@ -1006,10 +1006,6 @@ extern "C" {
    merge the two. */
 #define USE_C_FONT_LOCK
 
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
-# define HAVE_WIN32_CODING_SYSTEMS
-#endif
-
 #ifdef ERROR_CHECK_ALL
 #define ERROR_CHECK_EXTENTS
 #define ERROR_CHECK_TYPES

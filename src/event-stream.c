@@ -131,11 +131,11 @@ Lisp_Object Vmodifier_keys_sticky_time;
 /* Here FSF Emacs 20.7 defines Vpost_command_idle_hook,
    post_command_idle_delay, Vdeferred_action_list, and
    Vdeferred_action_function, but we don't because that stuff is crap,
-   and we're smarter than them, and their momas are fat. */
+   and we're smarter than them, and their mommas are fat. */
 
 /* FSF Emacs 20.7 also defines Vinput_method_function,
    Qinput_method_exit_on_first_char and Qinput_method_use_echo_area.
-   I don't know this should be imported or not. */
+   I don't know whether this should be imported or not. */
 
 /* Non-nil disable property on a command means
    do not execute it; call disabled-command-hook's value instead. */
@@ -2259,9 +2259,11 @@ The returned event will be one of the following types:
      #### I used to conditionalize on in_modal_loop but that fails utterly
      because event-msw.c specifically calls Fnext_event() inside of a modal
      loop to clear the dispatch queue. --ben */
+#ifdef HAVE_MENUBARS
   if (in_menu_callback)
     invalid_operation ("Attempt to call next-event inside menu callback",
 		       Qunbound);
+#endif /* HAVE_MENUBARS */
 
   PROFILE_RECORD_ENTERING_SECTION (Qnext_event);
 

@@ -30,7 +30,7 @@
 
 ;; Initialization code for MS Windows glyphs.
 
-;; This file is dumped with XEmacs (when MS Windows support is
+;; This file is dumped with XEmacs (when MS Windows display support is
 ;; compiled in). Make sure this is the first of msw-*.el files
 ;; dumped.
 

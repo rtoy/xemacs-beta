@@ -1046,32 +1046,38 @@ $(OUTDIR)\temacs.res: $(NT)\xemacs.rc
 
 
 PROGNAME = $(TEMACS_DIR)\xemacs.exe
+DO_TEMACS = "$(LIB_SRC)\i" "$(TEMACS)"
+DO_XEMACS = "$(LIB_SRC)\i" "$(PROGNAME)"
+
 BATCH = -no-packages -batch
 BATCH_PACKAGES = -vanilla -batch
-TEMACS_BATCH = "$(LIB_SRC)\i" "$(TEMACS)" $(BATCH)
-XEMACS_BATCH = "$(LIB_SRC)\i" "$(PROGNAME)" $(BATCH)
-XEMACS_BATCH_PACKAGES = "$(LIB_SRC)\i" "$(PROGNAME)" $(BATCH_PACKAGES)
-
+TEMACS_BATCH = $(DO_TEMACS) -nd $(BATCH)
+XEMACS_BATCH = $(DO_XEMACS) $(BATCH)
+XEMACS_BATCH_PACKAGES = $(DO_XEMACS) $(BATCH_PACKAGES)
+temacs_loadup_args = -l $(LISP)/loadup.el
+dump_temacs_args   = $(temacs_loadup_args) dump
+run_temacs_args = $(temacs_loadup_args) run-temacs
+dump_temacs = $(TEMACS_BATCH) $(dump_temacs_args)
 
 # Section handling automated tests starts here
 
-blddir=$(MAKEDIR:\=\\)\\..
-temacs_loadup=
-dump_temacs   = $(temacs_loadup) dump
-run_temacs    = $(temacs_loadup) run-temacs
 ## We have automated tests!!
-testdir=../tests/automated
-batch_test_emacs=$(BATCH_PACKAGES) -l $(testdir)/test-harness.el -f batch-test-emacs $(testdir)
+testdir = ../tests/automated
+batch_test_emacs = $(BATCH_PACKAGES) -l $(testdir)/test-harness.el -f batch-test-emacs $(testdir)
 
 # .PHONY: check check-temacs
 
 check:
 	cd $(TEMACS_DIR)
-	$(PROGNAME) $(batch_test_emacs)
+	$(DO_XEMACS) $(batch_test_emacs)
 
 check-temacs:
 	cd $(TEMACS_DIR)
-	$(TEMACS_BATCH) -l $(LISP)/loadup.el run-temacs $(batch_test_emacs)
+	$(TEMACS_BATCH) $(run_temacs_args) $(batch_test_emacs)
+
+check-features: all
+	cd $(TEMACS_DIR)
+	$(XEMACS_BATCH) -l check-features.el
 
 # Section handling automated tests ends here
 
@@ -1285,8 +1291,8 @@ if exist "$(MAKEINFO)" goto test_done
 @echo XEmacs 'info' cannot be built!
 @echo Install XEmacs package 'texinfo' (see README.packages).
 :suggest_makeinfo
-@echo Consider specifying path to makeinfo program: MAKEINFO=path
-@echo as this will build info docs faster than XEmacs using 'texinfo'.
+@echo Consider specifying path to 'makeinfo' in config.inc.
+@echo as this will build the info docs much faster than XEmacs using 'texinfo'.
 @if errorlevel 1 exit 1
 :test_done
 <<NOKEEP
@@ -1294,10 +1300,6 @@ if exist "$(MAKEINFO)" goto test_done
 # Section handling info ends here
 
 #------------------------------------------------------------------------------
-
-# LISP bits 'n bobs
-
-LOADPATH=$(LISP)
 
 # Rebuild docfile target
 
@@ -1323,11 +1325,23 @@ update-elc:
 	cd $(TEMACS_DIR)
 	$(TEMACS_BATCH) -l $(LISP)\update-elc.el
 
-# Update out-of-date .elcs, other than needed for dumping.
+## Update out-of-date .elcs, other than needed for dumping.
 update-elc-2:
 	$(XEMACS_BATCH) -no-autoloads -l update-elc-2.el -f batch-update-elc-2 $(LISP)
 
-# This file is touched by update-elc.el when redumping is necessary.
+$(LISP)/finder-inf.el:
+	@echo Building finder database ...
+	$(XEMACS_BATCH)	-eval "(setq finder-compile-keywords-quiet t)" \
+		-l finder -f finder-compile-keywords
+	@echo Building finder database ...(done)
+
+load-shadows:
+!if !$(QUICK_BUILD)
+	@echo Testing for Lisp shadows ...
+	@$(XEMACS_BATCH) -f list-load-path-shadows
+!endif
+
+## This file is touched by update-elc.el when redumping is necessary.
 $(TEMACS_DIR)\NEEDTODUMP :
 	@echo >$(TEMACS_DIR)\NEEDTODUMP
 
@@ -1351,7 +1365,7 @@ $(PROGNAME) : $(TEMACS) $(TEMACS_DIR)\NEEDTODUMP
 # use this rule to build the complete system
 all:	installation $(OUTDIR)\nul $(LASTFILE) $(LWLIB) \
 	$(LIB_SRC_TOOLS) $(TEMACS) update-elc $(DOC) $(PROGNAME) \
-	update-elc-2 info
+	update-elc-2 $(LISP)/finder-inf.el load-shadows info
 
 temacs: $(LASTFILE) $(TEMACS)
 
@@ -1499,20 +1513,20 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
 !endif
 !if $(HAVE_GTK)
   --------------------------------------------------------------------
-  WARNING: You specified HAVE_GTK=1, but we are compiling WITHOUT GTK support.
-  WARNING: gtk-xemacs is not currently supported on MS Windows (mingw or msvc).
-  WARNING: Yes, we know that gtk has been ported to native MS Windows, but
-  WARNING: XEmacs is not yet ready to use that port.
+  NOTE: You specified HAVE_GTK=1, but we are compiling WITHOUT GTK support.
+  NOTE: gtk-xemacs is not currently supported on MS Windows (mingw or msvc).
+  NOTE: Yes, we know that gtk has been ported to native MS Windows, but
+  NOTE: XEmacs is not yet ready to use that port.
   --------------------------------------------------------------------
 !endif
 !if $(HAVE_XPM)
   Compiling in support for XPM images.
 !else
   --------------------------------------------------------------------
-  WARNING: Compiling without XPM support.
-  WARNING: You should strongly consider installing XPM.
-  WARNING: Otherwise toolbars and other graphics will look suboptimal.
-  WARNING: (a copy may be found in ftp://ftp.xemacs.org/pub/xemacs/aux)
+  NOTE: Compiling without XPM support.
+  NOTE: You should strongly consider installing XPM.
+  NOTE: Otherwise toolbars and other graphics will look suboptimal.
+  NOTE: (a copy may be found in ftp://ftp.xemacs.org/pub/xemacs/aux)
   --------------------------------------------------------------------
 !endif
 !if $(HAVE_GIF)
@@ -1522,10 +1536,10 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
   Compiling in support for PNG images.
 !else
   --------------------------------------------------------------------
-  WARNING: Compiling without PNG image support.
-  WARNING: You should strongly consider installing the PNG libraries.
-  WARNING: Otherwise certain images and glyphs may not display.
-  WARNING: (a copy may be found in ftp://ftp.xemacs.org/pub/xemacs/aux
+  NOTE: Compiling without PNG image support.
+  NOTE: You should strongly consider installing the PNG libraries.
+  NOTE: Otherwise certain images and glyphs may not display.
+  NOTE: (a copy may be found in ftp://ftp.xemacs.org/pub/xemacs/aux
   --------------------------------------------------------------------
 !endif
 !if $(HAVE_TIFF)
@@ -1554,12 +1568,12 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
 !endif
 !if $(USE_UNION_TYPE)
   Using union type for Lisp object storage.
-  WARNING: ---------------------------------------------------------
-  WARNING: This tends to trigger compiler bugs, especially when combined
-  WARNING: with MULE and ERROR_CHECKING.  Crashes in pdump have recently
-  WARNING: been observed using Visual C++ in combination with union type,
-  WARNING: MULE, and ERROR_CHECKING.
-  WARNING: ---------------------------------------------------------
+  NOTE: ---------------------------------------------------------
+  NOTE: This tends to trigger compiler bugs, especially when combined
+  NOTE: with MULE and ERROR_CHECKING.  Crashes in pdump have recently
+  NOTE: been observed using Visual C++ in combination with union type,
+  NOTE: MULE, and ERROR_CHECKING.
+  NOTE: ---------------------------------------------------------
 !endif
 !if $(USE_PORTABLE_DUMPER)
   Using portable dumper.
@@ -1572,11 +1586,11 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
 !endif
 !if $(ERROR_CHECK_ALL)
   Compiling in extra internal error-checking.
-  WARNING: ---------------------------------------------------------
-  WARNING: Compiling in support for runtime error checking.
-  WARNING: XEmacs will run noticeably more slowly as a result.
-  WARNING: Error checking is on by default for XEmacs beta releases.
-  WARNING: ---------------------------------------------------------
+  NOTE: ---------------------------------------------------------
+  NOTE: Compiling in support for runtime error-checking.
+  NOTE: XEmacs will run noticeably more slowly as a result.
+  NOTE: Error-checking is on by default for XEmacs beta releases.
+  NOTE: ---------------------------------------------------------
 !endif
 !if $(DEBUG_XEMACS)
   Compiling in debugging support (no slowdown).

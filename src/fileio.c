@@ -55,7 +55,7 @@ Boston, MA 02111-1307, USA.  */
 #endif /* HPUX_PRE_8_0 */
 #endif /* HPUX */
 
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
+#ifdef WIN32_ANY
 #define WIN32_FILENAMES
 #include "syswindows.h"
 #define IS_DRIVE(x) isalpha (x)

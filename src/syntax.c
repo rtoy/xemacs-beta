@@ -646,7 +646,7 @@ syntax table.
        (character, syntax_table))
 {
   Lisp_Object mirrortab;
-  int code;
+  enum syntaxcode code;
 
   CHECK_CHAR_COERCE_INT (character);
   syntax_table = check_syntax_table (syntax_table,
@@ -889,7 +889,8 @@ find_start_of_comment (struct buffer *buf, Charbpos from, Charbpos stop,
 		int prev_syncode;
 		UPDATE_SYNTAX_CACHE_BACKWARD (scache, from - 1);
 		prev_syncode =
-		  SYNTAX_CODE_FROM_CACHE (scache, BUF_FETCH_CHAR (buf, from - 1));
+		  SYNTAX_CODE_FROM_CACHE (scache,
+					  BUF_FETCH_CHAR (buf, from - 1));
 
 		if (SYNTAX_CODES_END_P (prev_syncode, syncode))
 		  {
@@ -913,7 +914,8 @@ find_start_of_comment (struct buffer *buf, Charbpos from, Charbpos stop,
 		int prev_syncode;
 		UPDATE_SYNTAX_CACHE_BACKWARD (scache, from - 1);
 		prev_syncode =
-		  SYNTAX_CODE_FROM_CACHE (scache, BUF_FETCH_CHAR (buf, from - 1));
+		  SYNTAX_CODE_FROM_CACHE (scache,
+					  BUF_FETCH_CHAR (buf, from - 1));
 
 		if (SYNTAX_CODES_START_P (prev_syncode, syncode))
 		  {

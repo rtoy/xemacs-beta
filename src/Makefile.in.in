@@ -3,7 +3,7 @@
 ##   Copyright (C) 1994, 1995 Board of Trustees, University of Illinois
 ##   Copyright (C) 1996, 1997 Sun Microsystems, Inc.
 ##   Copyright (C) 1998, 1999 J. Kean Johnston.
-##   Copyright (C) 2001, 2002 Ben Wing.
+##   Copyright (C) 2001, 2002, 2003 Ben Wing.
 
 ## This file is part of XEmacs.
 
@@ -24,6 +24,9 @@
 
 ## Synched up with: Not synched with FSF.
 
+.PHONY: all
+all: build-the-mofo
+
 PROGNAME=@PROGNAME@
 
 #define NOT_C_CODE
@@ -37,9 +40,6 @@ DUMP_ID     = dump-id.o
 DUMP_TARGET = ${PROGNAME}
 EXE_TARGET  = temacs
 #endif
-
-all: ${DUMP_TARGET}
-.PHONY : all release dump-elc dump-elcs all-elc all-elcs lint
 
 ## For performance and consistency, no built-in rules.
 .SUFFIXES:
@@ -133,15 +133,15 @@ X11_libs = $(LIBI18N)
 
 #########################################################################
 
-## Object files needed for compilation.
+## Object files needed for compilation, and other rebuilt files.
 
-## NOTE: Some of the object files are specified in this file, and
-## others in configure.in.  The general rule is that they be specified
-## here whenever they have clear dependencies on configure defines.
-## They should be in configure.in when there is no configure define or
-## when there is extremely hairy code to determine which files are
-## needed (e.g. native sound support) and it would be pointless to
-## duplicate that code.
+## NOTE: Some of the object files are specified in this file, and others in
+## configure.in.  The general rule is that they be specified here whenever
+## possible -- in practice, that means that they have clear dependencies on
+## configure defines.  They should be in configure.in when there is no
+## configure define or when there is extremely hairy code to determine
+## which files are needed (e.g. native sound support) and it would be
+## pointless to duplicate that code.
 
 gui_objs= gui.o
 #ifdef HAVE_MENUBARS
@@ -377,49 +377,6 @@ malloclib = -ldmalloc
 # ifdef EXTERNAL_WIDGET
 external_widget_objs = ExternalShell.o extw-Xt-nonshared.o extw-Xlib-nonshared.o
 
-## Now we try to figure out how to link a shared library.
-## If we cannot figure it out, leave EXTW_LINK undefined and a shared
-## library will not be created.
-
-# ifdef USE_GCC
-#  ifdef USG5
-#   define EXTW_LINK(objs, output) $(CC) -shared objs -Xlinker -z -Xlinker text -o output
-extw_link_beg = $(CC) -shared
-extw_link_mid = -Xlinker -z -Xlinker text -o
-extw_link_end =
-## I cannot figure out how to do shared a.out libraries, so just punt.
-#  elif !defined (LINUX) || defined (__ELF__)
-#   define EXTW_LINK(objs, output) $(CC) -shared objs -o output
-extw_link_beg = $(CC) -shared
-extw_link_mid = -o
-extw_link_end =
-#  endif
-# elif defined (USG5)
-#  if defined (IRIX)
-#   define EXTW_LINK(objs, output) $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations objs -o output
-extw_link_beg = $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations
-extw_link_mid =  -o
-extw_link_end =
-#  else /* not IRIX */
-#   define EXTW_LINK(objs, output) $(CC) -G objs -z text -o output
-extw_link_beg = $(CC) -G
-extw_link_mid = -z text -o
-extw_link_end =
-#  endif /* not IRIX */
-# else /* not USG5 */
-#  if defined (DEC_ALPHA) && defined (OSF1)
-#   define EXTW_LINK(objs, output) $(LD) $(ldflags) $(ld_switch_shared) -d objs -o output $(LIBES)
-extw_link_beg = $(LD) $(ldflags) $(ld_switch_shared) -d
-extw_link_mid = -o
-extw_link_end = $(LIBES)
-#  else /* !(DEC_ALPHA && OSF1) */
-#   define EXTW_LINK(objs, output) $(LD) -dc objs -assert pure-text -o output
-extw_link_beg = $(LD) -dc
-extw_link_mid = -assert pure-text -o
-extw_link_end =
-#  endif /* !(DEC_ALPHA && OSF1) */
-# endif /* not USG5 */
-
 #  ifdef LWLIB_USES_MOTIF
 #    ifdef EXTW_LINK
 motif_other_files = libextcli_Xm.a libextcli_Xm.so.1
@@ -436,7 +393,6 @@ other_files=\
  libextcli_Xt.a libextcli_Xlib.a\
  ${shared_other_files}
 
-all: ${other_files}
 # endif /* EXTERNAL_WIDGET */
 
 # if defined (HAVE_OFFIX_DND) || defined (HAVE_CDE)
@@ -459,63 +415,86 @@ mo_dir = ${etcdir}
 mo_file = ${mo_dir}emacs.mo
 #endif
 
-batch = -no-packages -batch
-batch_packages = -vanilla -batch
-temacs_loadup = ./${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/loadup.el
-dump_temacs   = ${temacs_loadup} dump
-run_temacs    = ${temacs_loadup} run-temacs
-debug_temacs = gdb ${EXE_TARGET}
+#########################################################################
 
-release: ${EXE_TARGET} ${libsrc}DOC $(mo_file) ${other_files}
-#ifdef CANNOT_DUMP
-	ln ${EXE_TARGET} ${PROGNAME}
-#else
-	-if [ -w ${srcdir}/../lisp ]; then \
-	  w=`pwd`; cd ${srcdir} && $${w}/${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/inc-vers; \
+## Primary rebuilding process
+
+DO_TEMACS = ${DUMPENV} ./${EXE_TARGET}
+DO_XEMACS = ./${PROGNAME}
+LISP = ${srcdir}/../lisp
+
+BATCH = -no-packages -batch
+BATCH_PACKAGES = -vanilla -batch
+TEMACS_BATCH = $(DO_TEMACS) -nd $(BATCH)
+XEMACS_BATCH = $(DO_XEMACS) $(BATCH)
+XEMACS_BATCH_PACKAGES = $(DO_XEMACS) $(BATCH_PACKAGES)
+temacs_loadup_args = -l $(LISP)/loadup.el
+dump_temacs_args   = $(temacs_loadup_args) dump
+run_temacs_args = $(temacs_loadup_args) run-temacs
+dump_temacs = $(TEMACS_BATCH) $(dump_temacs_args)
+
+debug_temacs = gdb $(EXE_TARGET)
+
+.PHONY : build-the-mofo release update-elc update-elc-2 load-shadows
+
+## Compile, dump, and make sure all .elc files are up-to-date.
+
+## NOTE: The dependencies would (should) look like the following
+## commented-out statement in linear order, but apparently this causes
+## problems with some versions of `make' because there is insufficient
+## serialization of the build steps.  Evidently the .NO_PARALLEL directive
+## doesn't help.  `make' really seems to be designed to have all
+## dependencies proceed upward, not across, and to be all calculable before
+## actually running anything.  The problem here is that update-elc may
+## touch NEEDTODUMP and thus create an additional dependency
+## -- but *NOT UNTIL* that step is run.  There is no way I can come up with
+## to express such a dependency in upward fashion.
+
+## build-the-mofo: ${EXE_TARGET} update-elc ${libsrc}DOC $(mo_file) ${other_files} ${DUMP_TARGET} update-elc-2 $(LISP)/finder-inf.el load-shadows
+
+build-the-mofo: ${EXE_TARGET} update-elc ${libsrc}DOC $(mo_file) ${other_files} ${DUMP_TARGET} load-shadows
+.NO_PARALLEL: ${EXE_TARGET} update-elc ${libsrc}DOC ${DUMP_TARGET} update-elc-2
+
+release: all
+	-if [ -w $(LISP) ]; then \
+	  w=`pwd`; cd ${srcdir} && $${w}/${EXE_TARGET} -nd ${BATCH} -l $(LISP)/inc-vers; \
 	else true; fi
-	-./${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/loadup.el dump
+	-${dump_temacs}
 	touch release
-#endif /* ! defined (CANNOT_DUMP) */
 
-${DUMP_TARGET}: ${EXE_TARGET} ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
+update-elc: $(EXE_TARGET)
+	$(TEMACS_BATCH) -l $(LISP)/update-elc.el
+
+## Update out-of-date .elcs, other than needed for dumping.
+update-elc-2: $(EXE_TARGET) $(DUMP_TARGET)
+	$(XEMACS_BATCH) -no-autoloads -l update-elc-2.el -f batch-update-elc-2 $(LISP)
+
+$(LISP)/finder-inf.el: update-elc-2 $(EXE_TARGET) $(DUMP_TARGET)
+	@echo "Building finder database ..."
+	$(XEMACS_BATCH) -eval '(setq finder-compile-keywords-quiet t)' \
+		-l finder -f finder-compile-keywords
+	@echo "Building finder database ...(done)"
+
+load-shadows: $(LISP)/finder-inf.el $(EXE_TARGET) $(DUMP_TARGET)
+#ifndef QUICK_BUILD
+	@echo "Testing for Lisp shadows ..."
+	@$(XEMACS_BATCH) -f list-load-path-shadows
+#endif
+
+## This file is touched by update-elc.el when redumping is necessary.
+NEEDTODUMP:
+	touch NEEDTODUMP
+
+${DUMP_TARGET}: ${EXE_TARGET} NEEDTODUMP
 #ifdef HEAP_IN_DATA
 	@$(RM) $@ && touch SATISFIED
-	-${dump_temacs}
-	@if test -f $@;        then if test -f SATISFIED; then \
-		echo "Testing for Lisp shadows ..."; \
-		./${PROGNAME} ${batch} -f list-load-path-shadows; fi; \
-		$(RM) SATISFIED; exit 0; fi; \
-	if test -f SATISFIED; then $(RM) SATISFIED; exit 1; fi; \
-	$(RM) $@; \
-	$(RECURSIVE_MAKE) $@;
+	${dump_temacs}
+	@if test -f SATISFIED; then $(RM) SATISFIED; else $(RM) $@; \
+	$(RECURSIVE_MAKE) $@; fi
 #else
 	@$(RM) $@
 	${dump_temacs}
-	@echo "Testing for Lisp shadows ..."
-	@./${PROGNAME} ${batch} -f list-load-path-shadows
 #endif
-
-fastdump: ${EXE_TARGET}
-	@$(RM) ${DUMP_TARGET} && touch SATISFIED
-	-${dump_temacs}
-	@./${PROGNAME} ${batch} -f list-load-path-shadows
-
-FRC.update-elc.stamp :
-
-update-elc.stamp : ${EXE_TARGET} FRC.update-elc.stamp
-	@touch BYTECOMPILE_CHANGE
-	./${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/update-elc.el
-	@if test ! -f $@ -o -f BYTECOMPILE_CHANGE; then touch $@; fi; \
-	 $(RM) BYTECOMPILE_CHANGE
-
-obj_src = $(objs:.o=.c)
-
-dortl : $(obj_rtl) $(otherrtls)
-	echo "(defvar source-files '(" > ${srcdir}/../lisp/source-files.el
-	(for a in $(obj_src) $(othersrcs);do \
-	echo -n "\""$$a"\"" >> ${srcdir}/../lisp/source-files.el ;\
-	done)
-	echo "))" >> ${srcdir}/../lisp/source-files.el
 
 #ifdef DYNODUMP
 dynodump_deps = ../dynodump/dynodump.so
@@ -523,24 +502,52 @@ dynodump_deps = ../dynodump/dynodump.so
 	cd ../dynodump && $(RECURSIVE_MAKE)
 #endif /* DYNODUMP */
 
-${libsrc}DOC: ${EXE_TARGET} update-elc.stamp
+link_deps = $(start_files) ${objs} ${otherobjs} $(lwlib_deps) $(dynodump_deps)
+
+temacs_deps = $(link_deps) ${DUMP_ID}
+
+temacs_link_args = \
+ ${start_flags} ${ldflags} \
+ -o $@ ${start_files} ${objs} ${otherobjs} ${DUMP_ID} ${LIBES}
+
+${EXE_TARGET}: $(temacs_deps)
+	$(LD) $(temacs_link_args)
+
+dump-id.c: ${libsrc}make-dump-id ${link_deps}
+	${libsrc}make-dump-id
+
+obj_src = $(objs:.o=.c)
+
+${libsrc}DOC: ${libsrc}make-docfile NEEDTODUMP ${temacs_deps}
 #ifdef QUICK_BUILD
 	if test ! -f $@ ; then \
 #else
 	if true ; then \
 #endif
-	${DUMPENV} ./${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/make-docfile.el -- \
+	$(TEMACS_BATCH) -l $(LISP)/make-docfile.el -- \
 		-o ${libsrc}DOC -d ${srcdir} -i ${libsrc}../site-packages \
 		${obj_src} ${mallocdocsrc} ${rallocdocsrc} \
 		${extra_doc_files} ; fi
 
-dump_elcs: dump-elcs
+${libsrc}make-dump-id:
+	cd ${libsrc} && $(RECURSIVE_MAKE) make-dump-id
 
-dump-elcs: ${EXE_TARGET}
-	-${DUMPENV} ./${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/update-elc.el
+${libsrc}make-docfile:
+	cd ${libsrc} && $(RECURSIVE_MAKE) make-docfile
 
-all-elc all-elcs:
-	cd .. && $(RECURSIVE_MAKE) all-elc
+.PHONY: fastdump
+fastdump: ${EXE_TARGET}
+	@$(RM) ${DUMP_TARGET} && touch SATISFIED
+	-${dump_temacs}
+	@$(XEMACS_BATCH) -f list-load-path-shadows
+
+.PHONY: all-elc
+all-elc:
+	cd .. && $(RECURSIVE_MAKE)
+
+#########################################################################
+
+## Subsidiary dependency rules
 
 #ifdef I18N3
 
@@ -570,118 +577,6 @@ ${libsrc}make-po:
 	cd ${libsrc} && $(RECURSIVE_MAKE) make-po
 
 #endif /* I18N3 */
-
-${libsrc}make-dump-id:
-	cd ${libsrc} && $(RECURSIVE_MAKE) make-dump-id
-
-${libsrc}make-docfile:
-	cd ${libsrc} && $(RECURSIVE_MAKE) make-docfile
-
-## Lint Section
-LINT.c=$(LINT) $(LINTFLAGS) $(LINTINCLUDES)
-LINTFILES= $(objs:.o=.ln)
-LINTINCLUDES = $(cppflags)
-## LINTFLAGS= -fd -m -p -s -u -v -x
-LINTFLAGS= -fd -m -s -u -v -x
-lint: $(LINTFILES)
-	$(LINT.c) $(LINTFILES)
-## end of Lint Section
-
-link_deps=\
- $(start_files) ${objs} ${otherobjs}\
- $(lwlib_deps) $(dynodump_deps)
-
-temacs_deps = $(link_deps) ${DUMP_ID}
-
-temacs_link_args=\
- ${start_flags} ${ldflags}\
- -o $@ ${start_files} ${objs} ${otherobjs} ${DUMP_ID} ${LIBES}
-
-${EXE_TARGET}: $(temacs_deps)
-	$(LD) $(temacs_link_args)
-
-dump-id.c: ${libsrc}make-dump-id ${link_deps}
-	${libsrc}make-dump-id
-
-.PHONY : run-temacs
-
-run-temacs: ${EXE_TARGET}
-	-${run_temacs}
-
-## We have automated tests!!
-testdir = ${srcdir}/../tests/automated
-batch_test_emacs = ${batch_packages} -l ${testdir}/test-harness.el -f batch-test-emacs ${testdir}
-
-.PHONY: check check-temacs
-check:
-	./${PROGNAME} ${batch_test_emacs}
-check-temacs:
-	${run_temacs} ${batch_test_emacs}
-
-## Debugging targets:
-##
-## None of the debugging products work with a dumped xemacs binary,
-## because it does unexpected things like free memory that has been
-## malloc'ed in a *different* process!!  So we need to run these on
-## temacs.
-
-## RTC is Sun WorkShop's Run Time Checking, integrated with dbx
-rtc_patch.o:
-	rtc_patch_area -o $@
-
-rtcmacs: $(temacs_deps) rtc_patch.o
-	$(RM) ${EXE_TARGET}; $(RECURSIVE_MAKE) ${EXE_TARGET} RTC_patch_objs=rtc_patch.o
-	mv ${EXE_TARGET} rtcmacs
-
-.PHONY: run-rtcmacs
-run-rtcmacs: rtcmacs
-	dbx -q -C -c \
-	'dbxenv rtc_error_log_file_name /dev/fd/1; \
-	dbxenv suppress_startup_message 5.0; \
-	ignore POLL; \
-	check -access; \
-	suppress rui; \
-	runargs ${batch} -l ${srcdir}/../lisp/loadup.el run-temacs -vanilla; \
-	run' rtcmacs
-
-debug-temacs: ${EXE_TARGET}
-	-${debug_temacs}
-
-## Purify, Quantify, PureCoverage are software quality products from
-## Rational, formerly Pure Atria, formerly Pure Software.
-##
-## Purify
-PURIFY_PROG  = purify
-PURIFY_LIBS  =
-PURIFY_FLAGS =\
-#ifdef PDUMP
- -search-mmaps=yes\
-#endif
- -chain-length=32 -ignore-signals=SIGPOLL\
- -cache-dir=${blddir}/purecache -always-use-cache-dir=yes
-
-puremacs: $(temacs_deps)
-	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) $(temacs_link_args) $(PURIFY_LIBS)
-	cp $@ ${EXE_TARGET}
-
-## Quantify
-#ifdef  QUANTIFY
-QUANTIFY_PROG     = quantify
-QUANTIFY_HOME     = `$(QUANTIFY_PROG) -print-home-dir`
-QUANTIFY_FLAGS    = -cache-dir=./purecache -always-use-cache-dir=yes
-cppflags         += -I$(QUANTIFY_HOME)
-temacs_link_args += $(QUANTIFY_HOME)/quantify_stubs.a
-
-quantmacs: $(temacs_deps)
-	$(QUANTIFY_PROG) $(QUANTIFY_FLAGS) $(LD) $(temacs_link_args)
-	cp $@ ${EXE_TARGET}
-#endif /* QUANTIFY */
-
-
-PURECOV_PROG=purecov
-covmacs: $(temacs_deps)
-	$(PURECOV_PROG) $(LD) $(temacs_link_args)
-
 
 TopLevelEmacsShell.o : ${srcdir}/EmacsShell-sub.c config.h xintrinsicp.h EmacsShellP.h
 	$(CC) -c $(cflags) -DDEFINE_TOP_LEVEL_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
@@ -775,6 +670,49 @@ libextcli_Xt.a: ${external_client_xt_objs_nonshared}
 libextcli_Xlib.a: ${external_client_xlib_objs_nonshared}
 	ar r libextcli_Xlib.a ${external_client_xlib_objs_nonshared}
 
+## Now we try to figure out how to link a shared library.
+## If we cannot figure it out, leave EXTW_LINK undefined and a shared
+## library will not be created.
+
+# ifdef USE_GCC
+#  ifdef USG5
+#   define EXTW_LINK(objs, output) $(CC) -shared objs -Xlinker -z -Xlinker text -o output
+extw_link_beg = $(CC) -shared
+extw_link_mid = -Xlinker -z -Xlinker text -o
+extw_link_end =
+## I cannot figure out how to do shared a.out libraries, so just punt.
+#  elif !defined (LINUX) || defined (__ELF__)
+#   define EXTW_LINK(objs, output) $(CC) -shared objs -o output
+extw_link_beg = $(CC) -shared
+extw_link_mid = -o
+extw_link_end =
+#  endif
+# elif defined (USG5)
+#  if defined (IRIX)
+#   define EXTW_LINK(objs, output) $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations objs -o output
+extw_link_beg = $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations
+extw_link_mid =  -o
+extw_link_end =
+#  else /* not IRIX */
+#   define EXTW_LINK(objs, output) $(CC) -G objs -z text -o output
+extw_link_beg = $(CC) -G
+extw_link_mid = -z text -o
+extw_link_end =
+#  endif /* not IRIX */
+# else /* not USG5 */
+#  if defined (DEC_ALPHA) && defined (OSF1)
+#   define EXTW_LINK(objs, output) $(LD) $(ldflags) $(ld_switch_shared) -d objs -o output $(LIBES)
+extw_link_beg = $(LD) $(ldflags) $(ld_switch_shared) -d
+extw_link_mid = -o
+extw_link_end = $(LIBES)
+#  else /* !(DEC_ALPHA && OSF1) */
+#   define EXTW_LINK(objs, output) $(LD) -dc objs -assert pure-text -o output
+extw_link_beg = $(LD) -dc
+extw_link_mid = -assert pure-text -o
+extw_link_end =
+#  endif /* !(DEC_ALPHA && OSF1) */
+# endif /* not USG5 */
+
 #ifdef EXTW_LINK
 
 libextcli_Xm.so.1: ${external_client_motif_objs_shared}
@@ -847,16 +785,109 @@ extra_doc_files=emacs-widget-accessors.c ui-byhand.c $(glade_files)
 xemacs_res.o: ${srcdir}/../nt/xemacs.rc
 	windres --include-dir ${srcdir}/../nt -i ${srcdir}/../nt/xemacs.rc -o $@
 
-## System-specific programs to be made.
-## ${other_files}, $(objects_system) and $(objects_machine)
-## select which of these should be compiled.  */
+#########################################################################
+
+## Other random crap
+
+dortl : $(obj_rtl) $(otherrtls)
+	echo "(defvar source-files '(" > $(LISP)/source-files.el
+	(for a in $(obj_src) $(othersrcs);do \
+	echo -n "\""$$a"\"" >> $(LISP)/source-files.el ;\
+	done)
+	echo "))" >> $(LISP)/source-files.el
+
+## Lint Section
+LINT.c=$(LINT) $(LINTFLAGS) $(LINTINCLUDES)
+LINTFILES= $(objs:.o=.ln)
+LINTINCLUDES = $(cppflags)
+## LINTFLAGS= -fd -m -p -s -u -v -x
+LINTFLAGS= -fd -m -s -u -v -x
+.PHONY: lint
+lint: $(LINTFILES)
+	$(LINT.c) $(LINTFILES)
+## end of Lint Section
+
+## We have automated tests!!
+testdir = ${srcdir}/../tests/automated
+batch_test_emacs = ${BATCH_PACKAGES} -l ${testdir}/test-harness.el -f batch-test-emacs ${testdir}
+
+.PHONY: check check-temacs check-features
+check:
+	$(DO_XEMACS) $(batch_test_emacs)
+check-temacs:
+	$(TEMACS_BATCH) $(run_temacs_args) $(batch_test_emacs)
+check-features: all
+	$(XEMACS_BATCH) -l check-features.el
+
+## Debugging targets:
+##
+## None of the debugging products work with a dumped xemacs binary,
+## because it does unexpected things like free memory that has been
+## malloc'ed in a *different* process!!  So we need to run these on
+## temacs.
+
+## RTC is Sun WorkShop's Run Time Checking, integrated with dbx
+rtc_patch.o:
+	rtc_patch_area -o $@
+
+rtcmacs: $(temacs_deps) rtc_patch.o
+	$(RM) ${EXE_TARGET}; $(RECURSIVE_MAKE) ${EXE_TARGET} RTC_patch_objs=rtc_patch.o
+	mv ${EXE_TARGET} rtcmacs
+
+.PHONY: run-rtcmacs
+run-rtcmacs: rtcmacs
+	dbx -q -C -c \
+	'dbxenv rtc_error_log_file_name /dev/fd/1; \
+	dbxenv suppress_startup_message 5.0; \
+	ignore POLL; \
+	check -access; \
+	suppress rui; \
+	runargs -nd ${BATCH} ${run_temacs_args} -vanilla; \
+	run' rtcmacs
+
+debug-temacs: ${EXE_TARGET}
+	-${debug_temacs}
+
+## Purify, Quantify, PureCoverage are software quality products from
+## Rational, formerly Pure Atria, formerly Pure Software.
+##
+## Purify
+PURIFY_PROG  = purify
+PURIFY_LIBS  =
+PURIFY_FLAGS =\
+#ifdef PDUMP
+ -search-mmaps=yes\
+#endif
+ -chain-length=32 -ignore-signals=SIGPOLL\
+ -cache-dir=${blddir}/purecache -always-use-cache-dir=yes
+
+puremacs: $(temacs_deps)
+	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) $(temacs_link_args) $(PURIFY_LIBS)
+	cp $@ ${EXE_TARGET}
+
+## Quantify
+#ifdef  QUANTIFY
+QUANTIFY_PROG     = quantify
+QUANTIFY_HOME     = `$(QUANTIFY_PROG) -print-home-dir`
+QUANTIFY_FLAGS    = -cache-dir=./purecache -always-use-cache-dir=yes
+cppflags         += -I$(QUANTIFY_HOME)
+temacs_link_args += $(QUANTIFY_HOME)/quantify_stubs.a
+
+quantmacs: $(temacs_deps)
+	$(QUANTIFY_PROG) $(QUANTIFY_FLAGS) $(LD) $(temacs_link_args)
+	cp $@ ${EXE_TARGET}
+#endif /* QUANTIFY */
+
+PURECOV_PROG=purecov
+covmacs: $(temacs_deps)
+	$(PURECOV_PROG) $(LD) $(temacs_link_args)
 
 .PHONY: mostlyclean clean distclean realclean versionclean extraclean
 mostlyclean:
 	$(RM) temacs puremacs quantmacs *.o *.i  \
 	  core temacs.exe sheap-adjust.h
 clean: mostlyclean versionclean
-	$(RM) libextcli* update-elc.stamp
+	$(RM) libextcli*
 ## This is used in making a distribution.
 ## Do not use it on development directories!
 distclean: clean

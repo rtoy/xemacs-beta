@@ -56,7 +56,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/ShellP.h>
 
 #if defined (HAVE_XIM) && defined (XIM_MOTIF)
-#include <Xm/Xm.h>
+#include "xmotif.h"
 #endif
 
 #ifdef HAVE_DRAGNDROP

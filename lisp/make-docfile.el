@@ -137,7 +137,6 @@
 
 ;; Then process the autoloads
 (setq autoload-file-name "auto-autoloads.elc")
-(load "very-early-lisp.el")
 (load "find-paths.el")
 (load "packages.el")
 (load "setup-paths.el")

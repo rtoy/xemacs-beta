@@ -86,13 +86,13 @@ update_mirror_syntax_if_dirty (Lisp_Object table)
 /* Return the syntax code for a particular character and mirror table. */
 
 DECLARE_INLINE_HEADER (
-enum syntaxcode
+int
 SYNTAX_CODE (Lisp_Object table, Ichar c)
 )
 {
   type_checking_assert (XCHAR_TABLE (table)->mirror_table_p);
   update_mirror_syntax_if_dirty (table);
-  return (enum syntaxcode) XINT (get_char_table_1 (c, table));
+  return XINT (get_char_table_1 (c, table));
 }
 
 #ifdef NOT_WORTH_THE_EFFORT
@@ -100,7 +100,7 @@ SYNTAX_CODE (Lisp_Object table, Ichar c)
 /* Same but skip the dirty check. */
 
 DECLARE_INLINE_HEADER (
-enum syntaxcode
+int
 SYNTAX_CODE_1 (Lisp_Object table, Ichar c)
 )
 {
@@ -353,7 +353,14 @@ void
 UPDATE_SYNTAX_CACHE_FORWARD (struct syntax_cache *cache, Charxpos pos)
 )
 {
-  if (!(pos >= cache->prev_change && pos < cache->next_change))
+  /* #### Formerly this function, and the next one, had
+
+     if (pos < cache->prev_change || pos >= cache->next_change)
+
+     just like for plain UPDATE_SYNTAX_CACHE.  However, sometimes the
+     value of POS may be invalid (particularly, it may be 0 for a buffer).
+     FSF has the check at only one end, so let's try the same. */
+  if (pos >= cache->next_change)
     update_syntax_cache (cache, pos, 1);
 }
 
@@ -364,7 +371,7 @@ void
 UPDATE_SYNTAX_CACHE_BACKWARD (struct syntax_cache *cache, Charxpos pos)
 )
 {
-  if (!(pos >= cache->prev_change && pos < cache->next_change))
+  if (pos < cache->prev_change)
     update_syntax_cache (cache, pos, -1);
 }
 
@@ -374,7 +381,7 @@ void
 UPDATE_SYNTAX_CACHE (struct syntax_cache *cache, Charxpos pos)
 )
 {
-  if (!(pos >= cache->prev_change && pos < cache->next_change))
+  if (pos < cache->prev_change || pos >= cache->next_change)
     update_syntax_cache (cache, pos, 0);
 }
 

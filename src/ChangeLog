@@ -1,5 +1,209 @@
 2003-02-19  Ben Wing  <ben@xemacs.org>
 
+	* Makefile.in.in (all): New.
+	* Makefile.in.in (EXE_TARGET):
+	* Makefile.in.in (X11_libs):
+	* Makefile.in.in (external_widget_objs):
+	* Makefile.in.in (other_files):
+	* Makefile.in.in (extw_link_beg): Removed.
+	* Makefile.in.in (mo_file):
+	* Makefile.in.in (extw_link_mid): Removed.
+	* Makefile.in.in (extw_link_end): Removed.
+	* Makefile.in.in (temacs_loadup): Removed.
+	* Makefile.in.in (run_temacs): Removed.
+	* Makefile.in.in (dump_temacs):
+	* Makefile.in.in (DO_TEMACS): New.
+	* Makefile.in.in (DO_XEMACS): New.
+	* Makefile.in.in (debug_temacs):
+	* Makefile.in.in (LISP): New.
+	* Makefile.in.in (BATCH): New.
+	* Makefile.in.in (BATCH_PACKAGES): New.
+	* Makefile.in.in (TEMACS_BATCH): New.
+	* Makefile.in.in (XEMACS_BATCH): New.
+	* Makefile.in.in (XEMACS_BATCH_PACKAGES): New.
+	* Makefile.in.in (temacs_loadup_args): New.
+	* Makefile.in.in (dump_temacs_args): New.
+	* Makefile.in.in (run_temacs_args): New.
+	* Makefile.in.in (release):
+	* Makefile.in.in (build-the-mofo): New.
+	* Makefile.in.in (update-elc): New.
+	* Makefile.in.in (update-elc-2): New.
+	* Makefile.in.in (load-shadows): New.
+	* Makefile.in.in (NEEDTODUMP): New.
+	* Makefile.in.in (obj_src):
+	* Makefile.in.in (FRC.update-elc.stamp): Removed.
+	* Makefile.in.in (update-elc.stamp): Removed.
+	* Makefile.in.in (dortl): Removed.
+	* Makefile.in.in (link_deps): New.
+	* Makefile.in.in (temacs_deps): New.
+	* Makefile.in.in (temacs_link_args): New.
+	* Makefile.in.in (dump-id.c): New.
+	* Makefile.in.in (TopLevelEmacsShell.o):
+	* Makefile.in.in (LINT.c): Removed.
+	* Makefile.in.in (LINTFILES): Removed.
+	* Makefile.in.in (LINTINCLUDES): Removed.
+	* Makefile.in.in (LINTFLAGS): Removed.
+	* Makefile.in.in (lint): Removed.
+	* Makefile.in.in (dump_elcs): Removed.
+	* Makefile.in.in (all-elc): New.
+	* Makefile.in.in (dump-elcs): Removed.
+	* Makefile.in.in (run-temacs): Removed.
+	* Makefile.in.in (testdir): Removed.
+	* Makefile.in.in (batch_test_emacs): Removed.
+	* Makefile.in.in (check-temacs): Removed.
+	* Makefile.in.in (rtc_patch.o): Removed.
+	* Makefile.in.in (rtcmacs): Removed.
+	* Makefile.in.in (run-rtcmacs): Removed.
+	* Makefile.in.in (debug-temacs): Removed.
+	* Makefile.in.in (PURIFY_PROG): Removed.
+	* Makefile.in.in (PURIFY_LIBS): Removed.
+	* Makefile.in.in (PURIFY_FLAGS): Removed.
+	* Makefile.in.in (puremacs): Removed.
+	* Makefile.in.in (libextcli_Xlib.a):
+	* Makefile.in.in (QUANTIFY_PROG): Removed.
+	* Makefile.in.in (QUANTIFY_HOME): Removed.
+	* Makefile.in.in (QUANTIFY_FLAGS): Removed.
+	* Makefile.in.in (quantmacs): Removed.
+	* Makefile.in.in (PURECOV_PROG): Removed.
+	* Makefile.in.in (covmacs): Removed.
+	* Makefile.in.in (xemacs_res.o):
+	* Makefile.in.in (clean):
+
+	Major surgery.  Move all stuff related to building anything in the
+	src/ directory from top-level Makefile.in.in to here.  Simplify
+	the dependencies.  Rearrange into logical subsections.
+	Synchronize the main compile/dump/build-elcs section with
+	xemacs.mak, which is already clean and in good working order.
+	Remove weirdo targets like `all-elc[s]', dump-elc[s], etc.  Add
+	additional levels of macros \(e.g. DO_TEMACS, DO_XEMACS,
+	TEMACS_BATCH, XEMACS_BATCH, XEMACS_BATCH_PACKAGES) to factor out
+	duplicated stuff.  Clean up handling of "HEAP_IN_DATA" (Cygwin) so
+	it doesn't need to ignore the return value from dumping.  Add
+	.NO_PARALLEL since various aspects of building and dumping must be
+	serialized but do not always have dependencies between them
+	(this is impossible in some cases).  Everything related to src/
+	now gets built in one pass in this directory by just running
+	`make' (except the Makefiles themselves and config.h, paths.h,
+	Emacs.ad.h, and other generated .h files).
+
+	* console.c (Fvalid_console_type_p):
+	Update list of possibly valid console types.
+	
+	* emacs.c:
+	* emacs.c (check_compatible_window_system):
+	* emacs.c (main_1):
+	* emacs.c (standard_args):
+	* emacs.c (sort_args):
+	* emacs.c (main):
+	Rationalize the specifying and handling of the type of the first
+	frame.  This was originally prompted by a workspace in which I got
+	GTK to compile under C++ and in the process fixed it so it could
+	coexist with X in the same build -- hence, a combined
+	TTY/X/MS-Windows/GTK build is now possible under Cygwin. (However,
+	you can't simultaneously *display* more than one kind of device
+	connection -- but getting that to work is not that difficult.
+	Perhaps a project for a bored grad student.  I (ben) would do it
+	but don't see the use.)  To make sense of this, I added new
+	switches that can be used to specifically indicate the window
+	system: -x [aka --use-x], -tty \[aka --use-tty], -msw [aka
+	--use-ms-windows], -gtk [aka --use-gtk], and -gnome [aka
+	--use-gnome, same as --use-gtk]. -nw continues as an alias for
+	-tty.  When none have been given, XEmacs checks for other
+	parameters implying particular device types (-t -> tty, -display
+	-> x [or should it have same treatment as DISPLAY below?]), and
+	has ad-hoc logic afterwards: if env var DISPLAY is set, use x (or
+	gtk?  perhaps should check whether gnome is running), else MS
+	Windows if it exsits, else TTY if it exists, else stream, and you
+	must be running in batch mode.  This also fixes an existing bug
+	whereby compiling with no x, no mswin, no tty, when running non-
+	interactively (e.g. to dump) I get "sorry, must have TTY support".
+	
+	* emacs.c (Frun_emacs_from_temacs):
+	Turn on Vstack_trace_on_error so that errors are debuggable even
+	when occurring extremely early in reinitialization.
+	* emacs.c (pause_so_user_can_read_messages):
+	Try to make sure that the user can see message output under
+	Windows (i.e. it doesn't just disappear right away) regardless of
+	when it occurs, e.g. in the middle of creating the first frame.
+	* emacs.c (Femacs_run_status):
+	* emacs.c (syms_of_emacs):
+	Define new function `emacs-run-status', indicating whether XEmacs
+	is noninteractive or interactive, whether raw,
+	post-dump/pdump-load or run-temacs, whether we are dumping,
+	whether pdump is in effect.
+	
+	* event-stream.c:
+	It's "mommas are fat", not "momas are fat".
+	Fix other typo.
+	* event-stream.c (Fnext_event):
+	Conditionalize in_menu_callback check on HAVE_MENUBARS,
+	because it won't exist on w/o menubar support,
+	
+	* lisp.h:
+	More hackery on RETURN_NOT_REACHED.  Cygwin v3.2 DOES complain here
+	if RETURN_NOT_REACHED() is blank, as it is for GCC 2.5+.  So make it
+	blank only for GCC 2.5 through 2.999999999999999. 
+	
+	Declare Vstack_trace_on_error.
+	
+	* profile.c:
+	Need to include "profile.h" to fix warnings.
+	
+	* sheap.c (report_sheap_usage):
+	Don't fatal() when need to rerun Make, just stderr_out() and exit(0).
+	That way we can distinguish between a dumping failing expectedly
+	(due to lack of stack space, triggering another dump) and unexpectedly,
+	in which case, we want to stop building. (or go on, if -K is given)
+	* syntax.c (Fmatching_paren):
+	* syntax.c (find_start_of_comment):
+	* syntax.h:
+	Use ints where they belong, and enum syntaxcode's where they belong,
+	and fix warnings thereby.
+
+	* syntax.h:
+	Fix crash caused by an edge condition in the syntax-cache macros.
+
+	* text.h:
+	* text.h (LISP_STRING_TO_ALLOCA):
+	* text.h (alloca_ibytes):
+	Spacing fixes.
+
+	* xmotif.h:
+	New file, to get around shadowing warnings.
+	
+	* EmacsManager.c:
+	* event-Xt.c:
+	* glyphs-x.c:
+	* gui-x.c:
+	* input-method-motif.c:
+	* xmmanagerp.h:
+	* xmprimitivep.h:
+	Include xmotif.h.
+	
+	* alloc.c:
+	Conditionalize in_malloc on ERROR_CHECK_MALLOC.
+	
+	* config.h.in:
+	* file-coding.h:
+	* fileio.c:
+	* getloadavg.c (getloadavg):
+	* select-x.c:
+	* signal.c (qxe_setitimer):
+	* sysdep.c (total_data_usage):
+	* sysfile.h:
+	* systime.h:
+	* text.c (dfc_convert_to_external_format):
+	* text.c (dfc_convert_to_internal_format):
+	* unicode.c (dfc_coding_system_is_unicode):
+	Eliminate HAVE_WIN32_CODING_SYSTEMS, use WIN32_ANY instead.
+	Replace defined (WIN32_NATIVE) || defined (CYGWIN) with WIN32_ANY.
+	
+	* lisp.h:
+	More futile attempts to walk and chew gum at the same time when
+	dealing with subr's that don't return.
+	
+2003-02-19  Ben Wing  <ben@xemacs.org>
+
 	* eval.c (unbind_to_hairy):
 	Don't check_quit() unless we're unbinding a real Lisp
 	`unwind-protect' since check_quit() does lots of weird things and

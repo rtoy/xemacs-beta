@@ -26,11 +26,15 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_xmprimitivep_h_
 #define INCLUDED_xmprimitivep_h_
 
-#include <Xm/Xm.h>	/* to get XmVersion */
+#include "xmotif.h"	/* to get XmVersion */
+# define time time_
+# define message message_
 #if (XmVersion >= 1002)
 # include <Xm/PrimitiveP.h>
 #else
 # include <Xm/XmP.h>
 #endif
+# undef message
+# undef time
 
 #endif /* INCLUDED_xmprimitivep_h_ */

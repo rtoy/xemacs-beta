@@ -2898,7 +2898,7 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 #endif
 
     }
-#ifdef HAVE_WIN32_CODING_SYSTEMS
+#ifdef WIN32_ANY
   /* Optimize the common case involving Unicode where only ASCII is involved */
   else if (source_type != DFC_TYPE_LISP_LSTREAM &&
 	   sink_type   != DFC_TYPE_LISP_LSTREAM &&
@@ -2932,7 +2932,7 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 	  Dynarr_add (conversion_out_dynarr, (Extbyte) '\0');
 	}
     }
-#endif /* HAVE_WIN32_CODING_SYSTEMS */
+#endif /* WIN32_ANY */
   else
     {
       Lisp_Object streams_to_delete[3];
@@ -2940,9 +2940,9 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
       Lisp_Object instream, outstream;
       Lstream *reader, *writer;
 
-#ifdef HAVE_WIN32_CODING_SYSTEMS
+#ifdef WIN32_ANY
     the_hard_way:
-#endif /* HAVE_WIN32_CODING_SYSTEMS */
+#endif /* WIN32_ANY */
       delete_count = 0;
       if (source_type == DFC_TYPE_LISP_LSTREAM)
 	instream = source->lisp_object;
@@ -3088,7 +3088,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
       Dynarr_add_many (conversion_in_dynarr, source->data.ptr, source->data.len);
 #endif
     }
-#ifdef HAVE_WIN32_CODING_SYSTEMS
+#ifdef WIN32_ANY
   /* Optimize the common case involving Unicode where only ASCII/Latin-1 is
      involved */
   else if (source_type != DFC_TYPE_LISP_LSTREAM &&
@@ -3131,7 +3131,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 #endif /* MULE */
         }
     }
-#endif /* HAVE_WIN32_CODING_SYSTEMS */
+#endif /* WIN32_ANY */
   else
     {
       Lisp_Object streams_to_delete[3];
@@ -3139,9 +3139,9 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
       Lisp_Object instream, outstream;
       Lstream *reader, *writer;
 
-#ifdef HAVE_WIN32_CODING_SYSTEMS
+#ifdef WIN32_ANY
     the_hard_way:
-#endif /* HAVE_WIN32_CODING_SYSTEMS */
+#endif /* WIN32_ANY */
       delete_count = 0;
       if (source_type == DFC_TYPE_LISP_LSTREAM)
 	instream = source->lisp_object;

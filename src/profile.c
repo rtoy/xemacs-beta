@@ -26,6 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #include "bytecode.h"
 #include "elhash.h"
 #include "hash.h"
+#include "profile.h"
 
 #include "syssignal.h"
 #include "systime.h"
