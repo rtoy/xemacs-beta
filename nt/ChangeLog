@@ -1,3 +1,15 @@
+2001-04-27  Adrian Aichner  <adrian@xemacs.org>
+
+	* compface.mak (clean): New target.
+	* xemacs.mak: Use $(DEL) everywhere, instead of some occurences of
+	del and @$(DEL).  Add GTK supporting variables and document it as
+	currently unsupported on MSWindows.
+	* xemacs.mak (XEMACS_VERSION_STRING): Initialize according to
+	emacs_is_beta.  Use emacs_beta_version as patch level for non-beta
+	version.
+	* xemacs.mak (HAVE_GTK): New.
+	* xemacs.mak (GTK_DIR): New.
+
 2001-04-20  Ben Wing  <ben@xemacs.org>
 
 	* .cvsignore: Added stuff for Windows.

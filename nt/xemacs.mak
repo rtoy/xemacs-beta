@@ -69,10 +69,10 @@ PROGRAM_DEFINES=-DINFODOCK 					\
 	-DINFODOCK_MINOR_VERSION=$(infodock_minor_version)	\
 	-DINFODOCK_BUILD_VERSION=$(infodock_build_version)
 !else
-!if "$(emacs_beta_version)" != ""
+!if "$(emacs_is_beta)" != ""
 XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)-b$(emacs_beta_version)
 !else
-XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)
+XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version).$(emacs_beta_version)
 !endif
 PROGRAM_DEFINES=						\
 	-DPATH_VERSION=\"$(XEMACS_VERSION_STRING)\"		\
@@ -128,6 +128,9 @@ HAVE_XFACE=0
 !endif
 !if !defined(HAVE_GIF)
 HAVE_GIF=1
+!endif
+!if !defined(HAVE_GTK)
+HAVE_GTK=0
 !endif
 !if !defined(HAVE_TOOLBARS)
 HAVE_TOOLBARS=$(HAVE_XPM)
@@ -228,6 +231,10 @@ CONFIG_ERROR=1
 !endif
 !if $(HAVE_X_WINDOWS) && defined(X11_DIR) && !exist("$(X11_DIR)\LIB\X11.LIB")
 !message Specified X11 directory does not contain "$(X11_DIR)\LIB\X11.LIB"
+CONFIG_ERROR=1
+!endif
+!if $(HAVE_MS_WINDOWS) && $(HAVE_GTK) && !defined(GTK_DIR)
+!message Please specify root directory for your GTK installation: GTK_DIR=path
 CONFIG_ERROR=1
 !endif
 !if $(HAVE_MS_WINDOWS) && $(HAVE_XPM) && !defined(XPM_DIR)
@@ -1057,7 +1064,7 @@ $(TEMACS): $(TEMACS_INCLUDES) $(TEMACS_OBJS) $(OUTDIR)\xemacs.res
 !if $(DEBUG_XEMACS)
 	@dir /b/s $(OUTDIR)\*.sbr > bscmake.tmp
 	bscmake -nologo -o$(TEMACS_BROWSE) @bscmake.tmp
-	@$(DEL) bscmake.tmp
+	$(DEL) bscmake.tmp
 !endif
 !if $(USE_PORTABLE_DUMPER)
 	@if exist $(SRC)\dump-id.c del $(SRC)\dump-id.c
@@ -1331,11 +1338,11 @@ LOADPATH=$(LISP)
 
 # Rebuild docfile target
 docfile ::
-	if exist $(DOC) del $(DOC)
+	if exist $(DOC) $(DEL) $(DOC)
 docfile :: $(DOC)
 
 $(DOC): $(LIB_SRC)\make-docfile.exe $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(DOC_SRC9) $(DOC_SRC10) $(DOC_SRC11)
-	if exist $(DOC) del $(DOC)
+	if exist $(DOC) $(DEL) $(DOC)
 	set EMACSBOOTSTRAPLOADPATH=$(LISP);$(PACKAGE_PATH)
 	set EMACSBOOTSTRAPMODULEPATH=$(MODULES)
 	$(TEMACS_BATCH) -l $(TEMACS_DIR)\..\lisp\make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
@@ -1377,7 +1384,7 @@ $(PROGNAME) : $(TEMACS) $(TEMACS_DIR)\NEEDTODUMP
 # Make the resource section read/write since almost all of it is the dump
 # data which needs to be writable.  This avoids having to copy it.
 	editbin -nologo -section:.rsrc,rw xemacs.exe
-	del $(TEMACS_DIR)\xemacs.dmp
+	$(DEL) $(TEMACS_DIR)\xemacs.dmp
 !endif
 	cd $(NT)
 	@if not exist $(TEMACS_DIR)\SATISFIED nmake -nologo -f xemacs.mak $@
@@ -1397,7 +1404,7 @@ install:	all
 	@echo PlaceHolder > PlaceHolder
 	@xcopy /q PROBLEMS "$(INSTALL_DIR)\"
 	@xcopy /q PlaceHolder "$(INSTALL_DIR)\lock\"
-	@$(DEL) "$(INSTALL_DIR)\lock\PlaceHolder"
+	$(DEL) "$(INSTALL_DIR)\lock\PlaceHolder"
 	@xcopy /q $(LIB_SRC)\*.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
 	@copy $(LIB_SRC)\DOC "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
 	@copy $(CONFIG_VALUES) "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
@@ -1407,12 +1414,12 @@ install:	all
 	@xcopy /e /q $(XEMACS)\lisp "$(INSTALL_DIR)\lisp\"
 	@echo Making skeleton package tree in $(PACKAGE_PREFIX) ...
 	@xcopy /q PlaceHolder "$(PACKAGE_PREFIX)\site-packages\"
-	@$(DEL) "$(PACKAGE_PREFIX)\site-packages\PlaceHolder"
+	$(DEL) "$(PACKAGE_PREFIX)\site-packages\PlaceHolder"
 	@xcopy /q PlaceHolder "$(PACKAGE_PREFIX)\mule-packages\"
-	@$(DEL) "$(PACKAGE_PREFIX)\mule-packages\PlaceHolder"
+	$(DEL) "$(PACKAGE_PREFIX)\mule-packages\PlaceHolder"
 	@xcopy /q PlaceHolder "$(PACKAGE_PREFIX)\xemacs-packages\"
-	@$(DEL) "$(PACKAGE_PREFIX)\xemacs-packages\PlaceHolder"
-	@$(DEL) PlaceHolder
+	$(DEL) "$(PACKAGE_PREFIX)\xemacs-packages\PlaceHolder"
+	$(DEL) PlaceHolder
 
 mostlyclean:
 	$(DEL) $(XEMACS)\Installation
@@ -1483,6 +1490,23 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=\") configured for `$(EMACS_
 !endif
 !if $(HAVE_MULE)
   Compiling in MULE.
+!endif
+!if $(HAVE_GTK)
+  --------------------------------------------------------------------
+  WARNING: Compiling WITHOUT GTK support.
+  WARNING: As of xemacs-21.2-b44
+  WARNING: gtk-xemacs is not supported on MSWindows (mingw or msvc).
+  WARNING: Yes, we know that gtk has been ported to native MSWindows
+  WARNING: but XEmacs is not yet ready to use that port.
+  --------------------------------------------------------------------
+!else
+  --------------------------------------------------------------------
+  WARNING: Compiling without GTK support.
+  WARNING: As of xemacs-21.2-b44
+  WARNING: gtk-xemacs is not supported on MSWindows (mingw or msvc).
+  WARNING: Yes, we know that gtk has been ported to native MSWindows
+  WARNING: but XEmacs is not yet ready to use that port.
+  --------------------------------------------------------------------
 !endif
 !if $(HAVE_XPM)
   Compiling in support for XPM images.
@@ -1581,8 +1605,8 @@ update-elc-2:
 update-auto-and-custom:
 #       Combine into one invocation to avoid repeated startup penalty.
 	$(XEMACS_BATCH) -l autoload -f batch-update-one-directory $(LISP) -f batch-byte-compile-one-file $(LISP)\auto-autoloads.el -l cus-dep -f Custom-make-one-dependency $(LISP) -f batch-byte-compile-one-file $(LISP)\custom-load.el
-	@$(DEL) $(LISP)\auto-autoloads.el~
-	@$(DEL) $(LISP)\custom-load.el~
+	$(DEL) $(LISP)\auto-autoloads.el~
+	$(DEL) $(LISP)\custom-load.el~
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
