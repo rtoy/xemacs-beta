@@ -1,3 +1,8 @@
+2003-01-28  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in (opsys): (AIX specific)
+	Use opsys=aix4-2 for AIX 5 and all future versions.
+
 2003-02-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* INSTALL: Recommend Mule, deprecate stripped binaries.

@@ -1,3 +1,8 @@
+2003-02-13  Martin Buchholz  <martin@xemacs.org>
+
+	* xlwmenu.c (xlwMenuClassRec):
+	Use symbolic name `XtExposeCompressMaximal' instead of `TRUE'.
+
 2003-01-31  Martin Buchholz  <martin@xemacs.org>
 
 	* lwlib-Xm.c (xm_update_progress): 

@@ -110,6 +110,7 @@ things are arranged in config.h.in.  In particular:
 #undef _XOPEN_SOURCE_EXTENDED
 
 /* Make all functions available on AIX.  See AC_AIX. */
+/* Some AIX compilers (cc) pre-define _ALL_SOURCE, some (xlc) don't. */
 #ifndef _ALL_SOURCE
 #undef _ALL_SOURCE
 #endif
