@@ -207,7 +207,7 @@ isMine(Display *dpy, XEvent *event, char *arg)
 	  if (event->type == ClientMessage &&
 	      event->xclient.message_type == a_EXTW_NOTIFY &&
 	      event->xclient.data.l[0] == 1 - extw_which_side &&
-	      event->xclient.data.l[1] == q->type)
+	      (en_extw_notify) event->xclient.data.l[1] == q->type)
 	    return TRUE;
 	}
 	return FALSE;

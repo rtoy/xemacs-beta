@@ -493,7 +493,6 @@ Register Kanji words into kana-to-kanji conversion dictionary.
   jrKanjiStatusWithValue ksv;
   jrKanjiStatus ks;
   int len;
-  Lisp_Object val;
 #ifdef CANNA_MULE
   unsigned char cbuf[4096];
 #endif
@@ -533,7 +532,6 @@ Change Japanese pre-edit mode.
 {
   jrKanjiStatusWithValue ksv;
   jrKanjiStatus ks;
-  Lisp_Object val;
 
   CHECK_INT (num);
 
@@ -618,7 +616,6 @@ Do specified function at current mode.
 {
   jrKanjiStatusWithValue ksv;
   jrKanjiStatus ks;
-  Lisp_Object val;
 
   CHECK_INT (num);
 

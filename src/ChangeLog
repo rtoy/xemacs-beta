@@ -1,3 +1,34 @@
+2002-10-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* emacs.c (shut_down_emacs): Improve crash message.
+
+2002-10-17  Raymond Toy  <toy@rtp.ericsson.se>
+
+	* nas.c: Update for NAS 1.6 and later, from Jon Trulson.  Was
+	using the NAS private array SoundFileInfo that no longer exists in
+	NAS 1.6 and later.  Preserve backward compatibility with NAS 1.5a
+	and earlier.  This is broken for some versions between 1.5a and
+	1.5f.
+
+2002-10-20  Stephen Turnbull  <steve@tleepslib1>
+
+	* ExternalClient.c (externalClientRealize): Suppress "unused" warning.
+
+2002-10-19  Stephen Turnbull  <stephen@xemacs.org>
+
+	* extw-Xt.c (isMine): Suppress signed-unsigned compare warning.
+
+2002-10-19  Stephen Turnbull  <stephen@xemacs.org>
+
+	* mule-canna.c (Fcanna_touroku_string):
+	(Fcanna_change_mode):
+	(Fcanna_do_function):
+	Fix "unused variable" warnings.
+
+2002-10-18  Stephen Turnbull  <stephen@xemacs.org>
+
+	* event-Xt.c (enqueue_focus_event): Prototype it.
+
 2002-10-24  Andy Piper  <andy@xemacs.org>
 
 	* glyphs-widget.c (layout_query_geometry): add in fiddle

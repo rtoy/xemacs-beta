@@ -266,7 +266,9 @@ send_tooltalk_handshake (ExternalClientWidget ecw, Window win, char *name)
 static void
 externalClientRealize (Widget w, XtValueMask *vm, XSetWindowAttributes *attrs)
 {
+#ifdef TOOLTALK
   ExternalClientWidget ecw = (ExternalClientWidget)w;
+#endif
 
 #ifdef EXTW_USES_MOTIF
   (*xmPrimitiveWidgetClass->core_class.realize) (w, vm, attrs);
@@ -275,7 +277,6 @@ externalClientRealize (Widget w, XtValueMask *vm, XSetWindowAttributes *attrs)
 #endif
 
 #ifdef TOOLTALK
-
   /* Make sure that the server actually knows about this window id before
    * telling Emacs about it.
    */

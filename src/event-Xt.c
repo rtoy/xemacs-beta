@@ -67,6 +67,8 @@ Boston, MA 02111-1307, USA.  */
 #include "offix.h"
 #endif
 
+/* used in glyphs-x.c */
+void enqueue_focus_event (Widget wants_it, Lisp_Object frame, int in_p);
 static void handle_focus_event_1 (struct frame *f, int in_p);
 static void handle_focus_event_2 (Window w, struct frame *f, int in_p);
 
