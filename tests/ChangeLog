@@ -1,3 +1,9 @@
+2003-11-01  Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
+
+	* automated/weak-tests.el:
+	Added testing of the iterative marking calls needed for processing
+	weak data structures, especially ephemerons, correctly
+
 2003-10-22  Vin Shelton  <acs@xemacs.org>
 
 	* automated/hash-table-tests.el: Remove debugging print

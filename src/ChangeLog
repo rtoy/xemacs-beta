@@ -1,3 +1,11 @@
+2003-11-01  Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
+
+	* alloc.c (garbage_collect_1):
+	move kkcc_marking() call inside the while loop containing all
+	the iterative calls for marking weak data structures since the
+	entries on the kkcc_stack need to be processed after every run
+	to mark attached objects
+	
 2003-10-16  Jerry James  <james@xemacs.org>
 
 	* realpath.c (qxe_realpath): When a symbolic link to an absolute

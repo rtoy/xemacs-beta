@@ -4613,10 +4613,12 @@ garbage_collect_1 (void)
   while (finish_marking_weak_hash_tables () > 0 ||
 	 finish_marking_weak_lists       () > 0 ||
 	 continue_marking_ephemerons     () > 0)
-    ;
-
 #ifdef USE_KKCC
-  kkcc_marking ();
+    {
+      kkcc_marking ();
+    }
+#else /* NOT USE_KKCC */
+    ;
 #endif /* USE_KKCC */
 
   /* At this point, we know which objects need to be finalized: we
@@ -4625,12 +4627,14 @@ garbage_collect_1 (void)
   while (finish_marking_ephemerons       () > 0 ||
 	 finish_marking_weak_lists       () > 0 ||
 	 finish_marking_weak_hash_tables () > 0)
-    ;
-
 #ifdef USE_KKCC
-  kkcc_marking ();
+    {
+      kkcc_marking ();
+    }
   kkcc_gc_stack_free ();
 #undef mark_object
+#else /* NOT USE_KKCC */
+    ;
 #endif /* USE_KKCC */
 
   /* And prune (this needs to be called after everything else has been

@@ -222,3 +222,26 @@
   (Assert (equal (weak-list-list weaklist4) testlist)))
 
 (garbage-collect)
+
+;; test the intended functionality of the fixpoint iteration used for marking
+;; weak data structures like the ephermerons. Basically this tests gc_internals
+;; to work properly but it also ensures the ephemerons behave according to the
+;; specification
+
+(let* ((inner_cons (cons 1 2))
+       (weak1 (make-ephemeron inner_cons
+			      (make-ephemeron inner_cons
+					      (cons 1 2)
+					      '(lambda (v) t))
+			      '(lambda (v) t))))
+  (Assert (ephemeron-ref (ephemeron-ref weak1)))
+  (garbage-collect)
+  ;; assure the inner ephis are still there
+  (Assert (ephemeron-ref (ephemeron-ref weak1)))
+  ;; delete the key reference and force cleaning up the garbage
+  (setq inner_cons (cons 3 4))
+  (garbage-collect)
+  (Assert (not (ephemeron-ref weak1)))
+)
+
+(garbage-collect)
