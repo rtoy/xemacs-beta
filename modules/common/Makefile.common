@@ -62,7 +62,8 @@ all: $(OBJECT_TO_BUILD)
 	$(MODCC) $(MODCFLAGS) -c $<
 
 $(MODNAME).ell: $(OBJS) $(MODNAME)_i.o
-	$(MODCC) --mode=link --mode=verbose --mod-output=$@ $^ $(LDFLAGS)
+	$(MODCC) --mode=link --mode=verbose --mod-output=$@ \
+	$(OBJS) $(MODNAME)_i.o $(LDFLAGS)
 
 $(MODNAME)_i.c: $(SRCS)
 	ELLMAKEDOC=$(MAKE_DOCFILE) $(MODCC) --mode=init --mod-output=$@ \

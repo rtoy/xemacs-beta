@@ -35,7 +35,7 @@ all: $(MODNAME).ell
 	-I$(MODARCHDIR)/include -c $<
 
 $(MODNAME).ell: $(OBJS) $(MODNAME)_i.o
-	$(ELLCC) --mode=link --mod-output=$@ $^ $(LDFLAGS)
+	$(ELLCC) --mode=link --mod-output=$@ $(OBJS) $(MODNAME)_i.o $(LDFLAGS)
 
 $(MODNAME)_i.c: $(SRCS)
 	ELLMAKEDOC=$(MODARCHDIR)/make-docfile $(ELLCC) --mode=init \

@@ -1,3 +1,10 @@
+2003-05-20  Jerry James  <james@xemacs.org>
+
+	* sample/internal/Makefile.in.in: Expand $^ for makes that don't
+	understand it.
+	* sample/external/Makefile.in.in: Ditto.
+	* common/Makefile.common: Ditto.
+
 2003-05-10  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.13 "cauliflower" is released.
