@@ -5388,8 +5388,8 @@ The following symbols have predefined meanings:
                     function to be called the first time (part of) the extent
                     is redisplayed. It will be called with the extent as its
                     first argument.
-		    Note: The function will not be called immediately
-		    during redisplay, an eval event will be dispatched.
+                    Note: The function will not be called immediately
+                    during redisplay, an eval event will be dispatched.
 
  detachable         Whether the extent gets detached (as with
                     `detach-extent') when all the text within the
@@ -5404,16 +5404,16 @@ The following symbols have predefined meanings:
  face               The face in which to display the text.  Setting
                     this is the same as calling `set-extent-face'.
 
- mouse-face	    If non-nil, the extent will be highlighted in this
-		    face when the mouse moves over it.
+ mouse-face	        If non-nil, the extent will be highlighted in this
+                    face when the mouse moves over it.
 
  pointer            If non-nil, and a valid pointer glyph, this specifies
                     the shape of the mouse pointer while over the extent.
 
  highlight          Obsolete: Setting this property is equivalent to
-		    setting a `mouse-face' property of `highlight'.
-		    Reading this property returns non-nil if
-		    the extent has a non-nil `mouse-face' property.
+                    setting a `mouse-face' property of `highlight'.
+		            Reading this property returns non-nil if
+		            the extent has a non-nil `mouse-face' property.
 
  duplicable         Whether this extent should be copied into strings,
                     so that kill, yank, and undo commands will restore
@@ -5488,7 +5488,14 @@ The following symbols have predefined meanings:
                     `inside-margin', or `outside-margin') of the extent's
                     begin glyph.
 
- end-glyph-layout The layout policy of the extent's end glyph.
+ end-glyph-layout   The layout policy of the extent's end glyph.
+
+ syntax-table       A cons or a syntax table object.  If a cons, the car must
+                    be an integer (interpreted as a syntax code, applicable to
+		            all characters in the extent).  Otherwise, syntax of
+		            characters in the extent is looked up in the syntax table.
+		            You should use the text property API to manipulate this
+		            property.  (This may be required in the future.)
 */
        (extent, property, value))
 {
