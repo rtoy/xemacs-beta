@@ -1,3 +1,8 @@
+2005-03-11  David Robinow <drobinow@yahoo.com>
+
+	* syssignal.h: Configure always sets HAVE_DECL_SYS_SIGLIST.  Test
+	for non-zero.
+
 2005-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.20 "cilantro" is released.

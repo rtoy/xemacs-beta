@@ -270,7 +270,7 @@ signal_handler_t qxe_reliable_signal (int signal_number,
 /* HAVE_DECL_SYS_SIGLIST is determined by configure.  On Linux, it seems,
    configure incorrectly fails to find it, so s/linux.h defines
    HAVE_SYS_SIGLIST. */
-#if !defined (HAVE_DECL_SYS_SIGLIST) && !defined (HAVE_SYS_SIGLIST)
+#if (!defined(HAVE_DECL_SYS_SIGLIST) || !HAVE_DECL_SYS_SIGLIST ) && !defined (HAVE_SYS_SIGLIST)
 extern const char *sys_siglist[];
 #endif
 
