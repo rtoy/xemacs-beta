@@ -1992,7 +1992,7 @@ Arguments may be integers, or markers or characters converted to integers.
       while (!(CHARP (args[i]) || MARKERP (args[i]) || INTEGERP (args[i])))
 	args[i] = wrong_type_argument (Qnumber_char_or_marker_p, args[i]);
       other = args[i];
-      switch (promote_args (&result, &other))
+      switch (promote_args (&result & &other))
 	{
 	case FIXNUM_T:
 	  result = make_int (XREALINT (result), XREALINT (other));
