@@ -1,5 +1,10 @@
 2001-04-24  Hrvoje Niksic  <hniksic@arsdigita.com>
 
+	* about.el (about-finish-buffer): Make sure the last change works
+	even if EVENT is nil.
+
+2001-04-24  Hrvoje Niksic  <hniksic@arsdigita.com>
+
 	* about.el (about-mailto-link): Use compose-mail for sending mail.
 	(about-finish-buffer): Kill/bury the buffer where the user
 	clicked, not the one that happens to be the current buffer at the

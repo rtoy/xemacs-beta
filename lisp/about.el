@@ -307,16 +307,20 @@
       (widget-create 'link
 		     :help-echo "Bury this buffer"
 		     :action (lambda (widget event)
-			       ;; For some reason,
-			       ;; (bury-buffer (event-buffer event))
-			       ;; doesn't work.
-			       (with-selected-window (event-window event)
+			       (if event
+				   ;; For some reason,
+				   ;; (bury-buffer (event-buffer event))
+				   ;; doesn't work.
+				   (with-selected-window (event-window event)
+				     (bury-buffer))
 				 (bury-buffer)))
 		     :tag "Bury")
     (widget-create 'link
 		   :help-echo "Kill this buffer"
 		   :action (lambda (widget event)
-			     (kill-buffer (event-buffer event)))
+			     (if event
+				 (kill-buffer (event-buffer event))
+			       (kill-buffer (current-buffer))))
 		   :tag "Kill"))
   (widget-insert " this buffer and return to previous.\n")
   (use-local-map (make-sparse-keymap))
