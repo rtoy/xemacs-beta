@@ -1,3 +1,8 @@
+2001-05-03  Martin Buchholz  <martin@xemacs.org>
+
+	* s/aix4.h: Fix crash with xlc -O3.
+	Improve comment explaining how -O3 works.
+
 2001-05-02  Jerry James <james@xemacs.org>
 
 	* faces.h (SET_FACE_PROPERTY): pass parameters to
