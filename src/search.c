@@ -496,7 +496,7 @@ tables) and defaults to the current buffer.
    This does not clobber the match data. */
 
 Bytecount
-fast_string_match (Lisp_Object regexp,  const Ibyte *nonreloc,
+fast_string_match (Lisp_Object regexp, const Ibyte *nonreloc,
 		   Lisp_Object reloc, Bytecount offset,
 		   Bytecount length, int case_fold_search,
 		   Error_Behavior errb, int no_quit)

@@ -1533,18 +1533,18 @@ in @ref{Basic Types}.
 
 @defun widget-create-child-and-convert parent type &rest args
 As a child of @var{parent}, create a widget with type @var{type} and
-value @var{value}.  @type{type} is copied, and the @code{:widget-contvert}
+value @var{value}.  @var{type} is copied, and the @code{:widget-contvert}
 method is applied to the optional keyword arguments from @var{args}.
 @end defun
 
 @defun widget-create-child parent type
 As a child of @var{parent}, create a widget with type @var{type}.
-@type{type} is copied, but no conversion method is applied.
+@var{type} is copied, but no conversion method is applied.
 @end defun
 
 @defun widget-create-child-value parent type value
 As a child of @var{parent}, create a widget with type @var{type} and
-value @var{value}.  @type{type} is copied, but no conversion method is
+value @var{value}.  @var{type} is copied, but no conversion method is
 applied.
 @end defun
 

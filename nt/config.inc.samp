@@ -92,6 +92,10 @@ COMPFACE_DIR=
 # have only one version of config.inc, and have to manually change it for
 # each different build.
 
+# NOTE: These cannot be relative paths.  If you want the source and build to
+# be relatives of each other, use $(MAKEROOT) to refer to the root of the
+# current tree -- that's one level up from where xemacs.mak is located.
+
 # SOURCE_DIR=c:\src\xemacs\working
 
 # BUILD_DIR=c:\src\xemacs\msbuilds\working

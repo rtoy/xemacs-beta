@@ -481,6 +481,8 @@ Lisp_Object Qdo_eol, Qdo_coding;
 
 Lisp_Object Qcanonicalize_after_coding;
 
+Lisp_Object QScoding_system_cookie;
+
 /* This is used to convert autodetected coding systems into existing
    systems.  For example, the chain undecided->convert-eol-autodetect may
    have its separate parts detected as mswindows-multibyte and
@@ -3751,6 +3753,38 @@ detected_coding_system (struct detection_state *st)
     }
 }
 
+/* Look for a coding system in the string (skipping over leading
+   blanks).  If found, return it, otherwise nil. */
+
+static Lisp_Object
+snarf_coding_system (const Ibyte *p, Bytecount len)
+{
+  Bytecount n;
+  Ibyte *name;
+
+  while (*p == ' ' || *p == '\t') p++, len--;
+  len = min (len, 1000);
+  name = alloca_ibytes (len + 1);
+  memcpy (name, p, len);
+  name[len] = '\0';
+
+  /* Get coding system name */
+  /* Characters valid in a MIME charset name (rfc 1521),
+     and in a Lisp symbol name. */
+  n = qxestrspn (name,
+		 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		 "abcdefghijklmnopqrstuvwxyz"
+		 "0123456789"
+		 "!$%&*+-.^_{|}~");
+  if (n > 0)
+    {
+      name[n] = '\0';
+      return find_coding_system_for_text_file (intern_int (name), 0);
+    }
+
+  return Qnil;
+}
+
 /* Given a seekable read stream and potential coding system and EOL type
    as specified, do any autodetection that is called for.  If the
    coding system and/or EOL type are not `autodetect', they will be left
@@ -3772,10 +3806,12 @@ unwind_free_detection_state (Lisp_Object opaque)
   return Qnil;
 }
 
+/* #### This duplicates code in `find-coding-system-magic-cookie-in-file'
+   in files.el.  Look into combining them. */
+
 static Lisp_Object
 look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
 {
-  Lisp_Object coding_system = Qnil;
   const UExtbyte *p;
   const UExtbyte *scan_end;
 
@@ -3810,30 +3846,8 @@ look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
 			    *(p-1) == '\t' ||
 			    *(p-1) == ';')))
 		  {
-		    Bytecount n;
-		    Ibyte *name;
-		    
 		    p += LENGTH ("coding:");
-		    while (*p == ' ' || *p == '\t') p++;
-		    name = alloca_ibytes (suffix - p + 1);
-		    memcpy (name, p, suffix - p);
-		    name[suffix - p] = '\0';
-
-		    /* Get coding system name */
-		    /* Characters valid in a MIME charset name (rfc 1521),
-		       and in a Lisp symbol name. */
-		    n = qxestrspn (name,
-				   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-				   "abcdefghijklmnopqrstuvwxyz"
-				   "0123456789"
-				   "!$%&*+-.^_{|}~");
-		    if (n > 0)
-		      {
-			name[n] = '\0';
-			coding_system =
-			  find_coding_system_for_text_file (intern_int (name),
-							    0);
-		      }
+		    return snarf_coding_system (p, suffix - p);
 		    break;
 		  }
 	      break;
@@ -3841,7 +3855,19 @@ look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
 	break;
       }
 
-  return coding_system;
+  /* Look for initial ;;;###coding system */
+
+  {
+    Bytecount ind = fast_string_match (QScoding_system_cookie,
+				       data, Qnil, 0, len, 0, ERROR_ME_NOT,
+				       1);
+    if (ind >= 0)
+      return
+	snarf_coding_system (data + ind + LENGTH (";;;###coding system: "),
+			     len - ind - LENGTH (";;;###coding system: "));
+  }
+
+  return Qnil;
 } 
 
 static Lisp_Object
@@ -4755,6 +4781,9 @@ vars_of_file_coding (void)
 
   /* We always have file-coding support */
   Fprovide (intern ("file-coding"));
+
+  QScoding_system_cookie = build_string (";;;###coding system: ");
+  staticpro (&QScoding_system_cookie);
 
 #ifdef HAVE_DEFAULT_EOL_DETECTION
   /* WARNING: The existing categories are intimately tied to the function

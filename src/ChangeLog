@@ -1,3 +1,20 @@
+2003-03-09  Ben Wing  <ben@xemacs.org>
+
+	* file-coding.c:
+	* file-coding.c (snarf_coding_system):
+	* file-coding.c (look_for_coding_system_magic_cookie):
+	* file-coding.c (vars_of_file_coding):
+	Fix up internal magic-cookie code to also check for
+	`;;;###coding system', already handled by the (redundant)
+	code in files.el.
+	
+	* regex.c (re_match_2_internal):
+	Fix problem with ordering of initializations and statements -- OK in
+	C++, not in C.
+	
+	* search.c (fast_string_match):
+	Indentation.
+
 2003-03-06  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (build-the-mofo):

@@ -6131,9 +6131,11 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    re_char *dtmp = POS_AFTER_GAP_UNSAFE (d);
 	    Ichar emch = itext_ichar_fmt (dtmp, fmt, lispobj);
 	    int tempres;
-	    BEGIN_REGEX_MALLOC_OK ();
 #ifdef emacs
 	    Charxpos charpos = offset_to_charxpos (lispobj, PTR_TO_OFFSET (d));
+#endif
+	    BEGIN_REGEX_MALLOC_OK ();
+#ifdef emacs
 	    UPDATE_SYNTAX_CACHE (scache, charpos);
 #endif
 	    tempres = (SYNTAX_FROM_CACHE (scache, emch) != Sword);
@@ -6174,13 +6176,13 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    re_char *dtmp;
 	    Ichar emch;
 	    int tempres;
-	    BEGIN_REGEX_MALLOC_OK ();
 #ifdef emacs
 	    Charxpos charpos = offset_to_charxpos (lispobj, PTR_TO_OFFSET (d));
+	    BEGIN_REGEX_MALLOC_OK ();
 	    UPDATE_SYNTAX_CACHE (scache, charpos);
-#endif
 	    END_REGEX_MALLOC_OK ();
 	    RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
+#endif
 	    dtmp = POS_BEFORE_GAP_UNSAFE (d);
 	    DEC_IBYTEPTR_FMT (dtmp, fmt);
 	    emch = itext_ichar_fmt (dtmp, fmt, lispobj);
