@@ -111,9 +111,8 @@ Convert CHARACTER to a one-character string containing that character.
     {
       Lisp_Object ch2 = Fevent_to_character (character, Qt, Qnil, Qnil);
       if (NILP (ch2))
-	return
-	  signal_simple_continuable_error
-	    ("character has no ASCII equivalent:", Fcopy_event (character, Qnil));
+        invalid_argument
+	  ("character has no ASCII equivalent:", Fcopy_event (character, Qnil));
       character = ch2;
     }
 
@@ -234,7 +233,7 @@ region_limit (int beginningp, struct buffer *b)
     Fsignal (Qmark_inactive, Qnil);
 #endif
   m = Fmarker_position (b->mark);
-  if (NILP (m)) error ("There is no region now");
+  if (NILP (m)) invalid_operation ("There is no region now", Qunbound);
   if (!!(BUF_PT (b) < XINT (m)) == !!beginningp)
     return make_int (BUF_PT (b));
   else
@@ -1110,7 +1109,7 @@ characters appearing in the day and month names may be incorrect.
   CHECK_STRING (format_string);
 
   if (! lisp_to_time (time_, &value))
-    error ("Invalid time specification");
+    invalid_argument ("Invalid time specification", Qunbound);
 
   /* This is probably enough.  */
   size = XSTRING_LENGTH (format_string) * 6 + 50;
@@ -1151,7 +1150,7 @@ ZONE is an integer indicating the number of seconds east of Greenwich.
   Lisp_Object list_args[9];
 
   if (! lisp_to_time (specified_time, &time_spec))
-    error ("Invalid time specification");
+    invalid_argument ("Invalid time specification", Qunbound);
 
   decoded_time = localtime (&time_spec);
   list_args[0] = make_int (decoded_time->tm_sec);
@@ -1228,7 +1227,7 @@ If you want them to stand for years in this century, you must do that yourself.
 	  tzstring = tzbuf;
 	}
       else
-	error ("Invalid time zone specification");
+ invalid_argument ("Invalid time zone specification", Qunbound);
 
       /* Set TZ before calling mktime; merely adjusting mktime's returned
 	 value doesn't suffice, since that would mishandle leap seconds.  */
@@ -1246,7 +1245,7 @@ If you want them to stand for years in this century, you must do that yourself.
     }
 
   if (the_time == (time_t) -1)
-    error ("Specified time is not representable");
+    invalid_argument ("Specified time is not representable", Qunbound);
 
   return wasteful_word_to_lisp (the_time);
 }
@@ -2382,9 +2381,9 @@ Transposing beyond buffer boundaries is an error.
   len2 = endr2 - startr2;
 
   if (startr2 < endr1)
-    error ("transposed regions not properly ordered");
+    invalid_argument ("transposed regions not properly ordered", Qunbound);
   else if (startr1 == endr1 || startr2 == endr2)
-    error ("transposed region may not be of length 0");
+    invalid_argument ("transposed region may not be of length 0", Qunbound);
 
   string1 = make_string_from_buffer (buf, startr1, len1);
   string2 = make_string_from_buffer (buf, startr2, len2);
@@ -2409,12 +2408,12 @@ Transposing beyond buffer boundaries is an error.
 void
 syms_of_editfns (void)
 {
-  defsymbol (&Qpoint, "point");
-  defsymbol (&Qmark, "mark");
-  defsymbol (&Qregion_beginning, "region-beginning");
-  defsymbol (&Qregion_end, "region-end");
-  defsymbol (&Qformat, "format");
-  defsymbol (&Quser_files_and_directories, "user-files-and-directories");
+  DEFSYMBOL (Qpoint);
+  DEFSYMBOL (Qmark);
+  DEFSYMBOL (Qregion_beginning);
+  DEFSYMBOL (Qregion_end);
+  DEFSYMBOL (Qformat);
+  DEFSYMBOL (Quser_files_and_directories);
 
   DEFSUBR (Fchar_equal);
   DEFSUBR (Fchar_Equal);
@@ -2480,9 +2479,9 @@ syms_of_editfns (void)
   DEFSUBR (Fsave_restriction);
   DEFSUBR (Ftranspose_regions);
 
-  defsymbol (&Qzmacs_update_region, "zmacs-update-region");
-  defsymbol (&Qzmacs_deactivate_region, "zmacs-deactivate-region");
-  defsymbol (&Qzmacs_region_buffer, "zmacs-region-buffer");
+  DEFSYMBOL (Qzmacs_update_region);
+  DEFSYMBOL (Qzmacs_deactivate_region);
+  DEFSYMBOL (Qzmacs_region_buffer);
 }
 
 void

@@ -37,7 +37,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #include "file-coding.h"
 
-Lisp_Object Qcoding_system_error;
+Lisp_Object Qtext_conversion_error;
 
 Lisp_Object Vkeyboard_coding_system;
 Lisp_Object Vterminal_coding_system;
@@ -376,8 +376,7 @@ print_coding_system (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Coding_System *c = XCODING_SYSTEM (obj);
   if (print_readably)
-    error ("printing unreadable object #<coding_system 0x%x>",
-	   c->header.uid);
+    printing_unreadable_object ("#<coding_system 0x%x>", c->header.uid);
 
   write_c_string ("#<coding_system ", printcharfun);
   print_internal (c->name, printcharfun, 1);
@@ -424,7 +423,7 @@ symbol_to_eol_type (Lisp_Object symbol)
   if (EQ (symbol, Qcrlf)) return EOL_CRLF;
   if (EQ (symbol, Qcr))   return EOL_CR;
 
-  signal_simple_error ("Unrecognized eol type", symbol);
+  invalid_constant ("Unrecognized eol type", symbol);
   return EOL_AUTODETECT; /* not reached */
 }
 
@@ -547,7 +546,7 @@ coding system, an error is signaled instead of returning nil.
   Lisp_Object coding_system = Ffind_coding_system (name);
 
   if (NILP (coding_system))
-    signal_simple_error ("No such coding system", name);
+    invalid_argument ("No such coding system", name);
   return coding_system;
 }
 
@@ -649,11 +648,11 @@ parse_charset_conversion_specs (charset_conversion_spec_dynarr *store_here,
       struct charset_conversion_spec spec;
 
       if (!CONSP (car) || !CONSP (XCDR (car)) || !NILP (XCDR (XCDR (car))))
-	signal_simple_error ("Invalid charset conversion spec", car);
+	invalid_argument ("Invalid charset conversion spec", car);
       from = Fget_charset (XCAR (car));
       to = Fget_charset (XCAR (XCDR (car)));
       if (XCHARSET_TYPE (from) != XCHARSET_TYPE (to))
-	signal_simple_error_2
+	invalid_operation_2
 	  ("Attempted conversion between different charset types",
 	   from, to);
       spec.from_charset = from;
@@ -880,7 +879,7 @@ if TYPE is 'ccl:
   else if (EQ (type, Qinternal))      { ty = CODESYS_INTERNAL; }
 #endif
   else
-    signal_simple_error ("Invalid coding system type", type);
+    invalid_constant ("Invalid coding system type", type);
 
   CHECK_SYMBOL (name);
 
@@ -958,7 +957,7 @@ if TYPE is 'ccl:
 						value);
 	      }
 	    else
-	      signal_simple_error ("Unrecognized property", key);
+	      invalid_constant ("Unrecognized property", key);
 	  }
 	else if (EQ (type, Qccl))
 	  {
@@ -972,7 +971,7 @@ if TYPE is 'ccl:
 	    else if (EQ (key, Qencode))
 	      suffix = "-ccl-encode";
 	    else
-	      signal_simple_error ("Unrecognized property", key);
+	      invalid_constant ("Unrecognized property", key);
 
 	    /* If value is vector, register it as a ccl program
 	       associated with an newly created symbol for
@@ -991,7 +990,7 @@ if TYPE is 'ccl:
 	      }
 	    /* check if the given ccl programs are valid.  */
 	    if (setup_ccl_program (&test_ccl, sym) < 0)
-	      signal_simple_error ("Invalid CCL program", value);
+	      invalid_argument ("Invalid CCL program", value);
 
 	    if (EQ (key, Qdecode))
 	      CODING_SYSTEM_CCL_DECODE (codesys) = sym;
@@ -1001,7 +1000,7 @@ if TYPE is 'ccl:
 	  }
 #endif /* MULE */
 	else
-	  signal_simple_error ("Unrecognized property", key);
+	  invalid_constant ("Unrecognized property", key);
       }
   }
 
@@ -1074,7 +1073,7 @@ Return the coding-system symbol for which symbol ALIAS is an alias.
   if (SYMBOLP (aliasee))
     return aliasee;
   else
-    signal_simple_error ("Symbol is not a coding system alias", alias);
+    invalid_argument ("Symbol is not a coding system alias", alias);
   return Qnil;		/* To keep the compiler happy */
 }
 
@@ -1126,7 +1125,7 @@ and `coding-system-canonical-name-p'.
   CHECK_SYMBOL (alias);
 
   if (!NILP (Fcoding_system_canonical_name_p (alias)))
-    signal_simple_error
+    invalid_change
       ("Symbol is the canonical name of a coding system and cannot be redefined",
        alias);
 
@@ -1172,7 +1171,7 @@ and `coding-system-canonical-name-p'.
 
   /* Check for coding system alias loops */
   if (EQ (alias, aliasee))
-    alias_loop: signal_simple_error_2
+    alias_loop: invalid_operation_2
       ("Attempt to create a coding system alias loop", alias, aliasee);
 
   for (probe = aliasee;
@@ -1311,14 +1310,14 @@ Return the PROP property of CODING-SYSTEM.
 #ifdef MULE
 	  case CODESYS_PROP_ISO2022:
 	    if (type != CODESYS_ISO2022)
-	      signal_simple_error
+	      invalid_argument
 		("Property only valid in ISO2022 coding systems",
 		 prop);
 	    break;
 
 	  case CODESYS_PROP_CCL:
 	    if (type != CODESYS_CCL)
-	      signal_simple_error
+	      invalid_argument
 		("Property only valid in CCL coding systems",
 		 prop);
 	    break;
@@ -1329,7 +1328,7 @@ Return the PROP property of CODING-SYSTEM.
       }
 
   if (!ok)
-    signal_simple_error ("Unrecognized property", prop);
+    invalid_constant ("Unrecognized property", prop);
 
   if (EQ (prop, Qname))
     return XCODING_SYSTEM_NAME (coding_system);
@@ -1425,7 +1424,7 @@ decode_coding_category (Lisp_Object symbol)
     if (EQ (coding_category_symbol[i], symbol))
       return i;
 
-  signal_simple_error ("Unrecognized coding category", symbol);
+  invalid_constant ("Unrecognized coding category", symbol);
   return 0; /* not reached */
 }
 
@@ -1467,7 +1466,7 @@ previously.
       int cat = decode_coding_category (XCAR (rest));
 
       if (category_to_priority[cat] >= 0)
-	signal_simple_error ("Duplicate coding category in list", XCAR (rest));
+	sferror ("Duplicate coding category in list", XCAR (rest));
       category_to_priority[cat] = i++;
     }
 
@@ -5590,7 +5589,7 @@ syms_of_file_coding (void)
 {
   INIT_LRECORD_IMPLEMENTATION (coding_system);
 
-  DEFERROR_STANDARD (Qcoding_system_error, Qio_error);
+  DEFERROR_STANDARD (Qtext_conversion_error, Qconversion_error);
 
   DEFSUBR (Fcoding_system_p);
   DEFSUBR (Ffind_coding_system);
@@ -5628,50 +5627,50 @@ syms_of_file_coding (void)
   DEFSUBR (Fset_char_ucs);
   DEFSUBR (Fchar_ucs);
 #endif /* MULE */
-  defsymbol (&Qcoding_systemp, "coding-system-p");
-  defsymbol (&Qno_conversion, "no-conversion");
-  defsymbol (&Qraw_text, "raw-text");
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qcoding_systemp);
+  DEFSYMBOL (Qno_conversion);
+  DEFSYMBOL (Qraw_text);
 #ifdef MULE
-  defsymbol (&Qbig5, "big5");
-  defsymbol (&Qshift_jis, "shift-jis");
+  DEFSYMBOL (Qbig5);
+  DEFSYMBOL (Qshift_jis);
   defsymbol (&Qucs4, "ucs-4");
   defsymbol (&Qutf8, "utf-8");
-  defsymbol (&Qccl, "ccl");
-  defsymbol (&Qiso2022, "iso2022");
+  DEFSYMBOL (Qccl);
+  DEFSYMBOL (Qiso2022);
 #endif /* MULE */
-  defsymbol (&Qmnemonic, "mnemonic");
-  defsymbol (&Qeol_type, "eol-type");
-  defsymbol (&Qpost_read_conversion, "post-read-conversion");
-  defsymbol (&Qpre_write_conversion, "pre-write-conversion");
+  DEFSYMBOL (Qmnemonic);
+  DEFSYMBOL (Qeol_type);
+  DEFSYMBOL (Qpost_read_conversion);
+  DEFSYMBOL (Qpre_write_conversion);
 
-  defsymbol (&Qcr, "cr");
-  defsymbol (&Qlf, "lf");
-  defsymbol (&Qcrlf, "crlf");
-  defsymbol (&Qeol_cr, "eol-cr");
-  defsymbol (&Qeol_lf, "eol-lf");
-  defsymbol (&Qeol_crlf, "eol-crlf");
+  DEFSYMBOL (Qcr);
+  DEFSYMBOL (Qlf);
+  DEFSYMBOL (Qcrlf);
+  DEFSYMBOL (Qeol_cr);
+  DEFSYMBOL (Qeol_lf);
+  DEFSYMBOL (Qeol_crlf);
 #ifdef MULE
-  defsymbol (&Qcharset_g0, "charset-g0");
-  defsymbol (&Qcharset_g1, "charset-g1");
-  defsymbol (&Qcharset_g2, "charset-g2");
-  defsymbol (&Qcharset_g3, "charset-g3");
-  defsymbol (&Qforce_g0_on_output, "force-g0-on-output");
-  defsymbol (&Qforce_g1_on_output, "force-g1-on-output");
-  defsymbol (&Qforce_g2_on_output, "force-g2-on-output");
-  defsymbol (&Qforce_g3_on_output, "force-g3-on-output");
-  defsymbol (&Qno_iso6429, "no-iso6429");
-  defsymbol (&Qinput_charset_conversion, "input-charset-conversion");
-  defsymbol (&Qoutput_charset_conversion, "output-charset-conversion");
+  DEFSYMBOL (Qcharset_g0);
+  DEFSYMBOL (Qcharset_g1);
+  DEFSYMBOL (Qcharset_g2);
+  DEFSYMBOL (Qcharset_g3);
+  DEFSYMBOL (Qforce_g0_on_output);
+  DEFSYMBOL (Qforce_g1_on_output);
+  DEFSYMBOL (Qforce_g2_on_output);
+  DEFSYMBOL (Qforce_g3_on_output);
+  DEFSYMBOL (Qno_iso6429);
+  DEFSYMBOL (Qinput_charset_conversion);
+  DEFSYMBOL (Qoutput_charset_conversion);
 
-  defsymbol (&Qshort, "short");
-  defsymbol (&Qno_ascii_eol, "no-ascii-eol");
-  defsymbol (&Qno_ascii_cntl, "no-ascii-cntl");
-  defsymbol (&Qseven, "seven");
-  defsymbol (&Qlock_shift, "lock-shift");
-  defsymbol (&Qescape_quoted, "escape-quoted");
+  DEFSYMBOL (Qshort);
+  DEFSYMBOL (Qno_ascii_eol);
+  DEFSYMBOL (Qno_ascii_cntl);
+  DEFSYMBOL (Qseven);
+  DEFSYMBOL (Qlock_shift);
+  DEFSYMBOL (Qescape_quoted);
 #endif /* MULE */
-  defsymbol (&Qencode, "encode");
-  defsymbol (&Qdecode, "decode");
+  DEFSYMBOL (Qencode);
+  DEFSYMBOL (Qdecode);
 
 #ifdef MULE
   defsymbol (&coding_category_symbol[CODING_CATEGORY_SHIFT_JIS],

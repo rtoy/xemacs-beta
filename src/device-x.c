@@ -211,7 +211,7 @@ sanity_check_geometry_resource (Display *dpy)
 		  app_name, (char *) value.addr,
 		  app_class, (char *) value.addr);
       suppress_early_error_handler_backtrace = 1;
-      error ("Invalid geometry resource");
+      syntax_error ("Invalid geometry resource", Qunbound);
     }
 }
 
@@ -568,7 +568,7 @@ x_init_device (struct device *d, Lisp_Object props)
   if (dpy == 0)
     {
       suppress_early_error_handler_backtrace = 1;
-      signal_simple_error ("X server not responding\n", display);
+      gui_error ("X server not responding\n", display);
     }
 
   if (STRINGP (Vx_emacs_application_class) &&
@@ -1285,13 +1285,14 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
   if (NILP (locale))
     locale = Qglobal;
   if (NILP (Fvalid_specifier_locale_p (locale)))
-    signal_simple_error ("Invalid locale", locale);
+    invalid_argument ("Invalid locale", locale);
   if (WINDOWP (locale))
     /* #### I can't come up with any coherent way of naming windows.
        By relative position?  That seems tricky because windows
        can change position, be split, etc.  By order of creation?
        That seems less than useful. */
-    signal_simple_error ("Windows currently can't be resourced", locale);
+    signal_error (Qunimplemented,
+		  "Windows currently can't be resourced", locale);
 
   if (!NILP (device) && !DEVICEP (device))
     CHECK_DEVICE (device);
@@ -1483,8 +1484,13 @@ mean ``unspecified''.
     while (namerest[0] && classrest[0])
       namerest++, classrest++;
     if (namerest[0] || classrest[0])
-      signal_simple_error_2
-	("class list and name list must be the same length", name, class);
+      {
+	maybe_signal_error_2
+	  (Qstructure_formation_error,
+	   "class list and name list must be the same length", name, class,
+	   Qresource, errb);
+	return Qnil;
+      }
     result = XrmQGetResource (db, namelist, classlist, &xrm_type, &xrm_value);
 
     if (result != True || xrm_type != string_quark)
@@ -1504,33 +1510,32 @@ mean ``unspecified''.
 	  !ascii_strcasecmp (raw_result, "true") ||
 	  !ascii_strcasecmp (raw_result, "yes"))
 	return Fcons (Qt, Qnil);
-      return maybe_continuable_error
-	(Qresource, errb,
-	 "can't convert %s: %s to a Boolean", name_string, raw_result);
+      return maybe_signal_continuable_error_2
+	(Qinvalid_operation, "Can't convert to a Boolean",
+	 build_string (name_string), build_string (raw_result), Qresource,
+	 errb);
     }
   else if (EQ (type, Qinteger) || EQ (type, Qnatnum))
     {
       int i;
       char c;
       if (1 != sscanf (raw_result, "%d%c", &i, &c))
-	return maybe_continuable_error
-	  (Qresource, errb,
-	   "can't convert %s: %s to an integer", name_string, raw_result);
+      return maybe_signal_continuable_error_2
+	(Qinvalid_operation, "Can't convert to an integer",
+	 build_string (name_string), build_string (raw_result), Qresource,
+	 errb);
       else if (EQ (type, Qnatnum) && i < 0)
-	return maybe_continuable_error
-	  (Qresource, errb,
-	   "invalid numerical value %d for resource %s", i, name_string);
+	return maybe_signal_continuable_error_2
+	  (Qinvalid_argument, "Invalid numerical value for resource",
+	   make_int (i), build_string (name_string), Qresource, errb);
       else
 	return make_int (i);
     }
   else
     {
       return maybe_signal_continuable_error
-	(Qwrong_type_argument,
-	 list2 (build_translated_string
-		("should be string, integer, natnum or boolean"),
-		type),
-	 Qresource, errb);
+	(Qwrong_type_argument, "Should be string, integer, natnum or boolean",
+	 type, Qresource, errb);
     }
 }
 
@@ -1576,7 +1581,7 @@ standard resource specification.
   str = (char *) XSTRING_DATA (resource_line);
   if (!(colon_pos = strchr (str, ':')) || strchr (str, '\n'))
   invalid:
-    signal_simple_error ("Invalid resource line", resource_line);
+    syntax_error ("Invalid resource line", resource_line);
   if (strspn (str,
 	      /* Only the following chars are allowed before the colon */
 	      " \t.*?abcdefghijklmnopqrstuvwxyz"
@@ -1625,7 +1630,7 @@ The returned value will be one of the symbols `static-gray', `gray-scale',
     case TrueColor:   return intern ("true-color");
     case DirectColor: return intern ("direct-color");
     default:
-      error ("display has an unknown visual class");
+      invalid_state ("display has an unknown visual class", Qunbound);
       return Qnil;	/* suppress compiler warning */
     }
 }
@@ -1711,7 +1716,7 @@ DEVICE must be an X11 display device.  See `x-keysym-on-keyboard-p'.
 {
   struct device *d = decode_device (device);
   if (!DEVICE_X_P (d))
-    signal_simple_error ("Not an X device", device);
+    gui_error ("Not an X device", device);
 
   return DEVICE_X_DATA (d)->x_keysym_map_hash_table;
 }
@@ -1732,7 +1737,7 @@ The two names differ in capitalization and underscoring.
 {
   struct device *d = decode_device (device);
   if (!DEVICE_X_P (d))
-    signal_simple_error ("Not an X device", device);
+    gui_error ("Not an X device", device);
 
   return (EQ (Qsans_modifiers,
 	      Fgethash (keysym, DEVICE_X_KEYSYM_MAP_HASH_TABLE (d), Qnil)) ?
@@ -1755,7 +1760,7 @@ The two names differ in capitalization and underscoring.
 {
   struct device *d = decode_device (device);
   if (!DEVICE_X_P (d))
-    signal_simple_error ("Not an X device", device);
+    gui_error ("Not an X device", device);
 
   return (NILP (Fgethash (keysym, DEVICE_X_KEYSYM_MAP_HASH_TABLE (d), Qnil)) ?
 	  Qnil : Qt);
@@ -1903,7 +1908,7 @@ See also `x-set-font-path'.
   Lisp_Object font_path = Qnil;
 
   if (!directories)
-    signal_simple_error ("Can't get X font path", device);
+    gui_error ("Can't get X font path", device);
 
   while (ndirs_return--)
       font_path = Fcons (build_ext_string (directories[ndirs_return],
@@ -1985,9 +1990,9 @@ syms_of_device_x (void)
   DEFSUBR (Fx_get_font_path);
   DEFSUBR (Fx_set_font_path);
 
-  defsymbol (&Qx_error, "x-error");
-  defsymbol (&Qinit_pre_x_win, "init-pre-x-win");
-  defsymbol (&Qinit_post_x_win, "init-post-x-win");
+  DEFSYMBOL (Qx_error);
+  DEFSYMBOL (Qinit_pre_x_win);
+  DEFSYMBOL (Qinit_post_x_win);
 }
 
 void

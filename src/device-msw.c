@@ -631,7 +631,7 @@ handle_devmode_changes (Lisp_Devmode *ldm, HGLOBAL hDevNames, HGLOBAL hDevMode)
       if (!sync_printer_with_devmode (d, devmode, ldm->devmode, new_name))
 	{
 	  global_free_2_maybe (hDevNames, hDevMode);
-	  error ("Printer device initialization I/O error, device deleted.");
+	  signal_error (Qio_error, "Printer device initialization I/O error, device deleted", Qunbound);
 	}
     }
   else
@@ -759,17 +759,16 @@ mswindows_handle_print_dialog_box (struct frame *f, Lisp_Object keys)
 	    else if (EQ (value, Qpages))
 	      flags |= PD_PAGENUMS;
 	    else if (!EQ (value, Qall))
-	      invalid_argument ("Invalid value for :selected-page-button",
-				value);
+	      invalid_constant ("for :selected-page-button", value);
 	  }
 	else
-	  syntax_error ("Unrecognized print-dialog keyword", key);
+	  invalid_constant ("Unrecognized print-dialog keyword", key);
       }
   }
 
   if ((UNBOUNDP (device) && UNBOUNDP (settings)) ||
       (!UNBOUNDP (device) && !UNBOUNDP (settings)))
-    syntax_error ("Exactly one of :device and :printer-settings must be given",
+    sferror ("Exactly one of :device and :printer-settings must be given",
 		  keys);
 
   return print_dialog_worker (!UNBOUNDP (device) ? device : settings, flags);
@@ -829,13 +828,13 @@ mswindows_handle_page_setup_dialog_box (struct frame *f, Lisp_Object keys)
 	    plist = value;
 	  }
 	else
-	  syntax_error ("Unrecognized page-setup dialog keyword", key);
+	  invalid_constant ("Unrecognized page-setup dialog keyword", key);
       }
   }
 
   if ((UNBOUNDP (device) && UNBOUNDP (settings)) ||
       (!UNBOUNDP (device) && !UNBOUNDP (settings)))
-    syntax_error ("Exactly one of :device and :printer-settings must be given",
+    sferror ("Exactly one of :device and :printer-settings must be given",
 		  keys);
 
   if (UNBOUNDP (device))
@@ -937,8 +936,9 @@ Return value is the previously selected settings object.
 	DocumentProperties (NULL, DEVICE_MSPRINTER_HPRINTER(d),
 			    DEVICE_MSPRINTER_NAME(d), NULL, NULL, 0);
       if (dm_size <= 0)
-	invalid_operation ("Unable to specialize settings, printer error",
-			   device);
+	signal_error (Qio_error,
+		      "Unable to specialize settings, printer error",
+		      device);
 
       assert (XDEVMODE_SIZE (ldm) <= dm_size);
       ldm->devmode = xrealloc (ldm->devmode, dm_size);
@@ -949,7 +949,9 @@ Return value is the previously selected settings object.
      hold a larger one - not a big deal */
   if (!sync_printer_with_devmode (d, ldm->devmode, ldm->devmode,
 				  ldm->printer_name))
-    error ("Printer device initialization I/O error, device deleted.");
+    signal_error (Qio_error,
+		  "Printer device initialization I/O error, device deleted",
+		  Qunbound);
 
   if (ldm->printer_name == NULL)
     ldm->printer_name = xstrdup (DEVICE_MSPRINTER_NAME(d));
@@ -1006,7 +1008,9 @@ Return value is the currently selected settings object.
   if (!sync_printer_with_devmode (d, ldm_new->devmode,
 				  ldm_current->devmode,
 				  ldm_new->printer_name))
-    error ("Printer device initialization I/O error, device deleted.");
+    signal_error (Qio_error,
+		  "Printer device initialization I/O error, device deleted",
+		  Qunbound);
 
   if (ldm_new->printer_name != NULL)
     {
@@ -1029,8 +1033,8 @@ print_devmode (Lisp_Object obj, Lisp_Object printcharfun,
   char buf[100];
   Lisp_Devmode *dm = XDEVMODE (obj);
   if (print_readably)
-    error ("printing unreadable object #<msprinter-settings 0x%x>",
-           dm->header.uid);
+    printing_unreadable_object ("#<msprinter-settings 0x%x>",
+				dm->header.uid);
   write_c_string ("#<msprinter-settings", printcharfun);
   if (dm->printer_name)
     {

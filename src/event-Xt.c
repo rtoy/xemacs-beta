@@ -3247,9 +3247,9 @@ emacs_Xt_event_add_widget_actions (XtAppContext ctx)
 void
 syms_of_event_Xt (void)
 {
-  defsymbol (&Qkey_mapping, "key-mapping");
-  defsymbol (&Qsans_modifiers, "sans-modifiers");
-  defsymbol (&Qself_insert_command, "self-insert-command");
+  DEFSYMBOL (Qkey_mapping);
+  DEFSYMBOL (Qsans_modifiers);
+  DEFSYMBOL (Qself_insert_command);
 }
 
 void

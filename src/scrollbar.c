@@ -894,23 +894,23 @@ This ensures that VALUE is in the proper range for the horizontal scrollbar.
 void
 syms_of_scrollbar (void)
 {
-  defsymbol (&Qscrollbar_line_up, "scrollbar-line-up");
-  defsymbol (&Qscrollbar_line_down, "scrollbar-line-down");
-  defsymbol (&Qscrollbar_page_up, "scrollbar-page-up");
-  defsymbol (&Qscrollbar_page_down, "scrollbar-page-down");
-  defsymbol (&Qscrollbar_to_top, "scrollbar-to-top");
-  defsymbol (&Qscrollbar_to_bottom, "scrollbar-to-bottom");
-  defsymbol (&Qscrollbar_vertical_drag, "scrollbar-vertical-drag");
+  DEFSYMBOL (Qscrollbar_line_up);
+  DEFSYMBOL (Qscrollbar_line_down);
+  DEFSYMBOL (Qscrollbar_page_up);
+  DEFSYMBOL (Qscrollbar_page_down);
+  DEFSYMBOL (Qscrollbar_to_top);
+  DEFSYMBOL (Qscrollbar_to_bottom);
+  DEFSYMBOL (Qscrollbar_vertical_drag);
 
-  defsymbol (&Qscrollbar_char_left, "scrollbar-char-left");
-  defsymbol (&Qscrollbar_char_right, "scrollbar-char-right");
-  defsymbol (&Qscrollbar_page_left, "scrollbar-page-left");
-  defsymbol (&Qscrollbar_page_right, "scrollbar-page-right");
-  defsymbol (&Qscrollbar_to_left, "scrollbar-to-left");
-  defsymbol (&Qscrollbar_to_right, "scrollbar-to-right");
-  defsymbol (&Qscrollbar_horizontal_drag, "scrollbar-horizontal-drag");
+  DEFSYMBOL (Qscrollbar_char_left);
+  DEFSYMBOL (Qscrollbar_char_right);
+  DEFSYMBOL (Qscrollbar_page_left);
+  DEFSYMBOL (Qscrollbar_page_right);
+  DEFSYMBOL (Qscrollbar_to_left);
+  DEFSYMBOL (Qscrollbar_to_right);
+  DEFSYMBOL (Qscrollbar_horizontal_drag);
 
-  defsymbol (&Qinit_scrollbar_from_resources, "init-scrollbar-from-resources");
+  DEFSYMBOL (Qinit_scrollbar_from_resources);
 
   /* #### All these functions should be moved into Lisp.
      See comment above. */

@@ -162,7 +162,7 @@ stuff_char (struct console *con, int c)
 #ifdef TIOCSTI
   ioctl (input_fd, TIOCSTI, &c);
 #else /* no TIOCSTI */
-  error ("Cannot stuff terminal input characters in this version of Unix.");
+  invalid_operation ("Cannot stuff terminal input characters in this version of Unix.", Qunbound);
 #endif /* no TIOCSTI */
 }
 
@@ -678,7 +678,7 @@ sys_subshell (void)
   pid = fork ();
 
   if (pid == -1)
-    error ("Can't spawn subshell");
+    report_process_error ("Can't spawn subshell", Qunbound);
   if (pid == 0)
 #endif /* not WIN32_NATIVE */
   {
@@ -697,7 +697,7 @@ sys_subshell (void)
 
     /* Waits for process completion */
     if (_spawnlp (_P_WAIT, sh, sh, NULL) != 0)
-      error ("Can't spawn subshell");
+      report_process_error ("Can't spawn subshell", Qunbound);
     else
       return; /* we're done, no need to wait for termination */
   }
@@ -3337,7 +3337,8 @@ dup2 (int oldd, int newd)
 #ifdef F_DUPFD
   fd = fcntl (oldd, F_DUPFD, newd);
   if (fd != newd)
-    error ("can't dup2 (%i,%i) : %s", oldd, newd, strerror (errno));
+    signal_ferror_with_frob (Qfile_error, lisp_strerror (errno),
+			     "can't dup2 (%i, %i)", oldd, newd);
 #else
   fd = dup (old);
   if (fd == -1)

@@ -439,7 +439,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse)
 	  Lisp_Object cascade = desc;
 	  desc = Fcdr (desc);
 	  if (NILP (desc))
-	    signal_simple_error ("keyword in menu lacks a value",
+	    sferror ("keyword in menu lacks a value",
 				 cascade);
 	  val = Fcar (desc);
 	  desc = Fcdr (desc);
@@ -458,7 +458,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse)
 		   || CHARP (val))
 		wv->accel = LISP_TO_VOID (val);
 	      else
-		signal_simple_error ("bad keyboard accelerator", val);
+		invalid_argument ("bad keyboard accelerator", val);
 #endif
 	    }
 	  else if (EQ (key, Q_label))
@@ -466,7 +466,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse)
 	      /* implement in 21.2 */
 	    }
 	  else
-	    signal_simple_error ("unknown menu cascade keyword", cascade);
+	    invalid_argument ("unknown menu cascade keyword", cascade);
 	}
 
       gtk_object_set_data (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG, LISP_TO_VOID (desc));
@@ -486,7 +486,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse)
     }
   else
     {
-      signal_simple_error ("menu name (first element) must be a string",
+      invalid_argument ("menu name (first element) must be a string",
 			   desc);
     }
 
@@ -612,7 +612,7 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
       GtkWidget *widget = NULL;
 
       if (length < 2)
-	signal_simple_error ("button descriptors must be at least 2 long", descr);
+	sferror ("button descriptors must be at least 2 long", descr);
 
       /* length 2:		[ "name" callback ]
 	 length 3:		[ "name" callback active-p ]
@@ -636,7 +636,7 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
 	  /* the new way */
 	  int i;
 	  if (length & 1)
-	    signal_simple_error (
+	    sferror (
 				 "button descriptor has an odd number of keywords and values",
 				 descr);
 
@@ -647,7 +647,7 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
 	      Lisp_Object key = contents [i++];
 	      Lisp_Object val = contents [i++];
 	      if (!KEYWORDP (key))
-		signal_simple_error_2 ("not a keyword", key, descr);
+		invalid_argument_2 ("not a keyword", key, descr);
 
 	      if      (EQ (key, Q_active))   active_p   = val;
 	      else if (EQ (key, Q_suffix))   suffix     = val;
@@ -663,12 +663,12 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
 		  if ( SYMBOLP (val) || CHARP (val))
 		    accel = val;
 		  else
-		    signal_simple_error ("bad keyboard accelerator", val);
+		    invalid_argument ("bad keyboard accelerator", val);
 		}
 	      else if (EQ (key, Q_filter))
-		signal_simple_error(":filter keyword not permitted on leaf nodes", descr);
+		sferror(":filter keyword not permitted on leaf nodes", descr);
 	      else
-		signal_simple_error_2 ("unknown menu item keyword", key, descr);
+		invalid_argument_2 ("unknown menu item keyword", key, descr);
 	    }
 	}
 
@@ -809,7 +809,7 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
 	}
       else
 	{
-	  signal_simple_error_2 ("unknown style", style, descr);
+	  invalid_argument_2 ("unknown style", style, descr);
 	}
 
       gtk_widget_set_sensitive (widget, ! NILP (active_p));

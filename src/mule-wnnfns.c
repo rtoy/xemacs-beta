@@ -1098,7 +1098,7 @@ or wnn_kaikakko and the CDR contains the value.
 	else if (EQ (key, Qwnn_kaikakko)) param.p15 = setval;
 	else
 	  {
-	    signal_simple_error ("Invalid wnn keyword", key);
+	    invalid_constant ("Invalid wnn keyword", key);
 	    return Qnil;
 	  }
       }
@@ -1848,14 +1848,14 @@ syms_of_mule_wnn (void)
 #endif	/* Wnn6 */
   DEFSUBR (Fwnn_version);
 
-  defsymbol (&Qjserver, "jserver");
-  defsymbol (&Qcserver, "cserver");
-  /* defsymbol (&Qtserver, "tserver"); */
-  defsymbol (&Qkserver, "kserver");
+  DEFSYMBOL (Qjserver);
+  DEFSYMBOL (Qcserver);
+  /* DEFSYMBOL (Qtserver); */
+  DEFSYMBOL (Qkserver);
 
-  defsymbol (&Qwnn_no_uniq, "wnn-no-uniq");
-  defsymbol (&Qwnn_uniq, "wnn-uniq");
-  defsymbol (&Qwnn_uniq_kanji, "wnn-uniq-kanji");
+  DEFSYMBOL (Qwnn_no_uniq);
+  DEFSYMBOL (Qwnn_uniq);
+  DEFSYMBOL (Qwnn_uniq_kanji);
   defsymbol (&Qwnn_n, "wnn_n");
   defsymbol (&Qwnn_nsho, "wnn_nsho");
   defsymbol (&Qwnn_hindo, "wnn_hindo");

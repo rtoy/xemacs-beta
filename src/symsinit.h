@@ -96,6 +96,7 @@ void syms_of_free_hook (void);
 void syms_of_general (void);
 void syms_of_glyphs_x (void);
 void syms_of_glyphs_eimage (void);
+void syms_of_glyphs_shared (void);
 void syms_of_glyphs_widget (void);
 void syms_of_glyphs_mswindows (void);
 void syms_of_glyphs (void);

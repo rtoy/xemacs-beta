@@ -935,10 +935,6 @@ sys_kill (int pid, int sig)
   return rc;
 }
 
-#if 0
-/* Sync with FSF Emacs 19.34.6 note: ifdef'ed out in XEmacs */
-extern int report_file_error (const char *, Lisp_Object);
-#endif
 /* The following two routines are used to manipulate stdin, stdout, and
    stderr of our child processes.
 
@@ -976,7 +972,8 @@ prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
 		       0, 
 		       TRUE, 
 		       DUPLICATE_SAME_ACCESS))
-    report_file_error ("Duplicating input handle for child", Qnil);
+    mswindows_report_process_error ("Duplicating input handle for child",
+				    Qunbound, GetLastError ());
   
   if (!DuplicateHandle (parent,
 		       (HANDLE) _get_osfhandle (out),
@@ -985,7 +982,8 @@ prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
 		       0,
 		       TRUE,
 		       DUPLICATE_SAME_ACCESS))
-    report_file_error ("Duplicating output handle for child", Qnil);
+    mswindows_report_process_error ("Duplicating output handle for child",
+				    Qunbound, GetLastError ());
   
   if (!DuplicateHandle (parent,
 		       (HANDLE) _get_osfhandle (err),
@@ -994,17 +992,21 @@ prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
 		       0,
 		       TRUE,
 		       DUPLICATE_SAME_ACCESS))
-    report_file_error ("Duplicating error handle for child", Qnil);
+    mswindows_report_process_error ("Duplicating error handle for child",
+				    Qunbound, GetLastError ());
 
   /* and store them as our std handles */
   if (!SetStdHandle (STD_INPUT_HANDLE, newstdin))
-    report_file_error ("Changing stdin handle", Qnil);
+    mswindows_report_process_error ("Changing stdin handle",
+				    Qunbound, GetLastError ());
   
   if (!SetStdHandle (STD_OUTPUT_HANDLE, newstdout))
-    report_file_error ("Changing stdout handle", Qnil);
+    mswindows_report_process_error ("Changing stdout handle",
+				    Qunbound, GetLastError ());
 
   if (!SetStdHandle (STD_ERROR_HANDLE, newstderr))
-    report_file_error ("Changing stderr handle", Qnil);
+    mswindows_report_process_error ("Changing stderr handle",
+				    Qunbound, GetLastError ());
 }
 
 void
@@ -1289,8 +1291,8 @@ syms_of_ntproc (void)
 void
 vars_of_ntproc (void)
 {
-  defsymbol (&Qhigh, "high");
-  defsymbol (&Qlow, "low");
+  DEFSYMBOL (Qhigh);
+  DEFSYMBOL (Qlow);
 
   DEFVAR_LISP ("win32-quote-process-args", &Vwin32_quote_process_args /*
     Non-nil enables quoting of process arguments to ensure correct parsing.

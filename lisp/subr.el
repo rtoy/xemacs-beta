@@ -3,7 +3,7 @@
 ;; Copyright (C) 1985, 1986, 1992, 1994-5, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995 Sun Microsystems.
-;; Copyright (C) 2000 Ben Wing.
+;; Copyright (C) 2000, 2001 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: extensions, dumped
@@ -625,38 +625,42 @@ Although this usage of `error' is very common, it is deprecated because it
 totally defeats the purpose of having structured errors.  There is now
 a rich set of defined errors you can use:
 
-error
-  syntax-error
-    invalid-read-syntax
-    list-formation-error
-      malformed-list
-        malformed-property-list
-      circular-list
-        circular-property-list
-    invalid-regexp
-    specifier-syntax-error
+quit
 
+error
   invalid-argument
-    wrong-type-argument
-    args-out-of-range
-    wrong-number-of-arguments
+    syntax-error
+      invalid-read-syntax
+      invalid-regexp
+      structure-formation-error
+        list-formation-error
+          malformed-list
+            malformed-property-list
+          circular-list
+            circular-property-list
     invalid-function
     no-catch
     undefined-keystroke-sequence
-    specifier-argument-error
+    invalid-constant
+    wrong-type-argument
+    args-out-of-range
+    wrong-number-of-arguments
 
   invalid-state
     void-function
     cyclic-function-indirection
     void-variable
     cyclic-variable-indirection
-    protected-field
     invalid-byte-code
+    stack-overflow
+    out-of-memory
+    invalid-key-binding
+    internal-error
 
   invalid-operation
     invalid-change
       setting-constant
-      specifier-change-error
+      protected-field
     editing-error
       beginning-of-buffer
       end-of-buffer
@@ -666,32 +670,37 @@ error
         file-already-exists
         file-locked
         file-supersession
-      end-of-file
-      coding-system-error
-      image-conversion-error
+        end-of-file
+      process-error
+      network-error
       tooltalk-error
+      gui-error
+        dialog-box-error
+      sound-error
+      conversion-error
+        text-conversion-error
+        image-conversion-error
+        base64-conversion-error
+        selection-conversion-error
     arith-error
       range-error
       domain-error
       singularity-error
       overflow-error
       underflow-error
-    dialog-box-error
     search-failed
-    selection-conversion-error
+    printing-unreadable-object
+    unimplemented
 
-  unimplemented
+Note the semantic differences between some of the more common errors:
 
-  internal-error
-
-The five most common errors you will probably use or base your new
-errors off of are `syntax-error', `invalid-argument', `invalid-state',
-`invalid-operation', and `invalid-change'.  Note the semantic differences:
-
--- `syntax-error' is for errors in complex structures: parsed strings, lists,
-   and the like.
--- `invalid-argument' is for errors in a simple value.  Typically, the entire
-   value, not just one part of it, is wrong.
+-- `invalid-argument' is for all cases where a bad value is encountered.
+-- `invalid-constant' is for arguments where only a specific set of values
+   is allowed.
+-- `syntax-error' is when complex structures (parsed strings, lists,
+   and the like) are badly formed.  If the problem is just a single bad
+   value inside the structure, you should probably be using something else,
+   e.g. `invalid-constant', `wrong-type-argument', or `invalid-argument'.
 -- `invalid-state' means that some settings have been changed in such a way
    that their current state is unallowable.  More and more, code is being
    written more carefully, and catches the error when the settings are being
@@ -699,9 +708,10 @@ errors off of are `syntax-error', `invalid-argument', `invalid-state',
 -- `invalid-change' means that an attempt is being made to change some settings
    into an invalid state.  `invalid-change' is a type of `invalid-operation'.
 -- `invalid-operation' refers to all cases where code is trying to do something
-   that's disallowed.  This includes file errors, buffer errors (e.g. running
-   off the end of a buffer), `invalid-change' as just mentioned, and
-   arithmetic errors.
+   that's disallowed, or when an error occurred during an operation. (These
+   two concepts are merged because there's no clear distinction between them.)
+-- `io-error' refers to errors involving interaction with any external
+   components (files, other programs, the operating system, etc).
 
 See also `cerror', `signal', and `signal-error'."
   (while t (apply

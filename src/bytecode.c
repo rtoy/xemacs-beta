@@ -211,8 +211,6 @@ typedef enum Opcode Opcode;
 typedef unsigned char Opbyte;
 
 
-static void invalid_byte_code_error (char *error_message, ...);
-
 Lisp_Object * execute_rare_opcode (Lisp_Object *stack_ptr,
 				   const Opbyte *program_ptr,
 				   Opcode opcode);
@@ -634,9 +632,9 @@ execute_optimized_program (const Opbyte *program,
       REGISTER Opcode opcode = (Opcode) READ_UINT_1;
 #ifdef ERROR_CHECK_BYTE_CODE
       if (stack_ptr > stack_end)
-	invalid_byte_code_error ("byte code stack overflow");
+	stack_overflow ("byte code stack overflow", Qunbound);
       if (stack_ptr < stack_beg)
-	invalid_byte_code_error ("byte code stack underflow");
+	stack_overflow ("byte code stack underflow", Qunbound);
 #endif
 
 #ifdef BYTE_CODE_METER
@@ -842,7 +840,7 @@ execute_optimized_program (const Opbyte *program,
 #ifdef ERROR_CHECK_BYTE_CODE
 	  /* Binds and unbinds are supposed to be compiled balanced.  */
 	  if (specpdl_depth() != speccount)
-	    invalid_byte_code_error ("unbalanced specbinding stack");
+	    invalid_byte_code ("unbalanced specbinding stack", Qunbound);
 #endif
 	  return TOP;
 
@@ -1481,20 +1479,10 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 }
 
 
-static void
-invalid_byte_code_error (char *error_message, ...)
+DOESNT_RETURN
+invalid_byte_code (const char *reason, Lisp_Object frob)
 {
-  Lisp_Object obj;
-  va_list args;
-  char *buf = alloca_array (char, strlen (error_message) + 128);
-
-  sprintf (buf, "%s", error_message);
-  va_start (args, error_message);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (buf), Qnil, -1,
-				args);
-  va_end (args);
-
-  signal_error (Qinvalid_byte_code, list1 (obj));
+  signal_error (Qinvalid_byte_code, reason, frob);
 }
 
 /* Check for valid opcodes.  Change this when adding new opcodes.  */
@@ -1504,8 +1492,8 @@ check_opcode (Opcode opcode)
   if ((opcode < Bvarref) ||
       (opcode == 0251)   ||
       (opcode > Bassq && opcode < Bconstant))
-    invalid_byte_code_error
-      ("invalid opcode %d in instruction stream", opcode);
+    invalid_byte_code ("invalid opcode in instruction stream",
+		       make_int (opcode));
 }
 
 /* Check that IDX is a valid offset into the `constants' vector */
@@ -1513,19 +1501,20 @@ static void
 check_constants_index (int idx, Lisp_Object constants)
 {
   if (idx < 0 || idx >= XVECTOR_LENGTH (constants))
-    invalid_byte_code_error
-      ("reference %d to constants array out of range 0, %d",
+    signal_ferror
+      (Qinvalid_byte_code,
+       "reference %d to constants array out of range 0, %ld",
        idx, XVECTOR_LENGTH (constants) - 1);
 }
 
 /* Get next character from Lisp instructions string. */
-#define READ_INSTRUCTION_CHAR(lvalue) do {		\
-  (lvalue) = charptr_emchar (ptr);			\
-  INC_CHARPTR (ptr);					\
-  *icounts_ptr++ = program_ptr - program;		\
-  if (lvalue > UCHAR_MAX)				\
-    invalid_byte_code_error				\
-      ("Invalid character %c in byte code string");	\
+#define READ_INSTRUCTION_CHAR(lvalue) do {				\
+  (lvalue) = charptr_emchar (ptr);					\
+  INC_CHARPTR (ptr);							\
+  *icounts_ptr++ = program_ptr - program;				\
+  if (lvalue > UCHAR_MAX)						\
+    invalid_byte_code							\
+      ("Invalid character in byte code string", make_char (lvalue));	\
 } while (0)
 
 /* Get opcode from Lisp instructions string. */
@@ -1653,10 +1642,9 @@ optimize_byte_code (/* in */
 	  check_constants_index (arg, constants);
 	   val = XVECTOR_DATA (constants) [arg];
 	   if (!SYMBOLP (val))
-	     invalid_byte_code_error ("variable reference to non-symbol %S", val);
+	     invalid_byte_code ("variable reference to non-symbol", val);
 	   if (EQ (val, Qnil) || EQ (val, Qt) || (SYMBOL_IS_KEYWORD (val)))
-	     invalid_byte_code_error ("variable reference to constant symbol %s",
-				      string_data (XSYMBOL (val)->name));
+	     invalid_byte_code ("variable reference to constant symbol", val);
 	   WRITE_NARGS (Bvarref);
 	   break;
 
@@ -1669,10 +1657,9 @@ optimize_byte_code (/* in */
 	  check_constants_index (arg, constants);
 	  val = XVECTOR_DATA (constants) [arg];
 	  if (!SYMBOLP (val))
-	    invalid_byte_code_error ("attempt to set non-symbol %S", val);
+	    wtaerror ("attempt to set non-symbol", val);
 	  if (EQ (val, Qnil) || EQ (val, Qt))
-	    invalid_byte_code_error ("attempt to set constant symbol %s",
-				     string_data (XSYMBOL (val)->name));
+	    signal_error (Qsetting_constant, 0, val);
 	  /* Ignore assignments to keywords by converting to Bdiscard.
 	     For backward compatibility only - we'd like to make this an error.  */
 	  if (SYMBOL_IS_KEYWORD (val))
@@ -1691,10 +1678,10 @@ optimize_byte_code (/* in */
 	  check_constants_index (arg, constants);
 	  val = XVECTOR_DATA (constants) [arg];
 	  if (!SYMBOLP (val))
-	    invalid_byte_code_error ("attempt to let-bind non-symbol %S", val);
+	    wtaerror ("attempt to let-bind non-symbol", val);
 	  if (EQ (val, Qnil) || EQ (val, Qt) || (SYMBOL_IS_KEYWORD (val)))
-	    invalid_byte_code_error ("attempt to let-bind constant symbol %s",
-				     string_data (XSYMBOL (val)->name));
+	    signal_error (Qsetting_constant,
+			  "attempt to let-bind constant symbol", val);
 	  WRITE_NARGS (Bvarbind);
 	  break;
 
@@ -1740,8 +1727,7 @@ optimize_byte_code (/* in */
 	  jumps_ptr->to   = jumps_ptr->from + arg;
 	  jumps_ptr++;
 	  if (arg >= -1 && arg <= argsize)
-	    invalid_byte_code_error
-	      ("goto instruction is its own target");
+	    invalid_byte_code ("goto instruction is its own target", Qunbound);
 	  if (arg <= SCHAR_MIN ||
 	      arg >  SCHAR_MAX)
 	    {
@@ -2347,7 +2333,8 @@ If the byte code for compiled function FUNCTION is lazy-loaded, fetch it now.
     {
       Lisp_Object tem = read_doc_string (f->instructions);
       if (!CONSP (tem))
-	signal_simple_error ("Invalid lazy-loaded byte code", tem);
+	signal_error (Qinvalid_byte_code,
+			   "Invalid lazy-loaded byte code", tem);
       /* v18 or v19 bytecode file.  Need to Ebolify. */
       if (f->flags.ebolified && VECTORP (XCDR (tem)))
 	ebolify_bytecode_constants (XCDR (tem));
@@ -2412,8 +2399,8 @@ syms_of_bytecode (void)
   INIT_LRECORD_IMPLEMENTATION (compiled_function);
 
   DEFERROR_STANDARD (Qinvalid_byte_code, Qinvalid_state);
-  defsymbol (&Qbyte_code, "byte-code");
-  defsymbol (&Qcompiled_functionp, "compiled-function-p");
+  DEFSYMBOL (Qbyte_code);
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qcompiled_functionp);
 
   DEFSUBR (Fbyte_code);
   DEFSUBR (Ffetch_bytecode);
@@ -2432,7 +2419,7 @@ syms_of_bytecode (void)
 #endif
 
 #ifdef BYTE_CODE_METER
-  defsymbol (&Qbyte_code_meter, "byte-code-meter");
+  DEFSYMBOL (Qbyte_code_meter);
 #endif
 }
 

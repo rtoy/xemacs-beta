@@ -416,7 +416,7 @@ Set the value for range (START, END) to be VALUE in RANGE-TABLE.
   CHECK_INT_COERCE_CHAR (end);
   last = XINT (end);
   if (first > last)
-    signal_simple_error_2 ("start must be <= end", start, end);
+    invalid_argument_2 ("start must be <= end", start, end);
 
   put_range_table (range_table, first, last, value);
   verify_range_table (XRANGE_TABLE (range_table));
@@ -505,13 +505,13 @@ rangetab_data_validate (Lisp_Object keyword, Lisp_Object value,
       Lisp_Object range = XCAR (rest);
       rest = XCDR (rest);
       if (!CONSP (rest))
-	signal_simple_error ("Invalid list format", value);
+	sferror ("Invalid list format", value);
       if (!INTP (range) && !CHARP (range)
 	  && !(CONSP (range) && CONSP (XCDR (range))
 	       && NILP (XCDR (XCDR (range)))
 	       && (INTP (XCAR (range)) || CHARP (XCAR (range)))
 	       && (INTP (XCAR (XCDR (range))) || CHARP (XCAR (XCDR (range))))))
-	signal_simple_error ("Invalid range format", range);
+	sferror ("Invalid range format", range);
     }
 
   return 1;
@@ -744,8 +744,8 @@ syms_of_rangetab (void)
 {
   INIT_LRECORD_IMPLEMENTATION (range_table);
 
-  defsymbol (&Qrange_tablep, "range-table-p");
-  defsymbol (&Qrange_table, "range-table");
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qrange_tablep);
+  DEFSYMBOL (Qrange_table);
 
   DEFSUBR (Frange_table_p);
   DEFSUBR (Fmake_range_table);

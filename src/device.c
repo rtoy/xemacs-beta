@@ -119,8 +119,8 @@ print_device (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   char buf[256];
 
   if (print_readably)
-    error ("printing unreadable object #<device %s 0x%x>",
-	   XSTRING_DATA (d->name), d->header.uid);
+    printing_unreadable_object ("#<device %s 0x%x>",
+				XSTRING_DATA (d->name), d->header.uid);
 
   sprintf (buf, "#<%s-device", !DEVICE_LIVE_P (d) ? "dead" :
 	   DEVICE_TYPE_NAME (d));
@@ -279,7 +279,7 @@ function is called.
 		    (XFRAME (DEVICE_SELECTED_FRAME (XDEVICE (device)))),
                     Qnil);
   else
-    error ("Can't select a device with no frames");
+    invalid_operation ("Can't select a device with no frames", Qunbound);
   return Qnil;
 }
 
@@ -302,7 +302,7 @@ If DEVICE is the selected device, this makes FRAME the selected frame.
   CHECK_LIVE_FRAME (frame);
 
   if (! EQ (device, FRAME_DEVICE (XFRAME (frame))))
-    error ("In `set-device-selected-frame', FRAME is not on DEVICE");
+    invalid_argument ("In `set-device-selected-frame', FRAME is not on DEVICE", Qunbound);
 
   if (EQ (device, Fselected_device (Qnil)))
     return Fselect_frame (frame);
@@ -487,9 +487,9 @@ name; in such a case, the first device found is returned.)
   if (NILP (device))
     {
       if (NILP (type))
-	signal_simple_error ("No such device", connection);
+	invalid_argument ("No such device", connection);
       else
-	signal_simple_error_2 ("No such device", type, connection);
+	invalid_argument_2 ("No such device", type, connection);
     }
   return device;
 }
@@ -557,7 +557,7 @@ have no effect.
 
   conmeths = decode_console_type (type, ERROR_ME_NOT);
   if (!conmeths)
-    signal_simple_error ("Invalid device type", type);
+    invalid_constant ("Invalid device type", type);
 
   device = Ffind_device (connection, type);
   if (!NILP (device))
@@ -883,9 +883,9 @@ behavior cannot necessarily be determined automatically.
   struct device *d = decode_device (device);
   XSETDEVICE (device, d);
   if (!DEVICE_TTY_P (d))
-    signal_simple_error ("Cannot change the class of this device", device);
+    gui_error ("Cannot change the class of this device", device);
   if (!EQ (class, Qcolor) && !EQ (class, Qmono) && !EQ (class, Qgrayscale))
-    signal_simple_error ("Must be color, mono, or grayscale", class);
+    invalid_constant ("Must be color, mono, or grayscale", class);
   if (! EQ (DEVICE_CLASS (d), class))
     {
       Lisp_Object frmcons;
@@ -1067,7 +1067,7 @@ security              Non-zero if user environment is secure.
   FROB (slow_device);
   FROB (security);
   else
-    signal_simple_error ("Invalid device metric symbol", metric);
+    invalid_constant ("Invalid device metric symbol", metric);
 
   res = DEVMETH_OR_GIVEN (d, device_system_metrics, (d, m), Qunbound);
   return UNBOUNDP(res) ? default_ : res;
@@ -1186,7 +1186,7 @@ DOMAIN can be either a window, frame, device or console.
 {
   if (!WINDOWP (domain) && !FRAMEP (domain)
       && !DEVICEP (domain) && !CONSOLEP (domain))
-    signal_simple_error
+    invalid_argument
       ("Domain must be either a window, frame, device or console", domain);
 
   return domain_device_type (domain);
@@ -1280,54 +1280,54 @@ syms_of_device (void)
   DEFSUBR (Fdomain_device_type);
   DEFSUBR (Fdevice_printer_p);
 
-  defsymbol (&Qdevicep, "devicep");
-  defsymbol (&Qdevice_live_p, "device-live-p");
+  DEFSYMBOL (Qdevicep);
+  DEFSYMBOL (Qdevice_live_p);
 
-  defsymbol (&Qcreate_device_hook, "create-device-hook");
-  defsymbol (&Qdelete_device_hook, "delete-device-hook");
+  DEFSYMBOL (Qcreate_device_hook);
+  DEFSYMBOL (Qdelete_device_hook);
 
   /* Qcolor defined in general.c */
-  defsymbol (&Qgrayscale, "grayscale");
-  defsymbol (&Qmono, "mono");
+  DEFSYMBOL (Qgrayscale);
+  DEFSYMBOL (Qmono);
 
   /* Device metrics symbols */
-  defsymbol (&Qcolor_default, "color-default");
-  defsymbol (&Qcolor_select, "color-select");
-  defsymbol (&Qcolor_balloon, "color-balloon");
-  defsymbol (&Qcolor_3d_face, "color-3d-face");
-  defsymbol (&Qcolor_3d_light, "color-3d-light");
-  defsymbol (&Qcolor_3d_dark, "color-3d-dark");
-  defsymbol (&Qcolor_menu, "color-menu");
-  defsymbol (&Qcolor_menu_highlight, "color-menu-highlight");
-  defsymbol (&Qcolor_menu_button, "color-menu-button");
-  defsymbol (&Qcolor_menu_disabled, "color-menu-disabled");
-  defsymbol (&Qcolor_toolbar, "color-toolbar");
-  defsymbol (&Qcolor_scrollbar, "color-scrollbar");
-  defsymbol (&Qcolor_desktop, "color-desktop");
-  defsymbol (&Qcolor_workspace, "color-workspace");
-  defsymbol (&Qfont_default, "font-default");
-  defsymbol (&Qfont_menubar, "font-menubar");
-  defsymbol (&Qfont_dialog, "font-dialog");
-  defsymbol (&Qsize_cursor, "size-cursor");
-  defsymbol (&Qsize_scrollbar, "size-scrollbar");
-  defsymbol (&Qsize_menu, "size-menu");
-  defsymbol (&Qsize_toolbar, "size-toolbar");
-  defsymbol (&Qsize_toolbar_button, "size-toolbar-button");
-  defsymbol (&Qsize_toolbar_border, "size-toolbar-border");
-  defsymbol (&Qsize_icon, "size-icon");
-  defsymbol (&Qsize_icon_small, "size-icon-small");
-  defsymbol (&Qsize_device, "size-device");
-  defsymbol (&Qsize_workspace, "size-workspace");
-  defsymbol (&Qoffset_workspace, "offset-workspace");
-  defsymbol (&Qsize_device_mm, "size-device-mm");
-  defsymbol (&Qnum_bit_planes, "num-bit-planes");
-  defsymbol (&Qnum_color_cells, "num-color-cells");
-  defsymbol (&Qdevice_dpi, "device-dpi");
-  defsymbol (&Qmouse_buttons, "mouse-buttons");
-  defsymbol (&Qswap_buttons, "swap-buttons");
-  defsymbol (&Qshow_sounds, "show-sounds");
-  defsymbol (&Qslow_device, "slow-device");
-  defsymbol (&Qsecurity, "security");
+  DEFSYMBOL (Qcolor_default);
+  DEFSYMBOL (Qcolor_select);
+  DEFSYMBOL (Qcolor_balloon);
+  DEFSYMBOL (Qcolor_3d_face);
+  DEFSYMBOL (Qcolor_3d_light);
+  DEFSYMBOL (Qcolor_3d_dark);
+  DEFSYMBOL (Qcolor_menu);
+  DEFSYMBOL (Qcolor_menu_highlight);
+  DEFSYMBOL (Qcolor_menu_button);
+  DEFSYMBOL (Qcolor_menu_disabled);
+  DEFSYMBOL (Qcolor_toolbar);
+  DEFSYMBOL (Qcolor_scrollbar);
+  DEFSYMBOL (Qcolor_desktop);
+  DEFSYMBOL (Qcolor_workspace);
+  DEFSYMBOL (Qfont_default);
+  DEFSYMBOL (Qfont_menubar);
+  DEFSYMBOL (Qfont_dialog);
+  DEFSYMBOL (Qsize_cursor);
+  DEFSYMBOL (Qsize_scrollbar);
+  DEFSYMBOL (Qsize_menu);
+  DEFSYMBOL (Qsize_toolbar);
+  DEFSYMBOL (Qsize_toolbar_button);
+  DEFSYMBOL (Qsize_toolbar_border);
+  DEFSYMBOL (Qsize_icon);
+  DEFSYMBOL (Qsize_icon_small);
+  DEFSYMBOL (Qsize_device);
+  DEFSYMBOL (Qsize_workspace);
+  DEFSYMBOL (Qoffset_workspace);
+  DEFSYMBOL (Qsize_device_mm);
+  DEFSYMBOL (Qnum_bit_planes);
+  DEFSYMBOL (Qnum_color_cells);
+  DEFSYMBOL (Qdevice_dpi);
+  DEFSYMBOL (Qmouse_buttons);
+  DEFSYMBOL (Qswap_buttons);
+  DEFSYMBOL (Qshow_sounds);
+  DEFSYMBOL (Qslow_device);
+  DEFSYMBOL (Qsecurity);
 }
 
 void

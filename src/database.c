@@ -119,7 +119,7 @@ struct Lisp_Database
 #define CHECK_LIVE_DATABASE(db) do {					\
   CHECK_DATABASE (db);							\
   if (!DATABASE_LIVE_P (XDATABASE(db)))					\
-    signal_simple_error ("Attempting to access closed database", db);	\
+    invalid_operation ("Attempting to access closed database", db);	\
 } while (0)
 
 
@@ -159,7 +159,7 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   Lisp_Database *db = XDATABASE (obj);
 
   if (print_readably)
-    error ("printing unreadable object #<database 0x%x>", db->header.uid);
+    printing_unreadable_object ("#<database 0x%x>", db->header.uid);
 
   write_c_string ("#<database \"", printcharfun);
   print_internal (db->fname, printcharfun, 0);
@@ -183,7 +183,7 @@ finalize_database (void *header, int for_disksave)
       Lisp_Object object;
       XSETDATABASE (object, db);
 
-      signal_simple_error
+      invalid_operation
 	("Can't dump an emacs containing database objects", object);
     }
   db->funcs->close (db);
@@ -654,7 +654,7 @@ and defaults to 0755.
 	real_subtype = DB_QUEUE;
 #endif
       else
-	signal_simple_error ("Unsupported subtype", subtype);
+	invalid_constant ("Unsupported subtype", subtype);
 
 #if DB_VERSION_MAJOR == 1
       dbase = dbopen (filename, accessmask, modemask, real_subtype, NULL);
@@ -706,7 +706,7 @@ and defaults to 0755.
     }
 #endif /* HAVE_BERKELEY_DB */
 
-  signal_simple_error ("Unsupported database type", type);
+  invalid_constant ("Unsupported database type", type);
   return Qnil;
 
  db_done:
@@ -786,19 +786,19 @@ syms_of_database (void)
 {
   INIT_LRECORD_IMPLEMENTATION (database);
 
-  defsymbol (&Qdatabasep, "databasep");
+  DEFSYMBOL (Qdatabasep);
 #ifdef HAVE_DBM
-  defsymbol (&Qdbm, "dbm");
+  DEFSYMBOL (Qdbm);
 #endif
 #ifdef HAVE_BERKELEY_DB
-  defsymbol (&Qberkeley_db, "berkeley-db");
-  defsymbol (&Qhash, "hash");
-  defsymbol (&Qbtree, "btree");
-  defsymbol (&Qrecno, "recno");
+  DEFSYMBOL (Qberkeley_db);
+  DEFSYMBOL (Qhash);
+  DEFSYMBOL (Qbtree);
+  DEFSYMBOL (Qrecno);
 #if DB_VERSION_MAJOR > 2
-  defsymbol (&Qqueue, "queue");
+  DEFSYMBOL (Qqueue);
 #endif
-  defsymbol (&Qunknown, "unknown");
+  DEFSYMBOL (Qunknown);
 #endif
 
   DEFSUBR (Fopen_database);

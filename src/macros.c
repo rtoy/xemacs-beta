@@ -62,7 +62,7 @@ Non-nil arg (prefix arg) means append to last macro defined;
   /* This function can GC */
   struct console *con = XCONSOLE (Vselected_console);
   if (!NILP (con->defining_kbd_macro))
-      error ("Already defining kbd macro");
+      invalid_operation ("Already defining kbd macro", Qunbound);
 
   if (NILP (con->kbd_macro_builder))
     con->kbd_macro_builder = make_vector (30, Qnil);
@@ -105,7 +105,7 @@ An argument of zero means repeat until error.
   int repeat;
 
   if (NILP (con->defining_kbd_macro))
-    error ("Not defining kbd macro");
+    invalid_operation ("Not defining kbd macro", Qunbound);
 
   if (NILP (arg))
     repeat = -1;
@@ -193,7 +193,7 @@ pop_kbd_macro_event (Lisp_Object event)
     }
   else if (!EQ (Vexecuting_macro, Qt)) /* Some things replace the macro
 					  with Qt to force an early exit. */
-    error ("junk in executing-macro");
+    signal_error (Qinvalid_state, "junk in executing-macro", Qunbound);
 
   Fthrow (Qexecute_kbd_macro, Qt);
 }
@@ -234,9 +234,9 @@ defining others, use \\[name-last-kbd-macro].
   struct console *con = XCONSOLE (Vselected_console);
 
   if (!NILP (con->defining_kbd_macro))
-    error ("Can't execute anonymous macro while defining one");
+    invalid_operation ("Can't execute anonymous macro while defining one", Qunbound);
   else if (NILP (con->last_kbd_macro))
-    error ("No kbd macro has been defined");
+    invalid_operation ("No kbd macro has been defined", Qunbound);
   else
     Fexecute_kbd_macro (con->last_kbd_macro, prefix);
   return Qnil;
@@ -275,7 +275,7 @@ COUNT is a repeat count, or nil for once, or 0 for infinite loop.
 
   final = indirect_function (macro, 1);
   if (!STRINGP (final) && !VECTORP (final))
-    error ("Keyboard macros must be strings or vectors");
+    invalid_argument ("Keyboard macros must be strings or vectors", Qunbound);
 
   tem = Fcons (Vexecuting_macro, make_int (executing_macro_index));
   record_unwind_protect (pop_kbd_macro, tem);
@@ -307,7 +307,7 @@ syms_of_macros (void)
   DEFSUBR (Fcall_last_kbd_macro);
   DEFSUBR (Fexecute_kbd_macro);
   DEFSUBR (Fcancel_kbd_macro_events);
-  defsymbol (&Qexecute_kbd_macro, "execute-kbd-macro");
+  DEFSYMBOL (Qexecute_kbd_macro);
 }
 
 void

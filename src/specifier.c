@@ -46,10 +46,6 @@ Lisp_Object Qremove_locale, Qremove_locale_type;
 
 Lisp_Object Qconsole_type, Qdevice_class;
 
-Lisp_Object Qspecifier_syntax_error;
-Lisp_Object Qspecifier_argument_error;
-Lisp_Object Qspecifier_change_error;
-
 static Lisp_Object Vuser_defined_tags;
 
 typedef struct specifier_type_entry specifier_type_entry;
@@ -274,8 +270,8 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   Lisp_Object the_specs;
 
   if (print_readably)
-    error ("printing unreadable object #<%s-specifier 0x%x>",
-	   sp->methods->name, sp->header.uid);
+    printing_unreadable_object ("#<%s-specifier 0x%x>",
+				sp->methods->name, sp->header.uid);
 
   sprintf (buf, "#<%s-specifier global=", sp->methods->name);
   write_c_string (buf, printcharfun);
@@ -433,7 +429,7 @@ decode_specifier_type (Lisp_Object type, Error_behavior errb)
 	return Dynarr_at (the_specifier_type_entry_dynarr, i).meths;
     }
 
-  maybe_signal_type_error (Qspecifier_argument_error, "Invalid specifier type",
+  maybe_invalid_argument ("Invalid specifier type",
 			   type, Qspecifier, errb);
 
   return 0;
@@ -678,8 +674,7 @@ check_valid_locale_or_locale_type (Lisp_Object locale)
       !NILP (Fvalid_specifier_locale_p (locale)) ||
       !NILP (Fvalid_specifier_locale_type_p (locale)))
     return;
-  signal_type_error (Qspecifier_argument_error,
-		     "Invalid specifier locale or locale type", locale);
+  invalid_argument ("Invalid specifier locale or locale type", locale);
 }
 
 DEFUN ("specifier-locale-type-from-locale", Fspecifier_locale_type_from_locale,
@@ -690,7 +685,7 @@ Given a specifier LOCALE, return its type.
 {
   /* This cannot GC. */
   if (NILP (Fvalid_specifier_locale_p (locale)))
-    signal_type_error (Qspecifier_argument_error, "Invalid specifier locale",
+    invalid_argument ("Invalid specifier locale",
 		       locale);
   if (DEVICEP (locale)) return Qdevice;
   if (FRAMEP  (locale)) return Qframe;
@@ -709,7 +704,7 @@ decode_locale (Lisp_Object locale)
   else if (!NILP (Fvalid_specifier_locale_p (locale)))
     return locale;
   else
-    signal_type_error (Qspecifier_argument_error, "Invalid specifier locale",
+    invalid_argument ("Invalid specifier locale",
 		       locale);
 
   return Qnil;
@@ -725,7 +720,7 @@ decode_locale_type (Lisp_Object locale_type)
   if (EQ (locale_type, Qwindow)) return LOCALE_WINDOW;
   if (EQ (locale_type, Qbuffer)) return LOCALE_BUFFER;
 
-  signal_type_error (Qspecifier_argument_error, "Invalid specifier locale type",
+  invalid_argument ("Invalid specifier locale type",
 		     locale_type);
   return LOCALE_GLOBAL; /* not reached */
 }
@@ -762,7 +757,7 @@ static void
 check_valid_domain (Lisp_Object domain)
 {
   if (NILP (Fvalid_specifier_domain_p (domain)))
-    signal_type_error (Qspecifier_argument_error, "Invalid specifier domain",
+    invalid_argument ("Invalid specifier domain",
 		       domain);
 }
 
@@ -839,7 +834,7 @@ decode_specifier_tag_set (Lisp_Object tag_set)
   if (!NILP (Fvalid_specifier_tag_p (tag_set)))
     return list1 (tag_set);
   if (NILP (Fvalid_specifier_tag_set_p (tag_set)))
-    signal_type_error (Qspecifier_argument_error, "Invalid specifier tag-set",
+    invalid_argument ("Invalid specifier tag-set",
 		       tag_set);
   return tag_set;
 }
@@ -903,7 +898,7 @@ sorting by symbol name and removing duplicates.)
        (tag_set))
 {
   if (NILP (Fvalid_specifier_tag_set_p (tag_set)))
-    signal_type_error (Qspecifier_argument_error, "Invalid tag set", tag_set);
+    invalid_argument ("Invalid tag set", tag_set);
   return canonicalize_tag_set (tag_set);
 }
 
@@ -945,7 +940,7 @@ specifies which devices match it.)
   CHECK_LIVE_DEVICE (device);
 
   if (NILP (Fvalid_specifier_tag_set_p (tag_set)))
-    signal_type_error (Qspecifier_argument_error, "Invalid tag set", tag_set);
+    invalid_argument ("Invalid tag set", tag_set);
 
   return device_matches_specifier_tag_set_p (device, tag_set) ? Qt : Qnil;
 }
@@ -968,13 +963,11 @@ and classes) or the symbols nil, t, 'all, or 'global.
   CHECK_SYMBOL (tag);
   if (valid_device_class_p (tag) ||
       valid_console_type_p (tag))
-    signal_type_error (Qspecifier_change_error,
-		       "Cannot redefine built-in specifier tags", tag);
+    invalid_change ("Cannot redefine built-in specifier tags", tag);
   /* Try to prevent common instantiators and locales from being
      redefined, to reduce ambiguity */
   if (NILP (tag) || EQ (tag, Qt) || EQ (tag, Qall) || EQ (tag, Qglobal))
-    signal_type_error (Qspecifier_change_error, "Cannot define nil, t, 'all, or 'global",
-		       tag);
+    invalid_change ("Cannot define nil, t, 'all, or 'global", tag);
   assoc = assq_no_quit (tag, Vuser_defined_tags);
   if (NILP (assoc))
     {
@@ -1104,7 +1097,7 @@ Return the predicate for the given specifier tag.
   CHECK_SYMBOL (tag);
 
   if (NILP (Fvalid_specifier_tag_p (tag)))
-    signal_type_error (Qspecifier_argument_error, "Invalid specifier tag",
+    invalid_argument ("Invalid specifier tag",
 		       tag);
 
   /* Make up some predicates for the built-in types */
@@ -1232,21 +1225,21 @@ check_valid_inst_list (Lisp_Object inst_list, struct specifier_methods *meths,
 
       if (!CONSP (rest))
 	{
-	  maybe_signal_type_error (Qspecifier_syntax_error,
+	  maybe_sferror (
 				   "Invalid instantiator list", inst_list,
 				     Qspecifier, errb);
 	  return Qnil;
 	}
       if (!CONSP (inst_pair = XCAR (rest)))
 	{
-	  maybe_signal_type_error (Qspecifier_syntax_error,
+	  maybe_sferror (
 				   "Invalid instantiator pair", inst_pair,
 				     Qspecifier, errb);
 	  return Qnil;
 	}
       if (NILP (Fvalid_specifier_tag_set_p (tag_set = XCAR (inst_pair))))
 	{
-	  maybe_signal_type_error (Qspecifier_syntax_error,
+	  maybe_invalid_argument (
 				   "Invalid specifier tag", tag_set,
 				     Qspecifier, errb);
 	  return Qnil;
@@ -1290,14 +1283,14 @@ check_valid_spec_list (Lisp_Object spec_list, struct specifier_methods *meths,
       Lisp_Object spec, locale;
       if (!CONSP (rest) || !CONSP (spec = XCAR (rest)))
 	{
-	  maybe_signal_type_error (Qspecifier_syntax_error,
+	  maybe_sferror (
 				   "Invalid specification list", spec_list,
 				     Qspecifier, errb);
 	  return Qnil;
 	}
       if (NILP (Fvalid_specifier_locale_p (locale = XCAR (spec))))
 	{
-	  maybe_signal_type_error (Qspecifier_syntax_error,
+	  maybe_invalid_argument (
 				   "Invalid specifier locale", locale,
 				     Qspecifier, errb);
 	  return Qnil;
@@ -1348,8 +1341,7 @@ decode_how_to_add_specification (Lisp_Object how_to_add)
   if (EQ (Qremove_all, how_to_add))
     return SPEC_REMOVE_ALL;
 
-  signal_type_error (Qspecifier_argument_error, "Invalid `how-to-add' flag",
-		     how_to_add);
+  invalid_constant ("Invalid `how-to-add' flag", how_to_add);
 
   return SPEC_PREPEND;		/* not reached */
 }
@@ -1373,9 +1365,9 @@ check_modifiable_specifier (Lisp_Object spec)
 {
   if (NILP (Vunlock_ghost_specifiers)
       && GHOST_SPECIFIER_P (XSPECIFIER (spec)))
-    signal_type_error (Qspecifier_change_error,
-		       "Attempt to modify read-only specifier",
-			 list1 (spec));
+    signal_error (Qsetting_constant,
+		  "Attempt to modify read-only specifier",
+		  spec);
 }
 
 /* Helper function which unwind protects the value of
@@ -2332,7 +2324,7 @@ the same as in `add-spec-to-specifier'.
       CHECK_SPECIFIER (dest);
       check_modifiable_specifier (dest);
       if (XSPECIFIER (dest)->methods != XSPECIFIER (specifier)->methods)
-	error ("Specifiers not of same type");
+ invalid_argument ("Specifiers not of same type", Qunbound);
     }
 
   cl.dest = dest;
@@ -2390,7 +2382,7 @@ check_valid_specifier_matchspec (Lisp_Object matchspec,
     }
   else
     {
-      maybe_signal_simple_error
+      maybe_sferror
 	("Matchspecs not allowed for this specifier type",
 	 intern (meths->name), Qspecifier, errb);
       return Qnil;
@@ -2597,7 +2589,9 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
   depth = make_int (1 + XINT (depth));
   if (XINT (depth) > 20)
     {
-      maybe_error (Qspecifier, errb, "Apparent loop in specifier inheritance");
+      maybe_signal_error (Qstack_overflow,
+			  "Apparent loop in specifier inheritance",
+			  Qunbound, Qspecifier, errb);
       /* The specification is fucked; at least try the fallback
 	 (which better not be fucked, because it's not changeable
 	 from Lisp). */
@@ -3119,8 +3113,7 @@ static void
 boolean_validate (Lisp_Object instantiator)
 {
   if (!EQ (instantiator, Qt) && !EQ (instantiator, Qnil))
-    signal_type_error (Qspecifier_argument_error, "Must be t or nil",
-		       instantiator);
+    invalid_constant ("Must be t or nil", instantiator);
 }
 
 DEFUN ("boolean-specifier-p", Fboolean_specifier_p, 1, 1, 0, /*
@@ -3261,10 +3254,6 @@ syms_of_specifier (void)
   DEFSYMBOL (Qremove_tag_set_append);
   DEFSYMBOL (Qremove_locale);
   DEFSYMBOL (Qremove_locale_type);
-
-  DEFERROR_STANDARD (Qspecifier_syntax_error, Qsyntax_error);
-  DEFERROR_STANDARD (Qspecifier_argument_error, Qinvalid_argument);
-  DEFERROR_STANDARD (Qspecifier_change_error, Qinvalid_change);
 }
 
 void

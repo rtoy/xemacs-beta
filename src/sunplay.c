@@ -15,40 +15,18 @@
 
 /* Synched up with: Not in FSF. */
 
-#ifdef HAVE_CONFIG_H
+/* This file Mule-ized by Ben Wing, 5-15-01. */
+
 #include <config.h>
-#endif
+#include "lisp.h"
+#include "sound.h"
 
-#if __STDC__ || defined(STDC_HEADERS)
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>	/* for open() */
-#endif
-
-#include <stdio.h>
-#include <string.h>
-#ifndef emacs
-#include <sys/signal.h>
-#endif
-#include <sys/fcntl.h>
-#include <sys/file.h>
+#include "sysdep.h"
+#include "sysfile.h"
+#include "syssignal.h"
 
 #include <multimedia/libaudio.h>
 #include <multimedia/audio_device.h>
-
-#ifdef emacs
-# include <config.h>
-# include "lisp.h"
-# include "sysdep.h"
-# include <errno.h>
-# include "nativesound.h"
-#include "syssignal.h"
-# define perror(string) \
-    message("audio: %s, %s ", string, strerror (errno))
-# define warn(str) message ("audio: %s ", GETTEXT (str))
-#else /* !emacs */
-# define warn(str) fprintf (stderr, "%s\n", (str))
-#endif /* emacs */
 
 static SIGTYPE (*sighup_handler) (int sig);
 static SIGTYPE (*sigint_handler) (int sig);
@@ -64,7 +42,7 @@ static double old_volume;
 static Audio_hdr dev_hdr;
 
 static int
-init_device (int volume, unsigned char *data, int fd,
+init_device (int volume, UChar_Binary *data, int fd,
 	     unsigned int *header_length)
 {
 #ifdef SUNOS4_0_3
@@ -80,7 +58,7 @@ init_device (int volume, unsigned char *data, int fd,
 
   if (AUDIO_SUCCESS != audio_get_play_config (audio_fd, &dev_hdr))
     {
-      perror ("Not a valid audio device");
+      sound_perror ("Not a valid audio device");
       return 1;
     }
 
@@ -89,9 +67,9 @@ init_device (int volume, unsigned char *data, int fd,
 			: audio_read_filehdr (fd, &file_hdr, 0, 0)))
     {
       if (data)
-	perror ("invalid audio data");
+	sound_perror ("invalid audio data");
       else
-	perror ("invalid audio file");
+	sound_perror ("invalid audio file");
       return 1;
     }
 
@@ -105,20 +83,20 @@ init_device (int volume, unsigned char *data, int fd,
       initialized_device_p = 1;
       if (AUDIO_SUCCESS != audio_set_play_config (audio_fd, &new_hdr))
 	{
-	  char buf1 [100], buf2 [100], buf3 [250];
+	  Extbyte buf1 [100], buf2 [100], buf3 [250];
 	  audio_enc_to_str (&file_hdr, buf1);
 	  audio_enc_to_str (&new_hdr, buf2);
 	  sprintf (buf3, "wanted %s, got %s", buf1, buf2);
-	  warn (buf3);
+	  sound_warn (buf3);
 	  return 1;
 	}
     }
 
   if (volume < 0 || volume > 100)
     {
-      char buf [255];
+      Extbyte buf [255];
       sprintf (buf, "volume must be between 0 and 100 (not %d)", volume);
-      warn (buf);
+      sound_warn (buf);
       return 1;
     }
   {
@@ -149,17 +127,17 @@ reset_device (int wait_p)
 
 
 void
-play_sound_file (char *sound_file, int volume)
+play_sound_file (Extbyte *sound_file, int volume)
 {
   int rrtn, wrtn;
-  unsigned char buf [255];
+  UChar_Binary buf [255];
   int file_fd;
 
   audio_fd = audio_open ();
 
   if (audio_fd < 0)
     {
-      perror ("open /dev/audio");
+      sound_perror ("open /dev/audio");
       return;
     }
 
@@ -170,19 +148,19 @@ play_sound_file (char *sound_file, int volume)
   file_fd = open (sound_file, O_RDONLY, 0);
   if (file_fd < 0)
     {
-      perror (sound_file);
+      sound_perror (sound_file);
       goto END_OF_PLAY;
     }
 
-  if (init_device (volume, (unsigned char *) 0, file_fd, (unsigned int *) 0))
+  if (init_device (volume, (UChar_Binary *) 0, file_fd, (unsigned int *) 0))
     goto END_OF_PLAY;
 
   while (1)
     {
-      rrtn = read (file_fd, (char *) buf, sizeof (buf));
+      rrtn = read (file_fd, (Char_Binary *) buf, sizeof (buf));
       if (rrtn < 0)
 	{
-	  perror ("read");
+	  sound_perror ("read");
 	  goto END_OF_PLAY;
 	}
       if (rrtn == 0)
@@ -190,10 +168,10 @@ play_sound_file (char *sound_file, int volume)
 
       while (1)
 	{
-	  wrtn = write (audio_fd, (char *) buf, rrtn);
+	  wrtn = write (audio_fd, (Char_Binary *) buf, rrtn);
 	  if (wrtn < 0)
 	    {
-	      perror ("write");
+	      sound_perror ("write");
 	      goto END_OF_PLAY;
 	    }
 	  if (wrtn != 0)
@@ -204,9 +182,9 @@ play_sound_file (char *sound_file, int volume)
 	}
       if (wrtn != rrtn)
 	{
-	  char warn_buf [255];
+	  Extbyte warn_buf [255];
 	  sprintf (warn_buf, "play: rrtn = %d, wrtn = %d", rrtn, wrtn);
-	  warn (warn_buf);
+	  sound_warn (warn_buf);
 	  goto END_OF_PLAY;
 	}
     }
@@ -228,7 +206,7 @@ play_sound_file (char *sound_file, int volume)
 
 
 int
-play_sound_data (unsigned char *data, int length, int volume)
+play_sound_data (UChar_Binary *data, int length, int volume)
 {
   int wrtn, start = 0;
   unsigned int ilen;
@@ -239,14 +217,14 @@ play_sound_data (unsigned char *data, int length, int volume)
   if (length == 0) return 0;
 
   /* this is just to get a better error message */
-  if (strncmp (".snd\0", (char *) data, 4))
+  if (strncmp (".snd\0", (Char_Binary *) data, 4))
     {
-      warn ("Not valid audio data (bad magic number)");
+      sound_warn ("Not valid audio data (bad magic number)");
       goto END_OF_PLAY;
     }
   if (length <= sizeof (Audio_hdr))
     {
-      warn ("Not valid audio data (too short)");
+      sound_warn ("Not valid audio data (too short)");
       goto END_OF_PLAY;
     }
 
@@ -268,10 +246,10 @@ play_sound_data (unsigned char *data, int length, int volume)
 
   while (1)
     {
-      wrtn = write (audio_fd, (char *) (data+start), length-start);
+      wrtn = write (audio_fd, (Char_Binary *) (data+start), length-start);
       if (wrtn < 0)
 	{
-	  perror ("write");
+	  sound_perror ("write");
 	  goto END_OF_PLAY;
 	}
       if (wrtn != 0)
@@ -284,9 +262,9 @@ play_sound_data (unsigned char *data, int length, int volume)
     }
   if (wrtn != length)
     {
-      char buf [255];
+      Extbyte buf [255];
       sprintf (buf, "play: rrtn = %d, wrtn = %d", length, wrtn);
-      warn (buf);
+      sound_warn (buf);
       goto END_OF_PLAY;
     }
 

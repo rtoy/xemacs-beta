@@ -254,11 +254,11 @@ check_mark (void)
   Lisp_Object tem;
 
   if (zmacs_regions && !zmacs_region_active_p)
-    error ("The region is not active now");
+    invalid_operation ("The region is not active now", Qunbound);
 
   tem = Fmarker_buffer (current_buffer->mark);
   if (NILP (tem) || (XBUFFER (tem) != current_buffer))
-    error ("The mark is not set now");
+    invalid_operation ("The mark is not set now", Qunbound);
 
   return marker_position (current_buffer->mark);
 }
@@ -499,7 +499,7 @@ when reading the arguments.
 	  prompt_data = (const char *) XSTRING_DATA (specs);
 
 	if (prompt_data[prompt_index] == '+')
-	  error ("`+' is not used in `interactive' for ordinary commands");
+	  syntax_error ("`+' is not used in `interactive' for ordinary commands", Qunbound);
 	else if (prompt_data[prompt_index] == '*')
 	  {
 	    prompt_index++;
@@ -528,7 +528,7 @@ when reading the arguments.
 		    if (MINI_WINDOW_P (XWINDOW (window))
 			&& ! (minibuf_level > 0 && EQ (window,
 						       minibuf_window)))
-		      error ("Attempt to select inactive minibuffer window");
+		      invalid_operation ("Attempt to select inactive minibuffer window", Qunbound);
 
 #if 0 /* unclean! see event-stream.c */
 		    /* If the current buffer wants to clean up, let it.  */
@@ -737,10 +737,9 @@ when reading the arguments.
 #endif
 
 	      if (NILP (event))
-		error ("%s must be bound to a mouse or misc-user event",
-		       (SYMBOLP (function)
-			? (char *) string_data (XSYMBOL (function)->name)
-			: "command"));
+		signal_error (Qinvalid_operation,
+			      "function must be bound to a mouse or misc-user event",
+			      function);
 	      args[argnum] = event;
 	      mouse_event_count++;
 	      break;
@@ -959,9 +958,10 @@ when reading the arguments.
 	  case '+':
 	  default:
 	    {
-	      error ("Invalid `interactive' control letter \"%c\" (#o%03o).",
-		     prompt_data[prompt_index],
-		     prompt_data[prompt_index]);
+	      signal_ferror (Qsyntax_error,
+			  "Invalid `interactive' control letter \"%c\" (#o%03o).",
+			  prompt_data[prompt_index],
+			  prompt_data[prompt_index]);
 	    }
 	  }
 #undef PROMPT
@@ -1035,30 +1035,30 @@ Its numeric meaning is what you would get from `(interactive "p")'.
 void
 syms_of_callint (void)
 {
-  defsymbol (&Qcall_interactively, "call-interactively");
-  defsymbol (&Qread_from_minibuffer, "read-from-minibuffer");
-  defsymbol (&Qcompleting_read, "completing-read");
-  defsymbol (&Qread_file_name, "read-file-name");
-  defsymbol (&Qread_directory_name, "read-directory-name");
-  defsymbol (&Qread_string, "read-string");
-  defsymbol (&Qread_buffer, "read-buffer");
-  defsymbol (&Qread_variable, "read-variable");
-  defsymbol (&Qread_function, "read-function");
-  defsymbol (&Qread_command, "read-command");
-  defsymbol (&Qread_number, "read-number");
-  defsymbol (&Qread_expression, "read-expression");
+  DEFSYMBOL (Qcall_interactively);
+  DEFSYMBOL (Qread_from_minibuffer);
+  DEFSYMBOL (Qcompleting_read);
+  DEFSYMBOL (Qread_file_name);
+  DEFSYMBOL (Qread_directory_name);
+  DEFSYMBOL (Qread_string);
+  DEFSYMBOL (Qread_buffer);
+  DEFSYMBOL (Qread_variable);
+  DEFSYMBOL (Qread_function);
+  DEFSYMBOL (Qread_command);
+  DEFSYMBOL (Qread_number);
+  DEFSYMBOL (Qread_expression);
 #if defined(MULE) || defined(FILE_CODING)
-  defsymbol (&Qread_coding_system, "read-coding-system");
-  defsymbol (&Qread_non_nil_coding_system, "read-non-nil-coding-system");
+  DEFSYMBOL (Qread_coding_system);
+  DEFSYMBOL (Qread_non_nil_coding_system);
 #endif
-  defsymbol (&Qevents_to_keys, "events-to-keys");
-  defsymbol (&Qcommand_debug_status, "command-debug-status");
-  defsymbol (&Qenable_recursive_minibuffers, "enable-recursive-minibuffers");
+  DEFSYMBOL (Qevents_to_keys);
+  DEFSYMBOL (Qcommand_debug_status);
+  DEFSYMBOL (Qenable_recursive_minibuffers);
 
   defsymbol (&QletX, "let*");
-  defsymbol (&Qsave_excursion, "save-excursion");
+  DEFSYMBOL (Qsave_excursion);
 #if 0 /* ill-conceived */
-  defsymbol (&Qmouse_leave_buffer_hook, "mouse-leave-buffer-hook");
+  DEFSYMBOL (Qmouse_leave_buffer_hook);
 #endif
 
   DEFSUBR (Finteractive);

@@ -502,7 +502,7 @@ md5_coding_system (Lisp_Object object, Lisp_Object coding, Lisp_Object istream,
 	    /* Default to binary.  */
 	    coding_system = Fget_coding_system (Qbinary);
 	  else
-	    signal_simple_error ("No such coding system", coding);
+	    invalid_argument ("No such coding system", coding);
 	}
     }
   return coding_system;

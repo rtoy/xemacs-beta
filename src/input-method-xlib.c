@@ -816,7 +816,7 @@ If XIC is created successfully return t.  If not return nil.
   CHECK_LIVE_FRAME (frame);
   f = XFRAME (frame);
   if (!FRAME_X_P (f))
-    return signal_simple_error ("This frame is not on X device", frame);
+    invalid_argument ("This frame is not on X device", frame);
 
   XIM_init_frame (f);
   return FRAME_X_XIC (f) ? Qt : Qnil;
@@ -836,7 +836,7 @@ Otherwise, it destroys the XIC if it exists, then returns t anyway.
   CHECK_LIVE_FRAME (frame);
   f = XFRAME (frame);
   if (!FRAME_X_P (f))
-    return signal_simple_error ("This frame is not on X device", frame);
+    invalid_argument ("This frame is not on X device", frame);
 
   d = XDEVICE (FRAME_DEVICE (f));
   if (DEVICE_X_XIM (d)) {
@@ -850,7 +850,7 @@ Otherwise, it destroys the XIC if it exists, then returns t anyway.
 void
 syms_of_input_method_xlib (void)
 {
-  defsymbol (&Qxim_xlib, "xim-xlib");
+  DEFSYMBOL (Qxim_xlib);
 #if 0 /* see above */
   DEFSUBR (Fx_open_xim);
   DEFSUBR (Fx_close_xim);

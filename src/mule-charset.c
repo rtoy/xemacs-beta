@@ -404,9 +404,10 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   char buf[200];
 
   if (print_readably)
-    error ("printing unreadable object #<charset %s 0x%x>",
-           string_data (XSYMBOL (CHARSET_NAME (cs))->name),
-	   cs->header.uid);
+    printing_unreadable_object ("#<charset %s 0x%x>",
+				string_data (XSYMBOL (CHARSET_NAME (cs))->
+					     name),
+				cs->header.uid);
 
   write_c_string ("#<charset ", printcharfun);
   print_internal (CHARSET_NAME (cs), printcharfun, 0);
@@ -522,7 +523,7 @@ get_unallocated_leading_byte (int dimension)
     }
 
   if (!lb)
-    signal_simple_error
+    invalid_operation
       ("No more character sets free for this dimension",
        make_int (dimension));
 
@@ -567,7 +568,7 @@ charset instead of returning nil.
   Lisp_Object charset = Ffind_charset (name);
 
   if (NILP (charset))
-    signal_simple_error ("No such charset", name);
+    invalid_argument ("No such charset", name);
   return charset;
 }
 
@@ -682,7 +683,7 @@ character set.  Recognized properties are:
 
   charset = Ffind_charset (name);
   if (!NILP (charset))
-    signal_simple_error ("Cannot redefine existing charset", name);
+    invalid_operation ("Cannot redefine existing charset", name);
 
   {
     EXTERNAL_PROPERTY_LIST_LOOP_3 (keyword, value, props)
@@ -704,7 +705,7 @@ character set.  Recognized properties are:
 	    CHECK_INT (value);
 	    dimension = XINT (value);
 	    if (dimension < 1 || dimension > 2)
-	      signal_simple_error ("Invalid value for 'dimension", value);
+	      invalid_constant ("Invalid value for 'dimension", value);
 	  }
 
 	else if (EQ (keyword, Qchars))
@@ -712,7 +713,7 @@ character set.  Recognized properties are:
 	    CHECK_INT (value);
 	    chars = XINT (value);
 	    if (chars != 94 && chars != 96)
-	      signal_simple_error ("Invalid value for 'chars", value);
+	      invalid_constant ("Invalid value for 'chars", value);
 	  }
 
 	else if (EQ (keyword, Qcolumns))
@@ -720,7 +721,7 @@ character set.  Recognized properties are:
 	    CHECK_INT (value);
 	    columns = XINT (value);
 	    if (columns != 1 && columns != 2)
-	      signal_simple_error ("Invalid value for 'columns", value);
+	      invalid_constant ("Invalid value for 'columns", value);
 	  }
 
 	else if (EQ (keyword, Qgraphic))
@@ -728,7 +729,7 @@ character set.  Recognized properties are:
 	    CHECK_INT (value);
 	    graphic = XINT (value);
 	    if (graphic < 0 || graphic > 1)
-	      signal_simple_error ("Invalid value for 'graphic", value);
+	      invalid_constant ("Invalid value for 'graphic", value);
 	  }
 
 	else if (EQ (keyword, Qregistry))
@@ -744,7 +745,7 @@ character set.  Recognized properties are:
 	    else if (EQ (value, Qr2l))
 	      direction = CHARSET_RIGHT_TO_LEFT;
 	    else
-	      signal_simple_error ("Invalid value for 'direction", value);
+	      invalid_constant ("Invalid value for 'direction", value);
 	  }
 
 	else if (EQ (keyword, Qfinal))
@@ -752,7 +753,7 @@ character set.  Recognized properties are:
 	    CHECK_CHAR_COERCE_INT (value);
 	    final = XCHAR (value);
 	    if (final < '0' || final > '~')
-	      signal_simple_error ("Invalid value for 'final", value);
+	      invalid_constant ("Invalid value for 'final", value);
 	  }
 
 	else if (EQ (keyword, Qccl_program))
@@ -760,19 +761,19 @@ character set.  Recognized properties are:
 	    struct ccl_program test_ccl;
 
 	    if (setup_ccl_program (&test_ccl, value) < 0)
-	      signal_simple_error ("Invalid value for 'ccl-program", value);
+	      invalid_argument ("Invalid value for 'ccl-program", value);
 	    ccl_program = value;
 	  }
 
 	else
-	  signal_simple_error ("Unrecognized property", keyword);
+	  invalid_constant ("Unrecognized property", keyword);
       }
   }
 
   if (!final)
-    error ("'final must be specified");
+    invalid_argument ("'final must be specified", Qunbound);
   if (dimension == 2 && final > 0x5F)
-    signal_simple_error
+    invalid_constant
       ("Final must be in the range 0x30 - 0x5F for dimension == 2",
        make_char (final));
 
@@ -824,12 +825,12 @@ NEW-NAME is the name of the new charset.  Return the new charset.
 
   charset = Fget_charset (charset);
   if (!NILP (XCHARSET_REVERSE_DIRECTION_CHARSET (charset)))
-    signal_simple_error ("Charset already has reverse-direction charset",
+    invalid_operation ("Charset already has reverse-direction charset",
 			 charset);
 
   CHECK_SYMBOL (new_name);
   if (!NILP (Ffind_charset (new_name)))
-    signal_simple_error ("Cannot redefine existing charset", new_name);
+    invalid_operation ("Cannot redefine existing charset", new_name);
 
   cs = XCHARSET (charset);
 
@@ -888,27 +889,27 @@ will be returned if character sets exist for both directions).
   CHECK_INT (dimension);
   dm = XINT (dimension);
   if (dm < 1 || dm > 2)
-    signal_simple_error ("Invalid value for DIMENSION", dimension);
+    invalid_constant ("Invalid value for DIMENSION", dimension);
 
   CHECK_INT (chars);
   ch = XINT (chars);
   if (ch != 94 && ch != 96)
-    signal_simple_error ("Invalid value for CHARS", chars);
+    invalid_constant ("Invalid value for CHARS", chars);
 
   CHECK_CHAR_COERCE_INT (final);
   fi = XCHAR (final);
   if (fi < '0' || fi > '~')
-    signal_simple_error ("Invalid value for FINAL", final);
+    invalid_constant ("Invalid value for FINAL", final);
 
   if (EQ (direction, Ql2r))
     di = CHARSET_LEFT_TO_RIGHT;
   else if (EQ (direction, Qr2l))
     di = CHARSET_RIGHT_TO_LEFT;
   else if (!NILP (direction))
-    signal_simple_error ("Invalid value for DIRECTION", direction);
+    invalid_constant ("Invalid value for DIRECTION", direction);
 
   if (dm == 2 && fi > 0x5F)
-    signal_simple_error
+    invalid_constant
       ("Final must be in the range 0x30 - 0x5F for dimension == 2", final);
 
   if (dm == 1)
@@ -994,7 +995,7 @@ Recognized properties are those listed in `make-charset', as well as
       /* #### Is this translation OK?  If so, error checking sufficient? */
       return CHARSETP (obj) ? XCHARSET_NAME (obj) : obj;
     }
-  signal_simple_error ("Unrecognized charset property name", prop);
+  invalid_constant ("Unrecognized charset property name", prop);
   return Qnil; /* not reached */
 }
 
@@ -1018,7 +1019,7 @@ Set the 'ccl-program property of CHARSET to CCL-PROGRAM.
 
   charset = Fget_charset (charset);
   if (setup_ccl_program (&test_ccl, ccl_program) < 0)
-    signal_simple_error ("Invalid ccl-program", ccl_program);
+    invalid_argument ("Invalid ccl-program", ccl_program);
   XCHARSET_CCL_PROGRAM (charset) = ccl_program;
   face_property_was_changed (Vdefault_face, Qfont, Qglobal);
   return Qnil;
@@ -1089,7 +1090,7 @@ character s with caron.
   if (CHARSET_DIMENSION (cs) == 1)
     {
       if (!NILP (arg2))
-        signal_simple_error
+        invalid_argument
           ("Charset is of dimension one; second octet must be nil", arg2);
       return make_char (MAKE_CHAR (charset, a1, 0));
     }
@@ -1131,7 +1132,7 @@ N defaults to 0 if omitted.
   else if (EQ (n, make_int (1)))
     return make_int (octet1);
   else
-    signal_simple_error ("Octet number must be 0 or 1", n);
+    invalid_constant ("Octet number must be 0 or 1", n);
 }
 
 DEFUN ("split-char", Fsplit_char, 1, 1, 0, /*
@@ -1181,7 +1182,7 @@ lookup_composite_char (Bufbyte *str, int len)
   if (UNBOUNDP (ch))
     {
       if (composite_char_row_next >= 128)
-	signal_simple_error ("No more composite chars available", lispstr);
+	invalid_operation ("No more composite chars available", lispstr);
       emch = MAKE_CHAR (Vcharset_composite, composite_char_row_next,
 			composite_char_col_next);
       Fputhash (make_char (emch), lispstr,
@@ -1232,7 +1233,7 @@ Return a string of the characters comprising a composite character.
   CHECK_CHAR (ch);
   emch = XCHAR (ch);
   if (CHAR_LEADING_BYTE (emch) != LEADING_BYTE_COMPOSITE)
-    signal_simple_error ("Must be composite char", ch);
+    invalid_argument ("Must be composite char", ch);
   return composite_char_string (emch);
 }
 #endif /* ENABLE_COMPOSITE_CHARS */
@@ -1275,45 +1276,45 @@ syms_of_mule_charset (void)
   DEFSUBR (Fcomposite_char_string);
 #endif
 
-  defsymbol (&Qcharsetp, "charsetp");
-  defsymbol (&Qregistry, "registry");
-  defsymbol (&Qfinal, "final");
-  defsymbol (&Qgraphic, "graphic");
-  defsymbol (&Qdirection, "direction");
-  defsymbol (&Qreverse_direction_charset, "reverse-direction-charset");
-  defsymbol (&Qshort_name, "short-name");
-  defsymbol (&Qlong_name, "long-name");
+  DEFSYMBOL (Qcharsetp);
+  DEFSYMBOL (Qregistry);
+  DEFSYMBOL (Qfinal);
+  DEFSYMBOL (Qgraphic);
+  DEFSYMBOL (Qdirection);
+  DEFSYMBOL (Qreverse_direction_charset);
+  DEFSYMBOL (Qshort_name);
+  DEFSYMBOL (Qlong_name);
 
-  defsymbol (&Ql2r, "l2r");
-  defsymbol (&Qr2l, "r2l");
+  DEFSYMBOL (Ql2r);
+  DEFSYMBOL (Qr2l);
 
   /* Charsets, compatible with FSF 20.3
      Naming convention is Script-Charset[-Edition] */
-  defsymbol (&Qascii,			"ascii");
-  defsymbol (&Qcontrol_1,		"control-1");
-  defsymbol (&Qlatin_iso8859_1,		"latin-iso8859-1");
-  defsymbol (&Qlatin_iso8859_2,		"latin-iso8859-2");
-  defsymbol (&Qlatin_iso8859_3,		"latin-iso8859-3");
-  defsymbol (&Qlatin_iso8859_4,		"latin-iso8859-4");
-  defsymbol (&Qthai_tis620,		"thai-tis620");
-  defsymbol (&Qgreek_iso8859_7,		"greek-iso8859-7");
-  defsymbol (&Qarabic_iso8859_6,	"arabic-iso8859-6");
-  defsymbol (&Qhebrew_iso8859_8,	"hebrew-iso8859-8");
-  defsymbol (&Qkatakana_jisx0201,	"katakana-jisx0201");
-  defsymbol (&Qlatin_jisx0201,		"latin-jisx0201");
-  defsymbol (&Qcyrillic_iso8859_5, 	"cyrillic-iso8859-5");
-  defsymbol (&Qlatin_iso8859_9,		"latin-iso8859-9");
-  defsymbol (&Qjapanese_jisx0208_1978,	"japanese-jisx0208-1978");
-  defsymbol (&Qchinese_gb2312,		"chinese-gb2312");
-  defsymbol (&Qjapanese_jisx0208, 	"japanese-jisx0208");
-  defsymbol (&Qkorean_ksc5601,		"korean-ksc5601");
-  defsymbol (&Qjapanese_jisx0212,	"japanese-jisx0212");
-  defsymbol (&Qchinese_cns11643_1,	"chinese-cns11643-1");
-  defsymbol (&Qchinese_cns11643_2,	"chinese-cns11643-2");
-  defsymbol (&Qchinese_big5_1,		"chinese-big5-1");
-  defsymbol (&Qchinese_big5_2,		"chinese-big5-2");
+  DEFSYMBOL (Qascii);
+  DEFSYMBOL (Qcontrol_1);
+  DEFSYMBOL (Qlatin_iso8859_1);
+  DEFSYMBOL (Qlatin_iso8859_2);
+  DEFSYMBOL (Qlatin_iso8859_3);
+  DEFSYMBOL (Qlatin_iso8859_4);
+  DEFSYMBOL (Qthai_tis620);
+  DEFSYMBOL (Qgreek_iso8859_7);
+  DEFSYMBOL (Qarabic_iso8859_6);
+  DEFSYMBOL (Qhebrew_iso8859_8);
+  DEFSYMBOL (Qkatakana_jisx0201);
+  DEFSYMBOL (Qlatin_jisx0201);
+  DEFSYMBOL (Qcyrillic_iso8859_5);
+  DEFSYMBOL (Qlatin_iso8859_9);
+  DEFSYMBOL (Qjapanese_jisx0208_1978);
+  DEFSYMBOL (Qchinese_gb2312);
+  DEFSYMBOL (Qjapanese_jisx0208);
+  DEFSYMBOL (Qkorean_ksc5601);
+  DEFSYMBOL (Qjapanese_jisx0212);
+  DEFSYMBOL (Qchinese_cns11643_1);
+  DEFSYMBOL (Qchinese_cns11643_2);
+  DEFSYMBOL (Qchinese_big5_1);
+  DEFSYMBOL (Qchinese_big5_2);
 
-  defsymbol (&Qcomposite,		"composite");
+  DEFSYMBOL (Qcomposite);
 }
 
 void

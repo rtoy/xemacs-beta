@@ -479,8 +479,8 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
       numeric_addr = inet_addr ((char *) XSTRING_DATA (host));
       if (NUMERIC_ADDR_ERROR)
 	{
-	  maybe_error (Qprocess, errb,
-		       "Unknown host \"%s\"", XSTRING_DATA (host));
+	  maybe_signal_error (Qio_error, "Unknown host", host,
+				   Qprocess, errb);
 	  return 0;
 	}
 
@@ -1074,7 +1074,7 @@ unix_create_process (Lisp_Process *p,
       int save_errno = errno;
       close_descriptor_pair (forkin, forkout);
       errno = save_errno;
-      report_file_error ("Doing fork", Qnil);
+      report_process_error ("Doing fork", Qunbound);
     }
 
   /* #### dmoore - why is this commented out, otherwise we leave
@@ -1104,7 +1104,7 @@ io_failure:
     close_descriptor_pair (forkin, forkout);
     close_descriptor_pair (inchannel, outchannel);
     errno = save_errno;
-    report_file_error ("Opening pty or pipe", Qnil);
+    report_process_error ("Opening pty or pipe", Qunbound);
     return 0; /* not reached */
   }
 }
@@ -1293,11 +1293,15 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
 	     the unwritten data. */
 	  writeret = Lstream_write (XLSTREAM (DATA_OUTSTREAM(p)), chunkbuf,
 				    chunklen);
-	  signal (SIGPIPE, old_sigpipe);
-	  if (writeret < 0)
-	    /* This is a real error.  Blocking errors are handled
-	       specially inside of the filedesc stream. */
-	    report_file_error ("writing to process", list1 (proc));
+	  {
+	    int save_errno = errno;
+	    signal (SIGPIPE, old_sigpipe);
+	    errno = save_errno;
+	    if (writeret < 0)
+	      /* This is a real error.  Blocking errors are handled
+		 specially inside of the filedesc stream. */
+	      report_process_error ("writing to process", proc);
+	  }
 	  while (Lstream_was_blocked_p (XLSTREAM (p->pipe_outstream)))
 	    {
 	      /* Buffer is full.  Wait, accepting input;
@@ -1541,8 +1545,9 @@ unix_kill_child_process (Lisp_Object proc, int signo,
 #ifdef ESRCH
       if (errno != ESRCH)
 #endif
-	error ("kill (%ld, %ld) failed: %s",
-	       (long) pgid, (long) signo, strerror (errno));
+	signal_ferror_with_frob (Qio_error, lisp_strerror (errno),
+				 "kill (pgid=%ld, signo=%ld) failed",
+				 (long) pgid, (long) signo);
     }
 }
 
@@ -1586,11 +1591,11 @@ unix_canonicalize_host_name (Lisp_Object host)
   retval = getaddrinfo (ext_host, NULL, &hints, &res);
   if (retval != 0)
     {
-      char *gai_error;
+      Bufbyte *gai_error;
 
       EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error, Qnative);
-      maybe_error (Qprocess, ERROR_ME_NOT,
-		   "%s \"%s\"", gai_error, XSTRING_DATA (host));
+      maybe_signal_error (Qio_error, gai_error, host,
+			       Qprocess, ERROR_ME_NOT);
       canonname = host;
     }
   else
@@ -1641,7 +1646,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
   CHECK_STRING (host);
 
   if (!EQ (protocol, Qtcp) && !EQ (protocol, Qudp))
-    invalid_argument ("Unsupported protocol", protocol);
+    invalid_constant ("Unsupported protocol", protocol);
 
   {
 #ifdef USE_GETADDRINFO
@@ -1680,10 +1685,10 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     retval = getaddrinfo (ext_host, portstring, &hints, &res);
     if (retval != 0)
       {
-	char *gai_error;
+	Bufbyte *gai_error;
 
 	EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error, Qnative);
-	error ("%s/%s %s", XSTRING_DATA (host), portstring, gai_error);
+	signal_error (Qio_error, gai_error, list2 (host, service));
       }
 
     /* address loop */
@@ -1848,9 +1853,10 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	errno = xerrno;
 
 	if (failed_connect)
-	  report_file_error ("connection failed", list2 (host, name));
+	  report_network_error ("connection failed", list3 (Qunbound, host,
+							    name));
 	else
-	  report_file_error ("error creating socket", list1 (name));
+	  report_network_error ("error creating socket", name);
       }
   }
 
@@ -1858,8 +1864,10 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
   outch = dup (s);
   if (outch < 0)
     {
+      int save_errno = errno;
       close (s); /* this used to be leaked; from Kyle Jones */
-      report_file_error ("error duplicating socket", list1 (name));
+      errno = save_errno;
+      report_network_error ("error duplicating socket", name);
     }
 
   set_socket_nonblocking_maybe (inch, port, "tcp");
@@ -1913,15 +1921,17 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   thettl = (unsigned char) XINT (ttl);
 
   if ((udp = getprotobyname ("udp")) == NULL)
-    type_error (Qinvalid_operation, "No info available for UDP protocol");
+    invalid_operation ("No info available for UDP protocol", Qunbound);
 
   /* Init the sockets. Yes, I need 2 sockets. I couldn't duplicate one. */
   if ((rs = socket (PF_INET, SOCK_DGRAM, udp->p_proto)) < 0)
-    report_file_error ("error creating socket", list1(name));
+    report_network_error ("error creating socket", name);
   if ((ws = socket (PF_INET, SOCK_DGRAM, udp->p_proto)) < 0)
     {
+      int save_errno = errno;
       close (rs);
-      report_file_error ("error creating socket", list1(name));
+      errno = save_errno;
+      report_network_error ("error creating socket", name);
     }
 
   /* This will be used for both sockets */
@@ -1942,9 +1952,12 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   /* bind socket name */
   if (bind (rs, (struct sockaddr *)&sa, sizeof(sa)))
     {
+      int save_errno = errno;
       close (rs);
       close (ws);
-      report_file_error ("error binding socket", list2(name, port));
+      errno = save_errno;
+      report_network_error ("error binding socket", list3 (Qunbound, name,
+							   port));
     }
 
   /* join multicast group */
@@ -1953,9 +1966,12 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   if (setsockopt (rs, IPPROTO_IP, IP_ADD_MEMBERSHIP,
 		  &imr, sizeof (struct ip_mreq)) < 0)
     {
+      int save_errno = errno;
       close (ws);
       close (rs);
-      report_file_error ("error adding membership", list2(name, dest));
+      errno = save_errno;
+      report_network_error ("error adding membership", list3 (Qunbound, name,
+							      dest));
     }
 
   /* Socket configuration for writing ----------------------- */
@@ -2018,7 +2034,8 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
 #endif
 
       errno = xerrno;
-      report_file_error ("error connecting socket", list2(name, port));
+      report_network_error ("error connecting socket", list3 (Qunbound, name,
+							      port));
     }
 
 #ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
@@ -2029,9 +2046,11 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   if (setsockopt (ws, IPPROTO_IP, IP_MULTICAST_TTL,
 		  &thettl, sizeof (thettl)) < 0)
     {
+      int save_errno = errno;
       close (rs);
       close (ws);
-      report_file_error ("error setting ttl", list2(name, ttl));
+      errno = save_errno;
+      report_network_error ("error setting ttl", list3 (Qunbound, name, ttl));
     }
 
   set_socket_nonblocking_maybe (rs, theport, "udp");

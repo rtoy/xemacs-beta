@@ -16,10 +16,12 @@
  ** implied warranty.
  */
 
+/* Synched up with: Not in FSF. */
+
+/* This file Mule-ized by Ben Wing, 5-15-01. */
+
 #ifndef INCLUDED_miscplay_h_
 #define INCLUDED_miscplay_h_
-
-#include <stdlib.h>
 
 #define HEADERSZ  256   /* has to be at least as big as the biggest header   */
 #define SNDBUFSZ  2048  /* has to be at least as big as HEADERSZ             */
@@ -53,7 +55,7 @@ size_t sndcnv2byteBE(void **data,size_t *sz,void **outbuf);
 size_t sndcnv2monobyteLE(void **data,size_t *sz,void **outbuf);
 size_t sndcnv2monobyteBE(void **data,size_t *sz,void **outbuf);
 
-fmtType analyze_format(unsigned char *format,int *fmt,int *speed,
+fmtType analyze_format(UChar_Binary *format,int *fmt,int *speed,
                              int *tracks,
                              size_t (**parsesndfile)(void **,size_t *sz,
                                                      void **));

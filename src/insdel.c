@@ -1272,7 +1272,7 @@ get_buffer_range_char (struct buffer *b, Lisp_Object from, Lisp_Object to,
   if (*from_out >= 0 && *to_out >= 0 && *from_out > *to_out)
     {
       if (flags & GB_CHECK_ORDER)
-	signal_simple_error_2 ("start greater than end", from, to);
+	invalid_argument_2 ("start greater than end", from, to);
       else
 	{
 	  Bufpos temp = *from_out;
@@ -1371,7 +1371,7 @@ get_string_range_char (Lisp_Object string, Lisp_Object from, Lisp_Object to,
   if (*from_out >= 0 && *to_out >= 0 && *from_out > *to_out)
     {
       if (flags & GB_CHECK_ORDER)
-	signal_simple_error_2 ("start greater than end", from, to);
+	invalid_argument_2 ("start greater than end", from, to);
       else
 	{
 	  Bufpos temp = *from_out;
@@ -1869,7 +1869,7 @@ make_gap (struct buffer *buf, Bytecount increment)
 
       if (BUF_Z (buf) - BUF_BEG (buf) + BUF_GAP_SIZE (buf) + increment
 	  > EMACS_INT_MAX)
-	error ("Maximum buffer size exceeded");
+	out_of_memory ("Maximum buffer size exceeded", Qunbound);
 
       result = BUFFER_REALLOC (buf->text->beg,
 			       BI_BUF_Z (buf) - BI_BUF_BEG (buf) +
@@ -2445,7 +2445,7 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
 
   /* Make sure that point-max won't exceed the size of an emacs int. */
   if ((length + BUF_Z (buf)) > EMACS_INT_MAX)
-    error ("Maximum buffer size exceeded");
+    out_of_memory ("Maximum buffer size exceeded", Qunbound);
 
   /* theoretically not necessary -- caller should GCPRO.
      #### buffer_insert_from_buffer_1() doesn't!  */

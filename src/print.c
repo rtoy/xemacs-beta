@@ -784,7 +784,12 @@ print_error_message (Lisp_Object error_object, Lisp_Object stream)
     while (!NILP (tail))
       {
 	write_c_string (first ? ": " : ", ", stream);
-	print_internal (Fcar (tail), stream, 1);
+	/* Most errors have an explanatory string as their first argument,
+	   and it looks better not to put the quotes around it. */
+	print_internal (Fcar (tail), stream,
+			!(first && STRINGP (Fcar (tail))) ||
+			!NILP (Fget (type, Qerror_lacks_explanatory_string,
+				     Qnil)));
 	tail = Fcdr (tail);
 	first = 0;
       }
@@ -1062,7 +1067,7 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	if (EQ (obj, tortoise) && len > 0)
 	  {
 	    if (print_readably)
-	      error ("printing unreadable circular list");
+	      printing_unreadable_object ("circular list");
 	    else
 	      write_c_string ("... <circular list>", printcharfun);
 	    break;
@@ -1176,9 +1181,10 @@ default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
   char buf[200];
 
   if (print_readably)
-    error ("printing unreadable object #<%s 0x%x>",
-	   LHEADER_IMPLEMENTATION (&header->lheader)->name,
-	   header->uid);
+    printing_unreadable_object
+      ("#<%s 0x%x>",
+       LHEADER_IMPLEMENTATION (&header->lheader)->name,
+       header->uid);
 
   sprintf (buf, "#<%s 0x%x>",
 	   LHEADER_IMPLEMENTATION (&header->lheader)->name,
@@ -1239,7 +1245,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   print_depth++;
 
   if (print_depth > PRINT_CIRCLE)
-    error ("Apparently circular structure being printed");
+    signal_error (Qstack_overflow, "Apparently circular structure being printed", Qunbound);
 
   switch (XTYPE (obj))
     {
@@ -1355,8 +1361,8 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	char buf[128];
 	/* We're in trouble if this happens! */
 	if (print_readably)
-	  error ("printing illegal data type #o%03o",
-		 (int) XTYPE (obj));
+	  ty(e_error (Qinternal_error, "printing illegal data type #o%03o",
+		      (int) XTYPE (obj));
 	write_c_string ("#<EMACS BUG: ILLEGAL DATATYPE ",
 			printcharfun);
 	sprintf (buf, "(#o%3o)", (int) XTYPE (obj));
@@ -1578,7 +1584,7 @@ the output also will be logged to this file.
       CHECK_LIVE_DEVICE (device);
       if (!DEVICE_TTY_P (XDEVICE (device)) &&
 	  !DEVICE_STREAM_P (XDEVICE (device)))
-	signal_simple_error ("Must be tty or stream device", device);
+	wtaerror ("Must be tty or stream device", device);
       con = XCONSOLE (DEVICE_CONSOLE (XDEVICE (device)));
       if (DEVICE_TTY_P (XDEVICE (device)))
 	file = 0;
@@ -1624,7 +1630,7 @@ FILENAME = nil means just close any termscript file currently open.
       filename = Fexpand_file_name (filename, Qnil);
       termscript = fopen ((char *) XSTRING_DATA (filename), "w");
       if (termscript == NULL)
-	report_file_error ("Opening termscript", list1 (filename));
+	report_file_error ("Opening termscript", filename);
     }
   return Qnil;
 }
@@ -1770,14 +1776,14 @@ debug_short_backtrace (int length)
 void
 syms_of_print (void)
 {
-  defsymbol (&Qstandard_output, "standard-output");
+  DEFSYMBOL (Qstandard_output);
 
-  defsymbol (&Qprint_length, "print-length");
+  DEFSYMBOL (Qprint_length);
 
-  defsymbol (&Qprint_string_length, "print-string-length");
+  DEFSYMBOL (Qprint_string_length);
 
-  defsymbol (&Qdisplay_error, "display-error");
-  defsymbol (&Qprint_message_label, "print-message-label");
+  DEFSYMBOL (Qdisplay_error);
+  DEFSYMBOL (Qprint_message_label);
 
   DEFSUBR (Fprin1);
   DEFSUBR (Fprin1_to_string);
@@ -1790,10 +1796,10 @@ syms_of_print (void)
   DEFSUBR (Falternate_debugging_output);
   DEFSUBR (Fexternal_debugging_output);
   DEFSUBR (Fopen_termscript);
-  defsymbol (&Qexternal_debugging_output, "external-debugging-output");
-  defsymbol (&Qalternate_debugging_output, "alternate-debugging-output");
+  DEFSYMBOL (Qexternal_debugging_output);
+  DEFSYMBOL (Qalternate_debugging_output);
 #ifdef HAVE_MS_WINDOWS
-  defsymbol (&Qmswindows_debugging_output, "mswindows-debugging-output");
+  DEFSYMBOL (Qmswindows_debugging_output);
 #endif
   DEFSUBR (Fwith_output_to_temp_buffer);
 }

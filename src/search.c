@@ -126,7 +126,7 @@ static Bufpos search_buffer (struct buffer *buf, Lisp_Object str,
 static void
 matcher_overflow (void)
 {
-  error ("Stack overflow in regexp matcher");
+  stack_overflow ("Stack overflow in regexp matcher", Qunbound);
 }
 
 /* Compile a regexp and signal a Lisp error if anything goes wrong.
@@ -159,7 +159,7 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
   re_set_syntax (old);
   if (val)
     {
-      maybe_signal_error (Qinvalid_regexp, list1 (build_string (val)),
+      maybe_signal_error (Qinvalid_regexp, 0, build_string (val),
 			  Qsearch, errb);
       return 0;
     }
@@ -829,7 +829,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	  if (c < 0400 && syntax_spec_code[c] < (unsigned char) Smax)
 	    fastmap[c] = 1;
 	  else
-	    signal_simple_error ("Invalid syntax designator",
+	    invalid_argument ("Invalid syntax designator",
 				 make_char (c));
 	}
       else
@@ -1037,7 +1037,8 @@ search_command (Lisp_Object string, Lisp_Object limit, Lisp_Object noerror,
       CHECK_INT_COERCE_MARKER (limit);
       lim = XINT (limit);
       if (n > 0 ? lim < BUF_PT (buf) : lim > BUF_PT (buf))
-	error ("Invalid search limit (wrong side of point)");
+	invalid_argument ("Invalid search limit (wrong side of point)",
+			  Qunbound);
       if (lim > BUF_ZV (buf))
 	lim = BUF_ZV (buf);
       if (lim < BUF_BEGV (buf))
@@ -2280,7 +2281,7 @@ match since only regular expressions have distinguished subexpressions.
     {
       CHECK_STRING (string);
       if (!EQ (last_thing_searched, Qt))
-	error ("last thing matched was not a string");
+ invalid_argument ("last thing matched was not a string", Qunbound);
       /* If the match data
 	 were abstracted into a special "match data" type instead
 	 of the typical half-assed "let the implementation be
@@ -2302,7 +2303,7 @@ match since only regular expressions have distinguished subexpressions.
 	    args_out_of_range (strbuffer, make_int (search_regs.num_regs));
 	}
       if (!BUFFERP (last_thing_searched))
-	error ("last thing matched was not a buffer");
+ invalid_argument ("last thing matched was not a buffer", Qunbound);
       buffer = last_thing_searched;
       buf = XBUFFER (buffer);
     }
@@ -2313,7 +2314,7 @@ match since only regular expressions have distinguished subexpressions.
 				/* but some C compilers blew it */
 
   if (search_regs.num_regs == 0)
-    error ("replace-match called before any match found");
+    signal_error (Qinvalid_operation, "replace-match called before any match found", Qunbound);
 
   if (NILP (string))
     {
@@ -2747,7 +2748,7 @@ to hold all the values, and if INTEGERS is non-nil, no consing is done.
   Charcount len;
 
   if (NILP (last_thing_searched))
-    /*error ("match-data called before any match found");*/
+    /*error ("match-data called before any match found", Qunbound);*/
     return Qnil;
 
   data = alloca_array (Lisp_Object, 2 * search_regs.num_regs);
@@ -2982,6 +2983,7 @@ syms_of_search (void)
 
   DEFERROR_STANDARD (Qsearch_failed, Qinvalid_operation);
   DEFERROR_STANDARD (Qinvalid_regexp, Qsyntax_error);
+  Fput (Qinvalid_regexp, Qerror_lacks_explanatory_string, Qt);
 
   DEFSUBR (Flooking_at);
   DEFSUBR (Fposix_looking_at);

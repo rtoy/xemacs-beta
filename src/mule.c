@@ -45,7 +45,7 @@ accept a pattern compiled by 'regexp-compile' with word-option t.
   CHECK_CONS (pattern);
   len = XINT (Flength (pattern));
   if (len > MAXWORDBUF)
-    error ("Too complicated regular expression for word!");
+    invalid_argument ("Too complicated regular expression for word!", Qunbound);
   for (i = 0; i < len; i++)
     {
       temp = XCAR (pattern);

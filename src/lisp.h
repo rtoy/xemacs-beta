@@ -2360,6 +2360,9 @@ void switch_to_buffer (Lisp_Object, Lisp_Object);
 extern int find_file_compare_truenames;
 extern int find_file_use_truenames;
 
+/* Defined in bytecode.c */
+DOESNT_RETURN invalid_byte_code (const char *reason, Lisp_Object frob);
+
 /* Defined in callproc.c */
 char *egetenv (const char *);
 
@@ -2455,85 +2458,61 @@ extern int running_asynch_code;
 extern int suppress_early_error_handler_backtrace;
 
 /* Defined in eval.c */
-DECLARE_DOESNT_RETURN (signal_error (Lisp_Object, Lisp_Object));
-void maybe_signal_error (Lisp_Object, Lisp_Object, Lisp_Object,
-			 Error_behavior);
-Lisp_Object maybe_signal_continuable_error (Lisp_Object, Lisp_Object,
-					    Lisp_Object, Error_behavior);
-DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (type_error (Lisp_Object,
-							      const char *,
-							      ...), 2, 3);
-void maybe_type_error (Lisp_Object, Lisp_Object, Error_behavior, const char *,
-		       ...) PRINTF_ARGS (4, 5);
-Lisp_Object continuable_type_error (Lisp_Object, const char *, ...)
+DECLARE_DOESNT_RETURN (signal_error_1 (Lisp_Object, Lisp_Object));
+void maybe_signal_error_1 (Lisp_Object, Lisp_Object, Lisp_Object,
+			   Error_behavior);
+Lisp_Object maybe_signal_continuable_error_1 (Lisp_Object, Lisp_Object,
+					      Lisp_Object, Error_behavior);
+DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror (Lisp_Object,
+								 const char *,
+								 ...), 2, 3);
+void maybe_signal_ferror (Lisp_Object, Lisp_Object, Error_behavior,
+			  const char *, ...) PRINTF_ARGS (4, 5);
+Lisp_Object signal_continuable_ferror (Lisp_Object, const char *, ...)
      PRINTF_ARGS (2, 3);
-Lisp_Object maybe_continuable_type_error (Lisp_Object, Lisp_Object,
-					  Error_behavior,
-					  const char *, ...)
+Lisp_Object maybe_signal_continuable_ferror (Lisp_Object, Lisp_Object,
+					     Error_behavior,
+					     const char *, ...)
      PRINTF_ARGS (4, 5);
-DECLARE_DOESNT_RETURN (signal_type_error (Lisp_Object, const char *,
-					  Lisp_Object));
-void maybe_signal_type_error (Lisp_Object, const char *, Lisp_Object,
-			      Lisp_Object, Error_behavior);
-Lisp_Object signal_type_continuable_error (Lisp_Object, const char *,
-					   Lisp_Object);
-Lisp_Object maybe_signal_type_continuable_error (Lisp_Object, const char *,
-						 Lisp_Object,
-						 Lisp_Object, Error_behavior);
-DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (type_error_with_frob
+
+Lisp_Object build_error_data (const char *reason, Lisp_Object frob);
+DECLARE_DOESNT_RETURN (signal_error (Lisp_Object, const char *,
+				     Lisp_Object));
+void maybe_signal_error (Lisp_Object, const char *, Lisp_Object,
+			 Lisp_Object, Error_behavior);
+Lisp_Object signal_continuable_error (Lisp_Object, const char *,
+				      Lisp_Object);
+Lisp_Object maybe_signal_continuable_error (Lisp_Object, const char *,
+					    Lisp_Object,
+					    Lisp_Object, Error_behavior);
+DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror_with_frob
 						  (Lisp_Object, Lisp_Object,
 						   const char *,
 						   ...), 3, 4);
-void maybe_type_error_with_frob (Lisp_Object, Lisp_Object, Lisp_Object,
-				 Error_behavior,
-				 const char *, ...) PRINTF_ARGS (5, 6);
-Lisp_Object continuable_type_error_with_frob (Lisp_Object, Lisp_Object,
-					      const char *,
-					      ...) PRINTF_ARGS (3, 4);
-Lisp_Object maybe_continuable_type_error_with_frob
-(Lisp_Object, Lisp_Object, Lisp_Object, Error_behavior, const char *, ...)
+void maybe_signal_ferror_with_frob (Lisp_Object, Lisp_Object, Lisp_Object,
+				    Error_behavior,
+				    const char *, ...) PRINTF_ARGS (5, 6);
+Lisp_Object signal_continuable_ferror_with_frob (Lisp_Object, Lisp_Object,
+						 const char *,
+						 ...) PRINTF_ARGS (3, 4);
+Lisp_Object maybe_signal_continuable_ferror_with_frob (Lisp_Object,
+						       Lisp_Object,
+						       Lisp_Object,
+						       Error_behavior,
+						       const char *, ...)
      PRINTF_ARGS (5, 6);
-DECLARE_DOESNT_RETURN (signal_type_error_2 (Lisp_Object, const char *,
-					    Lisp_Object, Lisp_Object));
-void maybe_signal_type_error_2 (Lisp_Object, const char *, Lisp_Object,
-				Lisp_Object, Lisp_Object, Error_behavior);
-Lisp_Object signal_type_continuable_error_2 (Lisp_Object, const char *,
-					     Lisp_Object, Lisp_Object);
-Lisp_Object maybe_signal_type_continuable_error_2 (Lisp_Object, const char *,
-						   Lisp_Object, Lisp_Object,
-						   Lisp_Object,
-						   Error_behavior);
-DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (error (const char *,
-							   ...), 1, 2);
-void maybe_error (Lisp_Object, Error_behavior, const char *,
-		  ...) PRINTF_ARGS (3, 4);
-Lisp_Object continuable_error (const char *, ...) PRINTF_ARGS (1, 2);
-Lisp_Object maybe_continuable_error (Lisp_Object, Error_behavior,
-				     const char *, ...) PRINTF_ARGS (3, 4);
-DECLARE_DOESNT_RETURN (signal_simple_error (const char *, Lisp_Object));
-void maybe_signal_simple_error (const char *, Lisp_Object,
-				Lisp_Object, Error_behavior);
-Lisp_Object signal_simple_continuable_error (const char *, Lisp_Object);
-Lisp_Object maybe_signal_simple_continuable_error (const char *, Lisp_Object,
-						   Lisp_Object, Error_behavior);
-DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (error_with_frob
-						    (Lisp_Object, const char *,
-						     ...), 2, 3);
-void maybe_error_with_frob (Lisp_Object, Lisp_Object, Error_behavior,
-			    const char *, ...) PRINTF_ARGS (4, 5);
-Lisp_Object continuable_error_with_frob (Lisp_Object, const char *,
-					 ...) PRINTF_ARGS (2, 3);
-Lisp_Object maybe_continuable_error_with_frob
-(Lisp_Object, Lisp_Object, Error_behavior, const char *, ...) PRINTF_ARGS (4, 5);
-DECLARE_DOESNT_RETURN (signal_simple_error_2 (const char *,
-					      Lisp_Object, Lisp_Object));
-void maybe_signal_simple_error_2 (const char *, Lisp_Object, Lisp_Object,
-				  Lisp_Object, Error_behavior);
-Lisp_Object signal_simple_continuable_error_2 (const char *,
-					       Lisp_Object, Lisp_Object);
-Lisp_Object maybe_signal_simple_continuable_error_2 (const char *, Lisp_Object,
-						     Lisp_Object, Lisp_Object,
-						     Error_behavior);
+DECLARE_DOESNT_RETURN (signal_error_2 (Lisp_Object, const char *,
+				       Lisp_Object, Lisp_Object));
+void maybe_signal_error_2 (Lisp_Object, const char *, Lisp_Object,
+			   Lisp_Object, Lisp_Object, Error_behavior);
+Lisp_Object signal_continuable_error_2 (Lisp_Object, const char *,
+					Lisp_Object, Lisp_Object);
+Lisp_Object maybe_signal_continuable_error_2 (Lisp_Object, const char *,
+					      Lisp_Object, Lisp_Object,
+					      Lisp_Object,
+					      Error_behavior);
+
+
 DECLARE_DOESNT_RETURN (signal_malformed_list_error (Lisp_Object));
 DECLARE_DOESNT_RETURN (signal_malformed_property_list_error (Lisp_Object));
 DECLARE_DOESNT_RETURN (signal_circular_list_error (Lisp_Object));
@@ -2542,21 +2521,56 @@ DECLARE_DOESNT_RETURN (signal_circular_property_list_error (Lisp_Object));
 DECLARE_DOESNT_RETURN (syntax_error (const char *reason, Lisp_Object frob));
 DECLARE_DOESNT_RETURN (syntax_error_2 (const char *reason, Lisp_Object frob1,
 				       Lisp_Object frob2));
+void maybe_syntax_error (const char *, Lisp_Object, Lisp_Object,
+			 Error_behavior);
+DECLARE_DOESNT_RETURN (sferror (const char *reason, Lisp_Object frob));
+DECLARE_DOESNT_RETURN (sferror_2 (const char *reason, Lisp_Object frob1,
+				  Lisp_Object frob2));
+void maybe_sferror (const char *, Lisp_Object, Lisp_Object,
+		    Error_behavior);
 DECLARE_DOESNT_RETURN (invalid_argument (const char *reason,
 					 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (invalid_argument_2 (const char *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
+void maybe_invalid_argument (const char *, Lisp_Object, Lisp_Object,
+			     Error_behavior);
 DECLARE_DOESNT_RETURN (invalid_operation (const char *reason,
-					  Lisp_Object frob));
+					 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (invalid_operation_2 (const char *reason,
-					    Lisp_Object frob1,
-					    Lisp_Object frob2));
+					   Lisp_Object frob1,
+					   Lisp_Object frob2));
+void maybe_invalid_operation (const char *, Lisp_Object, Lisp_Object,
+			     Error_behavior);
+DECLARE_DOESNT_RETURN (invalid_state (const char *reason,
+					 Lisp_Object frob));
+DECLARE_DOESNT_RETURN (invalid_state_2 (const char *reason,
+					   Lisp_Object frob1,
+					   Lisp_Object frob2));
+void maybe_invalid_state (const char *, Lisp_Object, Lisp_Object,
+			     Error_behavior);
 DECLARE_DOESNT_RETURN (invalid_change (const char *reason,
-				       Lisp_Object frob));
+					 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (invalid_change_2 (const char *reason,
-					 Lisp_Object frob1,
-					 Lisp_Object frob2));
+					   Lisp_Object frob1,
+					   Lisp_Object frob2));
+void maybe_invalid_change (const char *, Lisp_Object, Lisp_Object,
+			     Error_behavior);
+DECLARE_DOESNT_RETURN (invalid_constant (const char *reason,
+					 Lisp_Object frob));
+DECLARE_DOESNT_RETURN (invalid_constant_2 (const char *reason,
+					   Lisp_Object frob1,
+					   Lisp_Object frob2));
+void maybe_invalid_constant (const char *, Lisp_Object, Lisp_Object,
+			     Error_behavior);
+DECLARE_DOESNT_RETURN (wtaerror (const char *reason, Lisp_Object frob));
+DECLARE_DOESNT_RETURN (out_of_memory (const char *reason,
+				      Lisp_Object frob));
+DECLARE_DOESNT_RETURN (stack_overflow (const char *reason,
+				       Lisp_Object frob));
+DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (printing_unreadable_object
+						  (const char *,
+						   ...), 1, 2);
 
 Lisp_Object signal_void_function_error (Lisp_Object);
 Lisp_Object signal_invalid_function_error (Lisp_Object);
@@ -2651,21 +2665,14 @@ Lisp_Object allocate_event (void);
 /* Defined in fileio.c */
 void record_auto_save (void);
 void force_auto_save_soon (void);
+DECLARE_DOESNT_RETURN (report_error_with_errno (Lisp_Object errtype,
+						const char *string,
+						Lisp_Object data));
+DECLARE_DOESNT_RETURN (report_file_type_error (Lisp_Object errtype,
+					       Lisp_Object oserrmess,
+					       const char *string,
+					       Lisp_Object data));
 DECLARE_DOESNT_RETURN (report_file_error (const char *, Lisp_Object));
-void maybe_report_file_error (const char *, Lisp_Object,
-			      Lisp_Object, Error_behavior);
-DECLARE_DOESNT_RETURN (signal_file_error (const char *, Lisp_Object));
-void maybe_signal_file_error (const char *, Lisp_Object,
-			      Lisp_Object, Error_behavior);
-DECLARE_DOESNT_RETURN (signal_double_file_error (const char *, const char *,
-						 Lisp_Object));
-void maybe_signal_double_file_error (const char *, const char *,
-				     Lisp_Object, Lisp_Object, Error_behavior);
-DECLARE_DOESNT_RETURN (signal_double_file_error_2 (const char *, const char *,
-						   Lisp_Object, Lisp_Object));
-void maybe_signal_double_file_error_2 (const char *, const char *,
-				       Lisp_Object, Lisp_Object, Lisp_Object,
-				       Error_behavior);
 Lisp_Object lisp_strerror (int);
 Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
 ssize_t read_allowing_quit (int, void *, size_t);
@@ -2721,6 +2728,18 @@ void check_losing_bytecode (const char *, Lisp_Object);
 /* Defined in glyphs.c */
 Error_behavior decode_error_behavior_flag (Lisp_Object);
 Lisp_Object encode_error_behavior_flag (Error_behavior);
+
+/* Defined in glyphs-shared.c */
+void shared_resource_validate (Lisp_Object instantiator);
+Lisp_Object shared_resource_normalize (Lisp_Object inst,
+				       Lisp_Object console_type,
+				       Lisp_Object dest_mask,
+				       Lisp_Object tag);
+extern Lisp_Object Q_resource_type, Q_resource_id;
+
+/* Defined in gui.c */
+DECLARE_DOESNT_RETURN (gui_error (const char *reason,
+				  Lisp_Object frob));
 
 /* Defined in indent.c */
 int bi_spaces_at_point (struct buffer *, Bytind);
@@ -2827,6 +2846,10 @@ Lisp_Object internal_with_output_to_temp_buffer (Lisp_Object,
 void float_to_string (char *, double);
 void internal_object_printer (Lisp_Object, Lisp_Object, int);
 
+/* Defined in process.c */
+DECLARE_DOESNT_RETURN (report_process_error (const char *, Lisp_Object));
+DECLARE_DOESNT_RETURN (report_network_error (const char *, Lisp_Object));
+
 /* Defined in profile.c */
 void mark_profiling_info (void);
 void profile_increase_call_count (Lisp_Object);
@@ -2870,6 +2893,7 @@ void emacs_sleep (int);
 
 /* Defined in sound.c */
 void init_device_sound (struct device *);
+DECLARE_DOESNT_RETURN (report_sound_error (const Char_ASCII *, Lisp_Object));
 
 /* Defined in specifier.c */
 Lisp_Object specifier_instance (Lisp_Object, Lisp_Object, Lisp_Object,
@@ -3182,10 +3206,9 @@ extern Lisp_Object Qcategory_designator_p, Qcategory_table_value_p, Qccl, Qcdr;
 extern Lisp_Object Qchar_or_string_p, Qcharacterp;
 extern Lisp_Object Qcharset_g0, Qcharset_g1, Qcharset_g2, Qcharset_g3;
 extern Lisp_Object Qcircular_list, Qcircular_property_list;
-extern Lisp_Object Qcoding_system_error;
 extern Lisp_Object Qcolor_pixmap_image_instance_p;
 extern Lisp_Object Qcommandp, Qcompletion_ignore_case;
-extern Lisp_Object Qconsole_live_p, Qconst_specifier, Qcr;
+extern Lisp_Object Qconsole_live_p, Qconst_specifier, Qconversion_error, Qcr;
 extern Lisp_Object Qcrlf, Qcurrent_menubar, Qctext;
 extern Lisp_Object Qcyclic_variable_indirection, Qdecode;
 extern Lisp_Object Qdefun, Qdevice_live_p;
@@ -3194,20 +3217,22 @@ extern Lisp_Object Qdomain_error;
 extern Lisp_Object Qediting_error;
 extern Lisp_Object Qencode, Qend_of_buffer, Qend_of_file, Qend_open;
 extern Lisp_Object Qeol_cr, Qeol_crlf, Qeol_lf, Qeol_type;
-extern Lisp_Object Qerror, Qerror_conditions, Qerror_message, Qescape_quoted;
+extern Lisp_Object Qerror, Qerror_conditions, Qerror_lacks_explanatory_string;
+extern Lisp_Object Qerror_message, Qescape_quoted;
 extern Lisp_Object Qevent_live_p, Qexit, Qextent_live_p;
 extern Lisp_Object Qexternal_debugging_output, Qfeaturep;
 extern Lisp_Object Qfile_error;
 extern Lisp_Object Qforce_g0_on_output, Qforce_g1_on_output;
 extern Lisp_Object Qforce_g2_on_output, Qforce_g3_on_output, Qforeground;
-extern Lisp_Object Qformat, Qframe_live_p;
+extern Lisp_Object Qformat, Qframe_live_p, Qgui_error;
 extern Lisp_Object Qicon_glyph_p, Qidentity;
 extern Lisp_Object Qinhibit_quit, Qinhibit_read_only;
 extern Lisp_Object Qinput_charset_conversion;
 extern Lisp_Object Qinteger_char_or_marker_p, Qinteger_or_char_p;
 extern Lisp_Object Qinteger_or_marker_p, Qintegerp, Qinteractive;
-extern Lisp_Object Qinternal_error, Qinvalid_argument;
-extern Lisp_Object Qinvalid_change, Qinvalid_function, Qinvalid_operation;
+extern Lisp_Object Qinternal_error, Qinvalid_argument, Qinvalid_byte_code;
+extern Lisp_Object Qinvalid_change, Qinvalid_constant, Qinvalid_function;
+extern Lisp_Object Qinvalid_operation;
 extern Lisp_Object Qinvalid_read_syntax, Qinvalid_state;
 extern Lisp_Object Qio_error;
 extern Lisp_Object Qiso2022;
@@ -3220,16 +3245,17 @@ extern Lisp_Object Qmark;
 extern Lisp_Object Qmnemonic;
 extern Lisp_Object Qmono_pixmap_image_instance_p;
 extern Lisp_Object Qmouse_leave_buffer_hook;
-extern Lisp_Object Qnas, Qnatnump, Qnative_layout;
+extern Lisp_Object Qnatnump, Qnative_layout, Qnetwork_error;
 extern Lisp_Object Qno_ascii_cntl, Qno_ascii_eol, Qno_catch;
 extern Lisp_Object Qno_conversion, Qno_iso6429;
 extern Lisp_Object Qnothing_image_instance_p;
-extern Lisp_Object Qnumber_char_or_marker_p, Qnumberp;
+extern Lisp_Object Qnumber_char_or_marker_p, Qnumberp, Qout_of_memory;
 extern Lisp_Object Qoutput_charset_conversion;
 extern Lisp_Object Qoverflow_error, Qpoint, Qpointer_glyph_p;
 extern Lisp_Object Qpointer_image_instance_p, Qpost_read_conversion;
 extern Lisp_Object Qpre_write_conversion, Qprint_length;
-extern Lisp_Object Qprint_string_length, Qprogn, Qquit;
+extern Lisp_Object Qprint_string_length, Qprinting_unreadable_object;
+extern Lisp_Object Qprogn, Qprocess_error, Qquit;
 extern Lisp_Object Qquote, Qrange_error, Qread_char;
 extern Lisp_Object Qread_from_minibuffer, Qreally_early_error_handler;
 extern Lisp_Object Qregion_beginning, Qregion_end;
@@ -3238,12 +3264,12 @@ extern Lisp_Object Qsave_buffers_kill_emacs;
 extern Lisp_Object Qself_insert_command, Qself_insert_defer_undo;
 extern Lisp_Object Qsequencep, Qset, Qsetting_constant;
 extern Lisp_Object Qseven, Qshift_jis, Qshort;
-extern Lisp_Object Qsingularity_error;
+extern Lisp_Object Qsingularity_error, Qsound_error, Qstack_overflow;
 extern Lisp_Object Qstandard_input, Qstandard_output;
 extern Lisp_Object Qstart_open;
-extern Lisp_Object Qstring_lessp, Qsubwindow;
+extern Lisp_Object Qstring_lessp, Qstructure_formation_error, Qsubwindow;
 extern Lisp_Object Qsubwindow_image_instance_p;
-extern Lisp_Object Qsyntax_error, Qt;
+extern Lisp_Object Qsyntax_error, Qt, Qtext_conversion_error;
 extern Lisp_Object Qtext_image_instance_p;
 extern Lisp_Object Qtop_level;
 extern Lisp_Object Qtrue_list_p;

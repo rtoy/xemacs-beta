@@ -381,18 +381,18 @@ This removes %_'s (accelerator indications) and converts %% to %.
 void
 syms_of_menubar (void)
 {
-  defsymbol (&Qcurrent_menubar, "current-menubar");
+  DEFSYMBOL (Qcurrent_menubar);
 
-  defsymbol (&Qmenu_force, "menu-force");
-  defsymbol (&Qmenu_fallback, "menu-fallback");
+  DEFSYMBOL (Qmenu_force);
+  DEFSYMBOL (Qmenu_fallback);
 
-  defsymbol (&Qmenu_quit, "menu-quit");
-  defsymbol (&Qmenu_up, "menu-up");
-  defsymbol (&Qmenu_down, "menu-down");
-  defsymbol (&Qmenu_left, "menu-left");
-  defsymbol (&Qmenu_right, "menu-right");
-  defsymbol (&Qmenu_select, "menu-select");
-  defsymbol (&Qmenu_escape, "menu-escape");
+  DEFSYMBOL (Qmenu_quit);
+  DEFSYMBOL (Qmenu_up);
+  DEFSYMBOL (Qmenu_down);
+  DEFSYMBOL (Qmenu_left);
+  DEFSYMBOL (Qmenu_right);
+  DEFSYMBOL (Qmenu_select);
+  DEFSYMBOL (Qmenu_escape);
 
   DEFSUBR (Fpopup_menu);
   DEFSUBR (Fnormalize_menu_item_name);
@@ -625,7 +625,7 @@ not changed is not so bad; more computation will be done, but redisplay of
 the menubar will still be performed optimally.
 */ );
   Vactivate_menubar_hook = Qnil;
-  defsymbol (&Qactivate_menubar_hook, "activate-menubar-hook");
+  DEFSYMBOL (Qactivate_menubar_hook);
 
   DEFVAR_BOOL ("menubar-show-keybindings", &menubar_show_keybindings /*
 If true, the menubar will display keyboard equivalents.

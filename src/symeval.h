@@ -294,6 +294,32 @@ void defsymbol_massage_multiword_predicate_nodump (Lisp_Object *location,
 void defsymbol (Lisp_Object *location, const char *name);
 void defsymbol_nodump (Lisp_Object *location, const char *name);
 
+/* Defining symbols:
+
+   (1) A standard symbol is defined with DEFSYMBOL.  That means that
+       the symbol's print name can be derived from the symbol's variable
+       name by removing the initial Q and replacing underscores with hyphens.
+   (2) A keyword symbol is defined with DEFKEYWORD.  That means that
+       the symbol's print name can be derived from the symbol's variable
+       name by removing the initial Q and replacing underscores with hyphens,
+       except that the initial underscore, which comes directly after the Q,
+       is replaced by a colon.
+   (3) DEFSYMBOL_MULTIWORD_PREDICATE is used for the predicates that are
+       associated with a particular type of Lisp Object.  Because of the
+       limitations of C macros, they're always given a predicate symbol
+       whose C name simply appends `p' to the type name, modulo hyphen/
+       underscore conversion.  Properly, however, the Lisp name should have
+       `-p' if there is more than one word in the type name.
+       DEFSYMBOL_MULTIWORD_PREDICATE is for these weird symbols -- the
+       C name as supplied to the macro should end with a `p' with no
+       underscore before it, and the macro will insert a hyphen there in
+       the Lisp name.
+   (4) In case you have some weird symbol where the equivalence between
+       the C and Lisp names is more complicated (e.g. the Lisp symbol has
+       non-alphabetic, non-numeric characters in it), you can just call
+       defsymbol() (the lowercase version) directly.
+*/
+
 #define DEFSYMBOL(name) defsymbol_massage_name (&name, #name)
 #define DEFSYMBOL_NO_DUMP(name) defsymbol_massage_name_nodump (&name, #name)
 #define DEFSYMBOL_MULTIWORD_PREDICATE(name) \

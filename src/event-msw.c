@@ -1368,7 +1368,7 @@ mswindows_need_event_in_modal_loop (int badly_p)
     {
       /* We'll deadlock if go waiting */
       if (mswindows_pending_timers_count == 0)
-	error ("Deadlock due to an attempt to call next-event in a wrong context");
+ invalid_operation ("Deadlock due to an attempt to call next-event in a wrong context", Qunbound);
 
       /* Fetch and dispatch any pending timers */
       if (GetMessage (&msg, NULL, WM_TIMER, WM_TIMER) > 0)
@@ -3416,7 +3416,7 @@ emacs_mswindows_select_process (Lisp_Process *process)
   HANDLE hev = get_process_input_waitable (process);
 
   if (!add_waitable_handle (hev))
-    error ("Too many active processes");
+    invalid_operation ("Too many active processes", Qunbound);
 
 #ifdef HAVE_WIN32_PROCESSES
   {
@@ -3428,7 +3428,7 @@ emacs_mswindows_select_process (Lisp_Process *process)
 	if (!add_waitable_handle (hprocess))
 	  {
 	    remove_waitable_handle (hev);
-	    error ("Too many active processes");
+	    invalid_operation ("Too many active processes", Qunbound);
 	  }
       }
   }

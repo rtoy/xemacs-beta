@@ -94,7 +94,6 @@ Lisp_Object Vmswindows_bitmap_file_path;
 static	COLORREF transparent_color = RGB (1,1,1);
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (mswindows_resource);
-Lisp_Object Q_resource_type, Q_resource_id;
 Lisp_Object Qmswindows_resource;
 
 static void
@@ -367,7 +366,7 @@ init_image_instance_from_dibitmap (Lisp_Image_Instance *ii,
 			     0, 0);
 
   if (!bitmap || !bmp_buf)
-    signal_simple_error ("Unable to create bitmap", instantiator);
+    signal_image_error ("Unable to create bitmap", instantiator);
 
   /* copy in the actual bitmap */
   memcpy (bmp_buf, bmp_data, bmp_bits);
@@ -419,7 +418,7 @@ image_instance_add_dibitmap (Lisp_Image_Instance *ii,
 				     0,0);
 
   if (!bitmap || !bmp_buf)
-    signal_simple_error ("Unable to create bitmap", instantiator);
+    signal_image_error ("Unable to create bitmap", instantiator);
 
   /* copy in the actual bitmap */
   memcpy (bmp_buf, bmp_data, bmp_bits);
@@ -456,8 +455,8 @@ mswindows_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 						 eimage + (width * height * 3 * slice),
 						 &bmp_bits, &bmp_data)))
 	{
-	  signal_simple_error ("EImage to DIBitmap conversion failed",
-			       instantiator);
+	  signal_image_error ("EImage to DIBitmap conversion failed",
+			      instantiator);
 	}
 
       /* Now create the pixmap and set up the image instance */
@@ -816,18 +815,18 @@ static int xpm_to_eimage (Lisp_Object image, const Extbyte *buffer,
       break;
     case XpmFileInvalid:
       {
-	signal_simple_error ("Invalid XPM data", image);
+	signal_image_error ("Invalid XPM data", image);
       }
     case XpmNoMemory:
       {
-	signal_double_file_error ("Parsing pixmap data",
-				  "out of memory", image);
+	signal_double_image_error ("Parsing pixmap data",
+				   "out of memory", image);
       }
     default:
       {
-	signal_double_file_error_2 ("Parsing pixmap data",
-				    "unknown error",
-				    make_int (result), image);
+	signal_double_image_error_2 ("Parsing pixmap data",
+				     "unknown error",
+				     make_int (result), image);
       }
     }
 
@@ -972,8 +971,8 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
   if (!xpm_to_eimage (image_instance, bytes, &eimage, &width, &height,
 		      &x_hot, &y_hot, &transp, color_symbols, nsymbols))
     {
-      signal_simple_error ("XPM to EImage conversion failed",
-			   image_instance);
+      signal_image_error ("XPM to EImage conversion failed",
+			  image_instance);
     }
 
   if (color_symbols)
@@ -989,8 +988,8 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
   if (!(bmp_info=convert_EImage_to_DIBitmap (device, width, height, eimage,
 					     &bmp_bits, &bmp_data)))
     {
-      signal_simple_error ("XPM to EImage conversion failed",
-			   image_instance);
+      signal_image_error ("XPM to EImage conversion failed",
+			  image_instance);
     }
   xfree (eimage);
 
@@ -1073,49 +1072,15 @@ bmp_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 static void
 mswindows_resource_validate (Lisp_Object instantiator)
 {
-  if ((NILP (find_keyword_in_vector (instantiator, Q_file))
-       &&
-       NILP (find_keyword_in_vector (instantiator, Q_resource_id)))
-      ||
-      NILP (find_keyword_in_vector (instantiator, Q_resource_type)))
-    signal_simple_error ("Must supply :file, :resource-id and :resource-type",
-			 instantiator);
+  shared_resource_validate (instantiator);
 }
 
 static Lisp_Object
 mswindows_resource_normalize (Lisp_Object inst, Lisp_Object console_type,
 			      Lisp_Object dest_mask)
 {
-  /* This function can call lisp */
-  Lisp_Object file = Qnil;
-  struct gcpro gcpro1, gcpro2;
-  Lisp_Object alist = Qnil;
-
-  GCPRO2 (file, alist);
-
-  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data,
-					     console_type);
-
-  if (CONSP (file)) /* failure locating filename */
-    signal_double_file_error ("Opening pixmap file",
-			      "no such file or directory",
-			      Fcar (file));
-
-  if (NILP (file)) /* no conversion necessary */
-    RETURN_UNGCPRO (inst);
-
-  alist = tagged_vector_to_alist (inst);
-
-  {
-    alist = remassq_no_quit (Q_file, alist);
-    alist = Fcons (Fcons (Q_file, file), alist);
-  }
-
-  {
-    Lisp_Object result = alist_to_tagged_vector (Qmswindows_resource, alist);
-    free_alist (alist);
-    RETURN_UNGCPRO (result);
-  }
+  return shared_resource_normalize (inst, console_type, dest_mask,
+				    Qmswindows_resource);
 }
 
 static int
@@ -1218,7 +1183,7 @@ static int resource_name_to_resource (Lisp_Object name, int type)
     }
   else if (!STRINGP (name))
     {
-      signal_simple_error ("invalid resource identifier", name);
+      invalid_argument ("invalid resource identifier", name);
     }
 
   do {
@@ -1311,7 +1276,7 @@ mswindows_resource_instantiate (Lisp_Object image_instance,
     }
   else if (!(resid = MAKEINTRESOURCE (resource_name_to_resource (resource_id,
 							       type))))
-    signal_simple_error ("Invalid resource identifier", resource_id);
+    invalid_argument ("Invalid resource identifier", resource_id);
 
   /* load the image */
   if (xLoadImageA) /* not in NT 3.5 */
@@ -1320,7 +1285,7 @@ mswindows_resource_instantiate (Lisp_Object image_instance,
 				  LR_CREATEDIBSECTION | LR_DEFAULTSIZE |
 				  LR_SHARED |
 				  (!NILP (file) ? LR_LOADFROMFILE : 0))))
-	signal_simple_error ("Cannot load image", instantiator);
+	signal_image_error ("Cannot load image", instantiator);
     }
   else
     {
@@ -1339,7 +1304,7 @@ mswindows_resource_instantiate (Lisp_Object image_instance,
 	}
 
       if (!himage)
-	signal_simple_error ("Cannot load image", instantiator);
+	signal_image_error ("Cannot load image", instantiator);
     }
 
   if (hinst)
@@ -1381,7 +1346,7 @@ check_valid_resource_symbol (Lisp_Object data)
 {
   CHECK_SYMBOL (data);
   if (!resource_symbol_to_type (data))
-    signal_simple_error ("invalid resource type", data);
+    invalid_constant ("invalid resource type", data);
 }
 
 static void
@@ -1392,7 +1357,7 @@ check_valid_resource_id (Lisp_Object data)
       !resource_name_to_resource (data, IMAGE_ICON)
       &&
       !resource_name_to_resource (data, IMAGE_BITMAP))
-    signal_simple_error ("invalid resource identifier", data);
+    invalid_constant ("invalid resource identifier", data);
 }
 
 /**********************************************************************
@@ -2028,7 +1993,7 @@ mswindows_xface_instantiate (Lisp_Object image_instance,
     }
 
   if (emsg)
-    signal_simple_error_2 (emsg, data, Qimage);
+    signal_image_error_2 (emsg, data, Qimage);
 
   bp = bits = (char *) alloca (PIXELS / 8);
 
@@ -2408,8 +2373,8 @@ mswindows_subwindow_instantiate (Lisp_Object image_instance,
 			NULL,       /* No menu */
 			NULL, /* must be null for this class */
 			NULL)) == NULL)
-    signal_simple_error ("window creation failed with code",
-			 make_int (GetLastError()));
+    gui_error ("window creation failed with code",
+	       make_int (GetLastError()));
 
   wnd = CreateWindow( "STATIC",
 		      "",
@@ -2547,8 +2512,8 @@ mswindows_widget_instantiate (Lisp_Object image_instance,
 			(HMENU)id,       /* No menu */
 			NULL, /* must be null for this class */
 			NULL)) == NULL)
-    signal_simple_error ("window creation failed with code",
-			 make_int (GetLastError()));
+    gui_error ("window creation failed with code",
+	       make_int (GetLastError()));
 
   if ((wnd = CreateWindowEx(
 			    exflags /* | WS_EX_NOPARENTNOTIFY*/,
@@ -2567,8 +2532,8 @@ mswindows_widget_instantiate (Lisp_Object image_instance,
 			    (FRAME_MSWINDOWS_HANDLE (XFRAME (frame)),
 			     GWL_HINSTANCE),
 			    NULL)) == NULL)
-    signal_simple_error ("window creation failed with code",
-			 make_int (GetLastError()));
+    gui_error ("window creation failed with code",
+	       make_int (GetLastError()));
 
   IMAGE_INSTANCE_SUBWINDOW_ID (ii) = wnd;
   SetWindowLong (wnd, GWL_USERDATA, (LONG)LISP_TO_VOID(image_instance));
@@ -2779,7 +2744,7 @@ static HTREEITEM add_tree_item (Lisp_Object image_instance,
 
   if ((ret = (HTREEITEM)SendMessage (wnd, TVM_INSERTITEM,
 				     0, (LPARAM)&tvitem)) == 0)
-    signal_simple_error ("error adding tree view entry", item);
+    gui_error ("error adding tree view entry", item);
 
   return ret;
 }
@@ -2902,7 +2867,7 @@ add_tab_item (Lisp_Object image_instance,
 
   if ((ret = SendMessage (wnd, TCM_INSERTITEM,
 			  i, (LPARAM)&tvitem)) < 0)
-    signal_simple_error ("error adding tab entry", item);
+    gui_error ("error adding tab entry", item);
 
   return ret;
 }
@@ -3103,7 +3068,7 @@ mswindows_combo_box_instantiate (Lisp_Object image_instance,
 			  C_STRING_ALLOCA, lparam,
 			  Qnative);
       if (SendMessage (wnd, CB_ADDSTRING, 0, (LPARAM)lparam) == CB_ERR)
-	signal_simple_error ("error adding combo entries", instantiator);
+	gui_error ("error adding combo entries", instantiator);
     }
 }
 
@@ -3214,8 +3179,6 @@ mswindows_control_wnd_proc (HWND hwnd, UINT msg,
 void
 syms_of_glyphs_mswindows (void)
 {
-  defkeyword (&Q_resource_id, ":resource-id");
-  defkeyword (&Q_resource_type, ":resource-type");
 }
 
 void

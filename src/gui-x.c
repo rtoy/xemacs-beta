@@ -405,12 +405,12 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
       return 1;
     }
   else if (!GUI_ITEMP (gui_item))
-    syntax_error ("need a string or a gui_item here", gui_item);
+    invalid_argument ("need a string or a gui_item here", gui_item);
 
   pgui = XGUI_ITEM (gui_item);
 
   if (!NILP (pgui->filter))
-    syntax_error (":filter keyword not permitted on leaf nodes", gui_item);
+    sferror (":filter keyword not permitted on leaf nodes", gui_item);
 
 #ifdef HAVE_MENUBARS
   if (menu_entry_p && !gui_item_included_p (gui_item, Vmenubar_configuration))
@@ -533,13 +533,13 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
 #endif
     }
   else
-    syntax_error_2 ("Unknown style", pgui->style, gui_item);
+    invalid_constant_2 ("Unknown style", pgui->style, gui_item);
 
   if (!allow_text_field_p && (wv->type == TEXT_TYPE))
-    syntax_error ("Text field not allowed in this context", gui_item);
+    sferror ("Text field not allowed in this context", gui_item);
 
   if (!NILP (pgui->selected) && EQ (pgui->style, Qtext))
-    syntax_error
+    sferror
       (":selected only makes sense with :style toggle, radio or button",
        gui_item);
   return 1;
@@ -584,7 +584,7 @@ gui_items_to_widget_values_1 (Lisp_Object gui_object_instance,
     {
       /* first one is the parent */
       if (CONSP (XCAR (items)))
-	syntax_error ("parent item must not be a list", XCAR (items));
+	sferror ("parent item must not be a list", XCAR (items));
 
       if (parent)
 	wv = gui_items_to_widget_values_1 (gui_object_instance,
@@ -631,7 +631,7 @@ gui_items_to_widget_values (Lisp_Object gui_object_instance, Lisp_Object items,
   Lisp_Object wv_closure;
 
   if (NILP (items))
-    syntax_error ("must have some items", items);
+    sferror ("must have some items", items);
 
   /* Inhibit GC during this conversion.  The reasons for this are
      the same as in menu_item_descriptor_to_widget_value(); see

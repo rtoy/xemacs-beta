@@ -21,17 +21,15 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* This file Mule-ized by Ben Wing, 5-15-01. */
+
 #include <config.h>
 #include "lisp.h"
 
-#include <string.h>
-#include <sys/file.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <audio.h>
-#include <netinet/in.h>		/* for ntohl() etc. */
+#include "sound.h"
+
+#include "sysfile.h"
+#include "sysproc.h" /* netinet/in.h for ntohl() etc. */
 
 /* Configuration options */
 
@@ -91,14 +89,6 @@ Boston, MA 02111-1307, USA.  */
 #define DEFAULT_CHANNEL_COUNT	     1
 #define DEFAULT_FORMAT	      AFmulaw8
 
-/* Exports */
-
-/* all compilers on machines that have the SGI audio library
-   understand prototypes, right? */
-
-extern void play_sound_file (char *, int);
-extern void play_sound_data (unsigned char *, int, int);
-
 /* Data structures */
 
 /* an AudioContext describes everything we want to know about how a
@@ -182,8 +172,8 @@ AudioContextRec;
 /* Forward declarations */
 
 static Lisp_Object close_sound_file (Lisp_Object);
-static AudioContext audio_initialize (unsigned char *, int, int);
-static void play_internal (unsigned char *, int, AudioContext);
+static AudioContext audio_initialize (UChar_Binary *, int, int);
+static void play_internal (UChar_Binary *, int, AudioContext);
 static void drain_audio_port (AudioContext);
 static void write_mulaw_8_chunk (void *, void *, AudioContext);
 static void write_linear_chunk (void *, void *, AudioContext);
@@ -209,11 +199,11 @@ close_sound_file (Lisp_Object closure)
 }
 
 void
-play_sound_file (char *sound_file, int volume)
+play_sound_file (Extbyte *sound_file, int volume)
 {
   int count = specpdl_depth ();
   int input_fd;
-  unsigned char buffer[CHUNKSIZE];
+  UChar_Binary buffer[CHUNKSIZE];
   int bytes_read;
   AudioContext ac = (AudioContext) 0;
 
@@ -264,7 +254,7 @@ restore_audio_port (Lisp_Object closure)
 }
 
 void
-play_sound_data (unsigned char *data, int length, int volume)
+play_sound_data (UChar_Binary *data, int length, int volume)
 {
   int count = specpdl_depth ();
   AudioContext ac;
@@ -278,7 +268,7 @@ play_sound_data (unsigned char *data, int length, int volume)
 }
 
 static AudioContext
-audio_initialize (unsigned char *data, int length, int volume)
+audio_initialize (UChar_Binary *data, int length, int volume)
 {
   Lisp_Object audio_port_state[3];
   static AudioContextRec desc;
@@ -293,7 +283,7 @@ audio_initialize (unsigned char *data, int length, int volume)
   if (LOOKING_AT_SND_HEADER_P (data))
     {
       if (parse_snd_header (data, length, & desc)==-1)
-	report_file_error ("decoding .snd header", Qnil);
+	report_sound_error ("decoding .snd header", Qunbound);
     }
   else
 #endif
@@ -322,17 +312,17 @@ audio_initialize (unsigned char *data, int length, int volume)
 }
 
 static void
-play_internal (unsigned char *data, int length, AudioContext ac)
+play_internal (UChar_Binary *data, int length, AudioContext ac)
 {
-  unsigned char * limit;
+  UChar_Binary * limit;
   if (ac == (AudioContext) 0)
     return;
 
-  data = (unsigned char *) ac->ac_data;
+  data = (UChar_Binary *) ac->ac_data;
   limit = data + ac->ac_size;
   while (data < limit)
     {
-      unsigned char * chunklimit = data + CHUNKSIZE;
+      UChar_Binary * chunklimit = data + CHUNKSIZE;
 
       if (chunklimit > limit)
 	chunklimit = limit;
@@ -375,8 +365,8 @@ st_ulaw_to_linear (int u)
 static void
 write_mulaw_8_chunk (void *buffer, void *chunklimit, AudioContext ac)
 {
-  unsigned char * data = (unsigned char *) buffer;
-  unsigned char * limit = (unsigned char *) chunklimit;
+  UChar_Binary * data = (UChar_Binary *) buffer;
+  UChar_Binary * limit = (UChar_Binary *) chunklimit;
   short * obuf, * bufp;
   long n_samples = limit - data;
 
@@ -398,7 +388,7 @@ write_linear_chunk (void *data, void *limit, AudioContext ac)
   switch (ac->ac_format)
     {
     case AFlinear16: n_samples = (short *) limit - (short *) data; break;
-    case AFlinear8:  n_samples =  (char *) limit -  (char *) data; break;
+    case AFlinear8:  n_samples =  (Char_Binary *) limit -  (Char_Binary *) data; break;
     default: n_samples =  (long *) limit -  (long *) data; break;
     }
   ALwritesamps (ac->ac_port, data, (long) n_samples);
@@ -457,7 +447,7 @@ initialize_audio_port (AudioContext desc)
     {
       if ((open_audio_port (return_ac, desc))==-1)
 	{
-	  report_file_error ("Open audio port", Qnil);
+	  report_sound_error ("Open audio port", Qunbound);
 	  return (AudioContext) 0;
 	}
     }
@@ -514,7 +504,7 @@ open_audio_port (AudioContext return_ac, AudioContext desc)
   ALfreeconfig (config);
   if (return_ac->ac_port==0)
     {
-      report_file_error ("Opening audio output port", Qnil);
+      report_sound_error ("Opening audio output port", Qunbound);
       return -1;
     }
   return 0;
@@ -530,8 +520,8 @@ set_channels (ALconfig config, unsigned int nchan)
     case 2: ALsetchannels (config, AL_STEREO); break;
 #endif /* HAVE_STEREO */
     default:
-      report_file_error ("Unsupported channel count",
-			 Fcons (make_int (nchan), Qnil));
+      report_sound_error ("Unsupported channel count",
+			  make_int (nchan));
       return -1;
     }
   return 0;
@@ -567,8 +557,7 @@ set_output_format (ALconfig config, AudioFormat format)
 #endif
 #endif
     default:
-      report_file_error ("Unsupported audio format",
-			 Fcons (make_int (format), Qnil));
+      report_sound_error ("Unsupported audio format", make_int (format));
       return -1;
     }
   old_samplesize = ALgetwidth (config);
@@ -612,7 +601,7 @@ typedef struct
   int dataFormat;
   int samplingRate;
   int channelCount;
-  char info[4];
+  Char_Binary info[4];
 }
 SNDSoundStruct;
 #define SOUND_TO_HOST_INT(x) ntohl(x)
@@ -684,8 +673,8 @@ parse_snd_header (void *header, long length, AudioContext desc)
     }
   desc->ac_output_rate = SOUND_TO_HOST_INT (hp->samplingRate);
   desc->ac_nchan = SOUND_TO_HOST_INT (hp->channelCount);
-  desc->ac_data = (char *) header + SOUND_TO_HOST_INT (hp->dataLocation);
-  limit = (char *) header + length - (char *) desc->ac_data;
+  desc->ac_data = (Char_Binary *) header + SOUND_TO_HOST_INT (hp->dataLocation);
+  limit = (Char_Binary *) header + length - (Char_Binary *) desc->ac_data;
   desc->ac_size = SOUND_TO_HOST_INT (hp->dataSize);
   if (desc->ac_size > limit) desc->ac_size = limit;
   return 0;

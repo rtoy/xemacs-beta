@@ -1237,6 +1237,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	 defsubr() (i.e. DEFSUBR)
 	 deferror(), DEFERROR(), or DEFERROR_STANDARD()
 	 defkeyword() or DEFKEYWORD()
+	 Fput()
 
 	 Order does not matter in these functions.
 	 */
@@ -1292,6 +1293,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_general ();
       syms_of_glyphs ();
       syms_of_glyphs_eimage ();
+      syms_of_glyphs_shared ();
       syms_of_glyphs_widget ();
       syms_of_gui ();
       syms_of_gutter ();
@@ -2598,7 +2600,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
   assert (!gc_in_progress);
 
   if (run_temacs_argc < 0)
-    error ("I've lost my temacs-hood.");
+    invalid_operation ("I've lost my temacs-hood.", Qunbound);
 
   /* Need to convert the orig_invoc_name and all of the arguments
      to external format. */
@@ -3213,8 +3215,9 @@ with `path-separator'.
 
   while (!STRINGP (Vpath_separator)
 	 || (XSTRING_CHAR_LENGTH (Vpath_separator) != 1))
-    Vpath_separator = signal_simple_continuable_error
-      ("`path-separator' should be set to a single-character string",
+    Vpath_separator = signal_continuable_error
+      (Qinvalid_state,
+       "`path-separator' should be set to a single-character string",
        Vpath_separator);
 
   return (split_string_by_emchar_1
@@ -3389,8 +3392,8 @@ syms_of_emacs (void)
   DEFSUBR (Fsplit_string_by_char);
   DEFSUBR (Fsplit_path);	/* #### */
 
-  defsymbol (&Qkill_emacs_hook, "kill-emacs-hook");
-  defsymbol (&Qsave_buffers_kill_emacs, "save-buffers-kill-emacs");
+  DEFSYMBOL (Qkill_emacs_hook);
+  DEFSYMBOL (Qsave_buffers_kill_emacs);
 }
 
 void

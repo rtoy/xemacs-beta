@@ -59,7 +59,7 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   char buf[200];
 
   if (print_readably)
-    error ("printing unreadable object #<marker 0x%lx>", (long) marker);
+    printing_unreadable_object ("#<marker 0x%lx>", (long) marker);
 
   write_c_string (GETTEXT ("#<marker "), printcharfun);
   if (!marker->buffer)
@@ -186,8 +186,8 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
       (MARKERP (position) && !XMARKER (position)->buffer))
     {
       if (point_p)
-	signal_simple_error ("Can't make point-marker point nowhere",
-			     marker);
+	invalid_operation ("Can't make point-marker point nowhere",
+			   marker);
       if (XMARKER (marker)->buffer)
 	unchain_marker (marker);
       return marker;
@@ -204,7 +204,7 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
       if (!BUFFER_LIVE_P (XBUFFER (buffer)))
 	{
 	  if (point_p)
-	    signal_simple_error
+	    invalid_operation
 	      ("Can't move point-marker in a killed buffer", marker);
 	  if (XMARKER (marker)->buffer)
 	    unchain_marker (marker);
@@ -231,8 +231,8 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
 #ifndef moving_point_by_moving_its_marker_is_a_bug
       BUF_SET_PT (b, charno);	/* this will move the marker */
 #else  /* It's not a feature, so it must be a bug */
-      signal_simple_error ("DEBUG: attempt to move point via point-marker",
-			   marker);
+      invalid_operation ("DEBUG: attempt to move point via point-marker",
+			 marker);
 #endif
     }
   else
@@ -243,7 +243,7 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
   if (m->buffer != b)
     {
       if (point_p)
-	signal_simple_error ("Can't change buffer of point-marker", marker);
+	invalid_operation ("Can't change buffer of point-marker", marker);
       if (m->buffer != 0)
 	unchain_marker (marker);
       m->buffer = b;
@@ -327,7 +327,7 @@ bi_marker_position (Lisp_Object marker)
   Bytind pos;
 
   if (!buf)
-    error ("Marker does not point anywhere");
+    invalid_argument ("Marker does not point anywhere", Qunbound);
 
   /* FSF claims that marker indices could end up denormalized, i.e.
      in the gap.  This is way bogus if it ever happens, and means
@@ -351,7 +351,7 @@ marker_position (Lisp_Object marker)
   struct buffer *buf = XMARKER (marker)->buffer;
 
   if (!buf)
-    error ("Marker does not point anywhere");
+    invalid_argument ("Marker does not point anywhere", Qunbound);
 
   return bytind_to_bufpos (buf, bi_marker_position (marker));
 }
@@ -363,7 +363,7 @@ set_bi_marker_position (Lisp_Object marker, Bytind pos)
   struct buffer *buf = m->buffer;
 
   if (!buf)
-    error ("Marker does not point anywhere");
+    invalid_argument ("Marker does not point anywhere", Qunbound);
 
 #ifdef ERROR_CHECK_BUFPOS
   if (pos < BI_BUF_BEG (buf) || pos > BI_BUF_Z (buf))
@@ -379,7 +379,7 @@ set_marker_position (Lisp_Object marker, Bufpos pos)
   struct buffer *buf = XMARKER (marker)->buffer;
 
   if (!buf)
-    error ("Marker does not point anywhere");
+    invalid_argument ("Marker does not point anywhere", Qunbound);
 
   set_bi_marker_position (marker, bufpos_to_bytind (buf, pos));
 }

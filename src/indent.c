@@ -311,7 +311,7 @@ If BUFFER is nil, the current buffer is assumed.
       if (last_visible >= BUF_BEGV (buf))
 	BUF_SET_PT (buf, last_visible);
       else
-        error ("Visible portion of buffer not modifiable");
+        invalid_operation ("Visible portion of buffer not modifiable", Qunbound);
     }
 
   if (indent_tabs_mode)
@@ -931,7 +931,7 @@ syms_of_indent (void)
   DEFSUBR (Fvertical_motion);
   DEFSUBR (Fvertical_motion_pixels);
 
-  defsymbol (&Qcoerce, "coerce");
+  DEFSYMBOL (Qcoerce);
 }
 
 void

@@ -151,12 +151,12 @@ dbox_descriptor_to_widget_value (Lisp_Object keys)
 	    buttons = value;
 	  }
 	else
-	  syntax_error ("Unrecognized question-dialog keyword", key);
+	  invalid_constant ("Unrecognized question-dialog keyword", key);
       }
   }
 
   if (NILP (question))
-    syntax_error ("Dialog descriptor provides no question", keys);
+    sferror ("Dialog descriptor provides no question", keys);
 
   /* Inhibit GC during this conversion.  The reasons for this are
      the same as in menu_item_descriptor_to_widget_value(); see
@@ -185,7 +185,7 @@ dbox_descriptor_to_widget_value (Lisp_Object keys)
 	if (NILP (button))
 	  {
 	    if (partition_seen)
-	      syntax_error ("More than one partition (nil) seen in dbox spec",
+	      sferror ("More than one partition (nil) seen in dbox spec",
 			    keys);
 	    partition_seen = 1;
 	    continue;
@@ -221,7 +221,7 @@ dbox_descriptor_to_widget_value (Lisp_Object keys)
 	    n++;
 
 	    if (lbuttons > 9 || rbuttons > 9)
-	      syntax_error ("Too many buttons (9)",
+	      sferror ("Too many buttons (9)",
 			    keys); /* #### this leaks */
 	  }
 
@@ -231,7 +231,7 @@ dbox_descriptor_to_widget_value (Lisp_Object keys)
   }
 
   if (n == 0)
-    syntax_error ("Dialog boxes must have some buttons", keys);
+    sferror ("Dialog boxes must have some buttons", keys);
 
   {
     Extbyte type = (text_field_p ? 'P' : 'Q');
@@ -259,7 +259,7 @@ x_make_dialog_box_internal (struct frame* f, Lisp_Object type,
   Widget parent, dbox;
 
   if (!EQ (type, Qquestion))
-    signal_type_error (Qunimplemented, "Dialog box type", type);
+    signal_error (Qunimplemented, "Dialog box type", type);
 
   data = dbox_descriptor_to_widget_value (keys);
 

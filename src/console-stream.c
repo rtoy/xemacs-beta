@@ -73,7 +73,7 @@ stream_init_console (struct console *con, Lisp_Object params)
 	   this descriptor. */
 	fopen ((char *) XSTRING_DATA (tty), READ_PLUS_TEXT);
       if (!stream_con->in)
-	error ("Unable to open tty %s", XSTRING_DATA (tty));
+	signal_error (Qio_error, "Unable to open tty", tty);
     }
 }
 
@@ -162,7 +162,7 @@ stream_init_frame_1 (struct frame *f, Lisp_Object props)
 #if 0
   struct device *d = XDEVICE (FRAME_DEVICE (f));
   if (!NILP (DEVICE_FRAME_LIST (d)))
-    error ("Only one frame allowed on stream devices");
+    invalid_operation ("Only one frame allowed on stream devices", Qunbound);
 #endif
   f->name = build_string ("stream");
   f->height = 80;

@@ -220,15 +220,13 @@ EXFUN (Fread_from_string, 3);
 static DOESNT_RETURN
 read_syntax_error (const char *string)
 {
-  signal_error (Qinvalid_read_syntax,
-		list1 (build_translated_string (string)));
+  signal_error (Qinvalid_read_syntax, string, Qunbound);
 }
 
 static Lisp_Object
 continuable_read_syntax_error (const char *string)
 {
-  return Fsignal (Qinvalid_read_syntax,
-		  list1 (build_translated_string (string)));
+  return signal_continuable_error (Qinvalid_read_syntax, string, Qunbound);
 }
 
 
@@ -244,7 +242,7 @@ readchar (Lisp_Object readcharfun)
       struct buffer *b = XBUFFER (readcharfun);
 
       if (!BUFFER_LIVE_P (b))
-        error ("Reading from killed buffer");
+        invalid_operation ("Reading from killed buffer", Qunbound);
 
       if (BUF_PT (b) >= BUF_ZV (b))
         return -1;
@@ -427,13 +425,13 @@ pas_de_holgazan_ici (int fd, Lisp_Object victim)
   EMACS_INT pos;
 
   if (!INTP (XCDR (victim)))
-    signal_simple_error ("Bogus doc string reference", victim);
+    invalid_byte_code ("Bogus doc string reference", victim);
   pos = XINT (XCDR (victim));
   if (pos < 0)
     pos = -pos; /* kludge to mark a user variable */
   tem = unparesseuxify_doc_string (fd, pos, 0, Vload_file_name_internal);
   if (!STRINGP (tem))
-    signal_error (Qerror, tem);
+    signal_error_1 (Qinvalid_byte_code, tem);
   return tem;
 }
 
@@ -473,7 +471,7 @@ load_force_doc_string_unwind (Lisp_Object oldlist)
 	      NGCPRO1 (juan);
 	      ivan = Fread (juan);
 	      if (!CONSP (ivan))
-		signal_simple_error ("invalid lazy-loaded byte code", ivan);
+		invalid_byte_code ("invalid lazy-loaded byte code", ivan);
 	      XCOMPILED_FUNCTION (john)->instructions = XCAR (ivan);
 	      /* v18 or v19 bytecode file.  Need to Ebolify. */
 	      if (XCOMPILED_FUNCTION (john)->flags.ebolified
@@ -598,7 +596,7 @@ encoding detection or end-of-line detection.
       if (fd < 0)
 	{
 	  if (NILP (noerror))
-	    signal_file_error ("Cannot open load file", file);
+	    signal_error (Qfile_error, "Cannot open load file", file);
 	  else
 	    {
 	      UNGCPRO;
@@ -816,7 +814,7 @@ decode_mode_1 (Lisp_Object mode)
       return XINT (mode);
     }
   else
-    signal_simple_error ("Invalid value", mode);
+    invalid_argument ("Invalid value", mode);
   return 0;			/* unreached */
 }
 
@@ -1410,7 +1408,7 @@ readevalloop (Lisp_Object readcharfun,
       QUIT;
 
       if (b != 0 && !BUFFER_LIVE_P (b))
-	error ("Reading from killed buffer");
+ invalid_operation ("Reading from killed buffer", Qunbound);
 
       c = readchar (readcharfun);
       if (c == ';')
@@ -1487,7 +1485,7 @@ point remains at the end of the last character read from the buffer.
   else
     buf = Fget_buffer (buffer);
   if (NILP (buf))
-    error ("No such buffer.");
+    invalid_argument ("No such buffer", Qunbound);
 
   if (NILP (printflag))
     tem = Qsymbolp;             /* #### #@[]*&$#*[& SI:NULL-STREAM */
@@ -1672,7 +1670,7 @@ read_escape (Lisp_Object readcharfun)
   Emchar c = readchar (readcharfun);
 
   if (c < 0)
-    signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
+    signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
 
   switch (c)
     {
@@ -1690,12 +1688,12 @@ read_escape (Lisp_Object readcharfun)
     case 'M':
       c = readchar (readcharfun);
       if (c < 0)
-	signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
+	signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
       if (c != '-')
-	error ("Invalid escape character syntax");
+	syntax_error ("Invalid escape character syntax", Qunbound);
       c = readchar (readcharfun);
       if (c < 0)
-	signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
+	signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
       if (c == '\\')
 	c = read_escape (readcharfun);
       return c | 0200;
@@ -1725,15 +1723,15 @@ read_escape (Lisp_Object readcharfun)
    #define ctl_modifier   (0x400000)
    #define meta_modifier  (0x800000)
 */
-#define FSF_LOSSAGE(mask)							\
-      if (fail_on_bucky_bit_character_escapes ||				\
-	  ((c = readchar (readcharfun)) != '-'))				\
-	error ("Invalid escape character syntax");				\
-      c = readchar (readcharfun);						\
-      if (c < 0)								\
-	signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));	\
-      if (c == '\\')								\
-	c = read_escape (readcharfun);						\
+#define FSF_LOSSAGE(mask)						\
+      if (fail_on_bucky_bit_character_escapes ||			\
+	  ((c = readchar (readcharfun)) != '-'))			\
+ syntax_error ("Invalid escape character syntax", Qunbound);		\
+      c = readchar (readcharfun);					\
+      if (c < 0)							\
+  signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));	\
+      if (c == '\\')							\
+	c = read_escape (readcharfun);					\
       return c | mask
 
     case 'S': FSF_LOSSAGE (shift_modifier);
@@ -1751,13 +1749,13 @@ read_escape (Lisp_Object readcharfun)
     case 'C':
       c = readchar (readcharfun);
       if (c < 0)
-	signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
+	signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
       if (c != '-')
-	error ("Invalid escape character syntax");
+	syntax_error ("Invalid escape character syntax", Qunbound);
     case '^':
       c = readchar (readcharfun);
       if (c < 0)
-	signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
+	signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
       if (c == '\\')
 	c = read_escape (readcharfun);
       /* FSFmacs junk for non-ASCII controls.
@@ -1853,7 +1851,7 @@ read_atom_0 (Lisp_Object readcharfun, Emchar firstchar, int *saw_a_backslash)
 	{
 	  c = readchar (readcharfun);
 	  if (c < 0)
-	    signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
+	    signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
 	  *saw_a_backslash = 1;
 	}
       Lstream_put_emchar (XLSTREAM (Vread_buffer_stream), c);
@@ -2213,7 +2211,7 @@ reader_nextchar (Lisp_Object readcharfun)
   QUIT;
   c = readchar (readcharfun);
   if (c < 0)
-    signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
+    signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
 
   switch (c)
     {
@@ -2819,7 +2817,7 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
       else
 #endif
       if (ch != '.')
-	signal_simple_error ("BUG! Internal reader error", elt);
+	signal_error (Qinternal_error, "BUG! Internal reader error", elt);
       else if (!s->allow_dotted_lists)
 	read_syntax_error ("\".\" in a vector");
       else
@@ -3118,25 +3116,25 @@ syms_of_lread (void)
   DEFSUBR (Feval_buffer);
   DEFSUBR (Feval_region);
 
-  defsymbol (&Qstandard_input, "standard-input");
-  defsymbol (&Qread_char, "read-char");
-  defsymbol (&Qcurrent_load_list, "current-load-list");
-  defsymbol (&Qload, "load");
-  defsymbol (&Qload_file_name, "load-file-name");
-  defsymbol (&Qfset, "fset");
+  DEFSYMBOL (Qstandard_input);
+  DEFSYMBOL (Qread_char);
+  DEFSYMBOL (Qcurrent_load_list);
+  DEFSYMBOL (Qload);
+  DEFSYMBOL (Qload_file_name);
+  DEFSYMBOL (Qfset);
 
 #ifdef LISP_BACKQUOTES
-  defsymbol (&Qbackquote, "backquote");
+  DEFSYMBOL (Qbackquote);
   defsymbol (&Qbacktick, "`");
   defsymbol (&Qcomma, ",");
   defsymbol (&Qcomma_at, ",@");
   defsymbol (&Qcomma_dot, ",.");
 #endif
 
-  defsymbol (&Qexists, "exists");
-  defsymbol (&Qreadable, "readable");
-  defsymbol (&Qwritable, "writable");
-  defsymbol (&Qexecutable, "executable");
+  DEFSYMBOL (Qexists);
+  DEFSYMBOL (Qreadable);
+  DEFSYMBOL (Qwritable);
+  DEFSYMBOL (Qexecutable);
 }
 
 void
@@ -3292,7 +3290,7 @@ character escape syntaxes or just read them incorrectly.
   Ffset (Qload, intern ("load-internal"));
 
 #ifdef FEATUREP_SYNTAX
-  defsymbol (&Qfeaturep, "featurep");
+  DEFSYMBOL (Qfeaturep);
   Fprovide(intern("xemacs"));
 #ifdef INFODOCK
   Fprovide(intern("infodock"));

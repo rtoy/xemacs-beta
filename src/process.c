@@ -109,6 +109,9 @@ Lisp_Object Vprocess_list;
 extern Lisp_Object Vlisp_EXEC_SUFFIXES;
 Lisp_Object Vnull_device;
 
+Lisp_Object Qprocess_error;
+Lisp_Object Qnetwork_error;
+
 
 
 static Lisp_Object
@@ -138,8 +141,7 @@ print_process (Lisp_Object object, Lisp_Object printcharfun, int escapeflag)
   Lisp_Process *process = XPROCESS (object);
 
   if (print_readably)
-    error ("printing unreadable object #<process %s>",
-           XSTRING_DATA (process->name));
+    printing_unreadable_object ("#<process %s>", XSTRING_DATA (process->name));
 
   if (!escapeflag)
     {
@@ -342,7 +344,7 @@ get_process (Lisp_Object name)
       if (BUFFERP (buffer))
 	goto have_buffer_object;
 
-      error ("Process %s does not exist", XSTRING_DATA (name));
+      invalid_argument ("Process does not exist", name);
     }
   else if (NILP (name))
     {
@@ -359,8 +361,7 @@ get_process (Lisp_Object name)
       if (PROCESSP (process))
 	return process;
 
-      error ("Buffer %s has no process",
-	     XSTRING_DATA (XBUFFER (buffer)->name));
+      invalid_argument ("Buffer has no process", buffer);
     }
   else
     return get_process (Fsignal (Qwrong_type_argument,
@@ -413,6 +414,18 @@ and the rest of the strings being the arguments given to it.
 /************************************************************************/
 /*                          creating a process                          */
 /************************************************************************/
+
+DOESNT_RETURN
+report_process_error (const char *string, Lisp_Object data)
+{
+  report_error_with_errno (Qprocess_error, string, data);
+}
+
+DOESNT_RETURN
+report_network_error (const char *string, Lisp_Object data)
+{
+  report_error_with_errno (Qnetwork_error, string, data);
+}
 
 Lisp_Object
 make_process_internal (Lisp_Object name)
@@ -469,11 +482,13 @@ void
 init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
 {
   USID usid = event_stream_create_stream_pair (in, out,
-					       &p->pipe_instream, &p->pipe_outstream,
+					       &p->pipe_instream,
+					       &p->pipe_outstream,
 					       flags);
 
   if (usid == USID_ERROR)
-    report_file_error ("Setting up communication with subprocess", Qnil);
+    signal_error (Qprocess_error, "Setting up communication with subprocess",
+		  Qunbound);
 
   if (usid != USID_DONTHASH)
     {
@@ -587,8 +602,8 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
   /* dmoore - if you re-enable this code, you have to gcprotect
      current_buffer through the above calls. */
   if (NILP (Ffile_accessible_directory_p (current_dir)))
-    report_file_error ("Setting current directory",
-		       list1 (current_buffer->directory));
+    signal_error (Qprocess_error, "Setting current directory",
+		  current_buffer->directory);
 #endif /* 0 */
 
   /* If program file name is not absolute, search our path for it */
@@ -602,7 +617,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
       NGCPRO1 (tem);
       locate_file (Vexec_path, program, Vlisp_EXEC_SUFFIXES, &tem, X_OK);
       if (NILP (tem))
-	report_file_error ("Searching for program", list1 (program));
+	signal_error (Qprocess_error, "Searching for program", program);
       program = Fexpand_file_name (tem, Qnil);
       NUNGCPRO;
     }
@@ -617,7 +632,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
       locate_file (list1 (build_string ("")), program, Vlisp_EXEC_SUFFIXES,
 		   &tem, X_OK);
       if (NILP (tem))
-	report_file_error ("Searching for program", list1 (program));
+	signal_error (Qprocess_error, "Searching for program", program);
       program = tem;
       NUNGCPRO;
     }
@@ -989,7 +1004,7 @@ send_process (Lisp_Object process,
   GCPRO2 (process, lstream);
 
   if (NILP (DATA_OUTSTREAM (XPROCESS (process))))
-    signal_simple_error ("Process not open for writing", process);
+    invalid_operation ("Process not open for writing", process);
 
   if (nonrelocatable)
     lstream =
@@ -1691,7 +1706,7 @@ decode_signal (Lisp_Object signal_)
 
 #undef handle_signal
 
-      error ("Undefined signal name %s", name);
+      invalid_constant ("Undefined signal name", signal_);
       return 0; /* Unreached */
     }
 }
@@ -1717,8 +1732,7 @@ process_send_signal (Lisp_Object process, int signo,
   process = get_process (process);
 
   if (network_connection_p (process))
-    error ("Network connection %s is not a subprocess",
-	   XSTRING_DATA (XPROCESS(process)->name));
+    invalid_operation ("Network connection is not a subprocess", process);
   CHECK_LIVE_PROCESS (process);
 
   MAYBE_PROCMETH (kill_child_process, (process, signo, current_group, nomsg));
@@ -1764,7 +1778,9 @@ See function `process-send-signal' for more details on usage.
 #ifdef SIGKILL
   process_send_signal (process, SIGKILL, !NILP (current_group), 0);
 #else
-  error ("kill-process: Not supported on this system");
+  signal_error (Qunimplemented,
+		     "kill-process: Not supported on this system",
+		     Qunbound);
 #endif
   return process;
 }
@@ -1779,7 +1795,9 @@ See function `process-send-signal' for more details on usage.
 #ifdef SIGQUIT
   process_send_signal (process, SIGQUIT, !NILP (current_group), 0);
 #else
-  error ("quit-process: Not supported on this system");
+  signal_error (Qunimplemented,
+		     "quit-process: Not supported on this system",
+		     Qunbound);
 #endif
   return process;
 }
@@ -1794,7 +1812,9 @@ See function `process-send-signal' for more details on usage.
 #ifdef SIGTSTP
   process_send_signal (process, SIGTSTP, !NILP (current_group), 0);
 #else
-  error ("stop-process: Not supported on this system");
+  signal_error (Qunimplemented,
+		     "stop-process: Not supported on this system",
+		     Qunbound);
 #endif
   return process;
 }
@@ -1809,7 +1829,9 @@ See function `process-send-signal' for more details on usage.
 #ifdef SIGCONT
   process_send_signal (process, SIGCONT, !NILP (current_group), 0);
 #else
-  error ("continue-process: Not supported on this system");
+  signal_error (Qunimplemented,
+		     "continue-process: Not supported on this system",
+		     Qunbound);
 #endif
   return process;
 }
@@ -1844,7 +1866,7 @@ text to PROCESS after you call this function.
 
   /* Make sure the process is really alive.  */
   if (! EQ (XPROCESS (process)->status_symbol, Qrun))
-    error ("Process %s not running", XSTRING_DATA (XPROCESS (process)->name));
+    invalid_operation ("Process not running", process);
 
   if (!MAYBE_INT_PROCMETH (process_send_eof, (process)))
     {
@@ -2023,19 +2045,22 @@ syms_of_process (void)
 {
   INIT_LRECORD_IMPLEMENTATION (process);
 
-  defsymbol (&Qprocessp, "processp");
-  defsymbol (&Qprocess_live_p, "process-live-p");
-  defsymbol (&Qrun, "run");
-  defsymbol (&Qstop, "stop");
-  defsymbol (&Qopen, "open");
-  defsymbol (&Qclosed, "closed");
+  DEFSYMBOL (Qprocessp);
+  DEFSYMBOL (Qprocess_live_p);
+  DEFSYMBOL (Qrun);
+  DEFSYMBOL (Qstop);
+  DEFSYMBOL (Qopen);
+  DEFSYMBOL (Qclosed);
 
-  defsymbol (&Qtcp, "tcp");
-  defsymbol (&Qudp, "udp");
+  DEFSYMBOL (Qtcp);
+  DEFSYMBOL (Qudp);
 
 #ifdef HAVE_MULTICAST
-  defsymbol(&Qmulticast, "multicast"); /* Used for occasional warnings */
+  DEFSYMBOL (Qmulticast); /* Used for occasional warnings */
 #endif
+
+  DEFERROR_STANDARD (Qprocess_error, Qio_error);
+  DEFERROR_STANDARD (Qnetwork_error, Qio_error);
 
   DEFSUBR (Fprocessp);
   DEFSUBR (Fprocess_live_p);

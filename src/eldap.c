@@ -82,7 +82,7 @@ signal_ldap_error (LDAP *ld, LDAPMessage *res, int ldap_err)
       ldap_err = ld->ld_errno;
 #endif
     }
-  signal_simple_error ("LDAP error",
+  invalid_operation ("LDAP error",
                        build_string (ldap_err2string (ldap_err)));
 }
 
@@ -113,8 +113,7 @@ print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   Lisp_LDAP *ldap = XLDAP (obj);
 
   if (print_readably)
-    error ("printing unreadable object #<ldap %s>",
-           XSTRING_DATA (ldap->host));
+    printing_unreadable_object ("#<ldap %s>", XSTRING_DATA (ldap->host));
 
   write_c_string ("#<ldap ", printcharfun);
   print_internal (ldap->host, printcharfun, 1);
@@ -140,7 +139,7 @@ finalize_ldap (void *header, int for_disksave)
   Lisp_LDAP *ldap = (Lisp_LDAP *) header;
 
   if (for_disksave)
-    signal_simple_error ("Can't dump an emacs containing LDAP objects",
+    invalid_operation ("Can't dump an emacs containing LDAP objects",
 			 make_ldap (ldap));
 
   if (ldap->ld)
@@ -243,7 +242,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
 	      ldap_auth = LDAP_AUTH_KRBV42;
 #endif
 	    else
-	      signal_simple_error ("Invalid authentication method", value);
+	      invalid_constant ("Invalid authentication method", value);
 	  }
 	/* Bind DN */
 	else if (EQ (keyword, Qbinddn))
@@ -269,7 +268,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
 	    else if (EQ (value, Qalways))
 	      ldap_deref = LDAP_DEREF_ALWAYS;
 	    else
-	      signal_simple_error ("Invalid deref value", value);
+	      invalid_constant ("Invalid deref value", value);
 	  }
 	/* Timelimit */
 	else if (EQ (keyword, Qtimelimit))
@@ -297,10 +296,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
   speed_up_interrupts ();
 
   if (ld == NULL )
-    signal_simple_error_2 ("Failed connecting to host",
-                           host,
-                           lisp_strerror (errno));
-
+    report_process_error ("Failed connecting to host", host);
 
 #ifdef HAVE_LDAP_SET_OPTION
   if ((err = ldap_set_option (ld, LDAP_OPT_DEREF,
@@ -333,8 +329,12 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
 
   err = ldap_bind_s (ld, ldap_binddn, ldap_passwd, ldap_auth);
   if (err != LDAP_SUCCESS)
-    signal_simple_error ("Failed binding to the server",
-                         build_string (ldap_err2string (err)));
+    {
+      Bufbyte *interrmess;
+      EXTERNAL_TO_C_STRING (ldap_err2string (err), interrmess, Qnative);
+      signal_error (Qprocess_error, "Failed binding to the server",
+		    build_string (interrmess));
+    }
 
   ldap = allocate_ldap ();
   ldap->ld = ld;
@@ -459,7 +459,7 @@ entry according to the value of WITHDN.
       else if (EQ (scope, Qsubtree))
         ldap_scope = LDAP_SCOPE_SUBTREE;
       else
-        signal_simple_error ("Invalid scope", scope);
+        invalid_constant ("Invalid scope", scope);
     }
 
   /* Attributes to search */
@@ -619,7 +619,7 @@ containing attribute/value string pairs.
   /* Check the entry */
   CHECK_CONS (entry);
   if (NILP (entry))
-    signal_simple_error ("Cannot add void entry", entry);
+    invalid_operation ("Cannot add void entry", entry);
 
   /* Build the ldap_mods array */
   len = XINT (Flength (entry));
@@ -735,7 +735,7 @@ or `replace'. ATTR is the LDAP attribute type to modify.
       else if (EQ (mod_op, Qreplace))
         ldap_mods[i].mod_op |= LDAP_MOD_REPLACE;
       else
-        signal_simple_error ("Invalid LDAP modification type", mod_op);
+        invalid_constant ("Invalid LDAP modification type", mod_op);
       current = XCDR (current);
       CHECK_STRING (XCAR (current));
       LISP_STRING_TO_EXTERNAL (XCAR (current), ldap_mods[i].mod_type, Qnative);
@@ -796,24 +796,24 @@ syms_of_eldap (void)
 {
   INIT_LRECORD_IMPLEMENTATION (ldap);
 
-  defsymbol (&Qldapp, "ldapp");
-  defsymbol (&Qport, "port");
-  defsymbol (&Qauth, "auth");
-  defsymbol (&Qbinddn, "binddn");
-  defsymbol (&Qpasswd, "passwd");
-  defsymbol (&Qderef, "deref");
-  defsymbol (&Qtimelimit, "timelimit");
-  defsymbol (&Qsizelimit, "sizelimit");
-  defsymbol (&Qbase, "base");
-  defsymbol (&Qonelevel, "onelevel");
-  defsymbol (&Qsubtree, "subtree");
-  defsymbol (&Qkrbv41, "krbv41");
-  defsymbol (&Qkrbv42, "krbv42");
-  defsymbol (&Qnever, "never");
-  defsymbol (&Qalways, "always");
-  defsymbol (&Qfind, "find");
-  defsymbol (&Qadd, "add");
-  defsymbol (&Qreplace, "replace");
+  DEFSYMBOL (Qldapp);
+  DEFSYMBOL (Qport);
+  DEFSYMBOL (Qauth);
+  DEFSYMBOL (Qbinddn);
+  DEFSYMBOL (Qpasswd);
+  DEFSYMBOL (Qderef);
+  DEFSYMBOL (Qtimelimit);
+  DEFSYMBOL (Qsizelimit);
+  DEFSYMBOL (Qbase);
+  DEFSYMBOL (Qonelevel);
+  DEFSYMBOL (Qsubtree);
+  DEFSYMBOL (Qkrbv41);
+  DEFSYMBOL (Qkrbv42);
+  DEFSYMBOL (Qnever);
+  DEFSYMBOL (Qalways);
+  DEFSYMBOL (Qfind);
+  DEFSYMBOL (Qadd);
+  DEFSYMBOL (Qreplace);
 
   DEFSUBR (Fldapp);
   DEFSUBR (Fldap_host);

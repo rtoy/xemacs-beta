@@ -153,7 +153,6 @@ static gint cursor_name_to_index (const char *name);
 #include "bitmaps.h"
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (gtk_resource);
-Lisp_Object Q_resource_type, Q_resource_id;
 Lisp_Object Qgtk_resource;
 #ifdef HAVE_WIDGETS
 Lisp_Object Qgtk_widget_instantiate_internal, Qgtk_widget_property_internal;
@@ -624,13 +623,13 @@ check_pointer_sizes (unsigned int width, unsigned int height,
 			  width, height, &best_width, &best_height))
     /* this means that an X error of some sort occurred (we trap
        these so they're not fatal). */
-    signal_simple_error ("XQueryBestCursor() failed?", instantiator);
+    gui_error ("XQueryBestCursor() failed?", instantiator);
 
   if (width > best_width || height > best_height)
-    error_with_frob (instantiator,
-		     "pointer too large (%dx%d): "
-		     "server requires %dx%d or smaller",
-		     width, height, best_width, best_height);
+    signal_ferror_with_frob (Qgui_error, instantiator,
+			     "pointer too large (%dx%d): "
+			     "server requires %dx%d or smaller",
+			     width, height, best_width, best_height);
 #endif
 }
 
@@ -727,7 +726,7 @@ init_image_instance_from_gdk_image (struct Lisp_Image_Instance *ii,
   GdkPixmap *pixmap;
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
-    signal_simple_error ("Not a Gtk device", device);
+    gui_error ("Not a Gtk device", device);
 
   d = GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (device)));
 
@@ -737,13 +736,13 @@ init_image_instance_from_gdk_image (struct Lisp_Image_Instance *ii,
 
   pixmap = gdk_pixmap_new (d, gdk_image->width, gdk_image->height, gdk_image->depth);
   if (!pixmap)
-    signal_simple_error ("Unable to create pixmap", instantiator);
+    gui_error ("Unable to create pixmap", instantiator);
 
   gc = gdk_gc_new (pixmap);
   if (!gc)
     {
       gdk_pixmap_unref (pixmap);
-      signal_simple_error ("Unable to create GC", instantiator);
+      gui_error ("Unable to create GC", instantiator);
     }
 
   gdk_draw_image (GDK_DRAWABLE (pixmap), gc, gdk_image,
@@ -820,14 +819,14 @@ image_instance_add_gdk_image (Lisp_Image_Instance *ii,
   pixmap = gdk_pixmap_new (d, gdk_image->width, gdk_image->height, gdk_image->depth);
 
   if (!pixmap)
-    signal_simple_error ("Unable to create pixmap", instantiator);
+    gui_error ("Unable to create pixmap", instantiator);
 
   gc = gdk_gc_new (pixmap);
 
   if (!gc)
     {
       gdk_pixmap_unref (pixmap);
-      signal_simple_error ("Unable to create GC", instantiator);
+      gui_error ("Unable to create GC", instantiator);
     }
 
   gdk_draw_image (GDK_DRAWABLE (pixmap), gc, gdk_image, 0, 0, 0, 0,
@@ -923,7 +922,7 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
   gdk_color_white(cmap, &white);
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
-    signal_simple_error ("Not a Gtk device", device);
+    gui_error ("Not a Gtk device", device);
 
   if ((dest_mask & IMAGE_MONO_PIXMAP_MASK) &&
       (dest_mask & IMAGE_COLOR_PIXMAP_MASK))
@@ -1120,8 +1119,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
 	  unlink (filename_out);
 	  errno = old_errno;
 	}
-      report_file_error ("Creating temp file",
-			 list1 (build_string (filename_out)));
+      report_file_error ("Creating temp file", build_string (filename_out));
     }
 
   CHECK_STRING (string);
@@ -1181,8 +1179,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
 #endif
 
   if (fubar)
-    report_file_error ("Writing temp file",
-		       list1 (build_string (filename_out)));
+    report_file_error ("Writing temp file", build_string (filename_out));
 }
 
 struct color_symbol
@@ -1279,7 +1276,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   unsigned int w, h;
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
-    signal_simple_error ("Not a Gtk device", device);
+    gui_error ("Not a Gtk device", device);
 
   if (dest_mask & IMAGE_COLOR_PIXMAP_MASK)
     type = IMAGE_COLOR_PIXMAP;
@@ -1454,7 +1451,7 @@ gtk_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     }
 
   if (emsg)
-    signal_simple_error_2 (emsg, data, Qimage);
+    gui_error_2 (emsg, data, Qimage);
 
   bp = bits = (char *) alloca (PIXELS / 8);
 
@@ -1489,43 +1486,16 @@ gtk_resource_validate (Lisp_Object instantiator)
        NILP (find_keyword_in_vector (instantiator, Q_resource_id))) 
       ||
       NILP (find_keyword_in_vector (instantiator, Q_resource_type)))
-    signal_simple_error ("Must supply :file, :resource-id and :resource-type",
+    sferror ("Must supply :file, :resource-id and :resource-type",
 			 instantiator);
 }
 
 static Lisp_Object
-gtk_resource_normalize (Lisp_Object inst, Lisp_Object console_type, Lisp_Object dest_mask)
+gtk_resource_normalize (Lisp_Object inst, Lisp_Object console_type,
+			Lisp_Object dest_mask)
 {
-  /* This function can call lisp */
-  Lisp_Object file = Qnil;
-  struct gcpro gcpro1, gcpro2;
-  Lisp_Object alist = Qnil;
-
-  GCPRO2 (file, alist);
-
-  file = potential_pixmap_file_instantiator (inst, Q_file, Q_data, 
-					     console_type);
-
-  if (CONSP (file)) /* failure locating filename */
-    signal_double_file_error ("Opening pixmap file",
-			      "no such file or directory",
-			      Fcar (file));
-
-  if (NILP (file)) /* no conversion necessary */
-    RETURN_UNGCPRO (inst);
-
-  alist = tagged_vector_to_alist (inst);
-
-  {
-    alist = remassq_no_quit (Q_file, alist);
-    alist = Fcons (Fcons (Q_file, file), alist);
-  }
-
-  {
-    Lisp_Object result = alist_to_tagged_vector (Qgtk_resource, alist);
-    free_alist (alist);
-    RETURN_UNGCPRO (result);
-  }
+  return shared_resource_normalize (inst, console_type, dest_mask,
+				    Qgtk_resource);
 }
 
 static int
@@ -1572,7 +1542,7 @@ gtk_resource_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object resource_id = find_keyword_in_vector (instantiator, Q_resource_id);
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
-    signal_simple_error ("Not a GTK device", device);
+    gui_error ("Not a GTK device", device);
 
   type = resource_symbol_to_type (resource_type);
 
@@ -1599,7 +1569,7 @@ check_valid_resource_symbol (Lisp_Object data)
 {
   CHECK_SYMBOL (data);
   if (!resource_symbol_to_type (data))
-    signal_simple_error ("invalid resource type", data);
+    invalid_constant ("invalid resource type", data);
 }
 
 static void
@@ -1613,7 +1583,7 @@ check_valid_resource_id (Lisp_Object data)
       !resource_name_to_resource (data, IMAGE_BITMAP)
 #endif
       )
-    signal_simple_error ("invalid resource identifier", data);
+    invalid_constant ("invalid resource identifier", data);
 }
 
 #if 0
@@ -1809,11 +1779,11 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object foreground, background;
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
-    signal_simple_error ("Not a Gtk device", device);
+    gui_error ("Not a Gtk device", device);
 
   if (!STRINGP (data) ||
       strncmp ("FONT ", (char *) XSTRING_DATA (data), 5))
-    signal_simple_error ("Invalid font-glyph instantiator",
+    invalid_argument ("Invalid font-glyph instantiator",
 			 instantiator);
 
   if (!(dest_mask & IMAGE_POINTER_MASK))
@@ -1837,10 +1807,10 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     count = 4, mask_name[0] = 0;
 
   if (count != 2 && count != 4)
-    signal_simple_error ("invalid cursor specification", data);
+    syntax_error ("invalid cursor specification", data);
   source = gdk_font_load (source_name);
   if (! source)
-    signal_simple_error_2 ("couldn't load font",
+    gui_error_2 ("couldn't load font",
 			   build_string (source_name),
 			   data);
   if (count == 2)
@@ -1852,8 +1822,8 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       mask = gdk_font_load (mask_name);
       if (!mask)
 	/* continuable */
-	Fsignal (Qerror, list3 (build_string ("couldn't load font"),
-				build_string (mask_name), data));
+	Fsignal (Qgui_error, list3 (build_string ("couldn't load font"),
+				    build_string (mask_name), data));
     }
   if (!mask)
     mask_char = 0;
@@ -1991,7 +1961,7 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object foreground, background;
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
-    signal_simple_error ("Not a Gtk device", device);
+    gui_error ("Not a Gtk device", device);
 
   if (!(dest_mask & IMAGE_POINTER_MASK))
     incompatible_image_types (instantiator, dest_mask, IMAGE_POINTER_MASK);
@@ -2001,7 +1971,7 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		      Qfile_name);
 
   if ((i = cursor_name_to_index (name_ext)) == -1)
-    signal_simple_error ("Unrecognized cursor-font name", data);
+    invalid_argument ("Unrecognized cursor-font name", data);
 
   gtk_initialize_pixmap_image_instance (ii, 1, IMAGE_POINTER);
   IMAGE_INSTANCE_GTK_CURSOR (ii) = gdk_cursor_new (i);
@@ -2220,7 +2190,7 @@ gtk_subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object frame = DOMAIN_FRAME (domain);
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
-    signal_simple_error ("Not a GTK device", device);
+    gui_error ("Not a GTK device", device);
 
   IMAGE_INSTANCE_TYPE (ii) = IMAGE_SUBWINDOW;
 
@@ -2571,13 +2541,11 @@ gtk_tab_control_redisplay (Lisp_Object image_instance)
 void
 syms_of_glyphs_gtk (void)
 {
-  defkeyword (&Q_resource_id, ":resource-id");
-  defkeyword (&Q_resource_type, ":resource-type");
 #ifdef HAVE_WIDGETS
-  defsymbol (&Qgtk_widget_instantiate_internal, "gtk-widget-instantiate-internal");
-  defsymbol (&Qgtk_widget_property_internal, "gtk-widget-property-internal");
-  defsymbol (&Qgtk_widget_redisplay_internal, "gtk-widget-redisplay-internal");
-  defsymbol (&Qgtk_widget_set_style, "gtk-widget-set-style");
+  DEFSYMBOL (Qgtk_widget_instantiate_internal);
+  DEFSYMBOL (Qgtk_widget_property_internal);
+  DEFSYMBOL (Qgtk_widget_redisplay_internal);
+  DEFSYMBOL (Qgtk_widget_set_style);
 #endif
 }
 

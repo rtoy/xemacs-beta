@@ -375,7 +375,7 @@ handle_file_dialog_box (struct frame *f, Lisp_Object keys)
 	      ofn.Flags &= ~(OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST);
 	  }
 	else
-	  syntax_error ("Unrecognized file-dialog keyword", key);
+	  invalid_constant ("Unrecognized file-dialog keyword", key);
       }
   }
 
@@ -394,15 +394,15 @@ handle_file_dialog_box (struct frame *f, Lisp_Object keys)
 	  for (i = 0; i < countof (common_dialog_errors); i++)
 	    {
 	      if (common_dialog_errors[i].errmess == err)
-		signal_type_error (Qdialog_box_error,
-				   "Creating file-dialog-box",
-				   build_string
-				   (common_dialog_errors[i].errname));
+		signal_error (Qdialog_box_error,
+			      "Creating file-dialog-box",
+			      build_string
+			      (common_dialog_errors[i].errname));
 	    }
 
-	  signal_type_error (Qdialog_box_error,
-			     "Unknown common dialog box error???",
-			     make_int (err));
+	  signal_error (Qdialog_box_error,
+			"Unknown common dialog box error???",
+			make_int (err));
 	}
     }
 
@@ -462,15 +462,15 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 	    button_row_width -= X_BUTTON_MARGIN;
 	  }
 	else
-	  syntax_error ("Unrecognized question-dialog keyword", key);
+	  invalid_constant ("Unrecognized question-dialog keyword", key);
       }
   }
 
   if (Dynarr_length (dialog_items) == 0)
-    syntax_error ("Dialog descriptor provides no buttons", keys);
+    sferror ("Dialog descriptor provides no buttons", keys);
 
   if (NILP (question))
-    syntax_error ("Dialog descriptor provides no question", keys);
+    sferror ("Dialog descriptor provides no question", keys);
 
   /* Determine the final width layout */
   {
@@ -659,7 +659,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 				 (LPARAM) LISP_TO_VOID (dialog_data));
     if (!did->hwnd)
       /* Something went wrong creating the dialog */
-      signal_type_error (Qdialog_box_error, "Creating dialog", keys);
+      signal_error (Qdialog_box_error, "Creating dialog", keys);
 
     Vdialog_data_list = Fcons (dialog_data, Vdialog_data_list);
 
@@ -682,7 +682,7 @@ mswindows_make_dialog_box_internal (struct frame* f, Lisp_Object type,
   else if (EQ (type, Qpage_setup))
     return mswindows_handle_page_setup_dialog_box (f, keys);
   else
-    signal_type_error (Qunimplemented, "Dialog box type", type);
+    signal_error (Qunimplemented, "Dialog box type", type);
   return Qnil;
 }
 
@@ -709,7 +709,7 @@ syms_of_dialog_mswindows (void)
   DEFKEYWORD (Q_no_read_only_return);
 
   /* Errors */
-  DEFERROR_STANDARD (Qdialog_box_error, Qinvalid_operation);
+  DEFERROR_STANDARD (Qdialog_box_error, Qgui_error);
 }
 
 void

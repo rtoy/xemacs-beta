@@ -19,32 +19,30 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+/* This file Mule-ized by Ben Wing, 5-15-01. */
 
+#include <config.h>
 #include "lisp.h"
+
 #include "miscplay.h"
+#include "sound.h"
+
+#include "sysfile.h"
 
 #include <esd.h>
 
-#include <unistd.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
 
 /* the name given to ESD - I think this should identify ourselves */
 #define ESD_NAME "xemacs"
 
-int esd_play_sound_file(char *file, int vol);
-int esd_play_sound_file(char *file, int vol)
+int esd_play_sound_file (Extbyte *file, int vol);
+int esd_play_sound_file (Extbyte *file, int vol)
 {                              /* #### FIXME: vol is ignored */
   return esd_play_file(ESD_NAME, file, 0);
 }
 
-int esd_play_sound_data(unsigned char *data, size_t length, int vol);
-int esd_play_sound_data(unsigned char *data, size_t length, int vol)
+int esd_play_sound_data (UChar_Binary *data, size_t length, int vol);
+int esd_play_sound_data (UChar_Binary *data, size_t length, int vol)
 {                              /* #### FIXME: vol is ignored */
   size_t         (*parsesndfile)(void **dayta,size_t *sz,void **outbuf);
   size_t         (*sndcnv)(void **dayta,size_t *sz,void **);
@@ -63,7 +61,7 @@ int esd_play_sound_data(unsigned char *data, size_t length, int vol)
   ffmt = analyze_format(data,&fmt,&speed,&tracks,&parsesndfile);
 
   if (ffmt != fmtRaw && ffmt != fmtSunAudio && ffmt != fmtWave) {
-    message(GETTEXT("audio: Unsupported file format (neither RAW, nor Sun/DECAudio, nor WAVE)"));
+    sound_warn("audio: Unsupported file format (neither RAW, nor Sun/DECAudio, nor WAVE)");
       return 0;
   }
 
@@ -87,7 +85,7 @@ int esd_play_sound_data(unsigned char *data, size_t length, int vol)
       flags |= ESD_BITS16;
       break;
     default:
-      message(GETTEXT("audio: byte format %d unimplemented"), fmt);
+      sound_warn ("audio: byte format %d unimplemented", fmt);
       return 0;
     }
   switch (tracks)
@@ -95,7 +93,7 @@ int esd_play_sound_data(unsigned char *data, size_t length, int vol)
     case 1: flags |= ESD_MONO; break;
     case 2: flags |= ESD_STEREO; break;
     default:
-      message(GETTEXT("audio: %d channels - only 1 or 2 supported"), tracks);
+      sound_warn ("audio: %d channels - only 1 or 2 supported", tracks);
       return 0;
     }
 
@@ -110,11 +108,11 @@ int esd_play_sound_data(unsigned char *data, size_t length, int vol)
     for (cptr = optr; (crtn = sndcnv((void **)&cptr,&prtn,
                                     (void **)&sptr)) > 0; ) {
       if ((wrtn = write(sock,sptr,crtn)) < 0) {
-       message(GETTEXT("audio: write error (%s)"), strerror(errno));
+	sound_perror ("audio: write error");
        goto END_OF_PLAY;
       }
       if (wrtn != crtn) {
-       message(GETTEXT("audio: only wrote %d of %d bytes"), wrtn, crtn);
+	sound_warn ("audio: only wrote %d of %d bytes", wrtn, crtn);
        goto END_OF_PLAY;
       }
     }

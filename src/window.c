@@ -184,8 +184,7 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   char buf[200];
 
   if (print_readably)
-    error ("printing unreadable object #<window 0x%x>",
-           XWINDOW (obj)->header.uid);
+    printing_unreadable_object ("#<window 0x%x>", XWINDOW (obj)->header.uid);
 
   write_c_string ("#<window", printcharfun);
   if (!NILP (XWINDOW (obj)->buffer))
@@ -1977,7 +1976,7 @@ will automatically call `save-buffers-kill-emacs'.)
 	return Qnil;
 
       if (MINI_WINDOW_P (XWINDOW (window)))
-	error ("Attempt to delete the minibuffer window");
+	signal_error (Qinvalid_operation, "Attempt to delete the minibuffer window", Qunbound);
 
       /* It has been suggested that it's a good thing for C-x 0 to have this
 	 behavior, but not such a good idea for #'delete-window to have it.
@@ -2973,7 +2972,7 @@ value is reasonable when this function is called.
   XSETWINDOW (window, w);
 
   if (MINI_WINDOW_P (w) && old_top > 0)
-    error ("Can't expand minibuffer to full frame");
+    invalid_operation ("Can't expand minibuffer to full frame", Qunbound);
 
   /* Ignore dedicated windows. */
   window_loop (DELETE_OTHER_WINDOWS, window, 0, w->frame, 0, Qnil);
@@ -3389,11 +3388,11 @@ global or per-frame buffer ordering.
   CHECK_BUFFER (buffer);
 
   if (!BUFFER_LIVE_P (XBUFFER (buffer)))
-    error ("Attempt to display deleted buffer");
+    invalid_operation ("Attempt to display deleted buffer", Qunbound);
 
   tem = w->buffer;
   if (NILP (tem))
-    error ("Window is deleted");
+    invalid_operation ("Window is deleted", Qunbound);
 
   /* While this seems like a logical thing to do, it causes problems
      because of saved window configurations.  It is possible for a
@@ -3412,8 +3411,7 @@ global or per-frame buffer ordering.
 				   is first being set up.  */
     {
       if (!NILP (w->dedicated) && !EQ (tem, buffer))
-	error ("Window is dedicated to buffer %s",
-	       XSTRING_DATA (XBUFFER (tem)->name));
+	signal_error (Qinvalid_operation, "Window is dedicated to buffer", tem);
 
       old_buffer_local_face_property =
 	XBUFFER (w->buffer)->buffer_local_face_property;
@@ -3475,7 +3473,7 @@ global or per-frame buffer ordering.
 
   /* we have already caught dead-window errors */
   if (!NILP (w->hchild) || !NILP (w->vchild))
-    error ("Trying to select non-leaf window");
+    invalid_operation ("Trying to select non-leaf window", Qunbound);
 
   w->use_time = make_int (++window_select_count);
 
@@ -3672,19 +3670,19 @@ and put SIZE columns in the first of the pair.
     }
 
   if (MINI_WINDOW_P (o))
-    error ("Attempt to split minibuffer window");
+    invalid_operation ("Attempt to split minibuffer window", Qunbound);
   else if (FRAME_NO_SPLIT_P (XFRAME (WINDOW_FRAME (o))))
-    error ("Attempt to split unsplittable frame");
+    invalid_operation ("Attempt to split unsplittable frame", Qunbound);
 
   check_min_window_sizes ();
 
   if (NILP (horflag))
     {
       if (csize < window_min_height)
-	error ("Window height %d too small (after splitting)", csize);
+	signal_error (Qinvalid_operation, "Window height too small (after splitting)", make_int (csize));
       if (csize + window_min_height > window_char_height (o, 1))
-	error ("Window height %d too small (after splitting)",
-	       window_char_height (o, 1) - csize);
+	signal_error (Qinvalid_operation, "Window height too small (after splitting)",
+	       make_int (window_char_height (o, 1) - csize));
       if (NILP (o->parent)
 	  || NILP (XWINDOW (o->parent)->vchild))
 	{
@@ -3703,10 +3701,10 @@ and put SIZE columns in the first of the pair.
   else
     {
       if (csize < window_min_width)
-	error ("Window width %d too small (after splitting)", csize);
+	signal_error (Qinvalid_operation, "Window width too small (after splitting)", make_int (csize));
       if (csize + window_min_width > window_char_width (o, 0))
-	error ("Window width %d too small (after splitting)",
-	       window_char_width (o, 0) - csize);
+	signal_error (Qinvalid_operation, "Window width too small (after splitting)",
+	       make_int (window_char_width (o, 0) - csize));
       if (NILP (o->parent)
 	  || NILP (XWINDOW (o->parent)->hchild))
 	{
@@ -4089,7 +4087,7 @@ change_window_height (Lisp_Object window, int delta, Lisp_Object horizontalp,
   XSETWINDOW (window, win);
   f = XFRAME (win->frame);
   if (EQ (window, FRAME_ROOT_WINDOW (f)))
-    error ("Won't change only window");
+    invalid_operation ("Won't change only window", Qunbound);
 
   /* #### This is very likely incorrect and instead the char_to_pixel_
      functions should be called. */
@@ -4102,7 +4100,7 @@ change_window_height (Lisp_Object window, int delta, Lisp_Object horizontalp,
       if (NILP (parent))
 	{
 	  if (widthflag)
-	    error ("No other window to side of this one");
+	    invalid_operation ("No other window to side of this one", Qunbound);
 	  break;
 	}
       if (widthflag
@@ -4354,7 +4352,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 	      (w->window_end_pos[CURRENT_DISP] == -1
 	       || (BUF_Z (b) - w->window_end_pos[CURRENT_DISP] > BUF_ZV (b))))
 	    {
-	      maybe_signal_error (Qend_of_buffer, Qnil, Qwindow, errb);
+	      maybe_signal_error_1 (Qend_of_buffer, Qnil, Qwindow, errb);
 	      return;
 	    }
 	  else
@@ -4411,7 +4409,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 	  if (vtarget > value
 	      && marker_position (w->start[CURRENT_DISP]) == BUF_BEGV (b))
 	    {
-	      maybe_signal_error (Qbeginning_of_buffer, Qnil, Qwindow, errb);
+	      maybe_signal_error_1 (Qbeginning_of_buffer, Qnil, Qwindow, errb);
 	      return;
 	    }
 	  else
@@ -4468,7 +4466,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 	}
       if (marker_position (w->start[CURRENT_DISP]) == BUF_BEGV (b))
 	{
-	  maybe_signal_error (Qbeginning_of_buffer, Qnil, Qwindow, errb);
+	  maybe_signal_error_1 (Qbeginning_of_buffer, Qnil, Qwindow, errb);
 	  return;
 	}
       else
@@ -4585,7 +4583,7 @@ showing that buffer is used.
   CHECK_LIVE_WINDOW (window);
 
   if (EQ (window, selected_window))
-    error ("There is no other window");
+    invalid_operation ("There is no other window", Qunbound);
 
   return window;
  }
@@ -5090,8 +5088,8 @@ print_window_config (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   struct window_config *config = XWINDOW_CONFIGURATION (obj);
   char buf[200];
   if (print_readably)
-    error ("printing unreadable object #<window-configuration 0x%x>",
-           config->header.uid);
+    printing_unreadable_object ("#<window-configuration 0x%x>",
+				config->header.uid);
   write_c_string ("#<window-configuration ", printcharfun);
   sprintf (buf, "0x%x>", config->header.uid);
   write_c_string (buf, printcharfun);
@@ -6066,20 +6064,20 @@ syms_of_window (void)
   INIT_LRECORD_IMPLEMENTATION (window);
   INIT_LRECORD_IMPLEMENTATION (window_configuration);
 
-  defsymbol (&Qwindowp, "windowp");
-  defsymbol (&Qwindow_live_p, "window-live-p");
-  defsymbol (&Qwindow_configurationp, "window-configuration-p");
-  defsymbol (&Qtemp_buffer_show_hook, "temp-buffer-show-hook");
-  defsymbol (&Qdisplay_buffer, "display-buffer");
+  DEFSYMBOL (Qwindowp);
+  DEFSYMBOL (Qwindow_live_p);
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qwindow_configurationp);
+  DEFSYMBOL (Qtemp_buffer_show_hook);
+  DEFSYMBOL (Qdisplay_buffer);
 
 #ifdef MEMORY_USAGE_STATS
-  defsymbol (&Qface_cache, "face-cache");
-  defsymbol (&Qglyph_cache, "glyph-cache");
-  defsymbol (&Qline_start_cache, "line-start-cache");
+  DEFSYMBOL (Qface_cache);
+  DEFSYMBOL (Qglyph_cache);
+  DEFSYMBOL (Qline_start_cache);
 #ifdef HAVE_SCROLLBARS
-  defsymbol (&Qscrollbar_instances, "scrollbar-instances");
+  DEFSYMBOL (Qscrollbar_instances);
 #endif
-  defsymbol (&Qother_redisplay, "other-redisplay");
+  DEFSYMBOL (Qother_redisplay);
   /* Qother in general.c */
 #endif
 

@@ -85,7 +85,8 @@ This is for loading dependency DLLs into XEmacs.
 	}
       else
 	{
-	  signal_simple_error ("dll_open error", build_string (dll_error (NULL)));
+	  signal_error (Qfile_error,
+			     "dll_open error", build_string (dll_error (NULL)));
 	}
     }
   return (h ? Qt : Qnil);
@@ -309,7 +310,7 @@ ffi_object_printer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   char buf[200];
 
   if (print_readably)
-    error ("printing unreadable object #<ffi %p", XFFI (obj)->function_ptr);
+    printing_unreadable_object ("#<ffi %p>", XFFI (obj)->function_ptr);
 
   write_c_string ("#<ffi ", printcharfun);
   print_internal (XFFI (obj)->function_name, printcharfun, 1);
@@ -519,7 +520,7 @@ Import a variable into the XEmacs namespace.
 
   if (arg.type == GTK_TYPE_INVALID)
     {
-      signal_simple_error ("Unknown type", type);
+      sferror ("Unknown type", type);
     }
 
   /* Need to look thru the already-loaded dlls */
@@ -535,7 +536,7 @@ Import a variable into the XEmacs namespace.
 
   if (!var)
     {
-      signal_simple_error ("Could not locate variable", name);
+      gui_error ("Could not locate variable", name);
     }
 
   GTK_VALUE_POINTER(arg) = var;
@@ -578,7 +579,7 @@ Import a function into the XEmacs namespace.
 
   if (!name_func)
     {
-      signal_simple_error ("Could not locate function", name);
+      gui_error ("Could not locate function", name);
     }
 
   data = allocate_ffi_data ();
@@ -607,7 +608,7 @@ Import a function into the XEmacs namespace.
 
 	  if (the_type == GTK_TYPE_INVALID)
 	    {
-	      signal_simple_error ("Unknown argument type", type);
+	      invalid_argument ("Unknown argument type", type);
 	    }
 
 	  /* All things must be reduced to their basest form... */
@@ -619,7 +620,7 @@ Import a function into the XEmacs namespace.
 
 	  if (NILP (marshaller_type))
 	    {
-	      signal_simple_error ("Do not know how to marshal", type);
+	      invalid_argument ("Do not know how to marshal", type);
 	    }
 	  marshaller = concat3 (marshaller, build_string ("_"), marshaller_type);
 	  n_args++;
@@ -635,7 +636,7 @@ Import a function into the XEmacs namespace.
 
   if (data->return_type == GTK_TYPE_INVALID)
     {
-      signal_simple_error ("Unknown return type", rettype);
+      invalid_argument ("Unknown return type", rettype);
     }
 
   import_gtk_type (data->return_type);
@@ -647,7 +648,7 @@ Import a function into the XEmacs namespace.
 
   if (!marshaller_func)
     {
-      signal_simple_error ("Could not locate marshaller function", marshaller);
+      gui_error ("Could not locate marshaller function", marshaller);
     }
 
   data->n_args = n_args;
@@ -723,7 +724,7 @@ Call an external function.
 	  if (lisp_to_gtk_type (XCAR (tail), &the_args[n_args]))
 	    {
 	      /* There was some sort of an error */
-	      signal_simple_error ("Error converting arguments", args);
+	      gui_error ("Error converting arguments", args);
 	    }
 	  n_args++;
 	}
@@ -774,7 +775,7 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun, int escapef
   char buf[200];
 
   if (print_readably)
-    error ("printing unreadable object #<GtkObject %p>", XGTK_OBJECT (obj)->object);
+    printing_unreadable_object ("#<GtkObject %p>", XGTK_OBJECT (obj)->object);
 
   write_c_string ("#<GtkObject (", printcharfun);
   if (XGTK_OBJECT (obj)->alive_p)
@@ -814,7 +815,7 @@ object_getprop (Lisp_Object obj, Lisp_Object prop)
 
   if (!(info->arg_flags & GTK_ARG_READABLE))
     {
-      signal_simple_error ("Attempt to get write-only property", prop);
+      invalid_operation ("Attempt to get write-only property", prop);
     }
 
   gtk_object_getv (XGTK_OBJECT (obj)->object, 1, args);
@@ -878,12 +879,12 @@ object_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
 
   if (lisp_to_gtk_type (value, &args[0]))
     {
-      signal_simple_error ("Error converting to GtkType", value);
+      gui_error ("Error converting to GtkType", value);
     }
 
   if (!(info->arg_flags & GTK_ARG_WRITABLE))
     {
-      signal_simple_error ("Attemp to set read-only argument", prop);
+      invalid_operation ("Attempt to set read-only argument", prop);
     }
 
   gtk_object_setv (XGTK_OBJECT (obj)->object, 1, args);
@@ -907,7 +908,7 @@ emacs_gtk_object_finalizer (void *header, int for_disksave)
       Lisp_Object obj;
       XSETGTK_OBJECT (obj, data);
 
-      signal_simple_error
+      invalid_operation
 	("Can't dump an emacs containing GtkObject objects", obj);
     }
 
@@ -1085,7 +1086,7 @@ emacs_gtk_boxed_printer (Lisp_Object obj, Lisp_Object printcharfun, int escapefl
   char buf[200];
 
   if (print_readably)
-    error ("printing unreadable object #<GtkBoxed %p>", XGTK_BOXED (obj)->object);
+    printing_unreadable_object ("#<GtkBoxed %p>", XGTK_BOXED (obj)->object);
 
   write_c_string ("#<GtkBoxed (", printcharfun);
   write_c_string (gtk_type_name (XGTK_BOXED (obj)->object_type), printcharfun);
@@ -1195,7 +1196,7 @@ This is for loading dependency DLLs into XEmacs.
 
   if (t == GTK_TYPE_INVALID)
     {
-      signal_simple_error ("Not a GTK type", type);
+      invalid_argument ("Not a GTK type", type);
     }
   return (make_int (GTK_FUNDAMENTAL_TYPE (t)));
 }
@@ -1231,7 +1232,7 @@ The cdr is a list of all the magic properties it has.
       t = gtk_type_from_name (XSTRING_DATA (type));
       if (t == GTK_TYPE_INVALID)
 	{
-	  signal_simple_error ("Not a GTK type", type);
+	  invalid_argument ("Not a GTK type", type);
 	}
     }
   else
@@ -1242,7 +1243,7 @@ The cdr is a list of all the magic properties it has.
 
   if (GTK_FUNDAMENTAL_TYPE (t) != GTK_TYPE_OBJECT)
     {
-      signal_simple_error ("Not a GtkObject", type);
+      invalid_argument ("Not a GtkObject", type);
     }
 
   /* Need to do stupid shit like this to get the args
@@ -1330,10 +1331,10 @@ syms_of_ui_gtk (void)
   INIT_LRECORD_IMPLEMENTATION (emacs_ffi);
   INIT_LRECORD_IMPLEMENTATION (emacs_gtk_object);
   INIT_LRECORD_IMPLEMENTATION (emacs_gtk_boxed);
-  defsymbol (&Qemacs_ffip, "emacs-ffi-p");
-  defsymbol (&Qemacs_gtk_objectp, "emacs-gtk-object-p");
-  defsymbol (&Qemacs_gtk_boxedp, "emacs-gtk-boxed-p");
-  defsymbol (&Qvoid, "void");
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qemacs_ffip);
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qemacs_gtk_objectp);
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qemacs_gtk_boxedp);
+  DEFSYMBOL (Qvoid);
   DEFSUBR (Fdll_load);
   DEFSUBR (Fgtk_import_function_internal);
   DEFSUBR (Fgtk_import_variable_internal);
@@ -1643,7 +1644,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	    }
 	  else
 	    {
-	      signal_simple_error ("Don't know how to convert object to GDK_WINDOW", obj);
+	      invalid_argument ("Don't know how to convert object to GDK_WINDOW", obj);
 	    }
 	  break;
 	}
@@ -1664,11 +1665,11 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	    }
 	  else if (STRINGP (obj))
 	    {
-	      signal_simple_error ("Please use a color specifier or instance, not a string", obj);
+	      invalid_argument ("Please use a color specifier or instance, not a string", obj);
 	    }
 	  else
 	    {
-	      signal_simple_error ("Don't know hot to convert to GdkColor", obj);
+	      invalid_argument ("Don't know how to convert to GdkColor", obj);
 	    }
 	}
       else if (arg->type == GTK_TYPE_GDK_FONT)
@@ -1702,11 +1703,11 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	    }
 	  else if (STRINGP (obj))
 	    {
-	      signal_simple_error ("Please use a font specifier or instance, not a string", obj);
+	      invalid_argument ("Please use a font specifier or instance, not a string", obj);
 	    }
 	  else
 	    {
-	      signal_simple_error ("Don't know hot to convert to GdkColor", obj);
+	      invalid_argument ("Don't know how to convert to GdkColor", obj);
 	    }
 	}
       else
@@ -1762,7 +1763,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	  if (XGTK_OBJECT (obj)->alive_p)
 	    GTK_VALUE_OBJECT (*arg) = XGTK_OBJECT (obj)->object;
 	  else
-	    signal_simple_error ("Attempting to pass dead object to GTK function", obj);
+	    invalid_argument ("Attempting to pass dead object to GTK function", obj);
 	}
       break;
 
@@ -1825,14 +1826,14 @@ symbol_to_enum (Lisp_Object obj, GtkType t)
 
   if (NILP (alist))
     {
-      signal_simple_error ("Unkown enumeration", build_string (gtk_type_name (t)));
+      invalid_argument ("Unknown enumeration", build_string (gtk_type_name (t)));
     }
 
   value = Fassq (obj, alist);
 
   if (NILP (value))
     {
-      signal_simple_error ("Unknown value", obj);
+      invalid_argument ("Unknown value", obj);
     }
 
   CHECK_INT (XCDR (value));
@@ -1894,7 +1895,7 @@ enum_to_symbol (guint value, GtkType t)
 
   if (NILP (alist))
     {
-      signal_simple_error ("Unkown enumeration", build_string (gtk_type_name (t)));
+      invalid_argument ("Unknown enumeration", build_string (gtk_type_name (t)));
     }
 
   cell = Frassq (make_int (value), alist);

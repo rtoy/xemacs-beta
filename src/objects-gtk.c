@@ -94,15 +94,15 @@ gtk_parse_nearest_color (struct device *d, GdkColor *color, Bufbyte *name,
   
   if (result == FALSE)
     {
-      maybe_signal_simple_error ("unrecognized color", make_string (name, len),
-				 Qcolor, errb);
+      maybe_invalid_argument ("unrecognized color", make_string (name, len),
+			  Qcolor, errb);
       return 0;
     }
   result = allocate_nearest_color (cmap, visual, color);
   if (!result)
     {
-      maybe_signal_simple_error ("couldn't allocate color",
-				 make_string (name, len), Qcolor, errb);
+      maybe_signal_error (Qgui_error, "couldn't allocate color",
+			  make_string (name, len), Qcolor, errb);
       return 0;
     }
 
@@ -227,8 +227,8 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
 
   if (!gf)
     {
-      maybe_signal_simple_error ("couldn't load font", f->name,
-				 Qfont, errb);
+      maybe_signal_error (Qgui_error, "couldn't load font", f->name,
+			  Qfont, errb);
       return 0;
     }
 

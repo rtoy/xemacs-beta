@@ -143,7 +143,7 @@ static void
 print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   if (print_readably)
-    error ("Printing unreadable object #<event>");
+    printing_unreadable_object ("#<event>");
 
   switch (XEVENT (obj)->event_type)
     {
@@ -458,7 +458,7 @@ WARNING: the event object returned may be a reused one; see the function
          (e.g. CHANNEL), which we don't want in empty events.  */
       e->event_type = empty_event;
       if (!NILP (plist))
-	syntax_error ("Cannot set properties of empty event", plist);
+	invalid_operation ("Cannot set properties of empty event", plist);
       UNGCPRO;
       return event;
     }
@@ -481,7 +481,7 @@ WARNING: the event object returned may be a reused one; see the function
   else
     {
       /* Not allowed: Qprocess, Qtimeout, Qmagic, Qeval, Qmagic_eval.  */
-      invalid_argument ("Invalid event type", type);
+      invalid_constant ("Invalid event type", type);
     }
 
   EVENT_CHANNEL (e) = Qnil;
@@ -490,7 +490,7 @@ WARNING: the event object returned may be a reused one; see the function
   Fcanonicalize_plist (plist, Qnil);
 
 #define WRONG_EVENT_TYPE_FOR_PROPERTY(event_type, prop) \
-  syntax_error_2 ("Invalid property for event type", prop, event_type)
+  invalid_argument_2 ("Invalid property for event type", prop, event_type)
 
   {
     EXTERNAL_PROPERTY_LIST_LOOP_3 (keyword, value, plist)
@@ -515,7 +515,7 @@ WARNING: the event object returned may be a reused one; see the function
 	      {
 	      case key_press_event:
 		if (!SYMBOLP (value) && !CHARP (value))
-		  syntax_error ("Invalid event key", value);
+		  invalid_argument ("Invalid event key", value);
 		e->event.key.keysym = value;
 		break;
 	      default:
@@ -561,7 +561,7 @@ WARNING: the event object returned may be a reused one; see the function
 		else if (EQ (sym, Qbutton4))   modifiers |= XEMACS_MOD_BUTTON4;
 		else if (EQ (sym, Qbutton5))   modifiers |= XEMACS_MOD_BUTTON5;
 		else
-		  syntax_error ("Invalid key modifier", sym);
+		  invalid_constant ("Invalid key modifier", sym);
 	      }
 
 	    switch (e->event_type)
@@ -649,7 +649,7 @@ WARNING: the event object returned may be a reused one; see the function
 	      }
 	  }
 	else
-	  syntax_error_2 ("Invalid property", keyword, value);
+	  invalid_constant_2 ("Invalid property", keyword, value);
       }
   }
 
@@ -694,24 +694,24 @@ WARNING: the event object returned may be a reused one; see the function
     {
     case key_press_event:
       if (UNBOUNDP (e->event.key.keysym))
-	syntax_error ("A key must be specified to make a keypress event",
+	sferror ("A key must be specified to make a keypress event",
 		      plist);
       break;
     case button_press_event:
       if (!e->event.button.button)
-	syntax_error
+	sferror
 	  ("A button must be specified to make a button-press event",
 	   plist);
       break;
     case button_release_event:
       if (!e->event.button.button)
-	syntax_error
+	sferror
 	  ("A button must be specified to make a button-release event",
 	   plist);
       break;
     case misc_user_event:
       if (NILP (e->event.misc.function))
-	syntax_error ("A function must be specified to make a misc-user event",
+	sferror ("A function must be specified to make a misc-user event",
 		      plist);
       break;
     default:
@@ -735,7 +735,7 @@ that it is safe to do so.
   CHECK_EVENT (event);
 
   if (XEVENT_TYPE (event) == dead_event)
-    error ("this event is already deallocated!");
+    invalid_argument ("this event is already deallocated!", Qunbound);
 
   assert (XEVENT_TYPE (event) <= last_event_type);
 
@@ -787,8 +787,9 @@ function `deallocate-event'.
     {
       CHECK_LIVE_EVENT (event2);
       if (EQ (event1, event2))
-	return signal_simple_continuable_error_2
-	  ("copy-event called with `eq' events", event1, event2);
+	return signal_continuable_error_2
+	  (Qinvalid_argument,
+	   "copy-event called with `eq' events", event1, event2);
     }
 
   assert (XEVENT_TYPE (event1) <= last_event_type);
@@ -988,7 +989,7 @@ character_to_event (Emchar c, Lisp_Event *event, struct console *con,
   Lisp_Object k = Qnil;
   int m = 0;
   if (event->event_type == dead_event)
-    error ("character-to-event called with a deallocated event!");
+    invalid_argument ("character-to-event called with a deallocated event!", Qunbound);
 
 #ifndef MULE
   c &= 255;
@@ -1415,10 +1416,7 @@ NEXT-EVENT must be an event object or nil.
     {
       QUIT;
       if (EQ (ev, event))
-	signal_error (Qerror,
-		      list3 (build_string ("Cyclic event-next"),
-			     event,
-			     next_event));
+	invalid_operation_2 ("Cyclic event-next", event, next_event);
     }
   XSET_EVENT_NEXT (event, next_event);
   return next_event;
@@ -2323,17 +2321,17 @@ syms_of_events (void)
   DEFSUBR (Fevent_function);
   DEFSUBR (Fevent_object);
 
-  defsymbol (&Qeventp, "eventp");
-  defsymbol (&Qevent_live_p, "event-live-p");
-  defsymbol (&Qkey_press_event_p, "key-press-event-p");
-  defsymbol (&Qbutton_event_p, "button-event-p");
-  defsymbol (&Qmouse_event_p, "mouse-event-p");
-  defsymbol (&Qprocess_event_p, "process-event-p");
-  defsymbol (&Qkey_press, "key-press");
-  defsymbol (&Qbutton_press, "button-press");
-  defsymbol (&Qbutton_release, "button-release");
-  defsymbol (&Qmisc_user, "misc-user");
-  defsymbol (&Qascii_character, "ascii-character");
+  DEFSYMBOL (Qeventp);
+  DEFSYMBOL (Qevent_live_p);
+  DEFSYMBOL (Qkey_press_event_p);
+  DEFSYMBOL (Qbutton_event_p);
+  DEFSYMBOL (Qmouse_event_p);
+  DEFSYMBOL (Qprocess_event_p);
+  DEFSYMBOL (Qkey_press);
+  DEFSYMBOL (Qbutton_press);
+  DEFSYMBOL (Qbutton_release);
+  DEFSYMBOL (Qmisc_user);
+  DEFSYMBOL (Qascii_character);
 
   defsymbol (&QKbackspace, "backspace");
   defsymbol (&QKtab, "tab");

@@ -937,7 +937,7 @@ float_error (int signo)
      occurring inside a signal handler to be restartable, considering
      that anything could happen when the error is signaled and trapped
      and considering the asynchronous nature of signal handlers. */
-  signal_error (Qarith_error, list1 (float_error_arg));
+  signal_error (Qarith_error, 0, float_error_arg);
 }
 
 /* Another idea was to replace the library function `infnan'

@@ -126,7 +126,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
      unwind-protection in case of error, but now there is.  */
   d = opendir ((char *) XSTRING_DATA (directory));
   if (!d)
-    report_file_error ("Opening directory", list1 (directory));
+    report_file_error ("Opening directory", directory);
 
   regex_match_object = Qt;
   regex_emacs_buffer = current_buffer;
@@ -343,7 +343,7 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
     {
       d = opendir ((char *) XSTRING_DATA (Fdirectory_file_name (directory)));
       if (!d)
-	report_file_error ("Opening directory", list1 (directory));
+	report_file_error ("Opening directory", directory);
       XCAR (locative) = make_opaque_ptr ((void *)d);
 
       /* Loop reading blocks */
@@ -942,10 +942,10 @@ If file does not exist, returns nil.
 void
 syms_of_dired (void)
 {
-  defsymbol (&Qdirectory_files, "directory-files");
-  defsymbol (&Qfile_name_completion, "file-name-completion");
-  defsymbol (&Qfile_name_all_completions, "file-name-all-completions");
-  defsymbol (&Qfile_attributes, "file-attributes");
+  DEFSYMBOL (Qdirectory_files);
+  DEFSYMBOL (Qfile_name_completion);
+  DEFSYMBOL (Qfile_name_all_completions);
+  DEFSYMBOL (Qfile_attributes);
 
   DEFSUBR (Fdirectory_files);
   DEFSUBR (Ffile_name_completion);

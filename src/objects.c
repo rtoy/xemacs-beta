@@ -45,7 +45,7 @@ finalose (void *ptr)
   Lisp_Object obj;
   XSETOBJ (obj, ptr);
 
-  signal_simple_error
+  invalid_operation
     ("Can't dump an emacs containing window system objects", obj);
 }
 
@@ -74,7 +74,7 @@ print_color_instance (Lisp_Object obj, Lisp_Object printcharfun,
   char buf[100];
   Lisp_Color_Instance *c = XCOLOR_INSTANCE (obj);
   if (print_readably)
-    error ("printing unreadable object #<color-instance 0x%x>",
+    printing_unreadable_object ("#<color-instance 0x%x>",
            c->header.uid);
   write_c_string ("#<color-instance ", printcharfun);
   print_internal (c->name, printcharfun, 0);
@@ -254,7 +254,7 @@ print_font_instance (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   char buf[200];
   Lisp_Font_Instance *f = XFONT_INSTANCE (obj);
   if (print_readably)
-    error ("printing unreadable object #<font-instance 0x%x>", f->header.uid);
+    printing_unreadable_object ("#<font-instance 0x%x>", f->header.uid);
   write_c_string ("#<font-instance ", printcharfun);
   print_internal (f->name, printcharfun, 1);
   write_c_string (" on ", printcharfun);
@@ -421,8 +421,8 @@ font_instance_truename_internal (Lisp_Object font_instance,
 
   if (NILP (f->device))
     {
-      maybe_signal_simple_error ("Couldn't determine font truename",
-				 font_instance, Qfont, errb);
+      maybe_signal_error (Qgui_error, "Couldn't determine font truename",
+			       font_instance, Qfont, errb);
       return Qnil;
     }
 
@@ -545,12 +545,12 @@ color_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	  if (DEVICE_TTY_P (d))
 	    return Vthe_null_color_instance;
 	  else
-	    signal_simple_error ("Color instantiator [] only valid on TTY's",
+	    gui_error ("Color instantiator [] only valid on TTY's",
 				 device);
 
 	case 1:
 	  if (NILP (COLOR_SPECIFIER_FACE (XCOLOR_SPECIFIER (specifier))))
-	    signal_simple_error ("Color specifier not attached to a face",
+	    gui_error ("Color specifier not attached to a face",
 				 instantiator);
 	  return (FACE_PROPERTY_INSTANCE_1
 		  (Fget_face (XVECTOR_DATA (instantiator)[0]),
@@ -571,7 +571,7 @@ color_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
       if (DEVICE_TTY_P (d))
 	return Vthe_null_color_instance;
       else
-	signal_simple_error ("Color instantiator [] only valid on TTY's",
+	gui_error ("Color instantiator [] only valid on TTY's",
 			     device);
     }
   else
@@ -588,7 +588,7 @@ color_validate (Lisp_Object instantiator)
   if (VECTORP (instantiator))
     {
       if (XVECTOR_LENGTH (instantiator) > 2)
-	signal_simple_error ("Inheritance vector must be of size 0 - 2",
+	sferror ("Inheritance vector must be of size 0 - 2",
 			     instantiator);
       else if (XVECTOR_LENGTH (instantiator) > 0)
 	{
@@ -599,14 +599,14 @@ color_validate (Lisp_Object instantiator)
 	    {
 	      Lisp_Object field = XVECTOR_DATA (instantiator)[1];
 	      if (!EQ (field, Qforeground) && !EQ (field, Qbackground))
-		signal_simple_error
+		invalid_constant
 		  ("Inheritance field must be `foreground' or `background'",
 		   field);
 	    }
 	}
     }
   else
-    signal_simple_error ("Invalid color instantiator", instantiator);
+    invalid_argument ("Invalid color instantiator", instantiator);
 }
 
 static void
@@ -801,13 +801,13 @@ font_validate (Lisp_Object instantiator)
     {
       if (XVECTOR_LENGTH (instantiator) != 1)
 	{
-	  signal_simple_error
+	  sferror
 	    ("Vector length must be one for font inheritance", instantiator);
 	}
       Fget_face (XVECTOR_DATA (instantiator)[0]);
     }
   else
-    signal_simple_error ("Must be string, vector, or font-instance",
+    invalid_argument ("Must be string, vector, or font-instance",
 			 instantiator);
 }
 
@@ -894,7 +894,7 @@ face_boolean_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	{
 	  if (NILP (FACE_BOOLEAN_SPECIFIER_FACE
 		    (XFACE_BOOLEAN_SPECIFIER (specifier))))
-	    signal_simple_error
+	    gui_error
 	      ("Face-boolean specifier not attached to a face", instantiator);
 	  prop = FACE_BOOLEAN_SPECIFIER_FACE_PROPERTY
 	    (XFACE_BOOLEAN_SPECIFIER (specifier));
@@ -937,15 +937,15 @@ face_boolean_validate (Lisp_Object instantiator)
 	      && !EQ (field, Qdim)
 	      && !EQ (field, Qblinking)
 	      && !EQ (field, Qreverse))
-	    signal_simple_error ("Invalid face-boolean inheritance field",
+	    invalid_constant ("Invalid face-boolean inheritance field",
 				 field);
 	}
     }
   else if (VECTORP (instantiator))
-    signal_simple_error ("Wrong length for face-boolean inheritance spec",
+    sferror ("Wrong length for face-boolean inheritance spec",
 			 instantiator);
   else
-    signal_simple_error ("Face-boolean instantiator must be nil, t, or vector",
+    invalid_argument ("Face-boolean instantiator must be nil, t, or vector",
 			 instantiator);
 }
 
@@ -1000,14 +1000,14 @@ syms_of_objects (void)
   DEFSUBR (Ffont_specifier_p);
   DEFSUBR (Fface_boolean_specifier_p);
 
-  defsymbol (&Qcolor_instancep, "color-instance-p");
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qcolor_instancep);
   DEFSUBR (Fmake_color_instance);
   DEFSUBR (Fcolor_instance_p);
   DEFSUBR (Fcolor_instance_name);
   DEFSUBR (Fcolor_instance_rgb_components);
   DEFSUBR (Fvalid_color_name_p);
 
-  defsymbol (&Qfont_instancep, "font-instance-p");
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qfont_instancep);
   DEFSUBR (Fmake_font_instance);
   DEFSUBR (Ffont_instance_p);
   DEFSUBR (Ffont_instance_name);
@@ -1020,7 +1020,7 @@ syms_of_objects (void)
   DEFSUBR (Flist_fonts);
 
   /* Qcolor, Qfont defined in general.c */
-  defsymbol (&Qface_boolean, "face-boolean");
+  DEFSYMBOL (Qface_boolean);
 }
 
 static const struct lrecord_description color_specifier_description[] = {

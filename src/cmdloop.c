@@ -248,7 +248,7 @@ command_loop_3 (void)
    * signal an error here to avoid the loop.
    */
   if (in_menu_callback)
-    error ("Attempt to enter command_loop_3 inside menu callback");
+    invalid_operation ("Attempt to enter command_loop_3 inside menu callback", Qunbound);
 #endif /* LWLIB_MENUBARS_LUCID */
   /* This function can GC */
   for (;;)
@@ -606,10 +606,10 @@ Don't call this unless you know what you're doing.
 void
 syms_of_cmdloop (void)
 {
-  defsymbol (&Qcommand_error, "command-error");
-  defsymbol (&Qreally_early_error_handler, "really-early-error-handler");
-  defsymbol (&Qtop_level, "top-level");
-  defsymbol (&Qerrors_deactivate_region, "errors-deactivate-region");
+  DEFSYMBOL (Qcommand_error);
+  DEFSYMBOL (Qreally_early_error_handler);
+  DEFSYMBOL (Qtop_level);
+  DEFSYMBOL (Qerrors_deactivate_region);
 
 #ifndef LISP_COMMAND_LOOP
   DEFSUBR (Frecursive_edit);

@@ -99,7 +99,7 @@ check_valid_orientation (Lisp_Object data)
   if (!EQ (data, Qhorizontal)
       &&
       !EQ (data, Qvertical))
-    invalid_argument ("unknown orientation for layout", data);
+    invalid_constant ("unknown orientation for layout", data);
 }
 
 static void
@@ -112,14 +112,14 @@ check_valid_tab_orientation (Lisp_Object data)
       !EQ (data, Qleft)
       &&
       !EQ (data, Qright))
-    invalid_argument ("unknown orientation for tab control", data);
+    invalid_constant ("unknown orientation for tab control", data);
 }
 
 static void
 check_valid_justification (Lisp_Object data)
 {
   if (!EQ (data, Qleft) && !EQ (data, Qright) && !EQ (data, Qcenter))
-    invalid_argument ("unknown justification for layout", data);
+    invalid_constant ("unknown justification for layout", data);
 }
 
 static void
@@ -539,18 +539,18 @@ widget_validate (Lisp_Object instantiator)
   Lisp_Object desc = find_keyword_in_vector (instantiator, Q_descriptor);
 
   if (NILP (desc))
-    syntax_error ("Must supply :descriptor", instantiator);
+    invalid_argument ("Must supply :descriptor", instantiator);
 
   if (VECTORP (desc))
     gui_parse_item_keywords (desc);
 
   if (!NILP (find_keyword_in_vector (instantiator, Q_width))
       && !NILP (find_keyword_in_vector (instantiator, Q_pixel_width)))
-    syntax_error ("Must supply only one of :width and :pixel-width", instantiator);
+    invalid_argument ("Must supply only one of :width and :pixel-width", instantiator);
 
   if (!NILP (find_keyword_in_vector (instantiator, Q_height))
 	     && !NILP (find_keyword_in_vector (instantiator, Q_pixel_height)))
-    syntax_error ("Must supply only one of :height and :pixel-height", instantiator);
+    invalid_argument ("Must supply only one of :height and :pixel-height", instantiator);
 }
 
 static void
@@ -558,7 +558,7 @@ combo_box_validate (Lisp_Object instantiator)
 {
   widget_validate (instantiator);
   if (NILP (find_keyword_in_vector (instantiator, Q_items)))
-    syntax_error ("Must supply item list", instantiator);
+    invalid_argument ("Must supply item list", instantiator);
 }
 
 /* we need to convert things like glyphs to images, eval expressions

@@ -696,6 +696,7 @@ DOC_SRC3=\
  $(SRC)\getloadavg.c \
  $(SRC)\glyphs.c \
  $(SRC)\glyphs-eimage.c \
+ $(SRC)\glyphs-shared.c \
  $(SRC)\glyphs-widget.c \
  $(SRC)\gui.c  \
  $(SRC)\gutter.c \
@@ -987,6 +988,7 @@ TEMACS_OBJS= \
 	$(OUTDIR)\getloadavg.obj \
 	$(OUTDIR)\glyphs.obj \
 	$(OUTDIR)\glyphs-eimage.obj \
+	$(OUTDIR)\glyphs-shared.obj \
 	$(OUTDIR)\glyphs-widget.obj \
 	$(OUTDIR)\gui.obj \
 	$(OUTDIR)\gutter.obj \

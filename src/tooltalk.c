@@ -167,8 +167,8 @@ print_tooltalk_message (Lisp_Object obj, Lisp_Object printcharfun,
   char buf[200];
 
   if (print_readably)
-    error ("printing unreadable object #<tooltalk_message 0x%x>",
-	   p->header.uid);
+    printing_unreadable_object ("#<tooltalk_message 0x%x>",
+				p->header.uid);
 
   sprintf (buf, "#<tooltalk_message id:0x%lx 0x%x>", (long) (p->m), p->header.uid);
   write_c_string (buf, printcharfun);
@@ -240,8 +240,8 @@ print_tooltalk_pattern (Lisp_Object obj, Lisp_Object printcharfun,
   char buf[200];
 
   if (print_readably)
-    error ("printing unreadable object #<tooltalk_pattern 0x%x>",
-	   p->header.uid);
+    printing_unreadable_object ("#<tooltalk_pattern 0x%x>",
+				p->header.uid);
 
   sprintf (buf, "#<tooltalk_pattern id:0x%lx 0x%x>", (long) (p->p), p->header.uid);
   write_c_string (buf, printcharfun);
@@ -300,8 +300,12 @@ static void
 check_status (Tt_status st)
 {
   if (tt_is_err (st))
-    signal_error (Qtooltalk_error,
-		  Fcons (build_string (tt_status_message (st)), Qnil));
+    {
+      Bufbyte *err;
+
+      EXTERNAL_TO_C_STRING (tt_status_message (st), err, Qnative);
+      signal_error (Qtooltalk_error, err, Qunbound);
+    }
 }
 
 DEFUN ("receive-tooltalk-message", Freceive_tooltalk_message, 0, 2, 0, /*
@@ -672,7 +676,7 @@ value returned by 'arg_bval like a string is fine.
 			   (XTOOLTALK_MESSAGE (message_)->plist_sym));
 
   else
-    signal_simple_error ("Invalid value for `get-tooltalk-message-attribute'",
+    invalid_constant ("Invalid value for `get-tooltalk-message-attribute'",
 			 attribute);
 
   return Qnil;
@@ -792,7 +796,7 @@ New arguments can be added to a message with add-tooltalk-message-arg.
       return Fput (XTOOLTALK_MESSAGE (message_)->plist_sym, argn, value);
     }
   else
-    signal_simple_error ("Invalid value for `set-tooltalk-message-attribute'",
+    invalid_constant ("Invalid value for `set-tooltalk-message-attribute'",
 			 attribute);
 
   if (fun_str)
@@ -1291,9 +1295,9 @@ Returns t if successful, nil otherwise.
        ())
 {
   if (!NILP (Vtooltalk_fd))
-    error ("Already connected to ToolTalk.");
+    signal_error (Qio_error, "Already connected to ToolTalk", Qunbound);
   if (noninteractive)
-    error ("Can't connect to ToolTalk in batch mode.");
+    signal_error (Qio_error, "Can't connect to ToolTalk in batch mode", Qunbound);
   init_tooltalk ();
   return NILP (Vtooltalk_fd) ? Qnil : Qt;
 }
@@ -1305,14 +1309,13 @@ syms_of_tooltalk (void)
   INIT_LRECORD_IMPLEMENTATION (tooltalk_message);
   INIT_LRECORD_IMPLEMENTATION (tooltalk_pattern);
 
-  defsymbol (&Qtooltalk_messagep, "tooltalk-message-p");
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qtooltalk_messagep);
   DEFSUBR (Ftooltalk_message_p);
-  defsymbol (&Qtooltalk_patternp, "tooltalk-pattern-p");
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qtooltalk_patternp);
   DEFSUBR (Ftooltalk_pattern_p);
-  defsymbol (&Qtooltalk_message_handler_hook, "tooltalk-message-handler-hook");
-  defsymbol (&Qtooltalk_pattern_handler_hook, "tooltalk-pattern-handler-hook");
-  defsymbol (&Qtooltalk_unprocessed_message_hook,
-	     "tooltalk-unprocessed-message-hook");
+  DEFSYMBOL (Qtooltalk_message_handler_hook);
+  DEFSYMBOL (Qtooltalk_pattern_handler_hook);
+  DEFSYMBOL (Qtooltalk_unprocessed_message_hook);
 
   DEFSUBR (Freceive_tooltalk_message);
   DEFSUBR (Fcreate_tooltalk_message);
@@ -1335,7 +1338,7 @@ syms_of_tooltalk (void)
   DEFSUBR (Ftooltalk_default_session);
   DEFSUBR (Ftooltalk_open_connection);
 
-  defsymbol (&Qreceive_tooltalk_message, "receive-tooltalk-message");
+  DEFSYMBOL (Qreceive_tooltalk_message);
   defsymbol (&Qtt_address, "address");
   defsymbol (&Qtt_args_count, "args_count");
   defsymbol (&Qtt_arg_bval, "arg_bval");

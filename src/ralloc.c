@@ -2048,18 +2048,18 @@ void
 syms_of_ralloc (void)
 {
 #ifdef MMAP_METERING
-  defsymbol (&Qmmap_times_mapped, "mmap-times-mapped");
-  defsymbol (&Qmmap_pages_mapped, "mmap-pages-mapped");
-  defsymbol (&Qmmap_times_unmapped, "mmap-times-unmapped");
-  defsymbol (&Qmmap_times_remapped, "mmap-times-remapped");
-  defsymbol (&Qmmap_didnt_copy, "mmap-didnt-copy");
-  defsymbol (&Qmmap_pages_copied, "mmap-pages-copied");
-  defsymbol (&Qmmap_average_bumpval, "mmap-average-bumpval");
-  defsymbol (&Qmmap_wastage, "mmap-wastage");
-  defsymbol (&Qmmap_live_pages, "mmap-live-pages");
-  defsymbol (&Qmmap_addr_looked_up, "mmap-addr-looked-up");
-  defsymbol (&Qmmap_hash_worked, "mmap-hash-worked");
-  defsymbol (&Qmmap_addrlist_size, "mmap-addrlist-size");
+  DEFSYMBOL (Qmmap_times_mapped);
+  DEFSYMBOL (Qmmap_pages_mapped);
+  DEFSYMBOL (Qmmap_times_unmapped);
+  DEFSYMBOL (Qmmap_times_remapped);
+  DEFSYMBOL (Qmmap_didnt_copy);
+  DEFSYMBOL (Qmmap_pages_copied);
+  DEFSYMBOL (Qmmap_average_bumpval);
+  DEFSYMBOL (Qmmap_wastage);
+  DEFSYMBOL (Qmmap_live_pages);
+  DEFSYMBOL (Qmmap_addr_looked_up);
+  DEFSYMBOL (Qmmap_hash_worked);
+  DEFSYMBOL (Qmmap_addrlist_size);
   DEFSUBR (Fmmap_allocator_status);
 #endif /* MMAP_METERING */
 }

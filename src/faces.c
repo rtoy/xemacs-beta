@@ -327,13 +327,13 @@ face_validate (Lisp_Object data, Error_behavior errb)
 
   if (!name_seen)
     {
-      maybe_error (Qface, errb, "No face name given");
+      maybe_sferror ("No face name given", Qunbound, Qface, errb);
       return 0;
     }
 
   if (NILP (Ffind_face (valw)))
     {
-      maybe_signal_simple_error ("No such face", valw, Qface, errb);
+      maybe_invalid_argument ("No such face", valw, Qface, errb);
       return 0;
     }
 
@@ -636,7 +636,7 @@ face instead of returning nil.
   Lisp_Object face = Ffind_face (name);
 
   if (NILP (face))
-    signal_simple_error ("No such face", name);
+    invalid_argument ("No such face", name);
   return face;
 }
 
@@ -1828,10 +1828,10 @@ syms_of_faces (void)
   INIT_LRECORD_IMPLEMENTATION (face);
 
   /* Qdefault, Qwidget, Qleft_margin, Qright_margin defined in general.c */
-  defsymbol (&Qmodeline, "modeline");
-  defsymbol (&Qgui_element, "gui-element");
-  defsymbol (&Qtext_cursor, "text-cursor");
-  defsymbol (&Qvertical_divider, "vertical-divider");
+  DEFSYMBOL (Qmodeline);
+  DEFSYMBOL (Qgui_element);
+  DEFSYMBOL (Qtext_cursor);
+  DEFSYMBOL (Qvertical_divider);
 
   DEFSUBR (Ffacep);
   DEFSUBR (Ffind_face);
@@ -1842,22 +1842,22 @@ syms_of_faces (void)
   DEFSUBR (Fmake_face);
   DEFSUBR (Fcopy_face);
 
-  defsymbol (&Qfacep, "facep");
-  defsymbol (&Qforeground, "foreground");
-  defsymbol (&Qbackground, "background");
+  DEFSYMBOL (Qfacep);
+  DEFSYMBOL (Qforeground);
+  DEFSYMBOL (Qbackground);
   /* Qfont defined in general.c */
-  defsymbol (&Qdisplay_table, "display-table");
-  defsymbol (&Qbackground_pixmap, "background-pixmap");
-  defsymbol (&Qunderline, "underline");
-  defsymbol (&Qstrikethru, "strikethru");
+  DEFSYMBOL (Qdisplay_table);
+  DEFSYMBOL (Qbackground_pixmap);
+  DEFSYMBOL (Qunderline);
+  DEFSYMBOL (Qstrikethru);
   /* Qhighlight, Qreverse defined in general.c */
-  defsymbol (&Qdim, "dim");
-  defsymbol (&Qblinking, "blinking");
+  DEFSYMBOL (Qdim);
+  DEFSYMBOL (Qblinking);
 
-  defsymbol (&Qinit_face_from_resources, "init-face-from-resources");
-  defsymbol (&Qinit_global_faces, "init-global-faces");
-  defsymbol (&Qinit_device_faces, "init-device-faces");
-  defsymbol (&Qinit_frame_faces, "init-frame-faces");
+  DEFSYMBOL (Qinit_face_from_resources);
+  DEFSYMBOL (Qinit_global_faces);
+  DEFSYMBOL (Qinit_device_faces);
+  DEFSYMBOL (Qinit_frame_faces);
 }
 
 void

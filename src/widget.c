@@ -108,7 +108,7 @@ ARGS are passed as extra arguments to the function.
 void
 syms_of_widget (void)
 {
-  defsymbol (&Qwidget_type, "widget-type");
+  DEFSYMBOL (Qwidget_type);
 
   DEFSUBR (Fwidget_plist_member);
   DEFSUBR (Fwidget_put);

@@ -102,6 +102,7 @@ Boston, MA 02111-1307, USA.  */
 static Fixnum auto_save_interval;
 
 Lisp_Object Qundefined_keystroke_sequence;
+Lisp_Object Qinvalid_key_binding;
 
 Lisp_Object Qcommand_event_p;
 
@@ -414,20 +415,23 @@ check_event_stream_ok (enum event_stream_operation op)
       switch (op)
 	{
 	case EVENT_STREAM_PROCESS:
-	  error ("Can't start subprocesses in -batch mode");
+	  invalid_operation ("Can't start subprocesses in -batch mode",
+			     Qunbound);
 	case EVENT_STREAM_TIMEOUT:
-	  error ("Can't add timeouts in -batch mode");
+	  invalid_operation ("Can't add timeouts in -batch mode", Qunbound);
 	case EVENT_STREAM_CONSOLE:
-	  error ("Can't add consoles in -batch mode");
+	  invalid_operation ("Can't add consoles in -batch mode", Qunbound);
 	case EVENT_STREAM_READ:
-	  error ("Can't read events in -batch mode");
+	  invalid_operation ("Can't read events in -batch mode", Qunbound);
 	default:
 	  abort ();
 	}
     }
   else if (!event_stream)
     {
-      error ("event-stream callbacks not initialized (internal error?)");
+      invalid_operation
+	("event-stream callbacks not initialized (internal error?)",
+	 Qunbound);
     }
 }
 
@@ -1332,11 +1336,11 @@ lisp_number_to_milliseconds (Lisp_Object secs, int allow_0)
   fsecs = XINT (secs);
 #endif
   if (fsecs < 0)
-    signal_simple_error ("timeout is negative", secs);
+    invalid_argument ("timeout is negative", secs);
   if (!allow_0 && fsecs == 0)
-    signal_simple_error ("timeout is non-positive", secs);
+    invalid_argument ("timeout is non-positive", secs);
   if (fsecs >= (((unsigned int) 0xFFFFFFFF) / 1000))
-    signal_simple_error
+    invalid_argument
       ("timeout would exceed 32 bits when represented in milliseconds", secs);
 
   return (unsigned long) (1000 * fsecs);
@@ -2081,7 +2085,8 @@ The returned event will be one of the following types:
    * so we signal an error here.
    */
   if (in_menu_callback)
-    error ("Attempt to call next-event inside menu callback");
+    invalid_operation ("Attempt to call next-event inside menu callback",
+		       Qunbound);
 #endif /* LWLIB_MENUBARS_LUCID */
 
   if (NILP (event))
@@ -2119,7 +2124,7 @@ The returned event will be one of the following types:
       if (!CONSP (Vunread_command_events))
 	{
 	  Vunread_command_events = Qnil;
-	  signal_error (Qwrong_type_argument,
+	  signal_error_1 (Qwrong_type_argument,
 			list3 (Qconsp, Vunread_command_events,
 			       Qunread_command_events));
 	}
@@ -2128,7 +2133,7 @@ The returned event will be one of the following types:
 	  Lisp_Object e = XCAR (Vunread_command_events);
 	  Vunread_command_events = XCDR (Vunread_command_events);
 	  if (!EVENTP (e) || !command_event_p (e))
-	    signal_error (Qwrong_type_argument,
+	    signal_error_1 (Qwrong_type_argument,
 			  list3 (Qcommand_event_p, e, Qunread_command_events));
 	  redisplay ();
 	  if (!EQ (e, event))
@@ -2145,7 +2150,7 @@ The returned event will be one of the following types:
 
       if (!EVENTP (e) || !command_event_p (e))
 	{
-	  signal_error (Qwrong_type_argument,
+	  signal_error_1 (Qwrong_type_argument,
 			list3 (Qeventp, e, Qunread_command_event));
 	}
       if (!EQ (e, event))
@@ -2235,7 +2240,7 @@ The returned event will be one of the following types:
   if (XEVENT_TYPE (Vlast_input_event) == dead_event)
     {
       Vlast_input_event = Fmake_event (Qnil, Qnil);
-      error ("Someone deallocated last-input-event!");
+      invalid_state ("Someone deallocated last-input-event!", Qunbound);
     }
   if (! EQ (event, Vlast_input_event))
     Fcopy_event (event, Vlast_input_event);
@@ -3173,10 +3178,11 @@ munge_keymap_translate (struct command_builder *builder,
 	  return result;
 	}
 
-      signal_simple_error ((munge == MUNGE_ME_FUNCTION_KEY ?
-			    "Invalid binding in function-key-map" :
-			    "Invalid binding in key-translation-map"),
-			   result);
+      signal_error (Qinvalid_key_binding,
+			 (munge == MUNGE_ME_FUNCTION_KEY ?
+			  "Invalid binding in function-key-map" :
+			  "Invalid binding in key-translation-map"),
+			 result);
     }
 
   return Qnil;
@@ -3438,7 +3444,7 @@ Set the maximum number of events to be stored internally.
 
   CHECK_INT (size);
   if (XINT (size) <= 0)
-    error ("Recent keys ring size must be positive");
+    invalid_argument ("Recent keys ring size must be positive", size);
   if (XINT (size) == recent_keys_ring_size)
     return size;
 
@@ -3873,7 +3879,7 @@ execute_command_event (struct command_builder *command_builder,
   if (XEVENT (Vlast_command_event)->event_type == dead_event)
     {
       Vlast_command_event = Fmake_event (Qnil, Qnil);
-      error ("Someone deallocated the last-command-event!");
+      invalid_state ("Someone deallocated the last-command-event!", Qunbound);
     }
 
   if (! EQ (event, Vlast_command_event))
@@ -4445,7 +4451,7 @@ If FILENAME is nil, close any open dribble file.
 		 O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
 		 CREAT_MODE);
       if (fd < 0)
-	error ("Unable to create dribble file");
+	report_file_error ("Unable to create dribble file", filename);
       Vdribble_file = make_filedesc_output_stream (fd, 0, 0, LSTR_CLOSING);
 #ifdef MULE
       Vdribble_file =
@@ -4484,10 +4490,11 @@ syms_of_event_stream (void)
   INIT_LRECORD_IMPLEMENTATION (command_builder);
   INIT_LRECORD_IMPLEMENTATION (timeout);
 
-  defsymbol (&Qdisabled, "disabled");
-  defsymbol (&Qcommand_event_p, "command-event-p");
+  DEFSYMBOL (Qdisabled);
+  DEFSYMBOL (Qcommand_event_p);
 
-  DEFERROR_STANDARD (Qundefined_keystroke_sequence, Qinvalid_argument);
+  DEFERROR_STANDARD (Qundefined_keystroke_sequence, Qsyntax_error);
+  DEFERROR_STANDARD (Qinvalid_key_binding, Qinvalid_state);
 
   DEFSUBR (Frecent_keys);
   DEFSUBR (Frecent_keys_ring_size);
@@ -4512,20 +4519,18 @@ syms_of_event_stream (void)
   DEFSUBR (Fopen_dribble_file);
   DEFSUBR (Fcurrent_event_timestamp);
 
-  defsymbol (&Qpre_command_hook, "pre-command-hook");
-  defsymbol (&Qpost_command_hook, "post-command-hook");
-  defsymbol (&Qunread_command_events, "unread-command-events");
-  defsymbol (&Qunread_command_event, "unread-command-event");
-  defsymbol (&Qpre_idle_hook, "pre-idle-hook");
-  defsymbol (&Qhandle_pre_motion_command, "handle-pre-motion-command");
-  defsymbol (&Qhandle_post_motion_command, "handle-post-motion-command");
-  defsymbol (&Qretry_undefined_key_binding_unshifted,
-	     "retry-undefined-key-binding-unshifted");
-  defsymbol (&Qauto_show_make_point_visible,
-	     "auto-show-make-point-visible");
+  DEFSYMBOL (Qpre_command_hook);
+  DEFSYMBOL (Qpost_command_hook);
+  DEFSYMBOL (Qunread_command_events);
+  DEFSYMBOL (Qunread_command_event);
+  DEFSYMBOL (Qpre_idle_hook);
+  DEFSYMBOL (Qhandle_pre_motion_command);
+  DEFSYMBOL (Qhandle_post_motion_command);
+  DEFSYMBOL (Qretry_undefined_key_binding_unshifted);
+  DEFSYMBOL (Qauto_show_make_point_visible);
 
-  defsymbol (&Qself_insert_defer_undo, "self-insert-defer-undo");
-  defsymbol (&Qcancel_mode_internal, "cancel-mode-internal");
+  DEFSYMBOL (Qself_insert_defer_undo);
+  DEFSYMBOL (Qcancel_mode_internal);
 }
 
 void

@@ -219,7 +219,7 @@ mswindows_get_files (char *dirfile, int nowild, Lisp_Object pattern,
 	      if (fh == INVALID_HANDLE_VALUE)
 		{
 		  report_file_error ("Opening directory",
-				     list1(build_string(dirfile)));
+				     build_string (dirfile));
 		}
 	    }
 	  else
@@ -232,7 +232,7 @@ mswindows_get_files (char *dirfile, int nowild, Lisp_Object pattern,
 		    }
 		  FindClose(fh);
 		  report_file_error ("Reading directory",
-				     list1(build_string(dirfile)));
+				     build_string (dirfile));
 		}
 	    }
 
@@ -620,7 +620,7 @@ switches do not contain `d', so that a full listing is expected.
 void
 syms_of_dired_mswindows (void)
 {
-  defsymbol (&Qmswindows_insert_directory, "mswindows-insert-directory");
+  DEFSYMBOL (Qmswindows_insert_directory);
 
   DEFSUBR (Fmswindows_insert_directory);
 }

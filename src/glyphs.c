@@ -183,7 +183,7 @@ decode_device_ii_format (Lisp_Object device, Lisp_Object format,
 	}
     }
 
-  maybe_signal_simple_error ("Invalid image-instantiator format", format,
+  maybe_invalid_argument ("Invalid image-instantiator format", format,
 			     Qimage, errb);
 
   return 0;
@@ -315,7 +315,7 @@ specifiers will not be affected.
 	  (!NILP (XCDR (XCDR (mapping))) &&
 	   (!CONSP (XCDR (XCDR (mapping))) ||
 	    !NILP (XCDR (XCDR (XCDR (mapping)))))))
-	signal_simple_error ("Invalid mapping form", mapping);
+	invalid_argument ("Invalid mapping form", mapping);
       else
 	{
 	  Lisp_Object exp = XCAR (mapping);
@@ -400,7 +400,7 @@ process_image_string_instantiator (Lisp_Object data,
     }
 
   /* Oh well. */
-  signal_simple_error ("Unable to interpret glyph instantiator",
+  invalid_argument ("Unable to interpret glyph instantiator",
 		       data);
 
   return Qnil;
@@ -484,7 +484,7 @@ Use `set-glyph-image' on glyphs to register instantiator changes.  */
 
   CHECK_VECTOR (instantiator);
   if (!KEYWORDP (keyword))
-    signal_simple_error ("instantiator property must be a keyword", keyword);
+    invalid_argument ("instantiator property must be a keyword", keyword);
 
   elt = XVECTOR_DATA (instantiator);
   len = XVECTOR_LENGTH (instantiator);
@@ -544,7 +544,7 @@ file_or_data_must_be_present (Lisp_Object instantiator)
 {
   if (NILP (find_keyword_in_vector (instantiator, Q_file)) &&
       NILP (find_keyword_in_vector (instantiator, Q_data)))
-    signal_simple_error ("Must supply either :file or :data",
+    sferror ("Must supply either :file or :data",
 			 instantiator);
 }
 
@@ -552,14 +552,14 @@ void
 data_must_be_present (Lisp_Object instantiator)
 {
   if (NILP (find_keyword_in_vector (instantiator, Q_data)))
-    signal_simple_error ("Must supply :data", instantiator);
+    sferror ("Must supply :data", instantiator);
 }
 
 static void
 face_must_be_present (Lisp_Object instantiator)
 {
   if (NILP (find_keyword_in_vector (instantiator, Q_face)))
-    signal_simple_error ("Must supply :face", instantiator);
+    sferror ("Must supply :face", instantiator);
 }
 
 /* utility function useful in retrieving data from a file. */
@@ -696,11 +696,12 @@ get_image_instantiator_governing_domain (Lisp_Object instantiator,
 
   if (governing_domain == GOVERNING_DOMAIN_WINDOW
       && NILP (DOMAIN_WINDOW (domain)))
-    signal_simple_error_2 ("Domain for this instantiator must be resolvable to a window",
-			   instantiator, domain);
+    invalid_argument_2
+      ("Domain for this instantiator must be resolvable to a window",
+       instantiator, domain);
   else if (governing_domain == GOVERNING_DOMAIN_FRAME
 	   && NILP (DOMAIN_FRAME (domain)))
-    signal_simple_error_2
+    invalid_argument_2
       ("Domain for this instantiator must be resolvable to a frame",
        instantiator, domain);
 
@@ -767,7 +768,7 @@ instantiate_image_instantiator (Lisp_Object governing_domain,
   GCPRO1 (ii);
   if (!valid_image_instantiator_format_p (INSTANTIATOR_TYPE (instantiator),
 					  DOMAIN_DEVICE (governing_domain)))
-    signal_simple_error
+    invalid_argument
       ("Image instantiator format is invalid in this locale.",
        instantiator);
 
@@ -783,7 +784,7 @@ instantiate_image_instantiator (Lisp_Object governing_domain,
 
   if (!HAS_IIFORMAT_METH_P (meths, instantiate)
       && (!device_meths || !HAS_IIFORMAT_METH_P (device_meths, instantiate)))
-    signal_simple_error
+    invalid_argument
       ("Don't know how to instantiate this image instantiator?",
        instantiator);
 
@@ -905,7 +906,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (obj);
 
   if (print_readably)
-    error ("printing unreadable object #<image-instance 0x%x>",
+    printing_unreadable_object ("#<image-instance 0x%x>",
            ii->header.uid);
   write_c_string ("#<image-instance (", printcharfun);
   print_internal (Fimage_instance_type (obj), printcharfun, 0);
@@ -1303,7 +1304,7 @@ decode_image_instance_type (Lisp_Object type, Error_behavior errb)
   if (EQ (type, Qsubwindow))    return IMAGE_SUBWINDOW;
   if (EQ (type, Qwidget))    return IMAGE_WIDGET;
 
-  maybe_signal_simple_error ("Invalid image-instance type", type,
+  maybe_invalid_constant ("Invalid image-instance type", type,
 			     Qimage, errb);
 
   return IMAGE_UNKNOWN; /* not reached */
@@ -1376,8 +1377,8 @@ DOESNT_RETURN
 incompatible_image_types (Lisp_Object instantiator, int given_dest_mask,
 			  int desired_dest_mask)
 {
-  signal_error
-    (Qerror,
+  signal_error_1
+    (Qinvalid_argument,
      list2
      (emacs_doprnt_string_lisp_2
       ((const Bufbyte *)
@@ -1457,7 +1458,7 @@ make_image_instance_1 (Lisp_Object data, Lisp_Object domain,
   Lisp_Object governing_domain;
 
   if (IMAGE_INSTANCEP (data))
-    signal_simple_error ("Image instances not allowed here", data);
+    invalid_argument ("Image instances not allowed here", data);
   image_validate (data);
   domain = decode_domain (domain);
   /* instantiate_image_instantiator() will abort if given an
@@ -1470,7 +1471,7 @@ make_image_instance_1 (Lisp_Object data, Lisp_Object domain,
   /* After normalizing the data, it's always either an image instance (which
      we filtered out above) or a vector. */
   if (EQ (INSTANTIATOR_TYPE (data), Qinherit))
-    signal_simple_error ("Inheritance not allowed here", data);
+    invalid_argument ("Inheritance not allowed here", data);
   governing_domain =
     get_image_instantiator_governing_domain (data, domain);
   ii = instantiate_image_instantiator (governing_domain, domain, data,
@@ -2141,15 +2142,33 @@ invalidate_glyph_geometry_maybe (Lisp_Object glyph_or_ii, struct window* w)
 DOESNT_RETURN
 signal_image_error (const char *reason, Lisp_Object frob)
 {
-  signal_error (Qimage_conversion_error,
-		list2 (build_translated_string (reason), frob));
+  signal_error (Qimage_conversion_error, reason, frob);
 }
 
 DOESNT_RETURN
 signal_image_error_2 (const char *reason, Lisp_Object frob0, Lisp_Object frob1)
 {
-  signal_error (Qimage_conversion_error,
-		list3 (build_translated_string (reason), frob0, frob1));
+  signal_error_2 (Qimage_conversion_error, reason, frob0, frob1);
+}
+
+DOESNT_RETURN
+signal_double_image_error (const char *string1, const char *string2,
+			   Lisp_Object data)
+{
+  signal_error_1 (Qimage_conversion_error,
+                list3 (build_translated_string (string1),
+		       build_translated_string (string2),
+		       data));
+}
+
+DOESNT_RETURN
+signal_double_image_error_2 (const char *string1, const char *string2,
+			     Lisp_Object data1, Lisp_Object data2)
+{
+  signal_error_1 (Qimage_conversion_error,
+                list4 (build_translated_string (string1),
+		       build_translated_string (string2),
+		       data1, data2));
 }
 
 /****************************************************************************
@@ -2475,9 +2494,9 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
 					     console_type);
 
   if (CONSP (file)) /* failure locating filename */
-    signal_double_file_error ("Opening pixmap file",
-			      "no such file or directory",
-			      Fcar (file));
+    signal_double_image_error ("Opening pixmap file",
+			       "no such file or directory",
+			       Fcar (file));
 
   if (NILP (file)) /* no conversion necessary */
     RETURN_UNGCPRO (inst);
@@ -2518,7 +2537,7 @@ check_valid_xbm_inline (Lisp_Object data)
       !CONSP (XCDR (data)) ||
       !CONSP (XCDR (XCDR (data))) ||
       !NILP (XCDR (XCDR (XCDR (data)))))
-    signal_simple_error ("Must be list of 3 elements", data);
+    sferror ("Must be list of 3 elements", data);
 
   width  = XCAR (data);
   height = XCAR (XCDR (data));
@@ -2527,13 +2546,13 @@ check_valid_xbm_inline (Lisp_Object data)
   CHECK_STRING (bits);
 
   if (!NATNUMP (width))
-    signal_simple_error ("Width must be a natural number", width);
+    invalid_argument ("Width must be a natural number", width);
 
   if (!NATNUMP (height))
-    signal_simple_error ("Height must be a natural number", height);
+    invalid_argument ("Height must be a natural number", height);
 
   if (((XINT (width) * XINT (height)) / 8) > XSTRING_CHAR_LENGTH (bits))
-    signal_simple_error ("data is too short for width and height",
+    invalid_argument ("data is too short for width and height",
 			 vector3 (width, height, bits));
 }
 
@@ -2592,29 +2611,29 @@ bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
     case BitmapOpenFailed:
       {
 	/* should never happen */
-	signal_double_file_error ("Opening bitmap file",
-				  "no such file or directory",
-				  name);
+	signal_double_image_error ("Opening bitmap file",
+				   "no such file or directory",
+				   name);
       }
     case BitmapFileInvalid:
       {
 	if (ok_if_data_invalid)
 	  return Qt;
-	signal_double_file_error ("Reading bitmap file",
-				  "invalid data in file",
-				  name);
+	signal_double_image_error ("Reading bitmap file",
+				   "invalid data in file",
+				   name);
       }
     case BitmapNoMemory:
       {
-	signal_double_file_error ("Reading bitmap file",
-				  "out of memory",
-				  name);
+	signal_double_image_error ("Reading bitmap file",
+				   "out of memory",
+				   name);
       }
     default:
       {
-	signal_double_file_error_2 ("Reading bitmap file",
-				    "unknown error code",
-				    make_int (result), name);
+	signal_double_image_error_2 ("Reading bitmap file",
+				     "unknown error code",
+				     make_int (result), name);
       }
     }
 
@@ -2682,9 +2701,9 @@ xbm_normalize (Lisp_Object inst, Lisp_Object console_type,
 						  Q_mask_data, console_type);
 
   if (CONSP (file)) /* failure locating filename */
-    signal_double_file_error ("Opening bitmap file",
-			      "no such file or directory",
-			      Fcar (file));
+    signal_double_image_error ("Opening bitmap file",
+			       "no such file or directory",
+			       Fcar (file));
 
   if (NILP (file) && NILP (mask_file)) /* no conversion necessary */
     RETURN_UNGCPRO (inst);
@@ -2767,9 +2786,9 @@ xface_normalize (Lisp_Object inst, Lisp_Object console_type,
 						  Q_mask_data, console_type);
 
   if (CONSP (file)) /* failure locating filename */
-    signal_double_file_error ("Opening bitmap file",
-			      "no such file or directory",
-			      Fcar (file));
+    signal_double_image_error ("Opening bitmap file",
+			       "no such file or directory",
+			       Fcar (file));
 
   if (NILP (file) && NILP (mask_file)) /* no conversion necessary */
     RETURN_UNGCPRO (inst);
@@ -2880,20 +2899,20 @@ pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
       }
     case XpmNoMemory:
       {
-	signal_double_file_error ("Reading pixmap file",
-				  "out of memory", name);
+	signal_double_image_error ("Reading pixmap file",
+				   "out of memory", name);
       }
     case XpmOpenFailed:
       {
 	/* should never happen? */
-	signal_double_file_error ("Opening pixmap file",
-				  "no such file or directory", name);
+	signal_double_image_error ("Opening pixmap file",
+				   "no such file or directory", name);
       }
     default:
       {
-	signal_double_file_error_2 ("Parsing pixmap file",
-				    "unknown error code",
-				    make_int (result), name);
+	signal_double_image_error_2 ("Parsing pixmap file",
+				     "unknown error code",
+				     make_int (result), name);
 	break;
       }
     }
@@ -2914,7 +2933,7 @@ check_valid_xpm_color_symbols (Lisp_Object data)
 	  !STRINGP (XCAR (XCAR (rest))) ||
 	  (!STRINGP (XCDR (XCAR (rest))) &&
 	   !COLOR_SPECIFIERP (XCDR (XCAR (rest)))))
-	signal_simple_error ("Invalid color symbol alist", data);
+	sferror ("Invalid color symbol alist", data);
     }
 }
 
@@ -2949,7 +2968,7 @@ evaluate_xpm_color_symbols (void)
       if (NILP (value))
 	continue;
       if (!STRINGP (value) && !COLOR_SPECIFIERP (value))
-	signal_simple_error
+	invalid_argument
 	  ("Result from xpm-color-symbols eval must be nil, string, or color",
 	   value);
       results = Fcons (Fcons (name, value), results);
@@ -2981,9 +3000,9 @@ xpm_normalize (Lisp_Object inst, Lisp_Object console_type,
 					     console_type);
 
   if (CONSP (file)) /* failure locating filename */
-    signal_double_file_error ("Opening pixmap file",
-			      "no such file or directory",
-			      Fcar (file));
+    signal_double_image_error ("Opening pixmap file",
+			       "no such file or directory",
+			       Fcar (file));
 
   color_symbols = find_keyword_in_vector_or_given (inst, Q_color_symbols,
 						   Qunbound);
@@ -3140,11 +3159,11 @@ image_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	  if (mask & dest_mask)
 	    return instantiator;
 	  else
-	    signal_simple_error ("Type of image instance not allowed here",
+	    invalid_argument ("Type of image instance not allowed here",
 				 instantiator);
 	}
       else
-	signal_simple_error_2 ("Wrong domain for image instance",
+	invalid_argument_2 ("Wrong domain for image instance",
 			       instantiator, domain);
     }
   /* How ugly !! An image instanciator that uses a kludgy syntax to snarf in
@@ -3284,8 +3303,7 @@ image_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 #endif
 	}
       else if (NILP (instance))
-	signal_simple_error ("Can't instantiate image (probably cached)",
-			     instantiator);
+	gui_error ("Can't instantiate image (probably cached)", instantiator);
       /* We found an instance. However, because we are using the glyph
          as the hash key instead of the instantiator, the current
          instantiator may not be the same as the original. Thus we
@@ -3335,12 +3353,12 @@ image_validate (Lisp_Object instantiator)
       int i;
 
       if (instantiator_len < 1)
-	signal_simple_error ("Vector length must be at least 1",
+	sferror ("Vector length must be at least 1",
 			     instantiator);
 
       meths = decode_image_instantiator_format (elt[0], ERROR_ME);
       if (!(instantiator_len & 1))
-	signal_simple_error
+	sferror
 	  ("Must have alternating keyword/value pairs", instantiator);
 
       GCPRO1 (already_seen);
@@ -3353,19 +3371,19 @@ image_validate (Lisp_Object instantiator)
 
 	  CHECK_SYMBOL (keyword);
 	  if (!SYMBOL_IS_KEYWORD (keyword))
-	    signal_simple_error ("Symbol must begin with a colon", keyword);
+	    invalid_argument ("Symbol must begin with a colon", keyword);
 
 	  for (j = 0; j < Dynarr_length (meths->keywords); j++)
 	    if (EQ (keyword, Dynarr_at (meths->keywords, j).keyword))
 	      break;
 
 	  if (j == Dynarr_length (meths->keywords))
-	    signal_simple_error ("Unrecognized keyword", keyword);
+	    invalid_argument ("Unrecognized keyword", keyword);
 
 	  if (!Dynarr_at (meths->keywords, j).multiple_p)
 	    {
 	      if (!NILP (memq_no_quit (keyword, already_seen)))
-		signal_simple_error
+		sferror
 		  ("Keyword may not appear more than once", keyword);
 	      already_seen = Fcons (keyword, already_seen);
 	    }
@@ -3378,7 +3396,7 @@ image_validate (Lisp_Object instantiator)
       MAYBE_IIFORMAT_METH (meths, validate, (instantiator));
     }
   else
-    signal_simple_error ("Must be string or vector", instantiator);
+    invalid_argument ("Must be string or vector", instantiator);
 }
 
 static void
@@ -3561,7 +3579,7 @@ print_glyph (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   char buf[20];
 
   if (print_readably)
-    error ("printing unreadable object #<glyph 0x%x>", glyph->header.uid);
+    printing_unreadable_object ("#<glyph 0x%x>", glyph->header.uid);
 
   write_c_string ("#<glyph (", printcharfun);
   print_internal (Fglyph_type (obj), printcharfun, 0);
@@ -3756,7 +3774,7 @@ decode_glyph_type (Lisp_Object type, Error_behavior errb)
   if (EQ (type, Qpointer)) return GLYPH_POINTER;
   if (EQ (type, Qicon))    return GLYPH_ICON;
 
-  maybe_signal_simple_error ("Invalid glyph type", type, Qimage, errb);
+  maybe_invalid_constant ("Invalid glyph type", type, Qimage, errb);
 
   return GLYPH_UNKNOWN;
 }
@@ -4708,7 +4726,7 @@ subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object height = find_keyword_in_vector (instantiator, Q_pixel_height);
 
   if (NILP (frame))
-    signal_simple_error ("No selected frame", device);
+    invalid_state ("No selected frame", device);
 
   if (!(dest_mask & IMAGE_SUBWINDOW_MASK))
     incompatible_image_types (instantiator, dest_mask, IMAGE_SUBWINDOW_MASK);
@@ -5008,7 +5026,7 @@ syms_of_glyphs (void)
 
   /* image instances */
 
-  defsymbol (&Qimage_instancep, "image-instance-p");
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qimage_instancep);
 
   DEFSYMBOL (Qnothing_image_instance_p);
   DEFSYMBOL (Qtext_image_instance_p);
@@ -5082,7 +5100,7 @@ syms_of_glyphs (void)
   DEFSUBR (Fglyph_animated_timeout_handler);
 
   /* Errors */
-  DEFERROR_STANDARD (Qimage_conversion_error, Qio_error);
+  DEFERROR_STANDARD (Qimage_conversion_error, Qconversion_error);
 }
 
 static const struct lrecord_description image_specifier_description[] = {

@@ -143,8 +143,8 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   char buf[200];
 
   if (print_readably)
-    error ("printing unreadable object #<frame %s 0x%x>",
-           XSTRING_DATA (frm->name), frm->header.uid);
+    printing_unreadable_object ("#<frame %s 0x%x>",
+				XSTRING_DATA (frm->name), frm->header.uid);
 
   sprintf (buf, "#<%s-frame ", !FRAME_LIVE_P (frm) ? "dead" :
 	   FRAME_TYPE_NAME (frm));
@@ -263,7 +263,7 @@ setup_frame_without_minibuffer (struct frame *f, Lisp_Object mini_window)
   if (!NILP (mini_window)
       && !EQ (DEVICE_CONSOLE (XDEVICE (device)),
 	      FRAME_CONSOLE (XFRAME (XWINDOW (mini_window)->frame))))
-    error ("frame and minibuffer must be on the same console");
+    invalid_argument ("frame and minibuffer must be on the same console", Qunbound);
 
   /* Do not create a default minibuffer frame on printer devices.  */
   if (NILP (mini_window)
@@ -394,7 +394,7 @@ See `set-frame-properties', `default-x-frame-plist', and
 
   if (!NILP (Fstring_match (make_string ((const Bufbyte *) "\\.", 2), name,
 			    Qnil, Qnil)))
-    signal_simple_error (". not allowed in frame names", name);
+    syntax_error (". not allowed in frame names", name);
 
   f = allocate_frame_core (device);
   XSETFRAME (frame, f);
@@ -425,7 +425,7 @@ See `set-frame-properties', `default-x-frame-plist', and
   else if (EQ (minibuf, Qt) || UNBOUNDP (minibuf))
     setup_normal_frame (f);
   else
-    signal_simple_error ("Invalid value for `minibuffer'", minibuf);
+    invalid_argument ("Invalid value for `minibuffer'", minibuf);
 
   update_frame_window_mirror (f);
 
@@ -790,7 +790,7 @@ selected_frame (void)
   Lisp_Object device = Fselected_device (Qnil);
   Lisp_Object frame = DEVICE_SELECTED_FRAME (XDEVICE (device));
   if (NILP (frame))
-    signal_simple_error ("No frames exist on device", device);
+    gui_error ("No frames exist on device", device);
   return XFRAME (frame);
 }
 
@@ -808,7 +808,7 @@ device_selected_frame (struct device *d)
     {
       Lisp_Object device;
       XSETDEVICE (device, d);
-      signal_simple_error ("No frames exist on device", device);
+      gui_error ("No frames exist on device", device);
     }
   return XFRAME (frame);
 }
@@ -957,7 +957,7 @@ If FRAME is the selected frame, this makes WINDOW the selected window.
   CHECK_LIVE_WINDOW (window);
 
   if (! EQ (frame, WINDOW_FRAME (XWINDOW (window))))
-    error ("In `set-frame-selected-window', WINDOW is not on FRAME");
+    invalid_argument ("In `set-frame-selected-window', WINDOW is not on FRAME", Qunbound);
 
   if (XFRAME (frame) == selected_frame ())
     return Fselect_window (window, Qnil);
@@ -1347,7 +1347,7 @@ delete_frame_internal (struct frame *f, int force,
      So we put it back.  */
   if (!force && !allow_deletion_of_last_visible_frame &&
       !other_visible_frames (f))
-    error ("Attempt to delete the sole visible or iconified frame");
+    invalid_operation ("Attempt to delete the sole visible or iconified frame", Qunbound);
 
   /* Does this frame have a minibuffer, and is it the surrogate
      minibuffer for any other frame?  */
@@ -1366,7 +1366,7 @@ delete_frame_internal (struct frame *f, int force,
 	    {
 	      /* We've found another frame whose minibuffer is on
 		 this frame. */
-	      signal_simple_error
+	      gui_error
 		("Attempt to delete a surrogate minibuffer frame", frame);
 	    }
 	}
@@ -1389,7 +1389,7 @@ delete_frame_internal (struct frame *f, int force,
 					     (XFRAME (this)),
 					     Qnil)))
 	      /* We've found a popup frame whose parent is this frame. */
-	      signal_simple_error
+	      gui_error
 		("Attempt to delete a frame with live popups", frame);
 	  }
       }
@@ -1924,7 +1924,7 @@ you may do so.
   sel_frame = XFRAME (DEVICE_SELECTED_FRAME (d));
 
   if (NILP (force) && !other_visible_frames (f))
-    error ("Attempt to make invisible the sole visible or iconified frame");
+    invalid_operation ("Attempt to make invisible the sole visible or iconified frame", Qunbound);
 
   /* Don't allow minibuf_window to remain on a deleted frame.  */
   if (EQ (f->minibuffer_window, minibuf_window))
@@ -2159,12 +2159,12 @@ store_minibuf_frame_prop (struct frame *f, Lisp_Object val)
   if (WINDOWP (val))
     {
       if (! MINI_WINDOW_P (XWINDOW (val)))
-	signal_simple_error
+	gui_error
 	  ("Surrogate minibuffer windows must be minibuffer windows",
 	   val);
 
       if (FRAME_HAS_MINIBUF_P (f) || FRAME_MINIBUF_ONLY_P (f))
-	signal_simple_error
+	gui_error
 	  ("Can't change the surrogate minibuffer of a frame with its own minibuffer", frame);
 
       /* Install the chosen minibuffer window, with proper buffer.  */
@@ -2173,7 +2173,7 @@ store_minibuf_frame_prop (struct frame *f, Lisp_Object val)
   else if (EQ (val, Qt))
     {
       if (FRAME_HAS_MINIBUF_P (f) || FRAME_MINIBUF_ONLY_P (f))
-	signal_simple_error
+	gui_error
 	  ("Frame already has its own minibuffer", frame);
       else
 	{
@@ -3206,69 +3206,69 @@ syms_of_frame (void)
 {
   INIT_LRECORD_IMPLEMENTATION (frame);
 
-  defsymbol (&Qdelete_frame_hook, "delete-frame-hook");
-  defsymbol (&Qselect_frame_hook, "select-frame-hook");
-  defsymbol (&Qdeselect_frame_hook, "deselect-frame-hook");
-  defsymbol (&Qcreate_frame_hook, "create-frame-hook");
-  defsymbol (&Qcustom_initialize_frame, "custom-initialize-frame");
-  defsymbol (&Qmouse_enter_frame_hook, "mouse-enter-frame-hook");
-  defsymbol (&Qmouse_leave_frame_hook, "mouse-leave-frame-hook");
-  defsymbol (&Qmap_frame_hook, "map-frame-hook");
-  defsymbol (&Qunmap_frame_hook, "unmap-frame-hook");
+  DEFSYMBOL (Qdelete_frame_hook);
+  DEFSYMBOL (Qselect_frame_hook);
+  DEFSYMBOL (Qdeselect_frame_hook);
+  DEFSYMBOL (Qcreate_frame_hook);
+  DEFSYMBOL (Qcustom_initialize_frame);
+  DEFSYMBOL (Qmouse_enter_frame_hook);
+  DEFSYMBOL (Qmouse_leave_frame_hook);
+  DEFSYMBOL (Qmap_frame_hook);
+  DEFSYMBOL (Qunmap_frame_hook);
 
-  defsymbol (&Qframep, "framep");
-  defsymbol (&Qframe_live_p, "frame-live-p");
-  defsymbol (&Qdelete_frame, "delete-frame");
-  defsymbol (&Qsynchronize_minibuffers, "synchronize-minibuffers");
-  defsymbol (&Qbuffer_predicate, "buffer-predicate");
-  defsymbol (&Qframe_being_created, "frame-being-created");
-  defsymbol (&Qmake_initial_minibuffer_frame, "make-initial-minibuffer-frame");
+  DEFSYMBOL (Qframep);
+  DEFSYMBOL (Qframe_live_p);
+  DEFSYMBOL (Qdelete_frame);
+  DEFSYMBOL (Qsynchronize_minibuffers);
+  DEFSYMBOL (Qbuffer_predicate);
+  DEFSYMBOL (Qframe_being_created);
+  DEFSYMBOL (Qmake_initial_minibuffer_frame);
 
-  defsymbol (&Qframe_title_format, "frame-title-format");
-  defsymbol (&Qframe_icon_title_format, "frame-icon-title-format");
+  DEFSYMBOL (Qframe_title_format);
+  DEFSYMBOL (Qframe_icon_title_format);
 
-  defsymbol (&Qhidden, "hidden");
-  defsymbol (&Qvisible, "visible");
-  defsymbol (&Qiconic, "iconic");
-  defsymbol (&Qinvisible, "invisible");
-  defsymbol (&Qvisible_iconic, "visible-iconic");
-  defsymbol (&Qinvisible_iconic, "invisible-iconic");
-  defsymbol (&Qnomini, "nomini");
-  defsymbol (&Qvisible_nomini, "visible-nomini");
-  defsymbol (&Qiconic_nomini, "iconic-nomini");
-  defsymbol (&Qinvisible_nomini, "invisible-nomini");
-  defsymbol (&Qvisible_iconic_nomini, "visible-iconic-nomini");
-  defsymbol (&Qinvisible_iconic_nomini, "invisible-iconic-nomini");
+  DEFSYMBOL (Qhidden);
+  DEFSYMBOL (Qvisible);
+  DEFSYMBOL (Qiconic);
+  DEFSYMBOL (Qinvisible);
+  DEFSYMBOL (Qvisible_iconic);
+  DEFSYMBOL (Qinvisible_iconic);
+  DEFSYMBOL (Qnomini);
+  DEFSYMBOL (Qvisible_nomini);
+  DEFSYMBOL (Qiconic_nomini);
+  DEFSYMBOL (Qinvisible_nomini);
+  DEFSYMBOL (Qvisible_iconic_nomini);
+  DEFSYMBOL (Qinvisible_iconic_nomini);
 
-  defsymbol (&Qminibuffer, "minibuffer");
-  defsymbol (&Qunsplittable, "unsplittable");
-  defsymbol (&Qinternal_border_width, "internal-border-width");
-  defsymbol (&Qtop_toolbar_shadow_color, "top-toolbar-shadow-color");
-  defsymbol (&Qbottom_toolbar_shadow_color, "bottom-toolbar-shadow-color");
-  defsymbol (&Qbackground_toolbar_color, "background-toolbar-color");
-  defsymbol (&Qtop_toolbar_shadow_pixmap, "top-toolbar-shadow-pixmap");
-  defsymbol (&Qbottom_toolbar_shadow_pixmap, "bottom-toolbar-shadow-pixmap");
-  defsymbol (&Qtoolbar_shadow_thickness, "toolbar-shadow-thickness");
-  defsymbol (&Qscrollbar_placement, "scrollbar-placement");
-  defsymbol (&Qinter_line_space, "inter-line-space");
+  DEFSYMBOL (Qminibuffer);
+  DEFSYMBOL (Qunsplittable);
+  DEFSYMBOL (Qinternal_border_width);
+  DEFSYMBOL (Qtop_toolbar_shadow_color);
+  DEFSYMBOL (Qbottom_toolbar_shadow_color);
+  DEFSYMBOL (Qbackground_toolbar_color);
+  DEFSYMBOL (Qtop_toolbar_shadow_pixmap);
+  DEFSYMBOL (Qbottom_toolbar_shadow_pixmap);
+  DEFSYMBOL (Qtoolbar_shadow_thickness);
+  DEFSYMBOL (Qscrollbar_placement);
+  DEFSYMBOL (Qinter_line_space);
   /* Qiconic already in this function. */
-  defsymbol (&Qvisual_bell, "visual-bell");
-  defsymbol (&Qbell_volume, "bell-volume");
-  defsymbol (&Qpointer_background, "pointer-background");
-  defsymbol (&Qpointer_color, "pointer-color");
-  defsymbol (&Qtext_pointer, "text-pointer");
-  defsymbol (&Qspace_pointer, "space-pointer");
-  defsymbol (&Qmodeline_pointer, "modeline-pointer");
-  defsymbol (&Qgc_pointer, "gc-pointer");
-  defsymbol (&Qinitially_unmapped, "initially-unmapped");
-  defsymbol (&Quse_backing_store, "use-backing-store");
-  defsymbol (&Qborder_color, "border-color");
-  defsymbol (&Qborder_width, "border-width");
+  DEFSYMBOL (Qvisual_bell);
+  DEFSYMBOL (Qbell_volume);
+  DEFSYMBOL (Qpointer_background);
+  DEFSYMBOL (Qpointer_color);
+  DEFSYMBOL (Qtext_pointer);
+  DEFSYMBOL (Qspace_pointer);
+  DEFSYMBOL (Qmodeline_pointer);
+  DEFSYMBOL (Qgc_pointer);
+  DEFSYMBOL (Qinitially_unmapped);
+  DEFSYMBOL (Quse_backing_store);
+  DEFSYMBOL (Qborder_color);
+  DEFSYMBOL (Qborder_width);
   /* Qwidth, Qheight, Qleft, Qtop in general.c */
-  defsymbol (&Qset_specifier, "set-specifier");
-  defsymbol (&Qset_face_property, "set-face-property");
-  defsymbol (&Qface_property_instance, "face-property-instance");
-  defsymbol (&Qframe_property_alias, "frame-property-alias");
+  DEFSYMBOL (Qset_specifier);
+  DEFSYMBOL (Qset_face_property);
+  DEFSYMBOL (Qface_property_instance);
+  DEFSYMBOL (Qframe_property_alias);
 
   DEFSUBR (Fmake_frame);
   DEFSUBR (Fframep);

@@ -173,7 +173,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      Lisp_Object cascade = desc;
 	      desc = Fcdr (desc);
 	      if (NILP (desc))
-		syntax_error ("Keyword in menu lacks a value", cascade);
+		sferror ("Keyword in menu lacks a value", cascade);
 	      val = Fcar (desc);
 	      desc = Fcdr (desc);
 	      if (EQ (key, Q_included))
@@ -190,14 +190,14 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		       || CHARP (val))
 		    wv->accel = LISP_TO_VOID (val);
 		  else
-		    syntax_error ("bad keyboard accelerator", val);
+		    invalid_argument ("bad keyboard accelerator", val);
 		}
 	      else if (EQ (key, Q_label))
 		{
 		  /* implement in 21.2 */
 		}
 	      else
-		syntax_error ("Unknown menu cascade keyword", cascade);
+		invalid_argument ("Unknown menu cascade keyword", cascade);
 	    }
 
 	  if ((!NILP (config_tag)
@@ -284,7 +284,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	}
       else
 	{
-	  syntax_error ("Menu name (first element) must be a string", desc);
+	  sferror ("Menu name (first element) must be a string", desc);
 	}
 
       if (deep_p || menubar_root_p)
@@ -296,7 +296,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      if (menubar_root_p && NILP (child))	/* the partition */
 		{
 		  if (partition_seen)
-		    syntax_error
+		    sferror
 		      ("More than one partition (nil) in menubar description",
 		       desc);
 		  partition_seen = 1;
@@ -321,9 +321,9 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	wv = NULL;
     }
   else if (NILP (desc))
-    syntax_error ("nil may not appear in menu descriptions", desc);
+    sferror ("nil may not appear in menu descriptions", desc);
   else
-    syntax_error ("Unrecognized menu descriptor", desc);
+    sferror ("Unrecognized menu descriptor", desc);
 
  menu_item_done:
 
@@ -814,7 +814,7 @@ x_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   CHECK_STRING (XCAR (menu_desc));
   data = menu_item_descriptor_to_widget_value (menu_desc, POPUP_TYPE, 1, 1);
 
-  if (! data) error ("no menu");
+  if (! data) signal_error (Qgui_error, "no menu", Qunbound);
 
   menu_id = new_lwlib_id ();
   menu = lw_create_widget ("popup", "popup" /* data->name */, menu_id, data,
@@ -1332,7 +1332,7 @@ or by actions defined in menu-accelerator-map.
   widget_value *val;
 
   if (NILP (f->menubar_data))
-    error ("Frame has no menubar.");
+    invalid_argument ("Frame has no menubar", Qunbound);
 
   id = XPOPUP_DATA (f->menubar_data)->id;
   val = lw_get_all_values (id);

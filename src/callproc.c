@@ -138,20 +138,6 @@ call_process_cleanup (Lisp_Object fdpid)
   return Qnil;
 }
 
-static Lisp_Object fork_error;
-#if 0 /* UNUSED */
-static void
-report_fork_error (char *string, Lisp_Object data)
-{
-  Lisp_Object errstring = lisp_strerror (errno);
-
-  fork_error = Fcons (build_string (string), Fcons (errstring, data));
-
-  /* terminate this branch of the fork, without closing stdin/out/etc. */
-  _exit (1);
-}
-#endif /* unused */
-
 DEFUN ("old-call-process-internal", Fold_call_process_internal, 1, MANY, 0, /*
 Call PROGRAM synchronously in separate process, with coding-system specified.
 Arguments are
@@ -202,7 +188,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 #if defined (NO_SUBPROCESSES)
   /* Without asynchronous processes we cannot have BUFFER == 0.  */
   if (nargs >= 3 && !INTP (args[2]))
-    error ("Operating system cannot handle asynchronous subprocesses");
+    signal_error (Qunimplemented, "Operating system cannot handle asynchronous subprocesses", Qunbound);
 #endif /* NO_SUBPROCESSES */
 
   /* Do all filename munging before building new_argv because GC in
@@ -233,8 +219,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     /* This is in FSF, but it breaks everything in the presence of
        ange-ftp-visited files, so away with it.  */
     if (NILP (Ffile_accessible_directory_p (current_dir)))
-      report_file_error ("Setting current directory",
-                         Fcons (current_buffer->directory, Qnil));
+      signal_error (Qprocess_error, "Setting current directory",
+		    current_buffer->directory);
 #endif /* 0 */
     NUNGCPRO;
   }
@@ -308,12 +294,12 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   new_argv[max(nargs - 3,1)] = 0;
 
   if (NILP (path))
-    report_file_error ("Searching for program", Fcons (args[0], Qnil));
+    signal_error (Qprocess_error, "Searching for program", args[0]);
   new_argv[0] = (char *) XSTRING_DATA (path);
 
   filefd = open ((char *) XSTRING_DATA (infile), O_RDONLY | OPEN_BINARY, 0);
   if (filefd < 0)
-    report_file_error ("Opening process input file", Fcons (infile, Qnil));
+    report_process_error ("Opening process input file", infile);
 
   if (INTP (buffer))
     {
@@ -368,10 +354,9 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	if (fd1 >= 0)
 	  close (fd1);
 	errno = save_errno;
-	report_file_error ("Cannot open", Fcons(error_file, Qnil));
+	report_process_error ("Cannot open", error_file);
       }
 
-    fork_error = Qnil;
 #ifdef WIN32_NATIVE
     pid = child_setup (filefd, fd1, fd_error, new_argv,
                        (char *) XSTRING_DATA (current_dir));
@@ -424,9 +409,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       close (fd1);
   }
 
-  if (!NILP (fork_error))
-    signal_error (Qfile_error, fork_error);
-
 #ifndef WIN32_NATIVE
   if (pid < 0)
     {
@@ -434,7 +416,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       if (fd[0] >= 0)
 	close (fd[0]);
       errno = save_errno;
-      report_file_error ("Doing fork", Qnil);
+      report_process_error ("Doing fork", Qunbound);
     }
 #endif
 
@@ -787,7 +769,7 @@ child_setup (int in, int out, int err, char **new_argv,
 		  (const char* const*)env);
   if (cpid == -1)
     /* An error occurred while trying to spawn the process.  */
-    report_file_error ("Spawning child process", Qnil);
+    report_process_error ("Spawning child process", Qunbound);
   reset_standard_handles (in, out, err, handles);
   return cpid;
 #else /* not WIN32_NATIVE */

@@ -784,7 +784,7 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
       if (!GTK_IS_CONTAINER (XGTK_OBJECT (lisp_window_id)->object))
 	{
-	  signal_simple_error ("Window ID must be a GtkContainer subclass", lisp_window_id);
+	  invalid_argument ("Window ID must be a GtkContainer subclass", lisp_window_id);
 	}
 
       shell = gtk_vbox_new (FALSE, 0);
@@ -957,8 +957,8 @@ gtk_init_frame_1 (struct frame *f, Lisp_Object props)
 	popup = Fselected_frame (device);
       CHECK_LIVE_FRAME (popup);
       if (!EQ (device, FRAME_DEVICE (XFRAME (popup))))
-	signal_simple_error_2 ("Parent must be on same device as frame",
-			       device, popup);
+	invalid_argument_2 ("Parent must be on same device as frame",
+			    device, popup);
     }
 
   initially_unmapped = Fplist_get (props, Qinitially_unmapped, Qnil);
@@ -1182,7 +1182,7 @@ gtk_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
 static void
 gtk_cant_notify_wm_error (void)
 {
-  error ("Can't notify window manager of iconification.");
+  signal_error (Qgui_error, "Can't notify window manager of iconification", Qunbound);
 }
 
 /* Raise frame F.  */
@@ -1389,11 +1389,11 @@ gtk_update_frame_external_traits (struct frame* frm, Lisp_Object name)
 void
 syms_of_frame_gtk (void)
 {
-  defsymbol (&Qwindow_id, "window-id");
-  defsymbol (&Qtext_widget, "text-widget");
-  defsymbol (&Qcontainer_widget, "container-widget");
-  defsymbol (&Qshell_widget, "shell-widget");
-  defsymbol (&Qdetachable_menubar, "detachable-menubar");
+  DEFSYMBOL (Qwindow_id);
+  DEFSYMBOL (Qtext_widget);
+  DEFSYMBOL (Qcontainer_widget);
+  DEFSYMBOL (Qshell_widget);
+  DEFSYMBOL (Qdetachable_menubar);
 
 #ifdef HAVE_DRAGNDROP
   staticpro (&Vcurrent_drag_object);

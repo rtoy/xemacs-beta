@@ -536,7 +536,7 @@ Toggle accepting of GPM mouse events.
 
 	if (noninteractive)
 	{
-		error ("Can't connect to GPM in batch mode.");
+	 invalid_operation ("Can't connect to GPM in batch mode.", Qunbound);
 	}
 
 	if (!console_name)
@@ -560,7 +560,7 @@ Toggle accepting of GPM mouse events.
 	*/
 	if (!NILP (Fgpm_enabled_p (device)))
 	{
-		error ("GPM already enabled for this console.");
+	 invalid_operation ("GPM already enabled for this console.", Qunbound);
 	}
 
 	conn.eventMask = GPM_DOWN|GPM_UP|GPM_MOVE|GPM_DRAG;

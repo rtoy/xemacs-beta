@@ -276,14 +276,14 @@ COUNT was explicitly specified.
       if (n < 0)
 	{
 	  if (pos < BUF_BEGV (buf))
-	    signal_error (Qbeginning_of_buffer, Qnil);
+	    signal_error (Qbeginning_of_buffer, 0, Qunbound);
 	  else
 	    buffer_delete_range (buf, pos, BUF_PT (buf), 0);
 	}
       else
 	{
 	  if (pos > BUF_ZV (buf))
-	    signal_error (Qend_of_buffer, Qnil);
+	    signal_error (Qend_of_buffer, 0, Qunbound);
 	  else
 	    buffer_delete_range (buf, BUF_PT (buf), pos, 0);
 	}
@@ -340,8 +340,8 @@ If a prefix arg COUNT is specified, the character is inserted COUNT times.
     c = Fevent_to_character (Vlast_command_event, Qnil, Qnil, Qt);
 
   if (NILP (c))
-    signal_simple_error ("Last typed character has no ASCII equivalent",
-                         Fcopy_event (Vlast_command_event, Qnil));
+    invalid_operation ("Last typed character has no ASCII equivalent",
+		       Fcopy_event (Vlast_command_event, Qnil));
 
   CHECK_CHAR_COERCE_INT (c);
 
@@ -502,10 +502,10 @@ Invoke `self-insert-command' as if CHARACTER is entered from keyboard.
 void
 syms_of_cmds (void)
 {
-  defsymbol (&Qkill_forward_chars, "kill-forward-chars");
-  defsymbol (&Qself_insert_command, "self-insert-command");
-  defsymbol (&Qoverwrite_mode_binary, "overwrite-mode-binary");
-  defsymbol (&Qno_self_insert, "no-self-insert");
+  DEFSYMBOL (Qkill_forward_chars);
+  DEFSYMBOL (Qself_insert_command);
+  DEFSYMBOL (Qoverwrite_mode_binary);
+  DEFSYMBOL (Qno_self_insert);
 
   DEFSUBR (Fforward_char);
   DEFSUBR (Fbackward_char);

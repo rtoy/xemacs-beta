@@ -51,7 +51,7 @@ DECLARE_LRECORD (ldap, Lisp_LDAP);
 #define CHECK_LIVE_LDAP(ldap) do {					\
   CHECK_LDAP (ldap);							\
   if (!XLDAP (ldap)->ld)						\
-    signal_simple_error ("Attempting to access closed LDAP connection",	\
+    invalid_operation ("Attempting to access closed LDAP connection",	\
                          ldap);						\
 } while (0)
 

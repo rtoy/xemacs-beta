@@ -400,12 +400,12 @@ motif_clipboard_cb (Widget widget, int *data_id, int *private_id, int *reason)
 	  selection = XCDR (selection);
 
 	if (NILP (selection))
-	  signal_error (Qselection_conversion_error,
-			build_string ("no selection"));
+	  signal_error (Qselection_conversion_error, "no selection",
+			     Qunbound);
 
 	if (!STRINGP (selection))
 	  signal_error (Qselection_conversion_error,
-			build_string ("couldn't convert selection to string"));
+			     "couldn't convert selection to string", Qunbound);
 
 
 	XmClipboardCopyByName (dpy, window, *data_id,
@@ -513,7 +513,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
       int prop_id;
 
       if (x_window_to_frame (d, window)) /* #### debug */
-	error ("attempt to transfer an INCR to ourself!");
+ invalid_operation ("attempt to transfer an INCR to ourself!", Qunbound);
 #if 0
       stderr_out ("\nINCR %d\n", bytes_remaining);
 #endif
@@ -861,9 +861,7 @@ copy_multiple_data (Lisp_Object obj)
       Lisp_Object vec2 = XVECTOR_DATA (obj) [i];
       CHECK_VECTOR (vec2);
       if (XVECTOR_LENGTH (vec2) != 2)
-	signal_error (Qerror, list2 (build_string
-				     ("vectors must be of length 2"),
-                                     vec2));
+	sferror ("vectors must be of length 2", vec2);
       XVECTOR_DATA (vec) [i] = make_vector (2, Qnil);
       XVECTOR_DATA (XVECTOR_DATA (vec) [i]) [0] = XVECTOR_DATA (vec2) [0];
       XVECTOR_DATA (XVECTOR_DATA (vec) [i]) [1] = XVECTOR_DATA (vec2) [1];
@@ -938,7 +936,7 @@ x_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
   wait_delaying_user_input (selection_reply_done, 0);
 
   if (selection_reply_timed_out)
-    error ("timed out waiting for reply from selection owner");
+    signal_error (Qselection_conversion_error, "timed out waiting for reply from selection owner", Qunbound);
 
   unbind_to (speccount, Qnil);
 
@@ -1116,17 +1114,18 @@ x_get_window_property_as_lisp_data (Display *display,
     {
       if (XGetSelectionOwner (display, selection_atom))
 	/* there is a selection owner */
-	signal_error
-	  (Qselection_conversion_error,
-	   Fcons (build_string ("selection owner couldn't convert"),
-		  Fcons (x_atom_to_symbol (d, selection_atom),
-			 actual_type ?
-			 list2 (target_type, x_atom_to_symbol (d, actual_type)) :
-			 list1 (target_type))));
+	signal_error (Qselection_conversion_error,
+		      "selection owner couldn't convert",
+		      Fcons (Qunbound,
+			     Fcons (x_atom_to_symbol (d, selection_atom),
+				    actual_type ?
+				    list2 (target_type,
+					   x_atom_to_symbol (d, actual_type)) :
+				    list1 (target_type))));
       else
-	signal_error (Qerror,
-		      list2 (build_string ("no selection"),
-			     x_atom_to_symbol (d, selection_atom)));
+	signal_error (Qselection_conversion_error,
+		      "no selection",
+		      x_atom_to_symbol (d, selection_atom));
     }
 
   if (actual_type == DEVICE_XATOM_INCR (d))
@@ -1382,10 +1381,8 @@ lisp_data_to_selection_data (struct device *d,
 	      (*(Atom **) data_ret) [i] =
 		symbol_to_x_atom (d, XVECTOR_DATA (obj) [i], 0);
 	    else
-              signal_error (Qerror, /* Qselection_error */
-                            list2 (build_string
-		   ("all elements of the vector must be of the same type"),
-                                   obj));
+              syntax_error
+		("all elements of the vector must be of the same type", obj);
 	}
 #if 0 /* #### MULTIPLE doesn't work yet */
       else if (VECTORP (XVECTOR_DATA (obj) [0]))
@@ -1401,10 +1398,8 @@ lisp_data_to_selection_data (struct device *d,
 	      {
 		Lisp_Object pair = XVECTOR_DATA (obj) [i];
 		if (XVECTOR_LENGTH (pair) != 2)
-		  signal_error (Qerror,
-                                list2 (build_string
-       ("elements of the vector must be vectors of exactly two elements"),
-				  pair));
+		  syntax_error
+		    ("elements of the vector must be vectors of exactly two elements", pair);
 
 		(*(Atom **) data_ret) [i * 2] =
 		  symbol_to_x_atom (d, XVECTOR_DATA (pair) [0], 0);
@@ -1412,10 +1407,8 @@ lisp_data_to_selection_data (struct device *d,
 		  symbol_to_x_atom (d, XVECTOR_DATA (pair) [1], 0);
 	      }
 	    else
-	      signal_error (Qerror,
-                            list2 (build_string
-		   ("all elements of the vector must be of the same type"),
-                                   obj));
+	      syntax_error
+		("all elements of the vector must be of the same type", obj);
 	}
 #endif
       else
@@ -1428,10 +1421,8 @@ lisp_data_to_selection_data (struct device *d,
 	    if (CONSP (XVECTOR_DATA (obj) [i]))
 	      *format_ret = 32;
 	    else if (!INTP (XVECTOR_DATA (obj) [i]))
-	      signal_error (Qerror, /* Qselection_error */
-                            list2 (build_string
-	("all elements of the vector must be integers or conses of integers"),
-                                   obj));
+	      syntax_error
+		("all elements of the vector must be integers or conses of integers", obj);
 
 	  *data_ret = (unsigned char *) xmalloc (*size_ret * (*format_ret/8));
 	  for (i = 0; i < (int) (*size_ret); i++)
@@ -1444,9 +1435,7 @@ lisp_data_to_selection_data (struct device *d,
 	}
     }
   else
-    signal_error (Qerror, /* Qselection_error */
-                  list2 (build_string ("unrecognized selection data"),
-                         obj));
+    invalid_argument ("unrecognized selection data", obj);
 
   *type_ret = symbol_to_x_atom (d, type, 0);
 }
@@ -1540,7 +1529,7 @@ initialize_cut_buffers (Display *display, Window window)
 	 EQ (symbol, QCUT_BUFFER5) ||				\
 	 EQ (symbol, QCUT_BUFFER6) ||				\
 	 EQ (symbol, QCUT_BUFFER7)))				\
-    signal_simple_error ("Doesn't name a cutbuffer", symbol);	\
+    invalid_constant ("Doesn't name a cutbuffer", symbol);	\
 } while (0)
 
 DEFUN ("x-get-cutbuffer-internal", Fx_get_cutbuffer_internal, 1, 1, 0, /*
@@ -1567,9 +1556,9 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
   if (!data) return Qnil;
 
   if (format != 8 || type != XA_STRING)
-    signal_simple_error_2 ("Cut buffer doesn't contain 8-bit STRING data",
-			   x_atom_to_symbol (d, type),
-			   make_int (format));
+    invalid_state_2 ("Cut buffer doesn't contain 8-bit STRING data",
+		     x_atom_to_symbol (d, type),
+		     make_int (format));
 
   /* We cheat - if the string contains an ESC character, that's
      technically not allowed in a STRING, so we assume it's
@@ -1713,8 +1702,7 @@ syms_of_select_x (void)
 #endif /* CUT_BUFFER_SUPPORT */
 
   /* Unfortunately, timeout handlers must be lisp functions. */
-  defsymbol (&Qx_selection_reply_timeout_internal,
-             "x-selection-reply-timeout-internal");
+  DEFSYMBOL (Qx_selection_reply_timeout_internal);
   DEFSUBR (Fx_selection_reply_timeout_internal);
 
 #ifdef CUT_BUFFER_SUPPORT

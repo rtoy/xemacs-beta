@@ -65,22 +65,22 @@ tty_init_device (struct device *d, Lisp_Object props)
 #if 0
     case TTY_UNABLE_OPEN_DATABASE:
       suppress_early_error_handler_backtrace = 1;
-      error ("Can't access terminal information database");
+      signal_error (Qio_error, "Can't access terminal information database", Qunbound);
       break;
 #endif
     case TTY_TYPE_UNDEFINED:
       suppress_early_error_handler_backtrace = 1;
-      error ("Terminal type `%s' undefined (or can't access database?)",
-	     XSTRING_DATA (terminal_type));
+      signal_error (Qio_error, "Terminal type undefined (or can't access database?)",
+	     terminal_type);
       break;
     case TTY_TYPE_INSUFFICIENT:
       suppress_early_error_handler_backtrace = 1;
-      error ("Terminal type `%s' not powerful enough to run Emacs",
-	     XSTRING_DATA (terminal_type));
+      signal_error (Qio_error, "Terminal type not powerful enough to run Emacs",
+	     terminal_type);
       break;
     case TTY_SIZE_UNSPECIFIED:
       suppress_early_error_handler_backtrace = 1;
-      error ("Can't determine window size of terminal");
+      signal_error (Qio_error, "Can't determine window size of terminal", Qunbound);
       break;
     case TTY_INIT_SUCCESS:
       break;
@@ -188,8 +188,8 @@ tty_device_system_metrics (struct device *d,
 void
 syms_of_device_tty (void)
 {
-  defsymbol (&Qinit_pre_tty_win, "init-pre-tty-win");
-  defsymbol (&Qinit_post_tty_win, "init-post-tty-win");
+  DEFSYMBOL (Qinit_pre_tty_win);
+  DEFSYMBOL (Qinit_post_tty_win);
 }
 
 void

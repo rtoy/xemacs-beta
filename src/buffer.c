@@ -260,10 +260,9 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (print_readably)
     {
       if (!BUFFER_LIVE_P (b))
-	error ("printing unreadable object #<killed buffer>");
+	printing_unreadable_object ("#<killed buffer>");
       else
-	error ("printing unreadable object #<buffer %s>",
-	       XSTRING_DATA (b->name));
+	printing_unreadable_object ("#<buffer %s>", XSTRING_DATA (b->name));
     }
   else if (!BUFFER_LIVE_P (b))
     write_c_string ("#<killed buffer>", printcharfun);
@@ -306,8 +305,8 @@ static void
 nsberror (Lisp_Object spec)
 {
   if (STRINGP (spec))
-    error ("No buffer named %s", XSTRING_DATA (spec));
-  signal_simple_error ("Invalid buffer argument", spec);
+    invalid_argument ("No buffer named", spec);
+  invalid_argument ("Invalid buffer argument", spec);
 }
 
 DEFUN ("buffer-list", Fbuffer_list, 0, 1, 0, /*
@@ -619,7 +618,8 @@ The value is never nil.
     return buf;
 
   if (XSTRING_LENGTH (name) == 0)
-    error ("Empty string for buffer name is not allowed");
+    invalid_argument ("Empty string for buffer name is not allowed",
+		      Qunbound);
 
   b = allocate_buffer ();
 
@@ -660,9 +660,9 @@ If BASE-BUFFER is itself an indirect buffer, the base buffer for that buffer
   CHECK_STRING (name);
   name = LISP_GETTEXT (name);
   if (!NILP (Fget_buffer (name)))
-    signal_simple_error ("Buffer name already in use", name);
+    invalid_argument ("Buffer name already in use", name);
   if (XSTRING_LENGTH (name) == 0)
-    error ("Empty string for buffer name is not allowed");
+    invalid_argument ("Empty string for buffer name is not allowed", Qunbound);
 
   b = allocate_buffer ();
 
@@ -948,7 +948,7 @@ This does not change the name of the visited file (if any).
   newname = LISP_GETTEXT (newname);
 
   if (XSTRING_LENGTH (newname) == 0)
-    error ("Empty string is invalid as a buffer name");
+    invalid_argument ("Empty string is invalid as a buffer name", Qunbound);
 
   tem = Fget_buffer (newname);
   /* Don't short-circuit if UNIQUE is t.  That is a useful way to rename
@@ -963,8 +963,7 @@ This does not change the name of the visited file (if any).
       if (!NILP (unique))
 	newname = Fgenerate_new_buffer_name (newname, current_buffer->name);
       else
-	error ("Buffer name \"%s\" is in use",
-	       XSTRING_DATA (newname));
+	invalid_argument ("Buffer name is in use", newname);
     }
 
   current_buffer->name = newname;
@@ -1498,7 +1497,7 @@ Use `switch-to-buffer' or `pop-to-buffer' to switch buffers permanently.
 {
   buffer = get_buffer (buffer, 0);
   if (NILP (buffer))
-    error ("Selecting deleted or non-existent buffer");
+    invalid_operation ("Selecting deleted or non-existent buffer", Qunbound);
   set_buffer_internal (XBUFFER (buffer));
   return buffer;
 }
@@ -1586,7 +1585,7 @@ will be placed, instead of being placed at the end.
     before = get_buffer (before, 1);
 
   if (EQ (before, buffer))
-    error ("Cannot place a buffer before itself");
+    invalid_operation ("Cannot place a buffer before itself", Qunbound);
 
   bury_buffer_1 (buffer, before, &Vbuffer_alist);
   bury_buffer_1 (buffer, before, &selected_frame ()->buffer_alist);
@@ -1925,12 +1924,12 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
           if (size_in_bytes == 0)
             break;
 	  else if (size_in_bytes < 0)
-	    error ("Error converting to external format");
+	    signal_error (Qtext_conversion_error, "Error converting to external format", Qunbound);
 
 	  size_in_bytes = Lstream_write (writer, tempbuf, size_in_bytes);
 
 	  if (size_in_bytes <= 0)
-	    error ("Error converting to external format");
+	    signal_error (Qtext_conversion_error, "Error converting to external format", Qunbound);
         }
 
       /* Closing writer will close any stream at the other end of writer. */
@@ -2063,12 +2062,12 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
           if (size_in_bytes == 0)
             break;
 	  else if (size_in_bytes < 0)
-	    error ("Error converting to internal format");
+	    signal_error (Qtext_conversion_error, "Error converting to internal format", Qunbound);
 
 	  size_in_bytes = Lstream_write (writer, tempbuf, size_in_bytes);
 
 	  if (size_in_bytes <= 0)
-	    error ("Error converting to internal format");
+	    signal_error (Qtext_conversion_error, "Error converting to internal format", Qunbound);
         }
 
       /* Closing writer will close any stream at the other end of writer. */
@@ -2097,31 +2096,31 @@ syms_of_buffer (void)
 {
   INIT_LRECORD_IMPLEMENTATION (buffer);
 
-  defsymbol (&Qbuffer_live_p, "buffer-live-p");
-  defsymbol (&Qbuffer_or_string_p, "buffer-or-string-p");
-  defsymbol (&Qmode_class, "mode-class");
-  defsymbol (&Qrename_auto_save_file, "rename-auto-save-file");
-  defsymbol (&Qkill_buffer_hook, "kill-buffer-hook");
-  defsymbol (&Qpermanent_local, "permanent-local");
+  DEFSYMBOL (Qbuffer_live_p);
+  DEFSYMBOL (Qbuffer_or_string_p);
+  DEFSYMBOL (Qmode_class);
+  DEFSYMBOL (Qrename_auto_save_file);
+  DEFSYMBOL (Qkill_buffer_hook);
+  DEFSYMBOL (Qpermanent_local);
 
-  defsymbol (&Qfirst_change_hook, "first-change-hook");
-  defsymbol (&Qbefore_change_functions, "before-change-functions");
-  defsymbol (&Qafter_change_functions, "after-change-functions");
+  DEFSYMBOL (Qfirst_change_hook);
+  DEFSYMBOL (Qbefore_change_functions);
+  DEFSYMBOL (Qafter_change_functions);
 
   /* #### Obsolete, for compatibility */
-  defsymbol (&Qbefore_change_function, "before-change-function");
-  defsymbol (&Qafter_change_function, "after-change-function");
+  DEFSYMBOL (Qbefore_change_function);
+  DEFSYMBOL (Qafter_change_function);
 
-  defsymbol (&Qdefault_directory, "default-directory");
+  DEFSYMBOL (Qdefault_directory);
 
-  defsymbol (&Qget_file_buffer, "get-file-buffer");
-  defsymbol (&Qchange_major_mode_hook, "change-major-mode-hook");
+  DEFSYMBOL (Qget_file_buffer);
+  DEFSYMBOL (Qchange_major_mode_hook);
 
-  defsymbol (&Qfundamental_mode, "fundamental-mode");
+  DEFSYMBOL (Qfundamental_mode);
 
-  defsymbol (&Qfind_file_compare_truenames, "find-file-compare-truenames");
+  DEFSYMBOL (Qfind_file_compare_truenames);
 
-  defsymbol (&Qswitch_to_buffer, "switch-to-buffer");
+  DEFSYMBOL (Qswitch_to_buffer);
 
   DEFSUBR (Fbufferp);
   DEFSUBR (Fbuffer_live_p);

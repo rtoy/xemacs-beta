@@ -116,7 +116,8 @@ report_error (char *file, int fd)
 {
   if (fd)
     close (fd);
-  report_file_error ("Cannot unexec", Fcons (build_string (file), Qnil));
+  report_error_with_errno (Qio_error, "Cannot unexec",
+			   build_string (file));
 }
 #endif /* emacs */
 
@@ -129,7 +130,7 @@ report_error_1 (int fd, char *msg, int a1, int a2)
 {
   close (fd);
 #ifdef emacs
-  error (msg, a1, a2);
+  signal_ferror (Qio_error, msg, a1, a2);
 #else
   fprintf (stderr, msg, a1, a2);
   fprintf (stderr, "\n");

@@ -393,8 +393,8 @@ or the symbol from the obarray.
               Lisp_Symbol *next;
 	      if (!SYMBOLP (bucket))
 		{
-		  signal_simple_error ("Bad obarray passed to try-completions",
-				       bucket);
+		  invalid_argument ("Bad obarray passed to try-completions",
+				    bucket);
 		}
 	      next = symbol_next (XSYMBOL (bucket));
 	      elt = bucket;
@@ -927,9 +927,9 @@ message_no_translate (const char *fmt, ...)
 void
 syms_of_minibuf (void)
 {
-  defsymbol (&Qminibuffer_setup_hook, "minibuffer-setup-hook");
+  DEFSYMBOL (Qminibuffer_setup_hook);
 
-  defsymbol (&Qcompletion_ignore_case, "completion-ignore-case");
+  DEFSYMBOL (Qcompletion_ignore_case);
 
   DEFSUBR (Fminibuffer_depth);
 #if 0
@@ -942,10 +942,10 @@ syms_of_minibuf (void)
   DEFSUBR (Ftry_completion);
   DEFSUBR (Fall_completions);
 
-  defsymbol (&Qappend_message, "append-message");
-  defsymbol (&Qclear_message, "clear-message");
-  defsymbol (&Qdisplay_message, "display-message");
-  defsymbol (&Qcurrent_message_label, "current-message-label");
+  DEFSYMBOL (Qappend_message);
+  DEFSYMBOL (Qclear_message);
+  DEFSYMBOL (Qdisplay_message);
+  DEFSYMBOL (Qcurrent_message_label);
 }
 
 void

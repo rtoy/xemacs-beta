@@ -74,7 +74,7 @@ print_case_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   Lisp_Case_Table *ct = XCASE_TABLE (obj);
   char buf[200];
   if (print_readably)
-    error ("printing unreadable object #<case-table 0x%x", ct->header.uid);
+    printing_unreadable_object ("#<case-table 0x%x", ct->header.uid);
   write_c_string ("#<case-table ", printcharfun);
   sprintf (buf, "0x%x>", ct->header.uid);
   write_c_string (buf, printcharfun);
@@ -176,7 +176,7 @@ CHAR-CASE is either downcase or upcase.
   else if (EQ (char_case, Qupcase))
     return case_table_char (character, XCASE_TABLE_UPCASE (case_table));
   else
-    signal_simple_error ("Char case must be downcase or upcase", char_case);
+    invalid_constant ("Char case must be downcase or upcase", char_case);
 
   return Qnil; /* Not reached. */
 }
@@ -212,7 +212,7 @@ See also `put-case-table-pair'.
       Fput_char_table (character, value, XCASE_TABLE_EQV (case_table));
     }
   else
-    signal_simple_error ("Char case must be downcase or upcase", char_case);
+    invalid_constant ("Char case must be downcase or upcase", char_case);
 
   return Qnil;
 }
@@ -447,9 +447,9 @@ syms_of_casetab (void)
 {
   INIT_LRECORD_IMPLEMENTATION (case_table);
 
-  defsymbol (&Qcase_tablep, "case-table-p");
-  defsymbol (&Qdowncase, "downcase");
-  defsymbol (&Qupcase, "upcase");
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qcase_tablep);
+  DEFSYMBOL (Qdowncase);
+  DEFSYMBOL (Qupcase);
 
   DEFSUBR (Fcase_table_p);
   DEFSUBR (Fget_case_table);

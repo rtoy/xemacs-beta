@@ -578,7 +578,7 @@ hash_table_size_validate (Lisp_Object keyword, Lisp_Object value,
   if (NATNUMP (value))
     return 1;
 
-  maybe_signal_error (Qwrong_type_argument, list2 (Qnatnump, value),
+  maybe_signal_error_1 (Qwrong_type_argument, list2 (Qnatnump, value),
 		      Qhash_table, errb);
   return 0;
 }
@@ -607,7 +607,7 @@ hash_table_weakness_validate (Lisp_Object keyword, Lisp_Object value,
   if (EQ (value, Qkey_or_value_weak))	return 1;
   if (EQ (value, Qvalue_weak))		return 1;
 
-  maybe_signal_simple_error ("Invalid hash table weakness",
+  maybe_invalid_constant ("Invalid hash table weakness",
 			     value, Qhash_table, errb);
   return 0;
 }
@@ -629,7 +629,7 @@ decode_hash_table_weakness (Lisp_Object obj)
   if (EQ (obj, Qkey_or_value_weak))	return HASH_TABLE_KEY_VALUE_WEAK;
   if (EQ (obj, Qvalue_weak))		return HASH_TABLE_VALUE_WEAK;
 
-  signal_simple_error ("Invalid hash table weakness", obj);
+  invalid_constant ("Invalid hash table weakness", obj);
   return HASH_TABLE_NON_WEAK; /* not reached */
 }
 
@@ -642,7 +642,7 @@ hash_table_test_validate (Lisp_Object keyword, Lisp_Object value,
   if (EQ (value, Qequal)) return 1;
   if (EQ (value, Qeql))	  return 1;
 
-  maybe_signal_simple_error ("Invalid hash table test",
+  maybe_invalid_constant ("Invalid hash table test",
 			     value, Qhash_table, errb);
   return 0;
 }
@@ -655,7 +655,7 @@ decode_hash_table_test (Lisp_Object obj)
   if (EQ (obj, Qequal)) return HASH_TABLE_EQUAL;
   if (EQ (obj, Qeql))	return HASH_TABLE_EQL;
 
-  signal_simple_error ("Invalid hash table test", obj);
+  invalid_constant ("Invalid hash table test", obj);
   return HASH_TABLE_EQ; /* not reached */
 }
 
@@ -665,7 +665,7 @@ hash_table_rehash_size_validate (Lisp_Object keyword, Lisp_Object value,
 {
   if (!FLOATP (value))
     {
-      maybe_signal_error (Qwrong_type_argument, list2 (Qfloatp, value),
+      maybe_signal_error_1 (Qwrong_type_argument, list2 (Qfloatp, value),
 			  Qhash_table, errb);
       return 0;
     }
@@ -674,7 +674,7 @@ hash_table_rehash_size_validate (Lisp_Object keyword, Lisp_Object value,
     double rehash_size = XFLOAT_DATA (value);
     if (rehash_size <= 1.0)
       {
-	maybe_signal_simple_error
+	maybe_invalid_argument
 	  ("Hash table rehash size must be greater than 1.0",
 	   value, Qhash_table, errb);
 	return 0;
@@ -696,7 +696,7 @@ hash_table_rehash_threshold_validate (Lisp_Object keyword, Lisp_Object value,
 {
   if (!FLOATP (value))
     {
-      maybe_signal_error (Qwrong_type_argument, list2 (Qfloatp, value),
+      maybe_signal_error_1 (Qwrong_type_argument, list2 (Qfloatp, value),
 			  Qhash_table, errb);
       return 0;
     }
@@ -705,7 +705,7 @@ hash_table_rehash_threshold_validate (Lisp_Object keyword, Lisp_Object value,
     double rehash_threshold = XFLOAT_DATA (value);
     if (rehash_threshold <= 0.0 || rehash_threshold >= 1.0)
       {
-	maybe_signal_simple_error
+	maybe_invalid_argument
 	  ("Hash table rehash threshold must be between 0.0 and 1.0",
 	   value, Qhash_table, errb);
 	return 0;
@@ -731,7 +731,7 @@ hash_table_data_validate (Lisp_Object keyword, Lisp_Object value,
 
   if (len & 1)
     {
-      maybe_signal_simple_error
+      maybe_sferror
 	("Hash table data must have alternating key/value pairs",
 	 value, Qhash_table, errb);
       return 0;
@@ -909,11 +909,11 @@ hash table, even if the other is not.
       else if (EQ (keyword, Q_rehash_threshold)) rehash_threshold = value;
       else if (EQ (keyword, Q_weakness))	 weakness	  = value;
       else if (EQ (keyword, Q_type))/*obsolete*/ weakness	  = value;
-      else signal_simple_error ("Invalid hash table property keyword", keyword);
+      else invalid_constant ("Invalid hash table property keyword", keyword);
     }
 
   if (i < nargs)
-    signal_simple_error ("Hash table property requires a value", args[i]);
+    sferror ("Hash table property requires a value", args[i]);
 
 #define VALIDATE_VAR(var) \
 if (!NILP (var)) hash_table_##var##_validate (Q##var, var, ERROR_ME);
@@ -1665,28 +1665,28 @@ syms_of_elhash (void)
   DEFSUBR (Finternal_hash_value);
 #endif
 
-  defsymbol (&Qhash_tablep, "hash-table-p");
-  defsymbol (&Qhash_table, "hash-table");
-  defsymbol (&Qhashtable, "hashtable");
-  defsymbol (&Qweakness, "weakness");
-  defsymbol (&Qvalue, "value");
-  defsymbol (&Qkey_or_value, "key-or-value");
-  defsymbol (&Qkey_and_value, "key-and-value");
-  defsymbol (&Qrehash_size, "rehash-size");
-  defsymbol (&Qrehash_threshold, "rehash-threshold");
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qhash_tablep);
+  DEFSYMBOL (Qhash_table);
+  DEFSYMBOL (Qhashtable);
+  DEFSYMBOL (Qweakness);
+  DEFSYMBOL (Qvalue);
+  DEFSYMBOL (Qkey_or_value);
+  DEFSYMBOL (Qkey_and_value);
+  DEFSYMBOL (Qrehash_size);
+  DEFSYMBOL (Qrehash_threshold);
 
-  defsymbol (&Qweak, "weak");             /* obsolete */
-  defsymbol (&Qkey_weak, "key-weak");     /* obsolete */
-  defsymbol (&Qkey_or_value_weak, "key-or-value-weak");    /* obsolete */
-  defsymbol (&Qvalue_weak, "value-weak"); /* obsolete */
-  defsymbol (&Qnon_weak, "non-weak");     /* obsolete */
+  DEFSYMBOL (Qweak);             /* obsolete */
+  DEFSYMBOL (Qkey_weak);     /* obsolete */
+  DEFSYMBOL (Qkey_or_value_weak);    /* obsolete */
+  DEFSYMBOL (Qvalue_weak); /* obsolete */
+  DEFSYMBOL (Qnon_weak);     /* obsolete */
 
-  defkeyword (&Q_test, ":test");
-  defkeyword (&Q_size, ":size");
-  defkeyword (&Q_rehash_size, ":rehash-size");
-  defkeyword (&Q_rehash_threshold, ":rehash-threshold");
-  defkeyword (&Q_weakness, ":weakness");
-  defkeyword (&Q_type, ":type"); /* obsolete */
+  DEFKEYWORD (Q_test);
+  DEFKEYWORD (Q_size);
+  DEFKEYWORD (Q_rehash_size);
+  DEFKEYWORD (Q_rehash_threshold);
+  DEFKEYWORD (Q_weakness);
+  DEFKEYWORD (Q_type); /* obsolete */
 }
 
 void

@@ -1,5 +1,5 @@
 /* Console functions for mswindows.
-   Copyright (C) 1996, 2000 Ben Wing.
+   Copyright (C) 1996, 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -156,7 +156,7 @@ mswindows_canonicalize_console_connection (Lisp_Object connection,
   if (!NILP (connection))
     {
       if (ERRB_EQ (errb, ERROR_ME))
-	signal_simple_error
+	invalid_argument
 	  ("Invalid (non-nil) connection for mswindows device/console",
 	   connection);
       else
@@ -530,14 +530,14 @@ no effect.  */
 #undef FROB
 
       else
-	signal_simple_error ("Unrecognized flag", st);
+	invalid_constant ("Unrecognized flag", st);
     }
 
   {
     int retval = MessageBox (NULL, msgout, titleout, sty);
 
     if (retval == 0)
-      error ("Out of memory when calling `mswindows-message-box'");
+      out_of_memory ("When calling `mswindows-message-box'", Qunbound);
 
 #define FROB(sym, val) if (retval == val) return sym
     FROB (Qabort, IDABORT);
@@ -549,28 +549,51 @@ no effect.  */
     FROB (Qyes, IDYES);
 #undef FROB
     
-    signal_simple_error ("Unknown return value from MessageBox()",
-			 make_int (retval));
+    invalid_argument ("Unknown return value from MessageBox()",
+		      make_int (retval));
   }
 
   return Qnil;
 }
 
-void
-mswindows_output_last_error (char *frob)
+Lisp_Object
+mswindows_lisp_error (int errnum)
 {
-  LPVOID lpMsgBuf;
-  int errval = GetLastError();
+  LPTSTR lpMsgBuf;
+  Lisp_Object result;
+  Bufbyte *inres;
+  Bytecount len;
   
   FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER
 		 | FORMAT_MESSAGE_FROM_SYSTEM,
-		 NULL, errval,
+		 NULL, errnum,
+		 /* !!#### not Mule-correct */
 		 MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
+		 /* yeah, i'm casting a char ** to a char *.  ya gotta
+		    problem widdat? */
 		 (LPTSTR) &lpMsgBuf,
 		 0,
 		 NULL);
+
+  TO_INTERNAL_FORMAT (C_STRING, lpMsgBuf, ALLOCA, (inres, len),
+		      Qmswindows_tstr);
+  /* Messages tend to end with a period and newline */
+  if (len >= 3 && !strcmp (inres + len - 3, ".\r\n"))
+    len -= 3;
+  result = make_string (inres, len);
+  
+  LocalFree (lpMsgBuf);
+  return result;
+}
+
+void
+mswindows_output_last_error (char *frob)
+{
+  int errval = GetLastError ();
+  Lisp_Object errmess = mswindows_lisp_error (errval);
+  
   stderr_out ("last error during %s is %d: %s\n",
-	      frob, errval, (char*)lpMsgBuf);
+	      frob, errval, XSTRING_DATA (errmess));
 }
 
 static Lisp_Object
@@ -585,7 +608,8 @@ msprinter_canonicalize_console_connection (Lisp_Object connection,
       if (NILP (connection))
 	{
 	  if (ERRB_EQ (errb, ERROR_ME))
-	    error ("There is no default printer in the system");
+	    invalid_state ("There is no default printer in the system",
+			   Qunbound);
 	  else
 	    return Qunbound;
 	}
@@ -612,40 +636,40 @@ syms_of_console_mswindows (void)
 {
   DEFSUBR (Fmswindows_debugging_output);
 
-  defsymbol (&Qabortretryignore, "abortretryignore");
-  defsymbol (&Qapplmodal, "applmodal");
-  defsymbol (&Qdefault_desktop_only, "default-desktop-only");
-  defsymbol (&Qdefbutton1, "defbutton1");
-  defsymbol (&Qdefbutton2, "defbutton2");
-  defsymbol (&Qdefbutton3, "defbutton3");
-  defsymbol (&Qdefbutton4, "defbutton4");
-  /* defsymbol (&Qhelp, "help"); */
-  defsymbol (&Qiconasterisk, "iconasterisk");
-  defsymbol (&Qiconexclamation, "iconexclamation");
-  defsymbol (&Qiconhand, "iconhand");
-  defsymbol (&Qiconinformation, "iconinformation");
-  defsymbol (&Qiconquestion, "iconquestion");
-  defsymbol (&Qiconstop, "iconstop");
-  /* defsymbol (&Qok, "ok"); */
-  defsymbol (&Qokcancel, "okcancel");
-  defsymbol (&Qretrycancel, "retrycancel");
-  /* defsymbol (&Qright, "right"); */
-  defsymbol (&Qrtlreading, "rtlreading");
-  defsymbol (&Qservice_notification, "service-notification");
-  defsymbol (&Qsetforeground, "setforeground");
-  defsymbol (&Qsystemmodal, "systemmodal");
-  defsymbol (&Qtaskmodal, "taskmodal");
-  defsymbol (&Qtopmost, "topmost");
-  defsymbol (&Qyesno, "yesno");
-  defsymbol (&Qyesnocancel, "yesnocancel");
+  DEFSYMBOL (Qabortretryignore);
+  DEFSYMBOL (Qapplmodal);
+  DEFSYMBOL (Qdefault_desktop_only);
+  DEFSYMBOL (Qdefbutton1);
+  DEFSYMBOL (Qdefbutton2);
+  DEFSYMBOL (Qdefbutton3);
+  DEFSYMBOL (Qdefbutton4);
+  /* DEFSYMBOL (Qhelp); */
+  DEFSYMBOL (Qiconasterisk);
+  DEFSYMBOL (Qiconexclamation);
+  DEFSYMBOL (Qiconhand);
+  DEFSYMBOL (Qiconinformation);
+  DEFSYMBOL (Qiconquestion);
+  DEFSYMBOL (Qiconstop);
+  /* DEFSYMBOL (Qok); */
+  DEFSYMBOL (Qokcancel);
+  DEFSYMBOL (Qretrycancel);
+  /* DEFSYMBOL (Qright); */
+  DEFSYMBOL (Qrtlreading);
+  DEFSYMBOL (Qservice_notification);
+  DEFSYMBOL (Qsetforeground);
+  DEFSYMBOL (Qsystemmodal);
+  DEFSYMBOL (Qtaskmodal);
+  DEFSYMBOL (Qtopmost);
+  DEFSYMBOL (Qyesno);
+  DEFSYMBOL (Qyesnocancel);
 
-  /* defsymbol (&Qabort, "abort"); */
-  /* defsymbol (&Qcancel, "cancel"); */
-  /* defsymbol (&Qignore, "ignore"); */
-  /* defsymbol (&Qno, "no"); */
-  /* defsymbol (&Qok, "ok"); */
-  /* defsymbol (&Qretry, "retry"); */
-  /* defsymbol (&Qyes, "yes"); */
+  /* DEFSYMBOL (Qabort); */
+  /* DEFSYMBOL (Qcancel); */
+  /* DEFSYMBOL (Qignore); */
+  /* DEFSYMBOL (Qno); */
+  /* DEFSYMBOL (Qok); */
+  /* DEFSYMBOL (Qretry); */
+  /* DEFSYMBOL (Qyes); */
 
   DEFSUBR (Fmswindows_message_box);
 }

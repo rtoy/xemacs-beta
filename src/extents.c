@@ -3026,9 +3026,9 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       if (print_readably)
 	{
 	  if (!EXTENT_LIVE_P (XEXTENT (obj)))
-	    error ("printing unreadable object #<destroyed extent>");
+	    printing_unreadable_object ("#<destroyed extent>");
 	  else
-	    error ("printing unreadable object #<extent 0x%lx>",
+	    printing_unreadable_object ("#<extent 0x%lx>",
 		   (long) XEXTENT (obj));
 	}
 
@@ -3049,7 +3049,7 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   else
     {
       if (print_readably)
-	error ("printing unreadable object #<extent>");
+	printing_unreadable_object ("#<extent>");
       write_c_string ("#<extent", printcharfun);
     }
   write_c_string (">", printcharfun);
@@ -3536,7 +3536,7 @@ See `extent-parent'.
     return Qnil;
   for (rest = parent; !NILP (rest); rest = extent_parent (XEXTENT (rest)))
     if (EQ (rest, extent))
-      signal_type_error (Qinvalid_change,
+      signal_error (Qinvalid_change,
 			 "Circular parent chain would result",
 			 extent);
   if (NILP (parent))
@@ -3877,7 +3877,7 @@ decode_map_extents_flags (Lisp_Object flags)
 	  EQ (sym, Qall_extents_open_closed))
 	{
 	  if (all_extents_specified)
-	    error ("Only one `all-extents-*' flag may be specified");
+	    invalid_argument ("Only one `all-extents-*' flag may be specified", Qunbound);
 	  all_extents_specified = 1;
 	}
       if (EQ (sym, Qstart_in_region) || EQ (sym, Qend_in_region) ||
@@ -3885,7 +3885,7 @@ decode_map_extents_flags (Lisp_Object flags)
 	  EQ (sym, Qstart_or_end_in_region))
 	{
 	  if (in_region_specified)
-	    error ("Only one `*-in-region' flag may be specified");
+	    invalid_argument ("Only one `*-in-region' flag may be specified", Qunbound);
 	  in_region_specified = 1;
 	}
 
@@ -3902,7 +3902,7 @@ decode_map_extents_flags (Lisp_Object flags)
 	EQ (sym, Qstart_and_end_in_region) ? ME_START_AND_END_IN_REGION :
 	EQ (sym, Qstart_or_end_in_region)  ? ME_START_OR_END_IN_REGION :
 	EQ (sym, Qnegate_in_region)	   ? ME_NEGATE_IN_REGION :
-	(invalid_argument ("Invalid `map-extents' flag", sym), 0);
+	(invalid_constant ("Invalid `map-extents' flag", sym), 0);
 
       flags = XCDR (flags);
     }
@@ -4266,7 +4266,7 @@ decode_extent_at_flag (Lisp_Object at_flag)
   if (EQ (at_flag, Qbefore)) return EXTENT_AT_BEFORE;
   if (EQ (at_flag, Qat))     return EXTENT_AT_AT;
 
-  invalid_argument ("Invalid AT-FLAG in `extent-at'", at_flag);
+  invalid_constant ("Invalid AT-FLAG in `extent-at'", at_flag);
   return EXTENT_AT_AFTER; /* unreached */
 }
 
@@ -5072,7 +5072,7 @@ symbol_to_glyph_layout (Lisp_Object layout_obj)
   if (EQ (layout_obj, Qwhitespace))	return GL_WHITESPACE;
   if (EQ (layout_obj, Qtext))		return GL_TEXT;
 
-  invalid_argument ("Unknown glyph layout type", layout_obj);
+  invalid_constant ("Unknown glyph layout type", layout_obj);
   return GL_TEXT; /* unreached */
 }
 
@@ -5363,13 +5363,13 @@ The following symbols have predefined meanings:
   else if (EQ (property, Qdetached))
     {
       if (NILP (value))
-	error ("can only set `detached' to t");
+ invalid_operation ("can only set `detached' to t", Qunbound);
       Fdetach_extent (extent);
     }
   else if (EQ (property, Qdestroyed))
     {
       if (NILP (value))
-	error ("can only set `destroyed' to t");
+ invalid_operation ("can only set `destroyed' to t", Qunbound);
       Fdelete_extent (extent);
     }
   else if (EQ (property, Qpriority))
@@ -6578,7 +6578,7 @@ Used as the `paste-function' property of `text-prop' extents.
 
   prop = Fextent_property (extent, Qtext_prop, Qnil);
   if (NILP (prop))
-    signal_type_error (Qinternal_error,
+    signal_error (Qinternal_error,
 		       "Internal error: no text-prop", extent);
   val = Fextent_property (extent, prop, Qnil);
 #if 0
@@ -6587,7 +6587,7 @@ Used as the `paste-function' property of `text-prop' extents.
   ** with a value of Qnil.  This is bad bad bad.
   */
   if (NILP (val))
-    signal_type_error_2 (Qinternal_error,
+    signal_error_2 (Qinternal_error,
 			 "Internal error: no text-prop",
 			 extent, prop);
 #endif
@@ -6757,51 +6757,50 @@ syms_of_extents (void)
   INIT_LRECORD_IMPLEMENTATION (extent_info);
   INIT_LRECORD_IMPLEMENTATION (extent_auxiliary);
 
-  defsymbol (&Qextentp, "extentp");
-  defsymbol (&Qextent_live_p, "extent-live-p");
+  DEFSYMBOL (Qextentp);
+  DEFSYMBOL (Qextent_live_p);
 
-  defsymbol (&Qall_extents_closed, "all-extents-closed");
-  defsymbol (&Qall_extents_open, "all-extents-open");
-  defsymbol (&Qall_extents_closed_open, "all-extents-closed-open");
-  defsymbol (&Qall_extents_open_closed, "all-extents-open-closed");
-  defsymbol (&Qstart_in_region, "start-in-region");
-  defsymbol (&Qend_in_region, "end-in-region");
-  defsymbol (&Qstart_and_end_in_region, "start-and-end-in-region");
-  defsymbol (&Qstart_or_end_in_region, "start-or-end-in-region");
-  defsymbol (&Qnegate_in_region, "negate-in-region");
+  DEFSYMBOL (Qall_extents_closed);
+  DEFSYMBOL (Qall_extents_open);
+  DEFSYMBOL (Qall_extents_closed_open);
+  DEFSYMBOL (Qall_extents_open_closed);
+  DEFSYMBOL (Qstart_in_region);
+  DEFSYMBOL (Qend_in_region);
+  DEFSYMBOL (Qstart_and_end_in_region);
+  DEFSYMBOL (Qstart_or_end_in_region);
+  DEFSYMBOL (Qnegate_in_region);
 
-  defsymbol (&Qdetached, "detached");
-  defsymbol (&Qdestroyed, "destroyed");
-  defsymbol (&Qbegin_glyph, "begin-glyph");
-  defsymbol (&Qend_glyph, "end-glyph");
-  defsymbol (&Qstart_open, "start-open");
-  defsymbol (&Qend_open, "end-open");
-  defsymbol (&Qstart_closed, "start-closed");
-  defsymbol (&Qend_closed, "end-closed");
-  defsymbol (&Qread_only, "read-only");
-  /* defsymbol (&Qhighlight, "highlight"); in faces.c */
-  defsymbol (&Qunique, "unique");
-  defsymbol (&Qduplicable, "duplicable");
-  defsymbol (&Qdetachable, "detachable");
-  defsymbol (&Qpriority, "priority");
-  defsymbol (&Qmouse_face, "mouse-face");
-  defsymbol (&Qinitial_redisplay_function,"initial-redisplay-function");
+  DEFSYMBOL (Qdetached);
+  DEFSYMBOL (Qdestroyed);
+  DEFSYMBOL (Qbegin_glyph);
+  DEFSYMBOL (Qend_glyph);
+  DEFSYMBOL (Qstart_open);
+  DEFSYMBOL (Qend_open);
+  DEFSYMBOL (Qstart_closed);
+  DEFSYMBOL (Qend_closed);
+  DEFSYMBOL (Qread_only);
+  /* DEFSYMBOL (Qhighlight); in faces.c */
+  DEFSYMBOL (Qunique);
+  DEFSYMBOL (Qduplicable);
+  DEFSYMBOL (Qdetachable);
+  DEFSYMBOL (Qpriority);
+  DEFSYMBOL (Qmouse_face);
+  DEFSYMBOL (Qinitial_redisplay_function);
 
 
-  defsymbol (&Qglyph_layout, "glyph-layout");	/* backwards compatibility */
-  defsymbol (&Qbegin_glyph_layout, "begin-glyph-layout");
-  defsymbol (&Qend_glyph_layout, "end-glyph-layout");
-  defsymbol (&Qoutside_margin, "outside-margin");
-  defsymbol (&Qinside_margin, "inside-margin");
-  defsymbol (&Qwhitespace, "whitespace");
+  DEFSYMBOL (Qglyph_layout);	/* backwards compatibility */
+  DEFSYMBOL (Qbegin_glyph_layout);
+  DEFSYMBOL (Qend_glyph_layout);
+  DEFSYMBOL (Qoutside_margin);
+  DEFSYMBOL (Qinside_margin);
+  DEFSYMBOL (Qwhitespace);
   /* Qtext defined in general.c */
 
-  defsymbol (&Qpaste_function, "paste-function");
-  defsymbol (&Qcopy_function,  "copy-function");
+  DEFSYMBOL (Qpaste_function);
+  DEFSYMBOL (Qcopy_function);
 
-  defsymbol (&Qtext_prop, "text-prop");
-  defsymbol (&Qtext_prop_extent_paste_function,
-	     "text-prop-extent-paste-function");
+  DEFSYMBOL (Qtext_prop);
+  DEFSYMBOL (Qtext_prop_extent_paste_function);
 
   DEFSUBR (Fextentp);
   DEFSUBR (Fextent_live_p);

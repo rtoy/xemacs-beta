@@ -474,7 +474,7 @@ Return what remains of the list.
 
 		  if (XINT (car) < BUF_BEGV (current_buffer)
 		      || XINT (cdr) > BUF_ZV (current_buffer))
-		    error ("Changes to be undone are outside visible portion of buffer");
+		    signal_error (Qinvalid_operation, "Changes to be undone are outside visible portion of buffer", Qunbound);
 		  /* Set point first thing, so that undoing this undo
 		     does not send point back to where it is now.  */
 		  Fgoto_char (car, Qnil);
@@ -489,14 +489,14 @@ Return what remains of the list.
 		  if (pos < 0)
 		    {
 		      if (-pos < BUF_BEGV (current_buffer) || -pos > BUF_ZV (current_buffer))
-			error ("Changes to be undone are outside visible portion of buffer");
+			signal_error (Qinvalid_operation, "Changes to be undone are outside visible portion of buffer", Qunbound);
 		      BUF_SET_PT (current_buffer, -pos);
 		      Finsert (1, &membuf);
 		    }
 		  else
 		    {
 		      if (pos < BUF_BEGV (current_buffer) || pos > BUF_ZV (current_buffer))
-			error ("Changes to be undone are outside visible portion of buffer");
+			signal_error (Qinvalid_operation, "Changes to be undone are outside visible portion of buffer", Qunbound);
 		      BUF_SET_PT (current_buffer, pos);
 
 		      /* Insert before markers so that if the mark is
@@ -527,8 +527,9 @@ Return what remains of the list.
           else
 	    {
 	    rotten:
-	      signal_simple_continuable_error
-		("Something rotten in the state of undo", next);
+	      signal_continuable_error
+		(Qinvalid_state,
+		 "Something rotten in the state of undo", next);
 	    }
         }
       arg--;
@@ -543,7 +544,7 @@ syms_of_undo (void)
 {
   DEFSUBR (Fprimitive_undo);
   DEFSUBR (Fundo_boundary);
-  defsymbol (&Qinhibit_read_only, "inhibit-read-only");
+  DEFSYMBOL (Qinhibit_read_only);
 }
 
 void

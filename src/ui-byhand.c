@@ -27,12 +27,12 @@ Return value is a list of (EXPAND FILL PADDING PACK_TYPE).
 
   if (!GTK_IS_BOX (XGTK_OBJECT (box)->object))
     {
-      signal_simple_error ("Object is not a GtkBox", box);
+      wtaerror ("Object is not a GtkBox", box);
     }
 
   if (!GTK_IS_WIDGET (XGTK_OBJECT (child)->object))
     {
-      signal_simple_error ("Child is not a GtkWidget", child);
+      wtaerror ("Child is not a GtkWidget", child);
     }
 
   gtk_box_query_child_packing (GTK_BOX (XGTK_OBJECT (box)->object),
@@ -88,7 +88,7 @@ Get the current size of a child in the buttonbox BOX.
 
   if (!GTK_IS_BUTTON_BOX (XGTK_OBJECT (box)->object))
     {
-      signal_simple_error ("Not a GtkBox object", box);
+      wtaerror ("Not a GtkBox object", box);
     }
 
   gtk_button_box_get_child_size (GTK_BUTTON_BOX (XGTK_OBJECT (box)->object),
@@ -110,7 +110,7 @@ Return a cons cell (X . Y) of the current buttonbox BOX ipadding.
 
   if (!GTK_IS_BUTTON_BOX (XGTK_OBJECT (box)->object))
     {
-      signal_simple_error ("Not a GtkBox object", box);
+      wtaerror ("Not a GtkBox object", box);
     }
 
   gtk_button_box_get_child_ipadding (GTK_BUTTON_BOX (XGTK_OBJECT (box)->object),
@@ -135,7 +135,7 @@ Return a list of (YEAR MONTH DAY) from the CALENDAR object.
 
   if (!GTK_IS_CALENDAR (XGTK_OBJECT (calendar)->object))
     {
-      signal_simple_error ("Not a GtkCalendar object", calendar);
+      wtaerror ("Not a GtkCalendar object", calendar);
     }
 
   gtk_calendar_get_date (GTK_CALENDAR (XGTK_OBJECT (calendar)->object),
@@ -163,7 +163,7 @@ Returns the text from GtkCList OBJ cell at coordinates ROW, COLUMN.
 
   if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
     {
-      signal_simple_error ("Object is not a GtkCList", obj);
+      wtaerror ("Object is not a GtkCList", obj);
     }
 
   gtk_clist_get_text (GTK_CLIST (XGTK_OBJECT (obj)->object), XINT (row), XINT (column), &text);
@@ -198,7 +198,7 @@ Returns a cons cell of (ROW . COLUMN) of the GtkCList OBJ at coordinates X, Y.
 
   if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
     {
-      signal_simple_error ("Object is not a GtkCList", obj);
+      wtaerror ("Object is not a GtkCList", obj);
     }
 
   gtk_clist_get_selection_info (GTK_CLIST (XGTK_OBJECT (obj)->object),
@@ -221,7 +221,7 @@ Return a cons of (pixmap . mask) at ROW,COLUMN in CLIST.
 
   if (!GTK_IS_CLIST (XGTK_OBJECT (clist)->object))
     {
-      signal_simple_error ("Object is not a GtkCList", clist);
+      wtaerror ("Object is not a GtkCList", clist);
     }
 
   gtk_clist_get_pixmap (GTK_CLIST (XGTK_OBJECT (clist)->object),
@@ -248,7 +248,7 @@ Return a list of (pixmap mask text) at ROW,COLUMN in CLIST.
 
   if (!GTK_IS_CLIST (XGTK_OBJECT (clist)->object))
     {
-      signal_simple_error ("Object is not a GtkCList", clist);
+      wtaerror ("Object is not a GtkCList", clist);
     }
 
   gtk_clist_get_pixtext (GTK_CLIST (XGTK_OBJECT (clist)->object),
@@ -272,7 +272,7 @@ Return a list of (RED GREEN BLUE ALPHA) from the GtkColorSelection OBJECT.
 
   if (!GTK_IS_COLOR_SELECTION (XGTK_OBJECT (object)->object))
     {
-      signal_simple_error ("Object is not a GtkColorSelection", object);
+      wtaerror ("Object is not a GtkColorSelection", object);
     }
 
   gtk_color_selection_get_color (GTK_COLOR_SELECTION (XGTK_OBJECT (object)), rgba);
@@ -300,7 +300,7 @@ Returns the new position of the cursor in the widget.
 
   if (!GTK_IS_EDITABLE (XGTK_OBJECT (obj)->object))
     {
-      signal_simple_error ("Object is not a GtkEditable", obj);
+      wtaerror ("Object is not a GtkEditable", obj);
     }
 
   gtk_editable_insert_text (GTK_EDITABLE (XGTK_OBJECT (obj)->object),
@@ -322,7 +322,7 @@ Return a cons cell of (PIXMAP . MASK) from GtkPixmap OBJECT.
 
   if (!GTK_IS_PIXMAP (XGTK_OBJECT (object)->object))
     {
-      signal_simple_error ("Object is not a GtkPixmap", object);
+      wtaerror ("Object is not a GtkPixmap", object);
     }
 
   gtk_pixmap_get (GTK_PIXMAP (XGTK_OBJECT (object)->object), &pixmap, &mask);
@@ -345,7 +345,7 @@ Returns a vector of LENGTH points representing the curve of CURVE.
 
   if (!GTK_IS_CURVE (XGTK_OBJECT (curve)->object))
     {
-      signal_simple_error ("Object is not a GtkCurve", curve);
+      wtaerror ("Object is not a GtkCurve", curve);
     }
 
   vector = (gfloat *) alloca (sizeof (gfloat) * XINT (length));
@@ -377,7 +377,7 @@ Set the vector of points on CURVE to VECTOR.
 
   if (!GTK_IS_CURVE (XGTK_OBJECT (curve)->object))
     {
-      signal_simple_error ("Object is not a GtkCurve", curve);
+      wtaerror ("Object is not a GtkCurve", curve);
     }
 
   c_vector = (gfloat *) alloca (sizeof (gfloat) * vec_length);
@@ -403,7 +403,7 @@ Return the text of LABEL.
 
   if (!GTK_IS_LABEL (XGTK_OBJECT (label)->object))
     {
-      signal_simple_error ("Object is not a GtkLabel", label);
+      wtaerror ("Object is not a GtkLabel", label);
     }
 
   gtk_label_get (GTK_LABEL (XGTK_OBJECT (label)->object), &string);
@@ -424,12 +424,12 @@ Return a list of packing information (EXPAND FILL PACK_TYPE) for CHILD in NOTEBO
 
   if (!GTK_IS_NOTEBOOK (XGTK_OBJECT (notebook)->object))
     {
-      signal_simple_error ("Object is not a GtkLabel", notebook);
+      wtaerror ("Object is not a GtkLabel", notebook);
     }
 
   if (!GTK_IS_WIDGET (XGTK_OBJECT (child)->object))
     {
-      signal_simple_error ("Object is not a GtkWidget", child);
+      wtaerror ("Object is not a GtkWidget", child);
     }
 
   gtk_notebook_query_tab_label_packing (GTK_NOTEBOOK (XGTK_OBJECT (notebook)->object),
@@ -449,7 +449,7 @@ Return the pointer position relative to WIDGET as a cons of (X . Y).
 
   if (!GTK_IS_WIDGET (XGTK_OBJECT (widget)->object))
     {
-      signal_simple_error ("Object is not a GtkWidget", widget);
+      wtaerror ("Object is not a GtkWidget", widget);
     }
 
   gtk_widget_get_pointer (GTK_WIDGET (XGTK_OBJECT (widget)->object), &x, &y);
@@ -503,17 +503,17 @@ generic_toolbar_insert_item (Lisp_Object toolbar,
 
   if (!SYMBOLP (callback) && !LISTP (callback))
     {
-      signal_simple_error ("Callback must be symbol or eval-able form", callback);
+      wtaerror ("Callback must be symbol or eval-able form", callback);
     }
 
   if (!GTK_IS_TOOLBAR (XGTK_OBJECT (toolbar)->object))
     {
-      signal_simple_error ("Object is not a GtkToolbar", toolbar);
+      wtaerror ("Object is not a GtkToolbar", toolbar);
     }
 
   if (!GTK_IS_WIDGET (XGTK_OBJECT (icon)->object))
     {
-      signal_simple_error ("Object is not a GtkWidget", icon);
+      wtaerror ("Object is not a GtkWidget", icon);
     }
 
   callback = Fcons (data, callback);

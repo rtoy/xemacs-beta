@@ -19,6 +19,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* This file Mule-ized by Ben Wing, 5-15-01. */
+
 
 /***
    NAME
@@ -51,10 +53,8 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "nativesound.h"
+#include "sound.h"
 
-#include <stdlib.h>
-#include <stdio.h>
 #ifdef HPUX10
 #include <Alib.h>
 #include <CUlib.h>
@@ -71,22 +71,20 @@ Fixnum      hp_play_gain;
 /* Functions */
 
 /* error handling */
-void player_error_internal(
-    Audio        * audio,
-    char         * text,
-    long         errorCode
-    )
+void
+player_error_internal (Audio * audio, Char_ASCII * text, long errorCode)
 {
-    char    errorbuff[132],buf[256];
+  Extbyte errorbuff[132];
+  Bufbyte *interr;
 
-    AGetErrorText(audio, errorCode, errorbuff, 131);
-    sprintf(buf,"%s: %s\n",text,errorbuff);
-    error(buf);
+  AGetErrorText (audio, errorCode, errorbuff, 131);
+  EXTERNAL_TO_C_STRING (errorbuf, interr, Qnative);
+  
+  signal_error (Qsound_error, text, build_string (interr));
 }
 
-long myHandler(audio, err_event)
-    Audio  * audio;
-    AErrorEvent  * err_event;
+long
+myHandler( Audio * audio, AErrorEvent * err_event)
 {
   player_error_internal(audio, "Internal sound error", err_event->error_code);
   return 1;			/* Must return something, was orig. an exit */
@@ -94,177 +92,154 @@ long myHandler(audio, err_event)
 
 /* Playing */
 void
-play_bucket_internal(audio, pSBucket, volume)
-     Audio           *audio;
-     SBucket     *pSBucket;
-     long         volume;
+play_bucket_internal( Audio *audio, SBucket *pSBucket, long volume)
 {
-    SBPlayParams    playParams;
-    AGainEntry      gainEntry;
-    ATransID        xid;
-    long            status;
-    char            * speaker;
+  SBPlayParams playParams;
+  AGainEntry gainEntry;
+  ATransID xid;
+  long status;
 
-    playParams.priority = APriorityNormal;          /* normal priority */
+  playParams.priority = APriorityNormal;          /* normal priority */
 
-    /*
-     * We can't signal an error, because all h*ll would break loose if
-     * we did.
-     */
-    if (SYMBOLP (Vhp_play_speaker))
-    {
-	speaker = (char *) (string_data (XSYMBOL (Vhp_play_speaker)->name));
+  /*
+   * We can't signal an error, because all h*ll would break loose if
+   * we did.
+   */
+  if (EQ (Vhp_play_speaker, Qexternal))
+    gainEntry.u.o.out_dst = AODTMonoJack;
+  else
+    gainEntry.u.o.out_dst = AODTMonoIntSpeaker;
 
-	/*
-	 * setup the playback parameters
-	 */
+  gainEntry.u.o.out_ch = AOCTMono;
+  gainEntry.gain = AUnityGain;
+  playParams.gain_matrix.type = AGMTOutput;       /* gain matrix */
+  playParams.gain_matrix.num_entries = 1;
+  playParams.gain_matrix.gain_entries = &gainEntry;
+  playParams.play_volume = hp_play_gain;          /* play volume */
+  playParams.pause_first = False;                 /* don't pause */
+  playParams.start_offset.type = ATTSamples;      /* start offset 0 */
+  playParams.start_offset.u.samples = 0;
+  playParams.duration.type = ATTFullLength;       /* play entire sample */
+  playParams.loop_count = 1;                      /* play sample just once */
+  playParams.previous_transaction = 0;            /* no linked transaction */
+  playParams.event_mask = 0;                      /* don't solicit any events */
 
-	/* speaker selection */
-	if ( strcmp(speaker,"external") == 0 ) {
-	    gainEntry.u.o.out_dst = AODTMonoJack;
-	} else {
-	    gainEntry.u.o.out_dst = AODTMonoIntSpeaker;
-	}
-    }
-    else
-    {
-	/*
-	 * Quietly revert to the internal speaker
-	 */
-	gainEntry.u.o.out_dst = AODTMonoIntSpeaker;
-    }
+  /*
+   * play the sound bucket
+   */
+  xid = APlaySBucket( audio, pSBucket, &playParams, NULL );
 
-    gainEntry.u.o.out_ch = AOCTMono;
-    gainEntry.gain = AUnityGain;
-    playParams.gain_matrix.type = AGMTOutput;       /* gain matrix */
-    playParams.gain_matrix.num_entries = 1;
-    playParams.gain_matrix.gain_entries = &gainEntry;
-    playParams.play_volume = hp_play_gain;          /* play volume */
-    playParams.pause_first = False;                 /* don't pause */
-    playParams.start_offset.type = ATTSamples;      /* start offset 0 */
-    playParams.start_offset.u.samples = 0;
-    playParams.duration.type = ATTFullLength;       /* play entire sample */
-    playParams.loop_count = 1;                      /* play sample just once */
-    playParams.previous_transaction = 0;            /* no linked transaction */
-    playParams.event_mask = 0;                      /* don't solicit any events */
+  /*
+   * set close mode to prevent playback from stopping
+   *  when we close audio connection
+   */
+  ASetCloseDownMode( audio, AKeepTransactions, &status );
 
-    /*
-     * play the sound bucket
-     */
-    xid = APlaySBucket( audio, pSBucket, &playParams, NULL );
-
-    /*
-     * set close mode to prevent playback from stopping
-     *  when we close audio connection
-     */
-    ASetCloseDownMode( audio, AKeepTransactions, &status );
-
-    /*
-     *  That's all, folks!
-     *  Always destroy bucket and close connection.
-     */
-    ADestroySBucket( audio, pSBucket, &status );
-    ACloseAudio( audio, &status );
+  /*
+   *  That's all, folks!
+   *  Always destroy bucket and close connection.
+   */
+  ADestroySBucket( audio, pSBucket, &status );
+  ACloseAudio( audio, &status );
 }
 
 void
-play_sound_file (sound_file, volume)
-     char * sound_file;
-     int volume;
+play_sound_file (Extbyte * sound_file, int volume)
 {
-    SBucket         *pSBucket;
-    Audio           *audio;
-    long            status;
-    AErrorHandler   prevHandler;  /* pointer to previous handler */
-    char            *server;
+  sbucket *pSBucket;
+  Audio *audio;
+  long status;
+  AErrorHandler prevHandler;  /* pointer to previous handler */
+  Extbyte *server;
 
-    if (STRINGP(Vhp_play_server))
-      server = (char *) XSTRING_DATA (Vhp_play_server);
+  if (STRINGP (Vhp_play_server))
+    LISP_STRING_TO_EXTERNAL (Vhp_play_server, server, Qnative);
+  else
     server = "";
 
-    /*
-     *  open audio connection
-     */
-    audio = AOpenAudio( server, &status );
-    if( status ) {
-        player_error_internal( audio, "Open audio failed", status );
+  /*
+   *  open audio connection
+   */
+  audio = AOpenAudio( server, &status );
+  if( status )
+    {
+      player_error_internal( audio, "Open audio failed", status );
     }
 
-    /* replace default error handler */
-    prevHandler = ASetErrorHandler(myHandler);
+  /* replace default error handler */
+  prevHandler = ASetErrorHandler(myHandler);
 
-    /*
-     *  Load the audio file into a sound bucket
-     */
+  /*
+   *  Load the audio file into a sound bucket
+   */
 
-    pSBucket = ALoadAFile( audio, sound_file, AFFUnknown, 0, NULL, NULL );
+  pSBucket = ALoadAFile( audio, sound_file, AFFUnknown, 0, NULL, NULL );
 
-    /*
-     * Play the bucket
-     */
+  /*
+   * Play the bucket
+   */
 
-    play_bucket_internal(audio, pSBucket, volume);
+  play_bucket_internal(audio, pSBucket, volume);
 
-    ASetErrorHandler(prevHandler);    
+  ASetErrorHandler(prevHandler);    
 }
 
 
 int
-play_sound_data (data, length, volume)
-     unsigned char * data;
-     int length;
-     int volume;
+play_sound_data (UChar_Binary * data, int length, int volume)
 {
-    SBucket         *pSBucket;
-    Audio           *audio;
-    AErrorHandler   prevHandler;
-    SunHeader       *header;
-    long            status;
-    char            *server;
-    int             result;
+  SBucket *pSBucket;
+  Audio *audio;
+  AErrorHandler prevHandler;
+  SunHeader *header;
+  long status;
+  Extbyte *server;
+  int result;
 
-    /* #### Finish this to return an error code.
-       This function signal a lisp error. How consistent with the rest.
-       What if this function is needed in doing the beep for the error?
+  /* #### Finish this to return an error code.
+     This function signal a lisp error. How consistent with the rest.
+     What if this function is needed in doing the beep for the error?
 
-       Apparently the author of this didn't read the comment in
-       Fplay_sound.
-    */
+     Apparently the author of this didn't read the comment in
+     Fplay_sound.
+  */
        
     
-    if (STRINGP (Vhp_play_server))
-      server = (char *) XSTRING_DATA (Vhp_play_server);
+  if (STRINGP (Vhp_play_server))
+    LISP_STRING_TO_EXTERNAL (Vhp_play_server, server, Qnative);
+  else
     server = "";
 
-    /* open audio connection */
-    audio = AOpenAudio( server, &status );
-    if( status ) {
-        player_error_internal( audio, "Open audio failed", status );
+  /* open audio connection */
+  audio = AOpenAudio( server, &status );
+  if(status)
+    {
+      player_error_internal( audio, "Open audio failed", status );
     }
 
-    /* replace default error handler */
-    prevHandler = ASetErrorHandler (myHandler);
+  /* replace default error handler */
+  prevHandler = ASetErrorHandler (myHandler);
 
-    /* Create sound bucket */
-    header = (SunHeader *) data;
+  /* Create sound bucket */
+  header = (SunHeader *) data;
 
-    pSBucket = ACreateSBucket(audio, NULL, NULL, &status);
-    if (status)
-      player_error_internal( audio, "Bucket creation failed", status );
+  pSBucket = ACreateSBucket(audio, NULL, NULL, &status);
+  if (status)
+    player_error_internal( audio, "Bucket creation failed", status );
 
-    APutSBucketData(audio, pSBucket, 0, (char *) (data + header->header_size), header->data_length, &status);
+  APutSBucketData(audio, pSBucket, 0, (Char_Binary *) (data + header->header_size), header->data_length, &status);
 
-   if (status)
-      player_error_internal( audio, "Audio data copy failed", status );
+  if (status)
+    player_error_internal( audio, "Audio data copy failed", status );
 
-    /* Play sound */
-    play_bucket_internal(audio, pSBucket, volume);
+  /* Play sound */
+  play_bucket_internal(audio, pSBucket, volume);
 
-    ASetErrorHandler(prevHandler);
-    if (status)
-      player_error_internal( audio, "Audio data copy failed", status );
+  ASetErrorHandler(prevHandler);
+  if (status)
+    player_error_internal( audio, "Audio data copy failed", status );
 
-    return 1;
+  return 1;
 }
 
 void
@@ -288,7 +263,7 @@ not make your functions depend on it.
 
   Vhp_play_speaker = intern ("internal");
 
-  DEFVAR_INT("hp-play-gain", &hp_play_gain /*
+  DEFVAR_INT ("hp-play-gain", &hp_play_gain /*
 Global gain value for playing sounds.
 Default value is AUnityGain which means keep level.
 Please refer to the HP documentation, for instance in

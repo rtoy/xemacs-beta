@@ -812,9 +812,9 @@ WARNING: this may alter match-data.
 void
 syms_of_font_lock (void)
 {
-  defsymbol (&Qcomment, "comment");
-  defsymbol (&Qblock_comment, "block-comment");
-  defsymbol (&Qbeginning_of_defun, "beginning-of-defun");
+  DEFSYMBOL (Qcomment);
+  DEFSYMBOL (Qblock_comment);
+  DEFSYMBOL (Qbeginning_of_defun);
 
   DEFSUBR (Fbuffer_syntactic_context);
   DEFSUBR (Fbuffer_syntactic_context_depth);

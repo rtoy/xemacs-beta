@@ -1,3 +1,12 @@
+2001-05-24  Ben Wing  <ben@xemacs.org>
+
+	* xemacs-faq.texi (Top):
+	* xemacs-faq.texi (Installation):
+	* xemacs-faq.texi (Q2.1.15):
+	* xemacs-faq.texi (Q2.1.18):
+	* xemacs-faq.texi (Q2.1.19):
+	document how to debug X errors
+	
 2001-05-15  Steve Youngs  <youngs@xemacs.org>
 
 	* xemacs/packages.texi (Local.rules): Update to reflect new dir tree.

@@ -26,6 +26,8 @@
 
 /* Synched up with: Not in FSF. */
 
+/* This file Mule-ized by Ben Wing, 5-15-01. */
+
 /* There are four compile-time options.
  *
  * XTOOLKIT	This will be part of an Xt program.
@@ -52,21 +54,13 @@
  *      1998-10-01 rlt  Added support for WAVE files.
  */
 
-#ifdef emacs
 #include <config.h>
 #include "lisp.h"
+
+#include "sound.h"
+
 #include "sysdep.h"
 #include "syssignal.h"
-#endif
-
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdio.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 
 /* NAS <= 1.2p5 defines {BIG,LITTLE}_ENDIAN in <audio/fileutil.h>,
    conflicting with GNU libc (at least); newer versions avoid this
@@ -92,8 +86,6 @@
 #define NAS_BIG_ENDIAN BIG_ENDIAN
 #endif
 
-#ifdef emacs
-
 #    define XTOOLKIT
 #    define XTEVENTS
 #    define ROBUST_PLAY
@@ -112,18 +104,11 @@
 	jmp_buf AuXtErrorJump;
 #    endif
 
-     /* The GETTEXT is correct. --ben */
-#    define warn(str) warn_when_safe (Qnas, Qwarning, "nas: %s ", GETTEXT (str))
-
 #    define play_sound_file nas_play_sound_file
 #    define play_sound_data nas_play_sound_data
 #    define wait_for_sounds nas_wait_for_sounds
 #    define init_play       nas_init_play
 #    define close_down_play nas_close_down_play
-
-#else /* !emacs */
-#    define warn(str) fprintf (stderr, "%s\n", (str))
-#endif /* emacs */
 
 #ifdef XTOOLKIT
 #    include <X11/Intrinsic.h>
@@ -138,7 +123,7 @@ SIGTYPE sigpipe_handle (int signo);
 
 extern Lisp_Object Vsynchronous_sounds;
 
-static Sound SoundOpenDataForReading (unsigned char *data, int length);
+static Sound SoundOpenDataForReading (UChar_Binary *data, int length);
 
 static AuServer       *aud;
 
@@ -150,31 +135,31 @@ static int sounds_in_play;
 static Display *aud_server;
 static XtInputId input_id;
 #else
-static char *aud_server;
+static Extbyte *aud_server;
 #endif /* XTOOLKIT */
 
-char *
+Extbyte *
 init_play (
 #ifdef XTOOLKIT
 	   Display *display
 #else
-	   char *server
+	   Extbyte *server
 #endif
 	   );
-char *
+Extbyte *
 init_play (
 #ifdef XTOOLKIT
 	   Display *display
 #else
-	   char *server
+	   Extbyte *server
 #endif
 	   )
 {
-  char *err_message;
+  Extbyte *err_message;
   SIGTYPE (*old_sigpipe) (int);
 
 #ifdef XTOOLKIT
-  char * server = DisplayString (display);
+  Extbyte * server = DisplayString (display);
   XtAppContext app_context = XtDisplayToApplicationContext (display);
 
   aud_server = display;
@@ -250,7 +235,7 @@ close_down_play (void)
 
 {
   AuCloseServer (aud);
-  warn ("disconnected from audio server");
+  sound_warn ("disconnected from audio server");
 }
 
  /********************************************************************\
@@ -282,7 +267,7 @@ doneCB (AuServer       *auserver,
 static void
 do_caching_play (Sound s,
 		 int volume,
-		 unsigned char *buf)
+		 UChar_Binary *buf)
 
 {
   AuBucketAttributes *list, b;
@@ -305,7 +290,7 @@ do_caching_play (Sound s,
 	      return;
 	    }
 
-	  if (SoundReadFile ((char *) my_buf, SoundNumBytes (s), s) != SoundNumBytes (s))
+	  if (SoundReadFile ((Extbyte *) my_buf, SoundNumBytes (s), s) != SoundNumBytes (s))
 	    {
 	      free (my_buf);
 	      return;
@@ -358,9 +343,9 @@ wait_for_sounds (void)
     }
 }
 
-int play_sound_file (char *sound_file, int volume);
+int play_sound_file (Extbyte *sound_file, int volume);
 int
-play_sound_file (char *sound_file,
+play_sound_file (Extbyte *sound_file,
 		 int volume)
 {
   SIGTYPE (*old_sigpipe) (int);
@@ -377,7 +362,7 @@ play_sound_file (char *sound_file,
   if (aud==NULL) {
     if (aud_server != NULL)
       {
-	char *m;
+	Extbyte *m;
 	/* attempt to reconect */
 	if ((m=init_play (aud_server))!= NULL)
 	  {
@@ -390,7 +375,7 @@ play_sound_file (char *sound_file,
       }
     else
       {
-	warn ("Attempt to play with no audio init\n");
+	sound_warn ("Attempt to play with no audio init\n");
 #ifdef ROBUST_PLAY
 	signal (SIGPIPE, old_sigpipe);
 #endif
@@ -451,9 +436,9 @@ play_sound_file (char *sound_file,
   return 1;
 }
 
-int play_sound_data (unsigned char *data, int length, int volume);
+int play_sound_data (UChar_Binary *data, int length, int volume);
 int
-play_sound_data (unsigned char *data,
+play_sound_data (UChar_Binary *data,
 		 int length, 
 		 int volume)
 {
@@ -478,7 +463,7 @@ play_sound_data (unsigned char *data,
   if (aud == NULL) {
     if (aud_server != NULL)
       {
-	char *m;
+	Extbyte *m;
 	/* attempt to reconect */
 	if ((m = init_play (aud_server)) != NULL)
 	  {
@@ -490,7 +475,7 @@ play_sound_data (unsigned char *data,
       }
     else
       {
-	warn ("Attempt to play with no audio init\n");
+	sound_warn ("Attempt to play with no audio init\n");
 #ifdef ROBUST_PLAY
 	signal (SIGPIPE, old_sigpipe);
 #endif
@@ -500,7 +485,7 @@ play_sound_data (unsigned char *data,
 
   if ((s=SoundOpenDataForReading (data, length))==NULL)
     {
-      warn ("unknown sound type");
+      sound_warn ("unknown sound type");
 #ifdef ROBUST_PLAY
       signal (SIGPIPE, old_sigpipe);
 #endif
@@ -518,7 +503,7 @@ play_sound_data (unsigned char *data,
     }
   else
     {
-      warn ("only understand snd and wave files at the moment");
+      sound_warn ("only understand snd and wave files at the moment");
       SoundCloseFile (s);
 #ifdef ROBUST_PLAY
       signal (SIGPIPE, old_sigpipe);
@@ -579,9 +564,9 @@ static AuBool
 CatchIoErrorAndJump (AuServer *old_aud)
 {
   if (old_aud)
-    warn ("Audio Server connection broken"); 
+    sound_warn ("Audio Server connection broken"); 
   else
-    warn ("Audio Server connection broken because of signal");
+    sound_warn ("Audio Server connection broken because of signal");
 
 #ifdef XTEVENTS
 #ifdef XTOOLKIT
@@ -637,14 +622,14 @@ CatchErrorAndJump (AuServer *old_aud,
 
 /* Create a name from the sound. */
 
-static char *
-NameFromData (const char *buf,
+static Extbyte *
+NameFromData (const Char_Binary *buf,
 	      int len)
 
 {
-  char name[9];
+  Extbyte name[9];
   int i;
-  char *s;
+  Extbyte *s;
 
   buf+=len/2;
   len -= len/2;
@@ -667,11 +652,11 @@ NameFromData (const char *buf,
 
   if (i==8)
     {
-      strcpy (s = (char *) malloc (10), name);
+      strcpy (s = (Extbyte *) malloc (10), name);
     }
   else 
     {
-      strcpy (s = (char *) malloc (15), "short sound");
+      strcpy (s = (Extbyte *) malloc (15), "short sound");
     }
 
   return s;
@@ -682,7 +667,7 @@ NameFromData (const char *buf,
  */
 
 static SndInfo *
-SndOpenDataForReading (const char *data,
+SndOpenDataForReading (const Char_Binary *data,
 		       int length)
 
 {
@@ -699,7 +684,7 @@ SndOpenDataForReading (const char *data,
 
   if (NAS_LITTLE_ENDIAN)
     {
-      char            n;
+      Char_Binary            n;
     
       swapl (&si->h.magic, n);
       swapl (&si->h.dataOffset, n);
@@ -719,7 +704,7 @@ SndOpenDataForReading (const char *data,
 
   if (size)
     {
-      if (!(si->comment = (char *) malloc (size + 1)))
+      if (!(si->comment = (Extbyte *) malloc (size + 1)))
 	{
 	  free (si);
 	  return NULL;
@@ -748,7 +733,7 @@ SndOpenDataForReading (const char *data,
 #define Err()		{ return NULL; }
 #define readFourcc(_f)	dread(_f, sizeof(RIFF_FOURCC), 1)
 #define cmpID(_x, _y)							      \
-    strncmp((char *) (_x), (char *) (_y), sizeof(RIFF_FOURCC))
+    strncmp((Char_Binary *) (_x), (Char_Binary *) (_y), sizeof(RIFF_FOURCC))
 #define PAD2(_x)	(((_x) + 1) & ~1)
 
 /* These functions here are for faking file I/O from buffer. */
@@ -777,7 +762,7 @@ dread (void* buf, size_t size, size_t nitems)
   
   if (file_posn + nread <= file_len)
     {
-      memcpy(buf, (char *) file_data + file_posn, size * nitems);
+      memcpy(buf, (Char_Binary *) file_data + file_posn, size * nitems);
       file_posn += nread;
       return nitems;
     }
@@ -792,7 +777,7 @@ static int
 dgetc (void)
 {
   if (file_posn < file_len)
-    return ((char *)file_data)[file_posn++];
+    return ((Char_Binary *)file_data)[file_posn++];
   else
     return -1;
 }
@@ -846,7 +831,7 @@ static int
 readChunk (RiffChunk *c)
 {
     int             status;
-    char            n;
+    Char_Binary            n;
 
     if ((status = dread(c, sizeof(RiffChunk), 1)))
 	if (NAS_BIG_ENDIAN)
@@ -859,7 +844,7 @@ readChunk (RiffChunk *c)
    read the wave data from a buffer in memory. */
 
 static WaveInfo *
-WaveOpenDataForReading (const char *data,
+WaveOpenDataForReading (const Char_Binary *data,
 			int length)
 {
     RiffChunk       ck;
@@ -912,7 +897,7 @@ WaveOpenDataForReading (const char *data,
 		    /* ICMT chunk */
 		    if (!cmpID(&c.ckID, RIFF_InfoIcmtID))
 		    {
-			if (!(wi->comment = (char *) malloc(c.ckSize)) ||
+			if (!(wi->comment = (Extbyte *) malloc(c.ckSize)) ||
 			    !dread(wi->comment, c.ckSize, 1))
 			    Err();
 
@@ -993,7 +978,7 @@ WaveOpenDataForReading (const char *data,
 
 
 static Sound
-SoundOpenDataForReading (unsigned char *data,
+SoundOpenDataForReading (UChar_Binary *data,
 			 int length)
 
 {
@@ -1002,7 +987,7 @@ SoundOpenDataForReading (unsigned char *data,
   if (!(s = (Sound) malloc (sizeof (SoundRec))))
     return NULL;
 
-  if ((s->formatInfo = SndOpenDataForReading ((char *) data, length)) != NULL)
+  if ((s->formatInfo = SndOpenDataForReading ((Char_Binary *) data, length)) != NULL)
     {
       if (!((int(*)(Sound))(SoundFileInfo[SoundFileFormatSnd].toSound)) (s))
 	{
@@ -1011,7 +996,7 @@ SoundOpenDataForReading (unsigned char *data,
 	  return NULL;
 	}
     }
-  else if ((s->formatInfo = WaveOpenDataForReading ((char *) data, length)) != NULL)
+  else if ((s->formatInfo = WaveOpenDataForReading ((Char_Binary *) data, length)) != NULL)
     {
       if (!((int(*)(Sound))(SoundFileInfo[SoundFileFormatWave].toSound)) (s))
 	{

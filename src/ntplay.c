@@ -18,35 +18,45 @@ along with XEmacs; see the file COPYING.  If not, write to the Free
 Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.*/
 
+/* Synched up with: Not in FSF. */
+
+/* This file Mule-ized by Ben Wing, 5-15-01. */
+
 #include <config.h>
 #include "lisp.h"
 
-#include "sysfile.h"
+#include "sound.h"
 #include "nt.h"
-#include "nativesound.h"
 
-static int play_sound_data_1 (unsigned char *data, int length,
-			       int volume, int convert);
+#include "sysfile.h"
 
-void play_sound_file (char *sound_file, int volume)
+static int play_sound_data_1 (UChar_Binary *data, int length,
+			      int volume, int convert);
+
+void
+play_sound_file (Extbyte *sound_file, int volume)
 {
   DWORD flags = SND_ASYNC | SND_NODEFAULT | SND_FILENAME;
   OFSTRUCT ofs;
-  Lisp_Object fname = Ffile_name_nondirectory (build_string (sound_file));
+  Lisp_Object fname =
+    Ffile_name_nondirectory (build_ext_string (sound_file, Qmswindows_tstr));
+  Extbyte *fnameext;
 
   CHECK_STRING (fname);
-  if (OpenFile (XSTRING_DATA (fname), &ofs, OF_EXIST) < 0)
+  LISP_STRING_TO_EXTERNAL (fname, fnameext, Qmswindows_tstr);
+
+  if (OpenFile (fnameext, &ofs, OF_EXIST) < 0)
     {
       /* file isn't in the path so read it as data */
       int size;
-      unsigned char* data;
+      UChar_Binary* data;
       int ofd = open (sound_file, O_RDONLY | OPEN_BINARY, 0);
       
       if (ofd <0)
 	return;
 
       size = lseek (ofd, 0, SEEK_END);
-      data = (unsigned char *)xmalloc (size);
+      data = (UChar_Binary *)xmalloc (size);
       lseek (ofd, 0, SEEK_SET);
       
       if (!data)
@@ -66,16 +76,17 @@ void play_sound_file (char *sound_file, int volume)
       play_sound_data_1 (data, size, 100, FALSE);
     }
   else 
-    PlaySound (XSTRING_DATA (fname), NULL, flags);
+    PlaySound (fnameext, NULL, flags);
 }
 
 /* mswindows can't cope with playing a sound from alloca space so we
    have to convert if necessary */
-static int play_sound_data_1 (unsigned char *data, int length, int volume,
-			       int convert_to_malloc)
+static int
+play_sound_data_1 (UChar_Binary *data, int length, int volume,
+		   int convert_to_malloc)
 {
   DWORD flags = SND_ASYNC | SND_MEMORY | SND_NODEFAULT;
-  static unsigned char* sound_data=0;
+  static UChar_Binary* sound_data=0;
   if (sound_data)
     {
       PlaySound (NULL, NULL, flags);
@@ -85,7 +96,7 @@ static int play_sound_data_1 (unsigned char *data, int length, int volume,
 
   if (convert_to_malloc)
     {
-      sound_data = (unsigned char *)xmalloc (length);
+      sound_data = (UChar_Binary *)xmalloc (length);
       memcpy (sound_data, data, length);
     }
   else
@@ -97,7 +108,8 @@ static int play_sound_data_1 (unsigned char *data, int length, int volume,
   return 1;
 }
 
-int play_sound_data (unsigned char *data, int length, int volume)
+int
+play_sound_data (UChar_Binary *data, int length, int volume)
 {
   return play_sound_data_1 (data, length, volume, TRUE);
 }

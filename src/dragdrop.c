@@ -113,9 +113,9 @@ dnd_url_hexify_string (const char *s, const char *m)
 void
 syms_of_dragdrop (void)
 {
-  defsymbol (&Qdragdrop_MIME, "dragdrop-MIME");
-  defsymbol (&Qdragdrop_URL,  "dragdrop-URL");
-  defsymbol (&Qdragdrop_drop_dispatch, "dragdrop-drop-dispatch");
+  DEFSYMBOL (Qdragdrop_MIME);
+  DEFSYMBOL (Qdragdrop_URL);
+  DEFSYMBOL (Qdragdrop_drop_dispatch);
 }
 
 void

@@ -55,6 +55,8 @@ Boston, MA 02111-1307, USA.  */
 Lisp_Object Qstring_lessp;
 Lisp_Object Qidentity;
 
+Lisp_Object Qbase64_conversion_error;
+
 static int internal_old_equal (Lisp_Object, Lisp_Object, int);
 Lisp_Object safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth);
 
@@ -205,8 +207,8 @@ void
 check_losing_bytecode (const char *function, Lisp_Object seq)
 {
   if (COMPILED_FUNCTIONP (seq))
-    error_with_frob
-      (seq,
+    signal_ferror_with_frob
+      (Qinvalid_argument, seq,
        "As of 20.3, `%s' no longer works with compiled-function objects",
        function);
 }
@@ -871,7 +873,7 @@ Lisp_Object
 safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth)
 {
   if (depth > 200)
-    signal_simple_error ("Stack overflow in copy-tree", arg);
+    stack_overflow ("Stack overflow in copy-tree", arg);
     
   if (CONSP (arg))
     {
@@ -2569,7 +2571,7 @@ face, or glyph.  See also `put', `remprop', and `object-plist'.
   if (LRECORDP (object) && XRECORD_LHEADER_IMPLEMENTATION (object)->getprop)
     val = XRECORD_LHEADER_IMPLEMENTATION (object)->getprop (object, property);
   else
-    signal_simple_error ("Object type has no properties", object);
+    invalid_operation ("Object type has no properties", object);
 
   return UNBOUNDP (val) ? default_ : val;
 }
@@ -2591,10 +2593,10 @@ See also `get', `remprop', and `object-plist'.
     {
       if (! XRECORD_LHEADER_IMPLEMENTATION (object)->putprop
 	  (object, property, value))
-	signal_simple_error ("Can't set property on object", property);
+	invalid_change ("Can't set property on object", property);
     }
   else
-    signal_simple_error ("Object type has no settable properties", object);
+    invalid_change ("Object type has no settable properties", object);
 
   return value;
 }
@@ -2615,10 +2617,10 @@ in the property list).  See also `get', `put', and `object-plist'.
     {
       ret = XRECORD_LHEADER_IMPLEMENTATION (object)->remprop (object, property);
       if (ret == -1)
-	signal_simple_error ("Can't remove property from object", property);
+	invalid_change ("Can't remove property from object", property);
     }
   else
-    signal_simple_error ("Object type has no removable properties", object);
+    invalid_change ("Object type has no removable properties", object);
 
   return ret ? Qt : Qnil;
 }
@@ -2635,7 +2637,7 @@ this may or may not have the desired effects.  Use `put' instead.
   if (LRECORDP (object) && XRECORD_LHEADER_IMPLEMENTATION (object)->plist)
     return XRECORD_LHEADER_IMPLEMENTATION (object)->plist (object);
   else
-    signal_simple_error ("Object type has no properties", object);
+    invalid_operation ("Object type has no properties", object);
 
   return Qnil;
 }
@@ -2645,7 +2647,7 @@ int
 internal_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
   if (depth > 200)
-    error ("Stack overflow in equal");
+    stack_overflow ("Stack overflow in equal", Qunbound);
   QUIT;
   if (EQ_WITH_EBOLA_NOTICE (obj1, obj2))
     return 1;
@@ -2675,7 +2677,7 @@ static int
 internal_old_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
   if (depth > 200)
-    error ("Stack overflow in equal");
+    stack_overflow ("Stack overflow in equal", Qunbound);
   QUIT;
   if (HACKEQ_UNSAFE (obj1, obj2))
     return 1;
@@ -3178,10 +3180,11 @@ in which case you can't use this.
   Lisp_Object ret = Qnil;
 
   if (loads == -2)
-    error ("load-average not implemented for this operating system");
+    signal_error (Qunimplemented,
+		  "load-average not implemented for this operating system",
+		  Qunbound);
   else if (loads < 0)
-    signal_simple_error ("Could not get load-average",
-			 lisp_strerror (errno));
+    invalid_operation ("Could not get load-average", lisp_strerror (errno));
 
   while (loads-- > 0)
     {
@@ -3349,8 +3352,7 @@ If FILENAME is omitted, the printname of FEATURE is used as the file name.
 
       tem = Fmemq (feature, Vfeatures);
       if (NILP (tem))
-	error ("Required feature %s was not provided",
-	       string_data (XSYMBOL (feature)->name));
+	invalid_state ("Required feature was not provided", feature);
 
       /* Once loading finishes, don't undo it.  */
       Vautoload_queue = Qt;
@@ -3419,11 +3421,17 @@ static short base64_char_to_value[128] =
    The octets are divided into 6 bit chunks, which are then encoded into
    base64 characters.  */
 
-#define ADVANCE_INPUT(c, stream)				\
- ((ec = Lstream_get_emchar (stream)) == -1 ? 0 :		\
-  ((ec > 255) ?							\
-   (signal_simple_error ("Non-ascii character in base64 input",	\
-			 make_char (ec)), 0)			\
+DOESNT_RETURN
+base64_conversion_error (const char *reason, Lisp_Object frob)
+{
+  signal_error (Qbase64_conversion_error, reason, frob);
+}
+
+#define ADVANCE_INPUT(c, stream)					\
+ ((ec = Lstream_get_emchar (stream)) == -1 ? 0 :			\
+  ((ec > 255) ?								\
+   (base64_conversion_error ("Non-ascii character in base64 input",	\
+    make_char (ec)), 0)							\
    : (c = (Bufbyte)ec), 1))
 
 static Bytind
@@ -3518,33 +3526,37 @@ base64_decode_1 (Lstream *istream, Bufbyte *to, Charcount *ccptr)
       if (ec < 0)
 	break;
       if (ec == '=')
-	signal_simple_error ("Illegal `=' character while decoding base64",
-			     make_int (streampos));
+	base64_conversion_error ("Illegal `=' character while decoding base64",
+		      make_int (streampos));
       value = base64_char_to_value[ec] << 18;
 
       /* Process second byte of a quadruplet.  */
       ADVANCE_INPUT_IGNORE_NONBASE64 (ec, istream, streampos);
       if (ec < 0)
-	error ("Premature EOF while decoding base64");
+	base64_conversion_error ("Premature EOF while decoding base64",
+				 Qunbound);
       if (ec == '=')
-	signal_simple_error ("Illegal `=' character while decoding base64",
-			     make_int (streampos));
+	base64_conversion_error ("Illegal `=' character while decoding base64",
+		      make_int (streampos));
       value |= base64_char_to_value[ec] << 12;
       STORE_BYTE (e, value >> 16, ccnt);
 
       /* Process third byte of a quadruplet.  */
       ADVANCE_INPUT_IGNORE_NONBASE64 (ec, istream, streampos);
       if (ec < 0)
-	error ("Premature EOF while decoding base64");
+	base64_conversion_error ("Premature EOF while decoding base64",
+				 Qunbound);
 
       if (ec == '=')
 	{
 	  ADVANCE_INPUT_IGNORE_NONBASE64 (ec, istream, streampos);
 	  if (ec < 0)
-	    error ("Premature EOF while decoding base64");
+	    base64_conversion_error ("Premature EOF while decoding base64",
+				     Qunbound);
 	  if (ec != '=')
-	    signal_simple_error ("Padding `=' expected but not found while decoding base64",
-				 make_int (streampos));
+	    base64_conversion_error
+	      ("Padding `=' expected but not found while decoding base64",
+	       make_int (streampos));
 	  continue;
 	}
 
@@ -3554,7 +3566,8 @@ base64_decode_1 (Lstream *istream, Bufbyte *to, Charcount *ccptr)
       /* Process fourth byte of a quadruplet.  */
       ADVANCE_INPUT_IGNORE_NONBASE64 (ec, istream, streampos);
       if (ec < 0)
-	error ("Premature EOF while decoding base64");
+	base64_conversion_error ("Premature EOF while decoding base64",
+				 Qunbound);
       if (ec == '=')
 	continue;
 
@@ -3766,9 +3779,11 @@ syms_of_fns (void)
 {
   INIT_LRECORD_IMPLEMENTATION (bit_vector);
 
-  defsymbol (&Qstring_lessp, "string-lessp");
-  defsymbol (&Qidentity, "identity");
-  defsymbol (&Qyes_or_no_p, "yes-or-no-p");
+  DEFSYMBOL (Qstring_lessp);
+  DEFSYMBOL (Qidentity);
+  DEFSYMBOL (Qyes_or_no_p);
+
+  DEFERROR_STANDARD (Qbase64_conversion_error, Qconversion_error);
 
   DEFSUBR (Fidentity);
   DEFSUBR (Frandom);

@@ -242,14 +242,15 @@ x_parse_nearest_color (struct device *d, XColor *color, Lisp_Object name,
   }
   if (!result)
     {
-      maybe_signal_simple_error ("Unrecognized color", name, Qcolor, errb);
+      maybe_signal_error (Qgui_error, "Unrecognized color",
+			  name, Qcolor, errb);
       return 0;
     }
   result = allocate_nearest_color (dpy, cmap, visual, color);
   if (!result)
     {
-      maybe_signal_simple_error ("Couldn't allocate color", name, Qcolor,
-				 errb);
+      maybe_signal_error (Qgui_error, "Couldn't allocate color",
+			  name, Qcolor, errb);
       return 0;
     }
 
@@ -374,8 +375,8 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 
   if (!xf)
     {
-      maybe_signal_simple_error ("Couldn't load font", f->name,
-				 Qfont, errb);
+      maybe_signal_error (Qgui_error, "Couldn't load font", f->name, Qfont,
+			  errb);
       return 0;
     }
 
@@ -383,8 +384,8 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
     {
       /* yes, this has been known to happen. */
       XFreeFont (dpy, xf);
-      maybe_signal_simple_error ("X font is too small", f->name,
-				 Qfont, errb);
+      maybe_signal_error (Qgui_error, "X font is too small", f->name, Qfont,
+			  errb);
       return 0;
     }
 
@@ -792,8 +793,8 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_behavior errb)
 	  Lisp_Object font_instance;
 	  XSETFONT_INSTANCE (font_instance, f);
 
-	  maybe_signal_simple_error ("Couldn't determine font truename",
-				     font_instance, Qfont, errb);
+	  maybe_signal_error (Qgui_error, "Couldn't determine font truename",
+			      font_instance, Qfont, errb);
 	  /* Ok, just this once, return the font name as the truename.
 	     (This is only used by Fequal() right now.) */
 	  return f->name;

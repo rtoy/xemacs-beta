@@ -1206,7 +1206,7 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 	      {
 		if (noerror)
 		  return Qnil;
-		error ("Containing expression ends prematurely");
+		signal_error (Qsyntax_error, "Containing expression ends prematurely", Qunbound);
 	      }
 	    break;
 
@@ -1378,7 +1378,7 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 	      {
 		if (noerror)
 		  return Qnil;
-		error ("Containing expression ends prematurely");
+		signal_error (Qsyntax_error, "Containing expression ends prematurely", Qunbound);
 	      }
 	    break;
 
@@ -1448,7 +1448,7 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 
 lose:
   if (!noerror)
-    error ("Unbalanced parentheses");
+    signal_error (Qsyntax_error, "Unbalanced parentheses", Qunbound);
   return Qnil;
 }
 
@@ -1650,7 +1650,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	{
 	  curlevel->last = XINT (Fcar (tem));
 	  if (++curlevel == endlevel)
-	    error ("Nesting too deep for parser");
+	    signal_error (Qstack_overflow, "Nesting too deep for parser", Qunbound);
 	  curlevel->prev = -1;
 	  curlevel->last = -1;
 	  tem = Fcdr (tem);
@@ -1792,7 +1792,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	  /* curlevel++->last ran into compiler bug on Apollo */
 	  curlevel->last = from - 1;
 	  if (++curlevel == endlevel)
-	    error ("Nesting too deep for parser");
+	    signal_error (Qstack_overflow, "Nesting too deep for parser", Qunbound);
 	  curlevel->prev = -1;
 	  curlevel->last = -1;
 	  if (targetdepth == depth) goto done;
@@ -2072,8 +2072,8 @@ update_syntax_table (Lisp_Char_Table *ct)
 void
 syms_of_syntax (void)
 {
-  defsymbol (&Qsyntax_table_p, "syntax-table-p");
-  defsymbol (&Qsyntax_table, "syntax-table");
+  DEFSYMBOL (Qsyntax_table_p);
+  DEFSYMBOL (Qsyntax_table);
 
   DEFSUBR (Fsyntax_table_p);
   DEFSUBR (Fsyntax_table);

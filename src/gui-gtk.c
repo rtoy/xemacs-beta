@@ -82,7 +82,7 @@ void
 syms_of_gui_gtk (void)
 {
 #ifdef HAVE_POPUPS
-  defsymbol (&Qmenu_no_selection_hook, "menu-no-selection-hook");
+  DEFSYMBOL (Qmenu_no_selection_hook);
 #endif
 }
 

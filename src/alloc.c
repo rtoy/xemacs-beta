@@ -236,7 +236,7 @@ memory_full (void)
     Fset (Qvalues, Qnil);
   Vcommand_history = Qnil;
 
-  error ("Memory exhausted");
+  out_of_memory ("Memory exhausted", Qunbound);
 }
 
 /* like malloc and realloc but check for no memory left, and block input. */
@@ -1433,7 +1433,7 @@ This is terrible behavior which is retained for compatibility with old
 	if (EQ (symbol, Qt)   ||
 	    EQ (symbol, Qnil) ||
 	    SYMBOL_IS_KEYWORD (symbol))
-	  signal_simple_error_2
+	  invalid_constant_2
 	    ("Invalid constant symbol in formal parameter list",
 	     symbol, arglist);
       }
@@ -3271,7 +3271,7 @@ garbage_collect_1 (void)
       return;
     frame = DEVICE_SELECTED_FRAME (XDEVICE (device));
     if (NILP (frame))
-      signal_simple_error ("No frames exist on device", device);
+      invalid_state ("No frames exist on device", device);
     f = XFRAME (frame);
   }
 

@@ -404,7 +404,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
 void
 syms_of_abbrev (void)
 {
-  defsymbol (&Qpre_abbrev_expand_hook, "pre-abbrev-expand-hook");
+  DEFSYMBOL (Qpre_abbrev_expand_hook);
   DEFSUBR (Fexpand_abbrev);
 }
 

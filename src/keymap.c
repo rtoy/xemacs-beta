@@ -256,7 +256,7 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   Lisp_Keymap *keymap = XKEYMAP (obj);
   char buf[200];
   if (print_readably)
-    error ("printing unreadable object #<keymap 0x%x>", keymap->header.uid);
+    printing_unreadable_object ("#<keymap 0x%x>", keymap->header.uid);
   write_c_string ("#<keymap ", printcharfun);
   if (!NILP (keymap->name))
     {
@@ -387,8 +387,7 @@ traverse_keymaps (Lisp_Object start_keymap, Lisp_Object start_parents,
       keymap = get_keymap (keymap, 1, 1);
       if (EQ (keymap, start_keymap))
 	{
-	  signal_simple_error ("Cyclic keymap indirection",
-			       start_keymap);
+	  invalid_argument ("Cyclic keymap indirection", start_keymap);
 	}
     }
 }
@@ -586,7 +585,7 @@ check_keymap_definition_loop (Lisp_Object def, Lisp_Keymap *to_keymap)
       Lisp_Object maps;
 
       if (XKEYMAP (def) == to_keymap)
-	signal_simple_error ("Cyclic keymap definition", def);
+	invalid_argument ("Cyclic keymap definition", def);
 
       for (maps = keymap_submaps (def);
 	   CONSP (maps);
@@ -1277,16 +1276,16 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	  /* || (XCHAR (*keysym) >= 128 && XCHAR (*keysym) < 160) */)
 	/* yuck!  Can't make the above restriction; too many compatibility
 	   problems ... */
-	signal_simple_error ("keysym char must be printable", *keysym);
+	invalid_argument ("keysym char must be printable", *keysym);
       /* #### This bites!  I want to be able to write (control shift a) */
       if (modifiers & XEMACS_MOD_SHIFT)
-	signal_simple_error
+	invalid_argument
 	  ("The `shift' modifier may not be applied to ASCII keysyms",
 	   spec);
     }
   else
     {
-      signal_simple_error ("Unknown keysym specifier", *keysym);
+      invalid_argument ("Unknown keysym specifier", *keysym);
     }
 
   if (SYMBOLP (*keysym))
@@ -1325,7 +1324,7 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	    !strcmp (name, "BS")))
 #endif /* unused */
           )
-	signal_simple_error
+	invalid_argument
           ("Invalid (FSF Emacs) key format (see doc of define-key)",
 	   *keysym);
 
@@ -1447,17 +1446,14 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
 	    break;
 	  }
 	default:
-	  signal_error (Qwrong_type_argument,
-			list2 (build_translated_string
-			       ("unable to bind this type of event"),
-			       spec));
+	  wtaerror ("unable to bind this type of event", spec);
 	}
     }
   else if (SYMBOLP (spec))
     {
       /* Be nice, allow = to mean (=) */
       if (bucky_sym_to_bucky_bit (spec) != 0)
-        signal_simple_error ("Key is a modifier name", spec);
+        invalid_argument ("Key is a modifier name", spec);
       define_key_check_and_coerce_keysym (spec, &spec, 0);
       returned_value->keysym = spec;
       returned_value->modifiers = 0;
@@ -1479,19 +1475,20 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
 	  if (!NILP (XCDR (rest)))
 	    {
 	      if (! modifier)
-		signal_simple_error ("Unknown modifier", keysym);
+		invalid_argument ("Unknown modifier", keysym);
 	    }
 	  else
 	    {
 	      if (modifier)
-		signal_simple_error ("Nothing but modifiers here",
+		sferror ("Nothing but modifiers here",
 				     spec);
 	    }
 	  rest = XCDR (rest);
 	  QUIT;
 	}
       if (!NILP (rest))
-        signal_simple_error ("List must be nil-terminated", spec);
+        signal_error (Qlist_formation_error,
+			   "List must be nil-terminated", spec);
 
       define_key_check_and_coerce_keysym (spec, &keysym, modifiers);
       returned_value->keysym = keysym;
@@ -1499,7 +1496,7 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
     }
   else
     {
-      signal_simple_error ("Unknown key-sequence specifier",
+      invalid_argument ("Unknown key-sequence specifier",
 			   spec);
     }
 }
@@ -1518,7 +1515,7 @@ key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
     {
       Lisp_Object fn, arg;
       if (! NILP (Fcdr (Fcdr (list))))
-	signal_simple_error ("Invalid menu event desc", list);
+	invalid_argument ("Invalid menu event desc", list);
       arg = Fcar (Fcdr (list));
       if (SYMBOLP (arg))
 	fn = Qcall_interactively;
@@ -1541,7 +1538,8 @@ key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
       EQ (raw_key.keysym, Qbutton5) || EQ (raw_key.keysym, Qbutton5up) ||
       EQ (raw_key.keysym, Qbutton6) || EQ (raw_key.keysym, Qbutton6up) ||
       EQ (raw_key.keysym, Qbutton7) || EQ (raw_key.keysym, Qbutton7up))
-    error ("Mouse-clicks can't appear in saved keyboard macros.");
+    invalid_operation ("Mouse-clicks can't appear in saved keyboard macros",
+		       Qunbound);
 
   XEVENT (event)->channel = Vselected_console;
   XEVENT (event)->event_type = key_press_event;
@@ -1724,18 +1722,19 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
     }
 
   if (EQ (keys, new_keys))
-    error_with_frob (mpc_binding,
-		     "can't bind %s: %s has a non-keymap binding",
-		     (char *) XSTRING_DATA (Fkey_description (keys)),
-		     (char *) XSTRING_DATA (Fsingle_key_description
-					    (Vmeta_prefix_char)));
+    signal_ferror_with_frob (Qinvalid_operation, mpc_binding,
+			     "can't bind %s: %s has a non-keymap binding",
+			     (char *) XSTRING_DATA (Fkey_description (keys)),
+			     (char *) XSTRING_DATA (Fsingle_key_description
+						    (Vmeta_prefix_char)));
   else
-    error_with_frob (mpc_binding,
-		     "can't bind %s: %s %s has a non-keymap binding",
-		     (char *) XSTRING_DATA (Fkey_description (keys)),
-		     (char *) XSTRING_DATA (Fkey_description (new_keys)),
-		     (char *) XSTRING_DATA (Fsingle_key_description
-					    (Vmeta_prefix_char)));
+    signal_ferror_with_frob (Qinvalid_operation, mpc_binding,
+			     "can't bind %s: %s %s has a non-keymap binding",
+			     (char *) XSTRING_DATA (Fkey_description (keys)),
+			     (char *) XSTRING_DATA (Fkey_description
+						    (new_keys)),
+			     (char *) XSTRING_DATA (Fsingle_key_description
+						    (Vmeta_prefix_char)));
 }
 
 DEFUN ("define-key", Fdefine_key, 3, 3, 0, /*
@@ -1921,7 +1920,7 @@ these features.
 				   XKEYMAP (keymap)->table, Qnil);
 	      if (!NILP (meta_map)
 		  && keymap_fullness (meta_map) != 0)
-		signal_simple_error_2
+		invalid_operation_2
 		  ("Map contains meta-bindings, can't bind",
 		   Fsingle_key_description (Vmeta_prefix_char), keymap);
               NUNGCPRO;
@@ -1977,7 +1976,7 @@ these features.
 	    keymap_store (keymap, &raw_key1, cmd);
 	  }
 	if (NILP (Fkeymapp (cmd)))
-          signal_simple_error_2 ("Invalid prefix keys in sequence",
+          sferror_2 ("Invalid prefix keys in sequence",
 				 c, keys);
 
 	if (ascii_hack && !NILP (raw_key2.keysym) &&
@@ -3278,7 +3277,7 @@ of a key read from the user rather than a character from a buffer.
 #endif
 		strcpy (bufp, (char *) string_data (XSYMBOL (keysym)->name));
 	      if (!NILP (XCDR (rest)))
-		signal_simple_error ("Invalid key description",
+		invalid_argument ("Invalid key description",
 				     key);
 	    }
 	}
@@ -3312,8 +3311,9 @@ of a character from a buffer rather than a key read from the user.
       Lisp_Object ch = Fevent_to_character (chr, Qnil, Qnil, Qt);
       if (NILP (ch))
 	return
-	  signal_simple_continuable_error
-	    ("character has no ASCII equivalent", Fcopy_event (chr, Qnil));
+	  signal_continuable_error
+	    (Qinvalid_argument,
+	     "character has no ASCII equivalent", Fcopy_event (chr, Qnil));
       chr = ch;
     }
 

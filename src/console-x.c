@@ -141,8 +141,7 @@ get_display_arg_connection (void)
 	      if (elt + 1 == argc)
 		{
 		  suppress_early_error_handler_backtrace = 1;
-		  type_error (Qinvalid_argument,
-			      "-display specified with no arg");
+		  invalid_argument ("-display specified with no arg", Qunbound);
 		}
 	      else
 		{

@@ -492,9 +492,8 @@ syms_of_filelock (void)
   DEFSUBR (Flock_buffer);
   DEFSUBR (Ffile_locked_p);
 
-  defsymbol (&Qask_user_about_supersession_threat,
-             "ask-user-about-supersession-threat");
-  defsymbol (&Qask_user_about_lock, "ask-user-about-lock");
+  DEFSYMBOL (Qask_user_about_supersession_threat);
+  DEFSYMBOL (Qask_user_about_lock);
 }
 
 void

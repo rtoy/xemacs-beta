@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2000 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -618,7 +618,7 @@ validate_signal_number (int signo)
   if (signo != SIGKILL && signo != SIGTERM
       && signo != SIGQUIT && signo != SIGINT
       && signo != SIGHUP)
-    invalid_argument ("Signal number not supported", make_int (signo));
+    invalid_constant ("Signal number not supported", make_int (signo));
 }
   
 /*-----------------------------------------------------------------------*/
@@ -655,21 +655,20 @@ nt_init_process (void)
   WSAStartup (MAKEWORD (1,1), &wsa_data);
 }
 
-/*
- * Fork off a subprocess. P is a pointer to newly created subprocess
- * object. If this function signals, the caller is responsible for
- * deleting (and finalizing) the process object.
- *
- * The method must return PID of the new process, a (positive??? ####) number
- * which fits into Lisp_Int. No return value indicates an error, the method
- * must signal an error instead.
- */
-
-static void
-signal_cannot_launch (Lisp_Object image_file, DWORD err)
+DOESNT_RETURN
+mswindows_report_process_error (const char *string, Lisp_Object data,
+				int errnum)
 {
-  mswindows_set_errno (err);
-  report_file_error ("Error starting", image_file);
+  report_file_type_error (Qprocess_error, mswindows_lisp_error (errnum),
+			  string, data);
+}
+
+static DOESNT_RETURN
+mswindows_report_winsock_error (const char *string, Lisp_Object data,
+				int errnum)
+{
+  report_file_type_error (Qnetwork_error, mswindows_lisp_error (errnum),
+			  string, data);
 }
 
 static void
@@ -700,6 +699,16 @@ compare_env (const void *strp1, const void *strp2)
   else
     return 1;
 }
+
+/*
+ * Fork off a subprocess. P is a pointer to newly created subprocess
+ * object. If this function signals, the caller is responsible for
+ * deleting (and finalizing) the process object.
+ *
+ * The method must return PID of the new process, a (positive??? ####) number
+ * which fits into Lisp_Int. No return value indicates an error, the method
+ * must signal an error instead.
+ */
 
 static int
 nt_create_process (Lisp_Process *p,
@@ -739,8 +748,11 @@ nt_create_process (Lisp_Process *p,
 	  image_type = xSHGetFileInfoA (progname, 0, NULL, 0, SHGFI_EXETYPE);
 	}
       if (image_type == 0)
-	signal_cannot_launch (program, (GetLastError () == ERROR_FILE_NOT_FOUND
-					? ERROR_BAD_FORMAT : GetLastError ()));
+	mswindows_report_process_error
+	  ("Error starting",
+	   program,
+	   GetLastError () == ERROR_FILE_NOT_FOUND
+	   ? ERROR_BAD_FORMAT : GetLastError ());
       windowed = HIWORD (image_type) != 0;
     }
   else /* NT 3.5; we have no idea so just guess. */
@@ -963,7 +975,9 @@ nt_create_process (Lisp_Process *p,
 	    CloseHandle (hmyshove);
 	    CloseHandle (hmyslurp);
 	  }
-	signal_cannot_launch (program, GetLastError ());
+	mswindows_report_process_error
+	  ("Error starting",
+	   program, GetLastError ());
       }
 
     /* The process started successfully */
@@ -1140,14 +1154,15 @@ nt_kill_process_by_pid (int pid, int signo)
 #define SOCK_TIMER_ID 666
 #define XM_SOCKREPLY (WM_USER + 666)
 
+/* Return 0 for success, or error code */
+
 static int
-get_internet_address (Lisp_Object host, struct sockaddr_in *address,
-		      Error_behavior errb)
+get_internet_address (Lisp_Object host, struct sockaddr_in *address)
 {
   char buf [MAXGETHOSTSTRUCT];
   HWND hwnd;
   HANDLE hasync;
-  int success = 0;
+  int errcode = 0;
 
   address->sin_family = AF_INET;
 
@@ -1157,7 +1172,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
     if (inaddr != INADDR_NONE)
       {
 	address->sin_addr.s_addr = inaddr;
-	return 1;
+	return 0;
       }
   }
 
@@ -1170,7 +1185,10 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
   hasync = WSAAsyncGetHostByName (hwnd, XM_SOCKREPLY, XSTRING_DATA (host),
 				  buf, sizeof (buf));
   if (hasync == NULL)
-    goto done;
+    {
+      errcode = WSAGetLastError ();
+      goto done;
+    }
 
   /* Set a timer to poll for quit every 250 ms */
   SetTimer (hwnd, SOCK_TIMER_ID, 250, NULL);
@@ -1182,14 +1200,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
       if (msg.message == XM_SOCKREPLY)
 	{
 	  /* Ok, got an answer */
-	  if (WSAGETASYNCERROR(msg.lParam) == NO_ERROR)
-	    success = 1;
-	  else
-	    {
-	      warn_when_safe(Qstream, Qwarning,
-			     "cannot get IP address for host \"%s\"",
-			     XSTRING_DATA (host));
-	    }
+	  errcode = WSAGETASYNCERROR (msg.lParam);
 	  goto done;
 	}
       else if (msg.message == WM_TIMER && msg.wParam == SOCK_TIMER_ID)
@@ -1208,13 +1219,13 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
  done:
   KillTimer (hwnd, SOCK_TIMER_ID);
   DestroyWindow (hwnd);
-  if (success)
+  if (!errcode)
     {
       /* BUF starts with struct hostent */
       struct hostent* he = (struct hostent*) buf;
       address->sin_addr.s_addr = *(unsigned long*)he->h_addr_list[0];
     }
-  return success;
+  return errcode;
 }
 
 static Lisp_Object
@@ -1222,7 +1233,7 @@ nt_canonicalize_host_name (Lisp_Object host)
 {
   struct sockaddr_in address;
 
-  if (!get_internet_address (host, &address, ERROR_ME_NOT))
+  if (get_internet_address (host, &address)) /* error */
     return host;
 
   if (address.sin_family == AF_INET)
@@ -1247,11 +1258,12 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
   SOCKET s;
   int port;
   int retval;
+  int errnum;
 
   CHECK_STRING (host);
 
   if (!EQ (protocol, Qtcp))
-    invalid_argument ("Unsupported protocol", protocol);
+    invalid_constant ("Unsupported protocol", protocol);
 
   if (INTP (service))
     port = htons ((unsigned short) XINT (service));
@@ -1265,12 +1277,16 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
       port = svc_info->s_port;
     }
 
-  get_internet_address (host, &address, ERROR_ME);
+  retval = get_internet_address (host, &address);
+  if (retval)
+    mswindows_report_winsock_error ("Getting IP address", host,
+				    retval);
   address.sin_port = port;
 
   s = socket (address.sin_family, SOCK_STREAM, 0);
   if (s < 0)
-    report_file_error ("error creating socket", list1 (name));
+    mswindows_report_winsock_error ("Creating socket", name,
+				    WSAGetLastError ());
 
   /* We don't want to be blocked on connect */
   {
@@ -1280,11 +1296,69 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
   
   retval = connect (s, (struct sockaddr *) &address, sizeof (address));
   if (retval != NO_ERROR && WSAGetLastError() != WSAEWOULDBLOCK)
-    goto connect_failed;
+    {
+      errnum = WSAGetLastError ();
+      goto connect_failed;
+    }
+
+#if 0 /* PUTA! I thought getsockopt() was failing, so I created the
+	 following based on the code in get_internet_address(), but
+	 it was my own fault down below.  Both versions should work. */
   /* Wait while connection is established */
+  {
+    HWND hwnd;
+
+  /* Create a window which will receive completion messages */
+    hwnd = CreateWindow ("STATIC", NULL, WS_OVERLAPPED, 0, 0, 1, 1,
+			 NULL, NULL, NULL, NULL);
+    assert (hwnd);
+
+    /* Post request */
+    if (WSAAsyncSelect (s, hwnd, XM_SOCKREPLY, FD_CONNECT))
+      {
+	errnum = WSAGetLastError ();
+	goto done;
+      }
+
+    /* Set a timer to poll for quit every 250 ms */
+    SetTimer (hwnd, SOCK_TIMER_ID, 250, NULL);
+
+    while (1)
+      {
+	MSG msg;
+	GetMessage (&msg, hwnd, 0, 0);
+	if (msg.message == XM_SOCKREPLY)
+	  {
+	    /* Ok, got an answer */
+	    errnum = WSAGETASYNCERROR (msg.lParam);
+	    goto done;
+	  }
+
+	else if (msg.message == WM_TIMER && msg.wParam == SOCK_TIMER_ID)
+	  {
+	    if (QUITP)
+	      {
+		WSAAsyncSelect (s, hwnd, XM_SOCKREPLY, 0);
+		KillTimer (hwnd, SOCK_TIMER_ID);
+		DestroyWindow (hwnd);
+		REALLY_QUIT;
+	      }
+	  }
+	DispatchMessage (&msg);
+      }
+
+  done:
+    WSAAsyncSelect (s, hwnd, XM_SOCKREPLY, 0);
+    KillTimer (hwnd, SOCK_TIMER_ID);
+    DestroyWindow (hwnd);
+    if (errnum)
+      goto connect_failed;
+  }
+
+#else
   while (1)
     {
-      fd_set fdset;
+      fd_set fdwriteset, fdexceptset;
       struct timeval tv;
       int nsel;
 
@@ -1298,21 +1372,44 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
       tv.tv_sec = 0;
       tv.tv_usec = 250 * 1000;
 
-      FD_ZERO (&fdset);
-      FD_SET (s, &fdset);
-      nsel = select (0, NULL, &fdset, &fdset, &tv);
+      FD_ZERO (&fdwriteset);
+      FD_SET (s, &fdwriteset);
+      FD_ZERO (&fdexceptset);
+      FD_SET (s, &fdexceptset);
+      nsel = select (0, NULL, &fdwriteset, &fdexceptset, &tv);
+
+      if (nsel == SOCKET_ERROR)
+	{
+	  errnum = WSAGetLastError ();
+	  goto connect_failed;
+	}
 
       if (nsel > 0)
 	{
 	  /* Check: was connection successful or not? */
-	  tv.tv_usec = 0;
-	  nsel = select (0, NULL, NULL, &fdset, &tv);
-	  if (nsel > 0)
-	    goto connect_failed;
-	  else
+	  if (FD_ISSET (s, &fdwriteset))
 	    break;
+	  else if (FD_ISSET (s, &fdexceptset))
+	    {
+	      int store_me_harder = sizeof (errnum);
+	      /* OK, we finally can get the REAL error code.  Any paths
+		 in this code that lead to a call of WSAGetLastError()
+		 indicate probable logic failure. */
+	      if (getsockopt (s, SOL_SOCKET, SO_ERROR, (char *) &errnum,
+			      &store_me_harder))
+		errnum = WSAGetLastError ();
+	      goto connect_failed;
+	    }
+	  else
+	    {
+	      signal_error (Qinternal_error,
+			    "Porra, esse caralho de um sistema de operacao",
+			    Qunbound);
+	      break;
+	    }
 	}
     }
+#endif
 
   /* We are connected at this point */
   *vinfd = (void*)s;
@@ -1321,23 +1418,13 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
 		   0, FALSE, DUPLICATE_SAME_ACCESS);
   return;
 
- connect_failed:  
-  closesocket (s);
-  if (INTP (service))
-    {
-      warn_when_safe (Qstream, Qwarning,
-		      "failure to open network stream to host \"%s\" for service \"%d\"",
-		      XSTRING_DATA (host),
-		      (unsigned short) XINT (service));
-    }
-  else
-    {
-      warn_when_safe (Qstream, Qwarning,
-		      "failure to open network stream to host \"%s\" for service \"%s\"",
-		      XSTRING_DATA (host),
-		      XSTRING_DATA (service));
-    }
-  report_file_error ("connection failed", list2 (host, name));
+ connect_failed:
+  {
+    closesocket (s);
+    mswindows_report_winsock_error ("Connection failed",
+				    list3 (Qunbound, host, service),
+				    errnum);
+  }
 }
 
 #endif

@@ -327,7 +327,7 @@ emodules_load(const char *module, const char *modname, const char *modver)
   dlhandle = 0;
 
   if ((module == (const char *)0) || (module[0] == '\0'))
-    error ("Empty module name");
+    invalid_argument ("Empty module name", Qunbound);
 
   /* This is to get around the fact that build_string() is not declared
      as taking a const char * as an argument. I HATE compiler warnings. */
@@ -336,46 +336,51 @@ emodules_load(const char *module, const char *modname, const char *modver)
 
   GCPRO2(filename, foundname);
   filename = build_string (tmod);
-  fd = locate_file(Vmodule_load_path, filename, Vmodule_extensions,
-		   &foundname, -1);
+  fd = locate_file (Vmodule_load_path, filename, Vmodule_extensions,
+		    &foundname, -1);
   UNGCPRO;
 
   if (fd < 0)
-    signal_simple_error ("Cannot open dynamic module", filename);
+    signal_error (Qdll_error, "Cannot open dynamic module", filename);
 
   soname = (char *)alloca (XSTRING_LENGTH (foundname) + 1);
   strcpy (soname, (char *)XSTRING_DATA (foundname));
 
   dlhandle = dll_open (soname);
   if (dlhandle == (dll_handle)0)
-    error ("Opening dynamic module: %s", dll_error (dlhandle));
+    {
+      Bufbyte *dllerrint;
+
+      EXTERNAL_TO_C_STRING (dll_error (dlhandle), dllerrint, Qnative);
+      signal_error (Qdll_error, "Opening dynamic module",
+		    build_string (dllerrint));
+    }
 
   ellcc_rev = (const long *)dll_variable (dlhandle, "emodule_compiler");
   if ((ellcc_rev == (const long *)0) || (*ellcc_rev <= 0))
-    error ("Missing symbol `emodule_compiler': Invalid dynamic module");
+    signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_compiler'", Qunbound);
   if (*ellcc_rev > EMODULES_REVISION)
-    error ("Unsupported version `%ld(%ld)': Invalid dynamic module",
-           *ellcc_rev, EMODULES_REVISION);
+    signal_ferror (Qdll_error, "Invalid dynamic module: Unsupported version `%ld(%ld)'", *ellcc_rev, EMODULES_REVISION);
 
   f = (const char **)dll_variable (dlhandle, "emodule_name");
   if ((f == (const char **)0) || (*f == (const char *)0))
-    error ("Missing symbol `emodule_name': Invalid dynamic module");
+    signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_name'", Qunbound);
 
   mname = (char *)alloca (strlen (*f) + 1);
   strcpy (mname, *f);
   if (mname[0] == '\0')
-    error ("Empty value for `emodule_name': Invalid dynamic module");
+    signal_error (Qdll_error, "Invalid dynamic module: Empty value for `emodule_name'", Qunbound);
 
   f = (const char **)dll_variable (dlhandle, "emodule_version");
   if ((f == (const char **)0) || (*f == (const char *)0))
-    error ("Missing symbol `emodule_version': Invalid dynamic module");
+    signal_error (Qdll_error, "Missing symbol `emodule_version': Invalid dynamic module", Qunbound);
 
   mver = (char *)alloca (strlen (*f) + 1);
   strcpy (mver, *f);
 
   f = (const char **)dll_variable (dlhandle, "emodule_title");
   if ((f == (const char **)0) || (*f == (const char *)0))
-    error ("Missing symbol `emodule_title': Invalid dynamic module");
+    signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_title'", Qunbound);
 
   mtitle = (char *)alloca (strlen (*f) + 1);
   strcpy (mtitle, *f);
@@ -394,25 +399,29 @@ emodules_load(const char *module, const char *modname, const char *modver)
   strcat (symname, mname);
   modsyms = (void (*)(void))dll_function (dlhandle, symname);
   if (modsyms == (void (*)(void))0)
-    error ("Missing symbol `%s': Invalid dynamic module", symname);
+    {
+    missing_symbol:
+      signal_error (Qdll_error, "Invalid dynamic module: Missing symbol",
+		    build_string (symname));
+    }
 
   strcpy (symname, "vars_of_");
   strcat (symname, mname);
   modvars = (void (*)(void))dll_function (dlhandle, symname);
   if (modvars == (void (*)(void))0)
-    error ("Missing symbol `%s': Invalid dynamic module", symname);
+    goto missing_symbol;
 
   strcpy (symname, "docs_of_");
   strcat (symname, mname);
   moddocs = (void (*)(void))dll_function (dlhandle, symname);
   if (moddocs == (void (*)(void))0)
-    error ("Missing symbol `%s': Invalid dynamic module", symname);
+    goto missing_symbol;
 
   if (modname && modname[0] && strcmp (modname, mname))
-    error ("Module name mismatch");
+    signal_error (Qdll_error, "Module name mismatch", Qunbound);
 
   if (modver && modver[0] && strcmp (modver, mver))
-    error ("Module version mismatch");
+    signal_error (Qdll_error, "Module version mismatch", Qunbound);
 
   /*
    * Attempt to make a new slot for this module. If this really is the

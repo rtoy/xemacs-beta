@@ -130,7 +130,7 @@ parse_off_posnum (const Bufbyte *start, const Bufbyte *end, int *returned_num)
   while (start != end && isdigit (*start))
     {
       if ((size_t) (arg_ptr - arg_convert) >= sizeof (arg_convert) - 1)
-	error ("Format converter number too large");
+ syntax_error ("Format converter number too large", Qunbound);
       *arg_ptr++ = *start++;
     }
   *arg_ptr = '\0';
@@ -142,10 +142,10 @@ parse_off_posnum (const Bufbyte *start, const Bufbyte *end, int *returned_num)
 #define NEXT_ASCII_BYTE(ch)					\
   do {								\
     if (fmt == fmt_end)						\
-      error ("Premature end of format string");			\
+      syntax_error ("Premature end of format string", Qunbound);			\
     ch = *fmt;							\
     if (ch >= 0200)						\
-      error ("Non-ASCII character in format converter spec");	\
+      syntax_error ("Non-ASCII character in format converter spec", Qunbound);	\
     fmt++;							\
   } while (0)
 
@@ -296,7 +296,7 @@ parse_doprnt_spec (const Bufbyte *format, Bytecount format_length)
 	    }
 
 	  if (!strchr (valid_converters, ch))
-	    error ("Invalid converter character %c", ch);
+	    syntax_error ("Invalid converter character", make_char (ch));
 	  spec.converter = ch;
 	}
 
@@ -356,7 +356,7 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
 	}
 
       if (j == Dynarr_length (specs))
-	error ("No conversion spec for argument %d", i);
+ syntax_error ("No conversion spec for argument", make_int (i));
 
       ch = spec->converter;
 
@@ -425,7 +425,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Bufbyte *format_nonreloc,
     {
       /* allow too many args for string, but not too few */
       if (nargs < get_args_needed (specs))
-	signal_error (Qwrong_number_of_arguments,
+	signal_error_1 (Qwrong_number_of_arguments,
 		      list3 (Qformat,
 			     make_int (nargs),
 			     !NILP (format_reloc) ? format_reloc :
@@ -493,7 +493,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Bufbyte *format_nonreloc,
 	}
 
       if (largs && (spec->argnum < 1 || spec->argnum > nargs))
-	error ("Invalid repositioning argument %d", spec->argnum);
+ syntax_error ("Invalid repositioning argument", make_int (spec->argnum));
 
       else if (ch == 'S' || ch == 's')
 	{
@@ -558,7 +558,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Bufbyte *format_nonreloc,
 		obj = make_int (XCHAR (obj));
 	      if (!INT_OR_FLOATP (obj))
 		{
-		  error ("format specifier %%%c doesn't match argument type",
+		  syntax_error ("format specifier %%%c doesn't match argument type",
 			 ch);
 		}
 	      else if (strchr (double_converters, ch))
@@ -585,7 +585,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Bufbyte *format_nonreloc,
 	      a = (Emchar) arg.l;
 
 	      if (!valid_char_p (a))
-		error ("invalid character value %d to %%c spec", a);
+	 syntax_error ("invalid character value %d to %%c spec", a);
 
 	      charlen = set_charptr_emchar (charbuf, a);
 	      doprnt_1 (stream, charbuf, charlen, spec->minwidth,

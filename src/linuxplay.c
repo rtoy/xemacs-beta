@@ -46,6 +46,8 @@
 
 /* Synched up with: Not in FSF. */
 
+/* This file Mule-ized by Ben Wing, 5-15-01. */
+
 /* XEmacs beta testers say:  undef this by default. */
 #undef NOVOLUMECTRLFORMULAW /* Changing the volume for uLaw-encoded
 			       samples sounds very poor; possibly,
@@ -53,35 +55,16 @@
 			       driver, so undefine this symbol at your
 			       discretion */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
+#include "lisp.h"
 
 #include "miscplay.h"
-#include "nativesound.h"
+#include "sound.h"
 
-#include <errno.h>
-#include <fcntl.h>
-#include SOUNDCARD_H_FILE /* Path computed by configure */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/file.h>
-#include <sys/ioctl.h>
-#include <sys/signal.h>
-#include <unistd.h>
-
-#ifdef LINUXPLAYSTANDALONE
-#define perror(str) fprintf(stderr,"audio: %s %s\n",str,strerror(errno));
-#define warn(str)   fprintf(stderr,"audio: %s\n",str);
-#else
-#include "lisp.h"
 #include "syssignal.h"
 #include "sysfile.h"
-#define perror(str) message("audio: %s, %s ",str,strerror(errno))
-#define warn(str)   message("audio: %s ",GETTEXT(str))
-#endif
+#include "systty.h" /* for sys/ioctl.h */
+#include SOUNDCARD_H_FILE /* Path computed by configure */
 
 static  SIGTYPE (*sighup_handler) (int);
 static  SIGTYPE (*sigint_handler) (int);
@@ -89,7 +72,7 @@ static  SIGTYPE (*sigint_handler) (int);
 static int           mix_fd;
 static int           audio_vol;
 static int           audio_fd;
-static char	     *audio_dev = "/dev/dsp";
+static Char_ASCII    *audio_dev = "/dev/dsp";
 
 /* Intercept SIGINT and SIGHUP in order to close the audio and mixer
    devices before terminating sound output; this requires reliable
@@ -123,16 +106,17 @@ sighandler (int sig)
    others, too. Thus we do quite a lot of double checking; actually most of
    this is not needed right now, but it will come in handy, if the kernel's
    sounddriver ever changes or if third-party sounddrivers are used. */
-static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
-		      int tracks, int *volume,
-		      size_t (**sndcnv) (void **, size_t *sz, void **))
+static int
+audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
+	   int tracks, int *volume,
+	   size_t (**sndcnv) (void **, size_t *sz, void **))
 {
   int i,the_speed,the_stereo,the_fmt;
 
   *sndcnv = sndcnvnop;
 
   if (ioctl(auddio_fd,SNDCTL_DSP_SYNC,NULL) < 0) {
-    perror("SNDCTL_DSP_SYNC");
+    sound_perror("SNDCTL_DSP_SYNC");
     return(0); }
 
   /* Initialize sound hardware with preferred parameters */
@@ -142,7 +126,7 @@ static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
 
   the_fmt = fmt;
   if(ioctl(audio_fd,SNDCTL_DSP_SETFMT,&the_fmt) < 0) {
-  	perror("SNDCTL_DSP_SETFMT");
+  	sound_perror("SNDCTL_DSP_SETFMT");
   	return(0);
   }
 
@@ -152,19 +136,19 @@ static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
       if (((i=fmt=AFMT_U8),ioctl(audio_fd,SNDCTL_DSP_SETFMT,&i)) < 0 ||
 	  fmt != i || ioctl(audio_fd,SNDCTL_DSP_SETFMT,&the_fmt) < 0 ||
 	  fmt != the_fmt) {
-  	perror("SNDCTL_DSP_SETFMT");
+  	sound_perror("SNDCTL_DSP_SETFMT");
   	return(0); } }
     else if (fmt == AFMT_MU_LAW && the_fmt == AFMT_U8 ) {
       /* the kernel will convert for us */ }
     else {
-      perror("SNDCTL_DSP_SETFMT");
+      sound_perror("SNDCTL_DSP_SETFMT");
       return(0); } }
   else if (fmt == AFMT_S8) {
     *sndcnv = sndcnv2unsigned;
     if (((i=fmt=AFMT_U8),ioctl(audio_fd,SNDCTL_DSP_SETFMT,&i)) < 0 ||
         fmt != i || ioctl(audio_fd,SNDCTL_DSP_SETFMT,&the_fmt) < 0 ||
         fmt != the_fmt) {
-      perror("SNDCTRL_DSP_SETFMT");
+      sound_perror("SNDCTRL_DSP_SETFMT");
       return(0); } }
 
   /* The PCSP driver does not support reading of the sampling rate via the
@@ -193,11 +177,11 @@ static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
 	the_fmt == AFMT_U8     ? sndcnv8U_2mono :
 	the_fmt == AFMT_MU_LAW ? sndcnvULaw_2mono : NULL;
       if (*sndcnv == NULL) { /* this should not happen */
-	perror("SNDCTL_DSP_STEREO");
+	sound_perror("SNDCTL_DSP_STEREO");
 	return(0); }
       /* Switch to mono mode */
       if (((i = 0),ioctl(audio_fd,SNDCTL_DSP_STEREO,&i)) < 0 || i) {
-  	perror("SNDCTL_DSP_STEREO");
+  	sound_perror("SNDCTL_DSP_STEREO");
 	return(0); }
       /* Now double check that everything is set as expected */
       if (((i = AFMT_QUERY),ioctl(audio_fd,SNDCTL_DSP_SETFMT,&i)) < 0 ||
@@ -210,18 +194,18 @@ static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
 	   i != 1)) {
 	/* There was no way that we could set the soundcard to a meaningful
            mode */
- 	perror("SNDCTL_DSP_SETFMT and SNDCTL_DSP_STEREO");
+ 	sound_perror("SNDCTL_DSP_SETFMT and SNDCTL_DSP_STEREO");
   	return(0); } }
     else {
       /* Somebody set the soundcard to stereo even though we requested
          mono; this should not happen... */
       if (((i = the_stereo = tracks),ioctl(audio_fd,SNDCTL_DSP_STEREO,&i))<0 ||
 	  i != the_stereo-1) {
-	perror("SNDCTL_DSP_STEREO");
+	sound_perror("SNDCTL_DSP_STEREO");
 	return(0); }
       if (((i = AFMT_QUERY),ioctl(audio_fd,SNDCTL_DSP_SETFMT,&i)) < 0 ||
 	  i != the_fmt) {
-	perror("SNDCTL_DSP_SETFMT");
+	sound_perror("SNDCTL_DSP_SETFMT");
 	return(0); } } }
 
   /* Fail if deviations from desired sampling frequency are too big */
@@ -230,9 +214,9 @@ static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
      "the_speed" is still unchanged */
   ioctl(audio_fd,SOUND_PCM_READ_RATE,&the_speed);
   if (speed*14 < the_speed*10 || speed*6 > the_speed*10) {
-    char buffer[256];
+    Extbyte buffer[256];
     sprintf(buffer,"SNDCTL_DSP_SPEED (req: %d, rtn: %d)",speed,the_speed);
-    perror(buffer);
+    sound_perror(buffer);
     return(0); }
 
   /* Use the mixer device for setting the playback volume */
@@ -282,16 +266,17 @@ static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
 
    Returns 1 on succes. 0 otherwise.
 */
-static int linux_play_data_or_file(int fd,unsigned char *data,
-				    int length,int volume)
+static int
+linux_play_data_or_file(int fd, UChar_Binary *data,
+			int length, int volume)
 {
   size_t         (*parsesndfile)(void **dayta,size_t *sz,void **outbuf);
   size_t         (*sndcnv)(void **dayta,size_t *sz,void **);
   fmtType        ffmt;
   int            fmt,speed,tracks;
-  unsigned char *pptr,*optr,*cptr,*sptr;
+  UChar_Binary *pptr,*optr,*cptr,*sptr;
   int            wrtn,rrtn,crtn,prtn;
-  unsigned char         sndbuf[SNDBUFSZ];
+  UChar_Binary         sndbuf[SNDBUFSZ];
 
   /* We need to read at least the header information before we can start
      doing anything */
@@ -308,7 +293,7 @@ static int linux_play_data_or_file(int fd,unsigned char *data,
   ffmt = analyze_format(data,&fmt,&speed,&tracks,&parsesndfile);
 
   if (ffmt != fmtRaw && ffmt != fmtSunAudio && ffmt != fmtWave) {
-    warn("Unsupported file format (neither RAW, nor Sun/DECAudio, nor WAVE)");
+    sound_warn("Unsupported file format (neither RAW, nor Sun/DECAudio, nor WAVE)");
       return 0; }
 
   /* The VoxWare-SDK discourages opening /dev/audio; opening /dev/dsp and
@@ -316,7 +301,7 @@ static int linux_play_data_or_file(int fd,unsigned char *data,
   if ((audio_fd=open(audio_dev, O_WRONLY | O_NONBLOCK, 0)) < 0) {
     /* JV. Much too verbose. In addition this can crash. See NOTE: in
        Fplay_sound 
-       perror(audio_dev); */
+       sound_perror(audio_dev); */
     if (mix_fd > 0 && mix_fd != audio_fd) { close(mix_fd); mix_fd = -1; }
     return 0; }
 
@@ -344,18 +329,18 @@ static int linux_play_data_or_file(int fd,unsigned char *data,
 				       (void **)&sptr)) > 0; ) {
 	for (;;) {
 	  if ((wrtn = write(audio_fd,sptr,crtn)) < 0) {
-	    perror("write"); goto END_OF_PLAY; }
+	    sound_perror("write"); goto END_OF_PLAY; }
 	  else if (wrtn) break;
 	  else if (ioctl(audio_fd,SNDCTL_DSP_SYNC,NULL) < 0) {
-	    perror("SNDCTL_DSP_SYNC"); goto END_OF_PLAY; } }
+	    sound_perror("SNDCTL_DSP_SYNC"); goto END_OF_PLAY; } }
 	if (wrtn != crtn) {
-	  char buf[255];
+	  Extbyte buf[255];
 	  sprintf(buf,"play: crtn = %d, wrtn = %d",crtn,wrtn);
-	  warn(buf);
+	  sound_warn(buf);
 	  goto END_OF_PLAY; } }
     if (fd >= 0) {
       if ((rrtn = read(fd,sndbuf,SNDBUFSZ)) < 0) {
-	perror("read"); goto END_OF_PLAY; } }
+	sound_perror("read"); goto END_OF_PLAY; } }
     else
       break;
   } while (rrtn > 0);
@@ -389,12 +374,13 @@ END_OF_PLAY:
 
 /* Call "linux_play_data_or_file" with the appropriate parameters for
    playing a soundfile */
-void play_sound_file (char *sound_file, int volume)
+void
+play_sound_file (Extbyte *sound_file, int volume)
 {
   int fd;
 
   if ((fd=open(sound_file,O_RDONLY,0)) < 0) {
-    perror(sound_file);
+    sound_perror(sound_file);
     return; }
   linux_play_data_or_file(fd,NULL,0,volume);
   close(fd);
@@ -403,7 +389,8 @@ void play_sound_file (char *sound_file, int volume)
 
 /* Call "linux_play_data_or_file" with the appropriate parameters for
    playing pre-loaded data */
-int play_sound_data (unsigned char *data, int length, int volume)
+int
+play_sound_data (UChar_Binary *data, int length, int volume)
 {
   return linux_play_data_or_file(-1,data,length,volume);
 }

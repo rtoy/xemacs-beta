@@ -1184,7 +1184,8 @@ mswindows_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
       COLOR_INSTANCE_MSWINDOWS_COLOR (c) = color;
       return 1;
     }
-  maybe_signal_simple_error ("Unrecognized color", name, Qcolor, errb);
+  maybe_signal_error (Qinvalid_constant,
+			   "Unrecognized color", name, Qcolor, errb);
   return(0);
 }
 
@@ -1301,7 +1302,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 
   if (fields < 0)
   {
-    maybe_signal_simple_error ("Invalid font", name, Qfont, errb);
+    maybe_signal_error (Qinvalid_argument, "Invalid font", name, Qfont, errb);
     return (0);
   }
 
@@ -1312,7 +1313,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   }
   else
   {
-    maybe_signal_simple_error ("Must specify a font name", name, Qfont, errb);
+    maybe_signal_error (Qinvalid_argument, "Must specify a font name", name, Qfont, errb);
     return (0);
   }
 
@@ -1344,7 +1345,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 	}
       else
 	{
-	  maybe_signal_simple_error ("Invalid font weight", name, Qfont, errb);
+	  maybe_signal_error (Qinvalid_constant, "Invalid font weight", name, Qfont, errb);
 	  return (0);
 	}
     }
@@ -1356,7 +1357,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 	logfont.lfItalic = TRUE;
       else
       {
-        maybe_signal_simple_error ("Invalid font weight or style", name, Qfont, errb);
+        maybe_signal_error (Qinvalid_constant, "Invalid font weight or style", name, Qfont, errb);
 	return (0);
       }
 
@@ -1371,7 +1372,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
     pt = 10;	/* #### Should we reject strings that don't specify a size? */
   else if ((pt=atoi(points)) == 0)
     {
-      maybe_signal_simple_error ("Invalid font pointsize", name, Qfont, errb);
+      maybe_signal_error (Qinvalid_argument, "Invalid font pointsize", name, Qfont, errb);
       return (0);
     }
 
@@ -1401,7 +1402,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 	logfont.lfStrikeOut = TRUE;
       else
         {
-          maybe_signal_simple_error ("Invalid font effect", name, Qfont, errb);
+          maybe_signal_error (Qinvalid_constant, "Invalid font effect", name, Qfont, errb);
 	  return (0);
 	}
 
@@ -1413,7 +1414,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 	    logfont.lfStrikeOut = TRUE;
 	  else
 	    {
-	      maybe_signal_simple_error ("Invalid font effect", name,
+	      maybe_signal_error (Qinvalid_constant, "Invalid font effect", name,
 					 Qfont, errb);
 	      return (0);
 	    }
@@ -1456,7 +1457,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 
   if (i == countof (charset_map))	/* No matching charset */
     {
-      maybe_signal_simple_error ("Invalid charset", name, Qfont, errb);
+      maybe_signal_error (Qinvalid_argument, "Invalid charset", name, Qfont, errb);
       return 0;
     }
 
@@ -1493,14 +1494,14 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 	}
       if (NILP (fonttail))
 	{
-	  maybe_signal_simple_error ("No matching font", name, Qfont, errb);
+	  maybe_signal_error (Qinvalid_argument, "No matching font", name, Qfont, errb);
 	  return 0;
 	}
     }
 
   if ((hfont = CreateFontIndirect(&logfont)) == NULL)
   {
-    maybe_signal_simple_error ("Couldn't create font", name, Qfont, errb);
+    maybe_signal_error (Qgui_error, "Couldn't create font", name, Qfont, errb);
     return 0;
   }
 
@@ -1519,7 +1520,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   if (!hfont2)
     {
       mswindows_finalize_font_instance (f);
-      maybe_signal_simple_error ("Couldn't map font", name, Qfont, errb);
+      maybe_signal_error (Qgui_error, "Couldn't map font", name, Qfont, errb);
       return 0;
     }
   GetTextMetrics (hdc, &metrics);

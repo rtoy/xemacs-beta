@@ -725,7 +725,7 @@ decode_gutter_position (Lisp_Object position)
   if (EQ (position, Qbottom)) return BOTTOM_GUTTER;
   if (EQ (position, Qleft))   return LEFT_GUTTER;
   if (EQ (position, Qright))  return RIGHT_GUTTER;
-  signal_simple_error ("Invalid gutter position", position);
+  invalid_constant ("Invalid gutter position", position);
 
   return TOP_GUTTER; /* not reached */
 }
@@ -838,7 +838,7 @@ gutter_validate (Lisp_Object instantiator)
 
   /* Must be a string or a plist. */
   if (!STRINGP (instantiator) && NILP (Fvalid_plist_p (instantiator)))
-      signal_simple_error ("Gutter spec must be string, plist or nil", instantiator);
+      sferror ("Gutter spec must be string, plist or nil", instantiator);
 
   if (!STRINGP (instantiator))
     {
@@ -848,7 +848,7 @@ gutter_validate (Lisp_Object instantiator)
 	{
 	  if (!SYMBOLP (XCAR (rest))
 	      || !STRINGP (XCAR (XCDR (rest))))
-	    signal_simple_error ("Gutter plist spec must contain strings", instantiator);
+	    sferror ("Gutter plist spec must contain strings", instantiator);
 	}
     }
 }
@@ -987,7 +987,7 @@ gutter_size_validate (Lisp_Object instantiator)
     return;
 
   if (!INTP (instantiator) && !EQ (instantiator, Qautodetect))
-    signal_simple_error ("Gutter size must be an integer or 'autodetect", instantiator);
+    invalid_argument ("Gutter size must be an integer or 'autodetect", instantiator);
 }
 
 DEFUN ("gutter-size-specifier-p", Fgutter_size_specifier_p, 1, 1, 0, /*
@@ -1012,7 +1012,7 @@ gutter_visible_validate (Lisp_Object instantiator)
     return;
 
   if (!NILP (instantiator) && !EQ (instantiator, Qt) && !CONSP (instantiator))
-    signal_simple_error ("Gutter visibility must be a boolean or list of symbols",
+    invalid_argument ("Gutter visibility must be a boolean or list of symbols",
 			 instantiator);
 
   if (CONSP (instantiator))
@@ -1022,7 +1022,7 @@ gutter_visible_validate (Lisp_Object instantiator)
       EXTERNAL_LIST_LOOP (rest, instantiator)
 	{
 	  if (!SYMBOLP (XCAR (rest)))
-	      signal_simple_error ("Gutter visibility must be a boolean or list of symbols",
+	      invalid_argument ("Gutter visibility must be a boolean or list of symbols",
 				   instantiator);
 	}
     }
@@ -1136,10 +1136,9 @@ syms_of_gutter (void)
   DEFSUBR (Fgutter_pixel_width);
   DEFSUBR (Fredisplay_gutter_area);
 
-  defsymbol (&Qgutter_size, "gutter-size");
-  defsymbol (&Qgutter_visible, "gutter-visible");
-  defsymbol (&Qdefault_gutter_position_changed_hook,
-	     "default-gutter-position-changed-hook");
+  DEFSYMBOL (Qgutter_size);
+  DEFSYMBOL (Qgutter_visible);
+  DEFSYMBOL (Qdefault_gutter_position_changed_hook);
 }
 
 void

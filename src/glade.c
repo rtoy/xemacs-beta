@@ -107,7 +107,7 @@ Return the textdomain of a GladeXML object.
 
   if (!GLADE_IS_XML (XGTK_OBJECT (xml)->object))
     {
-      signal_simple_error ("Object is not a GladeXML type.", xml);
+      wtaerror ("Object is not a GladeXML type.", xml);
     }
 
 #ifdef LIBGLADE_XML_TXTDOMAIN

@@ -97,7 +97,7 @@ Add a debug class to the list of active classes.
        (class))
 {
   if (NILP (xemacs_debug_loop (X_VALIDATE, class, Qnil)))
-    error ("No such debug class exists");
+    invalid_argument ("No such debug class exists", Qunbound);
   else
     xemacs_debug_loop (X_ADD, class, Qnil);
 
@@ -110,7 +110,7 @@ Delete a debug class from the list of active classes.
        (class))
 {
   if (NILP (xemacs_debug_loop (X_VALIDATE, class, Qnil)))
-    error ("No such debug class exists");
+    invalid_argument ("No such debug class exists", Qunbound);
   else
     xemacs_debug_loop (X_DELETE, class, Qnil);
 
@@ -148,7 +148,7 @@ CLASSES should be a list of debug classes.
   LIST_LOOP (rest, classes )
     {
       if (NILP (xemacs_debug_loop (X_VALIDATE, XCAR (rest), Qnil)))
-	error ("Invalid object in class list");
+	sferror ("Invalid object in class list", Qunbound);
     }
 
   LIST_LOOP (rest, classes)
@@ -166,7 +166,7 @@ Lists of defined types and their values are located in the source code.
 {
   CHECK_INT (type);
   if (NILP (xemacs_debug_loop (X_VALIDATE, class, Qnil)))
-    error ("Invalid debug class");
+    invalid_argument ("Invalid debug class", Qunbound);
 
   xemacs_debug_loop (X_SETTYPE, class, type);
 
@@ -179,7 +179,7 @@ For the given CLASS, return the associated type value.
        (class))
 {
   if (NILP (xemacs_debug_loop (X_VALIDATE, class, Qnil)))
-    error ("Invalid debug class");
+    invalid_argument ("Invalid debug class", Qunbound);
 
   return (xemacs_debug_loop (X_TYPE, class, Qnil));
 }
@@ -187,12 +187,12 @@ For the given CLASS, return the associated type value.
 void
 syms_of_debug (void)
 {
-  defsymbol (&Qredisplay, "redisplay");
-  defsymbol (&Qbuffers, "buffers");
-  defsymbol (&Qfaces, "faces");
-  defsymbol (&Qwindows, "windows");
-  defsymbol (&Qframes, "frames");
-  defsymbol (&Qdevices, "devices");
+  DEFSYMBOL (Qredisplay);
+  DEFSYMBOL (Qbuffers);
+  DEFSYMBOL (Qfaces);
+  DEFSYMBOL (Qwindows);
+  DEFSYMBOL (Qframes);
+  DEFSYMBOL (Qdevices);
 
   DEFSUBR (Fadd_debug_class_to_check);
   DEFSUBR (Fdelete_debug_class_to_check);

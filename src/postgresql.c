@@ -113,15 +113,15 @@ TODO (in rough order of priority):
 Lisp_Object Vpg_coding_system;
 #endif
 
-#define CHECK_LIVE_CONNECTION(P) { \
-	if (!P || (PQstatus (P) != CONNECTION_OK)) { \
-		char *e = "bad value"; \
-		if (P) e = PQerrorMessage (P); \
-		error ("dead connection [%s]", e); \
-	} }
-#define PUKE_IF_NULL(p) { \
-	if (!p) error ("bad value"); \
-	}
+#define CHECK_LIVE_CONNECTION(P) do {					\
+	if (!P || (PQstatus (P) != CONNECTION_OK)) {			\
+		char *e = "bad value";					\
+		if (P) e = PQerrorMessage (P);				\
+	 signal_ferror (Qprocess_error, "dead connection [%s]", e);	\
+	} } while (0)
+#define PUKE_IF_NULL(p) do {						 \
+	if (!p) signal_error (Qinvalid_argument, "bad value", Qunbound); \
+	} while (0)
 
 static Lisp_Object VXPGHOST;
 static Lisp_Object VXPGUSER;
@@ -220,7 +220,7 @@ print_pgconn (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     strcpy (buf, "#<PGconn connecting>"); /* evil! */
 
   if (print_readably)
-    error ("printing unreadable object %s", buf);
+    printing_unreadable_object ("%s", buf);
   else
     write_c_string (buf, printcharfun);
 }
@@ -245,8 +245,8 @@ finalize_pgconn (void *header, int for_disksave)
   Lisp_PGconn *pgconn = (Lisp_PGconn *)header;
 
   if (for_disksave)
-    signal_simple_error ("Can't dump an emacs containing PGconn objects",
-                         make_pgconn (pgconn));
+    invalid_operation ("Can't dump an emacs containing PGconn objects",
+		       make_pgconn (pgconn));
 
   if (pgconn->pgconn)
     {
@@ -335,7 +335,7 @@ notuples:
     strcpy (buf, "#<PGresult DEAD>"); /* evil! */
 
   if (print_readably)
-    error ("printing unreadable object %s", buf);
+    printing_unreadable_object ("%s", buf);
   else
     write_c_string (buf, printcharfun);
 }
@@ -364,8 +364,8 @@ finalize_pgresult (void *header, int for_disksave)
   Lisp_PGresult *pgresult = (Lisp_PGresult *)header;
 
   if (for_disksave)
-    signal_simple_error ("Can't dump an emacs containing PGresult objects",
-                         make_pgresult (pgresult));
+    invalid_operation ("Can't dump an emacs containing PGresult objects",
+		       make_pgresult (pgresult));
 
   if (pgresult->pgresult)
     {
@@ -482,7 +482,7 @@ Make a new connection to a PostgreSQL backend.
 	  buf[sizeof (buf) - 1] = '\0';
 	  PQfinish (P);
 	}
-      error ("libpq: %s", buf);
+      signal_ferror (Qprocess_error, "libpq: %s", buf);
     }
 }
 
@@ -525,7 +525,7 @@ Make a new asynchronous connection to a PostgreSQL backend.
 	  buf[sizeof (buf) - 1] = '\0';
 	  PQfinish (P);
 	}
-      error ("libpq: %s", buf);
+      signal_ferror (Qprocess_error, "libpq: %s", buf);
     }
 }
 
@@ -549,7 +549,7 @@ Poll an asynchronous connection for completion
       /* Something Bad has happened */
       {
 	char *e = PQerrorMessage (P);
-	error ("libpq: %s", e);
+	signal_ferror (Qprocess_error, "libpq: %s", e);
       }
     case PGRES_POLLING_OK:
       return Qpgres_polling_ok;
@@ -561,7 +561,7 @@ Poll an asynchronous connection for completion
       return Qpgres_polling_active;
     default:
       /* they've added a new field we don't know about */
-      error ("Help!  Unknown status code %08x from backend!", polling_status);
+      signal_ferror (Qprocess_error, "Help!  Unknown status code %08x from backend!", polling_status);
     }
 }
 
@@ -599,7 +599,7 @@ Set client coding system.
 		      C_STRING_ALLOCA, c_encoding, Qnative);
 
   if ((rc = PQsetClientEncoding (P, c_encoding)) < 0)
-    error ("bad encoding");
+    signal_error (Qinvalid_argument, "bad encoding", Qunbound);
   else
     return make_int (rc);
 }
@@ -715,7 +715,7 @@ Reset connection to the backend asynchronously.
   if (PQresetStart (P)) return Qt;
   {
     char *e = PQerrorMessage (P);
-    error ("libpq: %s", e);
+    signal_ferror (Qprocess_error, "libpq: %s", e);
   }
 }
 
@@ -739,7 +739,7 @@ Poll an asynchronous reset for completion.
       /* Something Bad has happened */
       {
 	char *e = PQerrorMessage (P);
-	error ("libpq: %s", e);
+	signal_ferror (Qprocess_error, "libpq: %s", e);
       }
     case PGRES_POLLING_OK:
       return Qpgres_polling_ok;
@@ -751,7 +751,7 @@ Poll an asynchronous reset for completion.
       return Qpgres_polling_active;
     default:
       /* they've added a new field we don't know about */
-      error ("Help!  Unknown status code %08x from backend!", polling_status);
+      signal_ferror (Qprocess_error, "Help!  Unknown status code %08x from backend!", polling_status);
     }
 }
 #endif
@@ -859,7 +859,7 @@ pq::backend-pid   Process ID of backend process
 #endif /* HAVE_POSTGRESQLV7 */
 	default:
 	  /* they've added a new field we don't know about */
-	  error ("Help!  Unknown connection status code %08x from backend!", cst);
+	  signal_ferror (Qprocess_error, "Help!  Unknown connection status code %08x from backend!", cst);
 	}
     }
   else if (EQ (field, Qpqerrormessage))
@@ -875,7 +875,7 @@ pq::backend-pid   Process ID of backend process
      */
     return make_int (PQbackendPID(P));
   else
-    error ("bad PGconn accessor");
+    signal_error (Qinvalid_argument, "bad PGconn accessor", Qunbound);
 }
 
 /* Query functions */
@@ -902,7 +902,7 @@ Submit a query to Postgres and wait for the result.
   {
     char *tag, buf[BLCKSZ];
 
-    if (!R) error ("query: out of memory");
+    if (!R) out_of_memory ("query: out of memory", Qunbound);
     else
       switch (PQresultStatus (R))
 	{
@@ -918,7 +918,7 @@ err:
 	  strncpy (buf, PQresultErrorMessage (R), sizeof (buf));
 	  buf [sizeof (buf) - 1] = '\0';
 	  PQclear (R);
-	  error (tag, buf);
+	  signal_ferror (Qprocess_error, tag, buf);
 	  /*NOTREACHED*/
 	default:
 	  break;
@@ -951,7 +951,7 @@ Returns: t if successfully submitted
 		      C_STRING_ALLOCA, c_query, Qnative);
 
   if (PQsendQuery (P, c_query)) return Qt;
-  else error ("async query: %s", PQerrorMessage (P));
+  else signal_ferror (Qprocess_error, "async query: %s", PQerrorMessage (P));
 }
 
 DEFUN ("pq-get-result", Fpq_get_result, 1, 1, 0, /*
@@ -989,7 +989,7 @@ err:
 	strncpy (buf, PQresultErrorMessage (R), sizeof (buf));
 	buf[sizeof (buf) - 1] = '\0';
 	PQclear (R);
-	error (tag, buf);
+	signal_ferror (Qprocess_error, tag, buf);
 	/*NOTREACHED*/
       default:
 	break;
@@ -1025,7 +1025,7 @@ Return result status of the query.
   case PGRES_FATAL_ERROR: return Qpgres_fatal_error;
   default:
     /* they've added a new field we don't know about */
-    error ("Help!  Unknown exec status code %08x from backend!", est);
+    signal_ferror (Qprocess_error, "Help!  Unknown exec status code %08x from backend!", est);
   }
 }
 
@@ -1434,10 +1434,10 @@ Make an empty PGresult object with the given status.
   else if (EQ (status, Qpgres_bad_response)) est = PGRES_BAD_RESPONSE;
   else if (EQ (status, Qpgres_nonfatal_error)) est = PGRES_NONFATAL_ERROR;
   else if (EQ (status, Qpgres_fatal_error)) est = PGRES_FATAL_ERROR;
-  else signal_simple_error ("bad status symbol", status);
+  else invalid_constant ("bad status symbol", status);
 
   R = PQmakeEmptyPGresult (P, est);
-  if (!R) error ("out of memory?");
+  if (!R) out_of_memory (0, Qunbound);
 
   lpgr = allocate_pgresult ();
   lpgr->pgresult = R;
@@ -1582,11 +1582,11 @@ syms_of_postgresql(void)
   INIT_LRECORD_IMPLEMENTATION (pgconn);
   INIT_LRECORD_IMPLEMENTATION (pgresult);
 #endif
-  defsymbol (&Qpostgresql, "postgresql");
+  DEFSYMBOL (Qpostgresql);
 
   /* opaque exported types */
-  defsymbol (&Qpgconnp, "pgconnp");
-  defsymbol (&Qpgresultp, "pgresultp");
+  DEFSYMBOL (Qpgconnp);
+  DEFSYMBOL (Qpgresultp);
 
   /* connection status types */
   defsymbol (&Qpg_connection_ok, "pg::connection-ok");

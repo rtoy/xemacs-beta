@@ -154,7 +154,8 @@ It defaults to the selected device.
   int owned_p = 0;
 
   CHECK_SYMBOL (selection_name);
-  if (NILP (selection_value)) error ("selection-value may not be nil.");
+  if (NILP (selection_value))
+    invalid_argument ("`selection-value' may not be nil", Qunbound);
 
   if (NILP (device))
     device = Fselected_device (Qnil);
@@ -162,8 +163,8 @@ It defaults to the selected device.
   if (!EQ (how_to_add, Qappend) && !EQ (how_to_add, Qt)
       && !EQ (how_to_add, Qreplace_existing)
       && !EQ (how_to_add, Qreplace_all) && !NILP (how_to_add))
-    error ("how-to-add must be nil, append, replace_all, "
-	   "replace_existing or t.");
+    invalid_constant ("`how-to-add' must be nil, append, replace_all, "
+		      "replace_existing or t", how_to_add);
 
 #ifdef MULE
   if (NILP (data_type))
@@ -226,7 +227,9 @@ It defaults to the selected device.
 						   Vselection_appender_alist);
 
 	      if (NILP (function))
-		error ("cannot append selections of supplied types.");
+		signal_error (Qinvalid_argument,
+			      "Cannot append selections of supplied types (no function)",
+			      data_type);
 
 	      function = XCDR (function);
 
@@ -237,10 +240,14 @@ It defaults to the selected device.
 				       selection_value);
 
 	      if (NILP (selection_value))
-		error ("cannot append selections of supplied types.");
+		signal_error (Qinvalid_argument,
+			      "Cannot append selections of supplied types (function returned nil)",
+			      data_type);
 	    }
 	  else
-	    error ("cannot append selections of supplied types.");
+	    signal_error_2 (Qinvalid_argument, "Cannot append selections of supplied types (data type nil and both values not strings)",
+			    XCDR (prev_real_value),
+			    selection_value);
 	}
 
       selection_data = Fcons (data_type, selection_value);
@@ -743,27 +750,27 @@ syms_of_select (void)
   DEFSUBR (Fselection_data_type_name);
 
   /* Lisp Functions */
-  defsymbol (&Qselect_convert_in, "select-convert-in");
-  defsymbol (&Qselect_convert_out, "select-convert-out");
-  defsymbol (&Qselect_coerce, "select-coerce");
+  DEFSYMBOL (Qselect_convert_in);
+  DEFSYMBOL (Qselect_convert_out);
+  DEFSYMBOL (Qselect_coerce);
 
   /* X Atoms */
-  defsymbol (&QPRIMARY, "PRIMARY");
-  defsymbol (&QSECONDARY, "SECONDARY");
-  defsymbol (&QSTRING, "STRING");
-  defsymbol (&QINTEGER, "INTEGER");
-  defsymbol (&QCLIPBOARD, "CLIPBOARD");
-  defsymbol (&QTIMESTAMP, "TIMESTAMP");
-  defsymbol (&QTEXT, "TEXT");
-  defsymbol (&QDELETE, "DELETE");
-  defsymbol (&QMULTIPLE, "MULTIPLE");
-  defsymbol (&QINCR, "INCR");
+  DEFSYMBOL (QPRIMARY);
+  DEFSYMBOL (QSECONDARY);
+  DEFSYMBOL (QSTRING);
+  DEFSYMBOL (QINTEGER);
+  DEFSYMBOL (QCLIPBOARD);
+  DEFSYMBOL (QTIMESTAMP);
+  DEFSYMBOL (QTEXT);
+  DEFSYMBOL (QDELETE);
+  DEFSYMBOL (QMULTIPLE);
+  DEFSYMBOL (QINCR);
   defsymbol (&QEMACS_TMP, "_EMACS_TMP_");
-  defsymbol (&QTARGETS, "TARGETS");
-  defsymbol (&QATOM, "ATOM");
+  DEFSYMBOL (QTARGETS);
+  DEFSYMBOL (QATOM);
   defsymbol (&QATOM_PAIR, "ATOM_PAIR");
   defsymbol (&QCOMPOUND_TEXT, "COMPOUND_TEXT");
-  defsymbol (&QNULL, "NULL");
+  DEFSYMBOL (QNULL);
 
   /* Windows formats - these all start with CF_ */
   defsymbol (&QCF_TEXT, "CF_TEXT");
@@ -790,10 +797,10 @@ syms_of_select (void)
   defsymbol (&QCF_DSPENHMETAFILE, "CF_DSPENHMETAFILE");
 
   /* Selection strategies */
-  defsymbol (&Qreplace_all, "replace-all");
-  defsymbol (&Qreplace_existing, "replace-existing");
+  DEFSYMBOL (Qreplace_all);
+  DEFSYMBOL (Qreplace_existing);
 
-  DEFERROR_STANDARD (Qselection_conversion_error, Qio_error);
+  DEFERROR_STANDARD (Qselection_conversion_error, Qconversion_error);
 }
 
 void

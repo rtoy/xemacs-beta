@@ -9232,17 +9232,16 @@ Please set the environmental variable DISPLAY to an appropriate value.\n");
 void
 syms_of_redisplay (void)
 {
-  defsymbol (&Qcursor_in_echo_area, "cursor-in-echo-area");
+  DEFSYMBOL (Qcursor_in_echo_area);
 #ifndef INHIBIT_REDISPLAY_HOOKS
-  defsymbol (&Qpre_redisplay_hook, "pre-redisplay-hook");
-  defsymbol (&Qpost_redisplay_hook, "post-redisplay-hook");
+  DEFSYMBOL (Qpre_redisplay_hook);
+  DEFSYMBOL (Qpost_redisplay_hook);
 #endif /* INHIBIT_REDISPLAY_HOOKS */
-  defsymbol (&Qdisplay_warning_buffer, "display-warning-buffer");
-  defsymbol (&Qbar_cursor, "bar-cursor");
-  defsymbol (&Qredisplay_end_trigger_functions,
-	     "redisplay-end-trigger-functions");
-  defsymbol (&Qtop_bottom, "top-bottom");
-  defsymbol (&Qbuffer_list_changed_hook, "buffer-list-changed-hook");
+  DEFSYMBOL (Qdisplay_warning_buffer);
+  DEFSYMBOL (Qbar_cursor);
+  DEFSYMBOL (Qredisplay_end_trigger_functions);
+  DEFSYMBOL (Qtop_bottom);
+  DEFSYMBOL (Qbuffer_list_changed_hook);
 
   DEFSUBR (Fredisplay_echo_area);
   DEFSUBR (Fredraw_frame);

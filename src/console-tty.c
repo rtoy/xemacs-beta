@@ -83,7 +83,7 @@ tty_init_console (struct console *con, Lisp_Object props)
 
       if (!temp_type)
 	{
-	  error ("Cannot determine terminal type");
+	  invalid_state ("Cannot determine terminal type", Qunbound);
 	}
       else
 	terminal_type = build_string (temp_type);
@@ -109,7 +109,7 @@ tty_init_console (struct console *con, Lisp_Object props)
       tty_con->infd = tty_con->outfd =
 	open ((char *) XSTRING_DATA (tty), O_RDWR);
       if (tty_con->infd < 0)
-	error ("Unable to open tty %s", XSTRING_DATA (tty));
+	signal_error (Qio_error, "Unable to open tty", tty);
       tty_con->is_stdio = 0;
     }
 
@@ -339,8 +339,8 @@ syms_of_console_tty (void)
 {
   DEFSUBR (Fconsole_tty_terminal_type);
   DEFSUBR (Fconsole_tty_controlling_process);
-  defsymbol (&Qterminal_type, "terminal-type");
-  defsymbol (&Qcontrolling_process, "controlling-process");
+  DEFSYMBOL (Qterminal_type);
+  DEFSYMBOL (Qcontrolling_process);
 #ifdef FILE_CODING
   DEFSUBR (Fconsole_tty_output_coding_system);
   DEFSUBR (Fset_console_tty_output_coding_system);

@@ -233,13 +233,13 @@ otherwise it is an integer representing a ShowWindow flag:
     return Qt;
   
   if (ret == ERROR_FILE_NOT_FOUND)
-    signal_simple_error ("file not found", document);
+    signal_error (Qfile_error, "file not found", document);
   else if (ret == ERROR_PATH_NOT_FOUND)
-    signal_simple_error ("path not found", current_dir);
+    signal_error (Qfile_error, "path not found", current_dir);
   else if (ret == ERROR_BAD_FORMAT)
-    signal_simple_error ("bad executable format", document);
+    signal_error (Qfile_error, "bad executable format", document);
   else
-    error ("internal error");
+    signal_error (Qinternal_error, "internal error", Qunbound);
 
   return Qnil;
 }

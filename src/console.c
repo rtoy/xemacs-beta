@@ -123,8 +123,8 @@ print_console (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   char buf[256];
 
   if (print_readably)
-    error ("printing unreadable object #<console %s 0x%x>",
-	   XSTRING_DATA (con->name), con->header.uid);
+    printing_unreadable_object ("#<console %s 0x%x>",
+				XSTRING_DATA (con->name), con->header.uid);
 
   sprintf (buf, "#<%s-console", !CONSOLE_LIVE_P (con) ? "dead" :
 	   CONSOLE_TYPE_NAME (con));
@@ -184,7 +184,7 @@ decode_console_type (Lisp_Object type, Error_behavior errb)
     if (EQ (type, Dynarr_at (the_console_type_entry_dynarr, i).symbol))
       return Dynarr_at (the_console_type_entry_dynarr, i).meths;
 
-  maybe_signal_simple_error ("Invalid console type", type, Qconsole, errb);
+  maybe_invalid_constant ("Invalid console type", type, Qconsole, errb);
 
   return 0;
 }
@@ -281,10 +281,10 @@ time this function is called.
 	  Fselect_window (FRAME_SELECTED_WINDOW (f), Qnil);
 	}
       else
-	error ("Can't select console with no frames.");
+ invalid_operation ("Can't select console with no frames", Qunbound);
     }
   else
-    error ("Can't select a console with no devices");
+    invalid_operation ("Can't select a console with no devices", Qunbound);
   return Qnil;
 }
 
@@ -461,9 +461,9 @@ name; in such a case, the first console found is returned.)
   if (NILP (console))
     {
       if (NILP (type))
-	signal_simple_error ("No such console", connection);
+	invalid_argument ("No such console", connection);
       else
-	signal_simple_error_2 ("No such console", type, connection);
+	invalid_argument_2 ("No such console", type, connection);
     }
   return console;
 }
@@ -625,7 +625,7 @@ delete_console_internal (struct console *con, int force,
       if (down_we_go)
 	{
 	  if (!force)
-	    error ("Attempt to delete the only frame");
+	    invalid_operation ("Attempt to delete the only frame", Qunbound);
 	  else if (from_io_error)
 	    {
 	      /* Mayday mayday!  We're going down! */
@@ -1107,14 +1107,14 @@ syms_of_console (void)
   DEFSUBR (Fset_input_mode);
   DEFSUBR (Fcurrent_input_mode);
 
-  defsymbol (&Qconsolep, "consolep");
-  defsymbol (&Qconsole_live_p, "console-live-p");
+  DEFSYMBOL (Qconsolep);
+  DEFSYMBOL (Qconsole_live_p);
 
-  defsymbol (&Qcreate_console_hook, "create-console-hook");
-  defsymbol (&Qdelete_console_hook, "delete-console-hook");
+  DEFSYMBOL (Qcreate_console_hook);
+  DEFSYMBOL (Qdelete_console_hook);
 
-  defsymbol (&Qsuspend_hook, "suspend-hook");
-  defsymbol (&Qsuspend_resume_hook, "suspend-resume-hook");
+  DEFSYMBOL (Qsuspend_hook);
+  DEFSYMBOL (Qsuspend_resume_hook);
 }
 
 static const struct lrecord_description cte_description_1[] = {

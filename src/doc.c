@@ -231,16 +231,16 @@ get_doc_string (Lisp_Object filepos)
 #endif /* CANNOT_DUMP */
 
       if (fd < 0)
-	error ("Cannot open doc string file \"%s\"",
-	       name_nonreloc ? name_nonreloc :
-	       (char *) XSTRING_DATA (name_reloc));
+	signal_error (Qfile_error, "Cannot open doc string file",
+		      name_nonreloc ? build_string (name_nonreloc) :
+		      name_reloc);
     }
 
   tem = unparesseuxify_doc_string (fd, position, name_nonreloc, name_reloc);
   close (fd);
 
   if (!STRINGP (tem))
-    signal_error (Qerror, tem);
+    signal_error_1 (Qinvalid_byte_code, tem);
 
   return tem;
 }
@@ -255,7 +255,7 @@ read_doc_string (Lisp_Object filepos)
   Lisp_Object string = get_doc_string (filepos);
 
   if (!STRINGP (string))
-    signal_simple_error ("loading bytecode failed to return string", string);
+    invalid_state ("loading bytecode failed to return string", string);
   return Fread (string);
 }
 
@@ -421,7 +421,7 @@ when doc strings are referred to in the dumped Emacs.
 
 #ifndef CANNOT_DUMP
   if (!purify_flag)
-    error ("Snarf-documentation can only be called in an undumped Emacs");
+    invalid_operation ("Snarf-documentation can only be called in an undumped Emacs", Qunbound);
 #endif
 
   CHECK_STRING (filename);
@@ -446,8 +446,7 @@ when doc strings are referred to in the dumped Emacs.
 
   fd = open (name, O_RDONLY | OPEN_BINARY, 0);
   if (fd < 0)
-    report_file_error ("Opening doc string file",
-		       Fcons (build_string (name), Qnil));
+    report_file_error ("Opening doc string file", build_string (name));
   Vinternal_doc_file_name = filename;
   filled = 0;
   pos = 0;
@@ -617,7 +616,7 @@ when doc strings are referred to in the dumped Emacs.
 	      else
                 {
                 /* lose: */
-                  error ("DOC file invalid at position %d", pos);
+                  signal_error (Qfile_error, "DOC file invalid at position", make_int (pos));
                 weird:
                   /* goto lose */;
                 }

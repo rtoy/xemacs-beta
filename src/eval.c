@@ -1,7 +1,7 @@
 /* Evaluator for XEmacs Lisp interpreter.
    Copyright (C) 1985-1987, 1992-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000 Ben Wing.
+   Copyright (C) 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -290,7 +290,7 @@ print_subr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   const char *trailer = subr->prompt ? " (interactive)>" : ">";
 
   if (print_readably)
-    error ("printing unreadable object %s%s%s", header, name, trailer);
+    printing_unreadable_object ("%s%s%s", header, name, trailer);
 
   write_c_string (header,  printcharfun);
   write_c_string (name,    printcharfun);
@@ -866,7 +866,7 @@ Each VALUEFORM can refer to the symbols already bound by this VARLIST.
 	      CHECK_CONS (tem);
 	      value = Feval (XCAR (tem));
 	      if (!NILP (XCDR (tem)))
-		signal_simple_error
+		sferror
 		  ("`let' bindings can have only one value-form", var);
 	    }
 	}
@@ -924,7 +924,7 @@ All the VALUEFORMs are evalled before any symbols are bound.
 		gcpro1.nvars = idx;
 
 		if (!NILP (XCDR (tem)))
-		  signal_simple_error
+		  sferror
 		    ("`let' bindings can have only one value-form", var);
 	      }
 	  }
@@ -1096,7 +1096,7 @@ In lisp-interaction-mode defvar is treated as defconst.
 	  Lisp_Object doc = XCAR (args);
 	  Fput (sym, Qvariable_documentation, doc);
 	  if (!NILP (args = XCDR (args)))
-	    error ("too many arguments");
+	    signal_error (Qwrong_number_of_arguments, "too many arguments", Qunbound);
 	}
     }
 
@@ -1144,7 +1144,7 @@ Since `defconst' unconditionally assigns the variable,
       Lisp_Object doc = XCAR (args);
       Fput (sym, Qvariable_documentation, doc);
       if (!NILP (args = XCDR (args)))
-	error ("too many arguments");
+	signal_error (Qwrong_number_of_arguments, "too many arguments", Qunbound);
     }
 
 #ifdef I18N3
@@ -1720,7 +1720,7 @@ condition_case_3 (Lisp_Object bodyform, Lisp_Object var, Lisp_Object handlers)
       else
 	{
 	invalid_condition_handler:
-	  signal_simple_error ("Invalid condition handler", handler);
+	  sferror ("Invalid condition handler", handler);
 	}
     }
 
@@ -1839,7 +1839,9 @@ return_from_signal (Lisp_Object value)
 #else  /* But the reality is that that stinks, because: */
   /* GACK!!! Really want some way for debug-on-quit errors
      to be continuable!! */
-  error ("Returning a value from an error is no longer supported");
+  signal_error (Qunimplemented,
+		"Returning a value from an error is no longer supported",
+		Qunbound);
 #endif
 }
 
@@ -2017,7 +2019,7 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
    data. */
 
 /* The simplest external error function: it would be called
-   signal_continuable_error() in the terminology below, but it's
+   signal_continuable_error_1() in the terminology below, but it's
    Lisp-callable. */
 
 DEFUN ("signal", Fsignal, 2, 2, 0, /*
@@ -2055,7 +2057,7 @@ user invokes the "return from signal" option.
 /* Signal a non-continuable error. */
 
 DOESNT_RETURN
-signal_error (Lisp_Object sig, Lisp_Object data)
+signal_error_1 (Lisp_Object sig, Lisp_Object data)
 {
   for (;;)
     Fsignal (sig, data);
@@ -2221,8 +2223,8 @@ call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
    Qresource, etc.). */
 
 void
-maybe_signal_error (Lisp_Object sig, Lisp_Object data, Lisp_Object class,
-		    Error_behavior errb)
+maybe_signal_error_1 (Lisp_Object sig, Lisp_Object data, Lisp_Object class,
+		      Error_behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return;
@@ -2237,8 +2239,8 @@ maybe_signal_error (Lisp_Object sig, Lisp_Object data, Lisp_Object class,
    according to ERRB. */
 
 Lisp_Object
-maybe_signal_continuable_error (Lisp_Object sig, Lisp_Object data,
-				Lisp_Object class, Error_behavior errb)
+maybe_signal_continuable_error_1 (Lisp_Object sig, Lisp_Object data,
+				  Lisp_Object class, Error_behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return Qnil;
@@ -2254,14 +2256,130 @@ maybe_signal_continuable_error (Lisp_Object sig, Lisp_Object data,
 
 /****************** Error functions class 2 ******************/
 
-/* Class 2: Printf-like functions that signal an error.
+/* Class 2: Signal an error with a string and an associated object.
+   Normally these functions are used to attach one associated object,
+   but to attach no objects, specify Qunbound for FROB, and for more
+   than one object, make a list of the objects with Qunbound as the
+   first element. (If you have specifically two objects to attach,
+   consider using the function in class 3 below.) These functions
+   signal an error of a specified type, whose data is one or more
+   objects (usually two), a string the related Lisp object(s)
+   specified as FROB. */
+
+/* Out of REASON and FROB, return a list of elements suitable for passing
+   to signal_error_1(). */
+
+Lisp_Object
+build_error_data (const char *reason, Lisp_Object frob)
+{
+  if (EQ (frob, Qunbound))
+    frob = Qnil;
+  else if (CONSP (frob) && EQ (XCAR (frob), Qunbound))
+    frob = XCDR (frob);
+  else
+    frob = list1 (frob);
+  if (!reason)
+    return frob;
+  else
+    return Fcons (build_translated_string (reason), frob);
+}
+
+DOESNT_RETURN
+signal_error (Lisp_Object type, const char *reason, Lisp_Object frob)
+{
+  signal_error_1 (type, build_error_data (reason, frob));
+}
+
+void
+maybe_signal_error (Lisp_Object type, const char *reason,
+		    Lisp_Object frob, Lisp_Object class,
+		    Error_behavior errb)
+{
+  /* Optimization: */
+  if (ERRB_EQ (errb, ERROR_ME_NOT))
+    return;
+  maybe_signal_error_1 (type, build_error_data (reason, frob), class, errb);
+}
+
+Lisp_Object
+signal_continuable_error (Lisp_Object type, const char *reason,
+			  Lisp_Object frob)
+{
+  return Fsignal (type, build_error_data (reason, frob));
+}
+
+Lisp_Object
+maybe_signal_continuable_error (Lisp_Object type, const char *reason,
+				Lisp_Object frob, Lisp_Object class,
+				Error_behavior errb)
+{
+  /* Optimization: */
+  if (ERRB_EQ (errb, ERROR_ME_NOT))
+    return Qnil;
+  return maybe_signal_continuable_error_1 (type,
+					   build_error_data (reason, frob),
+					   class, errb);
+}
+
+
+/****************** Error functions class 3 ******************/
+
+/* Class 3: Signal an error with a string and two associated objects.
+   These functions signal an error of a specified type, whose data
+   is three objects, a string and two related Lisp objects.
+   (The equivalent could be accomplished using the class 2 functions,
+   but these are more convenient in this particular case.) */
+
+DOESNT_RETURN
+signal_error_2 (Lisp_Object type, const char *reason,
+		Lisp_Object frob0, Lisp_Object frob1)
+{
+  signal_error_1 (type, list3 (build_translated_string (reason), frob0,
+			       frob1));
+}
+
+void
+maybe_signal_error_2 (Lisp_Object type, const char *reason,
+		      Lisp_Object frob0, Lisp_Object frob1,
+		      Lisp_Object class, Error_behavior errb)
+{
+  /* Optimization: */
+  if (ERRB_EQ (errb, ERROR_ME_NOT))
+    return;
+  maybe_signal_error_1 (type, list3 (build_translated_string (reason), frob0,
+				     frob1), class, errb);
+}
+
+Lisp_Object
+signal_continuable_error_2 (Lisp_Object type, const char *reason,
+			    Lisp_Object frob0, Lisp_Object frob1)
+{
+  return Fsignal (type, list3 (build_translated_string (reason), frob0,
+			       frob1));
+}
+
+Lisp_Object
+maybe_signal_continuable_error_2 (Lisp_Object type, const char *reason,
+				  Lisp_Object frob0, Lisp_Object frob1,
+				  Lisp_Object class, Error_behavior errb)
+{
+  /* Optimization: */
+  if (ERRB_EQ (errb, ERROR_ME_NOT))
+    return Qnil;
+  return maybe_signal_continuable_error_1
+    (type, list3 (build_translated_string (reason), frob0, frob1),
+     class, errb);
+}
+
+
+/****************** Error functions class 4 ******************/
+
+/* Class 4: Printf-like functions that signal an error.
    These functions signal an error of a specified type, whose data
    is a single string, created using the arguments. */
 
-/* dump an error message; called like printf */
-
 DOESNT_RETURN
-type_error (Lisp_Object type, const char *fmt, ...)
+signal_ferror (Lisp_Object type, const char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2272,12 +2390,12 @@ type_error (Lisp_Object type, const char *fmt, ...)
   va_end (args);
 
   /* Fsignal GC-protects its args */
-  signal_error (type, list1 (obj));
+  signal_error (type, 0, obj);
 }
 
 void
-maybe_type_error (Lisp_Object type, Lisp_Object class, Error_behavior errb,
-		  const char *fmt, ...)
+maybe_signal_ferror (Lisp_Object type, Lisp_Object class, Error_behavior errb,
+		     const char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2292,11 +2410,11 @@ maybe_type_error (Lisp_Object type, Lisp_Object class, Error_behavior errb,
   va_end (args);
 
   /* Fsignal GC-protects its args */
-  maybe_signal_error (type, list1 (obj), class, errb);
+  maybe_signal_error (type, 0, obj, class, errb);
 }
 
 Lisp_Object
-continuable_type_error (Lisp_Object type, const char *fmt, ...)
+signal_continuable_ferror (Lisp_Object type, const char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2311,8 +2429,8 @@ continuable_type_error (Lisp_Object type, const char *fmt, ...)
 }
 
 Lisp_Object
-maybe_continuable_type_error (Lisp_Object type, Lisp_Object class,
-			      Error_behavior errb, const char *fmt, ...)
+maybe_signal_continuable_ferror (Lisp_Object type, Lisp_Object class,
+				 Error_behavior errb, const char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2327,323 +2445,27 @@ maybe_continuable_type_error (Lisp_Object type, Lisp_Object class,
   va_end (args);
 
   /* Fsignal GC-protects its args */
-  return maybe_signal_continuable_error (type, list1 (obj), class, errb);
-}
-
-
-/****************** Error functions class 3 ******************/
-
-/* Class 3: Signal an error with a string and an associated object.
-   These functions signal an error of a specified type, whose data
-   is two objects, a string and a related Lisp object (usually the object
-   where the error is occurring). */
-
-DOESNT_RETURN
-signal_type_error (Lisp_Object type, const char *reason, Lisp_Object frob)
-{
-  if (UNBOUNDP (frob))
-    signal_error (type, list1 (build_translated_string (reason)));
-  else
-    signal_error (type, list2 (build_translated_string (reason), frob));
-}
-
-void
-maybe_signal_type_error (Lisp_Object type, const char *reason,
-			 Lisp_Object frob, Lisp_Object class,
-			 Error_behavior errb)
-{
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return;
-  maybe_signal_error (type, list2 (build_translated_string (reason), frob),
-				     class, errb);
-}
-
-Lisp_Object
-signal_type_continuable_error (Lisp_Object type, const char *reason,
-			       Lisp_Object frob)
-{
-  return Fsignal (type, list2 (build_translated_string (reason), frob));
-}
-
-Lisp_Object
-maybe_signal_type_continuable_error (Lisp_Object type, const char *reason,
-				     Lisp_Object frob, Lisp_Object class,
-				     Error_behavior errb)
-{
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return Qnil;
-  return maybe_signal_continuable_error
-    (type, list2 (build_translated_string (reason),
-		    frob), class, errb);
-}
-
-
-/****************** Error functions class 4 ******************/
-
-/* Class 4: Printf-like functions that signal an error.
-   These functions signal an error of a specified type, whose data
-   is a two objects, a string (created using the arguments) and a
-   Lisp object.
-*/
-
-DOESNT_RETURN
-type_error_with_frob (Lisp_Object type, Lisp_Object frob, const char *fmt, ...)
-{
-  Lisp_Object obj;
-  va_list args;
-
-  va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
-  va_end (args);
-
-  /* Fsignal GC-protects its args */
-  signal_error (type, list2 (obj, frob));
-}
-
-void
-maybe_type_error_with_frob (Lisp_Object type, Lisp_Object frob,
-			    Lisp_Object class, Error_behavior errb,
-			    const char *fmt, ...)
-{
-  Lisp_Object obj;
-  va_list args;
-
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return;
-
-  va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
-  va_end (args);
-
-  /* Fsignal GC-protects its args */
-  maybe_signal_error (type, list2 (obj, frob), class, errb);
-}
-
-Lisp_Object
-continuable_type_error_with_frob (Lisp_Object type, Lisp_Object frob,
-				  const char *fmt, ...)
-{
-  Lisp_Object obj;
-  va_list args;
-
-  va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
-  va_end (args);
-
-  /* Fsignal GC-protects its args */
-  return Fsignal (type, list2 (obj, frob));
-}
-
-Lisp_Object
-maybe_continuable_type_error_with_frob (Lisp_Object type, Lisp_Object frob,
-					Lisp_Object class, Error_behavior errb,
-					const char *fmt, ...)
-{
-  Lisp_Object obj;
-  va_list args;
-
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return Qnil;
-
-  va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
-  va_end (args);
-
-  /* Fsignal GC-protects its args */
-  return maybe_signal_continuable_error (type, list2 (obj, frob),
-					 class, errb);
+  return maybe_signal_continuable_error (type, 0, obj, class, errb);
 }
 
 
 /****************** Error functions class 5 ******************/
 
-/* Class 5: Signal an error with a string and two associated objects.
+/* Class 5: Printf-like functions that signal an error.
    These functions signal an error of a specified type, whose data
-   is three objects, a string and two related Lisp objects. */
+   is a one or more objects, a string (created using the arguments)
+   and additional Lisp objects specified in FROB. (The syntax of FROB
+   is the same as for class 2.)
 
-DOESNT_RETURN
-signal_type_error_2 (Lisp_Object type, const char *reason,
-		     Lisp_Object frob0, Lisp_Object frob1)
-{
-  signal_error (type, list3 (build_translated_string (reason), frob0,
-			       frob1));
-}
-
-void
-maybe_signal_type_error_2 (Lisp_Object type, const char *reason,
-			   Lisp_Object frob0, Lisp_Object frob1,
-			   Lisp_Object class, Error_behavior errb)
-{
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return;
-  maybe_signal_error (type, list3 (build_translated_string (reason), frob0,
-				     frob1), class, errb);
-}
-
-
-Lisp_Object
-signal_type_continuable_error_2 (Lisp_Object type, const char *reason,
-				 Lisp_Object frob0, Lisp_Object frob1)
-{
-  return Fsignal (type, list3 (build_translated_string (reason), frob0,
-				 frob1));
-}
-
-Lisp_Object
-maybe_signal_type_continuable_error_2 (Lisp_Object type, const char *reason,
-				       Lisp_Object frob0, Lisp_Object frob1,
-				       Lisp_Object class, Error_behavior errb)
-{
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return Qnil;
-  return maybe_signal_continuable_error
-    (type, list3 (build_translated_string (reason), frob0,
-		    frob1),
-     class, errb);
-}
-
-
-/****************** Simple error functions class 2 ******************/
-
-/* Simple class 2: Printf-like functions that signal an error.
-   These functions signal an error of type Qerror, whose data
-   is a single string, created using the arguments. */
-
-/* dump an error message; called like printf */
-
-DOESNT_RETURN
-error (const char *fmt, ...)
-{
-  Lisp_Object obj;
-  va_list args;
-
-  va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
-  va_end (args);
-
-  /* Fsignal GC-protects its args */
-  signal_error (Qerror, list1 (obj));
-}
-
-void
-maybe_error (Lisp_Object class, Error_behavior errb, const char *fmt, ...)
-{
-  Lisp_Object obj;
-  va_list args;
-
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return;
-
-  va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
-  va_end (args);
-
-  /* Fsignal GC-protects its args */
-  maybe_signal_error (Qerror, list1 (obj), class, errb);
-}
-
-Lisp_Object
-continuable_error (const char *fmt, ...)
-{
-  Lisp_Object obj;
-  va_list args;
-
-  va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
-  va_end (args);
-
-  /* Fsignal GC-protects its args */
-  return Fsignal (Qerror, list1 (obj));
-}
-
-Lisp_Object
-maybe_continuable_error (Lisp_Object class, Error_behavior errb,
-			 const char *fmt, ...)
-{
-  Lisp_Object obj;
-  va_list args;
-
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return Qnil;
-
-  va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
-  va_end (args);
-
-  /* Fsignal GC-protects its args */
-  return maybe_signal_continuable_error (Qerror, list1 (obj), class, errb);
-}
-
-
-/****************** Simple error functions class 3 ******************/
-
-/* Simple class 3: Signal an error with a string and an associated object.
-   These functions signal an error of type Qerror, whose data
-   is two objects, a string and a related Lisp object (usually the object
-   where the error is occurring). */
-
-DOESNT_RETURN
-signal_simple_error (const char *reason, Lisp_Object frob)
-{
-  signal_error (Qerror, list2 (build_translated_string (reason), frob));
-}
-
-void
-maybe_signal_simple_error (const char *reason, Lisp_Object frob,
-			   Lisp_Object class, Error_behavior errb)
-{
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return;
-  maybe_signal_error (Qerror, list2 (build_translated_string (reason), frob),
-				     class, errb);
-}
-
-Lisp_Object
-signal_simple_continuable_error (const char *reason, Lisp_Object frob)
-{
-  return Fsignal (Qerror, list2 (build_translated_string (reason), frob));
-}
-
-Lisp_Object
-maybe_signal_simple_continuable_error (const char *reason, Lisp_Object frob,
-				       Lisp_Object class, Error_behavior errb)
-{
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return Qnil;
-  return maybe_signal_continuable_error
-    (Qerror, list2 (build_translated_string (reason),
-		    frob), class, errb);
-}
-
-
-/****************** Simple error functions class 4 ******************/
-
-/* Simple class 4: Printf-like functions that signal an error.
-   These functions signal an error of type Qerror, whose data
-   is a two objects, a string (created using the arguments) and a
-   Lisp object.
+   There is no need for a class 6 because you can always attach 2
+   objects using class 5 (for FROB, specify a list with three
+   elements, the first of which is Qunbound), and these functions are
+   not commonly used.   
 */
 
 DOESNT_RETURN
-error_with_frob (Lisp_Object frob, const char *fmt, ...)
+signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob, const char *fmt,
+			 ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2654,12 +2476,13 @@ error_with_frob (Lisp_Object frob, const char *fmt, ...)
   va_end (args);
 
   /* Fsignal GC-protects its args */
-  signal_error (Qerror, list2 (obj, frob));
+  signal_error_1 (type, Fcons (obj, build_error_data (0, frob)));
 }
 
 void
-maybe_error_with_frob (Lisp_Object frob, Lisp_Object class,
-		       Error_behavior errb, const char *fmt, ...)
+maybe_signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
+			       Lisp_Object class, Error_behavior errb,
+			       const char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2674,11 +2497,13 @@ maybe_error_with_frob (Lisp_Object frob, Lisp_Object class,
   va_end (args);
 
   /* Fsignal GC-protects its args */
-  maybe_signal_error (Qerror, list2 (obj, frob), class, errb);
+  maybe_signal_error_1 (type, Fcons (obj, build_error_data (0, frob)), class,
+			errb);
 }
 
 Lisp_Object
-continuable_error_with_frob (Lisp_Object frob, const char *fmt, ...)
+signal_continuable_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
+				     const char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2689,12 +2514,14 @@ continuable_error_with_frob (Lisp_Object frob, const char *fmt, ...)
   va_end (args);
 
   /* Fsignal GC-protects its args */
-  return Fsignal (Qerror, list2 (obj, frob));
+  return Fsignal (type, Fcons (obj, build_error_data (0, frob)));
 }
 
 Lisp_Object
-maybe_continuable_error_with_frob (Lisp_Object frob, Lisp_Object class,
-				   Error_behavior errb, const char *fmt, ...)
+maybe_signal_continuable_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
+					   Lisp_Object class,
+					   Error_behavior errb,
+					   const char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2709,58 +2536,10 @@ maybe_continuable_error_with_frob (Lisp_Object frob, Lisp_Object class,
   va_end (args);
 
   /* Fsignal GC-protects its args */
-  return maybe_signal_continuable_error (Qerror, list2 (obj, frob),
-					 class, errb);
-}
-
-
-/****************** Simple error functions class 5 ******************/
-
-/* Simple class 5: Signal an error with a string and two associated objects.
-   These functions signal an error of type Qerror, whose data
-   is three objects, a string and two related Lisp objects. */
-
-DOESNT_RETURN
-signal_simple_error_2 (const char *reason,
-                       Lisp_Object frob0, Lisp_Object frob1)
-{
-  signal_error (Qerror, list3 (build_translated_string (reason), frob0,
-			       frob1));
-}
-
-void
-maybe_signal_simple_error_2 (const char *reason, Lisp_Object frob0,
-			     Lisp_Object frob1, Lisp_Object class,
-			     Error_behavior errb)
-{
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return;
-  maybe_signal_error (Qerror, list3 (build_translated_string (reason), frob0,
-				     frob1), class, errb);
-}
-
-
-Lisp_Object
-signal_simple_continuable_error_2 (const char *reason, Lisp_Object frob0,
-				   Lisp_Object frob1)
-{
-  return Fsignal (Qerror, list3 (build_translated_string (reason), frob0,
-				 frob1));
-}
-
-Lisp_Object
-maybe_signal_simple_continuable_error_2 (const char *reason, Lisp_Object frob0,
-					 Lisp_Object frob1, Lisp_Object class,
-					 Error_behavior errb)
-{
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return Qnil;
-  return maybe_signal_continuable_error
-    (Qerror, list3 (build_translated_string (reason), frob0,
-		    frob1),
-     class, errb);
+  return maybe_signal_continuable_error_1 (type,
+					   Fcons (obj,
+						  build_error_data (0, frob)),
+					   class, errb);
 }
 
 
@@ -2777,7 +2556,8 @@ signal_quit (void)
 }
 
 
-/* Used in core lisp functions for efficiency */
+/************************ convenience error functions ***********************/
+
 Lisp_Object
 signal_void_function_error (Lisp_Object function)
 {
@@ -2801,73 +2581,191 @@ signal_wrong_number_of_arguments_error (Lisp_Object function, int nargs)
 DOESNT_RETURN
 signal_malformed_list_error (Lisp_Object list)
 {
-  signal_error (Qmalformed_list, list1 (list));
+  signal_error (Qmalformed_list, 0, list);
 }
 
 DOESNT_RETURN
 signal_malformed_property_list_error (Lisp_Object list)
 {
-  signal_error (Qmalformed_property_list, list1 (list));
+  signal_error (Qmalformed_property_list, 0, list);
 }
 
 DOESNT_RETURN
 signal_circular_list_error (Lisp_Object list)
 {
-  signal_error (Qcircular_list, list1 (list));
+  signal_error (Qcircular_list, 0, list);
 }
 
 DOESNT_RETURN
 signal_circular_property_list_error (Lisp_Object list)
 {
-  signal_error (Qcircular_property_list, list1 (list));
+  signal_error (Qcircular_property_list, 0, list);
 }
 
 DOESNT_RETURN
 syntax_error (const char *reason, Lisp_Object frob)
 {
-  signal_type_error (Qsyntax_error, reason, frob);
+  signal_error (Qsyntax_error, reason, frob);
 }
 
 DOESNT_RETURN
 syntax_error_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
 {
-  signal_type_error_2 (Qsyntax_error, reason, frob1, frob2);
+  signal_error_2 (Qsyntax_error, reason, frob1, frob2);
+}
+
+void
+maybe_syntax_error (const char *reason, Lisp_Object frob,
+		    Lisp_Object class, Error_behavior errb)
+{
+  maybe_signal_error (Qsyntax_error, reason, frob, class, errb);
+}
+
+DOESNT_RETURN
+sferror (const char *reason, Lisp_Object frob)
+{
+  signal_error (Qstructure_formation_error, reason, frob);
+}
+
+DOESNT_RETURN
+sferror_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
+{
+  signal_error_2 (Qstructure_formation_error, reason, frob1, frob2);
+}
+
+void
+maybe_sferror (const char *reason, Lisp_Object frob,
+	       Lisp_Object class, Error_behavior errb)
+{
+  maybe_signal_error (Qstructure_formation_error, reason, frob, class, errb);
 }
 
 DOESNT_RETURN
 invalid_argument (const char *reason, Lisp_Object frob)
 {
-  signal_type_error (Qinvalid_argument, reason, frob);
+  signal_error (Qinvalid_argument, reason, frob);
 }
 
 DOESNT_RETURN
 invalid_argument_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
 {
-  signal_type_error_2 (Qinvalid_argument, reason, frob1, frob2);
+  signal_error_2 (Qinvalid_argument, reason, frob1, frob2);
+}
+
+void
+maybe_invalid_argument (const char *reason, Lisp_Object frob,
+			Lisp_Object class, Error_behavior errb)
+{
+  maybe_signal_error (Qinvalid_argument, reason, frob, class, errb);
+}
+
+DOESNT_RETURN
+invalid_constant (const char *reason, Lisp_Object frob)
+{
+  signal_error (Qinvalid_constant, reason, frob);
+}
+
+DOESNT_RETURN
+invalid_constant_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
+{
+  signal_error_2 (Qinvalid_constant, reason, frob1, frob2);
+}
+
+void
+maybe_invalid_constant (const char *reason, Lisp_Object frob,
+			Lisp_Object class, Error_behavior errb)
+{
+  maybe_signal_error (Qinvalid_constant, reason, frob, class, errb);
 }
 
 DOESNT_RETURN
 invalid_operation (const char *reason, Lisp_Object frob)
 {
-  signal_type_error (Qinvalid_operation, reason, frob);
+  signal_error (Qinvalid_operation, reason, frob);
 }
 
 DOESNT_RETURN
 invalid_operation_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
 {
-  signal_type_error_2 (Qinvalid_operation, reason, frob1, frob2);
+  signal_error_2 (Qinvalid_operation, reason, frob1, frob2);
+}
+
+void
+maybe_invalid_operation (const char *reason, Lisp_Object frob,
+			 Lisp_Object class, Error_behavior errb)
+{
+  maybe_signal_error (Qinvalid_operation, reason, frob, class, errb);
 }
 
 DOESNT_RETURN
 invalid_change (const char *reason, Lisp_Object frob)
 {
-  signal_type_error (Qinvalid_change, reason, frob);
+  signal_error (Qinvalid_change, reason, frob);
 }
 
 DOESNT_RETURN
 invalid_change_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
 {
-  signal_type_error_2 (Qinvalid_change, reason, frob1, frob2);
+  signal_error_2 (Qinvalid_change, reason, frob1, frob2);
+}
+
+void
+maybe_invalid_change (const char *reason, Lisp_Object frob,
+		      Lisp_Object class, Error_behavior errb)
+{
+  maybe_signal_error (Qinvalid_change, reason, frob, class, errb);
+}
+
+DOESNT_RETURN
+invalid_state (const char *reason, Lisp_Object frob)
+{
+  signal_error (Qinvalid_state, reason, frob);
+}
+
+DOESNT_RETURN
+invalid_state_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
+{
+  signal_error_2 (Qinvalid_state, reason, frob1, frob2);
+}
+
+void
+maybe_invalid_state (const char *reason, Lisp_Object frob,
+		     Lisp_Object class, Error_behavior errb)
+{
+  maybe_signal_error (Qinvalid_state, reason, frob, class, errb);
+}
+
+DOESNT_RETURN
+wtaerror (const char *reason, Lisp_Object frob)
+{
+  signal_error (Qwrong_type_argument, reason, frob);
+}
+
+DOESNT_RETURN
+stack_overflow (const char *reason, Lisp_Object frob)
+{
+  signal_error (Qstack_overflow, reason, frob);
+}
+
+DOESNT_RETURN
+out_of_memory (const char *reason, Lisp_Object frob)
+{
+  signal_error (Qout_of_memory, reason, frob);
+}
+
+DOESNT_RETURN
+printing_unreadable_object (const char *fmt, ...)
+{
+  Lisp_Object obj;
+  va_list args;
+
+  va_start (args, fmt);
+  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
+				args);
+  va_end (args);
+
+  /* Fsignal GC-protects its args */
+  signal_error (Qprinting_unreadable_object, 0, obj);
 }
 
 
@@ -3177,8 +3075,7 @@ do_autoload (Lisp_Object fundef,
       || (CONSP (fun)
           && EQ (XCAR (fun), Qautoload)))
 #endif
-    error ("Autoloading failed to define function %s",
-	   string_data (XSYMBOL (funname)->name));
+    invalid_state ("Autoloading failed to define function", funname);
   UNGCPRO;
 }
 
@@ -3262,7 +3159,8 @@ Evaluate FORM and return its value.
       if (max_lisp_eval_depth < 100)
 	max_lisp_eval_depth = 100;
       if (lisp_eval_depth > max_lisp_eval_depth)
-	error ("Lisp nesting exceeds `max-lisp-eval-depth'");
+	stack_overflow ("Lisp nesting exceeds `max-lisp-eval-depth'",
+			Qunbound);
     }
 
   /* We guaranteed CONSP (form) above */
@@ -3481,7 +3379,8 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
       if (max_lisp_eval_depth < 100)
 	max_lisp_eval_depth = 100;
       if (lisp_eval_depth > max_lisp_eval_depth)
-	error ("Lisp nesting exceeds `max-lisp-eval-depth'");
+	stack_overflow ("Lisp nesting exceeds `max-lisp-eval-depth'",
+			Qunbound);
     }
 
   backtrace.pdlcount = specpdl_depth();
@@ -4801,8 +4700,9 @@ grow_specpdl (size_t reserved)
 	      !NILP (Vdebug_on_signal))
 	    /* Leave room for some specpdl in the debugger.  */
 	    max_specpdl_size = size_needed + 100;
-	  continuable_error
-	    ("Variable binding depth exceeds max-specpdl-size");
+	  signal_continuable_error
+	    (Qstack_overflow,
+	     "Variable binding depth exceeds max-specpdl-size", Qunbound);
 	}
     }
   while (specpdl_size < size_needed)
@@ -5324,27 +5224,27 @@ syms_of_eval (void)
 {
   INIT_LRECORD_IMPLEMENTATION (subr);
 
-  defsymbol (&Qinhibit_quit, "inhibit-quit");
-  defsymbol (&Qautoload, "autoload");
-  defsymbol (&Qdebug_on_error, "debug-on-error");
-  defsymbol (&Qstack_trace_on_error, "stack-trace-on-error");
-  defsymbol (&Qdebug_on_signal, "debug-on-signal");
-  defsymbol (&Qstack_trace_on_signal, "stack-trace-on-signal");
-  defsymbol (&Qdebugger, "debugger");
-  defsymbol (&Qmacro, "macro");
+  DEFSYMBOL (Qinhibit_quit);
+  DEFSYMBOL (Qautoload);
+  DEFSYMBOL (Qdebug_on_error);
+  DEFSYMBOL (Qstack_trace_on_error);
+  DEFSYMBOL (Qdebug_on_signal);
+  DEFSYMBOL (Qstack_trace_on_signal);
+  DEFSYMBOL (Qdebugger);
+  DEFSYMBOL (Qmacro);
   defsymbol (&Qand_rest, "&rest");
   defsymbol (&Qand_optional, "&optional");
   /* Note that the process code also uses Qexit */
-  defsymbol (&Qexit, "exit");
-  defsymbol (&Qsetq, "setq");
-  defsymbol (&Qinteractive, "interactive");
-  defsymbol (&Qcommandp, "commandp");
-  defsymbol (&Qdefun, "defun");
-  defsymbol (&Qprogn, "progn");
-  defsymbol (&Qvalues, "values");
-  defsymbol (&Qdisplay_warning, "display-warning");
-  defsymbol (&Qrun_hooks, "run-hooks");
-  defsymbol (&Qif, "if");
+  DEFSYMBOL (Qexit);
+  DEFSYMBOL (Qsetq);
+  DEFSYMBOL (Qinteractive);
+  DEFSYMBOL (Qcommandp);
+  DEFSYMBOL (Qdefun);
+  DEFSYMBOL (Qprogn);
+  DEFSYMBOL (Qvalues);
+  DEFSYMBOL (Qdisplay_warning);
+  DEFSYMBOL (Qrun_hooks);
+  DEFSYMBOL (Qif);
 
   DEFSUBR (For);
   DEFSUBR (Fand);

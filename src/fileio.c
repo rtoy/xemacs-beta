@@ -1,6 +1,6 @@
 /* File IO for XEmacs.
    Copyright (C) 1985-1988, 1992-1995 Free Software Foundation, Inc.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -114,7 +114,7 @@ Lisp_Object Vdirectory_sep_char;
 static Lisp_Object Vinhibit_file_name_handlers;
 static Lisp_Object Vinhibit_file_name_operation;
 
-Lisp_Object Qfile_error, Qfile_already_exists;
+Lisp_Object Qfile_already_exists;
 
 Lisp_Object Qauto_save_hook;
 Lisp_Object Qauto_save_error;
@@ -126,104 +126,36 @@ Lisp_Object Qcompute_buffer_file_truename;
 
 EXFUN (Frunning_temacs_p, 0);
 
+/* DATA can be anything acceptable to signal_error ().
+ */
+
+DOESNT_RETURN
+report_file_type_error (Lisp_Object errtype, Lisp_Object oserrmess,
+			const char *string, Lisp_Object data)
+{
+  struct gcpro gcpro1;
+  Lisp_Object errdata = build_error_data (NULL, data);
+
+  GCPRO1 (errdata);
+  errdata = Fcons (build_translated_string (string),
+		   Fcons (oserrmess, errdata));
+  signal_error_1 (errtype, errdata);
+  UNGCPRO; /* not reached */
+}
+
+DOESNT_RETURN
+report_error_with_errno (Lisp_Object errtype,
+			 const char *string, Lisp_Object data)
+{
+  report_file_type_error (errtype, lisp_strerror (errno), string, data);
+}
+
 /* signal a file error when errno contains a meaningful value. */
 
 DOESNT_RETURN
 report_file_error (const char *string, Lisp_Object data)
 {
-  /* #### dmoore - This uses current_buffer, better make sure no one
-     has GC'd the current buffer.  File handlers are giving me a headache
-     maybe I'll just always protect current_buffer around all of those
-     calls. */
-
-  signal_error (Qfile_error,
-                Fcons (build_translated_string (string),
-		       Fcons (lisp_strerror (errno), data)));
-}
-
-void
-maybe_report_file_error (const char *string, Lisp_Object data,
-			 Lisp_Object class, Error_behavior errb)
-{
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return;
-
-  maybe_signal_error (Qfile_error,
-		      Fcons (build_translated_string (string),
-			     Fcons (lisp_strerror (errno), data)),
-		      class, errb);
-}
-
-/* signal a file error when errno does not contain a meaningful value. */
-
-DOESNT_RETURN
-signal_file_error (const char *string, Lisp_Object data)
-{
-  signal_error (Qfile_error,
-                list2 (build_translated_string (string), data));
-}
-
-void
-maybe_signal_file_error (const char *string, Lisp_Object data,
-			 Lisp_Object class, Error_behavior errb)
-{
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return;
-  maybe_signal_error (Qfile_error,
-		      list2 (build_translated_string (string), data),
-		      class, errb);
-}
-
-DOESNT_RETURN
-signal_double_file_error (const char *string1, const char *string2,
-			  Lisp_Object data)
-{
-  signal_error (Qfile_error,
-                list3 (build_translated_string (string1),
-		       build_translated_string (string2),
-		       data));
-}
-
-void
-maybe_signal_double_file_error (const char *string1, const char *string2,
-				Lisp_Object data, Lisp_Object class,
-				Error_behavior errb)
-{
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return;
-  maybe_signal_error (Qfile_error,
-		      list3 (build_translated_string (string1),
-			     build_translated_string (string2),
-			     data),
-		      class, errb);
-}
-
-DOESNT_RETURN
-signal_double_file_error_2 (const char *string1, const char *string2,
-			    Lisp_Object data1, Lisp_Object data2)
-{
-  signal_error (Qfile_error,
-                list4 (build_translated_string (string1),
-		       build_translated_string (string2),
-		       data1, data2));
-}
-
-void
-maybe_signal_double_file_error_2 (const char *string1, const char *string2,
-				  Lisp_Object data1, Lisp_Object data2,
-				  Lisp_Object class, Error_behavior errb)
-{
-  /* Optimization: */
-  if (ERRB_EQ (errb, ERROR_ME_NOT))
-    return;
-  maybe_signal_error (Qfile_error,
-		      list4 (build_translated_string (string1),
-			     build_translated_string (string2),
-			     data1, data2),
-		      class, errb);
+  report_error_with_errno (Qfile_error, string, data);
 }
 
 
@@ -726,7 +658,7 @@ be an absolute file name.
 	     error, or to ignore the error, which will likely result
 	     in inflooping.  */
 	  report_file_error ("Cannot create temporary name for prefix",
-			     list1 (prefix));
+			     prefix);
 	  return Qnil; /* not reached */
 	}
     }
@@ -1384,7 +1316,7 @@ No component of the resulting pathname will be a symbolic link, as
     errno = ENAMETOOLONG;
     goto lose;
   lose:
-    report_file_error ("Finding truename", list1 (expanded_name));
+    report_file_error ("Finding truename", expanded_name);
   }
   RETURN_UNGCPRO (Qnil);
 }
@@ -1747,7 +1679,7 @@ A prefix arg makes KEEP-TIME non-nil.
 
   ifd = interruptible_open ((char *) XSTRING_DATA (filename), O_RDONLY | OPEN_BINARY, 0);
   if (ifd < 0)
-    report_file_error ("Opening input file", list1 (filename));
+    report_file_error ("Opening input file", filename);
 
   record_unwind_protect (close_file_unwind, make_int (ifd));
 
@@ -1761,7 +1693,7 @@ A prefix arg makes KEEP-TIME non-nil.
     {
       errno = 0;
       report_file_error ("Input and output files are the same",
-			 list2 (filename, newname));
+			 list3 (Qunbound, filename, newname));
     }
 #endif
 
@@ -1779,7 +1711,7 @@ A prefix arg makes KEEP-TIME non-nil.
 	  /* Get a better looking error message. */
 	  errno = EISDIR;
 #endif /* EISDIR */
-	report_file_error ("Non-regular file", list1 (filename));
+	report_file_error ("Non-regular file", filename);
 	}
     }
 #endif /* S_ISREG && S_ISLNK */
@@ -1787,7 +1719,7 @@ A prefix arg makes KEEP-TIME non-nil.
   ofd = open( (char *) XSTRING_DATA (newname),
 	      O_WRONLY | O_CREAT | O_TRUNC | OPEN_BINARY, CREAT_MODE);
   if (ofd < 0)
-    report_file_error ("Opening output file", list1 (newname));
+    report_file_error ("Opening output file", newname);
 
   {
     Lisp_Object ofd_locative = noseeum_cons (make_int (ofd), Qnil);
@@ -1797,12 +1729,12 @@ A prefix arg makes KEEP-TIME non-nil.
     while ((n = read_allowing_quit (ifd, buf, sizeof (buf))) > 0)
     {
       if (write_allowing_quit (ofd, buf, n) != n)
-	report_file_error ("I/O error", list1 (newname));
+	report_file_error ("I/O error", newname);
     }
 
     /* Closing the output clobbers the file times on some systems.  */
     if (close (ofd) < 0)
-      report_file_error ("I/O error", list1 (newname));
+      report_file_error ("I/O error", newname);
 
     if (input_file_statable_p)
       {
@@ -1812,7 +1744,7 @@ A prefix arg makes KEEP-TIME non-nil.
 	    EMACS_SET_SECS_USECS (atime, st.st_atime, 0);
 	    EMACS_SET_SECS_USECS (mtime, st.st_mtime, 0);
 	    if (lisp_string_set_file_times (newname, atime, mtime))
-	      report_file_error ("I/O error", list1 (newname));
+	      report_file_error ("I/O error", newname);
 	  }
 	chmod ((const char *) XSTRING_DATA (newname),
 	       st.st_mode & 07777);
@@ -1862,7 +1794,7 @@ Create a directory.  One argument, a file name string.
     dir [XSTRING_LENGTH (dirname_) - 1] = 0;
 
   if (mkdir (dir, 0777) != 0)
-    report_file_error ("Creating directory", list1 (dirname_));
+    report_file_error ("Creating directory", dirname_);
 
   return Qnil;
 }
@@ -1888,7 +1820,7 @@ Delete a directory.  One argument, a file name or directory name string.
     return (call2 (handler, Qdelete_directory, dirname_));
 
   if (rmdir ((char *) XSTRING_DATA (dirname_)) != 0)
-    report_file_error ("Removing directory", list1 (dirname_));
+    report_file_error ("Removing directory", dirname_);
 
   return Qnil;
 }
@@ -1913,7 +1845,7 @@ If FILENAME has multiple names, it continues to exist with the other names.
     return call2 (handler, Qdelete_file, filename);
 
   if (0 > unlink ((char *) XSTRING_DATA (filename)))
-    report_file_error ("Removing old name", list1 (filename));
+    report_file_error ("Removing old name", filename);
   return Qnil;
 }
 
@@ -2010,7 +1942,7 @@ This is what happens in interactive use with M-x.
 	}
       else
 	{
-	  report_file_error ("Renaming", list2 (filename, newname));
+	  report_file_error ("Renaming", list3 (Qunbound, filename, newname));
 	}
     }
   UNGCPRO;
@@ -2062,7 +1994,7 @@ This is what happens in interactive use with M-x.
    Reverted to previous behavior pending a working fix. (jhar) */
 #if defined(WIN32_NATIVE)
   /* Windows does not support this operation.  */
-  report_file_error ("Adding new name", Flist (2, &filename));
+  signal_error_2 (Qunimplemented, "Adding new name", filename, newname);
 #else /* not defined(WIN32_NATIVE) */
 
   unlink ((char *) XSTRING_DATA (newname));
@@ -2070,7 +2002,7 @@ This is what happens in interactive use with M-x.
 		(char *) XSTRING_DATA (newname)))
     {
       report_file_error ("Adding new name",
-			 list2 (filename, newname));
+			 list3 (Qunbound, filename, newname));
     }
 #endif /* defined(WIN32_NATIVE) */
 
@@ -2128,7 +2060,7 @@ This happens for interactive use with M-x.
 		   (char *) XSTRING_DATA (linkname)))
     {
       report_file_error ("Making symbolic link",
-			 list2 (filename, linkname));
+			 list3 (Qunbound, filename, linkname));
     }
 #endif /* S_IFLNK */
 
@@ -2569,7 +2501,7 @@ Only the 12 low bits of MODE are used.
     return call3 (handler, Qset_file_modes, abspath, mode);
 
   if (chmod ((char *) XSTRING_DATA (abspath), XINT (mode)) < 0)
-    report_file_error ("Doing chmod", list1 (abspath));
+    report_file_error ("Doing chmod", abspath);
 
   return Qnil;
 }
@@ -2703,7 +2635,7 @@ positions), even in Mule. (Fixing this is very difficult.)
   int not_regular = 0;
 
   if (buf->base_buffer && ! NILP (visit))
-    error ("Cannot do file visiting in an indirect buffer");
+    invalid_operation ("Cannot do file visiting in an indirect buffer", Qunbound);
 
   /* No need to call Fbarf_if_buffer_read_only() here.
      That's called in begin_multiple_change() or wherever. */
@@ -2742,7 +2674,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 #endif
 
   if ( (!NILP (start) || !NILP (end)) && !NILP (visit) )
-    error ("Attempt to visit less than an entire file");
+    invalid_operation ("Attempt to visit less than an entire file", Qunbound);
 
   fd = -1;
 
@@ -2751,7 +2683,7 @@ positions), even in Mule. (Fixing this is very difficult.)
       if (fd >= 0) close (fd);
     badopen:
       if (NILP (visit))
-	report_file_error ("Opening input file", list1 (filename));
+	report_file_error ("Opening input file", filename);
       st.st_mtime = -1;
       goto notfound;
     }
@@ -2801,7 +2733,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 
   /* Supposedly happens on VMS.  */
   if (st.st_size < 0)
-    error ("File size is negative");
+    signal_error (Qfile_error, "File size is negative", Qunbound);
 
   if (NILP (end))
     {
@@ -2809,7 +2741,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	{
 	  end = make_int (st.st_size);
 	  if (XINT (end) != st.st_size)
-	    error ("Maximum buffer size exceeded");
+	    out_of_memory ("Maximum buffer size exceeded", Qunbound);
 	}
     }
 
@@ -2847,8 +2779,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	  Bufpos bufpos;
 	  nread = read_allowing_quit (fd, buffer, sizeof buffer);
 	  if (nread < 0)
-	    error ("IO error reading %s: %s",
-		   XSTRING_DATA (filename), strerror (errno));
+	    report_file_error ("Reading", filename);
 	  else if (nread == 0)
 	    break;
 	  bufpos = 0;
@@ -2886,7 +2817,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	  /* How much can we scan in the next step?  */
 	  trial = min (curpos, (Bufpos) sizeof (buffer));
 	  if (lseek (fd, curpos - trial, 0) < 0)
-	    report_file_error ("Setting file position", list1 (filename));
+	    report_file_error ("Setting file position", filename);
 
 	  total_read = 0;
 	  while (total_read < trial)
@@ -2894,7 +2825,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	      nread = read_allowing_quit (fd, buffer + total_read,
 					  trial - total_read);
 	      if (nread <= 0)
-		report_file_error ("IO error reading file", list1 (filename));
+		report_file_error ("IO error reading file", filename);
 	      total_read += nread;
 	    }
 	  /* Scan this bufferful from the end, comparing with
@@ -2940,7 +2871,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 
       /* Make sure point-max won't overflow after this insertion.  */
       if (total != XINT (make_int (total)))
-	error ("Maximum buffer size exceeded");
+	out_of_memory ("Maximum buffer size exceeded", Qunbound);
     }
   else
     /* For a special file, all we can do is guess.  The value of -1
@@ -2957,7 +2888,7 @@ positions), even in Mule. (Fixing this is very difficult.)
       )
     {
       if (lseek (fd, XINT (start), 0) < 0)
-	report_file_error ("Setting file position", list1 (filename));
+	report_file_error ("Setting file position", filename);
     }
 
   {
@@ -3018,8 +2949,8 @@ positions), even in Mule. (Fixing this is very difficult.)
 
   if (saverrno != 0)
     {
-      error ("IO error reading %s: %s",
-	     XSTRING_DATA (filename), strerror (saverrno));
+      errno = saverrno;
+      report_file_error ("Reading", filename);
     }
 
  notfound:
@@ -3065,7 +2996,7 @@ positions), even in Mule. (Fixing this is very difficult.)
       /* If visiting nonexistent file, return nil.  */
       if (buf->modtime == -1)
 	report_file_error ("Opening input file",
-			   list1 (filename));
+			   filename);
     }
 
   /* Decode file format */
@@ -3260,7 +3191,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
       if (!auto_saving) unlock_file (lockname);
       errno = save_errno;
 #endif /* CLASH_DETECTION */
-      report_file_error ("Opening output file", list1 (filename));
+      report_file_error ("Opening output file", filename);
     }
 
   {
@@ -3280,7 +3211,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 	    if (!auto_saving) unlock_file (lockname);
 #endif /* CLASH_DETECTION */
 	    report_file_error ("Lseek error",
-			       list1 (filename));
+			       filename);
 	  }
       }
 
@@ -3379,7 +3310,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   if (failure)
     {
       errno = save_errno;
-      report_file_error ("Writing file", list1 (fn));
+      report_file_error ("Writing file", fn);
     }
 
   if (visiting)
@@ -4146,47 +4077,47 @@ Return t if buffer has been auto-saved since last read in or saved.
 void
 syms_of_fileio (void)
 {
-  defsymbol (&Qexpand_file_name, "expand-file-name");
-  defsymbol (&Qfile_truename, "file-truename");
-  defsymbol (&Qsubstitute_in_file_name, "substitute-in-file-name");
-  defsymbol (&Qdirectory_file_name, "directory-file-name");
-  defsymbol (&Qfile_name_directory, "file-name-directory");
-  defsymbol (&Qfile_name_nondirectory, "file-name-nondirectory");
-  defsymbol (&Qunhandled_file_name_directory, "unhandled-file-name-directory");
-  defsymbol (&Qfile_name_as_directory, "file-name-as-directory");
-  defsymbol (&Qcopy_file, "copy-file");
-  defsymbol (&Qmake_directory_internal, "make-directory-internal");
-  defsymbol (&Qdelete_directory, "delete-directory");
-  defsymbol (&Qdelete_file, "delete-file");
-  defsymbol (&Qrename_file, "rename-file");
-  defsymbol (&Qadd_name_to_file, "add-name-to-file");
-  defsymbol (&Qmake_symbolic_link, "make-symbolic-link");
-  defsymbol (&Qfile_exists_p, "file-exists-p");
-  defsymbol (&Qfile_executable_p, "file-executable-p");
-  defsymbol (&Qfile_readable_p, "file-readable-p");
-  defsymbol (&Qfile_symlink_p, "file-symlink-p");
-  defsymbol (&Qfile_writable_p, "file-writable-p");
-  defsymbol (&Qfile_directory_p, "file-directory-p");
-  defsymbol (&Qfile_regular_p, "file-regular-p");
-  defsymbol (&Qfile_accessible_directory_p, "file-accessible-directory-p");
-  defsymbol (&Qfile_modes, "file-modes");
-  defsymbol (&Qset_file_modes, "set-file-modes");
-  defsymbol (&Qfile_newer_than_file_p, "file-newer-than-file-p");
-  defsymbol (&Qinsert_file_contents, "insert-file-contents");
-  defsymbol (&Qwrite_region, "write-region");
-  defsymbol (&Qverify_visited_file_modtime, "verify-visited-file-modtime");
-  defsymbol (&Qset_visited_file_modtime, "set-visited-file-modtime");
-  defsymbol (&Qcar_less_than_car, "car-less-than-car"); /* Vomitous! */
+  DEFSYMBOL (Qexpand_file_name);
+  DEFSYMBOL (Qfile_truename);
+  DEFSYMBOL (Qsubstitute_in_file_name);
+  DEFSYMBOL (Qdirectory_file_name);
+  DEFSYMBOL (Qfile_name_directory);
+  DEFSYMBOL (Qfile_name_nondirectory);
+  DEFSYMBOL (Qunhandled_file_name_directory);
+  DEFSYMBOL (Qfile_name_as_directory);
+  DEFSYMBOL (Qcopy_file);
+  DEFSYMBOL (Qmake_directory_internal);
+  DEFSYMBOL (Qdelete_directory);
+  DEFSYMBOL (Qdelete_file);
+  DEFSYMBOL (Qrename_file);
+  DEFSYMBOL (Qadd_name_to_file);
+  DEFSYMBOL (Qmake_symbolic_link);
+  DEFSYMBOL (Qfile_exists_p);
+  DEFSYMBOL (Qfile_executable_p);
+  DEFSYMBOL (Qfile_readable_p);
+  DEFSYMBOL (Qfile_symlink_p);
+  DEFSYMBOL (Qfile_writable_p);
+  DEFSYMBOL (Qfile_directory_p);
+  DEFSYMBOL (Qfile_regular_p);
+  DEFSYMBOL (Qfile_accessible_directory_p);
+  DEFSYMBOL (Qfile_modes);
+  DEFSYMBOL (Qset_file_modes);
+  DEFSYMBOL (Qfile_newer_than_file_p);
+  DEFSYMBOL (Qinsert_file_contents);
+  DEFSYMBOL (Qwrite_region);
+  DEFSYMBOL (Qverify_visited_file_modtime);
+  DEFSYMBOL (Qset_visited_file_modtime);
+  DEFSYMBOL (Qcar_less_than_car); /* Vomitous! */
 
-  defsymbol (&Qauto_save_hook, "auto-save-hook");
-  defsymbol (&Qauto_save_error, "auto-save-error");
-  defsymbol (&Qauto_saving, "auto-saving");
+  DEFSYMBOL (Qauto_save_hook);
+  DEFSYMBOL (Qauto_save_error);
+  DEFSYMBOL (Qauto_saving);
 
-  defsymbol (&Qformat_decode, "format-decode");
-  defsymbol (&Qformat_annotate_function, "format-annotate-function");
+  DEFSYMBOL (Qformat_decode);
+  DEFSYMBOL (Qformat_annotate_function);
 
-  defsymbol (&Qcompute_buffer_file_truename, "compute-buffer-file-truename");
-  DEFERROR_STANDARD (Qfile_error, Qio_error);
+  DEFSYMBOL (Qcompute_buffer_file_truename);
+
   DEFERROR_STANDARD (Qfile_already_exists, Qfile_error);
 
   DEFSUBR (Ffind_file_name_handler);

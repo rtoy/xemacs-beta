@@ -680,7 +680,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
 	  errno = old_errno;
 	}
       report_file_error ("Creating temp file",
-			 list1 (build_string (filename_out)));
+			 build_string (filename_out));
     }
 
   CHECK_STRING (string);
@@ -741,7 +741,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
 
   if (fubar)
     report_file_error ("Writing temp file",
-		       list1 (build_string (filename_out)));
+		       build_string (filename_out));
 }
 #endif /* 0 */
 
@@ -763,13 +763,13 @@ check_pointer_sizes (Screen *xs, unsigned int width, unsigned int height,
 			  width, height, &best_width, &best_height))
     /* this means that an X error of some sort occurred (we trap
        these so they're not fatal). */
-    signal_simple_error ("XQueryBestCursor() failed?", instantiator);
+    gui_error ("XQueryBestCursor() failed?", instantiator);
 
   if (width > best_width || height > best_height)
-    error_with_frob (instantiator,
-		     "pointer too large (%dx%d): "
-		     "server requires %dx%d or smaller",
-		     width, height, best_width, best_height);
+    signal_ferror_with_frob (Qgui_error, instantiator,
+			     "pointer too large (%dx%d): "
+			     "server requires %dx%d or smaller",
+			     width, height, best_width, best_height);
 }
 
 
@@ -862,7 +862,7 @@ init_image_instance_from_x_image (Lisp_Image_Instance *ii,
   Pixmap pixmap;
 
   if (!DEVICE_X_P (XDEVICE (device)))
-    signal_simple_error ("Not an X device", device);
+    gui_error ("Not an X device", device);
 
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
   d = XtWindow(DEVICE_XT_APP_SHELL (XDEVICE (device)));
@@ -874,13 +874,13 @@ init_image_instance_from_x_image (Lisp_Image_Instance *ii,
   pixmap = XCreatePixmap (dpy, d, ximage->width,
 			  ximage->height, ximage->depth);
   if (!pixmap)
-    signal_simple_error ("Unable to create pixmap", instantiator);
+    gui_error ("Unable to create pixmap", instantiator);
 
   gc = XCreateGC (dpy, pixmap, 0, NULL);
   if (!gc)
     {
       XFreePixmap (dpy, pixmap);
-      signal_simple_error ("Unable to create GC", instantiator);
+      gui_error ("Unable to create GC", instantiator);
     }
 
   XPutImage (dpy, pixmap, gc, ximage, 0, 0, 0, 0,
@@ -923,13 +923,13 @@ image_instance_add_x_image (Lisp_Image_Instance *ii,
   pixmap = XCreatePixmap (dpy, d, ximage->width,
 			  ximage->height, ximage->depth);
   if (!pixmap)
-    signal_simple_error ("Unable to create pixmap", instantiator);
+    gui_error ("Unable to create pixmap", instantiator);
 
   gc = XCreateGC (dpy, pixmap, 0, NULL);
   if (!gc)
     {
       XFreePixmap (dpy, pixmap);
-      signal_simple_error ("Unable to create GC", instantiator);
+      gui_error ("Unable to create GC", instantiator);
     }
 
   XPutImage (dpy, pixmap, gc, ximage, 0, 0, 0, 0,
@@ -1035,7 +1035,7 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
   enum image_instance_type type;
 
   if (!DEVICE_X_P (XDEVICE (device)))
-    signal_simple_error ("Not an X device", device);
+    gui_error ("Not an X device", device);
 
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
   draw = XtWindow(DEVICE_XT_APP_SHELL (XDEVICE (device)));
@@ -1323,7 +1323,7 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   unsigned int w, h;
 
   if (!DEVICE_X_P (XDEVICE (device)))
-    signal_simple_error ("Not an X device", device);
+    gui_error ("Not an X device", device);
 
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
   xs = DefaultScreenOfDisplay (dpy);
@@ -1422,19 +1422,13 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	if (force_mono)
 	  {
 	    /* second time; blow out. */
-	    signal_double_file_error ("Reading pixmap data",
-				      "color allocation failed",
-				      data);
+	    gui_error ("XPM color allocation failed", data);
 	  }
 	else
 	  {
+	    /* second time; blow out. */
 	    if (! (dest_mask & IMAGE_MONO_PIXMAP_MASK))
-	      {
-		/* second time; blow out. */
-		signal_double_file_error ("Reading pixmap data",
-					  "color allocation failed",
-					  data);
-	      }
+	      gui_error ("XPM color allocation failed", data);
 	    force_mono = 1;
 	    IMAGE_INSTANCE_TYPE (ii) = IMAGE_MONO_PIXMAP;
 	    goto retry;
@@ -1443,15 +1437,14 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     case XpmNoMemory:
       {
 	xpm_free (&xpmattrs);
-	signal_double_file_error ("Parsing pixmap data",
-				  "out of memory", data);
+	out_of_memory ("Parsing pixmap data", data);
       }
     default:
       {
 	xpm_free (&xpmattrs);
-	signal_double_file_error_2 ("Parsing pixmap data",
-				    "unknown error code",
-				    make_int (result), data);
+	signal_error_2 (Qgui_error,
+			"Parsing pixmap data: unknown error code",
+			make_int (result), data);
       }
     }
 
@@ -1705,7 +1698,7 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     }
 
   if (emsg)
-    signal_simple_error_2 (emsg, data, Qimage);
+    gui_error_2 (emsg, data, Qimage);
 
   bp = bits = (char *) alloca (PIXELS / 8);
 
@@ -1948,13 +1941,13 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object foreground, background;
 
   if (!DEVICE_X_P (XDEVICE (device)))
-    signal_simple_error ("Not an X device", device);
+    gui_error ("Not an X device", device);
 
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
 
   if (!STRINGP (data) ||
       strncmp ("FONT ", (char *) XSTRING_DATA (data), 5))
-    signal_simple_error ("Invalid font-glyph instantiator",
+    invalid_argument ("Invalid font-glyph instantiator",
 			 instantiator);
 
   if (!(dest_mask & IMAGE_POINTER_MASK))
@@ -1978,12 +1971,11 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     count = 4, mask_name[0] = 0;
 
   if (count != 2 && count != 4)
-    signal_simple_error ("invalid cursor specification", data);
+    syntax_error ("invalid cursor specification", data);
   source = safe_XLoadFont (dpy, source_name);
   if (! source)
-    signal_simple_error_2 ("couldn't load font",
-			   build_string (source_name),
-			   data);
+    signal_error_2 (Qgui_error,
+		    "couldn't load font", build_string (source_name), data);
   if (count == 2)
     mask = 0;
   else if (!mask_name[0])
@@ -1992,9 +1984,9 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     {
       mask = safe_XLoadFont (dpy, mask_name);
       if (!mask)
-	/* continuable */
-	Fsignal (Qerror, list3 (build_string ("couldn't load font"),
-				build_string (mask_name), data));
+	signal_continuable_error_2 (Qgui_error,
+				    "couldn't load font",
+				    build_string (mask_name), data);
     }
   if (!mask)
     mask_char = 0;
@@ -2043,7 +2035,7 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object foreground, background;
 
   if (!DEVICE_X_P (XDEVICE (device)))
-    signal_simple_error ("Not an X device", device);
+    gui_error ("Not an X device", device);
 
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
 
@@ -2052,7 +2044,7 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   LISP_STRING_TO_EXTERNAL (data, name_ext, Qfile_name);
   if ((i = XmuCursorNameToIndex (name_ext)) == -1)
-    signal_simple_error ("Unrecognized cursor-font name", data);
+    invalid_argument ("Unrecognized cursor-font name", data);
 
   x_initialize_pixmap_image_instance (ii, 1, IMAGE_POINTER);
   IMAGE_INSTANCE_X_CURSOR (ii) = XCreateFontCursor (dpy, i);
@@ -2265,7 +2257,8 @@ x_redisplay_widget (Lisp_Image_Instance *p)
 	{
 	  Lisp_Object sw;
 	  XSETIMAGE_INSTANCE (sw, p);
-	  signal_simple_error ("XEmacs bug: subwindow is deleted", sw);
+	  signal_error (Qinternal_error,
+			     "XEmacs bug: subwindow is deleted", sw);
 	}
 
       lw_add_widget_value_arg (wv, XtNwidth,
@@ -2311,7 +2304,7 @@ x_subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     h = IMAGE_INSTANCE_HEIGHT (ii);
 
   if (!DEVICE_X_P (XDEVICE (device)))
-    signal_simple_error ("Not an X device", device);
+    gui_error ("Not an X device", device);
 
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
   xs = DefaultScreenOfDisplay (dpy);
@@ -2472,7 +2465,7 @@ x_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   XColor fcolor, bcolor;
 
   if (!DEVICE_X_P (d))
-    signal_simple_error ("Not an X device", device);
+    gui_error ("Not an X device", device);
 
   /* have to set the type this late in case there is no device
      instantiation for a widget. But we can go ahead and do it without

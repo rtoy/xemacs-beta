@@ -288,14 +288,7 @@ Lstream_delete (Lstream *lstr)
 }
 
 #define Lstream_internal_error(reason, lstr) \
-  Lstream_signal_simple_error ("Internal error: " reason, lstr)
-
-static void Lstream_signal_simple_error (const char *reason, Lstream *lstr)
-{
-  Lisp_Object obj;
-  XSETLSTREAM (obj, lstr);
-  signal_simple_error (reason, obj);
-}
+  signal_error (Qinternal_error, reason, wrap_lstream (lstr))
 
 void
 Lstream_reopen (Lstream *lstr)

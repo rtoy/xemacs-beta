@@ -10,7 +10,7 @@ Access the `lower' slot of OBJ, a GtkAdjustment object.
 
 	if (!GTK_IS_ADJUSTMENT (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkAdjustment", obj);
+		wtaerror ("Object is not a GtkAdjustment", obj);
 	};
 
 	the_obj = GTK_ADJUSTMENT (XGTK_OBJECT (obj)->object);
@@ -31,7 +31,7 @@ Access the `upper' slot of OBJ, a GtkAdjustment object.
 
 	if (!GTK_IS_ADJUSTMENT (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkAdjustment", obj);
+		wtaerror ("Object is not a GtkAdjustment", obj);
 	};
 
 	the_obj = GTK_ADJUSTMENT (XGTK_OBJECT (obj)->object);
@@ -52,7 +52,7 @@ Access the `value' slot of OBJ, a GtkAdjustment object.
 
 	if (!GTK_IS_ADJUSTMENT (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkAdjustment", obj);
+		wtaerror ("Object is not a GtkAdjustment", obj);
 	};
 
 	the_obj = GTK_ADJUSTMENT (XGTK_OBJECT (obj)->object);
@@ -73,7 +73,7 @@ Access the `step_increment' slot of OBJ, a GtkAdjustment object.
 
 	if (!GTK_IS_ADJUSTMENT (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkAdjustment", obj);
+		wtaerror ("Object is not a GtkAdjustment", obj);
 	};
 
 	the_obj = GTK_ADJUSTMENT (XGTK_OBJECT (obj)->object);
@@ -94,7 +94,7 @@ Access the `page_increment' slot of OBJ, a GtkAdjustment object.
 
 	if (!GTK_IS_ADJUSTMENT (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkAdjustment", obj);
+		wtaerror ("Object is not a GtkAdjustment", obj);
 	};
 
 	the_obj = GTK_ADJUSTMENT (XGTK_OBJECT (obj)->object);
@@ -115,7 +115,7 @@ Access the `page_size' slot of OBJ, a GtkAdjustment object.
 
 	if (!GTK_IS_ADJUSTMENT (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkAdjustment", obj);
+		wtaerror ("Object is not a GtkAdjustment", obj);
 	};
 
 	the_obj = GTK_ADJUSTMENT (XGTK_OBJECT (obj)->object);
@@ -136,7 +136,7 @@ Access the `style' slot of OBJ, a GtkWidget object.
 
 	if (!GTK_IS_WIDGET (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkWidget", obj);
+		wtaerror ("Object is not a GtkWidget", obj);
 	};
 
 	the_obj = GTK_WIDGET (XGTK_OBJECT (obj)->object);
@@ -157,7 +157,7 @@ Access the `window' slot of OBJ, a GtkWidget object.
 
 	if (!GTK_IS_WIDGET (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkWidget", obj);
+		wtaerror ("Object is not a GtkWidget", obj);
 	};
 
 	the_obj = GTK_WIDGET (XGTK_OBJECT (obj)->object);
@@ -178,7 +178,7 @@ Access the `state' slot of OBJ, a GtkWidget object.
 
 	if (!GTK_IS_WIDGET (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkWidget", obj);
+		wtaerror ("Object is not a GtkWidget", obj);
 	};
 
 	the_obj = GTK_WIDGET (XGTK_OBJECT (obj)->object);
@@ -199,7 +199,7 @@ Access the `name' slot of OBJ, a GtkWidget object.
 
 	if (!GTK_IS_WIDGET (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkWidget", obj);
+		wtaerror ("Object is not a GtkWidget", obj);
 	};
 
 	the_obj = GTK_WIDGET (XGTK_OBJECT (obj)->object);
@@ -220,7 +220,7 @@ Access the `parent' slot of OBJ, a GtkWidget object.
 
 	if (!GTK_IS_WIDGET (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkWidget", obj);
+		wtaerror ("Object is not a GtkWidget", obj);
 	};
 
 	the_obj = GTK_WIDGET (XGTK_OBJECT (obj)->object);
@@ -241,7 +241,7 @@ Access the `child' slot of OBJ, a GtkButton object.
 
 	if (!GTK_IS_BUTTON (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkButton", obj);
+		wtaerror ("Object is not a GtkButton", obj);
 	};
 
 	the_obj = GTK_BUTTON (XGTK_OBJECT (obj)->object);
@@ -262,7 +262,7 @@ Access the `in_button' slot of OBJ, a GtkButton object.
 
 	if (!GTK_IS_BUTTON (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkButton", obj);
+		wtaerror ("Object is not a GtkButton", obj);
 	};
 
 	the_obj = GTK_BUTTON (XGTK_OBJECT (obj)->object);
@@ -283,7 +283,7 @@ Access the `button_down' slot of OBJ, a GtkButton object.
 
 	if (!GTK_IS_BUTTON (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkButton", obj);
+		wtaerror ("Object is not a GtkButton", obj);
 	};
 
 	the_obj = GTK_BUTTON (XGTK_OBJECT (obj)->object);
@@ -304,7 +304,7 @@ Access the `entry' slot of OBJ, a GtkCombo object.
 
 	if (!GTK_IS_COMBO (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCombo", obj);
+		wtaerror ("Object is not a GtkCombo", obj);
 	};
 
 	the_obj = GTK_COMBO (XGTK_OBJECT (obj)->object);
@@ -325,7 +325,7 @@ Access the `button' slot of OBJ, a GtkCombo object.
 
 	if (!GTK_IS_COMBO (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCombo", obj);
+		wtaerror ("Object is not a GtkCombo", obj);
 	};
 
 	the_obj = GTK_COMBO (XGTK_OBJECT (obj)->object);
@@ -346,7 +346,7 @@ Access the `popup' slot of OBJ, a GtkCombo object.
 
 	if (!GTK_IS_COMBO (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCombo", obj);
+		wtaerror ("Object is not a GtkCombo", obj);
 	};
 
 	the_obj = GTK_COMBO (XGTK_OBJECT (obj)->object);
@@ -367,7 +367,7 @@ Access the `popwin' slot of OBJ, a GtkCombo object.
 
 	if (!GTK_IS_COMBO (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCombo", obj);
+		wtaerror ("Object is not a GtkCombo", obj);
 	};
 
 	the_obj = GTK_COMBO (XGTK_OBJECT (obj)->object);
@@ -388,7 +388,7 @@ Access the `list' slot of OBJ, a GtkCombo object.
 
 	if (!GTK_IS_COMBO (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCombo", obj);
+		wtaerror ("Object is not a GtkCombo", obj);
 	};
 
 	the_obj = GTK_COMBO (XGTK_OBJECT (obj)->object);
@@ -409,7 +409,7 @@ Access the `table' slot of OBJ, a GtkGammaCurve object.
 
 	if (!GTK_IS_GAMMA_CURVE (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkGammaCurve", obj);
+		wtaerror ("Object is not a GtkGammaCurve", obj);
 	};
 
 	the_obj = GTK_GAMMA_CURVE (XGTK_OBJECT (obj)->object);
@@ -430,7 +430,7 @@ Access the `curve' slot of OBJ, a GtkGammaCurve object.
 
 	if (!GTK_IS_GAMMA_CURVE (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkGammaCurve", obj);
+		wtaerror ("Object is not a GtkGammaCurve", obj);
 	};
 
 	the_obj = GTK_GAMMA_CURVE (XGTK_OBJECT (obj)->object);
@@ -451,7 +451,7 @@ Access the `gamma' slot of OBJ, a GtkGammaCurve object.
 
 	if (!GTK_IS_GAMMA_CURVE (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkGammaCurve", obj);
+		wtaerror ("Object is not a GtkGammaCurve", obj);
 	};
 
 	the_obj = GTK_GAMMA_CURVE (XGTK_OBJECT (obj)->object);
@@ -472,7 +472,7 @@ Access the `gamma_dialog' slot of OBJ, a GtkGammaCurve object.
 
 	if (!GTK_IS_GAMMA_CURVE (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkGammaCurve", obj);
+		wtaerror ("Object is not a GtkGammaCurve", obj);
 	};
 
 	the_obj = GTK_GAMMA_CURVE (XGTK_OBJECT (obj)->object);
@@ -493,7 +493,7 @@ Access the `gamma_text' slot of OBJ, a GtkGammaCurve object.
 
 	if (!GTK_IS_GAMMA_CURVE (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkGammaCurve", obj);
+		wtaerror ("Object is not a GtkGammaCurve", obj);
 	};
 
 	the_obj = GTK_GAMMA_CURVE (XGTK_OBJECT (obj)->object);
@@ -514,7 +514,7 @@ Access the `active' slot of OBJ, a GtkCheckMenuItem object.
 
 	if (!GTK_IS_CHECK_MENU_ITEM (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCheckMenuItem", obj);
+		wtaerror ("Object is not a GtkCheckMenuItem", obj);
 	};
 
 	the_obj = GTK_CHECK_MENU_ITEM (XGTK_OBJECT (obj)->object);
@@ -535,7 +535,7 @@ Access the `tab_pos' slot of OBJ, a GtkNotebook object.
 
 	if (!GTK_IS_NOTEBOOK (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkNotebook", obj);
+		wtaerror ("Object is not a GtkNotebook", obj);
 	};
 
 	the_obj = GTK_NOTEBOOK (XGTK_OBJECT (obj)->object);
@@ -556,7 +556,7 @@ Access the `hadj' slot of OBJ, a GtkText object.
 
 	if (!GTK_IS_TEXT (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkText", obj);
+		wtaerror ("Object is not a GtkText", obj);
 	};
 
 	the_obj = GTK_TEXT (XGTK_OBJECT (obj)->object);
@@ -577,7 +577,7 @@ Access the `vadj' slot of OBJ, a GtkText object.
 
 	if (!GTK_IS_TEXT (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkText", obj);
+		wtaerror ("Object is not a GtkText", obj);
 	};
 
 	the_obj = GTK_TEXT (XGTK_OBJECT (obj)->object);
@@ -598,7 +598,7 @@ Access the `dir_list' slot of OBJ, a GtkFileSelection object.
 
 	if (!GTK_IS_FILE_SELECTION (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFileSelection", obj);
+		wtaerror ("Object is not a GtkFileSelection", obj);
 	};
 
 	the_obj = GTK_FILE_SELECTION (XGTK_OBJECT (obj)->object);
@@ -619,7 +619,7 @@ Access the `file_list' slot of OBJ, a GtkFileSelection object.
 
 	if (!GTK_IS_FILE_SELECTION (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFileSelection", obj);
+		wtaerror ("Object is not a GtkFileSelection", obj);
 	};
 
 	the_obj = GTK_FILE_SELECTION (XGTK_OBJECT (obj)->object);
@@ -640,7 +640,7 @@ Access the `selection_entry' slot of OBJ, a GtkFileSelection object.
 
 	if (!GTK_IS_FILE_SELECTION (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFileSelection", obj);
+		wtaerror ("Object is not a GtkFileSelection", obj);
 	};
 
 	the_obj = GTK_FILE_SELECTION (XGTK_OBJECT (obj)->object);
@@ -661,7 +661,7 @@ Access the `selection_text' slot of OBJ, a GtkFileSelection object.
 
 	if (!GTK_IS_FILE_SELECTION (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFileSelection", obj);
+		wtaerror ("Object is not a GtkFileSelection", obj);
 	};
 
 	the_obj = GTK_FILE_SELECTION (XGTK_OBJECT (obj)->object);
@@ -682,7 +682,7 @@ Access the `main_vbox' slot of OBJ, a GtkFileSelection object.
 
 	if (!GTK_IS_FILE_SELECTION (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFileSelection", obj);
+		wtaerror ("Object is not a GtkFileSelection", obj);
 	};
 
 	the_obj = GTK_FILE_SELECTION (XGTK_OBJECT (obj)->object);
@@ -703,7 +703,7 @@ Access the `ok_button' slot of OBJ, a GtkFileSelection object.
 
 	if (!GTK_IS_FILE_SELECTION (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFileSelection", obj);
+		wtaerror ("Object is not a GtkFileSelection", obj);
 	};
 
 	the_obj = GTK_FILE_SELECTION (XGTK_OBJECT (obj)->object);
@@ -724,7 +724,7 @@ Access the `cancel_button' slot of OBJ, a GtkFileSelection object.
 
 	if (!GTK_IS_FILE_SELECTION (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFileSelection", obj);
+		wtaerror ("Object is not a GtkFileSelection", obj);
 	};
 
 	the_obj = GTK_FILE_SELECTION (XGTK_OBJECT (obj)->object);
@@ -745,7 +745,7 @@ Access the `help_button' slot of OBJ, a GtkFileSelection object.
 
 	if (!GTK_IS_FILE_SELECTION (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFileSelection", obj);
+		wtaerror ("Object is not a GtkFileSelection", obj);
 	};
 
 	the_obj = GTK_FILE_SELECTION (XGTK_OBJECT (obj)->object);
@@ -766,7 +766,7 @@ Access the `action_area' slot of OBJ, a GtkFileSelection object.
 
 	if (!GTK_IS_FILE_SELECTION (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFileSelection", obj);
+		wtaerror ("Object is not a GtkFileSelection", obj);
 	};
 
 	the_obj = GTK_FILE_SELECTION (XGTK_OBJECT (obj)->object);
@@ -787,7 +787,7 @@ Access the `fontsel' slot of OBJ, a GtkFontSelectionDialog object.
 
 	if (!GTK_IS_FONT_SELECTION_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFontSelectionDialog", obj);
+		wtaerror ("Object is not a GtkFontSelectionDialog", obj);
 	};
 
 	the_obj = GTK_FONT_SELECTION_DIALOG (XGTK_OBJECT (obj)->object);
@@ -808,7 +808,7 @@ Access the `main_vbox' slot of OBJ, a GtkFontSelectionDialog object.
 
 	if (!GTK_IS_FONT_SELECTION_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFontSelectionDialog", obj);
+		wtaerror ("Object is not a GtkFontSelectionDialog", obj);
 	};
 
 	the_obj = GTK_FONT_SELECTION_DIALOG (XGTK_OBJECT (obj)->object);
@@ -829,7 +829,7 @@ Access the `action_area' slot of OBJ, a GtkFontSelectionDialog object.
 
 	if (!GTK_IS_FONT_SELECTION_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFontSelectionDialog", obj);
+		wtaerror ("Object is not a GtkFontSelectionDialog", obj);
 	};
 
 	the_obj = GTK_FONT_SELECTION_DIALOG (XGTK_OBJECT (obj)->object);
@@ -850,7 +850,7 @@ Access the `ok_button' slot of OBJ, a GtkFontSelectionDialog object.
 
 	if (!GTK_IS_FONT_SELECTION_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFontSelectionDialog", obj);
+		wtaerror ("Object is not a GtkFontSelectionDialog", obj);
 	};
 
 	the_obj = GTK_FONT_SELECTION_DIALOG (XGTK_OBJECT (obj)->object);
@@ -871,7 +871,7 @@ Access the `apply_button' slot of OBJ, a GtkFontSelectionDialog object.
 
 	if (!GTK_IS_FONT_SELECTION_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFontSelectionDialog", obj);
+		wtaerror ("Object is not a GtkFontSelectionDialog", obj);
 	};
 
 	the_obj = GTK_FONT_SELECTION_DIALOG (XGTK_OBJECT (obj)->object);
@@ -892,7 +892,7 @@ Access the `cancel_button' slot of OBJ, a GtkFontSelectionDialog object.
 
 	if (!GTK_IS_FONT_SELECTION_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkFontSelectionDialog", obj);
+		wtaerror ("Object is not a GtkFontSelectionDialog", obj);
 	};
 
 	the_obj = GTK_FONT_SELECTION_DIALOG (XGTK_OBJECT (obj)->object);
@@ -913,7 +913,7 @@ Access the `colorsel' slot of OBJ, a GtkColorSelectionDialog object.
 
 	if (!GTK_IS_COLOR_SELECTION_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkColorSelectionDialog", obj);
+		wtaerror ("Object is not a GtkColorSelectionDialog", obj);
 	};
 
 	the_obj = GTK_COLOR_SELECTION_DIALOG (XGTK_OBJECT (obj)->object);
@@ -934,7 +934,7 @@ Access the `main_vbox' slot of OBJ, a GtkColorSelectionDialog object.
 
 	if (!GTK_IS_COLOR_SELECTION_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkColorSelectionDialog", obj);
+		wtaerror ("Object is not a GtkColorSelectionDialog", obj);
 	};
 
 	the_obj = GTK_COLOR_SELECTION_DIALOG (XGTK_OBJECT (obj)->object);
@@ -955,7 +955,7 @@ Access the `ok_button' slot of OBJ, a GtkColorSelectionDialog object.
 
 	if (!GTK_IS_COLOR_SELECTION_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkColorSelectionDialog", obj);
+		wtaerror ("Object is not a GtkColorSelectionDialog", obj);
 	};
 
 	the_obj = GTK_COLOR_SELECTION_DIALOG (XGTK_OBJECT (obj)->object);
@@ -976,7 +976,7 @@ Access the `reset_button' slot of OBJ, a GtkColorSelectionDialog object.
 
 	if (!GTK_IS_COLOR_SELECTION_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkColorSelectionDialog", obj);
+		wtaerror ("Object is not a GtkColorSelectionDialog", obj);
 	};
 
 	the_obj = GTK_COLOR_SELECTION_DIALOG (XGTK_OBJECT (obj)->object);
@@ -997,7 +997,7 @@ Access the `cancel_button' slot of OBJ, a GtkColorSelectionDialog object.
 
 	if (!GTK_IS_COLOR_SELECTION_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkColorSelectionDialog", obj);
+		wtaerror ("Object is not a GtkColorSelectionDialog", obj);
 	};
 
 	the_obj = GTK_COLOR_SELECTION_DIALOG (XGTK_OBJECT (obj)->object);
@@ -1018,7 +1018,7 @@ Access the `help_button' slot of OBJ, a GtkColorSelectionDialog object.
 
 	if (!GTK_IS_COLOR_SELECTION_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkColorSelectionDialog", obj);
+		wtaerror ("Object is not a GtkColorSelectionDialog", obj);
 	};
 
 	the_obj = GTK_COLOR_SELECTION_DIALOG (XGTK_OBJECT (obj)->object);
@@ -1039,7 +1039,7 @@ Access the `vbox' slot of OBJ, a GtkDialog object.
 
 	if (!GTK_IS_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkDialog", obj);
+		wtaerror ("Object is not a GtkDialog", obj);
 	};
 
 	the_obj = GTK_DIALOG (XGTK_OBJECT (obj)->object);
@@ -1060,7 +1060,7 @@ Access the `action_area' slot of OBJ, a GtkDialog object.
 
 	if (!GTK_IS_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkDialog", obj);
+		wtaerror ("Object is not a GtkDialog", obj);
 	};
 
 	the_obj = GTK_DIALOG (XGTK_OBJECT (obj)->object);
@@ -1081,7 +1081,7 @@ Access the `close_button' slot of OBJ, a GtkInputDialog object.
 
 	if (!GTK_IS_INPUT_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkInputDialog", obj);
+		wtaerror ("Object is not a GtkInputDialog", obj);
 	};
 
 	the_obj = GTK_INPUT_DIALOG (XGTK_OBJECT (obj)->object);
@@ -1102,7 +1102,7 @@ Access the `save_button' slot of OBJ, a GtkInputDialog object.
 
 	if (!GTK_IS_INPUT_DIALOG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkInputDialog", obj);
+		wtaerror ("Object is not a GtkInputDialog", obj);
 	};
 
 	the_obj = GTK_INPUT_DIALOG (XGTK_OBJECT (obj)->object);
@@ -1123,7 +1123,7 @@ Access the `socket_window' slot of OBJ, a GtkPlug object.
 
 	if (!GTK_IS_PLUG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkPlug", obj);
+		wtaerror ("Object is not a GtkPlug", obj);
 	};
 
 	the_obj = GTK_PLUG (XGTK_OBJECT (obj)->object);
@@ -1144,7 +1144,7 @@ Access the `same_app' slot of OBJ, a GtkPlug object.
 
 	if (!GTK_IS_PLUG (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkPlug", obj);
+		wtaerror ("Object is not a GtkPlug", obj);
 	};
 
 	the_obj = GTK_PLUG (XGTK_OBJECT (obj)->object);
@@ -1165,7 +1165,7 @@ Access the `flags' slot of OBJ, a GtkObject object.
 
 	if (!GTK_IS_OBJECT (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkObject", obj);
+		wtaerror ("Object is not a GtkObject", obj);
 	};
 
 	the_obj = GTK_OBJECT (XGTK_OBJECT (obj)->object);
@@ -1186,7 +1186,7 @@ Access the `ref_count' slot of OBJ, a GtkObject object.
 
 	if (!GTK_IS_OBJECT (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkObject", obj);
+		wtaerror ("Object is not a GtkObject", obj);
 	};
 
 	the_obj = GTK_OBJECT (XGTK_OBJECT (obj)->object);
@@ -1207,7 +1207,7 @@ Access the `child1' slot of OBJ, a GtkPaned object.
 
 	if (!GTK_IS_PANED (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkPaned", obj);
+		wtaerror ("Object is not a GtkPaned", obj);
 	};
 
 	the_obj = GTK_PANED (XGTK_OBJECT (obj)->object);
@@ -1228,7 +1228,7 @@ Access the `child2' slot of OBJ, a GtkPaned object.
 
 	if (!GTK_IS_PANED (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkPaned", obj);
+		wtaerror ("Object is not a GtkPaned", obj);
 	};
 
 	the_obj = GTK_PANED (XGTK_OBJECT (obj)->object);
@@ -1249,7 +1249,7 @@ Access the `child1_resize' slot of OBJ, a GtkPaned object.
 
 	if (!GTK_IS_PANED (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkPaned", obj);
+		wtaerror ("Object is not a GtkPaned", obj);
 	};
 
 	the_obj = GTK_PANED (XGTK_OBJECT (obj)->object);
@@ -1270,7 +1270,7 @@ Access the `child2_resize' slot of OBJ, a GtkPaned object.
 
 	if (!GTK_IS_PANED (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkPaned", obj);
+		wtaerror ("Object is not a GtkPaned", obj);
 	};
 
 	the_obj = GTK_PANED (XGTK_OBJECT (obj)->object);
@@ -1291,7 +1291,7 @@ Access the `child1_shrink' slot of OBJ, a GtkPaned object.
 
 	if (!GTK_IS_PANED (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkPaned", obj);
+		wtaerror ("Object is not a GtkPaned", obj);
 	};
 
 	the_obj = GTK_PANED (XGTK_OBJECT (obj)->object);
@@ -1312,7 +1312,7 @@ Access the `child2_shrink' slot of OBJ, a GtkPaned object.
 
 	if (!GTK_IS_PANED (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkPaned", obj);
+		wtaerror ("Object is not a GtkPaned", obj);
 	};
 
 	the_obj = GTK_PANED (XGTK_OBJECT (obj)->object);
@@ -1333,7 +1333,7 @@ Access the `rows' slot of OBJ, a GtkCList object.
 
 	if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCList", obj);
+		wtaerror ("Object is not a GtkCList", obj);
 	};
 
 	the_obj = GTK_CLIST (XGTK_OBJECT (obj)->object);
@@ -1354,7 +1354,7 @@ Access the `columns' slot of OBJ, a GtkCList object.
 
 	if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCList", obj);
+		wtaerror ("Object is not a GtkCList", obj);
 	};
 
 	the_obj = GTK_CLIST (XGTK_OBJECT (obj)->object);
@@ -1375,7 +1375,7 @@ Access the `hadjustment' slot of OBJ, a GtkCList object.
 
 	if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCList", obj);
+		wtaerror ("Object is not a GtkCList", obj);
 	};
 
 	the_obj = GTK_CLIST (XGTK_OBJECT (obj)->object);
@@ -1396,7 +1396,7 @@ Access the `vadjustment' slot of OBJ, a GtkCList object.
 
 	if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCList", obj);
+		wtaerror ("Object is not a GtkCList", obj);
 	};
 
 	the_obj = GTK_CLIST (XGTK_OBJECT (obj)->object);
@@ -1417,7 +1417,7 @@ Access the `sort_type' slot of OBJ, a GtkCList object.
 
 	if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCList", obj);
+		wtaerror ("Object is not a GtkCList", obj);
 	};
 
 	the_obj = GTK_CLIST (XGTK_OBJECT (obj)->object);
@@ -1438,7 +1438,7 @@ Access the `focus_row' slot of OBJ, a GtkCList object.
 
 	if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCList", obj);
+		wtaerror ("Object is not a GtkCList", obj);
 	};
 
 	the_obj = GTK_CLIST (XGTK_OBJECT (obj)->object);
@@ -1459,7 +1459,7 @@ Access the `sort_column' slot of OBJ, a GtkCList object.
 
 	if (!GTK_IS_CLIST (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkCList", obj);
+		wtaerror ("Object is not a GtkCList", obj);
 	};
 
 	the_obj = GTK_CLIST (XGTK_OBJECT (obj)->object);
@@ -1480,7 +1480,7 @@ Access the `children' slot of OBJ, a GtkList object.
 
 	if (!GTK_IS_LIST (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkList", obj);
+		wtaerror ("Object is not a GtkList", obj);
 	};
 
 	the_obj = GTK_LIST (XGTK_OBJECT (obj)->object);
@@ -1501,7 +1501,7 @@ Access the `selection' slot of OBJ, a GtkList object.
 
 	if (!GTK_IS_LIST (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkList", obj);
+		wtaerror ("Object is not a GtkList", obj);
 	};
 
 	the_obj = GTK_LIST (XGTK_OBJECT (obj)->object);
@@ -1522,7 +1522,7 @@ Access the `children' slot of OBJ, a GtkTree object.
 
 	if (!GTK_IS_TREE (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkTree", obj);
+		wtaerror ("Object is not a GtkTree", obj);
 	};
 
 	the_obj = GTK_TREE (XGTK_OBJECT (obj)->object);
@@ -1543,7 +1543,7 @@ Access the `root_tree' slot of OBJ, a GtkTree object.
 
 	if (!GTK_IS_TREE (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkTree", obj);
+		wtaerror ("Object is not a GtkTree", obj);
 	};
 
 	the_obj = GTK_TREE (XGTK_OBJECT (obj)->object);
@@ -1564,7 +1564,7 @@ Access the `tree_owner' slot of OBJ, a GtkTree object.
 
 	if (!GTK_IS_TREE (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkTree", obj);
+		wtaerror ("Object is not a GtkTree", obj);
 	};
 
 	the_obj = GTK_TREE (XGTK_OBJECT (obj)->object);
@@ -1585,7 +1585,7 @@ Access the `selection' slot of OBJ, a GtkTree object.
 
 	if (!GTK_IS_TREE (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkTree", obj);
+		wtaerror ("Object is not a GtkTree", obj);
 	};
 
 	the_obj = GTK_TREE (XGTK_OBJECT (obj)->object);
@@ -1606,7 +1606,7 @@ Access the `subtree' slot of OBJ, a GtkTreeItem object.
 
 	if (!GTK_IS_TREE_ITEM (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkTreeItem", obj);
+		wtaerror ("Object is not a GtkTreeItem", obj);
 	};
 
 	the_obj = GTK_TREE_ITEM (XGTK_OBJECT (obj)->object);
@@ -1627,7 +1627,7 @@ Access the `hscrollbar' slot of OBJ, a GtkScrolledWindow object.
 
 	if (!GTK_IS_SCROLLED_WINDOW (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkScrolledWindow", obj);
+		wtaerror ("Object is not a GtkScrolledWindow", obj);
 	};
 
 	the_obj = GTK_SCROLLED_WINDOW (XGTK_OBJECT (obj)->object);
@@ -1648,7 +1648,7 @@ Access the `vscrollbar' slot of OBJ, a GtkScrolledWindow object.
 
 	if (!GTK_IS_SCROLLED_WINDOW (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkScrolledWindow", obj);
+		wtaerror ("Object is not a GtkScrolledWindow", obj);
 	};
 
 	the_obj = GTK_SCROLLED_WINDOW (XGTK_OBJECT (obj)->object);
@@ -1669,7 +1669,7 @@ Access the `hscrollbar_visible' slot of OBJ, a GtkScrolledWindow object.
 
 	if (!GTK_IS_SCROLLED_WINDOW (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkScrolledWindow", obj);
+		wtaerror ("Object is not a GtkScrolledWindow", obj);
 	};
 
 	the_obj = GTK_SCROLLED_WINDOW (XGTK_OBJECT (obj)->object);
@@ -1690,7 +1690,7 @@ Access the `vscrollbar_visible' slot of OBJ, a GtkScrolledWindow object.
 
 	if (!GTK_IS_SCROLLED_WINDOW (XGTK_OBJECT (obj)->object))
 	{
-		signal_simple_error ("Object is not a GtkScrolledWindow", obj);
+		wtaerror ("Object is not a GtkScrolledWindow", obj);
 	};
 
 	the_obj = GTK_SCROLLED_WINDOW (XGTK_OBJECT (obj)->object);

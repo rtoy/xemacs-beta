@@ -47,7 +47,7 @@ gtk_make_dialog_box_internal (struct frame* f, Lisp_Object type, Lisp_Object key
 void
 syms_of_dialog_gtk (void)
 {
-  defsymbol (&Qgtk_make_dialog_box_internal, "gtk-make-dialog-box-internal");
+  DEFSYMBOL (Qgtk_make_dialog_box_internal);
 }
 
 void

@@ -289,8 +289,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 			    {
 			      xfree (button_tbl);
 			      if (ilist) ImageList_Destroy (ilist);
-			      signal_simple_error ("Couldn't resize pixmap", 
-						   instance);
+			      gui_error ("Couldn't resize pixmap", instance);
 			    }
 			  /* we don't care if the mask fails */
 			  mask = mswindows_create_resized_mask 
@@ -312,8 +311,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 					nbuttons, nbuttons * 2 )))
 			{
 			  xfree (button_tbl);
-			  signal_simple_error ("Couldn't create image list",
-					       instance);
+			  gui_error ("Couldn't create image list", instance);
 			}
 
 		      /* make the mask actually do something */
@@ -329,7 +327,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 			{
 			  xfree (button_tbl);
 			  if (ilist) ImageList_Destroy (ilist);
-			  signal_simple_error 
+			  gui_error 
 			    ("couldn't add image to image list", instance);
 			}
 		      /* we're done with these now */
@@ -390,7 +388,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	{
 	  xfree (button_tbl);
 	  ImageList_Destroy (ilist);
-	  error ("couldn't create toolbar");
+	  gui_error ("couldn't create toolbar", Qunbound);
 	}
 
       /* finally populate with images */
@@ -398,7 +396,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 		       (WPARAM)sizeof(TBBUTTON), (LPARAM)0) == -1) 
 	{
 	  mswindows_clear_toolbar (f, pos, 0);
-	  error ("couldn't set button structure size");
+	  gui_error ("couldn't set button structure size", Qunbound);
 	}
 
       if (vert)
@@ -426,7 +424,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 			(WPARAM)nbuttons, (LPARAM)button_tbl))
 	{
 	  mswindows_clear_toolbar (f, pos, 0);
-	  error ("couldn't add button list to toolbar");
+	  gui_error ("couldn't add button list to toolbar", Qunbound);
 	}
 
       /* vertical toolbars need more rows */
@@ -452,7 +450,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 		       (LPARAM)ilist) < 0)
 	{
 	  mswindows_clear_toolbar (f, pos, 0);
-	  error ("couldn't add image list to toolbar");
+	  gui_error ("couldn't add image list to toolbar", Qunbound);
 	}
 
       /* now display the window */

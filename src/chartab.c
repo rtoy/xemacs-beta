@@ -211,7 +211,7 @@ symbol_to_char_table_type (Lisp_Object symbol)
   if (EQ (symbol, Qcategory)) return CHAR_TABLE_TYPE_CATEGORY;
 #endif
 
-  signal_simple_error ("Unrecognized char table type", symbol);
+  invalid_constant ("Unrecognized char table type", symbol);
   return CHAR_TABLE_TYPE_GENERIC; /* not reached */
 }
 
@@ -729,14 +729,14 @@ decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
     }
 #ifndef MULE
   else
-    signal_simple_error ("Range must be t or a character", range);
+    sferror ("Range must be t or a character", range);
 #else /* MULE */
   else if (VECTORP (range))
     {
       Lisp_Vector *vec = XVECTOR (range);
       Lisp_Object *elts = vector_data (vec);
       if (vector_length (vec) != 2)
-	signal_simple_error ("Length of charset row vector must be 2",
+	sferror ("Length of charset row vector must be 2",
 			     range);
       outrange->type = CHARTAB_RANGE_ROW;
       outrange->charset = Fget_charset (elts[0]);
@@ -746,7 +746,7 @@ decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
 	{
 	case CHARSET_TYPE_94:
 	case CHARSET_TYPE_96:
-	  signal_simple_error ("Charset in row vector must be multi-byte",
+	  sferror ("Charset in row vector must be multi-byte",
 			       outrange->charset);
 	case CHARSET_TYPE_94X94:
 	  check_int_range (outrange->row, 33, 126);
@@ -761,7 +761,7 @@ decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
   else
     {
       if (!CHARSETP (range) && !SYMBOLP (range))
-	signal_simple_error
+	sferror
 	  ("Char table range must be t, charset, char, or vector", range);
       outrange->type = CHARTAB_RANGE_CHARSET;
       outrange->charset = Fget_charset (range);
@@ -979,8 +979,9 @@ check_valid_char_table_value (Lisp_Object value, enum char_table_type type,
 
     case CHAR_TABLE_TYPE_DISPLAY:
       /* #### fix this */
-      maybe_signal_simple_error ("Display char tables not yet implemented",
-				 value, Qchar_table, errb);
+      maybe_signal_error (Qunimplemented,
+			       "Display char tables not yet implemented",
+			       value, Qchar_table, errb);
       return 0;
 
     case CHAR_TABLE_TYPE_CHAR:
@@ -1494,12 +1495,12 @@ chartab_data_validate (Lisp_Object keyword, Lisp_Object value,
 
       rest = XCDR (rest);
       if (!CONSP (rest))
-	signal_simple_error ("Invalid list format", value);
+	signal_error (Qlist_formation_error, "Invalid list format", value);
       if (CONSP (range))
 	{
 	  if (!CONSP (XCDR (range))
 	      || !NILP (XCDR (XCDR (range))))
-	    signal_simple_error ("Invalid range format", range);
+	    sferror ("Invalid range format", range);
 	  decode_char_table_range (XCAR (range), &dummy);
 	  decode_char_table_range (XCAR (XCDR (range)), &dummy);
 	}
@@ -1617,7 +1618,7 @@ check_category_char (Emchar ch, Lisp_Object table,
   Lisp_Char_Table *ctbl;
 #ifdef ERROR_CHECK_TYPECHECK
   if (NILP (Fcategory_table_p (table)))
-    signal_simple_error ("Expected category table", table);
+    wtaerror ("Expected category table", table);
 #endif
   ctbl = XCHAR_TABLE (table);
   temp = get_char_table (ch, ctbl);
@@ -1806,13 +1807,13 @@ syms_of_chartab (void)
 #ifdef MULE
   INIT_LRECORD_IMPLEMENTATION (char_table_entry);
 
-  defsymbol (&Qcategory_table_p, "category-table-p");
-  defsymbol (&Qcategory_designator_p, "category-designator-p");
-  defsymbol (&Qcategory_table_value_p, "category-table-value-p");
+  DEFSYMBOL (Qcategory_table_p);
+  DEFSYMBOL (Qcategory_designator_p);
+  DEFSYMBOL (Qcategory_table_value_p);
 #endif /* MULE */
 
-  defsymbol (&Qchar_table, "char-table");
-  defsymbol (&Qchar_tablep, "char-table-p");
+  DEFSYMBOL (Qchar_table);
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qchar_tablep);
 
   DEFSUBR (Fchar_table_p);
   DEFSUBR (Fchar_table_type_list);

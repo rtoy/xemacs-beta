@@ -12,6 +12,8 @@
 
 /* Synched up with: Not in FSF. */
 
+/* This file Mule-ized by Ben Wing, 5-15-01. */
+
 #ifndef INCLUDED_libsst_h_
 #define INCLUDED_libsst_h_
 
@@ -39,15 +41,5 @@ void sst_set_gx( /* int fd, value */ );
 
 void sst_tones( /* int fd, dhz1, dhz2, thz, rhz, usec */ );
 void sst_dtmf( /* int fd, char *dial, int usecper, usecpause */ );
-
-#ifdef emacs
-extern char *strerror ();
-extern void message ();
-# define perror(string) \
-    message("audio: %s, %s", string, strerror (errno))
-# define warn(str) message ("audio: %s", GETTEXT (str))
-#else /* !emacs */
-# define warn(str) fprintf (stderr, "%s\n", (str))
-#endif /* emacs */
 
 #endif /* INCLUDED_libsst_h_ */

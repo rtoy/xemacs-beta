@@ -288,7 +288,7 @@ gtk_get_foreign_selection (Lisp_Object selection_symbol,
   wait_delaying_user_input (selection_reply_done, 0);
 
   if (selection_reply_timed_out)
-    error ("timed out waiting for reply from selection owner");
+    signal_error (Qselection_conversion_error, "timed out waiting for reply from selection owner", Qunbound);
 
   unbind_to (speccount, Qnil);
 
@@ -462,17 +462,18 @@ gtk_get_window_property_as_lisp_data (struct device *d,
     {
       if (XGetSelectionOwner (display, selection_atom))
 	/* there is a selection owner */
-	signal_error
-	  (Qselection_conversion_error,
-	   Fcons (build_string ("selection owner couldn't convert"),
-		  Fcons (x_atom_to_symbol (d, selection_atom),
-			 actual_type ?
-			 list2 (target_type, x_atom_to_symbol (d, actual_type)) :
-			 list1 (target_type))));
+	signal_error (Qselection_conversion_error,
+		      "selection owner couldn't convert",
+		      Fcons (Qunbound,
+			     Fcons (x_atom_to_symbol (d, selection_atom),
+				    actual_type ?
+				    list2 (target_type,
+					   x_atom_to_symbol (d, actual_type)) :
+				    list1 (target_type))));
       else
-	signal_error (Qerror,
-		      list2 (build_string ("no selection"),
-			     x_atom_to_symbol (d, selection_atom)));
+	signal_error (Qselection_conversion_error,
+		      "no selection",
+		      x_atom_to_symbol (d, selection_atom));
     }
 
   if (actual_type == DEVICE_XATOM_INCR (d))
@@ -765,10 +766,8 @@ lisp_data_to_selection_data (struct device *d,
 	      (*(GdkAtom **) data_ret) [i] =
 		symbol_to_gtk_atom (d, XVECTOR_DATA (obj) [i], 0);
 	    else
-              signal_error (Qerror, /* Qselection_error */
-                            list2 (build_string
-		   ("all elements of the vector must be of the same type"),
-                                   obj));
+              syntax_error
+		("all elements of the vector must be of the same type", obj);
 	}
 #if 0 /* #### MULTIPLE doesn't work yet */
       else if (VECTORP (XVECTOR_DATA (obj) [0]))
@@ -784,10 +783,8 @@ lisp_data_to_selection_data (struct device *d,
 	      {
 		Lisp_Object pair = XVECTOR_DATA (obj) [i];
 		if (XVECTOR_LENGTH (pair) != 2)
-		  signal_error (Qerror,
-                                list2 (build_string
-       ("elements of the vector must be vectors of exactly two elements"),
-				  pair));
+		  syntax_error
+		    ("elements of the vector must be vectors of exactly two elements", pair);
 
 		(*(GdkAtom **) data_ret) [i * 2] =
 		  symbol_to_gtk_atom (d, XVECTOR_DATA (pair) [0], 0);
@@ -795,10 +792,8 @@ lisp_data_to_selection_data (struct device *d,
 		  symbol_to_gtk_atom (d, XVECTOR_DATA (pair) [1], 0);
 	      }
 	    else
-	      signal_error (Qerror,
-                            list2 (build_string
-		   ("all elements of the vector must be of the same type"),
-                                   obj));
+	      syntax_error
+		("all elements of the vector must be of the same type", obj);
 	}
 #endif
       else
@@ -811,10 +806,8 @@ lisp_data_to_selection_data (struct device *d,
 	    if (CONSP (XVECTOR_DATA (obj) [i]))
 	      *format_ret = 32;
 	    else if (!INTP (XVECTOR_DATA (obj) [i]))
-	      signal_error (Qerror, /* Qselection_error */
-                            list2 (build_string
-	("all elements of the vector must be integers or conses of integers"),
-                                   obj));
+	      syntax_error
+		("all elements of the vector must be integers or conses of integers", obj);
 
 	  *data_ret = (unsigned char *) xmalloc (*size_ret * (*format_ret/8));
 	  for (i = 0; i < (int) (*size_ret); i++)
@@ -827,9 +820,7 @@ lisp_data_to_selection_data (struct device *d,
 	}
     }
   else
-    signal_error (Qerror, /* Qselection_error */
-                  list2 (build_string ("unrecognized selection data"),
-                         obj));
+    invalid_argument ("unrecognized selection data", obj);
 
   *type_ret = symbol_to_gtk_atom (d, type, 0);
 }

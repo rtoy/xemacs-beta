@@ -39,6 +39,8 @@ Lisp_Object Vmenu_no_selection_hook;
 static Lisp_Object parse_gui_item_tree_list (Lisp_Object list);
 Lisp_Object find_keyword_in_vector (Lisp_Object vector, Lisp_Object keyword);
 
+Lisp_Object Qgui_error;
+
 #ifdef HAVE_POPUPS
 
 /* count of menus/dboxes currently up */
@@ -121,7 +123,7 @@ gui_item_add_keyval_pair (Lisp_Object gui_item,
   int retval = 0;
 
   if (!KEYWORDP (key))
-    syntax_error_2 ("Non-keyword in gui item", key, pgui_item->name);
+    sferror_2 ("Non-keyword in gui item", key, pgui_item->name);
 
   if (EQ (key, Q_descriptor))
     {
@@ -162,11 +164,11 @@ gui_item_add_keyval_pair (Lisp_Object gui_item,
 	  if (SYMBOLP (val) || CHARP (val))
 	    pgui_item->accelerator = val;
 	  else if (ERRB_EQ (errb, ERROR_ME))
-	    syntax_error ("Bad keyboard accelerator", val);
+	    invalid_argument ("Bad keyboard accelerator", val);
 	}
     }
   else if (ERRB_EQ (errb, ERROR_ME))
-    syntax_error_2 ("Unknown keyword in gui item", key,
+    invalid_argument_2 ("Unknown keyword in gui item", key,
 			   pgui_item->name);
   return retval;
 }
@@ -224,7 +226,7 @@ make_gui_item_from_keywords_internal (Lisp_Object item,
   contents = XVECTOR_DATA (item);
 
   if (length < 1)
-    syntax_error ("GUI item descriptors must be at least 1 elts long", item);
+    sferror ("GUI item descriptors must be at least 1 elts long", item);
 
   /* length 1:     		[ "name" ]
      length 2:		[ "name" callback ]
@@ -259,7 +261,7 @@ make_gui_item_from_keywords_internal (Lisp_Object item,
     {
       int i;
       if ((length - start) & 1)
-	syntax_error (
+	sferror (
 		"GUI item descriptor has an odd number of keywords and values",
 			     item);
 
@@ -287,12 +289,12 @@ widget_gui_parse_item_keywords (Lisp_Object item)
   contents = XVECTOR_DATA (item);
 
   if (!NILP (desc) && !STRINGP (desc) && !VECTORP (desc))
-    syntax_error ("Invalid GUI item descriptor", item);
+    sferror ("Invalid GUI item descriptor", item);
 
   if (length & 1)
     {
       if (!SYMBOLP (contents [0]))
-	syntax_error ("Invalid GUI item descriptor", item);
+	sferror ("Invalid GUI item descriptor", item);
       contents++;			/* Ignore the leading symbol. */
       length--;
     }
@@ -321,7 +323,7 @@ update_gui_item_keywords (Lisp_Object gui_item, Lisp_Object item)
  if (length & 1)
     {
       if (!SYMBOLP (contents [0]))
-	syntax_error ("Invalid GUI item descriptor", item);
+	sferror ("Invalid GUI item descriptor", item);
       contents++;			/* Ignore the leading symbol. */
       length--;
     }
@@ -486,7 +488,7 @@ gui_item_included_p (Lisp_Object gui_item, Lisp_Object conflist)
 static DOESNT_RETURN
 signal_too_long_error (Lisp_Object name)
 {
-  syntax_error ("GUI item produces too long displayable string", name);
+  invalid_argument ("GUI item produces too long displayable string", name);
 }
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -699,7 +701,7 @@ print_gui_item (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   char buf[20];
 
   if (print_readably)
-    error ("printing unreadable object #<gui-item 0x%x>", g->header.uid);
+    printing_unreadable_object ("#<gui-item 0x%x>", g->header.uid);
 
   write_c_string ("#<gui-item ", printcharfun);
   sprintf (buf, "0x%x>", g->header.uid);
@@ -771,7 +773,7 @@ parse_gui_item_tree_item (Lisp_Object entry)
       CHECK_STRING (entry);
     }
   else
-    syntax_error ("item must be a vector or a string", entry);
+    sferror ("item must be a vector or a string", entry);
 
   RETURN_UNGCPRO (ret);
 }
@@ -823,12 +825,21 @@ DEFINE_LRECORD_IMPLEMENTATION ("gui-item", gui_item,
 			       0,
 			       Lisp_Gui_Item);
 
+
+DOESNT_RETURN
+gui_error (const char *reason, Lisp_Object frob)
+{
+  signal_error (Qgui_error, reason, frob);
+}
+
 void
 syms_of_gui (void)
 {
   INIT_LRECORD_IMPLEMENTATION (gui_item);
 
   DEFSYMBOL (Qmenu_no_selection_hook);
+
+  DEFERROR_STANDARD (Qgui_error, Qio_error);
 
 #ifdef HAVE_POPUPS
   DEFSUBR (Fpopup_up_p);

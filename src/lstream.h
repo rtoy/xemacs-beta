@@ -33,6 +33,7 @@ Boston, MA 02111-1307, USA.  */
 DECLARE_LRECORD (lstream, struct lstream);
 #define XLSTREAM(x) XRECORD (x, lstream, struct lstream)
 #define XSETLSTREAM(x, p) XSETRECORD (x, p, lstream)
+#define wrap_lstream(p) wrap_object (p)
 #define LSTREAMP(x) RECORDP (x, lstream)
 /* #define CHECK_LSTREAM(x) CHECK_RECORD (x, lstream)
    Lstream pointers should never escape to the Lisp level, so

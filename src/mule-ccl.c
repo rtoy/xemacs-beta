@@ -1993,11 +1993,11 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
   int i;
 
   if (setup_ccl_program (&ccl, ccl_prog) < 0)
-    error ("Invalid CCL program");
+    syntax_error ("Invalid CCL program", Qunbound);
 
   CHECK_VECTOR (reg);
   if (XVECTOR_LENGTH (reg) != 8)
-    error ("Length of vector REGISTERS is not 8");
+    syntax_error ("Length of vector REGISTERS is not 8", Qunbound);
 
   for (i = 0; i < 8; i++)
     ccl.reg[i] = (INTP (XVECTOR_DATA (reg)[i])
@@ -2009,7 +2009,7 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
 	      CCL_MODE_ENCODING);
   QUIT;
   if (ccl.status != CCL_STAT_SUCCESS)
-    error ("Error in CCL program at %dth code", ccl.ic);
+    signal_error (Qccl_error, "Error in CCL program at code numbered ...", make_int (ccl.ic));
 
   for (i = 0; i < 8; i++)
     XSETINT (XVECTOR (reg)->contents[i], ccl.reg[i]);
@@ -2050,11 +2050,11 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
   struct gcpro gcpro1, gcpro2;
 
   if (setup_ccl_program (&ccl, ccl_prog) < 0)
-    error ("Invalid CCL program");
+    syntax_error ("Invalid CCL program", Qunbound);
 
   CHECK_VECTOR (status);
   if (XVECTOR (status)->size != 9)
-    error ("Length of vector STATUS is not 9");
+    syntax_error ("Length of vector STATUS is not 9", Qunbound);
   CHECK_STRING (string);
 
   GCPRO2 (status, string);
@@ -2087,10 +2087,10 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
   Dynarr_free (outbuf);
   QUIT;
   if (ccl.status == CCL_STAT_SUSPEND_BY_DST)
-    error ("Output buffer for the CCL programs overflow");
+    signal_error (Qccl_error, "Output buffer for the CCL programs overflow", Qunbound);
   if (ccl.status != CCL_STAT_SUCCESS
       && ccl.status != CCL_STAT_SUSPEND_BY_SRC)
-    error ("Error in CCL program at %dth code", ccl.ic);
+    signal_error (Qccl_error, "Error in CCL program at code numbered...", make_int (ccl.ic));
 
   return val;
 }
@@ -2241,10 +2241,10 @@ vars_of_mule_ccl (void)
   staticpro (&Vccl_program_table);
   Vccl_program_table = Fmake_vector (make_int (32), Qnil);
 
-  defsymbol (&Qccl_program, "ccl-program");
-  defsymbol (&Qccl_program_idx, "ccl-program-idx");
-  defsymbol (&Qcode_conversion_map, "code-conversion-map");
-  defsymbol (&Qcode_conversion_map_id, "code-conversion-map-id");
+  DEFSYMBOL (Qccl_program);
+  DEFSYMBOL (Qccl_program_idx);
+  DEFSYMBOL (Qcode_conversion_map);
+  DEFSYMBOL (Qcode_conversion_map_id);
 
   DEFVAR_LISP ("code-conversion-map-vector", &Vcode_conversion_map_vector /*
 Vector of code conversion maps.

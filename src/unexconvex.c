@@ -199,7 +199,8 @@ report_error (file, fd)
 {
     if (fd)
 	close (fd);
-    error ("Failure operating on %s", file);
+    signal_error (Qio_error, "Failure operating on file",
+		  build_string (file));
 }
 
 #define ERROR0(msg) report_error_1 (new, msg, 0, 0); return -1
@@ -213,7 +214,7 @@ char *msg;
 int a1, a2;
 {
     close (fd);
-    error (msg, a1, a2);
+    signal_ferror (Qio_error, msg, a1, a2);
 }
 
 /* ****************************************************************

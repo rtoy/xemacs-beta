@@ -15,20 +15,17 @@
 
 /* Synched up with: Not in FSF. */
 
-#ifdef emacs
+/* This file Mule-ized by Ben Wing, 5-15-01. */
+
 #include <config.h>
 #include "lisp.h"
-#endif
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+#include "sound.h"
 
 #include "libsst.h"
+
+#include "sysfile.h"
+
 
 #define AUDBUF 1024
 
@@ -38,12 +35,12 @@ sst_open(play_level, record_level)
     {
     int fd, i, gr, ger, gx;
     struct audio_ioctl ai;
-    char *ep;
+    Extbyte *ep;
 
     fd = open( "/dev/audio", O_RDWR );
     if ( fd < 0 )
 	{
-	perror( "sst_open: open /dev/audio" );
+	sound_perror( "sst_open: open /dev/audio" );
 	return( fd );
 	}
 
@@ -53,7 +50,7 @@ sst_open(play_level, record_level)
     i = AUDBUF;
     if ( ioctl( fd, AUDIOSETQSIZE, &i ) < 0 )
 	{
-	perror( "sst_open: SETQSIZE" );
+	sound_perror( "sst_open: SETQSIZE" );
 	return( fd );
 	}
 #endif /* AUDIOSETQSIZE */
@@ -67,7 +64,7 @@ sst_open(play_level, record_level)
 	    play_level = atoi( ep );
 	    if ( play_level < 0 || play_level > 99 )
 	    {
-		warn( "sst_open: SST_PLAY must be between 0 and 99" );
+		sound_warn( "sst_open: SST_PLAY must be between 0 and 99" );
 		return( -1 );
 	    }
 	}
@@ -80,7 +77,7 @@ sst_open(play_level, record_level)
 	    record_level = atoi( ep );
 	    if ( record_level < 0 || record_level > 99 )
 	    {
-		warn( "sst_open: SST_RECORD must be between 0 and 99" );
+		sound_warn( "sst_open: SST_RECORD must be between 0 and 99" );
 		return( -1 );
 	    }
 	}
@@ -110,7 +107,7 @@ sst_open(play_level, record_level)
     ai.control = AUDIO_MAP_MMR2;
     if ( ioctl( fd, AUDIOGETREG, &ai ) < 0 )
 	{
-	perror( "sst_open: GETREG MMR2" );
+	sound_perror( "sst_open: GETREG MMR2" );
 	return( -1 );
 	}
     if ( (ep = getenv( "SST_EARPHONES" )) != NULL )
@@ -119,7 +116,7 @@ sst_open(play_level, record_level)
 	ai.data[0] |= AUDIO_MMR2_BITS_LS;
     if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	{
-	perror( "sst_open: SETREG MMR2" );
+	sound_perror( "sst_open: SETREG MMR2" );
 	return( fd );
 	}
 
@@ -136,13 +133,13 @@ int fd;
     ai.data[0] = 0;
     if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	{
-	perror( "sst_close: SETREG MMR1" );
+	sound_perror( "sst_close: SETREG MMR1" );
 	}
     ai.control = AUDIO_MAP_MMR2;
     ai.data[0] = 0;
     if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	{
-	perror( "sst_close: SETREG MMR2" );
+	sound_perror( "sst_close: SETREG MMR2" );
 	}
     close( fd );
     }
@@ -150,7 +147,7 @@ int fd;
 /* These are tables of values to be loaded into various gain registers.
 */
 
-static unsigned char ger_table[][2] = {
+static UChar_Binary ger_table[][2] = {
     0xaa,	0xaa,	/* -10db */
     0x79,	0xac,
     0x41,	0x99,
@@ -183,7 +180,7 @@ static unsigned char ger_table[][2] = {
     };
 
 
-static unsigned char gr_gx_table[][2] = {
+static UChar_Binary gr_gx_table[][2] = {
     0x8b,	0x7c,	/* -18db */
     0x8b,	0x35,
     0x8b,	0x24,
@@ -225,9 +222,9 @@ int fd, value;
 
     if ( ( value < -10 ) || ( value > 18 ) )
 	{
-	  char buf [255];
+	  Extbyte buf [255];
 	  sprintf (buf, "sst_set_ger: GER %d out of range", value);
-	  warn(buf);
+	  sound_warn(buf);
 	  return;
 	}
 
@@ -238,18 +235,18 @@ int fd, value;
 
     if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	{
-	perror( "sst_set_ger: SETREG GER" );
+	sound_perror( "sst_set_ger: SETREG GER" );
 	}
 
     ai.control = AUDIO_MAP_MMR1;
     if ( ioctl( fd, AUDIOGETREG, &ai ) < 0 )
 	{
-	perror( "sst_set_ger: GETREG MMR1" );
+	sound_perror( "sst_set_ger: GETREG MMR1" );
 	}
     ai.data[0] |= AUDIO_MMR1_BITS_LOAD_GER;
     if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	{
-	perror( "sst_set_ger: SETREG MMR1" );
+	sound_perror( "sst_set_ger: SETREG MMR1" );
 	}
     }
 
@@ -261,9 +258,9 @@ int fd, value;
 
     if ( ( value < -18 ) || ( value > 12 ) )
 	{
-	  char buf [255];
+	  Extbyte buf [255];
 	  sprintf (buf,  "sst_set_gr: GR %d out of range", value);
-	  warn (buf);
+	  sound_warn (buf);
 	  return;
 	}
 
@@ -273,18 +270,18 @@ int fd, value;
 
     if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	{
-	perror( "sst_set_gr: SETREG GR" );
+	sound_perror( "sst_set_gr: SETREG GR" );
 	}
 
     ai.control = AUDIO_MAP_MMR1;
     if ( ioctl( fd, AUDIOGETREG, &ai ) < 0 )
 	{
-	perror( "sst_set_gr: GETREG MMR1" );
+	sound_perror( "sst_set_gr: GETREG MMR1" );
 	}
     ai.data[0] |= AUDIO_MMR1_BITS_LOAD_GR;
     if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	{
-	perror( "sst_set_gr: SETREG MMR1" );
+	sound_perror( "sst_set_gr: SETREG MMR1" );
 	}
     }
 
@@ -293,12 +290,12 @@ sst_set_gx( fd, value )
 int fd, value;
     {
     struct audio_ioctl ai;
-    char buf [255];
+    Extbyte buf [255];
 
     if ( ( value < -18 ) || ( value > 12 ) )
 	{
 	  sprintf (buf, "sst_set_gx: GX %d out of range", value);
-	  warn (buf);
+	  sound_warn (buf);
 	  return;
 	}
 
@@ -311,18 +308,18 @@ int fd, value;
 
     if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	{
-	perror( "sst_set_gx: SETREG GX" );
+	sound_perror( "sst_set_gx: SETREG GX" );
 	}
 
     ai.control = AUDIO_MAP_MMR1;
     if ( ioctl( fd, AUDIOGETREG, &ai ) < 0 )
 	{
-	perror( "sst_set_gx: GETREG MMR1" );
+	sound_perror( "sst_set_gx: GETREG MMR1" );
 	}
     ai.data[0] |= AUDIO_MMR1_BITS_LOAD_GX;
     if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	{
-	perror( "sst_set_gx: SETREG MMR1" );
+	sound_perror( "sst_set_gx: SETREG MMR1" );
 	}
     }
 
@@ -330,10 +327,10 @@ void
 sst_tones( fd, dhz1, dhz2, thz, rhz, usec )
 int fd, dhz1, dhz2, thz, rhz, usec;
     {
-    char buf [255];
+    Extbyte buf [255];
     struct audio_ioctl ai;
     int dval1, dval2, tval, rval;
-    unsigned char oldmmr2, newmmr2;
+    UChar_Binary oldmmr2, newmmr2;
 
     if ( dhz1 == 0 )
 	dval1 = 0;
@@ -343,7 +340,7 @@ int fd, dhz1, dhz2, thz, rhz, usec;
 	if ( ( dval1 < 1 ) || ( dval1 > 255 ) )
 	    {
 	      sprintf(buf, "sst_tones: dhz1 %d out of range", dhz1 );
-	      warn (buf);
+	      sound_warn (buf);
 	      return;
 	    }
 	}
@@ -356,7 +353,7 @@ int fd, dhz1, dhz2, thz, rhz, usec;
 	if ( ( dval2 < 1 ) || ( dval2 > 255 ) )
 	    {
 	      sprintf(buf, "sst_tones: dhz2 %d out of range", dhz2 );
-	      warn (buf);
+	      sound_warn (buf);
 	      return;
 	    }
 	}
@@ -369,7 +366,7 @@ int fd, dhz1, dhz2, thz, rhz, usec;
 	if ( ( tval < 1 ) || ( tval > 255 ) )
 	    {
 	      sprintf(buf, "sst_tones: thz %d out of range", thz );
-	      warn (buf);
+	      sound_warn (buf);
 	      return;
 	    }
 	}
@@ -382,7 +379,7 @@ int fd, dhz1, dhz2, thz, rhz, usec;
 	if ( ( rval < 1 ) || ( rval > 255 ) )
 	    {
 	      sprintf(buf, "sst_tones: rhz %d out of range", dhz2 );
-	      warn (buf);
+	      sound_warn (buf);
 	      return;
 	    }
 	}
@@ -390,21 +387,21 @@ int fd, dhz1, dhz2, thz, rhz, usec;
     if ( ( dval1 != 0 || dval2 != 0 ) && ( tval != 0 || rval != 0 ) )
 	{
 	  sprintf(buf, "sst_tones: cannot use DTMF and TONE or RINGER at the same time", dhz2 );
-	  warn (buf);
+	  sound_warn (buf);
 	  return;
 	}
 
     if ( tval != 0 && rval != 0 )
 	{
 	  sprintf(buf, "sst_tones: cannot use TONE and RINGER at the same time", dhz2 );
-	  warn (buf);
+	  sound_warn (buf);
 	return;
 	}
 
     ai.control = AUDIO_MAP_MMR2;
     if ( ioctl( fd, AUDIOGETREG, &ai ) < 0 )
 	{
-	perror( "sst_tones: GETREG MMR2" );
+	sound_perror( "sst_tones: GETREG MMR2" );
 	}
     oldmmr2 = newmmr2 = ai.data[0];
 
@@ -416,7 +413,7 @@ int fd, dhz1, dhz2, thz, rhz, usec;
 	ai.data[1] = dval2;
 	if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	    {
-	    perror( "sst_tones: SETREG FTGR" );
+	    sound_perror( "sst_tones: SETREG FTGR" );
 	    }
 	}
 
@@ -428,7 +425,7 @@ int fd, dhz1, dhz2, thz, rhz, usec;
 	ai.data[1] = 0;
 	if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	    {
-	    perror( "sst_tones: SETREG FTGR" );
+	    sound_perror( "sst_tones: SETREG FTGR" );
 	    }
 	}
 
@@ -440,7 +437,7 @@ int fd, dhz1, dhz2, thz, rhz, usec;
 	ai.data[1] = 0;
 	if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	    {
-	    perror( "sst_tones: SETREG FTGR" );
+	    sound_perror( "sst_tones: SETREG FTGR" );
 	    }
 	}
 
@@ -448,7 +445,7 @@ int fd, dhz1, dhz2, thz, rhz, usec;
     ai.data[0] = newmmr2;
     if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	{
-	perror( "sst_tones: SETREG MMR2" );
+	sound_perror( "sst_tones: SETREG MMR2" );
 	}
 
     usleep( usec );
@@ -456,16 +453,16 @@ int fd, dhz1, dhz2, thz, rhz, usec;
     ai.data[0] = oldmmr2;
     if ( ioctl( fd, AUDIOSETREG, &ai ) < 0 )
 	{
-	perror( "sst_tones: SETREG MMR2" );
+	sound_perror( "sst_tones: SETREG MMR2" );
 	}
     }
 
 void
 sst_dtmf( fd, dial, usecper, usecpause )
 int fd, usecper, usecpause;
-char *dial;
+Extbyte *dial;
     {
-    char *cp;
+    Extbyte *cp;
 
     for ( cp = dial; *cp != '\0'; cp++ )
 	{
@@ -495,9 +492,9 @@ char *dial;
 
 	    default:
 	      {
-		char buf [255];
+		Extbyte buf [255];
 		sprintf( buf, "sst_dtmf: unknown dialing code '%c'", *cp );
-		warn (buf);
+		sound_warn (buf);
 	      }
 	    }
 	usleep( usecpause );

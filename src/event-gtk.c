@@ -1693,8 +1693,8 @@ emacs_gtk_event_pending_p (int user_p)
 void
 syms_of_event_gtk (void)
 {
-  defsymbol (&Qkey_mapping, "key-mapping");
-  defsymbol (&Qsans_modifiers, "sans-modifiers");
+  DEFSYMBOL (Qkey_mapping);
+  DEFSYMBOL (Qsans_modifiers);
 }
 
 void reinit_vars_of_event_gtk (void)

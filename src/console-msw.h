@@ -371,6 +371,10 @@ Lisp_Object mswindows_handle_gui_wm_command (struct frame* f,
 int mswindows_windows9x_p (void);
 
 void mswindows_output_last_error (char *frob);
+DOESNT_RETURN mswindows_report_process_error (const char *string,
+					      Lisp_Object data,
+					      int errnum);
+Lisp_Object mswindows_lisp_error (int errnum);
 
 Lisp_Object mswindows_handle_print_dialog_box (struct frame *f,
 					       Lisp_Object keys);

@@ -304,7 +304,7 @@ syms_of_intl (void)
   /* defer-gettext is defined as a symbol because when it is used in menu
      specification strings, it is not evaluated as a function by
      menu_item_descriptor_to_widget_value(). */
-  defsymbol (&Qdefer_gettext, "defer-gettext");
+  DEFSYMBOL (Qdefer_gettext);
 
   DEFSUBR (Fignore_defer_gettext);
   DEFSUBR (Fgettext);

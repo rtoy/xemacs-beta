@@ -198,7 +198,7 @@ gtk_init_device (struct device *d, Lisp_Object props)
      getting an empty argv array causes them to abort. */
   if (NILP (Vgtk_initial_argv_list))
     {
-      signal_simple_error ("gtk-initial-argv-list must be set before creating Gtk devices", Vgtk_initial_argv_list);
+      invalid_operation ("gtk-initial-argv-list must be set before creating Gtk devices", Vgtk_initial_argv_list);
       return;
     }
 
@@ -429,7 +429,7 @@ The returned value will be one of the symbols `static-gray', `gray-scale',
     case GDK_VISUAL_TRUE_COLOR:   return intern ("true-color");
     case GDK_VISUAL_DIRECT_COLOR: return intern ("direct-color");
     default:
-      error ("display has an unknown visual class");
+      invalid_state ("display has an unknown visual class", Qunbound);
       return Qnil;	/* suppress compiler warning */
     }
 }
@@ -520,7 +520,7 @@ The two names differ in capitalization and underscoring.
   struct device *d = decode_device (device);
 
   if (!DEVICE_GTK_P (d))
-    signal_simple_error ("Not a GTK device", device);
+    gui_error ("Not a GTK device", device);
 
   return (NILP (Fgethash (keysym, DEVICE_GTK_DATA (d)->x_keysym_map_hashtable, Qnil)) ?
 	  Qnil : Qt);
@@ -699,8 +699,8 @@ syms_of_device_gtk (void)
   DEFSUBR (Fgtk_ungrab_keyboard);
   DEFSUBR (Fgtk_init);
 
-  defsymbol (&Qinit_pre_gtk_win, "init-pre-gtk-win");
-  defsymbol (&Qinit_post_gtk_win, "init-post-gtk-win");
+  DEFSYMBOL (Qinit_pre_gtk_win);
+  DEFSYMBOL (Qinit_post_gtk_win);
 }
 
 void

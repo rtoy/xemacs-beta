@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/04/20 11:32:18 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/05/24 07:50:53 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -169,7 +169,7 @@ Trouble Shooting:
 * Q2.1.15::     How to debug an XEmacs problem with a debugger.
 * Q2.1.16::     XEmacs crashes in @code{strcat} on HP/UX 10.
 * Q2.1.17::     @samp{Marker does not point anywhere}.
-* Q2.1.18::     [This question intentionally left blank]
+* Q2.1.18::     XEmacs is outputting lots of X errors.
 * Q2.1.19::     XEmacs does not follow the local timezone.
 * Q2.1.20::     @samp{Symbol's function definition is void: hkey-help-show.}
 * Q2.1.21::     [This question intentionally left blank]
@@ -1224,7 +1224,7 @@ Trouble Shooting:
 * Q2.1.15::     How to debug an XEmacs problem with a debugger.
 * Q2.1.16::     XEmacs crashes in @code{strcat} on HP/UX 10.
 * Q2.1.17::     @samp{Marker does not point anywhere}.
-* Q2.1.18::     [This question intentionally left blank]
+* Q2.1.18::     XEmacs is outputting lots of X errors.
 * Q2.1.19::     XEmacs does not follow the local timezone.
 * Q2.1.20::     @samp{Symbol's function definition is void: hkey-help-show.}
 * Q2.1.21::     [This question intentionally left blank]
@@ -2014,12 +2014,13 @@ Here are some hints:
 @itemize @bullet
 @item
 First of all, if the crash is at all reproducible, consider very
-strongly recompiling your XEmacs with debugging symbols, with no
-optimization, and with the configure options @samp{--debug=yes} and
-@samp{--error-checking=all}.  This will make your XEmacs run somewhat
-slower but make it a lot more likely to catch the problem earlier
-(closer to its source), and a lot easier to determine what's going on
-with a debugger.
+strongly recompiling your XEmacs with debugging symbols and with no
+optimization (e.g. with GCC use the compiler flags @samp{-g -O0} --
+that's an "oh" followed by a zero), and with the configure options
+@samp{--debug=yes} and @samp{--error-checking=all}.  This will make your
+XEmacs run somewhat slower but make it a lot more likely to catch the
+problem earlier (closer to its source), and a lot easier to determine
+what's going on with a debugger.
 
 @item
 If you're able to run XEmacs under a debugger and reproduce the crash
@@ -2038,6 +2039,10 @@ If XEmacs is hitting an assertion failure, put a breakpoint on
 If XEmacs is hitting some weird Lisp error that's causing it to crash
 (e.g. during startup), put a breakpoint on @code{signal_1()}---this is
 declared static in eval.c.
+
+@item
+If XEmacs is outputting lots of X errors, put a breakpoint on
+@code{x_error_handler()}; that will tell you which call is causing them.
 
 @item
 Internally, you will probably see lots of variables that hold objects of
@@ -2219,7 +2224,11 @@ Upgrade your Gnus.
 @end enumerate
 
 @node Q2.1.18, Q2.1.19, Q2.1.17, Installation
-@unnumberedsubsec Q2.1.18: removed
+@unnumberedsubsec Q2.1.18: XEmacs is outputting lots of X errors.
+
+If this is happening, we would very much like to know what's causing
+them.  To find this out, @xref{Q2.1.15}.  Try to get both a C and Lisp
+backtrace, and send them to @email{xemacs-beta@@xemacs.org}.
 
 @node Q2.1.19, Q2.1.20, Q2.1.18, Installation
 @unnumberedsubsec Q2.1.19: XEmacs does not follow the local timezone.

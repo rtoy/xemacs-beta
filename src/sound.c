@@ -21,6 +21,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* This file Mule-ized by Ben Wing, 5-15-01. */
+
 /* Originally written by Jamie Zawinski.
    Hacked on quite a bit by various others. */
 
@@ -32,22 +34,22 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_X_WINDOWS
 #include "console-x.h"
 #endif
-
 #include "device.h"
 #include "redisplay.h"
+#include "sound.h"
+
 #include "sysdep.h"
 
 #include "sysfile.h"
 
 #ifdef HAVE_NATIVE_SOUND
 # include "sysproc.h"
-# include "nativesound.h"
 #endif
 
 #ifdef HAVE_ESD_SOUND
-extern int esd_play_sound_file (char *file, int vol);
-extern int esd_play_sound_data (unsigned char *data, size_t length, int vol);
-# define DEVICE_CONNECTED_TO_ESD_P(x) 1 /* FIXME: better check */
+extern int esd_play_sound_file (Extbyte *file, int vol);
+extern int esd_play_sound_data (UChar_Binary *data, size_t length, int vol);
+# define DEVICE_CONNECTED_TO_ESD_P(x) 1 /* #### better check */
 #endif
 
 Fixnum bell_volume;
@@ -56,16 +58,21 @@ Lisp_Object Vsound_alist;
 Lisp_Object Vsynchronous_sounds;
 Lisp_Object Vnative_sound_only_on_console;
 Lisp_Object Q_volume, Q_pitch, Q_duration, Q_sound;
+Lisp_Object Qsound_error;
 
 
 #ifdef HAVE_NAS_SOUND
-extern int nas_play_sound_file (char *name, int volume);
-extern int nas_play_sound_data (unsigned char *data, int length, int volume);
+extern int nas_play_sound_file (Extbyte *name, int volume);
+extern int nas_play_sound_data (UChar_Binary *data, int length, int volume);
 extern int nas_wait_for_sounds (void);
-extern char *nas_init_play (Display *);
-
-Lisp_Object Qnas;
+extern Extbyte *nas_init_play (Display *);
 #endif
+
+DOESNT_RETURN
+report_sound_error (const Char_ASCII *string, Lisp_Object data)
+{
+  report_error_with_errno (Qsound_error, string, data);
+}
 
 DEFUN ("play-sound-file", Fplay_sound_file, 1, 3, "fSound file name: ", /*
 Play the named sound file on DEVICE's speaker at the specified volume
@@ -107,10 +114,12 @@ Windows the sound file must be in WAV format.
 	     fails.  --hniksic */
 	  if (NILP (Ffile_exists_p (file)))
 	    file =
-	      signal_simple_continuable_error ("File does not exist", file);
+	      signal_continuable_error (Qfile_error,
+					"File does not exist", file);
 	  else
 	    file =
-	      signal_simple_continuable_error ("File is unreadable", file);
+	      signal_continuable_error (Qfile_error,
+					"File is unreadable", file);
 	}
     }
   UNGCPRO;
@@ -118,7 +127,7 @@ Windows the sound file must be in WAV format.
 #ifdef HAVE_NAS_SOUND
   if (DEVICE_CONNECTED_TO_NAS_P (d))
     {
-      char *fileext;
+      Extbyte *fileext;
 
       LISP_STRING_TO_EXTERNAL (file, fileext, Qfile_name);
       /* #### NAS code should allow specification of a device. */
@@ -130,7 +139,7 @@ Windows the sound file must be in WAV format.
 #ifdef HAVE_ESD_SOUND
   if (DEVICE_CONNECTED_TO_ESD_P (d))
     {
-      char *fileext;
+      Extbyte *fileext;
       int result;
 
       LISP_STRING_TO_EXTERNAL (file, fileext, Qfile_name);
@@ -147,13 +156,13 @@ Windows the sound file must be in WAV format.
 #ifdef HAVE_NATIVE_SOUND
   if (NILP (Vnative_sound_only_on_console) || DEVICE_ON_CONSOLE_P (d))
     {
-      const char *fileext;
+      Extbyte *fileext;
 
       LISP_STRING_TO_EXTERNAL (file, fileext, Qfile_name);
       /* The sound code doesn't like getting SIGIO interrupts.
 	 Unix sucks! */
       stop_interrupts ();
-      play_sound_file ((char *) fileext, vol);
+      play_sound_file (fileext, vol);
       start_interrupts ();
       QUIT;
     }
@@ -311,13 +320,13 @@ See the variable `sound-alist'.
 #ifdef HAVE_NAS_SOUND
   if (DEVICE_CONNECTED_TO_NAS_P (d) && STRINGP (sound))
     {
-      const Extbyte *soundext;
+      const UChar_Binary *soundext;
       Extcount soundextlen;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, sound,
 			  ALLOCA, (soundext, soundextlen),
 			  Qbinary);
-      if (nas_play_sound_data ((unsigned char*)soundext, soundextlen, vol))
+      if (nas_play_sound_data (soundext, soundextlen, vol))
 	return Qnil;
     }
 #endif /* HAVE_NAS_SOUND */
@@ -325,7 +334,7 @@ See the variable `sound-alist'.
 #ifdef HAVE_ESD_SOUND
   if (DEVICE_CONNECTED_TO_ESD_P (d) && STRINGP (sound))
     {
-      Extbyte *soundext;
+      UChar_Binary *soundext;
       Extcount soundextlen;
       int succes;
 
@@ -334,7 +343,7 @@ See the variable `sound-alist'.
       
       /* #### ESD uses alarm(). But why should we also stop SIGIO? */
       stop_interrupts ();
-      succes = esd_play_sound_data ((unsigned char *) soundext, soundextlen, vol);
+      succes = esd_play_sound_data (soundext, soundextlen, vol);
       start_interrupts ();
       QUIT;
       if(succes)
@@ -346,7 +355,7 @@ See the variable `sound-alist'.
   if ((NILP (Vnative_sound_only_on_console) || DEVICE_ON_CONSOLE_P (d))
       && STRINGP (sound))
     {
-      const Extbyte *soundext;
+      UChar_Binary *soundext;
       Extcount soundextlen;
       int succes;
 
@@ -355,7 +364,7 @@ See the variable `sound-alist'.
 			  Qbinary);
       /* The sound code doesn't like getting SIGIO interrupts. Unix sucks! */
       stop_interrupts ();
-      succes = play_sound_data ((unsigned char*)soundext, soundextlen, vol);
+      succes = play_sound_data (soundext, soundextlen, vol);
       start_interrupts ();
       QUIT;
       if (succes)
@@ -403,7 +412,7 @@ device).
 
   if (NILP (arg) && !NILP (Vexecuting_macro))
     /* Stop executing a keyboard macro. */
-    error ("Keyboard macro terminated by a command ringing the bell");
+    invalid_operation ("Keyboard macro terminated by a command ringing the bell", Qunbound);
   
   if (d == last_bell_device && now-last_bell_time < bell_inhibit_time)
     return Qnil;
@@ -453,7 +462,7 @@ init_nas_sound (struct device *d)
 #ifdef HAVE_X_WINDOWS
   if (DEVICE_X_P (d))
     {
-      char *err_message = nas_init_play (DEVICE_X_DISPLAY (d));
+      Extbyte *err_message = nas_init_play (DEVICE_X_DISPLAY (d));
       DEVICE_CONNECTED_TO_NAS_P (d) = !err_message;
       /* Print out the message? */
     }
@@ -479,14 +488,14 @@ init_native_sound (struct device *d)
 	 */
 
       Display *display = DEVICE_X_DISPLAY (d);
-      char *dpy = DisplayString (display);
-      char *tail = (char *) strchr (dpy, ':');
+      Extbyte *dpy = DisplayString (display);
+      Extbyte *tail = strchr (dpy, ':');
       if (! tail ||
 	  strncmp (tail, ":0", 2))
 	DEVICE_ON_CONSOLE_P (d) = 0;
       else
 	{
-	  char dpyname[255], localname[255];
+	  Extbyte dpyname[255], localname[255];
 
 	  /* some systems can't handle SIGIO or SIGALARM in gethostbyname. */
 	  stop_interrupts ();
@@ -517,7 +526,7 @@ init_native_sound (struct device *d)
 		DEVICE_ON_CONSOLE_P (d) = 0;
 	      else
 		{
-		  char hn [255];
+		  Extbyte hn [255];
 		  struct hostent *l;
 		  strcpy (hn, h->h_name);
 		  l = gethostbyname (localname);
@@ -547,14 +556,12 @@ init_device_sound (struct device *d)
 void
 syms_of_sound (void)
 {
-  defkeyword (&Q_volume,   ":volume");
-  defkeyword (&Q_pitch,    ":pitch");
-  defkeyword (&Q_duration, ":duration");
-  defkeyword (&Q_sound,    ":sound");
+  DEFKEYWORD (Q_volume);
+  DEFKEYWORD (Q_pitch);
+  DEFKEYWORD (Q_duration);
+  DEFKEYWORD (Q_sound);
 
-#ifdef HAVE_NAS_SOUND
-  defsymbol (&Qnas, "nas");
-#endif
+  DEFERROR_STANDARD (Qsound_error, Qio_error);
 
   DEFSUBR (Fplay_sound_file);
   DEFSUBR (Fplay_sound);

@@ -56,24 +56,24 @@ unexec (target_file_name, source_file_name)
   status_$t status;
   /* Open the Source File. */
   if ((source_file = open (source_file_name, O_RDONLY)) < 0)
-    error ("cannot open source file for input");
+    signal_error (Qfile_error, "cannot open source file for input", Qunbound);
   /* Read the File Header. */
   if (read (source_file, &file_header, sizeof (file_header)) != sizeof (file_header))
-    error ("cannot read file header");
+    signal_error (Qfile_error, "cannot read file header", Qunbound);
   
   /* Read the Domain Header. */
   if (read (source_file, &domain_header, sizeof (domain_header))
       != sizeof (domain_header))
-    error ("cannot read domain header");
+    signal_error (Qfile_error, "cannot read domain header", Qunbound);
   /* Read the Section Headers. */
   sections =
     (struct scnhdr *) malloc (file_header.f_nscns*sizeof (struct scnhdr));
   if (sections == (struct scnhdr *) 0)
-    error ("cannot allocate section header storage");
+    out_of_memory ("cannot allocate section header storage", Qunbound);
   sections_limit = sections + file_header.f_nscns;
   if (read (source_file, sections, file_header.f_nscns*sizeof (struct scnhdr))
       != file_header.f_nscns*sizeof (struct scnhdr))
-    error ("cannot read section headers");
+    signal_error (Qfile_error, "cannot read section headers", Qunbound);
   /* Compute the new Size of the Data Section. */
   data_size = sbrk (0) - domain_header.data_start;
   delta_before_rwdi = delta_after_rwdi = data_size - domain_header.dsize;
@@ -84,7 +84,7 @@ unexec (target_file_name, source_file_name)
       {
 	/* If there are relocation entries, we cannot "unrelocate" them. */
 	if (rwdi_section->s_nreloc > 0)
-	  error (".rwdi section needs relocation - cannot dump Emacs");
+	  signal_error (Qio_error, ".rwdi section needs relocation - cannot dump Emacs", Qunbound);
 	delta_after_rwdi = delta_before_rwdi - rwdi_section->s_size;
 	old_rwdi_vaddr = rwdi_section->s_vaddr;
 	rwdi_section->s_paddr = 0;
@@ -152,59 +152,59 @@ unexec (target_file_name, source_file_name)
   ios_$create (target_file_name, strlen (target_file_name), coff_$uid,
 	       ios_$recreate_mode, ios_$write_opt, &target_file, &status);
   if (status.all != status_$ok)
-    error ("cannot open target file for output");
+    signal_error (Qfile_error, "cannot open target file for output", Qunbound);
   /* Write the File Header. */
   if (write (target_file, &file_header, sizeof (file_header)) != sizeof (file_header))
-    error ("cannot write file header");
+    signal_error (Qfile_error, "cannot write file header", Qunbound);
   /* Write the Domain Header. */
   if (write (target_file, &domain_header, sizeof (domain_header))
       != sizeof (domain_header))
-    error ("cannot write domain header");
+    signal_error (Qfile_error, "cannot write domain header", Qunbound);
   /* Write the Section Headers. */
   if (write (target_file, sections, file_header.f_nscns*sizeof (struct scnhdr))
       != file_header.f_nscns*sizeof (struct scnhdr))
-    error ("cannot write section headers");
+    signal_error (Qfile_error, "cannot write section headers", Qunbound);
   /* Copy the Allocated Sections. */
   for (section = sections; section != first_data_section; section++)
     if (section->s_scnptr != 0)
       CopyData (target_file, source_file, LONG_ALIGN(section->s_size));
   /* Write the Expanded Data Segment. */
   if (write (target_file, first_data_section->s_vaddr, data_size) != data_size)
-    error ("cannot write new data section");
+    signal_error (Qfile_error, "cannot write new data section", Qunbound);
   
   /* Skip over the Last Data Section and Copy until the .rwdi Section. */
   if (lseek (source_file, last_data_section->s_scnptr
 	     +old_data_section_size, L_SET) == -1)
-    error ("cannot seek past data section");
+    signal_error (Qfile_error, "cannot seek past data section", Qunbound);
   for (section = last_data_section+1; section != rwdi_section; section++)
     if (section->s_scnptr != 0)
       CopyData (target_file, source_file, LONG_ALIGN(section->s_size));
   /* Skip over the .rwdi Section and Copy Remainder of Source File. */
   if (lseek (source_file, source_file_offset_past_rwdi, L_SET) == -1)
-    error ("cannot seek past .rwdi section");
+    signal_error (Qfile_error, "cannot seek past .rwdi section", Qunbound);
   while ((byte_count = read (source_file, buffer, sizeof (buffer))) > 0)
     if (write (target_file, buffer, byte_count) != byte_count)
-      error ("cannot write data");
+      signal_error (Qfile_error, "cannot write data", Qunbound);
   /* Unrelocate .data references to Global Symbols. */
   for (section = first_data_section; section <= last_data_section; section++)
     for (i = 0; i < section->s_nreloc; i++)
       {
 	if  (lseek (source_file, section->s_relptr
 		    +i*sizeof (struct reloc)-delta_after_rwdi, L_SET) == -1)
-	  error ("cannot seek to relocation info");
+	  signal_error (Qfile_error, "cannot seek to relocation info", Qunbound);
 	if (read (source_file, &reloc_entry, sizeof (reloc_entry))
 	    != sizeof (reloc_entry))
-	  error ("cannot read reloc entry");
+	  signal_error (Qfile_error, "cannot read reloc entry", Qunbound);
 	if (lseek (source_file, reloc_entry.r_vaddr-section->s_vaddr
 		   +section->s_scnptr, L_SET) == -1)
-	  error ("cannot seek to data element");
+	  signal_error (Qfile_error, "cannot seek to data element", Qunbound);
 	if (lseek (target_file, reloc_entry.r_vaddr-section->s_vaddr
 		   +section->s_scnptr, L_SET) == -1)
-	  error ("cannot seek to data element");
+	  signal_error (Qfile_error, "cannot seek to data element", Qunbound);
 	if (read (source_file, buffer, 4) != 4)
-	  error ("cannot read data element");
+	  signal_error (Qfile_error, "cannot read data element", Qunbound);
 	if (write (target_file, buffer, 4) != 4)
-	  error ("cannot write data element");
+	  signal_error (Qfile_error, "cannot write data element", Qunbound);
       }
   
   /* Correct virtual addresses in .blocks section. */
@@ -220,11 +220,11 @@ unexec (target_file_name, source_file_name)
 	{
 	  if (lseek (target_file,
 		     blocks_section->s_scnptr+section_offset, L_SET) == -1)
-	    error ("cannot seek to comp unit record");
+	    signal_error (Qfile_error, "cannot seek to comp unit record", Qunbound);
 	  /* Handle pad records before the comp unit record. */
 	  if (read (target_file, &dst_record, DST_RECORD_HDR_SIZE)
 	      != DST_RECORD_HDR_SIZE)
-	    error ("cannot read dst record tag");
+	    signal_error (Qfile_error, "cannot read dst record tag", Qunbound);
 	  if (dst_record.rec_type == dst_typ_pad)
 	    section_offset += DST_RECORD_HDR_SIZE;
 	  else if (dst_record.rec_type == dst_typ_comp_unit)
@@ -232,7 +232,7 @@ unexec (target_file_name, source_file_name)
 	      comp_unit = &dst_record.rec_data.comp_unit_;
 	      if  (read (target_file, comp_unit, sizeof (*comp_unit))
 		   != sizeof (*comp_unit))
-		error ("cannot read comp unit record");
+		signal_error (Qfile_error, "cannot read comp unit record", Qunbound);
 	      if (lseek (target_file, blocks_section->s_scnptr
 			 +section_offset
 #if dst_version_major == 1 && dst_version_minor < 4
@@ -242,36 +242,36 @@ unexec (target_file_name, source_file_name)
 #endif
 			 +DST_RECORD_HDR_SIZE,
 			 L_SET) == -1)
-		error ("cannot seek to section table");
+		signal_error (Qfile_error, "cannot seek to section table", Qunbound);
 	      if (read (target_file, &number_of_sections, sizeof (number_of_sections))
 		  != sizeof (number_of_sections))
-		error ("cannot read section table size");
+		signal_error (Qfile_error, "cannot read section table size", Qunbound);
 	      for (i = 0; i < number_of_sections; i++)
 		{
 		  if (read (target_file, &section_base, sizeof (section_base))
 		      != sizeof (section_base))
-		    error ("cannot read section base value");
+		    signal_error (Qfile_error, "cannot read section base value", Qunbound);
 		  if (section_base < first_changed_vaddr)
 		    continue;
 		  else if (section_base < old_rwdi_vaddr)
 		    section_base += delta_before_rwdi;
 		  else section_base += delta_after_rwdi;
 		  if (lseek (target_file, -sizeof (section_base), L_INCR) == -1)
-		    error ("cannot seek to section base value");
+		    signal_error (Qfile_error, "cannot seek to section base value", Qunbound);
 		  if (write (target_file, &section_base, sizeof (section_base))
 		      != sizeof (section_base))
-		    error ("cannot write section base");
+		    signal_error (Qfile_error, "cannot write section base", Qunbound);
 		}
 	      section_offset += comp_unit->data_size;
 	    }
-	  else error ("unexpected dst record type");
+	  else signal_error (Qfile_error, "unexpected dst record type", Qunbound);
 	}
     }
   
   if (close (source_file) == -1)
-    error("cannot close source file");
+    signal_error (Qfile_error, "cannot close source file", Qunbound);
   if (close (target_file) == -1)
-    error ("cannot close target file");
+    signal_error (Qfile_error, "cannot close target file", Qunbound);
 }
 
 
@@ -288,9 +288,9 @@ CopyData (target_file, source_file, total_byte_count)
 	byte_count = sizeof (buffer);
       else byte_count = total_byte_count;
       if (read (source_file, buffer, byte_count) != byte_count)
-	error ("cannot read data");
+	signal_error (Qfile_error, "cannot read data", Qunbound);
       if (write (target_file, buffer, byte_count) != byte_count)
-	error ("cannot write data");
+	signal_error (Qfile_error, "cannot write data", Qunbound);
       total_byte_count -= byte_count;
     }
 }

@@ -1893,7 +1893,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 
 #ifndef EXTERNAL_WIDGET
   if (!NILP (lisp_window_id))
-    error ("support for external widgets was not enabled at compile-time");
+    signal_error (Qunimplemented, "support for external widgets was not enabled at compile-time", Qunbound);
 #else
   if (!NILP (lisp_window_id))
     {
@@ -1914,7 +1914,8 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
       else
 	sscanf (string, "%lu", &window_id);
       if (!is_valid_window (window_id, d))
-	error ("Invalid window %lu", (unsigned long) window_id);
+	signal_ferror (Qinvalid_argument, "Invalid window %lu",
+		       (unsigned long) window_id);
       FRAME_X_EXTERNAL_WINDOW_P (f) = 1;
     } else
 #endif /* EXTERNAL_WIDGET */
@@ -2161,8 +2162,8 @@ x_init_frame_1 (struct frame *f, Lisp_Object props)
 	popup = Fselected_frame (device);
       CHECK_LIVE_FRAME (popup);
       if (!EQ (device, FRAME_DEVICE (XFRAME (popup))))
-	signal_simple_error_2 ("Parent must be on same device as frame",
-			       device, popup);
+	invalid_argument_2 ("Parent must be on same device as frame",
+			    device, popup);
     }
 
   /*
@@ -2423,7 +2424,7 @@ x_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
 static void
 x_cant_notify_wm_error (void)
 {
-  error ("Can't notify window manager of iconification.");
+  signal_error (Qgui_error, "Can't notify window manager of iconification", Qunbound);
 }
 
 /* Raise frame F.  */
@@ -2772,8 +2773,8 @@ x_update_frame_external_traits (struct frame* frm, Lisp_Object name)
 void
 syms_of_frame_x (void)
 {
-  defsymbol (&Qwindow_id, "window-id");
-  defsymbol (&Qx_resource_name, "x-resource-name");
+  DEFSYMBOL (Qwindow_id);
+  DEFSYMBOL (Qx_resource_name);
 
   DEFSUBR (Fx_window_id);
 #ifdef HAVE_CDE

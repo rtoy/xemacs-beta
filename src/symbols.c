@@ -357,7 +357,7 @@ oblookup (Lisp_Object obarray, const Bufbyte *ptr, Bytecount size)
   if (ZEROP (bucket))
     ;
   else if (!SYMBOLP (bucket))
-    error ("Bad data in guts of obarray"); /* Like CADR error message */
+    signal_error (Qinvalid_state, "Bad data in guts of obarray", Qunbound); /* Like CADR error message */
   else
     for (tail = XSYMBOL (bucket); ;)
       {
@@ -575,13 +575,13 @@ reject_constant_symbols (Lisp_Object sym, Lisp_Object newval, int function_p,
 
   if (SYMBOL_VALUE_MAGIC_P (val) &&
       XSYMBOL_VALUE_MAGIC_TYPE (val) == SYMVAL_CONST_SPECIFIER_FORWARD)
-    signal_simple_error ("Use `set-specifier' to change a specifier's value",
-			 sym);
+    invalid_change ("Use `set-specifier' to change a specifier's value",
+		    sym);
 
   if (symbol_is_constant (sym, val)
       || (SYMBOL_IS_KEYWORD (sym) && !EQ (newval, sym)))
-    signal_error (Qsetting_constant,
-		  UNBOUNDP (newval) ? list1 (sym) : list2 (sym, newval));
+    signal_error_1 (Qsetting_constant,
+		    UNBOUNDP (newval) ? list1 (sym) : list2 (sym, newval));
 }
 
 /* Verify that it's ok to make SYM buffer-local.  This rejects
@@ -614,8 +614,7 @@ verify_ok_for_buffer_local (Lisp_Object sym,
   return;
 
   not_ok:
-  signal_error (Qerror,
-		list2 (build_string ("Symbol may not be buffer-local"), sym));
+  invalid_change ("Symbol may not be buffer-local", sym);
 }
 
 DEFUN ("makunbound", Fmakunbound, 1, 1, 0, /*
@@ -1757,8 +1756,7 @@ Set SYMBOL's value to NEWVAL, and return NEWVAL.
     case SYMVAL_DEFAULT_BUFFER_FORWARD:
     case SYMVAL_DEFAULT_CONSOLE_FORWARD:
       if (UNBOUNDP (newval))
-	signal_error (Qerror,
-		      list2 (build_string ("Cannot makunbound"), symbol));
+	invalid_change ("Cannot makunbound", symbol);
       break;
 
       /* case SYMVAL_UNBOUND_MARKER: break; */
@@ -2839,7 +2837,7 @@ decode_magic_handler_type (Lisp_Object symbol)
   if (EQ (symbol, Qlocal_predicate)) return MAGIC_HANDLER_LOCAL_PREDICATE;
   if (EQ (symbol, Qmake_local))      return MAGIC_HANDLER_MAKE_LOCAL;
 
-  signal_simple_error ("Unrecognized symbol value handler type", symbol);
+  invalid_constant ("Unrecognized symbol value handler type", symbol);
   abort ();
   return MAGIC_HANDLER_MAX;
 }
@@ -2874,7 +2872,7 @@ handler_type_from_function_symbol (Lisp_Object funsym, int abort_if_not_found)
 
   if (abort_if_not_found)
     abort ();
-  signal_simple_error ("Unrecognized symbol-value function", funsym);
+  invalid_argument ("Unrecognized symbol-value function", funsym);
   return MAGIC_HANDLER_MAX;
 }
 
@@ -3109,7 +3107,7 @@ has a buffer-local value in any buffer, or the symbols nil or t.
 
   if (SYMBOL_VALUE_MAGIC_P (valcontents)
       && !UNBOUNDP (valcontents))
-    signal_simple_error ("Variable is magic and cannot be aliased", variable);
+    invalid_change ("Variable is magic and cannot be aliased", variable);
   reject_constant_symbols (variable, Qunbound, 0, Qt);
 
   bfwd = alloc_lcrecord_type (struct symbol_value_varalias,
@@ -3244,7 +3242,7 @@ init_symbols_once_early (void)
 
   XSYMBOL (Qnil)->function = Qunbound;
 
-  defsymbol (&Qt, "t");
+  DEFSYMBOL (Qt);
   XSYMBOL (Qt)->value = Qt;	/* Veritas aeterna */
   Vquit_flag = Qnil;
 

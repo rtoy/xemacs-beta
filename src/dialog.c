@@ -45,8 +45,8 @@ a list of the remaining arguments.
   CHECK_SYMBOL (type);
 
   if (!HAS_DEVMETH_P (d, make_dialog_box_internal))
-    signal_type_error (Qunimplemented,
-		       "Device does not support dialogs", f->device);
+    signal_error (Qunimplemented,
+		  "Device does not support dialogs", f->device);
 
   return DEVMETH (d, make_dialog_box_internal, (f, type, keys));
 }

@@ -220,7 +220,7 @@ decode_toolbar_position (Lisp_Object position)
   if (EQ (position, Qbottom)) return BOTTOM_TOOLBAR;
   if (EQ (position, Qleft))   return LEFT_TOOLBAR;
   if (EQ (position, Qright))  return RIGHT_TOOLBAR;
-  signal_simple_error ("Invalid toolbar position", position);
+  invalid_constant ("Invalid toolbar position", position);
 
   return TOP_TOOLBAR; /* not reached */
 }
@@ -608,7 +608,7 @@ compute_frame_toolbar_buttons (struct frame *f, enum toolbar_pos pos,
     }
 
   if (!CONSP (toolbar))
-    signal_simple_error ("toolbar description must be a list", toolbar);
+    sferror ("toolbar description must be a list", toolbar);
 
   /* First synchronize any existing buttons. */
   while (!NILP (toolbar) && !NILP (buttons))
@@ -618,7 +618,7 @@ compute_frame_toolbar_buttons (struct frame *f, enum toolbar_pos pos,
       if (NILP (XCAR (toolbar)))
 	{
 	  if (pushright_seen)
-	    signal_simple_error
+	    sferror
 	      ("more than one partition (nil) in toolbar description",
 	       orig_toolbar);
 	  else
@@ -664,7 +664,7 @@ compute_frame_toolbar_buttons (struct frame *f, enum toolbar_pos pos,
       if (NILP (XCAR (toolbar)))
 	{
 	  if (pushright_seen)
-	    signal_simple_error
+	    sferror
 	      ("more than one partition (nil) in toolbar description",
 	       orig_toolbar);
 	  else
@@ -942,9 +942,9 @@ toolbar_button_at_pixpos (struct frame *f, int x_coord, int y_coord)
 
 DEFINE_SPECIFIER_TYPE (toolbar);
 
-#define CTB_ERROR(msg) do {					\
-  maybe_signal_simple_error (msg, button, Qtoolbar, errb);	\
-  RETURN_SANS_WARNINGS Qnil;					\
+#define CTB_ERROR(msg) do {						    \
+									      maybe_signal_error (Qinvalid_argument, msg, button, Qtoolbar, errb); \
+  RETURN_SANS_WARNINGS Qnil;						    \
 } while (0)
 
 /* Returns Q_style if key was :style, Qt if ok otherwise, Qnil if error. */
@@ -954,8 +954,8 @@ check_toolbar_button_keywords (Lisp_Object button, Lisp_Object key,
 {
   if (!KEYWORDP (key))
     {
-      maybe_signal_simple_error_2 ("Not a keyword", key, button, Qtoolbar,
-				   errb);
+      maybe_signal_error_2 (Qinvalid_argument, "Not a keyword", key, button,
+				 Qtoolbar, errb);
       return Qnil;
     }
 
@@ -1114,18 +1114,19 @@ toolbar_validate (Lisp_Object instantiator)
     return;
 
   if (!CONSP (instantiator))
-    signal_simple_error ("Toolbar spec must be list or nil", instantiator);
+    sferror ("Toolbar spec must be list or nil", instantiator);
 
   for (rest = instantiator; !NILP (rest); rest = XCDR (rest))
     {
       if (!CONSP (rest))
-	signal_simple_error ("Bad list in toolbar spec", instantiator);
+	sferror ("Bad list in toolbar spec", instantiator);
 
       if (NILP (XCAR (rest)))
 	{
 	  if (pushright_seen)
-	    error
-	      ("More than one partition (nil) in instantiator description");
+  	    sferror
+	      ("More than one partition (nil) in instantiator description",
+	       instantiator);
 	  else
 	    pushright_seen = 1;
 	}
@@ -1253,14 +1254,14 @@ syms_of_toolbar (void)
 {
   INIT_LRECORD_IMPLEMENTATION (toolbar_button);
 
-  defsymbol (&Qtoolbar_buttonp, "toolbar-button-p");
-  defsymbol (&Q2D, "2D");
-  defsymbol (&Q3D, "3D");
-  defsymbol (&Q2d, "2d");
-  defsymbol (&Q3d, "3d");
-  defsymbol (&Q_size, ":size");	Fset (Q_size, Q_size);
+  DEFSYMBOL_MULTIWORD_PREDICATE (Qtoolbar_buttonp);
+  DEFSYMBOL (Q2D);
+  DEFSYMBOL (Q3D);
+  DEFSYMBOL (Q2d);
+  DEFSYMBOL (Q3d);
+  DEFKEYWORD (Q_size);
 
-  defsymbol (&Qinit_toolbar_from_resources, "init-toolbar-from-resources");
+  DEFSYMBOL (Qinit_toolbar_from_resources);
   DEFSUBR (Ftoolbar_button_p);
   DEFSUBR (Ftoolbar_button_callback);
   DEFSUBR (Ftoolbar_button_help_string);
