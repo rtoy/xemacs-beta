@@ -814,21 +814,188 @@ A couple of sections in the Future Work chapter.
 @chapter Authorship of XEmacs
 @cindex authorship, XEmacs
 
-General authorship in chronological order:
+XEmacs is the result of the time and effort of many people, and the
+active developers have changed over time.  There are two major
+components of the XEmacs effort -- writing the code itself and providing
+all the support work (testing the code, releasing beta and final
+versions, handling patches, reading bug reports, maintaining the web
+site, managing the mailing lists, etc. etc.).  Neither component would
+work without the other.
+
+@subheading CODING
+
+The primary code contributor over the years has been Ben Wing (active
+since late 1992).  Between 1991 and 1995, large amounts of coding was
+contributed by Jamie Zawinski and Chuck Thompson.  Many other people
+have authored major subsystems or otherwise contributed large amounts of
+code, including Andy Piper, Hrvoje Niksic, Jerry James, Jonathan Harris,
+Kyle Jones, Martin Buchholz, Michael Sperber, Olivier Galibert, Richard
+Mlynarik, Stig, William Perry and plenty of others.
+
+Primary XEmacs-specific subsystems and their authors:
+
+@table @asis
+@item Objects
+@itemize @minus
+@item
+Conversion from 26-bit to 28-bit pointers and integers, lrecords, lcrecords: Richard Mlynarik, 1994
+@item
+Conversion to 32-bit pointers and 31-bit integers: Kyle Jones, Martin Buchholz
+@item
+Portable dumper, object descriptions: Olivier Galibert
+@item
+KKCC (new garbage collector), ephemerons, weak boxes: Michael Sperber and students
+@item
+Random object work (object equal and hash methods, weak lists, lcrecord lists, bit vectors, dynarr, blocktype, opaque, string resizing): Ben Wing
+@item
+Profiling: Ben Wing
+@item
+Some byte-compilation and hash-table improvements: Martin Buchholz
+@item
+Bignum: Jerry James
+@end itemize
+
+@item Internationalization/Mule
+@itemize @minus
+@item
+mostly Ben Wing; many ideas for future work, Stephen Turnbull
+@end itemize
+
+@item I/O
+@itemize @minus
+@item
+Basic event/event-stream implementation: Jamie Zawinski
+@item
+Most event work since 1994: Ben Wing
+@item
+Asynchronous stuff (async timeouts, signals, quit-checking): Ben Wing
+@item
+Process method abstraction, Windows process work: Kirill Katsnelson
+@item
+Misc-user events, async timeouts, most quit-checking and signal code, most other work since 1994: Ben Wing
+@item
+Lstreams: Ben Wing
+@end itemize
+
+@item Display
+@itemize @minus
+@item
+Redisplay mechanism: implementation, Chuck Thompson; additional work, lots of people
+@item
+Glyphs: mostly Ben Wing
+@item
+Specifiers: Ben Wing
+@item
+Extents: initial implementation, someone at Lucid; rewrite, 1994, Ben Wing
+@item
+Widgets: Andy Piper
+@item
+JPEG/PNG/TIFF image converters: Ben Wing, William Perry, Jareth Hein, others (see comment in @file{glyphs-eimage.c})
+@item
+Menus: Jamie Zawinski, someone at Lucid (Lucid menus)
+@item
+Scrollbars: Chuck Thompson, ??? (Lucid scrollbar)
+@item
+Multi-device/device-independence work (console/device/etc methods): Ben Wing, prototype by chuck thompson
+@item
+Faces: first implementation, Jamie Zawinski; second, chuck; third, Ben Wing
+@item
+Fonts/colors: first implementation, Jamie Zawinski; further work, Ben Wing
+@item
+Toolbars: implementation, chuck, much interface work, Ben Wing
+@item
+Gutters, tabs: andy piper
+@end itemize
+
+@item Device subsystems
+@itemize @minus
+@item
+X Windows: Jamie Zawinksi, Ben Wing, others
+@item
+GTK: William Perry, Malcolm Purvis
+@item
+MS Windows: initial implementation, Jonathan Harris; some more work, Andy Piper, Ben Wing
+@item
+TTY: Chuck Thompson, Ben Wing
+@item
+Cygwin: Andy Piper
+@end itemize
+
+@item Misc
+@itemize @minus
+@item
+Configure: initial porting from fsf, Chuck Thompson; conversion to autoconf 2, much rewriting, Martin Buchholz
+@item
+Most initialization-related code: Ben Wing
+@item
+Internals manual, much of Lisp manual: Ben Wing
+@item
+FSF synching: initial sync with FSF 19, Richard Mlynarik, further work, Ben Wing
+@end itemize
+@end table
+
+@subheading SUPPORT
+
+Currently, support duties are handled by many different people.
+
+Release managers have been
+
+@itemize @minus
+@item
+Stephen Turnbull (April 2001 - January 2003, March 2004 - present, 21.2.47 - 21.4.12, 21.5.2 - 21.5.7, 21.5.17 - present)
+@item
+Vin Shelton (May 2003 - present, 21.4.13 - present)
+@item
+Steve Youngs (July 2002 - September 2003, 21.5.8 - 21.5.16)
+@item
+Martin Buchholz (December 1998, November 1999 - May 2001, 21.2.7 - 21.2.8, 21.2.21 - 21.2.46, 21.5.0 - 21.5.1)
+@item
+Steve Baur (early 1997 - December 1998, February 1999 - November 1999, 19.15 - 21.2.5, 21.2.9 - 21.2.20)
+@item
+Andy Piper (December 1998, 21.2.6)
+@item
+Chuck Thompson (June 1994 - September 1996, 19.11 - 19.14)
+@item
+Jamie Zawinski (April 1991 - June 1994, 19.0 - 19.10)
+@end itemize
+
+The recent overlapping dates are intentional, since two or three trees
+are maintained simultaneously at any point.
+
+Other major support work:
+
+@itemize @minus
+@item
+Adrian Aichner wrote and maintains the web site.
+@item
+Stephen Turnbull has produced many of the beta and semi-stable releases
+and has attempted to be the "face" of XEmacs on the newsgroups and
+mailing lists.
+@item
+Steve Youngs, Ville Skytta, and now Norbert Koch have taken turns
+maintaining the packages.
+@item
+Vin Shelton maintains the stable releases.
+@item
+Testing - #### Norbert, Adrian, ???
+@end itemize
+
+@ignore
+@c fix this!
 
 @table @asis
 
 @item Jamie Zawinski, Eric Benson, Matthieu Devin, Harlan Sexton
 These were the early creators of Lucid Emacs, the predecessor of Xemacs.
-Jamie Zawinski was the primary maintainer and coder for Lucid Emacs—
+Jamie Zawinski was the primary maintainer and coder for Lucid Emacs,
 active between early 1991 and June 1994.  He presided over versions 19.0
 through 19.10, and then abruptly left for Netscape.  He wrote the
-advanced stream code, the Xt interface code, the byte compiler, the
+event stream code, the Xt interface code, the byte compiler, the
 original version of the X selection code, the first, second and third
 versions of the face code which appeared in 19.0, 19.6 and 19.9
 respectively.  Part of the keymap code separated the Lisp directories
 into many subdirectories and many smaller changes.  Matthieu Devin wrote
-the original version of the Extents code.  Someone else at Lucid wrote
+the original version of the extents code.  Someone else at Lucid wrote
 the Lucid widget library (LWLIB), with the exception of the scrollbar
 code, which was added later.
 
@@ -854,8 +1021,8 @@ board and arranging for Xemacs to be placed under CVS.  Author of the
 package code.
 
 @item Chuck Thompson
-Active January 1993 to June of 1996, author of the current and previous
-ve3rsions of the redisplay code and maintainer of Xemacs from mid-1994
+Active January 1993 to June 1996, author of the current and previous
+versions of the redisplay code and maintainer of Xemacs from mid-1994
 to mid-1996.  Creator of XEMacs.org.  Also wrote the scrollbar code, the
 original configure support, and prototype versions of the toolbar and
 device code.
@@ -894,6 +1061,7 @@ sub-process code, and revamping of the display size change mechanism.
 Author of much of the Microsoft Windows support.
 @end table
 
+@c fix this!
 Authorship of some of the modules:
 
 @table @file
@@ -949,6 +1117,7 @@ includes at the top of the file to follow Xemacs conventions.
 Inherited almost unchanged from FSF kept in sync up through 19.30
 basically no changes for Xemacs.
 @end table
+@end ignore
 
 @node A History of Emacs, The XEmacs Split, Authorship of XEmacs, Top
 @chapter A History of Emacs
