@@ -829,7 +829,7 @@ winsock_closer (Lstream *lstr)
   else
     shutdown (str->s, 1);
 
-  CloseHandle ((HANDLE)str->s);
+  closesocket (str->s);
   if (str->pending_p)
     WaitForSingleObject (str->ov.hEvent, INFINITE);
 
