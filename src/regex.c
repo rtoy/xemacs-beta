@@ -124,6 +124,13 @@ complex_vars_of_regex (void)
    even if config.h says that we can.  */
 #undef REL_ALLOC
 
+/* defined in lisp.h */
+#ifdef REGEX_MALLOC
+#ifndef DECLARE_NOTHING
+#define DECLARE_NOTHING struct nosuchstruct
+#endif
+#endif
+
 #if defined (STDC_HEADERS) || defined (_LIBC)
 #include <stdlib.h>
 #else

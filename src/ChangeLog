@@ -1,3 +1,7 @@
+2001-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* regex.c (DECLARE_NOTHING): Define if !emacs && REGEX_MALLOC.
+
 2001-05-11  Yoshiki Hayashi  <yoshiki@xemacs.org>
 
 	* lisp.h (EMACS_INT_MAX): This should be one bit less since
