@@ -337,8 +337,7 @@ and remote access is likely in the near future."
   (let ((existing (assq (car entry) package-get-base)))
     (if existing
         (setcdr existing (cdr entry))
-      (setq package-get-base (cons entry package-get-base))
-      (package-get-custom-add-entry (car entry) (car (cdr entry))))))
+      (setq package-get-base (cons entry package-get-base)))))
 
 (defun package-get-locate-file (file &optional nil-if-not-found no-remote)
   "Locate an existing FILE with respect to `package-get-remote'.
@@ -1044,26 +1043,6 @@ lead to Emacs accessing remote sites."
         (message "No appropriate package found")))
     found))
 
-;;
-;; customize interfaces.
-;; The group is in this file so that custom loads includes this file.
-;;
-(defgroup packages nil
-  "Configure XEmacs packages."
-  :group 'emacs)
-
-;;;###autoload
-(defun package-get-custom ()
-  "Fetch and install the latest versions of all customized packages."
-  (interactive)
-  (package-get-require-base t)
-  (mapcar (lambda (pkg)
-	    (if (eval (intern (concat (symbol-name (car pkg)) "-package")))
-		(package-get (car pkg) nil))
-	    t)
-	  package-get-base)
-  (package-net-update-installed-db))
-
 (defun package-get-ever-installed-p (pkg &optional notused)
   (string-match "-package$" (symbol-name pkg))
   (custom-initialize-set
@@ -1072,26 +1051,6 @@ lead to Emacs accessing remote sites."
 	packages-package-list
 	(intern (substring (symbol-name pkg) 0 (match-beginning 0))))
        t)))
-
-(defvar package-get-custom-groups nil
-  "List of package-get-custom groups")
-
-(defun package-get-custom-add-entry (package props)
-  (let* ((category (plist-get props 'category))
-         (group (intern (concat category "-packages")))
-         (custom-var (intern (concat (symbol-name package) "-package")))
-         (description (plist-get props 'description)))
-    (when (not (memq group package-get-custom-groups))
-      (setq package-get-custom-groups (cons group
-                                            package-get-custom-groups))
-      (eval `(defgroup ,group nil
-               ,(concat category " package group")
-               :group 'packages)))
-    (eval `(defcustom ,custom-var nil
-             ,description
-             :group ',group
-             :initialize 'package-get-ever-installed-p
-             :type 'boolean))))
 
 
 (provide 'package-get)

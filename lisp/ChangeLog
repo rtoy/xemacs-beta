@@ -1,3 +1,16 @@
+2002-05-01  Steve Youngs  <youngs@xemacs.org>
+
+	* package-get.el (package-get-update-base-entry): Remove code to
+	add package entries into custom.
+	(package-get-custom-groups): Remove.
+	(package-get-custom): Ditto.
+	(package-get-custom-add-entry): Ditto.
+
+2002-04-29  Steve Youngs  <youngs@xemacs.org>
+
+	* menubar-items.el (default-menubar): Remove entry for managing
+	packages via custom.
+
 2002-04-24  Mats Lidell  <matsl@contactor.se>
 
 	* mule/european.el (language-info-alist): Add TUTORIAL & greeting for Swedish.

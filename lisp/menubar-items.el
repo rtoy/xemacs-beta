@@ -576,16 +576,6 @@ Write your filter like this:
        ["%_Update Package Index" package-get-update-base]
        ["%_List and Install" pui-list-packages]
        ["U%_pdate Installed Packages" package-get-update-all]
-       ;; hack-o-matic, we can't force a load of package-base here
-       ;; since it triggers dialog box interactions which we can't
-       ;; deal with while using a menu
-       ("Using %_Custom"
-	:filter (lambda (&rest junk)
-		  (if package-get-base
-		      (submenu-generate-accelerator-spec
-		       (cdr (custom-menu-create 'packages)))
-		    '("Please load Package Index"))))
-
        ["%_Help" (Info-goto-node "(xemacs)Packages")])
       ("%_Internet"
        ["Read Mail %_1 (VM)..." vm

@@ -100,23 +100,14 @@ Alternatively, if you have copies of the packages locally, you can
 install packages from a local disk or CDROM.
 
 The file @file{etc/PACKAGES} in the core distribution contains a list of
-the @ref{Available Packages} at the time of the XEmacs release.  Packages are
-also listed on the @code{Options} menu under:
-
-@example
-        Options->Customize->Emacs->Packages
-@end example
-
-However, don't select any of these menu picks unless you actually want 
-to install the given package (and have properly configured your system 
-to do so).
+the @ref{Available Packages} at the time of the XEmacs release.
 
 You can also get a list of available packages, and whether or not they
 are installed, using the visual package browser and installer.  You can
 access it via the menus:
 
 @example
-        Options->Manage Packages->List & Install
+        Tools -> Packages -> List and Install
 @end example
 
 Or, you can get to it via the keyboard:
@@ -244,14 +235,10 @@ and optionally:
 After installing these by hand, fire up XEmacs and follow these
 steps.
 
-Note: The menus in XEmacs 21.2.x and up have changed slightly, so
-where I mention "Options -> Manage Packages", substitute "Tools ->
-Packages".
-
 @enumerate 1
 @item 
 Choose a download site.
-via menu: Options -> Manages Packages -> Add Download Site 
+via menu: Tools -> Packages -> Add Download Site 
 via keyb: @code{M-x customize-variable RET package-get-remote RET}
 (put in the details of remote host and directory)
 
@@ -261,7 +248,7 @@ local directory, you can: @code{M-x pui-add-install-directory RET}
 @item 
 Obtain a list of packages and display the list in a buffer named
 @file{*Packages*}.
-menu: Options -> Manage Packages -> List & Install
+menu: Tools -> Packages -> List & Install
 keyb: @code{M-x pui-list-packages RET}
 
 XEmacs will now connect to the remote site and download the

@@ -1,3 +1,10 @@
+2002-05-01  Steve Youngs  <youngs@xemacs.org>
+
+	* xemacs/packages.texi (Automatically): Don't mention "Options"
+	menu.
+	(Installing Packages): Don't mention getting list of packages via
+	customize. 
+
 2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.6 "bok choi" is released.
