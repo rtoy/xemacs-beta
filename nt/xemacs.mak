@@ -176,6 +176,9 @@ HAVE_WIDGETS=1
 !if !defined(DEBUG_XEMACS)
 DEBUG_XEMACS=0
 !endif
+!if !defined(OPTIMIZED_BUILD)
+OPTIMIZED_BUILD=0
+!endif
 !if !defined(ERROR_CHECK_ALL)
 # Turn off when not a beta XEmacs.
 ERROR_CHECK_ALL=1
