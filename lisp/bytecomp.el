@@ -2453,7 +2453,10 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	 (body (cdr (cdr fun)))
 	 (doc (if (stringp (car body))
 		  (prog1 (car body)
-		    (setq body (cdr body)))))
+		    ;; Discard the doc string
+		    ;; only if it is not the only element of the body.
+		    (if (cdr body)
+			(setq body (cdr body))))))
 	 (int (assq 'interactive body)))
     (dolist (arg arglist)
       (cond ((not (symbolp arg))
