@@ -1,5 +1,13 @@
 2001-05-23  Ben Wing  <ben@xemacs.org>
 
+	* event-msw.c (winsock_writer):
+	* event-msw.c (winsock_closer):
+	prior kludgy code was clobbering the buffer, thinking it was
+	"unused" space to store an unneeded return value; instead, use
+	the variable we've already got staring us in the face.
+
+2001-05-23  Ben Wing  <ben@xemacs.org>
+
 	for 21.5:
 
 	* s\cygwin32.h:

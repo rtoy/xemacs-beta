@@ -782,10 +782,10 @@ winsock_writer (Lstream *stream, const unsigned char *data,
   str->buffer = xrealloc (str->buffer, size);
   memcpy (str->buffer, data, size);
 
-  /* Docs indicate that 4th parameter to WriteFile can be NULL since this is
-   * an overlapped operation. This fails on Win95 with winsock 1.x so we
-   * supply a spare address which is ignored by Win95 anyway. Sheesh. */
-  if (WriteFile ((HANDLE)str->s, str->buffer, size, (LPDWORD)&str->buffer,
+  /* According to MSDN WriteFile docs, the fourth parameter cannot be NULL
+     on Win95 even when doing an overlapped operation, as we are, where
+     the return value through that parameter is not meaningful. */
+  if (WriteFile ((HANDLE)str->s, str->buffer, size, &str->bufsize,
 		 &str->ov)
       || GetLastError() == ERROR_IO_PENDING)
     str->pending_p = 1;
@@ -810,7 +810,10 @@ winsock_closer (Lstream *lstr)
     WaitForSingleObject (str->ov.hEvent, INFINITE);
 
   if (str->buffer)
-    xfree (str->buffer);
+    {
+      xfree (str->buffer);
+      str->buffer = 0;
+    }
 
   CloseHandle (str->ov.hEvent);
   return 0;
