@@ -1,5 +1,12 @@
 2001-06-01  Ben Wing  <ben@xemacs.org>
 
+	* Makefile.in.in (ldflags):
+	eliminate that pesky "defaulting to 00401000" warning.
+	* nt.h:
+	eliminate warnings.
+
+2001-06-01  Ben Wing  <ben@xemacs.org>
+
 	* nt.c (mswindows_utime):
 	* nt.c (close_file_data):
 	fix off-by-one-indirection error.
