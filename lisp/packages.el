@@ -1,7 +1,7 @@
 ;;; packages.el --- Low level support for XEmacs packages
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2002, 2003 Ben Wing.
+;; Copyright (C) 2002, 2003, 2004 Ben Wing.
 
 ;; Author: Steven L Baur <steve@xemacs.org>
 ;; Maintainer: Steven L Baur <steve@xemacs.org>
@@ -132,6 +132,14 @@ directories, directories with higher priority first"
 		attributes)))
     (setq packages-package-list
 	  (cons (cons name info) (remassq name packages-package-list)))))
+
+(defun package-suppress (package file form)
+  "Set up a package-suppress condition FORM for FILE in PACKAGE.
+When XEmacs searches for a file in the load path, it will ignore FILE
+if FORM evaluates to non-nil."
+  (setq load-suppress-alist
+	(acons (expand-file-name file load-file-name) form
+	       load-suppress-alist)))
 
 (defun package-require (name version)
   (let ((pkg (assq name packages-package-list)))

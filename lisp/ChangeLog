@@ -1,3 +1,8 @@
+2005-02-03  Ben Wing  <ben@xemacs.org>
+
+	* packages.el (package-suppress): New.
+	Add actual command to suppress packages.
+
 2005-02-03  Jerry James  <james@xemacs.org>
 
 	* dumped-lisp.el (preloaded-file-list): Add easy-mmode.
