@@ -1,7 +1,7 @@
 @c -*-texinfo-*-
 @c This is part of the XEmacs Lisp Reference Manual.
 @c Copyright (C) 1995, 1996 Ben Wing.
-@c Copyright (C) 2002 Free Software Foundation, Inc.
+@c Copyright (C) 2002, 2004 Free Software Foundation, Inc.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/specifiers.info
 @node Specifiers, Faces and Window-System Objects, Extents, top
@@ -1047,7 +1047,7 @@ This function returns the predicate for the given specifier tag.
 @section Functions for Instancing a Specifier
 
 @defun specifier-instance specifier &optional domain default no-fallback
-This function instantiates @var{specifier} (return its value) in
+This function instantiates @var{specifier} (returns its value) in
 @var{domain}.  If no instance can be generated for this domain, return
 @var{default}.
 
@@ -1102,7 +1102,7 @@ value will be a string, pixmap, or subwindow.
 @end defun
 
 @defun specifier-matching-instance specifier matchspec &optional domain default no-fallback
-This function return an instance for @var{specifier} in @var{domain}
+This function returns an instance for @var{specifier} in @var{domain}
 that matches @var{matchspec}.  If no instance can be generated for
 @var{domain}, return @var{default}.
 
