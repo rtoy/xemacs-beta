@@ -1,3 +1,15 @@
+2004-01-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/specifiers.texi (Specifier Examples): Add new example,
+	pluralize node name and section title.
+	(Specifiers): Pluralize "Specifier Examples" in menu.
+
+	* lispref/lispref.texi (Top): Pluralize "Specifier Examples" in menu.
+
+2003-11-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi: Fix Tony Rossini's address.
+
 2003-12-15  Steve Youngs  <sryoungs@bigpond.net.au>
 
 	* lispref/customize.texi (Defining New Types): New node.

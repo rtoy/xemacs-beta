@@ -38,7 +38,7 @@ This function returns non-@code{nil} if @var{object} is a specifier.
 * Specifier Tag Functions::     Working with specifier tags.
 * Specifier Instancing Functions::
                                 Functions to instance a specifier.
-* Specifier Example::           Making all this stuff clearer.
+* Specifier Examples::          Making all this stuff clearer.
 * Creating Specifiers::         Creating specifiers for your own use.
 * Specifier Validation Functions::
                                 Validating the components of a specifier.
@@ -1046,8 +1046,8 @@ In most circumstances, you should not use this function; use
 @code{specifier-instance} instead.
 @end defun
 
-@node Specifier Example
-@section Example of Specifier Usage
+@node Specifier Examples
+@section Examples of Specifier Usage
 
 Now let us present an example to clarify the theoretical discussions we
 have been through.  In this example, we will use the general specifier
@@ -1119,6 +1119,143 @@ call the instantiation method for colors.  This time, the X server
 our window is on recognizes the color @samp{moccasin}, and so the
 instantiation method succeeds and returns a color instance.
 @end enumerate
+
+Here's another example, which implements something like GNU Emacs's
+``frame-local'' variables.
+
+@example
+;; Implementation
+
+;; There are probably better ways to write this macro
+;; Heaven help you if VAR is a buffer-local; you will become very
+;; confused.  Probably should error on that.
+(defmacro define-frame-local-variable (var)
+  "Make the unbound symbol VAR become a frame-local variable."
+  (let ((val (if (boundp var) (symbol-value var) nil)))
+    `(progn
+      (setq ,var (make-specifier 'generic))
+      (add-spec-to-specifier ,var ',val 'global))))
+
+;; I'm not real happy about this terminology, how can `setq' be a defun?
+;; But `frame-set' would have people writing "(frame-set 'foo value)".
+(defun frame-setq (var value &optional frame)
+  "Set the local value of VAR to VALUE in FRAME.
+
+FRAME defaults to the selected frame."
+  (and frame (not (framep frame))
+       (error 'invalid-argument "FRAME must be a frame", frame))
+  (add-spec-to-specifier var value (or frame (selected-frame))))
+
+(defun frame-value (var &optional frame)
+  "Get the local value of VAR in FRAME.
+
+FRAME defaults to the selected frame."
+  (and frame (not (framep frame))
+       (error 'invalid-argument "FRAME must be a frame", frame))
+  ;; this is not just a map from frames to values; it also falls back
+  ;; to the global value
+  (specifier-instance var (or frame (selected-frame))))
+
+;; for completeness
+(defun frame-set-default (var value)
+  "Set the default value of frame-local variable VAR to VALUE."
+  (add-spec-to-specifier var value 'global))
+
+(defun frame-get-default (var)
+  "Get the default value of frame-local variable VAR."
+  (car (specifier-specs var 'global)))
+@end example
+
+Now you can execute the above definitions (eg, with @code{eval-last-sexp})
+and switch to @file{*scratch*} to play.  Things will work differently if
+you already have a variable named @code{foo}.
+
+@example
+;; Usage
+
+foo
+@error{} Symbol's value as variable is void: foo
+
+(define-frame-local-variable foo)
+@result{} nil
+
+;; the value of foo is a specifier, which is an opaque object;
+;; you must use accessor functions to get values
+
+foo
+@result{} #<generic-specifier global=(nil) 0x4f5cb>
+
+;; since no frame-local value is set, the global value (which is the
+;; constant `nil') is returned
+(frame-value foo)
+@result{} nil
+
+;; get the default explicitly
+(frame-get-default foo)
+@result{} nil
+
+;; get the whole specification list
+(specifier-specs foo 'global)
+@result{} (nil)
+
+;; give foo a frame-local value
+
+(frame-setq foo 'bar)
+@result{} nil
+
+;; access foo in several ways
+
+;; Note that the print function for this kind of specifier only
+;; gives you the global setting.  To get the full list of specs for
+;; debugging or study purposes, you must use specifier-specs or
+;; specifier-spec-list.
+foo
+@result{} #<generic-specifier global=(nil) 0x4f5cb>
+
+;; get the whole specification list
+(specifier-specs foo)
+@result{} ((#<x-frame "Message" 0x1bd66> (nil . bar)) (global (nil)))
+
+;; get the frame-local value
+(frame-value foo)
+@result{} bar
+
+;; get the default explicitly
+(frame-get-default foo)
+@result{} nil
+
+;; Switch to another frame and evaluate:
+;; C-x 5 o M-: (frame-setq foo 'baz) RET M-: (frame-value foo) RET
+@result{} baz
+
+;; Switch back.
+;; C-x 5 o
+(specifier-specs foo)
+@result{} ((#<x-frame "emacs" 0x28ec> (nil . baz))
+    (#<x-frame "Message" 0x1bd66> (nil . bar))
+    (global (nil)))
+
+(frame-value foo)
+@result{} bar
+
+(frame-get-default foo)
+@result{} nil
+@end example
+
+Note that since specifiers generalize both frame-local and buffer-local
+variables in a sensible way, XEmacs is not likely to put a high priority
+on implementing frame-local variables.
+@c Thanks to Jerry James for the following explanation.  He is not
+@c responsible for its use here, Stephen Turnbull is.
+In fact, some developers think that frame-local variables are evil for
+the same reason that buffer-local variables are evil: the declaration is
+both global and invisible.  That is, you cannot tell whether a variable
+is ``normal,'' buffer-local, or frame-local just by looking at it.  So
+if you have namespace management problems, and some other Lisp package
+happens to use a variable name that you already declared frame- or
+buffer-local, weird stuff happens, and it is extremely hard to track
+down.
+
 
 @node Creating Specifiers
 @section Creating New Specifier Objects
