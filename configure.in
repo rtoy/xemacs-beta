@@ -4196,6 +4196,16 @@ fi
 AC_C_INLINE
 test "$ac_cv_c_inline" != "no" -a "$GCC" = "yes" && XE_ADD_OBJS(inline.o)
 
+dnl check for the typeof extension
+AC_MSG_CHECKING(for typeof)
+AC_TRY_COMPILE(, [int i; __typeof__(i) j;], typeofname="__typeof__",
+  [AC_TRY_COMPILE(, [int i; typeof(i) j;], typeofname="typeof",
+   typeofname=no)])
+AC_MSG_RESULT($typeofname)
+if test "$typeofname" != "no"; then
+  AC_DEFINE_UNQUOTED(TYPEOF, $typeofname)
+fi
+
 dnl HP-UX has a working alloca in libPW.
 dnl case "${GCC}${opsys}" in hpux* )
 dnl  AC_CHECK_FUNC(alloca, [:], [AC_CHECK_LIB(PW, alloca)])

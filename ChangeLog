@@ -1,3 +1,7 @@
+2003-11-18  Jerry James  <james@xemacs.org>
+
+	* configure.in: Check for the typeof extension.
+
 2003-10-15  Jerry James  <james@xemacs.org>
 
 	* aclocal.m4: Add icc (Intel compiler) support.
