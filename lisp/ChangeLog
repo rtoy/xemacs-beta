@@ -1,3 +1,264 @@
+2005-02-02  Ben Wing  <ben@xemacs.org>
+
+	* cus-dep.el (Custom-make-dependencies-1):
+	If a directory has no custom dependencies, write a blank
+	custom-load file rather than deleting the file, so that
+	time-based rebuild checking will work.
+	
+	* cus-edit.el:
+	* cus-edit.el (custom-load-symbol):
+	* cus-edit.el (custom-load-symbol-1): New.
+	* cus-edit.el (custom-already-loaded-custom-defines): New.
+	* cus-edit.el (custom-define-current-source-file): New.
+	* cus-edit.el (custom-warn-when-reloading-necessary): New.
+	* cus-edit.el (custom-load-custom-defines): New.
+	* cus-edit.el (custom-load-custom-defines-1): New.
+	Split out code in custom-load-symbol.  Support loading of
+	the new custom-defines file.
+	
+	* cus-edit.el (custom-menu-create):
+	Split long menus.
+	
+	* custom.el:
+	* custom.el (load):
+	* custom.el (custom-dont-initialize): New.
+	* custom.el (custom-current-group-alist): New.
+	* custom.el (custom-declare-variable):
+	* custom.el (defcustom):
+	* custom.el (custom-current-group): New.
+	* custom.el (custom-declare-group):
+	* custom.el (defgroup):
+	* custom.el (custom-add-to-group):
+	* custom.el (custom-group-of-mode): New.
+	* custom.el (custom-handle-all-keywords):
+	* custom.el (custom-autoload): New.
+	* custom.el (custom-variable-p): New.
+	* custom.el (custom-load-recursion): New.
+	* custom.el (custom-load-symbol): New.
+	* custom.el (custom-known-themes):
+	* custom.el (custom-declare-theme): New.
+	* custom.el (deftheme):
+	* custom.el (custom-make-theme-feature):
+	* custom.el (custom-check-theme):
+	* custom.el (custom-push-theme):
+	* custom.el (custom-set-variables):
+	* custom.el (custom-theme-set-variables):
+	* custom.el (custom-set-default): New.
+	* custom.el (custom-quote): New.
+	* custom.el (customize-mark-to-save): New.
+	* custom.el (provide-theme):
+	* custom.el (require-theme):
+	* custom.el (customize-mark-as-set): New.
+	* custom.el (custom-remove-theme): New.
+	* custom.el (custom-do-theme-reset):
+	* custom.el (custom-theme-load-themes):
+	* custom.el (custom-load-themes):
+	* custom.el (custom-theme-value):
+	* custom.el (custom-theme-variable-value):
+	* custom.el (custom-theme-reset-internal):
+	* custom.el (copy-upto-last): Removed.
+	* custom.el (custom-theme-reset-variables):
+	* custom.el (custom-reset-variables):
+	* custom.el:
+	* custom.el (load):
+	* custom.el (custom-dont-initialize): New.
+	* custom.el (custom-current-group-alist): New.
+	* custom.el (custom-declare-variable):
+	* custom.el (defcustom):
+	* custom.el (custom-current-group): New.
+	* custom.el (custom-declare-group):
+	* custom.el (defgroup):
+	* custom.el (custom-add-to-group):
+	* custom.el (custom-group-of-mode): New.
+	* custom.el (custom-handle-all-keywords):
+	* custom.el (custom-autoload): New.
+	* custom.el (custom-variable-p): New.
+	* custom.el (custom-load-recursion): New.
+	* custom.el (custom-load-symbol): New.
+	* custom.el (custom-known-themes):
+	* custom.el (custom-declare-theme): New.
+	* custom.el (deftheme):
+	* custom.el (custom-make-theme-feature):
+	* custom.el (custom-check-theme):
+	* custom.el (custom-push-theme):
+	* custom.el (custom-set-variables):
+	* custom.el (custom-theme-set-variables):
+	* custom.el (custom-set-default): New.
+	* custom.el (custom-quote): New.
+	* custom.el (customize-mark-to-save): New.
+	* custom.el (provide-theme):
+	* custom.el (require-theme):
+	* custom.el (customize-mark-as-set): New.
+	* custom.el (custom-remove-theme): New.
+	* custom.el (custom-do-theme-reset):
+	* custom.el (custom-theme-load-themes):
+	* custom.el (custom-load-themes):
+	* custom.el (custom-theme-value):
+	* custom.el (custom-theme-variable-value):
+	* custom.el (custom-theme-reset-internal):
+	* custom.el (copy-upto-last): Removed.
+	* custom.el (custom-theme-reset-variables):
+	* custom.el (custom-reset-variables):
+	Sync with FSF 21.3.
+
+2004-11-09  Ben Wing  <ben@xemacs.org>
+
+	* easy-mmode.el, regexp-opt.el:
+	Move these files into core.
+	Uncomment stuff depending on new custom.el.
+	
+	* autoload.el:
+	* autoload.el (generate-autoload-function): New.
+	* autoload.el (autoload-feature-suffix): New.
+	* autoload.el (generate-autoload-section-continuation): New.
+	* autoload.el (make-autoload):
+	* autoload.el (generate-file-autoloads):
+	* autoload.el (generate-autoload-type-section):
+	* autoload.el (process-one-lisp-autoload): New.
+	* autoload.el (generate-lisp-file-autoloads-1):
+	* autoload.el (generate-c-file-autoloads-1):
+	* autoload.el (generate-custom-defines): New.
+	* autoload.el (print-autoload): Removed.
+	* autoload.el (autoload-print-form): New.
+	* autoload.el (defcustom):
+	* autoload.el (autoload-read-section-header): New.
+	* autoload.el (update-file-autoloads):
+	* autoload.el (update-autoloads-here): Removed.
+	* autoload.el (batch-update-directory-custom-defines): New.
+	* autoload.el (update-autoload-files):
+	* autoload.el (autoload-update-directory-autoloads): Removed.
+	* autoload.el (batch-update-directory-autoloads): New.
+	* autoload.el (autoload-featurep-protect-autoloads):
+	* autoload.el (update-autoloads-from-directory): Removed.
+	* autoload.el (update-custom-define-files): New.
+	* autoload.el (autoload-make-feature-name):
+	* autoload.el (batch-update-autoloads):
+	* autoload.el (batch-update-directory): Removed.
+	* autoload.el (batch-update-one-directory): Removed.
+	* autoload.el (batch-force-update-one-directory): Removed.
+	Major update.  Sync with FSF 21.2.
+	Create the ability to make custom-defines files.
+
+	* behavior-defs.el:
+	* behavior-defs.el (tty):
+	* behavior-defs.el ('scroll-in-place): Removed.
+	* behavior-defs.el ('mouse-avoidance): Removed.
+	* behavior-defs.el ('jka-compr): Removed.
+	* behavior-defs.el ('efs): Removed.
+	* behavior-defs.el ('resize-minibuffer): Removed.
+	* behavior-defs.el ('func-menu): Removed.
+	* behavior-defs.el ('mwheel): Removed.
+	* behavior-defs.el ('recent-files): Removed.
+	* behavior-defs.el ('filladapt): Removed.
+	* behavior-defs.el ('tty)): New.
+	* behavior-defs.el ('toolbars)): New.
+	* behavior-defs.el ('menus)): New.
+	* behavior-defs.el ('mouse)): New.
+	* behavior-defs.el ('editing)): New.
+	* behavior-defs.el ('keyboard)): New.
+	* behavior-defs.el ('files)): New.
+	* behavior-defs.el ('games)): New.
+	* behavior-defs.el ('processes)): New.
+	* behavior-defs.el ('display)): New.
+	* behavior-defs.el ('programming)): New.
+	* behavior-defs.el ('international)): New.
+	* behavior-defs.el ('buffers-and-windows)): New.
+	* behavior-defs.el ('internet)): New.
+	* behavior-defs.el ('compose-mail): New.
+	Only define the basic behavior groups here.
+	Move the definitions for particular packages to the
+	appropriate package files.
+	
+	* behavior.el:
+	* behavior.el (behavior-group-hash-table): New.
+	* behavior.el (behavior-override-hash-table): New.
+	* behavior.el (define-behavior): Removed.
+	* behavior.el (behavior-group-p): New.
+	* behavior.el (check-behavior-group): New.
+	* behavior.el (override-behavior):
+	* behavior.el (define-behavior-group):
+	* behavior.el (read-behavior):
+	* behavior.el (compute-behavior-group-children): New.
+	* behavior.el (behavior-menu-filter-1): New.
+	* behavior.el (behavior-menu-filter): New.
+	Major update.  Add documentation of how it works.
+	
+	* easymenu.el (easy-menu-add):
+	* easymenu.el (easy-menu-remove):
+	* map-ynp.el (map-y-or-n-p):
+	Use normalize-menu-text not normalize-menu-item-name.
+
+	* menubar-items.el (submenu-generate-accelerator-spec): Removed.
+	* menubar.el (submenu-generate-accelerator-spec): New.
+	Move to menubar.el and rewrite for cleanliness.
+	
+	* menubar-items.el (coding-system-menu-filter):
+	Use menu-split-long-menu-and-sort.
+	
+	* menubar-items.el (menu-item-strip-accelerator-spec): Removed.
+	* menubar-items.el (menu-item-generate-accelerator-spec): Removed.
+	* menubar-items.el (menu-max-items): Removed.
+	* menubar-items.el (menu-submenu-max-items): Removed.
+	* menubar-items.el (menu-submenu-name-format): Removed.
+	* menubar-items.el (menu-split-long-menu): Removed.
+	* menubar-items.el (menu-sort-menu): Removed.
+	* menubar.el (menu-item-strip-accelerator-spec): New.
+	* menubar.el (menu-item-generate-accelerator-spec): New.
+	* menubar.el (menu-max-items): New.
+	* menubar.el (menu-submenu-max-items): New.
+	* menubar.el (menu-submenu-name-format): New.
+	* menubar.el (menu-split-long-menu): New.
+	* menubar.el (menu-sort-menu): New.
+	Move to menubar.el.
+	
+	* menubar.el (menu-item-text): New.
+	* menubar.el (menu-split-long-menu-and-sort): New.
+	New funs.
+	
+	* menubar-items.el (default-menubar):
+	Delete many menus from Tools menu -- they have been integrated
+	as part of the behavior system.
+
+	Delete old Behavior menu defn.  Use behavior-menu-filter.
+
+	Use menu-split-long-menu-and-sort.
+	
+	* menubar.el (find-menu-item):
+	* menubar.el (find-menu-item-1): New.
+	Split up find-menu-item w/find-menu-item-1, since PARENT is not
+	an external item.
+	Rewrite to use compare-menu-text.
+	
+	* menubar.el (add-menu-item-1):
+	Don't normalize items as find-menu-item does not need it.
+	
+	* mwheel.el:
+	* mwheel.el ('mwheel): New.
+	Add define-behavior for mwheel.
+	
+	* paragraphs.el:
+	* paragraphs.el (paragraphs): New.
+	* paragraphs.el (use-hard-newlines): Removed.
+	* paragraphs.el (paragraph-start):
+	* paragraphs.el (paragraph-separate):
+	* paragraphs.el (sentence-end-double-space): New.
+	* paragraphs.el (sentence-end-without-period): New.
+	* paragraphs.el (sentence-end):
+	* paragraphs.el (forward-paragraph):
+	* paragraphs.el (backward-paragraph):
+	* paragraphs.el (mark-paragraph):
+	* paragraphs.el (forward-sentence):
+	* paragraphs.el (mark-end-of-sentence):
+	* paragraphs.el (transpose-sentences):
+	Sync to 21.3.  Depends on easy-mmode in core.
+
+	* update-elc-2.el (batch-update-elc-2):
+	* update-elc.el (do-autoload-commands):
+	Rewrite to use new autoload API.
+	
+	* update-elc.el (lisp-files-needing-early-byte-compilation):
+	Add easy-mmode.
+
 2005-01-31  Ben Wing  <ben@xemacs.org>
 
 	* help.el:

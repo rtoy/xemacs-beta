@@ -1,6 +1,7 @@
 ;;; cus-edit.el --- Tools for customizating Emacs and Lisp packages.
 ;;
 ;; Copyright (C) 1996, 1997, 2000 Free Software Foundation, Inc.
+;; Copyright (C) 2003 Ben Wing.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Maintainer: Hrvoje Niksic <hniksic@xemacs.org>
@@ -1656,23 +1657,121 @@ and `face'."
       (while loads
 	(setq load (car loads)
 	      loads (cdr loads))
-	(cond ((symbolp load)
-	       (condition-case nil
-		   (require load)
-		 (error nil)))
-	      ;; Don't reload a file already loaded.
-	      ((and (boundp 'preloaded-file-list)
-		    (member load preloaded-file-list)))
-	      ((assoc load load-history))
-	      ((assoc (locate-library load) load-history))
-	      (t
-	       (condition-case nil
-		   ;; Without this, we would load cus-edit recursively.
-		   ;; We are still loading it when we call this,
-		   ;; and it is not in load-history yet.
-		   (or (equal load "cus-edit")
-		       (load-library load))
-		 (error nil))))))))
+	(custom-load-symbol-1 load)))))
+
+(defun custom-load-symbol-1 (load)
+  (cond ((symbolp load)
+	 (condition-case nil
+	     (require load)
+	   (error nil)))
+	;; Don't reload a file already loaded.
+	((and (boundp 'preloaded-file-list)
+	      (member load preloaded-file-list)))
+	((assoc load load-history))
+	((assoc (locate-library load) load-history))
+	(t
+	 (condition-case nil
+	     ;; Without this, we would load cus-edit recursively.
+	     ;; We are still loading it when we call this,
+	     ;; and it is not in load-history yet.
+	     (or (equal load "cus-edit")
+		 (load-library load))
+	   (error nil)))))
+
+(defvar custom-already-loaded-custom-defines nil
+  "List of already-loaded `custom-defines' files.")
+(defvar custom-define-current-source-file nil)
+(defvar custom-warn-when-reloading-necessary nil
+  "For package-debugging purposes: Warn when an error hit in custom-defines.el.
+When this happens, the file from which the defcustom or defgroup was taken
+is loaded, and custom-defines.el is then reloaded.  This works in most
+cases, but may not be completely safe.  It's better if the package itself
+arranges for the necessary functions and variables to be available, using
+\;;;###autoload declarations.  When this variable is non-nil, warnings are
+issued (with backtrace), to aid in tracking down the problems.")
+
+(defun custom-load-custom-defines (symbol)
+  "Load custom-defines for SYMBOL."
+  (unless custom-load-recursion
+    (let ((custom-load-recursion t)
+	  (loads (get symbol 'custom-loads))
+	  load)
+      (while loads
+	(setq load (car loads)
+	      loads (cdr loads))
+	(let* ((found (locate-library
+		       (if (symbolp load) (symbol-name load) load)))
+	       (dir (and found (file-name-directory found))))
+	  ;; If we find a custom-defines file, assume the package is smart
+	  ;; enough to have put all its defcustoms and defgroups here, and
+	  ;; load it instead of the file itself.  Otherwise, do it the
+	  ;; hard way.
+	  (if (and found (or (file-exists-p
+			      (expand-file-name "custom-defines.elc" dir))
+			     (file-exists-p
+			      (expand-file-name "custom-defines.el" dir))))
+	      (when (not (member dir custom-already-loaded-custom-defines))
+		(push dir custom-already-loaded-custom-defines)
+		(custom-load-custom-defines-1 dir))))))))
+
+(defun custom-load-custom-defines-1 (dir)
+  ;; Actually load the custom-defines.el file in DIR.
+
+  ;; If we get an error loading the custom-defines, it may be because of a
+  ;; reference to something (e.g. a constant) that hasn't yet been defined
+  ;; yet.  Properly, these should have been marked, so they either go into
+  ;; the custom-defines.el file or are autoloaded.  But not everyone is so
+  ;; careful, so for the moment we try to load the file that the
+  ;; error-generating defcustom came from, and then reload the
+  ;; custom-defines.el file.  We might loop a number of times if we have
+  ;; various files that need loading.  If at any point we get an error that
+  ;; can't be solved just by loading the appropriate file (e.g. we hit the
+  ;; same error as before, the file is already loaded, etc.) then we signal
+  ;; it as a real error.
+  (let (source)
+    ;; here's how this works: if we get an error loading custom-defines,
+    ;; the condition handler is called; if we need to reload, we
+    ;; `return-from', which throws out of the handler and returns nil from
+    ;; the `block', which continues the while statement, executing the
+    ;; `load' at the bottom of this function and then entering the block
+    ;; again.  if the condition handler doesn't throw, but instead returns
+    ;; normally, `signal' will continue as if nothing happened, and end up
+    ;; signalling the error normally.
+    (while
+	(not
+	 (block custom-load
+	   ;; Use call-with-condition-handler so the error can be seen
+	   ;; with the stack intact.
+	   (call-with-condition-handler
+	       #'(lambda (__custom_load_cd1__)
+		   (when (and
+			  custom-define-current-source-file
+			  (progn
+			    (setq source (expand-file-name
+					  custom-define-current-source-file
+					  dir))
+			    (let ((nondir (file-name-nondirectory source)))
+			      (and (file-exists-p source)
+				   (not (assoc source load-history))
+				   (not (assoc nondir load-history))
+				   (not (and (boundp 'preloaded-file-list)
+					     (member nondir
+						     preloaded-file-list)))))))
+		     (if custom-warn-when-reloading-necessary
+			 (lwarn 'custom-defines 'warning
+			   "Error while loading custom-defines, fetching source and reloading ...\n
+Error: %s\n
+Source file: %s\n\n
+Backtrace follows:\n\n%s"
+			   (error-message-string __custom_load_cd1__)
+			   source
+			   (backtrace-in-condition-handler-eliminating-handler
+			    '__custom_load_cd1__)))
+		     (return-from custom-load nil)))
+	       #'(lambda ()
+		   (load (expand-file-name "custom-defines" dir))))))
+      ;; we get here only from the `return-from'; see above 
+      (load source))))
 
 (defun custom-load-widget (widget)
   "Load all dependencies for WIDGET."
@@ -3709,31 +3808,33 @@ Hashes several heavily used functions for `custom-save-resets'")
 (defun custom-menu-create (symbol)
   "Create menu for customization group SYMBOL.
 The menu is in a format applicable to `easy-menu-define'."
-  (let* ((item (vector (custom-unlispify-menu-entry symbol)
-		       `(customize-group ',symbol)
-		       t)))
-    ;; Item is the entry for creating a menu buffer for SYMBOL.
-    ;; We may nest, if the menu is not too big.
-    (custom-load-symbol symbol)
-    (if (< (length (get symbol 'custom-group)) widget-menu-max-size)
-	;; The menu is not too big.
-	(let ((custom-prefix-list (custom-prefix-add symbol
-						     custom-prefix-list))
-	      (members (custom-sort-items (get symbol 'custom-group)
-					  custom-menu-sort-alphabetically
-					  custom-menu-order-groups)))
-	  ;; Create the menu.
-	  `(,(custom-unlispify-menu-entry symbol t)
-	    ,item
-	    "--"
-	    ,@(mapcar (lambda (entry)
-			(widget-apply (if (listp (nth 1 entry))
-					  (nth 1 entry)
-					(list (nth 1 entry)))
-				      :custom-menu (nth 0 entry)))
-		      members)))
-      ;; The menu was too big.
-      item)))
+  (menu-split-long-menu
+   (let* ((item (vector (custom-unlispify-menu-entry symbol)
+			`(customize-group ',symbol)
+			t)))
+     ;; Item is the entry for creating a menu buffer for SYMBOL.
+     ;; We may nest, if the menu is not too big.
+     (custom-load-custom-defines symbol)
+     (if t ;(< (length (get symbol 'custom-group)) widget-menu-max-size)
+	 ;; The menu is not too big.
+	 (let ((custom-prefix-list (custom-prefix-add symbol
+						      custom-prefix-list))
+	       (members (custom-sort-items (get symbol 'custom-group)
+					   custom-menu-sort-alphabetically
+					   custom-menu-order-groups)))
+	   ;; Create the menu.
+	   `(,(custom-unlispify-menu-entry symbol t)
+	     ,item
+	     "--"
+	     ,@(mapcar (lambda (entry)
+			 (widget-apply (if (listp (nth 1 entry))
+					   (nth 1 entry)
+					 (list (nth 1 entry)))
+				       :custom-menu (nth 0 entry)))
+		       members)))
+       ; else ;; The menu was too big.
+       item
+       ))))
 
 ;;;###autoload
 (defun customize-menu-create (symbol &optional name)

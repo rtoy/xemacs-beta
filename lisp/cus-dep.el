@@ -173,11 +173,8 @@
 		))
 	    (cond
 	     ((zerop (hash-table-count hash))
-	      (if (not (file-exists-p cusload-file))
-		  (message "(No customization dependencies)")
-		(message "(No customization dependencies, deleting %s)"
-			 cusload-file)
-		(delete-file cusload-file)))
+	      (message "(No customization dependencies)")
+	      (write-region "" nil cusload-file))
 	     (t
 	      (message "Generating %s...\n" cusload-base-file)
 	      (with-temp-file cusload-file
