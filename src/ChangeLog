@@ -1,3 +1,9 @@
+2002-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* select.c (Fown_selection_internal):
+	* select.c (Fget_selection_internal):
+	Revert Jerry James's 2002-04-23 patch.
+
 2002-05-14  Ben Wing  <ben@xemacs.org>
 
 	* font-lock.c (find_context):

@@ -76,8 +76,13 @@ set the clipboard.")
 
 (defun get-clipboard ()
   "Return text pasted to the clipboard.
-See `interprogram-paste-function' for more information."
+Not suitable for `interprogram-paste-function', use `get-clipboard-foreign'."
   (get-selection 'CLIPBOARD))
+
+(defun get-clipboard-foreign ()
+  "Return text pasted to the clipboard by another program.
+See `interprogram-paste-function' for more information."
+  (get-selection-foreign 'CLIPBOARD))
 
 (define-device-method get-cutbuffer
   "Return the value of one of the cut buffers.
@@ -91,11 +96,11 @@ says how to convert the data. Returns NIL if there is no selection."
   (condition-case nil (get-selection type data-type) (t nil)))
 
 (defun get-selection (&optional type data-type)
-  "Return the value of a window-system selection, or nil if XEmacs owns it.
+  "Return the value of a window-system selection.
 The argument TYPE (default `PRIMARY') says which selection,
 and the argument DATA-TYPE (default `STRING', or `COMPOUND_TEXT' under Mule)
 says how to convert the data. If there is no selection an error is signalled.
-See `interprogram-paste-function' for more information."
+Not suitable in a `interprogram-paste-function', q.v."
   (or type (setq type 'PRIMARY))
   (or data-type (setq data-type selected-text-type))
   (if (consp data-type)
