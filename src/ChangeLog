@@ -1,3 +1,7 @@
+2003-05-20  Jerry James  <james@xemacs.org>
+
+	* regex.c (re_match_2_internal): pos -> charpos to fix shadow warning.
+
 2003-05-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* file-coding.c: DEFSYMBOL Qslightly_unlikely.

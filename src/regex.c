@@ -6075,7 +6075,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    /* XEmacs change */
 	    /* Straightforward and (I hope) correct implementation.
 	       Probably should be optimized by arranging to compute
-	       pos only once. */
+	       charpos only once. */
 	    /* emch1 is the character before d, syn1 is the syntax of
 	       emch1, emch2 is the character at d, and syn2 is the
 	       syntax of emch2. */
@@ -6087,7 +6087,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		at_beg = AT_STRINGS_BEG (d),
 		at_end = AT_STRINGS_END (d);
 #ifdef emacs
-	    Charxpos pos;
+	    Charxpos charpos;
 #endif
 
 	    if (at_beg && at_end)
@@ -6102,9 +6102,10 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		    DEC_IBYTEPTR_FMT (d_before, fmt);
 		    emch1 = itext_ichar_fmt (d_before, fmt, lispobj);
 #ifdef emacs
-		    pos = offset_to_charxpos (lispobj, PTR_TO_OFFSET (d)) - 1;
+		    charpos = offset_to_charxpos (lispobj,
+						  PTR_TO_OFFSET (d)) - 1;
 		    BEGIN_REGEX_MALLOC_OK ();
-		    UPDATE_SYNTAX_CACHE (scache, pos);
+		    UPDATE_SYNTAX_CACHE (scache, charpos);
 #endif
 		    syn1 = SYNTAX_FROM_CACHE (scache, emch1);
 		    END_REGEX_MALLOC_OK ();
@@ -6114,9 +6115,9 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		    d_after = POS_AFTER_GAP_UNSAFE (d);
 		    emch2 = itext_ichar_fmt (d_after, fmt, lispobj);
 #ifdef emacs
-		    pos = offset_to_charxpos (lispobj, PTR_TO_OFFSET (d));
+		    charpos = offset_to_charxpos (lispobj, PTR_TO_OFFSET (d));
 		    BEGIN_REGEX_MALLOC_OK ();
-		    UPDATE_SYNTAX_CACHE_FORWARD (scache, pos);
+		    UPDATE_SYNTAX_CACHE_FORWARD (scache, charpos);
 #endif
 		    syn2 = SYNTAX_FROM_CACHE (scache, emch2);
 		    END_REGEX_MALLOC_OK ();
