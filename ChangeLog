@@ -1,3 +1,9 @@
+2004-05-10  Jerry James  <james@xemacs.org>
+
+	* aclocal.m4: Typo fix.
+	* configure.in (XE_COMPUTE_RUNPATH): Add checks for shl_load and
+	LTDL; unify the OS-specific checks into a case statement.
+
 2004-04-30  Jerry James  <james@xemacs.org>
 
 	* configure.in: Turn ICC warning 147 into an error to get a good

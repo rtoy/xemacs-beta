@@ -218,7 +218,7 @@ dnl vital, as the module may have been compiled to rely on that behavior.
 dnl
 dnl So, having said all of that, we diverge from libtool significantly
 dnl here. We want to try and use the C compiler as much as possible. Only
-dnl if the C compiler itself cannot create shared libraries to we try to
+dnl if the C compiler itself cannot create shared libraries do we try to
 dnl find the linker.
 dnl
 dnl The other advantage to my scheme is that it removes the dependancy

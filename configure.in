@@ -3350,30 +3350,59 @@ dnl This must come before the detection code for anything that is in a module
 if test "$with_modules" != "no"; then
   AC_CHECKING(for module support)
 
-  dnl Check for MS-Windows
-  if test "$with_msw" = "yes"; then
-    have_dl=yes;
-  else
-    case "$opsys" in
-     darwin ) have_dl=yes; AC_DEFINE(HAVE_DYLD) ;;
-     * )
-      dnl Find headers and libraries
+  case "$opsys" in
+    mingw* | cygwin* ) have_dl=yes ;;
+    darwin ) have_dl=yes
+      AC_DEFINE(HAVE_DYLD)
+      ;;
+    * )
+      dnl Check for the ELFish dlopen()
       AC_CHECK_HEADER(dlfcn.h, [
 	AC_MSG_CHECKING([for dlopen in -lc])
 	AC_TRY_LINK([#include <dlfcn.h>],dnl
-	  [dlopen ("", 0);], [ have_dl=yes ], [
+	 [dlopen ("", 0);], [ have_dl=yes ], [
 	  AC_MSG_CHECKING([for dlopen in -ldl])
-	ac_save_LIBS="$LIBS"
-	LIBS="-ldl $LIBS"
-	AC_TRY_LINK([#include <dlfcn.h>],dnl
-	  [dlopen ("", 0);], [ have_dl=yes ],
-	  [LIBS="$ac_save_LIBS"])
-	ac_save_LIBS=])])
-      if test -n "$have_dl"; then
+	  ac_save_LIBS="$LIBS"
+	  LIBS="$LIBS -ldl"
+	  AC_TRY_LINK([#include <dlfcn.h>],dnl
+	   [dlopen ("", 0);], [ have_dl=yes ], [
+	    AC_MSG_CHECKING([for dlopen in -lsvld])
+	    LIBS="$ac_save_LIBS -lsvld"
+	    AC_TRY_LINK([#include <dlfcn.h>],dnl
+	     [dlopen ("", 0);], [ have_dl=yes ], [LIBS="$ac_save_LIBS"])])])])
+      if test "$have_dl" = "yes"; then
 	AC_DEFINE(HAVE_DLOPEN)
+      else
+	dnl Check for HP/UX shl_load
+	AC_CHECK_HEADER(dl.h, [
+	  AC_MSG_CHECKING([for shl_load in -lc])
+	  AC_TRY_LINK([#include <dl.h>],dnl
+	   [shl_load ("", 0, 0);], [have_dl=yes], [
+	    AC_MSG_CHECKING([for shl_load in -ldl])
+	    ac_save_LIBS="$LIBS"
+	    LIBS="$LIBS -ldld"
+	    AC_TRY_LINK([#include <dl.h>],dnl
+	     [shl_load ("", 0, 0);], [have_dl=yes], [LIBS="$ac_save_LIBS"])])])
+	if test "$have_dl" = "yes"; then
+	  AC_DEFINE(HAVE_SHL_LOAD) 
+	else
+	  dnl Check for libtool's libltdl
+	  AC_CHECK_HEADER(ltdl.h, [
+	    AC_MSG_CHECKING([for lt_dlinit in -lltdl])
+	    ac_save_LIBS="$LIBS"
+	    LIBS="$LIBS -lltdl"
+	    AC_TRY_LINK([#include <ltdl.h>],dnl
+	     [lt_dlinit ();], [have_dl=yes], [LIBS="$ac_save_LIBS"])])
+	  if test "$have_dl" = "yes"; then
+	    AC_DEFINE(HAVE_LTDL)
+	  fi
+	dnl end !HP/UX
+	fi
+      dnl end !dlopen
       fi
-    esac dnl end !darwin
-  fi dnl end !MS-Windows
+      ac_save_LIBS=
+  dnl end !darwin
+  esac
 
   if test -n "$have_dl"; then
     dnl XE_SHLIB_STUFF (in aclocal.m4) defines $can_build_shared
