@@ -24,7 +24,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 21.3.
 
 ;;; Commentary:
 
@@ -36,8 +36,6 @@
 ;;
 ;; This package was written by Dave Gillespie; it is a complete
 ;; rewrite of Cesar Quiroz's original cl.el package of December 1986.
-;;
-;; This package works with Emacs 18, Emacs 19, and XEmacs/Lucid Emacs 19.
 ;;
 ;; Bug reports, comments, and suggestions are welcome!
 
@@ -107,32 +105,8 @@
 			     'lucid)
 			    (t 19)))
 
-(or (fboundp 'defalias) (fset 'defalias 'fset))
-
 (defvar cl-optimize-speed 1)
 (defvar cl-optimize-safety 1)
-
-
-;;; Keywords used in this package.
-
-;;; XEmacs - keywords are done in Fintern().
-;;;
-;;; (defconst :test ':test)
-;;; (defconst :test-not ':test-not)
-;;; (defconst :key ':key)
-;;; (defconst :start ':start)
-;;; (defconst :start1 ':start1)
-;;; (defconst :start2 ':start2)
-;;; (defconst :end ':end)
-;;; (defconst :end1 ':end1)
-;;; (defconst :end2 ':end2)
-;;; (defconst :count ':count)
-;;; (defconst :initial-value ':initial-value)
-;;; (defconst :size ':size)
-;;; (defconst :from-end ':from-end)
-;;; (defconst :rehash-size ':rehash-size)
-;;; (defconst :rehash-threshold ':rehash-threshold)
-;;; (defconst :allow-other-keys ':allow-other-keys)
 
 
 (defvar custom-print-functions nil
@@ -227,13 +201,7 @@ Keywords supported:  :test :test-not :key"
 ;; ALWAYS be available.  So they've been moved from cl.el to eval.c.
 ;; Note: FSF Emacs moved them to subr.el in FSF 20.
 
-(defun cl-map-extents (&rest cl-args)
-  ;; XEmacs: This used to check for overlays first, but that's wrong
-  ;; because of the new compatibility library.  *duh*
-  (cond ((fboundp 'map-extents)
-	 (apply 'map-extents cl-args))
-	((fboundp 'next-overlay-at)
-	 (apply 'cl-map-overlays cl-args))))
+(defalias 'cl-map-extents 'map-extents)
 
 
 ;;; Blocks and exits.
@@ -246,12 +214,40 @@ Keywords supported:  :test :test-not :key"
 ;;; simulated.  Instead, multiple-value-bind and friends simply expect
 ;;; the target form to return the values as a list.
 
-(defalias 'values 'list)
-(defalias 'values-list 'identity)
-(defalias 'multiple-value-list 'identity)
-(defalias 'multiple-value-call 'apply)  ; only works for one arg
-(defalias 'nth-value 'nth)
+(defsubst values (&rest values)
+  "Return multiple values, Common Lisp style.
+The arguments of `values' are the values
+that the containing function should return."
+  values)
 
+(defsubst values-list (list)
+  "Return multiple values, Common Lisp style, taken from a list.
+LIST specifies the list of values
+that the containing function should return."
+  list)
+
+(defsubst multiple-value-list (expression)
+  "Return a list of the multiple values produced by EXPRESSION.
+This handles multiple values in Common Lisp style, but it does not
+work right when EXPRESSION calls an ordinary Emacs Lisp function
+that returns just one value."
+  expression)
+
+(defsubst multiple-value-apply (function expression)
+  "Evaluate EXPRESSION to get multiple values and apply FUNCTION to them.
+This handles multiple values in Common Lisp style, but it does not work
+right when EXPRESSION calls an ordinary Emacs Lisp function that returns just
+one value."
+  (apply function expression))
+
+(defalias 'multiple-value-call 'apply)  ; only works for one arg
+
+(defsubst nth-value (n expression)
+  "Evaluate EXPRESSION to get multiple values and return the Nth one.
+This handles multiple values in Common Lisp style, but it does not work
+right when EXPRESSION calls an ordinary Emacs Lisp function that returns just
+one value."
+  (nth n expression))
 
 ;;; Macros.
 
@@ -317,6 +313,7 @@ definitions to shadow the loaded ones for use in file byte-compilation."
 
 (defvar *gensym-counter* (* (logand (cl-random-time) 1023) 100))
 
+;; XEmacs change: gensym and gentemp moved here from cl-macs.el
 (defun gensym (&optional arg)
   "Generate a new uninterned symbol.
 The name is made by appending a number to a prefix.  If ARG is a string, it
@@ -341,6 +338,8 @@ If ARG is not a string, it is ignored."
 
 ;;; Numbers.
 
+;; XEmacs change: use floatp, which is right even in the presence of ratios
+;; and bigfloats
 (defun floatp-safe (object)
   "Return t if OBJECT is a floating point number."
   (floatp object))
@@ -361,14 +360,13 @@ If ARG is not a string, it is ignored."
   "Return t if INTEGER is even."
   (eq (logand integer 1) 0))
 
-(defun cl-abs (number)
-  "Return the absolute value of NUMBER."
-  (if (>= number 0) number (- number)))
-(or (fboundp 'abs) (defalias 'abs 'cl-abs))   ; This is built-in to Emacs 19
+;; XEmacs addition
+(defalias 'cl-abs 'abs)
 
 (defvar *random-state* (vector 'cl-random-state-tag -1 30 (cl-random-time)))
 
-;; These constants are defined in C when 'number-types is provided.
+;; XEmacs: These constants are defined in C when 'number-types is provided.
+;; They are always defined in C on Emacs.  Maybe we should, too.
 (unless (featurep 'number-types)
 ;;; We use `eval' in case VALBITS differs from compile-time to load-time.
   (defconst most-positive-fixnum (eval '(lsh -1 -1))
@@ -410,6 +408,7 @@ SEQ, this is like `mapcar'.  With several, it is like the Common Lisp
 	  (nreverse cl-res)))
     (mapcar cl-func cl-x)))
 
+(defalias 'svref 'aref)
 
 ;;; List functions.
 
@@ -420,42 +419,44 @@ SEQ, this is like `mapcar'.  With several, it is like the Common Lisp
 (defalias 'rest 'cdr)
 (defalias 'endp 'null)
 
+;; XEmacs change: make it a real function
 (defun second (x)
   "Return the second element of the list LIST."
   (car (cdr x)))
 
 (defun third (x)
-  "Return the third element of the list LIST."
+  "Return the third element of the list X."
   (car (cdr (cdr x))))
 
 (defun fourth (x)
-  "Return the fourth element of the list LIST."
+  "Return the fourth element of the list X."
   (nth 3 x))
 
 (defun fifth (x)
-  "Return the fifth element of the list LIST."
+  "Return the fifth element of the list X."
   (nth 4 x))
 
 (defun sixth (x)
-  "Return the sixth element of the list LIST."
+  "Return the sixth element of the list X."
   (nth 5 x))
 
 (defun seventh (x)
-  "Return the seventh element of the list LIST."
+  "Return the seventh element of the list X."
   (nth 6 x))
 
 (defun eighth (x)
-  "Return the eighth element of the list LIST."
+  "Return the eighth element of the list X."
   (nth 7 x))
 
 (defun ninth (x)
-  "Return the ninth element of the list LIST."
+  "Return the ninth element of the list X."
   (nth 8 x))
 
 (defun tenth (x)
-  "Return the tenth element of the list LIST."
+  "Return the tenth element of the list X."
   (nth 9 x))
 
+;; XEmacs change: Emacs defines caar, cadr, cdar, and cddr in subr.el.
 (defun caar (x)
   "Return the `car' of the `car' of X."
   (car (car x)))
@@ -569,34 +570,16 @@ SEQ, this is like `mapcar'.  With several, it is like the Common Lisp
   (cdr (cdr (cdr (cdr x)))))
 
 ;;; `last' is implemented as a C primitive, as of 1998-11
-
-;(defun last (x &optional n)
-;  "Return the last link in the list LIST.
-;With optional argument N, return Nth-to-last link (default 1)."
-;  (if n
-;      (let ((m 0) (p x))
-;	(while (consp p) (incf m) (pop p))
-;	(if (<= n 0) p
-;	  (if (< n m) (nthcdr (- m n) x) x)))
-;    (while (consp (cdr x)) (pop x))
-;    x))
-
-;;; `butlast'  is implemented as a C primitive, as of 1998-11
-;;; `nbutlast' is implemented as a C primitive, as of 1998-11
-
-;(defun butlast (x &optional n)
-;  "Return a copy of LIST with the last N elements removed."
-;  (if (and n (<= n 0)) x
-;    (nbutlast (copy-sequence x) n)))
-
-;(defun nbutlast (x &optional n)
-;  "Modify LIST to remove the last N elements."
-;  (let ((m (length x)))
-;    (or n (setq n 1))
-;    (and (< n m)
-;	 (progn
-;	   (if (> n 0) (setcdr (nthcdr (- (1- m) n) x) nil))
-;	   x))))
+;;(defun last* (x &optional n)
+;;  "Returns the last link in the list LIST.
+;;With optional argument N, returns Nth-to-last link (default 1)."
+;;  (if n
+;;      (let ((m 0) (p x))
+;;	(while (consp p) (incf m) (pop p))
+;;	(if (<= n 0) p
+;;	  (if (< n m) (nthcdr (- m n) x) x)))
+;;    (while (consp (cdr x)) (pop x))
+;;    x))
 
 (defun list* (arg &rest rest)   ; See compiler macro in cl-macs.el
   "Return a new list with specified args as elements, cons'd to last arg.
@@ -631,10 +614,6 @@ Thus, `(list* A B C D)' is equivalent to `(nconc (list A B C) D)', or to
 (defun cl-maclisp-member (item list)
   (while (and list (not (equal item (car list)))) (setq list (cdr list)))
   list)
-
-;;; Define an Emacs 19-compatible `member' for the benefit of Emacs 18 users.
-(or (and (fboundp 'member) (subrp (symbol-function 'member)))
-    (defalias 'member 'cl-maclisp-member))
 
 (defalias 'cl-member 'memq)   ; for compatibility with old CL package
 (defalias 'cl-floor 'floor*)
@@ -683,19 +662,7 @@ Keywords supported:  :test :test-not :key"
 ;; XEmacs change
 (define-error 'cl-assertion-failed "Assertion failed")
 
-;;; This is defined in Emacs 19; define it here for Emacs 18 users.
-(defun cl-add-hook (hook func &optional append)
-  "Add to hook variable HOOK the function FUNC.
-FUNC is not added if it already appears on the list stored in HOOK."
-  (let ((old (and (boundp hook) (symbol-value hook))))
-    (and (listp old) (not (eq (car old) 'lambda))
-	 (setq old (list old)))
-    (and (not (member func old))
-	 (set hook (if append (nconc old (list func)) (cons func old))))))
-(or (fboundp 'add-hook) (defalias 'add-hook 'cl-add-hook))
-
-;; XEmacs change
-;(load "cl-defs")
+;; XEmacs change: omit the autoload rules; we handle those a different way
 
 ;;; Define data for indentation and edebug.
 (mapcar
@@ -751,10 +718,10 @@ FUNC is not added if it already appears on the list stored in HOOK."
 (defun cl-hack-byte-compiler ()
   (if (and (not cl-hacked-flag) (fboundp 'byte-compile-file-form))
       (progn
+	(setq cl-hacked-flag t)		; Do it first, to prevent recursion.
 	(when (not (fboundp 'cl-compile-time-init))
 	  (load "cl-macs" nil t))
-	(cl-compile-time-init)   ; in cl-macs.el
-	(setq cl-hacked-flag t))))
+	(cl-compile-time-init))))	; In cl-macs.el.
 
 ;;; Try it now in case the compiler has already been loaded.
 (cl-hack-byte-compiler)
@@ -764,7 +731,8 @@ FUNC is not added if it already appears on the list stored in HOOK."
 ;;; we can take advantage of the fact that emacs-lisp-mode will be
 ;;; called when the compiler reads in the file to be compiled.
 ;;; BUG: If the first compilation is `byte-compile' rather than
-;;; `byte-compile-file', we lose.  Oh, well.
+;;; `byte-compile-file', we lose.  Emacs has fixed this by hanging it
+;;; on `bytecomp-load-hook' instead, which we do not have.
 (add-hook 'emacs-lisp-mode-hook 'cl-hack-byte-compiler)
 
 
@@ -773,8 +741,7 @@ FUNC is not added if it already appears on the list stored in HOOK."
 
 (provide 'cl)
 
-(provide 'mini-cl)   ; for Epoch
-
 (run-hooks 'cl-load-hook)
 
+;;; arch-tag: 5f07fa74-f153-4524-9303-21f5be125851
 ;;; cl.el ends here

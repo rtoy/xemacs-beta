@@ -1,6 +1,6 @@
 ;;; cl-extra.el --- Common Lisp extensions for XEmacs Lisp (part two)
 
-;; Copyright (C) 1993 Free Software Foundation, Inc.
+;; Copyright (C) 1993,2000,2003  Free Software Foundation, Inc.
 ;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
@@ -25,7 +25,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 21.3.
 
 ;;; Commentary:
 
@@ -38,8 +38,6 @@
 ;; This package was written by Dave Gillespie; it is a complete
 ;; rewrite of Cesar Quiroz's original cl.el package of December 1986.
 ;;
-;; This package works with Emacs 18, Emacs 19, and XEmacs/Lucid Emacs 19.
-;;
 ;; Bug reports, comments, and suggestions are welcome!
 
 ;; This file contains portions of the Common Lisp extensions
@@ -49,21 +47,12 @@
 
 
 ;;; Code:
+;; XEmacs addition
 (eval-when-compile
   (require 'obsolete))
 
 (or (memq 'cl-19 features)
     (error "Tried to load `cl-extra' before `cl'!"))
-
-
-;;; We define these here so that this file can compile without having
-;;; loaded the cl.el file already.
-
-(defmacro cl-push (x place) (list 'setq place (list 'cons x place)))
-(defmacro cl-pop (place)
-  (list 'car (list 'prog1 place (list 'setq place (list 'cdr place)))))
-
-(defvar cl-emacs-type)
 
 
 ;;; Type coercion.
@@ -77,14 +66,18 @@ TYPE is a Common Lisp type specifier."
 	((eq type 'array) (if (arrayp x) x (vconcat x)))
 	((and (eq type 'character) (stringp x) (= (length x) 1)) (aref x 0))
 	((and (eq type 'character) (symbolp x)) (coerce (symbol-name x) type))
+	;; XEmacs addition character <-> integer coercions
 	((and (eq type 'character) (char-int-p x)) (int-char x))
 	((and (eq type 'integer) (characterp x)) (char-int x))
 	((eq type 'float) (float x))
+	;; XEmacs addition: enhanced numeric type coercions
 	((and (featurep 'number-types)
 	      (memq type '(integer ratio bigfloat))
 	      (coerce-number x type)))
+	;; XEmacs addition: bit-vector coercion
 	((eq type 'bit-vector) (if (bit-vector-p x) x
 				 (apply 'bit-vector (append x nil))))
+	;; XEmacs addition: weak-list coercion
 	((eq type 'weak-list)
 	 (if (weak-list-p x) x
 	   (let ((wl (make-weak-list)))
@@ -103,8 +96,9 @@ numbers of different types (float vs. integer), and also compares
 strings case-insensitively."
   (cond ((eq x y) t)
 	((stringp x)
-	 ;; avoids downcase
+	 ;; XEmacs change: avoid downcase
 	 (eq t (compare-strings x nil nil y nil nil t)))
+	;; XEmacs addition: compare characters
 	((characterp x)
 	 (and (characterp y)
 	      (or (char-equal x y)
@@ -112,9 +106,8 @@ strings case-insensitively."
 	((numberp x)
 	 (and (numberp y) (= x y)))
 	((consp x)
-	 ;; XEmacs change
 	 (while (and (consp x) (consp y) (equalp (car x) (car y)))
-	   (cl-pop x) (cl-pop y))
+	   (setq x (cdr x) y (cdr y)))
 	 (and (not (consp x)) (equalp x y)))
 	((vectorp x)
 	 (and (vectorp y) (= (length x) (length y))
@@ -144,7 +137,7 @@ strings case-insensitively."
 			  (setcar cl-p1 (cdr (car cl-p1))))
 		      (aref (car cl-p1) cl-i)))
 	    (setq cl-p1 (cdr cl-p1) cl-p2 (cdr cl-p2)))
-	  (cl-push (apply cl-func cl-args) cl-res)
+	  (push (apply cl-func cl-args) cl-res)
 	  (setq cl-i (1+ cl-i)))
 	(nreverse cl-res))
     (let ((cl-res nil)
@@ -153,9 +146,9 @@ strings case-insensitively."
       (let ((cl-n (min (length cl-x) (length cl-y)))
 	    (cl-i -1))
 	(while (< (setq cl-i (1+ cl-i)) cl-n)
-	  (cl-push (funcall cl-func
-			    (if (consp cl-x) (cl-pop cl-x) (aref cl-x cl-i))
-			    (if (consp cl-y) (cl-pop cl-y) (aref cl-y cl-i)))
+	  (push (funcall cl-func
+			    (if (consp cl-x) (pop cl-x) (aref cl-x cl-i))
+			    (if (consp cl-y) (pop cl-y) (aref cl-y cl-i)))
 		   cl-res)))
       (nreverse cl-res))))
 
@@ -175,17 +168,17 @@ the elements themselves."
 	    (cl-args (cons cl-list (copy-sequence cl-rest)))
 	    cl-p)
 	(while (not (memq nil cl-args))
-	  (cl-push (apply cl-func cl-args) cl-res)
+	  (push (apply cl-func cl-args) cl-res)
 	  (setq cl-p cl-args)
-	  (while cl-p (setcar cl-p (cdr (cl-pop cl-p)) )))
+	  (while cl-p (setcar cl-p (cdr (pop cl-p)) )))
 	(nreverse cl-res))
     (let ((cl-res nil))
       (while cl-list
-	(cl-push (funcall cl-func cl-list) cl-res)
+	(push (funcall cl-func cl-list) cl-res)
 	(setq cl-list (cdr cl-list)))
       (nreverse cl-res))))
 
-
+;; XEmacs change: in Emacs, this function is named cl-mapc.
 (defun mapc (cl-func cl-seq &rest cl-rest)
   "Like `mapcar', but does not accumulate values returned by the function."
   (if cl-rest
@@ -194,6 +187,9 @@ the elements themselves."
     ;; which really doesn't accumulate any results.
     (mapc-internal cl-func cl-seq))
   cl-seq)
+
+;; XEmacs addition: FSF compatibility
+(defalias 'cl-mapc 'mapc)
 
 (defun mapl (cl-func cl-list &rest cl-rest)
   "Like `maplist', but does not accumulate values returned by the function."
@@ -222,7 +218,7 @@ If so, return the true (non-nil) value returned by PREDICATE."
 			     (if cl-res (throw 'cl-some cl-res)))))
 	       cl-seq cl-rest) nil)
     (let ((cl-x nil))
-      (while (and cl-seq (not (setq cl-x (funcall cl-pred (cl-pop cl-seq))))))
+      (while (and cl-seq (not (setq cl-x (funcall cl-pred (pop cl-seq))))))
       cl-x)))
 
 (defun every (cl-pred cl-seq &rest cl-rest)
@@ -246,35 +242,19 @@ If so, return the true (non-nil) value returned by PREDICATE."
   (not (apply 'every cl-pred cl-seq cl-rest)))
 
 ;;; Support for `loop'.
-(defun cl-map-keymap (cl-func cl-map)
-  (while (symbolp cl-map) (setq cl-map (symbol-function cl-map)))
-  (if (eq cl-emacs-type 'lucid) (funcall 'map-keymap cl-func cl-map)
-    (if (listp cl-map)
-	(let ((cl-p cl-map))
-	  (while (consp (setq cl-p (cdr cl-p)))
-	    (cond ((consp (car cl-p))
-		   (funcall cl-func (car (car cl-p)) (cdr (car cl-p))))
-		  ((vectorp (car cl-p))
-		   (cl-map-keymap cl-func (car cl-p)))
-		  ((eq (car cl-p) 'keymap)
-		   (setq cl-p nil)))))
-      (let ((cl-i -1))
-	(while (< (setq cl-i (1+ cl-i)) (length cl-map))
-	  (if (aref cl-map cl-i)
-	      (funcall cl-func cl-i (aref cl-map cl-i))))))))
+(defalias 'cl-map-keymap 'map-keymap)
 
 (defun cl-map-keymap-recursively (cl-func-rec cl-map &optional cl-base)
   (or cl-base
-      (setq cl-base (copy-sequence (if (eq cl-emacs-type 18) "0" [0]))))
-  (cl-map-keymap
+      (setq cl-base (copy-sequence [0])))
+  (map-keymap
    (function
     (lambda (cl-key cl-bind)
       (aset cl-base (1- (length cl-base)) cl-key)
       (if (keymapp cl-bind)
 	  (cl-map-keymap-recursively
 	   cl-func-rec cl-bind
-	   (funcall (if (eq cl-emacs-type 18) 'concat 'vconcat)
-		    cl-base (list 0)))
+	   (vconcat cl-base (list 0)))
 	(funcall cl-func-rec cl-base cl-bind))))
    cl-map))
 
@@ -282,17 +262,15 @@ If so, return the true (non-nil) value returned by PREDICATE."
   (or cl-what (setq cl-what (current-buffer)))
   (if (bufferp cl-what)
       (let (cl-mark cl-mark2 (cl-next t) cl-next2)
-	(save-excursion
-	  (set-buffer cl-what)
+	(with-current-buffer cl-what
 	  (setq cl-mark (copy-marker (or cl-start (point-min))))
 	  (setq cl-mark2 (and cl-end (copy-marker cl-end))))
 	(while (and cl-next (or (not cl-mark2) (< cl-mark cl-mark2)))
-	  (setq cl-next (and-fboundp 'next-property-change
-			  (if cl-prop (next-single-property-change
-				       cl-mark cl-prop cl-what)
-			    (next-property-change cl-mark cl-what)))
-		cl-next2 (or cl-next (save-excursion
-				       (set-buffer cl-what) (point-max))))
+	  (setq cl-next (if cl-prop (next-single-property-change
+				     cl-mark cl-prop cl-what)
+			  (next-property-change cl-mark cl-what))
+		cl-next2 (or cl-next (with-current-buffer cl-what
+				       (point-max))))
 	  (funcall cl-func (prog1 (marker-position cl-mark)
 			     (set-marker cl-mark cl-next2))
 		   (if cl-mark2 (min cl-next2 cl-mark2) cl-next2)))
@@ -300,10 +278,9 @@ If so, return the true (non-nil) value returned by PREDICATE."
     (or cl-start (setq cl-start 0))
     (or cl-end (setq cl-end (length cl-what)))
     (while (< cl-start cl-end)
-      (let ((cl-next (or (and-fboundp 'next-property-change
-			   (if cl-prop (next-single-property-change
-					cl-start cl-prop cl-what)
-			     (next-property-change cl-start cl-what)))
+      (let ((cl-next (or (if cl-prop (next-single-property-change
+				      cl-start cl-prop cl-what)
+			   (next-property-change cl-start cl-what))
 			 cl-end)))
 	(funcall cl-func cl-start (min cl-next cl-end))
 	(setq cl-start cl-next)))))
@@ -316,8 +293,7 @@ If so, return the true (non-nil) value returned by PREDICATE."
 	;; This is the preferred algorithm, though overlay-lists is
 	;; undocumented.
 	(let (cl-ovl)
-	  (save-excursion
-	    (set-buffer cl-buffer)
+	  (with-current-buffer cl-buffer
 	    (setq cl-ovl (overlay-lists))
 	    (if cl-start (setq cl-start (copy-marker cl-start)))
 	    (if cl-end (setq cl-end (copy-marker cl-end))))
@@ -333,10 +309,10 @@ If so, return the true (non-nil) value returned by PREDICATE."
 	  (if cl-end (set-marker cl-end nil)))
 
       ;; This alternate algorithm fails to find zero-length overlays.
-      (let ((cl-mark (save-excursion (set-buffer cl-buffer)
-				     (copy-marker (or cl-start (point-min)))))
-	    (cl-mark2 (and cl-end (save-excursion (set-buffer cl-buffer)
-						  (copy-marker cl-end))))
+      (let ((cl-mark (with-current-buffer cl-buffer
+		       (copy-marker (or cl-start (point-min)))))
+	    (cl-mark2 (and cl-end (with-current-buffer cl-buffer
+				    (copy-marker cl-end))))
 	    cl-pos cl-ovl)
 	(while (save-excursion
 		 (and (setq cl-pos (marker-position cl-mark))
@@ -363,28 +339,28 @@ If so, return the true (non-nil) value returned by PREDICATE."
 (defvar cl-progv-save)
 (defun cl-progv-before (syms values)
   (while syms
-    (cl-push (if (boundp (car syms))
+    (push (if (boundp (car syms))
 		 (cons (car syms) (symbol-value (car syms)))
 	       (car syms)) cl-progv-save)
     (if values
-	(set (cl-pop syms) (cl-pop values))
-      (makunbound (cl-pop syms)))))
+	(set (pop syms) (pop values))
+      (makunbound (pop syms)))))
 
 (defun cl-progv-after ()
   (while cl-progv-save
     (if (consp (car cl-progv-save))
 	(set (car (car cl-progv-save)) (cdr (car cl-progv-save)))
       (makunbound (car cl-progv-save)))
-    (cl-pop cl-progv-save)))
+    (pop cl-progv-save)))
 
 
 ;;; Numbers.
 
 (defun gcd (&rest args)
   "Return the greatest common divisor of the arguments."
-  (let ((a (abs (or (cl-pop args) 0))))
+  (let ((a (abs (or (pop args) 0))))
     (while args
-      (let ((b (abs (cl-pop args))))
+      (let ((b (abs (pop args))))
 	(while (> b 0) (setq b (% a (setq a b))))))
     a))
 
@@ -392,9 +368,9 @@ If so, return the true (non-nil) value returned by PREDICATE."
   "Return the least common multiple of the arguments."
   (if (memq 0 args)
       0
-    (let ((a (abs (or (cl-pop args) 1))))
+    (let ((a (abs (or (pop args) 1))))
       (while args
-	(let ((b (abs (cl-pop args))))
+	(let ((b (abs (pop args))))
 	  (setq a (* (/ a (gcd a b)) b))))
       a)))
 
@@ -410,6 +386,7 @@ If so, return the true (non-nil) value returned by PREDICATE."
 	g)
     (if (eq a 0) 0 (signal 'arith-error nil))))
 
+;; XEmacs addition
 (defun cl-expt (x y)
   "Return X raised to the power of Y.  Works only for integer arguments."
   (if (<= y 0) (if (= y 0) 1 (if (memq x '(-1 1)) (cl-expt x (- y)) 0))
@@ -576,7 +553,7 @@ If STATE is t, return a new state object seeded from the time of day."
 ;	     (if end
 ;		 (let ((res nil))
 ;		   (while (>= (setq end (1- end)) start)
-;		     (cl-push (cl-pop seq) res))
+;		     (push (pop seq) res))
 ;		   (nreverse res))
 ;	       (copy-sequence seq)))
 ;	    (t
@@ -590,6 +567,7 @@ If STATE is t, return a new state object seeded from the time of day."
 
 (defun concatenate (type &rest seqs)
   "Concatenate, into a sequence of type TYPE, the argument SEQUENCES."
+  ;; XEmacs change: use case instead of cond for clarity
   (case type
     (vector (apply 'vconcat seqs))
     (string (apply 'concat seqs))
@@ -619,25 +597,7 @@ If STATE is t, return a new state object seeded from the time of day."
     (setq list (cdr list)))
   (if (numberp sublist) (equal sublist list) (eq sublist list)))
 
-(defun cl-copy-tree (tree &optional vecp)
-  "Make a copy of TREE.
-If TREE is a cons cell, this recursively copies both its car and its cdr.
-Contrast to copy-sequence, which copies only along the cdrs.  With second
-argument VECP, this copies vectors as well as conses."
-  (if (consp tree)
-      (let ((p (setq tree (copy-list tree))))
-	(while (consp p)
-	  (if (or (consp (car p)) (and vecp (vectorp (car p))))
-	      (setcar p (cl-copy-tree (car p) vecp)))
-	  (or (listp (cdr p)) (setcdr p (cl-copy-tree (cdr p) vecp)))
-	  (cl-pop p)))
-    (if (and vecp (vectorp tree))
-	(let ((i (length (setq tree (copy-sequence tree)))))
-	  (while (>= (setq i (1- i)) 0)
-	    (aset tree i (cl-copy-tree (aref tree i) vecp))))))
-  tree)
-(or (and (fboundp 'copy-tree) (subrp (symbol-function 'copy-tree)))
-    (defalias 'copy-tree 'cl-copy-tree))
+(defalias 'cl-copy-tree 'copy-tree)
 
 
 ;;; Property lists.
@@ -655,6 +615,11 @@ argument VECP, this copies vectors as well as conses."
   (let ((p (cdr plist)))
     (while (and (cdr p) (not (eq (car (cdr p)) tag))) (setq p (cdr (cdr p))))
     (and (cdr p) (progn (setcdr p (cdr (cdr (cdr p)))) t))))
+
+;; XEmacs change: we have a builtin remprop
+(defalias 'cl-remprop 'remprop)
+
+
 
 ;;; Hash tables.
 
@@ -696,6 +661,10 @@ argument VECP, this copies vectors as well as conses."
 (defalias 'cl-remhash 'remhash)
 (defalias 'cl-clrhash 'clrhash)
 (defalias 'cl-maphash 'maphash)
+;; These three actually didn't exist in Emacs-20.
+(defalias 'cl-make-hash-table 'make-hash-table)
+(defalias 'cl-hash-table-p 'hash-table-p)
+(defalias 'cl-hash-table-count 'hash-table-count)
 
 ;;; Some debugging aids.
 
@@ -717,6 +686,7 @@ argument VECP, this copies vectors as well as conses."
   (skip-chars-forward " ")
   (if (looking-at "(")
       (let ((skip (or (looking-at "((") 
+		      ;; XEmacs: be selective about trailing stuff after prog
 		      (looking-at "(prog[nv12\\(ress-feedback\\|n-with-message\\)]")
 		      (looking-at "(unwind-protect ")
 		      (looking-at "(function (")
@@ -756,7 +726,7 @@ This also does some trivial optimizations to make the form prettier."
 	     (cl-macroexpand-all (cons 'progn (cddr form)) env)
 	   (let ((letf nil) (res nil) (lets (cadr form)))
 	     (while lets
-	       (cl-push (if (consp (car lets))
+	       (push (if (consp (car lets))
 			    (let ((exp (cl-macroexpand-all (caar lets) env)))
 			      (or (symbolp exp) (setq letf t))
 			      (cons exp (cl-macroexpand-body (cdar lets) env)))
@@ -785,13 +755,14 @@ This also does some trivial optimizations to make the form prettier."
 			  (sub (pairlis cl-closure-vars new)) (decls nil))
 		     (while (or (stringp (car body))
 				(eq (car-safe (car body)) 'interactive))
-		       (cl-push (list 'quote (cl-pop body)) decls))
+		       (push (list 'quote (pop body)) decls))
 		     (put (car (last cl-closure-vars)) 'used t)
 		     (append
 		      (list 'list '(quote lambda) '(quote (&rest --cl-rest--)))
 		      (sublis sub (nreverse decls))
 		      (list
 		       (list* 'list '(quote apply)
+			      ;; XEmacs: put a quote before the function
 			      (list 'list '(quote quote)
 				    (list 'function
 					  (list* 'lambda
@@ -804,6 +775,7 @@ This also does some trivial optimizations to make the form prettier."
 				     '((quote --cl-rest--)))))))
 		 (list (car form) (list* 'lambda (cadadr form) body))))
 	   (let ((found (assq (cadr form) env)))
+	     ;; XEmacs: cadr/caddr operate on nil without errors
 	     (if (eq (cadr (caddr found)) 'cl-labels-args)
 		 (cl-macroexpand-all (cadr (caddr (cadddr found))) env)
 	       form))))
@@ -834,6 +806,8 @@ This also does some trivial optimizations to make the form prettier."
 
 (run-hooks 'cl-extra-load-hook)
 
+;; XEmacs addition
 (provide 'cl-extra)
 
+;;; arch-tag: bcd03437-0871-43fb-a8f1-ad0e0b5427ed
 ;;; cl-extra.el ends here

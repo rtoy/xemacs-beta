@@ -1,3 +1,48 @@
+2004-06-24  Jerry James  <james@xemacs.org>
+
+	* cl-compat.el: Synch with Emacs 21.3.
+	* cl-extra.el: Ditto.
+	* cl-extra.el (cl-push): Removed because superfluous.
+	* cl-extra.el (cl-pop): Removed because superfluous.
+	* cl-extra.el (cl-emacs-type)): Removed because unused.
+	* cl-extra.el (cl-map-keymap): Just alias map-keymap.
+	* cl-extra.el (cl-map-keymap-recursively): Drop Emacs 18 support.
+	* cl-extra.el (cl-copy-tree): Removed because superfluous.
+	* cl-extra.el (cl-remprop): New alias.
+	* cl-extra.el (cl-make-hash-table): New alias.
+	* cl-extra.el (cl-hash-table-p): New alias.
+	* cl-extra.el (cl-hash-table-count): New alias.
+	* cl-macs.el: Synch with Emacs 21.3.
+	* cl-macs.el (cl-push): Removed because superfluous.
+	* cl-macs.el (cl-pop): Removed because superfluous.
+	* cl-macs.el (cl-emacs-type): Removed because unused.
+	* cl-macs.el (cl-compile-time-init): Drop Emacs 18 and 19 support.
+	* cl-macs.el (return): Change arg name to match Emacs and docstring.
+	* cl-macs.el (return-from): Ditto.
+	* cl-macs.el (loop): Check for 'collecting as well as 'collect.
+	* cl-macs.el (define-setf-expander): New alias.
+	* cl-macs.el (caar): New setf method.
+	* cl-macs.el (cadr): New setf method.
+	* cl-macs.el (cdar): New setf method.
+	* cl-macs.el (cddr): New setf method.
+	* cl-macs.el (deftype): Change arg name to match Emacs and docstring.
+	* cl-macs.el (ignore-errors): Change docstring to match arg name.
+	* cl-seq.el: Synch with Emacs 21.3.
+	* cl-seq.el (cl-push): Removed because superfluous.
+	* cl-seq.el (cl-pop): Removed because superfluous.
+	* cl-seq.el (mismatch): Typo fix.
+	* cl.el: Synch with Emacs 21.3.
+	* cl.el (cl-map-extents): Alias map-extents.
+	* cl.el (values): Change from defalias to defsubst to add docstring.
+	* cl.el (values-list): Ditto.
+	* cl.el (multiple-value-list): Ditto.
+	* cl.el (multiple-value-apply): Ditto.
+	* cl.el (nth-value): Ditto.
+	* cl.el (cl-abs): Alias the `abs' builtin instead.
+	* cl.el (svref): New alias.
+	* cl.el (cl-add-hook): Removed due to obsolescence.
+	* cl.el (cl-hack-byte-compiler): Set cl-hacked-flag first for safety.
+
 2004-06-26  Steve Youngs  <steve@youngs.au.com>
 
 	* package-get.el (package-get-info-name-array): New.

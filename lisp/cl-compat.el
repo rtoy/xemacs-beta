@@ -23,7 +23,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 21.3.
 
 ;;; Commentary:
 
@@ -55,11 +55,6 @@
 
 (defmacro defkeyword (x &optional doc)
   (list* 'defconst x (list 'quote x) (and doc (list doc))))
-
-;; XEmacs change.
-;; We have built-in function.
-;;(defun keywordp (sym)
-;;  (and (symbolp sym) (eq (aref (symbol-name sym) 0) ?\:) (set sym sym)))
 
 (defun keyword-of (sym)
   (or (keywordp sym) (keywordp (intern (format ":%s" sym)))))
@@ -192,5 +187,5 @@
 
 (provide 'cl-compat)
 
+;;; arch-tag: 9996bb4f-aaf5-4592-b436-bf64759a3163
 ;;; cl-compat.el ends here
-
