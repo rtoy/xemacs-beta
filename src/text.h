@@ -1097,7 +1097,7 @@ do {									\
   memcpy (*_lta_, XSTRING_DATA (_lta_2), 1 + XSTRING_LENGTH (_lta_2));	\
 } while (0)
 
-/* Make an alloca'd copy of a Ibyte * */	\
+/* Make an alloca'd copy of a Ibyte * */
 #define IBYTE_STRING_TO_ALLOCA(p, lval)		\
 do {						\
   Ibyte **_bsta_ = (Ibyte **) &(lval);		\

@@ -1,3 +1,8 @@
+2003-05-01  Andrew Begel  <abegel@CS.Berkeley.EDU>
+
+	* text.h (IBYTE_STRING_TO_ALLOCA): Removed a stray backslash from
+	the preceding comment.
+
 2003-05-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* config.h.in (HAVE_INTPTR_T_IN_SYS_TYPES_H): New.
