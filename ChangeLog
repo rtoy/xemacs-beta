@@ -1,3 +1,8 @@
+2003-09-20  Rodney Sparapani <rsparapa@mcw.edu>
+
+	* PROBLEMS: Propose bash as an alternative to buggy Solaris
+	/bin/sh.
+
 2003-09-20  Steve Youngs  <youngs@xemacs.org>
 
 	* configure: Re-generate after Martin's configure.in patch.
