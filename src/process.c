@@ -63,7 +63,7 @@ Boston, MA 02111-1307, USA.  */
 #include "systty.h"
 #include "syswait.h"
 
-Lisp_Object Qprocessp, Qprocess_live_p;
+Lisp_Object Qprocessp, Qprocess_live_p, Qprocess_readable_p;
 
 /* Process methods */
 struct process_methods the_process_methods;
@@ -299,6 +299,29 @@ Return t if OBJECT is a process that is alive.
   return PROCESSP (object) && PROCESS_LIVE_P (XPROCESS (object))
     ? Qt : Qnil;
 }
+
+#if 0
+/* This is a reasonable definition for this new primitive.  Kyle sez:
+
+   "The patch looks OK to me except for the creation and exporting of the
+   Fprocess_readable_p function.  I don't think a new Lisp function
+   should be created until we know something actually needs it.  If
+   we later want to give process-readable-p different semantics it
+   may be hard to do it and stay compatible with what we hastily
+   create today."
+
+   He's right, not yet.  Let's discuss the semantics on XEmacs Design
+   before enabling this.
+*/
+DEFUN ("process-readable-p", Fprocess_readable_p, 1, 1, 0, /*
+Return t if OBJECT is a process from which input may be available.
+*/
+       (object))
+{
+  return PROCESSP (object) && PROCESS_READABLE_P (XPROCESS (object))
+    ? Qt : Qnil;
+}
+#endif
 
 DEFUN ("process-list", Fprocess_list, 0, 0, 0, /*
 Return a list of all processes.
@@ -616,7 +639,7 @@ create_process (Lisp_Object process, Lisp_Object *argv, int nargv,
 				   separate_err));
 
   p->pid = make_int (pid);
-  if (PROCESS_LIVE_P (p))
+  if (PROCESS_READABLE_P (p))
     event_stream_select_process (p, 1, 1);
 }
 
@@ -1044,7 +1067,7 @@ read_process_output (Lisp_Object process, int read_stderr)
      Really, the loop in execute_internal_event() should check itself
      for a process-filter change, like in status_notify(); but the
      struct Lisp_Process is not exported outside of this file. */
-  if (!PROCESS_LIVE_P (p))
+  if (!PROCESS_READABLE_P (p))
     {
       errno = 0;
       return -1; /* already closed */
@@ -1274,7 +1297,7 @@ set_process_filter (Lisp_Object process, Lisp_Object filter,
   CHECK_PROCESS (process);
   if (set_stderr && !XPROCESS (process)->separate_stderr)
     invalid_change ("stdout and stderr not separate", process);
-  if (PROCESS_LIVE_P (XPROCESS (process)))
+  if (PROCESS_READABLE_P (XPROCESS (process))) 
     {
       if (EQ (filter, Qt))
 	event_stream_unselect_process (XPROCESS (process), !set_stderr,
@@ -1397,7 +1420,7 @@ Return PROCESS's input coding system.
        (process))
 {
   process = get_process (process);
-  CHECK_LIVE_PROCESS (process);
+  CHECK_READABLE_PROCESS (process);
   return (coding_stream_detected_coding_system
 	  (XLSTREAM (XPROCESS (process)->coding_instream)));
 }
@@ -1419,7 +1442,7 @@ Return a pair of coding-system for decoding and encoding of PROCESS.
        (process))
 {
   process = get_process (process);
-  CHECK_LIVE_PROCESS (process);
+  CHECK_READABLE_PROCESS (process);
   return Fcons (coding_stream_detected_coding_system
 		(XLSTREAM (XPROCESS (process)->coding_instream)),
 		coding_stream_coding_system
@@ -1435,7 +1458,7 @@ This is used for reading data from PROCESS.
 {
   codesys = get_coding_system_for_text_file (codesys, 1);
   process = get_process (process);
-  CHECK_LIVE_PROCESS (process);
+  CHECK_READABLE_PROCESS (process);
 
   set_coding_stream_coding_system
     (XLSTREAM (XPROCESS (process)->coding_instream), codesys);
@@ -2496,7 +2519,10 @@ syms_of_process (void)
   DEFSYMBOL (Qstop);
   DEFSYMBOL (Qopen);
   DEFSYMBOL (Qclosed);
-
+#if 0
+  /* see comment at Fprocess_readable_p */
+  DEFSYMBOL (&Qprocess_readable_p);
+#endif
   DEFSYMBOL (Qtcp);
   DEFSYMBOL (Qudp);
 
@@ -2509,6 +2535,10 @@ syms_of_process (void)
 
   DEFSUBR (Fprocessp);
   DEFSUBR (Fprocess_live_p);
+#if 0
+  /* see comment at Fprocess_readable_p */
+  DEFSUBR (Fprocess_readable_p);
+#endif
   DEFSUBR (Fget_process);
   DEFSUBR (Fget_buffer_process);
   DEFSUBR (Fdelete_process);

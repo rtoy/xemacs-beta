@@ -563,7 +563,11 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
       ;;	  (font-menu-add-default))
       (when window-setup-hook
 	(run-hooks 'window-setup-hook))
-      (setq window-setup-hook nil))
+      (setq window-setup-hook nil)
+      (if error-data
+	  ;; re-signal, and don't allow continuation as that will probably
+          ;; wipe out the user's .emacs if she hasn't migrated yet!
+	  (signal-error (car error-data) (cdr error-data))))
 
     (if load-user-init-file-p
 	(maybe-migrate-user-init-file))
@@ -908,6 +912,8 @@ directory which will load the relocated initialization code.")
 	    (find-user-init-file user-init-directory)))
   (if (not custom-file)
       (setq custom-file (make-custom-file-name user-init-file)))
+  ;; #### should test load-user-init-file-p here, not in load-init-file
+  ;; see comment there
   (if (and user-init-file
 	   (file-readable-p user-init-file))
       (load user-init-file t t t))
@@ -942,6 +948,8 @@ directory which will load the relocated initialization code.")
 	(debug-on-error-initial
 	 (if (eq init-file-debug t) 'startup init-file-debug)))
     (let ((debug-on-error debug-on-error-initial))
+      ;; #### I believe this test is incorrect, it leads to custom-file
+      ;; (at least) being undefined
       (if (and load-user-init-file-p init-file-debug)
 	  (progn
 	    ;; Do this without a condition-case if the user wants to debug.

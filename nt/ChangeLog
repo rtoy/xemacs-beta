@@ -1,3 +1,7 @@
+2002-03-29  Jonathan Harris  <jonathan@xemacs.org>
+
+	* xemacs.mak: Define STACK_TRACE_EYE_CATCHER.
+
 2002-05-28  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.mak (CFLAGS_NO_LIB):
@@ -339,7 +343,6 @@
 
 	* XEmacs 21.5.0 "alfalfa" is released.
 
->>>>>>> 1.120
 2001-03-14  Craig Lanning  <CraigL@Knology.net>
 
 	* minitar.c: Clean up some compiler warnings.

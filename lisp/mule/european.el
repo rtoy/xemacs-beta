@@ -27,7 +27,8 @@
 
 ;;; Commentary:
 
-;; Support six Latin coded character sets ISO8859-1,2,3,4,9,15.
+;; For Europeans, six coded character sets ISO8859-1,2,3,4,9 are supported.
+;; Note: ISO 8859/15 (Latin-9) is supported via the latin-unity package.
 
 ;; #### latin.el would be a better name for this file.
 

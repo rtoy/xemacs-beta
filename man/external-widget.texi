@@ -19,7 +19,7 @@ powerful replacement for standard text widgets.
 * Using an External Client Widget::
 * External Client Widget Resource Settings::
 * Motif-Specific Info About the External Client Widget::
-* Example Program Using the External Client Widget::
+* External Client Widget Internals::
 @end menu
 
 
@@ -113,7 +113,7 @@ are primarily for handling query-geometry and geometry-manager requests
 made by parent or child widgets.
 
 
-@node Motif-Specific Info About the External Client Widget, Example Program Using the External Client Widget, External Client Widget Resource Settings, Top
+@node Motif-Specific Info About the External Client Widget, External Client Widget Internals, External Client Widget Resource Settings, Top
 @chapter Motif-Specific Info About the External Client Widget
 
 By default, the external client widget has navigation type
@@ -127,84 +127,112 @@ semantics of the Motif text widget.  The traversal keystrokes
 @kbd{Ctrl-@key{TAB}} and @kbd{Shift-@key{TAB}} are silently filtered by
 the external client widget and are not seen by Emacs.
 
+@node External Client Widget Internals, , Motif-Specific Info About the External Client Widget, Top
+@chapter External Client Widget Internals
 
-@node Example Program Using the External Client Widget, , Motif-Specific Info About the External Client Widget, Top
-@chapter Example Program Using the External Client Widget
+The following text is lifted verbatim from Ben Wing's comments in
+@file{ExternalShell.c}.
 
-This is a very simple program.  It has some issues with exiting.
-Be careful to destroy the Emacs frame in the client window before
-exiting the client program.
+This is a special Shell that is designed to use an externally-
+provided window created by someone else (possibly another process).
+That other window should have an associated widget of class
+ExternalClient.  The two widgets communicate with each other using
+ClientMessage events and properties on the external window.
 
-@example
-/*
-   XEmacsInside.c
+Ideally this feature should be independent of Emacs.  Unfortunately
+there are lots and lots of specifics that need to be dealt with
+for this to work properly, and some of them can't conveniently
+be handled within the widget's methods.  Some day the code may
+be rewritten so that the embedded-widget feature can be used by
+any application, with appropriate entry points that are called
+at specific points within the application.
 
-   Copyright (C) 2002 Free Software Foundation
+This feature is similar to the OLE (Object Linking & Embedding)
+feature provided by MS Windows.
 
-   This program is part of XEmacs.  XEmacs is free software.  See the
-   file COPYING that came with XEmacs for conditions on redistribution.
+Communication between this shell and the client widget:
 
-   This is an example of the XEmacs external widget facility.
+Communication is through ClientMessage events with message_type
+EXTW_NOTIFY and format 32.  Both the shell and the client widget
+communicate with each other by sending the message to the same
+window (the "external window" below), and the data.l[0] value is
+used to determine who sent the message.
 
-   It uses libextcli-Xt.a to interface to the X Toolkit Intrinsics.
+The data is formatted as follows:
 
-   Compile with
+data.l[0] = who sent this message: external_shell_send (0) or
+            external_client_send (1)
+data.l[1] = message type (see enum en_extw_notify below)
+data.l[2-4] = data associated with this message
 
-   gcc -I/path/to/XEmacs/source/src -L/path/to/XEmacs/build/src -static \
-       -lextcli_Xt -lXt -lX11 -lSM -lICE \
-       -o XEmacsInside XEmacsInside.c
+EventHandler() handles messages from the other side.
 
-   Run it with the resource "*input: True" and a reasonable geometry spec.
-   It pops up a window, and prints a Lisp form on stdout.  Eval the form
-   in an XEmacs configured with --external-widget.
+extw_send_notify_3() sends a message to the other side.
 
-   Written by Stephen J. Turnbull <stephen@@xemacs.org>
+extw_send_geometry_value() is used when an XtWidgetGeometry structure
+   needs to be sent.  This is too much data to fit into a
+   ClientMessage, so the data is stored in a property and then
+   extw_send_notify_3() is called.
 
-   Based on simple_text.c from _The Motif Programming Manual_ by Heller
-   and Ferguson, O'Reilly.
-*/
+extw_get_geometry_value() receives an XtWidgetGeometry structure from a
+   property.
 
-#include <stdio.h>
+extw_wait_for_response() is used when a response to a sent message
+   is expected.  It looks for a matching event within a
+   particular timeout.
 
-#include <X11/Intrinsic.h>
-#include <X11/StringDefs.h>
-#include <X11/Shell.h>
+The particular message types are as follows:
 
-#include "ExternalClient.h"
+1) extw_notify_init (event_window, event_mask)
 
-main (int argc, char *argv[])
-@{
-  Widget toplevel, emacs;
-  XtAppContext app;
+This is sent from the shell to the client after the shell realizes
+its EmacsFrame widget on the client's "external window".  This
+tells the client that it should start passing along events of the
+types specified in event_mask.  event_window specifies the window
+of the EmacsFrame widget, which is a child of the client's
+external window.
 
-  XtSetLanguageProc (NULL, NULL, NULL);
+extw_notify_init (client_type)
 
-  toplevel = XtVaOpenApplication (&app, "Demo",
-				  NULL, 0, &argc, argv,
-				  NULL, sessionShellWidgetClass,
-				  NULL);
+When the client receives an extw_notify_init message from the
+shell, it sends back a message of the same sort specifying the type
+of the toolkit used by the client (Motif, generic Xt, or Xlib).
 
-  emacs = XtVaCreateManagedWidget ("externalWidget", externalClientWidgetClass,
-				   toplevel,
-				   NULL);
+2) extw_notify_end ()
 
-  XtRealizeWidget (toplevel);
+This is sent from the shell to the client when the shell's
+EmacsFrame widget is destroyed, and tells the client to stop
+passing events along.
 
-  printf ("(make-frame '(window-id \"%d\"))\n", XtWindow(emacs));
+3) extw_notify_qg (result)
 
-  XtAppMainLoop (app);
-@}
+This is sent from the client to the shell when a QueryGeometry
+request is received on the client.  The XtWidgetGeometry structure
+specified in the QueryGeometry request is passed on in the
+EXTW_QUERY_GEOMETRY property (of type EXTW_WIDGET_GEOMETRY) on the
+external window.  result is unused.
 
-/* This function doesn't belong here but somehow it's not getting resolved
-   from the library. */
-void
-fatal (char *msg)
-@{
-  fprintf (stderr, "%s", msg);
-  exit (1);
-@}
-@end example
+In response, the shell passes the QueryGeometry request down the
+widget tree, and when a response is received, sends a message of
+type extw_notify_qg back to the client, with result specifying the
+GeometryResult value.  If this value is XtGeometryAlmost, the
+returned XtWidgetGeometry structure is stored into the same property
+as above. [BPW is there a possible race condition here?]
 
+4) extw_notify_gm (result)
+
+A very similar procedure to that for extw_notify_qg is followed
+when the shell's RootGeometryManager method is called, indicating
+that a child widget wishes to change the shell's geometry.  The
+XtWidgetGeometry structure is stored in the EXTW_GEOMETRY_MANAGER
+property.
+
+5) extw_notify_focus_in (), extw_notify_focus_out ()
+
+These are sent from the client to the shell when the client gains
+or loses the keyboard focus.  It is done this way because Xt
+maintains its own concept of keyboard focus and only the client
+knows this information.
 
 @summarycontents
 @contents

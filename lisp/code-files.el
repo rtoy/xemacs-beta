@@ -454,18 +454,18 @@ and `insert-file-contents-post-hook'."
   "A special hook to decide the coding system used for writing out a file.
 
 Before writing a file, `write-region' calls the functions on this hook with
-arguments START, END, FILENAME, APPEND, VISIT, LOCKNAME, and CODING-SYSTEM,
+arguments START, END, FILENAME, APPEND, VISIT, LOCKNAME and CODING-SYSTEM,
 the same as the corresponding arguments in the call to `write-region'.
 
 The return value of each function should be one of
 
 -- nil
 -- A coding system or a symbol denoting it, indicating the coding system
-   to be used for reading the file
+   to be used for writing the file
 -- A list of two elements (absolute pathname and length of data written),
-   which is used as the return value to `write-region'.  In this
-   case, `write-region' assumes that the function has written
-   the file, and returns.
+   which is used as the return value to `write-region'.  In this case,
+   `write-region' assumes that the function has written the file and
+   returns.
 
 If any function returns non-nil, the remaining functions are not called.")
 
@@ -476,11 +476,12 @@ The functions on this hook are called with arguments START, END,
 FILENAME, APPEND, VISIT, LOCKNAME, and CODING-SYSTEM, the same as the
 corresponding arguments in the call to `write-region'.")
 
-(defun write-region (start end filename &optional append visit lockname coding-system)
+(defun write-region (start end filename
+		     &optional append visit lockname coding-system)
   "Write current region into specified file.
 By default the file's existing contents are replaced by the specified region.
-Call interactively, prompts for the filename.  With a prefix arg, also prompts
-for a coding system.
+Called interactively, prompts for a file name.  With a prefix arg, prompts
+for a coding system as well.
 
 When called from a program, takes three required arguments:
 START, END and FILENAME.  START and END are buffer positions.

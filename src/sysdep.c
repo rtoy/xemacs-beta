@@ -3166,7 +3166,14 @@ int
 qxe_rename (const Intbyte *old, const Intbyte *new)
 {
 #ifdef WIN32_NATIVE
-  return mswindows_rename (old, new);
+  /* Windows rename fails if NEW exists */
+  if (mswindows_rename (old, new) == 0)
+    return 0;
+  /* In some cases errno is EACCES if NEW exists */
+  if (errno != EEXIST && errno != EACCES)
+    return -1;
+  if (mswindows_unlink (new) != 0)
+    return -1;
 #else /* not WIN32_NATIVE */
   Extbyte *oldout, *newout;
   PATHNAME_CONVERT_OUT (old, oldout);
@@ -3654,35 +3661,34 @@ const char *sys_siglist[] =
 const char *sys_siglist[NSIG + 1] =
   {
     /* AIX has changed the signals a bit */
-    /* $$####begin-snarf */
-    "bogus signal",			/* 0 */
-    "hangup",				/* 1  SIGHUP */
-    "interrupt",			/* 2  SIGINT */
-    "quit",				/* 3  SIGQUIT */
-    "illegal instruction",		/* 4  SIGILL */
-    "trace trap",			/* 5  SIGTRAP */
-    "IOT instruction",			/* 6  SIGIOT */
-    "crash likely",			/* 7  SIGDANGER */
-    "floating point exception",		/* 8  SIGFPE */
-    "kill",				/* 9  SIGKILL */
-    "bus error",			/* 10 SIGBUS */
-    "segmentation violation",		/* 11 SIGSEGV */
-    "bad argument to system call",	/* 12 SIGSYS */
-    "write on a pipe with no one to read it", /* 13 SIGPIPE */
-    "alarm clock",			/* 14 SIGALRM */
-    "software termination signal",	/* 15 SIGTERM */
-    "user defined signal 1",		/* 16 SIGUSR1 */
-    "user defined signal 2",		/* 17 SIGUSR2 */
-    "death of a child",			/* 18 SIGCLD */
-    "power-fail restart",		/* 19 SIGPWR */
-    "bogus signal",			/* 20 */
-    "bogus signal",			/* 21 */
-    "bogus signal",			/* 22 */
-    "bogus signal",			/* 23 */
-    "bogus signal",			/* 24 */
-    "LAN I/O interrupt",		/* 25 SIGAIO */
-    "PTY I/O interrupt",		/* 26 SIGPTY */
-    "I/O intervention required",	/* 27 SIGIOINT */
+    DEFER_GETTEXT ("bogus signal"),			/* 0 */
+    DEFER_GETTEXT ("hangup"),				/* 1  SIGHUP */
+    DEFER_GETTEXT ("interrupt"),			/* 2  SIGINT */
+    DEFER_GETTEXT ("quit"),				/* 3  SIGQUIT */
+    DEFER_GETTEXT ("illegal instruction"),		/* 4  SIGILL */
+    DEFER_GETTEXT ("trace trap"),			/* 5  SIGTRAP */
+    DEFER_GETTEXT ("IOT instruction"),			/* 6  SIGIOT */
+    DEFER_GETTEXT ("crash likely"),			/* 7  SIGDANGER */
+    DEFER_GETTEXT ("floating point exception"),		/* 8  SIGFPE */
+    DEFER_GETTEXT ("kill"),				/* 9  SIGKILL */
+    DEFER_GETTEXT ("bus error"),			/* 10 SIGBUS */
+    DEFER_GETTEXT ("segmentation violation"),		/* 11 SIGSEGV */
+    DEFER_GETTEXT ("bad argument to system call"),	/* 12 SIGSYS */
+    DEFER_GETTEXT ("write on a pipe with no one to read it"), /* 13 SIGPIPE */
+    DEFER_GETTEXT ("alarm clock"),			/* 14 SIGALRM */
+    DEFER_GETTEXT ("software termination signal"),	/* 15 SIGTERM */
+    DEFER_GETTEXT ("user defined signal 1"),		/* 16 SIGUSR1 */
+    DEFER_GETTEXT ("user defined signal 2"),		/* 17 SIGUSR2 */
+    DEFER_GETTEXT ("death of a child"),			/* 18 SIGCLD */
+    DEFER_GETTEXT ("power-fail restart"),		/* 19 SIGPWR */
+    DEFER_GETTEXT ("bogus signal"),			/* 20 */
+    DEFER_GETTEXT ("bogus signal"),			/* 21 */
+    DEFER_GETTEXT ("bogus signal"),			/* 22 */
+    DEFER_GETTEXT ("bogus signal"),			/* 23 */
+    DEFER_GETTEXT ("bogus signal"),			/* 24 */
+    DEFER_GETTEXT ("LAN I/O interrupt"),		/* 25 SIGAIO */
+    DEFER_GETTEXT ("PTY I/O interrupt"),		/* 26 SIGPTY */
+    DEFER_GETTEXT ("I/O intervention required"),	/* 27 SIGIOINT */
 #ifdef AIXHFT
     "HFT grant",			/* 28 SIGGRANT */
     "HFT retract",			/* 29 SIGRETRACT */
@@ -3695,27 +3701,26 @@ const char *sys_siglist[NSIG + 1] =
 #else /* USG, not AIX */
 const char *sys_siglist[NSIG + 1] =
   {
-    /* $$####begin-snarf */
-    "bogus signal",			/* 0 */
-    "hangup",				/* 1  SIGHUP */
-    "interrupt",			/* 2  SIGINT */
-    "quit",				/* 3  SIGQUIT */
-    "illegal instruction",		/* 4  SIGILL */
-    "trace trap",			/* 5  SIGTRAP */
-    "IOT instruction",			/* 6  SIGIOT */
-    "EMT instruction",			/* 7  SIGEMT */
-    "floating point exception",		/* 8  SIGFPE */
-    "kill",				/* 9  SIGKILL */
-    "bus error",			/* 10 SIGBUS */
-    "segmentation violation",		/* 11 SIGSEGV */
-    "bad argument to system call",	/* 12 SIGSYS */
-    "write on a pipe with no one to read it", /* 13 SIGPIPE */
-    "alarm clock",			/* 14 SIGALRM */
-    "software termination signal",	/* 15 SIGTERM */
-    "user defined signal 1",		/* 16 SIGUSR1 */
-    "user defined signal 2",		/* 17 SIGUSR2 */
-    "death of a child",			/* 18 SIGCLD */
-    "power-fail restart",		/* 19 SIGPWR */
+    DEFER_GETTEXT ("bogus signal"),			/* 0 */
+    DEFER_GETTEXT ("hangup"),				/* 1  SIGHUP */
+    DEFER_GETTEXT ("interrupt"),			/* 2  SIGINT */
+    DEFER_GETTEXT ("quit"),				/* 3  SIGQUIT */
+    DEFER_GETTEXT ("illegal instruction"),		/* 4  SIGILL */
+    DEFER_GETTEXT ("trace trap"),			/* 5  SIGTRAP */
+    DEFER_GETTEXT ("IOT instruction"),			/* 6  SIGIOT */
+    DEFER_GETTEXT ("EMT instruction"),			/* 7  SIGEMT */
+    DEFER_GETTEXT ("floating point exception"),		/* 8  SIGFPE */
+    DEFER_GETTEXT ("kill"),				/* 9  SIGKILL */
+    DEFER_GETTEXT ("bus error"),			/* 10 SIGBUS */
+    DEFER_GETTEXT ("segmentation violation"),		/* 11 SIGSEGV */
+    DEFER_GETTEXT ("bad argument to system call"),	/* 12 SIGSYS */
+    DEFER_GETTEXT ("write on a pipe with no one to read it"), /* 13 SIGPIPE */
+    DEFER_GETTEXT ("alarm clock"),			/* 14 SIGALRM */
+    DEFER_GETTEXT ("software termination signal"),	/* 15 SIGTERM */
+    DEFER_GETTEXT ("user defined signal 1"),		/* 16 SIGUSR1 */
+    DEFER_GETTEXT ("user defined signal 2"),		/* 17 SIGUSR2 */
+    DEFER_GETTEXT ("death of a child"),			/* 18 SIGCLD */
+    DEFER_GETTEXT ("power-fail restart"),		/* 19 SIGPWR */
 #ifdef sun
     "window size changed",		/* 20 SIGWINCH */
     "urgent socket condition",		/* 21 SIGURG */

@@ -21,10 +21,10 @@
 (set-gutter-element 
  bottom-gutter 'str
  (make-glyph 
-  [layout :orientation vertical 
-	  :justify left :margin-width 4 
+  [layout :orientation vertical :margin-width 4
+	  :vertically-justify center :horizontally-justify left
 	  :items ([string :data "Fontifying glyphs.c..."]
-		  [layout :orientation horizontal 
+		  [layout :orientation horizontal
 			  :items 
 			  ([progress-gauge :value 0 :pixel-height 24
 					   :pixel-width 250 :descriptor 
@@ -33,7 +33,7 @@
 				   :descriptor " Stop " 
 				   :callback (quote quit)])])]))
 
-(set-gutter-element bottom-gutter 'str2 str2)
 (set-gutter-element-visible-p bottom-gutter-visible-p 'str t)
-(set-gutter-element-visible-p bottom-gutter-visible-p 'str2 t)
+(set-gutter-element left-gutter 'str2 str2)
+(set-gutter-element-visible-p left-gutter-visible-p 'str2 t)
 

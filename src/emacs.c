@@ -1932,6 +1932,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 	 */
 
       specifier_vars_of_glyphs ();
+      specifier_vars_of_glyphs_widget ();
       specifier_vars_of_gutter ();
 #ifdef HAVE_MENUBARS
       specifier_vars_of_menubar ();

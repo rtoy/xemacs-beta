@@ -1,3 +1,8 @@
+2002-04-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-from-buffer): Clean up
+	Check-Message and Check-Error-Message when done.
+
 2002-05-05  Ben Wing  <ben@xemacs.org>
 
 	* automated/lisp-tests.el:

@@ -451,5 +451,5 @@ Recognized properties are the same as those in `make-dialog-box':
 	     (setq copies (1- copies)))))
 	((and (not (eq system-type 'windows-nt))
 	      (fboundp 'lpr-region))
-	 (declare-fboundp (lpr-region (point-min) (point-max))))
+	 (lpr-region start end))
 	(t (error "No print support available"))))

@@ -451,3 +451,9 @@
 
 	* all: port from cygwin setup.
 
+<<<<<<< ChangeLog
+=======
+%%% $Id: ChangeLog,v 1.18 2002/06/04 06:04:38 andyp Exp $
+$Revision: 1.18 $
+
+>>>>>>> 1.2.2.11.2.10

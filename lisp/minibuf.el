@@ -761,10 +761,10 @@ See also the variable `completion-highlight-first-word-only' for
                         &optional predicate require-match
                                   initial-contents history default)
   "Read a string in the minibuffer, with completion.
-Args: PROMPT, TABLE, PREDICATE, REQUIRE-MATCH, INITIAL-CONTENTS, HISTORY.
+
 PROMPT is a string to prompt with; normally it ends in a colon and a space.
 TABLE is an alist whose elements' cars are strings, or an obarray.
-TABLE can also be a function to do the completion itself.
+TABLE can also be a function which does the completion itself.
 PREDICATE limits completion to a subset of TABLE.
 See `try-completion' and `all-completions' for more details
   on completion, TABLE, and PREDICATE.

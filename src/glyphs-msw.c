@@ -1954,6 +1954,16 @@ mswindows_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 		    0, 0, 0, 0,
 		    SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE
 		    | SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOACTIVATE);
+
+      /* Doing this once does not seem to be enough, for instance when
+	 mapping the search dialog this gets called four times. If we
+	 only set on the first time through then the subwindow never
+	 gets focus as intended. However, doing this everytime doesn't
+	 seem so bad, after all we only need to redo this after the
+	 focus changes - and if that happens resetting the initial
+	 focus doesn't seem so bad. */
+      if (IMAGE_INSTANCE_WANTS_INITIAL_FOCUS (p))
+	SetFocus (WIDGET_INSTANCE_MSWINDOWS_HANDLE (p));
 #endif
     }
 }
@@ -2037,6 +2047,13 @@ mswindows_redisplay_widget (Lisp_Image_Instance *p)
 }
 
 #ifdef HAVE_WIDGETS
+
+/* Account for some of the limitations with widget images. */
+static int
+mswindows_widget_border_width (void)
+{
+  return DEFAULT_WIDGET_BORDER_WIDTH;
+}
 
 /* register widgets into our hashtable so that we can cope with the
    callbacks. The hashtable is weak so deregistration is handled
@@ -2274,11 +2291,6 @@ mswindows_widget_instantiate (Lisp_Object image_instance,
 		    (IMAGE_INSTANCE_WIDGET_FACE (ii), domain,
 		     IMAGE_INSTANCE_WIDGET_TEXT (ii)),
 		    MAKELPARAM (TRUE, 0));
-#if 0
-  /* #### doesn't work.  need to investigate more closely. */
-  if (IMAGE_INSTANCE_WANTS_INITIAL_FOCUS (ii))
-    SetFocus (wnd);
-#endif
 }
 
 /* Instantiate a native layout widget. */
@@ -2763,7 +2775,7 @@ mswindows_combo_box_instantiate (Lisp_Object image_instance,
   default_face_font_info (domain, 0, 0, &height, 0, 0);
   GET_LIST_LENGTH (items, len);
 
-  height = (height + WIDGET_BORDER_HEIGHT * 2 ) * len;
+  height = (height + DEFAULT_WIDGET_BORDER_WIDTH * 2 ) * len;
   IMAGE_INSTANCE_HEIGHT (ii) = height;
 
   /* Now create the widget. */
@@ -2941,6 +2953,7 @@ console_type_create_glyphs_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, locate_pixmap_file);
 #ifdef HAVE_WIDGETS
   CONSOLE_HAS_METHOD (mswindows, widget_query_string_geometry);
+  CONSOLE_HAS_METHOD (mswindows, widget_border_width);
 #endif
 
   /* image methods - printer */

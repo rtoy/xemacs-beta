@@ -259,7 +259,9 @@ set Info-directory-list.")
 (make-obsolete-variable 'executing-macro 'executing-kbd-macro)
 
 (define-compatible-function-alias 'interactive-form 
-  'function-interactive) ;FSFmacs 21.1
+  'function-interactive) ;GNU 21.1
+(define-compatible-function-alias 'assq-delete-all
+  'remassq) ;GNU 21.1
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; modeline
 

@@ -68,6 +68,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 static void handle_focus_event_1 (struct frame *f, int in_p);
+static void handle_focus_event_2 (Window w, struct frame *f, int in_p);
 
 static struct event_stream *Xt_event_stream;
 
@@ -1536,6 +1537,16 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 static void
 handle_focus_event_1 (struct frame *f, int in_p)
 {
+  handle_focus_event_2 (XtWindow (FRAME_X_TEXT_WIDGET (f)), f, in_p);
+}
+
+static void
+handle_focus_event_2 (Window win, struct frame *f, int in_p)
+{
+  /* Although this treats focus differently for all widgets (including
+     the frame) it seems to work ok. */
+  Widget needs_it = XtWindowToWidget (FRAME_X_DISPLAY (f), win);
+
 #if XtSpecificationRelease > 5
   widget_with_focus = XtGetKeyboardFocusWidget (FRAME_X_TEXT_WIDGET (f));
 #endif
@@ -1566,13 +1577,18 @@ handle_focus_event_1 (struct frame *f, int in_p)
      click in the frame. Why is this?  */
   if (in_p
 #if XtSpecificationRelease > 5
-      && FRAME_X_TEXT_WIDGET (f) != widget_with_focus
+      && needs_it != widget_with_focus
 #endif
       )
     {
-      lw_set_keyboard_focus (FRAME_X_SHELL_WIDGET (f),
-			     FRAME_X_TEXT_WIDGET (f));
+      lw_set_keyboard_focus (FRAME_X_SHELL_WIDGET (f), needs_it);
     }
+
+  /* If we are focusing on a native widget then record and exit. */
+  if (needs_it != FRAME_X_TEXT_WIDGET (f)) {
+    widget_with_focus = needs_it;
+    return;
+  }
 
   /* We have the focus now. See comment in
      emacs_Xt_handle_widget_losing_focus (). */
@@ -1595,9 +1611,26 @@ handle_focus_event_1 (struct frame *f, int in_p)
   }
 }
 
+/* Create a synthetic X focus event. */
+void
+enqueue_focus_event (Widget wants_it, Lisp_Object frame, int in_p)
+{
+  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
+  Lisp_Event *ev          = XEVENT (emacs_event);
+  XEvent *x_event = &ev->event.magic.underlying_x_event;
+
+  x_event->type = in_p ? FocusIn : FocusOut;
+  x_event->xfocus.window = XtWindow (wants_it);
+
+  ev->channel	            = frame;
+  ev->event_type	    = magic_event;
+
+  enqueue_Xt_dispatch_event (emacs_event);
+}
+
 /* The idea here is that when a widget glyph gets unmapped we don't
    want the focus to stay with it if it has focus - because it may
-   well just get deleted next andthen we have lost the focus until the
+   well just get deleted next and then we have lost the focus until the
    user does something. So handle_focus_event_1 records the widget
    with keyboard focus when FocusOut is processed, and then, when a
    widget gets unmapped, it calls this function to restore focus if
@@ -1974,7 +2007,7 @@ emacs_Xt_handle_magic_event (Lisp_Event *emacs_event)
       if (FRAME_X_EXTERNAL_WINDOW_P (f))
 	break;
 #endif
-      handle_focus_event_1 (f, event->type == FocusIn);
+      handle_focus_event_2 (event->xfocus.window, f, event->type == FocusIn);
       break;
 
     case ClientMessage:

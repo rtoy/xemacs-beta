@@ -1,3 +1,156 @@
+2002-06-03  Andy Piper  <andy@xemacs.org>
+
+	* dialog-items.el (make-search-dialog): align various subcontrols
+	in visually pleasing ways, allow frame to autosize to the dialog
+	size.
+	* dialog.el (make-dialog-box): add a border inside the frame. Add
+	:autosize property, if t then reset the frame size appropriately
+	before the frame is mapped.
+	* gutter-items.el (set-progress-feedback-instantiator): align
+	various subcontrols.
+	* gutter-items.el (set-progress-abort-instantiator): ditto.
+
+2002-05-30  Andy Piper  <andy@xemacs.org>
+
+	* files.el (revert-buffer-internal): don't visit
+	revert-buffer. Kill buffer when not used. Suggested by Mike
+	Alexander <mta@arbortext.com>
+
+2002-05-08  Andy Piper  <andy@xemacs.org>
+
+	* files.el (revert-buffer): observe noconfirm behavior.
+
+2002-04-09  Andy Piper  <andy@xemacs.org>
+
+	* files.el (revert-buffer): use revert-buffer-internal if it looks
+	like doing so will not result in any user-visible changes.
+	(revert-buffer-internal): new function. Do the actual process of
+	reversion and then see whether the result is any different to what
+	we have already. If it is not then do nothing.
+
+2002-02-04  Andy Piper  <andy@xemacs.org>
+
+	* files.el (convert-standard-filename): Fix for short filename
+	Peter Arius <pas@methodpark.de>
+
+2001-12-16  Andy Piper  <andy@xemacs.org>
+
+	* package-get.el (package-get-update-all): Make sure installed.db
+	gets updated after updating packages.
+
+2001-12-11  Andy Piper  <andy@xemacs.org>
+
+	* menubar.el (get-popup-menu-response): re-order so that it works
+	on more sane/facist window systems.
+
+2001-12-03  Andy Piper  <andy@xemacs.org>
+
+	* faces.el (frob-face-property): don't infloop in face frobbing
+	from Jan Vroonhof <jan@xemacs.org>.
+
+2001-11-30  Andy Piper  <andy@xemacs.org>
+
+	* printer.el (generic-print-region): fix for non-MS systems from
+	Mike Fabian.
+
+2001-11-30  Jan Vroonhof  <jan@xemacs.org>
+
+	* font.el (font-window-system-mappings): Add mapping for Gtk
+	(assume identical to X)	
+
+2001-11-30  Jan Vroonhof  <jan@xemacs.org>
+
+	* faces.el (frob-face-property): Follow face fall-back hierarchy
+	properly for face properties without an instance. Only do manual
+	copy form 'default in last resort. This handles in particular
+	the case where 'default itself has only a fall-back (which is
+	the case by default on windows).
+
+2001-11-24  Andy Piper  <andy@xemacs.org>
+
+	* printer.el (generic-print-region): set default-frame-plist to
+	nil while creating the printer frame so that sizes reflect the
+	printed page.
+
+	* faces.el (face-complain-about-font): Don't complain on printers.
+
+2002-04-25  Steve Youngs  <youngs@xemacs.org>
+
+	* mule/mule-charset.el (string-to-char-list): New.  This used to
+	be in 'mule-misc.el' but that file has been removed.
+
+2002-04-14  Steve Youngs  <youngs@xemacs.org>
+
+	* obsolete.el (find-non-ascii-charset-region): A couple of
+	packages use this.
+	(find-non-ascii-charset-string): Ditto.
+
+2002-04-14  Ben Wing  <ben@xemacs.org>
+
+	* abbrev.el:
+	* abbrev.el (abbrev-mode):
+	* abbrev.el (only-global-abbrevs):
+	* abbrev.el (defining-abbrev-turns-on-abbrev-mode): New.
+	* abbrev.el (define-abbrev-table):
+	* abbrev.el (global-abbrev-mode): New.
+	* abbrev.el (add-mode-abbrev):
+	* abbrev.el (add-global-abbrev):
+	* abbrev.el (inverse-add-mode-abbrev):
+	* abbrev.el (inverse-add-global-abbrev):
+	Add `global-abbrev-mode', which turns on or off abbrev-mode in all
+	buffers.  Added `defining-abbrev-turns-on-abbrev-mode' -- if
+	non-nil, defining an abbrev through an interactive function will
+	automatically turn on abbrev-mode, either globally or locally
+	depending on the command.  This is the "what you'd expect"
+	behavior.
+	* indent.el:
+	* indent.el (indent-balanced-expression-function): New.
+	* indent.el (indent-balanced-expression): New.
+	* indent.el (indent-region-or-balanced-expression): New.
+	general function for indenting a balanced expression in a
+	mode-correct way.  Works similar to indent-region in that a mode
+	can specify a specific command to do the whole operation; if not,
+	figure out the region using forward-sexp and indent each line
+	using indent-according-to-mode.
+	* keydefs.el:
+	* keydefs.el (global-map): Removed.
+	Modify M-C-backslash to do indent-region-or-balanced-expression.
+	Make S-Tab just insert a TAB char, like it's meant to do.
+	* make-docfile.el:
+	* make-docfile.el (docfile-out-of-date):
+	Now that we're using the call-process-in-lisp, we need to load
+	an extra file win32-native.el because we're running a bare temacs.
+	* menubar-items.el:
+	* menubar-items.el (default-menubar):
+	Totally redo the Cmds menu so that most used commands appear
+	directly on the menu and less used commands appear in submenus.
+	The old way may have been very pretty, but rather impractical.
+	* process.el (call-process-internal):
+	Under Windows, don't ever use old-call-process-internal, even
+	in batch mode.  We can do processes in batch mode.
+	* subr.el:
+	* subr.el (truncate-string-to-width):
+	* subr.el (truncate-string-with-continuation-dots): New.
+	* subr.el (plist-to-alist):
+	Someone recoded truncate-string-to-width, saying "the FSF version
+	is too complicated and does lots of hard-to-understand stuff" but
+	the resulting recoded version was *totally* wrong!  it
+	misunderstood the basic point of this function, which is work in
+	*columns* not chars.  i dumped ours and copied the version from
+	FSF 21.1.  Also added truncate-string-with-continuation-dots,
+	since this idiom is used often.  
+
+2002-04-07  William M. Perry  <wmperry@gnu.org>
+
+	* startup.el (command-line): Don't call init-menubar-at-startup
+	unless we were built with menubar support.
+
+2002-03-19  Daiki Ueno  <daiki@xemacs.org>
+
+	* mule/japanese.el: Don't quote function expressions listed as
+	`native-coding-system'.
+	* mule/chinese.el: Likewise.
+
 2002-06-03  Ben Wing  <ben@xemacs.org> and
             Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
 
@@ -294,139 +447,6 @@
 2002-04-28  Steve Youngs  <youngs@xemacs.org>
 
 	* mule/mule-charset.el: Revert my last patch. 'string-to-char-list'.
-
-2002-04-09  Andy Piper  <andy@xemacs.org>
-
-	* files.el (revert-buffer): use revert-buffer-internal if it looks
-	like doing so will not result in any user-visible changes.
-	(revert-buffer-internal): new function. Do the actual process of
-	reversion and then see whether the result is any different to what
-	we have already. If it is not then do nothing.
-
-2002-02-04  Andy Piper  <andy@xemacs.org>
-
-	* files.el (convert-standard-filename): Fix for short filename
-	Peter Arius <pas@methodpark.de>
-
-2001-12-16  Andy Piper  <andy@xemacs.org>
-
-	* package-get.el (package-get-update-all): Make sure installed.db
-	gets updated after updating packages.
-
-2001-12-11  Andy Piper  <andy@xemacs.org>
-
-	* menubar.el (get-popup-menu-response): re-order so that it works
-	on more sane/facist window systems.
-
-2001-12-03  Andy Piper  <andy@xemacs.org>
-
-	* faces.el (frob-face-property): don't infloop in face frobbing
-	from Jan Vroonhof <jan@xemacs.org>.
-
-2001-11-30  Andy Piper  <andy@xemacs.org>
-
-	* printer.el (generic-print-region): fix for non-MS systems from
-	Mike Fabian.
-
-2001-11-30  Jan Vroonhof  <jan@xemacs.org>
-
-	* font.el (font-window-system-mappings): Add mapping for Gtk
-	(assume identical to X)	
-
-2001-11-30  Jan Vroonhof  <jan@xemacs.org>
-
-	* faces.el (frob-face-property): Follow face fall-back hierarchy
-	properly for face properties without an instance. Only do manual
-	copy form 'default in last resort. This handles in particular
-	the case where 'default itself has only a fall-back (which is
-	the case by default on windows).
-
-2001-11-24  Andy Piper  <andy@xemacs.org>
-
-	* printer.el (generic-print-region): set default-frame-plist to
-	nil while creating the printer frame so that sizes reflect the
-	printed page.
-
-	* faces.el (face-complain-about-font): Don't complain on printers.
-
-2002-04-25  Steve Youngs  <youngs@xemacs.org>
-
-	* mule/mule-charset.el (string-to-char-list): New.  This used to
-	be in 'mule-misc.el' but that file has been removed.
-
-2002-04-14  Steve Youngs  <youngs@xemacs.org>
-
-	* obsolete.el (find-non-ascii-charset-region): A couple of
-	packages use this.
-	(find-non-ascii-charset-string): Ditto.
-
-2002-04-14  Ben Wing  <ben@xemacs.org>
-
-	* abbrev.el:
-	* abbrev.el (abbrev-mode):
-	* abbrev.el (only-global-abbrevs):
-	* abbrev.el (defining-abbrev-turns-on-abbrev-mode): New.
-	* abbrev.el (define-abbrev-table):
-	* abbrev.el (global-abbrev-mode): New.
-	* abbrev.el (add-mode-abbrev):
-	* abbrev.el (add-global-abbrev):
-	* abbrev.el (inverse-add-mode-abbrev):
-	* abbrev.el (inverse-add-global-abbrev):
-	Add `global-abbrev-mode', which turns on or off abbrev-mode in all
-	buffers.  Added `defining-abbrev-turns-on-abbrev-mode' -- if
-	non-nil, defining an abbrev through an interactive function will
-	automatically turn on abbrev-mode, either globally or locally
-	depending on the command.  This is the "what you'd expect"
-	behavior.
-	* indent.el:
-	* indent.el (indent-balanced-expression-function): New.
-	* indent.el (indent-balanced-expression): New.
-	* indent.el (indent-region-or-balanced-expression): New.
-	general function for indenting a balanced expression in a
-	mode-correct way.  Works similar to indent-region in that a mode
-	can specify a specific command to do the whole operation; if not,
-	figure out the region using forward-sexp and indent each line
-	using indent-according-to-mode.
-	* keydefs.el:
-	* keydefs.el (global-map): Removed.
-	Modify M-C-backslash to do indent-region-or-balanced-expression.
-	Make S-Tab just insert a TAB char, like it's meant to do.
-	* make-docfile.el:
-	* make-docfile.el (docfile-out-of-date):
-	Now that we're using the call-process-in-lisp, we need to load
-	an extra file win32-native.el because we're running a bare temacs.
-	* menubar-items.el:
-	* menubar-items.el (default-menubar):
-	Totally redo the Cmds menu so that most used commands appear
-	directly on the menu and less used commands appear in submenus.
-	The old way may have been very pretty, but rather impractical.
-	* process.el (call-process-internal):
-	Under Windows, don't ever use old-call-process-internal, even
-	in batch mode.  We can do processes in batch mode.
-	* subr.el:
-	* subr.el (truncate-string-to-width):
-	* subr.el (truncate-string-with-continuation-dots): New.
-	* subr.el (plist-to-alist):
-	Someone recoded truncate-string-to-width, saying "the FSF version
-	is too complicated and does lots of hard-to-understand stuff" but
-	the resulting recoded version was *totally* wrong!  it
-	misunderstood the basic point of this function, which is work in
-	*columns* not chars.  i dumped ours and copied the version from
-	FSF 21.1.  Also added truncate-string-with-continuation-dots,
-	since this idiom is used often.  
-
-2002-04-07  William M. Perry  <wmperry@gnu.org>
-
-	* startup.el (command-line): Don't call init-menubar-at-startup
-	unless we were built with menubar support.
-
-2002-03-19  Daiki Ueno  <daiki@xemacs.org>
-
-	* mule/japanese.el: Don't quote function expressions listed as
-	`native-coding-system'.
-	* mule/chinese.el: Likewise.
-
-2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.6 "bok choi" is released.
 
@@ -1154,6 +1174,101 @@
 	* printer.el (generic-print-region): set default-frame-plist to
 	nil while creating the printer frame so that sizes reflect the
 	printed page.
+
+2002-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	This patch is based on Jerry James's patch and analysis.
+
+	* select.el (get-clipboard):
+	(get-selection):
+	Update docstrings.
+	(get-clipboard-foreign):
+	(get-selection-foreign):
+	New function for use as `interprogram-paste-function's.
+
+	* simple.el (interprogram-paste-function): Change default to
+	`get-clipboard-foreign'; improve docstring.
+	(interprogram-cut-function): Improve dosctring.
+
+2002-03-18  Adrian Aichner  <adrian@xemacs.org>
+
+	* cus-edit.el (customize-save-variable): Fix typo in prompt.
+
+2002-03-26  John Paul Wallington  <jpw@xemacs.org>
+
+	* obsolete.el (assq-delete-all): New compatibility alias for 
+	remassq.
+
+2002-01-09  Simon Josefsson  <jas@extundo.com>
+
+	* files.el (auto-mode-alist): Support Sieve (*.siv, *.sieve).
+
+2002-01-04  Adrian Aichner  <adrian@xemacs.org>
+
+	* info.el (Info-auto-generate-directory): Default
+	Info-auto-generate-directory to 'if-outdated.
+
+2002-03-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* startup.el (normal-top-level): Prevent migration code from
+	trashing .emacs on an error in loading the init files.
+
+2002-03-14  Ville Skyttä  <ville.skytta@xemacs.org>
+
+	* files.el (auto-mode-alist): GNUmakefile is a Makefile,
+	"system default" Xdefaults and friends get xrdb-mode.
+
+2002-03-05  Mats Lidell  <matsl@contactor.se>
+ 
+ 	* help-nomule.el (tutorial-supported-languages): Added Swedish
+ 	tutorial. Sorted languages.
+
+2002-02-11  Mike Sperber <mike@xemacs.org>
+
+	* info.el (Info-maybe-update-dir): Regenerate dir if we're
+	regenerating outdated dir files and dir is non-existent.
+
+2002-01-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* code-files.el (convert-mbox-coding-system): Improve comment.
+	(write-region): Improve docstring.  Reformat to 80 columns.  Add
+	coding-system argument to `write-region-pre-hook' call.
+	(write-region-pre-hook): Fix docstring to mention lockname argument.
+
+2002-01-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* minibuf.el (completing-read): Remove redundant wrong arg list.
+
+	* help.el (with-displaying-help-buffer): Put usage advice in docstring.
+
+2001-12-27  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* obsolete.el (interactive-form): new compatibility alias for 
+	function-interactive.
+
+2001-11-29  Adrian Aichner  <adrian@xemacs.org>
+
+	* menubar-items.el (Menubar-items-truncate-list): Removed.
+	* menubar-items.el (Menubar-items-truncate-history): New.
+	* menubar-items.el (default-menubar): Use
+	Menubar-items-truncate-history.
+
+2002-02-03  Adrian Aichner  <adrian@xemacs.org>
+
+	* printer.el (generic-print-region): Pass correct arguments to
+	lpr-region.  Thanks to Nevin Kapur <nevin@jhu.edu> and Björn
+	Torkelsson <torkel@acc.umu.se>.
+
+2002-01-09  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* help.el (describe-mode): synched with FSF 19.34; handle nil
+	minor mode indicators.
+
+2001-12-03  Christoph Wedler  <Christoph.Wedler@sap.com>
+
+	* minibuf.el (completing-read): Update docstring.
+
+2001-12-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* faces.el (face-complain-about-font): Don't complain on printers.
 

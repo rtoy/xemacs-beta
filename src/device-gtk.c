@@ -122,6 +122,18 @@ gtk_init_device_class (struct device *d)
 extern void gdk_imlib_init(void);
 #endif
 
+extern void emacs_gtk_selection_handle (GtkWidget *,
+					GtkSelectionData *selection_data,
+					guint info,
+					guint time_stamp,
+					gpointer data);
+extern void emacs_gtk_selection_clear_event_handle (GtkWidget *widget,
+                                                    GdkEventSelection *event,
+                                                    gpointer data);
+extern void emacs_gtk_selection_received (GtkWidget *widget,
+					  GtkSelectionData *selection_data,
+					  gpointer user_data);
+
 #ifdef HAVE_BONOBO
 static CORBA_ORB orb;
 #endif

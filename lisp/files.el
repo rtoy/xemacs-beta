@@ -2989,7 +2989,7 @@ Return nil if identical, and the new buffer if different."
 	    (if (not (file-exists-p file-name))
 		(error "File %s no longer exists!" file-name))
 	    (widen)
-	    (insert-file-contents file-name t nil nil t)
+	    (insert-file-contents file-name nil nil nil t)
 	    (setq bmin (point-min)
 		  bmax (point-max))))))
     (if (not (and (eq bmin (point-min))
@@ -2997,7 +2997,7 @@ Return nil if identical, and the new buffer if different."
 		  (eq (compare-buffer-substrings 
 		       newbuf bmin bmax (current-buffer) bmin bmax) 0)))
 	newbuf
-      nil)))
+      (and (kill-buffer newbuf) nil))))
 
 (defvar recover-file-diff-program "diff"
   "Absolute or relative name of the `diff' program used by `recover-file'.")
