@@ -121,6 +121,7 @@
     (hmuller  "Hans Muller"       "hmuller@xemacs.org")
     (hniksic  "Hrvoje Niksic"     "hniksic@xemacs.org")
     (hobley   "David hobley"      "hobley@xemacs.org")
+    (james    "Jerry James"       "james@xemacs.org")
     (jan      "Jan Vroonhof"      "jan@xemacs.org")
     (jareth   "Jareth Hein"       "jareth@xemacs.org")
     (jason    "Jason R. Mastaler" "jason@xemacs.org")
@@ -146,9 +147,11 @@
     (pez      "Peter Pezaris"     "pez@xemacs.org")
     (piper    "Andy Piper"        "andy@xemacs.org")
     (pittman  "Daniel Pittman"    "pittman@xemacs.org")
+    (rendhalver "Peter Brown"     "rendhalver@xemacs.org")
     (rickc    "Rick Campbell"     "rickc@xemacs.org")
     (rose     "John Rose"         "rose@xemacs.org")
     (rossini  "Anthony Rossini"   "rossini@xemacs.org")
+    (scop     "Ville Skyttä"      "scop@xemacs.org")
     (slb      "Steve Baur"        "steve@xemacs.org")
     (sperber  "Michael Sperber"   "mike@xemacs.org")
     (stig     "Jonathan Stigelman" "stig@xemacs.org")
@@ -167,13 +170,13 @@
 
 (defvar about-current-release-maintainers
   ;; this list should not necessarily be in sorted order.
-  '(turnbull adrian ben hniksic jason martin piper sperber youngs))
+  '(youngs adrian ben hniksic james piper rendhalver scop sperber turnbull))
 
 (defvar about-other-current-hackers
   ;; to sort this list or the one below, use:
   ;; M-x sort-regexp-fields RET [a-z]+ RET \(.*\) RET
   '(aj alastair cgw craig daiki dan dv fabrice golubev gunnar hisashi
-       jan jareth jmiller jonathan kazz kirill larsi morioka mta ograf
+       jan jareth jason jmiller jonathan kazz kirill larsi martin morioka mta ograf
        olivier oscar pittman tomonori tuck vin wmperry yoshiki))
 
 (defvar about-once-and-future-hackers
@@ -959,12 +962,12 @@ I appreciate power of XEmacs, but elementary editing operations should
 be done by single keystrokes with no modifiers.  So would not use
 XEmacs until discovered viper, and now can't live without viper.
 Occasionally dislike something in there or in other free software, and
-try to get it fixed.  .plan file contains classic (perhaps reinvented
-independently) formula:
+try to get it fixed.  .plan file contains classic \(perhaps reinvented
+independently\) formula:
 
 Hacking world for ever
 
-(borrowed from \"Hacking X for Y\" in ")
+\(borrowed from \"Hacking X for Y\" in ")
      (about-url-link "http://www.jargon.org/"
 		     "Jargon File" "www.jargon.org")
      (widget-insert ").\n"))
@@ -1027,6 +1030,10 @@ muck around with things. As a result I started the NT port. Hopefully I
 will get to finish it sometime sooner rather than later. I do vaguely
 remember University where it seems like I had more spare time that I can
 believe now. Oh well, such is life.\n"))
+    (james
+     (widget-insert
+      "\
+Sorry, no personal information available about me yet.\n"))
     (jan
      (widget-insert "\
 Jan Vroonhof has been using XEmacs since he needed to write .tex files
@@ -1263,6 +1270,10 @@ maintains the MS Windows netinstaller.\n"))
      (widget-insert
       "\
 Sorry, no personal information available about me yet.\n"))
+    (rendhalver
+     (widget-insert
+      "\
+Sorry, no personal information available about me yet.\n"))
     (rickc
      (widget-insert "\
 The hacker formerly known as Rick Busdiecker is a developer and
@@ -1289,6 +1300,10 @@ and the Fred Hutchinson Cancer Research Center.
 See ")
      (about-url-link 'rossini nil "Visit Anothony's home page")
      (widget-insert ".\n"))
+    (scop
+     (widget-insert
+      "\
+Sorry, no personal information available about me yet.\n"))
     (slb
      (widget-insert "\
 Peaches Baur, 1986-1999.
@@ -1372,19 +1387,17 @@ Happily living in Indiana telecommuting for a company based in Seattle
 Sorry, no personal information available about me yet.\n"))
     (youngs
      (widget-insert "\
-I live in Brisbane, Australia with my wife, Michelle and our daughter,
-Kaitlyn.  I've only been hacking XEmacs for a short time (approx 18
-mths), but I've been fooling around with computers since the early
-80's.
+I live in Brisbane, Australia with my wife, Michelle and our two
+children, Kaitlyn and Blake.
 
 In the past, I've been a bank officer, car salesman, insurance agent,
 managed a computer firm and owned and operated my own business.  I now
 divide my time between my family, planning my next business idea (a
-computer consulting firm that uses zero Microsoft products), looking
-after the XEmacs Packages and hacking my own XEmacs package, Eicq.
+computer consulting firm that uses zero Microsoft products), hacking
+XEmacs, and hacking my own XEmacs package, Eicq.
 
 \tSee: ")
-     (about-url-link 'youngs nil "Visit the Eicq homepage")
+     (about-url-link 'youngs "Eicq Homepage" "Visit the Eicq homepage\n<http://eicq.sf.net/>")
      (widget-insert ".\n"))
     ))
 
@@ -1584,6 +1597,11 @@ since its inception in 1998.\n"))
      (widget-insert
       "\
 Creator of the earliest version of the MS Windows port of XEmacs.\n"))
+    (james
+     (widget-insert
+      "\
+Jerry made lots of enhancements to the DSO code, including moving
+PostgreSQL and LDAP to modules.\n"))
     (jan
      (widget-insert "\
 Apart from hunting down redisplay bugs Jan has worked on such
@@ -1651,7 +1669,7 @@ Sorry, no information about my XEmacs contributions yet.\n"))
     (martin
      (widget-insert
       "\
-Beta release manager and author of many stability fixes and speed
+Former beta release manager and author of many stability fixes and speed
 improvements in XEmacs.\n"))
     (mcook
      (widget-insert "\
@@ -1708,6 +1726,10 @@ support.\n"))
      (widget-insert
       "\
 Sorry, no information about my XEmacs contributions yet.\n"))
+    (rendhalver
+     (widget-insert
+      "\
+Co Maintainer & Release Manager \(with Ville\) of the Packages.\n"))
     (rickc
      (widget-insert "\
 Maintainer of ILISP.\n"))
@@ -1720,6 +1742,10 @@ implementation of `duplicable' properties.\n"))
 Author of the first XEmacs FAQ;
 Development lead on Emacs Speaks Statistics;
 Assisted Jareth Hein with setting up the JitterBug tracking system.\n"))
+    (scop
+     (widget-insert
+      "\
+Co Maintainer & Release Manager \(with Rendhalver\) of the Packages.\n"))
     (slb
      (widget-insert
       "\
@@ -1754,8 +1780,7 @@ Sorry, no information about my XEmacs contributions yet.\n"))
     (turnbull
      (widget-insert
       "\
-Responsible for getting the current release of XEmacs out the
-door.\n"))
+Former XEmacs Beta Release Manager.\n"))
     (vin
      (widget-insert "\
 Vin helps maintain the older, more mature (read: moldy) versions of
@@ -1779,7 +1804,13 @@ strikethru face attribute support).\n"))
 Sorry, no information about my XEmacs contributions yet.\n"))
     (youngs
      (widget-insert "\
-Maintainer and release manager of the packages.\n"))
+Steve is the current XEmacs Beta Release Manager (the guy responsible
+for getting this version of XEmacs out the door).  
+
+Steve used to be our Packages Release Manager and as such is one of
+our resident PUI experts.  He fixed the \"has never worked before\"
+PGP code in package-get, added the balloon-help to PUI, and a few
+other package related enhancements/fixes.\n"))
     ))
 
 ;; Setup the buffer for a maintainer.
