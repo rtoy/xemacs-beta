@@ -374,7 +374,7 @@ echo "  Use \`$progname --help' to show usage.") >&2 && exit 1 ;;
 
 			srcdir		| \
 	compiler	| \
-       xemacs_compiler | \
+	xemacs_compiler	| \
 	cflags		| \
 	cpp		| \
 	cppflags	| \

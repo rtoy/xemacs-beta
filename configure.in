@@ -525,7 +525,7 @@ while test $# != 0; do
 	dnl The cache-file option is ignored (for compatibility with other configures)
 	srcdir		| \
 	compiler	| \
-       xemacs_compiler | \
+	xemacs_compiler	| \
 	cflags		| \
 	cpp		| \
 	cppflags	| \
