@@ -1,3 +1,140 @@
+to 21.5.6 "bok choi"
+
+UI changes and runtime bugs
+
+-- Fix: process waiting on MS Windows -- Mike Alexander
+-- Fix: (maybe) GTK progress bar crashes at startup -- William M. Perry
+-- Fix: detect printer set up for metric units -- Jonathan Harris
+-- Fix: add_charsets_to_precedence_list -- IKEYAMA Tomonori
+-- Change: misc menubar -- John Paul Wallington
+-- Add: auto-mode-alist: GNUmakefile is a Makefile, "system default"
+   Xdefaults and friends get xrdb-mode -- Ville Skytt,Ad(B
+-- From  Ben Wing  <ben@xemacs.org>.
+  -- Fix: init_process_io_handles obeys coding-system-for-{read,write}.
+  -- Fix: bug in md5 handling.
+  -- Fix: data corruption in print.c from print_depth becoming negative.
+  -- Fix: "nil channel" in MS Windows magic events crashes.
+  -- Fix: (tentative) redisplay crash freeing display line structures.
+  -- Fix: (tentative) TTYs don't work.
+  -- Fix: too-small SHEAP_ADJUSTMENT on Cygwin (can't run temacs).
+  -- Fix: hscroll/truncation/continuation glyphs causing "jumping lines".
+  -- Fix: problem with text files with no newlines ().
+  -- Fix: errors when opening (e.g.) mule-ucs/lisp/reldata/uiso8859-6.el.
+  -- Fix: (partial) excess memory use in Unicode processing, esp. at startup
+  -- Fix: sample.init.el (grep-all-files-in-current-directory-and-below):
+     Missing argument.
+  -- Fix: smoother scrolling on MS Windows.
+  -- Change: Move the menubar frame commands from the View menu to
+     the File menu, to be consistent with how most other programs do
+     things.  Move less-used revert/recover items to a submenu.  Make
+     "recover" not prompt for a file, but recover the current buffer.
+  -- Change: implementation of matching font to charset.
+  -- Change: default MS Windows font to Lucida Console, increase
+     default frame size on Windows to 50 lines.
+  -- Add: runtime flag -no-packages inhibits adding package lisp to load-path.
+  -- Add: much functionality to behavior.el.
+  -- Add: more Unicode translation files.
+
+Documentation
+
+-- Add: define STACK_TRACE_EYE_CATCHER for Windows -- Jonathan Harris
+-- Texinfo (internals): Add xref in emodules.texi -- Stephen J. Turnbull
+-- Texinfo (lispref): Unicode Support, Behaviors -- Stephen J. Turnbull
+-- Texinfo (user): Behaviors -- Stephen J. Turnbull
+-- Improve auto-mode-alist -- Simon Josefsson
+-- Docstrings: completion-ignored-extensions, file-name-all-completions --
+   John H. Palmieri
+-- From  Ben Wing  <ben@xemacs.org>.
+  -- New ChangeLog for ./etc/.
+  -- Updated: NEWS.
+  -- Improve docs (developers): tree layout, merging branch to trunk.
+  -- Improve docs (lispref): CL loop, menu sorting, sound-default-alist
+  -- Obsoleted Lisp: 'sref, char-bytes.
+  -- Internals: Revamped the sound documentation.
+-- Typo fixes -- Adrian Aichner
+
+Lisp API
+
+-- From  Ben Wing  <ben@xemacs.org>.
+  -- Fixed: bug in keymap iteration in cl-macs.el.
+  -- Fix: bugs in language environments English and Ethiopic
+  -- Change: lisp/mule/*.el -- convert to XEmacs style.
+  -- Add (synch to GNU): get-window-with-predicate, ALL-FRAMES,
+     some-window, count-windows, window-safely-shrinkable-p,
+     count-screen-lines, shrink-window-if-larger-than-buffer
+  -- Add (line-oriented mouse selection):  New functions
+     mouse-consolidated-yank mouse-yank, mouse-track,
+     default-mouse-track-normalize-point,
+     default-mouse-track-return-dragged-selection, mouse-track-by-lines,
+     mouse-track-insert mouse-track-adjust-by-lines, mouse-track-insert-1,
+     mouse-track-insert-by-lines, mouse-track-delete-and-insert-by-lines
+  -- Add (warnings): Add a consistent way to execute code,
+     catching all errors and displaying a warning, including a
+     backtrace showing where the error occurred.  New functions
+     backtrace-in-condition-handler-eliminating-handler, with-trapping-errors,
+     view-warnings.  Integrate show-message-log with view-lossage.
+  -- Add (debugging): New functions  debug-print-1, debug-print,
+     debug-backtrace.
+  -- Add (misc utils): map-plist, show-memory-usage, compare-strings,
+     truncate-string-to-width, variable require-prints-loading-message.
+  -- Add many languages and charsets.
+  -- Add (autoloads): Support defun*, defmacro*.
+  -- Add (byte-compiler): with-boundp, if-boundp, when-boundp,
+     and-boundp, declare-boundp, globally-declare-boundp, with-fboundp,
+     if-fboundp, when-fboundp, and-fboundp, declare-fboundp,
+     globally-declare-fboundp, with-byte-compiler-warnings-suppressed
+  -- Warning fixes.
+
+Internals
+
+-- Add: Get & SetLocaleInfo from winnls.h -- Jonathan Harris
+-- Add: codepages latin-jisx0201, japanese-jisx0212, remove
+   japanese-jisx0208-1978 -- IKEYAMA Tomonori
+-- Fix: Use wrap_emacs_*(), not wrap_*() for gtk_boxed, gtk_object, ffi --
+   William M. Perry
+-- Fix: I18N APIs on windows -- Jonathan Harris
+-- Fix: typos causing GTK build errors -- Malcolm Purvis
+-- Warning fixes -- William M. Perry
+-- From  Ben Wing  <ben@xemacs.org>.
+  -- Change: error-checking macros: ERROR_CHECK_TYPECHECK -> ERROR_CHECK_TYPES,
+     ERROR_CHECK_CHARBPOS -> ERROR_CHECK_TEXT, add ERROR_CHECK_DISPLAY,
+     ERROR_CHECK_STRUCTURES.
+  -- Change: Redo print_*().
+  -- Change: character-to-unicode char-to-unicode; also unicode-to-char{acter}.
+  -- Change: Replace XSETFOO with wrap_foo().
+  -- Change: symbol->name a Lisp_Object, not Lisp_String *.  Eliminate latter.
+  -- Change: rearrange init calls in emacs.c.
+  -- Add: (partial) category API compatible with FSF.
+  -- Add: (partial) GC triggering based on percentage of total memory
+     usage.  Not currently activated.
+  -- Add: (partial) sledgehammer redisplay check.
+  -- Add: error-behavior ERROR_ME_DEBUG_WARN.
+  -- Add: more error checking on Dynarrs.
+  -- Add: assert_at_line(), for use in asserts inside of inline functions.
+  -- Add: resizing_buffer_to_lisp_string().
+  -- Add: function get_charset_limits.
+  -- Add: (tentative, may go away) foo_checking_assert_at_line() macros.
+  -- Add: new event methods for printing, comparing, and hashing magic
+     events, to avoid event-type-specific stuff.
+  -- Fix eifree().  Use Eistrings in various places
+  -- Fix: bugs in chartab implementation and doc strings.
+
+Build
+
+-- Fix: make-mswin-unicode.pl -- Ben Wing, Jonathan Harris
+-- Fix: .texi files for Cygwin makeinfo -- Jonathan Harris
+-- Fix: Perl quoting in Windows build -- Jonathan Harris, Ben Wing
+-- Fix: Generate more intermediate files in obj subdirectory -- Jonathan Harris
+-- From Ben Wing  <ben@xemacs.org>.
+  -- Fix: require errors in behavior.el
+  -- Fix: compile error when TTY-only.
+  -- Change: update check_cygwin_setup.sh for current Cygwin reality.
+  -- Change: Makefile regenerates itself if out of date.
+  -- Change: improve error-checking config for Windows
+  -- Add: HAVE_SYS_TIMES_H config.h #define.
+  -- Add: new error-checking types in configure.
+  -- Add: .cvsignore
+
 to 21.5.5 "beets"
 
 Documentation
