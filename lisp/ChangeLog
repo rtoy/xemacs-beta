@@ -1,5 +1,11 @@
 2005-01-27  Ben Wing  <ben@xemacs.org>
 
+	* subr.el:
+	* subr.el (macro-declaration-function): New.
+	Some synching with FSF 21.2.
+
+2005-01-27  Ben Wing  <ben@xemacs.org>
+
 	* gtk-marshal.el (find-file):
 	Propagate hash changes to gtk-marshal.el.
 	

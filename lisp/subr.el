@@ -1,12 +1,13 @@
 ;;; subr.el --- basic lisp subroutines for XEmacs
 
-;; Copyright (C) 1985, 1986, 1992, 1994-5, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 86, 92, 94, 95, 99, 2000, 2001, 2002, 2003
+;;   Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
-;; Keywords: extensions, dumped
+;; Keywords: extensions, dumped, internal
 
 ;; This file is part of XEmacs.
 
@@ -48,6 +49,24 @@ Each element of this list holds the arguments to one call to `defcustom'.")
 (defun custom-declare-variable-early (&rest arguments)
   (setq custom-declare-variable-list
 	(cons arguments custom-declare-variable-list)))
+
+
+(defun macro-declaration-function (macro decl)
+  "Process a declaration found in a macro definition.
+This is set as the value of the variable `macro-declaration-function'.
+MACRO is the name of the macro being defined.
+DECL is a list `(declare ...)' containing the declarations.
+The return value of this function is not used."
+  (dolist (d (cdr decl))
+    (cond ((and (consp d) (eq (car d) 'indent))
+	   (put macro 'lisp-indent-function (cadr d)))
+	  ((and (consp d) (eq (car d) 'debug))
+	   (put macro 'edebug-form-spec (cadr d)))
+	  (t
+	   (message "Unknown declaration %s" d)))))
+
+(setq macro-declaration-function 'macro-declaration-function)
+
 
 ;;;; Lisp language features.
 
@@ -1600,5 +1619,33 @@ FILE should be the name of a library, with no directory name."
 (make-compatible 'eval-next-after-load "")
 
 ;; END SYNC WITH FSF 21.2
+
+;; (defun shell-quote-argument (argument) in process.el.
+
+;; (defun make-syntax-table (&optional oldtable) in syntax.el.
+
+;; (defun syntax-after (pos) #### doesn't exist.
+
+;; global-set-key, local-set-key, global-unset-key, local-unset-key in
+;; keymap.el.
+
+;; frame-configuration-p is in frame.el.
+
+;; functionp is built-in.
+
+;; interactive-form in obsolete.el.
+
+;; assq-del-all in obsolete.el.
+
+;; (defun make-temp-file (prefix &optional dir-flag suffix) #### doesn't exist.
+
+;; add-minor-mode in modeline.el.
+
+;; text-clone stuff #### doesn't exist; should go in text-props.el and
+;; requires changes to extents.c (modification hooks).
+
+;; play-sound is built-in.
+
+;; define-mail-user-agent is in simple.el.
 
 ;;; subr.el ends here
