@@ -1,3 +1,7 @@
+2002-03-18  Adrian Aichner  <adrian@xemacs.org>
+
+	* cus-edit.el (customize-save-variable): Fix typo in prompt.
+
 2002-03-18  Ben Wing  <ben@xemacs.org>
 
 	* mule\lao.el (?):
