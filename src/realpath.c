@@ -180,6 +180,8 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
   int abslen = abs_start (path);
 #endif
 
+ restart:
+
   /* Make a copy of the source path since we may need to modify it. */
   qxestrcpy (copy_path, path);
   path = copy_path;
@@ -320,13 +322,19 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
 	  /* Note: readlink doesn't add the null byte. */
 	  link_path[n] = '\0';
 	  
-	  if (abs_start (link_path) > 0)
-	    /* Start over for an absolute symlink. */
-	    new_path = resolved_path + abs_start (link_path) - 1;
-	  else
-	    /* Otherwise back up over this component. */
-	    for (--new_path; !IS_DIRECTORY_SEP (*new_path); --new_path)
-	      assert (new_path > resolved_path);
+	  abslen = abs_start (link_path);
+	  if (abslen > 0)
+	    {
+	      /* Start over for an absolute symlink. */
+	      new_path = resolved_path;
+	      qxestrcat (link_path, path);
+	      path = link_path;
+	      goto restart;
+	    }
+
+	  /* Otherwise back up over this component. */
+	  for (--new_path; !IS_DIRECTORY_SEP (*new_path); --new_path)
+	    assert (new_path > resolved_path);
 
 	  /* Safe sex check. */
 	  if (qxestrlen (path) + n >= PATH_MAX)

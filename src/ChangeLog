@@ -1,3 +1,8 @@
+2003-10-16  Jerry James  <james@xemacs.org>
+
+	* realpath.c (qxe_realpath): When a symbolic link to an absolute
+	pathname is found, really start over.
+
 2003-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* bytecode.c (execute_optimized_program):
