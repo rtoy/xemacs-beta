@@ -5604,7 +5604,7 @@ dnl Restore lines quoted above to original contents.
 
     CPP_MAKEFILE(,Makefile)
     CPP_MAKEFILE(-DUSE_GNU_MAKE,GNUmakefile)
-    if test -e "xemacs.def.in"; then
+    if test -r "xemacs.def.in"; then
       cp -f xemacs.def.in junk.c
       CPP_MAKEFILE(,xemacs.def)
     fi
