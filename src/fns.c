@@ -1106,7 +1106,7 @@ split_env_path (const CIbyte *evarname, const Ibyte *default_)
 /* Ben thinks this function should not exist or be exported to Lisp.
    We use it to define split-path-string in subr.el (not!).  */
 
-DEFUN ("split-string-by-char", Fsplit_string_by_char, 1, 2, 0, /*
+DEFUN ("split-string-by-char", Fsplit_string_by_char, 2, 2, 0, /*
 Split STRING into a list of substrings originally separated by SEPCHAR.
 */
        (string, sepchar))

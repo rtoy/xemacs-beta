@@ -1,3 +1,13 @@
+2002-08-03  Brian A Palmer  <bpalmer@rescomp.Stanford.EDU>
+
+	* fns.c (Fsplit_string_by_char): Make 2nd arg SEPCHAR a required
+	argument. 
+
+2002-08-03  Steve Youngs  <youngs@xemacs.org>
+
+	* objects-gtk.c: Fix '--with-mule' '--with-gtk' builds.
+	From Vaclav Barta <vbar@comp.cz>.
+
 2002-08-02  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* postgresql.c: Add dumpable-flag to pgconn and pgresult for
@@ -28,6 +38,7 @@
 	* alloc.c: Fix various kkcc-related nits that show up in MULE and
 	union-type builds.
 
+>>>>>>> 1.488
 2002-07-31  David Bush  <David.Bush@intel.com>
 
 	* events.c (event_equal): Correct comparison in MS Windows
