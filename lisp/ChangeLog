@@ -1,3 +1,9 @@
+2001-11-28  Steve Youngs  <youngs@xemacs.org>
+
+	* package-get.el (package-get-locate-index-file): Also search the
+	core etc/ directory for the package index file if it can't be
+	found in ~/.xemacs/.
+
 2001-10-29  Andy Piper  <andy@xemacs.org>
 
 	* code-files.el (toggle-buffer-file-coding-system): mark buffer as
