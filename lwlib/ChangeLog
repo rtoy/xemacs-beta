@@ -1,3 +1,7 @@
+2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.5 "beets" is released.
+
 2001-12-19  Valdis Kletnieks  <Valdis.Kletnieks@vt.edu>
 
 	* xlwscrollbar.c: Fix Xt translations comment.

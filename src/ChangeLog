@@ -1,3 +1,7 @@
+2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.5 "beets" is released.
+
 2002-03-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* fileio.c (Fwrite_region_internal): Document use of start == Qnil.

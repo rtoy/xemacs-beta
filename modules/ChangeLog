@@ -1,3 +1,7 @@
+2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.5 "beets" is released.
+
 2002-02-14  Sean MacLennan  <seanm@seanm.ca>
 
 	* base64/base64.c - update Bufpos => Charbpos
