@@ -1,3 +1,9 @@
+2001-05-29  Alexey Mahotkin  <alexm@hsys.msk.ru>
+
+	* xemacs/custom.texi: Documented keyboard shortcut.
+
+	* xemacs/mule.texi: Updated to match reality; tiny fixes.
+
 2001-05-30  Ben Wing  <ben@xemacs.org>
 
 	* xemacs-faq.texi (Top):

@@ -13,13 +13,14 @@
 @cindex IPA
 @cindex Japanese
 @cindex Korean
+@cindex Cyrillic
 @cindex Russian
-  If you compile XEmacs with mule option, it supports a wide variety of
-world scripts, including Latin script, as well as Arabic script,
-Simplified Chinese script (for mainland of China), Traditional Chinese
-script (for Taiwan and Hong-Kong), Greek script, Hebrew script, IPA
+  If you build XEmacs using the @code{--with-mule} option, it supports a
+wide variety of world scripts, including the Latin script, the Arabic
+script, Simplified Chinese (for mainland of China), Traditional Chinese
+(for Taiwan and Hong-Kong), the Greek script, the Hebrew script, IPA
 symbols, Japanese scripts (Hiragana, Katakana and Kanji), Korean scripts
-(Hangul and Hanja) and Cyrillic script (for Byelorussian, Bulgarian,
+(Hangul and Hanja) and the Cyrillic script (for Byelorussian, Bulgarian,
 Russian, Serbian and Ukrainian).  These features have been merged from
 the modified version of Emacs known as MULE (for ``MULti-lingual
 Enhancement to GNU Emacs'').
@@ -89,8 +90,10 @@ current when you use this command, because the effects apply globally to
 the XEmacs session.  The supported language environments include:
 
 @quotation
-Chinese-BIG5, Chinese-CNS, Chinese-GB, Cyrillic-ISO, English, Ethiopic,
-Greek, Japanese, Korean, Latin-1, Latin-2, Latin-3, Latin-4, Latin-5.
+ASCII, Chinese-BIG5, Chinese-GB, Croatian, Cyrillic-ALT, Cyrillic-ISO,
+Cyrillic-KOI8, Cyrillic-Win, Czech, English, Ethiopic, French, German,
+Greek, Hebrew, IPA, Japanese, Korean, Latin-1, Latin-2, Latin-3, Latin-4,
+Latin-5, Norwegian, Polish, Romanian, Slovenian, Thai-XTIS, Vietnamese.
 @end quotation
 
   Some operating systems let you specify the language you are using by
@@ -217,7 +220,7 @@ Display a list of all the supported input methods.
 input method name with the minibuffer; the name normally starts with the
 language environment that it is meant to be used with.  The variable
 @code{current-input-method} records which input method is selected.
-  
+
 @findex toggle-input-method
 @kindex C-\
   Input methods use various sequences of ASCII characters to stand for
@@ -274,19 +277,23 @@ handles three different conventions for how to separate lines in a file:
 newline, carriage-return linefeed, and just carriage-return.
 
 @table @kbd
-@item C-h C @var{coding} @key{RET}
+@item C-x @key{RET} C @var{coding} @key{RET}
 Describe coding system @var{coding}.
 
-@item C-h C @key{RET}
+@item C-x @key{RET} C @key{RET}
 Describe the coding systems currently in use.
 
 @item M-x list-coding-systems
 Display a list of all the supported coding systems.
 @end table
 
-@kindex C-h C
+@item C-u M-x list-coding-systems
+Display comprehensive list of specific details of all supported coding
+systems.
+
+@kindex C-x RET C
 @findex describe-coding-system
-  The command @kbd{C-h C} (@code{describe-coding-system}) displays
+  The command @kbd{C-x RET C} (@code{describe-coding-system}) displays
 information about particular coding systems.  You can specify a coding
 system name as argument; alternatively, with an empty argument, it
 describes the coding systems currently selected for various purposes,
@@ -435,7 +442,8 @@ Specify coding system @var{coding} for the immediately following
 command.
 
 @item C-x @key{RET} k @var{coding} @key{RET}
-Use coding system @var{coding} for keyboard input.
+Use coding system @var{coding} for keyboard input.  (This feature is
+non-functional and is temporarily disabled.)
 
 @item C-x @key{RET} t @var{coding} @key{RET}
 Use coding system @var{coding} for terminal output.
@@ -507,6 +515,8 @@ specifies the coding system for keyboard input.  Character-code
 translation of keyboard input is useful for terminals with keys that
 send non-ASCII graphic characters---for example, some terminals designed
 for ISO Latin-1 or subsets of it.
+
+(This feature is non-functional and is temporarily disabled.)
 
   By default, keyboard input is not translated at all.
 
