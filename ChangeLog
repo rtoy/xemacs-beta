@@ -2,6 +2,15 @@
 
 	* configure: Regenerate.
 
+2003-05-04  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: Don't look for Motif if it's already present in
+	$x_includes and $x_libraries.
+
+2003-05-04  Steve Youngs  <youngs@xemacs.org>
+
+	* configure: Regenerate.
+
 2003-05-01  Andrew Begel  <abegel@CS.Berkeley.EDU>
 
 	* configure.in: Move module detection to after src/ is added to
