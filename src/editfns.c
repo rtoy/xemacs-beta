@@ -2042,77 +2042,71 @@ or markers) bounding the text that should remain visible.
 }
 
 Lisp_Object
-save_restriction_save (void)
+save_restriction_save (struct buffer *buf)
 {
-  Lisp_Object bottom, top;
-  /* Note: I tried using markers here, but it does not win
-     because insertion at the end of the saved region
-     does not advance mh and is considered "outside" the saved region. */
-  bottom = make_int (BUF_BEGV (current_buffer) - BUF_BEG (current_buffer));
-  top = make_int (BUF_Z (current_buffer) - BUF_ZV (current_buffer));
+  Lisp_Object bottom = noseeum_make_marker ();
+  Lisp_Object top = noseeum_make_marker ();
 
-  return noseeum_cons (Fcurrent_buffer (), noseeum_cons (bottom, top));
+  /* Formerly, this function remembered the amount of text on either side
+     of the restricted area, in a halfway attempt to account for insertion --
+     it handles insertion inside the old restricted area, but not outside.
+     The comment read:
+
+     [[ Note: I tried using markers here, but it does not win
+     because insertion at the end of the saved region
+     does not advance mh and is considered "outside" the saved region. ]]
+
+     But that was clearly before the advent of marker-insertion-type. --ben */
+
+  Fset_marker (bottom, make_int (BUF_BEGV (buf)), wrap_buffer (buf));
+  Fset_marker (top, make_int (BUF_ZV (buf)), wrap_buffer (buf));
+  Fset_marker_insertion_type (top, Qt);
+
+  return noseeum_cons (wrap_buffer (buf), noseeum_cons (bottom, top));
 }
 
 Lisp_Object
 save_restriction_restore (Lisp_Object data)
 {
   struct buffer *buf;
-  Charcount newhead, newtail;
-  Lisp_Object tem;
+  Lisp_Object markers = XCDR (data);
   int local_clip_changed = 0;
 
   buf = XBUFFER (XCAR (data));
-  if (!BUFFER_LIVE_P (buf))
+  /* someone could have killed the buffer in the meantime ... */
+  if (BUFFER_LIVE_P (buf))
     {
-      /* someone could have killed the buffer in the meantime ... */
-      free_cons (XCONS (XCDR (data)));
-      free_cons (XCONS (data));
-      return Qnil;
-    }
-  tem = XCDR (data);
-  newhead = XINT (XCAR (tem));
-  newtail = XINT (XCDR (tem));
+      Charbpos start = marker_position (XCAR (markers));
+      Charbpos end = marker_position (XCDR (markers));
+      Bytebpos byte_start = charbpos_to_bytebpos (buf, start);
+      Bytebpos byte_end = charbpos_to_bytebpos (buf, end);
 
-  free_cons (XCONS (XCDR (data)));
+      if (BUF_BEGV (buf) != start)
+	{
+	  local_clip_changed = 1;
+	  SET_BOTH_BUF_BEGV (buf, start, byte_start);
+	  narrow_line_number_cache (buf);
+	}
+      if (BUF_ZV (buf) != end)
+	{
+	  local_clip_changed = 1;
+	  SET_BOTH_BUF_ZV (buf, end, byte_end);
+	}
+
+      if (local_clip_changed)
+	MARK_CLIP_CHANGED;
+
+      /* If point is outside the new visible range, move it inside. */
+      BUF_SET_PT (buf, charbpos_clip_to_bounds (BUF_BEGV (buf), BUF_PT (buf),
+						BUF_ZV (buf)));
+    }
+
+  /* Free all the junk we allocated, so that a `save-restriction' comes
+     for free in terms of GC junk. */
+  free_marker (XMARKER (XCAR (markers)));
+  free_marker (XMARKER (XCDR (markers)));
+  free_cons (XCONS (markers));
   free_cons (XCONS (data));
-
-  if (newhead + newtail > BUF_Z (buf) - BUF_BEG (buf))
-    {
-      newhead = 0;
-      newtail = 0;
-    }
-
-  {
-    Charbpos start, end;
-    Bytebpos byte_start, byte_end;
-
-    start = BUF_BEG (buf) + newhead;
-    end = BUF_Z (buf) - newtail;
-
-    byte_start = charbpos_to_bytebpos (buf, start);
-    byte_end = charbpos_to_bytebpos (buf, end);
-
-    if (BUF_BEGV (buf) != start)
-      {
-	local_clip_changed = 1;
-	SET_BOTH_BUF_BEGV (buf, start, byte_start);
-	narrow_line_number_cache (buf);
-      }
-    if (BUF_ZV (buf) != end)
-      {
-	local_clip_changed = 1;
-	SET_BOTH_BUF_ZV (buf, end, byte_end);
-      }
-  }
-  if (local_clip_changed)
-    MARK_CLIP_CHANGED;
-
-  /* If point is outside the new visible range, move it inside. */
-  BUF_SET_PT (buf,
-              charbpos_clip_to_bounds (BUF_BEGV (buf),
-				     BUF_PT (buf),
-				     BUF_ZV (buf)));
 
   return Qnil;
 }
@@ -2129,8 +2123,9 @@ even in case of abnormal exit (throw or error).
 
 The value returned is the value of the last form in BODY.
 
-`save-restriction' can get confused if, within the BODY, you widen
-and then make changes outside the area within the saved restrictions.
+As of XEmacs 22.0, `save-restriction' correctly handles all modifications
+made within BODY. (Formerly, it got confused if, within the BODY, you
+widened and then made changes outside the old restricted area.)
 
 Note: if you are using both `save-excursion' and `save-restriction',
 use `save-excursion' outermost:
@@ -2139,9 +2134,9 @@ use `save-excursion' outermost:
        (body))
 {
   /* This function can GC */
-  int speccount = specpdl_depth ();
-
-  record_unwind_protect (save_restriction_restore, save_restriction_save ());
+  int speccount =
+    record_unwind_protect (save_restriction_restore,
+			   save_restriction_save (current_buffer));
 
   return unbind_to_1 (speccount, Fprogn (body));
 }

@@ -868,6 +868,52 @@ Tell PROCESS that it has logical window size HEIGHT and WIDTH.
 /*                              Process I/O                             */
 /************************************************************************/
 
+/* Set up PROCESS's buffer for insertion of process data at PROCESS's
+   mark.
+
+   Sets the current buffer to PROCESS's buffer, inhibits read only,
+   remembers current point, sets point to PROCESS'S mark, widens if
+   necessary.
+*/
+static int
+process_setup_for_insertion (Lisp_Object process)
+{
+  Lisp_Process *p = XPROCESS (process);
+  int spec = specpdl_depth ();
+  struct buffer *buf = XBUFFER (p->buffer);
+  Charbpos output_pt;
+
+  if (buf != current_buffer)
+    {
+      record_unwind_protect (save_current_buffer_restore,
+			     Fcurrent_buffer ());
+      set_buffer_internal (buf);
+    }
+
+  record_unwind_protect (save_excursion_restore, save_excursion_save ());
+  specbind (Qinhibit_read_only, Qt);
+      
+  /* Insert new output into buffer
+     at the current end-of-output marker,
+     thus preserving logical ordering of input and output.  */
+  if (XMARKER (p->mark)->buffer)
+    output_pt = marker_position (p->mark);
+  else
+    output_pt = BUF_ZV (buf);
+
+  /* If the output marker is outside of the visible region, save
+     the restriction and widen.  */
+  if (! (BUF_BEGV (buf) <= output_pt && output_pt <= BUF_ZV (buf)))
+    {
+      record_unwind_protect (save_restriction_restore,
+			     save_restriction_save (buf));
+      Fwiden (wrap_buffer (buf));
+    }
+
+  BUF_SET_PT (buf, output_pt);
+  return spec;
+}
+
 /* Read pending output from the process channel,
    starting with our buffered-ahead character if we have one.
    Yield number of characters read.
@@ -940,47 +986,11 @@ read_process_output (Lisp_Object process)
   /* If no filter, write into buffer if it isn't dead.  */
   if (!NILP (p->buffer) && BUFFER_LIVE_P (XBUFFER (p->buffer)))
     {
-      Lisp_Object old_read_only = Qnil;
-      Charbpos old_point;
-      Charbpos old_begv;
-      Charbpos old_zv;
-      struct gcpro gcpro1, gcpro2;
+      struct gcpro gcpro1;
       struct buffer *buf = XBUFFER (p->buffer);
+      int spec = process_setup_for_insertion (process);
 
-      GCPRO2 (process, old_read_only);
-
-      old_point = BUF_PT (buf);
-      old_begv = BUF_BEGV (buf);
-      old_zv = BUF_ZV (buf);
-      old_read_only = buf->read_only;
-      buf->read_only = Qnil;
-
-      /* Insert new output into buffer
-	 at the current end-of-output marker,
-	 thus preserving logical ordering of input and output.  */
-      if (XMARKER (p->mark)->buffer)
-	BUF_SET_PT (buf,
-		    charbpos_clip_to_bounds (old_begv, marker_position (p->mark),
-					   old_zv));
-      else
-	BUF_SET_PT (buf, old_zv);
-
-      /* If the output marker is outside of the visible region, save
-	 the restriction and widen.  */
-      if (! (BUF_BEGV (buf) <= BUF_PT (buf) &&
-	     BUF_PT (buf) <= BUF_ZV (buf)))
-	Fwiden (p->buffer);
-
-      /* Make sure opoint floats ahead of any new text, just as point
-	 would.  */
-      if (BUF_PT (buf) <= old_point)
-	old_point += nchars;
-
-      /* Insert after old_begv, but before old_zv.  */
-      if (BUF_PT (buf) < old_begv)
-	old_begv += nchars;
-      if (BUF_PT (buf) <= old_zv)
-	old_zv += nchars;
+      GCPRO1 (process);
 
 #if 0
       /* This screws up initial display of the window.  jla */
@@ -994,29 +1004,8 @@ read_process_output (Lisp_Object process)
 #endif
 
       Fset_marker (p->mark, make_int (BUF_PT (buf)), p->buffer);
-
       MARK_MODELINE_CHANGED;
-
-      /* If the restriction isn't what it should be, set it.  */
-      if (old_begv != BUF_BEGV (buf) || old_zv != BUF_ZV (buf))
-	{
-	  Fwiden(p->buffer);
-	  old_begv = charbpos_clip_to_bounds (BUF_BEG (buf),
-					    old_begv,
-					    BUF_Z (buf));
-	  old_zv = charbpos_clip_to_bounds (BUF_BEG (buf),
-					  old_zv,
-					  BUF_Z (buf));
-	  Fnarrow_to_region (make_int (old_begv), make_int (old_zv),
-			     p->buffer);
-	}
-
-      buf->read_only = old_read_only;
-      old_point = charbpos_clip_to_bounds (BUF_BEGV (buf),
-					 old_point,
-					 BUF_ZV (buf));
-      BUF_SET_PT (buf, old_point);
-
+      unbind_to (spec);
       UNGCPRO;
     }
   return nchars;
@@ -1499,48 +1488,24 @@ status_notify (void)
 	    exec_sentinel (process, msg);
 	  /* Don't bother with a message in the buffer
 	     when a process becomes runnable.  */
-	  else if (!EQ (symbol, Qrun) && !NILP (p->buffer))
+	  else if (!EQ (symbol, Qrun) && !NILP (p->buffer) &&
+		   /* Avoid error if buffer is deleted
+		      (probably that's why the process is dead, too) */
+		   BUFFER_LIVE_P (XBUFFER (p->buffer)))
 	    {
-	      Lisp_Object old_read_only = Qnil;
-	      Lisp_Object old = Fcurrent_buffer ();
-	      Charbpos opoint;
-              struct gcpro ngcpro1, ngcpro2;
+	      struct gcpro ngcpro1;
+	      struct buffer *buf = XBUFFER (p->buffer);
+	      int spec = process_setup_for_insertion (process);
 
-	      /* Avoid error if buffer is deleted
-		 (probably that's why the process is dead, too) */
-	      if (!BUFFER_LIVE_P (XBUFFER (p->buffer)))
-		continue;
-
-              NGCPRO2 (old, old_read_only);
-	      Fset_buffer (p->buffer);
-	      opoint = BUF_PT (current_buffer);
-	      /* Insert new output into buffer
-		 at the current end-of-output marker,
-		 thus preserving logical ordering of input and output.  */
-	      if (XMARKER (p->mark)->buffer)
-		BUF_SET_PT (current_buffer, marker_position (p->mark));
-	      else
-		BUF_SET_PT (current_buffer, BUF_ZV (current_buffer));
-	      if (BUF_PT (current_buffer) <= opoint)
-		opoint += (string_char_length (msg)
-                           + string_char_length (p->name)
-                           + 10);
-
-	      old_read_only = current_buffer->read_only;
-	      current_buffer->read_only = Qnil;
+	      NGCPRO1 (process);
 	      buffer_insert_c_string (current_buffer, "\nProcess ");
 	      Finsert (1, &p->name);
 	      buffer_insert_c_string (current_buffer, " ");
 	      Finsert (1, &msg);
-	      current_buffer->read_only = old_read_only;
 	      Fset_marker (p->mark, make_int (BUF_PT (current_buffer)),
 			   p->buffer);
 
-	      opoint = charbpos_clip_to_bounds(BUF_BEGV (XBUFFER (p->buffer)),
-					     opoint,
-					     BUF_ZV (XBUFFER (p->buffer)));
-	      BUF_SET_PT (current_buffer, opoint);
-	      Fset_buffer (old);
+	      unbind_to (spec);
               NUNGCPRO;
 	    }
 	}

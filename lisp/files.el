@@ -2995,6 +2995,11 @@ at all if reversion would not cause any user-visible changes."
 	newbuf
       nil)))
 
+(defvar recover-file-diff-program "diff"
+  "Absolute or relative name of the `diff' program used by `recover-file'.")
+(defvar recover-file-diff-arguments '("-c")
+  "List of arguments (switches) to pass to `diff' by `recover-file'.")
+
 (defun recover-file (file)
   "Visit file FILE, but get contents from its last auto-save file."
   ;; Actually putting the file name in the minibuffer should be used
@@ -3017,9 +3022,10 @@ at all if reversion would not cause any user-visible changes."
 		   (not (file-newer-than-file-p file-name file))
 		 (not (file-exists-p file-name)))
 	       (error "Auto-save file %s not current" file-name))
-	      ((save-window-excursion
+	      (t
+	       (save-window-excursion
 		 ;; XEmacs change: use insert-directory instead of
-		 ;; calling ls directly.
+		 ;; calling ls directly.  Add option for diff.
 		 (with-output-to-temp-buffer "*Directory*"
 		   (buffer-disable-undo standard-output)
 		   (save-excursion
@@ -3029,14 +3035,85 @@ at all if reversion would not cause any user-visible changes."
 				       (if (file-symlink-p file) "-lL" "-l"))
 		     (setq default-directory (file-name-directory file-name))
 		     (insert-directory file-name "-l")))
-		 (yes-or-no-p (format "Recover auto save file %s? " file-name)))
-	       (switch-to-buffer (find-file-noselect file t))
-	       (let ((buffer-read-only nil))
-		 (erase-buffer)
-		 (let ((coding-system-for-read 'escape-quoted))
-		   (insert-file-contents file-name nil)))
-	       (after-find-file nil nil t))
-	      (t (error "Recover-file cancelled.")))))))
+		 (block nil
+		   (while t
+		     (case (get-user-response
+			    nil
+			    ;; Formerly included file name.  Useless now that
+			    ;; we display an ls of the files, and potentially
+			    ;; fills up the minibuffer, esp. with autosaves
+			    ;; all in one directory.
+			    "Recover auto save file? "
+			    '(("yes" "%_Yes" yes)
+			      ("no" "%_No" no)
+			      ("diff" "%_Diff" diff)))
+		       (no (error "Recover-file cancelled."))
+		       (yes
+			(switch-to-buffer (find-file-noselect file t))
+			(let ((buffer-read-only nil))
+			  (erase-buffer)
+			  (let ((coding-system-for-read 'escape-quoted))
+			    (insert-file-contents file-name nil)))
+			(after-find-file nil nil t)
+			(return nil))
+		       (diff
+			;; rather than just diff the two files (which would
+			;; be easy), we have to deal with the fact that
+			;; they may be in different formats, since
+			;; auto-saves are always in escape-quoted.  so, we
+			;; read the file into a buffer (#### should we look
+			;; at or use a file if it's already in a buffer?
+			;; maybe we would find hints as to the encoding of
+			;; the file?), then we save the resulting buffer in
+			;; escape-quoted, do the diff (between two files
+			;; both in escape-quoted) and read in the results
+			;; using coding system escape-quoted.  That way, we
+			;; should get what's correct most of the time.
+			(let ((buffer (generate-new-buffer "*recover*"))
+			      (temp
+			       (make-temp-name
+				(concat (file-name-as-directory
+					 (temp-directory))
+					(file-name-nondirectory file) "-"))))
+			  (unwind-protect
+			      (progn
+				(save-current-buffer
+				  (set-buffer buffer)
+				  (insert-file-contents file)
+				  (let ((coding-system-for-write
+					 'escape-quoted))
+				    (write-region (point-min) (point-max)
+						  temp nil 'silent)))
+				(with-output-to-temp-buffer "*Autosave Diff*"
+				  (buffer-disable-undo standard-output)
+				  (let ((coding-system-for-read
+					 'escape-quoted))
+				    (condition-case ferr
+					(apply #'call-process
+					       recover-file-diff-program
+					       nil standard-output nil
+					       (append
+						recover-file-diff-arguments
+						(list temp file-name)))
+				      (io-error
+				       (save-excursion
+					 (set-buffer standard-output)
+					 (setq default-directory
+					       (file-name-directory file))
+					 (insert-directory
+					  file
+					  (if (file-symlink-p file) "-lL"
+					    "-l"))
+					 (setq default-directory
+					       (file-name-directory file-name))
+					 (insert-directory file-name "-l")
+					 (terpri)
+					 (princ "Error during diff: ")
+					 (display-error ferr
+							standard-output)))))))
+			    (ignore-errors (kill-buffer buffer))
+			    (ignore-file-errors
+			     (delete-file temp)))))))))))))))
 
 (defun recover-session ()
   "Recover auto save files from a previous Emacs session.

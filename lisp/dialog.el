@@ -1,7 +1,7 @@
 ;;; dialog.el --- Dialog-box support for XEmacs
 
 ;; Copyright (C) 1991-4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2000 Ben Wing.
+;; Copyright (C) 2000, 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: extensions, internal, dumped
@@ -24,6 +24,9 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
+
+;;; Authorship: Mostly written or rewritten by Ben Wing; some old old stuff
+;;; that underlies some current code was written by JWZ.
 
 ;;; Commentary:
 
@@ -88,6 +91,116 @@ on the left of the dialog box and all following items on the right."
 				(t
 				 `[,(car x) (dialog-box-finish ',(cdr x)) t])))
 			   (cdr contents))))
+
+(defun get-user-response (position question answers)
+  "Ask a question and get a response from the user, in minibuffer or dialog box.
+POSITION specifies which frame to use.
+This is normally an event or a window or frame.
+If POSITION is t or nil, it means to use the frame the mouse is on.
+The dialog box appears in the middle of the specified frame.
+
+QUESTION is the question to ask (it should end with a question mark followed
+by a space).
+
+ANSWERS are the possible answers.  It is a list; each item looks like
+
+  (KEY BUTTON-TEXT RESPONSE)
+
+where KEY is the key to be pressed in the minibuffer, BUTTON-TEXT is the
+text to be displayed in a dialog box button (you should put %_ in it to
+indicate the accelerator), and RESPONSE is a value (typically a symbol)
+to be returned if the user selects this response.  KEY should be either a
+single character or a string; which one you use needs to be consistent for
+all responses and determines whether the user responds by hitting a single
+key or typing in a string and hitting ENTER.
+
+An item may also be just a string--that makes a nonselectable item in the
+dialog box and is ignored in the minibuffer.
+
+An item may also be nil -- that means to put all preceding items
+on the left of the dialog box and all following items on the right; ignored
+in the minibuffer."
+  (if (should-use-dialog-box-p)
+      (get-dialog-box-response
+       position
+       (cons question
+	     (mapcar #'(lambda (x)
+			 (cond
+			  ((null x) nil)
+			  ((stringp x) x)
+			  (t (cons (second x) (third x)))))
+		     answers)))
+    (save-excursion
+      (let* ((answers (remove-if-not #'consp answers))
+	     (possible
+	      (gettext
+	       (flet ((car-to-string-if (x)
+			(setq x (car x))
+			(if (stringp x)  x (char-to-string x))))
+		 (concat (mapconcat #'car-to-string-if
+			   (butlast answers) ", ") " or "
+			   (car-to-string-if (car (last answers)))))))
+	     (question (gettext question))
+	     (p (format "%s(%s) " question possible)))
+	(block nil
+	  (if (stringp (caar answers))
+	      ;; based on yes-or-no-p.
+	      (while t
+		(let* ((ans (downcase (read-string p nil t))) ;no history
+		       (res (member* ans answers :test #'equal :key #'car)))
+		  (if res (return (third (car res)))
+		    (ding nil 'yes-or-no-p)
+		    (discard-input)
+		    (message "Please answer %s." possible)
+		    (sleep-for 2))))
+	    ;; based on y-or-n-p.
+	    (save-excursion
+	      (let* ((pre "") event)
+		(while t
+		  (if (let ((cursor-in-echo-area t)
+			    (inhibit-quit t))
+			(message "%s%s(%s) " pre question possible)
+			(setq event (next-command-event event))
+			(condition-case nil
+			    (prog1
+				(or quit-flag (eq 'keyboard-quit
+						  (key-binding event)))
+			      (setq quit-flag nil))
+			  (wrong-type-argument t)))
+		      (progn
+			(message "%s%s(%s) %s" pre question possible
+				 (single-key-description event))
+			(setq quit-flag nil)
+			(signal 'quit '())))
+		  (let* ((keys (events-to-keys (vector event)))
+			 (def (lookup-key query-replace-map keys)))
+		    (cond
+; 		     ((eq def 'skip)
+; 		      (message "%s%sNo" question possible)
+; 		      (return nil))
+; 		     ((eq def 'act)
+; 		      (message "%s%sYes" question possible)
+; 		      (return t))
+		     ((eq def 'recenter)
+		      (recenter))
+		     ((or (eq def 'quit) (eq def 'exit-prefix))
+		      (signal 'quit '()))
+		     ((button-release-event-p event) ; ignore them
+		      nil)
+		     (t
+		      (let ((res (member* (event-to-character event) answers
+					  :key #'car)))
+			(if res (return (third (car res)))
+			  (message "%s%s(%s) %s" pre question possible
+				   (single-key-description event))
+			  (ding nil 'y-or-n-p)
+			  (discard-input)
+			  (if (= (length pre) 0)
+			      (setq pre (format "Please answer %s.  "
+						;; 17 parens!  a record in
+						;; our lisp code.
+						possible)))))))))))))))))
+
 
 (defun message-box (fmt &rest args)
   "Display a message, in a dialog box if possible.

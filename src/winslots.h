@@ -1,7 +1,7 @@
 /* Definitions of marked slots in windows and window configs
    Copyright (C) 1985, 1986, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -28,7 +28,9 @@ Boston, MA 02111-1307, USA.  */
 
    NOTE: No semicolons after slot declarations in this file!  The
    definitions of WINDOW_SLOT (and possibly WINDOW_SAVED_SLOT) need
-   to include a semicolon.
+   to include a semicolon.  This is because these may be defined as
+   nothing, and some compilers don't tolerate extra semicolons in
+   structure definitions.
 
    WINDOW_SLOT declares a Lisp_Object that is not copied into the
      saved_window struct of a window configuration, or is handled in
@@ -110,6 +112,20 @@ Boston, MA 02111-1307, USA.  */
   /* A marker pointing to where in the text the scrollbar is pointing;
      #### moved to scrollbar.c? */
   WINDOW_SLOT (sb_point)
+  /* A table that remembers (in marker form) the value of point in buffers
+     previously displayed in this window.  Switching back to those buffers
+     causes the remembered point value to become current, rather than the
+     buffer's point.  This is so that you get sensible behavior if you have
+     a buffer displayed in multiple windows and temporarily switch away and
+     then back in one window.  We don't save or restore this table in a
+     window configuration, since that would be counterproductive -- we
+     always want to remember the most recent value of point in buffers we
+     switched away from. */
+  WINDOW_SLOT (saved_point_cache)
+  /* A table that remembers (in marker form) the value of window start in
+     buffers previously displayed in this window.  Save reason as for
+     the previous table. */
+  WINDOW_SLOT (saved_last_window_start_cache)
 
   /* Number saying how recently window was selected */
   WINDOW_SLOT (use_time)

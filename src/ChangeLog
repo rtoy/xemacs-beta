@@ -1,3 +1,70 @@
+2002-05-16  Ben Wing  <ben@xemacs.org>
+
+	* bytecode.c (execute_rare_opcode):
+	* editfns.c:
+	* editfns.c (save_restriction_save):
+	* editfns.c (save_restriction_restore):
+	* editfns.c (Fsave_restriction):
+	* lisp.h:
+	* lread.c (Feval_region):
+	Fix save-restriction to use markers rather than pseudo-markers
+	(integers representing the amount of text on either side of the
+	region).  That way, all inserts are handled correctly, not just
+	those inside old restriction.
+
+	Add buffer argument to save_restriction_save().
+
+	* process.c:
+	* process.c (process_setup_for_insertion):
+	* process.c (read_process_output):
+	* process.c (status_notify):
+	Clean up very dirty and kludgy code that outputs into a buffer --
+	use proper unwind protects, etc.
+
+	* font-lock.c (find_context):
+	Do save-restriction/widen around the function -- otherwise, incorrect
+	results will ensue when a buffer has been narrowed before a call to
+	e.g. `buffer-syntactic-context' -- something that happens quite often.
+	
+	* fileio.c:
+	* fileio.c (Fmake_temp_name):
+	* fileio.c (syms_of_fileio):
+	Look for a handler for make-temp-name.
+	
+	* window.c:
+	* window.c (allocate_window):
+	* window.c (Fset_window_point):
+	* window.c (unshow_buffer):
+	* window.c (Fset_window_buffer):
+	* window.c (make_dummy_parent):
+	* winslots.h:
+	Try to solve this annoying problem: have two frames displaying the
+	buffer, in different places; in one, temporarily switch away to
+	another buffer and then back -- and you've lost your position;
+	it's reset to the other one in the other frame.  My current
+	solution involves window-level caches of buffers and points (also
+	a cache for window-start); when set-window-buffer is called, it
+	looks to see if the buffer was previously visited in the window,
+	and if so, uses the most recent point at that time. (It's a
+	marker, so it handles changes.)
+
+	#### Note: It could be argued that doing it on the frame level
+	would be better -- e.g. if you visit a buffer temporarily through
+	a grep, and then go back to that buffer, you presumably want the
+	grep's position rather than some previous position provided
+	everything was in the same frame, even though the grep was in
+	another window in the frame.  However, doing it on the frame level
+	fails when you have two windows on the same frame.  Perhaps we
+	keep both a window and a frame cache, and use the frame cache if
+	there are no other windows on the frame showing the buffer, else
+	the window's cache?  This is probably something to be configurable
+	using a specifier.  Suggestions please please please?
+
+	* window.c (window_scroll):
+	* window.c (Fmove_to_window_line):
+	Clean up a bit code that deals with the annoyance of window-point
+	vs. point.
+
 2002-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* select.c (Fown_selection_internal):

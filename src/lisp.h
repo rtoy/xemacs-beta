@@ -3358,7 +3358,7 @@ Lisp_Object make_string_from_buffer (struct buffer *, Charbpos, Charcount);
 Lisp_Object make_string_from_buffer_no_extents (struct buffer *, Charbpos, Charcount);
 Lisp_Object make_time (time_t);
 Lisp_Object save_excursion_save (void);
-Lisp_Object save_restriction_save (void);
+Lisp_Object save_restriction_save (struct buffer *buf);
 Lisp_Object save_excursion_restore (Lisp_Object);
 Lisp_Object save_restriction_restore (Lisp_Object);
 void widen_buffer (struct buffer *b, int no_clip);

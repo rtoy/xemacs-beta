@@ -1167,7 +1167,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 
     case Bsave_restriction:
       record_unwind_protect (save_restriction_restore,
-			     save_restriction_save ());
+			     save_restriction_save (current_buffer));
       break;
 
     case Bcatch:

@@ -1,3 +1,43 @@
+2002-05-16  Ben Wing  <ben@xemacs.org>
+
+	* dialog.el:
+	* dialog.el (get-user-response): New.  Function to ask a
+	multiple-choice question, automatically choosing a dialog box or
+	minibuffer representation as necessary.  Generalized version of
+	yes-or-no-p, y-or-n-p.
+	
+	* files.el:
+	* files.el (recover-file-diff-program): New.
+	* files.el (recover-file-diff-arguments): New.
+	* files.el (recover-file):
+	Use get-user-response to ask "yes/no/diff" question when recovering.
+	"diff" means that a diff is displayed between the current file and the
+	autosave. (Converts/deconverts escape-quoted as necessary.  No more
+	complaints from you, Mr. Turnbull!) One known problem: when a dialog
+	is used, it's modal, so you can't scroll the diff.  Will fix soon.
+	
+	* lisp-mode.el (lisp-fill-paragraph):
+	If we're filling a string, don't treat semicolon as a comment,
+	which would give very unfriendly results.
+	Uses `buffer-syntactic-context'.
+
+	* simple.el:
+	* simple.el (undo-all-changes): New.
+	all changes back to the beginning. (Useful if you've saved the file
+	in the middle of the changes.)
+
+	* simple.el (kill-word-into-kill-ring): New.
+	* simple.el (backward-kill-word):
+	Add option kill-word-into-kill-ring, which controls whether words
+	deleted with kill-word, backward-kill-word, etc. are "cut" into the
+	kill ring, or "cleared" into nothingness. (My preference is the
+	latter, by far.  I'd almost go so far as suggesting we make it the
+	default, as you can always select a word and then cut it if you want
+	it cut.)
+
+	* menubar-items.el (default-menubar):
+	Add option corresponding to kill-word-into-kill-ring.
+	
 2002-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	This patch is based on Jerry James's patch and analysis.

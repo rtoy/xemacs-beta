@@ -959,6 +959,14 @@ then call `undo-more' one or more times to undo them."
   (setq pending-undo-list (primitive-undo count pending-undo-list)
 	last-undo-buffer (current-buffer)))	; XEmacs
 
+(defun undo-all-changes ()
+  "Keep undoing till the start of the undo list is reached.
+Undoes all changes, even past a file save.  Especially useful when you've
+saved the file at some point."
+  (interactive)
+  (undo-start)
+  (while pending-undo-list (undo-more 1)))
+
 ;; XEmacs
 (defun call-with-transparent-undo (fn &rest args)
   "Apply FN to ARGS, and then undo all changes made by FN to the current
@@ -2982,11 +2990,21 @@ With optional argument COUNT, mark COUNT words."
   (interactive "p")
   (mark-something 'mark-word 'forward-word count))
 
+(defcustom kill-word-into-kill-ring t
+  "*Non-nil means `kill-word' saves word killed into kill ring.
+\(Normally, this also affects the clipboard.)
+Nil means word is just deleted, without being remembered.
+This also applies to `backward-kill-word' and `backward-or-forward-kill-word'."
+  :type 'boolean
+  :group 'editing-basics)
+
 (defun kill-word (&optional count)
   "Kill characters forward until encountering the end of a word.
 With optional argument COUNT, do this that many times."
   (interactive "*p")
-  (kill-region (point) (save-excursion (forward-word count) (point))))
+  (if kill-word-into-kill-ring
+      (kill-region (point) (save-excursion (forward-word count) (point)))
+    (delete-region (point) (save-excursion (forward-word count) (point)))))
 
 (defun backward-kill-word (&optional count)
   "Kill characters backward until encountering the end of a word.

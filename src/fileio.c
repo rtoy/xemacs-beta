@@ -226,6 +226,7 @@ Lisp_Object Qdelete_file;
 Lisp_Object Qrename_file;
 Lisp_Object Qadd_name_to_file;
 Lisp_Object Qmake_symbolic_link;
+Lisp_Object Qmake_temp_name;
 Lisp_Object Qfile_exists_p;
 Lisp_Object Qfile_executable_p;
 Lisp_Object Qfile_readable_p;
@@ -595,7 +596,11 @@ danger of generating a name being used by another process.
 
 In addition, this function makes an attempt to choose a name that
 does not specify an existing file.  To make this work, PREFIX should
-be an absolute file name.
+be an absolute file name.  A reasonable idiom is
+
+\(make-temp-name (expand-file-name "myprefix" (temp-directory)))
+
+which puts the file in the OS-specified temporary directory.
 */
        (prefix))
 {
@@ -613,8 +618,12 @@ be an absolute file name.
 
   Bytecount len;
   Intbyte *p, *data;
+  Lisp_Object handler;
 
   CHECK_STRING (prefix);
+  handler = Ffind_file_name_handler (prefix, Qmake_temp_name);
+  if (!NILP (handler))
+    return call2_check_string (handler, Qmake_temp_name, prefix);
 
   /* I was tempted to apply Fexpand_file_name on PREFIX here, but it's
      a bad idea because:
@@ -627,8 +636,9 @@ be an absolute file name.
      the code that uses (make-temp-name "") instead of
      (make-temp-name "./").
 
-     3) It might yield unexpected (to stat(2)) results in the presence
-     of EFS and file name handlers.  */
+    [[ 3) It might yield unexpected (to stat(2)) results in the presence
+     of EFS and file name handlers.]] Now that we check for a handler,
+     that's less of a concern. --ben */
 
   len = XSTRING_LENGTH (prefix);
   data = alloca_intbytes (len + 7);
@@ -4201,6 +4211,7 @@ syms_of_fileio (void)
   DEFSYMBOL (Qrename_file);
   DEFSYMBOL (Qadd_name_to_file);
   DEFSYMBOL (Qmake_symbolic_link);
+  DEFSYMBOL (Qmake_temp_name);
   DEFSYMBOL (Qfile_exists_p);
   DEFSYMBOL (Qfile_executable_p);
   DEFSYMBOL (Qfile_readable_p);

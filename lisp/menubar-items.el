@@ -890,7 +890,12 @@ Write your filter like this:
 	:style toggle
 	:selected (and (boundp 'pending-delete-mode) pending-delete-mode)
 	:active (boundp 'pending-delete-mode)]
-       ["`%_kill-line' Kills Whole Line at %_Beg"
+       ["`kill-%_word' Stores in Clipboard"
+	(customize-set-variable 'kill-word-into-kill-ring
+				(not kill-word-into-kill-ring))
+	:style toggle
+	:selected kill-word-into-kill-ring]
+       ["`kill-%_line' Kills Whole Line at Beg"
 	 (customize-set-variable 'kill-whole-line (not kill-whole-line))
 	 :style toggle
 	 :selected kill-whole-line]

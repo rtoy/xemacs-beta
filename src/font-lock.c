@@ -432,6 +432,16 @@ find_context (struct buffer *buf, Charbpos pt)
   int prev_syncode, syncode;
   Charbpos target = pt;
   struct syntax_cache *scache;
+  int spec = specpdl_depth ();
+
+  /* If we are narrowed, we will get confused.  In fact, we are quite often
+     narrowed when this function is called. */
+  if (BUF_BEGV (buf) != BUF_BEG (buf) || BUF_ZV (buf) != BUF_Z (buf))
+    {
+      record_unwind_protect (save_restriction_restore,
+			     save_restriction_save (buf));
+      Fwiden (wrap_buffer (buf));
+    }
   
   setup_context_cache (buf, pt);
   pt = context_cache.cur_point;
@@ -679,6 +689,7 @@ find_context (struct buffer *buf, Charbpos pt)
     }
 
   context_cache.needs_its_head_reexamined = 0;
+  unbind_to (spec);
 }
 
 static Lisp_Object

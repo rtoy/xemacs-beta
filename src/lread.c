@@ -1508,7 +1508,8 @@ see some text temporarily disappear because of this.
 
   if (NILP (stream))
     record_unwind_protect (save_excursion_restore, save_excursion_save ());
-  record_unwind_protect (save_restriction_restore, save_restriction_save ());
+  record_unwind_protect (save_restriction_restore,
+			 save_restriction_save (current_buffer));
 
   /* This both uses start and checks its type.  */
   Fgoto_char (start, cbuf);

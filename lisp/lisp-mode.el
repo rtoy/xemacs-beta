@@ -983,7 +983,10 @@ and initial semicolons."
 		(cond
 		 ((eq (char-after (point)) ?\\) (forward-char 2))
 		 ((memq (char-after (point)) '(?\" ??)) (forward-sexp 1))))
-	      (looking-at ";+[\t ]*"))
+	      ;; don't do comment filling in a string, or we will mess up
+	      ;; doc strings and other places where semicolons are used.
+	      (and (not (eq 'string (buffer-syntactic-context)))
+		   (looking-at ";+[\t ]*")))
 	  (error nil))
 	(setq has-comment t has-code-and-comment t)
 	(setq comment-fill-prefix

@@ -212,6 +212,15 @@ finalize_window (void *header, int for_disksave)
     }
 }
 
+/* These caches map buffers to markers.  They are key-weak so that entries
+   remain around as long as the buffers do. */
+
+static Lisp_Object
+make_saved_buffer_point_cache (void)
+{
+  return make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
+}
+
 DEFINE_LRECORD_IMPLEMENTATION ("window", window,
                                mark_window, print_window, finalize_window,
 			       0, 0, 0, struct window);
@@ -248,6 +257,8 @@ allocate_window (void)
   INIT_DISP_VARIABLE (start, Fmake_marker ());
   INIT_DISP_VARIABLE (pointm, Fmake_marker ());
   p->sb_point = Fmake_marker ();
+  p->saved_point_cache = make_saved_buffer_point_cache ();
+  p->saved_last_window_start_cache = make_saved_buffer_point_cache ();
   p->use_time = Qzero;
   INIT_DISP_VARIABLE (last_modified, Qzero);
   INIT_DISP_VARIABLE (last_point, Fmake_marker ());
@@ -1757,14 +1768,20 @@ If the last line is not clipped, return nil.
 
 DEFUN ("set-window-point", Fset_window_point, 2, 2, 0, /*
 Make point value in WINDOW be at position POS in WINDOW's buffer.
+If WINDOW is the selected window, this actually changes the buffer's point
+instead of the window's point. (The equivalence of the selected window's
+point with its buffer's point is maintained throughout XEmacs.)
 */
        (window, pos))
 {
   struct window *w = decode_window (window);
 
   CHECK_INT_COERCE_MARKER (pos);
-  if (w == XWINDOW (Fselected_window (Qnil)))
-    Fgoto_char (pos, Qnil);
+  /* Don't dereference selected-window because there may not
+     be one -- e.g. at startup */
+  if (EQ (wrap_window (w), Fselected_window (Qnil)))
+    /* Even though window selected, buffer may not be current */
+    Fgoto_char (pos, w->buffer);
   else
     set_marker_restricted (w->pointm[CURRENT_DISP], pos, w->buffer);
 
@@ -1834,8 +1851,9 @@ static void
 unshow_buffer (struct window *w)
 {
   Lisp_Object buf = w->buffer;
+  struct buffer *b = XBUFFER (buf);
 
-  if (XBUFFER (buf) != XMARKER (w->pointm[CURRENT_DISP])->buffer)
+  if (b != XMARKER (w->pointm[CURRENT_DISP])->buffer)
     abort ();
 
   /* FSF disables this check, so I'll do it too.  I hope it won't
@@ -1860,12 +1878,34 @@ unshow_buffer (struct window *w)
      is actually stored in that buffer, and the window's pointm isn't used.
      So don't clobber point in that buffer.  */
   if (! EQ (buf, XWINDOW (Fselected_window (Qnil))->buffer))
-    {
-      struct buffer *b= XBUFFER (buf);
-      BUF_SET_PT (b, charbpos_clip_to_bounds (BUF_BEGV (b),
-                                     marker_position (w->pointm[CURRENT_DISP]),
-                                     BUF_ZV (b)));
-    }
+    BUF_SET_PT (b,
+		charbpos_clip_to_bounds
+		(BUF_BEGV (b),
+		 marker_position (w->pointm[CURRENT_DISP]),
+		 BUF_ZV (b)));
+
+  {
+    Lisp_Object marker = Fgethash (buf, w->saved_point_cache, Qnil);
+    int selected = EQ (wrap_window (w), Fselected_window (Qnil));
+
+    if (NILP (marker))
+      {
+	marker = Fmake_marker ();
+	Fputhash (buf, marker, w->saved_point_cache);
+      }
+    Fset_marker (marker,
+		 selected ? make_int (BUF_PT (b)) : w->pointm[CURRENT_DISP],
+		 buf);
+
+    marker = Fgethash (buf, w->saved_last_window_start_cache, Qnil);
+
+    if (NILP (marker))
+      {
+	marker = Fmake_marker ();
+	Fputhash (buf, marker, w->saved_last_window_start_cache);
+      }
+    Fset_marker (marker, w->start[CURRENT_DISP], buf);
+  }
 }
 
 /* Put REPLACEMENT into the window structure in place of OLD. */
@@ -3490,17 +3530,44 @@ global or per-frame buffer ordering.
   w->window_end_pos[CURRENT_DISP] = 0;
   w->hscroll = 0;
   w->modeline_hscroll = 0;
+#if 0 /* pre point caches */
   Fset_marker (w->pointm[CURRENT_DISP],
 	       make_int (BUF_PT (XBUFFER (buffer))),
 	       buffer);
   set_marker_restricted (w->start[CURRENT_DISP],
 			 make_int (XBUFFER (buffer)->last_window_start),
 			 buffer);
+#else
+  {
+    Lisp_Object marker = Fgethash (buffer, w->saved_point_cache, Qnil);
+    Lisp_Object newpoint =
+      !NILP (marker) ? make_int (marker_position (marker)) :
+      make_int (BUF_PT (XBUFFER (buffer)));
+    /* Previously, we had in here set-window-point, which did one of the
+       following two, but not both.  However, that could result in pointm
+       being in a different buffer from the window's buffer!  Probably
+       not a travesty since it always occurred when the window was
+       selected, meaning its value of point was ignored in favor of the
+       buffer's; but it tripped an assert() in unshow_buffer(). */
+    set_marker_restricted (w->pointm[CURRENT_DISP], newpoint, buffer);
+    if (EQ (wrap_window (w), Fselected_window (Qnil)))
+      Fgoto_char (newpoint, buffer); /* this will automatically clip to
+					accessible */
+    marker = Fgethash (buffer, w->saved_last_window_start_cache, Qnil);
+    set_marker_restricted (w->start[CURRENT_DISP],
+			   !NILP (marker) ?
+			   make_int (marker_position (marker)) :
+			   make_int (XBUFFER (buffer)->last_window_start),
+			   buffer);
+  }
+#endif
+
   Fset_marker (w->sb_point, w->start[CURRENT_DISP], buffer);
   /* set start_at_line_beg correctly. GE */
-  w->start_at_line_beg = beginning_of_line_p (XBUFFER (buffer),
-					      marker_position (w->start[CURRENT_DISP]));
-  w->force_start = 0;           /* Lucid fix */
+  w->start_at_line_beg =
+    beginning_of_line_p (XBUFFER (buffer),
+			 marker_position (w->start[CURRENT_DISP]));
+  w->force_start = 0;           /* XEmacs fix */
   SET_LAST_MODIFIED (w, 1);
   SET_LAST_FACECHANGE (w);
   MARK_WINDOWS_CHANGED (w);
@@ -3687,6 +3754,8 @@ make_dummy_parent (Lisp_Object window)
   p->pointm[DESIRED_DISP] = Qnil;
   p->pointm[CMOTION_DISP] = Qnil;
   p->sb_point = Qnil;
+  p->saved_point_cache = make_saved_buffer_point_cache ();
+  p->saved_last_window_start_cache = make_saved_buffer_point_cache ();
   p->buffer = Qnil;
 }
 
@@ -4429,14 +4498,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 	      MARK_WINDOWS_CHANGED (w);
 
 	      if (!point_would_be_visible (w, startp, XINT (point)))
-		{
-		  if (selected)
-		    BUF_SET_PT (b, startp);
-		  else
-		    set_marker_restricted (w->pointm[CURRENT_DISP],
-					   make_int (startp),
-					   w->buffer);
-		}
+		Fset_window_point (wrap_window (w), make_int (startp));
 	    }
 	}
     }
@@ -4512,12 +4574,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 		  else
 		    new_point = start_of_last_line (w, startp);
 
-		  if (selected)
-		    BUF_SET_PT (b, new_point);
-		  else
-		    set_marker_restricted (w->pointm[CURRENT_DISP],
-					   make_int (new_point),
-					   w->buffer);
+		  Fset_window_point (wrap_window (w), make_int (new_point));
 		}
 	    }
 	}
@@ -4557,12 +4614,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 	    {
 	      Charbpos new_point = start_of_last_line (w, startp);
 
-	      if (selected)
-		BUF_SET_PT (b, new_point);
-	      else
-		set_marker_restricted (w->pointm[CURRENT_DISP],
-				       make_int (new_point),
-				       w->buffer);
+	      Fset_window_point (wrap_window (w), make_int (new_point));
 	    }
 	}
     }
@@ -4775,6 +4827,9 @@ If WINDOW is nil, the selected window is used.
 	{
 	  new_point = point_at_center (w, CURRENT_DISP, 0, 0);
 
+	  /* #### Here we are checking the selected window of the frame
+	     instead of the selected window period.  Elsewhere we check
+	     the selected window of the device.  What a mess! */
 	  if (selected)
 	    BUF_SET_PT (b, new_point);
 	  else
