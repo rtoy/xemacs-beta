@@ -528,8 +528,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
   else
     {
 #ifndef HAVE_XTREGISTERDRAWABLE
-      invalid_operation("your Xt library sucks too much to transfer this "
-			"much data!");
+      invalid_operation("Copying that much data requires X11R6.", Qunbound);
 #else
       /* Send an INCR selection. */
       int prop_id;
