@@ -184,6 +184,17 @@ The value returned is the value of the last form in BODY."
      (select-window ,window)
      ,@body))
 
+(defmacro save-window-excursion (&rest body)
+  "Execute body, preserving window sizes and contents.
+Restores which buffer appears in which window, where display starts,
+as well as the current buffer.
+Does not restore the value of point in current buffer."
+  (let ((window-config (gensym 'window-config)))
+    `(let ((,window-config (current-window-configuration)))
+      (unwind-protect
+	  (progn ,@body)
+	(set-window-configuration ,window-config)))))
+
 (defun count-windows (&optional minibuf)
    "Return the number of visible windows.
 This counts the windows in the selected frame and (if the minibuffer is

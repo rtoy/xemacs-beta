@@ -40,6 +40,9 @@
 	"process" ;; This is bad. network-streams may not be defined.
 	(when-feature multicast "multicast") ; #+network-streams implicitly true
 	"map-ynp"
+	"undo-stack"
+	"window"		; simple needs `save-window-excursion'
+	"window-xemacs"
 	"simple"
 	"keydefs"		; Before loaddefs so that keymap vars exist.
 	"abbrev"
@@ -68,9 +71,6 @@
 	"isearch-mode"
 	"buffer"
 	"buff-menu"
-	"undo-stack"
-	"window"
-	"window-xemacs"
 	"paths.el"		; don't get confused if paths compiled.
 	"lisp"
 	"page"

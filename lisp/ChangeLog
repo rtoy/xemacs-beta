@@ -1,3 +1,14 @@
+2002-11-28  Mike Sperber <mike@xemacs.org>
+
+	* window.el (save-window-excursion): New macro to eventually
+	replace the bytecode instruction of that name.
+
+2002-11-16  Mike Sperber <mike@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list): Move window.el & neighbors
+	further up because other some files further down import macro(s)
+	from it.
+
 2002-11-26  Mike Sperber <mike@xemacs.org>
 
 	* window.el (shrink-window-if-larger-than-buffer): Elide braindead
