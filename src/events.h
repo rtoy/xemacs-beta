@@ -241,7 +241,7 @@ Lisp_Object make_magic_data (void);
 Lisp_Object make_magic_eval_data (void);
 Lisp_Object make_eval_data (void);
 Lisp_Object make_misc_user_data (void);
-#endif USE_KKCC
+#endif /* USE_KKCC */
 
 typedef enum emacs_event_type
 {
