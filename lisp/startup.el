@@ -537,8 +537,11 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 
     (startup-load-autoloads)
 
-    (unwind-protect
-	(command-line)
+    (let (error-data)
+      (condition-case data
+	  (command-line)
+	;; catch non-error signals, especially quit
+	(t (setq error-data data)))
       ;; Do this again, in case the init file defined more abbreviations.
       (setq default-directory (abbreviate-file-name default-directory))
       ;; Specify the file for recording all the auto save files of

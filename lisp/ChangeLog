@@ -1,3 +1,7 @@
+2002-06-04  Andy Piper  <andy@xemacs.org>
+
+	* startup.el (normal-top-level): Fix bad merge.
+
 2002-06-04  Jerry James <james@eecs.ku.edu>
 
 	* find-paths.el (paths-find-architecture-directory): Search in

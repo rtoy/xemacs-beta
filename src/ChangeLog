@@ -1,3 +1,8 @@
+2002-06-04  Andy Piper  <andy@xemacs.org>
+
+	* glyphs-widget.c (widget_logical_unit_height): don't try and
+	determine geometry of nil strings.
+
 2002-06-03  Andy Piper  <andy@xemacs.org>
 
 	* frame.c (frame_conversion_internal): add conversion appropriate

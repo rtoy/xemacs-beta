@@ -295,7 +295,9 @@ static int
 widget_logical_unit_height (Lisp_Image_Instance* ii)
 {
   return logical_unit_height (NILP (IMAGE_INSTANCE_WIDGET_TEXT (ii)) ?
-			      IMAGE_INSTANCE_NAME (ii) 
+			      NILP (IMAGE_INSTANCE_NAME (ii)) ?
+			      Fsymbol_name (Qwidget) 
+			      : IMAGE_INSTANCE_NAME (ii)
 			      : IMAGE_INSTANCE_WIDGET_TEXT (ii),
 			      IMAGE_INSTANCE_WIDGET_FACE (ii),
 			      IMAGE_INSTANCE_DOMAIN (ii));
