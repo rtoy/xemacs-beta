@@ -243,7 +243,7 @@ via keyb: @code{M-x customize-variable RET package-get-remote RET}
 (put in the details of remote host and directory)
 
 If the package tarballs _AND_ the package-index file are in a
-local directory, you can: @code{M-x pui-add-install-directory RET}
+local directory, you can: @code{M-x pui-set-local-package-get-directory RET}
 
 @item 
 Obtain a list of packages and display the list in a buffer named
@@ -252,10 +252,7 @@ menu: Tools -> Packages -> List & Install
 keyb: @code{M-x pui-list-packages RET}
 
 XEmacs will now connect to the remote site and download the
-latest package-index file.  If you see an error about the
-package-index entries not being PGP signed, you can safely
-ignore this because PGP has not been integrated into the XEmacs
-package tools yet.
+latest package-index file.
 
 The visual package browser will then display a list of all packages.
 Help information will be displayed at the very bottom of the buffer; you
@@ -278,7 +275,7 @@ installed and is up to date.
 
 From here, you can select or unselect packages for installation using
 the @key{RET} key, the @kbd{Mouse-2} button or selecting "Select" from
-the (Popup) Menu.
+the Popup @kbd{Mouse-3} Menu.
 Once you've finished selecting the packages, you can
 press the @kbd{x} key (or use the menu) to actually install the
 packages. Note that you will have to restart XEmacs for XEmacs to
@@ -307,7 +304,9 @@ Kill the package buffer.
 @end table
 
 Moving the mouse over a package will also cause additional information
-about the package to be displayed in the minibuffer.
+about the package to be displayed in the minibuffer.  If you have
+balloon-help enabled a balloon-help frame will pop up and display
+additional package information also.
 
 
 @item 
@@ -342,6 +341,17 @@ M-x package-get-all <return>
 Enter the name of the package (e.g., @code{prog-modes}), and XEmacs
 will search for the latest version and install it and any packages that
 it depends upon.
+
+@heading Keeping Packages Up To Date:
+Once you have the packages you want installed (using any of the above
+methods) you'll want to keep them up to date.  You can do this easily
+from the menubar:
+
+@example
+Tools -> Packages -> Add Download Site
+Tools -> Packages -> Update Installed Packages
+@end example
+
 
 @node Which Packages, Removing Packages, Automatically, Installing Packages
 @comment  node-name,  next,  previous,  up
@@ -402,7 +412,7 @@ Currently, source packages are only available via anonymous CVS.  See
 @item GNU make 
 (3.75 or later preferred).
 @item makeinfo 
-(1.68 from texinfo-3.11 or later required).
+(4.2 from GNU texinfo 4.2 or later required).
 @item GNU tar
 (or equivalent).
 @item GNU gzip

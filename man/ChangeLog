@@ -1,3 +1,13 @@
+2003-03-20  Steve Youngs  <youngs@xemacs.org>
+
+	* xemacs/packages.texi (Automatically): Refer to
+	'pui-set-local-package-get-directory' instead of
+	'pui-add-install-directory'. 
+	Remove comment about PGP not being intergrated into PUI.
+	Document balloon-help in PUI.
+	Add heading "Keeping Packages Up To Date".
+	(Building Packages): makeinfo 4.2 is required.
+
 2003-03-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs/frame.texi (Gutter Basics): Describe common options for
