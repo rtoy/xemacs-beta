@@ -1,3 +1,104 @@
+to 21.5.18 "chestnut"
+
+Major Features
+
+-- Improve: GTK support gets many fixes and improvements - Purvis.
+-- Improve: pdump gets data in executable support, -si option - Galibert.
+-- New: GTK gets default gtkrc - Purvis.
+-- New: bignum support - James (lead), Sivakumar, Turnbull.
+
+User-Visible Bug Fixes and Minor Improvements
+
+-- Fix: 'no-conversion is special in eol detection - Turnbull.
+-- Fix: `display-completion-list' does not overflow window - Grundmann.
+-- Fix: X error handler must not call stderr_out - Clements.
+-- Fix: bogus error in `apropros' - Turnbull.
+-- Fix: bogus error in `package-require' - Youngs.
+-- Fix: buffer editing by `call-process-region' - Aichner.
+-- Fix: coredump from bogus position computation in syntax cache - Euler.
+-- Fix: coredump from redisplay wrapping in signal.c - James.
+-- Fix: coredump in giflib - Hines.
+-- Fix: etags.el correctly handles tags with name fields - Grundmann.
+-- Fix: prevent minibuffer from hijacking marks - Sperber.
+-- Fix: respect `allow-deletion-of-last-visible-frame' - Zajcev.
+-- Fix: sync revert-buffer to 21.4 - Turnbull, Sparapani.
+-- Improve: error message formatting - Gatzemeier.
+-- Improve: etags.el optimized for exuberant ctags - Grundmann.
+-- Improve: isearch-abort preserves interim successes - Turnbull, Zawinski.
+-- Improve: package info reporting - Youngs.
+-- Improve: window configuration handling - Rychter.
+
+Build Infrastructure
+
+-- Fix: 64-bit support - Purvis, SuSE.
+-- Fix: configure.in syntax, logic - Turnbull, James, Purvis.
+-- Fix: make install went interactive - Aichner.
+-- Fix: rebuild finder-inf.el - Turnbull.
+-- Improve: Makefile diagnostics - Turnbull.
+-- Improve: Windows build support - Aichner.
+-- Improve: configure compiler warning setup - James, Purvis.
+-- Improve: configure diagnostics - Turnbull.
+-- Improve: configure feature detection - Purvis, James, Turnbull.
+-- Improve: configure report - Turnbull, James.
+-- Improve: icc support - James.
+-- Improve: install procedure - Galibert.
+-- New: configure supports Playstation2 - Myrkraverk.
+-- New: support for parallel builds - Purvis.
+
+Documentation
+
+-- Improve: about.el version reporting - Turnbull.
+-- Improve: comments and docstrings - Turnbull, Aichner, Gatzemeier.
+-- New: lispref.texi documents bignum support - Turnbull, James.
+-- New: lispref.texi documents text field support - James.
+-- Update: FAQ - Turnbull.
+-- Update: NEWS - Turnbull.
+-- Update: PACKAGES - Koch.
+-- Update: about.el - Turnbull.
+-- Update: internals.texi - James, Turnbull.
+-- Update: lispref.texi - Turnbull, Okahata.
+-- Update: menus to XEmacs config file reality - Turnbull.
+
+Lisp API
+
+-- Improve: pixel position reporting - Okahata.
+
+Internal API and Implementation
+
+-- Fix: C macro definition for icc - James.
+-- Fix: C++ build problems - James, Verna.
+-- Fix: Cygwin bug workaround conditionalized - James.
+-- Fix: Lisp internal type manipulation - James.
+-- Fix: bogus CVS conflict in package-ui.el - Aichner.
+-- Fix: callproc.c vestiges removed - James.
+-- Fix: format conversions in pdump report - Turnbull.
+-- Fix: function argument usage - James.
+-- Fix: incomplete macro in external widget support - Golubev.
+-- Fix: lwlib GC handling - James.
+-- Fix: lwlib computation of widget changes - James.
+-- Fix: mark unused parameters - James, Wing.
+-- Fix: remove duplicate functions - Turnbull.
+-- Fix: remove unused variables - James.
+-- Fix: specifier validation - James.
+-- Fix: update byte compiler function database - James.
+-- Fix: warning suppression - James, Gatzemeier.
+-- Fix: workaround Darwin's distaste for ISO 8859/2 filenames.
+-- Improve: custom database save - Aichner, Niksic.
+-- Improve: itimer implementation - James, Jones, Buchholz, Yamaoka.
+-- Improve: test-harness.el Assert macro - James.
+-- New: LTDL support in ELLs - James.
+-- Update: INSTALL Canna, Make descriptions - James, Purvis.
+-- Update: SERVICE sync with upstream - James.
+-- Update: derived.el, subr.el, cl*.el sync to Emacs 21.3 - James.
+-- Update: etags sync with upstream v17.6 - James.
+
+Quality Assurance Infrastructure
+
+-- Fix: regression tests using most-negative-fixnum - James.
+-- Improve: faster Mule tests - Turnbull.
+-- New: Uno support - James.
+-- New: regression tests - Turnbull, Youngs, Yamaoka, Shelton, James.
+
 to 21.5.17 "chayote"
 
 Build
