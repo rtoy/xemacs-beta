@@ -1505,7 +1505,8 @@ make_compiled_function (void)
   f->instructions = Qzero;
   f->constants = Qzero;
   f->arglist = Qnil;
-  f->args = f->max_args = f->min_args = f->args_in_array = 0;
+  f->args = NULL;
+  f->max_args = f->min_args = f->args_in_array = 0;
   f->doc_and_interactive = Qnil;
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   f->annotated = Qnil;

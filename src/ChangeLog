@@ -1,3 +1,8 @@
+2003-10-10  Jerry James  <james@xemacs.org>
+
+	* alloc.c (make_compiled_function): Fix C++ breakage introduced by
+	2003-07-25 patch.
+
 2003-07-25  Eric Benson  <eric_a_benson@yahoo.com>
 
 	Delay the allocation and initialization of the args array in
