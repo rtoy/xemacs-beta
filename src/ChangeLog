@@ -1,3 +1,15 @@
+2002-01-03  Eric Gillespie, Jr.  <epg@pretzelnet.org>
+
+	* device-gtk.c: Add prototype for
+	emacs_gtk_selection_clear_event_handle.
+	(gtk_init_device): Call gtk_selection_add_target for CLIPBOARD
+	selection.  Setup signal handler for "selection_clear_event"
+	(emacs_gtk_selection_clear_event_handle).
+
+	* select-gtk.c (emacs_gtk_selection_clear_event_handle): Handle
+	other applications owning the clipboard (based on
+	x_handle_selection_clear).
+
 2002-02-02  William M. Perry  <wmperry@gnu.org>
 
 	* winslots.h: New toolbar_shadow_thickness slot.
