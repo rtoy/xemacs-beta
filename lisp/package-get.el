@@ -214,7 +214,7 @@ directory."
     ("Japan (jp.xemacs.org)" "ftp.jp.xemacs.org" "pub/GNU/xemacs/packages")
     ("Japan (nucba.ac.jp)" "mirror.nucba.ac.jp" "mirror/xemacs/packages")
     ("Japan (sut.ac.jp)" "sunsite.sut.ac.jp" "pub/archives/packages/xemacs/packages")
-    ("Korea (kr.xemacs.org))" "ftp.kr.xemacs.org" "pub/tools/emacs/xemacs/packages")
+    ("Korea (kr.xemacs.org)" "ftp.kr.xemacs.org" "pub/tools/emacs/xemacs/packages")
     ("New Zealand (nz.xemacs.org)" "ftp.nz.xemacs.org" "mirror/ftp.xemacs.org/packages")
     ("Norway (no.xemacs.org)" "ftp.no.xemacs.org" "pub/xemacs/packages")
     ("Poland (pl.xemacs.org)" "ftp.pl.xemacs.org" "pub/unix/editors/xemacs/packages")
@@ -331,6 +331,20 @@ is the directory on the site in which packages may be found.
 This variable is used to initialize `package-get-remote', the
 variable actually used to specify package download sites."
   :tag "Pre-Release Package download sites"
+  :type '(repeat (list (string :tag "Name") host-name directory))
+  :group 'package-get)
+
+;;;###autoload
+(defcustom package-get-site-release-download-sites
+  nil
+  "*List of remote sites available for downloading \"Site Release\" packages.
+List format is '(site-description site-name directory-on-site).
+SITE-DESCRIPTION is a textual description of the site.  SITE-NAME
+is the internet address of the download site.  DIRECTORY-ON-SITE
+is the directory on the site in which packages may be found.
+This variable is used to initialize `package-get-remote', the
+variable actually used to specify package download sites."
+  :tag "Site Release Package download sites"
   :type '(repeat (list (string :tag "Name") host-name directory))
   :group 'package-get)
 

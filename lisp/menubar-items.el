@@ -567,16 +567,22 @@ Write your filter like this:
      
      ("%_Tools"
       ("%_Packages"
-       ("%_Add Download Site"
-	:filter (lambda (&rest junk)
-		  (menu-split-long-menu
-		   (submenu-generate-accelerator-spec
-		    (package-ui-download-menu)))))
-       ("%_Pre-Release Download Sites"
-	:filter (lambda (&rest junk)
-		  (menu-split-long-menu
-		   (submenu-generate-accelerator-spec
-		    (package-ui-pre-release-download-menu)))))
+       ("%_Set Download Site"
+	("%_Official Releases"
+	 :filter (lambda (&rest junk)
+		   (menu-split-long-menu
+		    (submenu-generate-accelerator-spec
+		     (package-ui-download-menu)))))
+	("%_Pre-Releases"
+	 :filter (lambda (&rest junk)
+		   (menu-split-long-menu
+		    (submenu-generate-accelerator-spec
+		     (package-ui-pre-release-download-menu)))))
+	("%_Site Releases"
+	 :filter (lambda (&rest junk)
+		   (menu-split-long-menu
+		    (submenu-generate-accelerator-spec
+		     (package-ui-site-release-download-menu))))))
        "--:shadowEtchedIn"
        ["%_Update Package Index" package-get-update-base]
        ["%_List and Install" pui-list-packages]

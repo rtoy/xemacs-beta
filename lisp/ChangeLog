@@ -1,3 +1,16 @@
+2003-03-23  Adrian Aichner  <adrian@xemacs.org>
+
+	* menubar-items.el (default-menubar): Reword "Add Download Site"
+	to the more appropriate "Set Download Site".  Categorize download
+	sites under separate menu entries for "Offical", "Pre-", and
+	"Site" Releases so that users only need to customize
+	`package-get-site-release-download-sites'.
+	* package-get.el (package-get-download-sites): Fix typo.
+	* package-get.el (package-get-site-release-download-sites): New.
+	Add support for "Site Releases".
+	* package-ui.el (package-ui-site-release-download-menu): New.
+	Ditto.
+
 2003-03-21  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el: Globally remove trailing whitespace.

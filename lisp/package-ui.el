@@ -181,6 +181,21 @@ Set this to `nil' to use the `default' face."
   	  package-get-pre-release-download-sites))
 
 ;;;###autoload
+(defun package-ui-site-release-download-menu ()
+  "Build the 'Site Release Download Sites' menu."
+  (mapcar (lambda (site)
+  	    (vector (car site)
+  		    `(if (equal package-get-remote (quote ,(cdr site)))
+ 		      (setq package-get-remote nil)
+ 		      (package-ui-add-site (quote ,(cdr site))))
+		    ;; I've used radio buttons so that only a single
+		    ;; site can be selected, but they are in fact
+		    ;; toggles.  SY.
+  		    :style 'radio
+  		    :selected `(equal package-get-remote (quote ,(cdr site)))))
+  	  package-get-site-release-download-sites))
+
+;;;###autoload
 (defun pui-set-local-package-get-directory (dir)
   "Set a new package binary directory in `package-get-remote'.
 Note that no provision is made for saving any changes made by this function.
