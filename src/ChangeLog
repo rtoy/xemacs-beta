@@ -1,3 +1,25 @@
+2003-01-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* alloc.c (mark_object_maybe_checking_free): C macro syntax
+	requires paren to immediately follow definiendum.
+
+2003-01-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* file-coding.c (vars_of_file_coding): Fprovide here ...
+	(syms_of_file_coding): ... not here.  Dem's da rules.
+
+2003-01-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* toolbar-msw.c:
+	* menubar-gtk.c (menu_descriptor_to_widget_1):
+	* nt.c (mswindows_link):
+	* event-msw.c (output_alt_keyboard_state):
+	Change C++ style comments to C style.
+
+2003-01-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* config.h.in: Restore USE_XFONTSET.
+
 2003-01-22  Vin Shelton  <acs@xemacs.org>
 
 	* events.h: Change illegal (for C) // comment to /* */

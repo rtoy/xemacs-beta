@@ -3149,7 +3149,7 @@ mark_object_maybe_checking_free (Lisp_Object obj, int allow_free)
   mark_object (obj);
 }
 #else
-#define mark_object_maybe_checking_free (obj, allow_free) mark_object (obj)
+#define mark_object_maybe_checking_free(obj, allow_free) mark_object (obj)
 #endif /* ERROR_CHECK_GC */
 
 /* This function is called to mark the elements of an object. It processes

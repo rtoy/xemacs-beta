@@ -4608,14 +4608,6 @@ syms_of_file_coding (void)
   DEFSYMBOL (Qgzip);
 #endif
 
-  /* WARNING: The existing categories are intimately tied to the function
-     `coding-system-category' in coding.el.  If you change a category, or
-     change the layout of any coding system associated with a category, you
-     need to check that function and make sure it's written properly. */
-
-#ifdef HAVE_DEFAULT_EOL_DETECTION
-  Fprovide (intern ("unix-default-eol-detection"));
-#endif
 }
 
 void
@@ -4763,6 +4755,15 @@ vars_of_file_coding (void)
 
   /* We always have file-coding support */
   Fprovide (intern ("file-coding"));
+
+#ifdef HAVE_DEFAULT_EOL_DETECTION
+  /* WARNING: The existing categories are intimately tied to the function
+     `coding-system-category' in coding.el.  If you change a category, or
+     change the layout of any coding system associated with a category, you
+     need to check that function and make sure it's written properly. */
+
+  Fprovide (intern ("unix-default-eol-detection"));
+#endif
 
   DEFVAR_LISP ("keyboard-coding-system", &Vkeyboard_coding_system /*
 Coding system used for TTY keyboard input.

@@ -45,7 +45,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-msw-impl.h"
 #include "glyphs-msw.h"
-// #include "objects-msw.h"
+/* #include "objects-msw.h" */
 
 #define TOOLBAR_ITEM_ID_MIN 0x4000
 #define TOOLBAR_ITEM_ID_MAX 0x7FFF

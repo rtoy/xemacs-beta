@@ -869,7 +869,7 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
 	    }
 	  else
 	    {
-	      // l->accel_string = "";
+	      /* l->accel_string = ""; */
 	    }
 	}
 

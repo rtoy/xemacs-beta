@@ -2477,7 +2477,7 @@ output_alt_keyboard_state (void)
 {
   BYTE keymap[256];
   SHORT keystate[3];
-  // SHORT asyncstate[3];
+  /* SHORT asyncstate[3]; */
 
   GetKeyboardState (keymap);
   keystate[0] = GetKeyState (VK_MENU);
@@ -2587,8 +2587,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  }
 
 	if (should_set_keymap)
-	  //	    && (message_ != WM_SYSKEYUP
-	  //	|| NILP (Vmenu_accelerator_enabled)))
+	  /*	    && (message_ != WM_SYSKEYUP	      */
+	  /*	|| NILP (Vmenu_accelerator_enabled))) */
 	  SetKeyboardState (keymap);
 
       }

@@ -1115,7 +1115,7 @@ mswindows_link (const Ibyte *old, const Ibyte *new)
 	    {
 	      /* Should try mapping GetLastError to errno; for now just
 		 indicate a general error (eg. links not supported).  */
-	      errno = EINVAL;  // perhaps EMLINK?
+	      errno = EINVAL;  /* perhaps EMLINK? */
 	    }
 	}
 
