@@ -62,12 +62,6 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # endif
 #endif
 
-int
-dll_init (const Extbyte *arg)
-{
-  return 0;
-}
-
 dll_handle
 dll_open (Lisp_Object fname)
 {
@@ -121,12 +115,6 @@ dll_error ()
 #elif defined(HAVE_SHL_LOAD)
 /* This is the HP/UX version */
 #include <dl.h>
-int
-dll_init (const Extbyte *arg)
-{
-  return 0;
-}
-
 dll_handle
 dll_open (Lisp_Object fname)
 {
@@ -184,12 +172,6 @@ dll_error ()
 #include "syswindows.h"
 #include "sysfile.h"
 
-int
-dll_init (const Extbyte *arg)
-{
-  return 0;
-}
-
 dll_handle
 dll_open (Lisp_Object fname)
 {
@@ -237,12 +219,6 @@ dll_error ()
 */
 
 #include <mach-o/dyld.h>
-
-int
-dll_init (const Extbyte *arg)
-{
-  return 0;
-}
 
 dll_handle
 dll_open (Lisp_Object fname)
@@ -451,14 +427,53 @@ dll_error ()
   NSLinkEditError(&c, &errorNumber, &fileNameWithError, &errorString);
   return build_ext_string (errorString, Qnative);
 }
-#else
-/* Catchall if we don't know about this system's method of dynamic loading */
-int
-dll_init (const Extbyte *arg)
+#elif HAVE_LTDL
+/* Libtool's libltdl */
+#include <ltdl.h>
+
+dll_handle
+dll_open (Lisp_Object fname)
 {
-  return -1;
+  Extbyte *soname;
+
+  if (NILP (fname))
+    {
+      soname = NULL;
+    }
+  else
+    {
+      LISP_STRING_TO_EXTERNAL (fname, soname, Qdll_filename_encoding);
+    }
+  return (dll_handle) lt_dlopen (soname);
 }
 
+int
+dll_close (dll_handle h)
+{
+  return lt_dlclose ((lt_dlhandle) h);
+}
+
+dll_func
+dll_function (dll_handle h, const CIbyte *n)
+{
+  MAYBE_PREPEND_UNDERSCORE (n);
+  return (dll_func) lt_dlsym ((lt_dlhandle) h, n);
+}
+
+dll_var
+dll_variable (dll_handle h, const CIbyte *n)
+{
+  MAYBE_PREPEND_UNDERSCORE (n);
+  return (dll_var) lt_dlsym ((lt_dlhandle) h, n);
+}
+
+Lisp_Object
+dll_error ()
+{
+  return build_ext_string (lt_dlerror (), Qnative);
+}
+#else
+/* Catchall if we don't know about this system's method of dynamic loading */
 dll_handle
 dll_open (Lisp_Object fname)
 {

@@ -1,3 +1,11 @@
+2004-05-10  Jerry James  <james@xemacs.org>
+
+	* config.h.in: Add HAVE_LTDL.
+	* emodules.c: Include LTDL headers, if needed.
+	* emodules.c (vars_of_module): Add LTDL initialization code.
+	* sysdll.c: Remove unused dll_init functions.  Add LTDL support.
+	* sysdll.h: Remove dll_init declaration and adjust spacing.
+
 2004-05-05  Chuck Hines <chuck.hines@baesystems.com>
 
 	* dgif_lib.c (DGifSlurp): Changed do-while to while to stop

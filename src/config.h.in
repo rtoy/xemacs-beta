@@ -306,6 +306,7 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE__DLERROR
 #undef HAVE_SHL_LOAD
 #undef HAVE_DYLD
+#undef HAVE_LTDL
 #undef DLSYM_NEEDS_UNDERSCORE
 #undef HAVE_SHLIB
 

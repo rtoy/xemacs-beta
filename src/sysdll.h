@@ -28,13 +28,11 @@ typedef void * dll_handle;
 typedef void * dll_func;
 typedef void * dll_var;
 
-extern int dll_init(const Extbyte *);
-extern int dll_shutdown(void);
-extern dll_handle dll_open(Lisp_Object);
-extern int dll_close(dll_handle);
-extern dll_func dll_function(dll_handle, const CIbyte *);
-extern dll_var dll_variable(dll_handle, const CIbyte *);
-extern Lisp_Object dll_error(void);
+extern dll_handle dll_open (Lisp_Object);
+extern int dll_close (dll_handle);
+extern dll_func dll_function (dll_handle, const CIbyte *);
+extern dll_var dll_variable (dll_handle, const CIbyte *);
+extern Lisp_Object dll_error (void);
 
 /* More stand-ins ... */
 

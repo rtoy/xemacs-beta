@@ -20,6 +20,9 @@ Boston, MA 02111-1307, USA.  */
 
 #include "emodules.h"
 #include "sysdll.h"
+#ifdef HAVE_LTDL
+#include <ltdl.h>
+#endif
 
 /* Load path */
 static Lisp_Object Vmodule_load_path;
@@ -586,6 +589,13 @@ vars_of_module (void)
   Fprovide (intern ("modules"));
 
   reinit_vars_of_module ();
+
+#ifdef HAVE_LTDL
+  lt_dlinit ();
+  lt_dlmalloc = (lt_ptr (*) (size_t)) xmalloc;
+  lt_dlrealloc = (lt_ptr (*) (lt_ptr, size_t)) xrealloc;
+  lt_dlfree = (void (*) (lt_ptr)) xfree_1;
+#endif
 
   DEFVAR_LISP ("module-version", &Vmodule_version /*
 Emacs dynamic loading mechanism version, as a string.
