@@ -1,3 +1,8 @@
+2003-06-11  Adrian Aichner  <adrian@xemacs.org>
+
+	* font-lock.el (lisp-font-lock-keywords-1): Only NAME, not NAME(
+	to appear in font-lock-function-name-face.
+
 2003-06-01  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.14 "cassava" is released.

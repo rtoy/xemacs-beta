@@ -1987,7 +1987,7 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
 	  "\\)\\>"
 	  ;; Any whitespace following and declared object.
 	  "[ \t'\(]*"
-	  "\\([^ \t\n\)]+\\)?")
+	  "\\([^ \t\n\(\)]+\\)?")
 	 ;; Note about numbering:  #1 is the grouping around the whole
 	 ;; keyword.  #2 - #4 are in lisp-function-and-type-regexp.
 	 ;; #5 is for variables. (Must be set if neither #3 nor #4 are.)
