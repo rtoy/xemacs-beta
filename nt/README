@@ -77,38 +77,35 @@ systems listed.
 ====================
 
 1.  You really want the XPM library.  Grab the latest version of the xpm
-    sources (xpm-3.4k.tar.gz as of 2002-04-27) from
+    sources (xpm-3.4k.tar.gz as of 2003-10-27) from
     ftp://ftp.xemacs.org/pub/xemacs/aux/ and unpack them somewhere.  Copy
     nt\xpm.mak from the xemacs sources to the lib subdirectory of the xpm
     sources, cd to that directory and build xpm with 'nmake -f xpm.mak'.
 
 2.  You probably also want PNG image support. Grab the latest versions of
-    zlib and libpng (zlib-1.1.4 and libpng-1.0.9 as of 2002-04-27) from
+    zlib and libpng (zlib-1.1.4 and libpng-1.2.5 as of 2003-10-27) from
     ftp://ftp.xemacs.org/pub/xemacs/aux/, unpack them somewhere and read the
     respective READMEs for details on how to build them.  The following
-    build procedure works for zlib-1.1.4 and libpng-1.0.9:
+    build procedure works for zlib-1.1.4 and libpng-1.2.5:
 
-    cd to the zlib directory and type 'nmake -f msdos\makefile.w32'.
+    cd to the zlib directory and type 'nmake -f nt\Makefile.nt'.
 
     cd to the libpng directory, rename or move the zlib directory to ..\zlib
     and type 'nmake -f scripts\makefile.vcwin32'.
 
-3.  If you want TIFF support, grap the latest version of libtiff (tiff-v3.4
-    as of 2002-04-27) from ftp://ftp.xemacs.org/pub/xemacs/aux/ and unpack
-    it somewhere. Copy nt\tiff.mak from the xemacs sources to the
-    contrib\winnt subdirectory of the tiff sources, cd to that directory and
-    build libtiff with 'nmake -f tiff.mak'. Note: tiff.mak has only been
-    verified to work under WinNT, not Win95 or 98.  However, the latest
-    distribution of libtiff includes a contrib\win95\makefile.w95; that
-    might work.
+3.  If you want TIFF support, grab the latest version of libtiff (tiff-v3.5.7
+    as of 2003-10-27) from ftp://ftp.xemacs.org/pub/xemacs/aux/ and unpack
+    it somewhere. Then cd to the libtiff subdirectory of the tiff directory
+    and type 'nmake -f makefile.vc'.
 
 4.  If you want JPEG support grab the latest version of jpegsrc (jpeg-6b as
-    of 2002-04-27) from ftp://ftp.xemacs.org/pub/xemacs/aux/ and read the
+    of 2003-10-27) from ftp://ftp.xemacs.org/pub/xemacs/aux/ and read the
     README for details on how to build it.
 
-5.  If you want X-Face support, grab the compface distribution from
+5.  If you want X-Face support, grab the latest version of the compface
+    distribution (1.4 as of 2003-10-27) from
     ftp://ftp.xemacs.org/pub/xemacs/aux/ and unpack it somewhere.
-    Copy nt\compface.mak from xemacs sources to the compface directory.
+    Copy nt\compface.mak from the xemacs sources to the compface directory.
     cd to that directory and build libcompface with 'nmake -f compface.mak'.
 
 
