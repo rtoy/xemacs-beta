@@ -1129,7 +1129,7 @@ installation::
 OS: $(OS)
 !endif
 
-XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=) $(xemacs_extra_name:"=) configured for '$(EMACS_CONFIGURATION)'.
+XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) configured for `$(EMACS_CONFIGURATION)'.
 
   Building XEmacs using "$(MAKE:\=\\)".
   Building XEmacs using make flags "$(MAKEFLAGS)".

@@ -1,3 +1,8 @@
+2003-03-22  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs.mak (installation): Restore version convention in
+	enerated Installation file.
+
 2003-03-09  Ben Wing  <ben@xemacs.org>
 
 	* config.inc.samp (COMPFACE_DIR):
