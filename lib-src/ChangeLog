@@ -1,3 +1,8 @@
+2004-01-21  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in (mmencode): Pass $(ldflags) to the compiler.
+	* Makefile.in.in (make-path): Ditto.
+
 2003-10-13  Jerry James  <james@xemacs.org>
 
 	* ellcc.c: Remove attribute definitions, include new compiler.h
