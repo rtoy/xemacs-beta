@@ -1,3 +1,7 @@
+2003-09-26  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.16 "celeriac" is released.
+
 2003-09-21  Jerry James  <james@xemacs.org>
 
 	* ellcc.c (do_init_mode): Do not mangle external symbols in the

@@ -1,3 +1,65 @@
+to 21.5.16 "celeriac"
+
+Build
+
+-- Don't detect GNU DLD - James.
+-- Better detection of sound on Solaris9 - Buchholz.
+-- Add support detecting SunOS 5.10 in configure - Buchholz.
+-- Use '-bundle' when testing ability to build shared libs, but use
+     '-bundle_loader' in ellcc - Begel.
+-- Output separate declaration and definition for dump_id - James.
+-- Add Makefile targets to build PDF docs - Wambold.
+-- Don't mangle the unload function in `unload_postgresql' and
+     `unload_ldap' when compiling with C++ - James.
+-- Use extern "C" for C++ builds - James.
+-- Conditionally compile messages missing from the Cygwin headers - James.
+-- Add cast to quiet compiler in unexcw.c - James.
+-- Quiet compiler warnings about struct stat in syswindows.h - James.
+-- Test \{m,n\} in regexp-tests - Turnbull.
+
+Documentation
+
+-- Propose bash as workaround for buggy Solaris sh in PROBLEMS - Sparapani.
+-- Fix the PRINTED-MANUAL-TITLE arg for cross ref to "The XEmacs User's Manual"
+     - Aichner.
+-- New node: "A Reader's Guide to XEmacs Coding Conventions" - Turnbull.
+-- New node: "Customizing Message Display" - Golubev.
+
+Internals
+
+-- In ellcc.c don't mangle external symbols in generated doc file - James.
+-- Add PARTIALLY parameter to support Fpos_visible_in_window_p parameter in
+     redisplay - James.
+-- Use 'point_would_be_visible' parameter in `scrollbar_reset_cursor' - James.
+-- Add PARTIALLY parameter fo `Fpos_visible_in_window_p' - James.
+-- Use new 'point_would_be_visible' parameter in `window_scroll' - James.
+-- dll_open now takes a Lisp_Object - James.
+-- Remove useless call to dll_init - James.
+-- char to CIbyte conversion in emodules.c, sysdll.c - James.
+-- Do not mangle module initialisation function names - James.
+-- char to Extbyte conversion in sysdll.c - James.
+-- Return a Lisp_Object instead of a string in `dll_error' - James.
+-- Make eval-related functions visible to modules - James.
+-- Allow specifying elisp function for waithing user input while displaying
+     message while in minibuffer - Golubev.
+-- Use OS_RELEASE=os_release_major*100+os_release_minor in s/sol2.h - Buchholz.
+-- Add lrecord_memory_descriptions - Crestani.
+-- Remove GetLongPathNameW - Harris.
+-- A couple of new macros to compare w32api versions - James.
+-- KKCC fixes - Crestani.
+
+Lisp API
+
+-- Allow user to specify alternative function for displaying message - Golubev.
+-- New var to specify the maximum received fonts - LewisMoss.
+-- Allow gnuserv to fallback to GTK if X device fails - LewisMoss.
+-- Eval the initialisation value of `eol-detection-enabled-p' - Alexander.
+-- Make sure `setbuffer-file-coding-system' sets the eol type - Alexander.
+-- Remove unnecessary definitions of 'null-device' - Turnbull.
+-- Actually implement the specified semantics for 'defvar' - Sperber.
+-- Fix `shrink-to-fit' by calling `shrink-window-if-larger-than-buffer' - Aichner.
+
+
 to 21.5.15 "celery"
 
 Build

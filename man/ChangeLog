@@ -1,3 +1,7 @@
+2003-09-26  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.16 "celeriac" is released.
+
 2003-09-22  Adrian Aichner  <adrian@xemacs.org>
 
 	* lispref/backups.texi (Reverting): Fix the PRINTED-MANUAL-TITLE

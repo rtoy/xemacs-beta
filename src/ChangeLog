@@ -1,3 +1,7 @@
+2003-09-26  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.16 "celeriac" is released.
+
 2003-09-09  Jerry James  <james@xemacs.org>
 
 	* redisplay.c (point_would_be_visible): Add PARTIALLY parameter to
