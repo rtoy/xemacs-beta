@@ -1,3 +1,9 @@
+2005-01-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* regex.c (re_match_2_internal): 
+	* regex.h (struct re_pattern_buffer):
+	Improve comments.  Add a DEBUG_PRINT2 for null matches.
+
 2005-03-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select-x.c (x_reply_selection_request): Check that

@@ -357,8 +357,8 @@ struct re_pattern_buffer
            when it is matched.  */
   RE_TRANSLATE_TYPE translate;
 
-	/* Number of returnable groups found by the compiler. (This does
-           not count shy groups.) */
+	/* Number of subpatterns (returnable groups) found by the compiler.
+	   (This does not count shy groups.) */
   int re_nsub;
 
 	/* Total number of groups found by the compiler. (Including

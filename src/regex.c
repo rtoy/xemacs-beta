@@ -5178,8 +5178,9 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 				    : ((regoff_t) (d - string2 + size1)));
 		  }
 
-		/* Go through the first `min (num_regs, regs->num_regs)'
-		   registers, since that is all we initialized.  */
+		/* Map over the NUM_NONSHY_REGS non-shy internal registers.
+		   Copy each into the corresponding external register.
+		   MCNT indexes external registers. */
 		for (mcnt = 1; mcnt < MIN (num_nonshy_regs, regs->num_regs);
 		     mcnt++)
 		  {
@@ -5198,9 +5199,10 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	      } /* regs && !bufp->no_sub */
 
 	    /* If we have regs and the regs structure has more elements than
-	       were in the pattern, set the extra elements to -1.  If we
-	       (re)allocated the registers, this is the case, because we
-	       always allocate enough to have at least one -1 at the end.
+	       were in the pattern, set the extra elements starting with
+	       NUM_NONSHY_REGS to -1.  If we (re)allocated the registers,
+	       this is the case, because we always allocate enough to have
+	       at least one -1 at the end.
 
 	       We do this even when no_sub is set because some applications
 	       (XEmacs) reuse register structures which may contain stale
@@ -5406,8 +5408,11 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	  p1 = p;		/* To send to group_match_null_string_p.  */
 
           if (REG_MATCH_NULL_STRING_P (reg_info[*p]) == MATCH_NULL_UNSET_VALUE)
-            REG_MATCH_NULL_STRING_P (reg_info[*p])
-              = group_match_null_string_p (&p1, pend, reg_info);
+	    REG_MATCH_NULL_STRING_P (reg_info[*p])
+	      = group_match_null_string_p (&p1, pend, reg_info);
+
+	  DEBUG_PRINT2 ("  group CAN%s match null string\n",
+			REG_MATCH_NULL_STRING_P (reg_info[*p]) ? "NOT" : "");
 
           /* Save the position in the string where we were the last time
              we were at this open-group operator in case the group is
