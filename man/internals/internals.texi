@@ -2512,10 +2512,7 @@ devices and platforms.  Commonly, but not always, such objects are
 the internal structures developed for Lisp objects (the @samp{lrecord}
 structure) in order to take advantage of Lisp memory management.
 Unfortunately, XEmacs was originally written in C, so these techniques
-are based on heavy use of C macros.  Since XEmacs has been rewritten in
-``Clean C,'' @emph{i.e.}, it compiles under both C and C++, it should be
-possible to migrate to C++.  It is hoped this documentation will help
-encourage this process.
+are based on heavy use of C macros.
 
 @c You can't use @var{} for type below, because case is important.
 A module defining a class is likely to use most of the following

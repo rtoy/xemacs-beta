@@ -1,9 +1,14 @@
-2004-04-19  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+2004-05-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Object-Oriented Techniques for C):
+	Remove reference to "encouraging port to C++".
+
+2004-04-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/numbers.texi (The Bignum Extension): Mention the feature
 	symbols provided.
 
-2004-04-19  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+2004-04-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/numbers.texi (Rational Basics): There's a reason why
 	this node is named "Rational" and not "Ratio" in the menu....
@@ -32,7 +37,7 @@
 	Fix many typos and grammatical problems.
 	(User Interface): Fix typo.
 
-2004-04-09  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+2004-04-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/numbers.texi (Numbers): Describe bignums, ratios, and
 	bigfloats briefly.
@@ -78,7 +83,7 @@
 	(Common Gutter Widgets): In lieu of real documentation, at least
 	point to gutter-items.el.
 
-2004-04-06  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+2004-04-06  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Lightly revised from <psr7v1j039.fsf@diannao.ittc.ku.edu>.
 	Thanks to Jerry James <james@xemacs.org>.
@@ -2255,7 +2260,7 @@
 	Document INLINE_HEADER and how to create macros and inline functions.
 	Cleanup entire section.
 
-2000-02-17  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+2000-02-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* man/lispref/gutter.texi: New file describing gutter API.
 
@@ -2263,14 +2268,14 @@
 
 	* man/lispref/toolbar.texi: Fixup links to new node Gutter.
 
-2000-02-17  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+2000-02-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* man/lispref/frames.texi, man/xemacs/custom.texi,
 	man/xemacs/frame.texi, man/xemacs/glossary.texi: Mention menubars,
 	toolbars, and gutters as optional components of frames, with
 	pointers to descriptions.
 
-2000-02-17  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+2000-02-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* man/lispref/mule.texi:  Substantial reorganization and
 	revision for style of descriptions of character sets,
@@ -2713,7 +2718,7 @@
 	Added info dir entries so install-info will add them to
 	the common `dir' file.
 
-1999-04-28  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+1999-04-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* man/lispref/mule.texi: Document CCL
 	- add sections: syntax, statements, expressions, and examples.
@@ -3172,7 +3177,7 @@
 	Comment out w3 and vm info rules.
 	Use paranoid cd ./$@ syntax to avoid losing with luser's CDPATH.
 
-1998-03-27  Stephen Turnbull  <turnbull@sk.tsukuba.ac.jp>
+1998-03-27  Stephen Turnbull  <stephen@xemacs.org>
 
 	* xemacs/frame.texi: Document cursor appearance at end of line.
 
