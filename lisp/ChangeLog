@@ -1,3 +1,15 @@
+2003-04-24  Steve Youngs  <youngs@xemacs.org>
+
+	* font-lock.el (font-lock-match-java-declarations): Move
+	save-restriction, narrow-to-region to beginning of function to
+	avoid going beyond the limit and causing an infloop.
+	From Jin Choi <jsc@orangeimagineering.com>.
+
+2003-04-24  Vasily Korytov  <deskpot@myrealbox.com>
+
+	* lisp-mode.el (emacs-lisp-mode-hook, lisp-mode-hook,
+	lisp-interaction-mode-hook): Add the docstrings.
+
 2003-04-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* subr.el (split-string): Revert to regular behavior, except when
