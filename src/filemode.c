@@ -30,7 +30,9 @@ static char ftypelet (mode_t bits);
 static void rwx (unsigned short bits, char *chars);
 static void setst (unsigned short bits, char *chars);
 
-/* filemodestring - fill in string STR with an ls-style ASCII
+/* declared in "sysfile.h"
+
+   filemodestring - fill in string STR with an ls-style ASCII
    representation of the st_mode field of file stats block STATP.
    10 characters are stored in STR; no terminating null is added.
    The characters stored in STR are:

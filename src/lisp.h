@@ -1405,7 +1405,6 @@ struct extent_fragment;
 struct extent;
 struct frame;			/* "frame.h" */
 struct window;                  /* "window.h" */
-struct stat;                    /* <sys/stat.h> */
 struct utimbuf;                 /* "systime.h" or <utime.h> */
 struct display_line;
 struct display_glyph_area;
@@ -4282,9 +4281,6 @@ void lock_file (Lisp_Object);
 void unlock_file (Lisp_Object);
 void unlock_all_files (void);
 void unlock_buffer (struct buffer *);
-
-/* Defined in filemode.c */
-void filemodestring (struct stat *, char *);
 
 /* Defined in floatfns.c */
 EXFUN (Ftruncate, 1);

@@ -1,3 +1,23 @@
+2003-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Various cleanups against the possibility that <sys/stat.h> does
+	#define stat ... .
+
+	* lisp.h: Remove struct stat declaration.
+
+2003-05-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* broken-sun.h: Warn about possibility of #define stat.
+
+2000-07-22  Ilya N. Golubev  <gin@mo.msk.ru>
+
+	* lisp.h (filemodestring): Remove
+	
+	* sysfile.h (filemodestring): Put it here
+
+	* filemode.c (filemodestring): Note in comment where it is
+	declared.
+
 2003-05-09  Martin Buchholz  <martin@xemacs.org>
 
 	* dumper.c (pdump_load): Pdump'ed XEmacs can't find its .dmp file.
@@ -9,7 +29,7 @@
 
 	* database.c: Berkeley DB wants __STDC__ to be defined.
 
-2003-05-04  Martin Buchholz  <martin@xemacs.org>
+2003-04-05  Martin Buchholz  <martin@xemacs.org>
 
 	* EmacsFrameP.h (EmacsFramePart):
 	Kludge to allow compiling with Motif1, but linking with Motif2.

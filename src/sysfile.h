@@ -58,6 +58,9 @@ Boston, MA 02111-1307, USA.  */
 # include <sys/file.h>
 #endif
 
+/* Some systems (SCO 3.2v5) do #define stat ... in this header.  So it
+   _must_ be included before any use of struct stat.  Most emacs files
+   should include sysfile.h.  The unex*.c include <sys/stat.h> directly. */
 #include <sys/stat.h>
 
 #ifdef WIN32_ANY
@@ -368,6 +371,11 @@ int qxe_symlink (const Ibyte *name1, const Ibyte *name2);
 
 int qxe_unlink (const Ibyte *path);
 
+/* definition in filemode.c
+   must be declared here to ensure that struct stat is properly formed
+   on systems like SCO 3.2v5 */
+void filemodestring (struct stat *, char *);
+
 #endif /* emacs */
 
 
@@ -477,6 +485,5 @@ DECLARE_INLINE_HEADER (int IS_ANY_SEP (Ichar c))
 #endif /* WIN32_ANY */
 
 #endif /* emacs */
-
 
 #endif /* INCLUDED_sysfile_h_ */
