@@ -3257,7 +3257,7 @@ dnl Avoid re-AC_DEFINE-ing xmkmf symbols we've already defined above.
     esac
   fi
 
-  AC_CHECK_FUNCS(XConvertCase)
+  AC_CHECK_FUNCS(XConvertCase XtRegisterDrawable)
 
   AC_CHECK_HEADERS(X11/Xlocale.h)
 
@@ -4306,7 +4306,7 @@ if test "$need_motif" = "yes" ; then
 fi
 
 dnl ----------------------------------------------------------------
-dnl Check for POSIX functions.
+dnl Check for POSIX functions
 dnl ----------------------------------------------------------------
 
 AC_CHECK_FUNCS(cbrt closedir dup2 eaccess fmod fpathconf frexp fsync ftime ftruncate getaddrinfo gethostname getnameinfo getpagesize getrlimit gettimeofday getcwd link logb lrand48 matherr mkdir mktime perror poll random readlink rename res_init rint rmdir select setitimer setpgid setsid sigblock sighold sigprocmask snprintf strerror strlwr strupr symlink tzset ulimit umask usleep vlimit vsnprintf waitpid wcscmp wcslen)

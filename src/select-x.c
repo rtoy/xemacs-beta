@@ -527,6 +527,10 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
     }
   else
     {
+#ifndef HAVE_XTREGISTERDRAWABLE
+      invalid_operation("your Xt library sucks too much to transfer this "
+			"much data!");
+#else
       /* Send an INCR selection. */
       int prop_id;
       Widget widget = FRAME_X_TEXT_WIDGET (XFRAME(DEVICE_SELECTED_FRAME(d)));
@@ -594,6 +598,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
       }
       XChangeProperty (display, window, reply.property, type, format,
 		       PropModeReplace, data, 0);
+#endif /* HAVE_XTREGISTERDRAWABLE */
     }
 }
 

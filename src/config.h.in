@@ -236,6 +236,7 @@ things are arranged in config.h.in.  In particular:
 #undef THIS_IS_X11R6
 
 #undef HAVE_XCONVERTCASE
+#undef HAVE_XTREGISTERDRAWABLE
 
 #undef HAVE_BALLOON_HELP
 

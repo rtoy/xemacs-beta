@@ -1,5 +1,10 @@
 2005-03-01  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* config.h.in: New macro, HAVE_XTREGISTERDRAWABLE. 
+	* select-x.c (x_reply_selection_request): Use it. 
+
+2005-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* select-x.c (x_reply_selection_request): Wrap
 	DEVICE_SELECTED_FRAME in XFRAME --> fixes a build failure. 
 
