@@ -242,12 +242,16 @@
 		 :tag (or text-to-insert url)
 		 url))
 
-;; Insert a mailto: link in the buffer.
+;; Insert a mail link in the buffer.
 (defun about-mailto-link (address)
-  (about-url-link
-   (concat "mailto:" address) address
-   (concat "Send mail to " address)
-   ))
+  (lexical-let ((address address))
+    (widget-create 'link
+		   :tag address
+		   :button-prefix ""
+		   :button-suffix ""
+		   :action (lambda (widget &optional event)
+			     (compose-mail address))
+		   :help-echo (format "Send mail to %s" address))))
 
 ;; Attach a face to a string, in order to be inserted into the buffer.
 ;; Make sure that the extent is duplicable, but unique.  Returns the
@@ -291,19 +295,29 @@
 	 nil)))
 
 ;; Set up the stuff needed by widget.  Allowed types are `bury' and
-;; `kill'.
+;; `kill'.  The reason why we offer both types is performance: when a
+;; large buffer is merely buried, `about' will find it again when the
+;; user requests it, instead of recreating it.  Small buffers can be
+;; killed because it is cheap to generate their contents.
+
 (defun about-finish-buffer (&optional type)
   (or type (setq type 'bury))
   (widget-insert "\n")
   (if (eq type 'bury)
-      (widget-create 'link :help-echo "Bury buffer"
-		     :action (lambda (&rest ignore)
-			       (bury-buffer))
-		     "Remove")
-    (widget-create 'link :help-echo "Kill buffer"
-		   :action (lambda (&rest ignore)
-			     (kill-buffer (current-buffer)))
-		   "Kill"))
+      (widget-create 'link
+		     :help-echo "Bury this buffer"
+		     :action (lambda (widget event)
+			       ;; For some reason,
+			       ;; (bury-buffer (event-buffer event))
+			       ;; doesn't work.
+			       (with-selected-window (event-window event)
+				 (bury-buffer)))
+		     :tag "Bury")
+    (widget-create 'link
+		   :help-echo "Kill this buffer"
+		   :action (lambda (widget event)
+			     (kill-buffer (event-buffer event)))
+		   :tag "Kill"))
   (widget-insert " this buffer and return to previous.\n")
   (use-local-map (make-sparse-keymap))
   (set-keymap-parent (current-local-map) widget-keymap)
