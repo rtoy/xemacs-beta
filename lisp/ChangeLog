@@ -1,3 +1,8 @@
+2001-04-17  Didier Verna  <didier@xemacs.org>
+
+	* startup.el (load-user-init-file): define `custom-file' before
+	loading the user's init file.
+
 2001-04-02  Jan Vroonhof  <jan.vroonhof@ntlworld.com>
 
 	* dialog.el (make-dialog-box): Disable dialog box titles until
@@ -19,7 +24,7 @@
 
 	* loaddefs.el (completion-ignored-extensions):
 	Fix documentation.
-	
+
 	* menubar-items.el (menu-truncate-list): Removed.
 	* menubar-items.el (Menubar-items-truncate-list): New.
 	* menubar-items.el (default-menubar):
@@ -47,7 +52,7 @@
 
 	Merge in improvements from other definition of
 	make-auto-save-file-name in files.el.
-	
+
 	* auto-save.el (auto-save-original-name):
 	* auto-save.el (auto-save-name-in-fixed-directory):
 	* auto-save.el (auto-save-unslashify-name): Removed.
@@ -61,7 +66,7 @@
 	entirely safe with all filesystems and all possible characters in
 	a filename, and 100% reversible. (Essentially, uses
 	quoted-printable as the encoding.)
-	
+
 	* auto-save.el (recover-all-files):
 
 	Use insert-directory rather than calling ls directly -- fixes
@@ -70,13 +75,13 @@
 	* files.el:
 	* files.el (convert-standard-filename): Substitute FSF's
 	definition for this (we had nothing here before).
-	
+
 	* files.el (backup-buffer): Warning fix.
-	
+
 	* files.el (make-backup-file-name):
 	* files.el (find-backup-file-name):
 	Fix error in calling sequence to auto-save-file-name-p.
-	
+
 	* files.el (recover-file):
 	Use insert-directory rather than calling ls directly -- fixes
 	things under Windows.
@@ -85,7 +90,7 @@
 	* files.el (auto-save-file-name-p): Removed.
 	auto-save is always dumped so no sense in having a definition
 	that will always be overwritten with another.
-	
+
 	* files.el (insert-directory):
 	* win32-native.el:
 	* win32-native.el (debug-mswindows-process-command-lines):
@@ -139,7 +144,7 @@
 	View files in view-mode rather than Fundamental.
 	Remove separators from context menus -- now handled in generic code.
 	Add `Find Tag' to context menu.
-	
+
 	* menubar.el (popup-mode-menu):
 
 	Rewrite code that outputs the popup menu to (a) put more specific
@@ -158,11 +163,11 @@
 	* keydefs.el:
 	* keydefs.el (global-map):
 	Add commented-out change of M-k (for 21.5).
-	
+
 	* menubar-items.el (default-menubar):
 	Fix items to control kill-line behavior; add items for
 	shifted motion.
-	
+
 	* simple.el:
 	* simple.el (kill-whole-line):
 	* simple.el (historical-kill-line): Removed.
@@ -273,11 +278,11 @@
 
 	* XEmacs 21.2.45 "Thelxepeia" is released.
 
-2001-01-25  Jason R. Mastaler  <jason@xemacs.org> 
- 
-        * about.el (xemacs-hackers): update my entry. 
-        * about.el (about-maintainer-info): ditto. 
-        * about.el (about-hackers): ditto. 
+2001-01-25  Jason R. Mastaler  <jason@xemacs.org>
+
+        * about.el (xemacs-hackers): update my entry.
+        * about.el (about-maintainer-info): ditto.
+        * about.el (about-hackers): ditto.
 
 2001-02-20  Jan Vroonhof  <jan@xemacs.org>
 
