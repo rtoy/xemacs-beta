@@ -1,5 +1,9 @@
 2001-05-25  Martin Buchholz  <martin@xemacs.org>
 
+	* realpath.c: This file doesn't deal with internal
+	representation.  Define DONT_ENCAPSULATE.
+	Fixes crash in test suite.
+
 	* print.c (print_internal): Fix compile error.
 
 	* miscplay.c (waverequire): Don't inline.
