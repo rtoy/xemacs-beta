@@ -640,6 +640,19 @@ A sliding widget, for showing progress.  Can only be instanced as
 A tab widget; a series of user selectable tabs.  Can only be instanced
 as @code{widget}.
 
+The required keyword is @code{:items}.  Its value should be a list of
+vectors, whose first element is a string, the second element is a
+callback (a Lisp expression to be eval'ed), and the remaining elements
+are key-value pairs.  The most important keyword is @code{:selected} (a
+Boolean); exactly one of the elements should have a value of @code{t}
+for the @code{:selected} property.  Other keywords accepted include
+@code{:descriptor} (a string), @code{:face} (a symbol naming a face),
+@code{:orientation} (a symbol, one of @code{top}, @code{center},
+@code{bottom}, @code{left}, or @code{right}), and @code{:pixel-width}
+and @code{:pixel-height} (positive integers).
+
+(The above is incomplete and may be inaccurate.)
+
 @item tree-view
 A folding widget.  Can only be instanced as @code{widget}.
 

@@ -1,3 +1,37 @@
+2004-09-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* file-coding.c: Improve explanatory comments, add diatribes.
+	Fix some typos in comments.
+
+2003-11-21  Stephen J. Turnbull  <stephen@xemacs.org>
+ 
+	* dired.c (Fdirectory_files): MATCH is only tried against basename.
+
+2003-11-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* eval.c (Fcatch, Fthrow): Document that tags are compared with `eq'.
+
+2003-10-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* procimpl.h (struct Lisp_Process):
+	* undo.c (Fprimitive_undo): 
+	Remove obsolete references to ENERGIZE in comments.
+
+2004-07-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* glyphs.c (Fimage_instance_type): Add 'widget to docstring.
+
+2004-07-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* glyphs-widget.c (tab_control_query_geometry):
+	(logical_unit_height):
+	Typos in comments.
+
+2004-06-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* syntax.c (Sextword): Doesn't seem to exist.  Move comment to
+	Internals manual.
+
 2004-09-21  Jerry James  <james@xemacs.org>
 
 	* sound.c (Fwait_for_sounds): Factor out test for unused parameter.
@@ -430,6 +464,8 @@
 
 	* syntax.c (setup_syntax_cache): Fix behavior for buffers
 	containing multibyte chars.
+	Fixes "Fatal error: assertion failed, file src/buffer.h, line 617,
+	(x) >= ((Charbpos) 1) && x <= ((buf)->text->bufz + 0)"
 
 2004-06-29  Jerry James  <james@xemacs.org>
 

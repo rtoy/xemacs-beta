@@ -423,7 +423,7 @@ Return what remains of the list.
 #ifdef CLASH_DETECTION
 		  Funlock_buffer ();
 #endif /* CLASH_DETECTION */
-		  /* may GC under ENERGIZE: */
+		  /* #### need to check if this can GC */
 		  Fset_buffer_modified_p (Qnil, Qnil);
 		}
 	      else if (EXTENTP (car))

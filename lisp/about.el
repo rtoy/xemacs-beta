@@ -147,6 +147,7 @@
     (pez      "Peter Pezaris"     "pez@xemacs.org")
     (piper    "Andy Piper"        "andy@xemacs.org")
     (pittman  "Daniel Pittman"    "pittman@xemacs.org")
+    (purvis   "Malcolm Purvis"    "mpurvis@xemacs.org")
     (rickc    "Rick Campbell"     "rickc@xemacs.org")
     (rose     "John Rose"         "rose@xemacs.org")
     (rossini  "Anthony Rossini"   "rossini@xemacs.org")
@@ -158,8 +159,9 @@
     (thiessel "Marcus Thiessel"   "marcus@xemacs.org")
     (tomonori "Tomonori Ikeyama"  "tomonori@xemacs.org")
     (tuck     "Matt Tucker"       "tuck@xemacs.org")
-    (turnbull "Stephen Turnbull"  "turnbull@xemacs.org")
+    (turnbull "Stephen Turnbull"  "stephen@xemacs.org")
     (vin      "Vin Shelton"       "acs@xemacs.org")
+    (viteno   "Norbert Koch"      "viteno@xemacs.org")
     (vladimir "Vladimir Ivanovic" "vladimir@xemacs.org")
     (wmperry  "William Perry"     "wmperry@xemacs.org")
     (yoshiki  "Yoshiki Hayashi"   "yoshiki@xemacs.org")
@@ -168,19 +170,19 @@
 
 (defvar about-current-release-maintainers
   ;; this list should not necessarily be in sorted order.
-  '(adrian ben hniksic james piper scop sperber turnbull))
+  '(adrian james piper purvis sperber turnbull vin viteno))
 
 (defvar about-other-current-hackers
   ;; to sort this list or the one below, use:
   ;; M-x sort-regexp-fields RET [a-z]+ RET \(.*\) RET
-  '(aj alastair cgw craig daiki dan dv fabrice golubev gunnar hisashi
-       jan jareth jason jmiller jonathan kazz kirill larsi martin morioka mta ograf
-       olivier oscar pittman tomonori tuck vin wmperry yoshiki))
+  '(ben daiki darrylo dv fabrice golubev hniksic jan jason jmiller jonathan
+    kazz kirill larsi martin morioka mta ograf olivier oscar rossini pittman
+    scop tomonori tuck wmperry yoshiki))
 
 (defvar about-once-and-future-hackers
-  '(ajc baw bw chr cthomp darrylo devin dkindred dmoore eb hbs hmuller
-	hobley jens juhp jwz kyle marcpa mcook mly ograf pelegri pez
-	rickc rose rossini slb stig stigb thiessel vladimir))
+  '(aj ajc alastair baw bw cgw chr craig cthomp dan devin dkindred dmoore eb
+    gunnar hbs hisashi hmuller hobley jareth jens juhp jwz kyle marcpa mcook
+    mly ograf pelegri pez rickc rose slb stig stigb thiessel vladimir))
 
 ;; The CAR of alist elements is a valid argument to `about-url-link'.
 ;; It is preferred to a simple string, because it makes maintenance
@@ -215,10 +217,13 @@
     (piper      . "http://www.andypiper.com/")
     (rossini    . "http://faculty.washington.edu/rossini/")
     (stigb      . "http://www.tihlde.hist.no/~stigb/")
+    (turnbull   . "http://turnbull.sk.tsukuba.ac.jp/yaseppochi-gumi.html")
     (vin        . "http://www.upa.org/")
     (vladimir   . "http://www.leonora.org/~vladimir/")
     (wget       . "http://sunsite.dk/wget/")
-    (xemacs     . "http://www.xemacs.org/"))
+    (xemacs     . "http://www.xemacs.org/")
+    (xemacs-cvs . "http://cvs.xemacs.org/")
+    (xemacs-lists . "http://www.xemacs.org/Lists/"))
   "Some of the more important URLs.")
 
 (defvar about-left-margin 3)
@@ -461,6 +466,26 @@ developers responsible for this release are:\n\n")
 		     :button-suffix ""
 		     "The full list of contributors...")
       (widget-insert "\n
+The current package release engineer is Norbert Koch.
+Andreas Jaeger was the first package release engineer following the split
+of the XEmacs code base into core implementation and packaged Lisp.
+He was succeeded by Steve Youngs, then Ville Skyttä.\n\n")
+      (setup-person 'viteno)
+      (setup-person 'aj)
+      (setup-person 'scop)
+      (widget-insert "
+Vin Shelton is the maintainer of the stable branch, 21.4.
+Stephen Turnbull was the project manager for the release.  Andy Piper
+maintained the Windows branch until the release was declared stable.\n\n")
+      (setup-person 'vin)
+      (setup-person 'turnbull)
+      (setup-person 'piper)
+      (widget-insert "
+Ben Wing and Martin Buchholz were heavy code contributors and maintainers
+for 21.2 (the development branch leading to 21.4).\n\n")
+      (setup-person 'martin)
+      (setup-person 'ben)
+      (widget-insert "
 Steve Baur was the primary maintainer for 19.15 through 21.0.\n\n")
       (setup-person 'slb)
       (widget-insert "
@@ -666,6 +691,10 @@ contributed to the XEmacs development from late 1994 to early
   -- support for variable-width and variable height fonts
   -- support for arbitrary pixmaps and widgets in a buffer
   -- face support on TTY's, including color
+
+  Many of these are now available in GNU Emacs 21, but the XEmacs
+  implementations are generally more efficient, and the XEmacs APIs are
+  generally more in line with modern programming practices.
 
 * An installable package system, with a huge number of packages available
   that have been tested and are known to work with the latest version
@@ -1292,6 +1321,10 @@ maintains the MS Windows netinstaller.\n"))
      (widget-insert
       "\
 Sorry, no personal information available about me yet.\n"))
+    (purvis
+     (widget-insert
+      "\
+Sorry, no personal information available about me yet.\n"))
     (rickc
      (widget-insert "\
 The hacker formerly known as Rick Busdiecker is a developer and
@@ -1376,7 +1409,15 @@ Sorry, no personal information available about me yet.\n"))
     (turnbull
      (widget-insert "\
 Stephen lives with his Japanese wife and children in Tsukuba, Japan,
-where he is a professor of economics at the University of Tsukuba.\n"))
+where he is a professor of economics at the University of Tsukuba,
+and occasionally regretting not going to MIT for college, where he
+surely would have gotten addicted to computers early enough to have
+learned to actually code.
+
+Well, they also serve who rail 'n' rant.
+                  ")
+     (about-url-link 'turnbull nil "Visit Steve's personal page")
+     (widget-insert "\n"))
     (vin
      (widget-insert "\
 I own and operate my own consulting firm, EtherSoft.  Shhh, don't
@@ -1730,6 +1771,10 @@ support.\n"))
      (widget-insert
       "\
 Sorry, no information about my XEmacs contributions yet.\n"))
+    (purvis
+     (widget-insert
+      "\
+Currently filing off some of the splinters in the GTK port.\n"))
     (rickc
      (widget-insert "\
 Maintainer of ILISP.\n"))
@@ -1780,7 +1825,18 @@ Sorry, no information about my XEmacs contributions yet.\n"))
     (turnbull
      (widget-insert
       "\
-Former XEmacs Beta Release Manager.\n"))
+Mostly a source of random noise and occasionally useful advice on
+I18N up until people starting hinting that (2 years after the release
+of 21.1) it was time for various projects to get pushed into the public
+eye.  Steve was the prime mover behind the release of 21.4.
+
+Since Vin took over the maintainership of 21.4, Steve has featured as
+janitor and waterboy, handling (more or less) all those administrative
+tasks that need to get done somehow by somebody---wishing he were coding
+the whole time.
+
+Steve is maintainer of the edict, mule-ucs, and latin-unity packages,
+and has contributed quite a bit of documentation, especially for Mule.\n"))
     (vin
      (widget-insert "\
 Vin helps maintain the older, more mature (read: moldy) versions of

@@ -31,32 +31,6 @@ Boston, MA 02111-1307, USA.  */
 #include "syntax.h"
 #include "extents.h"
 
-/* Here is a comment from Ken'ichi HANDA <handa@etl.go.jp>
-   explaining the purpose of the Sextword syntax category:
-
-Japanese words are not separated by spaces, which makes finding word
-boundaries very difficult.  Theoretically it's impossible without
-using natural language processing techniques.  But, by defining
-pseudo-words as below (much simplified for letting you understand it
-easily) for Japanese, we can have a convenient forward-word function
-for Japanese.
-
-	A Japanese word is a sequence of characters that consists of
-	zero or more Kanji characters followed by zero or more
-	Hiragana characters.
-
-Then, the problem is that now we can't say that a sequence of
-word-constituents makes up a WORD.  For instance, both Hiragana "A"
-and Kanji "KAN" are word-constituents but the sequence of these two
-letters can't be a single word.
-
-So, we introduced Sextword for Japanese letters.  A character of
-Sextword is a word-constituent but a word boundary may exist between
-two such characters.  */
-
-/* Mule 2.4 doesn't seem to have Sextword - I'm removing it -- mrb */
-/* Recovered by tomo */
-
 #define ST_COMMENT_STYLE 0x101
 #define ST_STRING_STYLE  0x102
 

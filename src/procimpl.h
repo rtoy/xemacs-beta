@@ -103,7 +103,7 @@ struct Lisp_Process
   /* Non-false if process has exited and "dumped core" on its way down */
   char core_dumped;
 
-  /* This next field is only actually used #ifdef ENERGIZE */
+  /* #### Is this field unused? */
   /* if this flag is not NIL, then filter will do the read on the
      channel, rather than having a call to make_string.
      This only works if the filter is a subr. */

@@ -347,7 +347,7 @@ Optional argument TAG-SET is a tag or a list of tags, to be associated
 with the VALUE.  Tags are symbols (usually naming device types, such
 as `x' and `tty', or device classes, such as `color', `mono', and
 `grayscale'); specifying a TAG-SET restricts the scope of VALUE to
-devices that match all specified tags. (You can also create your
+devices that match all specified tags.  (You can also create your
 own tags using `define-specifier-tag', and use them to identify
 specifications added by you, so you can remove them later.)
 
@@ -367,7 +367,7 @@ is a valid instantiator (in that case, `specifier-specs' will return
 nil (meaning no specs) and `set-specifier' will interpret the `nil'
 as meaning \"I'm adding a global instantiator and its value is `nil'\"),
 or in strange cases where there is an ambiguity between a spec-list
-and an inst-list, etc. (The built-in specifier types are designed
+and an inst-list, etc.  (The built-in specifier types are designed
 in such a way as to avoid any such ambiguities.)"
 
   ;; backward compatibility: the old function had HOW-TO-ADD as the

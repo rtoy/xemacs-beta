@@ -25,6 +25,12 @@
 ;; coding systems have been created, because we'll be using them at
 ;; load time.
 
+;; #### Issues (this discussion probably belongs elsewhere)
+;; 1.  "Big" characters are unrepresentable.  Should give error, warning,
+;;     not just substitute "~".
+;; 2.  21.4 compatibility?
+;; 3.  make-char: non-mule barfs on non-iso8859-1.
+
 ;;; Code:
 
 (defcustom eol-detection-enabled-p (or (featurep 'mule)
@@ -78,6 +84,7 @@ if you do this."
   '((buffer-file-coding-system-for-read
      binary raw-text undecided raw-text undecided)
     (default-buffer-file-coding-system
+      ;; #### iso-2022-8 with no eol specified?  can that be OK?
       binary binary iso-2022-8 raw-text-dos mswindows-multibyte-dos)
     (native
      binary binary binary raw-text-dos mswindows-multibyte-system-default-dos)

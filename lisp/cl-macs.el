@@ -767,7 +767,7 @@ This is compatible with Common Lisp, but note that `defun' and
 The loop macro consists of a series of clauses, which do things like
 iterate variables, set conditions for exiting the loop, accumulating values
 to be returned as the return value of the loop, and executing arbitrary
-blocks of code.  Each clause is proceed in turn, and the loop executes its
+blocks of code.  Each clause is processed in turn, and the loop executes its
 body repeatedly until an exit condition is hit.
 
 It's important to understand that loop clauses such as `for' and `while',

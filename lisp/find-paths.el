@@ -44,7 +44,7 @@
 
 (defvar paths-lisp-filename-regexp
   "^\\(.*\\.elc?\\)$"
-  "File bases that contain Lisp file.")
+  "File bases that name Emacs Lisp files.")
 
 (defvar paths-no-lisp-directory-regexp
   (concat "\\(" paths-version-control-filename-regexp "\\)"

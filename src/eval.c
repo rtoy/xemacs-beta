@@ -1472,7 +1472,7 @@ check_proper_critical_section_lisp_protection (void)
 DEFUN ("catch", Fcatch, 1, UNEVALLED, 0, /*
 \(catch TAG BODY...): eval BODY allowing nonlocal exits using `throw'.
 TAG is evalled to get the tag to use.  Then the BODY is executed.
-Within BODY, (throw TAG) with same tag exits BODY and exits this `catch'.
+Within BODY, (throw TAG) with same (`eq') tag exits BODY and this `catch'.
 If no throw happens, `catch' returns the value of the last BODY form.
 If a throw happens, it specifies the value to return from `catch'.
 */
@@ -1536,8 +1536,8 @@ internal_catch (Lisp_Object tag,
 /* Unwind the specbind, catch, and handler stacks back to CATCH, and
    jump to that CATCH, returning VALUE as the value of that catch.
 
-   This is the guts Fthrow and Fsignal; they differ only in the way
-   they choose the catch tag to throw to.  A catch tag for a
+   This is the guts of Fthrow and Fsignal; they differ only in the
+   way they choose the catch tag to throw to.  A catch tag for a
    condition-case form has a TAG of Qnil.
 
    Before each catch is discarded, unbind all special bindings and
@@ -1709,7 +1709,7 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
 
 DEFUN_NORETURN ("throw", Fthrow, 2, 2, 0, /*
 Throw to the catch for TAG and return VALUE from it.
-Both TAG and VALUE are evalled.
+Both TAG and VALUE are evalled.  Tags are the same iff they are `eq'.
 */
        (tag, value))
 {

@@ -621,6 +621,14 @@ Therefore, @code{throw} makes the outer @code{catch} return the value
 @code{yes}.  The function @code{print} is never called, and the
 body-form @code{'no} is never evaluated.
 
+In most cases the formal tag for a catch is a quoted symbol or a
+variable whose value is a symbol.  Both styles are demonstrated above.
+In definitions of derived control structures, an anonymous tag may be
+desired.  A gensym could be used, but since catch tags are compared
+using @code{eq}, any Lisp object can be used.  An occasionally
+encountered idiom is to bind a local variable to @code{(cons nil nil)},
+and use the variable as the formal tag.
+
 @node Errors
 @subsection Errors
 @cindex errors

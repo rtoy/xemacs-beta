@@ -28,6 +28,11 @@
 ;; Boston, MA 02111-1307, USA.
 ;;; Code:
 
+;; #### - The comment that this file was GTK-ized by Wm Perry is a lie;
+;; nothing was done except to rename everything that was x- to gtk-.
+;; This is harmless, but we should reintegrate so that GTK can take
+;; advantage of fontconfig, too, I think.
+
 ;; #### - implement these...
 ;;
 ;;; (defvar font-menu-ignore-proportional-fonts nil
@@ -37,7 +42,8 @@
 
 (globally-declare-boundp
  '(gtk-font-regexp
-   gtk-font-regexp-foundry-and-family gtk-font-regexp-spacing))
+   gtk-font-regexp-foundry-and-family
+   gtk-font-regexp-spacing))
 
 (defvar gtk-font-menu-registry-encoding nil
   "Registry and encoding to use with font menu fonts.")
@@ -56,7 +62,8 @@
   "A regexp matching font families which are uninteresting (e.g. cursor fonts).")
 
 (defun hack-font-truename (fn)
-  "Filter the output of `font-instance-truename' to deal with Japanese fontsets."
+  ;; #### This is duplicated from x-font-menu.el.
+  "Filter the output of `font-instance-truename' to deal with font sets."
   (if (string-match "," (font-instance-truename fn))
       (let ((fpnt (nth 8 (split-string (font-instance-name fn) "-")))
 	    (flist (split-string (font-instance-truename fn) ","))

@@ -1647,7 +1647,7 @@ Return non-nil if OBJECT is an image instance.
 DEFUN ("image-instance-type", Fimage_instance_type, 1, 1, 0, /*
 Return the type of the given image instance.
 The return value will be one of 'nothing, 'text, 'mono-pixmap,
-'color-pixmap, 'pointer, or 'subwindow.
+'color-pixmap, 'pointer, 'subwindow, or 'widget.
 */
        (image_instance))
 {

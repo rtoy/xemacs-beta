@@ -60,7 +60,8 @@ DEFUN ("directory-files", Fdirectory_files, 1, 5, 0, /*
 Return a list of names of files in DIRECTORY.
 There are four optional arguments:
 If FULL is non-nil, absolute pathnames of the files are returned.
-If MATCH is non-nil, only pathnames containing that regexp are returned.
+If MATCH is non-nil, only pathnames whose basename contain that regexp are
+ returned.
 If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
  NOSORT is useful if you plan to sort the result yourself.
 If FILES-ONLY is the symbol t, then only the "files" in the directory

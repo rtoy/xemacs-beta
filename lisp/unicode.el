@@ -31,6 +31,7 @@
 
 ; ;; Subsets of Unicode.
 
+; #### what is this bogosity ... "chars 96, final ?2" !!?!
 ; (make-charset 'mule-unicode-2500-33ff 
 ; 	      "Unicode characters of the range U+2500..U+33FF."
 ; 	      '(dimension
@@ -124,7 +125,8 @@
 	    ;; "CP950.TXT" 
 	    ;; "GB12345.TXT" 
 	    ("GB2312.TXT" chinese-gb2312)
-	    ;; "HANGUL.TXT" 
+	    ;; "HANGUL.TXT"
+	    ;; #### shouldn't JIS X 0201's upper limit be 7f?
 	    ("JIS0201.TXT" latin-jisx0201 #x21 #x80)
 	    ("JIS0201.TXT" katakana-jisx0201 #xA0 #xFF #x-80)
 	    ("JIS0208.TXT" japanese-jisx0208 nil nil nil ignore-first-column)
@@ -139,6 +141,7 @@
 	    ;; "SHIFTJIS.TXT"
 	    )
 	   ("unicode/mule-ucs"
+	    ;; #### we don't support surrogates?!??
 	    ;; use these instead of the above ones once we support surrogates
 	    ;;("chinese-cns11643-1.txt" chinese-cns11643-1)
 	    ;;("chinese-cns11643-2.txt" chinese-cns11643-2)
@@ -249,6 +252,8 @@ Standard encoding for representing Unicode under MS Windows.  See
  "UCS-4 Little Endian"
  '(mnemonic "UCS4-LE"
    documentation
+   ;; #### I don't think this is permitted by ISO 10646, only Unicode.
+   ;; Call it UTF-32 instead?
    "Little-endian version of UCS-4 Unicode encoding.  See `ucs-4' coding system."
    type ucs-4
    little-endian t))
@@ -259,7 +264,7 @@ Standard encoding for representing Unicode under MS Windows.  See
  '(mnemonic "UTF8"
    documentation
    "UTF-8 Unicode encoding -- ASCII-compatible 8-bit variable-width encoding
-with the same principles as the Mule-internal encoding:
+sharing the following principles with the Mule-internal encoding:
 
   -- All ASCII characters (codepoints 0 through 127) are represented
      by themselves (i.e. using one byte, with the same value as the

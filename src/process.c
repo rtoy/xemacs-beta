@@ -1197,6 +1197,7 @@ not the name of the pty that Emacs uses to talk with that terminal.
 
 DEFUN ("set-process-buffer", Fset_process_buffer, 2, 2, 0, /*
 Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
+Output from PROCESS is inserted in this buffer unless PROCESS has a filter.
 */
        (process, buffer))
 {
@@ -1209,8 +1210,8 @@ Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
 
 DEFUN ("process-buffer", Fprocess_buffer, 1, 1, 0, /*
 Return the buffer PROCESS is associated with.
-Output from PROCESS is inserted in this buffer
-unless PROCESS has a filter.
+Output from PROCESS is inserted in this buffer unless PROCESS has a filter.
+Set the buffer with `set-process-buffer'.
 */
        (process))
 {
@@ -1219,6 +1220,8 @@ unless PROCESS has a filter.
 }
 
 DEFUN ("set-process-stderr-buffer", Fset_process_stderr_buffer, 2, 2, 0, /*
+Output from the stderr of PROCESS is inserted in this buffer unless
+PROCESS has a stderr filter.
 Set stderr buffer associated with PROCESS to BUFFER (a buffer, or nil).
 */
        (process, buffer))
@@ -1234,8 +1237,8 @@ Set stderr buffer associated with PROCESS to BUFFER (a buffer, or nil).
 
 DEFUN ("process-stderr-buffer", Fprocess_stderr_buffer, 1, 1, 0, /*
 Return the stderr buffer PROCESS is associated with.
-Output from the stderr of PROCESS is inserted in this buffer
-unless PROCESS has a stderr filter.
+Output from the stderr of PROCESS is inserted in this buffer unless PROCESS
+has a stderr filter.  Set the buffer with `set-process-stderr-buffer'.
 */
        (process))
 {

@@ -41,14 +41,16 @@ Boston, MA 02111-1307, USA.  */
 /* Capsule description of the different structures, what their purpose is,
    how they fit together, and where various bits of data are stored.
 
-   A "coding system" is an algorithm for converting data in one format into
-   data in another format.  Currently most of the coding systems we have
-   created concern internationalized text, and convert between the XEmacs
-   internal format for multilingual text, and various external
+   A "coding system" is an algorithm for converting stream data in one format
+   into stream data in another format.  Currently most of the coding systems
+   we have created concern internationalized text, and convert between the
+   XEmacs internal format for multilingual text, and various external
    representations of such text.  However, any such conversion is possible,
    for example, compressing or uncompressing text using the gzip algorithm.
    All coding systems provide both encode and decode routines, so that the
-   conversion can go both ways.
+   conversion can go both ways.  Unfortunately encoding and decoding may not
+   be exact inverses, even for a specific instance of a coding system.  Care
+   must be taken when this is not the case.
 
    The way we handle this is by dividing the various potential coding
    systems into types, analogous to classes in C++.  Each coding system
@@ -121,7 +123,9 @@ Boston, MA 02111-1307, USA.  */
    the Lisp primitives `set-process-input-coding-system' and
    `set-console-tty-input-coding-system', as well as getting set when a
    conversion operation was started with coding system `undecided' and the
-   correct coding system was then detected.)
+   correct coding system was then detected.)  #### This suggests implementing
+   compound text extended segments by saving the state of the ctext stream,
+   and installing an appropriate for the duration of the segment.
 
    IMPORTANT NOTE: There are at least two ancillary data structures
    associated with a coding system type. (There may also be detection data;
@@ -868,7 +872,7 @@ struct coding_stream
      because the write method is forced to take only what it's given but
      the read method can read more data from the other end if necessary.
      On the other hand, the write method is free to generate all the data
-     it wants (and just write it to the other end), but the the read method
+     it wants (and just write it to the other end), but the read method
      can return only as much as was asked for, so we need to implement our
      own buffering. */
 

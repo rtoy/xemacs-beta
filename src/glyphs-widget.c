@@ -274,12 +274,12 @@ widget_instance_border_width (Lisp_Image_Instance* ii)
   return widget_border_width (IMAGE_INSTANCE_DOMAIN (ii));
 }
 
-/* #### Its not clear to me what the value of logical_unit_height should
-   be, or whether it should even depend on the current
-   image_instance. It really should probably only depend on the
-   default widget face and the domain, however you can envisage users
-   wanting different logical units for nested layouts - so using the
-   properties of the current lahyout is probably not so dumb. */
+/* #### It's not clear to me what the value of logical_unit_height should
+   be, or whether it should even depend on the current image_instance.  It
+   really should probably only depend on the default widget face and the
+   domain, however you can envisage users wanting different logical units
+   for nested layouts - so using the properties of the current layout is
+   probably not so dumb. */
 static int
 logical_unit_height (Lisp_Object text, Lisp_Object face, Lisp_Object domain)
 {
@@ -287,7 +287,7 @@ logical_unit_height (Lisp_Object text, Lisp_Object face, Lisp_Object domain)
   widget_query_string_geometry (text, face, 
 				0, &charheight, domain);
   /* For the returned value to be useful it needs to be big enough to
-     accomodate the largest single-height widget. This is currently
+     accomodate the largest single-height widget.  This is currently
      the edit-field. */
   return charheight + 2 * widget_spacing (domain)
     + 4 * widget_border_width (domain);
@@ -961,8 +961,8 @@ tree_view_query_geometry (Lisp_Object image_instance,
     }
 }
 
-/* Get the geometry of a tab control. This is based on the number of
-   items and text therin in the tab control. */
+/* Get the geometry of a tab control.  This is based on the number of
+   items and text therein in the tab control. */
 static void
 tab_control_query_geometry (Lisp_Object image_instance,
 			    int* width, int* height,
@@ -978,6 +978,11 @@ tab_control_query_geometry (Lisp_Object image_instance,
     {
       int h, w;
 
+      /* #### Maybe we should allow items to be a list of strings?
+	 Ie, autoconvert "label" -> ["label" "label" :selected maybe-t].
+	 Maybe there's a better place (or several places) to do this?
+	 If so, change image_instantiator_tab_control back to use
+	 check_valid_item_list for checking Q_items. -- sjt */
       widget_query_string_geometry (XGUI_ITEM (XCAR (rest))->name,
 			     IMAGE_INSTANCE_WIDGET_FACE (ii),
 			     &w, &h, domain);

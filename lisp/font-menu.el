@@ -121,40 +121,58 @@
 
 ;;;###autoload
 (defcustom font-menu-ignore-scaled-fonts nil
-  "*If non-nil, then the font menu will try to show only bitmap fonts."
+  "*If non-nil, the font menu shows only bitmap fonts.
+
+Bitmap fonts at their design size are generally noticably higher quality than
+scaled fonts, unless the device is capable of interpreting antialiasing hints.
+In general, setting this option non-`nil' is useful mostly on older X servers.
+
+Not all devices make the distinction between bitmap and scaled fonts."
   :type 'boolean
   :group 'font-menu)
 
 ;;;###autoload
 (defcustom font-menu-this-frame-only-p nil
-  "*If non-nil, then changing the default font from the font menu will only
-affect one frame instead of all frames."
+  "*If non-nil, the menu affects the default font only on the selected frame."
   :type 'boolean
   :group 'font-menu)
 
 (defcustom font-menu-max-number nil
-  "The maximum number of fonts retrieved from the server"
+  "The maximum number of fonts retrieved from the display."
   :type 'integer
   :group 'font-menu)
 
 (defvaralias 'font-menu-max-items 'menu-max-items)
 (defvaralias 'font-menu-submenu-name-format 'menu-submenu-name-format)
 
+;; #### Need to update for fontconfig/Xft?  Document form for MS Windows.
 (defvar font-menu-preferred-resolution
   (make-specifier-and-init 'generic '((global ((mswindows) . ":")
 					      ((gtk) . "*-*")
 					      ((x) . "*-*"))) t)
-  "Preferred horizontal and vertical font menu resolution (e.g. \"75:75\").")
+  "Generic specifier containing preferred resolution as a string.
+Do not `setq' this variable; use `set-specifier'.
+
+For X11 and GTK devices, the instance value will be interpolated into an
+XLFD, and looks like \"75-75\").")
 
 (defvar font-menu-size-scaling
   (make-specifier-and-init 'integer '((global ((mswindows) . 1)
 					      ((gtk) . 10)
 					      ((x) . 10))) t)
-  "Scale factor used in defining font sizes.")
+  "Generic specifier containing scale factor for font sizes.  Don't touch.
 
-;; only call XListFonts (and parse) once per device.
-;; ( (device . [parsed-list-fonts family-menu size-menu weight-menu]) ...)
-(defvar device-fonts-cache nil)
+This is really a device type constant.  Some devices specify size in points
+\(MS Windows), others in decipoints (X11).")
+
+(defvar device-fonts-cache nil
+  "Alist mapping devices to font lists and font menus.  Don't use this.
+
+Instead, use the function `device-fonts-cache' which lazily updates this
+variable, and returns the value for the selected device.
+
+Each element has the form (DEVICE . [FONT-LIST FAMILY SIZE WEIGHT]) where
+FAMILY, SIZE, and WEIGHT denote menus.")
 
 (defsubst device-fonts-cache ()
   (or (cdr (assq (selected-device) device-fonts-cache))
@@ -169,14 +187,15 @@ affect one frame instead of all frames."
 (defun reset-device-font-menus (&optional device debug)
   "Generates the `Font', `Size', and `Weight' submenus for the Options menu.
 This is run the first time that a font-menu is needed for each device.
+
 If you don't like the lazy invocation of this function, you can add it to
 `create-device-hook' and that will make the font menus respond more quickly
 when they are selected for the first time.  If you add fonts to your system,
 or if you change your font path, you can call this to re-initialize the menus."
-  (message "Getting list of fonts from server... ")
   (if (or noninteractive
 	  (not (or device (setq device (selected-device)))))
       nil
+    (message "Getting list of fonts from server... ")
     (call-device-method 'reset-device-font-menus device device debug)
     (message "Getting list of fonts from server... done.")))
 
@@ -349,9 +368,12 @@ or if you change your font path, you can call this to re-initialize the menus."
       (message "Font %s" (face-font-name 'default)))))
 
 
+;; #### This should be called `font-menu-maybe-change-face'
+;; I wonder if a better API wouldn't (face attribute from to)
 (defun font-menu-change-face (face
 			      from-family from-weight from-size
 			      to-family   to-weight   to-size)
+  "Maybe update the font of FACE per TO-FAMILY, TO-WEIGHT, and TO-SIZE."
   (check-type face symbol)
   (let* ((dcache (device-fonts-cache))
 	 (font-data (font-menu-font-data face dcache))
@@ -360,8 +382,8 @@ or if you change your font path, you can call this to re-initialize the menus."
 	 (face-weight (aref font-data 3))
 	 (face-slant  (aref font-data 4)))
 
-    (or face-family
-	(signal 'error (list "couldn't parse font name for face" face)))
+     (or face-family
+ 	(signal 'error (list "couldn't parse font name for face" face)))
 
     ;; If this face matches the old default face in the attribute we
     ;; are changing, then change it to the new attribute along that

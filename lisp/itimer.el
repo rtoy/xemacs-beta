@@ -130,9 +130,9 @@ This is a macro."
 		    (list 'list ''itimerp var)))))
 
 (defmacro check-itimer-coerce-string (var)
-  "If VAR is not bound to a string, look up the itimer that it names and
+  "If VAR is bound to a string, look up the itimer that it names and
 bind VAR to it.  Otherwise, if VAR is not bound to an itimer, signal
-wrong-type-argument.  This is a macro."
+`wrong-type-argument'.  This is a macro."
   (list 'setq var
 	(list 'cond
 	      (list (list 'itimerp var) var)
@@ -142,7 +142,7 @@ wrong-type-argument.  This is a macro."
 
 (defmacro check-nonnegative-number (var)
   "If VAR is not bound to a number, signal `wrong-type-argument'.
-If VAR is not bound to a positive number, signal args-out-of-range.
+If VAR is not bound to a positive number, signal `args-out-of-range'.
 This is a macro."
   (list 'setq var
 	(list 'if (list 'not (list 'numberp var))

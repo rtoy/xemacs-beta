@@ -1,3 +1,64 @@
+2004-09-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* code-init.el: Add to header comment.
+	* gtk-font-menu.el: Improve documentation.
+	* unicode.el: Various comments added.
+	* process.c (process-buffer):
+	(set-process-buffer):
+	(process-stderr-buffer):
+	(set-process-stderr-buffer):
+	Document interaction with filters.
+
+2004-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* x-font-menu.el: (x-fonts-menu-junk-families): Improve docstring.
+	(hack-font-truename): Improve docstring.
+
+	* font-menu.el (font-menu-ignore-scaled-fonts): Improve docstring.
+	(font-menu-this-frame-only-p): Improve docstring.
+	(font-menu-preferred-resolution): Improve docstring.
+	(font-menu-size-scaling): Improve docstring.
+	(device-fonts-cache): Move comment into docstring and improve it.
+	(reset-device-font-menus): Improve docstring.
+	(reset-device-font-menus): Move message into if; only announce
+	we're getting font list if we're actually going to do it.
+
+2003-12-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* cl-macs.el (loop): Fixed typo in docstring.
+
+2003-11-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* itimer.el (check-itimer-coerce-string): Fix sense of docstring;
+	markup signal name as code.
+	(check-nonnegative-number): Markup signal name as code.
+
+2004-07-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* specifier.el (set-specifier): Sentences in docstrings should be
+	separated with two spaces, not one.
+
+	* find-paths.el (paths-lisp-filename-regexp): Improve docstring.
+
+2004-07-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* about.el (xemacs-hackers): Update turnbull, add viteno.
+	(about-current-release-maintainers): Add martin, vin, and viteno.
+	(about-other-current-hackers):
+	(about-once-and-future-hackers):
+	Move inactive hackers from other-current to once-and-future.
+	(about-url-alist):  Add turnbull, xemacs-cvs, and xemacs-lists.
+	* about.el (about-xemacs):
+	Add information about package maintainers.
+	Mention Vin, Stephen, and Andy w.r.t. 21.4.
+	Mention Ben and Martin w.r.t. 21.2.
+	(about-advantages): Mention GNU Emacs 21.
+	(about-personal-info): Update turnbull.
+
+2004-05-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* specifier.el (set-specifier): Fix typo in comment.
+
 2004-07-12  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* about.el (about-xemacs):
@@ -196,7 +257,6 @@
 	* dialog-gtk.el (popup-builtin-question-dialog):
 
 	Added support for dialog button mnemonics.
-
 
 2004-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
 

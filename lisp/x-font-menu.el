@@ -1,4 +1,4 @@
-;; x-font-menu.el --- Managing menus of X fonts.
+;;; x-font-menu.el --- Managing menus of X fonts.
 
 ;; Copyright (C) 1994 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
@@ -36,7 +36,8 @@
 
 (globally-declare-boundp
  '(x-font-regexp
-   x-font-regexp-foundry-and-family x-font-regexp-spacing))
+   x-font-regexp-foundry-and-family
+   x-font-regexp-spacing))
 
 (globally-declare-fboundp
  '(charset-registry))
@@ -55,10 +56,14 @@
 				;  "Axcob" -> "Applix Courier Bold", etc.
      )
    "\\|")
-  "A regexp matching font families which are uninteresting (e.g. cursor fonts).")
+  "Regexp matching font families which should not be menu-selectable.
+E.g. cursor fonts.")
 
 (defun hack-font-truename (fn)
-  "Filter the output of `font-instance-truename' to deal with Japanese fontsets."
+  ;; #### Are "font sets" XFontSets?
+  ;; #### Is this useful if not configure'd --with-xfs?
+  ;; #### This is duplicated in gtk-font-menu.el.
+  "Filter the output of `font-instance-truename' to deal with font sets."
   (if (string-match "," (font-instance-truename fn))
       (let ((fpnt (nth 8 (split-string (font-instance-name fn) "-")))
 	    (flist (split-string (font-instance-truename fn) ","))

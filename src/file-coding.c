@@ -69,6 +69,27 @@ Boston, MA 02111-1307, USA.  */
    Removed the conditionals.
    */
 
+/* sjt sez:
+
+There should be no elementary coding systems in the Lisp API, only chains.
+Chains should be declared, not computed, as a sequence of coding formats.
+(Probably the internal representation can be a vector for efficiency but
+programmers would probably rather work with lists.)  A stream has a token
+type.  Most streams are octet streams.  Text is a stream of characters (in
+_internal_ format; a file on disk is not text!)  An octet-stream has no
+implicit semantics, so its format must always be specified.  The only type
+currently having semantics is characters.  This means that the chain [euc-jp
+-> internal -> shift_jis) may be specified (euc-jp, shift_jis), and if no
+euc-jp -> shift_jis converter is available, then the chain is automatically
+constructed.  (N.B.  I f we have fixed width buffers in the future, then we
+could have ASCII -> 8-bit char -> 16-bit char -> ISO-2022-JP (with escape
+sequences).
+
+EOL handling is a char <-> char coding.  It should not be part of another
+coding system except as a convenience for users.  For text coding,
+automatically insert EOL handlers between char <-> octet boundaries.
+*/
+
 /* Comments about future work
 
 ------------------------------------------------------------------
@@ -157,7 +178,7 @@ Boston, MA 02111-1307, USA.  */
       results until the text file is reached, whereas the base64, gzip or
       euc-jp decoders will return higher.  Once the text file is reached,
       the EOL detector will return 0 or higher for the CRLF encoding, and
-      all other decoders will return 0 or lower; thus, we will successfully
+      all other detectors will return 0 or lower; thus, we will successfully
       proceed through CRLF decoding, or at worst prompt the user. (The only
       external-vs-internal distinction that might make sense here is to
       favor coding systems of the correct source type over those that
@@ -170,6 +191,18 @@ Boston, MA 02111-1307, USA.  */
       automatic internal-external conversion, CRLF decoding can occur
       before or after decoding of euc-jp, base64, iso2022, or similar,
       without any difference in the final results.)
+
+      #### What are we trying to say?  In base64, the CRLF decoding before
+      base64 decoding is irrelevant, they will be thrown out as whitespace
+      is not significant in base64.
+
+      [sjt considers all of this to be rather bogus.  Ideas like "greater
+      certainty" and "distinctive" can and should be quantified.  The issue
+      of proper table organization should be a question of optimization.]
+
+      [sjt wonders if it might not be a good idea to use Unicode's newline
+      character as the internal representation so that (for non-Unicode
+      coding systems) we can catch EOL bugs on Unix too.]
 
    -- There need to be two priority lists and two
       category->coding-system lists.  Once is general, the other
@@ -221,9 +254,31 @@ Boston, MA 02111-1307, USA.  */
 
    -- Clearly some of these are more important than others.  at the
    very least, the "better means of presentation" should be
-   implementation as soon as possibl, along with a very simple means
+   implemented as soon as possible, along with a very simple means
    of fail-safe whenever the data is readibly available, e.g. it's
    coming from a file, which is the most common scenario.
+
+--ben [at least that's what sjt thinks]
+
+*****
+
+While this is clearly something of an improvement over earlier designs,
+it doesn't deal with the most important issue: to do better than categories
+(which in the medium term is mostly going to mean "which flavor of Unicode
+is this?"), we need to look at statistical behavior rather than ruling out
+categories via presence of specific sequences.  This means the stream
+processor should
+
+    (1) keep octet distributions (octet, 2-, 3-, 4- octet sequences)
+    (2) in some kind of compressed form
+    (3) look for "skip features" (eg, characteristic behavior of leading
+        bytes for UTF-7, UTF-8, UTF-16, Mule code)
+    (4) pick up certain "simple" regexps
+    (5) provide "triggers" to determine when statistical detectors should be
+        invoked, such as octet count
+    (6) and "magic" like Unicode signatures or file(1) magic.
+
+--sjt
 
 
 ------------------------------------------------------------------
@@ -309,20 +364,62 @@ ABOUT PDUMP, UNICODE, AND RUNNING XEMACS FROM A DIRECTORY WITH WEIRD CHARS
          checked at all when doing safe-checking?).  safe-checking
          should work something like this: compile a list of all
          charsets used in the buffer, along with a count of chars
-         used.  that way, "slightly unsafe" charsets can perhaps be
-         presented at the end, which will lose only a few characters
+         used.  that way, "slightly unsafe" coding systems can perhaps
+         be presented at the end, which will lose only a few characters
          and are perhaps what the users were looking for.
+
+	 [sjt sez this whole step is a crock.  If a universal coding system
+	 is unacceptable, the user had better know what he/she is doing,
+	 and explicitly specify a lossy encoding.
+	 In principle, we can simply check for characters being writable as
+	 we go along.  Eg, via an "unrepresentable character handler."  We
+         still have the buffer contents.  If we can't successfully save,
+         then ask the user what to do.  (Do we ever simply destroy previous
+         file version before completing a write?)]
 
       2. when actually writing out, we need error checking in case an
          individual char in a charset can't be written even though the
          charsets are safe.  again, the user gets the choice of other
          reasonable coding systems.
 
+         [sjt -- something is very confused, here; safe charsets should be
+         defined as those charsets all of whose characters can be encoded.]
+
       3. same thing (error checking, list of alternatives, etc.) needs
          to happen when reading!  all of this will be a lot of work!
 
    
    --ben
+
+   I don't much like Ben's scheme.  First, this isn't an issue of I/O,
+   it's a coding issue.  It can happen in many places, not just on stream
+   I/O.  Error checking should take place on all translations.  Second,
+   the two-pass algorithm should be avoided if possible.  In some cases
+   (eg, output to a tty) we won't be able to go back and change the
+   previously output data.  Third, the whole idea of having a buffer full
+   of arbitrary characters which we're going to somehow shoehorn into a
+   file based on some twit user's less than informed idea of a coding system
+   is kind of laughable from the start.  If we're going to say that a buffer
+   has a coding system, shouldn't we enforce restrictions on what you can
+   put into it?  Fourth, what's the point of having safe charsets if some
+   of the characters in them are unsafe?  Fifth, what makes you think we're
+   going to have a list of charsets?  It seems to me that there might be
+   reasons to have user-defined charsets (eg, "German" vs "French" subsets
+   of ISO 8859/15).  Sixth, the idea of having language environment determine
+   precedence doesn't seem very useful to me.  Users who are working with a
+   language that corresponds to the language environment are not going to
+   run into safe charsets problems.  It's users who are outside of their
+   usual language environment who run into trouble.  Also, the reason for
+   specifying anything other than a universal coding system is normally
+   restrictions imposed by other users or applications.  Seventh, the
+   statistical feedback isn't terribly useful.  Users rarely "want" a
+   coding system, they want their file saved in a useful way.  We could
+   add a FORCE argument to conversions for those who really want a specific
+   coding system.  But mostly, a user might want to edit out a few unsafe
+   characters.  So (up to some maximum) we should keep a list of unsafe
+   text positions, and provide a convenient function for traversing them.
+
+   --sjt
 */
 
 #include <config.h>
@@ -497,8 +594,8 @@ static Lisp_Object Vchain_canonicalize_hash_table;
 Lisp_Object Qgzip;
 #endif
 
-/* Maps coding system names to either coding system objects or (for
-   aliases) other names. */
+/* Maps symbols (coding system names) to either coding system objects or
+   (for aliases) other names. */
 static Lisp_Object Vcoding_system_hash_table;
 
 int enable_multibyte_characters;
@@ -910,6 +1007,7 @@ add_coding_system_to_list_mapper (Lisp_Object key, Lisp_Object UNUSED (value),
   return 0;
 }
 
+/* #### should we specify a conventional for "all coding systems"? */
 DEFUN ("coding-system-list", Fcoding_system_list, 0, 1, 0, /*
 Return a list of the names of all defined coding systems.
 If INTERNAL is nil, only the normal (non-internal) coding systems are
@@ -1558,6 +1656,8 @@ The following additional properties are recognized if TYPE is 'unicode:
      `ucs-4' is the four-byte encoding; `utf-8' is an ASCII-compatible
      variable-width 8-bit encoding; `utf-7' is a 7-bit encoding using
      only characters that will safely pass through all mail gateways.
+     [[ This should be \"transformation format\".  There should also be
+     `ucs-2' (or `bmp' -- no surrogates) and `utf-32' (range checked). ]]
 
 'little-endian
      If non-nil, `utf-16' and `ucs-4' will write out the groups of two
@@ -1569,7 +1669,8 @@ The following additional properties are recognized if TYPE is 'unicode:
      written out at the beginning of the data.  This serves both to
      identify the endianness of the following data and to mark the
      data as Unicode (at least, this is how Windows uses it).
-
+     [[ The correct term is \"signature\", since this technique may also
+     be used with UTF-8.  That is the term used in the standard. ]]
 
 
 The following additional properties are recognized if TYPE is
@@ -1596,6 +1697,7 @@ The following additional properties are recognized if TYPE is
 
 
 The following additional properties are recognized if TYPE is 'undecided:
+[[ Doesn't GNU use \"detect-*\" for the following two? ]]
 
 'do-eol
      Do EOL detection.
@@ -1669,6 +1771,8 @@ Return t if OBJECT names a coding system, and is not a coding system alias.
   return CODING_SYSTEMP (Fgethash (object, Vcoding_system_hash_table, Qnil))
     ? Qt : Qnil;
 }
+
+/* #### Shouldn't this really be a find/get pair? */
 
 DEFUN ("coding-system-alias-p", Fcoding_system_alias_p, 1, 1, 0, /*
 Return t if OBJECT is a coding system alias.
@@ -1794,7 +1898,8 @@ and `coding-system-canonical-name-p'.
   Fputhash (alias, aliasee, Vcoding_system_hash_table);
 
   /* Set up aliases for subsidiaries.
-     #### There must be a better way to handle subsidiary coding systems. */
+     #### There must be a better way to handle subsidiary coding systems.
+     Inquiring Minds Want To Know: shouldn't they always be chains? */
   {
     static const char *suffixes[] = { "-unix", "-dos", "-mac" };
     int i;
@@ -1869,8 +1974,8 @@ DEFUN ("coding-system-used-for-io", Fcoding_system_used_for_io,
        1, 1, 0, /*
 Return the coding system actually used for I/O.
 In some cases (e.g. when a particular EOL type is specified) this won't be
-the coding system itself.  This can be useful when trying to track down
-more closely how exactly data is decoded.
+the coding system itself.  This can be useful when trying to determine
+precisely how data was decoded.
 */
        (coding_system))
 {
@@ -2002,6 +2107,8 @@ DEFINE_LSTREAM_IMPLEMENTATION_WITH_DATA ("coding", coding);
    definition of decoding as converting from external- to
    internal-formatted data.
 
+   [[ REWRITE ME! ]]
+
    #### We really need to abstract out the concept of "data formats" and
    define "converters" that convert from and to specified formats,
    eliminating the idea of decoding and encoding.  When specifying a
@@ -2052,7 +2159,7 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
 	/* #### 1024 is arbitrary; we really need to separate 0 from EOF,
            and when we get 0, keep taking more data until we don't get 0 --
            we don't know how much data the conversion routine might need
-           before it can generate any data of its own */
+           before it can generate any data of its own (eg, bzip2). */
 	Bytecount readmore =
 	  str->one_byte_at_a_time ? (Bytecount) 1 :
 	    max (size, (Bytecount) 1024);
@@ -2462,7 +2569,7 @@ encode_decode_coding_region (Lisp_Object start, Lisp_Object end,
 
   /* The chain of streams looks like this:
 
-     [BUFFER] <----- send through
+     [BUFFER] <----- (( read from/send to loop ))
                      ------> [CHAR->BYTE i.e. ENCODE AS BINARY if source is
                               in bytes]
 		             ------> [ENCODE/DECODE AS SPECIFIED]
@@ -2473,6 +2580,49 @@ encode_decode_coding_region (Lisp_Object start, Lisp_Object end,
 						      coding system calls
 						      for this]
 			                              ------> [BUFFER]
+   */
+  /* Of course, this is just horrible.  BYTE<->CHAR should only be available
+     to I/O routines.  It should not be visible to Mule proper.
+
+     A comment on the implementation.  Hrvoje and Kyle worry about the
+     inefficiency of repeated copying among buffers that chained coding
+     systems entail.  But this may not be as time inefficient as it appears
+     in the Mule ("house rules") context.  The issue is how do you do chain
+     coding systems without copying?  In theory you could have
+
+     IChar external_to_raw (ExtChar *cp, State *s);
+     IChar decode_utf16 (IChar c, State *s);
+     IChar decode_crlf (ExtChar *cp, State *s);
+
+     typedef Ichar (*Converter[]) (Ichar, State*);
+
+     Converter utf16[2] = { &decode_utf16, &decode_crlf };
+
+     void convert (ExtChar *inbuf, IChar *outbuf, Converter cvtr)
+     {
+       int i;
+       ExtChar c;
+       State s;
+
+       while (c = external_to_raw (*inbuf++, &s))
+	 {
+	   for (i = 0; i < sizeof(cvtr)/sizeof(Converter); ++i)
+	     if (s.ready)
+	       c = (*cvtr[i]) (c, &s);
+	 }
+       if (s.ready)
+         *outbuf++ = c;
+     }
+
+     But this is a lot of function calls; what Ben is doing is basically
+     reducing this to one call per buffer-full.  The only way to avoid this
+     is to hardcode all the "interesting" coding systems, maybe using
+     inline or macros to give structure.  But this is still a huge amount
+     of work, and code.
+
+     One advantage to the call-per-char approach is that we might be able
+     to do something about the marker/extent destruction that coding
+     normally entails.
    */
   while (1)
     {
@@ -2797,20 +2947,19 @@ chain_finalize_coding_stream_1 (struct chain_coding_stream *data)
 {  
   if (data->lstreams)
     {
-      /* Order of deletion is important here!  Delete from the head of the
-         chain and work your way towards the tail.  In general, when you
-         delete an object, there should be *NO* pointers to it anywhere.
-         Deleting back-to-front would be a problem because there are
-         pointers going forward.  If there were pointers in both
-         directions, you'd have to disconnect the pointers to a particular
-         object before deleting it. */
+      /* During GC, these objects are unmarked, and are about to be freed.
+	 We do NOT want them on the free list, and that will cause lots of
+	 nastiness including crashes.  Just let them be freed normally. */
       if (!gc_in_progress)
 	{
 	  int i;
-	  /* During GC, these objects are unmarked, and are about to be
-	     freed.  We do NOT want them on the free list, and that will
-	     cause lots of nastiness including crashes.  Just let them be
-	     freed normally. */
+	  /* Order of deletion is important here!  Delete from the head of
+	     the chain and work your way towards the tail.  In general,
+	     when you delete an object, there should be *NO* pointers to it
+	     anywhere.  Deleting back-to-front would be a problem because
+	     there are pointers going forward.  If there were pointers in
+	     both directions, you'd have to disconnect the pointers to a
+	     particular object before deleting it. */
 	  for (i = 0; i < data->lstream_count; i++)
 	    Lstream_delete (XLSTREAM ((data->lstreams)[i]));
 	}
@@ -2927,7 +3076,10 @@ chain_conversion_end_type (Lisp_Object codesys)
 /* "No conversion"; used for binary files.  We use quotes because there
    really is some conversion being applied (it does byte<->char
    conversion), but it appears to the user as if the text is read in
-   without conversion. */
+   without conversion.
+
+   #### Shouldn't we _call_ it that, then?  And while we're at it,
+   separate it into "to_internal" and "to_external"? */
 DEFINE_CODING_SYSTEM_TYPE (no_conversion);
 
 /* This is used when reading in "binary" files -- i.e. files that may
@@ -2973,6 +3125,7 @@ no_conversion_convert (struct coding_stream *str,
 		  c == LEADING_BYTE_CONTROL_1)
 		ch = c;
 	      else
+		/* #### This is just plain unacceptable. */
 		Dynarr_add (dst, '~'); /* untranslatable character */
 	    }
 	  else
@@ -3024,7 +3177,8 @@ data to the main encoding routine -- thus, that routine must handle
 different EOL types itself if it does line-oriented type processing.
 This is unavoidable because we don't know whether the output of the
 main encoding routine is ASCII compatible (Unicode is definitely not,
-for example).
+for example).  [[ sjt sez this is bogus.  There should be _no_ EOL
+processing (or processing of any kind) after conversion to external. ]]
 
 There is one parameter: `subtype', either `cr', `lf', `crlf', or nil.
 */
@@ -4810,7 +4964,8 @@ vars_of_file_coding (void)
   staticpro (&QScoding_system_cookie);
 
 #ifdef HAVE_DEFAULT_EOL_DETECTION
-  /* WARNING: The existing categories are intimately tied to the function
+  /* #### Find a more appropriate place for this comment.
+     WARNING: The existing categories are intimately tied to the function
      `coding-system-category' in coding.el.  If you change a category, or
      change the layout of any coding system associated with a category, you
      need to check that function and make sure it's written properly. */
@@ -4873,6 +5028,8 @@ Information is displayed on stderr.
   Vdebug_coding_detection = Qnil;
 #endif
 }
+
+/* #### reformat this for consistent appearance? */
 
 void
 complex_vars_of_file_coding (void)

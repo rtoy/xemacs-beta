@@ -1,3 +1,13 @@
+2003-11-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/control.texi (Examples of Catch): Mention use of a cons
+	as a catch tag.
+
+2004-07-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/glyphs.texi (Image Instantiator Formats): Add a few
+	words about the tab control widget.
+
 2004-05-14  Darryl Okahata  <darrylo@xemacs.org>
 
 	* lispref/windows.texi.  Added documentation for the functions,
@@ -17,7 +27,8 @@
 
 	* lispref/searching.texi (Syntax of Regexps): Add example of use
 	of shy groups in variable subexpression, correct rumor that there
-	may be substantial performance gain.
+	may be substantial performance gain.  Document double-digit back-
+	references.
 
 2004-08-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
