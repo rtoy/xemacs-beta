@@ -915,7 +915,7 @@ for obsolete fields.
 The @file{package-info.in} literals provided by the maintainer generally
 should not change over the life of the package.  (The exception is the
 @samp{provides} field, which should be generated, but isn't yet.)
-Values described as ``literal'' below are unquoted literal test.  These
+Values described as ``literal'' below are unquoted literal text.  These
 are normally interpreted as symbols by the package build process.  The
 maintainer literals are
 
