@@ -1196,6 +1196,9 @@ wrap_record_1 (const void *ptr, enum lrecord_type ty, const char *file,
 # define DECLARE_LRECORD(c_name, structtype)			\
 extern Lisp_Object Q##c_name##p;				\
 extern const struct lrecord_implementation lrecord_##c_name
+# define DECLARE_MODULE_API_LRECORD(c_name, structtype)			\
+extern MODULE_API Lisp_Object Q##c_name##p;				\
+extern MODULE_API const struct lrecord_implementation lrecord_##c_name
 # define DECLARE_EXTERNAL_LRECORD(c_name, structtype)		\
 extern Lisp_Object Q##c_name##p;				\
 extern int lrecord_type_##c_name;				\

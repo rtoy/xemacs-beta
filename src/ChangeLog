@@ -1,3 +1,8 @@
+2003-08-21  Jerry James  <james@xemacs.org>
+
+	* lrecord.h (DECLARE_MODULE_API_LRECORD): Also define when not
+	ERROR_CHECK_TYPES.
+
 2003-08-19  René Kyllingstad <listmailxemacs@kyllingstad.com>
 
 	* alloc.c (kkcc_gc_stack_init): 
