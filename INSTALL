@@ -310,10 +310,11 @@ version of malloc.  Debug Malloc is not included with XEmacs, is
 intended for use only by the developers and may be obtained from
 <URL:http://www.letters.com/dmalloc/>.
 
-The `--debug' and `--error-checking' options are intended for use only
-by the developers.  `--debug' adds code to be compiled in for
-performing various tests.  `--error-checking' adds additional tests to
-many of the commonly used macros.
+The `--debug' and `--error-checking' options are primarily useful to the
+developers.  `--debug' incorporates code for performing various tests,
+but does not impose a speed penalty.  `--error-checking' adds additional
+tests to many of the commonly used macros, and imposes a speed penalty.
+Neither is especially useful in most common debugging situations.
 
 The `--verbose' and `--extra-verbose' options are intended for use
 only by the developers.  `--verbose' causes the results of all
@@ -323,10 +324,12 @@ determining configure failures is the file `config.log', which
 contains the results of the compile and link tests used by configure.
 
 The `--with-mule' option enables (MUlti-Lingual Emacs) support, needed
-to support non-Latin-1 (including Asian) languages.  The Mule support
-is not yet as stable or efficient as the `Latin1' support.   Enabling
-Mule support requires the mule-base package installed prior to
-building XEmacs.  The following options require Mule support:
+to support non-Latin-1 (including Asian) languages.  Mule support is
+required for Asian language and Unicode (multibyte and wide character)
+support.  With the advent of the Euro and European Community
+expansion, Mule support is also recommended for Western Europeans.
+Enabling Mule support requires the mule-base package installed prior
+to building XEmacs.  The following options require Mule support:
 
 The `--with-xim' option enables use of the X11 XIM mechanism to allow
 an input method to input text into XEmacs.  The input method is shared
@@ -664,6 +667,15 @@ when running make in the subdirectories.
 
 Using GNU Make allows for simultaneous builds with and without the
 --srcdir option.
+
+STRIPPING BINARIES
+==================
+
+This saves nothing but a small (by modern standards) amount of disk
+space; the symbol table is not loaded into memory at execution time.
+If you do encounter a crash or other serious bug, the first thing the
+developers will do is ask you to build an XEmacs with a full symbol
+table, anyway.  Don't strip the XEmacs binary.
 
 MAIL-LOCKING POST-INSTALLATION
 ==============================

@@ -1,3 +1,7 @@
+2003-02-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* INSTALL: Recommend Mule, deprecate stripped binaries.
+
 2003-02-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.in (DLSYM_NEEDS_UNDERSCORE): Define on darwin.
