@@ -1,5 +1,10 @@
 2002-12-03  Didier Verna  <didier@xemacs.org>
 
+	* faces.el (set-face-background-pixmap-file): Ensure default value
+	can be computed.
+
+2002-12-03  Didier Verna  <didier@xemacs.org>
+
 	* faces.el (background-pixmap-file-history): New.
 	* faces.el (set-face-background-pixmap-file): New.
 

@@ -635,11 +635,13 @@ This function is a simplified version of `set-face-background-pixmap',
 designed for interactive use."
   (interactive
    (let* ((face (read-face-name "Set background pixmap of face: "))
+	  (default (and (face-background-pixmap-instance face)
+			((image-instance-file-name
+			  (face-background-pixmap-instance face)))))
 	  (file (read-file-name
 		 (format "Set background pixmap of face %s to: "
 			 (symbol-name face))
-		 nil (image-instance-file-name
-		      (face-background-pixmap-instance face)) t nil
+		 nil default t nil
 		      'background-pixmap-file-history)))
      (list face (if (equal file "") nil file))))
   (set-face-property face 'background-pixmap file))
