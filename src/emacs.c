@@ -251,7 +251,6 @@ version 18.59 released October 31, 1992.
 #include "frame.h"
 #include "sysdep.h"
 
-#include "syssignal.h" /* Always include before systty.h and sysproc.h */
 #include "systty.h"
 #include "sysfile.h"
 #include "systime.h"

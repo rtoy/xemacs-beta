@@ -57,9 +57,8 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 
 #include "sysfile.h"
-#include "syssignal.h" /* Always include before sysproc.h and systty.h
-			  -- didier */
 #include "sysproc.h"
+#include "syssignal.h"
 #include "systime.h"
 #include "systty.h"
 #include "syswait.h"
@@ -1124,6 +1123,16 @@ int
 process_has_separate_stderr (Lisp_Object process)
 {
   return XPROCESS (process)->separate_stderr;
+}
+
+DEFUN ("process-has-separate-stderr-p", Fprocess_has_separate_stderr_p, 1, 1,
+       0, /*
+Return non-nil if process has stderr separate from stdout.
+*/
+       (process))
+{
+  CHECK_PROCESS (process);
+  return process_has_separate_stderr (process) ? Qt : Qnil;
 }
 
 
@@ -2510,6 +2519,7 @@ syms_of_process (void)
   DEFSUBR (Fprocess_name);
   DEFSUBR (Fprocess_tty_name);
   DEFSUBR (Fprocess_command);
+  DEFSUBR (Fprocess_has_separate_stderr_p);
   DEFSUBR (Fset_process_buffer);
   DEFSUBR (Fset_process_stderr_buffer);
   DEFSUBR (Fprocess_buffer);

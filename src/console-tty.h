@@ -33,7 +33,6 @@ Boston, MA 02111-1307, USA.  */
 #define INCLUDED_console_tty_h_
 
 #include "console.h"
-#include "syssignal.h" /* Always include before systty.h */
 #include "systty.h"
 
 DECLARE_CONSOLE_TYPE (tty);

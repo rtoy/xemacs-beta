@@ -34,9 +34,9 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h"
 #include "procimpl.h"
 
-#include "syssignal.h" /* Always include before sysproc.h -- didier */
 #include "sysfile.h"
 #include "sysproc.h"
+#include "syssignal.h"
 
 /* Bound by win32-native.el */
 Lisp_Object Qmswindows_construct_process_command_line;

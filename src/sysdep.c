@@ -67,10 +67,9 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysdir.h"
 #include "sysfile.h"
-#include "syssignal.h" /* Always include before sysproc.h and systty.h
-			  -- didier */
 #include "sysproc.h"
 #include "syspwd.h"
+#include "syssignal.h"
 #include "systime.h"
 #include "systty.h"
 #include "syswait.h"

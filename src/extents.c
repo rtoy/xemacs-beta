@@ -3599,9 +3599,11 @@ See `extent-parent'.
       }
     for (i = 0; i < orignewlength; i++)
       {
-	if (!bsearch (Dynarr_atp (newprops, i), Dynarr_atp (oldprops, 0),
-		      Dynarr_length (oldprops), sizeof (Lisp_Object_pair),
-		      compare_key_value_pairs))
+	if (!Dynarr_length (oldprops) || !bsearch (Dynarr_atp (newprops, i), 
+						   Dynarr_atp (oldprops, 0),
+						   Dynarr_length (oldprops), 
+						   sizeof (Lisp_Object_pair),
+						   compare_key_value_pairs))
 	  {
 	    Lisp_Object_pair new;
 	    new.key = Dynarr_at (newprops, i).key;

@@ -1,3 +1,38 @@
+2002-06-01  Ben Wing  <ben@xemacs.org>
+
+	* buffer.c (init_initial_directory):
+	Fix bug noted by someone.
+	
+	* console-tty.h:
+	* device.h (struct device):
+	* emacs.c:
+	* filelock.c:
+	* nt.c:
+	* process-nt.c:
+	* process-unix.c:
+	* process.c:
+	* redisplay-tty.c:
+	* sysdep.c:
+	* sysproc.h:
+	* win32.c:
+	Redo problem with syssignal.h/sysproc.h dependence noted by Didier
+	-- rather than require one included before the other
+	(error-prone), just include syssignal.h from sysproc.h
+	where it's needed.
+	
+	* inline.c:
+	Include sysfile.h due to inline funs in that header.
+	
+	* extents.c (Fset_extent_parent):
+	Fix bug noted by Andrew Cohen <cohen@andy.bu.edu>.
+	
+	* process-unix.c (unix_open_network_stream):
+	* process-unix.c (unix_open_multicast_group):
+	Fix other bug noted by Andrew Cohen <cohen@andy.bu.edu>.
+
+	* process.c (syms_of_process):
+	Add process-has-separate-stderr-p, used by call-process-internal.
+
 2002-05-28  Martin Köbele <mkoebele@mkoebele.de>, Jens Müller <jmueller@informatik.uni-tuebingen.de>
 
 	* lrecord.h (lrecord_type): Add lrecord_type_weak_box to

@@ -1,3 +1,8 @@
+2002-06-01  Ben Wing  <ben@xemacs.org>
+
+	* process.el (call-process-internal):
+	Insert before, not after, point.
+
 2002-05-30  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
 
 	* code-process.el (call-process): Ensure that the argument to

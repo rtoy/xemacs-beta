@@ -40,12 +40,12 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 #include "buffer.h"
 
-#include "systime.h"
-#include "syssignal.h" /* Always include before sysproc.h -- didier */
-#include "sysproc.h"
-#include "sysfile.h"
-#include "syspwd.h"
 #include "sysdir.h"
+#include "sysfile.h"
+#include "sysproc.h"
+#include "syspwd.h"
+#include "syssignal.h"
+#include "systime.h"
 
 #include "syswindows.h"
 

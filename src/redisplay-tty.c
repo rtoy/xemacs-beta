@@ -46,6 +46,8 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty.h"
 #include "objects-tty.h"
 
+#include "syssignal.h"
+
 /* These headers #define all kinds of common words like "columns"...
    What a bunch of losers.  If we were to include them, we'd have to
    include them last to prevent them from messing up our own header

@@ -131,7 +131,7 @@ struct device
   /* holds some data necessary for SIGIO control.  Perhaps this should
      be inside of device_data; but it is used for both TTY's and X
      device.  Perhaps it should be conditionalized on SIGIO; but
-     this requires including syssignal.h and systty.h. */
+     this requires including syssignal.h. */
   int old_fcntl_owner;
 #endif
 };

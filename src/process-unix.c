@@ -53,9 +53,8 @@ Boston, MA 02111-1307, USA.  */
 #include <setjmp.h>
 #include "sysdir.h"
 #include "sysfile.h"
-#include "syssignal.h" /* Always include before systty.h and sysproc.h
-			  -- didier*/
 #include "sysproc.h"
+#include "syssignal.h"
 #include "systime.h"
 #include "systty.h"
 #include "syswait.h"
@@ -2034,7 +2033,8 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	if (retval == -1 && errno != EISCONN)
 	  {
 	    xerrno = errno;
-	    if (errno == EINTR)
+
+	    if (errno == EINTR || errno == EINPROGRESS || errno == EALREADY)
 	      goto loop;
 	    if (errno == EADDRINUSE && retry < 20)
 	      {
@@ -2262,10 +2262,11 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
     {
       int xerrno = errno;
 
-      if (errno == EINTR)
+      if (errno == EINTR || errno == EINPROGRESS || errno == EALREADY)
 	goto loop;
       if (errno == EADDRINUSE && retry < 20)
 	{
+#ifdef __FreeBSD__
 	  /* A delay here is needed on some FreeBSD systems,
 	     and it is harmless, since this retrying takes time anyway
 	     and should be infrequent.
@@ -2273,6 +2274,7 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
 	     slowed down so it can't be used here.  Async timers should
 	     already be disabled at this point so we can use `sleep'. */
 	  sleep (1);
+#endif
 	  retry++;
 	  goto loop;
 	}
