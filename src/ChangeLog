@@ -1,3 +1,8 @@
+2003-04-05  Martin Buchholz  <martin@xemacs.org>
+
+	* EmacsFrameP.h (EmacsFramePart):
+	Kludge to allow compiling with Motif1, but linking with Motif2.
+
 2003-05-04  Robert Pluim  <rpluim@bigfoot.com>
 
 	* database.c: Don't use the u_int8_t etc typedefs on FreeBSD,
