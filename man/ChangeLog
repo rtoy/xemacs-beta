@@ -1,3 +1,11 @@
+2003-02-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/startup.texi (Startup Paths): Clarification of package
+	hierarchy structure.
+
+	* xemacs-faq.texi (Q2.0.13, Q2.0.14, Q2.1.24, Q2.1.25): Not NEW.
+	(Q2.1.15): Stylistic changes for clarity.
+
 2003-02-03  Steve Youngs  <youngs@xemacs.org>
 
 	* xemacs/packages.texi (Local.rules File): Update to reflect Ben's

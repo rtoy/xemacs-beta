@@ -93,9 +93,13 @@ late hierarchy.  At run time, the package path may also be specified via
 the @code{EMACSPACKAGEPATH} environment variable.
 
 An XEmacs package hierarchy is laid out just like a normal installed
-XEmacs lisp directory.  It may have @file{lisp}, @file{etc},
-@file{info}, and @file{lib-src} subdirectories.  XEmacs adds these at
-appropriate places within the various system-wide paths.
+XEmacs directory.  It may have @file{lisp}, @file{etc}, @file{info}, and
+@file{lib-src} subdirectories.  (The @file{lib-src} subdirectory
+contains architecture-independent general-purpose scripts interpreted by
+the shell or Perl.  Java is also being widely used, but Java programs
+are generally found under @file{etc}, because they are specific to
+particular packages such as @file{JDE} and @file{xslt}.)  XEmacs adds
+these at appropriate places within the various system-wide paths.
 
 There may be any number of package hierarchy directories.
 

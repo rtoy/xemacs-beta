@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/01/03 12:12:30 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/02/05 08:18:55 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -149,8 +149,8 @@ Installation and Trouble Shooting
 * Q2.0.10::     After I run configure I find a coredump, is something wrong?
 * Q2.0.11::     XEmacs can't resolve host names.
 * Q2.0.12::     Why can't I strip XEmacs?
-* Q2.0.13::     I don't need no steenkin' packages.  Do I? (NEW)
-* Q2.0.14::     How do I figure out which packages to install? (NEW)
+* Q2.0.13::     I don't need no steenkin' packages.  Do I?
+* Q2.0.14::     How do I figure out which packages to install?
 * Q2.0.15::     EFS fails with "500 AUTH not understood" (NEW)
 * Q2.0.16::     Cygwin XEmacs won't start: cygXpm-noX4.dll was not found (NEW)
 
@@ -178,8 +178,8 @@ Trouble Shooting:
 * Q2.1.21::     [This question intentionally left blank]
 * Q2.1.22::     XEmacs seems to take a really long time to do some things.
 * Q2.1.23::     Movemail on Linux does not work for XEmacs 19.15 and later.
-* Q2.1.24::     XEmacs won't start without network. (NEW)
-* Q2.1.25::     After upgrading, XEmacs won't do `foo' any more! (NEW)
+* Q2.1.24::     XEmacs won't start without network.
+* Q2.1.25::     After upgrading, XEmacs won't do `foo' any more!
 
 Customization and Options
 
@@ -1344,8 +1344,8 @@ Installation:
 * Q2.0.10::     After I run configure I find a coredump, is something wrong?
 * Q2.0.11::     XEmacs can't resolve host names.
 * Q2.0.12::     Why can't I strip XEmacs?
-* Q2.0.13::     I don't need no steenkin' packages.  Do I? (NEW)
-* Q2.0.14::     I don't want to install a million .els one at a time! (NEW)
+* Q2.0.13::     I don't need no steenkin' packages.  Do I?
+* Q2.0.14::     I don't want to install a million .els one at a time!
 * Q2.0.15::     EFS fails with "500 AUTH not understood" (NEW)
 * Q2.0.16::     Cygwin XEmacs won't start: cygXpm-noX4.dll was not found (NEW)
 
@@ -1373,8 +1373,8 @@ Trouble Shooting:
 * Q2.1.21::     [This question intentionally left blank]
 * Q2.1.22::     XEmacs seems to take a really long time to do some things.
 * Q2.1.23::     Movemail on Linux does not work for XEmacs 19.15 and later.
-* Q2.1.24::     XEmacs won't start without network. (NEW)
-* Q2.1.25::     After upgrading, XEmacs won't do `foo' any more! (NEW)
+* Q2.1.24::     XEmacs won't start without network.
+* Q2.1.25::     After upgrading, XEmacs won't do `foo' any more!
 @end menu
 
 @node Q2.0.1, Q2.0.2, Installation, Installation
@@ -1501,9 +1501,9 @@ buggy optimizers.  Please see the @file{PROBLEMS} file that comes with
 XEmacs to read what it says about your platform.
 
 If you compiled XEmacs using @samp{--use-union-type} (or the option
-@samp{USE_UNION_TYPE} in @file{config.inc} under Windows), recompile
-again without this.  This has been known to trigger compiler errors in a
-number of cases.
+@samp{USE_UNION_TYPE} in @file{config.inc} under Windows), try
+recompiling again without it.  The union type has been known to trigger
+compiler errors in a number of cases.
 
 @node Q2.0.7, Q2.0.8, Q2.0.6, Installation
 @unnumberedsubsec Q2.0.7: Libraries in non-standard locations
@@ -1721,7 +1721,7 @@ cp lib-src/DOC-19.16-XEmacs
 @end quotation
 
 @node Q2.0.13, Q2.0.14, Q2.0.12, Installation
-@unnumberedsubsec Q2.0.13: I don't need no steenkin' packages.  Do I? (NEW)
+@unnumberedsubsec Q2.0.13: I don't need no steenkin' packages.  Do I?
 
 Strictly speaking, no.  XEmacs will build and install just fine without
 any packages installed.  However, only the most basic editing functions
@@ -1729,7 +1729,7 @@ will be available with no packages installed, so installing packages is
 an essential part of making your installed XEmacs _useful_.
 
 @node Q2.0.14, Q2.0.15, Q2.0.13, Installation
-@unnumberedsubsec Q2.0.14: How do I figure out which packages to install? (NEW)
+@unnumberedsubsec Q2.0.14: How do I figure out which packages to install?
 
 Many people really liked the old way that packages were bundled and do
 not want to mess with packages at all.  You can grab all the packages at
@@ -2213,7 +2213,7 @@ it does.
 @end quotation
 
 @node Q2.1.15, Q2.1.16, Q2.1.14, Installation
-@unnumberedsubsec Q2.1.15: How to Debug an XEmacs problem with a debugger
+@unnumberedsubsec Q2.1.15: How to debug an XEmacs problem with a debugger
 
 If XEmacs does crash on you, one of the most productive things you can
 do to help get the bug fixed is to poke around a bit with the debugger.
@@ -2226,18 +2226,22 @@ strongly recompiling your XEmacs with debugging symbols and with no
 optimization (e.g. with GCC use the compiler flags @samp{-g -O0} --
 that's an "oh" followed by a zero), and with the configure options
 @samp{--debug=yes} and @samp{--error-checking=all}.  This will make your
-XEmacs run somewhat slower but make it a lot more likely to catch the
-problem earlier (closer to its source), and a lot easier to determine
-what's going on with a debugger.
+XEmacs run somewhat slower, but you are a lot more likely to catch the
+problem earlier (closer to its source).  It makes it a lot easier to
+determine what's going on with a debugger.
 
 @item
-If you're able to run XEmacs under a debugger and reproduce the crash
-(if it's inconvenient to do this because XEmacs is already running or is
-running in batch mode as part of a bunch of scripts, consider attaching
-to the existing process with your debugger; most debuggers let you do
-this by substituting the process ID for the core file when you invoke
-the debugger from the command line, or by using the @code{attach}
-command or something similar), here are some things you can do:
+If it's not a true crash (@emph{i.e.}, XEmacs is hung, or a zombie
+process), or it's inconvenient to run XEmacs again because XEmacs is
+already running or is running in batch mode as part of a bunch of
+scripts, you may be able to attach to the existing process with your
+debugger.  Most debuggers let you do this by substituting the process ID
+for the core file when you invoke the debugger from the command line, or
+by using the @code{attach} command or something similar.
+
+@item
+If you're able to run XEmacs under a debugger and reproduce the crash,
+here are some things you can do:
 
 @item
 If XEmacs is hitting an assertion failure, put a breakpoint on
@@ -2254,18 +2258,18 @@ If XEmacs is outputting lots of X errors, put a breakpoint on
 
 @item
 Internally, you will probably see lots of variables that hold objects of
-type @code{Lisp_Object}.  These are exactly what they appear to be,
-i.e. references to Lisp objects.  Printing them out with the debugger
-probably won't be too useful---you'll likely just see a number.  To
-decode them, do this:
+type @code{Lisp_Object}.  These are references to Lisp objects.
+Printing them out with the debugger probably won't be too
+useful---you'll likely just see a number.  To decode them, do this:
 
 @example
 call dp (OBJECT)
 @end example
 
 where @var{OBJECT} is whatever you want to decode (it can be a variable,
-a function call, etc.).  This will print out a readable representation
-on the TTY from which the xemacs process was invoked.
+a function call, etc.).  This uses the Lisp printing routines to out a
+readable representation on the TTY from which the xemacs process was
+invoked.
 
 @item
 If you want to get a Lisp backtrace showing the Lisp call
@@ -2276,10 +2280,10 @@ call db ()
 @end example
 
 @item
-Using @code{dp} and @code{db} has two disadvantages - it can only be
-used with a running xemacs process, and it cannot display the internal C
-structure of a Lisp Object.  Even if all you've got is a core dump, all
-is not lost.
+Using @code{dp} and @code{db} has two disadvantages - they can only be
+used with a running (including hung or zombie) xemacs process, and they
+do not display the internal C structure of a Lisp Object.  Even if all
+you've got is a core dump, all is not lost.
 
 If you're using GDB, there are some macros in the file
 @file{src/.gdbinit} in the XEmacs source distribution that should make
@@ -2299,12 +2303,14 @@ Print the Lisp type of a lisp object.
 @item lbt
 Usage: lbt @*
 Print the current Lisp stack trace.
-Requires a running xemacs process.
+Requires a running xemacs process.  (It works by calling the db
+routine described above.)
 
 @item ldp
 Usage: ldp lisp_object @*
 Print a Lisp Object value using the Lisp printer.
-Requires a running xemacs process.
+Requires a running xemacs process.  (It works by calling the dp
+routine described above.)
 
 @item run-temacs
 Usage: run-temacs @*
@@ -2360,7 +2366,11 @@ space, and makes debugging much much harder.
 Your stack is getting trashed.  Debugging this is hard; you have to do a
 binary-search type of narrowing down where the crash occurs, until you
 figure out exactly which line is causing the problem.  Of course, this
-only works if the bug is highly reproducible.
+only works if the bug is highly reproducible.  Also, in many cases if
+you run XEmacs from the debugger, the debugger can protect the stack
+somewhat.  However, if the stack is being smashed, it is typically the
+case that there is a wild pointer somewhere in the program, often quite
+far from where the crash occurs.
 
 @item
 If your stack trace has exactly one frame in it, with address 0x0, this
@@ -2525,7 +2535,7 @@ and uncomment the line that reads:
 @end quotation
 
 @node Q2.1.24, Q2.1.25, Q2.1.23, Installation
-@unnumberedsubsec Q2.1.24:  XEmacs won't start without network. (NEW)
+@unnumberedsubsec Q2.1.24:  XEmacs won't start without network.
 
 If XEmacs starts when you're on the network, but fails when you're not
 on the network, you may be missing a "localhost" entry in your
@@ -2538,7 +2548,7 @@ on the network, you may be missing a "localhost" entry in your
 Add that line, and XEmacs will be happy.
 
 @node Q2.1.25,  , Q2.1.24, Installation
-@unnumberedsubsec Q2.1.25::  After upgrading, XEmacs won't do `foo' any more! (NEW)
+@unnumberedsubsec Q2.1.25::  After upgrading, XEmacs won't do `foo' any more!
 
 You have been used to doing `foo', but now when you invoke it (or click
 the toolbar button or select the menu item), nothing (or an error)
