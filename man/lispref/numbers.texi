@@ -192,8 +192,8 @@ floating point numbers.
 @end ignore
 
 
-@node Ratio Basics
-@section Ratio Basics
+@node Rational Basics
+@section Rational Basics
 
 Ratios (built-in rational numbers) are available only when the bignum
 extension is built into your XEmacs.  This facility is new and

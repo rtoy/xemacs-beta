@@ -1,3 +1,8 @@
+2004-04-19  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* lispref/numbers.texi (Rational Basics): There's a reason why
+	this node is named "Rational" and not "Ratio" in the menu....
+
 2004-04-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (Object-Oriented Techniques in XEmacs):
