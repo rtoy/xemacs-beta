@@ -777,7 +777,7 @@ Lstream_seekable_p (Lstream *lstr)
 static int
 Lstream_pseudo_close (Lstream *lstr)
 {
-  if (!lstr->flags & LSTREAM_FL_IS_OPEN)
+  if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
     Lstream_internal_error ("lstream is not open", lstr);
 
   /* don't check errors here -- best not to risk file descriptor loss */
