@@ -1,3 +1,12 @@
+2002-06-03  Ben Wing  <ben@xemacs.org> and
+            Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* process.el:
+	* process.el (process-synchronize-point): New.
+	* process.el (call-process-internal):
+	Create new process-synchronize-point to avoid dynamic binding
+	problems.  Fix editing bogosity in setting process sentinels.
+
 2002-05-28  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* obsolete.el (find-non-ascii-charset-region): Revert the function

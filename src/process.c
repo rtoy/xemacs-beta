@@ -2161,7 +2161,6 @@ static void
 remove_process (Lisp_Object process)
 {
   Vprocess_list = delq_no_quit (process, Vprocess_list);
-  Fset_marker (XPROCESS (process)->mark, Qnil, Qnil);
 
   deactivate_process (process);
 }
@@ -2652,7 +2651,7 @@ the cdr part is used for writing (encoding) data to a process.
 #ifdef PROCESS_IO_BLOCKING
   DEFVAR_LISP ("network-stream-blocking-port-list", &network_stream_blocking_port_list /*
 List of port numbers or port names to set a blocking I/O mode with connection.
-Nil value means to set a default(non-blocking) I/O mode.
+Nil value means to set a default (non-blocking) I/O mode.
 The value takes effect when `open-network-stream-internal' is called.
 */ );
   network_stream_blocking_port_list = Qnil;

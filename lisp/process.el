@@ -75,6 +75,29 @@ Wildcards and redirection are handled as usual in the shell."
   (start-process name buffer shell-file-name shell-command-switch
 		 (mapconcat #'identity args " ")))
 
+(defun process-synchronize-point (proc)
+  "Set the point(s) in buffer and stderr-buffer according to the process mark."
+  ;; We need this because the documentation says to insert *BEFORE* point,
+  ;; but we end up inserting after because only the process mark moves
+  ;; forward, not point.  We synchronize after every place output might
+  ;; happen, in sentinels, and in an unwind-protect, to make *SURE* that
+  ;; point is correct. (We could do this more easily and perhaps more
+  ;; safely using a process filter, but that would create a LOT of garbage
+  ;; since all the data would get sent in strings.) We make this a separate
+  ;; function, not an flet, due to dynamic binding problems -- the flet may
+  ;; not still be in scope when the sentinel is called.
+  (let ((pb (process-buffer proc))
+	(pm (process-mark proc)))
+    (if (and pb (buffer-live-p pb) (marker-buffer pm))
+	(goto-char pm pb))
+    (if (process-has-separate-stderr-p proc)
+	(let ((pseb (process-stderr-buffer proc))
+	      (psem (process-stderr-mark proc)))
+	  (if (and pseb (not (eq pb pseb))
+		   (buffer-live-p pseb)
+		   (marker-buffer psem))
+	      (goto-char psem pseb))))))
+
 (defun call-process-internal (program &optional infile buffer display
 				      &rest args)
   "Internal function to call PROGRAM synchronously in separate process.
@@ -186,128 +209,106 @@ Coding systems for the process are the same as for `start-process-internal'."
 		(set-marker (process-mark proc) (point buffer) buffer))
 	    (if errbuf
 		(set-marker (process-stderr-mark proc) (point errbuf) errbuf))
-	    ;; bind a function to set the point(s) in buffer and
-	    ;; stderr-buffer.  this is because the documentation says to
-	    ;; insert *BEFORE* point, but we end up inserting after because
-	    ;; only the process mark moves forward, not point.  we
-	    ;; synchronize after every place output might happen, in
-	    ;; sentinels, and in an unwind-protect, to make *SURE* that
-	    ;; point is correct. (We could do this more easily and perhaps
-	    ;; more safely using a process filter, but that would create a
-	    ;; LOT of garbage since all the data would get sent in
-	    ;; strings.)
-	    (flet ((synchronize-point (proc)
-		     (let ((pb (process-buffer proc))
-			   (pm (process-mark proc)))
-		       (if (and pb (buffer-live-p pb) (marker-buffer pm))
-			   (goto-char pm pb))
-		       (if (process-has-separate-stderr-p proc)
-			   (let ((pseb (process-stderr-buffer proc))
-				 (psem (process-stderr-mark proc)))
-			     (if (and pseb (not (eq pb pseb))
-				      (buffer-live-p pseb)
-				      (marker-buffer psem))
-				 (goto-char psem pseb)))))))
 	      ;; now do I/O, very carefully!  the unwind-protect makes sure
 	      ;; to clear out the sentinel, since it does a `throw', which
 	      ;; would have no catch (or writes to a file -- we only want
 	      ;; this on normal exit)
-	      (unwind-protect
-		  ;; if not NO-WAIT, set a sentinel to return the exit
-		  ;; status.  it will throw to this catch so we can exit
-		  ;; properly.
-		  (catch 'call-process-done
-		    (set-process-sentinel
-		     proc
-		     (if no-wait
-			 ;; we're trying really really hard to emulate
-			 ;; the old call-process, which would save the
-			 ;; stderr to a file even if discarding output.  so
-			 ;; we set a sentinel to save the output when
-			 ;; we finish.
-			 ;;
-			 ;; #### not clear if we should be doing this.
-			 ;;
-			 ;; NOTE NOTE NOTE: Due to the total bogosity of
-			 ;; dynamic scoping, and the lack of closures, we
-			 ;; have to be careful how we write the first
-			 ;; sentinel below since it may be executed after
-			 ;; this function has returned -- thus we fake a
-			 ;; closure. (This doesn't apply to the second one,
-			 ;; which only gets executed within the
-			 ;; unwind-protect.)
-			 (if (and errbuf stderr)
-			     (set-process-sentinel
-			      proc
-			      `(lambda (proc status)
-				 (set-process-sentinel proc nil)
-				 (synchronize-point proc)
-				 (with-current-buffer ,errbuf
-				   (write-region-internal
-				    1 (1+ (buffer-size))
-				    ,stderr
-				    nil 'major-rms-kludge-city nil
-				    coding-system-for-write))
-				 (kill-buffer ,errbuf))))
-		       ;; normal sentinel: maybe write out stderr and return
-		       ;; status.
-		       #'(lambda (proc status)
-			   (synchronize-point proc)
-			   (when (and errbuf stderr)
-			     (with-current-buffer errbuf
-			       (write-region-internal
-				1 (1+ (buffer-size)) stderr
-				nil 'major-rms-kludge-city nil
-				coding-system-for-write)))
-			   (cond ((eq 'exit (process-status proc))
-				  (set-process-sentinel proc nil)
-				  (throw 'call-process-done
-					 (process-exit-status proc)))
-				 ((eq 'signal (process-status proc))
-				  (set-process-sentinel proc nil)
-				  (throw 'call-process-done status))))))
-		    (if (not no-wait)
-			;; we're waiting.  send the input and loop forever,
-			;; handling process output and maybe redisplaying.
-			;; exit happens through the sentinel or C-g.  if
-			;; C-g, send SIGINT the first time, EOF if not
-			;; already done so (might make the process exit),
-			;; and keep waiting.  Another C-g will exit the
-			;; whole function, and the unwind-protect will
-			;; kill the process. (Hence the documented semantics
-			;; of SIGINT/SIGKILL.)
-			(let (eof-sent)
-			  (condition-case nil
-			      (progn
-				(when inbuf
-				  (process-send-region proc start end inbuf))
-				(process-send-eof proc)
-				(setq eof-sent t)
-				(while t
-				  (accept-process-output proc)
-				  (synchronize-point proc)
-				  (if display (sit-for 0))))
-			    (quit
-			     (process-send-signal 'SIGINT proc)
-			     (unless eof-sent
-			       (process-send-eof proc))
-			     (while t
-			       (accept-process-output proc)
-			       (synchronize-point proc)
-			       (if display (sit-for 0))))))
-		      ;; discard and no wait: send the input, set PROC
-		      ;; and ERRBUF to nil so that the unwind-protect
-		      ;; forms don't erase the sentinel, kill the process,
-		      ;; or kill ERRBUF (the sentinel does that), and exit.
-		      (when inbuf
-			(process-send-region proc start end inbuf))
-		      (process-send-eof proc)
-		      (setq errbuf nil)
-		      (setq proc nil)))
-		;; inner unwind-protect, once we're ready to do I/O.
-		(when proc
-		  (set-process-sentinel proc nil)
-		  (synchronize-point proc))))))
+	    (unwind-protect
+		;; if not NO-WAIT, set a sentinel to return the exit
+		;; status.  it will throw to this catch so we can exit
+		;; properly.
+		(catch 'call-process-done
+		  (set-process-sentinel
+		   proc
+		   (cond
+		    ((and no-wait errbuf stderr)
+		     ;; we're trying really really hard to emulate
+		     ;; the old call-process, which would save the
+		     ;; stderr to a file even if discarding output.  so
+		     ;; we set a sentinel to save the output when
+		     ;; we finish.
+		     ;;
+		     ;; #### not clear if we should be doing this.
+		     ;;
+		     ;; NOTE NOTE NOTE: Due to the total bogosity of
+		     ;; dynamic scoping, and the lack of closures, we
+		     ;; have to be careful how we write the first
+		     ;; sentinel below since it may be executed after
+		     ;; this function has returned -- thus we fake a
+		     ;; closure. (This doesn't apply to the second one,
+		     ;; which only gets executed within the
+		     ;; unwind-protect.)
+		     `(lambda (proc status)
+			(set-process-sentinel proc nil)
+			(process-synchronize-point proc)
+			(with-current-buffer ,errbuf
+			  (write-region-internal
+			   1 (1+ (buffer-size))
+			   ,stderr
+			   nil 'major-rms-kludge-city nil
+			   coding-system-for-write))
+			(kill-buffer ,errbuf)))
+		    (no-wait nil)
+		    (t
+		     ;; normal sentinel: maybe write out stderr and return
+		     ;; status.
+		     #'(lambda (proc status)
+			 (process-synchronize-point proc)
+			 (when (and errbuf stderr)
+			   (with-current-buffer errbuf
+			     (write-region-internal
+			      1 (1+ (buffer-size)) stderr
+			      nil 'major-rms-kludge-city nil
+			      coding-system-for-write)))
+			 (cond ((eq 'exit (process-status proc))
+				(set-process-sentinel proc nil)
+				(throw 'call-process-done
+				       (process-exit-status proc)))
+			       ((eq 'signal (process-status proc))
+				(set-process-sentinel proc nil)
+				(throw 'call-process-done status)))))))
+		  (if (not no-wait)
+		      ;; we're waiting.  send the input and loop forever,
+		      ;; handling process output and maybe redisplaying.
+		      ;; exit happens through the sentinel or C-g.  if
+		      ;; C-g, send SIGINT the first time, EOF if not
+		      ;; already done so (might make the process exit),
+		      ;; and keep waiting.  Another C-g will exit the
+		      ;; whole function, and the unwind-protect will
+		      ;; kill the process. (Hence the documented semantics
+		      ;; of SIGINT/SIGKILL.)
+		      (let (eof-sent)
+			(condition-case nil
+			    (progn
+			      (when inbuf
+				(process-send-region proc start end inbuf))
+			      (process-send-eof proc)
+			      (setq eof-sent t)
+			      (while t
+				(accept-process-output proc)
+				(process-synchronize-point proc)
+				(if display (sit-for 0))))
+			  (quit
+			   (process-send-signal 'SIGINT proc)
+			   (unless eof-sent
+			     (process-send-eof proc))
+			   (while t
+			     (accept-process-output proc)
+			     (process-synchronize-point proc)
+			     (if display (sit-for 0))))))
+		    ;; discard and no wait: send the input, set PROC
+		    ;; and ERRBUF to nil so that the unwind-protect
+		    ;; forms don't erase the sentinel, kill the process,
+		    ;; or kill ERRBUF (the sentinel does that), and exit.
+		    (when inbuf
+		      (process-send-region proc start end inbuf))
+		    (process-send-eof proc)
+		    (setq errbuf nil)
+		    (setq proc nil)))
+	      ;; inner unwind-protect, once we're ready to do I/O.
+	      (when proc
+		(set-process-sentinel proc nil)
+		(process-synchronize-point proc)))))
       ;; outer unwind-protect forms, to make sure we always clean up.
       (if (and inbuf kill-inbuf) (kill-buffer inbuf))
       (if (and errbuf kill-errbuf) (kill-buffer errbuf))
