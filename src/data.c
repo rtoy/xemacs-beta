@@ -1307,18 +1307,23 @@ Floating point numbers always use base 10.
       if (*p == '+')
 	p++;
 
-      for (end = p;
-	   (*end >= '0' && *end <= '9') ||
+      end = p;
+      if (*end == '-')
+	end++;
+      while ((*end >= '0' && *end <= '9') ||
 	     (b > 10 && *end >= 'a' && *end <= 'a' + b - 11) ||
-	     (b > 10 && *end >= 'A' && *end <= 'A' + b - 11);
-	   end++);
+	     (b > 10 && *end >= 'A' && *end <= 'A' + b - 11))
+	end++;
       if (*end == '/')
-	for (end++;
-	     (*end >= '0' && *end <= '9') ||
-	       (b > 10 && *end >= 'a' && *end <= 'a' + b - 11) ||
-	       (b > 10 && *end >= 'A' && *end <= 'A' + b - 11);
-	     end++);
-
+	{
+	  end++;
+	  if (*end == '-')
+	    end++;
+	  while ((*end >= '0' && *end <= '9') ||
+		 (b > 10 && *end >= 'a' && *end <= 'a' + b - 11) ||
+		 (b > 10 && *end >= 'A' && *end <= 'A' + b - 11))
+	    end++;
+	}
       save = *end;
       *end = '\0';
       ratio_set_string (scratch_ratio, (const char *) p, b);
@@ -1345,11 +1350,13 @@ Floating point numbers always use base 10.
 
     if (*p == '+')
       p++;
-    for (end = p;
-	 (*end >= '0' && *end <= '9') ||
+    end = p;
+    if (*end == '-')
+      end++;
+    while ((*end >= '0' && *end <= '9') ||
 	   (b > 10 && *end >= 'a' && *end <= 'a' + b - 11) ||
-	   (b > 10 && *end >= 'A' && *end <= 'A' + b - 11);
-	 end++);
+	   (b > 10 && *end >= 'A' && *end <= 'A' + b - 11))
+      end++;
     save = *end;
     *end = '\0';
     if (*p == '\0')

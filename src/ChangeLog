@@ -1,3 +1,8 @@
+2004-04-15  Jerry James  <james@xemacs.org>
+
+	* data.c (Fstring_to_number): Skip leading '-' when finding the
+	end of a number.
+
 2004-04-14  Jerry James  <james@xemacs.org>
 
 	* data.c (Fstring_to_number): Work around limitations of GMP
