@@ -114,6 +114,22 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
 		      GTK_SIGNAL_FUNC (scrollbar_drag_hack_cb), (gpointer) 0);
 
   gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)), SCROLLBAR_GTK_WIDGET (instance), 0, 0);
+
+#if GTK_CHECK_VERSION(1,2,9)
+  /*
+  ** With gtk version > 1.2.8 the scrollbars in gtk-xemacs and xemacs
+  ** from CVS are invisible. In fact they are not invisible but very
+  ** thin (0 pixels wide). This is so, because the new gtk code does
+  ** not call gtk_widget_request_size() on the newly created
+  ** scrollbars anymore. this change was done to allow the theme
+  ** engines to manipulate the scrollbar width. This patch calls
+  ** gtk_widget_request_size with the newly created scollbars. Maybe
+  ** it is better to postpone this call just before the
+  ** gtk_widget_show() call is done on the scrolbar.
+  */
+  gtk_widget_size_request(GTK_WIDGET(sb), &(GTK_WIDGET(sb)->requisition));
+#endif
+
   gtk_widget_hide (SCROLLBAR_GTK_WIDGET (instance));
 }
 

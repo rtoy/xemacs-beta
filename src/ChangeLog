@@ -1,3 +1,8 @@
+2001-05-09  William M. Perry  <wmperry@gnu.org>
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Fix the
+	disappearing GTK scrollbar problem.
+
 2001-05-09  Ben Wing  <ben@xemacs.org>
 
 	* regex.c (regex_compile):
