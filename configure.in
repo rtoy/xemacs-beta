@@ -2276,7 +2276,7 @@ if test "$GCC" = "yes"; then
   gcc_compiler_specs=`$XEMACS_CC -v 2>&1 | sed 's/.* \([[^ ]]\)/\1/' | head -1`
 else case "$XEMACS_CC" in
   dnl The Intel cc compiler
-  icc*)
+  ic*)
     compiler_version=`icc -V 2>&1 | head -1`
     ;;
   dnl non-gcc machine-specific magic - contributions welcome

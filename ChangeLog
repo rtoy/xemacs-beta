@@ -1,3 +1,7 @@
+2004-04-28  Jerry James  <james@xemacs.org>
+
+	* configure.in: Get version information for both icc and icpc.
+
 2004-04-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.in (GTK setup): Warn if other toolkits requested.
