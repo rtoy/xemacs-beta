@@ -1,3 +1,26 @@
+2002-07-08  Mike Sperber <mike@xemacs.org>
+
+	* text.h: Only include wchar.h if we have it; define wcslen
+	prototype if we don't.
+
+	* config.h.in: Add stub for HAVE_WCHAR_H.
+
+	* sysdep.c (wcslen): Added definition for systems which don't have
+	it.
+
+2002-07-08  Mike Sperber <mike@xemacs.org>
+
+	* process.c (Fstart_process_internal): Do error checking before we
+	fork off the child, so the child can't muck with the state of the
+	parent.
+
+2002-07-08  Mike Sperber <mike@xemacs.org>
+
+	* ralloc.c (init_ralloc): Allocate properly for pdump.
+
+	* emacs.c (main_1): Revert init_ralloc patch in favor of an
+	easier-to-understand solution.
+
 2002-07-05  David Bush  <David.Bush@intel.com>
 
 	* console-msw-impl.h (struct Lisp_Devmode): Lisp_Devmode is typedef'ed
