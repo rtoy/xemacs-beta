@@ -1,3 +1,10 @@
+2004-03-30  Zajcev Evgeny  <zevlg@yandex.ru>
+
+	* window.c: Declare `allow_deletion_of_last_visible_frame' extern.
+	* window.c (window_loop): [fix] Take into account
+	`allow-deletion-of-last-visible-frame' variable.
+	* window.c (replace-buffer-in-windows): Ditto.
+
 2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.17 "chayote" is released.

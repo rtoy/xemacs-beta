@@ -61,6 +61,8 @@ Lisp_Object Qscrollbar_instances;
 #endif
 #endif
 
+extern int allow_deletion_of_last_visible_frame;
+
 EXFUN (Fnext_window, 4);
 
 static int window_pixel_width_to_char_width (struct window *w,
@@ -2919,7 +2921,8 @@ window_loop (enum window_loop type,
 			 of its own, kill the frame.  */
 		      if (EQ (w, FRAME_ROOT_WINDOW (f))
 			  && !NILP (p->dedicated)
-			  && other_visible_frames (f))
+			  && (allow_deletion_of_last_visible_frame
+			      || other_visible_frames (f)))
 			{
 			  /* Skip the other windows on this frame.
 			     There might be one, the minibuffer!  */
@@ -3371,7 +3374,8 @@ Any other non-nil value means search all devices.
 	  if (!NILP (XWINDOW (window)->dedicated)
 	      && EQ (window,
 		     FRAME_ROOT_WINDOW (XFRAME (frame)))
-	      && other_visible_frames (XFRAME (frame)))
+	      && (allow_deletion_of_last_visible_frame
+		  || other_visible_frames (XFRAME (frame))))
 	    {
 	      delete_frame_internal (XFRAME (frame), 0, 0, 0); /* GC */
 	    }
