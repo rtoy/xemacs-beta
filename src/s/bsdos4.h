@@ -10,6 +10,8 @@
 #endif /* ELF */
 
 /* The declaration for openpty is missing.  Where is libutil.h? */
+#ifndef NOT_C_CODE
 struct termios;
 struct winsize;
 int openpty (int *, int *, char *, struct termios *, struct winsize *);
+#endif

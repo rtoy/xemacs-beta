@@ -1,3 +1,7 @@
+2001-05-08  Martin Buchholz  <martin@xemacs.org>
+
+	* s/bsdos4.h: Protect C code with #ifndef NOT_C_CODE.
+
 2000-04-22  zhaoway  <zw@debian.org>
 
 	* event-stream.c (is_scrollbar_event): Return 0 when XEmacs is
