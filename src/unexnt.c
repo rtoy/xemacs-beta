@@ -128,7 +128,7 @@ _start (void)
     {
       char executable_path[PATH_MAX];
 
-      if (GetModuleFileName (NULL, executable_path, PATH_MAX) == 0) 
+      if (GetModuleFileNameA (NULL, executable_path, PATH_MAX) == 0) 
 	{
 	  exit (1);
 	}
@@ -225,7 +225,7 @@ unexec (char *new_name, char *old_name, unsigned int start_data,
   dump_bss_and_heap (&in_file, &out_file);
 
   /* Patch up header fields; profiler is picky about this. */
-  hImagehelp = LoadLibrary ("imagehlp.dll");
+  hImagehelp = LoadLibraryA ("imagehlp.dll");
   if (hImagehelp)
   {
     PIMAGE_DOS_HEADER dos_header;
@@ -534,14 +534,14 @@ map_in_heap (char *filename)
   void  *file_base;
   unsigned long size, upper_size, n_read;
 
-  file = CreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-		     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+  file = CreateFileA (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+		      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if (file == INVALID_HANDLE_VALUE) 
     abort ();
 
   size = GetFileSize (file, &upper_size);
-  file_mapping = CreateFileMapping (file, NULL, PAGE_WRITECOPY, 
-				    0, size, NULL);
+  file_mapping = CreateFileMappingA (file, NULL, PAGE_WRITECOPY, 
+				     0, size, NULL);
   if (!file_mapping) 
     abort ();
 

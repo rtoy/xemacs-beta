@@ -560,14 +560,14 @@ CONFIG_VALUES = $(LIB_SRC)\config.values
 	cd $(NT)
 
 # Individual dependencies
-ETAGS_DEPS = $(LIB_SRC)/getopt.c $(LIB_SRC)/getopt1.c $(LIB_SRC)/../src/regex.c
+ETAGS_DEPS = $(LIB_SRC)/getopt.c $(LIB_SRC)/getopt1.c $(SRC)/regex.c
 $(LIB_SRC)/etags.exe : $(LIB_SRC)/etags.c $(ETAGS_DEPS)
 $(LIB_SRC)/movemail.exe: $(LIB_SRC)/movemail.c $(LIB_SRC)/pop.c $(ETAGS_DEPS)
 	cd $(LIB_SRC)
 	$(CCV) -I. -I$(XEMACS)/src -I$(XEMACS)/nt/inc $(LIB_SRC_DEFINES) $(CFLAGS) -Fe$@ $** wsock32.lib -link -incremental:no
 	cd $(NT)
-$(LIB_SRC)/minitar.exe : $(NT)/minitar.mak $(NT)/minitar.c
-	nmake -nologo -f minitar.mak ZLIB="$(ZLIB_DIR)" NT="$(NT)" LIB_SRC="$(LIB_SRC)"
+$(LIB_SRC)/minitar.exe : $(NT)/minitar.c
+	$(CCV) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS) -Fe$@ $** "$(ZLIB_DIR)\zlib.lib" -link -incremental:no
 
 LIB_SRC_TOOLS = \
 	$(LIB_SRC)/etags.exe		\
@@ -589,9 +589,6 @@ LIB_SRC_TOOLS = \
 	$(LIB_SRC)/make-dump-id.exe \
 	$(LIB_SRC_TOOLS)
 !endif
-
-# Shorthand target
-minitar: $(LIB_SRC)/minitar.exe
 
 #------------------------------------------------------------------------------
 
@@ -962,8 +959,6 @@ check:
 
 check-temacs:
 	cd $(SRC)
-	set EMACSBOOTSTRAPLOADPATH=$(LISP)
-	set EMACSBOOTSTRAPMODULEPATH=$(MODULES)
 	$(run_temacs) $(batch_test_emacs)
 
 # Section handling automated tests ends here
@@ -1167,7 +1162,7 @@ $(INFODIR)\new-users-guide.info: $(NEW_USERS_GUIDE_SRCS)
 	$(MAKEINFO) new-users-guide.texi
 	cd ..
 
-info:	makeinfo-test $(INFO_FILES)
+info:	$(INFO_FILES)
 
 makeinfo-test:
 	@<<makeinfo_test.bat
@@ -1211,14 +1206,10 @@ make-docargs: $(TEMACS_OBJS)
 
 $(DOC): $(LIB_SRC)\make-docfile.exe make-docargs
 	if exist $(DOC) $(DEL) $(DOC)
-	set EMACSBOOTSTRAPLOADPATH=$(LISP);$(PACKAGE_PATH)
-	set EMACSBOOTSTRAPMODULEPATH=$(MODULES)
 	$(TEMACS_BATCH) -l $(TEMACS_DIR)\..\lisp\make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
 	$(LIB_SRC)\make-docfile.exe -a $(DOC) @$(OUTDIR)\make-docfile.tmp
 
 update-elc:
-	set EMACSBOOTSTRAPLOADPATH=$(LISP);$(PACKAGE_PATH)
-	set EMACSBOOTSTRAPMODULEPATH=$(MODULES)
 	$(TEMACS_BATCH) -l $(TEMACS_DIR)\..\lisp\update-elc.el
 
 # This file is touched by update-elc.el when redumping is necessary.
@@ -1231,8 +1222,6 @@ $(TEMACS_DIR)\NEEDTODUMP :
 $(PROGNAME) : $(TEMACS) $(TEMACS_DIR)\NEEDTODUMP
 	@echo >$(TEMACS_DIR)\SATISFIED
 	cd $(TEMACS_DIR)
-	set EMACSBOOTSTRAPLOADPATH=$(LISP);$(PACKAGE_PATH)
-	set EMACSBOOTSTRAPMODULEPATH=$(MODULES)
 	$(TEMACS_BATCH) -l $(TEMACS_DIR)\..\lisp\loadup.el dump
 !if $(USE_PORTABLE_DUMPER)
 	rc -d INCLUDE_DUMP -Fo $(OUTDIR)\xemacs.res $(NT)\xemacs.rc

@@ -1,3 +1,15 @@
+2002-04-13  Jonathan Harris  <jonathan@xemacs.org>
+
+	* README: Document MSVC6 required
+	* minitar.c: Fix MSVC compiler warnings
+	* minitar.mak: Removed
+	* xemacs.mak: Build minitar directly from this makefile
+	* xemacs.mak (check-temacs):
+	* xemacs.mak (make-docargs):
+	* xemacs.mak (update-elc):
+	Remove obsolete references to EMACSBOOTSTRAPLOADPATH and
+	EMACSBOOTSTRAPMODULEPATH environment variables.
+
 2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.6 "bok choi" is released.

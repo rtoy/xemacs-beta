@@ -16,8 +16,7 @@ systems listed.
 * Required tools and sources
 ============================
 
-1.  You will need Visual C++ V4.0 or later to compile everything. Personally
-    we have tested V4.0, V4.2, V5.0 and v6.0.
+1.  You will need Visual C++ V6.0 or later to compile everything.
 
     Note that Visual C++ assumes that the environment variables INCLUDE and
     LIB are set to specify the location of the includes and libraries.
@@ -25,11 +24,11 @@ systems listed.
     vc\bin and sharedide\bin directories.
 
     Visual C++ V5.0 and later install a batch file called vcvars32.bat in
-    c:\Program Files\DevStudio\VC\bin\ (or wherever you installed it) that you
-    can run before building to set up all of these environment variables.
-    Alternatively, you can choose at setup time to have these
-    environment variables automatically set up in the registry, which
-    is generally a good idea.
+    c:\Program Files\Microsoft Visual Studio\VC98\bin\ (or wherever you
+    installed it) that you can run before building to set up all of these
+    environment variables.  Alternatively, you can choose at setup time to
+    have these environment variables automatically set up in the registry,
+    which is generally a good idea.
 
 
 2.  Grab the latest XEmacs source from
