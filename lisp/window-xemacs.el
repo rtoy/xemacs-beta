@@ -345,29 +345,28 @@ by `current-window-configuration'."
 
 (defun restore-saved-window (configuration window saved-window direction)
   "Within CONFIGURATION, restore WINDOW to the state of SAVED-WINDOW."
-  (if (saved-window-next-child saved-window)
-      (progn
-	(if (not (saved-window-minibufferp (saved-window-next-child saved-window)))
-	    (progn
-	      (cond ((eq direction 'vertical)
-		     (split-window window nil nil))
-		    ((eq direction 'horizontal)
-		     (split-window window nil t)))
-	      (restore-saved-window configuration
-				    (window-next-child window)
-				    (saved-window-next-child saved-window)
-				    direction)))
+  (and (saved-window-next-child saved-window)
+       (not (saved-window-minibufferp (saved-window-next-child saved-window)))
+       (progn
+	 (cond ((eq direction 'vertical)
+		(split-window window nil nil))
+	       ((eq direction 'horizontal)
+		(split-window window nil t)))
+	 (restore-saved-window configuration
+			       (window-next-child window)
+			       (saved-window-next-child saved-window)
+			       direction)))
 
-	(if (saved-window-first-hchild saved-window)
-	    (restore-saved-window configuration
-				  window
-				  (saved-window-first-hchild saved-window)
-				  'horizontal))
-	(if (saved-window-first-vchild saved-window)
-	    (restore-saved-window configuration
-				  window
-				  (saved-window-first-vchild saved-window)
-				  'vertical))))
+  (if (saved-window-first-hchild saved-window)
+      (restore-saved-window configuration
+			    window
+			    (saved-window-first-hchild saved-window)
+			    'horizontal))
+  (if (saved-window-first-vchild saved-window)
+      (restore-saved-window configuration
+			    window
+			    (saved-window-first-vchild saved-window)
+			    'vertical))
 
   (if (not (saved-window-minibufferp saved-window))
       (restore-saved-window-parameters configuration window saved-window)))
