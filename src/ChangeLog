@@ -1,3 +1,7 @@
+2003-11-14  Jerry James  <james@xemacs.org>
+
+	* config.h.in: Remove last traces of GNU DLD.
+
 2003-11-01  Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
 
 	* alloc.c (garbage_collect_1):
