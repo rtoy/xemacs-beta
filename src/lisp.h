@@ -3257,7 +3257,7 @@ extern Lisp_Object Qconsole_live_p, Qconst_specifier, Qconversion_error, Qcr;
 extern Lisp_Object Qcrlf, Qcurrent_menubar, Qctext;
 extern Lisp_Object Qcyclic_variable_indirection, Qdecode;
 extern Lisp_Object Qdefun, Qdevice_live_p;
-extern Lisp_Object Qdim, Qdisabled, Qdisplay_table;
+extern Lisp_Object Qdim, Qdisabled, Qdisabled_command_hook, Qdisplay_table;
 extern Lisp_Object Qdomain_error;
 extern Lisp_Object Qediting_error;
 extern Lisp_Object Qencode, Qend_of_buffer, Qend_of_file, Qend_open;

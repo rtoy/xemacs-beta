@@ -2894,7 +2894,7 @@ when reading the arguments.
   debug_on_next_call = 0; /* #### from FSFmacs; correct? */
 
   if (SYMBOLP (cmd) && !NILP (Fget (cmd, Qdisabled, Qnil)))
-    return run_hook (Vdisabled_command_hook);
+    return run_hook (Qdisabled_command_hook);
 
   for (;;)
     {

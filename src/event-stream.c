@@ -135,7 +135,7 @@ Lisp_Object Vmodifier_keys_sticky_time;
 
 /* Non-nil disable property on a command means
    do not execute it; call disabled-command-hook's value instead. */
-Lisp_Object Qdisabled, Vdisabled_command_hook;
+Lisp_Object Qdisabled;
 
 EXFUN (Fnext_command_event, 2);
 

@@ -50,6 +50,8 @@ Lisp_Object Vcommand_loop;
 
 Lisp_Object Venter_window_hook, Vleave_window_hook;
 
+Lisp_Object Qdisabled_command_hook, Vdisabled_command_hook;
+
 /* The error handler.  */
 Lisp_Object Qcommand_error;
 
@@ -606,6 +608,7 @@ Don't call this unless you know what you're doing.
 void
 syms_of_cmdloop (void)
 {
+  DEFSYMBOL (Qdisabled_command_hook);
   DEFSYMBOL (Qcommand_error);
   DEFSYMBOL (Qreally_early_error_handler);
   DEFSYMBOL (Qtop_level);
