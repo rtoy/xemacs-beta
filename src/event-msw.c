@@ -50,7 +50,7 @@ Boston, MA 02111-1307, USA.  */
    CYGWIN and HAVE_MSG_SELECT and HAVE_UNIX_PROCESSES and nothing else
 */
 #ifdef WIN32_NATIVE
-# if !(defined (HAVE_WIN32_PROCESSES && !defined (HAVE_UNIX_PROCESSES) && !defined (HAVE_MSG_SELECT) && !defined (CYGWIN)))
+# if !(defined (HAVE_WIN32_PROCESSES) && !defined (HAVE_UNIX_PROCESSES) && !defined (HAVE_MSG_SELECT) && !defined (CYGWIN))
 #  error Something is wrong with your process definitions for Windows native.
 # endif
 #elif defined (CYGWIN)
@@ -135,6 +135,9 @@ int windows_fd;
 
 #else
 
+/* The number of things we can wait on */
+#define MAX_WAITABLE (MAXIMUM_WAIT_OBJECTS - 1)
+
 /* List of mswindows waitable handles. */
 static HANDLE mswindows_waitable_handles[MAX_WAITABLE];
 
@@ -151,9 +154,6 @@ static int mswindows_waitable_count = 0;
  */
 static Lisp_Object mswindows_u_dispatch_event_queue, mswindows_u_dispatch_event_queue_tail;
 static Lisp_Object mswindows_s_dispatch_event_queue, mswindows_s_dispatch_event_queue_tail;
-
-/* The number of things we can wait on */
-#define MAX_WAITABLE (MAXIMUM_WAIT_OBJECTS - 1)
 
 /* Brush for painting widgets */
 static HBRUSH widget_brush = 0;
