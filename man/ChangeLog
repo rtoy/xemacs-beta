@@ -1,3 +1,9 @@
+2001-05-15  Steve Youngs  <youngs@xemacs.org>
+
+	* xemacs/packages.texi (Local.rules): Update to reflect new dir tree.
+	(Creating Packages): Ditto.
+	(Available Packages): Ditto.
+
 2001-05-09  Martin Buchholz <martin@xemacs.org>
 
 	* XEmacs 21.5.1 "anise" is released.
