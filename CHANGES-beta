@@ -1,3 +1,183 @@
+to 21.5.7 "broccoflower"
+
+CHANGES now uses @xemacs.org alias to identify contributors.  If the
+contributor doesn't have one (that I know about), the full name from
+the ChangeLog is used.
+
+UI changes and runtime bugs
+
+-- Add: ask "yes/no/diff" question when recovering; known problem: dialog
+   is modal, so you can't scroll the diff -- ben
+-- Add: balloon help for package-ui -- youngs
+-- Add: global-abbrev-mode, defining-abbrev-turns-on-abbrev-mode -- ben
+-- Add: lots of new menubar items -- ben
+-- Add: new winclient for MS Windows -- acs
+-- Add: option kill-word-into-kill-ring controls whether words are "cut"
+   into the kill ring, or "cleared" into nothingness -- ben
+-- Add: revert-buffer optimization for unchanged files -- andy
+-- Add: undo-all-changes back to the beginning -- ben
+-- Fix:	M-C-backslash does indent-region-or-balanced-expression, S-Tab
+   inserts a TAB char -- ben
+-- Fix: Cmds menu so that most used commands appear directly on the menu and
+   less used commands appear in submenus -- ben
+-- Fix: NILP(lim) crash in search.c -- mike
+-- Fix: STACK_TRACE_EYE_CATCHER now visible in MS Windows traces -- jonathan
+-- Fix: XmProcessTraversal crash -- stephen
+-- Fix: avoid infinite loop in extent code -- ben
+-- Fix: crash due to errant xfree() -- ben
+-- Fix: crash in gtk_popup_menu -- wmperry
+-- Fix: crashes due to excessive alloca -- ben
+-- Fix: detection of metric units on MS Windows -- jonathan
+-- Fix: don't output bell as ^G in console-stream when not a TTY -- ben
+-- Fix: improve MS Windows printer support -- andy
+-- Fix: improve appearance for gutters and dialogs -- andy
+-- Fix: improve lisp-mode indentation handling -- ben
+-- Fix: interprogram cut functions now don't add selection twice -- stephen
+-- Fix: many netinstaller improvements -- andy
+-- Fix: popup dialogs on MS Windows -- andy
+-- Fix: recover-session only shows session files with recoverable files,
+   and in chronological order -- ben
+-- Fix: save customized values MUCH faster and in alphabetic order,
+   custom-save-pretty-print turns on/off pretty-printing values
+   -- Nickolay Pakoulin
+-- Fix: semicolons inside strings are not comments in lisp-mode -- ben
+-- Fix: short filename handling on Windows -- Peter Arius
+-- Fix: some crashes in syntax code -- ben
+-- Fix: some crashes with multibyte text -- ben
+-- Fix: two frames displaying the buffer, in different places; in one,
+   temporarily switch away to another buffer and then back, and your position
+   has been reset to the other one in the other frame -- ben
+-- Fix: update installed.db after updating packages -- andy
+
+Documentation
+
+-- Add: New FAQs -- stephen, adrian
+-- Add: New or improved code and documentation in sample.init.el -- ben,
+   stephen
+-- Add: PROBLEMS: Hannibal Lecter crash, EFS AUTH failure, mail locking
+   -- stephen
+-- Add: etc/TUTORIAL.se -- Mats Lidell
+-- Add: new Internals manual nodes -- ben, stephen, darrylo
+-- Add: why modules don't use RTLD_GLOBAL -- james
+-- Fix: README.integral-types doc moved to Internals, code moved to
+   README.global-renaming -- ben
+-- Fix: README.packages: info about --package-path -- ben
+-- Fix: improve docstrings and comments -- ben, stephen, adrian,
+   John H. Palmieri
+-- Fix: typos, minor updates -- stephen, I. N. Golubev, Frank Schmitt,
+   adrian, youngs
+-- Fix: update etc/BETA -- Jarl Friis
+-- Fix: update etc/package-index.LATEST.pgp -- youngs
+-- Fix: update photos -- hniksic
+
+Lisp API
+
+-- Add: functions: args-out-of-range, argument-in-range-p,
+   check-argument-range, indent-balanced-expression-function,
+   indent-balanced-expression, indent-region-or-balanced-expression,
+   image-instance-instantiator, truncate-string-with-continuation-dots,
+   get-user-response, unicode-precedence-list -- ben, stephen
+-- Fix: GNU synchs of frame-parameter, makehash, buffer-local-value,
+   line-beginning-position, line-end-position, with-temp-message,
+   bound-and-true-p, propertize, delete-and-extract-region, add-to-list,
+   string-to-char-list, find-non-ascii-charset-region,
+   find-non-ascii-charset-string, truncate-string-to-width, plist-to-alist,
+   kill-ring-max, kill-new
+   -- John Paul Wallington, youngs, ben, james
+   set-frame-pixel-width, set-frame-pixel-size -- andy
+-- Add: args to map-specifier, various "heuristic" specifier functions -- ben
+-- Fix: call-process moves to Lisp -- ben
+   -- allows a buffer to be specified for input and stderr output
+   -- use it on all systems
+   -- implement C-g as documented
+   -- clean up and comment
+   -- call-process-region uses new call-process facilities; no temp file.
+   -- remove duplicate funs
+-- Add: compat.el, preliminary (not working) code -- ben
+-- Add: handle subprocess stderr separately (src/ChangeLog 2002-05-28) -- ben
+-- Add: new error trapping mechanism (src/ChangeLog 2002-05-28) -- ben
+-- Add: pixel-based sizing APIs: set-frame-pixel-height,
+-- Add: preliminary support for ELL autoloads -- james
+-- Add: toolbar face -- wmperry
+-- Add: widget "logical-unit" sizing APIs: widget-logical-to-character-width,
+   widget-logical-to-character-height -- andy
+-- Fix:	paths-find-architecture-directory searches in
+   `system-configuration'/`base', not `base'`system-configuration' -- james
+-- Fix: default CRLF conversion of process output off -- ben
+-- Fix: default value of gethash to Qunbound -- ben
+-- Fix: face-handling code (superseded by ben's overhaul) -- jan, andy
+-- Fix: layout improvements -- andy
+-- Fix: major overhaul of face-handling code -- ben
+  -- avoid truenaming fonts
+  -- msw-faces.el APIs now accept names and font instances, return names
+  -- rewrite frobbing functions in faces.el
+  -- don't duplicatively set a global specification for the default font
+  -- remove redundant face lists from x-faces.el and msw-faces.el
+  -- call init-global-faces under MS Windows!
+  -- correct weight names in font.el.
+
+Internals
+
+-- Add: new APIs -- ben
+   -- macros to GCPRO arrays
+   -- default argument for char tables
+   -- signal extent changes
+   -- internal_bind_*, check_specbind_stack_sanity
+   -- partial support for 8-, 16-, and 32-bit fixed-width text
+   -- new cons treatment (src/ChangeLog 2002-05-28)
+   -- rename character types to Itext, Ibyte, Ichar (src/ChangeLog 2002-06-05)
+   -- rename various identifiers for consistency
+-- Add: New GC preparation -- mike, Martin Köbele, Jens Müller
+-- Add: support for fastcall in MS Windows -- ben
+-- Fix: ELL APIs -- james
+   -- load only once
+   -- no longer use RTLD_GLOBAL
+-- Fix: ELLs now use RTLD_NOW instead of RTLD_LAZY -- Andrew Begel
+-- Fix: Many Mule changes -- ben
+-- Fix: call-process ensures that the argument to `symbol-value-in-buffer'
+   is a buffer even if `buffer' is a string -- mike
+-- Fix: code that outputs into a buffer, use unwind protects, etc. -- ben
+-- Fix: complete implementation of some Unicode functions, S-caron test
+   failure -- stephen
+-- Fix: conditionalize code depending on features like toolbar -- jonathan,
+   Mike Alexander
+-- Fix: create new process-synchronize-point to avoid dynamic binding
+   problems; fix bogosity in setting process sentinels -- ben, mike
+-- Fix: make a lot of code use common includes and implementations
+   (see 2002-06-20 src/ChangeLog) -- ben
+-- Fix: move global-map to keydefs.el -- ben
+-- Fix: new signal/C-g handling (src/ChangeLog 2002-05-28) -- ben
+-- Fix: numerous problems with the case-table implementation -- ben
+-- Fix: quoting of native-coding-system in CJK files -- Daiki Ueno
+-- Fix: race condition in process handling -- Nix
+-- Fix: recover gracefully from internal XOpenDevice failure -- mike
+-- Fix: redo syntax cache code -- ben
+-- Fix: save-restriction now uses markers -- ben
+-- Fix: small bugs -- stephen, ben, andy, martin, Eric Gillespie Jr
+
+Build
+
+-- Add: basic support for handling ISO 2022 doc strings in make-docfile -- ben
+-- Add: tmpdir for install, allowing simultaneous run & build -- andy
+-- Fix: "Stop Build" in VC++ now works -- Ben
+-- Fix: #undef INTERNET_DOMAIN_SOCKETS build of gnuserv -- Greg Steuck
+-- Fix: --with-widgets autodetection -- jan
+-- Fix: 64-bit support -- Andreas Jaeger, Gregory Steuck
+-- Fix: MS Windows Makefile cleanups -- ben, jonathan
+-- Fix: MS Windows builds default to pdump -- ben
+-- Fix: assorted build breakage -- ben, mike, andy, Malcolm Purvis
+-- Fix: check for EOF in make-docfile -- ben
+-- Fix: config.h.in organization -- ben
+-- Fix: ensure combined X and windows build gets widgets -- andy
+-- Fix: implement configure option moduledir -- Mike Fabian
+-- Fix: spurious failures in tests -- ben, stephen
+-- Fix: test harness now outputs FAIL messages to stderr in batch mode -- ben
+-- Fix: test-harness.el now cleans up Check-Message and Check-Error-Message
+   when done -- stephen
+-- Fix: typos and platform specific bugs in configure -- Malcolm Purvis,
+   galibert, Paul Stodghill
+-- Fix: warnings -- ben, wmperry, stephen, didier
+
 to 21.5.6 "bok choi"
 
 UI changes and runtime bugs
@@ -8,7 +188,7 @@ UI changes and runtime bugs
 -- Fix: add_charsets_to_precedence_list -- IKEYAMA Tomonori
 -- Change: misc menubar -- John Paul Wallington
 -- Add: auto-mode-alist: GNUmakefile is a Makefile, "system default"
-   Xdefaults and friends get xrdb-mode -- Ville Skytt,Ad(B
+   Xdefaults and friends get xrdb-mode -- Ville Skyttä
 -- From  Ben Wing  <ben@xemacs.org>.
   -- Fix: init_process_io_handles obeys coding-system-for-{read,write}.
   -- Fix: bug in md5 handling.
@@ -155,7 +335,7 @@ UI
    defining-kbd-macro-mode-line-string -- John Paul Wallington
 -- improve GTK clipboard handling -- Eric Gillespie, Jr.
 -- improve Info dir - generate file if non-existent -- Michael Sperber
--- improve printer handling -- Adrian Aichner, Bj,Av(Brn Torkelsson
+-- improve printer handling -- Adrian Aichner, Björn Torkelsson
 -- support GUI toolbar shadow thickness adjustment -- Bill Perry
 -- support ISO 8859/15 (Euro) -- Stephen Turnbull
 -- support Sieve in auto-mode-alist -- Simon Josefsson
