@@ -319,6 +319,7 @@ then this key deactivates the region without beeping."
     (setq buffer-backed-up nil)
     (setq buffer-auto-save-file-name nil)
     (set-buffer-dedicated-frame buffer nil)
+    (set-marker (mark-marker t buffer) nil)
     buffer))
 
 (defvar minibuffer-history-variable 'minibuffer-history

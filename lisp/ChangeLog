@@ -1,3 +1,9 @@
+2004-04-09  Mike Sperber  <mike@xemacs.org>
+
+	* minibuf.el (reset-buffer): Zap the mark of the minibuffer as
+	well, to prevent it from hijacking other buffers' marks when
+	typing in the minibuffer later.
+
 2004-04-05  Jerry James  <james@xemacs.org>
 
 	* cl-extra.el (coerce): Add support for general numeric conversions.
