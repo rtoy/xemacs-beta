@@ -1,5 +1,9 @@
 2004-08-10  Jerry James  <james@xemacs.org>
 
+	* ETAGS.EBNF: New file.  Describes the syntax of an ETAGS file.
+
+2004-08-10  Jerry James  <james@xemacs.org>
+
 	* SERVICE: Update to latest version from www.gnu.org.
 
 2004-05-15  Malcolm Purvis  <malcolmp@xemacs.org>

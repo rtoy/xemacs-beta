@@ -1,3 +1,7 @@
+2004-08-10  Jerry James  <james@xemacs.org>
+
+	* etags.c: Update to author version 16.56.
+
 2004-04-17  Olivier Galibert  <galibert@pobox.com>
 
 	* insert-data-in-exec.c (main): Fix error message.
