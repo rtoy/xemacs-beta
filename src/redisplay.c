@@ -6715,9 +6715,20 @@ register_post_redisplay_action (void (*fun) (Lisp_Object), Lisp_Object arg)
 						  ((void *) fun), arg)));
 }
 
+static int running_post_redisplay_actions;
+
 static void
 run_post_redisplay_actions (void)
 {
+  int depth;
+
+  if (running_post_redisplay_actions)
+    return;
+
+  depth = internal_bind_int (&running_post_redisplay_actions, 1);
+  /* If the function pushes further actions, they will be tacked onto
+     the end of the list, and we'll run them when we're done with the
+     current ones. */
   while (!NILP (Vpost_redisplay_actions))
     {
       Lisp_Object car = XCAR (Vpost_redisplay_actions);
@@ -6728,6 +6739,7 @@ run_post_redisplay_actions (void)
       free_cons (car);
       Vpost_redisplay_actions = XCDR (Vpost_redisplay_actions);
     }
+  unbind_to (depth);
 }
 
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS

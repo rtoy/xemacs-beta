@@ -1,3 +1,9 @@
+2003-02-21  Ben Wing  <ben@xemacs.org>
+
+	* redisplay.c:
+	* redisplay.c (run_post_redisplay_actions):
+	Don't get in an infinite loop running post-redisplay actions.
+
 2003-02-20  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:
