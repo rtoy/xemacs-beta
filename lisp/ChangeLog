@@ -1,3 +1,8 @@
+2002-01-04  Adrian Aichner  <adrian@xemacs.org>
+
+	* info.el (Info-auto-generate-directory): Default
+	Info-auto-generate-directory to 'if-outdated.
+
 2001-12-27  David A. Panariti  <davep@who.net>
 
 	* hyper-apropos.el (hyper-apropos-find-variable): 

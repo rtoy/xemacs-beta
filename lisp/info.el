@@ -395,7 +395,7 @@ file. An example might be something like:
   :type '(repeat directory)
   :group 'info)
 
-(defcustom Info-auto-generate-directory 'if-missing
+(defcustom Info-auto-generate-directory 'if-outdated
   "*When to auto generate an info directory listing.
 Possible values are:
 nil or `never' never auto-generate a directory listing,
