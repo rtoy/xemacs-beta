@@ -1,3 +1,19 @@
+2004-10-17  Shyamal Prasad  <shyamal@member.fsf.org>
+
+	* xemacs/programs.texi (Program Modes): Updated it to reflect
+	current status of programming modes.
+	* xemacs/programs.texi (CC Mode): New section introduces CC
+	Mode. Introduces customization with reference to CC Mode
+	manual. Also introduce C/AWK modes in prog-modes package
+	* xemacs/programs.texi (C Ident): Removed - it was
+	obsolete. prog-modes package documentation now contains
+	indentation description for old C mode 
+	* xemacs/major.texi (Mode Hooks): Add description of major mode
+	hooks. Cleaned up and updated programming mode descriptions.
+	* xemacs/xemacs.texi (Top): Updated Detailed Node listing for new
+	CC Mode section in programs.texi
+
+
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi:
