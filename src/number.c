@@ -24,6 +24,12 @@ Boston, MA 02111-1307, USA.  */
 #include <limits.h>
 #include "lisp.h"
 
+#ifdef HAVE_BIGFLOAT
+#define USED_IF_BIGFLOAT(decl) decl
+#else
+#define USED_IF_BIGFLOAT(decl) UNUSED (decl)
+#endif
+
 Lisp_Object Qrationalp, Qfloatingp, Qrealp;
 Lisp_Object Vdefault_float_precision;
 Fixnum Vmost_negative_fixnum, Vmost_positive_fixnum;
@@ -678,13 +684,7 @@ bigfloat; it is ignored otherwise.  If nil, the default precision is used.
 Note that some conversions lose information.  No error is signaled in such
 cases; the information is silently lost.
 */
-       (number, type,
-#ifdef HAVE_BIGFLOAT
-	precision
-#else
-	UNUSED (precision)
-#endif
-	))
+       (number, type, USED_IF_BIGFLOAT (precision)))
 {
   CHECK_SYMBOL (type);
   if (EQ (type, Qfixnum))

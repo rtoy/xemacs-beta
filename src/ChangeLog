@@ -1,3 +1,8 @@
+2005-02-18  Jerry James  <james@xemacs.org>
+
+	* number.c: Define USED_IF_BIGFLOAT.
+	* number.c (Fcoerce_number): Use it.
+
 2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.19 "chives" is released.
