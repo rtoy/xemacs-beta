@@ -1,3 +1,14 @@
+2002-08-16  Steve Youngs  <youngs@xemacs.org>
+
+	* build-report.el (build-report-installation-version-regexp):
+	Update to cater for 'xemacs-extra-name'.
+	(build-report-version-file-regexp): Ditto.
+	(build-report): Ditto.
+	(build-report-installation-data): Ditto.
+	(build-report-version-file-data): Ditto.
+
+	* version.el (emacs-version): Test for 'xemacs-extra-name'.
+
 2002-08-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* autoload.el (make-autoload): Make comment more precise.  Support

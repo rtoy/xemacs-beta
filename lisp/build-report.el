@@ -57,7 +57,7 @@
 ;;; report it to the maintainers of `build-report' when you think you
 ;;; need to do this.
 (defconst build-report-installation-version-regexp
-  "XEmacs\\s-+\\([0-9]+\\)\\.\\([0-9]+\\)\\(\\(-b\\|\\.\\)\\([0-9]+\\)\\)?\\s-+\\\\?\"\\([^\\\"]+\\)\\\\?\"\\s-+configured\\s-+for\\s-+`\\(.+\\)'\\."
+  "XEmacs\\s-+\\([0-9]+\\)\\.\\([0-9]+\\)\\(\\(-b\\|\\.\\)\\([0-9]+\\)\\)?\\s-+\\\\?\"\\([^\\\"]+\\)\\\\?\"\\s-+\\(.*\\)?configured\\s-+for\\s-+`\\(.+\\)'\\."
   "*REGEXP matching XEmacs Beta Version string in
 `build-report-installation-file' file.  This variable is used by
 `build-report-installation-data'.")
@@ -66,7 +66,8 @@
   "emacs_major_version\\s-*=\\s-*\\([0-9]+\\)
 emacs_minor_version\\s-*=\\s-*\\([0-9]+\\)
 emacs_beta_version\\s-*=\\s-*\\([0-9]+\\)?
-xemacs_codename\\s-*=\\s-*\"\\([^\"]+\\)\""
+xemacs_codename\\s-*=\\s-*\"\\([^\"]+\\)\"
+xemacs_extra_name\\s-*=\\s-*\"\\([^\"]+\\)\""
   "*REGEXP matching XEmacs Beta Version variable assignments in
 `build-report-version-file' file.  This variable is used by
 `build-report-version-file-data'.")
@@ -308,17 +309,17 @@ See also `mail-user-agent', `build-report-destination', and
   (save-excursion
     (if (file-exists-p build-report-installation-file)
         (multiple-value-bind
-            (major minor beta codename configuration)
+            (major minor beta codename extraname configuration)
             (build-report-installation-data build-report-installation-file)
           (setq build-report-subject
-                (format "[%%s] XEmacs %s.%s%s \"%s\", %s"
-                        major minor beta codename configuration)))
+                (format "[%%s] XEmacs %s.%s%s \"%s\" %s %s"
+                        major minor beta codename extraname configuration)))
       (multiple-value-bind
-          (major minor beta codename)
+          (major minor beta codename extraname)
           (build-report-version-file-data build-report-version-file)
         (setq build-report-subject
-              (format "[%%s] XEmacs %s.%s%s \"%s\", %s"
-                      major minor beta codename system-configuration))))
+              (format "[%%s] XEmacs %s.%s%s \"%s\" %s %s"
+                      major minor beta codename extraname system-configuration))))
     (compose-mail
      ;; `build-report-destination' used to be a single string, so
      ;; let's test if we really get a list of destinations.
@@ -492,7 +493,7 @@ which defaults to `build-report-installation-file'."
   (unless file
     (setq file build-report-installation-file))
   (let
-      (major minor beta codename configuration srcdir)
+      (major minor beta codename extraname configuration srcdir)
     (save-window-excursion
       (find-file-read-only file)
       (goto-char (point-min))
@@ -504,7 +505,8 @@ which defaults to `build-report-installation-file'."
           (setq minor (match-string 2))
           (setq beta (match-string 3))
           (setq codename (match-string 6))
-          (setq configuration (match-string 7)))
+	  (setq extraname (match-string 7))
+          (setq configuration (match-string 8)))
          ((looking-at build-report-installation-srcdir-regexp)
           (goto-char (match-end 0))
           (setq srcdir (match-string 1)))
@@ -515,7 +517,7 @@ which defaults to `build-report-installation-file'."
           (goto-char (match-end 0)))
          ((looking-at "\n")
           (goto-char (match-end 0)))))
-      (values major minor (or beta "") codename configuration srcdir))))
+      (values major minor (or beta "") codename extraname configuration srcdir))))
 
 (defun build-report-version-file-data (&optional file)
   "Return a list of XEmacs version information containing
@@ -525,7 +527,7 @@ defaults to `build-report-version-file'."
   (unless file
     (setq file build-report-version-file))
   (let
-      (major minor beta codename)
+      (major minor beta codename extraname)
     (save-window-excursion
       (find-file-read-only file)
       (goto-char (point-min))
@@ -536,7 +538,8 @@ defaults to `build-report-version-file'."
           (setq major (match-string 1))
           (setq minor (match-string 2))
           (setq beta (match-string 3))
-          (setq codename (match-string 4)))
+          (setq codename (match-string 4))
+	  (setq extraname (match-string 5)))
          ;; We avoid matching a potentially zero-length string to avoid
          ;; infinite looping.
          ((looking-at
@@ -544,6 +547,6 @@ defaults to `build-report-version-file'."
           (goto-char (match-end 0)))
          ((looking-at "\n")
           (goto-char (match-end 0)))))
-      (values major minor (or beta "") codename))))
+      (values major minor (or beta "") codename extraname))))
 
 ;;; build-report.el ends here

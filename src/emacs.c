@@ -324,6 +324,7 @@ Lisp_Object Vemacs_minor_version;
 Lisp_Object Vemacs_patch_level;
 Lisp_Object Vemacs_beta_version;
 Lisp_Object Vxemacs_codename;
+Lisp_Object Vxemacs_extra_name;
 #ifdef INFODOCK
 Lisp_Object Vinfodock_major_version;
 Lisp_Object Vinfodock_minor_version;
@@ -3856,6 +3857,16 @@ Codename of this version of Emacs (a string).
 #endif
   Vxemacs_codename = build_string (XEMACS_CODENAME);
 
+  DEFVAR_LISP ("xemacs-extra-name", &Vxemacs_extra_name /*
+Extra string to maybe put into the version string.
+
+Usually used to denote an XEmacs built from a CVS checkout between
+releases.  In that case its value would be \"(+CVS)\".
+*/ );
+#ifdef XEMACS_EXTRA_NAME
+  Vxemacs_extra_name = build_string (XEMACS_EXTRA_NAME);
+#endif
+  
   /* Lisp variables which contain command line flags.
 
      The portable dumper stomps on these; they must be saved and restored

@@ -1,3 +1,9 @@
+2002-08-16  Steve Youngs  <youngs@xemacs.org>
+
+	* config.h.in (XEMACS_EXTRA_NAME): New.
+
+	* emacs.c (vars_of_emacs): Use it.
+
 2002-08-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* eval.c (do_autoload): GCPRO both arguments and a local Lisp_Object.

@@ -36,7 +36,7 @@
 Warning, this variable did not exist in XEmacs versions prior to 20.3")
 
 (defconst emacs-version
-  (format "%d.%d %s%s%s%s"
+  (format "%d.%d %s%s%s%s%s"
 	  emacs-major-version
 	  emacs-minor-version
 	  (if emacs-patch-level
@@ -47,6 +47,9 @@ Warning, this variable did not exist in XEmacs versions prior to 20.3")
 	    "")
 	  (if xemacs-codename
 	      (concat " \"" xemacs-codename "\"")
+	    "")
+	  (if xemacs-extra-name
+	      (concat " " xemacs-extra-name)
 	    "")
 	  " XEmacs Lucid")
   "Version numbers of this version of XEmacs.")

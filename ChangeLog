@@ -1,3 +1,12 @@
+2002-08-16  Steve Youngs  <youngs@xemacs.org>
+
+	* version.sh (xemacs_extra_name): New var to identify XEmacs
+	version > release < next release.  ie, release+cvs.
+
+	* configure.in: Test for xemacs_extra_name. 
+
+	* configure: Re-generate.
+
 2002-08-22  Ville Skyttä  <ville.skytta@xemacs.org>
 
 	* configure.usage: Reorder usage message to clarify what widgets

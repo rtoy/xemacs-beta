@@ -94,6 +94,7 @@ things are arranged in config.h.in.  In particular:
 #undef EMACS_BETA_VERSION
 #undef EMACS_VERSION
 #undef XEMACS_CODENAME
+#undef XEMACS_EXTRA_NAME
 /* InfoDock versions, not used with XEmacs */
 #undef INFODOCK_MAJOR_VERSION
 #undef INFODOCK_MINOR_VERSION

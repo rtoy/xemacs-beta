@@ -995,6 +995,9 @@ if test -n "$emacs_beta_version" ; then
   fi
 fi
 AC_DEFINE_UNQUOTED(XEMACS_CODENAME, "$xemacs_codename")
+if test "X$xemacs_extra_name" != "X"; then
+  AC_DEFINE_UNQUOTED(XEMACS_EXTRA_NAME, "$xemacs_extra_name")
+fi
 AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
 
 if test "$with_infodock" = "yes"; then
@@ -4842,7 +4845,7 @@ dnl Start stdout redirection to '| tee -a Installation'
 (
 echo "
 
-XEmacs ${emacs_major_version}.${emacs_minor_version}${xemacs_betaname} \"$xemacs_codename\" configured for \`$canonical'.
+XEmacs ${emacs_major_version}.${emacs_minor_version}${xemacs_betaname} \"$xemacs_codename\" $xemacs_extra_name configured for \`$canonical'.
 "
 echo "
 Compilation / Installation:"
