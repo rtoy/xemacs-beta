@@ -1,3 +1,8 @@
+2005-01-03  Mike Sperber  <mike@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list): Prefix Mule files with
+	mule/, unbreaking the build.
+
 2004-12-18  Mike Sperber  <mike@xemacs.org>
 
 	* package-admin.el:

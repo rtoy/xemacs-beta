@@ -158,23 +158,23 @@ in dumped-lisp.el and is not itself listed.")
        "unicode"
 	;;;;;;;;;;;;;;;;;; MULE support
        (when (featurep 'mule)
-	 '("mule-charset"
-	   "mule-cmds" ; to sync with Emacs 20.1
-	   "mule-coding"
-	   "mule-composite-stub"
-	   "mule-composite"
+	 '("mule/mule-charset"
+	   "mule/mule-cmds" ; to sync with Emacs 20.1
+	   "mule/mule-coding"
+	   "mule/mule-composite-stub"
+	   "mule/mule-composite"
 	   ))
        ;; may initialize coding systems
-       (when (featurep '(and mule x)) "mule-x-init")
-       (when (featurep '(and mule tty)) "mule-tty-init")
+       (when (featurep '(and mule x)) "mule/mule-x-init")
+       (when (featurep '(and mule tty)) "mule/mule-tty-init")
        (when (and (featurep 'mule) (memq system-type '(windows-nt cygwin32)))
-	 "mule-win32-init")
+	 "mule-mule/win32-init")
        "code-init" ; set up defaults
        ;; All files after this can have extended characters in them.
        (when (featurep 'mule)
-	 '("mule-category"
-	   "mule-ccl"
-	   "kinsoku"
+	 '("mule/mule-category"
+	   "mule/mule-ccl"
+	   "mule/kinsoku"
 	   ))
 
 ;; after this goes the specific lisp routines for a particular input system
@@ -196,35 +196,35 @@ in dumped-lisp.el and is not itself listed.")
 ;; compile with -no-packages.
 
        (when (featurep 'mule)
-	 '("arabic"
-	   "chinese"
-	   "cyrillic"
-	   "english"
-	   "ethiopic"
-	   "european"
-	   "greek"
-	   "hebrew"
-	   "indian"
-	   "devanagari" ; must be loaded after indian.el
-	   "japanese"
-	   "korean"
-	   "lao"
-	   "latin"
-	   "misc-lang"
+	 '("mule/arabic"
+	   "mule/chinese"
+	   "mule/cyrillic"
+	   "mule/english"
+	   "mule/ethiopic"
+	   "mule/european"
+	   "mule/greek"
+	   "mule/hebrew"
+	   "mule/indian"
+	   "mule/devanagari" ; must be loaded after indian.el
+	   "mule/japanese"
+	   "mule/korean"
+	   "mule/lao"
+	   "mule/latin"
+	   "mule/misc-lang"
 	   ;; "thai" #### merge thai and thai-xtis!!!
-	   "thai-xtis"
-	   "tibetan"
-	   "vietnamese"
+	   "mule/thai-xtis"
+	   "mule/tibetan"
+	   "mule/vietnamese"
 	   ))
 	    
 	;; Specialized language support
-       (when (featurep '(and mule CANNA)) "canna-leim")
+       (when (featurep '(and mule CANNA)) "mule/canna-leim")
 ;; Egg/Its is now a package
 ;	(when (featurep '(and mule wnn))
 ;         '("egg-leim" "egg-kwnn-leim" "egg-cwnn-leim"))
-;	(when (featurep 'mule) "egg-sj3-leim")
+;	(when (featurep 'mule) "mule/egg-sj3-leim")
 ;; SKK is now a package
-;	(when (featurep 'mule) "skk-leim")
+;	(when (featurep 'mule) "mule/skk-leim")
 
 ;; Enable Mule capability for Gnus, mail, etc...
 ;; Moved to sunpro-load.el - the default only for Sun.
@@ -233,7 +233,7 @@ in dumped-lisp.el and is not itself listed.")
 	;; needs access to the charsets created by the above
 	;; language-specific files.
        (when (and (featurep 'mule) (valid-console-type-p 'mswindows))
-	 "mule-msw-init-late")
+	 "mule/mule-msw-init-late")
 
 ;;; mule-load.el ends here
 
