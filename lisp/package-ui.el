@@ -80,11 +80,10 @@ Set this to `nil' to use the `default' face."
    :group 'pui
    :type 'face)
    
-
-
-
-(defvar pui-info-buffer "*Packages*"
-  "Buffer to use for displaying package information.")
+(defcustom pui-info-buffer "*Packages*"
+  "*Buffer to use for displaying package information."
+  :group 'pui
+  :type 'string)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; End of user-changeable variables.
@@ -137,46 +136,11 @@ Set this to `nil' to use the `default' face."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Configuration routines
 
-(defun pui-directory-exists (dir)
-  "Check to see if DIR exists in `package-get-remote'."
-  (let (found)
-    (mapcar #'(lambda (item)
-		(if (and (null (car item))
-			 (string-equal (file-name-as-directory (car (cdr item)))
-				       (file-name-as-directory dir)))
-		    (setq found t)))
-	    package-get-remote)
-    found
-    ))
-
-(defun pui-package-dir-list (buffer)
-  "In BUFFER, format the list of package binary paths."
-  (let ( (count 1) paths sys dir)
-    (set-buffer buffer)
-    (buffer-disable-undo buffer)
-    (erase-buffer buffer)
-    (insert "Existing package binary paths:\n\n")
-    (setq paths package-get-remote)
-    (while paths
-      (setq sys (car (car paths))
-	    dir (car (cdr (car paths))))
-      (insert (format "%2s. " count))
-      (if (null sys)
-	  (insert dir)
-	(insert sys ":" dir))
-      (insert "\n")
-      (setq count (1+ count))
-      (setq paths (cdr paths))
-      )
-    (insert "\nThese are the places that will be searched for package binaries.\n")
-    (goto-char (point-min))
-    ))
-
 ;;;###autoload
 (defun package-ui-add-site (site)
   "Add site to package-get-remote and possibly offer to update package list."
   (let ((had-none (null package-get-remote)))
-    (push site package-get-remote)    
+    (setq package-get-remote site)    
     (when (and had-none package-get-was-current
 	       (y-or-n-p "Update Package list?"))
       (setq package-get-was-current nil)
@@ -185,39 +149,49 @@ Set this to `nil' to use the `default' face."
 	  (save-window-excursion
 	    (pui-list-packages))))
     (set-menubar-dirty-flag)))
-    
 
 ;;;###autoload
-(defun pui-add-install-directory (dir)
-  "Add a new package binary directory to the head of `package-get-remote'.
+(defun package-ui-download-menu ()
+  "Build the `Add Download Site' menu."
+  (mapcar (lambda (site)
+  	    (vector (car site)
+  		    `(if (equal package-get-remote (quote ,(cdr site)))
+ 		      (setq package-get-remote nil)
+ 		      (package-ui-add-site (quote ,(cdr site))))
+		    ;; I've used radio buttons so that only a single
+		    ;; site can be selected, but they are in fact
+		    ;; toggles.  SY.
+  		    :style 'radio
+  		    :selected `(equal package-get-remote (quote ,(cdr site)))))
+  	  package-get-download-sites))
+
+;;;###autoload
+(defun package-ui-pre-release-download-menu ()
+  "Build the 'Pre-Release Download Sites' menu."
+  (mapcar (lambda (site)
+  	    (vector (car site)
+  		    `(if (equal package-get-remote (quote ,(cdr site)))
+ 		      (setq package-get-remote nil)
+ 		      (package-ui-add-site (quote ,(cdr site))))
+		    ;; I've used radio buttons so that only a single
+		    ;; site can be selected, but they are in fact
+		    ;; toggles.  SY.
+  		    :style 'radio
+  		    :selected `(equal package-get-remote (quote ,(cdr site)))))
+  	  package-get-pre-release-download-sites))
+
+;;;###autoload
+(defun pui-set-local-package-get-directory (dir)
+  "Set a new package binary directory in `package-get-remote'.
 Note that no provision is made for saving any changes made by this function.
 It exists mainly as a convenience for one-time package installations from
 disk."
-  (interactive (let ( (tmpbuf (get-buffer-create
-			       "*Existing Package Binary Paths*"))
-		      dir)
-		 (save-window-excursion
-		   (save-excursion
-		     (unwind-protect
-			 (progn
-			   (pui-package-dir-list tmpbuf)
-			   (display-buffer tmpbuf)
-			   (setq dir (read-directory-name
-				      "New package binary directory to add? "
-				      nil nil t))
-			   )
-		       (kill-buffer tmpbuf)
-		       )))
-		 (list dir)
-		 ))
-  (progn
-    (if (not (pui-directory-exists dir))
-	(progn
-	  (setq package-get-remote (cons (list nil dir) package-get-remote))
-	  (message "Package directory \"%s\" added." dir)
-	  )
-      (message "Directory \"%s\" already exists in `package-get-remote'." dir))
-    ))
+  (interactive) 
+  (let ((dir (read-directory-name
+	      "New package binary directory to add? "
+	      nil nil t)))
+    (setq package-get-remote (list nil dir))
+    (message "Package directory \"%s\" added." dir)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Package list/installer routines
@@ -238,8 +212,7 @@ disk."
                     version))
               (list " " pui-up-to-date-package-face)
             (list "*" pui-outdated-package-face)))
-      (list "-" pui-uninstalled-package-face))
-    ))
+      (list "-" pui-uninstalled-package-face))))
 
 (defun pui-update-package-display (extent &optional pkg-sym version)
   "Update the package status for EXTENT.
@@ -272,9 +245,7 @@ and whether or not it is up-to-date."
       (goto-char (extent-start-position extent))
       (delete-char 1)
       (insert sym-char)
-      (set-buffer-modified-p nil)
-      )
-    ))
+      (set-buffer-modified-p nil))))
 
 (defun pui-toggle-package (extent)
   (let (pkg-sym)
@@ -286,8 +257,7 @@ and whether or not it is up-to-date."
 	    (cons pkg-sym pui-selected-packages))
       (setq pui-deleted-packages
 	    (delete pkg-sym pui-deleted-packages)))
-    (pui-update-package-display extent pkg-sym)
-    ))
+    (pui-update-package-display extent pkg-sym)))
 
 (defun pui-toggle-package-key ()
   "Select/unselect package for installation, using the keyboard."
@@ -296,10 +266,8 @@ and whether or not it is up-to-date."
     (if (setq extent (extent-at (point) (current-buffer) 'pui))
 	(progn
 	  (pui-toggle-package extent)
-	  (forward-line 1)
-	  )
-      (error "No package under cursor!"))
-    ))
+	  (forward-line 1))
+      (error "No package under cursor!"))))
 
 (defun pui-toggle-package-delete (extent)
   (let (pkg-sym)
@@ -311,8 +279,7 @@ and whether or not it is up-to-date."
 	    (cons pkg-sym pui-deleted-packages))
       (setq pui-selected-packages
 	    (delete pkg-sym pui-selected-packages)))
-    (pui-update-package-display extent pkg-sym)
-    ))
+    (pui-update-package-display extent pkg-sym)))
   
 
 (defun pui-toggle-package-delete-key ()
@@ -322,10 +289,8 @@ and whether or not it is up-to-date."
     (if (setq extent (extent-at (point) (current-buffer) 'pui))
 	(progn
 	  (pui-toggle-package-delete extent)
-	  (forward-line 1)
-	  )
-      (error "No package under cursor!"))
-    ))
+	  (forward-line 1))
+      (error "No package under cursor!"))))
 
 (defun pui-current-package ()
   (let ((extent (extent-at (point) (current-buffer) 'pui)))
@@ -335,25 +300,23 @@ and whether or not it is up-to-date."
 (defun pui-toggle-package-event (event)
   "Select/unselect package for installation, using the mouse."
   (interactive "e")
-  (let* ( (ep (event-point event))
-          (buffer (window-buffer (event-window event)))
-          (extent (extent-at ep buffer 'pui-package))
-          )
-    (pui-toggle-package extent)
-    ))
+  (let* ((ep (event-point event))
+	 (buffer (window-buffer (event-window event)))
+	 (extent (extent-at ep buffer 'pui-package)))
+    (pui-toggle-package extent)))
 
 (defun pui-toggle-verbosity-redisplay ()
   "Toggle verbose package info."
   (interactive)
   (progn
     (setq pui-list-verbose (not pui-list-verbose))
-    (pui-list-packages)
-    ))
+    (pui-list-packages)))
 
 (defun pui-install-selected-packages ()
   "Install selected packages."
   (interactive)
-  (let ( (tmpbuf "*Packages-To-Remove*") do-delete)
+  (let ((tmpbuf "*Packages-To-Remove*") 
+	do-delete)
     (when pui-deleted-packages
       (save-window-excursion
 	(with-output-to-temp-buffer tmpbuf
@@ -362,8 +325,7 @@ and whether or not it is up-to-date."
 				    #'string<)
 				   :activate-callback nil
 				   :help-string "Packages selected for removal:\n"
-				   :completion-string t
-				   ))
+				   :completion-string t))
 	(setq tmpbuf (get-buffer-create tmpbuf))
 	(display-buffer tmpbuf)
 	(setq do-delete (yes-or-no-p "Remove these packages? "))
@@ -376,7 +338,8 @@ and whether or not it is up-to-date."
 		(nreverse pui-deleted-packages))
 	(message "Packages deleted"))))
 	 
-  (let ( (tmpbuf "*Packages-To-Install*") do-install)
+  (let ((tmpbuf "*Packages-To-Install*") 
+	do-install)
     (if pui-selected-packages
 	(progn
 	  ;; Don't change window config when asking the user if he really
@@ -390,21 +353,18 @@ and whether or not it is up-to-date."
 	       (sort (mapcar #'symbol-name pui-selected-packages) #'string<)
 	       :activate-callback nil
 	       :help-string "Packages selected for installation:\n"
-	       :completion-string t
-	       ))
+	       :completion-string t))
 	    (setq tmpbuf (get-buffer-create tmpbuf))
 	    (display-buffer tmpbuf)
 	    (setq do-install (y-or-n-p "Install these packages? "))
-	    (kill-buffer tmpbuf)
-	    )
+	    (kill-buffer tmpbuf))
 	  (if do-install
 	      (progn
 		(save-excursion
 		  ;; Clear old temp buffer history
 		  (set-buffer (get-buffer-create package-admin-temp-buffer))
 		  (buffer-disable-undo package-admin-temp-buffer)
-		  (erase-buffer package-admin-temp-buffer)
-		  )
+		  (erase-buffer package-admin-temp-buffer))
 		(message "Installing selected packages ...") (sit-for 0)
 		(if (catch 'done
 		      (mapcar (lambda (pkg)
@@ -415,18 +375,13 @@ and whether or not it is up-to-date."
 		      t)
 		    (progn
 		      (pui-list-packages)
-		      (message "Packages installed")
-		      ))
-		)
-	    (clear-message)
-	    )
-	  )
+		      (message "Packages installed"))))
+	    (clear-message)))
       (if pui-deleted-packages
 	  (pui-list-packages)
 	(error "No packages have been selected!")))
     ;; sync with windows type systems
-    (package-net-update-installed-db)
-    ))
+    (package-net-update-installed-db)))
 
 (defun pui-add-required-packages ()
   "Select packages required by those already selected for installation."
@@ -490,8 +445,7 @@ EXTENT determines the package to display (the package information is
 attached to the extent as properties)."
   (let (pkg-sym info inst-ver auth-ver date maintainer balloon req)
     (if (or force-update (not (current-message))
-	    (string-match ".*: .*: " (current-message))
-	    )
+	    (string-match ".*: .*: " (current-message)))
 	(progn
 	  (setq pkg-sym (extent-property extent 'pui-package)
 		info (extent-property extent 'pui-info)
@@ -520,9 +474,7 @@ Required Packages : %s\n\n"
 	       "Inst V: %.2f Auth V: %s Maint: %s" 
 	       inst-ver auth-ver maintainer)
 	    (format "%.2f : %s : %s"
-		    inst-ver auth-ver maintainer))
-	  ))
-    ))
+		    inst-ver auth-ver maintainer))))))
 
 (defun pui-display-info (&optional no-error event)
   "Display additional package info in the modeline.
@@ -535,8 +487,7 @@ Designed to be called interactively (from a keypress)."
 	  (message (pui-help-echo extent t))
 	(if no-error
 	    (clear-message nil)
-	  (error "No package under cursor!")))
-      )))
+	  (error "No package under cursor!"))))))
 
 (defvar pui-menu
   '("Packages"
@@ -597,9 +548,9 @@ which are out-of-date (a newer version is available).  The user can then
 select packages for installation via the keyboard or mouse."
   (interactive)
   (package-get-require-base t)
-  (let ( (outbuf (get-buffer-create pui-info-buffer))
-	 (sep-string "===============================================================================\n")
-	 start )
+  (let ((outbuf (get-buffer-create pui-info-buffer))
+	(sep-string "===============================================================================\n")
+	start)
     (message "Creating package list ...") (sit-for 0)
     (set-buffer outbuf)
     (setq buffer-read-only nil)
@@ -643,27 +594,21 @@ Warning: No download sites specified.  Package index may be out of date.
 	       (progn
 		 (setq current-vers (package-get-key pkg-sym :version))
 		 (cond
-		  ( (not current-vers)
-		    (setq current-vers "-----") )
-		  ( (stringp current-vers)
-		    (setq current-vers
-			  (format "%.2f"
-				  (string-to-number current-vers))) )
-		  ( (numberp current-vers)
-		    (setq current-vers (format "%.2f" current-vers)) )
-		  )
+		  ((not current-vers)
+		   (setq current-vers "-----"))
+		  ((stringp current-vers)
+		   (setq current-vers
+			 (format "%.2f"
+				 (string-to-number current-vers))))
+		  ((numberp current-vers)
+		   (setq current-vers (format "%.2f" current-vers))))
 		 (insert
 		  (format "%s %-15s %-5.2f  %-5s  %s\n"
 			  (car disp) pkg-sym 
 			  (if (stringp version)
 			      (string-to-number version)
 			    version)
-			  current-vers desc))
-		 ;; (insert
-		 ;;  (format "\t\t  %-12s  %s\n"
-		 ;;    (package-get-info-prop info 'author-version)
-		 ;;    (package-get-info-prop info 'date)))
-		 )
+			  current-vers desc)))
 	     (insert (format "%s %-15s %-5s %s\n"
 			     (car disp)
 			     pkg-sym version desc)))
@@ -681,8 +626,7 @@ Warning: No download sites specified.  Package index may be out of date.
 	   (set-extent-property extent 'pui-package pkg-sym)
 	   (set-extent-property extent 'pui-info info)
 	   (set-extent-property extent 'help-echo 'pui-help-echo)
-	   (set-extent-property extent 'keymap pui-package-keymap)
-	   ))
+	   (set-extent-property extent 'keymap pui-package-keymap)))
      (sort (copy-sequence package-get-base)
 	   #'(lambda (a b)
 	       (string< (symbol-name (car a))
@@ -700,9 +644,7 @@ Warning: No download sites specified.  Package index may be out of date.
       (set-buffer-menubar current-menubar)
       (add-submenu '() pui-menu)
       (setq mode-popup-menu pui-menu))
-    (clear-message)
-    ;;    (message (substitute-command-keys "Press `\\[pui-help]' for help."))
-    ))
+    (clear-message)))
 
 ;;;###autoload
 (defalias 'list-packages 'pui-list-packages)

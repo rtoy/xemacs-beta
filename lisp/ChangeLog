@@ -1,3 +1,93 @@
+2003-03-20  Steve Youngs  <youngs@xemacs.org>
+
+	* menubar-items.el (default-menubar): Add a "Pre-Release Download
+	Sites" submenu to "Tools -> Packages" menu.
+
+	Filter the package download sites menus through
+	`menu-split-long-menu'.
+	
+	* obsolete.el (pui-add-install-directory): New.
+	(package-get-download-menu): New.
+
+	* package-admin.el: (package-admin-add-single-file-package):
+	Removed.
+	(package-admin-get-install-dir): Don't rely on an installed
+	xemacs-base package to guess where a package needs to be installed
+	to.
+	(package-admin-get-manifest-file): Whitespace clean up.
+	(package-admin-check-manifest): Use `directory-sep-char' to
+	compute regexp.  
+
+	Only search 'lisp' and 'man' directories to determine package
+	name.
+
+	Don't error is xemacs-base package isn't installed, just don't
+	sort the MANIFEST file and issue a warning.
+	(package-admin-add-binary-package): Whitespace clean up.
+	(package-admin-get-lispdir): Ditto.
+	(package-admin-delete-binary-package): Use `with-temp-buffer'
+	instead of creating a temporary buffer manually.
+
+	* package-get.el: (package-get-remote): Change custom type so that
+	only either a single directory or remote host:directory can be
+	selected. 
+	(package-get-download-sites): Put the sites into alphabetical
+	order of country.  
+
+	Make the description element be "Country (site)" instead of the
+	other way around. 
+	(package-get-pre-release-download-sites): New.
+	(package-get-require-signed-base-updates): Default to t.
+	(package-get-download-menu): Removed.
+	(package-get-locate-file): Change to reflect new format of
+	'package-get-remote'. 
+	(package-get-update-base-from-buffer): Whitespace clean up and
+	remove an unneccessary 'when'.
+	(package-get-interactive-package-query): Whitespace clean up.
+	(package-get-update-all): Ditto.
+	(package-get-all): Ditto.
+	(package-get-init-package): Ditto.
+	(package-get-info): New.
+	(package-get): Bring into line with new format of
+	'package-get-remote'.  
+
+	Error if non-Mule XEmacsen try to install Mule packages.  
+
+	Don't rely on a Mule package having 'mule-base' in its
+	"REQUIRES" to determine if it is a Mule package or not,
+	instead we test "CATEGORY".  
+
+	Better handling of the situation where a partial package tarball
+	exists on the local hard drive from a previous interupted
+	download.
+
+	Clean up after a failed package install.
+	(package-get-set-version-prop): Removed.
+	(package-get-installedp): Whitespace clean up.
+
+	* package-ui.el: Whitespace clean up.
+	(pui-info-buffer): Make it a defcustom.
+	(pui-directory-exists): Removed.
+	(pui-package-dir-list): Removed.
+	(pui-add-install-directory): Removed.
+	(package-ui-download-menu): New.
+	(package-ui-pre-release-download-menu): New.
+	(pui-set-local-package-get-directory): New.
+	(pui-package-symbol-char): Whitespace clean up.
+	(pui-update-package-display): Ditto.
+	(pui-toggle-package): Ditto.
+	(pui-toggle-package-key): Ditto.
+	(pui-toggle-package-delete): Ditto.
+	(pui-toggle-package-delete-key): Ditto.
+	(pui-toggle-package-event): Ditto.
+	(pui-toggle-verbosity-redisplay): Ditto.
+	(pui-install-selected-packages): Ditto.
+	(pui-help-echo): Ditto.
+	(pui-display-info): Ditto.
+	(pui-list-packages): Ditto.
+
+	* packages.el: Whitespace clean up.
+
 2003-03-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* gutter-items.el (buffers-tab-filter-functions): Improve docstring.

@@ -149,9 +149,7 @@ the directory to be ignored."
     ;; one.
     (while (setq pkg (assq name packages-package-list))
       (setq packages-package-list (delete pkg (copy-alist
-					       packages-package-list)))
-      )
-    ))
+					       packages-package-list))))))
 
 ;;; Build time stuff
 

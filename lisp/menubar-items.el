@@ -568,9 +568,16 @@ Write your filter like this:
      ("%_Tools"
       ("%_Packages"
        ("%_Add Download Site"
-        :filter (lambda (&rest junk)
-                  (submenu-generate-accelerator-spec
-		   (package-get-download-menu))))
+	:filter (lambda (&rest junk)
+		  (menu-split-long-menu
+		   (submenu-generate-accelerator-spec
+		    (package-ui-download-menu)))))
+       ("%_Pre-Release Download Sites"
+	:filter (lambda (&rest junk)
+		  (menu-split-long-menu
+		   (submenu-generate-accelerator-spec
+		    (package-ui-pre-release-download-menu)))))
+       "--:shadowEtchedIn"
        ["%_Update Package Index" package-get-update-base]
        ["%_List and Install" pui-list-packages]
        ["U%_pdate Installed Packages" package-get-update-all]
