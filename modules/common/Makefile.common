@@ -44,7 +44,7 @@ with_modules=@with_modules@
 srcdir=@srcdir@
 VPATH=@srcdir@
 
-SRC_SRCS=$(SRCS:%=$(srcdir)/%)
+SRC_SRCS=$(SRCS:%=@srcdir@/%)
 OBJS=$(SRCS:.c=.o)
 
 MODCC=@MOD_CC@

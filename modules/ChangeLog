@@ -1,3 +1,8 @@
+2003-06-11  Jerry James  <james@xemacs.org>
+
+	* common/Makefile.common: The last change re-broke FreeBSD module
+	building.  Expand srcdir in SRC_SRCS with configure to fix it.
+
 2003-06-10  Jerry James  <james@xemacs.org>
 
 	* common/Makefile.common: Change GNUish := to =.
