@@ -1,7 +1,7 @@
 2005-03-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/mule.texi (CCL Example):
-	char-int -> char-to-int, and hex 41 is decimal 64, both problems
+	char-int -> char-to-int, and hex 41 is decimal 65, both problems
 	with my previous patch pointed out by Stephen. 
 	* lispref/mule.texi (The actual coding system):
 	Give information on the make-coding-system call, and where the
