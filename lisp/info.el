@@ -3018,9 +3018,9 @@ e	Edit the contents of the current node."
   (make-local-variable 'Info-index-alternatives)
   (make-local-variable 'Info-history)
   ;; Faces are now defined by `defface'...
-  (make-local-variable 'mouse-track-click-hook)
-  (add-hook 'mouse-track-click-hook 'Info-maybe-follow-clicked-node)
-  (add-hook 'mouse-track-click-hook 'Info-mouse-track-double-click-hook)
+  (make-local-hook 'mouse-track-click-hook)
+  (add-hook 'mouse-track-click-hook 'Info-maybe-follow-clicked-node t t)
+  (add-hook 'mouse-track-click-hook 'Info-mouse-track-double-click-hook t t)
   ;; #### The console-on-window-system-p check is to allow this to
   ;; work on tty's.  The real problem here is that featurep really
   ;; needs to have some device/console domain knowledge added to it.
