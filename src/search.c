@@ -953,7 +953,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 		{
 		  pos++;
 		  INC_BYTEBPOS (buf, pos_byte);
-		  if (pos >= XINT (lim))
+		  if (pos >= limit)
 		    break;
 		  UPDATE_SYNTAX_CACHE_FORWARD (scache, pos);
 		}

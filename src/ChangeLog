@@ -1,3 +1,7 @@
+2002-06-24  Mike Sperber  <mike@xemacs.org>
+
+	* search.c (skip_chars): Fix a crash if NILP(lim).
+
 2002-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* unicode.c: Improve top-level comments and many docstrings.
