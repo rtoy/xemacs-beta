@@ -257,7 +257,7 @@ define pobj
   else
   if $lrecord_type == lrecord_type_symbol
     ptype Lisp_Symbol
-    printf "Symbol name: %s\n", $type_ptr->name->data
+    printf "Symbol name: %s\n", ((Lisp_String *)$type_ptr->name)->data_
   else
   if $lrecord_type == lrecord_type_vector
     ptype Lisp_Vector
