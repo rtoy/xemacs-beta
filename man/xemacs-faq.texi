@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2002/02/04 10:13:46 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2002/02/04 10:57:02 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -636,12 +636,13 @@ gnu.emacs.help.
 
 If you cannot post or read Usenet news, there is a corresponding mailing
 list @email{xemacs-news@@xemacs.org} which is available.  It can be
-subscribed to via the Mailman Web interface at
-@uref{http://www.xemacs.org/Lists/#xemacs-news} or by sending mail to to
+subscribed to via the Mailman Web interface or by sending mail to to
 @email{xemacs-news-request@@xemacs.org} with @samp{subscribe} in the
-body of the message.  To cancel a subscription, you may use the
-@email{xemacs-request} address or the Web interface.  Send a message
-with a subject of @samp{unsubscribe} to be removed.
+body of the message.  See also
+@uref{http://www.xemacs.org/Lists/#xemacs-news}.  To cancel a
+subscription, you may use the @email{xemacs-news-request@@xemacs.org}
+address or the Web interface.  Send a message with a subject of
+@samp{unsubscribe} to be removed.
 
 @node Q1.0.7, Q1.0.8, Q1.0.6, Introduction
 @unnumberedsubsec Q1.0.7: Where are the mailing lists archived?
