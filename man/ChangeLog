@@ -1,3 +1,15 @@
+2004-04-06  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	Lightly revised from <psr7v1j039.fsf@diannao.ittc.ku.edu>.
+	Thanks to Jerry James <james@xemacs.org>.
+
+	* xemacs-faq.texi (Top, Miscellaneous): In menus, renumber Section
+	5.3 and Q5.3.1-12 as 5.4.x, and add Mathematics and Q5.3.1-4 as
+	replacement section 5.3.
+	(Q5.3.1, Q5.3.2, Q5.3.3, Q5.3.4) New FAQs for bignums.
+	(Q5.2.1, Q8.0.1) Add @unnumberedsec headings.
+	(Q6.4.1) Correct @unnumberedsec heading.
+
 2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.17 "chayote" is released.

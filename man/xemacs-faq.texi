@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2004/01/21 09:03:42 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2004/04/06 15:52:00 $
 @sp 1
 @author Tony Rossini <rossini@@u.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -379,6 +379,12 @@ Miscellaneous:
 * Q5.3.10::     How can I get those oh-so-neat X-Face lines?
 * Q5.3.11::     How do I add new Info directories?
 * Q5.3.12::     What do I need to change to make printing work?
+
+Mathematics:
+* Q5.4.1::      What are bignums, ratios, and bigfloats in Lisp?
+* Q5.4.2::      XEmacs segfaults when I use very big numbers!
+* Q5.4.3::      Bignums are really slow!
+* Q5.4.4::      Equal bignums don't compare as equal!  What's going on?
 
 XEmacs on MS Windows
 
@@ -5050,6 +5056,12 @@ Miscellaneous:
 * Q5.3.10::     How can I get those oh-so-neat X-Face lines?
 * Q5.3.11::     How do I add new Info directories?
 * Q5.3.12::     What do I need to change to make printing work?
+
+Mathematics:
+* Q5.4.1::      What are bignums, ratios, and bigfloats in Lisp?
+* Q5.4.2::      XEmacs segfaults when I use very big numbers!
+* Q5.4.3::      Bignums are really slow!
+* Q5.4.4::      Equal bignums don't compare as equal!  What's going on?
 @end menu
 
 @node Q5.0.1, Q5.0.2, Miscellaneous, Miscellaneous
@@ -5799,6 +5811,7 @@ where the time is being spent.
 @end quotation
 
 @node Q5.2.1, Q5.2.2, Q5.1.11, Miscellaneous
+@unnumberedsec 5.2: Sound
 @unnumberedsubsec Q5.2.1: How do I turn off the sound?
 
 Add the following line to your @file{init.el}/@file{.emacs}:
@@ -6168,7 +6181,7 @@ Another alternative is to convert the documentation to HTML with
 texi2html and read it from a web browser like Lynx or W3.
 @end quotation
 
-@node Q5.3.12,  , Q5.3.11, Miscellaneous
+@node Q5.3.12, Q5.4.1, Q5.3.11, Miscellaneous
 @unnumberedsubsec Q5.3.12: What do I need to change to make printing work?
 
 For regular printing there are two variables that can be customized.
@@ -6211,6 +6224,121 @@ color, otherwise it should be set to @code{nil}.
 NOTE: It is an undocumented limitation in XEmacs that postscript
 printing (the @code{Pretty Print Buffer} menu item) @strong{requires} a
 window system environment.  It cannot be used outside of X11.
+
+
+@node Q5.4.1, Q5.4.2, Q5.3.12, Miscellaneous
+@unnumberedsec 5.4: Mathematics
+@unnumberedsubsec Q5.4.1: What are bignums, ratios, and bigfloats in Lisp?
+
+Thanks to @email{james@@xemacs.org, Jerry James}, XEmacs 21.5.18 and
+later can use the capabilities of multiple-precision libraries that may
+be available for your platform.  The GNU Multiple Precision (GMP) and
+BSD Multiple Precision (MP) libraries are partially supported.  GMP
+gives you @dfn{bignums} (arbitrary precision integers), @dfn{ratios}
+(arbitrary precision fractions), and @dfn{bigfloats} (arbitrary
+precision floating point numbers).  GNU MP is better-supported by XEmacs
+at the time of writing (2004-04-06).  BSD MP support does not include
+ratios or bigfloats, and it throws errors that aren't understood.
+
+In most cases, bignum support should be transparent to users and Lisp
+programmers.  A bignum-enabled XEmacs will automatically convert from
+fixnums to bignums and back in pure integer arithmetic, and for GNU MP,
+from floats to bigfloats.  (Bigfloats must be explicitly coerced to
+other types, even if they are exactly representable by less precise
+types.)  The Lisp reader and printer have been enhanced to handle
+bignums, as have the mathematical functions.  Rationals (fixnums,
+bignums, and ratios) are printed using the @samp{%d}, @samp{%o},
+@samp{%x}, and @samp{%u} format conversions.  The read syntax for ratios
+is @samp{3/5}.
+
+User-visible changes in behavior include (in probable order of annoyance)
+
+@itemize
+@item
+Arithmetic can cause a segfault, depending on your MP library
+@ref{Q5.4.2}.
+
+@item
+Terminology is not Common-Lisp-conforming.  For example, ``integer'' for
+Emacs Lisp means what Common Lisp calls ``fixnum''.  This issue is being
+investigated, but the use of ``integer'' for fixnum is pervasive and may
+cause backward-compatibility and GNU-Emacs-compatibility problems.
+
+@item
+Many operations that used to cause a range error now succeed, with
+intermediate results and return values coerced to bignums as needed.
+
+@item
+An atom with ratio read syntax now returns a number, not a symbol.
+
+@item
+The @samp{%u} format conversion will now give an error if its argument
+is negative.  (Without MP, it prints a number which Lisp can't read.)
+@end itemize
+
+@emph{Surgeon General's Warning}: The automatic conversions cannot be
+disabled at runtime.  New functions have been added which produce
+ratios, so there should be few surprises with type conflicts, but they
+can't be ruled out.  ``Arbitrary'' precision means precisely what it
+says.  If you work with extremely large numbers, your machine may
+arbitrarily decide to hand you an unpleasant surprise rather than a
+bignum @ref{Q5.4.2}.
+
+To configure with GNU MP, add
+@samp{--use-number-lib=gmp}
+to your invocation of @file{configure}.  For BSD MP, use
+@samp{--use-number-lib=mp}.
+
+If you would like to help with bignum support, especially on BSD MP,
+please subscribe to the @uref{http://www.xemacs.org/Lists/#xemacs-beta,
+XEmacs Beta mailing list}, and book up on @file{number-gmp.h} and
+@file{number-mp.h}.  Jerry has promised to write internals documentation
+eventually, but if your skills run more to analysis and documentation
+than to writing new code, feel free to fill in the gap!
+
+
+@node Q5.4.2, Q5.4.3, Q5.4.1, Miscellaneous
+@unnumberedsubsec Q5.4.2: XEmacs segfaults when I use very big numbers!
+
+GMP by default allocates temporaries on the stack.  If you run out of
+stack space, you're dead; there is no way that we know of to reliably
+detect this condition, because @samp{alloca} is typically implemented to
+be @emph{fast} rather than robust.  If you just need a little more
+oomph, use a bigger stack (@emph{e.g.}, the @file{ulimit -s} command in
+bash(1)).  If you want robustness at the cost of speed, configure GMP
+with @samp{--disable-alloca} and rebuild the GMP library.
+
+We do not know whether BSD MP uses @samp{alloca} or not.  Please send
+any information you have as a bug report (@kbd{M-x report-xemacs-bug
+@key{RET}}), which will give us platform information.  (We do know that
+BSD MP implementations vary across vendors, but how much, we do not know
+yet.)
+
+
+@node Q5.4.3, Q5.4.4, Q5.4.2, Miscellaneous
+@unnumberedsubsec Q5.4.3: Bignums are really slow!
+
+Many Linux distributions compile all their packages for the i386, and
+this is costly.  An optimized version can give you two or three orders
+of magnitude better performance for a Pentium III or IV.  (Yes, really.
+See @uref{http://www.swox.com/gmp/gmp-speed.html}.)
+
+
+@node Q5.4.4, , Q5.4.3, Miscellaneous
+@unnumberedsubsec Q5.4.4: Equal bignums don't compare as equal!  What gives?
+
+Ah, Grasshopper, I see you are using @code{(eq x y)}.  The Bodhisattva
+CLTL2 warned of the illusion that equal numbers would be @samp{eq}!
+Meditate on the deeper truths of @samp{eql}, in which numbers of the same
+type which have equal values compare equal, and @samp{=}, which does any
+necessary type coercions before comparing for equality.
+
+Yeah, yeah, it has always worked for integer types, because fixnums and
+characters have an immediate representation.  Sorry about that;
+arbitrary precision obviously requires consing new objects because the
+objects are ``large'' and of variable size, and the definition of
+@samp{eq} does not permit different objects to compare as equal.
+
 
 @node MS Windows, Current Events, Miscellaneous, Top
 @unnumbered 6 XEmacs on MS Windows
@@ -6876,7 +7004,7 @@ elements).
 
 
 @node Q6.4.1, Q6.4.2, Q6.3.4, MS Windows
-@unnumberedsec 6.3: Troubleshooting
+@unnumberedsec 6.4: Troubleshooting
 @unnumberedsubsec Q6.4.1 XEmacs won't start on Windows.
 
 XEmacs relies on a process called "dumping" to generate a working
@@ -7272,6 +7400,7 @@ to released XEmacsen, but users can apply themselves) are also accepted.
 @end menu
 
 @node Q8.0.1, , , Legacy Versions
+@unnumberedsec 8.0 XEmacs 21.1
 @unnumberedsubsec Q8.0.1: Gnus 5.10 won't display smileys in XEmacs 21.1.
 
 @email{eeide@@cs.utah.edu, Eric Eide} wrote:
