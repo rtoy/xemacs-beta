@@ -1,3 +1,14 @@
+2001-06-26  Robert Pluim  <rpluim@bigfoot.com>
+
+	* packages.el (locate-library): change to use read-library-name so
+	we can get completion
+
+2001-06-26  Robert Pluim  <rpluim@bigfoot.com>
+
+	* package-ui.el (pui-install-selected-packages): reverse the lists
+	of packages so that they get handled in the same order as they
+	were selected.
+
 2001-06-21  Ben Wing  <ben@xemacs.org>
 
 	* term\AT386.el:
