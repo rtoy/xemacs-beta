@@ -8,3 +8,8 @@
 #define UNEXEC unexelf.o
 
 #endif /* ELF */
+
+/* The declaration for openpty is missing.  Where is libutil.h? */
+struct termios;
+struct winsize;
+int openpty (int *, int *, char *, struct termios *, struct winsize *);

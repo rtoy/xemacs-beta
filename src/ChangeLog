@@ -1,3 +1,7 @@
+2001-05-04  Martin Buchholz  <martin@xemacs.org>
+
+	* s/bsdos4.h (openpty): Add declaration, missing from system headers.
+
 2001-05-05  Martin Buchholz  <martin@xemacs.org>
 
 	* search.c (warn_about_possibly_incompatible_back_references):
