@@ -1,3 +1,21 @@
+2005-02-03  Ben Wing  <ben@xemacs.org>
+
+	* paragraphs.el:
+	* paragraphs.el (paragraphs): New.
+	* paragraphs.el (use-hard-newlines): Removed.
+	* paragraphs.el (paragraph-start):
+	* paragraphs.el (paragraph-separate):
+	* paragraphs.el (sentence-end-double-space): New.
+	* paragraphs.el (sentence-end-without-period): New.
+	* paragraphs.el (sentence-end):
+	* paragraphs.el (forward-paragraph):
+	* paragraphs.el (backward-paragraph):
+	* paragraphs.el (mark-paragraph):
+	* paragraphs.el (forward-sentence):
+	* paragraphs.el (mark-end-of-sentence):
+	* paragraphs.el (transpose-sentences):
+	Sync to 21.3.  Depends on easy-mmode in core.
+
 2005-02-02  Ben Wing  <ben@xemacs.org>
 
 	* easy-mmode.el, regexp-opt.el:
@@ -249,25 +267,6 @@
 	* custom.el (custom-theme-reset-variables):
 	* custom.el (custom-reset-variables):
 	Sync with FSF 21.3.
-
-2004-11-09  Ben Wing  <ben@xemacs.org>
-
-	* paragraphs.el:
-	* paragraphs.el (paragraphs): New.
-	* paragraphs.el (use-hard-newlines): Removed.
-	* paragraphs.el (paragraph-start):
-	* paragraphs.el (paragraph-separate):
-	* paragraphs.el (sentence-end-double-space): New.
-	* paragraphs.el (sentence-end-without-period): New.
-	* paragraphs.el (sentence-end):
-	* paragraphs.el (forward-paragraph):
-	* paragraphs.el (backward-paragraph):
-	* paragraphs.el (mark-paragraph):
-	* paragraphs.el (forward-sentence):
-	* paragraphs.el (mark-end-of-sentence):
-	* paragraphs.el (transpose-sentences):
-	Sync to 21.3.  Depends on easy-mmode in core.
-
 
 2005-01-31  Ben Wing  <ben@xemacs.org>
 
