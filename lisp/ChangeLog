@@ -1,3 +1,9 @@
+2002-05-25  Steve Youngs  <youngs@xemacs.org>
+
+	* package-ui.el (pui-help-echo): Display both installed and author
+	version.  Use a balloon-help window to display extra info like
+	package requires.
+
 2002-05-23  Ben Wing  <ben@xemacs.org>
 
 	* files.el:
