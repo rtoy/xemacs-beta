@@ -1,3 +1,8 @@
+2002-11-12  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
+
+	* PROBLEMS: Typo fix.
+	(Building/IRIX): New crash and general advice from Valdis Kletnieks.
+
 2002-10-30  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* etc/TUTORIAL.ja: Typo fix.

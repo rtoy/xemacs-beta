@@ -43,7 +43,7 @@ General advice:
     Much general information is in INSTALL.  If it's covered in
     INSTALL, we don't repeat it here.
 
-*** How does I configure to get the buffer tabs/progress bars?
+*** How do I configure to get the buffer tabs/progress bars?
 
 These features depend on support for "native widgets".  Use the
 --with-widgets option to configure.  Configuration of widgets is
@@ -402,6 +402,46 @@ This is a Linux problem where you've compiled the XEmacs binary on a libc
 an earlier version.  The solution is to upgrade your old library.
 
 ** IRIX
+
+*** More coredumping in Irix (6.5 known to be vulnerable)
+
+No fix is known yet.  Here's the best information we have:
+
+Valdis Kletnieks <Valdis.Kletnieks@vt.edu> writes:
+
+  Were xemacs and [any 3rd party, locally-compiled] libraries [you use]
+  all compiled with the same ABI ( -o32, -n32, -64) and
+  mips2/mips3/mips4 flags, and are they appropriate for the machine in
+  question?  I know the IP30 implies an Octane, so it should be an R10K
+  chipset and above such nonsense, but I've seen the most astoundingly
+  bizzare crashes when somebody managed to compile with -mips4 and get
+  it to run on an R4400 or R5K system. ;)
+
+  Also, since you're using gcc, try re-running fixincludes and *then*
+  rebuilding xemacs and [any] libraries - mismatched headers can do that
+  sort of thing to you with little or no clue what's wrong (often you
+  get screwed when one routine does an malloc(sizeof(foo_struct)) and
+  passes the result to something that things foo_struct is a bit bigger,
+  trashing memory....
+
+Here's typical crash backtrace.  With --pdump, this occurs usually at
+startup under X windows and xemacs -nw at least starts, while without
+--pdump a similar crash is observed during build.
+
+#0  0x0fa460b8 in kill () at regcomp.c:637
+637     regcomp.c: No such file or directory.
+        in regcomp.c
+(gdb) where
+#0  0x0fa460b8 in kill () at regcomp.c:637
+#1  0x10087f34 in fatal_error_signal ()
+(gdb) quit
+
+This is confusing because there is no such file in the XEmacs
+distribution.  This is seen on (at least) the following configurations:
+
+uname -a: IRIX64 oct202 6.5 01091821 IP30
+XEmacs 21.4.9 "Informed Management" configured for `mips-sgi-irix6.5'.
+XEmacs 21.5-b9 "brussels sprouts"  configured for `mips-sgi-irix6.5'.
 
 *** On Irix 6.5, the MIPSpro compiler gets an internal compiler error
 
