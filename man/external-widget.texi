@@ -19,6 +19,7 @@ powerful replacement for standard text widgets.
 * Using an External Client Widget::
 * External Client Widget Resource Settings::
 * Motif-Specific Info About the External Client Widget::
+* Example Program Using the External Client Widget::
 @end menu
 
 
@@ -112,7 +113,7 @@ are primarily for handling query-geometry and geometry-manager requests
 made by parent or child widgets.
 
 
-@node Motif-Specific Info About the External Client Widget, , External Client Widget Resource Settings, Top
+@node Motif-Specific Info About the External Client Widget, Example Program Using the External Client Widget, External Client Widget Resource Settings, Top
 @chapter Motif-Specific Info About the External Client Widget
 
 By default, the external client widget has navigation type
@@ -125,6 +126,83 @@ but functions like a normal @key{TAB} in Emacs.  This follows the
 semantics of the Motif text widget.  The traversal keystrokes
 @kbd{Ctrl-@key{TAB}} and @kbd{Shift-@key{TAB}} are silently filtered by
 the external client widget and are not seen by Emacs.
+
+
+@node Example Program Using the External Client Widget, , Motif-Specific Info About the External Client Widget, Top
+@chapter Example Program Using the External Client Widget
+
+This is a very simple program.  It currently doesn't actually work; the
+client window does not accept keystroke input, although you can edit
+with the mouse.  It also has some issues with exiting.  Be careful to
+destroy the Emacs frame before exiting the client program.
+
+@example
+/*
+   Copyright (C) 2002 Free Software Foundation
+
+   This program is part of XEmacs.  XEmacs is free software.  See the
+   file COPYING that came with XEmacs for conditions on redistribution.
+
+   This is an example of the XEmacs external widget facility.
+
+   It uses libextcli-Xt.a to interface to the X Toolkit Intrinsics.
+
+   Compile with
+
+   gcc -I/path/to/XEmacs/source/src -L/path/to/XEmacs/build/src -static \
+       -lextcli_Xt -lXt -lX11 -lSM -lICE \
+       -o XEmacsInside XEmacsInside.c
+
+   Run it; it pops up a window, and prints a Lisp form on stdout.  Eval
+   the form in XEmacs configured --external-widget.
+
+   Written by Stephen J. Turnbull <stephen@@xemacs.org>
+
+   Based on simple_text.c from _The Motif Programming Manual_ by Heller
+   and Ferguson, O'Reilly.
+*/
+
+#include <stdio.h>
+
+#include <X11/Intrinsic.h>
+#include <X11/StringDefs.h>
+#include <X11/Shell.h>
+
+#include "ExternalClient.h"
+
+main (int argc, char *argv[])
+{
+  Widget toplevel, emacs;
+  XtAppContext app;
+
+  XtSetLanguageProc (NULL, NULL, NULL);
+
+  toplevel = XtVaOpenApplication (&app, "Demo",
+				  NULL, 0, &argc, argv,
+				  NULL, sessionShellWidgetClass,
+				  NULL);
+
+  emacs = XtVaCreateManagedWidget ("externalWidget", externalClientWidgetClass,
+				   toplevel,
+				   NULL);
+
+  XtRealizeWidget (toplevel);
+
+  printf ("(make-frame '(window-id \"%d\"))\n", XtWindow(emacs));
+
+  XtAppMainLoop (app);
+}
+
+/* This function doesn't belong here but somehow it's not getting resolved
+   from the library. */
+void
+fatal (char *msg)
+{
+  fprintf (stderr, "%s", msg);
+  exit (1);
+}
+@end example
+
 
 @summarycontents
 @contents

@@ -1,3 +1,10 @@
+2002-02-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* external-widget.texi
+	(Example Program Using the External Client Widget): New node.
+
+	* lispref/packaging.texi (Documenting Packages): New node.
+
 2002-01-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/packaging.texi (Makefile Variables): Document GENERATED
