@@ -1,3 +1,8 @@
+2003-12-07  Olivier Galibert  <galibert@pobox.com>
+
+	* Makefile.in.in: Don't install the dmp file when it's in the
+	executable.
+
 2004-04-12  Kaarthik Sivakumar  <kaarthik@comcast.net>
 
 	* configure.in: Check for libmp dependencies before checking for

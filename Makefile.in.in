@@ -385,7 +385,7 @@ install-arch-dep: mkdir
 	   for subdir in `find ${archlibdir} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; \
 	     do (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; done ; \
 	else true; fi
-#ifdef PDUMP
+#if defined(PDUMP) && defined(WIN32_NATIVE)
 	${INSTALL_DATA} src/${PROGNAME}.dmp ${bindir}/${PROGNAME}-${version}-`src/${PROGNAME} -sd`.dmp
 #endif
 #ifdef WIN32_NATIVE
