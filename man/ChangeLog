@@ -1,3 +1,10 @@
+2003-03-02  Stephen Turnbull  <stephen@xemacs.org>
+
+	* widget.texi (Defining New Widgets):
+	Document `widget-create-child', `widget-create-child-and-convert',
+	and `widget-create-child-value'.  Document the `:copy' method.
+	Improve discussion of the `:convert-widget' method.
+
 2003-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (XEmacs From the Perspective of Building):

@@ -1390,26 +1390,43 @@ in the @code{widget-type} property of @var{name}, which is what
 @code{widget-create} uses.
 
 If you just want to specify defaults for keywords with no complex
-conversions, you can use @code{identity} as your conversion function.
+conversions, you can use @code{identity} as your @code{:convert-widget}
+function.
 
 The following additional keyword arguments are useful when defining new
 widgets: 
 @table @code
 @item :convert-widget
-Function to convert a widget type before creating a widget of that
-type.  It takes a widget type as an argument, and returns the converted
-widget type.  When a widget is created, this function is called for the
-widget type and all the widget's parent types, most derived first. 
+Method to convert type-specific components of a widget type before
+instantiating a widget of that type.  Not normally called from user
+code, it is invoked by @code{widget-convert}.  Typical operations
+include converting types of child widgets to widget instances and
+converting values from external format (@emph{i.e.}, as expected by the
+calling code) to internal format (which is often different for the
+convenience of widget manipulation).  It takes a widget type as an
+argument, and returns the converted widget type.  When a widget is
+created, the value of this property is called for the widget type, then
+for all the widget's parent types, most derived first.  (The property is
+reevaluated for each parent type.)
 
 The following predefined functions can be used here:
 
 @defun widget-types-convert-widget widget
-Convert @code{:args} as widget types in @var{widget}.
+Convert each member of @code{:args} in @var{widget} from a widget type
+to a widget.
 @end defun
 
 @defun widget-value-convert-widget widget
-Initialize @code{:value} from @code{:args} in @var{widget}.
+Initialize @code{:value} from @code{(car :args)} in @var{widget}, and
+reset @code{:args}.
 @end defun
+
+@item :copy
+A method to implement deep copying of the type.  Any member of the
+widget which might be changed in place (rather than replaced) should be
+copied by this method.  (@code{widget-copy} uses @code{copy-sequence} to
+ensure that the top-level list is a copy.)  This particularly applies to
+child widgets.
 
 @item :value-to-internal
 Function to convert the value to the internal format.  The function
@@ -1427,8 +1444,14 @@ when the widget is created, and on any value set later with
 
 @item :create
 Function to create a widget from scratch.  The function takes one
-argument, a widget type, and creates a widget of that type, inserts it
-in the buffer, and returns a widget object.
+argument, a widget, and inserts it in the buffer.  Not normally called
+from user code.  Instead, call @code{widget-create} or related
+functions, which take a type argument, (usually) convert it to a widget,
+call the @code{:create} function to insert it in the buffer, and then
+return the (possibly converted) widget.
+
+The default, @code{widget-default-create}, is invariably appropriate.
+(None of the standard widgets specify @code{:create}.)
 
 @item :delete
 Function to delete a widget.  The function takes one argument, a widget,
@@ -1502,6 +1525,43 @@ Widget used as a base for other widgets.
 It provides most of the functionality that is referred to as ``by
 default'' in this text. 
 @end deffn
+
+In implementing complex hierarchical widgets (@emph{e.g.}, using the
+@samp{group} widget), the following functions may be useful.
+The syntax for the @var{type} arguments to these functions is described
+in @ref{Basic Types}.
+
+@defun widget-create-child-and-convert parent type &rest args
+As a child of @var{parent}, create a widget with type @var{type} and
+value @var{value}.  @type{type} is copied, and the @code{:widget-contvert}
+method is applied to the optional keyword arguments from @var{args}.
+@end defun
+
+@defun widget-create-child parent type
+As a child of @var{parent}, create a widget with type @var{type}.
+@type{type} is copied, but no conversion method is applied.
+@end defun
+
+@defun widget-create-child-value parent type value
+As a child of @var{parent}, create a widget with type @var{type} and
+value @var{value}.  @type{type} is copied, but no conversion method is
+applied.
+@end defun
+
+@defun widget-convert type &rest args
+Convert @var{type} to a widget without inserting it in the buffer.
+The optional @var{args} are additional keyword arguments.
+
+The widget's @code{:args} property is set from the longest tail of
+@var{args} whose @samp{cdr} is not a keyword, or if that is null, from
+the longest tail of @var{type}'s @code{:args} property whose cdr is not
+a keyword.  Keyword arguments from @var{args} are set, and the
+@code{:value} property (if any) is converted from external to internal
+format.
+@end defun
+
+@code{widget-convert} is typically not called from user code; rather it
+is called implicitly through the @samp{widget-create*} functions.
 
 @node Widget Browser, Widget Minor Mode, Defining New Widgets, Top
 @comment  node-name,  next,  previous,  up
