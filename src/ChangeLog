@@ -1,3 +1,15 @@
+2002-11-30  Ben Wing  <ben@xemacs.org>
+
+	* eval.c:
+	* eval.c (signal_call_debugger):
+	Fix up C debugger entrance -- first output the error message, then
+	stack trace, then exiting message, then force debugger.
+	
+	* frame-msw.c (mswindows_init_frame_1): Use EQ not EQUAL to avoid
+	QUIT tripping.
+	
+	* toolbar-msw.c (mswindows_clear_toolbar): Indentation fixes.
+
 2002-11-27  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:

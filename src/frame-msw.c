@@ -149,8 +149,9 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
   /* Misc frame stuff */
   FRAME_MSWINDOWS_MENU_HASH_TABLE (f) = Qnil;
 #ifdef HAVE_TOOLBARS
+  /* EQ not EQUAL or we will get QUIT crashes, see below. */
   FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f) = 
-    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
 #endif
   /* hashtable of instantiated glyphs on the frame.  Make them EQ because
      we only use ints as keys.  Otherwise we run into stickiness in

@@ -660,6 +660,20 @@ backtrace_259 (Lisp_Object stream)
   return Fbacktrace (stream, Qt);
 }
 
+#ifdef DEBUG_XEMACS
+
+static void
+trace_out_and_die (Lisp_Object err)
+{
+  Fdisplay_error (err, Qt);
+  backtrace_259 (Qnil);
+  stderr_out ("XEmacs exiting to debugger.\n");
+  Fforce_debugging_signal (Qt);
+  /* Unlikely to be reached */
+}
+
+#endif
+
 /* An error was signaled.  Maybe call the debugger, if the `debug-on-error'
    etc. variables call for this.  CONDITIONS is the list of conditions
    associated with the error being signalled.  SIG is the actual error
@@ -748,15 +762,15 @@ signal_call_debugger (Lisp_Object conditions,
     {
       debug_on_quit &= ~2;	/* reset critical bit */
 
-#ifdef DEBUG_XEMACS
-      if (noninteractive)
-	Fforce_debugging_signal (Qt);
-#endif
-
       specbind (Qdebug_on_error,	Qnil);
       specbind (Qstack_trace_on_error,	Qnil);
       specbind (Qdebug_on_signal,	Qnil);
       specbind (Qstack_trace_on_signal, Qnil);
+
+#ifdef DEBUG_XEMACS
+      if (noninteractive)
+	trace_out_and_die (Fcons (sig, data));
+#endif
 
       val = call_debugger (list2 (Qerror, (Fcons (sig, data))));
       unbind_to (speccount);
@@ -789,15 +803,15 @@ signal_call_debugger (Lisp_Object conditions,
     {
       debug_on_quit &= ~2;	/* reset critical bit */
 
-#ifdef DEBUG_XEMACS
-      if (noninteractive)
-	Fforce_debugging_signal (Qt);
-#endif
-
       specbind (Qdebug_on_error,	Qnil);
       specbind (Qstack_trace_on_error,	Qnil);
       specbind (Qdebug_on_signal,	Qnil);
       specbind (Qstack_trace_on_signal, Qnil);
+
+#ifdef DEBUG_XEMACS
+      if (noninteractive)
+	trace_out_and_die (Fcons (sig, data));
+#endif
 
       val = call_debugger (list2 (Qerror, (Fcons (sig, data))));
       *debugger_entered = 1;

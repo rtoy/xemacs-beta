@@ -111,11 +111,11 @@ mswindows_clear_toolbar (struct frame *f, enum toolbar_pos pos,
       i = qxeSendMessage (toolbarwnd, TB_BUTTONCOUNT, 0, 0);
       for (i--; i >= 0; i--)
 	{
-	  qxeSendMessage (toolbarwnd, TB_GETBUTTON, (WPARAM)i, 
-		       (LPARAM)&info);
-	  Fremhash(make_int(info.idCommand), 
-		   FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE(f));
-	  qxeSendMessage (toolbarwnd, TB_DELETEBUTTON, (WPARAM)i, 0);
+	  qxeSendMessage (toolbarwnd, TB_GETBUTTON, (WPARAM) i,
+		       (LPARAM) &info);
+	  Fremhash (make_int (info.idCommand), 
+		    FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f));
+	  qxeSendMessage (toolbarwnd, TB_DELETEBUTTON, (WPARAM) i, 0);
 	}
 	  
       /* finally get rid of the image list assuming it clears up its
