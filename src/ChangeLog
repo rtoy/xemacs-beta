@@ -1,3 +1,9 @@
+2005-04-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-ccl.c (ccl_driver): Calculate the charset and position code
+	for control-1 characters properly, both when reading multibyte
+	characters and writing them. 
+
 2005-03-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.c (set_unicode_conversion): Don't try to write to the
