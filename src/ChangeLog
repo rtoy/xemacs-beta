@@ -1,3 +1,12 @@
+2001-05-30  William M. Perry  <wmperry@gnu.org>
+
+	* emacs-marshals.c: Regenerated from lisp.
+
+	* emacs-widget-accessors.c: Regenerated from lisp.
+
+	* event-gtk.c (gtk_event_to_emacs_event): Buttons are now
+	modifiers, so selection with the mouse works again.
+
 2001-05-24  Kirill 'Big K' Katsnelson  <kkm@dtmx.com>
 
 	* redisplay.c (redisplay_device): Allow preemption on redisplay.
