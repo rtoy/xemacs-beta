@@ -115,7 +115,7 @@ struct specifier_methods
 
      If this function is not present, hashing behaves as if it
      returned zero. */
-  unsigned long (*hash_method) (Lisp_Object specifier, int depth);
+  Hashcode (*hash_method) (Lisp_Object specifier, int depth);
 
   /* Validate method: Given an instantiator, verify that it's
      valid for this specifier type.  If not, signal an error.

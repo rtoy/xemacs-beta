@@ -326,7 +326,7 @@ x_color_instance_equal (Lisp_Color_Instance *c1,
 	  (color1.blue == color2.blue));
 }
 
-static unsigned long
+static Hashcode
 x_color_instance_hash (Lisp_Color_Instance *c, int UNUSED (depth))
 {
   XColor color = COLOR_INSTANCE_X_COLOR (c);

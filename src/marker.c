@@ -88,10 +88,10 @@ marker_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 	   !marker1->buffer));
 }
 
-static unsigned long
+static Hashcode
 marker_hash (Lisp_Object obj, int UNUSED (depth))
 {
-  unsigned long hash = (unsigned long) XMARKER (obj)->buffer;
+  Hashcode hash = (Hashcode) XMARKER (obj)->buffer;
   if (hash)
     hash = HASH2 (hash, XMARKER (obj)->membpos);
   return hash;

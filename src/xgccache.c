@@ -92,12 +92,12 @@ struct gc_cache {
 };
 
 #ifdef GCCACHE_HASH
-static unsigned long
+static Hashcode
 gc_cache_hash (const void *arg)
 {
   const struct gcv_and_mask *gcvm = (const struct gcv_and_mask *) arg;
   unsigned long *longs = (unsigned long *) &gcvm->gcv;
-  unsigned long hash = gcvm->mask;
+  Hashcode hash = gcvm->mask;
   int i;
   /* This could look at the mask and only use the used slots in the
      hash code.  That would win in that we wouldn't have to initialize
@@ -105,7 +105,7 @@ gc_cache_hash (const void *arg)
      the hash function to be as fast as possible; some timings should
      be done. */
   for (i = 0; i < (int) (sizeof (XGCValues) / sizeof (unsigned long)); i++)
-    hash = (hash<<1) ^ *longs++;
+    hash = (hash << 1) ^ *longs++;
   return hash;
 }
 

@@ -45,6 +45,8 @@ struct hash_table
    automatically if the number of entries approaches the size */
 struct hash_table *make_hash_table (Elemcount size);
 
+struct hash_table *make_string_hash_table (Elemcount size);
+
 struct hash_table *make_general_hash_table (Elemcount size,
 					    hash_table_hash_function
 					    hash_function,

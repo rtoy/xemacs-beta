@@ -178,7 +178,7 @@ gtk_color_instance_equal (struct Lisp_Color_Instance *c1,
 			     COLOR_INSTANCE_GTK_COLOR (c2)));
 }
 
-static unsigned long
+static Hashcode
 gtk_color_instance_hash (struct Lisp_Color_Instance *c, int UNUSED (depth))
 {
     return (gdk_color_hash (COLOR_INSTANCE_GTK_COLOR (c), NULL));

@@ -133,13 +133,13 @@ color_instance_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
      DEVMETH (XDEVICE (c1->device), color_instance_equal, (c1, c2, depth)));
 }
 
-static unsigned long
+static Hashcode
 color_instance_hash (Lisp_Object obj, int depth)
 {
   Lisp_Color_Instance *c = XCOLOR_INSTANCE (obj);
   struct device *d = DEVICEP (c->device) ? XDEVICE (c->device) : 0;
 
-  return HASH2 ((unsigned long) d,
+  return HASH2 ((Hashcode) d,
 		!d ? LISP_HASH (obj)
 		: DEVMETH_OR_GIVEN (d, color_instance_hash, (c, depth),
 				    LISP_HASH (obj)));
@@ -334,7 +334,7 @@ font_instance_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 			 depth + 1);
 }
 
-static unsigned long
+static Hashcode
 font_instance_hash (Lisp_Object obj, int depth)
 {
   return internal_hash (font_instance_truename_internal

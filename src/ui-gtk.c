@@ -107,18 +107,6 @@ EXFUN (Fgtk_import_type, 1);
 static struct hash_table *internal_type_hash;
 
 static int
-type_hash_equal(const void *arg1, const void *arg2)
-{
-  return ((GtkType) arg1 == (GtkType) arg2);
-}
-
-static unsigned long
-type_hash_hash(const void *arg)
-{
-  return ((unsigned long) arg);
-}
-
-static int
 type_already_imported_p (GtkType t)
 {
   void *retval = NULL;
@@ -148,7 +136,7 @@ type_already_imported_p (GtkType t)
 
   if (!internal_type_hash)
     {
-      internal_type_hash = make_general_hash_table (163, type_hash_hash, type_hash_equal);
+      internal_type_hash = make_hash_table (163);
       return (0);
     }
 
@@ -1128,11 +1116,11 @@ emacs_gtk_boxed_equality (Lisp_Object o1, Lisp_Object o2, int UNUSED (depth))
 	  (data1->object_type == data2->object_type));
 }
 
-static unsigned long
+static Hashcode
 emacs_gtk_boxed_hash (Lisp_Object obj, int UNUSED (depth))
 {
   emacs_gtk_boxed_data *data = XGTK_BOXED(obj);
-  return (HASH2 ((unsigned long)data->object, data->object_type));
+  return (HASH2 ((Hashcode) data->object, data->object_type));
 }
 
 DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkBoxed", emacs_gtk_boxed,

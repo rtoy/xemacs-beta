@@ -1,5 +1,37 @@
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
+	* emacs-marshals.c:
+	* emacs-marshals.c (initialize_marshaller_storage):
+	* hash.c:
+	* hash.c (string_equal):
+	* hash.c (make_hash_table):
+	* hash.h:
+	* ui-gtk.c (type_already_imported_p):
+	Clean up and generalize creation of string hash tables.
+
+	* ui-gtk.c (emacs_gtk_boxed_hash):
+	* elhash.h:
+	* gccache-gtk.c (gc_cache_hash):
+	* glyphs-gtk.c (gtk_image_instance_hash):
+	* lrecord.h (struct lrecord_implementation):
+	* marker.c (marker_hash):
+	* objects-gtk.c (gtk_color_instance_hash):
+	* objects-msw.c (mswindows_color_instance_hash):
+	* objects-tty.c (tty_color_instance_hash):
+	* objects-x.c (x_color_instance_hash):
+	* objects.c (color_instance_hash):
+	* objects.c (font_instance_hash):
+	* opaque.c (hash_opaque):
+	* opaque.c (hash_opaque_ptr):
+	* rangetab.c (range_table_entry_hash):
+	* rangetab.c (range_table_hash):
+	* specifier.c (specifier_hash):
+	* specifier.h (struct specifier_methods):
+	* xgccache.c (gc_cache_hash):
+	Use Hashcode rather than unsigned long.
+
+2005-01-26  Ben Wing  <ben@xemacs.org>
+
 	* profile.c:
 	* profile.c (vars_of_profile):
 	* profile.h:
@@ -11,18 +43,6 @@
 	* emacs.c:
 	Update history section.
 	
-	* emacs-marshals.c:
-	* emacs-marshals.c (initialize_marshaller_storage):
-	* hash.c:
-	* hash.c (string_equal):
-	* hash.c (make_hash_table):
-	* hash.h:
-	* ui-gtk.c (type_already_imported_p):
-	Clean up and generalize creation of string hash tables.
-	
-	* profile.c:
-	* profile.c (vars_of_profile):
-	* profile.h:
 	
 2004-11-13  Ben Wing  <ben@xemacs.org>
 

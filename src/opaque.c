@@ -100,11 +100,11 @@ equal_opaque (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 
 /* This will not work correctly for opaques with subobjects! */
 
-static unsigned long
+static Hashcode
 hash_opaque (Lisp_Object obj, int UNUSED (depth))
 {
   if (XOPAQUE_SIZE (obj) == sizeof (unsigned long))
-    return *((unsigned long *) XOPAQUE_DATA (obj));
+    return *((Hashcode *) XOPAQUE_DATA (obj));
   else
     return memory_hash (XOPAQUE_DATA (obj), XOPAQUE_SIZE (obj));
 }
@@ -141,10 +141,10 @@ equal_opaque_ptr (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
   return (XOPAQUE_PTR (obj1)->ptr == XOPAQUE_PTR (obj2)->ptr);
 }
 
-static unsigned long
+static Hashcode
 hash_opaque_ptr (Lisp_Object obj, int UNUSED (depth))
 {
-  return (unsigned long) XOPAQUE_PTR (obj)->ptr;
+  return (Hashcode) XOPAQUE_PTR (obj)->ptr;
 }
 
 static const struct memory_description opaque_ptr_description[] = {

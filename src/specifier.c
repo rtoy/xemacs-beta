@@ -337,7 +337,7 @@ specifier_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   return retval;
 }
 
-static unsigned long
+static Hashcode
 specifier_hash (Lisp_Object obj, int depth)
 {
   Lisp_Specifier *s = XSPECIFIER (obj);
@@ -347,7 +347,7 @@ specifier_hash (Lisp_Object obj, int depth)
      the most likely places where interesting stuff will be. */
   return HASH5 ((HAS_SPECMETH_P (s, hash) ?
 		 SPECMETH (s, hash, (obj, depth)) : 0),
-		(unsigned long) s->methods,
+		(Hashcode) s->methods,
 		internal_hash (s->global_specs, depth + 1),
 		internal_hash (s->frame_specs,  depth + 1),
 		internal_hash (s->buffer_specs, depth + 1));

@@ -213,7 +213,7 @@ tty_color_instance_equal (Lisp_Color_Instance *c1,
 	      COLOR_INSTANCE_TTY_SYMBOL (c2)));
 }
 
-static unsigned long
+static Hashcode
 tty_color_instance_hash (Lisp_Color_Instance *c, int UNUSED (depth))
 {
   return LISP_HASH (COLOR_INSTANCE_TTY_SYMBOL (c));

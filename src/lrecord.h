@@ -276,7 +276,7 @@ struct lrecord_implementation
      hash to the same value in order for hash tables to work properly.
      This means that `hash' can be NULL only if the `equal' method is
      also NULL. */
-  unsigned long (*hash) (Lisp_Object, int);
+  Hashcode (*hash) (Lisp_Object, int);
 
   /* Data layout description for your object.  See long comment below. */
   const struct memory_description *description;

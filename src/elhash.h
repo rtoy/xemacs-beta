@@ -62,7 +62,7 @@ EXFUN (Fremhash, 2);
 EXFUN (Fclrhash, 1);
 
 typedef int (*hash_table_test_function_t) (Lisp_Object obj1, Lisp_Object obj2);
-typedef unsigned long (*hash_table_hash_function_t) (Lisp_Object obj);
+typedef Hashcode (*hash_table_hash_function_t) (Lisp_Object obj);
 typedef int (*maphash_function_t) (Lisp_Object key, Lisp_Object value,
 				   void* extra_arg);
 

@@ -159,19 +159,19 @@ range_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   return 1;
 }
 
-static unsigned long
+static Hashcode
 range_table_entry_hash (struct range_table_entry *rte, int depth)
 {
   return HASH3 (rte->first, rte->last, internal_hash (rte->val, depth + 1));
 }
 
-static unsigned long
+static Hashcode
 range_table_hash (Lisp_Object obj, int depth)
 {
   Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   int i;
   int size = Dynarr_length (rt->entries);
-  unsigned long hash = size;
+  Hashcode hash = size;
 
   /* approach based on internal_array_hash(). */
   if (size <= 5)

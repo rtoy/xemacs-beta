@@ -1,6 +1,6 @@
 /* Hash tables.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 2003 Ben Wing.
+   Copyright (C) 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -56,8 +56,19 @@ memory_hash (const void *xv, Bytecount size)
   return h;
 }
 
-Hashcode
-string_hash (const char *xv)
+static int
+string_equal (const void *st1, const void *st2)
+{
+  if (!st1)
+    return st2 ? 0 : 1;
+  else if (!st2)
+    return 0;
+  else
+    return !strcmp ((const char *) st1, (const char *) st2);
+}
+
+static Hashcode
+string_hash (const void *xv)
 {
   Hashcode h = 0;
   unsigned const char *x = (unsigned const char *) xv;
@@ -167,7 +178,7 @@ free_hash_table (struct hash_table *hash_table)
   xfree (hash_table, struct hash_table *);
 }
 
-struct hash_table*
+struct hash_table *
 make_hash_table (Elemcount size)
 {
   struct hash_table *hash_table = xnew_and_zero (struct hash_table);
@@ -175,6 +186,12 @@ make_hash_table (Elemcount size)
   hash_table->harray = xnew_array (hentry, hash_table->size);
   clrhash (hash_table);
   return hash_table;
+}
+
+struct hash_table *
+make_string_hash_table (Elemcount size)
+{
+  return make_general_hash_table (size, string_hash, string_equal);
 }
 
 struct hash_table *
