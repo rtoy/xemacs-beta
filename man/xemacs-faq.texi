@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/02/05 08:18:55 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/03/26 06:10:47 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -2829,10 +2829,10 @@ comprehensive list is given after it.
 
 In addition, an @file{app-defaults} file is supplied,
 @file{etc/Emacs.ad} listing the defaults.  The file
-@file{etc/sample.Xdefaults} gives a set of defaults that you might
+@file{etc/sample.Xresources} gives a set of defaults that you might
 consider.  It is essentially the same as @file{etc/Emacs.ad} but some
 entries are slightly altered.  Be careful about installing the contents
-of this file into your @file{.Xdefaults} or @file{.Xresources} file if
+of this file into your @file{.Xresources} or @file{.Xresources} file if
 you use GNU Emacs under X11 as well.
 
 @node Q3.1.2, Q3.1.3, Q3.1.1, Customization
@@ -2960,7 +2960,7 @@ bugs...
 @unnumberedsubsec Q3.2.1: How can I set color options from @file{init.el}/@file{.emacs}?
 
 How can I set the most commonly used color options from my
-@file{init.el}/@file{.emacs} instead of from my @file{.Xdefaults}?
+@file{init.el}/@file{.emacs} instead of from my @file{.Xresources}?
 
 Like this:
 
@@ -2994,7 +2994,7 @@ Like this:
 Note that you should use @samp{Emacs.} and not @samp{Emacs*} when
 setting face values.
 
-In @file{.Xdefaults}:
+In @file{.Xresources}:
 
 @example
 Emacs.default.attributeFont:  -*-*-medium-r-*-*-*-120-*-*-m-*-*-*
@@ -3002,12 +3002,14 @@ Emacs*menubar*font:           fixed
 Emacs.modeline.attributeFont: fixed
 @end example
 
-This is confusing because modeline is a face, and can be found listed
-with all faces in the current mode by using @kbd{M-x set-face-font
-(enter) ?}.  It uses the face specification of @code{attributeFont},
-while menubar is a normal X thing that uses the specification
-@code{font}.  With Motif it may be necessary to use @code{fontList}
-instead of @code{font}.
+This is confusing because @samp{default} and @samp{modeline} faces, and
+can be found listed with all faces in the current mode by using
+@kbd{M-x set-face-font (enter) ?}.  They use the face-specific resource
+@samp{attributeFont}, while menubar is a normal X thing that uses the
+specification @samp{font}.  With Motif it @emph{may be} necessary to use
+@samp{fontList} instead of @samp{font}.  With Mule in non-Motif
+configurations it @emph{is} necessary to use @samp{fontSet} instead of
+@samp{font}.
 
 @node Q3.2.3, Q3.2.4, Q3.2.2, Customization
 @unnumberedsubsec Q3.2.3: How can I set the colors when highlighting a region?
@@ -3016,7 +3018,7 @@ How can I set the background/foreground colors when highlighting a
 region?
 
 You can change the face @code{zmacs-region} either in your
-@file{.Xdefaults}:
+@file{.Xresources}:
 
 @example
 Emacs.zmacs-region.attributeForeground: firebrick
@@ -3770,16 +3772,19 @@ type @kbd{M-x customize @key{RET} buffers-menu @key{RET}}.
 I am trying to use a resource like @code{Emacs*menubar*font} to set the
 font of the menubar but it's not working.
 
-If you are using the real Motif menubar, this resource is not
-recognized; you have to say:
+In Motif, the use of @samp{font} resources is obsoleted in order to
+support internationalization.  If you are using the real Motif menubar,
+this resource is not recognized at all; you have to say:
 
 @example
 Emacs*menubar*fontList: FONT
 @end example
 
-If you are using the Lucid menubar, the former resource will be
-recognized only if the latter resource is unset.  This means that the
-resource
+If you are using the Lucid menubar, for backward compatibility of user
+configurations, the @samp{font} resource is recognized.  Since this is
+not supported by Motif itself, the code is a kludge and the @samp{font}
+resource will be recognized only if the @samp{fontList} resource
+resource is unset.  This means that the resource
 
 @example
 *fontList: FONT
@@ -3792,6 +3797,14 @@ Emacs*menubar*font: FONT
 @end example
 
 even though the latter is more specific.
+
+With Mule in non-Motif configurations it @emph{is} necessary to use
+@code{fontSet} @emph{instead of} @code{font}; the backward compatibility
+kludge was never implemented for non-Motif builds.  Example:
+
+@example
+*fontSet: FONT
+@end example
 
 @node Q3.8.5, Q3.9.1, Q3.8.4, Customization
 @unnumberedsubsec Q3.8.5: How can I bind a key to a function to toggle the toolbar?
@@ -3819,7 +3832,7 @@ code.
 @unnumberedsubsec Q3.9.1: How can I disable the scrollbar?
 
 To disable them for all frames, add the following line to
-your @file{.Xdefaults}:
+your @file{.Xresources}:
 
 @example
 Emacs.scrollBarWidth:  0

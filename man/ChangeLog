@@ -1,3 +1,13 @@
+2003-03-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q3.2.2): `default' is also a face.
+	(Q3.2.2, Q3.8.4): Describe appropriate use of `fontSet' in Mule.
+        Suggested by Janis Dzerins <jonis@dir.lv>.
+
+2003-03-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi: Global substitute .Xresources for .Xdefaults.
+
 2003-03-20  Steve Youngs  <youngs@xemacs.org>
 
 	* xemacs/packages.texi (Automatically): Refer to
