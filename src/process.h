@@ -66,12 +66,13 @@ EXFUN (Fprocess_status, 1);
 EXFUN (Fprocess_kill_without_query, 2);
 EXFUN (Fprocess_id, 1);
 
+MODULE_API
 DECLARE_DOESNT_RETURN (report_process_error (const char *, Lisp_Object));
 DECLARE_DOESNT_RETURN (report_network_error (const char *, Lisp_Object));
 extern Lisp_Object Vlisp_EXEC_SUFFIXES;
 
-Ibyte *egetenv (const CIbyte *var);
-void eputenv (const CIbyte *var, const CIbyte *value);
+MODULE_API Ibyte *egetenv (const CIbyte *var);
+MODULE_API void eputenv (const CIbyte *var, const CIbyte *value);
 extern int env_initted;
 
 extern Lisp_Object Qprocess_live_p;

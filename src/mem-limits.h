@@ -112,7 +112,7 @@ extern unsigned int lim_data;
 
 #if defined (HEAP_IN_DATA) && !defined(PDUMP)
 extern unsigned long static_heap_size;
-extern int initialized;
+extern MODULE_API int initialized;
 static void
 get_lim_data (void)
 {

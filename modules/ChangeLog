@@ -1,3 +1,11 @@
+2003-08-18  Jerry James  <james@xemacs.org>
+
+	* postgresql/postgresql.c: Include emodules.h when building a module.
+	* ldap/eldap.c: Ditto.
+	* common/Makefile.common: Make module makefiles processable by cpp.
+	* common/Makefile.common (IMPORT_LIB): New.
+	* common/Makefile.common: Use it.
+
 2003-06-11  Jerry James  <james@xemacs.org>
 
 	* common/Makefile.common: The last change re-broke FreeBSD module

@@ -27,6 +27,9 @@
 
 ## Note: This will be appended to the individual module Makefiles by configure.
 
+#define NOT_C_CODE
+#include "../../src/config.h"
+
 SHELL=/bin/sh
 RM=rm -f
 PROGNAME=@PROGNAME@
@@ -54,6 +57,9 @@ MODCFLAGS=@MODCFLAGS@
 INSTALLPATH=@INSTALLPATH@
 INSTALL_PROGRAM=@MOD_INSTALL_PROGRAM@
 OBJECT_TO_BUILD=@OBJECT_TO_BUILD@
+#ifdef HAVE_MS_WINDOWS
+IMPORT_LIB=../../src/xemacs-import.a
+#endif
 
 .PHONY:	clean distclean install
 all: $(OBJECT_TO_BUILD)
@@ -61,9 +67,9 @@ all: $(OBJECT_TO_BUILD)
 .c.o:
 	$(MODCC) $(MODCFLAGS) -c $<
 
-$(MODNAME).ell: $(OBJS) $(MODNAME)_i.o
+$(MODNAME).ell: $(OBJS) $(MODNAME)_i.o $(IMPORT_LIB)
 	$(MODCC) --mode=link --mode=verbose --mod-output=$@ \
-	$(OBJS) $(MODNAME)_i.o $(LDFLAGS)
+	$(OBJS) $(MODNAME)_i.o $(IMPORT_LIB) $(LDFLAGS)
 
 $(MODNAME)_i.c: $(SRCS)
 	ELLMAKEDOC=$(MAKE_DOCFILE) $(MODCC) --mode=init --mod-output=$@ \

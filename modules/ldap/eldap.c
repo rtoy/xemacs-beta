@@ -36,6 +36,9 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "buffer.h"
 #include "process.h"		/* for report_process_error */
+#ifdef HAVE_SHLIB
+# include "emodules.h"
+#endif
 
 #include <errno.h>
 

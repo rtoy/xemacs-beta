@@ -132,7 +132,7 @@ wrap_pointer_1 (const void *ptr)
   return obj;
 }
 
-extern Lisp_Object Qnull_pointer, Qzero;
+extern MODULE_API Lisp_Object Qnull_pointer, Qzero;
 
 #define INTP(x) ((x).s.bits)
 #define INT_PLUS(x,y)  make_int (XINT (x) + XINT (y))

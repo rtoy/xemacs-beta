@@ -218,7 +218,7 @@ enum lrecord_type
   lrecord_type_last_built_in_type /* must be last */
 };
 
-extern int lrecord_type_count;
+extern MODULE_API int lrecord_type_count;
 
 struct lrecord_implementation
 {
@@ -301,7 +301,8 @@ struct lrecord_implementation
    room in `lrecord_implementations_table' for such new lisp object types. */
 #define MODULE_DEFINABLE_TYPE_COUNT 32
 
-extern const struct lrecord_implementation *lrecord_implementations_table[lrecord_type_last_built_in_type + MODULE_DEFINABLE_TYPE_COUNT];
+extern MODULE_API const struct lrecord_implementation *
+lrecord_implementations_table[lrecord_type_last_built_in_type + MODULE_DEFINABLE_TYPE_COUNT];
 
 #define XRECORD_LHEADER_IMPLEMENTATION(obj) \
    LHEADER_IMPLEMENTATION (XRECORD_LHEADER (obj))
@@ -919,7 +920,7 @@ struct lrecord_implementation lrecord_##c_name =			\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_last_built_in_type, basic_p }
 
-extern Lisp_Object (*lrecord_markers[]) (Lisp_Object);
+extern MODULE_API Lisp_Object (*lrecord_markers[]) (Lisp_Object);
 
 #define INIT_LRECORD_IMPLEMENTATION(type) do {				\
   lrecord_implementations_table[lrecord_type_##type] = &lrecord_##type;	\
@@ -1134,6 +1135,18 @@ error_check_##c_name (Lisp_Object obj, const char *file, int line)	  \
 }									  \
 extern Lisp_Object Q##c_name##p
 
+# define DECLARE_MODULE_API_LRECORD(c_name, structtype)			  \
+extern MODULE_API const struct lrecord_implementation lrecord_##c_name;	  \
+DECLARE_INLINE_HEADER (							  \
+structtype *								  \
+error_check_##c_name (Lisp_Object obj, const char *file, int line)	  \
+)									  \
+{									  \
+  assert_at_line (RECORD_TYPEP (obj, lrecord_type_##c_name), file, line); \
+  return (structtype *) XPNTR (obj);					  \
+}									  \
+extern MODULE_API Lisp_Object Q##c_name##p
+
 # define DECLARE_EXTERNAL_LRECORD(c_name, structtype)			  \
 extern int lrecord_type_##c_name;					  \
 extern struct lrecord_implementation lrecord_##c_name;			  \
@@ -1347,8 +1360,9 @@ Lisp_Object alloc_managed_lcrecord (Lisp_Object lcrecord_list);
 void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 
 /* AUTO-MANAGED MODEL: */
-void *alloc_automanaged_lcrecord (Bytecount size,
-				  const struct lrecord_implementation *);
+MODULE_API void *
+alloc_automanaged_lcrecord (Bytecount size,
+			    const struct lrecord_implementation *);
 #define alloc_lcrecord_type(type, lrecord_implementation) \
   ((type *) alloc_automanaged_lcrecord (sizeof (type), lrecord_implementation))
 void free_lcrecord (Lisp_Object rec);
@@ -1464,7 +1478,7 @@ void dump_add_weak_object_chain (Lisp_Object *);
 
 /* Nonzero means Emacs has already been initialized.
    Used during startup to detect startup of dumped Emacs.  */
-extern int initialized;
+extern MODULE_API int initialized;
 
 #ifdef PDUMP
 

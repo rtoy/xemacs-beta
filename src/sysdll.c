@@ -210,11 +210,10 @@ dll_variable (dll_handle h, const char *n)
 {
   return dld_get_symbol (n);
 }
-#elif defined (WIN32_NATIVE)
+#elif defined (WIN32_NATIVE) || defined (CYGWIN)
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
+#include "syswindows.h"
+#include "sysfile.h"
 
 int
 dll_init (const char *arg)
@@ -225,7 +224,10 @@ dll_init (const char *arg)
 dll_handle
 dll_open (const char *fname)
 {
-  return (dll_handle) LoadLibrary (fname);
+  Ibyte *winfname, *unifname;
+  LOCAL_TO_WIN32_FILE_FORMAT ((char *) fname, winfname);
+  C_STRING_TO_TSTR (winfname, unifname);
+  return (dll_handle) qxeLoadLibrary (unifname);
 }
 
 int
@@ -249,7 +251,10 @@ dll_variable (dll_handle h, const char *n)
 const char *
 dll_error (dll_handle h)
 {
-  return "Windows DLL Error";
+  /* Since nobody frees the returned string, I have to make this ugly hack. */
+  static char err[32] = "Windows DLL Error ";
+  snprintf (&err[18], 14, "%lu", GetLastError ());
+  return err;
 }
 #elif defined(HAVE_DYLD)
 /* This section supports MacOSX dynamic libraries. Dynamically

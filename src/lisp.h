@@ -928,6 +928,16 @@ typedef unsigned long uintptr_t;
 /*#define REGISTER register*/
 /*#endif*/
 
+#if defined(HAVE_MS_WINDOWS) && defined(HAVE_SHLIB)
+# ifdef EMACS_MODULE
+#  define MODULE_API __declspec(dllimport)
+# else
+#  define MODULE_API __declspec(dllexport)
+# endif
+#else
+# define MODULE_API
+#endif
+
 /* ------------------------ alignment definitions ------------------- */
 
 /* No type has a greater alignment requirement than max_align_t.
@@ -1012,7 +1022,7 @@ template<typename T> struct alignment_trick { char c; T member; };
 #ifdef USE_ASSERTIONS
 /* Highly dubious kludge */
 /*   (thanks, Jamie, I feel better now -- ben) */
-void assert_failed (const char *, int, const char *);
+MODULE_API void assert_failed (const char *, int, const char *);
 # define abort() (assert_failed (__FILE__, __LINE__, "abort()"))
 # define assert(x) ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, #x))
 # define assert_with_message(x, msg) \
@@ -1073,10 +1083,10 @@ void assert_failed (const char *, int, const char *);
 
 /* Memory allocation */
 void malloc_warning (const char *);
-void *xmalloc (Bytecount size);
-void *xmalloc_and_zero (Bytecount size);
-void *xrealloc (void *, Bytecount size);
-char *xstrdup (const char *);
+MODULE_API void *xmalloc (Bytecount size);
+MODULE_API void *xmalloc_and_zero (Bytecount size);
+MODULE_API void *xrealloc (void *, Bytecount size);
+MODULE_API char *xstrdup (const char *);
 /* generally useful */
 #define countof(x) ((int) (sizeof(x)/sizeof((x)[0])))
 #define xnew(type) ((type *) xmalloc (sizeof (type)))
@@ -1088,9 +1098,9 @@ char *xstrdup (const char *);
 #define alloca_new(type) ((type *) ALLOCA (sizeof (type)))
 #define alloca_array(type, len) ((type *) ALLOCA ((len) * sizeof (type)))
 
-void *xemacs_c_alloca (unsigned int size);
+MODULE_API void *xemacs_c_alloca (unsigned int size);
 
-int record_unwind_protect_freeing (void *ptr);
+MODULE_API int record_unwind_protect_freeing (void *ptr);
 
 DECLARE_INLINE_HEADER (
 void *
@@ -1144,11 +1154,11 @@ xmalloc_and_record_unwind (Bytecount size)
 
 #define MAX_FUNCALLS_BETWEEN_ALLOCA_CLEANUP 10
 
-extern Bytecount __temp_alloca_size__;
+extern MODULE_API Bytecount __temp_alloca_size__;
 extern Bytecount funcall_alloca_count;
 
 #ifdef ERROR_CHECK_MALLOC
-extern int regex_malloc_disallowed;
+extern MODULE_API int regex_malloc_disallowed;
 #define REGEX_MALLOC_CHECK() assert (!regex_malloc_disallowed)
 #else
 #define REGEX_MALLOC_CHECK() ((void) 0)
@@ -1210,7 +1220,7 @@ expression has side effects -- something easy to forget. */
 } while (0)
 
 #ifdef ERROR_CHECK_MALLOC
-void xfree_1 (void *);
+MODULE_API void xfree_1 (void *);
 #define xfree(lvalue) do			\
 {						\
   void **xfree_ptr = (void **) &(lvalue);	\
@@ -1218,7 +1228,7 @@ void xfree_1 (void *);
   *xfree_ptr = (void *) 0xDEADBEEF;		\
 } while (0)
 #else
-void xfree (void *);
+MODULE_API void xfree (void *);
 #endif /* ERROR_CHECK_MALLOC */
 
 /* ------------------------ dynamic arrays ------------------- */
@@ -1245,11 +1255,11 @@ typedef struct dynarr
   Dynarr_declare (void);
 } Dynarr;
 
-void *Dynarr_newf (int elsize);
-void Dynarr_resize (void *dy, int size);
-void Dynarr_insert_many (void *d, const void *el, int len, int start);
-void Dynarr_delete_many (void *d, int start, int len);
-void Dynarr_free (void *d);
+MODULE_API void *Dynarr_newf (int elsize);
+MODULE_API void Dynarr_resize (void *dy, int size);
+MODULE_API void Dynarr_insert_many (void *d, const void *el, int len, int start);
+MODULE_API void Dynarr_delete_many (void *d, int start, int len);
+MODULE_API void Dynarr_free (void *d);
 
 #define Dynarr_new(type) ((type##_dynarr *) Dynarr_newf (sizeof (type)))
 #define Dynarr_new2(dynarr_type, type) \
@@ -1651,8 +1661,8 @@ typedef struct
 		       && XCHAR_OR_INT (obj1) == XCHAR_OR_INT (obj2)))
 
 #ifdef DEBUG_XEMACS
-extern int debug_issue_ebola_notices;
-int eq_with_ebola_notice (Lisp_Object, Lisp_Object);
+extern MODULE_API int debug_issue_ebola_notices;
+MODULE_API int eq_with_ebola_notice (Lisp_Object, Lisp_Object);
 #define EQ_WITH_EBOLA_NOTICE(obj1, obj2)				\
   (debug_issue_ebola_notices ? eq_with_ebola_notice (obj1, obj2)	\
    : EQ (obj1, obj2))
@@ -1708,7 +1718,7 @@ struct Lisp_Buffer_Cons
 };
 #endif
 
-DECLARE_LRECORD (cons, Lisp_Cons);
+DECLARE_MODULE_API_LRECORD (cons, Lisp_Cons);
 #define XCONS(x) XRECORD (x, cons, Lisp_Cons)
 #define wrap_cons(p) wrap_record (p, cons)
 #define CONSP(x) RECORDP (x, cons)
@@ -1718,7 +1728,7 @@ DECLARE_LRECORD (cons, Lisp_Cons);
 #define CONS_MARKED_P(c) MARKED_RECORD_HEADER_P(&((c)->lheader))
 #define MARK_CONS(c) MARK_RECORD_HEADER (&((c)->lheader))
 
-extern Lisp_Object Qnil;
+extern MODULE_API Lisp_Object Qnil;
 
 #define NILP(x)  EQ (x, Qnil)
 #define cons_car(a) ((a)->car_)
@@ -2264,7 +2274,7 @@ typedef struct Lisp_String Lisp_String;
 
 #define MAX_STRING_ASCII_BEGIN ((1 << 21) - 1)
 
-DECLARE_LRECORD (string, Lisp_String);
+DECLARE_MODULE_API_LRECORD (string, Lisp_String);
 #define XSTRING(x) XRECORD (x, string, Lisp_String)
 #define wrap_string(p) wrap_record (p, string)
 #define STRINGP(x) RECORDP (x, string)
@@ -2430,7 +2440,7 @@ struct Lisp_Symbol
 			 XSTRING_LENGTH (symbol_name (XSYMBOL (sym))))))
 #define KEYWORDP(obj) (SYMBOLP (obj) && SYMBOL_IS_KEYWORD (obj))
 
-DECLARE_LRECORD (symbol, Lisp_Symbol);
+DECLARE_MODULE_API_LRECORD (symbol, Lisp_Symbol);
 #define XSYMBOL(x) XRECORD (x, symbol, Lisp_Symbol)
 #define wrap_symbol(p) wrap_record (p, symbol)
 #define SYMBOLP(x) RECORDP (x, symbol)
@@ -2494,7 +2504,7 @@ struct Lisp_Marker
   char insertion_type;
 };
 
-DECLARE_LRECORD (marker, Lisp_Marker);
+DECLARE_MODULE_API_LRECORD (marker, Lisp_Marker);
 #define XMARKER(x) XRECORD (x, marker, Lisp_Marker)
 #define wrap_marker(p) wrap_record (p, marker)
 #define MARKERP(x) RECORDP (x, marker)
@@ -2953,7 +2963,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
 
    specpdl_depth is the current depth of `specpdl'.
    Save this for use later as arg to `unbind_to_1'.  */
-extern int specpdl_depth_counter;
+extern MODULE_API int specpdl_depth_counter;
 #define specpdl_depth() specpdl_depth_counter
 
 
@@ -2985,15 +2995,15 @@ extern int specpdl_depth_counter;
    within the QUIT macro.  At this point, we are guaranteed to not be in
    any sensitive code. */
 
-extern volatile int something_happened;
-extern int dont_check_for_quit;
-void check_what_happened (void);
+extern MODULE_API volatile int something_happened;
+extern MODULE_API int dont_check_for_quit;
+MODULE_API void check_what_happened (void);
 
-extern volatile int quit_check_signal_happened;
+extern MODULE_API volatile int quit_check_signal_happened;
 extern volatile int quit_check_signal_tick_count;
-void check_quit (void);
+MODULE_API void check_quit (void);
 
-void signal_quit (void);
+MODULE_API void signal_quit (void);
 
 int begin_dont_check_for_quit (void);
 int begin_do_check_for_quit (void);
@@ -3126,7 +3136,7 @@ unsigned long internal_array_hash (Lisp_Object *arr, int size, int depth);
    Every function that can call Feval must protect in this fashion all
    Lisp_Object variables whose contents will be used again. */
 
-extern struct gcpro *gcprolist;
+extern MODULE_API struct gcpro *gcprolist;
 
 /* #### Catching insufficient gcpro:
 
@@ -3196,18 +3206,20 @@ struct gcpro
 
 #ifdef DEBUG_GCPRO
 
-void debug_gcpro1 (char *, int, struct gcpro *, Lisp_Object *);
-void debug_gcpro2 (char *, int, struct gcpro *, struct gcpro *,
-		   Lisp_Object *, Lisp_Object *);
-void debug_gcpro3 (char *, int, struct gcpro *, struct gcpro *, struct gcpro *,
-		   Lisp_Object *, Lisp_Object *, Lisp_Object *);
-void debug_gcpro4 (char *, int, struct gcpro *, struct gcpro *, struct gcpro *,
-		   struct gcpro *, Lisp_Object *, Lisp_Object *, Lisp_Object *,
-		   Lisp_Object *);
-void debug_gcpro5 (char *, int, struct gcpro *, struct gcpro *, struct gcpro *,
-		   struct gcpro *, struct gcpro *, Lisp_Object *, Lisp_Object *,
-		   Lisp_Object *, Lisp_Object *, Lisp_Object *);
-void debug_ungcpro(char *, int, struct gcpro *);
+MODULE_API void debug_gcpro1 (char *, int, struct gcpro *, Lisp_Object *);
+MODULE_API void debug_gcpro2 (char *, int, struct gcpro *, struct gcpro *,
+			      Lisp_Object *, Lisp_Object *);
+MODULE_API void debug_gcpro3 (char *, int, struct gcpro *, struct gcpro *,
+			      struct gcpro *, Lisp_Object *, Lisp_Object *,
+			      Lisp_Object *);
+MODULE_API void debug_gcpro4 (char *, int, struct gcpro *, struct gcpro *,
+			      struct gcpro *, struct gcpro *, Lisp_Object *,
+			      Lisp_Object *, Lisp_Object *, Lisp_Object *);
+MODULE_API void debug_gcpro5 (char *, int, struct gcpro *, struct gcpro *,
+			      struct gcpro *, struct gcpro *, struct gcpro *,
+			      Lisp_Object *, Lisp_Object *, Lisp_Object *,
+			      Lisp_Object *, Lisp_Object *);
+MODULE_API void debug_ungcpro(char *, int, struct gcpro *);
 
 #define GCPRO1(v) \
  debug_gcpro1 (__FILE__, __LINE__,&gcpro1,&v)
@@ -3457,28 +3469,28 @@ extern Lisp_Object_ptr_dynarr *staticpros;
 
 /* Help debug crashes gc-marking a staticpro'ed object. */
 
-void staticpro_1 (Lisp_Object *, char *);
-void staticpro_nodump_1 (Lisp_Object *, char *);
+MODULE_API void staticpro_1 (Lisp_Object *, char *);
+MODULE_API void staticpro_nodump_1 (Lisp_Object *, char *);
 #define staticpro(ptr) staticpro_1 (ptr, #ptr)
 #define staticpro_nodump(ptr) staticpro_nodump_1 (ptr, #ptr)
 
 #ifdef HAVE_SHLIB
-void unstaticpro_nodump_1 (Lisp_Object *, char *);
+MODULE_API void unstaticpro_nodump_1 (Lisp_Object *, char *);
 #define unstaticpro_nodump(ptr) unstaticpro_nodump_1 (ptr, #ptr)
 #endif
 
 #else
 
 /* Call staticpro (&var) to protect static variable `var'. */
-void staticpro (Lisp_Object *);
+MODULE_API void staticpro (Lisp_Object *);
 
 /* Call staticpro_nodump (&var) to protect static variable `var'. */
 /* var will not be saved at dump time */
-void staticpro_nodump (Lisp_Object *);
+MODULE_API void staticpro_nodump (Lisp_Object *);
 
 #ifdef HAVE_SHLIB
 /* Call unstaticpro_nodump (&var) to stop protecting static variable `var'. */
-void unstaticpro_nodump (Lisp_Object *);
+MODULE_API void unstaticpro_nodump (Lisp_Object *);
 #endif
 
 #endif
@@ -3512,55 +3524,56 @@ void end_gc_forbidden (int count);
 #include "symsinit.h"
 
 /* Defined in abbrev.c */
-EXFUN (Fexpand_abbrev, 0);
+MODULE_API EXFUN (Fexpand_abbrev, 0);
 
 /* Defined in alloc.c */
-EXFUN (Fcons, 2);
-EXFUN (Flist, MANY);
+MODULE_API EXFUN (Fcons, 2);
+MODULE_API EXFUN (Flist, MANY);
 EXFUN (Fmake_byte_code, MANY);
-EXFUN (Fmake_list, 2);
-EXFUN (Fmake_string, 2);
-EXFUN (Fmake_symbol, 1);
-EXFUN (Fmake_vector, 2);
-EXFUN (Fvector, MANY);
+MODULE_API EXFUN (Fmake_list, 2);
+MODULE_API EXFUN (Fmake_string, 2);
+MODULE_API EXFUN (Fmake_symbol, 1);
+MODULE_API EXFUN (Fmake_vector, 2);
+MODULE_API EXFUN (Fvector, MANY);
 
 void release_breathing_space (void);
 Lisp_Object noseeum_cons (Lisp_Object, Lisp_Object);
-Lisp_Object make_vector (Elemcount, Lisp_Object);
-Lisp_Object vector1 (Lisp_Object);
-Lisp_Object vector2 (Lisp_Object, Lisp_Object);
-Lisp_Object vector3 (Lisp_Object, Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object make_vector (Elemcount, Lisp_Object);
+MODULE_API Lisp_Object vector1 (Lisp_Object);
+MODULE_API Lisp_Object vector2 (Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object vector3 (Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object make_bit_vector (Elemcount, Lisp_Object);
 Lisp_Object make_bit_vector_from_byte_vector (unsigned char *, Elemcount);
 Lisp_Object noseeum_make_marker (void);
 void garbage_collect_1 (void);
-Lisp_Object acons (Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object cons3 (Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object list1 (Lisp_Object);
-Lisp_Object list2 (Lisp_Object, Lisp_Object);
-Lisp_Object list3 (Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object list4 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
-		   Lisp_Object);
-Lisp_Object list6 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
-		   Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object acons (Lisp_Object, Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object cons3 (Lisp_Object, Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object list1 (Lisp_Object);
+MODULE_API Lisp_Object list2 (Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object list3 (Lisp_Object, Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object list4 (Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object);
+MODULE_API Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object);
+MODULE_API Lisp_Object list6 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object, Lisp_Object);
 DECLARE_DOESNT_RETURN (memory_full (void));
 void disksave_object_finalization (void);
 extern int purify_flag;
 extern EMACS_INT gc_generation_number[1];
 int c_readonly (Lisp_Object);
 int lisp_readonly (Lisp_Object);
-void copy_lisp_object (Lisp_Object dst, Lisp_Object src);
-Lisp_Object build_intstring (const Ibyte *);
-Lisp_Object build_string (const CIbyte *);
-Lisp_Object build_ext_string (const Extbyte *, Lisp_Object);
-Lisp_Object build_msg_intstring (const Ibyte *);
-Lisp_Object build_msg_string (const CIbyte *);
-Lisp_Object make_string (const Ibyte *, Bytecount);
-Lisp_Object make_ext_string (const Extbyte *, EMACS_INT, Lisp_Object);
+MODULE_API void copy_lisp_object (Lisp_Object dst, Lisp_Object src);
+MODULE_API Lisp_Object build_intstring (const Ibyte *);
+MODULE_API Lisp_Object build_string (const CIbyte *);
+MODULE_API Lisp_Object build_ext_string (const Extbyte *, Lisp_Object);
+MODULE_API Lisp_Object build_msg_intstring (const Ibyte *);
+MODULE_API Lisp_Object build_msg_string (const CIbyte *);
+MODULE_API Lisp_Object make_string (const Ibyte *, Bytecount);
+MODULE_API Lisp_Object make_ext_string (const Extbyte *, EMACS_INT, Lisp_Object);
 void init_string_ascii_begin (Lisp_Object string);
 Lisp_Object make_uninit_string (Bytecount);
-Lisp_Object make_float (double);
+MODULE_API Lisp_Object make_float (double);
 Lisp_Object make_string_nocopy (const Ibyte *, Bytecount);
 void free_cons (Lisp_Object);
 void free_list (Lisp_Object);
@@ -3574,7 +3587,7 @@ void kkcc_gc_stack_push_lisp_object (Lisp_Object obj);
 int marked_p (Lisp_Object obj);
 extern int funcall_allocation_flag;
 extern int need_to_garbage_collect;
-extern int need_to_check_c_alloca;
+extern MODULE_API int need_to_check_c_alloca;
 extern int need_to_signal_post_gc;
 extern Lisp_Object Qpost_gc_hook, Qgarbage_collecting;
 void recompute_funcall_allocation_flag (void);
@@ -3628,17 +3641,17 @@ extern struct buffer *current_buffer;
 extern void init_initial_directory (void);   /* initialize initial_directory */
 
 EXFUN (Fbuffer_disable_undo, 1);
-EXFUN (Fbuffer_modified_p, 1);
-EXFUN (Fbuffer_name, 1);
-EXFUN (Fcurrent_buffer, 0);
+MODULE_API EXFUN (Fbuffer_modified_p, 1);
+MODULE_API EXFUN (Fbuffer_name, 1);
+MODULE_API EXFUN (Fcurrent_buffer, 0);
 EXFUN (Ferase_buffer, 1);
 EXFUN (Fget_buffer, 1);
 EXFUN (Fget_buffer_create, 1);
 EXFUN (Fget_file_buffer, 1);
-EXFUN (Fkill_buffer, 1);
+MODULE_API EXFUN (Fkill_buffer, 1);
 EXFUN (Fother_buffer, 3);
 EXFUN (Frecord_buffer, 1);
-EXFUN (Fset_buffer, 1);
+MODULE_API EXFUN (Fset_buffer, 1);
 EXFUN (Fset_buffer_modified_p, 2);
 
 extern Lisp_Object QSscratch, Qafter_change_function, Qafter_change_functions;
@@ -3711,7 +3724,8 @@ DECLARE_DOESNT_RETURN (lisp_write_error (Lisp_Object));
 DECLARE_DOESNT_RETURN (args_out_of_range (Lisp_Object, Lisp_Object));
 DECLARE_DOESNT_RETURN (args_out_of_range_3 (Lisp_Object, Lisp_Object,
 					    Lisp_Object));
-Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
+MODULE_API
 DECLARE_DOESNT_RETURN (dead_wrong_type_argument (Lisp_Object, Lisp_Object));
 void check_int_range (EMACS_INT, EMACS_INT, EMACS_INT);
 
@@ -3867,15 +3881,15 @@ EXFUN (Fcall_with_condition_handler, MANY);
 EXFUN (Ffunction_max_args, 1);
 EXFUN (Ffunction_min_args, 1);
 
-DECLARE_DOESNT_RETURN (signal_error_1 (Lisp_Object, Lisp_Object));
+MODULE_API DECLARE_DOESNT_RETURN (signal_error_1 (Lisp_Object, Lisp_Object));
 void maybe_signal_error_1 (Lisp_Object, Lisp_Object, Lisp_Object,
 			   Error_Behavior);
 Lisp_Object maybe_signal_continuable_error_1 (Lisp_Object, Lisp_Object,
 					      Lisp_Object, Error_Behavior);
-DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror
-						  (Lisp_Object,
-						   const CIbyte *,
-						   ...), 2, 3);
+MODULE_API DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror
+							     (Lisp_Object,
+							      const CIbyte *,
+							      ...), 2, 3);
 void maybe_signal_ferror (Lisp_Object, Lisp_Object, Error_Behavior,
 			  const CIbyte *, ...) PRINTF_ARGS (4, 5);
 Lisp_Object signal_continuable_ferror (Lisp_Object, const CIbyte *, ...)
@@ -3940,20 +3954,20 @@ DECLARE_DOESNT_RETURN (sferror_2 (const CIbyte *reason, Lisp_Object frob1,
 				  Lisp_Object frob2));
 void maybe_sferror (const CIbyte *, Lisp_Object, Lisp_Object,
 		    Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_argument (const CIbyte *reason,
-					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_argument_2 (const CIbyte *reason,
-					   Lisp_Object frob1,
-					   Lisp_Object frob2));
+MODULE_API DECLARE_DOESNT_RETURN (invalid_argument (const CIbyte *reason,
+						    Lisp_Object frob));
+MODULE_API DECLARE_DOESNT_RETURN (invalid_argument_2 (const CIbyte *reason,
+						      Lisp_Object frob1,
+						      Lisp_Object frob2));
 void maybe_invalid_argument (const CIbyte *, Lisp_Object, Lisp_Object,
 			     Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_operation (const CIbyte *reason,
-					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_operation_2 (const CIbyte *reason,
-					   Lisp_Object frob1,
-					   Lisp_Object frob2));
-void maybe_invalid_operation (const CIbyte *, Lisp_Object, Lisp_Object,
-			     Error_Behavior);
+MODULE_API DECLARE_DOESNT_RETURN (invalid_operation (const CIbyte *reason,
+						     Lisp_Object frob));
+MODULE_API DECLARE_DOESNT_RETURN (invalid_operation_2 (const CIbyte *reason,
+						       Lisp_Object frob1,
+						       Lisp_Object frob2));
+MODULE_API void maybe_invalid_operation (const CIbyte *, Lisp_Object,
+					 Lisp_Object, Error_Behavior);
 DECLARE_DOESNT_RETURN (invalid_state (const CIbyte *reason,
 					 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (invalid_state_2 (const CIbyte *reason,
@@ -3968,18 +3982,19 @@ DECLARE_DOESNT_RETURN (invalid_change_2 (const CIbyte *reason,
 					   Lisp_Object frob2));
 void maybe_invalid_change (const CIbyte *, Lisp_Object, Lisp_Object,
 			   Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_constant (const CIbyte *reason,
-					 Lisp_Object frob));
+MODULE_API DECLARE_DOESNT_RETURN (invalid_constant (const CIbyte *reason,
+						    Lisp_Object frob));
 DECLARE_DOESNT_RETURN (invalid_constant_2 (const CIbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
 void maybe_invalid_constant (const CIbyte *, Lisp_Object, Lisp_Object,
 			     Error_Behavior);
 DECLARE_DOESNT_RETURN (wtaerror (const CIbyte *reason, Lisp_Object frob));
-DECLARE_DOESNT_RETURN (out_of_memory (const CIbyte *reason,
-				      Lisp_Object frob));
+MODULE_API DECLARE_DOESNT_RETURN (out_of_memory (const CIbyte *reason,
+						 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (stack_overflow (const CIbyte *reason,
 				       Lisp_Object frob));
+MODULE_API
 DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (printing_unreadable_object
 						  (const CIbyte *,
 						   ...), 1, 2);
@@ -4139,11 +4154,11 @@ Lisp_Object condition_case_1 (Lisp_Object,
 			      Lisp_Object (*) (Lisp_Object, Lisp_Object),
 			      Lisp_Object);
 Lisp_Object condition_case_3 (Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object unbind_to_1 (int, Lisp_Object);
+MODULE_API Lisp_Object unbind_to_1 (int, Lisp_Object);
 #define unbind_to(obj) unbind_to_1 (obj, Qnil)
 void specbind (Lisp_Object, Lisp_Object);
-int record_unwind_protect (Lisp_Object (*) (Lisp_Object), Lisp_Object);
-int record_unwind_protect_freeing (void *ptr);
+MODULE_API int record_unwind_protect (Lisp_Object (*) (Lisp_Object),
+				      Lisp_Object);
 int record_unwind_protect_freeing_dynarr (void *ptr);
 int record_unwind_protect_restoring_int (int *addr, int val);
 int internal_bind_int (int *addr, int newval);
@@ -4151,8 +4166,8 @@ int internal_bind_lisp_object (Lisp_Object *addr, Lisp_Object newval);
 void do_autoload (Lisp_Object, Lisp_Object); /* GCPROs both arguments */
 Lisp_Object un_autoload (Lisp_Object);
 void warn_when_safe_lispobj (Lisp_Object, Lisp_Object, Lisp_Object);
-void warn_when_safe (Lisp_Object, Lisp_Object, const CIbyte *,
-		     ...) PRINTF_ARGS (3, 4);
+MODULE_API void warn_when_safe (Lisp_Object, Lisp_Object, const CIbyte *,
+				...) PRINTF_ARGS (3, 4);
 extern int backtrace_with_internal_sections;
 
 extern Lisp_Object Vstack_trace_on_error;
@@ -4239,7 +4254,8 @@ extern Lisp_Object Vterminal_coding_system;
 extern Lisp_Object Qcanonicalize_after_coding;
 int coding_system_is_for_text_file (Lisp_Object coding_system);
 Lisp_Object find_coding_system_for_text_file (Lisp_Object name, int eol_wrap);
-Lisp_Object get_coding_system_for_text_file (Lisp_Object name, int eol_wrap);
+MODULE_API Lisp_Object get_coding_system_for_text_file (Lisp_Object name,
+							int eol_wrap);
 int coding_system_is_binary (Lisp_Object coding_system);
 
 
@@ -4293,7 +4309,7 @@ EXFUN (Ftruncate, 1);
 double extract_float (Lisp_Object);
 
 /* Defined in fns.c */
-EXFUN (Fappend, MANY);
+MODULE_API EXFUN (Fappend, MANY);
 EXFUN (Fassoc, 2);
 EXFUN (Fassq, 2);
 EXFUN (Fcanonicalize_lax_plist, 2);
@@ -4308,17 +4324,17 @@ EXFUN (Fdelete, 2);
 EXFUN (Fdelq, 2);
 EXFUN (Fdestructive_alist_to_plist, 1);
 EXFUN (Felt, 2);
-EXFUN (Fequal, 2);
-EXFUN (Fget, 3);
+MODULE_API EXFUN (Fequal, 2);
+MODULE_API EXFUN (Fget, 3);
 EXFUN (Flast, 2);
 EXFUN (Flax_plist_get, 3);
 EXFUN (Flax_plist_remprop, 2);
-EXFUN (Flength, 1);
+MODULE_API EXFUN (Flength, 1);
 EXFUN (Fmapcar, 2);
 EXFUN (Fmember, 2);
 EXFUN (Fmemq, 2);
 EXFUN (Fnconc, MANY);
-EXFUN (Fnreverse, 1);
+MODULE_API EXFUN (Fnreverse, 1);
 EXFUN (Fnthcdr, 2);
 EXFUN (Fold_assq, 2);
 EXFUN (Fold_equal, 2);
@@ -4327,11 +4343,12 @@ EXFUN (Fold_memq, 2);
 EXFUN (Fplist_get, 3);
 EXFUN (Fplist_member, 2);
 EXFUN (Fplist_put, 3);
-EXFUN (Fprovide, 1);
-EXFUN (Fput, 3);
+MODULE_API EXFUN (Fprovide, 1);
+MODULE_API EXFUN (Fput, 3);
 EXFUN (Frassq, 2);
 EXFUN (Fremassq, 2);
 EXFUN (Freplace_list, 2);
+MODULE_API EXFUN (Freverse, 1);
 EXFUN (Fsafe_length, 1);
 EXFUN (Fsort, 2);
 EXFUN (Fstring_equal, 2);
@@ -4501,7 +4518,7 @@ Lisp_Object echo_area_contents (struct frame *);
 void message_internal (const Ibyte *, Lisp_Object, Bytecount, Bytecount);
 void message_append_internal (const Ibyte *, Lisp_Object,
 			      Bytecount, Bytecount);
-void message (const char *, ...) PRINTF_ARGS (1, 2);
+MODULE_API void message (const char *, ...) PRINTF_ARGS (1, 2);
 void message_append (const char *, ...) PRINTF_ARGS (1, 2);
 void message_no_translate (const char *, ...) PRINTF_ARGS (1, 2);
 void clear_message (void);
@@ -4530,17 +4547,17 @@ void debug_backtrace (void);
 /* NOTE: Do not call this with the data of a Lisp_String.  Use princ.
  * Note: stream should be defaulted before calling
  *  (eg Qnil means stdout, not Vstandard_output, etc) */
-void write_c_string (Lisp_Object stream, const CIbyte *str);
+MODULE_API void write_c_string (Lisp_Object stream, const CIbyte *str);
 /* Same goes for this function. */
-void write_string (Lisp_Object stream, const Ibyte *str);
+MODULE_API void write_string (Lisp_Object stream, const Ibyte *str);
 /* Same goes for this function. */
 void write_string_1 (Lisp_Object stream, const Ibyte *str, Bytecount size);
 void write_eistring (Lisp_Object stream, const Eistring *ei);
 
 /* Higher-level (printf-style) ways to output data: */
-void write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...);
-void write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt,
-			    int nargs, ...);
+MODULE_API void write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...);
+MODULE_API void write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt,
+				       int nargs, ...);
 void stderr_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 void stderr_out_lisp (const CIbyte *, int nargs, ...);
 void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
@@ -4570,7 +4587,7 @@ void print_float (Lisp_Object, Lisp_Object, int);
 (((2410824 * sizeof (integral_type)) / 1000000) + 3)
 void long_to_string (char *, long);
 extern int print_escape_newlines;
-extern int print_readably;
+extern MODULE_API int print_readably;
 Lisp_Object internal_with_output_to_temp_buffer (Lisp_Object,
 						 Lisp_Object (*) (Lisp_Object),
 						 Lisp_Object, Lisp_Object);
@@ -4659,7 +4676,7 @@ EXFUN (Fsymbol_value, 1);
 
 unsigned int hash_string (const Ibyte *, Bytecount);
 Lisp_Object intern_int (const Ibyte *str);
-Lisp_Object intern (const CIbyte *str);
+MODULE_API Lisp_Object intern (const CIbyte *str);
 Lisp_Object intern_converting_underscores_to_dashes (const CIbyte *str);
 Lisp_Object oblookup (Lisp_Object, const Ibyte *, Bytecount);
 void map_obarray (Lisp_Object, int (*) (Lisp_Object, void *), void *);
@@ -5161,8 +5178,8 @@ extern Lisp_Object Qfile_name_sans_extension, Qfinal;
 extern Lisp_Object Qforeground, Qformat, Qframe_live_p, Qgraphic;
 extern Lisp_Object Qgui_error, Qicon_glyph_p, Qidentity, Qinhibit_quit;
 extern Lisp_Object Qinhibit_read_only, Qinteger_char_or_marker_p;
-extern Lisp_Object Qinteger_or_char_p, Qinteger_or_marker_p, Qintegerp;
-extern Lisp_Object Qinteractive, Qinternal_error, Qinvalid_argument;
+extern Lisp_Object Qinteger_or_char_p, Qinteger_or_marker_p;
+extern Lisp_Object Qinteractive, Qinternal_error;
 extern Lisp_Object Qinvalid_byte_code, Qinvalid_change, Qinvalid_constant;
 extern Lisp_Object Qinvalid_function, Qinvalid_operation;
 extern Lisp_Object Qinvalid_read_syntax, Qinvalid_state, Qio_error, Qlambda;
@@ -5176,7 +5193,7 @@ extern Lisp_Object Qnumberp, Qout_of_memory;
 extern Lisp_Object Qoverflow_error, Qpoint, Qpointer_glyph_p;
 extern Lisp_Object Qpointer_image_instance_p, Qprint_length;
 extern Lisp_Object Qprint_string_length, Qprinting_unreadable_object;
-extern Lisp_Object Qprocess_error, Qprogn, Qquit, Qquote, Qrange_error;
+extern Lisp_Object Qprogn, Qquit, Qquote, Qrange_error;
 extern Lisp_Object Qread_char, Qread_from_minibuffer;
 extern Lisp_Object Qreally_early_error_handler, Qregion_beginning;
 extern Lisp_Object Qregion_end, Qregistry, Qreverse_direction_charset;
@@ -5186,15 +5203,19 @@ extern Lisp_Object Qset, Qsetting_constant, Qshort_name, Qsingularity_error;
 extern Lisp_Object Qsound_error, Qstack_overflow, Qstandard_input;
 extern Lisp_Object Qstandard_output, Qstart_open, Qstring_lessp;
 extern Lisp_Object Qstructure_formation_error, Qsubwindow;
-extern Lisp_Object Qsubwindow_image_instance_p, Qsyntax_error, Qt;
+extern Lisp_Object Qsubwindow_image_instance_p;
 extern Lisp_Object Qtext_conversion_error, Qtext_image_instance_p, Qtop_level;
-extern Lisp_Object Qtrue_list_p, Qunbound, Qunderflow_error, Qunderline;
+extern Lisp_Object Qtrue_list_p, Qunderflow_error, Qunderline;
 extern Lisp_Object Quser_files_and_directories, Qvalues;
 extern Lisp_Object Qvariable_documentation, Qvariable_domain, Qvoid_function;
 extern Lisp_Object Qvoid_variable, Qwindow_live_p, Qwrong_number_of_arguments;
 extern Lisp_Object Qwrong_type_argument, Qyes_or_no_p;
 
+extern MODULE_API Lisp_Object Qintegerp, Qinvalid_argument, Qprocess_error;
+extern MODULE_API Lisp_Object Qsyntax_error, Qt, Qunbound;
+
 #define SYMBOL(fou) extern Lisp_Object fou
+#define SYMBOL_MODULE_API(fou) extern MODULE_API Lisp_Object fou
 #define SYMBOL_KEYWORD(la_cle_est_fou) extern Lisp_Object la_cle_est_fou
 #define SYMBOL_GENERAL(tout_le_monde, est_fou) \
   extern Lisp_Object tout_le_monde
@@ -5202,6 +5223,7 @@ extern Lisp_Object Qwrong_type_argument, Qyes_or_no_p;
 #include "general-slots.h"
 
 #undef SYMBOL
+#undef SYMBOL_MODULE_API
 #undef SYMBOL_KEYWORD
 #undef SYMBOL_GENERAL
 

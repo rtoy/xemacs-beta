@@ -224,6 +224,11 @@ sheap_objs=sheap.o
 
 #ifdef HAVE_SHLIB
 shlib_objs=sysdll.o emodules.o
+# ifdef HAVE_MS_WINDOWS
+export_lib=xemacs-export.o
+xemacs-export.o: xemacs.def
+	dlltool -D xemacs-${version}.exe -d $< -l xemacs-import.a -e $@
+# endif
 #endif
 
 #ifdef SUNPRO
@@ -342,7 +347,7 @@ X11_objs =  EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o
 
 ## define otherobjs as list of object files that make-docfile
 ## should not be told about.
-otherobjs = lastfile.o $(mallocobjs) $(rallocobjs) $(X11_objs)
+otherobjs = lastfile.o $(mallocobjs) $(rallocobjs) $(X11_objs) $(export_lib)
 otherrtls = $(otherobjs:.o=.c.rtl)
 othersrcs = $(otherobjs:.o=.c)
 

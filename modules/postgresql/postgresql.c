@@ -102,6 +102,9 @@ TODO (in rough order of priority):
 #include "buffer.h"
 #include "postgresql.h"
 #include "process.h"
+#ifdef HAVE_SHLIB
+# include "emodules.h"
+#endif
 
 #ifdef RUNNING_XEMACS_21_1 /* handle interface changes */
 #define PG_OS_CODING FORMAT_FILENAME

@@ -25,9 +25,10 @@ Boston, MA 02111-1307, USA.  */
    that don't have any obvious connection to any particular module
    and might be used in many different contexts.
 
-   Three types of declarations are allowed here:
+   Four types of declarations are allowed here:
 
    SYMBOL (Qfoo); declares a symbol "foo"
+   SYMBOL_MODULE_API (Qfoo); declares a symbol "foo" that is visible to modules
    SYMBOL_KEYWORD (Q_foo); declares a keyword symbol ":foo"
    SYMBOL_GENERAL (Qfoo, "bar"); declares a symbol named "bar" but stored in
      the variable Qfoo
@@ -124,7 +125,7 @@ SYMBOL (Qface);
 SYMBOL (Qfaces);
 SYMBOL (Qfallback);
 SYMBOL (Qfile);
-SYMBOL (Qfile_name);
+SYMBOL_MODULE_API (Qfile_name);
 SYMBOL_KEYWORD (Q_filter);
 SYMBOL (Qfont);
 SYMBOL (Qframe);
@@ -194,13 +195,13 @@ SYMBOL (Qmotion);
 SYMBOL (Qmsprinter);
 SYMBOL (Qmswindows);
 SYMBOL (Qname);
-SYMBOL (Qnative);
+SYMBOL_MODULE_API (Qnative);
 SYMBOL (Qnatnum);
 SYMBOL (Qno);
 SYMBOL (Qnone);
 SYMBOL (Qnot);
 SYMBOL (Qnothing);
-SYMBOL (Qnotice);
+SYMBOL_MODULE_API (Qnotice);
 SYMBOL (Qobject);
 SYMBOL (Qok);
 SYMBOL (Qold_assoc);

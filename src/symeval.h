@@ -275,24 +275,27 @@ DECLARE_LRECORD (symbol_value_varalias,	struct symbol_value_varalias);
    DEFUN ("name, Fname, ...); // at top level in foo.c
    DEFSUBR (Fname);           // in syms_of_foo();
 */
-void defsubr (Lisp_Subr *);
+MODULE_API void defsubr (Lisp_Subr *);
 #define DEFSUBR(Fname) defsubr (&S##Fname)
 
 /* To define a Lisp primitive macro using a C function `Fname', do this:
    DEFUN ("name, Fname, ...); // at top level in foo.c
    DEFSUBR_MACRO (Fname);     // in syms_of_foo();
 */
-void defsubr_macro (Lisp_Subr *);
+MODULE_API void defsubr_macro (Lisp_Subr *);
 #define DEFSUBR_MACRO(Fname) defsubr_macro (&S##Fname)
 
-void defsymbol_massage_name (Lisp_Object *location, const char *name);
-void defsymbol_massage_name_nodump (Lisp_Object *location, const char *name);
-void defsymbol_massage_multiword_predicate (Lisp_Object *location,
-					    const char *name);
-void defsymbol_massage_multiword_predicate_nodump (Lisp_Object *location,
-						   const char *name);
-void defsymbol (Lisp_Object *location, const char *name);
-void defsymbol_nodump (Lisp_Object *location, const char *name);
+MODULE_API void defsymbol_massage_name (Lisp_Object *location,
+					const char *name);
+MODULE_API void defsymbol_massage_name_nodump (Lisp_Object *location,
+					       const char *name);
+MODULE_API void defsymbol_massage_multiword_predicate (Lisp_Object *location,
+						       const char *name);
+MODULE_API void
+defsymbol_massage_multiword_predicate_nodump (Lisp_Object *location,
+					      const char *name);
+MODULE_API void defsymbol (Lisp_Object *location, const char *name);
+MODULE_API void defsymbol_nodump (Lisp_Object *location, const char *name);
 
 /* Defining symbols:
 
@@ -327,16 +330,19 @@ void defsymbol_nodump (Lisp_Object *location, const char *name);
 #define DEFSYMBOL_MULTIWORD_PREDICATE_NO_DUMP(name) \
   defsymbol_massage_multiword_predicate_nodump (&name, #name)
 
-void defkeyword (Lisp_Object *location, const char *name);
-void defkeyword_massage_name (Lisp_Object *location, const char *name);
+MODULE_API void defkeyword (Lisp_Object *location, const char *name);
+MODULE_API void defkeyword_massage_name (Lisp_Object *location,
+					 const char *name);
 #define DEFKEYWORD(name) defkeyword_massage_name (&name, #name)
 
-void deferror (Lisp_Object *symbol, const char *name,
-	       const char *message, Lisp_Object inherits_from);
-void deferror_massage_name (Lisp_Object *symbol, const char *name,
-			    const char *message, Lisp_Object inherits_from);
-void deferror_massage_name_and_message (Lisp_Object *symbol, const char *name,
-					Lisp_Object inherits_from);
+MODULE_API void deferror (Lisp_Object *symbol, const char *name,
+			  const char *message, Lisp_Object inherits_from);
+MODULE_API void deferror_massage_name (Lisp_Object *symbol, const char *name,
+				       const char *message,
+				       Lisp_Object inherits_from);
+MODULE_API void deferror_massage_name_and_message (Lisp_Object *symbol,
+						   const char *name,
+						   Lisp_Object inherits_from);
 #define DEFERROR(name, message, inherits_from) \
   deferror_massage_name (&name, #name, message, inherits_from)
 /* In this case, the error message is the same as the name, modulo some
@@ -347,8 +353,8 @@ void deferror_massage_name_and_message (Lisp_Object *symbol, const char *name,
 /* Macros we use to define forwarded Lisp variables.
    These are used in the syms_of_FILENAME functions.  */
 
-void defvar_magic (const char *symbol_name,
-		   const struct symbol_value_forward *magic);
+MODULE_API void defvar_magic (const char *symbol_name,
+			      const struct symbol_value_forward *magic);
 
 #define DEFVAR_SYMVAL_FWD(lname, c_location, forward_type, magicfun)	\
 do									\

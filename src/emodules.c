@@ -18,10 +18,6 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* This gross hack is so that we can make DEFVAR_foo register with the
-   portable dumper in core, but not do so in modules.  Since the hackery to do
-   that is in emodules.h, we have to turn it off for this file. */
-#define EMODULES_DO_NOT_REDEFINE
 #include "emodules.h"
 #include "sysdll.h"
 
@@ -78,7 +74,7 @@ the NAME specified.  If VERSION is specified, then the module is only
 loaded if it matches that VERSION.  This function will check to make
 sure that the same module is not loaded twice.  Modules are searched
 for in the same way as Lisp files, except that the valid file
-extensions are `.so', `.dll' or `.ell'.
+extensions are `.so', `.dll', `.ell', or `.dylib'.
 
 All symbols in the shared module must be completely resolved in order
 for this function to be successful.  Any modules which the specified
@@ -528,9 +524,10 @@ emodules_doc_subr(const char *symname, const char *doc)
   Lisp_Object sym = oblookup (Vobarray, (const Ibyte *)symname, len);
   Lisp_Subr *subr;
 
-  if (SYMBOLP(sym))
+  /* Skip autoload cookies */
+  if (SYMBOLP (sym) && SUBRP (XSYMBOL (sym)->function))
     {
-      subr = XSUBR( XSYMBOL(sym)->function);
+      subr = XSUBR (XSYMBOL (sym)->function);
       subr->doc = xstrdup (doc);
     }
   /*

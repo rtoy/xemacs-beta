@@ -28,12 +28,14 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #define SYMBOL(fou) Lisp_Object fou
+#define SYMBOL_MODULE_API(fou) Lisp_Object fou
 #define SYMBOL_KEYWORD(la_cle_est_fou) Lisp_Object la_cle_est_fou
 #define SYMBOL_GENERAL(tout_le_monde, est_fou) Lisp_Object tout_le_monde
 
 #include "general-slots.h"
 
 #undef SYMBOL
+#undef SYMBOL_MODULE_API
 #undef SYMBOL_KEYWORD
 #undef SYMBOL_GENERAL
 
@@ -41,6 +43,7 @@ void
 syms_of_general (void)
 {
 #define SYMBOL(loco) DEFSYMBOL (loco)
+#define SYMBOL_MODULE_API(loco) DEFSYMBOL (loco)
 #define SYMBOL_KEYWORD(meshugeneh) DEFKEYWORD (meshugeneh)
 #define SYMBOL_GENERAL(vachement, fou) defsymbol (&vachement, fou)
 

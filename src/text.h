@@ -125,7 +125,7 @@ ibyte_leading_byte_p_1 (int byte, const char *file, int line)
    This value can be derived in other ways -- e.g. something like
    XCHARSET_REP_BYTES (charset_by_leading_byte (first_byte))
    but it's faster this way. */
-extern const Bytecount rep_bytes_by_first_byte[0xA0];
+extern MODULE_API const Bytecount rep_bytes_by_first_byte[0xA0];
 
 /* Number of bytes in the string representation of a character. */
 
@@ -336,7 +336,7 @@ objects_have_same_internal_representation (Lisp_Object srcobj,
 
 #endif /* MULE */
 
-int dfc_coding_system_is_unicode (Lisp_Object codesys);
+MODULE_API int dfc_coding_system_is_unicode (Lisp_Object codesys);
 
 DECLARE_INLINE_HEADER (
 Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
@@ -606,8 +606,10 @@ validate_ibyte_string_backward (const Ibyte *ptr, Bytecount n)
 
 #ifdef MULE
 
-Charcount bytecount_to_charcount_fun (const Ibyte *ptr, Bytecount len);
-Bytecount charcount_to_bytecount_fun (const Ibyte *ptr, Charcount len);
+MODULE_API Charcount
+bytecount_to_charcount_fun (const Ibyte *ptr, Bytecount len);
+MODULE_API Bytecount
+charcount_to_bytecount_fun (const Ibyte *ptr, Charcount len);
 
 /* Given a pointer to a text string and a length in bytes, return
    the equivalent length in characters. */
@@ -799,9 +801,9 @@ itext_n_addr (const Ibyte *ptr, Charcount offset)
 
 #ifdef MULE
 
-Ichar non_ascii_itext_ichar (const Ibyte *ptr);
-Bytecount non_ascii_set_itext_ichar (Ibyte *ptr, Ichar c);
-Bytecount non_ascii_itext_copy_ichar (const Ibyte *src, Ibyte *dst);
+MODULE_API Ichar non_ascii_itext_ichar (const Ibyte *ptr);
+MODULE_API Bytecount non_ascii_set_itext_ichar (Ibyte *ptr, Ichar c);
+MODULE_API Bytecount non_ascii_itext_copy_ichar (const Ibyte *src, Ibyte *dst);
 
 /* Retrieve the character pointed to by PTR as an Ichar. */
 
@@ -994,7 +996,7 @@ itext_copy_ichar (const Ibyte *src, Ibyte *dst)
 
 #ifdef MULE
 
-int non_ascii_valid_ichar_p (Ichar ch);
+MODULE_API int non_ascii_valid_ichar_p (Ichar ch);
 
 /* Return whether the given Ichar is valid.
  */
@@ -2691,13 +2693,13 @@ typedef enum dfc_conversion_type dfc_conversion_type;
 /* WARNING: These use a static buffer.  This can lead to disaster if
    these functions are not used *very* carefully.  Another reason to only use
    TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT(). */
-void
+MODULE_API void
 dfc_convert_to_external_format (dfc_conversion_type source_type,
 				dfc_conversion_data *source,
 				Lisp_Object codesys,
 				dfc_conversion_type sink_type,
 				dfc_conversion_data *sink);
-void
+MODULE_API void
 dfc_convert_to_internal_format (dfc_conversion_type source_type,
 				dfc_conversion_data *source,
 				Lisp_Object codesys,
@@ -2886,12 +2888,14 @@ enum new_dfc_src_type
   DFC_LISP_STRING
 };
 
-void *new_dfc_convert_malloc (const void *src, Bytecount src_size,
-			      enum new_dfc_src_type type, Lisp_Object codesys);
-void *new_dfc_convert_alloca (const char *srctext, void *alloca_data);
-Bytecount new_dfc_convert_size (const char *srctext, const void *src,
-				Bytecount src_size, enum new_dfc_src_type type,
-				Lisp_Object codesys);
+MODULE_API void *new_dfc_convert_malloc (const void *src, Bytecount src_size,
+					 enum new_dfc_src_type type,
+					 Lisp_Object codesys);
+MODULE_API void *new_dfc_convert_alloca (const char *srctext, void *alloca_data);
+MODULE_API Bytecount new_dfc_convert_size (const char *srctext, const void *src,
+					   Bytecount src_size,
+					   enum new_dfc_src_type type,
+					   Lisp_Object codesys);
 
 /* Version of EXTERNAL_TO_C_STRING that *RETURNS* the translated string,
    still in alloca() space.  Requires some trickiness to do this, but gets

@@ -1,5 +1,32 @@
 2003-08-18  Jerry James  <james@xemacs.org>
 
+	* Makefile.in.in (export_lib): New.
+	* Makefile.in.in (xemacs-export.o): New.
+	* Makefile.in.in (otherobjs): Use them.
+	* emodules.c: Remove the EMODULES_DO_NOT_REDEFINE hack.
+	* emodules.c (Fload_module): Document the ".dylib" extension.
+	* emodules.c (emodules_doc_subr): Don't try to find the function
+	associated with an autoload cookie.
+	* emodules.h: Add MODULE_API markers.  Other part of
+	EMODULES_DO_NOT_REDEFINE hack removal.  Define unstaticpro to
+	unstaticpro_nodump for modules.
+	* general-slots.h: Document and use SYMBOL_MODULE_API.
+	* general.c (SYMBOL_MODULE_API): New.
+	* lisp.h: Ditto.  Also define MODULE_API appropriately, and define
+	SYMBOL_MODULE_API.
+	* sysdll.c: Allow Cygin module building.
+	* sysdll.c (dll_open): Use Unicode module names correctly.
+	* sysdll.c (dll_error): Return an informative error message.
+	* lisp-union.h: Add MODULE_API markers.
+	* lrecord.h: Ditto.
+	* mem-limits.h (get_lim_data): Ditto.
+	* opaque.h: Ditto.
+	* process.h: Ditto.
+	* symeval.h: Ditto.
+	* text.h: Ditto.
+
+2003-08-18  Jerry James  <james@xemacs.org>
+
 	* bytecode.c (execute_optimized_program): Setting a buffer-local
 	variable with no default binding sets the default.
 
