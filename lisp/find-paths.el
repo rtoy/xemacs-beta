@@ -136,9 +136,13 @@ BASE is the base to look for."
      suffix
      base))))
 
-(defun paths-find-emacs-directory (roots suffix base
-				   &optional envvar default keep-suffix)
-  "Find a directory in the XEmacs hierarchy.
+
+(defun paths-for-each-emacs-directory (func
+				       roots suffix base
+				       &optional envvar default keep-suffix)
+  "Iterate over directories in the XEmacs hierarchy.
+FUNC is a function that called for each directory, with the directory
+as the only argument.
 ROOTS must be a list of installation roots.
 SUFFIX is the subdirectory from there.
 BASE is the base to look for.
@@ -152,20 +156,74 @@ the directory."
     (if (and preferred-value
 	     (paths-file-readable-directory-p preferred-value))
 	(file-name-as-directory preferred-value)
-      (catch 'gotcha
-	(while roots
-	  (let* ((root (car roots))
-		 ;; installed
-		 (path (paths-construct-emacs-directory root suffix base)))
-	    (if (paths-file-readable-directory-p path)
-		(throw 'gotcha path)
-	      ;; in-place
-	      (if (null keep-suffix)
-		  (let ((path (paths-construct-emacs-directory root "" base)))
-		    (if (paths-file-readable-directory-p path)
-			(throw 'gotcha path))))))
-	  (setq roots (cdr roots)))
-	nil))))
+      (while roots
+	(let* ((root (car roots))
+	       ;; installed
+	       (path (paths-construct-emacs-directory root suffix base)))
+	  (if (paths-file-readable-directory-p path)
+	      (funcall func path)
+	    ;; in-place
+	    (if (null keep-suffix)
+		(let ((path (paths-construct-emacs-directory root "" base)))
+		  (if (paths-file-readable-directory-p path)
+		      (funcall func path))))))
+	(setq roots (cdr roots))))))
+
+(defun paths-find-emacs-directories (roots
+				     suffix base
+				     &optional envvar default keep-suffix)
+  "Find a list of directories in the XEmacs hierarchy.
+ROOTS must be a list of installation roots.
+SUFFIX is the subdirectory from there.
+BASE is the base to look for.
+ENVVAR is the name of the environment variable that might also
+specify the directory.
+DEFAULT is the preferred value.
+If KEEP-SUFFIX is non-nil, the suffix must be respected in searching
+the directory."
+  (let ((l '()))
+    (paths-for-each-emacs-directory #'(lambda (dir)
+					(setq l (cons dir l)))
+				    roots
+				    suffix base
+				    envvar default keep-suffix)
+    (reverse l)))
+
+(defun paths-find-emacs-directory (roots suffix base
+				   &optional envvar default keep-suffix)
+  "Find a directory in the XEmacs hierarchy.
+ROOTS must be a list of installation roots.
+SUFFIX is the subdirectory from there.
+BASE is the base to look for.
+ENVVAR is the name of the environment variable that might also
+specify the directory.
+DEFAULT is the preferred value.
+If KEEP-SUFFIX is non-nil, the suffix must be respected in searching
+the directory."
+  (catch 'gotcha
+    (paths-for-each-emacs-directory #'(lambda (dir)
+					(throw 'gotcha dir))
+				    roots
+				    suffix base
+				    envvar default keep-suffix)))
+
+(defun paths-for-each-site-directory (func roots base &optional envvar default)
+  "Iterate over the site-specific directories in the XEmacs hierarchy.
+FUNC is a function that called for each directory, with the directory
+as the only argument.
+ROOT must be a an installation root.
+BASE is the base to look for.
+ENVVAR is the name of the environment variable that might also
+specify the directory.
+DEFAULT is the preferred value."
+  (paths-for-each-emacs-directory func
+				  roots
+				  (file-name-as-directory
+				   (paths-construct-path (list
+							  "lib"
+							  emacs-program-name)))
+				  base
+				  envvar default))
 
 (defun paths-find-site-directory (roots base &optional envvar default)
   "Find a site-specific directory in the XEmacs hierarchy.
@@ -174,32 +232,76 @@ BASE is the base to look for.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
 DEFAULT is the preferred value."
-  (paths-find-emacs-directory roots
-			      (file-name-as-directory
-			       (paths-construct-path (list
-						      "lib"
-						      emacs-program-name)))
-			      base
-			      envvar default))
+  (catch 'gotcha
+    (paths-for-each-site-directory #'(lambda (dir)
+				       (throw 'gotcha dir))
+				   roots base
+				   envvar default)))
 
-(defun paths-find-version-directory (roots base
-				     &optional envvar default enforce-version)
-  "Find a version-specific directory in the XEmacs hierarchy.
+(defun paths-find-site-directories (roots base &optional envvar default)
+  "Find a list of site-specific directories in the XEmacs hierarchy.
+ROOT must be a an installation root.
+BASE is the base to look for.
+ENVVAR is the name of the environment variable that might also
+specify the directory.
+DEFAULT is the preferred value."
+  (let ((l '()))
+    (paths-for-each-site-directory #'(lambda (dir)
+					(setq l (cons dir l)))
+				   roots base
+				   envvar default)
+    (reverse l)))
 
+(defun paths-for-each-version-directory (func roots base
+					 &optional envvar default enforce-version)
+  "Iterate over version-specific directories in the XEmacs hierarchy.
+FUNC is a function that called for each directory, with the directory
+as the only argument.
 ROOT must be a an installation root.
 BASE is the base to look for.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
 DEFAULT is the preferred value.
 If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
-  (paths-find-emacs-directory roots
-			      (file-name-as-directory
-			       (paths-construct-path
-				(list "lib"
-				      (construct-emacs-version-name))))
-			      base
-			      envvar default
-			      enforce-version))
+  (paths-for-each-emacs-directory func
+				  roots
+				  (file-name-as-directory
+				   (paths-construct-path
+				    (list "lib"
+					  (construct-emacs-version-name))))
+				  base
+				  envvar default))
+
+(defun paths-find-version-directory (roots base
+				     &optional envvar default enforce-version)
+  "Find a version-specific directory in the XEmacs hierarchy.
+ROOT must be a an installation root.
+BASE is the base to look for.
+ENVVAR is the name of the environment variable that might also
+specify the directory.
+DEFAULT is the preferred value.
+If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
+  (catch 'gotcha
+    (paths-for-each-version-directory #'(lambda (dir)
+					  (throw 'gotcha dir))
+				      roots base
+				      envvar default)))
+
+(defun paths-find-version-directories (roots base
+				       &optional envvar default enforce-version)
+  "Find a list of version-specific directories in the XEmacs hierarchy.
+ROOT must be a an installation root.
+BASE is the base to look for.
+ENVVAR is the name of the environment variable that might also
+specify the directory.
+DEFAULT is the preferred value.
+If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
+  (let ((l '()))
+    (paths-for-each-site-directory #'(lambda (dir)
+				       (setq l (cons dir l)))
+				   roots base
+				   envvar default)
+    (reverse l)))
 
 (defun paths-find-architecture-directory (roots base &optional envvar default)
   "Find an architecture-specific directory in the XEmacs hierarchy.

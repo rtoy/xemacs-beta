@@ -1,3 +1,21 @@
+2005-01-08  Mike Sperber  <mike@xemacs.org>
+
+	* packages.el (packages-find-installation-package-directories): Add.
+
+	* find-paths.el (paths-for-each-emacs-directory): Abstract FUNC
+	parameter out of `paths-find-emacs-directory'.
+	(paths-find-emacs-directories): Add.
+	(paths-find-emacs-directory): Redefine in terms of
+	`paths-for-each-emacs-directory'.
+	(paths-for-each-site-directory): Add.
+	(paths-find-site-directory): Redefine in terms of
+	`paths-for-each-site-directory'.
+	(paths-find-site-directories): Add.
+	(paths-for-each-version-directory): Add.
+	(paths-find-version-directory): Redefine in terms of
+	`paths-for-each-version-directory'.
+	(paths-find-version-directories): Add.
+
 2005-01-09  Adrian Aichner  <adrian@xemacs.org>
 
 	* dumped-lisp.el (preloaded-file-list): Fix typo in
