@@ -3057,7 +3057,7 @@ if test "$with_msw" != "no"; then
       XE_APPEND(netinstall, INSTALL_ARCH_DEP_SUBDIR)
     fi
 
-    install_pp="$blddir/lib-src/installexe.sh"
+    install_pp="$srcdir/lib-src/installexe.sh"
     XE_APPEND(-limm32 -lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lole32 -luuid -lwinspool -lmpr, libs_system)
     if test "$with_dragndrop" != no; then
       XE_APPEND(msw, dragndrop_proto)

@@ -7332,7 +7332,7 @@ EOF
       INSTALL_ARCH_DEP_SUBDIR="$INSTALL_ARCH_DEP_SUBDIR netinstall" &&  if test "$extra_verbose" = "yes"; then echo "    Appending \"netinstall\" to \$INSTALL_ARCH_DEP_SUBDIR"; fi
     fi
 
-    install_pp="$blddir/lib-src/installexe.sh"
+    install_pp="$srcdir/lib-src/installexe.sh"
     libs_system="$libs_system -limm32 -lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lole32 -luuid -lwinspool -lmpr" &&  if test "$extra_verbose" = "yes"; then echo "    Appending \"-limm32 -lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lole32 -luuid -lwinspool -lmpr\" to \$libs_system"; fi
     if test "$with_dragndrop" != no; then
       dragndrop_proto="$dragndrop_proto msw" &&  if test "$extra_verbose" = "yes"; then echo "    Appending \"msw\" to \$dragndrop_proto"; fi

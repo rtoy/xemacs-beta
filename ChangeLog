@@ -1,3 +1,7 @@
+2003-10-11  Jerry James  <james@xemacs.org>
+
+	* configure.in: installexe.sh is under srcdir, not blddir.
+
 2003-09-26  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.16 "celeriac" is released.
