@@ -1,3 +1,7 @@
+2004-12-15  Ville Skyttä  <scop@xemacs.org>
+
+	* lispref/help.texi: Document 3rd arg to `make-obsolete'.
+
 2004-12-15  Robert Delius Royar  <xemacs@frinabulax.org>
 
 	* internals/internals.texi (Modules for the Basic Displayable Lisp
