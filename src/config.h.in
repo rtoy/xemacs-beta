@@ -889,6 +889,8 @@ on various systems. */
 #undef MAIL_LOCK_LOCKING
 #undef MAIL_LOCK_MMDF
 
+#undef HAVE_MKSTEMP
+
 #undef PREFIX_USER_DEFINED
 #undef EXEC_PREFIX_USER_DEFINED
 #undef MODULEDIR_USER_DEFINED

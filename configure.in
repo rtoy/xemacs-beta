@@ -2464,6 +2464,9 @@ AC_TRY_LINK([#include <math.h>],
   [return atanh(1.0) + asinh(1.0) + acosh(1.0); ],
   AC_DEFINE(HAVE_INVERSE_HYPERBOLIC))
 
+dnl See if mkstemp is available
+AC_CHECK_FUNCS(mkstemp)
+
 dnl Determine type of mail locking from configure args and s&m headers
 AC_CHECKING(type of mail spool file locking)
 AC_CHECK_FUNCS(lockf flock)

@@ -1,3 +1,7 @@
+2001-05-06  Karl M. Hegbloom  <karlheg@hegbloom.net>
+
+	* movemail.c (lock_dot): Use mkstemp if available
+
 2001-05-23  Ben Wing  <ben@xemacs.org>
 
 	* pop.c (socket_connection):

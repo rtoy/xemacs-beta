@@ -588,14 +588,20 @@ lock_dot(char *filename)
     p--;
   *p = 0;
   strcpy (p, "EXXXXXX");
+#ifndef HAVE_MKSTEMP
   mktemp (tempname);
   unlink (tempname);
+#endif
 
   for (;;)
     {
       /* Create the lock file, but not under the lock file name.  */
       /* Give up if cannot do that.  */
+#ifdef HAVE_MKSTEMP
+      desc = mkstemp (tempname);
+#else
       desc = open (tempname, O_WRONLY | O_CREAT | O_EXCL, 0666);
+#endif
       if (desc < 0)
 	{
 	  char *message = (char *) xmalloc (strlen (tempname) + 50);

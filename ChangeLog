@@ -1,3 +1,7 @@
+2001-05-06  Karl M. Hegbloom  <karlheg@hegbloom.net>
+
+	* configure.in: See if mkstemp is available for movemail.c
+
 2001-05-24  Yoshiki Hayashi  <yoshiki@xemacs.org>
 
 	* etc/xemacs-ja.1: Removed.
