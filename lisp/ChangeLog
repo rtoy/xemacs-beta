@@ -1,3 +1,9 @@
+2002-02-02  William M. Perry  <wmperry@gnu.org>
+
+	* widgets-gtk.el (gtk-widget-get-callback): New function to
+	support either :callback-ex or :callback in the widget functions.
+	(gtk-widget-instantiate-button-internal): Use it.
+
 2002-01-24  John Paul Wallington  <jpw@shootybangbang.com>
 
 	* faces.el (zmacs-region): fix typo in docstring.

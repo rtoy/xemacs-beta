@@ -39,20 +39,34 @@
    gtk-entry-new gtk-entry-set-text gtk-widget-set-style
    gtk-widget-get-style))
 
-(defvar foo)
+(defun gtk-widget-get-callback (widget plist instance)
+  (let ((cb (plist-get plist :callback))
+	(ex (plist-get plist :callback-ex))
+	(real-cb nil))
+    (cond
+     (ex
+      (gtk-signal-connect widget 'button-release-event
+			  (lambda (widget event data)
+			    (put widget 'last-event event)))
+      `(lambda (widget &rest ignored)
+	 (funcall ,ex ,instance (get widget 'last-event))))
+     (cb
+      `(lambda (widget &rest ignored)
+	 (if (functionp ,real-cb)
+	     (funcall ,real-cb)
+	   (eval ,real-cb))))
+     (t
+      nil))))
 
-(defun gtk-widget-instantiate-button-internal (plist callback)
+(defun gtk-widget-instantiate-button-internal (plist instance)
   (let* ((type (or (plist-get plist :style) 'button))
 	 (label (or (plist-get plist :descriptor) (symbol-name type)))
 	 (widget nil))
     (case type
       (button
        (setq widget (gtk-button-new-with-label label))
-       (gtk-signal-connect widget 'clicked (lambda (wid real-cb)
-					     (if (functionp real-cb)
-						 (funcall real-cb)
-					       (eval real-cb)))
-			   callback))
+       (gtk-signal-connect widget 'clicked
+			   (gtk-widget-get-callback widget plist instance)))
       (radio
        (let ((aux nil)
 	     (selected-p (plist-get plist :selected)))
@@ -62,26 +76,18 @@
 		    "bogus sibling"))
 	 (gtk-toggle-button-set-active widget (eval selected-p))
 	 (gtk-signal-connect widget 'toggled
-			     (lambda (wid data)
-			       ;; data is (real-cb . sibling)
-			       )
-			     (cons callback aux))))
+			     (gtk-widget-get-callback widget plist instance) aux)))
       (otherwise
        ;; Check boxes
        (setq widget (gtk-check-button-new-with-label label))
        (gtk-toggle-button-set-active widget
 				     (eval (plist-get plist :selected)))
        (gtk-signal-connect widget 'toggled
-			   (lambda (wid real-cb)
-			     (if (functionp real-cb)
-				 (funcall real-cb)
-			       (eval real-cb)))
-			   callback)))
-
+			   (gtk-widget-get-callback widget plist instance))))
     (gtk-widget-show-all widget)
     widget))
 
-(defun gtk-widget-instantiate-notebook-internal (plist callback)
+(defun gtk-widget-instantiate-notebook-internal (plist instance)
   (let ((widget (gtk-notebook-new))
 	(items (plist-get plist :items)))
     (while items
@@ -91,13 +97,13 @@
       (setq items (cdr items)))
     widget))
 
-(defun gtk-widget-instantiate-progress-internal (plist callback)
+(defun gtk-widget-instantiate-progress-internal (plist instance)
   (let* ((adj (gtk-adjustment-new 0.0 0.0 100.0 1.0 5.0 5.0))
 	 (widget (gtk-progress-bar-new-with-adjustment adj)))
     (gtk-adjustment-set-value adj (or (plist-get plist :value) 0.0))
     widget))
 
-(defun gtk-widget-instantiate-entry-internal (plist callback)
+(defun gtk-widget-instantiate-entry-internal (plist instance)
   (let* ((widget (gtk-entry-new))
 	 (default (plist-get plist :descriptor)))
     (cond
@@ -128,7 +134,7 @@
   (let* ((type (aref instantiator 0))
 	 (plist (cdr (map 'list 'identity instantiator)))
 	 (widget (funcall (or (get type 'instantiator) 'ignore)
-			  plist (or (plist-get plist :callback) 'ignore))))
+			  plist instance)))
     (add-timeout 0.1 (lambda (obj)
 		       (gtk-widget-set-style obj
 					     (gtk-widget-get-style
