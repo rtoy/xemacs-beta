@@ -1,5 +1,10 @@
 2003-02-06  Ben Wing  <ben@xemacs.org>
 
+	* lread.c (Fload_internal):
+	Oops.  Plain C can't handle declarations intermixed with statements.
+
+2003-02-06  Ben Wing  <ben@xemacs.org>
+
 	* alloc.c:
 	* alloc.c (GC_CHECK_NOT_FREE):
 	* alloc.c (mark_object_maybe_checking_free):

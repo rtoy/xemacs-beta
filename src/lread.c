@@ -503,10 +503,10 @@ encoding detection or end-of-line detection.
   int message_p = NILP (nomessage) || load_always_display_messages;
   static Lisp_Object last_file_loaded;
   struct stat s1, s2;
-  GCPRO4 (file, newer, older, found);
   Ibyte *spaces = alloca_ibytes (load_in_progress * 2 + 10);
   int i;
 
+  GCPRO4 (file, newer, older, found);
   CHECK_STRING (file);
 
   if (noninteractive)
