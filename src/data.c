@@ -171,10 +171,10 @@ EMACS_INT sign_extend_lisp_int (EMACS_INT num);
 EMACS_INT
 sign_extend_lisp_int (EMACS_INT num)
 {
-  if (num & (1L << (VALBITS - 1)))
-    return num | ((-1L) << VALBITS);
+  if (num & (1L << (INT_VALBITS - 1)))
+    return num | ((-1L) << INT_VALBITS);
   else
-    return num & ((1L << VALBITS) - 1);
+    return num & (EMACS_INT) ((1UL << INT_VALBITS) - 1);
 }
 
 

@@ -3648,19 +3648,19 @@ long
 get_random (void)
 {
   long val = random ();
-#if VALBITS > RAND_BITS
+#if INT_VALBITS > RAND_BITS
   val = (val << RAND_BITS) ^ random ();
-#if VALBITS > 2*RAND_BITS
+#if INT_VALBITS > 2*RAND_BITS
   val = (val << RAND_BITS) ^ random ();
-#if VALBITS > 3*RAND_BITS
+#if INT_VALBITS > 3*RAND_BITS
   val = (val << RAND_BITS) ^ random ();
-#if VALBITS > 4*RAND_BITS
+#if INT_VALBITS > 4*RAND_BITS
   val = (val << RAND_BITS) ^ random ();
 #endif /* need at least 5 */
 #endif /* need at least 4 */
 #endif /* need at least 3 */
 #endif /* need at least 2 */
-  return val & ((1L << VALBITS) - 1);
+  return val & (EMACS_INT) ((1UL << INT_VALBITS) - 1);
 }
 
 

@@ -1,3 +1,21 @@
+2004-04-19  Jerry James  <james@xemacs.org>
+
+	* data.c (sign_extend_lisp_int): Use INT_VALBITS instead of
+	VALBITS to compute the location of the sign bit.
+	* event-stream.c (Fcurrent_event_timestamp): Replace incorrect use
+	of VALBITS with EMACS_INT_MAX.
+	* events.c (Fevent_timestamp): Ditto.
+	* events.c (TIMESTAMP_HALFSPACE): Change VALBITS to INT_VALBITS to
+	compute the halfway point to timestamp wraparound.
+	* floatfns.c (float_to_int): Compare against EMACS_INT_MAX and
+	EMACS_INT_MIN instead of using VALBITS.
+	* floatfns.c (Flogb): Use EMACS_INT_MIN instead of building an
+	incorrect number with VALBITS.
+	* fns.c (Frandom): Use INT_VALBITS instead of VALBITS to compute
+	the denominator.
+	* sysdep.c (get_random): Use INT_VALBITS instead of VALBITS to
+	build random numbers.
+	
 2004-04-18  Jerry James  <james@xemacs.org>
 
 	* dump-data.c (dumped_data_get): Change return type to char *.

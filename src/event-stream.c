@@ -4782,7 +4782,7 @@ CONSOLE defaults to the selected console if omitted.
   /* This junk is so that timestamps don't get to be negative, but contain
      as many bits as this particular emacs will allow.
    */
-  return make_int (((1L << (VALBITS - 1)) - 1) & tiempo);
+  return make_int (EMACS_INT_MAX & tiempo);
 }
 
 

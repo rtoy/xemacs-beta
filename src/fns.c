@@ -170,7 +170,7 @@ With argument t, set the random number seed from the current time and pid.
 	 it's possible to get a quotient larger than limit; discarding
 	 these values eliminates the bias that would otherwise appear
 	 when using a large limit.  */
-      denominator = ((unsigned long)1 << VALBITS) / XINT (limit);
+      denominator = ((unsigned long)1 << INT_VALBITS) / XINT (limit);
       do
 	val = get_random () / denominator;
       while (val >= XINT (limit));

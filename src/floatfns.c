@@ -128,15 +128,16 @@ float_to_int (double x, const char *name, Lisp_Object num, Lisp_Object num2)
   bignum_set_double (scratch_bignum, x);
   return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
-  if (x >= ((EMACS_INT) 1 << (VALBITS-1))
-      || x <= - ((EMACS_INT) 1 << (VALBITS-1)) - (EMACS_INT) 1)
-  {
-    if (!UNBOUNDP (num2))
-      range_error2 (name, num, num2);
-    else
-      range_error (name, num);
-  }
-  return (make_int ((EMACS_INT) x));
+  REGISTER EMACS_INT result = (EMACS_INT) x;
+
+  if (result > EMACS_INT_MAX || result < EMACS_INT_MIN)
+    {
+      if (!UNBOUNDP (num2))
+	range_error2 (name, num, num2);
+      else
+	range_error (name, num);
+    }
+  return make_int (result);
 #endif /* HAVE_BIGNUM */
 }
 
@@ -798,7 +799,7 @@ This is the same as the exponent of a float.
   double f = extract_float (number);
 
   if (f == 0.0)
-    return make_int (- (EMACS_INT)(((EMACS_UINT) 1) << (VALBITS - 1))); /* most-negative-fixnum */
+    return make_int (EMACS_INT_MIN);
 #ifdef HAVE_LOGB
   {
     Lisp_Object val;
