@@ -858,7 +858,7 @@ determining the coding system works.
 
 Interactively, or if WILDCARDS is non-nil in a call from Lisp,
 expand wildcards (if any) and visit multiple files.  Wildcard expansion
-can be suppressed by setting `find-file-wildcards'."
+can be suppressed by setting `find-file-wildcards' to `nil'."
   (interactive (list (read-file-name "Find file: ")
 		     (and current-prefix-arg
 			  (read-coding-system "Coding system: "))
