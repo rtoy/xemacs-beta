@@ -2,8 +2,8 @@ You are looking at the XEmacs tutorial.  See end for copyrights and conditions.
 
 XEmacs commands generally involve the CONTROL key (sometimes labeled
 CTRL or CTL) or the META key. "META" is a traditional Emacs term; on
-most keyboards, the key is labelled "Alt". (On Sun keyboards, the META
-key is labelled with a diamond, and is *NOT* the Alt key, which also
+most keyboards, the key is labeled "Alt". (On Sun keyboards, the META
+key is labeled with a diamond, and is *NOT* the Alt key, which also
 exists.) On some TTY's, there is no META key; in this case, use ESC.
 Rather than write out META or CONTROL each time we want you to prefix a
 character, we'll use the following abbreviations:
@@ -45,7 +45,7 @@ keys are easier to remember and usually more convenient to use.  However,
 it's useful to know the older bindings, either in case you ever use a TTY
 or so that you can make sense of references to them.  From now on, we will
 mention the TTY bindings in parentheses, and expect that TTY users will
-subsitute them whenever we mention a cursor key.)
+substitute them whenever we mention a cursor key.)
 
 Now you may ask, what is a TTY?  A TTY (or "TeleTYpe")is a text-only
 connection, the kind you get when you use the "telnet" program to log into
@@ -107,7 +107,7 @@ M-		A keystroke involving the META key.  See META.
 META		An abstract name for a particular modifier key, which has
 		different correspondences depending on your keyboard.  On
 		most keyboards, META is the Alt key, but on Sun keyboards it's
-		a key labelled with a diamond, and *NOT* the Alt key, which
+		a key labeled with a diamond, and *NOT* the Alt key, which
 		also exists.  META can also be simulated by pressing ESC before
 		the other key, but in reality this is just two separate keys,
 		not a modifier plus a key: If you want to do M-f M-f, normally
@@ -129,7 +129,7 @@ buffer		A block of memory holding some text, such as the text of a
 cursor		A block or bar showing where in the text the current insertion
 		point is.
 cursor key	Any of the keys used for moving the cursor, such as the arrow
-		keys, <Next> and <Prior> (often labelled PgUp and PgDn),
+		keys, <Next> and <Prior> (often labeled PgUp and PgDn),
 		<Home> and <End>, etc.  Usually set off to the right of the
 		main part of the keyboard, often painted gray.
 echo area	A one-line area at the bottom of the frame where messages are
@@ -160,7 +160,7 @@ kill		Standardly known as "cut".  Remove text and remember it, so
 		"kills" are remembered, not only the most recent, and can be
 		accessed using M-y.  "kill" is also sometimes used in general
                 to refer to deleting anything other than text, e.g. buffers,
-		toolbar items, local variables, subprocesses, abbrevations,
+		toolbar items, local variables, subprocesses, abbreviations,
 		or to terminating the XEmacs process.
 minibuffer	A small buffer (usually one line, but it may expand as
 		necessary) at the bottom of the frame, used when commands need
@@ -283,7 +283,7 @@ without moving it off the screen.
 
 If moving by characters is too slow, you can move by words.  C-<Right>
 (CONTROL + right-arrow key) moves forward a word and C-<Left> moves back a
-word.  On TTY's, use M-f instead of C-<Right> and M-p instead of C-<Left>.
+word.  On TTY's, use M-f instead of C-<Right> and M-b instead of C-<Left>.
 
 >> Type a few C-<Right>'s and C-<Left>'s.
 
@@ -474,7 +474,7 @@ to use ESC ESC ESC.  The reasons for this are a bit complicated.)
 Hitting ESC ESC will get you out of almost any weird mode, including
 selected text, split windows, the minibuffer, recursive edits, "stranded
 minibuffer requests", and the like.  If you have many problems at once,
-each invokation of ESC ESC will get rid of one, so keep repeating until
+each invocation of ESC ESC will get rid of one, so keep repeating until
 everything's fixed.  REMEMBER: ESC ESC does not work if XEmacs is hung
 doing some time-consuming operation or running broken code.  Use C-g for
 that.
