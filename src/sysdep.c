@@ -67,10 +67,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysdir.h"
 #include "sysfile.h"
+#include "syssignal.h" /* Always include before sysproc.h and systty.h
+			  -- didier */
 #include "sysproc.h"
 #include "syspwd.h"
-#include "syssignal.h"
-#include "syssignal.h"
 #include "systime.h"
 #include "systty.h"
 #include "syswait.h"
@@ -581,7 +581,7 @@ sys_subshell (void)
   /* Note: These calls are spread out to insure that the return values
      of the calls (which may be newly-created strings) are properly
      GC-protected. */
-  
+
   GCPRO1 (dir);
 
   dir = current_buffer->directory;
@@ -2191,7 +2191,7 @@ total_data_usage (void)
 #else
   void *data_start = minimum_address_seen;
 #endif
-  
+
 #if !defined (WIN32_NATIVE) && !defined (CYGWIN)
   void *data_end = sbrk (0);
 #else

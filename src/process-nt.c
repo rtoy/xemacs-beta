@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h"
 #include "procimpl.h"
 
-#include "syssignal.h"
+#include "syssignal.h" /* Always include before sysproc.h -- didier */
 #include "sysfile.h"
 #include "sysproc.h"
 
@@ -127,11 +127,11 @@ typedef struct
  * The memory in other process is allocated by creating a suspended
  * thread. Initial stack of that thread is used as the memory
  * block. The thread entry point is the routine ExitThread in
- * kernel32.dll, so the allocated memory is freed just by resuming the 
+ * kernel32.dll, so the allocated memory is freed just by resuming the
  * thread, which immediately terminates after that.
  */
 
-static int 
+static int
 alloc_process_memory (HANDLE h_process, Bytecount size,
 		      process_memory *pmc)
 {
@@ -335,9 +335,9 @@ send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
   HMODULE h_kernel = qxeGetModuleHandle (XETEXT ("kernel32"));
   int close_process = 0;
   DWORD retval;
-  
+
   assert (h_kernel != NULL);
-  
+
   if (cp)
     {
       pid = cp->dwProcessId;
@@ -348,7 +348,7 @@ send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
       close_process = 1;
       /* Try to open the process with required privileges */
       h_process = OpenProcess (PROCESS_CREATE_THREAD
-			       | PROCESS_QUERY_INFORMATION 
+			       | PROCESS_QUERY_INFORMATION
 			       | PROCESS_VM_OPERATION
 			       | PROCESS_VM_WRITE,
 			       FALSE, pid);
@@ -368,7 +368,7 @@ send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
 	d.adr_ExitProcess =
 	  (void (WINAPI *) (UINT)) GetProcAddress (h_kernel, "ExitProcess");
 	assert (d.adr_ExitProcess);
-	retval = run_in_other_process (h_process, 
+	retval = run_in_other_process (h_process,
 				       (LPTHREAD_START_ROUTINE) sigkill_proc,
 				       &d, sizeof (d));
 	break;
@@ -381,7 +381,7 @@ send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
 	  GetProcAddress (h_kernel, "GenerateConsoleCtrlEvent");
 	assert (d.adr_GenerateConsoleCtrlEvent);
 	d.event = CTRL_C_EVENT;
-	retval = run_in_other_process (h_process, 
+	retval = run_in_other_process (h_process,
 				       (LPTHREAD_START_ROUTINE) sigint_proc,
 				       &d, sizeof (d));
 	break;
@@ -403,7 +403,7 @@ enable_child_signals (HANDLE h_process)
 {
   HMODULE h_kernel = qxeGetModuleHandle (XETEXT ("kernel32"));
   sig_enable_data d;
-  
+
   assert (h_kernel != NULL);
   d.adr_SetConsoleCtrlHandler =
     (BOOL (WINAPI *) (LPVOID, BOOL))
@@ -412,7 +412,7 @@ enable_child_signals (HANDLE h_process)
   run_in_other_process (h_process, (LPTHREAD_START_ROUTINE)sig_enable_proc,
 			&d, sizeof (d));
 }
-  
+
 /* ---------------------------- the 95 way ------------------------------- */
 
 static BOOL CALLBACK
@@ -448,7 +448,7 @@ send_signal_the_95_way (struct nt_process_data *cp, int pid, int signo)
   HANDLE h_process;
   int close_process = 0;
   int rc = 1;
-  
+
   if (cp)
     {
       pid = cp->dwProcessId;
@@ -465,7 +465,7 @@ send_signal_the_95_way (struct nt_process_data *cp, int pid, int signo)
       if (!h_process)
 	return 0;
     }
-    
+
   if (signo == SIGINT)
     {
       if (NILP (Vmswindows_start_process_share_console) && cp && cp->hwnd)
@@ -634,7 +634,7 @@ validate_signal_number (int signo)
       && signo != SIGHUP)
     invalid_constant ("Signal number not supported", make_int (signo));
 }
-  
+
 /*-----------------------------------------------------------------------*/
 /* Process methods							 */
 /*-----------------------------------------------------------------------*/
@@ -786,7 +786,7 @@ nt_create_process (Lisp_Process *p,
      process is a console one, or if it is windowed but windowed_process_io
      is non-zero */
   do_io = !windowed || windowed_process_io ;
-  
+
   if (do_io)
     {
       /* Create two unidirectional named pipes */
@@ -864,7 +864,7 @@ nt_create_process (Lisp_Process *p,
     REGISTER Lisp_Object tem;
     REGISTER Intbyte **new_env;
     REGISTER int new_length = 0, i;
-    
+
     for (tem = Vprocess_environment;
  	 (CONSP (tem)
  	  && STRINGP (XCAR (tem)));
@@ -876,15 +876,15 @@ nt_create_process (Lisp_Process *p,
        which we have superseded by gnuserv.c. (#### Does it work under
        MS Windows?)
 
-       sprintf (ppid_env_var_buffer, "EM_PARENT_PROCESS_ID=%d", 
+       sprintf (ppid_env_var_buffer, "EM_PARENT_PROCESS_ID=%d",
          GetCurrentProcessId ());
        arglen += strlen (ppid_env_var_buffer) + 1;
        numenv++;
     */
-    
+
     /* new_length + 1 to include terminating 0.  */
     env = new_env = alloca_array (Intbyte *, new_length + 1);
- 
+
     /* Copy the Vprocess_environment strings into new_env.  */
     for (tem = Vprocess_environment;
  	 (CONSP (tem)
@@ -916,7 +916,7 @@ nt_create_process (Lisp_Process *p,
       duplicate: ;
       }
     *new_env = 0;
-    
+
     /* Sort the environment variables */
     new_length = new_env - env;
     qsort (env, new_length, sizeof (Intbyte *), mswindows_compare_env);
@@ -953,7 +953,7 @@ nt_create_process (Lisp_Process *p,
 	  }
       }
 #endif
-  
+
   /* Create process */
   {
     STARTUPINFOW si;
@@ -1004,7 +1004,7 @@ nt_create_process (Lisp_Process *p,
 	CloseHandle (hprocout);
 	CloseHandle (hprocerr);
       }
-    
+
     /* Handle process creation failure */
     if (err)
       {
@@ -1046,12 +1046,12 @@ nt_create_process (Lisp_Process *p,
   }
 }
 
-/* 
+/*
  * This method is called to update status fields of the process
  * structure. If the process has not existed, this method is expected
  * to do nothing.
  *
- * The method is called only for real child processes.  
+ * The method is called only for real child processes.
  */
 
 static void
@@ -1345,7 +1345,7 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
     unsigned long nonblock = 1;
     ioctlsocket (s, FIONBIO, &nonblock);
   }
-  
+
   retval = connect (s, (struct sockaddr *) &address, sizeof (address));
   if (retval != NO_ERROR && WSAGetLastError() != WSAEWOULDBLOCK)
     {

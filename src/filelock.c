@@ -29,7 +29,8 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "sysdir.h"
 #include "syspwd.h"
-#include "syssignal.h" /* for kill */
+#include "syssignal.h" /* for kill. Always include before sysproc.h
+			  -- didier */
 #include "sysproc.h" /* for qxe_getpid() */
 
 Lisp_Object Qask_user_about_supersession_threat;

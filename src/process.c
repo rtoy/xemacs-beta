@@ -57,8 +57,9 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 
 #include "sysfile.h"
+#include "syssignal.h" /* Always include before sysproc.h and systty.h
+			  -- didier */
 #include "sysproc.h"
-#include "syssignal.h"
 #include "systime.h"
 #include "systty.h"
 #include "syswait.h"
@@ -994,7 +995,7 @@ process_setup_for_insertion (Lisp_Object process, int read_stderr)
 
   record_unwind_protect (save_excursion_restore, save_excursion_save ());
   specbind (Qinhibit_read_only, Qt);
-      
+
   /* Insert new output into buffer
      at the current end-of-output marker,
      thus preserving logical ordering of input and output.  */
@@ -1284,7 +1285,7 @@ set_process_filter (Lisp_Object process, Lisp_Object filter,
 DEFUN ("set-process-filter", Fset_process_filter, 2, 2, 0, /*
 Give PROCESS the filter function FILTER; nil means no filter.
 t means stop accepting output from the process. (If process was created
-with 
+with
 When a process has a filter, each time it does output
 the entire string of output is passed to the filter.
 The filter gets two arguments: the process and the string of output.
@@ -2323,7 +2324,7 @@ putenv_internal (const Intbyte *var,
    out of C and into Lisp is a good idea, but in this case the Lisp
    function is used so early in the startup sequence that it would be ugly
    to rearrange the early dumped code to accommodate this.
-   
+
 (defun getenv (variable)
   "Get the value of environment variable VARIABLE.
 VARIABLE should be a string.  Value is nil if VARIABLE is undefined in
@@ -2421,7 +2422,7 @@ init_xemacs_process (void)
     clrhash (usid_to_process);
   else
     usid_to_process = make_hash_table (32);
-  
+
   {
     /* jwz: always initialize Vprocess_environment, so that egetenv()
        works in temacs. */
@@ -2451,7 +2452,7 @@ init_xemacs_process (void)
     /* BAD BAD BAD.  We do not wanting to be passing an XEmacs-created
        SHELL var down to some inferior Cygwin process, which might get
        screwed up.
-	 
+
        There are a few broken apps (eterm/term.el, eterm/tshell.el,
        os-utils/terminal.el, texinfo/tex-mode.el) where this will
        cause problems.  Those broken apps don't look at
@@ -2462,7 +2463,7 @@ init_xemacs_process (void)
        at shell-file-name, so that the user can change the value of
        shell-file-name and everything will work out hunky-dorey.
        */
-    
+
     if (!egetenv ("SHELL"))
       {
 	Intbyte *faux_var = alloca_array (Intbyte, 7 + qxestrlen (shell));

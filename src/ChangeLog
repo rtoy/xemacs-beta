@@ -1,7 +1,19 @@
+2002-05-28  Didier Verna  <didier@xemacs.org>
+
+	* emacs.c: comment the inclusion order of syssignal.h and sysproc.h.
+	* filelock.c: ditto.
+	* nt.c: ditto.
+	* sysproc.h: ditto.
+	* process-nt.c: ditto.
+	* process-unix.c: include syssignal.h before sysproc.h.
+	* process.c: ditto.
+	* sysdep.c: ditto.
+	* win32.c: ditto.
+
 2002-05-28  Ben Wing  <ben@xemacs.org>
 
 	================================================================
-   	       ALLOW SEPARATION OF STDOUT AND STDERR IN PROCESSES   
+   	       ALLOW SEPARATION OF STDOUT AND STDERR IN PROCESSES
 	================================================================
 
 	Standard output and standard error can be processed separately in
@@ -35,7 +47,7 @@
 	* process-unix.c (child_setup):
 	Delete callproc.c.  Move child_setup() to process-unix.c.
 	wait_for_termination() now only needed on a few really old systems.
-	
+
 	* console-msw.h:
 	* event-Xt.c (emacs_Xt_select_process):
 	* event-Xt.c (emacs_Xt_unselect_process):
@@ -131,7 +143,7 @@
 	as such changes are required throughout the entire process code.
 	Rewrote the code that reads process output to do two loops, one
 	for stdout and one for stderr.
-	
+
 	* gpmevent.c (get_process_infd):
 	* gpmevent.c (Fgpm_enable):
 	* tooltalk.c:
@@ -341,7 +353,7 @@
 	read-ahead queues, so we just get the C-g normal.
 
 	Signal.c documents this very carefully.
-	
+
 	* cmdloop.c (Fcommand_loop_1):
         Correct use of dont_check_for_quit to new scheme, remove old
         out-of-date comments.
@@ -362,7 +374,7 @@
 	* event-stream.c:
 	* event-stream.c (event_stream_next_event):
 	 Fix C-g handling to actually work.
-	
+
 	* device-x.c (get_device_from_display):
 	* device-x.c (x_error_handler):
 	* device-x.c (x_IO_error_handler):
@@ -392,7 +404,7 @@
 	free_cons() now takes a Lisp_Object not the result of XCONS().
 	car and cdr have been renamed so that they don't get used directly;
 	go through XCAR(), XCDR() instead.
-	
+
 	* alloc.c (Fcons):
 	* alloc.c (free_cons):
 	* alloc.c (free_list):
@@ -420,7 +432,7 @@
 	* lisp.h (cons_car):
         Correct free_cons calling convention: now takes Lisp_Object,
         not Lisp_Cons
-	
+
 	* chartab.c (word_boundary_p):
         Eliminate direct use of ->car, ->cdr, should be black box.
 
@@ -431,7 +443,7 @@
 	================================================================
                            USE INTERNAL-BIND-*
 	================================================================
-	
+
 	* eval.c (restore_lisp_object):
 	* eval.c (restore_int):
 	Cleanups of these funs.
@@ -471,7 +483,7 @@
 
 
 	================================================================
-                                SPECBIND SANITY   
+                                SPECBIND SANITY
 	================================================================
 
 	* backtrace.h:
@@ -494,7 +506,7 @@
 	Removed older prototype of same mechanism.
 
 	================================================================
-                                    MISC   
+                                    MISC
 	================================================================
 
 	* lisp.h:
@@ -540,13 +552,13 @@
 
 	* lisp.h (assert_with_message):
 	Add assert_with_message.
-	
+
 	* lisp.h (GCPRO1_ARRAY):
 	* lisp.h (NGCPRO1_ARRAY):
 	* lisp.h (NNGCPRO1_ARRAY):
 	Add macros for gcproing entire arrays. (You could do this before
 	but it required manual twiddling the gcpro structure.)
-	
+
 	* lisp.h:
         Add prototypes for new functions defined elsewhere.
 
@@ -706,12 +718,12 @@
 	Do save-restriction/widen around the function -- otherwise, incorrect
 	results will ensue when a buffer has been narrowed before a call to
 	e.g. `buffer-syntactic-context' -- something that happens quite often.
-	
+
 	* fileio.c:
 	* fileio.c (Fmake_temp_name):
 	* fileio.c (syms_of_fileio):
 	Look for a handler for make-temp-name.
-	
+
 	* window.c:
 	* window.c (allocate_window):
 	* window.c (Fset_window_point):
@@ -768,7 +780,7 @@
 
 	* callproc.c (Fold_call_process_internal):
 	Use Fget_buffer_create() with a string buffer, as documented.
-	
+
 	* extents.c (signal_extent_changed): indentation.
 
 	* lstream.c (lisp_buffer_reader): fix a bug in selective-display
@@ -798,22 +810,22 @@
 	* doprnt.c (emacs_doprnt_1):
 	Use make_int() not make_char() when error about bad charval,
 	or abort will occur.
-	
+
 	* extents.c (signal_extent_changed):
 	Loop over children, not ourself -- avoid infinite loop.
-	
+
 	* lisp-disunion.h:
 	* lisp-union.h:
 	Rename make_char() to make_char_1 for error-checking purposes.
-	
+
 	* lread.c (read_escape):
 	Syntax error if escape is outside of ISO-8859-1 range.
 	Remove hopelessly broken (and unworkable) FSF_KEYS code.
-	
+
 	* mule-coding.c (Fdecode_shift_jis_char):
 	* search.c (skip_chars):
 	Spacing changes.
-	
+
 	* text.h:
 	New make_char() -- verify that the char value is legal.
 
@@ -830,10 +842,10 @@
 	* console-msw.h:
 	* event-msw.c (mswindows_wnd_proc):
 	Condition references to menu accelerator functions on HAVE_MENUBARS.
-	
+
 	* frame-msw.c (mswindows_init_frame_3):
 	Remove obsolete runemacs hack which called ShowWindow() twice.
-	
+
 	* intl-auto-encap-win32.c:
 	* intl-auto-encap-win32.h:
 	* intl-encap-win32.c:
@@ -846,13 +858,13 @@
 	Disable .data section renaming hack when using portable dumping.
 	Force _WIN32_WINNT = 0x0400 since intl-auto-encap-win32.[ch]
 	requires this.
-	
+
 2002-05-05  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (batch_test_emacs):
 
 	Fix so that packages are around when testing.
-	
+
 	* abbrev.c (struct abbrev_match_mapper_closure):
 	* abbrev.c (abbrev_match_mapper):
 	* abbrev.c (abbrev_match):
@@ -1585,7 +1597,7 @@
 	Another big Ben patch.
 
 	-- FUNCTIONALITY CHANGES:
-	
+
 	add partial support for 8-bit-fixed, 16-bit-fixed, and
 	32-bit-fixed formats.  not quite done yet. (in particular, needs
 	functions to actually convert the buffer.) NOTE: lots of changes
@@ -1599,7 +1611,7 @@
 	the relevant lisp info to the regex routines as local vars.
 
 	add general mechanism in extents code for signalling extent changes.
-	
+
 	fix numerous problems with the case-table implementation; yoshiki
 	never properly transferred many algorithms from old-style to
 	new-style case tables.
@@ -1620,9 +1632,9 @@
 	add more error-checking to buffer/string macros.
 
 	add some additional buffer_or_string_() funs.
-	
+
 	-- INTERFACE CHANGES AFFECTING MORE CODE:
-	
+
 	switch the arguments of write_c_string and friends to be
 	consistent with write_fmt_string, which must have printcharfun
 	first.
@@ -1634,7 +1646,7 @@
 	no-longer-needed CVOID_TO_LISP.
 
 	-- char/string macro changes:
-	
+
 	rename MAKE_CHAR() to make_emchar() for slightly less confusion
 	with make_char(). (The former generates an Emchar, the latter a
 	Lisp object.  Conceivably we should rename make_char() -> wrap_char()
@@ -1661,7 +1673,7 @@
 
 	here is a summary of most of the macros/inline funs changed by all
 	of the above changes:
-	
+
 	BYTE_*_P -> byte_*_p
 	XSTRING_BYTE -> string_byte
 	set_string_data/length -> set_lispstringp_data/length
@@ -1680,20 +1692,20 @@
 	REP_BYTES_BY_FIRST_BYTE -> rep_bytes_by_first_byte
 	char_to_unicode -> emchar_to_unicode
 	valid_char_p -> valid_emchar_p
-	
+
 	Change intbyte_strcmp -> qxestrcmp_c (duplicated functionality).
-		
+
 	-- INTERFACE CHANGES AFFECTING LESS CODE:
 
 	use DECLARE_INLINE_HEADER in various places.
 
 	remove '#ifdef emacs' from XEmacs-only files.
-	
+
 	eliminate CHAR_TABLE_VALUE(), which duplicated the functionality
 	of get_char_table().
-	
+
 	add BUFFER_TEXT_LOOP to simplify iterations over buffer text.
-	
+
 	define typedefs for signed and unsigned types of fixed sizes
 	(INT_32_BIT, UINT_32_BIT, etc.).
 
@@ -1780,7 +1792,7 @@
 
 2002-04-02  Andy Piper  <andy@xemacs.org>
 
-	* dired-msw.c (mswindows_get_files): 
+	* dired-msw.c (mswindows_get_files):
 	* nt.c (mswindows_stat): SetErrorMode() so that file errors are
 	completely handled by XEmacs. Suggested by Thomas Vogler
 	<mail@thomas-vogler.de>.
@@ -1876,7 +1888,7 @@
 	workspace, in which I make use of the new types Charxpos,
 	Bytexpos, Memxpos, representing a "position" either in a buffer or
 	a string. (This is especially important in the extent code.)
-	
+
 	* abbrev.c:
 	* abbrev.c (abbrev_oblookup):
 	* alloc.c (STRING_CHARS_BLOCK_SIZE):
@@ -1935,7 +1947,7 @@
 	SPECBIND_FAST_UNSAFE to be faster.
 	-- move the check for need to garbage collect into the allocation
 	code, so only a single flag needs to be checked in funcall.
-	
+
 
 	* buffer.c (Fstring_char_byte_converion_info):
 	* buffer.c (syms_of_buffer):
@@ -2038,7 +2050,7 @@
 	eliminate unused crufty vintage-19 "FSF defun hack" code.
 
 	* lrecord.h: improve pdump description docs.
-	
+
 	* buffer.c:
 	* ntheap.c:
 	* ntheap.c (round_to_next):
@@ -2079,7 +2091,7 @@
 	error has occurred, because it will wedge if we are in an inner
 	modal loop (typically when a menu is popped up) and make us unable
 	to get a useful stack trace in the debugger.
-	
+
 	* text.c (update_entirely_ascii_p_flag):
 	* text.c (charbpos_to_bytebpos_func):
 	* text.c (bytebpos_to_charbpos_func):
@@ -2099,12 +2111,12 @@
 
 2002-04-07  William M. Perry  <wmperry@gnu.org>
 
-	* event-gtk.c: 
-	* device-gtk.c: 
-	* glyphs-gtk.c: 
-	* frame-gtk.c: 
-	* gtk-xemacs.c: 
-	* menubar-gtk.c: 
+	* event-gtk.c:
+	* device-gtk.c:
+	* glyphs-gtk.c:
+	* frame-gtk.c:
+	* gtk-xemacs.c:
+	* menubar-gtk.c:
 	* redisplay-gtk.c: Need to include device.h and window.h in a few
 	places.  Not sure which .h has changed that was transparently
 	pulling them in before, but...
@@ -2155,7 +2167,7 @@
 	19.12.) Anyway, this introduced buffering issues, in which instead
 	of one char being read, it tried to read 1024 chars.  I tried
 	setting the stdin descriptor non-blocking, but it doesn't appear
-	to work on Cygwin. (#### Andy, do you know anything about this?) 
+	to work on Cygwin. (#### Andy, do you know anything about this?)
 	So I fixed it elsewhere.  If you get weirdness on the TTY, look in
 	console-tty.c and see how it gets the coding system; maybe there's
 	a way to change it (and if not, there should be!).
@@ -2248,7 +2260,7 @@
 
 	Add volatile_make_int() to fix warning in unix_send_process().
 
-	
+
 2002-03-31  Ben Wing  <ben@xemacs.org>
 
 	* s/windowsnt.h:
@@ -2499,14 +2511,14 @@
 
 	Clean up remaining places where nonintercepted Windows calls are
 	being used.
-	
+
 2002-03-29  Jonathan Harris  <jonathan@xemacs.org>
 
 	* device-msw.c (plist_get_margin): Add arg specifying mm or inches
 	* device-msw.c (plist_set_margin): Fix multiplicand used for mm
 	* device-msw.c (mswindows_handle_page_setup_dialog_box):
 	Detect and handle case where machine is set up for metric units
-	
+
 	* intl-auto-encap-win32.c:
 	* intl-auto-encap-win32.h:
 	* intl-encap-win32.c:
@@ -2514,9 +2526,9 @@
 
 2002-03-29  William M. Perry  <wmperry@gnu.org>
 
-	* ui-gtk.c (Fgtk_import_function_internal): 
-	(emacs_gtk_object_finalizer): 
-	(build_gtk_object): 
+	* ui-gtk.c (Fgtk_import_function_internal):
+	(emacs_gtk_object_finalizer):
+	(build_gtk_object):
 	(build_gtk_boxed): Use wrap_emacs_*() instead of wrap_*()
 	for gtk_boxed, gtk_object, ffi
 
@@ -2525,7 +2537,7 @@
 	* Makefile.in.in (gui_objs):
 	* Makefile.in.in (objs):
 	Always include gui.c, to fix compile error when TTY-only.
-	
+
 	* EmacsFrame.c (EmacsFrameSetValues):
 	* abbrev.c:
 	* abbrev.c (abbrev_match_mapper):
@@ -3267,11 +3279,11 @@
 	New fun Dynarr_verify(); use for further error checking on Dynarrs.
 
 	Rearrange code at top of lisp.h in conjunction with dynarr changes.
-	
+
 	Fix eifree().  Use Eistrings in various places
 	(format_event_object(), where_is_to_char(), and callers thereof)
 	to avoid fixed-size strings buffers.  New fun write_eistring().
-	
+
 	Reindent and fix GPM code to follow standards.
 
 	Set default MS Windows font to Lucida Console (same size as
@@ -3303,13 +3315,13 @@
 	like that.) The problem was that the glyph-contrib-p setting on
 	glyphs was ignored even if it was set properly, which it wasn't
 	until now.
-	
+
 2002-03-14  Mike Alexander  <mta@arbortext.com>
 
 	* event-msw.c (mswindows_unwait_process): New, remove process from
 	wait list
 	* process-nt.c (nt_finalize_process_data): Call
-	mswindows_unwait_process 
+	mswindows_unwait_process
 	* console-msw.h: Declare mswindows_unwait_process
 
 2002-03-21  William M. Perry  <wmperry@gnu.org>
@@ -3331,7 +3343,7 @@
 	* chartab.c (Fcheck_category_at):
 	* chartab.c (Fchar_in_category_p):
 	Fix bugs in implementation and doc strings.
-	
+
 	* config.h.in (type_checking_assert_at_line):
 	Add foo_checking_assert_at_line() macros.  Not clear whether these
 	are actually useful, though; I'll take them out if not.
@@ -3342,7 +3354,7 @@
 	Some improvements to the timeline.  Rearrange a bit the init
 	calls.  Add call for reinit_vars_of_object_mswindows() and
 	declare in symsinit.h.
-	
+
 	* event-Xt.c:
 	* event-Xt.c (emacs_Xt_format_magic_event):
 	* event-Xt.c (describe_event_window):
@@ -3386,7 +3398,7 @@
 	stream, not always to stderr, so it can be used
 	elsewhere. (e.g. in print-event when a magic event is
 	encountered?)
-	
+
 	* lisp.h:
 	* lisp.h (XCHAR_1):
 	* lisp.h (XCHAR):
@@ -3408,14 +3420,14 @@
 	assert_at_line().  Happens only when error-checking is defined so
 	doesn't slow down non-error-checking builds.  Fix XCHAR, XINT,
 	XCHAR_OR_INT, XFOO, and wrap_foo() in this fashion.
-	
+
 	* lstream.c:
 	* lstream.c (resizing_buffer_stream_ptr):
 	* lstream.h:
 	Add resizing_buffer_to_lisp_string().
-	
+
 	* objects-gtk.c (gtk_find_charset_font): Fix typo.
-	
+
 	* objects-msw.c:
 	* objects-msw.c (create_hfont_from_font_spec):
 	* objects-msw.c (initialize_font_instance):
@@ -3432,7 +3444,7 @@
 	char-by-char), and see if any of the font's supported ranges
 	include the charset's range.  also do some caching in
 	Vfont_signature_data of previous inquiries.
-	
+
 	* charset.h:
 	* text.c (Fmake_char):
 	* mule-charset.c (get_charset_limits): New fun; extracted out of
@@ -3545,7 +3557,7 @@
 
 	* .cvsignore:
 	ignore .tmp files that are getting auto-created by VC.
-	
+
 	* Makefile.in.in (release):
 	* Makefile.in.in (fastdump):
 	* Makefile.in.in (dynodump_deps):
@@ -3600,7 +3612,7 @@
 
 2002-02-11  Mike Sperber  <mike@xemacs.org>
 
-	* device-x.c: 
+	* device-x.c:
 	(x_IO_error_handler):
 	(x_init_device): Temporarily keep device in static variable
 	`device_being_initialized' so we can recover gracefully from
@@ -3722,9 +3734,9 @@
 	expose it in our method structure.
 	(gtk_ring_bell): Don't ring the bell if volume <= 0
 
-	* toolbar-gtk.c (gtk_output_toolbar_button): 
-	(gtk_output_frame_toolbars): 
-	(gtk_redraw_exposed_toolbars): 
+	* toolbar-gtk.c (gtk_output_toolbar_button):
+	(gtk_output_frame_toolbars):
+	(gtk_redraw_exposed_toolbars):
 	(gtk_redraw_frame_toolbars): These are now just aliases for the
 	common_XXX() routines in toolbar-common.c
 

@@ -53,9 +53,10 @@ Boston, MA 02111-1307, USA.  */
 #include <setjmp.h>
 #include "sysdir.h"
 #include "sysfile.h"
+#include "syssignal.h" /* Always include before systty.h and sysproc.h
+			  -- didier*/
 #include "sysproc.h"
 #include "systime.h"
-#include "syssignal.h" /* Always include before systty.h */
 #include "systty.h"
 #include "syswait.h"
 
@@ -1106,13 +1107,13 @@ unix_create_process (Lisp_Process *p,
   if (separate_err)
     {
       int sv[2];
-      
+
       if (pipe (sv) < 0)
 	goto io_failure;
       forkerr = sv[1];
       errchannel = sv[0];
     }
-      
+
 #if 0
   /* Replaced by close_process_descs */
   set_exclusive_use (inchannel);
@@ -2047,7 +2048,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 		   at this point so we can use `sleep'.
 
 		   (Again, this was not conditionalized on FreeBSD.
-		   Let's not mess up systems without the problem. --ben) 
+		   Let's not mess up systems without the problem. --ben)
 		*/
 		sleep (1);
 #endif

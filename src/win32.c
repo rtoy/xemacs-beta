@@ -25,8 +25,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "console-msw.h"
 
 #include "sysfile.h"
+#include "syssignal.h" /* Always include before sysproc.h -- didier */
 #include "sysproc.h"
-#include "syssignal.h"
 #include "systime.h"
 
 /* Control conversion of upper case file names to lower case.

@@ -233,7 +233,7 @@ version 18.58 released ?????.
 version 18.59 released October 31, 1992.
 
 */
-   
+
 /* Note: It is necessary to specify <config.h> and not "config.h" in
    order for the --srcdir type of compilation to work properly.
    Otherwise the config.h from the srcdir, rather than the one from
@@ -251,7 +251,7 @@ version 18.59 released October 31, 1992.
 #include "frame.h"
 #include "sysdep.h"
 
-#include "syssignal.h" /* Always include before systty.h */
+#include "syssignal.h" /* Always include before systty.h and sysproc.h */
 #include "systty.h"
 #include "sysfile.h"
 #include "systime.h"
@@ -730,7 +730,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
      startup.el, which is way late.  We need to be dumping the Unicode
      data, which means we need to fix pdump to correctly dump the "union"
      format used by the tables. */
-  
+
 #if (!defined (SYSTEM_MALLOC) && !defined (HAVE_LIBMCHECK)	\
      && !defined (DOUG_LEA_MALLOC))
   /* Make sure that any libraries we link against haven't installed a
@@ -826,7 +826,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
      arguments below in standard_args[], with the help text in startup.el,
      and with the list of non-clobbered variables near where pdump_load()
      is called! */
-  
+
   /* Handle the -sd/--show-dump-id switch, which means show the hex dump_id
      and quit */
   if (argmatch (argv, argc, "-sd", "--show-dump-id", 0, NULL, &skip_args))
@@ -838,7 +838,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #endif
       exit (0);
     }
-  
+
   /* Handle the -t switch, which specifies filename to use as terminal */
   {
     Extbyte *term;
@@ -890,7 +890,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
        suicide. (This is cleaner than using TerminateProcess()).  This
        makes (e.g.) the "Stop Build" command from VC++ correctly terminate
        XEmacs. */
-    
+
     char *heventstr;
     if (argmatch (argv, argc, "-mswindows-termination-handle", 0, 0,
 		  &heventstr, &skip_args))
@@ -936,7 +936,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 		0, NULL, &skip_args))
 #endif
     inhibit_site_modules = 1;
-  
+
   if (argmatch (argv, argc, "-vanilla", "--vanilla",
 		0, NULL, &skip_args))
     {
@@ -1308,7 +1308,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       syms_of_menubar_gtk ();
 #endif
       syms_of_select_gtk ();
-      
+
 #ifdef HAVE_GUI_OBJECTS
       syms_of_gui_gtk ();
 #endif
@@ -3030,7 +3030,7 @@ debug_can_access_memory (void *ptr, Bytecount len)
   EMACS_SIGNAL (SIGBUS, old_sigbus);
   EMACS_SIGNAL (SIGSEGV, old_sigsegv);
   errno = old_errno;
-      
+
   return retval;
 }
 
@@ -3311,7 +3311,7 @@ all of which are called before XEmacs is actually killed.
 #ifdef HAVE_MS_WINDOWS
   pause_so_user_can_read_messages (1);
 #endif
-  
+
   shut_down_emacs (0, STRINGP (arg) ? arg : Qnil, 0);
 
 #if defined(GNU_MALLOC)
@@ -3348,7 +3348,7 @@ all of which are called before XEmacs is actually killed.
 #define USER_IS_DEVELOPING_XEMACS
 #endif
 
-					      
+
 /* Handle bus errors, illegal instruction, etc: actual implementation. */
 static void
 guts_of_fatal_error_signal (int sig)

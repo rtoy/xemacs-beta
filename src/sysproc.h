@@ -194,6 +194,10 @@ pid_t qxe_getpid (void);
    --ben
 */
 
+/* #### WARNING: if you include this file somewhere, you must include
+   syssignal.h before in order to get SIGTSTP for the following define.
+   -- didier */
+
 #if !defined (WIN32_NATIVE) && ((!defined (SIGTSTP) && !defined (USG_JOBCTRL)) || !defined (HAVE_MKDIR) || !defined (HAVE_RMDIR))
 
 #define NEED_SYNC_PROCESS_CODE
