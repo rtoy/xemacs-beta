@@ -1,3 +1,11 @@
+2003-10-02  Steve Youngs  <youngs@xemacs.org>
+
+	* about.el (xemacs-hackers): Remove me.
+	(about-current-release-maintainers): Ditto.
+	(about-url-alist): Ditto.
+	(about-personal-info): Ditto.
+	(about-hacker-contribution): Ditto.
+
 2003-10-01  Steve Youngs  <youngs@xemacs.org>
 
 	* cl-extra.el (cl-do-prettyprint): Work around a "formatting" bug

@@ -163,13 +163,12 @@
     (vladimir "Vladimir Ivanovic" "vladimir@xemacs.org")
     (wmperry  "William Perry"     "wmperry@xemacs.org")
     (yoshiki  "Yoshiki Hayashi"   "yoshiki@xemacs.org")
-    (youngs   "Steve Youngs"      "youngs@xemacs.org")
     )
   "Alist of XEmacs hackers.")
 
 (defvar about-current-release-maintainers
   ;; this list should not necessarily be in sorted order.
-  '(youngs adrian ben hniksic james piper scop sperber turnbull))
+  '(adrian ben hniksic james piper scop sperber turnbull))
 
 (defvar about-other-current-hackers
   ;; to sort this list or the one below, use:
@@ -219,8 +218,7 @@
     (vin        . "http://www.upa.org/")
     (vladimir   . "http://www.leonora.org/~vladimir/")
     (wget       . "http://sunsite.dk/wget/")
-    (xemacs     . "http://www.xemacs.org/")
-    (youngs     . "http://eicq.sourceforge.net/"))
+    (xemacs     . "http://www.xemacs.org/"))
   "Some of the more important URLs.")
 
 (defvar about-left-margin 3)
@@ -1393,20 +1391,6 @@ Happily living in Indiana telecommuting for a company based in Seattle
      (widget-insert
       "\
 Sorry, no personal information available about me yet.\n"))
-    (youngs
-     (widget-insert "\
-I live in Brisbane, Australia with my wife, Michelle and our two
-children, Kaitlyn and Blake.
-
-In the past, I've been a bank officer, car salesman, insurance agent,
-managed a computer firm and owned and operated my own business.  I now
-divide my time between my family, planning my next business idea (a
-computer consulting firm that uses zero Microsoft products), hacking
-XEmacs, and hacking my own XEmacs package, Eicq.
-
-\tSee: ")
-     (about-url-link 'youngs "Eicq Homepage" "Visit the Eicq homepage\n<http://eicq.sf.net/>")
-     (widget-insert ".\n"))
     ))
 
 ;; Insert info about a maintainer's contribution to XEmacs.  See also
@@ -1806,15 +1790,6 @@ strikethru face attribute support).\n"))
      (widget-insert
       "\
 Sorry, no information about my XEmacs contributions yet.\n"))
-    (youngs
-     (widget-insert "\
-Steve is the current XEmacs Beta Release Manager (the guy responsible
-for getting this version of XEmacs out the door).  
-
-Steve used to be our Packages Release Manager and as such is one of
-our resident PUI experts.  He fixed the \"has never worked before\"
-PGP code in package-get, added the balloon-help to PUI, and a few
-other package related enhancements/fixes.\n"))
     ))
 
 ;; Setup the buffer for a maintainer.
