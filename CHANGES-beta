@@ -6,7 +6,10 @@ Documentation
 -- new Swedish TUTORIAL -- Mats Lidell
 -- update etc/BETA -- Jarl Friis, Stephen Turnbull
 -- update FAQ, new FAQs -- Adrian Aichner, Stephen Turnbull
--- typo fixes for Info docs -- Jeff Miller, Darryl Okahata
+-- fixes for build-breaking typos in Info docs -- Jeff Miller, Darryl Okahata
+-- misc comment and docstring improvements -- Valdis Kletnieks
+   Pretty much all the code fixers fixed docs too:  keep up the good
+   work, folks!
 
 UI
 -- fix switching between virtual desktops on MS Windows -- Adrian Aichner
