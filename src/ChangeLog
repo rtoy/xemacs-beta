@@ -1,3 +1,12 @@
+2005-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* emacs.c (xemacs-release-date): New version info variable.
+	* config.h.in (XEMACS_RELEASE_DATE): New config.h macro.
+
+	* emacs.c (inhibit-early-packages):
+	(inhibit-all-packages):
+	(xemacs-extra-name): Improve docstrings.
+
 2005-02-18  Jerry James  <james@xemacs.org>
 
 	* number.c: Define USED_IF_BIGFLOAT.

@@ -1,3 +1,8 @@
+2005-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* about.el (about-xemacs):
+	Compute release date from xemacs-release-date.
+
 2005-02-19  Norbert Koch  <viteno@xemacs.org>
 
 	* package-ui.el (pui-list-packages): The longest package name now

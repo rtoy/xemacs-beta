@@ -378,8 +378,28 @@
 		  (t (format "%d.%d"
 			     emacs-major-version
 			     emacs-minor-version))))
-	   (emacs-about-version (format "version %s of September 2004"
-					emacs-short-version)))
+	   (emacs-release-date
+	    (if (and (boundp 'xemacs-release-date)
+		     (stringp xemacs-release-date)
+		     (string-match "^\\([0-9]\\{4\\}\\)-\\([0-9][0-9]\\)-"
+				   xemacs-release-date))
+		(format "%s %s"
+			(aref [ "January" "February" "March" "April"
+				"May" "June" "July" "August"
+				"September" "October" "November" "December" ]
+			      (1- (string-to-number
+				   (match-string 2 xemacs-release-date))))
+			(match-string 1 xemacs-release-date))
+	      "February 2005 (defaulted in about.el)"))
+	   (emacs-variant-info (if (and xemacs-extra-name
+					(stringp xemacs-extra-name)
+					(< 0 (length xemacs-extra-name)))
+				   (format " %s" xemacs-extra-name)
+				 ""))
+	   (emacs-about-version (format "version %s of %s%s"
+					emacs-short-version
+					emacs-release-date
+					emacs-variant-info)))
       (widget-insert (about-center emacs-about-version))
       (widget-create 'link :help-echo "What's new in XEmacs"
 		     :action 'about-news

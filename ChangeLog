@@ -1,3 +1,9 @@
+2005-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* version.sh (XEMACS_RELEASE_DATE): New version info variable.
+
+	* configure.in (XEMACS_RELEASE_DATE): Use it.
+
 2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.19 "chives" is released.

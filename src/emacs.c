@@ -509,6 +509,7 @@ Lisp_Object Vemacs_patch_level;
 Lisp_Object Vemacs_beta_version;
 Lisp_Object Vxemacs_codename;
 Lisp_Object Vxemacs_extra_name;
+Lisp_Object Vxemacs_release_date;
 #ifdef INFODOCK
 Lisp_Object Vinfodock_major_version;
 Lisp_Object Vinfodock_minor_version;
@@ -4146,14 +4147,30 @@ Codename of this version of Emacs (a string).
   Vxemacs_codename = build_string (XEMACS_CODENAME);
 
   DEFVAR_LISP ("xemacs-extra-name", &Vxemacs_extra_name /*
-Extra string to maybe put into the version string.
+Arbitrary string to place in the version string after the codename.
 
-Usually used to denote an XEmacs built from a CVS checkout between
-releases.  In that case its value would be \"(+CVS)\".
+Appropriate surrounding whitespace will be added, but typically looks best
+if enclosed in parentheses.
+
+A standard use is to indicate the date version.sh was last updated from
+the CVS mainline, where it is automatically given a value similar to
+\"(+CVS-20050221)\".  Developers may also use it to indicate particular
+branches, etc.
 */ );
 #ifdef XEMACS_EXTRA_NAME
   Vxemacs_extra_name = build_string (XEMACS_EXTRA_NAME);
 #endif
+  
+  DEFVAR_LISP ("xemacs-release-date", &Vxemacs_release_date /*
+ISO 8601 format date string giving the date of latest release in series.
+
+The time may optionally be given.  The time zone may not be given, and
+is (implicitly) UTC.  Currently not included in the version string.
+*/ );
+#ifndef XEMACS_RELEASE_DATE
+#define XEMACS_RELEASE_DATE "2005-02-18 (defaulted in emacs.c)"
+#endif
+  Vxemacs_release_date = build_string (XEMACS_RELEASE_DATE);
   
   /* Lisp variables which contain command line flags.
 
@@ -4169,12 +4186,14 @@ Set to non-nil when the user-init and site-start files should not be loaded.
 */ );
 
   DEFVAR_BOOL ("inhibit-early-packages", &inhibit_early_packages /*
-Set to non-nil when the early packages should not be respected at startup.
+Set to non-nil when the early packages should be ignored at startup.
+Early package directories will not be added to `load-path', nor set up as
+autoloads, nothing.
 */ );
 
   DEFVAR_BOOL ("inhibit-all-packages", &inhibit_all_packages /*
-Set to non-nil when the no packages should not be respected at startup.
-XEmacs will utterly ignore the packages -- not in load-path, not set up as
+Set to non-nil when all packages should be ignored at startup.
+Package directories will not be added to `load-path', nor set up as
 autoloads, nothing.
 */ );
 

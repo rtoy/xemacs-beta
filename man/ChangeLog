@@ -1,3 +1,15 @@
+2005-02-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (The version.sh Script): New node.
+	(XEmacs from the Perspective of Building):
+	(Low-Level Modules):
+	(The Build Configuration System):
+	(Adding Configurable Features):
+	Add or update references to the version.sh node and/or file.
+
+	(XEmacs from the Perspective of Building): Improve text.
+
+
 2005-02-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (Introduction to Writing C Code):

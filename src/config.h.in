@@ -110,6 +110,7 @@ things are arranged in config.h.in.  In particular:
 #undef EMACS_VERSION
 #undef XEMACS_CODENAME
 #undef XEMACS_EXTRA_NAME
+#undef XEMACS_RELEASE_DATE
 /* InfoDock versions, not used with XEmacs */
 #undef INFODOCK_MAJOR_VERSION
 #undef INFODOCK_MINOR_VERSION
