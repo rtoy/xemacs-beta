@@ -1,3 +1,60 @@
+2003-01-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/startup.texi (Startup Paths): Hierarchy, not package, layout.
+
+2003-01-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi: Debugging FAQ improvements from Ben Wing.
+	(Q2.0.6): Mention union type bugs.
+	(Q2.1.1): Debugging HOWTO improvements.
+	(Q2.1.15): Decoding Lisp objects in the debugger.
+
+	* widget.texi (Widget Internals): New node.
+	(Top): Add menu item for it.
+
+	* xemacs/xemacs.texi (Top): Better short description of Mule in
+	menu.  Mule submenu.
+
+	Charset unification docs.  What a concept---commit docs first!
+
+	* lispref/mule.texi (MULE): Add Unification and Tables menu entries.
+	(Unicode Support): Fixup next node.
+	(Charset Unification):
+	(Overview):
+	(Usage):
+	(Basic Functionality):
+	(Interactive Usage):
+	(Configuration):
+	(Theory of Operation):
+	(What Unification Cannot Do for You):
+	(Unification Internals):
+	(Charsets and Coding Systems):
+	New nodes.
+
+	* xemacs/mule.texi (Mule): Menu items for Unification and Tables.
+	(Recognize Coding):
+	(Specify Coding):
+	Fixup next and previous pointers.
+	(Unification):
+	(Unification Overview):
+	(Unification Usage):
+	(Unification Configuration):
+	(Unification FAQs):
+	(Unification Theory):
+	(What Unification Cannot Do for You):
+	(Charsets and Coding Systems):
+	New nodes.
+
+2002-12-17  Stephen Turnbull  <stephen@xemacs.org>
+
+	* widget.texi (Widget Wishlist): Typo.
+	(Defining New Widgets): s/widget-define/define-widget/g.
+
+2002-12-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Regression Testing XEmacs): Hints for
+	test design.
+
 2002-10-29  Ville Skyttä  <scop@xemacs.org>
 
 	* xemacs-faq.texi (Top):

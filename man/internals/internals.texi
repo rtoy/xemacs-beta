@@ -3636,6 +3636,45 @@ tests that apply to one of several alternative implementations (eg, to
 GTK widgets, but not Athena, Motif, MS Windows, or Carbon), simply
 silently suppress the test if the feature is not available.
 
+Here are a few general hints for writing tests.
+
+@enumerate
+@item
+Include related successful cases.  Fixes often break something.
+
+@item
+Use the Known-Bug-Expect-Failure macro to mark the cases you know
+are going to fail.  We want to be able to distinguish between
+regressions and other unexpected failures, and cases that have
+been (partially) analyzed but not yet repaired.
+
+@item
+Mark the bug with the date of report.  An ``Unfixed since yyyy-mm-dd''
+gloss for Known-Bug-Expect-Failure is planned to further increase
+developer embarrassment (== incentive to fix the bug), but until then at
+least put a comment about the date so we can easily see when it was
+first reported.
+
+@item
+It's a matter of your judgement, but you should often use generic tests
+(@emph{e.g.}, @code{eq}) instead of more specific tests (@code{=} for
+numbers) even though you know that arguments ``should'' be of correct
+type.  That is, if the functions used can return generic objects
+(typically @code{nil}), as well as some more specific type that will be
+returned on success.  We don't want failures of those assertions
+reported as ``other failures'' (a wrong-type-arg signal, rather than a
+null return), we want them reported as ``assertion failures.''
+
+One example is a test that tests @code{(= (string-match this that) 0)},
+expecting a successful match.  Now suppose @code{string-match} is broken
+such that the match fails.  Then it will return @code{nil}, and @code{=}
+will signal ``wrong-type-argument, number-char-or-marker-p, nil'',
+generating an ``other failure'' in the report.  But this should be
+reported as an assertion failure (the test failed in a foreseeable way),
+rather than something else (we don't know what happened because XEmacs
+is broken in a way that we weren't trying to test!)
+@end enumerate
+
 
 @node CVS Techniques, A Summary of the Various XEmacs Modules, Regression Testing XEmacs, Top
 @chapter CVS Techniques

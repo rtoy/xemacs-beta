@@ -33,6 +33,7 @@
 * Widget Minor Mode::           
 * Utilities::                   
 * Widget Wishlist::             
+* Widget Internals::
 @end menu
 
 @node  Introduction, User Interface, Top, Top
@@ -120,7 +121,7 @@ create any widgets, the code has been split in two files:
 @table @file
 @item widget.el
 This will declare the user variables, define the function
-@code{widget-define}, and autoload the function @code{widget-create}. 
+@code{define-widget}, and autoload the function @code{widget-create}. 
 @item wid-edit.el
 Everything else is here, there is no reason to load it explicitly, as
 it will be autoloaded when needed.
@@ -1359,7 +1360,7 @@ you to create a shorthand for more complex widgets.  This includes
 specifying component widgets and new default values for the keyword
 arguments.
 
-@defun widget-define name class doc &rest args
+@defun define-widget name class doc &rest args
 Define a new widget type named @var{name} from @code{class}.
 
 @var{name} and class should both be symbols, @code{class} should be one
@@ -1384,7 +1385,7 @@ create identical widgets:
 
 @end defun
 
-Using @code{widget-define} just stores the definition of the widget type
+Using @code{define-widget} just stores the definition of the widget type
 in the @code{widget-type} property of @var{name}, which is what
 @code{widget-create} uses.
 
@@ -1558,7 +1559,7 @@ Get the item @var{widget} is assumed to toggle.@*
 This is only meaningful for radio buttons or checkboxes in a list.
 @end defun
 
-@node  Widget Wishlist,  , Utilities, Top
+@node Widget Wishlist, Widget Internals, Utilities, Top
 @comment  node-name,  next,  previous,  up
 @section Wishlist
 
@@ -1620,7 +1621,7 @@ A mailto widget.
 the field, not the end of the field itself. 
 
 @item
-Use and overlay instead of markers to delimit the widget.  Create
+Use an overlay instead of markers to delimit the widget.  Create
 accessors for the end points.
 
 @item
@@ -1630,6 +1631,36 @@ through @code{apropos}.  If more than one function is valid for the
 symbol, it should pop up a menu.
 
 @end itemize
+
+@node Widget Internals, , Widget Wishlist, Top
+@section Internals
+
+This (very brief!) section provides a few notes on the internal
+structure and implementation of Emacs widgets.  Avoid relying on this
+information.  (We intend to improve it, but this will take some time.)
+To the extent that it actually describes APIs, the information will be
+moved to appropriate sections of the manual in due course.
+
+@subsection The @dfn{Widget} and @dfn{Type} Structures
+
+Widgets and types are currently both implemented as lists.
+
+A symbol may be defined as a @dfn{type name} using @code{define-widget}.
+@xref{Defining New Widgets}.  A @dfn{type} is a list whose car is a
+previously defined type name, nil, or (recursively) a type.  The car is
+the @dfn{class} or parent type of the type, and properties which are not
+specified in the new type will be inherited from ancestors.  Probably
+the only type without a class should be the @code{default} type.  The
+cdr of a type is a plist whose keys are widget property keywords.
+
+A type or type name may also be referred to as an @dfn{unconverted
+widget}.
+
+A @dfn{converted widget} or @dfn{widget instance} is a list whose car is
+a type name or a type, and whose cdr is a property list.  Furthermore,
+all children of the converted widget must be converted.  Finally, in the
+process of appropriate parts of the list structure are copied to ensure
+that changes in values of one instance do not affect another's.
 
 @contents
 @bye
