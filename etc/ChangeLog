@@ -1,3 +1,9 @@
+2002-03-30  Steve Youngs  <youngs@xemacs.org>
+
+	* package-index.LATEST.gpg: Update to current reality.
+
+	* package-index.LATEST.pgp: Ditto.
+
 2002-03-25  Ben Wing  <ben@xemacs.org>
 
 	* unicode/unicode-consortium/8859-16.TXT:
