@@ -171,7 +171,8 @@ Spell-checking with GNU ispell.
 Integrated Development Environment for Java.
 
 *** liece
-IRC (Internet Relay Chat) client for Emacs.
+IRC (Internet Relay Chat) client for Emacs.  Note, this package is
+deprecated and will be removed, use riece instead.
 
 *** mail-lib
 Fundamental lisp files for providing email support.
@@ -244,6 +245,9 @@ Python language support.
 
 *** reftex
 Emacs support for LaTeX cross-references, citations.
+
+*** riece
+IRC (Internet Relay Chat) client for Emacs.
 
 *** rmail
 An obsolete Emacs mailer.  If you do not already use it don't start.

@@ -1,3 +1,8 @@
+2003-10-25  Norbert Koch  <viteno@xemacs.org>
+
+	* PACKAGES (riece): New package.
+	* PACKAGES (liece): Mark as deprecated.
+
 2003-10-02  Steve Youngs  <youngs@xemacs.org>
 
 	* youngs.png, youngsm.png: Removed.
