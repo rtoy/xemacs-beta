@@ -79,7 +79,8 @@ static int process_events_occurred;
 static int tty_events_occurred;
 
 /* Mask of bits indicating the descriptors that we wait for input on */
-extern SELECT_TYPE input_wait_mask, process_only_mask, tty_only_mask;
+extern SELECT_TYPE input_wait_mask, non_fake_input_wait_mask;
+extern SELECT_TYPE process_only_mask, tty_only_mask;
 
 static Lisp_Object gtk_keysym_to_emacs_keysym ();
 void debug_process_finalization (struct Lisp_Process *p);

@@ -1,3 +1,15 @@
+2003-04-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* symsinit.h (reinit_console_type_create_gtk):
+	(reinit_vars_of_menubar_gtk):
+	(reinit_vars_of_event_gtk):
+	Declare.
+
+2003-04-12  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
+
+	* event-gtk.c: Added missing declaration of
+	non_fake_input_wait_mask.
+
 2003-04-04  Daiki Ueno  <daiki@xemacs.org>
 
 	* regex.c (re_match_2_internal): Fix charset/charset_not matching
