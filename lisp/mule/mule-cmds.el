@@ -756,7 +756,8 @@ the language environment for the major languages of Western Europe."
 
   ;; Fit the charsets preferences in unicode conversions for the
   ;; language environment.
-  (set-language-unicode-precedence-list (charset-list))
+  (set-language-unicode-precedence-list
+   (get-language-info language-name 'charset))
 
   (run-hooks 'set-language-environment-hook)
   (force-mode-line-update t))

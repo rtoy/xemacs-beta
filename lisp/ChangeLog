@@ -1,3 +1,8 @@
+2002-11-01  Ilpo Nyyss~nen  <iny@iki.fi>
+
+	* mule/mule-cmds.el (finish-set-language-environment): Fix for
+	call to set-language-unicode-precedence-list.
+
 2003-02-09  Ben Wing  <ben@xemacs.org>
 
 	* window.el (walk-windows):
