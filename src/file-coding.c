@@ -3855,6 +3855,8 @@ look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
 	break;
       }
 
+#if 0
+  /* #### Totally wrong as is, rewrite */
   /* Look for initial ;;;###coding system */
 
   {
@@ -3866,6 +3868,7 @@ look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
 	snarf_coding_system (data + ind + LENGTH (";;;###coding system: "),
 			     len - ind - LENGTH (";;;###coding system: "));
   }
+#endif /* 0 */
 
   return Qnil;
 } 

@@ -1,6 +1,13 @@
 2003-03-09  Ben Wing  <ben@xemacs.org>
 
 	* file-coding.c:
+	* file-coding.c (look_for_coding_system_magic_cookie):
+	Disable new check for the moment since it's all wrong and
+	causes crashes.
+
+2003-03-09  Ben Wing  <ben@xemacs.org>
+
+	* file-coding.c:
 	* file-coding.c (snarf_coding_system):
 	* file-coding.c (look_for_coding_system_magic_cookie):
 	* file-coding.c (vars_of_file_coding):
