@@ -68,7 +68,7 @@ TIFF_DIR=$(OPTIONAL_LIBRARY_DIR)\tiff-v3.5.7
 # directory containing compface.  Get the library from
 # http://ftp.xemacs.org/aux/compface-1.5.tar.gz.
 HAVE_XFACE=1
-COMPFACE_DIR=$(OPTIONAL_LIBRARY_DIR)\compface-1.5
+COMPFACE_DIR=$(OPTIONAL_LIBRARY_DIR)\compface-1.5.1
 
 ############################################################################
 #                            Build settings                                #

@@ -1,3 +1,8 @@
+2005-01-28  Ben Wing  <ben@xemacs.org>
+
+	* config.inc.samp (COMPFACE_DIR):
+	Change version to 1.5.1 in accordance with FTP site.
+
 2004-11-17  Ben Wing  <ben@xemacs.org>
 
 	* config.inc.samp:
