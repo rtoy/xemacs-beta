@@ -1,3 +1,100 @@
+2001-06-21  Ben Wing  <ben@xemacs.org>
+
+	* term\AT386.el:
+	* term\AT386.el (AT386-keypad-map):
+	* term\AT386.el (AT386-keypad-map)): New.
+	Fix warnings.
+
+	* term\apollo.el:
+	* term\apollo.el ("term/vt100"):
+	* term\apollo.el (*dm-mouse-key-bindings-file*): Removed.
+	* term\apollo.el (*apollo-key-bindings-hook*): Removed.
+	* term\apollo.el (*preempt-display-manager-bindings*): Removed.
+	* term\apollo.el (*paste-buffer-directory*): Removed.
+	* term\apollo.el (*apollo-mouse-move-point-allow-minibuffer-exit*): Removed.
+	* term\apollo.el (*apollo-function-keys*): Removed.
+	* term\apollo.el (*apollo-mouse-buttons*): Removed.
+	* term\apollo.el (bind-apollo-function-key): Removed.
+	* term\apollo.el (unbind-apollo-function-key): Removed.
+	* term\apollo.el (select-apollo-meta-key): Removed.
+	* term\apollo.el (bind-apollo-mouse-button): Removed.
+	* term\apollo.el (unbind-apollo-mouse-button): Removed.
+	* term\apollo.el ('apollo-prefix)): Removed.
+	* term\apollo.el ('apollo-prefix-1)): Removed.
+	* term\apollo.el ('apollo-prefix-2)): Removed.
+	* term\apollo.el ('apollo-prefix-3)): Removed.
+	* term\apollo.el ('apollo-prefix-4)): Removed.
+	* term\apollo.el ('apollo-prefix-5)): Removed.
+	* term\apollo.el ('apollo-prefix-6)): Removed.
+	* term\apollo.el ('apollo-prefix-7)): Removed.
+	* term\apollo.el ('apollo-prefix-8)): Removed.
+	* term\apollo.el ('apollo-prefix): Removed.
+	* term\apollo.el (apollo-copy-region): Removed.
+	* term\apollo.el (apollo-cut-region): Removed.
+	* term\apollo.el (apollo-paste): Removed.
+	* term\apollo.el (minibuffer-prompt-length): Removed.
+	* term\apollo.el (extract-file-or-buffer-name-around-point): Removed.
+	* term\apollo.el (apollo-find-file): Removed.
+	* term\apollo.el (apollo-grow-emacs-window): Removed.
+	* term\apollo.el (apollo-move-emacs-window): Removed.
+	* term\apollo.el (apollo-again): Removed.
+	* term\apollo.el (apollo-exit): Removed.
+	* term\apollo.el (apollo-abort): Removed.
+	* term\apollo.el (apollo-aegis-help): Removed.
+	* term\apollo.el (apollo-clean-help-file): Removed.
+	* term\apollo.el (kill-whole-line): Removed.
+	* term\apollo.el (apollo-key-undefined): Removed.
+	* term\apollo.el (apollo-mouse-move-point): Removed.
+	* term\apollo.el (apollo-mouse-move-mark): Removed.
+	* term\apollo.el (apollo-mouse-cut): Removed.
+	* term\apollo.el (apollo-mouse-copy): Removed.
+	* term\apollo.el (apollo-mouse-paste): Removed.
+	* term\apollo.el (apollo-mouse-pop-buffer): Removed.
+	* term\apollo.el (apollo-mouse-find-file): Removed.
+	* term\apollo.el (apollo-mouse-find-file-other-window): Removed.
+	* term\apollo.el (apollo-mouse-defaults): Removed.
+	* term\apollo.el (apollo-mouse-cut-copy-paste): Removed.
+	* term\apollo.el (apollo-mouse-cancel-cut-copy-paste): Removed.
+	* term\apollo.el (install-apollo-dm-preemptive-key-bindings): Removed.
+	Kill kill kill.  Sync with FSF and remove most crap.
+	
+	* term\linux.el:
+	* term\linux.el (function-key-map): Removed.
+	Sync with FSF.  Don't define most defns, because they are
+	automatically defined by termcap.  But do add defns for keys that
+	normally get defined as f13, f14, etc. and really ought to be
+	shift-f3, shift-f4, etc. (NOTE: I did this based on Cygwin, which
+	emulates the Linux console.  I would appreciate it if someone on
+	Linux could verify.)
+
+	* term\cygwin.el:
+	New.  Load term/linux.
+	
+	* term\lk201.el:
+	* term\news.el:
+	* term\news.el (news-fkey-prefix)): New.
+	* term\vt100.el:
+	* term\vt100.el (vt100-wide-mode):
+	Sync with FSF.  Fix warnings.
+
+2001-06-21  Ben Wing  <ben@xemacs.org>
+
+	* dialog-gtk.el (popup-builtin-open-dialog): Fix warning.
+
+	For 21.4:
+	* help.el (frob-help-extents): Fix problem with undefined face.
+	* update-elc.el (update-elc-files-to-compile): Compile in proper order.
+
+	Maybe for 21.4:
+	* keydefs.el (global-map): Add a defn for M-?, previously
+	undefined, to access help -- in case the terminal is not set up
+	right, or f1 gets redefined.
+
+2001-06-19  Ben Wing  <ben@xemacs.org>
+
+	* term/{internal,pc-win,win32-win,sun,sun-mouse}.el:
+	Die die die.
+
 2001-06-17  Ben Wing  <ben@xemacs.org>
 
 	For 21.4:

@@ -191,7 +191,7 @@
 	need-to-recompile-mule-autoloads nil))
 
 (setq update-elc-files-to-compile (append update-elc-files-to-compile
-					  processed))
+					  (nreverse processed)))
 
 ;; (print update-elc-files-to-compile)
 

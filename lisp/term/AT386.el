@@ -28,6 +28,8 @@
 
 ;;; Code:
 
+(defvar AT386-keypad-map)
+
 (if (boundp 'AT386-keypad-map)
     nil
   ;; The terminal initialization should already have set up some keys

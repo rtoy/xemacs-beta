@@ -62,7 +62,8 @@
   ;;  :no-read-only-return t/nil
   (let ((initial-filename (plist-get keys :initial-filename))
 	(clicked-ok nil)
-	(widget nil))
+	(widget nil)
+	filename)
     (setq widget (gtk-file-dialog-new
  		  :directory (plist-get keys :directory)
 		  :callback `(lambda (f)

@@ -1,9 +1,10 @@
 ;;; vt100.el --- define VT100 function key sequences in function-key-map
 
+;; Copyright (C) 1989, 1993 Free Software Foundation, Inc.
+
 ;; Author: FSF
 ;; Keywords: terminals
 
-;; Copyright (C) 1989, 1993 Free Software Foundation, Inc.
 ;;; This file is part of GNU Emacs.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
@@ -19,6 +20,8 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with GNU Emacs; see the file COPYING.  If not, write to
 ;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+;;; Synched up with: FSF 21.0.103.
 
 ;;; Commentary:
 
@@ -37,7 +40,7 @@
 (load "term/lk201" nil t)
 
 ;;; Controlling the screen width.
-(defconst vt100-wide-mode (= (frame-width) 132)
+(defvar vt100-wide-mode (= (frame-width) 132)
   "t if vt100 is in 132-column mode.")
 
 (defun vt100-wide-mode (&optional arg)

@@ -22,11 +22,15 @@
 ;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;;; Boston, MA 02111-1307, USA.
 
+;;; Synched up with: FSF 21.0.103.
+
 ;;; Commentary:
 
 ;;; Uses the Emacs 19 terminal initialization features --- won't work with 18.
 
 ;;; Code:
+
+(defvar news-fkey-prefix)
 
 (if (boundp 'news-fkey-prefix)
     nil

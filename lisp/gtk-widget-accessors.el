@@ -1,4 +1,4 @@
-'(globally-declare-fboundp
+(globally-declare-fboundp
  '(gtk-fundamental-type))
 
 (require 'gtk-ffi)
