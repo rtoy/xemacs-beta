@@ -1,3 +1,10 @@
+2001-05-28  Nick V. Pakoulin  <npak@ispras.ru>
+
+	* xemacs.mak (install): Replace calls to (x)copy commands with
+	COPY and COPYDIR variables.
+	(COPY): New
+	(COPYDIR): New
+
 2001-05-26  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.mak (DEPEND):
