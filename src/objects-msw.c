@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1997 Jonathan Harris.
 
@@ -1926,7 +1926,7 @@ mswindows_print_font_instance (Lisp_Font_Instance *f,
 }
 
 static Lisp_Object
-mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device,
+mswindows_font_list (Lisp_Object pattern, Lisp_Object device,
 		      Lisp_Object UNUSED (maxnumber))
 {
   struct device *d = XDEVICE (device);
@@ -2188,7 +2188,7 @@ mswindows_find_charset_font (Lisp_Object device, Lisp_Object font,
 
   /* If FONT specifies a particular charset, this will only list fonts with
      that charset; otherwise, it will list fonts with all charsets. */
-  fontlist = mswindows_list_fonts (font, device, Qnil);
+  fontlist = mswindows_font_list (font, device, Qnil);
 
   if (!stage)
     {
@@ -2219,10 +2219,8 @@ mswindows_find_charset_font (Lisp_Object device, Lisp_Object font,
 /*                             non-methods                              */
 /************************************************************************/
 
-DEFUN ("mswindows-color-list", Fmswindows_color_list, 0, 0, 0, /*
-Return a list of the colors available on mswindows devices.
-*/
-       ())
+static Lisp_Object
+mswindows_color_list (void)
 {
   Lisp_Object result = Qnil;
   int i;
@@ -2233,7 +2231,6 @@ Return a list of the colors available on mswindows devices.
   return Fnreverse (result);
 }
 
-
 
 /************************************************************************/
 /*                            initialization                            */
@@ -2242,7 +2239,6 @@ Return a list of the colors available on mswindows devices.
 void
 syms_of_objects_mswindows (void)
 {
-  DEFSUBR (Fmswindows_color_list);
 }
 
 void
@@ -2257,13 +2253,14 @@ console_type_create_objects_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, color_instance_hash);
   CONSOLE_HAS_METHOD (mswindows, color_instance_rgb_components);
   CONSOLE_HAS_METHOD (mswindows, valid_color_name_p);
+  CONSOLE_HAS_METHOD (mswindows, color_list);
 
   CONSOLE_HAS_METHOD (mswindows, initialize_font_instance);
 /*  CONSOLE_HAS_METHOD (mswindows, mark_font_instance); */
   CONSOLE_HAS_METHOD (mswindows, print_font_instance);
   CONSOLE_HAS_METHOD (mswindows, finalize_font_instance);
   CONSOLE_HAS_METHOD (mswindows, font_instance_truename);
-  CONSOLE_HAS_METHOD (mswindows, list_fonts);
+  CONSOLE_HAS_METHOD (mswindows, font_list);
 #ifdef MULE
   CONSOLE_HAS_METHOD (mswindows, font_spec_matches_charset);
   CONSOLE_HAS_METHOD (mswindows, find_charset_font);
@@ -2280,13 +2277,14 @@ console_type_create_objects_mswindows (void)
   CONSOLE_INHERITS_METHOD (msprinter, mswindows, color_instance_hash);
   CONSOLE_INHERITS_METHOD (msprinter, mswindows, color_instance_rgb_components);
   CONSOLE_INHERITS_METHOD (msprinter, mswindows, valid_color_name_p);
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, color_list);
 
   CONSOLE_HAS_METHOD (msprinter, initialize_font_instance);
 /*  CONSOLE_INHERITS_METHOD (msprinter, mswindows, mark_font_instance); */
   CONSOLE_INHERITS_METHOD (msprinter, mswindows, print_font_instance);
   CONSOLE_INHERITS_METHOD (msprinter, mswindows, finalize_font_instance);
   CONSOLE_INHERITS_METHOD (msprinter, mswindows, font_instance_truename);
-  CONSOLE_INHERITS_METHOD (msprinter, mswindows, list_fonts);
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, font_list);
 #ifdef MULE
   CONSOLE_INHERITS_METHOD (msprinter, mswindows, font_spec_matches_charset);
   CONSOLE_INHERITS_METHOD (msprinter, mswindows, find_charset_font);

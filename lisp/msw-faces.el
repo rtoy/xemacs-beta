@@ -271,7 +271,7 @@ font. If it fails, it returns nil."
 		     (and (string-match mswindows-font-regexp name)
 			  (string-to-int (substring name (match-beginning 3)
 						    (match-end 3)))))
-		 (list-fonts font device)))
+		 (font-list font device)))
    #'<))
 
 (defun mswindows-frob-font-size (font up-p device)

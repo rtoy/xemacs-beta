@@ -355,6 +355,12 @@ x_valid_color_name_p (struct device *d, Lisp_Object color)
   return XParseColor (dpy, cmap, extname, &c);
 }
 
+static Lisp_Object
+x_color_list (void)
+{
+  return call0 (intern ("x-color-list-internal"));
+}
+
 
 /************************************************************************/
 /*                           font instances                             */
@@ -853,7 +859,7 @@ x_font_instance_properties (Lisp_Font_Instance *f)
 }
 
 static Lisp_Object
-x_list_fonts (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
+x_font_list (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
 {
   Extbyte **names;
   int count = 0;
@@ -1005,13 +1011,14 @@ console_type_create_objects_x (void)
   CONSOLE_HAS_METHOD (x, color_instance_hash);
   CONSOLE_HAS_METHOD (x, color_instance_rgb_components);
   CONSOLE_HAS_METHOD (x, valid_color_name_p);
+  CONSOLE_HAS_METHOD (x, color_list);
 
   CONSOLE_HAS_METHOD (x, initialize_font_instance);
   CONSOLE_HAS_METHOD (x, print_font_instance);
   CONSOLE_HAS_METHOD (x, finalize_font_instance);
   CONSOLE_HAS_METHOD (x, font_instance_truename);
   CONSOLE_HAS_METHOD (x, font_instance_properties);
-  CONSOLE_HAS_METHOD (x, list_fonts);
+  CONSOLE_HAS_METHOD (x, font_list);
 #ifdef MULE
   CONSOLE_HAS_METHOD (x, find_charset_font);
   CONSOLE_HAS_METHOD (x, font_spec_matches_charset);

@@ -206,6 +206,14 @@ gtk_valid_color_name_p (struct device *UNUSED (d), Lisp_Object color)
   return (1);
 }
 
+static Lisp_Object
+gtk_color_list (void)
+{
+  /* #### BILL!!!
+     Is this correct? */
+  return call0 (intern ("x-color-list-internal"));
+}
+
 
 /************************************************************************/
 /*                           font instances                             */
@@ -330,7 +338,7 @@ gtk_finalize_font_instance (struct Lisp_Font_Instance *f)
 
 /* Forward declarations for X specific functions at the end of the file */
 Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
-static Lisp_Object __gtk_list_fonts_internal (const char *pattern);
+static Lisp_Object __gtk_font_list_internal (const char *pattern);
 
 static Lisp_Object
 gtk_font_instance_truename (struct Lisp_Font_Instance *f,
@@ -361,14 +369,14 @@ gtk_font_instance_properties (struct Lisp_Font_Instance *UNUSED (f))
 }
 
 static Lisp_Object
-gtk_list_fonts (Lisp_Object pattern, Lisp_Object UNUSED (device),
+gtk_font_list (Lisp_Object pattern, Lisp_Object UNUSED (device),
 		Lisp_Object UNUSED (maxnumber))
 {
   const char *patternext;
 
   TO_EXTERNAL_FORMAT (LISP_STRING, pattern, C_STRING_ALLOCA, patternext, Qbinary);
 
-  return (__gtk_list_fonts_internal (patternext));
+  return (__gtk_font_list_internal (patternext));
 }
 
 #ifdef MULE
@@ -454,13 +462,14 @@ console_type_create_objects_gtk (void)
   CONSOLE_HAS_METHOD (gtk, color_instance_hash);
   CONSOLE_HAS_METHOD (gtk, color_instance_rgb_components);
   CONSOLE_HAS_METHOD (gtk, valid_color_name_p);
+  CONSOLE_HAS_METHOD (gtk, color_list);
 
   CONSOLE_HAS_METHOD (gtk, initialize_font_instance);
   CONSOLE_HAS_METHOD (gtk, print_font_instance);
   CONSOLE_HAS_METHOD (gtk, finalize_font_instance);
   CONSOLE_HAS_METHOD (gtk, font_instance_truename);
   CONSOLE_HAS_METHOD (gtk, font_instance_properties);
-  CONSOLE_HAS_METHOD (gtk, list_fonts);
+  CONSOLE_HAS_METHOD (gtk, font_list);
 #ifdef MULE
   CONSOLE_HAS_METHOD (gtk, find_charset_font);
   CONSOLE_HAS_METHOD (gtk, font_spec_matches_charset);
@@ -587,7 +596,7 @@ __get_gtk_font_truename (GdkFont *gdk_font, int expandp)
   return (font_name);
 }
 
-static Lisp_Object __gtk_list_fonts_internal (const char *pattern)
+static Lisp_Object __gtk_font_list_internal (const char *pattern)
 {
   char **names;
   int count = 0;

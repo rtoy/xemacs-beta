@@ -3,7 +3,7 @@
 ;; Copyright (C) 1985-1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1994, 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2004 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, dumped
@@ -371,6 +371,10 @@ on the system; white is (65280 65280 65280) or (65535 65535 65535).
 If FRAME is omitted or nil, use the selected frame."
   (color-instance-rgb-components (make-color-instance color)))
 (make-compatible 'x-color-values 'color-instance-rgb-components)
+
+(make-obsolete 'mswindows-color-list 'color-list)
+(make-obsolete 'tty-color-list 'color-list)
+(make-compatible 'list-fonts 'font-list)
 
 ;; Two loser functions which shouldn't be used.
 (make-obsolete 'following-char 'char-after)

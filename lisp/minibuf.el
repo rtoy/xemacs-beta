@@ -2181,75 +2181,8 @@ whether it is a file(/result) or a directory (/result/)."
   "Read the name of a face from the minibuffer and return it as a symbol."
   (intern (completing-read prompt obarray 'find-face must-match)))
 
-;; #### - wrong place for this variable?  Exactly.  We probably want
-;; `color-list' to be a console method, so `tty-color-list' becomes
-;; obsolete, and `read-color-completion-table' conses (mapcar #'list
-;; (color-list)), optionally caching the results.
-
-;; Ben wanted all of the possibilities from the `configure' script used
-;; here, but I think this is way too many.  I already trimmed the R4 variants
-;; and a few obvious losers from the list.  --Stig
-(defvar x-library-search-path '("/usr/X11R6/lib/X11/"
-				"/usr/X11R5/lib/X11/"
-				"/usr/lib/X11R6/X11/"
-				"/usr/lib/X11R5/X11/"
-				"/usr/local/X11R6/lib/X11/"
-				"/usr/local/X11R5/lib/X11/"
-				"/usr/local/lib/X11R6/X11/"
-				"/usr/local/lib/X11R5/X11/"
-				"/usr/X11/lib/X11/"
-				"/usr/lib/X11/"
-				"/usr/local/lib/X11/"
-				"/usr/X386/lib/X11/"
-				"/usr/x386/lib/X11/"
-				"/usr/XFree86/lib/X11/"
-				"/usr/unsupported/lib/X11/"
-				"/usr/athena/lib/X11/"
-				"/usr/local/x11r5/lib/X11/"
-				"/usr/lpp/Xamples/lib/X11/"
-				"/usr/openwin/lib/X11/"
-				"/usr/openwin/share/lib/X11/")
-  "Search path used by `read-color' to find rgb.txt.")
-
-(defvar x-read-color-completion-table)
-
 (defun read-color-completion-table ()
-  (case (device-type)
-    ;; #### Evil device-type dependency
-    ((x gtk)
-     (if (boundp 'x-read-color-completion-table)
-	 x-read-color-completion-table
-       (let ((rgb-file (locate-file "rgb.txt" x-library-search-path))
-	     clist color p)
-	 (if (not rgb-file)
-	     ;; prevents multiple searches for rgb.txt if we can't find it
-	     (setq x-read-color-completion-table nil)
-	   (with-current-buffer (get-buffer-create " *colors*")
-	     (reset-buffer (current-buffer))
-	     (insert-file-contents rgb-file)
-	     (while (not (eobp))
-	       ;; skip over comments
-	       (while (looking-at "^!")
-		 (end-of-line)
-		 (forward-char 1))
-	       (skip-chars-forward "0-9 \t")
-	       (setq p (point))
-	       (end-of-line)
-	       (setq color (buffer-substring p (point))
-		     clist (cons (list color) clist))
-	       ;; Ugh.  If we want to be able to complete the lowercase form
-	       ;; of the color name, we need to add it twice!  Yuck.
-	       (let ((dcase (downcase color)))
-		 (or (string= dcase color)
-		     (push (list dcase) clist)))
-	       (forward-char 1))
-	     (kill-buffer (current-buffer))))
-	 (setq x-read-color-completion-table clist)
-	 x-read-color-completion-table)))
-    (mswindows
-     (mapcar #'list (declare-fboundp (mswindows-color-list))))
-    (tty
-     (mapcar #'list (declare-fboundp (tty-color-list))))))
+  (mapcar #'list (color-list)))
 
 (defun read-color (prompt &optional must-match initial-contents)
   "Read the name of a color from the minibuffer.

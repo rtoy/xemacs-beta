@@ -106,10 +106,8 @@ If it is not found, return nil.
     return Qnil;
 }
 
-DEFUN ("tty-color-list", Ftty_color_list, 0, 0, 0, /*
-Return a list of the registered TTY colors.
-*/
-       ())
+static Lisp_Object
+tty_color_list (void)
 {
   Lisp_Object result = Qnil;
   Lisp_Object rest;
@@ -293,7 +291,7 @@ tty_finalize_font_instance (Lisp_Font_Instance *f)
 }
 
 static Lisp_Object
-tty_list_fonts (Lisp_Object UNUSED (pattern), Lisp_Object UNUSED (device),
+tty_font_list (Lisp_Object UNUSED (pattern), Lisp_Object UNUSED (device),
 		Lisp_Object UNUSED (maxnumber))
 {
   return list1 (build_string ("normal"));
@@ -368,7 +366,6 @@ syms_of_objects_tty (void)
   DEFSUBR (Fregister_tty_color);
   DEFSUBR (Funregister_tty_color);
   DEFSUBR (Ffind_tty_color);
-  DEFSUBR (Ftty_color_list);
 #if 0
   DEFSUBR (Fset_tty_dynamic_color_specs);
   DEFSUBR (Ftty_dynamic_color_specs);
@@ -386,12 +383,13 @@ console_type_create_objects_tty (void)
   CONSOLE_HAS_METHOD (tty, color_instance_equal);
   CONSOLE_HAS_METHOD (tty, color_instance_hash);
   CONSOLE_HAS_METHOD (tty, valid_color_name_p);
+  CONSOLE_HAS_METHOD (tty, color_list);
 
   CONSOLE_HAS_METHOD (tty, initialize_font_instance);
   CONSOLE_HAS_METHOD (tty, mark_font_instance);
   CONSOLE_HAS_METHOD (tty, print_font_instance);
   CONSOLE_HAS_METHOD (tty, finalize_font_instance);
-  CONSOLE_HAS_METHOD (tty, list_fonts);
+  CONSOLE_HAS_METHOD (tty, font_list);
 #ifdef MULE
   CONSOLE_HAS_METHOD (tty, font_spec_matches_charset);
   CONSOLE_HAS_METHOD (tty, find_charset_font);

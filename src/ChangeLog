@@ -1,5 +1,35 @@
 2005-01-27  Ben Wing  <ben@xemacs.org>
 
+	* console-impl.h (struct console_methods):
+	* objects-gtk.c:
+	* objects-gtk.c (gtk_color_list):
+	* objects-gtk.c (gtk_font_list):
+	* objects-gtk.c (console_type_create_objects_gtk):
+	* objects-gtk.c (__gtk_font_list_internal):
+	* objects-msw.c:
+	* objects-msw.c (mswindows_font_list):
+	* objects-msw.c (mswindows_find_charset_font):
+	* objects-msw.c (mswindows_color_list):
+	* objects-msw.c (syms_of_objects_mswindows):
+	* objects-msw.c (console_type_create_objects_mswindows):
+	* objects-tty.c (tty_color_list):
+	* objects-tty.c (tty_font_list):
+	* objects-tty.c (syms_of_objects_tty):
+	* objects-tty.c (console_type_create_objects_tty):
+	* objects-x.c:
+	* objects-x.c (x_color_list):
+	* objects-x.c (x_font_list):
+	* objects-x.c (console_type_create_objects_x):
+	* objects.c:
+	* objects.c (Fcolor_list):
+	* objects.c (Ffont_list):
+	* objects.c (syms_of_objects):
+	list-fonts->font-list.  Create color-list.  Abstract out
+	x/msw-specific versions and obsolete the x/msw-specific Lisp
+	functions.
+
+2005-01-27  Ben Wing  <ben@xemacs.org>
+
 	* nt.c:
 	* fileio.c:
 	Fix sync comments.

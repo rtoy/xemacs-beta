@@ -90,7 +90,7 @@ when they are selected for the first time.  If you add fonts to your system,
 or if you change your font path, you can call this to re-initialize the menus."
   ;; by Stig@hackvan.com
   ;; #### - this should implement a `menus-only' option, which would
-  ;; recalculate the menus from the cache w/o having to do list-fonts again.
+  ;; recalculate the menus from the cache w/o having to do font-list again.
   (unless x-font-regexp-ascii
     (setq x-font-regexp-ascii (if (featurep 'mule)
 				  (charset-registry 'ascii)
@@ -101,7 +101,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 	family size weight entry monospaced-p
 	dev-cache cache families sizes weights)
     (dolist (name (cond ((null debug)	; debugging kludge
-			 (list-fonts "*-*-*-*-*-*-*-*-*-*-*-*-*-*" device
+			 (font-list "*-*-*-*-*-*-*-*-*-*-*-*-*-*" device
 				     font-menu-max-number))
 			((stringp debug) (split-string debug "\n"))
 			(t debug)))

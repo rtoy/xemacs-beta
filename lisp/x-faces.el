@@ -1,7 +1,7 @@
 ;;; x-faces.el --- X-specific face frobnication, aka black magic.
 
 ;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1995, 1996, 2002 Ben Wing.
+;; Copyright (C) 1995, 1996, 2002, 2004 Ben Wing.
 
 ;; Author: Jamie Zawinski <jwz@jwz.org>
 ;; Maintainer: XEmacs Development Team
@@ -284,7 +284,7 @@ X fonts can be specified (by the user) in either pixels or 10ths of points,
 			  (string-to-int (substring name (match-beginning 6)
 						    (match-end 6)))
 			  name))))
-		 (list-fonts font device)))
+		 (font-list font device)))
    (function (lambda (x y) (if (= (nth 1 x) (nth 1 y))
 			       (< (nth 0 x) (nth 0 y))
 			       (< (nth 1 x) (nth 1 y)))))))
@@ -374,6 +374,71 @@ Otherwise, it returns the next larger version of this font that is defined."
 (make-obsolete 'x-make-face-bold-italic 'make-face-bold-italic)
 (make-obsolete 'x-make-face-unbold 'make-face-unbold)
 (make-obsolete 'x-make-face-unitalic 'make-face-unitalic)
+
+
+
+;; #### - wrong place for this variable?  Exactly.  We probably want
+;; `color-list' to be a console method, so `tty-color-list' becomes
+;; obsolete, and `read-color-completion-table' conses (mapcar #'list
+;; (color-list)), optionally caching the results.
+
+;; Ben wanted all of the possibilities from the `configure' script used
+;; here, but I think this is way too many.  I already trimmed the R4 variants
+;; and a few obvious losers from the list.  --Stig
+(defvar x-library-search-path '("/usr/X11R6/lib/X11/"
+				"/usr/X11R5/lib/X11/"
+				"/usr/lib/X11R6/X11/"
+				"/usr/lib/X11R5/X11/"
+				"/usr/local/X11R6/lib/X11/"
+				"/usr/local/X11R5/lib/X11/"
+				"/usr/local/lib/X11R6/X11/"
+				"/usr/local/lib/X11R5/X11/"
+				"/usr/X11/lib/X11/"
+				"/usr/lib/X11/"
+				"/usr/local/lib/X11/"
+				"/usr/X386/lib/X11/"
+				"/usr/x386/lib/X11/"
+				"/usr/XFree86/lib/X11/"
+				"/usr/unsupported/lib/X11/"
+				"/usr/athena/lib/X11/"
+				"/usr/local/x11r5/lib/X11/"
+				"/usr/lpp/Xamples/lib/X11/"
+				"/usr/openwin/lib/X11/"
+				"/usr/openwin/share/lib/X11/")
+  "Search path used by `x-color-list-internal' to find rgb.txt.")
+
+(defvar x-color-list-internal-cache)
+
+(defun x-color-list-internal ()
+  (if (boundp 'x-color-list-internal-cache)
+      x-color-list-internal-cache
+    (let ((rgb-file (locate-file "rgb.txt" x-library-search-path))
+	  clist color p)
+      (if (not rgb-file)
+	  ;; prevents multiple searches for rgb.txt if we can't find it
+	  (setq x-color-list-internal-cache nil)
+	(with-current-buffer (get-buffer-create " *colors*")
+	  (reset-buffer (current-buffer))
+	  (insert-file-contents rgb-file)
+	  (while (not (eobp))
+	    ;; skip over comments
+	    (while (looking-at "^!")
+	      (end-of-line)
+	      (forward-char 1))
+	    (skip-chars-forward "0-9 \t")
+	    (setq p (point))
+	    (end-of-line)
+	    (setq color (buffer-substring p (point))
+		  clist (cons (list color) clist))
+	    ;; Ugh.  If we want to be able to complete the lowercase form
+	    ;; of the color name, we need to add it twice!  Yuck.
+	    (let ((dcase (downcase color)))
+	      (or (string= dcase color)
+		  (push (list dcase) clist)))
+	    (forward-char 1))
+	  (kill-buffer (current-buffer))))
+      (setq x-color-list-internal-cache clist)
+      x-color-list-internal-cache)))
 
 
 ;;; internal routines

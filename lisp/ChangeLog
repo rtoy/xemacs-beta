@@ -1,5 +1,30 @@
 2005-01-27  Ben Wing  <ben@xemacs.org>
 
+	* font-menu.el:
+	* font.el:
+	* font.el (internal-facep):
+	* font.el (x-font-build-cache):
+	* font.el (font-lookup-rgb-components):
+	* frame.el (set-frame-font):
+	* gtk-font-menu.el (gtk-reset-device-font-menus):
+	* minibuf.el (read-color-completion-table):
+	* minibuf.el (x-library-search-path): Removed.
+	* minibuf.el (x-read-color-completion-table)): Removed.
+	* msw-faces.el (mswindows-available-font-sizes):
+	* msw-font-menu.el (mswindows-reset-device-font-menus):
+	* obsolete.el:
+	* x-faces.el:
+	* x-faces.el (x-available-font-sizes):
+	* x-faces.el (x-library-search-path): New.
+	* x-faces.el (x-color-list-internal-cache)): New.
+	* x-faces.el (x-color-list-internal): New.
+	* x-font-menu.el (x-reset-device-font-menus):
+	list-fonts->font-list.  Create color-list.  Abstract out
+	x/msw-specific versions and obsolete the x/msw-specific Lisp
+	functions.
+
+2005-01-27  Ben Wing  <ben@xemacs.org>
+
 	* subr.el:
 	* subr.el (macro-declaration-function): New.
 	Some synching with FSF 21.2.

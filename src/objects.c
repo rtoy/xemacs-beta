@@ -1,7 +1,7 @@
 /* Generic Objects and Functions.
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -246,6 +246,18 @@ such as `blink'.
 
   CHECK_STRING (color);
   return MAYBE_INT_DEVMETH (d, valid_color_name_p, (d, color)) ? Qt : Qnil;
+}
+
+DEFUN ("color-list", Fcolor_list, 0, 1, 0, /*
+Return a list of color names.
+DEVICE specifies which device to return names for, and defaults to the
+currently selected device.
+*/
+       (device))
+{
+  device = wrap_device (decode_device (device));
+
+  return MAYBE_LISP_DEVMETH (XDEVICE (device), color_list, ());
 }
 
 
@@ -506,7 +518,7 @@ Return the properties (an alist or nil) of FONT-INSTANCE.
 			     font_instance_properties, (f));
 }
 
-DEFUN ("list-fonts", Flist_fonts, 1, 3, 0, /*
+DEFUN ("font-list", Ffont_list, 1, 3, 0, /*
 Return a list of font names matching the given pattern.
 DEVICE specifies which device to search for names, and defaults to the
 currently selected device.
@@ -516,7 +528,7 @@ currently selected device.
   CHECK_STRING (pattern);
   device = wrap_device (decode_device (device));
 
-  return MAYBE_LISP_DEVMETH (XDEVICE (device), list_fonts, (pattern, device,
+  return MAYBE_LISP_DEVMETH (XDEVICE (device), font_list, (pattern, device,
 							    maxnumber));
 }
 
@@ -1121,6 +1133,7 @@ syms_of_objects (void)
   DEFSUBR (Fcolor_instance_name);
   DEFSUBR (Fcolor_instance_rgb_components);
   DEFSUBR (Fvalid_color_name_p);
+  DEFSUBR (Fcolor_list);
 
   DEFSYMBOL_MULTIWORD_PREDICATE (Qfont_instancep);
   DEFSUBR (Fmake_font_instance);
@@ -1132,7 +1145,7 @@ syms_of_objects (void)
   DEFSUBR (Ffont_instance_proportional_p);
   DEFSUBR (Ffont_instance_truename);
   DEFSUBR (Ffont_instance_properties);
-  DEFSUBR (Flist_fonts);
+  DEFSUBR (Ffont_list);
 
   /* Qcolor, Qfont defined in general.c */
   DEFSYMBOL (Qface_boolean);

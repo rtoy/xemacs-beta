@@ -994,7 +994,7 @@ pixels) is kept by adjusting the numbers of the lines and columns."
 	  (completion-ignore-case t)
 	  (font (completing-read "Font name: "
 			 (mapcar #'list
-				 (list-fonts "*" frame))
+				 (font-list "*" frame))
 			 nil nil nil nil
 			 (face-font-name 'default frame))))
      (list font current-prefix-arg)))

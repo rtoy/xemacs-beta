@@ -113,7 +113,7 @@
 ;;; ==>
 ;;; "-morisawa-ryumin light kl-light-r-normal--10-100-72-72-m-50-jisx0201.1976-0"
 ;;;
-;;; (list-fonts "-dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*")
+;;; (font-list "-dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*")
 ;;; ==>
 ;;; ("-dt-interface user-medium-r-normal-s sans-12-120-72-72-m-70-iso8859-1"
 ;;;  "-dt-interface user-medium-r-normal-s-14-120-75-75-m-120-jisx0208.1983-0"

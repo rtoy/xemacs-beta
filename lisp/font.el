@@ -2,7 +2,7 @@
 
 ;; Copyright (c) 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2004 Ben Wing.
 
 ;; Author: wmperry
 ;; Maintainer: XEmacs Development Team
@@ -32,8 +32,7 @@
 ;;; Code:
 
 (globally-declare-fboundp
- '(x-list-fonts
-   mswindows-list-fonts ns-list-fonts internal-facep fontsetp get-font-info
+ '(internal-facep fontsetp get-font-info
    get-fontset-info mswindows-define-rgb-color cancel-function-timers
    mswindows-font-regexp mswindows-canonicalize-font-name
    mswindows-parse-font-style mswindows-construct-font-style
@@ -60,13 +59,7 @@
     (defmacro defcustom (var value doc &rest args)
       `(defvar ,var ,value ,doc))))
 
-(if (not (fboundp 'try-font-name))
-    (defun try-font-name (fontname &rest args)
-      (case window-system
-	((x pm) (car-safe (x-list-fonts fontname)))
-	(mswindows (car-safe (mswindows-list-fonts fontname)))
-	(ns (car-safe (ns-list-fonts fontname)))
-	(otherwise nil))))
+; delete alternate defn of try-font-name
 
 (if (not (fboundp 'facep))
     (defun facep (face)
@@ -932,7 +925,7 @@ for use in the 'weight' field of an mswindows font string.")
 (defun x-font-build-cache (&optional device)
   (let ((hash-table (make-hash-table :test 'equal :size 15))
 	(fonts (mapcar 'x-font-create-object
-		       (x-list-fonts "-*-*-*-*-*-*-*-*-*-*-*-*-*-*")))
+		       (font-list "-*-*-*-*-*-*-*-*-*-*-*-*-*-*")))
 	(plist nil)
 	(cur nil))
     (while fonts
@@ -1064,7 +1057,7 @@ for use in the 'weight' field of an mswindows font string.")
 (defun font-lookup-rgb-components (color)
   "Lookup COLOR (a color name) in rgb.txt and return a list of RGB values.
 The list (R G B) is returned, or an error is signaled if the lookup fails."
-  (let ((lib-list (if (boundp 'x-library-search-path)
+  (let ((lib-list (if-boundp 'x-library-search-path
 		      x-library-search-path
 		    ;; This default is from XEmacs 19.13 - hope it covers
 		    ;; everyone.
