@@ -1,3 +1,10 @@
+2003-07-31  René Kyllingstad  <listmailxemacs@kyllingstad.com>
+
+	* event-msw.c (mswindows_enqueue_mouse_button_event):
+	* event-msw.c (mswindows_wnd_proc):
+	enqueue button{4,5}up events for scrollwheel event when
+	mswindows_handle_mousewheel_event doesn't handle it.
+
 2003-07-29  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 	    Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
 
