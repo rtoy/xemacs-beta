@@ -1,3 +1,7 @@
+2003-03-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* INSTALL: Reorganize, synch to configure.usage.
+
 2003-03-01  Ben Wing  <ben@xemacs.org>
 
 	* PROBLEMS:
