@@ -131,13 +131,14 @@ the external client widget and are not seen by Emacs.
 @node Example Program Using the External Client Widget, , Motif-Specific Info About the External Client Widget, Top
 @chapter Example Program Using the External Client Widget
 
-This is a very simple program.  It currently doesn't actually work; the
-client window does not accept keystroke input, although you can edit
-with the mouse.  It also has some issues with exiting.  Be careful to
-destroy the Emacs frame before exiting the client program.
+This is a very simple program.  It has some issues with exiting.
+Be careful to destroy the Emacs frame in the client window before
+exiting the client program.
 
 @example
 /*
+   XEmacsInside.c
+
    Copyright (C) 2002 Free Software Foundation
 
    This program is part of XEmacs.  XEmacs is free software.  See the
@@ -153,8 +154,9 @@ destroy the Emacs frame before exiting the client program.
        -lextcli_Xt -lXt -lX11 -lSM -lICE \
        -o XEmacsInside XEmacsInside.c
 
-   Run it; it pops up a window, and prints a Lisp form on stdout.  Eval
-   the form in XEmacs configured --external-widget.
+   Run it with the resource "*input: True" and a reasonable geometry spec.
+   It pops up a window, and prints a Lisp form on stdout.  Eval the form
+   in an XEmacs configured with --external-widget.
 
    Written by Stephen J. Turnbull <stephen@@xemacs.org>
 
