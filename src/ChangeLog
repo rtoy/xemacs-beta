@@ -1,5 +1,16 @@
 2003-02-06  Ben Wing  <ben@xemacs.org>
 
+	* unicode.c:
+	* unicode.c (struct utf_16_detector):
+	* unicode.c (utf_16_detect):
+	* unicode.c (struct utf_8_detector):
+	* unicode.c (utf_8_detect):
+	UTF-8 detector was totally bogus and detected almost anything as UTF-8.
+	UTF-16 detector got overly happy with 0x2028's (line separator,
+	also space+paren).
+
+2003-02-06  Ben Wing  <ben@xemacs.org>
+
 	* lread.c (Fload_internal):
 	Oops.  Plain C can't handle declarations intermixed with statements.
 

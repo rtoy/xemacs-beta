@@ -1,5 +1,5 @@
 /* Code to handle Unicode conversion.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1965,6 +1965,8 @@ struct utf_16_detector
   int byteno;
   int prev_char;
   int text, rev_text;
+  int sep, rev_sep;
+  int num_ascii;
 };
 
 static void
@@ -1994,12 +1996,19 @@ utf_16_detect (struct detection_state *st, const UExtbyte *src,
 	      && (prevc == '\r' || prevc == '\n'
 		  || (prevc >= 0x20 && prevc <= 0x7E)))
 	    data->rev_text++;
+	  /* #### 0x2028 is LINE SEPARATOR and 0x2029 is PARAGRAPH SEPARATOR.
+	     I used to count these in text and rev_text but that is very bad,
+	     as 0x2028 is also space + left-paren in ASCII, which is extremely
+	     common.  So, what do we do with these? */
 	  if (prevc == 0x20 && (c == 0x28 || c == 0x29))
-	    data->text++;
+	    data->sep++;
 	  if (c == 0x20 && (prevc == 0x28 || prevc == 0x29))
-	    data->rev_text++;
+	    data->rev_sep++;
 	}
 
+      if ((c >= ' ' && c <= '~') || c == '\n' || c == '\r' || c == '\t' ||
+	  c == '\f' || c == '\v')
+	data->num_ascii++;
       data->byteno++;
       data->prev_char = c;
     }
@@ -2063,7 +2072,19 @@ utf_16_detect (struct detection_state *st, const UExtbyte *src,
 	DET_RESULT (st, utf_16_little_endian) = DET_SOMEWHAT_LIKELY;
       }
     else
-      SET_DET_RESULTS (st, utf_16, DET_AS_LIKELY_AS_UNLIKELY);
+      {
+	/* #### FUCKME!  There should really be an ASCII detector.  This
+	   would rule out the need to have this built-in here as
+	   well. --ben */
+	int pct_ascii = ((100 * data->num_ascii) / data->byteno);
+
+	if (pct_ascii > 90)
+	  SET_DET_RESULTS (st, utf_16, DET_QUITE_IMPROBABLE);
+	else if (pct_ascii > 75)
+	  SET_DET_RESULTS (st, utf_16, DET_SOMEWHAT_UNLIKELY);
+	else
+	  SET_DET_RESULTS (st, utf_16, DET_AS_LIKELY_AS_UNLIKELY);
+      }
   }
 }
 
@@ -2072,7 +2093,16 @@ struct utf_8_detector
   int byteno;
   int first_byte;
   int second_byte;
+  int prev_byte;
   int in_utf_8_byte;
+  int recent_utf_8_sequence;
+  int seen_bogus_utf8;
+  int seen_really_bogus_utf8;
+  int seen_2byte_sequence;
+  int seen_longer_sequence;
+  int seen_iso2022_esc;
+  int seen_iso_shift;
+  int seen_utf_bom:1;
 };
 
 static void
@@ -2096,23 +2126,17 @@ utf_8_detect (struct detection_state *st, const UExtbyte *src,
 	  if (data->first_byte == 0xef &&
 	      data->second_byte == 0xbb &&
 	      c == 0xbf)
-	    {
-	      SET_DET_RESULTS (st, utf_8, DET_NEARLY_IMPOSSIBLE);
-	      DET_RESULT (st, utf_8_bom) = DET_NEAR_CERTAINTY;
-	      return;
-	    }
+	    data->seen_utf_bom = 1;
 	  break;
 	}
 
       switch (data->in_utf_8_byte)
 	{
 	case 0:
-	  if (c == ISO_CODE_ESC || c == ISO_CODE_SI || c == ISO_CODE_SO)
-	    {
-	      SET_DET_RESULTS (st, utf_8, DET_NEARLY_IMPOSSIBLE);
-	      DET_RESULT (st, utf_8) = DET_SOMEWHAT_UNLIKELY;
-	      return;
-	    }
+	  if (data->prev_byte == ISO_CODE_ESC && c >= 0x28 && c <= 0x2F)
+	    data->seen_iso2022_esc++;
+	  else if (c == ISO_CODE_SI || c == ISO_CODE_SO)
+	    data->seen_iso_shift++;
 	  else if (c >= 0xfc)
 	    data->in_utf_8_byte = 5;
 	  else if (c >= 0xf8)
@@ -2124,26 +2148,64 @@ utf_8_detect (struct detection_state *st, const UExtbyte *src,
 	  else if (c >= 0xc0)
 	    data->in_utf_8_byte = 1;
 	  else if (c >= 0x80)
-	    {
-	      SET_DET_RESULTS (st, utf_8, DET_NEARLY_IMPOSSIBLE);
-	      DET_RESULT (st, utf_8) = DET_SOMEWHAT_UNLIKELY;
-	      return;
-	    }
+	    data->seen_bogus_utf8++;
+	  if (data->in_utf_8_byte > 0)
+	    data->recent_utf_8_sequence = data->in_utf_8_byte;
 	  break;
 	default:
 	  if ((c & 0xc0) != 0x80)
-	    {
-	      SET_DET_RESULTS (st, utf_8, DET_NEARLY_IMPOSSIBLE);
-	      DET_RESULT (st, utf_8) = DET_SOMEWHAT_UNLIKELY;
-	      return;
-	    }
+	    data->seen_really_bogus_utf8++;
 	  else
-	    data->in_utf_8_byte--;
+	    {
+	      data->in_utf_8_byte--;
+	      if (data->in_utf_8_byte == 0)
+		{
+		  if (data->recent_utf_8_sequence == 1)
+		    data->seen_2byte_sequence++;
+		  else
+		    {
+		      assert (data->recent_utf_8_sequence >= 2);
+		      data->seen_longer_sequence++;
+		    }
+		}
+	    }
 	}
 
       data->byteno++;
+      data->prev_byte = c;
     }
-  SET_DET_RESULTS (st, utf_8, DET_SOMEWHAT_LIKELY);
+
+  /* either BOM or no BOM, but not both */
+  SET_DET_RESULTS (st, utf_8, DET_NEARLY_IMPOSSIBLE);
+
+
+  if (data->seen_utf_bom)
+    DET_RESULT (st, utf_8_bom) = DET_NEAR_CERTAINTY;
+  else
+    {
+      if (data->seen_really_bogus_utf8 ||
+	  data->seen_bogus_utf8 >= 2)
+	; /* bogus */
+      else if (data->seen_bogus_utf8)
+	DET_RESULT (st, utf_8) = DET_SOMEWHAT_UNLIKELY;
+      else if ((data->seen_longer_sequence >= 5 ||
+		data->seen_2byte_sequence >= 10) &&
+	       (!(data->seen_iso2022_esc + data->seen_iso_shift) ||
+		(data->seen_longer_sequence * 2 + data->seen_2byte_sequence) /
+		(data->seen_iso2022_esc + data->seen_iso_shift) >= 10))
+	/* heuristics, heuristics, we love heuristics */
+	DET_RESULT (st, utf_8) = DET_QUITE_PROBABLE;
+      else if (data->seen_iso2022_esc ||
+	       data->seen_iso_shift >= 3)
+	DET_RESULT (st, utf_8) = DET_SOMEWHAT_UNLIKELY;
+      else if (data->seen_longer_sequence ||
+	       data->seen_2byte_sequence)
+	DET_RESULT (st, utf_8) = DET_SOMEWHAT_LIKELY;
+      else if (data->seen_iso_shift)
+	DET_RESULT (st, utf_8) = DET_SOMEWHAT_UNLIKELY;
+      else
+	DET_RESULT (st, utf_8) = DET_AS_LIKELY_AS_UNLIKELY;
+    }
 }
 
 static void
