@@ -1,3 +1,10 @@
+2002-02-02  William M. Perry  <wmperry@gnu.org>
+
+	* glyphs-gtk.c (extract_xpm_color_names): Resurrect the xpm color
+	symbols stuff because the GTK XPM libraries do very weird things
+	if you don't specify the transparency at all.  Reverting the patch
+	of 12/22/01.
+
 2002-01-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* ChangeLog (2001-09-19 Ben Wing): Entry dosed with Dramamine.
