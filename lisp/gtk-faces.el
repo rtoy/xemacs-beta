@@ -79,7 +79,7 @@
 			   nil '(gtk default))
       (set-face-background 'zmacs-region
 			   (nth selected (plist-get style 'background))
-			   nil '(gtk default))
+			   nil '(gtk default)))
     (set-face-background 'text-cursor "red3" device)))
 
 ;;; This is called from `init-frame-faces', which is called from

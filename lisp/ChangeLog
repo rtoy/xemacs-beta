@@ -1,3 +1,8 @@
+2001-12-19  Jan Vroonhof  <jan@xemacs.org>
+
+	* gtk-faces.el (gtk-init-device-faces): Fix missing close paren
+	problem with my application of the JPW's following patch.
+
 2001-11-29  John Paul Wallington <jpw@shootybangbang.com>
 
 	* gtk-faces.el (gtk-init-device-faces): Replaced device locale 
