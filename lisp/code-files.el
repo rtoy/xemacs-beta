@@ -220,56 +220,69 @@ object (the entry specified a coding system)."
 ;(defun convert-mbox-coding-system (filename visit start end) ...)
 
 (defun load (file &optional noerror nomessage nosuffix)
-  "Execute a file of Lisp code named FILE.
-First tries FILE with .elc appended, then tries with .el,
- then tries FILE unmodified.  Searches directories in load-path.
+  "Execute a file of Lisp code named FILE, or load a binary module.
+First tries to find a Lisp FILE with .elc appended, then with .el, then with
+ FILE unmodified.  If unsuccessful, tries to find a binary module FILE with
+ .ell appended, then with .dll, then with .so, and finally unmodified.
+Searches directories in load-path for Lisp files, and in module-load-path
+ for binary modules.
 If optional second arg NOERROR is non-nil,
  report no error if FILE doesn't exist.
 Print messages at start and end of loading unless
  optional third arg NOMESSAGE is non-nil.
 If optional fourth arg NOSUFFIX is non-nil, don't try adding
- suffixes .elc or .el to the specified name FILE.
+ suffixes .elc, .el, or .ell to the specified name FILE.
 Return t if file exists."
   (let* ((filename (substitute-in-file-name file))
 	 (handler (find-file-name-handler filename 'load))
 	 (path nil))
     (if handler
 	(funcall handler 'load filename noerror nomessage nosuffix)
-      (if (or (<= (length filename) 0)
-	      (null (setq path
-			  (locate-file filename load-path
+      ;; First try to load a Lisp file
+      (if (and (> (length filename) 0)
+	       (setq path (locate-file filename load-path
 				       (and (not nosuffix)
-					    '(".elc" ".el" ""))))))
-	  (and (null noerror)
-	       (signal 'file-error (list "Cannot open load file" filename)))
-	;; now use the internal load to actually load the file.
-	(load-internal
-	 file noerror nomessage nosuffix
-	 (let ((elc ; use string= instead of string-match to keep match-data.
+					    '(".elc" ".el" "")))))
+	  ;; now use the internal load to actually load the file.
+	  (load-internal
+	   file noerror nomessage nosuffix
+	   (let ((elc ; use string= instead of string-match to keep match-data.
 		(equalp ".elc" (substring path -4))))
-	   (or (and (not elc) coding-system-for-read) ; prefer for source file
-	       ;; find magic-cookie
-	       (let ((codesys (find-coding-system-magic-cookie-in-file path)))
-		 (when codesys
-		   (setq codesys (intern codesys))
-		   (if (find-coding-system codesys) codesys)))
-	       (if elc
-		   ;; if reading a byte-compiled file and we didn't find
-		   ;; a coding-system magic cookie, then use `binary'.
-		   ;; We need to guarantee that we never do autodetection
-		   ;; on byte-compiled files because confusion here would
-		   ;; be a very bad thing.  Pre-existing byte-compiled
-		   ;; files are always in the `binary' coding system.
-		   ;; Also, byte-compiled files always use `lf' to terminate
-		   ;; a line; don't risk confusion here either.
-		   'binary
-		 (or (find-file-coding-system-for-read-from-filename path)
-		     ;; looking up in `file-coding-system-alist'.
-		     ;; otherwise use `buffer-file-coding-system-for-read',
-		     ;; as normal
-		     buffer-file-coding-system-for-read)
-		 )))
-	 )))))
+	     (or (and (not elc) coding-system-for-read) ;prefer for source file
+		 ;; find magic-cookie
+		 (let ((codesys
+			(find-coding-system-magic-cookie-in-file path)))
+		   (when codesys
+		     (setq codesys (intern codesys))
+		     (if (find-coding-system codesys) codesys)))
+		 (if elc
+		     ;; if reading a byte-compiled file and we didn't find
+		     ;; a coding-system magic cookie, then use `binary'.
+		     ;; We need to guarantee that we never do autodetection
+		     ;; on byte-compiled files because confusion here would
+		     ;; be a very bad thing.  Pre-existing byte-compiled
+		     ;; files are always in the `binary' coding system.
+		     ;; Also, byte-compiled files always use `lf' to terminate
+		     ;; a line; don't risk confusion here either.
+		     'binary
+		   (or (find-file-coding-system-for-read-from-filename path)
+		       ;; looking up in `file-coding-system-alist'.
+		       ;; otherwise use `buffer-file-coding-system-for-read',
+		       ;; as normal
+		       buffer-file-coding-system-for-read)
+		   ))))
+	;; The file name is invalid, or we want to load a binary module
+	(if (and (> (length filename) 0)
+		 (setq path (locate-file filename module-load-path
+					 (and (not nosuffix)
+					      '(".ell" ".dll" ".so" "")))))
+	    (if (featurep 'modules)
+		(let ((load-modules-quietly nomessage))
+		  (load-module path))
+	      (signal 'file-error '("This XEmacs does not support modules")))
+	  (and (null noerror)
+	       (signal 'file-error (list "Cannot open load file" filename))))
+	))))
 
 (defvar insert-file-contents-access-hook nil
   "A hook to make a file accessible before reading it.

@@ -148,6 +148,12 @@ for particular types of frames."
   ;; future.
   (destructive-plist-to-alist (frame-properties frame)))
 
+(make-compatible 'frame-parameter 'frame-property)
+(defun frame-parameter (frame parameter)
+  "Return FRAME's value for parameter PARAMETER.
+If FRAME is nil, describe the currently selected frame."
+  (cdr (assq parameter (frame-parameters frame))))
+
 (make-compatible 'modify-frame-parameters 'set-frame-properties)
 (defun modify-frame-parameters (frame alist)
   "Modify the properties of frame FRAME according to ALIST.
@@ -262,6 +268,23 @@ set Info-directory-list.")
   'function-interactive) ;GNU 21.1
 (define-compatible-function-alias 'assq-delete-all
   'remassq) ;GNU 21.1
+
+(defun makehash (&optional test)
+  "Create a new hash table.
+Optional first argument TEST specifies how to compare keys in the table.  
+Predefined tests are `eq', `eql', and `equal'.  Default is `eql'."
+  (make-hash-table :test test))
+(make-compatible 'makehash 'make-hash-table)
+
+(defun buffer-local-value (variable buffer)
+  "Return the value of VARIABLE in BUFFER.
+If VARIABLE does not have a buffer-local binding in BUFFER, the value
+is the default binding of variable."
+  (symbol-value-in-buffer variable buffer))
+(make-compatible 'buffer-local-value 'symbol-value-in-buffer)
+
+(define-compatible-function-alias 'line-beginning-position 'point-at-bol)
+(define-compatible-function-alias 'line-end-position 'point-at-eol)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; modeline
 

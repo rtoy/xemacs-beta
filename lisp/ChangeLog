@@ -1,3 +1,21 @@
+2002-06-24  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* obsolete.el (frame-parameter): New compatibility function.
+	(makehash): Ditto.
+	(buffer-local-value): Ditto.
+	(line-beginning-position): New compatibility alias for `point-at-bol'.
+	(line-end-position): New compatibility alias for `point-at-eol'.
+
+	* subr.el (with-temp-message): New function; sync with GNU Emacs 21.
+	(bound-and-true-p): Ditto.
+	(propertize): New function.
+	(delete-and-extract-region): Ditto.
+
+2002-06-24  Jerry James  <james@xemacs.org>
+
+	* code-files.el (load): Look for a binary module if no Lisp file
+	with the correct name is found.
+
 2002-06-22  Ville Skyttä  <ville.skytta@xemacs.org>
 
 	* subr.el (add-to-list): Sync with GNU Emacs 21.2, adding the

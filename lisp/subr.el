@@ -486,6 +486,23 @@ See also `with-temp-buffer'."
 	 (and (buffer-name ,temp-buffer)
 	      (kill-buffer ,temp-buffer))))))
 
+(defmacro with-temp-message (message &rest body)
+  "Display MESSAGE temporarily while BODY is evaluated.
+The original message is restored to the echo area after BODY has finished.
+The value returned is the value of the last form in BODY."
+  (let ((current-message (make-symbol "current-message"))
+	(temp-message (make-symbol "with-temp-message")))
+    `(let ((,temp-message ,message)
+	   (,current-message))
+       (unwind-protect
+	   (progn
+	     (when ,temp-message
+	       (setq ,current-message (current-message))
+	       (message "%s" ,temp-message))
+	     ,@body)
+	 (and ,temp-message ,current-message
+	      (message "%s" ,current-message))))))
+
 (defmacro with-temp-buffer (&rest forms)
   "Create a temporary buffer, and evaluate FORMS there like `progn'.
 See also `with-temp-file' and `with-output-to-string'."
@@ -1108,6 +1125,30 @@ This function accepts any number of arguments, but ignores them."
   (interactive)
   nil)
 
+;; defined in lisp/bindings.el in GNU Emacs.
+(defmacro bound-and-true-p (var)
+  "Return the value of symbol VAR if it is bound, else nil."
+  `(and (boundp (quote ,var)) ,var))
+
+;; `propertize' is a builtin in GNU Emacs 21.
+(defun propertize (string &rest properties)
+  "Return a copy of STRING with text properties added.
+First argument is the string to copy.
+Remaining arguments form a sequence of PROPERTY VALUE pairs for text
+properties to add to the result."
+  (let ((str (copy-sequence string)))
+    (add-text-properties 0 (length str)
+			 properties
+			 str)
+    str))
+
+;; `delete-and-extract-region' is a builtin in GNU Emacs 21.
+(defun delete-and-extract-region (start end)
+  "Delete the text between START and END and return it."
+  (let ((region (buffer-substring start end)))
+    (delete-region start end)
+    region))
+
 (define-function 'eval-in-buffer 'with-current-buffer)
 (make-obsolete 'eval-in-buffer 'with-current-buffer)
 
@@ -1131,8 +1172,6 @@ This function accepts any number of arguments, but ignores them."
 ;;      (subrp object)
 ;;      (compiled-function-p object)
 ;;      (eq (car-safe object) 'lambda)))
-
-
 
 (defun function-interactive (function)
   "Return the interactive specification of FUNCTION.
