@@ -342,8 +342,10 @@ a = autoloaded, b = byte-compiled, i = internal, l = lambda, m = macro.\n\n"
 		      (function-obsoleteness-doc fn)
 		    ;; A symbol's function slot can point to an unbound symbol.
 		    ;; In that case, `documentation' will fail.
-		    (ignore-errors
-		      (documentation fn)))))
+		    (condition-case nil
+			(documentation fn)
+		      (void-function "(alias for undefined function)")
+		      (error "(unexpected error from `documention')")))))
 	     (if (and
 		  doc
 		  (string-match
@@ -771,7 +773,12 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		     local (current-local-map)
 		     global (current-global-map)
 		     obsolete (get symbol 'byte-obsolete-info)
-		     doc (or (documentation symbol) "function not documented"))
+		     doc (or (condition-case nil
+				 (documentation symbol)
+			       (void-function
+				"(alias for undefined function)")
+			       (error "(unexpected error from `documention')"))
+			     "function not documented"))
 	       (save-excursion
 		 (set-buffer hyper-apropos-help-buf)
 		 (goto-char (point-max))

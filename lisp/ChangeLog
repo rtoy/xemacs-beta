@@ -1,3 +1,16 @@
+2004-09-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Fix bug: apropos errors if a defalias refers to an undefined
+	function.  <87pt4pmdcs.fsf@tleepslib.sk.tsukuba.ac.jp>
+
+	* apropos.el (apropos):
+	(apropos-command):
+	* help.el (frob-help-extents):
+	* help-macro.el (make-help-screen):
+	* hyper-apropos.el (hyper-apropos-grok-functions):
+	(hyper-apropos-get-doc):
+	Catch void-function error thrown by `documentation'.
+
 2004-09-07  Steve Youngs  <steve@youngs.au.com>
 
 	* packages.el (package-require): Fix incorrect arg to format.

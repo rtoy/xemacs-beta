@@ -110,7 +110,11 @@ Lisp expressions in those arguments."
 	      (substitute-command-keys ,(eval help-line))))
 	 (when three-step-help
 	   (message "%s" line-prompt))
-	 (let* ((help-screen (documentation (quote ,fname)))
+	 (let* ((help-screen
+		 (condition-case nil
+		     (documentation (quote ,fname))
+		   (void-function "(alias for undefined function)")
+		   (error "(unexpected error from `documention')")))
 		;; We bind overriding-local-map for very small
 		;; sections, *excluding* where we switch buffers and
 		;; where we execute the chosen help command.
