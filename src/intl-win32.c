@@ -1716,7 +1716,7 @@ determine_code_page (Lisp_Object USED_IF_MULE (codesys))
     case MULTIBYTE_SYSTEM_DEFAULT:
       locale = GetSystemDefaultLCID (); break;
     default:
-      abort (); locale = 0;
+      ABORT (); locale = 0;
     }
 
   switch (data->cp_type)
@@ -1752,7 +1752,7 @@ determine_code_page (Lisp_Object USED_IF_MULE (codesys))
       return 0;
 #endif
     default:
-      abort (); return 0;
+      ABORT (); return 0;
     }
 #else /* not MULE */
   return CP_ACP;
@@ -1825,7 +1825,7 @@ mswindows_multibyte_to_unicode_getprop (Lisp_Object coding_system,
 	  case MULTIBYTE_OEM: return Qoem;
 	  case MULTIBYTE_EBCDIC: return Qebcdic;
 	  case MULTIBYTE_MAC: return Qmac;
-	  default: abort ();
+	  default: ABORT ();
 	  }
     }
   else if (EQ (prop, Qlocale))
@@ -1840,7 +1840,7 @@ mswindows_multibyte_to_unicode_getprop (Lisp_Object coding_system,
 
 	case MULTIBYTE_SPECIFIED_CODE_PAGE:
 	  return Qnil;
-	default: abort ();
+	default: ABORT ();
 	}
     }
 
@@ -2146,7 +2146,7 @@ mswindows_multibyte_convert (struct coding_stream *UNUSED (str),
   Bytecount orign = n;
   /* should never be called; is preprocessed away in the
      canonicalize method */
-  abort ();
+  ABORT ();
   return orign;
 }
 

@@ -958,7 +958,7 @@ init_baud_rate (struct device *d)
 
     sg.sg_ospeed = B9600;
     if (ioctl (input_fd, TIOCGETP, &sg) < 0)
-      abort ();
+      ABORT ();
     DEVICE_TTY_DATA (d)->ospeed = sg.sg_ospeed;
 #endif
   }

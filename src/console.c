@@ -260,7 +260,7 @@ get_console_variant (Lisp_Object type)
   if (EQ (type, Qstream)) 
     return stream_console;
 
-  abort (); /* should never happen */
+  ABORT (); /* should never happen */
   return dead_console; 
 }
 
@@ -1564,6 +1564,6 @@ buffer's local map, and the minor mode keymaps and text property keymaps.
   if ((XINT (console_local_flags.slot) != -2 &&			\
          XINT (console_local_flags.slot) != -3)			\
       != !(NILP (XCONSOLE (Vconsole_local_symbols)->slot)))	\
-  abort ();
+  ABORT ();
 #include "conslots.h"
 }

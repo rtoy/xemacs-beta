@@ -711,7 +711,7 @@ get_image_instantiator_governing_domain (Lisp_Object instantiator,
   else if (governing_domain == GOVERNING_DOMAIN_DEVICE)
     domain = DOMAIN_DEVICE (domain);
   else
-    abort ();
+    ABORT ();
 
   return domain;
 }
@@ -1087,7 +1087,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
       break;
 
     default:
-      abort ();
+      ABORT ();
     }
 
   MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain), print_image_instance,
@@ -1209,7 +1209,7 @@ image_instance_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
       break;
 
     default:
-      abort ();
+      ABORT ();
     }
 
   return DEVMETH_OR_GIVEN (DOMAIN_XDEVICE (i1->domain),
@@ -1288,7 +1288,7 @@ image_instance_hash (Lisp_Object obj, int depth)
       break;
 
     default:
-      abort ();
+      ABORT ();
     }
 
   return HASH2 (hash, DEVMETH_OR_GIVEN
@@ -1373,7 +1373,7 @@ encode_image_instance_type (enum image_instance_type type)
     case IMAGE_SUBWINDOW:    return Qsubwindow;
     case IMAGE_WIDGET:    return Qwidget;
     default:
-      abort ();
+      ABORT ();
     }
 
   return Qnil; /* not reached */
@@ -2299,7 +2299,7 @@ inherit_instantiate (Lisp_Object UNUSED (image_instance),
 		     int UNUSED (dest_mask), Lisp_Object UNUSED (domain))
 {
   /* handled specially in image_instantiate */
-  abort ();
+  ABORT ();
 }
 
 
@@ -3337,7 +3337,7 @@ image_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 		      Qunbound);
 	}
       else
-	abort ();	/* We're not allowed anything else currently. */
+	ABORT ();	/* We're not allowed anything else currently. */
 
       /* If we don't have an instance at this point then create
          one. */
@@ -3414,7 +3414,7 @@ image_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
       RETURN_UNGCPRO (instance);
     }
 
-  abort ();
+  ABORT ();
   return Qnil; /* not reached */
 }
 
@@ -3810,7 +3810,7 @@ allocate_glyph (enum glyph_type type,
 	| IMAGE_COLOR_PIXMAP_MASK;
       break;
     default:
-      abort ();
+      ABORT ();
     }
 
   /* I think Fmake_specifier can GC.  I think set_specifier_fallback can GC. */
@@ -3935,7 +3935,7 @@ The return value will be one of 'buffer, 'pointer, or 'icon.
   CHECK_GLYPH (glyph);
   switch (XGLYPH_TYPE (glyph))
     {
-    default: abort ();
+    default: ABORT ();
     case GLYPH_BUFFER:  return Qbuffer;
     case GLYPH_POINTER: return Qpointer;
     case GLYPH_ICON:    return Qicon;
@@ -5018,7 +5018,7 @@ display_table_entry (Ichar ch, Lisp_Object face_table,
 	    continue;
 	}
       else
-	abort ();
+	ABORT ();
     }
 }
 

@@ -63,9 +63,9 @@ Boston, MA 02111-1307, USA.  */
 #define __INTERNAL_APPROPRIATENESS_CHECK(f) assert(FRAME_X_P (f))
 #define __INTERNAL_FLUSH(d) XFlush (DEVICE_X_DISPLAY (d))
 #else
-#define __INTERNAL_MAPPED_P(f) abort()
-#define __INTERNAL_APPROPRIATENESS_CHECK(f) abort()
-#define __INTERNAL_FLUSH(f) abort()
+#define __INTERNAL_MAPPED_P(f) ABORT()
+#define __INTERNAL_APPROPRIATENESS_CHECK(f) ABORT()
+#define __INTERNAL_FLUSH(f) ABORT()
 #endif
 
 #include "toolbar-common.h"
@@ -445,7 +445,7 @@ common_get_button_size (struct frame *f, Lisp_Object window,
 	(frame)->right_toolbar_was_visible = flag;			\
 	break;								\
       default:								\
-	abort ();							\
+	ABORT ();							\
       }									\
   } while (0)
 

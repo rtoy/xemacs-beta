@@ -618,7 +618,7 @@ color_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 		   XVECTOR_DATA (instantiator)[1], domain, ERROR_ME, 0, depth));
 
 	default:
-	  abort ();
+	  ABORT ();
 	}
     }
   else if (NILP (instantiator))
@@ -630,7 +630,7 @@ color_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 			     device);
     }
   else
-    abort ();	/* The spec validation routines are screwed up. */
+    ABORT ();	/* The spec validation routines are screwed up. */
 
   return Qunbound;
 }
@@ -894,7 +894,7 @@ font_instantiate (Lisp_Object UNUSED (specifier),
   else if (NILP (instantiator))
     return Qunbound;
   else
-    abort ();	/* Eh? */
+    ABORT ();	/* Eh? */
 
   return Qunbound;
 }
@@ -1025,7 +1025,7 @@ face_boolean_instantiate (Lisp_Object specifier,
       return retval;
     }
   else
-    abort ();	/* Eh? */
+    ABORT ();	/* Eh? */
 
   return Qunbound;
 }

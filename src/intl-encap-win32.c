@@ -146,9 +146,9 @@ yes ExpandEnvironmentStrings
 yes OutputDebugString
 yes FindResource
 yes FindResourceEx
-yes EnumResourceTypes
-yes EnumResourceNames
-yes EnumResourceLanguages
+skip EnumResourceTypes different prototypes in VC6 and VC7
+skip EnumResourceNames different prototypes in VC6 and VC7
+skip EnumResourceLanguages different prototypes in VC6 and VC7
 yes BeginUpdateResource
 yes UpdateResource
 yes EndUpdateResource
@@ -797,7 +797,7 @@ yes ImmInstallIME
 yes ImmGetDescription
 yes ImmGetIMEFileName
 yes ImmGetCompositionString
-yes ImmSetCompositionString
+skip ImmSetCompositionString different prototypes in VC6 and VC7
 yes ImmGetCandidateListCount
 yes ImmGetCandidateList
 yes ImmGetGuideLine
@@ -1249,6 +1249,69 @@ qxeSHGetSpecialFolderPath (HWND hwndOwner, Extbyte * lpszPath, int nFolder, BOOL
 
 #endif /* not CYGWIN */
 
+/********************************************************************************/
+/* would be encapsulatable but for header changes in different versions of VC++ */
+/********************************************************************************/
+
+#if MSC_VERSION >= 1300
+
+BOOL
+qxeEnumResourceTypes (HMODULE hModule, ENUMRESTYPEPROCW lpEnumFunc, LONG lParam)
+{
+  if (XEUNICODE_P)
+    return EnumResourceTypesW (hModule, lpEnumFunc, lParam);
+  else
+    return EnumResourceTypesA (hModule, (ENUMRESTYPEPROCA) lpEnumFunc, lParam);
+}
+
+BOOL
+qxeEnumResourceNames (HMODULE hModule, const Extbyte * lpType, ENUMRESNAMEPROCW lpEnumFunc, LONG lParam)
+{
+  if (XEUNICODE_P)
+    return EnumResourceNamesW (hModule, (LPCWSTR) lpType, lpEnumFunc, lParam);
+  else
+    return EnumResourceNamesA (hModule, (LPCSTR) lpType, (ENUMRESNAMEPROCA) lpEnumFunc, lParam);
+}
+
+BOOL
+qxeEnumResourceLanguages (HMODULE hModule, const Extbyte * lpType, const Extbyte * lpName, ENUMRESLANGPROCW lpEnumFunc, LONG lParam)
+{
+  if (XEUNICODE_P)
+    return EnumResourceLanguagesW (hModule, (LPCWSTR) lpType, (LPCWSTR) lpName, lpEnumFunc, lParam);
+  else
+    return EnumResourceLanguagesA (hModule, (LPCSTR) lpType, (LPCSTR) lpName, (ENUMRESLANGPROCA) lpEnumFunc, lParam);
+}
+
+#else
+
+BOOL
+qxeEnumResourceTypes (HMODULE hModule, ENUMRESTYPEPROC lpEnumFunc, LONG lParam)
+{
+  if (XEUNICODE_P)
+    return EnumResourceTypesW (hModule, lpEnumFunc, lParam);
+  else
+    return EnumResourceTypesA (hModule, lpEnumFunc, lParam);
+}
+
+BOOL
+qxeEnumResourceNames (HMODULE hModule, const Extbyte * lpType, ENUMRESNAMEPROC lpEnumFunc, LONG lParam)
+{
+  if (XEUNICODE_P)
+    return EnumResourceNamesW (hModule, (LPCWSTR) lpType, lpEnumFunc, lParam);
+  else
+    return EnumResourceNamesA (hModule, (LPCSTR) lpType, lpEnumFunc, lParam);
+}
+
+BOOL
+qxeEnumResourceLanguages (HMODULE hModule, const Extbyte * lpType, const Extbyte * lpName, ENUMRESLANGPROC lpEnumFunc, LONG lParam)
+{
+  if (XEUNICODE_P)
+    return EnumResourceLanguagesW (hModule, (LPCWSTR) lpType, (LPCWSTR) lpName, lpEnumFunc, lParam);
+  else
+    return EnumResourceLanguagesA (hModule, (LPCSTR) lpType, (LPCSTR) lpName, lpEnumFunc, lParam);
+}
+
+#endif /* MSC_VERSION >= 1300 */
 
 /************************************************************************/
 /*                                files                                 */
@@ -2047,7 +2110,31 @@ qxeImmGetCompositionFont (HIMC imc, LOGFONTW *lplf)
       return retval;
     }
 }
- 
+
+#if MSC_VERSION >= 1300
+
+BOOL
+qxeImmSetCompositionString (HIMC arg1, DWORD dwIndex, LPVOID lpComp, DWORD arg4, LPVOID lpRead, DWORD arg6)
+{
+  if (XEUNICODE_P)
+    return ImmSetCompositionStringW (arg1, dwIndex, lpComp, arg4, lpRead, arg6);
+  else
+    return ImmSetCompositionStringA (arg1, dwIndex, lpComp, arg4, lpRead, arg6);
+}
+
+#else
+
+BOOL
+qxeImmSetCompositionString (HIMC arg1, DWORD dwIndex, LPCVOID lpComp, DWORD arg4, LPCVOID lpRead, DWORD arg6)
+{
+  if (XEUNICODE_P)
+    return ImmSetCompositionStringW (arg1, dwIndex, lpComp, arg4, lpRead, arg6);
+  else
+    return ImmSetCompositionStringA (arg1, dwIndex, lpComp, arg4, lpRead, arg6);
+}
+
+#endif /* MSC_VERSION >= 1300 */
+
 int
 qxeGetObject (HGDIOBJ hgdiobj, int cbBuffer, LPVOID lpvObject)
 {

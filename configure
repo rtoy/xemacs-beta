@@ -14658,7 +14658,7 @@ fi
   if test "$sound_found" = "yes"; then
      with_native_sound=yes
 
-               if test "$opsys" = "netbsd" ; then 
+                    if test "$opsys" = "netbsd" ; then 
          
 echo $ac_n "checking for _oss_ioctl in -lossaudio""... $ac_c" 1>&6
 echo "configure:14665: checking for _oss_ioctl in -lossaudio" >&5

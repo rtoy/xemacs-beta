@@ -1655,9 +1655,9 @@ mswindows_need_event (int badly_p)
 		    mswindows_enqueue_process_event (XPROCESS (vaffanculo));
 		  else
 		    {
-		      /* abort (); */
+		      /* ABORT (); */
 		      /* #### FUCKME!  When can this happen?  I hit this
-			 abort() when I tried enabling it. */
+			 ABORT() when I tried enabling it. */
 		      /* Have to return something: there may be no
 			 accompanying process event */
 		      mswindows_enqueue_magic_event (NULL, XM_BUMPQUEUE);
@@ -2823,7 +2823,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 			lcid = MAKELANGID (LANG_ENGLISH, SUBLANG_ENGLISH_US);
 			break;
 
-		      default: abort (); lcid = 0;
+		      default: ABORT (); lcid = 0;
 		      }
 
 		    /* VERY CONFUSING!  See intl-win32.c. */
@@ -4419,7 +4419,7 @@ emacs_mswindows_format_magic_event (Lisp_Event *emacs_event,
       FROB (XM_MAPFRAME);
       FROB (XM_UNMAPFRAME);
 
-    default: abort ();
+    default: ABORT ();
     }
 #undef FROB
   

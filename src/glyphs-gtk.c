@@ -401,7 +401,7 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
 #endif
       else if (IMAGE_INSTANCE_TYPE (p) == IMAGE_SUBWINDOW)
 	{
-	  abort();
+	  ABORT();
 	}
       else
 	{
@@ -763,7 +763,7 @@ void init_image_instance_from_gdk_pixmap (struct Lisp_Image_Instance *ii,
   gint width, height, depth;
 
   if (!DEVICE_GTK_P (device))
-    abort ();
+    ABORT ();
 
   IMAGE_INSTANCE_DEVICE (ii) = device;
   IMAGE_INSTANCE_TYPE (ii) = IMAGE_COLOR_PIXMAP;
@@ -1010,7 +1010,7 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
       break;
 
     default:
-      abort ();
+      ABORT ();
     }
 }
 
@@ -1304,7 +1304,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       break;
 
     default:
-      abort ();
+      ABORT ();
     }
 
   UNGCPRO;
@@ -1929,7 +1929,7 @@ gtk_unmap_subwindow (Lisp_Image_Instance *p)
   if (IMAGE_INSTANCE_TYPE (p) == IMAGE_SUBWINDOW)
     {
       /* We don't support subwindows, but we do support widgets... */
-      abort ();
+      ABORT ();
     }
   else				/* must be a widget */
     {
@@ -1952,7 +1952,7 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
   if (IMAGE_INSTANCE_TYPE (p) == IMAGE_SUBWINDOW)
     {
       /* No subwindow support... */
-      abort ();
+      ABORT ();
     }
   else				/* must be a widget */
     {
@@ -2391,7 +2391,7 @@ gtk_button_redisplay (Lisp_Object image_instance)
   else
     {
       /* Unknown button type... */
-      abort();
+      ABORT();
     }
 }
 

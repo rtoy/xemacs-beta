@@ -368,7 +368,7 @@ gtk_scrollbar_loop (enum gtk_scrollbar_loop type, Lisp_Object window,
 		}
 	      break;
 	    default:
-	      abort ();
+	      ABORT ();
 	    }
 	}
 
@@ -443,7 +443,7 @@ scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
       event_data = Fcons (win, make_int ((int)adj->value));
       break;
     default:
-      abort();
+      ABORT();
     }
 
   signal_special_gtk_user_event (frame, event_type, event_data);

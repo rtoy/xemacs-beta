@@ -2762,7 +2762,7 @@ sort_args (int argc, Wexttext **argv)
 	}
 
       if (best < 0)
-	abort ();
+	ABORT ();
 
       /* Copy the highest priority remaining option, with its args, to
 	 NEW_ARGV.  */
@@ -3027,7 +3027,7 @@ main (int argc, Extbyte **argv, Extbyte **UNUSED (envp))
       if (rc != 0)
 	{
 	  stderr_out ("malloc_set_state failed, rc = %d\n", rc);
-	  abort ();
+	  ABORT ();
 	}
 #if 0
       free (malloc_state_ptr);
@@ -3261,7 +3261,7 @@ DEFUN ("force-debugging-signal", Fforce_debugging_signal, 0, 1, 0, /*
 Cause XEmacs to enter the debugger.
 On some systems, there may be no way to do this gracefully; if so,
 nothing happens unless ABORT is non-nil, in which case XEmacs will
-abort() -- a sure-fire way to immediately get back to the debugger,
+ABORT() -- a sure-fire way to immediately get back to the debugger,
 but also a sure-fire way to kill XEmacs (and dump core on Unix
 systems)!
 */
@@ -3269,7 +3269,7 @@ systems)!
 {
   debugging_breakpoint ();
   if (!NILP (abort_))
-    abort ();
+    ABORT ();
   return Qnil;
 }
 
@@ -3761,7 +3761,7 @@ static const Ascbyte *assert_failed_expr;
 #undef fprintf
 #endif
 
-/* This is called when an assert() fails or when abort() is called -- both
+/* This is called when an assert() fails or when ABORT() is called -- both
    of those are defined in the preprocessor to an expansion involving
    assert_failed(). */
 void
@@ -4496,10 +4496,6 @@ __sti__iflPNGFile_c___ (void)
 }
 
 #endif
-
-#undef abort /* Get access to the real version of abort.  We put this all
-		the way at the end to make sure that all calls to abort()
-		anywhere in the above code go through assert_failed(). */
 
 DOESNT_RETURN
 really_abort (void)

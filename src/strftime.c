@@ -197,7 +197,7 @@ add_num_time_t (char *string, int max, time_t num)
   char buf[40];
 
   if (sizeof (num) > 16)
-    abort ();
+    ABORT ();
   sprintf (buf, "%lu", (unsigned long) num);
   return add_str (string, buf, max);
 }

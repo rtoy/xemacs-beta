@@ -559,7 +559,7 @@ delete_from_buffer_alist (Lisp_Object buf)
   Lisp_Object cons = Frassq (buf, Vbuffer_alist);
   Lisp_Object frmcons, devcons, concons;
   if (NILP (cons))
-    return; /* abort() ? */
+    return; /* ABORT() ? */
   Vbuffer_alist = delq_no_quit (cons, Vbuffer_alist);
 
   FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
@@ -2819,7 +2819,7 @@ handled:
   if ((XINT (buffer_local_flags.slot) != -2 &&			\
        XINT (buffer_local_flags.slot) != -3)			\
       != !(NILP (XBUFFER (Vbuffer_local_symbols)->slot)))	\
-  abort ();
+  ABORT ();
 #include "bufslots.h"
 
   {

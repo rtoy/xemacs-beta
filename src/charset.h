@@ -428,7 +428,7 @@ ichar_leading_byte (Ichar c)
 #ifdef ENABLE_COMPOSITE_CHARS
       return LEADING_BYTE_COMPOSITE;
 #else
-      abort();
+      ABORT();
       return 0;
 #endif /* ENABLE_COMPOSITE_CHARS */
     }
@@ -452,7 +452,7 @@ ichar_len (Ichar c)
 #ifdef ENABLE_COMPOSITE_CHARS
 #error Not yet implemented
 #else
-      abort();
+      ABORT();
       return 0;
 #endif /* ENABLE_COMPOSITE_CHARS */
     }

@@ -1551,7 +1551,7 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
       break;
 
     default:
-      abort ();
+      ABORT ();
     }
 }
 
@@ -1622,6 +1622,9 @@ mswindows_xbm_instantiate (Lisp_Object image_instance,
    instead of strings.h. */
 #define SYSV32
 BEGIN_C_DECLS
+#ifndef __STDC__ /* Needed to avoid prototype warnings */
+#define __STDC__
+#endif
 #include <compface.h>
 END_C_DECLS
 

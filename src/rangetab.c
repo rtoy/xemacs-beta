@@ -75,7 +75,7 @@ range_table_type_to_symbol (enum range_table_type type)
       return Qstart_open_end_closed;
     }
 
-  abort ();
+  ABORT ();
   return Qnil;
 }
 
@@ -119,7 +119,7 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun,
 	case RANGE_START_CLOSED_END_CLOSED: so = 0, ec = 1; break;
 	case RANGE_START_OPEN_END_OPEN: so = 1, ec = 0; break;
 	case RANGE_START_OPEN_END_CLOSED: so = 1; ec = 1; break;
-	default: abort (); so = 0, ec = 0; break;
+	default: ABORT (); so = 0, ec = 0; break;
 	}
       write_fmt_string (printcharfun, "%c%ld %ld%c ",
 			print_readably ? '(' : so ? '(' : '[',
@@ -652,7 +652,7 @@ rangetab_instantiate (Lisp_Object plist)
       if (EQ (key, Qtype)) type = value;
       else if (EQ (key, Qdata)) data = value;
       else
-	abort ();
+	ABORT ();
     }
 
   rangetab = Fmake_range_table (type);

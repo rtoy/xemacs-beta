@@ -1,7 +1,7 @@
 # Makefile for Microsoft NMAKE	-*- Makefile -*-
 #
 #   Copyright (C) 1995 Board of Trustees, University of Illinois.
-#   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
+#   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2004 Ben Wing.
 #   Copyright (C) 1997, 1998, 2000 Jonathan Harris.
 #   Copyright (C) 1995 Sun Microsystems, Inc.
 #   Copyright (C) 1998 Free Software Foundation, Inc.
@@ -206,6 +206,11 @@ USE_MINITAR=$(HAVE_ZLIB)
 # A little bit of adhockery. Default to use system malloc and
 # DLL version of the C runtime library when using portable
 # dumping. These are the optimal settings.
+#
+# NOTE: The various graphics libraries are generally compiled to use
+# MSVCRT.DLL (the same that we use in USE_CRTDLL, more or less), so using
+# this is a good thing.
+
 !if !defined(USE_SYSTEM_MALLOC)
 USE_SYSTEM_MALLOC=$(USE_PORTABLE_DUMPER)
 !endif
@@ -597,7 +602,7 @@ CPLUSPLUS_COMPILE_FLAGS=
 
 ########################### Determine generic includes/defines/flags.
 
-INCLUDES=$(MSW_INCLUDES) -I$(NT)\inc -I$(SRC)
+INCLUDES=-I$(NT)\inc -I$(SRC) $(MSW_INCLUDES)
 
 DEFINES=$(MSW_DEFINES) $(MULE_DEFINES) $(UNION_DEFINES) \
 	$(DUMPER_DEFINES) $(KKCC_DEFINES) $(MALLOC_DEFINES) \
@@ -906,7 +911,7 @@ $(BLDLIB_SRC)/movemail.exe : $(LIB_SRC)/movemail.c $(LIB_SRC)/pop.c $(ETAGS_DEPS
 
 # Minitar uses zlib so just use cdecl to simplify things
 $(BLDLIB_SRC)/minitar.exe : $(NT)/minitar.c
-	$(CCV) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS_CDECL_NO_LIB) $(LINK_DEPENDENCY_ARGS) "$(ZLIB_DIR)\zlib.lib"
+	$(CCV) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS_CDECL_NO_LIB) -MD $(LINK_DEPENDENCY_ARGS) "$(ZLIB_DIR)\zlib.lib"
 
 LIB_SRC_TOOLS = \
 	$(BLDLIB_SRC)/etags.exe		\

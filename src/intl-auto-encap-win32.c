@@ -2629,19 +2629,6 @@ qxeImmGetCompositionString (HIMC arg1, DWORD arg2, LPVOID arg3, DWORD arg4)
 
 #if defined (HAVE_MS_WINDOWS)
 
-BOOL
-qxeImmSetCompositionString (HIMC arg1, DWORD dwIndex, LPCVOID lpComp, DWORD arg4, LPCVOID lpRead, DWORD arg6)
-{
-  if (XEUNICODE_P)
-    return ImmSetCompositionStringW (arg1, dwIndex, lpComp, arg4, lpRead, arg6);
-  else
-    return ImmSetCompositionStringA (arg1, dwIndex, lpComp, arg4, lpRead, arg6);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
 DWORD
 qxeImmGetCandidateListCount (HIMC arg1, LPDWORD lpdwListCount)
 {
@@ -3143,33 +3130,6 @@ qxeFindResourceEx (HMODULE hModule, const Extbyte * lpType, const Extbyte * lpNa
     return FindResourceExW (hModule, (LPCWSTR) lpType, (LPCWSTR) lpName, wLanguage);
   else
     return FindResourceExA (hModule, (LPCSTR) lpType, (LPCSTR) lpName, wLanguage);
-}
-
-BOOL
-qxeEnumResourceTypes (HMODULE hModule, ENUMRESTYPEPROC lpEnumFunc, LONG lParam)
-{
-  if (XEUNICODE_P)
-    return EnumResourceTypesW (hModule, lpEnumFunc, lParam);
-  else
-    return EnumResourceTypesA (hModule, lpEnumFunc, lParam);
-}
-
-BOOL
-qxeEnumResourceNames (HMODULE hModule, const Extbyte * lpType, ENUMRESNAMEPROC lpEnumFunc, LONG lParam)
-{
-  if (XEUNICODE_P)
-    return EnumResourceNamesW (hModule, (LPCWSTR) lpType, lpEnumFunc, lParam);
-  else
-    return EnumResourceNamesA (hModule, (LPCSTR) lpType, lpEnumFunc, lParam);
-}
-
-BOOL
-qxeEnumResourceLanguages (HMODULE hModule, const Extbyte * lpType, const Extbyte * lpName, ENUMRESLANGPROC lpEnumFunc, LONG lParam)
-{
-  if (XEUNICODE_P)
-    return EnumResourceLanguagesW (hModule, (LPCWSTR) lpType, (LPCWSTR) lpName, lpEnumFunc, lParam);
-  else
-    return EnumResourceLanguagesA (hModule, (LPCSTR) lpType, (LPCSTR) lpName, lpEnumFunc, lParam);
 }
 
 HANDLE

@@ -2020,7 +2020,7 @@ extent_in_region_p (EXTENT extent, Bytexpos from, Bytexpos to,
       case ME_ALL_EXTENTS_OPEN:        start_open = 1, end_open = 1; break;
       case ME_ALL_EXTENTS_CLOSED_OPEN: start_open = 0, end_open = 1; break;
       case ME_ALL_EXTENTS_OPEN_CLOSED: start_open = 1, end_open = 0; break;
-      default: abort(); return 0;
+      default: ABORT(); return 0;
       }
 
   start = buffer_or_string_bytexpos_to_startind (obj, from,
@@ -2056,7 +2056,7 @@ extent_in_region_p (EXTENT extent, Bytexpos from, Bytexpos to,
 	retval = (start <= exs && exs <= end) || (start <= exe && exe <= end);
 	break;
       default:
-	abort(); return 0;
+	ABORT(); return 0;
       }
   return flags & ME_NEGATE_IN_REGION ? !retval : retval;
 }
@@ -3161,7 +3161,7 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       Lisp_Object obj2 = Qnil;
 
       /* Destroyed extents have 't' in the object field, causing
-	 extent_object() to abort (maybe). */
+	 extent_object() to ABORT (maybe). */
       if (EXTENT_LIVE_P (XEXTENT (obj)))
 	obj2 = extent_object (XEXTENT (obj));
 
@@ -4781,10 +4781,10 @@ process_extents_for_insertion_mapper (EXTENT extent, void *arg)
 #ifdef ERROR_CHECK_EXTENTS
   if (extent_start (extent) > indice &&
       extent_start (extent) < indice + closure->length)
-    abort ();
+    ABORT ();
   if (extent_end (extent) > indice &&
       extent_end (extent) < indice + closure->length)
-    abort ();
+    ABORT ();
 #endif
 
   /* The extent-adjustment code adjusted the extent's endpoints as if
@@ -5282,7 +5282,7 @@ glyph_layout_to_symbol (glyph_layout layout)
     case GL_INSIDE_MARGIN:  return Qinside_margin;
     case GL_WHITESPACE:	    return Qwhitespace;
     default:
-      abort ();
+      ABORT ();
       return Qnil; /* unreached */
     }
 }

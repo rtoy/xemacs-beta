@@ -82,6 +82,8 @@
 
 #include "compiler.h"   /* Get compiler-specific definitions like UNUSED */
 
+#define ABORT abort
+
 /* If we are not linking with Emacs proper,
    we can't use the relocating allocator
    even if config.h says that we can.  */
@@ -293,7 +295,7 @@ do						\
    we could still be screwed.  So we set up a system where we indicate all
    places where we are prepared for malloc() or alloca(), and in any
    other circumstances, calls to those functions (from anywhere inside of
-   XEmacs!) will abort().  We do this even when REL_ALLOC is not defined
+   XEmacs!) will ABORT().  We do this even when REL_ALLOC is not defined
    so that we catch these problems sooner, since many developers and beta
    testers will not be running with REL_ALLOC. */
 int regex_malloc_disallowed;
@@ -4144,7 +4146,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 
 
 	default:
-          abort (); /* We have listed all the cases.  */
+          ABORT (); /* We have listed all the cases.  */
         } /* switch *p++ */
 
       /* Getting here means we have found the possible starting
@@ -6347,7 +6349,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 #endif /* emacs */
 
         default:
-          abort ();
+          ABORT ();
 	}
       continue;  /* Successfully executed one pattern command; keep going.  */
 
@@ -6973,7 +6975,7 @@ regerror (int errcode, const regex_t *UNUSED (preg), char *errbuf,
        to this routine.  If we are given anything else, or if other regex
        code generates an invalid error code, then the program has a bug.
        Dump core so we can fix it.  */
-    abort ();
+    ABORT ();
 
   msg = gettext (re_error_msgid[errcode]);
 

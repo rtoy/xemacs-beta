@@ -2709,7 +2709,7 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
     }
 #ifdef ERROR_CHECK_TEXT
   else if (x >= bufmin)
-    abort ();
+    ABORT ();
 #endif
   else
     {
@@ -3202,7 +3202,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
     }
 #ifdef ERROR_CHECK_TEXT
   else if (x >= bytmin)
-    abort ();
+    ABORT ();
 #endif
   else
     {
@@ -4492,7 +4492,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
    src expression. (We use the stringize operator to avoid evaluating the
    expression multiple times.) If the caller uses the exact same src
    expression twice in two converter calls in the same subexpression, we
-   will lose, but at least we can check for this and abort().  We could
+   will lose, but at least we can check for this and ABORT().  We could
    conceivably try to index on other parameters as well, but there is not
    really any point. */
 
@@ -4573,7 +4573,7 @@ new_dfc_convert_now_damn_it (const void *src, Bytecount src_size,
       break;
 
     default:
-      abort ();
+      ABORT ();
     }
 
   /* The size is always + 2 because we have double zero-termination at the

@@ -87,7 +87,7 @@ tty_init_device (struct device *d, Lisp_Object UNUSED (props))
     case TTY_INIT_SUCCESS:
       break;
     default:
-      abort ();
+      ABORT ();
     }
 
   init_one_device (d);

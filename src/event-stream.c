@@ -1301,7 +1301,7 @@ is a race condition.  That's why the RESIGNAL argument exists.
   Lisp_Object lid;
   id = event_stream_generate_wakeup (msecs, msecs2, function, object, 0);
   lid = make_int (id);
-  if (id != XINT (lid)) abort ();
+  if (id != XINT (lid)) ABORT ();
   return lid;
 }
 
@@ -1380,7 +1380,7 @@ is a race condition.  That's why the RESIGNAL argument exists.
   Lisp_Object lid;
   id = event_stream_generate_wakeup (msecs, msecs2, function, object, 1);
   lid = make_int (id);
-  if (id != XINT (lid)) abort ();
+  if (id != XINT (lid)) ABORT ();
   return lid;
 }
 
@@ -3081,7 +3081,7 @@ execute_internal_event (Lisp_Object event)
 	event_stream_handle_magic_event (XEVENT (event));
 	goto done;
     default:
-      abort ();
+      ABORT ();
     }
 
  done:
@@ -3591,7 +3591,7 @@ modify them.
     Lisp_Object e = XVECTOR_DATA (Vrecent_keys_ring)[j];
 
     if (NILP (e))
-      abort ();
+      ABORT ();
     XVECTOR_DATA (val)[i] = Fcopy_event (e, Qnil);
     if (++j >= recent_keys_ring_size)
       j = 0;
@@ -3735,7 +3735,7 @@ extract_this_command_keys_nth_mouse_event (int n)
 	{
 	  if (!n)
 	    {
-	      /* must copy to avoid an abort() in next_event_internal() */
+	      /* must copy to avoid an ABORT() in next_event_internal() */
 	      if (!NILP (XEVENT_NEXT (event)))
                 return Fcopy_event (event, Qnil);
 	      else
@@ -3868,7 +3868,7 @@ lookup_command_event (struct command_builder *command_builder,
           SET_EVENT_BUTTON_MODIFIERS (e, EVENT_BUTTON_MODIFIERS (e) | 
 				      XEMACS_MOD_META);
 	else
-	  abort ();
+	  ABORT ();
 
 	{
 	  int tckn = event_chain_count (Vthis_command_keys);

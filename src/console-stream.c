@@ -227,25 +227,25 @@ stream_eol_cursor_width (void)
 static void
 stream_window_output_begin (struct window *UNUSED (w))
 {
-  abort ();
+  ABORT ();
 }
 
 static void
 stream_window_output_end (struct window *UNUSED (w))
 {
-  abort ();
+  ABORT ();
 }
 
 static void
 stream_frame_output_begin (struct frame *UNUSED (f))
 {
-  abort ();
+  ABORT ();
 }
 
 static void
 stream_frame_output_end (struct frame *UNUSED (f))
 {
-  abort ();
+  ABORT ();
 }
 
 static void
@@ -257,7 +257,7 @@ stream_output_display_block (struct window *UNUSED (w),
 			     int UNUSED (cursor_width),
 			     int UNUSED (cursor_height))
 {
-  abort ();
+  ABORT ();
 }
 
 static void
@@ -268,7 +268,7 @@ stream_clear_region (Lisp_Object UNUSED (window), struct device* UNUSED (d),
 		     Lisp_Object UNUSED (bcolor),
 		     Lisp_Object UNUSED (background_pixmap))
 {
-  abort ();
+  ABORT ();
 }
 
 static int

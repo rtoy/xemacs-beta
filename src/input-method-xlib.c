@@ -514,7 +514,7 @@ retry:
     case XLookupChars:
       break;
     default:
-      abort ();
+      ABORT ();
     }
 
   new_event.type = ClientMessage;

@@ -525,7 +525,7 @@ malloc (n)		/* get a block */
 #ifdef rcheck
     botch ("block on free list clobbered");
 #else /* not rcheck */
-    abort ();
+    ABORT ();
 #endif /* not rcheck */
 
   /* Fill in the info, and if range checking, set up the magic numbers */
@@ -569,7 +569,7 @@ free (mem)
 
 #ifndef rcheck
     if (p -> mh_alloc != ISALLOC)
-      abort ();
+      ABORT ();
 
 #else /* rcheck */
     if (p -> mh_alloc != ISALLOC)

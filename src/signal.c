@@ -258,7 +258,7 @@ signal_remove_async_interval_timeout (int id)
 /* If alarm() gets called when polling isn't disabled, it will mess up
    the asynchronous timeouts, and then C-g checking won't work again.
    Some libraries call alarm() directly, so we override the standard
-   library's alarm() and abort() if the caller of the library function
+   library's alarm() and ABORT() if the caller of the library function
    didn't wrap in stop_interrupts()/start_interrupts().
 
    NOTE: We could potentially avoid the need to wrap by adding a
@@ -311,7 +311,7 @@ qxe_setitimer (int kind, const struct itimerval *itnew,
     case ITIMER_REAL: return setitimer (ITIMER_REAL, itnew, itold);
     case ITIMER_VIRTUAL: return setitimer (ITIMER_VIRTUAL, itnew, itold);
     case ITIMER_PROF: return setitimer (ITIMER_PROF, itnew, itold);
-    default: abort (); return 0;
+    default: ABORT (); return 0;
     }
 #endif
 }
@@ -614,7 +614,7 @@ interrupt_signal (int sig)
         c = getc (stdin);
       stdout_out ("Abort (and dump core)? (y or n) ");
       if (((c = getc (stdin)) & ~040) == 'Y')
-	abort ();
+	ABORT ();
       while (c != '\n')
         c = getc (stdin);
       stdout_out ("Continuing...\n");

@@ -318,7 +318,7 @@ face_validate (Lisp_Object data, Error_Behavior errb)
       if (EQ (keyw, Qname))
 	name_seen = 1;
       else
-	abort ();
+	ABORT ();
     }
 
   if (!name_seen)

@@ -392,7 +392,7 @@ motif_clipboard_cb (Widget widget, int *data_id, int *private_id, int *reason)
 	Window window = (Window) *private_id;
 	Lisp_Object selection = select_convert_out (QCLIPBOARD, Qnil, Qnil);
 
-	/* Whichever lazy git wrote this originally just called abort()
+	/* Whichever lazy git wrote this originally just called ABORT()
 	   when anything didn't go their way... */
 
 	/* Try some other text types */

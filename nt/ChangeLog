@@ -1,3 +1,22 @@
+2005-01-24  Ben Wing  <ben@xemacs.org>
+
+	* config.inc.samp:
+	* config.inc.samp (PNG_DIR):
+	Declare OPTIONAL_LIBRARY_DIR as root of library directories.
+	Redo all graphics library defaults to mirror the versions and
+	directories in the current binary aux distribution on xemacs
+	web site.  Enable TIFF and COMPFACE by default since you can
+	now compile with them and binary libs are provided.
+	
+	* xemacs.mak:
+	* xemacs.mak (INCLUDES):
+	Put our own directories first in case of conflict (e.g. config.h
+	in compface).
+	
+	* xemacs.mak ($(BLDLIB_SRC)/minitar.exe):
+	* xemacs.mak (LIB_SRC_TOOLS):
+	Use MSVCRT to avoid link problems.
+
 2004-11-07  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.mak (INTERNALS_SRCS):

@@ -237,7 +237,7 @@ mswindows_lisp_error_1 (int errnum, int no_recurse)
 #else
 	case 0: lang = 0; break;
 #endif
-	default: abort ();
+	default: ABORT ();
 	}
 
       retval = qxeFormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER

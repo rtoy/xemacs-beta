@@ -730,7 +730,7 @@ eol_type_to_symbol (enum eol_type type)
 {
   switch (type)
     {
-    default: abort ();
+    default: ABORT ();
     case EOL_LF:         return Qlf;
     case EOL_CRLF:       return Qcrlf;
     case EOL_CR:         return Qcr;
@@ -1579,7 +1579,7 @@ subsidiary_coding_system (Lisp_Object coding_system, enum eol_type type)
     case EOL_LF:   new_coding_system = CODING_SYSTEM_EOL_LF   (cs); break;
     case EOL_CR:   new_coding_system = CODING_SYSTEM_EOL_CR   (cs); break;
     case EOL_CRLF: new_coding_system = CODING_SYSTEM_EOL_CRLF (cs); break;
-    default:       abort (); return Qnil;
+    default:       ABORT (); return Qnil;
     }
 
   return NILP (new_coding_system) ? coding_system : new_coding_system;
@@ -2679,7 +2679,7 @@ chain_conversion_end_type (Lisp_Object codesys)
     case 3: return DECODES_CHARACTER_TO_CHARACTER;
     }
 
-  abort ();
+  ABORT ();
   return DECODES_BYTE_TO_BYTE;
 }
 
@@ -2836,7 +2836,7 @@ convert_eol_print (Lisp_Object cs, Lisp_Object printcharfun,
 		    data->subtype == EOL_CRLF ? "crlf" :
 		    data->subtype == EOL_CR ? "cr" :
 		    data->subtype == EOL_AUTODETECT ? "nil" :
-		    (abort(), ""));
+		    (ABORT(), ""));
 }
 
 static enum source_sink_type
@@ -2884,7 +2884,7 @@ convert_eol_getprop (Lisp_Object coding_system, Lisp_Object prop)
 	case EOL_CRLF: return Qcrlf;
 	case EOL_CR: return Qcr;
 	case EOL_AUTODETECT: return Qnil;
-	default: abort ();
+	default: ABORT ();
 	}
     }
 
@@ -3036,7 +3036,7 @@ convert_eol_canonicalize_after_coding (struct coding_stream *str)
     case EOL_CRLF: return Fget_coding_system (Qconvert_eol_crlf);
     case EOL_CR: return Fget_coding_system (Qconvert_eol_cr);
     case EOL_AUTODETECT: return str->codesys;
-    default: abort (); return Qnil;
+    default: ABORT (); return Qnil;
     }
 }
 
@@ -3256,7 +3256,7 @@ coding_category_id_to_symbol (int id)
 	  return Dynarr_at (cats, j).sym;
     }
 
-  abort ();
+  ABORT ();
   return Qnil; /* (usually) not reached */
 }
 
@@ -3277,7 +3277,7 @@ detection_result_number_to_symbol (enum detection_result result)
 #undef FROB
   }
 
-  abort ();
+  ABORT ();
   return Qnil; /* (usually) not reached */
 }
 

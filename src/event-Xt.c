@@ -870,7 +870,7 @@ emacs_Xt_mapping_action (Widget UNUSED (w), XEvent *event)
     case MappingKeyboard:  x_reset_key_mapping      (d); break;
     case MappingModifier:  x_reset_modifier_mapping (d); break;
     case MappingPointer:   /* Do something here? */      break;
-    default: abort();
+    default: ABORT();
     }
 }
 
@@ -2456,7 +2456,7 @@ Xt_process_to_emacs_event (Lisp_Event *emacs_event)
 	  return;
 	}
     }
-  abort ();
+  ABORT ();
 }
 
 static void

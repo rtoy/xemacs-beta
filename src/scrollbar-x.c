@@ -281,7 +281,7 @@ x_update_scrollbar_instance_status (struct window *w, int active, int size,
 	    }
 	}
 
-      if (!wv->scrollbar_data) abort ();
+      if (!wv->scrollbar_data) ABORT ();
       free_widget_value_tree (wv);
     }
   else if (managed)
@@ -367,7 +367,7 @@ x_scrollbar_loop (enum x_scrollbar_loop type, Lisp_Object window,
 		}
 	      break;
 	    default:
-	      abort ();
+	      ABORT ();
 	    }
 	}
 

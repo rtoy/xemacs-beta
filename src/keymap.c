@@ -472,7 +472,7 @@ keymap_lookup_directly (Lisp_Object keymap,
   if ((modifiers & ~(XEMACS_MOD_CONTROL | XEMACS_MOD_META | XEMACS_MOD_SUPER
 		     | XEMACS_MOD_HYPER | XEMACS_MOD_ALT | XEMACS_MOD_SHIFT))
       != 0)
-    abort ();
+    ABORT ();
 
   k = XKEYMAP (keymap);
 
@@ -547,7 +547,7 @@ keymap_delete_inverse_internal (Lisp_Object inverse_table,
   Lisp_Object *prev;
 
   if (UNBOUNDP (keys))
-    abort ();
+    ABORT ();
 
   for (prev = &new_keys, tail = new_keys;
        ;
@@ -1757,7 +1757,7 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
   else
     {
       new_keys = Qnil;
-      abort ();
+      ABORT ();
     }
 
   if (EQ (keys, new_keys))
@@ -3134,10 +3134,10 @@ accessible_keymaps_mapper_1 (Lisp_Object keysym, Lisp_Object contents,
       key.modifiers = modifiers;
 
       if (NILP (cmd))
-	abort ();
+	ABORT ();
       cmd = get_keymap (cmd, 0, 1);
       if (!KEYMAPP (cmd))
-	abort ();
+	ABORT ();
 
       vec = make_vector (XVECTOR_LENGTH (thisseq) + 1, Qnil);
       len = XVECTOR_LENGTH (thisseq);
@@ -3661,7 +3661,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	  /* OK, the key is for real */
 	  if (target_buffer)
 	    {
-	      if (!firstonly) abort ();
+	      if (!firstonly) ABORT ();
 	      format_raw_keys (so_far, keys_count + 1, target_buffer);
 	      return make_int (1);
 	    }

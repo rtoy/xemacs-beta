@@ -1036,7 +1036,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
   else
     {
       return (NULL);
-      /* abort (); ???? */
+      /* ABORT (); ???? */
     }
 }
 
@@ -1154,7 +1154,7 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	    else
 	      {
 		widget = gtk_menu_item_new_with_label ("ERROR");
-		/* abort() */
+		/* ABORT() */
 	      }
 	    gtk_widget_show_all (widget);
 	  }

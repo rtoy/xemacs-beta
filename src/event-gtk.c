@@ -904,7 +904,7 @@ gtk_process_to_emacs_event (struct Lisp_Event *emacs_event)
 	  return;
 	}
     }
-  abort ();
+  ABORT ();
 }
 
 static void

@@ -1775,7 +1775,7 @@ specifier_add_spec (Lisp_Object specifier, Lisp_Object locale,
     tem = nconc2 (*orig_inst_list, list_to_build_up);
   else
     {
-      abort ();
+      ABORT ();
       tem = Qnil;
     }
 
@@ -2567,7 +2567,7 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
 
        No. Errors are handled in Lisp primitives implementation.
        Invalid domain is a design error here - kkm. */
-    abort ();
+    ABORT ();
 
   if (NILP (buffer) && !NILP (window))
     buffer = WINDOW_BUFFER (XWINDOW (window));

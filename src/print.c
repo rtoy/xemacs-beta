@@ -1151,7 +1151,7 @@ float_to_string (char *buf, double data)
     }
 }
 
-#define ONE_DIGIT(figure) *p++ = n / (figure) + '0'
+#define ONE_DIGIT(figure) *p++ = (char) (n / (figure) + '0')
 #define ONE_DIGIT_ADVANCE(figure) (ONE_DIGIT (figure), n %= (figure))
 
 #define DIGITS_1(figure) ONE_DIGIT (figure)
@@ -1503,7 +1503,7 @@ printing_major_badness (Lisp_Object printcharfun,
   if (!inhibit_non_essential_conversion_operations)
     {
 #ifdef ERROR_CHECK_TYPES
-      abort ();
+      ABORT ();
 #else  /* not ERROR_CHECK_TYPES */
       if (print_readably)
 	signal_ferror (Qinternal_error, "printing %s", buf);

@@ -374,7 +374,7 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
   else if (ht->test_function == lisp_object_eql_equal)
     DO_NOTHING;
   else
-    abort ();
+    ABORT ();
 
   if (ht->count || !print_readably)
     {
@@ -533,7 +533,7 @@ make_standard_lisp_hash_table (enum hash_table_test test,
       break;
 
     default:
-      abort ();
+      ABORT ();
     }
 
   return make_general_lisp_hash_table (hash_function, test_function,
@@ -798,7 +798,7 @@ hash_table_instantiate (Lisp_Object plist)
       else if (EQ (key, Qdata))		    data	     = value;
       else if (EQ (key, Qtype))/*obsolete*/ weakness	     = value;
       else
-	abort ();
+	ABORT ();
     }
 
   /* Create the hash table.  */

@@ -3913,7 +3913,7 @@ do_auto_save_unwind (Lisp_Object fd)
    and if so, tries to avoid touching lisp objects.
 
    The only time that Fdo_auto_save() is called while GC is in progress
-   is if we're going down, as a result of an abort() or a kill signal.
+   is if we're going down, as a result of an ABORT() or a kill signal.
    It's fairly important that we generate autosave files in that case!
  */
 

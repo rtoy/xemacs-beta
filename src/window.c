@@ -643,7 +643,7 @@ real_window (struct window_mirror *mir, int no_abort)
     real_window_internal (mir->frame->root_window,
 			  XWINDOW_MIRROR (mir->frame->root_mirror), mir);
   if (NILP (retval) && !no_abort)
-    abort ();
+    ABORT ();
 
   return retval;
 }
@@ -706,7 +706,7 @@ window_display_lines (struct window *w, int which)
     update_frame_window_mirror (XFRAME (w->frame));
   t = find_window_mirror (w);
   if (!t)
-    abort ();
+    ABORT ();
 
   if (which == CURRENT_DISP)
     return t->current_display_lines;
@@ -716,7 +716,7 @@ window_display_lines (struct window *w, int which)
     /* The CMOTION_DISP display lines are global. */
     return cmotion_display_lines;
   else
-    abort ();
+    ABORT ();
 
   return 0;	/* shut up compiler */
 }
@@ -730,7 +730,7 @@ window_display_buffer (struct window *w)
     update_frame_window_mirror (XFRAME (w->frame));
   t = find_window_mirror (w);
   if (!t)
-    abort ();
+    ABORT ();
 
   return t->buffer;
 }
@@ -744,7 +744,7 @@ set_window_display_buffer (struct window *w, struct buffer *b)
     update_frame_window_mirror (XFRAME (w->frame));
   t = find_window_mirror (w);
   if (!t)
-    abort ();
+    ABORT ();
 
   t->buffer = b;
 }
@@ -1963,7 +1963,7 @@ unshow_buffer (struct window *w)
   struct buffer *b = XBUFFER (buf);
 
   if (b != XMARKER (w->pointm[CURRENT_DISP])->buffer)
-    abort ();
+    ABORT ();
 
   /* FSF disables this check, so I'll do it too.  I hope it won't
      break things.  --ben */
@@ -2833,14 +2833,14 @@ window_loop (enum window_loop type,
 	     I feel no shame about putting this piece of shit in. */
 	  if (++lose_lose >= 500)
 	    {
-	      /* Call to abort() added by Darryl Okahata (16 Nov. 2001),
+	      /* Call to ABORT() added by Darryl Okahata (16 Nov. 2001),
 	         at Ben's request, to catch any remaining bugs.
 
 		 If you find that XEmacs is aborting here, and you
 		 need to be up and running ASAP, it should be safe to
-		 comment out the following abort(), as long as you
+		 comment out the following ABORT(), as long as you
 		 leave the "break;" alone.  */
-	      abort();
+	      ABORT();
 	      break;	/* <--- KEEP THIS HERE!  Do not delete!  */
 	    }
 
@@ -2984,7 +2984,7 @@ window_loop (enum window_loop type,
 		}
 
 	      default:
-		abort ();
+		ABORT ();
 	      }
 
 	  if (EQ (w, last_window))
@@ -3076,7 +3076,7 @@ Any other non-nil value means search all devices.
   w = window_loop (GET_LRU_WINDOW, Qnil, 0, which_frames, 1, which_devices);
 
   /* At this point we damn well better have found something. */
-  if (NILP (w)) abort ();
+  if (NILP (w)) ABORT ();
 #endif
 
   return w;

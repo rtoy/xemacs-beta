@@ -1044,7 +1044,7 @@ BEGIN_C_DECLS
 /* Highly dubious kludge */
 /*   (thanks, Jamie, I feel better now -- ben) */
 MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
-# define abort() (assert_failed (__FILE__, __LINE__, "abort()"))
+# define ABORT() (assert_failed (__FILE__, __LINE__, "ABORT()"))
 # define assert(x) ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, #x))
 # define assert_with_message(x, msg) \
   ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, msg))
@@ -1052,8 +1052,8 @@ MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
   ((x) ? (void) 0 : assert_failed (file, line, #x))
 #else
 # ifdef DEBUG_XEMACS
-#  define assert(x) ((x) ? (void) 0 : (void) abort ())
-#  define assert_with_message(x, msg) ((x) ? (void) 0 : (void) abort ())
+#  define assert(x) ((x) ? (void) 0 : (void) ABORT ())
+#  define assert_with_message(x, msg) ((x) ? (void) 0 : (void) ABORT ())
 #  define assert_at_line(x, file, line) assert (x)
 # else
 #  define assert(x) ((void) 0)
@@ -1983,7 +1983,7 @@ do {									\
 
 /* For a list that's known to be in valid list format, where we may
    be deleting the current element out of the list --
-   will abort() if the list is not in valid format */
+   will ABORT() if the list is not in valid format */
 #define LIST_LOOP_DELETING(consvar, nextconsvar, list)		\
   for (consvar = list;						\
        !NILP (consvar) ? (nextconsvar = XCDR (consvar), 1) :0;	\
@@ -2542,7 +2542,7 @@ DECLARE_MODULE_API_LRECORD (marker, Lisp_Marker);
 #define CONCHECK_MARKER(x) CONCHECK_RECORD (x, marker)
 
 /* The second check was looking for GCed markers still in use */
-/* if (INTP (XMARKER (x)->lheader.next.v)) abort (); */
+/* if (INTP (XMARKER (x)->lheader.next.v)) ABORT (); */
 
 #define marker_next(m) ((m)->next)
 #define marker_prev(m) ((m)->prev)

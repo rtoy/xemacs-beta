@@ -419,7 +419,7 @@ get_next_display_block (layout_bounds bounds, display_block_dynarr *dba,
       else if (start_pos <= bounds.right_out)
 	*next_start = bounds.right_out;
       else
-	abort ();
+	ABORT ();
     }
 
   for (block = 0; block < Dynarr_length (dba); block++)
@@ -462,7 +462,7 @@ get_cursor_size_and_location (struct window *w, struct display_block *db,
   int defheight, defwidth;
 
   if (Dynarr_length (db->runes) <= cursor_location)
-    abort ();
+    ABORT ();
 
   window = wrap_window (w);
 
@@ -1610,7 +1610,7 @@ redisplay_output_layout (Lisp_Object domain,
 
 		case IMAGE_POINTER:
 		default:
-		  abort ();
+		  ABORT ();
 		}
 	    }
 	  IMAGE_INSTANCE_OPTIMIZE_OUTPUT (childii) = 0;
@@ -1722,7 +1722,7 @@ redisplay_clear_region (Lisp_Object locale, face_index findex, int x, int y,
       f = XFRAME (locale);
     }
   else
-    abort ();
+    ABORT ();
 
   d = XDEVICE (f->device);
 

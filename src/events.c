@@ -306,7 +306,7 @@ mark_event (Lisp_Object obj)
     case dead_event:
       break;
     default:
-      abort ();
+      ABORT ();
     }
   mark_object (event->channel);
   return event->next;
@@ -399,7 +399,7 @@ event_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 /*  if (e1->timestamp != e2->timestamp) return 0; */
   switch (e1->event_type)
     {
-    default: abort ();
+    default: ABORT ();
 
     case process_event:
       return EQ (EVENT_PROCESS_PROCESS (e1), EVENT_PROCESS_PROCESS (e2));
@@ -505,7 +505,7 @@ event_hash (Lisp_Object obj, int depth)
       return hash;
 
     default:
-      abort ();
+      ABORT ();
     }
 
   return 0; /* unreached */
@@ -823,7 +823,7 @@ WARNING: the event object returned may be a reused one; see the function
 	  SET_EVENT_MISC_USER_Y (e, coord_y);
 	  break;
 	default:
-	  abort ();
+	  ABORT ();
 	}
     }
 
@@ -884,18 +884,18 @@ that it is safe to do so.
     if (EQ (event, Vlast_command_event) ||
 	EQ (event, Vlast_input_event)   ||
 	EQ (event, Vunread_command_event))
-      abort ();
+      ABORT ();
 
     len = XVECTOR_LENGTH (Vthis_command_keys);
     for (i = 0; i < len; i++)
       if (EQ (event, XVECTOR_DATA (Vthis_command_keys) [i]))
-	abort ();
+	ABORT ();
     if (!NILP (Vrecent_keys_ring))
       {
 	int recent_ring_len = XVECTOR_LENGTH (Vrecent_keys_ring);
 	for (i = 0; i < recent_ring_len; i++)
 	  if (EQ (event, XVECTOR_DATA (Vrecent_keys_ring) [i]))
-	    abort ();
+	    ABORT ();
       }
   }
 #endif /* 0 */
@@ -1110,7 +1110,7 @@ event_chain_find_previous (Lisp_Object event_chain, Lisp_Object event)
       event_chain = XEVENT_NEXT (event_chain);
     }
 
-  abort ();
+  ABORT ();
   return Qnil;
 }
 
@@ -1324,7 +1324,7 @@ event_to_character (Lisp_Object event,
   if (CHAR_OR_CHAR_INTP (XEVENT_KEY_KEYSYM (event)))
     c = XCHAR_OR_CHAR_INT (XEVENT_KEY_KEYSYM (event));
   else if (!SYMBOLP (XEVENT_KEY_KEYSYM (event)))
-    abort ();
+    ABORT ();
   else if (map_device_key_names && !NILP (Vcharacter_set_property)
 	   /* Allow window-system-specific extensibility of
 	      keysym->code mapping */
@@ -1551,7 +1551,7 @@ format_event_object (Eistring *buf, Lisp_Object event, int brief)
     case empty_event:		eicat_ascii (buf, "empty");	     return;
     case dead_event:		eicat_ascii (buf, "DEAD-EVENT"); return;
     default:
-      abort ();
+      ABORT ();
       return;
     }
 #define modprint(x,y) \
@@ -1591,7 +1591,7 @@ format_event_object (Eistring *buf, Lisp_Object event, int brief)
 	eicat_lstr (buf, XSYMBOL (key)->name);
     }
   else
-    abort ();
+    ABORT ();
   if (mouse_p)
     eicat_ascii (buf, "up");
 }
@@ -1740,7 +1740,7 @@ empty		The event has been allocated but not assigned.
       return Qempty;
 
     default:
-      abort ();
+      ABORT ();
       return Qnil;
     }
 }
@@ -2130,9 +2130,9 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
 			    || TOOLBAR_BUTTONP (ret_obj1)
 #endif
      ))
-    abort ();
+    ABORT ();
   if (!NILP (ret_obj2) && !(EXTENTP (ret_obj2) || CONSP (ret_obj2)))
-    abort ();
+    ABORT ();
 
   if (char_x)
     *char_x = ret_x;
@@ -2480,7 +2480,7 @@ This is in the form of a property list (alternating keyword/value pairs).
 
   switch (EVENT_TYPE (e))
     {
-    default: abort ();
+    default: ABORT ();
 
     case process_event:
       props = cons3 (Qprocess, EVENT_PROCESS_PROCESS (e), props);

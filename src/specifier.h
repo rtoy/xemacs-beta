@@ -434,7 +434,7 @@ struct specifier_caching
 
 /* #### get image instances out of domains! */
 
-/* #### I think the following should abort() rather than return nil
+/* #### I think the following should ABORT() rather than return nil
    when an invalid domain is given; much more likely we'll catch design
    errors early. --ben */
 

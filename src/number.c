@@ -401,7 +401,7 @@ get_number_type (Lisp_Object arg)
     return BIGFLOAT_T;
 #endif
   /* Catch unintentional bad uses of this function */
-  abort ();
+  ABORT ();
   /* NOTREACHED */
   return FIXNUM_T;
 }
@@ -425,7 +425,7 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
     number = make_int (marker_position (number));
 
   /* Note that CHECK_NUMBER ensures that NUMBER is a supported type.  Hence,
-     we abort() in the #else sections below, because it shouldn't be possible
+     we ABORT() in the #else sections below, because it shouldn't be possible
      to arrive there. */
   CHECK_NUMBER (number);
   current_type = get_number_type (number);
@@ -440,13 +440,13 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 #ifdef HAVE_BIGNUM
 	  return make_bignum (XREALINT (number));
 #else
-	  abort ();
+	  ABORT ();
 #endif /* HAVE_BIGNUM */
 	case RATIO_T:
 #ifdef HAVE_RATIO
 	  return make_ratio (XREALINT (number), 1UL);
 #else
-	  abort ();
+	  ABORT ();
 #endif /* HAVE_RATIO */
 	case FLOAT_T:
 	  return make_float (XREALINT (number));
@@ -454,7 +454,7 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 #ifdef HAVE_BIGFLOAT
 	  return make_bigfloat (XREALINT (number), precision);
 #else
-	  abort ();
+	  ABORT ();
 #endif /* HAVE_BIGFLOAT */
 	}
     case BIGNUM_T:
@@ -470,7 +470,7 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	  bignum_set_long (scratch_bignum, 1L);
 	  return make_ratio_bg (XBIGNUM_DATA (number), scratch_bignum);
 #else
-	  abort ();
+	  ABORT ();
 #endif /* HAVE_RATIO */
 	case FLOAT_T:
 	  return make_float (bignum_to_double (XBIGNUM_DATA (number)));
@@ -483,11 +483,11 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	    return temp;
 	  }
 #else
-	  abort ();
+	  ABORT ();
 #endif /* HAVE_BIGFLOAT */
 	}
 #else
-      abort ();
+      ABORT ();
 #endif /* HAVE_BIGNUM */
     case RATIO_T:
 #ifdef HAVE_RATIO
@@ -514,11 +514,11 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	    return temp;
 	  }
 #else
-	  abort ();
+	  ABORT ();
 #endif /* HAVE_BIGFLOAT */
 	}
 #else
-      abort ();
+      ABORT ();
 #endif /* HAVE_RATIO */
     case FLOAT_T:
       switch (type)
@@ -530,14 +530,14 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	  bignum_set_double (scratch_bignum, XFLOAT_DATA (number));
 	  return make_bignum_bg (scratch_bignum);
 #else
-	  abort ();
+	  ABORT ();
 #endif /* HAVE_BIGNUM */
 	case RATIO_T:
 #ifdef HAVE_RATIO
 	  ratio_set_double (scratch_ratio, XFLOAT_DATA (number));
 	  return make_ratio_rt (scratch_ratio);
 #else
-	  abort ();
+	  ABORT ();
 #endif /* HAVE_RATIO */
 	case FLOAT_T:
 	  return number;
@@ -547,7 +547,7 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	  bigfloat_set_double (scratch_bigfloat, XFLOAT_DATA (number));
 	  return make_bigfloat_bf (scratch_bigfloat);
 #else
-	  abort ();
+	  ABORT ();
 #endif /* HAVE_BIGFLOAT */
 	}
     case BIGFLOAT_T:
@@ -561,14 +561,14 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	  bignum_set_bigfloat (scratch_bignum, XBIGFLOAT_DATA (number));
 	  return make_bignum_bg (scratch_bignum);
 #else
-	  abort ();
+	  ABORT ();
 #endif /* HAVE_BIGNUM */
 	case RATIO_T:
 #ifdef HAVE_RATIO
 	  ratio_set_bigfloat (scratch_ratio, XBIGFLOAT_DATA (number));
 	  return make_ratio_rt (scratch_ratio);
 #else
-	  abort ();
+	  ABORT ();
 #endif
 	case FLOAT_T:
 	  return make_float (bigfloat_to_double (XBIGFLOAT_DATA (number)));
@@ -577,10 +577,10 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	  return number;
 	}
 #else
-      abort ();
+      ABORT ();
 #endif /* HAVE_BIGFLOAT */
     }
-  abort ();
+  ABORT ();
   /* NOTREACHED */
   return Qzero;
 }

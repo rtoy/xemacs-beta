@@ -300,7 +300,7 @@ Lstream_delete (Lstream *lstr)
 	}
     }
 
-  abort ();
+  ABORT ();
 }
 
 #define Lstream_internal_error(reason, lstr) \
@@ -371,7 +371,7 @@ Lstream_really_write (Lstream *lstr, const unsigned char *data, int size)
 	   EWOULDBLOCK error. */
 	break;
       else if (num_written > size)
-	abort ();
+	ABORT ();
       else if (num_written > 0)
 	{
 	  data += num_written;
@@ -1646,7 +1646,7 @@ make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
 
   /* Make sure the luser didn't pass "w" in. */
   if (!strcmp (mode, "w"))
-    abort ();
+    ABORT ();
 
   if (flags & LSTR_IGNORE_ACCESSIBLE)
     {

@@ -490,7 +490,7 @@ pdump_unsupported_dump_type (enum memory_description_type type,
 #endif
   if (do_backtrace)
     pdump_backtrace ();
-  abort ();
+  ABORT ();
 }
 
 static void
@@ -500,7 +500,7 @@ pdump_bump_depth (void)
   if (me > 65536)
     {
       stderr_out ("Backtrace overflow, loop ?\n");
-      abort ();
+      ABORT ();
     }
   backtrace[me].obj = 0;
   backtrace[me].position = 0;

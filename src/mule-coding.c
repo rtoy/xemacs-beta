@@ -1247,7 +1247,7 @@ charset_by_attributes_or_create_one (int type, Ibyte final, int dir)
 	  chars = 96; dim = 2;
 	  break;
 	default:
-	  abort (); chars = 0; dim = 0;
+	  ABORT (); chars = 0; dim = 0;
 	}
 
       charset = Fmake_charset (Qunbound, Qnil,
@@ -1552,7 +1552,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_coding_stream *iso,
 	else
 	  {
 	    /* Can this ever be reached? -slb */
-	    abort ();
+	    ABORT ();
 	    goto error;
 	  }
 
@@ -1601,7 +1601,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_coding_stream *iso,
  designated:
   if (NILP (cs) && check_invalid_charsets)
     {
-      abort ();
+      ABORT ();
       /* #### This should never happen now that we automatically create
 	 temporary charsets as necessary.  We should probably remove
 	 this code. --ben */
@@ -2241,7 +2241,7 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		  break;
 
 		default:
-		  abort ();
+		  ABORT ();
 		}
 	    }
 	  char_boundary = 0;
@@ -2335,7 +2335,7 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		    }
 		  break;
 		default:
-		  abort ();
+		  ABORT ();
 		}
 	    }
 	}

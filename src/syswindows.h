@@ -579,6 +579,38 @@ BOOL qxeGetICMProfile (HDC arg1, LPDWORD arg2, Extbyte * arg3);
 #endif
 BOOL qxeUpdateICMRegKey (DWORD arg1, Extbyte * arg2, Extbyte * arg3, UINT arg4);
 
+/* would be encapsulatable but for header changes in different versions of VC++ */
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef EnumResourceTypes
+#define EnumResourceTypes error_use_qxeEnumResourceTypes_or_EnumResourceTypesA_and_EnumResourceTypesW
+#endif
+#if MSC_VERSION >= 1300
+BOOL qxeEnumResourceTypes (HMODULE hModule, ENUMRESTYPEPROCW lpEnumFunc, LONG lParam);
+#else
+BOOL qxeEnumResourceTypes (HMODULE hModule, ENUMRESTYPEPROC lpEnumFunc, LONG lParam);
+#endif
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef EnumResourceNames
+#define EnumResourceNames error_use_qxeEnumResourceNames_or_EnumResourceNamesA_and_EnumResourceNamesW
+#endif
+#if MSC_VERSION >= 1300
+BOOL qxeEnumResourceNames (HMODULE hModule, const Extbyte * lpType, ENUMRESNAMEPROCW lpEnumFunc, LONG lParam);
+#else
+BOOL qxeEnumResourceNames (HMODULE hModule, const Extbyte * lpType, ENUMRESNAMEPROC lpEnumFunc, LONG lParam);
+#endif
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef EnumResourceLanguages
+#define EnumResourceLanguages error_use_qxeEnumResourceLanguages_or_EnumResourceLanguagesA_and_EnumResourceLanguagesW
+#endif
+#if MSC_VERSION >= 1300
+BOOL qxeEnumResourceLanguages (HMODULE hModule, const Extbyte * lpType, const Extbyte * lpName, ENUMRESLANGPROCW lpEnumFunc, LONG lParam);
+#else
+BOOL qxeEnumResourceLanguages (HMODULE hModule, const Extbyte * lpType, const Extbyte * lpName, ENUMRESLANGPROC lpEnumFunc, LONG lParam);
+#endif
+
 /* files */
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef FindFirstFile
@@ -678,17 +710,33 @@ int qxeEnumFontFamiliesEx (HDC hdc, LOGFONTW *lpLogfont,
 #endif
 HFONT qxeCreateFontIndirect (CONST LOGFONTW *lplf);
 
+#if defined (HAVE_MS_WINDOWS)
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef ImmSetCompositionFont
 #define ImmSetCompositionFont error use qxeImmSetCompositionFont or ImmSetCompositionFontA/ImmSetCompositionFontW
 #endif
 BOOL qxeImmSetCompositionFont (HIMC imc, LOGFONTW *lplf);
+#endif /* defined (HAVE_MS_WINDOWS) */
 
+#if defined (HAVE_MS_WINDOWS)
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef ImmGetCompositionFont
 #define ImmGetCompositionFont error use qxeImmGetCompositionFont or ImmGetCompositionFontA/ImmGetCompositionFontW
 #endif
 BOOL qxeImmGetCompositionFont (HIMC imc, LOGFONTW *lplf);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmSetCompositionString
+#define ImmSetCompositionString error_use_qxeImmSetCompositionString_or_ImmSetCompositionStringA_and_ImmSetCompositionStringW
+#endif
+#if MSC_VERSION >= 1300
+BOOL qxeImmSetCompositionString (HIMC arg1, DWORD dwIndex, LPVOID lpComp, DWORD arg4, LPCVOID lpRead, DWORD arg6);
+#else
+BOOL qxeImmSetCompositionString (HIMC arg1, DWORD dwIndex, LPCVOID lpComp, DWORD arg4, LPCVOID lpRead, DWORD arg6);
+#endif
+#endif /* defined (HAVE_MS_WINDOWS) */
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef GetObject

@@ -34,6 +34,8 @@ Boston, MA 02111-1307, USA.  */
 #include "EmacsShell.h"
 #include "ExternalShell.h"
 
+#define ABORT abort
+
 #if 0 /* Not currently used */
 
 /* The root_geometry_manager() method in Shell.c is fucked up with regard
@@ -161,5 +163,5 @@ EmacsShellUpdateSizeHints (Widget gw)
   else if (XtIsSubclass (gw, transientEmacsShellWidgetClass))
     TransientEmacsShellUpdateSizeHints (gw);
   else
-    abort ();
+    ABORT ();
 }

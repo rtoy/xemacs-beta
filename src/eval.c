@@ -1642,7 +1642,7 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
 #ifdef DEFEND_AGAINST_THROW_RECURSION
   /* die if we recurse more than is reasonable */
   if (++throw_level > 20)
-    abort ();
+    ABORT ();
 #endif
 
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
@@ -2228,7 +2228,7 @@ user invokes the "return from signal" option.
       /* who knows how much has been initialized?  Safest bet is
          just to bomb out immediately. */
       stderr_out ("Error before initialization is complete!\n");
-      abort ();
+      ABORT ();
     }
 
   assert (!gc_in_progress);
@@ -6544,7 +6544,7 @@ Normally, you do not need to set this value yourself.  It is set to
 t each time a Control-G is detected, and to `critical' each time a
 Shift-Control-G is detected.  The XEmacs core C code is littered with
 calls to the QUIT; macro, which check the values of `quit-flag' and
-`inhibit-quit' and abort (or more accurately, call (signal 'quit)) if
+`inhibit-quit' and ABORT (or more accurately, call (signal 'quit)) if
 it's correct to do so.
 */ );
   Vquit_flag = Qnil;
@@ -6607,7 +6607,7 @@ obviously won't work), XEmacs will break out to a C debugger using
 \(force-debugging-signal t).  This is useful because debugging
 noninteractive runs of XEmacs is often very difficult, since they typically
 happen as part of sometimes large and complex make suites (e.g. rebuilding
-the XEmacs packages).  NOTE: This runs abort()!!! (As well as and after
+the XEmacs packages).  NOTE: This runs ABORT()!!! (As well as and after
 executing INT 3 under MS Windows, which should invoke a debugger if it's
 active.) This is guaranteed to kill XEmacs! (But in this situation, XEmacs
 is about to die anyway, and if no debugger is present, this will usefully

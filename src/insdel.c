@@ -421,7 +421,7 @@ static void
 move_gap (struct buffer *buf, Charbpos cpos, Bytebpos bpos)
 {
   if (! BUF_BEG_ADDR (buf))
-    abort ();
+    ABORT ();
   if (bpos < BYTE_BUF_GPT (buf))
     gap_left (buf, cpos, bpos);
   else if (bpos > BYTE_BUF_GPT (buf))

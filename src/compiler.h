@@ -99,6 +99,12 @@ Boston, MA 02111-1307, USA.  */
 # endif /* __GNUC__ */
 #endif /* GCC_VERSION */
 
+#ifdef _MSC_VER
+#define MSC_VERSION _MSC_VER
+#else
+#define MSC_VERSION 0
+#endif
+
 /* GCC < 2.6.0 could only declare one attribute per function.  In that case,
    we define DOESNT_RETURN in preference to PRINTF_ARGS, which is only used
    for checking args against the string spec. */
@@ -124,7 +130,17 @@ Boston, MA 02111-1307, USA.  */
 #   define DOESNT_RETURN_TYPE(rettype) rettype volatile
 #   define DECLARE_DOESNT_RETURN_TYPE(rettype,decl) rettype volatile decl
 #  endif /* GCC_VERSION >= NEED_GCC (2, 5, 0) */
-# else /* not gcc */
+# elif (MSC_VERSION >= 1200)
+/* MSVC 6.0 has a mechanism to declare functions which never return */
+#  define DOESNT_RETURN_TYPE(rettype) __declspec(noreturn) rettype
+#  define DECLARE_DOESNT_RETURN_TYPE(rettype,decl) \
+  __declspec(noreturn) rettype XCDECL decl
+#  if (MSC_VERSION >= 1300)
+/* VC++ 7 issues warnings about return statements in __declspec(noreturn)
+   functions; this problem didn't exist under VC++ 6 */
+#   define RETURN_NOT_REACHED(value) DO_NOTHING
+#  endif
+# else /* not gcc, VC++ */
 #  define DOESNT_RETURN_TYPE(rettype) rettype
 #  define DECLARE_DOESNT_RETURN_TYPE(rettype,decl) rettype decl
 # endif /* GCC_VERSION > NEED_GCC (0, 0, 0) */
@@ -145,8 +161,8 @@ Boston, MA 02111-1307, USA.  */
 /* More ways to shut up compiler.  This works in Fcommand_loop_1(),
    where there's an infinite loop in a function returning a Lisp object.
 */
-#if defined (_MSC_VER) || defined (__SUNPRO_C) || defined (__SUNPRO_CC) || \
-  (defined (DEC_ALPHA) && defined (OSF1))
+#if (defined (_MSC_VER) && MSC_VERSION < 1300) || defined (__SUNPRO_C) || \
+  defined (__SUNPRO_CC) || (defined (DEC_ALPHA) && defined (OSF1))
 # define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS if (0) return Qnil
 #else
 # define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS DO_NOTHING

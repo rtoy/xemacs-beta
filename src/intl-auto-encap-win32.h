@@ -1884,14 +1884,6 @@ LONG qxeImmGetCompositionString (HIMC arg1, DWORD arg2, LPVOID arg3, DWORD arg4)
 
 #if defined (HAVE_MS_WINDOWS)
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmSetCompositionString
-#define ImmSetCompositionString error_use_qxeImmSetCompositionString_or_ImmSetCompositionStringA_and_ImmSetCompositionStringW
-#endif
-BOOL qxeImmSetCompositionString (HIMC arg1, DWORD dwIndex, LPCVOID lpComp, DWORD arg4, LPCVOID lpRead, DWORD arg6);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef ImmGetCandidateListCount
 #define ImmGetCandidateListCount error_use_qxeImmGetCandidateListCount_or_ImmGetCandidateListCountA_and_ImmGetCandidateListCountW
 #endif
@@ -2227,24 +2219,6 @@ HRSRC qxeFindResource (HMODULE hModule, const Extbyte * lpName, const Extbyte * 
 #define FindResourceEx error_use_qxeFindResourceEx_or_FindResourceExA_and_FindResourceExW
 #endif
 HRSRC qxeFindResourceEx (HMODULE hModule, const Extbyte * lpType, const Extbyte * lpName, WORD wLanguage);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef EnumResourceTypes
-#define EnumResourceTypes error_use_qxeEnumResourceTypes_or_EnumResourceTypesA_and_EnumResourceTypesW
-#endif
-BOOL qxeEnumResourceTypes (HMODULE hModule, ENUMRESTYPEPROC lpEnumFunc, LONG lParam);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef EnumResourceNames
-#define EnumResourceNames error_use_qxeEnumResourceNames_or_EnumResourceNamesA_and_EnumResourceNamesW
-#endif
-BOOL qxeEnumResourceNames (HMODULE hModule, const Extbyte * lpType, ENUMRESNAMEPROC lpEnumFunc, LONG lParam);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef EnumResourceLanguages
-#define EnumResourceLanguages error_use_qxeEnumResourceLanguages_or_EnumResourceLanguagesA_and_EnumResourceLanguagesW
-#endif
-BOOL qxeEnumResourceLanguages (HMODULE hModule, const Extbyte * lpType, const Extbyte * lpName, ENUMRESLANGPROC lpEnumFunc, LONG lParam);
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef BeginUpdateResource

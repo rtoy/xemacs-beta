@@ -1422,10 +1422,10 @@ next_string_index (Lisp_Object s, Bytecount idx)
         the specific format).
    void eicpy_ascii (Eistring *eistr, const Ascbyte *ascstr);
         ... from an ASCII null-terminated string.  Non-ASCII characters in
-	the string are *ILLEGAL* (read abort() with error-checking defined).
+	the string are *ILLEGAL* (read ABORT() with error-checking defined).
    void eicpy_ascii_len (Eistring *eistr, const Ascbyte *ascstr, len);
         ... from an ASCII string, with length specified.  Non-ASCII characters
-	in the string are *ILLEGAL* (read abort() with error-checking defined).
+	in the string are *ILLEGAL* (read ABORT() with error-checking defined).
    void eicpy_ext (Eistring *eistr, const Extbyte *extdata,
                    Lisp_Object codesys);
         ... from external null-terminated data, with coding system specified.
@@ -1565,7 +1565,7 @@ next_string_index (Lisp_Object s, Bytecount idx)
         ... from another Eistring.
    void eicat_ascii (Eistring *eistr, Ascbyte *ascstr);
         ... from an ASCII null-terminated string.  Non-ASCII characters in
-	the string are *ILLEGAL* (read abort() with error-checking defined).
+	the string are *ILLEGAL* (read ABORT() with error-checking defined).
    void eicat_raw (ei, const Ibyte *data, Bytecount len);
         ... from raw internal-format data in the default internal format.
    void eicat_rawz (ei, const Ibyte *data);
@@ -1595,7 +1595,7 @@ next_string_index (Lisp_Object s, Bytecount idx)
    void eisub_ascii (Eistring *eistr, Bytecount off, Charcount charoff,
 		 Bytecount len, Charcount charlen, Ascbyte *ascstr);
         ... with an ASCII null-terminated string.  Non-ASCII characters in
-	the string are *ILLEGAL* (read abort() with error-checking defined).
+	the string are *ILLEGAL* (read ABORT() with error-checking defined).
    void eisub_ch (Eistring *eistr, Bytecount off, Charcount charoff,
 		  Bytecount len, Charcount charlen, Ichar ch);
         ... with an Ichar.

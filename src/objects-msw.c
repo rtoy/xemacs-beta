@@ -1937,7 +1937,7 @@ mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device,
   else if (DEVICE_MSPRINTER_P (d))
     font_list = DEVICE_MSPRINTER_FONTLIST (d);
   else
-    abort ();
+    ABORT ();
 
   LIST_LOOP (fonttail, font_list)
     {

@@ -176,7 +176,7 @@ Boston, MA 02111-1307, USA.  */
    (1-to-1).  Any character set that does not behave that way is
    broken according to the Unicode standard.
 
-   Answer: You will get an abort(), since the purpose of the sledgehammer
+   Answer: You will get an ABORT(), since the purpose of the sledgehammer
    routines is self-checking.  The above problem with non-1-to-1 mapping
    occurs in the Big5 tables, as provided by the Unicode Consortium. */
 
@@ -406,7 +406,7 @@ create_new_from_unicode_table (int level)
 	return newtab;
       }
     default:
-      abort ();
+      ABORT ();
       return 0;
     }
 }
@@ -702,7 +702,7 @@ sledgehammer_check_from_table (Lisp_Object charset, void *table, int level,
 	break;
       }
     default:
-      abort ();
+      ABORT ();
     }
 }
 
@@ -749,7 +749,7 @@ sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
 		  case 2: val = ((short **) frtab)[u2][u1]; break;
 		  case 3: val = ((short ***) frtab)[u3][u2][u1]; break;
 		  case 4: val = ((short ****) frtab)[u4][u3][u2][u1]; break;
-		  default: abort ();
+		  default: ABORT ();
 		  }
 
 		ch = make_ichar (charset, val >> 8, val & 0xFF);
@@ -772,7 +772,7 @@ sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
 		  case 1:
 		    assert_not_any_blank_table (frtab);
 		    break;
-		  default: abort ();
+		  default: ABORT ();
 		  }
 	      }
 	  }
@@ -796,7 +796,7 @@ sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
 	break;
       }
     default:
-      abort ();
+      ABORT ();
     }
 }
 
@@ -917,7 +917,7 @@ set_unicode_conversion (Ichar chr, int code)
 		  case 4:
 		    ((short ****) table)[0] = (short ***) old_table;
 		    break;
-		  default: abort ();
+		  default: ABORT ();
 		  }
 	      }
 	  }
@@ -953,7 +953,7 @@ set_unicode_conversion (Ichar chr, int code)
 		  ((short *) create_new_from_unicode_table (1));
 	      table = ((short **) table)[u2];
 	      break;
-	    default: abort ();
+	    default: ABORT ();
 	    }
 	}
     }
@@ -968,7 +968,7 @@ set_unicode_conversion (Ichar chr, int code)
 	case 2: ((short **) table)[u2][u1] = (c1 << 8) + c2; break;
 	case 3: ((short ***) table)[u3][u2][u1] = (c1 << 8) + c2; break;
 	case 4: ((short ****) table)[u4][u3][u2][u1] = (c1 << 8) + c2; break;
-	default:  abort ();
+	default:  ABORT ();
 	}
     }
   }
@@ -1031,7 +1031,7 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 	    case 2: retval = ((short **) table)[u2][u1]; break;
 	    case 3: retval = ((short ***) table)[u3][u2][u1]; break;
 	    case 4: retval = ((short ****) table)[u4][u3][u2][u1]; break;
-	    default: abort (); retval = 0;
+	    default: ABORT (); retval = 0;
 	    }
 
 	  if (retval != -1)
@@ -1496,7 +1496,7 @@ Unicode tables or in the charset:
 		  break;
 		case CHARSET_TYPE_96X96: l1 = 32; h1 = 127; l2 = 32; h2 = 127;
 		  break;
-		default: abort (); l1 = 0; h1 = 0; l2 = 0; h2 = 0;
+		default: ABORT (); l1 = 0; h1 = 0; l2 = 0; h2 = 0;
 		}
 
 	      if (cp1high < l2 || cp1high > h2 || cp1low < l1 || cp1low > h1)
@@ -1688,9 +1688,9 @@ encode_unicode_char_1 (int code, unsigned_char_dynarr *dst,
 	}
       break;
 
-    case UNICODE_UTF_7: abort ();
+    case UNICODE_UTF_7: ABORT ();
 
-    default: abort ();
+    default: ABORT ();
     }
 }
 
@@ -1829,10 +1829,10 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 	      break;
 
 	    case UNICODE_UTF_7:
-	      abort ();
+	      ABORT ();
 	      break;
 
-	    default: abort ();
+	    default: ABORT ();
 	    }
 
 	}
@@ -1959,7 +1959,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 			}
 		      break;
 		    default:
-		      abort ();
+		      ABORT ();
 		    }
 		}
 	    }
@@ -2344,7 +2344,7 @@ unicode_getprop (Lisp_Object coding_system, Lisp_Object prop)
 	case UNICODE_UTF_8: return Qutf_8;
 	case UNICODE_UTF_7: return Qutf_7;
 	case UNICODE_UCS_4: return Qucs_4;
-	default: abort ();
+	default: ABORT ();
 	}
     }
   else if (EQ (prop, Qlittle_endian))

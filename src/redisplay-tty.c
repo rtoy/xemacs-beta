@@ -355,7 +355,7 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 		    case IMAGE_TEXT:
 		    case IMAGE_POINTER:
 		    default:
-		      abort ();
+		      ABORT ();
 		    }
 		  IMAGE_INSTANCE_OPTIMIZE_OUTPUT
 		    (XIMAGE_INSTANCE (instance)) = 0;
@@ -365,7 +365,7 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 	      elt++;
 	    }
 	  else
-	    abort ();
+	    ABORT ();
 	}
     }
 

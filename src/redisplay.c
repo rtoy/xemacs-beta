@@ -1764,7 +1764,7 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 	  }
 	  break;
 	default:
-	  abort ();
+	  ABORT ();
 	}
     }
 
@@ -1959,7 +1959,7 @@ add_glyph_rune (pos_data *data, struct glyph_block *gb, int pos_type,
 
 	  /* Otherwise something is screwed up. */
 	  else
-	    abort ();
+	    ABORT ();
 	}
 
       face = glyph_face (gb->glyph, data->window);
@@ -2067,7 +2067,7 @@ add_glyph_rune (pos_data *data, struct glyph_block *gb, int pos_type,
 	  return NULL;
 	}
       else
-	abort ();	/* there are no unknown types */
+	ABORT ();	/* there are no unknown types */
     }
 
   return NULL;
@@ -3098,7 +3098,7 @@ add_margin_runes (struct display_line *dl, struct display_block *db, int start,
       struct glyph_block *gb = Dynarr_atp (gbd, elt);
 
       if (NILP (gb->extent))
-	abort ();	/* these should have been handled in add_glyph_rune */
+	ABORT ();	/* these should have been handled in add_glyph_rune */
 
       if (gb->active &&
 	  ((side == LEFT_GLYPHS &&
@@ -3183,7 +3183,7 @@ create_left_glyph_block (struct window *w, struct display_line *dl,
       struct glyph_block *gb = Dynarr_atp (dl->left_glyphs, elt);
 
       if (NILP (gb->extent))
-	abort ();	/* these should have been handled in add_glyph_rune */
+	ABORT ();	/* these should have been handled in add_glyph_rune */
 
       if (extent_begin_glyph_layout (XEXTENT (gb->extent)) == GL_WHITESPACE)
 	{
@@ -3235,7 +3235,7 @@ create_left_glyph_block (struct window *w, struct display_line *dl,
 	struct glyph_block *gb = Dynarr_atp (dl->left_glyphs, elt);
 
 	if (NILP (gb->extent))
-	  abort ();	/* these should have been handled in add_glyph_rune */
+	  ABORT ();	/* these should have been handled in add_glyph_rune */
 
 	if (extent_begin_glyph_layout (XEXTENT (gb->extent)) ==
 	    GL_INSIDE_MARGIN)
@@ -3304,7 +3304,7 @@ create_left_glyph_block (struct window *w, struct display_line *dl,
 	struct glyph_block *gb = Dynarr_atp (dl->left_glyphs, elt);
 
 	if (NILP (gb->extent))
-	  abort ();	/* these should have been handled in add_glyph_rune */
+	  ABORT ();	/* these should have been handled in add_glyph_rune */
 
 	if (extent_begin_glyph_layout (XEXTENT (gb->extent)) ==
 	    GL_INSIDE_MARGIN)
@@ -3346,7 +3346,7 @@ create_left_glyph_block (struct window *w, struct display_line *dl,
       struct glyph_block *gb = Dynarr_atp (dl->left_glyphs, elt);
 
       if (NILP (gb->extent))
-	abort ();	/* these should have been handled in add_glyph_rune */
+	ABORT ();	/* these should have been handled in add_glyph_rune */
 
       if (extent_begin_glyph_layout (XEXTENT (gb->extent)) ==
 	  GL_OUTSIDE_MARGIN)
@@ -3504,7 +3504,7 @@ create_right_glyph_block (struct window *w, struct display_line *dl)
       struct glyph_block *gb = Dynarr_atp (dl->right_glyphs, elt);
 
       if (NILP (gb->extent))
-	abort ();	/* these should have been handled in add_glyph_rune */
+	ABORT ();	/* these should have been handled in add_glyph_rune */
 
       if (extent_end_glyph_layout (XEXTENT (gb->extent)) == GL_WHITESPACE)
 	{
@@ -3554,7 +3554,7 @@ create_right_glyph_block (struct window *w, struct display_line *dl)
 	struct glyph_block *gb = Dynarr_atp (dl->right_glyphs, elt);
 
 	if (NILP (gb->extent))
-	  abort ();	/* these should have been handled in add_glyph_rune */
+	  ABORT ();	/* these should have been handled in add_glyph_rune */
 
 	if (extent_end_glyph_layout (XEXTENT (gb->extent)) == GL_INSIDE_MARGIN)
 	  {
@@ -3618,7 +3618,7 @@ create_right_glyph_block (struct window *w, struct display_line *dl)
 	struct glyph_block *gb = Dynarr_atp (dl->right_glyphs, elt);
 
 	if (NILP (gb->extent))
-	  abort ();	/* these should have been handled in add_glyph_rune */
+	  ABORT ();	/* these should have been handled in add_glyph_rune */
 
 	if (extent_end_glyph_layout (XEXTENT (gb->extent)) == GL_INSIDE_MARGIN)
 	  {
@@ -3659,7 +3659,7 @@ create_right_glyph_block (struct window *w, struct display_line *dl)
       struct glyph_block *gb = Dynarr_atp (dl->right_glyphs, elt);
 
       if (NILP (gb->extent))
-	abort ();	/* these should have been handled in add_glyph_rune */
+	ABORT ();	/* these should have been handled in add_glyph_rune */
 
       if (extent_end_glyph_layout (XEXTENT (gb->extent)) == GL_OUTSIDE_MARGIN)
 	{
@@ -5528,7 +5528,7 @@ regenerate_window (struct window *w, Charbpos start_pos, Charbpos point, int typ
 
   /* The lines had better exist by this point. */
   if (!(dla = window_display_lines (w, type)))
-    abort ();
+    ABORT ();
   Dynarr_reset (dla);
   w->max_line_len = 0;
 
@@ -5728,7 +5728,7 @@ regenerate_window (struct window *w, Charbpos start_pos, Charbpos point, int typ
 	    dla_start = 0;						      \
 	  }								      \
 	else								      \
-	  abort ();	/* structs differ */				      \
+	  ABORT ();	/* structs differ */				      \
 									      \
 	dla_end = Dynarr_length (cdla) - 1;				      \
       }									      \
@@ -7989,7 +7989,7 @@ find_point_loop:
       else if (point < start)
 	top = pos - 1;
       else
-	abort ();
+	ABORT ();
 
       new_pos = (bottom + top + 1) >> 1;
       if (pos == new_pos)

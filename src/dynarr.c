@@ -335,6 +335,6 @@ stack_like_free (void *val)
 	    return;
 	  }
 
-      abort ();
+      ABORT ();
     }
 }

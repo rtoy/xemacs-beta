@@ -552,7 +552,7 @@ very_old_free_lcrecord (struct lcrecord_header *lcrecord)
 	      break;
 	    }
 	  else if (next == 0)
-	    abort ();
+	    ABORT ();
 	  else
 	    header = next;
 	}
@@ -3096,7 +3096,7 @@ lispdesc_indirect_count_1 (EMACS_INT code,
 	pdump_backtrace ();
 #endif
       count = 0; /* warning suppression */
-      abort ();
+      ABORT ();
     }
   count += delta;
   return count;
@@ -3218,7 +3218,7 @@ lispdesc_one_description_line_size (void *rdata,
       return sizeof (long);
     default:
       stderr_out ("Unsupported dump type : %d\n", desc1->type);
-      abort ();
+      ABORT ();
     }
 
   return 0;
@@ -3260,7 +3260,7 @@ lispdesc_block_size_1 (const void *obj, Bytecount size,
       if (offset == max_offset)
 	{
 	  stderr_out ("Two relocatable elements at same offset?\n");
-	  abort ();
+	  ABORT ();
 	}
       else if (offset > max_offset)
 	{
@@ -3545,7 +3545,7 @@ kkcc_marking (void)
 		    
 	    default:
 	      stderr_out ("Unsupported description type : %d\n", desc1->type);
-	      abort ();
+	      ABORT ();
 	    }
 	}
     }
@@ -3568,7 +3568,7 @@ mark_object (
   /* this code should never be reached when configured for KKCC */
   stderr_out ("KKCC: Invalid mark_object call.\n");
   stderr_out ("Replace mark_object with kkcc_gc_stack_push_lisp_object.\n");
-  abort ();
+  ABORT ();
 #else /* not USE_KKCC */
 
  tail_recurse:

@@ -239,7 +239,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 		case ' ': spec.space_flag  = 1; break;
 		case '#': spec.number_flag = 1; break;
 		case '0': spec.zero_flag   = 1; break;
-		default: abort ();
+		default: ABORT ();
 		}
 	      NEXT_ASCII_BYTE (ch);
 	    }
@@ -408,7 +408,7 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
       else if (strchr (bigfloat_converters, ch))
 	arg.obj = va_arg (vargs, Lisp_Object);
 #endif
-      else abort ();
+      else ABORT ();
 
       Dynarr_add (args, arg);
     }

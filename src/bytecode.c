@@ -1602,7 +1602,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       }
 
     default:
-      abort();
+      ABORT();
       break;
     }
   return stack_ptr;
@@ -1973,7 +1973,7 @@ optimize_byte_code (/* in */
 		break;
 
 	    default:
-	      abort();
+	      ABORT();
 	      break;
 	    }
 	}
@@ -2049,7 +2049,8 @@ optimize_compiled_function (Lisp_Object compiled_function)
       program = alloca_array (Opbyte, 1 + 2 * XSTRING_LENGTH (f->instructions));
       optimize_byte_code (f->instructions, f->constants,
 			  program, &program_length, &varbind_count);
-      f->specpdl_depth = XINT (Flength (f->arglist)) + varbind_count;
+      f->specpdl_depth = (unsigned short) (XINT (Flength (f->arglist)) +
+                                           varbind_count);
       f->instructions =
 	make_opaque (program, program_length * sizeof (Opbyte));
     }
@@ -2514,7 +2515,7 @@ If the byte code for compiled function FUNCTION is lazy-loaded, fetch it now.
       f->constants    = XCDR (tem);
       return function;
     }
-  abort ();
+  ABORT ();
   return Qnil; /* not (usually) reached */
 }
 

@@ -195,7 +195,7 @@ char_table_type_to_symbol (enum char_table_type type)
 {
   switch (type)
   {
-  default: abort();
+  default: ABORT();
   case CHAR_TABLE_TYPE_GENERIC:  return Qgeneric;
   case CHAR_TABLE_TYPE_SYNTAX:   return Qsyntax;
   case CHAR_TABLE_TYPE_DISPLAY:  return Qdisplay;
@@ -261,7 +261,7 @@ decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
 	  check_int_range (outrange->row, 32, 127);
 	  break;
 	default:
-	  abort ();
+	  ABORT ();
 	}
     }
   else
@@ -294,7 +294,7 @@ encode_char_table_range (struct chartab_range *range)
     case CHARTAB_RANGE_CHAR:
       return make_char (range->ch);
     default:
-      abort ();
+      ABORT ();
     }
   return Qnil; /* not reached */
 }
@@ -514,7 +514,7 @@ Reset CHAR-TABLE to its default state.
       break;
 
     default:
-      abort ();
+      ABORT ();
       def = Qnil;
       break;
     }
@@ -877,7 +877,7 @@ get_range_char_table_1 (struct chartab_range *range, Lisp_Object table,
 #endif /* not MULE */
 
     default:
-      abort ();
+      ABORT ();
     }
 
   if (UNBOUNDP (retval))
@@ -972,7 +972,7 @@ check_valid_char_table_value (Lisp_Object value, enum char_table_type type,
       break;
 
     default:
-      abort ();
+      ABORT ();
     }
 
   return 0; /* not (usually) reached */
@@ -1426,7 +1426,7 @@ map_char_table (Lisp_Object table,
       }
 
     default:
-      abort ();
+      ABORT ();
     }
 
   return 0;
@@ -1561,7 +1561,7 @@ chartab_instantiate (Lisp_Object data)
 		 Fput_char_table (make_char (i), val, chartab);
 	    }
 	  else
-	    abort ();
+	    ABORT ();
 	}
       else
 	Fput_char_table (range, val, chartab);

@@ -159,13 +159,6 @@ typedef int ssize_t;
    files. */
 #define XCDECL __cdecl
 
-/* MSVC 6.0 has a mechanism to declare functions which never return */
-#if (_MSC_VER >= 1200)
-#define DOESNT_RETURN_TYPE(rettype) __declspec(noreturn) rettype
-#define DECLARE_DOESNT_RETURN_TYPE(rettype,decl) \
-  __declspec(noreturn) rettype XCDECL decl
-#endif /* MSVC 6.0 */
-
 /* MSVC warnings no-no crap.  When adding one to this section,
    1. Think twice.
    2. Insert textual description of the warning.
@@ -179,13 +172,16 @@ typedef int ssize_t;
 
 #endif /* compiler understands #pragma warning*/
 
+#if (_MSC_VER >= 1300)
+/* function declared with __declspec(noreturn) has non-void return type;
+   Lisp primitives have to be declared with Lisp_Object return type or
+   lots of things get very messed up */
+#pragma warning ( disable : 4646 )
+#endif 
+
 /* MSVC version >= 2.x without /Za supports __inline */
 #if (_MSC_VER < 900) || defined (__STDC__)
 # define inline
 #else
 # define inline __inline
 #endif
-
-/* lisp.h defines abort() as a macro.  therefore, we must include all
-   files that contain prototypes for abort() before then. */
-#include <../include/process.h>

@@ -1113,7 +1113,7 @@ do_symval_forwarding (Lisp_Object valcontents, struct buffer *buffer,
       return valcontents;
 
     default:
-      abort ();
+      ABORT ();
     }
   return Qnil;	/* suppress compiler warning */
 }
@@ -1289,7 +1289,7 @@ store_symval_forwarding (Lisp_Object sym, Lisp_Object ovalue,
 	  return;
 
 	default:
-	  abort ();
+	  ABORT ();
 	}
     }
 }
@@ -1914,7 +1914,7 @@ Set SYMBOL's value to NEWVAL, and return NEWVAL.
 	break;
       }
     default:
-      abort ();
+      ABORT ();
     }
   store_symval_forwarding (symbol, valcontents, newval);
 
@@ -2181,7 +2181,7 @@ sets it.
 	  return variable;
 
 	default:
-	  abort ();
+	  ABORT ();
 	}
     }
 
@@ -2290,7 +2290,7 @@ Use `make-local-hook' instead.
 	  }
 
 	default:
-	  abort ();
+	  ABORT ();
 	}
     }
 
@@ -2364,7 +2364,7 @@ Use `make-local-hook' instead.
 	  break;
 
 	default:
-	  abort ();
+	  ABORT ();
 	}
     }
 
@@ -2682,7 +2682,7 @@ The returned info will be a symbol, one of
     case SYMVAL_UNBOUND_MARKER:			return Qnil;
 
     default:
-      abort (); return Qnil;
+      ABORT (); return Qnil;
     }
 }
 
@@ -2912,7 +2912,7 @@ handler_type_from_function_symbol (Lisp_Object funsym, int abort_if_not_found)
     return MAGIC_HANDLER_MAKE_LOCAL;
 
   if (abort_if_not_found)
-    abort ();
+    ABORT ();
   invalid_argument ("Unrecognized symbol-value function", funsym);
   RETURN_NOT_REACHED (MAGIC_HANDLER_MAX);
 }
