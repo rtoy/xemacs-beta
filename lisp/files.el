@@ -1232,6 +1232,7 @@ run `normal-mode' explicitly."
     ;; #### The following three are Unix-specific (but do we care?)
     ("/app-defaults/" . xrdb-mode)
     ("\\.[^/]*wm2?\\(?:rc\\)?\\'" . winmgr-mode)
+    ("\\.si\\(v\\|eve\\)\\'" . sieve-mode)
     ("\\.\\(?:jpe?g\\|JPE?G\\|png\\|PNG\\|gif\\|GIF\\|tiff?\\|TIFF?\\)\\'" . image-mode)
     )
 "Alist of filename patterns vs. corresponding major mode functions.
