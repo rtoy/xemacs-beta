@@ -1,3 +1,45 @@
+2004-12-18  Mike Sperber  <mike@xemacs.org>
+
+	* package-admin.el:
+	* startup.el: Reflect the changes made in packages.el.
+
+	* packages.el:
+	* loadup.el:
+	* make-docfile.el:
+	* package-admin.el:
+	* startup.el:
+	* update-elc.el (early-package-hierarchies)
+	(late-package-hierarchies)
+	(last-package-hierarchies): Renamed these from `early-packages',
+	`late-packages' and `last-packages'.
+
+	* packages.el: Rewrote package-finding logic to separate the
+	concepts of "package directories" and "package hierarchies".
+	Added explanation of these concepts.
+	
+	* setup-paths.el: 
+	* find-paths.el: Added parameter descriptions to some of the
+	docstrings.
+
+	* packages.el, setup-paths.el: Make terminology more explicit
+	about "package hierarchies"
+
+	* startup.el (emacs-roots, emacs-data-roots)
+	(user-init-directory-base, user-init-directory)
+	(user-init-file-base, user-init-file-base-list)
+	(user-home-init-file-base-list)
+	(load-home-init-file, load-user-init-file-p)
+	(startup-find-load-path, startup-setup-paths)
+	(startup-find-load-path-for-packages): Moved these back from
+	setup-paths.el where they belong---setup-paths.el now again, as
+	documented, contains no code that sets global variables.  (They
+	were moved from startup.el to setup-paths.el on 2003-02-28.)
+	Clarify that in the comment at the top.
+
+	* setup-paths.el (paths-find-emacs-roots): Restored
+	`invocation-directory' 'invocation-name' parameters removed on
+	2003-02-28; they're useful for debugging.
+
 2004-12-15  Ville Skyttä  <scop@xemacs.org>
 
 	* bytecomp-runtime.el (make-obsolete): Add 3rd argument (no-op for

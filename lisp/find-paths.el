@@ -5,7 +5,7 @@
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
 ;; Copyright (C) 2003 Ben Wing.
 
-;; Author: Mike Sperber <sperber@informatik.uni-tuebingen.de>
+;; Author: Mike Sperber <mike@xemacs.org>
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, dumped
 
@@ -125,7 +125,10 @@ to EXPAND-FILE-NAME."
       path)))
 
 (defun paths-construct-emacs-directory (root suffix base)
-  "Construct a directory name within the XEmacs hierarchy."
+  "Construct a directory name within the XEmacs hierarchy.
+ROOT must be a an installation root.
+SUFFIX is the subdirectory from there.
+BASE is the base to look for."
   (file-name-as-directory
    (expand-file-name
     (concat
@@ -165,7 +168,12 @@ the directory."
 	nil))))
 
 (defun paths-find-site-directory (roots base &optional envvar default)
-  "Find a site-specific directory in the XEmacs hierarchy."
+  "Find a site-specific directory in the XEmacs hierarchy.
+ROOT must be a an installation root.
+BASE is the base to look for.
+ENVVAR is the name of the environment variable that might also
+specify the directory.
+DEFAULT is the preferred value."
   (paths-find-emacs-directory roots
 			      (file-name-as-directory
 			       (paths-construct-path (list
@@ -177,6 +185,12 @@ the directory."
 (defun paths-find-version-directory (roots base
 				     &optional envvar default enforce-version)
   "Find a version-specific directory in the XEmacs hierarchy.
+
+ROOT must be a an installation root.
+BASE is the base to look for.
+ENVVAR is the name of the environment variable that might also
+specify the directory.
+DEFAULT is the preferred value.
 If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
   (paths-find-emacs-directory roots
 			      (file-name-as-directory
@@ -188,7 +202,12 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
 			      enforce-version))
 
 (defun paths-find-architecture-directory (roots base &optional envvar default)
-  "Find an architecture-specific directory in the XEmacs hierarchy."
+  "Find an architecture-specific directory in the XEmacs hierarchy.
+ROOT must be a an installation root.
+BASE is the base to look for.
+ENVVAR is the name of the environment variable that might also
+specify the directory.
+DEFAULT is the preferred value."
   (or
    ;; from more to less specific
    (paths-find-version-directory roots
@@ -203,11 +222,12 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
 				 envvar)))
 
 (defun construct-emacs-version-name ()
-  "Construct the raw XEmacs version number."
+  "Construct a string from the raw XEmacs version number."
   (concat emacs-program-name "-" emacs-program-version))
 
 (defun paths-directories-which-exist (directories)
-  "Return the directories among DIRECTORIES."
+  "Return the directories among DIRECTORIES.
+DIRECTORIES is a list of strings."
   (let ((reverse-directories '()))
     (while directories
       (if (paths-file-readable-directory-p (car directories))
@@ -218,7 +238,7 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
     (reverse reverse-directories)))
 
 (defun paths-uniq-append (list-1 list-2)
-  "Append LIST-1 and LIST-2, omitting duplicates."
+  "Append LIST-1 and LIST-2, omitting EQUAL duplicates."
   (let ((reverse-survivors '()))
     (while list-2
       (if (null (member (car list-2) list-1))

@@ -139,7 +139,7 @@
 	      (external-debugging-output (format "\nLoad file %s: not found\n"
 						 file))
 	      ;; Uncomment in case of trouble
-	      ;;(print (format "late-packages: %S" late-packages))
+	      ;;(print (format "late-package-hierarchies: %S" late-package-hierarchies))
 	      ;;(print (format "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-root-p)))
 	      ;;(print (format "guessed-data-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-data-root-p)))
 	      nil)))

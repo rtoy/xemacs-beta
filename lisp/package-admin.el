@@ -197,9 +197,8 @@ Note:  Type \"site\" is not yet fully supported."
 			      (expand-file-name "mule-packages" user-init-directory))))))
     ;; Finally check the normal places
     (if (not top-dir)
-	(let ((path-list (nth 1 (packages-find-packages
-				 emacs-data-roots
-				 (packages-compute-package-locations user-init-directory)))))
+	(let ((path-list (nth 1 (packages-find-all-package-hierarchies
+				 emacs-data-roots))))
 	  (cond ((eq type 'std)
 		 (while path-list
 		   (if (equal (substring (car path-list) -16) 
@@ -226,7 +225,7 @@ If PKG-DIR is non-nil and writable, return that.  Otherwise check to
 see if the PACKAGE is already installed and return that location, if
 it is writable.  Finally, fall back to the `user-init-directory' if
 all else fails.  As a side effect of installing packages under
-`user-init-directory' these packages become part of `early-packages'."
+`user-init-directory' these packages become part of `early-package-hierarchies'."
   ;; If pkg-dir specified, return that if writable.
   (if (and pkg-dir
 	   (file-writable-p (directory-file-name pkg-dir)))
@@ -255,7 +254,7 @@ all else fails.  As a side effect of installing packages under
 		  (car-safe (member-if (lambda (h)
 					 (string-match (concat "^" (regexp-quote h))
 						       autoload-dir))
-				       (append (cdr early-packages) late-packages)))))
+				       (append (cdr early-package-hierarchies) late-package-hierarchies)))))
 	  (if (and pkg-dir
 		   (file-writable-p (directory-file-name pkg-dir)))
 	      pkg-dir

@@ -170,7 +170,7 @@
 	  (progn
 	  (message "Error: dumped file %s does not exist" arg0)
 	  ;; Uncomment in case of difficulties
-	  ;;(message "late-packages: %S" late-packages)
+	  ;;(message "late-package-hierarchies: %S" late-package-hierarchies)
 	  ;;(message "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-root-p))
 	  ;;(message "guessed-data-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-data-root-p))
 	  )

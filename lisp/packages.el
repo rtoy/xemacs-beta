@@ -58,8 +58,25 @@
 (defvar packages-package-list nil
   "Database of installed packages and version numbers")
 
-(defvar packages-hierarchy-depth 1
-  "Depth of package hierarchies.")
+;;; Directories and paths
+
+;;; Terminology:
+
+;;; A *package hierarchy* is a directory that contains a collection of
+;;; packages; it has lisp/, info/, etc/ etc. subdirectories that
+;;; contain the files constituting the packages.
+
+;;; A *package directory* contains package hierarchies---the package
+;;; hierarchies are typically in directories "xemacs-packages",
+;;; "mule-packages", and so on.  A package hierarchy might only be
+;;; applicable for specific variants of XEmacs.
+
+;;; Package hierarchies come in "early", "late", and "last" variants,
+;;; depending on their relative location in the various paths.
+;;; "Early" hierarchies are typically in the user's home directory,
+;;; "late" hierarchies are typically part of the XEmacs installation,
+;;; and "last" package hierarchies are for special purposes, such as
+;;; making the packages of some previous XEmacs version available.
 
 (defvar packages-load-path-depth 1
   "Depth of load-path search in package hierarchies.")
@@ -67,48 +84,33 @@
 (defvar packages-data-path-depth 1
   "Depth of data-path search in package hierarchies.")
 
-(defvar early-packages nil
-  "Packages early in the load path.")
+(defvar early-package-hierarchies nil
+  "Package hierarchies early in the load path.")
 
 (defvar early-package-load-path nil
   "Load path for packages early in the load path.")
 
-(defvar late-packages nil
-  "Packages late in the load path.")
+(defvar late-package-hierarchies nil
+  "Package hierarchies late in the load path.")
 
 (defvar late-package-load-path nil
   "Load path for packages late in the load path.")
 
-(defvar last-packages nil
-  "Packages last in the load path.")
+(defvar last-package-hierarchies nil
+  "Package hierarchies last in the load path.")
 
 (defvar last-package-load-path nil
   "Load path for packages last in the load path.")
 
-(defun packages-compute-package-locations (user-init-directory)
-  "Compute locations of the various package directories.
-This is a list each of whose elements describes one directory.
-A directory description is a three-element list.
-The first element is either an absolute path or a subdirectory
-in the XEmacs hierarchy.
-The second component is one of the symbols EARLY, LATE, LAST,
-depending on the load-path segment the hierarchy is supposed to
-show up in.
-The third component is a thunk which, if it returns NIL, causes
-the directory to be ignored."
-  (list
-   (list (paths-construct-path (list user-init-directory "site-packages"))
-	 'early #'(lambda () t))
-   (list (paths-construct-path (list user-init-directory "infodock-packages"))
-	 'early #'(lambda () (featurep 'infodock)))
-   (list (paths-construct-path (list user-init-directory "mule-packages"))
-	 'early #'(lambda () (featurep 'mule)))
-   (list (paths-construct-path (list user-init-directory "xemacs-packages"))
-	 'early #'(lambda () t))
-   (list "site-packages"     'late  #'(lambda () t))
-   (list "infodock-packages" 'late  #'(lambda () (featurep 'infodock)))
-   (list "mule-packages"     'late  #'(lambda () (featurep 'mule)))
-   (list "xemacs-packages"   'late  #'(lambda () t))))
+(defun packages-package-hierarchy-directory-names ()
+  "Returns a list package hierarchy directory names.
+These are the valid immediate directory names of package
+directories, directories with higher priority first"
+  (paths-filter #'(lambda (x) x)
+		`("site-packages"
+		  ,(when (featurep 'infodock) "infodock-packages")
+		  ,(when (featurep 'mule) "mule-packages")
+		  "xemacs-packages")))
 
 (defun package-get-key-1 (info key)
   "Locate keyword `key' in list."
@@ -328,30 +330,15 @@ This function is basically a wrapper over `locate-file'."
 
 ;; Path setup
 
-(defun packages-find-package-directories (roots base)
-  "Find a set of package directories."
-  ;; make sure paths-find-version-directory and paths-find-site-directory
-  ;; don't both pick up version-independent directories ...
-  (let ((version-directory (paths-find-version-directory roots base nil nil t))
-	(site-directory (paths-find-site-directory roots base)))
-    (paths-uniq-append
-     (and version-directory (list version-directory))
-     (and site-directory (list site-directory)))))
-
-(defvar packages-special-base-regexp "^\\(etc\\|info\\|man\\|lisp\\|lib-src\\|bin\\|pkginfo\\)$"
-  "Special subdirectories of packages.")
-
-(defvar packages-no-package-hierarchy-regexp
-  (concat "\\(" paths-version-control-filename-regexp "\\)"
-	  "\\|"
-	  "\\(" packages-special-base-regexp "\\)")
-  "Directories which can't be the roots of package hierarchies.")
-
-(defun packages-find-packages-in-directories (directories)
-  "Find all packages underneath directories in DIRECTORIES."
-  (paths-find-recursive-path directories
-			     packages-hierarchy-depth
-			     packages-no-package-hierarchy-regexp))
+(defun packages-find-package-hierarchies-named (package-directories base)
+  "Find a set of package hierarchies within an XEmacs installation.
+PACKAGE-DIRECTORIES is a list of package directories.
+BASE is a subdirectory name for the hierarchy.
+Returns list of hierarchies."
+  (paths-directories-which-exist
+   (mapcar #'(lambda (package-directory)
+	       (file-name-as-directory (concat package-directory base)))
+	   package-directories)))
 
 (defun packages-split-path (path)
   "Split PATH at \"\", return pair with two components.
@@ -368,7 +355,8 @@ The second component is shared with PATH."
 (defun packages-split-package-path (package-path)
   "Split up PACKAGE-PATH into early, late and last components.
 The separation is by \"\" components.
-This returns (LIST EARLY-PACKAGES LATE-PACKAGES LAST-PACKAGES)."
+This returns
+(LIST EARLY-PACKAGE-HIERARCHIES LATE-PACKAGE-HIERARCHIES LAST-PACKAGE-HIERARCHIES)."
   ;; When in doubt, it's late
   (let* ((stuff (packages-split-path package-path))
 	 (early (and (cdr stuff) (car stuff)))
@@ -376,99 +364,102 @@ This returns (LIST EARLY-PACKAGES LATE-PACKAGES LAST-PACKAGES)."
 	 (stuff (packages-split-path late+last))
 	 (late (car stuff))
 	 (last (cdr stuff)))
-    (list (packages-find-packages-in-directories early)
-	  (packages-find-packages-in-directories late)
-	  (packages-find-packages-in-directories last))))
+    (list (mapcar #'file-name-as-directory early)
+	  (mapcar #'file-name-as-directory late)
+	  (mapcar #'file-name-as-directory last))))
 
 (defun packages-deconstruct (list consumer)
-  "Deconstruct LIST and feed it to CONSUMER."
+  "Deconstruct LIST and feed it to CONSUMER.
+CONSUMER is a function that accepts the elements of LISTS as separate arguments."
   (apply consumer list))
 
-(defun packages-find-packages-by-name (roots name)
-  "Find a package hierarchy by its name."
-  (packages-find-packages-in-directories
-   (if (and (file-name-absolute-p name)
-	    (file-name-directory (expand-file-name name)))
-       (list (file-name-as-directory (expand-file-name name)))
-    (packages-find-package-directories roots name))))
+(defun packages-find-installation-package-directories (roots)
+  "Find the package directories in the XEmacs installation.
+ROOTS is a list of installation roots."
+  (let ((version-directory (paths-find-version-directory roots "" nil nil t))
+	(site-directory (paths-find-site-directory roots "")))
+    (paths-uniq-append
+     (and version-directory (list version-directory))
+     (and site-directory (list site-directory)))))
 
-(defun packages-find-packages-at-time
-  (roots package-locations time &optional default)
-  "Find packages at given time.
-For the format of PACKAGE-LOCATIONS, see the global variable of the same name.
-TIME is either 'EARLY, 'LATE, or 'LAST.
-DEFAULT is a default list of packages."
+(defun packages-find-package-hierarchies (package-directories &optional default)
+  "Find package hierarchies in a list of package directories.
+PACKAGE-DIRECTORIES is a list of package directories.
+DEFAULT is a default list of package hierarchies."
   (or default
-      (let ((packages '()))
-	(while package-locations
-	  (packages-deconstruct
-	   (car package-locations)
-	   #'(lambda (name a-time thunk)
-	       (if (and (eq time a-time)
-			(funcall thunk))
-		   (setq packages
-			 (nconc packages
-				(packages-find-packages-by-name roots name))))))
-	  (setq package-locations (cdr package-locations)))
-	packages)))
-
-(defun packages-find-packages (roots package-locations)
-  "Find the packages."
+      (let ((package-hierarchies '())
+	    (hierarchy-directories (packages-package-hierarchy-directory-names)))
+	(while hierarchy-directories
+	  (setq package-hierarchies
+		(nconc package-hierarchies
+		       (packages-find-package-hierarchies-named
+			package-directories
+			(car hierarchy-directories))))
+	  (setq hierarchy-directories (cdr hierarchy-directories)))
+	package-hierarchies)))
+  
+(defun packages-find-all-package-hierarchies (roots)
+ "Find the package hierarchies.
+ROOTS is a list of installation roots.
+Returns a list of three directory lists, the first being the list of early
+hierarchies, the second that of the late hierarchies, and the third the
+list of the last hierarchies."
   (let ((envvar-value (getenv "EMACSPACKAGEPATH")))
     (if envvar-value
 	(packages-split-package-path (paths-decode-directory-path envvar-value))
       (packages-deconstruct
        (packages-split-package-path configure-package-path)
-       #'(lambda (configure-early-packages
-		  configure-late-packages
-		  configure-last-packages)
-	   (list (packages-find-packages-at-time roots package-locations 'early
-						 configure-early-packages)
-		 (packages-find-packages-at-time roots package-locations 'late
-						 configure-late-packages)
-		 (packages-find-packages-at-time roots package-locations 'last
-						 configure-last-packages)))))))
+       #'(lambda (configure-early-package-hierarchies
+		  configure-late-package-hierarchies
+		  configure-last-package-hierarchies)
+	   (list
+	    (packages-find-package-hierarchies (list user-init-directory)
+					       configure-early-package-hierarchies)
+	    (packages-find-package-hierarchies (packages-find-installation-package-directories roots)
+					       configure-late-package-hierarchies)
+	    (packages-find-package-hierarchies '()
+					       configure-last-package-hierarchies)))))))
 
-(defun packages-find-package-library-path (packages suffixes)
+(defun packages-find-package-library-path (package-hierarchies suffixes)
   "Construct a path into a component of the packages hierarchy.
-PACKAGES is a list of package directories.
-SUFFIXES is a list of names of package subdirectories to look for."
+PACKAGE-HIERARCHIES is a list of package hierarchies.
+SUFFIXES is a list of names of hierarchy subdirectories to look for."
   (let ((directories
 	 (apply
 	  #'nconc
-	  (mapcar #'(lambda (package)
+	  (mapcar #'(lambda (hierarchy)
 		      (mapcar #'(lambda (suffix)
-				  (file-name-as-directory (concat package suffix)))
+				  (file-name-as-directory (concat hierarchy suffix)))
 			      suffixes))
-		  packages))))
+		  package-hierarchies))))
     (paths-directories-which-exist directories)))
 
-(defun packages-find-package-load-path (packages)
+(defun packages-find-package-load-path (package-hierarchies)
   "Construct the load-path component for packages.
-PACKAGES is a list of package directories."
+PACKAGE-HIERARCHIES is a list of package hierarchies."
   (paths-find-recursive-load-path
-   (packages-find-package-library-path packages
+   (packages-find-package-library-path package-hierarchies
 				       '("lisp"))
    packages-load-path-depth))
 
-(defun packages-find-package-exec-path (packages)
+(defun packages-find-package-exec-path (package-hierarchies)
   "Construct the exec-path component for packages.
-PACKAGES is a list of package directories."
-  (packages-find-package-library-path packages
+PACKAGE-HIERARCHIES is a list of package hierarchies."
+  (packages-find-package-library-path package-hierarchies
 				      (list (paths-construct-path
 					     (list "bin" system-configuration))
 					    "lib-src")))
 
-(defun packages-find-package-info-path (packages)
+(defun packages-find-package-info-path (package-hierarchies)
   "Construct the info-path component for packages.
-PACKAGES is a list of package directories."
-  (packages-find-package-library-path packages '("info")))
+PACKAGE-HIERARCHIES is a list of package directories."
+  (packages-find-package-library-path package-hierarchies '("info")))
 
-(defun packages-find-package-data-path (packages)
+(defun packages-find-package-data-path (package-hierarchies)
   "Construct the data-path component for packages.
-PACKAGES is a list of package directories."
+PACKAGE-HIERARCHIES is a list of package hierachies."
   (paths-find-recursive-load-path
-   (packages-find-package-library-path packages
+   (packages-find-package-library-path package-hierarchies
 				       '("etc"))
    packages-data-path-depth))
 

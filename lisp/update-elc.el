@@ -210,7 +210,7 @@ If any of these files are changed, we need to redump.")
 		  (print (format "Error: Library file %s not found" arg))
 		  (backtrace)
 		  ;; Uncomment in case of trouble
-		  ;;(print (format "late-packages: %S" late-packages))
+		  ;;(print (format "late-package-hierarchies: %S" late-package-hierarchies))
                   ;;(print (format "guessed-roots: %S"
                   ;;               (paths-find-emacs-roots
                   ;;                invocation-directory invocation-name)))
