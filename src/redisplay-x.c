@@ -773,7 +773,6 @@ x_output_string (struct window *w, struct display_line *dl,
   /* General variables */
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
-  Lisp_Object device;
   Lisp_Object window;
   Display *dpy = DEVICE_X_DISPLAY (d);
   Window x_win = XtWindow (FRAME_X_TEXT_WIDGET (f));
@@ -798,7 +797,6 @@ x_output_string (struct window *w, struct display_line *dl,
   int i;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
 
-  device = wrap_device (d);
   window = wrap_window (w);
 
   if (width < 0)

@@ -1,3 +1,7 @@
+2004-08-25  Jerry James  <james@xemacs.org>
+
+	* redisplay-x.c (x_output_string): Remove unused variable device.
+
 2004-08-12  Jerry James  <james@xemacs.org>
 
 	* window.c (margin_width_internal): Remove unused variable b.
