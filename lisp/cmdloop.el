@@ -164,7 +164,7 @@ or go back to just one window (by deleting all but the selected window)."
 
     (if (noninteractive)
         (progn
-          (message "%s exiting.\n" emacs-program-name)
+          (message "\n%s exiting.\n" emacs-program-name)
           (kill-emacs -1)))
     t))
 

@@ -1,3 +1,7 @@
+2003-05-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* cmdloop.el (command-error): Ensure exit msg is on separate line.
+
 2003-05-01  Steve Youngs  <youngs@xemacs.org>
 
 	* package-get.el (package-get-require-signed-base-updates): Force
