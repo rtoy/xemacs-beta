@@ -1,3 +1,7 @@
+2003-06-30  Vin Shelton  <acs@xemacs.org>
+
+	* lispref/lists.texi (List-related Predicates): Add @end defun.
+
 2003-06-30  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs-faq.texi (Q3.2.2): Fix typo.
