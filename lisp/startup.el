@@ -134,13 +134,13 @@ the user's init file.")
 
 (defvar site-start-file "site-start"
   "File containing site-wide run-time initializations.
-This file is loaded at run-time before `.emacs'.  It
-contains inits that need to be in place for the entire site, but
+It is loaded at run-time before the user's init file (see `user-init-file').
+It contains inits that need to be in place for the entire site, but
 which, due to their higher incidence of change, don't make sense to
-load into XEmacs' dumped image.  Thus, the run-time load order is:
+load into XEmacs's dumped image.  Thus, the run-time load order is:
 
   1. file described in this variable, if non-nil;
-  2. `.emacs';
+  2. the file computed by `find-user-init-file';
   3. `/path/to/xemacs/lisp/default.el'.
 
 Don't use the `site-start.el' file for things some users may not like.
@@ -915,13 +915,16 @@ directory which will load the relocated initialization code.")
       ;; Don't you dare turn this off for anyone except yourself.
       (load "default" t t))))
 
+;;; #### move this comment into a docstring.  See site-init-file for some
+;;; description of what it does.  Substitute a pointer to this function in
+;;; site-init-file's docstring.
 ;;; Load user's init file and default ones.
 (defun load-init-file ()
   (run-hooks 'before-init-hook)
 
   ;; Run the site-start library if it exists.  The point of this file is
-  ;; that it is run before .emacs.  There is no point in doing this after
-  ;; .emacs; that is useless.
+  ;; that it is run before the user's init file.  There is no point in
+  ;; doing this after the user's init file; that is useless.
   (when site-start-file
     (load site-start-file t t))
 

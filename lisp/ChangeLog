@@ -1,3 +1,28 @@
+2004-02-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* isearch-mode.el (isearch-abort): Preserve successful search target.
+
+2004-04-19  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* startup.el (site-start-file):
+	(load-init-file):
+	Improve documentation.
+
+2004-04-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* menubar-items.el (default-menubar): Options are saved to custom.el.
+
+2004-04-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* help.el (help-register-and-maybe-prune-excess): Trim docstring.
+	Sanity check argument.
+	(with-displaying-temp-buffer): Improve docstring.
+
+2004-04-09  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* files.el (revert-buffer): Synch to 21.4.  Suggested by
+	Rodney Sparapani <rsparapa@post.its.mcw.edu>.
+
 2004-04-09  Mike Sperber  <mike@xemacs.org>
 
 	* minibuf.el (reset-buffer): Zap the mark of the minibuffer as

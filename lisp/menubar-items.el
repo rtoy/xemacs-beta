@@ -1598,7 +1598,7 @@ Write your filter like this:
 	 (find-file el-file)
 	 (or (eq major-mode 'emacs-lisp-mode)
 	     (emacs-lisp-mode)))]
-      ["%_Save Options to Init File" customize-save-customized]
+      ["%_Save Options to Custom File" customize-save-customized]
       )
 
      ("%_Buffers"

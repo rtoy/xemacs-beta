@@ -3480,10 +3480,20 @@ Revert only if they differ."
 		    ;; The resultant buffer is identical, alter
 		    ;; modtime, update mods and exit
 		    (set-visited-file-modtime)
-		    (after-find-file nil nil t t t))
+		    (after-find-file nil nil t t t)
+		    ;; We preserved modes above so fixup the local
+		    ;; variables manually
+		    (condition-case err
+			(hack-local-variables)
+		      (error (lwarn 'local-variables 'warning
+			       "File local-variables error: %s"
+			       (error-message-string err)))))
 		   (t t))
 	     t)))))
 
+;; #### wouldn't something like `revert-buffer-compare-with-file' be a
+;; better name?
+;; #### why is the argument optional?
 (defun revert-buffer-internal (&optional file-name)
   "Read contents of FILE-NAME into a buffer, and compare to current buffer.
 Return nil if identical, and the new buffer if different."

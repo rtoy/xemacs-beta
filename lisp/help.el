@@ -461,7 +461,11 @@ zero or nil, only one help buffer, \"*Help*\" is ever used."
   "List of help buffers used by `help-register-and-maybe-prune-excess'")
 
 (defun help-register-and-maybe-prune-excess (newbuf)
-  "Register use of a help buffer and possibly kill any excess ones."
+  "Register help buffer named NEWBUF and possibly kill excess ones."
+  ;; don't let client code pass us bogus NEWBUF---if it gets in the list,
+  ;; help can become unusable
+  (unless (stringp newbuf)
+    (error 'wrong-type-argument "help buffer name must be string" newbuf))
   ;; remove new buffer from list
   (setq help-buffer-list (remove newbuf help-buffer-list))
   ;; maybe kill excess help buffers
@@ -487,7 +491,7 @@ zero or nil, only one help buffer, \"*Help*\" is ever used."
 
 (defvar help-buffer-prefix-string "Help"
   "Initial string to use in constructing help buffer names.
-You should never set this directory, only let-bind it.")
+You should never set this directly, only let-bind it.")
 
 (defun help-buffer-name (name)
   "Return a name for a Help buffer using string NAME for context."
@@ -528,13 +532,18 @@ You should never set this directory, only let-bind it.")
 (put 'help-window-config 'permanent-local t)
 
 (defmacro with-displaying-temp-buffer (name &rest body)
-  "Form which makes a help buffer with given NAME and evaluates BODY there.
+  "Make a help buffer with given NAME and evaluate BODY, sending stdout there.
 
 Use this function for displaying information in temporary buffers, where the
 user will typically view the information and then exit using
 \\<temp-buffer-mode-map>\\[help-mode-quit].
 
-The buffer is put into the mode specified in `mode-for-temp-buffer'."
+On exit from this form, the buffer is put into the mode specified in
+`mode-for-temp-buffer' and displayed, typically in a popup window.  Ie,
+the buffer is a scratchpad which is displayed all at once in formatted
+form.
+
+N.B. Write to this buffer with functions like `princ', not `insert'."
   `(let* ((winconfig (current-window-configuration))
 	  (was-one-window (one-window-p))
 	  (buffer-name ,name)
