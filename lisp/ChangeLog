@@ -1,3 +1,8 @@
+2005-01-17  Adrian Aichner  <adrian@xemacs.org>
+
+	* simple.el (shifted-motion-keys-select-region): Fix statement
+	about unshifted-motion-keys-deselect-region.
+
 2005-01-08  Mike Sperber  <mike@xemacs.org>
 
 	* packages.el (packages-find-installation-package-directories): Add.
