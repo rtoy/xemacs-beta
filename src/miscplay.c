@@ -114,7 +114,7 @@ static size_t parsevoc(void **data,size_t *sz,void **outbuf)
    this might require re-partioning of the data segments if headers cross the
    boundaries between two read operations. This is done in a two-step way:
    first we request a certain amount of bytes... */
-static inline int waverequire(void **data,size_t *sz,size_t rq)
+static int waverequire(void **data,size_t *sz,size_t rq)
 {
   int rc = 1;
 

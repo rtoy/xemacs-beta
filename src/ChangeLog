@@ -1,3 +1,8 @@
+2001-05-25  Martin Buchholz  <martin@xemacs.org>
+
+	* miscplay.c (waverequire): Don't inline.
+	Gcc can't inline functions that call alloca.
+
 2001-05-24  Yoshiki Hayashi  <yoshiki@xemacs.org>
 
 	* gui.c (gui_error_2): New function.
