@@ -1,3 +1,8 @@
+2002-07-31  David Bush  <David.Bush@intel.com>
+
+	* events.c (event_equal): Correct comparison in MS Windows
+	conditional code to use event structure defined for -use-kkcc.
+
 2002-07-29  Sean MacLennan <seanm@seanm.ca>
 
 	* glyphs-x.c (x_locate_pixmap_file): Test path not to be 0, before

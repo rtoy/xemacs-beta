@@ -442,9 +442,8 @@ event_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 #endif
 #ifdef HAVE_MS_WINDOWS
 	if (CONSOLE_MSWINDOWS_P (con))
-	  return (!memcmp(&XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA (e1)),
-			  &XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA (e2)),
-			  sizeof (union magic_data)));
+	  return (XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA (e1)) ==
+		  XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA (e2)));
 #endif
 	abort ();
 	return 1; /* not reached */
