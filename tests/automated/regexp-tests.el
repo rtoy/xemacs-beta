@@ -258,19 +258,17 @@
 
 ;; Character classes are broken in Mule as of 21.5.9
 ;; Added Known-Bug 2002-12-27
+;; Fixed by Daiki Ueno 2003-03-24
 (if (featurep 'mule)
     ;; note: (int-to-char 65) => ?A
     (let ((ch0 (make-char 'japanese-jisx0208 52 65))
 	  (ch1 (make-char 'japanese-jisx0208 51 65)))
       (Assert (not (string-match "A" (string ch0))))
       (Assert (not (string-match "[A]" (string ch0))))
-      (Known-Bug-Expect-Failure
-       (Assert (eq (string-match "[^A]" (string ch0)) 0)))
+      (Assert (eq (string-match "[^A]" (string ch0)) 0))
       (Assert (not (string-match "@A" (string ?@ ch0))))
-      (Known-Bug-Expect-Failure
-       (Assert (not (string-match "@[A]" (string ?@ ch0)))))
-      (Known-Bug-Expect-Failure
-       (Assert (eq (string-match "@[^A]" (string ?@ ch0)) 0)))
+      (Assert (not (string-match "@[A]" (string ?@ ch0))))
+      (Assert (eq (string-match "@[^A]" (string ?@ ch0)) 0))
       (Assert (not (string-match "@?A" (string ?@ ch0))))
       (Assert (not (string-match "A" (string ch1))))
       (Assert (not (string-match "[A]" (string ch1))))
@@ -278,7 +276,9 @@
       (Assert (not (string-match "@A" (string ?@ ch1))))
       (Assert (not (string-match "@[A]" (string ?@ ch1))))
       (Assert (eq (string-match "@[^A]" (string ?@ ch1)) 0))
-      (Assert (not (string-match "@?A" (string ?@ ch1))))))
+      (Assert (not (string-match "@?A" (string ?@ ch1))))
+      )
+  )
 
 ;; More stale match data tests.
 ;; Thanks to <bjacob@ca.metsci.com>.

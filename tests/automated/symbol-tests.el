@@ -71,10 +71,17 @@
 (flet ((check-weak-list-unique (weak-list &optional reversep)
 	 "Check that elements of WEAK-LIST are referenced only there."
 	 (let ((len (length (weak-list-list weak-list))))
-	   (Assert (not (zerop len)))
-	   (garbage-collect)
-	   (Assert (eq (length (weak-list-list weak-list))
-		       (if (not reversep) 0 len))))))
+	   (if (string-match "Using the new GC algorithms."
+			     Installation-string)
+	       (Implementation-Incomplete-Expect-Failure
+		(Assert (not (zerop len)))
+		(garbage-collect)
+		(Assert (eq (length (weak-list-list weak-list))
+			    (if (not reversep) 0 len))))
+	     (Assert (not (zerop len)))
+	     (garbage-collect)
+	     (Assert (eq (length (weak-list-list weak-list))
+			 (if (not reversep) 0 len)))))))
   (let ((weak-list (make-weak-list))
 	(gc-cons-threshold most-positive-fixnum))
     ;; Symbols created with `make-symbol' and `gensym' should be fresh

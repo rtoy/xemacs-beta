@@ -1,3 +1,20 @@
+2003-04-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-known-bug): Deleted.
+	(test-harness-failure-tag, test-harness-success-tag): New variables.
+	(Known-Bug-Expect-Failure): Bind them.
+	(Implementation-Incomplete-Expect-Failure): New macro. Bind *-tag.
+	(Print-Failure, Print-Pass): Use *-tag instead of literal strings.
+
+	* automated/symbol-tests.el (weak reference uniqueness): Mike sez
+	tests of garbage collector are due to incomplete descriptorization
+	of lisp types.  Tag with Implementation-Incomplete-Expect-Failure
+	if KKCC.
+
+2003-04-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el: Change known-bug status of Mule ranges.
+
 2003-03-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/regexp-tests.el: Change known-bug status of "\\b".

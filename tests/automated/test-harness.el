@@ -33,7 +33,8 @@
 ;;; Assert, Check-Error, Check-Message, and Check-Error-Message functions
 ;;; to create tests.  See `test-harness-from-buffer' below.
 ;;; Don't suppress tests just because they're due to known bugs not yet
-;;; fixed -- use the Known-Bug-Expect-Failure wrapper macro to mark them.
+;;; fixed -- use the Known-Bug-Expect-Failure and
+;;; Implementation-Incomplete-Expect-Failure wrapper macros to mark them.
 ;;; A lot of the tests we run push limits; suppress Ebola message with the
 ;;; Ignore-Ebola wrapper macro.
 ;;; 
@@ -142,23 +143,26 @@ The output file's name is made by appending `c' to the end of FILENAME."
     (with-output-to-temp-buffer "*Test-Log*"
       (princ (format "Testing %s...\n\n" filename))
 
-      (defconst test-harness-expect-bug nil)
+      (defconst test-harness-failure-tag "FAIL")
+      (defconst test-harness-success-tag "PASS")
 
       (defmacro Known-Bug-Expect-Failure (&rest body)
-	`(let ((test-harness-expect-bug t)) ,@body))
+	`(let ((test-harness-failure-tag "KNOWN BUG")
+	       (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
+	  ,@body))
+    
+      (defmacro Implementation-Incomplete-Expect-Failure (&rest body)
+	`(let ((test-harness-failure-tag "IMPLEMENTATION INCOMPLETE")
+	       (test-harness-success-tag "PASS (FAILURE EXPECTED)"))
+	  ,@body))
     
       (defun Print-Failure (fmt &rest args)
-	(setq fmt (format "%s: %s"
-			  (if test-harness-expect-bug
-			      "KNOWN BUG"
-			    "FAIL")
-			  fmt))
+	(setq fmt (format "%s: %s" test-harness-failure-tag fmt))
 	(if (noninteractive) (apply #'message fmt args))
 	(princ (concat (apply #'format fmt args) "\n")))
 
       (defun Print-Pass (fmt &rest args)
-	(setq fmt (concat "PASS: " fmt))
-	;; #### should warn if expecting failure here!
+	(setq fmt (format "%s: %s" test-harness-success-tag fmt))
 	(and test-harness-verbose
 	     (princ (concat (apply #'format fmt args) "\n"))))
 
