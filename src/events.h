@@ -1061,7 +1061,7 @@ extern Lisp_Object Vmodifier_keys_sticky_time;
 
 /* from events.c */
 void format_event_object (Eistring *buf, Lisp_Object event, int brief);
-//void format_event_data_object (Eistring *buf, Lisp_Object data, int brief);
+/*void format_event_data_object (Eistring *buf, Lisp_Object data, int brief);*/
 void character_to_event (Ichar c, Lisp_Event *event,
                          struct console *con,
                          int use_console_meta_flag,
