@@ -1,3 +1,8 @@
+2001-03-31  Mike Sperber <mike@xemacs.org>
+
+	* search.c (Freplace_match): [Again] support FSF-style
+	specification of match subexpression when applied to a buffer.
+
 2001-04-07  Hrvoje Niksic  <hniksic@arsdigita.com>
 
 	* extents.c (Fset_extent_endpoints): Force creation of extent info
