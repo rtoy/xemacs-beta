@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1988, 1992-4, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems
-;; Copyright (C) 1995, 1996, 2000, 2002 Ben Wing.
+;; Copyright (C) 1995, 1996, 2000, 2002, 2004, 2005 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: mouse, dumped
@@ -507,11 +507,52 @@ A value of nil disables the timeout feature."
   :type '(choice integer (const :tag "Disabled" nil))
   :group 'mouse)
 
-(defcustom mouse-track-activate-strokes '(button1-double-click button2-click)
-  "List of mouse strokes that can cause \"activation\" of the text extent
-under the mouse.  The exact meaning of \"activation\" is dependent on the
-text clicked on and the mode of the buffer, but typically entails actions
-such as following a hyperlink or selecting an entry in a completion buffer.
+(defcustom mouse-track-activate-strokes '(button1-click button1-double-click
+					  button2-click)
+  "Mouse strokes causing \"activation\" of the text extent under the mouse.
+The exact meaning of \"activation\" is dependent on the text clicked on and
+the mode of the buffer, but typically entails actions such as following a
+hyperlink or selecting an entry in a completion buffer.
+
+See also `mouse-track-conservative-activate-strokes'.
+
+Possible list entries are
+
+button1-click
+button1-double-click
+button1-triple-click
+button1-down
+button2-click
+button2-double-click
+button2-triple-click
+button2-down
+
+As a general rule, you should not use the \"-down\" values, because this
+makes it impossible to have other simultaneous actions, such as selection."
+  :type '(set
+	  button1-click
+	  button1-double-click
+	  button1-triple-click
+	  button1-down
+	  button2-click
+	  button2-double-click
+	  button2-triple-click
+	  button2-down)
+  :group 'mouse)
+
+(defcustom mouse-track-conservative-activate-strokes
+  '(button1-double-click button2-click)
+  "Mouse strokes causing \"conservative activation\" of text extent under mouse.
+The exact meaning of \"activation\" is dependent on the text clicked on and
+the mode of the buffer, but typically entails actions such as following a
+hyperlink or selecting an entry in a completion buffer.
+
+\"Conservative activation\" differs from regular activation in that it is
+not meant to be triggered by a button1 click, and thus is suitable for larger
+regions of text where the user might want to position the cursor inside of
+the region.
+
+See also `mouse-track-activate-strokes'.
 
 Possible list entries are
 
@@ -572,15 +613,6 @@ produce a number.")
 	    (add-timeout (/ mouse-track-scroll-delay 1000.0)
 			 'mouse-track-scroll-undefined
 			 (copy-event event)))))
-
-(defun mouse-track-do-activate (event)
-  "Execute the activate function under EVENT, if any.
-Return true if the function was activated."
-  (let ((ex (extent-at-event event 'activate-function)))
-    (when ex
-      (funcall (extent-property ex 'activate-function)
-	       event ex)
-      t)))
 
 (defvar Mouse-track-gensym (gensym))
 
@@ -1210,16 +1242,61 @@ also works, because the behavior is emulated."
 			  (4 . button4) (5 . button5))))
 	       (event-modifiers event)))))
 
+;; return t if an activation function was called.  This checks to see
+;; if the appropriate stroke for the click count and the button that
+;; was pressed is present in `mouse-track-activate-strokes'; if so, it
+;; looks for an extent under the mouse with an `activate-function'
+;; property, calls it and returns t.  Else, it repeats the whole
+;; process with `mouse-track-conservative-activate-strokes' and
+;; `conservative-activate-function'.
+(defun default-mouse-track-check-for-activation (event click-count
+						 count-list button-list)
+  (flet ((do-activate (event property)
+	   (let ((ex (extent-at-event event property)))
+	     (when ex
+	       (funcall (extent-property ex property) event ex)
+	       t))))
+    (or
+     (and (some #'(lambda (count button)
+		    (and (= click-count count)
+			 (memq button
+			       mouse-track-activate-strokes)))
+	   count-list button-list)
+	  (do-activate event 'activate-function))
+     (and (some #'(lambda (count button)
+		    (and (= click-count count)
+			 (memq button
+			       mouse-track-conservative-activate-strokes)))
+	   count-list button-list)
+	  (do-activate event 'conservative-activate-function)))))
+
 (defun default-mouse-track-down-hook (event click-count)
   (cond ((default-mouse-track-event-is-with-button event 1)
-	 (if (and (memq 'button1-down mouse-track-activate-strokes)
-		  (mouse-track-do-activate event))
+	 (if (default-mouse-track-check-for-activation
+	       event 1 '(1) '(button1-down))
 	     t
 	   (setq default-mouse-track-down-event (copy-event event))
 	   nil))
 	((default-mouse-track-event-is-with-button event 2)
-	 (and (memq 'button2-down mouse-track-activate-strokes)
-	      (mouse-track-do-activate event)))))
+	 (default-mouse-track-check-for-activation
+	   event 1 '(1) '(button2-down)))))
+
+(defun default-mouse-track-click-hook (event click-count)
+  (cond ((default-mouse-track-event-is-with-button event 1)
+	 (if (default-mouse-track-check-for-activation
+	       event click-count '(1 2 3) '(button1-click button1-double-click
+					    button1-triple-click))
+	     t
+	   (default-mouse-track-drag-hook event click-count nil)
+	   (default-mouse-track-drag-up-hook event click-count)
+	   t))
+	((default-mouse-track-event-is-with-button event 2)
+	 (if (default-mouse-track-check-for-activation
+	       event click-count '(1 2 3) '(button2-click button2-double-click
+					    button2-triple-click))
+	     t
+	   (mouse-yank event)
+	   t))))
 
 (defun default-mouse-track-cleanup-extents-hook ()
   (remove-hook 'pre-command-hook 'default-mouse-track-cleanup-extents-hook)
@@ -1329,44 +1406,10 @@ also works, because the behavior is emulated."
 	  (default-mouse-track-maybe-own-selection result 'PRIMARY)))
     t))
 
-(defun default-mouse-track-click-hook (event click-count)
-  (cond ((default-mouse-track-event-is-with-button event 1)
-	 (if (and
-	      (or (and (= click-count 1)
-		       (memq 'button1-click
-			     mouse-track-activate-strokes))
-		  (and (= click-count 2)
-		       (memq 'button1-double-click
-			     mouse-track-activate-strokes))
-		  (and (= click-count 3)
-		       (memq 'button1-triple-click
-			     mouse-track-activate-strokes)))
-	      (mouse-track-do-activate event))
-	     t
-	   (default-mouse-track-drag-hook event click-count nil)
-	   (default-mouse-track-drag-up-hook event click-count)
-	   t))
-	((default-mouse-track-event-is-with-button event 2)
-	 (if (and
-	      (or (and (= click-count 1)
-		       (memq 'button2-click
-			     mouse-track-activate-strokes))
-		  (and (= click-count 2)
-		       (memq 'button2-double-click
-			     mouse-track-activate-strokes))
-		  (and (= click-count 3)
-		       (memq 'button2-triple-click
-			     mouse-track-activate-strokes)))
-	      (mouse-track-do-activate event))
-	     t
-	   (mouse-yank event)
-	   t))))
-
-
 (add-hook 'mouse-track-down-hook 'default-mouse-track-down-hook)
+(add-hook 'mouse-track-click-hook 'default-mouse-track-click-hook)
 (add-hook 'mouse-track-drag-hook 'default-mouse-track-drag-hook)
 (add-hook 'mouse-track-drag-up-hook 'default-mouse-track-drag-up-hook)
-(add-hook 'mouse-track-click-hook 'default-mouse-track-click-hook)
 (add-hook 'mouse-track-cleanup-hook 'default-mouse-track-cleanup-hook)
 
 
