@@ -574,14 +574,14 @@ malloc (__malloc_size_t size)
     {
       /* Small allocation to receive a fragment of a block.
 	 Determine the logarithm to base two of the fragment size. */
-      __malloc_size_t log = 1;
+      __malloc_size_t log2 = 1;
       --size;
       while ((size /= 2) != 0)
-	++log;
+	++log2;
 
       /* Look in the fragment lists for a
 	 free fragment of the desired size. */
-      next = _fraghead[log].next;
+      next = _fraghead[log2].next;
       if (next != NULL)
 	{
 	  /* There are free fragments of this size.
@@ -595,13 +595,13 @@ malloc (__malloc_size_t size)
 	  if (--_heapinfo[block].busy.info.frag.nfree != 0)
 	    _heapinfo[block].busy.info.frag.first = (unsigned long int)
 	      ((unsigned long int) ((char *) next->next - (char *) NULL)
-	       % BLOCKSIZE) >> log;
+	       % BLOCKSIZE) >> log2;
 
 	  /* Update the statistics.  */
 	  ++_chunks_used;
-	  _bytes_used += 1 << log;
+	  _bytes_used += 1 << log2;
 	  --_chunks_free;
-	  _bytes_free -= 1 << log;
+	  _bytes_free -= 1 << log2;
 	}
       else
 	{
@@ -612,11 +612,11 @@ malloc (__malloc_size_t size)
 	    return NULL;
 
 	  /* Link all fragments but the first into the free list.  */
-	  for (i = 1; i < (__malloc_size_t) (BLOCKSIZE >> log); ++i)
+	  for (i = 1; i < (__malloc_size_t) (BLOCKSIZE >> log2); ++i)
 	    {
-	      next = (struct list *) ((char *) result + (i << log));
-	      next->next = _fraghead[log].next;
-	      next->prev = &_fraghead[log];
+	      next = (struct list *) ((char *) result + (i << log2));
+	      next->next = _fraghead[log2].next;
+	      next->prev = &_fraghead[log2];
 	      next->prev->next = next;
 	      if (next->next != NULL)
 		next->next->prev = next;
@@ -624,13 +624,13 @@ malloc (__malloc_size_t size)
 
 	  /* Initialize the nfree and first counters for this block.  */
 	  block = BLOCK (result);
-	  _heapinfo[block].busy.type = log;
+	  _heapinfo[block].busy.type = log2;
 	  _heapinfo[block].busy.info.frag.nfree = i - 1;
 	  _heapinfo[block].busy.info.frag.first = i - 1;
 
-	  _chunks_free += (BLOCKSIZE >> log) - 1;
-	  _bytes_free += BLOCKSIZE - (1 << log);
-	  _bytes_used -= BLOCKSIZE - (1 << log);
+	  _chunks_free += (BLOCKSIZE >> log2) - 1;
+	  _bytes_free += BLOCKSIZE - (1 << log2);
+	  _bytes_used -= BLOCKSIZE - (1 << log2);
 	}
     }
   else

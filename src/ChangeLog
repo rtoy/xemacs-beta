@@ -1,5 +1,9 @@
 2004-09-27  Jerry James  <james@xemacs.org>
 
+	* gmalloc.c (malloc): Change log to log2 to quiet gcc 3.3.
+
+2004-09-27  Jerry James  <james@xemacs.org>
+
 	* sysdep.c: Mark more unused parameters with the UNUSED macro.
 
 2004-09-21  Jerry James  <james@xemacs.org>
