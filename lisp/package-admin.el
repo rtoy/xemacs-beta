@@ -1,6 +1,7 @@
 ;;; package-admin.el --- Installation and Maintenance of XEmacs packages
 
 ;; Copyright (C) 1997 by Free Software Foundation, Inc.
+;; Copyright (C) 2003, Steve Youngs.
 
 ;; Author: SL Baur <steve@xemacs.org>
 ;; Keywords: internal
@@ -172,12 +173,14 @@ Note:  Type \"site\" is not yet fully supported."
 	(let ((path-list (paths-decode-directory-path env-value 'drop-empties)))
 	  (cond ((eq type 'std)
 		 (while path-list
-		   (if (equal (substring (car path-list) -16) "xemacs-packages/")
+		   (if (equal (substring (car path-list) -16) 
+			      (concat "xemacs-packages" directory-sep-char))
 		       (setq top-dir (car path-list)))
 		   (setq path-list (cdr path-list))))
 		((eq type 'mule)
 		 (while path-list
-		   (if (equal (substring (car path-list) -14) "mule-packages/")
+		   (if (equal (substring (car path-list) -14) 
+			      (concat "mule-packages" directory-sep-char))
 		       (setq top-dir (car path-list)))
 		   (setq path-list (cdr path-list)))))))
     ;; Wasn't in the environment, try `user-init-directory' if
@@ -197,12 +200,14 @@ Note:  Type \"site\" is not yet fully supported."
 				 (packages-compute-package-locations user-init-directory)))))
 	  (cond ((eq type 'std)
 		 (while path-list
-		   (if (equal (substring (car path-list) -16) "xemacs-packages/")
+		   (if (equal (substring (car path-list) -16) 
+			      (concat "xemacs-packages" directory-sep-char))
 		       (setq top-dir (car path-list)))
 		   (setq path-list (cdr path-list))))
 		((eq type 'mule)
 		 (while path-list
-		   (if (equal (substring (car path-list) -14) "mule-packages/")
+		   (if (equal (substring (car path-list) -14) 
+			      (concat "mule-packages" directory-sep-char))
 		       (setq top-dir (car path-list)))
 		   (setq path-list (cdr path-list)))))))
     ;; Now return either the directory or nil.
@@ -259,7 +264,8 @@ all else fails.  As a side effect of installing packages under
 		  ((equal type "mule")
 		   (setq pkg-dir (package-admin-find-top-directory 'mule)))
 		  (t
-		   (error "Invalid package type")))
+		   (error 'invalid-operation
+			  "Invalid package type")))
 	    (if (and pkg-dir
 		     (file-writable-p (directory-file-name pkg-dir)))
 		pkg-dir
@@ -274,7 +280,8 @@ all else fails.  As a side effect of installing packages under
 			  ((equal type "mule")
 			   (setq pkg-dir (package-admin-find-top-directory 'mule 'user-dir)))
 			  (t
-			   (error "Invalid package type")))
+			   (error 'invalid-operation
+				  "Invalid package type")))
 		    ;; Turn on `package-get-install-to-user-init-directory'
 		    ;; so we don't get asked for each package we try to
 		    ;; install in this session.
@@ -282,7 +289,10 @@ all else fails.  As a side effect of installing packages under
 		    pkg-dir)
 		;; If we get to here XEmacs can't make up its mind and
 		;; neither can the user, nothing left to do except barf. :-(
-		(error "Can't find suitable installation directory for package: %s" package)))))))))
+		(error 'search-failed
+		       (format
+			"Can't find suitable installation directory for package: %s" 
+			package))))))))))
 
 (defun package-admin-get-manifest-file (pkg-topdir package)
   "Return the name of the MANIFEST file for package PACKAGE.

@@ -282,7 +282,8 @@ and whether or not it is up-to-date."
 	(progn
 	  (pui-toggle-package extent)
 	  (forward-line 1))
-      (error "No package under cursor!"))))
+      (error 'invalid-operation
+	     "No package under cursor!"))))
 
 (defun pui-toggle-package-delete (extent)
   (let (pkg-sym)
@@ -305,7 +306,8 @@ and whether or not it is up-to-date."
 	(progn
 	  (pui-toggle-package-delete extent)
 	  (forward-line 1))
-      (error "No package under cursor!"))))
+      (error 'invalid-operation
+	     "No package under cursor!"))))
 
 (defun pui-current-package ()
   (let ((extent (extent-at (point) (current-buffer) 'pui)))
@@ -394,7 +396,8 @@ and whether or not it is up-to-date."
 	    (clear-message)))
       (if pui-deleted-packages
 	  (pui-list-packages)
-	(error "No packages have been selected!")))
+	(error 'invalid-operation
+	       "No packages have been selected!")))
     ;; sync with windows type systems
     (package-net-update-installed-db)))
 
@@ -452,7 +455,8 @@ and whether or not it is up-to-date."
                              nil nil nil nil nil 'pui)
                 (message "added dependencies"))
 	      (clear-message)))
-      (error "No packages have been selected!"))))
+      (error 'invalid-operation
+	     "No packages have been selected!"))))
 
 (defun pui-help-echo (extent &optional force-update)
   "Display additional package info in the modeline.
@@ -502,7 +506,8 @@ Designed to be called interactively (from a keypress)."
 	  (message (pui-help-echo extent t))
 	(if no-error
 	    (clear-message nil)
-	  (error "No package under cursor!"))))))
+	  (error 'invalid-operation
+		 "No package under cursor!"))))))
 
 (defvar pui-menu
   '("Packages"
@@ -550,7 +555,8 @@ Useful keys:
   `\\[pui-toggle-verbosity-redisplay]' to toggle between a verbose and non-verbose display.
   `\\[pui-quit]' to kill this buffer.
 "
-  (error "You cannot enter this mode directly. Use `pui-list-packages'"))
+  (error 'invalid-operation
+	 "You cannot enter this mode directly. Use `pui-list-packages'"))
 
 (put 'list-packages-mode 'mode-class 'special)
 

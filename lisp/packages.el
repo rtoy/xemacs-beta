@@ -134,11 +134,13 @@ the directory to be ignored."
 (defun package-require (name version)
   (let ((pkg (assq name packages-package-list)))
     (cond ((null pkg)
-	   (error "Package %s has not been loaded into this XEmacsen"
-		  name))
+	   (error 'invalid-state
+		  (format "Package %s has not been loaded into this XEmacsen"
+			  name)))
 	  ((< (package-get-key name :version) version)
-	   (error "Need version %g of package %s, got version %g"
-		  version name (cdr pkg)))
+	   (error 'search-failed
+		  (format "Need version %g of package %s, got version %g"
+			  version name (cdr pkg))))
 	  (t t))))
 
 (defun package-delete-name (name)

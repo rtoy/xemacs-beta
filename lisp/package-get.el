@@ -2,10 +2,12 @@
 
 ;; Copyright (C) 1998 by Pete Ware
 ;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2003, Steve Youngs
 
 ;; Author: Pete Ware <ware@cis.ohio-state.edu>
 ;; Heavy-Modifications: Greg Klanderman <greg@alphatech.com>
 ;;                      Jan Vroonhof    <vroonhof@math.ethz.ch>
+;;                      Steve Youngs    <youngs@xemacs.org>
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -380,10 +382,44 @@ Otherwise respect the `force-current' argument of `package-get-require-base'."
   :type 'boolean
   :group 'package-get)
 
-(defcustom package-get-require-signed-base-updates t
-  "*If set to a non-nil value, require explicit user confirmation for updates
-to the package-get database which cannot have their signature verified via PGP.
-When nil, no PGP verification will be done."
+(defun package-get-pgp-available-p ()
+  "Checks the availability of Mailcrypt and PGP executable.
+
+Returns t if both are found, nil otherwise.  As a side effect, set
+`mc-default-scheme' dependent on the PGP executable found."
+  (let (result)
+    (when (featurep 'mailcrypt-autoloads)
+      (autoload 'mc-setversion "mc-setversion"))
+    (when-fboundp 'mc-setversion
+      (cond ((locate-file "gpg" exec-path
+			  '("" ".btm" ".bat" ".cmd" ".exe" ".com")
+			  'executable)
+	     (mc-setversion "gpg")
+	     (setq result t))
+	    ((locate-file "pgpe" exec-path
+			  '("" ".btm" ".bat" ".cmd" ".exe" ".com")
+			  'executable)
+	     (mc-setversion "5.0")
+	     (setq result t))
+	    ((locate-file "pgp" exec-path
+			  '("" ".btm" ".bat" ".cmd" ".exe" ".com")
+			  'executable)
+	     (mc-setversion "2.6")
+	     (setq result t))))
+    (if result
+	result
+      nil)))
+
+(defcustom package-get-require-signed-base-updates (package-get-pgp-available-p)
+  "*If non-nil, try to verify the package index database via PGP.
+
+If nil, no PGP verification is done.  If the package index database
+entries are not PGP signed and this variable is non-nil, require user
+confirmation to continue with the package-get procedure.
+
+The default for this variable is the return value of
+`package-get-pgp-available-p', non-nil if both the \"Mailcrypt\"
+package and a suitable PGP executable are available, nil otherwise."
   :type 'boolean
   :group 'package-get)
 
@@ -413,7 +449,8 @@ and remote access is likely in the near future."
     (package-get-update-base nil force-current))
   (if (or (not (boundp 'package-get-base))
 	  (not package-get-base))
-      (error "Package-get database not loaded")
+      (error 'void-variable
+	     "Package-get database not loaded")
     (setq package-get-was-current force-current)))
 
 (defconst package-get-pgp-signed-begin-line "^-----BEGIN PGP SIGNED MESSAGE-----"
@@ -458,7 +495,8 @@ is non-nil."
       (if (file-exists-p package-get-user-index-filename)
 	  package-get-user-index-filename)
       (locate-data-file package-get-base-filename)
-      (error "Can't locate a package index file.")))
+      (error 'search-failed
+	     "Can't locate a package index file.")))
 
 (defun package-get-maybe-save-index (filename)
   "Offer to save the current buffer as the local package index file,
@@ -491,9 +529,11 @@ Unless FORCE-CURRENT is non-nil never try to update the database."
                                       (package-get-locate-index-file
 				         (not force-current)))))
   (if (not (file-exists-p db-file))
-      (error "Package-get database file `%s' does not exist" db-file))
+      (error 'file-error
+	     (format "Package-get database file `%s' does not exist" db-file)))
   (if (not (file-readable-p db-file))
-      (error "Package-get database file `%s' not readable" db-file))
+      (error 'file-error
+	     (format "Package-get database file `%s' not readable" db-file)))
   (let ((buf (get-buffer-create "*package database*")))
     (unwind-protect
         (save-excursion
@@ -525,42 +565,32 @@ used interactively, for example from a mail or news buffer."
 	(setq package-entries-are-signed t))
       (re-search-forward package-get-pgp-signature-end-line nil t)
       (setq package-get-continue-update-base t)
-      (if package-get-require-signed-base-updates
-	  (if package-entries-are-signed
-	      (if (featurep 'mailcrypt-autoloads)
-		  (progn
-		    (setq package-get-continue-update-base nil)
-		    (autoload 'mc-setversion "mc-setversion")
-		    (with-fboundp 'mc-setversion
-		      (cond ((locate-file "gpg" exec-path
-					  '("" ".btm" ".bat" ".cmd" ".exe"
-					    ".com") 'executable)
-			     (mc-setversion "gpg"))
-			    ((locate-file "pgpe" exec-path
-					  '("" ".btm" ".bat" ".cmd" ".exe"
-					    ".com") 'executable)
-			     (mc-setversion "5.0"))
-			    ((locate-file "pgp" exec-path
-					  '("" ".btm" ".bat" ".cmd" ".exe"
-					    ".com") 'executable)
-			     (mc-setversion "2.6"))
-			    (t
-			     (error 'search-failed
-				    "Can't find a suitable PGP executable"))))
-		    (autoload 'mc-verify "mc-toplev")
-		    (declare-fboundp (mc-verify))
-		    (setq package-get-continue-update-base t))
-		(error 'unimplemented "`mailcrypt' package unavailable"))
-	    (if (yes-or-no-p
-		 "Package Index is not PGP signed.  Continue anyway? ")
-		(setq package-get-continue-update-base t)
+      ;; This is a little overkill because the default value of
+      ;; `package-get-require-signed-base-updates' is the return of
+      ;; `package-get-pgp-available-p', but we have to allow for
+      ;; someone explicitly setting
+      ;; `package-get-require-signed-base-updates' to t. --SY
+      (when (and package-get-require-signed-base-updates
+		 (package-get-pgp-available-p))
+	(if package-entries-are-signed
+	    (let (good-sig)
 	      (setq package-get-continue-update-base nil)
-	      (error "Package database not updated"))))
+	      (autoload 'mc-verify "mc-toplev")
+	      (when (declare-fboundp (mc-verify))
+		(setq good-sig t))
+	      (if good-sig
+		  (setq package-get-continue-update-base t)
+		(error 'process-error 
+		       "GnuPG error.  Package database not updated")))
+	  (if (yes-or-no-p
+	       "Package Index is not PGP signed.  Continue anyway? ")
+	      (setq package-get-continue-update-base t)
+	    (setq package-get-continue-update-base nil)
+	    (warn "Package database not updated"))))
       ;; ToDo: We should call package-get-maybe-save-index on the region
-      (if package-get-continue-update-base
-	  (progn
-	    (package-get-update-base-entries content-beg content-end)
-	    (message "Updated package-get database"))))))
+      (when package-get-continue-update-base
+	(package-get-update-base-entries content-beg content-end)
+	(message "Updated package database")))))
 
 (defun package-get-update-base-entries (start end)
   "Update the package-get database with the entries found between
@@ -568,7 +598,8 @@ START and END in the current buffer."
   (save-excursion
     (goto-char start)
     (if (not (re-search-forward "^(package-get-update-base-entry" nil t))
-        (error "Buffer does not contain package-get database entries"))
+        (error 'search-failed
+	       "Buffer does not contain package-get database entries"))
     (beginning-of-line)
     (let ((count 0))
       (while (and (< (point) end)
@@ -577,7 +608,8 @@ START and END in the current buffer."
         (let ((entry (read (current-buffer))))
           (if (or (not (consp entry))
                   (not (eq (car entry) 'package-get-update-base-entry)))
-              (error "Invalid package-get database entry found"))
+              (error 'syntax-error
+		     "Invalid package-get database entry found"))
           (package-get-update-base-entry
            (car (cdr (car (cdr entry)))))
           (setq count (1+ count))))
@@ -708,8 +740,9 @@ Returns nil upon error."
 		   (reqd-version (cadr reqd-package))
 		   (reqd-name (car reqd-package)))
 	      (if (null reqd-name)
-		  (error "Unable to find a provider for %s"
-			 (car this-requires)))
+		  (error 'search-failed
+			 (format "Unable to find a provider for %s"
+				 (car this-requires))))
 	      (if (not (setq fetched-packages
 			     (package-get-all reqd-name reqd-version
 					      fetched-packages
@@ -740,7 +773,8 @@ required by PACKAGES."
                                   (let* ((reqd-package (package-get-package-provider reqd))
                                          (reqd-name    (car reqd-package)))
                                     (if (null reqd-name)
-                                        (error "Unable to find a provider for %s" reqd))
+                                        (error 'search-failed
+					       (format "Unable to find a provider for %s" reqd)))
                                     reqd-name))
                               this-requires)
                              dependencies))
@@ -836,7 +870,8 @@ in the minibuffer."
       (loop until (equal package (caar all-pkgs))
 	do (setq all-pkgs (cdr all-pkgs))
 	do (if (not all-pkgs)
-	       (error (format "%s is not a valid package" package))))
+	       (error 'invalid-argument
+		      (format "%s is not a valid package" package))))
       (setq info (plist-get (cadar all-pkgs) information))
       (if (interactive-p)
 	  (if arg
@@ -885,16 +920,19 @@ successfully installed but errors occurred during initialization, or
 	 filenames full-package-filename)
     (if (and (equal (package-get-info package 'category) "mule")
 	     (not (featurep 'mule)))
-	(error "Mule package %s can't be installed with a non-Mule XEmacs"
-	       package))
+	(error 'invalid-state 
+	       "Mule packages can't be installed with a non-Mule XEmacs"))
     (if (null this-package)
 	(if package-get-remote
-	    (error "Couldn't find package %s with version %s"
-		   package version)
-	  (error "No download site or local package location specified.")))
+	    (error 'search-failed
+		   (format "Couldn't find package %s with version %s"
+			   package version))
+	  (error 'syntax-error
+		 "No download site or local package location specified.")))
     (if (null base-filename)
-	(error "No filename associated with package %s, version %s"
-	       package version))
+	(error 'syntax-error
+	       (format "No filename associated with package %s, version %s"
+		       package version)))
     (setq install-dir (package-admin-get-install-dir package install-dir))
 
     ;; If they asked for the latest using version=nil, don't get an older
@@ -976,9 +1014,10 @@ successfully installed but errors occurred during initialization, or
       (if (or (not full-package-filename)
 	      (not (file-exists-p full-package-filename)))
 	  (if package-get-remote
-	      (error "Unable to find file %s" base-filename)
-	    (error
-	     "No download sites or local package locations specified.")))
+	      (error 'search-failed
+		     (format "Unable to find file %s" base-filename))
+	    (error 'syntax-error
+		   "No download sites or local package locations specified.")))
       ;; Validate the md5 checksum
       ;; Doing it with XEmacs removes the need for an external md5 program
       (message "Validating checksum for `%s'..." package) (sit-for 0)
@@ -989,8 +1028,9 @@ successfully installed but errors occurred during initialization, or
 						 'md5sum)))
 	    (progn
 	      (delete-file full-package-filename)
-	      (error "Package %s does not match md5 checksum %s has been deleted"
-		     base-filename full-package-filename))))
+	      (error 'process-error
+		     (format "Package %s does not match md5 checksum %s has been deleted"
+			     base-filename full-package-filename)))))
 
       (package-admin-delete-binary-package package install-dir)
 

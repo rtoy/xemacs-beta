@@ -1,3 +1,43 @@
+2003-04-14  Steve Youngs  <youngs@xemacs.org>
+
+	* package-admin.el (package-admin-find-top-directory): Use
+	'directory-sep-char'. 
+	(package-admin-get-install-dir): Ditto.
+	This is so PUI won't break on platforms that don't use '/' as the
+	directory separator. 
+	
+	* package-get.el (package-get-pgp-available-p): New.
+	(package-get-require-signed-base-updates): Use it.
+	(package-get-update-base-from-buffer): Move the code that finds
+	the gpg stuff into `package-get-pgp-available-p'.
+	Now if you have Mailcrypt and a PGP binary installed and set up on
+	your system, PUI will automatically default to doing PGP
+	verification, otherwise it'll default to off.
+	(package-get-require-base): Use the DATUM arg to `error'.
+	(package-get-locate-index-file): Ditto.
+	(package-get-update-base): Ditto.
+	(package-get-update-base-entries): Ditto.
+	(package-get-all): Ditto.
+	(package-get-dependencies): Ditto.
+	(package-get-info): Ditto.
+	(package-get): Ditto.
+
+	* package-info.el (batch-update-package-info): Use the DATUM arg
+	to `error'.
+
+	* package-net.el (package-net-batch-generate-bin-ini): Use the
+	DATUM arg to `error'.
+
+	* package-ui.el (pui-toggle-package-key): Use the DATUM arg to
+	`error'. 
+	(pui-toggle-package-delete-key): Ditto.
+	(pui-install-selected-packages): Ditto.
+	(pui-add-required-packages): Ditto.
+	(pui-display-info): Ditto.
+	(list-packages-mode): Ditto.
+
+	* packages.el (package-require): Use the DATUM arg to `error'.
+
 2003-03-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* menubar-items.el (default-menubar):
