@@ -1,3 +1,8 @@
+2004-01-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/specifiers.texi (Specifier Instancing Functions): Fix
+	typos, thanks to Ilpo Nyyssönen.
+
 2004-01-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/specifiers.texi (Specifier Instancing Functions): Add

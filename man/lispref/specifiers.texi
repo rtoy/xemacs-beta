@@ -1116,11 +1116,11 @@ dependent on the particular type of specifier.  Here are some examples:
 For chartable (e.g. display table) specifiers, @var{matchspec} should be a
 character, and the specification (a chartable) must give a value for
 that character in order to be considered.  This allows you to specify,
-@emphe.g.}, a buffer-local display table that only gives values for particular
+@emph{e.g.}, a buffer-local display table that only gives values for particular
 characters.  All other characters are handled as if the buffer-local
 display table is not there. (Chartable specifiers are not yet
 implemented.)
-
+@item
 For font specifiers, @var{matchspec} should be a list (@var{charset}
 . @var{second-stage-p}), and the specification (a font string) must have
 a registry that matches the charset's registry.  (This only makes sense
