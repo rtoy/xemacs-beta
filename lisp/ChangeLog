@@ -1,3 +1,7 @@
+2003-01-13  Ilya Golubev  <golubev@xemacs.org>
+
+	* about.el: Update golubev data.
+
 2003-01-10  Mike Sperber  <mike@xemacs.org>
 
 	* window-xemacs.el (window-reduce-to-one): Rewrite in terms of
