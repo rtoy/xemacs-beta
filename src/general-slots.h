@@ -90,6 +90,7 @@ SYMBOL (Qctext);
 SYMBOL (Qcurrent);
 SYMBOL (Qcursor);
 SYMBOL (Qdata);
+SYMBOL (Qdde);
 SYMBOL (Qdead);
 SYMBOL (Qdebug);
 SYMBOL (Qdefault);

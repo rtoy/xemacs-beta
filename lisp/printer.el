@@ -76,6 +76,9 @@ printers."
 				   (make-device 'msprinter printer-name))))
 
 (defun Printer-clear-device ()
+  ;; relying on GC to delete the device is too error-prone since there
+  ;; only can be one anyway.
+  (and printer-current-device (delete-device printer-current-device))
   (setq printer-current-device nil))
 
 (defcustom printer-page-header '((face bold date) nil (face bold buffer-name))
@@ -256,29 +259,30 @@ display of the print dialog box.
 
 If BUFFER is nil or omitted, the current buffer is used."
   (interactive (list nil (not current-prefix-arg)))
-  (let* ((print-region (and (interactive-p) (region-active-p)))
-	 (start (if print-region (region-beginning) (point-min buffer)))
-	 (end (if print-region (region-end) (point-max buffer))))
-    (if (or (not (valid-specifier-tag-p 'msprinter))
-	    (not display-print-dialog))
-	(generic-print-region start end buffer)
-      (let* ((d (Printer-get-device))
-	     (props (condition-case err
-			(make-dialog-box 'print :device d
+  (condition-case err
+      (let* ((print-region (and (interactive-p) (region-active-p)))
+	     (start (if print-region (region-beginning) (point-min buffer)))
+	     (end (if print-region (region-end) (point-max buffer))))
+	(if (or (not (valid-specifier-tag-p 'msprinter))
+		(not display-print-dialog))
+	    (generic-print-region start end buffer)
+	  (let* ((d (Printer-get-device))
+		 (props (make-dialog-box 'print :device d
 					 :allow-selection print-region
 					 :selected-page-button
-					 (if print-region 'selection 'all))
-		      (error
-		       (Printer-clear-device)
-		       (signal (car err) (cdr err))))))
-	(and props
-	     (let ((really-print-region
-		    (eq (plist-get props 'selected-page-button) 'selection)))
-	       (generic-print-region (if really-print-region start
-				       (point-min buffer))
-				     (if really-print-region end
-				       (point-max buffer))
-				     buffer d props)))))))
+					 (if print-region 'selection 'all))))
+	    (and props
+		 (let ((really-print-region
+			(eq (plist-get props 'selected-page-button) 'selection)))
+		   (generic-print-region (if really-print-region start
+					   (point-min buffer))
+					 (if really-print-region end
+					   (point-max buffer))
+					 buffer d props))))))
+    (error
+     ;; Make sure we catch all errors thrown from the native code.
+     (Printer-clear-device)
+     (signal (car err) (cdr err)))))
 
 (defun generic-print-region (start end &optional buffer print-device props)
   "Print region using a printing method appropriate to the O.S. being run.
@@ -338,7 +342,9 @@ Recognized properties are the same as those in `make-dialog-box':
 					 minibuffer none
 					 modeline-shadow-thickness 0
 					 vertical-scrollbar-visible-p nil
-					 horizontal-scrollbar-visible-p nil))
+					 horizontal-scrollbar-visible-p nil
+					 [default foreground] "black"
+					 [default background] "white"))
 				d))
 		       (let* ((w (frame-root-window f))
 			      (vertdpi
@@ -358,7 +364,7 @@ Recognized properties are the same as those in `make-dialog-box':
 					     ))))
 			      header-window
 			      footer-window)
-
+			   
 			 (when printer-page-header
 			   (let ((window-min-height 2))
 			     (setq header-window w)
@@ -366,7 +372,7 @@ Recognized properties are the same as those in `make-dialog-box':
 			   (setq header-buffer
 				 (generate-new-buffer " *header*"))
 			   (set-window-buffer header-window header-buffer))
-
+			   
 			 (when printer-page-footer
 			   (let ((window-min-height 2))
 			     (setq footer-window
@@ -374,9 +380,9 @@ Recognized properties are the same as those in `make-dialog-box':
 			   (setq footer-buffer
 				 (generate-new-buffer " *footer*"))
 			   (set-window-buffer footer-window footer-buffer))
-
+			   
 			 (setf (Print-context-window context) w)
-
+			   
 			 (let ((last-end 0) ; bufpos at end of previous page
 			       reached-end ; t if we've reached the end of the
 					; text we're printing

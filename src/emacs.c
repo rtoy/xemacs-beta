@@ -1345,6 +1345,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #ifdef HAVE_MS_WINDOWS
       syms_of_console_mswindows ();
       syms_of_device_mswindows ();
+      syms_of_event_mswindows ();
 #ifdef HAVE_DIALOGS
       syms_of_dialog_mswindows ();
 #endif

@@ -2285,6 +2285,8 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
   struct face_cachel *cachel;
   Lisp_Object frame = DOMAIN_FRAME (domain);
 
+  CHECK_STRING (string);
+
   /* Compute height */
   if (height)
     {

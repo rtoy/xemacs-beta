@@ -194,6 +194,11 @@ The following KEYWORD's are defined:
 :require VALUE should be a feature symbol.  Each feature will be
         required after initialization, of the user have saved this
         option.
+:version VALUE should be a string specifying that the variable was
+        first introduced, or its default value was changed, in Emacs
+        version VERSION.
+:set-after VARIABLE specifies that SYMBOL should be set after VARIABLE when
+	both have been customized.
 
 Read the section about customization in the Emacs Lisp manual for more
 information."
@@ -330,17 +335,38 @@ Third argument TYPE is the custom option type."
   "For customization option SYMBOL, handle KEYWORD with VALUE.
 Fourth argument TYPE is the custom option type."
   (cond ((eq keyword :group)
-         (custom-add-to-group value symbol type))
-        ((eq keyword :version)
-         (custom-add-version symbol value))
-        ((eq keyword :link)
-         (custom-add-link symbol value))
-        ((eq keyword :load)
-         (custom-add-load symbol value))
-        ((eq keyword :tag)
-         (put symbol 'custom-tag value))
-        (t
-         (signal 'error (list "Unknown keyword" keyword)))))
+	 (custom-add-to-group value symbol type))
+	((eq keyword :version)
+	 (custom-add-version symbol value))
+	((eq keyword :link)
+	 (custom-add-link symbol value))
+	((eq keyword :load)
+	 (custom-add-load symbol value))
+	((eq keyword :tag)
+	 (put symbol 'custom-tag value))
+ 	((eq keyword :set-after)
+	 (custom-add-dependencies symbol value))
+	(t
+	 (signal 'error (list "Unknown keyword" keyword)))))
+
+(defun custom-add-dependencies (symbol value)
+  "To the custom option SYMBOL, add dependencies specified by VALUE.
+VALUE should be a list of symbols.  For each symbol in that list,
+this specifies that SYMBOL should be set after the specified symbol, if
+both appear in constructs like `custom-set-variables'."
+  (unless (listp value)
+    (error "Invalid custom dependency `%s'" value))
+  (let* ((deps (get symbol 'custom-dependencies))
+	 (new-deps deps))
+    (while value
+      (let ((dep (car value)))
+	(unless (symbolp dep)
+	  (error "Invalid custom dependency `%s'" dep))
+	(unless (memq dep new-deps)
+	  (setq new-deps (cons dep new-deps)))
+	(setq value (cdr value))))
+    (unless (eq deps new-deps)
+      (put symbol 'custom-dependencies new-deps))))
 
 (defun custom-add-option (symbol option)
   "To the variable SYMBOL add OPTION.
@@ -466,6 +492,27 @@ Records the settings as belonging to THEME.
 
 See `custom-set-variables' for a description of the arguments ARGS."
   (custom-check-theme theme)
+  (setq args
+	(sort args
+	      (lambda (a1 a2)
+		(let* ((sym1 (car a1))
+		       (sym2 (car a2))
+		       (1-then-2 (memq sym1 (get sym2 'custom-dependencies)))
+		       (2-then-1 (memq sym2 (get sym1 'custom-dependencies))))
+		  (cond ((and 1-then-2 2-then-1)
+			 (error "Circular custom dependency between `%s' and `%s'"
+				sym1 sym2))
+			(1-then-2 t)
+			(2-then-1 nil)
+			;; Put symbols with :require last.  The macro
+			;; define-minor-mode generates a defcustom
+			;; with a :require and a :set, where the
+			;; setter function calls the mode function.
+			;; Putting symbols with :require last ensures
+			;; that the mode function will see other
+			;; customized values rather than default
+			;; values.
+			(t (nth 3 a2)))))))
   (let ((immediate (get theme 'theme-immediate)))
     (while args * etc/custom/example-themes/example-theme.el:
       (let ((entry (car args)))

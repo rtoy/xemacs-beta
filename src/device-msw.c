@@ -55,6 +55,8 @@ DWORD mswindows_dde_mlid;
 int mswindows_dde_enable;
 HSZ mswindows_dde_service;
 HSZ mswindows_dde_topic_system;
+HSZ mswindows_dde_topic_eval;
+HSZ mswindows_dde_item_result;
 HSZ mswindows_dde_item_open;
 #endif
 
@@ -174,8 +176,8 @@ mswindows_init_dde (void)
   mswindows_dde_mlid = 0;
   mswindows_dde_enable = 0;
   qxeDdeInitialize (&mswindows_dde_mlid, (PFNCALLBACK)mswindows_dde_callback,
-		    APPCMD_FILTERINITS|CBF_FAIL_SELFCONNECTIONS|CBF_FAIL_ADVISES|
-		    CBF_FAIL_POKES|CBF_FAIL_REQUESTS|CBF_SKIP_ALLNOTIFICATIONS,
+		    APPCMD_FILTERINITS|CBF_FAIL_SELFCONNECTIONS|
+		    CBF_FAIL_POKES|CBF_SKIP_ALLNOTIFICATIONS,
 		    0);
   
   mswindows_dde_service =
@@ -184,11 +186,21 @@ mswindows_init_dde (void)
 			      XEUNICODE_P ? CP_WINUNICODE : CP_WINANSI);
   /* The following strings we Unicode-ize ourselves:
      -- SZDDESYS_TOPIC is system-provided
+     -- MSWINDOWS_DDE_TOPIC_EVAL is defined by us
+     -- MSWINDOWS_DDE_ITEM_RESULT is defined by us
      -- MSWINDOWS_DDE_ITEM_OPEN is used in internal-format comparisons
   */
   mswindows_dde_topic_system =
     qxeDdeCreateStringHandle (mswindows_dde_mlid,
 			      XETEXT (SZDDESYS_TOPIC),
+			      XEUNICODE_P ? CP_WINUNICODE : CP_WINANSI);
+  mswindows_dde_topic_eval =
+    qxeDdeCreateStringHandle (mswindows_dde_mlid,
+			      XETEXT (MSWINDOWS_DDE_TOPIC_EVAL),
+			      XEUNICODE_P ? CP_WINUNICODE : CP_WINANSI);
+  mswindows_dde_item_result =
+    qxeDdeCreateStringHandle (mswindows_dde_mlid,
+			      XETEXT (MSWINDOWS_DDE_ITEM_RESULT),
 			      XEUNICODE_P ? CP_WINUNICODE : CP_WINANSI);
   mswindows_dde_item_open =
     qxeDdeCreateStringHandle (mswindows_dde_mlid,
@@ -229,8 +241,10 @@ mswindows_delete_device (struct device *d)
 {
 #ifdef HAVE_DRAGNDROP
   DdeNameService (mswindows_dde_mlid, 0L, 0L, DNS_UNREGISTER);
+  DdeFreeStringHandle (mswindows_dde_mlid, mswindows_dde_item_result);
   DdeFreeStringHandle (mswindows_dde_mlid, mswindows_dde_item_open);
   DdeFreeStringHandle (mswindows_dde_mlid, mswindows_dde_topic_system);
+  DdeFreeStringHandle (mswindows_dde_mlid, mswindows_dde_topic_eval);
   DdeFreeStringHandle (mswindows_dde_mlid, mswindows_dde_service);
   DdeUninitialize (mswindows_dde_mlid);
 

@@ -101,10 +101,17 @@ void mswindows_enqueue_magic_event (HWND hwnd, UINT msg);
 int mswindows_is_dialog_msg (MSG *msg);
 
 /* win32 DDE management library */
-#define MSWINDOWS_DDE_ITEM_OPEN "Open" /* WARNING: uses of this need XETEXT */
+
+/* WARNING: uses of these constants need XETEXT */
+#define MSWINDOWS_DDE_ITEM_OPEN "Open"
+#define MSWINDOWS_DDE_TOPIC_EVAL "Eval"
+#define MSWINDOWS_DDE_ITEM_RESULT "Result"
+
 extern DWORD mswindows_dde_mlid;
 extern HSZ mswindows_dde_service;
 extern HSZ mswindows_dde_topic_system;
+extern HSZ mswindows_dde_topic_eval;
+extern HSZ mswindows_dde_item_result;
 extern HSZ mswindows_dde_item_open;
 HDDEDATA CALLBACK mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 					  HSZ hszTopic, HSZ hszItem,

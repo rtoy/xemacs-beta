@@ -1733,6 +1733,191 @@ mswindows_wm_timer_callback (HWND hwnd, UINT umsg, UINT id_timer, DWORD dwtime)
 #ifdef HAVE_DRAGNDROP
 extern int mswindows_dde_enable;
 
+EXFUN(Fread_from_string, 3);
+
+/* The following variables are used to maintain consistency of result and
+ * error reporting to the client.
+ * The basic protocol is to Execute a lisp form, and then Request one or
+ * more of the following items: Status (1 = OK, 0 = Error), Result, or Error.
+ * When the lisp form is queued, the dde_eval_pending flag is set to 1,
+ * to indicate that the items are not yet available. The dde_eval_pending
+ * flag is set to 0 when the evaluation is complete. Requests for the result
+ * items will block while the dde_eval_pending flag is 1, to avoid clients
+ * getting inconsistent results.
+ */
+static int dde_eval_pending;
+static Lisp_Object dde_eval_result;
+static Lisp_Object dde_eval_error;
+
+static Lisp_Object
+dde_error (Lisp_Object err, Lisp_Object obj)
+{
+  dde_eval_error = err;
+  return Qnil;
+}
+
+/* Read lisp forms from a string. Evaluate the forms as if they were
+ * wrapped in a progn form. Return the result of the form.
+ */
+static Lisp_Object
+dde_eval_string (Lisp_Object str)
+{
+  struct gcpro gcpro1, gcpro2;
+  Lisp_Object args[3];
+  Lisp_Object obj;
+
+  /* Heavy handed GCPROing, on the principle of it's better to be safe than
+   * sorry...
+   */
+  args[0] = Qnil;
+  args[1] = Qnil;
+  args[2] = Qnil;
+  GCPRO2 (args[0], str);
+  gcpro1.nvars = 3;
+
+  /* Wrap the user supplied string in string "(progn ...)".
+   * We can now just read-from-string a single form. If we
+   * get an error, or finish before the end of the string,
+   * we know the original string had syntax errors.
+   */
+  args[0] = build_string ("(progn ");
+  args[1] = str;
+  args[2] = build_string (")");
+  str = Fconcat (3, args);
+
+  obj = Fread_from_string (str, Qnil, Qnil);
+  UNGCPRO;
+
+  /* The following doesn't check that the length fits in an EMACS_INT.
+   * This won't be a problem in reality...?
+   *
+   * If the read didn't get to the end of the string, we have a syntax
+   * error in the string supplied by the user.
+   */
+  if (XINT (XCDR (obj)) != XSTRING_LENGTH (str))
+    return Qnil;
+
+  GCPRO1 (obj);
+  obj = Feval (XCAR (obj));
+
+  RETURN_UNGCPRO(obj);
+}
+
+/* Evaluate the supplied string as a sequence of Lisp forms, wrapped in
+ * a progn. Catch any evaluation errors. Set the evaluation status and
+ * result variables.
+ */
+static void
+dde_eval (Lisp_Object str)
+{
+  dde_eval_error = Qnil;
+  dde_eval_result = condition_case_1 (Qt, dde_eval_string, str,
+				      dde_error, Qnil);
+  dde_eval_pending = 0;
+
+  /* Re-enable callbacks in case the client is waiting on a request */
+  DdeEnableCallback (mswindows_dde_mlid, NULL, EC_ENABLEALL);
+
+  /* Post advise notifications on the result item */
+  DdePostAdvise (mswindows_dde_mlid, mswindows_dde_topic_eval,
+		 mswindows_dde_item_result);
+}
+
+/* A list of DDE advise tokens. Each token is an uninterned symbol,
+ * whose value is the DDE string handle for its name (stored as a float,
+ * as a Lisp int cannot hold a full C int).
+ * The token's 'dde-data property is used to store data for a dde-advise.
+ */
+Lisp_Object Vdde_advise_items;
+
+/* The symbol 'HSZ */
+Lisp_Object QHSZ;
+
+DEFUN("dde-alloc-advise-item", Fdde_alloc_advise_item, 0, 1, 0, /*
+Allocate an advise item, and return its token.
+*/
+      (name))
+{
+  Lisp_Object token;
+  Extbyte *str;
+  HSZ hsz;
+  struct gcpro gcpro1, gcpro2;
+
+  if (!NILP (name))
+    CHECK_STRING (name);
+  else
+    {
+      static int num = 0;
+      char buf[20];
+      sprintf (buf, "Tok%d", num);
+      ++num;
+      name = build_string (buf);
+    }
+
+  token = Qnil;
+  GCPRO2 (name, token);
+  token = Fmake_symbol (name);
+  TO_EXTERNAL_FORMAT (LISP_STRING, name, C_STRING_ALLOCA, str,
+		      Qmswindows_tstr);
+  hsz = qxeDdeCreateStringHandle (mswindows_dde_mlid, str,
+				  XEUNICODE_P ? CP_WINUNICODE : CP_WINANSI);
+
+  Fput(token, QHSZ, make_float ((int)hsz));
+  Vdde_advise_items = Fcons (token, Vdde_advise_items);
+
+  RETURN_UNGCPRO(token);
+}
+
+DEFUN("dde-free-advise-item", Fdde_free_advise_item, 1, 1, 0, /*
+Free the resources associated with advise item ITEM.
+
+Frees all resources allocated to allow clients to set up advise loops
+on ITEM. It is assumed that no active advise loops remain. However, no
+problems should arise if they do - it's just that we won't ever send any
+notifications again.
+
+If the user does not free an advise item, resources will be leaked.
+*/
+      (item))
+{
+  HSZ hsz;
+  Lisp_Object val;
+
+  CHECK_SYMBOL (item);
+  val = Fget (item, QHSZ, Qnil);
+  if (!FLOATP (val))
+    return Qnil;
+  hsz = (HSZ)(int)XFLOAT_DATA (val);
+  DdeFreeStringHandle (mswindows_dde_mlid, hsz);
+  Vdde_advise_items = delq_no_quit (item, Vdde_advise_items);
+  return Qnil;
+}
+
+DEFUN("dde-advise", Fdde_advise, 2, 2, 0, /*
+Post a DDE advise for ITEM with associated data DATA.
+
+Records the value DATA for sending back to clients waiting for
+notifications on DDE item ITEM in the system topic, and posts
+the advise transaction.
+
+ITEM must be an advise token allocated using dde-alloc-advise-item.
+*/
+      (item, data))
+{
+  HSZ hsz;
+  Lisp_Object val;
+
+  CHECK_SYMBOL (item);
+  val = Fget (item, QHSZ, Qnil);
+  if (!FLOATP (val))
+    return Qnil;
+  hsz = (HSZ)(int)XFLOAT_DATA (val);
+
+  Fset (item, data);
+  DdePostAdvise (mswindows_dde_mlid, mswindows_dde_topic_eval, hsz);
+  return Qnil;
+}
+
 HDDEDATA CALLBACK
 mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 			HSZ hszTopic, HSZ hszItem, HDDEDATA hdata,
@@ -1741,31 +1926,172 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
   switch (uType)
     {
     case XTYP_CONNECT:
-      if (!DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system))
+      if (!DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system)
+          || !DdeCmpStringHandles (hszTopic, mswindows_dde_topic_eval))
 	return (HDDEDATA) TRUE;
       return (HDDEDATA) FALSE;
 
     case XTYP_WILDCONNECT:
       {
-	/* We only support one {service,topic} pair */
-	HSZPAIR pairs[2] =
+	/* We support two {service,topic} pairs */
+	HSZPAIR pairs[3] =
 	{
-	  { mswindows_dde_service, mswindows_dde_topic_system }, { 0, 0 } };
+	  { mswindows_dde_service, mswindows_dde_topic_system },
+	  { mswindows_dde_service, mswindows_dde_topic_eval },
+	  { 0, 0 }
+	};
 
-	if (!(hszItem 
-	      || DdeCmpStringHandles (hszItem, mswindows_dde_service)) &&
-	    !(hszTopic
-	      || DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system)))
+	if ((!hszItem
+	     || !DdeCmpStringHandles (hszItem, mswindows_dde_service)) &&
+	    (!hszTopic
+	     || !DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system)
+	     || !DdeCmpStringHandles (hszTopic, mswindows_dde_topic_eval)))
 	  return (DdeCreateDataHandle (mswindows_dde_mlid, (LPBYTE) pairs,
 				       sizeof (pairs), 0L, 0, uFmt, 0));
       }
       return (HDDEDATA) NULL;
 
+    case XTYP_ADVSTART:
+      if (!mswindows_dde_enable)
+	return (HDDEDATA) FALSE;
+
+      /* We only support advise loops on the eval topic for text data */
+      if (!DdeCmpStringHandles (hszTopic, mswindows_dde_topic_eval)
+	  && (uFmt == CF_TEXT || uFmt == CF_UNICODETEXT))
+	{
+	  /* Only allocated items or Result, are allowed */
+	  if (!DdeCmpStringHandles (hszItem, mswindows_dde_item_result))
+	    return (HDDEDATA) TRUE;
+
+	  {
+	    EXTERNAL_LIST_LOOP_2 (elt, Vdde_advise_items)
+	      {
+		Lisp_Object val;
+		HSZ hsz;
+		if (!SYMBOLP (elt))
+		  continue;
+		val = Fget (elt, QHSZ, Qnil);
+		if (!FLOATP (val))
+		  continue;
+		hsz = (HSZ) (int) XFLOAT_DATA (val);
+		if (!DdeCmpStringHandles (hszItem, hsz))
+		  return (HDDEDATA) TRUE;
+	      }
+	  }
+	}
+      return (HDDEDATA) FALSE;
+
+      /* Both advise requests and normal requests work the same */
+    case XTYP_ADVREQ:
+    case XTYP_REQUEST:
+      if (!mswindows_dde_enable)
+	return (HDDEDATA) NULL;
+
+      if (DdeCmpStringHandles (hszTopic, mswindows_dde_topic_eval) != 0)
+	return (HDDEDATA) NULL;
+
+      /* If this is a normal request and we're in the middle of
+       * an Execute, block until the Execute completes.
+       */
+      if (dde_eval_pending && uType == XTYP_REQUEST)
+	return (HDDEDATA) CBR_BLOCK;
+
+      /* We can only support requests for ANSI or Unicode text */
+      if (uFmt != CF_TEXT && uFmt != CF_UNICODETEXT)
+	return (HDDEDATA) NULL;
+
+      {
+	Lisp_Object args[2];
+	struct gcpro gcpro1;
+	Lisp_Object res;
+	Extbyte *result;
+	DWORD bytes;
+
+	args[0] = Qnil;
+	args[1] = Qnil;
+	GCPRO1 (args[0]);
+	gcpro1.nvars = 2;
+
+
+	if (!DdeCmpStringHandles (hszItem, mswindows_dde_item_result))
+	  {
+	    if (NILP (dde_eval_error))
+	      {
+		args[0] = build_string ("OK: %s");
+		args[1] = dde_eval_result;
+	      }
+	    else
+	      {
+		args[0] = build_string ("ERR: %s");
+		args[1] = dde_eval_error;
+	      }
+	  }
+	else
+	  {
+	    EXTERNAL_LIST_LOOP_2 (elt, Vdde_advise_items)
+	      {
+		Lisp_Object val;
+		HSZ hsz;
+		if (!SYMBOLP (elt))
+		  continue;
+		val = Fget (elt, QHSZ, Qnil);
+		if (!FLOATP (val))
+		  continue;
+		hsz = (HSZ) (int) XFLOAT_DATA (val);
+		if (!DdeCmpStringHandles (hszItem, hsz))
+		  args[1] = Fsymbol_value (elt);
+	      }
+	    args[0] = build_string ("%s");
+	  }
+
+	res = Fformat (2, args);
+	UNGCPRO;
+
+	bytes = (uFmt == CF_TEXT ? 1 : 2) * (XSTRING_LENGTH (res) + 1);
+	TO_EXTERNAL_FORMAT (LISP_STRING, res,
+			    C_STRING_ALLOCA, result,
+			    uFmt == CF_TEXT ? Qmswindows_multibyte
+			    : Qmswindows_unicode);
+
+	/* If we cannot create the data handle, this passes the null
+	 * return back to the client, which signals an error as we wish.
+	 */
+	return DdeCreateDataHandle (mswindows_dde_mlid, (LPBYTE)result,
+				    bytes, 0L, hszItem, uFmt, 0);
+      }
+
     case XTYP_EXECUTE:
       if (!mswindows_dde_enable)
 	return (HDDEDATA) DDE_FBUSY;
 
-      if (!DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system))
+      if (!DdeCmpStringHandles (hszTopic, mswindows_dde_topic_eval))
+	{
+	  DWORD len;
+	  LPBYTE extcmd;
+	  Lisp_Object tmp;
+
+	  /* Grab a pointer to the raw data supplied */
+	  extcmd = DdeAccessData (hdata, &len);
+
+	  TO_INTERNAL_FORMAT (DATA, (extcmd, len),
+			      LISP_STRING, tmp,
+			      Qmswindows_tstr);
+
+	  /* Release and free the data handle */
+	  DdeUnaccessData (hdata);
+	  DdeFreeDataHandle (hdata);
+
+	  /* Set a flag to say that the evaluation isn't yet complete,
+	   * enqueue the evaluation, send a dummy event to trigger the
+	   * event loop (I've no idea why this is needed, but it works...)
+	   * and return success to the client.
+	   */
+	  dde_eval_pending = 1;
+	  enqueue_magic_eval_event (dde_eval, tmp);
+	  mswindows_enqueue_magic_event (NULL, XM_BUMPQUEUE);
+	  return (HDDEDATA) DDE_FACK;
+	}
+      else if (!DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system))
 	{
 	  DWORD len = DdeGetData (hdata, NULL, 0, 0);
 	  LPBYTE extcmd = (LPBYTE) ALLOCA (len + 1);
@@ -1786,7 +2112,6 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 
 	  /* Check syntax & that it's an [Open("foo")] command, which we
 	   * treat like a file drop */
-	  /* #### Ought to be generalised and accept some other commands */
 	  if (*cmd == '[')
 	    cmd++;
 	  if (qxestrncasecmp_c (cmd, MSWINDOWS_DDE_ITEM_OPEN,
@@ -2966,6 +3291,70 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
       mswindows_handle_paint (XFRAME (mswindows_find_frame (hwnd)));
       break;
 
+    case WM_ACTIVATE:
+      {
+        /*
+         * If we receive a WM_ACTIVATE message that indicates that our frame
+         * is being activated, make sure that the frame is marked visible
+         * if the window itself is visible. This seems to fix the problem
+         * where XEmacs appears to lock-up after switching desktops with
+         * some virtual window managers.
+         */
+        int state = (int)(short) LOWORD(wParam);
+#ifdef DEBUG_XEMACS
+        if (debug_mswindows_events)
+          stderr_out("state = %d\n", state);
+#endif /* DEBUG_XEMACS */
+        if (state == WA_ACTIVE || state == WA_CLICKACTIVE)
+          {
+#ifdef DEBUG_XEMACS
+            if (debug_mswindows_events)
+              stderr_out("  activating\n");
+#endif /* DEBUG_XEMACS */
+            
+            fobj = mswindows_find_frame (hwnd);
+            frame = XFRAME (fobj);
+            if (IsWindowVisible (hwnd))
+              {
+#ifdef DEBUG_XEMACS
+                if (debug_mswindows_events)
+                  stderr_out("  window is visible\n");
+#endif /* DEBUG_XEMACS */
+                if (!FRAME_VISIBLE_P (frame))
+                  {
+#ifdef DEBUG_XEMACS
+                    if (debug_mswindows_events)
+                      stderr_out("  frame is not visible\n");
+#endif /* DEBUG_XEMACS */
+                    /*
+                     * It seems that we have to enqueue the XM_MAPFRAME event
+                     * prior to setting the frame visible so that
+                     * suspend-or-iconify-emacs works properly.
+                     */
+                    mswindows_enqueue_magic_event (hwnd, XM_MAPFRAME);
+                    FRAME_VISIBLE_P (frame) = 1;
+                    FRAME_ICONIFIED_P (frame) = 0;
+                  }
+#ifdef DEBUG_XEMACS
+                else
+                  {
+                    if (debug_mswindows_events)
+                      stderr_out("  frame is visible\n");
+                  }
+#endif /* DEBUG_XEMACS */
+              }
+#ifdef DEBUG_XEMACS
+            else
+              {     
+                if (debug_mswindows_events)
+                  stderr_out("  window is not visible\n");
+              }
+#endif /* DEBUG_XEMACS */
+          }
+	return qxeDefWindowProc (hwnd, message_, wParam, lParam);
+      }
+      break;
+      
     case WM_WINDOWPOSCHANGED:
       /* This is sent before WM_SIZE; in fact, the processing of this
 	 by DefWindowProc() sends WM_SIZE.  But WM_SIZE is not sent when
@@ -3075,13 +3464,14 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		}
 	      else
 		{
-		  if (!msframe->sizing && !FRAME_VISIBLE_P (frame)) {
-		    mswindows_enqueue_magic_event (hwnd, XM_MAPFRAME);
-		    /* APA: Now that the magic XM_MAPFRAME event has
-		     * been sent we can mark the frame as visible (just
-		     * like 21.1 did). */
-		    FRAME_VISIBLE_P (frame) = 1;
-		  }
+		  if (!msframe->sizing && !FRAME_VISIBLE_P (frame))
+                    {
+                      mswindows_enqueue_magic_event (hwnd, XM_MAPFRAME);
+                      /* APA: Now that the magic XM_MAPFRAME event has
+                       * been sent we can mark the frame as visible (just
+                       * like 21.1 did). */
+                      FRAME_VISIBLE_P (frame) = 1;
+                    }
 
 		  if (!msframe->sizing || mswindows_dynamic_frame_resize)
 		    redisplay ();
@@ -4725,6 +5115,25 @@ debug_output_mswin_message (HWND hwnd, UINT message_, WPARAM wParam,
       stderr_out (" wparam=%d lparam=%d hwnd=%x frame: ",
 		  wParam, (int) lParam, (unsigned int) hwnd);
       debug_print (frame);
+      if (message_ == WM_WINDOWPOSCHANGED ||
+          message_ == WM_WINDOWPOSCHANGING)
+        {
+          WINDOWPOS *wp = (WINDOWPOS *) lParam;
+          stderr_out("  WINDOWPOS: x=%d, y=%d, h=%d, w=%d\n",
+                     wp->x, wp->y, wp->cx, wp->cy);
+        }
+      else if (message_ == WM_MOVE)
+        {
+          int x = (int)(short) LOWORD(lParam);   /* horizontal position */
+          int y = (int)(short) HIWORD(lParam);   /* vertical position */
+          stderr_out("  MOVE: x=%d, y=%d\n", x, y);
+        }
+      else if (message_ == WM_SIZE)
+        {
+          int w = (int)(short) LOWORD(lParam);   /* width */
+          int h = (int)(short) HIWORD(lParam);   /* height */
+          stderr_out("  SIZE: w=%d, h=%d\n", w, h);
+        }
     }
   else
     stderr_out ("\n");
@@ -4762,6 +5171,8 @@ reinit_vars_of_event_mswindows (void)
   mswindows_event_stream->delete_io_streams_cb = emacs_mswindows_delete_io_streams;
   mswindows_event_stream->current_event_timestamp_cb =
     emacs_mswindows_current_event_timestamp;
+
+  dde_eval_pending = 0;
 }
 
 void
@@ -4780,6 +5191,28 @@ vars_of_event_mswindows (void)
   dump_add_root_object (&mswindows_s_dispatch_event_queue_tail);
 
   mswindows_error_caught_in_modal_loop = 0;
+
+#ifdef HAVE_DRAGNDROP
+  Fprovide (Qdde);
+
+  DEFVAR_LISP ("dde-advise-items", &Vdde_advise_items /*
+A list of allocated DDE advise items.
+Each item is an uninterned symbol, created using dde-alloc-advise-item.
+
+The symbol's value is the data which is returned to the DDE client when
+a request for the item is made (or a dde-advise call is made).
+
+The symbol also has a 'HSZ property, which holds the DDE string handle
+for the item, as a float. This is for internal use only, and should not
+be modified.
+*/ );
+  Vdde_advise_items = Qnil;
+  
+  dde_eval_result = Qnil;
+  staticpro (&dde_eval_result);
+  dde_eval_error = Qnil;
+  staticpro (&dde_eval_error);
+#endif
 
 #ifdef DEBUG_XEMACS
   DEFVAR_INT ("debug-mswindows-events", &debug_mswindows_events /*
@@ -4853,6 +5286,12 @@ If negative or zero, currently set system default is used instead.
 void
 syms_of_event_mswindows (void)
 {
+#ifdef HAVE_DRAGNDROP
+  DEFSYMBOL(QHSZ);
+  DEFSUBR(Fdde_alloc_advise_item);
+  DEFSUBR(Fdde_free_advise_item);
+  DEFSUBR(Fdde_advise);
+#endif
 }
 
 void

@@ -55,7 +55,7 @@ DECLARE_CONSOLE_TYPE (msprinter);
  * Printer settings, aka devmode
  */
 
-typedef struct Lisp_Devmode
+struct Lisp_Devmode
 {
   struct lcrecord_header header;
 
@@ -70,7 +70,7 @@ typedef struct Lisp_Devmode
      if not selected */
   Lisp_Object device;
 
-} Lisp_Devmode;
+};
 
 #define DEVMODE_SIZE(dm) ((dm)->dmSize + (dm)->dmDriverExtra)
 #define XDEVMODE_SIZE(x) ((x)->devmode ? DEVMODE_SIZE((x)->devmode) : 0)

@@ -1,3 +1,45 @@
+2002-06-16  Andy Piper  <andy@xemacs.org>
+
+	* menubar-items.el (default-menubar): enable windows printing on
+	cygwin as well as native.
+
+2002-06-12  Andy Piper  <andy@xemacs.org>
+
+	* printer.el (generic-print-buffer): catch all errors so that the
+	print device can be cleared in all scenarios.
+	(Printer-clear-device): make sure clearing the printer allows it
+	to be used again immediately.
+	(generic-print-region): make sure the default printer face is
+	black-on-white.
+
+2002-04-23  Jerry James  <james@xemacs.org>
+
+	* window-xemacs.el (display-buffer-function): Change doc to
+	reflect new arg.
+	* window-xemacs.el (pre-display-buffer-function): Ditto.
+	* window-xemacs.el (display-buffer): New arg, shrink-to-fit.  If
+	non-nil, make the new window just big enough for its contents.
+	* frame.el (get-frame-for-buffer): Accept new arg, due to above.
+	* frame.el (show-temp-buffer-in-current-frame): Remove broken
+	temp-buffer-shrink-to-fit code.  Tell display-buffer instead.
+
+2002-06-06  Andy Piper  <andy@xemacs.org>
+
+	* gutter-items.el (buffers-tab-filter-functions): fix typo.
+
+2002-06-06  Andy Piper  <andy@xemacs.org>
+
+	* custom.el (custom-theme-set-variables): sync :set-after from FSF.
+	(defcustom): ditto.
+	(custom-handle-keyword): ditto.
+
+2002-06-04  John H Palmieri  <palmieri@math.washington.edu>
+
+	* gutter-items.el (buffers-tab-selection-function): fix
+	documentation, make obsolete.
+	* gutter-items.el (buffers-tab-filter-functions): change default
+	value (but not default behavior), reword documentation.
+
 2002-06-27  Olivier Galibert  <galibert@pobox.com>
 
 	* behavior.el (enabled-behavior-list): Sort the lists for the

@@ -1,3 +1,45 @@
+2002-07-02  Paul Moore  <gustav@morpheus.demon.co.uk>
+
+	* console-msw.h:
+	* device-msw.c:
+	* device-msw.c (mswindows_init_dde):
+	* device-msw.c (mswindows_delete_device):
+	  Initialise extra DDE strings for remote execution, and change
+	  DDE initialisation to send ADVISE and REQUEST notifications.
+	
+	* emacs.c (main_1):
+	  Add symbols of event_mswindows.
+	
+	* event-msw.c:
+	* event-msw.c (mswindows_dde_callback):
+	* event-msw.c (reinit_vars_of_event_mswindows):
+	* event-msw.c (vars_of_event_mswindows):
+	* event-msw.c (syms_of_event_mswindows):
+	  Add DDE support for remote execution.
+
+2002-06-12  Andy Piper  <andy@xemacs.org>
+
+	* glyphs.c (query_string_geometry): check the string.
+
+	* glyphs-widget.c (widget_logical_unit_height): cope with nil
+	widget names.
+
+2002-06-12  Andy Piper  <andy@xemacs.org>
+
+	* frame-msw.c (msprinter_init_frame_3): calculate the frame size
+	for printing on accurately.
+
+2002-06-09  Rick Rankin <rick_rankin@yahoo.com>
+
+	* event-msw.c (mswindows_wnd_proc): Add a handler for the
+	WM_ACTIVATE message. Make sure that the frame is visible if the
+	window is visible. This seemss to fix the problem where XEmacs
+	appears to freeze after switching desktops with certain virtual
+	window managers.
+	(debug_output_mswin_message): Added code to output message
+	parameters for WM_WINDOWPOSCHANGED, 
+	WM_WINDOWPOSCHANGING, WM_MOVE, and WM_SIZE messages.
+
 2002-07-05  Jonathan Harris  <jonathan@xemacs.org>
 
 	* emacs.c (main_1): Conditionalise calls to
