@@ -1,3 +1,7 @@
+2003-03-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	*  files.el (save-abbrevs): Fixup whitespace.
+
 2003-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* subr.el (custom-declare-variable-early): Reference

@@ -344,10 +344,10 @@ editing a remote file."
 (defcustom save-abbrevs nil
    "*Non-nil means save word abbrevs too when files are saved.
 If `silently', don't ask the user before saving.
- Loading an abbrev file sets this to t."
+Loading an abbrev file sets this to t."
   :type '(choice (const t) (const nil) (const silently))
-   :group 'abbrev)
- 
+  :group 'abbrev)
+
 (defcustom find-file-run-dired t
    "*Non-nil means allow `find-file' to visit directories.
 To visit the directory, `find-file' runs `find-directory-functions'."
