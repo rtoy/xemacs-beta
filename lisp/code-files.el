@@ -198,12 +198,11 @@ object (the entry specified a coding system)."
 	    ((find-coding-system codesys))
 	    ))))
 
-;; This is completely broken, not only in implementation (does not
+;; This was completely broken, not only in implementation (does not
 ;; understand MIME), but in concept -- such high-level decoding should
-;; be done by mail readers, not by IO code!
+;; be done by mail readers, not by IO code!  Removed 2000-04-18.
 
-;(defun convert-mbox-coding-system (filename visit start end)
-;...
+;(defun convert-mbox-coding-system (filename visit start end) ...)
 
 (defun load (file &optional noerror nomessage nosuffix)
   "Execute a file of Lisp code named FILE.
@@ -413,12 +412,11 @@ and `insert-file-contents-post-hook'."
 (defvar write-region-pre-hook nil
   "A special hook to decide the coding system used for writing out a file.
 
-Before writing a file, `write-region' calls the functions on this hook
-with arguments START, END, FILENAME, APPEND, VISIT, and CODING-SYSTEM,
-the same as the corresponding arguments in the call to
-`write-region'.
+Before writing a file, `write-region' calls the functions on this hook with
+arguments START, END, FILENAME, APPEND, VISIT, LOCKNAME, and CODING-SYSTEM,
+the same as the corresponding arguments in the call to `write-region'.
 
-The return value of the functions should be either
+The return value of each function should be one of
 
 -- nil
 -- A coding system or a symbol denoting it, indicating the coding system
@@ -426,7 +424,7 @@ The return value of the functions should be either
 -- A list of two elements (absolute pathname and length of data written),
    which is used as the return value to `write-region'.  In this
    case, `write-region' assumes that the function has written
-   the file for itself and suppresses further writing.
+   the file, and returns.
 
 If any function returns non-nil, the remaining functions are not called.")
 
@@ -434,13 +432,16 @@ If any function returns non-nil, the remaining functions are not called.")
   "A hook called by `write-region' after a file has been written out.
 
 The functions on this hook are called with arguments START, END,
-FILENAME, APPEND, VISIT, and CODING-SYSTEM, the same as the
+FILENAME, APPEND, VISIT, LOCKNAME, and CODING-SYSTEM, the same as the
 corresponding arguments in the call to `write-region'.")
 
 (defun write-region (start end filename &optional append visit lockname coding-system)
   "Write current region into specified file.
 By default the file's existing contents are replaced by the specified region.
-When called from a program, takes three arguments:
+Call interactively, prompts for the filename.  With a prefix arg, also prompts
+for a coding system.
+
+When called from a program, takes three required arguments:
 START, END and FILENAME.  START and END are buffer positions.
 Optional fourth argument APPEND if non-nil means
   append to existing file contents (if any).
@@ -459,19 +460,19 @@ to the file, instead of any buffer contents, and END is ignored.
 Optional seventh argument CODING-SYSTEM specifies the coding system
   used to encode the text when it is written out, and defaults to
   the value of `buffer-file-coding-system' in the current buffer.
-  Interactively, with a prefix arg, you will be prompted for the
-  coding system.
 See also `write-region-pre-hook' and `write-region-post-hook'."
   (interactive "r\nFWrite region to file: \ni\ni\ni\nZCoding-system: ")
   (setq coding-system
 	(or coding-system-for-write
 	    (run-hook-with-args-until-success
-	     'write-region-pre-hook start end filename append visit lockname)
+	     'write-region-pre-hook
+	     start end filename append visit lockname coding-system)
 	    coding-system
 	    buffer-file-coding-system
 	    (find-file-coding-system-for-write-from-filename filename)
 	    ))
   (if (consp coding-system)
+      ;; One of the `write-region-pre-hook' functions wrote the file
       coding-system
     (let ((func
 	   (coding-system-property coding-system 'pre-write-conversion)))
