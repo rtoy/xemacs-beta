@@ -454,9 +454,9 @@ and `insert-file-contents-post-hook'."
 	  ;; set already.
 	  (set-buffer-file-coding-system
 	   (subsidiary-coding-system buffer-file-coding-system
-				     (coding-system-eol-type coding-system)))
+				     (coding-system-eol-type coding-system)) t)
 	;; otherwise actually set buffer-file-coding-system.
-	(set-buffer-file-coding-system coding-system)))
+	(set-buffer-file-coding-system coding-system t)))
     ;; ... and `buffer-file-coding-system-when-loaded'.  the machinations
     ;; of set-buffer-file-coding-system cause the actual coding system
     ;; object to be stored, so do that here, too.

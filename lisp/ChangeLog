@@ -3,6 +3,9 @@
 	* code-init.el (eol-detection-enabled-p): eval the initialization
 	value.
 
+	* code-files.el (insert-file-contents): Make sure that
+	setbuffer-file-coding-system sets the eol style.
+
 2003-09-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* win32-native.el (grep-null-device): Defined in
