@@ -4775,6 +4775,7 @@ garbage_collect_1 (void)
 	mark_object (catch->tag);
 	mark_object (catch->val);
 	mark_object (catch->actual_tag);
+	mark_object (catch->backtrace);
       }
   }
 

@@ -4158,6 +4158,7 @@ Lisp_Object call_with_suspended_errors (lisp_fn_t, Lisp_Object,
 int proper_redisplay_wrapping_in_place (void);
 Lisp_Object internal_catch (Lisp_Object, Lisp_Object (*) (Lisp_Object),
 			    Lisp_Object, int * volatile,
+			    Lisp_Object * volatile,
 			    Lisp_Object * volatile);
 Lisp_Object condition_case_1 (Lisp_Object,
 			      Lisp_Object (*) (Lisp_Object),

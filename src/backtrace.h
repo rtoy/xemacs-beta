@@ -141,6 +141,8 @@ struct catchtag
     /* Stores the actual tag used in `throw'; the same as TAG, unless
        TAG is Vcatch_everything_tag. */
     Lisp_Object actual_tag;
+    /* A backtrace prior to the throw, used with Vcatch_everything_tag. */
+    Lisp_Object backtrace;
     Lisp_Object val;
     struct catchtag *next;
     struct gcpro *gcpro;

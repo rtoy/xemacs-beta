@@ -1377,7 +1377,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
     case Bcatch:
       {
 	Lisp_Object arg = POP;
-	TOP = internal_catch (TOP, Feval, arg, 0, 0);
+	TOP = internal_catch (TOP, Feval, arg, 0, 0, 0);
 	break;
       }
 

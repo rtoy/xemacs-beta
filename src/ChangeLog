@@ -1,5 +1,29 @@
 2005-01-29  Ben Wing  <ben@xemacs.org>
 
+	* alloc.c (garbage_collect_1):
+	* backtrace.h:
+	* bytecode.c (execute_rare_opcode):
+	* cmdloop.c:
+	* cmdloop.c (initial_command_loop):
+	* cmdloop.c (Frecursive_edit):
+	* cmdloop.c (call_command_loop):
+	* eval.c:
+	* eval.c (call_debugger):
+	* eval.c (Fcatch):
+	* eval.c (internal_catch):
+	* eval.c (throw_or_bomb_out):
+	* eval.c (condition_case_1):
+	* eval.c (maybe_get_trapping_problems_backtrace):
+	* eval.c (flagged_a_squirmer):
+	* eval.c (issue_call_trapping_problems_warning):
+	* eval.c (call_trapping_problems):
+	* lisp.h:
+	* macros.c (Fexecute_kbd_macro):
+	Also include a backtrace when we catch an attempt to throw outside
+	of a function where call_trapping_problems() has been used.
+
+2005-01-29  Ben Wing  <ben@xemacs.org>
+
 	* file-coding.c (snarf_coding_system):
 	Use UExtbyte for semantic correctness.
 	* file-coding.c (look_for_coding_system_magic_cookie):

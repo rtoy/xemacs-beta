@@ -278,7 +278,7 @@ COUNT is a repeat count, or nil for once, or 0 for infinite loop.
       executing_macro_index = 0;
       con->prefix_arg = Qnil;
       internal_catch (Qexecute_kbd_macro, call_command_loop,
-		      Qnil, 0, 0);
+		      Qnil, 0, 0, 0);
     }
   while (--repeat != 0
 	 && (STRINGP (Vexecuting_macro) ||

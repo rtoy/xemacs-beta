@@ -404,6 +404,7 @@ static int throw_level;
 #endif
 
 static int warning_will_be_discarded (Lisp_Object level);
+static Lisp_Object maybe_get_trapping_problems_backtrace (void);
 
 
 /************************************************************************/
@@ -526,7 +527,7 @@ call_debugger (Lisp_Object arg)
     max_specpdl_size = specpdl_size + 40;
 
   speccount = internal_bind_int (&entering_debugger, 1);
-  val = internal_catch (Qdebugger, call_debugger_259, arg, &threw, 0);
+  val = internal_catch (Qdebugger, call_debugger_259, arg, &threw, 0, 0);
 
   return unbind_to_1 (speccount, ((threw)
 				? Qunbound /* Not returning a value */
@@ -1480,7 +1481,7 @@ If a throw happens, it specifies the value to return from `catch'.
   /* This function can GC */
   Lisp_Object tag  = Feval (XCAR (args));
   Lisp_Object body = XCDR (args);
-  return internal_catch (tag, Fprogn, body, 0, 0);
+  return internal_catch (tag, Fprogn, body, 0, 0, 0);
 }
 
 /* Set up a catch, then call C function FUNC on argument ARG.
@@ -1492,7 +1493,8 @@ internal_catch (Lisp_Object tag,
                 Lisp_Object (*func) (Lisp_Object arg),
                 Lisp_Object arg,
                 int * volatile threw,
-		Lisp_Object * volatile thrown_tag)
+		Lisp_Object * volatile thrown_tag,
+		Lisp_Object * volatile backtrace_before_throw)
 {
   /* This structure is made part of the chain `catchlist'.  */
   struct catchtag c;
@@ -1501,6 +1503,7 @@ internal_catch (Lisp_Object tag,
   c.next = catchlist;
   c.tag = tag;
   c.actual_tag = Qnil;
+  c.backtrace = Qnil;
   c.val = Qnil;
   c.backlist = backtrace_list;
 #if 0 /* FSFmacs */
@@ -1521,6 +1524,7 @@ internal_catch (Lisp_Object tag,
       /* Throw works by a longjmp that comes right here.  */
       if (threw) *threw = 1;
       if (thrown_tag) *thrown_tag = c.actual_tag;
+      if (backtrace_before_throw) *backtrace_before_throw = c.backtrace;
       return c.val;
     }
   c.val = (*func) (arg);
@@ -1677,6 +1681,8 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
 #endif
       for (c = catchlist; c; c = c->next)
 	{
+	  if (EQ (c->tag, Vcatch_everything_tag))
+	    c->backtrace = maybe_get_trapping_problems_backtrace ();
 	  if (EQ (c->tag, tag) || EQ (c->tag, Vcatch_everything_tag))
 	    unwind_to_catch (c, val, tag);
 	}
@@ -1881,6 +1887,7 @@ condition_case_1 (Lisp_Object handlers,
 #endif
   c.val = Qnil;
   c.actual_tag = Qnil;
+  c.backtrace = Qnil;
   c.backlist = backtrace_list;
 #if 0 /* FSFmacs */
   /* #### */
@@ -4813,19 +4820,13 @@ struct call_trapping_problems
   void *arg;
 };
 
-static DECLARE_DOESNT_RETURN_TYPE
-  (Lisp_Object, flagged_a_squirmer (Lisp_Object, Lisp_Object, Lisp_Object));
-
-static DOESNT_RETURN_TYPE (Lisp_Object)
-flagged_a_squirmer (Lisp_Object error_conditions, Lisp_Object data,
-		    Lisp_Object opaque)
+static Lisp_Object
+maybe_get_trapping_problems_backtrace (void)
 {
-  struct call_trapping_problems *p =
-    (struct call_trapping_problems *) get_opaque_ptr (opaque);
+  Lisp_Object backtrace;
 
   if (!(inhibit_flags & INHIBIT_WARNING_ISSUE)
-      && !warning_will_be_discarded (current_warning_level ())
-      && !EQ (error_conditions, Qquit))
+      && !warning_will_be_discarded (current_warning_level ()))
     {
       struct gcpro gcpro1;
       Lisp_Object lstream = Qnil;
@@ -4842,15 +4843,32 @@ flagged_a_squirmer (Lisp_Object error_conditions, Lisp_Object data,
       lstream = make_resizing_buffer_output_stream ();
       Fbacktrace (lstream, Qt);
       Lstream_flush (XLSTREAM (lstream));
-      p->backtrace = resizing_buffer_to_lisp_string (XLSTREAM (lstream));
+      backtrace = resizing_buffer_to_lisp_string (XLSTREAM (lstream));
       Lstream_delete (XLSTREAM (lstream));
       UNGCPRO;
 
       unbind_to (speccount);
     }
   else
-    p->backtrace = Qnil;
+    backtrace = Qnil;
 
+  return backtrace;
+}
+
+static DECLARE_DOESNT_RETURN_TYPE
+  (Lisp_Object, flagged_a_squirmer (Lisp_Object, Lisp_Object, Lisp_Object));
+
+static DOESNT_RETURN_TYPE (Lisp_Object)
+flagged_a_squirmer (Lisp_Object error_conditions, Lisp_Object data,
+		    Lisp_Object opaque)
+{
+  struct call_trapping_problems *p =
+    (struct call_trapping_problems *) get_opaque_ptr (opaque);
+
+  if (!EQ (error_conditions, Qquit))
+    p->backtrace = maybe_get_trapping_problems_backtrace ();
+  else
+    p->backtrace = Qnil;
   p->error_conditions = error_conditions;
   p->data = data;
 
@@ -4891,11 +4909,11 @@ issue_call_trapping_problems_warning (Lisp_Object warning_class,
 	{
 	  Lisp_Object errstr =
 	    emacs_sprintf_string_lisp
-	    ("%s: Attempt to throw outside of function "
-	     "to catch `%s' with value `%s'",
+	    ("%s: Attempt to throw outside of function:"
+	     "To catch `%s' with value `%s'\n\nBacktrace follows:\n\n%s",
 	     Qnil, 3,
 	     build_msg_string (warning_string ? warning_string : "error"),
-	     p->thrown_tag, p->thrown_value);
+	     p->thrown_tag, p->thrown_value, p->backtrace);
 	  warn_when_safe_lispobj (Qerror, current_warning_level (), errstr);
 	}
       else if (p->caught_error && !EQ (p->error_conditions, Qquit))
@@ -5109,7 +5127,7 @@ call_trapping_problems (Lisp_Object warning_class,
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
   struct call_trapping_problems package;
   struct call_trapping_problems_result real_problem;
-  Lisp_Object opaque, thrown_tag, tem;
+  Lisp_Object opaque, thrown_tag, tem, thrown_backtrace;
   int thrown = 0;
 
   assert (SYMBOLP (warning_class)); /* sanity-check */
@@ -5144,11 +5162,11 @@ call_trapping_problems (Lisp_Object warning_class,
        after printing the warning. (We print the warning in the stack
        context of the error, so we can get a backtrace.) */
     tem = internal_catch (package.catchtag, call_trapping_problems_1, opaque,
-			  &thrown, &thrown_tag);
+			  &thrown, &thrown_tag, &thrown_backtrace);
   else if (flags & INTERNAL_INHIBIT_THROWS)
     /* We skip over the first wrapper, which traps errors. */
     tem = internal_catch (package.catchtag, call_trapping_problems_2, opaque,
-			  &thrown, &thrown_tag);
+			  &thrown, &thrown_tag, &thrown_backtrace);
   else
     /* Nothing special. */
     tem = (fun) (arg);
@@ -5182,7 +5200,7 @@ call_trapping_problems (Lisp_Object warning_class,
       problem->caught_throw = 1;
       problem->error_conditions = Qnil;
       problem->data = Qnil;
-      problem->backtrace = Qnil;
+      problem->backtrace = thrown_backtrace;
       problem->thrown_tag = thrown_tag;
       problem->thrown_value = tem;
     }
