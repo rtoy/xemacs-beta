@@ -1,3 +1,8 @@
+2005-01-21  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* database.c (dbm_type):
+	* database.c (dbm_subtype): Mark parameters as unused.
+
 2005-01-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* database.c: Small warning fix for NetBSD, w.r.t. u_int_8_t being

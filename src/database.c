@@ -327,13 +327,13 @@ dbm_remove (Lisp_Database *db, Lisp_Object key)
 }
 
 static Lisp_Object
-dbm_type (Lisp_Database *db)
+dbm_type (Lisp_Database *UNUSED (db))
 {
   return Qdbm;
 }
 
 static Lisp_Object
-dbm_subtype (Lisp_Database *db)
+dbm_subtype (Lisp_Database *UNUSED (db))
 {
   return Qnil;
 }
