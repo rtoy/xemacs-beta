@@ -59,7 +59,7 @@ Boston, MA 02111-1307, USA.  */
 #include "gui.h"
 #include "keymap.h"
 #include "lstream.h"
-#include "objects.h"
+#include "objects-impl.h"
 #include "opaque.h"
 #include "process.h"
 #include "rangetab.h"
