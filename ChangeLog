@@ -1,3 +1,7 @@
+2001-09-25  Didier Verna  <didier@xemacs.org>
+
+	* configure.ac: new. Autoconf 2.5x guard.
+
 2001-09-19  Ben Wing  <ben@xemacs.org>
 
 	* configure.in (USAGE_ERROR):
@@ -136,7 +140,7 @@
 	AC_MSG_ERROR.
 
 2001-05-15  Steve Youngs  <youngs@xemacs.org>
-	* configure.in: 
+	* configure.in:
 	If no native dumper (UNEXEC) is defined, simply use pdump.
 	If no SYSTEM_TYPE is defined, choose an appopriate default.
 
@@ -155,7 +159,7 @@
 
 2001-05-11  Martin Buchholz  <martin@xemacs.org>
 
-	* configure.in: 
+	* configure.in:
 	Check for sys/ptyio.h on HPUX, else for pty.h or perhaps sys/pty.h
 
 2001-05-10  Ben Wing  <ben@xemacs.org>
@@ -180,7 +184,7 @@
 
 2001-05-04  Martin Buchholz  <martin@xemacs.org>
 
-	* configure.in (opsys): 
+	* configure.in (opsys):
 	Use lower-case `uname -s` as the default value for opsys.
 	The previous code effectively did the non-sensical
 	opsys=$canonical because [] magically disappear in configure.in.
@@ -225,14 +229,14 @@
 	* etc/OXYMORONS: Add 2 oxymorons, clean up numbering, close RFC.
 
 	* etc/NEWS: Fix typo.
-	
+
 	* configure.in:
 	* configure:
 	Fix typo, add -Wsign-compare if GCC, run autoconf.
 
 2001-03-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
-	* etc/gnuserv.1 (UNIX_DOMAIN_SOCKETS: 
+	* etc/gnuserv.1 (UNIX_DOMAIN_SOCKETS:
 	* PROBLEMS (Problems with running XEmacs):
 	Document TMPDIR lossage in gnuserv/gnuclient.
 
