@@ -2547,11 +2547,8 @@ AC_CHECK_SIZEOF(void *)
 dnl check for long file names
 AC_SYS_LONG_FILE_NAMES
 
-dnl -lm is required by LISP_FLOAT_TYPE, among other things
+dnl -lm is required for floating point support, among other things
 AC_CHECK_FUNC(sin, ,AC_CHECK_LIB(m, sin))
-
-dnl Floating operation support is now unconditional
-AC_DEFINE(LISP_FLOAT_TYPE)
 
 AC_TRY_LINK([#include <math.h>],
   [return atanh(1.0) + asinh(1.0) + acosh(1.0); ],
