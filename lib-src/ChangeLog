@@ -1,3 +1,8 @@
+2002-08-02  Jerry James  <james@xemacs.org>
+
+	* gnuserv.h: Include signal.h early to define NSIG before config.h
+	is included.
+
 2002-07-27  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.8 "broccoli" is released.
