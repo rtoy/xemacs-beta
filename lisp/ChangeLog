@@ -1,3 +1,11 @@
+2001-07-14  Sean MacLennan  <seanm@storm.ca>
+
+	* package-admin.el (package-install-hook): New.
+	(package-delete-hook): New.
+	(package-admin-add-single-file-package): Use package-delete-hook.
+
+	* package-get.el (package-get): Use package-install-hook.
+
 2001-06-26  Robert Pluim  <rpluim@bigfoot.com>
 
 	* packages.el (locate-library): change to use read-library-name so

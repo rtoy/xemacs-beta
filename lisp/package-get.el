@@ -865,6 +865,7 @@ successfully installed but errors occurred during initialization, or
 	      (if (package-get-init-package (package-admin-get-lispdir
 					     install-dir package))
 		  (progn
+		    (run-hook-with-args 'package-install-hook package install-dir)
 		    (message "Added package `%s'" package)
 		    (sit-for 0)
 		    )
