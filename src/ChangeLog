@@ -1,3 +1,10 @@
+2004-09-11  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* config.h.in: Added entries for sys/resource.h, sys/vlimit.h,
+	getrlimit() and vlimit().
+	* mem-limits.h: Use configure to check for the presence of
+	OS-specific functions.  General cleanup.
+
 2004-09-10  Jerry James  <james@xemacs.org>
 
 	* intl-encap-win32.c (qxeDocumentProperties): Conditionalize

@@ -254,10 +254,12 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_MACH_MACH_H
 #undef HAVE_SYS_PARAM_H
 #undef HAVE_SYS_PSTAT_H
+#undef HAVE_SYS_RESOURCE_H
 #undef HAVE_SYS_TIME_H
 #undef HAVE_SYS_TIMEB_H
 #undef HAVE_SYS_TIMES_H
 #undef HAVE_SYS_UN_H
+#undef HAVE_SYS_VLIMIT_H
 #undef HAVE_ULIMIT_H
 #undef HAVE_UNISTD_H
 
@@ -360,6 +362,7 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_GETHOSTNAME
 #undef HAVE_GETNAMEINFO
 #undef HAVE_GETPAGESIZE
+#undef HAVE_GETRLIMIT
 #undef HAVE_GETTIMEOFDAY
 #undef HAVE_GETWD
 #undef HAVE_GETCWD
@@ -399,6 +402,7 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_UTIMES
 #undef HAVE_WAITPID
 #undef HAVE_VSNPRINTF
+#undef HAVE_VLIMIT
 
 /* Many flavors of PTY support */
 #undef HAVE_GETPT	/* glibc's easy pty allocation function */
