@@ -447,6 +447,8 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
    but don't pop it. */
 #define TOP (*stack_ptr)
 
+#define GCPRO_STACK  (gcpro1.nvars = stack_ptr - stack_beg)
+
 /* The actual interpreter for byte code.
    This function has been seriously optimized for performance.
    Don't change the constructs unless you are willing to do
@@ -460,8 +462,8 @@ execute_optimized_program (const Opbyte *program,
 {
   /* This function can GC */
   REGISTER const Opbyte *program_ptr = (Opbyte *) program;
-  REGISTER Lisp_Object *stack_ptr
-    = alloca_array (Lisp_Object, stack_depth + 1);
+  Lisp_Object *stack_beg = alloca_array (Lisp_Object, stack_depth + 1);
+  REGISTER Lisp_Object *stack_ptr = stack_beg;
   int speccount = specpdl_depth ();
   struct gcpro gcpro1;
 
@@ -471,10 +473,10 @@ execute_optimized_program (const Opbyte *program,
 #endif
 
 #ifdef ERROR_CHECK_BYTE_CODE
-  Lisp_Object *stack_beg = stack_ptr;
   Lisp_Object *stack_end = stack_beg + stack_depth;
 #endif
 
+#if STATIC_GCPRO_STACK
   /* Initialize all the objects on the stack to Qnil,
      so we can GCPRO the whole stack.
      The first element of the stack is actually a dummy. */
@@ -484,9 +486,11 @@ execute_optimized_program (const Opbyte *program,
     for (i = stack_depth, p = stack_ptr; i--;)
       *++p = Qnil;
   }
-
+#endif  
   GCPRO1 (stack_ptr[1]);
+#if STATIC_GCPRO_STACK
   gcpro1.nvars = stack_depth;
+#endif  
 
   while (1)
     {
@@ -504,6 +508,9 @@ execute_optimized_program (const Opbyte *program,
       meter_code (prev_opcode, this_opcode);
 #endif
 
+#if !STATIC_GCPRO_STACK
+      GCPRO_STACK;
+#endif
       switch (opcode)
 	{
 	  REGISTER int n;
@@ -512,7 +519,11 @@ execute_optimized_program (const Opbyte *program,
 	  if (opcode >= Bconstant)
 	    PUSH (constants_data[opcode - Bconstant]);
 	  else
-	    stack_ptr = execute_rare_opcode (stack_ptr, program_ptr, opcode);
+	    {
+	      /* We're not sure what these do, so better safe than sorry. */
+	      /* GCPRO_STACK; */
+	      stack_ptr = execute_rare_opcode (stack_ptr, program_ptr, opcode);
+	    }
 	  break;
 
 	case Bvarref:
@@ -549,8 +560,12 @@ execute_optimized_program (const Opbyte *program,
 	  Lisp_Object new_value = POP;
 	  if (!SYMBOL_VALUE_MAGIC_P (old_value) || UNBOUNDP (old_value))
 	    symbol_ptr->value = new_value;
-	  else
+	  else {
+	    /* Fset may call magic handlers */
+	    /* GCPRO_STACK; */
 	    Fset (symbol, new_value);
+	  }
+	    
 	  break;
 	}
 
@@ -583,7 +598,11 @@ execute_optimized_program (const Opbyte *program,
 #endif
 	    }
 	  else
-	    specbind_magic (symbol, new_value);
+	    {
+	      /* does an Fset, may call magic handlers */
+	      /* GCPRO_STACK; */
+	      specbind_magic (symbol, new_value);
+	    }
 	  break;
 	}
 
@@ -597,6 +616,7 @@ execute_optimized_program (const Opbyte *program,
 	case Bcall+7:
 	  n = (opcode <  Bcall+6 ? opcode - Bcall :
 	       opcode == Bcall+6 ? READ_UINT_1 : READ_UINT_2);
+	  /* GCPRO_STACK; */
 	  DISCARD (n);
 #ifdef BYTE_CODE_METER
 	  if (byte_metering_on && SYMBOLP (TOP))
@@ -845,6 +865,7 @@ execute_optimized_program (const Opbyte *program,
 	  }
 
 	case Bsymbol_value:
+	  /* GCPRO_STACK; */
 	  TOP = Fsymbol_value (TOP);
 	  break;
 
@@ -974,6 +995,8 @@ execute_optimized_program (const Opbyte *program,
 	case Bset:
 	  {
 	    Lisp_Object arg = POP;
+	    /* Fset may call magic handlers */
+	    /* GCPRO_STACK; */
 	    TOP = Fset (TOP, arg);
 	    break;
 	  }
@@ -1019,6 +1042,9 @@ execute_optimized_program (const Opbyte *program,
 	  }
 
 	case Bset_buffer:
+	  /* #### WAG: set-buffer may cause Fset's of buffer locals
+	     Didn't prevent crash. :-( */
+	  /* GCPRO_STACK; */
 	  TOP = Fset_buffer (TOP);
 	  break;
 

@@ -1,3 +1,7 @@
+2003-11-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* bytecode.c (execute_optimized_program): GCPRO_STACK main loop.
+
 2004-01-16  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
 
 	* ui-gtk.c (__internal_callback_marshal): Marshalling data to
