@@ -1,3 +1,7 @@
+2004-01-21  Jerry James  <james@xemacs.org>
+
+	* wid-edit.el: Remove duplicate sexp widget definitions.
+
 2004-01-08  Nickolay Pakoulin  <npak@ispras.ru>
 
 	* info.el (Info-insert-file-contents): Use `shell-command-switch'

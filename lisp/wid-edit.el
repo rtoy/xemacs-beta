@@ -3616,69 +3616,6 @@ It will read a directory name from the minibuffer when invoked."
     (widget-apply widget :notify widget event)
     (widget-setup)))
 
-(define-widget 'sexp 'editable-field
-  "An arbitrary Lisp expression."
-  :tag "Lisp expression"
-  :format "%{%t%}: %v"
-  :value nil
-  :validate 'widget-sexp-validate
-  :match (lambda (widget value) t)
-  :value-to-internal 'widget-sexp-value-to-internal
-  :value-to-external (lambda (widget value) (read value))
-  :prompt-history 'widget-sexp-prompt-value-history
-  :prompt-value 'widget-sexp-prompt-value)
-
-(defun widget-sexp-value-to-internal (widget value)
-  ;; Use cl-prettyprint for printer representation.
-  (let ((pp (if (symbolp value)
-		(prin1-to-string value)
-	      (widget-prettyprint-to-string value))))
-    (if (> (length pp) 40)
-	(concat "\n" pp)
-      pp)))
-
-(defun widget-sexp-validate (widget)
-  ;; Valid if we can read the string and there is no junk left after it.
-  (save-excursion
-    (let ((buffer (set-buffer (get-buffer-create " *Widget Scratch*"))))
-      (erase-buffer)
-      (insert (widget-apply widget :value-get))
-      (goto-char (point-min))
-      (condition-case data
-	  (let ((value (read buffer)))
-	    (if (eobp)
-		(if (widget-apply widget :match value)
-		    nil
-		  (widget-put widget :error (widget-get widget :type-error))
-		  widget)
-	      (widget-put widget
-			  :error (format "Junk at end of expression: %s"
-					 (buffer-substring (point)
-							   (point-max))))
-	      widget))
-	(error (widget-put widget :error (error-message-string data))
-	       widget)))))
-
-(defvar widget-sexp-prompt-value-history nil
-  "History of input to `widget-sexp-prompt-value'.")
-
-(defun widget-sexp-prompt-value (widget prompt value unbound)
-  ;; Read an arbitrary sexp.
-  (let ((found (read-string prompt
-			    (if unbound nil (cons (prin1-to-string value) 0))
-			    (widget-get widget :prompt-history))))
-    (save-excursion
-      (let ((buffer (set-buffer (get-buffer-create " *Widget Scratch*"))))
-	(erase-buffer)
-	(insert found)
-	(goto-char (point-min))
-	(let ((answer (read buffer)))
-	  (unless (eobp)
-	    (signal 'error
-		    (list "Junk at end of expression"
-			  (buffer-substring (point) (point-max)))))
-	  answer)))))
-
 (define-widget 'restricted-sexp 'sexp
   "A Lisp expression restricted to values that match.
 
