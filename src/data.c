@@ -836,6 +836,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
 /**********************************************************************/
 /*                       Arithmetic functions                         */
 /**********************************************************************/
+#ifndef WITH_NUMBER_TYPES
 typedef struct
 {
   int int_p;
@@ -876,6 +877,7 @@ number_char_or_marker_to_double (Lisp_Object obj)
       goto retry;
     }
 }
+#endif /* WITH_NUMBER_TYPES */
 
 static EMACS_INT
 integer_char_or_marker_to_int (Lisp_Object obj)
@@ -1213,6 +1215,7 @@ If supported, it may also be a ratio.
   }
 }
 
+#ifndef HAVE_BIGNUM
 static int
 digit_to_number (int character, int base)
 {
@@ -1224,6 +1227,7 @@ digit_to_number (int character, int base)
 
   return digit >= base ? -1 : digit;
 }
+#endif
 
 DEFUN ("string-to-number", Fstring_to_number, 1, 2, 0, /*
 Convert STRING to a number by parsing it as a number in base BASE.

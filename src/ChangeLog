@@ -1,3 +1,12 @@
+2004-04-08  Jerry James  <james@xemacs.org>
+
+	* data.c: Use #ifndef for functions unused with new number types.
+	* data.c (digit_to_number): Unused when HAVE_BIGNUM.
+	* number.c: Remove multiply defined symbols Qintegerp & Qnumberp.
+	* number.c (syms_of_number): DEFSUBR(Ffloatingp) was omitted.
+	* print.c (print_internal): g++ thinks that specdepth might be
+	used undefined.  It isn't, but the compiler can't tell.
+
 2004-04-07  Jerry James  <james@xemacs.org>
 
 	* number.c (Fevenp): Change the C boolean into Qnil/Qt.  Thanks to

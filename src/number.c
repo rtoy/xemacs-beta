@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.  */
 #include <limits.h>
 #include "lisp.h"
 
-Lisp_Object Qintegerp, Qrationalp, Qfloatingp, Qrealp, Qnumberp;
+Lisp_Object Qrationalp, Qfloatingp, Qrealp;
 Lisp_Object Vdefault_float_precision;
 Fixnum Vmost_negative_fixnum, Vmost_positive_fixnum;
 static Lisp_Object Qunsupported_type;
@@ -707,11 +707,9 @@ syms_of_number (void)
 #endif
 
   /* Type predicates */
-  DEFSYMBOL (Qintegerp);
   DEFSYMBOL (Qrationalp);
   DEFSYMBOL (Qfloatingp);
   DEFSYMBOL (Qrealp);
-  DEFSYMBOL (Qnumberp);
 #ifndef HAVE_BIGNUM
   DEFSYMBOL (Qbignump);
 #endif
@@ -732,6 +730,7 @@ syms_of_number (void)
   DEFSUBR (Fnumerator);
   DEFSUBR (Fdenominator);
   DEFSUBR (Fbigfloatp);
+  DEFSUBR (Ffloatingp);
   DEFSUBR (Frealp);
   DEFSUBR (Fcanonicalize_number);
   DEFSUBR (Fcoerce_number);

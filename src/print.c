@@ -1514,7 +1514,7 @@ void
 print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   /* This function can GC */
-  int specdepth;
+  int specdepth = 0;
   struct gcpro gcpro1, gcpro2;
 
   QUIT;
