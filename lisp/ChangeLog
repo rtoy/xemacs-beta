@@ -1,3 +1,8 @@
+2001-05-13  Karl M. Hegbloom  <karlheg@hegbloom.net>
+
+	* packages.el (locate-data-file): Use suffixes list to allow
+	finding compressed copies of the data files.
+
 2001-05-30  Ben Wing  <ben@xemacs.org>
 
 	* etags.el (buffer-tag-table-list):

@@ -344,7 +344,7 @@ If no DIR-LIST is supplied, it defaults to `data-directory-list'."
   "Locate a file in a search path DIR-LIST (a list of directories).
 If no DIR-LIST is supplied, it defaults to `data-directory-list'.
 This function is basically a wrapper over `locate-file'."
-  (locate-file name (or dir-list data-directory-list)))
+  (locate-file name (or dir-list data-directory-list) '("" ".gz" ".bz2")))
 
 ;; Path setup
 
