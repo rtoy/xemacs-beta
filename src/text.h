@@ -1097,6 +1097,7 @@ do {							\
   memcpy (*_bsta_, _bsta_2, 1 + _bsta_3);		\
 } while (0)
 
+
 #define alloca_intbytes(num) alloca_array (Intbyte, num)
 #define alloca_extbytes(num) alloca_array (Extbyte, num)
 
@@ -1272,7 +1273,7 @@ next_string_index (Lisp_Object s, Bytecount idx)
    (a) it is Mule-correct
    (b) it does dynamic allocation so you never have to worry about size
        restrictions
-   (c) it comes in an alloca() variety (all allocation is stack-local,
+   (c) it comes in an ALLOCA() variety (all allocation is stack-local,
        so there is no need to explicitly clean up) as well as a malloc()
        variety
    (d) it knows its own length, so it does not suffer from standard null
@@ -1316,7 +1317,7 @@ next_string_index (Lisp_Object s, Bytecount idx)
         is declared as an Eistring *, and its storage declared on the stack.
 
    DECLARE_EISTRING_MALLOC (name);
-        Declare a new Eistring, which uses malloc()ed instead of alloca()ed
+        Declare a new Eistring, which uses malloc()ed instead of ALLOCA()ed
         data.  This is a standard local variable declaration and can go
         anywhere in the variable declaration section.  Once you initialize
 	the Eistring, you will have to free it using eifree() to avoid
@@ -1427,12 +1428,12 @@ next_string_index (Lisp_Object s, Bytecount idx)
 
    void eicpyout_alloca (Eistring *eistr, LVALUE: Intbyte *ptr_out,
                          LVALUE: Bytecount len_out);
-        Make an alloca() copy of the data in the Eistring, using the
-        default internal format.  Due to the nature of alloca(), this
+        Make an ALLOCA() copy of the data in the Eistring, using the
+        default internal format.  Due to the nature of ALLOCA(), this
         must be a macro, with all lvalues passed in as parameters.
 	(More specifically, not all compilers correctly handle using
-	alloca() as the argument to a function call -- GCC on x86
-	didn't used to, for example.) A pointer to the alloca()ed data
+	ALLOCA() as the argument to a function call -- GCC on x86
+	didn't used to, for example.) A pointer to the ALLOCA()ed data
 	is stored in PTR_OUT, and the length of the data (not including
 	the terminating zero) is stored in LEN_OUT.
 
@@ -1710,7 +1711,7 @@ next_string_index (Lisp_Object s, Bytecount idx)
 /* Principles for writing Eistring functions:
 
    (1) Unfortunately, we have to write most of the Eistring functions
-       as macros, because of the use of alloca().  The principle used
+       as macros, because of the use of ALLOCA().  The principle used
        below to assure no conflict in local variables is to prefix all
        local variables with "ei" plus a number, which should be unique
        among macros.  In practice, when finding a new number, find the
@@ -1767,8 +1768,8 @@ next_string_index (Lisp_Object s, Bytecount idx)
        temporary variable for all access to the Eistring.
        Essentially, we want it to appear as if these Eistring macros
        are functions -- we would like to declare them as functions but
-       they use alloca(), so we can't (and we can't make them inline
-       functions either -- alloca() is explicitly disallowed in inline
+       they use ALLOCA(), so we can't (and we can't make them inline
+       functions either -- ALLOCA() is explicitly disallowed in inline
        functions.)
 
    (7) Note that our rules regarding multiple evaluation are *more*
@@ -1872,10 +1873,10 @@ do {									      \
 	    (ei)->data_ = (Intbyte *) xrealloc ((ei)->data_, ei1newsize);     \
 	  else								      \
 	    {								      \
-	      /* We don't have realloc, so alloca() more space and copy the   \
+	      /* We don't have realloc, so ALLOCA() more space and copy the   \
 		 data into it. */					      \
 	      Intbyte *ei1oldeidata = (ei)->data_;			      \
-	      (ei)->data_ = (Intbyte *) alloca (ei1newsize);		      \
+	      (ei)->data_ = (Intbyte *) ALLOCA (ei1newsize);		      \
               if (ei1oldeidata)						      \
 	        memcpy ((ei)->data_, ei1oldeidata, ei1oldeibytelen + 1);      \
 	    }								      \
@@ -2091,7 +2092,7 @@ do {									\
 									\
       (ei)->max_size_allocated_ =					\
 	eifind_large_enough_buffer (0, (ei)->bytelen_ + 1);		\
-      ei13newdata = (Intbyte *) alloca ((ei)->max_size_allocated_);	\
+      ei13newdata = (Intbyte *) ALLOCA ((ei)->max_size_allocated_);	\
       memcpy (ei13newdata, (ei)->data_, (ei)->bytelen_ + 1);		\
       xfree ((ei)->data_);						\
       (ei)->data_ = ei13newdata;					\
@@ -2099,7 +2100,7 @@ do {									\
 									\
   if ((ei)->extdata_)							\
     {									\
-      Extbyte *ei13newdata = (Extbyte *) alloca ((ei)->extlen_ + 2);	\
+      Extbyte *ei13newdata = (Extbyte *) ALLOCA ((ei)->extlen_ + 2);	\
 									\
       memcpy (ei13newdata, (ei)->extdata_, (ei)->extlen_);		\
       /* Double null-terminate in case of Unicode data */		\
@@ -2422,8 +2423,8 @@ int eistr_casefiddle_1 (Intbyte *olddata, Bytecount len, Intbyte *newdata,
 #define EI_CASECHANGE(ei, downp)					\
 do {									\
   int ei11new_allocmax = (ei)->charlen_ * MAX_EMCHAR_LEN + 1;		\
-  Intbyte *ei11storage = (Intbyte *) alloca_array (Intbyte,		\
-						   ei11new_allocmax);	\
+  Intbyte *ei11storage =						\
+     (Intbyte *) alloca_array (Intbyte, ei11new_allocmax);	\
   int ei11newlen = eistr_casefiddle_1 ((ei)->data_, (ei)->bytelen_,	\
 				       ei11storage, downp);		\
 									\
@@ -2466,7 +2467,7 @@ do {									\
   The source or sink can be specified in one of these ways:
 
   DATA,   (ptr, len),    // input data is a fixed buffer of size len
-  ALLOCA, (ptr, len),    // output data is in a alloca()ed buffer of size len
+  ALLOCA, (ptr, len),    // output data is in a ALLOCA()ed buffer of size len
   MALLOC, (ptr, len),    // output data is in a malloc()ed buffer of size len
   C_STRING_ALLOCA, ptr,  // equivalent to ALLOCA (ptr, len_ignored) on output
   C_STRING_MALLOC, ptr,  // equivalent to MALLOC (ptr, len_ignored) on output
@@ -2726,7 +2727,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 /* + 2 because we double zero-extended to account for Unicode conversion */
 typedef union { char c; void *p; } *dfc_aliasing_voidpp;
 #define DFC_ALLOCA_USE_CONVERTED_DATA(sink) do {			\
-  void * dfc_sink_ret = alloca (dfc_sink.data.len + 2);			\
+  void * dfc_sink_ret = ALLOCA (dfc_sink.data.len + 2);			\
   memcpy (dfc_sink_ret, dfc_sink.data.ptr, dfc_sink.data.len + 2);	\
   ((dfc_aliasing_voidpp) &(DFC_CPP_CAR sink))->p = dfc_sink_ret;	\
   (DFC_CPP_CDR sink) = dfc_sink.data.len;				\
@@ -2738,7 +2739,7 @@ typedef union { char c; void *p; } *dfc_aliasing_voidpp;
   (DFC_CPP_CDR sink) = dfc_sink.data.len;				\
 } while (0)
 #define DFC_C_STRING_ALLOCA_USE_CONVERTED_DATA(sink) do {		\
-  void * dfc_sink_ret = alloca (dfc_sink.data.len + 2);			\
+  void * dfc_sink_ret = ALLOCA (dfc_sink.data.len + 2);			\
   memcpy (dfc_sink_ret, dfc_sink.data.ptr, dfc_sink.data.len + 2);	\
   ((dfc_aliasing_voidpp) &(sink))->p = dfc_sink_ret;			\
 } while (0)
@@ -2803,7 +2804,7 @@ do {								\
 								\
   if (!__gserr__)						\
     {								\
-      var = alloca_intbytes (99);					\
+      var = alloca_intbytes (99);			\
       qxesprintf (var, "Unknown error %d", __gsnum__);		\
     }								\
   else								\

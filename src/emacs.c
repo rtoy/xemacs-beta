@@ -2310,7 +2310,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
      The Right Thing on that system.  Rumor has it, this must be
      called for GNU dld in temacs and xemacs.  */
   {
-    char *buf = (char *)alloca (XSTRING_LENGTH (Vinvocation_directory)
+    char *buf = (char *)ALLOCA (XSTRING_LENGTH (Vinvocation_directory)
 				+ XSTRING_LENGTH (Vinvocation_name)
 				+ 2);
     sprintf (buf, "%s/%s", XSTRING_DATA (Vinvocation_directory),

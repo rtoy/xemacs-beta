@@ -249,7 +249,7 @@ get_doc_string (Lisp_Object filepos)
       if (purify_flag)
 	{
 	    /* sizeof ("../lib-src/") == 12 */
-	  name_nonreloc = (Intbyte *) alloca (12 + XSTRING_LENGTH (file) + 8);
+	  name_nonreloc = (Intbyte *) ALLOCA (12 + XSTRING_LENGTH (file) + 8);
 	  /* Preparing to dump; DOC file is probably not installed.
 	     So check in ../lib-src. */
 	  qxestrcpy (name_nonreloc, (Intbyte *) "../lib-src/");

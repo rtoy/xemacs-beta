@@ -583,7 +583,7 @@ Xt_StringToScrollBarPlacement (XrmValuePtr args,   /* unused */
 				 XrmValuePtr toVal)
 {
   XrmQuark q;
-  char *lowerName = (char *) alloca (strlen ((char *) fromVal->addr) + 1);
+  char *lowerName = (char *) ALLOCA (strlen ((char *) fromVal->addr) + 1);
 
   XmuCopyISOLatin1Lowered (lowerName, (char *) fromVal->addr);
   q = XrmStringToQuark (lowerName);

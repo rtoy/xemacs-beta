@@ -574,7 +574,7 @@ In Unix-syntax, this function just removes the final slash.
   handler = Ffind_file_name_handler (directory, Qdirectory_file_name);
   if (!NILP (handler))
     return call2_check_string (handler, Qdirectory_file_name, directory);
-  buf = (Intbyte *) alloca (XSTRING_LENGTH (directory) + 20);
+  buf = (Intbyte *) ALLOCA (XSTRING_LENGTH (directory) + 20);
   directory_file_name (XSTRING_DATA (directory), buf);
   return build_intstring (buf);
 }
@@ -976,7 +976,7 @@ See also the function `substitute-in-file-name'.
 	{
 	  for (p = nm; *p && (!IS_DIRECTORY_SEP (*p)); p++)
 	    DO_NOTHING;
-	  o = (Intbyte *) alloca (p - nm + 1);
+	  o = (Intbyte *) ALLOCA (p - nm + 1);
 	  memcpy (o, nm, p - nm);
 	  o [p - nm] = 0;
 
@@ -1046,7 +1046,7 @@ See also the function `substitute-in-file-name'.
       if (!newdir)
 	{
 	  /* Either nm starts with /, or drive isn't mounted. */
-	  newdir = (Intbyte *) alloca (4);
+	  newdir = (Intbyte *) ALLOCA (4);
 	  newdir[0] = DRIVE_LETTER (drive);
 	  newdir[1] = ':';
 	  newdir[2] = '/';
@@ -1110,7 +1110,7 @@ See also the function `substitute-in-file-name'.
 	    }
 	  if (!IS_DIRECTORY_SEP (nm[0]))
 	    {
-	      Intbyte *tmp = (Intbyte *) alloca (qxestrlen (newdir) +
+	      Intbyte *tmp = (Intbyte *) ALLOCA (qxestrlen (newdir) +
 						 qxestrlen (nm) + 2);
 	      file_name_as_directory (tmp, newdir);
 	      qxestrcat (tmp, nm);
@@ -1152,7 +1152,7 @@ See also the function `substitute-in-file-name'.
 	    {
 	      newdir =
 		(Intbyte *)
-		  qxestrcpy ((Intbyte *) alloca (qxestrlen (newdir) + 1),
+		  qxestrcpy ((Intbyte *) ALLOCA (qxestrlen (newdir) + 1),
 			     newdir);
 	      p = newdir + 2;
 	      while (*p && !IS_DIRECTORY_SEP (*p)) p++;
@@ -1177,7 +1177,7 @@ See also the function `substitute-in-file-name'.
 #endif
 	  )
 	{
-	  Intbyte *temp = (Intbyte *) alloca (length);
+	  Intbyte *temp = (Intbyte *) ALLOCA (length);
 	  memcpy (temp, newdir, length - 1);
 	  temp[length - 1] = 0;
 	  newdir = temp;
@@ -1193,10 +1193,10 @@ See also the function `substitute-in-file-name'.
   /* Reserve space for drive specifier and escape prefix, since either
      or both may need to be inserted.  (The Microsoft x86 compiler
      produces incorrect code if the following two lines are combined.)  */
-  target = (Intbyte *) alloca (tlen + 4);
+  target = (Intbyte *) ALLOCA (tlen + 4);
   target += 4;
 #else  /* not WIN32_FILENAMES */
-  target = (Intbyte *) alloca (tlen);
+  target = (Intbyte *) ALLOCA (tlen);
 #endif /* not WIN32_FILENAMES */
   *target = 0;
 
@@ -1550,7 +1550,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  }
 
 	/* Copy out the variable name */
-	target = (Intbyte *) alloca (s - o + 1);
+	target = (Intbyte *) ALLOCA (s - o + 1);
 	qxestrncpy (target, o, s - o);
 	target[s - o] = 0;
 #ifdef WIN32_NATIVE
@@ -1569,7 +1569,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 
   /* If substitution required, recopy the filename and do it */
   /* Make space in stack frame for the new copy */
-  xnm = (Intbyte *) alloca (XSTRING_LENGTH (filename) + total + 1);
+  xnm = (Intbyte *) ALLOCA (XSTRING_LENGTH (filename) + total + 1);
   x = xnm;
 
   /* Copy the rest of the name through, replacing $ constructs with values */
@@ -1601,7 +1601,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  }
 
 	/* Copy out the variable name */
-	target = (Intbyte *) alloca (s - o + 1);
+	target = (Intbyte *) ALLOCA (s - o + 1);
 	qxestrncpy (target, o, s - o);
 	target[s - o] = 0;
 #ifdef WIN32_NATIVE
@@ -3663,13 +3663,13 @@ Encrypt STRING using KEY.
 
   extra = XSTRING_LENGTH (string) % CRYPT_BLOCK_SIZE;
   rounded_size = XSTRING_LENGTH (string) + extra;
-  encrypted_string = alloca (rounded_size + 1);
+  encrypted_string = ALLOCA (rounded_size + 1);
   memcpy (encrypted_string, XSTRING_DATA (string), XSTRING_LENGTH (string));
   memset (encrypted_string + rounded_size - extra, 0, extra + 1);
 
   key_size = min (CRYPT_KEY_SIZE, XSTRING_LENGTH (key))
 
-  raw_key = alloca (CRYPT_KEY_SIZE + 1);
+  raw_key = ALLOCA (CRYPT_KEY_SIZE + 1);
   memcpy (raw_key, XSTRING_DATA (key), key_size);
   memset (raw_key + key_size, 0, (CRYPT_KEY_SIZE + 1) - key_size);
 
@@ -3691,13 +3691,13 @@ Decrypt STRING using KEY.
   CHECK_STRING (key);
 
   string_size = XSTRING_LENGTH (string) + 1;
-  decrypted_string = alloca (string_size);
+  decrypted_string = ALLOCA (string_size);
   memcpy (decrypted_string, XSTRING_DATA (string), string_size);
   decrypted_string[string_size - 1] = '\0';
 
   key_size = min (CRYPT_KEY_SIZE, XSTRING_LENGTH (key))
 
-  raw_key = alloca (CRYPT_KEY_SIZE + 1);
+  raw_key = ALLOCA (CRYPT_KEY_SIZE + 1);
   memcpy (raw_key, XSTRING_DATA (key), key_size);
   memset (raw_key + key_size, 0, (CRYPT_KEY_SIZE + 1) - key_size);
 

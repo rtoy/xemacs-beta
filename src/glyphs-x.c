@@ -1596,7 +1596,7 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   if (emsg)
     gui_error_2 (emsg, data, Qimage);
 
-  bp = bits = (Char_Binary *) alloca (PIXELS / 8);
+  bp = bits = (Char_Binary *) ALLOCA (PIXELS / 8);
 
   /* the compface library exports char F[], which uses a single byte per
      pixel to represent a 48x48 bitmap.  Yuck. */

@@ -697,12 +697,12 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
 
 	  if (STRINGP (suffix) && XSTRING_LENGTH (suffix))
 	    {
-	      label_buffer = alloca (XSTRING_LENGTH (name) + 15 + XSTRING_LENGTH (suffix));
+	      label_buffer = ALLOCA (XSTRING_LENGTH (name) + 15 + XSTRING_LENGTH (suffix));
 	      sprintf (label_buffer, "%s %s ", XSTRING_DATA (name), XSTRING_DATA (suffix));
 	    }
 	  else
 	    {
-	      label_buffer = alloca (XSTRING_LENGTH (name) + 15);
+	      label_buffer = ALLOCA (XSTRING_LENGTH (name) + 15);
 	      sprintf (label_buffer, "%s ", XSTRING_DATA (name));
 	    }
 

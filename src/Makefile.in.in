@@ -307,11 +307,13 @@ ldflags  = $(LDFLAGS) $(ld_switch_all) $(ld_dynamic_link_flags)
 ## if they all come out null.
 
 objs=\
- abbrev.o alloc.o $(balloon_help_objs) blocktype.o buffer.o bytecode.o\
- callint.o callproc.o casefiddle.o casetab.o chartab.o $(clash_detection_objs)\
- cmdloop.o cmds.o $(coding_system_objs) console.o console-stream.o\
+ abbrev.o alloc.o alloca.o \
+ $(balloon_help_objs) blocktype.o buffer.o bytecode.o \
+ callint.o callproc.o casefiddle.o casetab.o chartab.o \
+ $(clash_detection_objs) cmdloop.o cmds.o $(coding_system_objs) console.o \
+ console-stream.o\
  data.o $(database_objs) $(debug_objs) device.o dired.o doc.o doprnt.o\
- dynarr.o\
+ dynarr.o \
  editfns.o elhash.o emacs.o eval.o events.o\
  event-stream.o $(event_unixoid_objs) $(extra_objs) extents.o\
  faces.o file-coding.o fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o \
@@ -794,18 +796,13 @@ config.h sheap-adjust.h paths.h Emacs.ad.h :
 ## be used but generate no code.
 ## Some have it written in assembler in alloca.s.
 ## Some use the C version in alloca.c (these define C_ALLOCA in config.h).
-
+## Nowadays we always compile in the C version and use it to avoid stack
+## overflow.
 
 #ifdef C_ALLOCA
-## We could put something in alloca.c to #define free and malloc
-## whenever emacs was #defined, but that's not appropriate for all
-## users of alloca in Emacs.  Check out ../lib-src/getopt.c.  */
-
-alloca.o : ${srcdir}/alloca.c
-	$(CC) -c -Dfree=xfree -Dmalloc=xmalloc $(cflags) ${srcdir}/alloca.c
 #else
 #ifndef HAVE_ALLOCA
-alloca.o : ${srcdir}/alloca.s config.h
+allocax.o : ${srcdir}/alloca.s config.h
 ## $(CPP) is cc -E, which may get confused by filenames
 ## that do not end in .c.  So copy file to a safe name.  */
 ##	cp ${srcdir}/alloca.s allocatem.c
@@ -819,7 +816,6 @@ alloca.o : ${srcdir}/alloca.s config.h
 	@$(RM) alloca.o
 ## Xenix, in particular, needs to run assembler via cc.
 	$(CC) -c allocax.s
-	mv allocax.o alloca.o
 	$(RM) allocax.s allocatem.c
 #endif /* HAVE_ALLOCA */
 #endif /* ! defined (C_ALLOCA) */

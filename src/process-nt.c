@@ -908,7 +908,7 @@ nt_create_process (Lisp_Process *p,
        while leaving the real app name as argv[0].  */
     if (is_dos_app)
       {
-	cmdname = (Intbyte *) alloca (PATH_MAX);
+	cmdname = (Intbyte *) ALLOCA (PATH_MAX);
 	if (egetenv ("CMDPROXY"))
 	  qxestrcpy (cmdname, egetenv ("CMDPROXY"));
 	else

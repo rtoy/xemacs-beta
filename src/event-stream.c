@@ -2227,12 +2227,11 @@ The returned event will be one of the following types:
 
   status_notify ();             /* Notice process change */
 
-#ifdef C_ALLOCA
-  alloca (0);		/* Cause a garbage collection now */
   /* Since we can free the most stuff here
    *  (since this is typically called from
    *  the command-loop top-level). */
-#endif /* C_ALLOCA */
+  if (need_to_check_c_alloca)
+    xemacs_c_alloca (0);		/* Cause a garbage collection now */
 
   if (object_dead_p (XEVENT (event)->channel))
     /* event_console_or_selected may crash if the channel is dead.

@@ -434,7 +434,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	if (bufsize < 64 * 1024 && total_read > 32 * bufsize)
 	  {
 	    bufsize *= 2;
-	    bufptr = (char *) alloca (bufsize);
+	    bufptr = (char *) ALLOCA (bufsize);
 	  }
 
 	if (!NILP (display) && INTERACTIVE)

@@ -5235,10 +5235,12 @@ generate_displayable_area (struct window *w, Lisp_Object disp_string,
       struct display_line *dlp;
       Charcount next_pos;
       int local;
+      int pos_of_dlp = -1;
 
       if (Dynarr_length (dla) < Dynarr_largest (dla))
 	{
-	  dlp = Dynarr_atp (dla, Dynarr_length (dla));
+	  pos_of_dlp = Dynarr_length (dla);
+	  dlp = Dynarr_atp (dla, pos_of_dlp);
 	  local = 0;
 	}
       else
@@ -5281,6 +5283,7 @@ generate_displayable_area (struct window *w, Lisp_Object disp_string,
       else
 	dlp->clip = 0;
 
+      assert (pos_of_dlp < 0 || pos_of_dlp == Dynarr_length (dla));
       Dynarr_add (dla, *dlp);
 
       /* #### This type of check needs to be done down in the
@@ -5380,10 +5383,12 @@ regenerate_window (struct window *w, Charbpos start_pos, Charbpos point, int typ
       struct display_line dl;
       struct display_line *dlp;
       int local;
+      int pos_of_dlp = -1;
 
       if (Dynarr_length (dla) < Dynarr_largest (dla))
 	{
-	  dlp = Dynarr_atp (dla, Dynarr_length (dla));
+	  pos_of_dlp = Dynarr_length (dla);
+	  dlp = Dynarr_atp (dla, pos_of_dlp);
 	  local = 0;
 	}
       else
@@ -5463,6 +5468,7 @@ regenerate_window (struct window *w, Charbpos start_pos, Charbpos point, int typ
       if (dlp->num_chars > w->max_line_len)
 	w->max_line_len = dlp->num_chars;
 
+      assert (pos_of_dlp < 0 || pos_of_dlp == Dynarr_length (dla));
       Dynarr_add (dla, *dlp);
 
       /* #### This isn't right, but it is close enough for now. */

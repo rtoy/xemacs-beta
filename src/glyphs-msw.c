@@ -1674,7 +1674,7 @@ mswindows_xface_instantiate (Lisp_Object image_instance,
   if (emsg)
     signal_image_error_2 (emsg, data, Qimage);
 
-  bp = bits = (UChar_Binary *) alloca (PIXELS / 8);
+  bp = bits = (UChar_Binary *) ALLOCA (PIXELS / 8);
 
   /* the compface library exports char F[], which uses a single byte per
      pixel to represent a 48x48 bitmap.  Yuck. */
@@ -2804,7 +2804,7 @@ mswindows_widget_property (Lisp_Object image_instance, Lisp_Object prop)
   if (EQ (prop, Q_text))
     {
       Charcount tchar_len = qxeSendMessage (wnd, WM_GETTEXTLENGTH, 0, 0);
-      Extbyte *buf = (Extbyte *) alloca (XETCHAR_SIZE * (tchar_len + 1));
+      Extbyte *buf = (Extbyte *) ALLOCA (XETCHAR_SIZE * (tchar_len + 1));
 
       qxeSendMessage (wnd, WM_GETTEXT, (WPARAM)tchar_len + 1, (LPARAM) buf);
       return build_tstr_string (buf);
@@ -2841,7 +2841,7 @@ mswindows_combo_box_property (Lisp_Object image_instance, Lisp_Object prop)
       long item = qxeSendMessage (wnd, CB_GETCURSEL, 0, 0);
       Charcount tchar_len = qxeSendMessage (wnd, CB_GETLBTEXTLEN,
 					    (WPARAM)item, 0);
-      Extbyte *buf = (Extbyte *) alloca (XETCHAR_SIZE * (tchar_len + 1));
+      Extbyte *buf = (Extbyte *) ALLOCA (XETCHAR_SIZE * (tchar_len + 1));
       qxeSendMessage (wnd, CB_GETLBTEXT, (WPARAM)item, (LPARAM) buf);
       return build_tstr_string (buf);
     }

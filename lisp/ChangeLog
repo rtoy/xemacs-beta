@@ -1,3 +1,30 @@
+2002-05-23  Ben Wing  <ben@xemacs.org>
+
+	* files.el:
+	* files.el (recover-session):
+	* files.el (recover-session-finish): Removed.
+	* files.el (Recover-session-files-from-auto-save-list-file): New.
+	Recover-session improvements: Only show session files where some
+	files can actually be recovered, and show in chronological order.
+	
+	* subr.el:
+	* subr.el (truncate-string-to-width):
+	* subr.el (BUG): New.
+	* subr.el (truncate-string-with-continuation-dots): Removed.
+	* subr.el (plist-to-alist):
+	* menubar-items.el (default-menubar):
+	As promised to rms, the functionality in
+	truncate-string-with-continuation-dots has been merged into
+	truncate-string-to-width.  Change callers in menubar-items.el.
+	
+	* select.el:
+	* select.el (copy-primary-selection):
+	* select.el (kill-primary-selection):
+	* select.el (own-selection):
+	* select.el (cut-copy-clear-internal):
+	Document some of these funs better.  Fix problem where we were
+	doing own-clipboard twice.
+
 2002-05-20  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* files.el (revert-buffer):

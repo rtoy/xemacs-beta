@@ -655,7 +655,7 @@ EmacsXtCvtStringToXIMStyles (
 
   if (p->count_styles == 0)
     {   /* No valid styles? */
-      char *buf = (char *)alloca (strlen (fromVal->addr)
+      char *buf = (char *)ALLOCA (strlen (fromVal->addr)
 				  + strlen (DefaultXIMStyles)
 				  + 100);
       XrmValue new_from;

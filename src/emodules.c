@@ -333,7 +333,7 @@ emodules_load(const char *module, const char *modname, const char *modver)
 
   /* This is to get around the fact that build_string() is not declared
      as taking a const char * as an argument. I HATE compiler warnings. */
-  tmod = (char *)alloca (strlen (module) + 1);
+  tmod = (char *)ALLOCA (strlen (module) + 1);
   strcpy (tmod, module);
 
   GCPRO2(filename, foundname);
@@ -345,7 +345,7 @@ emodules_load(const char *module, const char *modname, const char *modver)
   if (fd < 0)
     signal_error (Qdll_error, "Cannot open dynamic module", filename);
 
-  soname = (char *)alloca (XSTRING_LENGTH (foundname) + 1);
+  soname = (char *)ALLOCA (XSTRING_LENGTH (foundname) + 1);
   strcpy (soname, (char *)XSTRING_DATA (foundname));
 
   dlhandle = dll_open (soname);
@@ -368,7 +368,7 @@ emodules_load(const char *module, const char *modname, const char *modver)
   if ((f == (const char **)0) || (*f == (const char *)0))
     signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_name'", Qunbound);
 
-  mname = (char *)alloca (strlen (*f) + 1);
+  mname = (char *)ALLOCA (strlen (*f) + 1);
   strcpy (mname, *f);
   if (mname[0] == '\0')
     signal_error (Qdll_error, "Invalid dynamic module: Empty value for `emodule_name'", Qunbound);
@@ -377,17 +377,17 @@ emodules_load(const char *module, const char *modname, const char *modver)
   if ((f == (const char **)0) || (*f == (const char *)0))
     signal_error (Qdll_error, "Missing symbol `emodule_version': Invalid dynamic module", Qunbound);
 
-  mver = (char *)alloca (strlen (*f) + 1);
+  mver = (char *)ALLOCA (strlen (*f) + 1);
   strcpy (mver, *f);
 
   f = (const char **)dll_variable (dlhandle, "emodule_title");
   if ((f == (const char **)0) || (*f == (const char *)0))
     signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_title'", Qunbound);
 
-  mtitle = (char *)alloca (strlen (*f) + 1);
+  mtitle = (char *)ALLOCA (strlen (*f) + 1);
   strcpy (mtitle, *f);
 
-  symname = (char *)alloca (strlen (mname) + 15);
+  symname = (char *)ALLOCA (strlen (mname) + 15);
 
   strcpy (symname, "modules_of_");
   strcat (symname, mname);

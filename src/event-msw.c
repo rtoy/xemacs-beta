@@ -1741,7 +1741,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
       if (!DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system))
 	{
 	  DWORD len = DdeGetData (hdata, NULL, 0, 0);
-	  LPBYTE extcmd = (LPBYTE) alloca (len+1);
+	  LPBYTE extcmd = (LPBYTE) ALLOCA (len+1);
 	  Intbyte *cmd;
 	  Intbyte *end;
 	  struct gcpro gcpro1, gcpro2;
@@ -3334,7 +3334,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	     * 3.10 of rfc1738 because they're missing the //<host>/ part and
 	     * because they may contain reserved characters. But that's OK -
 	     * they just need to be good enough to keep dragdrop.el happy. */
-	    fname_ext = (Extbyte *) alloca ((len + 1) * XETCHAR_SIZE);
+	    fname_ext = (Extbyte *) ALLOCA ((len + 1) * XETCHAR_SIZE);
 	    qxeDragQueryFile ((HDROP) wParam, i, fname_ext, len + 1);
 
 	    TO_INTERNAL_FORMAT (DATA, (fname_ext, len * XETCHAR_SIZE),

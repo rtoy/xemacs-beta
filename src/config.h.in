@@ -624,6 +624,8 @@ things are arranged in config.h.in.  In particular:
 #define XLIB_ILLEGAL_ACCESS 1
 #endif
 
+#define XEMACS_WANTS_C_ALLOCA
+
 /* alloca twiddling.
    Because we might be #including alloca.h here, feature test macros
    such as _XOPEN_SOURCE must be defined above. */
@@ -649,8 +651,12 @@ things are arranged in config.h.in.  In particular:
 /* AIX requires this before any "real" code in the translation unit.  */
 #pragma alloca
 #elif ! defined (alloca)
+#ifdef C_ALLOCA
+#define alloca xemacs_c_alloca
+#else
 void *alloca ();
-#endif
+#endif /* C_ALLOCA */
+#endif /* !defined (alloca) */
 #endif /* C code */
 
 /* The configuration script may define `opsysfile' to be the name of

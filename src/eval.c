@@ -3562,9 +3562,21 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
   Lisp_Object *fun_args = args + 1;
 
   QUIT;
-  if (need_to_garbage_collect)
-    /* Callers should gcpro lexpr args */
-    garbage_collect_1 ();
+
+  if (funcall_allocation_flag)
+    {
+      if (need_to_garbage_collect)
+	/* Callers should gcpro lexpr args */
+	garbage_collect_1 ();
+      if (need_to_check_c_alloca)
+	{
+	  if (++funcall_alloca_count >= MAX_FUNCALLS_BETWEEN_ALLOCA_CLEANUP)
+	    {
+	      xemacs_c_alloca (0);
+	      funcall_alloca_count = 0;
+	    }
+	}
+    }
 
   if (++lisp_eval_depth > max_lisp_eval_depth)
     {

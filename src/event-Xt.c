@@ -1083,7 +1083,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
       }
     case XLookupNone: return Qnil;
     case XBufferOverflow:
-      bufptr = (char *) alloca (len+1);
+      bufptr = (char *) ALLOCA (len+1);
       bufsiz = len+1;
       goto Lookup_String;
     }

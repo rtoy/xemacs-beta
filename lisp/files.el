@@ -3131,33 +3131,35 @@ Then you'll be asked about a number of files to recover."
   (if (null auto-save-list-file-prefix)
       (error
        "You set `auto-save-list-file-prefix' to disable making session files"))
-  (declare-fboundp (dired (concat auto-save-list-file-prefix "*")))
-  (goto-char (point-min))
-  (or (looking-at "Move to the session you want to recover,")
-      (let ((inhibit-read-only t))
-	(insert "Move to the session you want to recover,\n"
-		"then type C-c C-c to select it.\n\n"
-		"You can also delete some of these files;\n"
-		"type d on a line to mark that file for deletion.\n\n")))
-  (use-local-map (let ((map (make-sparse-keymap)))
-		   (set-keymap-parents map (list (current-local-map)))
-		   map))
-  (define-key (current-local-map) "\C-c\C-c" 'recover-session-finish))
+  (let* ((auto-save-list-dir
+	  (file-name-directory auto-save-list-file-prefix))
+	 (files (directory-files
+		 auto-save-list-dir
+		 t
+		 (concat "^" (regexp-quote (file-name-nondirectory
+					    auto-save-list-file-prefix)))))
+	 (files (sort (delete-if-not #'Recover-session-files-from-auto-save-list-file
+			       files) #'file-newer-than-file-p)))
+    (unless files
+      (error "No sessions can be recovered now"))
+    (declare-fboundp (dired (cons auto-save-list-dir files)))
+    (goto-char (point-min))
+    (or (looking-at "Move to the session you want to recover,")
+	(let ((inhibit-read-only t))
+	  (delete-matching-lines "^[ \t]*total.*$")
+	  (insert "Move to the session you want to recover,\n"
+		  "then type C-c C-c to select it.\n\n"
+		  "You can also delete some of these files;\n"
+		  "type d on a line to mark that file for deletion.\n\n")))
+    (use-local-map (let ((map (make-sparse-keymap)))
+		     (set-keymap-parents map (list (current-local-map)))
+		     map))
+    (define-key (current-local-map) "\C-c\C-c" 'recover-session-finish)))
 
-(defun recover-session-finish ()
-  "Choose one saved session to recover auto-save files from.
-This command is used in the special Dired buffer created by
-\\[recover-session]."
-  (interactive)
-  ;; Get the name of the session file to recover from.
-  (let ((file (declare-fboundp (dired-get-filename)))
-	files
+(defun Recover-session-files-from-auto-save-list-file (file)
+  "Return the auto save files in list file FILE that are current."
+  (let (files
 	(buffer (get-buffer-create " *recover*")))
-    ;; #### dired-do-flagged-delete in FSF.
-    ;; This version is for ange-ftp
-    ;;(dired-do-deletions t)
-    ;; This version is for efs
-    (declare-fboundp (dired-expunge-deletions))
     (unwind-protect
 	(save-excursion
 	  ;; Read in the auto-save-list file.
@@ -3202,22 +3204,37 @@ This command is used in the special Dired buffer created by
 	      ;; Ignore a file if its auto-save file does not exist now.
 	      (if (file-exists-p autofile)
 		  (setq files (cons thisfile files)))))
-	  (setq files (nreverse files))
-	  ;; The file contains a pair of line for each auto-saved buffer.
-	  ;; The first line of the pair contains the visited file name
-	  ;; or is empty if the buffer was not visiting a file.
-	  ;; The second line is the auto-save file name.
-	  (if files
-	      (map-y-or-n-p  "Recover %s? "
-			     (lambda (file)
-			       (condition-case nil
-				   (save-excursion (recover-file file))
-				 (error
-				  (lwarn 'recover 'alert "Failed to recover `%s'" file))))
-			     files
-			     '("file" "files" "recover"))
-	    (message "No files can be recovered from this session now")))
+	  (setq files (nreverse files)))
       (kill-buffer buffer))))
+
+(defun recover-session-finish ()
+  "Choose one saved session to recover auto-save files from.
+This command is used in the special Dired buffer created by
+\\[recover-session]."
+  (interactive)
+  ;; Get the name of the session file to recover from.
+  (let ((file (declare-fboundp (dired-get-filename))))
+    ;; #### dired-do-flagged-delete in FSF.
+    ;; This version is for ange-ftp
+    ;;(dired-do-deletions t)
+    ;; This version is for efs
+    (declare-fboundp (dired-expunge-deletions))
+    (let ((files (Recover-session-files-from-auto-save-list-file file)))
+      ;; The file contains a pair of line for each auto-saved buffer.
+      ;; The first line of the pair contains the visited file name
+      ;; or is empty if the buffer was not visiting a file.
+      ;; The second line is the auto-save file name.
+      (if files
+	  (map-y-or-n-p  "Recover %s? "
+			 (lambda (file)
+			   (condition-case nil
+			       (save-excursion (recover-file file))
+			     (error
+			      (lwarn 'recover 'alert
+				"Failed to recover `%s'" file))))
+			 files
+			 '("file" "files" "recover"))
+	(message "No files can be recovered from this session now")))))
 
 (defun kill-some-buffers (&optional list)
   "For each buffer in LIST, ask whether to kill it.

@@ -1062,7 +1062,7 @@ characters appearing in the day and month names may be incorrect.
 
   while (1)
     {
-      Extbyte *buf = (Extbyte *) alloca (size);
+      Extbyte *buf = (Extbyte *) ALLOCA (size);
       Extbyte *formext;
       *buf = 1;
 

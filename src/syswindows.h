@@ -861,7 +861,7 @@ do {									   \
     {									   \
       int ltwff2 =							   \
         cygwin_posix_to_win32_path_list_buf_size ((char *) ltwffp);	   \
-      pathout = (Intbyte *) alloca (ltwff2);				   \
+      pathout = (Intbyte *) ALLOCA (ltwff2);				   \
       cygwin_posix_to_win32_path_list ((char *) ltwffp, (char *) pathout); \
     }									   \
 } while (0)
@@ -878,7 +878,7 @@ do {									\
   Intbyte *wtlff1 = (path);						\
   int wtlff2 =								\
     cygwin_win32_to_posix_path_list_buf_size ((char *) wtlff1);		\
-  Intbyte *wtlff3 = (Intbyte *) alloca (wtlff2);			\
+  Intbyte *wtlff3 = (Intbyte *) ALLOCA (wtlff2);			\
   cygwin_win32_to_posix_path_list ((char *) wtlff1, (char *) wtlff3);	\
   (pathout) = wtlff3;							\
 } while (0)

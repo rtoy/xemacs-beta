@@ -361,7 +361,7 @@ Return nil if error occurs.
       return Qnil;
     }
   size = XSTRING_LENGTH (lname) > 1024 ? 1026 : XSTRING_LENGTH (lname) + 2;
-  envname = alloca (size);
+  envname = ALLOCA (size);
   strncpy (envname, (char *) XSTRING_DATA (lname), size-2);
   envname[size-2] = '\0';
   if (NILP (hname)) hostname = "";
@@ -370,7 +370,7 @@ Return nil if error occurs.
       CHECK_STRING (hname);
       size = XSTRING_LENGTH(hname) > 1024 ? 1025 : XSTRING_LENGTH(hname) + 1;
 
-      hostname = alloca (size);
+      hostname = ALLOCA (size);
       strncpy (hostname, (char *) XSTRING_DATA (hname), size-1);
       hostname[size-1] = '\0';
     }

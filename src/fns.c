@@ -617,6 +617,7 @@ concat (int nargs, Lisp_Object *args,
   Intbyte *string_result = 0;
   Intbyte *string_result_ptr = 0;
   struct gcpro gcpro1;
+  int sdep = specpdl_depth ();
 
   /* The modus operandi in Emacs is "caller gc-protects args".
      However, concat is called many times in Emacs on freshly
@@ -699,8 +700,11 @@ concat (int nargs, Lisp_Object *args,
       {
       case c_cons:
         if (total_length == 0)
-          /* In append, if all but last arg are nil, return last arg */
-          RETURN_UNGCPRO (last_tail);
+	  {
+	    unbind_to (sdep);
+	    /* In append, if all but last arg are nil, return last arg */
+	    RETURN_UNGCPRO (last_tail);
+	  }
         val = Fmake_list (make_int (total_length), Qnil);
         break;
       case c_vector:
@@ -720,7 +724,8 @@ concat (int nargs, Lisp_Object *args,
 	   realloc()ing in order to make the char fit properly.
 	   O(N^2) yuckage. */
         val = Qnil;
-	string_result = (Intbyte *) alloca (total_length * MAX_EMCHAR_LEN);
+	string_result =
+	  (Intbyte *) MALLOC_OR_ALLOCA (total_length * MAX_EMCHAR_LEN);
 	string_result_ptr = string_result;
         break;
       default:
@@ -838,6 +843,7 @@ concat (int nargs, Lisp_Object *args,
   if (!NILP (prev))
     XCDR (prev) = last_tail;
 
+  unbind_to (sdep);
   RETURN_UNGCPRO (val);
 }
 
@@ -3100,7 +3106,7 @@ mapcar1 (Elemcount leni, Lisp_Object *vals,
 	 results computed so far.
 
 	 if (vals == 0) we don't have any free space available and
-	 don't want to eat up any more stack with alloca().
+	 don't want to eat up any more stack with ALLOCA ().
 	 So we use EXTERNAL_LIST_LOOP_3_NO_DECLARE and GCPRO the tail. */
 
       if (vals)
@@ -3756,39 +3762,6 @@ base64_decode_1 (Lstream *istream, Intbyte *to, Charcount *ccptr)
 #undef ADVANCE_INPUT_IGNORE_NONBASE64
 #undef STORE_BYTE
 
-static Lisp_Object
-free_malloced_ptr (Lisp_Object unwind_obj)
-{
-  void *ptr = (void *)get_opaque_ptr (unwind_obj);
-  xfree (ptr);
-  free_opaque_ptr (unwind_obj);
-  return Qnil;
-}
-
-/* Don't use alloca for regions larger than this, lest we overflow
-   the stack.  */
-#define MAX_ALLOCA 65536
-
-/* We need to setup proper unwinding, because there is a number of
-   ways these functions can blow up, and we don't want to have memory
-   leaks in those cases.  */
-#define XMALLOC_OR_ALLOCA(ptr, len, type) do {			\
-  Elemcount XOA_len = (len);				\
-  if (XOA_len > MAX_ALLOCA)					\
-    {								\
-      ptr = xnew_array (type, XOA_len);				\
-      record_unwind_protect (free_malloced_ptr,			\
-			     make_opaque_ptr ((void *)ptr));	\
-    }								\
-  else								\
-    ptr = alloca_array (type, XOA_len);				\
-} while (0)
-
-#define XMALLOC_UNBIND(ptr, len, speccount) do {		\
-  if ((len) > MAX_ALLOCA)					\
-    unbind_to (speccount);				\
-} while (0)
-
 DEFUN ("base64-encode-region", Fbase64_encode_region, 2, 3, "r", /*
 Base64-encode the region between START and END.
 Return the length of the encoded text.
@@ -3803,7 +3776,7 @@ into shorter lines.
   struct buffer *buf = current_buffer;
   Charbpos begv, zv, old_pt = BUF_PT (buf);
   Lisp_Object input;
-  int speccount = specpdl_depth();
+  int speccount = specpdl_depth ();
 
   get_buffer_range_char (buf, start, end, &begv, &zv, 0);
   barf_if_buffer_read_only (buf, begv, zv);
@@ -3818,7 +3791,7 @@ into shorter lines.
   input = make_lisp_buffer_input_stream (buf, begv, zv, 0);
   /* We needn't multiply allength with MAX_EMCHAR_LEN because all the
      base64 characters will be single-byte.  */
-  XMALLOC_OR_ALLOCA (encoded, allength, Intbyte);
+  encoded = (Intbyte *) MALLOC_OR_ALLOCA (allength);
   encoded_length = base64_encode_1 (XLSTREAM (input), encoded,
 				    NILP (no_line_break));
   if (encoded_length > allength)
@@ -3828,7 +3801,7 @@ into shorter lines.
   /* Now we have encoded the region, so we insert the new contents
      and delete the old.  (Insert first in order to preserve markers.)  */
   buffer_insert_raw_string_1 (buf, begv, encoded, encoded_length, 0);
-  XMALLOC_UNBIND (encoded, allength, speccount);
+  unbind_to (speccount);
   buffer_delete_range (buf, begv + encoded_length, zv + encoded_length, 0);
 
   /* Simulate FSF Emacs implementation of this function: if point was
@@ -3860,14 +3833,14 @@ into shorter lines.
   allength += allength / MIME_LINE_LENGTH + 1 + 6;
 
   input = make_lisp_string_input_stream (string, 0, -1);
-  XMALLOC_OR_ALLOCA (encoded, allength, Intbyte);
+  encoded = (Intbyte *) MALLOC_OR_ALLOCA (allength);
   encoded_length = base64_encode_1 (XLSTREAM (input), encoded,
 				    NILP (no_line_break));
   if (encoded_length > allength)
     abort ();
   Lstream_delete (XLSTREAM (input));
   result = make_string (encoded, encoded_length);
-  XMALLOC_UNBIND (encoded, allength, speccount);
+  unbind_to (speccount);
   return result;
 }
 
@@ -3894,7 +3867,7 @@ Characters out of the base64 alphabet are ignored.
 
   input = make_lisp_buffer_input_stream (buf, begv, zv, 0);
   /* We need to allocate enough room for decoding the text. */
-  XMALLOC_OR_ALLOCA (decoded, length * MAX_EMCHAR_LEN, Intbyte);
+  decoded = (Intbyte *) MALLOC_OR_ALLOCA (length * MAX_EMCHAR_LEN);
   decoded_length = base64_decode_1 (XLSTREAM (input), decoded, &cc_decoded_length);
   if (decoded_length > length * MAX_EMCHAR_LEN)
     abort ();
@@ -3904,7 +3877,7 @@ Characters out of the base64 alphabet are ignored.
      and delete the old.  (Insert first in order to preserve markers.)  */
   BUF_SET_PT (buf, begv);
   buffer_insert_raw_string_1 (buf, begv, decoded, decoded_length, 0);
-  XMALLOC_UNBIND (decoded, length * MAX_EMCHAR_LEN, speccount);
+  unbind_to (speccount);
   buffer_delete_range (buf, begv + cc_decoded_length,
 		       zv + cc_decoded_length, 0);
 
@@ -3932,7 +3905,7 @@ Characters out of the base64 alphabet are ignored.
 
   length = string_char_length (string);
   /* We need to allocate enough room for decoding the text. */
-  XMALLOC_OR_ALLOCA (decoded, length * MAX_EMCHAR_LEN, Intbyte);
+  decoded = (Intbyte *) MALLOC_OR_ALLOCA (length * MAX_EMCHAR_LEN);
 
   input = make_lisp_string_input_stream (string, 0, -1);
   decoded_length = base64_decode_1 (XLSTREAM (input), decoded,
@@ -3942,7 +3915,7 @@ Characters out of the base64 alphabet are ignored.
   Lstream_delete (XLSTREAM (input));
 
   result = make_string (decoded, decoded_length);
-  XMALLOC_UNBIND (decoded, length * MAX_EMCHAR_LEN, speccount);
+  unbind_to (speccount);
   return result;
 }
 

@@ -1018,7 +1018,7 @@ static void
 setup_eol_coding_systems (Lisp_Object codesys)
 {
   int len = XSTRING_LENGTH (XSYMBOL (XCODING_SYSTEM_NAME (codesys))->name);
-  Intbyte *codesys_name = (Intbyte *) alloca (len + 7);
+  Intbyte *codesys_name = (Intbyte *) ALLOCA (len + 7);
   int mlen = -1;
   Intbyte *codesys_mnemonic = 0;
   Lisp_Object codesys_name_sym, sub_codesys;
@@ -1030,7 +1030,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
   if (STRINGP (XCODING_SYSTEM_MNEMONIC (codesys)))
     {
       mlen = XSTRING_LENGTH (XCODING_SYSTEM_MNEMONIC (codesys));
-      codesys_mnemonic = (Intbyte *) alloca (mlen + 7);
+      codesys_mnemonic = (Intbyte *) ALLOCA (mlen + 7);
       memcpy (codesys_mnemonic,
 	      XSTRING_DATA (XCODING_SYSTEM_MNEMONIC (codesys)), mlen);
     }

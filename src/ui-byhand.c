@@ -348,7 +348,7 @@ Returns a vector of LENGTH points representing the curve of CURVE.
       wtaerror ("Object is not a GtkCurve", curve);
     }
 
-  vector = (gfloat *) alloca (sizeof (gfloat) * XINT (length));
+  vector = (gfloat *) ALLOCA (sizeof (gfloat) * XINT (length));
 
   gtk_curve_get_vector (GTK_CURVE (XGTK_OBJECT (curve)->object), XINT (length), vector);
   lisp_vector = make_vector (XINT (length), Qnil);
@@ -380,7 +380,7 @@ Set the vector of points on CURVE to VECTOR.
       wtaerror ("Object is not a GtkCurve", curve);
     }
 
-  c_vector = (gfloat *) alloca (sizeof (gfloat) * vec_length);
+  c_vector = (gfloat *) ALLOCA (sizeof (gfloat) * vec_length);
 
   for (i = 0; i < vec_length; i++)
     {

@@ -802,6 +802,7 @@ TEMACS_OBJS= \
 	$(TEMACS_DUMP_OBJS)\
 	$(OUTDIR)\abbrev.obj \
 	$(OUTDIR)\alloc.obj \
+	$(OUTDIR)\alloca.obj \
 	$(OUTDIR)\blocktype.obj \
 	$(OUTDIR)\buffer.obj \
 	$(OUTDIR)\bytecode.obj \

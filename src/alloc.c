@@ -94,6 +94,10 @@ static Fixnum debug_allocation_backtrace_length;
 /* Number of bytes of consing done since the last gc */
 static EMACS_INT consing_since_gc;
 int need_to_garbage_collect;
+int need_to_check_c_alloca;
+int funcall_allocation_flag;
+Bytecount __temp_alloca_size__;
+Bytecount funcall_alloca_count;
 
 /* Determine now whether we need to garbage collect or not, to make
    Ffuncall() faster */
@@ -401,6 +405,10 @@ allocate_lisp_storage (Bytecount size)
      esp. as the object are not large -- large stuff like buffer text and
      redisplay structures and allocated separately. */
   memset (val, 0, size);
+
+  if (need_to_check_c_alloca)
+    xemacs_c_alloca (0);
+
   return val;
 }
 
@@ -1909,7 +1917,7 @@ sledgehammer_check_ascii_begin (Lisp_Object str)
 #endif
 
 /* You do NOT want to be calling this! (And if you do, you must call
-   XSET_STRING_ASCII_BEGIN() after modifying the string.) Use alloca()
+   XSET_STRING_ASCII_BEGIN() after modifying the string.) Use ALLOCA ()
    instead and then call make_string() like the rest of the world. */
 
 Lisp_Object
@@ -3999,6 +4007,12 @@ This may be helpful in debugging XEmacs's memory usage.
   return make_int (total_data_usage ());
 }
 
+void
+recompute_funcall_allocation_flag (void)
+{
+  funcall_allocation_flag = need_to_garbage_collect || need_to_check_c_alloca;
+}
+
 /* True if it's time to garbage collect now. */
 static void
 recompute_need_to_garbage_collect (void)
@@ -4014,6 +4028,7 @@ recompute_need_to_garbage_collect (void)
        gc_cons_percentage
 #endif /* 0 */
        );
+  recompute_funcall_allocation_flag ();
 }
 
 
@@ -4219,6 +4234,9 @@ common_init_alloc_once_early (void)
 
   consing_since_gc = 0;
   need_to_garbage_collect = always_gc;
+  need_to_check_c_alloca = 0;
+  funcall_allocation_flag = 0;
+  funcall_alloca_count = 0;
 
 #if 1
   gc_cons_threshold = 500000; /* XEmacs change */

@@ -589,7 +589,7 @@ sys_subshell (void)
   dir = Funhandled_file_name_directory (dir);
   dir = expand_and_dir_to_file (dir, Qnil);
 
-  str = (Intbyte *) alloca (XSTRING_LENGTH (dir) + 2);
+  str = (Intbyte *) ALLOCA (XSTRING_LENGTH (dir) + 2);
   len = XSTRING_LENGTH (dir);
   memcpy (str, XSTRING_DATA (dir), len);
   if (!IS_ANY_SEP (str[len - 1]))
@@ -2236,7 +2236,7 @@ init_system_name (void)
   Vsystem_name = build_string (uts.nodename);
 #else /* HAVE_GETHOSTNAME */
   int hostname_size = 256;
-  char *hostname = (char *) alloca (hostname_size);
+  char *hostname = (char *) ALLOCA (hostname_size);
 
   /* Try to get the host name; if the buffer is too short, try
      again.  Apparently, the only indication gethostname gives of
@@ -2252,7 +2252,7 @@ init_system_name (void)
 	break;
 
       hostname_size <<= 1;
-      hostname = (char *) alloca (hostname_size);
+      hostname = (char *) ALLOCA (hostname_size);
     }
 # if defined( HAVE_SOCKETS)
   /* Turn the hostname into the official, fully-qualified hostname.
@@ -2295,7 +2295,7 @@ init_system_name (void)
 		if (*alias)
 		  fqdn = *alias;
 	      }
-	    hostname = (char *) alloca (strlen (fqdn) + 1);
+	    hostname = (char *) ALLOCA (strlen (fqdn) + 1);
 	    strcpy (hostname, fqdn);
 	  }
 #  else /* !(HAVE_GETADDRINFO && HAVE_GETNAMEINFO) */
@@ -2312,7 +2312,7 @@ init_system_name (void)
 	hints.ai_protocol = 0;
 	if (!getaddrinfo (hostname, NULL, &hints, &res))
 	  {
-	    hostname = (char *) alloca (strlen (res->ai_canonname) + 1);
+	    hostname = (char *) ALLOCA (strlen (res->ai_canonname) + 1);
 	    strcpy (hostname, res->ai_canonname);
 
 	    freeaddrinfo (res);

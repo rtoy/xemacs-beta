@@ -438,7 +438,7 @@ msprinter_default_printer (void)
     return Qnil;
 
   /* this is destructive, but that's ok because the string is either in
-     name[] or alloca()ed */
+     name[] or ALLOCA ()ed */
   qxestrtok (nameint, ",");
 
   return build_intstring (nameint);
@@ -1249,7 +1249,7 @@ values.  Return value is nil if there are no printers installed.
   if (GetLastError () != ERROR_INSUFFICIENT_BUFFER)
     signal_enum_printer_error ();
 
-  data_buf = (BYTE *) alloca (bytes_needed);
+  data_buf = (BYTE *) ALLOCA (bytes_needed);
   ok = qxeEnumPrinters (enum_flags, NULL, enum_level, data_buf, bytes_needed,
 			&bytes_needed, &num_printers);
   if (!ok)

@@ -372,7 +372,7 @@ add_accel_and_to_external (Lisp_Object string)
   else
     {
       Bytecount namelen = XSTRING_LENGTH (string);
-      Intbyte *chars = (Intbyte *) alloca (namelen + 3);
+      Intbyte *chars = (Intbyte *) ALLOCA (namelen + 3);
       chars[0] = '%';
       chars[1] = '_';
       memcpy (chars + 2, name, namelen + 1);

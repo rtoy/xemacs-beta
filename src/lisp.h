@@ -939,8 +939,91 @@ char *xstrdup (const char *);
 #define xzero(lvalue) ((void) memset (&(lvalue), '\0', sizeof (lvalue)))
 #define xnew_array_and_zero(type, len) ((type *) xmalloc_and_zero ((len) * sizeof (type)))
 #define XREALLOC_ARRAY(ptr, type, len) ((void) (ptr = (type *) xrealloc (ptr, (len) * sizeof (type))))
-#define alloca_new(type) ((type *) alloca (sizeof (type)))
-#define alloca_array(type, len) ((type *) alloca ((len) * sizeof (type)))
+#define alloca_new(type) ((type *) ALLOCA (sizeof (type)))
+#define alloca_array(type, len) ((type *) ALLOCA ((len) * sizeof (type)))
+
+void *xemacs_c_alloca (unsigned int size);
+
+int record_unwind_protect_freeing (void *ptr);
+
+DECLARE_INLINE_HEADER (
+void *
+xmalloc_and_record_unwind (Bytecount size)
+)
+{
+  void *ptr = xmalloc (size);
+  record_unwind_protect_freeing (ptr);
+  return ptr;
+}
+
+/* Stack allocation.
+
+   Allocating excessively large blocks on the stack can cause crashes.
+   We provide MALLOC_OR_ALLOCA() below for places where it's likely that
+   large amounts will be allocated; it mallocs the block if it's too big.
+   Unfortunately, that requires a call to unbind_to() at the end of the
+   function, and it's not feasible to rewrite all calls to alloca() this
+   way.
+
+   Instead, we use the portable C alloca() substitute in alloca.c above a
+   certain size.  This actually uses malloc(), but checks the current stack
+   pointer to see if data from previous alloca() calls needs to be freed.
+   However, this can lead to large heap sizes -- especially since cleanup
+   can only happen in a parent function, and will never happen if (as will
+   often be the case) it's the same function in the same place in the code
+   that keeps tripping the alloca() limit.
+
+   So we set up a system to periodically force cleanup.  Currently we
+   do cleanup:
+
+   -- Only when there's C alloca() data, and then
+   -- Every stack alloca() or allocation of Lisp data, every call to
+      next_event_internal() [typically near the top of the stack],
+      or every 10th funcall
+
+   This should not be a big penalty because
+
+   (a) If there are few C alloca() chunks, checking them will be fast
+   (b) If not, we've allocated a huge amount of heap space (remember, each
+       chunk represents > 256K of heap), and we really want them gone
+*/
+
+/* We use a larger maximum when the choice is alloca() vs. the C alloca()
+   substitute than when the choice is vs. malloc(), because in the former
+   case, our alternative choice is less palatable because the memory may
+   not be freed for awhile. */
+
+#define MAX_ALLOCA_VS_C_ALLOCA 262144
+#define MAX_ALLOCA_VS_MALLOC 65536
+
+#define MAX_FUNCALLS_BETWEEN_ALLOCA_CLEANUP 10
+
+extern Bytecount __temp_alloca_size__;
+extern Bytecount funcall_alloca_count;
+
+/* Do stack or heap alloca() depending on size.
+
+NOTE: The use of a global temporary like this is unsafe if ALLOCA() occurs
+twice anywhere in the same expression; but that seems highly unlikely.  The
+alternative is to force all callers to declare a local temporary if the
+expression has side effects -- something easy to forget. */
+
+#define ALLOCA(size)					\
+  (__temp_alloca_size__ = (size),			\
+   __temp_alloca_size__  > MAX_ALLOCA_VS_C_ALLOCA ?	\
+   xemacs_c_alloca (__temp_alloca_size__) :		\
+   (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
+    alloca (__temp_alloca_size__)))
+
+/* WARNING: If you use this, you must unbind_to() at the end of your
+   function! */
+
+#define MALLOC_OR_ALLOCA(size)				\
+  (__temp_alloca_size__ = (size),			\
+   __temp_alloca_size__  > MAX_ALLOCA_VS_MALLOC ?	\
+   xmalloc_and_record_unwind (__temp_alloca_size__) :	\
+   (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
+    alloca (__temp_alloca_size__)))
 
 /* also generally useful if you want to avoid arbitrary size limits
    but don't need a full dynamic array.  Assumes that BASEVAR points
@@ -1929,7 +2012,7 @@ struct Lisp_String
 };
 typedef struct Lisp_String Lisp_String;
 
-#define MAX_STRING_ASCII_BEGIN ((2 << 21) - 1)
+#define MAX_STRING_ASCII_BEGIN ((1 << 21) - 1)
 
 DECLARE_LRECORD (string, Lisp_String);
 #define XSTRING(x) XRECORD (x, string, Lisp_String)
@@ -3121,7 +3204,10 @@ void free_marker (Lisp_Marker *);
 int object_dead_p (Lisp_Object);
 void mark_object (Lisp_Object obj);
 int marked_p (Lisp_Object obj);
+extern int funcall_allocation_flag;
 extern int need_to_garbage_collect;
+extern int need_to_check_c_alloca;
+void recompute_funcall_allocation_flag (void);
 
 #ifdef MEMORY_USAGE_STATS
 Bytecount malloced_storage_size (void *, Bytecount, struct overhead_stats *);
@@ -3591,7 +3677,6 @@ Lisp_Object unbind_to_1 (int, Lisp_Object);
 #define unbind_to(obj) unbind_to_1 (obj, Qnil)
 void specbind (Lisp_Object, Lisp_Object);
 int record_unwind_protect (Lisp_Object (*) (Lisp_Object), Lisp_Object);
-int record_unwind_protect_freeing (void *ptr);
 int record_unwind_protect_freeing_dynarr (void *ptr);
 int internal_bind_int (int *addr, int newval);
 int internal_bind_lisp_object (Lisp_Object *addr, Lisp_Object newval);

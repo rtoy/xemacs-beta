@@ -990,7 +990,7 @@ mswindows_string_to_color (const Intbyte *name)
     }
   else if (*name)	/* Can't be an empty string */
     {
-      Intbyte *nospaces = (Intbyte *) alloca (qxestrlen (name) + 1);
+      Intbyte *nospaces = (Intbyte *) ALLOCA (qxestrlen (name) + 1);
       Intbyte *c = nospaces;
       while (*name)
 	if (*name != ' ')
@@ -1729,7 +1729,7 @@ mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 
   int nsep = 0;
   Intbyte *ptr = (Intbyte *) XSTRING_DATA (f->name);
-  Intbyte *name = (Intbyte *) alloca (XSTRING_LENGTH (f->name) + 19);
+  Intbyte *name = (Intbyte *) ALLOCA (XSTRING_LENGTH (f->name) + 19);
 
   qxestrcpy (name, ptr);
 

@@ -1983,7 +1983,7 @@ wordify (Lisp_Object buffer, Lisp_Object string)
     /* The following value is an upper bound on the amount of storage we
        need.  In non-Mule, it is exact. */
     Intbyte *storage =
-      (Intbyte *) alloca (XSTRING_LENGTH (string) - punct_count +
+      (Intbyte *) ALLOCA (XSTRING_LENGTH (string) - punct_count +
                           5 * (word_count - 1) + 4);
     Intbyte *o = storage;
 
@@ -2968,7 +2968,7 @@ Return a regexp string which matches exactly STRING and nothing else.
 
   CHECK_STRING (string);
 
-  temp = (Intbyte *) alloca (XSTRING_LENGTH (string) * 2);
+  temp = (Intbyte *) ALLOCA (XSTRING_LENGTH (string) * 2);
 
   /* Now copy the data into the new string, inserting escapes. */
 

@@ -1,3 +1,123 @@
+2002-05-23  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (objs):
+	* Makefile.in.in (Emacs.ad.h):
+	* Makefile.in.in (alloca.o): Removed.
+	* Makefile.in.in (allocax.o): New.
+	Add alloca.o.  Ensure that alloca.s doesn't compile into alloca.o,
+	but allocax.o (not that it's currently used or anything.)
+
+	* EmacsFrame.c (Xt_StringToScrollBarPlacement):
+	* abbrev.c (abbrev_oblookup):
+	* alloc.c:
+	* alloc.c (allocate_lisp_storage):
+	* alloc.c (recompute_funcall_allocation_flag):
+	* alloc.c (recompute_need_to_garbage_collect):
+	* alloc.c (common_init_alloc_once_early):
+	* alloca.c:
+	* alloca.c (hdr):
+	* alloca.c (xemacs_c_alloca):
+	* callint.c (Fcall_interactively):
+	* callproc.c (Fold_call_process_internal):
+	* config.h.in:
+	* config.h.in (XEMACS_WANTS_C_ALLOCA):
+	* device-msw.c (msprinter_default_printer):
+	* device-msw.c (Fmswindows_printer_list):
+	* device-x.c (x_init_device):
+	* dired.c (Fdirectory_files):
+	* dired.c (file_name_completion_stat):
+	* doc.c (get_doc_string):
+	* editfns.c (Fformat_time_string):
+	* emacs.c (main_1):
+	* emodules.c (emodules_load):
+	* eval.c (Ffuncall):
+	* event-Xt.c (x_to_emacs_keysym):
+	* event-msw.c (mswindows_dde_callback):
+	* event-msw.c (mswindows_wnd_proc):
+	* event-stream.c (Fnext_event):
+	* file-coding.c (setup_eol_coding_systems):
+	* fileio.c:
+	* fileio.c (Fdirectory_file_name):
+	* fileio.c (if):
+	* fileio.c (Fsubstitute_in_file_name):
+	* fileio.c (Fencrypt_string):
+	* fileio.c (Fdecrypt_string):
+	* filelock.c (MAKE_LOCK_NAME):
+	* filelock.c (lock_file_1):
+	* filelock.c (current_lock_owner):
+	* filelock.c (lock_file):
+	* fns.c (concat):
+	* fns.c (mapcar1):
+	* fns.c (Fbase64_encode_region):
+	* fns.c (Fbase64_encode_string):
+	* fns.c (Fbase64_decode_region):
+	* fns.c (Fbase64_decode_string):
+	* glyphs-gtk.c (gtk_xface_instantiate):
+	* glyphs-msw.c (mswindows_xface_instantiate):
+	* glyphs-msw.c (mswindows_widget_property):
+	* glyphs-msw.c (mswindows_combo_box_property):
+	* glyphs-x.c (x_xface_instantiate):
+	* gui-x.c (add_accel_and_to_external):
+	* input-method-xlib.c (EmacsXtCvtStringToXIMStyles):
+	* intl-win32.c (Fmswindows_get_valid_keyboard_layouts):
+	* lisp.h:
+	* lisp.h (alloca_new):
+	* lisp.h (NOTE): New.
+	* lisp.h (MAX_STRING_ASCII_BEGIN):
+	* lread.c (Fload_internal):
+	* lread.c (locate_file_map_suffixes):
+	* menubar-gtk.c (menu_descriptor_to_widget_1):
+	* menubar-msw.c (mswindows_translate_menu_or_dialog_item):
+	* menubar.c (Fnormalize_menu_item_name):
+	* mule-wnnfns.c (Fwnn_open):
+	* nt.c (init_mswindows_environment):
+	* objects-msw.c (mswindows_string_to_color):
+	* objects-msw.c (mswindows_font_instance_truename):
+	* process-nt.c (nt_create_process):
+	* realpath.c (cygwin_readlink_and_correct_case):
+	* redisplay-gtk.c:
+	* redisplay-gtk.c (gtk_text_width):
+	* redisplay-gtk.c (gtk_output_string):
+	* redisplay-output.c:
+	* redisplay-output.c (compare_runes_2):
+	* redisplay-x.c:
+	* redisplay-x.c (x_text_width):
+	* redisplay-x.c (x_output_string):
+	* redisplay.c (generate_displayable_area):
+	* redisplay.c (regenerate_window):
+	* search.c (wordify):
+	* search.c (Fregexp_quote):
+	* select-msw.c (mswindows_own_selection):
+	* sysdep.c (sys_subshell):
+	* sysdep.c (init_system_name):
+	* syswindows.h (LOCAL_TO_WIN32_FILE_FORMAT):
+	* syswindows.h (WIN32_TO_LOCAL_FILE_FORMAT):
+	* text.c (convert_emchar_string_into_malloced_string):
+	* text.h:
+	* text.h (EI_ALLOC):
+	* text.h (eito_alloca):
+	* text.h (EI_CASECHANGE):
+	* text.h (DFC_ALLOCA_USE_CONVERTED_DATA):
+	* text.h (DFC_C_STRING_ALLOCA_USE_CONVERTED_DATA):
+	* text.h (GET_STRERROR):
+	* ui-byhand.c (Fgtk_curve_get_vector):
+	* ui-byhand.c (Fgtk_curve_set_vector):
+
+	Fix Raymond Toy's crash.  Repeat to self: 2^21 - 1 is NOT the
+	same as (2 << 21) - 1.
+
+	Fix crashes due to excessive alloca().  replace alloca() with
+	ALLOCA(), which calls the C alloca() [which uses xmalloc()]
+	when the size is too big.  Insert in various places calls to
+	try to flush the C alloca() stored info if there is any.
+
+	Add MALLOC_OR_ALLOCA(), for places that expect to be alloca()ing
+	large blocks.  This xmalloc()s when too large and records an
+	unwind-protect to free -- relying on the caller to unbind_to()
+	elsewhere in the function.  Use it in concat().
+
+	Use MALLOC instead of ALLOCA in select-msw.c.
+
 2002-05-21  Jonathan Harris  <jonathan@xemacs.org>
 
 	* device-msw.c (mswindows_handle_page_setup_dialog_box):

@@ -164,7 +164,7 @@ cygwin_readlink_and_correct_case (const Intbyte *name, Intbyte *buf,
       /* The file may exist, but isn't a symlink. Try to find the
          right name. */
       Intbyte *tmp =
-	(Intbyte *) alloca (cygwin_posix_to_win32_path_list_buf_size
+	(Intbyte *) ALLOCA (cygwin_posix_to_win32_path_list_buf_size
 			    ((char *) name));
       cygwin_posix_to_win32_path_list ((char *) name, (char *) tmp);
       n = mswindows_readlink_and_correct_case (tmp, buf, size);

@@ -103,7 +103,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   directory = Ffile_name_as_directory (directory);
   directorylen = XSTRING_LENGTH (directory);
 
-  statbuf = (Intbyte *) alloca (directorylen + MAXNAMLEN + 1);
+  statbuf = (Intbyte *) ALLOCA (directorylen + MAXNAMLEN + 1);
   memcpy (statbuf, XSTRING_DATA (directory), directorylen);
   statbuf_tail = statbuf + directorylen;
 
@@ -250,7 +250,7 @@ file_name_completion_stat (Lisp_Object directory, DIRENTRY *dp,
   Bytecount len = NAMLEN (dp);
   Bytecount pos = XSTRING_LENGTH (directory);
   int value;
-  Intbyte *fullname = (Intbyte *) alloca (len + pos + 2);
+  Intbyte *fullname = (Intbyte *) ALLOCA (len + pos + 2);
 
   memcpy (fullname, XSTRING_DATA (directory), pos);
   if (!IS_DIRECTORY_SEP (fullname[pos - 1]))

@@ -390,7 +390,7 @@ when reading the arguments.
 	goto lose;
     }
 
-  /* FSFmacs makes an alloca() copy of prompt_data here.
+  /* FSFmacs makes an ALLOCA () copy of prompt_data here.
      We're more intelligent about this and just reset prompt_data
      as necessary. */
   /* If either specs or prompt_data is set to a string, use it.  */

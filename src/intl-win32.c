@@ -1430,7 +1430,7 @@ The return value is a list of pairs of language id and layout id.
        ())
 {
   int num_layouts = GetKeyboardLayoutList (0, NULL);
-  HKL * layouts = (HKL *) alloca (num_layouts * sizeof (HKL));
+  HKL * layouts = (HKL *) ALLOCA (num_layouts * sizeof (HKL));
   Lisp_Object obj = Qnil;
 
   if (GetKeyboardLayoutList (num_layouts, layouts) == num_layouts)

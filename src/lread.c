@@ -581,7 +581,7 @@ encoding detection or end-of-line detection.
 	    }
 	}
 
-      foundstr = (Intbyte *) alloca (XSTRING_LENGTH (found) + 1);
+      foundstr = (Intbyte *) ALLOCA (XSTRING_LENGTH (found) + 1);
       qxestrcpy (foundstr, XSTRING_DATA (found));
       foundlen = qxestrlen (foundstr);
 
@@ -929,7 +929,7 @@ locate_file_map_suffixes (Lisp_Object filename, Lisp_Object suffixes,
     max = XSTRING_LENGTH (suffixes);
 
   fn_len = XSTRING_LENGTH (filename);
-  fn = (Intbyte *) alloca (max + fn_len + 1);
+  fn = (Intbyte *) ALLOCA (max + fn_len + 1);
   memcpy (fn, XSTRING_DATA (filename), fn_len);
 
   /* Loop over suffixes.  */

@@ -342,7 +342,7 @@ This removes %_'s (accelerator indications) and converts %% to %.
   end = string_char_length (name);
   name_data = XSTRING_DATA (name);
 
-  string_result = (Intbyte *) alloca (end * MAX_EMCHAR_LEN);
+  string_result = (Intbyte *) ALLOCA (end * MAX_EMCHAR_LEN);
   string_result_ptr = string_result;
   for (i = 0; i < end; i++)
     {

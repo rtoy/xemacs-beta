@@ -462,30 +462,27 @@ Write your filter like this:
       "----"
        ["D%_ynamic Abbrev Expand" dabbrev-expand]
        ["Define %_Global Abbrev for " add-global-abbrev
-	:suffix	(truncate-string-with-continuation-dots
-		 (abbrev-string-to-be-defined nil)
-		 40)]
+	:suffix	(truncate-string-to-width (abbrev-string-to-be-defined nil)
+					  40 nil nil t)]
       ("Other %_Abbrev"
        ["Dynamic Abbrev %_Complete" dabbrev-completion]
        ["Dynamic Abbrev Complete in %_All Buffers" (dabbrev-completion 16)]
        "----"
        "----"
        ["%_Define Global Abbrev for " add-global-abbrev
-	:suffix	(truncate-string-with-continuation-dots
-		 (abbrev-string-to-be-defined nil)
-		 40)]
+	:suffix	(truncate-string-to-width (abbrev-string-to-be-defined nil)
+					  40 nil nil t)]
        ["Define %_Mode-Specific Abbrev for " add-mode-abbrev
-	:suffix	(truncate-string-with-continuation-dots
-		 (abbrev-string-to-be-defined nil)
-		 40)]
+	:suffix	(truncate-string-to-width (abbrev-string-to-be-defined nil)
+					  40 nil nil t)]
        ["Define Global Ex%_pansion for " inverse-add-global-abbrev
-	:suffix	(truncate-string-with-continuation-dots
+	:suffix	(truncate-string-to-width
 		 (inverse-abbrev-string-to-be-defined 1)
-		 40)]
+		 40 nil nil t)]
        ["Define Mode-Specific Expa%_nsion for " inverse-add-mode-abbrev
-	:suffix	(truncate-string-with-continuation-dots
+	:suffix	(truncate-string-to-width
 		 (inverse-abbrev-string-to-be-defined 1)
-		 40)]
+		 40 nil nil t)]
        "---"
        ["E%_xpand Abbrev" expand-abbrev]
        ["Expand Abbrevs in Re%_gion" expand-region-abbrevs

@@ -480,7 +480,7 @@ init_mswindows_environment (void)
 		Charcount cch;
 
 		cch = qxeExpandEnvironmentStrings ((Extbyte *) lpval, buf, 0);
-		buf = (Extbyte *) alloca (cch * XETCHAR_SIZE);
+		buf = (Extbyte *) ALLOCA (cch * XETCHAR_SIZE);
 		qxeExpandEnvironmentStrings ((Extbyte *) lpval, buf, cch);
 		TSTR_TO_C_STRING (buf, envval);
 		eputenv (env_vars[i], envval);

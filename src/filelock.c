@@ -93,7 +93,7 @@ typedef struct
 /* Write the name of the lock file for FN into LFNAME.  Length will be
    that of FN plus two more for the leading `.#' plus one for the null.  */
 #define MAKE_LOCK_NAME(lock, file) \
-  (lock = (Intbyte *) alloca (XSTRING_LENGTH (file) + 2 + 1), \
+  (lock = (Intbyte *) ALLOCA (XSTRING_LENGTH (file) + 2 + 1), \
    fill_in_lock_file_name (lock, file))
 
 static void
@@ -138,7 +138,7 @@ lock_file_1 (Intbyte *lfname, int force)
     host_name = (Intbyte *) "";
 
   lock_info_str =
-    (Intbyte *) alloca (qxestrlen (user_name) + qxestrlen (host_name)
+    (Intbyte *) ALLOCA (qxestrlen (user_name) + qxestrlen (host_name)
 			+ LOCK_PID_MAX + 5);
 
   qxesprintf (lock_info_str, "%s@%s.%d", user_name, host_name, qxe_getpid ());
@@ -191,7 +191,7 @@ current_lock_owner (lock_info_type *owner, Intbyte *lfname)
      read it to determine return value, so allocate it.  */
   if (!owner)
     {
-      owner = (lock_info_type *) alloca (sizeof (lock_info_type));
+      owner = (lock_info_type *) ALLOCA (sizeof (lock_info_type));
       local_owner = 1;
     }
 
@@ -346,7 +346,7 @@ lock_file (Lisp_Object fn)
     goto done;
 
   /* Else consider breaking the lock */
-  locker = (Intbyte *) alloca (qxestrlen (lock_info.user)
+  locker = (Intbyte *) ALLOCA (qxestrlen (lock_info.user)
 			       + qxestrlen (lock_info.host)
 			       + LOCK_PID_MAX + 9);
   qxesprintf (locker, "%s@%s (pid %d)", lock_info.user, lock_info.host,

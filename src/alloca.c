@@ -26,36 +26,16 @@
 /* Authorship:
 
    FSF: A long time ago.
-   Very few changes for XEmacs.
+   Some cleanups for XEmacs.
  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-/* XEmacs: If compiling with GCC 2, this file is theoretically not needed.
-   However, alloca() is broken under GCC 2 on many machines: you
-   cannot put a call to alloca() as part of an argument to a function.
- */
-/* If someone has defined alloca as a macro,
-   there must be some other way alloca is supposed to work.  */
-/* XEmacs sometimes uses the C alloca even when a builtin alloca is available,
-   because it's safer. */
-#if defined (EMACS_WANTS_C_ALLOCA) || (!defined (alloca) && (!defined (__GNUC__) || __GNUC__ < 2))
-
 #ifdef emacs
-#ifdef static
-/* actually, only want this if static is defined as ""
-   -- this is for usg, in which emacs must undefine static
-   in order to make unexec workable
-   */
-#ifndef STACK_DIRECTION
-you
-lose
--- must know STACK_DIRECTION at compile-time
-#endif /* STACK_DIRECTION undefined */
-#endif /* static */
-#endif /* emacs */
+#include "lisp.h"
+#endif
 
 /* If your stack is a linked list of frames, you have to
    provide an "address metric" ADDRESS_FUNCTION macro.  */
@@ -67,46 +47,10 @@ long i00afunc ();
 #define ADDRESS_FUNCTION(arg) &(arg)
 #endif
 
-#ifdef __STDC__ /* XEmacs change */
 typedef void *pointer;
-#else
-typedef char *pointer;
-#endif
-
-/* XEmacs: With ERROR_CHECK_MALLOC defined, there is no xfree -- it's
-   a macro that does some stuff to try and trap invalid frees,
-   and then calls xfree_1 to actually do the work. */
-
-#ifdef emacs
-# ifdef ERROR_CHECK_MALLOC
-void xfree_1 (pointer);
-#  define xfree xfree_1
-# else
-void xfree (pointer);
-# endif
-#endif
 
 #ifndef NULL
 #define	NULL	0
-#endif
-
-/* Different portions of Emacs need to call different versions of
-   malloc.  The Emacs executable needs alloca to call xmalloc, because
-   ordinary malloc isn't protected from input signals.  On the other
-   hand, the utilities in lib-src need alloca to call malloc; some of
-   them are very simple, and don't have an xmalloc routine.
-
-   Non-Emacs programs expect this to call use xmalloc.
-
-   Callers below should use malloc.  */
-
-#ifdef emacs
-#define malloc xmalloc
-#endif
-#ifndef WIN32_NATIVE
-extern pointer malloc ();
-#else
-extern void *malloc();
 #endif
 
 /* Define STACK_DIRECTION if you know the direction of stack
@@ -161,13 +105,13 @@ find_stack_direction ()
    It is very important that sizeof(header) agree with malloc
    alignment chunk size.  The following default should work okay.  */
 
-#ifndef	ALIGN_SIZE
-#define	ALIGN_SIZE	sizeof(double)
+#ifndef	ALIGNMENT_SIZE
+#define	ALIGNMENT_SIZE	sizeof(double)
 #endif
 
 typedef union hdr
 {
-  char align[ALIGN_SIZE];	/* To force sizeof(header).  */
+  char align[ALIGNMENT_SIZE];	/* To force sizeof(header).  */
   struct
     {
       union hdr *next;		/* For chaining headers.  */
@@ -185,12 +129,7 @@ static header *last_alloca_header = NULL;	/* -> last alloca header.  */
    implementations of C, for example under Gould's UTX/32.  */
 
 pointer
-#ifdef EMACS_WANTS_C_ALLOCA
-c_alloca (size)
-#else
-alloca (size)
-#endif
-     unsigned size;
+xemacs_c_alloca (unsigned int size)
 {
   auto char probe;		/* Probes stack depth: */
   register char *depth = ADDRESS_FUNCTION (probe);
@@ -212,7 +151,11 @@ alloca (size)
 	{
 	  register header *np = hp->h.next;
 
-	  free ((pointer) hp);	/* Collect garbage.  */
+#ifdef emacs
+	  xfree (hp);		/* Collect garbage.  */
+#else
+	  free (hp);		/* Collect garbage.  */
+#endif
 
 	  hp = np;		/* -> next header.  */
 	}
@@ -222,13 +165,22 @@ alloca (size)
     last_alloca_header = hp;	/* -> last valid storage.  */
   }
 
+#ifdef emacs
+  need_to_check_c_alloca = size > 0 || last_alloca_header;
+  recompute_funcall_allocation_flag ();
+#endif
+
   if (size == 0)
     return NULL;		/* No allocation required.  */
 
   /* Allocate combined header + user data storage.  */
 
   {
+#ifdef emacs
+    register pointer new = xmalloc (sizeof (header) + size);
+#else
     register pointer new = malloc (sizeof (header) + size);
+#endif
     /* Address of header.  */
 
     ((header *) new)->h.next = last_alloca_header;
@@ -509,5 +461,3 @@ i00afunc (long address)
 
 #endif /* not CRAY2 */
 #endif /* CRAY */
-
-#endif /* complicated expression at top of file */

@@ -314,7 +314,7 @@ mswindows_own_selection (Lisp_Object selection_name,
   else
     /* we do NOT append a zero byte.  we don't know whether we're dealing
        with regular text, unicode text, binary data, etc. */
-    TO_EXTERNAL_FORMAT (LISP_STRING, data, ALLOCA, (src, size),
+    TO_EXTERNAL_FORMAT (LISP_STRING, data, MALLOC, (src, size),
 			Qbinary);
 
   /* Allocate memory */
@@ -324,6 +324,7 @@ mswindows_own_selection (Lisp_Object selection_name,
     {
       CloseClipboard ();
 
+      xfree (src);
       return Qnil;
     }
 
@@ -334,10 +335,12 @@ mswindows_own_selection (Lisp_Object selection_name,
       GlobalFree (hValue);
       CloseClipboard ();
 
+      xfree (src);
       return Qnil;
     }
 
   memcpy (dst, src, size);
+  xfree (src);
 
   GlobalUnlock (hValue);
 

@@ -1042,7 +1042,7 @@ convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
 					    Bytecount *len_out)
 {
   /* Damn zero-termination. */
-  Intbyte *str = (Intbyte *) alloca (nels * MAX_EMCHAR_LEN + 1);
+  Intbyte *str = (Intbyte *) ALLOCA (nels * MAX_EMCHAR_LEN + 1);
   Intbyte *strorig = str;
   Bytecount len;
 

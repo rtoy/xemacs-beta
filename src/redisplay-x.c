@@ -118,7 +118,7 @@ struct textual_run
    al.  (This means converting to one or two byte format, possibly
    tweaking the high bits, and possibly running a CCL program.) You
    must pre-allocate the space used and pass it in. (This is done so
-   you can alloca() the space.)  You need to allocate (2 * len) bytes
+   you can ALLOCA () the space.)  You need to allocate (2 * len) bytes
    of TEXT_STORAGE and (len * sizeof (struct textual_run)) bytes of
    RUN_STORAGE, where LEN is the length of the dynarr.
 
@@ -249,7 +249,7 @@ x_text_width (struct frame *f, struct face_cachel *cachel, const Emchar *str,
 	      Charcount len)
 {
   int width_so_far = 0;
-  unsigned char *text_storage = (unsigned char *) alloca (2 * len);
+  unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
   struct textual_run *runs = alloca_array (struct textual_run, len);
   int nruns;
   int i;
@@ -795,7 +795,7 @@ x_output_string (struct window *w, struct display_line *dl,
   GC bgc, gc;
   int height;
   int len = Dynarr_length (buf);
-  unsigned char *text_storage = (unsigned char *) alloca (2 * len);
+  unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
   struct textual_run *runs = alloca_array (struct textual_run, len);
   int nruns;
   int i;

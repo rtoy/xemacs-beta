@@ -644,7 +644,7 @@ x_init_device (struct device *d, Lisp_Object props)
       {
 	LISP_STRING_TO_EXTERNAL (Vx_app_defaults_directory, data_dir,
 				 Qfile_name);
-	path = (Extbyte *) alloca (strlen (data_dir) + strlen (locale) +
+	path = (Extbyte *) ALLOCA (strlen (data_dir) + strlen (locale) +
 				   7);
 	sprintf (path, "%s%s/Emacs", data_dir, locale);
 	if (!access (path, R_OK))
@@ -653,7 +653,7 @@ x_init_device (struct device *d, Lisp_Object props)
     else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
 	LISP_STRING_TO_EXTERNAL (Vdata_directory, data_dir, Qfile_name);
-	path = (Extbyte *) alloca (strlen (data_dir) + 13 + strlen (locale) +
+	path = (Extbyte *) ALLOCA (strlen (data_dir) + 13 + strlen (locale) +
 				   7);
 	sprintf (path, "%sapp-defaults/%s/Emacs", data_dir, locale);
 	if (!access (path, R_OK))

@@ -305,6 +305,86 @@ compare_runes (struct window *w, struct rune *crb, struct rune *drb)
     return 1;
 }
 
+#if 0
+void
+compare_runes_2 (struct window *w, struct rune *crb, struct rune *drb)
+{
+  if (crb->type == DGLYPH)
+    {
+      if (!EQ (crb->object.dglyph.glyph, drb->object.dglyph.glyph) ||
+	  !EQ (crb->object.dglyph.extent, drb->object.dglyph.extent) ||
+	  crb->object.dglyph.xoffset != drb->object.dglyph.xoffset ||
+	  crb->object.dglyph.yoffset != drb->object.dglyph.yoffset ||
+	  crb->object.dglyph.ascent != drb->object.dglyph.ascent ||
+	  crb->object.dglyph.descent != drb->object.dglyph.descent)
+	return 0;
+      /* Only check dirtiness if we know something has changed. */
+      else if (XGLYPH_DIRTYP (crb->object.dglyph.glyph) ||
+	       crb->findex != drb->findex)
+	{
+	  /* We need some way of telling redisplay_output_layout () that the
+	     only reason we are outputting it is because something has
+	     changed internally. That way we can optimize whether we need
+	     to clear the layout first and also only output the components
+	     that have changed. The image_instance dirty flag and
+	     display_hash are no good to us because these will invariably
+	     have been set anyway if the layout has changed. So it looks
+	     like we need yet another change flag that we can set here and
+	     then clear in redisplay_output_layout (). */
+	  Lisp_Object window, image;
+	  Lisp_Image_Instance* ii;
+	  window = wrap_window (w);
+	  image = glyph_image_instance (crb->object.dglyph.glyph,
+					window, crb->object.dglyph.matchspec,
+					ERROR_ME_DEBUG_WARN, 1);
+	  
+	  if (!IMAGE_INSTANCEP (image))
+	    return 0;
+	  ii = XIMAGE_INSTANCE (image);
+	  
+	  if (TEXT_IMAGE_INSTANCEP (image) &&
+	      (crb->findex != drb->findex ||
+	       WINDOW_FACE_CACHEL_DIRTY (w, drb->findex)))
+	    return 0;
+	  
+	  /* It is quite common for the two glyphs to be EQ since in many
+	     cases they will actually be the same object. This does not
+	     mean, however, that nothing has changed. We therefore need to
+	     check the current hash of the glyph against the last recorded
+	     display hash and the pending display items. See
+	     update_widget () ^^#### which function?. */
+	  if (image_instance_changed (image) ||
+	      crb->findex != drb->findex ||
+	      WINDOW_FACE_CACHEL_DIRTY (w, drb->findex))
+	    {
+	      /* Now we are going to re-output the glyph, but since
+		 this is for some internal reason not related to geometry
+		 changes, send a hint to the output routines that they can
+		 take some short cuts. This is most useful for
+		 layouts. This flag should get reset by the output
+		 routines.
+		 
+		 #### It is possible for us to get here when the
+		 face_cachel is dirty. I do not know what the implications
+		 of this are.*/
+	      IMAGE_INSTANCE_OPTIMIZE_OUTPUT (ii) = 1;
+	      return 0;
+	    }
+	  else
+	    return 1;
+	}
+      else if (crb->findex != drb->findex ||
+	       WINDOW_FACE_CACHEL_DIRTY (w, drb->findex))
+	return 0;
+      else
+	return 1;
+    }
+  else return !(memcmp (crb, drb, sizeof (*crb)) ||
+		WINDOW_FACE_CACHEL_DIRTY (w, drb->findex));
+}
+#endif
+
+
 /*****************************************************************************
  get_next_display_block
 

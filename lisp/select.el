@@ -3,6 +3,7 @@
 ;; Copyright (C) 1998 Andy Piper.
 ;; Copyright (C) 1990, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Sun Microsystems.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: extensions, dumped
@@ -46,13 +47,19 @@ When non-nil, any operation that sets the primary selection will also
 set the clipboard.")
 
 (defun copy-primary-selection ()
-  "Copy the selection to the Clipboard and the kill ring."
+  "Copy the selection to the Clipboard and the kill ring.
+This is similar to the command \\[kill-ring-save] except that it will
+save to the Clipboard even if that command doesn't, and it handles rectangles
+properly."
   (interactive)
   (and (console-on-window-system-p)
        (cut-copy-clear-internal 'copy)))
 
 (defun kill-primary-selection ()
-  "Copy the selection to the Clipboard and the kill ring, then delete it."
+  "Copy the selection to the Clipboard and the kill ring, then deleted it.
+This is similar to the command \\[kill-region] except that it will
+save to the Clipboard even if that command doesn't, and it handles rectangles
+properly."
   (interactive "*")
   (and (console-on-window-system-p)
        (cut-copy-clear-internal 'cut)))
@@ -130,7 +137,7 @@ and DATA specifies the contents.  DATA may be any lisp data type
 that can be converted using the function corresponding to DATA-TYPE
 in `select-converter-alist'---strings are the usual choice, but
 other types may be permissible depending on the DATA-TYPE parameter
-(if DATA-TYPE is not supplied, the default behavior is window
+\(if DATA-TYPE is not supplied, the default behavior is window
 system specific, but strings are always accepted).
 HOW-TO-ADD may be any of the following:
 
@@ -139,7 +146,7 @@ HOW-TO-ADD may be any of the following:
   'append or t        -- append data to existing DATA-TYPE data.
 
 DATA-TYPE is the window-system specific data type identifier
-(see `register-selection-data-type' for more information).
+\(see `register-selection-data-type' for more information).
 
 The selection may also be a cons of two markers pointing to the same buffer,
 or an overlay.  In these cases, the selection is considered to be the text
@@ -355,8 +362,7 @@ any more, because just about anything could be a valid selection now."
       (cond ((memq mode '(cut copy))
 	     (if rect-p
 		 (progn
-		   ;; why is killed-rectangle free?  Is it used somewhere?
-		   ;; should it be defvarred?
+		   ;; killed-rectangle is defvarred in rect.el
 		   (setq killed-rectangle (extract-rectangle s e))
 		   (kill-new (mapconcat #'identity killed-rectangle "\n")))
 	       (copy-region-as-kill s e))
@@ -365,6 +371,7 @@ any more, because just about anything could be a valid selection now."
 	     ;; some other way, but owning the clipboard twice in that case
 	     ;; wouldn't actually hurt anything.
 	     (or (and (consp kill-hooks) (memq 'own-clipboard kill-hooks))
+		 (eq 'own-clipboard interprogram-cut-function)
 		 (own-clipboard (car kill-ring)))))
       (cond ((memq mode '(cut clear))
 	     (if rect-p
