@@ -22,10 +22,12 @@
 SHELL    = /bin/sh
 MAKEINFO = makeinfo
 TEXI2DVI = texi2dvi
+TEXI2HTML = texi2html -verbose -split chapter
+
 RM = rm -f
 
 .SUFFIXES:
-.SUFFIXES: .info .texi .dvi
+.SUFFIXES: .html .info .texi .dvi
 
 RECURSIVE_MAKE = $(MAKE) $(MFLAGS) MAKEINFO='$(MAKEINFO)' TEXI2DVI='$(TEXI2DVI)'
 
@@ -34,6 +36,7 @@ all : info
 # Ughhh!  The things we do to have portable makefiles...
 
 INFODIR = ../info
+HTMLDIR = ../html
 
 info_files = \
 	$(INFODIR)/cl.info \
@@ -51,6 +54,23 @@ info_files = \
 	$(INFODIR)/widget.info \
 	$(INFODIR)/xemacs.info \
 	$(INFODIR)/xemacs-faq.info
+
+html_files = \
+	$(HTMLDIR)/cl.html \
+	$(HTMLDIR)/custom.html \
+	$(HTMLDIR)/emodules.html \
+	$(HTMLDIR)/external-widget.html \
+	$(HTMLDIR)/info.html \
+	$(HTMLDIR)/lispref.html \
+	$(HTMLDIR)/internals.html \
+	$(HTMLDIR)/new-users-guide.html \
+	$(HTMLDIR)/standards.html \
+	$(HTMLDIR)/term.html \
+	$(HTMLDIR)/termcap.html \
+	$(HTMLDIR)/texinfo.html \
+	$(HTMLDIR)/widget.html \
+	$(HTMLDIR)/xemacs.html \
+	$(HTMLDIR)/xemacs-faq.html
 
 dvi_files = \
 	cl.dvi \
@@ -263,6 +283,7 @@ new-users-guide.info : $(INFODIR)/new-users-guide.info
 .PHONY : xemacs lispref internals new-users-guide info dvi
 
 info : $(info_files)
+html : $(html_files)
 
 # tm: FRC.tm
 #	cd ./tm && $(RECURSIVE_MAKE)
@@ -299,3 +320,71 @@ distclean: clean
 realclean: distclean
 extraclean: distclean
 	$(RM) *~ \#* */*~ */\#*
+
+############################################################################
+
+$(HTMLDIR)/cl.html : cl.texi
+	$(TEXI2HTML) -subdir $(HTMLDIR) cl.texi
+
+$(HTMLDIR)/custom.html : custom.texi
+	$(TEXI2HTML) -subdir $(HTMLDIR) custom.texi
+
+$(HTMLDIR)/emodules.html : emodules.texi
+	$(TEXI2HTML) -subdir $(HTMLDIR) emodules.texi
+
+$(HTMLDIR)/external-widget.html : external-widget.texi
+	$(TEXI2HTML) -subdir $(HTMLDIR) external-widget.texi
+
+$(HTMLDIR)/info.html : info.texi
+	$(TEXI2HTML) -subdir $(HTMLDIR) info.texi
+
+$(HTMLDIR)/standards.html : standards.texi
+	$(TEXI2HTML) -subdir $(HTMLDIR) standards.texi
+
+$(HTMLDIR)/term.html : term.texi
+	$(TEXI2HTML) -subdir $(HTMLDIR) term.texi
+
+$(HTMLDIR)/termcap.html : termcap.texi
+	$(TEXI2HTML) -subdir $(HTMLDIR) termcap.texi
+
+$(HTMLDIR)/texinfo.html : texinfo.texi
+	$(TEXI2HTML) -subdir $(HTMLDIR) texinfo.texi
+
+$(HTMLDIR)/widget.html : widget.texi
+	$(TEXI2HTML) -subdir $(HTMLDIR) widget.texi
+
+$(HTMLDIR)/xemacs-faq.html : xemacs-faq.texi
+	$(TEXI2HTML) -top_file xemacs-faq_1.html -subdir $(HTMLDIR) xemacs-faq.texi
+
+# Manuals with their own subdirectory
+$(HTMLDIR)/xemacs.html : $(xemacs-srcs)
+	$(TEXI2HTML) -subdir $(HTMLDIR) xemacs/xemacs.texi
+
+$(HTMLDIR)/lispref.html : $(lispref-srcs)
+	$(TEXI2HTML) -subdir $(HTMLDIR) lispref/lispref.texi
+
+$(HTMLDIR)/internals.html : $(internals-srcs)
+	$(TEXI2HTML) -subdir $(HTMLDIR) internals/internals.texi
+
+$(HTMLDIR)/new-users-guide.html : $(new-users-guide-srcs)
+	$(TEXI2HTML) -subdir $(HTMLDIR) new-users-guide/new-users-guide.texi
+
+# $(HTMLDIR)/w3.html : w3.texi
+#	$(TEXI2HTML) -subdir $(HTMLDIR) w3.texi
+
+# EMACS = ../src/xemacs
+# EMACSFLAGS = -batch -q -no-site-file
+
+# $(HTMLDIR)/vm.html : vm.texi
+#	-$(EMACS) $(EMACSFLAGS) -insert vm.texi -l texinfmt \
+#		-f texinfo-format-buffer -f save-buffer
+#	-mv vm.html* $(HTMLDIR)/.
+
+# special = # $(HTMLDIR)/vm.html $(HTMLDIR)/texinfo.html
+
+xemacs : $(HTMLDIR)/xemacs.html
+lispref : $(HTMLDIR)/lispref.html
+internals : $(HTMLDIR)/internals.html
+new-users-guide.html : $(HTMLDIR)/new-users-guide.html
+
+html : $(html_files)
