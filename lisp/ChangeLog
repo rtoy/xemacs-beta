@@ -1,3 +1,9 @@
+2004-06-10  Adrian Aichner  <adrian@xemacs.org>
+
+	* cus-edit.el (custom-save-variables): Fix bug introduced by
+	nconc/make-list removal.
+	* cus-edit.el (custom-save-faces): Ditto.
+
 2004-06-07  Adrian Aichner  <adrian@xemacs.org>
 
 	* cus-edit.el (custom-browse-visibility): Typo fix.

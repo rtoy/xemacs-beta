@@ -3477,8 +3477,7 @@ SYMBOL must be a customized variable."
         (lambda (symbol)
           (when (custom-save-variable-p symbol)
             (push symbol sorted-list))))
-       (setq sorted-list (sort (cdr sorted-list) 'string<))
-
+       (setq sorted-list (sort sorted-list 'string<))
        (unless (bolp)
          (princ "\n"))
        (princ "(custom-set-variables")
@@ -3549,8 +3548,7 @@ SYMBOL must be a customized face."
        (lambda (symbol)
          (when (custom-save-face-p symbol)
            (push symbol sorted-list))))
-      (setq sorted-list (sort (cdr sorted-list) 'string<))
-      
+      (setq sorted-list (sort sorted-list 'string<))
       (unless (bolp)
 	(princ "\n"))
       (princ "(custom-set-faces")
