@@ -1,3 +1,8 @@
+2003-12-15  Steve Youngs  <sryoungs@bigpond.net.au>
+
+	* lispref/customize.texi (Defining New Types): New node.
+	From Per Abrahamsen <abraham@dina.kvl.dk>
+
 2003-10-16  Ilya N. Golubev  <gin@mo.msk.ru>
 
 	* lispref/tips.texi (Comment Tips): Typo fix.

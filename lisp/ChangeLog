@@ -1,5 +1,22 @@
 2003-12-15  Steve Youngs  <sryoungs@bigpond.net.au>
 
+	* wid-edit.el (lazy): New.
+	(widget-child-value-get): New.
+	(widget-child-value-inline): New.
+	(widget-child-validate): New.
+	(widget-type-value-create): New.
+	(widget-type-default-get): New.
+	(widget-type-match): New.
+
+	This adds a "lazy" widget to allow the definition of recursive
+	datatypes for customize.  The composite widgets expand their
+	subtypes immediately, which cause obvious problems for recursive
+	datatypes.  The "lazy" will only expand them when needed, hense
+	the name.
+	From Per Abrahamsen <abraham@dina.kvl.dk>
+
+2003-12-15  Steve Youngs  <sryoungs@bigpond.net.au>
+
 	* package-get.el (package-get-list-packages-where): New.  A
 	function that allows searching for groups of packages.  For
 	example, find all packages that require the fsf-compat package.
