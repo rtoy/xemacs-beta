@@ -1,7 +1,7 @@
 ;;; win32-native.el --- Lisp routines when running on native MS Windows.
 
 ;; Copyright (C) 1994 Free Software Foundation, Inc.
-;; Copyright (C) 2000 Ben Wing.
+;; Copyright (C) 2000, 2004 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: mouse, dumped
@@ -81,9 +81,125 @@ to pass a command in.")
   (if (mswindows-system-shell-p shell-file-name)
       (setq shell-command-switch "/c")))
 
-;;----------------------------------------------------------------------
-;; Quoting process args
-;;--------------------
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                                                        ;;
+;;                          Quoting process args                          ;;
+;;                                                                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Converting a bunch of args into a single command line or vice-versa is
+;; extremely hairy due to the quoting conventions needed.  There is in fact
+;; code that does this in the CRT, and perhaps we should look at it and
+;; follow the logic.
+
+;; Here is some further info from MSDN, discovered *AFTER* the actual code
+;; below was written, and hence the code may not follow what it should.
+;; !!#### But this is definitely something to be fixed up.  The article is
+;; called "Parsing C++ Command-Line Arguments", Visual Tools and Langs ->
+;; Visual Studio -> Visual C++ -> Reference -> C/C++ Lang and ... -> C++
+;; Lang Ref -> Basic Concepts -> Startup and Termination -> Program
+;; Startup: the main Function.
+
+;; Microsoft Specific 
+;; 
+;; Microsoft C/C++ startup code uses the following rules when interpreting
+;; arguments given on the operating system command line:
+;; 
+;; Arguments are delimited by white space, which is either a space or a tab.
+;; 
+;; The caret character (^) is not recognized as an escape character or
+;; delimiter. The character is handled completely by the command-line parser
+;; in the operating system before being passed to the argv array in the
+;; program.
+;; 
+;; A string surrounded by double quotation marks ("string") is interpreted as
+;; a single argument, regardless of white space contained within. A quoted
+;; string can be embedded in an argument.
+;; 
+;; A double quotation mark preceded by a backslash ( \") is interpreted as a
+;; literal double quotation mark character (").
+;; 
+;; Backslashes are interpreted literally, unless they immediately precede a
+;; double quotation mark.
+;; 
+;; If an even number of backslashes is followed by a double quotation mark,
+;; one backslash is placed in the argv array for every pair of backslashes,
+;; and the double quotation mark is interpreted as a string delimiter.
+;; 
+;; If an odd number of backslashes is followed by a double quotation mark, one
+;; backslash is placed in the argv array for every pair of backslashes, and
+;; the double quotation mark is "escaped" by the remaining backslash,
+;; causing a literal double quotation mark (") to be placed in argv.
+;; 
+;; The following program demonstrates how command-line arguments are passed:
+;; 
+;; include <iostream.h>
+;; 
+;; void main( int argc,      // Number of strings in array argv
+;;           char *argv[],   // Array of command-line argument strings
+;;           char *envp[] )  // Array of environment variable strings
+;; {
+;;     int count;
+;; 
+;;     // Display each command-line argument.
+;;     cout << "\nCommand-line arguments:\n";
+;;     for( count = 0; count < argc; count++ )
+;;          cout << "  argv[" << count << "]   "
+;;                 << argv[count] << "\n";
+;; }
+;; 
+;; Table 2.2 shows example input and expected output, demonstrating the rules
+;; in the preceding list.
+;; 
+;; Table 2.2
+;; 
+;; Command-Line Input argv[1] argv[2] argv[3] 
+;; ------------------------------------------
+;; "abc" d e          abc     d       e
+;;  
+;; a\\\b d"e f"g h    a\\\b   de fg   h
+;;  
+;; a\\\"b c d         a\"b    c       d
+;;  
+;; a\\\\"b c" d e     a\\b c  d       e
+;;  
+;; END Microsoft Specific
+;; 
+;; note: for pulling apart an arg:
+;; each arg consists of either
+
+;; something surrounded by single quotes
+
+;; or
+
+;; one or more of
+
+;; 1. a non-ws, non-" char
+;; 2. a section of double-quoted text
+;; 3. a section of double-quoted text with end-of-string instead of the final
+;; quote.
+
+;; 2 and 3 get handled together.
+
+;; quoted text is one of
+;;
+;; 1. quote + even number of backslashes + quote, or
+;; 2. quote + non-greedy anything + non-backslash + even number of
+;;    backslashes + quote.
+
+;; we need to separate the two because we unfortunately have no non-greedy
+;; ? operator. (urk! we actually do, but it wasn't documented.) --ben
+
+;; if you want to mess around, keep this test case in mind:
+
+;; this string
+
+;; " as'f 'FOO BAR' '' \"\" \"asdf \\ \\\" \\\\\\\" asdfasdf\\\\\" foo\" "
+
+;; should tokenize into this:
+
+;; (" " "as'f" " " "'FOO BAR' " "'' " "\"\"" " " "\"asdf \\ \\\" \\\\\\\" asdfasdf\\\\\"" " " "foo" "\" ")
+
 
 (defvar debug-mswindows-process-command-lines nil
   "If non-nil, output debug information about the command lines constructed.
@@ -130,41 +246,6 @@ to the process appear to be getting passed incorrectly.")
 ;; which emulate the same behavior.
 (defun mswindows-construct-vc-runtime-command-line (program args)
   (mapconcat #'mswindows-quote-one-vc-runtime-arg args " "))
-
-;; note: for pulling apart an arg:
-;; each arg consists of either
-
-;; something surrounded by single quotes
-
-;; or
-
-;; one or more of
-
-;; 1. a non-ws, non-" char
-;; 2. a section of double-quoted text
-;; 3. a section of double-quoted text with end-of-string instead of the final
-;; quote.
-
-;; 2 and 3 get handled together.
-
-;; quoted text is one of
-;;
-;; 1. quote + even number of backslashes + quote, or
-;; 2. quote + non-greedy anything + non-backslash + even number of
-;;    backslashes + quote.
-
-;; we need to separate the two because we unfortunately have no non-greedy
-;; ? operator. (urk! we actually do, but it wasn't documented.) --ben
-
-;; if you want to mess around, keep this test case in mind:
-
-;; this string
-
-;; " as'f 'FOO BAR' '' \"\" \"asdf \\ \\\" \\\\\\\" asdfasdf\\\\\" foo\" "
-
-;; should tokenize into this:
-
-;; (" " "as'f" " " "'FOO BAR' " "'' " "\"\"" " " "\"asdf \\ \\\" \\\\\\\" asdfasdf\\\\\"" " " "foo" "\" ")
 
 ;; this regexp actually separates the arg into individual args, like a
 ;; shell (such as sh) does, but using vc-runtime rules.  it's easy to

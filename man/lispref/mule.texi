@@ -1787,13 +1787,13 @@ CCL_EOF_BLOCK := CCL_BLOCK
 CCL_BLOCK :=
         STATEMENT | (STATEMENT [STATEMENT ...])
 STATEMENT :=
-        SET | IF | BRANCH | LOOP | REPEAT | BREAK | READ | WRITE
-        | CALL | END
+        SET | IF | BRANCH | LOOP | REPEAT | BREAK | READ | WRITE  | CALL
+	| TRANSLATE | MAP | END
 
 SET :=
         (REG = EXPRESSION)
         | (REG ASSIGNMENT_OPERATOR EXPRESSION)
-        | integer
+        | INT-OR-CHAR
 
 EXPRESSION := ARG | (EXPRESSION OPERATOR ARG)
 
@@ -1803,28 +1803,30 @@ LOOP := (loop STATEMENT [STATEMENT ...])
 BREAK := (break)
 REPEAT :=
         (repeat)
-        | (write-repeat [REG | integer | string])
-        | (write-read-repeat REG [integer | ARRAY])
+        | (write-repeat [REG | INT-OR-CHAR | string])
+        | (write-read-repeat REG [INT-OR-CHAR | ARRAY])
 READ :=
         (read REG ...)
-        | (read-if (REG OPERATOR ARG) CCL_BLOCK CCL_BLOCK)
+        | (read-if (REG OPERATOR ARG) CCL_BLOCK [CCL_BLOCK])
         | (read-branch REG CCL_BLOCK [CCL_BLOCK ...])
 WRITE :=
         (write REG ...)
         | (write EXPRESSION)
-        | (write integer) | (write string) | (write REG ARRAY)
+        | (write INT-OR-CHAR) | (write string) | (write REG ARRAY)
         | string
 CALL := (call ccl-program-name)
 END := (end)
 
 REG := r0 | r1 | r2 | r3 | r4 | r5 | r6 | r7
-ARG := REG | integer
+ARG := REG | INT-OR-CHAR
 OPERATOR :=
         + | - | * | / | % | & | '|' | ^ | << | >> | <8 | >8 | //
         | < | > | == | <= | >= | != | de-sjis | en-sjis
 ASSIGNMENT_OPERATOR :=
         += | -= | *= | /= | %= | &= | '|=' | ^= | <<= | >>=
-ARRAY := '[' integer ... ']'
+ARRAY := '[' INT-OR-CHAR ... ']'
+INT-OR-CHAR := integer | character
+
 @end format
 
 @node    CCL Statements, CCL Expressions, CCL Syntax, CCL
@@ -1856,7 +1858,7 @@ reads one byte (a C char) from the input into each register in turn.
   The @dfn{write} takes several forms.  In the form @samp{(write @var{reg}
 ...)} it takes one or more registers as arguments and writes each in
 turn to the output.  The integer in a register (interpreted as an
-Emchar) is encoded to multibyte form (ie, Bufbytes) and written to the
+Ichar) is encoded to multibyte form (ie, Ibytes) and written to the
 current output buffer.  If it is less than 256, it is written as is.
 The forms @samp{(write @var{expression})} and @samp{(write
 @var{integer})} are treated analogously.  The form @samp{(write

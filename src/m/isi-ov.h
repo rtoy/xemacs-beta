@@ -71,7 +71,6 @@ NOTE-END */
 /* A few changes for the newer systems.  */
 
 #ifdef BSD4_3
-#define HAVE_ALLOCA
 /* The following line affects crt0.c.  */
 #undef m68k
 

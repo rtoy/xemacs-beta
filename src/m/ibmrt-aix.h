@@ -56,16 +56,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define A_TEXT_SEEK(HDR) (N_TXTOFF (hdr) + sizeof (hdr))
 
-/* Define C_ALLOCA if this machine does not support a true alloca
-   and the one written in C should be used instead.
-   Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used.
-   Define neither one if an assembler-language alloca
-   in the file alloca.s should be used.  */
-
-#define C_ALLOCA
-#define STACK_DIRECTION -1 /* tell alloca.c which way it grows */
-
 /* AIX has PTYs, so define here, along with macros needed to make them work. */
 
 #define PTY_ITERATION for (i=0; i<256; i++)

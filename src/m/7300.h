@@ -51,13 +51,9 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef __GNUC__
 
-#define HAVE_ALLOCA
-
 #else
 
 #define SWITCH_ENUM_BUG
-#define C_ALLOCA
-#define STACK_DIRECTION -1
 
 #endif
 

@@ -1,3 +1,310 @@
+2004-11-04  Ben Wing  <ben@xemacs.org>
+
+	* lispref/mule.texi (CCL Syntax):
+	* lispref/mule.texi (INT-OR-CHAR): New.
+	* lispref/mule.texi (CCL Statements):
+	Update CCL docs.
+
+2004-11-04  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Top):
+	* internals/internals.texi (NOTE): New.
+	* internals/internals.texi (list-to-texinfo): New.
+	* internals/internals.texi (remove-spacing): New.
+	* internals/internals.texi (table-to-texinfo): New.
+	* internals/internals.texi (convert-text-to-texinfo): New.
+	* internals/internals.texi ('make-future): New.
+	* internals/internals.texi ('make-discussion): New.
+	* internals/internals.texi ('make-old-future): New.
+	* internals/internals.texi ('make-section): New.
+	* internals/internals.texi ('make-subsection): New.
+	* internals/internals.texi (Introduction):
+	* internals/internals.texi (divisions): New.
+	* internals/internals.texi (Authorship of XEmacs):
+	* internals/internals.texi (XEmacs):
+	* internals/internals.texi (The XEmacs Split):
+	* internals/internals.texi (Author): New.
+	* internals/internals.texi (XEmacs from the Outside):
+	* internals/internals.texi (The Lisp Language):
+	* internals/internals.texi (XEmacs from the Perspective of Building):
+	* internals/internals.texi (Build-Time Dependencies):
+	* internals/internals.texi (The Modules of XEmacs):
+	* internals/internals.texi (A Summary of the Various XEmacs Modules):
+	* internals/internals.texi (ways): Removed.
+	* internals/internals.texi (Low-Level Modules):
+	* internals/internals.texi (Basic Lisp Modules):
+	* internals/internals.texi (Modules for Standard Editing Operations):
+	* internals/internals.texi (files): Removed.
+	* internals/internals.texi (Modules for Interfacing with the File System):
+	* internals/internals.texi (some_variable): Removed.
+	* internals/internals.texi (Modules for Other Aspects of the Lisp Interpreter and Object System):
+	* internals/internals.texi (Modules for Interfacing with the Operating System):
+	* internals/internals.texi (character): Removed.
+	* internals/internals.texi (Major Textual Changes):
+	* internals/internals.texi (Great Integral Type Renaming):
+	* internals/internals.texi (commands): Removed.
+	* internals/internals.texi (Text/Char Type Renaming):
+	* internals/internals.texi (pattern): Removed.
+	* internals/internals.texi (Rules When Writing New C Code):
+	* internals/internals.texi (A Reader's Guide to XEmacs Coding Conventions):
+	* internals/internals.texi (General Coding Rules):
+	* internals/internals.texi (examples): Removed.
+	* internals/internals.texi (Object-Oriented Techniques for C):
+	* internals/internals.texi (Writing Lisp Primitives):
+	* internals/internals.texi (Writing Good Comments):
+	* internals/internals.texi (Adding Global Lisp Variables):
+	* internals/internals.texi (Writing Macros):
+	* internals/internals.texi (Proper Use of Unsigned Types):
+	* internals/internals.texi (Techniques for XEmacs Developers):
+	* internals/internals.texi (Regression Testing XEmacs):
+	* internals/internals.texi (How to Regression-Test):
+	* internals/internals.texi (Modules for Regression Testing):
+	* internals/internals.texi (CVS Techniques):
+	* internals/internals.texi (Merging a Branch into the Trunk):
+	* internals/internals.texi (XEmacs from the Inside):
+	* internals/internals.texi (The XEmacs Object System (Abstractly Speaking)):
+	* internals/internals.texi (How Lisp Objects Are Represented in C):
+	* internals/internals.texi (Allocation of Objects in XEmacs Lisp):
+	* internals/internals.texi (Introduction to Allocation):
+	* internals/internals.texi (Garbage Collection):
+	* internals/internals.texi (GCPROing):
+	* internals/internals.texi (Garbage Collection - Step by Step):
+	* internals/internals.texi (Invocation):
+	* internals/internals.texi (garbage_collect_1):
+	* internals/internals.texi (mark_object):
+	* internals/internals.texi (gc_sweep):
+	* internals/internals.texi (sweep_lcrecords_1):
+	* internals/internals.texi (compact_string_chars):
+	* internals/internals.texi (sweep_strings):
+	* internals/internals.texi (sweep_bit_vectors_1):
+	* internals/internals.texi (Integers and Characters):
+	* internals/internals.texi (Allocation from Frob Blocks):
+	* internals/internals.texi (lrecords):
+	* internals/internals.texi (Low-level allocation):
+	* internals/internals.texi (Cons):
+	* internals/internals.texi (Vector):
+	* internals/internals.texi (Bit Vector):
+	* internals/internals.texi (Symbol):
+	* internals/internals.texi (Marker):
+	* internals/internals.texi (String):
+	* internals/internals.texi (Compiled Function):
+	* internals/internals.texi (The Lisp Reader and Compiler):
+	* internals/internals.texi (Evaluation; Stack Frames; Bindings):
+	* internals/internals.texi (Evaluation):
+	* internals/internals.texi (Dynamic Binding; The specbinding Stack; Unwind-Protects):
+	* internals/internals.texi (Simple Special Forms):
+	* internals/internals.texi (Catch and Throw):
+	* internals/internals.texi (Error Trapping):
+	* internals/internals.texi (Symbols and Variables):
+	* internals/internals.texi (Introduction to Symbols):
+	* internals/internals.texi (Obarrays):
+	* internals/internals.texi (Symbol Values):
+	* internals/internals.texi (Buffers):
+	* internals/internals.texi (Introduction to Buffers):
+	* internals/internals.texi (Buffer Lists):
+	* internals/internals.texi (Markers and Extents):
+	* internals/internals.texi (The Buffer Object):
+	* internals/internals.texi (Text):
+	* internals/internals.texi (The Text in a Buffer):
+	* internals/internals.texi (Ibytes and Ichars):
+	* internals/internals.texi (Byte-Char Position Conversion):
+	* internals/internals.texi (Searching and Matching):
+	* internals/internals.texi (Multilingual Support):
+	* internals/internals.texi (Introduction to Multilingual Issues #1):
+	* internals/internals.texi (Introduction to Multilingual Issues #2):
+	* internals/internals.texi (Introduction to Multilingual Issues #3):
+	* internals/internals.texi (Introduction to Multilingual Issues #4):
+	* internals/internals.texi (Character Sets):
+	* internals/internals.texi (Encodings):
+	* internals/internals.texi (Japanese EUC (Extended Unix Code)):
+	* internals/internals.texi (JIS7):
+	* internals/internals.texi (Internal Mule Encodings):
+	* internals/internals.texi (Internal String Encoding):
+	* internals/internals.texi (Internal Character Encoding):
+	* internals/internals.texi (Byte/Character Types; Buffer Positions; Other Typedefs):
+	* internals/internals.texi (Byte Types):
+	* internals/internals.texi (Different Ways of Seeing Internal Text):
+	* internals/internals.texi (Buffer Positions):
+	* internals/internals.texi (Other Typedefs):
+	* internals/internals.texi (Usage of the Various Representations):
+	* internals/internals.texi (Working With the Various Representations):
+	* internals/internals.texi (Internal Text API's):
+	* internals/internals.texi (Basic internal-format API's):
+	* internals/internals.texi (The DFC API):
+	* internals/internals.texi (The Eistring API):
+	* internals/internals.texi (Coding for Mule):
+	* internals/internals.texi (Character-Related Data Types):
+	* internals/internals.texi (Working With Character and Byte Positions):
+	* internals/internals.texi (Conversion to and from External Data):
+	* internals/internals.texi (General Guidelines for Writing Mule-Aware Code):
+	* internals/internals.texi (An Example of Mule-Aware Code):
+	* internals/internals.texi (Mule-izing Code):
+	* internals/internals.texi (CCL):
+	* internals/internals.texi (Microsoft Windows-Related Multilingual Issues):
+	* internals/internals.texi (Microsoft Documentation):
+	* internals/internals.texi (Locales):
+	* internals/internals.texi (More about code pages):
+	* internals/internals.texi (More about locales):
+	* internals/internals.texi (Unicode support under Windows):
+	* internals/internals.texi (The golden rules of writing Unicode-safe code):
+	* internals/internals.texi (The format of the locale in setlocale()):
+	* internals/internals.texi (Random other Windows I18N docs):
+	* internals/internals.texi (Modules for Internationalization):
+	* internals/internals.texi (Consoles; Devices; Frames; Windows):
+	* internals/internals.texi (Introduction to Consoles; Devices; Frames; Windows):
+	* internals/internals.texi (Point):
+	* internals/internals.texi (Window Hierarchy):
+	* internals/internals.texi (The Window Object):
+	* internals/internals.texi (Modules for the Basic Displayable Lisp Objects):
+	* internals/internals.texi (The Redisplay Mechanism):
+	* internals/internals.texi (Critical Redisplay Sections):
+	* internals/internals.texi (Line Start Cache):
+	* internals/internals.texi (Redisplay Piece by Piece):
+	* internals/internals.texi (Modules for the Redisplay Mechanism):
+	* internals/internals.texi (Modules for other Display-Related Lisp Objects):
+	* internals/internals.texi (Extents):
+	* internals/internals.texi (Introduction to Extents):
+	* internals/internals.texi (Extent Ordering):
+	* internals/internals.texi (Format of the Extent Info):
+	* internals/internals.texi (Zero-Length Extents):
+	* internals/internals.texi (Mathematics of Extent Ordering):
+	* internals/internals.texi (Extent Fragments):
+	* internals/internals.texi (Faces):
+	* internals/internals.texi (Glyphs):
+	* internals/internals.texi (Specifiers):
+	* internals/internals.texi (Menus):
+	* internals/internals.texi (Events and the Event Loop):
+	* internals/internals.texi (Introduction to Events):
+	* internals/internals.texi (Main Loop):
+	* internals/internals.texi (Specifics of the Event Gathering Mechanism):
+	* internals/internals.texi (Specifics About the Emacs Event):
+	* internals/internals.texi (Event Queues):
+	* internals/internals.texi (Event Stream Callback Routines):
+	* internals/internals.texi (Other Event Loop Functions):
+	* internals/internals.texi (Stream Pairs):
+	* internals/internals.texi (Converting Events):
+	* internals/internals.texi (Dispatching Events; The Command Builder):
+	* internals/internals.texi (Focus Handling):
+	* internals/internals.texi (Editor-Level Control Flow Modules):
+	* internals/internals.texi (Asynchronous Events; Quit Checking):
+	* internals/internals.texi (Signal Handling):
+	* internals/internals.texi (Control-G (Quit) Checking):
+	* internals/internals.texi (Profiling):
+	* internals/internals.texi (Asynchronous Timeouts):
+	* internals/internals.texi (Exiting):
+	* internals/internals.texi (Lstreams):
+	* internals/internals.texi (Creating an Lstream):
+	* internals/internals.texi (Lstream Types):
+	* internals/internals.texi (Lstream Functions):
+	* internals/internals.texi (Lstream Methods):
+	* internals/internals.texi (Subprocesses):
+	* internals/internals.texi (Interface to MS Windows):
+	* internals/internals.texi (Different kinds of Windows environments):
+	* internals/internals.texi (Windows Build Flags):
+	* internals/internals.texi (Windows I18N Introduction):
+	* internals/internals.texi (Modules for Interfacing with MS Windows):
+	* internals/internals.texi (Interface to the X Window System):
+	* internals/internals.texi (Lucid Widget Library):
+	* internals/internals.texi (Generic Widget Interface):
+	* internals/internals.texi (dependencies): New.
+	* internals/internals.texi (routines): New.
+	* internals/internals.texi (Summary): New.
+	* internals/internals.texi (Scrollbars):
+	* internals/internals.texi (Menubars):
+	* internals/internals.texi (Checkboxes and Radio Buttons):
+	* internals/internals.texi (Progress Bars):
+	* internals/internals.texi (Tab Controls):
+	* internals/internals.texi (Modules for Interfacing with X Windows):
+	* internals/internals.texi (Dumping):
+	* internals/internals.texi (Dumping Justification):
+	* internals/internals.texi (Overview):
+	* internals/internals.texi (Data descriptions):
+	* internals/internals.texi (Dumping phase):
+	* internals/internals.texi (Object inventory):
+	* internals/internals.texi (Address allocation):
+	* internals/internals.texi (The header):
+	* internals/internals.texi (Data dumping):
+	* internals/internals.texi (Pointers dumping):
+	* internals/internals.texi (Reloading phase):
+	* internals/internals.texi (Abstract): New.
+	* internals/internals.texi (Remaining issues):
+	* internals/internals.texi (Future Work):
+	* internals/internals.texi (Future Work -- General Suggestions):
+	* internals/internals.texi (Future Work -- Elisp Compatibility Package):
+	* internals/internals.texi (Future Work -- Drag-n-Drop):
+	* internals/internals.texi (Future Work -- Standard Interface for Enabling Extensions):
+	* internals/internals.texi (Future Work -- Better Initialization File Scheme):
+	* internals/internals.texi (Future Work -- Keyword Parameters):
+	* internals/internals.texi (Future Work -- Property Interface Changes):
+	* internals/internals.texi (Future Work -- Toolbars):
+	* internals/internals.texi (Future Work -- Easier Toolbar Customization):
+	* internals/internals.texi (Future Work -- Toolbar Interface Changes):
+	* internals/internals.texi (Future Work -- Menu API Changes):
+	* internals/internals.texi (Future Work -- Removal of Misc-User Event Type):
+	* internals/internals.texi (Future Work -- Mouse Pointer):
+	* internals/internals.texi (Future Work -- Abstracted Mouse Pointer Interface):
+	* internals/internals.texi (Future Work -- Busy Pointer):
+	* internals/internals.texi (Future Work -- Extents):
+	* internals/internals.texi (Future Work -- Everything should obey duplicable extents):
+	* internals/internals.texi (Future Work -- Version Number and Development Tree Organization):
+	* internals/internals.texi (Future Work -- Improvements to the @code{xemacs.org} Website):
+	* internals/internals.texi (Future Work -- Keybindings):
+	* internals/internals.texi (Future Work -- Keybinding Schemes):
+	* internals/internals.texi (Future Work -- Better Support for Windows Style Key Bindings):
+	* internals/internals.texi (Future Work -- Misc Key Binding Ideas):
+	* internals/internals.texi (Future Work -- Byte Code Snippets):
+	* internals/internals.texi (Future Work -- Autodetection):
+	* internals/internals.texi (Future Work -- Conversion Error Detection):
+	* internals/internals.texi (Future Work -- Unicode):
+	* internals/internals.texi (Future Work -- BIDI Support):
+	* internals/internals.texi (Future Work -- Localized Text/Messages):
+	* internals/internals.texi (Future Work -- Lisp Stream API):
+	* internals/internals.texi (Future Work -- Multiple Values):
+	* internals/internals.texi (Future Work -- Macros):
+	* internals/internals.texi (Future Work -- Specifiers):
+	* internals/internals.texi (Future Work -- Display Tables):
+	* internals/internals.texi (Future Work -- Making Elisp Function Calls Faster):
+	* internals/internals.texi (Future Work -- Lisp Engine Replacement):
+	* internals/internals.texi (Future Work -- Lisp Engine Discussion):
+	* internals/internals.texi (Future Work -- Lisp Engine Replacement -- Implementation):
+	* internals/internals.texi (Future Work -- Startup File Modification by Packages):
+	* internals/internals.texi (Future Work Discussion):
+	* internals/internals.texi (Discussion -- garbage collection):
+	* internals/internals.texi (Discussion -- glyphs):
+	* internals/internals.texi (Discussion -- Dialog Boxes):
+	* internals/internals.texi (Discussion -- Multilingual Issues):
+	* internals/internals.texi (Discussion -- Windows External Widget):
+	* internals/internals.texi (Discussion -- Packages):
+	* internals/internals.texi (Discussion -- Distribution Layout):
+	* internals/internals.texi (Old Future Work):
+	* internals/internals.texi (Old Future Work -- A Portable Unexec Replacement):
+	* internals/internals.texi (backtrace): New.
+	* internals/internals.texi (Old Future Work -- Indirect Buffers):
+	* internals/internals.texi (emacs-lisp): New.
+	* internals/internals.texi (Old Future Work -- Improvements in support for non-ASCII (European) keysyms under X):
+	* internals/internals.texi (Newsgroups): New.
+	* internals/internals.texi (Old Future Work -- RTF Clipboard Support):
+	* internals/internals.texi (own-selection): New.
+	* internals/internals.texi (Old Future Work -- xemacs.org Mailing Address Changes):
+	* internals/internals.texi (COMMENT): New.
+	* internals/internals.texi (Old Future Work -- Lisp callbacks from critical areas of the C code):
+	* internals/internals.texi (Now): Removed.
+	* internals/internals.texi (Proof): Removed.
+	* internals/internals.texi (Note): Removed.
+	* internals/internals.texi (Date): New.
+	* internals/internals.texi (ben): Removed.
+	* internals/internals.texi (importance): New.
+	* internals/internals.texi (From): New.
+	Major work on internals manual.  Rearranged many chapters so as to
+	lie in coherent divisions.
+	Add tons of stuff to Future Work, Old Future Work, Discussions.
+	Add lots of stuff to Mule section (Multilingual ...).
+	Remove index.texi, incorporate into internals.texi.
+	Section on early history and an introduction.
+	Section on XEmacs split.  Lots of new MS Windows docs
+	Mostly recently: Windows-I18N docs.  Lots if new I18N docs.
+	Loads of other stuff.
+
 2004-11-02  Ben Wing  <ben@xemacs.org>
 
 	* internals/index.texi:

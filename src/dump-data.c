@@ -33,7 +33,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* 4 bytes for the data size, 4096 for alignment */
 
-static unsigned char dumped_data[MAX_SIZE+4096+4] = {
+static Rawbyte dumped_data[MAX_SIZE+4096+4] = {
   255,
   6,
   1,
@@ -52,32 +52,33 @@ static unsigned char dumped_data[MAX_SIZE+4096+4] = {
 };
 
 size_t
-dumped_data_size(void)
+dumped_data_size (void)
 {
-  return dumped_data[0] | (dumped_data[1] << 8) | (dumped_data[2] << 16) | (dumped_data[3] << 24);
+  return dumped_data[0] | (dumped_data[1] << 8) | (dumped_data[2] << 16) |
+    (dumped_data[3] << 24);
 }
 
 size_t
-dumped_data_max_size(void)
+dumped_data_max_size (void)
 {
   return MAX_SIZE;
 }
 
 size_t
-dumped_data_align_offset(void)
+dumped_data_align_offset (void)
 {
-  EMACS_INT iptr = (EMACS_INT)dumped_data;
+  EMACS_INT iptr = (EMACS_INT) dumped_data;
   EMACS_INT iptr2;
-  iptr2 = (iptr+4+4095) & ~(EMACS_INT)4095;
+  iptr2 = (iptr + 4 + 4095) & ~(EMACS_INT) 4095;
   
-  return iptr2-iptr;
+  return iptr2 - iptr;
 }
 
-char *
-dumped_data_get(void)
+Rawbyte *
+dumped_data_get (void)
 {
-  EMACS_INT iptr = (EMACS_INT)dumped_data;
-  iptr = (iptr+4+4095) & ~(EMACS_INT)4095;
-  return (char *)iptr;
+  EMACS_INT iptr = (EMACS_INT) dumped_data;
+  iptr = (iptr + 4 + 4095) & ~(EMACS_INT) 4095;
+  return (Rawbyte *) iptr;
 }
 

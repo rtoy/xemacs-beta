@@ -1267,18 +1267,18 @@ CCL_BLOCK := STATEMENT | (STATEMENT [STATEMENT ...])
 
 STATEMENT :=
 	SET | IF | BRANCH | LOOP | REPEAT | BREAK | READ | WRITE | CALL
-	| TRANSLATE | END
+	| TRANSLATE | MAP | END
 
 SET :=	(REG = EXPRESSION)
 	| (REG ASSIGNMENT_OPERATOR EXPRESSION)
-	;; The following form is the same as (r0 = integer).
-	| integer
+	;; The following form is the same as (r0 = INT-OR-CHAR).
+	| INT-OR-CHAR
 
 EXPRESSION := ARG | (EXPRESSION OPERATOR ARG)
 
 ;; Evaluate EXPRESSION.  If the result is nonzeor, execute
 ;; CCL_BLOCK_0.  Otherwise, execute CCL_BLOCK_1.
-IF :=	(if EXPRESSION CCL_BLOCK_0 CCL_BLOCK_1)
+IF :=	(if EXPRESSION CCL_BLOCK_0 [CCL_BLOCK_1])
 
 ;; Evaluate EXPRESSION.  Provided that the result is N, execute
 ;; CCL_BLOCK_N.
@@ -1293,24 +1293,24 @@ BREAK := (break)
 REPEAT :=
 	;; Jump to the head of the most inner loop.
 	(repeat)
-	;; Same as: ((write [REG | integer | string])
+	;; Same as: ((write [REG | INT-OR-CHAR | string])
 	;;	     (repeat))
-	| (write-repeat [REG | integer | string])
+	| (write-repeat [REG | INT-OR-CHAR | string])
 	;; Same as: ((write REG [ARRAY])
 	;;	     (read REG)
 	;;	     (repeat))
 	| (write-read-repeat REG [ARRAY])
-	;; Same as: ((write integer)
+	;; Same as: ((write INT-OR-CHAR)
 	;;	     (read REG)
 	;;	     (repeat))
-	| (write-read-repeat REG integer)
+	| (write-read-repeat REG INT-OR-CHAR)
 
 READ := ;; Set REG_0 to a byte read from the input text, set REG_1
 	;; to the next byte read, and so on.
 	(read REG_0 [REG_1 ...])
 	;; Same as: ((read REG)
 	;;	     (if (REG OPERATOR ARG) CCL_BLOCK_0 CCL_BLOCK_1))
-	| (read-if (REG OPERATOR ARG) CCL_BLOCK_0 CCL_BLOCK_1)
+	| (read-if (REG OPERATOR ARG) CCL_BLOCK_0 [CCL_BLOCK_1])
 	;; Same as: ((read REG)
 	;;	     (branch REG CCL_BLOCK_0 [CCL_BLOCK_1 ...]))
 	| (read-branch REG CCL_BLOCK_0 [CCL_BLOCK_1 ...])
@@ -1330,10 +1330,10 @@ WRITE :=
 	;; Same as: ((r7 = EXPRESSION)
 	;;	     (write r7))
 	| (write EXPRESSION)
-	;; Write the value of `integer' to the output buffer.  If it
+	;; Write the value of `INT-OR-CHAR' to the output buffer.  If it
 	;; is a multibyte character, write the corresponding multibyte
 	;; representation.
-	| (write integer)
+	| (write INT-OR-CHAR)
 	;; Write the byte sequence of `string' as is to the output
 	;; buffer.  It is encoded by binary coding system, thus,
         ;; by this operation, you cannot write multibyte string
@@ -1356,6 +1356,17 @@ WRITE :=
 ;; Call CCL program whose name is ccl-program-name.
 CALL := (call ccl-program-name)
 
+TRANSLATE :=
+	(translate-character REG(table) REG(charset) REG(codepoint))
+	| (translate-character SYMBOL REG(charset) REG(codepoint))
+MAP :=
+     (iterate-multiple-map REG REG MAP-IDs)
+     | (map-multiple REG REG (MAP-SET))
+     | (map-single REG REG MAP-ID)
+MAP-IDs := MAP-ID ...
+MAP-SET := MAP-IDs | (MAP-IDs) MAP-SET
+MAP-ID := INT-OR-CHAR
+
 ;; Terminate the CCL program.
 END := (end)
 
@@ -1363,7 +1374,7 @@ END := (end)
 ;; used by CCL interpreter, its value is changed unexpectedly.
 REG := r0 | r1 | r2 | r3 | r4 | r5 | r6 | r7
 
-ARG := REG | integer
+ARG := REG | INT-OR-CHAR
 
 OPERATOR :=
 	;; Normal arithmethic operators (same meaning as C code).
@@ -1429,19 +1440,9 @@ ASSIGNMENT_OPERATOR :=
 	;;	 (REG /= ARG))
 	| //=
 
-ARRAY := `[' integer ... `]'
+ARRAY := `[' INT-OR-CHAR ... `]'
 
-
-TRANSLATE :=
-	(translate-character REG(table) REG(charset) REG(codepoint))
-	| (translate-character SYMBOL REG(charset) REG(codepoint))
-MAP :=
-     (iterate-multiple-map REG REG MAP-IDs)
-     | (map-multiple REG REG (MAP-SET))
-     | (map-single REG REG MAP-ID)
-MAP-IDs := MAP-ID ...
-MAP-SET := MAP-IDs | (MAP-IDs) MAP-SET
-MAP-ID := integer
+INT-OR-CHAR := integer | character
 "
   `(let ((prog ,(ccl-compile (eval ccl-program))))
      (defconst ,name prog ,doc)

@@ -34,7 +34,5 @@ Boston, MA 02111-1307, USA.  */
 
 #define CRT0_DUMMIES one_dummy,
 
-#define HAVE_ALLOCA
-
 #define LOAD_AVE_TYPE long
 #define LOAD_AVE_CVT(x) ((int) (((double) (x)) / 2048.0 * 100.0))

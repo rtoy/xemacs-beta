@@ -1,7 +1,7 @@
 /* Header file for text manipulation primitives and macros.
    Copyright (C) 1985-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -166,73 +166,8 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 
 #endif /* not MULE */
 
-/* ---------------- Handling non-default formats ----------------- */
+/* For more discussion, see text.c, "handling non-default formats" */
 
-/* We support, at least to some extent, formats other than the default
-   variable-width format, for speed; all of these alternative formats are
-   fixed-width.  Currently we only handle these non-default formats in
-   buffers, because access to their text is strictly controlled and thus
-   the details of the format mostly compartmentalized.  The only really
-   tricky part is the search code -- the regex, Boyer-Moore, and
-   simple-search algorithms in search.c and regex.c.  All other code that
-   knows directly about the buffer representation is the basic code to
-   modify or retrieve the buffer text.
-
-   Supporting fixed-width formats in Lisp strings is harder, but possible
-   -- FSF currently does this, for example.  In this case, however,
-   probably only 8-bit-fixed is reasonable for Lisp strings -- getting
-   non-ASCII-compatible fixed-width formats to work is much, much harder
-   because a lot of code assumes that strings are ASCII-compatible
-   (i.e. ASCII + other characters represented exclusively using high-bit
-   bytes) and a lot of code mixes Lisp strings and non-Lisp strings freely.
-
-   The different possible fixed-width formats are 8-bit fixed, 16-bit
-   fixed, and 32-bit fixed.  The latter can represent all possible
-   characters, but at a substantial memory penalty.  The other two can
-   represent only a subset of the possible characters.  How these subsets
-   are defined can be simple or very tricky.
-
-   Currently we support only the default format and the 8-bit fixed format,
-   and in the latter, we only allow these to be the first 256 characters in
-   an Ichar (ASCII and Latin 1).
-   
-   One reasonable approach for 8-bit fixed is to allow the upper half to
-   represent any 1-byte charset, which is specified on a per-buffer basis.
-   This should work fairly well in practice since most documents are in
-   only one foreign language (possibly with some English mixed in).  I
-   think FSF does something like this; or at least, they have something
-   called nonascii-translation-table and use it when converting from
-   8-bit-fixed text ("unibyte text") to default text ("multibyte text").
-   With 16-bit fixed, you could do something like assign chunks of the 64K
-   worth of characters to charsets as they're encountered in documents.
-   This should work well with most Asian documents.
-
-   If/when we switch to using Unicode internally, we might have formats more
-   like this:
-
-   -- UTF-8 or some extension as the default format.  Perl uses an
-   extension that handles 64-bit chars and requires as much as 13 bytes per
-   char, vs. the standard of 31-bit chars and 6 bytes max.  UTF-8 has the
-   same basic properties as our own variable-width format (see text.c,
-   Internal String Encoding) and so most code would not need to be changed.
-
-   -- UTF-16 as a "pseudo-fixed" format (i.e. 16-bit fixed plus surrogates
-   for representing characters not in the BMP, aka >= 65536).  The vast
-   majority of documents will have no surrogates in them so byte/char
-   conversion will be very fast.
-
-   -- an 8-bit fixed format, like currently.
-   
-   -- possibly, UCS-4 as a 32-bit fixed format.
-
-   The fixed-width formats essentially treat the buffer as an array of
-   8-bit, 16-bit or 32-bit integers.  This means that how they are stored
-   in memory (in particular, big-endian or little-endian) depends on the
-   native format of the machine's processor.  It also means we have to
-   worry a bit about alignment (basically, we just need to keep the gap an
-   integral size of the character size, and get things aligned properly
-   when converting the buffer between formats).
-   */
 typedef enum internal_format
 {
   FORMAT_DEFAULT,
@@ -603,6 +538,26 @@ validate_ibyte_string_backward (const Ibyte *ptr, Bytecount n)
 
 #endif /* MULE */
 
+#ifdef ERROR_CHECK_TEXT
+#define ASSERT_ASCTEXT_ASCII_LEN(ptr, len)			\
+do {								\
+  int aia2;							\
+  const Ascbyte *aia2ptr = (ptr);				\
+  int aia2len = (len);						\
+								\
+  for (aia2 = 0; aia2 < aia2len; aia2++)			\
+    assert (aia2ptr[aia2] >= 0x00 && aia2ptr[aia2] < 0x7F);	\
+} while (0)
+#define ASSERT_ASCTEXT_ASCII(ptr)			\
+do {							\
+  const Ascbyte *aiaz2 = (ptr);				\
+  ASSERT_ASCTEXT_ASCII_LEN (aiaz2, strlen (aiaz2));	\
+} while (0)
+#else
+#define ASSERT_ASCTEXT_ASCII_LEN(ptr, len)
+#define ASSERT_ASCTEXT_ASCII(ptr)
+#endif
+
 /* -------------------------------------------------------------- */
 /*      Working with the length (in bytes and characters) of a    */
 /*               section of internally-formatted text 	          */
@@ -670,6 +625,68 @@ charcount_to_bytecount (const Ibyte *ptr, Charcount len)
     }
   else
     return charcount_to_bytecount_fun (ptr, len);
+}
+
+MODULE_API Bytecount
+charcount_to_bytecount_down_fun (const Ibyte *ptr, Charcount len);
+
+/* Given a pointer to a text string and a length in bytes, return
+   the equivalent length in characters of the stretch [PTR - LEN, PTR). */
+
+DECLARE_INLINE_HEADER (
+Charcount
+bytecount_to_charcount_down (const Ibyte *ptr, Bytecount len)
+)
+{
+  /* No need to be clever here */
+  return bytecount_to_charcount (ptr - len, len);
+}
+
+/* Given a pointer to a text string and a length in characters, return the
+   equivalent length in bytes of the stretch of characters of that length
+   BEFORE the pointer.
+*/
+
+DECLARE_INLINE_HEADER (
+Bytecount
+charcount_to_bytecount_down (const Ibyte *ptr, Charcount len)
+)
+{
+#define SLEDGEHAMMER_CHECK_TEXT
+#ifdef SLEDGEHAMMER_CHECK_TEXT
+  Charcount len1 = len;
+  Bytecount ret1, ret2;
+
+  /* To test the correctness of the function version, always do the
+     calculation both ways and check that the values are the same. */
+  text_checking_assert (len >= 0);
+  {
+    const Ibyte *newptr = ptr;
+    while (len1 > 0)
+      {
+	DEC_IBYTEPTR (newptr);
+	len1--;
+      }
+    ret1 = ptr - newptr;
+  }
+  ret2 = charcount_to_bytecount_down_fun (ptr, len);
+  text_checking_assert (ret1 == ret2);
+  return ret1;
+#else
+  text_checking_assert (len >= 0);
+  if (len < 20) /* See above */
+    {
+      const Ibyte *newptr = ptr;
+      while (len > 0)
+	{
+	  DEC_IBYTEPTR (newptr);
+	  len--;
+	}
+      return ptr - newptr;
+    }
+  else
+    return charcount_to_bytecount_down_fun (ptr, len);
+#endif /* SLEDGEHAMMER_CHECK_TEXT */
 }
 
 /* Given a pointer to a text string in the specified format and a length in
@@ -991,7 +1008,7 @@ itext_copy_ichar (const Ibyte *src, Ibyte *dst)
 
 
 /* ---------------------------- */
-/*     Working with Ichars     */
+/*      Working with Ichars     */
 /* ---------------------------- */
 
 /* NOTE: There are other functions/macros for working with Ichars in
@@ -1100,23 +1117,9 @@ void sledgehammer_check_ascii_begin (Lisp_Object str);
 do {									\
   Ibyte **_lta_ = (Ibyte **) &(lval);					\
   Lisp_Object _lta_2 = (s);						\
-  *_lta_ = alloca_array (Ibyte, 1 + XSTRING_LENGTH (_lta_2));		\
+  *_lta_ = alloca_ibytes (1 + XSTRING_LENGTH (_lta_2));		\
   memcpy (*_lta_, XSTRING_DATA (_lta_2), 1 + XSTRING_LENGTH (_lta_2));	\
 } while (0)
-
-/* Make an alloca'd copy of a Ibyte * */
-#define IBYTE_STRING_TO_ALLOCA(p, lval)		\
-do {						\
-  Ibyte **_bsta_ = (Ibyte **) &(lval);		\
-  const Ibyte *_bsta_2 = (p);			\
-  Bytecount _bsta_3 = qxestrlen (_bsta_2);	\
-  *_bsta_ = alloca_array (Ibyte, 1 + _bsta_3);	\
-  memcpy (*_bsta_, _bsta_2, 1 + _bsta_3);	\
-} while (0)
-
-
-#define alloca_ibytes(num) alloca_array (Ibyte, num)
-#define alloca_extbytes(num) alloca_array (Extbyte, num)
 
 void resize_string (Lisp_Object s, Bytecount pos, Bytecount delta);
 
@@ -1335,19 +1338,20 @@ next_string_index (Lisp_Object s, Bytecount idx)
    variable section:
 
    DECLARE_EISTRING (name);
-        Declare a new Eistring.  This is a standard local variable declaration
-        and can go anywhere in the variable declaration section.  NAME itself
-        is declared as an Eistring *, and its storage declared on the stack.
+        Declare a new Eistring and initialize it to the empy string.  This
+        is a standard local variable declaration and can go anywhere in the
+        variable declaration section.  NAME itself is declared as an
+        Eistring *, and its storage declared on the stack.
 
    DECLARE_EISTRING_MALLOC (name);
-        Declare a new Eistring, which uses malloc()ed instead of ALLOCA()ed
-        data.  This is a standard local variable declaration and can go
-        anywhere in the variable declaration section.  Once you initialize
-	the Eistring, you will have to free it using eifree() to avoid
-	memory leaks.  You will need to use this form if you are passing
-	an Eistring to any function that modifies it (otherwise, the
-	modified data may be in stack space and get overwritten when the
-	function returns).
+        Declare and initialize a new Eistring, which uses malloc()ed
+        instead of ALLOCA()ed data.  This is a standard local variable
+        declaration and can go anywhere in the variable declaration
+        section.  Once you initialize the Eistring, you will have to free
+        it using eifree() to avoid memory leaks.  You will need to use this
+        form if you are passing an Eistring to any function that modifies
+        it (otherwise, the modified data may be in stack space and get
+        overwritten when the function returns).
 
    or use
 
@@ -1416,10 +1420,10 @@ next_string_index (Lisp_Object s, Bytecount idx)
         ... from raw internal-format data in the specified format that is
         "null-terminated" (the meaning of this depends on the nature of
         the specific format).
-   void eicpy_c (Eistring *eistr, const Char_ASCII *c_string);
+   void eicpy_c (Eistring *eistr, const Ascbyte *c_string);
         ... from an ASCII null-terminated string.  Non-ASCII characters in
 	the string are *ILLEGAL* (read abort() with error-checking defined).
-   void eicpy_c_len (Eistring *eistr, const Char_ASCII *c_string, len);
+   void eicpy_c_len (Eistring *eistr, const Ascbyte *c_string, len);
         ... from an ASCII string, with length specified.  Non-ASCII characters
 	in the string are *ILLEGAL* (read abort() with error-checking defined).
    void eicpy_ext (Eistring *eistr, const Extbyte *extdata,
@@ -1559,7 +1563,7 @@ next_string_index (Lisp_Object s, Bytecount idx)
 
    void eicat_ei (Eistring *eistr, Eistring *eistr2);
         ... from another Eistring.
-   void eicat_c (Eistring *eistr, Char_ASCII *c_string);
+   void eicat_c (Eistring *eistr, Ascbyte *c_string);
         ... from an ASCII null-terminated string.  Non-ASCII characters in
 	the string are *ILLEGAL* (read abort() with error-checking defined).
    void eicat_raw (ei, const Ibyte *data, Bytecount len);
@@ -1589,7 +1593,7 @@ next_string_index (Lisp_Object s, Bytecount idx)
 		  Bytecount len, Charcount charlen, Eistring *eistr2);
         ... with another Eistring.
    void eisub_c (Eistring *eistr, Bytecount off, Charcount charoff,
-		 Bytecount len, Charcount charlen, Char_ASCII *c_string);
+		 Bytecount len, Charcount charlen, Ascbyte *c_string);
         ... with an ASCII null-terminated string.  Non-ASCII characters in
 	the string are *ILLEGAL* (read abort() with error-checking defined).
    void eisub_ch (Eistring *eistr, Bytecount off, Charcount charoff,
@@ -1656,17 +1660,17 @@ next_string_index (Lisp_Object s, Bytecount idx)
    Charcount eirstr_ei_off_char (Eistring *eistr, Eistring *eistr2,
 				 Bytecount off, Charcount charoff);
 
-   Bytecount eistr_c (Eistring *eistr, Char_ASCII *c_string);
-   Charcount eistr_c_char (Eistring *eistr, Char_ASCII *c_string);
-   Bytecount eistr_c_off (Eistring *eistr, Char_ASCII *c_string, Bytecount off,
+   Bytecount eistr_c (Eistring *eistr, Ascbyte *c_string);
+   Charcount eistr_c_char (Eistring *eistr, Ascbyte *c_string);
+   Bytecount eistr_c_off (Eistring *eistr, Ascbyte *c_string, Bytecount off,
 			   Charcount charoff);
-   Charcount eistr_c_off_char (Eistring *eistr, Char_ASCII *c_string,
+   Charcount eistr_c_off_char (Eistring *eistr, Ascbyte *c_string,
 			       Bytecount off, Charcount charoff);
-   Bytecount eirstr_c (Eistring *eistr, Char_ASCII *c_string);
-   Charcount eirstr_c_char (Eistring *eistr, Char_ASCII *c_string);
-   Bytecount eirstr_c_off (Eistring *eistr, Char_ASCII *c_string,
+   Bytecount eirstr_c (Eistring *eistr, Ascbyte *c_string);
+   Charcount eirstr_c_char (Eistring *eistr, Ascbyte *c_string);
+   Bytecount eirstr_c_off (Eistring *eistr, Ascbyte *c_string,
 			   Bytecount off, Charcount charoff);
-   Charcount eirstr_c_off_char (Eistring *eistr, Char_ASCII *c_string,
+   Charcount eirstr_c_off_char (Eistring *eistr, Ascbyte *c_string,
 				Bytecount off, Charcount charoff);
 
 
@@ -1707,17 +1711,17 @@ next_string_index (Lisp_Object s, Bytecount idx)
 			      Charcount charoff, Bytecount len,
 			      Charcount charlen, Eistring *eistr2);
 
-   int eicmp_c (Eistring *eistr, Char_ASCII *c_string);
+   int eicmp_c (Eistring *eistr, Ascbyte *c_string);
    int eicmp_off_c (Eistring *eistr, Bytecount off, Charcount charoff,
-                    Bytecount len, Charcount charlen, Char_ASCII *c_string);
-   int eicasecmp_c (Eistring *eistr, Char_ASCII *c_string);
+                    Bytecount len, Charcount charlen, Ascbyte *c_string);
+   int eicasecmp_c (Eistring *eistr, Ascbyte *c_string);
    int eicasecmp_off_c (Eistring *eistr, Bytecount off, Charcount charoff,
                         Bytecount len, Charcount charlen,
-                        Char_ASCII *c_string);
-   int eicasecmp_i18n_c (Eistring *eistr, Char_ASCII *c_string);
+                        Ascbyte *c_string);
+   int eicasecmp_i18n_c (Eistring *eistr, Ascbyte *c_string);
    int eicasecmp_i18n_off_c (Eistring *eistr, Bytecount off, Charcount charoff,
                              Bytecount len, Charcount charlen,
-                             Char_ASCII *c_string);
+                             Ascbyte *c_string);
 
 
     ********************************************** 
@@ -1899,7 +1903,7 @@ do {									      \
 	      /* We don't have realloc, so ALLOCA() more space and copy the   \
 		 data into it. */					      \
 	      Ibyte *ei1oldeidata = (ei)->data_;			      \
-	      (ei)->data_ = (Ibyte *) ALLOCA (ei1newsize);		      \
+	      (ei)->data_ = alloca_ibytes (ei1newsize);		      \
               if (ei1oldeidata)						      \
 	        memcpy ((ei)->data_, ei1oldeidata, ei1oldeibytelen + 1);      \
 	    }								      \
@@ -1915,27 +1919,6 @@ do {							\
   EI_ALLOC (ei, bytelen, charlen, 1);			\
   memcpy ((ei)->data_, data, (ei)->bytelen_);		\
 } while (0)
-
-#ifdef ERROR_CHECK_TEXT
-#define EI_ASSERT_ASCII(ptr, len)			\
-do {							\
-  int ei5;						\
-  const Char_ASCII *ei5ptr = (ptr);			\
-  int ei5len = (len);					\
-							\
-  for (ei5 = 0; ei5 < ei5len; ei5++)			\
-    assert (ei5ptr[ei5] >= 0x00 && ei5ptr[ei5] < 0x7F);	\
-} while (0)
-#define EI_ASSERT_ASCIIZ(ptr)			\
-do {						\
-  const Char_ASCII *ei5p1 = (ptr);		\
-  EI_ASSERT_ASCII (ei5p1, strlen (ei5p1));	\
-} while (0)
-#else
-#define EI_ASSERT_ASCII(ptr, len)
-#define EI_ASSERT_ASCIIZ(ptr)
-#endif
-
 
 /*   ----- Initialization -----   */
 
@@ -2001,18 +1984,18 @@ do {							\
 
 #define eicpy_c(ei, c_string)			\
 do {						\
-  const Char_ASCII *ei4 = (c_string);		\
+  const Ascbyte *ei4 = (c_string);		\
 						\
-  EI_ASSERT_ASCIIZ (ei4);			\
+  ASSERT_ASCTEXT_ASCII (ei4);			\
   eicpy_ext (ei, ei4, Qbinary);			\
 } while (0)
 
 #define eicpy_c_len(ei, c_string, c_len)	\
 do {						\
-  const Char_ASCII *ei6 = (c_string);		\
+  const Ascbyte *ei6 = (c_string);		\
   int ei6len = (c_len);				\
 						\
-  EI_ASSERT_ASCII (ei6, ei6len);		\
+  ASSERT_ASCTEXT_ASCII_LEN (ei6, ei6len);	\
   eicpy_ext_len (ei, ei6, ei6len, Qbinary);	\
 } while (0)
 
@@ -2078,7 +2061,7 @@ do {								\
   assert (ei23fmt == FORMAT_DEFAULT);				\
 								\
   *ei23lenout = (eistr)->bytelen_;				\
-  *ei23ptrout = alloca_array (Ibyte, (eistr)->bytelen_ + 1);	\
+  *ei23ptrout = alloca_ibytes ((eistr)->bytelen_ + 1);	\
   memcpy (*ei23ptrout, (eistr)->data_, (eistr)->bytelen_ + 1);	\
 } while (0)
 
@@ -2114,7 +2097,7 @@ do {									\
 									\
       (ei)->max_size_allocated_ =					\
 	eifind_large_enough_buffer (0, (ei)->bytelen_ + 1);		\
-      ei13newdata = (Ibyte *) ALLOCA ((ei)->max_size_allocated_);	\
+      ei13newdata = alloca_ibytes ((ei)->max_size_allocated_);		\
       memcpy (ei13newdata, (ei)->data_, (ei)->bytelen_ + 1);		\
       xfree ((ei)->data_, Ibyte *);					\
       (ei)->data_ = ei13newdata;					\
@@ -2122,7 +2105,7 @@ do {									\
 									\
   if ((ei)->extdata_)							\
     {									\
-      Extbyte *ei13newdata = (Extbyte *) ALLOCA ((ei)->extlen_ + 2);	\
+      Extbyte *ei13newdata = alloca_extbytes ((ei)->extlen_ + 2);	\
 									\
       memcpy (ei13newdata, (ei)->extdata_, (ei)->extlen_);		\
       /* Double null-terminate in case of Unicode data */		\
@@ -2226,10 +2209,10 @@ do {								\
 
 #define eicat_c(ei, c_string)					\
 do {								\
-  const Char_ASCII *ei15 = (c_string);				\
+  const Ascbyte *ei15 = (c_string);				\
   int ei15len = strlen (ei15);					\
 								\
-  EI_ASSERT_ASCII (ei15, ei15len);				\
+  ASSERT_ASCTEXT_ASCII_LEN (ei15, ei15len);			\
   eicat_1 (ei, ei15, ei15len,					\
            bytecount_to_charcount ((Ibyte *) ei15, ei15len));	\
 } while (0)
@@ -2305,9 +2288,9 @@ do {									\
 
 #define eisub_c(ei, off, charoff, len, charlen, c_string)	\
 do {								\
-  const Char_ASCII *ei20 = (c_string);				\
+  const Ascbyte *ei20 = (c_string);				\
   int ei20len = strlen (ei20);					\
-  EI_ASSERT_ASCII (ei20, ei20len);				\
+  ASSERT_ASCTEXT_ASCII_LEN (ei20, ei20len);			\
   eisub_1 (ei, off, charoff, len, charlen, ei20, ei20len, -1);	\
 } while (0)
 
@@ -2446,7 +2429,7 @@ int eistr_casefiddle_1 (Ibyte *olddata, Bytecount len, Ibyte *newdata,
 do {									\
   int ei11new_allocmax = (ei)->charlen_ * MAX_ICHAR_LEN + 1;		\
   Ibyte *ei11storage =							\
-     (Ibyte *) alloca_array (Ibyte, ei11new_allocmax);			\
+     (Ibyte *) alloca_ibytes (ei11new_allocmax);			\
   int ei11newlen = eistr_casefiddle_1 ((ei)->data_, (ei)->bytelen_,	\
 				       ei11storage, downp);		\
 									\
@@ -2525,9 +2508,27 @@ END_C_DECLS
 
   Typical use is
 
-  TO_EXTERNAL_FORMAT (DATA, (ptr, len),
-                      LISP_BUFFER, buffer,
-		      Qfile_name);
+     TO_EXTERNAL_FORMAT (LISP_STRING, str, C_STRING_MALLOC, ptr, Qfile_name);
+
+  which means that the contents of the lisp string `str' are written
+  to a malloc'ed memory area which will be pointed to by `ptr', after the
+  function returns.  The conversion will be done using the `file-name'
+  coding system (which will be controlled by the user indirectly by
+  setting or binding the variable `file-name-coding-system').
+
+  Some sources and sinks require two C variables to specify.  We use
+  some preprocessor magic to allow different source and sink types, and
+  even different numbers of arguments to specify different types of
+  sources and sinks.
+
+  So we can have a call that looks like
+
+     TO_INTERNAL_FORMAT (DATA, (ptr, len),
+                         MALLOC, (ptr, len),
+                         coding_system);
+
+  The parenthesized argument pairs are required to make the
+  preprocessor magic work.
 
   NOTE: GC is inhibited during the entire operation of these macros.  This
   is because frequently the data to be converted comes from strings but
@@ -2551,6 +2552,12 @@ END_C_DECLS
 
   When specifying the sink, use lvalues, since the macro will assign to them,
   except when the sink is an lstream or a lisp buffer.
+
+  For the sink types `ALLOCA' and `C_STRING_ALLOCA', the resulting text is
+  stored in a stack-allocated buffer, which is automatically freed on
+  returning from the function.  However, the sink types `MALLOC' and
+  `C_STRING_MALLOC' return `xmalloc()'ed memory.  The caller is responsible
+  for freeing this memory using `xfree()'.
 
   The macros accept the kinds of sources and sinks appropriate for
   internal and external data representation.  See the type_checking_assert
@@ -2607,7 +2614,45 @@ END_C_DECLS
   behavior may change in the future, and you cannot rely on this --
   the most you can rely on is that sink data in Unicode format will
   have two terminating nulls, which combine to form one Unicode null
-  character.  */
+  character.
+
+  NOTE: You might ask, why are these not written as functions that
+  *RETURN* the converted string, since that would allow them to be used
+  much more conveniently, without having to constantly declare temporary
+  variables?  The answer is that in fact I originally did write the
+  routines that way, but that required either
+
+  (a) calling alloca() inside of a function call, or
+  (b) using expressions separated by commas and a global temporary variable, or
+  (c) using the GCC extension ({ ... }).
+
+  Turned out that all of the above had bugs, all caused by GCC (hence the
+  comments about "those GCC wankers" and "ream gcc up the ass").  As for
+  (a), some versions of GCC (especially on Intel platforms), which had
+  buggy implementations of alloca() that couldn't handle being called
+  inside of a function call -- they just decremented the stack right in the
+  middle of pushing args.  Oops, crash with stack trashing, very bad.  (b)
+  was an attempt to fix (a), and that led to further GCC crashes, esp. when
+  you had two such calls in a single subexpression, because GCC couldn't be
+  counted upon to follow even a minimally reasonable order of execution.
+  True, you can't count on one argument being evaluated before another, but
+  GCC would actually interleave them so that the temp var got stomped on by
+  one while the other was accessing it.  So I tried (c), which was
+  problematic because that GCC extension has more bugs in it than a
+  termite's nest.
+
+  So reluctantly I converted to the current way.  Now, that was awhile ago
+  (c. 1994), and it appears that the bug involving alloca in function calls
+  has long since been fixed.  More recently, I defined the new-dfc routines
+  down below, which DO allow exactly such convenience of returning your
+  args rather than store them in temp variables, and I also wrote a
+  configure check to see whether alloca() causes crashes inside of function
+  calls, and if so use the portable alloca() implementation in alloca.c.
+  If you define TEST_NEW_DFC, the old routines get written in terms of the
+  new ones, and I've had a beta put out with this on and it appeared to
+  this appears to cause no problems -- so we should consider
+  switching, and feel no compunctions about writing further such function-
+  like alloca() routines in lieu of statement-like ones. --ben */
 
 #define TO_EXTERNAL_FORMAT(source_type, source, sink_type, sink, codesys)  \
 do {									   \
@@ -2802,24 +2847,24 @@ typedef union { char c; void *p; } *dfc_aliasing_voidpp;
 #define DFC_ALLOCA_USE_CONVERTED_DATA(sink) do {			\
   void * dfc_sink_ret = ALLOCA (dfc_sink.data.len + 2);			\
   memcpy (dfc_sink_ret, dfc_sink.data.ptr, dfc_sink.data.len + 2);	\
-  ((dfc_aliasing_voidpp) &(DFC_CPP_CAR sink))->p = dfc_sink_ret;	\
+  VOIDP_CAST (DFC_CPP_CAR sink) = dfc_sink_ret;				\
   (DFC_CPP_CDR sink) = dfc_sink.data.len;				\
 } while (0)
 #define DFC_MALLOC_USE_CONVERTED_DATA(sink) do {			\
   void * dfc_sink_ret = xmalloc (dfc_sink.data.len + 2);		\
   memcpy (dfc_sink_ret, dfc_sink.data.ptr, dfc_sink.data.len + 2);	\
-  ((dfc_aliasing_voidpp) &(DFC_CPP_CAR sink))->p = dfc_sink_ret;	\
+  VOIDP_CAST (DFC_CPP_CAR sink) = dfc_sink_ret;				\
   (DFC_CPP_CDR sink) = dfc_sink.data.len;				\
 } while (0)
 #define DFC_C_STRING_ALLOCA_USE_CONVERTED_DATA(sink) do {		\
   void * dfc_sink_ret = ALLOCA (dfc_sink.data.len + 2);			\
   memcpy (dfc_sink_ret, dfc_sink.data.ptr, dfc_sink.data.len + 2);	\
-  ((dfc_aliasing_voidpp) &(sink))->p = dfc_sink_ret;			\
+  VOIDP_CAST (sink) = dfc_sink_ret;					\
 } while (0)
 #define DFC_C_STRING_MALLOC_USE_CONVERTED_DATA(sink) do {		\
   void * dfc_sink_ret = xmalloc (dfc_sink.data.len + 2);		\
   memcpy (dfc_sink_ret, dfc_sink.data.ptr, dfc_sink.data.len + 2);	\
-  ((dfc_aliasing_voidpp) &(sink))->p = dfc_sink_ret;			\
+  VOIDP_CAST (sink) = dfc_sink_ret;					\
 } while (0)
 #define DFC_LISP_STRING_USE_CONVERTED_DATA(sink) \
   sink = make_string ((Ibyte *) dfc_sink.data.ptr, dfc_sink.data.len)
@@ -2879,20 +2924,45 @@ typedef union { char c; void *p; } *dfc_aliasing_voidpp;
 #define C_STRING_TO_EXTERNAL_MALLOC(in, out, codesys)			\
   do { * (Extbyte **) &(out) =						\
        NEW_C_STRING_TO_EXTERNAL_MALLOC (in, codesys); } while (0)
+#define SIZED_C_STRING_TO_EXTERNAL_MALLOC(in, inlen, out, codesys)	\
+  do { * (Extbyte **) &(out) =						\
+       NEW_SIZED_C_STRING_TO_EXTERNAL_MALLOC (in, inlen, codesys); }	\
+  while (0)
 #define EXTERNAL_TO_C_STRING_MALLOC(in, out, codesys)			\
   do { * (Ibyte **) &(out) =						\
        NEW_EXTERNAL_TO_C_STRING_MALLOC (in, codesys); } while (0)
+#define SIZED_EXTERNAL_TO_C_STRING_MALLOC(in, inlen, out, codesys)	\
+  do { * (Ibyte **) &(out) =						\
+       NEW_SIZED_EXTERNAL_TO_C_STRING_MALLOC (in, inlen, codesys); }	\
+  while (0)
 #define LISP_STRING_TO_EXTERNAL_MALLOC(in, out, codesys)		\
   do { * (Extbyte **) &(out) =						\
        NEW_LISP_STRING_TO_EXTERNAL_MALLOC (in, codesys); } while (0)
 #else
 #define C_STRING_TO_EXTERNAL_MALLOC(in, out, codesys) \
   TO_EXTERNAL_FORMAT (C_STRING, in, C_STRING_MALLOC, out, codesys)
+#define SIZED_C_STRING_TO_EXTERNAL_MALLOC(in, inlen, out, codesys) \
+  TO_EXTERNAL_FORMAT (DATA, (in, inlen), C_STRING_MALLOC, out, codesys)
 #define EXTERNAL_TO_C_STRING_MALLOC(in, out, codesys) \
   TO_INTERNAL_FORMAT (C_STRING, in, C_STRING_MALLOC, out, codesys)
+#define SIZED_EXTERNAL_TO_C_STRING_MALLOC(in, inlen, out, codesys) \
+  TO_INTERNAL_FORMAT (DATA, (in, inlen), C_STRING_MALLOC, out, codesys)
 #define LISP_STRING_TO_EXTERNAL_MALLOC(in, out, codesys) \
   TO_EXTERNAL_FORMAT (LISP_STRING, in, C_STRING_MALLOC, out, codesys)
 #endif /* TEST_NEW_DFC */
+
+#define C_STRING_TO_SIZED_EXTERNAL_MALLOC(in, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (C_STRING, in, MALLOC, (out, outlen), codesys)
+#define SIZED_C_STRING_TO_SIZED_EXTERNAL_MALLOC(in, inlen, out, outlen, \
+						codesys)		\
+  TO_EXTERNAL_FORMAT (DATA, (in, inlen), MALLOC, (out, outlen), codesys)
+#define EXTERNAL_TO_SIZED_C_STRING_MALLOC(in, out, outlen, codesys) \
+  TO_INTERNAL_FORMAT (C_STRING, in, MALLOC, (out, outlen), codesys)
+#define SIZED_EXTERNAL_TO_SIZED_C_STRING_MALLOC(in, inlen, out, outlen, \
+						codesys)		\
+  TO_INTERNAL_FORMAT (DATA, (in, inlen), MALLOC, (out, outlen), codesys)
+#define LISP_STRING_TO_SIZED_EXTERNAL_MALLOC(in, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (LISP_STRING, in, MALLOC, (out, outlen), codesys)
 
 enum new_dfc_src_type
 {
@@ -2906,11 +2976,13 @@ enum new_dfc_src_type
 MODULE_API void *new_dfc_convert_malloc (const void *src, Bytecount src_size,
 					 enum new_dfc_src_type type,
 					 Lisp_Object codesys);
-MODULE_API void *new_dfc_convert_alloca (const char *srctext, void *alloca_data);
-MODULE_API Bytecount new_dfc_convert_size (const char *srctext, const void *src,
+MODULE_API Bytecount new_dfc_convert_size (const char *srctext,
+					   const void *src,
 					   Bytecount src_size,
 					   enum new_dfc_src_type type,
 					   Lisp_Object codesys);
+MODULE_API void *new_dfc_convert_copy_data (const char *srctext,
+					    void *alloca_data);
 
 END_C_DECLS
 
@@ -2932,7 +3004,7 @@ END_C_DECLS
    could be inside of a function call. */
 
 #define NEW_DFC_CONVERT_1_ALLOCA(src, src_size, type, codesys)		\
-  new_dfc_convert_alloca						\
+  new_dfc_convert_copy_data						\
    (#src, ALLOCA_FUNCALL_OK (new_dfc_convert_size (#src, src, src_size,	\
 						   type, codesys)))
 
@@ -2959,15 +3031,76 @@ END_C_DECLS
   (Extbyte *) new_dfc_convert_malloc (LISP_TO_VOID (src), -1,	\
 				      DFC_LISP_STRING, codesys)
 
-/* Standins for various encodings, until we know them better */
+/* Standins for various encodings. */
+#ifdef WEXTTEXT_IS_WIDE
+#define Qcommand_argument_encoding Qmswindows_unicode
+#define Qenvironment_variable_encoding Qmswindows_unicode
+#else
 #define Qcommand_argument_encoding Qnative
 #define Qenvironment_variable_encoding Qnative
+#endif
 #define Qunix_host_name_encoding Qnative
 #define Qunix_service_name_encoding Qnative
 #define Qmswindows_host_name_encoding Qmswindows_multibyte
 #define Qmswindows_service_name_encoding Qmswindows_multibyte
 
-/* Standins for various X encodings, until we know them better.
+/* Wexttext functions.  The type of Wexttext is selected at compile time
+   and will sometimes be wchar_t, sometimes char. */
+
+int wcscmp_ascii (const wchar_t *s1, const Ascbyte *s2);
+int wcsncmp_ascii (const wchar_t *s1, const Ascbyte *s2, Charcount len);
+
+#ifdef WEXTTEXT_IS_WIDE /* defined under MS Windows i.e. WIN32_NATIVE */
+#define WEXTTEXT_ZTERM_SIZE sizeof (wchar_t)
+/* Extra indirection needed in case of manifest constant as arg */
+#define WEXTSTRING_1(arg) L##arg
+#define WEXTSTRING(arg) WEXTSTRING_1(arg)
+#define wext_strlen wcslen
+#define wext_strcmp wcscmp
+#define wext_strncmp wcsncmp
+#define wext_strcmp_ascii wcscmp_ascii
+#define wext_strncmp_ascii wcsncmp_ascii
+#define wext_strcpy wcscpy
+#define wext_strncpy wcsncpy
+#define wext_strchr wcschr
+#define wext_strrchr wcsrchr
+#define wext_strdup wcsdup
+#define wext_atol(str) wcstol (str, 0, 10)
+#define wext_sprintf wsprintfW /* Huh?  both wsprintfA and wsprintfW? */
+#define wext_getenv _wgetenv
+#define build_wext_string(str, cs) build_ext_string ((Extbyte *) str, cs)
+#define WEXTTEXT_TO_8_BIT(arg) WEXTTEXT_TO_MULTIBYTE(arg)
+#ifdef WIN32_NATIVE
+int XCDECL wext_retry_open (const Wexttext *path, int oflag, ...);
+#else
+#error Cannot handle Wexttext yet on this system
+#endif
+#define wext_access _waccess
+#define wext_stat _wstat
+#else
+#define WEXTTEXT_ZTERM_SIZE sizeof (char)
+#define WEXTSTRING(arg) arg
+#define wext_strlen strlen
+#define wext_strcmp strcmp
+#define wext_strncmp strncmp
+#define wext_strcmp_ascii strcmp
+#define wext_strncmp_ascii strncmp
+#define wext_strcpy strcpy
+#define wext_strncpy strncpy
+#define wext_strchr strchr
+#define wext_strrchr strrchr
+#define wext_strdup xstrdup
+#define wext_atol(str) atol (str)
+#define wext_sprintf sprintf
+#define wext_getenv getenv
+#define build_wext_string build_ext_string
+#define wext_retry_open retry_open
+#define wext_access access
+#define wext_stat stat
+#define WEXTTEXT_TO_8_BIT(arg) ((Extbyte *) arg)
+#endif
+
+/* Standins for various X encodings.
 
    About encodings in X:
 
@@ -3041,6 +3174,11 @@ END_C_DECLS
    Qenvironment_variable_encoding */
 #define Qx_display_name_encoding Qx_hpc_encoding
 #define Qx_xpm_data_encoding Qx_hpc_encoding
+
+/* !!#### Verify these! */
+#define Qxt_widget_arg_encoding Qnative
+#define Qdt_dnd_encoding Qnative
+#define Qoffix_dnd_encoding Qnative
 
 /* RedHat 6.2 contains a locale called "Francais" with the C-cedilla
    encoded in ISO2022! */

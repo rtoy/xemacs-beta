@@ -54,7 +54,3 @@ NOTE-END  */
 /* This triggers some stuff to avoid a compiler bug */
 
 #define TAHOE_REGISTER_BUG
-
-/* System provides alloca.  */
-
-#define HAVE_ALLOCA

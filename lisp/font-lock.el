@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1992-1995, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.
-;; Copyright (C) 1996, 2000, 2001, 2002 Ben Wing.
+;; Copyright (C) 1996, 2000, 2001, 2002, 2004 Ben Wing.
 
 ;; Author: Jamie Zawinski <jwz@jwz.org>, for the LISPM Preservation Society.
 ;; Minimally merged with FSF 19.34 by Barry Warsaw <bwarsaw@python.org>
@@ -2027,7 +2027,7 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
       ;;     "when" "unless" "do" "dolist" "dotimes" "flet" "labels"
       ;;     "lambda" "block" "return" "return-from" "loop") t)
       ;; (setq last-kbd-macro
-      ;;   (read-kbd-macro "\" C-7 C-1 <right> C-r \\\\| 3*<right> \" RET"))
+      ;;   (read-kbd-macro "\" C-6 C-9 <right> C-r \\\\| 3*<right> \" RET"))
       "autoload\\|block\\|c\\(?:a\\(?:ll-with-condition-handler\\|tch\\)\\|"
       "ond\\(?:ition-case\\)?\\)\\|do\\(?:list\\|times\\)?\\|"
       "eval-\\(?:a\\(?:fter-load\\|nd-compile\\)\\|when-compile\\)\\|flet\\|"
@@ -2174,6 +2174,12 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
 (defconst c-font-lock-keywords-3 nil
   "Gaudy level highlighting for C modes.")
 
+(defconst c-font-lock-keywords-2 nil
+  "Medium level highlighting for XEmacs C source code.")
+
+(defconst c-font-lock-keywords-3 nil
+  "Gaudy level highlighting for XEmacs C source code.")
+
 (defconst c++-font-lock-keywords-1 nil
   "Subdued level highlighting for C++ modes.")
 
@@ -2205,14 +2211,35 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
 (let ((c-keywords
 ;      ("break" "continue" "do" "else" "for" "if" "return" "switch" "while")
        "break\\|continue\\|do\\|else\\|for\\|if\\|return\\|switch\\|while")
+      (xemacs-c-type-types
+      ;(regexp-opt '("Ibyte" "CIbyte" "Extbyte" "UExtbyte" "WExtbyte"
+      ; "Ascbyte" "UAscbyte" "Rawbyte" "CRawbyte" "Binbyte" "CBinbyte"
+      ; "SBinbyte" "Boolbyte" "Ichar" "Raw_Ichar" "Itext" "Textcount"
+      ; "Bytecount" "Charcount" "Charbpos" "Bytebpos" "Membpos" "Charxpos"
+      ; "Bytexpos" "Memxpos" "Elemcount" "Hashcode" "EMACS_INT" "USID"
+      ; "face_index" "glyph_index" "Lisp_Object"))
+       ;; see below (search for last-kbd-macro) for how to auto-generate
+       ;; what's below from what's above.
+       (concat
+	"Ascbyte\\|B\\(?:inbyte\\|oolbyte\\|yte\\(?:bpos\\|count\\|"
+	"xpos\\)\\)\\|C\\(?:Binbyte\\|Ibyte\\|Rawbyte\\|har\\(?:bpos\\|"
+	"count\\|xpos\\)\\)\\|E\\(?:MACS_INT\\|lemcount\\|xtbyte\\)\\|"
+	"Hashcode\\|I\\(?:byte\\|char\\|text\\)\\|Lisp_Object\\|"
+	"Mem\\(?:bpos\\|xpos\\)\\|Raw\\(?:_Ichar\\|byte\\)\\|SBinbyte\\|"
+	"Textcount\\|U\\(?:Ascbyte\\|Extbyte\\|SID\\)\\|WExtbyte\\|"
+	"face_index\\|glyph_index"))
       (c-type-types
 ;      ("auto" "extern" "register" "static" "typedef" "struct" "union" "enum"
-;	"signed" "unsigned" "short" "long" "int" "char" "float" "double"
-;	"void" "volatile" "const")
+;	"signed" "unsigned" "short" "long" "int" "char" "wchar_t" "float"
+;       "double" "void" "volatile" "const")
+       ;; This regexp is (just) 6 parens deep ...
+       ;; This regexp is (just) 6 parens deep ...
+       ;; This regexp is (just) 6 parens deep ...
+       ;; repeat ad nauseum
        (concat "auto\\|c\\(har\\|onst\\)\\|double\\|e\\(num\\|xtern\\)\\|"
 	       "float\\|int\\|long\\|register\\|"
 	       "s\\(hort\\|igned\\|t\\(atic\\|ruct\\)\\)\\|typedef\\|"
-	       "un\\(ion\\|signed\\)\\|vo\\(id\\|latile\\)"))	; 6 ()s deep.
+	       "un\\(ion\\|signed\\)\\|vo\\(id\\|latile\\)\\|wchar_t"))
       (c++-keywords
 ;      ("break" "continue" "do" "else" "for" "if" "return" "switch" "while"
 ;	"asm" "catch" "delete" "new" "operator" "sizeof" "this" "throw" "try"
@@ -2317,62 +2344,110 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
      (1 font-lock-preprocessor-face) (2 font-lock-variable-name-face nil t))
    ))
 
- (setq c-font-lock-keywords-2
-  (append c-font-lock-keywords-1
-   (list
-    ;;
-    ;; Simple regexps for speed.
-    ;;
-    ;; Fontify all type specifiers.
-    (cons (concat "\\<\\(" c-type-types "\\)\\>") 'font-lock-type-face)
-    ;;
-    ;; Fontify all builtin keywords (except case, default and goto; see below).
-    (cons (concat "\\<\\(" c-keywords "\\)\\>") 'font-lock-keyword-face)
-    ;;
-    ;; Fontify case/goto keywords and targets, and case default/goto tags.
-    '("\\<\\(case\\|goto\\)\\>[ \t]*\\([^ \t\n:;]+\\)?"
-      (1 font-lock-keyword-face) (2 font-lock-reference-face nil t))
-    '("^[ \t]*\\(\\sw+\\)[ \t]*:" 1 font-lock-reference-face)
-    )))
-
- (setq c-font-lock-keywords-3
-  (append c-font-lock-keywords-2
-   ;;
-   ;; More complicated regexps for more complete highlighting for types.
-   ;; We still have to fontify type specifiers individually, as C is so hairy.
-   (list
-    ;;
-    ;; Fontify all storage classes and type specifiers, plus their items.
-    (list (concat "\\<\\(" c-type-types "\\)\\>"
-		  "\\([ \t*&]+\\sw+\\>\\)*")
-	  ;; Fontify each declaration item.
-	  '(font-lock-match-c++-style-declaration-item-and-skip-to-next
-	    ;; Start with point after all type specifiers.
-	    (goto-char (or (match-beginning 8) (match-end 1)))
-	    ;; Finish with point after first type specifier.
-	    (goto-char (match-end 1))
-	    ;; Fontify as a variable or function name.
+ (let ((cflk2-part-1
+	(list
+	 ;;
+	 ;; Simple regexps for speed.
+	 ;;
+	 ;; Fontify all type specifiers.
+	 (cons (concat "\\<\\(" c-type-types "\\)\\>") 'font-lock-type-face)))
+       (cflk2-part-2
+	(list
+	 ;; Fontify all builtin keywords (except case, default and goto;
+	 ;; see below).
+	 (cons (concat "\\<\\(" c-keywords "\\)\\>") 'font-lock-keyword-face)
+	 ;;
+	 ;; Fontify case/goto keywords and targets, and case default/goto tags.
+	 '("\\<\\(case\\|goto\\)\\>[ \t]*\\([^ \t\n:;]+\\)?"
+	   (1 font-lock-keyword-face) (2 font-lock-reference-face nil t))
+	 '("^[ \t]*\\(\\sw+\\)[ \t]*:" 1 font-lock-reference-face)))
+       (cflk3-part-1
+	;;
+	;; More complicated regexps for more complete highlighting for
+	;; types.  We still have to fontify type specifiers individually,
+	;; as C is so hairy.
+	(list
+	 ;;
+	 ;; Fontify all storage classes and type specifiers, plus their items.
+	 (list (concat "\\<\\(" c-type-types "\\)\\>"
+		       "\\([ \t*&]+\\sw+\\>\\)*")
+	       ;; Fontify each declaration item.
+	       '(font-lock-match-c++-style-declaration-item-and-skip-to-next
+		 ;; Start with point after all type specifiers.
+		 (goto-char (or (match-beginning 8) (match-end 1)))
+		 ;; Finish with point after first type specifier.
+		 (goto-char (match-end 1))
+		 ;; Fontify as a variable or function name.
+		 (1 (if (match-beginning 4)
+			font-lock-function-name-face
+		      font-lock-variable-name-face))))))
+       (cflk3-part-2
+	(list
+	 ;;
+	 ;; Fontify structures, or typedef names, plus their items.
+	 '("\\(}\\)[ \t*]*\\sw"
+	   (font-lock-match-c++-style-declaration-item-and-skip-to-next
+	    (goto-char (match-end 1)) nil
 	    (1 (if (match-beginning 4)
 		   font-lock-function-name-face
 		 font-lock-variable-name-face))))
-    ;;
-    ;; Fontify structures, or typedef names, plus their items.
-    '("\\(}\\)[ \t*]*\\sw"
-      (font-lock-match-c++-style-declaration-item-and-skip-to-next
-       (goto-char (match-end 1)) nil
-       (1 (if (match-beginning 4)
-	      font-lock-function-name-face
-	    font-lock-variable-name-face))))
-    ;;
-    ;; Fontify anything at beginning of line as a declaration or definition.
-    '("^\\(\\sw+\\)\\>\\([ \t*]+\\sw+\\>\\)*"
-      (1 font-lock-type-face)
-      (font-lock-match-c++-style-declaration-item-and-skip-to-next
-       (goto-char (or (match-beginning 2) (match-end 1))) nil
-       (1 (if (match-beginning 4)
-	      font-lock-function-name-face
-	    font-lock-variable-name-face))))
-    )))
+	 ;;
+	 ;; Fontify anything at beginning of line as a declaration or
+	 ;; definition.
+	 '("^\\(\\sw+\\)\\>\\([ \t*]+\\sw+\\>\\)*"
+	   (1 font-lock-type-face)
+	   (font-lock-match-c++-style-declaration-item-and-skip-to-next
+	    (goto-char (or (match-beginning 2) (match-end 1))) nil
+	    (1 (if (match-beginning 4)
+		   font-lock-function-name-face
+		 font-lock-variable-name-face))))))
+       (xcflk2-part-1
+	(list
+	 ;; Fontify all simple type specifiers used in XEmacs code.
+	 (cons (concat "\\<\\(" xemacs-c-type-types "\\)\\>")
+	       'font-lock-type-face)))
+       (xcflk3-part-1
+	;;
+	;; More complicated regexps for more complete highlighting for
+	;; types.  We still have to fontify type specifiers individually,
+	;; as C is so hairy.
+	(list
+	 ;;
+	 ;; Fontify all storage classes and type specifiers, plus their items.
+	 (list (concat "\\<\\(" xemacs-c-type-types "\\)\\>"
+		       "\\([ \t*&]+\\sw+\\>\\)*")
+	       ;; Fontify each declaration item.
+	       '(font-lock-match-c++-style-declaration-item-and-skip-to-next
+		 ;; Start with point after all type specifiers.
+		 (goto-char (or (match-beginning 8) (match-end 1)))
+		 ;; Finish with point after first type specifier.
+		 (goto-char (match-end 1))
+		 ;; Fontify as a variable or function name.
+		 (1 (if (match-beginning 4)
+			font-lock-function-name-face
+		      font-lock-variable-name-face)))))))
+
+   (setq c-font-lock-keywords-2
+	 (append c-font-lock-keywords-1
+		 cflk2-part-1
+		 cflk2-part-2))
+
+   (setq c-font-lock-keywords-3
+	 (append c-font-lock-keywords-2
+		 cflk3-part-1
+		 cflk3-part-2))
+
+   (setq xemacs-c-font-lock-keywords-2
+	 (append c-font-lock-keywords-1
+		 cflk2-part-1
+		 xcflk2-part-1
+		 cflk2-part-2))
+
+   (setq xemacs-c-font-lock-keywords-3
+	 (append xemacs-c-font-lock-keywords-2
+		 cflk3-part-1
+		 xcflk3-part-1
+		 cflk3-part-2)))
 
  (setq c++-font-lock-keywords-1
   (append

@@ -62,19 +62,6 @@ Boston, MA 02111-1307, USA.  */
 #undef ADDR_CORRECT
 #define ADDR_CORRECT(x) ((int)(x))
 
-/* Define C_ALLOCA if this machine does not support a true alloca
-   and the one written in C should be used instead.
-   Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used.
-   Define neither one if an assembler-language alloca
-   in the file alloca.s should be used.	 */
-
-/* Note: aix3-2.h defines HAVE_ALLOCA; aix3-1.h doesn't.  */
-#ifndef HAVE_ALLOCA
-#define C_ALLOCA
-#define STACK_DIRECTION -1 /* tell alloca.c which way it grows */
-#endif
-
 /* Specify the font for X to use.
    This used to be Rom14.500; that's nice on the X server shipped with
    the RS/6000, but it's not available on other servers.  */

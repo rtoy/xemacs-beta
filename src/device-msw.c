@@ -501,7 +501,7 @@ msprinter_init_device (struct device *d, Lisp_Object UNUSED (props))
   DEVICE_MSPRINTER_DEVMODE (d) = Qnil;
   DEVICE_MSPRINTER_NAME (d) = Qnil;
 
-#if 0 /* @@#### deleted in new ikeyama ws */
+#if 0 /* #### deleted in new ikeyama ws */
   /* We do not use printer font list as we do with the display
      device.  Rather, we allow GDI to pick the closest match to the
      display font. */
@@ -1298,7 +1298,7 @@ values.  Return value is nil if there are no printers installed.
   if (GetLastError () != ERROR_INSUFFICIENT_BUFFER)
     signal_enum_printer_error ();
 
-  data_buf = (BYTE *) ALLOCA (bytes_needed);
+  data_buf = alloca_array (BYTE, bytes_needed);
   ok = qxeEnumPrinters (enum_flags, NULL, enum_level, data_buf, bytes_needed,
 			&bytes_needed, &num_printers);
   if (!ok)

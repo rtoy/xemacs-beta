@@ -415,7 +415,8 @@ React to settings of `default-frame-plist', `initial-frame-plist' there."
 			 '(t)))
 		     t))
 	    ;; Create the new frame.
-	    (let (props new)
+	    (let (props ;new
+		  )
 	      ;; If the frame isn't visible yet, wait till it is.
 	      ;; If the user has to position the window,
 	      ;; Emacs doesn't know its real position until
@@ -454,13 +455,14 @@ React to settings of `default-frame-plist', `initial-frame-plist' there."
 	      (if (lax-plist-member frame-initial-geometry-arguments 'top)
 		  (laxremf props 'top))
 	      ;; Now create the replacement initial frame.
-	      (setq new
-		    (make-frame
-		     ;; Use the geometry args that created the existing
-		     ;; frame, rather than the props we get for it.
-		     (append '(user-size t user-position t)
-			     frame-initial-geometry-arguments
-			     props)))
+	      ;(setq new
+	      (make-frame
+	       ;; Use the geometry args that created the existing
+	       ;; frame, rather than the props we get for it.
+	       (append '(user-size t user-position t)
+		       frame-initial-geometry-arguments
+		       props))
+	      ;)
 	      ;; The initial frame, which we are about to delete, may be
 	      ;; the only frame with a minibuffer.  If it is, create a
 	      ;; new one.
@@ -1186,9 +1188,8 @@ selected frame)."
     ((x ns gtk) t)
     (mswindows (> mswindows-num-mouse-buttons 0))
     (tty
-     (and 
-      (fboundp 'gpm-is-supported-p)
-      (gpm-is-supported-p (display-device display))))
+     (and-fboundp 'gpm-is-supported-p
+       (gpm-is-supported-p (display-device display))))
     (t nil)))
 
 (defun display-popup-menus-p (&optional display)
@@ -1273,8 +1274,8 @@ the question is inapplicable to a certain kind of display."
 The value is one of the symbols `static-gray', `gray-scale',
 `static-color', `pseudo-color', `true-color', or `direct-color'."
   (case (framep-on-display display)
-    (x (x-display-visual-class (display-device display)))
-    (gtk (gtk-display-visual-class (display-device display)))
+    (x (declare-fboundp (x-display-visual-class (display-device display))))
+    (gtk (declare-fboundp (gtk-display-visual-class (display-device display))))
     (mswindows (let ((planes (display-planes display)))
 		 (cond ((eq planes 1) 'static-gray)
 		       ((eq planes 4) 'static-color)

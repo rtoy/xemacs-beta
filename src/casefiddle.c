@@ -51,8 +51,7 @@ casify_object (enum case_action flag, Lisp_Object string_or_char,
     {
       Lisp_Object syntax_table = buf->mirror_syntax_table;
       Ibyte *storage =
-	alloca_array (Ibyte, XSTRING_LENGTH (string_or_char) *
-		      MAX_ICHAR_LEN);
+	alloca_ibytes (XSTRING_LENGTH (string_or_char) * MAX_ICHAR_LEN);
       Ibyte *newp = storage;
       Ibyte *oldp = XSTRING_DATA (string_or_char);
       Ibyte *endp = oldp + XSTRING_LENGTH (string_or_char);

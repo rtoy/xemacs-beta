@@ -1348,47 +1348,16 @@ of buffer-file-coding-system set by this function."
 (defun init-mule-at-startup ()
   "Initialize MULE environment at startup.  Don't call this."
 
-  ;; Fill up the Unicode translation tables for the standard charsets.
-  ;; Currently this needs to happen after data-directory gets
-  ;; initialized, which is not long in the startup process before we
-  ;; are called.  However, in reality this is WAY TOO LATE for this to
-  ;; be happening.  All manner of stuff involving paths happens
-  ;; beforehand, and eventually we want to be able to invoke XEmacs
-  ;; from a path with Japanese in it without problem.  Everything else
-  ;; is carefully set up to get the coding systems ready before we
-  ;; have to consult any paths or similarly interact with the system
-  ;; (except possibly finding the dump file).  We need to find a way
-  ;; of dumping the data that we use to build the tables along with
-  ;; the rest of the dump data, i.e. in the same file as it or ideally
-  ;; as a resource attached to the executable itself, so we have
-  ;; access to it extremely early; then, we call
-  ;; init-unicode-at-startup from init_intl(), which should (perhaps)
-  ;; be soon enough.
+  (when (not load-unicode-tables-at-dump-time)
+    (load-unicode-tables))
 
-  ;; An alternative is to resurrect my attempts to actually dump the
-  ;; created tables, which would completely solve things, although
-  ;; they're somewhat big (HOW BIG? INVESTIGATE) and this would
-  ;; preclude demand-loading the data.  Another possibility would be
-  ;; to load the tables into memory at dump time (after writing them
-  ;; out in some super-compressed binary form).  Yet another is to
-  ;; spit out the table data out in C code, which is then compiled in.
-
-  ;; We need to go through these, compile a list of what sorts of
-  ;; multilingual things we want to do early at startup (start XEmacs
-  ;; from a Japanese or other multilingual directory?  Can we then
-  ;; find the dump file?  If the dump file is elsewhere in a Japanese
-  ;; directory?  etc.) and see what we get with the different
-  ;; possibilities, and what are their strengths and weaknesses.
-
-  (init-unicode-at-startup)
-
-  ;; This is called (currently; might be moved earlier) from startup.el, after
-  ;; the basic GUI systems have been initialized, and just before the
-  ;; init file gets read in.  It needs to finish up initializing the current
-  ;; language environment.  Very early in the startup procedure we determined
-  ;; the default language environment from the locale, and bootstrapped the
-  ;; native, file-name and process I/O coding systems.  Now we need to do it
-  ;; over `the right away'.
+  ;; This is called (currently; might be moved earlier) from startup.el,
+  ;; after the basic GUI systems have been initialized, and just before the
+  ;; init file gets read in.  It needs to finish up initializing the
+  ;; current language environment.  Very early in the startup procedure we
+  ;; determined the default language environment from the locale, and
+  ;; bootstrapped the native, file-name and process I/O coding systems.
+  ;; Now we need to do it over `the right away'.
   (finish-set-language-environment current-language-environment)
 
   ;; Load a (localizable) locale-specific init file, if it exists.

@@ -1,6 +1,6 @@
 /* Support for dynamic arrays.
    Copyright (C) 1993 Sun Microsystems, Inc.
-   Copyright (C) 2002, 2003 Ben Wing.
+   Copyright (C) 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -45,10 +45,10 @@ until the next operation that changes the length of the array.
 This is a container object.  Declare a dynamic array of a specific type
 as follows:
 
-typedef struct
-{
-  Dynarr_declare (mytype);
-} mytype_dynarr;
+  typedef struct
+  {
+    Dynarr_declare (mytype);
+  } mytype_dynarr;
 
 Use the following functions/macros:
 
@@ -129,7 +129,7 @@ Use the following global variable:
 static int Dynarr_min_size = 8;
 
 static void
-Dynarr_realloc (Dynarr *dy, int new_size)
+Dynarr_realloc (Dynarr *dy, Bytecount new_size)
 {
   if (DUMPEDP (dy->base))
     {
@@ -151,7 +151,7 @@ Dynarr_newf (int elsize)
 }
 
 void
-Dynarr_resize (void *d, int size)
+Dynarr_resize (void *d, Elemcount size)
 {
   int newsize;
   double multiplier;
@@ -271,3 +271,70 @@ Dynarr_memory_usage (void *d, struct overhead_stats *stats)
 }
 
 #endif /* MEMORY_USAGE_STATS */
+
+/* Version of malloc() that will be extremely efficient when allocation
+   nearly always occurs in LIFO (stack) order.
+
+   #### Perhaps shouldn't be in this file, but where else? */
+
+typedef struct
+{
+  Dynarr_declare (char_dynarr *);
+} char_dynarr_dynarr;
+
+char_dynarr_dynarr *stack_like_free_list;
+char_dynarr_dynarr *stack_like_in_use_list;
+
+void *
+stack_like_malloc (Bytecount size)
+{
+  char_dynarr *this_one;
+  if (!stack_like_free_list)
+    {
+      stack_like_free_list = Dynarr_new2 (char_dynarr_dynarr,
+					  char_dynarr *);
+      stack_like_in_use_list = Dynarr_new2 (char_dynarr_dynarr,
+					    char_dynarr *);
+    }
+
+  if (Dynarr_length (stack_like_free_list) > 0)
+    this_one = Dynarr_pop (stack_like_free_list);
+  else
+    this_one = Dynarr_new (char);
+  Dynarr_add (stack_like_in_use_list, this_one);
+  Dynarr_resize (this_one, size);
+  return Dynarr_atp (this_one, 0);
+}
+
+void
+stack_like_free (void *val)
+{
+  int len = Dynarr_length (stack_like_in_use_list);
+  assert (len > 0);
+  /* The vast majority of times, we will be called in a last-in first-out
+     order, and the item at the end of the list will be the one we're
+     looking for, so just check for this first and avoid any function
+     calls. */
+  if (Dynarr_atp (Dynarr_at (stack_like_in_use_list, len - 1), 0) == val)
+    {
+      char_dynarr *this_one = Dynarr_pop (stack_like_in_use_list);
+      Dynarr_add (stack_like_free_list, this_one);
+    }
+  else
+    {
+      /* Find the item and delete it. */
+      int i;
+      assert (len >= 2);
+      for (i = len - 2; i >= 0; i--)
+	if (Dynarr_atp (Dynarr_at (stack_like_in_use_list, i), 0) ==
+	    val)
+	  {
+	    char_dynarr *this_one = Dynarr_at (stack_like_in_use_list, i);
+	    Dynarr_add (stack_like_free_list, this_one);
+	    Dynarr_delete (stack_like_in_use_list, i);
+	    return;
+	  }
+
+      abort ();
+    }
+}

@@ -1,6 +1,7 @@
 /* Compiler-specific definitions for XEmacs.
    Copyright (C) 1998-1999, 2003 Free Software Foundation, Inc.
    Copyright (C) 1994 Richard Mlynarik.
+   Copyright (C) 1995, 1996, 2000-2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -232,5 +233,45 @@ Boston, MA 02111-1307, USA.  */
 #else
 # define MODULE_API
 #endif
+
+/* Under "strict-aliasing" assumptions, you're not necessarily allowed to
+   access the same memory address as two different types.  The proper way
+   around that is with a union.  The macros below help out, e.g. the
+   definition of XE_MAKEPOINTS(val) is
+
+   ANSI_ALIASING_TYPEDEF (POINTS, POINTS);
+   #define XE_MAKEPOINTS(l)       ANSI_ALIASING_CAST (POINTS, l)
+
+   replacing
+
+   BAD!!! #define XE_MAKEPOINTS(l)       (* (POINTS *) &(l))
+
+   On the other hand, if you are just casting from one pointer to the other
+   in order to pass a pointer to another function, it's probably OK to just
+   trick GCC by inserting an intermediate cast to (void *), to avoid
+   warnings about "dereferencing type-punned pointer".  #### I don't know
+   how kosher this is, but do strict-aliasing rules really apply across
+   functions?
+
+   Note that the input to e.g. VOIDP_CAST must be an lvalue (i.e. not
+   &(something)), but the value of the macro is also an lvalue, so in place
+   of `(void **) &foo' you could write `& VOIDP_CAST (foo)' if you are
+   subsequently dereferencing the value or don't feel comfortable doing a
+   trick like `(void **) (void *) &foo'.
+
+   Unfortunately, it does not work to just define the union type on the fly in
+   the cast -- otherwise, we could avoid the need for a typedef.  Or rather,
+   it does work under gcc but not under Visual C++.
+
+   --ben
+ */
+
+#define ANSI_ALIASING_TYPEDEF(name, type) typedef union { char c; type p; } *ANSI_ALIASING_##name
+#define ANSI_ALIASING_CAST(name, val) (((ANSI_ALIASING_##name) &(val))->p)
+ANSI_ALIASING_TYPEDEF (voidp, void *);
+/* VOIDP_CAST: Cast an lvalue to (void *) in a way that is ANSI-aliasing
+   safe and will not result in GCC warnings.  The result is still an
+   lvalue, so you can assign to it or take its address. */
+#define VOIDP_CAST(l)  ANSI_ALIASING_CAST (voidp, l)
 
 #endif /* INCLUDED_compiler_h */

@@ -40,10 +40,6 @@ NOTE-END  */
 #define CRT0_DUMMIES one_dummy,
 #endif
 
-/* The News machine has alloca. */
-
-#define HAVE_ALLOCA
-
 /* Data type of load average, as read out of kmem.  */
 
 #define LOAD_AVE_TYPE double

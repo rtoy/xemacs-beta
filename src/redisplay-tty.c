@@ -1057,6 +1057,7 @@ tty_ring_bell (struct device *d, int volume, int UNUSED (pitch),
 int
 init_tty_for_redisplay (struct device *d, char *terminal_type)
 {
+  /* !!#### Mule-ize this */
   int status;
   char entry_buffer[2044];
   /* char temp_buffer[2044]; */

@@ -134,9 +134,9 @@ static const struct sized_memory_description lstream_extra_description_map[] =
 
 static const struct memory_description lstream_description[] =
 {
-  { XD_STRUCT_PTR, offsetof (Lstream, imp), 1,
+  { XD_BLOCK_PTR, offsetof (Lstream, imp), 1,
     &lstream_implementation_description },
-  { XD_STRUCT_ARRAY, offsetof (Lstream, data), 1,
+  { XD_BLOCK_ARRAY, offsetof (Lstream, data), 1,
     lstream_extra_description_map },
   { XD_END }
 };
@@ -1637,7 +1637,7 @@ DEFINE_LSTREAM_IMPLEMENTATION_WITH_DATA ("lisp-buffer", lisp_buffer);
 
 static Lisp_Object
 make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
-			   int flags, const Char_ASCII *mode)
+			   int flags, const Ascbyte *mode)
 {
   Lstream *lstr;
   struct lisp_buffer_stream *str;
@@ -1867,6 +1867,4 @@ void
 vars_of_lstream (void)
 {
   INIT_LRECORD_IMPLEMENTATION (lstream);
-
-  reinit_vars_of_lstream ();
 }

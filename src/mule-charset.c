@@ -1,7 +1,7 @@
 /* Functions to handle multilingual characters.
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -162,20 +162,6 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun,
   write_fmt_string (printcharfun, " 0x%x>", cs->header.uid);
 }
 
-static void
-finalize_charset (void *header, int for_disksave)
-{
-  /* See mule-charset.h, definition of Lisp_Charset. */
-  Lisp_Object charset = wrap_charset ((Lisp_Charset *) header);
-  if (for_disksave && XCHARSET_TO_UNICODE_TABLE (charset))
-    {
-      /* Control-1, ASCII, Composite don't have tables */
-      free_charset_unicode_tables (charset);
-      XCHARSET_TO_UNICODE_TABLE (charset) = 0;
-      XCHARSET_FROM_UNICODE_TABLE (charset) = 0;
-    }
-}
-
 static const struct memory_description charset_description[] = {
   { XD_INT, offsetof (Lisp_Charset, dimension) },
   { XD_INT, offsetof (Lisp_Charset, from_unicode_levels) },
@@ -195,7 +181,7 @@ static const struct memory_description charset_description[] = {
 
 DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
 			       1, /* dumpable flag */
-                               mark_charset, print_charset, finalize_charset,
+                               mark_charset, print_charset, 0,
 			       0, 0, charset_description, Lisp_Charset);
 /* Make a new charset. */
 /* #### SJT Should generic properties be allowed? */
@@ -1014,30 +1000,13 @@ syms_of_mule_charset (void)
   DEFSYMBOL (Qcomposite);
 }
 
-static int
-init_charset_unicode_tables_mapper (Lisp_Object UNUSED (key),
-				    Lisp_Object value, void *UNUSED (closure))
-{
-  init_charset_unicode_tables (value);
-  return 0;
-}
-
-void
-init_mule_charset (void)
-{
-  /* See mule-charset.h, definition of Lisp_Charset. */
-  if (initialized)
-    elisp_maphash (init_charset_unicode_tables_mapper, Vcharset_hash_table,
-		   0);
-}
-
 void
 vars_of_mule_charset (void)
 {
   int i, j, k;
 
   chlook = xnew_and_zero (struct charset_lookup); /* zero for Purify. */
-  dump_add_root_struct_ptr (&chlook, &charset_lookup_description);
+  dump_add_root_block_ptr (&chlook, &charset_lookup_description);
 
   /* Table of charsets indexed by leading byte. */
   for (i = 0; i < countof (chlook->charset_by_leading_byte); i++)

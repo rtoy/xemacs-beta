@@ -3492,7 +3492,7 @@ do {									      \
     if (!UNBOUNDP (f) && (!CONSP (f) || !EQ (XCAR (f), Qautoload)))	      \
       signal_ferror (Qdll_error, "Attempt to redefine %s", subr_name (subr)); \
 									      \
-    newsubr = (Lisp_Subr *) xmalloc (sizeof (Lisp_Subr));		      \
+    newsubr = xnew (Lisp_Subr);						      \
     memcpy (newsubr, subr, sizeof (Lisp_Subr));				      \
     subr->doc = (const char *)newsubr;					      \
     subr = newsubr;							      \

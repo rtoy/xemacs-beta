@@ -1,7 +1,7 @@
 /* Record indices of function doc strings stored in a file.
    Copyright (C) 1985, 1986, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -100,11 +100,11 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
           Ibyte *old_buffer = buffer;
 	  if (buffer == buf)
 	    {
-	      buffer = (Ibyte *) xmalloc (buffer_size *= 2);
+	      buffer = xnew_ibytes (buffer_size *= 2);
 	      memcpy (buffer, old_buffer, p - old_buffer);
 	    }
 	  else
-            buffer = (Ibyte *) xrealloc (buffer, buffer_size *= 2);
+            XREALLOC_ARRAY (buffer, Ibyte, buffer_size *= 2);
           p += buffer - old_buffer;
 	  space_left = buffer_size - (p - buffer);
 	}
@@ -248,10 +248,10 @@ get_doc_string (Lisp_Object filepos)
       if (purify_flag)
 	{
 	    /* sizeof ("../lib-src/") == 12 */
-	  name_nonreloc = (Ibyte *) ALLOCA (12 + XSTRING_LENGTH (file) + 8);
+	  name_nonreloc = alloca_ibytes (12 + XSTRING_LENGTH (file) + 8);
 	  /* Preparing to dump; DOC file is probably not installed.
 	     So check in ../lib-src. */
-	  qxestrcpy (name_nonreloc, (Ibyte *) "../lib-src/");
+	  qxestrcpy_ascii (name_nonreloc, "../lib-src/");
 	  qxestrcat (name_nonreloc, XSTRING_DATA (file));
 
 	  fd = qxe_open (name_nonreloc, O_RDONLY | OPEN_BINARY, 0);
@@ -461,7 +461,7 @@ when doc strings are referred to in the dumped Emacs.
 
   {
     name = alloca_ibytes (XSTRING_LENGTH (filename) + 14);
-    qxestrcpy (name, (Ibyte *) "../lib-src/");
+    qxestrcpy_ascii (name, "../lib-src/");
   }
 
   qxestrcat (name, XSTRING_DATA (filename));
@@ -679,7 +679,7 @@ kludgily_ignore_lost_doc_p (Lisp_Object sym)
 # define kludge_prefix "ad-Orig-"
   Lisp_Object name = XSYMBOL (sym)->name;
   return (XSTRING_LENGTH (name) > (Bytecount) (sizeof (kludge_prefix)) &&
-	  !qxestrncmp_c (XSTRING_DATA (name), kludge_prefix,
+	  !qxestrncmp_ascii (XSTRING_DATA (name), kludge_prefix,
 			 sizeof (kludge_prefix) - 1));
 # undef kludge_prefix
 }
@@ -831,8 +831,8 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 #endif
 
   strlength = XSTRING_LENGTH (string);
-  bsize = 1 + strlength;
-  buf = (Ibyte *) xmalloc (bsize);
+  bsize = ITEXT_ZTERM_SIZE + strlength;
+  buf = xnew_ibytes (bsize);
   bufp = buf;
 
   /* Have to reset strdata every time GC might be called */

@@ -81,8 +81,8 @@ EXTERN_C MODULE_API void emodules_doc_sym (const char *objname,
 
 /* We should not expose module entities to the portable dumper. */
 #if defined(PDUMP) && defined(EMACS_MODULE)
-#undef dump_add_root_struct_ptr
-#define dump_add_root_struct_ptr(varaddr,descaddr) DO_NOTHING
+#undef dump_add_root_block_ptr
+#define dump_add_root_block_ptr(varaddr,descaddr) DO_NOTHING
 #undef dump_add_opaque
 #define dump_add_opaque(varaddr,size) DO_NOTHING
 #undef dump_add_root_block

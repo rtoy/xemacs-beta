@@ -20,6 +20,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* This file has been Mule-ized, Ben Wing, 10-7-04. */
+
 #ifndef INCLUDED_dumper_h
 #define INCLUDED_dumper_h
 
@@ -27,10 +29,10 @@ BEGIN_C_DECLS
 
 void pdump_objects_unmark (void);
 void pdump (void);
-int pdump_load (const char *argv0);
+int pdump_load (const Wexttext *argv0);
 void pdump_backtrace (void);
 extern unsigned int dump_id;
-extern char *pdump_start, *pdump_end;
+extern Rawbyte *pdump_start, *pdump_end;
 
 END_C_DECLS
 

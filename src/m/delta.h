@@ -42,16 +42,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / FSCALE) */
 
-/* Define C_ALLOCA if this machine does not support a true alloca
-   and the one written in C should be used instead.
-   Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used.
-   Define neither one if an assembler-language alloca
-   in the file alloca.s should be used.  */
-
-/* #define C_ALLOCA */
-/* #define HAVE_ALLOCA */
-
 /* Define NO_REMAP if memory segmentation makes it not work well
    to change the boundary between the text section and data section
    when Emacs is dumped.  If you define this, the preloaded Lisp
@@ -85,11 +75,6 @@ Boston, MA 02111-1307, USA.  */
 # undef LIBX11_SYSTEM		/* no -lpt as usg5-3.h expects */
 # define LIBX11_SYSTEM "-lnls -lnsl_s"
 #endif /* HAVE_X_WINDOWS */
-
-#ifdef __GNUC__
- /* Use builtin alloca. Also be sure that no other ones are tried out. */
-# define alloca __builtin_alloca
-# define HAVE_ALLOCA
 
  /* We are assuming here that the `true' GNU gcc has not been
     installed, and we are using the gnucc provided by Motorola.  No

@@ -1,6 +1,6 @@
-/* Buffer manipulation primitives for XEmacs.
+/* Text manipulation primitives for XEmacs.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2004 Ben Wing.
    Copyright (C) 1999 Martin Buchholz.
 
 This file is part of XEmacs.
@@ -39,536 +39,138 @@ Boston, MA 02111-1307, USA.  */
 /*                            long comments                             */
 /************************************************************************/
 
-/*
+/* NB: Everything below was written by Ben Wing except as otherwise noted. */
+
+/************************************************************************/
+/*                                                                      */
+/*                                                                      */
+/*               Part A: More carefully-written documentation           */
+/*                                                                      */
+/*                                                                      */
+/************************************************************************/
+
+/* Authorship: Ben Wing
+
+
    ==========================================================================
-                1. Intro to Characters, Character Sets, and Encodings
+                         7. Handling non-default formats
    ==========================================================================
 
-   A character (which is, BTW, a surprisingly complex concept) is, in a
-   written representation of text, the most basic written unit that has a
-   meaning of its own.  It's comparable to a phoneme when analyzing words
-   in spoken speech (for example, the sound of `t' in English, which in
-   fact has different pronunciations in different words -- aspirated in
-   `time', unaspirated in `stop', unreleased or even pronounced as a
-   glottal stop in `button', etc. -- but logically is a single concept).
-   Like a phoneme, a character is an abstract concept defined by its
-   *meaning*.  The character `lowercase f', for example, can always be used
-   to represent the first letter in the word `fill', regardless of whether
-   it's drawn upright or italic, whether the `fi' combination is drawn as a
-   single ligature, whether there are serifs on the bottom of the vertical
-   stroke, etc. (These different appearances of a single character are
-   often called "graphs" or "glyphs".) Our concern when representing text
-   is on representing the abstract characters, and not on their exact
-   appearance.
+   We support, at least to some extent, formats other than the default
+   variable-width format, for speed; all of these alternative formats are
+   fixed-width.  Currently we only handle these non-default formats in
+   buffers, because access to their text is strictly controlled and thus
+   the details of the format mostly compartmentalized.  The only really
+   tricky part is the search code -- the regex, Boyer-Moore, and
+   simple-search algorithms in search.c and regex.c.  All other code that
+   knows directly about the buffer representation is the basic code to
+   modify or retrieve the buffer text.
 
-   A character set (or "charset"), as we define it, is a set of characters,
-   each with an associated number (or set of numbers -- see below), called
-   a "code point".  It's important to understand that a character is not
-   defined by any number attached to it, but by its meaning.  For example,
-   ASCII and EBCDIC are two charsets containing exactly the same characters
-   (lowercase and uppercase letters, numbers 0 through 9, particular
-   punctuation marks) but with different numberings. The `comma' character
-   in ASCII and EBCDIC, for instance, is the same character despite having
-   a different numbering.  Conversely, when comparing ASCII and JIS-Roman,
-   which look the same except that the latter has a yen sign substituted
-   for the backslash, we would say that the backslash and yen sign are
-   *not* the same characters, despite having the same number (95) and
-   despite the fact that all other characters are present in both charsets,
-   with the same numbering.  ASCII and JIS-Roman, then, do *not* have
-   exactly the same characters in them (ASCII has a backslash character but
-   no yen-sign character, and vice-versa for JIS-Roman), unlike ASCII and
-   EBCDIC, even though the numberings in ASCII and JIS-Roman are closer.
+   Supporting fixed-width formats in Lisp strings is harder, but possible
+   -- FSF currently does this, for example.  In this case, however,
+   probably only 8-bit-fixed is reasonable for Lisp strings -- getting
+   non-ASCII-compatible fixed-width formats to work is much, much harder
+   because a lot of code assumes that strings are ASCII-compatible
+   (i.e. ASCII + other characters represented exclusively using high-bit
+   bytes) and a lot of code mixes Lisp strings and non-Lisp strings freely.
 
-   It's also important to distinguish between charsets and encodings.  For
-   a simple charset like ASCII, there is only one encoding normally used --
-   each character is represented by a single byte, with the same value as
-   its code point.  For more complicated charsets, however, things are not
-   so obvious.  Unicode version 2, for example, is a large charset with
-   thousands of characters, each indexed by a 16-bit number, often
-   represented in hex, e.g. 0x05D0 for the Hebrew letter "aleph".  One
-   obvious encoding uses two bytes per character (actually two encodings,
-   depending on which of the two possible byte orderings is chosen).  This
-   encoding is convenient for internal processing of Unicode text; however,
-   it's incompatible with ASCII, so a different encoding, e.g. UTF-8, is
-   usually used for external text, for example files or e-mail.  UTF-8
-   represents Unicode characters with one to three bytes (often extended to
-   six bytes to handle characters with up to 31-bit indices).  Unicode
-   characters 00 to 7F (identical with ASCII) are directly represented with
-   one byte, and other characters with two or more bytes, each in the range
-   80 to FF.
+   The different possible fixed-width formats are 8-bit fixed, 16-bit
+   fixed, and 32-bit fixed.  The latter can represent all possible
+   characters, but at a substantial memory penalty.  The other two can
+   represent only a subset of the possible characters.  How these subsets
+   are defined can be simple or very tricky.
 
-   In general, a single encoding may be able to represent more than one
-   charset.
-
-   See also man/lispref/mule.texi.
+   Currently we support only the default format and the 8-bit fixed format,
+   and in the latter, we only allow these to be the first 256 characters in
+   an Ichar (ASCII and Latin 1).
    
-   ==========================================================================
-                               2. Character Sets
-   ==========================================================================
+   One reasonable approach for 8-bit fixed is to allow the upper half to
+   represent any 1-byte charset, which is specified on a per-buffer basis.
+   This should work fairly well in practice since most documents are in
+   only one foreign language (possibly with some English mixed in).  I
+   think FSF does something like this; or at least, they have something
+   called nonascii-translation-table and use it when converting from
+   8-bit-fixed text ("unibyte text") to default text ("multibyte text").
+   With 16-bit fixed, you could do something like assign chunks of the 64K
+   worth of characters to charsets as they're encountered in documents.
+   This should work well with most Asian documents.
 
-   A particular character in a charset is indexed using one or
-   more "position codes", which are non-negative integers.
-   The number of position codes needed to identify a particular
-   character in a charset is called the "dimension" of the
-   charset.  In XEmacs/Mule, all charsets have 1 or 2 dimensions,
-   and the size of all charsets (except for a few special cases)
-   is either 94, 96, 94 by 94, or 96 by 96.  The range of
-   position codes used to index characters from any of these
-   types of character sets is as follows:
+   If/when we switch to using Unicode internally, we might have formats more
+   like this:
 
-   Charset type		Position code 1		Position code 2
-   ------------------------------------------------------------
-   94			33 - 126		N/A
-   96			32 - 127		N/A
-   94x94		33 - 126		33 - 126
-   96x96		32 - 127		32 - 127
+   -- UTF-8 or some extension as the default format.  Perl uses an
+   extension that handles 64-bit chars and requires as much as 13 bytes per
+   char, vs. the standard of 31-bit chars and 6 bytes max.  UTF-8 has the
+   same basic properties as our own variable-width format (see text.c,
+   Internal String Encoding) and so most code would not need to be changed.
 
-   Note that in the above cases position codes do not start at
-   an expected value such as 0 or 1.  The reason for this will
-   become clear later.
+   -- UTF-16 as a "pseudo-fixed" format (i.e. 16-bit fixed plus surrogates
+   for representing characters not in the BMP, aka >= 65536).  The vast
+   majority of documents will have no surrogates in them so byte/char
+   conversion will be very fast.
 
-   For example, Latin-1 is a 96-character charset, and JISX0208
-   (the Japanese national character set) is a 94x94-character
-   charset.
-
-   [Note that, although the ranges above define the *valid*
-   position codes for a charset, some of the slots in a particular
-   charset may in fact be empty.  This is the case for JISX0208,
-   for example, where (e.g.) all the slots whose first
-   position code is in the range 118 - 127 are empty.]
-
-   There are three charsets that do not follow the above rules.
-   All of them have one dimension, and have ranges of position
-   codes as follows:
-
-   Charset name		Position code 1
-   ------------------------------------
-   ASCII		0 - 127
-   Control-1		0 - 31
-   Composite		0 - some large number
-
-   (The upper bound of the position code for composite characters
-   has not yet been determined, but it will probably be at
-   least 16,383).
-
-   ASCII is the union of two subsidiary character sets:
-   Printing-ASCII (the printing ASCII character set,
-   consisting of position codes 33 - 126, like for a standard
-   94-character charset) and Control-ASCII (the non-printing
-   characters that would appear in a binary file with codes 0
-   - 32 and 127).
-
-   Control-1 contains the non-printing characters that would
-   appear in a binary file with codes 128 - 159.
-
-   Composite contains characters that are generated by
-   overstriking one or more characters from other charsets.
-
-   Note that some characters in ASCII, and all characters
-   in Control-1, are "control" (non-printing) characters.
-   These have no printed representation but instead control
-   some other function of the printing (e.g. TAB or 8 moves
-   the current character position to the next tab stop).
-   All other characters in all charsets are "graphic"
-   (printing) characters.
-
-   When a binary file is read in, the bytes in the file are
-   assigned to character sets as follows:
-
-   Bytes		Character set		Range
-   --------------------------------------------------
-   0 - 127		ASCII			0 - 127
-   128 - 159		Control-1		0 - 31
-   160 - 255		Latin-1			32 - 127
-
-   This is a bit ad-hoc but gets the job done.
-
-   ==========================================================================
-                               3. Encodings
-   ==========================================================================
-
-   An "encoding" is a way of numerically representing
-   characters from one or more character sets.  If an encoding
-   only encompasses one character set, then the position codes
-   for the characters in that character set could be used
-   directly.  This is not possible, however, if more than one
-   character set is to be used in the encoding.
-
-   For example, the conversion detailed above between bytes in
-   a binary file and characters is effectively an encoding
-   that encompasses the three character sets ASCII, Control-1,
-   and Latin-1 in a stream of 8-bit bytes.
-
-   Thus, an encoding can be viewed as a way of encoding
-   characters from a specified group of character sets using a
-   stream of bytes, each of which contains a fixed number of
-   bits (but not necessarily 8, as in the common usage of
-   "byte").
-
-   Here are descriptions of a couple of common
-   encodings:
-
-
-   A. Japanese EUC (Extended Unix Code)
-
-   This encompasses the character sets:
-   - Printing-ASCII,
-   - Katakana-JISX0201 (half-width katakana, the right half of JISX0201).
-   - Japanese-JISX0208
-   - Japanese-JISX0212
-   It uses 8-bit bytes.
-
-   Note that Printing-ASCII and Katakana-JISX0201 are 94-character
-   charsets, while Japanese-JISX0208 is a 94x94-character charset.
-
-   The encoding is as follows:
-
-   Character set	Representation  (PC == position-code)
-   -------------	--------------
-   Printing-ASCII	PC1
-   Japanese-JISX0208	PC1 + 0x80 | PC2 + 0x80
-   Katakana-JISX0201	0x8E       | PC1 + 0x80
-
-
-   B. JIS7
-
-   This encompasses the character sets:
-   - Printing-ASCII
-   - Latin-JISX0201 (the left half of JISX0201; this character set is
-     very similar to Printing-ASCII and is a 94-character charset)
-   - Japanese-JISX0208
-   - Katakana-JISX0201
-   It uses 7-bit bytes.
-
-   Unlike Japanese EUC, this is a "modal" encoding, which
-   means that there are multiple states that the encoding can
-   be in, which affect how the bytes are to be interpreted.
-   Special sequences of bytes (called "escape sequences")
-   are used to change states.
-
-   The encoding is as follows:
-
-   Character set	Representation
-   -------------	--------------
-   Printing-ASCII	PC1
-   Latin-JISX0201	PC1
-   Katakana-JISX0201	PC1
-   Japanese-JISX0208	PC1 | PC2
-
-   Escape sequence	ASCII equivalent  Meaning
-   ---------------	----------------  -------
-   0x1B 0x28 0x42	ESC ( B		  invoke Printing-ASCII
-   0x1B 0x28 0x4A	ESC ( J		  invoke Latin-JISX0201
-   0x1B 0x28 0x49	ESC ( I		  invoke Katakana-JISX0201
-   0x1B 0x24 0x42	ESC $ B		  invoke Japanese-JISX0208
-
-   Initially, Printing-ASCII is invoked.
-
-   ==========================================================================
-                          4. Internal Mule Encodings
-   ==========================================================================
-
-   In XEmacs/Mule, each character set is assigned a unique number,
-   called a "leading byte".  This is used in the encodings of a
-   character.  Leading bytes are in the range 0x80 - 0xFF
-   (except for ASCII, which has a leading byte of 0), although
-   some leading bytes are reserved.
-
-   Charsets whose leading byte is in the range 0x80 - 0x9F are
-   called "official" and are used for built-in charsets.
-   Other charsets are called "private" and have leading bytes
-   in the range 0xA0 - 0xFF; these are user-defined charsets.
-
-   More specifically:
-
-   Character set		Leading byte
-   -------------		------------
-   ASCII			0 (0x7F in arrays indexed by leading byte)
-   Composite			0x8D
-   Dimension-1 Official		0x80 - 0x8C/0x8D
-				  (0x8E is free)
-   Control			0x8F
-   Dimension-2 Official		0x90 - 0x99
-				  (0x9A - 0x9D are free)
-   Dimension-1 Private Marker   0x9E
-   Dimension-2 Private Marker   0x9F
-   Dimension-1 Private		0xA0 - 0xEF
-   Dimension-2 Private		0xF0 - 0xFF
-
-   There are two internal encodings for characters in XEmacs/Mule.
-   One is called "string encoding" and is an 8-bit encoding that
-   is used for representing characters in a buffer or string.
-   It uses 1 to 4 bytes per character.  The other is called
-   "character encoding" and is a 19-bit encoding that is used
-   for representing characters individually in a variable.
-
-   (In the following descriptions, we'll ignore composite
-   characters for the moment.  We also give a general (structural)
-   overview first, followed later by the exact details.)
-
-   A. Internal String Encoding
-
-   ASCII characters are encoded using their position code directly.
-   Other characters are encoded using their leading byte followed
-   by their position code(s) with the high bit set.  Characters
-   in private character sets have their leading byte prefixed with
-   a "leading byte prefix", which is either 0x9E or 0x9F. (No
-   character sets are ever assigned these leading bytes.) Specifically:
-
-   Character set		Encoding (PC == position-code)
-   -------------		-------- (LB == leading-byte)
-   ASCII			PC1  |
-   Control-1			LB   | PC1 + 0xA0
-   Dimension-1 official		LB   | PC1 + 0x80
-   Dimension-1 private		0x9E | LB         | PC1 + 0x80
-   Dimension-2 official		LB   | PC1        | PC2 + 0x80
-   Dimension-2 private		0x9F | LB         | PC1 + 0x80 | PC2 + 0x80
-
-   The basic characteristic of this encoding is that the first byte
-   of all characters is in the range 0x00 - 0x9F, and the second and
-   following bytes of all characters is in the range 0xA0 - 0xFF.
-   This means that it is impossible to get out of sync, or more
-   specifically:
-
-   1. Given any byte position, the beginning of the character it is
-      within can be determined in constant time.
-   2. Given any byte position at the beginning of a character, the
-      beginning of the next character can be determined in constant
-      time.
-   3. Given any byte position at the beginning of a character, the
-      beginning of the previous character can be determined in constant
-      time.
-   4. Textual searches can simply treat encoded strings as if they
-      were encoded in a one-byte-per-character fashion rather than
-      the actual multi-byte encoding.
-
-   None of the standard non-modal encodings meet all of these
-   conditions.  For example, EUC satisfies only (2) and (3), while
-   Shift-JIS and Big5 (not yet described) satisfy only (2). (All
-   non-modal encodings must satisfy (2), in order to be unambiguous.)
-
-   B. Internal Character Encoding
-
-   One 19-bit word represents a single character.  The word is
-   separated into three fields:
-
-   Bit number:	18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
-		<------------> <------------------> <------------------>
-   Field:	      1		         2		      3
-
-   Note that fields 2 and 3 hold 7 bits each, while field 1 holds 5 bits.
-
-   Character set		Field 1		Field 2		Field 3
-   -------------		-------		-------		-------
-   ASCII			   0		   0              PC1
-      range:                                                   (00 - 7F)
-   Control-1			   0		   1              PC1
-      range:                                                   (00 - 1F)
-   Dimension-1 official            0            LB - 0x7F         PC1
-      range:                                    (01 - 0D)      (20 - 7F)
-   Dimension-1 private             0            LB - 0x80         PC1
-      range:                                    (20 - 6F)      (20 - 7F)
-   Dimension-2 official		LB - 0x8F          PC1            PC2
-      range:                    (01 - 0A)       (20 - 7F)      (20 - 7F)
-   Dimension-2 private          LB - 0xE1          PC1            PC2
-      range:                    (0F - 1E)       (20 - 7F)      (20 - 7F)
-   Composite			  0x1F              ?              ?
-
-   Note that character codes 0 - 255 are the same as the "binary encoding"
-   described above.
-
-   Most of the code in XEmacs knows nothing of the representation of a
-   character other than that values 0 - 255 represent ASCII, Control 1,
-   and Latin 1.
-
-   WARNING WARNING WARNING: The Boyer-Moore code in search.c, and the
-   code in search_buffer() that determines whether that code can be used,
-   knows that "field 3" in a character always corresponds to the last
-   byte in the textual representation of the character. (This is important
-   because the Boyer-Moore algorithm works by looking at the last byte
-   of the search string and &&#### finish this.
-
-   ==========================================================================
-                  5. Buffer Positions and Other Typedefs
-   ==========================================================================
-
-   A. Buffer Positions
+   -- an 8-bit fixed format, like currently.
    
-   There are three possible ways to specify positions in a buffer.  All
-   of these are one-based: the beginning of the buffer is position or
-   index 1, and 0 is not a valid position.
+   -- possibly, UCS-4 as a 32-bit fixed format.
 
-   As a "buffer position" (typedef Charbpos):
-
-      This is an index specifying an offset in characters from the
-      beginning of the buffer.  Note that buffer positions are
-      logically *between* characters, not on a character.  The
-      difference between two buffer positions specifies the number of
-      characters between those positions.  Buffer positions are the
-      only kind of position externally visible to the user.
-
-   As a "byte index" (typedef Bytebpos):
-
-      This is an index over the bytes used to represent the characters
-      in the buffer.  If there is no Mule support, this is identical
-      to a buffer position, because each character is represented
-      using one byte.  However, with Mule support, many characters
-      require two or more bytes for their representation, and so a
-      byte index may be greater than the corresponding buffer
-      position.
-
-   As a "memory index" (typedef Membpos):
-
-      This is the byte index adjusted for the gap.  For positions
-      before the gap, this is identical to the byte index.  For
-      positions after the gap, this is the byte index plus the gap
-      size.  There are two possible memory indices for the gap
-      position; the memory index at the beginning of the gap should
-      always be used, except in code that deals with manipulating the
-      gap, where both indices may be seen.  The address of the
-      character "at" (i.e. following) a particular position can be
-      obtained from the formula
-
-        buffer_start_address + memory_index(position) - 1
-
-      except in the case of characters at the gap position.
-
-   B. Other Typedefs
-
-      Ichar:
-      ------
-        This typedef represents a single Emacs character, which can be
-	ASCII, ISO-8859, or some extended character, as would typically
-	be used for Kanji.  Note that the representation of a character
-	as an Ichar is *not* the same as the representation of that
-	same character in a string; thus, you cannot do the standard
-	C trick of passing a pointer to a character to a function that
-	expects a string.
-
-	An Ichar takes up 19 bits of representation and (for code
-	compatibility and such) is compatible with an int.  This
-	representation is visible on the Lisp level.  The important
-	characteristics	of the Ichar representation are
-
-	  -- values 0x00 - 0x7f represent ASCII.
-	  -- values 0x80 - 0xff represent the right half of ISO-8859-1.
-	  -- values 0x100 and up represent all other characters.
-
-	This means that Ichar values are upwardly compatible with
-	the standard 8-bit representation of ASCII/ISO-8859-1.
-
-      Ibyte:
-      ------
-        The data in a buffer or string is logically made up of Ibyte
-	objects, where a Ibyte takes up the same amount of space as a
-	char. (It is declared differently, though, to catch invalid
-	usages.) Strings stored using Ibytes are said to be in
-	"internal format".  The important characteristics of internal
-	format are
-
-	  -- ASCII characters are represented as a single Ibyte,
-	     in the range 0 - 0x7f.
-	  -- All other characters are represented as a Ibyte in
-	     the range 0x80 - 0x9f followed by one or more Ibytes
-	     in the range 0xa0 to 0xff.
-
-	This leads to a number of desirable properties:
-
-	  -- Given the position of the beginning of a character,
-	     you can find the beginning of the next or previous
-	     character in constant time.
-	  -- When searching for a substring or an ASCII character
-	     within the string, you need merely use standard
-	     searching routines.
-
-      Extbyte:
-      --------
-        Strings that go in or out of Emacs are in "external format",
-	typedef'ed as an array of char or a char *.  There is more
-	than one external format (JIS, EUC, etc.) but they all
-	have similar properties.  They are modal encodings,
-	which is to say that the meaning of particular bytes is
-	not fixed but depends on what "mode" the string is currently
-	in (e.g. bytes in the range 0 - 0x7f might be
-	interpreted as ASCII, or as Hiragana, or as 2-byte Kanji,
-	depending on the current mode).  The mode starts out in
-	ASCII/ISO-8859-1 and is switched using escape sequences --
-	for example, in the JIS encoding, 'ESC $ B' switches to a
-	mode where pairs of bytes in the range 0 - 0x7f
-	are interpreted as Kanji characters.
-
-	External-formatted data is generally desirable for passing
-	data between programs because it is upwardly compatible
-	with standard ASCII/ISO-8859-1 strings and may require
-	less space than internal encodings such as the one
-	described above.  In addition, some encodings (e.g. JIS)
-	keep all characters (except the ESC used to switch modes)
-	in the printing ASCII range 0x20 - 0x7e, which results in
-	a much higher probability that the data will avoid being
-	garbled in transmission.  Externally-formatted data is
-	generally not very convenient to work with, however, and
-	for this reason is usually converted to internal format
-	before any work is done on the string.
-
-	NOTE: filenames need to be in external format so that
-	ISO-8859-1 characters come out correctly.
-
-      Charcount:
-      ----------
-        This typedef represents a count of characters, such as
-	a character offset into a string or the number of
-	characters between two positions in a buffer.  The
-	difference between two Charbpos's is a Charcount, and
-	character positions in a string are represented using
-	a Charcount.
-
-      Bytecount:
-      ----------
-        Similar to a Charcount but represents a count of bytes.
-	The difference between two Bytebpos's is a Bytecount.
-
-
-   C. Usage of the Various Representations
-
-   Memory indices are used in low-level functions in insdel.c and for
-   extent endpoints and marker positions.  The reason for this is that
-   this way, the extents and markers don't need to be updated for most
-   insertions, which merely shrink the gap and don't move any
-   characters around in memory.
-
-   (The beginning-of-gap memory index simplifies insertions w.r.t.
-   markers, because text usually gets inserted after markers.  For
-   extents, it is merely for consistency, because text can get
-   inserted either before or after an extent's endpoint depending on
-   the open/closedness of the endpoint.)
-
-   Byte indices are used in other code that needs to be fast,
-   such as the searching, redisplay, and extent-manipulation code.
-
-   Buffer positions are used in all other code.  This is because this
-   representation is easiest to work with (especially since Lisp
-   code always uses buffer positions), necessitates the fewest
-   changes to existing code, and is the safest (e.g. if the text gets
-   shifted underneath a buffer position, it will still point to a
-   character; if text is shifted under a byte index, it might point
-   to the middle of a character, which would be bad).
-
-   Similarly, Charcounts are used in all code that deals with strings
-   except for code that needs to be fast, which used Bytecounts.
-
-   Strings are always passed around internally using internal format.
-   Conversions between external format are performed at the time
-   that the data goes in or out of Emacs.
-
-   D. Working With the Various Representations
-
-   We write things this way because it's very important the
-   MAX_BYTEBPOS_GAP_SIZE_3 is a multiple of 3. (As it happens,
-   65535 is a multiple of 3, but this may not always be the
-   case. #### unfinished
+   The fixed-width formats essentially treat the buffer as an array of
+   8-bit, 16-bit or 32-bit integers.  This means that how they are stored
+   in memory (in particular, big-endian or little-endian) depends on the
+   native format of the machine's processor.  It also means we have to
+   worry a bit about alignment (basically, we just need to keep the gap an
+   integral size of the character size, and get things aligned properly
+   when converting the buffer between formats).
 
    ==========================================================================
-                                6. Miscellaneous
+                     8. Using UTF-16 as the default text format
+   ==========================================================================
+
+   NOTE: The Eistring API is (or should be) Mule-correct even without
+   an ASCII-compatible internal representation.
+
+   #### Currently, the assumption that text units are one byte in size is
+   embedded throughout XEmacs, and `Ibyte *' is used where `Itext *' should
+   be.  The way to fix this is to (among other things)
+
+   (a) review all places referencing `Ibyte' and `Ibyte *', change them to
+       use Itext, and fix up the code.
+   (b) change XSTRING_DATA to be of type Itext *
+   (c) review all uses of XSTRING_DATA
+   (d) eliminate XSTRING_LENGTH, splitting it into XSTRING_BYTE_LENGTH and
+       XSTRING_TEXT_LENGTH and reviewing all places referencing this
+   (e) make similar changes to other API's that refer to the "length" of
+       something, such as qxestrlen() and eilen()
+   (f) review all use of `CIbyte *'.  Currently this is usually a way of
+       passing literal ASCII text strings in places that want internal text.
+       Either create separate _ascii() and _itext() versions of the
+       functions taking CIbyte *, or make use of something like the
+       WEXTTEXT() macro, which will generate wide strings as appropriate.
+   (g) review all uses of Bytecount and see which ones should be Textcount.
+   (h) put in error-checking code that will be tripped as often as possible
+       when doing anything with internal text, and check to see that ASCII
+       text has not mistakenly filtered in.  This should be fairly easy as
+       ASCII text will generally be entirely spaces and letters whereas every
+       second byte of Unicode text will generally be a null byte.  Either we
+       abort if the second bytes are entirely letters and numbers, or,
+       perhaps better, do the equivalent of a non-MULE build, where we should
+       be dealing entirely with 8-bit characters, and assert that the high
+       bytes of each pair are null.
+   (i) review places where xmalloc() is called.  If we convert each use of
+       xmalloc() to instead be xnew_array() or some other typed routine,
+       then we will find every place that allocates space for Itext and
+       assumes it is based on one-byte units.
+   (j) encourage the use of ITEXT_ZTERM_SIZE instead of '+ 1' whenever we
+       are adding space for a zero-terminator, to emphasize what we are
+       doing and make sure the calculations are correct.  Similarly for
+       EXTTEXT_ZTERM_SIZE.
+   (k) Note that the qxestr*() functions, among other things, will need to
+       be rewritten.
+
+   Note that this is a lot of work, and is not high on the list of priorities
+   currently.
+
+   ==========================================================================
+                                9. Miscellaneous
    ==========================================================================
 
    A. Unicode Support
@@ -621,7 +223,1050 @@ Boston, MA 02111-1307, USA.  */
       Or you could use 0x8D C1 C2 C3 C4, allowing for about
       85 million (slightly over 2^26) composite characters.
 
+   ==========================================================================
+                               10. Internal API's
+   ==========================================================================
+
+   All of these are documented in more detail in text.h.
+
+@enumerate
+@item
+Basic internal-format API's
+
+These are simple functions and macros to convert between text
+representation and characters, move forward and back in text, etc.
+
+@item
+The DFC API
+
+This is for conversion between internal and external text.  Note that
+there is also the "new DFC" API, which *returns* a pointer to the
+converted text (in alloca space), rather than storing it into a
+variable.
+
+@item
+The Eistring API
+
+(This API is currently under-used) When doing simple things with
+internal text, the basic internal-format API's are enough.  But to do
+things like delete or replace a substring, concatenate various strings,
+etc. is difficult to do cleanly because of the allocation issues.
+The Eistring API is designed to deal with this, and provides a clean
+way of modifying and building up internal text. (Note that the former
+lack of this API has meant that some code uses Lisp strings to do
+similar manipulations, resulting in excess garbage and increased
+garbage collection.)
+
+NOTE: The Eistring API is (or should be) Mule-correct even without
+an ASCII-compatible internal representation.
+@end enumerate
+
+   ==========================================================================
+                      11. Other Sources of Documentation
+   ==========================================================================
+
+   man/lispref/mule.texi
+@enumerate
+@item
+another intro to characters, encodings, etc; #### Merge with the
+above info
+@item
+documentation of ISO-2022
+@item
+The charset and coding-system Lisp API's
+@item
+The CCL conversion language for writing encoding conversions
+@item
+The Latin-Unity package for unifying Latin charsets
+@end enumerate
+
+   man/internals/internals.texi (the Internals manual)
+@enumerate
+@item
+"Coding for Mule" -- how to write Mule-aware code
+@item
+"Modules for Internationalization"
+@item
+"The Text in a Buffer" -- more about the different ways of
+viewing buffer positions; #### Merge with the above info
+@item
+"MULE Character Sets and Encodings" -- yet another intro
+to characters, encodings, etc; #### Merge with the
+above info; also some documentation of Japanese EUC and JIS7,
+and CCL internals
+@end enumerate
+
+   text.h -- info about specific XEmacs-C API's for handling internal and
+             external text
+
+   intl-win32.c -- Windows-specific I18N information 
+
+   lisp.h -- some info appears alongside the definitions of the basic
+             character-related types
+
+   unicode.c -- documentation about Unicode translation tables
 */
+
+
+/************************************************************************/
+/*                                                                      */
+/*                                                                      */
+/*               Part B: Random proposals for work to be done           */
+/*                                                                      */
+/*                                                                      */
+/************************************************************************/
+
+
+/*
+
+
+   ==========================================================================
+                   - Mule design issues (ben)
+   ==========================================================================
+
+circa 1999
+
+Here is a more detailed list of Mule-related projects that we will be
+working on.  They are more or less ordered according to how we will
+proceed, but it's not exact.  In particular, there will probably be
+time overlap among adjacent projects.
+
+@enumerate
+@item
+Modify the internal/external conversion macros to allow for
+MS Windows support.
+
+@item
+Modify the buffer macros to allow for more than one internal
+representation, e.g. fixed width and variable width.
+
+@item
+Review the existing Mule code, especially the lisp code, for code
+quality issues and improve the cleanliness of it.  Also work on
+creating a specification for the Mule API.
+
+@item
+Write some more automated mule tests.
+
+@item
+Integrate Tomohiko's UTF-2000 code, fixing it up so that nothing is
+broken when the UTF-2000 configure option is not enabled.
+
+@item
+Fix up the MS Windows code to be Mule-correct, so that you can
+compile with Mule support under MS windows and have a working
+XEmacs, at least just with Latin-1.
+
+@item
+Implement a scheme to guarantee no corruption of files, even with
+an incorrect coding system - in particular, guarantee no corruption
+of binary files.
+
+@item
+Make the text property support in XEmacs robust with respect to
+string and text operations, so that the `no corruption' support in
+the previous entry works properly, even if a lot of cutting and
+pasting is done.
+
+@item
+Improve the handling of auto-detection so that, when there is any
+possibility at all of mistake, the user is informed of the detected
+encoding and given the choice of choosing other possibilities.
+
+@item
+Improve the support for different language environments in XEmacs,
+for example, the priority of coding systems used in auto-detection
+should properly reflect the language environment.  This probably
+necessitates rethinking the current `coding system priority'
+scheme.
+
+@item
+Do quality work to improve the existing UTF-2000 implementation.
+
+@item
+Implement preliminary support for 8-bit fixed width
+representation.  First, we will only implement 7-bit support, and
+will fall back to variable width as soon as any non-ASCII
+character is encountered.  Then we will improve the support to
+handle an arbitrary character set in the upper half of the 8-bit space.
+
+@item
+Investigate any remaining hurdles to making --with-mule be the
+default configure option.
+@end enumerate
+
+   ==========================================================================
+                   - Mule design issues (stephen)
+   ==========================================================================
+
+What I see as Mule priorities (in rough benefit order, I am not taking
+account of difficulty, nor the fact that some - eg 8 & 10 - will
+probably come as packages):
+
+@enumerate
+@item
+Fix the autodetect problem (by making the coding priority list
+user-configurable, as short as he likes, even null, with "binary"
+as the default).
+@item
+Document the language environments and other Mule "APIs" as
+implemented (since there is no real design spec).  Check to see 
+how and where they are broken.
+@item
+Make the Mule menu useful to non-ISO-2022-literate folks.
+@item
+Redo the lstreams stuff to make it easy and robust to "pipeline",
+eg, libz | gnupg | jis2mule.
+@item
+Make Custom Mule-aware.  (This probably depends on a sensible
+fonts model.)
+@item
+Implement the "literal byte stream" memory feature.
+@item
+Study the FSF implementation of Mule for background for 7 & 8.
+@item
+Identify desirable Mule features (eg, i18n-ized messages as above, 
+collating tables by language environment, etc).  (New features
+might have priority as high as 9.)
+@item
+Specify Mule UIs, APIs, etc, and design and (re)implement them.
+@item
+Implement the 8-bit-wide buffer optimization.
+@item
+Move the internal encoding to UTF-32 (subject to Olivier's caveats 
+regarding compose characters), with the variable-width char
+buffers using UTF-8.
+@item
+Implement the 16- and 32-bit-wide buffer optimizations.
+@end enumerate
+
+   ==========================================================================
+                   - Mule design issues "short term" (ben)
+   ==========================================================================
+
+@enumerate
+@item
+Finish changes in fixup/directory, get in CVS.
+
+(Test with and without "quick-build", to see if really faster)
+(need autoconf)
+
+@item
+Finish up Windows/Mule changes.  Outline of this elsewhere;  Do
+*minimal* effort.
+
+@item
+Continue work on Windows stability, e.g. go through existing notes
+on Windows Mule-ization + extract all info.
+
+@item
+Get Unicode translation tables integrated.
+
+Finish UCS2/UTF16 coding system.
+
+@item
+Make sure coding system priority list is language-environment specific.
+
+@item
+Consider moving language selection Menu up to be parallel with Mule menu.
+
+@item
+Check to make sure we grok the default locale at startup under
+Windows and understand the Windows locales.  Finish implementation
+of mswindows-multibyte and make sure it groks all the locales.
+
+@item
+Do the above as best as we can without using Unicode tables.
+
+@item
+Start tagging all text with a language text property,
+indicating the current language environment when the text was input.
+
+@item
+Make sure we correctly accept input of non-ASCII chars
+(probably already do!)
+
+@item
+Implement active language/keyboard switching under Windows.
+
+@item
+Look into implementing support for "MS IME" protocol (Microsoft
+fancy built-in Asian input methods).
+
+@item
+Redo implementation of mswindows-multibyte and internal display to
+entirely use translation to/from Unicode for increased accuracy.
+
+@item
+Implement buf<->char improvements from FSF.  Also implement
+my string byte<->char optimization structure.
+
+@item
+Integrate all Mule DOCS from 20.6 or 21.0.  Try to add sections
+for what we've added.
+
+@item
+Implement 8-bit fixed width optimizations.  Then work on 16-bit.
+@end enumerate
+
+   ==========================================================================
+                   - Mule design issues (more) (ben)
+   ==========================================================================
+
+   Get minimal Mule for Windows working using Ikeyama's patches.  At
+   first, rely on his conversion of internal -> external
+   locale-specific but very soon (as soon as we get translation
+   tables) can switch to using Unicode versions of display funs, which
+   will allow many more charsets to be handled and in a more
+   consistent fashion.
+
+   i.e. to convert an internal string to an external format, at first
+   we use our own knowledge of the Microsoft locale file formats but
+   an alternative is to convert to Unicode and use Microsoft's
+   convert-Unicode-to-locale encoding functions.  This gains us a
+   great deal of generality, since in practice all charset caching
+   points can be wrapped into Unicode caching points.
+
+   This requires adding UCS2 support, which I'm doing.  This support
+   would let us convert internal -> Unicode, which is exactly what we
+   want.
+
+   At first, though, I would do the UCS2 support, but leave the
+   existing way of doing things in redisplay.  Meanwhile, I'd go
+   through and fix up the places in the code that assume we are
+   dealing with unibytes.
+
+   After this, the font problems will be fixed , we should have a
+   pretty well working XEmacs + MULE under Windows.  The only real
+   other work is the clipboard code, which should be straightforward.
+
+   ==========================================================================
+                   - Mule design discussion
+   ==========================================================================
+
+--------------------------------------------------------------------------
+
+Ben
+
+April 11, 2000
+
+Well yes, this was the whole point of my "no lossage" proposal of being
+able to undo any coding-system transformation on a buffer.  The idea was
+to figure out which transformations were definitely reversable, and for
+all the others, cache the original text in a text property.  This way, you
+could probably still do a fairly good job at constructing a good reversal
+even after you've gone into the text and added, deleted, and rearranged
+some things.
+
+But you could implement it much more simply and usefully by just
+determining, for any text being decoded into mule-internal, can we go back
+and read the source again?  If not, remember the entire file (GNUS
+message, etc) in text properties.  Then, implement the UI interface (like
+Netscape's) on top of that.  This way, you have something that at least
+works, but it might be inefficient.  All we would need to do is work on
+making the
+underlying implementation more efficient.
+
+Are you interested in doing this?  It would be a huge win for users.
+Hrvoje Niksic wrote:
+
+> Ben Wing <ben@666.com> writes:
+>
+> > let me know exactly what "rethink" functionality you want and i'll
+> > come up with an interface.  perhaps you just want something like
+> > netscape's encoding menu, where if you switch encodings, it reloads
+> > and reencodes?
+>
+> It might be a bit more complex than that.  In many cases, it's hard or
+> impossible to meaningfully "reload" -- for instance, this
+> functionality should be available while editing a Gnus message, as
+> well as while visiting a file.
+>
+> For the special case of Latin-N <-> Latin-M conversion, things could
+> be done easily -- to convert from N to M, you only need to convert
+> internal representation back to N, and then convert it forth to M.
+
+--------------------------------------------------------------------------
+April 11, 2000
+
+Well yes, this was the whole point of my "no lossage" proposal of being
+able to undo any coding-system transformation on a buffer.  The idea was
+to figure out which transformations were definitely reversable, and for
+all the others, cache the original text in a text property.  This way, you
+could probably still do a fairly good job at constructing a good reversal
+even after you've gone into the text and added, deleted, and rearranged
+some things.
+
+But you could implement it much more simply and usefully by just
+determining, for any text being decoded into mule-internal, can we go back
+and read the source again?  If not, remember the entire file (GNUS
+message, etc) in text properties.  Then, implement the UI interface (like
+Netscape's) on top of that.  This way, you have something that at least
+works, but it might be inefficient.  All we would need to do is work on
+making the
+underlying implementation more efficient.
+
+Are you interested in doing this?  It would be a huge win for users.
+Hrvoje Niksic wrote:
+
+> Ben Wing <ben@666.com> writes:
+>
+> > let me know exactly what "rethink" functionality you want and i'll
+> > come up with an interface.  perhaps you just want something like
+> > netscape's encoding menu, where if you switch encodings, it reloads
+> > and reencodes?
+>
+> It might be a bit more complex than that.  In many cases, it's hard or
+> impossible to meaningfully "reload" -- for instance, this
+> functionality should be available while editing a Gnus message, as
+> well as while visiting a file.
+>
+> For the special case of Latin-N <-> Latin-M conversion, things could
+> be done easily -- to convert from N to M, you only need to convert
+> internal representation back to N, and then convert it forth to M.
+
+
+------------------------------------------------------------------------
+
+   ==========================================================================
+   - Redoing translation macros [old]
+   ==========================================================================
+
+  Currently the translation macros (the macros with names such as
+  GET_C_STRING_CTEXT_DATA_ALLOCA) have names that are difficult to parse
+  or remember, and are not all that general.  In the process of
+  reviewing the Windows code so that it could be muleized, I discovered
+  that these macros need to be extended in various ways to allow for
+  the Windows code to be easily muleized.
+  
+  Since the macros needed to be changed anyways, I figured it would be a
+  good time to redo them properly.  I propose new macros which have
+  names like this:
+  
+  @itemize @bullet
+  @item
+  <A>_TO_EXTERNAL_FORMAT_<B>
+  @item
+  <A>_TO_EXTERNAL_FORMAT_<B>_1
+  @item
+  <C>_TO_INTERNAL_FORMAT_<D>
+  @item
+  <C>_TO_INTERNAL_FORMAT_<D>_1
+  @end itemize
+  
+  A and C represent the source of the data, and B and D represent the
+  sink of the data.
+  
+  All of these macros call either the functions
+  convert_to_external_format or convert_to_internal_format internally,
+  with some massaging of the arguments.
+  
+  All of these macros take the following arguments:
+  
+  @itemize @bullet
+  @item
+  First, one or two arguments indicating the source of the data.
+  @item
+  Second, an argument indicating the coding system. (In order to avoid
+  an excessive number of macros, we no longer provide separate macros
+  for specific coding systems.)
+  @item
+  Third, one or two arguments indicating the sink of the data.
+  @item
+  Fourth, optionally, arguments indicating the error behavior and the
+  warning class (these arguments are only present in the _1 versions
+  of the macros).  The other, shorter named macros are trivial
+  interfaces onto these macros with the error behavior being
+  ERROR_ME_WARN, with the warning class being Vstandard_warning_class.
+  @end itemize
+  
+  <A> can be one of the following:
+  @itemize @bullet
+  @item
+  LISP (which means a Lisp string) Takes one argument, a Lisp Object.
+  @item
+  LSTREAM (which indicates an lstream) Takes one argument, an
+  lstream.  The data is read from the lstream until EOF is reached.
+  @item
+  DATA (which indicates a raw memory area) Takes two arguments, a
+  pointer and a length in bytes.
+  (You must never use this if the source of the data is a Lisp string,
+  because of the possibility of relocation during garbage collection.)
+  @end itemize
+  
+  <B> can be one of the following:
+  @itemize @bullet
+  @item
+  ALLOCA (which means that the resulting data is stored in alloca()ed
+  memory.  Two arguments should be specified, a pointer and a length,
+  which should be lvalues.)
+  @item
+  MALLOC (which means that the resulting data is stored in malloc()ed
+  memory.  Two arguments should be specified, a pointer and a
+  length.  The memory must be free()d by the caller.
+  @item
+  OPAQUE (which means the resulting data is stored in an opaque Lisp
+  Object.  This takes one argument, a lvalue Lisp Object.
+  @item
+  LSTREAM. The data is written to an lstream.
+  @end itemize
+  
+  <C> can be one of the :
+  @itemize @bullet
+  @item
+  DATA
+  @item
+  LSTREAM
+  @end itemize
+  (just like <A> above)
+  
+  <D> can be one of
+  @itemize @bullet
+  @item
+  ALLOCA
+  @item
+  MALLOC
+  @item
+  LISP This means a Lisp String.
+  @item
+  BUFFER The resulting data is inserted into a buffer at the buffer's
+  value of point.
+  @item
+  LSTREAM The data is written to the lstream.
+  @end itemize
+  
+  
+  Note that I have eliminated the FORMAT argument of previous macros,
+  and replaced it with a coding system.  This was made possible by
+  coding system aliases.  In place of old `format's, we use a `virtual
+  coding system', which is aliased to the actual coding system.
+  
+  The value of the coding system argument can be anything that is legal
+  input to get_coding_system, i.e. a symbol or a coding system object.
+
+   ==========================================================================
+   - creation of generic macros for accessing internally formatted data [old]
+   ==========================================================================
+
+ I have a design; it's all written down (I did it in Tsukuba), and I just have
+ to have it transcribed.  It's higher level than the macros, though; it's Lisp
+ primitives that I'm designing.
+ 
+ As for the design of the macros, don't worry so much about all files having to
+ get included (which is inevitable with macros), but about how the files are
+ separated.  Your design might go like this:
+ 
+ @enumerate
+ @item
+ you have generic macro interfaces, which specify a particular
+ behavior but not an implementation.  these generic macros have
+ complementary versions for buffers and for strings (and the buffer
+ or string is an argument to all of the macros), and do such things
+ as convert between byte and char indices, retrieve the character at
+ a particular byte or char index, increment or decrement a byte
+ index to the beginning of the next or previous character, indicate
+ the number of bytes occupied by the character at a particular byte
+ or character index, etc.  These are similar to what's already out
+ there except that they confound buffers and strings and that they
+ can also work with actual char *'s, which I think is a really bad
+ idea because it encourages code to "assume" that the representation
+ is ASCII compatible, which is might not be (e.g. 16-bit fixed
+ width).  In fact, one thing I'm planning on doing is redefining
+ Bufbyte as a struct, for debugging purposes, to catch all places
+ that cavalierly compare them with ASCII char's.  Note also that I
+ really want to rename Bufpos and Bytind, which are confusing and
+ wrong in that they also apply to strings. They should be Bytepos
+ and Charpos, or something like that, to go along with Bytecount and
+ Charcount. Similarly, Bufbyte is similarly a misnomer and should be
+ Intbyte -- a byte in the internal string representation (any of the
+ internal representations) of a string or buffer.  Corresponding to
+ this is Extbyte (which we already have), a byte in any external
+ string representation.  We also have Extcount, which makes sense,
+ and we might possibly want Extcharcount, the number of characters
+ in an external string representation; but that gets sticky in modal
+ encodings, and it's not clear how useful it would be.
+ 
+ @item
+ for all generic macro interfaces, there are specific versions of
+ each of them for each possible representation (pure ASCII in the
+ non-Mule world, Mule standard, UTF-8, 8-bit fixed, 16-bit fixed,
+ 32-bit fixed, etc.; there may well be more than one possible 16-bit
+ fixed version, as well). Each representation has a corresponding
+ prefix, e.g. MULE_ or FIXED16_ or whatever, which is prefixed onto
+ the generic macro names.  The resulting macros perform the
+ operation defined for the macro, but assume, and only work
+ correctly with, text in the corresponding representation.
+ 
+ @item
+ The definition of the generic versions merely conditionalizes on
+ the appropriate things (i.e. bit flags in the buffer or string
+ object) and calls the appropriate representation-specific version.
+ There may be more than one definition (protected by ifdefs, of
+ course), or one definition that amalgamated out of many ifdef'ed
+ sections.
+ 
+ @item
+ You should probably put each different representation in its own
+ header file, e.g. charset-mule.h or charset-fixed16.h or
+ charset-ascii.h or whatever.  Then put the main macros into
+ charset.h, and conditionalize in this file appropriately to include
+ the other ones.  That way, code that actually needs to play around
+ with internal-format text at this level can include "charset.h"
+ (certainly a much better place than buffer.h), and everyone else
+ uses higher-level routines.  The representation-specific macros
+ should not normally be used *directly* at all; they are invoked
+ automatically from the generic macros.  However, code that needs to
+ be highly, highly optimized might choose to take a loop and write
+ two versions of it, one for each representation, to avoid the
+ per-loop-iteration cost of a comparison. Until the macro interface
+ is rock stable and solid, we should strongly discourage such
+ nanosecond optimizations.
+ @end enumerate
+ 
+   ==========================================================================
+                   - UTF-16 compatible representation
+   ==========================================================================
+
+NOTE: One possible default internal representation that was compatible
+with UTF16 but allowed all possible chars in UCS4 would be to take a
+more-or-less unused range of 2048 chars (not from the private area
+because Microsoft actually uses up most or all of it with EUDC chars).
+Let's say we picked A400 - ABFF.  Then, we'd have:
+
+0000 - FFFF    Simple chars
+
+D[8-B]xx D[C-F]xx  Surrogate char, represents 1M chars
+
+A[4-B]xx D[C-F]xx D[C-F]xx   Surrogate char, represents 2G chars
+
+This is exactly the same number of chars as UCS-4 handles, and it follows the
+same property as UTF8 and Mule-internal:
+
+@enumerate
+@item
+There are two disjoint groupings of units, one representing leading units
+and one representing non-leading units.
+@item
+Given a leading unit, you immediately know how many units follow to make
+up a valid char, irrespective of any other context.
+@end enumerate
+
+Note that A4xx is actually currently assigned to Yi.  Since this is an
+internal representation, we could just move these elsewhere.
+
+An alternative is to pick two disjoint ranges, e.g. 2D00 - 2DFF and
+A500 - ABFF.
+
+   ==========================================================================
+                        New API for char->font mapping
+   ==========================================================================
+- ; supersedes charset-registry and CCL;
+  supports all windows systems; powerful enough for Unicode; etc.
+
+  (charset-font-mapping charset)
+
+font-mapping-specifier  string
+
+char-font-mapping-table
+
+  char-table, specifier; elements of char table are either strings (which
+  specify a registry or comparable font property, or vectors of a string
+  (same) followed by keyword-value pairs (optional).  The only allowable
+  keyword currently is :ccl-program, which specifies a CCL program to map
+  the characters into font indices.  Other keywords may be added
+  e.g. allowing Elisp fragments instead of CCL programs, also allowed is
+  [inherit], which inherits from the next less-specific char-table in the
+  specifier.
+
+  The preferred interface onto this mapping (which should be portable
+  across Emacsen) is
+
+  (set-char-font-mapping key value &optional locale tag-set how-to-add)
+
+  where key is a char, range or charset (as for put-char-table), value is
+  as above, and the other arguments are standard for specifiers.  This
+  automatically creates a char table in the locale, as necessary (all
+  elements default to [inherit]).  On GNU Emacs, some specifiers arguments
+  may be unimplemented.
+
+ (char-font-mapping key value &optional locale)
+works vaguely like get-specifier?   But does inheritance processing.
+locale should clearly default here to current-buffer
+
+#### should get-specifier as well?  Would make it work most like
+#### buffer-local variables.
+
+NB.  set-charset-registry and set-charset-ccl-program are obsoleted.
+
+   ==========================================================================
+                 Implementing fixed-width 8,16,32 bit buffer optimizations
+   ==========================================================================
+
+Add set-buffer-optimization (buffer &rest keywords) for
+controlling these things.
+
+Also, put in hack so that correct arglist can be retrieved by
+Lisp code.
+
+Look at the way keyword primitives are currently handled; make
+sure it works and is documented, etc.
+
+Implement 8-bit fixed width optimization.  Take the things that
+know about the actual implementation and put them in a single
+file, in essence creating an abstraction layer to allow
+pluggable internal representations.  Implement a fairly general
+scheme for mapping between character codes in the 8 bits or 16
+bits representation and on actual charset characters.  As part of
+set-buffer-optimization, you can specify a list of character sets
+to be used in the 8 bit to 16 bit, etc. world.  You can also
+request that the buffer be in 8, 16, etc. if possible.
+
+-> set defaults wrt this.
+-> perhaps this should be just buffer properties.
+-> this brings up the idea of default properties on an object.
+-> Implement default-put, default-get, etc.
+
+What happens when a character not assigned in the range gets
+added?  Then, must convert to variable width of some sort.
+
+Note: at first, possibly we just convert whole hog to get things
+right.  Then we'd have to poy alternative to characters that got
+added + deleted that were unassigned in the fixed width.  When
+this goes to zero and there's been enough time (heuristics), we
+go back to fixed.
+
+Side note:  We could dynamically build up the set of assigned
+chars as they go.  Conceivably this could even go down to the
+single char level: Just keep a big array of mapping from 16 bit
+values to chars, and add empty time, a char has been encountered
+that wasn't there before.  Problem need inverse mapping.
+
+-> Possibility; chars are actual objects, not just numbers.
+Then you could keep track of such info in the chars itself.
+*Think about this.*
+
+Eventually, we might consider allowing mixed fixed-width,
+variable-width buffer encodings.  Then, we use range tables to
+indicate which sections are fixed and which variable and INC_CHAR does
+something like this: binary search to find the current range, which
+indicates whether it's fixed or variable, and tells us what the
+increment is.  We can cache this info and use it next time to speed
+up.
+
+-> We will then have two partially shared range tables - one for
+overall fixed width vs. variable width, and possibly one containing
+this same info, but partitioning the variable width in one.  Maybe
+need fancier nested range table model.
+
+   ==========================================================================
+        Expansion of display table and case mapping table support for all
+                           chars, not just ASCII/Latin1.
+   ==========================================================================
+
+   ==========================================================================
+       Improved flexibility for display tables, and evaluation of its
+      features to make sure it meshes with and complements the char<->font
+                       mapping API mentioned earlier
+   ==========================================================================
+
+   ==========================================================================
+                              String access speedup:
+   ==========================================================================
+
+  For strings larger than some size in bytes (10?), keep extra fields of
+  info: length in chars, and a (char, byte) pair in the middle to speed
+  up sequential access.
+  
+  (Better idea: do this for any size string, but only if it contains
+  non-ASCII chars.  Then if info is missing, we know string is
+  ASCII-only.)
+  
+  Use a string-extra-info object, replacing string property slot and
+  containing fields for string mod tick, string extents, string props,
+  and string char length, and cached (char,byte) pair.
+  string-extra-info (or string-auxiliary?) objects could be in frob
+  blocks, esp. if creating frob blocks is easy + worth it.
+
+- Caching of char<->byte conversions in strings - should make nearly
+  all operations on strings O(N)
+
+   ==========================================================================
+                    Improvements in buffer char<->byte mapping
+   ==========================================================================
+
+  - Range table implementation - especially when there are few runs of
+    different widths, e.g. recently converted from fixed-width
+    optimization to variable width
+
+  Range Tables to speed up Bufpos <-> Bytind caching
+  ==================================================
+  
+  This describes an alternative implementation using ranges.  We
+  maintain a range table of all spans of characters of a fixed width.
+  Updating this table could take time if there are a large number of
+  spans; but constant factors of operations should be quick.  This method really wins
+  when you have 8-bit buffers just converted to variable width, where
+  there will be few spans.  More specifically, lookup in this range
+  table is O(log N) and can be done with simple binary search, which is
+  very fast.  If we maintain the ranges using a gap array, updating this
+  table will be fast for local operations, which is most of the time.
+  
+  We will also provide (at first, at least) a Lisp function to set the
+  caching mechanism explicitly - either range tables or the existing
+  implementation.  Eventually, we want to improve things, to the point
+  where we automatically pick the right caching for the situation and
+  have more caching schemes implemented.
+
+   ==========================================================================
+                        - Robustify Text Properties
+   ==========================================================================
+
+   ==========================================================================
+           Support for unified internal representation, e.g. Unicode
+   ==========================================================================
+
+   Start tagging all text with a language text property,
+   indicating the current language environment when the text was input.
+   (needs "Robustify Text Properties")
+
+   ==========================================================================
+                          - Generalized Coding Systems
+   ==========================================================================
+
+  - Lisp API for Defining Coding Systems
+
+  User-defined coding systems.
+  
+  (define-coding-system-type 'type
+    :encode-function fun
+    :decode-function fun
+    :detect-function fun
+    :buffering (number = at least this many chars
+                line   = buffer up to end of line
+                regexp = buffer until this regexp is found in match
+                source data.  match data will be appropriate when fun is
+                called
+  
+  encode fun is called as
+  
+  (encode instream outstream)
+  
+  should read data from instream and write converted result onto
+  outstream.  Can leave some data stuff in stream, it will reappear
+  next time.  Generally, there is a finite amount of data in instream
+  and further attempts to read lead to would-block errors or retvals.
+  Can use instream properties to record state.  May use read-stream
+  functionality to read everything into a vector or string.
+  
+  ->Need vectors + string exposed to resizing of Lisp implementation
+    where necessary.
+  
+   ==========================================================================
+     Support Windows Active Kbd Switching, Far East IME API (done already?)
+   ==========================================================================
+
+   ==========================================================================
+              - UI/design changes for Coding System Pipelining
+   ==========================================================================
+
+  ------------------------------------------------------------------
+                            CODING-SYSTEM CHAINS
+  ------------------------------------------------------------------
+
+  sjt sez:
+
+  There should be no elementary coding systems in the Lisp API, only
+  chains.  Chains should be declared, not computed, as a sequence of coding
+  formats.  (Probably the internal representation can be a vector for
+  efficiency but programmers would probably rather work with lists.)  A
+  stream has a token type.  Most streams are octet streams.  Text is a
+  stream of characters (in _internal_ format; a file on disk is not text!)
+  An octet-stream has no implicit semantics, so its format must always be
+  specified.  The only type currently having semantics is characters.  This
+  means that the chain [euc-jp -> internal -> shift_jis) may be specified
+  (euc-jp, shift_jis), and if no euc-jp -> shift_jis converter is
+  available, then the chain is automatically constructed.  (N.B.  I f we
+  have fixed width buffers in the future, then we could have ASCII -> 8-bit
+  char -> 16-bit char -> ISO-2022-JP (with escape sequences).
+
+  EOL handling is a char <-> char coding.  It should not be part of another
+  coding system except as a convenience for users.  For text coding,
+  automatically insert EOL handlers between char <-> octet boundaries.
+
+  ------------------------------------------------------------------
+                            ABOUT DETECTION
+  ------------------------------------------------------------------
+
+
+  ------------------------------------------------------------------
+     EFFICIENCY OF CODING CONVERSION WITH MULTIPLE COPIES/CHAINS
+  ------------------------------------------------------------------
+
+   A comment in encode_decode_coding_region():
+
+   The chain of streams looks like this:
+
+     [BUFFER] <----- (( read from/send to loop ))
+                     ------> [CHAR->BYTE i.e. ENCODE AS BINARY if source is
+                              in bytes]
+		             ------> [ENCODE/DECODE AS SPECIFIED]
+			             ------> [BYTE->CHAR i.e. DECODE AS BINARY
+                                              if sink is in bytes]
+					     ------> [AUTODETECT EOL if
+					              we're decoding and
+						      coding system calls
+						      for this]
+			                              ------> [BUFFER]
+
+    sjt (?) responds:
+
+     Of course, this is just horrible.  BYTE<->CHAR should only be available
+     to I/O routines.  It should not be visible to Mule proper.
+
+     A comment on the implementation.  Hrvoje and Kyle worry about the
+     inefficiency of repeated copying among buffers that chained coding
+     systems entail.  But this may not be as time inefficient as it appears
+     in the Mule ("house rules") context.  The issue is how do you do chain
+     coding systems without copying?  In theory you could have
+
+     IChar external_to_raw (ExtChar *cp, State *s);
+     IChar decode_utf16 (IChar c, State *s);
+     IChar decode_crlf (ExtChar *cp, State *s);
+
+     typedef Ichar (*Converter[]) (Ichar, State*);
+
+     Converter utf16[2] = { &decode_utf16, &decode_crlf };
+
+     void convert (ExtChar *inbuf, IChar *outbuf, Converter cvtr)
+     {
+       int i;
+       ExtChar c;
+       State s;
+
+       while (c = external_to_raw (*inbuf++, &s))
+	 {
+	   for (i = 0; i < sizeof(cvtr)/sizeof(Converter); ++i)
+	     if (s.ready)
+	       c = (*cvtr[i]) (c, &s);
+	 }
+       if (s.ready)
+         *outbuf++ = c;
+     }
+
+     But this is a lot of function calls; what Ben is doing is basically
+     reducing this to one call per buffer-full.  The only way to avoid this
+     is to hardcode all the "interesting" coding systems, maybe using
+     inline or macros to give structure.  But this is still a huge amount
+     of work, and code.
+
+     One advantage to the call-per-char approach is that we might be able
+     to do something about the marker/extent destruction that coding
+     normally entails.
+
+    ben sez:
+
+     it should be possible to preserve the markers/extents without
+     switching completely to one-call-per-char -- we could at least do one
+     call per "run", where a run is more or less the maximal stretch of
+     text not overlapping any markers or extent boundaries. (It's a bit
+     more complicated if we want to properly support the different extent
+     begins/ends; in some cases we might have to pump a single character
+     adjacent to where two extents meet.) The "stateless" way that I wrote
+     all of the conversion routines may be a real hassle but it allows
+     something like this to work without too much problem -- pump in one
+     run at a time into one end of the chain, do a flush after each
+     iteration, and stick what comes out the other end in its place.
+
+  ------------------------------------------------------------------
+                              ABOUT FORMATS
+  ------------------------------------------------------------------
+  
+  when calling make-coding-system, the name can be a cons of (format1 .
+  format2), specifying that it decodes format1->format2 and encodes the other
+  way.  if only one name is given, that is assumed to be format1, and the
+  other is either `external' or `internal' depending on the end type.
+  normally the user when decoding gives the decoding order in formats, but
+  can leave off the last one, `internal', which is assumed.  a multichain
+  might look like gzip|multibyte|unicode, using the coding systems named
+  `gzip', `(unicode . multibyte)' and `unicode'.  the way this actually works
+  is by searching for gzip->multibyte; if not found, look for gzip->external
+  or gzip->internal. (In general we automatically do conversion between
+  internal and external as necessary: thus gzip|crlf does the expected, and
+  maps to gzip->external, external->internal, crlf->internal, which when
+  fully specified would be gzip|external:external|internal:crlf|internal --
+  see below.)  To forcibly fit together two converters that have explicitly
+  specified and incompatible names (say you have unicode->multibyte and
+  iso8859-1->ebcdic and you know that the multibyte and iso8859-1 in this
+  case are compatible), you can force-cast using :, like this:
+  ebcdic|iso8859-1:multibyte|unicode. (again, if you force-cast between
+  internal and external formats, the conversion happens automatically.)
+  
+  --------------------------------------------------------------------------
+  ABOUT PDUMP, UNICODE, AND RUNNING XEMACS FROM A DIRECTORY WITH WEIRD CHARS
+  --------------------------------------------------------------------------
+
+-- there's the problem that XEmacs can't be run in a directory with
+   non-ASCII/Latin-1 chars in it, since it will be doing Unicode
+   processing before we've had a chance to load the tables.  In fact,
+   even finding the tables in such a situation is problematic using
+   the normal commands.  my idea is to eventually load the stuff
+   extremely extremely early, at the same time as the pdump data gets
+   loaded.  in fact, the unicode table data (stored in an efficient
+   binary format) can even be stuck into the pdump file (which would
+   mean as a resource to the executable, for windows).  we'd need to
+   extend pdump a bit: to allow for attaching extra data to the pdump
+   file. (something like pdump_attach_extra_data (addr, length)
+   returns a number of some sort, an index into the file, which you
+   can then retrieve with pdump_load_extra_data(), which returns an
+   addr (mmap()ed or loaded), and later you pdump_unload_extra_data()
+   when finished.  we'd probably also need
+   pdump_attach_extra_data_append(), which appends data to the data
+   just written out with pdump_attach_extra_data().  this way,
+   multiple tables in memory can be written out into one contiguous
+   table. (we'd use the tar-like trick of allowing new blocks to be
+   written without going back to change the old blocks -- we just rely
+   on the end of file/end of memory.) this same mechanism could be
+   extracted out of pdump and used to handle the non-pdump situation
+   (or alternatively, we could just dump either the memory image of
+   the tables themselves or the compressed binary version).  in the
+   case of extra unicode tables not known about at compile time that
+   get loaded before dumping, we either just dump them into the image
+   (pdump and all) or extract them into the compressed binary format,
+   free the original tables, and treat them like all other tables.
+
+
+   ==========================================================================
+        - Generalized language appropriate word wrapping (requires
+                 layout-exposing API defined in BIDI section)
+   ==========================================================================
+
+   ==========================================================================
+                            - Make Custom Mule-aware
+   ==========================================================================
+
+   ==========================================================================
+                         - Composite character support
+   ==========================================================================
+
+   ==========================================================================
+                 - Language appropriate sorting and searching
+   ==========================================================================
+
+   ==========================================================================
+                    - Glyph shaping for Arabic and Devanagari
+   ==========================================================================
+
+-  (needs to be handled mostly
+  at C level, as part of layout; luckily it's entirely local in its
+  changes, as this is not hard)
+
+
+   ==========================================================================
+    Consider moving language selection Menu up to be parallel with Mule menu
+   ==========================================================================
+
+*/
+
 
 
 /************************************************************************/
@@ -695,7 +1340,7 @@ qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
   int retval;
 
   va_start (args, format);
-  retval = vsprintf ((char *) buffer, format, args);
+  retval = vsprintf ((Chbyte *) buffer, format, args);
   va_end (args);
 
   return retval;
@@ -760,13 +1405,13 @@ qxestrcasecmp (const Ibyte *s1, const Ibyte *s2)
 }
 
 int
-ascii_strcasecmp (const Char_ASCII *s1, const Char_ASCII *s2)
+ascii_strcasecmp (const Ascbyte *s1, const Ascbyte *s2)
 {
   return qxestrcasecmp ((const Ibyte *) s1, (const Ibyte *) s2);
 }
 
 int
-qxestrcasecmp_c (const Ibyte *s1, const Char_ASCII *s2)
+qxestrcasecmp_ascii (const Ibyte *s1, const Ascbyte *s2)
 {
   return qxestrcasecmp (s1, (const Ibyte *) s2);
 }
@@ -814,13 +1459,13 @@ qxestrncasecmp (const Ibyte *s1, const Ibyte *s2, Bytecount len)
 }
 
 int
-ascii_strncasecmp (const Char_ASCII *s1, const Char_ASCII *s2, Bytecount len)
+ascii_strncasecmp (const Ascbyte *s1, const Ascbyte *s2, Bytecount len)
 {
   return qxestrncasecmp ((const Ibyte *) s1, (const Ibyte *) s2, len);
 }
 
 int
-qxestrncasecmp_c (const Ibyte *s1, const Char_ASCII *s2, Bytecount len)
+qxestrncasecmp_ascii (const Ibyte *s1, const Ascbyte *s2, Bytecount len)
 {
   return qxestrncasecmp (s1, (const Ibyte *) s2, len);
 }
@@ -1034,6 +1679,37 @@ lisp_strcasecmp_i18n (Lisp_Object s1, Lisp_Object s2)
 			 XSTRING_DATA (s2), XSTRING_LENGTH (s2));
 }
 
+/* Compare a wide string with an ASCII string */
+
+int
+wcscmp_ascii (const wchar_t *s1, const Ascbyte *s2)
+{
+  while (*s1 && *s2)
+    {
+      if (*s1 != *s2)
+       break;
+      s1++, s2++;
+    }
+
+  return *s1 - *s2;
+}
+
+int
+wcsncmp_ascii (const wchar_t *s1, const Ascbyte *s2, Charcount len)
+{
+  while (len--)
+    {
+      int diff = *s1 - *s2;
+      if (diff != 0)
+	return diff;
+      if (!*s1)
+	return 0;
+      s1++, s2++;
+    }
+
+  return 0;
+}
+
 
 /************************************************************************/
 /*               conversion between textual representations             */
@@ -1043,7 +1719,7 @@ lisp_strcasecmp_i18n (Lisp_Object s1, Lisp_Object s2)
 
 void
 convert_ibyte_string_into_ichar_dynarr (const Ibyte *str, Bytecount len,
-					   Ichar_dynarr *dyn)
+					Ichar_dynarr *dyn)
 {
   const Ibyte *strend = str + len;
 
@@ -1057,7 +1733,7 @@ convert_ibyte_string_into_ichar_dynarr (const Ibyte *str, Bytecount len,
 
 Charcount
 convert_ibyte_string_into_ichar_string (const Ibyte *str, Bytecount len,
-					   Ichar *arr)
+					Ichar *arr)
 {
   const Ibyte *strend = str + len;
   Charcount newlen = 0;
@@ -1099,7 +1775,7 @@ convert_ichar_string_into_malloced_string (Ichar *arr, int nels,
 					    Bytecount *len_out)
 {
   /* Damn zero-termination. */
-  Ibyte *str = (Ibyte *) ALLOCA (nels * MAX_ICHAR_LEN + 1);
+  Ibyte *str = alloca_ibytes (nels * MAX_ICHAR_LEN + 1);
   Ibyte *strorig = str;
   Bytecount len;
 
@@ -1109,7 +1785,7 @@ convert_ichar_string_into_malloced_string (Ichar *arr, int nels,
     str += set_itext_ichar (str, arr[i]);
   *str = '\0';
   len = str - strorig;
-  str = (Ibyte *) xmalloc (1 + len);
+  str = xnew_ibytes (1 + len);
   memcpy (str, strorig, 1 + len);
   if (len_out)
     *len_out = len;
@@ -1440,14 +2116,14 @@ eito_malloc_1 (Eistring *ei)
 
       ei->max_size_allocated_ =
 	eifind_large_enough_buffer (0, ei->bytelen_ + 1);
-      newdata = (Ibyte *) xmalloc (ei->max_size_allocated_);
+      newdata = xnew_ibytes (ei->max_size_allocated_);
       memcpy (newdata, ei->data_, ei->bytelen_ + 1);
       ei->data_ = newdata;
     }
 
   if (ei->extdata_)
     {
-      Extbyte *newdata = (Extbyte *) xmalloc (ei->extlen_ + 2);
+      Extbyte *newdata = xnew_extbytes (ei->extlen_ + 2);
 
       memcpy (newdata, ei->extdata_, ei->extlen_);
       /* Double null-terminate in case of Unicode data */
@@ -1496,7 +2172,7 @@ eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
       }
 
     if (is_c)
-      EI_ASSERT_ASCII ((Char_ASCII *) dst, dstlen);
+      ASSERT_ASCTEXT_ASCII_LEN ((Ascbyte *) dst, dstlen);
 
     return (fold_case == 0 ? qxememcmp4 (src, len, dst, dstlen) :
 	    fold_case == 1 ? qxememcasecmp4 (src, len, dst, dstlen) :
@@ -1527,12 +2203,6 @@ eicpyout_malloc_fmt (Eistring *eistr, Bytecount *len_out, Internal_Format fmt,
 
 #ifdef MULE
 
-/* Skip as many ASCII bytes as possible in the memory block [PTR, END).
-   Return pointer to the first non-ASCII byte.  optimized for long
-   stretches of ASCII. */
-inline static const Ibyte *
-skip_ascii (const Ibyte *ptr, const Ibyte *end)
-{
 #ifdef EFFICIENT_INT_128_BIT
 # define STRIDE_TYPE INT_128_BIT
 # define HIGH_BIT_MASK \
@@ -1550,6 +2220,12 @@ skip_ascii (const Ibyte *ptr, const Ibyte *end)
 #define ALIGNED(ptr) ((((EMACS_UINT) ptr) & ALIGN_BITS) == 0)
 #define STRIDE sizeof (STRIDE_TYPE)
 
+/* Skip as many ASCII bytes as possible in the memory block [PTR, END).
+   Return pointer to the first non-ASCII byte.  optimized for long
+   stretches of ASCII. */
+inline static const Ibyte *
+skip_ascii (const Ibyte *ptr, const Ibyte *end)
+{
   const unsigned STRIDE_TYPE *ascii_end;
 
   /* Need to do in 3 sections -- before alignment start, aligned chunk,
@@ -1569,6 +2245,34 @@ skip_ascii (const Ibyte *ptr, const Ibyte *end)
   ptr = (Ibyte *) ascii_end;
   while (ptr < end && byte_ascii_p (*ptr))
     ptr++;
+  return ptr;
+}
+
+/* Skip as many ASCII bytes as possible in the memory block [END, PTR),
+   going downwards.  Return pointer to the location above the first
+   non-ASCII byte.  Optimized for long stretches of ASCII. */
+inline static const Ibyte *
+skip_ascii_down (const Ibyte *ptr, const Ibyte *end)
+{
+  const unsigned STRIDE_TYPE *ascii_end;
+
+  /* Need to do in 3 sections -- before alignment start, aligned chunk,
+     after alignment end. */
+  while (!ALIGNED (ptr))
+    {
+      if (ptr == end || !byte_ascii_p (*(ptr - 1)))
+	return ptr;
+      ptr--;
+    }
+  ascii_end = (const unsigned STRIDE_TYPE *) ptr - 1;
+  /* This loop screams, because we can detect ASCII
+     characters 4 or 8 at a time. */
+  while ((const Ibyte *) ascii_end >= end
+	 && !(*ascii_end & HIGH_BIT_MASK))
+    ascii_end--;
+  ptr = (Ibyte *) (ascii_end + 1);
+  while (ptr > end && byte_ascii_p (*(ptr - 1)))
+    ptr--;
   return ptr;
 }
 
@@ -1631,6 +2335,31 @@ charcount_to_bytecount_fun (const Ibyte *ptr, Charcount len)
   return newptr - ptr;
 }
 
+/* Function equivalent of charcount_to_bytecount_down.  This works on strings
+   of all sizes but is more efficient than a simple loop on large strings
+   and probably less efficient on sufficiently small strings. */
+
+Bytecount
+charcount_to_bytecount_down_fun (const Ibyte *ptr, Charcount len)
+{
+  const Ibyte *newptr = ptr;
+  while (1)
+    {
+      const Ibyte *newnewptr = skip_ascii_down (newptr, newptr - len);
+      len -= newptr - newnewptr;
+      newptr = newnewptr;
+      /* Skip over all non-ASCII chars, counting the length and
+	 stopping if it's zero */
+      while (len && !byte_ascii_p (*(newptr - 1)))
+	if (ibyte_first_byte_p (*--newptr))
+	  len--;
+      if (!len)
+	break;
+    }
+  text_checking_assert (ptr - newptr >= 0);
+  return ptr - newptr;
+}
+
 /* The next two functions are the actual meat behind the
    charbpos-to-bytebpos and bytebpos-to-charbpos conversions.  Currently
    the method they use is fairly unsophisticated; see buffer.h.
@@ -1641,35 +2370,280 @@ charcount_to_bytecount_fun (const Ibyte *ptr, Charcount len)
 
    Similar considerations apply to bytebpos_to_charbpos_func(), although
    less so because the function is not called so often.
+ */
 
-   #### At some point this should use a more sophisticated method;
-   see buffer.h. */
+/*
 
+Info on Byte-Char conversion:
+
+  (Info-goto-node "(internals)Byte-Char Position Conversion")
+*/
+
+#ifdef OLD_BYTE_CHAR
 static int not_very_random_number;
+#endif /* OLD_BYTE_CHAR */
+
+#define OLD_LOOP
+
+/* If we are this many characters away from any known position, cache the
+   new position in the buffer's char-byte cache. */
+#define FAR_AWAY_DISTANCE 5000
+
+/* Converting between character positions and byte positions.  */
+
+/* There are several places in the buffer where we know
+   the correspondence: BEG, BEGV, PT, GPT, ZV and Z,
+   and everywhere there is a marker.  So we find the one of these places
+   that is closest to the specified position, and scan from there.  */
+
+/* This macro is a subroutine of charbpos_to_bytebpos_func.
+   Note that it is desirable that BYTEPOS is not evaluated
+   except when we really want its value.  */
+
+#define CONSIDER(CHARPOS, BYTEPOS)					\
+do									\
+{									\
+  Charbpos this_charpos = (CHARPOS);					\
+  int changed = 0;							\
+									\
+  if (this_charpos == x)						\
+    {									\
+      retval = (BYTEPOS);						\
+      goto done;							\
+    }									\
+  else if (this_charpos > x)						\
+    {									\
+      if (this_charpos < best_above)					\
+	{								\
+	  best_above = this_charpos;					\
+	  best_above_byte = (BYTEPOS);					\
+	  changed = 1;							\
+	}								\
+    }									\
+  else if (this_charpos > best_below)					\
+    {									\
+      best_below = this_charpos;					\
+      best_below_byte = (BYTEPOS);					\
+      changed = 1;							\
+    }									\
+									\
+  if (changed)								\
+    {									\
+      if (best_above - best_below == best_above_byte - best_below_byte)	\
+        {								\
+	  retval = best_below_byte + (x - best_below);			\
+          goto done;							\
+	}								\
+    }									\
+}									\
+while (0)
+
 
 Bytebpos
 charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
 {
+#ifdef OLD_BYTE_CHAR
   Charbpos bufmin;
   Charbpos bufmax;
   Bytebpos bytmin;
   Bytebpos bytmax;
   int size;
   int forward_p;
-  Bytebpos retval;
   int diff_so_far;
   int add_to_cache = 0;
+#endif /* OLD_BYTE_CHAR */
+
+  Charbpos best_above, best_below;
+  Bytebpos best_above_byte, best_below_byte;
+  int i;
+  struct buffer_text *t;
+  Bytebpos retval;
+
   PROFILE_DECLARE ();
 
-  /* Check for some cached positions, for speed. */
-  if (x == BUF_PT (buf))
-    return BYTE_BUF_PT (buf);
-  if (x == BUF_ZV (buf))
-    return BYTE_BUF_ZV (buf);
-  if (x == BUF_BEGV (buf))
-    return BYTE_BUF_BEGV (buf);
-
   PROFILE_RECORD_ENTERING_SECTION (QSin_char_byte_conversion);
+
+  best_above = BUF_Z (buf);
+  best_above_byte = BYTE_BUF_Z (buf);
+
+  /* In this case, we simply have all one-byte characters.  But this should
+     have been intercepted before, in charbpos_to_bytebpos(). */
+  text_checking_assert (best_above != best_above_byte);
+
+  best_below = BUF_BEG (buf);
+  best_below_byte = BYTE_BUF_BEG (buf);
+
+  /* We find in best_above and best_above_byte
+     the closest known point above CHARPOS,
+     and in best_below and best_below_byte
+     the closest known point below CHARPOS,
+     
+     If at any point we can tell that the space between those
+     two best approximations is all single-byte,
+     we interpolate the result immediately.  */
+
+  CONSIDER (BUF_PT (buf), BYTE_BUF_PT (buf));
+  CONSIDER (BUF_GPT (buf), BYTE_BUF_GPT (buf));
+  CONSIDER (BUF_BEGV (buf), BYTE_BUF_BEGV (buf));
+  CONSIDER (BUF_ZV (buf), BYTE_BUF_ZV (buf));
+
+  t = buf->text;
+  CONSIDER (t->cached_charpos, t->cached_bytepos);
+
+  /* Check the most recently entered positions first */
+
+  for (i = t->next_cache_pos - 1; i >= 0; i--)
+    {
+      CONSIDER (t->mule_charbpos_cache[i], t->mule_bytebpos_cache[i]);
+
+      /* If we are down to a range of 50 chars,
+	 don't bother checking any other markers;
+	 scan the intervening chars directly now.  */
+      if (best_above - best_below < 50)
+	break;
+    }
+
+  /* We get here if we did not exactly hit one of the known places.
+     We have one known above and one known below.
+     Scan, counting characters, from whichever one is closer.  */
+
+  if (x - best_below < best_above - x)
+    {
+      int record = x - best_below > FAR_AWAY_DISTANCE;
+
+#ifdef OLD_LOOP /* old code */
+      while (best_below != x)
+	{
+	  best_below++;
+	  INC_BYTEBPOS (buf, best_below_byte);
+	}
+#else
+      text_checking_assert (BUF_FORMAT (buf) == FORMAT_DEFAULT);
+      /* The gap should not occur between best_below and x, or we will be
+	 screwed in using charcount_to_bytecount().  It should not be exactly
+	 at x either, because we already should have caught that. */
+      text_checking_assert
+	(BUF_CEILING_OF_IGNORE_ACCESSIBLE (buf, best_below) > x);
+
+      /* Using charcount_to_bytecount() is potentially a lot faster than a
+	 simple loop using INC_BYTEBPOS() because (a) the checks for gap
+	 and buffer format are factored out instead of getting checked
+	 every time; (b) the checking goes 4 or 8 bytes at a time in ASCII
+	 text.
+      */
+      best_below_byte +=
+	charcount_to_bytecount
+	(BYTE_BUF_BYTE_ADDRESS (buf, best_below_byte), x - best_below);
+      best_below = x;
+#endif /* 0 */
+
+      /* If this position is quite far from the nearest known position,
+	 cache the correspondence.
+
+	 NB FSF does this: "... by creating a marker here.
+	 It will last until the next GC."
+      */
+
+      if (record)
+	{
+	  /* If we have run out of positions to record, discard some of the
+	     old ones.  I used to use a circular buffer, which avoids the
+	     need to block-move any memory.  But it makes it more difficult
+	     to keep track of which positions haven't been used -- commonly
+	     we haven't yet filled out anywhere near the whole set of
+	     positions and don't want to check them all.  We should not be
+	     recording that often, and block-moving is extremely fast in
+	     any case. --ben */
+	  if (t->next_cache_pos == NUM_CACHED_POSITIONS)
+	    {
+	      memmove (t->mule_charbpos_cache,
+		       t->mule_charbpos_cache + NUM_MOVED_POSITIONS,
+		       sizeof (Charbpos) *
+		       (NUM_CACHED_POSITIONS - NUM_MOVED_POSITIONS));
+	      memmove (t->mule_bytebpos_cache,
+		       t->mule_bytebpos_cache + NUM_MOVED_POSITIONS,
+		       sizeof (Bytebpos) *
+		       (NUM_CACHED_POSITIONS - NUM_MOVED_POSITIONS));
+	      t->next_cache_pos -= NUM_MOVED_POSITIONS;
+	    }
+	  t->mule_charbpos_cache[t->next_cache_pos] = best_below;
+	  t->mule_bytebpos_cache[t->next_cache_pos] = best_below_byte;
+	  t->next_cache_pos++;
+	}
+
+      t->cached_charpos = best_below;
+      t->cached_bytepos = best_below_byte;
+
+      retval = best_below_byte;
+      text_checking_assert (best_below_byte >= best_below);
+      goto done;
+    }
+  else
+    {
+      int record = best_above - x > FAR_AWAY_DISTANCE;
+
+#ifdef OLD_LOOP
+      while (best_above != x)
+	{
+	  best_above--;
+	  DEC_BYTEBPOS (buf, best_above_byte);
+	}
+#else
+      text_checking_assert (BUF_FORMAT (buf) == FORMAT_DEFAULT);
+      /* The gap should not occur between best_above and x, or we will be
+	 screwed in using charcount_to_bytecount_down().  It should not be
+	 exactly at x either, because we already should have caught
+	 that. */
+      text_checking_assert
+	(BUF_FLOOR_OF_IGNORE_ACCESSIBLE (buf, best_above) < x);
+
+      /* Using charcount_to_bytecount_down() is potentially a lot faster
+	 than a simple loop using DEC_BYTEBPOS(); see above. */
+      best_above_byte -=
+	charcount_to_bytecount_down
+	/* BYTE_BUF_BYTE_ADDRESS will return a value on the high side of the
+	   gap if we are at the gap, which is the wrong side.  So do the
+	   following trick instead. */
+	(BYTE_BUF_BYTE_ADDRESS_BEFORE (buf, best_above_byte) + 1,
+	 best_above - x);
+      best_above = x;
+#endif /* SLEDGEHAMMER_CHECK_TEXT */
+
+
+      /* If this position is quite far from the nearest known position,
+	 cache the correspondence.
+
+	 NB FSF does this: "... by creating a marker here.
+	 It will last until the next GC."
+      */
+      if (record)
+	{
+	  if (t->next_cache_pos == NUM_CACHED_POSITIONS)
+	    {
+	      memmove (t->mule_charbpos_cache,
+		       t->mule_charbpos_cache + NUM_MOVED_POSITIONS,
+		       sizeof (Charbpos) *
+		       (NUM_CACHED_POSITIONS - NUM_MOVED_POSITIONS));
+	      memmove (t->mule_bytebpos_cache,
+		       t->mule_bytebpos_cache + NUM_MOVED_POSITIONS,
+		       sizeof (Bytebpos) *
+		       (NUM_CACHED_POSITIONS - NUM_MOVED_POSITIONS));
+	      t->next_cache_pos -= NUM_MOVED_POSITIONS;
+	    }
+	  t->mule_charbpos_cache[t->next_cache_pos] = best_above;
+	  t->mule_bytebpos_cache[t->next_cache_pos] = best_above_byte;
+	  t->next_cache_pos++;
+	}
+
+      t->cached_charpos = best_above;
+      t->cached_bytepos = best_above_byte;
+
+      retval = best_above_byte;
+      text_checking_assert (best_above_byte >= best_above);
+      goto done;
+    }
+
+#ifdef OLD_BYTE_CHAR
 
   bufmin = buf->text->mule_bufmin;
   bufmax = buf->text->mule_bufmax;
@@ -1789,7 +2763,7 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
       /* I considered keeping the positions ordered.  This would speed
 	 up this loop, but updating the cache would take longer, so
 	 it doesn't seem like it would really matter. */
-      for (i = 0; i < 16; i++)
+      for (i = 0; i < NUM_CACHED_POSITIONS; i++)
 	{
 	  int diff = buf->text->mule_charbpos_cache[i] - x;
 
@@ -1921,10 +2895,58 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
       buf->text->mule_bytebpos_cache[replace_loc] = retval;
     }
 
+#endif /* OLD_BYTE_CHAR */
+
+done:
   PROFILE_RECORD_EXITING_SECTION (QSin_char_byte_conversion);
 
   return retval;
 }
+
+#undef CONSIDER
+
+/* bytepos_to_charpos returns the char position corresponding to BYTEPOS.  */
+
+/* This macro is a subroutine of bytebpos_to_charbpos_func.
+   It is used when BYTEPOS is actually the byte position.  */
+
+#define CONSIDER(BYTEPOS, CHARPOS)					\
+do									\
+{									\
+  Bytebpos this_bytepos = (BYTEPOS);					\
+  int changed = 0;							\
+									\
+  if (this_bytepos == x)						\
+    {									\
+      retval = (CHARPOS);						\
+      goto done;							\
+    }									\
+  else if (this_bytepos > x)						\
+    {									\
+      if (this_bytepos < best_above_byte)				\
+	{								\
+	  best_above = (CHARPOS);					\
+	  best_above_byte = this_bytepos;				\
+	  changed = 1;							\
+	}								\
+    }									\
+  else if (this_bytepos > best_below_byte)				\
+    {									\
+      best_below = (CHARPOS);						\
+      best_below_byte = this_bytepos;					\
+      changed = 1;							\
+    }									\
+									\
+  if (changed)								\
+    {									\
+      if (best_above - best_below == best_above_byte - best_below_byte)	\
+	{								\
+	  retval = best_below + (x - best_below_byte);			\
+	  goto done;							\
+	}								\
+    }									\
+}									\
+while (0)
 
 /* The logic in this function is almost identical to the logic in
    the previous function. */
@@ -1932,26 +2954,189 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
 Charbpos
 bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
 {
+#ifdef OLD_BYTE_CHAR
   Charbpos bufmin;
   Charbpos bufmax;
   Bytebpos bytmin;
   Bytebpos bytmax;
   int size;
   int forward_p;
-  Charbpos retval;
   int diff_so_far;
   int add_to_cache = 0;
+#endif /* OLD_BYTE_CHAR */
+
+  Charbpos best_above, best_above_byte;
+  Bytebpos best_below, best_below_byte;
+  int i;
+  struct buffer_text *t;
+  Charbpos retval;
+
   PROFILE_DECLARE ();
 
-  /* Check for some cached positions, for speed. */
-  if (x == BYTE_BUF_PT (buf))
-    return BUF_PT (buf);
-  if (x == BYTE_BUF_ZV (buf))
-    return BUF_ZV (buf);
-  if (x == BYTE_BUF_BEGV (buf))
-    return BUF_BEGV (buf);
-
   PROFILE_RECORD_ENTERING_SECTION (QSin_char_byte_conversion);
+
+  best_above = BUF_Z (buf);
+  best_above_byte = BYTE_BUF_Z (buf);
+
+  /* In this case, we simply have all one-byte characters.  But this should
+     have been intercepted before, in bytebpos_to_charbpos(). */
+  text_checking_assert (best_above != best_above_byte);
+
+  best_below = BUF_BEG (buf);
+  best_below_byte = BYTE_BUF_BEG (buf);
+
+  CONSIDER (BYTE_BUF_PT (buf), BUF_PT (buf));
+  CONSIDER (BYTE_BUF_GPT (buf), BUF_GPT (buf));
+  CONSIDER (BYTE_BUF_BEGV (buf), BUF_BEGV (buf));
+  CONSIDER (BYTE_BUF_ZV (buf), BUF_ZV (buf));
+
+  t = buf->text;
+  CONSIDER (t->cached_bytepos, t->cached_charpos);
+
+  /* Check the most recently entered positions first */
+
+  for (i = t->next_cache_pos - 1; i >= 0; i--)
+    {
+      CONSIDER (t->mule_bytebpos_cache[i], t->mule_charbpos_cache[i]);
+
+      /* If we are down to a range of 50 chars,
+	 don't bother checking any other markers;
+	 scan the intervening chars directly now.  */
+      if (best_above - best_below < 50)
+	break;
+    }
+
+  /* We get here if we did not exactly hit one of the known places.
+     We have one known above and one known below.
+     Scan, counting characters, from whichever one is closer.  */
+
+  if (x - best_below_byte < best_above_byte - x)
+    {
+      int record = x - best_below_byte > 5000;
+
+#ifdef OLD_LOOP /* old code */
+      while (best_below_byte < x)
+	{
+	  best_below++;
+	  INC_BYTEBPOS (buf, best_below_byte);
+	}
+#else
+      text_checking_assert (BUF_FORMAT (buf) == FORMAT_DEFAULT);
+      /* The gap should not occur between best_below and x, or we will be
+	 screwed in using charcount_to_bytecount().  It should not be exactly
+	 at x either, because we already should have caught that. */
+      text_checking_assert
+	(BYTE_BUF_CEILING_OF_IGNORE_ACCESSIBLE (buf, best_below_byte) > x);
+
+      /* Using bytecount_to_charcount() is potentially a lot faster than
+	 a simple loop above using INC_BYTEBPOS(); see above.
+      */
+      best_below +=
+	bytecount_to_charcount
+	(BYTE_BUF_BYTE_ADDRESS (buf, best_below_byte), x - best_below_byte);
+      best_below_byte = x;
+#endif
+
+      /* If this position is quite far from the nearest known position,
+	 cache the correspondence.
+
+	 NB FSF does this: "... by creating a marker here.
+	 It will last until the next GC."
+      */
+
+      if (record)
+	{
+	  if (t->next_cache_pos == NUM_CACHED_POSITIONS)
+	    {
+	      memmove (t->mule_charbpos_cache,
+		       t->mule_charbpos_cache + NUM_MOVED_POSITIONS,
+		       sizeof (Charbpos) *
+		       (NUM_CACHED_POSITIONS - NUM_MOVED_POSITIONS));
+	      memmove (t->mule_bytebpos_cache,
+		       t->mule_bytebpos_cache + NUM_MOVED_POSITIONS,
+		       sizeof (Bytebpos) *
+		       (NUM_CACHED_POSITIONS - NUM_MOVED_POSITIONS));
+	      t->next_cache_pos -= NUM_MOVED_POSITIONS;
+	    }
+	  t->mule_charbpos_cache[t->next_cache_pos] = best_below;
+	  t->mule_bytebpos_cache[t->next_cache_pos] = best_below_byte;
+	  t->next_cache_pos++;
+	}
+
+
+      t->cached_charpos = best_below;
+      t->cached_bytepos = best_below_byte;
+
+      retval = best_below;
+      text_checking_assert (best_below_byte >= best_below);
+      goto done;
+    }
+  else
+    {
+      int record = best_above_byte - x > 5000;
+
+#ifdef OLD_LOOP /* old code */
+      while (best_above_byte > x)
+	{
+	  best_above--;
+	  DEC_BYTEBPOS (buf, best_above_byte);
+	}
+#else
+      text_checking_assert (BUF_FORMAT (buf) == FORMAT_DEFAULT);
+      /* The gap should not occur between best_above and x, or we will be
+	 screwed in using bytecount_to_charcount_down().  It should not be
+	 exactly at x either, because we already should have caught
+	 that. */
+      text_checking_assert
+	(BYTE_BUF_FLOOR_OF_IGNORE_ACCESSIBLE (buf, best_above_byte) < x);
+
+      /* Using bytecount_to_charcount_down() is potentially a lot faster
+	 than a simple loop using INC_BYTEBPOS(); see above. */
+      best_above -=
+	bytecount_to_charcount_down
+	/* BYTE_BUF_BYTE_ADDRESS will return a value on the high side of the
+	   gap if we are at the gap, which is the wrong side.  So do the
+	   following trick instead. */
+	(BYTE_BUF_BYTE_ADDRESS_BEFORE (buf, best_above_byte) + 1,
+	best_above_byte - x);
+      best_above_byte = x;
+#endif
+
+
+      /* If this position is quite far from the nearest known position,
+	 cache the correspondence.
+
+	 NB FSF does this: "... by creating a marker here.
+	 It will last until the next GC."
+      */
+      if (record)
+	{
+	  if (t->next_cache_pos == NUM_CACHED_POSITIONS)
+	    {
+	      memmove (t->mule_charbpos_cache,
+		       t->mule_charbpos_cache + NUM_MOVED_POSITIONS,
+		       sizeof (Charbpos) *
+		       (NUM_CACHED_POSITIONS - NUM_MOVED_POSITIONS));
+	      memmove (t->mule_bytebpos_cache,
+		       t->mule_bytebpos_cache + NUM_MOVED_POSITIONS,
+		       sizeof (Bytebpos) *
+		       (NUM_CACHED_POSITIONS - NUM_MOVED_POSITIONS));
+	      t->next_cache_pos -= NUM_MOVED_POSITIONS;
+	    }
+	  t->mule_charbpos_cache[t->next_cache_pos] = best_above;
+	  t->mule_bytebpos_cache[t->next_cache_pos] = best_above_byte;
+	  t->next_cache_pos++;
+	}
+
+      t->cached_charpos = best_above;
+      t->cached_bytepos = best_above_byte;
+
+      retval = best_above;
+      text_checking_assert (best_above_byte >= best_above);
+      goto done;
+    }
+
+#ifdef OLD_BYTE_CHAR
 
   bufmin = buf->text->mule_bufmin;
   bufmax = buf->text->mule_bufmax;
@@ -2071,7 +3256,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
       /* I considered keeping the positions ordered.  This would speed
 	 up this loop, but updating the cache would take longer, so
 	 it doesn't seem like it would really matter. */
-      for (i = 0; i < 16; i++)
+      for (i = 0; i < NUM_CACHED_POSITIONS; i++)
 	{
 	  int diff = buf->text->mule_bytebpos_cache[i] - x;
 
@@ -2202,7 +3387,9 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
       buf->text->mule_charbpos_cache[replace_loc] = retval;
       buf->text->mule_bytebpos_cache[replace_loc] = x;
     }
+#endif /* OLD_BYTE_CHAR */
 
+done:
   PROFILE_RECORD_EXITING_SECTION (QSin_char_byte_conversion);
 
   return retval;
@@ -2216,11 +3403,13 @@ buffer_mule_signal_inserted_region (struct buffer *buf, Charbpos start,
 				    Bytecount bytelength,
 				    Charcount charlength)
 {
+#ifdef OLD_BYTE_CHAR
   int size = (1 << buf->text->mule_shifter) + !!buf->text->mule_three_p;
+#endif /* OLD_BYTE_CHAR */
   int i;
 
   /* Adjust the cache of known positions. */
-  for (i = 0; i < 16; i++)
+  for (i = 0; i < buf->text->next_cache_pos; i++)
     {
 
       if (buf->text->mule_charbpos_cache[i] > start)
@@ -2230,6 +3419,15 @@ buffer_mule_signal_inserted_region (struct buffer *buf, Charbpos start,
 	}
     }
 
+  /* Adjust the special cached position. */
+
+  if (buf->text->cached_charpos > start)
+    {
+      buf->text->cached_charpos += charlength;
+      buf->text->cached_bytepos += bytelength;
+    }
+
+#ifdef OLD_BYTE_CHAR
   if (start >= buf->text->mule_bufmax)
     return;
 
@@ -2304,6 +3502,7 @@ buffer_mule_signal_inserted_region (struct buffer *buf, Charbpos start,
 	    }
 	}
     }
+#endif /* OLD_BYTE_CHAR */
 }
 
 /* Text from START to END (equivalent in Bytebpos's: from BYTE_START to
@@ -2317,7 +3516,7 @@ buffer_mule_signal_deleted_region (struct buffer *buf, Charbpos start,
   int i;
 
   /* Adjust the cache of known positions. */
-  for (i = 0; i < 16; i++)
+  for (i = 0; i < buf->text->next_cache_pos; i++)
     {
       /* After the end; gets shoved backward */
       if (buf->text->mule_charbpos_cache[i] > end)
@@ -2333,6 +3532,22 @@ buffer_mule_signal_deleted_region (struct buffer *buf, Charbpos start,
 	}
     }
 
+  /* Adjust the special cached position. */
+
+  /* After the end; gets shoved backward */
+  if (buf->text->cached_charpos > end)
+    {
+      buf->text->cached_charpos -= end - start;
+      buf->text->cached_bytepos -= byte_end - byte_start;
+    }
+  /* In the range; moves to start of range */
+  else if (buf->text->cached_charpos > start)
+    {
+      buf->text->cached_charpos = start;
+      buf->text->cached_bytepos = byte_start;
+    }
+
+#ifdef OLD_BYTE_CHAR
   /* We don't care about any text after the end of the known region. */
 
   end = min (end, buf->text->mule_bufmax);
@@ -2355,6 +3570,7 @@ buffer_mule_signal_deleted_region (struct buffer *buf, Charbpos start,
       buf->text->mule_bufmin -= end - start;
       buf->text->mule_bytmin -= byte_end - byte_start;
     }
+#endif /* OLD_BYTE_CHAR */
 }
 
 #endif /* MULE */
@@ -2833,6 +4049,7 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
   Extbyte_dynarr *conversion_out_dynarr;
   PROFILE_DECLARE ();
 
+  assert (!inhibit_non_essential_conversion_operations);
   PROFILE_RECORD_ENTERING_SECTION (QSin_internal_external_conversion);
 
   count = begin_gc_forbidden ();
@@ -3038,6 +4255,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
   Ibyte_dynarr *conversion_in_dynarr;
   PROFILE_DECLARE ();
 
+  assert (!inhibit_non_essential_conversion_operations);
   PROFILE_RECORD_ENTERING_SECTION (QSin_internal_external_conversion);
 
   count = begin_gc_forbidden ();
@@ -3223,6 +4441,50 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 }
 
 /* ----------------------------------------------------------------------- */
+/*                         Alloca-conversion helpers                       */
+/* ----------------------------------------------------------------------- */
+
+/* For alloca(), things are trickier because the calling function needs to
+   allocate.  This means that the caller needs to do the following:
+
+   (a) invoke us to do the conversion, remember the data and return the size.
+   (b) alloca() the proper size.
+   (c) invoke us again to copy the data.
+
+   We need to handle the possibility of two or more invocations of the
+   converter in the same expression.  In such cases it's conceivable that
+   the evaluation of the sub-expressions will be overlapping (e.g. one size
+   function called, then the other one called, then the copy functions
+   called).  To handle this, we keep a list of active data, indexed by the
+   src expression. (We use the stringize operator to avoid evaluating the
+   expression multiple times.) If the caller uses the exact same src
+   expression twice in two converter calls in the same subexpression, we
+   will lose, but at least we can check for this and abort().  We could
+   conceivably try to index on other parameters as well, but there is not
+   really any point. */
+
+alloca_convert_vals_dynarr *active_alloca_convert;
+
+int
+find_pos_of_existing_active_alloca_convert (const char *srctext)
+{
+  alloca_convert_vals *vals = NULL;
+  int i;
+
+  if (!active_alloca_convert)
+    active_alloca_convert = Dynarr_new (alloca_convert_vals);
+
+  for (i = 0; i < Dynarr_length (active_alloca_convert); i++)
+    {
+      vals = Dynarr_atp (active_alloca_convert, i);
+      if (vals->srctext == srctext)
+	return i;
+    }
+
+  return -1;
+}
+
+/* ----------------------------------------------------------------------- */
 /* New-style DFC converters (data is returned rather than stored into var) */
 /* ----------------------------------------------------------------------- */
 
@@ -3275,6 +4537,43 @@ new_dfc_convert_now_damn_it (const void *src, Bytecount src_size,
     default:
       abort ();
     }
+
+  /* The size is always + 2 because we have double zero-termination at the
+     end of all data (for Unicode-correctness). */
+  *dst_size += 2;
+}
+
+Bytecount
+new_dfc_convert_size (const char *srctext, const void *src,
+		      Bytecount src_size, enum new_dfc_src_type type,
+		      Lisp_Object codesys)
+{
+  alloca_convert_vals vals;
+
+  assert (find_pos_of_existing_active_alloca_convert (srctext) < 0);
+
+  vals.srctext = srctext;
+
+  new_dfc_convert_now_damn_it (src, src_size, type, &vals.dst, &vals.dst_size,
+			       codesys);
+
+  Dynarr_add (active_alloca_convert, vals);
+  return vals.dst_size;
+}
+
+void *
+new_dfc_convert_copy_data (const char *srctext, void *alloca_data)
+{
+  alloca_convert_vals *vals;
+  int i = find_pos_of_existing_active_alloca_convert (srctext);
+
+  assert (i >= 0);
+  vals = Dynarr_atp (active_alloca_convert, i);
+  assert (alloca_data);
+  memcpy (alloca_data, vals->dst, vals->dst_size);
+  xfree (vals->dst, void *);
+  Dynarr_delete (active_alloca_convert, i);
+  return alloca_data;
 }
 
 void *
@@ -3286,90 +4585,6 @@ new_dfc_convert_malloc (const void *src, Bytecount src_size,
 
   new_dfc_convert_now_damn_it (src, src_size, type, &dst, &dst_size, codesys);
   return dst;
-}
-
-/* For alloca(), things are trickier because the calling function needs to
-   allocate.  This means that the caller needs to do the following:
-
-   (a) invoke us to do the conversion, remember the data and return the size.
-   (b) alloca() the proper size.
-   (c) invoke us again to copy the data.
-
-   We need to handle the possibility of two or more invocations of the
-   converter in the same expression.  In such cases it's conceivable that
-   the evaluation of the sub-expressions will be overlapping (e.g. one size
-   function called, then the other one called, then the copy functions
-   called).  To handle this, we keep a list of active data, indexed by the
-   src expression. (We use the stringize operator to avoid evaluating the
-   expression multiple times.) If the caller uses the exact same src
-   expression twice in two converter calls in the same subexpression, we
-   will lose, but at least we can check for this and abort().  We could
-   conceivably try to index on other parameters as well, but there is not
-   really any point. */
-
-typedef struct
-{
-  const char *srctext;
-  void *dst;
-  Bytecount dst_size;
-} dfc_e2c_vals;
-
-typedef struct
-{
-  Dynarr_declare (dfc_e2c_vals);
-} dfc_e2c_vals_dynarr;
-
-static dfc_e2c_vals_dynarr *active_dfc_e2c;
-
-static int
-find_pos_of_existing_active_dfc_e2c (const char *srctext)
-{
-  dfc_e2c_vals *vals = NULL;
-  int i;
-
-  for (i = 0; i < Dynarr_length (active_dfc_e2c); i++)
-    {
-      vals = Dynarr_atp (active_dfc_e2c, i);
-      if (vals->srctext == srctext)
-	return i;
-    }
-
-  return -1;
-}
-
-void *
-new_dfc_convert_alloca (const char *srctext, void *alloca_data)
-{
-  dfc_e2c_vals *vals;
-  int i = find_pos_of_existing_active_dfc_e2c (srctext);
-
-  assert (i >= 0);
-  vals = Dynarr_atp (active_dfc_e2c, i);
-  assert (alloca_data);
-  memcpy (alloca_data, vals->dst, vals->dst_size + 2);
-  xfree (vals->dst, void *);
-  Dynarr_delete (active_dfc_e2c, i);
-  return alloca_data;
-}
-
-Bytecount
-new_dfc_convert_size (const char *srctext, const void *src,
-		      Bytecount src_size, enum new_dfc_src_type type,
-		      Lisp_Object codesys)
-{
-  dfc_e2c_vals vals;
-
-  assert (find_pos_of_existing_active_dfc_e2c (srctext) < 0);
-
-  vals.srctext = srctext;
-
-  new_dfc_convert_now_damn_it (src, src_size, type, &vals.dst, &vals.dst_size,
-			       codesys);
-
-  Dynarr_add (active_dfc_e2c, vals);
-  /* The size is always + 2 because we have double zero-termination at the
-     end of all data (for Unicode-correctness). */
-  return vals.dst_size + 2;
 }
 
 
@@ -3893,7 +5108,6 @@ reinit_vars_of_text (void)
 					   Ibyte_dynarr *);
   conversion_out_dynarr_list = Dynarr_new2 (Extbyte_dynarr_dynarr,
 					    Extbyte_dynarr *);
-  active_dfc_e2c = Dynarr_new (dfc_e2c_vals);
 
   for (i = 0; i <= MAX_BYTEBPOS_GAP_SIZE_3; i++)
     three_to_one_table[i] = i / 3;
@@ -3902,8 +5116,6 @@ reinit_vars_of_text (void)
 void
 vars_of_text (void)
 {
-  reinit_vars_of_text ();
-
   QSin_char_byte_conversion = build_msg_string ("(in char-byte conversion)");
   staticpro (&QSin_char_byte_conversion);
   QSin_internal_external_conversion =

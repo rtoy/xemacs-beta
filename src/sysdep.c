@@ -1,7 +1,7 @@
 /* Interfaces to system-dependent kernel and library entries.
    Copyright (C) 1985-1988, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -616,7 +616,7 @@ sys_subshell (void)
   dir = Funhandled_file_name_directory (dir);
   dir = expand_and_dir_to_file (dir, Qnil);
 
-  str = (Ibyte *) ALLOCA (XSTRING_LENGTH (dir) + 2);
+  str = alloca_ibytes (XSTRING_LENGTH (dir) + 2);
   len = XSTRING_LENGTH (dir);
   memcpy (str, XSTRING_DATA (dir), len);
   if (!IS_ANY_SEP (str[len - 1]))
@@ -2299,6 +2299,7 @@ init_system_name (void)
   Vsystem_name = build_string (uts.nodename);
 #else /* HAVE_GETHOSTNAME */
   int hostname_size = 256;
+  /* !!#### Needs review */
   char *hostname = (char *) ALLOCA (hostname_size);
 
   /* Try to get the host name; if the buffer is too short, try
@@ -2315,6 +2316,7 @@ init_system_name (void)
 	break;
 
       hostname_size <<= 1;
+  /* !!#### Needs review */
       hostname = (char *) ALLOCA (hostname_size);
     }
 # if defined( HAVE_SOCKETS)
@@ -2356,6 +2358,7 @@ init_system_name (void)
 		if (*alias)
 		  fqdn = *alias;
 	      }
+  /* !!#### Needs review */
 	    hostname = (char *) ALLOCA (strlen (fqdn) + 1);
 	    strcpy (hostname, fqdn);
 	  }
@@ -2373,6 +2376,7 @@ init_system_name (void)
 	hints.ai_protocol = 0;
 	if (!getaddrinfo (hostname, NULL, &hints, &res))
 	  {
+  /* !!#### Needs review */
 	    hostname = (char *) ALLOCA (strlen (res->ai_canonname) + 1);
 	    strcpy (hostname, res->ai_canonname);
 
@@ -2578,7 +2582,8 @@ underlying_open_1 (const Extbyte *path, int oflag, int mode)
 
 #endif /* WIN32_NATIVE */
 
-/* Just one call with normal open() semantics. */
+/* Just call open() with normal open() semantics, with some fixups for
+   problems under Windows. */
 
 static int
 underlying_open (const Extbyte *path, int oflag, int mode)
@@ -2599,18 +2604,9 @@ underlying_open (const Extbyte *path, int oflag, int mode)
 #endif /* WIN32_NATIVE */
 }
 
-/* Like qxe_open() below but operates on externally-encoded filenames. */
-
-int XCDECL
-retry_open (const Extbyte *path, int oflag, ...)
+static int
+retry_open_1 (const Extbyte *path, int oflag, int mode)
 {
-  int mode;
-  va_list ap;
-
-  va_start (ap, oflag);
-  mode = va_arg (ap, int);
-  va_end (ap);
-
 #ifdef INTERRUPTIBLE_OPEN
   {
     int rtnval;
@@ -2623,6 +2619,44 @@ retry_open (const Extbyte *path, int oflag, ...)
   return underlying_open (path, oflag, mode);
 #endif
 }
+
+/* A version of open() that retries when interrupted.  Operates on
+   externally-encoded filenames. */
+
+int XCDECL
+retry_open (const Extbyte *path, int oflag, ...)
+{
+  int mode;
+  va_list ap;
+
+  va_start (ap, oflag);
+  mode = va_arg (ap, int);
+  va_end (ap);
+
+  return retry_open_1 (path, oflag, mode);
+}
+
+#if defined (WIN32_NATIVE) && defined (WEXTTEXT_IS_WIDE)
+
+/* Like retry_open() but operate on Wexttext filenames. */
+
+int XCDECL
+wext_retry_open (const Wexttext *path, int oflag, ...)
+{
+  int mode;
+  va_list ap;
+
+  va_start (ap, oflag);
+  mode = va_arg (ap, int);
+  va_end (ap);
+
+  if (!XEUNICODE_P)
+    return retry_open_1 (WEXTTEXT_TO_MULTIBYTE (path), oflag, mode);
+  else
+    return retry_open_1 ((Extbyte *) path, oflag, mode);
+}
+
+#endif
 
 /* The basic external entry point to open().  Handles conversion to
    external encoding, interruptions, etc. */
@@ -2784,12 +2818,12 @@ write_allowing_quit (int fildes, const void *buf, Bytecount size)
    #### Should conceivably encapsulate getchar() etc.  What a pain! */
 
 FILE *
-retry_fopen (const Extbyte *path, const Char_ASCII *mode)
+retry_fopen (const Extbyte *path, const Ascbyte *mode)
 {
 #ifdef WIN32_NATIVE
   int fd;
   int oflag;
-  const Char_ASCII *mode_save = mode;
+  const Ascbyte *mode_save = mode;
 
   /* Force all file handles to be non-inheritable.  This is necessary to
      ensure child processes don't unwittingly inherit handles that might
@@ -2839,7 +2873,7 @@ retry_fopen (const Extbyte *path, const Char_ASCII *mode)
 }
 
 FILE *
-qxe_fopen (const Ibyte *path, const Char_ASCII *mode)
+qxe_fopen (const Ibyte *path, const Ascbyte *mode)
 {
   Extbyte *pathout;
   PATHNAME_CONVERT_OUT (path, pathout);
@@ -3417,7 +3451,7 @@ qxe_ctime (const time_t *t)
 
 #ifndef HAVE_WCHAR_H
 size_t
-wcslen(const wchar_t *s)
+wcslen (const wchar_t *s)
 {
   const wchar_t *p = s;
 

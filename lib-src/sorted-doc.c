@@ -99,7 +99,7 @@ const char *states[] =
 };
     
 int
-main ()
+main (int argc, char **argv)
 {
   register DOCSTR *dp = NULL;	/* allocated DOCSTR */
   register LINE *lp = NULL;	/* allocated line */

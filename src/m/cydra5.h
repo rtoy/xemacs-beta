@@ -37,16 +37,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define LOAD_AVE_CVT(x) x
 
-/* Define C_ALLOCA if this machine does not support a true alloca
-   and the one written in C should be used instead.
-   Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used.
-   Define neither one if an assembler-language alloca
-   in the file alloca.s should be used.  */
-
-#define C_ALLOCA
-#undef HAVE_ALLOCA
-
 #define DATA_START    0x20000000
 
 /* Define NO_REMAP if memory segmentation makes it not work well
@@ -56,9 +46,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define NO_REMAP
 #define	LIBS_MACHINE "-lsocket -lnsl"
-
-/* Stack grows downward in memory.  */
-#define	STACK_DIRECTION -1
 
 /* The data section in a coff file must be aligned in the file.  */
 #define	DATA_SECTION_ALIGNMENT	0xFFF

@@ -192,7 +192,7 @@ emacs_gtk_selection_handle (GtkWidget *UNUSED (widget),
 
   count = specpdl_depth ();
 
-  cl = (struct _selection_closure *) xmalloc (sizeof (*cl));
+  cl = xnew (struct _selection_closure);
   cl->data = selection_data;
   cl->successful = FALSE;
 
@@ -200,7 +200,7 @@ emacs_gtk_selection_handle (GtkWidget *UNUSED (widget),
 			 make_opaque_ptr (cl));
 
   {
-    UChar_Binary *data;
+    Rawbyte *data;
     Bytecount size;
     int format;
     GdkAtom type;
@@ -213,7 +213,7 @@ emacs_gtk_selection_handle (GtkWidget *UNUSED (widget),
     successful_p = Qt;
     /* Tell x_selection_request_lisp_error() it's cool. */
     cl->successful = TRUE;
-    xfree (data, UChar_Binary *);
+    xfree (data, Rawbyte *);
   }
 
   unbind_to (count);

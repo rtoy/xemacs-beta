@@ -509,14 +509,15 @@ Designed to be called interactively (from a keypress)."
 (defun pui-display-maintainer (&optional no-error event)
   "Display a package's maintainer in the minibuffer."
   (interactive)
-  (let (extent pkg-sym info maintainer)
+  (let (extent ;pkg-sym
+	info maintainer)
     (save-excursion
       (beginning-of-line)
       (if (setq extent 	(extent-at (point) (current-buffer) 'pui))
 	  (progn
-	    (setq pkg-sym (extent-property extent 'pui-package)
-		  info (extent-property extent 'pui-info)
-		  maintainer (package-get-info-prop info 'maintainer))
+	    (setq ;pkg-sym (extent-property extent 'pui-package)
+	     info (extent-property extent 'pui-info)
+	     maintainer (package-get-info-prop info 'maintainer))
 	    (message (format "Maintainer: %s" maintainer)))
 	(if no-error
 	    (clear-message nil)

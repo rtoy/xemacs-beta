@@ -308,7 +308,7 @@ definitions to shadow the loaded ones for use in file byte-compilation."
   (let* ((time (copy-sequence (current-time-string))) (i (length time)) (v 0))
     (while (>= (decf i) 0) (setq v (+ (* v 3) (aref time i))))
     (if (featurep 'bignum)
-	(coerce-number v 'fixnum)
+	(declare-fboundp (coerce-number v 'fixnum))
       v)))
 
 (defvar *gensym-counter* (* (logand (cl-random-time) 1023) 100))

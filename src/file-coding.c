@@ -69,359 +69,6 @@ Boston, MA 02111-1307, USA.  */
    Removed the conditionals.
    */
 
-/* sjt sez:
-
-There should be no elementary coding systems in the Lisp API, only chains.
-Chains should be declared, not computed, as a sequence of coding formats.
-(Probably the internal representation can be a vector for efficiency but
-programmers would probably rather work with lists.)  A stream has a token
-type.  Most streams are octet streams.  Text is a stream of characters (in
-_internal_ format; a file on disk is not text!)  An octet-stream has no
-implicit semantics, so its format must always be specified.  The only type
-currently having semantics is characters.  This means that the chain [euc-jp
--> internal -> shift_jis) may be specified (euc-jp, shift_jis), and if no
-euc-jp -> shift_jis converter is available, then the chain is automatically
-constructed.  (N.B.  I f we have fixed width buffers in the future, then we
-could have ASCII -> 8-bit char -> 16-bit char -> ISO-2022-JP (with escape
-sequences).
-
-EOL handling is a char <-> char coding.  It should not be part of another
-coding system except as a convenience for users.  For text coding,
-automatically insert EOL handlers between char <-> octet boundaries.
-*/
-
-/* Comments about future work
-
-------------------------------------------------------------------
-                            ABOUT DETECTION
-------------------------------------------------------------------
-
-   however, in general the detection code has major problems and needs lots
-   of work:
-
-   -- instead of merely "yes" or "no" for particular categories, we need a
-      more flexible system, with various levels of likelihood.  Currently
-      I've created a system with six levels, as follows:
-
-     [see file-coding.h]
-
-     Let's consider what this might mean for an ASCII text detector.  (In
-     order to have accurate detection, especially given the iteration I
-     proposed below, we need active detectors for *all* types of data we
-     might reasonably encounter, such as ASCII text files, binary files,
-     and possibly other sorts of ASCII files, and not assume that simply
-     "falling back to no detection" will work at all well.)
-     
-     An ASCII text detector DOES NOT report ASCII text as level 0, since
-     that's what the detector is looking for.  Such a detector ideally
-     wants all bytes in the range 0x20 - 0x7E (no high bytes!), except for
-     whitespace control chars and perhaps a few others; LF, CR, or CRLF
-     sequences at regular intervals (where "regular" might mean an average
-     < 100 chars and 99% < 300 for code and other stuff of the "text file
-     w/line breaks" variety, but for the "text file w/o line breaks"
-     variety, excluding blank lines, averages could easily be 600 or more
-     with 2000-3000 char "lines" not so uncommon); similar statistical
-     variance between odds and evens (not Unicode); frequent occurrences of
-     the space character; letters more common than non-letters; etc.  Also
-     checking for too little variability between frequencies of characters
-     and for exclusion of particular characters based on character ranges
-     can catch ASCII encodings like base-64, UUEncode, UTF-7, etc.
-     Granted, this doesn't even apply to everything called "ASCII", and we
-     could potentially distinguish off ASCII for code, ASCII for text,
-     etc. as separate categories.  However, it does give us a lot to work
-     off of, in deciding what likelihood to choose -- and it shows there's
-     in fact a lot of detectable patterns to look for even in something
-     seemingly so generic as ASCII.  The detector would report most text
-     files in level 1 or level 2.  EUC encodings, Shift-JIS, etc.  probably
-     go to level -1 because they also pass the EOL test and all other tests
-     for the ASCII part of the text, but have lots of high bytes, which in
-     essence turn them into binary.  Aberrant text files like something in
-     BASE64 encoding might get placed in level 0, because they pass most
-     tests but fail dramatically the frequency test; but they should not be
-     reported as any lower, because that would cause explicit prompting,
-     and the user should be able any valid text file without prompting.
-     The escape sequences and the base-64-type checks might send 7-bit
-     iso2022 to 0, but probably not -1, for similar reasons.
-
-   -- The assumed algorithm for the above detection levels is to in essence
-      sort categories first by detection level and then by priority.
-      Perhaps, however, we would want smarter algorithms, or at least
-      something user-controllable -- in particular, when (other than no
-      category at level 0 or greater) do we prompt the user to pick a
-      category?
-
-   -- Improvements in how the detection algorithm works: we want to handle
-      lots of different ways something could be encoded, including multiple
-      stacked encodings.  trying to specify a series of detection levels
-      (check for base64 first, then check for gzip, then check for an i18n
-      decoding, then for crlf) won't generally work.  for example, what
-      about the same encoding appearing more than once? for example, take
-      euc-jp, base64'd, then gzip'd, then base64'd again: this could well
-      happen, and you could specify the encodings specifically as
-      base64|gzip|base64|euc-jp, but we'd like to autodetect it without
-      worrying about exactly what order these things appear in.  we should
-      allow for iterating over detection/decoding cycles until we reach
-      some maximum (we got stuck in a loop, due to incorrect category
-      tables or detection algorithms), have no reported detection levels
-      over -1, or we end up with no change after a decoding pass (i.e. the
-      coding system associated with a chosen category was `no-conversion'
-      or something equivalent).  it might make sense to divide things into
-      two phases (internal and external), where the internal phase has a
-      separate category list and would probably mostly end up handling EOL
-      detection; but the i think about it, the more i disagree.  with
-      properly written detectors, and properly organized tables (in
-      general, those decodings that are more "distinctive" and thus
-      detectable with greater certainty go lower on the list), we shouldn't
-      need two phases.  for example, let's say the example above was also
-      in CRLF format.  The EOL detector (which really detects *plain text*
-      with a particular EOL type) would return at most level 0 for all
-      results until the text file is reached, whereas the base64, gzip or
-      euc-jp decoders will return higher.  Once the text file is reached,
-      the EOL detector will return 0 or higher for the CRLF encoding, and
-      all other detectors will return 0 or lower; thus, we will successfully
-      proceed through CRLF decoding, or at worst prompt the user. (The only
-      external-vs-internal distinction that might make sense here is to
-      favor coding systems of the correct source type over those that
-      require conversion between external and internal; if done right, this
-      could allow the CRLF detector to return level 1 for all CRLF-encoded
-      text files, even those that look like Base-64 or similar encoding, so
-      that CRLF encoding will always get decoded without prompting, but not
-      interfere with other decoders.  On the other hand, this
-      external-vs-internal distinction may not matter at all -- with
-      automatic internal-external conversion, CRLF decoding can occur
-      before or after decoding of euc-jp, base64, iso2022, or similar,
-      without any difference in the final results.)
-
-      #### What are we trying to say?  In base64, the CRLF decoding before
-      base64 decoding is irrelevant, they will be thrown out as whitespace
-      is not significant in base64.
-
-      [sjt considers all of this to be rather bogus.  Ideas like "greater
-      certainty" and "distinctive" can and should be quantified.  The issue
-      of proper table organization should be a question of optimization.]
-
-      [sjt wonders if it might not be a good idea to use Unicode's newline
-      character as the internal representation so that (for non-Unicode
-      coding systems) we can catch EOL bugs on Unix too.]
-
-   -- There need to be two priority lists and two
-      category->coding-system lists.  Once is general, the other
-      category->langenv-specific.  The user sets the former, the langenv
-      category->the latter.  The langenv-specific entries take precedence
-      category->over the others.  This works similarly to the
-      category->category->Unicode charset priority list.
-
-   -- The simple list of coding categories per detectors is not enough.
-      Instead of coding categories, we need parameters.  For example,
-      Unicode might have separate detectors for UTF-8, UTF-7, UTF-16,
-      and perhaps UCS-4; or UTF-16/UCS-4 would be one detection type.
-      UTF-16 would have parameters such as "little-endian" and "needs BOM",
-      and possibly another one like "collapse/expand/leave alone composite
-      sequences" once we add this support.  Usually these parameters
-      correspond directly to a coding system parameter.  Different
-      likelihood values can be specified for each parameter as well as for
-      the detection type as a whole.  The user can specify particular
-      coding systems for a particular combination of detection type and
-      parameters, or can give "default parameters" associated with a
-      detection type.  In the latter case, we create a new coding system as
-      necessary that corresponds to the detected type and parameters.
-
-   -- a better means of presentation.  rather than just coming up
-      with the new file decoded according to the detected coding
-      system, allow the user to browse through the file and
-      conveniently reject it if it looks wrong; then detection
-      starts again, but with that possibility removed.  in cases where
-      certainty is low and thus more than one possibility is presented,
-      the user can browse each one and select one or reject them all.
-
-   -- fail-safe: even after the user has made a choice, if they
-      later on realize they have the wrong coding system, they can
-      go back, and we've squirreled away the original data so they
-      can start the process over.  this may be tricky.
-
-   -- using a larger buffer for detection.  we use just a small
-      piece, which can give quite random results.  we may need to
-      buffer up all the data we look through because we can't
-      necessarily rewind.  the idea is we proceed until we get a
-      result that's at least at a certain level of certainty
-      (e.g. "probable") or we reached a maximum limit of how much
-      we want to buffer.
-
-   -- dealing with interactive systems.  we might need to go ahead
-      and present the data before we've finished detection, and
-      then re-decode it, perhaps multiple times, as we get better
-      detection results.
-
-   -- Clearly some of these are more important than others.  at the
-   very least, the "better means of presentation" should be
-   implemented as soon as possible, along with a very simple means
-   of fail-safe whenever the data is readibly available, e.g. it's
-   coming from a file, which is the most common scenario.
-
---ben [at least that's what sjt thinks]
-
-*****
-
-While this is clearly something of an improvement over earlier designs,
-it doesn't deal with the most important issue: to do better than categories
-(which in the medium term is mostly going to mean "which flavor of Unicode
-is this?"), we need to look at statistical behavior rather than ruling out
-categories via presence of specific sequences.  This means the stream
-processor should
-
-    (1) keep octet distributions (octet, 2-, 3-, 4- octet sequences)
-    (2) in some kind of compressed form
-    (3) look for "skip features" (eg, characteristic behavior of leading
-        bytes for UTF-7, UTF-8, UTF-16, Mule code)
-    (4) pick up certain "simple" regexps
-    (5) provide "triggers" to determine when statistical detectors should be
-        invoked, such as octet count
-    (6) and "magic" like Unicode signatures or file(1) magic.
-
---sjt
-
-
-------------------------------------------------------------------
-                            ABOUT FORMATS
-------------------------------------------------------------------
-
-when calling make-coding-system, the name can be a cons of (format1 .
-format2), specifying that it decodes format1->format2 and encodes the other
-way.  if only one name is given, that is assumed to be format1, and the
-other is either `external' or `internal' depending on the end type.
-normally the user when decoding gives the decoding order in formats, but
-can leave off the last one, `internal', which is assumed.  a multichain
-might look like gzip|multibyte|unicode, using the coding systems named
-`gzip', `(unicode . multibyte)' and `unicode'.  the way this actually works
-is by searching for gzip->multibyte; if not found, look for gzip->external
-or gzip->internal. (In general we automatically do conversion between
-internal and external as necessary: thus gzip|crlf does the expected, and
-maps to gzip->external, external->internal, crlf->internal, which when
-fully specified would be gzip|external:external|internal:crlf|internal --
-see below.)  To forcibly fit together two converters that have explicitly
-specified and incompatible names (say you have unicode->multibyte and
-iso8859-1->ebcdic and you know that the multibyte and iso8859-1 in this
-case are compatible), you can force-cast using :, like this:
-ebcdic|iso8859-1:multibyte|unicode. (again, if you force-cast between
-internal and external formats, the conversion happens automatically.)
-
---------------------------------------------------------------------------
-ABOUT PDUMP, UNICODE, AND RUNNING XEMACS FROM A DIRECTORY WITH WEIRD CHARS
---------------------------------------------------------------------------
-
--- there's the problem that XEmacs can't be run in a directory with
-   non-ASCII/Latin-1 chars in it, since it will be doing Unicode
-   processing before we've had a chance to load the tables.  In fact,
-   even finding the tables in such a situation is problematic using
-   the normal commands.  my idea is to eventually load the stuff
-   extremely extremely early, at the same time as the pdump data gets
-   loaded.  in fact, the unicode table data (stored in an efficient
-   binary format) can even be stuck into the pdump file (which would
-   mean as a resource to the executable, for windows).  we'd need to
-   extend pdump a bit: to allow for attaching extra data to the pdump
-   file. (something like pdump_attach_extra_data (addr, length)
-   returns a number of some sort, an index into the file, which you
-   can then retrieve with pdump_load_extra_data(), which returns an
-   addr (mmap()ed or loaded), and later you pdump_unload_extra_data()
-   when finished.  we'd probably also need
-   pdump_attach_extra_data_append(), which appends data to the data
-   just written out with pdump_attach_extra_data().  this way,
-   multiple tables in memory can be written out into one contiguous
-   table. (we'd use the tar-like trick of allowing new blocks to be
-   written without going back to change the old blocks -- we just rely
-   on the end of file/end of memory.) this same mechanism could be
-   extracted out of pdump and used to handle the non-pdump situation
-   (or alternatively, we could just dump either the memory image of
-   the tables themselves or the compressed binary version).  in the
-   case of extra unicode tables not known about at compile time that
-   get loaded before dumping, we either just dump them into the image
-   (pdump and all) or extract them into the compressed binary format,
-   free the original tables, and treat them like all other tables.
-
---------------------------------------------------------------------------
-               HANDLING WRITING A FILE SAFELY, WITHOUT DATA LOSS
---------------------------------------------------------------------------
-
-      -- When writing a file, we need error detection; otherwise somebody
-      will create a Unicode file without realizing the coding system
-      of the buffer is Raw, and then lose all the non-ASCII/Latin-1
-      text when it's written out.  We need two levels
-
-      1. first, a "safe-charset" level that checks before any actual
-         encoding to see if all characters in the document can safely
-         be represented using the given coding system.  FSF has a
-         "safe-charset" property of coding systems, but it's stupid
-         because this information can be automatically derived from
-         the coding system, at least the vast majority of the time.
-         What we need is some sort of
-         alternative-coding-system-precedence-list, langenv-specific,
-         where everything on it can be checked for safe charsets and
-         then the user given a list of possibilities.  When the user
-         does "save with specified encoding", they should see the same
-         precedence list.  Again like with other precedence lists,
-         there's also a global one, and presumably all coding systems
-         not on other list get appended to the end (and perhaps not
-         checked at all when doing safe-checking?).  safe-checking
-         should work something like this: compile a list of all
-         charsets used in the buffer, along with a count of chars
-         used.  that way, "slightly unsafe" coding systems can perhaps
-         be presented at the end, which will lose only a few characters
-         and are perhaps what the users were looking for.
-
-	 [sjt sez this whole step is a crock.  If a universal coding system
-	 is unacceptable, the user had better know what he/she is doing,
-	 and explicitly specify a lossy encoding.
-	 In principle, we can simply check for characters being writable as
-	 we go along.  Eg, via an "unrepresentable character handler."  We
-         still have the buffer contents.  If we can't successfully save,
-         then ask the user what to do.  (Do we ever simply destroy previous
-         file version before completing a write?)]
-
-      2. when actually writing out, we need error checking in case an
-         individual char in a charset can't be written even though the
-         charsets are safe.  again, the user gets the choice of other
-         reasonable coding systems.
-
-         [sjt -- something is very confused, here; safe charsets should be
-         defined as those charsets all of whose characters can be encoded.]
-
-      3. same thing (error checking, list of alternatives, etc.) needs
-         to happen when reading!  all of this will be a lot of work!
-
-   
-   --ben
-
-   I don't much like Ben's scheme.  First, this isn't an issue of I/O,
-   it's a coding issue.  It can happen in many places, not just on stream
-   I/O.  Error checking should take place on all translations.  Second,
-   the two-pass algorithm should be avoided if possible.  In some cases
-   (eg, output to a tty) we won't be able to go back and change the
-   previously output data.  Third, the whole idea of having a buffer full
-   of arbitrary characters which we're going to somehow shoehorn into a
-   file based on some twit user's less than informed idea of a coding system
-   is kind of laughable from the start.  If we're going to say that a buffer
-   has a coding system, shouldn't we enforce restrictions on what you can
-   put into it?  Fourth, what's the point of having safe charsets if some
-   of the characters in them are unsafe?  Fifth, what makes you think we're
-   going to have a list of charsets?  It seems to me that there might be
-   reasons to have user-defined charsets (eg, "German" vs "French" subsets
-   of ISO 8859/15).  Sixth, the idea of having language environment determine
-   precedence doesn't seem very useful to me.  Users who are working with a
-   language that corresponds to the language environment are not going to
-   run into safe charsets problems.  It's users who are outside of their
-   usual language environment who run into trouble.  Also, the reason for
-   specifying anything other than a universal coding system is normally
-   restrictions imposed by other users or applications.  Seventh, the
-   statistical feedback isn't terribly useful.  Users rarely "want" a
-   coding system, they want their file saved in a useful way.  We could
-   add a FORCE argument to conversions for those who really want a specific
-   coding system.  But mostly, a user might want to edit out a few unsafe
-   characters.  So (up to some maximum) we should keep a list of unsafe
-   text positions, and provide a convenient function for traversing them.
-
-   --sjt
-*/
-
 #include <config.h>
 #include "lisp.h"
 
@@ -459,7 +106,7 @@ typedef struct
 static coding_system_type_entry_dynarr *the_coding_system_type_entry_dynarr;
 
 static const struct memory_description cste_description_1[] = {
-  { XD_STRUCT_PTR,  offsetof (coding_system_type_entry, meths), 1, &coding_system_methods_description },
+  { XD_BLOCK_PTR,  offsetof (coding_system_type_entry, meths), 1, &coding_system_methods_description },
   { XD_END }
 };
 
@@ -523,7 +170,7 @@ static const struct sized_memory_description detector_category_dynarr_descriptio
 static const struct memory_description struct_detector_description_1[]
 =
 {
-  { XD_STRUCT_PTR, offsetof (struct detector, cats), 1,
+  { XD_BLOCK_PTR, offsetof (struct detector, cats), 1,
       &detector_category_dynarr_description },
   { XD_END }
 };
@@ -698,13 +345,13 @@ static const struct sized_memory_description coding_system_extra_description_map
 
 static const struct memory_description coding_system_description[] =
 {
-  { XD_STRUCT_PTR,  offsetof (Lisp_Coding_System, methods), 1,
+  { XD_BLOCK_PTR,  offsetof (Lisp_Coding_System, methods), 1,
     &coding_system_methods_description },
 #define MARKED_SLOT(x) { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, x) },
 #define MARKED_SLOT_ARRAY(slot, size) \
   { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Coding_System, slot), size },
 #include "coding-system-slots.h"
-  { XD_STRUCT_ARRAY, offsetof (Lisp_Coding_System, data), 1,
+  { XD_BLOCK_ARRAY, offsetof (Lisp_Coding_System, data), 1,
     coding_system_extra_description_map },
   { XD_END }
 };
@@ -1093,8 +740,8 @@ eol_type_to_symbol (enum eol_type type)
 
 struct subsidiary_type
 {
-  Char_ASCII *extension;
-  Char_ASCII *mnemonic_ext;
+  Ascbyte *extension;
+  Ascbyte *mnemonic_ext;
   enum eol_type eol;
 };
 
@@ -1108,7 +755,7 @@ static void
 setup_eol_coding_systems (Lisp_Object codesys)
 {
   int len = XSTRING_LENGTH (XSYMBOL (XCODING_SYSTEM_NAME (codesys))->name);
-  Ibyte *codesys_name = (Ibyte *) ALLOCA (len + 7);
+  Ibyte *codesys_name = alloca_ibytes (len + 7);
   int mlen = -1;
   Ibyte *codesys_mnemonic = 0;
   Lisp_Object codesys_name_sym, sub_codesys;
@@ -1120,7 +767,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
   if (STRINGP (XCODING_SYSTEM_MNEMONIC (codesys)))
     {
       mlen = XSTRING_LENGTH (XCODING_SYSTEM_MNEMONIC (codesys));
-      codesys_mnemonic = (Ibyte *) ALLOCA (mlen + 7);
+      codesys_mnemonic = alloca_ibytes (mlen + 7);
       memcpy (codesys_mnemonic,
 	      XSTRING_DATA (XCODING_SYSTEM_MNEMONIC (codesys)), mlen);
     }
@@ -1140,14 +787,14 @@ setup_eol_coding_systems (Lisp_Object codesys)
   
   for (i = 0; i < countof (coding_subsidiary_list); i++)
     {
-      Char_ASCII *extension = coding_subsidiary_list[i].extension;
-      Char_ASCII *mnemonic_ext = coding_subsidiary_list[i].mnemonic_ext;
+      Ascbyte *extension = coding_subsidiary_list[i].extension;
+      Ascbyte *mnemonic_ext = coding_subsidiary_list[i].mnemonic_ext;
       enum eol_type eol = coding_subsidiary_list[i].eol;
 
-      qxestrcpy_c (codesys_name + len, extension);
+      qxestrcpy_ascii (codesys_name + len, extension);
       codesys_name_sym = intern_int (codesys_name);
       if (mlen != -1)
-	qxestrcpy_c (codesys_mnemonic + mlen, mnemonic_ext);
+	qxestrcpy_ascii (codesys_mnemonic + mlen, mnemonic_ext);
 
       sub_codesys = Fcopy_coding_system (codesys, codesys_name_sym);
       if (mlen != -1)
@@ -1217,7 +864,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
    */
 
 static Lisp_Object
-make_coding_system_1 (Lisp_Object name_or_existing, Char_ASCII *prefix,
+make_coding_system_1 (Lisp_Object name_or_existing, Ascbyte *prefix,
 		      Lisp_Object type, Lisp_Object description,
 		      Lisp_Object props)
 {
@@ -1384,7 +1031,7 @@ make_coding_system_1 (Lisp_Object name_or_existing, Char_ASCII *prefix,
 }
 
 Lisp_Object
-make_internal_coding_system (Lisp_Object existing, Char_ASCII *prefix,
+make_internal_coding_system (Lisp_Object existing, Ascbyte *prefix,
 			     Lisp_Object type, Lisp_Object description,
 			     Lisp_Object props)
 {
@@ -2080,8 +1727,8 @@ extern const struct sized_memory_description chain_coding_stream_description;
 extern const struct sized_memory_description undecided_coding_stream_description;
 
 static const struct memory_description coding_stream_data_description_1 []= {
-  { XD_STRUCT_PTR, chain_coding_system, 1, &chain_coding_stream_description},
-  { XD_STRUCT_PTR, undecided_coding_system, 1, &undecided_coding_stream_description},
+  { XD_BLOCK_PTR, chain_coding_system, 1, &chain_coding_stream_description},
+  { XD_BLOCK_PTR, undecided_coding_system, 1, &undecided_coding_stream_description},
   { XD_END }
 };
 
@@ -2581,49 +2228,14 @@ encode_decode_coding_region (Lisp_Object start, Lisp_Object end,
 						      for this]
 			                              ------> [BUFFER]
    */
-  /* Of course, this is just horrible.  BYTE<->CHAR should only be available
-     to I/O routines.  It should not be visible to Mule proper.
 
-     A comment on the implementation.  Hrvoje and Kyle worry about the
-     inefficiency of repeated copying among buffers that chained coding
-     systems entail.  But this may not be as time inefficient as it appears
-     in the Mule ("house rules") context.  The issue is how do you do chain
-     coding systems without copying?  In theory you could have
+  /* #### See comment
 
-     IChar external_to_raw (ExtChar *cp, State *s);
-     IChar decode_utf16 (IChar c, State *s);
-     IChar decode_crlf (ExtChar *cp, State *s);
+     EFFICIENCY OF CODING CONVERSION WITH MULTIPLE COPIES/CHAINS
 
-     typedef Ichar (*Converter[]) (Ichar, State*);
+     in text.c.
+  */
 
-     Converter utf16[2] = { &decode_utf16, &decode_crlf };
-
-     void convert (ExtChar *inbuf, IChar *outbuf, Converter cvtr)
-     {
-       int i;
-       ExtChar c;
-       State s;
-
-       while (c = external_to_raw (*inbuf++, &s))
-	 {
-	   for (i = 0; i < sizeof(cvtr)/sizeof(Converter); ++i)
-	     if (s.ready)
-	       c = (*cvtr[i]) (c, &s);
-	 }
-       if (s.ready)
-         *outbuf++ = c;
-     }
-
-     But this is a lot of function calls; what Ben is doing is basically
-     reducing this to one call per buffer-full.  The only way to avoid this
-     is to hardcode all the "interesting" coding systems, maybe using
-     inline or macros to give structure.  But this is still a huge amount
-     of work, and code.
-
-     One advantage to the call-per-char approach is that we might be able
-     to do something about the marker/extent destruction that coding
-     normally entails.
-   */
   while (1)
     {
       char tempbuf[1024]; /* some random amount */
@@ -2717,7 +2329,7 @@ struct chain_coding_stream
 
 static const struct memory_description chain_coding_system_description[] = {
   { XD_INT, offsetof (struct chain_coding_system, count) },
-  { XD_STRUCT_PTR, offsetof (struct chain_coding_system, chain),
+  { XD_BLOCK_PTR, offsetof (struct chain_coding_system, chain),
     XD_INDIRECT (0, 0), &lisp_object_description },
   { XD_LISP_OBJECT, offsetof (struct chain_coding_system,
 			      canonicalize_after_coding) },
@@ -2726,7 +2338,7 @@ static const struct memory_description chain_coding_system_description[] = {
 
 static const struct memory_description chain_coding_stream_description_1 [] = {
   { XD_INT, offsetof (struct chain_coding_stream, lstream_count) },
-  { XD_STRUCT_PTR, offsetof (struct chain_coding_stream, lstreams),
+  { XD_BLOCK_PTR, offsetof (struct chain_coding_stream, lstreams),
     XD_INDIRECT (0, 0), &lisp_object_description },
   { XD_END }
 };
@@ -2985,26 +2597,29 @@ chain_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 {
   if (EQ (key, Qchain))
     {
-      Lisp_Object tail;
       Lisp_Object *cslist;
       int count = 0;
       int i;
 
-      EXTERNAL_LIST_LOOP (tail, value)
-	{
-	  Fget_coding_system (XCAR (tail));
-	  count++;
-	}
+      {
+	EXTERNAL_LIST_LOOP_2 (elt, value)
+	  {
+	    Fget_coding_system (elt);
+	    count++;
+	  }
+      }
 
       cslist = xnew_array (Lisp_Object, count);
       XCODING_SYSTEM_CHAIN_CHAIN (codesys) = cslist;
 
       count = 0;
-      EXTERNAL_LIST_LOOP (tail, value)
-	{
-	  cslist[count] = Fget_coding_system (XCAR (tail));
-	  count++;
-	}
+      {
+	EXTERNAL_LIST_LOOP_2 (elt, value)
+	  {
+	    cslist[count] = Fget_coding_system (elt);
+	    count++;
+	  }
+      }
 
       XCODING_SYSTEM_CHAIN_COUNT (codesys) = count;
 
@@ -3469,7 +3084,7 @@ static const struct memory_description undecided_coding_system_description[] = {
 
 static const struct memory_description undecided_coding_stream_description_1 [] = {
   { XD_LISP_OBJECT, offsetof (struct undecided_coding_stream, actual) },
-  { XD_STRUCT_ARRAY, offsetof (struct undecided_coding_stream, c),
+  { XD_BLOCK_ARRAY, offsetof (struct undecided_coding_stream, c),
     1, &chain_coding_stream_description },
   { XD_END }
 };
@@ -4324,7 +3939,6 @@ previously.
   int *category_to_priority =
     alloca_array (int, coding_detector_category_count);
   int i, j;
-  Lisp_Object rest;
 
   /* First generate a list that maps coding categories to priorities. */
 
@@ -4333,14 +3947,16 @@ previously.
 
   /* Highest priority comes from the specified list. */
   i = 0;
-  EXTERNAL_LIST_LOOP (rest, list)
-    {
-      int cat = coding_category_symbol_to_id (XCAR (rest));
+  {
+    EXTERNAL_LIST_LOOP_2 (elt, list)
+      {
+	int cat = coding_category_symbol_to_id (elt);
 
-      if (category_to_priority[cat] >= 0)
-	sferror ("Duplicate coding category in list", XCAR (rest));
-      category_to_priority[cat] = i++;
-    }
+	if (category_to_priority[cat] >= 0)
+	  sferror ("Duplicate coding category in list", elt);
+	category_to_priority[cat] = i++;
+      }
+  }
 
   /* Now go through the existing categories by priority to retrieve
      the categories not yet specified and preserve their priority
@@ -4837,7 +4453,7 @@ coding_system_type_create (void)
     make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
 
   the_coding_system_type_entry_dynarr = Dynarr_new (coding_system_type_entry);
-  dump_add_root_struct_ptr (&the_coding_system_type_entry_dynarr,
+  dump_add_root_block_ptr (&the_coding_system_type_entry_dynarr,
 			    &csted_description);
 
   Vcoding_system_type_list = Qnil;
@@ -4855,7 +4471,7 @@ coding_system_type_create (void)
 		   sizeof (coding_category_by_priority));
 
   all_coding_detectors = Dynarr_new2 (detector_dynarr, struct detector);
-  dump_add_root_struct_ptr (&all_coding_detectors,
+  dump_add_root_block_ptr (&all_coding_detectors,
 			    &detector_dynarr_description);
 
   dump_add_opaque_int (&coding_system_tick);
@@ -4955,8 +4571,6 @@ reinit_vars_of_file_coding (void)
 void
 vars_of_file_coding (void)
 {
-  reinit_vars_of_file_coding ();
-
   /* We always have file-coding support */
   Fprovide (intern ("file-coding"));
 

@@ -41,22 +41,8 @@ Boston, MA 02111-1307, USA.  */
    code will not be sharable; but that's better than failing completely.  */
 #define NO_REMAP
 
-/* Define C_ALLOCA if this machine does not support a true alloca
-   and the one written in C should be used instead.
-   Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used.
-   Define neither one if an assembler-language alloca
-   in the file alloca.s should be used.  */
-#ifdef __GNUC__
-#  define alloca __builtin_alloca	/* Use the gcc builtin alloca() ... */
-#  define HAVE_ALLOCA	/* ... and be sure that no other ones are tried out. */
-#  undef C_ALLOCA
-#  define C_OPTIMIZE_SWITCH "-O2"
-#else /* not __GNUC__ */
-#  undef HAVE_ALLOCA
-#  define C_ALLOCA	/* Use the alloca() supplied in alloca.c. */
-#  define STACK_DIRECTION -1  /* The stack grows towards lower addresses. */
-#  define C_OPTIMIZE_SWITCH "-O"
+#ifndef __GNUC__
+#  define C_OPTIMIZE_SWITCH -O
 #endif /* __GNUC__ */
 
 #undef LIB_X11_LIB	/* Don't use shared libraries defined in usg5-3.h */

@@ -1,6 +1,6 @@
 /* The "lrecord" structure (header of a compound lisp object).
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -20,6 +20,8 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
+
+/* This file has been Mule-ized, Ben Wing, 10-13-04. */
 
 #ifndef INCLUDED_lrecord_h_
 #define INCLUDED_lrecord_h_
@@ -227,7 +229,7 @@ extern MODULE_API int lrecord_type_count;
 
 struct lrecord_implementation
 {
-  const char *name;
+  const Ascbyte *name;
 
   /* information for the dumper: is the object dumpable and should it 
      be dumped. */
@@ -394,7 +396,7 @@ extern int gc_in_progress;
    objects, referenced in the DEFINE_*LRECORD_*IMPLEMENTATION*() call; (b)
    descriptions of global objects to be dumped, registered by
    dump_add_root_block(); (c) descriptions of global pointers to
-   non-Lisp_Object heap objects, registered by dump_add_root_struct_ptr().
+   non-Lisp_Object heap objects, registered by dump_add_root_block_ptr().
    The descriptions need to tell pdump which elements of your structure are
    Lisp_Objects or structure pointers, plus the descriptions in turn of the
    non-Lisp_Object structures pointed to.  If these structures are you own
@@ -446,9 +448,9 @@ extern int gc_in_progress;
    does not need to be given here) and global objects, where the size is an
    argument to the call to dump_add_root_block().
    sized_memory_descriptions are used for pointers and arrays in
-   memory_descriptions and for calls to dump_add_root_struct_ptr(). (####
+   memory_descriptions and for calls to dump_add_root_block_ptr(). (####
    It is not obvious why this is so in the latter case.  Probably, calls to
-   dump_add_root_struct_ptr() should use plain memory_descriptions and have
+   dump_add_root_block_ptr() should use plain memory_descriptions and have
    the size be an argument to the call.)
 
    NOTE: Anywhere that a sized_memory_description occurs inside of a plain
@@ -497,12 +499,12 @@ extern int gc_in_progress;
      ...;
    }
 
-   You'd use XD_STRUCT_PTR, something like:
+   You'd use XD_BLOCK_PTR, something like:
 
    static const struct memory_description foo_description[] = {
      ...
      { XD_INT,		offsetof (Lisp_Foo, count) },
-     { XD_STRUCT_PTR,	offsetof (Lisp_Foo, objects),
+     { XD_BLOCK_PTR,	offsetof (Lisp_Foo, objects),
        XD_INDIRECT (0, 0), &lisp_object_description },
      ...
    };
@@ -519,7 +521,7 @@ extern int gc_in_progress;
      lisp_object_description_1
    };
 
-   Another example of XD_STRUCT_PTR:
+   Another example of XD_BLOCK_PTR:
 
    typedef struct htentry
    {
@@ -557,7 +559,7 @@ extern int gc_in_progress;
    
    const struct memory_description hash_table_description[] = {
      { XD_ELEMCOUNT,     offsetof (Lisp_Hash_Table, size) },
-     { XD_STRUCT_PTR, offsetof (Lisp_Hash_Table, hentries), XD_INDIRECT (0, 1),
+     { XD_BLOCK_PTR, offsetof (Lisp_Hash_Table, hentries), XD_INDIRECT (0, 1),
 	 &htentry_description },
      { XD_LO_LINK,    offsetof (Lisp_Hash_Table, next_weak) },
      { XD_END }
@@ -577,7 +579,7 @@ extern int gc_in_progress;
  
    const struct memory_description specifier_description[] = {
      ...
-     { XD_STRUCT_ARRAY, offset (Lisp_Specifier, data), 1,
+     { XD_BLOCK_ARRAY, offset (Lisp_Specifier, data), 1,
        specifier_extra_description_map },
      ...
      { XD_END }
@@ -627,7 +629,7 @@ extern int gc_in_progress;
   An array of Lisp objects or (equivalently) pointers to lrecords.
   The parameter (i.e. third element) is the count.  This would be declared
   as Lisp_Object foo[666].  For something declared as Lisp_Object *foo,
-  use XD_STRUCT_PTR, whose description parameter is a sized_memory_description
+  use XD_BLOCK_PTR, whose description parameter is a sized_memory_description
   consisting of only XD_LISP_OBJECT and XD_END.
 
     XD_LO_LINK
@@ -646,34 +648,38 @@ extern int gc_in_progress;
 
   Pointer to undumpable data.  Must be NULL when dumping.
 
-    XD_STRUCT_PTR
+    XD_BLOCK_PTR
 
   Pointer to block of described memory. (This is misnamed: It is NOT
   necessarily a pointer to a struct foo.) Parameters are number of
   contiguous blocks and sized_memory_description.
 
-    XD_STRUCT_ARRAY
+    XD_BLOCK_ARRAY
 
   Array of blocks of described memory.  Parameters are number of
-  structures and sized_memory_description.  This differs from XD_STRUCT_PTR
+  structures and sized_memory_description.  This differs from XD_BLOCK_PTR
   in that the parameter is declared as struct foo[666] instead of
   struct *foo.  In other words, the block of memory holding the
   structures is within the containing structure, rather than being
   elsewhere, with a pointer in the containing structure.
 
   NOTE NOTE NOTE: Be sure that you understand the difference between
-  XD_STRUCT_PTR and XD_STRUCT_ARRAY:
+  XD_BLOCK_PTR and XD_BLOCK_ARRAY:
     - struct foo bar[666], i.e. 666 inline struct foos
-        --> XD_STRUCT_ARRAY, argument 666, pointing to a description of
+        --> XD_BLOCK_ARRAY, argument 666, pointing to a description of
             struct foo
     - struct foo *bar, i.e. pointer to a block of 666 struct foos
-        --> XD_STRUCT_PTR, argument 666, pointing to a description of
+        --> XD_BLOCK_PTR, argument 666, pointing to a description of
             struct foo
     - struct foo *bar[666], i.e. 666 pointers to separate blocks of struct foos
-        --> XD_STRUCT_ARRAY, argument 666, pointing to a description of
+        --> XD_BLOCK_ARRAY, argument 666, pointing to a description of
 	    a single pointer to struct foo; the description is a single
-	    XD_STRUCT_PTR, argument 1, which in turn points to a description
+	    XD_BLOCK_PTR, argument 1, which in turn points to a description
 	    of struct foo.
+
+  NOTE also that an XD_BLOCK_PTR of 666 foos is equivalent to an
+  XD_BLOCK_PTR of 1 bar, where the description of `bar' is an
+  XD_BLOCK_ARRAY of 666 foos. 
 
     XD_OPAQUE_DATA_PTR
 
@@ -693,9 +699,9 @@ extern int gc_in_progress;
   parameter of the XD_UNION descriptor to determine if this description
   applies to the union data, and XD_INDIRECT references refer to the
   containing object and description.  Note that the description applies
-  "inline" to the union data, like XD_STRUCT_ARRAY and not XD_STRUCT_PTR.
+  "inline" to the union data, like XD_BLOCK_ARRAY and not XD_BLOCK_PTR.
   If the union data is a pointer to different types of structures, each
-  element in the memory_description should be an XD_STRUCT_PTR.  See
+  element in the memory_description should be an XD_BLOCK_PTR.  See
   unicode.c, redisplay.c and objects.c for examples of XD_UNION.
 
     XD_UNION_DYNAMIC_SIZE
@@ -705,7 +711,7 @@ extern int gc_in_progress;
   of the union constant.  That is, an object with plain XD_UNION typically
   has the union declared as `union foo' or as `void *', where an object
   with XD_UNION_DYNAMIC_SIZE typically has the union as the last element,
-  and declared as something like char foo[1].  With plain XD_UNION, the
+  and declared as something like Rawbyte foo[1].  With plain XD_UNION, the
   object is (usually) of fixed size and always contains enough space for
   the data associated with all possible union constants, and thus the union
   constant can potentially change during the lifetime of the object.  With
@@ -723,13 +729,14 @@ extern int gc_in_progress;
   associated with the currently specified (and unchangeable) union
   constant.
 
-    XD_C_STRING
+    XD_ASCII_STRING
 
-  Pointer to a C string.
+  Pointer to a C string, purely ASCII.
 
     XD_DOC_STRING
 
-  Pointer to a doc string (C string if positive, opaque value if negative)
+  Pointer to a doc string (C string in pure ASCII if positive,
+  opaque value if negative)
 
     XD_INT_RESET
 
@@ -779,12 +786,12 @@ enum memory_description_type
   XD_LISP_OBJECT,
   XD_LO_LINK,
   XD_OPAQUE_PTR,
-  XD_STRUCT_PTR,
-  XD_STRUCT_ARRAY,
+  XD_BLOCK_PTR,
+  XD_BLOCK_ARRAY,
   XD_OPAQUE_DATA_PTR,
   XD_UNION,
   XD_UNION_DYNAMIC_SIZE,
-  XD_C_STRING,
+  XD_ASCII_STRING,
   XD_DOC_STRING,
   XD_INT_RESET,
   XD_BYTECOUNT,
@@ -866,7 +873,7 @@ extern const struct sized_memory_description lisp_object_description;
 #define XD_INDIRECT_DELTA(code) ((-1 - (code)) >> 8)
 
 #define XD_DYNARR_DESC(base_type, sub_desc)				      \
-  { XD_STRUCT_PTR, offsetof (base_type, base), XD_INDIRECT(1, 0), sub_desc }, \
+  { XD_BLOCK_PTR, offsetof (base_type, base), XD_INDIRECT(1, 0), sub_desc }, \
   { XD_INT,        offsetof (base_type, cur) },				      \
   { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }	      \
 
@@ -1154,7 +1161,7 @@ and DEFINE_LRECORD_IMPLEMENTATION.
 extern const struct lrecord_implementation lrecord_##c_name;		  \
 DECLARE_INLINE_HEADER (							  \
 structtype *								  \
-error_check_##c_name (Lisp_Object obj, const char *file, int line)	  \
+error_check_##c_name (Lisp_Object obj, const Ascbyte *file, int line)	  \
 )									  \
 {									  \
   assert_at_line (RECORD_TYPEP (obj, lrecord_type_##c_name), file, line); \
@@ -1166,7 +1173,7 @@ extern Lisp_Object Q##c_name##p
 extern MODULE_API const struct lrecord_implementation lrecord_##c_name;	  \
 DECLARE_INLINE_HEADER (							  \
 structtype *								  \
-error_check_##c_name (Lisp_Object obj, const char *file, int line)	  \
+error_check_##c_name (Lisp_Object obj, const Ascbyte *file, int line)	  \
 )									  \
 {									  \
   assert_at_line (RECORD_TYPEP (obj, lrecord_type_##c_name), file, line); \
@@ -1179,7 +1186,7 @@ extern int lrecord_type_##c_name;					  \
 extern struct lrecord_implementation lrecord_##c_name;			  \
 DECLARE_INLINE_HEADER (							  \
 structtype *								  \
-error_check_##c_name (Lisp_Object obj, const char *file, int line)	  \
+error_check_##c_name (Lisp_Object obj, const Ascbyte *file, int line)	  \
 )									  \
 {									  \
   assert_at_line (RECORD_TYPEP (obj, lrecord_type_##c_name), file, line); \
@@ -1190,7 +1197,7 @@ extern Lisp_Object Q##c_name##p
 # define DECLARE_NONRECORD(c_name, type_enum, structtype)		\
 DECLARE_INLINE_HEADER (							\
 structtype *								\
-error_check_##c_name (Lisp_Object obj, const char *file, int line)	\
+error_check_##c_name (Lisp_Object obj, const Ascbyte *file, int line)	\
 )									\
 {									\
   assert_at_line (XTYPE (obj) == type_enum, file, line);		\
@@ -1205,7 +1212,7 @@ extern Lisp_Object Q##c_name##p
 
 DECLARE_INLINE_HEADER (
 Lisp_Object
-wrap_record_1 (const void *ptr, enum lrecord_type ty, const char *file,
+wrap_record_1 (const void *ptr, enum lrecord_type ty, const Ascbyte *file,
 	       int line)
 )
 {
@@ -1402,14 +1409,14 @@ void free_lcrecord (Lisp_Object rec);
    overwrite the header information. */
 
 #define copy_sized_lcrecord(dst, src, size)			\
-  memcpy ((char *) (dst) + sizeof (struct lcrecord_header),	\
-	  (char *) (src) + sizeof (struct lcrecord_header),	\
+  memcpy ((Rawbyte *) (dst) + sizeof (struct lcrecord_header),	\
+	  (Rawbyte *) (src) + sizeof (struct lcrecord_header),	\
 	  (size) - sizeof (struct lcrecord_header))
 
 #define copy_lcrecord(dst, src) copy_sized_lcrecord (dst, src, sizeof (*(dst)))
 
 #define zero_sized_lcrecord(lcr, size)				\
-   memset ((char *) (lcr) + sizeof (struct lcrecord_header), 0,	\
+   memset ((Rawbyte *) (lcr) + sizeof (struct lcrecord_header), 0,	\
 	   (size) - sizeof (struct lcrecord_header))
 
 #define zero_lcrecord(lcr) zero_sized_lcrecord (lcr, sizeof (*(lcr)))
@@ -1439,13 +1446,26 @@ lisp_object_size (Lisp_Object o)
 /*		                 Dumping                		*/
 /************************************************************************/
 
-/* dump_add_root_struct_ptr (&var, &desc) dumps the structure pointed to by
+/* dump_add_root_block_ptr (&var, &desc) dumps the structure pointed to by
    `var'.  This is for a single relocatable pointer located in the data
-   segment (i.e. the block pointed to is in the heap). */
+   segment (i.e. the block pointed to is in the heap).
+
+   If the structure pointed to is not a `struct' but an array, you should
+   set the size field of the sized_memory_description to 0, and use
+   XD_BLOCK_ARRAY in the inner memory_description.
+
+   NOTE that a "root struct pointer" could also be described using
+   dump_add_root_block(), with SIZE == sizeof (void *), and a description
+   containing a single XD_BLOCK_PTR entry, offset 0, size 1, with a
+   structure description the same as the value passed to
+   dump_add_root_block_ptr().  That would require an extra level of
+   description, though, as compared to using dump_add_root_block_ptr(),
+   and thus this function is generally more convenient.
+    */
 #ifdef PDUMP
-void dump_add_root_struct_ptr (void *, const struct sized_memory_description *);
+void dump_add_root_block_ptr (void *, const struct sized_memory_description *);
 #else
-#define dump_add_root_struct_ptr(varaddr,descaddr) DO_NOTHING
+#define dump_add_root_block_ptr(varaddr, descaddr) DO_NOTHING
 #endif
 
 /* dump_add_opaque (&var, size) dumps the opaque static structure `var'.
@@ -1465,7 +1485,7 @@ void dump_add_root_struct_ptr (void *, const struct sized_memory_description *);
 void dump_add_root_block (const void *ptraddress, Bytecount size,
 			  const struct memory_description *desc);
 #else
-#define dump_add_root_block(ptraddress,desc) DO_NOTHING
+#define dump_add_root_block(ptraddress, size, desc) DO_NOTHING
 #endif
 
 /* Call dump_add_opaque_int (&int_var) to dump `int_var', of type `int'. */
@@ -1512,8 +1532,8 @@ extern MODULE_API int initialized;
 
 #ifdef PDUMP
 #include "dumper.h"
-#define DUMPEDP(adr) ((((char *) (adr)) < pdump_end) && \
-                      (((char *) (adr)) >= pdump_start))
+#define DUMPEDP(adr) ((((Rawbyte *) (adr)) < pdump_end) && \
+                      (((Rawbyte *) (adr)) >= pdump_start))
 #else
 #define DUMPEDP(adr) 0
 #endif
@@ -1534,9 +1554,15 @@ EMACS_INT lispdesc_indirect_count_1 (EMACS_INT code,
 				     const void *idata);
 const struct sized_memory_description *lispdesc_indirect_description_1
  (const void *obj, const struct sized_memory_description *sdesc);
-Bytecount lispdesc_structure_size (const void *obj,
-				   const struct sized_memory_description *
-				   sdesc);
+Bytecount lispdesc_block_size_1 (const void *obj, Bytecount size,
+			         const struct memory_description *desc);
+
+DECLARE_INLINE_HEADER (
+Bytecount lispdesc_block_size (const void *obj,
+			       const struct sized_memory_description *sdesc))
+{
+  return lispdesc_block_size_1 (obj, sdesc->size, sdesc->description);
+}
 
 DECLARE_INLINE_HEADER (
 EMACS_INT

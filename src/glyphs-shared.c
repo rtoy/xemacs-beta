@@ -190,14 +190,14 @@ static int NextInt (FILE *fstream)
  * like the Xlib routine XReadBitmapfile as possible.
  */
 static int
-read_bitmap_data (FILE *fstream, int *width, int *height, UChar_Binary **datap,
+read_bitmap_data (FILE *fstream, int *width, int *height, Binbyte **datap,
 		  int *x_hot, int *y_hot)
 {
-    UChar_Binary *data = NULL;		/* working variable */
-    Char_ASCII line[MAX_SIZE];		/* input line from file */
+    Binbyte *data = NULL;		/* working variable */
+    Ascbyte line[MAX_SIZE];		/* input line from file */
     int size;				/* number of bytes of data */
-    Char_ASCII name_and_type[MAX_SIZE];	/* an input line */
-    Char_ASCII *type;			/* for parsing */
+    Ascbyte name_and_type[MAX_SIZE];	/* an input line */
+    Ascbyte *type;			/* for parsing */
     int value;				/* from an input line */
     int version10p;			/* boolean, old format */
     int padding;			/* to handle alignment */
@@ -270,12 +270,12 @@ read_bitmap_data (FILE *fstream, int *width, int *height, UChar_Binary **datap,
 	bytes_per_line = (ww+7)/8 + padding;
 
 	size = bytes_per_line * hh;
-	data = (UChar_Binary *) Xmalloc ((unsigned int) size);
+	data = (Binbyte *) Xmalloc ((unsigned int) size);
 	if (!data)
 	  RETURN (BitmapNoMemory);
 
 	if (version10p) {
-	    UChar_Binary *ptr;
+	    Binbyte *ptr;
 	    int bytes;
 
 	    for (bytes=0, ptr=data; bytes<size; (bytes += 2)) {
@@ -286,7 +286,7 @@ read_bitmap_data (FILE *fstream, int *width, int *height, UChar_Binary **datap,
 		  *(ptr++) = value >> 8;
 	    }
 	} else {
-	    UChar_Binary *ptr;
+	    Binbyte *ptr;
 	    int bytes;
 
 	    for (bytes=0, ptr=data; bytes<size; bytes++, ptr++) {
@@ -318,7 +318,7 @@ read_bitmap_data_from_file (Lisp_Object filename,
 			    /* Remaining args are RETURNED */
 			    int *width,
 			    int *height,
-			    UChar_Binary **datap,
+			    Binbyte **datap,
 			    int *x_hot, int *y_hot)
 {
   FILE *fstream;

@@ -92,8 +92,6 @@ Boston, MA 02111-1307, USA.  */
  */
 #undef const
 
-#define HAVE_GETWD
-
 /*
  * <pwd.h> already declares getpwuid, and with a uid_t argument in ANSI C
  * mode.  Define this so xrdb.c will compile

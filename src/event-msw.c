@@ -2065,7 +2065,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
       else if (!DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system))
 	{
 	  DWORD len = DdeGetData (hdata, NULL, 0, 0);
-	  LPBYTE extcmd = (LPBYTE) ALLOCA (len + 1);
+	  Extbyte *extcmd = alloca_extbytes (len + 1);
 	  Ibyte *cmd;
 	  Ibyte *end;
 	  struct gcpro gcpro1, gcpro2;
@@ -2074,7 +2074,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 	  Lisp_Object frmcons, devcons, concons;
 	  Lisp_Event *event = XEVENT (emacs_event);
 
-	  DdeGetData (hdata, extcmd, len, 0);
+	  DdeGetData (hdata, (LPBYTE) extcmd, len, 0);
 	  DdeFreeDataHandle (hdata);
 
 	  TO_INTERNAL_FORMAT (DATA, (extcmd, len),
@@ -2085,7 +2085,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 	   * treat like a file drop */
 	  if (*cmd == '[')
 	    cmd++;
-	  if (qxestrncasecmp_c (cmd, MSWINDOWS_DDE_ITEM_OPEN,
+	  if (qxestrncasecmp_ascii (cmd, MSWINDOWS_DDE_ITEM_OPEN,
 				strlen (MSWINDOWS_DDE_ITEM_OPEN)))
 	    return DDE_FNOTPROCESSED;
 	  cmd += strlen (MSWINDOWS_DDE_ITEM_OPEN);
@@ -2946,7 +2946,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	 if one wants to exercise fingers playing chords on the mouse,
 	 he is allowed to do that! */
       mswindows_enqueue_mouse_button_event (hwnd, message_,
-					    MAKEPOINTS (lParam),
+					    XE_MAKEPOINTS (lParam),
 					    wParam &~ MK_MBUTTON,
 					    GetMessageTime());
       break;
@@ -2966,7 +2966,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  msframe->button2_is_down = 0;
 	  msframe->ignore_next_rbutton_up = 1;
 	  mswindows_enqueue_mouse_button_event (hwnd, WM_MBUTTONUP,
-						MAKEPOINTS (lParam),
+						XE_MAKEPOINTS (lParam),
 						wParam
 						&~ (MK_LBUTTON | MK_MBUTTON
 						    | MK_RBUTTON),
@@ -2978,12 +2978,12 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	    {
 	      msframe->button2_need_rbutton = 0;
 	      mswindows_enqueue_mouse_button_event (hwnd, WM_LBUTTONDOWN,
-						    MAKEPOINTS (lParam),
+						    XE_MAKEPOINTS (lParam),
 						    wParam &~ MK_LBUTTON,
 						    GetMessageTime());
 	    }
 	  mswindows_enqueue_mouse_button_event (hwnd, WM_LBUTTONUP,
-						MAKEPOINTS (lParam),
+						XE_MAKEPOINTS (lParam),
 						wParam &~ MK_LBUTTON,
 						GetMessageTime());
 	}
@@ -3004,7 +3004,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  msframe->button2_is_down = 0;
 	  msframe->ignore_next_lbutton_up = 1;
 	  mswindows_enqueue_mouse_button_event (hwnd, WM_MBUTTONUP,
-						MAKEPOINTS (lParam),
+						XE_MAKEPOINTS (lParam),
 						wParam
 						&~ (MK_LBUTTON | MK_MBUTTON
 						    | MK_RBUTTON),
@@ -3016,12 +3016,12 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	    {
 	      msframe->button2_need_lbutton = 0;
 	      mswindows_enqueue_mouse_button_event (hwnd, WM_RBUTTONDOWN,
-						    MAKEPOINTS (lParam),
+						    XE_MAKEPOINTS (lParam),
 						    wParam &~ MK_RBUTTON,
 						    GetMessageTime());
 	    }
 	  mswindows_enqueue_mouse_button_event (hwnd, WM_RBUTTONUP,
-						MAKEPOINTS (lParam),
+						XE_MAKEPOINTS (lParam),
 						wParam &~ MK_RBUTTON,
 						GetMessageTime());
 	}
@@ -3036,10 +3036,10 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  msframe->button2_need_lbutton = 0;
 	  msframe->button2_need_rbutton = 0;
 	  if (mswindows_button2_near_enough (msframe->last_click_point,
-					     MAKEPOINTS (lParam)))
+					     XE_MAKEPOINTS (lParam)))
 	    {
 	      mswindows_enqueue_mouse_button_event (hwnd, WM_MBUTTONDOWN,
-						    MAKEPOINTS (lParam),
+						    XE_MAKEPOINTS (lParam),
 						    wParam
 						    &~ (MK_LBUTTON | MK_MBUTTON
 							| MK_RBUTTON),
@@ -3054,7 +3054,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 						    &~ MK_RBUTTON,
 						    msframe->last_click_time);
 	      mswindows_enqueue_mouse_button_event (hwnd, WM_LBUTTONDOWN,
-						    MAKEPOINTS (lParam),
+						    XE_MAKEPOINTS (lParam),
 						    wParam &~ MK_LBUTTON,
 						    GetMessageTime());
 	    }
@@ -3063,7 +3063,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	{
 	  mswindows_set_chord_timer (hwnd);
 	  msframe->button2_need_rbutton = 1;
-	  msframe->last_click_point = MAKEPOINTS (lParam);
+	  msframe->last_click_point = XE_MAKEPOINTS (lParam);
 	  msframe->last_click_mods = wParam;
 	}
       msframe->last_click_time = GetMessageTime();
@@ -3078,10 +3078,10 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  msframe->button2_need_lbutton = 0;
 	  msframe->button2_need_rbutton = 0;
 	  if (mswindows_button2_near_enough (msframe->last_click_point,
-					     MAKEPOINTS (lParam)))
+					     XE_MAKEPOINTS (lParam)))
 	    {
 	      mswindows_enqueue_mouse_button_event (hwnd, WM_MBUTTONDOWN,
-						    MAKEPOINTS (lParam),
+						    XE_MAKEPOINTS (lParam),
 						    wParam
 						    &~ (MK_LBUTTON | MK_MBUTTON
 							| MK_RBUTTON),
@@ -3096,7 +3096,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 						    &~ MK_LBUTTON,
 						    msframe->last_click_time);
 	      mswindows_enqueue_mouse_button_event (hwnd, WM_RBUTTONDOWN,
-						    MAKEPOINTS (lParam),
+						    XE_MAKEPOINTS (lParam),
 						    wParam &~ MK_RBUTTON,
 						    GetMessageTime());
 	    }
@@ -3105,7 +3105,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	{
 	  mswindows_set_chord_timer (hwnd);
 	  msframe->button2_need_lbutton = 1;
-	  msframe->last_click_point = MAKEPOINTS (lParam);
+	  msframe->last_click_point = XE_MAKEPOINTS (lParam);
 	  msframe->last_click_mods = wParam;
 	}
       msframe->last_click_time = GetMessageTime();
@@ -3151,7 +3151,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	     as if timer has expired. This improves drag-select feedback */
 	  if ((msframe->button2_need_lbutton || msframe->button2_need_rbutton)
 	      && !mswindows_button2_near_enough (msframe->last_click_point,
-						 MAKEPOINTS (lParam)))
+						 XE_MAKEPOINTS (lParam)))
 	    {
 	      KillTimer (hwnd, BUTTON_2_TIMER_ID);
 	      qxeSendMessage (hwnd, WM_TIMER, BUTTON_2_TIMER_ID, 0);
@@ -3163,8 +3163,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  XSET_EVENT_CHANNEL (emacs_event,  mswindows_find_frame(hwnd));
 	  XSET_EVENT_TIMESTAMP (emacs_event, GetMessageTime());
 	  XSET_EVENT_TYPE (emacs_event, pointer_motion_event);
-	  XSET_EVENT_MOTION_X (emacs_event,MAKEPOINTS (lParam).x);
-	  XSET_EVENT_MOTION_Y (emacs_event,MAKEPOINTS (lParam).y);
+	  XSET_EVENT_MOTION_X (emacs_event, XE_MAKEPOINTS (lParam).x);
+	  XSET_EVENT_MOTION_Y (emacs_event, XE_MAKEPOINTS (lParam).y);
 	  XSET_EVENT_MOTION_MODIFIERS (emacs_event,
                                 mswindows_modifier_state (NULL, wParam, 0));
 
@@ -3558,9 +3558,9 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
            displayed */
 	if (!mswindows_handle_mousewheel_event (mswindows_find_frame (hwnd),
 					       keys, delta,
-					       MAKEPOINTS (lParam)))
+					       XE_MAKEPOINTS (lParam)))
           mswindows_enqueue_mouse_button_event (hwnd, message_,
-                                                MAKEPOINTS (lParam),
+                                                XE_MAKEPOINTS (lParam),
                                                 wParam,
                                                 GetMessageTime());
         /* We are not in a modal loop so no pumping is necessary. */
@@ -3716,7 +3716,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	     * 3.10 of rfc1738 because they're missing the //<host>/ part and
 	     * because they may contain reserved characters. But that's OK -
 	     * they just need to be good enough to keep dragdrop.el happy. */
-	    fname_ext = (Extbyte *) ALLOCA ((len + 1) * XETCHAR_SIZE);
+	    fname_ext = alloca_extbytes ((len + 1) * XETCHAR_SIZE);
 	    qxeDragQueryFile ((HDROP) wParam, i, fname_ext, len + 1);
 
 	    TO_INTERNAL_FORMAT (DATA, (fname_ext, len * XETCHAR_SIZE),
@@ -3725,7 +3725,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
 	    /* May be a shell link aka "shortcut" - replace fname if so */
 #if !defined (NO_CYGWIN_COM_SUPPORT)
-	    if (!qxestrcasecmp_c (fname + fnamelen - 4, ".LNK"))
+	    if (!qxestrcasecmp_ascii (fname + fnamelen - 4, ".LNK"))
 	      {
 		/* ####
 		   
@@ -3771,14 +3771,13 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 					  NULL,
 					  CLSCTX_INPROC_SERVER,
 					  XECOMID (IID_IShellLinkW),
-					  (void **) &psl) == S_OK)
+					  &VOIDP_CAST (psl)) == S_OK)
 		      {
 			IPersistFile *ppf;
 
 			if (XECOMCALL2 (psl, QueryInterface,
 					XECOMID (IID_IPersistFile),
-					(void **) &ppf) ==
-			    S_OK)
+					&VOIDP_CAST (ppf)) == S_OK)
 			  {
 			    Extbyte *fname_unicode;
 			    WIN32_FIND_DATAW wfd;
@@ -3832,14 +3831,13 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 					  NULL,
 					  CLSCTX_INPROC_SERVER,
 					  XECOMID (IID_IShellLinkA),
-					  (void **) &psl) == S_OK)
+					  &VOIDP_CAST (psl)) == S_OK)
 		      {
 			IPersistFile *ppf;
 
 			if (XECOMCALL2 (psl, QueryInterface,
 					XECOMID (IID_IPersistFile),
-					(void **) &ppf) ==
-			    S_OK)
+					&VOIDP_CAST (ppf)) == S_OK)
 			  {
 			    Extbyte *fname_unicode;
 			    WIN32_FIND_DATAA wfd;
@@ -3916,7 +3914,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
             ImmGetCompositionStringW is supported even on Windows 9x, and
             allows us to handle multiple languages. */
          len = ImmGetCompositionStringW (imc, GCS_RESULTSTR, NULL, 0);
-	 result = alloca_array (Extbyte, len);
+	 result = alloca_extbytes (len);
          ImmGetCompositionStringW (imc, GCS_RESULTSTR, (WCHAR *) result, len);
          ImmReleaseContext (hwnd, imc);
 
@@ -5180,8 +5178,6 @@ reinit_vars_of_event_mswindows (void)
 void
 vars_of_event_mswindows (void)
 {
-  reinit_vars_of_event_mswindows ();
-
   mswindows_s_dispatch_event_queue = Qnil;
   staticpro (&mswindows_s_dispatch_event_queue);
   mswindows_s_dispatch_event_queue_tail = Qnil;

@@ -480,7 +480,7 @@ static const struct sized_memory_description			\
   defsymbol_nodump (&ty##_coding_system_methods->predicate_symbol,	\
                     pred_sym);						\
   add_entry_to_coding_system_type_list (ty##_coding_system_methods);	\
-  dump_add_root_struct_ptr (&ty##_coding_system_methods,		\
+  dump_add_root_block_ptr (&ty##_coding_system_methods,		\
                             &coding_system_methods_description);	\
 } while (0)
 
@@ -1046,7 +1046,7 @@ Lisp_Object detect_coding_stream (Lisp_Object stream);
 Ichar decode_big5_char (int o1, int o2);
 void add_entry_to_coding_system_type_list (struct coding_system_methods *m);
 Lisp_Object make_internal_coding_system (Lisp_Object existing,
-					 Char_ASCII *prefix,
+					 Ascbyte *prefix,
 					 Lisp_Object type,
 					 Lisp_Object description,
 					 Lisp_Object props);

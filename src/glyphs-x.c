@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001, 2002, 2003 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1999, 2000, 2002 Andy Piper
 
@@ -163,7 +163,7 @@ void emacs_Xt_enqueue_focus_event (Widget wants_it, Lisp_Object frame,
 /************************************************************************/
 static XImage *
 convert_EImage_to_XImage (Lisp_Object device, int width, int height,
-			  UChar_Binary *pic, unsigned long **pixtbl,
+			  Binbyte *pic, unsigned long **pixtbl,
 			  int *npixels)
 {
   Display *dpy;
@@ -172,7 +172,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
   XImage *outimg;
   int depth, bitmap_pad, bits_per_pixel, byte_cnt, i, j;
   int rd,gr,bl,q;
-  UChar_Binary *data, *ip, *dp;
+  Binbyte *data, *ip, *dp;
   quant_table *qtable = 0;
   union {
     UINT_32_BIT val;
@@ -211,7 +211,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
   bits_per_pixel = outimg->bits_per_pixel;
   byte_cnt = bits_per_pixel >> 3;
 
-  data = (UChar_Binary *) xmalloc (outimg->bytes_per_line * height);
+  data = xnew_binbytes (outimg->bytes_per_line * height);
   if (!data)
     {
       XDestroyImage (outimg);
@@ -843,7 +843,7 @@ static void
 x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 				   int width, int height,
 				   int slices,
-				   UChar_Binary *eimage,
+				   Binbyte *eimage,
 				   int dest_mask,
 				   Lisp_Object instantiator,
 				   Lisp_Object UNUSED (domain))
@@ -893,7 +893,7 @@ x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 
 static Pixmap
 pixmap_from_xbm_inline (Lisp_Object device, int width, int height,
-			Char_Binary *bits)
+			CBinbyte *bits)
 {
   return XCreatePixmapFromBitmapData (DEVICE_X_DISPLAY (XDEVICE (device)),
 				      XtWindow (DEVICE_XT_APP_SHELL
@@ -908,7 +908,7 @@ pixmap_from_xbm_inline (Lisp_Object device, int width, int height,
 static void
 init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 				     int width, int height,
-				     Char_Binary *bits,
+				     CBinbyte *bits,
 				     Lisp_Object instantiator,
 				     Lisp_Object pointer_fg,
 				     Lisp_Object pointer_bg,
@@ -995,7 +995,7 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 	IMAGE_INSTANCE_PIXMAP_BG (ii) = background;
 	IMAGE_INSTANCE_X_PIXMAP (ii) =
 	  XCreatePixmapFromBitmapData (dpy, draw,
-				       (Char_Binary *) bits, width, height,
+				       (CBinbyte *) bits, width, height,
 				       fg, bg, d);
 	IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = d;
       }
@@ -1010,7 +1010,7 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 
 	source =
 	  XCreatePixmapFromBitmapData (dpy, draw,
-				       (Char_Binary *) bits, width, height,
+				       (CBinbyte *) bits, width, height,
 				       1, 0, 1);
 
 	if (NILP (foreground))
@@ -1045,7 +1045,7 @@ static void
 xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 		   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		   int dest_mask, int width, int height,
-		   Char_Binary *bits)
+		   CBinbyte *bits)
 {
   Lisp_Object mask_data = find_keyword_in_vector (instantiator, Q_mask_data);
   Lisp_Object mask_file = find_keyword_in_vector (instantiator, Q_mask_file);
@@ -1054,7 +1054,7 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 
   if (!NILP (mask_data))
     {
-      Char_Binary *ext_data;
+      CBinbyte *ext_data;
 
       LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (mask_data))), ext_data,
 			       Qbinary);
@@ -1077,7 +1077,7 @@ x_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		   int dest_mask, Lisp_Object UNUSED (domain))
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-  Char_Binary *ext_data;
+  CBinbyte *ext_data;
 
   assert (!NILP (data));
 
@@ -1562,9 +1562,9 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
-  UChar_Binary *p, *bits, *bp;
+  Binbyte *p, *bits, *bp;
   const CIbyte * volatile emsg = 0;
-  const UChar_Binary * volatile dstring;
+  const Binbyte * volatile dstring;
 
   assert (!NILP (data));
 
@@ -1572,7 +1572,7 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		      C_STRING_ALLOCA, dstring,
 		      Qbinary);
 
-  if ((p = (UChar_Binary *) strchr ((char *) dstring, ':')))
+  if ((p = (Binbyte *) strchr ((char *) dstring, ':')))
     {
       dstring = p + 1;
     }
@@ -1600,11 +1600,11 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   if (emsg)
     signal_image_error_2 (emsg, data, Qimage);
 
-  bp = bits = (UChar_Binary *) ALLOCA (PIXELS / 8);
+  bp = bits = alloca_binbytes (PIXELS / 8);
 
   /* the compface library exports char F[], which uses a single byte per
      pixel to represent a 48x48 bitmap.  Yuck. */
-  for (i = 0, p = (UChar_Binary *) F; i < (PIXELS / 8); ++i)
+  for (i = 0, p = (Binbyte *) F; i < (PIXELS / 8); ++i)
     {
       int n, b;
       /* reverse the bit order of each byte... */
@@ -1612,11 +1612,11 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	{
 	  n |= ((*p++) << b);
 	}
-      *bp++ = (UChar_Binary) n;
+      *bp++ = (Binbyte) n;
     }
 
   xbm_instantiate_1 (image_instance, instantiator, pointer_fg,
-		     pointer_bg, dest_mask, 48, 48, (Char_Binary *) bits);
+		     pointer_bg, dest_mask, 48, 48, (CBinbyte *) bits);
 }
 
 #endif /* HAVE_XFACE */

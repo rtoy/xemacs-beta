@@ -743,8 +743,6 @@ reinit_vars_of_scrollbar_x (void)
 void
 vars_of_scrollbar_x (void)
 {
-  reinit_vars_of_scrollbar_x ();
-
 #if defined (LWLIB_SCROLLBARS_LUCID)
   Fprovide (intern ("lucid-scrollbars"));
 #elif defined (LWLIB_SCROLLBARS_MOTIF)

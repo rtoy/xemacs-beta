@@ -1,7 +1,7 @@
 /* Portable data dumper for XEmacs.
    Copyright (C) 1999-2000 Olivier Galibert
    Copyright (C) 2001 Martin Buchholz
-   Copyright (C) 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,7 +22,17 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* !!#### Not yet Mule-ized */
+/* This file has been Mule-ized, Ben Wing, 10-10-04. */
+
+/* #### Put in much more assertions.  Whenever we store fixups in the
+   process or writing out data, make sure the fixups (offsets) point to the
+   beginning of an object, i.e. are registered.  Same whenever we read in
+   -- verify offsets as registered, and when compute a fixup, verify the
+   pointer is pointing within the pdump area.  registered and check within
+   pdump area.  For specific types of pointers (e.g. to Lisp_Objects),
+   check if they're pointing to the right kinds of types.  It should be
+   possible to check that a putative Lisp_Object is really a Lisp_Object
+   since it will follow a strict format in its header. */
 
 #include <config.h>
 #include "lisp.h"
@@ -45,7 +55,7 @@ Boston, MA 02111-1307, USA.  */
 
 typedef struct
 {
-  const void *varaddress;
+  const void *blockaddr;
   Bytecount size;
   const struct memory_description *desc;
 } pdump_root_block;
@@ -59,12 +69,12 @@ typedef struct
 {
   void **ptraddress;
   const struct sized_memory_description *desc;
-} pdump_root_struct_ptr;
+} pdump_root_block_ptr;
 
 typedef struct
 {
-  Dynarr_declare (pdump_root_struct_ptr);
-} pdump_root_struct_ptr_dynarr;
+  Dynarr_declare (pdump_root_block_ptr);
+} pdump_root_block_ptr_dynarr;
 
 typedef struct
 {
@@ -74,23 +84,24 @@ typedef struct
 
 typedef struct
 {
-  char **address; /* char * for ease of doing relocation */
-  char * value;
+  Rawbyte **address; /* Rawbyte * for ease of doing relocation */
+  Rawbyte * value;
 } pdump_static_pointer;
 
 static pdump_root_block_dynarr *pdump_root_blocks;
-static pdump_root_struct_ptr_dynarr *pdump_root_struct_ptrs;
+static pdump_root_block_ptr_dynarr *pdump_root_block_ptrs;
 static Lisp_Object_ptr_dynarr *pdump_root_lisp_objects;
 static Lisp_Object_ptr_dynarr *pdump_weak_object_chains;
 
-/* Mark SIZE bytes at non-heap address VARADDRESS for dumping, described
-   by DESC. */
+/* Mark SIZE bytes at non-heap address BLOCKADDR for dumping, described
+   by DESC.  Called by outside callers during XEmacs initialization.  */
+
 void
-dump_add_root_block (const void *varaddress, Bytecount size,
+dump_add_root_block (const void *blockaddr, Bytecount size,
 		     const struct memory_description *desc)
 {
   pdump_root_block info;
-  info.varaddress = varaddress;
+  info.blockaddr = blockaddr;
   info.size = size;
   info.desc = desc;
   if (pdump_root_blocks == NULL)
@@ -98,23 +109,25 @@ dump_add_root_block (const void *varaddress, Bytecount size,
   Dynarr_add (pdump_root_blocks, info);
 }
 
-/* Mark the struct described by DESC and pointed to by the pointer at
-   non-heap address VARADDRESS for dumping.
-   All the objects reachable from this pointer will also be dumped. */
+/* Mark the block described by DESC and pointed to by the pointer at
+   non-heap address PTRADDRESS for dumping.
+   All the objects reachable from this pointer will also be dumped.
+   Called by outside callers during XEmacs initialization. */
 void
-dump_add_root_struct_ptr (void *ptraddress,
-			  const struct sized_memory_description *desc)
+dump_add_root_block_ptr (void *ptraddress,
+			 const struct sized_memory_description *desc)
 {
-  pdump_root_struct_ptr info;
+  pdump_root_block_ptr info;
   info.ptraddress = (void **) ptraddress;
   info.desc = desc;
-  if (pdump_root_struct_ptrs == NULL)
-    pdump_root_struct_ptrs = Dynarr_new (pdump_root_struct_ptr);
-  Dynarr_add (pdump_root_struct_ptrs, info);
+  if (pdump_root_block_ptrs == NULL)
+    pdump_root_block_ptrs = Dynarr_new (pdump_root_block_ptr);
+  Dynarr_add (pdump_root_block_ptrs, info);
 }
 
 /* Mark the Lisp_Object at non-heap address VARADDRESS for dumping.
-   All the objects reachable from this var will also be dumped. */
+   All the objects reachable from this var will also be dumped.
+   Called by outside callers during XEmacs initialization.  */
 void
 dump_add_root_lisp_object (Lisp_Object *varaddress)
 {
@@ -123,7 +136,8 @@ dump_add_root_lisp_object (Lisp_Object *varaddress)
   Dynarr_add (pdump_root_lisp_objects, varaddress);
 }
 
-/* Mark the list pointed to by the Lisp_Object at VARADDRESS for dumping. */
+/* Mark the list pointed to by the Lisp_Object at VARADDRESS for dumping.
+   Called by outside callers during XEmacs initialization.  */
 void
 dump_add_weak_object_chain (Lisp_Object *varaddress)
 {
@@ -153,10 +167,10 @@ retry_fwrite (&object, sizeof (object), 1, pdump_out);
 } while (0)
 
 #define PDUMP_READ(ptr, type) \
-(((type *) (ptr = (char*) (((type *) ptr) + 1)))[-1])
+(((type *) (ptr = (Rawbyte *) (((type *) ptr) + 1)))[-1])
 
 #define PDUMP_READ_ALIGNED(ptr, type) \
-((ptr = (char *) ALIGN_PTR (ptr, type)), PDUMP_READ (ptr, type))
+((ptr = (Rawbyte *) ALIGN_PTR (ptr, type)), PDUMP_READ (ptr, type))
 
 
 
@@ -166,13 +180,13 @@ typedef struct
   int count;
 } pdump_reloc_table;
 
-static char *pdump_rt_list = 0;
+static Rawbyte *pdump_rt_list = 0;
 
 void
 pdump_objects_unmark (void)
 {
   int i;
-  char *p = pdump_rt_list;
+  Rawbyte *p = pdump_rt_list;
   if (p)
     for (;;)
       {
@@ -196,10 +210,10 @@ pdump_objects_unmark (void)
 /* The structure of the dump file looks like this:
  0		- header
 		- dumped objects
- stab_offset	- nb_root_struct_ptrs*struct(void *, adr)
-		  for global pointers to structures
+ stab_offset	- nb_root_block_ptrs*struct(void *, adr)
+		  for global pointers to heap blocks
 		- nb_root_blocks*struct(void *, size, info) for global
-		  objects to restore
+		  data-segment blocks to restore
 		- relocation table
 		- root lisp object address/value couples with the count
 		  preceding the list
@@ -215,12 +229,12 @@ typedef struct
   unsigned int id;
   EMACS_UINT stab_offset;
   EMACS_UINT reloc_address;
-  int nb_root_struct_ptrs;
+  int nb_root_block_ptrs;
   int nb_root_blocks;
 } pdump_header;
 
-char *pdump_start;
-char *pdump_end;
+Rawbyte *pdump_start;
+Rawbyte *pdump_end;
 static Bytecount pdump_length;
 
 #ifdef WIN32_NATIVE
@@ -246,38 +260,87 @@ pdump_size_to_align (Bytecount size)
   return pdump_align_table[size % countof (pdump_align_table)];
 }
 
-typedef struct pdump_entry_list_elt
+/************************************************************************/
+/*                     Registering memory blocks                        */
+/************************************************************************/
+
+/* "Registering" or recording a heap memory block (which will need to be
+   written out, reloaded and relocated, and to which there may be pointers
+   from other heap blocks or from the data segment) happens both in a list
+   and in a hash table.  There is a single hash table covering all
+   registered blocks, but different lists for different kinds of blocks.
+   There is one list for "opaque data" (stuff identified as
+   XD_OPAQUE_DATA_PTR, XD_ASCII_STRING, XD_DOC_STRING), one list for each
+   type of Lisp object, and one list for each different memory descriptor.
+   This lets similar-sized and aligned objects be grouped together when
+   they are written out, to save space.
+
+   pdump_block_list is a list keeping track of registered memory blocks.
+   pdump_block_list_elt is a single entry through the list, and the list is
+   threaded through the NEXT pointer.  The information in this list
+   associated with a particular block of memory is
+
+   -- address of the beginning
+   -- number of elements at that address
+   -- size of each element
+   -- offset to this block in the dumped data
+
+   pdump_desc_list is a list keeping track of the various descriptions
+   that we've seen.  The primary purpose of this is so that memory blocks
+   can be grouped depending on the particular memory description
+   appropriate for them.  The format of the list is different from
+   pdump_block_list -- a single array is used. (#### Dynarr should have
+   been used!!!).  The information in this list associated with a
+   description is
+
+   -- pointer to the description
+   -- a pdump_block_list of blocks using that description
+
+   Functions for working with lists of memory blocks:
+
+   -- Add a memory block to a list using pdump_add_block()
+
+   -- Get a memory block from a pointer to its beginning using
+      pdump_get_block().  This uses the hash table, which lists everything.
+
+   -- Return the memory-block list (pdump_block_list) associated with a
+      descriptor, using pdump_get_block_list().  If no entry found in the
+      pdump_desc_list, add a new one.
+
+*/ 
+
+typedef struct pdump_block_list_elt
 {
-  struct pdump_entry_list_elt *next;
+  struct pdump_block_list_elt *next;
   const void *obj;
   Bytecount size;
   int count;
   EMACS_INT save_offset;
-} pdump_entry_list_elt;
+} pdump_block_list_elt;
 
 typedef struct
 {
-  pdump_entry_list_elt *first;
+  pdump_block_list_elt *first;
   int align;
   int count;
-} pdump_entry_list;
+} pdump_block_list;
 
-typedef struct pdump_struct_list_elt
+typedef struct pdump_desc_list_elt
 {
-  pdump_entry_list list;
+  pdump_block_list list;
   const struct memory_description *desc;
-} pdump_struct_list_elt;
+} pdump_desc_list_elt;
 
 typedef struct
 {
-  pdump_struct_list_elt *list;
+  pdump_desc_list_elt *list;
   int count;
   int size;
-} pdump_struct_list;
+} pdump_desc_list;
 
-static pdump_entry_list *pdump_object_table;
-static pdump_entry_list pdump_opaque_data_list;
-static pdump_struct_list pdump_struct_table;
+static pdump_block_list *pdump_object_table;
+static pdump_block_list pdump_opaque_data_list;
+static pdump_desc_list pdump_desc_table;
 
 static int *pdump_alert_undump_object;
 
@@ -289,7 +352,7 @@ static FILE *pdump_out;
 
 #define PDUMP_HASHSIZE 200001
 
-static pdump_entry_list_elt **pdump_hash;
+static pdump_block_list_elt **pdump_hash;
 
 /* Since most pointers are eight bytes aligned, the >>3 allows for a better hash */
 static int
@@ -298,11 +361,14 @@ pdump_make_hash (const void *obj)
   return ((unsigned long)(obj)>>3) % PDUMP_HASHSIZE;
 }
 
-static pdump_entry_list_elt *
-pdump_get_entry (const void *obj)
+/* Return the entry for an already-registered memory block at OBJ,
+   or NULL if none. */
+
+static pdump_block_list_elt *
+pdump_get_block (const void *obj)
 {
   int pos = pdump_make_hash (obj);
-  pdump_entry_list_elt *e;
+  pdump_block_list_elt *e;
 
   assert (obj != 0);
 
@@ -318,11 +384,14 @@ pdump_get_entry (const void *obj)
   return 0;
 }
 
+/* Register a new memory block on Return the entry for an already-registered heap (?) memory block at OBJ,
+   or NULL if none. */
+
 static void
-pdump_add_entry (pdump_entry_list *list, const void *obj, Bytecount size,
+pdump_add_block (pdump_block_list *list, const void *obj, Bytecount size,
 		 int count)
 {
-  pdump_entry_list_elt *e;
+  pdump_block_list_elt *e;
   int pos = pdump_make_hash (obj);
 
   while ((e = pdump_hash[pos]) != 0)
@@ -335,7 +404,7 @@ pdump_add_entry (pdump_entry_list *list, const void *obj, Bytecount size,
 	pos = 0;
     }
 
-  e = xnew (pdump_entry_list_elt);
+  e = xnew (pdump_block_list_elt);
 
   e->next = list->first;
   e->obj = obj;
@@ -354,30 +423,30 @@ pdump_add_entry (pdump_entry_list *list, const void *obj, Bytecount size,
   }
 }
 
-static pdump_entry_list *
-pdump_get_entry_list (const struct memory_description *desc)
+static pdump_block_list *
+pdump_get_block_list (const struct memory_description *desc)
 {
   int i;
-  for (i=0; i<pdump_struct_table.count; i++)
-    if (pdump_struct_table.list[i].desc == desc)
-      return &pdump_struct_table.list[i].list;
+  for (i=0; i<pdump_desc_table.count; i++)
+    if (pdump_desc_table.list[i].desc == desc)
+      return &pdump_desc_table.list[i].list;
 
-  if (pdump_struct_table.size <= pdump_struct_table.count)
+  if (pdump_desc_table.size <= pdump_desc_table.count)
     {
-      if (pdump_struct_table.size == -1)
-	pdump_struct_table.size = 10;
+      if (pdump_desc_table.size == -1)
+	pdump_desc_table.size = 10;
       else
-	pdump_struct_table.size = pdump_struct_table.size * 2;
-      pdump_struct_table.list = (pdump_struct_list_elt *)
-	xrealloc (pdump_struct_table.list,
-		  pdump_struct_table.size * sizeof (pdump_struct_list_elt));
+	pdump_desc_table.size = pdump_desc_table.size * 2;
+      pdump_desc_table.list = (pdump_desc_list_elt *)
+	xrealloc (pdump_desc_table.list,
+		  pdump_desc_table.size * sizeof (pdump_desc_list_elt));
     }
-  pdump_struct_table.list[pdump_struct_table.count].list.first = 0;
-  pdump_struct_table.list[pdump_struct_table.count].list.align = ALIGNOF (max_align_t);
-  pdump_struct_table.list[pdump_struct_table.count].list.count = 0;
-  pdump_struct_table.list[pdump_struct_table.count].desc = desc;
+  pdump_desc_table.list[pdump_desc_table.count].list.first = 0;
+  pdump_desc_table.list[pdump_desc_table.count].list.align = ALIGNOF (max_align_t);
+  pdump_desc_table.list[pdump_desc_table.count].list.count = 0;
+  pdump_desc_table.list[pdump_desc_table.count].desc = desc;
 
-  return &pdump_struct_table.list[pdump_struct_table.count++].list;
+  return &pdump_desc_table.list[pdump_desc_table.count++].list;
 }
 
 static struct
@@ -439,13 +508,15 @@ pdump_bump_depth (void)
 }
 
 static void pdump_register_object (Lisp_Object obj);
-static void pdump_register_struct_contents (const void *data,
-					    const struct sized_memory_description *
-					    sdesc,
-					    int count);
-static void pdump_register_struct (const void *data,
-				   const struct sized_memory_description *sdesc,
-				   int count);
+static void pdump_register_block_contents (const void *data,
+					   Bytecount size,
+					   const struct memory_description *
+					   desc,
+					   int count);
+static void pdump_register_block (const void *data,
+				  Bytecount size,
+				  const struct memory_description *desc,
+				  int count);
 
 static void
 pdump_register_sub (const void *data, const struct memory_description *desc)
@@ -458,7 +529,7 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
       const struct memory_description *desc1 = &desc[pos];
       EMACS_INT offset = lispdesc_indirect_count (desc1->offset, desc,
 						  data);
-      const void *rdata = (const char *) data + offset;
+      const void *rdata = (const Rawbyte *) data + offset;
 
       backtrace[me].position = pos;
       backtrace[me].offset = offset;
@@ -484,23 +555,23 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 						       data);
 
-	    pdump_add_entry (&pdump_opaque_data_list,
+	    pdump_add_block (&pdump_opaque_data_list,
 			     *(void **)rdata, count, 1);
 	    break;
 	  }
-	case XD_C_STRING:
+	case XD_ASCII_STRING:
 	  {
-	    const char *str = * (const char **) rdata;
+	    const Ascbyte *str = * (const Ascbyte **) rdata;
 	    if (str)
-	      pdump_add_entry (&pdump_opaque_data_list, str, strlen (str) + 1,
+	      pdump_add_block (&pdump_opaque_data_list, str, strlen (str) + 1,
 			       1);
 	    break;
 	  }
 	case XD_DOC_STRING:
 	  {
-	    const char *str = * (const char **) rdata;
+	    const Ascbyte *str = * (const Ascbyte **) rdata;
 	    if ((EMACS_INT) str > 0)
-	      pdump_add_entry (&pdump_opaque_data_list, str, strlen (str) + 1,
+	      pdump_add_block (&pdump_opaque_data_list, str, strlen (str) + 1,
 			       1);
 	    break;
 	  }
@@ -510,7 +581,8 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 
 	    assert (desc1->data1 == 0);
 
-	    backtrace[me].offset = (const char *) pobj - (const char *) data;
+	    backtrace[me].offset =
+	      (const Rawbyte *) pobj - (const Rawbyte *) data;
 	    pdump_register_object (*pobj);
 	    break;
 	  }
@@ -526,30 +598,32 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 		Lisp_Object dobj = *pobj;
 
 		backtrace[me].offset =
-		  (const char *) pobj - (const char *) data;
+		  (const Rawbyte *) pobj - (const Rawbyte *) data;
 		pdump_register_object (dobj);
 	      }
 	    break;
 	  }
-	case XD_STRUCT_PTR:
+	case XD_BLOCK_PTR:
 	  {
 	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 						       data);
 	    const struct sized_memory_description *sdesc =
 	      lispdesc_indirect_description (data, desc1->data2);
-	    const char *dobj = *(const char **)rdata;
+	    const Rawbyte *dobj = *(const Rawbyte **)rdata;
 	    if (dobj)
-	      pdump_register_struct (dobj, sdesc, count);
+	      pdump_register_block (dobj, sdesc->size, sdesc->description,
+				    count);
 	    break;
 	  }
-	case XD_STRUCT_ARRAY:
+	case XD_BLOCK_ARRAY:
 	  {
 	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 						       data);
 	    const struct sized_memory_description *sdesc =
 	      lispdesc_indirect_description (data, desc1->data2);
 
-	    pdump_register_struct_contents (rdata, sdesc, count);
+	    pdump_register_block_contents (rdata, sdesc->size,
+					   sdesc->description, count);
 	    break;
 	  }
 	case XD_UNION:
@@ -578,7 +652,7 @@ pdump_register_object (Lisp_Object obj)
   if (!objh)
     return;
 
-  if (pdump_get_entry (objh))
+  if (pdump_get_block (objh))
     return;
 
   imp = LHEADER_IMPLEMENTATION (objh);
@@ -588,7 +662,7 @@ pdump_register_object (Lisp_Object obj)
     {
       pdump_bump_depth ();
       backtrace[pdump_depth - 1].obj = objh;
-      pdump_add_entry (pdump_object_table + objh->type,
+      pdump_add_block (pdump_object_table + objh->type,
 		       objh, detagged_lisp_object_size (objh), 1);
       pdump_register_sub (objh, imp->description);
       --pdump_depth;
@@ -601,54 +675,54 @@ pdump_register_object (Lisp_Object obj)
     }
 }
 
-/* Register the referenced objects in the array of COUNT objects of
-   located at DATA; each object is described by SDESC.  "Object" here
-   simply means any block of memory; it need not actually be a C
-   "struct".  It could be a single integer or Lisp_Object, for
-   example, as long as the description is accurate.
+/* Register the referenced objects in the array of COUNT blocks located at
+   DATA; each block is described by SIZE and DESC.  "Block" here simply
+   means any block of memory.
 
    This does not register the block of memory itself; it may, for
    example, be an array of structures inlined in another memory block
-   and thus should not be registered.  See pdump_register_struct(),
+   and thus should not be registered.  See pdump_register_block(),
    which does register the memory block. */
 
 static void
-pdump_register_struct_contents (const void *data,
-				const struct sized_memory_description *sdesc,
-				int count)
-
+pdump_register_block_contents (const void *data,
+			       Bytecount size,
+			       const struct memory_description *desc,
+			       int count)
 {
   int i;
   Bytecount elsize;
 
   pdump_bump_depth ();
-  elsize = lispdesc_structure_size (data, sdesc);
+  elsize = lispdesc_block_size_1 (data, size, desc);
   for (i = 0; i < count; i++)
     {
-      pdump_register_sub (((char *) data) + elsize * i, sdesc->description);
+      pdump_register_sub (((Rawbyte *) data) + elsize * i, desc);
     }
   --pdump_depth;
 }
 
-/* Register the array of COUNT objects of located at DATA; each object is
-   described by SDESC.  "Object" here simply means any block of memory;
-   it need not actually be a C "struct".  It could be a single integer
-   or Lisp_Object, for example, as long as the description is accurate.
+/* Register the array of COUNT blocks located at DATA; each block is
+   described by SDESC.  "Block" here simply means any block of memory,
+   which is more accurate and less confusing than terms like `struct' and
+   `object'.  A `block' need not actually be a C "struct".  It could be a
+   single integer or Lisp_Object, for example, as long as the description
+   is accurate.
 
-   This is like pdump_register_struct_contents() but also registers
+   This is like pdump_register_block_contents() but also registers
    the memory block itself. */
 
 static void
-pdump_register_struct (const void *data,
-		       const struct sized_memory_description *sdesc,
-		       int count)
+pdump_register_block (const void *data,
+		      Bytecount size,
+		      const struct memory_description *desc,
+		      int count)
 {
-  if (data && !pdump_get_entry (data))
+  if (data && !pdump_get_block (data))
     {
-      pdump_add_entry (pdump_get_entry_list (sdesc->description), data,
-		       lispdesc_structure_size (data, sdesc), count);
-
-      pdump_register_struct_contents (data, sdesc, count);
+      pdump_add_block (pdump_get_block_list (desc), data,
+		       lispdesc_block_size_1 (data, size, desc), count);
+      pdump_register_block_contents (data, size, desc, count);
     }
 }
 
@@ -656,7 +730,7 @@ pdump_register_struct (const void *data,
    COUNT contiguous blocks of memory, each described by DESC and of size
    SIZE, whose original is located at ORIG_DATA and the modifiable copy at
    DATA.  We examine the description to figure out where the pointers are,
-   and then look up the replacement values using pdump_get_entry().
+   and then look up the replacement values using pdump_get_block().
 
    This is done just before writing the modified block of memory to the
    dump file.  The new pointer offsets have been carefully calculated so
@@ -688,7 +762,7 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
   for (i = 0; i < count; i++)
     {
       /* CUR points to the beginning of each block in the new data. */
-      char *cur = ((char *)data) + i*size;
+      Rawbyte *cur = ((Rawbyte *)data) + i * size;
       /* Scan each line of the description for relocatable pointers */
       for (pos = 0; desc[pos].type != XD_END; pos++)
 	{
@@ -719,12 +793,12 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 		break;
 	      }
 	    case XD_OPAQUE_DATA_PTR:
-	    case XD_C_STRING:
-	    case XD_STRUCT_PTR:
+	    case XD_ASCII_STRING:
+	    case XD_BLOCK_PTR:
 	      {
 		void *ptr = * (void **) rdata;
 		if (ptr)
-		  * (EMACS_INT *) rdata = pdump_get_entry (ptr)->save_offset;
+		  * (EMACS_INT *) rdata = pdump_get_block (ptr)->save_offset;
 		break;
 	      }
 	    case XD_LO_LINK:
@@ -738,7 +812,7 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
                    referenced one. (The Qnil or Qunbound that ends the
                    chain will always be a referenced object.) */
 		Lisp_Object obj = * (Lisp_Object *) rdata;
-		pdump_entry_list_elt *elt1;
+		pdump_block_list_elt *elt1;
 		/* #### Figure out how to handle indirect offsets here.
 		   #### In general, when computing indirect counts, do we
 		   really need to use the orig_data pointer?  Why not just
@@ -752,11 +826,12 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 		assert (!XD_IS_INDIRECT (desc1->offset));
 		for (;;)
 		  {
-		    elt1 = pdump_get_entry (XRECORD_LHEADER (obj));
+		    elt1 = pdump_get_block (XRECORD_LHEADER (obj));
 		    if (elt1)
 		      break;
 		    obj = * (Lisp_Object *) (desc1->offset +
-					     (char *)(XRECORD_LHEADER (obj)));
+					     (Rawbyte *)
+					     (XRECORD_LHEADER (obj)));
 		  }
 		* (EMACS_INT *) rdata = elt1->save_offset;
 		break;
@@ -769,7 +844,7 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 
 		if (POINTER_TYPE_P (XTYPE (*pobj)) && XRECORD_LHEADER (*pobj))
 		  * (EMACS_INT *) pobj =
-		    pdump_get_entry (XRECORD_LHEADER (*pobj))->save_offset;
+		    pdump_get_block (XRECORD_LHEADER (*pobj))->save_offset;
 		break;
 	      }
 	    case XD_LISP_OBJECT_ARRAY:
@@ -784,7 +859,7 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 		    if (POINTER_TYPE_P (XTYPE (*pobj)) &&
 			XRECORD_LHEADER (*pobj))
 		      * (EMACS_INT *) pobj =
-			pdump_get_entry (XRECORD_LHEADER (*pobj))->save_offset;
+			pdump_get_block (XRECORD_LHEADER (*pobj))->save_offset;
 		  }
 		break;
 	      }
@@ -793,10 +868,10 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 		EMACS_INT str = *(EMACS_INT *)rdata;
 		if (str > 0)
 		  * (EMACS_INT *) rdata =
-		    pdump_get_entry ((void *)str)->save_offset;
+		    pdump_get_block ((void *)str)->save_offset;
 		break;
 	      }
-	    case XD_STRUCT_ARRAY:
+	    case XD_BLOCK_ARRAY:
 	      {
 		EMACS_INT num = lispdesc_indirect_count (desc1->data1, desc,
 							 orig_data);
@@ -805,11 +880,12 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 
 		pdump_store_new_pointer_offsets
 		  (num, rdata,
-		   ((char *) rdata - (char *) data) + (char *) orig_data,
+		   ((Rawbyte *) rdata - (Rawbyte *) data) +
+		   (Rawbyte *) orig_data,
 		   sdesc->description,
-		   lispdesc_structure_size
-		   (((char *) rdata - (char *) data) + (char *) orig_data,
-		    sdesc));
+		   lispdesc_block_size
+		   (((Rawbyte *) rdata - (Rawbyte *) data) +
+		    (Rawbyte *) orig_data, sdesc));
 		break;
 	      }
 	    case XD_UNION:
@@ -834,7 +910,7 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
    the dump file. */
 
 static void
-pdump_dump_data (pdump_entry_list_elt *elt,
+pdump_dump_data (pdump_block_list_elt *elt,
 		 const struct memory_description *desc)
 {
   Bytecount size = elt->size;
@@ -855,8 +931,9 @@ pdump_dump_data (pdump_entry_list_elt *elt,
    in the block.  Does not recursively relocate any other memory blocks
    pointed to. (We already have a list of all memory blocks in the dump
    file.)  This is used once the dump data has been loaded back in, both
-   for blocks sitting in the dumped data and in global data objects whose
-   contents have been restored from the dumped data. */
+   for blocks sitting in the dumped data (former heap blocks) and in global
+   data-sgment blocks whose contents have been restored from the dumped
+   data. */
 
 static void
 pdump_reloc_one (void *data, EMACS_INT delta,
@@ -867,8 +944,9 @@ pdump_reloc_one (void *data, EMACS_INT delta,
   for (pos = 0; desc[pos].type != XD_END; pos++)
     {
       const struct memory_description *desc1 = &desc[pos];
-      void *rdata = (char *) data + lispdesc_indirect_count (desc1->offset,
-							     desc, data);
+      void *rdata =
+	(Rawbyte *) data + lispdesc_indirect_count (desc1->offset,
+							desc, data);
 
     union_switcheroo:
 
@@ -886,8 +964,8 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 	case XD_INT_RESET:
 	  break;
 	case XD_OPAQUE_DATA_PTR:
-	case XD_C_STRING:
-	case XD_STRUCT_PTR:
+	case XD_ASCII_STRING:
+	case XD_BLOCK_PTR:
 	case XD_LO_LINK:
 	  {
 	    EMACS_INT ptr = *(EMACS_INT *)rdata;
@@ -903,7 +981,7 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 
 	    if (POINTER_TYPE_P (XTYPE (*pobj))
 		&& ! EQ (*pobj, Qnull_pointer))
-	      *pobj = wrap_pointer_1 ((char *) XPNTR (*pobj) + delta);
+	      *pobj = wrap_pointer_1 ((Rawbyte *) XPNTR (*pobj) + delta);
 
 	    break;
 	  }
@@ -919,7 +997,8 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 
 		if (POINTER_TYPE_P (XTYPE (*pobj))
 		    && ! EQ (*pobj, Qnull_pointer))
-		  *pobj = wrap_pointer_1 ((char *) XPNTR (*pobj) + delta);
+		  *pobj = wrap_pointer_1 ((Rawbyte *) XPNTR (*pobj) +
+					  delta);
 	      }
 	    break;
 	  }
@@ -930,18 +1009,18 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 	      *(EMACS_INT *)rdata = str + delta;
 	    break;
 	  }
-	case XD_STRUCT_ARRAY:
+	case XD_BLOCK_ARRAY:
 	  {
 	    EMACS_INT num = lispdesc_indirect_count (desc1->data1, desc,
 						     data);
 	    int j;
 	    const struct sized_memory_description *sdesc =
 	      lispdesc_indirect_description (data, desc1->data2);
-	    Bytecount size = lispdesc_structure_size (rdata, sdesc);
+	    Bytecount size = lispdesc_block_size (rdata, sdesc);
 
 	    /* Note: We are recursing over data in the block itself */
 	    for (j = 0; j < num; j++)
-	      pdump_reloc_one ((char *) rdata + j * size, delta,
+	      pdump_reloc_one ((Rawbyte *) rdata + j * size, delta,
 			       sdesc->description);
 
 	    break;
@@ -960,18 +1039,48 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 }
 
 static void
-pdump_allocate_offset (pdump_entry_list_elt *elt,
+pdump_allocate_offset (pdump_block_list_elt *elt,
 		       const struct memory_description *UNUSED (desc))
 {
   Bytecount size = elt->count * elt->size;
   elt->save_offset = cur_offset;
-  if (size>max_size)
+  if (size > max_size)
     max_size = size;
   cur_offset += size;
 }
 
+/* Traverse through all the heap blocks, once the "register" stage of
+   dumping has finished.  To compress space as much as possible, we
+   logically sort all blocks by alignment, hitting all blocks with
+   alignment == the maximum (which may be 8 bytes, for doubles), then
+   all blocks with the next lower alignment (4 bytes), etc.
+
+   Within each alignment we hit
+
+   -- first the Lisp objects, type-by-type
+
+   -- then the heap memory blocks that are not Lisp objects, description-by-
+      description -- i.e. all blocks with the same description will be
+      placed together
+
+   -- then the "opaque" data objects declared as XD_OPAQUE_DATA_PTR,
+      XD_ASCII_STRING and XD_DOC_STRING.
+
+   The idea is to have as little blank space as possible in the laid-out
+   data.
+
+   For each item that we have hit, we process it by calling F, the function
+   passed it.  In dumper.c, pdump_scan_by_alignment() is called twice with
+   two different functions -- pdump_allocate_offset() in stage 2 to compute
+   the offset to each block, and pdump_dump_data() in stage 3 to
+   successively write each block to disk.
+
+   It's extremely important that the SAME traversal order gets invoked
+   in both stage 2 and 3.
+*/
+
 static void
-pdump_scan_by_alignment (void (*f)(pdump_entry_list_elt *,
+pdump_scan_by_alignment (void (*f)(pdump_block_list_elt *,
 				   const struct memory_description *))
 {
   int align;
@@ -979,16 +1088,16 @@ pdump_scan_by_alignment (void (*f)(pdump_entry_list_elt *,
   for (align = ALIGNOF (max_align_t); align; align>>=1)
     {
       int i;
-      pdump_entry_list_elt *elt;
+      pdump_block_list_elt *elt;
 
       for (i=0; i<lrecord_type_count; i++)
 	if (pdump_object_table[i].align == align)
 	  for (elt = pdump_object_table[i].first; elt; elt = elt->next)
 	    f (elt, lrecord_implementations_table[i]->description);
 
-      for (i=0; i<pdump_struct_table.count; i++)
+      for (i=0; i<pdump_desc_table.count; i++)
 	{
-	  pdump_struct_list_elt list = pdump_struct_table.list[i];
+	  pdump_desc_list_elt list = pdump_desc_table.list[i];
 	  if (list.list.align == align)
 	    for (elt = list.list.first; elt; elt = elt->next)
 	      f (elt, list.desc);
@@ -1000,22 +1109,32 @@ pdump_scan_by_alignment (void (*f)(pdump_entry_list_elt *,
     }
 }
 
+/* Dump out the root block pointers, part of stage 3 (the "WRITE" stage) of
+   dumping.  For each pointer we dump out a structure containing the
+   location of the pointer and its value, replaced by the appropriate
+   offset into the dumped data. */
+
 static void
-pdump_dump_root_struct_ptrs (void)
+pdump_dump_root_block_ptrs (void)
 {
   int i;
-  Elemcount count = Dynarr_length (pdump_root_struct_ptrs);
+  Elemcount count = Dynarr_length (pdump_root_block_ptrs);
   pdump_static_pointer *data = alloca_array (pdump_static_pointer, count);
   for (i = 0; i < count; i++)
     {
       data[i].address =
-	(char **) Dynarr_atp (pdump_root_struct_ptrs, i)->ptraddress;
+	(Rawbyte **) Dynarr_atp (pdump_root_block_ptrs, i)->ptraddress;
       data[i].value   =
-	(char *) pdump_get_entry (* data[i].address)->save_offset;
+	(Rawbyte *) pdump_get_block (* data[i].address)->save_offset;
     }
   PDUMP_ALIGN_OUTPUT (pdump_static_pointer);
   retry_fwrite (data, sizeof (pdump_static_pointer), count, pdump_out);
 }
+
+/* Dump out the root blocks, part of stage 3 (the "WRITE" stage) of
+   dumping.  For each block we dump a structure containing info about the
+   block (its location, size and description) and then the block itself,
+   with its pointers replaced with offsets into the dump data. */
 
 static void
 pdump_dump_root_blocks (void)
@@ -1023,9 +1142,20 @@ pdump_dump_root_blocks (void)
   int i;
   for (i = 0; i < Dynarr_length (pdump_root_blocks); i++)
     {
-      pdump_root_block *info = Dynarr_atp (pdump_root_blocks, i);
-      PDUMP_WRITE_ALIGNED (pdump_root_block, *info);
-      retry_fwrite (info->varaddress, info->size, 1, pdump_out);
+      pdump_root_block info = Dynarr_at (pdump_root_blocks, i);
+      PDUMP_WRITE_ALIGNED (pdump_root_block, info);
+
+      if (info.desc)
+	{
+	  /* Copy to temporary buffer */
+	  memcpy (pdump_buf, info.blockaddr, info.size);
+
+	  /* Store new offsets into all pointers in block */
+	  pdump_store_new_pointer_offsets (1, pdump_buf, info.blockaddr,
+					   info.desc, info.size);
+	}
+      retry_fwrite (info.desc ? pdump_buf : info.blockaddr,
+		    info.size, 1, pdump_out);
     }
 }
 
@@ -1033,7 +1163,7 @@ static void
 pdump_dump_rtables (void)
 {
   int i;
-  pdump_entry_list_elt *elt;
+  pdump_block_list_elt *elt;
   pdump_reloc_table rt;
 
   for (i=0; i<lrecord_type_count; i++)
@@ -1046,7 +1176,7 @@ pdump_dump_rtables (void)
       PDUMP_WRITE_ALIGNED (pdump_reloc_table, rt);
       while (elt)
 	{
-	  EMACS_INT rdata = pdump_get_entry (elt->obj)->save_offset;
+	  EMACS_INT rdata = pdump_get_block (elt->obj)->save_offset;
 	  PDUMP_WRITE_ALIGNED (EMACS_INT, rdata);
 	  elt = elt->next;
 	}
@@ -1056,15 +1186,15 @@ pdump_dump_rtables (void)
   rt.count = 0;
   PDUMP_WRITE_ALIGNED (pdump_reloc_table, rt);
 
-  for (i=0; i<pdump_struct_table.count; i++)
+  for (i=0; i<pdump_desc_table.count; i++)
     {
-      elt = pdump_struct_table.list[i].list.first;
-      rt.desc = pdump_struct_table.list[i].desc;
-      rt.count = pdump_struct_table.list[i].list.count;
+      elt = pdump_desc_table.list[i].list.first;
+      rt.desc = pdump_desc_table.list[i].desc;
+      rt.count = pdump_desc_table.list[i].list.count;
       PDUMP_WRITE_ALIGNED (pdump_reloc_table, rt);
       while (elt)
 	{
-	  EMACS_INT rdata = pdump_get_entry (elt->obj)->save_offset;
+	  EMACS_INT rdata = pdump_get_block (elt->obj)->save_offset;
 	  int j;
 	  for (j=0; j<elt->count; j++)
 	    {
@@ -1097,15 +1227,15 @@ pdump_dump_root_lisp_objects (void)
 
       if (POINTER_TYPE_P (XTYPE (obj.value)))
 	obj.value =
-	  wrap_pointer_1 ((void *) pdump_get_entry (XRECORD_LHEADER
+	  wrap_pointer_1 ((void *) pdump_get_block (XRECORD_LHEADER
 						    (obj.value))->save_offset);
 
       PDUMP_WRITE (pdump_static_Lisp_Object, obj);
     }
 
-  for (i=0; i<Dynarr_length (pdump_weak_object_chains); i++)
+  for (i = 0; i < Dynarr_length (pdump_weak_object_chains); i++)
     {
-      pdump_entry_list_elt *elt;
+      pdump_block_list_elt *elt;
       pdump_static_Lisp_Object obj;
 
       obj.address = Dynarr_at (pdump_weak_object_chains, i);
@@ -1115,7 +1245,7 @@ pdump_dump_root_lisp_objects (void)
 	{
 	  const struct memory_description *desc;
 	  int pos;
-	  elt = pdump_get_entry (XRECORD_LHEADER (obj.value));
+	  elt = pdump_get_block (XRECORD_LHEADER (obj.value));
 	  if (elt)
 	    break;
 	  desc = XRECORD_LHEADER_IMPLEMENTATION (obj.value)->description;
@@ -1126,13 +1256,130 @@ pdump_dump_root_lisp_objects (void)
 	  assert (!XD_IS_INDIRECT (desc[pos].offset));
 	  obj.value =
 	    * (Lisp_Object *) (desc[pos].offset +
-			       (char *) (XRECORD_LHEADER (obj.value)));
+			       (Rawbyte *) (XRECORD_LHEADER (obj.value)));
 	}
       obj.value = wrap_pointer_1 ((void *) elt->save_offset);
 
       PDUMP_WRITE (pdump_static_Lisp_Object, obj);
     }
 }
+
+
+/*########################################################################
+  #                             Pdump                                    #
+  ########################################################################
+
+  [ben]
+
+  DISCUSSION OF DUMPING:
+
+  The idea of dumping is to record the state of XEmacs in a file, so that
+  it can be reloaded later.  This avoids having to reload all of the basic
+  Lisp code each time XEmacs is run, which is a rather time-consuming
+  process.  (Less so on new machines, but still noticeable.  As an example
+  of a program with similar issues but which does not have a dumping
+  process and as a result has a slow startup time, consider Adobe Photoshop
+  5.0 or Adobe Photoshop Elements 2.0.)
+
+  We don't actually record ALL the state of XEmacs (some of it, for example,
+  is dependent on the run-time environment and needs to be initialized
+  whenever XEmacs is run), but whatever state we don't record needs to be
+  reinitialized every time XEmacs is run.
+
+  The old way of dumping was to make a new executable file with the data
+  segment expanded to contain the heap and written out from memory.  This
+  is what the unex* files do.  Unfortunately this process is extremely
+  system-specific and breaks easily with OS changes.
+
+  Another simple, more portable trick, the "static heap" method, involves
+  replacing the allocator with our own allocator which allocates all space
+  out of a very large array declared in our data segment until we run out,
+  then uses the underlying malloc() to start allocating on the heap.  If we
+  ensure that the large array is big enough to hold all data allocated
+  during the dump stage, then all of the data we need to save is in the
+  data segment, and it's easy to calculate the location and size of the
+  data segment we want to save (we don't want to record and reinitialize
+  the data segment of library functions) by using appropriately declared
+  variables in the first and last file linked.  This method is known as the
+  "static heap" method, and is used by the non-pdump version of the dumper
+  under Cygwin, and was also used under VMS and in Win-Emacs.
+
+  The "static heap" method works well in practice.  Nonetheless, a more
+  complex method of dumping was written by Olivier Galibert, which requires
+  that structural descriptions of all data allocated in the heap be provided
+  and the roots of all pointers into the heap be noted through function calls
+  to the pdump API.  This way, all the heap data can be traversed and written
+  out to a file, and then reloaded at run-time and the pointers relocated to
+  point at the new location of the loaded data.  This is the "pdump" method
+  used in this file.
+
+  There are two potential advantages of "pdump" over the "static heap":
+
+  (1) It doesn't require any tricks to calculate the beginning and end of
+      the data segment, or even that the XEmacs section of the data segment
+      be contiguous. (It's not clear whether this is an issue in practice.)
+  (2) Potentially, it could handle an OS that does not always load the
+      static data segment at a predictable location.  The "static heap"
+      method by its nature needs the data segment to stay in the same place
+      from invocation to invocation, since it simply dumps out memory and
+      reloads it, without any pointer relocation.  I say "potentially"
+      because as it is currently written pdump does assume that the data
+      segment is never relocated.  However, changing pdump to remove this
+      assumption is probably not difficult, as all the mechanism to handle
+      pointer relocation is already present.
+
+
+  DISCUSSION OF PDUMP WORKINGS:
+
+  See man/internals/internals.texi for more information.
+
+  NOTE that we have two kinds of memory to handle: memory on the heap
+  (i.e. allocated through malloc()) or the like, and static memory in the
+  data segment of the program, i.e. stuff declared as global or static.
+  All heap memory needs to be written out to the dump file and reproduced
+  (i.e. reloaded and any necessary relocations performed).  Data-segment
+  memory that is not statically initialized (i.e. through declarations in
+  the C code) needs either to be written out and reloaded, or
+  reinitialized.  In addition, any pointers in data-segment memory to heap
+  memory must be written out, reloaded and relocated.
+
+  NOTE that we currently don't handle relocation of pointers into data-
+  segment memory. (See overview discussion above.) These are treated in
+  the descriptions as opaque data not needing relocation.  If this becomes a
+  problem, it can be fixed through new kinds of types in
+  enum memory_description_type.
+
+  Three basic steps to dumping out:
+
+  (1) "REGISTER":
+      Starting with all sources of relocatable memory (currently this means
+      all data-segment pointers to heap memory -- see above about pointers
+      to data-segment memory), recursively traverse the tree of pointers
+      and "register" (make a note of) every memory block seen.
+
+  (2) "LAYOUT":
+      Go through all of the registered blocks and compute the location of
+      each one in the dump data (i.e. the "offset" that will be added to
+      the address corresponding to start of the loaded-in data to get the
+      new pointer referring to this block).  The blocks will be laid out
+      sequentially according to the order we traverse them.  Also note the
+      maximum-sized block for use in step 3.
+
+  (3) "WRITE":
+      After writing some header stuff, go through all of the registered
+      blocks and write out each one to the dump file.  Note that we are
+      simply writing out the blocks sequentially as we see them, and our
+      traversal path is identical to that in step 2, so blocks will end up
+      at the locations computed for them.  In order to write out a block,
+      first copy it to a temporary location (hence the maximum-block-size
+      computation in the previous step), then for each relocatable pointer
+      in the block, write in its place the offset to the heap block in the
+      dump data.  When the dump data is loaded, the address of the
+      beginning of the dump data will be added to the offset in each
+      pointer, and thence become accurate.
+
+  --ben
+*/
 
 void
 pdump (void)
@@ -1144,7 +1391,7 @@ pdump (void)
 
   in_pdump = 1;
 
-  pdump_object_table = xnew_array (pdump_entry_list, lrecord_type_count);
+  pdump_object_table = xnew_array (pdump_block_list, lrecord_type_count);
   pdump_alert_undump_object = xnew_array (int, lrecord_type_count);
 
   assert (ALIGNOF (max_align_t) <= pdump_align_table[0]);
@@ -1172,35 +1419,42 @@ pdump (void)
 		   lrecord_type_count * sizeof (lrecord_markers[0]));
 #endif /* not USE_KKCC */
 
-  pdump_hash = xnew_array_and_zero (pdump_entry_list_elt *, PDUMP_HASHSIZE);
+  pdump_hash = xnew_array_and_zero (pdump_block_list_elt *, PDUMP_HASHSIZE);
 
-  for (i=0; i<lrecord_type_count; i++)
+  for (i = 0; i<lrecord_type_count; i++)
     {
       pdump_object_table[i].first = 0;
       pdump_object_table[i].align = ALIGNOF (max_align_t);
       pdump_object_table[i].count = 0;
       pdump_alert_undump_object[i] = 0;
     }
-  pdump_struct_table.count = 0;
-  pdump_struct_table.size = -1;
+  pdump_desc_table.count = 0;
+  pdump_desc_table.size = -1;
 
   pdump_opaque_data_list.first = 0;
   pdump_opaque_data_list.align = ALIGNOF (max_align_t);
   pdump_opaque_data_list.count = 0;
   pdump_depth = 0;
 
+  /* (I) The "register" stage: Note all heap memory blocks to be relocated
+     */
+
+  /* Try various roots of accessibility: */
+
+  /* (1) Lisp objects, both those declared using DEFVAR_LISP*() and  those
+         staticpro()d. */
   for (i = 0; i < Dynarr_length (pdump_root_lisp_objects); i++)
     pdump_register_object (* Dynarr_at (pdump_root_lisp_objects, i));
 
   none = 1;
-  for (i=0; i<lrecord_type_count; i++)
+  for (i = 0; i < lrecord_type_count; i++)
     if (pdump_alert_undump_object[i])
       {
 	if (none)
-	  printf ("Undumpable types list :\n");
+	  stderr_out ("Undumpable types list :\n");
 	none = 0;
-	printf ("  - %s (%d)\n", lrecord_implementations_table[i]->name,
-		pdump_alert_undump_object[i]);
+	stderr_out ("  - %s (%d)\n", lrecord_implementations_table[i]->name,
+		    pdump_alert_undump_object[i]);
       }
   if (!none)
     {
@@ -1208,26 +1462,68 @@ pdump (void)
       return;
     }
 
-  for (i=0; i<Dynarr_length (pdump_root_struct_ptrs); i++)
+  /* (2) Register out the data-segment pointer variables to heap blocks */
+  for (i = 0; i < Dynarr_length (pdump_root_block_ptrs); i++)
     {
-      pdump_root_struct_ptr info = Dynarr_at (pdump_root_struct_ptrs, i);
-      pdump_register_struct (*(info.ptraddress), info.desc, 1);
+      pdump_root_block_ptr info = Dynarr_at (pdump_root_block_ptrs, i);
+      pdump_register_block (*(info.ptraddress), info.desc->size,
+			    info.desc->description, 1);
     }
 
+  /* (3) Register out the data-segment blocks, maybe with pointers to heap
+     blocks */
+  for (i = 0; i < Dynarr_length (pdump_root_blocks); i++)
+    {
+      pdump_root_block *info = Dynarr_atp (pdump_root_blocks, i);
+      if (info->desc)
+	{
+	  /* Size may have been given as 0 meaning "compute later".
+	     Compute now and update.  If no DESC, size must always be
+	     correct as there is no other way of computing it. */
+	  info->size = lispdesc_block_size_1 (info->blockaddr, info->size,
+					      info->desc);
+	  pdump_register_block_contents (info->blockaddr, info->size,
+					 info->desc, 1);
+	}
+    }
+
+  /* (II) The "layout" stage: Compute the offsets and max-size */
+
+  /* (1) Determine header size */
   memcpy (header.signature, PDUMP_SIGNATURE, PDUMP_SIGNATURE_LEN);
   header.id = dump_id;
   header.reloc_address = 0;
-  header.nb_root_struct_ptrs = Dynarr_length (pdump_root_struct_ptrs);
+  header.nb_root_block_ptrs = Dynarr_length (pdump_root_block_ptrs);
   header.nb_root_blocks = Dynarr_length (pdump_root_blocks);
 
   cur_offset = MAX_ALIGN_SIZE (sizeof (header));
   max_size = 0;
 
+  /* (2) Traverse all heap blocks and compute their offsets; keep track
+         of maximum block size seen */
   pdump_scan_by_alignment (pdump_allocate_offset);
   cur_offset = MAX_ALIGN_SIZE (cur_offset);
   header.stab_offset = cur_offset;
 
+  /* (3) Update maximum size based on root (data-segment) blocks */
+  for (i = 0; i < Dynarr_length (pdump_root_blocks); i++)
+    {
+      pdump_root_block info = Dynarr_at (pdump_root_blocks, i);
+
+      /* If no DESC, no relocation needed and we copy directly instead of
+	 into a temp buffer. */
+      if (info.desc)
+	{
+	  if (info.size > max_size)
+	    max_size = info.size;
+	}
+    }
+
+  /* (III) The "write "stage: Dump out the data, storing the offsets in
+           place of pointers whenever we write out memory blocks */
+
   pdump_buf = xmalloc (max_size);
+  /* EMACS_PROGNAME is entirely ASCII so this should be Mule-safe */
   pdump_fd = open (EMACS_PROGNAME ".dmp",
 		   O_WRONLY | O_CREAT | O_TRUNC | OPEN_BINARY, 0666);
   if (pdump_fd < 0)
@@ -1245,7 +1541,7 @@ pdump (void)
 
   fseek (pdump_out, header.stab_offset, SEEK_SET);
 
-  pdump_dump_root_struct_ptrs ();
+  pdump_dump_root_block_ptrs ();
   pdump_dump_root_blocks ();
   pdump_dump_rtables ();
   pdump_dump_root_lisp_objects ();
@@ -1266,7 +1562,7 @@ pdump (void)
 static int
 pdump_load_check (void)
 {
-  return (!memcmp (((pdump_header *)pdump_start)->signature,
+  return (!memcmp (((pdump_header *) pdump_start)->signature,
 		   PDUMP_SIGNATURE, PDUMP_SIGNATURE_LEN)
 	  && ((pdump_header *)pdump_start)->id == dump_id);
 }
@@ -1278,7 +1574,7 @@ static int
 pdump_load_finish (void)
 {
   int i;
-  char *p;
+  Rawbyte *p;
   EMACS_INT delta;
   EMACS_INT count;
   pdump_header *header = (pdump_header *) pdump_start;
@@ -1288,9 +1584,9 @@ pdump_load_finish (void)
   delta = ((EMACS_INT) pdump_start) - header->reloc_address;
   p = pdump_start + header->stab_offset;
 
-  /* Put back the pdump_root_struct_ptrs */
-  p = (char *) ALIGN_PTR (p, pdump_static_pointer);
-  for (i = 0; i < header->nb_root_struct_ptrs; i++)
+  /* Put back the pdump_root_block_ptrs */
+  p = (Rawbyte *) ALIGN_PTR (p, pdump_static_pointer);
+  for (i = 0; i < header->nb_root_block_ptrs; i++)
     {
       pdump_static_pointer ptr = PDUMP_READ (p, pdump_static_pointer);
       (* ptr.address) = ptr.value + delta;
@@ -1300,9 +1596,9 @@ pdump_load_finish (void)
   for (i = 0; i < header->nb_root_blocks; i++)
     {
       pdump_root_block info = PDUMP_READ_ALIGNED (p, pdump_root_block);
-      memcpy ((void *) info.varaddress, p, info.size);
+      memcpy ((void *) info.blockaddr, p, info.size);
       if (info.desc)
-	pdump_reloc_one ((void *) info.varaddress, delta, info.desc);
+	pdump_reloc_one ((void *) info.blockaddr, delta, info.desc);
       p += info.size;
     }
 
@@ -1312,16 +1608,16 @@ pdump_load_finish (void)
   for (;;)
     {
       pdump_reloc_table rt = PDUMP_READ_ALIGNED (p, pdump_reloc_table);
-      p = (char *) ALIGN_PTR (p, char *);
+      p = (Rawbyte *) ALIGN_PTR (p, Rawbyte *);
       if (rt.desc)
 	{
-	  char **reloc = (char **) p;
+	  Rawbyte **reloc = (Rawbyte **) p;
 	  for (i = 0; i < rt.count; i++)
 	    {
 	      reloc[i] += delta;
 	      pdump_reloc_one (reloc[i], delta, rt.desc);
 	    }
-	  p += rt.count * sizeof (char *);
+	  p += rt.count * sizeof (Rawbyte *);
 	}
       else if (!(--count))
 	  break;
@@ -1329,13 +1625,13 @@ pdump_load_finish (void)
 
   /* Put the pdump_root_lisp_objects variables in place */
   i = PDUMP_READ_ALIGNED (p, Elemcount);
-  p = (char *) ALIGN_PTR (p, pdump_static_Lisp_Object);
+  p = (Rawbyte *) ALIGN_PTR (p, pdump_static_Lisp_Object);
   while (i--)
     {
       pdump_static_Lisp_Object obj = PDUMP_READ (p, pdump_static_Lisp_Object);
 
       if (POINTER_TYPE_P (XTYPE (obj.value)))
-	obj.value = wrap_pointer_1 ((char *) XPNTR (obj.value) + delta);
+	obj.value = wrap_pointer_1 ((Rawbyte *) XPNTR (obj.value) + delta);
 
       (* obj.address) = obj.value;
     }
@@ -1346,7 +1642,7 @@ pdump_load_finish (void)
   for (;;)
     {
       pdump_reloc_table rt = PDUMP_READ_ALIGNED (p, pdump_reloc_table);
-      p = (char *) ALIGN_PTR (p, Lisp_Object);
+      p = (Rawbyte *) ALIGN_PTR (p, Lisp_Object);
       if (!rt.desc)
 	break;
       if (rt.desc == hash_table_description)
@@ -1373,34 +1669,43 @@ pdump_file_unmap (void)
 }
 
 static int
-pdump_file_get (const char *path)
+pdump_file_get (const Wexttext *wpath)
 {
+  Extbyte *path;
+  if (XEUNICODE_P)
+    path = (Extbyte *) wpath;
+  else
+    path = WEXTTEXT_TO_MULTIBYTE (wpath);
 
-  pdump_hFile = CreateFileA (path,
-		            GENERIC_READ + GENERIC_WRITE,  /* Required for copy on write */
-			    0,		            /* Not shared */
-			    NULL,		    /* Not inheritable */
-			    OPEN_EXISTING,
-			    FILE_ATTRIBUTE_NORMAL,
-			    NULL);		    /* No template file */
+  pdump_hFile =
+    qxeCreateFile (path,
+		   GENERIC_READ + GENERIC_WRITE,  /* Required for copy on
+						     write */
+		   0,		            /* Not shared */
+		   NULL,		    /* Not inheritable */
+		   OPEN_EXISTING,
+		   FILE_ATTRIBUTE_NORMAL,
+		   NULL);		    /* No template file */
   if (pdump_hFile == INVALID_HANDLE_VALUE)
     return 0;
 
   pdump_length = GetFileSize (pdump_hFile, NULL);
-  pdump_hMap = CreateFileMappingA (pdump_hFile,
-				  NULL,		    /* No security attributes */
-				  PAGE_WRITECOPY,   /* Copy on write */
-				  0,		    /* Max size, high half */
-				  0,		    /* Max size, low half */
-				  NULL);	    /* Unnamed */
+  pdump_hMap =
+    qxeCreateFileMapping (pdump_hFile,
+			  NULL,           /* No security attributes */
+			  PAGE_WRITECOPY, /* Copy on write */
+			  0,              /* Max size, high half */
+			  0,              /* Max size, low half */
+			  NULL);          /* Unnamed */
   if (pdump_hMap == INVALID_HANDLE_VALUE)
     return 0;
 
-  pdump_start = (char *) MapViewOfFile (pdump_hMap,
-					FILE_MAP_COPY, /* Copy on write */
-					0,	      /* Start at zero */
-					0,
-					0);	      /* Map all of it */
+  pdump_start =
+    (Rawbyte *) MapViewOfFile (pdump_hMap,
+				   FILE_MAP_COPY, /* Copy on write */
+				   0,	      /* Start at zero */
+				   0,
+				   0);	      /* Map all of it */
   pdump_free = pdump_file_unmap;
   return 1;
 }
@@ -1439,7 +1744,7 @@ pdump_resource_get (void)
   if (hResLoad == NULL)
     return 0;
 
-  pdump_start = (char *) LockResource (hResLoad);
+  pdump_start = (Rawbyte *) LockResource (hResLoad);
   if (pdump_start == NULL)
     return 0;
 
@@ -1459,7 +1764,7 @@ pdump_resource_get (void)
 static void
 pdump_file_free (void)
 {
-  xfree (pdump_start, char *);
+  xfree (pdump_start, Rawbyte *);
 }
 
 #ifdef HAVE_MMAP
@@ -1471,10 +1776,10 @@ pdump_file_unmap (void)
 #endif
 
 static int
-pdump_file_get (const char *path)
+pdump_file_get (const Wexttext *path)
 {
-  int fd = open (path, O_RDONLY | OPEN_BINARY);
-  if (fd<0)
+  int fd = wext_retry_open (path, O_RDONLY | OPEN_BINARY);
+  if (fd < 0)
     return 0;
 
   pdump_length = lseek (fd, 0, SEEK_END);
@@ -1492,8 +1797,10 @@ pdump_file_get (const char *path)
 # ifndef MAP_FAILED
 #  define MAP_FAILED ((void *) -1L)
 # endif
-  pdump_start = (char *) mmap (0, pdump_length, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
-  if (pdump_start != (char *) MAP_FAILED)
+  pdump_start =
+    (Rawbyte *) mmap (0, pdump_length, PROT_READ|PROT_WRITE, MAP_PRIVATE,
+			  fd, 0);
+  if (pdump_start != (Rawbyte *) MAP_FAILED)
     {
       pdump_free = pdump_file_unmap;
       retry_close (fd);
@@ -1501,7 +1808,7 @@ pdump_file_get (const char *path)
     }
 #endif /* HAVE_MMAP */
 
-  pdump_start = xnew_array (char, pdump_length);
+  pdump_start = xnew_array (Rawbyte, pdump_length);
   pdump_free = pdump_file_free;
   retry_read (fd, pdump_start, pdump_length);
 
@@ -1512,23 +1819,24 @@ pdump_file_get (const char *path)
 static int
 pdump_ram_try (void)
 {
-  pdump_start = dumped_data_get();
-  pdump_length = dumped_data_size();
+  pdump_start = dumped_data_get ();
+  pdump_length = dumped_data_size ();
 
-  return pdump_load_check();
+  return pdump_load_check ();
 }
 
 #endif /* !WIN32_NATIVE */
 
 
 static int
-pdump_file_try (char *exe_path)
+pdump_file_try (Wexttext *exe_path)
 {
-  char *w = exe_path + strlen (exe_path);
+  Wexttext *w = exe_path + wext_strlen (exe_path);
 
   do
     {
-      sprintf (w, "-%s-%08x.dmp", EMACS_VERSION, dump_id);
+      wext_sprintf (w, WEXTSTRING ("-%s-%08x.dmp"), WEXTSTRING (EMACS_VERSION),
+		    dump_id);
       if (pdump_file_get (exe_path))
 	{
 	  if (pdump_load_check ())
@@ -1536,7 +1844,7 @@ pdump_file_try (char *exe_path)
 	  pdump_free ();
 	}
 
-      sprintf (w, "-%08x.dmp", dump_id);
+      wext_sprintf (w, WEXTSTRING ("-%08x.dmp"), dump_id);
       if (pdump_file_get (exe_path))
 	{
 	  if (pdump_load_check ())
@@ -1544,7 +1852,7 @@ pdump_file_try (char *exe_path)
 	  pdump_free ();
 	}
 
-      sprintf (w, ".dmp");
+      wext_sprintf (w, WEXTSTRING (".dmp"));
       if (pdump_file_get (exe_path))
 	{
 	  if (pdump_load_check ())
@@ -1554,50 +1862,65 @@ pdump_file_try (char *exe_path)
 
       do
 	w--;
-      while (w>exe_path && !IS_DIRECTORY_SEP (*w) && (*w != '-') && (*w != '.'));
+      /* !!#### See comment below about how this is unsafe. */
+      while (w > exe_path && !IS_DIRECTORY_SEP (*w) && (*w != '-') &&
+	     (*w != '.'));
     }
-  while (w>exe_path && !IS_DIRECTORY_SEP (*w));
+  while (w > exe_path && !IS_DIRECTORY_SEP (*w));
   return 0;
 }
 
 int
-pdump_load (const Extbyte *argv0)
+pdump_load (const Wexttext *argv0)
 {
-  Extbyte exe_path[PATH_MAX];
-
+  Wexttext exe_path[PATH_MAX];
 #ifdef WIN32_NATIVE
-  GetModuleFileNameA (NULL, exe_path, PATH_MAX);
+  qxeGetModuleFileName (NULL, (Extbyte *) exe_path, PATH_MAX);
+  if (!XEUNICODE_P)
+    {
+      Wexttext *wexe = MULTIBYTE_TO_WEXTTEXT ((Extbyte *) exe_path);
+      wext_strcpy (exe_path, wexe);
+    }
 #else /* !WIN32_NATIVE */
-  Extbyte *w;
-  const Extbyte *dir, *p;
+  Wexttext *w;
+  const Wexttext *dir, *p;
 
-  if(pdump_ram_try()) {
-    pdump_load_finish();
-    in_pdump = 0;
-    return 1;
-  }
+  if (pdump_ram_try ())
+    {
+      pdump_load_finish ();
+      in_pdump = 0;
+      return 1;
+    }
 
   in_pdump = 1;
   dir = argv0;
   if (dir[0] == '-')
     {
       /* XEmacs as a login shell, oh goody! */
-      dir = getenv ("SHELL"); /* not egetenv -- not yet initialized */
+      dir = wext_getenv ("SHELL"); /* not egetenv -- not yet initialized and we
+				      want external-format data */
     }
 
-  p = dir + strlen (dir);
-  while (p != dir && !IS_ANY_SEP (p[-1])) p--;
+  p = dir + wext_strlen (dir);
+  /* !!#### This is bad as it may fail with certain non-ASCII-compatible
+     external formats such as JIS.  Maybe we should be using the mb*()
+     routines in libc?  But can we reliably trust them on all Unix
+     platforms?  (We can't convert to internal since those conversion
+     routines aren't yet initialized) */
+  while (p != dir && !IS_ANY_SEP (p[-1]))
+    p--;
 
   if (p != dir)
     {
       /* invocation-name includes a directory component -- presumably it
 	 is relative to cwd, not $PATH */
-      strcpy (exe_path, dir);
+      wext_strcpy (exe_path, dir);
     }
   else
     {
-      const Extbyte *path = getenv ("PATH"); /* not egetenv -- not yet init. */
-      const Extbyte *name = p;
+      const Wexttext *path = wext_getenv ("PATH"); /* not egetenv --
+						     not yet init. */
+      const Wexttext *name = p;
       for (;;)
 	{
 	  p = path;
@@ -1610,22 +1933,17 @@ pdump_load (const Extbyte *argv0)
 	    }
 	  else
 	    {
-	      memcpy (exe_path, path, p - path);
+	      memcpy (exe_path, path, (p - path) * sizeof (Wexttext));
 	      w = exe_path + (p - path);
 	    }
 	  if (!IS_DIRECTORY_SEP (w[-1]))
-	    {
-	      *w++ = '/';
-	    }
-	  strcpy (w, name);
-
-#undef access /* avoid !@#$%^& encapsulated access */
-#undef stat   /* avoid !@#$%^& encapsulated stat */
+	    *w++ = '/';
+	  wext_strcpy (w, name);
 
 	  {
 	    struct stat statbuf;
-	    if (access (exe_path, X_OK) == 0
-		&& stat (exe_path, &statbuf) == 0
+	    if (wext_access (exe_path, X_OK) == 0
+		&& wext_stat (exe_path, &statbuf) == 0
 		&& ! S_ISDIR (statbuf.st_mode))
 	      break;
 	  }
@@ -1633,7 +1951,7 @@ pdump_load (const Extbyte *argv0)
 	  if (!*p)
 	    {
 	      /* Oh well, let's have some kind of default */
-	      sprintf (exe_path, "./%s", name);
+	      wext_sprintf (exe_path, "./%s", name);
 	      break;
 	    }
 	  path = p+1;

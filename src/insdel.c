@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1991, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -65,19 +65,22 @@ Boston, MA 02111-1307, USA.  */
 #define SET_BUF_END_GAP_SIZE(buf, value) \
   do { (buf)->text->end_gap_size = (value); } while (0)
 
-/* Gap location.  */
-#define BYTE_BUF_GPT(buf) ((buf)->text->gpt + 0)
 #define BUF_GPT_ADDR(buf) (BUF_BEG_ADDR (buf) + BYTE_BUF_GPT (buf) - 1)
 
 /* Set gap location.  */
-#define SET_BYTE_BUF_GPT(buf, value) do { (buf)->text->gpt = (value); } while (0)
-
-/* Set end of buffer.  */
-#define SET_BOTH_BUF_Z(buf, val, bival)		\
+#define SET_BOTH_BUF_GPT(buf, cval, bval)	\
 do						\
 {						\
-  (buf)->text->z = (bival);			\
-  (buf)->text->bufz = (val);			\
+  (buf)->text->gpt = (bval);			\
+  (buf)->text->bufgpt = (cval);			\
+} while (0)
+
+/* Set end of buffer.  */
+#define SET_BOTH_BUF_Z(buf, cval, bval)		\
+do						\
+{						\
+  (buf)->text->z = (bval);			\
+  (buf)->text->bufz = (cval);			\
 } while (0)
 
 /* Under Mule, we maintain two sentinels in the buffer: one at the
@@ -254,10 +257,10 @@ adjust_markers_for_insert (struct buffer *buf, Membpos ind, Bytecount amount)
    bigger.  --ben */
 #define GAP_MOVE_CHUNK 300000
 
-/* Move the gap to POS, which is less than the current GPT. */
+/* Move the gap to CPOS/BPOS, which is less than the current GPT. */
 
 static void
-gap_left (struct buffer *buf, Bytebpos pos)
+gap_left (struct buffer *buf, Charbpos cpos, Bytebpos bpos)
 {
   Ibyte *to, *from;
   Bytecount i;
@@ -275,21 +278,23 @@ gap_left (struct buffer *buf, Bytebpos pos)
   while (1)
     {
       /* I gets number of characters left to copy.  */
-      i = new_s1 - pos;
+      i = new_s1 - bpos;
       if (i == 0)
 	break;
       /* If a quit is requested, stop copying now.
-	 Change POS to be where we have actually moved the gap to.  */
+	 Change BPOS to be where we have actually moved the gap to.  */
       if (QUITP)
 	{
-	  pos = new_s1;
+	  bpos = new_s1;
+	  cpos = bytebpos_to_charbpos (buf, bpos);
 	  break;
 	}
       /* Move at most GAP_MOVE_CHUNK chars before checking again for a quit. */
       if (i > GAP_MOVE_CHUNK)
 	i = GAP_MOVE_CHUNK;
 
-      if (i >= 128)
+      if (i >= 10) /* was 128 but memmove() should be extremely efficient
+		      nowadays */
 	{
 	  new_s1 -= i;
 	  from   -= i;
@@ -304,19 +309,19 @@ gap_left (struct buffer *buf, Bytebpos pos)
 	}
     }
 
-  /* Adjust markers, and buffer data structure, to put the gap at POS.
-     POS is where the loop above stopped, which may be what was specified
+  /* Adjust markers, and buffer data structure, to put the gap at BPOS.
+     BPOS is where the loop above stopped, which may be what was specified
      or may be where a quit was detected.  */
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      adjust_markers (mbuf, pos, BYTE_BUF_GPT (mbuf), BUF_GAP_SIZE (mbuf));
+      adjust_markers (mbuf, bpos, BYTE_BUF_GPT (mbuf), BUF_GAP_SIZE (mbuf));
     }
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      adjust_extents (wrap_buffer (mbuf), pos, BYTE_BUF_GPT (mbuf),
+      adjust_extents (wrap_buffer (mbuf), bpos, BYTE_BUF_GPT (mbuf),
 		      BUF_GAP_SIZE (mbuf));
     }
-  SET_BYTE_BUF_GPT (buf, pos);
+  SET_BOTH_BUF_GPT (buf, cpos, bpos);
   SET_GAP_SENTINEL (buf);
 #ifdef ERROR_CHECK_EXTENTS
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
@@ -328,7 +333,7 @@ gap_left (struct buffer *buf, Bytebpos pos)
 }
 
 static void
-gap_right (struct buffer *buf, Bytebpos pos)
+gap_right (struct buffer *buf, Charbpos cpos, Bytebpos bpos)
 {
   Ibyte *to, *from;
   Bytecount i;
@@ -346,21 +351,23 @@ gap_right (struct buffer *buf, Bytebpos pos)
   while (1)
     {
       /* I gets number of characters left to copy.  */
-      i = pos - new_s1;
+      i = bpos - new_s1;
       if (i == 0)
 	break;
       /* If a quit is requested, stop copying now.
-	 Change POS to be where we have actually moved the gap to.  */
+	 Change BPOS to be where we have actually moved the gap to.  */
       if (QUITP)
 	{
-	  pos = new_s1;
+	  bpos = new_s1;
+	  cpos = bytebpos_to_charbpos (buf, bpos);
 	  break;
 	}
       /* Move at most GAP_MOVE_CHUNK chars before checking again for a quit. */
       if (i > GAP_MOVE_CHUNK)
 	i = GAP_MOVE_CHUNK;
 
-      if (i >= 128)
+      if (i >= 10) /* was 128 but memmove() should be extremely efficient
+		      nowadays */
 	{
 	  new_s1 += i;
 	  memmove (to, from, i);
@@ -379,14 +386,14 @@ gap_right (struct buffer *buf, Bytebpos pos)
     int gsize = BUF_GAP_SIZE (buf);
     MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
       {
-	adjust_markers (mbuf, BYTE_BUF_GPT (mbuf) + gsize, pos + gsize, - gsize);
+	adjust_markers (mbuf, BYTE_BUF_GPT (mbuf) + gsize, bpos + gsize, - gsize);
       }
     MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
       {
 	adjust_extents (wrap_buffer (mbuf), BYTE_BUF_GPT (mbuf) + gsize,
-			pos + gsize, - gsize);
+			bpos + gsize, - gsize);
       }
-    SET_BYTE_BUF_GPT (buf, pos);
+    SET_BOTH_BUF_GPT (buf, cpos, bpos);
     SET_GAP_SENTINEL (buf);
 #ifdef ERROR_CHECK_EXTENTS
     MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
@@ -395,7 +402,7 @@ gap_right (struct buffer *buf, Bytebpos pos)
       }
 #endif
   }
-  if (pos == BYTE_BUF_Z (buf))
+  if (bpos == BYTE_BUF_Z (buf))
     {
       /* merge gap with end gap */
 
@@ -407,18 +414,18 @@ gap_right (struct buffer *buf, Bytebpos pos)
   QUIT;
 }
 
-/* Move gap to position `pos'.
+/* Move gap to position `bpos'.
    Note that this can quit!  */
 
 static void
-move_gap (struct buffer *buf, Bytebpos pos)
+move_gap (struct buffer *buf, Charbpos cpos, Bytebpos bpos)
 {
   if (! BUF_BEG_ADDR (buf))
     abort ();
-  if (pos < BYTE_BUF_GPT (buf))
-    gap_left (buf, pos);
-  else if (pos > BYTE_BUF_GPT (buf))
-    gap_right (buf, pos);
+  if (bpos < BYTE_BUF_GPT (buf))
+    gap_left (buf, cpos, bpos);
+  else if (bpos > BYTE_BUF_GPT (buf))
+    gap_right (buf, cpos, bpos);
 }
 
 /* Merge the end gap into the gap */
@@ -427,7 +434,8 @@ static void
 merge_gap_with_end_gap (struct buffer *buf)
 {
   Lisp_Object tem;
-  Bytebpos real_gap_loc;
+  Charbpos real_gap_loc_char;
+  Bytebpos real_gap_loc_byte;
   Bytecount old_gap_size;
   Bytecount increment;
 
@@ -440,20 +448,23 @@ merge_gap_with_end_gap (struct buffer *buf)
       tem = Vinhibit_quit;
       Vinhibit_quit = Qt;
 
-      real_gap_loc = BYTE_BUF_GPT (buf);
+      real_gap_loc_char = BUF_GPT (buf);
+      real_gap_loc_byte = BYTE_BUF_GPT (buf);
       old_gap_size = BUF_GAP_SIZE (buf);
 
       /* Pretend the end gap is the gap */
-      SET_BYTE_BUF_GPT (buf, BYTE_BUF_Z (buf) + BUF_GAP_SIZE (buf));
+      SET_BOTH_BUF_GPT (buf, BUF_Z (buf) + BUF_GAP_SIZE (buf),
+			BYTE_BUF_Z (buf) + BUF_GAP_SIZE (buf));
       SET_BUF_GAP_SIZE (buf, increment);
 
       /* Move the new gap down to be consecutive with the end of the old one.
 	 This adjusts the markers properly too.  */
-      gap_left (buf, real_gap_loc + old_gap_size);
+      gap_left (buf, real_gap_loc_char + old_gap_size,
+		real_gap_loc_byte + old_gap_size);
 
       /* Now combine the two into one large gap.  */
       SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) + old_gap_size);
-      SET_BYTE_BUF_GPT (buf, real_gap_loc);
+      SET_BOTH_BUF_GPT (buf, real_gap_loc_char, real_gap_loc_byte);
       SET_GAP_SENTINEL (buf);
 
       /* We changed the total size of the buffer (including gap),
@@ -471,7 +482,8 @@ make_gap (struct buffer *buf, Bytecount increment)
 {
   Ibyte *result;
   Lisp_Object tem;
-  Bytebpos real_gap_loc;
+  Charbpos real_gap_loc_char;
+  Bytebpos real_gap_loc_byte;
   Bytecount old_gap_size;
 
   /* If we have to get more space, get enough to last a while.  We use
@@ -508,22 +520,25 @@ make_gap (struct buffer *buf, Bytecount increment)
   tem = Vinhibit_quit;
   Vinhibit_quit = Qt;
 
-  real_gap_loc = BYTE_BUF_GPT (buf);
+  real_gap_loc_char = BUF_GPT (buf);
+  real_gap_loc_byte = BYTE_BUF_GPT (buf);
   old_gap_size = BUF_GAP_SIZE (buf);
 
   /* Call the newly allocated space a gap at the end of the whole space.  */
-  SET_BYTE_BUF_GPT (buf, BYTE_BUF_Z (buf) + BUF_GAP_SIZE (buf));
+  SET_BOTH_BUF_GPT (buf, BUF_Z (buf) + BUF_GAP_SIZE (buf),
+		    BYTE_BUF_Z (buf) + BUF_GAP_SIZE (buf));
   SET_BUF_GAP_SIZE (buf, increment);
 
   SET_BUF_END_GAP_SIZE (buf, 0);
 
   /* Move the new gap down to be consecutive with the end of the old one.
      This adjusts the markers properly too.  */
-  gap_left (buf, real_gap_loc + old_gap_size);
+  gap_left (buf, real_gap_loc_char + old_gap_size,
+	    real_gap_loc_byte + old_gap_size);
 
   /* Now combine the two into one large gap.  */
   SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) + old_gap_size);
-  SET_BYTE_BUF_GPT (buf, real_gap_loc);
+  SET_BOTH_BUF_GPT (buf, real_gap_loc_char, real_gap_loc_byte);
   SET_GAP_SENTINEL (buf);
 
   /* We changed the total size of the buffer (including gap),
@@ -1130,7 +1145,7 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
     /* #### if debug-on-quit is invoked and the user changes the
        buffer, bad things can happen.  This is a rampant problem
        in Emacs. */
-    move_gap (buf, bytepos); /* may QUIT */
+    move_gap (buf, pos, bytepos); /* may QUIT */
   if (! GAP_CAN_HOLD_SIZE_P (buf, length_in_buffer))
     {
       if (BUF_END_GAP_SIZE (buf) >= length_in_buffer)
@@ -1166,7 +1181,8 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
 			     BUF_FORMAT (buf), wrap_buffer (buf), NULL);
   
   SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) - length_in_buffer);
-  SET_BYTE_BUF_GPT (buf, BYTE_BUF_GPT (buf) + length_in_buffer);
+  SET_BOTH_BUF_GPT (buf, BUF_GPT (buf) + cclen,
+		    BYTE_BUF_GPT (buf) + length_in_buffer);
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
       SET_BOTH_BUF_ZV (mbuf, BUF_ZV (mbuf) + cclen,
@@ -1389,9 +1405,9 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
       /* Make sure the gap is somewhere in or next to what we are deleting.  */
       /* NOTE: Can QUIT! */
       if (byte_to < BYTE_BUF_GPT (buf))
-	gap_left (buf, byte_to);
+	gap_left (buf, to, byte_to);
       if (byte_from > BYTE_BUF_GPT (buf))
-	gap_right (buf, byte_from);
+	gap_right (buf, from, byte_from);
       do_move_gap = 1;
     }
 
@@ -1511,7 +1527,7 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
     }
   SET_BOTH_BUF_Z (buf, BUF_Z (buf) - numdel, BYTE_BUF_Z (buf) - byte_numdel);
   if (do_move_gap)
-    SET_BYTE_BUF_GPT (buf, byte_from);
+    SET_BOTH_BUF_GPT (buf, from, byte_from);
   SET_GAP_SENTINEL (buf);
 
 #ifdef MULE
@@ -1753,7 +1769,6 @@ reinit_vars_of_insdel (void)
 void
 vars_of_insdel (void)
 {
-  reinit_vars_of_insdel ();
 }
 
 void
@@ -1767,24 +1782,22 @@ init_buffer_text (struct buffer *b)
 	memory_full ();
 
       SET_BUF_END_GAP_SIZE (b, 0);
-      SET_BYTE_BUF_GPT (b, 1);
+      SET_BOTH_BUF_GPT (b, 1, 1);
       SET_BOTH_BUF_Z (b, 1, 1);
       SET_GAP_SENTINEL (b);
       SET_END_SENTINEL (b);
+
 #ifdef MULE
-      {
-	int i;
+      b->text->entirely_one_byte_p = 1;
 
-	b->text->mule_bufmin = b->text->mule_bufmax = 1;
-	b->text->mule_bytmin = b->text->mule_bytmax = 1;
-	b->text->entirely_one_byte_p = 1;
+#ifdef OLD_BYTE_CHAR
+      b->text->mule_bufmin = b->text->mule_bufmax = 1;
+      b->text->mule_bytmin = b->text->mule_bytmax = 1;
+#endif
 
-	for (i = 0; i < 16; i++)
-	  {
-	    b->text->mule_charbpos_cache[i] = 1;
-	    b->text->mule_bytebpos_cache[i] = 1;
-	  }
-      }
+      b->text->cached_charpos = 1;
+      b->text->cached_bytepos = 1;
+
       /* &&#### Set to FORMAT_8_BIT_FIXED when that code is working */
       BUF_FORMAT (b) = FORMAT_DEFAULT;
 #endif /* MULE */

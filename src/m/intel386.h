@@ -115,8 +115,6 @@ NOTE-END */
 
 #define NO_REMAP
 
-#define STACK_DIRECTION -1
-
 /* Since cannot purify, use standard Xenix 386 startup code. */
 
 #define START_FILES "/lib/386/Sseg.o pre-crt0.o /lib/386/Scrt0.o"
@@ -143,12 +141,4 @@ NOTE-END */
 #define ULIMIT_BREAK_VALUE (32*1024*1024)
 
 #define SEGMENT_MASK ((SEGMENT_SIZE)-1)
-#endif
-
-#ifdef __GNUC__
-/* GCC's alloca() is semi-broken.  See lisp.h.
-
-   This brokenness has been confirmed under both Linux and NetBSD.
-   It may also exist on non-Intel architectures. */
-#define BROKEN_ALLOCA_IN_FUNCTION_CALLS
 #endif

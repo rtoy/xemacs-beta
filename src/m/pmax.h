@@ -48,11 +48,6 @@ NOTE-END  */
    and it causes hanging in read_process_output.  */
 #define BROKEN_O_NONBLOCK
 
-#if defined (OSF1) || defined (MACH)
-#undef C_ALLOCA
-#define HAVE_ALLOCA
-#endif
-
 /* mcc@timessqr.gc.cuny.edu says this makes Emacs work with DECnet.  */
 #ifdef HAVE_LIBDNET
 #define LIBS_MACHINE "-ldnet"

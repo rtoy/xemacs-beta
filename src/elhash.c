@@ -453,9 +453,9 @@ static const struct sized_memory_description htentry_description = {
 static const struct memory_description htentry_union_description_1[] = {
   /* Note: XD_INDIRECT in this table refers to the surrounding table,
      and so this will work. */
-  { XD_STRUCT_PTR, HASH_TABLE_NON_WEAK, XD_INDIRECT (0, 1),
+  { XD_BLOCK_PTR, HASH_TABLE_NON_WEAK, XD_INDIRECT (0, 1),
     &htentry_description },
-  { XD_STRUCT_PTR, 0, XD_INDIRECT (0, 1), &htentry_description,
+  { XD_BLOCK_PTR, 0, XD_INDIRECT (0, 1), &htentry_description,
     XD_FLAG_UNION_DEFAULT_ENTRY | XD_FLAG_NO_KKCC },
   { XD_END }
 };

@@ -952,9 +952,9 @@ static const struct sized_memory_description ccsd_description =
 static const struct memory_description iso2022_coding_system_description[] = {
   { XD_LISP_OBJECT_ARRAY, offsetof (struct iso2022_coding_system, 
 				    initial_charset), 4 },
-  { XD_STRUCT_PTR, offsetof (struct iso2022_coding_system, input_conv),
+  { XD_BLOCK_PTR, offsetof (struct iso2022_coding_system, input_conv),
     1, &ccsd_description },
-  { XD_STRUCT_PTR, offsetof (struct iso2022_coding_system, output_conv),
+  { XD_BLOCK_PTR, offsetof (struct iso2022_coding_system, output_conv),
     1, &ccsd_description },
   { XD_END }
 };
@@ -1274,46 +1274,7 @@ charset_by_attributes_or_create_one (int type, Ibyte final, int dir)
    or invocation of an invalid character set and treat that as
    an unrecognized escape sequence.
 
-   ********************************************************************
-
-   #### Strategies for error annotation and coding orthogonalization
-
-   We really want to separate out a number of things.  Conceptually,
-   there is a nested syntax.
-
-   At the top level is the ISO 2022 extension syntax, including charset
-   designation and invocation, and certain auxiliary controls such as the
-   ISO 6429 direction specification.  These are octet-oriented, with the
-   single exception (AFAIK) of the "exit Unicode" sequence which uses the
-   UTF's natural width (1 byte for UTF-7 and UTF-8, 2 bytes for UCS-2 and
-   UTF-16, and 4 bytes for UCS-4 and UTF-32).  This will be treated as a
-   (deprecated) special case in Unicode processing.
-
-   The middle layer is ISO 2022 character interpretation.  This will depend
-   on the current state of the ISO 2022 registers, and assembles octets
-   into the character's internal representation.
-
-   The lowest level is translating system control conventions.  At present
-   this is restricted to newline translation, but one could imagine doing
-   tab conversion or line wrapping here.  "Escape from Unicode" processing
-   would be done at this level.
-
-   At each level the parser will verify the syntax.  In the case of a
-   syntax error or warning (such as a redundant escape sequence that affects
-   no characters), the parser will take some action, typically inserting the
-   erroneous octets directly into the output and creating an annotation
-   which can be used by higher level I/O to mark the affected region.
-
-   This should make it possible to do something sensible about separating
-   newline convention processing from character construction, and about
-   preventing ISO 2022 escape sequences from being recognized
-   inappropriately.
-
-   The basic strategy will be to have octet classification tables, and
-   switch processing according to the table entry.
-
-   It's possible that, by doing the processing with tables of functions or
-   the like, the parser can be used for both detection and translation. */
+*/
 
 static int
 parse_iso2022_esc (Lisp_Object codesys, struct iso2022_coding_stream *iso,
@@ -2480,11 +2441,8 @@ static void
 parse_charset_conversion_specs (charset_conversion_spec_dynarr *store_here,
 				Lisp_Object spec_list)
 {
-  Lisp_Object rest;
-
-  EXTERNAL_LIST_LOOP (rest, spec_list)
+  EXTERNAL_LIST_LOOP_2 (car, spec_list)
     {
-      Lisp_Object car = XCAR (rest);
       Lisp_Object from, to;
       struct charset_conversion_spec spec;
 
@@ -3078,7 +3036,7 @@ ccl_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 {
   Lisp_Object sym;
   struct ccl_program test_ccl;
-  Char_ASCII *suffix;
+  Ascbyte *suffix;
 
   /* Check key first.  */
   if (EQ (key, Qdecode))

@@ -1,6 +1,6 @@
 /* File IO for XEmacs.
    Copyright (C) 1985-1988, 1992-1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -267,7 +267,7 @@ Otherwise, OPERATION is the name of a funcall'able function.
   /* This function does not GC */
   /* This function can be called during GC */
   /* This function must not munge the match data.  */
-  Lisp_Object chain, inhibited_handlers;
+  Lisp_Object inhibited_handlers;
 
   CHECK_STRING (filename);
 
@@ -276,22 +276,22 @@ Otherwise, OPERATION is the name of a funcall'able function.
   else
     inhibited_handlers = Qnil;
 
-  EXTERNAL_LIST_LOOP (chain, Vfile_name_handler_alist)
-    {
-      Lisp_Object elt = XCAR (chain);
-      if (CONSP (elt))
-	{
-	  Lisp_Object string = XCAR (elt);
-	  if (STRINGP (string)
-	      && (fast_lisp_string_match (string, filename) >= 0))
-	    {
-	      Lisp_Object handler = XCDR (elt);
-	      if (NILP (Fmemq (handler, inhibited_handlers)))
-		return handler;
-	    }
-	}
-      QUIT;
-    }
+  {
+    EXTERNAL_LIST_LOOP_2 (elt, Vfile_name_handler_alist)
+      {
+	if (CONSP (elt))
+	  {
+	    Lisp_Object string = XCAR (elt);
+	    if (STRINGP (string)
+		&& (fast_lisp_string_match (string, filename) >= 0))
+	      {
+		Lisp_Object handler = XCDR (elt);
+		if (NILP (Fmemq (handler, inhibited_handlers)))
+		  return handler;
+	      }
+	  }
+      }
+  }
   return Qnil;
 }
 
@@ -373,8 +373,7 @@ Given a Unix syntax file name, returns a string ending in slash.
       Ibyte *res;
       Ibyte *wd = mswindows_getdcwd (toupper (*beg) - 'A' + 1);
       
-      res = alloca_array (Ibyte,
-			  (wd ? qxestrlen (wd) : 0) + 10); /* go overboard */
+      res = alloca_ibytes ((wd ? qxestrlen (wd) : 0) + 10); /* go overboard */
       res[0] = '\0';
       if (p == beg + 4 && IS_DIRECTORY_SEP (*beg) && beg[1] == ':')
 	{
@@ -576,7 +575,7 @@ In Unix-syntax, this function just removes the final slash.
   handler = Ffind_file_name_handler (directory, Qdirectory_file_name);
   if (!NILP (handler))
     return call2_check_string (handler, Qdirectory_file_name, directory);
-  buf = (Ibyte *) ALLOCA (XSTRING_LENGTH (directory) + 20);
+  buf = alloca_ibytes (XSTRING_LENGTH (directory) + 20);
   directory_file_name (XSTRING_DATA (directory), buf);
   return build_intstring (buf);
 }
@@ -978,7 +977,7 @@ See also the function `substitute-in-file-name'.
 	{
 	  for (p = nm; *p && (!IS_DIRECTORY_SEP (*p)); p++)
 	    DO_NOTHING;
-	  o = (Ibyte *) ALLOCA (p - nm + 1);
+	  o = alloca_ibytes (p - nm + 1);
 	  memcpy (o, nm, p - nm);
 	  o [p - nm] = 0;
 
@@ -1048,7 +1047,7 @@ See also the function `substitute-in-file-name'.
       if (!newdir)
 	{
 	  /* Either nm starts with /, or drive isn't mounted. */
-	  newdir = (Ibyte *) ALLOCA (4);
+	  newdir = alloca_ibytes (4);
 	  newdir[0] = DRIVE_LETTER (drive);
 	  newdir[1] = ':';
 	  newdir[2] = '/';
@@ -1112,8 +1111,8 @@ See also the function `substitute-in-file-name'.
 	    }
 	  if (!IS_DIRECTORY_SEP (nm[0]))
 	    {
-	      Ibyte *tmp = (Ibyte *) ALLOCA (qxestrlen (newdir) +
-						 qxestrlen (nm) + 2);
+	      Ibyte *tmp = alloca_ibytes (qxestrlen (newdir) +
+					  qxestrlen (nm) + 2);
 	      file_name_as_directory (tmp, newdir);
 	      qxestrcat (tmp, nm);
 	      nm = tmp;
@@ -1152,10 +1151,9 @@ See also the function `substitute-in-file-name'.
 	{
 	  if (IS_DIRECTORY_SEP (newdir[0]) && IS_DIRECTORY_SEP (newdir[1]))
 	    {
-	      newdir =
-		(Ibyte *)
-		  qxestrcpy ((Ibyte *) ALLOCA (qxestrlen (newdir) + 1),
-			     newdir);
+	      /* !!#### Use ei API */
+	      newdir = qxestrcpy (alloca_ibytes (qxestrlen (newdir) + 1),
+				  newdir);
 	      p = newdir + 2;
 	      while (*p && !IS_DIRECTORY_SEP (*p)) p++;
 	      p++;
@@ -1179,7 +1177,7 @@ See also the function `substitute-in-file-name'.
 #endif
 	  )
 	{
-	  Ibyte *temp = (Ibyte *) ALLOCA (length);
+	  Ibyte *temp = alloca_ibytes (length);
 	  memcpy (temp, newdir, length - 1);
 	  temp[length - 1] = 0;
 	  newdir = temp;
@@ -1195,10 +1193,10 @@ See also the function `substitute-in-file-name'.
   /* Reserve space for drive specifier and escape prefix, since either
      or both may need to be inserted.  (The Microsoft x86 compiler
      produces incorrect code if the following two lines are combined.)  */
-  target = (Ibyte *) ALLOCA (tlen + 4);
+  target = alloca_ibytes (tlen + 4);
   target += 4;
 #else  /* not WIN32_FILENAMES */
-  target = (Ibyte *) ALLOCA (tlen);
+  target = alloca_ibytes (tlen);
 #endif /* not WIN32_FILENAMES */
   *target = 0;
 
@@ -1562,7 +1560,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  }
 
 	/* Copy out the variable name */
-	target = (Ibyte *) ALLOCA (s - o + 1);
+	target = alloca_ibytes (s - o + 1);
 	qxestrncpy (target, o, s - o);
 	target[s - o] = 0;
 #ifdef WIN32_NATIVE
@@ -1581,7 +1579,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 
   /* If substitution required, recopy the filename and do it */
   /* Make space in stack frame for the new copy */
-  xnm = (Ibyte *) ALLOCA (XSTRING_LENGTH (filename) + total + 1);
+  xnm = alloca_ibytes (XSTRING_LENGTH (filename) + total + 1);
   x = xnm;
 
   /* Copy the rest of the name through, replacing $ constructs with values */
@@ -1613,7 +1611,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  }
 
 	/* Copy out the variable name */
-	target = (Ibyte *) ALLOCA (s - o + 1);
+	target = alloca_ibytes (s - o + 1);
 	qxestrncpy (target, o, s - o);
 	target[s - o] = 0;
 #ifdef WIN32_NATIVE
@@ -3137,22 +3135,16 @@ under Mule, is very difficult.)
 
   if (inserted > 0)
     {
-      Lisp_Object p;
-      struct gcpro ngcpro1;
-
-      NGCPRO1 (p);
-      EXTERNAL_LIST_LOOP (p, Vafter_insert_file_functions)
+      GC_EXTERNAL_LIST_LOOP_2 (p, Vafter_insert_file_functions)
 	{
-	  Lisp_Object insval =
-	    call1 (XCAR (p), make_int (inserted));
+	  Lisp_Object insval = call1 (p, make_int (inserted));
 	  if (!NILP (insval))
 	    {
 	      CHECK_NATNUM (insval);
 	      inserted = XINT (insval);
 	    }
-	  QUIT;
 	}
-      NUNGCPRO;
+      END_GC_EXTERNAL_LIST_LOOP (p);
     }
 
   UNGCPRO;
@@ -3666,6 +3658,7 @@ Encrypt STRING using KEY.
 */
        (string, key))
 {
+  /* !!#### Needs work */
   Extbyte *encrypted_string, *raw_key;
   Extbyte *string_ext, *key_ext;
   Bytecount string_size_ext, key_size_ext, rounded_size, extra, key_size;
@@ -4405,8 +4398,6 @@ on other platforms, it is initialized so that Lisp code can find out
 what the normal separator is.
 */ );
   Vdirectory_sep_char = make_char (DEFAULT_DIRECTORY_SEP);
-
-  reinit_vars_of_fileio ();
 }
 
 void

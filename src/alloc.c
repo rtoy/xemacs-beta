@@ -1,7 +1,7 @@
 /* Storage allocation and gc for XEmacs Lisp interpreter.
    Copyright (C) 1985-1998 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -196,7 +196,7 @@ Lisp_Object Vpost_gc_hook, Qpost_gc_hook;
 /* "Garbage collecting" */
 Lisp_Object Vgc_message;
 Lisp_Object Vgc_pointer_glyph;
-static const Char_ASCII gc_default_message[] = "Garbage collecting";
+static const Ascbyte gc_default_message[] = "Garbage collecting";
 Lisp_Object Qgarbage_collecting;
 
 static Lisp_Object QSin_garbage_collection;
@@ -311,29 +311,74 @@ set_alloc_mins_and_maxes (void *val, Bytecount size)
     minimum_address_seen = (char *) val;
 }
 
-/* like malloc and realloc but check for no memory left. */
-
 #ifdef ERROR_CHECK_MALLOC
 static int in_malloc;
 extern int regex_malloc_disallowed;
-#endif
+
+#define MALLOC_BEGIN()				\
+do						\
+{						\
+  assert (!in_malloc);				\
+  assert (!regex_malloc_disallowed);		\
+  in_malloc = 1;				\
+}						\
+while (0)
+
+#define FREE_OR_REALLOC_BEGIN(block)					\
+do									\
+{									\
+  /* Unbelievably, calling free() on 0xDEADBEEF doesn't cause an	\
+     error until much later on for many system mallocs, such as		\
+     the one that comes with Solaris 2.3.  FMH!! */			\
+  assert (block != (void *) 0xDEADBEEF);				\
+  /* You cannot free something within dumped space, because there is	\
+     no longer any sort of malloc structure associated with the block.	\
+     If you are tripping this, you may need to conditionalize on	\
+     DUMPEDP. */							\
+  assert (!DUMPEDP (block));						\
+  MALLOC_BEGIN ();							\
+}									\
+while (0)
+
+#define MALLOC_END()				\
+do						\
+{						\
+  in_malloc = 0;				\
+}						\
+while (0)
+
+#else /* ERROR_CHECK_MALLOC */
+
+#define MALLOC_BEGIN(block)
+#define FREE_OR_REALLOC_BEGIN(block)
+#define MALLOC_END()
+
+#endif /* ERROR_CHECK_MALLOC */
+
+static void
+malloc_after (void *val, Bytecount size)
+{
+  if (!val && size != 0)
+    memory_full ();
+  set_alloc_mins_and_maxes (val, size);
+}
+
+/* like malloc, calloc, realloc, free but:
+
+   -- check for no memory left
+   -- set internal mins and maxes
+   -- with error-checking on, check for reentrancy, invalid freeing, etc.
+*/
 
 #undef xmalloc
 void *
 xmalloc (Bytecount size)
 {
   void *val;
-#ifdef ERROR_CHECK_MALLOC
-  assert (!in_malloc);
-  assert (!regex_malloc_disallowed);
-  in_malloc = 1;
-#endif
+  MALLOC_BEGIN ();
   val = malloc (size);
-#ifdef ERROR_CHECK_MALLOC
-  in_malloc = 0;
-#endif
-  if (!val && (size != 0)) memory_full ();
-  set_alloc_mins_and_maxes (val, size);
+  MALLOC_END ();
+  malloc_after (val, size);
   return val;
 }
 
@@ -342,18 +387,10 @@ static void *
 xcalloc (Elemcount nelem, Bytecount elsize)
 {
   void *val;
-#ifdef ERROR_CHECK_MALLOC
-  assert (!in_malloc);
-  assert (!regex_malloc_disallowed);
-  in_malloc = 1;
-#endif
+  MALLOC_BEGIN ();
   val= calloc (nelem, elsize);
-#ifdef ERROR_CHECK_MALLOC
-  in_malloc = 0;
-#endif
-
-  if (!val && (nelem != 0)) memory_full ();
-  set_alloc_mins_and_maxes (val, nelem * elsize);
+  MALLOC_END ();
+  malloc_after (val, nelem * elsize);
   return val;
 }
 
@@ -367,18 +404,10 @@ xmalloc_and_zero (Bytecount size)
 void *
 xrealloc (void *block, Bytecount size)
 {
-#ifdef ERROR_CHECK_MALLOC
-  assert (!in_malloc);
-  assert (!regex_malloc_disallowed);
-  in_malloc = 1;
-#endif
+  FREE_OR_REALLOC_BEGIN (block);
   block = realloc (block, size);
-#ifdef ERROR_CHECK_MALLOC
-  in_malloc = 0;
-#endif
-
-  if (!block && (size != 0)) memory_full ();
-  set_alloc_mins_and_maxes (block, size);
+  MALLOC_END ();
+  malloc_after (block, size);
   return block;
 }
 
@@ -386,19 +415,11 @@ void
 xfree_1 (void *block)
 {
 #ifdef ERROR_CHECK_MALLOC
-  /* Unbelievably, calling free() on 0xDEADBEEF doesn't cause an
-     error until much later on for many system mallocs, such as
-     the one that comes with Solaris 2.3.  FMH!! */
-  assert (block != (void *) 0xDEADBEEF);
   assert (block);
-  assert (!in_malloc);
-  assert (!regex_malloc_disallowed);
-  in_malloc = 1;
 #endif /* ERROR_CHECK_MALLOC */
+  FREE_OR_REALLOC_BEGIN (block);
   free (block);
-#ifdef ERROR_CHECK_MALLOC
-  in_malloc = 0;
-#endif
+  MALLOC_END ();
 }
 
 #ifdef ERROR_CHECK_GC
@@ -953,6 +974,7 @@ typedef struct Lisp_Free
 #define FREE_FIXED_TYPE(type, structtype, ptr) do {		\
   structtype *FFT_ptr = (ptr);					\
   gc_checking_assert (!LRECORD_FREE_P (FFT_ptr));		\
+  gc_checking_assert (!DUMPEDP (FFT_ptr));			\
   ADDITIONAL_FREE_##type (FFT_ptr);				\
   deadbeef_memory (FFT_ptr, sizeof (structtype));		\
   PUT_FIXED_TYPE_ON_FREE_LIST (type, structtype, FFT_ptr);	\
@@ -2498,7 +2520,7 @@ Concatenate all the argument characters and make the result a string.
 */
        (int nargs, Lisp_Object *args))
 {
-  Ibyte *storage = alloca_array (Ibyte, nargs * MAX_ICHAR_LEN);
+  Ibyte *storage = alloca_ibytes (nargs * MAX_ICHAR_LEN);
   Ibyte *p = storage;
 
   for (; nargs; nargs--, args++)
@@ -2583,7 +2605,9 @@ Lisp_Object
 build_ext_string (const Extbyte *str, Lisp_Object coding_system)
 {
   /* Some strlen's crash and burn if passed null. */
-  return make_ext_string ((const Extbyte *) str, (str ? strlen(str) : 0),
+  return make_ext_string ((const Extbyte *) str,
+			  (str ? dfc_external_data_len (str, coding_system) :
+			   0),
 			  coding_system);
 }
 
@@ -2792,6 +2816,9 @@ free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord)
   gc_checking_assert (detagged_lisp_object_size (lheader) == list->size);
   /* Make sure the object isn't already freed. */
   gc_checking_assert (!free_header->lcheader.free);
+  /* Freeing stuff in dumped memory is bad.  If you trip this, you
+     may need to check for this before freeing. */
+  gc_checking_assert (!OBJECT_DUMPED_P (lcrecord));
   
   if (implementation->finalizer)
     implementation->finalizer (lheader, 0);
@@ -2891,7 +2918,7 @@ static const struct sized_memory_description staticpros_description = {
 #ifdef DEBUG_XEMACS
 
 static const struct memory_description staticpro_one_name_description_1[] = {
-  { XD_C_STRING, 0 },
+  { XD_ASCII_STRING, 0 },
   { XD_END }
 };
 
@@ -3114,17 +3141,17 @@ lispdesc_one_description_line_size (void *rdata,
       return sizeof (Lisp_Object);
     case XD_OPAQUE_PTR:
       return sizeof (void *);
-    case XD_STRUCT_PTR:
+    case XD_BLOCK_PTR:
       {
 	EMACS_INT val = lispdesc_indirect_count (desc1->data1, desc, obj);
 	return val * sizeof (void *);
       }
-    case XD_STRUCT_ARRAY:
+    case XD_BLOCK_ARRAY:
       {
 	EMACS_INT val = lispdesc_indirect_count (desc1->data1, desc, obj);
 	    
 	return (val *
-		lispdesc_structure_size
+		lispdesc_block_size
 		(rdata, lispdesc_indirect_description (obj, desc1->data2)));
       }
     case XD_OPAQUE_DATA_PTR:
@@ -3173,7 +3200,7 @@ lispdesc_one_description_line_size (void *rdata,
 	    return max_size;
 	  }
       }
-    case XD_C_STRING:
+    case XD_ASCII_STRING:
       return sizeof (void *);
     case XD_DOC_STRING:
       return sizeof (void *);
@@ -3217,18 +3244,15 @@ lispdesc_one_description_line_size (void *rdata,
    i.e. by trapping SIGSEGV and SIGBUS.) */
 
 Bytecount
-lispdesc_structure_size (const void *obj,
-			 const struct sized_memory_description *sdesc)
+lispdesc_block_size_1 (const void *obj, Bytecount size,
+		       const struct memory_description *desc)
 {
   EMACS_INT max_offset = -1;
   int max_offset_pos = -1;
   int pos;
-  const struct memory_description *desc;
 
-  if (sdesc->size)
-    return sdesc->size;
-
-  desc = sdesc->description;
+  if (size)
+    return size;
 
   for (pos = 0; desc[pos].type != XD_END; pos++)
     {
@@ -3405,7 +3429,7 @@ mark_struct_contents (const void *data,
 {
   int i;
   Bytecount elsize;
-  elsize = lispdesc_structure_size (data, sdesc);
+  elsize = lispdesc_block_size (data, sdesc);
 
   for (i = 0; i < count; i++)
     {
@@ -3454,7 +3478,7 @@ kkcc_marking (void)
 	    case XD_LO_LINK:
 	    case XD_OPAQUE_PTR:
 	    case XD_OPAQUE_DATA_PTR:
-	    case XD_C_STRING:
+	    case XD_ASCII_STRING:
 	    case XD_DOC_STRING:
 	      break;
 	    case XD_LISP_OBJECT: 
@@ -3491,7 +3515,7 @@ kkcc_marking (void)
 		  }
 		break;
 	      }
-	    case XD_STRUCT_PTR:
+	    case XD_BLOCK_PTR:
 	      {
 		EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 							   data);
@@ -3502,7 +3526,7 @@ kkcc_marking (void)
 		  mark_struct_contents (dobj, sdesc, count);
 		break;
 	      }
-	    case XD_STRUCT_ARRAY:
+	    case XD_BLOCK_ARRAY:
 	      {
 		EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 							   data);
@@ -4669,7 +4693,7 @@ garbage_collect_1 (void)
   /***** Now we actually start the garbage collection. */
 
   gc_in_progress = 1;
-  inhibit_non_essential_printing_operations = 1;
+  inhibit_non_essential_conversion_operations = 1;
 
   gc_generation_number[0]++;
 
@@ -4833,7 +4857,7 @@ garbage_collect_1 (void)
 #endif
   recompute_need_to_garbage_collect ();
 
-  inhibit_non_essential_printing_operations = 0;
+  inhibit_non_essential_conversion_operations = 0;
   gc_in_progress = 0;
 
   run_post_gc_actions ();
@@ -4887,7 +4911,7 @@ garbage_collect_1 (void)
 /* Debugging aids.  */
 
 static Lisp_Object
-gc_plist_hack (const Char_ASCII *name, int value, Lisp_Object tail)
+gc_plist_hack (const Ascbyte *name, int value, Lisp_Object tail)
 {
   /* C doesn't have local functions (or closures, or GC, or readable syntax,
      or portable numeric datatypes, or bit-vectors, or characters, or
@@ -5394,11 +5418,11 @@ init_alloc_once_early (void)
 
   staticpros = Dynarr_new2 (Lisp_Object_ptr_dynarr, Lisp_Object *);
   Dynarr_resize (staticpros, 1410); /* merely a small optimization */
-  dump_add_root_struct_ptr (&staticpros, &staticpros_description);
+  dump_add_root_block_ptr (&staticpros, &staticpros_description);
 #ifdef DEBUG_XEMACS
   staticpro_names = Dynarr_new2 (char_ptr_dynarr, char *);
   Dynarr_resize (staticpro_names, 1410); /* merely a small optimization */
-  dump_add_root_struct_ptr (&staticpro_names, &staticpro_names_description);
+  dump_add_root_block_ptr (&staticpro_names, &staticpro_names_description);
 #endif
 
   init_lcrecord_lists ();

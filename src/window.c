@@ -170,7 +170,7 @@ static const struct sized_memory_description int_dynarr_description = {
 };
 
 static const struct memory_description face_cachel_description_1[] = {
-  { XD_STRUCT_PTR, offsetof (face_cachel, merged_faces),
+  { XD_BLOCK_PTR, offsetof (face_cachel, merged_faces),
     1, &int_dynarr_description },
   { XD_LISP_OBJECT, offsetof (face_cachel, face) },
   { XD_LISP_OBJECT, offsetof (face_cachel, foreground) },
@@ -241,11 +241,11 @@ static const struct memory_description window_description [] = {
   { XD_LISP_OBJECT_ARRAY, offsetof (struct window, slot), size },
 #include "winslots.h"
 
-  { XD_STRUCT_PTR, offsetof (struct window, face_cachels),
+  { XD_BLOCK_PTR, offsetof (struct window, face_cachels),
     1, &face_cachel_dynarr_description },
-  { XD_STRUCT_PTR, offsetof (struct window, glyph_cachels),
+  { XD_BLOCK_PTR, offsetof (struct window, glyph_cachels),
     1, &glyph_cachel_dynarr_description },
-  { XD_STRUCT_PTR, offsetof (struct window, line_start_cache),
+  { XD_BLOCK_PTR, offsetof (struct window, line_start_cache),
     1, &line_start_cache_dynarr_description },
   { XD_END }
 };
@@ -422,9 +422,9 @@ static const struct memory_description window_mirror_description [] = {
   { XD_LISP_OBJECT, offsetof (struct window_mirror, hchild) },
   { XD_LISP_OBJECT, offsetof (struct window_mirror, vchild) },
 
-  { XD_STRUCT_PTR, offsetof (struct window_mirror, current_display_lines),
+  { XD_BLOCK_PTR, offsetof (struct window_mirror, current_display_lines),
     1, &display_line_dynarr_description },
-  { XD_STRUCT_PTR, offsetof (struct window_mirror, desired_display_lines),
+  { XD_BLOCK_PTR, offsetof (struct window_mirror, desired_display_lines),
     1, &display_line_dynarr_description },
 
   { XD_LISP_OBJECT, offsetof (struct window_mirror, buffer) },
@@ -5488,8 +5488,6 @@ reinit_vars_of_window (void)
 void
 vars_of_window (void)
 {
-  reinit_vars_of_window ();
-
   DEFVAR_BOOL ("scroll-on-clipped-lines", &scroll_on_clipped_lines /*
 *Non-nil means to scroll if point lands on a line which is clipped.
 */ );

@@ -361,6 +361,7 @@ Return nil if error occurs.
       return Qnil;
     }
   size = XSTRING_LENGTH (lname) > 1024 ? 1026 : XSTRING_LENGTH (lname) + 2;
+  /* !!#### */
   envname = (char *) ALLOCA (size);
   strncpy (envname, (char *) XSTRING_DATA (lname), size-2);
   envname[size-2] = '\0';
@@ -1890,8 +1891,6 @@ reinit_vars_of_mule_wnn (void)
 void
 vars_of_mule_wnn (void)
 {
-  reinit_vars_of_mule_wnn ();
-
   DEFVAR_INT ("lb-sisheng", &lb_sisheng /*
 Leading character for Sisheng.
 */ );

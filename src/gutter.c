@@ -1065,11 +1065,9 @@ gutter_visible_validate (Lisp_Object instantiator)
 
   if (CONSP (instantiator))
     {
-      Lisp_Object rest;
-
-      EXTERNAL_LIST_LOOP (rest, instantiator)
+      EXTERNAL_LIST_LOOP_2 (elt, instantiator)
 	{
-	  if (!SYMBOLP (XCAR (rest)))
+	  if (!SYMBOLP (elt))
 	      invalid_argument ("Gutter visibility must be a boolean or list of symbols",
 				   instantiator);
 	}

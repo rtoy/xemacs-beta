@@ -65,7 +65,7 @@ static specifier_type_entry_dynarr *the_specifier_type_entry_dynarr;
 
 static const struct memory_description ste_description_1[] = {
   { XD_LISP_OBJECT, offsetof (specifier_type_entry, symbol) },
-  { XD_STRUCT_PTR,  offsetof (specifier_type_entry, meths), 1,
+  { XD_BLOCK_PTR,  offsetof (specifier_type_entry, meths), 1,
     &specifier_methods_description },
   { XD_END }
 };
@@ -396,7 +396,7 @@ static const struct sized_memory_description specifier_extra_description_map[]
 };
 
 const struct memory_description specifier_description[] = {
-  { XD_STRUCT_PTR,  offsetof (Lisp_Specifier, methods), 1,
+  { XD_BLOCK_PTR,  offsetof (Lisp_Specifier, methods), 1,
     &specifier_methods_description },
   { XD_LO_LINK,     offsetof (Lisp_Specifier, next_specifier) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, global_specs) },
@@ -404,11 +404,11 @@ const struct memory_description specifier_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, frame_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, window_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, buffer_specs) },
-  { XD_STRUCT_PTR,  offsetof (Lisp_Specifier, caching), 1,
+  { XD_BLOCK_PTR,  offsetof (Lisp_Specifier, caching), 1,
     &specifier_caching_description },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, magic_parent) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, fallback) },
-  { XD_STRUCT_ARRAY, offsetof (Lisp_Specifier, data), 1,
+  { XD_BLOCK_ARRAY, offsetof (Lisp_Specifier, data), 1,
     specifier_extra_description_map },
   { XD_END }
 };
@@ -3183,10 +3183,8 @@ display_table_validate (Lisp_Object instantiator)
     ;
   else if (CONSP (instantiator))
     {
-      Lisp_Object tail;
-      EXTERNAL_LIST_LOOP (tail, instantiator)
+      EXTERNAL_LIST_LOOP_2 (car, instantiator)
 	{
-	  Lisp_Object car = XCAR (tail);
 	  if (!VALID_SINGLE_DISPTABLE_INSTANTIATOR_P (car))
 	    goto lose;
 	}
@@ -3295,7 +3293,7 @@ void
 specifier_type_create (void)
 {
   the_specifier_type_entry_dynarr = Dynarr_new (specifier_type_entry);
-  dump_add_root_struct_ptr (&the_specifier_type_entry_dynarr, &sted_description);
+  dump_add_root_block_ptr (&the_specifier_type_entry_dynarr, &sted_description);
 
   Vspecifier_type_list = Qnil;
   staticpro (&Vspecifier_type_list);

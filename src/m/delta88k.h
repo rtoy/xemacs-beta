@@ -51,25 +51,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define NO_REMAP
 
-/* Define C_ALLOCA if this machine does not support a true alloca
-   and the one written in C should be used instead.
-   Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used.
-   Define neither one if an assembler-language alloca
-   in the file alloca.s should be used.  */
-
-/* BEM:  Distributed asm alloca doesn't work.  Don't know about libPW.a.
-   C ALLOCA is safe and fast enough for now. */
-
-#ifdef __GNUC__
-#define HAVE_ALLOCA   /* ... and be sure that no other ones are tried out. */
-#undef C_ALLOCA
-#else /* not __GNUC__ */
-#undef HAVE_ALLOCA
-#define C_ALLOCA      /* Use the alloca() supplied in alloca.c. */
-#define STACK_DIRECTION -1  /* The stack grows towards lower addresses. */
-#endif /* __GNUC__ */
-
 /*
  * we have the wrong name for networking libs
  */

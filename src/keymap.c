@@ -1320,13 +1320,13 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	     accept these as aliases for the "real" names?
 	     */
 	  (XSTRING_LENGTH (XSYMBOL (*keysym)->name) <= 3 &&
-	   (!qxestrcmp_c (name, "LFD") ||
-	    !qxestrcmp_c (name, "TAB") ||
-	    !qxestrcmp_c (name, "RET") ||
-	    !qxestrcmp_c (name, "ESC") ||
-	    !qxestrcmp_c (name, "DEL") ||
-	    !qxestrcmp_c (name, "SPC") ||
-	    !qxestrcmp_c (name, "BS")))
+	   (!qxestrcmp_ascii (name, "LFD") ||
+	    !qxestrcmp_ascii (name, "TAB") ||
+	    !qxestrcmp_ascii (name, "RET") ||
+	    !qxestrcmp_ascii (name, "ESC") ||
+	    !qxestrcmp_ascii (name, "DEL") ||
+	    !qxestrcmp_ascii (name, "SPC") ||
+	    !qxestrcmp_ascii (name, "BS")))
 #endif /* unused */
           )
 	invalid_argument
@@ -1338,7 +1338,7 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	 otherwise have the same problem as above.  (Gag!)  We silently
 	 accept these as aliases for the "real" names.
 	 */
-      else if (!qxestrncmp_c (name, "kp_", 3))
+      else if (!qxestrncmp_ascii (name, "kp_", 3))
 	{
 	  /* Likewise, the obsolete keysym binding of kp_.* should not lose. */
 	  DECLARE_EISTRING (temp);

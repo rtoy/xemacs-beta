@@ -13,60 +13,281 @@
 
 
 /*----------------------------------------------------------------------*/
-/*                       Processing file WINNLS.H                       */
+/*                       Processing file WINCON.H                       */
 /*----------------------------------------------------------------------*/
 
-/* Error if GetCPInfoEx used: not used, not examined yet */
-
-/* Error if CompareString used: not used, not examined yet */
-
-/* Error if LCMapString used: not used, not examined yet */
-
-int
-qxeGetLocaleInfo (LCID Locale, LCTYPE LCType, Extbyte * lpLCData, int cchData)
+BOOL
+qxePeekConsoleInput (HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
   if (XEUNICODE_P)
-    return GetLocaleInfoW (Locale, LCType, (LPWSTR) lpLCData, cchData);
+    return PeekConsoleInputW (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
   else
-    return GetLocaleInfoA (Locale, LCType, (LPSTR) lpLCData, cchData);
+    return PeekConsoleInputA (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 }
 
 BOOL
-qxeSetLocaleInfo (LCID Locale, LCTYPE LCType, const Extbyte * lpLCData)
+qxeReadConsoleInput (HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
   if (XEUNICODE_P)
-    return SetLocaleInfoW (Locale, LCType, (LPCWSTR) lpLCData);
+    return ReadConsoleInputW (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
   else
-    return SetLocaleInfoA (Locale, LCType, (LPCSTR) lpLCData);
+    return ReadConsoleInputA (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 }
 
-/* Error if GetTimeFormat used: not used, not examined yet */
+BOOL
+qxeWriteConsoleInput (HANDLE hConsoleInput, CONST INPUT_RECORD * lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten)
+{
+  if (XEUNICODE_P)
+    return WriteConsoleInputW (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsWritten);
+  else
+    return WriteConsoleInputA (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsWritten);
+}
 
-/* Error if GetDateFormat used: not used, not examined yet */
+BOOL
+qxeReadConsoleOutput (HANDLE hConsoleOutput, PCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpReadRegion)
+{
+  if (XEUNICODE_P)
+    return ReadConsoleOutputW (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpReadRegion);
+  else
+    return ReadConsoleOutputA (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpReadRegion);
+}
 
-/* Error if GetNumberFormat used: not used, not examined yet */
+BOOL
+qxeWriteConsoleOutput (HANDLE hConsoleOutput, CONST CHAR_INFO * lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpWriteRegion)
+{
+  if (XEUNICODE_P)
+    return WriteConsoleOutputW (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
+  else
+    return WriteConsoleOutputA (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
+}
 
-/* Error if GetCurrencyFormat used: not used, not examined yet */
+BOOL
+qxeReadConsoleOutputCharacter (HANDLE hConsoleOutput, Extbyte * lpCharacter, DWORD nLength, COORD dwReadCoord, LPDWORD lpNumberOfCharsRead)
+{
+  if (XEUNICODE_P)
+    return ReadConsoleOutputCharacterW (hConsoleOutput, (LPWSTR) lpCharacter, nLength, dwReadCoord, lpNumberOfCharsRead);
+  else
+    return ReadConsoleOutputCharacterA (hConsoleOutput, (LPSTR) lpCharacter, nLength, dwReadCoord, lpNumberOfCharsRead);
+}
 
-/* Error if EnumCalendarInfo used: not used, not examined yet */
+BOOL
+qxeWriteConsoleOutputCharacter (HANDLE hConsoleOutput, const Extbyte * lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
+{
+  if (XEUNICODE_P)
+    return WriteConsoleOutputCharacterW (hConsoleOutput, (LPCWSTR) lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
+  else
+    return WriteConsoleOutputCharacterA (hConsoleOutput, (LPCSTR) lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
+}
 
-/* Error if EnumCalendarInfoEx used: not used, not examined yet */
+/* Error if FillConsoleOutputCharacter used: split CHAR */
 
-/* Error if EnumTimeFormats used: not used, not examined yet */
+BOOL
+qxeScrollConsoleScreenBuffer (HANDLE hConsoleOutput, CONST SMALL_RECT * lpScrollRectangle, CONST SMALL_RECT * lpClipRectangle, COORD dwDestinationOrigin, CONST CHAR_INFO * lpFill)
+{
+  if (XEUNICODE_P)
+    return ScrollConsoleScreenBufferW (hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
+  else
+    return ScrollConsoleScreenBufferA (hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
+}
 
-/* Error if EnumDateFormats used: not used, not examined yet */
+DWORD
+qxeGetConsoleTitle (Extbyte * lpConsoleTitle, DWORD nSize)
+{
+  if (XEUNICODE_P)
+    return GetConsoleTitleW ((LPWSTR) lpConsoleTitle, nSize);
+  else
+    return GetConsoleTitleA ((LPSTR) lpConsoleTitle, nSize);
+}
 
-/* Error if EnumDateFormatsEx used: not used, not examined yet */
+BOOL
+qxeSetConsoleTitle (const Extbyte * lpConsoleTitle)
+{
+  if (XEUNICODE_P)
+    return SetConsoleTitleW ((LPCWSTR) lpConsoleTitle);
+  else
+    return SetConsoleTitleA ((LPCSTR) lpConsoleTitle);
+}
 
-/* Error if GetStringTypeEx used: not used, not examined yet */
+BOOL
+qxeReadConsole (HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID lpReserved)
+{
+  if (XEUNICODE_P)
+    return ReadConsoleW (hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
+  else
+    return ReadConsoleA (hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
+}
 
-/* Error if GetStringType used: no such fun; A and W versions have different nos. of args */
+BOOL
+qxeWriteConsole (HANDLE hConsoleOutput, CONST VOID * lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
+{
+  if (XEUNICODE_P)
+    return WriteConsoleW (hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
+  else
+    return WriteConsoleA (hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
+}
 
-/* Error if FoldString used: not used, not examined yet */
 
-/* Error if EnumSystemLocales used: not used, not examined yet */
+/*----------------------------------------------------------------------*/
+/*                      Processing file SHELLAPI.H                      */
+/*----------------------------------------------------------------------*/
 
-/* Error if EnumSystemCodePages used: not used, not examined yet */
+UINT 
+qxeDragQueryFile (HDROP arg1, UINT arg2, Extbyte * arg3, UINT arg4)
+{
+  if (XEUNICODE_P)
+    return DragQueryFileW (arg1, arg2, (LPWSTR) arg3, arg4);
+  else
+    return DragQueryFileA (arg1, arg2, (LPSTR) arg3, arg4);
+}
+
+HINSTANCE 
+qxeShellExecute (HWND hwnd, const Extbyte * lpOperation, const Extbyte * lpFile, const Extbyte * lpParameters, const Extbyte * lpDirectory, INT nShowCmd)
+{
+  if (XEUNICODE_P)
+    return ShellExecuteW (hwnd, (LPCWSTR) lpOperation, (LPCWSTR) lpFile, (LPCWSTR) lpParameters, (LPCWSTR) lpDirectory, nShowCmd);
+  else
+    return ShellExecuteA (hwnd, (LPCSTR) lpOperation, (LPCSTR) lpFile, (LPCSTR) lpParameters, (LPCSTR) lpDirectory, nShowCmd);
+}
+
+HINSTANCE 
+qxeFindExecutable (const Extbyte * lpFile, const Extbyte * lpDirectory, Extbyte * lpResult)
+{
+  if (XEUNICODE_P)
+    return FindExecutableW ((LPCWSTR) lpFile, (LPCWSTR) lpDirectory, (LPWSTR) lpResult);
+  else
+    return FindExecutableA ((LPCSTR) lpFile, (LPCSTR) lpDirectory, (LPSTR) lpResult);
+}
+
+/* Error if CommandLineToArgv used: Unicode-only */
+
+INT       
+qxeShellAbout (HWND hWnd, const Extbyte * szApp, const Extbyte * szOtherStuff, HICON hIcon)
+{
+  if (XEUNICODE_P)
+    return ShellAboutW (hWnd, (LPCWSTR) szApp, (LPCWSTR) szOtherStuff, hIcon);
+  else
+    return ShellAboutA (hWnd, (LPCSTR) szApp, (LPCSTR) szOtherStuff, hIcon);
+}
+
+HICON     
+qxeExtractAssociatedIcon (HINSTANCE hInst, Extbyte * lpIconPath, LPWORD lpiIcon)
+{
+  if (XEUNICODE_P)
+    return ExtractAssociatedIconW (hInst, (LPWSTR) lpIconPath, lpiIcon);
+  else
+    return ExtractAssociatedIconA (hInst, (LPSTR) lpIconPath, lpiIcon);
+}
+
+HICON     
+qxeExtractIcon (HINSTANCE hInst, const Extbyte * lpszExeFileName, UINT nIconIndex)
+{
+  if (XEUNICODE_P)
+    return ExtractIconW (hInst, (LPCWSTR) lpszExeFileName, nIconIndex);
+  else
+    return ExtractIconA (hInst, (LPCSTR) lpszExeFileName, nIconIndex);
+}
+
+#if !defined (CYGWIN_HEADERS)
+
+/* NOTE: NT 4.0+ only */
+DWORD   
+qxeDoEnvironmentSubst (Extbyte * szString, UINT cbString)
+{
+  if (XEUNICODE_P)
+    return DoEnvironmentSubstW ((LPWSTR) szString, cbString);
+  else
+    return DoEnvironmentSubstA ((LPSTR) szString, cbString);
+}
+
+#endif /* !defined (CYGWIN_HEADERS) */
+
+/* Error if FindEnvironmentString used: causes link error; NT 4.0+ only */
+
+/* Skipping ExtractIconEx because NT 4.0+ only, error in Cygwin prototype */
+
+/* NOTE: NT 4.0+ only */
+int
+qxeSHFileOperation (LPSHFILEOPSTRUCTW lpFileOp)
+{
+  if (XEUNICODE_P)
+    return SHFileOperationW (lpFileOp);
+  else
+    return SHFileOperationA ((LPSHFILEOPSTRUCTA) lpFileOp);
+}
+
+/* NOTE: NT 4.0+ only */
+BOOL
+qxeShellExecuteEx (LPSHELLEXECUTEINFOW lpExecInfo)
+{
+  if (XEUNICODE_P)
+    return ShellExecuteExW (lpExecInfo);
+  else
+    return ShellExecuteExA ((LPSHELLEXECUTEINFOA) lpExecInfo);
+}
+
+/* Error if WinExecError used: causes link error; NT 4.0+ only */
+
+#if !defined (CYGWIN_HEADERS)
+
+/* NOTE: NT 4.0+ only */
+HRESULT
+qxeSHQueryRecycleBin (const Extbyte * pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo)
+{
+  if (XEUNICODE_P)
+    return SHQueryRecycleBinW ((LPCWSTR) pszRootPath, pSHQueryRBInfo);
+  else
+    return SHQueryRecycleBinA ((LPCSTR) pszRootPath, pSHQueryRBInfo);
+}
+
+#endif /* !defined (CYGWIN_HEADERS) */
+
+#if !defined (CYGWIN_HEADERS)
+
+/* NOTE: NT 4.0+ only */
+HRESULT
+qxeSHEmptyRecycleBin (HWND hwnd, const Extbyte * pszRootPath, DWORD dwFlags)
+{
+  if (XEUNICODE_P)
+    return SHEmptyRecycleBinW (hwnd, (LPCWSTR) pszRootPath, dwFlags);
+  else
+    return SHEmptyRecycleBinA (hwnd, (LPCSTR) pszRootPath, dwFlags);
+}
+
+#endif /* !defined (CYGWIN_HEADERS) */
+
+/* Error if Shell_NotifyIcon used: split-sized NOTIFYICONDATA, NT 4.0+ only */
+
+/* Skipping SHGetFileInfo because split-sized SHFILEINFO, NT 4.0+ only */
+
+/* Error if SHGetDiskFreeSpace used: causes link error; NT 4.0+ only */
+
+#if !defined (CYGWIN_HEADERS)
+
+/* NOTE: NT 4.0+ only */
+BOOL
+qxeSHGetNewLinkInfo (const Extbyte * pszLinkTo, const Extbyte * pszDir, Extbyte * pszName, BOOL * pfMustCopy, UINT uFlags)
+{
+  if (XEUNICODE_P)
+    return SHGetNewLinkInfoW ((LPCWSTR) pszLinkTo, (LPCWSTR) pszDir, (LPWSTR) pszName, pfMustCopy, uFlags);
+  else
+    return SHGetNewLinkInfoA ((LPCSTR) pszLinkTo, (LPCSTR) pszDir, (LPSTR) pszName, pfMustCopy, uFlags);
+}
+
+#endif /* !defined (CYGWIN_HEADERS) */
+
+#if !defined (CYGWIN_HEADERS)
+
+/* NOTE: NT 4.0+ only */
+BOOL
+qxeSHInvokePrinterCommand (HWND hwnd, UINT uAction, const Extbyte * lpBuf1, const Extbyte * lpBuf2, BOOL fModal)
+{
+  if (XEUNICODE_P)
+    return SHInvokePrinterCommandW (hwnd, uAction, (LPCWSTR) lpBuf1, (LPCWSTR) lpBuf2, fModal);
+  else
+    return SHInvokePrinterCommandA (hwnd, uAction, (LPCSTR) lpBuf1, (LPCSTR) lpBuf2, fModal);
+}
+
+#endif /* !defined (CYGWIN_HEADERS) */
 
 
 /*----------------------------------------------------------------------*/
@@ -661,762 +882,6 @@ qxeMultinetGetConnectionPerformance (LPNETRESOURCEW lpNetResource, LPNETCONNECTI
 }
 
 #endif /* defined (HAVE_MS_WINDOWS) */
-
-
-/*----------------------------------------------------------------------*/
-/*                       Processing file WINREG.H                       */
-/*----------------------------------------------------------------------*/
-
-/* Skipping RegConnectRegistry because error in Cygwin prototype */
-
-LONG
-
-qxeRegCreateKey (HKEY hKey, const Extbyte * lpSubKey, PHKEY phkResult)
-{
-  if (XEUNICODE_P)
-    return RegCreateKeyW (hKey, (LPCWSTR) lpSubKey, phkResult);
-  else
-    return RegCreateKeyA (hKey, (LPCSTR) lpSubKey, phkResult);
-}
-
-LONG
-
-qxeRegCreateKeyEx (HKEY hKey, const Extbyte * lpSubKey, DWORD Reserved, Extbyte * lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition)
-{
-  if (XEUNICODE_P)
-    return RegCreateKeyExW (hKey, (LPCWSTR) lpSubKey, Reserved, (LPWSTR) lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
-  else
-    return RegCreateKeyExA (hKey, (LPCSTR) lpSubKey, Reserved, (LPSTR) lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
-}
-
-LONG
-
-qxeRegDeleteKey (HKEY hKey, const Extbyte * lpSubKey)
-{
-  if (XEUNICODE_P)
-    return RegDeleteKeyW (hKey, (LPCWSTR) lpSubKey);
-  else
-    return RegDeleteKeyA (hKey, (LPCSTR) lpSubKey);
-}
-
-LONG
-
-qxeRegDeleteValue (HKEY hKey, const Extbyte * lpValueName)
-{
-  if (XEUNICODE_P)
-    return RegDeleteValueW (hKey, (LPCWSTR) lpValueName);
-  else
-    return RegDeleteValueA (hKey, (LPCSTR) lpValueName);
-}
-
-LONG
-
-qxeRegEnumKey (HKEY hKey, DWORD dwIndex, Extbyte * lpName, DWORD cbName)
-{
-  if (XEUNICODE_P)
-    return RegEnumKeyW (hKey, dwIndex, (LPWSTR) lpName, cbName);
-  else
-    return RegEnumKeyA (hKey, dwIndex, (LPSTR) lpName, cbName);
-}
-
-LONG
-
-qxeRegEnumKeyEx (HKEY hKey, DWORD dwIndex, Extbyte * lpName, LPDWORD lpcbName, LPDWORD lpReserved, Extbyte * lpClass, LPDWORD lpcbClass, PFILETIME lpftLastWriteTime)
-{
-  if (XEUNICODE_P)
-    return RegEnumKeyExW (hKey, dwIndex, (LPWSTR) lpName, lpcbName, lpReserved, (LPWSTR) lpClass, lpcbClass, lpftLastWriteTime);
-  else
-    return RegEnumKeyExA (hKey, dwIndex, (LPSTR) lpName, lpcbName, lpReserved, (LPSTR) lpClass, lpcbClass, lpftLastWriteTime);
-}
-
-LONG
-
-qxeRegEnumValue (HKEY hKey, DWORD dwIndex, Extbyte * lpValueName, LPDWORD lpcbValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
-{
-  if (XEUNICODE_P)
-    return RegEnumValueW (hKey, dwIndex, (LPWSTR) lpValueName, lpcbValueName, lpReserved, lpType, lpData, lpcbData);
-  else
-    return RegEnumValueA (hKey, dwIndex, (LPSTR) lpValueName, lpcbValueName, lpReserved, lpType, lpData, lpcbData);
-}
-
-LONG
-
-qxeRegLoadKey (HKEY hKey, const Extbyte * lpSubKey, const Extbyte * lpFile)
-{
-  if (XEUNICODE_P)
-    return RegLoadKeyW (hKey, (LPCWSTR) lpSubKey, (LPCWSTR) lpFile);
-  else
-    return RegLoadKeyA (hKey, (LPCSTR) lpSubKey, (LPCSTR) lpFile);
-}
-
-LONG
-
-qxeRegOpenKey (HKEY hKey, const Extbyte * lpSubKey, PHKEY phkResult)
-{
-  if (XEUNICODE_P)
-    return RegOpenKeyW (hKey, (LPCWSTR) lpSubKey, phkResult);
-  else
-    return RegOpenKeyA (hKey, (LPCSTR) lpSubKey, phkResult);
-}
-
-LONG
-
-qxeRegOpenKeyEx (HKEY hKey, const Extbyte * lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
-{
-  if (XEUNICODE_P)
-    return RegOpenKeyExW (hKey, (LPCWSTR) lpSubKey, ulOptions, samDesired, phkResult);
-  else
-    return RegOpenKeyExA (hKey, (LPCSTR) lpSubKey, ulOptions, samDesired, phkResult);
-}
-
-LONG
-
-qxeRegQueryInfoKey (HKEY hKey, Extbyte * lpClass, LPDWORD lpcbClass, LPDWORD lpReserved, LPDWORD lpcSubKeys, LPDWORD lpcbMaxSubKeyLen, LPDWORD lpcbMaxClassLen, LPDWORD lpcValues, LPDWORD lpcbMaxValueNameLen, LPDWORD lpcbMaxValueLen, LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime)
-{
-  if (XEUNICODE_P)
-    return RegQueryInfoKeyW (hKey, (LPWSTR) lpClass, lpcbClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
-  else
-    return RegQueryInfoKeyA (hKey, (LPSTR) lpClass, lpcbClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
-}
-
-LONG
-
-qxeRegQueryValue (HKEY hKey, const Extbyte * lpSubKey, Extbyte * lpValue, PLONG lpcbValue)
-{
-  if (XEUNICODE_P)
-    return RegQueryValueW (hKey, (LPCWSTR) lpSubKey, (LPWSTR) lpValue, lpcbValue);
-  else
-    return RegQueryValueA (hKey, (LPCSTR) lpSubKey, (LPSTR) lpValue, lpcbValue);
-}
-
-LONG
-
-qxeRegQueryMultipleValues (HKEY hKey, PVALENTW val_list, DWORD num_vals, Extbyte * lpValueBuf, LPDWORD ldwTotsize)
-{
-  if (XEUNICODE_P)
-    return RegQueryMultipleValuesW (hKey, val_list, num_vals, (LPWSTR) lpValueBuf, ldwTotsize);
-  else
-    return RegQueryMultipleValuesA (hKey, (PVALENTA) val_list, num_vals, (LPSTR) lpValueBuf, ldwTotsize);
-}
-
-LONG
-
-qxeRegQueryValueEx (HKEY hKey, const Extbyte * lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
-{
-  if (XEUNICODE_P)
-    return RegQueryValueExW (hKey, (LPCWSTR) lpValueName, lpReserved, lpType, lpData, lpcbData);
-  else
-    return RegQueryValueExA (hKey, (LPCSTR) lpValueName, lpReserved, lpType, lpData, lpcbData);
-}
-
-LONG
-
-qxeRegReplaceKey (HKEY hKey, const Extbyte * lpSubKey, const Extbyte * lpNewFile, const Extbyte * lpOldFile)
-{
-  if (XEUNICODE_P)
-    return RegReplaceKeyW (hKey, (LPCWSTR) lpSubKey, (LPCWSTR) lpNewFile, (LPCWSTR) lpOldFile);
-  else
-    return RegReplaceKeyA (hKey, (LPCSTR) lpSubKey, (LPCSTR) lpNewFile, (LPCSTR) lpOldFile);
-}
-
-LONG
-
-qxeRegRestoreKey (HKEY hKey, const Extbyte * lpFile, DWORD dwFlags)
-{
-  if (XEUNICODE_P)
-    return RegRestoreKeyW (hKey, (LPCWSTR) lpFile, dwFlags);
-  else
-    return RegRestoreKeyA (hKey, (LPCSTR) lpFile, dwFlags);
-}
-
-LONG
-
-qxeRegSaveKey (HKEY hKey, const Extbyte * lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
-{
-  if (XEUNICODE_P)
-    return RegSaveKeyW (hKey, (LPCWSTR) lpFile, lpSecurityAttributes);
-  else
-    return RegSaveKeyA (hKey, (LPCSTR) lpFile, lpSecurityAttributes);
-}
-
-LONG
-
-qxeRegSetValue (HKEY hKey, const Extbyte * lpSubKey, DWORD dwType, const Extbyte * lpData, DWORD cbData)
-{
-  if (XEUNICODE_P)
-    return RegSetValueW (hKey, (LPCWSTR) lpSubKey, dwType, (LPCWSTR) lpData, cbData);
-  else
-    return RegSetValueA (hKey, (LPCSTR) lpSubKey, dwType, (LPCSTR) lpData, cbData);
-}
-
-LONG
-
-qxeRegSetValueEx (HKEY hKey, const Extbyte * lpValueName, DWORD Reserved, DWORD dwType, CONST BYTE* lpData, DWORD cbData)
-{
-  if (XEUNICODE_P)
-    return RegSetValueExW (hKey, (LPCWSTR) lpValueName, Reserved, dwType, lpData, cbData);
-  else
-    return RegSetValueExA (hKey, (LPCSTR) lpValueName, Reserved, dwType, lpData, cbData);
-}
-
-LONG
-
-qxeRegUnLoadKey (HKEY hKey, const Extbyte * lpSubKey)
-{
-  if (XEUNICODE_P)
-    return RegUnLoadKeyW (hKey, (LPCWSTR) lpSubKey);
-  else
-    return RegUnLoadKeyA (hKey, (LPCSTR) lpSubKey);
-}
-
-BOOL
-
-qxeInitiateSystemShutdown (Extbyte * lpMachineName, Extbyte * lpMessage, DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown)
-{
-  if (XEUNICODE_P)
-    return InitiateSystemShutdownW ((LPWSTR) lpMachineName, (LPWSTR) lpMessage, dwTimeout, bForceAppsClosed, bRebootAfterShutdown);
-  else
-    return InitiateSystemShutdownA ((LPSTR) lpMachineName, (LPSTR) lpMessage, dwTimeout, bForceAppsClosed, bRebootAfterShutdown);
-}
-
-BOOL
-
-qxeAbortSystemShutdown (Extbyte * lpMachineName)
-{
-  if (XEUNICODE_P)
-    return AbortSystemShutdownW ((LPWSTR) lpMachineName);
-  else
-    return AbortSystemShutdownA ((LPSTR) lpMachineName);
-}
-
-
-/*----------------------------------------------------------------------*/
-/*                      Processing file SHELLAPI.H                      */
-/*----------------------------------------------------------------------*/
-
-UINT 
-qxeDragQueryFile (HDROP arg1, UINT arg2, Extbyte * arg3, UINT arg4)
-{
-  if (XEUNICODE_P)
-    return DragQueryFileW (arg1, arg2, (LPWSTR) arg3, arg4);
-  else
-    return DragQueryFileA (arg1, arg2, (LPSTR) arg3, arg4);
-}
-
-HINSTANCE 
-qxeShellExecute (HWND hwnd, const Extbyte * lpOperation, const Extbyte * lpFile, const Extbyte * lpParameters, const Extbyte * lpDirectory, INT nShowCmd)
-{
-  if (XEUNICODE_P)
-    return ShellExecuteW (hwnd, (LPCWSTR) lpOperation, (LPCWSTR) lpFile, (LPCWSTR) lpParameters, (LPCWSTR) lpDirectory, nShowCmd);
-  else
-    return ShellExecuteA (hwnd, (LPCSTR) lpOperation, (LPCSTR) lpFile, (LPCSTR) lpParameters, (LPCSTR) lpDirectory, nShowCmd);
-}
-
-HINSTANCE 
-qxeFindExecutable (const Extbyte * lpFile, const Extbyte * lpDirectory, Extbyte * lpResult)
-{
-  if (XEUNICODE_P)
-    return FindExecutableW ((LPCWSTR) lpFile, (LPCWSTR) lpDirectory, (LPWSTR) lpResult);
-  else
-    return FindExecutableA ((LPCSTR) lpFile, (LPCSTR) lpDirectory, (LPSTR) lpResult);
-}
-
-/* Error if CommandLineToArgv used: Unicode-only */
-
-INT       
-qxeShellAbout (HWND hWnd, const Extbyte * szApp, const Extbyte * szOtherStuff, HICON hIcon)
-{
-  if (XEUNICODE_P)
-    return ShellAboutW (hWnd, (LPCWSTR) szApp, (LPCWSTR) szOtherStuff, hIcon);
-  else
-    return ShellAboutA (hWnd, (LPCSTR) szApp, (LPCSTR) szOtherStuff, hIcon);
-}
-
-HICON     
-qxeExtractAssociatedIcon (HINSTANCE hInst, Extbyte * lpIconPath, LPWORD lpiIcon)
-{
-  if (XEUNICODE_P)
-    return ExtractAssociatedIconW (hInst, (LPWSTR) lpIconPath, lpiIcon);
-  else
-    return ExtractAssociatedIconA (hInst, (LPSTR) lpIconPath, lpiIcon);
-}
-
-HICON     
-qxeExtractIcon (HINSTANCE hInst, const Extbyte * lpszExeFileName, UINT nIconIndex)
-{
-  if (XEUNICODE_P)
-    return ExtractIconW (hInst, (LPCWSTR) lpszExeFileName, nIconIndex);
-  else
-    return ExtractIconA (hInst, (LPCSTR) lpszExeFileName, nIconIndex);
-}
-
-#if !defined (CYGWIN_HEADERS)
-
-/* NOTE: NT 4.0+ only */
-DWORD   
-qxeDoEnvironmentSubst (Extbyte * szString, UINT cbString)
-{
-  if (XEUNICODE_P)
-    return DoEnvironmentSubstW ((LPWSTR) szString, cbString);
-  else
-    return DoEnvironmentSubstA ((LPSTR) szString, cbString);
-}
-
-#endif /* !defined (CYGWIN_HEADERS) */
-
-/* Error if FindEnvironmentString used: causes link error; NT 4.0+ only */
-
-/* Skipping ExtractIconEx because NT 4.0+ only, error in Cygwin prototype */
-
-/* NOTE: NT 4.0+ only */
-int
-qxeSHFileOperation (LPSHFILEOPSTRUCTW lpFileOp)
-{
-  if (XEUNICODE_P)
-    return SHFileOperationW (lpFileOp);
-  else
-    return SHFileOperationA ((LPSHFILEOPSTRUCTA) lpFileOp);
-}
-
-/* NOTE: NT 4.0+ only */
-BOOL
-qxeShellExecuteEx (LPSHELLEXECUTEINFOW lpExecInfo)
-{
-  if (XEUNICODE_P)
-    return ShellExecuteExW (lpExecInfo);
-  else
-    return ShellExecuteExA ((LPSHELLEXECUTEINFOA) lpExecInfo);
-}
-
-/* Error if WinExecError used: causes link error; NT 4.0+ only */
-
-#if !defined (CYGWIN_HEADERS)
-
-/* NOTE: NT 4.0+ only */
-HRESULT
-qxeSHQueryRecycleBin (const Extbyte * pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo)
-{
-  if (XEUNICODE_P)
-    return SHQueryRecycleBinW ((LPCWSTR) pszRootPath, pSHQueryRBInfo);
-  else
-    return SHQueryRecycleBinA ((LPCSTR) pszRootPath, pSHQueryRBInfo);
-}
-
-#endif /* !defined (CYGWIN_HEADERS) */
-
-#if !defined (CYGWIN_HEADERS)
-
-/* NOTE: NT 4.0+ only */
-HRESULT
-qxeSHEmptyRecycleBin (HWND hwnd, const Extbyte * pszRootPath, DWORD dwFlags)
-{
-  if (XEUNICODE_P)
-    return SHEmptyRecycleBinW (hwnd, (LPCWSTR) pszRootPath, dwFlags);
-  else
-    return SHEmptyRecycleBinA (hwnd, (LPCSTR) pszRootPath, dwFlags);
-}
-
-#endif /* !defined (CYGWIN_HEADERS) */
-
-/* Error if Shell_NotifyIcon used: split-sized NOTIFYICONDATA, NT 4.0+ only */
-
-/* Skipping SHGetFileInfo because split-sized SHFILEINFO, NT 4.0+ only */
-
-/* Error if SHGetDiskFreeSpace used: causes link error; NT 4.0+ only */
-
-#if !defined (CYGWIN_HEADERS)
-
-/* NOTE: NT 4.0+ only */
-BOOL
-qxeSHGetNewLinkInfo (const Extbyte * pszLinkTo, const Extbyte * pszDir, Extbyte * pszName, BOOL * pfMustCopy, UINT uFlags)
-{
-  if (XEUNICODE_P)
-    return SHGetNewLinkInfoW ((LPCWSTR) pszLinkTo, (LPCWSTR) pszDir, (LPWSTR) pszName, pfMustCopy, uFlags);
-  else
-    return SHGetNewLinkInfoA ((LPCSTR) pszLinkTo, (LPCSTR) pszDir, (LPSTR) pszName, pfMustCopy, uFlags);
-}
-
-#endif /* !defined (CYGWIN_HEADERS) */
-
-#if !defined (CYGWIN_HEADERS)
-
-/* NOTE: NT 4.0+ only */
-BOOL
-qxeSHInvokePrinterCommand (HWND hwnd, UINT uAction, const Extbyte * lpBuf1, const Extbyte * lpBuf2, BOOL fModal)
-{
-  if (XEUNICODE_P)
-    return SHInvokePrinterCommandW (hwnd, uAction, (LPCWSTR) lpBuf1, (LPCWSTR) lpBuf2, fModal);
-  else
-    return SHInvokePrinterCommandA (hwnd, uAction, (LPCSTR) lpBuf1, (LPCSTR) lpBuf2, fModal);
-}
-
-#endif /* !defined (CYGWIN_HEADERS) */
-
-
-/*----------------------------------------------------------------------*/
-/*                       Processing file WINCON.H                       */
-/*----------------------------------------------------------------------*/
-
-BOOL
-qxePeekConsoleInput (HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
-{
-  if (XEUNICODE_P)
-    return PeekConsoleInputW (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
-  else
-    return PeekConsoleInputA (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
-}
-
-BOOL
-qxeReadConsoleInput (HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
-{
-  if (XEUNICODE_P)
-    return ReadConsoleInputW (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
-  else
-    return ReadConsoleInputA (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
-}
-
-BOOL
-qxeWriteConsoleInput (HANDLE hConsoleInput, CONST INPUT_RECORD * lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten)
-{
-  if (XEUNICODE_P)
-    return WriteConsoleInputW (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsWritten);
-  else
-    return WriteConsoleInputA (hConsoleInput, lpBuffer, nLength, lpNumberOfEventsWritten);
-}
-
-BOOL
-qxeReadConsoleOutput (HANDLE hConsoleOutput, PCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpReadRegion)
-{
-  if (XEUNICODE_P)
-    return ReadConsoleOutputW (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpReadRegion);
-  else
-    return ReadConsoleOutputA (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpReadRegion);
-}
-
-BOOL
-qxeWriteConsoleOutput (HANDLE hConsoleOutput, CONST CHAR_INFO * lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpWriteRegion)
-{
-  if (XEUNICODE_P)
-    return WriteConsoleOutputW (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
-  else
-    return WriteConsoleOutputA (hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
-}
-
-BOOL
-qxeReadConsoleOutputCharacter (HANDLE hConsoleOutput, Extbyte * lpCharacter, DWORD nLength, COORD dwReadCoord, LPDWORD lpNumberOfCharsRead)
-{
-  if (XEUNICODE_P)
-    return ReadConsoleOutputCharacterW (hConsoleOutput, (LPWSTR) lpCharacter, nLength, dwReadCoord, lpNumberOfCharsRead);
-  else
-    return ReadConsoleOutputCharacterA (hConsoleOutput, (LPSTR) lpCharacter, nLength, dwReadCoord, lpNumberOfCharsRead);
-}
-
-BOOL
-qxeWriteConsoleOutputCharacter (HANDLE hConsoleOutput, const Extbyte * lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
-{
-  if (XEUNICODE_P)
-    return WriteConsoleOutputCharacterW (hConsoleOutput, (LPCWSTR) lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
-  else
-    return WriteConsoleOutputCharacterA (hConsoleOutput, (LPCSTR) lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
-}
-
-/* Error if FillConsoleOutputCharacter used: split CHAR */
-
-BOOL
-qxeScrollConsoleScreenBuffer (HANDLE hConsoleOutput, CONST SMALL_RECT * lpScrollRectangle, CONST SMALL_RECT * lpClipRectangle, COORD dwDestinationOrigin, CONST CHAR_INFO * lpFill)
-{
-  if (XEUNICODE_P)
-    return ScrollConsoleScreenBufferW (hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
-  else
-    return ScrollConsoleScreenBufferA (hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
-}
-
-DWORD
-qxeGetConsoleTitle (Extbyte * lpConsoleTitle, DWORD nSize)
-{
-  if (XEUNICODE_P)
-    return GetConsoleTitleW ((LPWSTR) lpConsoleTitle, nSize);
-  else
-    return GetConsoleTitleA ((LPSTR) lpConsoleTitle, nSize);
-}
-
-BOOL
-qxeSetConsoleTitle (const Extbyte * lpConsoleTitle)
-{
-  if (XEUNICODE_P)
-    return SetConsoleTitleW ((LPCWSTR) lpConsoleTitle);
-  else
-    return SetConsoleTitleA ((LPCSTR) lpConsoleTitle);
-}
-
-BOOL
-qxeReadConsole (HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID lpReserved)
-{
-  if (XEUNICODE_P)
-    return ReadConsoleW (hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
-  else
-    return ReadConsoleA (hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
-}
-
-BOOL
-qxeWriteConsole (HANDLE hConsoleOutput, CONST VOID * lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
-{
-  if (XEUNICODE_P)
-    return WriteConsoleW (hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
-  else
-    return WriteConsoleA (hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
-}
-
-
-/*----------------------------------------------------------------------*/
-/*                        Processing file IMM.H                         */
-/*----------------------------------------------------------------------*/
-
-#if defined (HAVE_MS_WINDOWS)
-
-HKL
-qxeImmInstallIME (const Extbyte * lpszIMEFileName, const Extbyte * lpszLayoutText)
-{
-  if (XEUNICODE_P)
-    return ImmInstallIMEW ((LPCWSTR) lpszIMEFileName, (LPCWSTR) lpszLayoutText);
-  else
-    return ImmInstallIMEA ((LPCSTR) lpszIMEFileName, (LPCSTR) lpszLayoutText);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-UINT
-qxeImmGetDescription (HKL arg1, Extbyte * arg2, UINT uBufLen)
-{
-  if (XEUNICODE_P)
-    return ImmGetDescriptionW (arg1, (LPWSTR) arg2, uBufLen);
-  else
-    return ImmGetDescriptionA (arg1, (LPSTR) arg2, uBufLen);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-UINT
-qxeImmGetIMEFileName (HKL arg1, Extbyte * arg2, UINT uBufLen)
-{
-  if (XEUNICODE_P)
-    return ImmGetIMEFileNameW (arg1, (LPWSTR) arg2, uBufLen);
-  else
-    return ImmGetIMEFileNameA (arg1, (LPSTR) arg2, uBufLen);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-LONG
-qxeImmGetCompositionString (HIMC arg1, DWORD arg2, LPVOID arg3, DWORD arg4)
-{
-  if (XEUNICODE_P)
-    return ImmGetCompositionStringW (arg1, arg2, arg3, arg4);
-  else
-    return ImmGetCompositionStringA (arg1, arg2, arg3, arg4);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-BOOL
-qxeImmSetCompositionString (HIMC arg1, DWORD dwIndex, LPCVOID lpComp, DWORD arg4, LPCVOID lpRead, DWORD arg6)
-{
-  if (XEUNICODE_P)
-    return ImmSetCompositionStringW (arg1, dwIndex, lpComp, arg4, lpRead, arg6);
-  else
-    return ImmSetCompositionStringA (arg1, dwIndex, lpComp, arg4, lpRead, arg6);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD
-qxeImmGetCandidateListCount (HIMC arg1, LPDWORD lpdwListCount)
-{
-  if (XEUNICODE_P)
-    return ImmGetCandidateListCountW (arg1, lpdwListCount);
-  else
-    return ImmGetCandidateListCountA (arg1, lpdwListCount);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD
-qxeImmGetCandidateList (HIMC arg1, DWORD deIndex, LPCANDIDATELIST arg3, DWORD dwBufLen)
-{
-  if (XEUNICODE_P)
-    return ImmGetCandidateListW (arg1, deIndex, arg3, dwBufLen);
-  else
-    return ImmGetCandidateListA (arg1, deIndex, arg3, dwBufLen);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD
-qxeImmGetGuideLine (HIMC arg1, DWORD dwIndex, Extbyte * arg3, DWORD dwBufLen)
-{
-  if (XEUNICODE_P)
-    return ImmGetGuideLineW (arg1, dwIndex, (LPWSTR) arg3, dwBufLen);
-  else
-    return ImmGetGuideLineA (arg1, dwIndex, (LPSTR) arg3, dwBufLen);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-/* Skipping ImmGetCompositionFont because split-sized LOGFONT */
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-/* Skipping ImmSetCompositionFont because split-sized LOGFONT */
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-/* NOTE: // split-simple REGISTERWORD */
-BOOL
-qxeImmConfigureIME (HKL arg1, HWND arg2, DWORD arg3, LPVOID arg4)
-{
-  if (XEUNICODE_P)
-    return ImmConfigureIMEW (arg1, arg2, arg3, arg4);
-  else
-    return ImmConfigureIMEA (arg1, arg2, arg3, arg4);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-/* NOTE: // strings of various sorts */
-LRESULT
-qxeImmEscape (HKL arg1, HIMC arg2, UINT arg3, LPVOID arg4)
-{
-  if (XEUNICODE_P)
-    return ImmEscapeW (arg1, arg2, arg3, arg4);
-  else
-    return ImmEscapeA (arg1, arg2, arg3, arg4);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-DWORD
-qxeImmGetConversionList (HKL arg1, HIMC arg2, const Extbyte * arg3, LPCANDIDATELIST arg4, DWORD dwBufLen, UINT uFlag)
-{
-  if (XEUNICODE_P)
-    return ImmGetConversionListW (arg1, arg2, (LPCWSTR) arg3, arg4, dwBufLen, uFlag);
-  else
-    return ImmGetConversionListA (arg1, arg2, (LPCSTR) arg3, arg4, dwBufLen, uFlag);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-BOOL
-qxeImmIsUIMessage (HWND arg1, UINT arg2, WPARAM arg3, LPARAM arg4)
-{
-  if (XEUNICODE_P)
-    return ImmIsUIMessageW (arg1, arg2, arg3, arg4);
-  else
-    return ImmIsUIMessageA (arg1, arg2, arg3, arg4);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-BOOL
-qxeImmRegisterWord (HKL arg1, const Extbyte * lpszReading, DWORD arg3, const Extbyte * lpszRegister)
-{
-  if (XEUNICODE_P)
-    return ImmRegisterWordW (arg1, (LPCWSTR) lpszReading, arg3, (LPCWSTR) lpszRegister);
-  else
-    return ImmRegisterWordA (arg1, (LPCSTR) lpszReading, arg3, (LPCSTR) lpszRegister);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-BOOL
-qxeImmUnregisterWord (HKL arg1, const Extbyte * lpszReading, DWORD arg3, const Extbyte * lpszUnregister)
-{
-  if (XEUNICODE_P)
-    return ImmUnregisterWordW (arg1, (LPCWSTR) lpszReading, arg3, (LPCWSTR) lpszUnregister);
-  else
-    return ImmUnregisterWordA (arg1, (LPCSTR) lpszReading, arg3, (LPCSTR) lpszUnregister);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-/* Error if ImmGetRegisterWordStyle used: split-sized STYLEBUF */
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-UINT
-qxeImmEnumRegisterWord (HKL arg1, REGISTERWORDENUMPROCW arg2, const Extbyte * lpszReading, DWORD arg4, const Extbyte * lpszRegister, LPVOID arg6)
-{
-  if (XEUNICODE_P)
-    return ImmEnumRegisterWordW (arg1, arg2, (LPCWSTR) lpszReading, arg4, (LPCWSTR) lpszRegister, arg6);
-  else
-    return ImmEnumRegisterWordA (arg1, (REGISTERWORDENUMPROCA) arg2, (LPCSTR) lpszReading, arg4, (LPCSTR) lpszRegister, arg6);
-}
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-
-/* Error if ImmGetImeMenuItems used: split-sized IMEMENUITEMINFO */
-
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-
-/*----------------------------------------------------------------------*/
-/*                       Processing file DDEML.H                        */
-/*----------------------------------------------------------------------*/
-
-UINT
-qxeDdeInitialize (LPDWORD pidInst, PFNCALLBACK pfnCallback, DWORD afCmd, DWORD ulRes)
-{
-  if (XEUNICODE_P)
-    return DdeInitializeW (pidInst, pfnCallback, afCmd, ulRes);
-  else
-    return DdeInitializeA (pidInst, pfnCallback, afCmd, ulRes);
-}
-
-/* Skipping DdeCreateStringHandle because error in Cygwin prototype */
-
-DWORD
-qxeDdeQueryString (DWORD idInst, HSZ hsz, Extbyte * psz, DWORD cchMax, int iCodePage)
-{
-  if (XEUNICODE_P)
-    return DdeQueryStringW (idInst, hsz, (LPWSTR) psz, cchMax, iCodePage);
-  else
-    return DdeQueryStringA (idInst, hsz, (LPSTR) psz, cchMax, iCodePage);
-}
 
 
 /*----------------------------------------------------------------------*/
@@ -2393,160 +1858,943 @@ qxeSystemParametersInfo (UINT uiAction, UINT uiParam, PVOID pvParam, UINT fWinIn
 
 
 /*----------------------------------------------------------------------*/
-/*                      Processing file MMSYSTEM.H                      */
+/*                       Processing file DDEML.H                        */
+/*----------------------------------------------------------------------*/
+
+UINT
+qxeDdeInitialize (LPDWORD pidInst, PFNCALLBACK pfnCallback, DWORD afCmd, DWORD ulRes)
+{
+  if (XEUNICODE_P)
+    return DdeInitializeW (pidInst, pfnCallback, afCmd, ulRes);
+  else
+    return DdeInitializeA (pidInst, pfnCallback, afCmd, ulRes);
+}
+
+/* Skipping DdeCreateStringHandle because error in Cygwin prototype */
+
+DWORD
+qxeDdeQueryString (DWORD idInst, HSZ hsz, Extbyte * psz, DWORD cchMax, int iCodePage)
+{
+  if (XEUNICODE_P)
+    return DdeQueryStringW (idInst, hsz, (LPWSTR) psz, cchMax, iCodePage);
+  else
+    return DdeQueryStringA (idInst, hsz, (LPSTR) psz, cchMax, iCodePage);
+}
+
+
+/*----------------------------------------------------------------------*/
+/*                       Processing file WINREG.H                       */
+/*----------------------------------------------------------------------*/
+
+/* Skipping RegConnectRegistry because error in Cygwin prototype */
+
+LONG
+
+qxeRegCreateKey (HKEY hKey, const Extbyte * lpSubKey, PHKEY phkResult)
+{
+  if (XEUNICODE_P)
+    return RegCreateKeyW (hKey, (LPCWSTR) lpSubKey, phkResult);
+  else
+    return RegCreateKeyA (hKey, (LPCSTR) lpSubKey, phkResult);
+}
+
+LONG
+
+qxeRegCreateKeyEx (HKEY hKey, const Extbyte * lpSubKey, DWORD Reserved, Extbyte * lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition)
+{
+  if (XEUNICODE_P)
+    return RegCreateKeyExW (hKey, (LPCWSTR) lpSubKey, Reserved, (LPWSTR) lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
+  else
+    return RegCreateKeyExA (hKey, (LPCSTR) lpSubKey, Reserved, (LPSTR) lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
+}
+
+LONG
+
+qxeRegDeleteKey (HKEY hKey, const Extbyte * lpSubKey)
+{
+  if (XEUNICODE_P)
+    return RegDeleteKeyW (hKey, (LPCWSTR) lpSubKey);
+  else
+    return RegDeleteKeyA (hKey, (LPCSTR) lpSubKey);
+}
+
+LONG
+
+qxeRegDeleteValue (HKEY hKey, const Extbyte * lpValueName)
+{
+  if (XEUNICODE_P)
+    return RegDeleteValueW (hKey, (LPCWSTR) lpValueName);
+  else
+    return RegDeleteValueA (hKey, (LPCSTR) lpValueName);
+}
+
+LONG
+
+qxeRegEnumKey (HKEY hKey, DWORD dwIndex, Extbyte * lpName, DWORD cbName)
+{
+  if (XEUNICODE_P)
+    return RegEnumKeyW (hKey, dwIndex, (LPWSTR) lpName, cbName);
+  else
+    return RegEnumKeyA (hKey, dwIndex, (LPSTR) lpName, cbName);
+}
+
+LONG
+
+qxeRegEnumKeyEx (HKEY hKey, DWORD dwIndex, Extbyte * lpName, LPDWORD lpcbName, LPDWORD lpReserved, Extbyte * lpClass, LPDWORD lpcbClass, PFILETIME lpftLastWriteTime)
+{
+  if (XEUNICODE_P)
+    return RegEnumKeyExW (hKey, dwIndex, (LPWSTR) lpName, lpcbName, lpReserved, (LPWSTR) lpClass, lpcbClass, lpftLastWriteTime);
+  else
+    return RegEnumKeyExA (hKey, dwIndex, (LPSTR) lpName, lpcbName, lpReserved, (LPSTR) lpClass, lpcbClass, lpftLastWriteTime);
+}
+
+LONG
+
+qxeRegEnumValue (HKEY hKey, DWORD dwIndex, Extbyte * lpValueName, LPDWORD lpcbValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
+{
+  if (XEUNICODE_P)
+    return RegEnumValueW (hKey, dwIndex, (LPWSTR) lpValueName, lpcbValueName, lpReserved, lpType, lpData, lpcbData);
+  else
+    return RegEnumValueA (hKey, dwIndex, (LPSTR) lpValueName, lpcbValueName, lpReserved, lpType, lpData, lpcbData);
+}
+
+LONG
+
+qxeRegLoadKey (HKEY hKey, const Extbyte * lpSubKey, const Extbyte * lpFile)
+{
+  if (XEUNICODE_P)
+    return RegLoadKeyW (hKey, (LPCWSTR) lpSubKey, (LPCWSTR) lpFile);
+  else
+    return RegLoadKeyA (hKey, (LPCSTR) lpSubKey, (LPCSTR) lpFile);
+}
+
+LONG
+
+qxeRegOpenKey (HKEY hKey, const Extbyte * lpSubKey, PHKEY phkResult)
+{
+  if (XEUNICODE_P)
+    return RegOpenKeyW (hKey, (LPCWSTR) lpSubKey, phkResult);
+  else
+    return RegOpenKeyA (hKey, (LPCSTR) lpSubKey, phkResult);
+}
+
+LONG
+
+qxeRegOpenKeyEx (HKEY hKey, const Extbyte * lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
+{
+  if (XEUNICODE_P)
+    return RegOpenKeyExW (hKey, (LPCWSTR) lpSubKey, ulOptions, samDesired, phkResult);
+  else
+    return RegOpenKeyExA (hKey, (LPCSTR) lpSubKey, ulOptions, samDesired, phkResult);
+}
+
+LONG
+
+qxeRegQueryInfoKey (HKEY hKey, Extbyte * lpClass, LPDWORD lpcbClass, LPDWORD lpReserved, LPDWORD lpcSubKeys, LPDWORD lpcbMaxSubKeyLen, LPDWORD lpcbMaxClassLen, LPDWORD lpcValues, LPDWORD lpcbMaxValueNameLen, LPDWORD lpcbMaxValueLen, LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime)
+{
+  if (XEUNICODE_P)
+    return RegQueryInfoKeyW (hKey, (LPWSTR) lpClass, lpcbClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
+  else
+    return RegQueryInfoKeyA (hKey, (LPSTR) lpClass, lpcbClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
+}
+
+LONG
+
+qxeRegQueryValue (HKEY hKey, const Extbyte * lpSubKey, Extbyte * lpValue, PLONG lpcbValue)
+{
+  if (XEUNICODE_P)
+    return RegQueryValueW (hKey, (LPCWSTR) lpSubKey, (LPWSTR) lpValue, lpcbValue);
+  else
+    return RegQueryValueA (hKey, (LPCSTR) lpSubKey, (LPSTR) lpValue, lpcbValue);
+}
+
+LONG
+
+qxeRegQueryMultipleValues (HKEY hKey, PVALENTW val_list, DWORD num_vals, Extbyte * lpValueBuf, LPDWORD ldwTotsize)
+{
+  if (XEUNICODE_P)
+    return RegQueryMultipleValuesW (hKey, val_list, num_vals, (LPWSTR) lpValueBuf, ldwTotsize);
+  else
+    return RegQueryMultipleValuesA (hKey, (PVALENTA) val_list, num_vals, (LPSTR) lpValueBuf, ldwTotsize);
+}
+
+LONG
+
+qxeRegQueryValueEx (HKEY hKey, const Extbyte * lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
+{
+  if (XEUNICODE_P)
+    return RegQueryValueExW (hKey, (LPCWSTR) lpValueName, lpReserved, lpType, lpData, lpcbData);
+  else
+    return RegQueryValueExA (hKey, (LPCSTR) lpValueName, lpReserved, lpType, lpData, lpcbData);
+}
+
+LONG
+
+qxeRegReplaceKey (HKEY hKey, const Extbyte * lpSubKey, const Extbyte * lpNewFile, const Extbyte * lpOldFile)
+{
+  if (XEUNICODE_P)
+    return RegReplaceKeyW (hKey, (LPCWSTR) lpSubKey, (LPCWSTR) lpNewFile, (LPCWSTR) lpOldFile);
+  else
+    return RegReplaceKeyA (hKey, (LPCSTR) lpSubKey, (LPCSTR) lpNewFile, (LPCSTR) lpOldFile);
+}
+
+LONG
+
+qxeRegRestoreKey (HKEY hKey, const Extbyte * lpFile, DWORD dwFlags)
+{
+  if (XEUNICODE_P)
+    return RegRestoreKeyW (hKey, (LPCWSTR) lpFile, dwFlags);
+  else
+    return RegRestoreKeyA (hKey, (LPCSTR) lpFile, dwFlags);
+}
+
+LONG
+
+qxeRegSaveKey (HKEY hKey, const Extbyte * lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+  if (XEUNICODE_P)
+    return RegSaveKeyW (hKey, (LPCWSTR) lpFile, lpSecurityAttributes);
+  else
+    return RegSaveKeyA (hKey, (LPCSTR) lpFile, lpSecurityAttributes);
+}
+
+LONG
+
+qxeRegSetValue (HKEY hKey, const Extbyte * lpSubKey, DWORD dwType, const Extbyte * lpData, DWORD cbData)
+{
+  if (XEUNICODE_P)
+    return RegSetValueW (hKey, (LPCWSTR) lpSubKey, dwType, (LPCWSTR) lpData, cbData);
+  else
+    return RegSetValueA (hKey, (LPCSTR) lpSubKey, dwType, (LPCSTR) lpData, cbData);
+}
+
+LONG
+
+qxeRegSetValueEx (HKEY hKey, const Extbyte * lpValueName, DWORD Reserved, DWORD dwType, CONST BYTE* lpData, DWORD cbData)
+{
+  if (XEUNICODE_P)
+    return RegSetValueExW (hKey, (LPCWSTR) lpValueName, Reserved, dwType, lpData, cbData);
+  else
+    return RegSetValueExA (hKey, (LPCSTR) lpValueName, Reserved, dwType, lpData, cbData);
+}
+
+LONG
+
+qxeRegUnLoadKey (HKEY hKey, const Extbyte * lpSubKey)
+{
+  if (XEUNICODE_P)
+    return RegUnLoadKeyW (hKey, (LPCWSTR) lpSubKey);
+  else
+    return RegUnLoadKeyA (hKey, (LPCSTR) lpSubKey);
+}
+
+BOOL
+
+qxeInitiateSystemShutdown (Extbyte * lpMachineName, Extbyte * lpMessage, DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown)
+{
+  if (XEUNICODE_P)
+    return InitiateSystemShutdownW ((LPWSTR) lpMachineName, (LPWSTR) lpMessage, dwTimeout, bForceAppsClosed, bRebootAfterShutdown);
+  else
+    return InitiateSystemShutdownA ((LPSTR) lpMachineName, (LPSTR) lpMessage, dwTimeout, bForceAppsClosed, bRebootAfterShutdown);
+}
+
+BOOL
+
+qxeAbortSystemShutdown (Extbyte * lpMachineName)
+{
+  if (XEUNICODE_P)
+    return AbortSystemShutdownW ((LPWSTR) lpMachineName);
+  else
+    return AbortSystemShutdownA ((LPSTR) lpMachineName);
+}
+
+
+/*----------------------------------------------------------------------*/
+/*                       Processing file WINNLS.H                       */
+/*----------------------------------------------------------------------*/
+
+/* Error if GetCPInfoEx used: not used, not examined yet */
+
+/* Error if CompareString used: not used, not examined yet */
+
+/* Error if LCMapString used: not used, not examined yet */
+
+int
+qxeGetLocaleInfo (LCID Locale, LCTYPE LCType, Extbyte * lpLCData, int cchData)
+{
+  if (XEUNICODE_P)
+    return GetLocaleInfoW (Locale, LCType, (LPWSTR) lpLCData, cchData);
+  else
+    return GetLocaleInfoA (Locale, LCType, (LPSTR) lpLCData, cchData);
+}
+
+BOOL
+qxeSetLocaleInfo (LCID Locale, LCTYPE LCType, const Extbyte * lpLCData)
+{
+  if (XEUNICODE_P)
+    return SetLocaleInfoW (Locale, LCType, (LPCWSTR) lpLCData);
+  else
+    return SetLocaleInfoA (Locale, LCType, (LPCSTR) lpLCData);
+}
+
+/* Error if GetTimeFormat used: not used, not examined yet */
+
+/* Error if GetDateFormat used: not used, not examined yet */
+
+/* Error if GetNumberFormat used: not used, not examined yet */
+
+/* Error if GetCurrencyFormat used: not used, not examined yet */
+
+/* Error if EnumCalendarInfo used: not used, not examined yet */
+
+/* Error if EnumCalendarInfoEx used: not used, not examined yet */
+
+/* Error if EnumTimeFormats used: not used, not examined yet */
+
+/* Error if EnumDateFormats used: not used, not examined yet */
+
+/* Error if EnumDateFormatsEx used: not used, not examined yet */
+
+/* Error if GetStringTypeEx used: not used, not examined yet */
+
+/* Error if GetStringType used: no such fun; A and W versions have different nos. of args */
+
+/* Error if FoldString used: not used, not examined yet */
+
+/* Error if EnumSystemLocales used: not used, not examined yet */
+
+/* Error if EnumSystemCodePages used: not used, not examined yet */
+
+
+/*----------------------------------------------------------------------*/
+/*                        Processing file IME.H                         */
+/*----------------------------------------------------------------------*/
+
+/* Error if SendIMEMessageEx used: obsolete, no docs available */
+
+
+/*----------------------------------------------------------------------*/
+/*                       Processing file WINGDI.H                       */
+/*----------------------------------------------------------------------*/
+
+int
+qxeAddFontResource (const Extbyte * arg1)
+{
+  if (XEUNICODE_P)
+    return AddFontResourceW ((LPCWSTR) arg1);
+  else
+    return AddFontResourceA ((LPCSTR) arg1);
+}
+
+HMETAFILE
+qxeCopyMetaFile (HMETAFILE arg1, const Extbyte * arg2)
+{
+  if (XEUNICODE_P)
+    return CopyMetaFileW (arg1, (LPCWSTR) arg2);
+  else
+    return CopyMetaFileA (arg1, (LPCSTR) arg2);
+}
+
+/* Skipping CreateDC because split-sized DEVMODE */
+
+/* Skipping CreateFontIndirect because split-sized LOGFONT */
+
+HFONT
+qxeCreateFont (int arg1, int arg2, int arg3, int arg4, int arg5, DWORD arg6, DWORD arg7, DWORD arg8, DWORD arg9, DWORD arg10, DWORD arg11, DWORD arg12, DWORD arg13, const Extbyte * arg14)
+{
+  if (XEUNICODE_P)
+    return CreateFontW (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, (LPCWSTR) arg14);
+  else
+    return CreateFontA (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, (LPCSTR) arg14);
+}
+
+/* Skipping CreateIC because split-sized DEVMODE */
+
+HDC
+qxeCreateMetaFile (const Extbyte * arg1)
+{
+  if (XEUNICODE_P)
+    return CreateMetaFileW ((LPCWSTR) arg1);
+  else
+    return CreateMetaFileA ((LPCSTR) arg1);
+}
+
+BOOL
+qxeCreateScalableFontResource (DWORD arg1, const Extbyte * arg2, const Extbyte * arg3, const Extbyte * arg4)
+{
+  if (XEUNICODE_P)
+    return CreateScalableFontResourceW (arg1, (LPCWSTR) arg2, (LPCWSTR) arg3, (LPCWSTR) arg4);
+  else
+    return CreateScalableFontResourceA (arg1, (LPCSTR) arg2, (LPCSTR) arg3, (LPCSTR) arg4);
+}
+
+/* Skipping DeviceCapabilities because split-sized DEVMODE */
+
+/* Skipping EnumFontFamiliesEx because split-complex FONTENUMPROC; NT 4.0+ only */
+
+/* Error if EnumFontFamilies used: split-complex FONTENUMPROC */
+
+/* Error if EnumFonts used: split-complex FONTENUMPROC */
+
+BOOL
+qxeGetCharWidth (HDC arg1, UINT arg2, UINT arg3, LPINT arg4)
+{
+  if (XEUNICODE_P)
+    return GetCharWidthW (arg1, arg2, arg3, arg4);
+  else
+    return GetCharWidthA (arg1, arg2, arg3, arg4);
+}
+
+BOOL
+qxeGetCharWidth32 (HDC arg1, UINT arg2, UINT arg3, LPINT arg4)
+{
+  if (XEUNICODE_P)
+    return GetCharWidth32W (arg1, arg2, arg3, arg4);
+  else
+    return GetCharWidth32A (arg1, arg2, arg3, arg4);
+}
+
+BOOL  
+qxeGetCharWidthFloat (HDC arg1, UINT arg2, UINT arg3, PFLOAT arg4)
+{
+  if (XEUNICODE_P)
+    return GetCharWidthFloatW (arg1, arg2, arg3, arg4);
+  else
+    return GetCharWidthFloatA (arg1, arg2, arg3, arg4);
+}
+
+BOOL  
+qxeGetCharABCWidths (HDC arg1, UINT arg2, UINT arg3, LPABC arg4)
+{
+  if (XEUNICODE_P)
+    return GetCharABCWidthsW (arg1, arg2, arg3, arg4);
+  else
+    return GetCharABCWidthsA (arg1, arg2, arg3, arg4);
+}
+
+BOOL  
+qxeGetCharABCWidthsFloat (HDC arg1, UINT arg2, UINT arg3, LPABCFLOAT arg4)
+{
+  if (XEUNICODE_P)
+    return GetCharABCWidthsFloatW (arg1, arg2, arg3, arg4);
+  else
+    return GetCharABCWidthsFloatA (arg1, arg2, arg3, arg4);
+}
+
+DWORD
+qxeGetGlyphOutline (HDC arg1, UINT arg2, UINT arg3, LPGLYPHMETRICS arg4, DWORD arg5, LPVOID arg6, CONST MAT2 * arg7)
+{
+  if (XEUNICODE_P)
+    return GetGlyphOutlineW (arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+  else
+    return GetGlyphOutlineA (arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+}
+
+HMETAFILE
+qxeGetMetaFile (const Extbyte * arg1)
+{
+  if (XEUNICODE_P)
+    return GetMetaFileW ((LPCWSTR) arg1);
+  else
+    return GetMetaFileA ((LPCSTR) arg1);
+}
+
+/* Error if GetOutlineTextMetrics used: split-sized LPOUTLINETEXTMETRIC */
+
+BOOL  
+qxeGetTextExtentPoint (HDC arg1, const Extbyte * arg2, int arg3, LPSIZE arg4)
+{
+  if (XEUNICODE_P)
+    return GetTextExtentPointW (arg1, (LPCWSTR) arg2, arg3, arg4);
+  else
+    return GetTextExtentPointA (arg1, (LPCSTR) arg2, arg3, arg4);
+}
+
+BOOL  
+qxeGetTextExtentPoint32 (HDC arg1, const Extbyte * arg2, int arg3, LPSIZE arg4)
+{
+  if (XEUNICODE_P)
+    return GetTextExtentPoint32W (arg1, (LPCWSTR) arg2, arg3, arg4);
+  else
+    return GetTextExtentPoint32A (arg1, (LPCSTR) arg2, arg3, arg4);
+}
+
+BOOL  
+qxeGetTextExtentExPoint (HDC arg1, const Extbyte * arg2, int arg3, int arg4, LPINT arg5, LPINT arg6, LPSIZE arg7)
+{
+  if (XEUNICODE_P)
+    return GetTextExtentExPointW (arg1, (LPCWSTR) arg2, arg3, arg4, arg5, arg6, arg7);
+  else
+    return GetTextExtentExPointA (arg1, (LPCSTR) arg2, arg3, arg4, arg5, arg6, arg7);
+}
+
+/* NOTE: NT 4.0+ only */
+DWORD
+qxeGetCharacterPlacement (HDC arg1, const Extbyte * arg2, int arg3, int arg4, LPGCP_RESULTSW arg5, DWORD arg6)
+{
+  if (XEUNICODE_P)
+    return GetCharacterPlacementW (arg1, (LPCWSTR) arg2, arg3, arg4, arg5, arg6);
+  else
+    return GetCharacterPlacementA (arg1, (LPCSTR) arg2, arg3, arg4, (LPGCP_RESULTSA) arg5, arg6);
+}
+
+/* Error if GetGlyphIndices used: NT 5.0+ only */
+
+/* Error if AddFontResourceEx used: NT 5.0+ only */
+
+/* Error if RemoveFontResourceEx used: NT 5.0+ only */
+
+/* Error if CreateFontIndirectEx used: split-sized ENUMLOGFONTEXDV; NT 5.0+ only */
+
+/* Skipping ResetDC because split-sized DEVMODE */
+
+BOOL
+qxeRemoveFontResource (const Extbyte * arg1)
+{
+  if (XEUNICODE_P)
+    return RemoveFontResourceW ((LPCWSTR) arg1);
+  else
+    return RemoveFontResourceA ((LPCSTR) arg1);
+}
+
+HENHMETAFILE
+qxeCopyEnhMetaFile (HENHMETAFILE arg1, const Extbyte * arg2)
+{
+  if (XEUNICODE_P)
+    return CopyEnhMetaFileW (arg1, (LPCWSTR) arg2);
+  else
+    return CopyEnhMetaFileA (arg1, (LPCSTR) arg2);
+}
+
+HDC
+qxeCreateEnhMetaFile (HDC arg1, const Extbyte * arg2, CONST RECT * arg3, const Extbyte * arg4)
+{
+  if (XEUNICODE_P)
+    return CreateEnhMetaFileW (arg1, (LPCWSTR) arg2, arg3, (LPCWSTR) arg4);
+  else
+    return CreateEnhMetaFileA (arg1, (LPCSTR) arg2, arg3, (LPCSTR) arg4);
+}
+
+HENHMETAFILE
+qxeGetEnhMetaFile (const Extbyte * arg1)
+{
+  if (XEUNICODE_P)
+    return GetEnhMetaFileW ((LPCWSTR) arg1);
+  else
+    return GetEnhMetaFileA ((LPCSTR) arg1);
+}
+
+UINT
+qxeGetEnhMetaFileDescription (HENHMETAFILE arg1, UINT arg2, Extbyte * arg3)
+{
+  if (XEUNICODE_P)
+    return GetEnhMetaFileDescriptionW (arg1, arg2, (LPWSTR) arg3);
+  else
+    return GetEnhMetaFileDescriptionA (arg1, arg2, (LPSTR) arg3);
+}
+
+/* Skipping GetTextMetrics because split-sized LPTEXTMETRIC */
+
+int
+qxeStartDoc (HDC arg1, CONST DOCINFOW * arg2)
+{
+  if (XEUNICODE_P)
+    return StartDocW (arg1, arg2);
+  else
+    return StartDocA (arg1, (CONST DOCINFOA *) arg2);
+}
+
+/* Skipping GetObject because split-sized LOGFONT */
+
+BOOL
+qxeTextOut (HDC arg1, int arg2, int arg3, const Extbyte * arg4, int arg5)
+{
+  if (XEUNICODE_P)
+    return TextOutW (arg1, arg2, arg3, (LPCWSTR) arg4, arg5);
+  else
+    return TextOutA (arg1, arg2, arg3, (LPCSTR) arg4, arg5);
+}
+
+BOOL
+qxeExtTextOut (HDC arg1, int arg2, int arg3, UINT arg4, CONST RECT * arg5, const Extbyte * arg6, UINT arg7, CONST INT * arg8)
+{
+  if (XEUNICODE_P)
+    return ExtTextOutW (arg1, arg2, arg3, arg4, arg5, (LPCWSTR) arg6, arg7, arg8);
+  else
+    return ExtTextOutA (arg1, arg2, arg3, arg4, arg5, (LPCSTR) arg6, arg7, arg8);
+}
+
+BOOL
+qxePolyTextOut (HDC arg1, CONST POLYTEXTW * arg2, int arg3)
+{
+  if (XEUNICODE_P)
+    return PolyTextOutW (arg1, arg2, arg3);
+  else
+    return PolyTextOutA (arg1, (CONST POLYTEXTA *) arg2, arg3);
+}
+
+int
+qxeGetTextFace (HDC arg1, int arg2, Extbyte * arg3)
+{
+  if (XEUNICODE_P)
+    return GetTextFaceW (arg1, arg2, (LPWSTR) arg3);
+  else
+    return GetTextFaceA (arg1, arg2, (LPSTR) arg3);
+}
+
+DWORD
+qxeGetKerningPairs (HDC arg1, DWORD arg2, LPKERNINGPAIR arg3)
+{
+  if (XEUNICODE_P)
+    return GetKerningPairsW (arg1, arg2, arg3);
+  else
+    return GetKerningPairsA (arg1, arg2, arg3);
+}
+
+/* Error if GetLogColorSpace used: split-sized LPLOGCOLORSPACE; NT 4.0+ only */
+
+/* Error if CreateColorSpace used: split-sized LPLOGCOLORSPACE; NT 4.0+ only */
+
+/* Skipping GetICMProfile because NT 4.0+ only, error in Cygwin prototype */
+
+/* NOTE: NT 4.0+ only */
+BOOL
+qxeSetICMProfile (HDC arg1, Extbyte * arg2)
+{
+  if (XEUNICODE_P)
+    return SetICMProfileW (arg1, (LPWSTR) arg2);
+  else
+    return SetICMProfileA (arg1, (LPSTR) arg2);
+}
+
+/* NOTE: NT 4.0+ only */
+int
+qxeEnumICMProfiles (HDC arg1, ICMENUMPROCW arg2, LPARAM arg3)
+{
+  if (XEUNICODE_P)
+    return EnumICMProfilesW (arg1, arg2, arg3);
+  else
+    return EnumICMProfilesA (arg1, (ICMENUMPROCA) arg2, arg3);
+}
+
+/* Skipping UpdateICMRegKey because NT 4.0+ only, error in Cygwin prototype */
+
+/* Error if wglUseFontBitmaps used: causes link error */
+
+/* Error if wglUseFontOutlines used: causes link error */
+
+
+/*----------------------------------------------------------------------*/
+/*                       Processing file SHLOBJ.H                       */
 /*----------------------------------------------------------------------*/
 
 BOOL
-qxesndPlaySound (const Extbyte * pszSound, UINT fuSound)
+qxeSHGetPathFromIDList (LPCITEMIDLIST pidl, Extbyte * pszPath)
 {
   if (XEUNICODE_P)
-    return sndPlaySoundW ((LPCWSTR) pszSound, fuSound);
+    return SHGetPathFromIDListW (pidl, (LPWSTR) pszPath);
   else
-    return sndPlaySoundA ((LPCSTR) pszSound, fuSound);
+    return SHGetPathFromIDListA (pidl, (LPSTR) pszPath);
 }
+
+/* Skipping SHGetSpecialFolderPath because error in Cygwin prototype, missing from Cygwin libraries */
+
+/* Skipping SHBrowseForFolder because need to intercept callback for SendMessage */
+
+/* Skipping SHGetDataFromIDList because split-sized WIN32_FIND_DATA or split-simple NETRESOURCE, missing from Cygwin libraries */
+
+
+/*----------------------------------------------------------------------*/
+/*                      Processing file COMMDLG.H                       */
+/*----------------------------------------------------------------------*/
+
+BOOL  
+qxeGetOpenFileName (LPOPENFILENAMEW arg1)
+{
+  if (XEUNICODE_P)
+    return GetOpenFileNameW (arg1);
+  else
+    return GetOpenFileNameA ((LPOPENFILENAMEA) arg1);
+}
+
+BOOL  
+qxeGetSaveFileName (LPOPENFILENAMEW arg1)
+{
+  if (XEUNICODE_P)
+    return GetSaveFileNameW (arg1);
+  else
+    return GetSaveFileNameA ((LPOPENFILENAMEA) arg1);
+}
+
+short 
+qxeGetFileTitle (const Extbyte * arg1, Extbyte * arg2, WORD arg3)
+{
+  if (XEUNICODE_P)
+    return GetFileTitleW ((LPCWSTR) arg1, (LPWSTR) arg2, arg3);
+  else
+    return GetFileTitleA ((LPCSTR) arg1, (LPSTR) arg2, arg3);
+}
+
+BOOL  
+qxeChooseColor (LPCHOOSECOLORW arg1)
+{
+  if (XEUNICODE_P)
+    return ChooseColorW (arg1);
+  else
+    return ChooseColorA ((LPCHOOSECOLORA) arg1);
+}
+
+HWND  
+qxeFindText (LPFINDREPLACEW arg1)
+{
+  if (XEUNICODE_P)
+    return FindTextW (arg1);
+  else
+    return FindTextA ((LPFINDREPLACEA) arg1);
+}
+
+HWND  
+qxeReplaceText (LPFINDREPLACEW arg1)
+{
+  if (XEUNICODE_P)
+    return ReplaceTextW (arg1);
+  else
+    return ReplaceTextA ((LPFINDREPLACEA) arg1);
+}
+
+/* Error if AfxReplaceText used: mac only */
+
+/* Error if ChooseFont used: split-sized LPLOGFONT in LPCHOOSEFONT */
+
+/* Skipping PrintDlg because LPPRINTDLG with split-sized DEVMODE handle */
+
+/* Skipping PageSetupDlg because LPPAGESETUPDLG with split-sized DEVMODE handle */
+
+
+/*----------------------------------------------------------------------*/
+/*                        Processing file IMM.H                         */
+/*----------------------------------------------------------------------*/
+
+#if defined (HAVE_MS_WINDOWS)
+
+HKL
+qxeImmInstallIME (const Extbyte * lpszIMEFileName, const Extbyte * lpszLayoutText)
+{
+  if (XEUNICODE_P)
+    return ImmInstallIMEW ((LPCWSTR) lpszIMEFileName, (LPCWSTR) lpszLayoutText);
+  else
+    return ImmInstallIMEA ((LPCSTR) lpszIMEFileName, (LPCSTR) lpszLayoutText);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+UINT
+qxeImmGetDescription (HKL arg1, Extbyte * arg2, UINT uBufLen)
+{
+  if (XEUNICODE_P)
+    return ImmGetDescriptionW (arg1, (LPWSTR) arg2, uBufLen);
+  else
+    return ImmGetDescriptionA (arg1, (LPSTR) arg2, uBufLen);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+UINT
+qxeImmGetIMEFileName (HKL arg1, Extbyte * arg2, UINT uBufLen)
+{
+  if (XEUNICODE_P)
+    return ImmGetIMEFileNameW (arg1, (LPWSTR) arg2, uBufLen);
+  else
+    return ImmGetIMEFileNameA (arg1, (LPSTR) arg2, uBufLen);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+LONG
+qxeImmGetCompositionString (HIMC arg1, DWORD arg2, LPVOID arg3, DWORD arg4)
+{
+  if (XEUNICODE_P)
+    return ImmGetCompositionStringW (arg1, arg2, arg3, arg4);
+  else
+    return ImmGetCompositionStringA (arg1, arg2, arg3, arg4);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
 
 BOOL
-qxePlaySound (const Extbyte * pszSound, HMODULE hmod, DWORD fdwSound)
+qxeImmSetCompositionString (HIMC arg1, DWORD dwIndex, LPCVOID lpComp, DWORD arg4, LPCVOID lpRead, DWORD arg6)
 {
   if (XEUNICODE_P)
-    return PlaySoundW ((LPCWSTR) pszSound, hmod, fdwSound);
+    return ImmSetCompositionStringW (arg1, dwIndex, lpComp, arg4, lpRead, arg6);
   else
-    return PlaySoundA ((LPCSTR) pszSound, hmod, fdwSound);
+    return ImmSetCompositionStringA (arg1, dwIndex, lpComp, arg4, lpRead, arg6);
 }
 
-/* Error if waveOutGetDevCaps used: split-sized LPWAVEOUTCAPS */
+#endif /* defined (HAVE_MS_WINDOWS) */
 
-MMRESULT
-qxewaveOutGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD
+qxeImmGetCandidateListCount (HIMC arg1, LPDWORD lpdwListCount)
 {
   if (XEUNICODE_P)
-    return waveOutGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
+    return ImmGetCandidateListCountW (arg1, lpdwListCount);
   else
-    return waveOutGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
+    return ImmGetCandidateListCountA (arg1, lpdwListCount);
 }
 
-/* Error if waveInGetDevCaps used: split-sized LPWAVEINCAPS */
+#endif /* defined (HAVE_MS_WINDOWS) */
 
-MMRESULT
-qxewaveInGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD
+qxeImmGetCandidateList (HIMC arg1, DWORD deIndex, LPCANDIDATELIST arg3, DWORD dwBufLen)
 {
   if (XEUNICODE_P)
-    return waveInGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
+    return ImmGetCandidateListW (arg1, deIndex, arg3, dwBufLen);
   else
-    return waveInGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
+    return ImmGetCandidateListA (arg1, deIndex, arg3, dwBufLen);
 }
 
-/* Error if midiOutGetDevCaps used: split-sized LPMIDIOUTCAPS */
+#endif /* defined (HAVE_MS_WINDOWS) */
 
-MMRESULT
-qxemidiOutGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD
+qxeImmGetGuideLine (HIMC arg1, DWORD dwIndex, Extbyte * arg3, DWORD dwBufLen)
 {
   if (XEUNICODE_P)
-    return midiOutGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
+    return ImmGetGuideLineW (arg1, dwIndex, (LPWSTR) arg3, dwBufLen);
   else
-    return midiOutGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
+    return ImmGetGuideLineA (arg1, dwIndex, (LPSTR) arg3, dwBufLen);
 }
 
-/* Error if midiInGetDevCaps used: split-sized LPMIDIOUTCAPS */
+#endif /* defined (HAVE_MS_WINDOWS) */
 
-MMRESULT
-qxemidiInGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
+#if defined (HAVE_MS_WINDOWS)
+
+/* Skipping ImmGetCompositionFont because split-sized LOGFONT */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* Skipping ImmSetCompositionFont because split-sized LOGFONT */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* NOTE: // split-simple REGISTERWORD */
+BOOL
+qxeImmConfigureIME (HKL arg1, HWND arg2, DWORD arg3, LPVOID arg4)
 {
   if (XEUNICODE_P)
-    return midiInGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
+    return ImmConfigureIMEW (arg1, arg2, arg3, arg4);
   else
-    return midiInGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
+    return ImmConfigureIMEA (arg1, arg2, arg3, arg4);
 }
 
-/* Error if auxGetDevCaps used: split-sized LPAUXCAPS */
+#endif /* defined (HAVE_MS_WINDOWS) */
 
-/* Error if mixerGetDevCaps used: split-sized LPMIXERCAPS */
+#if defined (HAVE_MS_WINDOWS)
 
-/* Error if mixerGetLineInfo used: split-sized LPMIXERLINE */
-
-/* Error if mixerGetLineControls used: split-sized LPMIXERCONTROL */
-
-/* Error if mixerGetControlDetails used: split-sized LPMIXERCONTROL in LPMIXERLINECONTROLS in LPMIXERCONTROLDETAILS */
-
-/* Error if joyGetDevCaps used: split-sized LPJOYCAPS */
-
-FOURCC
-qxemmioStringToFOURCC (const Extbyte * sz, UINT uFlags)
+/* NOTE: // strings of various sorts */
+LRESULT
+qxeImmEscape (HKL arg1, HIMC arg2, UINT arg3, LPVOID arg4)
 {
   if (XEUNICODE_P)
-    return mmioStringToFOURCCW ((LPCWSTR) sz, uFlags);
+    return ImmEscapeW (arg1, arg2, arg3, arg4);
   else
-    return mmioStringToFOURCCA ((LPCSTR) sz, uFlags);
+    return ImmEscapeA (arg1, arg2, arg3, arg4);
 }
 
-LPMMIOPROC
-qxemmioInstallIOProc (FOURCC fccIOProc, LPMMIOPROC pIOProc, DWORD dwFlags)
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+DWORD
+qxeImmGetConversionList (HKL arg1, HIMC arg2, const Extbyte * arg3, LPCANDIDATELIST arg4, DWORD dwBufLen, UINT uFlag)
 {
   if (XEUNICODE_P)
-    return mmioInstallIOProcW (fccIOProc, pIOProc, dwFlags);
+    return ImmGetConversionListW (arg1, arg2, (LPCWSTR) arg3, arg4, dwBufLen, uFlag);
   else
-    return mmioInstallIOProcA (fccIOProc, pIOProc, dwFlags);
+    return ImmGetConversionListA (arg1, arg2, (LPCSTR) arg3, arg4, dwBufLen, uFlag);
 }
 
-HMMIO
-qxemmioOpen (Extbyte * pszFileName, LPMMIOINFO pmmioinfo, DWORD fdwOpen)
-{
-  if (XEUNICODE_P)
-    return mmioOpenW ((LPWSTR) pszFileName, pmmioinfo, fdwOpen);
-  else
-    return mmioOpenA ((LPSTR) pszFileName, pmmioinfo, fdwOpen);
-}
+#endif /* defined (HAVE_MS_WINDOWS) */
 
-MMRESULT
-qxemmioRename (const Extbyte * pszFileName, const Extbyte * pszNewFileName, LPCMMIOINFO pmmioinfo, DWORD fdwRename)
-{
-  if (XEUNICODE_P)
-    return mmioRenameW ((LPCWSTR) pszFileName, (LPCWSTR) pszNewFileName, pmmioinfo, fdwRename);
-  else
-    return mmioRenameA ((LPCSTR) pszFileName, (LPCSTR) pszNewFileName, pmmioinfo, fdwRename);
-}
-
-MCIERROR
-qxemciSendCommand (MCIDEVICEID mciId, UINT uMsg, DWORD dwParam1, DWORD dwParam2)
-{
-  if (XEUNICODE_P)
-    return mciSendCommandW (mciId, uMsg, dwParam1, dwParam2);
-  else
-    return mciSendCommandA (mciId, uMsg, dwParam1, dwParam2);
-}
-
-MCIERROR
-qxemciSendString (const Extbyte * lpstrCommand, Extbyte * lpstrReturnString, UINT uReturnLength, HWND hwndCallback)
-{
-  if (XEUNICODE_P)
-    return mciSendStringW ((LPCWSTR) lpstrCommand, (LPWSTR) lpstrReturnString, uReturnLength, hwndCallback);
-  else
-    return mciSendStringA ((LPCSTR) lpstrCommand, (LPSTR) lpstrReturnString, uReturnLength, hwndCallback);
-}
-
-MCIDEVICEID
-qxemciGetDeviceID (const Extbyte * pszDevice)
-{
-  if (XEUNICODE_P)
-    return mciGetDeviceIDW ((LPCWSTR) pszDevice);
-  else
-    return mciGetDeviceIDA ((LPCSTR) pszDevice);
-}
-
-#if !defined (MINGW)
-
-/* Error if mciGetDeviceIDFromElementID used: missing from Win98se version of ADVAPI32.dll */
-
-#endif /* !defined (MINGW) */
+#if defined (HAVE_MS_WINDOWS)
 
 BOOL
-qxemciGetErrorString (MCIERROR mcierr, Extbyte * pszText, UINT cchText)
+qxeImmIsUIMessage (HWND arg1, UINT arg2, WPARAM arg3, LPARAM arg4)
 {
   if (XEUNICODE_P)
-    return mciGetErrorStringW (mcierr, (LPWSTR) pszText, cchText);
+    return ImmIsUIMessageW (arg1, arg2, arg3, arg4);
   else
-    return mciGetErrorStringA (mcierr, (LPSTR) pszText, cchText);
+    return ImmIsUIMessageA (arg1, arg2, arg3, arg4);
 }
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+BOOL
+qxeImmRegisterWord (HKL arg1, const Extbyte * lpszReading, DWORD arg3, const Extbyte * lpszRegister)
+{
+  if (XEUNICODE_P)
+    return ImmRegisterWordW (arg1, (LPCWSTR) lpszReading, arg3, (LPCWSTR) lpszRegister);
+  else
+    return ImmRegisterWordA (arg1, (LPCSTR) lpszReading, arg3, (LPCSTR) lpszRegister);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+BOOL
+qxeImmUnregisterWord (HKL arg1, const Extbyte * lpszReading, DWORD arg3, const Extbyte * lpszUnregister)
+{
+  if (XEUNICODE_P)
+    return ImmUnregisterWordW (arg1, (LPCWSTR) lpszReading, arg3, (LPCWSTR) lpszUnregister);
+  else
+    return ImmUnregisterWordA (arg1, (LPCSTR) lpszReading, arg3, (LPCSTR) lpszUnregister);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* Error if ImmGetRegisterWordStyle used: split-sized STYLEBUF */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+UINT
+qxeImmEnumRegisterWord (HKL arg1, REGISTERWORDENUMPROCW arg2, const Extbyte * lpszReading, DWORD arg4, const Extbyte * lpszRegister, LPVOID arg6)
+{
+  if (XEUNICODE_P)
+    return ImmEnumRegisterWordW (arg1, arg2, (LPCWSTR) lpszReading, arg4, (LPCWSTR) lpszRegister, arg6);
+  else
+    return ImmEnumRegisterWordA (arg1, (REGISTERWORDENUMPROCA) arg2, (LPCSTR) lpszReading, arg4, (LPCSTR) lpszRegister, arg6);
+}
+
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+
+/* Error if ImmGetImeMenuItems used: split-sized IMEMENUITEMINFO */
+
+#endif /* defined (HAVE_MS_WINDOWS) */
 
 
 /*----------------------------------------------------------------------*/
@@ -3725,406 +3973,158 @@ qxeCreateProcessAsUser (HANDLE hToken, const Extbyte * lpApplicationName, Extbyt
 
 
 /*----------------------------------------------------------------------*/
-/*                      Processing file COMMDLG.H                       */
-/*----------------------------------------------------------------------*/
-
-BOOL  
-qxeGetOpenFileName (LPOPENFILENAMEW arg1)
-{
-  if (XEUNICODE_P)
-    return GetOpenFileNameW (arg1);
-  else
-    return GetOpenFileNameA ((LPOPENFILENAMEA) arg1);
-}
-
-BOOL  
-qxeGetSaveFileName (LPOPENFILENAMEW arg1)
-{
-  if (XEUNICODE_P)
-    return GetSaveFileNameW (arg1);
-  else
-    return GetSaveFileNameA ((LPOPENFILENAMEA) arg1);
-}
-
-short 
-qxeGetFileTitle (const Extbyte * arg1, Extbyte * arg2, WORD arg3)
-{
-  if (XEUNICODE_P)
-    return GetFileTitleW ((LPCWSTR) arg1, (LPWSTR) arg2, arg3);
-  else
-    return GetFileTitleA ((LPCSTR) arg1, (LPSTR) arg2, arg3);
-}
-
-BOOL  
-qxeChooseColor (LPCHOOSECOLORW arg1)
-{
-  if (XEUNICODE_P)
-    return ChooseColorW (arg1);
-  else
-    return ChooseColorA ((LPCHOOSECOLORA) arg1);
-}
-
-HWND  
-qxeFindText (LPFINDREPLACEW arg1)
-{
-  if (XEUNICODE_P)
-    return FindTextW (arg1);
-  else
-    return FindTextA ((LPFINDREPLACEA) arg1);
-}
-
-HWND  
-qxeReplaceText (LPFINDREPLACEW arg1)
-{
-  if (XEUNICODE_P)
-    return ReplaceTextW (arg1);
-  else
-    return ReplaceTextA ((LPFINDREPLACEA) arg1);
-}
-
-/* Error if AfxReplaceText used: mac only */
-
-/* Error if ChooseFont used: split-sized LPLOGFONT in LPCHOOSEFONT */
-
-/* Skipping PrintDlg because LPPRINTDLG with split-sized DEVMODE handle */
-
-/* Skipping PageSetupDlg because LPPAGESETUPDLG with split-sized DEVMODE handle */
-
-
-/*----------------------------------------------------------------------*/
-/*                       Processing file SHLOBJ.H                       */
+/*                      Processing file MMSYSTEM.H                      */
 /*----------------------------------------------------------------------*/
 
 BOOL
-qxeSHGetPathFromIDList (LPCITEMIDLIST pidl, Extbyte * pszPath)
+qxesndPlaySound (const Extbyte * pszSound, UINT fuSound)
 {
   if (XEUNICODE_P)
-    return SHGetPathFromIDListW (pidl, (LPWSTR) pszPath);
+    return sndPlaySoundW ((LPCWSTR) pszSound, fuSound);
   else
-    return SHGetPathFromIDListA (pidl, (LPSTR) pszPath);
-}
-
-/* Skipping SHGetSpecialFolderPath because error in Cygwin prototype, missing from Cygwin libraries */
-
-/* Skipping SHBrowseForFolder because need to intercept callback for SendMessage */
-
-/* Skipping SHGetDataFromIDList because split-sized WIN32_FIND_DATA or split-simple NETRESOURCE, missing from Cygwin libraries */
-
-
-/*----------------------------------------------------------------------*/
-/*                        Processing file IME.H                         */
-/*----------------------------------------------------------------------*/
-
-/* Error if SendIMEMessageEx used: obsolete, no docs available */
-
-
-/*----------------------------------------------------------------------*/
-/*                       Processing file WINGDI.H                       */
-/*----------------------------------------------------------------------*/
-
-int
-qxeAddFontResource (const Extbyte * arg1)
-{
-  if (XEUNICODE_P)
-    return AddFontResourceW ((LPCWSTR) arg1);
-  else
-    return AddFontResourceA ((LPCSTR) arg1);
-}
-
-HMETAFILE
-qxeCopyMetaFile (HMETAFILE arg1, const Extbyte * arg2)
-{
-  if (XEUNICODE_P)
-    return CopyMetaFileW (arg1, (LPCWSTR) arg2);
-  else
-    return CopyMetaFileA (arg1, (LPCSTR) arg2);
-}
-
-/* Skipping CreateDC because split-sized DEVMODE */
-
-/* Skipping CreateFontIndirect because split-sized LOGFONT */
-
-HFONT
-qxeCreateFont (int arg1, int arg2, int arg3, int arg4, int arg5, DWORD arg6, DWORD arg7, DWORD arg8, DWORD arg9, DWORD arg10, DWORD arg11, DWORD arg12, DWORD arg13, const Extbyte * arg14)
-{
-  if (XEUNICODE_P)
-    return CreateFontW (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, (LPCWSTR) arg14);
-  else
-    return CreateFontA (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, (LPCSTR) arg14);
-}
-
-/* Skipping CreateIC because split-sized DEVMODE */
-
-HDC
-qxeCreateMetaFile (const Extbyte * arg1)
-{
-  if (XEUNICODE_P)
-    return CreateMetaFileW ((LPCWSTR) arg1);
-  else
-    return CreateMetaFileA ((LPCSTR) arg1);
+    return sndPlaySoundA ((LPCSTR) pszSound, fuSound);
 }
 
 BOOL
-qxeCreateScalableFontResource (DWORD arg1, const Extbyte * arg2, const Extbyte * arg3, const Extbyte * arg4)
+qxePlaySound (const Extbyte * pszSound, HMODULE hmod, DWORD fdwSound)
 {
   if (XEUNICODE_P)
-    return CreateScalableFontResourceW (arg1, (LPCWSTR) arg2, (LPCWSTR) arg3, (LPCWSTR) arg4);
+    return PlaySoundW ((LPCWSTR) pszSound, hmod, fdwSound);
   else
-    return CreateScalableFontResourceA (arg1, (LPCSTR) arg2, (LPCSTR) arg3, (LPCSTR) arg4);
+    return PlaySoundA ((LPCSTR) pszSound, hmod, fdwSound);
 }
 
-/* Skipping DeviceCapabilities because split-sized DEVMODE */
+/* Error if waveOutGetDevCaps used: split-sized LPWAVEOUTCAPS */
 
-/* Skipping EnumFontFamiliesEx because split-complex FONTENUMPROC; NT 4.0+ only */
+MMRESULT
+qxewaveOutGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
+{
+  if (XEUNICODE_P)
+    return waveOutGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
+  else
+    return waveOutGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
+}
 
-/* Error if EnumFontFamilies used: split-complex FONTENUMPROC */
+/* Error if waveInGetDevCaps used: split-sized LPWAVEINCAPS */
 
-/* Error if EnumFonts used: split-complex FONTENUMPROC */
+MMRESULT
+qxewaveInGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
+{
+  if (XEUNICODE_P)
+    return waveInGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
+  else
+    return waveInGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
+}
+
+/* Error if midiOutGetDevCaps used: split-sized LPMIDIOUTCAPS */
+
+MMRESULT
+qxemidiOutGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
+{
+  if (XEUNICODE_P)
+    return midiOutGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
+  else
+    return midiOutGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
+}
+
+/* Error if midiInGetDevCaps used: split-sized LPMIDIOUTCAPS */
+
+MMRESULT
+qxemidiInGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText)
+{
+  if (XEUNICODE_P)
+    return midiInGetErrorTextW (mmrError, (LPWSTR) pszText, cchText);
+  else
+    return midiInGetErrorTextA (mmrError, (LPSTR) pszText, cchText);
+}
+
+/* Error if auxGetDevCaps used: split-sized LPAUXCAPS */
+
+/* Error if mixerGetDevCaps used: split-sized LPMIXERCAPS */
+
+/* Error if mixerGetLineInfo used: split-sized LPMIXERLINE */
+
+/* Error if mixerGetLineControls used: split-sized LPMIXERCONTROL */
+
+/* Error if mixerGetControlDetails used: split-sized LPMIXERCONTROL in LPMIXERLINECONTROLS in LPMIXERCONTROLDETAILS */
+
+/* Error if joyGetDevCaps used: split-sized LPJOYCAPS */
+
+FOURCC
+qxemmioStringToFOURCC (const Extbyte * sz, UINT uFlags)
+{
+  if (XEUNICODE_P)
+    return mmioStringToFOURCCW ((LPCWSTR) sz, uFlags);
+  else
+    return mmioStringToFOURCCA ((LPCSTR) sz, uFlags);
+}
+
+LPMMIOPROC
+qxemmioInstallIOProc (FOURCC fccIOProc, LPMMIOPROC pIOProc, DWORD dwFlags)
+{
+  if (XEUNICODE_P)
+    return mmioInstallIOProcW (fccIOProc, pIOProc, dwFlags);
+  else
+    return mmioInstallIOProcA (fccIOProc, pIOProc, dwFlags);
+}
+
+HMMIO
+qxemmioOpen (Extbyte * pszFileName, LPMMIOINFO pmmioinfo, DWORD fdwOpen)
+{
+  if (XEUNICODE_P)
+    return mmioOpenW ((LPWSTR) pszFileName, pmmioinfo, fdwOpen);
+  else
+    return mmioOpenA ((LPSTR) pszFileName, pmmioinfo, fdwOpen);
+}
+
+MMRESULT
+qxemmioRename (const Extbyte * pszFileName, const Extbyte * pszNewFileName, LPCMMIOINFO pmmioinfo, DWORD fdwRename)
+{
+  if (XEUNICODE_P)
+    return mmioRenameW ((LPCWSTR) pszFileName, (LPCWSTR) pszNewFileName, pmmioinfo, fdwRename);
+  else
+    return mmioRenameA ((LPCSTR) pszFileName, (LPCSTR) pszNewFileName, pmmioinfo, fdwRename);
+}
+
+MCIERROR
+qxemciSendCommand (MCIDEVICEID mciId, UINT uMsg, DWORD dwParam1, DWORD dwParam2)
+{
+  if (XEUNICODE_P)
+    return mciSendCommandW (mciId, uMsg, dwParam1, dwParam2);
+  else
+    return mciSendCommandA (mciId, uMsg, dwParam1, dwParam2);
+}
+
+MCIERROR
+qxemciSendString (const Extbyte * lpstrCommand, Extbyte * lpstrReturnString, UINT uReturnLength, HWND hwndCallback)
+{
+  if (XEUNICODE_P)
+    return mciSendStringW ((LPCWSTR) lpstrCommand, (LPWSTR) lpstrReturnString, uReturnLength, hwndCallback);
+  else
+    return mciSendStringA ((LPCSTR) lpstrCommand, (LPSTR) lpstrReturnString, uReturnLength, hwndCallback);
+}
+
+MCIDEVICEID
+qxemciGetDeviceID (const Extbyte * pszDevice)
+{
+  if (XEUNICODE_P)
+    return mciGetDeviceIDW ((LPCWSTR) pszDevice);
+  else
+    return mciGetDeviceIDA ((LPCSTR) pszDevice);
+}
+
+#if !defined (MINGW)
+
+/* Error if mciGetDeviceIDFromElementID used: missing from Win98se version of ADVAPI32.dll */
+
+#endif /* !defined (MINGW) */
 
 BOOL
-qxeGetCharWidth (HDC arg1, UINT arg2, UINT arg3, LPINT arg4)
+qxemciGetErrorString (MCIERROR mcierr, Extbyte * pszText, UINT cchText)
 {
   if (XEUNICODE_P)
-    return GetCharWidthW (arg1, arg2, arg3, arg4);
+    return mciGetErrorStringW (mcierr, (LPWSTR) pszText, cchText);
   else
-    return GetCharWidthA (arg1, arg2, arg3, arg4);
+    return mciGetErrorStringA (mcierr, (LPSTR) pszText, cchText);
 }
-
-BOOL
-qxeGetCharWidth32 (HDC arg1, UINT arg2, UINT arg3, LPINT arg4)
-{
-  if (XEUNICODE_P)
-    return GetCharWidth32W (arg1, arg2, arg3, arg4);
-  else
-    return GetCharWidth32A (arg1, arg2, arg3, arg4);
-}
-
-BOOL  
-qxeGetCharWidthFloat (HDC arg1, UINT arg2, UINT arg3, PFLOAT arg4)
-{
-  if (XEUNICODE_P)
-    return GetCharWidthFloatW (arg1, arg2, arg3, arg4);
-  else
-    return GetCharWidthFloatA (arg1, arg2, arg3, arg4);
-}
-
-BOOL  
-qxeGetCharABCWidths (HDC arg1, UINT arg2, UINT arg3, LPABC arg4)
-{
-  if (XEUNICODE_P)
-    return GetCharABCWidthsW (arg1, arg2, arg3, arg4);
-  else
-    return GetCharABCWidthsA (arg1, arg2, arg3, arg4);
-}
-
-BOOL  
-qxeGetCharABCWidthsFloat (HDC arg1, UINT arg2, UINT arg3, LPABCFLOAT arg4)
-{
-  if (XEUNICODE_P)
-    return GetCharABCWidthsFloatW (arg1, arg2, arg3, arg4);
-  else
-    return GetCharABCWidthsFloatA (arg1, arg2, arg3, arg4);
-}
-
-DWORD
-qxeGetGlyphOutline (HDC arg1, UINT arg2, UINT arg3, LPGLYPHMETRICS arg4, DWORD arg5, LPVOID arg6, CONST MAT2 * arg7)
-{
-  if (XEUNICODE_P)
-    return GetGlyphOutlineW (arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-  else
-    return GetGlyphOutlineA (arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-}
-
-HMETAFILE
-qxeGetMetaFile (const Extbyte * arg1)
-{
-  if (XEUNICODE_P)
-    return GetMetaFileW ((LPCWSTR) arg1);
-  else
-    return GetMetaFileA ((LPCSTR) arg1);
-}
-
-/* Error if GetOutlineTextMetrics used: split-sized LPOUTLINETEXTMETRIC */
-
-BOOL  
-qxeGetTextExtentPoint (HDC arg1, const Extbyte * arg2, int arg3, LPSIZE arg4)
-{
-  if (XEUNICODE_P)
-    return GetTextExtentPointW (arg1, (LPCWSTR) arg2, arg3, arg4);
-  else
-    return GetTextExtentPointA (arg1, (LPCSTR) arg2, arg3, arg4);
-}
-
-BOOL  
-qxeGetTextExtentPoint32 (HDC arg1, const Extbyte * arg2, int arg3, LPSIZE arg4)
-{
-  if (XEUNICODE_P)
-    return GetTextExtentPoint32W (arg1, (LPCWSTR) arg2, arg3, arg4);
-  else
-    return GetTextExtentPoint32A (arg1, (LPCSTR) arg2, arg3, arg4);
-}
-
-BOOL  
-qxeGetTextExtentExPoint (HDC arg1, const Extbyte * arg2, int arg3, int arg4, LPINT arg5, LPINT arg6, LPSIZE arg7)
-{
-  if (XEUNICODE_P)
-    return GetTextExtentExPointW (arg1, (LPCWSTR) arg2, arg3, arg4, arg5, arg6, arg7);
-  else
-    return GetTextExtentExPointA (arg1, (LPCSTR) arg2, arg3, arg4, arg5, arg6, arg7);
-}
-
-/* NOTE: NT 4.0+ only */
-DWORD
-qxeGetCharacterPlacement (HDC arg1, const Extbyte * arg2, int arg3, int arg4, LPGCP_RESULTSW arg5, DWORD arg6)
-{
-  if (XEUNICODE_P)
-    return GetCharacterPlacementW (arg1, (LPCWSTR) arg2, arg3, arg4, arg5, arg6);
-  else
-    return GetCharacterPlacementA (arg1, (LPCSTR) arg2, arg3, arg4, (LPGCP_RESULTSA) arg5, arg6);
-}
-
-/* Error if GetGlyphIndices used: NT 5.0+ only */
-
-/* Error if AddFontResourceEx used: NT 5.0+ only */
-
-/* Error if RemoveFontResourceEx used: NT 5.0+ only */
-
-/* Error if CreateFontIndirectEx used: split-sized ENUMLOGFONTEXDV; NT 5.0+ only */
-
-/* Skipping ResetDC because split-sized DEVMODE */
-
-BOOL
-qxeRemoveFontResource (const Extbyte * arg1)
-{
-  if (XEUNICODE_P)
-    return RemoveFontResourceW ((LPCWSTR) arg1);
-  else
-    return RemoveFontResourceA ((LPCSTR) arg1);
-}
-
-HENHMETAFILE
-qxeCopyEnhMetaFile (HENHMETAFILE arg1, const Extbyte * arg2)
-{
-  if (XEUNICODE_P)
-    return CopyEnhMetaFileW (arg1, (LPCWSTR) arg2);
-  else
-    return CopyEnhMetaFileA (arg1, (LPCSTR) arg2);
-}
-
-HDC
-qxeCreateEnhMetaFile (HDC arg1, const Extbyte * arg2, CONST RECT * arg3, const Extbyte * arg4)
-{
-  if (XEUNICODE_P)
-    return CreateEnhMetaFileW (arg1, (LPCWSTR) arg2, arg3, (LPCWSTR) arg4);
-  else
-    return CreateEnhMetaFileA (arg1, (LPCSTR) arg2, arg3, (LPCSTR) arg4);
-}
-
-HENHMETAFILE
-qxeGetEnhMetaFile (const Extbyte * arg1)
-{
-  if (XEUNICODE_P)
-    return GetEnhMetaFileW ((LPCWSTR) arg1);
-  else
-    return GetEnhMetaFileA ((LPCSTR) arg1);
-}
-
-UINT
-qxeGetEnhMetaFileDescription (HENHMETAFILE arg1, UINT arg2, Extbyte * arg3)
-{
-  if (XEUNICODE_P)
-    return GetEnhMetaFileDescriptionW (arg1, arg2, (LPWSTR) arg3);
-  else
-    return GetEnhMetaFileDescriptionA (arg1, arg2, (LPSTR) arg3);
-}
-
-/* Skipping GetTextMetrics because split-sized LPTEXTMETRIC */
-
-int
-qxeStartDoc (HDC arg1, CONST DOCINFOW * arg2)
-{
-  if (XEUNICODE_P)
-    return StartDocW (arg1, arg2);
-  else
-    return StartDocA (arg1, (CONST DOCINFOA *) arg2);
-}
-
-/* Skipping GetObject because split-sized LOGFONT */
-
-BOOL
-qxeTextOut (HDC arg1, int arg2, int arg3, const Extbyte * arg4, int arg5)
-{
-  if (XEUNICODE_P)
-    return TextOutW (arg1, arg2, arg3, (LPCWSTR) arg4, arg5);
-  else
-    return TextOutA (arg1, arg2, arg3, (LPCSTR) arg4, arg5);
-}
-
-BOOL
-qxeExtTextOut (HDC arg1, int arg2, int arg3, UINT arg4, CONST RECT * arg5, const Extbyte * arg6, UINT arg7, CONST INT * arg8)
-{
-  if (XEUNICODE_P)
-    return ExtTextOutW (arg1, arg2, arg3, arg4, arg5, (LPCWSTR) arg6, arg7, arg8);
-  else
-    return ExtTextOutA (arg1, arg2, arg3, arg4, arg5, (LPCSTR) arg6, arg7, arg8);
-}
-
-BOOL
-qxePolyTextOut (HDC arg1, CONST POLYTEXTW * arg2, int arg3)
-{
-  if (XEUNICODE_P)
-    return PolyTextOutW (arg1, arg2, arg3);
-  else
-    return PolyTextOutA (arg1, (CONST POLYTEXTA *) arg2, arg3);
-}
-
-int
-qxeGetTextFace (HDC arg1, int arg2, Extbyte * arg3)
-{
-  if (XEUNICODE_P)
-    return GetTextFaceW (arg1, arg2, (LPWSTR) arg3);
-  else
-    return GetTextFaceA (arg1, arg2, (LPSTR) arg3);
-}
-
-DWORD
-qxeGetKerningPairs (HDC arg1, DWORD arg2, LPKERNINGPAIR arg3)
-{
-  if (XEUNICODE_P)
-    return GetKerningPairsW (arg1, arg2, arg3);
-  else
-    return GetKerningPairsA (arg1, arg2, arg3);
-}
-
-/* Error if GetLogColorSpace used: split-sized LPLOGCOLORSPACE; NT 4.0+ only */
-
-/* Error if CreateColorSpace used: split-sized LPLOGCOLORSPACE; NT 4.0+ only */
-
-/* Skipping GetICMProfile because NT 4.0+ only, error in Cygwin prototype */
-
-/* NOTE: NT 4.0+ only */
-BOOL
-qxeSetICMProfile (HDC arg1, Extbyte * arg2)
-{
-  if (XEUNICODE_P)
-    return SetICMProfileW (arg1, (LPWSTR) arg2);
-  else
-    return SetICMProfileA (arg1, (LPSTR) arg2);
-}
-
-/* NOTE: NT 4.0+ only */
-int
-qxeEnumICMProfiles (HDC arg1, ICMENUMPROCW arg2, LPARAM arg3)
-{
-  if (XEUNICODE_P)
-    return EnumICMProfilesW (arg1, arg2, arg3);
-  else
-    return EnumICMProfilesA (arg1, (ICMENUMPROCA) arg2, arg3);
-}
-
-/* Skipping UpdateICMRegKey because NT 4.0+ only, error in Cygwin prototype */
-
-/* Error if wglUseFontBitmaps used: causes link error */
-
-/* Error if wglUseFontOutlines used: causes link error */
 

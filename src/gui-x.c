@@ -388,7 +388,7 @@ add_accel_and_to_external (Lisp_Object string)
   else
     {
       Bytecount namelen = XSTRING_LENGTH (string);
-      Ibyte *chars = (Ibyte *) ALLOCA (namelen + 3);
+      Ibyte *chars = alloca_ibytes (namelen + 3);
       chars[0] = '%';
       chars[1] = '_';
       memcpy (chars + 2, name, namelen + 1);
@@ -694,8 +694,6 @@ reinit_vars_of_gui_x (void)
 void
 vars_of_gui_x (void)
 {
-  reinit_vars_of_gui_x ();
-
   Vpopup_callbacks = Qnil;
   staticpro (&Vpopup_callbacks);
 }

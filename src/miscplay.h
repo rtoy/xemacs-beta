@@ -55,7 +55,7 @@ size_t sndcnv2byteBE(void **data,size_t *sz,void **outbuf);
 size_t sndcnv2monobyteLE(void **data,size_t *sz,void **outbuf);
 size_t sndcnv2monobyteBE(void **data,size_t *sz,void **outbuf);
 
-fmtType analyze_format(UChar_Binary *format,int *fmt,int *speed,
+fmtType analyze_format(Binbyte *format,int *fmt,int *speed,
                              int *tracks,
                              size_t (**parsesndfile)(void **,size_t *sz,
                                                      void **));

@@ -32,7 +32,7 @@ extern Lisp_Object Qdragdrop_URL;
 extern Lisp_Object Qdragdrop_drop_dispatch;
 
 /* some utility functions */
-char *dnd_url_hexify_string (const char *s, const char *m);
+Ibyte *dnd_url_hexify_string (const Ibyte *s, const Ibyte *m);
 
 /* emacs interface */
 void syms_of_dragdrop (void);

@@ -42,7 +42,7 @@ static double old_volume;
 static Audio_hdr dev_hdr;
 
 static int
-init_device (int volume, UChar_Binary *data, int fd,
+init_device (int volume, Binbyte *data, int fd,
 	     unsigned int *header_length)
 {
 #ifdef SUNOS4_0_3
@@ -130,7 +130,7 @@ void
 play_sound_file (Extbyte *sound_file, int volume)
 {
   int rrtn, wrtn;
-  UChar_Binary buf [255];
+  Binbyte buf [255];
   int file_fd;
 
   audio_fd = audio_open ();
@@ -152,12 +152,12 @@ play_sound_file (Extbyte *sound_file, int volume)
       goto END_OF_PLAY;
     }
 
-  if (init_device (volume, (UChar_Binary *) 0, file_fd, (unsigned int *) 0))
+  if (init_device (volume, (Binbyte *) 0, file_fd, (unsigned int *) 0))
     goto END_OF_PLAY;
 
   while (1)
     {
-      rrtn = read (file_fd, (Char_Binary *) buf, sizeof (buf));
+      rrtn = read (file_fd, (CBinbyte *) buf, sizeof (buf));
       if (rrtn < 0)
 	{
 	  sound_perror ("read");
@@ -168,7 +168,7 @@ play_sound_file (Extbyte *sound_file, int volume)
 
       while (1)
 	{
-	  wrtn = write (audio_fd, (Char_Binary *) buf, rrtn);
+	  wrtn = write (audio_fd, (CBinbyte *) buf, rrtn);
 	  if (wrtn < 0)
 	    {
 	      sound_perror ("write");
@@ -206,7 +206,7 @@ play_sound_file (Extbyte *sound_file, int volume)
 
 
 int
-play_sound_data (UChar_Binary *data, int length, int volume)
+play_sound_data (Binbyte *data, int length, int volume)
 {
   int wrtn, start = 0;
   unsigned int ilen;
@@ -217,7 +217,7 @@ play_sound_data (UChar_Binary *data, int length, int volume)
   if (length == 0) return 0;
 
   /* this is just to get a better error message */
-  if (strncmp (".snd\0", (Char_Binary *) data, 4))
+  if (strncmp (".snd\0", (CBinbyte *) data, 4))
     {
       sound_warn ("Not valid audio data (bad magic number)");
       goto END_OF_PLAY;
@@ -246,7 +246,7 @@ play_sound_data (UChar_Binary *data, int length, int volume)
 
   while (1)
     {
-      wrtn = write (audio_fd, (Char_Binary *) (data+start), length-start);
+      wrtn = write (audio_fd, (CBinbyte *) (data+start), length-start);
       if (wrtn < 0)
 	{
 	  sound_perror ("write");

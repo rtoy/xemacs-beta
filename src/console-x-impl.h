@@ -260,7 +260,7 @@ struct x_frame
   /* This flag tells us if the menubar contents are up-to-date with respect
      to the current menubar structure.  If we want to actually pull down a
      menu and this is false, then we need to update things. */
-  char menubar_contents_up_to_date;
+  Boolbyte menubar_contents_up_to_date;
 
   /* The icon pixmaps; these are Lisp_Image_Instance objects, or Qnil. */
   Lisp_Object icon_pixmap;
@@ -279,7 +279,7 @@ struct x_frame
 #endif /* HAVE_TOOLBARS */
 
   /* geometry string that ought to be freed. */
-  char *geom_free_me_please;
+  Ascbyte *geom_free_me_please;
 
 #ifdef HAVE_XIM
   XPoint   xic_spot;		/* Spot Location cache */

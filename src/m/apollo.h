@@ -39,10 +39,6 @@ Boston, MA 02111-1307, USA.  */
 /* Do not define LOAD_AVE_TYPE or LOAD_AVE_CVT
    since there is no /dev/kmem */
 
-/* Define HAVE_ALLOCA because we use the system's version of alloca.  */
-
-#define HAVE_ALLOCA
-
 /* Prevent -lg from being used for debugging.  Not needed.  */
 
 #define LIBS_DEBUG

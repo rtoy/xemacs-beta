@@ -38,8 +38,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / FSCALE)
 
-#define HAVE_ALLOCA
-
 /* Here is where programs actually start running */
 #define TEXT_START 0x8000
 #define LD_TEXT_START_ADDR 8000

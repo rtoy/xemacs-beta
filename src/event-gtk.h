@@ -32,6 +32,5 @@ gint emacs_gtk_motion_event_handler (GtkWidget *widget, GdkEventMotion *event);
 gboolean emacs_shell_event_handler (GtkWidget *wid /* unused */,
 				    GdkEvent *event,
 				    gpointer closure);
-void reinit_vars_of_event_gtk (void);
 
 #endif /* __EVENT-GTK_H__ */

@@ -1,7 +1,7 @@
 /* Device functions for X windows.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -494,6 +494,7 @@ x_try_best_visual (Display *dpy, int scrnum)
 static void
 x_init_device (struct device *d, Lisp_Object UNUSED (props))
 {
+  /* !!#### */
   Lisp_Object display;
   Display *dpy;
   Widget app_shell;
@@ -651,8 +652,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
       {
 	LISP_STRING_TO_EXTERNAL (Vx_app_defaults_directory, data_dir,
 				 Qfile_name);
-	path = (Extbyte *) ALLOCA (strlen (data_dir) + strlen (locale) +
-				   7);
+	path = alloca_extbytes (strlen (data_dir) + strlen (locale) + 7);
 	sprintf (path, "%s%s/Emacs", data_dir, locale);
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);
@@ -660,8 +660,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
 	LISP_STRING_TO_EXTERNAL (Vdata_directory, data_dir, Qfile_name);
-	path = (Extbyte *) ALLOCA (strlen (data_dir) + 13 + strlen (locale) +
-				   7);
+	path = alloca_extbytes (strlen (data_dir) + 13 + strlen (locale) + 7);
 	sprintf (path, "%sapp-defaults/%s/Emacs", data_dir, locale);
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);
@@ -1721,9 +1720,9 @@ Return the empty string if the vendor ID string cannot be determined.
        (device))
 {
   Display *dpy = get_x_display (device);
-  char *vendor = ServerVendor (dpy);
+  Extbyte *vendor = ServerVendor (dpy);
 
-  return build_string (vendor ? vendor : "");
+  return build_ext_string (vendor ? vendor : "", Qx_hpc_encoding);
 }
 
 DEFUN ("x-server-version", Fx_server_version, 0, 1, 0, /*
@@ -1748,7 +1747,7 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
 */
        (keysym))
 {
-  const char *keysym_ext;
+  const Extbyte *keysym_ext;
 
   CHECK_STRING (keysym);
   LISP_STRING_TO_EXTERNAL (keysym, keysym_ext, Qctext);
@@ -1952,7 +1951,8 @@ See also `x-set-font-path'.
 {
   Display *dpy = get_x_display (device);
   int ndirs_return;
-  const char **directories = (const char **) XGetFontPath (dpy, &ndirs_return);
+  const Extbyte **directories =
+    (const Extbyte **) XGetFontPath (dpy, &ndirs_return);
   Lisp_Object font_path = Qnil;
 
   if (!directories)
@@ -1983,25 +1983,29 @@ See also `x-get-font-path'.
        (font_path, device))
 {
   Display *dpy = get_x_display (device);
-  Lisp_Object path_entry;
-  const char **directories;
+  Extbyte **directories;
   int i=0,ndirs=0;
 
-  EXTERNAL_LIST_LOOP (path_entry, font_path)
-    {
-      CHECK_STRING (XCAR (path_entry));
-      ndirs++;
-    }
+  {
+    EXTERNAL_LIST_LOOP_2 (path_entry, font_path)
+      {
+	CHECK_STRING (path_entry);
+	ndirs++;
+      }
+  }
 
-  directories = alloca_array (const char *, ndirs);
+  directories = alloca_array (Extbyte *, ndirs);
 
-  EXTERNAL_LIST_LOOP (path_entry, font_path)
-    {
-      LISP_STRING_TO_EXTERNAL (XCAR (path_entry), directories[i++], Qfile_name);
-    }
+  {
+    EXTERNAL_LIST_LOOP_2 (path_entry, font_path)
+      {
+	LISP_STRING_TO_EXTERNAL (path_entry, directories[i++],
+				 Qfile_name);
+      }
+  }
 
   expect_x_error (dpy);
-  XSetFontPath (dpy, (char **) directories, ndirs);
+  XSetFontPath (dpy, directories, ndirs);
   signal_if_x_error (dpy, 1/*resumable_p*/);
 
   return Qnil;
@@ -2051,7 +2055,7 @@ void
 reinit_console_type_create_device_x (void)
 {
   /* Initialize variables to speed up X resource interactions */
-  const Char_ASCII *valid_resource_chars =
+  const Ascbyte *valid_resource_chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
   while (*valid_resource_chars)
     valid_resource_char_p[(unsigned int) (*valid_resource_chars++)] = 1;
@@ -2083,8 +2087,6 @@ reinit_vars_of_device_x (void)
 void
 vars_of_device_x (void)
 {
-  reinit_vars_of_device_x ();
-
   DEFVAR_LISP ("x-emacs-application-class", &Vx_emacs_application_class /*
 The X application class of the XEmacs process.
 This controls, among other things, the name of the `app-defaults' file

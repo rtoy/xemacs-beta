@@ -37,18 +37,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / FSCALE) */
 
-/* Define C_ALLOCA if this machine does not support a true alloca
-   and the one written in C should be used instead.
-   Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used.
-   Define neither one if an assembler-language alloca
-   in the file alloca.s should be used.  */
-
-/* #define C_ALLOCA */
-#ifdef __NetBSD__
-#define HAVE_ALLOCA
-#endif
-
 /* Define NO_REMAP if memory segmentation makes it not work well
    to change the boundary between the text section and data section
    when Emacs is dumped.  If you define this, the preloaded Lisp
@@ -57,8 +45,6 @@ Boston, MA 02111-1307, USA.  */
 /* #define NO_REMAP */
 
 #define TEXT_START 0
-
-#define STACK_DIRECTION -1
 
 #ifndef __NetBSD__
 #define EXEC_MAGIC 0410

@@ -54,7 +54,7 @@ generate_dump_id (void)
 }
 
 int
-main ()
+main (int argc, char **argv)
 {
   FILE *f;
 

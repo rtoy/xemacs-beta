@@ -179,27 +179,75 @@ later when you send off a build report with 'M-x build-report RET'
 ** Building XEmacs from a full distribution
 ===========================================
 
-Locate a convenient place where you have at least 100MB of free space
+[1] Locate a convenient place where you have at least 100MB of free space
 and issue the command
 
 $ gunzip -c /tmp/xemacs-21.5.10.tar.gz | tar xvf -
 
 (or simply `tar zxvf /tmp/xemacs-21.5.10.tar.gz' if you use GNU tar).
 
-cd to the top level directory and issue an appropriate configure
-command.  One maintainer uses the following at the time of this
-writing:
+[2] cd to the top level directory and issue an appropriate configure
+command.
 
-./configure \
-	--extra-verbose \
-	--site-prefixes=/usr/local/pgsql:/usr/local/BerkeleyDB.4.1 \
-	--dynamic=yes --with-gtk=no --with-gnome=no --with-toolbars \
-	--with-wmcommand --with-athena=next --with-menubars=lucid \
-	--with-scrollbars=athena --with-dialogs=athena --with-widgets=athena \
-	--with-gif --with-sound=native,noesd --with-site-lisp=no \
-	--with-site-modules --pdump --with-mule --with-xfs --debug \
-	--error-checking=all --memory-usage-stats --use-kkcc \
-	--with-clash-detection
+[3] Run `configure'.  If you are new, just consider running it with no
+options, to see if you can get a succesful build.  When you are more
+experienced, you should put various flags in.  Here is what we suggest:
+
+[a] It's a good idea to use
+
+--extra-verbose
+--debug
+--memory-usage-stats
+--error-checking=all
+
+These turn on extra debugging info and checks.  The last one in particular
+will add a great deal of extra error-checking -- which will slow your XEmacs
+down somewhat but is likely to catch bugs much sooner and make your bug
+reports much more useful.
+
+[b] You should also strongly consider
+
+--with-mule
+--use-pkcc
+--pdump
+--with-clash-detection
+--with-wmcommand
+--with-xfs
+
+These turn on optional features, which can always use testing.
+
+[c] If you have gcc, consider using
+
+--compiler=gcc
+--xemacs-compiler=g++
+
+This will compile XEmacs using g++, which will turn on a lot of additional
+error-checking.
+
+[d] If your packages are not installed under /usr/local, you should add a
+line like
+
+--package-path=~/.xemacs::/xemacs/site-packages:/xemacs/xemacs-packages:/xemacs/mule-packages
+
+[e] If you want to build multiple configurations from the same source tree,
+make separate build directories for each configuration, run `configure' from
+the top level of these (currently empty) directories and use an option like
+
+--srcdir=/xemacs/source-tree
+
+(or wherever your source tree is).  This will magically create symlinks and
+populate your build directory.
+
+[f] Use --site-prefixes (or --site-includes and --site-libraries) if you have
+some packages that XEmacs can compile with that are located in an unusual
+place.  For example:
+
+--site-prefixes=/usr/local/pgsql:/usr/local/BerkeleyDB.4.1
+
+[g] Depending on your build environment, consuder setting or not setting
+options for menubars, scrollbars, window systems, native sound, etc.  If
+you're not sure, leave them out and let configure do the auto-detection.
+(If you get bugs compiling GTK, use `--with-gtk=no --with-gnome=no'.)
 
 Part of the configure output is a summary that looks something
 like the following.  (this summary is also available as the file
@@ -282,14 +330,14 @@ Other Features:
 
 
 
-Then...
+[4] Then...
 
 $ make > ./beta.err 2>&1
 $ make check > ./xemacs-make-check.err 2>&1
 
 ...and you should have a working XEmacs.
 
-After you have verified that you have a functional editor, fire up
+[5] After you have verified that you have a functional editor, fire up
 your favorite mail program and send a build report to
 <xemacs-buildreports@xemacs.org>.
 

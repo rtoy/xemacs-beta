@@ -148,7 +148,7 @@ mswindows_text_width_single_run (HDC hdc, struct face_cachel *cachel,
   Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
   SIZE size;
 
-#if 0 /* @@#### not the way of ikeyama's ws */
+#if 0 /* #### not the way of ikeyama's ws */
   if (!fi->proportional_p || !hdc)
     {
       if (XCHARSET_DIMENSION (run->charset) == 2)
@@ -166,7 +166,7 @@ mswindows_text_width_single_run (HDC hdc, struct face_cachel *cachel,
 			     cachel->underline, cachel->strikethru);
       GetTextExtentPoint32W (hdc, run->ptr, run->nwchars, &size);
       return size.cx;
-#if 0 /* @@#### not the way of ikeyama's ws */
+#if 0 /* #### not the way of ikeyama's ws */
     }
 #endif
 }

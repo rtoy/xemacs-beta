@@ -48,7 +48,7 @@ static union {
     int           align;
     enum wvState state;
     size_t        left;
-    UChar_Binary leftover[HEADERSZ];
+    Binbyte leftover[HEADERSZ];
     signed long   chunklength;
   } wave;
   struct {
@@ -56,13 +56,13 @@ static union {
     int           isdata;
     int           skipping;
     size_t        left;
-    UChar_Binary leftover[HEADERSZ];
+    Binbyte leftover[HEADERSZ];
   } audio;
 } parsestate;
 
 /* Use a global buffer as scratch-pad for possible conversions of the
    sampling format */
-UChar_Binary miscplay_sndbuf[SNDBUFSZ];
+Binbyte miscplay_sndbuf[SNDBUFSZ];
 
 /* Initialize global parser state information to zero */
 void reset_parsestate()
@@ -121,7 +121,7 @@ static int waverequire(void **data,size_t *sz,size_t rq)
   memcpy(parsestate.wave.leftover+parsestate.wave.left,
         *data,rq);
   parsestate.wave.left      += rq;
-  (*(UChar_Binary **)data) += rq;
+  (*(Binbyte **)data) += rq;
   *sz                       -= rq;
   return(rc);
 }
@@ -192,7 +192,7 @@ static size_t parsewave(void **data,size_t *sz,void **outbuf)
       else {
        if (parsestate.wave.chunklength > 0 && *sz > 0) {
          *sz -= parsestate.wave.chunklength;
-         (*(UChar_Binary **)data) += parsestate.wave.chunklength; }
+         (*(Binbyte **)data) += parsestate.wave.chunklength; }
        parsestate.wave.state = wvOutOfBlock; }
       break;
     case wvSoundChunk: {
@@ -217,7 +217,7 @@ static size_t parsewave(void **data,size_t *sz,void **outbuf)
        count  = *sz;
        count -= rq = count % parsestate.wave.align; }
       *outbuf                   = *data;
-      (*(UChar_Binary **)data) += count;
+      (*(Binbyte **)data) += count;
       *sz                       -= count;
       if ((parsestate.wave.chunklength -= count) < parsestate.wave.align) {
        parsestate.wave.state = wvOutOfBlock;
@@ -258,7 +258,7 @@ static size_t parsesundecaudio(void **data,size_t *sz,void **outbuf)
              count = parsestate.audio.align - parsestate.audio.left);
       *outbuf = parsestate.audio.leftover;
       *sz    -= count;
-      *data   = (*(Char_Binary **)data) + count;
+      *data   = (*(CBinbyte **)data) + count;
       parsestate.audio.left = 0;
       return(parsestate.audio.align); }
     else {
@@ -266,7 +266,7 @@ static size_t parsesundecaudio(void **data,size_t *sz,void **outbuf)
       memmove(parsestate.audio.leftover + parsestate.audio.left,
              *data,
              *sz);
-      *data = (*(Char_Binary **)data) + *sz;
+      *data = (*(CBinbyte **)data) + *sz;
       parsestate.audio.left += *sz;
       *sz   = 0;
       return(0); } }
@@ -278,7 +278,7 @@ static size_t parsesundecaudio(void **data,size_t *sz,void **outbuf)
     *outbuf = *data;
     if ((parsestate.audio.left = rc % parsestate.audio.align) != 0) {
       memmove(parsestate.audio.leftover,
-             (Char_Binary *)*outbuf + rc - parsestate.audio.left,
+             (CBinbyte *)*outbuf + rc - parsestate.audio.left,
              parsestate.audio.left);
       rc -= parsestate.audio.left; }
     *sz = 0;
@@ -288,7 +288,7 @@ static size_t parsesundecaudio(void **data,size_t *sz,void **outbuf)
      header information and determine how many bytes we need to skip until
      the start of the sound chunk */
   if (!parsestate.audio.skipping) {
-    UChar_Binary *header = (UChar_Binary *) *data;
+    Binbyte *header = (Binbyte *) *data;
     if (*sz < 8) {
       sound_warn("Irrecoverable error while parsing Sun/DEC audio file");
       return(0); }
@@ -310,10 +310,10 @@ static size_t parsesundecaudio(void **data,size_t *sz,void **outbuf)
   if (*sz >= (size_t) parsestate.audio.skipping) {
     /* Skip just the header information and return the sound chunk */
     int rc = *sz - parsestate.audio.skipping;
-    *outbuf = (Char_Binary *)*data + parsestate.audio.skipping;
+    *outbuf = (CBinbyte *)*data + parsestate.audio.skipping;
     if ((parsestate.audio.left = rc % parsestate.audio.align) != 0) {
       memmove(parsestate.audio.leftover,
-             (Char_Binary *)*outbuf + rc - parsestate.audio.left,
+             (CBinbyte *)*outbuf + rc - parsestate.audio.left,
              parsestate.audio.left);
       rc -= parsestate.audio.left; }
     *sz = 0;
@@ -341,20 +341,20 @@ size_t sndcnvnop(void **data,size_t *sz,void **outbuf)
 /* Convert 8 bit unsigned stereo data to 8 bit unsigned mono data */
 size_t sndcnv8U_2mono(void **data,size_t *sz,void **outbuf)
 {
-  REGISTER UChar_Binary *src;
-  REGISTER UChar_Binary *dest;
+  REGISTER Binbyte *src;
+  REGISTER Binbyte *dest;
   int rc,count;
 
   count = *sz / 2;
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = (UChar_Binary *) *data;
+  src     = (Binbyte *) *data;
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--)
     {
-      *dest++ = (UChar_Binary)(((int)*(src) +
+      *dest++ = (Binbyte)(((int)*(src) +
 				 (int)*(src+1)) / 2);
       src += 2;
     }
@@ -365,21 +365,21 @@ size_t sndcnv8U_2mono(void **data,size_t *sz,void **outbuf)
 /* Convert 8 bit signed stereo data to 8 bit signed mono data */
 size_t sndcnv8S_2mono(void **data,size_t *sz,void **outbuf)
 {
-  REGISTER UChar_Binary *src;
-  REGISTER UChar_Binary *dest;
+  REGISTER Binbyte *src;
+  REGISTER Binbyte *dest;
   int rc, count;
 
   count = *sz / 2;
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = (UChar_Binary *) *data;
+  src     = (Binbyte *) *data;
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--)
     {
-      *dest++ = (UChar_Binary)(((int)*((SChar_Binary *)(src)) +
-				 (int)*((SChar_Binary *)(src+1))) / 2);
+      *dest++ = (Binbyte)(((int)*((SBinbyte *)(src)) +
+				 (int)*((SBinbyte *)(src+1))) / 2);
       src  += 2;
     }
   *data   = src;
@@ -389,21 +389,21 @@ size_t sndcnv8S_2mono(void **data,size_t *sz,void **outbuf)
 /* Convert 8 bit signed stereo data to 8 bit unsigned mono data */
 size_t sndcnv2monounsigned(void **data,size_t *sz,void **outbuf)
 {
-  REGISTER UChar_Binary *src;
-  REGISTER UChar_Binary *dest;
+  REGISTER Binbyte *src;
+  REGISTER Binbyte *dest;
   int rc,count;
 
   count = *sz / 2;
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = (UChar_Binary *) *data;
+  src     = (Binbyte *) *data;
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--)
     {
-      *dest++ = (UChar_Binary)(((int)*((SChar_Binary *)(src)) +
-				 (int)*((SChar_Binary *)(src+1))) / 2) ^ 0x80;
+      *dest++ = (Binbyte)(((int)*((SBinbyte *)(src)) +
+				 (int)*((SBinbyte *)(src+1))) / 2) ^ 0x80;
       src += 2;
     }
   *data   = src;
@@ -413,15 +413,15 @@ size_t sndcnv2monounsigned(void **data,size_t *sz,void **outbuf)
 /* Convert 8 bit signed mono data to 8 bit unsigned mono data */
 size_t sndcnv2unsigned(void **data,size_t *sz,void **outbuf)
 {
-  REGISTER UChar_Binary *src;
-  REGISTER UChar_Binary *dest;
+  REGISTER Binbyte *src;
+  REGISTER Binbyte *dest;
   int rc,count;
 
   count = *sz;
   if (count > SNDBUFSZ) { *sz  -= SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = (UChar_Binary *) *data;
+  src     = (Binbyte *) *data;
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--)
@@ -432,7 +432,7 @@ size_t sndcnv2unsigned(void **data,size_t *sz,void **outbuf)
 
 /* Convert a number in the range -32768..32767 to an 8 bit ulaw encoded
    number --- I hope, I got this conversion right :-) */
-static inline SChar_Binary int2ulaw(int i)
+static inline SBinbyte int2ulaw(int i)
 {
     /* Lookup table for fast calculation of number of bits that need shifting*/
     static short int t_bits[128] = {
@@ -457,7 +457,7 @@ static inline SChar_Binary int2ulaw(int i)
 size_t sndcnvULaw_2linear(void **data,size_t *sz,void **outbuf)
 {
   /* conversion table stolen from Linux's ulaw.h */
-  static UChar_Binary ulaw_dsp[] = {
+  static Binbyte ulaw_dsp[] = {
      3,    7,   11,   15,   19,   23,   27,   31,
     35,   39,   43,   47,   51,   55,   59,   63,
     66,   68,   70,   72,   74,   76,   78,   80,
@@ -491,7 +491,7 @@ size_t sndcnvULaw_2linear(void **data,size_t *sz,void **outbuf)
    128,  128,  128,  128,  128,  128,  128,  128,
    128,  128,  128,  128,  128,  128,  128,  128,
   };
-  UChar_Binary *p=(UChar_Binary *)*data;
+  Binbyte *p=(Binbyte *)*data;
 
   *outbuf = *data;
   while ((*sz)--)
@@ -501,7 +501,7 @@ size_t sndcnvULaw_2linear(void **data,size_t *sz,void **outbuf)
     }
   *sz = 0;
   *data = p;
-  return p - (UChar_Binary *)*outbuf;
+  return p - (Binbyte *)*outbuf;
 }
 
 /* Convert 8 bit ulaw stereo data to 8 bit ulaw mono data */
@@ -543,15 +543,15 @@ size_t sndcnvULaw_2mono(void **data,size_t *sz,void **outbuf)
        +60,   +56,   +52,   +48,   +44,   +40,   +36,   +32,
        +28,   +24,   +20,   +16,   +12,    +8,    +4,    +0};
 
-  REGISTER UChar_Binary *src;
-  REGISTER UChar_Binary *dest;
+  REGISTER Binbyte *src;
+  REGISTER Binbyte *dest;
   int rc,count;
 
   count = *sz / 2;
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = (UChar_Binary *) *data;
+  src     = (Binbyte *) *data;
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--)
@@ -589,8 +589,8 @@ size_t sndcnv16swap(void **data,size_t *sz,void **outbuf)
    signed mono data */
 size_t sndcnv16_2monoLE(void **data,size_t *sz,void **outbuf)
 {
-  REGISTER UChar_Binary *src;
-  REGISTER UChar_Binary *dest;
+  REGISTER Binbyte *src;
+  REGISTER Binbyte *dest;
   int rc,count;
   signed short i;
 
@@ -598,7 +598,7 @@ size_t sndcnv16_2monoLE(void **data,size_t *sz,void **outbuf)
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = (UChar_Binary *) *data;
+  src     = (Binbyte *) *data;
   *outbuf =
   dest    = miscplay_sndbuf;
   for (count /= 2; count--; ) {
@@ -607,8 +607,8 @@ size_t sndcnv16_2monoLE(void **data,size_t *sz,void **outbuf)
        (int)(src[2]) +
        256*(int)(src[3])) / 2;
     src += 4;
-    *dest++ = (UChar_Binary)(i & 0xFF);
-    *dest++ = (UChar_Binary)((i / 256) & 0xFF); }
+    *dest++ = (Binbyte)(i & 0xFF);
+    *dest++ = (Binbyte)((i / 256) & 0xFF); }
   *data = src;
   return(rc);
 }
@@ -617,8 +617,8 @@ size_t sndcnv16_2monoLE(void **data,size_t *sz,void **outbuf)
    signed mono data */
 size_t sndcnv16_2monoBE(void **data,size_t *sz,void **outbuf)
 {
-  REGISTER UChar_Binary *src;
-  REGISTER UChar_Binary *dest;
+  REGISTER Binbyte *src;
+  REGISTER Binbyte *dest;
   int rc,count;
   signed short i;
 
@@ -626,7 +626,7 @@ size_t sndcnv16_2monoBE(void **data,size_t *sz,void **outbuf)
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = (UChar_Binary *) *data;
+  src     = (Binbyte *) *data;
   *outbuf =
   dest    = miscplay_sndbuf;
   for (count /= 2; count--; ) {
@@ -635,8 +635,8 @@ size_t sndcnv16_2monoBE(void **data,size_t *sz,void **outbuf)
        (int)(src[3]) +
        256*(int)(src[2])) / 2;
     src += 4;
-    *dest++ = (UChar_Binary)((i / 256) & 0xFF);
-    *dest++ = (UChar_Binary)(i & 0xFF); }
+    *dest++ = (Binbyte)((i / 256) & 0xFF);
+    *dest++ = (Binbyte)(i & 0xFF); }
   *data = src;
   return(rc);
 }
@@ -644,19 +644,19 @@ size_t sndcnv16_2monoBE(void **data,size_t *sz,void **outbuf)
 /* Convert 16 bit little endian signed data to 8 bit unsigned data */
 size_t sndcnv2byteLE(void **data,size_t *sz,void **outbuf)
 {
-  REGISTER UChar_Binary *src;
-  REGISTER UChar_Binary *dest;
+  REGISTER Binbyte *src;
+  REGISTER Binbyte *dest;
   int rc,count;
 
   count = *sz / 2;
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = (UChar_Binary *) *data;
+  src     = (Binbyte *) *data;
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--) {
-    *dest++ = (UChar_Binary)(((SChar_Binary *)src)[1] ^ (SChar_Binary)0x80);
+    *dest++ = (Binbyte)(((SBinbyte *)src)[1] ^ (SBinbyte)0x80);
     src += 2;
   }
   *data = src;
@@ -666,19 +666,19 @@ size_t sndcnv2byteLE(void **data,size_t *sz,void **outbuf)
 /* Convert 16 bit big endian signed data to 8 bit unsigned data */
 size_t sndcnv2byteBE(void **data,size_t *sz,void **outbuf)
 {
-  REGISTER UChar_Binary *src;
-  REGISTER UChar_Binary *dest;
+  REGISTER Binbyte *src;
+  REGISTER Binbyte *dest;
   int rc,count;
 
   count = *sz / 2;
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = (UChar_Binary *) *data;
+  src     = (Binbyte *) *data;
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--) {
-    *dest++ = (UChar_Binary)(((SChar_Binary *)src)[0] ^ (SChar_Binary)0x80);
+    *dest++ = (Binbyte)(((SBinbyte *)src)[0] ^ (SBinbyte)0x80);
     src += 2;
   }
   *data = src;
@@ -689,20 +689,20 @@ size_t sndcnv2byteBE(void **data,size_t *sz,void **outbuf)
    mono data */
 size_t sndcnv2monobyteLE(void **data,size_t *sz,void **outbuf)
 {
-  REGISTER UChar_Binary *src;
-  REGISTER UChar_Binary *dest;
+  REGISTER Binbyte *src;
+  REGISTER Binbyte *dest;
   int rc,count;
 
   count = *sz / 4;
   if (count > SNDBUFSZ) { *sz  -= 4*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = (UChar_Binary *) *data;
+  src     = (Binbyte *) *data;
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--) {
-    *dest++ = (UChar_Binary)(((int)((SChar_Binary *)src)[1] +
-                              (int)((SChar_Binary *)src)[3]) / 2 ^ 0x80);
+    *dest++ = (Binbyte)(((int)((SBinbyte *)src)[1] +
+                              (int)((SBinbyte *)src)[3]) / 2 ^ 0x80);
     src += 4;
   }
   *data = src;
@@ -713,20 +713,20 @@ size_t sndcnv2monobyteLE(void **data,size_t *sz,void **outbuf)
    mono data */
 size_t sndcnv2monobyteBE(void **data,size_t *sz,void **outbuf)
 {
-  REGISTER UChar_Binary *src;
-  REGISTER UChar_Binary *dest;
+  REGISTER Binbyte *src;
+  REGISTER Binbyte *dest;
   int rc,count;
 
   count = *sz / 4;
   if (count > SNDBUFSZ) { *sz  -= 4*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = (UChar_Binary *) *data;
+  src     = (Binbyte *) *data;
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--) {
-    *dest++ = (UChar_Binary)(((int)((SChar_Binary *)src)[0] +
-                              (int)((SChar_Binary *)src)[2]) / 2 ^ 0x80);
+    *dest++ = (Binbyte)(((int)((SBinbyte *)src)[0] +
+                              (int)((SBinbyte *)src)[2]) / 2 ^ 0x80);
     src += 4;
   }
   *data = src;
@@ -736,7 +736,7 @@ size_t sndcnv2monobyteBE(void **data,size_t *sz,void **outbuf)
 /* Look at the header of the sound file and try to determine the format;
    we can recognize files in VOC, WAVE, and, Sun/DEC-audio format--- everything
    else is assumed to be raw 8 bit unsigned data sampled at 8kHz */
-fmtType analyze_format(UChar_Binary *format,int *fmt,int *speed,
+fmtType analyze_format(Binbyte *format,int *fmt,int *speed,
                              int *tracks,
                              size_t (**parsesndfile)(void **,size_t *sz,
                                                      void **))

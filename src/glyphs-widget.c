@@ -187,31 +187,25 @@ check_valid_string_or_vector (Lisp_Object data)
 static void
 check_valid_item_list (Lisp_Object items)
 {
-  Lisp_Object rest;
-
-  CHECK_LIST (items);
-  EXTERNAL_LIST_LOOP (rest, items)
+  EXTERNAL_LIST_LOOP_2 (elt, items)
     {
-      if (STRINGP (XCAR (rest)))
-	CHECK_STRING (XCAR (rest));
-      else if (VECTORP (XCAR (rest)))
-	gui_parse_item_keywords (XCAR (rest));
-      else if (LISTP (XCAR (rest)))
-	check_valid_item_list (XCAR (rest));
+      if (STRINGP (elt))
+	CHECK_STRING (elt);
+      else if (VECTORP (elt))
+	gui_parse_item_keywords (elt);
+      else if (LISTP (elt))
+	check_valid_item_list (elt);
       else
-	invalid_argument ("Items must be vectors, lists or strings", items);
+	invalid_argument ("Item must be vector, list or string", elt);
     }
 }
 
 static void
 check_valid_instantiator_list (Lisp_Object data)
 {
-  Lisp_Object rest;
-
-  CHECK_LIST (data);
-  EXTERNAL_LIST_LOOP (rest, data)
+  EXTERNAL_LIST_LOOP_2 (elt, data)
     {
-      check_valid_instantiator (XCAR (rest));
+      check_valid_instantiator (elt);
     }
 }
 
@@ -1952,7 +1946,6 @@ reinit_vars_of_glyphs_widget (void)
 void
 vars_of_glyphs_widget (void)
 {
-  reinit_vars_of_glyphs_widget ();
 }
 
 

@@ -91,7 +91,8 @@ static void gmp_free (void *ptr, size_t UNUSED (size))
 void
 init_number_gmp ()
 {
-  mp_set_memory_functions ((void *(*) (size_t))xmalloc, gmp_realloc, gmp_free);
+  mp_set_memory_functions ((void *(*) (size_t)) xmalloc, gmp_realloc,
+			   gmp_free);
 
   /* The smallest number that is printed without exponents */
   mpf_init_set_d (float_print_min, 0.001);

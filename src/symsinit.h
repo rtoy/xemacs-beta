@@ -26,13 +26,14 @@ Boston, MA 02111-1307, USA.  */
 
 /* Earliest environment initializations (dump-time and run-time). */
 
+void init_win32_very_very_early (void);
+
 void init_data_very_early (void);
 void init_floatfns_very_early (void);
 void init_free_hook (void);
 void init_process_times_very_early (void);
 void init_ralloc (void);
 void init_signals_very_early (void);
-void init_win32_very_early (void);
 void init_mswindows_dde_very_early (void);
 
 /* Early Lisp-engine initialization -- dump-time only for init, dump-time
@@ -284,8 +285,7 @@ void process_type_create_unix (void);
 void init_provide_once (void);
 
 /* Initialize most variables (dump-time for vars_, dump-time and
-   post-pdump-load-time for reinit_vars).  #### The reinit_() functions
-   should be called from emacs.c, not the corresponding vars_of_(). */
+   post-pdump-load-time for reinit_vars). */
 
 void vars_of_abbrev (void);
 void vars_of_alloc (void);
@@ -429,7 +429,6 @@ void vars_of_tooltalk (void);
 void vars_of_undo (void);
 void reinit_vars_of_undo (void);
 void vars_of_unicode (void);
-void reinit_vars_of_unicode (void);
 void vars_of_window (void);
 void reinit_vars_of_window (void);
 void vars_of_win32 (void);
@@ -500,7 +499,6 @@ void init_intl_win32 (void);
 void init_lread (void);
 void init_macros (void);
 void init_mswindows_environment (void);
-void init_mule_charset (void);
 void init_nt (void);
 void init_postgresql_from_environment (void);
 void init_redisplay (void);

@@ -72,7 +72,7 @@ Fixnum      hp_play_gain;
 
 /* error handling */
 void
-player_error_internal (Audio * audio, Char_ASCII * text, long errorCode)
+player_error_internal (Audio * audio, Ascbyte * text, long errorCode)
 {
   Extbyte errorbuff[132];
   Ibyte *interr;
@@ -186,7 +186,7 @@ play_sound_file (Extbyte * sound_file, int volume)
 
 
 int
-play_sound_data (UChar_Binary * data, int UNUSED (length), int volume)
+play_sound_data (Binbyte * data, int UNUSED (length), int volume)
 {
   SBucket *pSBucket;
   Audio *audio;
@@ -227,7 +227,7 @@ play_sound_data (UChar_Binary * data, int UNUSED (length), int volume)
   if (status)
     player_error_internal( audio, "Bucket creation failed", status );
 
-  APutSBucketData(audio, pSBucket, 0, (Char_Binary *) (data + header->header_size), header->data_length, &status);
+  APutSBucketData(audio, pSBucket, 0, (CBinbyte *) (data + header->header_size), header->data_length, &status);
 
   if (status)
     player_error_internal( audio, "Audio data copy failed", status );

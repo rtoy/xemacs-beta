@@ -1,3 +1,60 @@
+2004-11-04  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-ccl.el (define-ccl-program):
+	* mule/mule-ccl.el (TRANSLATE): New.
+	* mule/mule-ccl.el (MAP): New.
+	* mule/mule-ccl.el (MAP-IDs): New.
+	* mule/mule-ccl.el (MAP-SET): New.
+	* mule/mule-ccl.el (MAP-ID): New.
+	* mule/mule-ccl.el (INT-OR-CHAR): New.
+	Update docs.
+	
+2004-10-26  Ben Wing  <ben@xemacs.org>
+
+	* cl-extra.el (coerce):
+	* cl.el (cl-random-time):
+	* wid-edit.el (widget-url-link-action):
+	* widgets-gtk.el (gtk-widget-instantiate-notebook-internal):
+	* dialog-gtk.el:
+	* frame.el (frame-notice-user-settings):
+	* frame.el (display-mouse-p):
+	* frame.el (display-visual-class):
+	* package-ui.el (pui-display-maintainer):
+	Fix compile warnings.
+	
+2004-10-14  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el:
+	Put in comment about extended chars in dumped files.
+	
+	* font-lock.el:
+	* font-lock.el (lisp-font-lock-keywords-2):
+	* font-lock.el (c-font-lock-keywords-2): New.
+	* font-lock.el (c-font-lock-keywords-3): New.
+	Add versions of C keywords for editing XEmacs source code,
+	recognizing many basic XEmacs types.
+
+	* loadup.el (really-early-error-handler):
+	* unicode.el:
+	* unicode.el (load-unicode-tables-at-dump-time): New.
+	* unicode.el (init-unicode-at-startup): Removed.
+	* mule/mule-cmds.el (init-mule-at-startup):
+	Define and implement load-unicode-tables-at-dump-time.  Set this
+	to true on Windows systems.  This will increase the size of the
+	dumped XEmacs but allow XEmacs to be run when in a non-ASCII
+	directory or with non-ASCII command-line arguments.
+	
+	* update-elc.el:
+	* update-elc.el (unbytecompiled-lisp-files):
+	* update-elc.el (additional-dump-dependencies): New.
+	* update-elc.el ((preloaded-file-list site-load-packages files-to-process)):
+	Add loadup.el, loadup-el.el and update-elc.el as additional
+	dependencies, forcing a redump if they are changed.
+	
+	* win32-native.el:
+	Add stuff snipped from Microsoft docs concerning how quoting
+	conventions are supposed to work.
+
 2004-10-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* code-process.el (call-process-region): Fix region deletion bug.

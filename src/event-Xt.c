@@ -1089,6 +1089,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
       }
     case XLookupNone: return Qnil;
     case XBufferOverflow:
+      /* !!#### needs work */
       bufptr = (char *) ALLOCA (len+1);
       bufsiz = len+1;
       goto Lookup_String;
@@ -1344,7 +1345,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
            explicitly prohibits. */
         XClientMessageEvent *ev = &x_event->xclient;
 #ifdef HAVE_OFFIX_DND
-	if (DndIsDropMessage(x_event))
+	if (DndIsDropMessage (x_event))
 	  {
 	    unsigned int state;
 	    int modifiers = 0;
@@ -1362,7 +1363,8 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	    GCPRO4 (l_type, l_data, l_dndlist, l_item);
 	    set_event_type (emacs_event, misc_user_event);
 	    SET_EVENT_CHANNEL (emacs_event, wrap_frame (frame));
-	    SET_EVENT_TIMESTAMP (emacs_event, DEVICE_X_LAST_SERVER_TIMESTAMP (d));
+	    SET_EVENT_TIMESTAMP (emacs_event,
+				 DEVICE_X_LAST_SERVER_TIMESTAMP (d));
 	    state=DndDragButtons (x_event);
 
 	    if (state & ShiftMask)	modifiers |= XEMACS_MOD_SHIFT;
@@ -1389,35 +1391,36 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	    DndDropCoordinates (FRAME_X_TEXT_WIDGET (frame), x_event,
 				&(EVENT_MISC_USER_X (emacs_event)),
 				&(EVENT_MISC_USER_Y (emacs_event)));
-	    DndGetData (x_event,&data,&size);
+	    DndGetData (x_event, &data, &size);
 
-	    dtype=DndDataType (x_event);
+	    dtype = DndDataType (x_event);
 	    switch (dtype)
 	      {
 	      case DndFiles: /* null terminated strings, end null */
 		{
 		  int len;
-		  char *hurl = NULL;
+		  Ibyte *hurl = NULL;
 
 		  while (*data)
 		    {
-		      len = strlen ((char*)data);
-		      hurl = dnd_url_hexify_string ((char *)data, "file:");
-		      l_item = make_string ((Ibyte *)hurl, strlen (hurl));
+		      Ibyte *dataint;
+		      len = strlen (data);
+		      EXTERNAL_TO_C_STRING (data, dataint, Qfile_name);
+		      hurl = dnd_url_hexify_string (dataint, "file:");
+		      l_item = build_intstring (hurl);
 		      l_dndlist = Fcons (l_item, l_dndlist);
 		      data += len + 1;
-		      xfree (hurl, char *);
+		      xfree (hurl, Ibyte *);
 		    }
 		  l_type = Qdragdrop_URL;
 		}
 		break;
 	      case DndText:
 		l_type = Qdragdrop_MIME;
-		l_dndlist = list1 ( list3 ( list1 ( make_string ((Ibyte *)"text/plain", 10) ),
-					    make_string ((Ibyte *)"8bit", 4),
-					    make_ext_string ((Extbyte *)data,
-							     strlen((char *)data),
-							     Qctext) ) );
+		l_dndlist = list1 (list3 (list1 (build_string ("text/plain")),
+					  build_string ("8bit"),
+					  build_ext_string (data,
+							    Qctext)));
 		break;
 	      case DndMIME:
 		/* we have to parse this in some way to extract
@@ -1428,44 +1431,41 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		       to tm...
 		*/
 		l_type = Qdragdrop_MIME;
-		l_dndlist = list1 ( make_ext_string ((Extbyte *)data,
-						     strlen((char *)data),
-						     Qbinary) );
+		l_dndlist = list1 (build_ext_string (data, Qbinary));
 		break;
 	      case DndFile:
 	      case DndDir:
 	      case DndLink:
 	      case DndExe:
 		{
-		  char *hurl = dnd_url_hexify_string ((char *) data, "file:");
-
-		  l_dndlist = list1 ( make_string ((Ibyte *)hurl,
-						   strlen (hurl)) );
-		  l_type = Qdragdrop_URL;
-
-		  xfree (hurl, char *);
+		  Ibyte *dataint, *hurl;
+		  EXTERNAL_TO_C_STRING (data, dataint, Qfile_name);
+		  hurl = dnd_url_hexify_string (dataint, "file:");
+		  l_dndlist = list1 (build_intstring (hurl));
+		  xfree (hurl, Ibyte *);
 		}
 		break;
 	      case DndURL:
 		/* as it is a real URL it should already be escaped
 		   and escaping again will break them (cause % is unsave) */
-		l_dndlist = list1 ( make_ext_string ((Extbyte *)data,
-						     strlen ((char *)data),
-						     Qfile_name) );
+		l_dndlist = list1 (build_ext_string (data,
+						     Qfile_name));
 		l_type = Qdragdrop_URL;
 		break;
 	      default: /* Unknown, RawData and any other type */
-		l_dndlist = list1 ( list3 ( list1 ( make_string ((Ibyte *)"application/octet-stream", 24) ),
-					    make_string ((Ibyte *)"8bit", 4),
-					    make_ext_string ((Extbyte *)data,
-							     size,
-							     Qbinary) ) );
+		l_dndlist = list1 (list3 (list1 (build_string
+						 ("application/octet-stream")),
+					  build_string ("8bit"),
+					  make_ext_string (data, size,
+							   Qbinary)));
 		l_type = Qdragdrop_MIME;
 		break;
 	      }
 
-	    SET_EVENT_MISC_USER_FUNCTION (emacs_event, Qdragdrop_drop_dispatch);
-	    SET_EVENT_MISC_USER_OBJECT (emacs_event, Fcons (l_type, l_dndlist));
+	    SET_EVENT_MISC_USER_FUNCTION (emacs_event,
+					  Qdragdrop_drop_dispatch);
+	    SET_EVENT_MISC_USER_OBJECT (emacs_event,
+					Fcons (l_type, l_dndlist));
 
 	    UNGCPRO;
 
@@ -3214,8 +3214,6 @@ reinit_vars_of_event_Xt (void)
 void
 vars_of_event_Xt (void)
 {
-  reinit_vars_of_event_Xt ();
-
   DEFVAR_BOOL ("x-allow-sendevents", &x_allow_sendevents /*
 *Non-nil means to allow synthetic events.  Nil means they are ignored.
 Beware: allowing emacs to process SendEvents opens a big security hole.

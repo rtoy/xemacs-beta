@@ -72,7 +72,7 @@ static  SIGTYPE (*sigint_handler) (int);
 static int           mix_fd;
 static int           audio_vol;
 static int           audio_fd;
-static Char_ASCII    *audio_dev = "/dev/dsp";
+static Ascbyte    *audio_dev = "/dev/dsp";
 
 /* Intercept SIGINT and SIGHUP in order to close the audio and mixer
    devices before terminating sound output; this requires reliable
@@ -267,7 +267,7 @@ audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
    Returns 1 on succes. 0 otherwise.
 */
 static int
-linux_play_data_or_file(int fd, UChar_Binary *data,
+linux_play_data_or_file(int fd, Binbyte *data,
 			int length, int volume)
 {
   size_t         (*parsesndfile)(void **dayta,size_t *sz,void **outbuf);
@@ -276,7 +276,7 @@ linux_play_data_or_file(int fd, UChar_Binary *data,
   int            fmt,speed,tracks;
   void           *pptr, *optr, *cptr, *sptr;
   int            wrtn,rrtn,crtn,prtn;
-  UChar_Binary         sndbuf[SNDBUFSZ];
+  Binbyte         sndbuf[SNDBUFSZ];
 
   /* We need to read at least the header information before we can start
      doing anything */
@@ -388,7 +388,7 @@ play_sound_file (Extbyte *sound_file, int volume)
 /* Call "linux_play_data_or_file" with the appropriate parameters for
    playing pre-loaded data */
 int
-play_sound_data (UChar_Binary *data, int length, int volume)
+play_sound_data (Binbyte *data, int length, int volume)
 {
   return linux_play_data_or_file(-1,data,length,volume);
 }

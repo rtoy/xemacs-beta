@@ -55,12 +55,6 @@ and this notice must be preserved on all copies.  */
 #define A_TEXT_OFFSET(HDR) sizeof(HDR)
 #define A_TEXT_SEEK(HDR) sizeof(HDR)
 
-/* Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used.
-   At least, gcc for 88000 supports inline alloca. */
-
-#define HAVE_ALLOCA
-
 /* Memory management mechanism is different on Mach, so emacs-supplied
    malloc.c does not work. */
 

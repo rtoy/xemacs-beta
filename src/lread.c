@@ -564,7 +564,7 @@ encoding detection or end-of-line detection.
 	    }
 	}
 
-      foundstr = (Ibyte *) ALLOCA (XSTRING_LENGTH (found) + 1);
+      foundstr = alloca_ibytes (XSTRING_LENGTH (found) + 1);
       qxestrcpy (foundstr, XSTRING_DATA (found));
       foundlen = qxestrlen (foundstr);
 
@@ -799,10 +799,9 @@ decode_mode (Lisp_Object mode)
     return R_OK;
   else if (CONSP (mode))
     {
-      Lisp_Object tail;
       int mask = 0;
-      EXTERNAL_LIST_LOOP (tail, mode)
-	mask |= decode_mode_1 (XCAR (tail));
+      EXTERNAL_LIST_LOOP_2 (elt, mode)
+	mask |= decode_mode_1 (elt);
       return mask;
     }
   else
@@ -835,9 +834,8 @@ for details.
 
   if (LISTP (suffixes))
     {
-      Lisp_Object tail;
-      EXTERNAL_LIST_LOOP (tail, suffixes)
-	CHECK_STRING (XCAR (tail));
+      EXTERNAL_LIST_LOOP_2 (elt, suffixes)
+	CHECK_STRING (elt);
     }
   else
     CHECK_STRING (suffixes);
@@ -921,7 +919,7 @@ locate_file_map_suffixes (Lisp_Object filename, Lisp_Object suffixes,
     max = XSTRING_LENGTH (suffixes);
 
   fn_len = XSTRING_LENGTH (filename);
-  fn = (Ibyte *) ALLOCA (max + fn_len + 1);
+  fn = alloca_ibytes (max + fn_len + 1);
   memcpy (fn, XSTRING_DATA (filename), fn_len);
 
   /* Loop over suffixes.  */
@@ -1095,9 +1093,9 @@ locate_file_without_hash (Lisp_Object path, Lisp_Object str,
   /* This function can GC */
   int absolute = !NILP (Ffile_name_absolute_p (str));
 
-  EXTERNAL_LIST_LOOP (path, path)
+  EXTERNAL_LIST_LOOP_2 (elt, path)
     {
-      int val = locate_file_in_directory (XCAR (path), str, suffixes, storeptr,
+      int val = locate_file_in_directory (elt, str, suffixes, storeptr,
 					  mode);
       if (val >= 0)
 	return val;
@@ -1160,10 +1158,9 @@ can be used if the internal tables grow too large, or when dumping.
     Fclrhash (Vlocate_file_hash_table);
   else
     {
-      Lisp_Object pathtail;
-      EXTERNAL_LIST_LOOP (pathtail, path)
+      EXTERNAL_LIST_LOOP_2 (elt, path)
 	{
-	  Lisp_Object pathel = Fexpand_file_name (XCAR (pathtail), Qnil);
+	  Lisp_Object pathel = Fexpand_file_name (elt, Qnil);
 	  Fremhash (pathel, Vlocate_file_hash_table);
 	}
     }
@@ -1193,7 +1190,7 @@ locate_file (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 {
   /* This function can GC */
   Lisp_Object suffixtab = Qnil;
-  Lisp_Object pathtail, pathel_expanded;
+  Lisp_Object pathel_expanded;
   int val;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
@@ -1216,56 +1213,56 @@ locate_file (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 
   suffixtab = locate_file_construct_suffixed_files (str, suffixes);
 
-  EXTERNAL_LIST_LOOP (pathtail, path)
-    {
-      Lisp_Object pathel = XCAR (pathtail);
-      Lisp_Object hash_table;
-      Lisp_Object tail;
-      int found = 0;
+  {
+    EXTERNAL_LIST_LOOP_2 (pathel, path)
+      {
+	Lisp_Object hash_table;
+	int found = 0;
 
-      /* If this path element is relative, we have to look by hand. */
-      if (NILP (pathel) || NILP (Ffile_name_absolute_p (pathel)))
-	{
-	  val = locate_file_in_directory (pathel, str, suffixes, storeptr,
-					  mode);
-	  if (val >= 0)
-	    {
-	      UNGCPRO;
-	      return val;
-	    }
-	  continue;
-	}
-
-      pathel_expanded = Fexpand_file_name (pathel, Qnil);
-      hash_table = locate_file_find_directory_hash_table (pathel_expanded);
-
-      if (!NILP (hash_table))
-	{
-	  /* Loop over suffixes.  */
-	  LIST_LOOP (tail, suffixtab)
-	    if (!NILP (Fgethash (XCAR (tail), hash_table, Qnil)))
+	/* If this path element is relative, we have to look by hand. */
+	if (NILP (pathel) || NILP (Ffile_name_absolute_p (pathel)))
+	  {
+	    val = locate_file_in_directory (pathel, str, suffixes, storeptr,
+					    mode);
+	    if (val >= 0)
 	      {
-		found = 1;
-		break;
+		UNGCPRO;
+		return val;
 	      }
-	}
+	    continue;
+	  }
 
-      if (found)
-	{
-	  /* This is a likely candidate.  Look by hand in this directory
-	     so we don't get thrown off if someone byte-compiles a file. */
-	  val = locate_file_in_directory (pathel, str, suffixes, storeptr,
-					  mode);
-	  if (val >= 0)
-	    {
-	      UNGCPRO;
-	      return val;
-	    }
+	pathel_expanded = Fexpand_file_name (pathel, Qnil);
+	hash_table = locate_file_find_directory_hash_table (pathel_expanded);
 
-	  /* Hmm ...  the file isn't actually there. (Or possibly it's
-	     a directory ...)  So refresh our hashing. */
-	  locate_file_refresh_hashing (pathel_expanded);
-	}
+	if (!NILP (hash_table))
+	  {
+	    /* Loop over suffixes.  */
+	    LIST_LOOP_2 (elt, suffixtab)
+	      if (!NILP (Fgethash (elt, hash_table, Qnil)))
+		{
+		  found = 1;
+		  break;
+		}
+	  }
+
+	if (found)
+	  {
+	    /* This is a likely candidate.  Look by hand in this directory
+	       so we don't get thrown off if someone byte-compiles a file. */
+	    val = locate_file_in_directory (pathel, str, suffixes, storeptr,
+					    mode);
+	    if (val >= 0)
+	      {
+		UNGCPRO;
+		return val;
+	      }
+	    
+	    /* Hmm ...  the file isn't actually there. (Or possibly it's
+	       a directory ...)  So refresh our hashing. */
+	    locate_file_refresh_hashing (pathel_expanded);
+	  }
+      }
     }
 
   /* File is probably not there, but check the hard way just in case. */
@@ -3111,8 +3108,6 @@ reinit_vars_of_lread (void)
 void
 vars_of_lread (void)
 {
-  reinit_vars_of_lread ();
-
   DEFVAR_LISP ("values", &Vvalues /*
 List of values of all expressions which were read, evaluated and printed.
 Order is reverse chronological.

@@ -234,7 +234,7 @@ do {									\
     Dynarr_new (console_type_entry);					\
   add_entry_to_image_instantiator_format_list				\
     (Q##format, format##_image_instantiator_methods);			\
-  dump_add_root_struct_ptr (&format##_image_instantiator_methods,	\
+  dump_add_root_block_ptr (&format##_image_instantiator_methods,	\
 			    &iim_description);				\
 } while (0)
 
@@ -312,7 +312,7 @@ do {									   \
   add_entry_to_device_ii_format_list					   \
     (Q##type, Q##format, type##_##format##_image_instantiator_methods);	   \
   IIFORMAT_VALID_CONSOLE(type,format);					   \
-  dump_add_root_struct_ptr (&type##_##format##_image_instantiator_methods, \
+  dump_add_root_block_ptr (&type##_##format##_image_instantiator_methods, \
 			    &iim_description);				   \
 } while (0)
 
@@ -925,7 +925,7 @@ Lisp_Object pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid);
 Lisp_Object bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
 				 int ok_if_data_invalid);
 int read_bitmap_data_from_file (Lisp_Object filename, int *width,
-				int *height, UChar_Binary **datap,
+				int *height, Binbyte **datap,
 				int *x_hot, int *y_hot);
 Lisp_Object xbm_mask_file_munging (Lisp_Object alist, Lisp_Object file,
 				   Lisp_Object mask_file,

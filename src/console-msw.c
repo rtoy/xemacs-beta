@@ -29,6 +29,8 @@ Boston, MA 02111-1307, USA.  */
    Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0
  */
 
+/* See win32.c for info about the different Windows files in XEmacs. */
+
 #include <config.h>
 #include "lisp.h"
 
@@ -92,8 +94,7 @@ static HWND
 GetConsoleHwnd (void)
 { 
   HWND hwndFound;
-  Ibyte newtitleint[200];
-  Extbyte *newtitle;
+  Ascbyte newtitle[100];
   Extbyte *oldtitle;
   int numchars;
 
@@ -112,14 +113,12 @@ GetConsoleHwnd (void)
 
   /* format a "unique" new title */
 
-  qxesprintf (newtitleint, "%ld/%ld", GetTickCount (),
-	      GetCurrentProcessId ());
+  sprintf (newtitle, "%ld/%ld", GetTickCount (), GetCurrentProcessId ());
 
-  C_STRING_TO_TSTR (newtitleint, newtitle);
+  /* change current window title; we may be called during armageddon
+     so don't do any conversion */
 
-  /* change current window title */
-
-  qxeSetConsoleTitle (newtitle);
+  SetConsoleTitleA (newtitle);
 
   /* ensure window title has been updated */
 
@@ -127,7 +126,7 @@ GetConsoleHwnd (void)
 
   /* look for NewWindowTitle */
 
-  hwndFound = qxeFindWindow (NULL, newtitle);
+  hwndFound = FindWindowA (NULL, newtitle);
 
   /* restore original window title */
 
@@ -242,7 +241,7 @@ mswindows_output_console_string (const Ibyte *ptr, Bytecount len)
   mswindows_ensure_console_buffered ();
   mswindows_show_console ();
 
-  if (initialized && !inhibit_non_essential_printing_operations)
+  if (initialized && !inhibit_non_essential_conversion_operations)
     {
       const Extbyte *extptr;
       Bytecount extlen;
@@ -253,7 +252,10 @@ mswindows_output_console_string (const Ibyte *ptr, Bytecount len)
 			      extlen / XETCHAR_SIZE, &num_written, NULL);
     }
   else
-    return WriteConsoleA (mswindows_console_buffer, (char *) ptr, len,
+#ifdef NON_ASCII_INTERNAL_FORMAT
+#error Do something here
+#endif
+    return WriteConsoleA (mswindows_console_buffer, (Chbyte *) ptr, len,
 			  &num_written, NULL);
 }
 
@@ -285,7 +287,7 @@ void
 write_string_to_mswindows_debugging_output (const Ibyte *str, Bytecount len)
 {
   const Extbyte *extptr;
-  if (initialized && !inhibit_non_essential_printing_operations)
+  if (initialized && !inhibit_non_essential_conversion_operations)
     {
       TO_EXTERNAL_FORMAT (DATA, (str, len),
 			  C_STRING_ALLOCA, extptr,
@@ -294,6 +296,9 @@ write_string_to_mswindows_debugging_output (const Ibyte *str, Bytecount len)
     }
   else
     {
+#ifdef NON_ASCII_INTERNAL_FORMAT
+#error Do something here
+#endif
       /* STR may not be null-terminated so make it that way. */
       Extbyte *ext = alloca_extbytes (len + 1);
       memcpy (ext, str, len);
@@ -505,7 +510,6 @@ is selected.  If the message box has no Cancel button, pressing ESC has
 no effect.  */
        (message_, flags, title))
 {
-  Lisp_Object tail;
   Extbyte *msgout;
   Extbyte *titleout = 0;
   UINT sty = 0;
@@ -525,44 +529,45 @@ no effect.  */
       LISP_STRING_TO_TSTR (title, titleout);
     }
 
-  EXTERNAL_LIST_LOOP (tail, flags)
-    {
-      Lisp_Object st = XCAR (tail);
-      CHECK_SYMBOL (st);
-      if (0)
-	;
+  {
+    EXTERNAL_LIST_LOOP_2 (st, flags)
+      {
+	CHECK_SYMBOL (st);
+	if (0)
+	  ;
 #define FROB(sym, val) else if (EQ (st, sym)) sty |= val
-      FROB (Qabortretryignore, MB_ABORTRETRYIGNORE);
-      FROB (Qapplmodal, MB_APPLMODAL);
-      FROB (Qdefault_desktop_only, MB_DEFAULT_DESKTOP_ONLY);
-      FROB (Qdefbutton1, MB_DEFBUTTON1);
-      FROB (Qdefbutton2, MB_DEFBUTTON2);
-      FROB (Qdefbutton3, MB_DEFBUTTON3);
-      FROB (Qdefbutton4, MB_DEFBUTTON4);
-      FROB (Qhelp, MB_HELP);
-      FROB (Qiconasterisk, MB_ICONASTERISK);
-      FROB (Qiconexclamation, MB_ICONEXCLAMATION);
-      FROB (Qiconhand, MB_ICONHAND);
-      FROB (Qiconinformation, MB_ICONINFORMATION);
-      FROB (Qiconquestion, MB_ICONQUESTION);
-      FROB (Qiconstop, MB_ICONSTOP);
-      FROB (Qok, MB_OK);
-      FROB (Qokcancel, MB_OKCANCEL);
-      FROB (Qretrycancel, MB_RETRYCANCEL);
-      FROB (Qright, MB_RIGHT);
-      FROB (Qrtlreading, MB_RTLREADING);
-      FROB (Qservice_notification, MB_SERVICE_NOTIFICATION);
-      FROB (Qsetforeground, MB_SETFOREGROUND);
-      FROB (Qsystemmodal, MB_SYSTEMMODAL);
-      FROB (Qtaskmodal, MB_TASKMODAL);
-      FROB (Qtopmost, MB_TOPMOST);
-      FROB (Qyesno, MB_YESNO);
-      FROB (Qyesnocancel, MB_YESNOCANCEL);
+	FROB (Qabortretryignore, MB_ABORTRETRYIGNORE);
+	FROB (Qapplmodal, MB_APPLMODAL);
+	FROB (Qdefault_desktop_only, MB_DEFAULT_DESKTOP_ONLY);
+	FROB (Qdefbutton1, MB_DEFBUTTON1);
+	FROB (Qdefbutton2, MB_DEFBUTTON2);
+	FROB (Qdefbutton3, MB_DEFBUTTON3);
+	FROB (Qdefbutton4, MB_DEFBUTTON4);
+	FROB (Qhelp, MB_HELP);
+	FROB (Qiconasterisk, MB_ICONASTERISK);
+	FROB (Qiconexclamation, MB_ICONEXCLAMATION);
+	FROB (Qiconhand, MB_ICONHAND);
+	FROB (Qiconinformation, MB_ICONINFORMATION);
+	FROB (Qiconquestion, MB_ICONQUESTION);
+	FROB (Qiconstop, MB_ICONSTOP);
+	FROB (Qok, MB_OK);
+	FROB (Qokcancel, MB_OKCANCEL);
+	FROB (Qretrycancel, MB_RETRYCANCEL);
+	FROB (Qright, MB_RIGHT);
+	FROB (Qrtlreading, MB_RTLREADING);
+	FROB (Qservice_notification, MB_SERVICE_NOTIFICATION);
+	FROB (Qsetforeground, MB_SETFOREGROUND);
+	FROB (Qsystemmodal, MB_SYSTEMMODAL);
+	FROB (Qtaskmodal, MB_TASKMODAL);
+	FROB (Qtopmost, MB_TOPMOST);
+	FROB (Qyesno, MB_YESNO);
+	FROB (Qyesnocancel, MB_YESNOCANCEL);
 #undef FROB
 
-      else
-	invalid_constant ("Unrecognized flag", st);
-    }
+	else
+	  invalid_constant ("Unrecognized flag", st);
+      }
+  }
 
   {
     int retval = qxeMessageBox (NULL, msgout, titleout, sty);

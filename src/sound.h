@@ -27,7 +27,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Defined in *play.c */
 void play_sound_file (Extbyte *name, int volume);
-int play_sound_data (UChar_Binary *data, int length, int volume);
+int play_sound_data (Binbyte *data, int length, int volume);
 
 # define sound_perror(string)						 \
 do {									 \

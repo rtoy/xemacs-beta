@@ -31,7 +31,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 #include "sysfile.h"
 
-static int play_sound_data_1 (UChar_Binary *data, int length,
+static int play_sound_data_1 (Binbyte *data, int length,
 			      int volume, int convert);
 
 void
@@ -49,14 +49,14 @@ play_sound_file (Extbyte *sound_file, int UNUSED (volume))
     {
       /* file isn't in the path so read it as data */
       int size;
-      UChar_Binary *data;
+      Binbyte *data;
       int ofd = qxe_open (XSTRING_DATA (fname), O_RDONLY | OPEN_BINARY, 0);
       
       if (ofd <0)
 	return;
 
       size = lseek (ofd, 0, SEEK_END);
-      data = (UChar_Binary *) xmalloc (size);
+      data = xnew_binbytes (size);
       lseek (ofd, 0, SEEK_SET);
       
       if (!data)
@@ -68,7 +68,7 @@ play_sound_file (Extbyte *sound_file, int UNUSED (volume))
       if (retry_read (ofd, data, size) != size)
 	{
 	  retry_close (ofd);
-	  xfree (data, UChar_Binary *);
+	  xfree (data, Binbyte *);
 	  return;
 	}
       retry_close (ofd);
@@ -82,21 +82,21 @@ play_sound_file (Extbyte *sound_file, int UNUSED (volume))
 /* mswindows can't cope with playing a sound from alloca space so we
    have to convert if necessary */
 static int
-play_sound_data_1 (UChar_Binary *data, int length, int UNUSED (volume),
+play_sound_data_1 (Binbyte *data, int length, int UNUSED (volume),
 		   int convert_to_malloc)
 {
   DWORD flags = SND_ASYNC | SND_MEMORY | SND_NODEFAULT;
-  static UChar_Binary *sound_data = 0;
+  static Binbyte *sound_data = 0;
   if (sound_data)
     {
       qxePlaySound (NULL, NULL, flags);
-      xfree (sound_data, UChar_Binary *);
+      xfree (sound_data, Binbyte *);
       sound_data = 0;
     }
 
   if (convert_to_malloc)
     {
-      sound_data = (UChar_Binary *) xmalloc (length);
+      sound_data = xnew_binbytes (length);
       memcpy (sound_data, data, length);
     }
   else
@@ -109,7 +109,7 @@ play_sound_data_1 (UChar_Binary *data, int length, int UNUSED (volume),
 }
 
 int
-play_sound_data (UChar_Binary *data, int length, int volume)
+play_sound_data (Binbyte *data, int length, int volume)
 {
   return play_sound_data_1 (data, length, volume, TRUE);
 }

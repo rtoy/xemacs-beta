@@ -1,5 +1,6 @@
 /* profile.c --- generate periodic events for profiling of Emacs Lisp code.
  Copyright (C) 1992, 1994 Free Software Foundation, Inc.
+ Copyright (C) 2004 Ben Wing.
 
  Author: Boaz Ben-Zvi <boaz@lcs.mit.edu>
 
@@ -91,7 +92,7 @@ get_time (void)
 }
 
 int
-main ()
+main (int argc, char **argv)
 {
   int c;
   while ((c = getchar ()) != EOF)

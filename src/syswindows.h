@@ -1,5 +1,5 @@
 /* Copyright (C) 2000 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -39,24 +39,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_syswindows_h_
 #define INCLUDED_syswindows_h_
 
-/* There are two different general Windows-related include files in src.
-
-   Uses are approximately:
-
-   syswindows.h: Wrapper around <windows.h>, including missing defines as
-   necessary.  Includes stuff needed on both Cygwin and native Windows,
-   regardless of window system chosen.  Includes definitions needed for
-   Unicode conversion/encapsulation, and other Mule-related stuff, plus
-   various other prototypes and Windows-specific, but not GUI-specific,
-   stuff.
-
-   console-msw.h: Used on both Cygwin and native Windows, but only when
-   native window system (as opposed to X) chosen.  Includes syswindows.h.
-*/
-
-/* See s/windowsnt.h for a description of what exactly the various
-   constants such as WIN32_NATIVE, HAVE_MS_WINDOWS, CYGWIN, and MINGW
-   mean, and how they relate to each other. */
+/* See win32.c for info about the different Windows files in XEmacs. */
 
 /* ------------------------- Basic includes ------------------------- */
 
@@ -519,7 +502,7 @@ size_t	wcsxfrm (wchar_t*, const wchar_t*, size_t);
 
 /* ------------------------- Unicode encapsulation ------------------------- */
 
-/* See intl-encap-win32.c for more information about Unicode-encapsulation */
+/* See intl-win32.c for more information about Unicode-encapsulation */
 
 #define ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 
@@ -762,7 +745,7 @@ ATOM qxeRegisterClassEx (CONST WNDCLASSEXW * arg1);
 /* Set early in command-line processing, when -nuni or
    --no-unicode-lib-calls is seen. */
 extern int no_mswin_unicode_lib_calls;
-/* Set early, in init_win32_very_early(). */
+/* Set early, in init_win32_very_very_early(). */
 extern int mswindows_windows9x_p;
 #define XEUNICODE_P (!mswindows_windows9x_p && !no_mswin_unicode_lib_calls)
 
@@ -832,11 +815,58 @@ DECLARE_INLINE_HEADER (int unicode_char_to_text (int ch, Extbyte *t))
 Extbyte *convert_multibyte_to_unicode_malloc (const Extbyte *src,
 					      Bytecount n,
 					      int cp, Bytecount *size_out);
+Extbyte *convert_unicode_to_multibyte_malloc (const Extbyte *src,
+					      Bytecount n,
+					      int cp, Bytecount *size_out);
 Ibyte *convert_multibyte_to_internal_malloc (const Extbyte *src,
 					       Bytecount n,
 					       int cp, Bytecount *size_out);
 void convert_multibyte_to_unicode_dynarr (const Extbyte *src, Bytecount n,
 					  int cp, unsigned_char_dynarr *dst);
+void convert_unicode_to_multibyte_dynarr (const Extbyte *src, Bytecount n,
+					  int cp, unsigned_char_dynarr *dst);
+
+Bytecount unicode_multibyte_convert_size (const char *srctext, const void *src,
+					  Bytecount src_size, int to_unicode,
+					  int cp);
+void *unicode_multibyte_convert_copy_data (const char *srctext,
+					   void *alloca_data);
+
+/* NOTE: If you make two invocations of the following functions in the same
+   subexpression and use the exact same expression for the source in both
+   cases, you will lose.  In this unlikely case, you may get an abort, and
+   need to rewrite the code.
+
+   We need to use ALLOCA_FUNCALL_OK here, see NEW_DFC in text.h.
+*/
+
+#ifdef WEXTTEXT_IS_WIDE
+#define MULTIBYTE_TO_WEXTTEXT(str)					 \
+  ((Wexttext *)								 \
+   unicode_multibyte_convert_copy_data					 \
+   (#str, ALLOCA_FUNCALL_OK (unicode_multibyte_convert_size		 \
+			     (#str, str, strlen (str) + 1, 1, CP_ACP))))
+
+#define WEXTTEXT_TO_MULTIBYTE(str)					\
+  ((Extbyte *)								\
+   unicode_multibyte_convert_copy_data					\
+   (#str, ALLOCA_FUNCALL_OK (unicode_multibyte_convert_size		\
+			     (#str, str,				\
+			      (wcslen (str) + 1) * sizeof (WCHAR), 0,	\
+			      CP_ACP))))
+#else
+#define MULTIBYTE_TO_WEXTTEXT(str) ((Wexttext *) (str))
+#define WEXTTEXT_TO_MULTIBYTE(str) ((Extbyte *) (str))
+#endif
+
+/* #### mbstowcs() uses MB_ERR_INVALID_CHARS in addition to MB_PRECOMPOSED.
+   Should we do this?  But then we have to handle errors.
+   #### Do we already check for invalid sequences in the coding system? */
+#define MBTOWC_OPTIONS MB_PRECOMPOSED /* | MB_ERR_INVALID_CHARS */
+  /* The following options are what wcstombs() uses in the CRT.  It uses
+     NULL in place of "~". */
+#define WCTOMB_OPTIONS WC_COMPOSITECHECK | WC_SEPCHARS
+#define WCTOMB_INVALID_STRING "~"
 
 /* ------------------------- Other Mule stuff ------------------------- */
 
@@ -895,7 +925,7 @@ do {									   \
     {									   \
       int ltwff2 =							   \
         cygwin_posix_to_win32_path_list_buf_size ((char *) ltwffp);	   \
-      pathout = (Ibyte *) ALLOCA (ltwff2);				   \
+      pathout = alloca_ibytes (ltwff2);				   \
       cygwin_posix_to_win32_path_list ((char *) ltwffp, (char *) pathout); \
     }									   \
 } while (0)
@@ -912,7 +942,7 @@ do {									\
   Ibyte *wtlff1 = (path);						\
   int wtlff2 =								\
     cygwin_win32_to_posix_path_list_buf_size ((char *) wtlff1);		\
-  Ibyte *wtlff3 = (Ibyte *) ALLOCA (wtlff2);			\
+  Ibyte *wtlff3 = alloca_ibytes (wtlff2);				\
   cygwin_win32_to_posix_path_list ((char *) wtlff1, (char *) wtlff3);	\
   (pathout) = wtlff3;							\
 } while (0)
@@ -940,7 +970,7 @@ do									     \
       /* If URL style file, the innards may have Cygwin mount points and     \
 	 the like.  so separate out the innards, process them, and put back  \
 	 together. */							     \
-      if (qxestrncasecmp_c (lffmutt_pathint, "file://", 7) == 0)	     \
+      if (qxestrncasecmp_ascii (lffmutt_pathint, "file://", 7) == 0)	     \
 	{								     \
 	  Ibyte *lffmutt_path1, *lffmutt_path2;			     \
 	  LOCAL_TO_WIN32_FILE_FORMAT (lffmutt_pathint + 7, lffmutt_path1);   \

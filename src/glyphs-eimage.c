@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994, 1998 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002, 2004 Ben Wing
    Copyright (C) 1995 Sun Microsystems
 
 This file is part of XEmacs.
@@ -140,7 +140,7 @@ struct jpeg_unwind_data
   /* Object that holds state info for JPEG decoding */
   struct jpeg_decompress_struct *cinfo_ptr;
   /* EImage data */
-  UChar_Binary *eimage;
+  Binbyte *eimage;
 };
 
 static Lisp_Object
@@ -157,7 +157,7 @@ jpeg_instantiate_unwind (Lisp_Object unwind_obj)
     retry_fclose (data->instream);
 
   if (data->eimage)
-    xfree (data->eimage, UChar_Binary *);
+    xfree (data->eimage, Binbyte *);
 
   return Qnil;
 }
@@ -375,7 +375,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-    const UChar_Binary *bytes;
+    const Binbyte *bytes;
     Bytecount len;
 
     /* #### This is a definite problem under Mule due to the amount of
@@ -418,7 +418,8 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     /* Step 6: Read in the data and put into EImage format (8bit RGB triples)*/
 
-    unwind.eimage = (UChar_Binary*) xmalloc (cinfo.output_width * cinfo.output_height * 3);
+    unwind.eimage =
+      xnew_binbytes (cinfo.output_width * cinfo.output_height * 3);
     if (!unwind.eimage)
       signal_image_error("Unable to allocate enough memory for image", instantiator);
 
@@ -426,7 +427,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       JSAMPARRAY row_buffer;	/* Output row buffer */
       JSAMPLE *jp;
       int row_stride;		/* physical row width in output buffer */
-      UChar_Binary *op = unwind.eimage;
+      Binbyte *op = unwind.eimage;
 
       /* We may need to do some setup of our own at this point before reading
        * the data.  After jpeg_start_decompress() we have the correct scaled
@@ -458,11 +459,11 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	      int clr;
 	      if (jpeg_gray)
 		{
-		  UChar_Binary val;
+		  Binbyte val;
 #if (BITS_IN_JSAMPLE == 8)
-		  val = (UChar_Binary) *jp++;
+		  val = (Binbyte) *jp++;
 #else /* other option is 12 */
-		  val = (UChar_Binary) (*jp++ >> 4);
+		  val = (Binbyte) (*jp++ >> 4);
 #endif
 		  for (clr = 0; clr < 3; clr++) /* copy the same value into RGB */
 		      *op++ = val;
@@ -471,9 +472,9 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		{
 		  for (clr = 0; clr < 3; clr++)
 #if (BITS_IN_JSAMPLE == 8)
-		    *op++ = (UChar_Binary)*jp++;
+		    *op++ = (Binbyte)*jp++;
 #else /* other option is 12 */
-		    *op++ = (UChar_Binary)(*jp++ >> 4);
+		    *op++ = (Binbyte)(*jp++ >> 4);
 #endif
 		}
 	    }
@@ -535,7 +536,7 @@ gif_possible_dest_types (void)
 
 struct gif_unwind_data
 {
-  UChar_Binary *eimage;
+  Binbyte *eimage;
   /* Object that holds the decoded data from a GIF file */
   GifFileType *giffile;
 };
@@ -553,14 +554,14 @@ gif_instantiate_unwind (Lisp_Object unwind_obj)
       GifFree(data->giffile);
     }
   if (data->eimage)
-    xfree (data->eimage, UChar_Binary *);
+    xfree (data->eimage, Binbyte *);
 
   return Qnil;
 }
 
 typedef struct gif_memory_storage
 {
-  UChar_Binary *bytes;		/* The data       */
+  Binbyte *bytes;		/* The data       */
   Bytecount len;		/* How big is it? */
   Bytecount index;		/* Where are we?  */
 } gif_memory_storage;
@@ -613,7 +614,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   int speccount = specpdl_depth ();
   gif_memory_storage mem_struct;
   struct gif_error_struct gif_err;
-  UChar_Binary *bytes;
+  Binbyte *bytes;
   Bytecount len;
   int height = 0;
   int width = 0;
@@ -663,7 +664,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   {
     ColorMapObject *cmo = unwind.giffile->SColorMap;
     int i, j, row, pass, interlace, slice;
-    UChar_Binary *eip;
+    Binbyte *eip;
     /* interlaced gifs have rows in this order:
        0, 8, 16, ..., 4, 12, 20, ..., 2, 6, 10, ..., 1, 3, 5, ...  */
     static int InterlacedOffset[] = { 0, 4, 2, 1 };
@@ -671,8 +672,8 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     height = unwind.giffile->SHeight;
     width = unwind.giffile->SWidth;
-    unwind.eimage = (UChar_Binary*)
-      xmalloc (width * height * 3 * unwind.giffile->ImageCount);
+    unwind.eimage =
+      xnew_binbytes (width * height * 3 * unwind.giffile->ImageCount);
     if (!unwind.eimage)
       signal_image_error("Unable to allocate enough memory for image", instantiator);
 
@@ -703,7 +704,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	    eip = unwind.eimage + (width * height * 3 * slice) + (row * width * 3);
 	    for (j = 0; j < width; j++)
 	      {
-		UChar_Binary pixel =
+		Binbyte pixel =
 		  unwind.giffile->SavedImages[slice].RasterBits[(i * width) + j];
 		*eip++ = cmo->Colors[pixel].Red;
 		*eip++ = cmo->Colors[pixel].Green;
@@ -778,7 +779,7 @@ png_possible_dest_types (void)
 
 struct png_memory_storage
 {
-  const UChar_Binary *bytes;	/* The data       */
+  const Binbyte *bytes;	/* The data       */
   Bytecount len;		/* How big is it? */
   Bytecount index;		/* Where are we?  */
 };
@@ -826,7 +827,7 @@ png_warning_func (png_structp UNUSED (png_ptr), png_const_charp msg)
 struct png_unwind_data
 {
   FILE *instream;
-  UChar_Binary *eimage;
+  Binbyte *eimage;
   png_structp png_ptr;
   png_infop info_ptr;
 };
@@ -844,7 +845,7 @@ png_instantiate_unwind (Lisp_Object unwind_obj)
     retry_fclose (data->instream);
 
   if (data->eimage)
-    xfree(data->eimage, UChar_Binary *);
+    xfree(data->eimage, Binbyte *);
 
   return Qnil;
 }
@@ -904,7 +905,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* Initialize the IO layer and read in header information */
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-    const UChar_Binary *bytes;
+    const Binbyte *bytes;
     Bytecount len;
 
     assert (!NILP (data));
@@ -922,12 +923,12 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   {
     int y;
-    UChar_Binary **row_pointers;
+    Binbyte **row_pointers;
     height = info_ptr->height;
     width = info_ptr->width;
 
     /* Wow, allocate all the memory.  Truly, exciting. */
-    unwind.eimage = xnew_array_and_zero (UChar_Binary, width * height * 3);
+    unwind.eimage = xnew_array_and_zero (Binbyte, width * height * 3);
     /* libpng expects that the image buffer passed in contains a
        picture to draw on top of if the png has any transparencies.
        This could be a good place to pass that in... */
@@ -1026,7 +1027,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     }
 #endif
 
-    xfree (row_pointers, UChar_Binary **);
+    xfree (row_pointers, Binbyte **);
   }
 
   /* now instantiate */
@@ -1069,7 +1070,7 @@ tiff_possible_dest_types (void)
 
 struct tiff_unwind_data
 {
-  UChar_Binary *eimage;
+  Binbyte *eimage;
   /* Object that holds the decoded data from a TIFF file */
   TIFF *tiff;
 };
@@ -1086,14 +1087,14 @@ tiff_instantiate_unwind (Lisp_Object unwind_obj)
       TIFFClose(data->tiff);
     }
   if (data->eimage)
-    xfree (data->eimage, UChar_Binary *);
+    xfree (data->eimage, Binbyte *);
 
   return Qnil;
 }
 
 typedef struct tiff_memory_storage
 {
-  UChar_Binary *bytes;		/* The data       */
+  Binbyte *bytes;		/* The data       */
   Bytecount len;		/* How big is it? */
   Bytecount index;		/* Where are we?  */
 } tiff_memory_storage;
@@ -1258,11 +1259,11 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   TIFFSetWarningHandler ((TIFFErrorHandler)tiff_warning_func);
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-    UChar_Binary *bytes;
+    Binbyte *bytes;
     Bytecount len;
 
     uint32 *raster;
-    UChar_Binary *ep;
+    Binbyte *ep;
 
     assert (!NILP (data));
 
@@ -1285,7 +1286,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     TIFFGetField (unwind.tiff, TIFFTAG_IMAGEWIDTH, &width);
     TIFFGetField (unwind.tiff, TIFFTAG_IMAGELENGTH, &height);
-    unwind.eimage = (UChar_Binary *) xmalloc (width * height * 3);
+    unwind.eimage = xnew_binbytes (width * height * 3);
 
     /* #### This is little more than proof-of-concept/function testing.
        It needs to be reimplemented via scanline reads for both memory
@@ -1306,9 +1307,9 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		rp = raster + (i * width);
 		for (j = 0; j < (int) width; j++)
 		  {
-		    *ep++ = (UChar_Binary)TIFFGetR(*rp);
-		    *ep++ = (UChar_Binary)TIFFGetG(*rp);
-		    *ep++ = (UChar_Binary)TIFFGetB(*rp);
+		    *ep++ = (Binbyte)TIFFGetR(*rp);
+		    *ep++ = (Binbyte)TIFFGetG(*rp);
+		    *ep++ = (Binbyte)TIFFGetB(*rp);
 		    rp++;
 		  }
 	      }

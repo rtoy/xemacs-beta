@@ -144,13 +144,13 @@ extern const struct sized_memory_description x_frame_data_description;
 
 static const struct memory_description frame_data_description_1 []= {
 #ifdef HAVE_GTK
-  { XD_STRUCT_PTR, gtk_console, 1, &gtk_frame_data_description},
+  { XD_BLOCK_PTR, gtk_console, 1, &gtk_frame_data_description},
 #endif
 #ifdef HAVE_MS_WINDOWS
-  { XD_STRUCT_PTR, mswindows_console, 1, &mswindows_frame_data_description},
+  { XD_BLOCK_PTR, mswindows_console, 1, &mswindows_frame_data_description},
 #endif
 #ifdef HAVE_X_WINDOWS
-  { XD_STRUCT_PTR, x_console, 1, &x_frame_data_description},
+  { XD_BLOCK_PTR, x_console, 1, &x_frame_data_description},
 #endif
   { XD_END }
 };
@@ -162,7 +162,7 @@ static const struct sized_memory_description frame_data_description = {
 extern const struct sized_memory_description expose_ignore_description;
 
 static const struct memory_description expose_ignore_description_1 [] = {
-  { XD_STRUCT_PTR, offsetof (struct expose_ignore, next),
+  { XD_BLOCK_PTR, offsetof (struct expose_ignore, next),
     1, &expose_ignore_description },
   { XD_END }
 };
@@ -173,7 +173,7 @@ const struct sized_memory_description expose_ignore_description = {
 };
 
 static const struct memory_description display_line_dynarr_pointer_description_1 []= {
-  { XD_STRUCT_PTR, 0, 1, &display_line_dynarr_description},
+  { XD_BLOCK_PTR, 0, 1, &display_line_dynarr_description},
   { XD_END }
 };
 
@@ -188,9 +188,9 @@ static const struct memory_description frame_description [] = {
   { XD_LISP_OBJECT_ARRAY, offsetof (struct frame, slot), size },
 #include "frameslots.h"
 
-  { XD_STRUCT_PTR, offsetof (struct frame, subwindow_exposures),
+  { XD_BLOCK_PTR, offsetof (struct frame, subwindow_exposures),
     1, &expose_ignore_description },
-  { XD_STRUCT_PTR, offsetof (struct frame, subwindow_exposures_tail),
+  { XD_BLOCK_PTR, offsetof (struct frame, subwindow_exposures_tail),
     1, &expose_ignore_description },
 
 #ifdef HAVE_SCROLLBARS
@@ -198,12 +198,12 @@ static const struct memory_description frame_description [] = {
   { XD_LISP_OBJECT, offsetof (struct frame, sb_hcache) },
 #endif /* HAVE_SCROLLBARS */
 
-  { XD_STRUCT_ARRAY, offsetof (struct frame, current_display_lines),
+  { XD_BLOCK_ARRAY, offsetof (struct frame, current_display_lines),
     4, &display_line_dynarr_pointer_description },
-  { XD_STRUCT_ARRAY, offsetof (struct frame, desired_display_lines),
+  { XD_BLOCK_ARRAY, offsetof (struct frame, desired_display_lines),
     4, &display_line_dynarr_pointer_description },
 
-  { XD_STRUCT_PTR, offsetof (struct frame, framemeths), 1,
+  { XD_BLOCK_PTR, offsetof (struct frame, framemeths), 1,
     &console_methods_description },
   { XD_UNION, offsetof (struct frame, frame_data), 
     XD_INDIRECT (0, 0), &frame_data_description },

@@ -104,7 +104,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   directory = Ffile_name_as_directory (directory);
   directorylen = XSTRING_LENGTH (directory);
 
-  statbuf = (Ibyte *) ALLOCA (directorylen + MAXNAMLEN + 1);
+  statbuf = alloca_ibytes (directorylen + MAXNAMLEN + 1);
   memcpy (statbuf, XSTRING_DATA (directory), directorylen);
   statbuf_tail = statbuf + directorylen;
 
@@ -251,7 +251,7 @@ file_name_completion_stat (Lisp_Object directory, DIRENTRY *dp,
   Bytecount len = NAMLEN (dp);
   Bytecount pos = XSTRING_LENGTH (directory);
   int value;
-  Ibyte *fullname = (Ibyte *) ALLOCA (len + pos + 2);
+  Ibyte *fullname = alloca_ibytes (len + pos + 2);
 
   memcpy (fullname, XSTRING_DATA (directory), pos);
   if (!IS_DIRECTORY_SEP (fullname[pos - 1]))
@@ -391,11 +391,9 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
 	      /* if name is not an exact match against specified string.  */
 	      if (!passcount && cclen > file_name_length)
 		{
-		  Lisp_Object tem;
 		  /* and exit this for loop if a match is found */
-		  EXTERNAL_LIST_LOOP (tem, Vcompletion_ignored_extensions)
+		  EXTERNAL_LIST_LOOP_2 (elt, Vcompletion_ignored_extensions)
 		    {
-		      Lisp_Object elt = XCAR (tem);
 		      Charcount skip;
 
 		      CHECK_STRING (elt);

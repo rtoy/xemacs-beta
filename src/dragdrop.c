@@ -1,6 +1,7 @@
 /* Drag'n'Drop definitions
    created 03-may-98 by Oliver Graf <ograf@fga.de>
    Copyright (C) 1998 Oliver Graf <ograf@fga.de>
+   Copyright (C) 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -74,12 +75,12 @@ Lisp_Object Qdragdrop_drop_dispatch;
 /* Encodes the unsafe characters (listed in URL_UNSAFE) in a given
    string, returning a malloc-ed %XX encoded string.
    if method is != NULL it is prepended to the string. */
-char *
-dnd_url_hexify_string (const char *s, const char *m)
+Ibyte *
+dnd_url_hexify_string (const Ibyte *s, const Ibyte *m)
 {
-  const char *b;
-  char *p, *res;
-  int i;
+  const Ibyte *b;
+  Ibyte *p, *res;
+  Bytecount i;
 
   b = s;
   for (i = 0; *s; s++, i++)
@@ -87,19 +88,19 @@ dnd_url_hexify_string (const char *s, const char *m)
       i += 2; /* Two more characters (hex digits) */
   if (m)
     {
-      res = (char *)xmalloc (i + 1 + strlen (m));
-      strcpy (res, m);
-      p = res + strlen (m);
+      res = xnew_ibytes (i + ITEXT_ZTERM_SIZE + qxestrlen (m));
+      qxestrcpy (res, m);
+      p = res + qxestrlen (m);
     }
   else
     {
-      res = (char *)xmalloc (i + 1);
+      res = xnew_ibytes (i + ITEXT_ZTERM_SIZE);
       p = res;
     }
   for (s = b; *s; s++)
     if (strchr (URL_UNSAFE, *s))
       {
-	const unsigned char c = *s;
+	const Ibyte c = *s;
 	*p++ = '%';
 	*p++ = HEXD2ASC (c >> 4);
 	*p++ = HEXD2ASC (c & 0xf);
@@ -131,15 +132,15 @@ Each element is the feature symbol of the protocol.
   Vdragdrop_protocols = Qnil;
 
 #ifdef HAVE_MS_WINDOWS
-  Vdragdrop_protocols = Fcons ( Qmswindows , Vdragdrop_protocols );
+  Vdragdrop_protocols = Fcons (Qmswindows, Vdragdrop_protocols);
 #endif
 #ifdef HAVE_CDE
-  Vdragdrop_protocols = Fcons ( intern ("cde") , Vdragdrop_protocols );
+  Vdragdrop_protocols = Fcons (intern ("cde"), Vdragdrop_protocols);
 #endif
 #ifdef HAVE_OFFIX_DND
-  Vdragdrop_protocols = Fcons ( intern ("offix") , Vdragdrop_protocols );
+  Vdragdrop_protocols = Fcons (intern ("offix"), Vdragdrop_protocols);
 #endif
 #ifdef HAVE_GTK
-  Vdragdrop_protocols = Fcons ( Qgtk , Vdragdrop_protocols );
+  Vdragdrop_protocols = Fcons (Qgtk, Vdragdrop_protocols);
 #endif
 }

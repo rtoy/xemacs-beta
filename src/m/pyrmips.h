@@ -6,6 +6,5 @@
 #include "m-pyramid.h"
 
 #define SYSTEM_MALLOC
-#define HAVE_ALLOCA
 #define CANNOT_DUMP
 

@@ -117,7 +117,15 @@
     "dumped-pkg-lisp.el"
     "raw-process.el"
     "version.el")
-  "Lisp files that should not be byte compiled.")
+  "Lisp files that should not be byte compiled.
+Files in `additional-dump-dependencies' do not need to be listed here.")
+
+(defvar additional-dump-dependencies
+  '("loadup.el"
+    "loadup-el.el"
+    "update-elc.el")
+  "Lisp files that are not dumped but which the dump depends on.
+If any of these files are changed, we need to redump.")
 
 (defvar lisp-files-ignored-when-checking-for-autoload-updating
   '("custom-load.el"
@@ -187,10 +195,13 @@
   ;; in the lisp-files-need* variables.
   (setq files-to-process (append lisp-files-needed-for-byte-compilation
 				 lisp-files-needing-early-byte-compilation
+				 additional-dump-dependencies
 				 preloaded-file-list))
   (while files-to-process
     (let* ((arg (car files-to-process))
-	   (arg-is-preloaded (member arg preloaded-file-list))
+	   (arg-is-dump-dependency
+	    (or (member arg preloaded-file-list)
+		(member arg additional-dump-dependencies)))
 	   (arg-sans-extension (update-elc-chop-extension arg))
 	   (full-arg (locate-library arg-sans-extension))
 	   (full-arg-sans-extension
@@ -209,11 +220,11 @@
 	   (full-arg-elc (concat full-arg-sans-extension ".elc"))
 	   (full-arg-dir (file-name-directory full-arg-el)))
 	   
-      ;; (print full-arg-el)
+      ; (print full-arg-el)
 
       ;; now check if .el or .elc is newer than the dumped exe.
       ;; if so, need to redump.
-      (when (and dump-target arg-is-preloaded
+      (when (and dump-target arg-is-dump-dependency
 		 ;; no need to check for existence of either of the files
 		 ;; because of the definition of file-newer-than-file-p.
 		 (or (file-newer-than-file-p full-arg-el dump-target)
@@ -222,6 +233,8 @@
 
       (if (and (not (member (file-name-nondirectory arg)
 			    unbytecompiled-lisp-files))
+	       (not (member (file-name-nondirectory arg)
+			    additional-dump-dependencies))
 	       (not (member full-arg-el processed))
 	       ;; no need to check for existence of either of the files
 	       ;; because of the definition of file-newer-than-file-p.

@@ -609,18 +609,17 @@ Import a function into the XEmacs namespace.
 
   if (!NILP (args))
     {
-      Lisp_Object tail = Qnil;
       Lisp_Object value = args;
       Lisp_Object type = Qnil;
 
-      EXTERNAL_LIST_LOOP (tail, value)
+      EXTERNAL_LIST_LOOP_2 (elt, value)
 	{
 	  GtkType the_type;
 	  Lisp_Object marshaller_type = Qnil;
 
-	  CHECK_SYMBOL (XCAR (tail));
+	  CHECK_SYMBOL (elt);
 
-	  type = Fsymbol_name (XCAR (tail));
+	  type = Fsymbol_name (elt);
 
 	  the_type = gtk_type_from_name ((char *) XSTRING_DATA (type));
 
@@ -728,24 +727,25 @@ Call an external function.
 
   if (!NILP (args))
     {
-      Lisp_Object tail = Qnil;
       Lisp_Object value = args;
       
       CHECK_LIST (args);
       n_args = 0;
 
       /* First we convert all of the arguments from Lisp to GtkArgs */
-      EXTERNAL_LIST_LOOP (tail, value)
-	{
-	  the_args[n_args].type = XFFI (func)->args[n_args];
+      {
+	EXTERNAL_LIST_LOOP_2 (elt, value)
+	  {
+	    the_args[n_args].type = XFFI (func)->args[n_args];
 
-	  if (lisp_to_gtk_type (XCAR (tail), &the_args[n_args]))
-	    {
-	      /* There was some sort of an error */
-	      gui_error ("Error converting arguments", args);
-	    }
-	  n_args++;
-	}
+	    if (lisp_to_gtk_type (elt, &the_args[n_args]))
+	      {
+		/* There was some sort of an error */
+		gui_error ("Error converting arguments", args);
+	      }
+	    n_args++;
+	  }
+      }
     }
 
   /* Now we need to tack on space for a return value, if they have

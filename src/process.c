@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -62,6 +62,10 @@ Boston, MA 02111-1307, USA.  */
 #include "systime.h"
 #include "systty.h"
 #include "syswait.h"
+
+#ifdef WIN32_NATIVE
+#include "syswindows.h"
+#endif
 
 Lisp_Object Qprocessp, Qprocess_live_p, Qprocess_readable_p;
 
@@ -1788,7 +1792,7 @@ decode_signal (Lisp_Object signal_)
       name = XSTRING_DATA (XSYMBOL (signal_)->name);
 
 #define handle_signal(sym) do {			\
-	if (!qxestrcmp_c ( name, #sym))		\
+	if (!qxestrcmp_ascii ( name, #sym))		\
 	  return sym;				\
       } while (0)
 
@@ -2146,9 +2150,9 @@ deactivate_process (Lisp_Object process)
 				    &in_usid, &err_usid);
 
   if (in_usid != USID_DONTHASH)
-    remhash ((const void*)in_usid, usid_to_process);
+    remhash ((const void *) in_usid, usid_to_process);
   if (err_usid != USID_DONTHASH)
-    remhash ((const void*)err_usid, usid_to_process);
+    remhash ((const void *) err_usid, usid_to_process);
 
   p->pipe_instream = Qnil;
   p->pipe_outstream = Qnil;
@@ -2435,11 +2439,19 @@ init_xemacs_process (void)
   {
     /* jwz: always initialize Vprocess_environment, so that egetenv()
        works in temacs. */
-    char **envp;
+    Extbyte **envp;
     Vprocess_environment = Qnil;
+#ifdef WIN32_NATIVE
+    _wgetenv (L""); /* force initialization of _wenviron */
+    for (envp = (Extbyte **) _wenviron; envp && *envp; envp++)
+      Vprocess_environment =
+	Fcons (build_ext_string (*envp, Qmswindows_unicode),
+	       Vprocess_environment);
+#else
     for (envp = environ; envp && *envp; envp++)
       Vprocess_environment =
 	Fcons (build_ext_string (*envp, Qnative), Vprocess_environment);
+#endif
     /* This gets set back to 0 in disksave_object_finalization() */
     env_initted = 1;
   }
@@ -2475,7 +2487,7 @@ init_xemacs_process (void)
 
     if (!egetenv ("SHELL"))
       {
-	Ibyte *faux_var = alloca_array (Ibyte, 7 + qxestrlen (shell));
+	Ibyte *faux_var = alloca_ibytes (7 + qxestrlen (shell));
 	qxesprintf (faux_var, "SHELL=%s", shell);
 	Vprocess_environment = Fcons (build_intstring (faux_var),
 				      Vprocess_environment);

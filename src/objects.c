@@ -63,7 +63,7 @@ Lisp_Object Qcolor_instancep;
 
 static const struct memory_description color_instance_data_description_1 []= {
 #ifdef HAVE_TTY
-  { XD_STRUCT_PTR, tty_console, 1, &tty_color_instance_data_description},
+  { XD_BLOCK_PTR, tty_console, 1, &tty_color_instance_data_description},
 #endif
   { XD_END }
 };
@@ -260,7 +260,7 @@ static Lisp_Object font_instance_truename_internal (Lisp_Object xfont,
 
 static const struct memory_description font_instance_data_description_1 []= {
 #ifdef HAVE_TTY
-  { XD_STRUCT_PTR, tty_console, 1, &tty_font_instance_data_description},
+  { XD_BLOCK_PTR, tty_console, 1, &tty_font_instance_data_description},
 #endif
   { XD_END }
 };
@@ -1214,5 +1214,4 @@ reinit_vars_of_objects (void)
 void
 vars_of_objects (void)
 {
-  reinit_vars_of_objects ();
 }

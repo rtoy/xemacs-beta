@@ -39,77 +39,13 @@ Boston, MA 02111-1307, USA.  */
 int mswindows_is_blocking;
 #endif
 
-/* Written by Ben Wing.
+/* Written by Ben Wing. */
 
-   We implement our own profiling scheme so that we can determine
-   things like which Lisp functions are occupying the most time.  Any
-   standard OS-provided profiling works on C functions, which is
-   not always that useful -- and inconvenient, since it requires compiling
-   with profile info and can't be retrieved dynamically, as XEmacs is
-   running.
+/*
 
-   The basic idea is simple.  We set a profiling timer using setitimer
-   (ITIMER_PROF), which generates a SIGPROF every so often.  (This runs not
-   in real time but rather when the process is executing or the system is
-   running on behalf of the process -- at least, that is the case under
-   Unix.  Under MS Windows and Cygwin, there is no setitimer(), so we
-   simulate it using multimedia timers, which run in real time.  To make
-   the results a bit more realistic, we ignore ticks that go off while
-   blocking on an event wait.  Note that Cygwin does provide a simulation
-   of setitimer(), but it's in real time anyway, since Windows doesn't
-   provide a way to have process-time timers, and furthermore, it's broken,
-   so we don't use it.) When the signal goes off, we see what we're in, and
-   add 1 to the count associated with that function.
+Documented in
 
-   It would be nice to use the Lisp allocation mechanism etc. to keep track
-   of the profiling information (i.e. to use Lisp hash tables), but we
-   can't because that's not safe -- updating the timing information happens
-   inside of a signal handler, so we can't rely on not being in the middle
-   of Lisp allocation, garbage collection, malloc(), etc.  Trying to make
-   it work would be much more work than it's worth.  Instead we use a basic
-   (non-Lisp) hash table, which will not conflict with garbage collection
-   or anything else as long as it doesn't try to resize itself.  Resizing
-   itself, however (which happens as a result of a puthash()), could be
-   deadly.  To avoid this, we make sure, at points where it's safe
-   (e.g. profile_record_about_to_call() -- recording the entry into a
-   function call), that the table always has some breathing room in it so
-   that no resizes will occur until at least that many items are added.
-   This is safe because any new item to be added in the sigprof would
-   likely have the profile_record_about_to_call() called just before it,
-   and the breathing room is checked.
-
-   In general: any entry that the sigprof handler puts into the table comes
-   from a backtrace frame (except "Processing Events at Top Level", and
-   there's only one of those).  Either that backtrace frame was added when
-   profiling was on (in which case profile_record_about_to_call() was
-   called and the breathing space updated), or when it was off -- and in
-   this case, no such frames can have been added since the last time
-   `start-profile' was called, so when `start-profile' is called we make
-   sure there is sufficient breathing room to account for all entries
-   currently on the stack.
-
-   Jan 1998: In addition to timing info, I have added code to remember call
-   counts of Lisp funcalls.  The profile_increase_call_count()
-   function is called from Ffuncall(), and serves to add data to
-   Vcall_count_profile_table.  This mechanism is much simpler and
-   independent of the SIGPROF-driven one.  It uses the Lisp allocation
-   mechanism normally, since it is not called from a handler.  It may
-   even be useful to provide a way to turn on only one profiling
-   mechanism, but I haven't done so yet.  --hniksic
-
-   Dec 2002: Total overhaul of the interface, making it sane and easier to
-   use. --ben
-
-   Feb 2003: Lots of rewriting of the internal code.  Add GC-consing-usage,
-   total GC usage, and total timing to the information tracked.  Track
-   profiling overhead and allow the ability to have internal sections
-   (e.g. internal-external conversion, byte-char conversion) that are
-   treated like Lisp functions for the purpose of profiling.  --ben
-
-   BEWARE: If you are modifying this file, be *very* careful.  Correctly
-   implementing the "total" values is very tricky due to the possibility of
-   recursion and of functions already on the stack when starting to
-   profile/still on the stack when stopping.
+  (Info-goto-node "(internals)Profiling")
 */
 
 /* We use a plain table here because we're recording inside of a signal
@@ -163,7 +99,7 @@ static const struct sized_memory_description hentry_description = {
 
 static const struct memory_description plain_hash_table_description_1[] = {
   { XD_ELEMCOUNT,  offsetof (struct hash_table, size) },
-  { XD_STRUCT_PTR, offsetof (struct hash_table, harray), XD_INDIRECT (0, 0),
+  { XD_BLOCK_PTR, offsetof (struct hash_table, harray), XD_INDIRECT (0, 0),
     &hentry_description },
   { XD_END }
 };
@@ -741,7 +677,7 @@ value can be.
 #if 0
   /* #### This is supposed to be for KKCC but KKCC doesn't use this stuff
      currently. */
-  dump_add_root_struct_ptr (&big_profile_table, &plain_hash_table_description);
+  dump_add_root_block_ptr (&big_profile_table, &plain_hash_table_description);
 #endif /* 0 */
 
   profiling_lock = 0;

@@ -1,5 +1,5 @@
 /* Unicode-encapsulation of Win32 library functions.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -37,118 +37,6 @@ Boston, MA 02111-1307, USA.  */
 #include "console-msw.h"
 
 int no_mswin_unicode_lib_calls;
-
-/* The golden rules of writing Unicode-safe code:
-
--- There are no preprocessor games going on.
-
--- Do not set the UNICODE constant.
-
--- You need to change your code to call the Windows API prefixed with "qxe"
-   functions (when they exist) and use the ...W structs instead of the
-   generic ones.  String arguments in the qxe functions are of type Extbyte
-   *.
-
--- You code is responsible for conversion of text arguments.  We try to
-   handle everything else -- the argument differences, the copying back and
-   forth of structures, etc.  Use Qmswindows_tstr and macros such as
-   C_STRING_TO_TSTR.  You are also responsible for interpreting and
-   specifying string sizes, which have not been changed.  Usually these are
-   in characters, meaning you need to divide by XETCHAR_SIZE. (But, some
-   functions want sizes in bytes, even with Unicode strings.  Look in the
-   documentation.) Use XETEXT when specifying string constants, so that
-   they show up in Unicode as necessary.
-
--- If you need to process external strings (in general you should not do
-   this; do all your manipulations in internal format and convert at the
-   point of entry into or exit from the function), use the xet...()
-   functions.
-
-more specifically:
-
-Unicode support is important for supporting many languages under
-Windows, such as Cyrillic, without resorting to translation tables for
-particular Windows-specific code pages.  Internally, all characters in
-Windows can be represented in two encodings: code pages and Unicode.
-With Unicode support, we can seamlessly support all Windows
-characters.  Currently, the test in the drive to support Unicode is if
-IME input works properly, since it is being converted from Unicode.
-
-Unicode support also requires that the various Windows API's be
-"Unicode-encapsulated", so that they automatically call the ANSI or
-Unicode version of the API call appropriately and handle the size
-differences in structures.  What this means is:
-
--- first, note that Windows already provides a sort of encapsulation
-   of all API's that deal with text.  All such API's are underlyingly
-   provided in two versions, with an A or W suffix (ANSI or "wide"
-   i.e. Unicode), and the compile-time constant UNICODE controls which is
-   selected by the unsuffixed API.  Same thing happens with structures, and
-   also with types, where the generic types have names beginning with T --
-   TCHAR, LPTSTR, etc..  Unfortunately, this is compile-time only, not
-   run-time, so not sufficient. (Creating the necessary run-time encoding
-   is not conceptually difficult, but very time-consuming to write.  It
-   adds no significant overhead, and the only reason it's not standard in
-   Windows is conscious marketing attempts by Microsoft to cripple Windows
-   95.  FUCK MICROSOFT!  They even describe in a KnowledgeBase article
-   exactly how to create such an API [although we don't exactly follow
-   their procedure], and point out its usefulness; the procedure is also
-   described more generally in Nadine Kano's book on Win32
-   internationalization -- written SIX YEARS AGO!  Obviously Microsoft has
-   such an API available internally.)
-
--- what we do is provide an encapsulation of each standard Windows API call
-   that is split into A and W versions.  current theory is to avoid all
-   preprocessor games; so we name the function with a prefix -- "qxe"
-   currently -- and require callers to use the prefixed name.  Callers need
-   to explicitly use the W version of all structures, and convert text
-   themselves using Qmswindows_tstr.  the qxe encapsulated version will
-   automatically call the appropriate A or W version depending on whether
-   we're running on 9x or NT (you can force use of the A calls on NT,
-   e.g. for testing purposes, using the command- line switch -nuni aka
-   -no-unicode-lib-calls), and copy data between W and A versions of the
-   structures as necessary.
-
--- We require the caller to handle the actual translation of text to
-   avoid possible overflow when dealing with fixed-size Windows
-   structures.  There are no such problems when copying data between
-   the A and W versions because ANSI text is never larger than its
-   equivalent Unicode representation.
-
-NOTE NOTE NOTE: As of August 2001, Microsoft (finally!  See my nasty
-comment above) released their own Unicode-encapsulation library, called
-Microsoft Layer for Unicode on Windows 95/98/Me Systems.  It tries to be
-more transparent than we are, in that
-
--- its routines do ANSI/Unicode string translation, while we don't, for
-   efficiency (we already have to do internal/external conversion so it's
-   no extra burden to do the proper conversion directly rather than always
-   converting to Unicode and then doing a second conversion to ANSI as
-   necessary)
-
--- rather than requiring separately-named routines (qxeFooBar), they
-   physically override the existing routines at the link level.  it also
-   appears that they do this BADLY, in that if you link with the MLU, you
-   get an application that runs ONLY on Win9x!!! (hint -- use
-   GetProcAddress()).  there's still no way to create a single binary!
-   fucking losers.
-
--- they assume you compile with UNICODE defined, so there's no need for the
-   application to explicitly use ...W structures, as we require.
-
--- they also intercept windows procedures to deal with notify messages as
-   necessary, which we don't do yet.
-
--- they (of course) don't use Extbyte.
-
-at some point (especially when they fix the single-binary problem!), we
-should consider switching.  for the meantime, we'll stick with what i've
-already written.  perhaps we should think about adopting some of the
-greater transparency they have; but i opted against transparency on
-purpose, to make the code easier to follow for someone who's not familiar
-with it.  until our library is really complete and bug-free, we should
-think twice before doing this.
-*/
 
 
 /************************************************************************/
@@ -2513,7 +2401,9 @@ qxeRegisterClass (CONST WNDCLASSW * lpWndClass)
   if (XEUNICODE_P)
     return RegisterClassW (&classnew);
   else
-    return RegisterClassA ((CONST WNDCLASSA *) &classnew);
+    /* The intermediate cast fools gcc into not outputting strict-aliasing
+       complaints */
+    return RegisterClassA ((CONST WNDCLASSA *) (void *) &classnew);
 }
 
 BOOL
@@ -2557,7 +2447,9 @@ qxeRegisterClassEx (CONST WNDCLASSEXW *lpWndClass)
   if (XEUNICODE_P)
     return RegisterClassExW (&classnew);
   else
-    return RegisterClassExA ((CONST WNDCLASSEXA *) &classnew);
+    /* The intermediate cast fools gcc into not outputting strict-aliasing
+       complaints */
+    return RegisterClassExA ((CONST WNDCLASSEXA *) (void *) &classnew);
 }
 
 

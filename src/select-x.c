@@ -479,7 +479,7 @@ x_selection_request_lisp_error (Lisp_Object closure)
  */
 static void
 x_reply_selection_request (XSelectionRequestEvent *event, int format,
-			   UChar_Binary *data, Bytecount size, Atom type)
+			   Rawbyte *data, Bytecount size, Atom type)
 {
   /* This function can GC */
   XSelectionEvent reply;
@@ -531,7 +531,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
 					PropertyDelete);
 
       XChangeProperty (display, window, reply.property, DEVICE_XATOM_INCR (d),
-		       32, PropModeReplace, (UChar_Binary *)
+		       32, PropModeReplace, (Rawbyte *)
 		       &bytes_remaining, 1);
       XSelectInput (display, window, PropertyChangeMask);
       /* Tell 'em the INCR data is there... */
@@ -642,7 +642,7 @@ x_handle_selection_request (XSelectionRequestEvent *event)
 			 make_opaque_ptr (event));
 
   {
-    UChar_Binary *data;
+    Rawbyte *data;
     Bytecount size;
     int format;
     Atom type;
@@ -653,7 +653,7 @@ x_handle_selection_request (XSelectionRequestEvent *event)
     successful_p = Qt;
     /* Tell x_selection_request_lisp_error() it's cool. */
     event->type = 0;
-    xfree (data, UChar_Binary *);
+    xfree (data, Rawbyte *);
   }
 
   unbind_to (count);
@@ -969,14 +969,14 @@ x_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
 
 static void
 x_get_window_property (Display *display, Window window, Atom property,
-		       UChar_Binary **data_ret, Bytecount *bytes_ret,
+		       Rawbyte **data_ret, Bytecount *bytes_ret,
 		       Atom *actual_type_ret, int *actual_format_ret,
 		       unsigned long *actual_size_ret, int delete_p)
 {
   Bytecount total_size;
   unsigned long bytes_remaining;
   Bytecount offset = 0;
-  UChar_Binary *tmp_data = 0;
+  Rawbyte *tmp_data = 0;
   int result;
   Bytecount buffer_size = SELECTION_QUANTUM (display);
   if (buffer_size > MAX_SELECTION_QUANTUM) buffer_size = MAX_SELECTION_QUANTUM;
@@ -1004,7 +1004,7 @@ x_get_window_property (Display *display, Window window, Atom property,
     }
 
   total_size = bytes_remaining + 1;
-  *data_ret = (UChar_Binary *) xmalloc (total_size);
+  *data_ret = xnew_rawbytes (total_size);
 
   /* Now read, until we've gotten it all. */
   while (bytes_remaining)
@@ -1041,7 +1041,7 @@ receive_incremental_selection (Display *display, Window window, Atom property,
 			       /* this one is for error messages only */
 			       Lisp_Object UNUSED (target_type),
 			       Bytecount min_size_bytes,
-			       UChar_Binary **data_ret,
+			       Rawbyte **data_ret,
 			       Bytecount *size_bytes_ret,
 			       Atom *type_ret, int *format_ret,
 			       unsigned long *size_ret)
@@ -1050,7 +1050,7 @@ receive_incremental_selection (Display *display, Window window, Atom property,
   Bytecount offset = 0;
   int prop_id;
   *size_bytes_ret = min_size_bytes;
-  *data_ret = (UChar_Binary *) xmalloc (*size_bytes_ret);
+  *data_ret = xnew_rawbytes (*size_bytes_ret);
 #if 0
   stderr_out ("\nread INCR %d\n", min_size_bytes);
 #endif
@@ -1066,7 +1066,7 @@ receive_incremental_selection (Display *display, Window window, Atom property,
 				    PropertyNewValue);
   while (1)
     {
-      UChar_Binary *tmp_data;
+      Rawbyte *tmp_data;
       Bytecount tmp_size_bytes;
       wait_for_property_change (prop_id);
       /* expect it again immediately, because x_get_window_property may
@@ -1086,7 +1086,7 @@ receive_incremental_selection (Display *display, Window window, Atom property,
 #endif
 	  unexpect_property_change (prop_id);
 	  if (tmp_data)
-	    xfree (tmp_data, UChar_Binary *);
+	    xfree (tmp_data, Rawbyte *);
 	  break;
 	}
 #if 0
@@ -1099,11 +1099,11 @@ receive_incremental_selection (Display *display, Window window, Atom property,
 		   *size_bytes_ret, offset + tmp_size_bytes);
 #endif
 	  *size_bytes_ret = offset + tmp_size_bytes;
-	  *data_ret = (UChar_Binary *) xrealloc (*data_ret, *size_bytes_ret);
+	  *data_ret = (Rawbyte *) xrealloc (*data_ret, *size_bytes_ret);
 	}
       memcpy ((*data_ret) + offset, tmp_data, tmp_size_bytes);
       offset += tmp_size_bytes;
-      xfree (tmp_data, UChar_Binary *);
+      xfree (tmp_data, Rawbyte *);
     }
 }
 
@@ -1120,7 +1120,7 @@ x_get_window_property_as_lisp_data (Display *display,
   Atom actual_type;
   int actual_format;
   unsigned long actual_size;
-  UChar_Binary *data = NULL;
+  Rawbyte *data = NULL;
   Bytecount bytes = 0;
   Lisp_Object val;
   struct device *d = get_device_from_display (display);
@@ -1152,7 +1152,7 @@ x_get_window_property_as_lisp_data (Display *display,
       Bytecount min_size_bytes =
 	/* careful here. */
 	(Bytecount) (* ((unsigned int *) data));
-      xfree (data, UChar_Binary *);
+      xfree (data, Rawbyte *);
       receive_incremental_selection (display, window, property, target_type,
 				     min_size_bytes, &data, &bytes,
 				     &actual_type, &actual_format,
@@ -1164,7 +1164,7 @@ x_get_window_property_as_lisp_data (Display *display,
   val = selection_data_to_lisp_data (d, data, bytes,
 				     actual_type, actual_format);
 
-  xfree (data, UChar_Binary *);
+  xfree (data, Rawbyte *);
   return val;
 }
 
@@ -1268,7 +1268,7 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
   Display *display = DEVICE_X_DISPLAY (d);
   Window window = RootWindow (display, 0); /* Cutbuffers are on frame 0 */
   Atom cut_buffer_atom;
-  UChar_Binary *data;
+  Rawbyte *data;
   Bytecount bytes;
   Atom type;
   int format;
@@ -1296,7 +1296,7 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
 			  memchr (data, 0x1b, bytes) ?
 			  Qctext : Qbinary)
 	 : Qnil);
-  xfree (data, UChar_Binary *);
+  xfree (data, Rawbyte *);
   return ret;
 }
 
@@ -1467,8 +1467,6 @@ reinit_vars_of_select_x (void)
 void
 vars_of_select_x (void)
 {
-  reinit_vars_of_select_x ();
-
 #ifdef CUT_BUFFER_SUPPORT
   cut_buffers_initialized = 0;
   Fprovide (intern ("cut-buffer"));

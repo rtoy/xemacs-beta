@@ -1,6 +1,6 @@
 /* XEmacs site configuration template file.  -*- C -*-
    Copyright (C) 1986, 1991-1994, 1998, 1999 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -26,6 +26,21 @@ Boston, MA 02111-1307, USA.  */
    think they can include it as many times as they like.  */
 #ifndef _SRC_CONFIG_H_
 #define _SRC_CONFIG_H_
+
+/* The proper format of this file:
+
+1. All #undef statements that are changed by configure should go together,
+   BEFORE the inclusion of the s&m files, and need to be bracketed by
+   #ifndef WIN32_NO_CONFIGURE.  There is currently only one exception to
+   this: SYSTEM_TYPE.
+
+2. All other code, except for the things that may be referenced in s&m
+   files (there is very very little of this) need to go AFTER the inclusion
+   of s&m files.
+
+Together, this ensures that the s&m files can override configure
+determinations as necessary, and we will properly notice this.
+*/
 
 /*
 This file now serves both as config.h.in and simply as config.h under
@@ -133,12 +148,6 @@ things are arranged in config.h.in.  In particular:
 /* Allow the configurer to specify if she wants site-modules. */
 #undef INHIBIT_SITE_MODULES
 
-/* This will be removed in 19.15. */
-/* Hah!  Try 20.3 ... */
-/* Hah!  Try never ... */
-/* If at first you don't succeed, try, try again. */
-/* #define LOSING_BYTECODE */
-
 /* Undefine on systems which don't have processes */
 #undef HAVE_UNIX_PROCESSES
 
@@ -159,6 +168,30 @@ things are arranged in config.h.in.  In particular:
 
 /* Use a debugging malloc? -- experimental */
 #undef USE_DEBUG_MALLOC
+
+/* Use the relocating allocator for buffer space? */
+#undef REL_ALLOC
+
+/* If using the C implementation of alloca, define if you know the
+   direction of stack growth for your system; otherwise it will be
+   automatically deduced at run-time.
+        STACK_DIRECTION > 0 => grows toward higher addresses
+        STACK_DIRECTION < 0 => grows toward lower addresses
+        STACK_DIRECTION = 0 => direction of growth unknown */
+#undef STACK_DIRECTION
+
+/* Is alloca() broken when part of an argument to a function call? */
+#undef BROKEN_ALLOCA_IN_FUNCTION_CALLS
+
+/* Define to 1 if you have `alloca', as a function or macro. */
+#undef HAVE_ALLOCA
+
+/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
+   */
+#undef HAVE_ALLOCA_H
+
+/* Define to 1 if using `alloca.c'. */
+#undef C_ALLOCA
 
 /* Compile in TTY support? */
 #undef HAVE_TTY
@@ -185,18 +218,6 @@ things are arranged in config.h.in.  In particular:
 #undef NARROWPROTO
 #endif /* HAVE_X_WINDOWS */
 
-#endif /* WIN32_NO_CONFIGURE */
-
-#ifdef HAVE_X_WINDOWS
-/* The following should always be defined, no matter what xmkmf thinks. */
-#ifndef NeedFunctionPrototypes
-#define NeedFunctionPrototypes 1
-#endif
-#ifndef FUNCPROTO
-#define FUNCPROTO 15
-#endif
-#endif /* HAVE_X_WINDOWS */
-
 /* Defines for building Gtk applications */
 #undef HAVE_GNOME
 #undef HAVE_GTK
@@ -204,22 +225,6 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_GLADE_GLADE_H
 #undef HAVE_GLADE_H
 #undef LIBGLADE_XML_TXTDOMAIN
-
-/* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
-#if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS) || defined (HAVE_MS_WINDOWS) /* || defined (HAVE_NEXTSTEP) */
-#define HAVE_WINDOW_SYSTEM
-#endif
-
-#if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS)
-#define HAVE_XLIKE
-#endif
-
-/* Define HAVE_UNIXOID_EVENT_LOOP if we use select() to wait for events. */
-#if defined (HAVE_X_WINDOWS) || defined (HAVE_TTY) || defined (HAVE_MSG_SELECT)
-#define HAVE_UNIXOID_EVENT_LOOP
-#endif
-
-#ifndef WIN32_NO_CONFIGURE /* Defined in xemacs.mak or s/windowsnt.h: */
 
 /* XFree86 has a different prototype for this function */
 #undef HAVE_XREGISTERIMINSTANTIATECALLBACK
@@ -343,6 +348,9 @@ things are arranged in config.h.in.  In particular:
 /* Can `gettimeofday' accept two arguments? */
 #undef GETTIMEOFDAY_ONE_ARGUMENT
 
+/* Is scanf() broken? (Under certain versions of Cygwin) */
+#undef CYGWIN_SCANF_BUG
+
 #undef HAVE_MMAP
 #undef HAVE_STRCOLL
 #undef HAVE_GETPGRP
@@ -350,6 +358,7 @@ things are arranged in config.h.in.  In particular:
 
 #undef HAVE_INVERSE_HYPERBOLIC
 
+/* Functions in the big list of functions checked for */
 #undef HAVE_CBRT
 #undef HAVE_CLOSEDIR
 #undef HAVE_DUP2
@@ -357,14 +366,15 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_FMOD
 #undef HAVE_FPATHCONF
 #undef HAVE_FREXP
+#undef HAVE_FSYNC
 #undef HAVE_FTIME
+#undef HAVE_FTRUNCATE
 #undef HAVE_GETADDRINFO
 #undef HAVE_GETHOSTNAME
 #undef HAVE_GETNAMEINFO
 #undef HAVE_GETPAGESIZE
 #undef HAVE_GETRLIMIT
 #undef HAVE_GETTIMEOFDAY
-#undef HAVE_GETWD
 #undef HAVE_GETCWD
 #undef HAVE_LINK
 #undef HAVE_LOGB
@@ -376,7 +386,6 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_POLL
 #undef HAVE_RANDOM
 #undef HAVE_READLINK
-#undef HAVE_REALPATH
 #undef HAVE_RENAME
 #undef HAVE_RES_INIT
 #undef HAVE_RINT
@@ -388,21 +397,24 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_SIGBLOCK
 #undef HAVE_SIGHOLD
 #undef HAVE_SIGPROCMASK
-#undef HAVE_SIGSETJMP
 #undef HAVE_SNPRINTF
-#undef HAVE_STPCPY
 #undef HAVE_STRERROR
 #undef HAVE_STRLWR
 #undef HAVE_STRUPR
 #undef HAVE_SYMLINK
 #undef HAVE_TZSET
 #undef HAVE_ULIMIT
+#undef HAVE_UMASK
 #undef HAVE_USLEEP
+#undef HAVE_VLIMIT
+#undef HAVE_VSNPRINTF
+#undef HAVE_WAITPID
+#undef HAVE_WCSCMP
+#undef HAVE_WCSLEN
+
 #undef HAVE_UTIME
 #undef HAVE_UTIMES
-#undef HAVE_WAITPID
-#undef HAVE_VSNPRINTF
-#undef HAVE_VLIMIT
+#undef HAVE_SIGSETJMP
 
 /* Many flavors of PTY support */
 #undef HAVE_GETPT	/* glibc's easy pty allocation function */
@@ -428,9 +440,6 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_SYSVIPC
 #undef HAVE_LOCKF
 #undef HAVE_FLOCK
-#undef HAVE_FSYNC
-#undef HAVE_FTRUNCATE
-#undef HAVE_UMASK
 
 #undef SYSV_SYSTEM_DIR
 #undef NONSYSTEM_DIR_LIBRARY
@@ -667,116 +676,58 @@ things are arranged in config.h.in.  In particular:
 #undef gid_t
 #undef socklen_t
 
-#endif /* WIN32_NO_CONFIGURE */
+/* Enhanced numeric support */
+#undef WITH_NUMBER_TYPES
+#undef WITH_GMP
+#undef WITH_MP
+#undef MP_PREFIX
+#undef HAVE_MP_MOVE
 
-/* USER_FULL_NAME returns a string that is the user's full name.
-   It can assume that the variable `pw' points to the password file
-   entry for this user.
+#undef SIZEOF_SHORT
+#undef SIZEOF_INT
+#undef SIZEOF_LONG
+#undef SIZEOF_LONG_LONG
+#undef SIZEOF_VOID_P
+#undef SIZEOF_DOUBLE
 
-   At some sites, the pw_gecos field contains the user's full name.
-   If neither this nor any other field contains the right thing, use
-   pw_name, giving the user's login name, since that is better than
-   nothing. */
-#define USER_FULL_NAME pw->pw_gecos
+/* some systems (Cygwin) typedef u?intptr_t in <sys/types.h>
+   but the standard is <inttypes.h>
+   ugliness due to last-resort conditional typedef'ing in lisp.h */
+#undef HAVE_INTPTR_T_IN_SYS_TYPES_H
 
-#if (defined (QUANTIFY) || defined (PURIFY)) && !defined (XLIB_ILLEGAL_ACCESS)
-#define XLIB_ILLEGAL_ACCESS 1
-#endif
+/* Does the keyword `inline' exist?  */
+#undef inline
 
-#define XEMACS_WANTS_C_ALLOCA
+/* movemail options */
+/* Should movemail use POP3 for mail access? */
+#undef MAIL_USE_POP
+/* Should movemail use kerberos for POP authentication? */
+#undef KERBEROS
+/* Should movemail use hesiod for getting POP server host? */
+#undef HESIOD
+/* Determine type of mail locking. */
+#undef MAIL_LOCK_LOCKF
+#undef MAIL_LOCK_FLOCK
+#undef MAIL_LOCK_DOT
+#undef MAIL_LOCK_LOCKING
+#undef MAIL_LOCK_MMDF
 
-/* alloca twiddling.
-   Because we might be #including alloca.h here, feature test macros
-   such as _XOPEN_SOURCE must be defined above. */
+#undef HAVE_MKSTEMP
 
-#undef HAVE_ALLOCA_H
-#ifndef NOT_C_CODE
-#if defined (__CYGWIN__)
-/* We get complaints about redefinitions if we just use the __GNUC__
-   definition: stdlib.h also includes alloca.h, which defines it slightly
-   differently */
-#include <alloca.h>
-#elif defined (__GNUC__)
-#define alloca __builtin_alloca
-#elif defined (WIN32_NO_CONFIGURE)
-/* Defines size_t and alloca ().  */
-#include <malloc.h>
-#elif defined (__DECC)
-#include <alloca.h>
-#pragma intrinsic(alloca)
-#elif defined (HAVE_ALLOCA_H)
-#include <alloca.h>
-#elif defined (_AIX)
-/* AIX requires this before any "real" code in the translation unit.  */
-#pragma alloca
-#elif ! defined (alloca)
-#ifdef C_ALLOCA
-#define alloca xemacs_c_alloca
-#else
-void *alloca ();
-#endif /* C_ALLOCA */
-#endif /* !defined (alloca) */
-#endif /* C code */
+#undef PREFIX_USER_DEFINED
+#undef EXEC_PREFIX_USER_DEFINED
+#undef MODULEDIR_USER_DEFINED
+#undef SITEMODULEDIR_USER_DEFINED
+#undef DOCDIR_USER_DEFINED
+#undef LISPDIR_USER_DEFINED
+#undef PACKAGE_PATH_USER_DEFINED
+#undef SITELISPDIR_USER_DEFINED
+#undef ARCHLIBDIR_USER_DEFINED
+#undef ETCDIR_USER_DEFINED
+#undef INFODIR_USER_DEFINED
+#undef INFOPATH_USER_DEFINED
 
-/* The configuration script may define `opsysfile' to be the name of
-   the s/...h file that describes your operating system.
-   The file name is chosen based on the configuration name. */
-
-#if defined (__cplusplus) && !defined (NOT_C_CODE)
-extern "C" {
-#endif
-
-#undef config_opsysfile
-#ifdef WIN32_NO_CONFIGURE
-#include "s/windowsnt.h"
-#elif defined (config_opsysfile)
-#include config_opsysfile
-#endif
-
-/* The configuration script may define `machfile' to be the name of
-   the m/...h file that describes the machine you are using.
-   The file name is chosen based on the configuration name. */
-
-#undef config_machfile
-#ifdef WIN32_NO_CONFIGURE
-#include "m/windowsnt.h"
-#elif defined (config_machfile)
-#include config_machfile
-#endif
-
-#if defined (__cplusplus) && !defined (NOT_C_CODE)
-}
-#endif
-
-/* s&m files shouldn't be required to define anything, or even to exist.
-   If the s&m files don't define SYSTEM_TYPE, configure will select an
-   appropriate default value. */
-#ifndef SYSTEM_TYPE
-#undef SYSTEM_TYPE
-#endif
-
-#if defined (USE_SYSTEM_MALLOC) && !defined (SYSTEM_MALLOC)
-#define SYSTEM_MALLOC
-#endif
-
-/* Define the return type of signal handlers if the s/xxx.h file
-   did not already do so. */
-#define RETSIGTYPE void
-
-#ifndef XCDECL
-#define XCDECL
-#endif
-
-/* SIGTYPE is the macro we actually use. */
-#ifndef SIGTYPE
-#define SIGTYPE RETSIGTYPE XCDECL
-#define SIGRETURN return
-#endif
-
-#ifndef WIN32_NO_CONFIGURE /* Defined in xemacs.mak or s/windowsnt.h: */
-
-/* Use the relocating allocator for buffer space? */
-#undef REL_ALLOC
+#undef PDUMP
 
 /* Define DYNODUMP if it is necessary to properly dump on this system.
    Currently this is only Solaris 2.x, for x < 6. */
@@ -838,8 +789,129 @@ extern "C" {
 
 #endif /* WIN32_NO_CONFIGURE */
 
+/* alloca twiddling.
+   Because we might be #including alloca.h here, feature test macros
+   such as _XOPEN_SOURCE must be defined above.
+
+   #### This really should go below the inclusion of s&m files, like
+   everything else. */
+
+#ifndef NOT_C_CODE
+#if defined (__CYGWIN__)
+/* We get complaints about redefinitions if we just use the __GNUC__
+   definition: stdlib.h also includes alloca.h, which defines it slightly
+   differently */
+#include <alloca.h>
+#elif defined (__GNUC__)
+#define alloca __builtin_alloca
+#elif defined (WIN32_NO_CONFIGURE)
+/* Defines size_t and alloca ().  */
+#include <malloc.h>
+#elif defined (__DECC)
+#include <alloca.h>
+#pragma intrinsic(alloca)
+#elif defined (HAVE_ALLOCA_H)
+#include <alloca.h>
+#elif defined (_AIX)
+/* AIX requires this before any "real" code in the translation unit.  */
+#pragma alloca
+#elif ! defined (alloca)
+#ifdef C_ALLOCA
+#define alloca xemacs_c_alloca
+#else
+void *alloca ();
+#endif /* C_ALLOCA */
+#endif /* !defined (alloca) */
+#endif /* C code */
+
+/* The configuration script may define `opsysfile' to be the name of
+   the s/...h file that describes your operating system.
+   The file name is chosen based on the configuration name. */
+
+#if defined (__cplusplus) && !defined (NOT_C_CODE)
+extern "C" {
+#endif
+
+#undef config_opsysfile
+#ifdef WIN32_NO_CONFIGURE
+#include "s/windowsnt.h"
+#elif defined (config_opsysfile)
+#include config_opsysfile
+#endif
+
+/* The configuration script may define `machfile' to be the name of
+   the m/...h file that describes the machine you are using.
+   The file name is chosen based on the configuration name. */
+
+#undef config_machfile
+#ifdef WIN32_NO_CONFIGURE
+#include "m/windowsnt.h"
+#elif defined (config_machfile)
+#include config_machfile
+#endif
+
+#if defined (__cplusplus) && !defined (NOT_C_CODE)
+}
+#endif
+
+/* This will be removed in 19.15. */
+/* Hah!  Try 20.3 ... */
+/* Hah!  Try never ... */
+/* If at first you don't succeed, try, try again. */
+/* #define LOSING_BYTECODE */
+
+/* USER_FULL_NAME returns a string that is the user's full name.
+   It can assume that the variable `pw' points to the password file
+   entry for this user.
+
+   At some sites, the pw_gecos field contains the user's full name.
+   If neither this nor any other field contains the right thing, use
+   pw_name, giving the user's login name, since that is better than
+   nothing. */
+#define USER_FULL_NAME pw->pw_gecos
+
+#define XEMACS_WANTS_C_ALLOCA
+
+/* s&m files shouldn't be required to define anything, or even to exist.
+   If the s&m files don't define SYSTEM_TYPE, configure will select an
+   appropriate default value. */
+#ifndef SYSTEM_TYPE
+#undef SYSTEM_TYPE
+#endif
+
+#if defined (USE_SYSTEM_MALLOC) && !defined (SYSTEM_MALLOC)
+#define SYSTEM_MALLOC
+#endif
+
+/* Define the return type of signal handlers if the s/xxx.h file
+   did not already do so. */
+#define RETSIGTYPE void
+
+#ifndef XCDECL
+#define XCDECL
+#endif
+
+/* SIGTYPE is the macro we actually use. */
+#ifndef SIGTYPE
+#define SIGTYPE RETSIGTYPE XCDECL
+#define SIGRETURN return
+#endif
+
+/* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
+#if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS) || defined (HAVE_MS_WINDOWS) /* || defined (HAVE_NEXTSTEP) */
+#define HAVE_WINDOW_SYSTEM
+#endif
+
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS) || defined (HAVE_WIDGETS)
 #define HAVE_GUI_OBJECTS
+#endif
+
+#if defined (HAVE_MENUBARS) || defined (HAVE_DIALOGS)
+#define HAVE_POPUPS
+#endif
+
+#if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS)
+#define HAVE_XLIKE
 #endif
 
 /* For the moment, Athena widgets and dialogs may be very unstable and not
@@ -854,8 +926,23 @@ extern "C" {
 #define HAVE_X_DIALOGS
 #endif
 
-#if defined (HAVE_MENUBARS) || defined (HAVE_DIALOGS)
-#define HAVE_POPUPS
+#ifdef HAVE_X_WINDOWS
+/* The following should always be defined, no matter what xmkmf thinks. */
+#ifndef NeedFunctionPrototypes
+#define NeedFunctionPrototypes 1
+#endif
+#ifndef FUNCPROTO
+#define FUNCPROTO 15
+#endif
+#endif /* HAVE_X_WINDOWS */
+
+#if (defined (QUANTIFY) || defined (PURIFY)) && !defined (XLIB_ILLEGAL_ACCESS)
+#define XLIB_ILLEGAL_ACCESS 1
+#endif
+
+/* Define HAVE_UNIXOID_EVENT_LOOP if we use select() to wait for events. */
+#if defined (HAVE_X_WINDOWS) || defined (HAVE_TTY) || defined (HAVE_MSG_SELECT)
+#define HAVE_UNIXOID_EVENT_LOOP
 #endif
 
 /* If you are using SunOS 4.1.1 and X11r5, then you need this patch.
@@ -891,25 +978,6 @@ extern "C" {
 #define listen Rlisten
 #endif /* HAVE_SOCKS && !DO_NOT_SOCKSIFY */
 
-#ifndef WIN32_NO_CONFIGURE /* Defined in xemacs.mak or s/windowsnt.h: */
-
-#undef SIZEOF_SHORT
-#undef SIZEOF_INT
-#undef SIZEOF_LONG
-#undef SIZEOF_LONG_LONG
-#undef SIZEOF_VOID_P
-#undef SIZEOF_DOUBLE
-
-/* some systems (Cygwin) typedef u?intptr_t in <sys/types.h>
-   but the standard is <inttypes.h>
-   ugliness due to last-resort conditional typedef'ing in lisp.h */
-#undef HAVE_INTPTR_T_IN_SYS_TYPES_H
-
-/* Does the keyword `inline' exist?  */
-#undef inline
-
-#endif /* WIN32_NO_CONFIGURE */
-
 #ifndef BITS_PER_CHAR
 #define BITS_PER_CHAR 8
 #endif
@@ -919,13 +987,6 @@ extern "C" {
 #define LONG_LONG_BITS (SIZEOF_LONG_LONG * BITS_PER_CHAR)
 #define VOID_P_BITS (SIZEOF_VOID_P * BITS_PER_CHAR)
 #define DOUBLE_BITS (SIZEOF_DOUBLE * BITS_PER_CHAR)
-
-/* Enhanced numeric support */
-#undef WITH_NUMBER_TYPES
-#undef WITH_GMP
-#undef WITH_MP
-#undef MP_PREFIX
-#undef HAVE_MP_MOVE
 
 /* Use `INLINE_HEADER' to define inline functions in .h files.
    Use `inline static' to define inline functions in .c files.
@@ -987,41 +1048,6 @@ extern "C" {
 # define LONGJMP(x, y) longjmp (x, y)
 # define JMP_BUF jmp_buf
 #endif
-
-#ifndef WIN32_NO_CONFIGURE /* Defined in xemacs.mak or s/windowsnt.h: */
-
-/* movemail options */
-/* Should movemail use POP3 for mail access? */
-#undef MAIL_USE_POP
-/* Should movemail use kerberos for POP authentication? */
-#undef KERBEROS
-/* Should movemail use hesiod for getting POP server host? */
-#undef HESIOD
-/* Determine type of mail locking. */
-#undef MAIL_LOCK_LOCKF
-#undef MAIL_LOCK_FLOCK
-#undef MAIL_LOCK_DOT
-#undef MAIL_LOCK_LOCKING
-#undef MAIL_LOCK_MMDF
-
-#undef HAVE_MKSTEMP
-
-#undef PREFIX_USER_DEFINED
-#undef EXEC_PREFIX_USER_DEFINED
-#undef MODULEDIR_USER_DEFINED
-#undef SITEMODULEDIR_USER_DEFINED
-#undef DOCDIR_USER_DEFINED
-#undef LISPDIR_USER_DEFINED
-#undef PACKAGE_PATH_USER_DEFINED
-#undef SITELISPDIR_USER_DEFINED
-#undef ARCHLIBDIR_USER_DEFINED
-#undef ETCDIR_USER_DEFINED
-#undef INFODIR_USER_DEFINED
-#undef INFOPATH_USER_DEFINED
-
-#undef PDUMP
-
-#endif /* WIN32_NO_CONFIGURE */
 
 /* For the moment, we go ahead and keep this, since it's used in mouse.el.
    #### font-lock does its own version using parse-partial-sexp.  We should

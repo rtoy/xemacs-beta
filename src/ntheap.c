@@ -52,39 +52,39 @@ cache_system_info (void)
 }
 
 /* Round ADDRESS up to be aligned with ALIGN.  */
-UChar_Binary *
-round_to_next (UChar_Binary *address, unsigned long align)
+URawbyte *
+round_to_next (URawbyte *address, unsigned long align)
 {
   unsigned long tmp;
 
   tmp = (unsigned long) address;
   tmp = (tmp + align - 1) / align;
 
-  return (UChar_Binary *) (tmp * align);
+  return (URawbyte *) (tmp * align);
 }
 
 /* Info for keeping track of our heap.  */
-UChar_Binary *data_region_base = UNINIT_PTR;
-UChar_Binary *data_region_end = UNINIT_PTR;
-UChar_Binary *real_data_region_end = UNINIT_PTR;
+URawbyte *data_region_base = UNINIT_PTR;
+URawbyte *data_region_end = UNINIT_PTR;
+URawbyte *real_data_region_end = UNINIT_PTR;
 unsigned long  data_region_size = UNINIT_LONG;
 unsigned long  reserved_heap_size = UNINIT_LONG;
 
 /* The start of the data segment.  */
-UChar_Binary *
+URawbyte *
 get_data_start (void)
 {
   return data_region_base;
 }
 
 /* The end of the data segment.  */
-UChar_Binary *
+URawbyte *
 get_data_end (void)
 {
   return data_region_end;
 }
 
-static UChar_Binary *
+static URawbyte *
 allocate_heap (void)
 {
   /* The base address for our GNU malloc heap is chosen in conjunction
@@ -148,7 +148,7 @@ allocate_heap (void)
 		      PAGE_NOACCESS);
 #endif
 
-  return (UChar_Binary *) ptr;
+  return (URawbyte *) ptr;
 }
 
 
@@ -177,7 +177,7 @@ sbrk (unsigned long increment)
   if (size < 0) 
     {
       int new_size;
-      UChar_Binary *new_data_region_end;
+      URawbyte *new_data_region_end;
 
       size = -size;
 
@@ -188,7 +188,7 @@ sbrk (unsigned long increment)
       /* We can only decommit full pages, so allow for 
 	 partial deallocation [cga].  */
       new_data_region_end = (data_region_end - size);
-      new_data_region_end = (UChar_Binary *)
+      new_data_region_end = (URawbyte *)
 	((long) (new_data_region_end + syspage_mask) & ~syspage_mask);
       new_size = real_data_region_end - new_data_region_end;
       real_data_region_end = new_data_region_end;
@@ -217,7 +217,7 @@ sbrk (unsigned long increment)
 
       /* We really only commit full pages, so record where
 	 the real end of committed memory is [cga].  */
-      real_data_region_end = (UChar_Binary *)
+      real_data_region_end = (URawbyte *)
 	  ((long) (data_region_end + syspage_mask) & ~syspage_mask);
     }
   
@@ -239,8 +239,8 @@ recreate_heap (Extbyte *executable_path)
   void *tmp;
   MEMORY_BASIC_INFORMATION info;
   DWORD size;
-  UChar_Binary *base = get_heap_end ();
-  UChar_Binary *end  =
+  URawbyte *base = get_heap_end ();
+  URawbyte *end  =
     base + get_reserved_heap_size () - get_committed_heap_size ();
   VirtualQuery (base, &info, sizeof (info));
   if (info.State != MEM_FREE)

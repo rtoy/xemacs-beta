@@ -39,25 +39,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define LOAD_AVE_CVT(x) ((int) ((x) * 100.0))
 
-/* Define C_ALLOCA if this machine does not support a true alloca
-   and the one written in C should be used instead.
-   Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used.
-   Define neither one if an assembler-language alloca
-   in the file alloca.s should be used.  */
-
-/* On return from a subroutine, the 68020 compiler restores old contents of
-   register variables relative to sp, so alloca() screws up such routines.
-   The following definitions should work on all Masscomps.  On the MC-5500
-   (a 68000) one can #undef C_ALLOCA and #define HAVE_ALLOCA.  */
-#ifdef mc500
-#undef C_ALLOCA
-#define HAVE_ALLOCA
-#else
-#define C_ALLOCA
-#undef HAVE_ALLOCA
-#endif
-
 /* Define NO_REMAP if memory segmentation makes it not work well
    to change the boundary between the text section and data section
    when Emacs is dumped.  If you define this, the preloaded Lisp

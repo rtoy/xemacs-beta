@@ -1,3 +1,1481 @@
+2004-10-27  Ben Wing  <ben@xemacs.org>
+
+	---------------------------------------------------------------
+ 	                     MULE-RELATED WORK:
+	---------------------------------------------------------------
+
+	---------------------------
+            byte-char conversion
+	---------------------------
+
+	* buffer.c:
+	* buffer.h (BUFFER_TEXT_LOOP):
+	* buffer.h (BYTE_BUF_CEILING_OF_IGNORE_ACCESSIBLE):
+	* buffer.h (BYTE_BUF_FLOOR_OF):
+	* buffer.h (NUM_CACHED_POSITIONS):
+	* buffer.h (struct buffer_text):
+	* buffer.h:
+	* insdel.c (BUF_GPT_ADDR):
+	* insdel.c (SET_BOTH_BUF_GPT):
+	* insdel.c (SET_BOTH_BUF_Z):
+	* insdel.c (buffer_delete_range):
+	* insdel.c (buffer_insert_string_1):
+	* insdel.c (gap_left):
+	* insdel.c (gap_right):
+	* insdel.c (init_buffer_text):
+	* insdel.c (make_gap):
+	* insdel.c (merge_gap_with_end_gap):
+	* insdel.c (move_gap):
+	* insdel.c:
+	* text.c (buffer_mule_signal_deleted_region):
+	* text.c (buffer_mule_signal_inserted_region):
+	* text.c (bytebpos_to_charbpos_func):
+	* text.c (charbpos_to_bytebpos_func):
+	* text.c (skip_ascii):
+	* text.c (skip_ascii_down):
+	Port FSF algorithm for byte-char conversion, replacing broken
+	previous version.  Track the char position of the gap.  Add
+	functions to do char-byte conversion downwards as well as upwards.
+	Move comments about algorithm workings to internals manual.
+	
+	---------------------------
+	       work on types
+	---------------------------
+	
+	* alloc.c:
+	* alloc.c (gc_plist_hack):
+	* console-x-impl.h (struct x_frame):
+	* dump-data.c:
+	* dump-data.c (dumped_data_size):
+	* dump-data.c (dumped_data_max_size):
+	* dump-data.c (dumped_data_align_offset):
+	* dump-data.c (dumped_data_get):
+	* dump-data.h:
+	* dump-data.h (dumped_data_get):
+	* dumper.c:
+	* dumper.c (struct):
+	* dumper.c (PDUMP_READ):
+	* dumper.c (PDUMP_READ_ALIGNED):
+	* dumper.c (pdump_objects_unmark):
+	* dumper.c (pdump_register_sub):
+	* dumper.c (pdump_register_struct_contents):
+	* dumper.c (pdump_store_new_pointer_offsets):
+	* dumper.c (pdump_reloc_one):
+	* dumper.c (pdump_dump_root_struct_ptrs):
+	* dumper.c (pdump_dump_root_lisp_objects):
+	* dumper.c (pdump):
+	* dumper.c (pdump_load_check):
+	* dumper.c (pdump_load_finish):
+	* dialog-msw.c:
+	* dired-msw.c (mswindows_format_file):
+	* doc.c (get_doc_string):
+	* doc.c (Fsnarf_documentation):
+	* doc.c (kludgily_ignore_lost_doc_p):
+	* editfns.c:
+	* esd.c (esd_play_sound_data):
+	* event-gtk.h (emacs_shell_event_handler):
+	* event-msw.c (mswindows_dde_callback):
+	* events.c (format_event_object):
+	* file-coding.c (struct subsidiary_type):
+	* file-coding.c (setup_eol_coding_systems):
+	* file-coding.c (make_coding_system_1):
+	* file-coding.c (make_internal_coding_system):
+	* file-coding.h:
+	* fns.c (add_suffix_to_symbol):
+	* fns.c (add_prefix_to_symbol):
+	* glyphs-eimage.c (struct jpeg_unwind_data):
+	* glyphs-eimage.c (jpeg_instantiate_unwind):
+	* glyphs-eimage.c (jpeg_instantiate):
+	* glyphs-eimage.c (struct gif_unwind_data):
+	* glyphs-eimage.c (gif_instantiate_unwind):
+	* glyphs-eimage.c (gif_memory_storage):
+	* glyphs-eimage.c (gif_instantiate):
+	* glyphs-eimage.c (struct png_memory_storage):
+	* glyphs-eimage.c (struct png_unwind_data):
+	* glyphs-eimage.c (png_instantiate_unwind):
+	* glyphs-eimage.c (png_instantiate):
+	* glyphs-eimage.c (struct tiff_unwind_data):
+	* glyphs-eimage.c (tiff_instantiate_unwind):
+	* glyphs-eimage.c (tiff_memory_storage):
+	* glyphs-eimage.c (tiff_instantiate):
+	* glyphs-gtk.c (gtk_xpm_instantiate):
+	* glyphs-msw.c (convert_EImage_to_DIBitmap):
+	* glyphs-msw.c (mswindows_init_image_instance_from_eimage):
+	* glyphs-msw.c (set_mono_pixel):
+	* glyphs-msw.c (mswindows_initialize_image_instance_mask):
+	* glyphs-msw.c (xpm_to_eimage):
+	* glyphs-msw.c (mswindows_xpm_instantiate):
+	* glyphs-msw.c (xbm_create_bitmap_from_data):
+	* glyphs-msw.c (init_image_instance_from_xbm_inline):
+	* glyphs-msw.c (xbm_instantiate_1):
+	* glyphs-msw.c (mswindows_xbm_instantiate):
+	* glyphs-msw.c (mswindows_xface_instantiate):
+	* glyphs-shared.c (read_bitmap_data):
+	* glyphs-shared.c (read_bitmap_data_from_file):
+	* glyphs-x.c (convert_EImage_to_XImage):
+	* glyphs-x.c (x_init_image_instance_from_eimage):
+	* glyphs-x.c (pixmap_from_xbm_inline):
+	* glyphs-x.c (init_image_instance_from_xbm_inline):
+	* glyphs-x.c (xbm_instantiate_1):
+	* glyphs-x.c (x_xbm_instantiate):
+	* glyphs-x.c (x_xface_instantiate):
+	* glyphs.c (bitmap_to_lisp_data):
+	* glyphs.h:
+	* gui.c (gui_error):
+	* gui.c (gui_error_2):
+	* hpplay.c (player_error_internal):
+	* hpplay.c (play_sound_data):
+	* imgproc.c (get_histogram):
+	* imgproc.c (build_EImage_quantable):
+	* intl-win32.c (lang_to_langcode):
+	* intl-win32.c (sublang_to_langcode):
+	* intl-win32.c (int_from_hex):
+	* intl-win32.c (enum_locale_fn):
+	* lrecord.h (DECLARE_LRECORD):
+	* lrecord.h (DECLARE_MODULE_API_LRECORD):
+	* lrecord.h (DECLARE_EXTERNAL_LRECORD):
+	* lrecord.h (DECLARE_NONRECORD):
+	* lrecord.h (copy_sized_lcrecord):
+	* lrecord.h (zero_sized_lcrecord):
+	* lrecord.h (DUMPEDP):
+	* lstream.c (make_lisp_buffer_stream_1):
+	* keymap.c (define_key_check_and_coerce_keysym):
+	* lisp.h:
+	* libsst.c:
+	* linuxplay.c:
+	* linuxplay.c (linux_play_data_or_file):
+	* linuxplay.c (play_sound_data):
+	* miscplay.c:
+	* miscplay.c (waverequire):
+	* miscplay.c (parsewave):
+	* miscplay.c (parsesundecaudio):
+	* miscplay.c (sndcnv8U_2mono):
+	* miscplay.c (sndcnv8S_2mono):
+	* miscplay.c (sndcnv2monounsigned):
+	* miscplay.c (sndcnv2unsigned):
+	* miscplay.c (int2ulaw):
+	* miscplay.c (sndcnvULaw_2linear):
+	* miscplay.c (sndcnvULaw_2mono):
+	* miscplay.c (sndcnv16_2monoLE):
+	* miscplay.c (sndcnv16_2monoBE):
+	* miscplay.c (sndcnv2byteLE):
+	* miscplay.c (sndcnv2byteBE):
+	* miscplay.c (sndcnv2monobyteLE):
+	* miscplay.c (sndcnv2monobyteBE):
+	* miscplay.c (analyze_format):
+	* miscplay.h (parse_wave_complete):
+	* mule-coding.c (ccl_putprop):
+	* nas.c:
+	* nas.c (nas_play_sound_data):
+	* nas.c (SndOpenDataForReading):
+	* nas.c (cmpID):
+	* nas.c (dread):
+	* nas.c (dgetc):
+	* nas.c (readChunk):
+	* nas.c (WaveOpenDataForReading):
+	* nas.c (SoundOpenDataForReading):
+	* nt.c:
+	* nt.c (init_mswindows_environment):
+	* nt.c (mswindows_is_executable):
+	* nt.c (mswindows_executable_type):
+	* ntheap.c:
+	* ntheap.c (round_to_next):
+	* ntheap.c (get_data_start):
+	* ntheap.c (get_data_end):
+	* ntheap.c (allocate_heap):
+	* ntheap.c (sbrk):
+	* ntheap.c (recreate_heap):
+	* ntplay.c:
+	* ntplay.c (play_sound_file):
+	* ntplay.c (play_sound_data_1):
+	* ntplay.c (play_sound_data):
+	* objects-msw.c (colormap_t):
+	* objects-msw.c (fontmap_t):
+	* objects-msw.c (mswindows_string_to_color):
+	* objects-msw.c (mswindows_color_to_string):
+	* objects-msw.c (match_font):
+	* objects-msw.c (font_enum_callback_2):
+	* objects-msw.c (sort_font_list_function):
+	* objects-msw.c (parse_font_spec):
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_1):
+	* objects-tty.c (tty_initialize_font_instance):
+	* objects-x.c (x_font_instance_properties):
+	* print.c (printing_major_badness):
+	* process-nt.c (mswindows_compare_env):
+	* process-nt.c (get_internet_address):
+	* process.c:
+	* process.c (handle_signal):
+	* process.c (deactivate_process):
+	* redisplay.h:
+	* select-common.h (selection_data_to_lisp_data):
+	* select-common.h (lisp_data_to_selection_data):
+	* select-gtk.c (emacs_gtk_selection_handle):
+	* select-x.c (x_reply_selection_request):
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (x_get_window_property):
+	* select-x.c (receive_incremental_selection):
+	* select-x.c (x_get_window_property_as_lisp_data):
+	* select-x.c (Fx_get_cutbuffer_internal):
+	* sgiplay.c:
+	* sgiplay.c (play_sound_file):
+	* sgiplay.c (play_sound_data):
+	* sgiplay.c (audio_initialize):
+	* sgiplay.c (play_internal):
+	* sgiplay.c (write_mulaw_8_chunk):
+	* sgiplay.c (write_linear_chunk):
+	* sgiplay.c (struct):
+	* sgiplay.c (parse_snd_header):
+	* sound.c:
+	* sound.c (report_sound_error):
+	* sound.c (Fplay_sound):
+	* sound.h:
+	* sunplay.c (init_device):
+	* sunplay.c (play_sound_file):
+	* sunplay.c (play_sound_data):
+	* sysfile.h:
+	* sysdep.c (retry_fopen):
+	* sysdep.c (qxe_fopen):
+	* sysdep.c (wcslen):
+	* syswindows.h (LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR):
+	* text.c (ascii_strcasecmp):
+	* text.c (qxestrcasecmp_ascii):
+	* text.c (ascii_strncasecmp):
+	* text.c (qxestrncasecmp_ascii):
+	* text.c (convert_ibyte_string_into_ichar_dynarr):
+	* text.c (convert_ibyte_string_into_ichar_string):
+	* text.c (eicmp_1):
+	* unexnt.c (unexec):
+	* unexnt.c (get_section_info):
+	* unexnt.c (copy_executable_and_dump_data_section):
+	* unexnt.c (dump_bss_and_heap):
+	* win32.c (urlify_filename):
+	* win32.c (mswindows_lisp_error_1):
+	* xgccache.c (gc_cache_lookup):
+	* text.c (qxesprintf):
+	Further work on types.  This creates a full set of types for all
+	the basic semantics of `char' that I have so far identified, so that
+	its semantics can always be identified for the purposes of proper
+	Mule-safe code, and the raw use of `char' always avoided.
+	
+	(1) More type renaming, for consistency of naming.
+
+	Char_ASCII -> Ascbyte
+	UChar_ASCII -> UAscbyte
+	Char_Binary -> CBinbyte
+	UChar_Binary -> Binbyte
+	SChar_Binary -> SBinbyte
+
+	(2) Introduce Rawbyte, CRawbyte, Boolbyte, Chbyte, UChbyte, and
+	Bitbyte and use them.
+
+	(3) New types Itext, Wexttext and Textcount for separating out
+	the concepts of bytes and textual units (different under UTF-16
+	and UTF-32, which are potential internal encodings).
+
+	(4) qxestr*_c -> qxestr*_ascii.
+
+	* lisp.h (qxesscanf_ascii_1):
+	New; goes with other qxe() functions. #### Maybe goes in a
+	different section.
+
+	* lisp.h:
+	Group generic int-type defs together with EMACS_INT defs.
+	
+	* lisp.h (EXTTEXT_ZTERM_SIZE):
+	* lisp.h (ITEXT_SIZE):
+	* lisp.h (NON_ASCII_INTERNAL_FORMAT):
+	* lisp.h (UTF16_IBYTE_FORMAT):
+	* lisp.h (WEXTTEXT_IS_WIDE)
+	New defns.
+	
+	* lisp.h (Boolean):
+	New type to replace places where int occurs as a boolean.
+	It's signed because occasionally people may want to use -1 as
+	an error value, and because unsigned ints are viral -- see comments
+	in the internals manual against using them.
+	
+	* dynarr.c:
+	* dynarr.c (Dynarr_realloc):
+	* dynarr.c (Dynarr_resize):
+	int -> Bytecount.
+	
+	---------------------------
+   	         Mule-izing
+	---------------------------
+
+	* device-x.c:
+	* device-x.c (Fx_server_vendor):
+	* device-x.c (Fx_valid_keysym_name_p):
+	* device-x.c (Fx_get_font_path):
+	* device-x.c (Fx_set_font_path):
+	* device-x.c (reinit_console_type_create_device_x):
+	Partially Mule-ize.
+	
+	* dumper.c (see above):
+	* dumper.c (pdump_file_get):
+	* dumper.c (pdump_resource_get):
+	* dumper.c (pdump_file_free):
+	* dumper.c (pdump_ram_try):
+	* dumper.c (pdump_file_try):
+	* dumper.c (pdump_load):
+	* dumper.h:
+	Mule-ize.  Use Rawbyte.  Use stderr_out not printf.  Use wext_*().
+
+	* sysdep.c:
+	* sysdep.c (retry_open_1):
+	* sysdep.c (retry_open):
+	* sysdep.c (wext_retry_open):
+	* syswindows.h:
+	* text.c (wcscmp_ascii):
+	* text.c (wcsncmp_ascii):
+	New Wexttext API for manipulation of external text that may be
+	Unicode (e.g. startup code under Windows).
+
+	* emacs.c (make_arg_list_1):
+	* emacs.c (make_arg_list):
+	* emacs.c (make_argc_argv):
+	* emacs.c (free_argc_argv):
+	* emacs.c (init_cmdargs):
+	* emacs.c (argmatch):
+	* emacs.c (check_compatible_window_system):
+	* emacs.c (struct standard_args):
+	* emacs.c (sort_args):
+	* emacs.c (main):
+	* emacs.c (debug_can_access_memory):
+	* emacs.c (shut_down_emacs):
+	* emacs.c (guts_of_fatal_error_signal):
+	* emacs.c (assert_failed):
+	Mule-ize.  Properly deal with argv in external encoding.
+	Use wext_*() and Wexttext.  Use Rawbyte.
+
+	#if 0 some old junk on SCO that is unlikely to be correct.
+
+	Rewrite allocation code in run-temacs.
+
+	* emacs.c:
+	* symsinit.h:
+	* win32.c (init_win32_very_very_early):
+	Rename win32 init function and call it even earlier, to
+	initialize mswindows_9x_p even earlier, for use in startup code
+	(XEUNICODE_P).
+	
+	* process.c (init_xemacs_process):
+	Use _wenviron not environ under Windows, to get Unicode environment
+	variables.
+
+	* event-Xt.c (x_event_to_emacs_event):
+	Mule-ize drag-n-drop related stuff.
+	
+	* dragdrop.c (dnd_url_hexify_string):
+	* dragdrop.h:
+	* frame-x.c:
+	* frame-x.c (x_wm_set_cell_size):
+	* frame-x.c (x_wm_set_variable_size):
+	* frame-x.c (x_wm_hack_wm_protocols):
+	* frame-x.c (x_wm_store_class_hints):
+	* frame-x.c (x_wm_maybe_store_wm_command):
+	* frame-x.c (x_frame_window_state):
+	* frame-x.c (x_set_frame_text_value):
+	* frame-x.c (x_set_initial_frame_size):
+	* frame-x.c (x_set_frame_properties):
+	* frame-x.c (maybe_set_frame_title_format):
+	* frame-x.c (start_drag_internal_1):
+	* frame-x.c (x_cde_destroy_callback):
+	* frame-x.c (x_cde_convert_callback):
+	* frame-x.c (abort_current_drag):
+	* frame-x.c (Fcde_start_drag_internal):
+	* frame-x.c (x_cde_transfer_callback):
+	* frame-x.c (Foffix_start_drag_internal):
+	* frame-x.c (x_initialize_frame_size):
+	* frame-x.c (x_create_widgets):
+	* frame-x.c (xemacs_XtPopup):
+	* frame-x.c (x_popup_frame):
+	* frame-x.c (x_set_frame_icon):
+	* frame-x.c (x_set_frame_position):
+	* frame-x.c (x_delete_frame):
+	* frame-x.c (x_update_frame_external_traits):
+	Mule-ize.
+
+	* text.h:
+	Add some more stand-in defines for particular kinds of conversion;
+	use in Mule-ization work in frame-x.c etc.
+
+	---------------------------
+   	         Freshening
+	---------------------------
+
+	* intl-auto-encap-win32.c:
+	* intl-auto-encap-win32.c (qxePeekConsoleInput):
+	* intl-auto-encap-win32.c (qxeReadConsoleInput):
+	* intl-auto-encap-win32.c (qxeWriteConsoleInput):
+	* intl-auto-encap-win32.c (qxeExtractAssociatedIcon):
+	* intl-auto-encap-win32.c (qxeShellExecuteEx):
+	* intl-auto-encap-win32.c (qxeSHQueryRecycleBin):
+	* intl-auto-encap-win32.c (qxeSHEmptyRecycleBin):
+	* intl-auto-encap-win32.c (qxeSHGetNewLinkInfo):
+	* intl-auto-encap-win32.c (qxeSHInvokePrinterCommand):
+	* intl-auto-encap-win32.c (qxewvsprintf):
+	* intl-auto-encap-win32.c (qxeLoadKeyboardLayout):
+	* intl-auto-encap-win32.c (qxeGetKeyboardLayoutName):
+	* intl-auto-encap-win32.c (qxeOpenDesktop):
+	* intl-auto-encap-win32.c (qxeEnumDesktops):
+	* intl-auto-encap-win32.c (qxeCreateWindowStation):
+	* intl-auto-encap-win32.c (qxeOpenWindowStation):
+	* intl-auto-encap-win32.c (qxeEnumWindowStations):
+	* intl-auto-encap-win32.c (qxeGetUserObjectInformation):
+	* intl-auto-encap-win32.c (qxeSetUserObjectInformation):
+	* intl-auto-encap-win32.c (qxeRegisterWindowMessage):
+	* intl-auto-encap-win32.c (qxeGetMessage):
+	* intl-auto-encap-win32.c (qxeDispatchMessage):
+	* intl-auto-encap-win32.c (qxePeekMessage):
+	* intl-auto-encap-win32.c (qxeSendMessageTimeout):
+	* intl-auto-encap-win32.c (qxeSendNotifyMessage):
+	* intl-auto-encap-win32.c (qxeSendMessageCallback):
+	* intl-auto-encap-win32.c (qxePostMessage):
+	* intl-auto-encap-win32.c (qxePostThreadMessage):
+	* intl-auto-encap-win32.c (qxeGetClassInfoEx):
+	* intl-auto-encap-win32.c (qxeCreateWindowEx):
+	* intl-auto-encap-win32.c (qxeCreateDialogParam):
+	* intl-auto-encap-win32.c (qxeCreateDialogIndirectParam):
+	* intl-auto-encap-win32.c (qxeDialogBoxParam):
+	* intl-auto-encap-win32.c (qxeDialogBoxIndirectParam):
+	* intl-auto-encap-win32.c (qxeSetDlgItemText):
+	* intl-auto-encap-win32.c (qxeGetDlgItemText):
+	* intl-auto-encap-win32.c (qxeSendDlgItemMessage):
+	* intl-auto-encap-win32.c (qxeCallMsgFilter):
+	* intl-auto-encap-win32.c (qxeRegisterClipboardFormat):
+	* intl-auto-encap-win32.c (qxeGetClipboardFormatName):
+	* intl-auto-encap-win32.c (qxeCharToOem):
+	* intl-auto-encap-win32.c (qxeOemToChar):
+	* intl-auto-encap-win32.c (qxeCharToOemBuff):
+	* intl-auto-encap-win32.c (qxeOemToCharBuff):
+	* intl-auto-encap-win32.c (qxeCharUpper):
+	* intl-auto-encap-win32.c (qxeCharUpperBuff):
+	* intl-auto-encap-win32.c (qxeCharLower):
+	* intl-auto-encap-win32.c (qxeCharLowerBuff):
+	* intl-auto-encap-win32.c (qxeCharNext):
+	* intl-auto-encap-win32.c (qxeCharPrev):
+	* intl-auto-encap-win32.c (qxeMapVirtualKey):
+	* intl-auto-encap-win32.c (qxeMapVirtualKeyEx):
+	* intl-auto-encap-win32.c (qxeLoadAccelerators):
+	* intl-auto-encap-win32.c (qxeCreateAcceleratorTable):
+	* intl-auto-encap-win32.c (qxeCopyAcceleratorTable):
+	* intl-auto-encap-win32.c (qxeTranslateAccelerator):
+	* intl-auto-encap-win32.c (qxeLoadMenu):
+	* intl-auto-encap-win32.c (qxeLoadMenuIndirect):
+	* intl-auto-encap-win32.c (qxeChangeMenu):
+	* intl-auto-encap-win32.c (qxeGetMenuString):
+	* intl-auto-encap-win32.c (qxeInsertMenu):
+	* intl-auto-encap-win32.c (qxeAppendMenu):
+	* intl-auto-encap-win32.c (qxeModifyMenu):
+	* intl-auto-encap-win32.c (qxeInsertMenuItem):
+	* intl-auto-encap-win32.c (qxeGetMenuItemInfo):
+	* intl-auto-encap-win32.c (qxeSetMenuItemInfo):
+	* intl-auto-encap-win32.c (qxeDrawText):
+	* intl-auto-encap-win32.c (qxeDrawTextEx):
+	* intl-auto-encap-win32.c (qxeGrayString):
+	* intl-auto-encap-win32.c (qxeDrawState):
+	* intl-auto-encap-win32.c (qxeTabbedTextOut):
+	* intl-auto-encap-win32.c (qxeGetTabbedTextExtent):
+	* intl-auto-encap-win32.c (qxeSetProp):
+	* intl-auto-encap-win32.c (qxeGetProp):
+	* intl-auto-encap-win32.c (qxeRemoveProp):
+	* intl-auto-encap-win32.c (qxeEnumPropsEx):
+	* intl-auto-encap-win32.c (qxeEnumProps):
+	* intl-auto-encap-win32.c (qxeSetWindowText):
+	* intl-auto-encap-win32.c (qxeGetWindowText):
+	* intl-auto-encap-win32.c (qxeGetWindowTextLength):
+	* intl-auto-encap-win32.c (qxeMessageBox):
+	* intl-auto-encap-win32.c (qxeMessageBoxEx):
+	* intl-auto-encap-win32.c (qxeMessageBoxIndirect):
+	* intl-auto-encap-win32.c (qxeGetWindowLong):
+	* intl-auto-encap-win32.c (qxeSetWindowLong):
+	* intl-auto-encap-win32.c (qxeGetClassLong):
+	* intl-auto-encap-win32.c (qxeSetClassLong):
+	* intl-auto-encap-win32.c (qxeFindWindow):
+	* intl-auto-encap-win32.c (qxeFindWindowEx):
+	* intl-auto-encap-win32.c (qxeGetClassName):
+	* intl-auto-encap-win32.c (qxeSetWindowsHookEx):
+	* intl-auto-encap-win32.c (qxeLoadBitmap):
+	* intl-auto-encap-win32.c (qxeLoadCursor):
+	* intl-auto-encap-win32.c (qxeLoadCursorFromFile):
+	* intl-auto-encap-win32.c (qxeLoadIcon):
+	* intl-auto-encap-win32.c (qxeLoadImage):
+	* intl-auto-encap-win32.c (qxeLoadString):
+	* intl-auto-encap-win32.c (qxeIsDialogMessage):
+	* intl-auto-encap-win32.c (qxeDlgDirList):
+	* intl-auto-encap-win32.c (qxeDlgDirSelectEx):
+	* intl-auto-encap-win32.c (qxeDlgDirListComboBox):
+	* intl-auto-encap-win32.c (qxeDlgDirSelectComboBoxEx):
+	* intl-auto-encap-win32.c (qxeDefFrameProc):
+	* intl-auto-encap-win32.c (qxeCreateMDIWindow):
+	* intl-auto-encap-win32.c (qxeWinHelp):
+	* intl-auto-encap-win32.c (qxeRegLoadKey):
+	* intl-auto-encap-win32.c (qxeRegOpenKey):
+	* intl-auto-encap-win32.c (qxeSetLocaleInfo):
+	* intl-auto-encap-win32.c (qxeCopyMetaFile):
+	* intl-auto-encap-win32.c (qxeCreateScalableFontResource):
+	* intl-auto-encap-win32.c (qxeGetCharWidth):
+	* intl-auto-encap-win32.c (qxeGetCharWidth32):
+	* intl-auto-encap-win32.c (qxeGetCharWidthFloat):
+	* intl-auto-encap-win32.c (qxeGetCharABCWidths):
+	* intl-auto-encap-win32.c (qxeGetCharABCWidthsFloat):
+	* intl-auto-encap-win32.c (qxeGetGlyphOutline):
+	* intl-auto-encap-win32.c (qxeGetMetaFile):
+	* intl-auto-encap-win32.c (qxeGetTextExtentPoint):
+	* intl-auto-encap-win32.c (qxeGetTextExtentPoint32):
+	* intl-auto-encap-win32.c (qxeGetTextExtentExPoint):
+	* intl-auto-encap-win32.c (qxeGetCharacterPlacement):
+	* intl-auto-encap-win32.c (qxeCopyEnhMetaFile):
+	* intl-auto-encap-win32.c (qxeCreateEnhMetaFile):
+	* intl-auto-encap-win32.c (qxeGetEnhMetaFile):
+	* intl-auto-encap-win32.c (qxeGetEnhMetaFileDescription):
+	* intl-auto-encap-win32.c (qxeTextOut):
+	* intl-auto-encap-win32.c (qxeExtTextOut):
+	* intl-auto-encap-win32.c (qxePolyTextOut):
+	* intl-auto-encap-win32.c (qxeGetTextFace):
+	* intl-auto-encap-win32.c (qxeGetKerningPairs):
+	* intl-auto-encap-win32.c (qxeEnumICMProfiles):
+	* intl-auto-encap-win32.c (qxeGetOpenFileName):
+	* intl-auto-encap-win32.c (qxeGetSaveFileName):
+	* intl-auto-encap-win32.c (qxeGetFileTitle):
+	* intl-auto-encap-win32.c (qxeChooseColor):
+	* intl-auto-encap-win32.c (qxeFindText):
+	* intl-auto-encap-win32.c (qxeReplaceText):
+	* intl-auto-encap-win32.c (qxeImmGetDescription):
+	* intl-auto-encap-win32.c (qxeImmGetIMEFileName):
+	* intl-auto-encap-win32.c (qxeMoveFile):
+	* intl-auto-encap-win32.c (qxeMoveFileEx):
+	* intl-auto-encap-win32.c (qxeGetNamedPipeHandleState):
+	* intl-auto-encap-win32.c (qxeCallNamedPipe):
+	* intl-auto-encap-win32.c (qxeWaitNamedPipe):
+	* intl-auto-encap-win32.c (qxeSetVolumeLabel):
+	* intl-auto-encap-win32.c (qxeGetVolumeInformation):
+	* intl-auto-encap-win32.c (qxeClearEventLog):
+	* intl-auto-encap-win32.c (qxeBackupEventLog):
+	* intl-auto-encap-win32.c (qxeOpenEventLog):
+	* intl-auto-encap-win32.c (qxeRegisterEventSource):
+	* intl-auto-encap-win32.c (qxeOpenBackupEventLog):
+	* intl-auto-encap-win32.c (qxeReadEventLog):
+	* intl-auto-encap-win32.c (qxeReportEvent):
+	* intl-auto-encap-win32.c (qxeAccessCheckAndAuditAlarm):
+	* intl-auto-encap-win32.c (qxeObjectOpenAuditAlarm):
+	* intl-auto-encap-win32.c (qxeObjectPrivilegeAuditAlarm):
+	* intl-auto-encap-win32.c (qxeObjectCloseAuditAlarm):
+	* intl-auto-encap-win32.c (qxeObjectDeleteAuditAlarm):
+	* intl-auto-encap-win32.c (qxePrivilegedServiceAuditAlarm):
+	* intl-auto-encap-win32.c (qxeSetFileSecurity):
+	* intl-auto-encap-win32.c (qxeGetFileSecurity):
+	* intl-auto-encap-win32.c (qxeFindFirstChangeNotification):
+	* intl-auto-encap-win32.c (qxeIsBadStringPtr):
+	* intl-auto-encap-win32.c (qxeLookupAccountSid):
+	* intl-auto-encap-win32.c (qxeLookupAccountName):
+	* intl-auto-encap-win32.c (qxeLookupPrivilegeValue):
+	* intl-auto-encap-win32.c (qxeLookupPrivilegeName):
+	* intl-auto-encap-win32.c (qxeLookupPrivilegeDisplayName):
+	* intl-auto-encap-win32.c (qxeBuildCommDCB):
+	* intl-auto-encap-win32.c (qxeBuildCommDCBAndTimeouts):
+	* intl-auto-encap-win32.c (qxeCommConfigDialog):
+	* intl-auto-encap-win32.c (qxeGetDefaultCommConfig):
+	* intl-auto-encap-win32.c (qxeSetDefaultCommConfig):
+	* intl-auto-encap-win32.c (qxeGetComputerName):
+	* intl-auto-encap-win32.c (qxeSetComputerName):
+	* intl-auto-encap-win32.c (qxeGetUserName):
+	* intl-auto-encap-win32.c (qxeLogonUser):
+	* intl-auto-encap-win32.c (qxeCreateProcessAsUser):
+	* intl-auto-encap-win32.c (qxesndPlaySound):
+	* intl-auto-encap-win32.c (qxePlaySound):
+	* intl-auto-encap-win32.c (qxemidiInGetErrorText):
+	* intl-auto-encap-win32.c (qxemmioInstallIOProc):
+	* intl-auto-encap-win32.c (qxemmioOpen):
+	* intl-auto-encap-win32.c (qxemmioRename):
+	* intl-auto-encap-win32.c (qxemciSendCommand):
+	* intl-auto-encap-win32.c (qxemciSendString):
+	* intl-auto-encap-win32.c (qxemciGetDeviceID):
+	* intl-auto-encap-win32.h:
+	* intl-auto-encap-win32.h (EnumPrinters):
+	* intl-auto-encap-win32.h (ResetPrinter):
+	* intl-auto-encap-win32.h (SetJob):
+	* intl-auto-encap-win32.h (GetJob):
+	* intl-auto-encap-win32.h (EnumJobs):
+	* intl-auto-encap-win32.h (AddPrinter):
+	* intl-auto-encap-win32.h (SetPrinter):
+	* intl-auto-encap-win32.h (GetPrinter):
+	* intl-auto-encap-win32.h (AddPrinterDriver):
+	* intl-auto-encap-win32.h (AddPrinterDriverEx):
+	* intl-auto-encap-win32.h (EnumPrinterDrivers):
+	* intl-auto-encap-win32.h (GetPrinterDriver):
+	* intl-auto-encap-win32.h (GetPrinterDriverDirectory):
+	* intl-auto-encap-win32.h (DeletePrinterDriver):
+	* intl-auto-encap-win32.h (DeletePrinterDriverEx):
+	* intl-auto-encap-win32.h (AddPerMachineConnection):
+	* intl-auto-encap-win32.h (DeletePerMachineConnection):
+	* intl-auto-encap-win32.h (EnumPerMachineConnections):
+	* intl-auto-encap-win32.h (AddPrintProcessor):
+	* intl-auto-encap-win32.h (EnumPrintProcessors):
+	* intl-auto-encap-win32.h (GetPrintProcessorDirectory):
+	* intl-auto-encap-win32.h (EnumPrintProcessorDatatypes):
+	* intl-auto-encap-win32.h (DeletePrintProcessor):
+	* intl-auto-encap-win32.h (StartDocPrinter):
+	* intl-auto-encap-win32.h (AddJob):
+	* intl-auto-encap-win32.h (AdvancedDocumentProperties):
+	* intl-auto-encap-win32.h (GetPrinterData):
+	* intl-auto-encap-win32.h (GetPrinterDataEx):
+	* intl-auto-encap-win32.h (EnumPrinterData):
+	* intl-auto-encap-win32.h (EnumPrinterDataEx):
+	* intl-auto-encap-win32.h (EnumPrinterKey):
+	* intl-auto-encap-win32.h (SetPrinterData):
+	* intl-auto-encap-win32.h (SetPrinterDataEx):
+	* intl-auto-encap-win32.h (DeletePrinterData):
+	* intl-auto-encap-win32.h (DeletePrinterDataEx):
+	* intl-auto-encap-win32.h (DeletePrinterKey):
+	* intl-auto-encap-win32.h (PrinterMessageBox):
+	* intl-auto-encap-win32.h (AddForm):
+	* intl-auto-encap-win32.h (DeleteForm):
+	* intl-auto-encap-win32.h (GetForm):
+	* intl-auto-encap-win32.h (SetForm):
+	* intl-auto-encap-win32.h (EnumForms):
+	* intl-auto-encap-win32.h (EnumMonitors):
+	* intl-auto-encap-win32.h (AddMonitor):
+	* intl-auto-encap-win32.h (DeleteMonitor):
+	* intl-auto-encap-win32.h (EnumPorts):
+	* intl-auto-encap-win32.h (AddPort):
+	* intl-auto-encap-win32.h (ConfigurePort):
+	* intl-auto-encap-win32.h (DeletePort):
+	* intl-auto-encap-win32.h (XcvData):
+	* intl-auto-encap-win32.h (SetPort):
+	* intl-auto-encap-win32.h (AddPrinterConnection):
+	* intl-auto-encap-win32.h (DeletePrinterConnection):
+	* intl-auto-encap-win32.h (AddPrintProvidor):
+	* intl-auto-encap-win32.h (DeletePrintProvidor):
+	* intl-auto-encap-win32.h (SetPrinterHTMLView):
+	* intl-auto-encap-win32.h (GetPrinterHTMLView):
+	* intl-auto-encap-win32.h (WNetAddConnection):
+	* intl-auto-encap-win32.h (WNetAddConnection2):
+	* intl-auto-encap-win32.h (WNetAddConnection3):
+	* intl-auto-encap-win32.h (WNetCancelConnection):
+	* intl-auto-encap-win32.h (WNetCancelConnection2):
+	* intl-auto-encap-win32.h (WNetGetConnection):
+	* intl-auto-encap-win32.h (WNetUseConnection):
+	* intl-auto-encap-win32.h (WNetConnectionDialog1):
+	* intl-auto-encap-win32.h (WNetDisconnectDialog1):
+	* intl-auto-encap-win32.h (WNetOpenEnum):
+	* intl-auto-encap-win32.h (WNetEnumResource):
+	* intl-auto-encap-win32.h (WNetGetUniversalName):
+	* intl-auto-encap-win32.h (WNetGetUser):
+	* intl-auto-encap-win32.h (WNetGetProviderName):
+	* intl-auto-encap-win32.h (WNetGetNetworkInformation):
+	* intl-auto-encap-win32.h (WNetGetLastError):
+	* intl-auto-encap-win32.h (MultinetGetConnectionPerformance):
+	* intl-auto-encap-win32.h (GetBinaryType):
+	* intl-auto-encap-win32.h (GetShortPathName):
+	* intl-auto-encap-win32.h (GetLongPathName):
+	* intl-auto-encap-win32.h (FreeEnvironmentStrings):
+	* intl-auto-encap-win32.h (FormatMessage):
+	* intl-auto-encap-win32.h (CreateMailslot):
+	* intl-auto-encap-win32.h (EncryptFile):
+	* intl-auto-encap-win32.h (DecryptFile):
+	* intl-auto-encap-win32.h (OpenRaw):
+	* intl-auto-encap-win32.h (QueryRecoveryAgents):
+	* intl-auto-encap-win32.h (lstrcmp):
+	* intl-auto-encap-win32.h (lstrcmpi):
+	* intl-auto-encap-win32.h (lstrcpyn):
+	* intl-auto-encap-win32.h (lstrcpy):
+	* intl-auto-encap-win32.h (lstrcat):
+	* intl-auto-encap-win32.h (lstrlen):
+	* intl-auto-encap-win32.h (CreateMutex):
+	* intl-auto-encap-win32.h (OpenMutex):
+	* intl-auto-encap-win32.h (CreateEvent):
+	* intl-auto-encap-win32.h (OpenEvent):
+	* intl-auto-encap-win32.h (CreateSemaphore):
+	* intl-auto-encap-win32.h (OpenSemaphore):
+	* intl-auto-encap-win32.h (CreateWaitableTimer):
+	* intl-auto-encap-win32.h (OpenWaitableTimer):
+	* intl-auto-encap-win32.h (CreateFileMapping):
+	* intl-auto-encap-win32.h (OpenFileMapping):
+	* intl-auto-encap-win32.h (GetLogicalDriveStrings):
+	* intl-auto-encap-win32.h (LoadLibrary):
+	* intl-auto-encap-win32.h (LoadLibraryEx):
+	* intl-auto-encap-win32.h (GetModuleFileName):
+	* intl-auto-encap-win32.h (GetModuleHandle):
+	* intl-auto-encap-win32.h (CreateProcess):
+	* intl-auto-encap-win32.h (FatalAppExit):
+	* intl-auto-encap-win32.h (GetStartupInfo):
+	* intl-auto-encap-win32.h (GetCommandLine):
+	* intl-auto-encap-win32.h (GetEnvironmentVariable):
+	* intl-auto-encap-win32.h (SetEnvironmentVariable):
+	* intl-auto-encap-win32.h (ExpandEnvironmentStrings):
+	* intl-auto-encap-win32.h (OutputDebugString):
+	* intl-auto-encap-win32.h (FindResource):
+	* intl-auto-encap-win32.h (FindResourceEx):
+	* intl-auto-encap-win32.h (EnumResourceTypes):
+	* intl-auto-encap-win32.h (EnumResourceNames):
+	* intl-auto-encap-win32.h (EnumResourceLanguages):
+	* intl-auto-encap-win32.h (BeginUpdateResource):
+	* intl-auto-encap-win32.h (UpdateResource):
+	* intl-auto-encap-win32.h (EndUpdateResource):
+	* intl-auto-encap-win32.h (GlobalAddAtom):
+	* intl-auto-encap-win32.h (GlobalFindAtom):
+	* intl-auto-encap-win32.h (GlobalGetAtomName):
+	* intl-auto-encap-win32.h (AddAtom):
+	* intl-auto-encap-win32.h (FindAtom):
+	* intl-auto-encap-win32.h (GetAtomName):
+	* intl-auto-encap-win32.h (GetProfileInt):
+	* intl-auto-encap-win32.h (GetProfileString):
+	* intl-auto-encap-win32.h (WriteProfileString):
+	* intl-auto-encap-win32.h (GetProfileSection):
+	* intl-auto-encap-win32.h (WriteProfileSection):
+	* intl-auto-encap-win32.h (GetPrivateProfileInt):
+	* intl-auto-encap-win32.h (GetPrivateProfileString):
+	* intl-auto-encap-win32.h (WritePrivateProfileString):
+	* intl-auto-encap-win32.h (GetPrivateProfileSection):
+	* intl-auto-encap-win32.h (WritePrivateProfileSection):
+	* intl-auto-encap-win32.h (GetPrivateProfileSectionNames):
+	* intl-auto-encap-win32.h (GetPrivateProfileStruct):
+	* intl-auto-encap-win32.h (WritePrivateProfileStruct):
+	* intl-auto-encap-win32.h (GetDriveType):
+	* intl-auto-encap-win32.h (GetSystemDirectory):
+	* intl-auto-encap-win32.h (GetTempPath):
+	* intl-auto-encap-win32.h (GetTempFileName):
+	* intl-auto-encap-win32.h (GetWindowsDirectory):
+	* intl-auto-encap-win32.h (SetCurrentDirectory):
+	* intl-auto-encap-win32.h (GetCurrentDirectory):
+	* intl-auto-encap-win32.h (GetDiskFreeSpace):
+	* intl-auto-encap-win32.h (GetDiskFreeSpaceEx):
+	* intl-auto-encap-win32.h (CreateDirectory):
+	* intl-auto-encap-win32.h (CreateDirectoryEx):
+	* intl-auto-encap-win32.h (RemoveDirectory):
+	* intl-auto-encap-win32.h (GetFullPathName):
+	* intl-auto-encap-win32.h (DefineDosDevice):
+	* intl-auto-encap-win32.h (QueryDosDevice):
+	* intl-auto-encap-win32.h (CreateFile):
+	* intl-auto-encap-win32.h (SetFileAttributes):
+	* intl-auto-encap-win32.h (GetFileAttributes):
+	* intl-auto-encap-win32.h (GetFileAttributesEx):
+	* intl-auto-encap-win32.h (GetCompressedFileSize):
+	* intl-auto-encap-win32.h (DeleteFile):
+	* intl-auto-encap-win32.h (FindFirstFileEx):
+	* intl-auto-encap-win32.h (SearchPath):
+	* intl-auto-encap-win32.h (CopyFile):
+	* intl-auto-encap-win32.h (CopyFileEx):
+	* intl-auto-encap-win32.h (MoveFile):
+	* intl-auto-encap-win32.h (MoveFileEx):
+	* intl-auto-encap-win32.h (MoveFileWithProgress):
+	* intl-auto-encap-win32.h (CreateHardLink):
+	* intl-auto-encap-win32.h (CreateNamedPipe):
+	* intl-auto-encap-win32.h (GetNamedPipeHandleState):
+	* intl-auto-encap-win32.h (CallNamedPipe):
+	* intl-auto-encap-win32.h (WaitNamedPipe):
+	* intl-auto-encap-win32.h (SetVolumeLabel):
+	* intl-auto-encap-win32.h (GetVolumeInformation):
+	* intl-auto-encap-win32.h (ClearEventLog):
+	* intl-auto-encap-win32.h (BackupEventLog):
+	* intl-auto-encap-win32.h (OpenEventLog):
+	* intl-auto-encap-win32.h (RegisterEventSource):
+	* intl-auto-encap-win32.h (OpenBackupEventLog):
+	* intl-auto-encap-win32.h (ReadEventLog):
+	* intl-auto-encap-win32.h (ReportEvent):
+	* intl-auto-encap-win32.h (AccessCheckAndAuditAlarm):
+	* intl-auto-encap-win32.h (AccessCheckByTypeAndAuditAlarm):
+	* intl-auto-encap-win32.h (AccessCheckByTypeResultListAndAuditAlarm):
+	* intl-auto-encap-win32.h (ObjectOpenAuditAlarm):
+	* intl-auto-encap-win32.h (ObjectPrivilegeAuditAlarm):
+	* intl-auto-encap-win32.h (ObjectCloseAuditAlarm):
+	* intl-auto-encap-win32.h (ObjectDeleteAuditAlarm):
+	* intl-auto-encap-win32.h (PrivilegedServiceAuditAlarm):
+	* intl-auto-encap-win32.h (SetFileSecurity):
+	* intl-auto-encap-win32.h (GetFileSecurity):
+	* intl-auto-encap-win32.h (FindFirstChangeNotification):
+	* intl-auto-encap-win32.h (ReadDirectoryChanges):
+	* intl-auto-encap-win32.h (IsBadStringPtr):
+	* intl-auto-encap-win32.h (LookupAccountSid):
+	* intl-auto-encap-win32.h (LookupAccountName):
+	* intl-auto-encap-win32.h (LookupPrivilegeValue):
+	* intl-auto-encap-win32.h (LookupPrivilegeName):
+	* intl-auto-encap-win32.h (LookupPrivilegeDisplayName):
+	* intl-auto-encap-win32.h (BuildCommDCB):
+	* intl-auto-encap-win32.h (BuildCommDCBAndTimeouts):
+	* intl-auto-encap-win32.h (CommConfigDialog):
+	* intl-auto-encap-win32.h (GetDefaultCommConfig):
+	* intl-auto-encap-win32.h (SetDefaultCommConfig):
+	* intl-auto-encap-win32.h (GetComputerName):
+	* intl-auto-encap-win32.h (SetComputerName):
+	* intl-auto-encap-win32.h (GetUserName):
+	* intl-auto-encap-win32.h (LogonUser):
+	* intl-auto-encap-win32.h (CreateProcessAsUser):
+	* intl-auto-encap-win32.h (GetCurrentHwProfile):
+	* intl-auto-encap-win32.h (GetVersionEx):
+	* intl-auto-encap-win32.h (CreateJobObject):
+	* intl-auto-encap-win32.h (OpenJobObject):
+	* intl-auto-encap-win32.h (qxemciGetErrorString):
+	Regenerate.
+	
+	---------------------------
+   	         Unicode-work
+	---------------------------
+
+	* intl-win32.c (convert_multibyte_to_unicode_malloc):
+	* intl-win32.c (convert_unicode_to_multibyte_malloc):
+	* intl-win32.c (unicode_multibyte_convert_now_damn_it):
+	* intl-win32.c (unicode_multibyte_convert_size):
+	* intl-win32.c (unicode_multibyte_convert_copy_data):
+	* intl-win32.c (convert_multibyte_to_unicode_dynarr):
+	* intl-win32.c (convert_unicode_to_multibyte_dynarr):
+	* intl-win32.c (mswindows_multibyte_to_unicode_convert):
+	* syswindows.h:
+	Factor out common options to MultiByteToWideChar and
+	WideCharToMultiByte.  Add convert_unicode_to_multibyte_malloc()
+	and convert_unicode_to_multibyte_dynarr() and use.  Add stuff for
+	alloca() conversion of multibyte/unicode.
+
+	* alloc.c (build_ext_string):
+	Use dfc_external_data_len() in case of unicode coding system.
+	
+	* alloc.c:
+	* mule-charset.c:
+	* mule-charset.c (make_charset):
+	* mule-charset.c (syms_of_mule_charset):
+	Don't zero out and reinit charset Unicode tables.  This fucks up
+	dump-time loading.  Anyway, either we load them at dump time or
+	run time, never both.
+
+	* unicode.c (init_charset_unicode_tables):
+	* unicode.c (vars_of_unicode):
+	Dump the blank tables as well.
+
+	---------------------------------------------------------------
+                     DOCUMENTATION, MOSTLY MULE-RELATED:
+	---------------------------------------------------------------
+
+	* EmacsFrame.c (Xt_StringToScrollBarPlacement):
+	* emodules.c:
+	* event-Xt.c (x_to_emacs_keysym):
+	* fileio.c (Fencrypt_string):
+	* input-method-xlib.c (EmacsXtCvtStringToXIMStyles):
+	* mule-wnnfns.c (Fwnn_open):
+	* redisplay-gtk.c (gtk_output_string):
+	* redisplay-gtk.c (gtk_text_width):
+	* redisplay-tty.c (init_tty_for_redisplay):
+	* redisplay-x.c (x_text_width):
+	* regex.c:
+	* sysdep.c (init_system_name):
+	Add comment about Mule work needed.
+
+	* text.h (NEW_DFC_CONVERT_1_ALLOCA):
+	Add more documentation describing why DFC routines were not written
+	to return their value.  Add some other DFC documentation.
+
+	* console-msw.c:
+	* console-msw.h:
+	Add pointer to docs in win32.c.
+	
+	* emacs.c:
+	Add comments on sources of doc info.
+
+	* text.c:
+	* text.c (NOTE): New.
+	* text.c (Note): New.
+	* charset.h (struct Lisp_Charset):
+	* unicode.c:
+	* intl-win32.c:
+	* intl-win32.c (NOTE): New.
+	* intl-win32.c (Abstract): New.
+	* intl-encap-win32.c:
+	* text.h:
+	* text.h (internal_format):
+	* file-coding.c (encode_decode_coding_region): 
+	* file-coding.c:
+	* mule-coding.c (parse_iso2022_esc):
+	Collect background comments and related to text matters and
+	internationalization, and proposals for work to be done, in text.c
+	or Internals manual, stuff related to specific textual API's in
+	text.h, and stuff related to internal implementation of Unicode
+	conversion in unicode.c.  Put lots of pointers to the comments to
+	make them easier to find.
+
+	* s/mingw32.h:
+	* s/win32-common.h:
+	* s/win32-native.h:
+	* s/windowsnt.h:
+	* win32.c:
+	* win32.c (console-msw.h): New.
+	* win32.c (process-nt.c): New.
+	* win32.c (nt.c): New.
+	* win32.c (win32.c): New.
+	* win32.c (syswindows.h): New.
+	* win32.c (intl-win32.c): New.
+	* win32.c (intl-encap-win32.c): New.
+	* win32.c (intl-auto-encap-win32.c): New.
+	* win32.c (intl-auto-encap-win32.h): New.
+	Add bunches of new documentation on the different kinds of
+	builds and environments under Windows and how they work.
+	Collect this info in win32.c.  Add pointers to these docs in
+	the relevant s/* files.
+	
+	* emacs.c (mswindows_handle_hardware_exceptions_1):
+	* emacs.c:
+	Document places with long comments.
+	Remove comment about exiting, move to internals manual, put
+	in pointer.
+	
+	* event-stream.c:
+	Move docs about event queues and focus to internals manual, put
+	in pointer.
+	
+	* events.h:
+	Move docs about event stream callbacks to internals manual, put
+	in pointer.
+
+	* profile.c:
+	* redisplay.c (create_text_block):
+	* signal.c:
+	Move documentation to the Internals manual.
+
+	* process-nt.c:
+	Add pointer to comment in win32-native.el.
+	
+	* lisp.h:
+	Add comments about some comment conventions.
+
+	* lisp.h (xfree):
+	Add comment about the second argument.
+	
+	* device-msw.c (msprinter_init_device):
+	* redisplay-msw.c (mswindows_text_width_single_run):
+	@@#### comments are out-of-date.
+	
+	---------------------------------------------------------------
+                   PDUMP WORK (MOTIVATED BY UNICODE CHANGES)
+	---------------------------------------------------------------
+
+	* alloc.c (lispdesc_block_size_1):
+	* alloc.c (lispdesc_one_description_line_size):
+	* alloc.c (mark_struct_contents):
+	* buffer.c:
+	* buffer.c (complex_vars_of_buffer):
+	* buffer.c (vars_of_buffer):
+	* bytecode.c:
+	* console-impl.h (INITIALIZE_CONSOLE_TYPE):
+	* console.c (complex_vars_of_console):
+	* console.c (console_type_create):
+	* console.c:
+	* device.c:
+	* dumper.c (dump_add_root_block):
+	* dumper.c (dump_add_root_block_ptr):
+	* dumper.c (dump_add_root_lisp_object):
+	* dumper.c (dump_add_weak_object_chain):
+	* dumper.c (pdump_add_block):
+	* dumper.c (pdump_allocate_offset):
+	* dumper.c (pdump_block_list_elt):
+	* dumper.c (pdump_desc_list_elt):
+	* dumper.c (pdump_dump_data):
+	* dumper.c (pdump_dump_root_blocks):
+	* dumper.c (pdump_dump_rtables):
+	* dumper.c (pdump_get_block_list):
+	* dumper.c (pdump_register_block):
+	* dumper.c (pdump_register_block_contents):
+	* dumper.c (pdump_register_object):
+	* dumper.c (pdump_scan_by_alignment):
+	* alloc.c (lispdesc_one_description_line_size):
+	* alloc.c (kkcc_marking):
+	* dumper.c (pdump_register_sub):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (memory_description_type):
+	* elhash.c:
+	* emodules.h:
+	* events.c:
+	* extents.c:
+	* frame.c:
+	* glyphs.c:
+	* glyphs.h (INITIALIZE_DEVICE_IIFORMAT):
+	* glyphs.h (INITIALIZE_IMAGE_INSTANTIATOR_FORMAT_NO_SYM):
+	* mule-charset.c (vars_of_mule_charset):
+	* mule-coding.c:
+	* objects.c:
+	* profile.c (vars_of_profile):
+	* rangetab.c:
+	* redisplay.c:
+	* specifier.c (specifier_type_create):
+	* specifier.c:
+	* specifier.h (INITIALIZE_SPECIFIER_TYPE):
+	* window.c:
+	* lstream.c (lstream_description):
+	* file-coding.h (INITIALIZE_CODING_SYSTEM_TYPE):
+	* file-coding.c (coding_system_description):
+	* file-coding.c (coding_system_type_create):
+	* lrecord.h (XD_DYNARR_DESC):
+	PDUMP:
+
+	Properly implement dump_add_root_block(), which never worked before,
+	and is necessary for dumping Unicode tables.
+	
+	Pdump name changes for accuracy:
+	XD_STRUCT_PTR -> XD_BLOCK_PTR.
+	XD_STRUCT_ARRAY -> XD_BLOCK_ARRAY.
+	XD_C_STRING -> XD_ASCII_STRING.
+	*_structure_* -> *_block_*.
+	
+	* lrecord.h (XD_DYNARR_DESC): some comments added about
+	dump_add_root_block() vs dump_add_root_block_ptr().
+
+	* extents.c:
+	remove incorrect comment about pdump problems with gap array.
+	
+	---------------------------------------------------------------
+                                    ALLOCATION
+	---------------------------------------------------------------
+
+	* abbrev.c (abbrev_oblookup):
+	* alloc.c (MALLOC_BEGIN):
+	* bytecode.c (compiled_function_instructions):
+	* casefiddle.c (casify_object):
+	* device-msw.c (Fmswindows_printer_list):
+	* device-x.c:
+	* dired-msw.c (mswindows_get_files):
+	* doc.c (Fsubstitute_command_keys):
+	* doc.c (unparesseuxify_doc_string):
+	* doc.c:
+	* doprnt.c (emacs_vsprintf_malloc):
+	* doprnt.c (emacs_vsprintf_malloc_lisp):
+	* dragdrop.c (dnd_url_hexify_string):
+	* dragdrop.c:
+	* editfns.c (Fformat_time_string):
+	* editfns.c (Finsert_char):
+	* editfns.c (get_home_directory):
+	* emodules.c (emodules_load):
+	* file-coding.c (setup_eol_coding_systems):
+	* fileio.c (Fdirectory_file_name):
+	* fileio.c (Ffile_name_directory):
+	* fileio.c (Fsubstitute_in_file_name):
+	* fileio.c (Fexpand_file_name):
+	* filelock.c (MAKE_LOCK_NAME):
+	* filelock.c (current_lock_owner):
+	* filelock.c (lock_file):
+	* filelock.c (lock_file_1):
+	* fns.c (mapcar1):
+	* glyphs-eimage.c (jpeg_instantiate):
+	* glyphs-eimage.c (gif_instantiate):
+	* glyphs-eimage.c (tiff_instantiate):
+	* glyphs-gtk.c (gtk_xpm_instantiate):
+	* glyphs-msw.c (mswindows_combo_box_property):
+	* glyphs-msw.c (mswindows_widget_property):
+	* glyphs-msw.c (convert_EImage_to_DIBitmap):
+	* glyphs-msw.c (mswindows_initialize_image_instance_mask):
+	* glyphs-msw.c (xbm_create_bitmap_from_data):
+	* glyphs-x.c (convert_EImage_to_XImage):
+	* glyphs-x.c (x_xface_instantiate):
+	* gui-msw.c (mswindows_translate_menu_or_dialog_item):
+	* gui-x.c (add_accel_and_to_external):
+	* imgproc.c (create_colorcell):
+	* imgproc.c (build_EImage_quantable):
+	* intl-win32.c (Fmswindows_get_valid_keyboard_layouts):
+	* intl-win32.c (convert_multibyte_to_unicode_malloc):
+	* intl-win32.c (wcsdup):
+	* lread.c (Fload_internal):
+	* lread.c (locate_file_map_suffixes):
+	* menubar-gtk.c (menu_descriptor_to_widget_1):
+	* menubar.c (Fnormalize_menu_item_name):
+	* nt.c (init_mswindows_environment):
+	* nt.c (get_cached_volume_information):
+	* nt.c (get_volume_info):
+	* nt.c (nt_get_resource):
+	* objects-msw.c (mswindows_string_to_color):
+	* objects-x.c (truename_via_random_props):
+	* print.c (output_string):
+	* process-nt.c (nt_create_process):
+	* process-unix.c (child_setup):
+	* process.c (init_xemacs_process):
+	* realpath.c (readlink_and_correct_case):
+	* redisplay.c (add_disp_table_entry_runes_1):
+	* search.c (Fregexp_quote):
+	* search.c (search_buffer):
+	* search.c (wordify):
+	* select-common.c (receive_incremental_selection):
+	* symbols.c (check_module_subr):
+	* sysdep.c (sys_subshell):
+	* syswindows.h (LOCAL_TO_WIN32_FILE_FORMAT):
+	* syswindows.h (WIN32_TO_LOCAL_FILE_FORMAT):
+	* text.c (convert_ichar_string_into_malloced_string):
+	* text.c (eito_malloc_1):
+	* text.h (EI_CASECHANGE):
+	* text.h (EI_ALLOC):
+	* text.h (eicpy_c):
+	* text.h (eicpyout_alloca_fmt):
+	* text.h (eito_alloca):
+	* text.h (LISP_STRING_TO_ALLOCA):
+	* ui-byhand.c (Fgtk_curve_get_vector):
+	* ui-byhand.c (Fgtk_curve_set_vector):
+	* text.h:
+	New macros {alloca,xnew}_{itext,{i,ext,raw,bin,asc}bytes} for
+	more convenient allocation of these commonly requested items.
+	Modify functions to use alloca_ibytes, alloca_array, alloca_extbytes,
+	xnew_ibytes, etc. also XREALLOC_ARRAY, xnew.
+	
+	* alloc.c (FREE_FIXED_TYPE):
+	* alloc.c (Fstring):
+	* alloc.c (MALLOC_BEGIN):
+	* alloc.c (free_managed_lcrecord):
+	* alloc.c (garbage_collect_1):
+	* alloc.c (init_alloc_once_early):
+	* alloc.c (xcalloc):
+	* alloc.c (xfree_1):
+	* alloc.c (xrealloc):
+	* alloc.c:
+	Rewrite the allocation functions to factor out repeated code.
+	Add assertions for freeing dumped data.
+	
+	* lisp.h (xmalloc_and_record_unwind):
+	* lisp.h (xfree):
+	Moved down and consolidated with other allocation stuff.
+	
+	* lisp.h:
+	* dynarr.c (stack_like_malloc):
+	* dynarr.c (stack_like_free):
+	New functions for allocation that's very efficient when mostly in
+	LIFO order.
+
+	* lisp.h:
+	* text.c (find_pos_of_existing_active_alloca_convert):
+	* text.h (NEW_DFC_CONVERT_1_ALLOCA):
+	* text.c (new_dfc_convert_now_damn_it):
+	* text.c (new_dfc_convert_size):
+	* text.c (new_dfc_convert_copy_data):
+	* text.c (new_dfc_convert_malloc):
+	* text.h:
+	Factor out some stuff for general use by alloca()-conversion funs.
+	
+	* text.h (xmalloc_ibytes):
+	* lisp.h:
+	Fill out convenience routines for allocating various kinds of
+	bytes and put them in lisp.h.  Use them in place of xmalloc(),
+	ALLOCA().
+
+	* text.h (SIZED_C_STRING_TO_EXTERNAL_MALLOC):
+	* text.h (C_STRING_TO_SIZED_EXTERNAL_MALLOC):
+	Fill out the convenience functions so the _MALLOC() kinds match
+	the alloca() kinds.
+
+	---------------------------------------------------------------
+                                ERROR-CHECKING
+	---------------------------------------------------------------
+
+	* text.h (eicpy_c):
+	* text.h (eicpy_c_len):
+	* text.h (eicat_c):
+	* text.h (eisub_c):
+	Create ASSERT_ASCTEXT_ASCII() and ASSERT_ASCTEXT_ASCII_LEN()
+	from similar Eistring checkers and change the Eistring checkers to
+	use them instead.
+
+
+	---------------------------------------------------------------
+                               MACROS IN LISP.H
+	---------------------------------------------------------------
+
+	* lisp.h (GCDECL1):
+	* lisp.h (NNUNGCPRO):
+	* lisp.h (XGCDECL1):
+	* lisp.h (XGCPRO1):
+	* lisp.h (XUNGCPRO):
+	Redo GCPRO declarations.  Create a "base" set of functions that can
+	be used to generate any kind of gcpro sets -- regular, ngcpro,
+	nngcpro, private ones used in GC_EXTERNAL_LIST_LOOP_2.
+	
+	* buffer.c (Fkill_buffer):
+	* callint.c (quotify_args):
+	* chartab.c (chartab_data_validate):
+	* console-msw.c:
+	* device-x.c:
+	* dialog-msw.c (handle_question_dialog_box):
+	* dired.c (file_name_completion):
+	* dired.c (Fdirectory_files):
+	* dired.c (file_name_completion_stat):
+	* extents.c (memoize_extent_face_internal):
+	* extents.c (report_extent_modification_mapper):
+	* ui-gtk.c (Fgtk_call_function):
+	* ui-gtk.c (Fgtk_import_function_internal):
+	* rangetab.c (rangetab_data_validate):
+	* nt.c (init_mswindows_environment):
+	* mule-coding.c (parse_charset_conversion_specs):
+	* minibuf.c (regexp_ignore_completion_p):
+	* menubar-msw.c (populate_or_checksum_helper):
+	* menubar.c (Fmenu_find_real_submenu):
+	* menubar-gtk.c (menu_create_menubar):
+	* lread.c (locate_file_without_hash):
+	* lread.c (Flocate_file):
+	* lread.c (Flocate_file_clear_hashing):
+	* lread.c (decode_mode):
+	* lread.c (locate_file):
+	* lisp.h (PROPERTY_LIST_LOOP):
+	* lisp.h (GC_EXTERNAL_LIST_LOOP_2): New.
+	* lisp.h (END_GC_EXTERNAL_LIST_LOOP): New.
+	* lisp.h (EXTERNAL_LIST_LOOP): Deleted.
+	* gutter.c (gutter_visible_validate):
+	* glyphs.c (decode_image_instance_type_list):
+	* glyphs.c (Fset_console_type_image_conversion_list):
+	* glyphs-widget.c (check_valid_instantiator_list):
+	* glyphs-widget.c (check_valid_item_list):
+	* fns.c (Freplace_list):
+	* fileio.c (Finsert_file_contents_internal):
+	* fileio.c (Ffind_file_name_handler):
+	* file-coding.c (Fset_coding_priority_list):
+	* file-coding.c (chain_putprop):
+	* specifier.c (display_table_validate):
+	Eliminate EXTERNAL_LIST_LOOP, which does not check for circularities.
+	Use EXTERNAL_LIST_LOOP_2 instead or EXTERNAL_LIST_LOOP_3
+	or EXTERNAL_PROPERTY_LIST_LOOP_3 or GC_EXTERNAL_LIST_LOOP_2
+	(new macro).  Removed/redid comments on EXTERNAL_LIST_LOOP.
+	
+
+	---------------------------------------------------------------
+                                 SPACING FIXES
+	---------------------------------------------------------------
+
+	* callint.c (Fcall_interactively):
+	* hftctl.c (WR_REQ):
+	* number-gmp.c (init_number_gmp):
+	* process-unix.c (unix_deactivate_process):
+	Spacing fixes.
+
+
+	---------------------------------------------------------------
+                     FIX FOR GEOMETRY PROBLEM IN FIRST FRAME
+	---------------------------------------------------------------
+
+	* unicode.c (init_charset_unicode_tables):
+	Add workaround for newlib bug in sscanf() [should be fixed by
+	release 1.5.12 of Cygwin].
+	* toolbar.c (update_frame_toolbars_geometry):
+	bug fix for problem of initial frame being 77 chars wide on Windows.
+	will be overridden by my other ws.
+
+	---------------------------------------------------------------
+                        FIX FOR LEAKING PROCESS HANDLES:
+	---------------------------------------------------------------
+
+	
+	* process-nt.c (free_process_memory):
+	* process-nt.c (alloc_process_memory):
+	* process-nt.c (run_in_other_process):
+	* process-nt.c (send_signal_the_nt_way):
+	* process-nt.c (nt_finalize_process_data):
+	* process-nt.c (nt_create_process):
+	* process-nt.c (nt_deactivate_process):
+	* process-nt.c (process_type_create_nt):
+	Fixes for leaking handles.  Inspired by work done by Adrian Aichner
+	<adrian@xemacs.org>.
+
+	---------------------------------------------------------------
+                        FIX FOR CYGWIN BUG (Unicode-related):
+	---------------------------------------------------------------
+
+	* unicode.c (init_charset_unicode_tables):
+	Add workaround for newlib bug in sscanf() [should be fixed by
+	release 1.5.12 of Cygwin].
+
+	---------------------------------------------------------------
+                                 WARNING FIXES:
+	---------------------------------------------------------------
+
+	* console-stream.c (init_console_stream):
+	`reinit' is unused.
+	
+	* compiler.h:
+	* event-msw.c (mswindows_wnd_proc):
+	* frame-msw.c (mswindows_frame_totally_visible_p):
+	* intl-encap-win32.c (qxeRegisterClass):
+	* intl-encap-win32.c (qxeRegisterClassEx):
+	* text.h (DFC_ALLOCA_USE_CONVERTED_DATA):
+	Add stuff to deal with ANSI-aliasing warnings I got.
+
+	* regex.c:
+	* regex.c (itext_ichar):
+	Gather includes together to avoid warning.
+
+	---------------------------------------------------------------
+                        CHANGES TO INITIALIZATION ROUTINES:
+	---------------------------------------------------------------
+
+	* buffer.c (vars_of_buffer):
+	* emacs.c (main_1):
+	* console.c (vars_of_console):
+	* debug.c (vars_of_debug):
+	* device-x.c (vars_of_device_x):
+	* device.c (vars_of_device):
+	* dragdrop.c (vars_of_dragdrop):
+	* emodules.c (vars_of_module):
+	* eval.c (vars_of_eval):
+	* eval.c (reinit_vars_of_eval):
+	* event-Xt.c (vars_of_event_Xt):
+	* event-gtk.c (vars_of_event_gtk):
+	* event-msw.c (vars_of_event_mswindows):
+	* event-stream.c (vars_of_event_stream):
+	* event-tty.c (vars_of_event_tty):
+	* events.c (vars_of_events):
+	* extents.c (vars_of_extents):
+	* faces.c (complex_vars_of_faces):
+	* file-coding.c (vars_of_file_coding):
+	* fileio.c (vars_of_fileio):
+	* font-lock.c (vars_of_font_lock):
+	* frame-msw.c (vars_of_frame_mswindows):
+	* glyphs-widget.c (vars_of_glyphs_widget):
+	* glyphs.c (vars_of_glyphs):
+	* glyphs.c (complex_vars_of_glyphs):
+	* gui-x.c (vars_of_gui_x):
+	* insdel.c (vars_of_insdel):
+	* lread.c (vars_of_lread):
+	* lstream.c (vars_of_lstream):
+	* menubar-gtk.c (vars_of_menubar_gtk):
+	* menubar-x.c (vars_of_menubar_x):
+	* minibuf.c (vars_of_minibuf):
+	* mule-wnnfns.c (vars_of_mule_wnn):
+	* objects-msw.c (vars_of_objects_mswindows):
+	* objects.c (vars_of_objects):
+	* print.c (vars_of_print):
+	* scrollbar-x.c (vars_of_scrollbar_x):
+	* search.c (vars_of_search):
+	* select-x.c (vars_of_select_x):
+	* text.c (reinit_vars_of_text):
+	* text.c (vars_of_text):
+	* undo.c (vars_of_undo):
+	* unicode.c (vars_of_unicode):
+	* window.c (vars_of_window):
+	* symsinit.h:
+	Call reinit_*() functions directly from emacs.c, for clarity.
+	Factor out some redundant init code.  Move disallowed stuff
+	that had crept into vars_of_glyphs() into complex_vars_of_glyphs().
+	Call init_eval_semi_early() from eval.c not in the middle of
+	vars_of_() in emacs.c since there should be no order dependency
+	in the latter calls.
+
+	---------------------------------------------------------------
+                                     ARMAGEDDON:
+	---------------------------------------------------------------
+
+	* alloc.c:
+	* emacs.c:
+	* lisp.h:
+	* print.c (debug_backtrace):
+	* print.c (debug_p3):
+	* print.c (debug_p4):
+	* print.c (debug_prin1):
+	* print.c (print_internal):
+	* print.c (printing_major_badness):
+	* print.c (struct debug_bindings ):
+	* print.c (write_string_to_stdio_stream_1):
+	* print.c (write_string_to_external_output_va):
+	* print.c (debug_prin1_exit):
+	* print.c (write_string_to_alternate_debugging_output):
+	Rename inhibit_non_essential_printing_operations to
+	  inhibit_non_essential_conversion_operations.
+
+	* text.c (dfc_convert_to_external_format):
+	* text.c (dfc_convert_to_internal_format):
+	Assert on !inhibit_non_essential_conversion_operations.
+	
+	* console-msw.c (Fmswindows_message_box):
+	* console-msw.c (GetConsoleHwnd):
+	* console-msw.c (mswindows_output_console_string):
+	* console-msw.c (write_string_to_mswindows_debugging_output):
+	* print.c (write_string_to_stdio_stream_1):
+	Don't do conversion in SetConsoleTitle or FindWindow to avoid
+	problems during armageddon.  Put #errors for NON_ASCII_INTERNAL_FORMAT
+	in places where problems would arise.
+	
+	---------------------------------------------------------------
+                        CHANGES TO THE BUILD PROCEDURE:
+	---------------------------------------------------------------
+
+	* config.h.in:
+	* s/cxux.h:
+	* s/usg5-4-2.h:
+	* m/powerpc.h:
+	Add comment about correct ordering of this file.
+	Rearrange everything to follow this -- put all #undefs together
+	and before the s&m files.  Add undefs for HAVE_ALLOCA, C_ALLOCA,
+	BROKEN_ALLOCA_IN_FUNCTION_CALLS, STACK_DIRECTION.  Remove unused
+	HAVE_STPCPY, HAVE_GETWD, HAVE_SETLOCALE.
+
+	* m/gec63.h: Deleted; totally broken, not used at all, not in FSF.
+
+	* m/7300.h:
+	* m/acorn.h:
+	* m/alliant-2800.h:
+	* m/alliant.h:
+	* m/altos.h:
+	* m/altos.h (SWITCH_ENUM_BUG):
+	* m/amdahl.h:
+	* m/apollo.h:
+	* m/att3b.h:
+	* m/aviion.h:
+	* m/celerity.h:
+	* m/clipper.h:
+	* m/cnvrgnt.h:
+	* m/convex.h:
+	* m/cydra5.h:
+	* m/cydra5.h (DATA_START):
+	* m/delta.h:
+	* m/delta88k.h:
+	* m/dpx2.h:
+	* m/elxsi.h:
+	* m/ews4800r.h:
+	* m/gould.h:
+	* m/hp300bsd.h (LOAD_AVE_TYPE):
+	* m/hp800.h:
+	* m/hp9000s300.h:
+	* m/i860.h:
+	* m/ibmps2-aix.h:
+	* m/ibmps2-aix.h (LIBS_MACHINE):
+	* m/ibmrs6000.h:
+	* m/ibmrt-aix.h:
+	* m/ibmrt.h:
+	* m/intel386.h:
+	* m/intel386.h (SEGMENT_MASK):
+	* m/iris4d.h:
+	* m/iris5d.h:
+	* m/iris6d.h:
+	* m/irist.h:
+	* m/isi-ov.h:
+	* m/luna88k.h:
+	* m/m68k.h (ASSERT_VALID_POINTER):
+	* m/masscomp.h:
+	* m/mg1.h:
+	* m/mips-nec.h:
+	* m/mips-siemens.h:
+	* m/mips.h:
+	* m/news.h:
+	* m/nh3000.h:
+	* m/nh4000.h:
+	* m/ns32000.h:
+	* m/orion105.h:
+	* m/pfa50.h:
+	* m/plexus.h:
+	* m/pmax.h:
+	* m/powerpc.h:
+	* m/pyrmips.h (CANNOT_DUMP):
+	* m/sequent-ptx.h:
+	* m/sequent.h:
+	* m/sgi-challenge.h:
+	* m/symmetry.h:
+	* m/tad68k.h:
+	* m/tahoe.h:
+	* m/targon31.h:
+	* m/tekxd88.h:
+	* m/template.h:
+	* m/tower32.h:
+	* m/tower32v3.h:
+	* m/ustation.h:
+	* m/vax.h:
+	* m/wicat.h:
+	* m/xps100.h:
+	* m/xps100.h (TERMINFO):
+	Delete C_ALLOCA, HAVE_ALLOCA, STACK_DIRECTION,
+	BROKEN_ALLOCA_IN_FUNCTION_CALLS.  All of this is auto-detected.
+	When in doubt, I followed recent FSF sources, which also have
+	these things deleted.
+
+
 2002-04-05  Golubev I. N.  <gin@mo.msk.ru>
 
 	* .gdbinit (pptype):

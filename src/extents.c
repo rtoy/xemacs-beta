@@ -264,14 +264,6 @@ typedef struct gap_array_marker
 
    offset_past_gap = elsize * (gap + gapsize)
    els_past_gap = numels - gap
-
-   #### The current layout will not cut it for dumping purposes.  If we
-   need to dump one of these structures, we will have to rearrange things
-   so that the gap array data and other fields are in one single memory
-   block.  Either this is a pointer off of struct gap_array, or it is
-   struct gap_array itself; in the latter case, the interface below has to
-   be modified so that functions that change the array pass in a ** rather
-   than a *, since the pointer may move.
 */
 
 
@@ -1036,7 +1028,7 @@ static void soe_invalidate (Lisp_Object obj);
 extern const struct sized_memory_description gap_array_marker_description;
 
 static const struct memory_description gap_array_marker_description_1[] = { 
-  { XD_STRUCT_PTR, offsetof (Gap_Array_Marker, next), 1,
+  { XD_BLOCK_PTR, offsetof (Gap_Array_Marker, next), 1,
     &gap_array_marker_description },
   { XD_END }
 };
@@ -1050,11 +1042,11 @@ static const struct memory_description lispobj_gap_array_description_1[] = {
   { XD_INT, offsetof (Gap_Array, gap) },
   { XD_INT, offsetof (Gap_Array, offset_past_gap) },
   { XD_INT, offsetof (Gap_Array, els_past_gap) },
-  { XD_STRUCT_PTR, offsetof (Gap_Array, markers), 1,
+  { XD_BLOCK_PTR, offsetof (Gap_Array, markers), 1,
     &gap_array_marker_description, XD_FLAG_NO_KKCC },
-  { XD_STRUCT_ARRAY, offsetof (Gap_Array, array), XD_INDIRECT (0, 0),
+  { XD_BLOCK_ARRAY, offsetof (Gap_Array, array), XD_INDIRECT (0, 0),
     &lisp_object_description },
-  { XD_STRUCT_ARRAY, XD_INDIRECT (1, offsetof (Gap_Array, array)),
+  { XD_BLOCK_ARRAY, XD_INDIRECT (1, offsetof (Gap_Array, array)),
     XD_INDIRECT (2, 0), &lisp_object_description },
   { XD_END }
 };
@@ -1067,9 +1059,9 @@ static const struct sized_memory_description lispobj_gap_array_description = {
 extern const struct sized_memory_description extent_list_marker_description;
 
 static const struct memory_description extent_list_marker_description_1[] = { 
-  { XD_STRUCT_PTR, offsetof (Extent_List_Marker, m), 1,
+  { XD_BLOCK_PTR, offsetof (Extent_List_Marker, m), 1,
     &gap_array_marker_description },
-  { XD_STRUCT_PTR, offsetof (Extent_List_Marker, next), 1,
+  { XD_BLOCK_PTR, offsetof (Extent_List_Marker, next), 1,
     &extent_list_marker_description },
   { XD_END }
 };
@@ -1080,9 +1072,9 @@ const struct sized_memory_description extent_list_marker_description = {
 };
 
 static const struct memory_description extent_list_description_1[] = { 
-  { XD_STRUCT_PTR, offsetof (Extent_List, start), 1, &lispobj_gap_array_description },
-  { XD_STRUCT_PTR, offsetof (Extent_List, end), 1, &lispobj_gap_array_description, XD_FLAG_NO_KKCC },
-  { XD_STRUCT_PTR, offsetof (Extent_List, markers), 1, &extent_list_marker_description, XD_FLAG_NO_KKCC },
+  { XD_BLOCK_PTR, offsetof (Extent_List, start), 1, &lispobj_gap_array_description },
+  { XD_BLOCK_PTR, offsetof (Extent_List, end), 1, &lispobj_gap_array_description, XD_FLAG_NO_KKCC },
+  { XD_BLOCK_PTR, offsetof (Extent_List, markers), 1, &extent_list_marker_description, XD_FLAG_NO_KKCC },
   { XD_END }
 };
 
@@ -1092,7 +1084,7 @@ static const struct sized_memory_description extent_list_description = {
 };
 
 static const struct memory_description stack_of_extents_description_1[] = { 
-  { XD_STRUCT_PTR, offsetof (Stack_Of_Extents, extents), 1, &extent_list_description },
+  { XD_BLOCK_PTR, offsetof (Stack_Of_Extents, extents), 1, &extent_list_description },
   { XD_END }
 };
 
@@ -1102,9 +1094,9 @@ static const struct sized_memory_description stack_of_extents_description = {
 };
 
 static const struct memory_description extent_info_description [] = {
-  { XD_STRUCT_PTR, offsetof (struct extent_info, extents), 1,
+  { XD_BLOCK_PTR, offsetof (struct extent_info, extents), 1,
     &extent_list_description },
-  { XD_STRUCT_PTR, offsetof (struct extent_info, soe), 1,
+  { XD_BLOCK_PTR, offsetof (struct extent_info, soe), 1,
     &stack_of_extents_description, XD_FLAG_NO_KKCC },
   { XD_END }
 };
@@ -4977,11 +4969,10 @@ report_extent_modification_mapper (EXTENT extent, void *arg)
     call3 (hook, exobj, startobj, endobj);
   else
     {
-      Lisp_Object tail;
-      EXTERNAL_LIST_LOOP (tail, hook)
+      EXTERNAL_LIST_LOOP_2 (elt, hook)
 	/* #### Shouldn't this perform the same Fset_buffer() check as
            above?  */
-	call3 (XCAR (tail), exobj, startobj, endobj);
+	call3 (elt, exobj, startobj, endobj);
     }
   return 0;
 }
@@ -5092,13 +5083,15 @@ memoize_extent_face_internal (Lisp_Object list)
     }
 
   thecons = Vextent_face_reusable_list;
-  EXTERNAL_LIST_LOOP (cons, list)
-    {
-      Lisp_Object face = Fget_face (XCAR (cons));
-
-      XCAR (thecons) = Fface_name (face);
-      thecons = XCDR (thecons);
-    }
+  {
+    EXTERNAL_LIST_LOOP_2 (face, list)
+      {
+	face = Fget_face (face);
+	
+	XCAR (thecons) = Fface_name (face);
+	thecons = XCDR (thecons);
+      }
+  }
 
   list = Fgethash (Vextent_face_reusable_list, Vextent_face_memoize_hash_table,
 		   Qnil);
@@ -7392,8 +7385,6 @@ reinit_vars_of_extents (void)
 void
 vars_of_extents (void)
 {
-  reinit_vars_of_extents ();
-
   DEFVAR_INT ("mouse-highlight-priority", &mouse_highlight_priority /*
 The priority to use for the mouse-highlighting pseudo-extent
 that is used to highlight extents with the `mouse-face' attribute set.

@@ -187,49 +187,51 @@ See also 'find-menu-item'.
 */
        (desc, path))
 {
-  Lisp_Object path_entry, submenu_desc, submenu;
   struct gcpro gcpro1, gcpro2;
   Lisp_Object gui_item = allocate_gui_item ();
   Lisp_Gui_Item* pgui_item = XGUI_ITEM (gui_item);
 
   GCPRO2 (gui_item, desc);
 
-  EXTERNAL_LIST_LOOP (path_entry, path)
-    {
-      /* Verify that DESC describes a menu, not single item */
-      if (!CONSP (desc))
-	RETURN_UNGCPRO (Qnil);
+  {
+    EXTERNAL_LIST_LOOP_2 (elt, path)
+      {
+	/* Verify that DESC describes a menu, not single item */
+	if (!CONSP (desc))
+	  RETURN_UNGCPRO (Qnil);
 
-      /* Parse this menu */
-      desc = menu_parse_submenu_keywords (desc, gui_item);
+	/* Parse this menu */
+	desc = menu_parse_submenu_keywords (desc, gui_item);
 
-      /* Check that this (sub)menu is active */
-      if (!gui_item_active_p (gui_item))
-	RETURN_UNGCPRO (Qnil);
+	/* Check that this (sub)menu is active */
+	if (!gui_item_active_p (gui_item))
+	  RETURN_UNGCPRO (Qnil);
 
-      /* Apply :filter */
-      if (!NILP (pgui_item->filter))
-	desc = call1 (pgui_item->filter, desc);
+	/* Apply :filter */
+	if (!NILP (pgui_item->filter))
+	  desc = call1 (pgui_item->filter, desc);
 
-      /* Find the next menu on the path inside this one */
-      EXTERNAL_LIST_LOOP (submenu_desc, desc)
+	/* Find the next menu on the path inside this one */
 	{
-	  submenu = XCAR (submenu_desc);
-	  if (CONSP (submenu)
-	      && STRINGP (XCAR (submenu))
-	      && !NILP (Fstring_equal (XCAR (submenu), XCAR (path_entry))))
+	  EXTERNAL_LIST_LOOP_2 (submenu, desc)
 	    {
-	      desc = submenu;
-	      goto descend;
+	      if (CONSP (submenu)
+		  && STRINGP (XCAR (submenu))
+		  && !NILP (Fstring_equal (XCAR (submenu), elt)))
+		{
+		  desc = submenu;
+		  goto descend;
+		}
 	    }
 	}
-      /* Submenu not found */
-      RETURN_UNGCPRO (Qnil);
+	/* Submenu not found */
+	RETURN_UNGCPRO (Qnil);
 
-    descend:
-      /* Prepare for the next iteration */
-      gui_item_init (gui_item);
-    }
+      descend:
+	/* Prepare for the next iteration */
+	gui_item_init (gui_item);
+      }
+  }
 
   /* We have successfully descended down the end of the path */
   UNGCPRO;
@@ -345,7 +347,7 @@ This removes %_'s (accelerator indications) and converts %% to %.
   end = string_char_length (name);
   name_data = XSTRING_DATA (name);
 
-  string_result = (Ibyte *) ALLOCA (end * MAX_ICHAR_LEN);
+  string_result = alloca_ibytes (end * MAX_ICHAR_LEN);
   string_result_ptr = string_result;
   for (i = 0; i < end; i++)
     {

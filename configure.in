@@ -6,7 +6,7 @@ define([AC_INIT_NOTICE],
 #### Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
 #### Copyright (C) 1993-1995 Board of Trustees, University of Illinois.
 #### Copyright (C) 1996, 1997 Sun Microsystems, Inc.
-#### Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
+#### Copyright (C) 1995, 1996, 2002, 2003, 2004 Ben Wing.
 #### Copyright (C) 2000, 2001 Martin Buchholz.
 #### Copyright (C) 1998, 1999 J. Kean Johnston.
 
@@ -2054,10 +2054,16 @@ if test "$cflags_warning_specified" = "no"; then
   elif test "$CC" = "xlc"; then
     cflags_warning="-qinfo"
   elif test "$GCC" = "yes"; then
-    cflags_warning="-Wall -Wno-switch -Winline -Wmissing-prototypes"
+    cflags_warning="-Wall -Wno-switch -Wmissing-prototypes"
+    dnl This is not very useful, as it issues warnings that may appear
+    dnl or disappear rather randomly, cannot easily be fixed, and are
+    dnl not a big deal.  If you want it, add it yourself.
+    dnl cflags_warning="$cflags_warning -Winline"
 
     dnl Yuck, bad compares have been worth at least 3 crashes!
-    cflags_warning="$cflags_warning -Wsign-compare"
+    dnl Warnings about char subscripts are pretty pointless, though,
+    dnl and we use them in various places.
+    cflags_warning="$cflags_warning -Wsign-compare -Wno-char-subscripts"
     cflags_warning="$cflags_warning -Wundef -Wstrict-prototypes"
     test "$__GCC3" = "yes" && cflags_warning="$cflags_warning -Wpacked"
     dnl glibc is intentionally not `-Wpointer-arith'-clean.
@@ -3459,7 +3465,7 @@ if test "$with_modules" != "no"; then
 fi
 if test "$with_modules" != "yes"; then
   MOD_CC="$XEMACS_CC"
-  MODCFLAGS="\$(CFLAGS) -I../../src -I\$(srcdir)/../../src"
+  MODCFLAGS="\$(XE_CFLAGS) -I../../src -I\$(srcdir)/../../src"
   INSTALLPATH=""
   MOD_INSTALL_PROGRAM="true"
   OBJECT_TO_BUILD="\$(MODNAME).o"
@@ -3581,27 +3587,31 @@ ldap_libs=
 test -z "$with_ldap" && { AC_CHECK_HEADER(ldap.h, ,with_ldap=no) }
 test -z "$with_ldap" && { AC_CHECK_HEADER(lber.h, ,with_ldap=no) }
 if test "$with_ldap" != "no"; then
-  AC_CHECK_LIB(ldap, ldap_search, with_ldap_nolber=yes, with_ldap_nolber=no)
-  test "$with_ldap_nolber" = "no" && { AC_CHECK_LIB(ldap, ldap_open, with_ldap_lber=yes, with_ldap_lber=no, -llber) }
-  test "$with_ldap_nolber" = "no" -a "$with_ldap_lber" = "no" && { AC_CHECK_LIB(ldap, ldap_open, with_ldap_krb=yes, with_ldap_krb=no, -llber -lkrb) }
-  test "$with_ldap_nolber" = "no" -a "$with_ldap_lber" = "no" -a "$with_ldap_krb" = "no" && { AC_CHECK_LIB(ldap, ldap_open, with_ldap_krbdes=yes, with_ldap_krbdes=no, -llber -lkrb -ldes) }
-  test -z "$with_ldap" -a \( "$with_ldap_lber" = "yes" -o "$with_ldap_nolber" = "yes" -o "$with_ldap_krb" = "yes" -o "$with_ldap_krbdes" = "yes" \) && with_ldap=yes
+  AC_CHECK_LIB(ldap, ldap_search, with_ldap=yes)
+  dnl Check for other libraries we need to link with to get the main routines.
+  test "$with_ldap" != "yes" && { AC_CHECK_LIB(ldap, ldap_open, [with_ldap=yes with_ldap_lber=yes], , -llber) }
+  test "$with_ldap" != "yes" && { AC_CHECK_LIB(ldap, ldap_open, [with_ldap=yes with_ldap_lber=yes with_ldap_krb=yes], , -llber -lkrb) }
+  test "$with_ldap" != "yes" && { AC_CHECK_LIB(ldap, ldap_open, [with_ldap=yes with_ldap_lber=yes with_ldap_krb=yes with_ldap_des=yes], , -llber -lkrb -ldes) }
+  dnl Recently, we need -lber even though the main routines are elsewhere,
+  dnl because otherwise be get link errors w.r.t. ber_pvt_opt_on.  So just
+  dnl check for that (it's a variable not a fun but that doesn't seem to
+  dnl matter in these checks)  and stick in -lber if so.  Can't hurt (even to
+  dnl stick it in always shouldn't hurt, I don't think) ... #### Someone who
+  dnl #### understands LDAP needs to fix this properly.
+  test "$with_ldap_lber" != "yes" && { AC_CHECK_LIB(lber, ber_pvt_opt_on, with_ldap_lber=yes) }
 fi
 if test "$with_ldap" = "yes"; then
   AC_DEFINE(HAVE_LDAP)
-  if test "$with_ldap_nolber" = "yes" ; then
-    XE_PREPEND(-lldap, ldap_libs)
-  else
-    if test "$with_ldap_krb" = "yes" ; then
-      XE_PREPEND(-lkrb, ldap_libs)
-    fi
-    if test "$with_ldap_krbdes" = "yes" ; then
-      XE_PREPEND(-ldes, ldap_libs)
-      XE_PREPEND(-lkrb, ldap_libs)
-    fi
-    XE_PREPEND(-llber, ldap_libs)
-    XE_PREPEND(-lldap, ldap_libs)
+  if test "$with_ldap_des" = "yes" ; then
+    XE_PREPEND(-ldes, ldap_libs)
   fi
+  if test "$with_ldap_krb" = "yes" ; then
+    XE_PREPEND(-lkrb, ldap_libs)
+  fi
+  if test "$with_ldap_lber" = "yes" ; then
+    XE_PREPEND(-llber, ldap_libs)
+  fi
+  XE_PREPEND(-lldap, ldap_libs)
   save_LIBS="$LIBS" LIBS="$LIBS $ldap_libs"
   AC_CHECK_FUNCS(ldap_set_option ldap_get_lderrno ldap_result2error ldap_parse_result)
   LIBS="$save_LIBS"
@@ -4226,7 +4236,7 @@ dnl ----------------------------------------------------------------
 dnl Check for POSIX functions.
 dnl ----------------------------------------------------------------
 
-AC_CHECK_FUNCS(cbrt closedir dup2 eaccess fmod fpathconf frexp ftime getaddrinfo gethostname getnameinfo getpagesize getrlimit gettimeofday getcwd getwd link logb lrand48 matherr mkdir mktime perror poll random readlink rename res_init rint rmdir select setitimer setpgid setlocale setsid sigblock sighold sigprocmask snprintf stpcpy strerror strlwr strupr symlink tzset ulimit usleep waitpid vsnprintf fsync ftruncate umask wcslen wcscmp vlimit)
+AC_CHECK_FUNCS(cbrt closedir dup2 eaccess fmod fpathconf frexp fsync ftime ftruncate getaddrinfo gethostname getnameinfo getpagesize getrlimit gettimeofday getcwd link logb lrand48 matherr mkdir mktime perror poll random readlink rename res_init rint rmdir select setitimer setpgid setsid sigblock sighold sigprocmask snprintf strerror strlwr strupr symlink tzset ulimit umask usleep vlimit vsnprintf waitpid wcscmp wcslen)
 
 dnl getaddrinfo() is borked under hpux11
 if test "$ac_cv_func_getaddrinfo" != "no" ; then
@@ -4463,6 +4473,23 @@ main (int argc, char *argv[])
 AC_MSG_RESULT($working_alloca_in_function_calls)
 test "$working_alloca_in_function_calls" != "yes" && \
   AC_DEFINE(BROKEN_ALLOCA_IN_FUNCTION_CALLS)
+
+AC_MSG_CHECKING(for working scanf)
+AC_TRY_RUN([
+int
+main (int argc, char **argv)
+{
+  int ret, cp1, cp2, endcount;
+  char *p = "0x7d   0x000E  ";
+  ret = sscanf (p, "%i %i%n", &cp1, &cp2, &endcount);
+  /* endcount should be 13 but it's 11 in Cygwin newlib after 6/04;
+     this breaks unicode.c */
+  return endcount != 13;
+}
+], working_scanf=yes, working_scanf=no)
+AC_MSG_RESULT($working_scanf)
+test "$working_scanf" != "yes" && \
+  AC_DEFINE(CYGWIN_SCANF_BUG)
 
 dnl Check whether strcoll exists and works correctly. (This does more
 dnl than just check for its existence.) If so, it defines HAVE_STRCOLL.
@@ -5638,8 +5665,26 @@ AC_OUTPUT($ac_output_files,
 [for dir in . $MAKE_SUBDIR; do
   (
     cd $dir
+
+dnl Normally []'s are used for quoting but this will cause problems
+dnl since we use brackets in sed.  When not inside of a macro definition,
+dnl two brackets become one, but inside of a macro definition you need
+dnl more, or something -- I don't understand, but Martin probably does.
+dnl We put the brackets back later.
+dnl [ben]
+changequote(<<,>>)dnl
+
+dnl MAKE_JUNK_C(filename):
+dnl Copy a .in file to junk.c in preparation for passing through the
+dnl C preprocessor.  Delete comment lines, pass lines that will be
+dnl interpreted by cpp through directly, and put quotes around remaining
+dnl lines, to avoid problems from overly helpful preprocessors that
+dnl "helpfully" put extra quotes in various places for later use by the
+dnl compiler.  Later, the quotes will be removed.
+
+define(<<MAKE_JUNK_C>>,
     rm -f junk.c
-    < Makefile.in \
+    < <<$1>> \
       sed -e '/^# Generated/d' \
           -e 's%/\*\*/#.*%%' \
           -e 's/^ *# */#/' \
@@ -5652,15 +5697,15 @@ d
 }'        \
 dnl Quote other lines to protect from CPP substitution
 	  -e '/./ {
-s/\([[\"]]\)/\\\1/g
+s/\([\"]\)/\\\1/g
 s/^/"/
 s/$/"/
 }'  > junk.c;
+)dnl MAKE_JUNK_C
 
-dnl Create a GNUmakefile and Makefile from Makefile.in.
+dnl CPP_MAKEFILE(CPPFLAGS,filename):
+dnl Pass junk.c through the preprocessor and put the result in FILENAME.
 
-changequote(<<,>>)dnl
-dnl CPP_MAKEFILE(CPPFLAGS,filename)
 define(<<CPP_MAKEFILE>>,
 echo creating $dir/<<$2>>
 $CPP -I. -I${top_srcdir}/src <<$1>> junk.c \
@@ -5681,10 +5726,18 @@ dnl Restore lines quoted above to original contents.
     mv -f Makefile.new <<$2>>
 )dnl CPP_MAKEFILE
 
+dnl Create a GNUmakefile and Makefile from Makefile.in.
+dnl Create xemacs.def from xemacs.def.in in the same fashion,
+dnl if it exists (i.e. in the src/ directory).
+    MAKE_JUNK_C(Makefile.in)
     CPP_MAKEFILE(,Makefile)
     CPP_MAKEFILE(-DUSE_GNU_MAKE,GNUmakefile)
     if test -r "xemacs.def.in"; then
-      cp -f xemacs.def.in junk.c
+dnl #### We should be using MAKE_JUNK_C instead of the next two lines.
+dnl #### But the comments in xemacs.def.in need to be converted from C-style
+dnl #### to lines beginning with ##.
+      rm -f junk.c
+      cp xemacs.def.in junk.c
       CPP_MAKEFILE(,xemacs.def)
     fi
 changequote([,])dnl

@@ -1,6 +1,6 @@
 /* Functions for the X window system.
    Copyright (C) 1989, 1992-5, 1997 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -21,9 +21,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not synched with FSF. */
 
-/* Substantially rewritten for XEmacs.  */
+/* This file has been Mule-ized, Ben Wing, 10-14-04. */
 
-/* 7-8-00 !!#### This file needs definite Mule review. */
+/* Substantially rewritten for XEmacs.  */
 
 #include <config.h>
 #include "lisp.h"
@@ -271,8 +271,8 @@ x_wm_set_cell_size (Widget wmshell, int cw, int ch)
   if (cw <= 0 || ch <= 0)
     abort ();
 
-  XtSetArg (al [0], XtNwidthInc,  cw);
-  XtSetArg (al [1], XtNheightInc, ch);
+  XtSetArg (al[0], XtNwidthInc,  cw);
+  XtSetArg (al[1], XtNheightInc, ch);
   XtSetValues (wmshell, al, 2);
 }
 
@@ -289,8 +289,8 @@ x_wm_set_variable_size (Widget wmshell, int width, int height)
   fflush (stdout);
 #endif
 
-  XtSetArg (al [0], XtNwidthCells,  width);
-  XtSetArg (al [1], XtNheightCells, height);
+  XtSetArg (al[0], XtNwidthCells,  width);
+  XtSetArg (al[1], XtNheightCells, height);
   XtSetValues (wmshell, al, 2);
 }
 
@@ -314,7 +314,7 @@ x_wm_hack_wm_protocols (Widget widget)
     int format = 0;
     unsigned long nitems = 0;
     unsigned long bytes_after;
-    unsigned char *prop_return = 0; /* semantically a void* */
+    Rawbyte *prop_return = 0; /* semantically a void* */
 
     if (Success == XGetWindowProperty (dpy, w, DEVICE_XATOM_WM_PROTOCOLS (d),
 				       0, 100, False, XA_ATOM,
@@ -330,7 +330,7 @@ x_wm_hack_wm_protocols (Widget widget)
 	  else if (atoms[nitems] == DEVICE_XATOM_WM_TAKE_FOCUS (d))
 	    need_focus = 0;
 	}
-    if (prop_return) XFree ((char *) prop_return);
+    if (prop_return) XFree ((CRawbyte *) prop_return);
   }
   {
     Atom props [10];
@@ -339,15 +339,15 @@ x_wm_hack_wm_protocols (Widget widget)
     if (need_focus)  props[count++] = DEVICE_XATOM_WM_TAKE_FOCUS (d);
     if (count)
       XChangeProperty (dpy, w, DEVICE_XATOM_WM_PROTOCOLS (d), XA_ATOM, 32,
-		       PropModeAppend, (unsigned char *) props, count);
+		       PropModeAppend, (Rawbyte *) props, count);
   }
 }
 
 static void
-x_wm_store_class_hints (Widget shell, char *frame_name)
+x_wm_store_class_hints (Widget shell, Extbyte *frame_name)
 {
   Display *dpy = XtDisplay (shell);
-  char *app_name, *app_class;
+  Extbyte *app_name, *app_class;
   XClassHint classhint;
 
   if (!XtIsWMShell (shell))
@@ -360,6 +360,7 @@ x_wm_store_class_hints (Widget shell, char *frame_name)
 }
 
 #ifndef HAVE_WMCOMMAND
+
 static void
 x_wm_maybe_store_wm_command (struct frame *f)
 {
@@ -372,7 +373,7 @@ x_wm_maybe_store_wm_command (struct frame *f)
   if (NILP (DEVICE_X_WM_COMMAND_FRAME (d)))
     {
       int argc;
-      char **argv;
+      Wexttext **argv;
       make_argc_argv (Vcommand_line_args, &argc, &argv);
       XSetCommand (XtDisplay (w), XtWindow (w), argv, argc);
       free_argc_argv (argv);
@@ -410,6 +411,7 @@ x_wm_maybe_move_wm_command (struct frame *f)
 
     }
 }
+
 #endif /* !HAVE_WMCOMMAND */
 
 int
@@ -418,7 +420,7 @@ x_frame_window_state (struct frame *f)
   Atom actual_type;
   int actual_format;
   unsigned long nitems, bytesafter;
-  unsigned char *datap = 0;
+  Rawbyte *datap = 0;
   Widget widget;
   int result = -1;
   struct device *d = XDEVICE (FRAME_DEVICE (f));
@@ -434,7 +436,7 @@ x_frame_window_state (struct frame *f)
       unsigned long *ul_result_ptr = (unsigned long *) datap;
       if (nitems <= 2)	/* "suggested" by ICCCM version 1 */
 	result = (int) ul_result_ptr[0];
-      XFree ((char *) datap);
+      XFree ((CRawbyte *) datap);
     }
 
   return result;
@@ -643,7 +645,7 @@ x_set_frame_text_value (struct frame *f, Ibyte *value,
   for (ptr = value; *ptr; ptr++)
     if (!byte_ascii_p (*ptr))
       {
-        const char * tmp;
+        const Extbyte *tmp;
         encoding = DEVICE_XATOM_COMPOUND_TEXT (XDEVICE (FRAME_DEVICE (f)));
 	C_STRING_TO_EXTERNAL (value, tmp, Qctext);
         new_XtValue = (String) tmp;
@@ -685,12 +687,12 @@ static void
 x_set_initial_frame_size (struct frame *f, int flags, int x, int y,
 			  int w, int h)
 {
-  char shell_geom [255];
+  Ascbyte shell_geom[255];
   int xval, yval;
-  char xsign, ysign;
-  char uspos = !!(flags & (XValue | YValue));
-  char ussize = !!(flags & (WidthValue | HeightValue));
-  char *temp;
+  Ascbyte xsign, ysign;
+  Boolbyte uspos = !!(flags & (XValue | YValue));
+  Boolbyte ussize = !!(flags & (WidthValue | HeightValue));
+  Ascbyte *temp;
 
   /* assign the correct size to the EmacsFrame widget ... */
   EmacsFrameSetCharSize (FRAME_X_TEXT_WIDGET (f), w, h);
@@ -708,7 +710,7 @@ x_set_initial_frame_size (struct frame *f, int flags, int x, int y,
 
   if (uspos || ussize)
     {
-      temp = (char *) xmalloc (1 + strlen (shell_geom));
+      temp = xnew_ascbytes (1 + strlen (shell_geom));
       strcpy (temp, shell_geom);
       FRAME_X_GEOM_FREE_ME_PLEASE (f) = temp;
     }
@@ -742,21 +744,27 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 
       if (STRINGP (prop))
 	{
-	  const char *extprop;
+	  const Extbyte *extprop;
 
 	  if (XSTRING_LENGTH (prop) == 0)
 	    continue;
 
-	  LISP_STRING_TO_EXTERNAL (prop, extprop, Qctext);
+	  LISP_STRING_TO_EXTERNAL (prop, extprop, Qxt_widget_arg_encoding);
 	  if (STRINGP (val))
 	    {
 	      const Extbyte *extval;
 	      Bytecount extvallen;
 
+	      /* !!#### I seriously doubt there is a single external format
+		 for the value of a widget argument; it depends on the
+		 semantics of the argument.  So use of
+		 Qxt_widget_arg_encoding is totally bogus. --ben */
 	      TO_EXTERNAL_FORMAT (LISP_STRING, val,
 				  ALLOCA, (extval, extvallen),
-				  Qctext);
+				  Qxt_widget_arg_encoding);
 	      XtVaSetValues (w, XtVaTypedArg, extprop,
+			     /* !!#### Verify this + 1 and document
+				as zero-termination */
 			     XtRString, extval, extvallen + 1,
 			     (XtArgVal) NULL);
 	    }
@@ -769,6 +777,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	{
 	  Lisp_Object str = Fget (prop, Qx_resource_name, Qnil);
 	  int int_p = !NILP (Fget (prop, Qintegerp, Qnil));
+	  Extbyte *strext;
 
 	  if (NILP (prop) || NILP (str))
 	    {
@@ -796,14 +805,14 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 
 	  /* Kludge the width/height so that we interpret them in characters
 	     instead of pixels.  Yuck yuck yuck. */
-	  if (!strcmp ((char *) XSTRING_DATA (str), "width"))
+	  if (!qxestrcmp_ascii (XSTRING_DATA (str), "width"))
 	    {
 	      CHECK_INT (val);
 	      width = XINT (val);
 	      width_specified_p = True;
 	      continue;
 	    }
-	  if (!strcmp ((char *) XSTRING_DATA (str), "height"))
+	  if (!qxestrcmp_ascii (XSTRING_DATA (str), "height"))
 	    {
 	      CHECK_INT (val);
 	      height = XINT (val);
@@ -811,14 +820,14 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      continue;
 	    }
 	  /* Further kludge the x/y. */
-	  if (!strcmp ((char *) XSTRING_DATA (str), "x"))
+	  if (!qxestrcmp_ascii (XSTRING_DATA (str), "x"))
 	    {
 	      CHECK_INT (val);
 	      x = (Position) XINT (val);
 	      x_position_specified_p = True;
 	      continue;
 	    }
-	  if (!strcmp ((char *) XSTRING_DATA (str), "y"))
+	  if (!qxestrcmp_ascii (XSTRING_DATA (str), "y"))
 	    {
 	      CHECK_INT (val);
 	      y = (Position) XINT (val);
@@ -827,41 +836,46 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	    }
 	  /* Have you figured out by now that this entire function is
              one gigantic kludge? */
-	  if (!strcmp ((char *) XSTRING_DATA (str),
-		       "internalBorderWidth"))
+	  if (!qxestrcmp_ascii (XSTRING_DATA (str), "internalBorderWidth"))
 	    {
 	      internal_border_width_specified = True;
 	    }
 
+	  LISP_STRING_TO_EXTERNAL (str, strext, Qxt_widget_arg_encoding);
 	  if (int_p)
 	    {
 	      CHECK_INT (val);
-	      Xt_SET_VALUE (w, (char *) XSTRING_DATA (str), XINT (val));
+	      Xt_SET_VALUE (w, strext, XINT (val));
 	    }
 	  else if (EQ (val, Qt))
 	    {
-	      Xt_SET_VALUE (w, (char *) XSTRING_DATA (str), True); /* XtN...*/
+	      Xt_SET_VALUE (w, strext, True); /* XtN...*/
 	    }
 	  else if (EQ (val, Qnil))
 	    {
-	      Xt_SET_VALUE (w, (char *) XSTRING_DATA (str), False); /* XtN...*/
+	      Xt_SET_VALUE (w, strext, False); /* XtN...*/
 	    }
 	  else
 	    {
 	      CHECK_STRING (val);
+	      const Extbyte *extval;
+	      Bytecount extvallen;
+
+	      TO_EXTERNAL_FORMAT (LISP_STRING, val,
+				  ALLOCA, (extval, extvallen),
+				  Qxt_widget_arg_encoding);
 	      XtVaSetValues (w, XtVaTypedArg,
 			     /* XtN... */
-			     (char *) XSTRING_DATA (str),
-			     XtRString,
-			     XSTRING_DATA (val),
-			     XSTRING_LENGTH (val) + 1,
+			     strext,
+			     /* !!#### Verify this + 1 and document
+				as zero-termination */
+			     XtRString, extval, extvallen + 1,
 			     (XtArgVal) NULL);
 	    }
 
 #ifdef HAVE_SCROLLBARS
-	  if (!strcmp ((char *) XSTRING_DATA (str), "scrollBarWidth")
-	      || !strcmp ((char *) XSTRING_DATA (str),
-			  "scrollBarHeight"))
+	  if (!qxestrcmp_ascii (XSTRING_DATA (str), "scrollBarWidth")
+	      || !qxestrcmp_ascii (XSTRING_DATA (str), "scrollBarHeight"))
 	    {
 	      x_update_frame_scrollbars (f);
 	    }
@@ -941,35 +955,130 @@ maybe_set_frame_title_format (Widget shell)
   if (!frame_title_format_already_set)
     {
       /* No doubt there's a less stupid way to do this. */
-      char *results [2];
-      XtResource resources [2];
-      results [0] = results [1] = 0;
-      resources [0].resource_name = XtNtitle;
-      resources [0].resource_class = XtCTitle;
-      resources [0].resource_type = XtRString;
-      resources [0].resource_size = sizeof (String);
-      resources [0].resource_offset = 0;
-      resources [0].default_type = XtRString;
-      resources [0].default_addr = 0;
-      resources [1].resource_name = XtNiconName;
-      resources [1].resource_class = XtCIconName;
-      resources [1].resource_type = XtRString;
-      resources [1].resource_size = sizeof (String);
-      resources [1].resource_offset = sizeof (char *);
-      resources [1].default_type = XtRString;
-      resources [1].default_addr = 0;
+      Extbyte *results[2];
+      XtResource resources[2];
+      results[0] = results[1] = 0;
+      resources[0].resource_name = XtNtitle;
+      resources[0].resource_class = XtCTitle;
+      resources[0].resource_type = XtRString;
+      resources[0].resource_size = sizeof (String);
+      resources[0].resource_offset = 0;
+      resources[0].default_type = XtRString;
+      resources[0].default_addr = 0;
+      resources[1].resource_name = XtNiconName;
+      resources[1].resource_class = XtCIconName;
+      resources[1].resource_type = XtRString;
+      resources[1].resource_size = sizeof (String);
+      resources[1].resource_offset = sizeof (Extbyte *);
+      resources[1].default_type = XtRString;
+      resources[1].default_addr = 0;
       XtGetSubresources (XtParent (shell), (XtPointer) results,
 			 shell->core.name,
 			 shell->core.widget_class->core_class.class_name,
 			 resources, XtNumber (resources), 0, 0);
       if (results[0])
-	Vframe_title_format = build_string (results[0]);
+	Vframe_title_format = build_ext_string (results[0], Qctext);
       if (results[1])
-	Vframe_icon_title_format = build_string (results[1]);
+	Vframe_icon_title_format = build_ext_string (results[1], Qctext);
     }
 
   frame_title_format_already_set = 1;
 }
+
+#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND)
+
+static Extbyte *
+start_drag_internal_1 (Lisp_Object event, Lisp_Object data,
+		       Lisp_Object encoding, XEvent *x_event, int listp,
+		       Widget *wid_out, Bytecount *len_out,
+		       int *num_items_out)
+{
+  struct frame *f;
+  Widget wid;
+  struct device *d;
+  struct x_device *xd;
+  XWindowAttributes win_attrib;
+  int modifier = 0, state = 0;
+  Extbyte *dnd_data;
+  Lisp_Event *lisp_event;
+
+  CHECK_EVENT (event);
+  lisp_event = XEVENT (event);
+  if (EVENT_TYPE (lisp_event) != button_press_event)
+    invalid_argument ("Need button-press event for drag", event);
+  f = decode_x_frame (FW_FRAME (EVENT_CHANNEL (lisp_event)));
+  wid = FRAME_X_TEXT_WIDGET (f);
+  d = XDEVICE (FRAME_DEVICE (f));
+  xd = DEVICE_X_DATA (d);
+  *num_items_out = 0;
+
+  if (listp)
+    {
+      DECLARE_EISTRING (ei);
+
+      EXTERNAL_LIST_LOOP_2 (elt, data)
+	{
+	  CHECK_STRING (elt);
+	  eicat_lstr (ei, elt);
+	  eicat_ch (ei, '\0');
+	  (*num_items_out)++;
+	}
+      eicat_ch (ei, '\0');
+      SIZED_C_STRING_TO_SIZED_EXTERNAL_MALLOC (eidata (ei), eilen (ei),
+					       dnd_data, *len_out,
+					       encoding);
+    }
+  else
+    {
+      CHECK_STRING (data);
+      LISP_STRING_TO_SIZED_EXTERNAL_MALLOC (data, dnd_data, *len_out,
+					    encoding);
+      *len_out += EXTTEXT_ZTERM_SIZE;
+      (*num_items_out)++;
+    }
+
+  /* not so gross hack that converts an emacs event back to a XEvent */
+
+  x_event->xbutton.type = ButtonPress;
+  x_event->xbutton.send_event = False;
+  x_event->xbutton.display = XtDisplayOfObject (wid);
+  x_event->xbutton.window = XtWindowOfObject (wid);
+  x_event->xbutton.root = XRootWindow (x_event->xbutton.display, 0);
+  x_event->xbutton.subwindow = 0;
+  x_event->xbutton.time = lisp_event->timestamp;
+  x_event->xbutton.x = EVENT_BUTTON_X (lisp_event);
+  x_event->xbutton.y = EVENT_BUTTON_Y (lisp_event);
+  if (Success == XGetWindowAttributes (x_event->xbutton.display,
+				       x_event->xbutton.window,
+				       &win_attrib))
+    {
+      x_event->xbutton.x_root = win_attrib.x + EVENT_BUTTON_X (lisp_event);
+      x_event->xbutton.y_root = win_attrib.y + EVENT_BUTTON_Y (lisp_event);
+    }
+  else
+    {
+      x_event->xbutton.x_root = EVENT_BUTTON_X (lisp_event); /* this is wrong */
+      x_event->xbutton.y_root = EVENT_BUTTON_Y (lisp_event);
+    }
+
+  modifier = EVENT_BUTTON_MODIFIERS (lisp_event);
+  if (modifier & XEMACS_MOD_SHIFT)   state |= ShiftMask;
+  if (modifier & XEMACS_MOD_CONTROL) state |= ControlMask;
+  if (modifier & XEMACS_MOD_META)    state |= xd->MetaMask;
+  if (modifier & XEMACS_MOD_SUPER)   state |= xd->SuperMask;
+  if (modifier & XEMACS_MOD_HYPER)   state |= xd->HyperMask;
+  if (modifier & XEMACS_MOD_ALT)     state |= xd->AltMask;
+  state |= Button1Mask << (EVENT_BUTTON_BUTTON (lisp_event) - 1);
+
+  x_event->xbutton.state = state;
+  x_event->xbutton.button = EVENT_BUTTON_BUTTON (lisp_event);
+  x_event->xbutton.same_screen = True;
+
+  *wid_out = wid;
+  return dnd_data;
+}
+
+#endif /* defined (HAVE_CDE) || defined (HAVE_OFFIX_DND) */
 
 #ifdef HAVE_CDE
 #include <Dt/Dt.h>
@@ -985,7 +1094,7 @@ x_cde_destroy_callback (Widget widget, XtPointer clientData,
 			XtPointer callData)
 {
   DtDndDragFinishCallbackStruct *dragFinishInfo =
-    (DtDndDragFinishCallbackStruct *)callData;
+    (DtDndDragFinishCallbackStruct *) callData;
   DtDndContext *dragData = dragFinishInfo->dragData;
   int i;
 
@@ -996,7 +1105,7 @@ x_cde_destroy_callback (Widget widget, XtPointer clientData,
 	{
 	  for (i = 0; i < dragData->numItems; i++)
 	    {
-	      XtFree((char *) dragData->data.buffers[i].bp);
+	      XtFree ((CRawbyte *) dragData->data.buffers[i].bp);
 	      if (dragData->data.buffers[i].name)
 		XtFree(dragData->data.buffers[i].name);
 	    }
@@ -1020,8 +1129,8 @@ x_cde_convert_callback (Widget widget, XtPointer clientData,
 {
   DtDndConvertCallbackStruct *convertInfo =
     (DtDndConvertCallbackStruct *) callData;
-  char *textdata = (char *) clientData;
-  char *textptr = NULL;
+  Extbyte *textdata = (Extbyte *) clientData;
+  Extbyte *textptr = NULL;
   int i;
 
   if (convertInfo == NULL)
@@ -1036,19 +1145,19 @@ x_cde_convert_callback (Widget widget, XtPointer clientData,
       return;
     }
 
-  for (textptr=textdata, i=0;
-       i<convertInfo->dragData->numItems;
-       textptr+=strlen(textptr)+1, i++)
+  for (textptr = textdata, i = 0;
+       i < convertInfo->dragData->numItems;
+       textptr += strlen (textptr) + 1, i++)
     {
       if (convertInfo->dragData->protocol == DtDND_BUFFER_TRANSFER)
 	{
-	  convertInfo->dragData->data.buffers[i].bp = XtNewString(textptr);
-	  convertInfo->dragData->data.buffers[i].size = strlen(textptr);
+	  convertInfo->dragData->data.buffers[i].bp = XtNewString (textptr);
+	  convertInfo->dragData->data.buffers[i].size = strlen (textptr);
 	  convertInfo->dragData->data.buffers[i].name = NULL;
 	}
       else
 	{
-	  convertInfo->dragData->data.files[i] = XtNewString(textptr);
+	  convertInfo->dragData->data.files[i] = XtNewString (textptr);
 	}
     }
 
@@ -1056,7 +1165,7 @@ x_cde_convert_callback (Widget widget, XtPointer clientData,
 }
 
 static Lisp_Object
-abort_current_drag(Lisp_Object arg)
+abort_current_drag (Lisp_Object arg)
 {
   if (CurrentDragWidget && drag_not_done)
     {
@@ -1077,140 +1186,46 @@ WARNING: can only handle plain/text and file: transfers!
 */
        (event, dragtype, dragdata))
 {
-  if (EVENTP (event))
-    {
-      struct frame *f = decode_x_frame (Fselected_frame (Qnil));
-      XEvent x_event;
-      Widget wid = FRAME_X_TEXT_WIDGET (f);
-      Display *display = XtDisplayOfObject (wid);
-      struct device *d    = get_device_from_display (display);
-      struct x_device *xd = DEVICE_X_DATA (d);
-      XWindowAttributes win_attrib;
-      int modifier = 0, state = 0;
-      char *Ctext;
-      int numItems = 0, textlen = 0, pos = 0;
-      Lisp_Event *lisp_event = XEVENT (event);
-      Lisp_Object item = Qnil;
-      struct gcpro gcpro1;
+  Extbyte *dnd_data;
+  XEvent x_event;
+  Bytecount dnd_len;
+  Widget wid;
+  int num_items;
 
-      /* only drag if this is really a press */
-      if (EVENT_TYPE(lisp_event) != button_press_event
-	  || !LISTP(dragdata))
-	return Qnil;
+  dnd_data = start_drag_internal_1 (event, dragdata, Qdt_dnd_encoding,
+				    &x_event, 1,
+				    &wid, &dnd_len, &num_items);
 
-      GCPRO1 (item);
+  dnd_convert_cb_rec[0].callback = x_cde_convert_callback;
+  dnd_convert_cb_rec[0].closure  = (XtPointer) dnd_data;
+  dnd_convert_cb_rec[1].callback = NULL;
+  dnd_convert_cb_rec[1].closure  = NULL;
 
-      /*
-       * not so cross hack that converts a emacs event back to a XEvent
-       */
+  dnd_destroy_cb_rec[0].callback = x_cde_destroy_callback;
+  dnd_destroy_cb_rec[0].closure  = (XtPointer) dnd_data;
+  dnd_destroy_cb_rec[1].callback = NULL;
+  dnd_destroy_cb_rec[1].closure  = NULL;
 
-      x_event.xbutton.type = ButtonPress;
-      x_event.xbutton.send_event = False;
-      x_event.xbutton.display = XtDisplayOfObject(wid);
-      x_event.xbutton.window = XtWindowOfObject(wid);
-      x_event.xbutton.root = XRootWindow(x_event.xbutton.display, 0);
-      x_event.xbutton.subwindow = 0;
-      x_event.xbutton.time = lisp_event->timestamp;
-      x_event.xbutton.x = EVENT_BUTTON_X (lisp_event);
-      x_event.xbutton.y = EVENT_BUTTON_Y (lisp_event);
-      if (Success == XGetWindowAttributes (x_event.xbutton.display,
-					   x_event.xbutton.window,
-					   &win_attrib))
-	{
-	  x_event.xbutton.x_root = win_attrib.x + EVENT_BUTTON_X (lisp_event);
-	  x_event.xbutton.y_root = win_attrib.y + EVENT_BUTTON_Y (lisp_event);
-	}
-      else
-	{
-	  x_event.xbutton.x_root = EVENT_BUTTON_X (lisp_event); /* this is wrong */
-	  x_event.xbutton.y_root = EVENT_BUTTON_Y (lisp_event);
-	}
-      modifier = EVENT_BUTTON_MODIFIERS (lisp_event);
-      if (modifier & XEMACS_MOD_SHIFT)   state |= ShiftMask;
-      if (modifier & XEMACS_MOD_CONTROL) state |= ControlMask;
-      if (modifier & XEMACS_MOD_META)    state |= xd->MetaMask;
-      if (modifier & XEMACS_MOD_SUPER)   state |= xd->SuperMask;
-      if (modifier & XEMACS_MOD_HYPER)   state |= xd->HyperMask;
-      if (modifier & XEMACS_MOD_ALT)     state |= xd->AltMask;
-      state |= Button1Mask << (EVENT_BUTTON_BUTTON (lisp_event)-1);
+  CurrentDragWidget =
+    DtDndDragStart (wid, &x_event,
+		    (NILP (dragtype) ? DtDND_BUFFER_TRANSFER :
+		     DtDND_FILENAME_TRANSFER),
+		    num_items,
+		    XmDROP_COPY,
+		    dnd_convert_cb_rec,
+		    dnd_destroy_cb_rec,
+		    NULL, 0);
 
-      x_event.xbutton.state = state;
-      x_event.xbutton.button = EVENT_BUTTON_BUTTON (lisp_event);
-      x_event.xkey.same_screen = True;
+  xfree (dnd_data, Extbyte *);
 
-      /* convert data strings into a big string */
-      item = dragdata;
-      while (!NILP (item))
-	{
-	  if (!STRINGP (XCAR (item)))
-	    {
-	      numItems=0;
-	      break;
-	    }
-	  textlen += XSTRING_LENGTH (XCAR (item)) + 1;
-	  numItems++;
-	  item = XCDR (item);
-	}
-
-      if (numItems)
-	{
-	  /*
-	   * concatenate all strings given to one large string, with
-	   * \0 as separator. List is ended by \0.
-	   */
-	  Ctext = (char *)xmalloc (textlen+1);
-	  Ctext[0] = 0;
-
-	  item = dragdata;
-	  while (!NILP (item))
-	    {
-	      if (!STRINGP (XCAR (item)))
-		{
-		  numItems=0;
-		  xfree(Ctext, char *);
-		  Ctext=NULL;
-		  break;
-		}
-	      strcpy (Ctext+pos, (const char *)XSTRING_DATA (XCAR (item)));
-	      pos += XSTRING_LENGTH (XCAR (item)) + 1;
-	      item = XCDR (item);
-	    }
-	  Ctext[pos] = 0;
-
-	  dnd_convert_cb_rec[0].callback = x_cde_convert_callback;
-	  dnd_convert_cb_rec[0].closure  = (XtPointer) Ctext;
-	  dnd_convert_cb_rec[1].callback = NULL;
-	  dnd_convert_cb_rec[1].closure  = NULL;
-
-	  dnd_destroy_cb_rec[0].callback = x_cde_destroy_callback;
-	  dnd_destroy_cb_rec[0].closure  = (XtPointer) Ctext;
-	  dnd_destroy_cb_rec[1].callback = NULL;
-	  dnd_destroy_cb_rec[1].closure  = NULL;
-
-	  CurrentDragWidget =
-	    DtDndDragStart (wid, &x_event,
-			    (NILP(dragtype)?DtDND_BUFFER_TRANSFER:DtDND_FILENAME_TRANSFER),
-			    numItems,
-			    XmDROP_COPY,
-			    dnd_convert_cb_rec,
-			    dnd_destroy_cb_rec,
-			    NULL, 0);
-	}
-
-      UNGCPRO;
-
-      return numItems?Qt:Qnil;
-    }
-
-  return Qnil;
+  return num_items ? Qt : Qnil;
 }
 
 static void
 x_cde_transfer_callback (Widget widget, XtPointer clientData,
 			 XtPointer callData)
 {
-  char *filePath, *hurl;
-  int ii, enqueue=1;
+  int ii, enqueue = 1;
   Lisp_Object frame = Qnil;
   Lisp_Object l_type = Qnil;
   Lisp_Object l_data = Qnil;
@@ -1239,53 +1254,62 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 
       for (ii = 0; ii < transferInfo->dropData->numItems; ii++)
 	{
-	  filePath = transferInfo->dropData->data.files[ii];
-	  hurl = dnd_url_hexify_string ((char *)filePath, "file:");
-          /* #### Mule-izing required */
-	  l_data = Fcons (make_string ((Ibyte* )hurl,
-				       strlen (hurl)),
-			  l_data);
-	  xfree (hurl, char *);
+	  Ibyte *fileint;
+	  Ibyte *hurl;
+
+	  EXTERNAL_TO_C_STRING (transferInfo->dropData->data.files[ii],
+				fileint, Qfile_name);
+
+	  hurl = dnd_url_hexify_string (fileint, "file:");
+	  l_data = Fcons (build_intstring (hurl), l_data);
+	  xfree (hurl, Ibyte *);
 	}
     }
   else if (transferInfo->dropData->protocol == DtDND_BUFFER_TRANSFER)
     {
-      int speccount = specpdl_depth();
+      int speccount = specpdl_depth ();
 
-      /* Problem: all buffers a treated as text/plain!!!
-         Solution: Also support DtDND_TEXT_TRANSFER
+      /* !!#### Problem: all buffers a treated as text/plain!!!
+	 Not appropriate for intl text.  Note that there is a function
+	 DtDtsBufferToDataType(), but I don't know what the possible
+	 return values are.
+         Solution (?): Also support DtDND_TEXT_TRANSFER (compound text)
          perhaps implementation of the Motif protocol
          (which is the base of CDE) will clear this */
       l_type = Qdragdrop_MIME;
-      record_unwind_protect(abort_current_drag, Qnil);
+      record_unwind_protect (abort_current_drag, Qnil);
       drag_not_done = 1;
       for (ii = 0; ii < transferInfo->dropData->numItems; ii++)
  	{
 	  /* let us forget this name thing for now... */
  	  /* filePath = transferInfo->dropData->data.buffers[ii].name;
 	     path = (filePath == NULL) ? Qnil
-	     : make_string ((Ibyte *)filePath, strlen (filePath)); */
+	     : build_ext_string (filePath, Q???); */
 	  /* what, if the data is no text, and how can I tell it? */
-	  l_data = Fcons ( list3 ( list1 ( make_string ((Ibyte *)"text/plain", 10) ),
-				   make_string ((Ibyte *)"8bit", 4),
-				   make_string ((Ibyte *)transferInfo->dropData->data.buffers[ii].bp,
-						transferInfo->dropData->data.buffers[ii].size) ),
-			   l_data );
+	  l_data =
+	    Fcons (list3 (list1 (build_string ("text/plain")),
+			  build_string ("8bit"),
+			  make_ext_string
+			  (transferInfo->dropData->data.buffers[ii].bp,
+			   transferInfo->dropData->data.buffers[ii].size,
+			   /* !!#### what goes here? */
+			   Qdt_dnd_encoding)),
+			   l_data);
  	}
       drag_not_done = 0;
       unbind_to (speccount);
     }
   else /* the other cases: NOOP_TRANSFER */
-    enqueue=0;
+    enqueue = 0;
 
   /* The Problem: no button and mods from CDE... */
   if (enqueue)
-    enqueue_misc_user_event_pos ( frame, Qdragdrop_drop_dispatch,
-				  Fcons (l_type, l_data),
-				  0 /* this is the button */,
-				  0 /* these are the mods */,
-				  transferInfo->x,
-				  transferInfo->y);
+    enqueue_misc_user_event_pos (frame, Qdragdrop_drop_dispatch,
+				 Fcons (l_type, l_data),
+				 0 /* this is the button */,
+				 0 /* these are the mods */,
+				 transferInfo->x,
+				 transferInfo->y);
 
   UNGCPRO;
   return;
@@ -1303,115 +1327,30 @@ The type defaults to DndText (4).
 */
        (event, data, dtyp))
 {
-  if (EVENTP(event))
+  Extbyte *dnd_data;
+  XEvent x_event;
+  Bytecount dnd_len;
+  Widget wid;
+  int num_items;
+  int dnd_type = DndText;
+
+  if (!NILP (dtyp))
     {
-      struct frame *f = decode_x_frame (Fselected_frame (Qnil));
-      XEvent x_event;
-      Widget wid = FRAME_X_TEXT_WIDGET (f);
-      Display *display = XtDisplayOfObject (wid);
-      struct device *d    = get_device_from_display (display);
-      struct x_device *xd = DEVICE_X_DATA (d);
-      XWindowAttributes win_attrib;
-      int modifier = 0, state = 0;
-      char *dnd_data = NULL;
-      long dnd_len = 0;
-      int dnd_typ = DndText, dnd_dealloc = 0;
-      Lisp_Event *lisp_event = XEVENT (event);
-
-      /* only drag if this is really a press */
-      if (EVENT_TYPE(lisp_event) != button_press_event)
-	return Qnil;
-
-      /* get the desired type */
-      if (!NILP (dtyp) && INTP (dtyp))
-	dnd_typ = XINT (dtyp);
-
-      if (dnd_typ == DndFiles)
-	{
-	  Lisp_Object run = data;
-	  int len = 0;
-
-	  if (NILP ( Flistp (data)))
-	    return Qnil;
-
-	  /* construct the data from a list of files */
-	  dnd_len = 1;
-	  dnd_data = (char *) xmalloc (1);
-	  *dnd_data = 0;
-	  while (!NILP (run))
-	    {
-	      if (!STRINGP (XCAR (run)))
-		{
-		  xfree (dnd_data, char *);
-		  return Qnil;
-		}
-	      len = XSTRING_LENGTH (XCAR (run)) + 1;
-	      dnd_data = (char *) xrealloc (dnd_data, dnd_len + len);
-	      strcpy (dnd_data + dnd_len - 1, (const char *)XSTRING_DATA (XCAR (run)));
-	      dnd_len += len;
-	      run = XCDR (run);
-	    }
-
-	  dnd_data[dnd_len - 1] = 0; /* the list-ending zero */
-	  dnd_dealloc = 1;
-
-	}
-      else
-	{
-	  if (!STRINGP (data))
-	    return Qnil;
-
-	  /* and what's with MULE data ??? */
-	  dnd_data = (char *)XSTRING_DATA (data);
-	  dnd_len  = XSTRING_LENGTH (data) + 1; /* the zero */
-
-	}
-
-      /* not so gross hack that converts an emacs event back to a XEvent */
-
-      x_event.xbutton.type = ButtonPress;
-      x_event.xbutton.send_event = False;
-      x_event.xbutton.display = XtDisplayOfObject(wid);
-      x_event.xbutton.window = XtWindowOfObject(wid);
-      x_event.xbutton.root = XRootWindow(x_event.xkey.display, 0);
-      x_event.xbutton.subwindow = 0;
-      x_event.xbutton.time = lisp_event->timestamp;
-      x_event.xbutton.x = EVENT_BUTTON_X (lisp_event);
-      x_event.xbutton.y = EVENT_BUTTON_Y (lisp_event);
-      if (Success == XGetWindowAttributes (x_event.xbutton.display,
-					   x_event.xbutton.window,
-					   &win_attrib))
-	{
-	  x_event.xbutton.x_root = win_attrib.x + EVENT_BUTTON_X (lisp_event);
-	  x_event.xbutton.y_root = win_attrib.y + EVENT_BUTTON_Y (lisp_event);
-	}
-      else
-	{
-	  x_event.xbutton.x_root = EVENT_BUTTON_X (lisp_event); /* this is wrong */
-	  x_event.xbutton.y_root = EVENT_BUTTON_Y (lisp_event);
-	}
-
-      modifier = EVENT_BUTTON_MODIFIERS (lisp_event);
-      if (modifier & XEMACS_MOD_SHIFT)   state |= ShiftMask;
-      if (modifier & XEMACS_MOD_CONTROL) state |= ControlMask;
-      if (modifier & XEMACS_MOD_META)    state |= xd->MetaMask;
-      if (modifier & XEMACS_MOD_SUPER)   state |= xd->SuperMask;
-      if (modifier & XEMACS_MOD_HYPER)   state |= xd->HyperMask;
-      if (modifier & XEMACS_MOD_ALT)     state |= xd->AltMask;
-      state |= Button1Mask << (EVENT_BUTTON_BUTTON (lisp_event)-1);
-
-      x_event.xbutton.state = state;
-      x_event.xbutton.button = EVENT_BUTTON_BUTTON (lisp_event);
-      x_event.xkey.same_screen = True;
-
-      DndSetData(dnd_typ, (unsigned char *)dnd_data, dnd_len);
-      if (dnd_dealloc)
-	xfree (dnd_data, char *);
-
-      /* the next thing blocks everything... */
-      if (DndHandleDragging(wid, &x_event))
-	return Qt;
+      CHECK_INT (dtyp);
+      dnd_type = XINT (dtyp);
     }
+
+  dnd_data = start_drag_internal_1 (event, data, Qoffix_dnd_encoding,
+				    &x_event, dnd_type == DndFiles,
+				    &wid, &dnd_len, &num_items);
+
+  DndSetData (dnd_type, (UExtbyte *) dnd_data, dnd_len);
+  xfree (dnd_data, Extbyte *);
+
+  /* the next thing blocks everything... */
+  if (DndHandleDragging (wid, &x_event))
+    return Qt;
+
   return Qnil;
 }
 
@@ -1516,7 +1455,7 @@ x_initialize_frame_size (struct frame *f)
   unsigned int h = 40;
   int flags = 0;
 
-  char *geom = 0, *ew_geom = 0;
+  Ascbyte *geom = 0, *ew_geom = 0;
   Boolean iconic_p = False, ew_iconic_p = False;
 
   Widget wmshell = FRAME_X_SHELL_WIDGET (f);
@@ -1846,8 +1785,8 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 #ifdef EXTERNAL_WIDGET
   Window window_id = 0;
 #endif
-  const char *name;
-  Arg al [25];
+  const Extbyte *name;
+  Arg al[25];
   int ac = 0;
   Widget text, container, shell;
   Widget parentwid = 0;
@@ -1879,26 +1818,29 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 
 #ifndef EXTERNAL_WIDGET
   if (!NILP (lisp_window_id))
-    signal_error (Qunimplemented, "support for external widgets was not enabled at compile-time", Qunbound);
+    signal_error
+      (Qunimplemented,
+       "support for external widgets was not enabled at compile-time",
+       Qunbound);
 #else
   if (!NILP (lisp_window_id))
     {
-      char *string;
+      Ibyte *string;
 
       CHECK_STRING (lisp_window_id);
-      string = (char *) XSTRING_DATA (lisp_window_id);
+      string = XSTRING_DATA (lisp_window_id);
       if (string[0] == '0' && (string[1] == 'x' || string[1] == 'X'))
-	sscanf (string+2, "%lxu", &window_id);
+	qxesscanf_ascii_1 (string + 2, "%lxu", &window_id);
 #if 0
       else if (string[0] == 'w')
 	{
-	  sscanf (string+1, "%x", &parent_widget);
+	  qxesscanf_ascii (string + 1, "%x", &parent_widget);
 	  if (parent_widget)
 	    window_id = XtWindow (parent_widget);
 	}
 #endif
       else
-	sscanf (string, "%lu", &window_id);
+	qxesscanf_ascii_1 (string, "%lu", &window_id);
       if (!is_valid_window (window_id, d))
 	signal_ferror (Qinvalid_argument, "Invalid window %lu",
 		       (unsigned long) window_id);
@@ -2009,14 +1951,14 @@ xemacs_XtPopup (Widget widget)
   ShellWidget shell_widget = (ShellWidget) widget;
   XtGrabKind call_data = XtGrabNone;
 
-  XtCallCallbacks (widget, XtNpopupCallback, (XtPointer)&call_data);
+  XtCallCallbacks (widget, XtNpopupCallback, (XtPointer) &call_data);
 
   shell_widget->shell.popped_up = TRUE;
   shell_widget->shell.grab_kind = XtGrabNone;
   shell_widget->shell.spring_loaded = False;
 
   if (shell_widget->shell.create_popup_child_proc != NULL)
-    (*(shell_widget->shell.create_popup_child_proc))(widget);
+    (*(shell_widget->shell.create_popup_child_proc)) (widget);
 
   /* The XtSetValues below are not in XtPopup menu.  We just want to
      make absolutely sure... */
@@ -2113,7 +2055,7 @@ x_popup_frame (struct frame *f)
      */
   XChangeProperty (XtDisplay (frame_widget), XtWindow (frame_widget),
 		   DEVICE_XATOM_WM_PROTOCOLS (d), XA_ATOM, 32, PropModeAppend,
-		   (unsigned char*) NULL, 0);
+		   (Rawbyte *) NULL, 0);
 
   x_send_synthetic_mouse_event (f);
 }
@@ -2225,9 +2167,9 @@ x_set_frame_icon (struct frame *f)
 
   /* Store the X data into the widget. */
   {
-    Arg al [2];
-    XtSetArg (al [0], XtNiconPixmap, x_pixmap);
-    XtSetArg (al [1], XtNiconMask,   x_mask);
+    Arg al[2];
+    XtSetArg (al[0], XtNiconPixmap, x_pixmap);
+    XtSetArg (al[1], XtNiconMask,   x_mask);
     XtSetValues (FRAME_X_SHELL_WIDGET (f), al, 2);
   }
 }
@@ -2290,11 +2232,11 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
   Dimension frame_h = DisplayHeight (dpy, DefaultScreen (dpy));
   Dimension shell_w, shell_h, shell_bord;
   int win_gravity;
-  Arg al [3];
+  Arg al[3];
 
-  XtSetArg (al [0], XtNwidth,       &shell_w);
-  XtSetArg (al [1], XtNheight,      &shell_h);
-  XtSetArg (al [2], XtNborderWidth, &shell_bord);
+  XtSetArg (al[0], XtNwidth,       &shell_w);
+  XtSetArg (al[1], XtNheight,      &shell_h);
+  XtSetArg (al[2], XtNborderWidth, &shell_bord);
   XtGetValues (w, al, 3);
 
   win_gravity =
@@ -2311,9 +2253,9 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
      come back at the right place.  We can't look at s->visible to determine
      whether it is iconified because it might not be up-to-date yet (the queue
      might not be processed). */
-  XtSetArg (al [0], XtNwinGravity, win_gravity);
-  XtSetArg (al [1], XtNx, xoff);
-  XtSetArg (al [2], XtNy, yoff);
+  XtSetArg (al[0], XtNwinGravity, win_gravity);
+  XtSetArg (al[1], XtNx, xoff);
+  XtSetArg (al[2], XtNy, yoff);
   XtSetValues (w, al, 3);
 
   /* Sometimes you will find that
@@ -2684,7 +2626,7 @@ x_delete_frame (struct frame *f)
 
   if (FRAME_X_GEOM_FREE_ME_PLEASE (f))
     {
-      xfree (FRAME_X_GEOM_FREE_ME_PLEASE (f), char *);
+      xfree (FRAME_X_GEOM_FREE_ME_PLEASE (f), Ascbyte *);
       FRAME_X_GEOM_FREE_ME_PLEASE (f) = 0;
     }
 
@@ -2696,7 +2638,7 @@ x_delete_frame (struct frame *f)
 }
 
 static void
-x_update_frame_external_traits (struct frame* frm, Lisp_Object name)
+x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
 {
   Arg al[10];
   int ac = 0;

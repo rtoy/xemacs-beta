@@ -93,14 +93,14 @@ extern const struct sized_memory_description x_device_data_description;
 
 static const struct memory_description device_data_description_1 []= {
 #ifdef HAVE_GTK
-  { XD_STRUCT_PTR, gtk_console, 1, &gtk_device_data_description},
+  { XD_BLOCK_PTR, gtk_console, 1, &gtk_device_data_description},
 #endif
 #ifdef HAVE_MS_WINDOWS
-  { XD_STRUCT_PTR, mswindows_console, 1, &mswindows_device_data_description},
-  { XD_STRUCT_PTR, msprinter_console, 1, &msprinter_device_data_description},
+  { XD_BLOCK_PTR, mswindows_console, 1, &mswindows_device_data_description},
+  { XD_BLOCK_PTR, msprinter_console, 1, &msprinter_device_data_description},
 #endif
 #ifdef HAVE_X_WINDOWS
-  { XD_STRUCT_PTR, x_console, 1, &x_device_data_description},
+  { XD_BLOCK_PTR, x_console, 1, &x_device_data_description},
 #endif
   { XD_END }
 };
@@ -114,7 +114,7 @@ static const struct memory_description device_description [] = {
 #define MARKED_SLOT(x) { XD_LISP_OBJECT, offsetof (struct device, x) },
 #include "devslots.h"
 
-  { XD_STRUCT_PTR, offsetof (struct device, devmeths), 1,
+  { XD_BLOCK_PTR, offsetof (struct device, devmeths), 1,
     &console_methods_description },
   { XD_UNION, offsetof (struct device, device_data), 
     XD_INDIRECT (0, 0), &device_data_description },
@@ -1477,8 +1477,6 @@ reinit_vars_of_device (void)
 void
 vars_of_device (void)
 {
-  reinit_vars_of_device ();
-
   DEFVAR_LISP ("create-device-hook", &Vcreate_device_hook /*
 Function or functions to call when a device is created.
 One argument, the newly-created device.

@@ -50,7 +50,7 @@ Boston, MA 02111-1307, USA.  */
 
 typedef struct colormap_t
 {
-  const Char_ASCII *name;
+  const Ascbyte *name;
   COLORREF colorref;
 } colormap_t;
 
@@ -728,7 +728,7 @@ static const colormap_t mswindows_X_color_map[] =
 
 typedef struct fontmap_t
 {
-  const Char_ASCII *name;
+  const Ascbyte *name;
   int value;
 } fontmap_t;
 
@@ -964,7 +964,7 @@ mswindows_string_to_color (const Ibyte *name)
 	  return (PALETTERGB (r, g, b));
 	}
     }
-  else if (!qxestrncmp_c (name, "rgb:", 4))
+  else if (!qxestrncmp_ascii (name, "rgb:", 4))
     {
       unsigned int r, g, b;
 
@@ -990,7 +990,7 @@ mswindows_string_to_color (const Ibyte *name)
     }
   else if (*name)	/* Can't be an empty string */
     {
-      Ibyte *nospaces = (Ibyte *) ALLOCA (qxestrlen (name) + 1);
+      Ibyte *nospaces = alloca_ibytes (qxestrlen (name) + 1);
       Ibyte *c = nospaces;
       while (*name)
 	if (*name != ' ')
@@ -1000,7 +1000,7 @@ mswindows_string_to_color (const Ibyte *name)
       *c = '\0';
 
       for (i = 0; i < countof (mswindows_X_color_map); i++)
-	if (!qxestrcasecmp_c (nospaces, mswindows_X_color_map[i].name))
+	if (!qxestrcasecmp_ascii (nospaces, mswindows_X_color_map[i].name))
 	  return (mswindows_X_color_map[i].colorref);
     }
   return (COLORREF) -1;
@@ -1010,7 +1010,7 @@ Lisp_Object
 mswindows_color_to_string (COLORREF color)
 {
   int i;
-  Char_ASCII buf[8];
+  Ascbyte buf[8];
   COLORREF pcolor = PALETTERGB (GetRValue (color), GetGValue (color),
 				GetBValue (color));
 
@@ -1057,14 +1057,14 @@ match_font (Ibyte *pattern1, Ibyte *pattern2,
 	      return 0;
 	    }
 	  else if (fontname)
-	    qxestrcat_c (qxestrcat (fontname, c1), ":");
+	    qxestrcat_ascii (qxestrcat (fontname, c1), ":");
 	}
       else if (fontname)
         {
 	  if (c2 && c2[0] != '\0')
-	    qxestrcat_c (qxestrcat (fontname, c2), ":");
+	    qxestrcat_ascii (qxestrcat (fontname, c2), ":");
 	  else
-	    qxestrcat_c (fontname, ":");
+	    qxestrcat_ascii (fontname, ":");
 	}
 
       if (e1) *(e1++) = ':';
@@ -1134,7 +1134,7 @@ font_enum_callback_2 (ENUMLOGFONTEXW *lpelfe, NEWTEXTMETRICEXW *lpntme,
   for (i = 0; i < countof (charset_map); i++)
     if (lpelfe->elfLogFont.lfCharSet == charset_map[i].value)
       {
-	qxestrcat_c (fontname, charset_map[i].name);
+	qxestrcat_ascii (fontname, charset_map[i].name);
 	break;
       }
   if (i == countof (charset_map))
@@ -1204,8 +1204,8 @@ sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
   c1 = qxestrrchr (font1, ':');
   c2 = qxestrrchr (font2, ':');
 
-  t1 = !qxestrcasecmp_c (c1 + 1, "western");
-  t2 = !qxestrcasecmp_c (c2 + 1, "western");
+  t1 = !qxestrcasecmp_ascii (c1 + 1, "western");
+  t2 = !qxestrcasecmp_ascii (c2 + 1, "western");
 
   if (t1 && !t2)
     return 1;
@@ -1243,8 +1243,8 @@ sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
 	return 1;
     }
 
-  t1 = !qxestrncasecmp_c (font1, "courier new:", 12);
-  t2 = !qxestrncasecmp_c (font2, "courier new:", 12);
+  t1 = !qxestrncasecmp_ascii (font1, "courier new:", 12);
+  t2 = !qxestrncasecmp_ascii (font2, "courier new:", 12);
 
   if (t1 && !t2)
     return 1;
@@ -1500,7 +1500,7 @@ parse_font_spec (const Ibyte *namestr,
 
   /* weight */
   if (fields < 2)
-    qxestrcpy_c (weight, fontweight_map[0].name);
+    qxestrcpy_ascii (weight, fontweight_map[0].name);
 
   /* Maybe split weight into weight and style */
   if ((c = qxestrchr (weight, ' ')))
@@ -1512,7 +1512,7 @@ parse_font_spec (const Ibyte *namestr,
     style = NULL;
 
   for (i = 0; i < countof (fontweight_map); i++)
-    if (!qxestrcasecmp_c (weight, fontweight_map[i].name))
+    if (!qxestrcasecmp_ascii (weight, fontweight_map[i].name))
       {
 	if (logfont)
 	  logfont->lfWeight = fontweight_map[i].value;
@@ -1537,7 +1537,7 @@ parse_font_spec (const Ibyte *namestr,
   if (style)
     {
       /* #### what about oblique? */
-      if (qxestrcasecmp_c (style, "italic") == 0)
+      if (qxestrcasecmp_ascii (style, "italic") == 0)
 	{
 	  if (logfont)
 	    logfont->lfItalic = TRUE;
@@ -1557,7 +1557,7 @@ parse_font_spec (const Ibyte *namestr,
   else if (logfont)
     logfont->lfItalic = FALSE;
 
-  if (fields < 3 || !qxestrcmp_c (points, ""))
+  if (fields < 3 || !qxestrcmp_ascii (points, ""))
     ;
   else if (points[0] == '0' ||
 	   qxestrspn (points, "0123456789") < qxestrlen (points))
@@ -1601,9 +1601,9 @@ parse_font_spec (const Ibyte *namestr,
       else
         effects2 = NULL;
 
-      if (qxestrcasecmp_c (effects, "underline") == 0)
+      if (qxestrcasecmp_ascii (effects, "underline") == 0)
 	underline = TRUE;
-      else if (qxestrcasecmp_c (effects, "strikeout") == 0)
+      else if (qxestrcasecmp_ascii (effects, "strikeout") == 0)
 	strikeout = TRUE;
       else
         {
@@ -1614,9 +1614,9 @@ parse_font_spec (const Ibyte *namestr,
 
       if (effects2 && effects2[0] != '\0')
 	{
-	  if (qxestrcasecmp_c (effects2, "underline") == 0)
+	  if (qxestrcasecmp_ascii (effects2, "underline") == 0)
 	    underline = TRUE;
-	  else if (qxestrcasecmp_c (effects2, "strikeout") == 0)
+	  else if (qxestrcasecmp_ascii (effects2, "strikeout") == 0)
 	    strikeout = TRUE;
 	  else
 	    {
@@ -1630,12 +1630,12 @@ parse_font_spec (const Ibyte *namestr,
       if (underline)
 	{
 	  if (strikeout)
-	    qxestrcpy_c (effects, "underline strikeout");
+	    qxestrcpy_ascii (effects, "underline strikeout");
 	  else
-	    qxestrcpy_c (effects, "underline");
+	    qxestrcpy_ascii (effects, "underline");
 	}
       else if (strikeout)
-	qxestrcpy_c (effects, "strikeout");
+	qxestrcpy_ascii (effects, "strikeout");
 
       if (logfont)
 	{
@@ -1663,12 +1663,12 @@ parse_font_spec (const Ibyte *namestr,
      font_instantiate() calls the devmeth find_matching_font(), which gets
      a truename font spec with the registry (i.e. the charset spec) filled
      in appropriately to the charset. */
-  if (!qxestrcmp_c (charset, ""))
+  if (!qxestrcmp_ascii (charset, ""))
     ;
   else
     {
       for (i = 0; i < countof (charset_map); i++)
-	if (!qxestrcasecmp_c (charset, charset_map[i].name))
+	if (!qxestrcasecmp_ascii (charset, charset_map[i].name))
 	  {
 	    if (logfont)
 	      logfont->lfCharSet = charset_map[i].value;
@@ -2001,7 +2001,7 @@ mswindows_font_spec_matches_charset_stage_1 (struct device *UNUSED (d),
   font_charset = c;
 
   /* For border-glyph use */
-  if (!qxestrcasecmp_c (font_charset, "symbol"))
+  if (!qxestrcasecmp_ascii (font_charset, "symbol"))
     font_charset = (const Ibyte *) "western";
 
   /* Get code page for the charset */
@@ -2320,6 +2320,4 @@ vars_of_objects_mswindows (void)
     make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
   staticpro (&Vfont_signature_data);
 #endif /* MULE */
-
-  reinit_vars_of_object_mswindows ();
 }

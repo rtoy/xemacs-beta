@@ -1,7 +1,7 @@
 /* Generic toolbar implementation.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2003, 2004 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -778,8 +778,11 @@ update_frame_toolbars_geometry (struct frame *f)
       if (frame_size_changed)
 	{
 	  int width, height;
-	  pixel_to_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
-			      &width, &height);
+	  if (!window_system_pixelated_geometry (wrap_frame (f)))
+	    pixel_to_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
+				&width, &height);
+	  else
+	    width = FRAME_PIXWIDTH (f), height = FRAME_PIXHEIGHT (f);
 	  if (!HAS_FRAMEMETH_P (f, set_frame_size))
 	    change_frame_size (f, height, width, 0);
 	  else

@@ -45,7 +45,8 @@
   gtk-box-set-spacing gtk-dialog-vbox gtk-container-add
   gtk-label-new gtk-button-new-with-label
   gtk-widget-set-sensitive gtk-widget-show gtk-dialog-action-area
-  gtk-label-parse-uline gtk-widget-add-accelerator gtk-accel-group-new))
+  gtk-label-parse-uline gtk-widget-add-accelerator gtk-accel-group-new
+  gtk-misc-set-alignment gtk-button-new gtk-window-add-accel-group))
 
 (defun gtk-popup-convert-underscores (str)
   ;; Convert the XEmacs button accelerator representation to Gtk mnemonic

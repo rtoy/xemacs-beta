@@ -83,8 +83,8 @@ readlink_and_correct_case (const Ibyte *name, Ibyte *buf,
 
   /* The file may exist, but isn't a symlink. Try to find the
      right name. */
-  tmp = (Ibyte *) ALLOCA (cygwin_posix_to_win32_path_list_buf_size
-			  ((char *) name));
+  tmp =
+    alloca_ibytes (cygwin_posix_to_win32_path_list_buf_size ((char *) name));
   cygwin_posix_to_win32_path_list ((char *) name, (char *) tmp);
   name = tmp;
 # endif

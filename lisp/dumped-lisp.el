@@ -6,6 +6,17 @@
 This includes every package that is loaded directly by a package listed
 in dumped-lisp.el and is not itself listed.")
 
+
+;; WARNING WARNING WARNING: None of the files below, until where it says
+;; "All files after this can have extended characters in them", can have
+;; extended (non-ASCII characters) of any sort in them!  Unfortunately, you
+;; will not get any error at load-time; however, you may get a later very
+;; cryptic error "Invalid opcode"!  This is caused by the byte-code data
+;; being encoded as escape-quoted, when we can't handle that yet.
+;;
+;; #### We should resurrect the check for the coding-system magic cookie in
+;; fileio.c and put in an abort if we are not able to handle it yet.
+
 (setq preloaded-file-list
       (list
        ;; do not defcustom any variables in these files

@@ -1,3 +1,21 @@
+2004-10-26  Ben Wing  <ben@xemacs.org>
+
+	* configure.in (AC_INIT_NOTICE):
+	* configure.in (TAB):
+	* configure.in (XE_COMPUTE_RUNPATH):
+	Turn off -Winline and -Wchar-subscripts.
+	Use the right set of cflags when compiling modules.
+	Rewrite ldap configuration to separate the inclusion of lber
+	(needed in recent Cygwin) from the basic checks for the
+	needed libraries.
+	add a function for MAKE_JUNK_C; initially code was added to
+	generate xemacs.def using this, but it will need to be rewritten.
+	add an rm -f for junk.c to avoid weird Cygwin bug with cp -f onto
+	an existing file.
+	Sort list of auto-detected functions and eliminate unused checks for
+	stpcpy,	setlocale and getwd.
+	Add autodetection of Cygwin scanf problems
+
 2004-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.18 "chestnut" is released.

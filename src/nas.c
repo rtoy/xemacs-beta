@@ -136,7 +136,7 @@ SIGTYPE sigpipe_handle (int signo);
 
 extern Lisp_Object Vsynchronous_sounds;
 
-static Sound SoundOpenDataForReading (UChar_Binary *data, int length);
+static Sound SoundOpenDataForReading (Binbyte *data, int length);
 
 static AuServer       *aud;
 
@@ -274,7 +274,7 @@ doneCB (AuServer       *UNUSED (auserver),
 static void
 do_caching_play (Sound s,
 		 int volume,
-		 UChar_Binary *buf)
+		 Binbyte *buf)
 
 {
   AuBucketAttributes *list, b;
@@ -442,9 +442,9 @@ nas_play_sound_file (Extbyte *sound_file,
   return 1;
 }
 
-int nas_play_sound_data (UChar_Binary *data, int length, int volume);
+int nas_play_sound_data (Binbyte *data, int length, int volume);
 int
-nas_play_sound_data (UChar_Binary *data, int length, int volume)
+nas_play_sound_data (Binbyte *data, int length, int volume)
 {
   Sound s;
   int offset;
@@ -621,7 +621,7 @@ CatchErrorAndJump (AuServer *old_aud,
 /* Create a name from the sound. */
 
 static Extbyte *
-NameFromData (const Char_Binary *buf,
+NameFromData (const CBinbyte *buf,
 	      int len)
 
 {
@@ -665,7 +665,7 @@ NameFromData (const Char_Binary *buf,
  */
 
 static SndInfo *
-SndOpenDataForReading (const Char_Binary *data,
+SndOpenDataForReading (const CBinbyte *data,
 		       int length)
 
 {
@@ -682,7 +682,7 @@ SndOpenDataForReading (const Char_Binary *data,
 
   if (NAS_LITTLE_ENDIAN)
     {
-      Char_Binary            n;
+      CBinbyte            n;
 
       swapl (&si->h.magic, n);
       swapl (&si->h.dataOffset, n);
@@ -731,7 +731,7 @@ SndOpenDataForReading (const Char_Binary *data,
 #define Err()		{ return NULL; }
 #define readFourcc(_f)	dread(_f, sizeof(RIFF_FOURCC), 1)
 #define cmpID(_x, _y)							      \
-    strncmp((Char_Binary *) (_x), (Char_Binary *) (_y), sizeof(RIFF_FOURCC))
+    strncmp((CBinbyte *) (_x), (CBinbyte *) (_y), sizeof(RIFF_FOURCC))
 #define PAD2(_x)	(((_x) + 1) & ~1)
 
 /* These functions here are for faking file I/O from buffer. */
@@ -760,7 +760,7 @@ dread (void* buf, size_t size, size_t nitems)
 
   if (file_posn + nread <= file_len)
     {
-      memcpy(buf, (Char_Binary *) file_data + file_posn, size * nitems);
+      memcpy(buf, (CBinbyte *) file_data + file_posn, size * nitems);
       file_posn += nread;
       return nitems;
     }
@@ -775,7 +775,7 @@ static int
 dgetc (void)
 {
   if (file_posn < file_len)
-    return ((Char_Binary *)file_data)[file_posn++];
+    return ((CBinbyte *)file_data)[file_posn++];
   else
     return -1;
 }
@@ -829,7 +829,7 @@ static int
 readChunk (RiffChunk *c)
 {
   int             status;
-  Char_Binary            n;
+  CBinbyte            n;
 
   if ((status = dread(c, sizeof(RiffChunk), 1)))
     if (NAS_BIG_ENDIAN)
@@ -842,7 +842,7 @@ readChunk (RiffChunk *c)
    read the wave data from a buffer in memory. */
 
 static WaveInfo *
-WaveOpenDataForReading (const Char_Binary *data,
+WaveOpenDataForReading (const CBinbyte *data,
 			int length)
 {
   RiffChunk       ck;
@@ -976,7 +976,7 @@ WaveOpenDataForReading (const Char_Binary *data,
 
 
 static Sound
-SoundOpenDataForReading (UChar_Binary *data,
+SoundOpenDataForReading (Binbyte *data,
 			 int length)
 
 {
@@ -988,7 +988,7 @@ SoundOpenDataForReading (UChar_Binary *data,
   if (!(s = (Sound) malloc (sizeof (SoundRec))))
     return NULL;
 
-  if ((s->formatInfo = SndOpenDataForReading ((Char_Binary *) data, length)) != NULL)
+  if ((s->formatInfo = SndOpenDataForReading ((CBinbyte *) data, length)) != NULL)
     {
 #if (AudioLibraryVersionMajor >= 2 ) && (AudioLibraryVersionMinor >= 3)
       if ((toProc = SoundFileGetProc(SoundFileFormatSnd,
@@ -1009,7 +1009,7 @@ SoundOpenDataForReading (UChar_Binary *data,
 	  return NULL;
 	}
     }
-  else if ((s->formatInfo = WaveOpenDataForReading ((Char_Binary *) data, length)) != NULL)
+  else if ((s->formatInfo = WaveOpenDataForReading ((CBinbyte *) data, length)) != NULL)
     {
 #if (AudioLibraryVersionMajor >= 2 ) && (AudioLibraryVersionMinor >= 3)
       if ((toProc = SoundFileGetProc(SoundFileFormatWave,

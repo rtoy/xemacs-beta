@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -25,10 +25,15 @@ Boston, MA 02111-1307, USA.  */
 
 /* Mule-ized as of 8-6-00 */
 
+/* Major comment about parsing and/or constructing a command line taken
+   from Windows, or suitable for giving to one of the library routines that
+   calls a subprocess is in win32-native.el */
+
 #include <config.h>
 #include "lisp.h"
 
 #include "console-msw.h"
+#include "events.h"
 #include "hash.h"
 #include "lstream.h"
 #include "process.h"
@@ -120,6 +125,13 @@ typedef struct
   LPVOID address;
 } process_memory;
 
+static void
+free_process_memory (process_memory *pmc)
+{
+  ResumeThread (pmc->h_thread);
+  CloseHandle (pmc->h_thread);
+}
+
 /*
  * Allocate SIZE bytes in H_PROCESS address space. Fill in PMC used
  * further by other routines. Return nonzero if successful.
@@ -176,15 +188,9 @@ alloc_process_memory (HANDLE h_process, Bytecount size,
   return 1;
 
  failure:
-  ResumeThread (pmc->h_thread);
+  free_process_memory (pmc);
   pmc->address = 0;
   return 0;
-}
-
-static void
-free_process_memory (process_memory *pmc)
-{
-  ResumeThread (pmc->h_thread);
 }
 
 /*
@@ -256,7 +262,7 @@ run_in_other_process (HANDLE h_process,
 
  failure:
   free_process_memory (&pm);
-  return (DWORD)-1;
+  return (DWORD) -1;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -382,7 +388,7 @@ send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
 	assert (d.adr_GenerateConsoleCtrlEvent);
 	d.event = CTRL_C_EVENT;
 	retval = run_in_other_process (h_process,
-				       (LPTHREAD_START_ROUTINE) sigint_proc,
+				       (LPTHREAD_START_ROUTINE) sigint_proc,   
 				       &d, sizeof (d));
 	break;
       }
@@ -392,7 +398,7 @@ send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
 
   if (close_process)
     CloseHandle (h_process);
-  return (int)retval > 0 ? 1 : 0;
+  return (int) retval > 0 ? 1 : 0;
 }
 
 /*
@@ -654,10 +660,14 @@ nt_finalize_process_data (Lisp_Process *p, int for_disksave)
 {
   assert (!for_disksave);
   /* If it's still in the list of processes we are waiting on delete
-     it.  */
+     it.  This can happen if we forcibly delete a process and are unable
+     to kill it. */
   mswindows_unwait_process (p);
   if (NT_DATA (p)->h_process)
-    CloseHandle (NT_DATA (p)->h_process);
+    {
+      CloseHandle (NT_DATA (p)->h_process);
+      NT_DATA (p)->h_process = 0;
+    }
 }
 
 /*
@@ -700,8 +710,8 @@ ensure_console_window_exists (void)
 int
 mswindows_compare_env (const void *strp1, const void *strp2)
 {
-  const Ibyte *str1 = *(const Ibyte **)strp1,
-    *str2 = *(const Ibyte **)strp2;
+  const Itext *str1 = * (const Itext **) strp1,
+    *str2 = * (const Itext **) strp2;
 
   while (*str1 && *str2 && *str1 != '=' && *str2 != '=')
     {
@@ -799,8 +809,8 @@ nt_create_process (Lisp_Process *p,
 	CreatePipe (&hmyslurp_err, &hprocerr, &sa, 0);
       else
 	/* Duplicate the stdout handle for use as stderr */
-	DuplicateHandle(GetCurrentProcess(), hprocout, GetCurrentProcess(),
-			&hprocerr, 0, TRUE, DUPLICATE_SAME_ACCESS);
+	DuplicateHandle (GetCurrentProcess(), hprocout, GetCurrentProcess(),
+			 &hprocerr, 0, TRUE, DUPLICATE_SAME_ACCESS);
 
       /* Stupid Win32 allows to create a pipe with *both* ends either
 	 inheritable or not. We need process ends inheritable, and local
@@ -837,6 +847,8 @@ nt_create_process (Lisp_Process *p,
     args_or_ret = Fnreverse (args_or_ret);
     args_or_ret = Fcons (program, args_or_ret);
 
+    /* This Lisp function is in win32-native.el and has lots of comments
+       about what exactly is going on. */
     args_or_ret = call1 (Qmswindows_construct_process_command_line,
 			 args_or_ret);
 
@@ -938,7 +950,7 @@ nt_create_process (Lisp_Process *p,
        while leaving the real app name as argv[0].  */
     if (is_dos_app)
       {
-	cmdname = (Ibyte *) ALLOCA (PATH_MAX);
+	cmdname = alloca_ibytes (PATH_MAX);
 	if (egetenv ("CMDPROXY"))
 	  qxestrcpy (cmdname, egetenv ("CMDPROXY"));
 	else
@@ -1134,6 +1146,20 @@ nt_send_process (Lisp_Object proc, struct lstream *lstream)
     }
 }
 
+static void
+nt_deactivate_process (Lisp_Process *p,
+		       USID *in_usid,
+		       USID *err_usid)
+{
+  event_stream_delete_io_streams (p->pipe_instream, p->pipe_outstream,
+				  p->pipe_errstream, in_usid, err_usid);
+  /* Go ahead and close the process handle now to prevent accumulation
+     of handles when lots of processes are run. (The handle gets closed
+     anyway upon GC, but that might be a ways away, esp. if
+     deleted-exited-processes is set to nil.) */
+  nt_finalize_process_data (p, 0);
+}
+
 /*
  * Send a signal number SIGNO to PROCESS.
  * CURRENT_GROUP means send to the process group that currently owns
@@ -1196,7 +1222,7 @@ nt_kill_process_by_pid (int pid, int signo)
 static int
 get_internet_address (Lisp_Object host, struct sockaddr_in *address)
 {
-  Char_Binary buf[MAXGETHOSTSTRUCT];
+  CBinbyte buf[MAXGETHOSTSTRUCT];
   HWND hwnd;
   HANDLE hasync;
   int errcode = 0;
@@ -1558,6 +1584,7 @@ process_type_create_nt (void)
   PROCESS_HAS_METHOD (nt, create_process);
   PROCESS_HAS_METHOD (nt, update_status_if_terminated);
   PROCESS_HAS_METHOD (nt, send_process);
+  PROCESS_HAS_METHOD (nt, deactivate_process);
   PROCESS_HAS_METHOD (nt, kill_child_process);
   PROCESS_HAS_METHOD (nt, kill_process_by_pid);
 #ifdef HAVE_SOCKETS

@@ -71,9 +71,9 @@ TYPE is a Common Lisp type specifier."
 	((and (eq type 'integer) (characterp x)) (char-int x))
 	((eq type 'float) (float x))
 	;; XEmacs addition: enhanced numeric type coercions
-	((and (featurep 'number-types)
-	      (memq type '(integer ratio bigfloat))
-	      (coerce-number x type)))
+	((and-fboundp 'coerce-number
+	   (memq type '(integer ratio bigfloat))
+	   (coerce-number x type)))
 	;; XEmacs addition: bit-vector coercion
 	((eq type 'bit-vector) (if (bit-vector-p x) x
 				 (apply 'bit-vector (append x nil))))

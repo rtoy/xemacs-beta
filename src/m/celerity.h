@@ -39,9 +39,5 @@ Boston, MA 02111-1307, USA.  */
 
 #define LD_SWITCH_MACHINE "-k100000"
 
-/* alloca is provided by the system.  */
-
-#define HAVE_ALLOCA
-
 /* (short) negative-int doesn't sign-extend correctly */
 #define SHORT_CAST_BUG

@@ -323,7 +323,7 @@ WR_REQ (fd, request, cmdlen, cmd, resplen)
   if (cmdlen)			/* if arg structure to pass    */
     {
       size = sizeof (struct hfctlreq) + cmdlen;
-      if ((p.c = xmalloc(size)) == NULL) /* malloc one area            */
+      if ((p.c = xmalloc (size)) == NULL) /* malloc one area            */
 	return (-1);
 
       memcpy (p.c, &req, sizeof (req)); /* copy CTL REQ struct         */

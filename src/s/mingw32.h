@@ -21,14 +21,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* based on cygwin32.h by Andy Piper <andy@xemacs.org> */
 
-/* NOTE: MinGW is a way of using GCC to target the native Windows
-   environment.  This works similarly to building with Cygwin, but the
-   resulting executable does not use the Cygwin DLL.  Instead, MINGW
-   provides import libraries for the standard C library DLL's (specifically
-   CRTDLL -- #### how does this differ from MSVCRT and LIBC.LIB?).  This
-   means that code for MinGW will be very similar to code written for
-   VC++.  See comment in windowsnt.h for more information on how Cygwin
-   and native Windows relate. */
+/* See win32.c for info about the different Windows files in XEmacs. */
 
 #include "win32-native.h"
 

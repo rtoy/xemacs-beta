@@ -53,7 +53,7 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_ESD_SOUND
 extern int esd_play_sound_file (Extbyte *file, int vol);
-extern int esd_play_sound_data (UChar_Binary *data, size_t length, int vol);
+extern int esd_play_sound_data (Binbyte *data, size_t length, int vol);
 # define DEVICE_CONNECTED_TO_ESD_P(x) 1 /* #### better check */
 #endif
 
@@ -68,13 +68,13 @@ Lisp_Object Qsound_error;
 
 #ifdef HAVE_NAS_SOUND
 extern int nas_play_sound_file (Extbyte *name, int volume);
-extern int nas_play_sound_data (UChar_Binary *data, int length, int volume);
+extern int nas_play_sound_data (Binbyte *data, int length, int volume);
 extern int nas_wait_for_sounds (void);
 extern Extbyte *nas_init_play (Display *);
 #endif
 
 DOESNT_RETURN
-report_sound_error (const Char_ASCII *string, Lisp_Object data)
+report_sound_error (const Ascbyte *string, Lisp_Object data)
 {
   report_error_with_errno (Qsound_error, string, data);
 }
@@ -346,7 +346,7 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
 #ifdef HAVE_NAS_SOUND
   if (DEVICE_CONNECTED_TO_NAS_P (d) && STRINGP (sound))
     {
-      UChar_Binary *soundext;
+      Binbyte *soundext;
       Bytecount soundextlen;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, sound,
@@ -360,7 +360,7 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
 #ifdef HAVE_ESD_SOUND
   if (DEVICE_CONNECTED_TO_ESD_P (d) && STRINGP (sound))
     {
-      UChar_Binary *soundext;
+      Binbyte *soundext;
       Bytecount soundextlen;
       int succes;
 
@@ -381,7 +381,7 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
   if ((NILP (Vnative_sound_only_on_console) || DEVICE_ON_CONSOLE_P (d))
       && STRINGP (sound))
     {
-      UChar_Binary *soundext;
+      Binbyte *soundext;
       Bytecount soundextlen;
       int succes;
 

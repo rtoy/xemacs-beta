@@ -174,8 +174,8 @@ AudioContextRec;
 /* Forward declarations */
 
 static Lisp_Object close_sound_file (Lisp_Object);
-static AudioContext audio_initialize (UChar_Binary *, int, int);
-static int play_internal (UChar_Binary *, int, AudioContext);
+static AudioContext audio_initialize (Binbyte *, int, int);
+static int play_internal (Binbyte *, int, AudioContext);
 static void drain_audio_port (AudioContext);
 static void write_mulaw_8_chunk (void *, void *, AudioContext);
 static void write_linear_chunk (void *, void *, AudioContext);
@@ -205,7 +205,7 @@ play_sound_file (Extbyte *sound_file, int volume)
 {
   int count = specpdl_depth ();
   int input_fd;
-  UChar_Binary buffer[CHUNKSIZE];
+  Binbyte buffer[CHUNKSIZE];
   int bytes_read;
   AudioContext ac = (AudioContext) 0;
 
@@ -256,7 +256,7 @@ restore_audio_port (Lisp_Object closure)
 }
 
 int
-play_sound_data (UChar_Binary *data, int length, int volume)
+play_sound_data (Binbyte *data, int length, int volume)
 {
   int count = specpdl_depth ();
   AudioContext ac;
@@ -272,7 +272,7 @@ play_sound_data (UChar_Binary *data, int length, int volume)
 }
 
 static AudioContext
-audio_initialize (UChar_Binary *data, int length, int volume)
+audio_initialize (Binbyte *data, int length, int volume)
 {
   Lisp_Object audio_port_state[3];
   static AudioContextRec desc;
@@ -316,17 +316,17 @@ audio_initialize (UChar_Binary *data, int length, int volume)
 }
 
 static int
-play_internal (UChar_Binary *data, int UNUSED (length), AudioContext ac)
+play_internal (Binbyte *data, int UNUSED (length), AudioContext ac)
 {
-  UChar_Binary * limit;
+  Binbyte * limit;
   if (ac == (AudioContext) 0)
     return 0;
 
-  data = (UChar_Binary *) ac->ac_data;
+  data = (Binbyte *) ac->ac_data;
   limit = data + ac->ac_size;
   while (data < limit)
     {
-      UChar_Binary * chunklimit = data + CHUNKSIZE;
+      Binbyte * chunklimit = data + CHUNKSIZE;
 
       if (chunklimit > limit)
 	chunklimit = limit;
@@ -371,8 +371,8 @@ st_ulaw_to_linear (int u)
 static void
 write_mulaw_8_chunk (void *buffer, void *chunklimit, AudioContext ac)
 {
-  UChar_Binary * data = (UChar_Binary *) buffer;
-  UChar_Binary * limit = (UChar_Binary *) chunklimit;
+  Binbyte * data = (Binbyte *) buffer;
+  Binbyte * limit = (Binbyte *) chunklimit;
   short * obuf, * bufp;
   long n_samples = limit - data;
 
@@ -394,7 +394,7 @@ write_linear_chunk (void *data, void *limit, AudioContext ac)
   switch (ac->ac_format)
     {
     case AFlinear16: n_samples = (short *) limit - (short *) data; break;
-    case AFlinear8:  n_samples =  (Char_Binary *) limit -  (Char_Binary *) data; break;
+    case AFlinear8:  n_samples =  (CBinbyte *) limit -  (CBinbyte *) data; break;
     default: n_samples =  (long *) limit -  (long *) data; break;
     }
   ALwritesamps (ac->ac_port, data, (long) n_samples);
@@ -607,7 +607,7 @@ typedef struct
   int dataFormat;
   int samplingRate;
   int channelCount;
-  Char_Binary info[4];
+  CBinbyte info[4];
 }
 SNDSoundStruct;
 #define SOUND_TO_HOST_INT(x) ntohl(x)
@@ -679,8 +679,8 @@ parse_snd_header (void *header, long length, AudioContext desc)
     }
   desc->ac_output_rate = SOUND_TO_HOST_INT (hp->samplingRate);
   desc->ac_nchan = SOUND_TO_HOST_INT (hp->channelCount);
-  desc->ac_data = (Char_Binary *) header + SOUND_TO_HOST_INT (hp->dataLocation);
-  limit = (Char_Binary *) header + length - (Char_Binary *) desc->ac_data;
+  desc->ac_data = (CBinbyte *) header + SOUND_TO_HOST_INT (hp->dataLocation);
+  limit = (CBinbyte *) header + length - (CBinbyte *) desc->ac_data;
   desc->ac_size = SOUND_TO_HOST_INT (hp->dataSize);
   if (desc->ac_size > limit) desc->ac_size = limit;
   return 0;

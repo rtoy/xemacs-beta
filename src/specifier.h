@@ -330,7 +330,7 @@ static const struct sized_memory_description type##_specifier_description_0 \
     &specifier_empty_extra_description;					    \
   defsymbol_nodump (&type##_specifier_methods->predicate_symbol, pred_sym); \
   add_entry_to_specifier_type_list (Q##type, type##_specifier_methods);	    \
-  dump_add_root_struct_ptr (&type##_specifier_methods,			    \
+  dump_add_root_block_ptr (&type##_specifier_methods,			    \
 			    &specifier_methods_description);		    \
 } while (0)
 

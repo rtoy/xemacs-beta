@@ -89,7 +89,8 @@
 
 (defun gtk-widget-instantiate-notebook-internal (plist instance)
   (let ((widget (gtk-notebook-new))
-	(items (plist-get plist :items)))
+	;(items (plist-get plist :items))
+	)
 ;    (while items
 ;      (gtk-notebook-append-page widget
 ;				(gtk-vbox-new nil 3)

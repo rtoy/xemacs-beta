@@ -239,6 +239,7 @@ static int
 gtk_text_width (struct frame *UNUSED (f), struct face_cachel *cachel,
 		CONST Ichar *str, Charcount len)
 {
+  /* !!#### */
   int width_so_far = 0;
   unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
   struct textual_run *runs = alloca_array (struct textual_run, len);
@@ -659,6 +660,7 @@ gtk_output_string (struct window *w, struct display_line *dl,
 		   int width, face_index findex, int cursor,
 		   int cursor_start, int cursor_width, int cursor_height)
 {
+  /* !!#### Needs review */
   /* General variables */
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);

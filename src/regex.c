@@ -28,10 +28,6 @@
 #include <config.h>
 #endif
 
-#ifndef REGISTER	/* Rigidly enforced as of 20.3 */
-#define REGISTER
-#endif
-
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
 #endif
@@ -40,10 +36,6 @@
 #ifndef emacs
 #undef MULE
 #endif
-
-/* We need this for `regex.h', and perhaps for the Emacs include files.  */
-#include <sys/types.h>
-#include <stddef.h> /* needed for ptrdiff_t under Solaris */
 
 /* XEmacs addition */
 #ifdef REL_ALLOC
@@ -83,6 +75,11 @@
 
 #else  /* not emacs */
 
+#include <stdlib.h>
+#include <sys/types.h>
+#include <stddef.h> /* needed for ptrdiff_t under Solaris */
+#include <string.h>
+
 #include "compiler.h"   /* Get compiler-specific definitions like UNUSED */
 
 /* If we are not linking with Emacs proper,
@@ -96,8 +93,6 @@
 #define DECLARE_NOTHING struct nosuchstruct
 #endif
 #endif
-
-#include <stdlib.h>
 
 #define itext_ichar(str)				((Ichar) (str)[0])
 #define itext_ichar_fmt(str, fmt, object)		((Ichar) (str)[0])
@@ -117,8 +112,6 @@ typedef int Ichar;
 #define DEC_IBYTEPTR_FMT(p, fmt) ((p)--)
 #define itext_ichar_len(ptr) 1
 #define itext_ichar_len_fmt(ptr, fmt) 1
-
-#include <string.h>
 
 /* Define the syntax stuff for \<, \>, etc.  */
 
@@ -345,6 +338,7 @@ void *alloca ();
 
 #define REGEX_ALLOCATE ALLOCA
 
+  /* !!#### Needs review */
 /* Assumes a `char *destination' variable.  */
 #define REGEX_REALLOCATE(source, osize, nsize)				\
   (destination = (char *) ALLOCA (nsize),				\

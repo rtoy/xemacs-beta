@@ -563,6 +563,7 @@ Xt_StringToScrollBarPlacement (XrmValuePtr UNUSED (args),
 			       XrmValuePtr fromVal,
 			       XrmValuePtr toVal)
 {
+  /* !!#### needs work */
   XrmQuark q;
   char *lowerName = (char *) ALLOCA (strlen ((char *) fromVal->addr) + 1);
 

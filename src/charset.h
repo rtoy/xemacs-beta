@@ -194,40 +194,15 @@ struct Lisp_Charset
 
   Lisp_Object ccl_program;
 
-  /* Unicode translation tables.  See unicode.c for the format of these tables.
-
-     NOTE ABOUT DUMPING: We don't currently dump these tables.  For one
-     thing, they're big, and it's very fast to recreate them (a fraction of
-     a second on modern processors); for another, there isn't currently
-     support in pdump for this. (At one point I started writing it, in the
-     form of XD_UNION, but thought better of it.) In order to avoid pdump
-     problems (and to make the dump data smaller), we free all the tables
-     at dump time (using the disksave finalization method), set them to
-     zero, and reinit them to blank when we start up again; they will be
-     reloaded when `init-mule-at-startup' is called.
-
-     #### This creates a problem w.r.t. user-defined charsets.  It would be
-     inconvenient to require all dumped user-defined charsets to be
-     reloaded at init time, but that's what currently needs to be done.
-     The solution is either to go ahead and create pdump support for
-     dumping the tables, and use it just for these; or to copy the data in
-     them into a compressed format, write it out to pdump as a single
-     opaque block, and undo the operation at startup.
-
-     #### There's another problem, having to do with starting up in a
-     non-ISO-8859-1 directory.  We don't load the tables until after we've
-     parsed the current directories, and we run into a real bootstrapping
-     problem trying to solve this.  Either we'll have to dump all the
-     tables as-is or make some special provisions for writing extra binary
-     data into the pdump data, and do the compressed trick mentioned above
-     for all the tables. */
+  /* Unicode translation tables.  See unicode.c for the format of these
+     tables, and discussion of how they are initialized.
+  */
   void *to_unicode_table;
   void *from_unicode_table;
   int from_unicode_levels;
 
-  unsigned char unicode_table_loaded;
-
-  /* Final byte of this character set in ISO2022 designating escape sequence */
+  /* Final byte of this character set in ISO2022 designating escape
+     sequence */
   Ibyte final;
 
   /* Number of bytes (1 - 4) required in the internal representation

@@ -1,7 +1,7 @@
 /* Lisp functions pertaining to editing.
    Copyright (C) 1985-1987, 1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -851,8 +851,8 @@ get_home_directory (void)
 	      (homepath = egetenv ("HOMEPATH")) != NULL)
 	    {
 	      cached_home_directory =
-		(Ibyte *) xmalloc (qxestrlen (homedrive) +
-				     qxestrlen (homepath) + 1);
+		xnew_ibytes (qxestrlen (homedrive) + qxestrlen (homepath) +
+				ITEXT_ZTERM_SIZE);
 	      qxesprintf (cached_home_directory, "%s%s",
 			  homedrive,
 			  homepath);
@@ -1061,7 +1061,7 @@ characters appearing in the day and month names may be incorrect.
 
   while (1)
     {
-      Extbyte *buf = (Extbyte *) ALLOCA (size);
+      Extbyte *buf = alloca_extbytes (size);
       Extbyte *formext;
       *buf = 1;
 
@@ -1339,8 +1339,8 @@ the data it can't find.
    See Sun bugs 1113095 and 1114114, ``Timezone routines
    improperly modify environment''.  */
 
-static Char_ASCII set_time_zone_rule_tz1[] = "TZ=GMT+0";
-static Char_ASCII set_time_zone_rule_tz2[] = "TZ=GMT+1";
+static Ascbyte set_time_zone_rule_tz1[] = "TZ=GMT+0";
+static Ascbyte set_time_zone_rule_tz2[] = "TZ=GMT+1";
 
 #endif
 
@@ -1579,7 +1579,7 @@ text into.  If BUFFER is nil, the current buffer is assumed.
   if (n <= 0)
     return Qnil;
   slen = min (n, (Bytecount) 768);
-  string = alloca_array (Ibyte, slen);
+  string = alloca_ibytes (slen);
   /* Write as many copies of the character into the temp string as will fit. */
   for (i = 0; i + charlen <= slen; i += charlen)
     for (j = 0; j < charlen; j++)

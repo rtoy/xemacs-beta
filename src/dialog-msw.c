@@ -297,7 +297,7 @@ dialog_popped_down (Lisp_Object UNUSED (arg))
 static struct
 {
   DWORD errmess;
-  Char_ASCII *errname;
+  Ascbyte *errname;
 } common_dialog_errors[] =
 {
   { CDERR_DIALOGFAILURE, "CDERR_DIALOGFAILURE" },
@@ -565,17 +565,14 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 	  }
 	else if (EQ (key, Q_buttons))
 	  {
-	    Lisp_Object item_cons;
-	    
 	    /* Parse each item in the dialog into gui_item structs,
 	       and stuff a dynarr of these. Calculate button row width
 	       in this loop too */
-	    EXTERNAL_LIST_LOOP (item_cons, value)
+	    EXTERNAL_LIST_LOOP_2 (item, value)
 	      {
-		if (!NILP (XCAR (item_cons)))
+		if (!NILP (item))
 		  {
-		    Lisp_Object gitem =
-		      gui_parse_item_keywords (XCAR (item_cons));
+		    Lisp_Object gitem = gui_parse_item_keywords (item);
 		    Dynarr_add (dialog_items, gitem);
 		    button_row_width += button_width (XGUI_ITEM (gitem)->name) 
 		      + X_BUTTON_MARGIN;

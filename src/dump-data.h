@@ -24,15 +24,15 @@ Boston, MA 02111-1307, USA.  */
 #define INCLUDED_dump_data_h_
 
 /* inline dumped data size */
-size_t dumped_data_size(void);
+size_t dumped_data_size (void);
 
 /* maximum space available for inline data */
-size_t dumped_data_max_size(void);
+size_t dumped_data_max_size (void);
 
 /* alignment offset for data inclusion */
-size_t dumped_data_align_offset(void);
+size_t dumped_data_align_offset (void);
 
 /* inline data */
-char *dumped_data_get(void);
+Rawbyte *dumped_data_get (void);
 
 #endif

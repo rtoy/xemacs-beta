@@ -383,7 +383,6 @@ static unsigned long
 populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
 			     Lisp_Object hash_tab, int bar_p, int populate_p)
 {
-  Lisp_Object item_desc;
   int deep_p, flush_right;
   struct gcpro gcpro1, gcpro2, gcpro3;
   unsigned long checksum;
@@ -418,24 +417,26 @@ populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
 
   /* Loop thru the desc's CDR and add items for each entry */
   flush_right = 0;
-  EXTERNAL_LIST_LOOP (item_desc, desc)
-    {
-      if (NILP (XCAR (item_desc)))
-	{
-	  /* Do not flush right menubar items when MS style compliant */
-	  if (bar_p && !REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIGHT_FLUSH)
-	    flush_right = 1;
-	  if (!populate_p)
-	    checksum = HASH2 (checksum, LISP_HASH (Qnil));
-	}
-      else if (populate_p)
-	populate_menu_add_item (menu, path, hash_tab,
-				XCAR (item_desc), &accel_list,
-				flush_right, bar_p);
-      else
-	checksum = HASH2 (checksum,
-			  checksum_menu_item (XCAR (item_desc)));
-    }
+  {
+    EXTERNAL_LIST_LOOP_2 (elt, desc)
+      {
+	if (NILP (elt))
+	  {
+	    /* Do not flush right menubar items when MS style compliant */
+	    if (bar_p && !REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIGHT_FLUSH)
+	      flush_right = 1;
+	    if (!populate_p)
+	      checksum = HASH2 (checksum, LISP_HASH (Qnil));
+	  }
+	else if (populate_p)
+	  populate_menu_add_item (menu, path, hash_tab,
+				  elt, &accel_list,
+				  flush_right, bar_p);
+	else
+	  checksum = HASH2 (checksum,
+			    checksum_menu_item (elt));
+      }
+  }
 
   if (populate_p)
     {

@@ -2,7 +2,7 @@
 
 ### make-mswin-unicode --- generate Unicode-encapsulation code for MS Windows
 
-## Copyright (C) 2001, 2002 Ben Wing.
+## Copyright (C) 2001, 2002, 2004 Ben Wing.
 
 ## Author: Ben Wing <ben@xemacs.org>
 ## Maintainer: Ben Wing <ben@xemacs.org>
@@ -269,7 +269,8 @@ foreach my $file (keys %files)
 		  }
 
 		print HOUT "#undef $fun\n";
-		print HOUT "#define $fun error $reason\n";
+		(my $munged_reason = $reason) =~ s/[^A-Za-z0-9]/_/g;
+		print HOUT "#define $fun error_$munged_reason\n";
 		print COUT "/* Error if $fun used: $reason */\n\n";
 	      }
 	    elsif ($command eq "skip")
@@ -333,7 +334,7 @@ foreach my $file (keys %files)
 		  }
 		print HOUT "#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED\n";
 		print HOUT "#undef $fun\n";
-		print HOUT "#define $fun error use qxe$fun or ${fun}A/${fun}W\n";
+		print HOUT "#define $fun error_use_qxe${fun}_or_${fun}A_and_${fun}W\n";
 		print HOUT "#endif\n";
 		if (defined ($reason))
 		  {

@@ -115,9 +115,9 @@ console_type_entry_dynarr *the_console_type_entry_dynarr;
 
 static const struct memory_description console_data_description_1 []= {
 #ifdef HAVE_TTY
-  { XD_STRUCT_PTR, tty_console, 1, &tty_console_data_description},
+  { XD_BLOCK_PTR, tty_console, 1, &tty_console_data_description},
 #endif
-  { XD_STRUCT_PTR, stream_console, 1, &stream_console_data_description},
+  { XD_BLOCK_PTR, stream_console, 1, &stream_console_data_description},
   { XD_END }
 };
 
@@ -129,7 +129,7 @@ static const struct memory_description console_description [] = {
   { XD_INT, offsetof (struct console, contype) },
 #define MARKED_SLOT(x) { XD_LISP_OBJECT, offsetof (struct console, x) },
 #include "conslots.h"
-  { XD_STRUCT_PTR, offsetof (struct console, conmeths), 1,
+  { XD_BLOCK_PTR, offsetof (struct console, conmeths), 1,
     &console_methods_description },
   { XD_UNION, offsetof (struct console, console_data), 
     XD_INDIRECT (0, 0), &console_data_description },
@@ -1227,7 +1227,7 @@ syms_of_console (void)
 
 static const struct memory_description cte_description_1[] = {
   { XD_LISP_OBJECT, offsetof (console_type_entry, symbol) },
-  { XD_STRUCT_PTR,  offsetof (console_type_entry, meths), 1, &console_methods_description },
+  { XD_BLOCK_PTR,  offsetof (console_type_entry, meths), 1, &console_methods_description },
   { XD_END }
 };
 
@@ -1263,7 +1263,7 @@ void
 console_type_create (void)
 {
   the_console_type_entry_dynarr = Dynarr_new (console_type_entry);
-  dump_add_root_struct_ptr (&the_console_type_entry_dynarr, &cted_description);
+  dump_add_root_block_ptr (&the_console_type_entry_dynarr, &cted_description);
 
   Vconsole_type_list = Qnil;
   staticpro (&Vconsole_type_list);
@@ -1289,8 +1289,6 @@ reinit_vars_of_console (void)
 void
 vars_of_console (void)
 {
-  reinit_vars_of_console ();
-
   DEFVAR_LISP ("create-console-hook", &Vcreate_console_hook /*
 Function or functions to call when a console is created.
 One argument, the newly-created console.
@@ -1474,8 +1472,8 @@ complex_vars_of_console (void)
   syms = XCONSOLE (Vconsole_local_symbols);
   console_defaults_saved_slots      = &defs->CONSOLE_SLOTS_FIRST_NAME;
   console_local_symbols_saved_slots = &syms->CONSOLE_SLOTS_FIRST_NAME;
-  dump_add_root_struct_ptr (&console_defaults_saved_slots,      &console_slots_description);
-  dump_add_root_struct_ptr (&console_local_symbols_saved_slots, &console_slots_description);
+  dump_add_root_block_ptr (&console_defaults_saved_slots,      &console_slots_description);
+  dump_add_root_block_ptr (&console_local_symbols_saved_slots, &console_slots_description);
 
   DEFVAR_CONSOLE_DEFAULTS ("default-function-key-map", function_key_map /*
 Default value of `function-key-map' for consoles that don't override it.

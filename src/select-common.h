@@ -67,7 +67,7 @@ Boston, MA 02111-1307, USA.  */
 
 static Lisp_Object
 selection_data_to_lisp_data (struct device *d,
-			     UChar_Binary *data,
+			     Rawbyte *data,
 			     Bytecount size,
 			     XE_ATOM_TYPE type,
 			     int format)
@@ -168,7 +168,7 @@ selection_data_to_lisp_data (struct device *d,
 static void
 lisp_data_to_selection_data (struct device *d,
 			     Lisp_Object obj,
-			     UChar_Binary **data_ret,
+			     Rawbyte **data_ret,
 			     XE_ATOM_TYPE *type_ret,
 			     Bytecount *size_ret,
 			     int *format_ret)
@@ -200,7 +200,7 @@ lisp_data_to_selection_data (struct device *d,
 			  (NILP (type) ? Qctext : Qbinary));
       *format_ret = 8;
       *size_ret = extvallen;
-      *data_ret = (UChar_Binary *) xmalloc (*size_ret);
+      *data_ret = xnew_rawbytes (*size_ret);
       memcpy (*data_ret, extval, *size_ret);
 #ifdef MULE
       if (NILP (type)) type = QCOMPOUND_TEXT;
@@ -221,7 +221,7 @@ lisp_data_to_selection_data (struct device *d,
 			  ALLOCA, (extval, extvallen),
 			  Qctext);
       *size_ret = extvallen;
-      *data_ret = (UChar_Binary *) xmalloc (*size_ret);
+      *data_ret = xnew_rawbytes (*size_ret);
       memcpy (*data_ret, extval, *size_ret);
 #ifdef MULE
       if (NILP (type)) type = QCOMPOUND_TEXT;
@@ -233,7 +233,7 @@ lisp_data_to_selection_data (struct device *d,
     {
       *format_ret = 32;
       *size_ret = 1;
-      *data_ret = (UChar_Binary *) xmalloc (sizeof (XE_ATOM_TYPE) + 1);
+      *data_ret = xnew_rawbytes (sizeof (XE_ATOM_TYPE) + 1);
       (*data_ret) [sizeof (XE_ATOM_TYPE)] = 0;
       (*(XE_ATOM_TYPE **) data_ret) [0] = XE_SYMBOL_TO_ATOM (d, obj, 0);
       if (NILP (type)) type = QATOM;
@@ -244,7 +244,7 @@ lisp_data_to_selection_data (struct device *d,
     {
       *format_ret = 16;
       *size_ret = 1;
-      *data_ret = (UChar_Binary *) xmalloc (sizeof (short) + 1);
+      *data_ret = xnew_rawbytes (sizeof (short) + 1);
       (*data_ret) [sizeof (short)] = 0;
       (*(short **) data_ret) [0] = (short) XINT (obj);
       if (NILP (type)) type = QINTEGER;
@@ -253,7 +253,7 @@ lisp_data_to_selection_data (struct device *d,
     {
       *format_ret = 32;
       *size_ret = 1;
-      *data_ret = (UChar_Binary *) xmalloc (sizeof (long) + 1);
+      *data_ret = xnew_rawbytes (sizeof (long) + 1);
       (*data_ret) [sizeof (long)] = 0;
       (*(unsigned long **) data_ret) [0] = lisp_to_word (obj);
       if (NILP (type)) type = QINTEGER;
@@ -272,7 +272,7 @@ lisp_data_to_selection_data (struct device *d,
 	  if (NILP (type)) type = QATOM;
 	  *size_ret = XVECTOR_LENGTH (obj);
 	  *format_ret = 32;
-	  *data_ret = (UChar_Binary *) xmalloc ((*size_ret) * sizeof (XE_ATOM_TYPE));
+	  *data_ret = xnew_rawbytes ((*size_ret) * sizeof (XE_ATOM_TYPE));
 	  for (i = 0; i < *size_ret; i++)
 	    if (SYMBOLP (XVECTOR_DATA (obj) [i]))
 	      (*(XE_ATOM_TYPE **) data_ret) [i] =
@@ -288,8 +288,8 @@ lisp_data_to_selection_data (struct device *d,
 	  if (NILP (type)) type = QATOM_PAIR;
 	  *size_ret = XVECTOR_LENGTH (obj);
 	  *format_ret = 32;
-	  *data_ret = (UChar_Binary *)
-	    xmalloc ((*size_ret) * sizeof (XE_ATOM_TYPE) * 2);
+	  *data_ret =
+	    xnew_rawbytes ((*size_ret) * sizeof (XE_ATOM_TYPE) * 2);
 	  for (i = 0; i < *size_ret; i++)
 	    if (VECTORP (XVECTOR_DATA (obj) [i]))
 	      {
@@ -321,7 +321,7 @@ lisp_data_to_selection_data (struct device *d,
 	      syntax_error
 		("all elements of the vector must be integers or conses of integers", obj);
 
-	  *data_ret = (UChar_Binary *) xmalloc (*size_ret * (*format_ret/8));
+	  *data_ret = xnew_rawbytes (*size_ret * (*format_ret/8));
 	  for (i = 0; i < *size_ret; i++)
 	    if (*format_ret == 32)
 	      (*((unsigned long **) data_ret)) [i] =

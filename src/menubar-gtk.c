@@ -875,13 +875,15 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 
 	  if (STRINGP (suffix) && XSTRING_LENGTH (suffix))
 	    {
-	      label_buffer = (Ibyte*) ALLOCA (XSTRING_LENGTH (name) + 15 + XSTRING_LENGTH (suffix));
-	      sprintf ((char*) label_buffer, "%s %s ", XSTRING_DATA (name), XSTRING_DATA (suffix));
+	      /* !!#### */
+	      label_buffer = alloca_ibytes (XSTRING_LENGTH (name) + 15 + XSTRING_LENGTH (suffix));
+	      qxesprintf (label_buffer, "%s %s ", XSTRING_DATA (name),
+			  XSTRING_DATA (suffix));
 	    }
 	  else
 	    {
-	      label_buffer = (Ibyte*) ALLOCA (XSTRING_LENGTH (name) + 15);
-	      sprintf ((char*) label_buffer, "%s ", XSTRING_DATA (name));
+	      label_buffer = alloca_ibytes (XSTRING_LENGTH (name) + 15);
+	      qxesprintf (label_buffer, "%s ", XSTRING_DATA (name));
 	    }
 
 	  temp_label = convert_underscores (label_buffer);
@@ -1082,9 +1084,7 @@ static void
 menu_create_menubar (struct frame *f, Lisp_Object descr)
 {
   gboolean right_justify = FALSE;
-  Lisp_Object tail = Qnil;
   Lisp_Object value = descr;
-  Lisp_Object item_descr = Qnil;
   GtkWidget *menubar = FRAME_GTK_MENUBAR_WIDGET (f);
   GUI_ID id = (GUI_ID) gtk_object_get_data (GTK_OBJECT (menubar), XEMACS_MENU_GUIID_TAG);
   guint menu_position = 0;
@@ -1098,74 +1098,74 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 
   menubar_accel_group = gtk_accel_group_new();
 
-  EXTERNAL_LIST_LOOP (tail, value)
-    {
-      gpointer current_child = g_list_nth_data (GTK_MENU_SHELL (menubar)->children, menu_position);
+  {
+    EXTERNAL_LIST_LOOP_2 (item_descr, value)
+      {
+	gpointer current_child = g_list_nth_data (GTK_MENU_SHELL (menubar)->children, menu_position);
 
-      item_descr = XCAR (tail);
+	if (NILP (item_descr))
+	  {
+	    /* Need to start right-justifying menus */
+	    right_justify = TRUE;
+	    menu_position--;
+	  }
+	else if (VECTORP (item_descr))
+	  {
+	    /* It is a button description */
+	    GtkWidget *item;
 
-      if (NILP (item_descr))
-	{
-	  /* Need to start right-justifying menus */
-	  right_justify = TRUE;
-	  menu_position--;
-	}
-      else if (VECTORP (item_descr))
-	{
-	  /* It is a button description */
-	  GtkWidget *item;
+	    item = menu_descriptor_to_widget (item_descr, menubar_accel_group);
+	    gtk_widget_set_name (item, "XEmacsMenuButton");
 
-	  item = menu_descriptor_to_widget (item_descr, menubar_accel_group);
-	  gtk_widget_set_name (item, "XEmacsMenuButton");
+	    if (!item)
+	      {
+		item = gtk_menu_item_new_with_label ("ITEM CREATION ERROR");
+	      }
 
-	  if (!item)
-	    {
-	      item = gtk_menu_item_new_with_label ("ITEM CREATION ERROR");
-	    }
+	    gtk_widget_show_all (item);
+	    if (current_child) gtk_widget_destroy (GTK_WIDGET (current_child));
+	    gtk_menu_bar_insert (GTK_MENU_BAR (menubar), item, menu_position);
+	  }
+	else if (LISTP (item_descr))
+	  {
+	    /* Need to actually convert it into a menu and slap it in */
+	    GtkWidget *widget;
+	    gboolean reused_p = FALSE;
 
-	  gtk_widget_show_all (item);
-	  if (current_child) gtk_widget_destroy (GTK_WIDGET (current_child));
-	  gtk_menu_bar_insert (GTK_MENU_BAR (menubar), item, menu_position);
-	}
-      else if (LISTP (item_descr))
-	{
-	  /* Need to actually convert it into a menu and slap it in */
-	  GtkWidget *widget;
-	  gboolean reused_p = FALSE;
+	    /* We may be able to reuse the widget, let's at least check. */
+	    if (current_child && menu_can_reuse_widget (GTK_WIDGET (current_child),
+							XSTRING_DATA (XCAR (item_descr))))
+	      {
+		widget = menu_convert (item_descr, GTK_WIDGET (current_child),
+				       menubar_accel_group);
+		reused_p = TRUE;
+	      }
+	    else
+	      {
+		widget = menu_convert (item_descr, NULL, menubar_accel_group);
+		if (current_child) gtk_widget_destroy (GTK_WIDGET (current_child));
+		gtk_menu_bar_insert (GTK_MENU_BAR (menubar), widget, menu_position);
+	      }
 
-	  /* We may be able to reuse the widget, let's at least check. */
-	  if (current_child && menu_can_reuse_widget (GTK_WIDGET (current_child),
-						      XSTRING_DATA (XCAR (item_descr))))
-	    {
-	      widget = menu_convert (item_descr, GTK_WIDGET (current_child),
-				     menubar_accel_group);
-	      reused_p = TRUE;
-	    }
-	  else
-	    {
-	      widget = menu_convert (item_descr, NULL, menubar_accel_group);
-	      if (current_child) gtk_widget_destroy (GTK_WIDGET (current_child));
-	      gtk_menu_bar_insert (GTK_MENU_BAR (menubar), widget, menu_position);
-	    }
-
-	  if (widget)
-	    {
-	      if (right_justify) gtk_menu_item_right_justify (GTK_MENU_ITEM (widget));
-	    }
-	  else
-	    {
-	      widget = gtk_menu_item_new_with_label ("ERROR");
-	      /* abort() */
-	    }
-	  gtk_widget_show_all (widget);
-	}
-      else if (STRINGP (item_descr))
-	{
-	  /* Do I really want to be this careful?  Anything else in a
-             menubar description is illegal */
-	}
-      menu_position++;
-    }
+	    if (widget)
+	      {
+		if (right_justify) gtk_menu_item_right_justify (GTK_MENU_ITEM (widget));
+	      }
+	    else
+	      {
+		widget = gtk_menu_item_new_with_label ("ERROR");
+		/* abort() */
+	      }
+	    gtk_widget_show_all (widget);
+	  }
+	else if (STRINGP (item_descr))
+	  {
+	    /* Do I really want to be this careful?  Anything else in a
+	       menubar description is illegal */
+	  }
+	menu_position++;
+      }
+  }
 
   /* Need to delete any menu items that were past the bounds of the new one */
   {
@@ -1495,7 +1495,6 @@ If non-nil, the frame menubar can be detached into its own top-level window.
 If non-nil, menus can be torn off into their own top-level windows.
 */ );
 #endif
-  reinit_vars_of_menubar_gtk ();
 }
 
 /*---------------------------------------------------------------------------*/

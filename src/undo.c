@@ -545,8 +545,6 @@ reinit_vars_of_undo (void)
 void
 vars_of_undo (void)
 {
-  reinit_vars_of_undo ();
-
   pending_boundary = Qnil;
   staticpro (&pending_boundary);
   last_undo_buffer = Qnil;

@@ -299,7 +299,6 @@ reinit_vars_of_event_tty (void)
 void
 vars_of_event_tty (void)
 {
-  reinit_vars_of_event_tty ();
 }
 
 void

@@ -239,12 +239,12 @@ find_make_module (const CIbyte *mod, const CIbyte *name, const CIbyte *ver,
    * not previously loaded.
    */
   if (modules == NULL)
-    modules = (emodules_list *) xmalloc (sizeof (emodules_list));
+    modules = xnew (emodules_list);
   modnum++;
-  modules = (emodules_list *) xrealloc (modules, modnum * sizeof (emodules_list));
+  XREALLOC_ARRAY (modules, emodules_list, modnum);
 
   fs = modnum - 1;
-  memset (&modules[fs], 0, sizeof(emodules_list));
+  memset (&modules[fs], 0, sizeof (emodules_list));
   return fs;
 }
 
@@ -333,6 +333,7 @@ void
 emodules_load (const CIbyte *module, const CIbyte *modname,
 	       const CIbyte *modver)
 {
+  /* !!#### Needs serious work */
   Lisp_Object old_load_list;
   Lisp_Object filename;
   Lisp_Object foundname, lisp_modname;
@@ -587,8 +588,6 @@ vars_of_module (void)
 {
 #ifdef HAVE_SHLIB
   Fprovide (intern ("modules"));
-
-  reinit_vars_of_module ();
 
 #ifdef HAVE_LTDL
   lt_dlinit ();

@@ -1,5 +1,5 @@
 /* Code to handle Unicode conversion.
-   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -43,6 +43,126 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysfile.h"
 
+/* For more info about how Unicode works under Windows, see intl-win32.c. */
+
+/* Info about Unicode translation tables [ben]:
+
+   FORMAT:
+   -------
+
+   We currently use the following format for tables:
+
+   If dimension == 1, to_unicode_table is a 96-element array of ints
+   (Unicode code points); else, it's a 96-element array of int * pointers,
+   each of which points to a 96-element array of ints.  If no elements in a
+   row have been filled in, the pointer will point to a default empty
+   table; that way, memory usage is more reasonable but lookup still fast.
+
+   -- If from_unicode_levels == 1, from_unicode_table is a 256-element
+   array of shorts (octet 1 in high byte, octet 2 in low byte; we don't
+   store Ichars directly to save space).
+
+   -- If from_unicode_levels == 2, from_unicode_table is a 256-element
+   array of short * pointers, each of which points to a 256-element array
+   of shorts.
+
+   -- If from_unicode_levels == 3, from_unicode_table is a 256-element
+   array of short ** pointers, each of which points to a 256-element array
+   of short * pointers, each of which points to a 256-element array of
+   shorts.
+
+   -- If from_unicode_levels == 4, same thing but one level deeper.
+
+   Just as for to_unicode_table, we use default tables to fill in all
+   entries with no values in them.
+
+   #### An obvious space-saving optimization is to use variable-sized
+   tables, where each table instead of just being a 256-element array, is a
+   structure with a start value, an end value, and a variable number of
+   entries (END - START + 1).  Only 8 bits are needed for END and START,
+   and could be stored at the end to avoid alignment problems.  However,
+   before charging off and implementing this, we need to consider whether
+   it's worth it:
+
+   (1) Most tables will be highly localized in which code points are
+   defined, heavily reducing the possible memory waste.  Before doing any
+   rewriting, write some code to see how much memory is actually being
+   wasted (i.e. ratio of empty entries to total # of entries) and only
+   start rewriting if it's unacceptably high.  You have to check over all
+   charsets.
+
+   (2) Since entries are usually added one at a time, you have to be very
+   careful when creating the tables to avoid realloc()/free() thrashing in
+   the common case when you are in an area of high localization and are
+   going to end up using most entries in the table.  You'd certainly want
+   to allow only certain sizes, not arbitrary ones (probably powers of 2,
+   where you want the entire block including the START/END values to fit
+   into a power of 2, minus any malloc overhead if there is any -- there's
+   none under gmalloc.c, and probably most system malloc() functions are
+   quite smart nowadays and also have no overhead).  You could optimize
+   somewhat during the in-C initializations, because you can compute the
+   actual usage of various tables by scanning the entries you're going to
+   add in a separate pass before adding them. (You could actually do the
+   same thing when entries are added on the Lisp level by making the
+   assumption that all the entries will come in one after another before
+   any use is made of the data.  So as they're coming in, you just store
+   them in a big long list, and the first time you need to retrieve an
+   entry, you compute the whole table at once.) You'd still have to deal
+   with the possibility of later entries coming in, though.
+
+   (3) You do lose some speed using START/END values, since you need a
+   couple of comparisons at each level.  This could easily make each single
+   lookup become 3-4 times slower.  The Unicode book considers this a big
+   issue, and recommends against variable-sized tables for this reason;
+   however, they almost certainly have in mind applications that primarily
+   involve conversion of large amounts of data.  Most Unicode strings that
+   are translated in XEmacs are fairly small.  The only place where this
+   might matter is in loading large files -- e.g. a 3-megabyte
+   Unicode-encoded file.  So think about this, and maybe do a trial
+   implementation where you don't worry too much about the intricacies of
+   (2) and just implement some basic "multiply by 1.5" trick or something
+   to do the resizing.  There is a very good FAQ on Unicode called
+   something like the Linux-Unicode How-To (it should be part of the Linux
+   How-To's, I think), that lists the url of a guy with a whole bunch of
+   unicode files you can use to stress-test your implementations, and he's
+   highly likely to have a good multi-megabyte Unicode-encoded file (with
+   normal text in it -- if you created your own just by creating repeated
+   strings of letters and numbers, you probably wouldn't get accurate
+   results).
+
+   INITIALIZATION:
+   ---------------
+
+   There are advantages and disadvantages to loading the tables at
+   run-time.
+
+   Advantages:
+
+   They're big, and it's very fast to recreate them (a fraction of a second
+   on modern processors).
+
+   Disadvantages:
+
+   (1) User-defined charsets: It would be inconvenient to require all
+   dumped user-defined charsets to be reloaded at init time.
+
+   (2) Starting up in a non-ISO-8859-1 directory.  If we load at run-time,
+   we don't load the tables until after we've parsed the current
+   directories, and we run into a real bootstrapping problem, if the
+   directories themselves are non-ISO-8859-1.  This is potentially fixable
+   once we switch to using Unicode internally, so we don't have to do any
+   conversion (other than the automatic kind, e.g. UTF-16 to UTF-8).
+
+   NB With run-time loading, we load in init-mule-at-startup, in
+   mule-cmds.el.  This is called from startup.el, which is quite late in
+   the initialization process -- but data-directory isn't set until then.
+   With dump-time loading, you still can't dump in a Japanese directory
+   (again, until we move to Unicode internally), but this is not such an
+   imposition.
+
+   
+*/
+
 /* #### WARNING!  The current sledgehammer routines have a fundamental
    problem in that they can't handle two characters mapping to a
    single Unicode codepoint or vice-versa in a single charset table.
@@ -61,91 +181,6 @@ Boston, MA 02111-1307, USA.  */
    occurs in the Big5 tables, as provided by the Unicode Consortium. */
 
 /* #define SLEDGEHAMMER_CHECK_UNICODE */
-
-  /* We currently use the following format for tables:
-
-     If dimension == 1, to_unicode_table is a 96-element array of ints
-     (Unicode code points); else, it's a 96-element array of int *
-     pointers, each of which points to a 96-element array of ints.  If no
-     elements in a row have been filled in, the pointer will point to a
-     default empty table; that way, memory usage is more reasonable but
-     lookup still fast.
-
-     -- If from_unicode_levels == 1, from_unicode_table is a 256-element
-     array of shorts (octet 1 in high byte, octet 2 in low byte; we don't
-     store Ichars directly to save space).
-
-     -- If from_unicode_levels == 2, from_unicode_table is a
-     256-element array of short * pointers, each of which points to a
-     256-element array of shorts.
-
-     -- If from_unicode_levels == 3, from_unicode_table is a
-     256-element array of short ** pointers, each of which points to
-     a 256-element array of short * pointers, each of which points to
-     a 256-element array of shorts.
-
-     -- If from_unicode_levels == 4, same thing but one level deeper.
-
-     Just as for to_unicode_table, we use default tables to fill in
-     all entries with no values in them.
-
-     #### An obvious space-saving optimization is to use variable-sized
-     tables, where each table instead of just being a 256-element array,
-     is a structure with a start value, an end value, and a variable
-     number of entries (END - START + 1).  Only 8 bits are needed for
-     END and START, and could be stored at the end to avoid alignment
-     problems.  However, before charging off and implementing this,
-     we need to consider whether it's worth it:
-
-     (1) Most tables will be highly localized in which code points are
-     defined, heavily reducing the possible memory waste.  Before
-     doing any rewriting, write some code to see how much memory is
-     actually being wasted (i.e. ratio of empty entries to total # of
-     entries) and only start rewriting if it's unacceptably high.  You
-     have to check over all charsets.
-
-     (2) Since entries are usually added one at a time, you have to be
-     very careful when creating the tables to avoid realloc()/free()
-     thrashing in the common case when you are in an area of high
-     localization and are going to end up using most entries in the
-     table.  You'd certainly want to allow only certain sizes, not
-     arbitrary ones (probably powers of 2, where you want the entire
-     block including the START/END values to fit into a power of 2,
-     minus any malloc overhead if there is any -- there's none under
-     gmalloc.c, and probably most system malloc() functions are quite
-     smart nowadays and also have no overhead).  You could optimize
-     somewhat during the in-C initializations, because you can compute
-     the actual usage of various tables by scanning the entries you're
-     going to add in a separate pass before adding them. (You could
-     actually do the same thing when entries are added on the Lisp
-     level by making the assumption that all the entries will come in
-     one after another before any use is made of the data.  So as
-     they're coming in, you just store them in a big long list, and
-     the first time you need to retrieve an entry, you compute the
-     whole table at once.) You'd still have to deal with the
-     possibility of later entries coming in, though.
-
-     (3) You do lose some speed using START/END values, since you need
-     a couple of comparisons at each level.  This could easily make
-     each single lookup become 3-4 times slower.  The Unicode book
-     considers this a big issue, and recommends against variable-sized
-     tables for this reason; however, they almost certainly have in
-     mind applications that primarily involve conversion of large
-     amounts of data.  Most Unicode strings that are translated in
-     XEmacs are fairly small.  The only place where this might matter
-     is in loading large files -- e.g. a 3-megabyte Unicode-encoded
-     file.  So think about this, and maybe do a trial implementation
-     where you don't worry too much about the intricacies of (2) and
-     just implement some basic "multiply by 1.5" trick or something to
-     do the resizing.  There is a very good FAQ on Unicode called
-     something like the Linux-Unicode How-To (it should be part of the
-     Linux How-To's, I think), that lists the url of a guy with a
-     whole bunch of unicode files you can use to stress-test your
-     implementations, and he's highly likely to have a good
-     multi-megabyte Unicode-encoded file (with normal text in it -- if
-     you created your own just by creating repeated strings of letters
-     and numbers, you probably wouldn't get accurate results).
-     */
 
 /* When MULE is not defined, we may still need some Unicode support --
    in particular, some Windows API's always want Unicode, and the way
@@ -189,7 +224,7 @@ static const struct sized_memory_description to_unicode_level_0_desc = {
 };
 
 static const struct memory_description to_unicode_level_1_desc_1[] = {
-  { XD_STRUCT_PTR, 0, 96, &to_unicode_level_0_desc },
+  { XD_BLOCK_PTR, 0, 96, &to_unicode_level_0_desc },
   { XD_END }
 };
 
@@ -198,8 +233,8 @@ static const struct sized_memory_description to_unicode_level_1_desc = {
 };
 
 static const struct memory_description to_unicode_description_1[] = {
-  { XD_STRUCT_PTR, 1, 96, &to_unicode_level_0_desc },
-  { XD_STRUCT_PTR, 2, 96, &to_unicode_level_1_desc },
+  { XD_BLOCK_PTR, 1, 96, &to_unicode_level_0_desc },
+  { XD_BLOCK_PTR, 2, 96, &to_unicode_level_1_desc },
   { XD_END }
 };
 
@@ -207,6 +242,12 @@ static const struct memory_description to_unicode_description_1[] = {
    needs to describe them to pdump. */
 const struct sized_memory_description to_unicode_description = {
   sizeof (void *), to_unicode_description_1
+};
+
+/* Used only for to_unicode_blank_2 */
+static const struct memory_description to_unicode_level_2_desc_1[] = {
+  { XD_BLOCK_PTR, 0, 96, &to_unicode_level_1_desc },
+  { XD_END }
 };
 
 static const struct memory_description from_unicode_level_0_desc_1[] = {
@@ -218,7 +259,7 @@ static const struct sized_memory_description from_unicode_level_0_desc = {
 };
 
 static const struct memory_description from_unicode_level_1_desc_1[] = {
-  { XD_STRUCT_PTR, 0, 256, &from_unicode_level_0_desc },
+  { XD_BLOCK_PTR, 0, 256, &from_unicode_level_0_desc },
   { XD_END }
 };
 
@@ -227,7 +268,7 @@ static const struct sized_memory_description from_unicode_level_1_desc = {
 };
 
 static const struct memory_description from_unicode_level_2_desc_1[] = {
-  { XD_STRUCT_PTR, 0, 256, &from_unicode_level_1_desc },
+  { XD_BLOCK_PTR, 0, 256, &from_unicode_level_1_desc },
   { XD_END }
 };
 
@@ -236,7 +277,7 @@ static const struct sized_memory_description from_unicode_level_2_desc = {
 };
 
 static const struct memory_description from_unicode_level_3_desc_1[] = {
-  { XD_STRUCT_PTR, 0, 256, &from_unicode_level_2_desc },
+  { XD_BLOCK_PTR, 0, 256, &from_unicode_level_2_desc },
   { XD_END }
 };
 
@@ -245,10 +286,10 @@ static const struct sized_memory_description from_unicode_level_3_desc = {
 };
 
 static const struct memory_description from_unicode_description_1[] = {
-  { XD_STRUCT_PTR, 1, 256, &from_unicode_level_0_desc },
-  { XD_STRUCT_PTR, 2, 256, &from_unicode_level_1_desc },
-  { XD_STRUCT_PTR, 3, 256, &from_unicode_level_2_desc },
-  { XD_STRUCT_PTR, 4, 256, &from_unicode_level_3_desc },
+  { XD_BLOCK_PTR, 1, 256, &from_unicode_level_0_desc },
+  { XD_BLOCK_PTR, 2, 256, &from_unicode_level_1_desc },
+  { XD_BLOCK_PTR, 3, 256, &from_unicode_level_2_desc },
+  { XD_BLOCK_PTR, 4, 256, &from_unicode_level_3_desc },
   { XD_END }
 };
 
@@ -256,6 +297,12 @@ static const struct memory_description from_unicode_description_1[] = {
    needs to describe them to pdump. */
 const struct sized_memory_description from_unicode_description = {
   sizeof (void *), from_unicode_description_1
+};
+
+/* Used only for from_unicode_blank_4 */
+static const struct memory_description from_unicode_level_4_desc_1[] = {
+  { XD_BLOCK_PTR, 0, 256, &from_unicode_level_3_desc },
+  { XD_END }
 };
 
 static Lisp_Object_dynarr *unicode_precedence_dynarr;
@@ -383,7 +430,8 @@ init_charset_unicode_tables (Lisp_Object charset)
     }
 
   {
-    XCHARSET_FROM_UNICODE_TABLE (charset) = create_new_from_unicode_table (1);
+    XCHARSET_FROM_UNICODE_TABLE (charset) =
+      create_new_from_unicode_table (1);
     XCHARSET_FROM_UNICODE_LEVELS (charset) = 1;
   }
 }
@@ -1391,7 +1439,16 @@ Unicode tables or in the charset:
       if ((!ignore_first_column ?
 	   sscanf (p, "%i %i%n", &cp1, &cp2, &endcount) < 2 :
 	   sscanf (p, "%i %i %i%n", &dummy, &cp1, &cp2, &endcount) < 3)
-	  || *(p + endcount + strspn (p + endcount, " \t\n\r\f")))
+	  /* #### Temporary code!  Cygwin newlib fucked up scanf() handling
+	     of numbers beginning 0x0... starting in 04/2004, in an attempt
+	     to fix another bug.  A partial fix for this was put in in
+	     06/2004, but as of 10/2004 the value of ENDCOUNT returned in
+	     such case is still wrong.  If this gets fixed soon, remove
+	     this code. --ben */
+#ifndef CYGWIN_SCANF_BUG
+	  || *(p + endcount + strspn (p + endcount, " \t\n\r\f"))
+#endif
+	  )
 	{
 	  warn_when_safe (Qunicode, Qwarning,
 			  "Unrecognized line in translation file %s:\n%s",
@@ -2405,18 +2462,8 @@ reinit_coding_system_type_create_unicode (void)
 }
 
 void
-reinit_vars_of_unicode (void)
-{
-#ifdef MULE
-  init_blank_unicode_tables ();
-#endif /* MULE */
-}
-
-void
 vars_of_unicode (void)
 {
-  reinit_vars_of_unicode ();
-
   Fprovide (intern ("unicode"));
 
 #ifdef MULE
@@ -2427,7 +2474,30 @@ vars_of_unicode (void)
   Vdefault_unicode_precedence_list = Qnil;
 
   unicode_precedence_dynarr = Dynarr_new (Lisp_Object);
-  dump_add_root_struct_ptr (&unicode_precedence_dynarr,
+  dump_add_root_block_ptr (&unicode_precedence_dynarr,
 			    &lisp_object_dynarr_description);
+
+  init_blank_unicode_tables ();
+
+  /* Note that the "block" we are describing is a single pointer, and hence
+     we could potentially use dump_add_root_block_ptr().  However, given
+     the way the descriptions are written, we couldn't use them, and would
+     have to write new descriptions for each of the pointers below, since
+     we would have to make use of a description with an XD_BLOCK_ARRAY
+     in it. */
+
+  dump_add_root_block (&to_unicode_blank_1, sizeof (void *),
+		       to_unicode_level_1_desc_1);
+  dump_add_root_block (&to_unicode_blank_2, sizeof (void *),
+		       to_unicode_level_2_desc_1);
+
+  dump_add_root_block (&from_unicode_blank_1, sizeof (void *),
+		       from_unicode_level_1_desc_1);
+  dump_add_root_block (&from_unicode_blank_2, sizeof (void *),
+		       from_unicode_level_2_desc_1);
+  dump_add_root_block (&from_unicode_blank_3, sizeof (void *),
+		       from_unicode_level_3_desc_1);
+  dump_add_root_block (&from_unicode_blank_4, sizeof (void *),
+		       from_unicode_level_4_desc_1);
 #endif /* MULE */
 }

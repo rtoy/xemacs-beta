@@ -166,7 +166,9 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
 
 #ifdef GCCACHE_HASH
 
-  if (gethash (&gcvm, cache->table, (const void **) &cell))
+  /* The intermediate cast fools gcc into not outputting strict-aliasing
+     complaints */
+  if (gethash (&gcvm, cache->table, (const void **) (void *) &cell))
 
 #else /* !GCCACHE_HASH */
 

@@ -1341,7 +1341,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
       int charset_base = -1;
       int boyer_moore_ok = 1;
       Ibyte *pat = 0;
-      Ibyte *patbuf = alloca_array (Ibyte, len * MAX_ICHAR_LEN);
+      Ibyte *patbuf = alloca_ibytes (len * MAX_ICHAR_LEN);
       pat = patbuf;
 #ifdef MULE
       /* &&#### needs some 8-bit work here */
@@ -2058,7 +2058,7 @@ wordify (Lisp_Object buffer, Lisp_Object string)
     /* The following value is an upper bound on the amount of storage we
        need.  In non-Mule, it is exact. */
     Ibyte *storage =
-      (Ibyte *) ALLOCA (XSTRING_LENGTH (string) - punct_count +
+      alloca_ibytes (XSTRING_LENGTH (string) - punct_count +
                           5 * (word_count - 1) + 4);
     Ibyte *o = storage;
 
@@ -3057,7 +3057,7 @@ Return a regexp string which matches exactly STRING and nothing else.
 
   CHECK_STRING (string);
 
-  temp = (Ibyte *) ALLOCA (XSTRING_LENGTH (string) * 2);
+  temp = alloca_ibytes (XSTRING_LENGTH (string) * 2);
 
   /* Now copy the data into the new string, inserting escapes. */
 
@@ -3152,8 +3152,6 @@ reinit_vars_of_search (void)
 void
 vars_of_search (void)
 {
-  reinit_vars_of_search ();
-
   DEFVAR_LISP ("forward-word-regexp", &Vforward_word_regexp /*
 *Regular expression to be used in `forward-word'.
 #### Not yet implemented.

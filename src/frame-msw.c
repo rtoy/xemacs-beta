@@ -401,7 +401,7 @@ mswindows_frame_totally_visible_p (struct frame *f)
      client part. So, if non-client are is covered and client area is
      not, we return true. */
   GetClientRect (hwnd, &rc_me);
-  MapWindowPoints (hwnd, HWND_DESKTOP, (LPPOINT)&rc_me, 2);
+  MapWindowPoints (hwnd, HWND_DESKTOP, (LPPOINT) (void *) (&rc_me), 2);
 
   /* First see if we're off the desktop */
   GetWindowRect (GetDesktopWindow (), &rc_other);
@@ -1170,8 +1170,6 @@ reinit_vars_of_frame_mswindows (void)
 void
 vars_of_frame_mswindows (void)
 {
-  reinit_vars_of_frame_mswindows ();
-
   DEFVAR_LISP ("mswindows-use-system-frame-size-defaults", &Vmswindows_use_system_frame_size_defaults /*
 Controls whether to use system or XEmacs defaults for frame size.
 If nil then reasonable defaults are used for initial frame sizes. If t

@@ -231,7 +231,7 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
   if (wordend <= wordstart)
     return 0;
 
-  p = word = (Ibyte *) ALLOCA (MAX_ICHAR_LEN * (wordend - wordstart));
+  p = word = alloca_ibytes (MAX_ICHAR_LEN * (wordend - wordstart));
   for (idx = wordstart; idx < wordend; idx++)
     {
       Ichar c = BUF_FETCH_CHAR (buf, idx);

@@ -65,16 +65,6 @@ NOTE-END */
 
 #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0)
 
-/* Define C_ALLOCA if this machine does not support a true alloca
-   and the one written in C should be used instead.
-   Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used.
-   Define neither one if an assembler-language alloca
-   in the file alloca.s should be used.  */
-
-#define C_ALLOCA
-#define	STACK_DIRECTION	-1  /* grows towards lower addresses on Gould UTX/32 */
-
 /* No need to extend the user stack. */
 
 /* If this is a 2.1 system, COFF will be predefined by cpp. If it's */

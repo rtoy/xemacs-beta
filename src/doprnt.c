@@ -948,7 +948,7 @@ emacs_vsprintf_malloc_lisp (const CIbyte *format_nonreloc,
 		format_reloc, nargs, largs);
   Lstream_flush (XLSTREAM (stream));
   len = Lstream_byte_count (XLSTREAM (stream));
-  retval = (Ibyte *) xmalloc (len + 1);
+  retval = xnew_ibytes (len + 1);
   memcpy (retval, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
   retval[len] = '\0';
   Lstream_delete (XLSTREAM (stream));
@@ -1032,7 +1032,7 @@ emacs_vsprintf_malloc (const CIbyte *format, va_list vargs,
 		   vargs);
   Lstream_flush (XLSTREAM (stream));
   len = Lstream_byte_count (XLSTREAM (stream));
-  retval = (Ibyte *) xmalloc (len + 1);
+  retval = xnew_ibytes (len + 1);
   memcpy (retval, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
   retval[len] = '\0';
   end_gc_forbidden (count);

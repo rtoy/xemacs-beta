@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -74,12 +74,16 @@ Boston, MA 02111-1307, USA.  */
    extent-parent and extent-children.
    */
 
+#define NUM_CACHED_POSITIONS 50
+#define NUM_MOVED_POSITIONS 10
+
 struct buffer_text
 {
   Ibyte *beg;		/* Actual address of buffer contents. */
   Bytebpos gpt;		/* Index of gap in buffer. */
+  Charbpos bufgpt;	/* Equivalent as a Charbpos. */
   Bytebpos z;		/* Index of end of buffer. */
-  Charbpos bufz;		/* Equivalent as a Charbpos. */
+  Charbpos bufz;	/* Equivalent as a Charbpos. */
   Bytecount gap_size;/* Size of buffer's gap */
   Bytecount end_gap_size;/* Size of buffer's end gap */
   long modiff;		/* This counts buffer-modification events
@@ -90,6 +94,8 @@ struct buffer_text
 			   time buffer visited or saved a file.  */
 
 #ifdef MULE
+
+#ifdef OLD_BYTE_CHAR
   /* We keep track of a "known" region for very fast access.  This
      information is text-only so it goes here.  We update this at each
      change to the buffer, so if it's entirely ASCII, these will always
@@ -97,11 +103,16 @@ struct buffer_text
   Charbpos mule_bufmin, mule_bufmax;
   Bytebpos mule_bytmin, mule_bytmax;
   int mule_shifter, mule_three_p;
+#endif
 
-  /* And we also cache 16 positions for fairly fast access near those
-     positions. */
-  Charbpos mule_charbpos_cache[16];
-  Bytebpos mule_bytebpos_cache[16];
+  /* And we also cache NUM_CACHED_POSITIONS positions for fairly fast
+     access near those positions. */
+  Charbpos mule_charbpos_cache[NUM_CACHED_POSITIONS];
+  Bytebpos mule_bytebpos_cache[NUM_CACHED_POSITIONS];
+  int next_cache_pos;
+
+  Charbpos cached_charpos;
+  Bytebpos cached_bytepos;
 
   /* True if all chars fit into one byte;
      == (format == FORMAT_8_BIT_FIXED ||
@@ -117,7 +128,7 @@ struct buffer_text
   
   /* Currently we only handle 8 bit fixed and default */
   Internal_Format format;
-#endif
+#endif /* MULE */
 
   /* Similar to the above, we keep track of positions for which line
      number has last been calculated.  See line-number.c. */
@@ -311,6 +322,10 @@ for (mps_bufcons = Qunbound,					\
 /* End of buffer.  */
 #define BYTE_BUF_Z(buf) ((buf)->text->z + 0)
 #define BUF_Z(buf) ((buf)->text->bufz + 0)
+
+/* Gap location.  */
+#define BYTE_BUF_GPT(buf) ((buf)->text->gpt + 0)
+#define BUF_GPT(buf) ((buf)->text->bufgpt + 0)
 
 /* Point. */
 #define BYTE_BUF_PT(buf) ((buf)->pt + 0)
@@ -536,69 +551,14 @@ next_bytebpos (struct buffer *USED_IF_MULE_OR_CHECK_TEXT (buf), Bytebpos x)
 /*	   Converting between byte and character positions		*/
 /*----------------------------------------------------------------------*/
 
+/*
+
+Info on Byte-Char conversion:
+
+  (Info-goto-node "(internals)Byte-Char Position Conversion")
+*/
+
 #ifdef MULE
-
-/* The basic algorithm we use is to keep track of a known region of
-   characters in each buffer, all of which are of the same width.  We keep
-   track of the boundaries of the region in both Charbpos and Bytebpos
-   coordinates and also keep track of the char width, which is 1 - 4 bytes.
-   If the position we're translating is not in the known region, then we
-   invoke a function to update the known region to surround the position in
-   question.  This assumes locality of reference, which is usually the
-   case.
-
-   Note that the function to update the known region can be simple or
-   complicated depending on how much information we cache.  In addition to
-   the known region, we always cache the correct conversions for point,
-   BEGV, and ZV, and in addition to this we cache 16 positions where the
-   conversion is known.  We only look in the cache or update it when we
-   need to move the known region more than a certain amount (currently 50
-   chars), and then we throw away a "random" value and replace it with the
-   newly calculated value.
-
-   Finally, we maintain an extra flag that tracks whether the buffer is
-   entirely ASCII, to speed up the conversions even more.  This flag is
-   actually of dubious value because in an entirely-ASCII buffer the known
-   region will always span the entire buffer (in fact, we update the flag
-   based on this fact), and so all we're saving is a few machine cycles.
-
-   A potentially smarter method than what we do with known regions and
-   cached positions would be to keep some sort of pseudo-extent layer over
-   the buffer; maybe keep track of the charbpos/bytebpos correspondence at the
-   beginning of each line, which would allow us to do a binary search over
-   the pseudo-extents to narrow things down to the correct line, at which
-   point you could use a linear movement method.  This would also mesh well
-   with efficiently implementing a line-numbering scheme.  However, you
-   have to weigh the amount of time spent updating the cache vs. the
-   savings that result from it.  In reality, we modify the buffer far less
-   often than we access it, so a cache of this sort that provides
-   guaranteed LOG (N) performance (or perhaps N * LOG (N), if we set a
-   maximum on the cache size) would indeed be a win, particularly in very
-   large buffers.  If we ever implement this, we should probably set a
-   reasonably high minimum below which we use the old method, because the
-   time spent updating the fancy cache would likely become dominant when
-   making buffer modifications in smaller buffers.
-
-   Note also that we have to multiply or divide by the char width in order
-   to convert the positions.  We do some tricks to avoid ever actually
-   having to do a multiply or divide, because that is typically an
-   expensive operation (esp. divide).  Multiplying or dividing by 1, 2, or
-   4 can be implemented simply as a shift left or shift right, and we keep
-   track of a shifter value (0, 1, or 2) indicating how much to shift.
-   Multiplying by 3 can be implemented by doubling and then adding the
-   original value.  Dividing by 3, alas, cannot be implemented in any
-   simple shift/subtract method, as far as I know; so we just do a table
-   lookup.  For simplicity, we use a table of size 128K, which indexes the
-   "divide-by-3" values for the first 64K non-negative numbers. (Note that
-   we can increase the size up to 384K, i.e. indexing the first 192K
-   non-negative numbers, while still using shorts in the array.) This also
-   means that the size of the known region can be at most 64K for
-   width-three characters.
-
-   !!#### We should investigate the algorithm in GNU Emacs.  I think it
-   does something similar, but it may differ in some details, and it's
-   worth seeing if anything can be gleaned.
-   */
 
 Bytebpos charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x);
 Charbpos bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x);
@@ -623,11 +583,13 @@ charbpos_to_bytebpos (struct buffer *USED_IF_MULE_OR_CHECK_TEXT (buf),
     retval = (Bytebpos) (x << 1);
   else if (BUF_FORMAT (buf) == FORMAT_32_BIT_FIXED)
     retval = (Bytebpos) (x << 2);
+#ifdef OLD_BYTE_CHAR
   else if (x >= buf->text->mule_bufmin && x <= buf->text->mule_bufmax)
     retval = (buf->text->mule_bytmin +
 	    ((x - buf->text->mule_bufmin) << buf->text->mule_shifter) +
 	    (buf->text->mule_three_p ? (x - buf->text->mule_bufmin) :
 	     (Bytebpos) 0));
+#endif /* OLD_BYTE_CHAR */
   else
     retval = charbpos_to_bytebpos_func (buf, x);
 #else
@@ -654,11 +616,13 @@ bytebpos_to_charbpos (struct buffer *USED_IF_MULE_OR_CHECK_TEXT (buf),
     retval = (Charbpos) (x >> 1);
   else if (BUF_FORMAT (buf) == FORMAT_32_BIT_FIXED)
     retval = (Charbpos) (x >> 2);
+#ifdef OLD_BYTE_CHAR
   else if (x >= buf->text->mule_bytmin && x <= buf->text->mule_bytmax)
     retval = (buf->text->mule_bufmin +
 	      ((buf->text->mule_three_p
 		? three_to_one_table[x - buf->text->mule_bytmin]
 		: (x - buf->text->mule_bytmin) >> buf->text->mule_shifter)));
+#endif /* OLD_BYTE_CHAR */
   else
     retval = bytebpos_to_charbpos_func (buf, x);
 #else
@@ -1071,41 +1035,42 @@ BUFFER_MIRROR_SYNTAX_TABLE (struct buffer *buf)
   representation is changed to have multiple gaps in it.
   */
 
-
 /*  Return the maximum position in the buffer it is safe to scan forwards
     past N to.  This is used to prevent buffer scans from running into
     the gap (e.g. search.c).  All characters between N and CEILING_OF(N)
     are located contiguous in memory.  Note that the character *at*
     CEILING_OF(N) is not contiguous in memory. */
 #define BYTE_BUF_CEILING_OF(b, n)					\
-  ((n) < (b)->text->gpt && (b)->text->gpt < BYTE_BUF_ZV (b) ?		\
-   (b)->text->gpt : BYTE_BUF_ZV (b))
-#define BUF_CEILING_OF(b, n)						\
-  bytebpos_to_charbpos (b, BYTE_BUF_CEILING_OF (b, charbpos_to_bytebpos (b, n)))
+  ((n) < BYTE_BUF_GPT (b) && BYTE_BUF_GPT (b) < BYTE_BUF_ZV (b) ?	\
+   BYTE_BUF_GPT (b) : BYTE_BUF_ZV (b))
+#define BUF_CEILING_OF(b, n)				\
+  ((n) < BUF_GPT (b) && BUF_GPT (b) < BUF_ZV (b) ?	\
+   BUF_GPT (b) : BUF_ZV (b))
 
 /*  Return the minimum position in the buffer it is safe to scan backwards
     past N to.  All characters between FLOOR_OF(N) and N are located
     contiguous in memory.  Note that the character *at* N may not be
     contiguous in memory. */
-#define BYTE_BUF_FLOOR_OF(b, n)						\
-        (BYTE_BUF_BEGV (b) < (b)->text->gpt && (b)->text->gpt < (n) ?	\
-	 (b)->text->gpt : BYTE_BUF_BEGV (b))
-#define BUF_FLOOR_OF(b, n)						\
-  bytebpos_to_charbpos (b, BYTE_BUF_FLOOR_OF (b, charbpos_to_bytebpos (b, n)))
+#define BYTE_BUF_FLOOR_OF(b, n)						  \
+        (BYTE_BUF_BEGV (b) < BYTE_BUF_GPT (b) && BYTE_BUF_GPT (b) < (n) ? \
+	 BYTE_BUF_GPT (b) : BYTE_BUF_BEGV (b))
+#define BUF_FLOOR_OF(b, n)					\
+        (BUF_BEGV (b) < BUF_GPT (b) && BUF_GPT (b) < (n) ?	\
+	 BUF_GPT (b) : BUF_BEGV (b))
 
 #define BYTE_BUF_CEILING_OF_IGNORE_ACCESSIBLE(b, n)			\
-  ((n) < (b)->text->gpt && (b)->text->gpt < BYTE_BUF_Z (b) ?		\
-   (b)->text->gpt : BYTE_BUF_Z (b))
-#define BUF_CEILING_OF_IGNORE_ACCESSIBLE(b, n) 				\
-  bytebpos_to_charbpos							\
-   (b, BYTE_BUF_CEILING_OF_IGNORE_ACCESSIBLE (b, charbpos_to_bytebpos (b, n)))
+  ((n) < BYTE_BUF_GPT (b) && BYTE_BUF_GPT (b) < BYTE_BUF_Z (b) ?	\
+   BYTE_BUF_GPT (b) : BYTE_BUF_Z (b))
+#define BUF_CEILING_OF_IGNORE_ACCESSIBLE(b, n)		\
+  ((n) < BUF_GPT (b) && BUF_GPT (b) < BUF_Z (b) ?	\
+   BUF_GPT (b) : BUF_Z (b))
 
-#define BYTE_BUF_FLOOR_OF_IGNORE_ACCESSIBLE(b, n)				\
-        (BYTE_BUF_BEG (b) < (b)->text->gpt && (b)->text->gpt < (n) ?	\
-	 (b)->text->gpt : BYTE_BUF_BEG (b))
-#define BUF_FLOOR_OF_IGNORE_ACCESSIBLE(b, n) 				\
-  bytebpos_to_charbpos							\
-   (b, BYTE_BUF_FLOOR_OF_IGNORE_ACCESSIBLE (b, charbpos_to_bytebpos (b, n)))
+#define BYTE_BUF_FLOOR_OF_IGNORE_ACCESSIBLE(b, n)			 \
+        (BYTE_BUF_BEG (b) < BYTE_BUF_GPT (b) && BYTE_BUF_GPT (b) < (n) ? \
+	 BYTE_BUF_GPT (b) : BYTE_BUF_BEG (b))
+#define BUF_FLOOR_OF_IGNORE_ACCESSIBLE(b, n)			\
+        (BUF_BEG (b) < BUF_GPT (b) && BUF_GPT (b) < (n) ?	\
+	 BUF_GPT (b) : BUF_BEG (b))
 
 /* Iterate over contiguous chunks of text in buffer BUF, starting at POS,
    of length LEN.  Evaluates POS and LEN only once, but BUF multiply.  In
@@ -1117,7 +1082,7 @@ BUFFER_MIRROR_SYNTAX_TABLE (struct buffer *buf)
    NOTE: This must be surrounded with braces! */
 
 #define BUFFER_TEXT_LOOP(buf, pos, len, runptr, runlen)			      \
-Ibyte *runptr;							      \
+Ibyte *runptr;								      \
 Bytecount runlen;							      \
 Bytebpos BTL_pos = (pos);						      \
 Bytebpos BTL_len = (len);						      \

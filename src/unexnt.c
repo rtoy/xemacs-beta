@@ -194,13 +194,13 @@ unexec (Ibyte *new_name, Ibyte *old_name, unsigned int UNUSED (start_data),
      ".exe" extension...patch them up if they don't.  */
   qxestrcpy (in_filename, old_name);
   ptr = in_filename + qxestrlen (in_filename) - 4;
-  if (qxestrcmp_c (ptr, ".exe"))
-    qxestrcat_c (in_filename, ".exe");
+  if (qxestrcmp_ascii (ptr, ".exe"))
+    qxestrcat_ascii (in_filename, ".exe");
 
   qxestrcpy (out_filename, new_name);
   ptr = out_filename + qxestrlen (out_filename) - 4;
-  if (qxestrcmp_c (ptr, ".exe"))
-    qxestrcat_c (out_filename, ".exe");
+  if (qxestrcmp_ascii (ptr, ".exe"))
+    qxestrcat_ascii (out_filename, ".exe");
 
   stdout_out ("Dumping from %s\n", in_filename);
   stdout_out ("          to %s\n", out_filename);
@@ -222,7 +222,7 @@ unexec (Ibyte *new_name, Ibyte *old_name, unsigned int UNUSED (start_data),
   /* The size of the dumped executable is the size of the original
      executable plus the size of the heap and the size of the .bss section.  */
   heap_index_in_executable = (unsigned long)
-    round_to_next ((UChar_Binary *) in_file.size, get_allocation_unit ());
+    round_to_next ((Rawbyte *) in_file.size, get_allocation_unit ());
   size = heap_index_in_executable + get_committed_heap_size () + bss_size;
   if (!open_output_file (&out_file, out_filename, size))
     {
@@ -249,7 +249,7 @@ unexec (Ibyte *new_name, Ibyte *old_name, unsigned int UNUSED (start_data),
     pfnCheckSumMappedFile_t pfnCheckSumMappedFile;
 
     dos_header = (PIMAGE_DOS_HEADER) out_file.file_base;
-    nt_header = (PIMAGE_NT_HEADERS) ((UChar_Binary *) dos_header +
+    nt_header = (PIMAGE_NT_HEADERS) ((Rawbyte *) dos_header +
 				     dos_header->e_lfanew);
 
     nt_header->OptionalHeader.CheckSum = 0;
@@ -333,7 +333,7 @@ get_section_info (file_data *p_infile)
   PIMAGE_DOS_HEADER dos_header;
   PIMAGE_NT_HEADERS nt_header;
   PIMAGE_SECTION_HEADER section, data_section;
-  UChar_Binary *ptr;
+  Rawbyte *ptr;
   int i;
   
   dos_header = (PIMAGE_DOS_HEADER) p_infile->file_base;
@@ -363,26 +363,26 @@ get_section_info (file_data *p_infile)
   for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++) 
     {
 #ifndef DUMP_SEPARATE_SECTION
-      if (!qxestrcmp_c (section->Name, ".bss")) 
+      if (!qxestrcmp_ascii (section->Name, ".bss")) 
 	{
 	  extern int my_ebss;		/* From lastfile.c  */
 
-	  ptr = (UChar_Binary *) nt_header->OptionalHeader.ImageBase +
+	  ptr = (Rawbyte *) nt_header->OptionalHeader.ImageBase +
 	    section->VirtualAddress;
 	  bss_start = ptr;
-	  bss_size = (UChar_Binary*) &my_ebss - (UChar_Binary*) bss_start;
+	  bss_size = (Rawbyte*) &my_ebss - (Rawbyte*) bss_start;
 	}
 
-      if (!qxestrcmp_c (section->Name, ".data")) 
+      if (!qxestrcmp_ascii (section->Name, ".data")) 
 #else
-      if (!qxestrcmp_c (section->Name, "xdata"))
+      if (!qxestrcmp_ascii (section->Name, "xdata"))
 #endif
 	{
-	  extern Char_Binary my_edata[];	/* From lastfile.c  */
+	  extern Rawbyte my_edata[];	/* From lastfile.c  */
 
 	  /* The .data section.  */
 	  data_section = section;
-	  ptr = (UChar_Binary *) nt_header->OptionalHeader.ImageBase +
+	  ptr = (Rawbyte *) nt_header->OptionalHeader.ImageBase +
 	    section->VirtualAddress;
 	  data_start_va = ptr;
 	  data_start_file = section->PointerToRawData;
@@ -422,7 +422,7 @@ get_section_info (file_data *p_infile)
       get_bss_info_from_map_file (p_infile, &ptr, &bss_size);
       bss_start = ptr + nt_header->OptionalHeader.ImageBase
 	+ data_section->VirtualAddress;
-      bss_size = (UChar_Binary *) &my_ebss - (UChar_Binary *) bss_start;
+      bss_size = (Rawbyte *) &my_ebss - (Rawbyte *) bss_start;
     }
 #else
   bss_size = 0;
@@ -443,11 +443,11 @@ static void
 copy_executable_and_dump_data_section (file_data *p_infile,
 				       file_data *p_outfile)
 {
-  UChar_Binary *data_file, *data_va;
+  Rawbyte *data_file, *data_va;
   unsigned long size, index;
 
   /* Get a pointer to where the raw data should go in the executable file.  */
-  data_file = (UChar_Binary *) p_outfile->file_base + data_start_file;
+  data_file = (Rawbyte *) p_outfile->file_base + data_start_file;
 
   /* Get a pointer to the raw data in our address space.  */
   data_va = data_start_va;
@@ -463,8 +463,8 @@ copy_executable_and_dump_data_section (file_data *p_infile,
   DUMP_MSG (("Dumping data section...\n"));
   DUMP_MSG (("\t0x%08x Address in process.\n", data_va));
   DUMP_MSG (("\t0x%08x Offset in output file.\n", 
-	     (UChar_Binary *) data_file -
-	     (UChar_Binary *) p_outfile->file_base));
+	     (Rawbyte *) data_file -
+	     (Rawbyte *) p_outfile->file_base));
   DUMP_MSG (("\t0x%08x Size in bytes.\n", size));
   memcpy (data_file, data_va, size);
 
@@ -474,14 +474,14 @@ copy_executable_and_dump_data_section (file_data *p_infile,
   DUMP_MSG (("\t0x%08x Offset in input file.\n", index));
   DUMP_MSG (("\t0x%08x Offset in output file.\n", index));
   DUMP_MSG (("\t0x%08x Size in bytes.\n", size));
-  memcpy ((UChar_Binary *) p_outfile->file_base + index, 
-	  (UChar_Binary *) p_infile->file_base + index, size);
+  memcpy ((Rawbyte *) p_outfile->file_base + index, 
+	  (Rawbyte *) p_infile->file_base + index, size);
 }
 
 static void
 dump_bss_and_heap (file_data *UNUSED (p_infile), file_data *p_outfile)
 {
-  UChar_Binary *heap_data;
+  Rawbyte *heap_data;
   unsigned long size, index;
 
   DUMP_MSG (("Dumping heap onto end of executable...\n"));
@@ -505,7 +505,7 @@ dump_bss_and_heap (file_data *UNUSED (p_infile), file_data *p_outfile)
   DUMP_MSG (("\t0x%08x BSS start in process.\n", bss_start));
   DUMP_MSG (("\t0x%08x BSS offset in executable.\n", index));
   DUMP_MSG (("\t0x%08x BSS size in bytes.\n", size));
-  memcpy ((UChar_Binary *) p_outfile->file_base + index, bss_start, size);
+  memcpy ((Rawbyte *) p_outfile->file_base + index, bss_start, size);
 #endif
 }
 

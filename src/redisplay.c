@@ -522,7 +522,7 @@ static const struct sized_memory_description rune_dglyph_description = {
 };
 
 static const struct memory_description rune_object_description_1[] = {
-  { XD_STRUCT_ARRAY, RUNE_DGLYPH, 1, &rune_dglyph_description },
+  { XD_BLOCK_ARRAY, RUNE_DGLYPH, 1, &rune_dglyph_description },
   { XD_END }
 };
 
@@ -553,7 +553,7 @@ static const struct sized_memory_description rune_dynarr_description = {
 };
 
 static const struct memory_description display_block_description_1[] = {
-  { XD_STRUCT_PTR, offsetof (display_block, runes),
+  { XD_BLOCK_PTR, offsetof (display_block, runes),
     1, &rune_dynarr_description },
   { XD_END }
 };
@@ -595,11 +595,11 @@ static const struct sized_memory_description glyph_block_dynarr_description = {
 };
 
 static const struct memory_description display_line_description_1[] = {
-  { XD_STRUCT_PTR, offsetof (display_line, display_blocks),
+  { XD_BLOCK_PTR, offsetof (display_line, display_blocks),
     1, &display_block_dynarr_description },
-  { XD_STRUCT_PTR, offsetof (display_line, left_glyphs),
+  { XD_BLOCK_PTR, offsetof (display_line, left_glyphs),
     1, &glyph_block_dynarr_description },
-  { XD_STRUCT_PTR, offsetof (display_line, right_glyphs),
+  { XD_BLOCK_PTR, offsetof (display_line, right_glyphs),
     1, &glyph_block_dynarr_description },
   { XD_END }
 };
@@ -1569,7 +1569,7 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 	  Lisp_Object format = XCAR (XCDR (entry));
 	  Bytebpos len = XSTRING_LENGTH (format);
 	  Ibyte *src = XSTRING_DATA (format), *end = src + len;
-	  Ibyte *result = alloca_array (Ibyte, len);
+	  Ibyte *result = alloca_ibytes (len);
 	  Ibyte *dst = result;
 
 	  while (src < end)
@@ -2144,42 +2144,11 @@ create_text_block (struct window *w, struct display_line *dl,
      #### This variable should probably have some rethought done to
      it.
 
-     #### It would also be really nice if you could specify that
-     the characters come out in hex instead of in octal.  Mule
-     does that by adding a ctl-hexa variable similar to ctl-arrow,
-     but that's bogus -- we need a more general solution.  I
-     think you need to extend the concept of display tables
-     into a more general conversion mechanism.  Ideally you
-     could specify a Lisp function that converts characters,
-     but this violates the Second Golden Rule and besides would
-     make things way way way way slow.
+     See also
 
-     So instead, we extend the display-table concept, which was
-     historically limited to 256-byte vectors, to one of the
-     following:
+     (Info-goto-node "(internals)Future Work -- Display Tables")
 
-     a) A 256-entry vector, for backward compatibility;
-     b) char-table, mapping characters to values;
-     c) range-table, mapping ranges of characters to values;
-     d) a list of the above.
-
-     The (d) option allows you to specify multiple display tables
-     instead of just one.  Each display table can specify conversions
-     for some characters and leave others unchanged.  The way the
-     character gets displayed is determined by the first display table
-     with a binding for that character.  This way, you could call a
-     function `enable-hex-display' that adds a hex display-table to
-     the list of display tables for the current buffer.
-
-     #### ...not yet implemented...  Also, we extend the concept of
-     "mapping" to include a printf-like spec.  Thus you can make all
-     extended characters show up as hex with a display table like
-     this:
-
-         #s(range-table data ((256 524288) (format "%x")))
-
-     Since more than one display table is possible, you have
-     great flexibility in mapping ranges of characters.  */
+  */
   Ichar printable_min = (CHAR_OR_CHAR_INTP (b->ctl_arrow)
 			  ? XCHAR_OR_CHAR_INT (b->ctl_arrow)
 			  : ((EQ (b->ctl_arrow, Qt) || EQ (b->ctl_arrow, Qnil))
@@ -7734,63 +7703,13 @@ mark_redisplay_structs (display_line_dynarr *dla)
 }
 
 
-/*****************************************************************************
- Line Start Cache Description and Rationale
 
- The traditional scrolling code in Emacs breaks in a variable height world.
- It depends on the key assumption that the number of lines that can be
- displayed at any given time is fixed.  This led to a complete separation
- of the scrolling code from the redisplay code.  In order to fully support
- variable height lines, the scrolling code must actually be tightly
- integrated with redisplay.  Only redisplay can determine how many lines
- will be displayed on a screen for any given starting point.
+/*
 
- What is ideally wanted is a complete list of the starting buffer position
- for every possible display line of a buffer along with the height of that
- display line.  Maintaining such a full list would be very expensive.  We
- settle for having it include information for all areas which we happen to
- generate anyhow (i.e. the region currently being displayed) and for those
- areas we need to work with.
+Info on line-start cache:
 
- In order to ensure that the cache accurately represents what redisplay
- would actually show, it is necessary to invalidate it in many situations.
- If the buffer changes, the starting positions may no longer be correct.
- If a face or an extent has changed then the line heights may have altered.
- These events happen frequently enough that the cache can end up being
- constantly disabled.  With this potentially constant invalidation when is
- the cache ever useful?
-
- Even if the cache is invalidated before every single usage, it is
- necessary.  Scrolling often requires knowledge about display lines which
- are actually above or below the visible region.  The cache provides a
- convenient light-weight method of storing this information for multiple
- display regions.  This knowledge is necessary for the scrolling code to
- always obey the First Golden Rule of Redisplay.
-
- If the cache already contains all of the information that the scrolling
- routines happen to need so that it doesn't have to go generate it, then we
- are able to obey the Third Golden Rule of Redisplay.  The first thing we
- do to help out the cache is to always add the displayed region.  This
- region had to be generated anyway, so the cache ends up getting the
- information basically for free.  In those cases where a user is simply
- scrolling around viewing a buffer there is a high probability that this is
- sufficient to always provide the needed information.  The second thing we
- can do is be smart about invalidating the cache.
-
- TODO -- Be smart about invalidating the cache.  Potential places:
-
- + Insertions at end-of-line which don't cause line-wraps do not alter the
-   starting positions of any display lines.  These types of buffer
-   modifications should not invalidate the cache.  This is actually a large
-   optimization for redisplay speed as well.
-
- + Buffer modifications frequently only affect the display of lines at and
-   below where they occur.  In these situations we should only invalidate
-   the part of the cache starting at where the modification occurs.
-
- In case you're wondering, the Second Golden Rule of Redisplay is not
- applicable.
- ****************************************************************************/
+  (Info-goto-node "(internals)Line Start Cache")
+*/
 
 /* This will get used quite a bit so we don't want to be constantly
    allocating and freeing it. */

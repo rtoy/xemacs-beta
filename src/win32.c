@@ -1,5 +1,5 @@
 /* Utility routines for XEmacs on Windows 9x, NT and Cygwin.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -29,6 +29,19 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "syssignal.h"
 #include "systime.h"
 
+
+
+/*
+
+Info on Windows issues:
+
+  (Info-goto-node "(internals)Interface to MS Windows")
+
+   ------- @file{src/config.h}.in vs. @file{nt/xemacs.mak} -------
+
+   See @file{src/config.h.in} more more info.
+*/
+
 /* Control conversion of upper case file names to lower case.
    nil means no, t means yes. */
 Lisp_Object Vmswindows_downcase_file_names;
@@ -54,7 +67,7 @@ urlify_filename (Ibyte *filename)
   
   WIN32_TO_LOCAL_FILE_FORMAT (filename, filename);
   pseudo_url = xnew_array (Ibyte, 5 + qxestrlen (filename) + 1);
-  qxestrcpy_c (pseudo_url, "file:");
+  qxestrcpy_ascii (pseudo_url, "file:");
   qxestrcat (pseudo_url, filename);
   /* URL's only have /, no backslash */
   for (filename = pseudo_url; *filename; filename++)
@@ -256,7 +269,7 @@ mswindows_lisp_error_1 (int errnum, int no_recurse)
   TSTR_TO_C_STRING (lpMsgBuf, inres);
   len = qxestrlen (inres);
   /* Messages tend to end with a period and newline */
-  if (len >= 3 && !qxestrcmp_c (inres + len - 3, ".\r\n"))
+  if (len >= 3 && !qxestrcmp_ascii (inres + len - 3, ".\r\n"))
     len -= 3;
   result = make_string (inres, len);
   
@@ -665,7 +678,7 @@ init_win32 (void)
 }
 
 void
-init_win32_very_early (void)
+init_win32_very_very_early (void)
 {
   mswindows_windows9x_p = GetVersion () & 0x80000000;
 }

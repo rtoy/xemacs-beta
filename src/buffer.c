@@ -1,7 +1,7 @@
 /* Buffer manipulation primitives for XEmacs.
    Copyright (C) 1985-1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -244,9 +244,9 @@ static const struct memory_description buffer_description [] = {
 
   { XD_LISP_OBJECT, offsetof (struct buffer, extent_info) },
 
-  { XD_STRUCT_PTR, offsetof (struct buffer, text),
+  { XD_BLOCK_PTR, offsetof (struct buffer, text),
     1, &buffer_text_description },
-  { XD_STRUCT_PTR, offsetof (struct buffer, syntax_cache),
+  { XD_BLOCK_PTR, offsetof (struct buffer, syntax_cache),
     1, &syntax_cache_description },
 
   { XD_LISP_OBJECT, offsetof (struct buffer, indirect_children) },
@@ -1139,7 +1139,7 @@ with `delete-process'.
   /* This function can call lisp */
   Lisp_Object buf;
   REGISTER struct buffer *b;
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1;
 
   if (NILP (buffer))
     buf = Fcurrent_buffer ();
@@ -1190,22 +1190,23 @@ with `delete-process'.
   if (BUFFER_LIVE_P (b))
     {
       int speccount = specpdl_depth ();
-      Lisp_Object tail = Qnil;
 
-      GCPRO2 (buf, tail);
+      GCPRO1 (buf);
       record_unwind_protect (save_excursion_restore, save_excursion_save ());
       Fset_buffer (buf);
 
-      /* First run the query functions; if any query is answered no,
-         don't kill the buffer.  */
-      EXTERNAL_LIST_LOOP (tail, Vkill_buffer_query_functions)
-	{
-	  if (NILP (call0 (Fcar (tail))))
-	    {
-	      UNGCPRO;
-	      return unbind_to (speccount);
-	    }
-	}
+      {
+	/* First run the query functions; if any query is answered no,
+	   don't kill the buffer.  */
+	EXTERNAL_LIST_LOOP_2 (arg, Vkill_buffer_query_functions)
+	  {
+	    if (NILP (call0 (arg)))
+	      {
+		UNGCPRO;
+		return unbind_to (speccount);
+	      }
+	  }
+      }
 
       /* Then run the hooks.  */
       run_hook (Qkill_buffer_hook);
@@ -1829,25 +1830,33 @@ The values returned are in the form of a plist of properties and values.
 		 intern_converting_underscores_to_dashes (#field), plist)
   ADD_INT (bufz);
   ADD_INT (z);
+#ifdef OLD_BYTE_CHAR
   ADD_INT (mule_bufmin);
   ADD_INT (mule_bufmax);
   ADD_INT (mule_bytmin);
   ADD_INT (mule_bytmax);
   ADD_INT (mule_shifter);
   ADD_BOOL (mule_three_p);
+#endif
   ADD_BOOL (entirely_one_byte_p);
   ADD_INT (num_ascii_chars);
   ADD_INT (num_8_bit_fixed_chars);
   ADD_INT (num_16_bit_fixed_chars);
+  ADD_INT (cached_charpos);
+  ADD_INT (cached_bytepos);
+  ADD_INT (next_cache_pos);
+
   {
-    Lisp_Object pos[16];
+    Lisp_Object pos[NUM_CACHED_POSITIONS];
     int i;
-    for (i = 0; i < 16; i++)
+    for (i = 0; i < b->text->next_cache_pos; i++)
       pos[i] = make_int (b->text->mule_charbpos_cache[i]);
-    plist = cons3 (Flist (16, pos), intern ("mule-charbpos-cache"), plist);
-    for (i = 0; i < 16; i++)
+    plist = cons3 (Flist (b->text->next_cache_pos, pos),
+		   intern ("mule-charbpos-cache"), plist);
+    for (i = 0; i < b->text->next_cache_pos; i++)
       pos[i] = make_int (b->text->mule_bytebpos_cache[i]);
-    plist = cons3 (Flist (16, pos), intern ("mule-bytebpos-cache"), plist);
+    plist = cons3 (Flist (b->text->next_cache_pos, pos),
+		   intern ("mule-bytebpos-cache"), plist);
   }
 #undef ADD_INT
 #undef ADD_BOOL
@@ -1963,8 +1972,6 @@ void
 vars_of_buffer (void)
 {
   /* This function can GC */
-  reinit_vars_of_buffer ();
-
   staticpro (&QSFundamental);
   staticpro (&QSscratch);
 
@@ -2331,8 +2338,8 @@ complex_vars_of_buffer (void)
   syms = XBUFFER (Vbuffer_local_symbols);
   buffer_defaults_saved_slots      = &defs->BUFFER_SLOTS_FIRST_NAME;
   buffer_local_symbols_saved_slots = &syms->BUFFER_SLOTS_FIRST_NAME;
-  dump_add_root_struct_ptr (&buffer_defaults_saved_slots,      &buffer_slots_description);
-  dump_add_root_struct_ptr (&buffer_local_symbols_saved_slots, &buffer_slots_description);
+  dump_add_root_block_ptr (&buffer_defaults_saved_slots,      &buffer_slots_description);
+  dump_add_root_block_ptr (&buffer_local_symbols_saved_slots, &buffer_slots_description);
 
   DEFVAR_BUFFER_DEFAULTS ("default-modeline-format", modeline_format /*
 Default value of `modeline-format' for buffers that don't override it.

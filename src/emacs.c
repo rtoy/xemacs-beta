@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1992, 1993, 1994
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,6 +22,8 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Mule 2.0, FSF 19.28. */
+
+/* This file has been Mule-ized, Ben Wing, 10-7-04. */
 
 /* Capsule summary of the various releases of Lucid Emacs/XEmacs and
    FSF/GNU Emacs. (Copied from the Internals Manual, where the
@@ -234,6 +236,139 @@ version 18.59 released October 31, 1992.
 
 */
 
+/* Sources for further information:
+
+-----------------------------------
+1. Using XEmacs, Programming Elisp:
+-----------------------------------
+
+;;; -- the XEmacs User's Manual (Access using the online Info browser:
+;;;       Use `Help->Info (Online Docs)->XEmacs User's Manual' (if
+;;;       there is such an entry); or get to the Info contents page
+;;;       using `Help->Info Contents' or `C-h i', and then
+;;;       *middle-click* the XEmacs link or move the cursor into the
+;;;       link and hit ENTER.  This manual contains a great deal of
+;;;       documentation on customization: Scroll down to the
+;;;       Customization link and select it in the same fashion as for
+;;;       the XEmacs link just mentioned.)
+
+;;; -- the XEmacs FAQ (`C-h F' for the local version; get either the
+;;;       local version or the very latest version off the net using
+;;;       the Help menu)
+
+;;; -- the XEmacs Lisp Reference Manual, containing detailed
+;;;       documentation on Elisp. (Access using Info, just like for the
+;;;       XEmacs User's Manual.)
+
+;;; -- the documentation strings for specific commands, functions,
+;;;       key sequences, and variables.  NOTE: This is *not* the same
+;;;       information as in the XEmacs User's Manual or XEmacs Lisp
+;;;       Reference Manual!  In general, the doc strings are more
+;;;       terse and more up-to-date than what is found in the manuals.
+;;;       Once you understand the general concepts, these doc strings
+;;;       should be your first point of reference for further
+;;;       info. (Access using menu entries under `Help->Commands,
+;;;       Variables, Keys' or using the keyboard: `C-h k' for a key
+;;;       sequence, `C-h f' for a named command or Elisp function,
+;;;       `C-h v' for a variable.  There is various other useful
+;;;       information accessible similarly, such as `C-h a'
+;;;       ["Apropos", i.e. search for a command, function, or variable
+;;;       by name]; `C-h C-a' ["Apropos Docs", i.e. search through the
+;;;       text of the doc strings]; `C-h b' to list all key bindings;
+;;;       `C-h m' to describe the current major and minor modes; etc.
+;;;       Type `C-h ? ?' for a complete list.)
+
+;;; -- Getting Started with XEmacs [aka the "New User's Guide"], a
+;;;       more introductory manual than the XEmacs User's Manual.
+;;;       (Access using Info, just like for the XEmacs User's Manual.
+;;;       There are some sections on customization here.)
+
+;;; -- the XEmacs tutorial, a very simple introduction to XEmacs for
+;;;       total beginners. (`C-h t' for English; get the version in
+;;;       various languages from the Help menu)
+
+;;; -- the XEmacs web site, www.xemacs.org.
+
+;;; -- the XEmacs mailing lists (xemacs-FOO@xemacs.org;
+;;;       see http://www.xemacs.org/Lists/ for more info.  Before
+;;;       posting, consider looking through the archives -- they go back
+;;;       years and there is a powerful searching interface.  Currently
+;;;       the archives are at http://list-archive.xemacs.org/, but if
+;;;       this doesn't work, you can always access them through
+;;;       www.xemacs.org.)
+
+;;; -- the XEmacs newsgroup, comp.emacs.xemacs.  This is
+;;;       bi-directionally gatewayed with xemacs@xemacs.org.  WARNING:
+;;;       The developers do not normally hang out on this newsgroup.  If
+;;;       you need to contact them, use xemacs-beta@xemacs.org.
+
+;;; -- the XEmacs internals manual, for those interested in working on
+;;;       the XEmacs C code. (Available through Info.)
+
+;;; -- `Help->About XEmacs' to find out who the maintainers are.
+
+---------------------
+2. Developing XEmacs:
+---------------------
+
+-- the internals manual, man/internals/internals.texi
+
+-- long comments at the head of certain files:
+
+     emacs.c
+     extents.c
+     text.c
+     text.h 
+     lisp.h 
+     redisplay.h
+     dynarr.c
+     blocktype.c
+     eval.c
+     event-Xt.c (sort of)
+     event-stream.c (command event queue)
+     frame.c
+     intl-encap-win32.c
+     keymap.c
+     line-number.c (a little bit)
+     menubar-msw.c (sort of)
+     menubar-x.c (sort of)
+     mule-canna.c (sort of)
+     mule-ccl.c
+     mule-coding.c (scattered in the file)
+     mule-wnn.c (in japanese)
+     ntheap.c (near the top)
+     redisplay.c (various scattered)
+     regex.c (various scattered)
+     sysdep.c (maybe; wait_for_termination)
+     unexec.c
+     unicode.c
+     xgccache.c (a bit)
+
+     #### review .h files; write a perl program to look for long comments
+     throughout the files, ignoring stuff inside of DEFUN's.
+
+     #### elsewhere?
+
+-- comments scattered throughout the sources (#### should be grouped
+   together if feasible).  For example, lrecord.h (pdump and object-
+   creation), alloc.c (fixed-type allocation), etc. #### fill in.
+
+-- Ben's Architecting XEmacs web site.
+   (http://www.xemacs.org/Architecting-XEmacs/index.html; #### should be
+   integrated into the sources)
+
+-- Back discussions on xemacs-beta (#### The juiciest tidbits, esp.
+   those with specific proposals, should be extracted and stuck in
+   the source)
+
+-- README.* in the src/ directory (and maybe other directories)
+
+-- The ChangeLog files, sometimes.
+
+*/
+
+
+
 /* Note: It is necessary to specify <config.h> and not "config.h" in
    order for the --srcdir type of compilation to work properly.
    Otherwise the config.h from the srcdir, rather than the one from
@@ -383,7 +518,7 @@ int display_arg;
 /* Type of display specified.  We cannot use a Lisp symbol here because
    Lisp symbols may not initialized at the time that we set this
    variable. */
-const Char_ASCII *display_use;
+const Ascbyte *display_use;
 
 /* If non-zero, then the early error handler will only print the error
    message and exit. */
@@ -391,7 +526,7 @@ int suppress_early_error_handler_backtrace;
 
 /* An address near the bottom of the stack.
    Tells GC how to save a copy of the stack.  */
-char *stack_bottom;
+Rawbyte *stack_bottom;
 
 #ifdef USG_SHARED_LIBRARIES
 /* If nonzero, this is the place to put the end of the writable segment
@@ -462,10 +597,10 @@ int nodumpfile;
 int debug_paths;
 
 /* Save argv and argc.  */
-static Extbyte **initial_argv;	/* #### currently unused */
+static Wexttext **initial_argv;	/* #### currently unused */
 static int initial_argc;	/* #### currently unused */
 
-static void sort_args (int argc, char **argv);
+static void sort_args (int argc, Wexttext **argv);
 
 Lisp_Object Qkill_emacs_hook;
 Lisp_Object Qsave_buffers_kill_emacs;
@@ -480,16 +615,14 @@ int fatal_error_in_progress;
 int preparing_for_armageddon;
 
 /* Nonzero means we're in an unstable situation and need to skip
-   i18n conversions and such during printing. */
-int inhibit_non_essential_printing_operations;
+   i18n conversions and such.  During printing we check for this,
+   and during conversion we abort if we see this. */
+int inhibit_non_essential_conversion_operations;
 
 static JMP_BUF run_temacs_catch;
 
 static int run_temacs_argc;
-static Extbyte **run_temacs_argv;
-static Extbyte *run_temacs_args;
-static int run_temacs_argv_size;
-static int run_temacs_args_size;
+static Wexttext **run_temacs_argv;
 
 #ifdef _MSC_VER
 static DWORD mswindows_handle_hardware_exceptions (DWORD code);
@@ -507,7 +640,7 @@ static DWORD CALLBACK wait_for_termination_signal (LPVOID handle);
 /* Code for dealing with Lisp access to the Unix command line */
 
 static Lisp_Object
-make_arg_list_1 (int argc, Extbyte **argv, int skip_args)
+make_arg_list_1 (int argc, Wexttext **argv, int skip_args)
 {
   Lisp_Object result = Qnil;
   REGISTER int i;
@@ -531,8 +664,8 @@ make_arg_list_1 (int argc, Extbyte **argv, int skip_args)
 	    }
 	  else
 #endif
-	    result = Fcons (build_ext_string (argv[i],
-					      Qcommand_argument_encoding),
+	    result = Fcons (build_wext_string (argv[i],
+					       Qcommand_argument_encoding),
 			    result);
 	}
     }
@@ -540,7 +673,7 @@ make_arg_list_1 (int argc, Extbyte **argv, int skip_args)
 }
 
 Lisp_Object
-make_arg_list (int argc, Extbyte **argv)
+make_arg_list (int argc, Wexttext **argv)
 {
   return make_arg_list_1 (argc, argv, 0);
 }
@@ -548,40 +681,39 @@ make_arg_list (int argc, Extbyte **argv)
 /* Calling functions are also responsible for calling free_argc_argv
    when they are done with the generated list. */
 void
-make_argc_argv (Lisp_Object argv_list, int *argc, Extbyte ***argv)
+make_argc_argv (Lisp_Object argv_list, int *argc, Wexttext ***argv)
 {
   Lisp_Object next;
   int n = XINT (Flength (argv_list));
   REGISTER int i;
-  *argv = (Extbyte**) xmalloc ((n+1) * sizeof (Extbyte*));
+  *argv = xnew_array (Wexttext *, n + 1);
 
   for (i = 0, next = argv_list; i < n; i++, next = XCDR (next))
     {
-      const Extbyte *temp;
       CHECK_STRING (XCAR (next));
 
-      LISP_STRING_TO_EXTERNAL (XCAR (next), temp, Qcommand_argument_encoding);
-      (*argv) [i] = xstrdup (temp);
+      LISP_STRING_TO_EXTERNAL_MALLOC (XCAR (next), (*argv) [i],
+				      Qcommand_argument_encoding);
     }
   (*argv) [n] = 0;
   *argc = i;
 }
 
 void
-free_argc_argv (Extbyte **argv)
+free_argc_argv (Wexttext **argv)
 {
   int elt = 0;
 
   while (argv[elt])
     {
-      xfree (argv[elt], Extbyte *);
+      xfree (argv[elt], Wexttext *);
       elt++;
     }
-  xfree (argv, Extbyte **);
+  xfree (argv, Wexttext **);
 }
 
 static void
-init_cmdargs (int argc, Extbyte **argv, int skip_args)
+init_cmdargs (int argc, Wexttext **argv, int skip_args)
 {
   initial_argv = argv;
   initial_argc = argc;
@@ -619,12 +751,12 @@ Return the directory name in which the Emacs executable was located.
    enough information to do it right.  */
 
 static int
-argmatch (char **argv, int argc, char *sstr, char *lstr,
-	  int minlen, char **valptr, int *skipptr)
+argmatch (Wexttext **argv, int argc, Ascbyte *sstr, Ascbyte *lstr,
+	  int minlen, Wexttext **valptr, int *skipptr)
 {
-  char *p = NULL;
-  int arglen;
-  char *arg;
+  Wexttext *p = NULL;
+  Charcount arglen;
+  Wexttext *arg;
 
   /* Don't access argv[argc]; give up in advance.  */
   if (argc <= *skipptr + 1)
@@ -633,7 +765,7 @@ argmatch (char **argv, int argc, char *sstr, char *lstr,
   arg = argv[*skipptr+1];
   if (arg == NULL)
     return 0;
-  if (strcmp (arg, sstr) == 0)
+  if (wext_strcmp_ascii (arg, sstr) == 0)
     {
       if (valptr != NULL)
 	{
@@ -644,11 +776,12 @@ argmatch (char **argv, int argc, char *sstr, char *lstr,
 	*skipptr += 1;
       return 1;
     }
-  arglen = (valptr != NULL && (p = strchr (arg, '=')) != NULL
-	    ? p - arg : (int) strlen (arg));
+  arglen = (valptr != NULL && (p = wext_strchr (arg, '=')) != NULL
+	    ? p - arg : (Charcount) wext_strlen (arg));
   if (lstr && !minlen)
     minlen = strlen (lstr);
-  if (lstr == 0 || arglen < minlen || strncmp (arg, lstr, arglen) != 0)
+  if (lstr == 0 || arglen < minlen ||
+      wext_strncmp_ascii (arg, lstr, arglen) != 0)
     return 0;
   else if (valptr == NULL)
     {
@@ -657,13 +790,13 @@ argmatch (char **argv, int argc, char *sstr, char *lstr,
     }
   else if (p != NULL)
     {
-      *valptr = p+1;
+      *valptr = p + 1;
       *skipptr += 1;
       return 1;
     }
-  else if (argv[*skipptr+2] != NULL)
+  else if (argv[*skipptr + 2] != NULL)
     {
-      *valptr = argv[*skipptr+2];
+      *valptr = argv[*skipptr + 2];
       *skipptr += 2;
       return 1;
     }
@@ -674,7 +807,7 @@ argmatch (char **argv, int argc, char *sstr, char *lstr,
 }
 
 static void
-check_compatible_window_system (char *must)
+check_compatible_window_system (Ascbyte *must)
 {
   if (display_use && strcmp (display_use, must))
     fatal ("Incompatible window system type `%s': `%s' already specified",
@@ -700,32 +833,16 @@ check_compatible_window_system (char *must)
    the conventional dumper or `xemacs -nd' with the pdumper).  See
    Frun_emacs_from_temacs().
 */
-DECLARE_DOESNT_RETURN (main_1 (int, Extbyte **, Extbyte **, int));
+DECLARE_DOESNT_RETURN (main_1 (int, Wexttext **, Wexttext **, int));
 DOESNT_RETURN
-main_1 (int argc, Extbyte **argv,
-#if defined (WIN32_NATIVE) || defined (_SCO_DS)
-	Extbyte **envp,
-#else
-	Extbyte **UNUSED (envp),
-#endif
-	int restart)
+main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 {
-  char stack_bottom_variable;
+  Rawbyte stack_bottom_variable;
   int skip_args = 0;
   Lisp_Object load_me;
 #ifdef NeXT
   extern int malloc_cookie;
 #endif
-
-  /* !!#### Under MS Windows, this should all be rewritten to deal with
-     Unicode arguments and environment.  We need to retrieve the command
-     line with GetCommandLine and convert to argv format with
-     CommandLineToArgvW.  Unfortunately we have a bootstrapping problem
-     currently because we can't initialize the Unicode tables until we've
-     computed the location of data-directory, which doesn't happen till
-     startup.el, which is way late.  We need to be dumping the Unicode
-     data, which means we need to fix pdump to correctly dump the "union"
-     format used by the tables. */
 
 #if (!defined (SYSTEM_MALLOC) && !defined (HAVE_LIBMCHECK)	\
      && !defined (DOUG_LEA_MALLOC))
@@ -740,7 +857,7 @@ main_1 (int argc, Extbyte **argv,
 
   noninteractive = 0;
   display_use = 0;
-  inhibit_non_essential_printing_operations = 1;
+  inhibit_non_essential_conversion_operations = 1;
 
 #ifdef NeXT
   /* 19-Jun-1995 -baw
@@ -770,7 +887,9 @@ main_1 (int argc, Extbyte **argv,
 
   sort_args (argc, argv);
 
-#if defined (WIN32_NATIVE) || defined (_SCO_DS)
+#if 0 /* defined (_SCO_DS)
+	 #### Turn this off, we already have another SCO_DS hack in main().
+      */
   environ = envp;
 #endif
 
@@ -834,8 +953,8 @@ main_1 (int argc, Extbyte **argv,
      alignment and max size of the inline data and quit */
   if (argmatch (argv, argc, "-si", "--show-inline-info", 0, NULL, &skip_args))
     {
-#if defined(PDUMP) && !defined(WIN32_NATIVE)
-      printf ("%u %u\n", dumped_data_max_size(), dumped_data_align_offset());
+#if defined (PDUMP) && !defined (WIN32_NATIVE)
+      printf ("%u %u\n", dumped_data_max_size (), dumped_data_align_offset ());
 #else
       printf ("Portable dumper not configured or windows native; -si just forces exit.\n");
 #endif
@@ -869,11 +988,11 @@ main_1 (int argc, Extbyte **argv,
        makes (e.g.) the "Stop Build" command from VC++ correctly terminate
        XEmacs. */
 
-    char *heventstr;
+    Wexttext *heventstr;
     if (argmatch (argv, argc, "-mswindows-termination-handle", 0, 0,
 		  &heventstr, &skip_args))
       {
-	HANDLE hevent = (HANDLE) atol (heventstr);
+	HANDLE hevent = (HANDLE) wext_atol (heventstr);
 	DWORD unused;
 	HANDLE h_thread = CreateThread (NULL, 0, wait_for_termination_signal,
 					(void *) hevent, 0, &unused);
@@ -982,9 +1101,11 @@ main_1 (int argc, Extbyte **argv,
 
   /* Handle the -t switch, which specifies filename to use as terminal */
   {
-    Extbyte *term;
+    Wexttext *term;
     if (argmatch (argv, argc, "-t", "--terminal", 0, &term, &skip_args))
       {
+	int fd;
+
 	check_compatible_window_system ("tty");
 #ifndef HAVE_TTY
 	fatal ("Sorry, this XEmacs was not compiled with TTY support");
@@ -992,16 +1113,20 @@ main_1 (int argc, Extbyte **argv,
 
 	retry_close (0);
 	retry_close (1);
-	if (open (term, O_RDWR | OPEN_BINARY, 2) < 0)
-	  fatal ("%s: %s", term, strerror (errno));
+
+	fd = wext_retry_open (term, O_RDWR | OPEN_BINARY, 2);
+	/* Conversions are not possible yet, and printing will be in
+	   external format, so strerror() and ttyname() are OK. */
+	if (fd < 0)
+	  fatal ("%s: %s", WEXTTEXT_TO_8_BIT (term), strerror (errno));
 	dup (0);
 	if (! isatty (0))
-	  fatal ("%s: not a tty", term);
+	  fatal ("%s: not a tty", WEXTTEXT_TO_8_BIT (term));
 
 #if 0
 	stderr_out ("Using %s", ttyname (0));
 #endif
-	stderr_out ("Using %s", term);
+	stderr_out ("Using %s", WEXTTEXT_TO_8_BIT (term));
       }
   }
 
@@ -1011,7 +1136,7 @@ main_1 (int argc, Extbyte **argv,
      to run until we've recognized this argument.  */
   {
 #ifdef HAVE_X_WINDOWS
-    char *dpy = 0;
+    Wexttext *dpy = 0;
     int count_before = skip_args;
 
     if (argmatch (argv, argc, "-d", "--display", 3, &dpy, &skip_args) ||
@@ -1025,12 +1150,12 @@ main_1 (int argc, Extbyte **argv,
 	 This requires inserting a new element into argv.  */
       if (dpy != 0 && skip_args - count_before == 1)
 	{
-	  char **new = (char **) xmalloc (sizeof (char *) * (argc + 2));
+	  Wexttext **new = xnew_array (Wexttext *, argc + 2);
 	  int j;
 
 	  for (j = 0; j < count_before + 1; j++)
 	    new[j] = argv[j];
-	  new[count_before + 1] = "-d";
+	  new[count_before + 1] = WEXTSTRING ("-d");
 	  new[count_before + 2] = dpy;
 	  for (j = count_before + 2; j <argc; j++)
 	    new[j + 1] = argv[j];
@@ -1040,7 +1165,7 @@ main_1 (int argc, Extbyte **argv,
       /* Change --display to -d, when its arg is separate.  */
       else if (dpy != 0 && skip_args > count_before
 	       && argv[count_before + 1][1] == '-')
-	argv[count_before + 1] = "-d";
+	argv[count_before + 1] = WEXTSTRING ("-d");
 
       /* Don't actually discard this arg.  */
       skip_args = count_before;
@@ -1053,11 +1178,11 @@ main_1 (int argc, Extbyte **argv,
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_GTK)
   if (!display_use)
     {
-      char *dpy;
+      Wexttext *dpy;
       /* If there is a non-empty environment var DISPLAY, assume X or GTK,
 	 but don't set `display_arg', which is only to be set if the
 	 display was specified on the command line. */
-      if ((dpy = getenv ("DISPLAY")) && dpy[0])
+      if ((dpy = wext_getenv (WEXTSTRING ("DISPLAY"))) && dpy[0])
 #ifdef HAVE_X_WINDOWS
 	/* #### Who gets precedence?  X or GTK?  For the moment, GTK support is
 	   unstable so use X.  Maybe eventually we will switch this. */
@@ -1126,11 +1251,8 @@ main_1 (int argc, Extbyte **argv,
 				       As early as possible, of course,
 				       so we can be fairly accurate. */
 
-#ifdef WIN32_ANY
-  init_win32_very_early ();
-#endif
 #ifdef HAVE_MS_WINDOWS
-  /* Depends on XEUNICODE_P, only accurate after the previous call */
+  /* Depends on XEUNICODE_P */
   init_mswindows_dde_very_early (); /* DDE needs to be initialized early so
 				       that the client doesn't give up
 				       waiting.  */
@@ -1201,7 +1323,7 @@ main_1 (int argc, Extbyte **argv,
       else
 	purify_flag = 1;
     }
-#else
+#else /* not PDUMP */
   if (!initialized)
     purify_flag = 1;
 #endif
@@ -1626,22 +1748,6 @@ main_1 (int argc, Extbyte **argv,
       coding_system_type_create_mule_coding ();
 #endif
 
-      /* Now initialize the structure types and associated symbols.
-	 Other than the first function below, the functions may
-	 make exactly the following function/macro calls:
-
-	 define_structure_type()
-	 define_structure_type_keyword()
-
-	 */
-
-      structure_type_create ();
-
-      structure_type_create_chartab ();
-      structure_type_create_faces ();
-      structure_type_create_rangetab ();
-      structure_type_create_hash_table ();
-
       /* Now initialize the image instantiator formats and associated symbols.
          Other than the first function below, the functions may
 	 make exactly the following function/macro calls:
@@ -1668,6 +1774,71 @@ main_1 (int argc, Extbyte **argv,
 #ifdef HAVE_GTK
       image_instantiator_format_create_glyphs_gtk ();
 #endif
+    }
+#ifdef PDUMP
+  else if (!restart)	      /* after successful pdump_load()
+				 (note, we are inside ifdef PDUMP) */
+    {
+      reinit_alloc_early ();
+      reinit_symbols_early ();
+      reinit_opaque_early ();
+      reinit_eistring_early ();
+
+      reinit_console_type_create_stream ();
+#ifdef HAVE_TTY
+      reinit_console_type_create_tty ();
+#endif
+#ifdef HAVE_X_WINDOWS
+      reinit_console_type_create_x ();
+      reinit_console_type_create_device_x ();
+#endif
+#ifdef HAVE_MS_WINDOWS
+      reinit_console_type_create_mswindows ();
+#endif
+#ifdef HAVE_GTK
+      reinit_console_type_create_gtk ();
+#endif
+
+      reinit_specifier_type_create ();
+      reinit_specifier_type_create_image ();
+      reinit_specifier_type_create_gutter ();
+      reinit_specifier_type_create_objects ();
+#ifdef HAVE_TOOLBARS
+      reinit_specifier_type_create_toolbar ();
+#endif
+
+      reinit_coding_system_type_create ();
+      reinit_coding_system_type_create_unicode ();
+#ifdef WIN32_ANY
+      reinit_coding_system_type_create_intl_win32 ();
+#endif
+#ifdef MULE
+      reinit_coding_system_type_create_mule_coding ();
+#endif
+    }
+#endif /* PDUMP */
+
+  if (!initialized
+#ifdef PDUMP
+      || !restart
+#endif
+      )
+    {
+      /* Now initialize the structure types and associated symbols.
+	 Other than the first function below, the functions may
+	 make exactly the following function/macro calls:
+
+	 define_structure_type()
+	 define_structure_type_keyword()
+
+	 */
+
+      structure_type_create ();
+
+      structure_type_create_chartab ();
+      structure_type_create_faces ();
+      structure_type_create_rangetab ();
+      structure_type_create_hash_table ();
 
       /* Now initialize the lstream types and associated symbols.
 	 Other than the first function below, the functions may
@@ -1694,7 +1865,10 @@ main_1 (int argc, Extbyte **argv,
 #ifdef HAVE_WIN32_PROCESSES
       process_type_create_nt ();
 #endif
+    }
 
+  if (!initialized)
+    {
       /* Now initialize most variables.
 
 	 These functions may do exactly the following:
@@ -1744,6 +1918,8 @@ main_1 (int argc, Extbyte **argv,
            variables settable from the command line.  See the comment above
            the call to pdump_load() in main_1().  This caveat should only
            apply to vars_of_emacs().
+
+	 Order should not matter in these functions.
        */
 
       /* Now allow Fprovide() statements to be made. */
@@ -1779,7 +1955,6 @@ main_1 (int argc, Extbyte **argv,
       vars_of_editfns ();
       vars_of_emacs ();
       vars_of_eval ();
-      init_eval_semi_early ();
 
 #ifdef HAVE_X_WINDOWS
       vars_of_event_Xt ();
@@ -1986,7 +2161,86 @@ main_1 (int argc, Extbyte **argv,
 #ifdef HAVE_GPM
       vars_of_gpmevent ();
 #endif
+    }
 
+  if (!initialized
+#ifdef PDUMP
+      || !restart
+#endif
+      )
+    {
+      /* Now do additional vars_of_*() initialization that happens both
+	 at dump time and after pdump load. */
+      reinit_vars_of_buffer ();
+      reinit_vars_of_console ();
+#ifdef DEBUG_XEMACS
+      reinit_vars_of_debug ();
+#endif
+      reinit_vars_of_device ();
+      reinit_vars_of_eval ();
+#if defined (HAVE_TTY) && (defined (DEBUG_TTY_EVENT_STREAM) || !defined (HAVE_X_WINDOWS))
+      reinit_vars_of_event_tty ();
+#endif
+      reinit_vars_of_event_stream ();
+      reinit_vars_of_events ();
+      reinit_vars_of_extents ();
+      reinit_vars_of_file_coding ();
+      reinit_vars_of_fileio ();
+#ifdef USE_C_FONT_LOCK
+      reinit_vars_of_font_lock ();
+#endif /* USE_C_FONT_LOCK */
+      reinit_vars_of_glyphs ();
+      reinit_vars_of_glyphs_widget ();
+      reinit_vars_of_insdel ();
+      reinit_vars_of_lread ();
+      reinit_vars_of_lstream ();
+      reinit_vars_of_minibuf ();
+#ifdef HAVE_SHLIB
+      reinit_vars_of_module ();
+#endif
+      reinit_vars_of_objects ();
+      reinit_vars_of_print ();
+      reinit_vars_of_search ();
+      reinit_vars_of_text ();
+      reinit_vars_of_undo ();
+      reinit_vars_of_window ();
+
+#ifdef HAVE_MS_WINDOWS
+      reinit_vars_of_event_mswindows ();
+      reinit_vars_of_frame_mswindows ();
+      reinit_vars_of_object_mswindows ();
+#endif
+
+#ifdef HAVE_GTK
+      reinit_vars_of_event_gtk ();
+      reinit_vars_of_menubar_gtk ();
+#endif
+
+#ifdef HAVE_X_WINDOWS
+      reinit_vars_of_device_x ();
+      reinit_vars_of_event_Xt ();
+#ifdef HAVE_SCROLLBARS
+      reinit_vars_of_scrollbar_x ();
+#endif
+#ifdef HAVE_MENUBARS
+      reinit_vars_of_menubar_x ();
+#endif
+      reinit_vars_of_select_x ();
+#if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_X_DIALOGS) || defined (HAVE_TOOLBARS)
+      reinit_vars_of_gui_x ();
+#endif
+#endif /* HAVE_X_WINDOWS */
+
+#ifdef MULE
+      reinit_vars_of_mule_coding ();
+#endif
+#if defined (MULE) && defined (HAVE_WNN)
+      reinit_vars_of_mule_wnn ();
+#endif
+    }
+
+  if (!initialized)
+    {
       /* Now initialize any specifier variables.  We do this later
 	 because it has some dependence on the vars initialized
 	 above.
@@ -2034,6 +2288,13 @@ main_1 (int argc, Extbyte **argv,
 #ifdef WIN32_ANY
       complex_vars_of_intl_win32 ();
 #endif
+
+      /* At this point we should be able to do conversion operations.
+         We have initialized things to the point that we can create Lisp
+         objects and we have defined the basic coding systems (in the
+         just-previous complex-vars calls).  We will in fact do conversion
+	 quite soon, e.g. in complex_vars_of_glyphs_x(). */
+      inhibit_non_essential_conversion_operations = 0;
 
       /* Depends on specifiers. */
       complex_vars_of_faces ();
@@ -2116,150 +2377,28 @@ main_1 (int argc, Extbyte **argv,
       }
 #endif
     }
+  else
+    {
+      /* We are at the equivalent place where we reset this in the
+	 non-initialized case. */
+      inhibit_non_essential_conversion_operations = 0;
 
 #ifdef PDUMP
-  if (initialized && !restart)	      /* after successful pdump_load()
-					 (note, we are inside ifdef PDUMP) */
-    {
-      reinit_alloc_early ();
-      reinit_symbols_early ();
-      reinit_opaque_early ();
-      reinit_eistring_early ();
-
-      reinit_console_type_create_stream ();
-#ifdef HAVE_TTY
-      reinit_console_type_create_tty ();
-#endif
-#ifdef HAVE_X_WINDOWS
-      reinit_console_type_create_x ();
-      reinit_console_type_create_device_x ();
-#endif
-#ifdef HAVE_MS_WINDOWS
-      reinit_console_type_create_mswindows ();
-#endif
-#ifdef HAVE_GTK
-      reinit_console_type_create_gtk ();
-#endif
-
-      reinit_specifier_type_create ();
-      reinit_specifier_type_create_image ();
-      reinit_specifier_type_create_gutter ();
-      reinit_specifier_type_create_objects ();
-#ifdef HAVE_TOOLBARS
-      reinit_specifier_type_create_toolbar ();
-#endif
-
-      structure_type_create ();
-
-      reinit_coding_system_type_create ();
-      reinit_coding_system_type_create_unicode ();
-#ifdef WIN32_ANY
-      reinit_coding_system_type_create_intl_win32 ();
-#endif
-#ifdef MULE
-      reinit_coding_system_type_create_mule_coding ();
-#endif
-
-      structure_type_create_chartab ();
-      structure_type_create_faces ();
-      structure_type_create_rangetab ();
-      structure_type_create_hash_table ();
-
-      lstream_type_create ();
-      lstream_type_create_file_coding ();
-#if defined (HAVE_MS_WINDOWS) && !defined (HAVE_MSG_SELECT)
-      lstream_type_create_mswindows_selectable ();
-#endif
-#ifdef HAVE_UNIX_PROCESSES
-      process_type_create_unix ();
-#endif
-#ifdef HAVE_WIN32_PROCESSES
-      process_type_create_nt ();
-#endif
-
-      reinit_vars_of_buffer ();
-      reinit_vars_of_console ();
-#ifdef DEBUG_XEMACS
-      reinit_vars_of_debug ();
-#endif
-      reinit_vars_of_device ();
-      reinit_vars_of_eval ();
-#if defined (HAVE_TTY) && (defined (DEBUG_TTY_EVENT_STREAM) || !defined (HAVE_X_WINDOWS))
-      reinit_vars_of_event_tty ();
-#endif
-      reinit_vars_of_event_stream ();
-      reinit_vars_of_events ();
-      reinit_vars_of_extents ();
-      reinit_vars_of_file_coding ();
-      reinit_vars_of_fileio ();
-#ifdef USE_C_FONT_LOCK
-      reinit_vars_of_font_lock ();
-#endif /* USE_C_FONT_LOCK */
-      reinit_vars_of_glyphs ();
-      reinit_vars_of_glyphs_widget ();
-      reinit_vars_of_insdel ();
-      reinit_vars_of_lread ();
-      reinit_vars_of_lstream ();
-      reinit_vars_of_minibuf ();
-#ifdef HAVE_SHLIB
-      reinit_vars_of_module ();
-#endif
-      reinit_vars_of_objects ();
-      reinit_vars_of_print ();
-      reinit_vars_of_search ();
-      reinit_vars_of_text ();
-      reinit_vars_of_undo ();
-      reinit_vars_of_unicode ();
-      reinit_vars_of_window ();
-
-#ifdef HAVE_MS_WINDOWS
-      reinit_vars_of_event_mswindows ();
-      reinit_vars_of_frame_mswindows ();
-      reinit_vars_of_object_mswindows ();
-#endif
-
-#ifdef HAVE_GTK
-      reinit_vars_of_event_gtk ();
-      reinit_vars_of_menubar_gtk ();
-#endif
-
-#ifdef HAVE_X_WINDOWS
-      reinit_vars_of_device_x ();
-      reinit_vars_of_event_Xt ();
-#ifdef HAVE_SCROLLBARS
-      reinit_vars_of_scrollbar_x ();
-#endif
-#ifdef HAVE_MENUBARS
-      reinit_vars_of_menubar_x ();
-#endif
-      reinit_vars_of_select_x ();
-#if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_X_DIALOGS) || defined (HAVE_TOOLBARS)
-      reinit_vars_of_gui_x ();
-#endif
-#endif /* HAVE_X_WINDOWS */
-
-#ifdef MULE
-      reinit_vars_of_mule_coding ();
-#endif
-#if defined (MULE) && defined (HAVE_WNN)
-      reinit_vars_of_mule_wnn ();
-#endif
-
-      reinit_complex_vars_of_buffer_runtime_only ();
-      reinit_complex_vars_of_console_runtime_only ();
-      reinit_complex_vars_of_minibuf ();
-    }
+      if (!restart)	      /* after successful pdump_load()
+				 (note, we are inside ifdef PDUMP) */
+	{
+	  reinit_complex_vars_of_buffer_runtime_only ();
+	  reinit_complex_vars_of_console_runtime_only ();
+	  reinit_complex_vars_of_minibuf ();
+	}
 #endif /* PDUMP */
-
-  /* CONGRATULATIONS!!!  We have successfully initialized the Lisp
-     engine. */
+    }
 
   if (initialized)
     init_eval_semi_early ();
 
-#ifdef MULE
-  init_mule_charset ();
-#endif
+  /* CONGRATULATIONS!!!  We have successfully initialized the Lisp
+     engine. */
 
   /* Now do further initialization/setup of stuff that is not needed by the
      syms_of_() routines.  This involves stuff that only is enabled in
@@ -2267,7 +2406,11 @@ main_1 (int argc, Extbyte **argv,
      not needed until we start loading Lisp code (the reader).  A lot
      of this stuff involves querying the current environment and needs
      to be done both at dump time and at run time.  Some will be done
-     only at run time, by querying the `initialized' variable. */
+     only at run time, by querying the `initialized' variable.
+
+     The ordering of these functions is critical, especially the early ones,
+     where there is typically a dependency from each to the previous.
+ */
 
 #ifdef WIN32_ANY
   init_intl_win32 (); /* Under Windows, determine whether we use Unicode
@@ -2310,8 +2453,7 @@ main_1 (int argc, Extbyte **argv,
 #endif
 
   init_lread ();	/* Set up the Lisp reader. */
-  init_cmdargs (argc, (Extbyte **) argv,
-		skip_args);	/* Create list Vcommand_line_args */
+  init_cmdargs (argc, argv, skip_args);	/* Create list Vcommand_line_args */
   init_buffer_2 ();	/* Set default directory of *scratch* buffer */
 
 #ifdef WIN32_NATIVE
@@ -2390,9 +2532,10 @@ main_1 (int argc, Extbyte **argv,
   if (!initialized)
     {
       /* Handle -l loadup-and-dump, args passed by Makefile. */
-      if (argc > 2 + skip_args && !strcmp (argv[1 + skip_args], "-l"))
-	/* !!#### need to be Mule-translating this, but later */
-	load_me = build_string (argv[2 + skip_args]);
+      if (argc > 2 + skip_args &&
+	  !wext_strcmp_ascii (argv[1 + skip_args], "-l"))
+	load_me = build_wext_string (argv[2 + skip_args],
+				     Qcommand_argument_encoding);
     }
 
 #ifdef QUANTIFY
@@ -2401,7 +2544,6 @@ main_1 (int argc, Extbyte **argv,
 #endif /* QUANTIFY */
 
   initialized = 1;
-  inhibit_non_essential_printing_operations = 0;
 
   /* This never returns.  */
   initial_command_loop (load_me);
@@ -2416,8 +2558,8 @@ main_1 (int argc, Extbyte **argv,
 
 struct standard_args
 {
-  const char *name;
-  const char *longname;
+  const Ascbyte *name;
+  const Ascbyte *longname;
   int priority;
   int nargs;
 };
@@ -2512,9 +2654,9 @@ static const struct standard_args standard_args[] =
    If an option takes an argument, keep it and its argument together.  */
 
 static void
-sort_args (int argc, char **argv)
+sort_args (int argc, Wexttext **argv)
 {
-  char **new_argv = xnew_array (char *, argc);
+  Wexttext **new_argv = xnew_array (Wexttext *, argc);
   /* For each element of argv,
      the corresponding element of options is:
      0 for an option that takes no arguments,
@@ -2534,22 +2676,24 @@ sort_args (int argc, char **argv)
       options[from] = -1;
       priority[from] = 0;
       /* Pseudo options "--" and "run-temacs" indicate end of options */
-      if (!strcmp (argv[from], "--") ||
-	  !strcmp (argv[from], "run-temacs"))
+      if (!wext_strcmp_ascii (argv[from], "--") ||
+	  !wext_strcmp_ascii (argv[from], "run-temacs"))
 	end_of_options_p = 1;
       if (!end_of_options_p && argv[from][0] == '-')
 	{
-	  int match, thislen;
-	  char *equals;
+	  int match;
+	  Charcount thislen;
+	  Wexttext *equals;
 
 	  /* Look for a match with a known old-fashioned option.  */
 	  for (i = 0; i < countof (standard_args); i++)
-	    if (!strcmp (argv[from], standard_args[i].name))
+	    if (!wext_strcmp_ascii (argv[from], standard_args[i].name))
 	      {
 		options[from]  = standard_args[i].nargs;
 		priority[from] = standard_args[i].priority;
 		if (from + standard_args[i].nargs >= argc)
-		  fatal ("Option `%s' requires an argument\n", argv[from]);
+		  fatal ("Option `%s' requires an argument\n",
+			 WEXTTEXT_TO_8_BIT (argv[from]));
 		from += standard_args[i].nargs;
 		goto done;
 	      }
@@ -2560,15 +2704,16 @@ sort_args (int argc, char **argv)
 	  if (argv[from][1] == '-')
 	    {
 	      match = -1;
-	      thislen = strlen (argv[from]);
-	      equals = strchr (argv[from], '=');
+	      thislen = wext_strlen (argv[from]);
+	      equals = wext_strchr (argv[from], '=');
 	      if (equals != 0)
 		thislen = equals - argv[from];
 
 	      for (i = 0; i < countof (standard_args); i++)
 		if (standard_args[i].longname
-		    && !strncmp (argv[from], standard_args[i].longname,
-				 thislen))
+		    && !wext_strncmp_ascii (argv[from],
+					    standard_args[i].longname,
+					    thislen))
 		  {
 		    if (match == -1)
 		      match = i;
@@ -2586,7 +2731,8 @@ sort_args (int argc, char **argv)
 		  if (equals != 0)
 		    options[from] = 0;
 		  if (from + options[from] >= argc)
-		    fatal ("Option `%s' requires an argument\n", argv[from]);
+		    fatal ("Option `%s' requires an argument\n",
+			   WEXTTEXT_TO_8_BIT (argv[from]));
 		  from += options[from];
 		}
 	    }
@@ -2630,8 +2776,8 @@ sort_args (int argc, char **argv)
 	argv[best + i + 1] = 0;
     }
 
-  memcpy (argv, new_argv, sizeof (char *) * argc);
-  xfree (new_argv, char **);
+  memcpy (argv, new_argv, sizeof (Wexttext *) * argc);
+  xfree (new_argv, Wexttext **);
   xfree (options, int *);
   xfree (priority, int *);
 }
@@ -2704,54 +2850,32 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
    tools like Purify or tcov that get confused by XEmacs' dumping.  */
      (int nargs, Lisp_Object *args))
 {
-  int ac;
-  const Extbyte *wampum;
-  int namesize;
-  int total_len;
-  Lisp_Object orig_invoc_name = Fcar (Vcommand_line_args);
-  const Extbyte **wampum_all = alloca_array (const Extbyte *, nargs);
-  int *wampum_all_len  = alloca_array (int, nargs);
+  int i;
 
   assert (!gc_in_progress);
 
   if (run_temacs_argc < 0)
-    invalid_operation ("I've lost my temacs-hood.", Qunbound);
+    invalid_operation ("I've lost my temacs-hood", Qunbound);
 
-  /* Need to convert the orig_invoc_name and all of the arguments
-     to external format. */
+  run_temacs_argc = nargs + 1;
+  run_temacs_argv = xnew_array (Wexttext *, nargs + 2);
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, orig_invoc_name,
-		      ALLOCA, (wampum, namesize),
-		      Qnative);
-  namesize++;
-
-  for (ac = 0, total_len = namesize; ac < nargs; ac++)
+  LISP_STRING_TO_EXTERNAL_MALLOC (Fcar (Vcommand_line_args),
+				  run_temacs_argv[0],
+				  Qcommand_argument_encoding);
+  for (i = 0; i < nargs; i++)
     {
-      CHECK_STRING (args[ac]);
-      TO_EXTERNAL_FORMAT (LISP_STRING, args[ac],
-			  ALLOCA, (wampum_all[ac], wampum_all_len[ac]),
-			  Qnative);
-      wampum_all_len[ac]++;
-      total_len += wampum_all_len[ac];
-    }
-  DO_REALLOC (run_temacs_args, run_temacs_args_size, total_len, char);
-  DO_REALLOC (run_temacs_argv, run_temacs_argv_size, nargs+2, char *);
+      CHECK_STRING (args[i]);
 
-  memcpy (run_temacs_args, wampum, namesize);
-  run_temacs_argv [0] = run_temacs_args;
-  for (ac = 0; ac < nargs; ac++)
-    {
-      memcpy (run_temacs_args + namesize,
-	      wampum_all[ac], wampum_all_len[ac]);
-      run_temacs_argv [ac + 1] = run_temacs_args + namesize;
-      namesize += wampum_all_len[ac];
+      LISP_STRING_TO_EXTERNAL_MALLOC (args[i], run_temacs_argv[i + 1],
+				      Qcommand_argument_encoding);
     }
-  run_temacs_argv [nargs + 1] = 0;
+  run_temacs_argv[nargs + 1] = 0;
+
   catchlist = NULL; /* Important!  Otherwise free_cons() calls in
 		       condition_case_unwind() may lead to GC death. */
   unbind_to (0); /* this closes loadup.el */
   purify_flag = 0;
-  run_temacs_argc = nargs + 1;
 #if defined (HEAP_IN_DATA) && !defined (PDUMP)
   report_sheap_usage (0);
 #endif
@@ -2767,7 +2891,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
 
 /* ARGSUSED */
 int
-main (int argc, char **argv, char **envp)
+main (int argc, Extbyte **argv, Extbyte **UNUSED (envp))
 {
 
 #ifdef _MSC_VER
@@ -2780,8 +2904,7 @@ main (int argc, char **argv, char **envp)
 #endif
 
   int     volatile vol_argc = argc;
-  char ** volatile vol_argv = argv;
-  char ** volatile vol_envp = envp;
+  Wexttext ** volatile vol_argv;
   /* This is hairy.  We need to compute where the XEmacs binary was invoked
      from because temacs initialization requires it to find the lisp
      directories.  The code that recomputes the path is guarded by the
@@ -2815,7 +2938,7 @@ main (int argc, char **argv, char **envp)
   quantify_clear_data ();
 #endif /* QUANTIFY */
 
-  inhibit_non_essential_printing_operations = 1;
+  inhibit_non_essential_conversion_operations = 1;
   suppress_early_error_handler_backtrace = 0;
   lim_data = 0; /* force reinitialization of this variable */
 
@@ -2826,6 +2949,35 @@ main (int argc, char **argv, char **envp)
   sbrk (1);
 #endif
 
+#ifdef WIN32_ANY
+  /* Figure out which version we're running so XEUNICODE_P works */
+  init_win32_very_very_early ();
+#endif
+
+#ifdef WIN32_NATIVE
+#if 0
+  /* !!#### We should be doing something like this, but this messes up
+     globbing.  I tried using wmain() and linking with WSETARGV, but the
+     routines for WSETARGV are left out of MSVCRT.DLL!
+
+     To fix this we need to copy the argument-expanding and globbing code
+     from Cygwin and Unicode-ize it.  Yuck. */
+  if (XEUNICODE_P)
+    /* Set up Unicode versions of the arguments. */
+    vol_argv = CommandLineToArgvW (GetCommandLineW (), &vol_argc);
+#else
+  {
+    int i;
+
+    vol_argv = alloca_array (Wexttext *, argc);
+    for (i = 0; i < argc; i++)
+      vol_argv[i] = MULTIBYTE_TO_WEXTTEXT (argv[i]);
+  }
+#endif
+#else
+   vol_argv = (Wexttext **) argv;
+#endif /* WIN32_NATIVE */
+
   if (!initialized)
     {
 #ifdef DOUG_LEA_MALLOC
@@ -2834,7 +2986,7 @@ main (int argc, char **argv, char **envp)
       run_temacs_argc = 0;
       if (! SETJMP (run_temacs_catch))
 	{
-	  main_1 (vol_argc, vol_argv, vol_envp, 0);
+	  main_1 (vol_argc, vol_argv, NULL, 0);
 	}
       /* run-emacs-from-temacs called */
       restarted = 1;
@@ -2855,12 +3007,11 @@ main (int argc, char **argv, char **envp)
 
 	 06/20/96 robertl@dgii.com */
       {
-	extern char **_environ;
-	if ((unsigned) environ == 0)
+	extern Extbyte *_environ;
+	if (environ == NULL)
 	  environ = _environ;
       }
 #endif /* _SCO_DS */
-      vol_envp = environ;
     }
 #if defined (RUN_TIME_REMAP) && ! defined (PDUMP)
   else
@@ -2896,7 +3047,7 @@ main (int argc, char **argv, char **envp)
 
   run_temacs_argc = -2;
 
-  main_1 (vol_argc, vol_argv, vol_envp, restarted);
+  main_1 (vol_argc, vol_argv, NULL, restarted);
 
 #ifdef _MSC_VER
   }
@@ -2914,7 +3065,7 @@ main (int argc, char **argv, char **envp)
 /************************************************************************/
 
 #if !defined (PDUMP) || !defined (SYSTEM_MALLOC)
-extern Char_Binary my_edata[];
+extern Rawbyte my_edata[];
 #endif
 
 extern void disable_free_hook (void);
@@ -3022,53 +3173,11 @@ and announce itself normally when it is run.
 /*                  exiting XEmacs (intended or not)                    */
 /************************************************************************/
 
-/* Ben's capsule summary about expected and unexpected exits from XEmacs.
+/*
 
-   Expected exits occur when the user directs XEmacs to exit, for example
-   by pressing the close button on the only frame in XEmacs, or by typing
-   C-x C-c.  This runs `save-buffers-kill-emacs', which saves any necessary
-   buffers, and then exits using the primitive `kill-emacs'.
+Info on intended/unintended exits:
 
-   However, unexpected exits occur in a few different ways:
-
-     -- a memory access violation or other hardware-generated exception
-        occurs.  This is the worst possible problem to deal with, because
-        the fault can occur while XEmacs is in any state whatsoever, even
-        quite unstable ones.  As a result, we need to be *extremely* careful
-        what we do.
-     -- we are using one X display (or if we've used more, we've closed the
-        others already), and some hardware or other problem happens and
-        suddenly we've lost our connection to the display.  In this situation,
-	things are not so dire as in the last one; our code itself isn't
-	trashed, so we can continue execution as normal, after having set
-	things up so that we can exit at the appropriate time.  Our exit
-	still needs to be of the emergency nature; we have no displays, so
-	any attempts to use them will fail.  We simply want to auto-save
-	(the single most important thing to do during shut-down), do minimal
-	cleanup of stuff that has an independent existence outside of XEmacs,
-	and exit.
-
-	Currently, both unexpected exit scenarios described above set
-	preparing_for_armageddon to indicate that nonessential and possibly
-	dangerous things should not be done, specifically:
-
-	-- no garbage collection.
-	-- no hooks are run.
-	-- no messages of any sort from autosaving.
-	-- autosaving tries harder, ignoring certain failures.
-	-- existing frames are not deleted.
-
-	(Also, all places that set preparing_for_armageddon also
-	set dont_check_for_quit.  This happens separately because it's
-	also necessary to set other variables to make absolutely sure
-	no quitting happens.)
-
-	In the first scenario above (the access violation), we also set
-	fatal_error_in_progress.  This causes more things to not happen:
-
-	-- assertion failures do not abort.
-	-- printing code does not do code conversion or gettext when
-	   printing to stdout/stderr.
+  (Info-goto-node "(internals)Exiting")
 */
 
 /* ------------------------------- */
@@ -3131,7 +3240,7 @@ debug_can_access_memory (void *ptr, Bytecount len)
 	/* If we can, try to avoid problems with super-optimizing compilers
 	   that might decide that memcmp (ptr, ptr, len) can be optimized
 	   away since its result is always 1. */
-	memcmp (ptr, (char *) ptr + 1, len - 1);
+	memcmp (ptr, (Rawbyte *) ptr + 1, len - 1);
       else
 	memcmp (ptr, ptr, len);
     }
@@ -3315,21 +3424,21 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 	 );
 #ifndef _MSC_VER
       {
-	const char *name;
-	char *dir = 0;
+	const Ibyte *name;
+	Ibyte *dir = 0;
 
 	/* Now try to determine the actual path to the executable,
 	   to try to make the backtrace-determination process as foolproof
 	   as possible. */
 	if (STRINGP (Vinvocation_name))
-	  name = (char *) XSTRING_DATA (Vinvocation_name);
+	  name = XSTRING_DATA (Vinvocation_name);
 	else
-	  name = "xemacs";
+	  name = (const Ibyte *) "xemacs";
 	if (STRINGP (Vinvocation_directory))
-	  dir = (char *) XSTRING_DATA (Vinvocation_directory);
+	  dir = XSTRING_DATA (Vinvocation_directory);
 	if (!dir || dir[0] != '/')
 	  stderr_out ("`which %s`", name);
-	else if (dir[strlen (dir) - 1] != '/')
+	else if (dir[qxestrlen (dir) - 1] != '/')
 	  stderr_out ("%s/%s", dir, name);
 	else
 	  stderr_out ("%s%s", dir, name);
@@ -3476,7 +3585,7 @@ static void
 guts_of_fatal_error_signal (int sig)
 {
   fatal_error_in_progress++;
-  inhibit_non_essential_printing_operations = 1;
+  inhibit_non_essential_conversion_operations = 1;
   preparing_for_armageddon = 1;
 
   ensure_no_quitting_from_now_on ();
@@ -3511,13 +3620,13 @@ guts_of_fatal_error_signal (int sig)
 # if 0	/* This is evil, rarely useful, and causes grief in some cases. */
       /* Check for Sun-style stack printing via /proc */
       {
-        const Char_ASCII *pstack = "/usr/proc/bin/pstack";
+        const Ascbyte *pstack = "/usr/proc/bin/pstack";
         if (access (pstack, X_OK) == 0)
           {
-            Char_ASCII buf[100];
+            Ascbyte buf[100];
             stderr_out ("\nC backtrace follows:\n"
                        "(A real debugger may provide better information)\n\n");
-            sprintf (buf, "%s %d >&2", pstack, (int)getpid());
+            sprintf (buf, "%s %d >&2", pstack, (int) getpid());
             system (buf);
           }
       }
@@ -3557,7 +3666,7 @@ fatal_error_signal (int sig)
 static DWORD
 mswindows_handle_hardware_exceptions_1 (void)
 {
-  inhibit_non_essential_printing_operations = 1;
+  inhibit_non_essential_conversion_operations = 1;
   preparing_for_armageddon = 1;
 #if !defined (USER_IS_DEVELOPING_XEMACS)
   pause_so_user_can_read_messages (0);
@@ -3644,9 +3753,9 @@ mswindows_handle_hardware_exceptions (DWORD code)
    we recursively hit such a failure.) */
 static int in_assert_failed;
 
-static const char *assert_failed_file;
+static const Ascbyte *assert_failed_file;
 static int assert_failed_line;
-static const char *assert_failed_expr;
+static const Ascbyte *assert_failed_expr;
 
 #ifdef fprintf
 #undef fprintf
@@ -3656,7 +3765,7 @@ static const char *assert_failed_expr;
    of those are defined in the preprocessor to an expansion involving
    assert_failed(). */
 void
-assert_failed (const char *file, int line, const char *expr)
+assert_failed (const Ascbyte *file, int line, const Ascbyte *expr)
 {
   /* If we're already crashing, let's not crash again.  This might be
      critical to getting auto-saving working properly. */
@@ -3666,7 +3775,7 @@ assert_failed (const char *file, int line, const char *expr)
   /* We are extremely paranoid so we sensibly deal with recursive
      assertion failures. */
   in_assert_failed++;
-  inhibit_non_essential_printing_operations = 1;
+  inhibit_non_essential_conversion_operations = 1;
 
   if (in_assert_failed >= 4)
     _exit (-1);
@@ -3734,7 +3843,7 @@ assert_failed (const char *file, int line, const char *expr)
   really_abort ();
 #endif /* defined (_MSC_VER) || defined (CYGWIN) */
 #endif /* !defined (ASSERTIONS_DONT_ABORT) */
-  inhibit_non_essential_printing_operations = 0;
+  inhibit_non_essential_conversion_operations = 0;
   in_assert_failed = 0;
 }
 #endif /* USE_ASSERTIONS */
@@ -4222,7 +4331,7 @@ configure's idea of what `mule-lisp-directory' will be.
 */ );
 #ifdef PATH_MULELOADSEARCH
   Vconfigure_mule_lisp_directory = Ffile_name_as_directory
-    (build_string ((char *) PATH_MULELOADSEARCH));
+    (build_ext_string (PATH_MULELOADSEARCH, Qfile_name);
 #else
   Vconfigure_mule_lisp_directory = Qnil;
 #endif

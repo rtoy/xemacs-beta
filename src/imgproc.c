@@ -45,10 +45,10 @@ Boston, MA 02111-1307, USA.  */
 #include "imgproc.h"
 
 static void
-get_histogram(quant_table *qt, UChar_Binary *pic,
+get_histogram(quant_table *qt, Binbyte *pic,
 	      int width, int height, Colorbox* box)
 {
-  register UChar_Binary *inptr;
+  register Binbyte *inptr;
   register int red, green, blue;
   register int j, i;
 
@@ -340,7 +340,7 @@ create_colorcell(quant_table *qt, int num_colors, int red, int green, int blue)
   ir = red >> (COLOR_DEPTH-C_DEPTH);
   ig = green >> (COLOR_DEPTH-C_DEPTH);
   ib = blue >> (COLOR_DEPTH-C_DEPTH);
-  ptr = (C_cell *)xmalloc(sizeof (C_cell));
+  ptr = xnew (C_cell);
   *(qt->ColorCells + ir*C_LEN*C_LEN + ig*C_LEN + ib) = ptr;
   ptr->num_ents = 0;
 
@@ -472,7 +472,7 @@ map_colortable(quant_table *qt, int num_colors)
 }
 
 quant_table *
-build_EImage_quantable(UChar_Binary *eimage, int width, int height, int num_colors)
+build_EImage_quantable(Binbyte *eimage, int width, int height, int num_colors)
 {
   quant_table *qt;
   Colorbox *box_list, *ptr;
@@ -486,7 +486,7 @@ build_EImage_quantable(UChar_Binary *eimage, int width, int height, int num_colo
    * STEP 1:  create empty boxes
    */
   qt->usedboxes = NULL;
-  box_list = qt->freeboxes = (Colorbox *)xmalloc (num_colors*sizeof (Colorbox));
+  box_list = qt->freeboxes = xnew_array (Colorbox, num_colors);
   qt->freeboxes[0].next = &(qt->freeboxes[1]);
   qt->freeboxes[0].prev = NULL;
   for (i = 1; i < num_colors-1; ++i)

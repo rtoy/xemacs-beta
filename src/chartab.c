@@ -1499,17 +1499,11 @@ static int
 chartab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 		       Error_Behavior UNUSED (errb))
 {
-  Lisp_Object rest;
-
   /* #### should deal with ERRB */
-  EXTERNAL_LIST_LOOP (rest, value)
+  EXTERNAL_PROPERTY_LIST_LOOP_3 (range, data, value)
     {
-      Lisp_Object range = XCAR (rest);
       struct chartab_range dummy;
 
-      rest = XCDR (rest);
-      if (!CONSP (rest))
-	signal_error (Qlist_formation_error, "Invalid list format", value);
       if (CONSP (range))
 	{
 	  if (!CONSP (XCDR (range))

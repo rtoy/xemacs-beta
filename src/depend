@@ -203,9 +203,9 @@ objects.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h conslots.
 offix.o: offix-cursors.h offix-types.h offix.h xintrinsic.h
 opaque.o: $(LISP_H) opaque.h
 print.o: $(LISP_H) backtrace.h buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h conslots.h console-impl.h console-msw.h console-stream-impl.h console-stream.h console-tty-impl.h console-tty.h console.h device-impl.h device.h devslots.h extents.h frame.h insdel.h intl-auto-encap-win32.h lstream.h opaque.h redisplay.h sysfile.h systty.h syswindows.h
-process-nt.o: $(LISP_H) console-msw.h console.h hash.h intl-auto-encap-win32.h lstream.h process-slots.h process.h procimpl.h sysfile.h sysproc.h syssignal.h systime.h syswindows.h
+process-nt.o: $(LISP_H) console-msw.h console.h events.h hash.h intl-auto-encap-win32.h lstream.h process-slots.h process.h procimpl.h sysfile.h sysproc.h syssignal.h systime.h syswindows.h
 process-unix.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h console.h events.h file-coding.h frame.h hash.h lstream.h ndir.h opaque.h process-slots.h process.h procimpl.h redisplay.h scrollbar.h sysdep.h sysdir.h sysfile.h sysproc.h syssignal.h systime.h systty.h syswait.h window.h
-process.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h commands.h console.h device.h events.h file-coding.h frame.h hash.h insdel.h lstream.h opaque.h process-slots.h process.h procimpl.h redisplay.h scrollbar.h sysdep.h sysfile.h sysproc.h syssignal.h systime.h systty.h syswait.h window.h
+process.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h commands.h console.h device.h events.h file-coding.h frame.h hash.h insdel.h intl-auto-encap-win32.h lstream.h opaque.h process-slots.h process.h procimpl.h redisplay.h scrollbar.h sysdep.h sysfile.h sysproc.h syssignal.h systime.h systty.h syswait.h syswindows.h window.h
 profile.o: $(LISP_H) backtrace.h bytecode.h elhash.h hash.h profile.h syssignal.h systime.h
 ralloc.o: $(LISP_H) getpagesize.h
 rangetab.o: $(LISP_H) rangetab.h

@@ -1,6 +1,6 @@
 /* Utility and Unix shadow routines under MS Windows (WIN32_NATIVE defined).
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -389,7 +389,7 @@ nt_get_resource (Ibyte *key, LPDWORD lpdwtype)
 
       if (qxeRegQueryValueEx (hrootkey, keyext, NULL, NULL, NULL,
 			      &cbData) == ERROR_SUCCESS 
-	  && (lpvalue = (LPBYTE) xmalloc (cbData)) != NULL 
+	  && (lpvalue = xnew_array (BYTE, cbData)) != NULL 
 	  && qxeRegQueryValueEx (hrootkey, keyext, NULL, lpdwtype, lpvalue,
 			      &cbData) == ERROR_SUCCESS)
 	return (lpvalue);
@@ -407,7 +407,7 @@ nt_get_resource (Ibyte *key, LPDWORD lpdwtype)
 	
       if (qxeRegQueryValueEx (hrootkey, keyext, NULL, NULL, NULL,
 			      &cbData) == ERROR_SUCCESS &&
-	  (lpvalue = (LPBYTE) xmalloc (cbData)) != NULL &&
+	  (lpvalue = xnew_array (BYTE, cbData)) != NULL &&
 	  qxeRegQueryValueEx (hrootkey, keyext, NULL, lpdwtype, lpvalue,
 			      &cbData) == ERROR_SUCCESS)
 	return (lpvalue);
@@ -433,7 +433,7 @@ init_mswindows_environment (void)
     LPBYTE lpval;
     DWORD dwType;
 
-    static Char_ASCII *env_vars[] = 
+    static Ascbyte *env_vars[] = 
     {
       "HOME",
       "EMACSLOADPATH",
@@ -483,7 +483,7 @@ init_mswindows_environment (void)
 		Charcount cch;
 
 		cch = qxeExpandEnvironmentStrings ((Extbyte *) lpval, buf, 0);
-		buf = (Extbyte *) ALLOCA (cch * XETCHAR_SIZE);
+		buf = alloca_extbytes (cch * XETCHAR_SIZE);
 		qxeExpandEnvironmentStrings ((Extbyte *) lpval, buf, cch);
 		TSTR_TO_C_STRING (buf, envval);
 		eputenv (env_vars[i], (CIbyte *) envval);
@@ -510,17 +510,14 @@ init_mswindows_environment (void)
 
      The same applies to COMSPEC.  */
   {
-    Lisp_Object tail;
-
-    EXTERNAL_LIST_LOOP (tail, Vprocess_environment)
+    EXTERNAL_LIST_LOOP_2 (str, Vprocess_environment)
       {
-	Lisp_Object str = XCAR (tail);
 	if (STRINGP (str))
 	  {
 	    Ibyte *dat = XSTRING_DATA (str);
-	    if (qxestrncasecmp_c (dat, "PATH=", 5) == 0)
+	    if (qxestrncasecmp_ascii (dat, "PATH=", 5) == 0)
 	      memcpy (dat, "PATH=", 5);
-	    else if (qxestrncasecmp_c (dat, "COMSPEC=", 8) == 0)
+	    else if (qxestrncasecmp_ascii (dat, "COMSPEC=", 8) == 0)
 	      memcpy (dat, "COMSPEC=", 8);
 	  }
       }
@@ -700,7 +697,7 @@ get_cached_volume_information (Ibyte *root_dir)
 	 entry if present.  */
       if (info == NULL)
 	{
-	  info = (volume_info_data *) xmalloc (sizeof (volume_info_data));
+	  info = xnew (volume_info_data);
 	  add_volume_info (root_dir, info);
 	}
       else
@@ -727,7 +724,7 @@ get_volume_info (const Ibyte *name, const Ibyte **pPath)
 {
   /* We probably only need a couple of bytes, but let's be generous in
      case this function gets changed */
-  Ibyte *temp = alloca_array (Ibyte, qxestrlen (name) + 10);
+  Ibyte *temp = alloca_ibytes (qxestrlen (name) + 10);
   Ibyte *rootname = NULL;  /* default to current volume */
   volume_info_data *info;
 
@@ -781,10 +778,10 @@ int
 mswindows_is_executable (const Ibyte *name)
 {
   Ibyte *p = qxestrrchr (name, '.');
-  return (p != NULL && (qxestrcasecmp_c (p, ".exe") == 0 ||
-			qxestrcasecmp_c (p, ".com") == 0 ||
-			qxestrcasecmp_c (p, ".bat") == 0 ||
-			qxestrcasecmp_c (p, ".cmd") == 0));
+  return (p != NULL && (qxestrcasecmp_ascii (p, ".exe") == 0 ||
+			qxestrcasecmp_ascii (p, ".com") == 0 ||
+			qxestrcasecmp_ascii (p, ".bat") == 0 ||
+			qxestrcasecmp_ascii (p, ".cmd") == 0));
 }
 
 /* Emulate the Unix directory procedures opendir, closedir, 
@@ -1881,10 +1878,10 @@ mswindows_executable_type (const Ibyte *filename, int *is_dos_app,
   p = qxestrrchr (filename, '.');
 
   /* We can only identify DOS .com programs from the extension. */
-  if (p && qxestrcasecmp_c (p, ".com") == 0)
+  if (p && qxestrcasecmp_ascii (p, ".com") == 0)
     *is_dos_app = TRUE;
-  else if (p && (qxestrcasecmp_c (p, ".bat") == 0 ||
-		 qxestrcasecmp_c (p, ".cmd") == 0))
+  else if (p && (qxestrcasecmp_ascii (p, ".bat") == 0 ||
+		 qxestrcasecmp_ascii (p, ".cmd") == 0))
     {
       /* A DOS shell script - it appears that CreateProcess is happy to
 	 accept this (somewhat surprisingly); presumably it looks at

@@ -661,9 +661,10 @@ EmacsXtCvtStringToXIMStyles (
 
   if (p->count_styles == 0)
     {   /* No valid styles? */
-      char *buf = (char *)ALLOCA (strlen (fromVal->addr)
-				  + strlen (DefaultXIMStyles)
-				  + 100);
+      /* !!#### */
+      char *buf = (char *) ALLOCA (strlen (fromVal->addr)
+				   + strlen (DefaultXIMStyles)
+				   + 100);
       XrmValue new_from;
       XtAppContext the_app_con = XtDisplayToApplicationContext (dpy);
 

@@ -123,7 +123,7 @@ static void write_string_to_alternate_debugging_output (const Ibyte *str,
    into an opaque object. */
 struct debug_bindings 
 {
-  int inhibit_non_essential_printing_operations;
+  int inhibit_non_essential_conversion_operations;
   int print_depth;
   int print_readably;
   int print_unbuffered;
@@ -154,14 +154,18 @@ write_string_to_stdio_stream_1 (FILE *stream, struct console *con,
 
   if (stream || output_is_std_handle)
     {
-      if (initialized && !inhibit_non_essential_printing_operations)
+      if (initialized && !inhibit_non_essential_conversion_operations)
 	TO_EXTERNAL_FORMAT (DATA, (ptr, len),
 			    ALLOCA, (extptr, extlen),
 			    Qterminal);
       else
 	{
+#ifdef NON_ASCII_INTERNAL_FORMAT
+#error Do something here
+#else
 	  extptr = (Extbyte *) ptr;
 	  extlen = (Bytecount) len;
+#endif
 	}
     }
 
@@ -291,7 +295,7 @@ write_string_to_external_output_va (const CIbyte *fmt, va_list args,
   Ibyte kludge[8192];
   Bytecount kludgelen;
 
-  if (initialized && !inhibit_non_essential_printing_operations)
+  if (initialized && !inhibit_non_essential_conversion_operations)
     fmt = GETTEXT (fmt);
   vsprintf ((CIbyte *) kludge, fmt, args);
   kludgelen = qxestrlen (kludge);
@@ -424,7 +428,7 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 	     we inhibit GC.  */
 	  if (len < 65536)
 	    {
-	      Ibyte *copied = alloca_array (Ibyte, len);
+	      Ibyte *copied = alloca_ibytes (len);
 	      memcpy (copied, newnonreloc + offset, len);
 	      Lstream_write (XLSTREAM (function), copied, len);
 	    }
@@ -1473,7 +1477,7 @@ enum printing_badness
 
 static void
 printing_major_badness (Lisp_Object printcharfun,
-			Char_ASCII *badness_string, int type, void *val,
+			Ascbyte *badness_string, int type, void *val,
 			enum printing_badness badness)
 {
   Ibyte buf[666];
@@ -1496,7 +1500,7 @@ printing_major_badness (Lisp_Object printcharfun,
 
   /* Don't abort or signal if called from debug_print() or already
      crashing */
-  if (!inhibit_non_essential_printing_operations)
+  if (!inhibit_non_essential_conversion_operations)
     {
 #ifdef ERROR_CHECK_TYPES
       abort ();
@@ -1560,7 +1564,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   /* Avoid calling internal_bind_int, which conses, when called from
      debug_prin1.  In that case, we have bound print_depth to 0 anyway. */
-  if (!inhibit_non_essential_printing_operations)
+  if (!inhibit_non_essential_conversion_operations)
     {
       specdepth = internal_bind_int (&print_depth, print_depth + 1);
 
@@ -1653,7 +1657,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	   debug_print() or we're already crashing.  In such cases,
 	   (further) crashing is counterproductive. */
 
-	if (inhibit_non_essential_printing_operations &&
+	if (inhibit_non_essential_conversion_operations &&
 	    !debug_can_access_memory (lheader, sizeof (*lheader)))
 	    {
 	      write_fmt_string (printcharfun, "#<EMACS BUG: BAD MEMORY %p>",
@@ -1697,7 +1701,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	   (e.g. under Unix we typically have to set a SIGSEGV handler and
 	   try to trigger a seg fault). */
 
-	if (inhibit_non_essential_printing_operations)
+	if (inhibit_non_essential_conversion_operations)
 	  {
 	    if (!debug_can_access_memory
 		(lheader, detagged_lisp_object_size (lheader)))
@@ -1740,7 +1744,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       }
     }
 
-  if (!inhibit_non_essential_printing_operations)
+  if (!inhibit_non_essential_conversion_operations)
     unbind_to (specdepth);
   UNGCPRO;
 }
@@ -1914,7 +1918,7 @@ write_string_to_alternate_debugging_output (const Ibyte *str, Bytecount len)
   int extlen;
   const Extbyte *extptr;
 #if 0 /* We want to see the internal representation, don't we? */
-  if (initialized && !inhibit_non_essential_printing_operations)
+  if (initialized && !inhibit_non_essential_conversion_operations)
     TO_EXTERNAL_FORMAT (DATA, (str, len),
 			ALLOCA, (extptr, extlen),
 			Qterminal);
@@ -2062,8 +2066,8 @@ debug_prin1_exit (Lisp_Object UNUSED (ignored))
 {
   struct debug_bindings *bindings = 
     (struct debug_bindings *) XOPAQUE (debug_prin1_bindings)->data;
-  inhibit_non_essential_printing_operations =
-    bindings->inhibit_non_essential_printing_operations;
+  inhibit_non_essential_conversion_operations =
+    bindings->inhibit_non_essential_conversion_operations;
   print_depth = bindings->print_depth;
   print_readably = bindings->print_readably;
   print_unbuffered = bindings->print_unbuffered;
@@ -2089,8 +2093,8 @@ debug_prin1 (Lisp_Object debug_print_obj, int flags)
   struct debug_bindings *bindings = 
     (struct debug_bindings *) XOPAQUE (debug_prin1_bindings)->data;
 
-  bindings->inhibit_non_essential_printing_operations =
-    inhibit_non_essential_printing_operations;
+  bindings->inhibit_non_essential_conversion_operations =
+    inhibit_non_essential_conversion_operations;
   bindings->print_depth = print_depth;
   bindings->print_readably = print_readably;
   bindings->print_unbuffered = print_unbuffered;
@@ -2100,7 +2104,7 @@ debug_prin1 (Lisp_Object debug_print_obj, int flags)
   bindings->Vinhibit_quit = Vinhibit_quit;
   specdepth = record_unwind_protect (debug_prin1_exit, Qnil);
 
-  inhibit_non_essential_printing_operations = 1;
+  inhibit_non_essential_conversion_operations = 1;
   print_depth = 0;
   print_readably = debug_print_readably != -1 ? debug_print_readably : 0;
   print_unbuffered++;
@@ -2128,7 +2132,7 @@ debug_prin1 (Lisp_Object debug_print_obj, int flags)
 void
 debug_p4 (Lisp_Object obj)
 {
-  inhibit_non_essential_printing_operations = 1;
+  inhibit_non_essential_conversion_operations = 1;
   if (STRINGP (obj))
     debug_out ("\"%s\"", XSTRING_DATA (obj));
   else if (CONSP (obj))
@@ -2195,7 +2199,7 @@ debug_p4 (Lisp_Object obj)
 		   ((struct lcrecord_header *) header)->uid);
     }
 
-  inhibit_non_essential_printing_operations = 0;
+  inhibit_non_essential_conversion_operations = 0;
 }
 
 static void
@@ -2227,9 +2231,9 @@ void
 debug_p3 (Lisp_Object obj)
 {
   debug_p4 (obj);
-  inhibit_non_essential_printing_operations = 1;
+  inhibit_non_essential_conversion_operations = 1;
   debug_out ("\n");
-  inhibit_non_essential_printing_operations = 0;
+  inhibit_non_essential_conversion_operations = 0;
 }
 
 void
@@ -2266,7 +2270,7 @@ debug_backtrace (void)
   /* by doing this, we trick various things that are non-essential
      but might cause crashes into not getting executed. */
   int specdepth = 
-    internal_bind_int (&inhibit_non_essential_printing_operations, 1);
+    internal_bind_int (&inhibit_non_essential_conversion_operations, 1);
 
   internal_bind_int (&print_depth, 0);
   internal_bind_int (&print_readably, 0);
@@ -2375,8 +2379,6 @@ reinit_vars_of_print (void)
 void
 vars_of_print (void)
 {
-  reinit_vars_of_print ();
-
   DEFVAR_LISP ("standard-output", &Vstandard_output /*
 Output stream `print' uses by default for outputting a character.
 This may be any function of one argument.

@@ -255,10 +255,8 @@ regexp_ignore_completion_p (const Ibyte *nonreloc,
   /* Ignore this element if it fails to match all the regexps.  */
   if (!NILP (Vcompletion_regexp_list))
     {
-      Lisp_Object regexps;
-      EXTERNAL_LIST_LOOP (regexps, Vcompletion_regexp_list)
+      EXTERNAL_LIST_LOOP_2 (re, Vcompletion_regexp_list)
 	{
-	  Lisp_Object re = XCAR (regexps);
 	  CHECK_STRING (re);
 	  if (fast_string_match (re, nonreloc, reloc, offset,
 				 length, 0, ERROR_ME, 0) < 0)
@@ -955,8 +953,6 @@ reinit_vars_of_minibuf (void)
 void
 vars_of_minibuf (void)
 {
-  reinit_vars_of_minibuf ();
-
   staticpro (&Vminibuf_prompt);
   Vminibuf_prompt = Qnil;
 

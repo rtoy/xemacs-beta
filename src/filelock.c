@@ -96,7 +96,7 @@ typedef struct
 /* Write the name of the lock file for FN into LFNAME.  Length will be
    that of FN plus two more for the leading `.#' plus one for the null.  */
 #define MAKE_LOCK_NAME(lock, file) \
-  (lock = (Ibyte *) ALLOCA (XSTRING_LENGTH (file) + 2 + 1), \
+  (lock = alloca_ibytes (XSTRING_LENGTH (file) + 2 + 1), \
    fill_in_lock_file_name (lock, file))
 
 static void
@@ -141,8 +141,8 @@ lock_file_1 (Ibyte *lfname, int force)
     host_name = (Ibyte *) "";
 
   lock_info_str =
-    (Ibyte *) ALLOCA (qxestrlen (user_name) + qxestrlen (host_name)
-			+ LOCK_PID_MAX + 5);
+    alloca_ibytes (qxestrlen (user_name) + qxestrlen (host_name)
+		   + LOCK_PID_MAX + 5);
 
   qxesprintf (lock_info_str, "%s@%s.%d", user_name, host_name, qxe_getpid ());
 
@@ -194,7 +194,7 @@ current_lock_owner (lock_info_type *owner, Ibyte *lfname)
      read it to determine return value, so allocate it.  */
   if (!owner)
     {
-      owner = (lock_info_type *) ALLOCA (sizeof (lock_info_type));
+      owner = alloca_new (lock_info_type);
       local_owner = 1;
     }
 
@@ -207,7 +207,7 @@ current_lock_owner (lock_info_type *owner, Ibyte *lfname)
     return -1;
   }
   len = at - lfinfo;
-  owner->user = (Ibyte *) xmalloc (len + 1);
+  owner->user = xnew_ibytes (len + 1);
   qxestrncpy (owner->user, lfinfo, len);
   owner->user[len] = 0;
 
@@ -216,7 +216,7 @@ current_lock_owner (lock_info_type *owner, Ibyte *lfname)
 
   /* The host is everything in between.  */
   len = dot - at - 1;
-  owner->host = (Ibyte *) xmalloc (len + 1);
+  owner->host = xnew_ibytes (len + 1);
   qxestrncpy (owner->host, at + 1, len);
   owner->host[len] = 0;
 
@@ -349,9 +349,9 @@ lock_file (Lisp_Object fn)
     goto done;
 
   /* Else consider breaking the lock */
-  locker = (Ibyte *) ALLOCA (qxestrlen (lock_info.user)
-			       + qxestrlen (lock_info.host)
-			       + LOCK_PID_MAX + 9);
+  locker = alloca_ibytes (qxestrlen (lock_info.user)
+			  + qxestrlen (lock_info.host)
+			  + LOCK_PID_MAX + 9);
   qxesprintf (locker, "%s@%s (pid %d)", lock_info.user, lock_info.host,
 	      lock_info.pid);
   FREE_LOCK_INFO (lock_info);

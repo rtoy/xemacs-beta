@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002, 2004 Ben Wing
    Copyright (C) 1995 Sun Microsystems
 
 This file is part of XEmacs.
@@ -1163,7 +1163,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   int force_mono;
   gint w, h;
   struct gcpro gcpro1, gcpro2, gcpro3;
-  const UChar_Binary * volatile dstring;
+  const Binbyte * volatile dstring;
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
     gui_error ("Not a Gtk device", device);
@@ -1224,9 +1224,9 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	for (j = 0; j < image.ncolors; j++)
 	  {
 	    if (image.colorTable[j].symbolic != NULL &&
-		!qxestrcasecmp_c(color_symbols[i].name, image.colorTable[j].symbolic))
+		!qxestrcasecmp_ascii(color_symbols[i].name, image.colorTable[j].symbolic))
 	      {
-		image.colorTable[j].c_color = (char*) xmalloc(16);
+		image.colorTable[j].c_color = xnew_ascbytes (16);
 
 		sprintf(image.colorTable[j].c_color, "#%.4x%.4x%.4x",
 			color_symbols[i].color.red, color_symbols[i].color.green,

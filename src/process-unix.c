@@ -917,7 +917,7 @@ child_setup (int in, int out, int err, Ibyte **new_argv,
     REGISTER Bytecount i;
 
     i = XSTRING_LENGTH (current_dir);
-    pwd = alloca_array (Ibyte, i + 6);
+    pwd = alloca_ibytes (i + 6);
     memcpy (pwd, "PWD=", 4);
     memcpy (pwd + 4, XSTRING_DATA (current_dir), i);
     i += 4;
@@ -1620,10 +1620,10 @@ unix_deactivate_process (Lisp_Process *p,
 {
   SIGTYPE (*old_sigpipe) (int) = 0;
 
-  if (UNIX_DATA(p)->infd >= 0)
-    flush_pending_output (UNIX_DATA(p)->infd);
-  if (UNIX_DATA(p)->errfd >= 0)
-    flush_pending_output (UNIX_DATA(p)->errfd);
+  if (UNIX_DATA (p)->infd >= 0)
+    flush_pending_output (UNIX_DATA (p)->infd);
+  if (UNIX_DATA (p)->errfd >= 0)
+    flush_pending_output (UNIX_DATA (p)->errfd);
 
   /* closing the outstream could result in SIGPIPE, so ignore it. */
   old_sigpipe = (SIGTYPE (*) (int)) EMACS_SIGNAL (SIGPIPE, SIG_IGN);
@@ -1631,8 +1631,8 @@ unix_deactivate_process (Lisp_Process *p,
 				  p->pipe_errstream, in_usid, err_usid);
   EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 
-  UNIX_DATA(p)->infd  = -1;
-  UNIX_DATA(p)->errfd  = -1;
+  UNIX_DATA (p)->infd  = -1;
+  UNIX_DATA (p)->errfd  = -1;
 }
 
 /* If the subtty field of the process data is not filled in, do so now. */

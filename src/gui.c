@@ -818,13 +818,13 @@ DEFINE_LRECORD_IMPLEMENTATION ("gui-item", gui_item,
 			       Lisp_Gui_Item);
 
 DOESNT_RETURN
-gui_error (const Char_ASCII *reason, Lisp_Object frob)
+gui_error (const Ascbyte *reason, Lisp_Object frob)
 {
   signal_error (Qgui_error, reason, frob);
 }
 
 DOESNT_RETURN
-gui_error_2 (const Char_ASCII *reason, Lisp_Object frob0, Lisp_Object frob1)
+gui_error_2 (const Ascbyte *reason, Lisp_Object frob0, Lisp_Object frob1)
 {
   signal_error_2 (Qgui_error, reason, frob0, frob1);
 }

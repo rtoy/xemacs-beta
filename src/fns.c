@@ -3229,7 +3229,7 @@ mapcar1 (Elemcount leni, Lisp_Object *vals,
     {
       /* The string data of `sequence' might be relocated during GC. */
       Bytecount slen = XSTRING_LENGTH (sequence);
-      Ibyte *p = alloca_array (Ibyte, slen);
+      Ibyte *p = alloca_ibytes (slen);
       Ibyte *end = p + slen;
 
       memcpy (p, XSTRING_DATA (sequence), slen);
@@ -3350,22 +3350,22 @@ length, no consing will take place.
 */
        (old, new))
 {
-  Lisp_Object tail, oldtail = old, prevoldtail = Qnil;
+  Lisp_Object oldtail = old, prevoldtail = Qnil;
 
-  EXTERNAL_LIST_LOOP (tail, new)
+  EXTERNAL_LIST_LOOP_2 (elt, new)
     {
       if (!NILP (oldtail))
 	{
 	  CHECK_CONS (oldtail);
-	  XCAR (oldtail) = XCAR (tail);
+	  XCAR (oldtail) = elt;
 	}
       else if (!NILP (prevoldtail))
 	{
-	  XCDR (prevoldtail) = Fcons (XCAR (tail), Qnil);
+	  XCDR (prevoldtail) = Fcons (elt, Qnil);
 	  prevoldtail = XCDR (prevoldtail);
 	}
       else
-	old = oldtail = Fcons (XCAR (tail), Qnil);
+	old = oldtail = Fcons (elt, Qnil);
 
       if (!NILP (oldtail))
 	{
@@ -3383,7 +3383,7 @@ length, no consing will take place.
 }
 
 Lisp_Object
-add_suffix_to_symbol (Lisp_Object symbol, const Char_ASCII *ascii_string)
+add_suffix_to_symbol (Lisp_Object symbol, const Ascbyte *ascii_string)
 {
   return Fintern (concat2 (Fsymbol_name (symbol),
 			   build_string (ascii_string)),
@@ -3391,7 +3391,7 @@ add_suffix_to_symbol (Lisp_Object symbol, const Char_ASCII *ascii_string)
 }
 
 Lisp_Object
-add_prefix_to_symbol (const Char_ASCII *ascii_string, Lisp_Object symbol)
+add_prefix_to_symbol (const Ascbyte *ascii_string, Lisp_Object symbol)
 {
   return Fintern (concat2 (build_string (ascii_string),
 			   Fsymbol_name (symbol)),

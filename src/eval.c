@@ -4979,7 +4979,7 @@ set_trapping_problems_flags (int flags)
    `throw' out of the function being called are trapped, and a warning
    issued. (Again, WARNING_STRING should be given.)
 
-   (If FLAGS contains INHIBIT_WARNING_ISSUE, no warnings are issued;
+   If FLAGS contains INHIBIT_WARNING_ISSUE, no warnings are issued;
    this applies to recursive invocations of call_trapping_problems, too.
 
    If FLAGS contains POSTPONE_WARNING_ISSUE, no warnings are issued;
@@ -6519,13 +6519,12 @@ reinit_vars_of_eval (void)
 #ifdef DEFEND_AGAINST_THROW_RECURSION
   throw_level = 0;
 #endif
+  init_eval_semi_early ();
 }
 
 void
 vars_of_eval (void)
 {
-  reinit_vars_of_eval ();
-
   DEFVAR_INT ("max-specpdl-size", &max_specpdl_size /*
 Limit on number of Lisp variable bindings & unwind-protects before error.
 */ );

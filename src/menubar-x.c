@@ -1375,8 +1375,6 @@ reinit_vars_of_menubar_x (void)
 void
 vars_of_menubar_x (void)
 {
-  reinit_vars_of_menubar_x ();
-
 #if defined (LWLIB_MENUBARS_LUCID)
   Fprovide (intern ("lucid-menubars"));
 #elif defined (LWLIB_MENUBARS_MOTIF)

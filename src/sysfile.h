@@ -341,8 +341,8 @@ Bytecount write_allowing_quit (int fildes, const void *buf,
 
 size_t retry_fread (void *, size_t, size_t, FILE *);
 size_t retry_fwrite (const void *, size_t, size_t, FILE *);
-FILE *retry_fopen (const Extbyte *path, const Char_ASCII *mode);
-FILE *qxe_fopen (const Ibyte *path, const Char_ASCII *mode);
+FILE *retry_fopen (const Extbyte *path, const Ascbyte *mode);
+FILE *qxe_fopen (const Ibyte *path, const Ascbyte *mode);
 int retry_fclose (FILE *);
 
 /* encapsulations: file-information calls */

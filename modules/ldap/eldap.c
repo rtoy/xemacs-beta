@@ -1,5 +1,7 @@
 /* LDAP client interface for XEmacs.
    Copyright (C) 1998 Free Software Foundation, Inc.
+   Copyright (C) 2004 Ben Wing.
+   
 
 This file is part of XEmacs.
 
@@ -97,7 +99,7 @@ signal_ldap_error (LDAP *ld,
 #endif
     }
   invalid_operation ("LDAP error",
-		     build_string (ldap_err2string (ldap_err)));
+		     build_ext_string (ldap_err2string (ldap_err), Qnative));
 }
 
 
@@ -223,8 +225,8 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
   LDAP *ld;
   int  ldap_port = 0;
   int  ldap_auth = LDAP_AUTH_SIMPLE;
-  char *ldap_binddn = NULL;
-  char *ldap_password = NULL;
+  Extbyte *ldap_binddn = NULL;
+  Extbyte *ldap_password = NULL;
   int  ldap_deref = LDAP_DEREF_NEVER;
   int  ldap_timelimit = 0;
   int  ldap_sizelimit = 0;
@@ -305,7 +307,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
 
   /* Connect to the server and bind */
   slow_down_interrupts ();
-  ld = ldap_open ((char *) XSTRING_DATA (host), ldap_port);
+  ld = ldap_open (NEW_LISP_STRING_TO_EXTERNAL (host, Qnative), ldap_port);
   speed_up_interrupts ();
 
   if (ld == NULL )
@@ -343,10 +345,8 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
   err = ldap_bind_s (ld, ldap_binddn, ldap_password, ldap_auth);
   if (err != LDAP_SUCCESS)
     {
-      Ibyte *interrmess;
-      EXTERNAL_TO_C_STRING (ldap_err2string (err), interrmess, Qnative);
       signal_error (Qprocess_error, "Failed binding to the server",
-		    build_intstring (interrmess));
+		    build_ext_string (ldap_err2string (err), Qnative));
     }
 
   ldap = allocate_ldap ();
@@ -425,13 +425,13 @@ entry according to the value of WITHDN.
   LDAP *ld;
   LDAPMessage *e;
   BerElement *ptr;
-  char *a, *dn;
+  Extbyte *a, *dn;
   int i, rc;
   int  matches;
   struct ldap_unwind_struct unwind;
 
   int  ldap_scope = LDAP_SCOPE_SUBTREE;
-  char **ldap_attributes = NULL;
+  Extbyte **ldap_attributes = NULL;
 
   int speccount = specpdl_depth ();
 
@@ -482,13 +482,14 @@ entry according to the value of WITHDN.
       ldap_attributes = alloca_array (char *, 1 + XINT (Flength (attrs)));
 
       i = 0;
-      EXTERNAL_LIST_LOOP (attrs, attrs)
-	{
-	  Lisp_Object current = XCAR (attrs);
-	  CHECK_STRING (current);
-	  LISP_STRING_TO_EXTERNAL (current, ldap_attributes[i], Qnative);
-	  ++i;
-	}
+      {
+	EXTERNAL_LIST_LOOP_2 (current, attrs)
+	  {
+	    CHECK_STRING (current);
+	    LISP_STRING_TO_EXTERNAL (current, ldap_attributes[i], Qnative);
+	    ++i;
+	  }
+      }
       ldap_attributes[i] = NULL;
     }
 
@@ -497,9 +498,11 @@ entry according to the value of WITHDN.
 
   /* Perform the search */
   if (ldap_search (ld,
-                   NILP (base) ? (char *) "" : (char *) XSTRING_DATA (base),
+                   NILP (base) ? "" :
+		   NEW_LISP_STRING_TO_EXTERNAL (base, Qnative),
                    ldap_scope,
-                   NILP (filter) ? (char *) "" : (char *) XSTRING_DATA (filter),
+                   NILP (filter) ? "" :
+		   NEW_LISP_STRING_TO_EXTERNAL (filter, Qnative),
                    ldap_attributes,
                    NILP (attrsonly) ? 0 : 1)
       == -1)
@@ -536,9 +539,9 @@ entry according to the value of WITHDN.
             signal_ldap_error (ld, e, 0);
           entry = Fcons (build_ext_string (dn, Qnative), Qnil);
         }
-      for (a= ldap_first_attribute (ld, e, &ptr);
+      for (a = ldap_first_attribute (ld, e, &ptr);
            a != NULL;
-           a = ldap_next_attribute (ld, e, ptr) )
+           a = ldap_next_attribute (ld, e, ptr))
         {
           list = Fcons (build_ext_string (a, Qnative), Qnil);
           unwind.vals = ldap_get_values_len (ld, e, a);
@@ -618,9 +621,9 @@ containing attribute/value string pairs.
 
   Lisp_Object current = Qnil;
   Lisp_Object values  = Qnil;
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1;
 
-  GCPRO2 (current, values);
+  GCPRO1 (values);
 
   /* Do all the parameter checking  */
   CHECK_LIVE_LDAP (ldap);
@@ -639,51 +642,57 @@ containing attribute/value string pairs.
   ldap_mods = alloca_array (LDAPMod, len);
   ldap_mods_ptrs = alloca_array (LDAPMod *, 1 + len);
   i = 0;
-  EXTERNAL_LIST_LOOP (entry, entry)
-    {
-      current = XCAR (entry);
-      CHECK_CONS (current);
-      CHECK_STRING (XCAR (current));
-      ldap_mods_ptrs[i] = &(ldap_mods[i]);
-      LISP_STRING_TO_EXTERNAL (XCAR (current), ldap_mods[i].mod_type, Qnative);
-      ldap_mods[i].mod_op = LDAP_MOD_ADD | LDAP_MOD_BVALUES;
-      values = XCDR (current);
-      if (CONSP (values))
-        {
-	  len = (Elemcount) XINT (Flength (values));
-          bervals = alloca_array (struct berval, len);
-          ldap_mods[i].mod_vals.modv_bvals =
-            alloca_array (struct berval *, 1 + len);
-          j = 0;
-          EXTERNAL_LIST_LOOP (values, values)
-            {
-              current = XCAR (values);
-              CHECK_STRING (current);
-              ldap_mods[i].mod_vals.modv_bvals[j] = &(bervals[j]);
-	      TO_EXTERNAL_FORMAT (LISP_STRING, current,
-				  ALLOCA, (bervals[j].bv_val,
-					   bervals[j].bv_len),
-				  Qnative);
-              j++;
-            }
-          ldap_mods[i].mod_vals.modv_bvals[j] = NULL;
-        }
-      else
-        {
-          CHECK_STRING (values);
-          bervals = alloca_array (struct berval, 1);
-          ldap_mods[i].mod_vals.modv_bvals = alloca_array (struct berval *, 2);
-          ldap_mods[i].mod_vals.modv_bvals[0] = &(bervals[0]);
-	  TO_EXTERNAL_FORMAT (LISP_STRING, values,
-			      ALLOCA, (bervals[0].bv_val,
-				       bervals[0].bv_len),
-			      Qnative);
-          ldap_mods[i].mod_vals.modv_bvals[1] = NULL;
-        }
-      i++;
-    }
+
+  {
+    EXTERNAL_LIST_LOOP_2 (current, entry)
+      {
+	CHECK_CONS (current);
+	CHECK_STRING (XCAR (current));
+	ldap_mods_ptrs[i] = &(ldap_mods[i]);
+	LISP_STRING_TO_EXTERNAL (XCAR (current), ldap_mods[i].mod_type,
+				 Qnative);
+	ldap_mods[i].mod_op = LDAP_MOD_ADD | LDAP_MOD_BVALUES;
+	values = XCDR (current);
+	if (CONSP (values))
+	  {
+	    len = (Elemcount) XINT (Flength (values));
+	    bervals = alloca_array (struct berval, len);
+	    ldap_mods[i].mod_vals.modv_bvals =
+	      alloca_array (struct berval *, 1 + len);
+	    j = 0;
+	    {
+	      EXTERNAL_LIST_LOOP_2 (cur2, values)
+		{
+		  CHECK_STRING (cur2);
+		  ldap_mods[i].mod_vals.modv_bvals[j] = &(bervals[j]);
+		  TO_EXTERNAL_FORMAT (LISP_STRING, cur2,
+				      ALLOCA, (bervals[j].bv_val,
+					       bervals[j].bv_len),
+				      Qnative);
+		  j++;
+		}
+	    }
+	    ldap_mods[i].mod_vals.modv_bvals[j] = NULL;
+	  }
+	else
+	  {
+	    CHECK_STRING (values);
+	    bervals = alloca_array (struct berval, 1);
+	    ldap_mods[i].mod_vals.modv_bvals = alloca_array (struct berval *,
+							     2);
+	    ldap_mods[i].mod_vals.modv_bvals[0] = &(bervals[0]);
+	    TO_EXTERNAL_FORMAT (LISP_STRING, values,
+				ALLOCA, (bervals[0].bv_val,
+					 bervals[0].bv_len),
+				Qnative);
+	    ldap_mods[i].mod_vals.modv_bvals[1] = NULL;
+	  }
+	i++;
+      }
+  }
   ldap_mods_ptrs[i] = NULL;
-  rc = ldap_add_s (ld, (char *) XSTRING_DATA (dn), ldap_mods_ptrs);
+  rc = ldap_add_s (ld, NEW_LISP_STRING_TO_EXTERNAL (dn, Qnative),
+		   ldap_mods_ptrs);
   if (rc != LDAP_SUCCESS)
     signal_ldap_error (ld, NULL, rc);
 
@@ -710,7 +719,6 @@ or `replace'. ATTR is the LDAP attribute type to modify.
   Lisp_Object mod_op;
   Elemcount len;
 
-  Lisp_Object current = Qnil;
   Lisp_Object values  = Qnil;
   struct gcpro gcpro1, gcpro2;
 
@@ -732,48 +740,50 @@ or `replace'. ATTR is the LDAP attribute type to modify.
   ldap_mods_ptrs = alloca_array (LDAPMod *, 1 + len);
   i = 0;
 
-  GCPRO2 (current, values);
-  EXTERNAL_LIST_LOOP (mods, mods)
-    {
-      current = XCAR (mods);
-      CHECK_CONS (current);
-      CHECK_SYMBOL (XCAR (current));
-      mod_op = XCAR (current);
-      ldap_mods_ptrs[i] = &(ldap_mods[i]);
-      ldap_mods[i].mod_op = LDAP_MOD_BVALUES;
-      if (EQ (mod_op, Qadd))
-        ldap_mods[i].mod_op |= LDAP_MOD_ADD;
-      else if (EQ (mod_op, Qdelete))
-        ldap_mods[i].mod_op |= LDAP_MOD_DELETE;
-      else if (EQ (mod_op, Qreplace))
-        ldap_mods[i].mod_op |= LDAP_MOD_REPLACE;
-      else
-        invalid_constant ("Invalid LDAP modification type", mod_op);
-      current = XCDR (current);
-      CHECK_STRING (XCAR (current));
-      LISP_STRING_TO_EXTERNAL (XCAR (current), ldap_mods[i].mod_type, Qnative);
-      values = XCDR (current);
-      len = (Elemcount) XINT (Flength (values));
-      bervals = alloca_array (struct berval, len);
-      ldap_mods[i].mod_vals.modv_bvals =
-        alloca_array (struct berval *, 1 + len);
-      j = 0;
-      EXTERNAL_LIST_LOOP (values, values)
-        {
-          current = XCAR (values);
-          CHECK_STRING (current);
-          ldap_mods[i].mod_vals.modv_bvals[j] = &(bervals[j]);
-	  TO_EXTERNAL_FORMAT (LISP_STRING, current,
-			      ALLOCA, (bervals[j].bv_val,
-				       bervals[j].bv_len),
-			      Qnative);
-          j++;
-        }
-      ldap_mods[i].mod_vals.modv_bvals[j] = NULL;
-      i++;
-    }
+  GCPRO1 (values);
+  {
+    EXTERNAL_LIST_LOOP_2 (current, mods)
+      {
+	CHECK_CONS (current);
+	CHECK_SYMBOL (XCAR (current));
+	mod_op = XCAR (current);
+	ldap_mods_ptrs[i] = &(ldap_mods[i]);
+	ldap_mods[i].mod_op = LDAP_MOD_BVALUES;
+	if (EQ (mod_op, Qadd))
+	  ldap_mods[i].mod_op |= LDAP_MOD_ADD;
+	else if (EQ (mod_op, Qdelete))
+	  ldap_mods[i].mod_op |= LDAP_MOD_DELETE;
+	else if (EQ (mod_op, Qreplace))
+	  ldap_mods[i].mod_op |= LDAP_MOD_REPLACE;
+	else
+	  invalid_constant ("Invalid LDAP modification type", mod_op);
+	current = XCDR (current);
+	CHECK_STRING (XCAR (current));
+	LISP_STRING_TO_EXTERNAL (XCAR (current), ldap_mods[i].mod_type,
+				 Qnative);
+	values = XCDR (current);
+	len = (Elemcount) XINT (Flength (values));
+	bervals = alloca_array (struct berval, len);
+	ldap_mods[i].mod_vals.modv_bvals =
+	  alloca_array (struct berval *, 1 + len);
+	j = 0;
+	EXTERNAL_LIST_LOOP_2 (cur2, values)
+	  {
+	    CHECK_STRING (cur2);
+	    ldap_mods[i].mod_vals.modv_bvals[j] = &(bervals[j]);
+	    TO_EXTERNAL_FORMAT (LISP_STRING, cur2,
+				ALLOCA, (bervals[j].bv_val,
+					 bervals[j].bv_len),
+				Qnative);
+	    j++;
+	  }
+	ldap_mods[i].mod_vals.modv_bvals[j] = NULL;
+	i++;
+      }
+  }
   ldap_mods_ptrs[i] = NULL;
-  rc = ldap_modify_s (ld, (char *) XSTRING_DATA (dn), ldap_mods_ptrs);
+  rc = ldap_modify_s (ld, NEW_LISP_STRING_TO_EXTERNAL (dn, Qnative),
+		      ldap_mods_ptrs);
   if (rc != LDAP_SUCCESS)
     signal_ldap_error (ld, NULL, rc);
 
@@ -797,7 +807,7 @@ DN is the distinguished name of the entry to delete.
   ld = XLDAP (ldap)->ld;
   CHECK_STRING (dn);
 
-  rc = ldap_delete_s (ld, (char *) XSTRING_DATA (dn));
+  rc = ldap_delete_s (ld, NEW_LISP_STRING_TO_EXTERNAL (dn, Qnative));
   if (rc != LDAP_SUCCESS)
     signal_ldap_error (ld, NULL, rc);
 

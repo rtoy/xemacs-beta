@@ -77,6 +77,11 @@
 ; 		))
 
 
+;; accessed in loadup.el, mule-cmds.el; see discussion in unicode.c
+(defvar load-unicode-tables-at-dump-time (eq system-type 'windows-nt)
+  "[INTERNAL] Whether to load the Unicode tables at dump time.
+Setting this at run-time does nothing.")
+
 ;; NOTE: This takes only a fraction of a second on my Pentium III
 ;; 700Mhz even with a totally optimization-disabled XEmacs.
 (defun load-unicode-tables ()
@@ -172,9 +177,6 @@
 				     (cdr args)))
 			  (cdr tables))))
 	    parse-args)))
-
-(defun init-unicode-at-startup ()
-  (load-unicode-tables))
 
 (make-coding-system
  'utf-16 'unicode

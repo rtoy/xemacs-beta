@@ -153,7 +153,7 @@ static const struct sized_memory_description rted_description = {
 };
 
 static const struct memory_description range_table_description[] = {
-  { XD_STRUCT_PTR,  offsetof (Lisp_Range_Table, entries),  1, &rted_description },
+  { XD_BLOCK_PTR,  offsetof (Lisp_Range_Table, entries),  1, &rted_description },
   { XD_END }
 };
 
@@ -494,15 +494,9 @@ static int
 rangetab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 			Error_Behavior UNUSED (errb))
 {
-  Lisp_Object rest;
-
-  /* #### should deal with errb */
-  EXTERNAL_LIST_LOOP (rest, value)
+  /* #### should deal with ERRB */
+  EXTERNAL_PROPERTY_LIST_LOOP_3 (range, data, value)
     {
-      Lisp_Object range = XCAR (rest);
-      rest = XCDR (rest);
-      if (!CONSP (rest))
-	sferror ("Invalid list format", value);
       if (!INTP (range) && !CHARP (range)
 	  && !(CONSP (range) && CONSP (XCDR (range))
 	       && NILP (XCDR (XCDR (range)))

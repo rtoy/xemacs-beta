@@ -853,7 +853,6 @@ reinit_vars_of_font_lock (void)
 void
 vars_of_font_lock (void)
 {
-  reinit_vars_of_font_lock ();
 }
 
 #endif /* USE_C_FONT_LOCK */

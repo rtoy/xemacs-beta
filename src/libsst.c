@@ -147,7 +147,7 @@ int fd;
 /* These are tables of values to be loaded into various gain registers.
 */
 
-static UChar_Binary ger_table[][2] = {
+static Binbyte ger_table[][2] = {
     0xaa,	0xaa,	/* -10db */
     0x79,	0xac,
     0x41,	0x99,
@@ -180,7 +180,7 @@ static UChar_Binary ger_table[][2] = {
     };
 
 
-static UChar_Binary gr_gx_table[][2] = {
+static Binbyte gr_gx_table[][2] = {
     0x8b,	0x7c,	/* -18db */
     0x8b,	0x35,
     0x8b,	0x24,
@@ -330,7 +330,7 @@ int fd, dhz1, dhz2, thz, rhz, usec;
     Extbyte buf [255];
     struct audio_ioctl ai;
     int dval1, dval2, tval, rval;
-    UChar_Binary oldmmr2, newmmr2;
+    Binbyte oldmmr2, newmmr2;
 
     if ( dhz1 == 0 )
 	dval1 = 0;

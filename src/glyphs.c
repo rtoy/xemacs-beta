@@ -303,15 +303,12 @@ specifiers will not be affected.
 */
        (console_type, list))
 {
-  Lisp_Object tail;
   Lisp_Object *imlist = get_image_conversion_list (console_type);
 
   /* Check the list to make sure that it only has valid entries. */
 
-  EXTERNAL_LIST_LOOP (tail, list)
+  EXTERNAL_LIST_LOOP_2 (mapping, list)
     {
-      Lisp_Object mapping = XCAR (tail);
-
       /* Mapping form should be (STRING VECTOR) or (STRING VECTOR INTEGER) */
       if (!CONSP (mapping) ||
 	  !CONSP (XCDR (mapping)) ||
@@ -878,13 +875,13 @@ static const struct sized_memory_description subwindow_image_instance_descriptio
 };
 
 static const struct memory_description image_instance_data_description_1 [] = {
-  { XD_STRUCT_ARRAY, IMAGE_TEXT,
+  { XD_BLOCK_ARRAY, IMAGE_TEXT,
     1, &text_image_instance_description },
-  { XD_STRUCT_ARRAY, IMAGE_MONO_PIXMAP,
+  { XD_BLOCK_ARRAY, IMAGE_MONO_PIXMAP,
     1, &pixmap_image_instance_description },
-  { XD_STRUCT_ARRAY, IMAGE_COLOR_PIXMAP,
+  { XD_BLOCK_ARRAY, IMAGE_COLOR_PIXMAP,
     1, &pixmap_image_instance_description },
-  { XD_STRUCT_ARRAY, IMAGE_WIDGET,
+  { XD_BLOCK_ARRAY, IMAGE_WIDGET,
     1, &subwindow_image_instance_description },
   { XD_END }
 };
@@ -1385,7 +1382,6 @@ encode_image_instance_type (enum image_instance_type type)
 static int
 decode_image_instance_type_list (Lisp_Object list)
 {
-  Lisp_Object rest;
   int mask = 0;
 
   if (NILP (list))
@@ -1398,12 +1394,14 @@ decode_image_instance_type_list (Lisp_Object list)
       return image_instance_type_to_mask (type);
     }
 
-  EXTERNAL_LIST_LOOP (rest, list)
-    {
-      enum image_instance_type type =
-	decode_image_instance_type (XCAR (rest), ERROR_ME);
-      mask |= image_instance_type_to_mask (type);
-    }
+  {
+    EXTERNAL_LIST_LOOP_2 (elt, list)
+      {
+	enum image_instance_type type =
+	  decode_image_instance_type (elt, ERROR_ME);
+	mask |= image_instance_type_to_mask (type);
+      }
+  }
 
   return mask;
 }
@@ -2668,7 +2666,7 @@ bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
 		     int ok_if_data_invalid)
 {
   int w, h;
-  UChar_Binary *data;
+  Binbyte *data;
   int result;
 
   result = read_bitmap_data_from_file (name, &w, &h, &data, xhot, yhot);
@@ -5264,7 +5262,7 @@ static const struct sized_memory_description iiked_description = {
 static const struct memory_description iife_description_1[] = {
   { XD_LISP_OBJECT, offsetof (image_instantiator_format_entry, symbol) },
   { XD_LISP_OBJECT, offsetof (image_instantiator_format_entry, device) },
-  { XD_STRUCT_PTR,  offsetof (image_instantiator_format_entry, meths),  1, &iim_description },
+  { XD_BLOCK_PTR,  offsetof (image_instantiator_format_entry, meths),  1, &iim_description },
   { XD_END }
 };
 
@@ -5286,8 +5284,8 @@ static const struct sized_memory_description iifed_description = {
 static const struct memory_description iim_description_1[] = {
   { XD_LISP_OBJECT, offsetof (struct image_instantiator_methods, symbol) },
   { XD_LISP_OBJECT, offsetof (struct image_instantiator_methods, device) },
-  { XD_STRUCT_PTR,  offsetof (struct image_instantiator_methods, keywords), 1, &iiked_description },
-  { XD_STRUCT_PTR,  offsetof (struct image_instantiator_methods, consoles), 1, &cted_description },
+  { XD_BLOCK_PTR,  offsetof (struct image_instantiator_methods, keywords), 1, &iiked_description },
+  { XD_BLOCK_PTR,  offsetof (struct image_instantiator_methods, consoles), 1, &cted_description },
   { XD_END }
 };
 
@@ -5307,7 +5305,7 @@ image_instantiator_format_create (void)
   Vimage_instantiator_format_list = Qnil;
   staticpro (&Vimage_instantiator_format_list);
 
-  dump_add_root_struct_ptr (&the_image_instantiator_format_entry_dynarr, &iifed_description);
+  dump_add_root_block_ptr (&the_image_instantiator_format_entry_dynarr, &iifed_description);
 
   INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (nothing, "nothing");
 
@@ -5418,8 +5416,6 @@ reinit_vars_of_glyphs (void)
 void
 vars_of_glyphs (void)
 {
-  reinit_vars_of_glyphs ();
-
   Vthe_nothing_vector = vector1 (Qnothing);
   staticpro (&Vthe_nothing_vector);
 
@@ -5435,34 +5431,6 @@ vars_of_glyphs (void)
   Vglyph_type_list = list3 (Qbuffer, Qpointer, Qicon);
   staticpro (&Vglyph_type_list);
 
-  /* The octal-escape glyph, control-arrow-glyph and
-     invisible-text-glyph are completely initialized in glyphs.el */
-
-  DEFVAR_LISP ("octal-escape-glyph", &Voctal_escape_glyph /*
-What to prefix character codes displayed in octal with.
-*/);
-  Voctal_escape_glyph = allocate_glyph (GLYPH_BUFFER, redisplay_glyph_changed);
-
-  DEFVAR_LISP ("control-arrow-glyph", &Vcontrol_arrow_glyph /*
-What to use as an arrow for control characters.
-*/);
-  Vcontrol_arrow_glyph = allocate_glyph (GLYPH_BUFFER,
-					 redisplay_glyph_changed);
-
-  DEFVAR_LISP ("invisible-text-glyph", &Vinvisible_text_glyph /*
-What to use to indicate the presence of invisible text.
-This is the glyph that is displayed when an ellipsis is called for
-\(see `selective-display-ellipses' and `buffer-invisibility-spec').
-Normally this is three dots ("...").
-*/);
-  Vinvisible_text_glyph = allocate_glyph (GLYPH_BUFFER,
-					  redisplay_glyph_changed);
-
-  /* Partially initialized in glyphs.el */
-  DEFVAR_LISP ("hscroll-glyph", &Vhscroll_glyph /*
-What to display at the beginning of horizontally scrolled lines.
-*/);
-  Vhscroll_glyph = allocate_glyph (GLYPH_BUFFER, redisplay_glyph_changed);
 #ifdef HAVE_WINDOW_SYSTEM
   Fprovide (Qxbm);
 #endif
@@ -5574,6 +5542,35 @@ What to display at the end of truncated lines.
 What to display at the end of wrapped lines.
 */ );
   Vcontinuation_glyph = allocate_glyph (GLYPH_BUFFER, redisplay_glyph_changed);
+
+  /* The octal-escape glyph, control-arrow-glyph and
+     invisible-text-glyph are completely initialized in glyphs.el */
+
+  DEFVAR_LISP ("octal-escape-glyph", &Voctal_escape_glyph /*
+What to prefix character codes displayed in octal with.
+*/);
+  Voctal_escape_glyph = allocate_glyph (GLYPH_BUFFER, redisplay_glyph_changed);
+
+  DEFVAR_LISP ("control-arrow-glyph", &Vcontrol_arrow_glyph /*
+What to use as an arrow for control characters.
+*/);
+  Vcontrol_arrow_glyph = allocate_glyph (GLYPH_BUFFER,
+					 redisplay_glyph_changed);
+
+  DEFVAR_LISP ("invisible-text-glyph", &Vinvisible_text_glyph /*
+What to use to indicate the presence of invisible text.
+This is the glyph that is displayed when an ellipsis is called for
+\(see `selective-display-ellipses' and `buffer-invisibility-spec').
+Normally this is three dots ("...").
+*/);
+  Vinvisible_text_glyph = allocate_glyph (GLYPH_BUFFER,
+					  redisplay_glyph_changed);
+
+  /* Partially initialized in glyphs.el */
+  DEFVAR_LISP ("hscroll-glyph", &Vhscroll_glyph /*
+What to display at the beginning of horizontally scrolled lines.
+*/);
+  Vhscroll_glyph = allocate_glyph (GLYPH_BUFFER, redisplay_glyph_changed);
 
   /* Partially initialized in glyphs-x.c, glyphs.el */
   DEFVAR_LISP ("xemacs-logo", &Vxemacs_logo /*

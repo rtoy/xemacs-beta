@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -652,7 +652,7 @@ truename_via_random_props (Display *dpy, XFontStruct *font)
   if (ok)
     {
       int L = strlen (composed_name) + 1;
-      result = (Extbyte *) xmalloc (L);
+      result = xnew_extbytes (L);
       strncpy (result, composed_name, L);
     }
   else
@@ -827,17 +827,17 @@ x_font_instance_properties (Lisp_Font_Instance *f)
 	   atom == DEVICE_XATOM_SPACING (d) ||
 	   atom == DEVICE_XATOM_CHARSET_REGISTRY (d) ||
 	   atom == DEVICE_XATOM_CHARSET_ENCODING (d) ||
-	   !qxestrcmp_c (name_str, "CHARSET_COLLECTIONS") ||
-	   !qxestrcmp_c (name_str, "FONTNAME_REGISTRY") ||
-	   !qxestrcmp_c (name_str, "CLASSIFICATION") ||
-	   !qxestrcmp_c (name_str, "COPYRIGHT") ||
-	   !qxestrcmp_c (name_str, "DEVICE_FONT_NAME") ||
-	   !qxestrcmp_c (name_str, "FULL_NAME") ||
-	   !qxestrcmp_c (name_str, "MONOSPACED") ||
-	   !qxestrcmp_c (name_str, "QUALITY") ||
-	   !qxestrcmp_c (name_str, "RELATIVE_SET") ||
-	   !qxestrcmp_c (name_str, "RELATIVE_WEIGHT") ||
-	   !qxestrcmp_c (name_str, "STYLE")))
+	   !qxestrcmp_ascii (name_str, "CHARSET_COLLECTIONS") ||
+	   !qxestrcmp_ascii (name_str, "FONTNAME_REGISTRY") ||
+	   !qxestrcmp_ascii (name_str, "CLASSIFICATION") ||
+	   !qxestrcmp_ascii (name_str, "COPYRIGHT") ||
+	   !qxestrcmp_ascii (name_str, "DEVICE_FONT_NAME") ||
+	   !qxestrcmp_ascii (name_str, "FULL_NAME") ||
+	   !qxestrcmp_ascii (name_str, "MONOSPACED") ||
+	   !qxestrcmp_ascii (name_str, "QUALITY") ||
+	   !qxestrcmp_ascii (name_str, "RELATIVE_SET") ||
+	   !qxestrcmp_ascii (name_str, "RELATIVE_WEIGHT") ||
+	   !qxestrcmp_ascii (name_str, "STYLE")))
 	{
 	  Extbyte *val_str = XGetAtomName (dpy, props [i].card32);
 

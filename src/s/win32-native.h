@@ -19,6 +19,8 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
+/* See win32.c for info about the different Windows files in XEmacs. */
+
 #include "win32-common.h"
 
 /* Identify ourselves */

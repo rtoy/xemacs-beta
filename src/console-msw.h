@@ -35,6 +35,8 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_console_msw_h_
 #define INCLUDED_console_msw_h_
 
+/* See win32.c for info about the different Windows files in XEmacs. */
+
 #include "console.h"
 #include "syswindows.h"
 
@@ -81,6 +83,9 @@ typedef struct
   int width;
   int height;
 } XEMACS_RECT_WH;
+
+ANSI_ALIASING_TYPEDEF (POINTS, POINTS);
+#define XE_MAKEPOINTS(l)       ANSI_ALIASING_CAST (POINTS, l)
 
 /*
  * Random globals

@@ -1,5 +1,5 @@
 /* Win32 internationalization functions.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
    Copyright (C) 2000 IKEYAMA Tomonori.
 
 This file is part of XEmacs.
@@ -53,6 +53,15 @@ int _getmbcp (void);
 # define NO_EXT_MULTIBYTE_FEATURES
 #endif
 
+
+
+/*
+
+Detailed info on Microsoft Windows-Related Multilingual Issues:
+
+  (Info-goto-node "(internals)Microsoft Windows-Related Multilingual Issues")
+*/
+
 Lisp_Object Qmswindows_multibyte, Qmswindows_multibyte_to_unicode;
 Lisp_Object Qmswindows_tstr, Qmswindows_unicode;
 Lisp_Object Qmswindows_multibyte_system_default;
@@ -72,74 +81,6 @@ LCID current_locale;
 /************************************************************************/
 /*            Language/locale/code page conversion functions            */
 /************************************************************************/
-
-/* There are various different ways of representing the vague concept
-   of "language", and it can be very confusing.  So:
-
-   -- The C library has the concept of "locale", which is a
-   combination of language and country, and which controls the way
-   currency and dates are displayed, the encoding of data, etc.
-
-   -- XEmacs has the concept of "language environment", more or less
-   like a locale; although currently in most cases it just refers to
-   the language, and no sub-language distinctions are
-   made. (Exceptions are with Chinese, which has different language
-   environments for Taiwan and mainland China, due to the different
-   encodings and writing systems.)
-
-   -- Windows has a number of different language concepts:
-
-   1. There are "languages" and "sublanguages", which correspond to
-   the languages and countries of the C library -- e.g. LANG_ENGLISH
-   and SUBLANG_ENGLISH_US.  These are identified by 8-bit integers,
-   called the "primary language identifier" and "sublanguage
-   identifier", respectively.  These are combined into a 16-bit
-   integer or "language identifier" by MAKELANGID().
-
-   2. The language identifier in turn is combined with a "sort
-   identifier" (and optionally a "sort version") to yield a 32-bit
-   integer called a "locale identifier" (type LCID), which identifies
-   locales -- the primary means of distinguishing language/regional
-   settings and similar to C library locales.
-
-   3. "Code pages" identify different text encodings (i.e. a set of
-   supported characters, an enumeration of those characters [i.e. an
-   association of character with number or number pair; there may be
-   disjoint ranges of numbers supported]), and a way of encoding a
-   stream of those characters into an 8-bit data stream).  All of the
-   encodings are either one-byte or mixed one-byte/two-byte encodings,
-   all non-modal; in the mixed encodings, two-byte characters have the
-   first byte >= 128, although the second byte may or may not be
-   restricted to this range, depending on the encoding.  Code pages
-   are similar to XEmacs "charsets"; the latter also define a set of
-   supported characters and an enumeration of those characters (but
-   code pages in additionally define an encoding, which charsets don't
-   do).  Code pages often function in Windows like charsets in XEmacs.
-
-   4. Every Windows locale has a specific code page associated with
-   it; more than one locale can share a code page -- e.g. all the
-   Western European languages, including English, do.
-
-   5. Windows also has an "input locale identifier" (aka "keyboard
-   layout id") or HKL, which is a 32-bit integer composed of the
-   16-bit language identifier and a 16-bit "device identifier", which
-   originally specified a particular keyboard layout (e.g. the locale
-   "US English" can have the QWERTY layout, the Dvorak layout, etc.),
-   but has been expanded to include speech-to-text converters and
-   other non-keyboard ways of inputting text.  Note that both the HKL
-   and LCID share the language identifier in the lower 16 bits, and in
-   both cases a 0 in the upper 16 bits means "default" (sort order or
-   device), providing a way to convert between HKL's, LCID's, and
-   language identifiers (i.e. language/sublanguage pairs).  The
-   default keyboard layout for a language is (as far as I can
-   determine) established using the Regional Settings control panel
-   applet, where you can add input locales as combinations of language
-   (actually language/sublanguage) and layout; presumably if you list
-   only one input locale with a particular language, the corresponding
-   layout is the default for that language.  But what if you list more
-   than one?  You can specify a single default input locale, but there
-   appears to be no way to do so on a per-language basis.
-*/   
 
 struct lang_to_string
 {
@@ -675,7 +616,7 @@ lang_to_langcode (Lisp_Object lang, struct lang_to_string *table,
   int i;
 
   for (i = 0; i < table_size; i++)
-    if (!strcmp ((char *) XSTRING_DATA (lang), table[i].string))
+    if (!qxestrcmp_ascii (XSTRING_DATA (lang), table[i].string))
       return table[i].code;
   return -1;
 }
@@ -688,14 +629,14 @@ sublang_to_langcode (Lisp_Object lang, struct lang_to_string *table,
 
   for (i = 0; i < table_size; i++)
     if (table[i].string &&
-	!strcmp ((char *) XSTRING_DATA (lang), table[i].string))
+	!qxestrcmp_ascii (XSTRING_DATA (lang), table[i].string))
       return table[i].code;
 
-  if (!strcmp ((char *) XSTRING_DATA (lang), "NEUTRAL"))
+  if (!qxestrcmp_ascii (XSTRING_DATA (lang), "NEUTRAL"))
     return SUBLANG_NEUTRAL;
-  if (!strcmp ((char *) XSTRING_DATA (lang), "DEFAULT"))
+  if (!qxestrcmp_ascii (XSTRING_DATA (lang), "DEFAULT"))
     return SUBLANG_DEFAULT;
-  if (!strcmp ((char *) XSTRING_DATA (lang), "SYS_DEFAULT"))
+  if (!qxestrcmp_ascii (XSTRING_DATA (lang), "SYS_DEFAULT"))
     return SUBLANG_SYS_DEFAULT;
 
   return -1;
@@ -1093,11 +1034,11 @@ If LOCALE is nil or omitted, the current locale is used.
 }
 
 static DWORD
-int_from_hex (Char_ASCII *s)
+int_from_hex (Ascbyte *s)
 {
   DWORD val = 0;
-  static Char_ASCII hex[] = "0123456789abcdefABCDEF";
-  Char_ASCII *p;
+  static Ascbyte hex[] = "0123456789abcdefABCDEF";
+  Ascbyte *p;
 
   while (*s && (p = strchr (hex, *s)) != NULL)
     {
@@ -1115,7 +1056,7 @@ int_from_hex (Char_ASCII *s)
 static Lisp_Object Vmswindows_valid_locales;
 
 static BOOL CALLBACK
-enum_locale_fn (Char_ASCII *localeNum)
+enum_locale_fn (Ascbyte *localeNum)
 {
   DWORD id = int_from_hex (localeNum);
   Vmswindows_valid_locales =
@@ -1485,7 +1426,7 @@ The return value is a list of pairs of language id and layout id.
        ())
 {
   int num_layouts = GetKeyboardLayoutList (0, NULL);
-  HKL * layouts = (HKL *) ALLOCA (num_layouts * sizeof (HKL));
+  HKL *layouts = alloca_array (HKL, num_layouts);
   Lisp_Object obj = Qnil;
 
   if (GetKeyboardLayoutList (num_layouts, layouts) == num_layouts)
@@ -1682,7 +1623,7 @@ wchar_t *
 wcsdup (const wchar_t *str)
 {
   int len = wcslen (str) + 1;
-  void *val = xmalloc (len * sizeof (wchar_t));
+  wchar_t *val = xnew_array (wchar_t, len);
 
   if (val == 0) return 0;
   return (wchar_t *) memcpy (val, str, len * sizeof (wchar_t));
@@ -1924,6 +1865,10 @@ mswindows_multibyte_to_unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
   write_c_string (printcharfun, ")");
 }
 
+/* ----------------------------------------------------------------------- */
+/*                      Unicode/Multibyte converters                       */
+/* ----------------------------------------------------------------------- */
+
 /* Convert multibyte to Unicode according to the specified code page
    and return the value as a malloc()ed string.  This currently exists
    because the TO_INTERNAL_FORMAT() mechanism -- the normal way to do
@@ -1934,18 +1879,37 @@ mswindows_multibyte_to_unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
    called recursively merely when I'm doing a simple conversion
    operation?  It turns out this can and does happen, consistently, as
    a result of calling QUIT -- it happens consistently for complicated
-   reasons outlined in event-msw.c, WM_KEYDOWN handling.) */
+   reasons outlined in event-msw.c, WM_KEYDOWN handling.)
+
+   NOTE: These functions are also used at startup. */
 
 Extbyte *
 convert_multibyte_to_unicode_malloc (const Extbyte *src, Bytecount n,
 				     int cp, Bytecount *size_out)
 {
-  Bytecount nout = MultiByteToWideChar (cp, 0, src, n, 0, 0);
+  Charcount nout = MultiByteToWideChar (cp, MBTOWC_OPTIONS, src, n, 0, 0);
   Extbyte *outp = xnew_array (Extbyte, nout * sizeof (WCHAR));
 
-  MultiByteToWideChar (cp, 0, src, n, (LPWSTR) outp, nout);
+  MultiByteToWideChar (cp, MBTOWC_OPTIONS, src, n, (LPWSTR) outp, nout);
   if (size_out)
     *size_out = nout * sizeof (WCHAR);
+  return outp;
+}
+
+Extbyte *
+convert_unicode_to_multibyte_malloc (const Extbyte *src, Bytecount n,
+				     int cp, Bytecount *size_out)
+{
+  Bytecount nout = WideCharToMultiByte (cp, WCTOMB_OPTIONS, (LPWSTR) src,
+					n / sizeof (WCHAR),
+					0, 0, WCTOMB_INVALID_STRING, 0);
+  Extbyte *outp = xnew_array (Extbyte, nout);
+
+  WideCharToMultiByte (cp, WCTOMB_OPTIONS, (LPWSTR) src,
+		       n / sizeof (WCHAR), (LPSTR) outp, nout,
+		       WCTOMB_INVALID_STRING, 0);
+  if (size_out)
+    *size_out = nout;
   return outp;
 }
 
@@ -1972,6 +1936,69 @@ convert_multibyte_to_internal_malloc (const Extbyte *src, Bytecount n,
   return intdata;
 }
 
+static void
+unicode_multibyte_convert_now_damn_it (const void *src, Bytecount src_size,
+				       int to_unicode, void **dst,
+				       Bytecount *dst_size, int cp)
+{
+  if (to_unicode)
+    {
+      Charcount nout = MultiByteToWideChar (cp, MBTOWC_OPTIONS, (LPSTR) src,
+					    src_size, 0, 0);
+      Extbyte *outp = (Extbyte *) stack_like_malloc (nout * sizeof (WCHAR));
+
+      MultiByteToWideChar (cp, MBTOWC_OPTIONS, (LPSTR) src, src_size,
+			   (LPWSTR) outp, nout);
+      *dst = (void *) outp;
+      *dst_size = nout * sizeof (WCHAR);
+    }
+  else
+    {
+      Bytecount nout = WideCharToMultiByte (cp, WCTOMB_OPTIONS, (LPWSTR) src,
+					    src_size / sizeof (WCHAR),
+					    0, 0, WCTOMB_INVALID_STRING, 0);
+      Extbyte *outp = (Extbyte *) stack_like_malloc (nout);
+
+      WideCharToMultiByte (cp, WCTOMB_OPTIONS, (LPWSTR) src,
+			   src_size / sizeof (WCHAR), (LPSTR) outp, nout,
+			   WCTOMB_INVALID_STRING, 0);
+      *dst = (void *) outp;
+      *dst_size = nout;
+    }
+}
+
+Bytecount
+unicode_multibyte_convert_size (const char *srctext, const void *src,
+				Bytecount src_size, int to_unicode, int cp)
+{
+  alloca_convert_vals vals;
+
+  assert (find_pos_of_existing_active_alloca_convert (srctext) < 0);
+
+  vals.srctext = srctext;
+
+  unicode_multibyte_convert_now_damn_it (src, src_size, to_unicode, &vals.dst,
+					 &vals.dst_size, cp);
+
+  Dynarr_add (active_alloca_convert, vals);
+  return vals.dst_size;
+}
+
+void *
+unicode_multibyte_convert_copy_data (const char *srctext, void *alloca_data)
+{
+  alloca_convert_vals *vals;
+  int i = find_pos_of_existing_active_alloca_convert (srctext);
+
+  assert (i >= 0);
+  vals = Dynarr_atp (active_alloca_convert, i);
+  assert (alloca_data);
+  memcpy (alloca_data, vals->dst, vals->dst_size);
+  stack_like_free (vals->dst);
+  Dynarr_delete (active_alloca_convert, i);
+  return alloca_data;
+}
+
 /* Convert multibyte to Unicode according to the specified code page
    and append the results onto the specified Dynarr.  See above. */
 
@@ -1979,14 +2006,32 @@ void
 convert_multibyte_to_unicode_dynarr (const Extbyte *src, Bytecount n,
 				     int cp, unsigned_char_dynarr *dst)
 {
-  Bytecount nout = MultiByteToWideChar (cp, 0, src, n, 0, 0);
+  Charcount nout = MultiByteToWideChar (cp, MBTOWC_OPTIONS, src, n, 0, 0);
   void *outp;
 
   Dynarr_add_many (dst, 0, nout * sizeof (WCHAR));
   /* dynarr's buffer may be realloc()ed by call above, so access it after */
   outp = Dynarr_atp (dst, Dynarr_length (dst) - nout * sizeof (WCHAR));
-  MultiByteToWideChar (cp, 0, src, n, (LPWSTR) outp, nout);
+  MultiByteToWideChar (cp, MBTOWC_OPTIONS, src, n, (LPWSTR) outp, nout);
 }
+
+void
+convert_unicode_to_multibyte_dynarr (const Extbyte *src, Bytecount n,
+				     int cp, unsigned_char_dynarr *dst)
+{
+  Bytecount nout = WideCharToMultiByte (cp, WCTOMB_OPTIONS, (LPWSTR) src,
+					n / sizeof (WCHAR),
+					0, 0, WCTOMB_INVALID_STRING, 0);
+  void *outp;
+
+  Dynarr_add_many (dst, 0, nout);
+  /* dynarr's buffer may be realloc()ed by call above, so access it after */
+  outp = Dynarr_atp (dst, Dynarr_length (dst) - nout);
+  WideCharToMultiByte (cp, WCTOMB_OPTIONS, (LPWSTR) src,
+		       n / sizeof (WCHAR), (LPSTR) outp, nout,
+		       WCTOMB_INVALID_STRING, 0);
+}
+
 
 /* Convert MS Windows multibyte to Unicode. */
 
@@ -2054,20 +2099,8 @@ mswindows_multibyte_to_unicode_convert (struct coding_stream *str,
       else
 	data->partial_byte_present = 0;
 
-      {
-	int nout = WideCharToMultiByte (data->cp, WC_COMPOSITECHECK,
-					(LPWSTR) new_src, n / sizeof (WCHAR),
-					0, 0, "~", 0);
-	void *outp;
-
-	Dynarr_add_many (dst, 0, nout);
-	/* dynarr's buffer may be realloc()ed by call above, so access it
-           after */
-	outp = Dynarr_atp (dst, Dynarr_length (dst) - nout);
-	WideCharToMultiByte (data->cp, WC_COMPOSITECHECK, (LPWSTR) new_src,
-			     n / sizeof (WCHAR),
-			     (LPSTR) outp, nout, "~", 0);
-      }
+      convert_unicode_to_multibyte_dynarr ((Extbyte *) new_src, n, data->cp,
+					   dst);
     }
   return orign;
 }

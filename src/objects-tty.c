@@ -238,7 +238,7 @@ tty_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   Ibyte *str = XSTRING_DATA (name);
   Lisp_Object charset = Qnil;
 
-  if (qxestrncmp_c (str, "normal", 6))
+  if (qxestrncmp_ascii (str, "normal", 6))
     return 0;
   str += 6;
   if (*str)

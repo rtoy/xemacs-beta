@@ -1,7 +1,7 @@
 /* Fundamental definitions for XEmacs Lisp interpreter.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1993-1996 Richard Mlynarik.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -56,6 +56,40 @@ Boston, MA 02111-1307, USA.  */
 /************************************************************************/
 /*			  general definitions				*/
 /************************************************************************/
+
+/* Conventions in comments:
+
+   "Mule-izing" is the process of going through a file and eliminating
+   assumptions that the internal format (Ibyte * text) is the same as the
+   external format used by library routines.  Mule-ization should also
+   include replacing *ALL* raw references to `char' or `unsigned char' with
+   one of the self-documenting types created below.  How exactly to do the
+   conversion, and how to write correctly Mule-ized code, is described in
+   the internals manual.  Files that say "This file is Mule-ized" have
+   been reviewed at some point; that's not to say that incorrect code hasn't
+   crept in, though.
+
+   "Unicode-splitting" is the process of fixing a file so that it will
+   handle external text in Unicode under Microsoft Windows, as appropriate.
+   ("splitting" because it needs to handle either Unicode or variable-width
+   multibyte depending on the OS -- NT or 9x).  See intl-win32.c.
+
+   #### is a way of marking problems of any sort.
+
+   !!#### marks places that are not properly Mule-ized.
+
+   &&#### marks places that need to be fixed in order for the "8-bit mule"
+   conversion to work correctly, i.e. in order to support multiple different
+   buffer formats under Mule, including a fixed 8-bit format.
+
+   ^^#### marks places that need to be fixed in order to eliminate the
+   assumption that Ibyte * text is composed of 1-byte units (e.g. UTF-16
+   is composed of 2-byte units and might be a possible format to consider
+   for Ibyte * text).
+
+   %%#### marks places that need work for KKCC (the new garbage collector).
+
+   */
 
 /* -------------------------- include files --------------------- */
 
@@ -133,37 +167,11 @@ Boston, MA 02111-1307, USA.  */
 #define trapping_problems_checking_assert_with_message(assertion, msg)
 #endif
 
-/* ------------------------ definition of EMACS_INT ------------------- */
+/************************************************************************/
+/**                     Definitions of basic types                     **/
+/************************************************************************/
 
-/* EMACS_INT is the underlying integral type into which a Lisp_Object must fit.
-   In particular, it must be large enough to contain a pointer.
-   config.h can override this, e.g. to use `long long' for bigger lisp ints.
-
-   #### In point of fact, it would NOT be a good idea for config.h to mess
-   with EMACS_INT.  A lot of code makes the basic assumption that EMACS_INT
-   is the size of a pointer. */
-
-#ifndef SIZEOF_EMACS_INT
-# define SIZEOF_EMACS_INT SIZEOF_VOID_P
-#endif
-
-#ifndef EMACS_INT
-# if   SIZEOF_EMACS_INT == SIZEOF_LONG
-#  define EMACS_INT long
-# elif SIZEOF_EMACS_INT == SIZEOF_INT
-#  define EMACS_INT int
-# elif SIZEOF_EMACS_INT == SIZEOF_LONG_LONG
-#  define EMACS_INT long long
-# else
-#  error Unable to determine suitable type for EMACS_INT
-# endif
-#endif
-
-#ifndef EMACS_UINT
-# define EMACS_UINT unsigned EMACS_INT
-#endif
-
-#define BITS_PER_EMACS_INT (SIZEOF_EMACS_INT * BITS_PER_CHAR)
+/* ------------- generic 8/16/32/64/128-bit integral types ------------ */
 
 #if SIZEOF_SHORT == 2
 #define INT_16_BIT short
@@ -223,23 +231,99 @@ Boston, MA 02111-1307, USA.  */
 #define EFFICIENT_UINT_128_BIT UINT_128_BIT
 #endif
 
-/* ------------------------ basic char/int typedefs ------------------- */
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#elif defined (HAVE_INTPTR_T_IN_SYS_TYPES_H)
+/* included elsewhere */
+#elif SIZEOF_VOID_P == SIZEOF_INT
+typedef int intptr_t;
+typedef unsigned int uintptr_t;
+#elif SIZEOF_VOID_P == SIZEOF_LONG
+typedef long intptr_t;
+typedef unsigned long uintptr_t;
+#elif defined (SIZEOF_LONG_LONG) && SIZEOF_VOID_P == SIZEOF_LONG_LONG
+typedef long long intptr_t;
+typedef unsigned long long uintptr_t;
+#else
+/* Just pray. May break, may not. */
+typedef long intptr_t;
+typedef unsigned long uintptr_t;
+#endif
 
-/* The definitions we put here use typedefs to attribute specific meaning
-   to types that by themselves are pretty general.  Stuff pointed to by a
-   char * or unsigned char * will nearly always be one of four types:
-   a) pointer to internally-formatted text; b) pointer to text in some
-   external format, which can be defined as all formats other than the
-   internal one; c) pure ASCII text; d) binary data that is not meant to
-   be interpreted as text. [A fifth possible type "e) a general pointer
-   to memory" should be replaced with void *.]  Using these more specific
-   types rather than the general ones helps avoid the confusions that
-   occur when the semantics of a char * argument being studied are unclear.
+/* ---------------------- definition of EMACS_INT --------------------- */
 
-   Note that these typedefs are purely for documentation purposes; from
+/* EMACS_INT is the underlying integral type into which a Lisp_Object must fit.
+   In particular, it must be large enough to contain a pointer.
+   config.h can override this, e.g. to use `long long' for bigger lisp ints.
+
+   #### In point of fact, it would NOT be a good idea for config.h to mess
+   with EMACS_INT.  A lot of code makes the basic assumption that EMACS_INT
+   is the size of a pointer. */
+
+#ifndef SIZEOF_EMACS_INT
+# define SIZEOF_EMACS_INT SIZEOF_VOID_P
+#endif
+
+#ifndef EMACS_INT
+# if   SIZEOF_EMACS_INT == SIZEOF_LONG
+#  define EMACS_INT long
+# elif SIZEOF_EMACS_INT == SIZEOF_INT
+#  define EMACS_INT int
+# elif SIZEOF_EMACS_INT == SIZEOF_LONG_LONG
+#  define EMACS_INT long long
+# else
+#  error Unable to determine suitable type for EMACS_INT
+# endif
+#endif
+
+#ifndef EMACS_UINT
+# define EMACS_UINT unsigned EMACS_INT
+#endif
+
+#define BITS_PER_EMACS_INT (SIZEOF_EMACS_INT * BITS_PER_CHAR)
+
+/* -------------------------- basic byte typedefs --------------------- */
+
+/* The definitions we put here and in the next section use typedefs to
+   attribute specific meaning to types that by themselves are pretty
+   general.
+
+   REMEMBER!  These typedefs are purely for documentation purposes; from
    the C code's perspective, they are exactly equivalent to `char *',
    `unsigned char *', etc., so you can freely use them with library
-   functions declared as such. */
+   functions declared as such.
+
+   (See also "Byte/Character Types" in text.c)
+ 
+   The basic semantics for `char':
+
+   a) [Ibyte] pointer to internally-formatted text
+   b) [Extbyte] pointer to text in some external format, which can be
+                defined as all formats other than the internal one
+   c) [Ascbyte] pure ASCII text
+   d) [Binbyte] binary data that is not meant to be interpreted as text
+   e) [Rawbyte] general data in memory, where we don't care about whether
+                it's text or binary
+   f) [Boolbyte] a zero or a one
+   g) [Bitbyte] a byte used for bit fields
+   h) [Chbyte] null-semantics `char *'; used when casting an argument to
+               an external API where the the other types may not be
+               appropriate
+
+
+   Prefixing codes:
+
+   C = plain char, when the base type is unsigned
+   U = unsigned
+   S = signed
+
+   Ideally, XEmacs code should NEVER directly use `char' or any type
+   derived from it.  This is for Mule-cleanliness.  If you find yourself
+   wanting or needing to use `char' and one of the above six semantics does
+   not apply, add a new type of semantics; don't use `char' directly.
+
+   See text.c under "Byte Types", and following sections.
+*/
 
 /* The data representing the text in a buffer is logically a set
    of Ibytes, declared as follows. */
@@ -251,9 +335,10 @@ typedef unsigned char Ibyte;
    are function arguments whose values are most commonly literal strings,
    or where you have to apply a stdlib string function to internal data.
 
-   In general, you should avoid this where possible and use Ibyte instead,
-   for consistency.  For example, the new Mule workspace contains
-   Ibyte versions of the stdlib string functions. */
+   In general, you should avoid this where possible and use Ascbyte if the
+   text is just ASCII (e.g. string literals) or otherwise Ibyte, for
+   consistency.  For example, the new Mule workspace contains Ibyte
+   versions of the stdlib string functions. */
 
 typedef char CIbyte;
 
@@ -266,16 +351,51 @@ typedef char CIbyte;
 typedef char Extbyte;
 typedef unsigned char UExtbyte;
 
-/* A byte in a string in binary format: */
-typedef char Char_Binary;
-typedef signed char SChar_Binary;
-typedef unsigned char UChar_Binary;
+#define EXTTEXT_ZTERM_SIZE (sizeof (Extbyte))
 
 /* A byte in a string in entirely US-ASCII format: (Nothing outside
  the range 00 - 7F) */
 
-typedef char Char_ASCII;
-typedef unsigned char UChar_ASCII;
+typedef char Ascbyte;
+typedef unsigned char UAscbyte;
+
+/* A generic memory pointer, no text or binary semantics assumed.
+   In general, there should be no manipulation of the memory pointed to
+   by these pointers other than just copying it around. */
+
+typedef unsigned char Rawbyte;
+typedef char CRawbyte;
+
+/* A byte in a string in binary (not meant as text) format: */
+
+typedef unsigned char Binbyte;
+typedef char CBinbyte;
+typedef signed char SBinbyte;
+
+/* A byte used to represent a boolean value: 0 or 1.
+   Normally use plain Boolint, and only use Boolbyte to save space. */
+
+typedef char Boolbyte;
+
+/* A byte composed of bitfields.  Hardly ever used. */
+
+typedef unsigned char Bitbyte;
+
+/* A no-semantics `char'.  Used (pretty-much) ONLY for casting arguments to
+   functions accepting a `char *', `unsigned char *', etc. where the other
+   types don't exactly apply and what you are logically concerned with is
+   the type of the function's argument and not its semantics.
+
+   DO NOT DO NOT DO NOT DO NOT use this as a sloppy replacement for one of
+   the other types.  If you're not using this as part of casting an
+   argument to a function call, and you're not Ben Wing, you're using it
+   wrong.  Go find another one of the types. */
+
+typedef char Chbyte;
+typedef unsigned char UChbyte;
+typedef signed char SChbyte;
+
+/* ------------------------ other text-related typedefs ------------------- */
 
 /* To the user, a buffer is made up of characters.  In the non-Mule world,
    characters and Ibytes are equivalent, restricted to the range 0 - 255.
@@ -309,6 +429,39 @@ typedef int Ichar;
 
 typedef int Raw_Ichar;
 
+/* Internal text as a series of textual units (8-bit bytes in the old
+   "Mule" encoding -- still the standard internal encoding -- and in UTF-8,
+   but 16-bit bytes in UTF-16 and 32-bit bytes in UTF-32).  See text.c. */
+
+#ifdef UTF16_IBYTE_FORMAT
+#define NON_ASCII_INTERNAL_FORMAT
+typedef unsigned short Itext;
+#else
+typedef Ibyte Itext;
+#endif
+typedef EMACS_INT Textcount;
+
+#define ITEXT_SIZE (sizeof (Itext))
+/* Use this to emphasize that we are adding space for the zero-terminator */
+#define ITEXT_ZTERM_SIZE ITEXT_SIZE
+
+/* Wexttext is wchar_t on WIN32_NATIVE (and perhaps other systems that
+   support wchar_t's in library functions), and Extbyte otherwise.  This is
+   used whenever we have to do any sort of manipulation of
+   externally-encoded strings -- generally a very bad idea, and unsafe, but
+   in some cases we have no choice (especially at startup, and esp. prior
+   to pdump, where we haven't loaded the Unicode tables necessary for
+   conversion under Windows).  On platforms where the external encoding may
+   be Unicode (i.e. Windows), we always do our manipulations in Unicode,
+   converting to and from multibyte if necessary -- otherwise we'd have to
+   conditionalize on Unicode vs. multibyte all over the place, which is
+   just a nightmare. */
+#ifdef WIN32_NATIVE
+#define WEXTTEXT_IS_WIDE
+typedef wchar_t Wexttext;
+#else
+typedef Extbyte Wexttext;
+#endif
 
 #if !defined (__cplusplus) || !defined (CPLUSPLUS_INTEGRAL_CLASSES_NOT_YET)
 
@@ -797,25 +950,8 @@ inline Bytecount operator - (const Ibyte *x, const Ibyte *y)	\
 typedef EMACS_INT Elemcount;
 /* Hash codes */
 typedef unsigned long Hashcode;
-
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#elif defined(HAVE_INTPTR_T_IN_SYS_TYPES_H)
-/* included elsewhere */
-#elif SIZEOF_VOID_P == SIZEOF_INT
-typedef int intptr_t;
-typedef unsigned int uintptr_t;
-#elif SIZEOF_VOID_P == SIZEOF_LONG
-typedef long intptr_t;
-typedef unsigned long uintptr_t;
-#elif defined(SIZEOF_LONG_LONG) && SIZEOF_VOID_P == SIZEOF_LONG_LONG
-typedef long long intptr_t;
-typedef unsigned long long uintptr_t;
-#else
-/* Just pray. May break, may not. */
-typedef long intptr_t;
-typedef unsigned long uintptr_t;
-#endif
+/* Booleans */
+typedef int Boolint;
 
 /* ------------------------ basic compiler defines ------------------- */
 
@@ -907,7 +1043,7 @@ BEGIN_C_DECLS
 #ifdef USE_ASSERTIONS
 /* Highly dubious kludge */
 /*   (thanks, Jamie, I feel better now -- ben) */
-MODULE_API void assert_failed (const char *, int, const char *);
+MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
 # define abort() (assert_failed (__FILE__, __LINE__, "abort()"))
 # define assert(x) ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, #x))
 # define assert_with_message(x, msg) \
@@ -926,54 +1062,38 @@ MODULE_API void assert_failed (const char *, int, const char *);
 # endif
 #endif
 
-/* EMACS_INT is the underlying integral type into which a Lisp_Object must fit.
-   In particular, it must be large enough to contain a pointer.
-   config.h can override this, e.g. to use `long long' for bigger lisp ints.
-
-   #### In point of fact, it would NOT be a good idea for config.h to mess
-   with EMACS_INT.  A lot of code makes the basic assumption that EMACS_INT
-   is the size of a pointer. */
-
-#ifndef SIZEOF_EMACS_INT
-# define SIZEOF_EMACS_INT SIZEOF_VOID_P
-#endif
+/************************************************************************/
+/**                         Memory allocation                          **/
+/************************************************************************/
 
 /* ------------------------ simple memory allocation ------------------- */
 
-/* Memory allocation */
-void malloc_warning (const char *);
+/* Basic memory allocation and freeing functions */
+void malloc_warning (const Ascbyte *);
 MODULE_API void *xmalloc (Bytecount size) ATTRIBUTE_MALLOC;
 MODULE_API void *xmalloc_and_zero (Bytecount size) ATTRIBUTE_MALLOC;
 MODULE_API void *xrealloc (void *, Bytecount size) ATTRIBUTE_MALLOC;
-MODULE_API char *xstrdup (const char *) ATTRIBUTE_MALLOC;
-/* generally useful */
-#define countof(x) ((int) (sizeof(x)/sizeof((x)[0])))
-#define xnew(type) ((type *) xmalloc (sizeof (type)))
-#define xnew_array(type, len) ((type *) xmalloc ((len) * sizeof (type)))
-#define xnew_and_zero(type) ((type *) xmalloc_and_zero (sizeof (type)))
-#define xzero(lvalue) ((void) memset (&(lvalue), '\0', sizeof (lvalue)))
-#define xnew_array_and_zero(type, len) ((type *) xmalloc_and_zero ((len) * sizeof (type)))
-#define XREALLOC_ARRAY(ptr, type, len) ((void) (ptr = (type *) xrealloc (ptr, (len) * sizeof (type))))
-#define alloca_new(type) ((type *) ALLOCA (sizeof (type)))
-#define alloca_array(type, len) ((type *) ALLOCA ((len) * sizeof (type)))
+MODULE_API Chbyte *xstrdup (const Chbyte *) ATTRIBUTE_MALLOC;
 
-MODULE_API void *xemacs_c_alloca (unsigned int size) ATTRIBUTE_MALLOC;
+/* Basic free function */
 
-MODULE_API int record_unwind_protect_freeing (void *ptr);
+MODULE_API void xfree_1 (void *);
+#ifdef ERROR_CHECK_MALLOC
+/* This used to use a temporary variable, which both avoided the multiple
+   evaluation and obviated the need for the TYPE argument.  But that triggered
+   complaints under strict aliasing. #### There should be a better way. */
+#define xfree(lvalue, type) do						\
+{									\
+  xfree_1 (lvalue);							\
+  VOIDP_CAST (lvalue) = (void *) 0xDEADBEEF;				\
+} while (0)
+#else
+#define xfree(lvalue,type) xfree_1 (lvalue)
+#endif /* ERROR_CHECK_MALLOC */
 
-DECLARE_INLINE_HEADER (
-void *
-xmalloc_and_record_unwind (Bytecount size)
-)
-{
-  void *ptr = xmalloc (size);
-  record_unwind_protect_freeing (ptr);
-  return ptr;
-}
+/* ------------------------ stack allocation -------------------------- */
 
-/* Stack allocation.
-
-   Allocating excessively large blocks on the stack can cause crashes.
+/* Allocating excessively large blocks on the stack can cause crashes.
    We provide MALLOC_OR_ALLOCA() below for places where it's likely that
    large amounts will be allocated; it mallocs the block if it's too big.
    Unfortunately, that requires a call to unbind_to() at the end of the
@@ -1047,6 +1167,20 @@ expression has side effects -- something easy to forget. */
 #define ALLOCA_FUNCALL_OK(size) ALLOCA (size)
 #endif
 
+MODULE_API void *xemacs_c_alloca (unsigned int size) ATTRIBUTE_MALLOC;
+
+MODULE_API int record_unwind_protect_freeing (void *ptr);
+
+DECLARE_INLINE_HEADER (
+void *
+xmalloc_and_record_unwind (Bytecount size)
+)
+{
+  void *ptr = xmalloc (size);
+  record_unwind_protect_freeing (ptr);
+  return ptr;
+}
+
 /* WARNING: If you use this, you must unbind_to() at the end of your
    function! */
 
@@ -1057,6 +1191,46 @@ expression has side effects -- something easy to forget. */
    xmalloc_and_record_unwind (__temp_alloca_size__) :	\
    (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
     alloca (__temp_alloca_size__)))
+
+/* -------------- convenience functions for memory allocation ------------- */
+
+#define countof(x) ((int) (sizeof(x)/sizeof((x)[0])))
+#define xnew(type) ((type *) xmalloc (sizeof (type)))
+#define xnew_array(type, len) ((type *) xmalloc ((len) * sizeof (type)))
+#define xnew_and_zero(type) ((type *) xmalloc_and_zero (sizeof (type)))
+#define xzero(lvalue) ((void) memset (&(lvalue), '\0', sizeof (lvalue)))
+#define xnew_array_and_zero(type, len) ((type *) xmalloc_and_zero ((len) * sizeof (type)))
+
+#define alloca_new(type) ((type *) ALLOCA (sizeof (type)))
+#define alloca_array(type, len) ((type *) ALLOCA ((len) * sizeof (type)))
+
+#define alloca_itexts(num) alloca_array (Itext, num)
+#define alloca_ibytes(num) alloca_array (Ibyte, num)
+#define alloca_extbytes(num) alloca_array (Extbyte, num)
+#define alloca_rawbytes(num) alloca_array (Rawbyte, num)
+#define alloca_binbytes(num) alloca_array (Binbyte, num)
+#define alloca_ascbytes(num) alloca_array (Ascbyte, num)
+#define xmalloc_itexts(num) xnew_array (Itext, num)
+#define xnew_ibytes(num) xnew_array (Ibyte, num)
+#define xnew_extbytes(num) xnew_array (Extbyte, num)
+#define xnew_rawbytes(num) xnew_array (Rawbyte, num)
+#define xnew_binbytes(num) xnew_array (Binbyte, num)
+#define xnew_ascbytes(num) xnew_array (Ascbyte, num)
+
+/* Make an alloca'd copy of a Ibyte * */
+#define IBYTE_STRING_TO_ALLOCA(p, lval)		\
+do {						\
+  Ibyte **_bsta_ = (Ibyte **) &(lval);		\
+  const Ibyte *_bsta_2 = (p);			\
+  Bytecount _bsta_3 = qxestrlen (_bsta_2);	\
+  *_bsta_ = alloca_ibytes (1 + _bsta_3);	\
+  memcpy (*_bsta_, _bsta_2, 1 + _bsta_3);	\
+} while (0)
+
+/* ----------------- convenience functions for reallocation --------------- */
+
+#define XREALLOC_ARRAY(ptr, type, len) \
+  ((void) (ptr = (type *) xrealloc (ptr, (len) * sizeof (type))))
 
 /* also generally useful if you want to avoid arbitrary size limits
    but don't need a full dynamic array.  Assumes that BASEVAR points
@@ -1077,17 +1251,6 @@ expression has side effects -- something easy to forget. */
       XREALLOC_ARRAY (basevar, type, (sizevar));		\
     }								\
 } while (0)
-
-MODULE_API void xfree_1 (void *);
-#ifdef ERROR_CHECK_MALLOC
-#define xfree(lvalue,type) do			\
-{						\
-  xfree_1 (lvalue);				\
-  lvalue = (type) 0xDEADBEEF;			\
-} while (0)
-#else
-#define xfree(lvalue,type) xfree_1 (lvalue)
-#endif /* ERROR_CHECK_MALLOC */
 
 /* ------------------------ dynamic arrays ------------------- */
 
@@ -1114,7 +1277,7 @@ typedef struct dynarr
 } Dynarr;
 
 MODULE_API void *Dynarr_newf (int elsize);
-MODULE_API void Dynarr_resize (void *dy, int size);
+MODULE_API void Dynarr_resize (void *dy, Elemcount size);
 MODULE_API void Dynarr_insert_many (void *d, const void *el, int len, int start);
 MODULE_API void Dynarr_delete_many (void *d, int start, int len);
 MODULE_API void Dynarr_free (void *d);
@@ -1131,7 +1294,7 @@ MODULE_API void Dynarr_free (void *d);
 #ifdef ERROR_CHECK_STRUCTURES
 DECLARE_INLINE_HEADER (
 Dynarr *
-Dynarr_verify_1 (void *d, const char *file, int line)
+Dynarr_verify_1 (void *d, const Ascbyte *file, int line)
 )
 {
   Dynarr *dy = (Dynarr *) d;
@@ -1142,7 +1305,7 @@ Dynarr_verify_1 (void *d, const char *file, int line)
 
 DECLARE_INLINE_HEADER (
 Dynarr *
-Dynarr_verify_mod_1 (void *d, const char *file, int line)
+Dynarr_verify_mod_1 (void *d, const Ascbyte *file, int line)
 )
 {
   Dynarr *dy = (Dynarr *) d;
@@ -1216,7 +1379,12 @@ struct overhead_stats;
 Bytecount Dynarr_memory_usage (void *d, struct overhead_stats *stats);
 #endif
 
-/* Counts of bytes or chars */
+void *stack_like_malloc (Bytecount size);
+void stack_like_free (void *val);
+
+/************************************************************************/
+/**                 Definitions of more complex types                  **/
+/************************************************************************/
 
 /* Note that the simplest typedefs are near the top of this file. */
 
@@ -1671,22 +1839,13 @@ extern MODULE_API Lisp_Object Qnil;
    macros will hit an assertion failure if the structure is ill-formed;
    the external-list macros will signal an error in this case, either a
    malformed-list error or a circular-list error.
-
-   Note also that the simplest external list iterator, EXTERNAL_LIST_LOOP,
-   does *NOT* check for circularities.  Therefore, make sure you call
-   QUIT each iteration or so.  However, it's probably easier just to use
-   EXTERNAL_LIST_LOOP_2, which is easier to use in any case.
 */
 
-/* LIST_LOOP and EXTERNAL_LIST_LOOP are the simplest macros.  They don't
-   require brace surrounding, and iterate through a list, which may or may
-   not known to be syntactically correct.  EXTERNAL_LIST_LOOP is for those
-   not known to be correct, and it detects and signals a malformed list
-   error when encountering a problem.  Circularities, however, are not
-   handled, and cause looping forever, so make sure to include a QUIT.
-   These functions also accept two args, TAIL (set progressively to each
-   cons starting with the first), and LIST, the list to iterate over.
-   TAIL needs to be defined by the program.
+/* LIST_LOOP is a simple, old-fashioned macro.  It doesn't require brace
+   surrounding, and iterates through a list, which may or may not known to
+   be syntactically correct.  It accepts two args, TAIL (set progressively
+   to each cons starting with the first), and LIST, the list to iterate
+   over.  TAIL needs to be defined by the caller.
 
    In each iteration, you can retrieve the current list item using XCAR
    (tail), or destructively modify the list using XSETCAR (tail,
@@ -1696,12 +1855,6 @@ extern MODULE_API Lisp_Object Qnil;
   for (tail = list;			\
        !NILP (tail);			\
        tail = XCDR (tail))
-
-#define EXTERNAL_LIST_LOOP(tail, list)			\
-  for (tail = list; !NILP (tail); tail = XCDR (tail))	\
-     if (!CONSP (tail))					\
-       signal_malformed_list_error (list);		\
-     else
 
 /* The following macros are the "core" macros for list traversal.
 
@@ -1756,6 +1909,22 @@ Lisp_Object elt, hare_##elt, tortoise_##elt;				\
 EMACS_INT len_##elt;							\
 PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len_##elt, hare_##elt,		\
 		      tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
+
+
+#define GC_EXTERNAL_LIST_LOOP_2(elt, list)				\
+do {									\
+  XGCDECL3 (elt);							\
+  Lisp_Object elt, hare_##elt, tortoise_##elt;				\
+  EMACS_INT len_##elt;							\
+  XGCPRO3 (elt, elt, hare_##elt, tortoise_##elt);			\
+  PRIVATE_EXTERNAL_LIST_LOOP_6 (elt, list, len_##elt, hare_##elt,	\
+				tortoise_##elt,				\
+				CIRCULAR_LIST_SUSPICION_LENGTH)
+
+#define END_GC_EXTERNAL_LIST_LOOP(elt)		\
+  XUNGCPRO (elt);				\
+}						\
+while (0)
 
 #define EXTERNAL_LIST_LOOP_3(elt, list, tail)				\
 Lisp_Object elt, tail, tortoise_##elt;					\
@@ -2035,23 +2204,6 @@ EXTERNAL_PROPERTY_LIST_LOOP_7 (key, value, list, len, tail,		\
 	   (EQ (hare, tortoise) ?					\
 	    ((void) signal_circular_property_list_error (list)) :	\
 	    ((void) 0)))))
-
-/* For a property list (alternating keywords/values) that may not be
-   in valid list format -- will signal an error if the list is not in
-   valid format.  CONSVAR is used to keep track of the iterations
-   without modifying PLIST.
-
-   We have to be tricky to still keep the same C format.*/
-#define EXTERNAL_PROPERTY_LIST_LOOP(tail, key, value, plist)	\
-  for (tail = plist;						\
-       (CONSP (tail) && CONSP (XCDR (tail)) ?			\
-	(key = XCAR (tail), value = XCAR (XCDR (tail))) :	\
-	(key = Qunbound,    value = Qunbound)),			\
-       !NILP (tail);						\
-       tail = XCDR (XCDR (tail)))				\
-    if (UNBOUNDP (key))						\
-      Fsignal (Qmalformed_property_list, list1 (plist));	\
-    else
 
 #define PROPERTY_LIST_LOOP(tail, key, value, plist)	\
   for (tail = plist;					\
@@ -2387,7 +2539,7 @@ DECLARE_MODULE_API_LRECORD (marker, Lisp_Marker);
 
 DECLARE_INLINE_HEADER (
 Ichar
-XCHAR_1 (Lisp_Object obj, const char *file, int line)
+XCHAR_1 (Lisp_Object obj, const Ascbyte *file, int line)
 )
 {
   assert_at_line (CHARP (obj), file, line);
@@ -2455,7 +2607,7 @@ DECLARE_LRECORD (float, Lisp_Float);
 
 DECLARE_INLINE_HEADER (
 EMACS_INT
-XINT_1 (Lisp_Object obj, const char *file, int line)
+XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
 )
 {
   assert_at_line (INTP (obj), file, line);
@@ -2464,7 +2616,7 @@ XINT_1 (Lisp_Object obj, const char *file, int line)
 
 DECLARE_INLINE_HEADER (
 EMACS_INT
-XCHAR_OR_INT_1 (Lisp_Object obj, const char *file, int line)
+XCHAR_OR_INT_1 (Lisp_Object obj, const Ascbyte *file, int line)
 )
 {
   assert_at_line (INTP (obj) || CHARP (obj), file, line);
@@ -3095,114 +3247,93 @@ struct gcpro
 
 BEGIN_C_DECLS
 
+#define XGCDECL1(x) struct gcpro x##cpro1
+#define XGCDECL2(x) struct gcpro x##cpro1, x##cpro2
+#define XGCDECL3(x) struct gcpro x##cpro1, x##cpro2, x##cpro3
+#define XGCDECL4(x) struct gcpro x##cpro1, x##cpro2, x##cpro3, x##cpro4
+#define XGCDECL5(x) struct gcpro x##cpro1, x##cpro2, x##cpro3, x##cpro4, x##cpro5
+
 #ifdef DEBUG_GCPRO
 
-MODULE_API void debug_gcpro1 (char *, int, struct gcpro *, Lisp_Object *);
-MODULE_API void debug_gcpro2 (char *, int, struct gcpro *, struct gcpro *,
+MODULE_API void debug_gcpro1 (Ascbyte *, int, struct gcpro *, Lisp_Object *);
+MODULE_API void debug_gcpro2 (Ascbyte *, int, struct gcpro *, struct gcpro *,
 			      Lisp_Object *, Lisp_Object *);
-MODULE_API void debug_gcpro3 (char *, int, struct gcpro *, struct gcpro *,
+MODULE_API void debug_gcpro3 (Ascbyte *, int, struct gcpro *, struct gcpro *,
 			      struct gcpro *, Lisp_Object *, Lisp_Object *,
 			      Lisp_Object *);
-MODULE_API void debug_gcpro4 (char *, int, struct gcpro *, struct gcpro *,
+MODULE_API void debug_gcpro4 (Ascbyte *, int, struct gcpro *, struct gcpro *,
 			      struct gcpro *, struct gcpro *, Lisp_Object *,
 			      Lisp_Object *, Lisp_Object *, Lisp_Object *);
-MODULE_API void debug_gcpro5 (char *, int, struct gcpro *, struct gcpro *,
+MODULE_API void debug_gcpro5 (Ascbyte *, int, struct gcpro *, struct gcpro *,
 			      struct gcpro *, struct gcpro *, struct gcpro *,
 			      Lisp_Object *, Lisp_Object *, Lisp_Object *,
 			      Lisp_Object *, Lisp_Object *);
-MODULE_API void debug_ungcpro(char *, int, struct gcpro *);
+MODULE_API void debug_ungcpro(Ascbyte *, int, struct gcpro *);
 
-#define GCPRO1(v) \
- debug_gcpro1 (__FILE__, __LINE__,&gcpro1,&v)
-#define GCPRO2(v1,v2) \
- debug_gcpro2 (__FILE__, __LINE__,&gcpro1,&gcpro2,&v1,&v2)
-#define GCPRO3(v1,v2,v3) \
- debug_gcpro3 (__FILE__, __LINE__,&gcpro1,&gcpro2,&gcpro3,&v1,&v2,&v3)
-#define GCPRO4(v1,v2,v3,v4) \
- debug_gcpro4 (__FILE__, __LINE__,&gcpro1,&gcpro2,&gcpro3,&gcpro4,\
+#define XGCPRO1(x,v)							\
+ debug_gcpro1 (__FILE__, __LINE__,&x##cpro1,&v)
+#define XGCPRO2(x,v1,v2)						\
+ debug_gcpro2 (__FILE__, __LINE__,&x##cpro1,&x##cpro2,&v1,&v2)
+#define XGCPRO3(x,v1,v2,v3)						\
+ debug_gcpro3 (__FILE__, __LINE__,&x##cpro1,&x##cpro2,&x##cpro3,	\
+	       &v1,&v2,&v3)
+#define XGCPRO4(x,v1,v2,v3,v4)						\
+ debug_gcpro4 (__FILE__, __LINE__,&x##cpro1,&x##cpro2,&x##cpro3,	\
+	       &x##cpro4,						\
 	       &v1,&v2,&v3,&v4)
-#define GCPRO5(v1,v2,v3,v4,v5) \
- debug_gcpro5 (__FILE__, __LINE__,&gcpro1,&gcpro2,&gcpro3,&gcpro4,&gcpro5,\
+#define XGCPRO5(x,v1,v2,v3,v4,v5)					\
+ debug_gcpro5 (__FILE__, __LINE__,&x##cpro1,&x##cpro2,&x##cpro3,	\
+	       &x##cpro4,&x##cpro5,					\
 	       &v1,&v2,&v3,&v4,&v5)
-#define UNGCPRO \
- debug_ungcpro(__FILE__, __LINE__,&gcpro1)
-
-#define NGCPRO1(v) \
- debug_gcpro1 (__FILE__, __LINE__,&ngcpro1,&v)
-#define NGCPRO2(v1,v2) \
- debug_gcpro2 (__FILE__, __LINE__,&ngcpro1,&ngcpro2,&v1,&v2)
-#define NGCPRO3(v1,v2,v3) \
- debug_gcpro3 (__FILE__, __LINE__,&ngcpro1,&ngcpro2,&ngcpro3,&v1,&v2,&v3)
-#define NGCPRO4(v1,v2,v3,v4) \
- debug_gcpro4 (__FILE__, __LINE__,&ngcpro1,&ngcpro2,&ngcpro3,&ngcpro4,\
-	       &v1,&v2,&v3,&v4)
-#define NGCPRO5(v1,v2,v3,v4,v5) \
- debug_gcpro5 (__FILE__, __LINE__,&ngcpro1,&ngcpro2,&ngcpro3,&ngcpro4,\
-	       &ngcpro5,&v1,&v2,&v3,&v4,&v5)
-#define NUNGCPRO \
- debug_ungcpro(__FILE__, __LINE__,&ngcpro1)
-
-#define NNGCPRO1(v) \
- debug_gcpro1 (__FILE__, __LINE__,&nngcpro1,&v)
-#define NNGCPRO2(v1,v2) \
- debug_gcpro2 (__FILE__, __LINE__,&nngcpro1,&nngcpro2,&v1,&v2)
-#define NNGCPRO3(v1,v2,v3) \
- debug_gcpro3 (__FILE__, __LINE__,&nngcpro1,&nngcpro2,&nngcpro3,&v1,&v2,&v3)
-#define NNGCPRO4(v1,v2,v3,v4) \
- debug_gcpro4 (__FILE__, __LINE__,&nngcpro1,&nngcpro2,&nngcpro3,&nngcpro4,\
-	       &v1,&v2,&v3,&v4)
-#define NNGCPRO5(v1,v2,v3,v4,v5) \
- debug_gcpro5 (__FILE__, __LINE__,&nngcpro1,&nngcpro2,&nngcpro3,&nngcpro4,\
-	       &nngcpro5,&v1,&v2,&v3,&v4,&v5)
-#define NNUNGCPRO \
- debug_ungcpro(__FILE__, __LINE__,&nngcpro1)
+#define XUNGCPRO(x) \
+ debug_ungcpro(__FILE__, __LINE__,&x##cpro1)
 
 #else /* ! DEBUG_GCPRO */
 
-#define GCPRO1(var1) ((void) (						\
-  gcpro1.next = gcprolist, gcpro1.var = &var1, gcpro1.nvars = 1,	\
-  gcprolist = &gcpro1 ))
+#define XGCPRO1(x, var1) ((void) (					\
+  x##cpro1.next = gcprolist, x##cpro1.var = &var1, x##cpro1.nvars = 1,	\
+  gcprolist = &x##cpro1 ))
 
-#define GCPRO2(var1, var2) ((void) (					\
-  gcpro1.next = gcprolist, gcpro1.var = &var1, gcpro1.nvars = 1,	\
-  gcpro2.next = &gcpro1,   gcpro2.var = &var2, gcpro2.nvars = 1,	\
-  gcprolist = &gcpro2 ))
+#define XGCPRO2(x, var1, var2) ((void) (				\
+  x##cpro1.next = gcprolist, x##cpro1.var = &var1, x##cpro1.nvars = 1,	\
+  x##cpro2.next = &x##cpro1, x##cpro2.var = &var2, x##cpro2.nvars = 1,	\
+  gcprolist = &x##cpro2 ))
 
-#define GCPRO3(var1, var2, var3) ((void) (				\
-  gcpro1.next = gcprolist, gcpro1.var = &var1, gcpro1.nvars = 1,	\
-  gcpro2.next = &gcpro1,   gcpro2.var = &var2, gcpro2.nvars = 1,	\
-  gcpro3.next = &gcpro2,   gcpro3.var = &var3, gcpro3.nvars = 1,	\
-  gcprolist = &gcpro3 ))
+#define XGCPRO3(x, var1, var2, var3) ((void) (				\
+  x##cpro1.next = gcprolist, x##cpro1.var = &var1, x##cpro1.nvars = 1,	\
+  x##cpro2.next = &x##cpro1, x##cpro2.var = &var2, x##cpro2.nvars = 1,	\
+  x##cpro3.next = &x##cpro2, x##cpro3.var = &var3, x##cpro3.nvars = 1,	\
+  gcprolist = &x##cpro3 ))
 
-#define GCPRO4(var1, var2, var3, var4) ((void) (			\
-  gcpro1.next = gcprolist, gcpro1.var = &var1, gcpro1.nvars = 1,	\
-  gcpro2.next = &gcpro1,   gcpro2.var = &var2, gcpro2.nvars = 1,	\
-  gcpro3.next = &gcpro2,   gcpro3.var = &var3, gcpro3.nvars = 1,	\
-  gcpro4.next = &gcpro3,   gcpro4.var = &var4, gcpro4.nvars = 1,	\
-  gcprolist = &gcpro4 ))
+#define XGCPRO4(x, var1, var2, var3, var4) ((void) (			\
+  x##cpro1.next = gcprolist, x##cpro1.var = &var1, x##cpro1.nvars = 1,	\
+  x##cpro2.next = &x##cpro1, x##cpro2.var = &var2, x##cpro2.nvars = 1,	\
+  x##cpro3.next = &x##cpro2, x##cpro3.var = &var3, x##cpro3.nvars = 1,	\
+  x##cpro4.next = &x##cpro3, x##cpro4.var = &var4, x##cpro4.nvars = 1,	\
+  gcprolist = &x##cpro4 ))
 
-#define GCPRO5(var1, var2, var3, var4, var5) ((void) (			\
-  gcpro1.next = gcprolist, gcpro1.var = &var1, gcpro1.nvars = 1,	\
-  gcpro2.next = &gcpro1,   gcpro2.var = &var2, gcpro2.nvars = 1,	\
-  gcpro3.next = &gcpro2,   gcpro3.var = &var3, gcpro3.nvars = 1,	\
-  gcpro4.next = &gcpro3,   gcpro4.var = &var4, gcpro4.nvars = 1,	\
-  gcpro5.next = &gcpro4,   gcpro5.var = &var5, gcpro5.nvars = 1,	\
-  gcprolist = &gcpro5 ))
+#define XGCPRO5(x, var1, var2, var3, var4, var5) ((void) (		\
+  x##cpro1.next = gcprolist, x##cpro1.var = &var1, x##cpro1.nvars = 1,	\
+  x##cpro2.next = &x##cpro1, x##cpro2.var = &var2, x##cpro2.nvars = 1,	\
+  x##cpro3.next = &x##cpro2, x##cpro3.var = &var3, x##cpro3.nvars = 1,	\
+  x##cpro4.next = &x##cpro3, x##cpro4.var = &var4, x##cpro4.nvars = 1,	\
+  x##cpro5.next = &x##cpro4, x##cpro5.var = &var5, x##cpro5.nvars = 1,	\
+  gcprolist = &x##cpro5 ))
 
-#define GCPRO1_ARRAY(array, n) ((void) (				\
-  gcpro1.next = gcprolist, gcpro1.var = array, gcpro1.nvars = n,	\
-  gcprolist = &gcpro1 ))
+#define XGCPRO1_ARRAY(x, array, n) ((void) (				 \
+  x##cpro1.next = gcprolist,  x##cpro1.var = array,  x##cpro1.nvars = n, \
+  gcprolist = &x##cpro1 ))
 
-#define GCPRO2_ARRAY(array1, n1, array2, n2) ((void) (			\
-  gcpro1.next = gcprolist, gcpro1.var = array1, gcpro1.nvars = n1,	\
-  gcpro2.next = &gcpro1,   gcpro2.var = array2, gcpro2.nvars = n2,	\
-  gcprolist = &gcpro2 ))
+#define XGCPRO2_ARRAY(x, array1, n1, array2, n2) ((void) (		  \
+  x##cpro1.next = gcprolist,  x##cpro1.var = array1, x##cpro1.nvars = n1, \
+  x##cpro2.next = &x##cpro1, x##cpro2.var = array2, x##cpro2.nvars = n2,  \
+  gcprolist = &x##cpro2 ))
 
-#define GCPRO3_ARRAY(array1, n1, array2, n2, array3, n3) ((void) (	\
-  gcpro1.next = gcprolist, gcpro1.var = array1, gcpro1.nvars = n1,	\
-  gcpro2.next = &gcpro1,   gcpro2.var = array2, gcpro2.nvars = n2,	\
-  gcpro3.next = &gcpro2,   gcpro3.var = array3, gcpro3.nvars = n3,	\
-  gcprolist = &gcpro3 ))
+#define XGCPRO3_ARRAY(x, array1, n1, array2, n2, array3, n3) ((void) (	  \
+  x##cpro1.next = gcprolist,  x##cpro1.var = array1, x##cpro1.nvars = n1, \
+  x##cpro2.next = &x##cpro1, x##cpro2.var = array2, x##cpro2.nvars = n2,  \
+  x##cpro3.next = &x##cpro2, x##cpro3.var = array3, x##cpro3.nvars = n3,  \
+  gcprolist = &x##cpro3 ))
 
 #if defined (__cplusplus) && defined (ERROR_CHECK_GC)
 /* We need to reset each gcpro to avoid triggering the assert() in
@@ -3226,105 +3357,63 @@ do									   \
 #define UNWIND_GCPRO_TO(val) (gcprolist = (val))
 #endif /* defined (__cplusplus) && defined (ERROR_CHECK_GC) */
 
-#define UNGCPRO_1(gcpro1) UNWIND_GCPRO_TO (gcpro1.next)
-
-#define UNGCPRO UNGCPRO_1 (gcpro1)
-
-#define NGCPRO1(var1) ((void) (						\
-  ngcpro1.next = gcprolist, ngcpro1.var = &var1, ngcpro1.nvars = 1,	\
-  gcprolist = &ngcpro1 ))
-
-#define NGCPRO2(var1, var2) ((void) (					\
-  ngcpro1.next = gcprolist, ngcpro1.var = &var1, ngcpro1.nvars = 1,	\
-  ngcpro2.next = &ngcpro1,  ngcpro2.var = &var2, ngcpro2.nvars = 1,	\
-  gcprolist = &ngcpro2 ))
-
-#define NGCPRO3(var1, var2, var3) ((void) (				\
-  ngcpro1.next = gcprolist, ngcpro1.var = &var1, ngcpro1.nvars = 1,	\
-  ngcpro2.next = &ngcpro1,  ngcpro2.var = &var2, ngcpro2.nvars = 1,	\
-  ngcpro3.next = &ngcpro2,  ngcpro3.var = &var3, ngcpro3.nvars = 1,	\
-  gcprolist = &ngcpro3 ))
-
-#define NGCPRO4(var1, var2, var3, var4) ((void) (			\
-  ngcpro1.next = gcprolist, ngcpro1.var = &var1, ngcpro1.nvars = 1,	\
-  ngcpro2.next = &ngcpro1,  ngcpro2.var = &var2, ngcpro2.nvars = 1,	\
-  ngcpro3.next = &ngcpro2,  ngcpro3.var = &var3, ngcpro3.nvars = 1,	\
-  ngcpro4.next = &ngcpro3,  ngcpro4.var = &var4, ngcpro4.nvars = 1,	\
-  gcprolist = &ngcpro4 ))
-
-#define NGCPRO5(var1, var2, var3, var4, var5) ((void) (			\
-  ngcpro1.next = gcprolist, ngcpro1.var = &var1, ngcpro1.nvars = 1,	\
-  ngcpro2.next = &ngcpro1,  ngcpro2.var = &var2, ngcpro2.nvars = 1,	\
-  ngcpro3.next = &ngcpro2,  ngcpro3.var = &var3, ngcpro3.nvars = 1,	\
-  ngcpro4.next = &ngcpro3,  ngcpro4.var = &var4, ngcpro4.nvars = 1,	\
-  ngcpro5.next = &ngcpro4,  ngcpro5.var = &var5, ngcpro5.nvars = 1,	\
-  gcprolist = &ngcpro5 ))
-
-#define NGCPRO1_ARRAY(array, n) ((void) (				\
-  ngcpro1.next = gcprolist, ngcpro1.var = array, ngcpro1.nvars = n,	\
-  gcprolist = &ngcpro1 ))
-
-#define NGCPRO2_ARRAY(array1, n1, array2, n2) ((void) (			\
-  ngcpro1.next = gcprolist, ngcpro1.var = array1, ngcpro1.nvars = n1,	\
-  ngcpro2.next = &ngcpro1,  ngcpro2.var = array2, ngcpro2.nvars = n2,	\
-  gcprolist = &ngcpro2 ))
-
-#define NGCPRO3_ARRAY(array1, n1, array2, n2, array3, n3) ((void) (	\
-  ngcpro1.next = gcprolist, ngcpro1.var = array1, ngcpro1.nvars = n1,	\
-  ngcpro2.next = &ngcpro1,  ngcpro2.var = array2, ngcpro2.nvars = n2,	\
-  ngcpro3.next = &ngcpro2,  ngcpro3.var = array3, ngcpro3.nvars = n3,	\
-  gcprolist = &ngcpro3 ))
-
-#define NUNGCPRO UNGCPRO_1 (ngcpro1)
-
-#define NNGCPRO1(var1) ((void) (					\
-  nngcpro1.next = gcprolist, nngcpro1.var = &var1, nngcpro1.nvars = 1,	\
-  gcprolist = &nngcpro1 ))
-
-#define NNGCPRO2(var1, var2) ((void) (					\
-  nngcpro1.next = gcprolist, nngcpro1.var = &var1, nngcpro1.nvars = 1,	\
-  nngcpro2.next = &nngcpro1, nngcpro2.var = &var2, nngcpro2.nvars = 1,	\
-  gcprolist = &nngcpro2 ))
-
-#define NNGCPRO3(var1, var2, var3) ((void) (				\
-  nngcpro1.next = gcprolist, nngcpro1.var = &var1, nngcpro1.nvars = 1,	\
-  nngcpro2.next = &nngcpro1, nngcpro2.var = &var2, nngcpro2.nvars = 1,	\
-  nngcpro3.next = &nngcpro2, nngcpro3.var = &var3, nngcpro3.nvars = 1,	\
-  gcprolist = &nngcpro3 ))
-
-#define NNGCPRO4(var1, var2, var3, var4)  ((void) (			\
-  nngcpro1.next = gcprolist, nngcpro1.var = &var1, nngcpro1.nvars = 1,	\
-  nngcpro2.next = &nngcpro1, nngcpro2.var = &var2, nngcpro2.nvars = 1,	\
-  nngcpro3.next = &nngcpro2, nngcpro3.var = &var3, nngcpro3.nvars = 1,	\
-  nngcpro4.next = &nngcpro3, nngcpro4.var = &var4, nngcpro4.nvars = 1,	\
-  gcprolist = &nngcpro4 ))
-
-#define NNGCPRO5(var1, var2, var3, var4, var5) ((void) (		\
-  nngcpro1.next = gcprolist, nngcpro1.var = &var1, nngcpro1.nvars = 1,	\
-  nngcpro2.next = &nngcpro1, nngcpro2.var = &var2, nngcpro2.nvars = 1,	\
-  nngcpro3.next = &nngcpro2, nngcpro3.var = &var3, nngcpro3.nvars = 1,	\
-  nngcpro4.next = &nngcpro3, nngcpro4.var = &var4, nngcpro4.nvars = 1,	\
-  nngcpro5.next = &nngcpro4, nngcpro5.var = &var5, nngcpro5.nvars = 1,	\
-  gcprolist = &nngcpro5 ))
-
-#define NNGCPRO1_ARRAY(array, n) ((void) (				\
-  nngcpro1.next = gcprolist, nngcpro1.var = array, nngcpro1.nvars = n,	\
-  gcprolist = &nngcpro1 ))
-
-#define NNGCPRO2_ARRAY(array1, n1, array2, n2) ((void) (		  \
-  nngcpro1.next = gcprolist,  nngcpro1.var = array1, nngcpro1.nvars = n1, \
-  nngcpro2.next = &nngcpro1,  nngcpro2.var = array2, nngcpro2.nvars = n2, \
-  gcprolist = &nngcpro2 ))
-
-#define NNGCPRO3_ARRAY(array1, n1, array2, n2, array3, n3) ((void) (	  \
-  nngcpro1.next = gcprolist,  nngcpro1.var = array1, nngcpro1.nvars = n1, \
-  nngcpro2.next = &nngcpro1,  nngcpro2.var = array2, nngcpro2.nvars = n2, \
-  nngcpro3.next = &nngcpro2,  nngcpro3.var = array3, nngcpro3.nvars = n3, \
-  gcprolist = &nngcpro3 ))
-
-#define NNUNGCPRO UNGCPRO_1 (nngcpro1)
+#define XUNGCPRO(x) UNWIND_GCPRO_TO (x##cpro1.next)
 
 #endif /* ! DEBUG_GCPRO */
+
+#define GCDECL1 XGCDECL1 (g)
+#define GCDECL2 XGCDECL2 (g)
+#define GCDECL3 XGCDECL3 (g)
+#define GCDECL4 XGCDECL4 (g)
+#define GCDECL5 XGCDECL5 (g)
+
+#define GCPRO1(a) XGCPRO1 (g,a)
+#define GCPRO2(a,b) XGCPRO2 (g,a,b)
+#define GCPRO3(a,b,c) XGCPRO3 (g,a,b,c)
+#define GCPRO4(a,b,c,d) XGCPRO4 (g,a,b,c,d)
+#define GCPRO5(a,b,c,d,e) XGCPRO5 (g,a,b,c,d,e)
+
+#define GCPRO1_ARRAY(a1,n1) XGCPRO1_ARRAY(g,a1,n1)
+#define GCPRO2_ARRAY(a1,n1,a2,n2) XGCPRO2_ARRAY (g,a1,n1,a2,n2)
+#define GCPRO3_ARRAY(a1,n1,a2,n2,a3,n3) XGCPRO3_ARRAY (g,a1,n1,a2,n2,a3,n3)
+
+#define UNGCPRO XUNGCPRO (g)
+
+#define NGCDECL1 XGCDECL1 (ng)
+#define NGCDECL2 XGCDECL2 (ng)
+#define NGCDECL3 XGCDECL3 (ng)
+#define NGCDECL4 XGCDECL4 (ng)
+#define NGCDECL5 XGCDECL5 (ng)
+
+#define NGCPRO1(a) XGCPRO1 (ng,a)
+#define NGCPRO2(a,b) XGCPRO2 (ng,a,b)
+#define NGCPRO3(a,b,c) XGCPRO3 (ng,a,b,c)
+#define NGCPRO4(a,b,c,d) XGCPRO4 (ng,a,b,c,d)
+#define NGCPRO5(a,b,c,d,e) XGCPRO5 (ng,a,b,c,d,e)
+
+#define NGCPRO1_ARRAY(a1,n1) XGCPRO1_ARRAY(ng,a1,n1)
+#define NGCPRO2_ARRAY(a1,n1,a2,n2) XGCPRO2_ARRAY (ng,a1,n1,a2,n2)
+#define NGCPRO3_ARRAY(a1,n1,a2,n2,a3,n3) XGCPRO3_ARRAY (ng,a1,n1,a2,n2,a3,n3)
+
+#define NUNGCPRO XUNGCPRO (ng)
+
+#define NNGCDECL1 XGCDECL1 (nng)
+#define NNGCDECL2 XGCDECL2 (nng)
+#define NNGCDECL3 XGCDECL3 (nng)
+#define NNGCDECL4 XGCDECL4 (nng)
+#define NNGCDECL5 XGCDECL5 (nng)
+
+#define NNGCPRO1(a) XGCPRO1 (nng,a)
+#define NNGCPRO2(a,b) XGCPRO2 (nng,a,b)
+#define NNGCPRO3(a,b,c) XGCPRO3 (nng,a,b,c)
+#define NNGCPRO4(a,b,c,d) XGCPRO4 (nng,a,b,c,d)
+#define NNGCPRO5(a,b,c,d,e) XGCPRO5 (nng,a,b,c,d,e)
+
+#define NNGCPRO1_ARRAY(a1,n1) XGCPRO1_ARRAY(nng,a1,n1)
+#define NNGCPRO2_ARRAY(a1,n1,a2,n2) XGCPRO2_ARRAY (nng,a1,n1,a2,n2)
+#define NNGCPRO3_ARRAY(a1,n1,a2,n2,a3,n3) XGCPRO3_ARRAY (nng,a1,n1,a2,n2,a3,n3)
+
+#define NNUNGCPRO XUNGCPRO (nng)
 
 /* Evaluate expr, UNGCPRO, and then return the value of expr.  */
 #define RETURN_UNGCPRO(expr) do		\
@@ -3360,13 +3449,13 @@ extern Lisp_Object_ptr_dynarr *staticpros;
 
 /* Help debug crashes gc-marking a staticpro'ed object. */
 
-MODULE_API void staticpro_1 (Lisp_Object *, char *);
-MODULE_API void staticpro_nodump_1 (Lisp_Object *, char *);
+MODULE_API void staticpro_1 (Lisp_Object *, Ascbyte *);
+MODULE_API void staticpro_nodump_1 (Lisp_Object *, Ascbyte *);
 #define staticpro(ptr) staticpro_1 (ptr, #ptr)
 #define staticpro_nodump(ptr) staticpro_nodump_1 (ptr, #ptr)
 
 #ifdef HAVE_SHLIB
-MODULE_API void unstaticpro_nodump_1 (Lisp_Object *, char *);
+MODULE_API void unstaticpro_nodump_1 (Lisp_Object *, Ascbyte *);
 #define unstaticpro_nodump(ptr) unstaticpro_nodump_1 (ptr, #ptr)
 #endif
 
@@ -3747,15 +3836,15 @@ EXFUN (Frunning_temacs_p, 0);
 EXFUN (Fforce_debugging_signal, 1);
 
 SIGTYPE fatal_error_signal (int);
-Lisp_Object make_arg_list (int, Extbyte **);
-void make_argc_argv (Lisp_Object, int *, Extbyte ***);
-void free_argc_argv (Extbyte **);
+Lisp_Object make_arg_list (int, Wexttext **);
+void make_argc_argv (Lisp_Object, int *, Wexttext ***);
+void free_argc_argv (Wexttext **);
 Lisp_Object split_external_path (const Extbyte *path);
 Lisp_Object split_env_path (const CIbyte *evarname, const Ibyte *default_);
 
 /* Nonzero means don't do interactive redisplay and don't change tty modes */
 extern int noninteractive, noninteractive1;
-extern int inhibit_non_essential_printing_operations;
+extern int inhibit_non_essential_conversion_operations;
 extern int preparing_for_armageddon;
 extern Fixnum emacs_priority;
 extern int suppress_early_error_handler_backtrace;
@@ -3998,32 +4087,32 @@ Lisp_Object call_with_condition_handler (Lisp_Object (*handler) (Lisp_Object,
 					 Lisp_Object arg);
 int set_trapping_problems_flags (int flags);
 Lisp_Object call_trapping_problems (Lisp_Object warning_class,
-				    const char *warning_string,
+				    const Ascbyte *warning_string,
 				    int flags,
 				    struct call_trapping_problems_result
 				    *problem,
 				    Lisp_Object (*fun) (void *),
 				    void *arg);
 Lisp_Object va_call_trapping_problems (Lisp_Object warning_class,
-				       const char *warning_string,
+				       const Ascbyte *warning_string,
 				       int flags,
 				       struct call_trapping_problems_result
 				       *problem,
 				       lisp_fn_t fun, int nargs, ...);
-Lisp_Object call0_trapping_problems (const char *, Lisp_Object, int);
-Lisp_Object call1_trapping_problems (const char *, Lisp_Object, Lisp_Object,
+Lisp_Object call0_trapping_problems (const Ascbyte *, Lisp_Object, int);
+Lisp_Object call1_trapping_problems (const Ascbyte *, Lisp_Object, Lisp_Object,
 				   int);
-Lisp_Object call2_trapping_problems (const char *, Lisp_Object, Lisp_Object,
+Lisp_Object call2_trapping_problems (const Ascbyte *, Lisp_Object, Lisp_Object,
 				   Lisp_Object, int);
-Lisp_Object call3_trapping_problems (const char *, Lisp_Object, Lisp_Object,
+Lisp_Object call3_trapping_problems (const Ascbyte *, Lisp_Object, Lisp_Object,
 				   Lisp_Object, Lisp_Object, int);
-Lisp_Object call4_trapping_problems (const char *, Lisp_Object, Lisp_Object,
+Lisp_Object call4_trapping_problems (const Ascbyte *, Lisp_Object, Lisp_Object,
 				   Lisp_Object, Lisp_Object, Lisp_Object,
 				   int);
-Lisp_Object call5_trapping_problems (const char *, Lisp_Object, Lisp_Object,
+Lisp_Object call5_trapping_problems (const Ascbyte *, Lisp_Object, Lisp_Object,
 				   Lisp_Object, Lisp_Object, Lisp_Object,
 				   Lisp_Object, int);
-Lisp_Object eval_in_buffer_trapping_problems (const char *, struct buffer *,
+Lisp_Object eval_in_buffer_trapping_problems (const Ascbyte *, struct buffer *,
 					    Lisp_Object, int);
 Lisp_Object run_hook_trapping_problems (Lisp_Object, Lisp_Object, int);
 Lisp_Object safe_run_hook_trapping_problems (Lisp_Object, Lisp_Object, int);
@@ -4288,7 +4377,7 @@ void external_plist_put (Lisp_Object *, Lisp_Object,
 			 Lisp_Object, int, Error_Behavior);
 int external_remprop (Lisp_Object *, Lisp_Object, int, Error_Behavior);
 int internal_equal_trapping_problems (Lisp_Object warning_class,
-    				      const char *warning_string,
+    				      const Ascbyte *warning_string,
 				      int flags,
 				      struct call_trapping_problems_result *p,
 				      int retval,
@@ -4305,8 +4394,8 @@ Lisp_Object bytecode_nconc2 (Lisp_Object *);
 void check_losing_bytecode (const char *, Lisp_Object);
 
 Lisp_Object add_suffix_to_symbol (Lisp_Object symbol,
-				  const Char_ASCII *ascii_string);
-Lisp_Object add_prefix_to_symbol (const Char_ASCII *ascii_string,
+				  const Ascbyte *ascii_string);
+Lisp_Object add_prefix_to_symbol (const Ascbyte *ascii_string,
 				  Lisp_Object symbol);
 
 /* Defined in free-hook.c */
@@ -4327,9 +4416,9 @@ Lisp_Object shared_resource_normalize (Lisp_Object inst,
 extern Lisp_Object Q_resource_type, Q_resource_id;
 
 /* Defined in gui.c */
-DECLARE_DOESNT_RETURN (gui_error (const char *reason,
+DECLARE_DOESNT_RETURN (gui_error (const Ascbyte *reason,
 				  Lisp_Object frob));
-DECLARE_DOESNT_RETURN (gui_error_2 (const char *reason,
+DECLARE_DOESNT_RETURN (gui_error_2 (const Ascbyte *reason,
 				    Lisp_Object frob0, Lisp_Object frob1));
 /* Defined in indent.c */
 EXFUN (Findent_to, 3);
@@ -4555,7 +4644,7 @@ void init_interrupts_late (void);
 EXFUN (Fding, 3);
 
 void init_device_sound (struct device *);
-DECLARE_DOESNT_RETURN (report_sound_error (const Char_ASCII *, Lisp_Object));
+DECLARE_DOESNT_RETURN (report_sound_error (const Ascbyte *, Lisp_Object));
 
 /* Defined in specifier.c */
 EXFUN (Fadd_spec_to_specifier, 5);
@@ -4758,12 +4847,12 @@ void Lstream_funget_ichar (Lstream *stream, Ichar ch);
 
 DECLARE_INLINE_HEADER (Ibyte *qxestrdup (const Ibyte *s))
 {
-  return (Ibyte *) xstrdup ((const char *) s);
+  return (Ibyte *) xstrdup ((const Chbyte *) s);
 }
 
 DECLARE_INLINE_HEADER (Bytecount qxestrlen (const Ibyte *s))
 {
-  return strlen ((const char *) s);
+  return strlen ((const Chbyte *) s);
 }
 
 DECLARE_INLINE_HEADER (Charcount qxestrcharlen (const Ibyte *s))
@@ -4774,177 +4863,186 @@ DECLARE_INLINE_HEADER (Charcount qxestrcharlen (const Ibyte *s))
 DECLARE_INLINE_HEADER (int qxestrcmp (const Ibyte *s1,
 				      const Ibyte *s2))
 {
-  return strcmp ((const char *) s1, (const char *) s2);
+  return strcmp ((const Chbyte *) s1, (const Chbyte *) s2);
 }
 
-DECLARE_INLINE_HEADER (int qxestrcmp_c (const Ibyte *s1,
-					const char *s2))
+DECLARE_INLINE_HEADER (int qxestrcmp_ascii (const Ibyte *s1,
+					    const Ascbyte *s2))
 {
-  return strcmp ((const char *) s1, s2);
+  return strcmp ((const Chbyte *) s1, s2);
 }
 
 DECLARE_INLINE_HEADER (int qxestrncmp (const Ibyte *string1,
 				       const Ibyte *string2,
 				       Bytecount count))
 {
-  return strncmp ((const char *) string1, (const char *) string2,
+  return strncmp ((const Chbyte *) string1, (const Chbyte *) string2,
 		  (size_t) count);
 }
 
-DECLARE_INLINE_HEADER (int qxestrncmp_c (const Ibyte *string1,
-					 const char *string2,
-					 Bytecount count))
+DECLARE_INLINE_HEADER (int qxestrncmp_ascii (const Ibyte *string1,
+					     const Ascbyte *string2,
+					     Bytecount count))
 {
-  return strncmp ((const char *) string1, string2, (size_t) count);
+  return strncmp ((const Chbyte *) string1, string2, (size_t) count);
 }
 
 DECLARE_INLINE_HEADER (Ibyte *qxestrcpy (Ibyte *strDest,
-					   const Ibyte *strSource))
+					 const Ibyte *strSource))
 {
-  return (Ibyte *) strcpy ((char *) strDest, (const char *) strSource);
+  return (Ibyte *) strcpy ((Chbyte *) strDest, (const Chbyte *) strSource);
 }
 
-DECLARE_INLINE_HEADER (Ibyte *qxestrcpy_c (Ibyte *strDest,
-					     const char *strSource))
+DECLARE_INLINE_HEADER (Ibyte *qxestrcpy_ascii (Ibyte *strDest,
+					       const Ascbyte *strSource))
 {
-  return (Ibyte *) strcpy ((char *) strDest, strSource);
+  return (Ibyte *) strcpy ((Chbyte *) strDest, strSource);
 }
 
 DECLARE_INLINE_HEADER (Ibyte *qxestrncpy (Ibyte *strDest,
-					    const Ibyte *strSource,
-					    Bytecount count))
+					  const Ibyte *strSource,
+					  Bytecount count))
 {
-  return (Ibyte *) strncpy ((char *) strDest, (const char *) strSource,
+  return (Ibyte *) strncpy ((Chbyte *) strDest, (const Chbyte *) strSource,
 			      (size_t) count);
 }
 
-DECLARE_INLINE_HEADER (Ibyte *qxestrncpy_c (Ibyte *strDest,
-					      const char *strSource,
-					      Bytecount count))
+DECLARE_INLINE_HEADER (Ibyte *qxestrncpy_ascii (Ibyte *strDest,
+						const Ascbyte *strSource,
+						Bytecount count))
 {
-  return (Ibyte *) strncpy ((char *) strDest, strSource, (size_t) count);
+  return (Ibyte *) strncpy ((Chbyte *) strDest, strSource, (size_t) count);
 }
 
 DECLARE_INLINE_HEADER (Ibyte *qxestrcat (Ibyte *strDest,
-					   const Ibyte *strSource))
+					 const Ibyte *strSource))
 {
-  return (Ibyte *) strcat ((char *) strDest, (const char *) strSource);
+  return (Ibyte *) strcat ((Chbyte *) strDest, (const Chbyte *) strSource);
 }
 
-DECLARE_INLINE_HEADER (Ibyte *qxestrcat_c (Ibyte *strDest,
-					     const char *strSource))
+DECLARE_INLINE_HEADER (Ibyte *qxestrcat_ascii (Ibyte *strDest,
+					       const Ascbyte *strSource))
 {
-  return (Ibyte *) strcat ((char *) strDest, strSource);
+  return (Ibyte *) strcat ((Chbyte *) strDest, strSource);
 }
 
 DECLARE_INLINE_HEADER (Ibyte *qxestrncat (Ibyte *strDest,
-					    const Ibyte *strSource,
-					    Bytecount count))
+					  const Ibyte *strSource,
+					  Bytecount count))
 {
-  return (Ibyte *) strncat ((char *) strDest, (const char *) strSource,
+  return (Ibyte *) strncat ((Chbyte *) strDest, (const Chbyte *) strSource,
 			      (size_t) count);
 }
 
-DECLARE_INLINE_HEADER (Ibyte *qxestrncat_c (Ibyte *strDest,
-					      const char *strSource,
-					      Bytecount count))
+DECLARE_INLINE_HEADER (Ibyte *qxestrncat_ascii (Ibyte *strDest,
+						const Ascbyte *strSource,
+						Bytecount count))
 {
-  return (Ibyte *) strncat ((char *) strDest, strSource, (size_t) count);
+  return (Ibyte *) strncat ((Chbyte *) strDest, strSource, (size_t) count);
 }
 
 DECLARE_INLINE_HEADER (Ibyte *qxestrchr (const Ibyte *s, Ichar c))
 {
   assert (c >= 0 && c <= 255);
-  return (Ibyte *) strchr ((const char *) s, c);
+  return (Ibyte *) strchr ((const Chbyte *) s, c);
 }
 
 DECLARE_INLINE_HEADER (Ibyte *qxestrrchr (const Ibyte *s, Ichar c))
 {
   assert (c >= 0 && c <= 255);
-  return (Ibyte *) strrchr ((const char *) s, c);
+  return (Ibyte *) strrchr ((const Chbyte *) s, c);
 }
 
 DECLARE_INLINE_HEADER (Ibyte *qxestrstr (const Ibyte *string1,
-					   const Ibyte *string2))
+					 const Ibyte *string2))
 {
-  return (Ibyte *) strstr ((const char *) string1, (const char *) string2);
+  return (Ibyte *) strstr ((const Chbyte *) string1, (const Chbyte *) string2);
 }
 
 DECLARE_INLINE_HEADER (Bytecount qxestrcspn (const Ibyte *string,
 					     const CIbyte *strCharSet))
 {
-  return (Bytecount) strcspn ((const char *) string, strCharSet);
+  return (Bytecount) strcspn ((const Chbyte *) string, strCharSet);
 }
 
 DECLARE_INLINE_HEADER (Bytecount qxestrspn (const Ibyte *string,
 					    const CIbyte *strCharSet))
 {
-  return (Bytecount) strspn ((const char *) string, strCharSet);
+  return (Bytecount) strspn ((const Chbyte *) string, strCharSet);
 }
 
 DECLARE_INLINE_HEADER (Ibyte *qxestrpbrk (const Ibyte *string,
-					    const CIbyte *strCharSet))
+					  const CIbyte *strCharSet))
 {
-  return (Ibyte *) strpbrk ((const char *) string, strCharSet);
+  return (Ibyte *) strpbrk ((const Chbyte *) string, strCharSet);
 }
 
 DECLARE_INLINE_HEADER (Ibyte *qxestrtok (Ibyte *strToken,
-					   const CIbyte *strDelimit))
+					 const CIbyte *strDelimit))
 {
-  return (Ibyte *) strtok ((char *) strToken, strDelimit);
+  return (Ibyte *) strtok ((Chbyte *) strToken, strDelimit);
 }
 
 DECLARE_INLINE_HEADER (double qxestrtod (const Ibyte *nptr,
 					 Ibyte **endptr))
 {
-  return strtod ((const char *) nptr, (char **) endptr);
+  return strtod ((const Chbyte *) nptr, (Chbyte **) endptr);
 }
 
 DECLARE_INLINE_HEADER (long qxestrtol (const Ibyte *nptr, Ibyte **endptr,
 				       int base))
 {
-  return strtol ((const char *) nptr, (char **) endptr, base);
+  return strtol ((const Chbyte *) nptr, (Chbyte **) endptr, base);
 }
 
 DECLARE_INLINE_HEADER (unsigned long qxestrtoul (const Ibyte *nptr,
 						 Ibyte **endptr,
 						 int base))
 {
-  return strtoul ((const char *) nptr, (char **) endptr, base);
+  return strtoul ((const Chbyte *) nptr, (Chbyte **) endptr, base);
 }
 
 DECLARE_INLINE_HEADER (int qxeatoi (const Ibyte *string))
 {
-  return atoi ((const char *) string);
+  return atoi ((const Chbyte *) string);
 }
 
 DECLARE_INLINE_HEADER (Ibyte *qxestrupr (Ibyte *s))
 {
-  return (Ibyte *) strupr ((char *) s);
+  return (Ibyte *) strupr ((Chbyte *) s);
 }
 
 DECLARE_INLINE_HEADER (Ibyte *qxestrlwr (Ibyte *s))
 {
-  return (Ibyte *) strlwr ((char *) s);
+  return (Ibyte *) strlwr ((Chbyte *) s);
 }
 
 int qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
      PRINTF_ARGS (2, 3);
+
+DECLARE_INLINE_HEADER (int qxesscanf_ascii_1 (Ibyte *buffer,
+					      const Ascbyte *format,
+					      void *ptr))
+{
+  /* #### DAMNIT! No vsscanf! */
+  return sscanf ((Chbyte *) buffer, format, ptr);
+}
 
 /* Do not use POSIX locale routines.  Not Mule-correct. */
 #define qxestrcoll DO NOT USE.
 #define qxestrxfrm DO NOT USE.
 
 int qxestrcasecmp (const Ibyte *s1, const Ibyte *s2);
-int qxestrcasecmp_c (const Ibyte *s1, const Char_ASCII *s2);
+int qxestrcasecmp_ascii (const Ibyte *s1, const Ascbyte *s2);
 int qxestrcasecmp_i18n (const Ibyte *s1, const Ibyte *s2);
-int ascii_strcasecmp (const Char_ASCII *s1, const Char_ASCII *s2);
+int ascii_strcasecmp (const Ascbyte *s1, const Ascbyte *s2);
 int lisp_strcasecmp (Lisp_Object s1, Lisp_Object s2);
 int lisp_strcasecmp_i18n (Lisp_Object s1, Lisp_Object s2);
 int qxestrncasecmp (const Ibyte *s1, const Ibyte *s2, Bytecount len);
-int qxestrncasecmp_c (const Ibyte *s1, const Char_ASCII *s2, Bytecount len);
+int qxestrncasecmp_ascii (const Ibyte *s1, const Ascbyte *s2,
+			  Bytecount len);
 int qxestrncasecmp_i18n (const Ibyte *s1, const Ibyte *s2, Bytecount len);
-int ascii_strncasecmp (const Char_ASCII *s1, const Char_ASCII *s2,
+int ascii_strncasecmp (const Ascbyte *s1, const Ascbyte *s2,
 		       Bytecount len);
 int qxememcmp (const Ibyte *s1, const Ibyte *s2, Bytecount len);
 int qxememcmp4 (const Ibyte *s1, Bytecount len1,
@@ -4969,6 +5067,23 @@ void buffer_mule_signal_inserted_region (struct buffer *buf, Charbpos start,
 void buffer_mule_signal_deleted_region (struct buffer *buf, Charbpos start,
 					Charbpos end, Bytebpos byte_start,
 					Bytebpos byte_end);
+
+typedef struct
+{
+  const char *srctext;
+  void *dst;
+  Bytecount dst_size;
+} alloca_convert_vals;
+
+typedef struct
+{
+  Dynarr_declare (alloca_convert_vals);
+} alloca_convert_vals_dynarr;
+
+extern alloca_convert_vals_dynarr *active_alloca_convert;
+
+MODULE_API int find_pos_of_existing_active_alloca_convert (const char *
+							   srctext);
 
 /* Defined in unicode.c */
 extern const struct sized_memory_description to_unicode_description;

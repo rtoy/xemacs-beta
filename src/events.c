@@ -189,16 +189,16 @@ static const struct sized_memory_description magic_data_description = {
 };
 
 static const struct memory_description event_data_description_1 [] = {
-  { XD_STRUCT_ARRAY, key_press_event, 1, &key_data_description },
-  { XD_STRUCT_ARRAY, button_press_event, 1, &button_data_description },
-  { XD_STRUCT_ARRAY, button_release_event, 1, &button_data_description },
-  { XD_STRUCT_ARRAY, pointer_motion_event, 1, &motion_data_description },
-  { XD_STRUCT_ARRAY, process_event, 1, &process_data_description },
-  { XD_STRUCT_ARRAY, timeout_event, 1, &timeout_data_description },
-  { XD_STRUCT_ARRAY, magic_event, 1, &magic_data_description },
-  { XD_STRUCT_ARRAY, magic_eval_event, 1, &magic_eval_data_description },
-  { XD_STRUCT_ARRAY, eval_event, 1, &eval_data_description },
-  { XD_STRUCT_ARRAY, misc_user_event, 1, &misc_user_data_description },
+  { XD_BLOCK_ARRAY, key_press_event, 1, &key_data_description },
+  { XD_BLOCK_ARRAY, button_press_event, 1, &button_data_description },
+  { XD_BLOCK_ARRAY, button_release_event, 1, &button_data_description },
+  { XD_BLOCK_ARRAY, pointer_motion_event, 1, &motion_data_description },
+  { XD_BLOCK_ARRAY, process_event, 1, &process_data_description },
+  { XD_BLOCK_ARRAY, timeout_event, 1, &timeout_data_description },
+  { XD_BLOCK_ARRAY, magic_event, 1, &magic_data_description },
+  { XD_BLOCK_ARRAY, magic_eval_event, 1, &magic_eval_data_description },
+  { XD_BLOCK_ARRAY, eval_event, 1, &eval_data_description },
+  { XD_BLOCK_ARRAY, misc_user_event, 1, &misc_user_data_description },
   { XD_END }
 };
 
@@ -1574,7 +1574,7 @@ format_event_object (Eistring *buf, Lisp_Object event, int brief)
     eicat_ch (buf, XCHAR (key));
   else if (SYMBOLP (key))
     {
-      const Char_ASCII *str = 0;
+      const Ascbyte *str = 0;
       if (brief)
 	{
 	  if      (EQ (key, QKlinefeed))  str = "LFD";
@@ -2634,8 +2634,6 @@ reinit_vars_of_events (void)
 void
 vars_of_events (void)
 {
-  reinit_vars_of_events ();
-
   DEFVAR_LISP ("character-set-property", &Vcharacter_set_property /*
 This is used to map e.g. `ocircumflex' to the appropriate character under X.
 This value of this variable (a symbol, normally `x-iso8859-1' if not nil)

@@ -115,7 +115,7 @@ Lisp_Object
 mswindows_translate_menu_or_dialog_item (Lisp_Object item, Ichar *accel)
 {
   Bytecount len = XSTRING_LENGTH (item);
-  Ibyte *it = (Ibyte *) ALLOCA (2 * len + 42), *ptr = it;
+  Ibyte *it = alloca_ibytes (2 * len + 42), *ptr = it;
 
   memcpy (ptr, XSTRING_DATA (item), len + 1);
   if (accel)

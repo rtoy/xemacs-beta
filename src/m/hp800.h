@@ -50,21 +50,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define LOAD_AVE_CVT(x) ((int) (x * 100.0))
 
-
-/* Define C_ALLOCA if this machine does not support a true alloca
-   and the one written in C should be used instead.
-   Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used.
-   Define neither one if an assembler-language alloca
-   in the file alloca.s should be used.  */
-
-/* lemacs change:  define HAVE_ALLOCA if gcc is being used */
-#ifdef __GNUC__
-#define HAVE_ALLOCA
-#else
-#define C_ALLOCA
-#endif
-
 /* the data segment on this machine always starts at address 0x40000000. */
 
 #ifdef DATA_START
@@ -76,8 +61,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define DATA_START    0x40000000
 #define TEXT_START    0x00000000
-
-#define STACK_DIRECTION 1 
 
 /* Define NO_REMAP if memory segmentation makes it not work well
    to change the boundary between the text section and data section

@@ -236,9 +236,8 @@ Quote EXPR if it is not self quoting.
 static Lisp_Object
 quotify_args (Lisp_Object expr)
 {
-  Lisp_Object tail;
-  EXTERNAL_LIST_LOOP (tail, expr)
-    XSETCAR (tail, Fquote_maybe (XCAR (tail)));
+  EXTERNAL_LIST_LOOP_3 (elt, expr, tail)
+    XSETCAR (tail, Fquote_maybe (elt));
   return expr;
 }
 
@@ -387,7 +386,7 @@ when reading the arguments.
 	goto lose;
     }
 
-  /* FSFmacs makes an ALLOCA () copy of prompt_data here.
+  /* FSFmacs makes an ALLOCA() copy of prompt_data here.
      We're more intelligent about this and just reset prompt_data
      as necessary. */
   /* If either specs or prompt_data is set to a string, use it.  */

@@ -1648,8 +1648,6 @@ reinit_vars_of_event_gtk (void)
 void
 vars_of_event_gtk (void)
 {
-  reinit_vars_of_event_gtk ();
-
   DEFVAR_BOOL ("gtk-allow-sendevents", &gtk_allow_sendevents /*
 *Non-nil means to allow synthetic events.  Nil means they are ignored.
 Beware: allowing emacs to process SendEvents opens a big security hole.

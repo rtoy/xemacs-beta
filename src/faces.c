@@ -1974,7 +1974,7 @@ complex_vars_of_faces (void)
 
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_GTK)
     
-    const Char_ASCII *fonts[] =
+    const Ascbyte *fonts[] =
     {
       /************** ISO-8859 fonts *************/
 
@@ -2104,7 +2104,7 @@ complex_vars_of_faces (void)
       "-*-*-*-*-*-*-*-*-*-*-*-*-*-*",
       "*"
     };
-    const Char_ASCII **fontptr;
+    const Ascbyte **fontptr;
 
 #ifdef HAVE_X_WINDOWS
     for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
@@ -2126,13 +2126,13 @@ complex_vars_of_faces (void)
 
 #ifdef HAVE_MS_WINDOWS
     {
-       const Char_ASCII *mswfonts[] =
+       const Ascbyte *mswfonts[] =
  	    {
  	      "Courier New:Regular:10::",
  	      "Courier:Regular:10::",
  	      ":Regular:10::"
  	    };
-       const Char_ASCII **mswfontptr;
+       const Ascbyte **mswfontptr;
  
        for (mswfontptr = mswfonts + countof (mswfonts) - 1;
 	    mswfontptr >= mswfonts; mswfontptr--)

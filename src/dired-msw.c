@@ -285,8 +285,7 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
 			  eigetch_char (filename, 2) == '\0'))) ||
 		       hide_dot)))
 		{
-		  file.cFileName =
-		    (Ibyte *) xmalloc (sizeof (Ibyte) * (1 + len));
+		  file.cFileName = xnew_ibytes (len + ITEXT_ZTERM_SIZE);
 		  memcpy (file.cFileName, eidata (filename), len);
 		  file.cFileName[len] = '\0';
 		  Dynarr_add (files, file);
@@ -341,11 +340,11 @@ mswindows_format_file (Win32_file *file, int display_size, int add_newline)
 	DEC_IBYTEPTR (end);
 	DEC_IBYTEPTR (end);
 	DEC_IBYTEPTR (end);
-	if (qxestrcasecmp_c (end, ".exe") == 0
-	    || qxestrcasecmp_c (end, ".com") == 0
-	    || qxestrcasecmp_c (end, ".bat") == 0
+	if (qxestrcasecmp_ascii (end, ".exe") == 0
+	    || qxestrcasecmp_ascii (end, ".com") == 0
+	    || qxestrcasecmp_ascii (end, ".bat") == 0
 #if 0
-	    || qxestrcasecmp_c (end, ".pif") == 0
+	    || qxestrcasecmp_ascii (end, ".pif") == 0
 #endif
 	    )
 	  is_executable = 1;

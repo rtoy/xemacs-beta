@@ -2178,7 +2178,7 @@ compiled_function_hash (Lisp_Object obj, int depth)
 
 static const struct memory_description compiled_function_description[] = {
   { XD_INT,         offsetof (Lisp_Compiled_Function, args_in_array) },
-  { XD_STRUCT_PTR,  offsetof (Lisp_Compiled_Function, args),
+  { XD_BLOCK_PTR,  offsetof (Lisp_Compiled_Function, args),
       XD_INDIRECT (0, 0), &lisp_object_description },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, instructions) },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, constants) },
@@ -2228,7 +2228,7 @@ compiled_function_instructions (Lisp_Compiled_Function *f)
     Lisp_Opaque *opaque = XOPAQUE (f->instructions);
 
     Ibyte * const buffer =
-      alloca_array (Ibyte, OPAQUE_SIZE (opaque) * MAX_ICHAR_LEN);
+      alloca_ibytes (OPAQUE_SIZE (opaque) * MAX_ICHAR_LEN);
     Ibyte *bp = buffer;
 
     const Opbyte * const program = (const Opbyte *) OPAQUE_DATA (opaque);
