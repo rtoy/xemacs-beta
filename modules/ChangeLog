@@ -1,3 +1,7 @@
+2003-01-15  Jerry James  <james@eecs.ku.edu>
+
+	* ldap/eldap.c: Apply Ben's postgresql change to LDAP also.
+
 2002-12-16  Ben Wing  <ben@xemacs.org>
 
 	* postgresql/postgresql.c:

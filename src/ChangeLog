@@ -1,3 +1,7 @@
+2003-01-15  Jerry James  <james@eecs.ku.edu>
+
+	* emodules.h: #undef everything we redefine for module code.
+
 2003-01-14  Sergey Okhapkin <sos@prospect.com.ru>
 
 	* Makefile.in.in (ldflags): re-order sections for gcc 3.2.
