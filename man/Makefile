@@ -22,9 +22,11 @@
 SHELL    = /bin/sh
 MAKEINFO = makeinfo
 TEXI2DVI = texi2dvi
-TEXI2HTML = texi2html -verbose -split chapter
+TEXI2HTML = texi2html -verbose -subdir $(HTMLDIR)
+TEXI2HTML_SPLIT = $(TEXI2HTML) -split chapter
 
 RM = rm -f
+CP = cp
 
 .SUFFIXES:
 .SUFFIXES: .html .info .texi .dvi .pdf
@@ -37,6 +39,7 @@ all : info
 
 INFODIR = ../info
 HTMLDIR = ../html
+PHOTODIR = ../etc/photos
 
 info_files = \
 	$(INFODIR)/cl.info \
@@ -338,50 +341,59 @@ extraclean: distclean
 ############################################################################
 
 $(HTMLDIR)/cl.html : cl.texi
-	$(TEXI2HTML) -subdir $(HTMLDIR) cl.texi
+	$(TEXI2HTML_SPLIT) cl.texi
 
 $(HTMLDIR)/custom.html : custom.texi
-	$(TEXI2HTML) -subdir $(HTMLDIR) custom.texi
+	$(TEXI2HTML_SPLIT) custom.texi
 
 $(HTMLDIR)/emodules.html : emodules.texi
-	$(TEXI2HTML) -subdir $(HTMLDIR) emodules.texi
+	$(TEXI2HTML_SPLIT) emodules.texi
 
 $(HTMLDIR)/external-widget.html : external-widget.texi
-	$(TEXI2HTML) -subdir $(HTMLDIR) external-widget.texi
+	$(TEXI2HTML_SPLIT) external-widget.texi
 
 $(HTMLDIR)/info.html : info.texi
-	$(TEXI2HTML) -subdir $(HTMLDIR) info.texi
+	$(TEXI2HTML_SPLIT) info.texi
 
 $(HTMLDIR)/standards.html : standards.texi
-	$(TEXI2HTML) -subdir $(HTMLDIR) standards.texi
+	$(TEXI2HTML_SPLIT) standards.texi
 
 $(HTMLDIR)/term.html : term.texi
-	$(TEXI2HTML) -subdir $(HTMLDIR) term.texi
+	$(TEXI2HTML_SPLIT) term.texi
 
 $(HTMLDIR)/termcap.html : termcap.texi
-	$(TEXI2HTML) -subdir $(HTMLDIR) termcap.texi
+	$(TEXI2HTML_SPLIT) termcap.texi
 
 $(HTMLDIR)/texinfo.html : texinfo.texi
-	$(TEXI2HTML) -subdir $(HTMLDIR) texinfo.texi
+	$(TEXI2HTML_SPLIT) texinfo.texi
 
 $(HTMLDIR)/widget.html : widget.texi
-	$(TEXI2HTML) -subdir $(HTMLDIR) widget.texi
+	$(TEXI2HTML_SPLIT) widget.texi
 
 $(HTMLDIR)/xemacs-faq.html : xemacs-faq.texi
-	$(TEXI2HTML) -top_file xemacs-faq_1.html -subdir $(HTMLDIR) xemacs-faq.texi
+	$(TEXI2HTML) xemacs-faq.texi
+	$(TEXI2HTML_SPLIT) -top_file xemacs-faq_1.html xemacs-faq.texi
+	$(CP) $(PHOTODIR)/ben.png $(HTMLDIR)
+	$(CP) $(PHOTODIR)/cthomp.png $(HTMLDIR)
+	$(CP) $(PHOTODIR)/hniksic.png $(HTMLDIR)
+	$(CP) $(PHOTODIR)/jwz.png $(HTMLDIR)
+	$(CP) $(PHOTODIR)/martin.png $(HTMLDIR)
+	$(CP) $(PHOTODIR)/mly.png $(HTMLDIR)
+	$(CP) $(PHOTODIR)/piper.png $(HTMLDIR)
+	$(CP) $(PHOTODIR)/slb.png $(HTMLDIR)
 
 # Manuals with their own subdirectory
 $(HTMLDIR)/xemacs.html : $(xemacs-srcs)
-	$(TEXI2HTML) -subdir $(HTMLDIR) xemacs/xemacs.texi
+	$(TEXI2HTML_SPLIT) xemacs/xemacs.texi
 
 $(HTMLDIR)/lispref.html : $(lispref-srcs)
-	$(TEXI2HTML) -subdir $(HTMLDIR) lispref/lispref.texi
+	$(TEXI2HTML_SPLIT) lispref/lispref.texi
 
 $(HTMLDIR)/internals.html : $(internals-srcs)
-	$(TEXI2HTML) -subdir $(HTMLDIR) internals/internals.texi
+	$(TEXI2HTML_SPLIT) internals/internals.texi
 
 $(HTMLDIR)/new-users-guide.html : $(new-users-guide-srcs)
-	$(TEXI2HTML) -subdir $(HTMLDIR) new-users-guide/new-users-guide.texi
+	$(TEXI2HTML_SPLIT) new-users-guide/new-users-guide.texi
 
 xemacs : $(HTMLDIR)/xemacs.html
 lispref : $(HTMLDIR)/lispref.html

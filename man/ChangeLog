@@ -1,3 +1,27 @@
+2004-12-05  Adrian Aichner  <adrian@xemacs.org>
+
+	* Makefile (TEXI2HTML): Changed to produce unsplit output.
+	* Makefile (TEXI2HTML_SPLIT): New.
+	* Makefile (CP): New.
+	* Makefile (PHOTODIR): New.
+	* Makefile ($(HTMLDIR)/cl.html): Use TEXI2HTML_SPLIT.
+	* Makefile ($(HTMLDIR)/custom.html): Ditto.
+	* Makefile ($(HTMLDIR)/emodules.html): Ditto.
+	* Makefile ($(HTMLDIR)/external-widget.html): Ditto.
+	* Makefile ($(HTMLDIR)/info.html): Ditto.
+	* Makefile ($(HTMLDIR)/standards.html): Ditto.
+	* Makefile ($(HTMLDIR)/term.html): Ditto.
+	* Makefile ($(HTMLDIR)/termcap.html): Ditto.
+	* Makefile ($(HTMLDIR)/texinfo.html): Ditto.
+	* Makefile ($(HTMLDIR)/widget.html): Ditto.
+	* Makefile ($(HTMLDIR)/xemacs-faq.html): Ditto.
+	Produce unsplit output for website also, copy photos to HTMLDIR.
+	* Makefile ($(HTMLDIR)/xemacs.html): Ditto.
+	* Makefile ($(HTMLDIR)/lispref.html): Ditto.
+	* Makefile ($(HTMLDIR)/internals.html): Ditto.
+	* Makefile ($(HTMLDIR)/new-users-guide.html): Ditto.
+	* xemacs-faq.texi (Q1.3.1): Fix broken image links in HTML output.
+
 2004-11-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (Better Rendering Support --

@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2004/12/05 08:48:12 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2004/12/05 22:30:40 $
 @sp 1
 @author Ben Wing <ben@@xemacs.org>
 @author Tony Rossini <rossini@@u.washington.edu>
@@ -1545,42 +1545,45 @@ Portraits and email of some of the major developers:
 @itemize @bullet
 @item @email{andy@@xemacs.org, Andy Piper}
 @html
-<br><img src="wing.gif" alt="Portrait of Ben Wing"><br>
+<br><img src="piper.png" alt="Portrait of Andy Piper"><br>
 @end html
 
 @item @email{ben@@xemacs.org, Ben Wing}
 @html
-<br><img src="wing.gif" alt="Portrait of Ben Wing"><br>
+<br><img src="ben.png" alt="Portrait of Ben Wing"><br>
 @end html
 
 @item @email{cthomp@@xemacs.org, Chuck Thompson}
 @html
-<br><img src="cthomp.jpeg" alt="Portrait of Chuck Thompson"><br>
+<br><img src="cthomp.png" alt="Portrait of Chuck Thompson"><br>
 @end html
 
 @item @email{hniksic@@xemacs.org, Hrvoje Niksic}
 
 @html
-<br><img src="hniksic.jpeg" alt="Portrait of Hrvoje Niksic"><br>
+<br><img src="hniksic.png" alt="Portrait of Hrvoje Niksic"><br>
 @end html
 
 @item @email{jwz@@jwz.org, Jamie Zawinski}
 @html
-<br><img src="jwz.gif" alt="Portrait of Jamie Zawinski"><br>
+<br><img src="jwz.png" alt="Portrait of Jamie Zawinski"><br>
 @end html
 
 @item @email{martin@@xemacs.org, Martin Buchholz}
 @html
-<br><img src="mrb.jpeg" alt="Portrait of Martin Buchholz"><br>
+<br><img src="martin.png" alt="Portrait of Martin Buchholz"><br>
 @end html
 
 @item @email{mly@@adoc.xerox.com, Richard Mlynarik}
+@html
+<br><img src="mly.png" alt="Portrait of Richard Mlynarik"><br>
+@end html
 
 @item @email{stephen@@xemacs.org, Stephen Turnbull}
 
 @item @email{steve@@xemacs.org, Steve Baur}
 @html
-<br><img src="steve.gif" alt="Portrait of Steve Baur"><br>
+<br><img src="slb.png" alt="Portrait of Steve Baur"><br>
 @end html
 @end itemize
 
