@@ -1,3 +1,8 @@
+2002-02-01  Steve Youngs  <youngs@xemacs.org>
+
+	* xemacs/packages.texi (Removing Packages): The interactive
+	function is 'package-get-delete-package'.
+
 2002-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.4 "bamboo" is released.
