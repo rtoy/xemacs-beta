@@ -1071,8 +1071,7 @@ LISPREF_SRCS = \
 	$(MANDIR)\lispref\x-windows.texi
 
 INTERNALS_SRCS = \
-	$(MANDIR)\internals\internals.texi \
-	$(MANDIR)\internals\index.texi
+	$(MANDIR)\internals\internals.texi
 
 NEW_USERS_GUIDE_SRCS = \
 	$(MANDIR)\new-users-guide\custom1.texi \
