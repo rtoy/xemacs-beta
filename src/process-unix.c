@@ -1591,11 +1591,11 @@ unix_canonicalize_host_name (Lisp_Object host)
   retval = getaddrinfo (ext_host, NULL, &hints, &res);
   if (retval != 0)
     {
-      Bufbyte *gai_error;
+      char *gai_error;
 
       EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error, Qnative);
       maybe_signal_error (Qio_error, gai_error, host,
-			       Qprocess, ERROR_ME_NOT);
+			  Qprocess, ERROR_ME_NOT);
       canonname = host;
     }
   else
@@ -1685,7 +1685,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     retval = getaddrinfo (ext_host, portstring, &hints, &res);
     if (retval != 0)
       {
-	Bufbyte *gai_error;
+	char *gai_error;
 
 	EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error, Qnative);
 	signal_error (Qio_error, gai_error, list2 (host, service));

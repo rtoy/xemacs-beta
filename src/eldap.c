@@ -330,7 +330,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
   err = ldap_bind_s (ld, ldap_binddn, ldap_passwd, ldap_auth);
   if (err != LDAP_SUCCESS)
     {
-      Bufbyte *interrmess;
+      char *interrmess;
       EXTERNAL_TO_C_STRING (ldap_err2string (err), interrmess, Qnative);
       signal_error (Qprocess_error, "Failed binding to the server",
 		    build_string (interrmess));

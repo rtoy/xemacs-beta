@@ -351,7 +351,7 @@ emodules_load(const char *module, const char *modname, const char *modver)
   dlhandle = dll_open (soname);
   if (dlhandle == (dll_handle)0)
     {
-      Bufbyte *dllerrint;
+      char *dllerrint;
 
       EXTERNAL_TO_C_STRING (dll_error (dlhandle), dllerrint, Qnative);
       signal_error (Qdll_error, "Opening dynamic module",

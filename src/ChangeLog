@@ -1,6 +1,15 @@
 2001-05-25  Martin Buchholz  <martin@xemacs.org>
 
-	* fns.c (base64_conversion_error): Fix compile warning.
+	* process-unix.c (unix_canonicalize_host_name): Fix compile warnings.
+	(unix_open_network_stream): Likewise.
+	* sound.h (sound_perror): Likewise.
+	(sound_warn): Likewise.
+	* emodules.c (emodules_load): Likewise.
+	* fns.c (base64_conversion_error): Likewise.
+	* tooltalk.c (check_status): Likewise.
+	* eldap.c (Fldap_open): Likewise.
+	* hpplay.c (player_error_internal): Likewise.
+	* win32.c (tstr_to_local_file_format): Likewise.
 
 	* realpath.c: This file doesn't deal with internal
 	representation.  Define DONT_ENCAPSULATE.

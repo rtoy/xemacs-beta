@@ -84,7 +84,7 @@ pfNetApiBufferFree_t xNetApiBufferFree;
 Lisp_Object
 tstr_to_local_file_format (Extbyte *pathout)
 {
-  Bufbyte *ttlff;
+  char *ttlff;
   Lisp_Object in;
 
   EXTERNAL_TO_C_STRING (pathout, ttlff, Qmswindows_tstr);
