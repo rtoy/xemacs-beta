@@ -1,3 +1,10 @@
+2003-03-21  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el: Globally remove trailing whitespace.
+	* package-get.el (package-get-download-sites): Add more sites.
+	* package-get.el (package-get-pre-release-download-sites): Add
+	more sites.
+
 2003-03-20  Steve Youngs  <youngs@xemacs.org>
 
 	* menubar-items.el (default-menubar): Add a "Pre-Release Download
@@ -16502,7 +16509,7 @@ Mon Sep 22 15:47:02 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 	* prim/profile.el (profiling-results): Renamed from
  	`pretty-print-profiling-info'.
 
-1997-10-03  Karl M. Hegbloom  <Karl M. Hegbloom <karlheg@inetarena.com>>
+1997-10-03  Karl M. Hegbloom  <Karl M. Hegbloom <karlheg@inetarena.com>
 
 	* custom/cus-edit.el (custom-save-all): Bind `auto-mode-alist' to
  	nil around the init file handling to prevent unnecessary automagic
