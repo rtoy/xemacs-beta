@@ -1,3 +1,7 @@
+2003-05-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etc/sample.Xresources (menubar and popup fonts): Use X Font Sets.
+
 2003-06-29  Norbert Koch  <viteno@xemacs.org>
 
 	* package-index.LATEST.gpg: Official package release.
