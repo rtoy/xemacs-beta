@@ -1211,7 +1211,30 @@ This can be one of `non-weak', `weak', `key-weak' or `value-weak'.
    - by gc (if the hash table is weak)
 
    So we make a copy of the hentries at the beginning of the mapping
-   operation, and iterate over the copy. */
+   operation, and iterate over the copy.  Naturally, this is
+   expensive, but not as expensive as you might think, because no
+   actual memory has to be collected by our notoriously inefficient
+   GC; we use an unwind-protect instead to free the memory directly.
+
+   We could avoid the copying by having the hash table modifiers
+   puthash and remhash check for currently active mapping functions.
+   Disadvantages: it's hard to get right, and IMO hash mapping
+   functions are basically rare, and no extra space in the hash table
+   object and no extra cpu in puthash or remhash should be wasted to
+   make maphash 3% faster.  From a design point of view, the basic
+   functions gethash, puthash and remhash should be implementable
+   without having to think about maphash.
+
+   Note: We don't (yet) have Common Lisp's with-hash-table-iterator.
+   If you implement this naively, you cannot have more than one
+   concurrently active iterator over the same hash table.  The `each'
+   function in perl has this limitation.
+
+   Note: We GCPRO memory on the heap, not on the stack.  There is no
+   obvious reason why this is bad, but as of this writing this is the
+   only known occurrence of this technique in the code.
+*/
+
 static Lisp_Object
 maphash_unwind (Lisp_Object unwind_obj)
 {
