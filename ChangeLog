@@ -1,3 +1,9 @@
+2004-03-04  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
+
+	* configure.in (src/Makefile): No longer include a special linker
+	script for PowerPC Linux.  Thanks to Stefan Bruda for reporting
+	this bug.
+
 2004-04-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.in (Compiler-specific hacks): Restore warning flags

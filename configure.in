@@ -2223,7 +2223,9 @@ fi
 dnl Feed s&m crud to src/Makefile
 
 dnl Linux/powerpc needs the following magic for some reason
-test "$machine$opsys" = "powerpclinux" && start_flags="-T $srcdir/src/ppc.ldscript"
+dnl [Not needed with YellowDog 2.3 and causes link problems with YellowDog 3.0,
+dnl the two most popular PowerPC distributions.]
+dnl test "$machine$opsys" = "powerpclinux" && start_flags="-T $srcdir/src/ppc.ldscript"
 
 if test "$unexec" = "unexaix.o"; then
 dnl AIX needs various hacks to make static linking work.
