@@ -123,7 +123,7 @@ Otherwise, XEmacs will offer migration to the init directory.")
    ;; don't exist.  instead, xemacs.mak points configure-lisp-directory and
    ;; configure-data-directory at the right places.
    (and
-    (or configure-exec-directory (paths-file-readable-directory-p (paths-construct-path (list directory "lib-src"))))
+    (or configure-exec-directory (paths-file-readable-directory-p (paths-construct-path (list directory "lib-src"))) (eq system-type 'windows-nt))
     (or configure-lisp-directory (paths-file-readable-directory-p (paths-construct-path (list directory "lisp"))))
     (or configure-data-directory (paths-file-readable-directory-p (paths-construct-path (list directory "etc")))))))
 

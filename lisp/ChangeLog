@@ -1,3 +1,8 @@
+2003-06-13  Adrian Aichner  <adrian@xemacs.org>
+
+	* setup-paths.el (paths-emacs-root-p): Don't insist in lib-src
+	directory on 'windows-nt, which currently does not have it.
+
 2003-06-11  Adrian Aichner  <adrian@xemacs.org>
 
 	* font-lock.el (lisp-font-lock-keywords-1): Only NAME, not NAME(
