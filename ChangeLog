@@ -1,3 +1,10 @@
+2005-01-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure:
+	* configure.in (XE_COMPUTE_RUNPATH): 
+	NetBSD can use Linux's sound API, but it needs an extra library at
+	link time to do so.
+
 2004-12-07  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* INSTALL: A POSIX compatible Make is no longer required for builds.

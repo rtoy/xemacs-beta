@@ -4697,7 +4697,16 @@ if test "$with_native_sound" != "no"; then
     done
   fi
 
-  test "$sound_found" = "yes" && with_native_sound=yes
+  if test "$sound_found" = "yes"; then
+     with_native_sound=yes
+
+     dnl NetBSD can use Linux's sound API, but it needs an extra library at
+     dnl link time to do so. (OpenBSD apparently needs the same; not written
+     dnl or tested.)
+     if test "$opsys" = "netbsd" ; then 
+         AC_CHECK_LIB(ossaudio, _oss_ioctl, native_sound_lib="-lossaudio")
+     fi
+  fi
 fi
 
 if test "$with_native_sound" = "yes"; then
