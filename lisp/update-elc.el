@@ -242,9 +242,10 @@
 		   need-to-rebuild-mule-autoloads)
 	       '("-l" "autoload"))
 	   (if need-to-rebuild-autoloads
-	       '("-f" "batch-force-update-one-directory" "../lisp"))
+	       '("-f" "autoload-update-directory-autoloads" "auto" "../lisp"))
 	   (if need-to-rebuild-mule-autoloads
-	       '("-f" "batch-force-update-one-directory" "../lisp/mule"))
+	       '("-f" "autoload-update-directory-autoloads"
+		 "mule" "../lisp/mule"))
 	   (if need-to-recompile-autoloads
 	       '("-f" "batch-byte-compile-one-file"
 		 "../lisp/auto-autoloads.el"))

@@ -542,6 +542,9 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 			   nil)
       (startup-setup-paths-warning))
 
+    ;; Either we need to inhibit messages from do_autoloads, or this
+    ;; should go into (command-line) after the initialization of the
+    ;; frame?
     (startup-load-autoloads)
 
     (let (error-data)
@@ -747,7 +750,7 @@ If this is nil, no message will be displayed.")
     ;; In this case, I completely agree. --ben
     (if (featurep 'menubar)
 	(init-menubar-at-startup))
-    ;; perhaps this should go earlier in the proecess?
+    ;; perhaps this should go earlier in the process?
     (if (featurep 'mule)
 	(declare-fboundp (init-mule-at-startup)))
 
@@ -1247,7 +1250,7 @@ a new format, when variables have changed, etc."
 (defun splash-frame-body ()
   `[((face (blue bold underline)
 	   "\nDistribution, copying license, warranty:\n\n")
-     "Please visit the XEmacs website at http://www.xemacs.org !\n\n"
+     "Please visit the XEmacs website at http://www.xemacs.org/ !\n\n"
      ,@(if (featurep 'sparcworks)
 	   `( "\
 Sun provides support for the WorkShop/XEmacs integration package only.
@@ -1303,7 +1306,7 @@ Copyright (C) 1995-1996 Ben Wing\n"))
      ((key about-xemacs) ": see who's developing XEmacs\n"))
 
     ((face (blue bold underline) "\nUseful stuff:\n\n")
-     "Things that you should know rather quickly...\n\n"
+     "Things that you should learn rather quickly...\n\n"
      ((key find-file) ": visit a file\n")
      ((key save-buffer) ": save changes\n")
      ((key undo) ": undo changes\n")
@@ -1430,20 +1433,24 @@ Copyright (C) 1995-1996 Ben Wing\n"))
 	t)))))
 
 (defun startup-load-autoloads ()
-  (if (and (not inhibit-autoloads)
-	   lisp-directory)
+  (when (and (not inhibit-autoloads) lisp-directory)
+    (load (expand-file-name (file-name-sans-extension autoload-file-name)
+			    lisp-directory)
+	  nil t)
+    (when (featurep 'mule)
       (load (expand-file-name (file-name-sans-extension autoload-file-name)
-			      lisp-directory) nil t))
+			      (file-name-as-directory
+			       (expand-file-name "mule" lisp-directory)))
+	    nil t)))
 
   ;; Hey!  Let's use a packages-* function for a non-package purpose!
-  (if (and (not inhibit-autoloads) (featurep 'modules))
-      (packages-load-package-auto-autoloads module-load-path))
+  (when (and (not inhibit-autoloads) (featurep 'modules))
+    (packages-load-package-auto-autoloads module-load-path))
 
-  (if (and (not inhibit-autoloads) (not inhibit-all-packages))
-      (progn
-	(if (not inhibit-early-packages)
-	    (packages-load-package-auto-autoloads early-package-load-path))
-	(packages-load-package-auto-autoloads late-package-load-path)
-	(packages-load-package-auto-autoloads last-package-load-path))))
+  (unless (or inhibit-autoloads inhibit-all-packages)
+    (unless inhibit-early-packages
+      (packages-load-package-auto-autoloads early-package-load-path))
+    (packages-load-package-auto-autoloads late-package-load-path)
+    (packages-load-package-auto-autoloads last-package-load-path)))
 
 ;;; startup.el ends here

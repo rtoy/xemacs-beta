@@ -144,17 +144,30 @@
     (message "Recompiling updated .els in directory tree `%s'...done" dir)
     ;; don't depend on being able to autoload `update-autoload-files'!
     (load "autoload")
-    (update-autoload-files (list dir))
-    (byte-recompile-file (expand-file-name "auto-autoloads.el" dir) 0)
-    (if (featurep 'modules)
+    ;; #### the API used here is deprecated, convert to one with explicit
+    ;; arguments when it is available
+    (let ((generated-autoload-file (expand-file-name "auto-autoloads.el" dir))
+	  (autoload-package-name "auto")) ; feature prefix
+      (update-autoload-files (list dir))
+      (byte-recompile-file generated-autoload-file 0))
+    (when (featurep 'modules)
       (let* ((moddir (expand-file-name "../modules" (file-truename dir)))
 	     (generated-autoload-file
-	      (expand-file-name "auto-autoloads.el" moddir)))
-	(update-autoload-files (directory-files moddir t nil nil 0) t)
+	      (expand-file-name "auto-autoloads.el" moddir))
+	     (autoload-package-name "modules")) ; feature prefix
+	(update-autoload-files
+	 (delete (concat (file-name-as-directory moddir) ".")
+		 (delete (concat (file-name-as-directory moddir) "..")
+			 (directory-files moddir t nil nil 0)))
+	 t)
 	(byte-recompile-file generated-autoload-file 0)))
     (when (featurep 'mule)
-      (update-autoload-files (list (expand-file-name "mule" dir)))
-      (byte-recompile-file (expand-file-name "mule/auto-autoloads.el" dir) 0))
+      (let* ((muledir (expand-file-name "../modules" (file-truename dir)))
+	     (generated-autoload-file
+	      (expand-file-name "auto-autoloads.el" muledir))
+	     (autoload-package-name "mule")) ; feature prefix
+	(update-autoload-files (list muledir))
+	(byte-recompile-file generated-autoload-file 0)))
     ;; likewise here.
     (load "cus-dep")
     (Custom-make-dependencies dir)

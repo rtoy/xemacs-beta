@@ -1,3 +1,62 @@
+2003-01-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* autoload.el: Drastically reorganized.
+
+	API improvement:
+
+	(autoload-target-directory): 
+	(batch-update-autoloads): 
+	(batch-update-directory): 
+	(batch-update-one-directory): 
+	(batch-force-update-one-directory):
+	Deprecated.
+	(autoload-feature-prefix): New special.
+	(autoload-package-name): Obsolete alias for autoload-feature-prefix.
+	(autoload-batch-update-autoloads): New function.  Main
+	command-line API.
+
+	Documentation:
+
+	Improve many docstrings.
+	(Header summary): Update.
+	(Commentary): Completely rewritten.
+	(ChangeLog): Redundant, so removed.
+
+	General sanitation:
+
+	(generated-autoload-file): Default changed to lisp-directory.
+	(generate-file-autoloads): Better argument checking.
+	(generate-c-file-autoloads-1): Make the output code prettier,
+	clean up long lines.
+	(autoload-featurep-protect-autoloads):
+	(autoload-make-feature-name):
+	New functions for handling feature checking and provide'ing.
+	(update-autoload-files): Use them.  Don't try tricky things to
+	guess feature names.
+	(update-autoloads-here): Remove extra arg to a call
+	to format.  Warn of probable bitrot in the docstring.
+	(batch-force-update-one-directory):
+	(batch-update-one-directory):
+	Fix typo in error message.
+
+	Related changes:
+
+	* update-elc.el: Use `autoload-update-directory-autoloads'.
+
+	* update-elc-2.el (batch-update-elc-2): Use full API for
+	`update-autoload-files'.
+
+	* startup.el (startup-load-autoloads): Oops.  Ben generates Mule
+	autoloads in lisp/mule, Mike doesn't load them in startup.el.
+	Also, use `when' and `unless' for clarity.
+	(command-line): Comment typo.
+	(splash-frame-body): Grammatical nits.
+
+2003-01-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* info.el (Info-insert-dir): Make default-directory end in
+	separator.  Patch due to Martin Buchholz.
+
 2003-01-10  Mike Sperber  <mike@xemacs.org>
 
 	* window-xemacs.el: Revert his change

@@ -1,3 +1,8 @@
+2002-10-19  Stephen Turnbull  <stephen@xemacs.org>
+
+	* Makefile.in.in (clean): Delete auto-autoloads.e* and custom-load.*
+	in lisp, lisp/mule, and modules.
+
 2003-01-14  Jerry James  <james@xemacs.org>
 
 	* PROBLEMS: Describe Steve Youngs' problem with the PostgreSQL
