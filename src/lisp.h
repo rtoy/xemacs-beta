@@ -3506,6 +3506,7 @@ EXFUN (Faset, 3);
 EXFUN (Fcar, 1);
 EXFUN (Fcar_safe, 1);
 EXFUN (Fcdr, 1);
+EXFUN (Fcdr_safe, 1);
 EXFUN (Fgeq, MANY);
 EXFUN (Fgtr, MANY);
 EXFUN (Findirect_function, 1);

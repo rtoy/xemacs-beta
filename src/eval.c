@@ -3829,13 +3829,18 @@ using for example `funcall' or `apply'.
   if (SYMBOLP (object))
     object = indirect_function (object, 0);
 
-  return
-    (SUBRP (object) ||
-     COMPILED_FUNCTIONP (object) ||
-     (CONSP (object) &&
-      (EQ (XCAR (object), Qlambda) ||
-       EQ (XCAR (object), Qautoload))))
-    ? Qt : Qnil;
+  if (COMPILED_FUNCTIONP (object) || SUBRP (object))
+    return Qt;
+  if (CONSP (object))
+    {
+      Lisp_Object car = XCAR (object);
+      if (EQ (car, Qlambda))
+	return Qt;
+      if (EQ (car, Qautoload)
+	  && NILP (Fcar_safe (Fcdr_safe (Fcdr_safe (Fcdr_safe (XCDR (object)))))))
+	return Qt;
+    }
+  return Qnil;
 }
 
 static Lisp_Object

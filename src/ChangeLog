@@ -1,3 +1,12 @@
+2002-07-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lisp.h: Declare Fcdr_safe to be callable from C.
+
+2002-07-08  Hrvoje Niksic  <hniksic@xemacs.org>
+
+	* eval.c (Ffunctionp): Return nil for autoloaded macros and
+	keymaps.
+
 2002-07-08  Daiki Ueno  <daiki@xemacs.org>
 
 	* glyphs-x.c (x_unmap_subwindow): Deal with the substantial windows.
