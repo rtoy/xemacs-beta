@@ -1,0 +1,13 @@
+
+# This part should appear unchanged in every module configure.ac
+AC_SUBST(PROGNAME, "module")
+AC_SUBST(MOD_CC, "@ELLCC@")
+AC_SUBST(MODARCHDIR, "\$(shell @ELLCC@ --mod-archdir)")
+AC_SUBST(MAKE_DOCFILE, "\$(MODARCHDIR)/make-docfile")
+AC_SUBST(MODCFLAGS, "\$(CFLAGS) --mode=compile --mod-output=\$@ -I\$(MODARCHDIR)/include")
+AC_SUBST(INSTALLPATH, "\$(shell @ELLCC@ --mod-site-location)")
+AC_SUBST(MOD_INSTALL_PROGRAM, "@INSTALL_PROGRAM@")
+AC_SUBST(OBJECT_TO_BUILD, "\$(MODNAME).ell")
+
+AC_CONFIG_FILES([Makefile.in Makefile])
+AC_OUTPUT
