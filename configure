@@ -1575,7 +1575,7 @@ fi
 
 if test -z "$pdump"; then
   case "$opsys" in
-    linux* )  pdump=yes ;;              darwin )  pdump=yes ;;              * )       pdump=no ;;
+    linux* )  pdump=yes ;;              darwin )  pdump=yes ;;              cygwin* ) pdump=yes ;;              * )       pdump=no ;;
   esac
 fi
 

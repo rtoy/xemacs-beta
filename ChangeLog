@@ -1,5 +1,10 @@
 2004-11-12  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
+	* configure:
+	* configure.in: Make pdump default for Cygwin.
+
+2004-11-12  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
 	* Makefile.in.in (install-arch-dep): Fix installation for Cygwin.
 
 2004-10-26  Ben Wing  <ben@xemacs.org>
