@@ -139,6 +139,7 @@ main (int argc, char **argv)
 	    {
 	      fprintf (stderr,
 		       "Error: incorrect magic number in tar header. Exiting\n");
+	      exit (-2);
 	    }
 
 	  strncpy (name, block, 100);
@@ -158,6 +159,7 @@ main (int argc, char **argv)
 	      break;
 	    default:
 	      fprintf (stderr, "Error: unknown type flag %c. Exiting.\n", type);
+	      exit (-2);
 	      break;
 	    }
       
@@ -218,6 +220,8 @@ main (int argc, char **argv)
 		  fprintf (stderr, "Error: invalid size in tar header. Exiting.\n");
 		  exit (-2);
 		}
+	      if (size==0)	/* file of size 0 is done */
+		in_block = 0;
 	    }
 	} else { /* write or continue writing file contents */
 	  nbytes = size>512? 512:size;
@@ -227,6 +231,7 @@ main (int argc, char **argv)
 	    {
 	      fprintf (stderr, "Error: only wrote %d bytes to file %s. Exiting.\n",
 		       nwritten, fullname);
+	      exit (-2);
 	    }
 	  size -= nbytes;
 	  if (size==0)

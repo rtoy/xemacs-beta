@@ -1,3 +1,7 @@
+2003-06-15  Adrian Aichner  <adrian@xemacs.org>
+
+	* minitar.c (main): Handle 0 size files correctly.
+
 2003-06-01  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.14 "cassava" is released.
