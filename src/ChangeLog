@@ -1,3 +1,10 @@
+2004-09-02  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* buffer.c (Frecord_buffer): Make sure the argument is buffer
+	to fix a crash.  Also, check the buffer is live and it
+	really exists in buffer_list.  If the buffer is not in the list,
+	prepend it.
+
 2004-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.18 "chestnut" is released.

@@ -1374,38 +1374,60 @@ buffer.  See `other-buffer' for more information.
 {
   REGISTER Lisp_Object lynk, prev;
   struct frame *f = selected_frame ();
+  int buffer_found = 0;
 
+  CHECK_BUFFER (buffer);
+  if (!BUFFER_LIVE_P (XBUFFER (buffer)))
+    return Qnil;
   prev = Qnil;
   for (lynk = Vbuffer_alist; CONSP (lynk); lynk = XCDR (lynk))
     {
       if (EQ (XCDR (XCAR (lynk)), buffer))
-	break;
+	{
+	  buffer_found = 1;
+	  break;
+	}
       prev = lynk;
     }
-  /* Effectively do Vbuffer_alist = delq_no_quit (lynk, Vbuffer_alist) */
-  if (NILP (prev))
-    Vbuffer_alist = XCDR (Vbuffer_alist);
+  if (buffer_found)
+    {
+      /* Effectively do Vbuffer_alist = delq_no_quit (lynk, Vbuffer_alist) */
+      if (NILP (prev))
+	Vbuffer_alist = XCDR (Vbuffer_alist);
+      else
+	XCDR (prev) = XCDR (XCDR (prev));
+      XCDR (lynk) = Vbuffer_alist;
+      Vbuffer_alist = lynk;
+    }
   else
-    XCDR (prev) = XCDR (XCDR (prev));
-  XCDR (lynk) = Vbuffer_alist;
-  Vbuffer_alist = lynk;
+    Vbuffer_alist = Fcons (Fcons (Fbuffer_name(buffer), buffer), Vbuffer_alist);
 
   /* That was the global one.  Now do the same thing for the
      per-frame buffer-alist. */
+  buffer_found = 0;
   prev = Qnil;
   for (lynk = f->buffer_alist; CONSP (lynk); lynk = XCDR (lynk))
     {
       if (EQ (XCDR (XCAR (lynk)), buffer))
-	break;
+	{
+	  buffer_found = 1;
+	  break;
+	}
       prev = lynk;
     }
-  /* Effectively do f->buffer_alist = delq_no_quit (lynk, f->buffer_alist) */
-  if (NILP (prev))
-    f->buffer_alist = XCDR (f->buffer_alist);
+  if (buffer_found)
+    {
+      /* Effectively do f->buffer_alist = delq_no_quit (lynk, f->buffer_alist) */
+      if (NILP (prev))
+	f->buffer_alist = XCDR (f->buffer_alist);
+      else
+	XCDR (prev) = XCDR (XCDR (prev));
+      XCDR (lynk) = f->buffer_alist;
+      f->buffer_alist = lynk;
+    }
   else
-    XCDR (prev) = XCDR (XCDR (prev));
-  XCDR (lynk) = f->buffer_alist;
-  f->buffer_alist = lynk;
+    f->buffer_alist = Fcons (Fcons (Fbuffer_name(buffer), buffer),
+			     f->buffer_alist);
 
   return Qnil;
 }
