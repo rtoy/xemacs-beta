@@ -1,3 +1,11 @@
+2004-06-07  Jerry James  <james@xemacs.org>
+
+	* derived.el: Synch with Emacs 21.3.
+	* subr.el (with-local-quit): New, from Emacs 21.3.
+	* subr.el (delayed-mode-hooks): New variable, from Emacs 21.3.
+	* subr.el (run-mode-hooks): New function, from Emacs 21.3.
+	* subr.el (delay-mode-hooks): New macro, from Emacs 21.3.
+
 2004-06-10  Adrian Aichner  <adrian@xemacs.org>
 
 	* cus-edit.el (custom-save-variables): Fix bug introduced by

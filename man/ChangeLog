@@ -1,3 +1,16 @@
+2004-06-07  Jerry James  <james@xemacs.org>
+
+	* lispref/modes.texi (Major Modes): Document -mode functions, and
+	the use of a nil argument to defined-derived mode.
+	* lispref/modes.texi (Major Mode Conventions): Describe the use of
+	delay-mode-hooks and define-derived-mode.
+	* lispref/modes.texi (Derived Modes): Warn against the use of
+	interactive specs in derived mode definitions.
+	* lispref/modes.texi (Hooks): Document run-mode-hooks,
+	delay-mode-hooks, run-hook-with-args,
+	run-hook-with-args-until-failure, and0
+	run-hook-with-args-until-success.
+
 2004-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/glyphs.texi (Creating Glyphs): Improve discussion, fix a

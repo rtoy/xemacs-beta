@@ -521,7 +521,14 @@ See also `with-temp-file' and `with-output-to-string'."
 	   (buffer-string)
 	 (kill-buffer nil)))))
 
-;; FSF 21.2.
+(defmacro with-local-quit (&rest body)
+  "Execute BODY with `inhibit-quit' temporarily bound to nil."
+  `(condition-case nil
+       (let ((inhibit-quit nil))
+	 ,@body)
+     (quit (setq quit-flag t))))
+
+;; FSF 21.3.
 
 ; (defmacro combine-after-change-calls (&rest body)
 ;   "Execute BODY, but don't call the after-change functions till the end.
@@ -535,10 +542,40 @@ See also `with-temp-file' and `with-output-to-string'."
 
 ; Do not alter `after-change-functions' or `before-change-functions'
 ; in BODY."
+;   (declare (indent 0) (debug t))
 ;   `(unwind-protect
 ;        (let ((combine-after-change-calls t))
 ; 	 . ,body)
 ;      (combine-after-change-execute)))
+
+
+(defvar delay-mode-hooks nil
+  "If non-nil, `run-mode-hooks' should delay running the hooks.")
+(defvar delayed-mode-hooks nil
+  "List of delayed mode hooks waiting to be run.")
+(make-variable-buffer-local 'delayed-mode-hooks)
+(put 'delay-mode-hooks 'permanent-local t)
+
+(defun run-mode-hooks (&rest hooks)
+  "Run mode hooks `delayed-mode-hooks' and HOOKS, or delay HOOKS.
+Execution is delayed if `delay-mode-hooks' is non-nil.
+Major mode functions should use this."
+  (if delay-mode-hooks
+      ;; Delaying case.
+      (dolist (hook hooks)
+	(push hook delayed-mode-hooks))
+    ;; Normal case, just run the hook as before plus any delayed hooks.
+    (setq hooks (nconc (nreverse delayed-mode-hooks) hooks))
+    (setq delayed-mode-hooks nil)
+    (apply 'run-hooks hooks)))
+
+(defmacro delay-mode-hooks (&rest body)
+  "Execute BODY, but delay any `run-mode-hooks'.
+Only affects hooks run in the current buffer."
+  `(progn
+     (make-local-variable 'delay-mode-hooks)
+     (let ((delay-mode-hooks t))
+       ,@body)))
 
 (defmacro with-syntax-table (table &rest body)
   "Evaluate BODY with syntax table of current buffer set to a copy of TABLE.
