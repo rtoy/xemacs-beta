@@ -84,6 +84,9 @@
 (require 'widget)
 (require 'cus-face)
 
+;; #### This and the autoloads file naming variables belong in a separate
+;; file to be required here.
+;; #### Compare this with the autoloads handling.
 ;; Don't change this, unless you plan to change the code in
 ;; cus-start.el, too.
 (defconst cusload-base-file "custom-load.el")
