@@ -1,3 +1,9 @@
+2001-05-08  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* buffer.c (Vcase_fold_search): Remove obsolete
+	  comment about non ASCII case-fold-search.  This
+	  bug has been fixed by case-table changes.
+
 2001-05-08  Yoshiaki Kasahara  <kasahara@nc.kyushu-u.ac.jp>
 
 	* mule-charset.c (Fmake_charset): Add missing else.
