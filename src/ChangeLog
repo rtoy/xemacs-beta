@@ -1,3 +1,17 @@
+2001-05-29  Adrian Aichner  <adrian@xemacs.org>
+
+	* fileio.c: Include nt.h.  Remove lisp_string_set_file_times()
+	because set_file_times() now takes Lisp_Object path, instead of
+	char*.
+	* nt.c: Include buffer.h.
+	* nt.c (convert_from_time_t): New.
+	* nt.c (mswindows_utime): New.  Use utime, since SetFileTime does
+	not set mtime correctly.
+	* nt.h: Declare mswindows_utime().
+	* sysdep.c (set_file_times): set_file_times() now takes Lisp_Object
+	path, instead of char*.
+	* systime.h: Include <sys/utime.h> on WIN32_NATIVE.
+
 2001-05-30  William M. Perry  <wmperry@gnu.org>
 
 	* emacs-marshals.c: Regenerated from lisp.

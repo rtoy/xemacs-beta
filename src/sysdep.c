@@ -3378,17 +3378,26 @@ gettimeofday (struct timeval *tp, struct timezone *tzp)
    access to those functions goes through the following. */
 
 int
-set_file_times (char *filename, EMACS_TIME atime, EMACS_TIME mtime)
+set_file_times (Lisp_Object path, EMACS_TIME atime, EMACS_TIME mtime)
 {
-#if defined (HAVE_UTIME)
+#if defined (WIN32_NATIVE)
   struct utimbuf utb;
   utb.actime = EMACS_SECS (atime);
   utb.modtime = EMACS_SECS (mtime);
+  return mswindows_utime (path, &utb);
+#elif defined (HAVE_UTIME)
+  struct utimbuf utb;
+  Extbyte *filename;
+  utb.actime = EMACS_SECS (atime);
+  utb.modtime = EMACS_SECS (mtime);
+  LISP_STRING_TO_EXTERNAL (path, filename, Qfile_name);
   return utime (filename, &utb);
 #elif defined (HAVE_UTIMES)
   struct timeval tv[2];
+  Extbyte *filename;
   tv[0] = atime;
   tv[1] = mtime;
+  LISP_STRING_TO_EXTERNAL (path, filename, Qfile_name);
   return utimes (filename, tv);
 #else
   /* No file times setting function available. */

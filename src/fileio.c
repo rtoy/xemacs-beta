@@ -54,6 +54,7 @@ Boston, MA 02111-1307, USA.  */
 #endif /* HPUX */
 
 #ifdef WIN32_NATIVE
+#include "nt.h"
 #define IS_DRIVE(x) isalpha (x)
 /* Need to lower-case the drive letter, or else expanded
    filenames will sometimes compare inequal, because
@@ -1596,16 +1597,6 @@ barf_or_query_if_file_exists (Lisp_Object absname, const char *querystring,
   return;
 }
 
-/* A slightly higher-level interface than `set_file_times' */
-static int
-lisp_string_set_file_times (Lisp_Object filename,
-			    EMACS_TIME atime, EMACS_TIME mtime)
-{
-  char *ext_filename;
-  LISP_STRING_TO_EXTERNAL (filename, ext_filename, Qfile_name);
-  return set_file_times (ext_filename, atime, mtime);
-}
-
 DEFUN ("copy-file", Fcopy_file, 2, 4,
        "fCopy file: \nFCopy %s to file: \np\nP", /*
 Copy FILENAME to NEWNAME.  Both args must be strings.
@@ -1743,8 +1734,8 @@ A prefix arg makes KEEP-TIME non-nil.
 	    EMACS_TIME atime, mtime;
 	    EMACS_SET_SECS_USECS (atime, st.st_atime, 0);
 	    EMACS_SET_SECS_USECS (mtime, st.st_mtime, 0);
-	    if (lisp_string_set_file_times (newname, atime, mtime))
-	      report_file_error ("I/O error", newname);
+	    if (set_file_times (newname, atime, mtime))
+	      report_file_error ("I/O error", list1 (newname));
 	  }
 	chmod ((const char *) XSTRING_DATA (newname),
 	       st.st_mode & 07777);
