@@ -29,7 +29,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 #ifdef DLSYM_NEEDS_UNDERSCORE
 #define MAYBE_PREPEND_UNDERSCORE(n) do {		\
-  char *buf = alloca_array (char, strlen (n) + 2);	\
+  CIbyte *buf = alloca_array (CIbyte, strlen (n) + 2);	\
   *buf = '_';						\
   strcpy (buf + 1, n);					\
   n = buf;						\
@@ -63,15 +63,25 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #endif
 
 int
-dll_init (const char *arg)
+dll_init (const Extbyte *arg)
 {
   return 0;
 }
 
 dll_handle
-dll_open (const char *fname)
+dll_open (Lisp_Object fname)
 {
-  return (dll_handle) dlopen (fname, RTLD_NOW);
+  Extbyte *soname;
+
+  if (NILP (fname))
+    {
+      soname = NULL;
+    }
+  else
+    {
+      LISP_STRING_TO_EXTERNAL (fname, soname, Qdll_filename_encoding);
+    }
+  return (dll_handle) dlopen (soname, RTLD_NOW);
 }
 
 int
@@ -81,47 +91,56 @@ dll_close (dll_handle h)
 }
 
 dll_func
-dll_function (dll_handle h, const char *n)
+dll_function (dll_handle h, const CIbyte *n)
 {
   MAYBE_PREPEND_UNDERSCORE (n);
   return (dll_func) dlsym ((void *) h, n);
 }
 
 dll_var
-dll_variable (dll_handle h, const char *n)
+dll_variable (dll_handle h, const CIbyte *n)
 {
   MAYBE_PREPEND_UNDERSCORE (n);
   return (dll_var)dlsym ((void *)h, n);
 }
 
-const char *
+Lisp_Object
 dll_error (dll_handle h)
 {
+  const Extbyte *msg;
 #if defined(HAVE_DLERROR) || defined(dlerror)
-  return (const char *) dlerror ();
+  msg = (const Extbyte *) dlerror ();
 #elif defined(HAVE__DLERROR)
-  return (const char *) _dlerror();
+  msg = (const Extbyte *) _dlerror();
 #else
-  return "Shared library error";
+  msg = (const Extbyte *) "Shared library error";
 #endif
+  return build_ext_string (msg, Qnative);
 }
 
 #elif defined(HAVE_SHL_LOAD)
 /* This is the HP/UX version */
 #include <dl.h>
 int
-dll_init (const char *arg)
+dll_init (const Extbyte *arg)
 {
   return 0;
 }
 
 dll_handle
-dll_open (const char *fname)
+dll_open (Lisp_Object fname)
 {
-  /* shl_load will hang hard if passed a NULL fname. */
-  if (fname == NULL) return NULL;
+  Extbyte *soname;
 
-  return (dll_handle) shl_load (fname, BIND_DEFERRED, 0L);
+  if (NILP (fname))
+    {
+      soname = NULL;
+    }
+  else
+    {
+      LISP_STRING_TO_EXTERNAL (fname, soname, Qdll_filename_encoding);
+    }
+  return (dll_handle) shl_load (soname, BIND_DEFERRED, 0L);
 }
 
 int
@@ -131,7 +150,7 @@ dll_close (dll_handle h)
 }
 
 dll_func
-dll_function (dll_handle h, const char *n)
+dll_function (dll_handle h, const CIbyte *n)
 {
   long handle = 0L;
 
@@ -142,7 +161,7 @@ dll_function (dll_handle h, const char *n)
 }
 
 dll_var
-dll_variable (dll_handle h, const char *n)
+dll_variable (dll_handle h, const CIbyte *n)
 {
   long handle = 0L;
 
@@ -152,109 +171,65 @@ dll_variable (dll_handle h, const char *n)
   return (dll_var) handle;
 }
 
-const char *
+Lisp_Object
 dll_error (dll_handle h)
 {
   /* #### WTF?!  Shouldn't this at least attempt to get strerror or
      something?  --hniksic */
-  return "Generic shared library error";
+  return build_string ("Generic shared library error", Qnative);
 }
 
-#elif defined(HAVE_DLD_INIT)
-#include <dld.h>
-int
-dll_init (const char *arg)
-{
-  char *real_exe = dld_find_executable (arg);
-  int rc;
-
-  rc = dld_init (real_exe);
-  if (rc)
-    {
-      dld_perror (exe);
-      return -1;
-    }
-  return 0;
-}
-
-dll_handle
-dll_open (const char *fname)
-{
-  rc = dld_link (fname);
-  if (rc)
-    return NULL;
-
-  return (dll_handle) 1;
-}
-
-int
-dll_close (dll_handle h)
-{
-  /* *sigh* DLD is pretty lame and doesn't return a handle that you can use
-  ** later on to free the file - you have to remember the filename and
-  ** use that as the unlinker.  We should eventually keep a linked list
-  ** of loaded modules and then use the node pointer as the unique id
-  ** for the shared library.  Wheeee.  But not now.
-  */
-  return 1;
-}
-
-DLL_FUNC
-dll_function (dll_handle h, const char *n)
-{
-  return dld_get_func (n);
-}
-
-DLL_FUNC
-dll_variable (dll_handle h, const char *n)
-{
-  return dld_get_symbol (n);
-}
 #elif defined (WIN32_NATIVE) || defined (CYGWIN)
 
 #include "syswindows.h"
 #include "sysfile.h"
 
 int
-dll_init (const char *arg)
+dll_init (const Extbyte *arg)
 {
   return 0;
 }
 
 dll_handle
-dll_open (const char *fname)
+dll_open (Lisp_Object fname)
 {
-  Ibyte *winfname, *unifname;
-  LOCAL_TO_WIN32_FILE_FORMAT ((char *) fname, winfname);
-  C_STRING_TO_TSTR (winfname, unifname);
-  return (dll_handle) qxeLoadLibrary (unifname);
+  Extbyte *soname;
+
+  if (NILP (fname))
+    {
+      soname = NULL;
+    }
+  else
+    {
+      LOCAL_FILE_FORMAT_TO_TSTR (fname, soname);
+    }
+  return (dll_handle) qxeLoadLibrary (soname);
 }
 
 int
 dll_close (dll_handle h)
 {
-  return FreeLibrary (h);
+  return FreeLibrary ((HMODULE) h);
 }
 
 dll_func
-dll_function (dll_handle h, const char *n)
+dll_function (dll_handle h, const CIbyte *n)
 {
-  return (dll_func) GetProcAddress (h, n);
+  return (dll_func) GetProcAddress ((HINSTANCE) h, n);
 }
 
 dll_func
-dll_variable (dll_handle h, const char *n)
+dll_variable (dll_handle h, const CIbyte *n)
 {
-  return (dll_func) GetProcAddress (h, n);
+  return (dll_func) GetProcAddress ((HINSTANCE) h, n);
 }
 
-const char *
+Lisp_Object
 dll_error (dll_handle h)
 {
-  /* Since nobody frees the returned string, I have to make this ugly hack. */
-  static char err[32] = "Windows DLL Error ";
-  snprintf (&err[18], 14, "%lu", GetLastError ());
-  return err;
+  CIbyte err[32];
+  snprintf (err, 32, "Windows DLL Error %lu", GetLastError ());
+  return build_string (err);
 }
 #elif defined(HAVE_DYLD)
 /* This section supports MacOSX dynamic libraries. Dynamically
@@ -264,22 +239,32 @@ dll_error (dll_handle h)
 #include <mach-o/dyld.h>
 
 int
-dll_init (const char *arg)
+dll_init (const Extbyte *arg)
 {
   return 0;
 }
 
 dll_handle
-dll_open (const char *fname)
+dll_open (Lisp_Object fname)
 {
+  Extbyte *soname;
   NSObjectFileImage file;
   NSModule out;
-  NSObjectFileImageReturnCode ret =
-    NSCreateObjectFileImageFromFile(fname, &file);
+  NSObjectFileImageReturnCode ret;
+
+  if (NILP (fname))
+    {
+      soname = NULL;
+    }
+  else
+    {
+      LISP_STRING_TO_EXTERNAL (fname, soname, Qdll_filename_encoding);
+    }
+  ret = NSCreateObjectFileImageFromFile(soname, &file);
   if (ret != NSObjectFileImageSuccess) {
     return NULL;
   }
-  out = NSLinkModule(file, fname,
+  out = NSLinkModule(file, soname,
 		     NSLINKMODULE_OPTION_BINDNOW |
 		     NSLINKMODULE_OPTION_PRIVATE |
 		     NSLINKMODULE_OPTION_RETURN_ON_ERROR);
@@ -293,7 +278,7 @@ dll_close (dll_handle h)
 }
 
 dll_func
-dll_function (dll_handle h, const char *n)
+dll_function (dll_handle h, const CIbyte *n)
 {
   NSSymbol sym;
   MAYBE_PREPEND_UNDERSCORE (n);
@@ -303,7 +288,7 @@ dll_function (dll_handle h, const char *n)
 }
 
 dll_var
-dll_variable (dll_handle h, const char *n)
+dll_variable (dll_handle h, const CIbyte *n)
 {
   NSSymbol sym;
   MAYBE_PREPEND_UNDERSCORE (n);
@@ -312,25 +297,25 @@ dll_variable (dll_handle h, const char *n)
   return (dll_var)NSAddressOfSymbol(sym);
 }
 
-const char *
+Lisp_Object
 dll_error (dll_handle h)
 {
   NSLinkEditErrors c;
   int errorNumber;
-  const char *fileNameWithError, *errorString;
+  const CIbyte *fileNameWithError, *errorString;
   NSLinkEditError(&c, &errorNumber, &fileNameWithError, &errorString);
-  return errorString;
+  return build_ext_string (errorString, Qnative);
 }
 #else
-/* Catchall if we don't know about this systems method of dynamic loading */
+/* Catchall if we don't know about this system's method of dynamic loading */
 int
-dll_init (const char *arg)
+dll_init (const Extbyte *arg)
 {
   return -1;
 }
 
 dll_handle
-dll_open (const char *fname)
+dll_open (Lisp_Object fname)
 {
   return NULL;
 }
@@ -342,21 +327,21 @@ dll_close (dll_handle h)
 }
 
 dll_func
-dll_function (dll_handle h, const char *n)
+dll_function (dll_handle h, const CIbyte *n)
 {
   return NULL;
 }
 
 dll_func
-dll_variable (dll_handle h, const char *n)
+dll_variable (dll_handle h, const CIbyte *n)
 {
   return NULL;
 }
 
-const char *
+Lisp_Object
 dll_error (dll_handle h)
 {
-  return "Shared libraries not implemented on this system";
+  return build_string ("Shared libraries not implemented on this system");
 }
 #endif /* System conditionals */
 

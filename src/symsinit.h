@@ -95,7 +95,7 @@ void syms_of_dired_mswindows (void);
 void syms_of_doc (void);
 void syms_of_dragdrop (void);
 void syms_of_editfns (void);
-void syms_of_eldap (void);
+EXTERN_C void syms_of_eldap (void);
 void syms_of_elhash (void);
 void syms_of_emacs (void);
 void syms_of_eval (void);
@@ -155,7 +155,7 @@ void syms_of_objects (void);
 void syms_of_objects_mswindows (void);
 void syms_of_objects_tty (void);
 void syms_of_objects_x (void);
-void syms_of_postgresql (void);
+EXTERN_C void syms_of_postgresql (void);
 void syms_of_print (void);
 void syms_of_process (void);
 void syms_of_process_nt (void);
@@ -433,8 +433,8 @@ void reinit_vars_of_window (void);
 void vars_of_win32 (void);
 void vars_of_select_x (void);
 void reinit_vars_of_select_x (void);
-void vars_of_eldap (void);
-void vars_of_postgresql (void);
+EXTERN_C void vars_of_eldap (void);
+EXTERN_C void vars_of_postgresql (void);
 void vars_of_gpmevent (void);
 
 /* Initialize specifier variables (dump-time only). */

@@ -524,17 +524,6 @@ make_arg_list_1 (int argc, Extbyte **argv, int skip_args)
 	      fullpath = build_tstr_string (full_exe_path);
 	      xfree (full_exe_path);
 	      result = Fcons (fullpath, result);
-#ifdef HAVE_SHLIB
-	      {
-		Extbyte *fullpathext;
-
-		/* Don't use full_exe_path directly because it's probably
-		   in a different format. */
-		LISP_STRING_TO_EXTERNAL (fullpath, fullpathext,
-					 Qdll_filename_encoding);
-		(void) dll_init (fullpathext);
-	      }
-#endif
 	    }
 	  else
 #endif
@@ -2355,23 +2344,6 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       Vinvocation_name = Ffile_name_nondirectory (Vinvocation_directory);
       Vinvocation_directory = Ffile_name_directory (Vinvocation_directory);
     }
-
-#if defined (HAVE_SHLIB) && !defined (WIN32_NATIVE)
-  /* This is Unix only.  MS Windows NT has a library call that does
-     The Right Thing on that system.  Rumor has it, this must be
-     called for GNU dld in temacs and xemacs.  */
-  {
-    char *buf = (char *)ALLOCA (XSTRING_LENGTH (Vinvocation_directory)
-				+ XSTRING_LENGTH (Vinvocation_name)
-				+ 2);
-    sprintf (buf, "%s/%s", XSTRING_DATA (Vinvocation_directory),
-	     XSTRING_DATA (Vinvocation_name));
-
-    C_STRING_TO_EXTERNAL (buf, buf, Qfile_name);
-    /* All we can do is cry if an error happens, so ignore it. */
-    (void) dll_init (buf);
-  }
-#endif
 
 #if defined (LOCALTIME_CACHE) && defined (HAVE_TZSET)
   /* sun's localtime() has a bug.  it caches the value of the time

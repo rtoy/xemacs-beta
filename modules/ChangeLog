@@ -1,3 +1,9 @@
+2003-09-21  Jerry James  <james@xemacs.org>
+
+	* postgresql/postgresql.c (unload_postgresql): Do not mangle the
+	unload function name when compiling with C++.
+	* ldap/eldap.c (unload_eldap): Ditto.
+
 2003-09-03  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.15 "celery" is released.

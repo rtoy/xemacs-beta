@@ -856,7 +856,7 @@ Acme organization in the United States.
 }
 
 #ifdef HAVE_SHLIB
-void unload_eldap (void);
+EXTERN_C void unload_eldap (void);
 void
 unload_eldap (void)
 {

@@ -1,3 +1,29 @@
+2003-09-21  Jerry James  <james@xemacs.org>
+
+	* device-x.c (x_init_device): dll_open now takes a Lisp_Object.
+	* emacs.c (make_arg_list_1): Remove useless call to dll_init.
+	* emacs.c (main_1): Ditto.
+	* emodules.c: char to CIbyte conversion.
+	* emodules.c (Fload_module): Ditto.
+	* emodules.c (Funload_module): Ditto.
+	* emodules.c (find_make_module): Ditto, and use NULL.
+	* emodules.c (emodules_load): Ditto, and pass Lisp_Objects to and
+	from the sysdll routines.  Be careful about string conversions.
+	* emodules.c (reinit_vars_of_module): Use NULL.
+	* objects-msw.c (mswindows_find_charset_font): Fix call to
+	mswindows_list_fonts broken by James LewisMoss' Sept 20 change.
+	* symsinit.h: Do not mangle module initialization function names.
+	* sysdll.c (MAYBE_PREPEND_UNDERSCORE): char to CIbyte conversion.
+	* sysdll.c (dll_init): char to Extbyte conversion.
+	* sysdll.c (dll_open): Take a Lisp_Object, possibly Qnil.
+	* sysdll.c (dll_function): char to CIbyte conversion.
+	* sysdll.c (dll_variable): Ditto.
+	* sysdll.c (dll_error): Return a Lisp_Object, not a string.
+	* sysdll.c (dll_close): Cast appropriately for C++.
+	* sysdll.h: Change prototypes as per sysdll.c changes.
+	* lisp.h: Make eval-related functions visible to modules.
+	* xemacs.def.in.in: Ditto.
+
 2003-09-20  Ilya N. Golubev  <gin@mo.msk.ru>
 
 	* cmdloop.c (Fcommand_loop_1): Allow specifying elisp function for

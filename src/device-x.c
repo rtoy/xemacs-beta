@@ -538,7 +538,7 @@ x_init_device (struct device *d, Lisp_Object props)
 
   {
     /* Get a dll handle to the main process. */
-    dll_handle xaw_dll_handle = dll_open (NULL);
+    dll_handle xaw_dll_handle = dll_open (Qnil);
 
     /* Did that fail?  If so, continue without error.
      * We could die here but, well, that's unfriendly and all -- plus I feel

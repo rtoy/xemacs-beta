@@ -41,10 +41,10 @@ Lisp_Object Qmodule, Qunload_module, module_tag;
 typedef struct _emodules_list
 {
   int used;             /* Is this slot used?                              */
-  char *soname;         /* Name of the shared object loaded (full path)    */
-  char *modname;        /* The name of the module                          */
-  char *modver;         /* The module version string                       */
-  char *modtitle;       /* How the module announces itself                 */
+  CIbyte *soname;       /* Name of the shared object loaded (full path)    */
+  CIbyte *modname;      /* The name of the module                          */
+  CIbyte *modver;       /* The module version string                       */
+  CIbyte *modtitle;     /* How the module announces itself                 */
   void (*unload)(void); /* Module cleanup function to run before unloading */
   dll_handle dlhandle;  /* Dynamic lib handle                              */
 } emodules_list;
@@ -56,8 +56,8 @@ static dll_handle dlhandle;
 static emodules_list *modules;
 static int modnum;
 
-static int find_make_module (const char *mod, const char *name,
-			     const char *ver, int make_or_find);
+static int find_make_module (const CIbyte *mod, const CIbyte *name,
+			     const CIbyte *ver, int make_or_find);
 static Lisp_Object module_load_unwind (Lisp_Object);
 static void attempt_module_delete (int mod);
 
@@ -91,22 +91,22 @@ the variable `load-modules-quietly' is non-NIL.
 */
        (file, name, version))
 {
-  char *mod, *mname, *mver;
+  CIbyte *mod, *mname, *mver;
   int speccount = specpdl_depth();
 
   CHECK_STRING(file);
 
-  mod = (char *)XSTRING_DATA (file);
+  mod = (CIbyte *) XSTRING_DATA (file);
 
   if (NILP (name))
     mname = "";
   else
-    mname = (char *)XSTRING_DATA (name);
+    mname = (CIbyte *) XSTRING_DATA (name);
 
   if (NILP (version))
     mver = "";
   else
-    mver = (char *)XSTRING_DATA (version);
+    mver = (CIbyte *) XSTRING_DATA (version);
 
   dlhandle = 0;
   record_unwind_protect (module_load_unwind, make_int(modnum));
@@ -131,7 +131,7 @@ soon as the last reference to symbols within the module is destroyed.
        (file, name, version))
 {
   int x;
-  char *mod, *mname, *mver;
+  CIbyte *mod, *mname, *mver;
   Lisp_Object foundname = Qnil;
   struct gcpro gcpro1;
 
@@ -141,18 +141,18 @@ soon as the last reference to symbols within the module is destroyed.
   if (locate_file (Vmodule_load_path, file, Vmodule_extensions, &foundname, 0)
       < 0)
     return Qt;
-  mod = (char *)XSTRING_DATA (foundname);
+  mod = (CIbyte *) XSTRING_DATA (foundname);
   UNGCPRO;
 
   if (NILP (name))
     mname = "";
   else
-    mname = (char *)XSTRING_DATA (name);
+    mname = (CIbyte *) XSTRING_DATA (name);
 
   if (NILP (version))
     mver = "";
   else
-    mver = (char *)XSTRING_DATA (version);
+    mver = (CIbyte *) XSTRING_DATA (version);
 
   x = find_make_module (mod, mname, mver, 1);
   if (x != -1)
@@ -204,7 +204,8 @@ is a bug, and you are encouraged to report it.
 }
 
 static int
-find_make_module (const char *mod, const char *name, const char *ver, int mof)
+find_make_module (const CIbyte *mod, const CIbyte *name, const CIbyte *ver,
+		  int mof)
 {
   int i, fs = -1;
 
@@ -232,7 +233,7 @@ find_make_module (const char *mod, const char *name, const char *ver, int mof)
    * We only get here if we haven't found a free slot and the module was
    * not previously loaded.
    */
-  if (modules == (emodules_list *)0)
+  if (modules == NULL)
     modules = (emodules_list *) xmalloc (sizeof (emodules_list));
   modnum++;
   modules = (emodules_list *) xrealloc (modules, modnum * sizeof (emodules_list));
@@ -324,16 +325,17 @@ module_load_unwind (Lisp_Object upto)
  * the cleaning up.
  */
 void
-emodules_load(const char *module, const char *modname, const char *modver)
+emodules_load (const CIbyte *module, const CIbyte *modname,
+	       const CIbyte *modver)
 {
   Lisp_Object old_load_list;
   Lisp_Object filename;
   Lisp_Object foundname, lisp_modname;
   int x, mpx;
-  char *soname;
-  const char **f;
+  CIbyte *soname;
+  const CIbyte **f;
   const long *ellcc_rev;
-  char *mver, *mname, *mtitle, *symname;
+  CIbyte *mver, *mname, *mtitle, *symname;
   void (*modload)(void) = 0;
   void (*modsyms)(void) = 0;
   void (*modvars)(void) = 0;
@@ -348,7 +350,7 @@ emodules_load(const char *module, const char *modname, const char *modver)
   emodules_depth++;
   dlhandle = 0;
 
-  if ((module == (const char *)0) || (module[0] == '\0'))
+  if (module == NULL || module[0] == '\0')
     invalid_argument ("Empty module name", Qunbound);
 
   GCPRO4(filename, foundname, old_load_list, lisp_modname);
@@ -357,51 +359,47 @@ emodules_load(const char *module, const char *modname, const char *modver)
 		   &foundname, 0) < 0)
     signal_error (Qdll_error, "Cannot open dynamic module", filename);
 
-  soname = (char *)ALLOCA (XSTRING_LENGTH (foundname) + 1);
-  strcpy (soname, (char *)XSTRING_DATA (foundname));
+  LISP_STRING_TO_EXTERNAL (foundname, soname, Qfile_name);
   lisp_modname = call1 (Qfile_name_sans_extension,
 			Ffile_name_nondirectory (foundname));
 
-  dlhandle = dll_open (soname);
-  if (dlhandle == (dll_handle)0)
+  dlhandle = dll_open (foundname);
+  if (dlhandle == NULL)
     {
-      Ibyte *dllerrint;
-
-      EXTERNAL_TO_C_STRING (dll_error (dlhandle), dllerrint, Qnative);
       signal_error (Qdll_error, "Opening dynamic module",
-		    build_intstring (dllerrint));
+		    dll_error (dlhandle));
     }
 
   ellcc_rev = (const long *)dll_variable (dlhandle, "emodule_compiler");
-  if ((ellcc_rev == (const long *)0) || (*ellcc_rev <= 0))
+  if (ellcc_rev == NULL || *ellcc_rev <= 0L)
     signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_compiler'", Qunbound);
   if (*ellcc_rev > EMODULES_REVISION)
     signal_ferror (Qdll_error, "Invalid dynamic module: Unsupported version `%ld(%ld)'", *ellcc_rev, EMODULES_REVISION);
 
-  f = (const char **)dll_variable (dlhandle, "emodule_name");
-  if ((f == (const char **)0) || (*f == (const char *)0))
+  f = (const CIbyte **) dll_variable (dlhandle, "emodule_name");
+  if (f == NULL || *f == NULL)
     signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_name'", Qunbound);
 
-  mname = (char *)ALLOCA (strlen (*f) + 1);
+  mname = (CIbyte *) ALLOCA (strlen (*f) + 1);
   strcpy (mname, *f);
   if (mname[0] == '\0')
     signal_error (Qdll_error, "Invalid dynamic module: Empty value for `emodule_name'", Qunbound);
 
-  f = (const char **)dll_variable (dlhandle, "emodule_version");
-  if ((f == (const char **)0) || (*f == (const char *)0))
+  f = (const CIbyte **) dll_variable (dlhandle, "emodule_version");
+  if (f == NULL || *f == NULL)
     signal_error (Qdll_error, "Missing symbol `emodule_version': Invalid dynamic module", Qunbound);
 
-  mver = (char *)ALLOCA (strlen (*f) + 1);
+  mver = (CIbyte *) ALLOCA (strlen (*f) + 1);
   strcpy (mver, *f);
 
-  f = (const char **)dll_variable (dlhandle, "emodule_title");
-  if ((f == (const char **)0) || (*f == (const char *)0))
+  f = (const CIbyte **) dll_variable (dlhandle, "emodule_title");
+  if (f == NULL || *f == NULL)
     signal_error (Qdll_error, "Invalid dynamic module: Missing symbol `emodule_title'", Qunbound);
 
-  mtitle = (char *)ALLOCA (strlen (*f) + 1);
+  mtitle = (CIbyte *) ALLOCA (strlen (*f) + 1);
   strcpy (mtitle, *f);
 
-  symname = (char *)ALLOCA (strlen (mname) + 15);
+  symname = (CIbyte *) ALLOCA (strlen (mname) + 15);
 
   strcpy (symname, "modules_of_");
   strcat (symname, mname);
@@ -414,7 +412,7 @@ emodules_load(const char *module, const char *modname, const char *modver)
   strcpy (symname, "syms_of_");
   strcat (symname, mname);
   modsyms = (void (*)(void))dll_function (dlhandle, symname);
-  if (modsyms == (void (*)(void))0)
+  if (modsyms == NULL)
     {
     missing_symbol:
       signal_error (Qdll_error, "Invalid dynamic module: Missing symbol",
@@ -424,13 +422,13 @@ emodules_load(const char *module, const char *modname, const char *modver)
   strcpy (symname, "vars_of_");
   strcat (symname, mname);
   modvars = (void (*)(void))dll_function (dlhandle, symname);
-  if (modvars == (void (*)(void))0)
+  if (modvars == NULL)
     goto missing_symbol;
 
   strcpy (symname, "docs_of_");
   strcat (symname, mname);
   moddocs = (void (*)(void))dll_function (dlhandle, symname);
-  if (moddocs == (void (*)(void))0)
+  if (moddocs == NULL)
     goto missing_symbol;
 
   /* Now look for the optional unload function. */
@@ -574,7 +572,7 @@ void
 reinit_vars_of_module (void)
 {
   emodules_depth = 0;
-  modules = (emodules_list *)0;
+  modules = NULL;
   modnum = 0;
 }
 

@@ -715,13 +715,20 @@ do_init_mode (void)
     }
   fprintf (mout, "/* DO NOT EDIT - AUTOMATICALLY GENERATED */\n\n");
   fprintf (mout, "#include <emodules.h>\n\n");
+  fprintf (mout, "#ifdef __cplusplus\n");
+  fprintf (mout, "extern \"C\" {\n");
+  fprintf (mout, "#endif\n");
+  fprintf (mout, "extern const long emodule_compiler;\n");
+  fprintf (mout, "extern const char *emodule_name, *emodule_version, *emodule_title;\n");
+  fprintf (mout, "extern void docs_of_%s (void);\n", SSTR(mod_name));
+  fprintf (mout, "#ifdef __cplusplus\n");
+  fprintf (mout, "}\n");
+  fprintf (mout, "#endif\n\n");
   fprintf (mout, "const long emodule_compiler = %ld;\n", EMODULES_REVISION);
   fprintf (mout, "const char *emodule_name = \"%s\";\n", SSTR(mod_name));
   fprintf (mout, "const char *emodule_version = \"%s\";\n", SSTR(mod_version));
-  fprintf (mout, "const char *emodule_title = \"%s\";\n", SSTR(mod_title));
-  fprintf (mout, "\n\n");
-  fprintf (mout, "void docs_of_%s (void);\n", SSTR(mod_name));
-  fprintf (mout, "void docs_of_%s (void)\n", SSTR(mod_name));
+  fprintf (mout, "const char *emodule_title = \"%s\";\n\n", SSTR(mod_title));
+  fprintf (mout, "void docs_of_%s ()\n", SSTR(mod_name));
   if (fclose (mout) != 0)
     {
       fatal ("Failed to close output file %s", mod_output);

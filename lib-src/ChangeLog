@@ -1,3 +1,8 @@
+2003-09-21  Jerry James  <james@xemacs.org>
+
+	* ellcc.c (do_init_mode): Do not mangle external symbols in the
+	generated doc file with C++ so that emodules.c can find them.
+
 2003-09-15  Jerry James  <james@xemacs.org>
 
 	* make-dump-id.c (main): Output separate declaration and

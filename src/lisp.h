@@ -3901,18 +3901,18 @@ extern int unloading_module;
 #endif
 
 /* Defined in eval.c */
-EXFUN (Fapply, MANY);
+MODULE_API EXFUN (Fapply, MANY);
 EXFUN (Fbacktrace, 2);
 EXFUN (Fcommand_execute, 3);
 EXFUN (Fcommandp, 1);
-EXFUN (Feval, 1);
-EXFUN (Ffuncall, MANY);
+MODULE_API EXFUN (Feval, 1);
+MODULE_API EXFUN (Ffuncall, MANY);
 EXFUN (Ffunctionp, 1);
 EXFUN (Finteractive_p, 0);
 EXFUN (Fprogn, UNEVALLED);
-EXFUN (Fsignal, 2);
-EXFUN (Fthrow, 2);
-EXFUN (Fcall_with_condition_handler, MANY);
+MODULE_API EXFUN (Fsignal, 2);
+MODULE_API EXFUN (Fthrow, 2);
+MODULE_API EXFUN (Fcall_with_condition_handler, MANY);
 EXFUN (Ffunction_max_args, 1);
 EXFUN (Ffunction_min_args, 1);
 
@@ -4044,22 +4044,25 @@ Lisp_Object run_hook_with_args (int, Lisp_Object *, enum run_hooks_condition);
 void va_run_hook_with_args (Lisp_Object, int, ...);
 void va_run_hook_with_args_in_buffer (struct buffer *, Lisp_Object, int, ...);
 Lisp_Object run_hook (Lisp_Object);
-Lisp_Object apply1 (Lisp_Object, Lisp_Object);
-Lisp_Object call0 (Lisp_Object);
-Lisp_Object call1 (Lisp_Object, Lisp_Object);
-Lisp_Object call2 (Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object call3 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object call4 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
-		   Lisp_Object);
-Lisp_Object call5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
-		   Lisp_Object, Lisp_Object);
-Lisp_Object call6 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
-		   Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object call7 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
-		   Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object call8 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
-		   Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
-		   Lisp_Object);
+MODULE_API Lisp_Object apply1 (Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object call0 (Lisp_Object);
+MODULE_API Lisp_Object call1 (Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object call2 (Lisp_Object, Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object call3 (Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object);
+MODULE_API Lisp_Object call4 (Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object call5 (Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object, Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object call6 (Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object);
+MODULE_API Lisp_Object call7 (Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object, Lisp_Object);
+MODULE_API Lisp_Object call8 (Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object call0_in_buffer (struct buffer *, Lisp_Object);
 Lisp_Object call1_in_buffer (struct buffer *, Lisp_Object, Lisp_Object);
 Lisp_Object call2_in_buffer (struct buffer *, Lisp_Object, Lisp_Object,

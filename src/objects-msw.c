@@ -2185,7 +2185,7 @@ mswindows_find_charset_font (Lisp_Object device, Lisp_Object font,
 
   /* If FONT specifies a particular charset, this will only list fonts with
      that charset; otherwise, it will list fonts with all charsets. */
-  fontlist = mswindows_list_fonts (font, device);
+  fontlist = mswindows_list_fonts (font, device, Qnil);
 
   if (!stage)
     {

@@ -1862,7 +1862,7 @@ init_postgresql_from_environment (void)
 }
 
 #ifdef HAVE_SHLIB
-void unload_postgresql (void);
+EXTERN_C void unload_postgresql (void);
 void
 unload_postgresql (void)
 {

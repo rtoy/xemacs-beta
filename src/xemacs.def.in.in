@@ -10,6 +10,7 @@ EXPORTS
 /* Exported functions */
 acons
 alloc_automanaged_lcrecord	/* alloc_lcrecord_type */
+apply1
 #ifdef USE_ASSERTIONS
 assert_failed			/* abort(), assert(), etc. */
 #endif
@@ -20,6 +21,17 @@ build_msg_string
 build_string
 #ifdef MULE
 bytecount_to_charcount_fun	/* bytecount_to_charcount */
+#endif
+call0
+call1
+call2
+call3
+call4
+call5
+call6
+call7
+call8
+#ifdef MULE
 charcount_to_bytecount_fun	/* charcount_to_bytecount */
 #endif
 check_quit			/* QUITP */
@@ -137,12 +149,16 @@ Dynarr_insert_many		/* Dynarr_add_{literal,lisp}_string */
 Dynarr_newf			/* Dynarr_new, Dynarr_new2 */
 Dynarr_resize			/* Dynarr_add */
 Fappend
+Fapply
 Fbuffer_modified_p
 Fbuffer_name
+Fcall_with_condition_handler
 Fcons
 Fcurrent_buffer
 Fequal
+Feval
 Fexpand_abbrev
+Ffuncall
 Fget
 Fkill_buffer
 Flength
@@ -156,6 +172,8 @@ Fprovide
 Fput
 Freverse
 Fset_buffer
+Fsignal
+Fthrow
 Fvector
 
 /* Exported variables */
