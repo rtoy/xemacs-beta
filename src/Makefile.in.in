@@ -613,7 +613,7 @@ $(DUMP_TARGET): $(RAW_EXE) $(BLDSRC)/NEEDTODUMP $(LIB_SRC)/DOC
 			fi ; \
 		fi ; \
 	fi
-	if ! test -f dump-size; then \
+	if test ! -f dump-size; then \
 		$(LIB_SRC)/insert-data-in-exec -s $(DUMP_TARGET).dmp > dump-size ; \
 		$(RM) dump-data.o $(DUMP_TARGET) $(DUMP_TARGET).dmp $(RAW_EXE);\
 		$(MAKE) $(RECURSIVE_MAKE_ARGS) $@; \
