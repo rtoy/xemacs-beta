@@ -1,3 +1,8 @@
+2001-06-08  Mike Sperber <mike@xemacs.org>
+
+	* files.el (save-some-buffers-1): Don't zap the help window right
+	after `map-y-or-n-p' has popped it up.
+
 2001-06-08  Ben Wing  <ben@xemacs.org>
 
 	* process.el: comment about shell-command-switch.
