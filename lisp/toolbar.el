@@ -101,6 +101,7 @@ customized through the options menu."
 	    (setq toolbar-icon-directory
 		  (file-name-as-directory name))))))
 
+;; called from toolbar.c during device and frame initialization
 (defun init-toolbar-from-resources (locale)
   (if (and (featurep 'x)
 	   (not (featurep 'infodock))

@@ -196,8 +196,9 @@ See `interprogram-cut-function' for more information."
   (own-selection string 'CLIPBOARD))
 
 (defun disown-selection (&optional secondary-p)
-  "Assuming we own the selection, disown it.  With an argument, discard the
-secondary selection instead of the primary selection."
+  "Assuming we own the selection, disown it.
+With an argument, discard the secondary selection instead of the
+primary selection."
   (disown-selection-internal (if secondary-p 'SECONDARY 'PRIMARY))
   (when (and selection-sets-clipboard
 	     (or (not secondary-p)
@@ -205,7 +206,6 @@ secondary selection instead of the primary selection."
 		 (eq secondary-p 'CLIPBOARD)))
     (disown-selection-internal 'CLIPBOARD)))
 
-;; from x-init.el
 ;; selections and active regions
 
 ;; If and only if zmacs-regions is true:
@@ -220,10 +220,10 @@ secondary selection instead of the primary selection."
 ;; application asserts the selection.  This is probably not a big deal.
 
 (defun activate-region-as-selection ()
-  (if (marker-buffer (mark-marker t))
-      (own-selection (cons (point-marker t) (mark-marker t)))))
+  (cond (mouse-track-rectangle-p (mouse-track-activate-rectangular-selection))
+	((marker-buffer (mark-marker t))
+	 (own-selection (cons (point-marker t) (mark-marker t))))))
 
-; moved from x-select.el
 (defvar primary-selection-extent nil
   "The extent of the primary selection; don't use this.")
 
@@ -294,7 +294,6 @@ secondary selection instead of the primary selection."
 	  ))
 	previous-extent))))
 
-;; moved from x-select.el
 (defun valid-simple-selection-p (data)
   "An obsolete function that tests whether something was a valid simple
 selection using the old XEmacs selection support. You shouldn't use this

@@ -40,23 +40,6 @@
   "The X Window system."
   :group 'environment)
 
-;; selections and active regions
-
-;; If and only if zmacs-regions is true:
-
-;; When a mark is pushed and the region goes into the "active" state, we
-;; assert it as the Primary selection.  This causes it to be hilighted.
-;; When the region goes into the "inactive" state, we disown the Primary
-;; selection, causing the region to be dehilighted.
-
-;; Note that it is possible for the region to be in the "active" state
-;; and not be hilighted, if it is in the active state and then some other
-;; application asserts the selection.  This is probably not a big deal.
-
-(defun x-activate-region-as-selection ()
-  (if (marker-buffer (mark-marker t))
-      (own-selection (cons (point-marker t) (mark-marker t)))))
-
 ;; OpenWindows-like "find" processing.  These functions are really Sunisms,
 ;; but we put them here instead of in x-win-sun.el in case someone wants
 ;; to use them when not running on a Sun console (presumably after binding
@@ -298,28 +281,7 @@
 (defun init-post-x-win ()
   "Initialize X Windows at startup (post).  Don't call this."
   (when (not post-x-win-initted)
-    ;; We can't load this until after the initial X device is created
-    ;; because the icon initialization needs to access the display to get
-    ;; any toolbar-related color resources.
-    (if (and (not (featurep 'infodock)) (featurep 'toolbar))
-        (init-x-toolbar))
-    (if (and (featurep 'infodock) (featurep 'toolbar))
-	(require 'id-x-toolbar))
-    (if (featurep 'gutter) (init-gutter))
     (if (featurep 'mule) (init-mule-x-win))
-    ;; these are only ever called if zmacs-regions is true.
-    (add-hook 'zmacs-deactivate-region-hook
-	      (lambda ()
-		(when (console-on-window-system-p)
-		  (disown-selection))))
-    (add-hook 'zmacs-activate-region-hook
-	      (lambda ()
-		(when (console-on-window-system-p)
-		  (x-activate-region-as-selection))))
-    (add-hook 'zmacs-update-region-hook
-	      (lambda ()
-		(when (console-on-window-system-p)
-		  (x-activate-region-as-selection))))
     ;; Motif-ish bindings
     ;; The following two were generally unliked.
     ;;(define-key global-map '(shift delete)   'kill-primary-selection)
@@ -331,7 +293,6 @@
     (define-key global-map 'paste	'yank-clipboard-selection)
     (define-key global-map 'cut		'kill-primary-selection)
 
-    (define-key global-map 'menu	'popup-mode-menu)
     ;;(define-key global-map '(shift menu) 'x-goto-menubar) ;NYI
 
     (setq post-x-win-initted t)))

@@ -1,3 +1,52 @@
+2001-04-28  Ben Wing  <ben@xemacs.org>
+
+	* about.el (xemacs-hackers):
+	* about.el (about-url-alist):
+	* about.el (about-personal-info):
+	* about.el (about-hacker-contribution):
+	More contributions.
+	
+	* simple.el (handle-post-motion-command):
+	Fix spurious setting of zmacs-region-stays to t after a non-shift
+	motion command.
+
+	* etags.el (find-tag-internal):
+	Sync up with FSF 20.7, to fix bugs handling some etags line formats.
+	
+	* gtk-init.el (init-post-gtk-win):
+	* msw-init.el (init-post-mswindows-win):
+	* x-init.el:
+	* x-init.el (x-activate-region-as-selection): Removed.
+	* x-init.el (init-post-x-win):
+	* keydefs.el (global-map):
+	* simple.el:
+	* startup.el (command-line):
+	* toolbar-items.el:
+	* toolbar-items.el (init-x-toolbar-list): Removed.
+	* toolbar-items.el (init-toolbar-list): New.
+	* toolbar-items.el (init-x-toolbar): Removed.
+	* toolbar-items.el (init-toolbar): New.
+	* toolbar-items.el (x-init-toolbar-from-resources): Removed.
+	* toolbar.el:
+	Move non-window-system specific code that was duplicated in
+	all window systems into the generic code.
+	
+	* gutter.el:
+	* gutter.el (init-gutter): Removed. (unused)
+	
+	* mouse.el:
+	* mouse.el (default-mouse-track-maybe-own-selection):
+	* mouse.el (mouse-track-activate-rectangular-selection): New.
+	* select.el:
+	* select.el (disown-selection):
+	* select.el (activate-region-as-selection):
+	* select.el (primary-selection-extent):
+	* select.el (valid-simple-selection-p):
+	Clean up the rectangle code w.r.t. selections.  You'll now get
+	the right text copied into the primary selection (but not the
+	clipboard yet, unfortunately -- that really requires defining
+	our own rectangle type).
+
 2001-04-25  IKEYAMA Tomonori <tomonori@suiyokai.org>
 
 	* faces.el (make-face-bold):

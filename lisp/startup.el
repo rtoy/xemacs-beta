@@ -595,6 +595,11 @@ If this is nil, no message will be displayed.")
       (when (featurep 'toolbar)
 	(init-toolbar-location))
 
+      (if (featurep 'toolbar)
+	  (if (featurep 'infodock)
+	      (require 'id-x-toolbar)
+	    (init-toolbar)))
+
       ;; Run the window system's init function.  tty is considered to be
       ;; a type of window system for this purpose.  This creates the
       ;; initial (non stdio) device.

@@ -296,7 +296,6 @@ mswindows_handle_mousewheel_event (Lisp_Object frame, int keys, int delta,
     Lisp_Object corpore, sano;
     struct window *needle_in_haystack;
 
-    // stderr_out ("donde_esta: %d %d\n", donde_esta.x, donde_esta.y);
     pixel_to_glyph_translation (XFRAME (frame), donde_esta.x, donde_esta.y,
 				&mene, &_mene, &tekel, &upharsin,
 				&needle_in_haystack,
@@ -305,8 +304,6 @@ mswindows_handle_mousewheel_event (Lisp_Object frame, int keys, int delta,
     if (needle_in_haystack)
       {
 	XSETWINDOW (win, needle_in_haystack);
-	// stderr_out ("found needle\n");
-	// debug_print (win);
       }
     else
       {

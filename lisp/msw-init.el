@@ -43,23 +43,6 @@
 (defun init-post-mswindows-win (console)
   "Initialize mswindows GUI at startup (post).  Don't call this."
   (unless mswindows-post-win-initted
-    (if (featurep 'toolbar)
-	(if (featurep 'infodock)
-	    (require 'id-x-toolbar)
-	  (init-x-toolbar)))
-    (if (featurep 'gutter) (init-gutter))
-    (add-hook 'zmacs-deactivate-region-hook
-	      (lambda ()
-		(if (console-on-window-system-p)
-		    (disown-selection))))
-    (add-hook 'zmacs-activate-region-hook
-	      (lambda ()
-		(if (console-on-window-system-p)
-		    (activate-region-as-selection))))
-    (add-hook 'zmacs-update-region-hook
-	      (lambda ()
-		(if (console-on-window-system-p)
-		    (activate-region-as-selection))))
     ;; Old-style mswindows bindings. The new-style mswindows bindings
     ;; (namely Ctrl-X, Ctrl-C and Ctrl-V) are already spoken for by XEmacs.
     (global-set-key '(shift delete)   'kill-primary-selection)
@@ -68,9 +51,6 @@
     (global-set-key '(control insert) 'copy-primary-selection)
 
     (global-set-key '(meta f4)	      'save-buffers-kill-emacs)
-
-    ;; Random stuff
-    (global-set-key 'menu	'popup-mode-menu)
 
     (setq mswindows-post-win-initted t)))
 

@@ -126,11 +126,6 @@ GNU long form though.")
 
 (defun init-post-gtk-win ()
   (unless gtk-post-win-initted
-    (if (and (not (featurep 'infodock)) (featurep 'toolbar))
-        (init-x-toolbar))
-    (if (and (featurep 'infodock) (featurep 'toolbar))
-	(require 'id-x-toolbar))
-
     (when (featurep 'mule)
       (define-specifier-tag 'mule-fonts
 	(lambda (device) (eq 'gtk (device-type device))))
@@ -187,20 +182,6 @@ GNU long form though.")
 	 )
        'global '(mule-fonts) 'append))
     
-    (add-hook 'zmacs-deactivate-region-hook
-	      (lambda ()
-		(if (console-on-window-system-p)
-		    (disown-selection))))
-    (add-hook 'zmacs-activate-region-hook
-	      (lambda ()
-		(if (console-on-window-system-p)
-		    (activate-region-as-selection))))
-    (add-hook 'zmacs-update-region-hook
-	      (lambda ()
-		(if (console-on-window-system-p)
-		    (activate-region-as-selection))))
-
-    (define-key global-map 'menu 'popup-mode-menu)
     (setq gtk-post-win-initted t)))
     
 (push '("-geometry" . gtk-init-handle-geometry) command-switch-alist)

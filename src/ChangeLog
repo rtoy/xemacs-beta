@@ -1,3 +1,27 @@
+2001-04-28  Ben Wing  <ben@xemacs.org>
+
+	* buffer.c (Ferase_buffer):
+	* editfns.c (buffer_insert1):
+	* editfns.c (Finsert_before_markers):
+	* editfns.c (Finsert_string):
+	* editfns.c (Finsert_char):
+	* editfns.c (Fdelete_region):
+	* editfns.c (Fwiden):
+	* editfns.c (Fnarrow_to_region):
+	remove bogus lines setting zmacs_region_stays to 0.
+	
+	* scrollbar-msw.c (mswindows_handle_mousewheel_event):
+	remove debug lines.
+
+2001-03-08  Mike Alexander  <mta@arbortext.com>
+
+	* event-msw.c (mswindows_need_event_in_modal_loop):
+	Don't dispatch a message if we didn't get one.
+	(mswindows_need_event):
+	Terminate the correct process when one exits instead of the first
+	one on Vprocess_list and look for process termination when in
+	mswindows_protect_modal_loop.
+
 2001-04-20  Ben Wing  <ben@xemacs.org>
 
 	* .cvsignore: Added stuff for Windows.

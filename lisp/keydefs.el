@@ -265,7 +265,7 @@ Keymap for characters following C-c.")
 ;;; Done.  -hniksic
 ;(put 'set-goal-column 'disabled t)
 
-(define-key global-map [menu] 'execute-extended-command)
+(define-key global-map 'menu 'popup-mode-menu)
 (define-key global-map [find] 'search-forward)
 
 (define-key global-map "\C-t" 'transpose-chars)

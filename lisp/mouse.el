@@ -1039,29 +1039,33 @@ at the initial click position."
 	     ;;
 	     (and (eq (console-type) 'x)
 		  (sit-for 0.15 t))
+	     ;; zmacs-activate-region -> zmacs-activate-region-hook ->
+	     ;; activate-region-as-selection -> either own-selection or
+	     ;; mouse-track-activate-rectangular-selection
 	     (zmacs-activate-region)))
 	  ((console-on-window-system-p)
+	   ;; #### do we need this?  we don't do it when zmacs-regions = t
 	   (if (= start end)
 	       (disown-selection type)
-	     (if (consp default-mouse-track-extent)
-		 ;; own the rectangular region
-		 ;; this is a hack
-		 (let ((r default-mouse-track-extent))
-		   (save-excursion
-		     (set-buffer (get-buffer-create " *rect yank temp buf*"))
-		     (while r
-		       (insert (extent-string (car r)) "\n")
-		       (setq r (cdr r)))
-		     (own-selection (buffer-substring (point-min) (point-max)))
-		     (kill-buffer (current-buffer))))
-	       (own-selection (cons (set-marker (make-marker) start)
-				    (set-marker (make-marker) end))
-			      type)))))
+	     (activate-region-as-selection))))
     (if (and (eq 'x (console-type))
 	     (not (= start end)))
 	;; I guess cutbuffers should do something with rectangles too.
 	;; does anybody use them?
 	(x-store-cutbuffer (buffer-substring start end)))))
+
+(defun mouse-track-activate-rectangular-selection ()
+  (if (consp default-mouse-track-extent)
+      ;; own the rectangular region
+      ;; this is a hack
+      (let ((r default-mouse-track-extent))
+	(save-excursion
+	  (set-buffer (get-buffer-create " *rect yank temp buf*"))
+	  (erase-buffer)
+	  (while r
+	    (insert (extent-string (car r)) "\n")
+	    (setq r (cdr r)))
+	  (own-selection (buffer-substring (point-min) (point-max)))))))
 
 (defun default-mouse-track-deal-with-down-event (click-count)
   (let ((event default-mouse-track-down-event))

@@ -2088,9 +2088,7 @@ either a character or a symbol, uppercase or lowercase."
 	     (setq zmacs-region-stays t))
 	    ((and (getf last-command-properties 'shifted-motion-command)
 		  unshifted-motion-keys-deselect-region)
-	     (setq zmacs-region-stays nil))
-	    (t
-	     (setq zmacs-region-stays t)))))
+	     (setq zmacs-region-stays nil)))))
 
 (defun forward-char-command (&optional arg buffer)
   "Move point right ARG characters (left if ARG negative) in BUFFER.
@@ -3892,6 +3890,10 @@ see the variable `zmacs-regions'.")
   "Function or functions called when the active region changes.
 This is called after each command that sets `zmacs-region-stays' to t.
 See the variable `zmacs-regions'.")
+
+(add-hook 'zmacs-deactivate-region-hook 'disown-selection)
+(add-hook 'zmacs-activate-region-hook 'activate-region-as-selection)
+(add-hook 'zmacs-update-region-hook 'activate-region-as-selection)
 
 (defvar zmacs-region-extent nil
   "The extent of the zmacs region; don't use this.")

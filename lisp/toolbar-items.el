@@ -425,7 +425,7 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
 
 ;;; each entry maps a variable to the prefix used.
 
-(defvar init-x-toolbar-list
+(defvar init-toolbar-list
   '((toolbar-last-win-icon . "last-win")
     (toolbar-next-win-icon . "next-win")
     (toolbar-file-icon     . "file")
@@ -444,18 +444,18 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
     (toolbar-debug-icon    . "debug")
     (toolbar-news-icon     . "news")))
 
-(defun init-x-toolbar ()
-  (toolbar-add-item-data init-x-toolbar-list )
+(defun init-toolbar ()
+  (toolbar-add-item-data init-toolbar-list)
   ;; do this now because errors will occur if the icon symbols
   ;; are not initted
   (set-specifier default-toolbar initial-toolbar-spec))
   
-(defun toolbar-add-item-data ( icon-list &optional icon-dir )
+(defun toolbar-add-item-data (icon-list &optional icon-dir)
   (if (eq icon-dir nil)
       (setq icon-dir toolbar-icon-directory))
   (mapcar
    (lambda (cons)
-     (let ((prefix (expand-file-name (cdr cons)  icon-dir)))
+     (let ((prefix (expand-file-name (cdr cons) icon-dir)))
        ;; #### This should use a better mechanism for finding the
        ;; glyphs, allowing for formats other than x[pb]m.  Look at
        ;; `widget-glyph-find' for an example how it might be done.
@@ -567,31 +567,5 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
     toolbar-vector-news
     )
   "The initial toolbar for a buffer.")
-
-(defun x-init-toolbar-from-resources (locale)
-  (x-init-specifier-from-resources
-   top-toolbar-height 'natnum locale
-   '("topToolBarHeight" . "TopToolBarHeight"))
-  (x-init-specifier-from-resources
-   bottom-toolbar-height 'natnum locale
-   '("bottomToolBarHeight" . "BottomToolBarHeight"))
-  (x-init-specifier-from-resources
-   left-toolbar-width 'natnum locale
-   '("leftToolBarWidth" . "LeftToolBarWidth"))
-  (x-init-specifier-from-resources
-   right-toolbar-width 'natnum locale
-   '("rightToolBarWidth" . "RightToolBarWidth"))
-  (x-init-specifier-from-resources
-   top-toolbar-border-width 'natnum locale
-   '("topToolBarBorderWidth" . "TopToolBarBorderWidth"))
-  (x-init-specifier-from-resources
-   bottom-toolbar-border-width 'natnum locale
-   '("bottomToolBarBorderWidth" . "BottomToolBarBorderWidth"))
-  (x-init-specifier-from-resources
-   left-toolbar-border-width 'natnum locale
-   '("leftToolBarBorderWidth" . "LeftToolBarBorderWidth"))
-  (x-init-specifier-from-resources
-   right-toolbar-border-width 'natnum locale
-   '("rightToolBarBorderWidth" . "RightToolBarBorderWidth")))
 
 ;;; toolbar-items.el ends here

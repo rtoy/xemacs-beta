@@ -622,6 +622,7 @@ If it returns non-nil, this file needs processing by evalling
 (autoload 'get-symbol-syntax-table "symbol-syntax")
 
 (defun find-tag-internal (tagname)
+  
   (let ((next (null tagname))
 	(tmpnext (null tagname))
 	;; If tagname is a list: (TAGNAME), this indicates
@@ -631,7 +632,7 @@ If it returns non-nil, this file needs processing by evalling
 	(exact-syntax-table (get-symbol-syntax-table (syntax-table)))
 	tag-table-currently-matching-exact
 	tag-target exact-tagname
-	tag-tables tag-table-point file linebeg startpos buf
+	tag-tables tag-table-point file linebeg line startpos buf
 	offset found pat syn-tab)
     (when (consp tagname)
       (setq tagname (car tagname)))
@@ -697,45 +698,117 @@ If it returns non-nil, this file needs processing by evalling
 	       (if exact "matching" "containing")
 	       tagname))
       (beginning-of-line)
-      (search-forward "\C-?")
-      (setq file (expand-file-name (file-of-tag)
-				   ;; In XEmacs, this needs to be
-				   ;; relative to:
-				   (or (file-name-directory (car tag-tables))
-				       "./")))
-      (setq linebeg (buffer-substring (1- (point)) (point-at-bol)))
-      (search-forward ",")
-      (setq startpos (read (current-buffer)))
+
+      ;; from here down, synched with FSF 20.7
+      ;; etags-snarf-tag and etags-goto-tag-location. --ben
+
+      (if (save-excursion
+	    (forward-line -1)
+	    (looking-at "\f\n"))
+	  (progn
+	    ;; The match was for a source file name, not any tag
+	    ;; within a file.  Give text of t, meaning to go exactly
+	    ;; to the location we specify, the beginning of the file.
+	    (setq linebeg t
+		  line nil
+		  startpos 1)
+	    (setq file
+		  (expand-file-name (file-of-tag)
+				    ;; In XEmacs, this needs to be
+				    ;; relative to:
+				    (or (file-name-directory (car tag-tables))
+					"./"))))
+	(search-forward "\C-?")
+	(setq file
+	      (expand-file-name (file-of-tag)
+				;; In XEmacs, this needs to be
+				;; relative to:
+				(or (file-name-directory (car tag-tables))
+				    "./")))
+	(setq linebeg (buffer-substring (1- (point)) (point-at-bol)))
+	;; Skip explicit tag name if present.
+	(search-forward "\001" (save-excursion (forward-line 1) (point)) t)
+	(if (looking-at "[0-9]")
+	    (setq line (string-to-int (buffer-substring
+				       (point)
+				       (progn (skip-chars-forward "0-9")
+					      (point))))))
+	(search-forward ",")
+	(if (looking-at "[0-9]")
+	    (setq startpos (string-to-int (buffer-substring
+					   (point)
+					   (progn (skip-chars-forward "0-9")
+						  (point)))))))
+      ;; Leave point on the next line of the tags file.
+      (forward-line 1)
       (setq last-tag-data
 	    (nconc (list tagname (point) tag-table-currently-matching-exact)
 		   tag-tables))
       (setq buf (find-file-noselect file))
+
+      ;; LINEBEG is the initial part of a line containing the tag and
+      ;; STARTPOS is the character position of LINEBEG within the file
+      ;; (starting from 1); LINE is the line number.  If LINEBEG is t,
+      ;; it means the tag refers to exactly LINE or STARTPOS
+      ;; (whichever is present, LINE having preference, no searching).
+      ;; Either LINE or STARTPOS may be nil; STARTPOS is used if
+      ;; present.  If the tag isn't exactly at the given position then
+      ;; look around that position using a search window which expands
+      ;; until it hits the start of file.
+
       (with-current-buffer buf
 	(save-excursion
 	  (save-restriction
 	    (widen)
-	    ;; Here we search for PAT in the range [STARTPOS - OFFSET,
-	    ;; STARTPOS + OFFSET], with increasing values of OFFSET.
-	    ;;
-	    ;; We used to set the initial offset to 1000, but the
-	    ;; actual sources show that finer-grained control is
-	    ;; needed (e.g. two `hash_string's in src/symbols.c.)  So,
-	    ;; I changed 100 to 100, and (* 3 offset) to (* 5 offset).
-	    (setq offset 100)
-	    (setq pat (concat "^" (regexp-quote linebeg)))
-	    (or startpos (setq startpos (point-min)))
-	    (while (and (not found)
-			(progn
-			  (goto-char (- startpos offset))
-			  (not (bobp))))
-	      (setq found (re-search-forward pat (+ startpos offset) t))
-	      (setq offset (* 5 offset)))
-	    ;; Finally, try finding it anywhere in the buffer.
-	    (or found
-		(re-search-forward pat nil t)
-		(error "%s not found in %s" pat file))
-	    (beginning-of-line)
-	    (setq startpos (point)))))
+	    (if (eq linebeg t)
+		;; Direct file tag.
+		(cond (line (goto-line line))
+		      (startpos (goto-char startpos))
+		      (t (error "etags.el BUG: bogus direct file tag")))
+	      ;; Here we search for PAT in the range [STARTPOS - OFFSET,
+	      ;; STARTPOS + OFFSET], with increasing values of OFFSET.
+	      ;;
+	      ;; We used to set the initial offset to 1000, but the
+	      ;; actual sources show that finer-grained control is
+	      ;; needed (e.g. two `hash_string's in src/symbols.c.)  So,
+	      ;; I changed 1000 to 100, and (* 3 offset) to (* 5 offset).
+	      (setq offset 100)
+	      (setq pat (concat (if (eq selective-display t)
+				    "\\(^\\|\^m\\)" "^")
+				(regexp-quote linebeg)))
+
+	      ;; The character position in the tags table is 0-origin.
+	      ;; Convert it to a 1-origin Emacs character position.
+	      (if startpos (setq startpos (1+ startpos)))
+	      ;; If no char pos was given, try the given line number.
+	      (or startpos
+		  (if line
+		      (setq startpos (progn (goto-line line)
+					    (point)))))
+	      (or startpos
+		  (setq startpos (point-min)))
+	      ;; First see if the tag is right at the specified location.
+	      (goto-char startpos)
+	      (setq found (looking-at pat))
+	      (while (and (not found)
+			  (progn
+			    (goto-char (- startpos offset))
+			    (not (bobp))))
+		(setq found
+		      (re-search-forward pat (+ startpos offset) t)
+		      offset (* 5 offset))) ; expand search window
+	      ;; Finally, try finding it anywhere in the buffer.
+	      (or found
+		  (re-search-forward pat nil t)
+		  (error "Rerun etags: `%s' not found in %s"
+			 pat file))))
+	  ;; Position point at the right place
+	  ;; if the search string matched an extra Ctrl-m at the beginning.
+	  (and (eq selective-display t)
+	       (looking-at "\^m")
+	       (forward-char 1))
+	  (beginning-of-line)
+	  (setq startpos (point))))
       (cons buf startpos))))
 
 ;;;###autoload

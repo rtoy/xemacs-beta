@@ -150,7 +150,7 @@
     (rose     "John Rose"         "rose@xemacs.org")
     (rossini  "Anthony Rossini"   "rossini@xemacs.org")
     (slb      "Steve Baur"        "steve@xemacs.org")
-    (sperber  "Michael Sperber"   "sperber@xemacs.org")
+    (sperber  "Michael Sperber"   "mike@xemacs.org")
     (stig     "Jonathan Stigelman" "stig@xemacs.org")
     (stigb    "Stig Bjorlykke"    "stigb@xemacs.org")
     (thiessel "Marcus Thiessel"   "marcus@xemacs.org")
@@ -188,6 +188,7 @@
     ;; to sort the stuff below, use M-x sort-regexp-fields RET
     ;; ^.*$ RET (\([a-z]*\) RET
   '((ajc        . "http://www-personal.monash.edu.au/~ajc/")
+    (alastair   . "http://website.lineone.net/~ajhoughton/")
     (baw        . "http://barry.wooz.org/")
     (ben        . "http://www.666.com/ben/")
     (ben-xemacs . "http://www.xemacs.org/Architecting-XEmacs/index.html")
@@ -757,7 +758,15 @@ hair various colours (see ")
     (alastair
      (widget-insert
       "\
-Sorry, no personal information available about me yet.\n"))
+Alastair, apart from being an all-round hacker, occasional contributor
+to free software projects and general good egg(!), currently works for
+Telsis, a manufacturer of telephony equipment on the south coast of
+England.  He'd quite like to have his own company one day, but has yet
+to think of that killer product...
+
+See also ")
+        (about-url-link 'alastair nil "Visit Alastair's home page")
+        (widget-insert ".\n"))
     (baw
      (widget-insert "\
 As of November 2000, I am a software engineer with the Pythonlabs at
@@ -857,21 +866,12 @@ looking for a job involving lisp programming, French and Russian.\n"))
 Sorry, no personal information available about me yet.\n"))
     (cthomp
      (widget-insert "\
-Chuck, through being in the wrong place at the right time, got stuck
-with being Jamie's replacement as the primary maintainer of XEmacs.
-This caused his hair to begin falling out and quadrupled his daily
-coffee dosage.  Though he works at and for the University of Illinois
-his funding for XEmacs work actually came from Sun Microsystems.
-
-He has worked on XEmacs since November 1992, which fact occasionally
-gives him nightmares.  As of October 1995, he no longer works
-full-time on XEmacs, though he does continue as an active maintainer.
-His main contributions have been the greatly enhanced redisplay
-engine, scrollbar support, the toolbars, configure support and
-numerous other features and fixes.
-
-Rumors that Chuck is aka Black Francis aka Frank Black are completely
-unfounded.\n"))
+Chuck is a senior system and network administrator for the Computer
+Science department at the Unversity of Illinois.  In one previous life
+he spent every waking hour working on XEmacs.  In another he dabbled
+as a project manager for a streaming video startup (RIP).  His current
+reason for not having time to contribute to XEmacs is the Thompson
+Twins.\n"))
     (daiki
      (about-url-link 'daiki nil "Visit Daiki's page"))
     (dan
@@ -1050,12 +1050,13 @@ See: ")
       (widget-insert ".\n"))
     (jens
      (widget-insert "\
-I'm currently working at the University of Karlsruhe, Germany on
-getting my diploma thesis on Supersymmetry (uuh, that's physics) done.
-After that (and all the remaining exams) I'm looking forward to make a
-living out of my hobbies -- computers (and graphics). But because I
-have no deadline for the exams and XEmacs betas are released at a high
-rate this may take some time...\n"))
+I'm currently working for 1&1 Internet AG, a large Domain and Webspace
+Provider in Germany and Europe.  I do mostly Java/XML/OO/Component
+stuff today.  I'm interested EJB, Corba and other middleware or
+distributed Systems.  Besides work, I occasionally hack on The Gimp
+and other gtk/gnome related projects.  Maybe the advent of XEmacs/Gtk
+will get me back to spend some time again hacking on XEmacs in the
+near future.\n"))
     (jmiller
      (widget-insert "\
 Jeff grew up in Indiana and is a country boy at heart.  He currently
@@ -1215,9 +1216,11 @@ To see some of these have a look at ")
       "\
 Sorry, no personal information available about me yet.\n"))
     (oscar
-     (widget-insert
-      "\
-Sorry, no personal information available about me yet.\n"))
+     (widget-insert "\
+Oscar heads the Computer Science department at CPE Lyon, a french
+engineering school in France. Besides his administrative tasks he
+teaches networking basics, Internet technologies (you know, all these
+xxML and hairy script languages !)  and the Scheme language.\n"))
     (pelegri
      (widget-insert
       "\
@@ -1249,11 +1252,11 @@ MS Windows operating systems.\n"))
 Sorry, no personal information available about me yet.\n"))
     (rickc
      (widget-insert "\
-The hacker formerly known as Rick Busdiecker develops and maintains
-libraries for financial applications at Lehman Brothers during
-daylight hours.  In the evenings he maintains three children, and
-when he ought to be sleeping he co-maintains ILISP, builds XEmacs
-betas, and tinkers with various personal hacking projects.\n"))
+The hacker formerly known as Rick Busdiecker is a developer and
+technical manager at Deutsche Bank in New York during daylight hours.
+In the evenings he maintains three children, and when he ought to be
+sleeping he builds XEmacs betas, and tinkers with various personal
+hacking projects.\n"))
     (rose
      (widget-insert
       "\
@@ -1348,7 +1351,8 @@ See ")
      (widget-insert ".\n"))
     (wmperry
      (widget-insert "\
-Currently working at Aventail, Corp. on SOCKS v5 servers.\n"))
+Happily living in Indiana telecommuting for a company based in Seattle
+\(who I now prefer not to name), wishing I was in Ireland instead.\n"))
     (yoshiki
      (widget-insert
       "\
@@ -1456,8 +1460,9 @@ Sorry, no information about my XEmacs contributions yet.\n"))
      (widget-insert
       "\
 Maintainer of XEmacs from mid-1994 through 1996.  Author of the
-redisplay engine and some of the device-abstraction, TTY and glyph
-code.  Creator of the xemacs.org domain.\n"))
+redisplay engine, the original toolbar and scrollbars and some of the
+device-abstraction, TTY and glyph code.  Creator of the xemacs.org
+domain and comp.emacs.xemacs.\n"))
     (daiki
      (widget-insert
       "\
@@ -1579,7 +1584,9 @@ Beta tester, manager of the various XEmacs mailing lists and binary
 kit manager.  Also, originator and maintainer of the gnus.org domain.\n"))
     (jens
      (widget-insert "\
-Jens did the artwork for graphics added to XEmacs 20.2 and 19.15.\n"))
+Jens did the artwork for graphics added to XEmacs 20.2 and 19.15. He's
+also the author of \"XEmacs Mine\", a game similar to Minesweeper, but
+running in XEmacs\n"))
     (jmiller
      (widget-insert "\
 Beta tester and last hacker of calendar.\n"))
@@ -1659,9 +1666,10 @@ Author of the XEmacs Drag'n'Drop API.\n"))
       "\
 Author of the portable dumper.\n"))
     (oscar
-     (widget-insert
-      "\
-Author of the LDAP support in XEmacs.\n"))
+     (widget-insert "\
+Oscar's major contributions to XEmacs are the internal LDAP support
+and the EUDC package, an interface to query various directory services
+in a uniform manner (when composing mail for instance).\n"))
     (pelegri
      (widget-insert "\
 Author of EOS, a package included in the standard XEmacs distribution

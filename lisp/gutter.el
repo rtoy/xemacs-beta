@@ -178,11 +178,6 @@ elements of the gutter specification will only be visible if the
 corresponding symbol occurs in the gutter-visible instantiator."
   (make-specifier-and-init 'gutter-visible spec-list))
 
-(defun init-gutter ()
-  "Initialize the gutter."
-  ;; do nothing as yet.
-  )
-
 ;;; gutter.el ends here.
 
 
