@@ -1,3 +1,10 @@
+2004-01-16  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
+
+	* ui-gtk.c (__internal_callback_marshal): Marshalling data to
+	return to GTK requires a different API to marshalling data to use
+	as GTK parameters.
+	* ui-gtk.c (lisp_to_gtk_ret_type): New. 
+
 2004-01-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* specifier.c (Fvalid_specifier_type_p): Fix docstring typo.
