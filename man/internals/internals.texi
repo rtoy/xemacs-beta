@@ -23137,6 +23137,21 @@ these modules around the notion of interfacing a ``generic rendering
 engine interface'' to ``text'' seems like a plausible way to focus this
 work.
 
+Further evidence for this kind of approach is a bug recently fixed in
+the @samp{xft-sjt} branch.  XEmacs was crashing because the Athena Label
+widget tried to access a nonexistent font in its initialization
+routine.  The font didn't exist because although no core X11 font
+corresponding to the spec existed, an Xft font was found.  So the XEmacs
+font instance existed but it did not specify an X11 core font, only the
+Xft font.  When this object was used to initialize the font for the
+Label widget, None (0) was passed to XtSetArgs, then XtCreateWidget was
+called, and the internal initialization routine attempted to access that
+(nonexistent) font while computing an X11 graphics context (GC).
+
+A similar issue applies to colors, but there Xft colors keep the pixel
+data internally, so (serendipitously) the X11 color (@emph{i.e.}, pixel)
+member does get updated.
+
 @item Colors, fonts, and faces
 Besides the rendering engine itself, the XEmacs implementations of these
 objects are poorly supported by current widget implementations,

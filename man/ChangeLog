@@ -1,3 +1,8 @@
+2004-12-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Better Rendering Support --
+	Implementation): Document reasons for Label Widget crash.
+
 2004-12-07  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* Makefile (RECURSIVE_MAKE): Removed.
@@ -357,7 +362,6 @@
 	(Future Work -- Lisp Engine Replacement):
 	Add pointers to new node.
 
->>>>>>> 1.271
 2004-11-16  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (Top):
