@@ -490,16 +490,16 @@ the C kernel of Emacs uses.
   return Qnil;    
 }
 
+#ifdef HAVE_NAS_SOUND
+#define USED_IF_HAVE_NAS(decl) decl
+#else
+#define USED_IF_HAVE_NAS(decl) UNUSED (decl)
+#endif
+
 DEFUN ("wait-for-sounds", Fwait_for_sounds, 0, 1, 0, /*
 Wait for all sounds to finish playing on DEVICE.
 */
-       (
-#ifdef HAVE_NAS_SOUND
-	device
-#else
-	UNUSED (device)
-#endif
-	))
+       (USED_IF_HAVE_NAS (device)))
 {
 #ifdef HAVE_NAS_SOUND
   struct device *d = decode_device (device);
@@ -515,13 +515,7 @@ Wait for all sounds to finish playing on DEVICE.
 DEFUN ("connected-to-nas-p", Fconnected_to_nas_p, 0, 1, 0, /*
 Return t if connected to NAS server for sounds on DEVICE.
 */
-       (
-#ifdef HAVE_NAS_SOUND
-	device
-#else
-	UNUSED (device)
-#endif
-	))
+       (USED_IF_HAVE_NAS (device)))
 {
 #ifdef HAVE_NAS_SOUND
   return DEVICE_CONNECTED_TO_NAS_P (decode_device (device)) ? Qt : Qnil;

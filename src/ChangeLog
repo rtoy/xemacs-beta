@@ -1,3 +1,8 @@
+2004-09-21  Jerry James  <james@xemacs.org>
+
+	* sound.c (Fwait_for_sounds): Factor out test for unused parameter.
+	(Fconnected_to_nas_p): Ditto.
+
 2004-05-14  Darryl Okahata  <darrylo@xemacs.org>
 
 	* window.c (current-pixel-row, current-pixel-column).  Added a
