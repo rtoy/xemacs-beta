@@ -1,3 +1,23 @@
+2002-04-17  Nickolay Pakoulin  <npak@ispras.ru>
+
+	* cus-edit.el (custom-save-delete-any): New function
+	(make-custom-save-resets-mapper): New macro
+	(custom-save-resets-mapper-alist): New constant
+	(custom-save-resets): Modified
+	Save customized values MUCH faster by keeping often used lambdas
+	in cache `custom-save-resets-mapper-alist' instead of building them
+	on the fly in `custom-save-resets'.
+	
+	* cus-edit.el (custom-save-pretty-print): New variable
+	(custom-save-variable-p): New function
+	(custom-save-variable-internal): New function
+	(custom-save-variables): Modified
+        (custom-save-face-p): New function
+        (custom-save-face-internal): Modified
+        (custom-save-faces): Modified
+	Save customized variables and faces in the alphabetic order.
+	`custom-save-pretty-print' turns on/off pretty-printing values.
+
 2002-05-16  Ben Wing  <ben@xemacs.org>
 
 	* dialog.el:

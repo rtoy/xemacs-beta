@@ -344,6 +344,12 @@ WIDGET is the widget to apply the filter entries of MENU on."
 (defvar custom-prefix-list nil
   "List of prefixes that should be ignored by `custom-unlispify'")
 
+(defcustom custom-save-pretty-print t
+  "Non-nil means pretty-print values of customized variables if available."
+:group 'customize
+:type 'boolean)
+
+
 (defcustom custom-unlispify-menu-entries t
   "Display menu entries as words instead of symbols if non nil."
   :group 'custom-menu
@@ -3379,78 +3385,148 @@ Leave point at the location of the call, or after the last expression."
 			 (point))
 	  (throw 'found nil))))))
 
+(defun custom-save-delete-any (&rest symbols)
+  "Delete the call to any symbol among SYMBOLS in `custom-file'.
+Leave the point at the end of the file."
+  (let ((find-file-hooks nil)
+	(auto-mode-alist nil))
+    (set-buffer (find-file-noselect custom-file)))
+  (goto-char (point-min))
+  (condition-case nil
+      (while (not (eobp))
+        (let ((sexp (read (current-buffer))))
+          (when (and (listp sexp)
+                     (memq (car sexp) symbols))
+            (delete-region (save-excursion
+                             (backward-sexp)
+                             (point))
+                           (point))
+            (while (and (eolp) (not (eobp)))
+              (delete-region (point) (prog2 (forward-line 1) (point))))
+            )))
+    (end-of-file nil)))
+
+(defsubst custom-save-variable-p (symbol)
+  "Return non-nil if symbol SYMBOL is a customized variable."
+  (and (symbolp symbol)
+       (let ((spec (car-safe (get symbol 'theme-value))))
+         (or (and spec (eq (car spec) 'user)
+                  (eq (second spec) 'set))
+             (get symbol 'saved-variable-comment)
+             ;; support non-themed vars
+             (and (null spec) (get symbol 'saved-value))))))
+
+(defun custom-save-variable-internal (symbol)
+  "Print variable SYMBOL to the standard output.
+SYMBOL must be a customized variable."
+  (let ((requests (get symbol 'custom-requests))
+        (now (not (or (get symbol 'standard-value)
+                      (and (not (boundp symbol))
+                           (not (eq (get symbol 'force-value)
+                                    'rogue))))))
+        (comment (get symbol 'saved-variable-comment))
+        ;; Print everything, no placeholders `...'
+        (print-level nil)
+        (print-length nil))
+    (unless (custom-save-variable-p symbol)
+      (error 'wrong-type-argument "Not a customized variable" symbol))
+    (princ "\n '(")
+    (prin1 symbol)
+    (princ " ")
+    ;; This comment stuff is in the way ####
+    ;; Is (eq (third spec) (car saved-value)) ????
+    ;; (prin1 (third spec))
+    ;; XEmacs -- pretty-print value if available
+    (if (and custom-save-pretty-print
+             (fboundp 'pp))
+        ;; To suppress bytecompiler warning
+        (with-fboundp 'pp
+          (pp (car (get symbol 'saved-value))))
+      (prin1 (car (get symbol 'saved-value))))
+    (when (or now requests comment)
+      (princ (if now " t" " nil")))
+    (when (or comment requests)
+      (princ " ")
+      (prin1 requests))
+    (when comment
+      (princ " ")
+      (prin1 comment))
+    (princ ")")))
+
 (defun custom-save-variables ()
    "Save all customized variables in `custom-file'."
    (save-excursion
      (custom-save-delete 'custom-load-themes)
      (custom-save-delete 'custom-reset-variables)
      (custom-save-delete 'custom-set-variables)
+     ;; This leaves point at the end of file.
+     ;; Adrian Aichner <adrian@xemacs.org> stated it is
+     ;; a bad behavior <npak@ispras.ru>
+     ;;(custom-save-delete-any 'custom-load-themes
+     ;;                        'custom-reset-variables
+     ;;                        'custom-set-variables)
      (custom-save-loaded-themes)
      (custom-save-resets 'theme-value 'custom-reset-variables nil)
-     (let ((standard-output (current-buffer)))
+     (let ((standard-output (current-buffer))
+           ;; To make nconc work
+           (sorted-list (make-list 1 t)))
+       ;; First create a sorted list of saved variables.
+       (mapatoms
+        (lambda (symbol)
+          (when (custom-save-variable-p symbol)
+            (nconc sorted-list (list symbol)))))
+       (setq sorted-list (sort (cdr sorted-list) 'string<))
+
        (unless (bolp)
- 	(princ "\n"))
+         (princ "\n"))
        (princ "(custom-set-variables")
-       (mapatoms (lambda (symbol)
-		   (let ((spec (car-safe (get symbol 'theme-value)))
- 			(requests (get symbol 'custom-requests))
- 			(now (not (or (get symbol 'standard-value)
- 				      (and (not (boundp symbol))
- 					   (not (eq (get symbol 'force-value)
-						    'rogue))))))
-			(comment (get symbol 'saved-variable-comment)))
- 		    (when (or (and spec (eq (car spec) 'user)
- 			       (eq (second spec) 'set)) comment
-			       ;; support non-themed vars
-			       (and (null spec) (get symbol 'saved-value)))
- 		      (princ "\n '(")
-		      (prin1 symbol)
- 		      (princ " ")
-		      ;; This comment stuff is in the way ####
-		      ;; Is (eq (third spec) (car saved-value)) ????
- 		      ;; (prin1 (third spec))
-		      ;; XEmacs -- pretty-print value if available
-		      (if-fboundp 'pp
-			  (pp (car (get symbol 'saved-value)))
-			(prin1 (car (get symbol 'saved-value))))
-		      (when (or now requests comment)
-			(princ (if now " t" " nil")))
-		      (when (or comment requests)
-			(princ " ")
-			(prin1 requests))
-		      (when comment
-			(princ " ")
-			(prin1 comment))
-		      (princ ")")))))
-      (princ ")")
-      (unless (looking-at "\n")
-	(princ "\n")))))
+       (mapc 'custom-save-variable-internal
+             sorted-list)
+       (princ ")")
+       (unless (looking-at "\n")
+         (princ "\n")))))
 
 (defvar custom-save-face-ignoring nil)
 
-(defun custom-save-face-internal (symbol)
+(defsubst custom-save-face-p (symbol)
+  "Return non-nil if SYMBOL is a customized face."
   (let ((theme-spec (car-safe (get symbol 'theme-face)))
-	(comment (get symbol 'saved-face-comment))
+	(comment (get symbol 'saved-face-comment)))
+    (or (and (not (memq symbol custom-save-face-ignoring))
+             ;; Don't print default face here.
+             (or (and theme-spec
+                      (eq (car theme-spec) 'user)
+                      (eq (second theme-spec) 'set))
+                 ;; cope with non-themed faces
+                 (and (null theme-spec)
+                      (get symbol 'saved-face))))
+        comment)))
+
+(defun custom-save-face-internal (symbol)
+  "Print face SYMBOL to the standard output.
+SYMBOL must be a customized face."
+  (let ((comment (get symbol 'saved-face-comment))
 	(now (not (or (get symbol 'face-defface-spec)
 	      (and (not (find-face symbol))
-		   (not (eq (get symbol 'force-face) 'rogue)))))))
-    (when (or (and (not (memq symbol custom-save-face-ignoring))
-	       ;; Don't print default face here.
-		   (or (and theme-spec
-			    (eq (car theme-spec) 'user)
-			    (eq (second theme-spec) 'set))
-		       ;; cope with non-themed faces
-		       (and (null theme-spec)
-			    (get symbol 'saved-face)))) comment)
+		   (not (eq (get symbol 'force-face) 'rogue))))))
+        ;; Print everything, no placeholders `...'
+        (print-level nil)
+        (print-length nil))
+    (if (memq symbol custom-save-face-ignoring)
+        ;; Do nothing
+        nil
+      ;; Print face
+      (unless (custom-save-face-p symbol)
+        (error 'wrong-type-argument "Not a customized face" symbol))
       (princ "\n '(")
       (prin1 symbol)
       (princ " ")
       (prin1 (get symbol 'saved-face))
       (if (or comment now)
-	  (princ (if now " t" " nil")))
+          (princ (if now " t" " nil")))
       (when comment
-	  (princ " ")
-	  (prin1 comment))
+        (princ " ")
+        (prin1 comment))
       (princ ")"))))
 
 (defun custom-save-faces ()
@@ -3458,52 +3534,92 @@ Leave point at the location of the call, or after the last expression."
   (save-excursion
     (custom-save-delete 'custom-reset-faces)
     (custom-save-delete 'custom-set-faces)
+    ;; This leaves point at the end of file.
+    ;; Adrian Aichner <adrian@xemacs.org> stated it is
+    ;; a bad behavior <npak@ispras.ru>
+    ;;(custom-save-delete-any 'custom-reset-faces
+    ;;                        'custom-set-faces)
     (custom-save-resets 'theme-face 'custom-reset-faces '(default))
-    (let ((standard-output (current-buffer)))
+    (let ((standard-output (current-buffer))
+          ;; To make nconc work
+          (sorted-list (make-list 1 t)))
+      ;; Create a sorted list of faces
+      (mapatoms
+       (lambda (symbol)
+         (when (custom-save-face-p symbol)
+           (nconc sorted-list (list symbol)))))
+      (setq sorted-list (sort (cdr sorted-list) 'string<))
+      
       (unless (bolp)
 	(princ "\n"))
       (princ "(custom-set-faces")
 	;; The default face must be first, since it affects the others.
-      (custom-save-face-internal 'default)
+      (when (custom-save-face-p 'default)
+        (custom-save-face-internal 'default))
       (let ((custom-save-face-ignoring '(default)))
-	(mapatoms #'custom-save-face-internal))
+	(mapc 'custom-save-face-internal
+              sorted-list))
       (princ ")")
       (unless (looking-at "\n")
 	(princ "\n")))))
 
+(defmacro make-custom-save-resets-mapper (property setter)
+  "Create a mapper for `custom-save-resets'."
+  `(lambda (object)
+     (let ((spec (car-safe (get object (quote ,property))))
+           (print-level nil)
+           (print-length nil))
+       (with-boundp '(ignored-special started-writing)
+         (when (and (not (memq object ignored-special))
+                    (eq (car spec) 'user)
+                    (eq (second spec) 'reset))
+           ;; Do not write reset statements unless necessary.
+           (unless started-writing
+             (setq started-writing t)
+             (unless (bolp)
+               (princ "\n"))
+             (princ "(")
+             (princ (quote ,setter))
+             (princ "\n '(")
+             (prin1 object)
+             (princ " ")
+             (prin1 (third spec))
+             (princ ")")))))))
+
+(defconst custom-save-resets-mapper-alist
+  (eval-when-compile
+    (list (list 'theme-value 'custom-reset-variables
+                (byte-compile
+                 (make-custom-save-resets-mapper
+                  'theme-value 'custom-reset-variables)))
+          (list 'theme-face 'custom-reset-faces
+                (byte-compile
+                 (make-custom-save-resets-mapper
+                  'theme-face 'custom-reset-faces)))))
+  "Never use it.
+Hashes several heavily used functions for `custom-save-resets'")
+
 (defun custom-save-resets (property setter special)
+  (declare (special ignored-special))
   (let (started-writing ignored-special)
-    (setq ignored-special ignored-special) ;; suppress byte-compiler warning
     ;; (custom-save-delete setter) Done by caller
     (let ((standard-output (current-buffer))
-	  (mapper `(lambda (object)
-		    (let ((spec (car-safe (get object (quote ,property)))))
-		      (when (and (not (memq object ignored-special))
-				 (eq (car spec) 'user)
-				 (eq (second spec) 'reset))
-			;; Do not write reset statements unless necessary.
-			(unless started-writing
-			  (setq started-writing t)
-			  (unless (bolp)
-			    (princ "\n"))
-			(princ "(")
-			(princ (quote ,setter))
-			(princ "\n '(")
-			(prin1 object)
-			(princ " ")
-			(prin1 (third spec))
-			(princ ")")))))))
+	  (mapper (let ((triple (assq property custom-save-resets-mapper-alist)))
+                    (if (and triple (eq (second triple) setter))
+                        (third triple)
+                      (make-custom-save-resets-mapper property setter)))))
       (mapc mapper special)
       (setq ignored-special special)
       (mapatoms mapper)
       (when started-writing
-	(princ ")\n"))))
-    )
+	(princ ")\n")))))
 
 
 (defun custom-save-loaded-themes ()
   (let ((themes (reverse (get 'user 'theme-loads-themes)))
-	(standard-output (current-buffer)))
+	(standard-output (current-buffer))
+        (print-level nil)
+        (print-length nil))
     (when themes
       (unless (bolp) (princ "\n"))
       (princ "(custom-load-themes")
