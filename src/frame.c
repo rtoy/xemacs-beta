@@ -1445,12 +1445,12 @@ delete_frame_internal (struct frame *f, int force,
 
       FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
 	{
-	  Lisp_Object this = XCAR (frmcons);
+	  Lisp_Object this_frame = XCAR (frmcons);
 
-	  if (! EQ (this, frame)
+	  if (! EQ (this_frame, frame)
 	      && EQ (frame, (WINDOW_FRAME
 			     (XWINDOW
-			      (FRAME_MINIBUF_WINDOW (XFRAME (this)))))))
+			      (FRAME_MINIBUF_WINDOW (XFRAME (this_frame)))))))
 	    {
 	      /* We've found another frame whose minibuffer is on
 		 this frame. */
@@ -1467,14 +1467,14 @@ delete_frame_internal (struct frame *f, int force,
 
     FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
       {
-	Lisp_Object this = XCAR (frmcons);
+	Lisp_Object this_frame = XCAR (frmcons);
 
 
-	if (! EQ (this, frame))
+	if (! EQ (this_frame, frame))
 	  {
 	    struct device *devcons_d = XDEVICE (XCAR (devcons));
 	    if (EQ (frame, DEVMETH_OR_GIVEN (devcons_d, get_frame_parent,
-					     (XFRAME (this)),
+					     (XFRAME (this_frame)),
 					     Qnil)))
 	      /* We've found a popup frame whose parent is this frame. */
 	      gui_error
@@ -1715,22 +1715,22 @@ delete_frame_internal (struct frame *f, int force,
 
       CONSOLE_FRAME_LOOP_NO_BREAK (frmcons, devcons, con)
 	{
-	  Lisp_Object this;
+	  Lisp_Object this_frame;
 	  struct frame *f1;
 
-	  this = XCAR (frmcons);
-	  f1 = XFRAME (this);
+	  this_frame = XCAR (frmcons);
+	  f1 = XFRAME (this_frame);
 
 	  /* Consider only frames on the same console
 	     and only those with minibuffers.  */
 	  if (FRAME_HAS_MINIBUF_P (f1))
 	    {
-	      frame_with_minibuf = this;
+	      frame_with_minibuf = this_frame;
 	      if (FRAME_MINIBUF_ONLY_P (f1))
 		goto double_break_2;
 	    }
 
-	  frame_on_same_console = this;
+	  frame_on_same_console = this_frame;
 	}
     double_break_2:
 

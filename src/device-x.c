@@ -1238,16 +1238,17 @@ construct_name_list (Display *display, Widget widget, char *fake_name,
 		     char *fake_class, char *name, char *class_)
 {
   char *stack [100][2];
-  Widget this;
+  Widget this_widget;
   int count = 0;
   char *name_tail, *class_tail;
 
   if (widget)
     {
-      for (this = widget; this; this = XtParent (this))
+      for (this_widget = widget; this_widget;
+	   this_widget = XtParent (this_widget))
 	{
-	  stack [count][0] = this->core.name;
-	  stack [count][1] = XtClass (this)->core_class.class_name;
+	  stack [count][0] = this_widget->core.name;
+	  stack [count][1] = XtClass (this_widget)->core_class.class_name;
 	  count++;
 	}
       count--;

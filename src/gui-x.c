@@ -111,12 +111,12 @@ void
 gcpro_popup_callbacks (LWLIB_ID id)
 {
   Lisp_Object lid = make_int (id);
-  Lisp_Object this = assq_no_quit (lid, Vpopup_callbacks);
+  Lisp_Object this_callback = assq_no_quit (lid, Vpopup_callbacks);
 
-  if (!NILP (this))
+  if (!NILP (this_callback))
     {
-      free_list (XCDR (this));
-      XCDR (this) = snarf_widget_values_for_gcpro (id);
+      free_list (XCDR (this_callback));
+      XCDR (this_callback) = snarf_widget_values_for_gcpro (id);
     }
   else
     Vpopup_callbacks = Fcons (Fcons (lid, snarf_widget_values_for_gcpro (id)),
@@ -130,11 +130,11 @@ void
 ungcpro_popup_callbacks (LWLIB_ID id)
 {
   Lisp_Object lid = make_int (id);
-  Lisp_Object this = assq_no_quit (lid, Vpopup_callbacks);
+  Lisp_Object this_callback = assq_no_quit (lid, Vpopup_callbacks);
 
-  assert (!NILP (this));
-  free_list (XCDR (this));
-  Vpopup_callbacks = delq_no_quit (this, Vpopup_callbacks);
+  assert (!NILP (this_callback));
+  free_list (XCDR (this_callback));
+  Vpopup_callbacks = delq_no_quit (this_callback, Vpopup_callbacks);
 }
 
 int

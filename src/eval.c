@@ -587,10 +587,10 @@ wants_debugger (Lisp_Object list, Lisp_Object conditions)
 
   while (CONSP (conditions))
     {
-      Lisp_Object this, tail;
-      this = XCAR (conditions);
+      Lisp_Object curr, tail;
+      curr = XCAR (conditions);
       for (tail = list; CONSP (tail); tail = XCDR (tail))
-	if (EQ (XCAR (tail), this))
+	if (EQ (XCAR (tail), curr))
 	  return 1;
       conditions = XCDR (conditions);
     }

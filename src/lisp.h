@@ -516,8 +516,6 @@ typedef EMACS_INT Memxpos;
    we don't want by creating overloaded versions of them and declaring them
    private. */
    
-#undef this
-
 class Bytecount;
 class Bytebpos;
 class Bytexpos;
@@ -941,8 +939,6 @@ DECLARE_INTEGRAL_TYPE_COMPARE (unsigned long, Charcount);
 inline Bytecount operator - (const Ibyte *x, const Ibyte *y)	\
   { return Bytecount (x - y); }
 #endif
-
-#define this c_this
 
 #endif /* __cplusplus */
 
@@ -3235,9 +3231,7 @@ struct gcpro
   gcpro (const gcpro& g) : next (g.next), var (g.var), nvars (g.nvars) { }
   gcpro& operator= (const gcpro& g) { next = g.next; var = g.var;
 				      nvars = g.nvars;
-#undef this
 				      return *this;}
-#define this c_this
   ~gcpro () { assert (!next); }
 #endif /* defined (__cplusplus) && defined (ERROR_CHECK_GC) */
 };

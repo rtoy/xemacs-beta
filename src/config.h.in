@@ -1018,7 +1018,6 @@ extern "C" {
 # if defined (__cplusplus)
 /* Avoid C++ keywords used as ordinary C identifiers */
 #  define new   c_new
-#  define this  c_this
 #  define catch c_catch
 
 #  define EXTERN_C extern "C"

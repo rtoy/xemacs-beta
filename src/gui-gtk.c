@@ -57,19 +57,19 @@ void
 ungcpro_popup_callbacks (GUI_ID id)
 {
   Lisp_Object lid = make_int (id);
-  Lisp_Object this = assq_no_quit (lid, Vpopup_callbacks);
-  Vpopup_callbacks = delq_no_quit (this, Vpopup_callbacks);
+  Lisp_Object this_callback = assq_no_quit (lid, Vpopup_callbacks);
+  Vpopup_callbacks = delq_no_quit (this_callback, Vpopup_callbacks);
 }
 
 Lisp_Object
 get_gcpro_popup_callbacks (GUI_ID id)
 {
   Lisp_Object lid = make_int (id);
-  Lisp_Object this = assq_no_quit (lid, Vpopup_callbacks);
+  Lisp_Object this_callback = assq_no_quit (lid, Vpopup_callbacks);
 
-  if (!NILP (this))
+  if (!NILP (this_callback))
     {
-      return (XCDR (this));
+      return (XCDR (this_callback));
     }
   return (Qnil);
 }

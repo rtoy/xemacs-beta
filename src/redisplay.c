@@ -4106,20 +4106,20 @@ tail_recurse:
       /* A string.  Add to the display line and check for %-constructs
          within it. */
 
-      Ibyte *this = XSTRING_DATA (elt);
+      Ibyte *this_str = XSTRING_DATA (elt);
 
-      while ((pos < max_pos || max_pos == -1) && *this)
+      while ((pos < max_pos || max_pos == -1) && *this_str)
         {
-          Ibyte *last = this;
+          Ibyte *last = this_str;
 
-          while (*this && *this != '%')
-            this++;
+          while (*this_str && *this_str != '%')
+            this_str++;
 
-          if (this != last)
+          if (this_str != last)
             {
               /* No %-construct */
               Charcount size =
-		bytecount_to_charcount (last, this - last);
+		bytecount_to_charcount (last, this_str - last);
 
 	      if (size <= *offset)
 		*offset -= size;
@@ -4134,32 +4134,32 @@ tail_recurse:
 		  *offset = 0;
 		}
             }
-          else /* *this == '%' */
+          else /* *this_str == '%' */
             {
               Charcount spec_width = 0;
 
-              this++; /* skip over '%' */
+              this_str++; /* skip over '%' */
 
               /* We can't allow -ve args due to the "%-" construct.
                * Argument specifies minwidth but not maxwidth
                * (maxwidth can be specified by
                * (<negative-number> . <stuff>) modeline elements)
                */
-              while (isdigit (*this))
+              while (isdigit (*this_str))
                 {
-                  spec_width = spec_width * 10 + (*this - '0');
-                  this++;
+                  spec_width = spec_width * 10 + (*this_str - '0');
+                  this_str++;
                 }
               spec_width += pos;
 
-              if (*this == 'M')
+              if (*this_str == 'M')
                 {
                   pos = generate_fstring_runes (w, data, pos, spec_width,
                                                 max_pos, Vglobal_mode_string,
                                                 depth, max_pixsize, findex,
                                                 type, offset, cur_ext);
                 }
-              else if (*this == '-')
+              else if (*this_str == '-')
                 {
                   Charcount num_to_add;
 
@@ -4186,9 +4186,9 @@ tail_recurse:
                     pos = add_string_to_fstring_db_runes
                       (data, (const Ibyte *) "-", pos, pos, max_pos);
                 }
-              else if (*this != 0)
+              else if (*this_str != 0)
                 {
-                  Ichar ch = itext_ichar (this);
+                  Ichar ch = itext_ichar (this_str);
                   Ibyte *str;
 		  Charcount size;
 
@@ -4215,9 +4215,9 @@ tail_recurse:
 		    }
                 }
 
-              /* NOT this++.  There could be any sort of character at
+              /* NOT this_str++.  There could be any sort of character at
                  the current position. */
-              INC_IBYTEPTR (this);
+              INC_IBYTEPTR (this_str);
             }
 
           if (max_pixsize > 0)
