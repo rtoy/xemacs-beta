@@ -1,3 +1,10 @@
+2005-02-20  Adrian Aichner  <adrian@xemacs.org>
+
+	* replace.el (operate-on-non-matching-lines): Append matching
+	lines to temp buffer to avoid prohibitive GC as a result of
+	enormous string consing.
+	* replace.el (operate-on-matching-lines): Ditto.
+
 2005-02-21  Ben Wing  <ben@xemacs.org>
 
 	* glyphs.el:

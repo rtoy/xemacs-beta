@@ -247,7 +247,9 @@ Returns the number of lines matched."
 
       (let ((matched-text nil)
             (curmatch-start (point))
-            (limit (copy-marker (point-max))))
+            (limit (copy-marker (point-max)))
+	    (matched-text-buffer (generate-new-buffer " *matched-text*"))
+	    lines-matched)
         ;; Limit search if limits were specified.
         (when end (setq limit (copy-marker end)))
 
@@ -259,32 +261,33 @@ Returns the number of lines matched."
 	  ;; curmatch-start is first char not preserved by previous match.
 	  (if (not (re-search-forward regexp limit 'move))
               (let ((curmatch-end limit))
-                (setq matched-text (concat matched-text (buffer-substring curmatch-start curmatch-end)))
+		(append-to-buffer matched-text-buffer curmatch-start curmatch-end)
                 (if delete (delete-region curmatch-start curmatch-end)))
 	    (let ((curmatch-end (save-excursion (goto-char (match-beginning 0))
-				       (beginning-of-line)
-				       (point))))
+						(beginning-of-line)
+						(point))))
 	      ;; Now curmatch-end is first char preserved by the new match.
 	      (if (< curmatch-start curmatch-end)
                   (progn
-                    (setq matched-text (concat matched-text (buffer-substring curmatch-start curmatch-end)))
+		    (append-to-buffer matched-text-buffer curmatch-start curmatch-end)
                     (if delete (delete-region curmatch-start curmatch-end))))))
 	  (setq curmatch-start (save-excursion (forward-line 1)
-				      (point)))
+					       (point)))
 	  ;; If the match was empty, avoid matching again at same place.
 	  (and (not (eobp)) (= (match-beginning 0) (match-end 0))
 	       (forward-char 1)))
 
         ;; If any lines were matched and KILL is non-nil, insert the
         ;; matched lines into the kill ring.
+	(setq matched-text (buffer-string matched-text-buffer))
         (if (and matched-text kill) (kill-new matched-text))
 
         ;; Return the number of matched lines.
-        (with-temp-buffer
-          ;; Use concat to make a string even if matched-text is nil.
-          (insert (concat matched-text))
-          (count-lines (point-min) (point-max)))
-        ))))
+	(setq lines-matched
+	      (with-current-buffer matched-text-buffer
+		(count-lines (point-min) (point-max))))
+	(kill-buffer matched-text-buffer)
+	lines-matched))))
 
 (define-function 'keep-lines 'delete-non-matching-lines)
 (defun delete-non-matching-lines (regexp)
@@ -358,8 +361,9 @@ Returns the number of lines matched."
       (let ((matched-text nil)
             (curmatch-start nil)
             (curmatch-end nil)
-            (limit nil))
-
+            (limit nil)
+	    (matched-text-buffer (generate-new-buffer " *matched-text*"))
+	    lines-matched)
         ;; Limit search if limits were specified.
         (when beg (goto-char beg))
         (when end (setq limit (copy-marker end)))
@@ -370,17 +374,17 @@ Returns the number of lines matched."
                                                (beginning-of-line)
                                                (point)))
           (setq curmatch-end (progn (forward-line 1) (point)))
-          (setq matched-text (concat matched-text (buffer-substring curmatch-start curmatch-end)))
+	  (append-to-buffer matched-text-buffer curmatch-start curmatch-end)
           (if delete (delete-region curmatch-start curmatch-end)))
-
+	(setq matched-text (buffer-string matched-text-buffer))
         (if (and matched-text kill) (kill-new matched-text))
 
         ;; Return the number of matched lines.
-        (with-temp-buffer
-          ;; Use concat to make a string even if matched-text is nil.
-          (insert (concat matched-text))
-          (count-lines (point-min) (point-max)))
-        ))))
+	(setq lines-matched
+	      (with-current-buffer matched-text-buffer
+		(count-lines (point-min) (point-max))))
+	(kill-buffer matched-text-buffer)
+	lines-matched))))
 
 (define-function 'flush-lines 'delete-matching-lines)
 (defun delete-matching-lines (regexp)
