@@ -1,3 +1,48 @@
+2005-02-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Introduction to Writing C Code):
+	Change "mostly warning-free" to "warning-free" to encourage
+	reporting warnings as bugs.
+	(The configure Script):
+	Incorporate Malcolm Purvis's notes from configure.ac.  Document
+	his implementations of keyword and complex options, and remove
+	descriptions of my obsolete code.
+
+2005-01-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Better Rendering Support --
+	Configuration with the Interim Patches):
+	Improve notes on configuration.
+
+2004-12-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Better Rendering Support --
+	Configuration with the Interim Patches): Menubar uses xftFont
+	resource, too.
+
+2005-02-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (XEmacs from the Perspective of
+	Building): Mention autoconf.
+	(The Modules of XEmacs): Point Next the The Build Configuration
+	System and add Modules for Building XEmacs to the menu.
+	(A Summary of the Various XEmacs Modules): Add Modules for
+	Building XEmacs to menu, and Modules for Build Configuration,
+	Modules for Compiling XEmacs, and Modules for Preloading Lisp to
+	the table of sections.
+	(Low-Level Modules): Point Previous to Modules for Building XEmacs.
+	(Modules for Building XEmacs):
+	(Modules for Build Configuration):
+	(Modules for Compiling XEmacs):
+	(Modules for Preloading Lisp):
+	(The Build Configuration System):
+	(Adding Configurable Features):
+	(The configure Script):
+	(The Makefile Precursors):
+	New nodes.
+	(Rules When Writing New C Code):
+	Point Previous to The Build Configuration System.
+
 2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.19 "chives" is released.

@@ -311,6 +311,7 @@ Similar but generates a general subsection.
 * XEmacs from the Perspective of Building::  
 * Build-Time Dependencies::     
 * The Modules of XEmacs::       
+* The Build Configuration System::
 * Rules When Writing New C Code::  
 * Regression Testing XEmacs::   
 * CVS Techniques::              
@@ -2409,7 +2410,9 @@ that is not normally used or needed.
 The first step of building involves running the @file{configure} program
 and passing it various parameters to specify any optional features you
 want and compiler arguments and such, as described in the @file{INSTALL}
-file.  This determines what the build environment is, chooses the
+file.  (You may optionally run @file{autoconf} first to update the
+@file{configure} script.  @xref{Modules for Build Configuration}.)
+This determines what the build environment is, chooses the
 appropriate @file{s/} and @file{m/} file, and runs a series of tests to
 determine many details about your environment, such as which library
 functions are available and exactly how they work.  The reason for
@@ -2520,12 +2523,13 @@ you do not need @file{subr.el}, you should @samp{defvar}
 @code{custom-declare-variable-list} to prevent the @samp{void-variable}
 error.  (Currently this is only needed for @file{make-docfile.el}.)
 
-@node The Modules of XEmacs, Rules When Writing New C Code, Build-Time Dependencies, Top
+@node The Modules of XEmacs, The Build Configuration System, Build-Time Dependencies, Top
 @chapter The Modules of XEmacs
 @cindex modules of XEmacs
 
 @menu
 * A Summary of the Various XEmacs Modules::  
+* Modules for Building XEmacs::       
 * Low-Level Modules::           
 * Basic Lisp Modules::          
 * Modules for Standard Editing Operations::  
@@ -2534,7 +2538,7 @@ error.  (Currently this is only needed for @file{make-docfile.el}.)
 * Modules for Interfacing with the Operating System::  
 @end menu
 
-@node A Summary of the Various XEmacs Modules, Low-Level Modules, The Modules of XEmacs, The Modules of XEmacs
+@node A Summary of the Various XEmacs Modules, Modules for Building XEmacs, The Modules of XEmacs, The Modules of XEmacs
 @section A Summary of the Various XEmacs Modules
 @cindex summary of the various XEmacs modules
 @cindex modules, summary of the various XEmacs
@@ -2545,6 +2549,12 @@ some of them are attached to the chapters describing the modules in
 question.
 
 @itemize @bullet
+@item
+@ref{Modules for Build Configuration}.
+@item
+@ref{Modules for Compiling XEmacs}.
+@item
+@ref{Modules for Preloading Lisp}.
 @item
 @ref{Low-Level Modules}.
 @item
@@ -3022,7 +3032,65 @@ The following table contains cross-references from each module in XEmacs
 
 
 
-@node Low-Level Modules, Basic Lisp Modules, A Summary of the Various XEmacs Modules, The Modules of XEmacs
+@node Modules for Building XEmacs, Low-Level Modules, A Summary of the Various XEmacs Modules, The Modules of XEmacs
+@section Modules for Building XEmacs
+@cindex modules for building XEmacs
+@cindex building XEmacs, modules for
+
+@menu
+* Modules for Build Configuration:: 
+* Modules for Compiling XEmacs:: 
+* Modules for Preloading Lisp:: 
+@end menu
+
+
+
+@node Modules for Build Configuration, Modules for Compiling XEmacs, Modules for Building XEmacs, Modules for Building XEmacs
+@subsection Modules for Build Configuration
+@cindex modules for build configuration
+@cindex build configuration, modules for
+
+@example
+@file{configure}
+@file{config.h.in}
+@file{Makefile.in.in}
+@end example
+
+@example
+@file{configure.ac}
+@file{configure.in}
+@end example
+
+@xref{The configure Script}.
+
+
+
+@node Modules for Compiling XEmacs, Modules for Preloading Lisp, Modules for Build Configuration, Modules for Building XEmacs
+@subsection Modules for Compiling XEmacs
+@cindex modules for compiling xemacs
+@cindex compiling xemacs, modules for
+
+@strong{Please write this node!} @c ####
+
+This node should contain descriptions of files like the various
+Makefiles, and I guess cross-references to ellcc etc.
+
+
+
+@node Modules for Preloading Lisp, , Modules for Compiling XEmacs, Modules for Building XEmacs
+@subsection Modules for Preloading Lisp
+@cindex modules for preloading lisp
+@cindex preloading lisp, modules for
+
+@strong{Please write this node!} @c ####
+
+This node should contain descriptions of files like dumped-lisp.el
+(maybe that goes in Modules for Build Configuration supra?),
+update-elcs.el, and so on.
+
+
+
+@node Low-Level Modules, Basic Lisp Modules, Modules for Building XEmacs, The Modules of XEmacs
 @section Low-Level Modules
 @cindex low-level modules
 @cindex modules, low-level
@@ -4056,7 +4124,327 @@ bugs in early releases of SunOS 4.1.
 This module provides some terminal-control code necessary on versions of
 AIX prior to 4.1.
 
-@node Rules When Writing New C Code, Regression Testing XEmacs, The Modules of XEmacs, Top
+
+
+@node The Build Configuration System, Rules When Writing New C Code, The Modules of XEmacs, Top
+@chapter The Build Configuration System
+@cindex build configuration
+@cindex configuration, build
+
+@strong{Please write this node!} @c ####
+
+This node should describe XEmacs-specific techniques and idioms in the
+configuration system.  A particular example is the set of @samp{XE_}
+macros in @file{configure.in} and @file{configure.ac}.
+
+@menu
+* Adding Configurable Features::  
+* The configure Script::  
+* The Makefile Precursors::  
+@end menu
+
+
+
+@node Adding Configurable Features, The configure Script, The Build Configuration System, The Build Configuration System
+@section Adding Configurable Features
+@cindex adding configurable features
+@cindex configurable features, adding
+@cindex features, adding configurable
+
+Adding a configurable feature requires at least adding an option to the
+@file{configure} script and a macro definition to @file{src/config.h.in}
+(@pxref{The configure Script}), and often changes to Makefile precursors
+(@pxref{The Makefile Precursors}).
+
+
+
+@node The configure Script, The Makefile Precursors, Adding Configurable Features, The Build Configuration System
+@section The configure Script
+@cindex configure script
+@cindex script, configure
+
+At the heart of the XEmacs build configuration system is the
+@file{configure} script.  This beast is maintained using the Autoconf
+system, which is a truly terrifying monstrosity based on a fundamentally
+flawed programming model (extensive use of macros), with an
+implementation about which I've never heard a nice word (GNU @file{m4}),
+used to string together a large set of @emph{ad hoc} tests, to implement
+a configuration language with conventions that are unimportant in simple
+cases and counterintuitive when things get complicated.  If that doesn't
+scare you off, Welcome! I think you're ready to become a configure
+hacker!  (But be prepared for things to go downhill from here.)
+
+@file{configure} is, of course, is written in POSIX shell language, and
+autogenerated from a precursor (see? the first step was a doozy!)
+Currently that precursor is called @file{configure.ac}, but in the
+previous generation it was called @file{configure.in}.  As of February
+2005, @file{configure.ac} is used in the development mainline, but
+because the semantics of many predefined macros changed drastically
+between @file{autoconf} 2.13 and @file{autoconf} 2.50 (why not ``3.0''? 
+you got me), the XEmacs Project chose to stick with the devil it knew
+for the stable line of XEmacs 21.4 releases.
+
+One reason for worrying about the semantic changes is the fact that
+XEmacs uses a lot of homebrew code, including @file{m4} macros, to
+implement special features in its @file{configure} script.  Here are
+some of the important features:
+
+@itemize
+@item
+Selectively enabling debugging, error checking, and tracing.
+@item
+Complex options, which are set-valued (@i{i.e.}, unordered; ordered
+lists of options, for example ``take the first available from the
+list,'' are neither used currently nor given special support).
+@end itemize
+
+Where these are implemented as @file{m4} macros, the prefix @samp{XE_}
+is used to identify them as XEmacs features in the @file{configure}
+precursor code.  Here is a list of prototypes of the convenience macros
+provided for performing common operations:
+
+@c #### @var{}-ize the formal parameters of these functions?
+@table @code
+@item USAGE_ERROR(string)
+prints a usage error and dies
+
+@item PRINT_VAR(var var ...)
+prints values of shell variables
+
+@item XE_ADD_OBJS(foo.o ...)
+@strong{#### Please document me!}
+
+@item XE_APPEND(value, varname)
+@strong{#### Please document me!}
+
+@item XE_PREPEND(value, varname)
+@strong{#### Please document me!}
+
+@item XE_DIE(message)
+used for situations that can't lead to a successful build, such as
+missing include files or conflicts between requested features.
+
+@item XE_CHECK_FEATURE_DEPENDENCY(feature1, feature2)
+@strong{#### Please document me!}
+
+@item XE_STRIP_4TH_COMPONENT(var)
+@strong{#### Please document me!}
+
+@item CANONICALIZE_PATH(varname)
+@strong{#### Please document me!}
+
+@item XE_PROTECT_LINKER_FLAGS(shell_var)
+@strong{#### Please document me!}
+
+@item COLON_TO_SPACE(path)
+Allow use of either @samp{:} or spaces for lists of directories.
+
+@item XE_ADD_RUNPATH_DIR(directory)
+@strong{#### Please document me!}
+
+@item XE_COMPUTE_RUNPATH()
+@strong{#### Please document me!}
+
+@item XE_SPACE(var, words)
+@strong{#### Please document me!}
+
+@item XE_SHLIB_STUFF
+See @file{aclocal.m4}.
+@end table
+
+@heading XEmacs keyword option support
+
+A @dfn{keyword} option is one that accepts one of a number of
+pre-defined values (if support for sets of values is needed, see
+``complex options'' below).  For example,
+@samp{--with-mail-locking=flock}.
+
+Keyword options use expanded forms of @samp{AC_ARG_[WITH|ENABLE]} called
+@samp{XE_KEYWORD_ARG_[WITH|ENABLE]}, both taking 5 parameters.  The
+first 4 parameters of these macros are the same as original macros with
+the exception that all four parameters are @strong{required}.  The
+@var{action-if-true} code is run after the argument list has been
+parsed.
+
+The 5th parameter is a list of supported keywords.  The whole list must
+be quoted but the individual keywords should not.
+
+If the option value is a not a valid keyword then an error message is
+generated, otherwise the value is left untouched.
+
+This support is implemented via the following @file{GNU m4} macros.
+Macros labelled @dfn{internal} are not expected to be used by
+@file{configure.ac} programmers; they are part of the implementation of
+higher-level features.
+
+@table @code
+@item XE_KEYWORD_ARG_WITH(package, help-string, action-if-true, action-if-false, [keyword1, keyword2, ....])
+Expanded version of @samp{AC_ARG_WITH} for keyword options.  All the
+parameters are required.  The last argument is a comma-separated list of
+supported keywords, @file{m4}-quoted with @samp{[]}.
+
+@item XE_KEYWORD_ARG_ENABLE(feature, help-string, action-if-true, action-if-false, [keyword1, keyword2, ....])
+Expanded version of @samp{AC_ARG_ENABLE} for keyword options.  All the
+parameters are required.  The last argument is a comma-separated list of
+supported keywords, @file{m4}-quoted with @samp{[]}.
+
+@item XE_PARSE_KEYWORD_OPTION(prefix, cmdline-flag)
+Internal macro to parse the option values.  If an undeclared option is
+found then an error is generated.
+
+@item XE_KEYWORD(keyword)
+Internal macro to declare an option value.
+
+@end table
+
+@heading XEmacs complex option support
+
+A @dfn{complex option} is one that takes a number of related values, as
+a set.  For example, we might use "--with-xft=all,nomenubars" for
+compatibility with XFontSet i18n of menubars.  (The example is
+contrived, Xft looks much better than XFS.)  Processing such an option
+requires a number of auxiliary variables.
+
+Complex options use expanded forms of @samp{AC_ARG_[WITH|ENABLE]} called
+@samp{XE_COMPLEX_ARG_[WITH|ENABLE]}, both taking 5 parameters.  The
+first 4 parameters of these macros are the same as original macros with
+the exception that all four parameters are @strong{required}.  The
+@var{action-if-true} code is run after the argument list has been
+parsed.
+
+The 5th parameter is a list of @samp{XE_COMPLEX_OPTION} macro calls that
+define the valid components and their default values.  The list must be
+quoted but the individual macro calls should not.  Here is how the
+@samp{sound} flag is defined:
+
+@example
+XE_COMPLEX_ARG_ENABLE([sound],
+	AC_HELP_STRING([--enable-sound],[Compile with sound support.
+                        Valid types are `native', `nas' and `esd'.
+                        Prefix a type with 'no' to disable.
+                        The first type can be `none' or `all'.  `none' means
+                        `nonative,nonas,noesd'.  `all' means `native,nas,esd'.
+                        Later options override earlier ones for the same TYPE.
+                        The default is to autodetect all sound support except 
+                        for ESD which defaults to off.]),
+	[],
+	[enable_sound_nas=""],
+	[XE_COMPLEX_OPTION([native],[""]),
+	 XE_COMPLEX_OPTION([nas],[""]),
+	 XE_COMPLEX_OPTION([esd],[no])])
+@end example
+
+(Note that the help string will be reformatted by @file{autoconf} so
+that all whitespace is first compressed to a single space, then folded
+to appear in the right-hand column as above.  Thus the help string may
+appear differently when @code{./configure --help} is invoked.)
+
+@c #### verify for INSTALL and xemacs Texinfo.
+Each component is interpreted as a separate feature to be enabled or
+disabled.  As usual, the distinction between ``with'' and ``enable'' is
+that ``with'' features require specific support from the system, usually
+one or more optional libraries, and ``enable'' features are supported
+entirely by code in XEmacs, but the user might want to switch it off for
+some reason.  Option values are stored in the variables
+@samp{with_@var{package}_@var{component}} or
+@samp{enable_@var{feature}_@var{component}} (@i{e.g.} 
+@samp{with_xft_menubars}).
+
+The user of @file{configure} specifies the configuration by providing a
+list of components.  The special components @samp{all} and @samp{none}
+may occur first in the list, setting the defaults for all components to
+@samp{yes} or @samp{no} respectively.
+
+In @file{configure.ac}, default values of option values may be
+@samp{yes} which means that the option must be used and an error must
+occur if there is a configuration problems (such as a missing library)
+or @samp{no} which means that the option must not be used.  The default
+value can also be the null string @samp{""}, usually meaning that
+@file{configure} will attempt to find support for the feature on the
+system, and will enable the configuration if it is available.  Sometimes
+the null string means that @file{configure}'s default is
+system-dependent.  (This usage is not consistent, and depends on the
+implementation of the feature detector rather than the argument parser.)
+Users cannot specify the null string for an individual component from
+the command line.
+
+There are two possible uses in XEmacs for this kind of facility.  One is
+exemplified by sound: there are alternative protocols (native, ESD, NAS)
+and each is supported by a corresponding library.  The other is a single
+library which may or may not be supported by multiple components of
+XEmacs, as exemplified by Xft.  This latter usage may be more common
+during development of a feature.  Perhaps specialized APIs should be
+provided, see comment on @samp{XE_COMPLEX_OPTION_HELP_STRING} below.
+
+@table @code
+@item XE_COMPLEX_OPTION(option, yesno)
+Declare a complex option and its default value.  The value @strong{must}
+be either @samp{yes} or @samp{no} or the null string @samp{""}.  The
+null string means ``maybe'', whose semantics are determined by the
+implementation of the option, not by the parser.  Typical semantics are
+``use the library if found in the usual places'' or ``default is
+platform-dependent''.
+
+@item XE_COMPLEX_OPTION_HELP_STRING(flag, long, short, components, libraries)
+Format a boilerplate help string for complex options.
+
+This was originally written for the Xft option, and doesn't read so well
+for options based on alternative libraries like sound.  Hackers beware:
+the API may be enhanced to deal with this in the future.
+
+@item XE_COMPLEX_ARG_WITH(PACKAGE, HELP-STRING, ACTION-IF-TRUE, ACTION-IF-FALSE, [XE_COMPLEX_OPTION(a,yes), ....])
+Extended version of @samp{AC_ARG_WITH} for complex options.  All the
+parameters are required.
+
+@item XE_COMPLEX_ARG_ENABLE(FEATURE, HELP-STRING, ACTION-IF-TRUE, ACTION-IF-FALSE, [XE_COMPLEX_OPTION(a,yes), ....])
+Expanded version of @samp{AC_ARG_ENABLE} for complex options.  All the
+parameters are required.
+
+@item XE_EXPAND_COMPLEX_OPTION(prefix, component, yesno)
+Internal macro create the option's shell variable containing the default
+value and to note the values in an option list.
+
+@item XE_EXPAND_COMPLEX_OPTIONS(prefix, option_list)
+Internal macro which recursively expands an option list.
+
+@item XE_INIT_COMPLEX_OPTION(prefix, option_list)
+Internal macro to initialise the complex option shell variables.
+
+Variables of the form @samp{@var{prefix}_@var{option}} contain the
+default value for that option.  @samp{@var{prefix}_types} contains a
+space-separated list of all the options and @samp{@var{prefix}_default}
+contains a comma-separated list of all the default values.
+
+@item XE_PARSE_COMPLEX_OPTION(prefix, cmdline-flag)
+Internal macro to parse the option values.  If an undeclared option is
+found then an error is generated.
+
+@end table
+
+
+
+@node The Makefile Precursors, , The configure Script, The Build Configuration System
+@section The Makefile Precursors
+@cindex Makefile precursors
+@cindex precursors, Makefile
+
+@strong{Please write this node!} @c ####
+
+As in other programs using a @file{configure} program, XEmacs's
+Makefiles are not written, they are generated.  The @file{configure}
+program uses Makefile precursors, or templates, to generate the actual
+Makefiles.  In fact, it is a multistage process.  The developer changes
+the file @file{Makefile.in.in}, then @file{configure} first generates an
+intermediate file @file{Makefile.in}, and finally produces a portable
+Makefile called @file{Makefile}, and a Makefile optimized for @file{GNU
+make} called @file{GNUmakefile}.
+
+This node describes XEmacs-specific techniques and idioms used in the
+@file{Makefile.in.in} files.
+
+
+
+@node Rules When Writing New C Code, Regression Testing XEmacs, The Build Configuration System, Top
 @chapter Rules When Writing New C Code
 @cindex writing new C code, rules when
 @cindex C code, rules when writing new
@@ -4090,8 +4478,8 @@ See also @ref{Coding for Mule}.
 @cindex coding conventions
 
 The C code is actually written in a dialect of C called @dfn{Clean C},
-meaning that it can be compiled, mostly warning-free, with either a C
-or C++ compiler.  Coding in Clean C has several advantages over plain
+meaning that it can be compiled, warning-free, with either a C or C++
+compiler.  Coding in Clean C has several advantages over plain
 C.  C++ compilers are more nit-picking, and a number of coding errors
 have been found by compiling with C++.  The ability to use both C and
 C++ tools means that a greater variety of development tools are
@@ -4102,6 +4490,7 @@ built-in types such as @code{unsigned char} or @code{long}) as
 classes, strictly limiting the permissible operations and catching
 illegal implicit casts and such.
 
+@c #### did Ben delete this, or just the CODING-STANDARDS file in ./etc?
 XEmacs follows the GNU coding standards, which are documented
 separately in @xref{top,,, standards, GNU Coding Standards}.  This
 section mainly documents standards that are not included in that
@@ -23222,6 +23611,7 @@ work properly so that it could be relied upon, and a lot of things
 could "just work".
 
 
+
 @node Future Work -- Better Rendering Support, , Future Work -- Lisp Engine Replacement,  Future Work
 @section Future Work -- Better Rendering Support
 @cindex future work, better rendering support
@@ -23231,7 +23621,7 @@ This section was written by Stephen Turnbull <stephen@@xemacs.org>, so
 don't blame Ben (or Eric and Matthias, for that matter).  Feel free to
 add, edit, and share the blame, guys!
 
-@c #### make these @urlref's!!
+@c #### Make these @urlref's!!
 As of late November 2004, this principally means adding support for the
 @file{Xft} library, which provides a more robust @emph{font
 configuration} mechanism via Keith Packard's @file{fontconfig} library
@@ -23244,7 +23634,7 @@ block integration.  These are @emph{Mule}, and more generally,
 @emph{face} support; @emph{widget} support (including the toolbar and
 menubar); and @emph{redisplay refactoring}.
 
-@c Describe Alexey Gladkov and Yury Konovalov's work.
+@c #### Describe Alexey Gladkov and Yury Konovalov's work.
 
 However, in late 2003 Eric Knauel <knauel@@informatik.uni-tuebingen.de>
 and Matthias Neubauer <neubauer@@informatik.uni-freiburg.de> put forward
@@ -23255,15 +23645,15 @@ this point a (private) CVS branch is available for Stephen's patch
 one may be made available for the Knauel-Matthias patch soon.
 
 @menu
-* Better Rendering Support -- Issues::
+* Better Rendering Support -- Review Criteria::
 * Better Rendering Support -- Implementation::
 * Better Rendering Support -- Current Status::
 * Better Rendering Support -- Configuration with the Interim Patches::
 @end menu
 
 
-@node Better Rendering Support -- Issues, Better Rendering Support -- Implementation, , Future Work -- Better Rendering Support
-@subsection Better Rendering Support -- Issues
+@node Better Rendering Support -- Review Criteria, Better Rendering Support -- Implementation, , Future Work -- Better Rendering Support
+@subsection Better Rendering Support -- Review Criteria
 @cindex better rendering support, issues
 @cindex issues, better rendering support
 
@@ -23300,7 +23690,7 @@ the gutters.  So specifiers will probably have to be reworked, in order
 to properly support display of different faces in non-buffer, non-window
 contexts.
 
-@node Better Rendering Support -- Implementation, Better Rendering Support -- Current Status, Better Rendering Support -- Issues, Future Work -- Better Rendering Support
+@node Better Rendering Support -- Implementation, Better Rendering Support -- Current Status, Better Rendering Support -- Review Criteria, Future Work -- Better Rendering Support
 @subsection Better Rendering Support -- Implementation
 @cindex better rendering support, implementation
 @cindex implementation, better rendering support
@@ -23323,6 +23713,15 @@ specifiers and @file{fontconfig} overlap, we should consider using
 @file{fontconfig} instead of @samp{XLFD} names.  This implies that use
 of @file{Xft}'s rendering functionality should be separated from use of
 @file{fontconfig}.
+
+@item fontconfig
+Fontconfig is dramatically different from the X model in several ways.
+In particular, @emph{fontconfig always returns a font}.  However, the
+font returned need not be anything like the desired font.  This means
+that XEmacs must adopt a strategy of delegating the search to
+fontconfig, then sanity-checking the return, rather than trying to use
+the fontconfig API to search using techniques appropriate for the X11
+core font API.
 
 @item Font menus
 The @samp{Options->Font} and @samp{Options->Font Sizes} menus are
@@ -23492,6 +23891,26 @@ Mea culpa.
 These menus don't work.  All fonts are greyed out.  All sizes are
 available, but many (most?) faces don't change size, in particular,
 @samp{default} does not.
+
+@item Antialiased text bleeding outside of reported extent
+On my PowerBook G4 Titanium 15" screen, X.org server v6.8.1,
+  dimensions:    1280x833 pixels (433x282 millimeters),
+  resolution:    75x75 dots per inch,
+  depth of root window:    24 planes
+(yes, those dimensions are broken),
+with font "Bitstream Vera Sans Mono-16:dpi=75" antialiased text may
+bleed out of the extent reported by XftTextExtents and other such
+facilities.  This is most obvious with the underscore character in that
+font.  The bottom of the underscore is antialiased, and insertions or
+deletions in the same line before the underscore leave a series of
+"phantom" underlines.  Except that it doesn't happen on the very first
+such insertion or deletion after a window refresh.  A similar effect
+sometimes occurs with deletions at the end of the line (no, I can't
+define "sometimes").  See also comments in @file{redisplay-x.c},
+functions @code{x_output_string} and @code{x_output_display_block}.
+(Mostly duplicated here.)
+
+I think this is probably an Xft bug, but I'm not sure.
 @end table
 
 
@@ -23505,43 +23924,24 @@ mind when configuring:
 
 @itemize
 @item
-The only way to configure widget fonts at the present time is to use X
-resources (or hack the source and rebuild).  Currently supported widgets
-are
-@itemize
-@item
-menubars
-@item
-tab controls
-@end itemize
+Although the menus don't work, it is possible to specify fonts for
+@emph{faces} using @code{set-face-font} (and other specifier-changing
+functions).
 
-Here are the resources I use.  @strong{Warning:} @emph{This interface
-will change.}  The tab control has separate Font and XftFont resources,
-and uses the X resource manager to instantiate a FontStruct from the
-Font resource.  The menubar on the other hand uses Font for both, but
-converts to FontStruct if Xft is not compiled in, and leaves it as a
-string if Xft is compiled in.  There is no equivalent facility for
-XftFont yet, and creating one that handles both FontStruct and XftFont
-depending on XEmacs's configuration and the font name seems error-prone
-at best.  Probably we will revert to a simple string representation for
-this resource, and convert to a face in XEmacs rather than a font in
-Xt/Xft.
-@example
-XEmacs*Tabs.xftFont: Bitstream Vera Sans-18 
-XEmacs*menubar.font: Bitstream Vera Sans-18
-XEmacs.modeline.attributeFont: Bitstream Charter-26
-XEmacs.default.attributeFont: Bitstream Vera Sans Mono-24
-@end example
-No, I don't understand why I need to use different point sizes to get
-what looks like good balance to my eyes.  I do highly recommend use of a
-proportional font in the modeline because it allows a lot more text to
-fit there.
+There currently is no explicit way to specify that a particular font be
+used only for a given language.  However, since many fonts support only
+a limited repertoire such as ISO 8859/1, you can use the precedence of
+specifications for a given specifier locale to get something of this
+effect for non-Latin character sets.  This will normally work rather
+poorly for multiple Latin character sets, however, because the
+repertoires tend to have large amounts of overlap.  Support for
+specifying font by @emph{language} as well as by character set is
+planned.
 
-@item
 Because fonts supporting other languages tend to support English as
 well, if you want to use one font for English and another for the other
 language, you must use the @code{append} method when adding font
-specifications for the other language.
+specifications for the @emph{other} language.
 
 However, this leaves you with a problem if you want to change the other
 language's font: you have to remove the existing specification so it
@@ -23559,7 +23959,40 @@ I use @code{define-specifier-tag} like this:
 (set-face-font 'default "Mikachan-14"
                nil '(lang-ja) 'remove-tag-set-append)
 @end example
+
+@item
+The only way to configure widget fonts at the present time is to use X
+resources (or hack the source and rebuild).  Currently supported widgets
+are
+@itemize
+@item
+menubars
+@item
+tab controls
 @end itemize
+
+Here are the resources I use.  @strong{Warning:} @emph{This interface
+will change.}  The tab control and menubar have separate Font and
+XftFont resources, and use the X resource manager to instantiate a
+FontStruct from the Font resource.  There is no converter facility for
+XftFont yet, and creating one that handles both FontStruct and XftFont
+depending on XEmacs's configuration and the font name seems error-prone
+at best.  Probably we will should to a simple string representation for
+this resource, and convert to a face in XEmacs rather than a font in
+Xt/Xft.
+@example
+XEmacs*Tabs.xftFont: Bitstream Vera Sans-16
+XEmacs*menubar*xftFont: Bitstream Vera Sans-16
+XEmacs.modeline.attributeFont: Bitstream Charter-16
+XEmacs.default.attributeFont: Bitstream Vera Sans Mono-16
+@end example
+I highly recommend use of a proportional font in the modeline because it
+allows a lot more text to fit there.  (Previously the font sizes were
+quite varied, and there was a comment that this weirdness gave good
+balance.  This isn't true on my main platform, Mac OS X, and needs to be
+rechecked on Linux, where it was observed.)
+@end itemize
+
 
 
 @node Future Work Discussion, Old Future Work, Future Work, Top
