@@ -214,7 +214,8 @@ static const struct sized_memory_description rted_description = {
 };
 
 static const struct memory_description range_table_description[] = {
-  { XD_BLOCK_PTR,  offsetof (Lisp_Range_Table, entries),  1, &rted_description },
+  { XD_BLOCK_PTR,  offsetof (Lisp_Range_Table, entries),  1,
+    { &rted_description } },
   { XD_END }
 };
 

@@ -1,3 +1,42 @@
+2005-02-01  Jerry James  <james@xemacs.org>
+
+	* dumper.c: Olivier Galibert's changes to enable dumping data via
+	a Java-like serialization/deserialization process.
+
+	* number.c: OG's bignum conversion functions.  Also, use the
+	dumping capability to initialize bigfloat-max-prec sanely.
+
+	* alloc.c:
+	* buffer.c:
+	* bytecode.c:
+	* console.c:
+	* data.c:
+	* device.c:
+	* elhash.c:
+	* eval.c:
+	* events.c:
+	* extents.c:
+	* file-coding.c:
+	* frame.c:
+	* glyphs.c:
+	* lstream.c:
+	* marker.c:
+	* mule-charset.c:
+	* mule-coding.c:
+	* objects.c:
+	* profile.c:
+	* rangetab.c:
+	* redisplay.c:
+	* specifier.c:
+	* unicode.c:
+	* window.c:
+	Add curly braces to the data2 arg of each memory_description
+	initializer.  Add a union member name to each reference to data2.
+
+	* lrecord.h: Ditto.  OG changes to add and document
+	XD_OPAQUE_PTR_CONVERTIBLE and XD_OPAQUE_DATA_CONVERTIBLE.  Add
+	memory_contents_description to solve pointer aliasing problems.
+
 2005-02-02  Ben Wing  <ben@xemacs.org>
 
 	* lread.c:

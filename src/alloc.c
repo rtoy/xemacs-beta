@@ -2662,7 +2662,7 @@ make_string_nocopy (const Ibyte *contents, Bytecount length)
 */
 
 const struct memory_description free_description[] = {
-  { XD_LISP_OBJECT, offsetof (struct free_lcrecord_header, chain), 0, 0,
+  { XD_LISP_OBJECT, offsetof (struct free_lcrecord_header, chain), 0, { 0 },
     XD_FLAG_FREE_LISP_OBJECT },
   { XD_END }
 };
@@ -2674,7 +2674,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("free", free,
 			       struct free_lcrecord_header);
 
 const struct memory_description lcrecord_list_description[] = {
-  { XD_LISP_OBJECT, offsetof (struct lcrecord_list, free), 0, 0,
+  { XD_LISP_OBJECT, offsetof (struct lcrecord_list, free), 0, { 0 },
     XD_FLAG_FREE_LISP_OBJECT },
   { XD_END }
 };
@@ -3152,7 +3152,8 @@ lispdesc_one_description_line_size (void *rdata,
 	    
 	return (val *
 		lispdesc_block_size
-		(rdata, lispdesc_indirect_description (obj, desc1->data2)));
+		(rdata,
+		 lispdesc_indirect_description (obj, desc1->data2.descr)));
       }
     case XD_OPAQUE_DATA_PTR:
       return sizeof (void *);
@@ -3162,7 +3163,7 @@ lispdesc_one_description_line_size (void *rdata,
 	   description, use it; else compute size based on current union
 	   constant. */
 	const struct sized_memory_description *sdesc =
-	  lispdesc_indirect_description (obj, desc1->data2);
+	  lispdesc_indirect_description (obj, desc1->data2.descr);
 	if (sdesc->size)
 	  return sdesc->size;
 	else
@@ -3179,7 +3180,7 @@ lispdesc_one_description_line_size (void *rdata,
 	   description, use it; else compute size based on maximum of all
 	   possible structures. */
 	const struct sized_memory_description *sdesc =
-	  lispdesc_indirect_description (obj, desc1->data2);
+	  lispdesc_indirect_description (obj, desc1->data2.descr);
 	if (sdesc->size)
 	  return sdesc->size;
 	else
@@ -3520,7 +3521,7 @@ kkcc_marking (void)
 		EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 							   data);
 		const struct sized_memory_description *sdesc =
-		  lispdesc_indirect_description (data, desc1->data2);
+		  lispdesc_indirect_description (data, desc1->data2.descr);
 		const char *dobj = * (const char **) rdata;
 		if (dobj)
 		  mark_struct_contents (dobj, sdesc, count);
@@ -3531,7 +3532,7 @@ kkcc_marking (void)
 		EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 							   data);
 		const struct sized_memory_description *sdesc =
-		  lispdesc_indirect_description (data, desc1->data2);
+		  lispdesc_indirect_description (data, desc1->data2.descr);
 		      
 		mark_struct_contents (rdata, sdesc, count);
 		break;

@@ -115,9 +115,9 @@ console_type_entry_dynarr *the_console_type_entry_dynarr;
 
 static const struct memory_description console_data_description_1 []= {
 #ifdef HAVE_TTY
-  { XD_BLOCK_PTR, tty_console, 1, &tty_console_data_description},
+  { XD_BLOCK_PTR, tty_console, 1, { &tty_console_data_description} },
 #endif
-  { XD_BLOCK_PTR, stream_console, 1, &stream_console_data_description},
+  { XD_BLOCK_PTR, stream_console, 1, { &stream_console_data_description} },
   { XD_END }
 };
 
@@ -130,9 +130,9 @@ static const struct memory_description console_description [] = {
 #define MARKED_SLOT(x) { XD_LISP_OBJECT, offsetof (struct console, x) },
 #include "conslots.h"
   { XD_BLOCK_PTR, offsetof (struct console, conmeths), 1,
-    &console_methods_description },
+    { &console_methods_description } },
   { XD_UNION, offsetof (struct console, console_data), 
-    XD_INDIRECT (0, 0), &console_data_description },
+    XD_INDIRECT (0, 0), { &console_data_description } },
   { XD_END }
 };
 
@@ -1227,7 +1227,8 @@ syms_of_console (void)
 
 static const struct memory_description cte_description_1[] = {
   { XD_LISP_OBJECT, offsetof (console_type_entry, symbol) },
-  { XD_BLOCK_PTR,  offsetof (console_type_entry, meths), 1, &console_methods_description },
+  { XD_BLOCK_PTR,  offsetof (console_type_entry, meths), 1,
+    { &console_methods_description } },
   { XD_END }
 };
 

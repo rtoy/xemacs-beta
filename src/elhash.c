@@ -452,8 +452,8 @@ static const struct memory_description htentry_union_description_1[] = {
   /* Note: XD_INDIRECT in this table refers to the surrounding table,
      and so this will work. */
   { XD_BLOCK_PTR, HASH_TABLE_NON_WEAK, XD_INDIRECT (0, 1),
-    &htentry_description },
-  { XD_BLOCK_PTR, 0, XD_INDIRECT (0, 1), &htentry_description,
+    { &htentry_description } },
+  { XD_BLOCK_PTR, 0, XD_INDIRECT (0, 1), { &htentry_description },
     XD_FLAG_UNION_DEFAULT_ENTRY | XD_FLAG_NO_KKCC },
   { XD_END }
 };
@@ -467,7 +467,7 @@ const struct memory_description hash_table_description[] = {
   { XD_ELEMCOUNT,  offsetof (Lisp_Hash_Table, size) },
   { XD_INT,	   offsetof (Lisp_Hash_Table, weakness) },
   { XD_UNION,	   offsetof (Lisp_Hash_Table, hentries), XD_INDIRECT (1, 0),
-    &htentry_union_description },
+    { &htentry_union_description } },
   { XD_LO_LINK,    offsetof (Lisp_Hash_Table, next_weak) },
   { XD_END }
 };

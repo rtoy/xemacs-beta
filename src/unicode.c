@@ -224,7 +224,7 @@ static const struct sized_memory_description to_unicode_level_0_desc = {
 };
 
 static const struct memory_description to_unicode_level_1_desc_1[] = {
-  { XD_BLOCK_PTR, 0, 96, &to_unicode_level_0_desc },
+  { XD_BLOCK_PTR, 0, 96, { &to_unicode_level_0_desc } },
   { XD_END }
 };
 
@@ -233,8 +233,8 @@ static const struct sized_memory_description to_unicode_level_1_desc = {
 };
 
 static const struct memory_description to_unicode_description_1[] = {
-  { XD_BLOCK_PTR, 1, 96, &to_unicode_level_0_desc },
-  { XD_BLOCK_PTR, 2, 96, &to_unicode_level_1_desc },
+  { XD_BLOCK_PTR, 1, 96, { &to_unicode_level_0_desc } },
+  { XD_BLOCK_PTR, 2, 96, { &to_unicode_level_1_desc } },
   { XD_END }
 };
 
@@ -246,7 +246,7 @@ const struct sized_memory_description to_unicode_description = {
 
 /* Used only for to_unicode_blank_2 */
 static const struct memory_description to_unicode_level_2_desc_1[] = {
-  { XD_BLOCK_PTR, 0, 96, &to_unicode_level_1_desc },
+  { XD_BLOCK_PTR, 0, 96, { &to_unicode_level_1_desc } },
   { XD_END }
 };
 
@@ -259,7 +259,7 @@ static const struct sized_memory_description from_unicode_level_0_desc = {
 };
 
 static const struct memory_description from_unicode_level_1_desc_1[] = {
-  { XD_BLOCK_PTR, 0, 256, &from_unicode_level_0_desc },
+  { XD_BLOCK_PTR, 0, 256, { &from_unicode_level_0_desc } },
   { XD_END }
 };
 
@@ -268,7 +268,7 @@ static const struct sized_memory_description from_unicode_level_1_desc = {
 };
 
 static const struct memory_description from_unicode_level_2_desc_1[] = {
-  { XD_BLOCK_PTR, 0, 256, &from_unicode_level_1_desc },
+  { XD_BLOCK_PTR, 0, 256, { &from_unicode_level_1_desc } },
   { XD_END }
 };
 
@@ -277,7 +277,7 @@ static const struct sized_memory_description from_unicode_level_2_desc = {
 };
 
 static const struct memory_description from_unicode_level_3_desc_1[] = {
-  { XD_BLOCK_PTR, 0, 256, &from_unicode_level_2_desc },
+  { XD_BLOCK_PTR, 0, 256, { &from_unicode_level_2_desc } },
   { XD_END }
 };
 
@@ -286,10 +286,10 @@ static const struct sized_memory_description from_unicode_level_3_desc = {
 };
 
 static const struct memory_description from_unicode_description_1[] = {
-  { XD_BLOCK_PTR, 1, 256, &from_unicode_level_0_desc },
-  { XD_BLOCK_PTR, 2, 256, &from_unicode_level_1_desc },
-  { XD_BLOCK_PTR, 3, 256, &from_unicode_level_2_desc },
-  { XD_BLOCK_PTR, 4, 256, &from_unicode_level_3_desc },
+  { XD_BLOCK_PTR, 1, 256, { &from_unicode_level_0_desc } },
+  { XD_BLOCK_PTR, 2, 256, { &from_unicode_level_1_desc } },
+  { XD_BLOCK_PTR, 3, 256, { &from_unicode_level_2_desc } },
+  { XD_BLOCK_PTR, 4, 256, { &from_unicode_level_3_desc } },
   { XD_END }
 };
 
@@ -301,7 +301,7 @@ const struct sized_memory_description from_unicode_description = {
 
 /* Used only for from_unicode_blank_4 */
 static const struct memory_description from_unicode_level_4_desc_1[] = {
-  { XD_BLOCK_PTR, 0, 256, &from_unicode_level_3_desc },
+  { XD_BLOCK_PTR, 0, 256, { &from_unicode_level_3_desc } },
   { XD_END }
 };
 

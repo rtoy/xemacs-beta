@@ -98,8 +98,8 @@ marker_hash (Lisp_Object obj, int UNUSED (depth))
 }
 
 static const struct memory_description marker_description[] = {
-  { XD_LISP_OBJECT, offsetof (Lisp_Marker, next), 0, 0, XD_FLAG_NO_KKCC },
-  { XD_LISP_OBJECT, offsetof (Lisp_Marker, prev), 0, 0, XD_FLAG_NO_KKCC },
+  { XD_LISP_OBJECT, offsetof (Lisp_Marker, next), 0, { 0 }, XD_FLAG_NO_KKCC },
+  { XD_LISP_OBJECT, offsetof (Lisp_Marker, prev), 0, { 0 }, XD_FLAG_NO_KKCC },
   { XD_LISP_OBJECT, offsetof (Lisp_Marker, buffer) },
   { XD_END }
 };

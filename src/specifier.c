@@ -66,7 +66,7 @@ static specifier_type_entry_dynarr *the_specifier_type_entry_dynarr;
 static const struct memory_description ste_description_1[] = {
   { XD_LISP_OBJECT, offsetof (specifier_type_entry, symbol) },
   { XD_BLOCK_PTR,  offsetof (specifier_type_entry, meths), 1,
-    &specifier_methods_description },
+    { &specifier_methods_description } },
   { XD_END }
 };
 
@@ -397,7 +397,7 @@ static const struct sized_memory_description specifier_extra_description_map[]
 
 const struct memory_description specifier_description[] = {
   { XD_BLOCK_PTR,  offsetof (Lisp_Specifier, methods), 1,
-    &specifier_methods_description },
+    { &specifier_methods_description } },
   { XD_LO_LINK,     offsetof (Lisp_Specifier, next_specifier) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, global_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, device_specs) },
@@ -405,11 +405,11 @@ const struct memory_description specifier_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, window_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, buffer_specs) },
   { XD_BLOCK_PTR,  offsetof (Lisp_Specifier, caching), 1,
-    &specifier_caching_description },
+    { &specifier_caching_description } },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, magic_parent) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, fallback) },
   { XD_BLOCK_ARRAY, offsetof (Lisp_Specifier, data), 1,
-    specifier_extra_description_map },
+    { specifier_extra_description_map } },
   { XD_END }
 };
 

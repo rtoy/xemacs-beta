@@ -245,9 +245,9 @@ static const struct memory_description buffer_description [] = {
   { XD_LISP_OBJECT, offsetof (struct buffer, extent_info) },
 
   { XD_BLOCK_PTR, offsetof (struct buffer, text),
-    1, &buffer_text_description },
+    1, { &buffer_text_description } },
   { XD_BLOCK_PTR, offsetof (struct buffer, syntax_cache),
-    1, &syntax_cache_description },
+    1, { &syntax_cache_description } },
 
   { XD_LISP_OBJECT, offsetof (struct buffer, indirect_children) },
   { XD_LISP_OBJECT, offsetof (struct buffer, base_buffer) },

@@ -173,9 +173,9 @@ static const struct memory_description charset_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, reverse_direction_charset) },
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, ccl_program) },
   { XD_UNION, offsetof (Lisp_Charset, to_unicode_table),
-    XD_INDIRECT (0, 0), &to_unicode_description },
+    XD_INDIRECT (0, 0), { &to_unicode_description } },
   { XD_UNION, offsetof (Lisp_Charset, from_unicode_table),
-    XD_INDIRECT (1, 0), &from_unicode_description },
+    XD_INDIRECT (1, 0), { &from_unicode_description } },
   { XD_END }
 };
 

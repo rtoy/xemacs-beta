@@ -2589,9 +2589,9 @@ make_weak_list (enum weak_list_type type)
 
 static const struct memory_description weak_list_description[] = {
   { XD_LISP_OBJECT, offsetof (struct weak_list, list), 
-  0, 0, XD_FLAG_NO_KKCC },
+    0, { 0 }, XD_FLAG_NO_KKCC },
   { XD_LO_LINK,     offsetof (struct weak_list, next_weak), 
-  0, 0, XD_FLAG_NO_KKCC },
+    0, { 0 }, XD_FLAG_NO_KKCC },
   { XD_END }
 };
 
@@ -3299,11 +3299,11 @@ make_ephemeron(Lisp_Object key, Lisp_Object value, Lisp_Object finalizer)
    is marked here. */
 static const struct memory_description ephemeron_description[] = {
   { XD_LISP_OBJECT, offsetof(struct ephemeron, key),
-    0, 0, XD_FLAG_NO_KKCC },
+    0, { 0 }, XD_FLAG_NO_KKCC },
   { XD_LISP_OBJECT, offsetof(struct ephemeron, cons_chain),
-    0, 0, XD_FLAG_NO_KKCC },
+    0, { 0 }, XD_FLAG_NO_KKCC },
   { XD_LISP_OBJECT, offsetof(struct ephemeron, value),
-    0, 0, XD_FLAG_NO_KKCC },
+    0, { 0 }, XD_FLAG_NO_KKCC },
   { XD_END }
 };
 

@@ -63,7 +63,7 @@ Lisp_Object Qcolor_instancep;
 
 static const struct memory_description color_instance_data_description_1 []= {
 #ifdef HAVE_TTY
-  { XD_BLOCK_PTR, tty_console, 1, &tty_color_instance_data_description},
+  { XD_BLOCK_PTR, tty_console, 1, { &tty_color_instance_data_description } },
 #endif
   { XD_END }
 };
@@ -77,7 +77,7 @@ static const struct memory_description color_instance_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Color_Instance, name)},
   { XD_LISP_OBJECT, offsetof (Lisp_Color_Instance, device)},
   { XD_UNION, offsetof (Lisp_Color_Instance, data),
-    XD_INDIRECT (0, 0), &color_instance_data_description },
+    XD_INDIRECT (0, 0), { &color_instance_data_description } },
   {XD_END}
 };
 
@@ -272,7 +272,7 @@ static Lisp_Object font_instance_truename_internal (Lisp_Object xfont,
 
 static const struct memory_description font_instance_data_description_1 []= {
 #ifdef HAVE_TTY
-  { XD_BLOCK_PTR, tty_console, 1, &tty_font_instance_data_description},
+  { XD_BLOCK_PTR, tty_console, 1, { &tty_font_instance_data_description} },
 #endif
   { XD_END }
 };
@@ -287,7 +287,7 @@ static const struct memory_description font_instance_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, truename)},
   { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, device)},
   { XD_UNION, offsetof (Lisp_Font_Instance, data), 
-    XD_INDIRECT (0, 0), &font_instance_data_description },
+    XD_INDIRECT (0, 0), { &font_instance_data_description } },
   { XD_END }
 };
 

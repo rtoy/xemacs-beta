@@ -109,7 +109,7 @@ static const struct sized_memory_description hentry_description = {
 static const struct memory_description plain_hash_table_description_1[] = {
   { XD_ELEMCOUNT,  offsetof (struct hash_table, size) },
   { XD_BLOCK_PTR, offsetof (struct hash_table, harray), XD_INDIRECT (0, 0),
-    &hentry_description },
+    { &hentry_description } },
   { XD_END }
 };
 

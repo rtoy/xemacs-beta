@@ -2180,7 +2180,7 @@ compiled_function_hash (Lisp_Object obj, int depth)
 static const struct memory_description compiled_function_description[] = {
   { XD_INT,         offsetof (Lisp_Compiled_Function, args_in_array) },
   { XD_BLOCK_PTR,  offsetof (Lisp_Compiled_Function, args),
-      XD_INDIRECT (0, 0), &lisp_object_description },
+    XD_INDIRECT (0, 0), { &lisp_object_description } },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, instructions) },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, constants) },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, arglist) },

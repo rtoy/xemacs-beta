@@ -1,5 +1,5 @@
 /* Portable data dumper for XEmacs.
-   Copyright (C) 1999-2000 Olivier Galibert
+   Copyright (C) 1999-2000,2004 Olivier Galibert
    Copyright (C) 2001 Martin Buchholz
    Copyright (C) 2001, 2002, 2003, 2004 Ben Wing.
 
@@ -78,6 +78,57 @@ typedef struct
 
 typedef struct
 {
+  const void *object;
+  void *data;
+  Bytecount size;
+  EMACS_INT offset;
+  EMACS_INT dest_offset;
+  EMACS_INT save_offset;
+  const struct opaque_convert_functions *fcts;
+} pdump_cv_data_info;
+
+typedef struct 
+{
+  Dynarr_declare (pdump_cv_data_info);
+} pdump_cv_data_info_dynarr;
+
+typedef struct
+{
+  EMACS_INT dest_offset;
+  EMACS_INT save_offset;
+  Bytecount size;
+} pdump_cv_data_dump_info;
+
+typedef struct
+{
+  const void *object;
+  void *data;
+  Bytecount size;
+  EMACS_INT index;
+  EMACS_INT save_offset;
+  const struct opaque_convert_functions *fcts;
+} pdump_cv_ptr_info;
+
+typedef struct 
+{
+  Dynarr_declare (pdump_cv_ptr_info);
+} pdump_cv_ptr_info_dynarr;
+
+typedef struct
+{
+  EMACS_INT save_offset;
+  Bytecount size;
+} pdump_cv_ptr_dump_info;
+
+typedef struct
+{
+  EMACS_INT save_offset;
+  Bytecount size;
+  void *adr;
+} pdump_cv_ptr_load_info;
+
+typedef struct
+{
   Lisp_Object *address;
   Lisp_Object value;
 } pdump_static_Lisp_Object;
@@ -92,6 +143,8 @@ static pdump_root_block_dynarr *pdump_root_blocks;
 static pdump_root_block_ptr_dynarr *pdump_root_block_ptrs;
 static Lisp_Object_ptr_dynarr *pdump_root_lisp_objects;
 static Lisp_Object_ptr_dynarr *pdump_weak_object_chains;
+static pdump_cv_data_info_dynarr *pdump_cv_data;
+static pdump_cv_ptr_info_dynarr *pdump_cv_ptr;
 
 /* Mark SIZE bytes at non-heap address BLOCKADDR for dumping, described
    by DESC.  Called by outside callers during XEmacs initialization.  */
@@ -210,7 +263,10 @@ pdump_objects_unmark (void)
 /* The structure of the dump file looks like this:
  0		- header
 		- dumped objects
- stab_offset	- nb_root_block_ptrs*struct(void *, adr)
+ stab_offset	- nb_cv_data*struct(dest, adr) for in-object externally
+		  represented data
+		- nb_cv_ptr*(adr) for pointed-to externally represented data
+ 		- nb_root_block_ptrs*struct(void *, adr)
 		  for global pointers to heap blocks
 		- nb_root_blocks*struct(void *, size, info) for global
 		  data-segment blocks to restore
@@ -231,11 +287,16 @@ typedef struct
   EMACS_UINT reloc_address;
   int nb_root_block_ptrs;
   int nb_root_blocks;
+  int nb_cv_data;
+  int nb_cv_ptr;
 } pdump_header;
 
 Rawbyte *pdump_start;
 Rawbyte *pdump_end;
 static Bytecount pdump_length;
+
+static pdump_cv_data_dump_info *pdump_loaded_cv_data;
+static pdump_cv_ptr_load_info  *pdump_loaded_cv_ptr;
 
 #ifdef WIN32_NATIVE
 /* Handle for the dump file */
@@ -449,6 +510,16 @@ pdump_get_block_list (const struct memory_description *desc)
   return &pdump_desc_table.list[pdump_desc_table.count++].list;
 }
 
+static pdump_cv_ptr_info *
+pdump_find_in_cv_ptr_dynarr(const void *object)
+{
+  int i;
+  for (i = 0; i < Dynarr_length (pdump_cv_ptr); i++)
+    if (Dynarr_at (pdump_cv_ptr, i).object == object)
+      return Dynarr_atp (pdump_cv_ptr, i);
+  return 0;
+}
+
 static struct
 {
   struct lrecord_header *obj;
@@ -608,7 +679,7 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 						       data);
 	    const struct sized_memory_description *sdesc =
-	      lispdesc_indirect_description (data, desc1->data2);
+	      lispdesc_indirect_description (data, desc1->data2.descr);
 	    const Rawbyte *dobj = *(const Rawbyte **)rdata;
 	    if (dobj)
 	      pdump_register_block (dobj, sdesc->size, sdesc->description,
@@ -620,7 +691,7 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
 						       data);
 	    const struct sized_memory_description *sdesc =
-	      lispdesc_indirect_description (data, desc1->data2);
+	      lispdesc_indirect_description (data, desc1->data2.descr);
 
 	    pdump_register_block_contents (rdata, sdesc->size,
 					   sdesc->description, count);
@@ -632,6 +703,29 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 	  if (desc1)
 	    goto union_switcheroo;
 	  break;
+	case XD_OPAQUE_PTR_CONVERTIBLE:
+	  {
+	    pdump_cv_ptr_info info;
+	    info.object = *(void **)rdata;
+	    info.fcts = desc1->data2.funcs;
+	    if (!pdump_find_in_cv_ptr_dynarr (info.object))
+	      {
+		info.fcts->convert(info.object, &info.data, &info.size);
+		Dynarr_add (pdump_cv_ptr, info);
+	      }
+	    break;
+	  }
+	case XD_OPAQUE_DATA_CONVERTIBLE:
+	  {
+	    pdump_cv_data_info info;
+	    info.object = data;
+	    info.offset = offset;
+	    info.fcts = desc1->data2.funcs;
+
+	    info.fcts->convert(rdata, &info.data, &info.size);
+	    Dynarr_add (pdump_cv_data, info);
+	    break;
+	  }
 
 	default:
 	  pdump_unsupported_dump_type (desc1->type, 1);
@@ -725,6 +819,7 @@ pdump_register_block (const void *data,
       pdump_register_block_contents (data, size, desc, count);
     }
 }
+
 
 /* Store the already-calculated new pointer offsets for all pointers in the
    COUNT contiguous blocks of memory, each described by DESC and of size
@@ -876,7 +971,7 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 		EMACS_INT num = lispdesc_indirect_count (desc1->data1, desc,
 							 orig_data);
 		const struct sized_memory_description *sdesc =
-		  lispdesc_indirect_description (orig_data, desc1->data2);
+		  lispdesc_indirect_description (orig_data, desc1->data2.descr);
 
 		pdump_store_new_pointer_offsets
 		  (num, rdata,
@@ -893,6 +988,14 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 	      desc1 = lispdesc_process_xd_union (desc1, desc, orig_data);
 	      if (desc1)
 		goto union_switcheroo;
+	      break;
+
+	    case XD_OPAQUE_PTR_CONVERTIBLE:
+	      *(EMACS_INT *)rdata = pdump_find_in_cv_ptr_dynarr (*(void **)rdata)->index;
+	      break;
+
+	    case XD_OPAQUE_DATA_CONVERTIBLE:
+	      /* in-object, nothing to do */
 	      break;
 
 	    default:
@@ -1015,7 +1118,7 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 						     data);
 	    int j;
 	    const struct sized_memory_description *sdesc =
-	      lispdesc_indirect_description (data, desc1->data2);
+	      lispdesc_indirect_description (data, desc1->data2.descr);
 	    Bytecount size = lispdesc_block_size (rdata, sdesc);
 
 	    /* Note: We are recursing over data in the block itself */
@@ -1032,6 +1135,28 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 	    goto union_switcheroo;
 	  break;
 
+	case XD_OPAQUE_PTR_CONVERTIBLE:
+	  {
+	    pdump_cv_ptr_load_info *p = pdump_loaded_cv_ptr + *(EMACS_INT *)rdata;
+	    if (!p->adr)
+	      p->adr = desc1->data2.funcs->deconvert(0, pdump_start +
+						     p->save_offset, p->size);
+	    *(void **)rdata = p->adr;
+	    break;
+	  }
+
+	case XD_OPAQUE_DATA_CONVERTIBLE:
+	  {
+	    EMACS_INT dest_offset = (Rawbyte *)rdata - pdump_start;
+	    pdump_cv_data_dump_info *p;
+
+	    for(p = pdump_loaded_cv_data; p->dest_offset != dest_offset; p++);
+
+	    desc1->data2.funcs->deconvert(rdata, pdump_start + p->save_offset,
+					  p->size);
+	    break;
+	  }
+
 	default:
 	  pdump_unsupported_dump_type (desc1->type, 0);
 	}
@@ -1047,6 +1172,39 @@ pdump_allocate_offset (pdump_block_list_elt *elt,
   if (size > max_size)
     max_size = size;
   cur_offset += size;
+}
+
+/* Write out to global file descriptor PDUMP_OUT the result of an
+   external element.  It's just opaque data. */
+
+static void
+pdump_dump_cv_data (pdump_cv_data_info *elt)
+{
+  retry_fwrite (elt->data, elt->size, 1, pdump_out);
+}
+
+static void
+pdump_dump_cv_ptr (pdump_cv_ptr_info *elt)
+{
+  retry_fwrite (elt->data, elt->size, 1, pdump_out);
+}
+
+static void
+pdump_allocate_offset_cv_data (pdump_cv_data_info *elt)
+{
+  elt->save_offset = cur_offset;
+  if (elt->size>max_size)
+    max_size = elt->size;
+  cur_offset += elt->size;
+}
+
+static void
+pdump_allocate_offset_cv_ptr (pdump_cv_ptr_info *elt)
+{
+  elt->save_offset = cur_offset;
+  if (elt->size>max_size)
+    max_size = elt->size;
+  cur_offset += elt->size;
 }
 
 /* Traverse through all the heap blocks, once the "register" stage of
@@ -1081,7 +1239,9 @@ pdump_allocate_offset (pdump_block_list_elt *elt,
 
 static void
 pdump_scan_by_alignment (void (*f)(pdump_block_list_elt *,
-				   const struct memory_description *))
+				   const struct memory_description *),
+			 void (*g)(pdump_cv_data_info *),
+			 void (*h)(pdump_cv_ptr_info *))
 {
   int align;
 
@@ -1106,13 +1266,54 @@ pdump_scan_by_alignment (void (*f)(pdump_block_list_elt *,
       for (elt = pdump_opaque_data_list.first; elt; elt = elt->next)
 	if (pdump_size_to_align (elt->size) == align)
 	  f (elt, 0);
+
+      for (i=0; i < Dynarr_length (pdump_cv_data); i++)
+	if (pdump_size_to_align (Dynarr_atp (pdump_cv_data, i)->size) == align)
+	  g (Dynarr_atp (pdump_cv_data, i));
+
+      for (i=0; i < Dynarr_length (pdump_cv_ptr); i++)
+	if (pdump_size_to_align (Dynarr_atp (pdump_cv_ptr, i)->size) == align)
+	  h (Dynarr_atp (pdump_cv_ptr, i));
     }
+}
+
+static void
+pdump_dump_cv_data_info (void)
+{
+  int i;
+  Elemcount count = Dynarr_length (pdump_cv_data);
+  pdump_cv_data_dump_info *data = alloca_array (pdump_cv_data_dump_info, count);
+  for (i = 0; i < count; i++)
+    {
+      data[i].dest_offset = Dynarr_at (pdump_cv_data, i).dest_offset;
+      data[i].save_offset = Dynarr_at (pdump_cv_data, i).save_offset;
+      data[i].size        = Dynarr_at (pdump_cv_data, i).size;
+    }
+
+  PDUMP_ALIGN_OUTPUT (pdump_cv_data_dump_info);
+  retry_fwrite (data, sizeof (pdump_cv_data_dump_info), count, pdump_out); 
 }
 
 /* Dump out the root block pointers, part of stage 3 (the "WRITE" stage) of
    dumping.  For each pointer we dump out a structure containing the
    location of the pointer and its value, replaced by the appropriate
    offset into the dumped data. */
+
+static void
+pdump_dump_cv_ptr_info (void)
+{
+  int i;
+  Elemcount count = Dynarr_length (pdump_cv_ptr);
+  pdump_cv_ptr_dump_info *data = alloca_array (pdump_cv_ptr_dump_info, count);
+  for (i = 0; i < count; i++)
+    {
+      data[i].save_offset = Dynarr_at (pdump_cv_ptr, i).save_offset;
+      data[i].size        = Dynarr_at (pdump_cv_ptr, i).size;
+    }
+
+  PDUMP_ALIGN_OUTPUT (pdump_cv_ptr_dump_info);
+  retry_fwrite (data, sizeof (pdump_cv_ptr_dump_info), count, pdump_out); 
+}
 
 static void
 pdump_dump_root_block_ptrs (void)
@@ -1436,6 +1637,9 @@ pdump (void)
   pdump_opaque_data_list.count = 0;
   pdump_depth = 0;
 
+  pdump_cv_data = Dynarr_new2 (pdump_cv_data_info_dynarr, pdump_cv_data_info);
+  pdump_cv_ptr  = Dynarr_new2 (pdump_cv_ptr_info_dynarr,  pdump_cv_ptr_info);
+
   /* (I) The "register" stage: Note all heap memory blocks to be relocated
      */
 
@@ -1495,13 +1699,17 @@ pdump (void)
   header.reloc_address = 0;
   header.nb_root_block_ptrs = Dynarr_length (pdump_root_block_ptrs);
   header.nb_root_blocks = Dynarr_length (pdump_root_blocks);
+  header.nb_cv_data = Dynarr_length (pdump_cv_data);
+  header.nb_cv_ptr =  Dynarr_length (pdump_cv_ptr);
 
   cur_offset = MAX_ALIGN_SIZE (sizeof (header));
   max_size = 0;
 
   /* (2) Traverse all heap blocks and compute their offsets; keep track
          of maximum block size seen */
-  pdump_scan_by_alignment (pdump_allocate_offset);
+  pdump_scan_by_alignment (pdump_allocate_offset,
+			   pdump_allocate_offset_cv_data,
+			   pdump_allocate_offset_cv_ptr);
   cur_offset = MAX_ALIGN_SIZE (cur_offset);
   header.stab_offset = cur_offset;
 
@@ -1537,10 +1745,36 @@ pdump (void)
   retry_fwrite (&header, sizeof (header), 1, pdump_out);
   PDUMP_ALIGN_OUTPUT (max_align_t);
 
-  pdump_scan_by_alignment (pdump_dump_data);
+  for (i = 0; i < Dynarr_length (pdump_cv_data); i++)
+    {
+      pdump_cv_data_info *elt = Dynarr_atp (pdump_cv_data, i);
+      elt->dest_offset =
+	pdump_get_block (elt->object)->save_offset + elt->offset;
+    }
+
+  for (i = 0; i < Dynarr_length (pdump_cv_ptr); i++)
+    Dynarr_at (pdump_cv_ptr, i).index = i;
+
+  pdump_scan_by_alignment (pdump_dump_data, pdump_dump_cv_data, pdump_dump_cv_ptr);
+
+  for (i = 0; i < Dynarr_length (pdump_cv_data); i++)
+    {
+      pdump_cv_data_info *elt = Dynarr_atp (pdump_cv_data, i);
+      if(elt->fcts->convert_free)
+	elt->fcts->convert_free(elt->object, elt->data, elt->size);
+    }
+
+  for (i = 0; i < Dynarr_length (pdump_cv_ptr); i++)
+    {
+      pdump_cv_ptr_info *elt = Dynarr_atp (pdump_cv_ptr, i);
+      if(elt->fcts->convert_free)
+	elt->fcts->convert_free(elt->object, elt->data, elt->size);
+    }
 
   fseek (pdump_out, header.stab_offset, SEEK_SET);
 
+  pdump_dump_cv_data_info ();
+  pdump_dump_cv_ptr_info ();
   pdump_dump_root_block_ptrs ();
   pdump_dump_root_blocks ();
   pdump_dump_rtables ();
@@ -1583,6 +1817,23 @@ pdump_load_finish (void)
 
   delta = ((EMACS_INT) pdump_start) - header->reloc_address;
   p = pdump_start + header->stab_offset;
+
+  /* Get the cv_data array */
+  p = (char *) ALIGN_PTR (p, pdump_cv_data_dump_info);
+  pdump_loaded_cv_data = (pdump_cv_data_dump_info *)p;
+  p += header->nb_cv_data*sizeof(pdump_cv_data_dump_info);
+
+  /* Build the cv_ptr array */
+  p = (char *) ALIGN_PTR (p, pdump_cv_ptr_dump_info);
+  pdump_loaded_cv_ptr =
+    alloca_array (pdump_cv_ptr_load_info, header->nb_cv_ptr);
+  for (i = 0; i < header->nb_cv_ptr; i++)
+    {
+      pdump_cv_ptr_dump_info info = PDUMP_READ (p, pdump_cv_ptr_dump_info);
+      pdump_loaded_cv_ptr[i].save_offset = info.save_offset;
+      pdump_loaded_cv_ptr[i].size        = info.size;
+      pdump_loaded_cv_ptr[i].adr         = 0;
+    }
 
   /* Put back the pdump_root_block_ptrs */
   p = (Rawbyte *) ALIGN_PTR (p, pdump_static_pointer);

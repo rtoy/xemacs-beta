@@ -189,16 +189,16 @@ static const struct sized_memory_description magic_data_description = {
 };
 
 static const struct memory_description event_data_description_1 [] = {
-  { XD_BLOCK_ARRAY, key_press_event, 1, &key_data_description },
-  { XD_BLOCK_ARRAY, button_press_event, 1, &button_data_description },
-  { XD_BLOCK_ARRAY, button_release_event, 1, &button_data_description },
-  { XD_BLOCK_ARRAY, pointer_motion_event, 1, &motion_data_description },
-  { XD_BLOCK_ARRAY, process_event, 1, &process_data_description },
-  { XD_BLOCK_ARRAY, timeout_event, 1, &timeout_data_description },
-  { XD_BLOCK_ARRAY, magic_event, 1, &magic_data_description },
-  { XD_BLOCK_ARRAY, magic_eval_event, 1, &magic_eval_data_description },
-  { XD_BLOCK_ARRAY, eval_event, 1, &eval_data_description },
-  { XD_BLOCK_ARRAY, misc_user_event, 1, &misc_user_data_description },
+  { XD_BLOCK_ARRAY, key_press_event, 1, { &key_data_description } },
+  { XD_BLOCK_ARRAY, button_press_event, 1, { &button_data_description } },
+  { XD_BLOCK_ARRAY, button_release_event, 1, { &button_data_description } },
+  { XD_BLOCK_ARRAY, pointer_motion_event, 1, { &motion_data_description } },
+  { XD_BLOCK_ARRAY, process_event, 1, { &process_data_description } },
+  { XD_BLOCK_ARRAY, timeout_event, 1, { &timeout_data_description } },
+  { XD_BLOCK_ARRAY, magic_event, 1, { &magic_data_description } },
+  { XD_BLOCK_ARRAY, magic_eval_event, 1, { &magic_eval_data_description } },
+  { XD_BLOCK_ARRAY, eval_event, 1, { &eval_data_description } },
+  { XD_BLOCK_ARRAY, misc_user_event, 1, { &misc_user_data_description } },
   { XD_END }
 };
 
@@ -211,7 +211,7 @@ static const struct memory_description event_description [] = {
   { XD_LISP_OBJECT, offsetof (struct Lisp_Event, next) },
   { XD_LISP_OBJECT, offsetof (struct Lisp_Event, channel) },
   { XD_UNION, offsetof (struct Lisp_Event, event), 
-    XD_INDIRECT (0, 0), &event_data_description },
+    XD_INDIRECT (0, 0), { &event_data_description } },
   { XD_END }
 };
 

@@ -64,12 +64,43 @@ bignum_hash (Lisp_Object obj, int UNUSED (depth))
   return bignum_hashcode (XBIGNUM_DATA (obj));
 }
 
+static void
+bignum_convert (const void *object, void **data, Bytecount *size)
+{
+  CIbyte *bstr = bignum_to_string (*(bignum *)object, 10);
+  *data = bstr;
+  *size = strlen(bstr)+1;
+}
+
+static void
+bignum_convfree (const void * UNUSED (object), void *data,
+		 Bytecount UNUSED (size))
+{
+  xfree (data, void *);
+}
+
+static void *
+bignum_deconvert (void *object, void *data, Bytecount UNUSED (size))
+{
+  bignum *b = (bignum *) object;
+  bignum_init(*b);
+  bignum_set_string(*b, (const char *) data, 10);
+  return object;
+}
+
+static const struct opaque_convert_functions bignum_opc = {
+  bignum_convert,
+  bignum_convfree,
+  bignum_deconvert
+};
+
 static const struct memory_description bignum_description[] = {
-  { XD_OPAQUE_PTR, offsetof (Lisp_Bignum, data) },
+  { XD_OPAQUE_DATA_CONVERTIBLE, offsetof (Lisp_Bignum, data),
+    0, { &bignum_opc }, XD_FLAG_NO_KKCC },
   { XD_END }
 };
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bignum", bignum, 0, 0, bignum_print,
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bignum", bignum, 1, 0, bignum_print,
 				     0, bignum_equal, bignum_hash,
 				     bignum_description, Lisp_Bignum);
 
@@ -770,13 +801,8 @@ This is determined by the underlying library used to implement bigfloats.
 
 #ifdef HAVE_BIGFLOAT
 #ifdef HAVE_BIGNUM
-  /* Uncomment the next two lines and remove the line below them when dumping
-     bignums becomes possible. */
-  /*
   Vbigfloat_max_prec = make_bignum (0L);
   bignum_set_ulong (XBIGNUM_DATA (Vbigfloat_max_prec), ULONG_MAX);
-  */
-  Vbigfloat_max_prec = make_int (EMACS_INT_MAX);
 #else
   Vbigfloat_max_prec = make_int (EMACS_INT_MAX);
 #endif

@@ -135,9 +135,9 @@ static const struct sized_memory_description lstream_extra_description_map[] =
 static const struct memory_description lstream_description[] =
 {
   { XD_BLOCK_PTR, offsetof (Lstream, imp), 1,
-    &lstream_implementation_description },
+    { &lstream_implementation_description } },
   { XD_BLOCK_ARRAY, offsetof (Lstream, data), 1,
-    lstream_extra_description_map },
+    { lstream_extra_description_map } },
   { XD_END }
 };
 

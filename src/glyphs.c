@@ -876,13 +876,13 @@ static const struct sized_memory_description subwindow_image_instance_descriptio
 
 static const struct memory_description image_instance_data_description_1 [] = {
   { XD_BLOCK_ARRAY, IMAGE_TEXT,
-    1, &text_image_instance_description },
+    1, { &text_image_instance_description } },
   { XD_BLOCK_ARRAY, IMAGE_MONO_PIXMAP,
-    1, &pixmap_image_instance_description },
+    1, { &pixmap_image_instance_description } },
   { XD_BLOCK_ARRAY, IMAGE_COLOR_PIXMAP,
-    1, &pixmap_image_instance_description },
+    1, { &pixmap_image_instance_description } },
   { XD_BLOCK_ARRAY, IMAGE_WIDGET,
-    1, &subwindow_image_instance_description },
+    1, { &subwindow_image_instance_description } },
   { XD_END }
 };
 
@@ -898,7 +898,7 @@ static const struct memory_description image_instance_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Image_Instance, parent) },
   { XD_LISP_OBJECT, offsetof (Lisp_Image_Instance, instantiator) },
   { XD_UNION, offsetof (struct Lisp_Image_Instance, u), 
-    XD_INDIRECT (0, 0), &image_instance_data_description },
+    XD_INDIRECT (0, 0), { &image_instance_data_description } },
   { XD_END }
 };
 
@@ -5264,7 +5264,8 @@ static const struct sized_memory_description iiked_description = {
 static const struct memory_description iife_description_1[] = {
   { XD_LISP_OBJECT, offsetof (image_instantiator_format_entry, symbol) },
   { XD_LISP_OBJECT, offsetof (image_instantiator_format_entry, device) },
-  { XD_BLOCK_PTR,  offsetof (image_instantiator_format_entry, meths),  1, &iim_description },
+  { XD_BLOCK_PTR,  offsetof (image_instantiator_format_entry, meths), 1,
+    { &iim_description } },
   { XD_END }
 };
 
@@ -5286,8 +5287,10 @@ static const struct sized_memory_description iifed_description = {
 static const struct memory_description iim_description_1[] = {
   { XD_LISP_OBJECT, offsetof (struct image_instantiator_methods, symbol) },
   { XD_LISP_OBJECT, offsetof (struct image_instantiator_methods, device) },
-  { XD_BLOCK_PTR,  offsetof (struct image_instantiator_methods, keywords), 1, &iiked_description },
-  { XD_BLOCK_PTR,  offsetof (struct image_instantiator_methods, consoles), 1, &cted_description },
+  { XD_BLOCK_PTR,  offsetof (struct image_instantiator_methods, keywords), 1,
+    { &iiked_description } },
+  { XD_BLOCK_PTR,  offsetof (struct image_instantiator_methods, consoles), 1,
+    { &cted_description } },
   { XD_END }
 };
 

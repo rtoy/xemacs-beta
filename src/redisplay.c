@@ -522,7 +522,7 @@ static const struct sized_memory_description rune_dglyph_description = {
 };
 
 static const struct memory_description rune_object_description_1[] = {
-  { XD_BLOCK_ARRAY, RUNE_DGLYPH, 1, &rune_dglyph_description },
+  { XD_BLOCK_ARRAY, RUNE_DGLYPH, 1, { &rune_dglyph_description } },
   { XD_END }
 };
 
@@ -533,7 +533,7 @@ static const struct sized_memory_description rune_object_description = {
 static const struct memory_description rune_description_1[] = {
   { XD_INT, offsetof (rune, type) },
   { XD_UNION, offsetof (rune, object),
-    XD_INDIRECT (0, 0), &rune_object_description },
+    XD_INDIRECT (0, 0), { &rune_object_description } },
   { XD_END }
 };
 
@@ -554,7 +554,7 @@ static const struct sized_memory_description rune_dynarr_description = {
 
 static const struct memory_description display_block_description_1[] = {
   { XD_BLOCK_PTR, offsetof (display_block, runes),
-    1, &rune_dynarr_description },
+    1, { &rune_dynarr_description } },
   { XD_END }
 };
 
@@ -596,11 +596,11 @@ static const struct sized_memory_description glyph_block_dynarr_description = {
 
 static const struct memory_description display_line_description_1[] = {
   { XD_BLOCK_PTR, offsetof (display_line, display_blocks),
-    1, &display_block_dynarr_description },
+    1, { &display_block_dynarr_description } },
   { XD_BLOCK_PTR, offsetof (display_line, left_glyphs),
-    1, &glyph_block_dynarr_description },
+    1, { &glyph_block_dynarr_description } },
   { XD_BLOCK_PTR, offsetof (display_line, right_glyphs),
-    1, &glyph_block_dynarr_description },
+    1, { &glyph_block_dynarr_description } },
   { XD_END }
 };
 

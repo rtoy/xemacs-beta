@@ -171,7 +171,7 @@ static const struct sized_memory_description int_dynarr_description = {
 
 static const struct memory_description face_cachel_description_1[] = {
   { XD_BLOCK_PTR, offsetof (face_cachel, merged_faces),
-    1, &int_dynarr_description },
+    1, { &int_dynarr_description } },
   { XD_LISP_OBJECT, offsetof (face_cachel, face) },
   { XD_LISP_OBJECT, offsetof (face_cachel, foreground) },
   { XD_LISP_OBJECT, offsetof (face_cachel, background) },
@@ -242,11 +242,11 @@ static const struct memory_description window_description [] = {
 #include "winslots.h"
 
   { XD_BLOCK_PTR, offsetof (struct window, face_cachels),
-    1, &face_cachel_dynarr_description },
+    1, { &face_cachel_dynarr_description } },
   { XD_BLOCK_PTR, offsetof (struct window, glyph_cachels),
-    1, &glyph_cachel_dynarr_description },
+    1, { &glyph_cachel_dynarr_description } },
   { XD_BLOCK_PTR, offsetof (struct window, line_start_cache),
-    1, &line_start_cache_dynarr_description },
+    1, { &line_start_cache_dynarr_description } },
   { XD_END }
 };
 
@@ -423,9 +423,9 @@ static const struct memory_description window_mirror_description [] = {
   { XD_LISP_OBJECT, offsetof (struct window_mirror, vchild) },
 
   { XD_BLOCK_PTR, offsetof (struct window_mirror, current_display_lines),
-    1, &display_line_dynarr_description },
+    1, { &display_line_dynarr_description } },
   { XD_BLOCK_PTR, offsetof (struct window_mirror, desired_display_lines),
-    1, &display_line_dynarr_description },
+    1, { &display_line_dynarr_description } },
 
   { XD_LISP_OBJECT, offsetof (struct window_mirror, buffer) },
 

@@ -152,6 +152,7 @@ extern gmp_randstate_t random_state;
 #define ratio_set_bigfloat(r,f)         mpq_set_f (r, f)
 #define ratio_set_long_ulong(r,num,den)    mpq_set_si (r, num, den)
 #define ratio_set_ulong_ulong(r,num,den)   mpq_set_ui (r, num, den)
+/* FIXME: Why does this canonicalize, but the previous 2 don't? */
 #define ratio_set_bignum_bignum(r,num,den) do {	\
     mpz_set (mpq_numref (r), num);		\
     mpz_set (mpq_denref (r), den);		\

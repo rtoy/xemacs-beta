@@ -1029,7 +1029,7 @@ extern const struct sized_memory_description gap_array_marker_description;
 
 static const struct memory_description gap_array_marker_description_1[] = { 
   { XD_BLOCK_PTR, offsetof (Gap_Array_Marker, next), 1,
-    &gap_array_marker_description },
+    { &gap_array_marker_description } },
   { XD_END }
 };
 
@@ -1043,11 +1043,11 @@ static const struct memory_description lispobj_gap_array_description_1[] = {
   { XD_INT, offsetof (Gap_Array, offset_past_gap) },
   { XD_INT, offsetof (Gap_Array, els_past_gap) },
   { XD_BLOCK_PTR, offsetof (Gap_Array, markers), 1,
-    &gap_array_marker_description, XD_FLAG_NO_KKCC },
+    { &gap_array_marker_description }, XD_FLAG_NO_KKCC },
   { XD_BLOCK_ARRAY, offsetof (Gap_Array, array), XD_INDIRECT (0, 0),
-    &lisp_object_description },
+    { &lisp_object_description } },
   { XD_BLOCK_ARRAY, XD_INDIRECT (1, offsetof (Gap_Array, array)),
-    XD_INDIRECT (2, 0), &lisp_object_description },
+    XD_INDIRECT (2, 0), { &lisp_object_description } },
   { XD_END }
 };
 
@@ -1060,9 +1060,9 @@ extern const struct sized_memory_description extent_list_marker_description;
 
 static const struct memory_description extent_list_marker_description_1[] = { 
   { XD_BLOCK_PTR, offsetof (Extent_List_Marker, m), 1,
-    &gap_array_marker_description },
+    { &gap_array_marker_description } },
   { XD_BLOCK_PTR, offsetof (Extent_List_Marker, next), 1,
-    &extent_list_marker_description },
+    { &extent_list_marker_description } },
   { XD_END }
 };
 
@@ -1072,9 +1072,12 @@ const struct sized_memory_description extent_list_marker_description = {
 };
 
 static const struct memory_description extent_list_description_1[] = { 
-  { XD_BLOCK_PTR, offsetof (Extent_List, start), 1, &lispobj_gap_array_description },
-  { XD_BLOCK_PTR, offsetof (Extent_List, end), 1, &lispobj_gap_array_description, XD_FLAG_NO_KKCC },
-  { XD_BLOCK_PTR, offsetof (Extent_List, markers), 1, &extent_list_marker_description, XD_FLAG_NO_KKCC },
+  { XD_BLOCK_PTR, offsetof (Extent_List, start), 1,
+    { &lispobj_gap_array_description } },
+  { XD_BLOCK_PTR, offsetof (Extent_List, end), 1,
+    { &lispobj_gap_array_description }, XD_FLAG_NO_KKCC },
+  { XD_BLOCK_PTR, offsetof (Extent_List, markers), 1,
+    { &extent_list_marker_description }, XD_FLAG_NO_KKCC },
   { XD_END }
 };
 
@@ -1084,7 +1087,8 @@ static const struct sized_memory_description extent_list_description = {
 };
 
 static const struct memory_description stack_of_extents_description_1[] = { 
-  { XD_BLOCK_PTR, offsetof (Stack_Of_Extents, extents), 1, &extent_list_description },
+  { XD_BLOCK_PTR, offsetof (Stack_Of_Extents, extents), 1,
+    { &extent_list_description } },
   { XD_END }
 };
 
@@ -1095,9 +1099,9 @@ static const struct sized_memory_description stack_of_extents_description = {
 
 static const struct memory_description extent_info_description [] = {
   { XD_BLOCK_PTR, offsetof (struct extent_info, extents), 1,
-    &extent_list_description },
+    { &extent_list_description } },
   { XD_BLOCK_PTR, offsetof (struct extent_info, soe), 1,
-    &stack_of_extents_description, XD_FLAG_NO_KKCC },
+    { &stack_of_extents_description }, XD_FLAG_NO_KKCC },
   { XD_END }
 };
 

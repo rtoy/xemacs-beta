@@ -953,9 +953,9 @@ static const struct memory_description iso2022_coding_system_description[] = {
   { XD_LISP_OBJECT_ARRAY, offsetof (struct iso2022_coding_system, 
 				    initial_charset), 4 },
   { XD_BLOCK_PTR, offsetof (struct iso2022_coding_system, input_conv),
-    1, &ccsd_description },
+    1, { &ccsd_description } },
   { XD_BLOCK_PTR, offsetof (struct iso2022_coding_system, output_conv),
-    1, &ccsd_description },
+    1, { &ccsd_description } },
   { XD_END }
 };
 

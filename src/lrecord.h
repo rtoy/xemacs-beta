@@ -505,7 +505,7 @@ extern int gc_in_progress;
      ...
      { XD_INT,		offsetof (Lisp_Foo, count) },
      { XD_BLOCK_PTR,	offsetof (Lisp_Foo, objects),
-       XD_INDIRECT (0, 0), &lisp_object_description },
+       XD_INDIRECT (0, 0), { &lisp_object_description } },
      ...
    };
 
@@ -560,7 +560,7 @@ extern int gc_in_progress;
    const struct memory_description hash_table_description[] = {
      { XD_ELEMCOUNT,     offsetof (Lisp_Hash_Table, size) },
      { XD_BLOCK_PTR, offsetof (Lisp_Hash_Table, hentries), XD_INDIRECT (0, 1),
-	 &htentry_description },
+	 { &htentry_description } },
      { XD_LO_LINK,    offsetof (Lisp_Hash_Table, next_weak) },
      { XD_END }
    };
@@ -580,7 +580,7 @@ extern int gc_in_progress;
    const struct memory_description specifier_description[] = {
      ...
      { XD_BLOCK_ARRAY, offset (Lisp_Specifier, data), 1,
-       specifier_extra_description_map },
+       { specifier_extra_description_map } },
      ...
      { XD_END }
    };
@@ -647,6 +647,18 @@ extern int gc_in_progress;
     XD_OPAQUE_PTR
 
   Pointer to undumpable data.  Must be NULL when dumping.
+
+    XD_OPAQUE_PTR_CONVERTIBLE
+
+  Pointer to data which is not directly dumpable but can be converted
+  to a dumpable, opaque external representation.  The parameter is
+  a pointer to an opaque_convert_functions struct.
+
+    XD_OPAQUE_DATA_CONVERTIBLE
+
+  Data which is not directly dumpable but can be converted to a
+  dumpable, opaque external representation.  The parameter is a
+  pointer to an opaque_convert_functions struct.
 
     XD_BLOCK_PTR
 
@@ -786,9 +798,11 @@ enum memory_description_type
   XD_LISP_OBJECT,
   XD_LO_LINK,
   XD_OPAQUE_PTR,
+  XD_OPAQUE_PTR_CONVERTIBLE,
+  XD_OPAQUE_DATA_CONVERTIBLE,
+  XD_OPAQUE_DATA_PTR,
   XD_BLOCK_PTR,
   XD_BLOCK_ARRAY,
-  XD_OPAQUE_DATA_PTR,
   XD_UNION,
   XD_UNION_DYNAMIC_SIZE,
   XD_ASCII_STRING,
@@ -847,12 +861,21 @@ enum data_description_entry_flags
 #endif
 };
 
+union memory_contents_description
+{
+  /* The first element is used by static initializers only.  We always read
+     from one of the other two pointers. */
+  const void *write_only;
+  const struct sized_memory_description *descr;
+  const struct opaque_convert_functions *funcs;
+};
+
 struct memory_description
 {
   enum memory_description_type type;
   Bytecount offset;
   EMACS_INT data1;
-  const struct sized_memory_description *data2;
+  union memory_contents_description data2;
   /* Indicates which subsystems process this entry, plus (potentially) other
      flags that apply to this entry. */
   int flags;
@@ -864,6 +887,36 @@ struct sized_memory_description
   const struct memory_description *description;
 };
 
+
+struct opaque_convert_functions
+{
+  /* Used by XD_OPAQUE_PTR_CONVERTIBLE and
+     XD_OPAQUE_DATA_CONVERTIBLE */
+
+  /* Converter to external representation, for those objects from
+     external libraries that can't be directly dumped as opaque data
+     because they contain pointers.  This is called at dump time to
+     convert to an opaque, pointer-less representation.
+
+     This function must put a pointer to the opaque result in *data
+     and its size in *size. */
+  void (*convert)(const void *object, void **data, Bytecount *size);
+
+  /* Post-conversion cleanup.  Optional (null if not provided).
+
+     When provided it will be called post-dumping to free any storage
+     allocated for the conversion results. */
+  void (*convert_free)(const void *object, void *data, Bytecount size);
+
+  /* De-conversion.
+
+     At reload time, rebuilds the object from the converted form.
+     "object" is 0 for the PTR case, return is ignored in the DATA
+     case. */
+  void *(*deconvert)(void *object, void *data, Bytecount size);
+
+};
+
 extern const struct sized_memory_description lisp_object_description;
 
 #define XD_INDIRECT(val, delta) (-1 - (Bytecount) ((val) | ((delta) << 8)))
@@ -873,10 +926,9 @@ extern const struct sized_memory_description lisp_object_description;
 #define XD_INDIRECT_DELTA(code) ((-1 - (code)) >> 8)
 
 #define XD_DYNARR_DESC(base_type, sub_desc)				      \
-  { XD_BLOCK_PTR, offsetof (base_type, base), XD_INDIRECT(1, 0), sub_desc }, \
+  { XD_BLOCK_PTR, offsetof (base_type, base), XD_INDIRECT(1, 0), {sub_desc} },\
   { XD_INT,        offsetof (base_type, cur) },				      \
   { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }	      \
-
 
 /* DEFINE_LRECORD_IMPLEMENTATION is for objects with constant size.
    DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION is for objects whose size varies.
@@ -1605,7 +1657,7 @@ lispdesc_process_xd_union (const struct memory_description *desc1,
   EMACS_INT variant = lispdesc_indirect_count (desc1->data1, desc,
 					       data);
   desc1 =
-    lispdesc_indirect_description (data, desc1->data2)->description;
+    lispdesc_indirect_description (data, desc1->data2.descr)->description;
   
   for (count = 0; desc1[count].type != XD_END; count++)
     {
