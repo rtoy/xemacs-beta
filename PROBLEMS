@@ -47,7 +47,7 @@ General advice:
 *** How do I configure to get the buffer tabs/progress bars?
 
 These features depend on support for "native widgets".  Use the
---with-widgets option to configure.  Configuration of widgets is
+--enable-widgets option to configure.  Configuration of widgets is
 automatic for "modern" toolkits (MS Windows, GTK, and Motif), but if
 you are using Xt and the Athena widgets, you will probably want to
 specify a "3d" widget set.  See configure --usage, and don't forget to
@@ -278,7 +278,7 @@ Marcus Thiessel <marcus@xemacs.org>
 Larry Auton <lda@control.att.com> writes:
 Beware of not specifying
 
-	--with-dialogs=athena
+	--enable-dialogs=athena
 
 if it builds with the motif dialogs [boom!] you're a dead man.
 
@@ -301,7 +301,7 @@ Valdis Kletnieks says:
   defined in string.h - basically anything the compiler knows how to
   inline.)
 
-*** On AIX 4.3, you must specify --with-dialogs=athena with configure
+*** On AIX 4.3, you must specify --enable-dialogs=athena with configure
 
 *** The libXt shipped with AIX 4.3 up to 4.3.2 is broken.  This causes
     xemacs -nw to fail in various ways.  The official APAR is this:
@@ -369,7 +369,7 @@ Errors similar to the following:
 are caused by using GNU ld.  There are several workarounds available:
 
 In XEmacs 21.2 or later, configure using the new portable dumper
-(--pdump).
+(--enable-pdump).
 
 Alternatively, you can link using the Sun version of ld, which is
 normally held in /usr/ccs/bin.  This can be done by one of:
@@ -536,9 +536,9 @@ Valdis Kletnieks <Valdis.Kletnieks@vt.edu> writes:
   passes the result to something that things foo_struct is a bit bigger,
   trashing memory....
 
-Here's typical crash backtrace.  With --pdump, this occurs usually at
-startup under X windows and xemacs -nw at least starts, while without
---pdump a similar crash is observed during build.
+Here's typical crash backtrace.  With --enable-pdump, this occurs
+usually at startup under X windows and xemacs -nw at least starts, while
+without --pdump a similar crash is observed during build.
 
 #0  0x0fa460b8 in kill () at regcomp.c:637
 637     regcomp.c: No such file or directory.
@@ -559,7 +559,7 @@ XEmacs 21.5-b9 "brussels sprouts"  configured for `mips-sgi-irix6.5'.
 
 The MIPSpro Compiler (at least version 7.2.1) can't seem to handle the
 union type properly, and fails to compile src/glyphs.c.  To avoid this
-problem, always build ---use-union-type=no (but that's the default, so
+problem, always build --enable-union-type=no (but that's the default, so
 you should only see this problem if you're an XEmacs maintainer).
 
 *** Linking with -rpath on IRIX.
@@ -569,9 +569,9 @@ There are a couple of problems [with use of -rpath with Irix ld], though:
 
   1. The ld in IRIX 5.3 ignores all but the last -rpath
      spec, so the patched configure spits out a warning
-     if --x-libraries or --site-runtime-libraries are
+     if --x-libraries or --with-site-runtime-libraries are
      specified under irix 5.x, and it only adds -rpath
-     entries for the --site-runtime-libraries.  This bug was
+     entries for the --with-site-runtime-libraries.  This bug was
      fixed sometime between 5.3 and 6.2.
 
   2. IRIX gcc 2.7.2 doesn't accept -rpath directly, so
@@ -580,8 +580,8 @@ There are a couple of problems [with use of -rpath with Irix ld], though:
         ${CC-cc} $CFLAGS $LDFLAGS ...
      rather than quoting $LDFLAGS with prefix-args, like
      src/Makefile does.  So if you specify --x-libraries
-     or --site-runtime-libraries, you must use --use-gcc=no,
-     or configure will fail.
+     or --with-site-runtime-libraries, you must use
+     --with--gcc=no, or configure will fail.
 
 *** On Irix 6.3, the SGI ld quits with segmentation fault when linking temacs
 
@@ -686,16 +686,18 @@ now produces a functional binary.   I will typically build this
 configuration for COFF with:
 
 	/path_to_xemacs_source/configure --with-gcc=no \
-	  --site-includes=/usr/local/include --site-libraries=/usr/local/lib \
-	  --with-xpm --with-xface --with-sound=nas
+	  --with-site-includes=/usr/local/include \
+          --with-site-libraries=/usr/local/lib \
+	  --with-xpm --with-xface --enable-sound=nas
 
 This version now supports ELF builds.  I highly recommend this to
 reduce the in-core footprint of XEmacs.  This is now how I compile
 all my test releases.  Build it like this:
 
 	/path_to_XEmacs_source/configure --with-gcc=no \
-	  --site-includes=/usr/local/include --site-libraries=/usr/local/lib \
-	  --with-xpm --with-xface --with-sound=nas --dynamic
+	  --with-site-includes=/usr/local/include
+          --with-site-libraries=/usr/local/lib \
+	  --with-xpm --with-xface --enable-sound=nas --with-dynamic
 
 The compiler known as icc [ supplied with the OpenServer 5 Development
 System ] generates a working binary, but it takes forever to generate
@@ -706,8 +708,10 @@ have to 'cd src ; make  LD=icc' to avoid linker errors.
 The way I handle the build procedure is:
 
 	/path_to_XEmacs_source/configure --with-gcc=no \
-	  --site-includes=/usr/local/include --site-libraries=/usr/local/lib \
-	  --with-xpm --with-xface --with-sound=nas --dynamic --compiler="icc"
+	  --with-site-includes=/usr/local/include \
+          --with-site-libraries=/usr/local/lib \
+	  --with-xpm --with-xface --enable-sound=nas --with-dynamic \
+          --with-compiler="icc"
 
 NOTE I have the xpm, xface, and audio libraries and includes in
 	/usr/local/lib, /usr/local/include.  If you don't have these,
@@ -1361,8 +1365,8 @@ Use the following instead
 undefined symbols.
 
 The only known case in which this happens is if you are using gcc, you
-configured with --error-checking=all and --with-modules, and you
-compiled with no optimization.  If you encounter this problem in any
+configured with --enable-error-checking=all and --enable-modules, and
+you compiled with no optimization.  If you encounter this problem in any
 other situation, please inform xemacs-beta@xemacs.org.
 
 This problem stems from a gcc bug.  With no optimization, functions
@@ -1601,18 +1605,19 @@ Typically the Lisp backtrace includes
 
    make-frame(nil #<x-device on ":0.0" 0x2558>)
 
-somewhere near the top.  The problem is due to an improvement in GNU
-ld that sorts the ELF reloc sections in the executable, giving
-dramatic speedups in startup for large executables.  It also confuses
-the traditional unexec code in XEmacs, leading to the core dump.  The
-solution is to use the --pdump or --ldflags='-z nocombreloc' options
-to configure.  Recent 21.4 and 12.5 autodetect this in configure.
+somewhere near the top.  The problem is due to an improvement in GNU ld
+that sorts the ELF reloc sections in the executable, giving dramatic
+speedups in startup for large executables.  It also confuses the
+traditional unexec code in XEmacs, leading to the core dump.  The
+solution is to use the --enable-pdump or --with-ldflags='-z nocombreloc'
+options to configure.  Recent 21.4 and 12.5 autodetect this in
+configure.
 
 Red Hat and SuSE (at least) distributed a prerelease version of ld
 (versions around 2.11.90.x.y) where autodetection is impossible.  The
 recommended procedure is to upgrade to binutils >= 2.12 and rerun
-configure.  Otherwise you must apply the flags by hand.  --pdump is
-recommended.
+configure.  Otherwise you must apply the flags by hand.  --enable-pdump
+is recommended.
 
 *** I want XEmacs to use the Alt key, not the XXX key, for Meta commands
 
@@ -1774,8 +1779,8 @@ entries in the warnings buffer.
 
 SGI ships a really old Xpm library in /usr/lib which does not work at
 all well with XEmacs.  The solution is to install your own copy of the
-latest version of Xpm somewhere and then use the --site-includes and
---site-libraries flags to tell configure where to find it.
+latest version of Xpm somewhere and then use the --with-site-includes
+and --with-site-libraries flags to tell configure where to find it.
 
 *** Trouble using ptys on IRIX, or running out of ptys.
 

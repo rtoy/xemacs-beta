@@ -36,7 +36,7 @@ XEmacs.
 
 Verify that your users have a high enough stack limit. On some systems
 such as OpenBSD and OSF/Tru64 the default is 2MB which is too low.  On
-MacOS/X (Darwin), it's 512kB.  See 'PROBLEMS' for details.
+MacOS/X (Darwin) before 10.3, it's 512kB.  See 'PROBLEMS' for details.
 
 Building XEmacs requires about 100 Mb of disk space (including the
 XEmacs sources).  Once installed, XEmacs occupies between 20 and 100
@@ -93,19 +93,19 @@ You can get (most of) them from the XEmacs FTP archive at
 each library does is available in the file
 <ftp://ftp.xemacs.org/pub/xemacs/aux/00README.txt>.
 
-Use the `--site-includes' and `--site-libraries' options when building
-XEmacs to allow configure to find the external software packages.  For
-your convenience these can be set together by using the
-`--with-site-prefix' option.  This will set these variables as needed
+Use the `--with-site-includes' and `--with-site-libraries' options when
+building XEmacs to allow configure to find the external software
+packages.  For your convenience these can be set together by using the
+`--with-site-prefixes' option.  This will set these variables as needed
 assuming your libraries are organised as a typical /usr tree.
 
 If you link dynamically with external libraries, usually denoted by
-".so" (Unix), ".dll" (Windows), or ".dylib" (MacOS) file extensions,
-on some systems you may also need to add the library directories to
-the `--site-runtime-libraries' option.  It is typically necessary only
+".so" (Unix), ".dll" (Windows), or ".dylib" (MacOS) file extensions, on
+some systems you may also need to add the library directories to the
+`--with-site-runtime-libraries' option.  It is typically necessary only
 if you link with dynamic libraries that are installed in non-standard
-directories, or if you expect some of the libraries used to build
-XEmacs to be in a different directory at run time than at build time.
+directories, or if you expect some of the libraries used to build XEmacs
+to be in a different directory at run time than at build time.
 
 NOTE: This option has unusual semantics.  ONLY libraries found in the
 directories specified in this option will be used at runtime.  This
@@ -113,13 +113,13 @@ means you must specify ALL directories you want searched at runtime in
 this option (perhaps excluding a very small number of standard system
 library paths).
 
-Directories specified with `--site-libraries' are NOT automatically
-added.  The rationale is that most users will not need this option,
-and this allows the builder to specify exactly the needed directories.
-Specifying unnecessary directories leads to obscure problems
-(typically startup delays) if those directories are mounted over a
-network, and the automounter configuration changes.  Not all systems
-need this option; it's best to avoid using it if you can.
+Directories specified with `--with-site-libraries' are NOT automatically
+added.  The rationale is that most users will not need this option, and
+this allows the builder to specify exactly the needed directories.
+Specifying unnecessary directories leads to obscure problems (typically
+startup delays) if those directories are mounted over a network, and the
+automounter configuration changes.  Not all systems need this option;
+it's best to avoid using it if you can.
 
 Dynamic linking has pros and cons.  Dynamically linking 3rd party
 libraries to XEmacs decreases the size of the binary, and means you
@@ -155,14 +155,14 @@ on particular machines.
 Specifying Location of Headers and Libraries
 --------------------------------------------
 
-The `--site-includes=DIR' and `--site-libraries=DIR' options allow you
-to specify additional places the compiler should look for include
-files and object libraries.  You may specify multiple DIR's by
+The `--with-site-includes=DIR' and `--with-site-libraries=DIR' options
+allow you to specify additional places the compiler should look for
+include files and object libraries.  You may specify multiple DIR's by
 enclosing the list in quotes.  All the external libraries you want to
 use with XEmacs (e.g. xpm, wnn, ...) described later should have their
 include and library directories defined using these options.
 
-The `--site-runtime-libraries=DIR' option specifies directories to
+The `--with-site-runtime-libraries=DIR' option specifies directories to
 search for shared libraries at run time.  If you use this option, you
 must specify ALL of the directories containing shared libraries at run
 time, including system directories.  Please read the information about
@@ -177,31 +177,42 @@ Window System files installed in unusual places.
 Configuring the Build Process
 -----------------------------
 
-The `--with-gcc=PROGRAM' option specifies that the build process
-should compile XEmacs using GCC.  The `--compiler' option allows you
-to specify some other compiler to be used to compile XEmacs.  If
-neither option is specified, the environment variable CC is used
-instead.  Otherwise the compiler will then default to 'cc'.
+The `--with-gcc=PROGRAM' option specifies that the build process should
+compile XEmacs using GCC.  The `--with-compiler' option allows you to
+specify some other compiler to be used to compile XEmacs.  If neither
+option is specified, the environment variable CC is used instead.
+Otherwise the compiler will then default to 'cc'.
 
-The `--xemacs-compiler=PROGRAM' option specifies the compiler control
-program for the xemacs binary only.  Other C code will be compiled
-according to the `--with-gcc' and `--compiler' options above.  This is
-useful if you wish to compile XEmacs with a C++ compiler, because the
-utilities in ./lib-src cannot be compiled as C++.  This option is
-primarily intended for use by the maintainers.
+The `--with-xemacs-compiler=PROGRAM' option specifies the compiler
+control program for the xemacs binary only.  Other C code will be
+compiled according to the `--with-gcc' and `--with-compiler' options
+above.  This is useful if you wish to compile XEmacs with a C++
+compiler, because the utilities in ./lib-src cannot be compiled as C++.
+This option is primarily intended for use by the maintainers.
 
-The `--cflags=FLAGS' option specifies all of the CFLAGS the build process
-should use when compiling XEmacs, except for flags controlling warning
-generation.  Otherwise the value of the environment variable CFLAGS is
-consulted.  If that is also undefined, CFLAGS defaults to "-g -O" for
-gcc and "-g" for all other compilers.
+The `--with-cflags=FLAGS' option specifies all of the CFLAGS the build
+process should use when compiling XEmacs, except for flags controlling
+warning generation.  Otherwise the value of the environment variable
+CFLAGS is consulted.  If that is also undefined, CFLAGS defaults to "-g
+-O" for gcc and "-g" for all other compilers.
 
-The `--cflags_warning=FLAGS' option specifies the warnings to be
+The `--with-cflags-warning=FLAGS' option specifies the warnings to be
 generated.  There is normally no reason to use this flag, as XEmacs
 turns on as many warnings as possible, and is still expected to build
 with no, or at most a few warnings.
 
-The `--dynamic' option specifies that configure should try to link
+The `--with-cflags-optimization=FLAGS' option specifies the
+optimizations to be used.  There is normally no reason to use this flag,
+as XEmacs will already set the maximum safe
+optimization flags appropriate for the compiler being invoked.
+
+The `--with-cflags-debugging=FLAGS' option specifies debugging
+information to be generated.  There is normally no reason to use this
+flag, as XEmacs will include debugging information whenever possible
+(i.e. unless optimization is turned on and the compiler does not permit
+debugging and optimization simultaneously).
+
+The `--with-dynamic' option specifies that configure should try to link
 emacs dynamically rather than statically.
 
 You can build XEmacs for several different machine types from a single
@@ -257,28 +268,27 @@ system has X Window System support, and arrange to use it if present.
 The `--without-xmu' option can be used if your vendor doesn't ship
 the Xmu library.
 
-The `--with-menubars=TYPE' option allows you to specify which X
+The `--enable-menubars=TYPE' option allows you to specify which X
 toolkit you wish to use for the menubar.  The valid options are
 `lucid', `motif' and `no'.  The default is `lucid' which is a
 Motif-lookalike menubar.  We highly recommend its usage over the real
 Motif menubar. (In fact, the Motif menubar is currently broken.)  If
 `no' is specified then support for menubars will not be compiled in.
 
-The `--with-scrollbars=TYPE' option allows you to specify which X
+The `--enable-scrollbars=TYPE' option allows you to specify which X
 toolkit you wish to use for the scrollbars.  The valid options are
 `lucid', `motif', `athena', `athena3d', and `no'.  The default is
-`lucid' which is a Motif-lookalike scrollbar.  If `no' is specified
-then support for scrollbars will not be compiled in.
+`lucid' which is a Motif-lookalike scrollbar.  If `no' is specified then
+support for scrollbars will not be compiled in.
 
-The `--with-dialogs=TYPE' option allows you to specify which X toolkit
+The `--enable-dialogs=TYPE' option allows you to specify which X toolkit
 you wish to use for the dialog boxes.  The valid options are `athena',
 `athena3d', `motif, and `no.  The `lucid' option is accepted and will
 result in the `athena' toolkit being used.  If the Motif toolkit can be
 found the default is `motif'.  Otherwise, the default is `athena'.  If
-`no' is specified then support for dialog boxes will not be compiled
-in.
+`no' is specified then support for dialog boxes will not be compiled in.
 
-The `--with-toolbars' option allows you to enable or disable toolbar
+The `--enable-toolbars' option allows you to enable or disable toolbar
 support.  The default is `yes' if support for a windowing system is
 included.
 
@@ -290,11 +300,11 @@ The `--with-xface' option specifies that XEmacs should support
 X-Faces.  `configure' will attempt to detect if you have the compface
 library and define `--with-xface' for you.
 
-The `--with-database' option specifies that XEmacs should be built
+The `--enable-database' option specifies that XEmacs should be built
 with simple database support.  The valid options are `no' or a
 comma-separated list of one or more of `dbm', `gnudbm' or `berkdb'.
 `configure' will attempt to detect the necessary libraries and header
-files and define `--with-database' for you.
+files and define `--enable-database' for you.
 
 The `--with-postgresql' option specifies that XEmacs should be built
 with PostgreSQL support, linking with libpq.  `configure' will attempt
@@ -309,23 +319,23 @@ to detect whether LDAP support is available, and automatically define
 The `--with-socks' option specifies that XEmacs should be built with
 SOCKS support.  This requires the libsocks library.
 
-The `--external-widget' option specifies that XEmacs should be built
-with support for being used as a widget by other X11 applications.
+The `--enable-external-widget' option specifies that XEmacs should be
+built with support for being used as a widget by other X11 applications.
 This functionality should be considered beta.
 
-The `--with-sound=TYPE' option specifies that XEmacs should be built
-with sound support.  Native (`--with-sound=native') sound support is
+The `--enable-sound=TYPE' option specifies that XEmacs should be built
+with sound support.  Native (`--enable-sound=native') sound support is
 currently available only on Sun SparcStations, SGI's, HP9000s, and
 systems (such as Linux) with soundcard.h.  Network Audio Support (NAS)
-(`--with-sound=nas' or `--with-sound=both') is an extension to X that
-you may or may not have for your system.  For NAS, you will probably
-need to provide the paths to the nas include and library directories
-to configure.  If `--with-sound' is not specified, `configure' will
-attempt to determine if your configuration supports native sound and
-define --with-sound for you.  If your native sound library is not in a
-standard location you can specify it with the `--native-sound-lib=LIB'
-flag.  For Linux, `/dev/audio' is required for SunAudio files and
-`/dev/dsp' is required for raw data and WAVE format files.
+(`--enable-sound=nas') is an extension to X that you may or may not have
+for your system.  For NAS, you will probably need to provide the paths
+to the nas include and library directories to configure.  If
+`--enable-sound' is not specified, `configure' will attempt to determine
+if your configuration supports native sound and define --enable-sound
+for you.  If your native sound library is not in a standard location you
+can specify it with the `--with-native-sound-lib=LIB' flag.  For Linux,
+`/dev/audio' is required for SunAudio files and `/dev/dsp' is required
+for raw data and WAVE format files.
 
 The `--with-tooltalk' option specifies that XEmacs should be built
 with ToolTalk support for interconnecting with other applications.
@@ -351,7 +361,7 @@ support can be explicitly disabled via the `--with-offix=no' option.
 Internationalization Options
 ----------------------------
 
-The `--with-mule' option enables MUlti-Lingual Emacs (Mule) support,
+The `--enable-mule' option enables MUlti-Lingual Emacs (Mule) support,
 needed to support non-Latin-1 (including Asian) languages.  Mule
 support is required for Asian language and Unicode (multibyte and wide
 character) support.  With the advent of the Euro and European
@@ -409,14 +419,14 @@ supports.
 Options for Developers and Special Requirements
 -----------------------------------------------
 
-The `--rel-alloc' option can be used to either enable or disable use
-of the relocating allocator.  Turning on --rel-alloc will allow XEmacs
-to return unused memory to the operating system, thereby reducing its
-memory footprint.  However, it may make XEmacs runs more slowly,
+The `--with-rel-alloc' option can be used to either enable or disable
+use of the relocating allocator.  Turning on --with-rel-alloc will allow
+XEmacs to return unused memory to the operating system, thereby reducing
+its memory footprint.  However, it may make XEmacs runs more slowly,
 especially if your system's `mmap' implementation is missing or
-inefficient.  Generally, it's best to go with the default
-configuration for your system.  You can tweak this based on how you
-use XEmacs, and the memory and cpu resources available on your system.
+inefficient.  Generally, it's best to go with the default configuration
+for your system.  You can tweak this based on how you use XEmacs, and
+the memory and cpu resources available on your system.
 
 The `--with-system-malloc' option can be used to either enable or
 disable use of the system malloc.  Generally, it's best to go with the
@@ -428,17 +438,15 @@ debugging version of malloc.  Debug Malloc is not included with XEmacs
 and is intended for use only by the developers. It may be obtained
 from <URL:http://www.letters.com/dmalloc/>.
 
-The `--debug' and `--error-checking' options are primarily useful to
-the developers.  `--debug' incorporates code for performing various
-tests, but does not impose a speed penalty.  `--error-checking' adds
-additional tests to many of the commonly used macros, and imposes a
-speed penalty.  Using either or both of these options can make bug
-reports more useful to the developers.
+The `--enable-debug' and `--enable-error-checking' options are primarily
+useful to the developers.  `--enable-debug' incorporates code for
+performing various tests, but does not impose a speed penalty.
+`--enable-error-checking' adds additional tests to many of the commonly
+used macros, and imposes a speed penalty.  Using either or both of these
+options can make bug reports more useful to the developers.
 
-The `--verbose' and `--extra-verbose' options are useful only to the
-developers.  `--verbose' causes the results of all configure tests to
-be displayed.  `--extra-verbose' displays additional information,
-useful for debugging `configure'.
+The `--verbose' option is useful only to the developers.  It displays
+additional information, useful for debugging `configure'.
 
 MAIL LOCKING
 ============
@@ -450,9 +458,9 @@ objective merits."  XEmacs must use the same method as other mail
 utilities on your system, or you WILL lose mail.
 
 Presently, XEmacs supports lockf, flock, and dot locking.  Specify the
-locking method via the --mail-locking=METHOD option to configure.
-Valid values for METHOD are --mail-locking are `lockf', `flock', and
-`dot'.
+locking method via the --with-mail-locking=METHOD option to configure.
+Valid values for METHOD are --with-mail-locking are `lockf', `flock',
+and `dot'.
 
 RUNNING CONFIGURE
 =================

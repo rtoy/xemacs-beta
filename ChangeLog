@@ -1,3 +1,9 @@
+2005-03-06  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* INSTALL:
+	* PROBLEMS: Change configure arguments to the new autoconf 2.5
+	style configure.
+
 2005-03-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure: Regenerated. 
