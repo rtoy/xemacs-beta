@@ -1,3 +1,10 @@
+2004-12-07  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* Makefile.in.in: Always refer to make as $(MAKE) and use
+	$(RECURSIVE_MAKE_ARGS) for other parameters.  This allows -j to
+	work in GNU Make while removing need for POSIX compatible make on
+	all systems.
+
 2004-12-06  Ben Wing  <ben@xemacs.org>
 
 	* rangetab.c (rangetab_instantiate):

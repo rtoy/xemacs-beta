@@ -1,3 +1,9 @@
+2004-12-07  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* Makefile (RECURSIVE_MAKE): Removed.
+	* Makefile (RECURSIVE_MAKE_ARGS): New.  The new method for
+	handling parallel builds.
+
 2004-12-05  Ben Wing  <ben@xemacs.org>
 
 	* xemacs/packages.texi (Packages):
@@ -351,6 +357,7 @@
 	(Future Work -- Lisp Engine Replacement):
 	Add pointers to new node.
 
+>>>>>>> 1.271
 2004-11-16  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (Top):

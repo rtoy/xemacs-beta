@@ -16541,7 +16541,7 @@ done
 
 
 
-RECURSIVE_MAKE="\$(MAKE) \$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)'"
+RECURSIVE_MAKE_ARGS="\$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)'"
 
 
 
@@ -17235,7 +17235,7 @@ s%@ld_switch_all@%$ld_switch_all%g
 s%@ld_libs_general@%$ld_libs_general%g
 s%@ld_libs_window_system@%$ld_libs_window_system%g
 s%@ld_libs_all@%$ld_libs_all%g
-s%@RECURSIVE_MAKE@%$RECURSIVE_MAKE%g
+s%@RECURSIVE_MAKE_ARGS@%$RECURSIVE_MAKE_ARGS%g
 s%@native_sound_lib@%$native_sound_lib%g
 s%@sound_cflags@%$sound_cflags%g
 s%@dynodump_arch@%$dynodump_arch%g

@@ -33,10 +33,10 @@ all: build-the-mofo
 ## Here are the things that we expect ../configure to edit.
 
 #ifdef USE_GNU_MAKE
-RECURSIVE_MAKE=$(MAKE)
+RECURSIVE_MAKE_ARGS=
 #else
 @SET_MAKE@
-RECURSIVE_MAKE=@RECURSIVE_MAKE@
+RECURSIVE_MAKE_ARGS=@RECURSIVE_MAKE_ARGS@
 #endif
 
 PROGNAME=@PROGNAME@
@@ -525,19 +525,19 @@ build-the-mofo: update-elc-2 $(mo_file) $(other_files) $(LISP)/finder-inf.el loa
 #ifdef HAVE_X_WINDOWS
 lwlib_deps = $(lwlib_lib)
 $(lwlib_lib):
-	+cd ../lwlib && $(RECURSIVE_MAKE)
+	cd ../lwlib && $(MAKE) $(RECURSIVE_MAKE_ARGS)
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef DYNODUMP
 dynodump_deps = ../dynodump/dynodump.so
 ../dynodump/dynodump.so:
-	+cd ../dynodump && $(RECURSIVE_MAKE)
+	cd ../dynodump && $(MAKE) $(RECURSIVE_MAKE_ARGS)
 #endif /* DYNODUMP */
 
 link_deps = $(start_files) $(objs) $(otherobjs) $(lwlib_deps) $(dynodump_deps)
 
 $(LIB_SRC)/make-dump-id:
-	+cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-dump-id
+	cd $(LIB_SRC) && $(MAKE) $(RECURSIVE_MAKE_ARGS) make-dump-id
 
 dump-id.c: $(LIB_SRC)/make-dump-id $(link_deps)
 	$(LIB_SRC)/make-dump-id
@@ -573,7 +573,7 @@ $(BLDSRC)/NEEDTODUMP: $(RAW_EXE) FRC.needtodump
 obj_src = $(objs:.o=.c)
 
 $(LIB_SRC)/make-docfile:
-	+cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-docfile
+	cd $(LIB_SRC) && $(MAKE) $(RECURSIVE_MAKE_ARGS) make-docfile
 
 $(LIB_SRC)/DOC: $(LIB_SRC)/make-docfile $(BLDSRC)/NEEDTODUMP $(temacs_deps)
 #ifdef QUICK_BUILD
@@ -593,7 +593,7 @@ $(DUMP_TARGET): $(RAW_EXE) $(BLDSRC)/NEEDTODUMP $(LIB_SRC)/DOC
 	@$(RM) $@ && touch SATISFIED
 	$(dump_temacs)
 	@if test -f SATISFIED; then $(RM) SATISFIED; else $(RM) $@; \
-	$(RECURSIVE_MAKE) $@; fi
+	$(MAKE) $(RECURSIVE_MAKE_ARGS) $@; fi
 #else
 	@$(RM) $@
 	$(dump_temacs)
@@ -615,7 +615,7 @@ $(DUMP_TARGET): $(RAW_EXE) $(BLDSRC)/NEEDTODUMP $(LIB_SRC)/DOC
 	if ! test -f dump-size; then \
 		$(LIB_SRC)/insert-data-in-exec -s $(DUMP_TARGET).dmp > dump-size ; \
 		$(RM) dump-data.o $(DUMP_TARGET) $(DUMP_TARGET).dmp $(RAW_EXE);\
-		$(RECURSIVE_MAKE) $@; \
+		$(MAKE) $(RECURSIVE_MAKE_ARGS) $@; \
 	fi
 #endif
 
@@ -658,7 +658,7 @@ fastdump: $(RAW_EXE)
 
 .PHONY: all-elc
 all-elc:
-	+cd .. && $(RECURSIVE_MAKE)
+	cd .. && $(MAKE) $(RECURSIVE_MAKE_ARGS)
 
 #########################################################################
 ##                     Subsidiary dependency rules                     ##
@@ -686,10 +686,10 @@ $(LIB_SRC)/emacs.mo: $(LIB_SRC)/emacs.po
 	cd $(LIB_SRC)/ && $(msgfmt) -o emacs.mo emacs.po
 
 $(LIB_SRC)/make-msgfile:
-	+cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-msgfile
+	cd $(LIB_SRC) && $(MAKE) $(RECURSIVE_MAKE_ARGS) make-msgfile
 
 $(LIB_SRC)/make-po:
-	+cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-po
+	cd $(LIB_SRC) && $(MAKE) $(RECURSIVE_MAKE_ARGS) make-po
 
 #endif /* I18N3 */
 
@@ -945,7 +945,7 @@ rtc_patch.o:
 	rtc_patch_area -o $@
 
 rtcmacs: $(temacs_deps) rtc_patch.o
-	$(RM) $(RAW_EXE); $(RECURSIVE_MAKE) $(RAW_EXE) RTC_patch_objs=rtc_patch.o
+	$(RM) $(RAW_EXE); $(MAKE) $(RECURSIVE_MAKE_ARGS) $(RAW_EXE) RTC_patch_objs=rtc_patch.o
 	mv $(RAW_EXE) rtcmacs
 
 .PHONY: run-rtcmacs
