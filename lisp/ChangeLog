@@ -1,5 +1,28 @@
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
+	* newcomment.el:
+	* newcomment.el (comment):
+	* newcomment.el (comment-fill-column): New.
+	* newcomment.el (comment-style):
+	* newcomment.el (comment-padding):
+	* newcomment.el (comment-multi-line):
+	* newcomment.el (comment-normalize-vars):
+	* newcomment.el (comment-indent):
+	* newcomment.el (uncomment-region):
+	* newcomment.el (comment-make-extra-lines):
+	* newcomment.el (comment-with-narrowing):
+	* newcomment.el (comment-region-internal):
+	* newcomment.el (comment-region):
+	* newcomment.el (comment-box):
+	* newcomment.el (comment-or-uncomment-region): New.
+	* newcomment.el (comment-dwim):
+	* newcomment.el (comment-auto-fill-only-comments):
+	* newcomment.el (comment-valid-prefix): New.
+	* newcomment.el (comment-indent-new-line):
+	Sync to FSF 21.3.
+
+2005-01-26  Ben Wing  <ben@xemacs.org>
+
 	* fill.el:
 	* fill.el (canonically-space-region):
 	* fill.el (fill-region-as-paragraph):
@@ -37,28 +60,6 @@
 	Undo Stephen's change of 2004-05-11.
 	Implement no-conversion-coding-system-mapping as a coding
 	system variable.
-
-2004-11-17  Ben Wing  <ben@xemacs.org>
-
-	* newcomment.el:
-	* newcomment.el (comment):
-	* newcomment.el (comment-fill-column): New.
-	* newcomment.el (comment-style):
-	* newcomment.el (comment-padding):
-	* newcomment.el (comment-multi-line):
-	* newcomment.el (comment-normalize-vars):
-	* newcomment.el (comment-indent):
-	* newcomment.el (uncomment-region):
-	* newcomment.el (comment-make-extra-lines):
-	* newcomment.el (comment-with-narrowing):
-	* newcomment.el (comment-region-internal):
-	* newcomment.el (comment-region):
-	* newcomment.el (comment-box):
-	* newcomment.el (comment-or-uncomment-region): New.
-	* newcomment.el (comment-dwim):
-	* newcomment.el (comment-auto-fill-only-comments):
-	* newcomment.el (comment-valid-prefix): New.
-	* newcomment.el (comment-indent-new-line):
 
 2005-01-25  Ben Wing  <ben@xemacs.org>
 
