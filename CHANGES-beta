@@ -1,5 +1,179 @@
 to 21.5.10 "burdock"
 
+Please accept my apologies for the very long wait between releases
+this time around.  My PC chose the 21.5.10 development cycle to go up
+in a sickening cloud of smoke. :-( (Steve Youngs <youngs@xemacs.org>)
+
+Lots of updates from Ben Wing (as always), also from Andy Piper, Mike
+Sperber, and Stephen Turnbull with lots of documentation updates and
+fixes.  One new exciting addition in this release is that the LDAP and
+PostgreSQL code has been extracted out of the core C code and moved to
+DSO's.  We have Jerry James to thank/blame/worship for that.
+
+Build
+
+-- Reset sheap-adjustment to zero - Piper.
+-- Make --pdump default to yes on Linux - Turnbull.
+-- Only use -Wpacked in GCC v3 - Wing.
+-- Remove LISP_FLOAT_TYPE definition. - James.
+-- Temporarily disable DSO's under Cygwin - Wing.
+-- Updates to DSO building code (Makefile.in, configure.in etc) - Wing, James.
+-- Separate compiler warning flags from CFLAGS - Wing.
+-- Delete auto-autoloads.e* & custom-load.e* on 'make clean' - Turnbull.
+-- Disable detection of 'getaddrinfo' for HP-UX 11.XX - Turnbull.
+-- Include modules directories in 'make tags' - Youngs.
+-- Fix shadowing warnings in make-docfile.c - Wing.
+-- Move the common stuff from postgresql/ldap Makefile.in.in &
+     configure.ac's into a "common" Makefile and configure script -
+     Wing.
+-- Major cleanup of ellcc - Wing, James.
+-- Add Makefile var to pick up '--site-libraries' in DSO's - Youngs.
+-- Avoid unnecessary deviations from UNIX 'describe-installation' in
+     xemacs.mak - Aichner.
+-- Don't confirm overwriting files in xemacs.mak - Aichner.
+-- Support 'xemacs_extra_name' in xemacs.mak - Aichner.
+-- Some gcc/g++ 3 fixes - Wing.
+-- Warning fixes - Wing.
+-- Fix some C++ errors - Wing.
+-- Allow for C needing volatile and C++ that can't have volatile,
+     remove previous volatile hacks - Wing.
+-- Try for a working Cygwin build with old unexec - Wing.
+-- Warning suppression - Turnbull.
+-- New Mule character class regexp tests - Turnbull, Ueno.
+-- Better handling of known bugs in tests - Turnbull.
+-- Add test for stale subexpr match-data - Turnbull.
+-- Update syntax-table tests - Turnbull.
+-- Add word-boundary regexp tests - Turnbull.
+
+Documentation
+
+-- Updates to PROBLEMS file
+	Running/Linux - Lesstif 0.93.36 - Turnbull
+	Running/IRIX - Irix 6.5 coredumps - Turnbull
+	Running/Cygwin - "No cygXpm-noX" fatal error - Turnbull
+	Missing charsets - Remove ambiguity - Turnbull
+	Running, General - FontSet warnings - Turnbull
+	MacOS/X - Stack limitation - Turnbull
+	Digital Unix - Generalise - Turnbull
+	AIX - USE_KKCC lossage - Turnbull.
+-- Update instructions in info/dir - Wallington.
+-- Recommend TeXinfo 4.2 in INSTALL - Turnbull.
+-- Add example in sample.Xdefaults - Boffi.
+-- Typo fixes - Yamaoka, Youngs, Turnbull, Wing.
+-- Docstring fixes - Turnbull, Piper, Skyttä, Wing.
+-- Update description of XEmacs Patches and Design ML's - Turnbull.
+-- Incorportate ChangeLog.X into ChangeLog - Wing.
+-- FAQ additions/amendments:
+	Debugging FAQ improvements - Wing.
+	Mention union type bugs - Turnbull.
+	Debugging HOWTO improvements - Turnbull.
+	Decoding Lisp objects in the debugger - Turnbull.
+	Fix location of FAQ on website - Skyttä.
+	Add missing menu entry for Q3.2.7 - Verna.
+	Displaying non-ASCII - Turnbull.
+	Mention bug report commands - Turnbull.
+	Revise Q1.3.[1-6] - Turnbull.
+	New FAQ for "no cygXpm-noX" fatal error - Turnbull.
+-- New TeXinfo nodes: 
+	"Widget Internals" - Turnbull.
+	"Simple Specifier Usage" - Turnbull.
+	"Compilation Options" - Turnbull.
+-- Document charset Unification and Tables - Turnbull.
+-- Better short description of Mule in Mule submenu - Turnbull.
+-- Regression Testing XEmacs design hints & rewrite - Turnbull.
+-- Document 'face-frob-from-locale-first' - Golubev.
+-- Document 'set-face-background-pixmap-file' - Verna.
+-- Add urefs to Doug Lea's * Wolfram Gloger's home pages in "Low-Level
+     Modules" - Turnbull.
+-- Update "Available Packages" - Skyttä.
+-- Document 'append' arg of 'add-to-list' - Skyttä.
+-- Add optimisation hints in "Techniques for XEmacs Developers" - Turnbull.
+
+Internals
+
+-- Add *menubar*FontSet and *popup*FontSet entries - Turnbull, Skyttä.
+-- Extract ldap and postgresql code from core and put them into DSO's - James.
+-- 'Fset_window_point' Correct to GNU/Emacs behaviour (fixes some bugs
+     in Gnus) - Wing.
+-- Inhibit GC in critical sections - Wing.
+-- Fix calculation in 'report_sheap_usage' - Piper.
+-- Implement and use new var 'garbage_collection_messages' - Wallington.
+-- Fix 'open_database' for Berkeley DB 4.1.x - Allen.
+-- Updates to frame code - Sperber.
+-- Change C debugger entrance: error message, then stack trace, then
+     exiting message, then force debugger - Wing.
+-- Use EQ not EQUAL in 'mswindows_init_frame_1' - Wing.
+-- Better redisplay-related asserts - Wing.
+-- Don't generate large warning strings when they'll be discarded - Wing.
+-- Implement 'debug-on-error' as documented - Wing.
+-- Fix docs relating to QUIT which can't GC under any circumstances - Wing.
+-- More robust package compilation and debugging - Wing.
+-- Overhaul profile code - Wing.
+-- Fix crashes due to incorrectly ported GNU/Emacs code - Wing.
+-- Clean up realpath.c - Wing.
+-- DdeCreateStringHandle needs to be manual due to new Cygwin bug - Wing.
+-- Fix some Cygwin complaints - Wing.
+-- Unconditionally use LISP_FLOAT_TYPE code - James.
+-- Improve crash message in 'shut_down_emacs' - Turnbull.
+-- Update NAS code for NAS 1.6 and later - Toy.
+-- Fix "unused variable" warnings in mule-canna.c - Turnbull.
+-- Prototype 'enqueue_focus_event' - Turnbull.
+-- Use BORDER_FIDDLE_FACTOR instead of 10 in 'layout_layout' - Piper.
+-- Add optional 'noerror' arg to 'Frequire' - Wallington.
+-- Only resize 'layout_query_geometry' dynamically if static sizes
+     haven't been set - Piper.
+-- Fix infloop upon a gdm logout - Sigelman.
+-- Fix scope of 'num_nonshy_regs' - Turnbull.
+-- Fix "stale match data" bug - Turnbull.
+-- Don't call 'XtDisplay' on a destroyed widget - Golubev.
+-- Update specifier code - Sperber.
+-- Update process code - Sperber.
+-- Move ldap/postgresql code out to DSO's - James.
+-- Normalise Ffile_truename and drive spec on cygwing to win32 format
+     - Piper.
+-- Use 'closesocket' instead of 'CloseHandle' in 'winsock_closer' - Alexander.
+-- Coding system updates - Ikiuo.
+
+Lisp API
+
+-- Update window-xemacs.el to fix 'goto-line' - Wing.
+-- Add garbage collection messages - Wallington.
+-- Re-implement window configurations in Emacs Lisp - Sperber.
+-- Enhance background-pixmap-file code - Verna.
+-- New macro 'save-window-excursion' to eventually replace bytecode
+     instruction - Sperber.
+-- Move window.el et al up the order in dumped-lisp.el - Sperber.
+-- Don't use 'save-window-excursion' in
+     'shrink-window-if-larger-than-buffer' - Sperber.
+-- Updates to pixel-size code in dialog.el - Sperber.
+-- Remove nonworking 'breakpoint-on-error' - Wing.
+-- Extract out 'with-displaying-help-buffer' into a more general mechanism
+     - Wing.
+-- Don't catch errors when noninteractive in startup.el - Wing.
+-- Fix warnings in code-files.el, loadhist.el, & package-get.el - Wing.
+-- Simplify code in '*-reset-device-font-menus' - James.
+-- Synch font-menu.el to the 21.4 version - Turnbull.
+-- Preserve return value from 'call-process' - Sperber.
+-- New functions in replace.el that operate on regions - Evans.
+-- Run 'delete-frame-hook' in general dialogs only - Piper.
+-- Add a margin parameter in autoload.el for DSO autoloads - James.
+-- Conditionalise autoloads for DSO's on the existence of the DSO - James.
+-- Always set module directories/paths in dump-paths.el - James.
+-- Bring list of package sites up to date - Skyttä.
+-- Add "Find Variable" menu entry for 'hyper-apropos-find-variable' -
+     Wallington
+-- Fix 'view-lossage' interactive spec - Wallington.
+-- Synch 'with-output-to-string' with GNU/Emacs 21 - Wallington.
+-- Bind C-xrd to 'delete-rectangle' - Yamaoka.
+-- Move entries in 'auto-mode-alist' out to packages for the modes
+     that are in packages - Skyttä
+-- New compatible alias for 'lookup-syntax-properties'
+     ('parse-sexp-lookup-properties') - Turnbull.
+-- Enable C autoloads for DSO's - James.
+-- Update revert-buffer code - Piper.
+-- Add new coding system 'utf-8-bom' - Ikiuo.
+
+
 to 21.5.9 "brussels sprouts"
 
 The main thrust of this release is the new GC algorithms.  If you want

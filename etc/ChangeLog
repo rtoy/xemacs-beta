@@ -1,3 +1,7 @@
+2003-01-04  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.10 "burdock" is released.
+
 2002-11-11  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
 
 	* etc/Emacs.ad (Emacs.bold-italic.attributeFont): Per G. Boffi.
