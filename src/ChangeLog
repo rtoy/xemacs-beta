@@ -1,7 +1,28 @@
+2004-06-02  Didier Verna  <didier@xemacs.org>
+
+	C++ related fixes.
+
+	* ExternalClient-Xlib.c (window_has_focus_p): Fix nchild parameter
+	type.
+	* ExternalClient.c (ComputeWindowAttributes): Fix old K&R function
+	prototype.
+	* ExternalClient.c (Destroy): Ditto.
+	* ExternalClient.c (QueryGeometry): Ditto.
+	* ExternalShell.c (EventHandler): Ditto.
+	* ExternalShell.c (ExternalShellDestroy): Ditto.
+	* ExternalShell.c (ChangeManaged): Ditto.
+	* ExternalShell.c (ExternalShellRootGeometryManager): Ditto.
+	* extw-Xt.c: Wrap `fatal' and `_XtWaitForSomething' function
+	prototypes in EXTERN_C.
+	* extw-Xt.c (_XT_WAIT_FOR_SOMETHING): Rename macro (previously
+	_XtWaitForSomething).
+	* extw-Xt.c (extw_wait_for_response): Use it.
+	* nas.c (EXTERN_C): Wrap audio headers inclusion in EXTERN_C.
+
 2004-05-21  Jerry James  <james@xemacs.org>
 
 	* floatfns.c (Ffloat): Add missing return keyword.
-	* number.h: Declare Qbignump, Qratiop, and Qbigfloatp in every case. 
+	* number.h: Declare Qbignump, Qratiop, and Qbigfloatp in every case.
 	* number.c: Ditto.
 	* number.c (syms_of_number): Ditto.  Declare
 	Fbigfloat_get_precision and Fbigfloat_set_precision.
@@ -186,7 +207,7 @@
 	the denominator.
 	* sysdep.c (get_random): Use INT_VALBITS instead of VALBITS to
 	build random numbers.
-	
+
 2004-04-18  Jerry James  <james@xemacs.org>
 
 	* dump-data.c (dumped_data_get): Change return type to char *.
@@ -554,7 +575,7 @@
 	* ui-gtk.c (__internal_callback_marshal): Marshalling data to
 	return to GTK requires a different API to marshalling data to use
 	as GTK parameters.
-	* ui-gtk.c (lisp_to_gtk_ret_type): New. 
+	* ui-gtk.c (lisp_to_gtk_ret_type): New.
 
 2004-01-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -612,7 +633,7 @@
 	the iterative calls for marking weak data structures since the
 	entries on the kkcc_stack need to be processed after every run
 	to mark attached objects
-	
+
 2003-10-16  Jerry James  <james@xemacs.org>
 
 	* realpath.c (qxe_realpath): When a symbolic link to an absolute
@@ -731,7 +752,7 @@
 	* ui-gtk.c (CONVERT_RETVAL): Add type parameter to use of xfree,
 	and fix some minor whitespace problems.
 	* xemacs.def.in.in: Unconditionally export xfree_1
-	
+
 	* alloc.c:
 	* alloca.c:
 	* buffer.c:
@@ -990,7 +1011,7 @@
 	(kkcc_gc_stack_pop): Remove kkcc_gc_stack_count.
 	(mark_object_maybe_checking_free): Push on stack instead of marking.
 	(garbage_collect_1): Invoke kkcc_marking after finish_marking_*.
-	
+
 2003-08-21  Jerry James  <james@xemacs.org>
 
 	* lrecord.h (DECLARE_MODULE_API_LRECORD): Also define when not
@@ -998,7 +1019,7 @@
 
 2003-08-19  René Kyllingstad <listmailxemacs@kyllingstad.com>
 
-	* alloc.c (kkcc_gc_stack_init): 
+	* alloc.c (kkcc_gc_stack_init):
 	(kkcc_gc_stack_realloc): Missing casts for the return value of
 	malloc and realloc.
 
@@ -1059,15 +1080,15 @@
 
 	* README.kkcc: Aligned to the changes.
 	* alloc.c: Implemented the kkcc_gc_stack.
-	(kkcc_gc_stack_init): 
-	(kkcc_gc_stack_free): 
-	(kkcc_gc_stack_realloc): 
-	(kkcc_gc_stack_full): 
-	(kkcc_gc_stack_empty): 
-	(kkcc_gc_stack_push): 
-	(kkcc_gc_stack_pop): 
-	(kkcc_gc_stack_push_lisp_object): 
-	(mark_object_maybe_checking_free): Push objects on kkcc stack instead 
+	(kkcc_gc_stack_init):
+	(kkcc_gc_stack_free):
+	(kkcc_gc_stack_realloc):
+	(kkcc_gc_stack_full):
+	(kkcc_gc_stack_empty):
+	(kkcc_gc_stack_push):
+	(kkcc_gc_stack_pop):
+	(kkcc_gc_stack_push_lisp_object):
+	(mark_object_maybe_checking_free): Push objects on kkcc stack instead
 	of marking.
 	(mark_struct_contents): Push objects on kkcc stack instead of marking.
 	(kkcc_marking): KKCC mark algorithm using the kkcc_gc_stack.
@@ -1075,17 +1096,17 @@
 	(garbage_collect_1): Push objects on kkcc stack instead of marking.
 	* data.c: Added XD_FLAG_NO_KKCC to ephemeron_description and to
 	weak_list_description.
-	* data.c (finish_marking_weak_lists): Push objects on kkcc stack 
+	* data.c (finish_marking_weak_lists): Push objects on kkcc stack
 	instead of marking.
-	(continue_marking_ephemerons): Push objects on kkcc stack instead 
+	(continue_marking_ephemerons): Push objects on kkcc stack instead
 	of marking.
-	(finish_marking_ephemerons): Push objects on kkcc stack instead 
+	(finish_marking_ephemerons): Push objects on kkcc stack instead
 	of marking.
-	* elhash.c (finish_marking_weak_hash_tables): Push objects on kkcc 
+	* elhash.c (finish_marking_weak_hash_tables): Push objects on kkcc
 	stack instead of marking.
 	* eval.c: Added XD_FLAG_NO_KKCC to subr_description.
 	* lisp.h: Added prototype for kkcc_gc_stack_push_lisp_object.
-	* profile.c (mark_profiling_info_maphash): Push keys on kkcc stack 
+	* profile.c (mark_profiling_info_maphash): Push keys on kkcc stack
 	instead of marking.
 
 2003-07-30  Jerry James  <james@xemacs.org>
@@ -1094,12 +1115,12 @@
 
 2003-07-24  Mike Sperber  <mike@xemacs.org>
 
-	* lisp.h: 
-	* data.c: 
-	(init_marking_ephemerons): 
-	(continue_marking_ephemerons): 
-	(finish_marking_ephemerons): 
-	(prune_ephemerons): 
+	* lisp.h:
+	* data.c:
+	(init_marking_ephemerons):
+	(continue_marking_ephemerons):
+	(finish_marking_ephemerons):
+	(prune_ephemerons):
 	* alloc.c (garbage_collect_1): Rewrite the ephemeron marker once
 	again to allow ephemerons to be used for implementing simple
 	object finalization.
@@ -1184,8 +1205,8 @@
 	(Fsearch_forward):
 	(Fword_search_backward):
 	(Fword_search_forward):
-	(Fre_search_backward): 
-	(Fre_search_forward): 
+	(Fre_search_backward):
+	(Fre_search_forward):
 	(Fposix_search_backward):
 	(Fposix_search_forward):
 	Document that search/match failure preserves match data.
@@ -1211,7 +1232,7 @@
 2000-07-22  Ilya N. Golubev  <gin@mo.msk.ru>
 
 	* lisp.h (filemodestring): Remove
-	
+
 	* sysfile.h (filemodestring): Put it here
 
 	* filemode.c (filemodestring): Note in comment where it is
@@ -1285,9 +1306,9 @@
 
 	* search.c (search_buffer):
 	Don't find null string if repetition count is 0.
-	(string_match_1): 
-	(looking_at_1): 
-	(search_buffer): 
+	(string_match_1):
+	(looking_at_1):
+	(search_buffer):
 	(simple_search):
 	(boyer_moore):
 	Clear all search regs as start, not unused ones on success.
@@ -1399,11 +1420,11 @@
 	Fix up internal magic-cookie code to also check for
 	`;;;###coding system', already handled by the (redundant)
 	code in files.el.
-	
+
 	* regex.c (re_match_2_internal):
 	Fix problem with ordering of initializations and statements -- OK in
 	C++, not in C.
-	
+
 	* search.c (fast_string_match):
 	Indentation.
 
@@ -1427,7 +1448,7 @@
 	* alloc.c (disksave_object_finalization):
 	Don't arbitrarily clear Vconfigure_info_directory since it
 	messes up separate build/source dirs.
-	
+
 	* console.c (get_console_variant):
 	* console.c (Fvalid_console_type_p):
 	* console.c (Fconsole_type):
@@ -1435,7 +1456,7 @@
 	* device-msw.c:
 	* device.c:
 	Add accidentally omitted msprinter console and data descriptions.
-	
+
 	* print.c:
 	* print.c (write_string_to_stdio_stream_1):
 	* print.c (write_string_to_stdio_stream):
@@ -1455,11 +1476,11 @@
 	Add clear-left-side functionality to help keep stdio/stderr
 	output from separate sources on separate lines.  Generalize
 	the different kinds of debugging output. Add dpa().
-	
+
 	* profile.c:
 	* profile.c (vars_of_profile):
 	Add better docs on Unix/Windows differences.
-	
+
 	* regex.c:
 	* regex.c (RE_TRANSLATE_1):
 	* regex.c (REGEX_ALLOCATE_STACK):
@@ -1472,7 +1493,7 @@
 	* emacs.c (assert_failed):
 	Seg fault rather than abort on Cygwin, since gdb doesn't trap
 	aborts properly.
-	
+
 	* console-gtk-impl.h:
 	* console-gtk-impl.h (struct gtk_frame):
 	* console-gtk.h:
@@ -1615,7 +1636,7 @@
 	* dumper.c (pdump_reloc_one):
 	* dumper.c (pdump_dump_root_struct_ptrs):
 	Issue notes about incremental linking problems under Windows.
-	
+
 	* fileio.c:
 	* fileio.c (barf_or_query_if_file_exists):
 	* fileio.c (Fsysnetunam):
@@ -1623,7 +1644,7 @@
 	* fileio.c (Fdecrypt_string):
 	* fileio.c (Fdo_auto_save):
 	Mule-ize encrypt/decrypt-string code.
-	
+
 	* text.h (DEC_IBYTEPTR):
 	* text.h (EI_ALLOC):
 	* text.h (eicpy_lstr):
@@ -1847,7 +1868,7 @@
 	* alloc.c:
 	* alloc.c (garbage_collect_1):
 	Make gc_currently_forbidden static.
-	
+
 	* config.h.in:
 	* lisp.h:
 	Move some stuff to lisp.h.
@@ -1889,17 +1910,17 @@
 	* event-stream.c (Fdiscard_input):
 	* frame.c:
 	Add comments about calling Lisp.
-	
+
 	* debug.c:
 	* debug.c (FROB):
 	* debug.c (syms_of_debug):
 	* general-slots.h:
 	Move generalish symbols to general-slots.h.
-	
+
 	* doprnt.c (get_doprnt_args):
 	* doprnt.c (emacs_doprnt_1):
 	reindent.
-	
+
 	* lisp.h (Dynarr_reset):
 	* lisp.h (Dynarr_add):
 	* lisp.h (Dynarr_increment):
@@ -1912,7 +1933,7 @@
 	* dynarr.c (Dynarr_memory_usage):
 	Add debug code for locking a dynarr to catch invalid mods.
 	Use in redisplay.c.
-	
+
 	* eval.c:
 	* eval.c (throw_or_bomb_out):
 	* eval.c (Fsignal):
@@ -1924,13 +1945,13 @@
 	* file-coding.c:
 	* file-coding.c (complex_vars_of_file_coding):
 	Define file-name as alias for native not vice-versa.
-	
+
 	* frame-gtk.c:
 	* frame-gtk.c (syms_of_frame_gtk):
 	* frame-x.c:
 	* frame-x.c (syms_of_frame_x):
 	Move Qwindow_id to general-slots.
-	
+
 	* dialog-msw.c (handle_question_dialog_box):
 	* glyphs-gtk.c (gtk_tab_control_redisplay):
 	* glyphs-msw.c:
@@ -1968,7 +1989,7 @@
 	within redisplay, taking an in_redisplay parameter if it's
 	possible for them to be called both inside and outside of
 	redisplay.
-	
+
 	* gutter.c:
 	* gutter.c (calculate_gutter_size):
 	* gutter.c (redraw_exposed_gutters):
@@ -1977,16 +1998,16 @@
 	* gutter.c (gutter_geometry_changed_in_window):
 	Defer specifier-changed updating till after redisplay, if
 	necessary, since we need to enter redisplay to do it.
-	
+
 	* gutter.c (Fredisplay_gutter_area):
 	Do nothing if in redisplay.
-	
+
 	* lisp.h:
 	Add version of alloca() for use in function calls.
-	
+
 	* lisp.h (XCADR):
 	Add XCAD[D+]R up to 6 D's, and aliases X1ST, X2ND, etc.
-	
+
 	* frame.c (invalidate_vertical_divider_cache_in_frame):
 	* frame.c (adjust_frame_size):
 	* frame.c (store_minibuf_frame_prop):
@@ -2029,7 +2050,7 @@
 	we enter redisplay reentrantly.  Disable all quit checking in
 	redisplay since it's too dangerous.  Ensure that all calls to
 	QUIT trigger an abort if unprotected.
-	
+
 	* redisplay.c:
 	* scrollbar-gtk.c (gtk_update_frame_scrollbars):
 	* scrollbar-x.c (x_update_frame_scrollbars):
@@ -2038,11 +2059,11 @@
 	Create enter/exit_redisplay_critical_section_maybe() for code
 	that needs to ensure it's in a critical section but doesn't
 	interfere with an existing critical section.
-	
+
 	* sysdep.c:
 	* sysdep.c (qxe_execve):
 	Use _wexecve() when under Windows NT for Unicode correctness.
-	
+
 	* text.c:
 	* text.c (new_dfc_convert_now_damn_it):
 	* text.c (new_dfc_convert_malloc):
@@ -2061,7 +2082,7 @@
 
 	Update the encoding aliases after involved scrutinization of the
 	X manual.
-	
+
 	* unicode.c:
 	* unicode.c (init_blank_unicode_tables):
 	* unicode.c (init_charset_unicode_tables):
@@ -2160,7 +2181,7 @@
 
 	* console.c (Fvalid_console_type_p):
 	Update list of possibly valid console types.
-	
+
 	* emacs.c:
 	* emacs.c (check_compatible_window_system):
 	* emacs.c (main_1):
@@ -2189,7 +2210,7 @@
 	must be running in batch mode.  This also fixes an existing bug
 	whereby compiling with no x, no mswin, no tty, when running non-
 	interactively (e.g. to dump) I get "sorry, must have TTY support".
-	
+
 	* emacs.c (Frun_emacs_from_temacs):
 	Turn on Vstack_trace_on_error so that errors are debuggable even
 	when occurring extremely early in reinitialization.
@@ -2203,24 +2224,24 @@
 	is noninteractive or interactive, whether raw,
 	post-dump/pdump-load or run-temacs, whether we are dumping,
 	whether pdump is in effect.
-	
+
 	* event-stream.c:
 	It's "mommas are fat", not "momas are fat".
 	Fix other typo.
 	* event-stream.c (Fnext_event):
 	Conditionalize in_menu_callback check on HAVE_MENUBARS,
 	because it won't exist on w/o menubar support,
-	
+
 	* lisp.h:
 	More hackery on RETURN_NOT_REACHED.  Cygwin v3.2 DOES complain here
 	if RETURN_NOT_REACHED() is blank, as it is for GCC 2.5+.  So make it
-	blank only for GCC 2.5 through 2.999999999999999. 
-	
+	blank only for GCC 2.5 through 2.999999999999999.
+
 	Declare Vstack_trace_on_error.
-	
+
 	* profile.c:
 	Need to include "profile.h" to fix warnings.
-	
+
 	* sheap.c (report_sheap_usage):
 	Don't fatal() when need to rerun Make, just stderr_out() and exit(0).
 	That way we can distinguish between a dumping failing expectedly
@@ -2242,7 +2263,7 @@
 
 	* xmotif.h:
 	New file, to get around shadowing warnings.
-	
+
 	* EmacsManager.c:
 	* event-Xt.c:
 	* glyphs-x.c:
@@ -2251,10 +2272,10 @@
 	* xmmanagerp.h:
 	* xmprimitivep.h:
 	Include xmotif.h.
-	
+
 	* alloc.c:
 	Conditionalize in_malloc on ERROR_CHECK_MALLOC.
-	
+
 	* config.h.in:
 	* file-coding.h:
 	* fileio.c:
@@ -2269,11 +2290,11 @@
 	* unicode.c (dfc_coding_system_is_unicode):
 	Eliminate HAVE_WIN32_CODING_SYSTEMS, use WIN32_ANY instead.
 	Replace defined (WIN32_NATIVE) || defined (CYGWIN) with WIN32_ANY.
-	
+
 	* lisp.h:
 	More futile attempts to walk and chew gum at the same time when
 	dealing with subr's that don't return.
-	
+
 2003-02-19  Ben Wing  <ben@xemacs.org>
 
 	* eval.c (unbind_to_hairy):
@@ -2320,7 +2341,7 @@
 	* buffer.c:
 	* syntax.c:
 	Move syntax table description from buffer.c to syntax.c.
-	
+
 	* chartab.c:
 	* chartab.c (set_char_table_dirty):
 	* chartab.c (fill_char_table):
@@ -2338,7 +2359,7 @@
 	away, just mark as dirty.
 	Add various asserts to make sure we are dealing with the right type
 	of table (mirror or non-mirror).
-	
+
 	* font-lock.c:
 	* font-lock.c (find_context):
 	* syntax.c (init_syntax_cache):
@@ -2365,7 +2386,7 @@
 	When retrieving the syntax code, check the dirty flag and update
 	the mirror tables as appropriate.
 	Add some asserts, as above.
-	
+
 2003-02-14  Ben Wing  <ben@xemacs.org>
 
 	* scrollbar.c (specifier_vars_of_scrollbar):
@@ -2377,7 +2398,7 @@
 	If, that is, you're using a slow X connection and MoveOpaque.
 	Use compress_exposure = XtExposeCompressMaximal | XtExposeNoRegion.
 	Use compress_motion = TRUE.
-	* EmacsFrame.c (emacsFrameClassRec): 
+	* EmacsFrame.c (emacsFrameClassRec):
 	* EmacsShell-sub.c (EMACS_SHELL_CLASS_REC):
 	* EmacsManager.c (emacsManagerClassRec):
 	* xintrinsicp.h: Make sure XtExposeNoRegion is defined.
@@ -2435,7 +2456,7 @@
 
 	* profile.h: New file.
 	Create macros for declaring internal profiling sections.
-	
+
 	* lisp.h:
 	Move profile-related stuff to profile.h.
 
@@ -2469,8 +2490,8 @@
 
 	* eval.c:
 	* eval.c (unwind_to_catch):
-	When unwinding, 
-	
+	When unwinding,
+
 	* eval.c (Fcommand_execute):
 	* eval.c (Feval):
 	* eval.c (Ffuncall):
@@ -2515,7 +2536,7 @@
 	since the signal handler is the main grower but can't allow
 	a realloc().  We make sure, at critical points, that the table
 	is large enough.)
-	
+
 	* lread.c:
 	* lread.c (Fload_internal):
 	* lread.c (done): New.
@@ -2546,7 +2567,7 @@
 
 2003-02-07  Mike Sperber  <mike@xemacs.org>
 
-	* scrollbar.c (specifier_vars_of_scrollbar): 
+	* scrollbar.c (specifier_vars_of_scrollbar):
 	(specifier_vars_of_scrollbar): TTY devices don't have scrollbars.
 
 2003-01-28  Martin Buchholz  <martin@xemacs.org>
@@ -2560,11 +2581,11 @@
 	* console-stream.c (console_type_create_stream):
 	Abort when any attempts to output a stream console are made.
 	Should be caught sooner.
-	
+
 	* event-msw.c (mswindows_wnd_proc):
 	Don't redisplay() during sizing when the frame has not yet been
 	initialized completely.
-	
+
 	* event-stream.c (Fnext_event):
 	* menubar-msw.c (mswindows_handle_wm_initmenupopup):
 	* menubar-x.c (protected_menu_item_descriptor_to_widget_value):
@@ -2575,11 +2596,11 @@
 	in_modal_loop, when issuing error in `next-event', otherwise we
 	bite the dust immediately -- event-msw.c purposely calls
 	Fnext_event() in a modal loop, and knows what it's doing.
-	
+
 	* redisplay-output.c (redisplay_unmap_subwindows_maybe):
 	* redisplay-output.c (redisplay_unmap_subwindows_except_us):
 	Formatting fixes.
-	
+
 	* redisplay.c:
 	* redisplay.c (redisplay_frame):
 	* redisplay.c (Fredisplay_echo_area):
@@ -2599,7 +2620,7 @@
 	Put in a check here (as well as redisplay_device()) for a stream
 	frame.  We can get here directly through Lisp fun
 	`redisplay-frame'.  Abort if frame not initialized.
-	
+
 	* redisplay.c (Fredisplay_echo_area):
 	* redisplay.c (Fforce_cursor_redisplay):
 	Check for stream frames/devices.
@@ -2634,7 +2655,7 @@
 
 	They are related because they both touch on the code that retrieves
 	events and handles the internal queues.
-	
+
 	* console-msw.h:
 	* event-msw.c:
 	* event-msw.c (mswindows_unmodalize_signal_maybe):
@@ -2682,7 +2703,7 @@
 	If in_modal_loop, only retrieve process and timeout events.
 	Don't retrieve any X events because processing them can lead
 	to reentrancy in lwlib -> death.
-	
+
 	* event-stream.c:
 	* event-stream.c (check_event_stream_ok):
 	* event-stream.c (event_stream_handle_magic_event):
@@ -2701,7 +2722,7 @@
 	* event-stream.c (event_stream_next_event):
 	Remove unused parameter to check_event_stream_ok() and change
 	all callers.
-	
+
 	* lisp.h:
 	* event-stream.c (maybe_do_auto_save):
 	* event-stream.c (emacs_handle_focus_change_preliminary):
@@ -2726,7 +2747,7 @@
 	not just if any are.  Add parameter to detect_input_pending()
 	for this.  Change recursive_sit_for from a Lisp_Object (which
 	could only be Qt or Qnil) to an int, like it should be.
-	
+
 	* event-Xt.c:
 	* event-Xt.c (THIS_IS_X):
 	* event-gtk.c:
@@ -2738,7 +2759,7 @@
 
 	* event-msw.c (emacs_mswindows_event_pending_p):
 	Implement HOW_MANY and only process events when not in_modal_loop.
-	
+
 	* event-tty.c:
 	* event-tty.c (tty_timeout_to_emacs_event):
 	* event-tty.c (emacs_tty_event_pending_p):
@@ -2756,10 +2777,10 @@
 	presence of a fast auto-repeat (usually the auto-repeating is
 	generated dynamically as necessary), and you get much better
 	display behavior with lazy-lock active.
-	
+
 	* event-unixoid.c:
 	Comment changes.
-	
+
 	* event-stream.c (command_event_p_cb):
 	* event-stream.c (Fdiscard_input):
 	Rewrite discard-input much more simply and safely using the
@@ -2768,15 +2789,15 @@
 
 	SEMI-UNRELATED CHANGES:
 	-----------------------
-	
+
 	* event-stream.c (run_pre_idle_hook):
 	Turn QUIT-checking back on when running the pre-idle hook so it
 	can be quit out of.
-	
+
 	* indent.c:
 	Document exact functioning of `vertical-motion' better, and its
 	differences from GNU Emacs.
-	
+
 2003-02-06  Ben Wing  <ben@xemacs.org>
 
 	* unicode.c:
@@ -2811,7 +2832,7 @@
 
 	* esd.c (esd_play_sound_data):
 	Warning fixes.
-	
+
 	* fns.c:
 	* fns.c (mark_bit_vector):
 	* fns.c (Frequire):
@@ -2819,7 +2840,7 @@
 	Eliminate bogus require-prints-loading-message; use already
 	existent load-always-display-messages instead.  Make sure `load'
 	knows we are coming from `require'.
-	
+
 	* lread.c:
 	* lread.c (READCHARFUN_MAYBE):
 	* lread.c (Fload_internal):
@@ -2923,7 +2944,7 @@
 	* ui-gtk.c: Fix typo from Ben's patch: emacs_ffi_data is a
 	typedef, not a struct.  emacs_gtk_object_data is a typedef, not a
 	struct.
-	
+
 
 	* gtk-glue.c (gdk_event_to_emacs_event): Fix typos from Ben's
 	patch: le -> emacs_event + rearrange the code.
@@ -2943,7 +2964,7 @@
 	Major cleanup of KKCC, etc.
 
 	KKCC, pdump-related:
-	
+
 	-- descriptions are written for all objects.  this required some
 	   changes in the format of some objects, e.g. extents, popup-data,
 	   coding system, lstream, lcrecord-list.
@@ -2987,7 +3008,7 @@
 	-- factor out some code duplicated in kkcc and pdump.
 
 	Other allocation/object-related:
-	
+
 	-- change various *slots.h so MARKED_SLOT() call no longer
 	   includes semicolon.
 	-- free_marker() takes a Lisp_Object not a direct pointer.
@@ -3007,7 +3028,7 @@
 	   the end, instead of a separate block holding the array.
 
 	Error-checking-related:
-	
+
 	-- now can compile with C++ under MS Windows.  clean up compile errors
 	   discovered that way. (a few were real problems)
 	-- add C++ error-checking code to verify problems with mismatched
@@ -3022,9 +3043,9 @@
 	   when crashing or from debug_print(), and tries as hard as it
 	   reasonably can in other situations.
 	-- Correct the message output upon crashing to be more up-to-date.
-	
+
 	Event-related:
-	
+
 	-- document event-matches-key-specifier-p better.
 	-- generalize the dispatch queues formerly duplicated in the
 	   various event implementations.  add event methods to drain pending
@@ -3039,7 +3060,7 @@
 	   MS Windows but not quite there yet.
 
 	Other:
-	
+
 	-- class -> class_ and no more C++ games with this item.
 	   new -> new_ in the lwlib code, so far not elsewhere.
 	-- use `struct htentry' not `struct hentry' in elhash.c to avoid
@@ -3802,7 +3823,7 @@
 	* window.h (Fcurrent_window_configuration): Don't export anymore.
 	(Qcurrent_window_configuration): Declare.
 	(Qset_window_configuration): Declare.
-	* event-stream.c (execute_help_form): 
+	* event-stream.c (execute_help_form):
 	* bytecode.c (execute_rare_opcode): Call out to Lisp to save
 	window excursion.
 	* window.c (Qcurrent_window_configuration): Declare.
@@ -3810,28 +3831,28 @@
 	(Vwindow_configuration_free_list):
 	(Qset_window_configuration):
 	(Qtemp_buffer_show_hook):
-	(struct saved_window): 
-	(struct window_config): 
-	(SAVED_WINDOW_N): 
-	(XWINDOW_CONFIGURATION): 
-	(wrap_window_configuration): 
-	(WINDOW_CONFIGURATIONP): 
-	(CHECK_WINDOW_CONFIGURATION): 
-	(mark_window_config): 
-	(sizeof_window_config_for_n_windows): 
-	(sizeof_window_config): 
-	(print_window_config): 
-	(saved_window_equal): 
-	(window_config_equal): 
-	(Fwindow_configuration_p): 
-	(mark_windows_in_use_closure): 
-	(mark_windows_in_use): 
-	(free_window_configuration): 
-	(Fset_window_configuration): 
-	(count_windows): 
-	(saved_window_index): 
-	(save_window_save): 
-	(Fcurrent_window_configuration): 
+	(struct saved_window):
+	(struct window_config):
+	(SAVED_WINDOW_N):
+	(XWINDOW_CONFIGURATION):
+	(wrap_window_configuration):
+	(WINDOW_CONFIGURATIONP):
+	(CHECK_WINDOW_CONFIGURATION):
+	(mark_window_config):
+	(sizeof_window_config_for_n_windows):
+	(sizeof_window_config):
+	(print_window_config):
+	(saved_window_equal):
+	(window_config_equal):
+	(Fwindow_configuration_p):
+	(mark_windows_in_use_closure):
+	(mark_windows_in_use):
+	(free_window_configuration):
+	(Fset_window_configuration):
+	(count_windows):
+	(saved_window_index):
+	(save_window_save):
+	(Fcurrent_window_configuration):
 	(Fsave_window_excursion): Remove.
 	(mark_window_as_deleted): Rectify comment about
 	`set-window-configuration'.
@@ -3873,10 +3894,10 @@
 	* eval.c (signal_call_debugger):
 	Fix up C debugger entrance -- first output the error message, then
 	stack trace, then exiting message, then force debugger.
-	
+
 	* frame-msw.c (mswindows_init_frame_1): Use EQ not EQUAL to avoid
 	QUIT tripping.
-	
+
 	* toolbar-msw.c (mswindows_clear_toolbar): Indentation fixes.
 
 2002-11-27  Ben Wing  <ben@xemacs.org>
@@ -3884,9 +3905,9 @@
 	* alloc.c:
 	* alloc.c (garbage_collect_1):
 	Better redisplay-related assert.
-	
+
 	* elhash.c (xhash_table): Comment change.
-	
+
 	* eval.c:
 	* eval.c (signal_call_debugger):
 	* eval.c (throw_or_bomb_out):
@@ -3908,7 +3929,7 @@
 	and we are --debug.
 
 	Better redisplay-related asserts.
-	
+
 	* frame-msw.c (mswindows_init_frame_1):
 	* frame.c (enter_redisplay_critical_section):
 	* lisp.h:
@@ -3921,7 +3942,7 @@
 
 	Fix up documentation related to QUIT (which CANNOT garbage-collect
 	under any circumstances), and to redisplay critical sections.
-	
+
 	* lread.c:
 	* lread.c (Fload_internal):
 	* lread.c (PRINT_LOADING_MESSAGE_1):
@@ -3931,7 +3952,7 @@
 	Add load-ignore-out-of-date-elc-files,
 	load-always-display-messages, load-show-full-path-in-messages for
 	more robust package compilation and debugging.
-	
+
 	* profile.c:
 	* profile.c (create_call_count_profile_table):
 	* profile.c (profile_increase_call_count):
@@ -3949,7 +3970,7 @@
 	Add set-profiling-info.  See related profile.el changes (which
 	SHOULD ABSOLUTELY be in the core!  Get rid of xemacs-devel and
 	xemacs-base packages *yesterday*!).
-	
+
 2002-11-22  Ben Wing  <ben@xemacs.org>
 
 	* fileio.c: Fix crashes due to incorrectly ported code from
@@ -3974,53 +3995,53 @@
 
 	* emodules.h:
 	Fix warnings from redefining symbols.
-	
+
 	* eval.c:
 	* eval.c (call_with_condition_handler):
 	* eval.c (run_post_gc_hook):
 	* eval.c (Ffuncall):
 	Fix C++ errors -- no automatic casting between function pointers
 	and void *, function declarations inside of functions not allowed.
-	
+
 	* event-Xt.c (emacs_Xt_enqueue_focus_event):
 	Warning fixes.
-	
+
 	* fileio.c (Ffile_truename):
 	Warning fixes.
 	Use LOCAL_TO_WIN32_FILE_FORMAT rather than duplicating it.
-	
+
 	* glyphs-x.c:
 	* glyphs-x.c (x_map_subwindow):
 	Fix style.
-	
+
 	* intl-auto-encap-win32.c:
 	* intl-auto-encap-win32.h:
 	* intl-encap-win32.c:
 	* intl-encap-win32.c (qxeRegConnectRegistry):
 	* syswindows.h (RegConnectRegistry):
 	DdeCreateStringHandle needs to be manual due to new Cygwin bug.
-	
+
 	* intl-win32.c:
 	* intl-win32.c (wcscmp):
 	* intl-win32.c (wcslen):
 	wcslen/wcscmp don't seem to exist under G++ 3, Cygwin.
-	
+
 	* lisp.h:
 	* lisp-union.h:
 	* lisp-disunion.h:
 	* process-unix.c (unix_send_process):
 	Ugh, C needs volatile and C++ must not have volatile.  Remove
 	previous volatile hacks, which don't seem to be working any more.
-	
+
 	* sheap.c (STATIC_HEAP_SLOP):
 	Try to get a working Cygwin build with old unexec.
-	
+
 	* sheap.c (more_static_core):
 	No NL's in literals allowed.
-	
+
 	* symbols.c (Fset):
 	Fix C++ errors.
-	
+
 	* syswindows.h:
 	* syswindows.h (struct):
 	* syswindows.h (tagNMDATETIMEFORMATW):
@@ -4109,8 +4130,8 @@
 2002-09-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* search.c (clear_unused_search_regs): New static function.
-	(search_buffer): 
-	(simple_search): 
+	(search_buffer):
+	(simple_search):
 	(boyer_moore):
 	Use it.  Fixes "stale match data" bug reported by Martin Stjernholm.
 	Minor clarifications in comments.
@@ -4217,7 +4238,7 @@
 	(big5_detect): It was made not to become the trouble of EUC.
 	(iso2022_detector): Add member 'longest_even_high_byte'.
 	(iso2022_detect): Fix checking for even/odd_high_byte_group.
-	The judgment of EUC is changed. 
+	The judgment of EUC is changed.
 
 	* unicode.c: Add DETECTOR_CATEGORY utf_8_bom.
 	(utf_8_detector): Add member byteno, first_byte and second_byte.
@@ -4351,7 +4372,7 @@
 2002-08-03  Brian A Palmer  <bpalmer@rescomp.Stanford.EDU>
 
 	* fns.c (Fsplit_string_by_char): Make 2nd arg SEPCHAR a required
-	argument. 
+	argument.
 
 2002-08-03  Steve Youngs  <youngs@xemacs.org>
 
@@ -4376,15 +4397,15 @@
 
 2002-07-31  David Bush  <David.Bush@intel.com>
 
-	* eldap.c: Add the dumpable-flag to the USE_KKCC version of 
+	* eldap.c: Add the dumpable-flag to the USE_KKCC version of
 	DEFINE_LRECORD_IMPLEMENTATION for "ldap"
 
 2002-08-01  Mike Sperber <mike@xemacs.org>
 
 	* event-stream.c:
-	* event-Xt.c: 
-	* events.h: 
-	* events.c: 
+	* event-Xt.c:
+	* events.h:
+	* events.c:
 	* alloc.c: Fix various kkcc-related nits that show up in MULE and
 	union-type builds.
 
@@ -4407,7 +4428,7 @@
 	    Mike Sperber <mike@xemacs.org>
 
 	configure flag to turn these changes on: --use-kkcc
-	
+
 	First we added a dumpable flag to lrecord_implementation. It shows,
 	if the object is dumpable and should be processed by the dumper.
 	* lrecord.h (struct lrecord_implementation): added dumpable flag
@@ -4416,17 +4437,17 @@
 
 	Then we changed mark_object, that it no longer needs a mark method for
 	those types that have pdump descritions.
-	* alloc.c: 
+	* alloc.c:
 	(mark_object): If the object has a description, the new mark algorithm
-	is called, and the object is marked according to its description. 
+	is called, and the object is marked according to its description.
 	Otherwise it uses the mark method like before.
-	
-	These procedures mark objects according to their descriptions. They 
+
+	These procedures mark objects according to their descriptions. They
 	are modeled on the corresponding pdumper procedures.
-	(mark_with_description): 
-	(get_indirect_count): 
-	(structure_size): 
-	(mark_struct_contents): 
+	(mark_with_description):
+	(get_indirect_count):
+	(structure_size):
+	(mark_struct_contents):
 	These procedures still call mark_object, this is needed while there are
 	Lisp_Objects without descriptions left.
 
@@ -4455,22 +4476,22 @@
 	* event-gtk.c:
 	* event-tty.c:
 	To write a pdump description for Lisp_Event, we converted every struct
-	in the union event to a Lisp_Object. So we created nine new 
+	in the union event to a Lisp_Object. So we created nine new
 	Lisp_Objects: Lisp_Key_Data, Lisp_Button_Data, Lisp_Motion_Data,
-	Lisp_Process_Data, Lisp_Timeout_Data, Lisp_Eval_Data, 
+	Lisp_Process_Data, Lisp_Timeout_Data, Lisp_Eval_Data,
 	Lisp_Misc_User_Data, Lisp_Magic_Data, Lisp_Magic_Eval_Data.
-	We also wrote makro selectors and mutators for the fields of the new 
+	We also wrote makro selectors and mutators for the fields of the new
 	designed Lisp_Event and added everywhere these new abstractions.
 
 
 	We implemented XD_UNION support in (mark_with_description), so
 	we can describe exspecially console/device specific data with XD_UNION.
-	To describe with XD_UNION, we added a field to these objects, which 
-	holds the variant type of the object. This field is initialized in 
-	the appendant constructor. The variant is an integer, it has also to 
+	To describe with XD_UNION, we added a field to these objects, which
+	holds the variant type of the object. This field is initialized in
+	the appendant constructor. The variant is an integer, it has also to
 	be described in an description, if XD_UNION is used.
 
-	XD_UNION is used in following descriptions:	
+	XD_UNION is used in following descriptions:
 	* console.c: console_description
 	(get_console_variant): returns the variant
 	(create_console): added variant initialization
@@ -4637,10 +4658,10 @@
 	* device-msw.c (mswindows_delete_device):
 	  Initialise extra DDE strings for remote execution, and change
 	  DDE initialisation to send ADVISE and REQUEST notifications.
-	
+
 	* emacs.c (main_1):
 	  Add symbols of event_mswindows.
-	
+
 	* event-msw.c:
 	* event-msw.c (mswindows_dde_callback):
 	* event-msw.c (reinit_vars_of_event_mswindows):
@@ -4668,7 +4689,7 @@
 	appears to freeze after switching desktops with certain virtual
 	window managers.
 	(debug_output_mswin_message): Added code to output message
-	parameters for WM_WINDOWPOSCHANGED, 
+	parameters for WM_WINDOWPOSCHANGED,
 	WM_WINDOWPOSCHANGING, WM_MOVE, and WM_SIZE messages.
 
 2002-07-05  Jonathan Harris  <jonathan@xemacs.org>
@@ -4676,7 +4697,7 @@
 	* emacs.c (main_1): Conditionalise calls to
 	syms_of_dired_mswindows() and vars_of_dired_mswindows() on
 	WIN32_NATIVE instead of redundant HAVE_MSW_C_DIRED
-	
+
 2002-07-03  Mike Sperber <mike@xemacs.org>
 
 	* emacs.c (main_1): We need to call init_ralloc twice for PDUMP,
@@ -4721,17 +4742,17 @@
         * lrecord.h (lrecord_type): add lrecord_type_ephemeron
 	to lrecord_type enumeration.
 
-	* lisp.h (XEPHEMERON): 
-	(XEPHEMERON_REF): 
-	(XEPHEMERON_NEXT): 
-	(XEPHEMERON_FINALIZER): 
-	(XSET_EPHEMERON_NEXT): 
-	(XSET_EPHEMERON_VALUE): 
-	(XSET_EPHEMERON_KEY): 
-	(wrap_ephemeron): 
-	(EPHEMERONP): 
-	(CHECK_EPHEMERON): 
-	(CONCHECK_EPHEMERON): 
+	* lisp.h (XEPHEMERON):
+	(XEPHEMERON_REF):
+	(XEPHEMERON_NEXT):
+	(XEPHEMERON_FINALIZER):
+	(XSET_EPHEMERON_NEXT):
+	(XSET_EPHEMERON_VALUE):
+	(XSET_EPHEMERON_KEY):
+	(wrap_ephemeron):
+	(EPHEMERONP):
+	(CHECK_EPHEMERON):
+	(CONCHECK_EPHEMERON):
         (struct ephemeron): Add representation of ephemerons.
 
         * alloc.c (garbage_collect_1):
@@ -4758,7 +4779,7 @@
 	and objects-impl.h to pick up some error_check_* functions.
 	Remove console.h, extents.h, frame.h and objects.h because the
 	*-impl.h files include them.
-	
+
 2002-06-17  Jerry James  <james@xemacs.org>
 
 	* sysdll.c: Remove RTLD_GLOBAL initialization.
@@ -4779,7 +4800,7 @@
 	(Fparse_unicode_translation_table): Use right function name in error.
 
 	(unicode_to_ichar): Renamed from unicode_to_char.
-	(Funicode_to_char): 
+	(Funicode_to_char):
 	(decode_unicode_char):
 	Use new name.
 
@@ -4823,7 +4844,7 @@
 
 	* console.h: Define opaque console_methods to unbreak the build.
 
-	* objects.c (initialize_charset_font_caches): 
+	* objects.c (initialize_charset_font_caches):
 	(invalidate_charset_font_caches): Only define if we're MULE.
 	(font_instantiate): Unbreak for non-MULE.
 
@@ -4832,7 +4853,7 @@
 	* s/cygwin32.h:
 	Allow pdump to work under Cygwin (mmap is broken, so need to undefine
 	HAVE_MMAP).
-	
+
 	* s/win32-common.h:
 	* s/win32-common.h (NO_MATHERR):
 	* s/windowsnt.h:
@@ -5138,7 +5159,7 @@
 	* toolbar-msw.c:
 	* unicode.c:
 	Warning fixes.
-	
+
 	* config.h.in:
 	#undefs meant to be frobbed by configure *MUST* go inside of
 	#ifndef WIN32_NO_CONFIGURE, and everything else *MUST* go outside!
@@ -5147,9 +5168,9 @@
 	Let detailed backtraces be detailed.
 	* specifier.c:
 	Don't override user's print-string-length/print-length settings.
-	
+
 	* glyphs.c: New function image-instance-instantiator.
-	
+
 	* config.h.in:
 	* sysdep.c (set_descriptor_non_blocking):
 	* sysdep.c (SIG_PARAM_TYPE):
@@ -6034,23 +6055,23 @@
 	the pointer itself and when it refers to operations on text; and
 	[b] use consistent naming for everything referring to internal
 	format, i.e.
- 
+
 	Itext == text in internal format
 	Ibyte == a byte in such text
 	Ichar == a char as represented in internal character format
- 
+
 	thus e.g.
- 
+
 	set_charptr_emchar -> set_itext_ichar
 
 	The pre and post tags on either side of this change are:
-	
+
 	pre-internal-format-textual-renaming
 	post-internal-format-textual-renaming
 
 	See the Internals Manual for details of exactly how this was done,
 	how to handle the change in your workspace, etc.
-	
+
 2002-06-04  Andy Piper  <andy@xemacs.org>
 
 	* glyphs-widget.c (widget_logical_unit_height): don't try and
@@ -6211,7 +6232,7 @@
 
 	* buffer.c (init_initial_directory):
 	Fix bug noted by someone.
-	
+
 	* console-tty.h:
 	* device.h (struct device):
 	* emacs.c:
@@ -6228,13 +6249,13 @@
 	-- rather than require one included before the other
 	(error-prone), just include syssignal.h from sysproc.h
 	where it's needed.
-	
+
 	* inline.c:
 	Include sysfile.h due to inline funs in that header.
-	
+
 	* extents.c (Fset_extent_parent):
 	Fix bug noted by Andrew Cohen <cohen@andy.bu.edu>.
-	
+
 	* process-unix.c (unix_open_network_stream):
 	* process-unix.c (unix_open_multicast_group):
 	Fix other bug noted by Andrew Cohen <cohen@andy.bu.edu>.
@@ -6249,18 +6270,18 @@
 
 	* alloc.c (garbage_collect_1): Call prune_weak_boxes().
 
-	* lisp.h (struct weak_box): 
-	* data.c: 
-	(prune_weak_boxes): 
-	(mark_weak_box): 
-	(print_weak_box): 
-	(weak_box_equal): 
-	(weak_box_hash): 
-	(make_weak_box): 
-	(Fmake_weak_box): 
-	(Fweak_box_ref): 
-	(Fweak_boxp): 
-	(syms_of_data): 
+	* lisp.h (struct weak_box):
+	* data.c:
+	(prune_weak_boxes):
+	(mark_weak_box):
+	(print_weak_box):
+	(weak_box_equal):
+	(weak_box_hash):
+	(make_weak_box):
+	(Fmake_weak_box):
+	(Fweak_box_ref):
+	(Fweak_boxp):
+	(syms_of_data):
 	(vars_of_data): Add implementation of weak boxes.
 
 2002-05-29  Ben Wing  <ben@xemacs.org>
@@ -7977,7 +7998,7 @@
 
 	* s/darwin.h: New file.
 	Thanks to Greg Parker <gparker@cs.stanford.edu>.
-	
+
 2002-04-23  Andreas Jaeger  <aj@suse.de>
 
 	* s/linux.h (LIB_STANDARD): Define correctly for x86-64 and s390x
@@ -7986,7 +8007,7 @@
 
 2002-02-11  Mike Sperber  <mike@xemacs.org>
 
-	* device-x.c: 
+	* device-x.c:
 	(x_IO_error_handler):
 	(x_init_device): Temporarily keep device in static variable
 	`device_being_initialized' so we can recover gracefully from
@@ -8034,7 +8055,7 @@
 2001-12-23  William M. Perry  <wmperry@gnu.org>
 
 	* menubar-gtk.c (gtk_popup_menu)  Add sanity checks, fix crash.
-	
+
 2002-01-04  Martin Buchholz  <martin@xemacs.org>
 
 	* keymap.c (define_key_alternate_name): Parenthesize EQ.
@@ -11256,7 +11277,7 @@
 
 	See the Internals Manual, under Major Type Changes, and also
 	README.global-renaming.
-	
+
 
 2001-09-17  Ben Wing  <ben@xemacs.org>
 

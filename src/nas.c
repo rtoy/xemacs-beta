@@ -10,9 +10,9 @@
  * that the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation, and that the name Network Computing Devices, Inc. not be
- * used in advertising or publicity pertaining to distribution of this 
+ * used in advertising or publicity pertaining to distribution of this
  * software without specific, written prior permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED 'AS-IS'.  NETWORK COMPUTING DEVICES, INC.,
  * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT
  * LIMITATION ALL IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -31,10 +31,10 @@
 /* There are four compile-time options.
  *
  * XTOOLKIT	This will be part of an Xt program.
- * 
+ *
  * XTEVENTS	The playing will be supervised asynchronously by the Xt event
  *		loop.  If not set, playing will be completed within the call
- *		to play_file etc. 
+ *		to play_file etc.
  *
  * ROBUST_PLAY	Causes errors in nas to be caught.  This means that the
  *		program will attempt not to die if the nas server does.
@@ -80,11 +80,14 @@
 #undef LITTLE_ENDIAN
 #undef BIG_ENDIAN
 
+EXTERN_C
+{
 #include <audio/audiolib.h>
 #include <audio/soundlib.h>
 #include <audio/snd.h>
 #include <audio/wave.h>
 #include <audio/fileutil.h>
+}
 
 /* NAS <= 1.2p5 <audio/fileutil.h> doesn't define the NAS_ versions */
 #ifndef NAS_LITTLE_ENDIAN
@@ -218,7 +221,7 @@ nas_init_play (
 #endif
 
 #ifdef XTEVENTS
-  input_id = AuXtAppAddAudioHandler (app_context, aud); 
+  input_id = AuXtAppAddAudioHandler (app_context, aud);
 #endif
 
 #ifdef CACHE_SOUNDS
@@ -303,10 +306,10 @@ do_caching_play (Sound s,
       else
 	my_buf = (AuPointer) buf;
 
-      id = AuSoundCreateBucketFromData (aud, 
+      id = AuSoundCreateBucketFromData (aud,
 					s,
 					my_buf,
-					AuAccessAllMasks, 
+					AuAccessAllMasks,
 					NULL,
 					NULL);
       if (buf == NULL)
@@ -320,10 +323,10 @@ do_caching_play (Sound s,
 
   sounds_in_play++;
 
-  AuSoundPlayFromBucket (aud, 
-			 id, 
+  AuSoundPlayFromBucket (aud,
+			 id,
 			 AuNone,
-			 AuFixedPointFromFraction (volume, 100), 
+			 AuFixedPointFromFraction (volume, 100),
 			 doneCB, (AuPointer) &sounds_in_play,
 			 1,
 			 NULL, NULL,
@@ -334,7 +337,7 @@ do_caching_play (Sound s,
 
 
 void nas_wait_for_sounds (void);
-void 
+void
 nas_wait_for_sounds (void)
 
 {
@@ -371,7 +374,7 @@ nas_play_sound_file (Extbyte *sound_file,
 	  /* attempt to reconect */
 	  if ((m = nas_init_play (aud_server)) != NULL)
 	    {
-	      
+
 #ifdef ROBUST_PLAY
 	      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
@@ -538,7 +541,7 @@ nas_play_sound_data (UChar_Binary *data, int length, int volume)
     nas_wait_for_sounds ();
 #endif
 
-  SoundCloseFile (s); 
+  SoundCloseFile (s);
 
 #ifdef ROBUST_PLAY
   EMACS_SIGNAL (SIGPIPE, old_sigpipe);
@@ -561,13 +564,13 @@ static AuBool
 CatchIoErrorAndJump (AuServer *old_aud)
 {
   if (old_aud)
-    sound_warn ("Audio Server connection broken"); 
+    sound_warn ("Audio Server connection broken");
   else
     sound_warn ("Audio Server connection broken because of signal");
 
 #ifdef XTEVENTS
 #ifdef XTOOLKIT
-  AuXtAppRemoveAudioHandler (aud, input_id); 
+  AuXtAppRemoveAudioHandler (aud, input_id);
 #endif
 
   if (aud)
@@ -584,7 +587,7 @@ CatchIoErrorAndJump (AuServer *old_aud)
   aud = NULL;
   sounds_in_play = 0;
   longjmp (AuXtErrorJump, 1);
- 
+
 #endif /* XTEVENTS */
   return 0;
 }
@@ -649,7 +652,7 @@ NameFromData (const Char_Binary *buf,
     {
       strcpy (s = (Extbyte *) malloc (10), name);
     }
-  else 
+  else
     {
       strcpy (s = (Extbyte *) malloc (15), "short sound");
     }
@@ -658,7 +661,7 @@ NameFromData (const Char_Binary *buf,
 }
 
 /* Code to do a pseudo-open on a data buffer. Only for snd files at the
-   moment. 
+   moment.
  */
 
 static SndInfo *
@@ -680,7 +683,7 @@ SndOpenDataForReading (const Char_Binary *data,
   if (NAS_LITTLE_ENDIAN)
     {
       Char_Binary            n;
-    
+
       swapl (&si->h.magic, n);
       swapl (&si->h.dataOffset, n);
       swapl (&si->h.dataSize, n);
@@ -754,7 +757,7 @@ static int
 dread (void* buf, size_t size, size_t nitems)
 {
   size_t nread = size * nitems;
-  
+
   if (file_posn + nread <= file_len)
     {
       memcpy(buf, (Char_Binary *) file_data + file_posn, size * nitems);
@@ -847,7 +850,7 @@ WaveOpenDataForReading (const Char_Binary *data,
   AuInt32            fileSize;
   WaveInfo       *wi;
 
-    
+
   if (!(wi = (WaveInfo *) malloc(sizeof(WaveInfo))))
     return NULL;
 
@@ -855,7 +858,7 @@ WaveOpenDataForReading (const Char_Binary *data,
   wi->dataOffset = wi->format = wi->writing = 0;
 
   dopen(data, length);
-    
+
   if (!readChunk(&ck) ||
       cmpID(&ck.ckID, RIFF_RiffID) ||
       !readFourcc(&fourcc) ||
@@ -967,7 +970,7 @@ WaveOpenDataForReading (const Char_Binary *data,
 				length - wi->dataOffset);
 
   wi->fp = NULL;
-    
+
   return wi;
 }
 
@@ -988,7 +991,7 @@ SoundOpenDataForReading (UChar_Binary *data,
   if ((s->formatInfo = SndOpenDataForReading ((Char_Binary *) data, length)) != NULL)
     {
 #if (AudioLibraryVersionMajor >= 2 ) && (AudioLibraryVersionMinor >= 3)
-      if ((toProc = SoundFileGetProc(SoundFileFormatSnd, 
+      if ((toProc = SoundFileGetProc(SoundFileFormatSnd,
 				     SoundFileInfoProcTo)) == NULL)
 	{
 	  SndCloseFile ((SndInfo *) (s->formatInfo));
@@ -1009,7 +1012,7 @@ SoundOpenDataForReading (UChar_Binary *data,
   else if ((s->formatInfo = WaveOpenDataForReading ((Char_Binary *) data, length)) != NULL)
     {
 #if (AudioLibraryVersionMajor >= 2 ) && (AudioLibraryVersionMinor >= 3)
-      if ((toProc = SoundFileGetProc(SoundFileFormatWave, 
+      if ((toProc = SoundFileGetProc(SoundFileFormatWave,
 				     SoundFileInfoProcTo)) == NULL)
 	{
 	  WaveCloseFile ((WaveInfo *) (s->formatInfo));

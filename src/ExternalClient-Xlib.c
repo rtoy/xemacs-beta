@@ -59,10 +59,10 @@ window_has_focus_p (Display *display, Window win, int enter_p)
       Status st;
       Window root_win, parent_win;
       Window *child_win;
-      int nchild;
+      unsigned int nchild;
 
-      st = XQueryTree(display, win, &root_win, &parent_win, &child_win,
-		      &nchild);
+      st = XQueryTree (display, win, &root_win, &parent_win, &child_win,
+		       &nchild);
       if (!st)
 	return False;
       XFree((XPointer)child_win);
@@ -75,7 +75,7 @@ window_has_focus_p (Display *display, Window win, int enter_p)
   while (1);
 }
 
-  
+
 /* External entry points when using XLib directly */
 
 void ExternalClientInitialize (Display *display, Window win);
@@ -100,7 +100,7 @@ ExternalClientEventHandler (Display *display, Window win, XEvent *event)
 {
   if (win != event->xany.window)
     return;
-  
+
   if (event->type == ClientMessage &&
       event->xclient.message_type == a_EXTW_NOTIFY &&
       event->xclient.data.l[0] == extw_shell_send)
@@ -109,11 +109,11 @@ ExternalClientEventHandler (Display *display, Window win, XEvent *event)
       /* for the moment, just refuse geometry requests. */
       extw_send_notify_3(display, win, extw_notify_gm, XtGeometryNo, 0, 0);
       break;
-      
+
     case extw_notify_init:
       extw_send_notify_3(display, win, extw_notify_init, EXTW_TYPE_XLIB, 0, 0);
       break;
-      
+
     case extw_notify_end:
       XClearArea(display, win, 0, 0, 0, 0, True);
       break;

@@ -337,10 +337,9 @@ remove_ww (Window win)
 
 /* stolen outright from Intrinsic.c */
 
-static void ComputeWindowAttributes(widget,value_mask,values)
-     Widget		 widget;
-     XtValueMask		 *value_mask;
-     XSetWindowAttributes *values;
+static void
+ComputeWindowAttributes (Widget widget, XtValueMask *value_mask,
+			 XSetWindowAttributes *values)
 {
   *value_mask = CWEventMask | CWColormap;
   (*values).event_mask = XtBuildEventMask(widget);
@@ -511,19 +510,17 @@ EventHandler (Widget wid, XtPointer closure, XEvent *event,
       }
 }
 
-static void Destroy(wid)
-     Widget wid;
+static void Destroy (Widget wid)
 {
   ExternalClientWidget w = (ExternalClientWidget)wid;
 
   NOTIFY(w, extw_notify_end, 0, 0, 0);
 }
 
-static XtGeometryResult QueryGeometry(gw, request, reply)
-     Widget gw;
-     XtWidgetGeometry *request, *reply;
+static XtGeometryResult
+QueryGeometry (Widget gw, XtWidgetGeometry *request, XtWidgetGeometry *reply)
 {
-  ExternalClientWidget w = (ExternalClientWidget)gw;
+  ExternalClientWidget w = (ExternalClientWidget) gw;
   XEvent event;
   unsigned long request_num;
   Display *display = XtDisplay(gw);
@@ -558,7 +555,7 @@ static XtGeometryResult QueryGeometry(gw, request, reply)
 }
 
 static void ExternalClientFocusIn (Widget w, XEvent *event, String *params,
-				Cardinal *num_params)
+				   Cardinal *num_params)
 {
   ExternalClientWidget ecw = (ExternalClientWidget) w;
 
@@ -572,7 +569,7 @@ static void ExternalClientFocusIn (Widget w, XEvent *event, String *params,
 }
 
 static void ExternalClientFocusOut (Widget w, XEvent *event, String *params,
-				 Cardinal *num_params)
+				    Cardinal *num_params)
 {
   ExternalClientWidget ecw = (ExternalClientWidget) w;
 
@@ -586,7 +583,7 @@ static void ExternalClientFocusOut (Widget w, XEvent *event, String *params,
 }
 
 static void ExternalClientEnter (Widget w, XEvent *event, String *params,
-			      Cardinal *num_params)
+				 Cardinal *num_params)
 {
   ExternalClientWidget ecw = (ExternalClientWidget) w;
 
@@ -605,7 +602,7 @@ static void ExternalClientEnter (Widget w, XEvent *event, String *params,
 }
 
 static void ExternalClientLeave (Widget w, XEvent *event, String *params,
-			      Cardinal *num_params)
+				 Cardinal *num_params)
 {
   ExternalClientWidget ecw = (ExternalClientWidget) w;
 

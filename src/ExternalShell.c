@@ -158,8 +158,9 @@ static void ExternalShellRealize (Widget wid, Mask *vmask, XSetWindowAttributes
 				  *attr);
 static void ExternalShellDestroy (Widget w);
 static void ChangeManaged (Widget wid);
-static XtGeometryResult ExternalShellRootGeometryManager (Widget gw,
-  XtWidgetGeometry *request, XtWidgetGeometry *reply);
+static XtGeometryResult
+ExternalShellRootGeometryManager (Widget gw, XtWidgetGeometry *request,
+				  XtWidgetGeometry *reply);
 static void EventHandler (Widget wid, XtPointer closure, XEvent *event,
 			  Boolean *continue_to_dispatch);
 
@@ -275,11 +276,9 @@ find_managed_child (CompositeWidget w)
 # define XtCXtToolkitError "XtToolkitError"
 #endif
 
-static void EventHandler(wid, closure, event, continue_to_dispatch)
-     Widget wid;
-     XtPointer closure;	/* unused */
-     XEvent *event;
-     Boolean *continue_to_dispatch; /* unused */
+static void EventHandler (Widget wid, XtPointer closure /* unused */,
+			  XEvent *event,
+			  Boolean *continue_to_dispatch /* unused */)
 {
   ExternalShellWidget w = (ExternalShellWidget) wid;
 
@@ -498,8 +497,7 @@ static void ExternalShellRealize (Widget wid, Mask *vmask,
 
 }
 
-static void ExternalShellDestroy(wid)
-	Widget wid;
+static void ExternalShellDestroy (Widget wid)
 {
   ExternalShellWidget w = (ExternalShellWidget)wid;
 
@@ -512,8 +510,7 @@ static void ExternalShellDestroy(wid)
 /* Invoke matching routine from superclass, but first override its
    geometry opinions with our own routine */
 
-static void ChangeManaged(wid)
-    Widget wid;
+static void ChangeManaged (Widget wid)
 {
   if (!XtIsRealized (wid))
     GetGeometry(wid, (Widget)NULL);
@@ -523,9 +520,9 @@ static void ChangeManaged(wid)
 
 /* Based on RootGeometryManager() in Shell.c */
 
-static XtGeometryResult ExternalShellRootGeometryManager(gw, request, reply)
-    Widget gw;
-    XtWidgetGeometry *request, *reply;
+static XtGeometryResult
+ExternalShellRootGeometryManager (Widget gw, XtWidgetGeometry *request,
+				  XtWidgetGeometry *reply)
 {
     ExternalShellWidget w = (ExternalShellWidget)gw;
     unsigned int mask = request->request_mode;

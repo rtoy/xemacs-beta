@@ -28,7 +28,10 @@ Boston, MA 02111-1307, USA. */
 ERROR!  This ought not be getting compiled if EXTERNAL_WIDGET is undefined
 #endif
 
+EXTERN_C
+{
 void fatal (const char *fmt, ...);
+}
 #else /* not emacs */
 static void fatal (char *msg);
 #endif
@@ -45,34 +48,31 @@ static void fatal (char *msg);
    for real? */
 
 #if (XT_REVISION > 5)
-int _XtWaitForSomething(
-    XtAppContext app,
-    _XtBoolean ignoreEvents,
-    _XtBoolean ignoreTimers,
-    _XtBoolean ignoreInputs,
-    _XtBoolean ignoreSignals,
-    _XtBoolean block,
+EXTERN_C
+{
+  int _XtWaitForSomething (XtAppContext app, _XtBoolean ignoreEvents,
+			   _XtBoolean ignoreTimers, _XtBoolean ignoreInputs,
+			   _XtBoolean ignoreSignals, _XtBoolean block,
 #ifdef XTHREADS
-    _XtBoolean drop_lock,
+			   _XtBoolean drop_lock,
 #endif
-    unsigned long *howlong);
+			   unsigned long *howlong);
+}
 
 # ifndef XTHREADS
-#  define _XtwaitForSomething(timers,inputs,events,block,howlong,appCtx) \
-          _XtWaitForSomething(appCtx,events,timers,inputs,0,block,howlong)
+#  define _XT_WAIT_FOR_SOMETHING(timers,inputs,events,block,howlong,appCtx) \
+          _XtWaitForSomething (appCtx,events,timers,inputs,0,block,howlong)
 # else
-#  define _XtwaitForSomething(timers,inputs,events,block,howlong,appCtx) \
-          _XtWaitForSomething(appCtx,events,timers,inputs,0,block,1,howlong)
+#  define _XT_WAIT_FOR_SOMETHING(timers,inputs,events,block,howlong,appCtx) \
+          _XtWaitForSomething (appCtx,events,timers,inputs,0,block,1,howlong)
 # endif
 #else
-int _XtwaitForSomething(
-        Boolean ignoreTimers,
-        Boolean ignoreInputs,
-        Boolean ignoreEvents,
-        Boolean block,
-        unsigned long *howlong,
-        XtAppContext app
-        );
+EXTERN_C
+{
+  int _XtwaitForSomething (Boolean ignoreTimers, Boolean ignoreInputs,
+			   Boolean ignoreEvents, Boolean block,
+			   unsigned long *howlong, XtAppContext app);
+}
 #endif
 
 #ifdef DEBUG_WIDGET
@@ -93,7 +93,7 @@ print_geometry_structure(XtWidgetGeometry *xwg)
 {
   int num = sizeof(geom_masks)/sizeof(int);
   int i;
-  
+
   printf ("  masks:");
   for (i=0; i<num; i++)
     if (xwg->request_mode & geom_masks[i])
@@ -163,7 +163,7 @@ extw_get_geometry_value(Display *display, Window win, Atom property,
   int format;
   unsigned long nitems, bytes_after;
   unsigned char *prop;
-  
+
   if (XGetWindowProperty(display, win, property, 0,
 			 sizeof(*xwg)/4, False, a_EXTW_WIDGET_GEOMETRY,
 			 &dummy, &format, &nitems, &bytes_after,
@@ -199,7 +199,7 @@ isMine(Display *dpy, XEvent *event, char *arg)
 {
 	QueryStruct *q = (QueryStruct *) arg;
 	Widget w = q->w;
-	
+
 	if ( (dpy != XtDisplay(w)) || (event->xany.window != XtWindow(w)) ) {
 	    return FALSE;
 	}
@@ -218,26 +218,28 @@ isMine(Display *dpy, XEvent *event, char *arg)
    Shell.c. */
 
 Bool
-extw_wait_for_response(Widget w, XEvent *event, unsigned long request_num,
-		       en_extw_notify type, unsigned long timeout)
+extw_wait_for_response (Widget w, XEvent *event, unsigned long request_num,
+			en_extw_notify type, unsigned long timeout)
 {
-	XtAppContext app = XtWidgetToApplicationContext(w);
-	QueryStruct q;
+  XtAppContext app = XtWidgetToApplicationContext(w);
+  QueryStruct q;
 
-	XFlush(XtDisplay(w));
-	q.w = w;
-	q.request_num = request_num;
-	q.type = type;
-	
-	for(;;) {
- 	    /*
- 	     * look for match event
- 	     */
-	    if (XCheckIfEvent( XtDisplay(w), event, isMine, (char*)&q))
-	        return TRUE;
-	    if (_XtwaitForSomething(TRUE, TRUE, FALSE, TRUE, &timeout, app)
-		!= -1) continue;
-	    if (timeout == 0)
-		return FALSE;
-	}
+  XFlush(XtDisplay(w));
+  q.w = w;
+  q.request_num = request_num;
+  q.type = type;
+
+  for(;;)
+    {
+      /*
+       * look for match event
+       */
+      if (XCheckIfEvent (XtDisplay(w), event, isMine, (char*)&q))
+	return TRUE;
+      if (_XT_WAIT_FOR_SOMETHING (TRUE, TRUE, FALSE, TRUE, &timeout, app)
+	  != -1)
+	continue;
+      if (timeout == 0)
+	return FALSE;
+    }
 }
