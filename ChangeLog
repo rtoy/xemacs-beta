@@ -1,3 +1,12 @@
+2003-03-01  Ben Wing  <ben@xemacs.org>
+
+	* PROBLEMS:
+	* PROBLEMS (Note):
+	* PROBLEMS (http):
+	* PROBLEMS (IMPORTANT):
+	Include nt/PROBLEMS and update.  Add note about incremental
+	linking badness.
+
 2003-02-28  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (mostlyclean):
