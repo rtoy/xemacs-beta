@@ -301,7 +301,8 @@ are used."
 	 (generate-autoload-ish-1
 	  file
 	  (replace-in-string (file-name-nondirectory file) "\\.c$" "")
-	  t #'generate-c-file-autoloads-1))
+	  t #'generate-c-file-autoloads-1
+	  funlist))
 	(t
 	 (error 'wrong-type-argument file "not a C or Elisp source file"))))
 

@@ -1,5 +1,10 @@
 2003-02-14  Ben Wing  <ben@xemacs.org>
 
+	* autoload.el (generate-file-autoloads):
+	Include FUNLIST argument to generate-c-file-autoloads-1.
+
+2003-02-14  Ben Wing  <ben@xemacs.org>
+
 	* byte-optimize.el:
 	* byte-optimize.el (byte-compile-inline-expand):
 	* byte-optimize.el (byte-compile-unfold-lambda):
