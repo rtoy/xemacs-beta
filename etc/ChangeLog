@@ -1,3 +1,7 @@
+2002-09-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Emacs.ad: Add charsets to *menubar*FontSet and *popup*FontSet.
+
 2002-08-31  Ville Skyttä  <ville.skytta@xemacs.org>
 
 	* Emacs.ad: Add *menubar*FontSet and *popup*FontSet entries,

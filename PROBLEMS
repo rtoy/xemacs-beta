@@ -677,6 +677,22 @@ using the default cygwin shell. (See above.)
 * Problems with running XEmacs
 ==============================
 ** General
+*** At startup I get a warning on stderr about missing charsets:
+ 
+    Warning: Missing charsets in String to FontSet conversion
+ 
+You need to specify appropriate charsets for your locale (usually the
+value of the LANG environment variable) in .Xresources.  It looks like
+XFree86 4.x (the usual server on Linux and *BSD) has some braindamage
+where .UTF-8 locales will always generate this message, because the
+XFree86 (font)server doesn't know that UTF-8 will use the ISO10646-1
+font registry (or a Cmap or something).
+ 
+If you are not using a .UTF-8 locale and see this warning, please let
+xemacs-beta@xemacs.org know about it, so we can add fonts to the
+appropriate fontsets and stifle this warning.  (Unfortunately it's
+buried in Xlib, so we can't easily get rid of it otherwise.)
+
 *** Starting with 21.4.x, killing text is absurdly slow.
 
 See FAQ Q3.10.6.  Should be available on the web near
