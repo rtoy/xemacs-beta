@@ -2066,7 +2066,7 @@ read_bit_vector (Lisp_Object readcharfun)
 struct structure_type *
 define_structure_type (Lisp_Object type,
 		       int (*validate) (Lisp_Object data,
-					Error_behavior errb),
+					Error_Behavior errb),
 		       Lisp_Object (*instantiate) (Lisp_Object data))
 {
   struct structure_type st;
@@ -2085,7 +2085,7 @@ void
 define_structure_type_keyword (struct structure_type *st, Lisp_Object keyword,
 			       int (*validate) (Lisp_Object keyword,
 						Lisp_Object value,
-						Error_behavior errb))
+						Error_Behavior errb))
 {
   struct structure_keyword_entry en;
 

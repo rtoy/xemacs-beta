@@ -441,7 +441,7 @@ create_bidirectional_pipe (int *inchannel, int *outchannel,
 #ifndef USE_GETADDRINFO
 static int
 get_internet_address (Lisp_Object host, struct sockaddr_in *address,
-		      Error_behavior errb)
+		      Error_Behavior errb)
 {
   struct hostent *host_info_ptr = NULL;
 #ifdef TRY_AGAIN
@@ -1591,7 +1591,7 @@ unix_canonicalize_host_name (Lisp_Object host)
   retval = getaddrinfo (ext_host, NULL, &hints, &res);
   if (retval != 0)
     {
-      char *gai_error;
+      Bufbyte *gai_error;
 
       EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error, Qnative);
       maybe_signal_error (Qio_error, gai_error, host,
@@ -1685,7 +1685,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     retval = getaddrinfo (ext_host, portstring, &hints, &res);
     if (retval != 0)
       {
-	char *gai_error;
+       Bufbyte *gai_error;
 
 	EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error, Qnative);
 	signal_error (Qio_error, gai_error, list2 (host, service));

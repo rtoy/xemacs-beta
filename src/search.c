@@ -143,7 +143,7 @@ matcher_overflow (void)
 static int
 compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
 		   Lisp_Object translate, struct re_registers *regp, int posix,
-		   Error_behavior errb)
+		   Error_Behavior errb)
 {
   const char *val;
   reg_syntax_t old;
@@ -181,7 +181,7 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
 
 struct re_pattern_buffer *
 compile_pattern (Lisp_Object pattern, struct re_registers *regp,
-		 Lisp_Object translate, int posix, Error_behavior errb)
+		 Lisp_Object translate, int posix, Error_Behavior errb)
 {
   struct regexp_cache *cp, **cpp;
 
@@ -461,7 +461,7 @@ Bytecount
 fast_string_match (Lisp_Object regexp,  const Bufbyte *nonreloc,
 		   Lisp_Object reloc, Bytecount offset,
 		   Bytecount length, int case_fold_search,
-		   Error_behavior errb, int no_quit)
+		   Error_Behavior errb, int no_quit)
 {
   /* This function has been Mule-ized, except for the trt table handling. */
   Bytecount val;

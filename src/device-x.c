@@ -1441,7 +1441,7 @@ mean ``unspecified''.
   char *raw_result;
   XrmDatabase db;
   Display *display;
-  Error_behavior errb = decode_error_behavior_flag (noerror);
+  Error_Behavior errb = decode_error_behavior_flag (noerror);
 
   CHECK_STRING (name);
   CHECK_STRING (class);

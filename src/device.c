@@ -384,7 +384,7 @@ init_device_resources (struct device *d)
 
 static Lisp_Object
 semi_canonicalize_device_connection (struct console_methods *meths,
-				     Lisp_Object name, Error_behavior errb)
+				     Lisp_Object name, Error_Behavior errb)
 {
   if (HAS_CONTYPE_METH_P (meths, semi_canonicalize_device_connection))
     return CONTYPE_METH (meths, semi_canonicalize_device_connection,
@@ -396,7 +396,7 @@ semi_canonicalize_device_connection (struct console_methods *meths,
 
 static Lisp_Object
 canonicalize_device_connection (struct console_methods *meths,
-				Lisp_Object name, Error_behavior errb)
+				Lisp_Object name, Error_Behavior errb)
 {
   if (HAS_CONTYPE_METH_P (meths, canonicalize_device_connection))
     return CONTYPE_METH (meths, canonicalize_device_connection,

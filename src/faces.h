@@ -334,7 +334,7 @@ Lisp_Object face_property_matching_instance (Lisp_Object face,
 					     Lisp_Object property,
 					     Lisp_Object charset,
 					     Lisp_Object domain,
-					     Error_behavior errb,
+					     Error_Behavior errb,
 					     int no_fallback,
 					     Lisp_Object depth);
 

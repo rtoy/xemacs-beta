@@ -72,7 +72,7 @@ Lisp_Object copy_gui_item (Lisp_Object gui_item);
 Lisp_Object widget_gui_parse_item_keywords (Lisp_Object item);
 int gui_item_add_keyval_pair (Lisp_Object gui_item,
                               Lisp_Object key, Lisp_Object val,
-                              Error_behavior errb);
+                              Error_Behavior errb);
 Lisp_Object gui_parse_item_keywords (Lisp_Object item);
 Lisp_Object gui_parse_item_keywords_no_errors (Lisp_Object item);
 void gui_add_item_keywords_to_plist (Lisp_Object plist, Lisp_Object gui_item);

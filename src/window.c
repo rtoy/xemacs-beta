@@ -4223,7 +4223,7 @@ change_window_height (Lisp_Object window, int delta, Lisp_Object horizontalp,
    the top clip.  */
 void
 window_scroll (Lisp_Object window, Lisp_Object count, int direction,
-	       Error_behavior errb)
+	       Error_Behavior errb)
 {
   struct window *w = XWINDOW (window);
   struct buffer *b = XBUFFER (w->buffer);

@@ -154,7 +154,7 @@ EXFUN (Fnext_window, 4);
 
 struct image_instantiator_methods *
 decode_device_ii_format (Lisp_Object device, Lisp_Object format,
-			 Error_behavior errb)
+			 Error_Behavior errb)
 {
   int i;
 
@@ -190,7 +190,7 @@ decode_device_ii_format (Lisp_Object device, Lisp_Object format,
 }
 
 struct image_instantiator_methods *
-decode_image_instantiator_format (Lisp_Object format, Error_behavior errb)
+decode_image_instantiator_format (Lisp_Object format, Error_Behavior errb)
 {
   return decode_device_ii_format (Qnil, format, errb);
 }
@@ -1291,7 +1291,7 @@ allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
 }
 
 static enum image_instance_type
-decode_image_instance_type (Lisp_Object type, Error_behavior errb)
+decode_image_instance_type (Lisp_Object type, Error_Behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME))
     CHECK_SYMBOL (type);
@@ -1413,7 +1413,7 @@ Return a list of valid image-instance types.
   return Fcopy_sequence (Vimage_instance_type_list);
 }
 
-Error_behavior
+Error_Behavior
 decode_error_behavior_flag (Lisp_Object noerror)
 {
   if (NILP (noerror))        return ERROR_ME;
@@ -1422,7 +1422,7 @@ decode_error_behavior_flag (Lisp_Object noerror)
 }
 
 Lisp_Object
-encode_error_behavior_flag (Error_behavior errb)
+encode_error_behavior_flag (Error_Behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME))
     return Qnil;
@@ -1575,7 +1575,7 @@ message is generated and this function returns nil.
 */
        (data, domain, dest_types, noerror))
 {
-  Error_behavior errb = decode_error_behavior_flag (noerror);
+  Error_Behavior errb = decode_error_behavior_flag (noerror);
 
   return call_with_suspended_errors ((lisp_fn_t) make_image_instance_1,
 				     Qnil, Qimage, errb,
@@ -3762,7 +3762,7 @@ allocate_glyph (enum glyph_type type,
 }
 
 static enum glyph_type
-decode_glyph_type (Lisp_Object type, Error_behavior errb)
+decode_glyph_type (Lisp_Object type, Error_Behavior errb)
 {
   if (NILP (type))
     return GLYPH_BUFFER;
@@ -3863,7 +3863,7 @@ The return value will be one of 'buffer, 'pointer, or 'icon.
 
 Lisp_Object
 glyph_image_instance (Lisp_Object glyph, Lisp_Object domain,
-		      Error_behavior errb, int no_quit)
+		      Error_Behavior errb, int no_quit)
 {
   Lisp_Object specifier = GLYPH_IMAGE (XGLYPH (glyph));
 

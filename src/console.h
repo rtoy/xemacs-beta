@@ -98,15 +98,15 @@ struct console_methods
   int (*initially_selected_for_input_method) (struct console *);
   void (*delete_console_method) (struct console *);
   Lisp_Object (*semi_canonicalize_console_connection_method)
-    (Lisp_Object connection, Error_behavior errb);
+    (Lisp_Object connection, Error_Behavior errb);
   Lisp_Object (*semi_canonicalize_device_connection_method)
-    (Lisp_Object connection, Error_behavior errb);
+    (Lisp_Object connection, Error_Behavior errb);
   Lisp_Object (*canonicalize_console_connection_method)
-    (Lisp_Object connection, Error_behavior errb);
+    (Lisp_Object connection, Error_Behavior errb);
   Lisp_Object (*canonicalize_device_connection_method)
-    (Lisp_Object connection, Error_behavior errb);
+    (Lisp_Object connection, Error_Behavior errb);
   Lisp_Object (*device_to_console_connection_method)
-    (Lisp_Object connection, Error_behavior errb);
+    (Lisp_Object connection, Error_Behavior errb);
 
   /* device methods */
   void (*init_device_method) (struct device *, Lisp_Object props);
@@ -210,7 +210,7 @@ struct console_methods
   int (*initialize_color_instance_method) (Lisp_Color_Instance *,
 					   Lisp_Object name,
 					   Lisp_Object device,
-					   Error_behavior errb);
+					   Error_Behavior errb);
   void (*mark_color_instance_method) (Lisp_Color_Instance *);
   void (*print_color_instance_method) (Lisp_Color_Instance *,
 				       Lisp_Object printcharfun,
@@ -228,14 +228,14 @@ struct console_methods
   int (*initialize_font_instance_method) (Lisp_Font_Instance *,
 					  Lisp_Object name,
 					  Lisp_Object device,
-					  Error_behavior errb);
+					  Error_Behavior errb);
   void (*mark_font_instance_method) (Lisp_Font_Instance *);
   void (*print_font_instance_method) (Lisp_Font_Instance *,
 				      Lisp_Object printcharfun,
 				      int escapeflag);
   void (*finalize_font_instance_method) (Lisp_Font_Instance *);
   Lisp_Object (*font_instance_truename_method) (Lisp_Font_Instance *,
-						Error_behavior errb);
+						Error_Behavior errb);
   Lisp_Object (*font_instance_properties_method) (Lisp_Font_Instance *);
   Lisp_Object (*list_fonts_method) (Lisp_Object pattern,
 				    Lisp_Object device);
@@ -624,7 +624,7 @@ Lisp_Object make_console (struct console *c);
 void add_entry_to_console_type_list (Lisp_Object symbol,
 				     struct console_methods *type);
 struct console_methods *decode_console_type (Lisp_Object type,
-					     Error_behavior errb);
+					     Error_Behavior errb);
 void delete_console_internal (struct console *con, int force,
 			      int from_kill_emacs, int from_io_error);
 void io_error_delete_console (Lisp_Object console);

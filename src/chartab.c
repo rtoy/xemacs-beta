@@ -948,7 +948,7 @@ If there is more than one value, return MULTI (defaults to nil).
 
 static int
 check_valid_char_table_value (Lisp_Object value, enum char_table_type type,
-			      Error_behavior errb)
+			      Error_Behavior errb)
 {
   switch (type)
     {
@@ -1474,7 +1474,7 @@ the entire table.
 
 static int
 chartab_type_validate (Lisp_Object keyword, Lisp_Object value,
-		       Error_behavior errb)
+		       Error_Behavior errb)
 {
   /* #### should deal with ERRB */
   symbol_to_char_table_type (value);
@@ -1483,7 +1483,7 @@ chartab_type_validate (Lisp_Object keyword, Lisp_Object value,
 
 static int
 chartab_data_validate (Lisp_Object keyword, Lisp_Object value,
-		       Error_behavior errb)
+		       Error_Behavior errb)
 {
   Lisp_Object rest;
 

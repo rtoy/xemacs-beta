@@ -2049,7 +2049,7 @@ internal_remprop (Lisp_Object *plist, Lisp_Object property)
    result in a list with an odd length. */
 
 static Lisp_Object
-bad_bad_bunny (Lisp_Object *plist, Lisp_Object *badplace, Error_behavior errb)
+bad_bad_bunny (Lisp_Object *plist, Lisp_Object *badplace, Error_Behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME))
     return Fsignal (Qmalformed_property_list, list2 (*plist, *badplace));
@@ -2076,7 +2076,7 @@ bad_bad_bunny (Lisp_Object *plist, Lisp_Object *badplace, Error_behavior errb)
 */
 
 static Lisp_Object
-bad_bad_turtle (Lisp_Object *plist, Lisp_Object *badplace, Error_behavior errb)
+bad_bad_turtle (Lisp_Object *plist, Lisp_Object *badplace, Error_Behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME))
     return Fsignal (Qcircular_property_list, list1 (*plist));
@@ -2105,7 +2105,7 @@ bad_bad_turtle (Lisp_Object *plist, Lisp_Object *badplace, Error_behavior errb)
 static int
 advance_plist_pointers (Lisp_Object *plist,
 			Lisp_Object **tortoise, Lisp_Object **hare,
-			Error_behavior errb, Lisp_Object *retval)
+			Error_Behavior errb, Lisp_Object *retval)
 {
   int i;
   Lisp_Object *tortsave = *tortoise;
@@ -2187,7 +2187,7 @@ advance_plist_pointers (Lisp_Object *plist,
 
 Lisp_Object
 external_plist_get (Lisp_Object *plist, Lisp_Object property,
-		    int laxp, Error_behavior errb)
+		    int laxp, Error_Behavior errb)
 {
   Lisp_Object *tortoise = plist;
   Lisp_Object *hare = plist;
@@ -2221,7 +2221,7 @@ external_plist_get (Lisp_Object *plist, Lisp_Object property,
 
 void
 external_plist_put (Lisp_Object *plist, Lisp_Object property,
-		    Lisp_Object value, int laxp, Error_behavior errb)
+		    Lisp_Object value, int laxp, Error_Behavior errb)
 {
   Lisp_Object *tortoise = plist;
   Lisp_Object *hare = plist;
@@ -2248,7 +2248,7 @@ external_plist_put (Lisp_Object *plist, Lisp_Object property,
 
 int
 external_remprop (Lisp_Object *plist, Lisp_Object property,
-		  int laxp, Error_behavior errb)
+		  int laxp, Error_Behavior errb)
 {
   Lisp_Object *tortoise = plist;
   Lisp_Object *hare = plist;

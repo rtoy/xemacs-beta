@@ -163,7 +163,7 @@ int purify_flag;
 
 #ifdef ERROR_CHECK_TYPECHECK
 
-Error_behavior ERROR_ME, ERROR_ME_NOT, ERROR_ME_WARN;
+Error_Behavior ERROR_ME, ERROR_ME_NOT, ERROR_ME_WARN;
 
 #endif
 

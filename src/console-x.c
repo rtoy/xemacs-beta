@@ -86,7 +86,7 @@ split_up_display_spec (Lisp_Object display, int *hostname_length,
    the integrity of our input, because the generic functions don't. */
 
 static Lisp_Object
-x_device_to_console_connection (Lisp_Object connection, Error_behavior errb)
+x_device_to_console_connection (Lisp_Object connection, Error_Behavior errb)
 {
   /* Strip the trailing .# off of the connection, if it's there. */
 
@@ -167,7 +167,7 @@ get_display_arg_connection (void)
 
 static Lisp_Object
 x_semi_canonicalize_console_connection (Lisp_Object connection,
-					Error_behavior errb)
+					Error_Behavior errb)
 {
   struct gcpro gcpro1;
 
@@ -218,7 +218,7 @@ x_semi_canonicalize_console_connection (Lisp_Object connection,
 }
 
 static Lisp_Object
-x_canonicalize_console_connection (Lisp_Object connection, Error_behavior errb)
+x_canonicalize_console_connection (Lisp_Object connection, Error_Behavior errb)
 {
   Lisp_Object hostname = Qnil;
   struct gcpro gcpro1, gcpro2;
@@ -246,7 +246,7 @@ x_canonicalize_console_connection (Lisp_Object connection, Error_behavior errb)
 
 static Lisp_Object
 x_semi_canonicalize_device_connection (Lisp_Object connection,
-				       Error_behavior errb)
+				       Error_Behavior errb)
 {
   int hostname_length, display_length, screen_length;
   struct gcpro gcpro1;
@@ -274,7 +274,7 @@ x_semi_canonicalize_device_connection (Lisp_Object connection,
 }
 
 static Lisp_Object
-x_canonicalize_device_connection (Lisp_Object connection, Error_behavior errb)
+x_canonicalize_device_connection (Lisp_Object connection, Error_Behavior errb)
 {
   int hostname_length, display_length, screen_length;
   Lisp_Object screen_str = Qnil;

@@ -280,13 +280,13 @@ void tty_redisplay_shutdown (struct console *c);
 
 /* called from console-stream.c */
 Lisp_Object tty_semi_canonicalize_console_connection (Lisp_Object connection,
-						      Error_behavior errb);
+						      Error_Behavior errb);
 Lisp_Object tty_canonicalize_console_connection (Lisp_Object connection,
-						 Error_behavior errb);
+						 Error_Behavior errb);
 Lisp_Object tty_semi_canonicalize_device_connection (Lisp_Object connection,
-						     Error_behavior errb);
+						     Error_Behavior errb);
 Lisp_Object tty_canonicalize_device_connection (Lisp_Object connection,
-						Error_behavior errb);
+						Error_Behavior errb);
 struct console * tty_find_console_from_fd (int fd);
 
 #endif /* INCLUDED_console_tty_h_ */

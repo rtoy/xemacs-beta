@@ -45,7 +45,7 @@ gtk_initially_selected_for_input (struct console *con)
    the integrity of our input, because the generic functions don't. */
 
 static Lisp_Object
-gtk_device_to_console_connection (Lisp_Object connection, Error_behavior errb)
+gtk_device_to_console_connection (Lisp_Object connection, Error_Behavior errb)
 {
   /* Strip the trailing .# off of the connection, if it's there. */
 
@@ -60,7 +60,7 @@ gtk_device_to_console_connection (Lisp_Object connection, Error_behavior errb)
 
 static Lisp_Object
 gtk_semi_canonicalize_console_connection (Lisp_Object connection,
-					  Error_behavior errb)
+					  Error_Behavior errb)
 {
   struct gcpro gcpro1;
 
@@ -72,7 +72,7 @@ gtk_semi_canonicalize_console_connection (Lisp_Object connection,
 }
 
 static Lisp_Object
-gtk_canonicalize_console_connection (Lisp_Object connection, Error_behavior errb)
+gtk_canonicalize_console_connection (Lisp_Object connection, Error_Behavior errb)
 {
   Lisp_Object hostname = Qnil;
   struct gcpro gcpro1, gcpro2;
@@ -86,7 +86,7 @@ gtk_canonicalize_console_connection (Lisp_Object connection, Error_behavior errb
 
 static Lisp_Object
 gtk_semi_canonicalize_device_connection (Lisp_Object connection,
-				         Error_behavior errb)
+				         Error_Behavior errb)
 {
   struct gcpro gcpro1;
 
@@ -98,7 +98,7 @@ gtk_semi_canonicalize_device_connection (Lisp_Object connection,
 }
 
 static Lisp_Object
-gtk_canonicalize_device_connection (Lisp_Object connection, Error_behavior errb)
+gtk_canonicalize_device_connection (Lisp_Object connection, Error_Behavior errb)
 {
   struct gcpro gcpro1;
 

@@ -226,7 +226,7 @@ allocate_nearest_color (Display *display, Colormap colormap, Visual *visual,
 
 static int
 x_parse_nearest_color (struct device *d, XColor *color, Lisp_Object name,
-		       Error_behavior errb)
+		       Error_Behavior errb)
 {
   Display *dpy   = DEVICE_X_DISPLAY  (d);
   Colormap cmap  = DEVICE_X_COLORMAP (d);
@@ -259,7 +259,7 @@ x_parse_nearest_color (struct device *d, XColor *color, Lisp_Object name,
 
 static int
 x_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
-			     Lisp_Object device, Error_behavior errb)
+			     Lisp_Object device, Error_Behavior errb)
 {
   XColor color;
   int result;
@@ -364,7 +364,7 @@ x_valid_color_name_p (struct device *d, Lisp_Object color)
 
 static int
 x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
-			    Lisp_Object device, Error_behavior errb)
+			    Lisp_Object device, Error_Behavior errb)
 {
   Display *dpy = DEVICE_X_DISPLAY (XDEVICE (device));
   XFontStruct *xf;
@@ -774,7 +774,7 @@ x_font_truename (Display *dpy, Extbyte *name, XFontStruct *font)
 }
 
 static Lisp_Object
-x_font_instance_truename (Lisp_Font_Instance *f, Error_behavior errb)
+x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 {
   struct device *d = XDEVICE (f->device);
 

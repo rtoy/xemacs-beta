@@ -73,7 +73,7 @@ allocate_nearest_color (GdkColormap *colormap, GdkVisual *visual,
 
 int
 gtk_parse_nearest_color (struct device *d, GdkColor *color, Bufbyte *name,
-			 Bytecount len, Error_behavior errb)
+			 Bytecount len, Error_Behavior errb)
 {
   GdkColormap *cmap;
   GdkVisual *visual;
@@ -111,7 +111,7 @@ gtk_parse_nearest_color (struct device *d, GdkColor *color, Bufbyte *name,
 
 static int
 gtk_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
-			       Lisp_Object device, Error_behavior errb)
+			       Lisp_Object device, Error_Behavior errb)
 {
   GdkColor color;
   int result;
@@ -215,7 +215,7 @@ gtk_valid_color_name_p (struct device *d, Lisp_Object color)
 
 static int
 gtk_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
-			      Lisp_Object device, Error_behavior errb)
+			      Lisp_Object device, Error_Behavior errb)
 {
   GdkFont *gf;
   XFontStruct *xf;
@@ -342,7 +342,7 @@ Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
 static Lisp_Object __gtk_list_fonts_internal (const char *pattern);
 
 static Lisp_Object
-gtk_font_instance_truename (struct Lisp_Font_Instance *f, Error_behavior errb)
+gtk_font_instance_truename (struct Lisp_Font_Instance *f, Error_Behavior errb)
 {
   if (NILP (FONT_INSTANCE_GTK_TRUENAME (f)))
     {

@@ -118,14 +118,14 @@ stream_delete_console (struct console *con)
 
 Lisp_Object
 stream_semi_canonicalize_console_connection (Lisp_Object connection,
-					     Error_behavior errb)
+					     Error_Behavior errb)
 {
   return NILP (connection) ? Vstdio_str : connection;
 }
 
 Lisp_Object
 stream_canonicalize_console_connection (Lisp_Object connection,
-					Error_behavior errb)
+					Error_Behavior errb)
 {
   if (NILP (connection) || internal_equal (connection, Vstdio_str, 0))
     return Vstdio_str;
@@ -143,14 +143,14 @@ stream_canonicalize_console_connection (Lisp_Object connection,
 
 Lisp_Object
 stream_semi_canonicalize_device_connection (Lisp_Object connection,
-					    Error_behavior errb)
+					    Error_Behavior errb)
 {
   return stream_semi_canonicalize_console_connection (connection, errb);
 }
 
 Lisp_Object
 stream_canonicalize_device_connection (Lisp_Object connection,
-				       Error_behavior errb)
+				       Error_Behavior errb)
 {
   return stream_canonicalize_console_connection (connection, errb);
 }

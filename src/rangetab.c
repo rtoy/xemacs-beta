@@ -495,7 +495,7 @@ exactly once) if FUNCTION modifies or deletes the current entry
 
 static int
 rangetab_data_validate (Lisp_Object keyword, Lisp_Object value,
-			Error_behavior errb)
+			Error_Behavior errb)
 {
   Lisp_Object rest;
 

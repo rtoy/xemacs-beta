@@ -234,7 +234,7 @@ such as `blink'.
 Lisp_Object Qfont_instancep;
 
 static Lisp_Object font_instance_truename_internal (Lisp_Object xfont,
-						    Error_behavior errb);
+						    Error_Behavior errb);
 
 static Lisp_Object
 mark_font_instance (Lisp_Object obj)
@@ -320,7 +320,7 @@ these objects are GCed, the underlying X data is deallocated as well.
   Lisp_Font_Instance *f;
   Lisp_Object val;
   int retval = 0;
-  Error_behavior errb = decode_error_behavior_flag (noerror);
+  Error_Behavior errb = decode_error_behavior_flag (noerror);
 
   if (ERRB_EQ (errb, ERROR_ME))
     CHECK_STRING (name);
@@ -415,7 +415,7 @@ This means that different characters in the font have different widths.
 
 static Lisp_Object
 font_instance_truename_internal (Lisp_Object font_instance,
-				 Error_behavior errb)
+				 Error_Behavior errb)
 {
   Lisp_Font_Instance *f = XFONT_INSTANCE (font_instance);
 

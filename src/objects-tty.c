@@ -144,7 +144,7 @@ See `set-tty-dynamic-color-specs'.
 
 static int
 tty_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
-			       Lisp_Object device, Error_behavior errb)
+			       Lisp_Object device, Error_Behavior errb)
 {
   Lisp_Object result;
 
@@ -215,7 +215,7 @@ tty_valid_color_name_p (struct device *d, Lisp_Object color)
 
 static int
 tty_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
-			      Lisp_Object device, Error_behavior errb)
+			      Lisp_Object device, Error_Behavior errb)
 {
   Bufbyte *str = XSTRING_DATA (name);
   Lisp_Object charset = Qnil;

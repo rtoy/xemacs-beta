@@ -331,9 +331,9 @@ do {										\
 
 struct image_instantiator_methods *
 decode_device_ii_format (Lisp_Object device, Lisp_Object format,
-			 Error_behavior errb);
+			 Error_Behavior errb);
 struct image_instantiator_methods *
-decode_image_instantiator_format (Lisp_Object format, Error_behavior errb);
+decode_image_instantiator_format (Lisp_Object format, Error_Behavior errb);
 
 void add_entry_to_image_instantiator_format_list (Lisp_Object symbol,
 			struct image_instantiator_methods *meths);
@@ -999,7 +999,7 @@ Lisp_Object glyph_face (Lisp_Object glyph, Lisp_Object domain);
 int glyph_contrib_p (Lisp_Object glyph, Lisp_Object domain);
 Lisp_Object glyph_image_instance (Lisp_Object glyph,
 				  Lisp_Object domain,
-				  Error_behavior errb, int no_quit);
+				  Error_Behavior errb, int no_quit);
 void file_or_data_must_be_present (Lisp_Object instantiator);
 void data_must_be_present (Lisp_Object instantiator);
 Lisp_Object make_string_from_file (Lisp_Object file);

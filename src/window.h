@@ -366,7 +366,7 @@ void set_window_pixheight (Lisp_Object window, int pixheight,
 void set_window_pixwidth (Lisp_Object window, int pixwidth,
 			  int nodelete);
 void window_scroll (Lisp_Object window, Lisp_Object n, int direction,
-		    Error_behavior errb);
+		    Error_Behavior errb);
 int buffer_window_count (struct buffer *b, struct frame *f);
 int buffer_window_mru (struct window *w);
 void check_frame_size (struct frame *frame, int *rows, int *cols);

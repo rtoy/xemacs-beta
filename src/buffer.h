@@ -1284,12 +1284,12 @@ typedef union { char c; void *p; } *dfc_aliasing_voidpp;
 #define DFC_C_STRING_ALLOCA_USE_CONVERTED_DATA(sink) do {		\
   void * dfc_sink_ret = alloca (dfc_sink.data.len + 1);			\
   memcpy (dfc_sink_ret, dfc_sink.data.ptr, dfc_sink.data.len + 1);	\
-  (sink) = (char *) dfc_sink_ret;					\
+  ((dfc_aliasing_voidpp) &(sink))->p = dfc_sink_ret;			\
 } while (0)
 #define DFC_C_STRING_MALLOC_USE_CONVERTED_DATA(sink) do {		\
   void * dfc_sink_ret = xmalloc (dfc_sink.data.len + 1);		\
   memcpy (dfc_sink_ret, dfc_sink.data.ptr, dfc_sink.data.len + 1);	\
-  (sink) = (char *) dfc_sink_ret;					\
+  ((dfc_aliasing_voidpp) &(sink))->p = dfc_sink_ret;			\
 } while (0)
 #define DFC_LISP_STRING_USE_CONVERTED_DATA(sink) \
   sink = make_string ((Bufbyte *) dfc_sink.data.ptr, dfc_sink.data.len)

@@ -303,28 +303,28 @@ output coding systems of CONSOLE.
 
 Lisp_Object
 tty_semi_canonicalize_console_connection (Lisp_Object connection,
-					  Error_behavior errb)
+					  Error_Behavior errb)
 {
   return stream_semi_canonicalize_console_connection (connection, errb);
 }
 
 Lisp_Object
 tty_canonicalize_console_connection (Lisp_Object connection,
-				     Error_behavior errb)
+				     Error_Behavior errb)
 {
   return stream_canonicalize_console_connection (connection, errb);
 }
 
 Lisp_Object
 tty_semi_canonicalize_device_connection (Lisp_Object connection,
-					 Error_behavior errb)
+					 Error_Behavior errb)
 {
   return stream_semi_canonicalize_console_connection (connection, errb);
 }
 
 Lisp_Object
 tty_canonicalize_device_connection (Lisp_Object connection,
-				    Error_behavior errb)
+				    Error_Behavior errb)
 {
   return stream_canonicalize_console_connection (connection, errb);
 }

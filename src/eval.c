@@ -2122,7 +2122,7 @@ call_with_suspended_errors_1 (Lisp_Object opaque_arg)
    (2) silently fail and return some error value.
    (3) do as (2) but issue a warning in the process.
 
-   Currently there's lots of stuff that passes an Error_behavior
+   Currently there's lots of stuff that passes an Error_Behavior
    value and calls maybe_signal_error() and other such functions.
    This approach is inherently error-prone and broken.  A much
    more robust and easier approach is to use call_with_suspended_errors().
@@ -2132,7 +2132,7 @@ call_with_suspended_errors_1 (Lisp_Object opaque_arg)
 
 Lisp_Object
 call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
-			    Lisp_Object class, Error_behavior errb,
+			    Lisp_Object class, Error_Behavior errb,
 			    int nargs, ...)
 {
   va_list vargs;
@@ -2224,7 +2224,7 @@ call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
 
 void
 maybe_signal_error_1 (Lisp_Object sig, Lisp_Object data, Lisp_Object class,
-		      Error_behavior errb)
+		      Error_Behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return;
@@ -2240,7 +2240,7 @@ maybe_signal_error_1 (Lisp_Object sig, Lisp_Object data, Lisp_Object class,
 
 Lisp_Object
 maybe_signal_continuable_error_1 (Lisp_Object sig, Lisp_Object data,
-				  Lisp_Object class, Error_behavior errb)
+				  Lisp_Object class, Error_Behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return Qnil;
@@ -2293,7 +2293,7 @@ signal_error (Lisp_Object type, const char *reason, Lisp_Object frob)
 void
 maybe_signal_error (Lisp_Object type, const char *reason,
 		    Lisp_Object frob, Lisp_Object class,
-		    Error_behavior errb)
+		    Error_Behavior errb)
 {
   /* Optimization: */
   if (ERRB_EQ (errb, ERROR_ME_NOT))
@@ -2311,7 +2311,7 @@ signal_continuable_error (Lisp_Object type, const char *reason,
 Lisp_Object
 maybe_signal_continuable_error (Lisp_Object type, const char *reason,
 				Lisp_Object frob, Lisp_Object class,
-				Error_behavior errb)
+				Error_Behavior errb)
 {
   /* Optimization: */
   if (ERRB_EQ (errb, ERROR_ME_NOT))
@@ -2341,7 +2341,7 @@ signal_error_2 (Lisp_Object type, const char *reason,
 void
 maybe_signal_error_2 (Lisp_Object type, const char *reason,
 		      Lisp_Object frob0, Lisp_Object frob1,
-		      Lisp_Object class, Error_behavior errb)
+		      Lisp_Object class, Error_Behavior errb)
 {
   /* Optimization: */
   if (ERRB_EQ (errb, ERROR_ME_NOT))
@@ -2361,7 +2361,7 @@ signal_continuable_error_2 (Lisp_Object type, const char *reason,
 Lisp_Object
 maybe_signal_continuable_error_2 (Lisp_Object type, const char *reason,
 				  Lisp_Object frob0, Lisp_Object frob1,
-				  Lisp_Object class, Error_behavior errb)
+				  Lisp_Object class, Error_Behavior errb)
 {
   /* Optimization: */
   if (ERRB_EQ (errb, ERROR_ME_NOT))
@@ -2394,7 +2394,7 @@ signal_ferror (Lisp_Object type, const char *fmt, ...)
 }
 
 void
-maybe_signal_ferror (Lisp_Object type, Lisp_Object class, Error_behavior errb,
+maybe_signal_ferror (Lisp_Object type, Lisp_Object class, Error_Behavior errb,
 		     const char *fmt, ...)
 {
   Lisp_Object obj;
@@ -2430,7 +2430,7 @@ signal_continuable_ferror (Lisp_Object type, const char *fmt, ...)
 
 Lisp_Object
 maybe_signal_continuable_ferror (Lisp_Object type, Lisp_Object class,
-				 Error_behavior errb, const char *fmt, ...)
+				 Error_Behavior errb, const char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2481,7 +2481,7 @@ signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob, const char *fmt,
 
 void
 maybe_signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
-			       Lisp_Object class, Error_behavior errb,
+			       Lisp_Object class, Error_Behavior errb,
 			       const char *fmt, ...)
 {
   Lisp_Object obj;
@@ -2520,7 +2520,7 @@ signal_continuable_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
 Lisp_Object
 maybe_signal_continuable_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
 					   Lisp_Object class,
-					   Error_behavior errb,
+					   Error_Behavior errb,
 					   const char *fmt, ...)
 {
   Lisp_Object obj;
@@ -2616,7 +2616,7 @@ syntax_error_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
 
 void
 maybe_syntax_error (const char *reason, Lisp_Object frob,
-		    Lisp_Object class, Error_behavior errb)
+		    Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qsyntax_error, reason, frob, class, errb);
 }
@@ -2635,7 +2635,7 @@ sferror_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
 
 void
 maybe_sferror (const char *reason, Lisp_Object frob,
-	       Lisp_Object class, Error_behavior errb)
+	       Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qstructure_formation_error, reason, frob, class, errb);
 }
@@ -2654,7 +2654,7 @@ invalid_argument_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
 
 void
 maybe_invalid_argument (const char *reason, Lisp_Object frob,
-			Lisp_Object class, Error_behavior errb)
+			Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qinvalid_argument, reason, frob, class, errb);
 }
@@ -2673,7 +2673,7 @@ invalid_constant_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
 
 void
 maybe_invalid_constant (const char *reason, Lisp_Object frob,
-			Lisp_Object class, Error_behavior errb)
+			Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qinvalid_constant, reason, frob, class, errb);
 }
@@ -2692,7 +2692,7 @@ invalid_operation_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
 
 void
 maybe_invalid_operation (const char *reason, Lisp_Object frob,
-			 Lisp_Object class, Error_behavior errb)
+			 Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qinvalid_operation, reason, frob, class, errb);
 }
@@ -2711,7 +2711,7 @@ invalid_change_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
 
 void
 maybe_invalid_change (const char *reason, Lisp_Object frob,
-		      Lisp_Object class, Error_behavior errb)
+		      Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qinvalid_change, reason, frob, class, errb);
 }
@@ -2730,7 +2730,7 @@ invalid_state_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
 
 void
 maybe_invalid_state (const char *reason, Lisp_Object frob,
-		     Lisp_Object class, Error_behavior errb)
+		     Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qinvalid_state, reason, frob, class, errb);
 }

@@ -294,7 +294,7 @@ DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("face", face,
 
 static int
 face_name_validate (Lisp_Object keyword, Lisp_Object value,
-		    Error_behavior errb)
+		    Error_Behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME))
     {
@@ -306,7 +306,7 @@ face_name_validate (Lisp_Object keyword, Lisp_Object value,
 }
 
 static int
-face_validate (Lisp_Object data, Error_behavior errb)
+face_validate (Lisp_Object data, Error_Behavior errb)
 {
   int name_seen = 0;
   Lisp_Object valw = Qnil;
@@ -555,7 +555,7 @@ update_faces_inheritance (Lisp_Object face, Lisp_Object property)
 Lisp_Object
 face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 				 Lisp_Object charset, Lisp_Object domain,
-				 Error_behavior errb, int no_fallback,
+				 Error_Behavior errb, int no_fallback,
 				 Lisp_Object depth)
 {
   Lisp_Object retval =

@@ -43,11 +43,11 @@ struct stream_console
 extern Lisp_Object Vterminal_console, Vterminal_frame, Vterminal_device;
 
 Lisp_Object stream_semi_canonicalize_console_connection(Lisp_Object,
-							Error_behavior);
+							Error_Behavior);
 Lisp_Object stream_canonicalize_console_connection(Lisp_Object,
-						   Error_behavior);
+						   Error_Behavior);
 Lisp_Object stream_semi_canonicalize_device_connection(Lisp_Object,
-						       Error_behavior);
+						       Error_Behavior);
 Lisp_Object stream_canonicalize_device_connection(Lisp_Object,
-						  Error_behavior);
+						  Error_Behavior);
 #endif /* INCLUDED_console_stream_h_ */

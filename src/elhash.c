@@ -573,7 +573,7 @@ make_lisp_hash_table (size_t size,
    unclear how this would cope with ERRB.  */
 static int
 hash_table_size_validate (Lisp_Object keyword, Lisp_Object value,
-			 Error_behavior errb)
+			 Error_Behavior errb)
 {
   if (NATNUMP (value))
     return 1;
@@ -591,7 +591,7 @@ decode_hash_table_size (Lisp_Object obj)
 
 static int
 hash_table_weakness_validate (Lisp_Object keyword, Lisp_Object value,
-			      Error_behavior errb)
+			      Error_Behavior errb)
 {
   if (EQ (value, Qnil))			return 1;
   if (EQ (value, Qt))			return 1;
@@ -635,7 +635,7 @@ decode_hash_table_weakness (Lisp_Object obj)
 
 static int
 hash_table_test_validate (Lisp_Object keyword, Lisp_Object value,
-			 Error_behavior errb)
+			 Error_Behavior errb)
 {
   if (EQ (value, Qnil))	  return 1;
   if (EQ (value, Qeq))	  return 1;
@@ -661,7 +661,7 @@ decode_hash_table_test (Lisp_Object obj)
 
 static int
 hash_table_rehash_size_validate (Lisp_Object keyword, Lisp_Object value,
-				 Error_behavior errb)
+				 Error_Behavior errb)
 {
   if (!FLOATP (value))
     {
@@ -692,7 +692,7 @@ decode_hash_table_rehash_size (Lisp_Object rehash_size)
 
 static int
 hash_table_rehash_threshold_validate (Lisp_Object keyword, Lisp_Object value,
-				     Error_behavior errb)
+				     Error_Behavior errb)
 {
   if (!FLOATP (value))
     {
@@ -723,7 +723,7 @@ decode_hash_table_rehash_threshold (Lisp_Object rehash_threshold)
 
 static int
 hash_table_data_validate (Lisp_Object keyword, Lisp_Object value,
-			 Error_behavior errb)
+			 Error_Behavior errb)
 {
   int len;
 

@@ -1169,7 +1169,7 @@ mswindows_get_hfont (Lisp_Font_Instance* f,
 
 static int
 mswindows_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
-			       Lisp_Object device, Error_behavior errb)
+			       Lisp_Object device, Error_Behavior errb)
 {
   const char *extname;
   COLORREF color;
@@ -1264,7 +1264,7 @@ mswindows_finalize_font_instance (Lisp_Font_Instance *f);
 static int
 initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 			  Lisp_Object device_font_list, HDC hdc,
-			  Error_behavior errb)
+			  Error_Behavior errb)
 {
   const char *extname;
   LOGFONT logfont;
@@ -1537,7 +1537,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 
 static int
 mswindows_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
-				    Lisp_Object device, Error_behavior errb)
+				    Lisp_Object device, Error_Behavior errb)
 {
   HDC hdc = CreateCompatibleDC (NULL);
   Lisp_Object font_list = DEVICE_MSWINDOWS_FONTLIST (XDEVICE (device));
@@ -1548,7 +1548,7 @@ mswindows_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 
 static int
 msprinter_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
-				    Lisp_Object device, Error_behavior errb)
+				    Lisp_Object device, Error_Behavior errb)
 {
   HDC hdc = DEVICE_MSPRINTER_HDC (XDEVICE (device));
   Lisp_Object font_list = DEVICE_MSPRINTER_FONTLIST (XDEVICE (device));
@@ -1622,7 +1622,7 @@ mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device)
  * Missing parts of the font spec should be filled in with these values:
  *	Courier New:Regular:10::Western */
 static Lisp_Object
-mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_behavior errb)
+mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 {
   int nsep=0;
   char *name = (char *) XSTRING_DATA (f->name);

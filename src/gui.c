@@ -117,7 +117,7 @@ get_gui_callback (Lisp_Object data, Lisp_Object *fn, Lisp_Object *arg)
 int
 gui_item_add_keyval_pair (Lisp_Object gui_item,
 			  Lisp_Object key, Lisp_Object val,
-			  Error_behavior errb)
+			  Error_Behavior errb)
 {
   Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
   int retval = 0;
@@ -214,7 +214,7 @@ allocate_gui_item (void)
  */
 static Lisp_Object
 make_gui_item_from_keywords_internal (Lisp_Object item,
-				      Error_behavior errb)
+				      Error_Behavior errb)
 {
   int length, plist_p, start;
   Lisp_Object *contents;

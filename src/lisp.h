@@ -520,7 +520,7 @@ typedef enum error_behavior
   ERROR_ME,
   ERROR_ME_NOT,
   ERROR_ME_WARN
-} Error_behavior;
+} Error_Behavior;
 
 #define ERRB_EQ(a, b) ((a) == (b))
 
@@ -532,11 +532,11 @@ typedef enum error_behavior
 typedef struct _error_behavior_struct_
 {
   int really_unlikely_name_to_have_accidentally_in_a_non_errb_structure;
-} Error_behavior;
+} Error_Behavior;
 
-extern Error_behavior ERROR_ME;
-extern Error_behavior ERROR_ME_NOT;
-extern Error_behavior ERROR_ME_WARN;
+extern Error_Behavior ERROR_ME;
+extern Error_Behavior ERROR_ME_NOT;
+extern Error_Behavior ERROR_ME_WARN;
 
 #define ERRB_EQ(a, b)							   \
  ((a).really_unlikely_name_to_have_accidentally_in_a_non_errb_structure == \
@@ -1590,7 +1590,7 @@ struct structure_keyword_entry
 {
   Lisp_Object keyword;
   int (*validate) (Lisp_Object keyword, Lisp_Object value,
-		   Error_behavior errb);
+		   Error_Behavior errb);
 };
 
 typedef struct
@@ -1603,7 +1603,7 @@ struct structure_type
 {
   Lisp_Object type;
   structure_keyword_entry_dynarr *keywords;
-  int (*validate) (Lisp_Object data, Error_behavior errb);
+  int (*validate) (Lisp_Object data, Error_Behavior errb);
   Lisp_Object (*instantiate) (Lisp_Object data);
 };
 
@@ -1615,14 +1615,14 @@ typedef struct
 struct structure_type *define_structure_type (Lisp_Object type,
 					      int (*validate)
 					      (Lisp_Object data,
-					       Error_behavior errb),
+					       Error_Behavior errb),
 					      Lisp_Object (*instantiate)
 					      (Lisp_Object data));
 void define_structure_type_keyword (struct structure_type *st,
 				    Lisp_Object keyword,
 				    int (*validate) (Lisp_Object keyword,
 						     Lisp_Object value,
-						     Error_behavior errb));
+						     Error_Behavior errb));
 
 /*---------------------------- weak lists ------------------------------*/
 
@@ -2460,18 +2460,18 @@ extern int suppress_early_error_handler_backtrace;
 /* Defined in eval.c */
 DECLARE_DOESNT_RETURN (signal_error_1 (Lisp_Object, Lisp_Object));
 void maybe_signal_error_1 (Lisp_Object, Lisp_Object, Lisp_Object,
-			   Error_behavior);
+			   Error_Behavior);
 Lisp_Object maybe_signal_continuable_error_1 (Lisp_Object, Lisp_Object,
-					      Lisp_Object, Error_behavior);
+					      Lisp_Object, Error_Behavior);
 DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror (Lisp_Object,
 								 const char *,
 								 ...), 2, 3);
-void maybe_signal_ferror (Lisp_Object, Lisp_Object, Error_behavior,
+void maybe_signal_ferror (Lisp_Object, Lisp_Object, Error_Behavior,
 			  const char *, ...) PRINTF_ARGS (4, 5);
 Lisp_Object signal_continuable_ferror (Lisp_Object, const char *, ...)
      PRINTF_ARGS (2, 3);
 Lisp_Object maybe_signal_continuable_ferror (Lisp_Object, Lisp_Object,
-					     Error_behavior,
+					     Error_Behavior,
 					     const char *, ...)
      PRINTF_ARGS (4, 5);
 
@@ -2479,18 +2479,18 @@ Lisp_Object build_error_data (const char *reason, Lisp_Object frob);
 DECLARE_DOESNT_RETURN (signal_error (Lisp_Object, const char *,
 				     Lisp_Object));
 void maybe_signal_error (Lisp_Object, const char *, Lisp_Object,
-			 Lisp_Object, Error_behavior);
+			 Lisp_Object, Error_Behavior);
 Lisp_Object signal_continuable_error (Lisp_Object, const char *,
 				      Lisp_Object);
 Lisp_Object maybe_signal_continuable_error (Lisp_Object, const char *,
 					    Lisp_Object,
-					    Lisp_Object, Error_behavior);
+					    Lisp_Object, Error_Behavior);
 DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror_with_frob
 						  (Lisp_Object, Lisp_Object,
 						   const char *,
 						   ...), 3, 4);
 void maybe_signal_ferror_with_frob (Lisp_Object, Lisp_Object, Lisp_Object,
-				    Error_behavior,
+				    Error_Behavior,
 				    const char *, ...) PRINTF_ARGS (5, 6);
 Lisp_Object signal_continuable_ferror_with_frob (Lisp_Object, Lisp_Object,
 						 const char *,
@@ -2498,19 +2498,19 @@ Lisp_Object signal_continuable_ferror_with_frob (Lisp_Object, Lisp_Object,
 Lisp_Object maybe_signal_continuable_ferror_with_frob (Lisp_Object,
 						       Lisp_Object,
 						       Lisp_Object,
-						       Error_behavior,
+						       Error_Behavior,
 						       const char *, ...)
      PRINTF_ARGS (5, 6);
 DECLARE_DOESNT_RETURN (signal_error_2 (Lisp_Object, const char *,
 				       Lisp_Object, Lisp_Object));
 void maybe_signal_error_2 (Lisp_Object, const char *, Lisp_Object,
-			   Lisp_Object, Lisp_Object, Error_behavior);
+			   Lisp_Object, Lisp_Object, Error_Behavior);
 Lisp_Object signal_continuable_error_2 (Lisp_Object, const char *,
 					Lisp_Object, Lisp_Object);
 Lisp_Object maybe_signal_continuable_error_2 (Lisp_Object, const char *,
 					      Lisp_Object, Lisp_Object,
 					      Lisp_Object,
-					      Error_behavior);
+					      Error_Behavior);
 
 
 DECLARE_DOESNT_RETURN (signal_malformed_list_error (Lisp_Object));
@@ -2522,47 +2522,47 @@ DECLARE_DOESNT_RETURN (syntax_error (const char *reason, Lisp_Object frob));
 DECLARE_DOESNT_RETURN (syntax_error_2 (const char *reason, Lisp_Object frob1,
 				       Lisp_Object frob2));
 void maybe_syntax_error (const char *, Lisp_Object, Lisp_Object,
-			 Error_behavior);
+			 Error_Behavior);
 DECLARE_DOESNT_RETURN (sferror (const char *reason, Lisp_Object frob));
 DECLARE_DOESNT_RETURN (sferror_2 (const char *reason, Lisp_Object frob1,
 				  Lisp_Object frob2));
 void maybe_sferror (const char *, Lisp_Object, Lisp_Object,
-		    Error_behavior);
+		    Error_Behavior);
 DECLARE_DOESNT_RETURN (invalid_argument (const char *reason,
 					 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (invalid_argument_2 (const char *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
 void maybe_invalid_argument (const char *, Lisp_Object, Lisp_Object,
-			     Error_behavior);
+			     Error_Behavior);
 DECLARE_DOESNT_RETURN (invalid_operation (const char *reason,
 					 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (invalid_operation_2 (const char *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
 void maybe_invalid_operation (const char *, Lisp_Object, Lisp_Object,
-			     Error_behavior);
+			     Error_Behavior);
 DECLARE_DOESNT_RETURN (invalid_state (const char *reason,
 					 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (invalid_state_2 (const char *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
 void maybe_invalid_state (const char *, Lisp_Object, Lisp_Object,
-			     Error_behavior);
+			     Error_Behavior);
 DECLARE_DOESNT_RETURN (invalid_change (const char *reason,
 					 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (invalid_change_2 (const char *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
 void maybe_invalid_change (const char *, Lisp_Object, Lisp_Object,
-			     Error_behavior);
+			     Error_Behavior);
 DECLARE_DOESNT_RETURN (invalid_constant (const char *reason,
 					 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (invalid_constant_2 (const char *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
 void maybe_invalid_constant (const char *, Lisp_Object, Lisp_Object,
-			     Error_behavior);
+			     Error_Behavior);
 DECLARE_DOESNT_RETURN (wtaerror (const char *reason, Lisp_Object frob));
 DECLARE_DOESNT_RETURN (out_of_memory (const char *reason,
 				      Lisp_Object frob));
@@ -2624,7 +2624,7 @@ Lisp_Object call1_trapping_errors (const char *, Lisp_Object, Lisp_Object);
 Lisp_Object call2_trapping_errors (const char *,
 				   Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object call_with_suspended_errors (lisp_fn_t, volatile Lisp_Object, Lisp_Object,
-					Error_behavior, int, ...);
+					Error_Behavior, int, ...);
 /* C Code should be using internal_catch, record_unwind_p, condition_case_1 */
 Lisp_Object internal_catch (Lisp_Object, Lisp_Object (*) (Lisp_Object),
 			    Lisp_Object, int * volatile);
@@ -2712,10 +2712,10 @@ Lisp_Object internal_plist_get (Lisp_Object, Lisp_Object);
 void internal_plist_put (Lisp_Object *, Lisp_Object, Lisp_Object);
 int internal_remprop (Lisp_Object *, Lisp_Object);
 Lisp_Object external_plist_get (Lisp_Object *, Lisp_Object,
-				int, Error_behavior);
+				int, Error_Behavior);
 void external_plist_put (Lisp_Object *, Lisp_Object,
-			 Lisp_Object, int, Error_behavior);
-int external_remprop (Lisp_Object *, Lisp_Object, int, Error_behavior);
+			 Lisp_Object, int, Error_Behavior);
+int external_remprop (Lisp_Object *, Lisp_Object, int, Error_Behavior);
 int internal_equal (Lisp_Object, Lisp_Object, int);
 Lisp_Object concat2 (Lisp_Object, Lisp_Object);
 Lisp_Object concat3 (Lisp_Object, Lisp_Object, Lisp_Object);
@@ -2726,8 +2726,8 @@ Lisp_Object bytecode_nconc2 (Lisp_Object *);
 void check_losing_bytecode (const char *, Lisp_Object);
 
 /* Defined in glyphs.c */
-Error_behavior decode_error_behavior_flag (Lisp_Object);
-Lisp_Object encode_error_behavior_flag (Error_behavior);
+Error_Behavior decode_error_behavior_flag (Lisp_Object);
+Lisp_Object encode_error_behavior_flag (Error_Behavior);
 
 /* Defined in glyphs-shared.c */
 void shared_resource_validate (Lisp_Object instantiator);
@@ -2877,10 +2877,10 @@ Bytind bi_find_next_newline_no_quit (struct buffer *, Bytind, int);
 Bytind bi_find_next_emchar_in_string (Lisp_String*, Emchar, Bytind, EMACS_INT);
 Bufpos find_before_next_newline (struct buffer *, Bufpos, Bufpos, int);
 struct re_pattern_buffer *compile_pattern (Lisp_Object, struct re_registers *,
-					   Lisp_Object, int, Error_behavior);
+					   Lisp_Object, int, Error_Behavior);
 Bytecount fast_string_match (Lisp_Object,  const Bufbyte *,
 			     Lisp_Object, Bytecount,
-			     Bytecount, int, Error_behavior, int);
+			     Bytecount, int, Error_Behavior, int);
 Bytecount fast_lisp_string_match (Lisp_Object, Lisp_Object);
 void restore_match_data (void);
 extern Fixnum warn_about_possibly_incompatible_back_references;
@@ -2898,9 +2898,9 @@ DECLARE_DOESNT_RETURN (report_sound_error (const Char_ASCII *, Lisp_Object));
 
 /* Defined in specifier.c */
 Lisp_Object specifier_instance (Lisp_Object, Lisp_Object, Lisp_Object,
-				Error_behavior, int, int, Lisp_Object);
+				Error_Behavior, int, int, Lisp_Object);
 Lisp_Object specifier_instance_no_quit (Lisp_Object, Lisp_Object, Lisp_Object,
-					Error_behavior, int, Lisp_Object);
+					Error_Behavior, int, Lisp_Object);
 
 /* Defined in symbols.c */
 unsigned int hash_string (const Bufbyte *, Bytecount);

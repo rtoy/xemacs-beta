@@ -148,7 +148,7 @@ mswindows_ensure_console_allocated (void)
 
 static Lisp_Object
 mswindows_canonicalize_console_connection (Lisp_Object connection,
-					   Error_behavior errb)
+					   Error_Behavior errb)
 {
   /* Do not allow more than one mswindows device, by explicitly
      requiring that CONNECTION is nil, the only allowed connection in
@@ -168,7 +168,7 @@ mswindows_canonicalize_console_connection (Lisp_Object connection,
 
 static Lisp_Object
 mswindows_canonicalize_device_connection (Lisp_Object connection,
-					  Error_behavior errb)
+					  Error_Behavior errb)
 {
   return mswindows_canonicalize_console_connection (connection, errb);
 }
@@ -598,7 +598,7 @@ mswindows_output_last_error (char *frob)
 
 static Lisp_Object
 msprinter_canonicalize_console_connection (Lisp_Object connection,
-					   Error_behavior errb)
+					   Error_Behavior errb)
 {
   /* If nil connection is specified, transform it into the name
      of the default printer */
@@ -621,7 +621,7 @@ msprinter_canonicalize_console_connection (Lisp_Object connection,
 
 static Lisp_Object
 msprinter_canonicalize_device_connection (Lisp_Object connection,
-					  Error_behavior errb)
+					  Error_Behavior errb)
 {
   return msprinter_canonicalize_console_connection (connection, errb);
 }

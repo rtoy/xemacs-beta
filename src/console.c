@@ -176,7 +176,7 @@ decode_console (Lisp_Object console)
 
 
 struct console_methods *
-decode_console_type (Lisp_Object type, Error_behavior errb)
+decode_console_type (Lisp_Object type, Error_Behavior errb)
 {
   int i;
 
@@ -358,7 +358,7 @@ make_console (struct console *con)
 
 static Lisp_Object
 semi_canonicalize_console_connection (struct console_methods *meths,
-				      Lisp_Object name, Error_behavior errb)
+				      Lisp_Object name, Error_Behavior errb)
 {
   if (HAS_CONTYPE_METH_P (meths, semi_canonicalize_console_connection))
     return CONTYPE_METH (meths, semi_canonicalize_console_connection,
@@ -370,7 +370,7 @@ semi_canonicalize_console_connection (struct console_methods *meths,
 
 static Lisp_Object
 canonicalize_console_connection (struct console_methods *meths,
-				 Lisp_Object name, Error_behavior errb)
+				 Lisp_Object name, Error_Behavior errb)
 {
   if (HAS_CONTYPE_METH_P (meths, canonicalize_console_connection))
     return CONTYPE_METH (meths, canonicalize_console_connection,

@@ -950,7 +950,7 @@ DEFINE_SPECIFIER_TYPE (toolbar);
 /* Returns Q_style if key was :style, Qt if ok otherwise, Qnil if error. */
 static Lisp_Object
 check_toolbar_button_keywords (Lisp_Object button, Lisp_Object key,
-			       Lisp_Object val, Error_behavior errb)
+			       Lisp_Object val, Error_Behavior errb)
 {
   if (!KEYWORDP (key))
     {
@@ -994,7 +994,7 @@ whole, use `check-valid-instantiator' with a specifier type of 'toolbar.
 {
   Lisp_Object *elt, glyphs, value;
   int len;
-  Error_behavior errb = decode_error_behavior_flag (noerror);
+  Error_Behavior errb = decode_error_behavior_flag (noerror);
 
   if (!VECTORP (button))
     CTB_ERROR ("toolbar button descriptors must be vectors");

@@ -1775,28 +1775,28 @@ init_ntproc (void)
 #ifndef HAVE_TTY
 Lisp_Object
 tty_semi_canonicalize_console_connection (Lisp_Object connection,
-					  Error_behavior errb)
+					  Error_Behavior errb)
 {
   return Vstdio_str;
 }
 
 Lisp_Object
 tty_canonicalize_console_connection (Lisp_Object connection,
-				     Error_behavior errb)
+				     Error_Behavior errb)
 {
   return Vstdio_str;
 }
 
 Lisp_Object
 tty_semi_canonicalize_device_connection (Lisp_Object connection,
-					 Error_behavior errb)
+					 Error_Behavior errb)
 {
   return Vstdio_str;
 }
 
 Lisp_Object
 tty_canonicalize_device_connection (Lisp_Object connection,
-				    Error_behavior errb)
+				    Error_Behavior errb)
 {
   return Vstdio_str;
 }

@@ -419,7 +419,7 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
 /************************************************************************/
 
 static struct specifier_methods *
-decode_specifier_type (Lisp_Object type, Error_behavior errb)
+decode_specifier_type (Lisp_Object type, Error_Behavior errb)
 {
   int i;
 
@@ -1160,7 +1160,7 @@ call_validate_method (Lisp_Object boxed_method, Lisp_Object instantiator)
 static Lisp_Object
 check_valid_instantiator (Lisp_Object instantiator,
 			  struct specifier_methods *meths,
-			  Error_behavior errb)
+			  Error_Behavior errb)
 {
   if (meths->validate_method)
     {
@@ -1215,7 +1215,7 @@ Return non-nil if INSTANTIATOR is valid for SPECIFIER-TYPE.
 
 static Lisp_Object
 check_valid_inst_list (Lisp_Object inst_list, struct specifier_methods *meths,
-		       Error_behavior errb)
+		       Error_Behavior errb)
 {
   Lisp_Object rest;
 
@@ -1274,7 +1274,7 @@ Return non-nil if INST-LIST is valid for specifier type TYPE.
 
 static Lisp_Object
 check_valid_spec_list (Lisp_Object spec_list, struct specifier_methods *meths,
-		       Error_behavior errb)
+		       Error_Behavior errb)
 {
   Lisp_Object rest;
 
@@ -2352,7 +2352,7 @@ call_validate_matchspec_method (Lisp_Object boxed_method,
 static Lisp_Object
 check_valid_specifier_matchspec (Lisp_Object matchspec,
 				 struct specifier_methods *meths,
-				 Error_behavior errb)
+				 Error_Behavior errb)
 {
   if (meths->validate_matchspec_method)
     {
@@ -2467,7 +2467,7 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 				   Lisp_Object matchspec,
 				   Lisp_Object domain,
 				   Lisp_Object inst_list,
-				   Error_behavior errb, int no_quit,
+				   Error_Behavior errb, int no_quit,
 				   Lisp_Object depth)
 {
   /* This function can GC */
@@ -2545,7 +2545,7 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
    triggered by a user call, who knows what it will usually be. */
 Lisp_Object
 specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
-		    Lisp_Object domain, Error_behavior errb, int no_quit,
+		    Lisp_Object domain, Error_Behavior errb, int no_quit,
 		    int no_fallback, Lisp_Object depth)
 {
   Lisp_Object buffer = Qnil;
@@ -2645,7 +2645,7 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
 
 Lisp_Object
 specifier_instance_no_quit (Lisp_Object specifier, Lisp_Object matchspec,
-			    Lisp_Object domain, Error_behavior errb,
+			    Lisp_Object domain, Error_Behavior errb,
 			    int no_fallback, Lisp_Object depth)
 {
   return specifier_instance (specifier, matchspec, domain, errb,

@@ -404,7 +404,7 @@ Lisp_Object
 msprinter_default_printer (void)
 {
   Extbyte name[666];
-  char *nameint;
+  Bufbyte *nameint;
 
   if (GetProfileString (XETEXT ("windows"), XETEXT ("device"), NULL, name,
 			sizeof (name) / XETCHAR_SIZE) <= 0)
