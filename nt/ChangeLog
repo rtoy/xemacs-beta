@@ -1,14 +1,6 @@
 2001-05-01  Ben Wing  <ben@xemacs.org>
 
-	* xemacs.mak (DEPEND):
-	Don't add config.inc to the horked depend file.  It's not
-	recognized by nmake and just results in warnings.
-	* xemacs.mak (docfile):
-	Don't use $(DEL) in the middle of a shell command, because it
-	will try to call `-del' and fail.
-
-2001-04-23  Ben Wing  <ben@xemacs.org>
-
+	* config.inc.samp (MAKEINFO): point at more standard c: not f:.
 	* minitar.c:
 	* minitar.c (Usage):
 	* minitar.c (octal):
@@ -16,6 +8,15 @@
 	* minitar.c (main):
 	Fix more compiler warnings, clean up the style to conform
 	more to standard XEmacs.
+
+2001-05-01  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.mak (DEPEND):
+	Don't add config.inc to the horked depend file.  It's not
+	recognized by nmake and just results in warnings.
+	* xemacs.mak (docfile):
+	Don't use $(DEL) in the middle of a shell command, because it
+	will try to call `-del' and fail.
 
 2001-04-27  Adrian Aichner  <adrian@xemacs.org>
 
