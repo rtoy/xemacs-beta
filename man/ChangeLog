@@ -1,3 +1,7 @@
+2003-05-10  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.13 "cauliflower" is released.
+
 2003-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/searching.texi (Match Data): Failed match preserves data.

@@ -1,3 +1,7 @@
+2003-05-10  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.13 "cauliflower" is released.
+
 2003-05-05  Steve Youngs  <youngs@xemacs.org>
 
 	* lwlib-Xm.c (xm_update_one_widget): Only call

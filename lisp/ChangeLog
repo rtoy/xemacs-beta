@@ -1,3 +1,7 @@
+2003-05-10  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.13 "cauliflower" is released.
+
 2003-05-08  Jerry James  <james@xemacs.org>
 
 	* code-init.el (coding-system-variable-default-value-table): Use

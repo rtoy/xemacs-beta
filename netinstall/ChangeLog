@@ -1,3 +1,7 @@
+2003-05-10  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.13 "cauliflower" is released.
+
 2003-04-24  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.12 "carrot" is released.
@@ -475,6 +479,6 @@
 
 	* all: port from cygwin setup.
 
-%%% $Id: ChangeLog,v 1.25 2003/04/24 23:41:40 youngs Exp $
-$Revision: 1.25 $
+%%% $Id: ChangeLog,v 1.26 2003/05/10 08:53:35 youngs Exp $
+$Revision: 1.26 $
 

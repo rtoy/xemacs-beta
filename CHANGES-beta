@@ -1,16 +1,20 @@
 to 21.5.13 "cauliflower"
 
+Remember that bug that made return behave as linefeed in a TTY?  It's
+gone!  Thanks go out to Jerry James and Steve Turnbull for squashing
+this year old bug.  Of course, that wasn't the only bug fixed this
+time around.
 
 Here are the highlights:
 
 Build
 
 -- Don't look for Motif if it's already been found - Buchholz.
--- Autoconf fixes for building modules on MacOS X - Begel.
 -- Darwin, Cygwin, BerkDB autoconf fixes - Turnbull.
 -- Make DEFUNed functions be tags - Buchholz.
 -- Allow compiling with Motif 1 and linking with Motif 2 - Buchholz.
-
+-- Update regexp tests - Turnbull.
+-- Don't autodetect ESD (Enlightened Sound Daemon) - Turnbull.
 
 
 Documentation
@@ -18,12 +22,19 @@ Documentation
 -- New section in PROBLEMS auxilary programs for Windows - Turnbull.
 -- FAQ updates
 	Q6.4.3 New aux programs for Windows - Turnbull.
+-- Document failed match preserves data - Turnbull.
 
 
 Internals
 
 -- Don't use the u_int8_t etc typedefs on FreeBSD in database.c - Pluim.
 -- Better support for externally defined lrecord types - Begel.
+-- Only call `xm_update_progress' if Motif is defined - Youngs.
+-- Define __STDC__ for BerkeleyDB - Buchholz.
+-- Fix bug where XEmacs couldn't find its .dmp file - Buchholz.
+-- Move `filemodestring' from lisp.h to sysfile.h - Golubev.
+-- Clean ups against the possibility of sys/stat.h defining stat - Turnbull.
+-- Search/match updates - Turnbull.
 
 
 Lisp API
@@ -32,6 +43,7 @@ Lisp API
 -- Put exit message on separate line in `command-error' - Turnbull.
 -- Temporarily turn off PGP verification of package-index - Youngs.
 -- Remove keymapings for 'function-key-error' - James.
+-- Fix bug that mapped RET to LFD in TTYs - James.
 
 
 to 21.5.12 "carrot"
