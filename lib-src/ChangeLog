@@ -1,5 +1,10 @@
 2004-12-06  Ben Wing  <ben@xemacs.org>
 
+	* i.c (pump):
+	Undo change of 2003-03-06.  It causes truncation of output at the end.
+
+2004-12-06  Ben Wing  <ben@xemacs.org>
+
 	* gnuclient.c:
 	* gnuclient.c (get_current_working_directory):
 	* gnuclient.c (filename_expand):
