@@ -1223,6 +1223,7 @@ extract_xpm_color_names (Lisp_Object device,
           assert (COLOR_SPECIFIERP (value));
           value = Fspecifier_instance (value, domain, Qnil, Qnil);
         }
+
       if (NILP (value))
         continue;
       results = noseeum_cons (noseeum_cons (name, value), results);
@@ -2019,7 +2020,7 @@ gtk_unmap_subwindow (Lisp_Image_Instance *p)
    redisplay_output_subwindow */
 static void
 gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
-		 struct display_glyph_area* dga)
+		   struct display_glyph_area* dga)
 {
   assert (dga->width > 0 && dga->height > 0);
 
@@ -2072,6 +2073,21 @@ gtk_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 			     -dga->xoffset, -dga->yoffset);
 	    }
 	  GTK_WIDGET_FLAGS(FRAME_GTK_TEXT_WIDGET (f)) = old_flags;
+	}
+      else
+	{
+	  if (IMAGE_INSTANCE_GTK_ALREADY_PUT(p))
+	    {
+	      /* Do nothing... */
+	    }
+	  else
+	    {
+	      /* Must make sure we have put the image at least once! */
+	      IMAGE_INSTANCE_GTK_ALREADY_PUT(p) = TRUE;
+	      gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
+			     wid,
+			     -dga->xoffset, -dga->yoffset);
+	    }
 	}
 
       if (!IMAGE_INSTANCE_SUBWINDOW_DISPLAYEDP (p))
@@ -2189,7 +2205,6 @@ gtk_subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* This function can GC */
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
-  Lisp_Object frame = DOMAIN_FRAME (domain);
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
     gui_error ("Not a GTK device", device);
