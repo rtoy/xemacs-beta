@@ -1,3 +1,7 @@
+2001-07-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* specifier.el: define-specifier-tag 'gtk.
+
 2001-07-15  Adrian Aichner  <adrian@xemacs.org>
 
 	* about.el (about-personal-info): Fix word duplication typos.
