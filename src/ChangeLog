@@ -1,5 +1,9 @@
 2004-10-19  Jerry James  <james@xemacs.org>
 
+	* console-stream.c (init_console_stream): Mark another unused param.
+
+2004-10-19  Jerry James  <james@xemacs.org>
+
 	* events.c: Define USED_IF_TTY and USED_IF_TOOLBARS.  Use them to
 	mark more unused parameters.
 	* console.c: Define USED_IF_TTY and use it.

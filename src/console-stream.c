@@ -364,7 +364,7 @@ The initial frame object, which represents XEmacs' stdout.
 
 #ifndef PDUMP
 void
-init_console_stream (int reinit)
+init_console_stream (int UNUSED (reinit))
 {
   /* This function can GC */
   if (!initialized)
