@@ -1,3 +1,9 @@
+2002-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* PROBLEMS: Describe "Hannibal Lecter" crash on Linux.  Reorder
+	Linux runtime issues section.
+	* INSTALL: Improve description of mail locking.
+
 2002-05-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* PROBLEMS (General): Decribe failed AUTH with EFS.

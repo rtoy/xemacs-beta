@@ -1337,23 +1337,24 @@ affected virtually all ioctl() calls.
 
 
 ** Linux
-*** Mandrake
+*** XEmacs crashes on startup, in make-frame.
 
-The Mandrake Linux distribution is attempting to comprehensively
-update the user interface, and make it consistent across
-applications.  This is very difficult, and will occasionally cause
-conflicts with applications like Emacs with their own long-established
-interfaces.  Known issues specific to Mandrake or especially common:
+Typically the Lisp backtrace includes
 
-Some versions of XEmacs (21.1.9 is known) distributed with Mandrake
-were patched to make the Meta and Alt keysyms synonymous.  These
-normally work as expected in the Mandrake environment.  However,
-custom-built XEmacsen (including all 21.2 betas) will "inexplicably"
-not respect the "Alt-invokes-Meta-commands" convention.  See "I want
-XEmacs to use the Alt key" below.
+   make-frame(nil #<x-device on ":0.0" 0x2558>)
 
-The color-gcc wrapper (see below) is in common use on the Mandrake
-platform.
+somewhere near the top.  The problem is due to an improvement in GNU
+ld that sorts the ELF reloc sections in the executable, giving
+dramatic speedups in startup for large executables.  It also confuses
+the traditional unexec code in XEmacs, leading to the core dump.  The
+solution is to use the --pdump or --ldflags='-z nocombreloc' options
+to configure.  Recent 21.4 and 12.5 autodetect this in configure.
+
+Red Hat and SuSE (at least) distributed a prerelease version of ld
+(versions around 2.11.90.x.y) where autodetection is impossible.  The
+recommended procedure is to upgrade to binutils >= 2.12 and rerun
+configure.  Otherwise you must apply the flags by hand.  --pdump is
+recommended.
 
 *** I want XEmacs to use the Alt key, not the XXX key, for Meta commands
 
@@ -1396,30 +1397,6 @@ http://www.geocities.com/kensanata/color-emacs.html#ansicolors
 
 This is written for the mainline GNU Emacs but the author has made
 efforts to adapt it to XEmacs.  YMMV.
-
-*** You get crashes in a non-C locale with Linux GNU Libc 2.0.
-
-Internationalization was not the top priority for GNU Libc 2.0.
-As of this writing (1998-12-28) you may get crashes while running
-XEmacs in a non-C locale.  For example, `LC_ALL=en_US xemacs' crashes
-while `LC_ALL=C xemacs' runs fine.  This happens for example with GNU
-libc 2.0.7.  Installing libintl.a and libintl.h built from gettext
-0.10.35 and re-building XEmacs solves the crashes.  Presumably soon
-everyone will upgrade to GNU Libc 2.1 and this problem will go away.
-
-*** `C-z', or `M-x suspend-emacs' hangs instead of suspending.
-
-If you build with `gpm' support on Linux, you cannot suspend XEmacs
-because gpm installs a buggy SIGTSTP handler.  Either compile with
-`--with-gpm=no', or don't suspend XEmacs on the Linux console until
-this bug is fixed.
-
-*** With certain fonts, when the cursor appears on a character, the
-character doesn't appear--you get a solid box instead.
-
-One user on a Linux system reported that this problem went away with
-installation of a new X server.  The failing server was XFree86 3.1.1.
-XFree86 3.1.2 works.
 
 *** Slow startup on Linux.
 
@@ -1490,6 +1467,48 @@ is appropriate) works in most cases.
 If you cannot or do not want to do that, you can hard code IPv4
 behavior in src/process-unix.c.  This is bad[tm], on your own head be
 it.  Use the configure option `--with-ipv6-cname=no'.
+
+*** Mandrake
+
+The Mandrake Linux distribution is attempting to comprehensively
+update the user interface, and make it consistent across
+applications.  This is very difficult, and will occasionally cause
+conflicts with applications like Emacs with their own long-established
+interfaces.  Known issues specific to Mandrake or especially common:
+
+Some versions of XEmacs (21.1.9 is known) distributed with Mandrake
+were patched to make the Meta and Alt keysyms synonymous.  These
+normally work as expected in the Mandrake environment.  However,
+custom-built XEmacsen (including all 21.2 betas) will "inexplicably"
+not respect the "Alt-invokes-Meta-commands" convention.  See "I want
+XEmacs to use the Alt key" below.
+
+The color-gcc wrapper (see below) is in common use on the Mandrake
+platform.
+
+*** You get crashes in a non-C locale with Linux GNU Libc 2.0.
+
+Internationalization was not the top priority for GNU Libc 2.0.
+As of this writing (1998-12-28) you may get crashes while running
+XEmacs in a non-C locale.  For example, `LC_ALL=en_US xemacs' crashes
+while `LC_ALL=C xemacs' runs fine.  This happens for example with GNU
+libc 2.0.7.  Installing libintl.a and libintl.h built from gettext
+0.10.35 and re-building XEmacs solves the crashes.  Presumably soon
+everyone will upgrade to GNU Libc 2.1 and this problem will go away.
+
+*** `C-z', or `M-x suspend-emacs' hangs instead of suspending.
+
+If you build with `gpm' support on Linux, you cannot suspend XEmacs
+because gpm installs a buggy SIGTSTP handler.  Either compile with
+`--with-gpm=no', or don't suspend XEmacs on the Linux console until
+this bug is fixed.
+
+*** With certain fonts, when the cursor appears on a character, the
+character doesn't appear--you get a solid box instead.
+
+One user on a Linux system reported that this problem went away with
+installation of a new X server.  The failing server was XFree86 3.1.1.
+XFree86 3.1.2 works.
 
 ** IRIX
 *** On Irix, I don't see the toolbar icons and I'm getting lots of
