@@ -4423,8 +4423,28 @@ You should *bind* this, not set it.
 
   DEFVAR_LISP ("key-translation-map", &Vkey_translation_map /*
 Keymap of key translations that can override keymaps.
-This keymap works like `function-key-map', but comes after that,
+
+This keymap works like `function-key-map', but is searched before it,
 and applies even for keys that have ordinary bindings.
+
+The `read-key-sequence' function replaces any subsequence bound by
+`key-translation-map' with its binding.  More precisely, when the active
+keymaps have no binding for the current key sequence but
+`key-translation-map' binds a suffix of the sequence to a vector or string,
+`read-key-sequence' replaces the matching suffix with its binding, and
+continues with the new sequence.  See `key-binding' for details.
+
+The events that come from bindings in `key-translation-map' are not
+themselves looked up in `key-translation-map'.
+
+#### FIXME: stolen from `function-key-map'; need better example.
+#### I guess you could implement a Dvorak keyboard with this?
+For example, suppose `key-translation-map' binds `ESC O P' to [f1].
+Typing `ESC O P' to `read-key-sequence' would return
+\[#<keypress-event f1>].  Typing `C-x ESC O P' would return
+\[#<keypress-event control-X> #<keypress-event f1>].  If [f1]
+were a prefix key, typing `ESC O P x' would return
+\[#<keypress-event f1> #<keypress-event x>].
 */ );
   Vkey_translation_map = Qnil;
 
