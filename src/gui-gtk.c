@@ -34,10 +34,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-gtk-impl.h"
 
-#ifdef HAVE_POPUPS
-Lisp_Object Qmenu_no_selection_hook;
-#endif
-
 static GUI_ID gui_id_ctr = 0;
 
 GUI_ID

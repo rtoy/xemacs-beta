@@ -91,7 +91,6 @@ DECLARE_IMAGE_INSTANTIATOR_FORMAT (gif);
 
 #ifdef HAVE_XFACE
 DEFINE_DEVICE_IIFORMAT (gtk, xface);
-Lisp_Object Qxface;
 #endif
 
 #ifdef HAVE_XPM
@@ -129,7 +128,7 @@ static void cursor_font_instantiate (Lisp_Object image_instance,
 				     int dest_mask,
 				     Lisp_Object domain);
 
-static gint cursor_name_to_index (const char *name);
+static GdkCursorType cursor_name_to_index (const char *name);
 
 #ifndef BitmapSuccess
 #define BitmapSuccess           0
@@ -356,7 +355,7 @@ gtk_print_image_instance (struct Lisp_Image_Instance *p,
 			  (unsigned long) IMAGE_INSTANCE_GTK_MASK (p));
       write_c_string (printcharfun, ")");
       break;
-#if HAVE_SUBWINDOWS
+#ifdef HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
       /* #### implement me */
 #endif
@@ -380,7 +379,7 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
 	{
 	  if (IMAGE_INSTANCE_SUBWINDOW_ID (p))
 	    {
-	      gtk_widget_destroy (IMAGE_INSTANCE_SUBWINDOW_ID (p));
+	      gtk_widget_destroy ((GtkWidget*) IMAGE_INSTANCE_SUBWINDOW_ID (p));
 
 	      /* We can release the callbacks again. */
 	      /* #### FIXME! */
@@ -462,7 +461,7 @@ gtk_image_instance_equal (struct Lisp_Image_Instance *p1,
       if (IMAGE_INSTANCE_GTK_COLORMAP (p1) != IMAGE_INSTANCE_GTK_COLORMAP (p2) ||
 	  IMAGE_INSTANCE_GTK_NPIXELS (p1) != IMAGE_INSTANCE_GTK_NPIXELS (p2))
 	return 0;
-#if HAVE_SUBWINDOWS
+#ifdef HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
       /* #### implement me */
 #endif
@@ -483,7 +482,7 @@ gtk_image_instance_hash (struct Lisp_Image_Instance *p, int depth)
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
       return IMAGE_INSTANCE_GTK_NPIXELS (p);
-#if HAVE_SUBWINDOWS
+#ifdef HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
       /* #### implement me */
       return 0;
@@ -1016,7 +1015,7 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object mask_file = find_keyword_in_vector (instantiator, Q_mask_file);
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   GdkPixmap *mask = 0;
-  const char *gcc_may_you_rot_in_hell;
+  const Extbyte *gcc_may_you_rot_in_hell;
 
   if (!NILP (mask_data))
     {
@@ -1027,7 +1026,6 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 	pixmap_from_xbm_inline (IMAGE_INSTANCE_DEVICE (ii),
 				XINT (XCAR (mask_data)),
 				XINT (XCAR (XCDR (mask_data))),
-				(const unsigned char *)
 				gcc_may_you_rot_in_hell);
     }
 
@@ -1152,7 +1150,7 @@ write_lisp_string_to_temp_file (Lisp_Object string)
 
 struct color_symbol
 {
-  char*		name;
+  Ibyte*	name;
   GdkColor	color;
 };
 
@@ -1210,11 +1208,11 @@ extract_xpm_color_names (Lisp_Object device,
       colortbl[j].color = 
 	* COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (XCDR (cons)));
 
-      colortbl[j].name = (char *) XSTRING_DATA (XCAR (cons));
-      free_cons (XCONS (cons));
+      colortbl[j].name = XSTRING_DATA (XCAR (cons));
+      free_cons (cons);
       cons = results;
       results = XCDR (results);
-      free_cons (XCONS (cons));
+      free_cons (cons);
     }
   return colortbl;
 }
@@ -1241,7 +1239,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 							   Q_color_symbols);
   enum image_instance_type type;
   int force_mono;
-  unsigned int w, h;
+  gint w, h;
   Lisp_Object tempfile = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
@@ -1276,8 +1274,8 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 					   &nsymbols);
   for (i = 0; i < nsymbols; i++)
     {
-      if (!qxestrcasecmp ("BgColor", color_symbols[i].name) ||
-	  !qxestrcasecmp ("None", color_symbols[i].name))
+      if (!qxestrcasecmp_c (color_symbols[i].name, "BgColor") ||
+	  !qxestrcasecmp_c (color_symbols[i].name, "None"))
 	{
 	  transparent_color = &color_symbols[i].color;
 	}
@@ -1482,7 +1480,7 @@ gtk_resource_possible_dest_types (void)
 
 extern guint symbol_to_enum (Lisp_Object, GtkType);
 
-static guint resource_name_to_resource (Lisp_Object name, int type)
+static guint resource_name_to_resource (Lisp_Object name, image_instance_type type)
 {
   if (type == IMAGE_POINTER)
     return (symbol_to_enum (name, GTK_TYPE_GDK_CURSOR_TYPE));
@@ -1490,7 +1488,7 @@ static guint resource_name_to_resource (Lisp_Object name, int type)
     return (0);
 }
 
-static int
+static image_instance_type
 resource_symbol_to_type (Lisp_Object data)
 {
   if (EQ (data, Qcursor))
@@ -1502,7 +1500,7 @@ resource_symbol_to_type (Lisp_Object data)
     return IMAGE_BITMAP;
 #endif
   else
-    return 0;
+    return IMAGE_UNKNOWN;
 }
 
 static void
@@ -1512,7 +1510,7 @@ gtk_resource_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 {
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   GdkCursor *c = NULL;
-  unsigned int type = 0;
+  image_instance_type type;
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Lisp_Object resource_type = find_keyword_in_vector (instantiator, Q_resource_type);
   Lisp_Object resource_id = find_keyword_in_vector (instantiator, Q_resource_id);
@@ -1534,7 +1532,7 @@ gtk_resource_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   
   /* mess with the keyword info we were provided with */
   gtk_initialize_pixmap_image_instance (ii, 1, type);
-  c = gdk_cursor_new (resource_name_to_resource (resource_id, type));
+  c = gdk_cursor_new ((GdkCursorType) resource_name_to_resource (resource_id, type));
   IMAGE_INSTANCE_GTK_CURSOR (ii) = c;
   IMAGE_INSTANCE_PIXMAP_FILENAME (ii) = resource_id;
   IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = 10;
@@ -1855,7 +1853,7 @@ static char *__downcase (const char *name)
 }
 
 /* This is basically the equivalent of XmuCursorNameToIndex */
-static gint
+static GdkCursorType
 cursor_name_to_index (const char *name)
 {
     int i;
@@ -1919,10 +1917,10 @@ cursor_name_to_index (const char *name)
 	if (!the_gdk_cursors[i]) continue;
 	if (!strcmp (the_gdk_cursors[i], name))
 	{
-	    return (i);
+	  return (GdkCursorType) i;
 	}
     }
-    return(-1);
+    return (GdkCursorType) -1;
 }
 
 static void
@@ -1934,7 +1932,7 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
-  int i;
+  GdkCursorType i;
   const char *name_ext;
   Lisp_Object foreground, background;
 
@@ -2107,11 +2105,9 @@ gtk_redisplay_widget (Lisp_Image_Instance *p)
   gtk_widget_show_all (IMAGE_INSTANCE_GTK_CLIPWIDGET (p));
   if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (p))
     {
-      Lisp_Object image_instance = wrap_image_instance (p);
-
-
       /* Need to update GtkArgs that might have changed... */
       /* #### FIXME!!! */
+      /*Lisp_Object image_instance = wrap_image_instance (p); */
     }
   else
     {
@@ -2708,7 +2704,7 @@ complex_vars_of_glyphs_gtk (void)
      vector3 (Qxbm, Q_data,					\
 	      list3 (make_int (name##_width),			\
 		     make_int (name##_height),			\
-		     make_ext_string (name##_bits,		\
+		     make_ext_string ((Extbyte*) name##_bits,	\
 				      sizeof (name##_bits),	\
 				      Qbinary))),		\
      Qglobal, Qgtk, Qnil)
@@ -2757,7 +2753,8 @@ gtk_colorize_image_instance (Lisp_Object image_instance,
 
     gcv.foreground = * COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (foreground));
     gcv.background = * COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (background));
-    gc = gdk_gc_new_with_values (new_pxmp, &gcv, GDK_GC_BACKGROUND | GDK_GC_FOREGROUND);
+    gc = gdk_gc_new_with_values (new_pxmp, &gcv,
+				 (GdkGCValuesMask) (GDK_GC_BACKGROUND | GDK_GC_FOREGROUND));
 
     XCopyPlane (GDK_WINDOW_XDISPLAY (draw),
 		GDK_WINDOW_XWINDOW (IMAGE_INSTANCE_GTK_PIXMAP (p)),

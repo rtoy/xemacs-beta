@@ -120,7 +120,7 @@ static void
 emacs_gtk_marshal_INT__BOOL (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[1]);
   *return_val = (*rfunc) (GTK_VALUE_BOOL (args[0]));
@@ -130,7 +130,7 @@ static void
 emacs_gtk_marshal_INT__OBJECT_ARRAY (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[2]);
   *return_val = (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_ARRAY (args[1]));
@@ -140,7 +140,7 @@ static void
 emacs_gtk_marshal_INT__OBJECT_INT_ARRAY (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[3]);
   *return_val = (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_INT (args[1]), GTK_VALUE_ARRAY (args[2]));
@@ -150,7 +150,7 @@ static void
 emacs_gtk_marshal_INT__OBJECT_INT_INT (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[3]);
   *return_val = (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_INT (args[1]), GTK_VALUE_INT (args[2]));
@@ -160,7 +160,7 @@ static void
 emacs_gtk_marshal_INT__OBJECT_INT_STRING (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[3]);
   *return_val = (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_INT (args[1]), GTK_VALUE_STRING (args[2]));
@@ -170,7 +170,7 @@ static void
 emacs_gtk_marshal_INT__OBJECT_INT (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[2]);
   *return_val = (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_INT (args[1]));
@@ -180,7 +180,7 @@ static void
 emacs_gtk_marshal_INT__OBJECT_OBJECT (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[2]);
   *return_val = (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_OBJECT (args[1]));
@@ -190,7 +190,7 @@ static void
 emacs_gtk_marshal_INT__OBJECT_POINTER_INT_INT (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[4]);
   *return_val = (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_POINTER (args[1]), GTK_VALUE_INT (args[2]), GTK_VALUE_INT (args[3]));
@@ -200,7 +200,7 @@ static void
 emacs_gtk_marshal_INT__OBJECT_POINTER_INT (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[3]);
   *return_val = (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_POINTER (args[1]), GTK_VALUE_INT (args[2]));
@@ -210,7 +210,7 @@ static void
 emacs_gtk_marshal_INT__OBJECT_POINTER (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[2]);
   *return_val = (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_POINTER (args[1]));
@@ -220,7 +220,7 @@ static void
 emacs_gtk_marshal_INT__OBJECT_STRING (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[2]);
   *return_val = (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_STRING (args[1]));
@@ -230,7 +230,7 @@ static void
 emacs_gtk_marshal_INT__OBJECT (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[1]);
   *return_val = (*rfunc) (GTK_VALUE_OBJECT (args[0]));
@@ -240,7 +240,7 @@ static void
 emacs_gtk_marshal_INT__POINTER_INT (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[2]);
   *return_val = (*rfunc) (GTK_VALUE_POINTER (args[0]), GTK_VALUE_INT (args[1]));
@@ -250,7 +250,7 @@ static void
 emacs_gtk_marshal_INT__POINTER_STRING_INT (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[3]);
   *return_val = (*rfunc) (GTK_VALUE_POINTER (args[0]), GTK_VALUE_STRING (args[1]), GTK_VALUE_INT (args[2]));
@@ -260,7 +260,7 @@ static void
 emacs_gtk_marshal_INT__POINTER_STRING_STRING (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[3]);
   *return_val = (*rfunc) (GTK_VALUE_POINTER (args[0]), GTK_VALUE_STRING (args[1]), GTK_VALUE_STRING (args[2]));
@@ -270,7 +270,7 @@ static void
 emacs_gtk_marshal_INT__POINTER_STRING (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[2]);
   *return_val = (*rfunc) (GTK_VALUE_POINTER (args[0]), GTK_VALUE_STRING (args[1]));
@@ -280,7 +280,7 @@ static void
 emacs_gtk_marshal_INT__POINTER (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[1]);
   *return_val = (*rfunc) (GTK_VALUE_POINTER (args[0]));
@@ -290,7 +290,7 @@ static void
 emacs_gtk_marshal_INT__STRING_STRING_INT_ARRAY (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[4]);
   *return_val = (*rfunc) (GTK_VALUE_STRING (args[0]), GTK_VALUE_STRING (args[1]), GTK_VALUE_INT (args[2]), GTK_VALUE_ARRAY (args[3]));
@@ -300,7 +300,7 @@ static void
 emacs_gtk_marshal_INT__STRING (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[1]);
   *return_val = (*rfunc) (GTK_VALUE_STRING (args[0]));
@@ -310,7 +310,7 @@ static void
 emacs_gtk_marshal_INT__NONE (ffi_actual_function func, GtkArg *args)
 {
   __INT_fn rfunc = (__INT_fn) func;
-  guint *return_val;
+  gint *return_val;
 
   return_val = GTK_RETLOC_INT (args[0]);
   *return_val = (*rfunc) ();
@@ -424,7 +424,7 @@ emacs_gtk_marshal_NONE__OBJECT_INT_BOOL (ffi_actual_function func, GtkArg *args)
   __NONE_fn rfunc = (__NONE_fn) func;
   (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_INT (args[1]), GTK_VALUE_BOOL (args[2]));
 }
-typedef void (*__NONE__OBJECT_INT_FLOAT_BOOL_fn)(GtkObject *, guint, gfloat, gboolean);
+typedef void (*__NONE__OBJECT_INT_FLOAT_BOOL_fn)(GtkObject *, gint, gfloat, gboolean);
 
 static void
 emacs_gtk_marshal_NONE__OBJECT_INT_FLOAT_BOOL (ffi_actual_function func, GtkArg *args)
@@ -432,7 +432,7 @@ emacs_gtk_marshal_NONE__OBJECT_INT_FLOAT_BOOL (ffi_actual_function func, GtkArg 
   __NONE__OBJECT_INT_FLOAT_BOOL_fn rfunc = (__NONE__OBJECT_INT_FLOAT_BOOL_fn) func;
   (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_INT (args[1]), GTK_VALUE_FLOAT (args[2]), GTK_VALUE_BOOL (args[3]));
 }
-typedef void (*__NONE__OBJECT_INT_FLOAT_fn)(GtkObject *, guint, gfloat);
+typedef void (*__NONE__OBJECT_INT_FLOAT_fn)(GtkObject *, gint, gfloat);
 
 static void
 emacs_gtk_marshal_NONE__OBJECT_INT_FLOAT (ffi_actual_function func, GtkArg *args)
@@ -454,7 +454,7 @@ emacs_gtk_marshal_NONE__OBJECT_INT_INT_ARRAY (ffi_actual_function func, GtkArg *
   __NONE_fn rfunc = (__NONE_fn) func;
   (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_INT (args[1]), GTK_VALUE_INT (args[2]), GTK_VALUE_ARRAY (args[3]));
 }
-typedef void (*__NONE__OBJECT_INT_INT_FLOAT_FLOAT_fn)(GtkObject *, guint, guint, gfloat, gfloat);
+typedef void (*__NONE__OBJECT_INT_INT_FLOAT_FLOAT_fn)(GtkObject *, gint, gint, gfloat, gfloat);
 
 static void
 emacs_gtk_marshal_NONE__OBJECT_INT_INT_FLOAT_FLOAT (ffi_actual_function func, GtkArg *args)
@@ -574,7 +574,7 @@ emacs_gtk_marshal_NONE__OBJECT_OBJECT_BOOL_BOOL (ffi_actual_function func, GtkAr
   __NONE_fn rfunc = (__NONE_fn) func;
   (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_OBJECT (args[1]), GTK_VALUE_BOOL (args[2]), GTK_VALUE_BOOL (args[3]));
 }
-typedef void (*__NONE__OBJECT_OBJECT_FLOAT_INT_fn)(GtkObject *, GtkObject *, gfloat, guint);
+typedef void (*__NONE__OBJECT_OBJECT_FLOAT_INT_fn)(GtkObject *, GtkObject *, gfloat, gint);
 
 static void
 emacs_gtk_marshal_NONE__OBJECT_OBJECT_FLOAT_INT (ffi_actual_function func, GtkArg *args)
@@ -701,7 +701,7 @@ emacs_gtk_marshal_NONE__OBJECT_POINTER_BOOL (ffi_actual_function func, GtkArg *a
   __NONE_fn rfunc = (__NONE_fn) func;
   (*rfunc) (GTK_VALUE_OBJECT (args[0]), GTK_VALUE_POINTER (args[1]), GTK_VALUE_BOOL (args[2]));
 }
-typedef void (*__NONE__OBJECT_POINTER_INT_FLOAT_FLOAT_fn)(GtkObject *, void *, guint, gfloat, gfloat);
+typedef void (*__NONE__OBJECT_POINTER_INT_FLOAT_FLOAT_fn)(GtkObject *, void *, gint, gfloat, gfloat);
 
 static void
 emacs_gtk_marshal_NONE__OBJECT_POINTER_INT_FLOAT_FLOAT (ffi_actual_function func, GtkArg *args)
@@ -1070,7 +1070,7 @@ emacs_gtk_marshal_OBJECT__INT (ffi_actual_function func, GtkArg *args)
   return_val = GTK_RETLOC_OBJECT (args[1]);
   *return_val = (*rfunc) (GTK_VALUE_INT (args[0]));
 }
-typedef GtkObject * (*__OBJECT__OBJECT_FLOAT_INT_fn)(GtkObject *, gfloat, guint);
+typedef GtkObject * (*__OBJECT__OBJECT_FLOAT_INT_fn)(GtkObject *, gfloat, gint);
 
 static void
 emacs_gtk_marshal_OBJECT__OBJECT_FLOAT_INT (ffi_actual_function func, GtkArg *args)

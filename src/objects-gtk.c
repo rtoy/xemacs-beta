@@ -230,7 +230,7 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
       return 0;
     }
 
-  xf = GDK_FONT_XFONT (gf);
+  xf = (XFontStruct*) GDK_FONT_XFONT (gf);
 
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
@@ -507,7 +507,7 @@ gtk_find_charset_font (Lisp_Object device, Lisp_Object font,
       if (gtk_font_spec_matches_charset (XDEVICE (device), charset,
 					 intname, Qnil, 0, -1, 0))
 	{
-	  result = make_string ((char *) intname, intlen);
+	  result = make_string (intname, intlen);
 	  break;
 	}
     }
@@ -556,12 +556,12 @@ __get_gtk_font_truename (GdkFont *gdk_font, int expandp)
     {
       if (names->data)
 	{
-	  if (valid_font_name_p (dpy, names->data))
+	  if (valid_font_name_p (dpy, (char*) names->data))
 	    {
 	      if (!expandp)
 		{
 		  /* They want the wildcarded version */
-		  font_name = build_string (names->data);
+		  font_name = build_string ((char*) names->data);
 		}
 	      else
 		{
@@ -569,7 +569,7 @@ __get_gtk_font_truename (GdkFont *gdk_font, int expandp)
 		  int nnames = 0;
 		  char **x_font_names = 0;
 
-		  x_font_names = XListFonts (dpy, names->data, 1, &nnames);
+		  x_font_names = XListFonts (dpy, (char*) names->data, 1, &nnames);
 		  if (x_font_names)
 		    {
 		      font_name = build_string (x_font_names[0]);

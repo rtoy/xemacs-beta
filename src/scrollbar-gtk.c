@@ -364,7 +364,7 @@ scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
 {
   /* This function can GC */
   int vertical = (int) user_data;
-  struct frame *f = gtk_object_get_data (GTK_OBJECT (adj), "xemacs::frame");
+  struct frame *f = (struct frame*) gtk_object_get_data (GTK_OBJECT (adj), "xemacs::frame");
   struct scrollbar_instance *instance;
   GUI_ID id = (GUI_ID) gtk_object_get_data (GTK_OBJECT (adj), "xemacs::gui_id");
   Lisp_Object win, frame;

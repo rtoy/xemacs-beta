@@ -344,13 +344,12 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
 {
   GtkWidget *shell = FRAME_GTK_SHELL_WIDGET (f);
   GdkGeometry geometry;
-  GdkWindowHints geometry_mask = 0x00;
 
   if (GTK_IS_WINDOW (shell))
     {
+      GdkWindowHints geometry_mask = GDK_HINT_RESIZE_INC;
       /* Deal with the cell size */
       default_face_height_and_width (wrap_frame (f), &geometry.height_inc, &geometry.width_inc);
-      geometry_mask |= GDK_HINT_RESIZE_INC;
 
       gtk_window_set_geometry_hints (GTK_WINDOW (shell),
 				     FRAME_GTK_TEXT_WIDGET (f), &geometry, geometry_mask);
@@ -599,7 +598,7 @@ gtk_initialize_frame_size (struct frame *f)
 
   if (STRINGP (Vgtk_initial_geometry))
     {
-      if (!gnome_parse_geometry (XSTRING_DATA (Vgtk_initial_geometry), &x,&y,&w,&h))
+      if (!gnome_parse_geometry ((char*) XSTRING_DATA (Vgtk_initial_geometry), &x,&y,&w,&h))
 	{
 	  x = y = 10;
 	  w = 80;
@@ -1084,8 +1083,8 @@ gtk_set_frame_pointer (struct frame *f)
 static Lisp_Object
 gtk_get_frame_parent (struct frame *f)
 {
-    GtkWidget *parentwid = gtk_object_get_data (GTK_OBJECT (FRAME_GTK_SHELL_WIDGET (f)),
-						TRANSIENT_DATA_IDENTIFIER);
+  GtkWidget *parentwid = (GtkWidget*) gtk_object_get_data (GTK_OBJECT (FRAME_GTK_SHELL_WIDGET (f)),
+							   TRANSIENT_DATA_IDENTIFIER);
 
     /* find the frame whose wid is parentwid */
     if (parentwid)
@@ -1137,13 +1136,13 @@ gtk_set_frame_size (struct frame *f, int cols, int rows)
 {
   GtkWidget *shell = FRAME_GTK_SHELL_WIDGET (f);
   GdkGeometry geometry;
-  GdkWindowHints geometry_mask = 0x00;
 
   if (GTK_IS_WINDOW (shell))
     {
+      GdkWindowHints geometry_mask = GDK_HINT_RESIZE_INC;
+
       /* Update the cell size */
       default_face_height_and_width (wrap_frame (f), &geometry.height_inc, &geometry.width_inc);
-      geometry_mask |= GDK_HINT_RESIZE_INC;
 
       gtk_window_set_geometry_hints (GTK_WINDOW (shell),
 				     FRAME_GTK_TEXT_WIDGET (f), &geometry, geometry_mask);

@@ -608,7 +608,7 @@ gtk_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
       mask |= GDK_GC_LINE_WIDTH;
     }
 
-  return gc_cache_lookup (DEVICE_GTK_GC_CACHE (d), &gcv, mask);
+  return gc_cache_lookup (DEVICE_GTK_GC_CACHE (d), &gcv, (GdkGCValuesMask) mask);
 }
 
 /*****************************************************************************
@@ -848,7 +848,7 @@ gtk_output_string (struct window *w, struct display_line *dl,
       /* We draw underlines in the same color as the text. */
       if (cachel->underline)
 	{
-	  unsigned long upos, uthick;
+	  int upos, uthick;
 
 	  /* Cannot get at font properties in Gtk, so we resort to
              guessing */
@@ -874,7 +874,7 @@ gtk_output_string (struct window *w, struct display_line *dl,
 	}
 
       if (cachel->strikethru) {
-	unsigned long ascent,descent,upos, uthick;
+	gint ascent,descent,upos, uthick;
 	GdkFont *gfont = FONT_INSTANCE_GTK_FONT (XFONT_INSTANCE (font));
 
 	/* Cannot get at font properties in Gtk, so we resort to

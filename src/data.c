@@ -1374,11 +1374,11 @@ Floating point numbers always use base 10.
     {
       /* Use the system-provided functions for base 10. */
 #if   SIZEOF_EMACS_INT == SIZEOF_INT
-      return make_int (atoi (p));
+      return make_int (atoi ((char*) p));
 #elif SIZEOF_EMACS_INT == SIZEOF_LONG
-      return make_int (atol (p));
+      return make_int (atol ((char*) p));
 #elif SIZEOF_EMACS_INT == SIZEOF_LONG_LONG
-      return make_int (atoll (p));
+      return make_int (atoll ((char*) p));
 #endif
     }
   else

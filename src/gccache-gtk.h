@@ -30,6 +30,6 @@ Boston, MA 02111-1307, USA.  */
 struct gc_cache;
 struct gc_cache *make_gc_cache (GtkWidget *);
 void free_gc_cache (struct gc_cache *cache);
-GdkGC *gc_cache_lookup (struct gc_cache *, GdkGCValues *, GdkGCValuesMask mask);
+GdkGC *gc_cache_lookup (struct gc_cache *, GdkGCValues *, unsigned long mask);
 
 #endif /* _XGCCACHE_H_ */

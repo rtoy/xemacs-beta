@@ -409,7 +409,6 @@ gtk_own_selection (Lisp_Object selection_name, Lisp_Object selection_value,
 {
   struct device *d = decode_gtk_device (Qnil);
   GtkWidget *selecting_window = GTK_WIDGET (DEVICE_GTK_APP_SHELL (d));
-  Lisp_Object selection_time;
   /* Use the time of the last-read mouse or keyboard event.
      For selection purposes, we use this as a sleazy way of knowing what the
      current time is in server-time.  This assumes that the most recently read

@@ -27,6 +27,9 @@
 /* XEmacs specific GTK types */
 #include "gtk-glue.c"
 
+/* Is the fundamental type of 't' the xemacs defined fundamental type 'type'? */
+#define IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t,type) (((GtkType) GTK_FUNDAMENTAL_TYPE(t)) == (type))
+
 Lisp_Object Qemacs_ffip;
 Lisp_Object Qemacs_gtk_objectp;
 Lisp_Object Qemacs_gtk_boxedp;
@@ -53,9 +56,11 @@ initialize_dll_cache (void)
 {
   if (!dll_cache)
     {
+      static char text[] = "---XEmacs Internal Handle---";
+
       dll_cache = g_hash_table_new (g_str_hash, g_str_equal);
 
-      g_hash_table_insert (dll_cache, "---XEmacs Internal Handle---", dll_open (Qnil));
+      g_hash_table_insert (dll_cache, text, dll_open (Qnil));
     }
 }
 
@@ -85,12 +90,11 @@ This is for loading dependency DLLs into XEmacs.
 
       if (h)
 	{
-	  g_hash_table_insert (dll_cache, g_strdup (XSTRING_DATA (dll)), h);
+	  g_hash_table_insert (dll_cache, qxestrdup (XSTRING_DATA (dll)), h);
 	}
       else
 	{
-	  signal_error (Qfile_error,
-			"dll_open error", build_string (dll_error ()));
+	  signal_error (Qfile_error, "dll_open error", dll_error());
 	}
     }
   return (h ? Qt : Qnil);
@@ -331,17 +335,25 @@ DEFINE_LRECORD_IMPLEMENTATION ("ffi", emacs_ffi,
 			       0, 0, 0, 
 			       ffi_data_description, emacs_ffi_data);
 
-typedef GtkObject * (*__OBJECT_fn) ();
-typedef gint (*__INT_fn) ();
-typedef void (*__NONE_fn) ();
-typedef gchar * (*__STRING_fn) ();
-typedef gboolean (*__BOOL_fn) ();
-typedef gfloat (*__FLOAT_fn) ();
-typedef void * (*__POINTER_fn) ();
-typedef GList * (*__LIST_fn) ();
+#if defined (__cplusplus)
+#define MANY_ARGS ...
+#else
+#define MANY_ARGS
+#endif
+
+typedef void (*pfv)();
+typedef GtkObject * (*__OBJECT_fn) (MANY_ARGS);
+typedef gint (*__INT_fn) (MANY_ARGS);
+typedef void (*__NONE_fn) (MANY_ARGS);
+typedef gchar * (*__STRING_fn) (MANY_ARGS);
+typedef gboolean (*__BOOL_fn) (MANY_ARGS);
+typedef gfloat (*__FLOAT_fn) (MANY_ARGS);
+typedef void * (*__POINTER_fn) (MANY_ARGS);
+typedef GList * (*__LIST_fn) (MANY_ARGS);
 
 /* An auto-generated file of marshalling functions. */
 #include "emacs-marshals.c"
+#undef MANY_ARGS
 
 #define CONVERT_SINGLE_TYPE(var,nam,tp) case GTK_TYPE_##nam: GTK_VALUE_##nam (var) = * (tp *) v; break;
 #define CONVERT_RETVAL(a,freep) 			\
@@ -424,7 +436,7 @@ static gpointer __allocate_object_storage (GtkType t)
       break;
 
     default:
-      if (GTK_FUNDAMENTAL_TYPE (t) == GTK_TYPE_LISTOF)
+      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t, GTK_TYPE_LISTOF))
 	{
 	  s = (sizeof (void *));
 	}
@@ -478,18 +490,18 @@ static Lisp_Object type_to_marshaller_type (GtkType t)
          new fundamental type that is not fixed at compile time.
          *sigh*
 	 */
-      if (GTK_FUNDAMENTAL_TYPE (t) == GTK_TYPE_ARRAY)
+      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t, GTK_TYPE_ARRAY))
 	return (build_string ("ARRAY"));
 
-      if (GTK_FUNDAMENTAL_TYPE (t) == GTK_TYPE_LISTOF)
+      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(t, GTK_TYPE_LISTOF))
 	return (build_string ("LIST"));
       return (Qnil);
     }
 }
 
 struct __dll_mapper_closure {
-  void * (*func) (dll_handle, const char *);
-  const char *obj_name;
+  void * (*func) (dll_handle, const CIbyte *);
+  Ibyte *obj_name;
   void **storage;
 };
 
@@ -500,7 +512,7 @@ static void __dll_mapper (gpointer key, gpointer value, gpointer user_data)
   if (*(closure->storage) == NULL)
     {
       /* Need to see if it is in this one */
-      *(closure->storage) = closure->func ((dll_handle) value, closure->obj_name);
+      *(closure->storage) = closure->func ((dll_handle) value, (CIbyte*) closure->obj_name);
     }
 }
 
@@ -657,7 +669,7 @@ Import a function into the XEmacs namespace.
 
   data->n_args = n_args;
   data->function_name = name;
-  data->function_ptr = name_func;
+  data->function_ptr = (dll_func) name_func;
   data->marshal = marshaller_func;
 
   rval = wrap_emacs_ffi (data);
@@ -756,11 +768,11 @@ Call an external function.
     int i;
     for (i = 0; i < n_args; i++)
       {
-	if (GTK_FUNDAMENTAL_TYPE (the_args[i].type) == GTK_TYPE_ARRAY)
+	if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(the_args[i].type, GTK_TYPE_ARRAY))
 	  {
 	    g_free (GTK_VALUE_POINTER (the_args[i]));
 	  }
-	else if (GTK_FUNDAMENTAL_TYPE (the_args[i].type) == GTK_TYPE_LISTOF)
+	else if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(the_args[i].type, GTK_TYPE_LISTOF))
 	  {
 	    /* g_list_free (GTK_VALUE_POINTER (the_args[i])); */
 	  }
@@ -1237,7 +1249,7 @@ The cdr is a list of all the magic properties it has.
 
   if (STRINGP (type))
     {
-      t = gtk_type_from_name (XSTRING_DATA (type));
+      t = gtk_type_from_name ((gchar*) XSTRING_DATA (type));
       if (t == GTK_TYPE_INVALID)
 	{
 	  invalid_argument ("Not a GTK type", type);
@@ -1518,7 +1530,7 @@ Lisp_Object gtk_type_to_lisp (GtkArg *arg)
       }
 
     default:
-      if (GTK_FUNDAMENTAL_TYPE (arg->type) == GTK_TYPE_LISTOF)
+      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, GTK_TYPE_LISTOF))
 	{
 	  if (!GTK_VALUE_POINTER (*arg))
 	    return (Qnil);
@@ -1779,7 +1791,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
       break;
 
     default:
-      if (GTK_FUNDAMENTAL_TYPE (arg->type) == GTK_TYPE_ARRAY)
+      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, GTK_TYPE_ARRAY))
 	{
 	  if (NILP (obj))
 	    GTK_VALUE_POINTER(*arg) = NULL;
@@ -1788,7 +1800,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
 	      xemacs_list_to_array (obj, arg);
 	    }
 	}
-      else if (GTK_FUNDAMENTAL_TYPE (arg->type) == GTK_TYPE_LISTOF)
+      else if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, GTK_TYPE_LISTOF))
 	{
 	  if (NILP (obj))
 	    GTK_VALUE_POINTER(*arg) = NULL;
@@ -2059,7 +2071,7 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
       break;
 
     default:
-      if (GTK_FUNDAMENTAL_TYPE (arg->type) == GTK_TYPE_ARRAY)
+      if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, GTK_TYPE_ARRAY))
 	{
 	  if (NILP (obj))
 	    *(GTK_RETLOC_POINTER(*arg)) = NULL;
@@ -2068,7 +2080,7 @@ int lisp_to_gtk_ret_type (Lisp_Object obj, GtkArg *arg)
 	      xemacs_list_to_array (obj, arg);
 	    }
 	}
-      else if (GTK_FUNDAMENTAL_TYPE (arg->type) == GTK_TYPE_LISTOF)
+      else if (IS_XEMACS_GTK_FUNDAMENTAL_TYPE(arg->type, GTK_TYPE_LISTOF))
 	{
 	  if (NILP (obj))
 	    *(GTK_RETLOC_POINTER(*arg)) = NULL;

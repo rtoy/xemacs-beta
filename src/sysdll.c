@@ -362,7 +362,7 @@ my_find_image(const char *name)
 static NSSymbol
 search_linked_libs(const struct mach_header * mh, const char *symbol)
 {
-  int n;
+  unsigned long n;
   NSSymbol nssym = 0;
 
   struct load_command *lc =
@@ -407,7 +407,7 @@ dll_function (dll_handle h, const CIbyte *n)
     {
       /* NOTE: This assumes that this function is included in the main program
 	 and not in a shared library. */
-      const struct mach_header* my_mh = image_for_address(&dll_function);
+      const struct mach_header* my_mh = image_for_address((void*) &dll_function);
 
       if (NSIsSymbolNameDefinedInImage(my_mh, n))
 	{

@@ -122,11 +122,11 @@ xemacs_gtklist_to_list (GtkArg *arg)
     {
       if (arg->type == GTK_TYPE_STRING_LIST)
 	{
-	  g_list_foreach (GTK_VALUE_POINTER (*arg), __make_string_mapper, &rval);
+	  g_list_foreach ((GList*) GTK_VALUE_POINTER (*arg), __make_string_mapper, &rval);
 	}
       else if (arg->type == GTK_TYPE_OBJECT_LIST)
 	{
-	  g_list_foreach (GTK_VALUE_POINTER (*arg), __make_gtk_object_mapper, &rval);
+	  g_list_foreach ((GList*) GTK_VALUE_POINTER (*arg), __make_gtk_object_mapper, &rval);
 	}
       else
 	{
@@ -169,7 +169,7 @@ xemacs_list_to_array (Lisp_Object obj, GtkArg *arg)
   
   if (arg->type == GTK_TYPE_STRING_ARRAY)
     {
-      FROB(gchar *, CHECK_STRING, XSTRING_DATA);
+      FROB(gchar *, CHECK_STRING, (gchar*) XSTRING_DATA);
     }
   else if (arg->type == GTK_TYPE_FLOAT_ARRAY)
     {
@@ -249,8 +249,8 @@ gdk_event_to_emacs_event(GdkEvent *ev)
 	      set_event_type (emacs_event, misc_user_event);
 	      SET_EVENT_MISC_USER_BUTTON (emacs_event, ev->button.button);
 	      SET_EVENT_MISC_USER_MODIFIERS (emacs_event, 0);
-	      SET_EVENT_MISC_USER_X (emacs_event, ev->button.x);
-	      SET_EVENT_MISC_USER_Y (emacs_event, ev->button.y);
+	      SET_EVENT_MISC_USER_X (emacs_event, (int) ev->button.x);
+	      SET_EVENT_MISC_USER_Y (emacs_event, (int) ev->button.y);
 	      if (ev->type == GDK_2BUTTON_PRESS)
 		SET_EVENT_MISC_USER_FUNCTION (emacs_event, intern ("double-click"));
 	      else

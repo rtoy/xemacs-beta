@@ -1,5 +1,8 @@
+;;
+;; To regenerate ../src/emacs-marshals.c just load this file.
+;;
 (defconst name-to-return-type
-  '(("INT" . "guint")
+  '(("INT" . "gint")
     ("CALLBACK" . "GtkCallback")
     ("OBJECT" . "GtkObject *")
     ("POINTER" . "void *")
@@ -26,7 +29,7 @@
     (setq name (get-marshaller-name rval args))
 
     (if (member name defined-marshallers)
-	(error "Attempe to define the same marshaller more than once! %s" name))
+	(error "Attempt to define the same marshaller more than once! %s" name))
 
     (set-buffer (get-buffer-create "emacs-marshals.c"))
     (goto-char (point-max))

@@ -79,7 +79,7 @@ Connect a glade handler.
     }
 
   glade_xml_signal_connect_full (GLADE_XML (XGTK_OBJECT (xml)->object),
-				 XSTRING_DATA (handler_name),
+				 (char*) XSTRING_DATA (handler_name),
 				 connector, LISP_TO_VOID (func));
   return (Qt);
 }

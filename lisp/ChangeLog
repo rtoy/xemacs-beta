@@ -1,3 +1,7 @@
+2004-04-20  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
+
+ 	* gtk-marshal.el: Return type for INT is gint, not guint.
+
 2004-02-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* isearch-mode.el (isearch-abort): Preserve successful search target.

@@ -68,7 +68,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct gcv_and_mask {
 	GdkGCValues gcv;
-	GdkGCValuesMask mask;
+	unsigned long mask; /* contains a GdkGCValuesMask bitmask. */
 };
 
 struct gc_cache_cell {
@@ -155,7 +155,7 @@ free_gc_cache (struct gc_cache *cache)
 }
 
 GdkGC *
-gc_cache_lookup (struct gc_cache *cache, GdkGCValues *gcv, GdkGCValuesMask mask)
+gc_cache_lookup (struct gc_cache *cache, GdkGCValues *gcv, unsigned long mask)
 {
   struct gc_cache_cell *cell, *next, *prev;
   struct gcv_and_mask gcvm;
@@ -267,7 +267,7 @@ gc_cache_lookup (struct gc_cache *cache, GdkGCValues *gcv, GdkGCValuesMask mask)
 #endif
 
   /* Now make and return the GC. */
-  cell->gc = gdk_gc_new_with_values (cache->window, gcv, mask);
+  cell->gc = gdk_gc_new_with_values (cache->window, gcv, (GdkGCValuesMask) mask);
 
   /* debug */
   assert (cell->gc == gc_cache_lookup (cache, gcv, mask));

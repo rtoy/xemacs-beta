@@ -1,3 +1,89 @@
+2004-04-20  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
+
+	* console-gtk-impl.h: Include X11.h.
+	* console-gtk-impl.h (struct gtk_device): Use X types for keysym data.
+	* data.c (Fstring_to_number): Cast Ibtye to char* for atoX arg.
+	* device-gtk.c (gtk_init_device): Convert gtkrc filename to extern
+	encoding before use by GTK.
+	* device-gtk.c (Fgtk_grab_pointer): Cast bitmask to expected type.
+	* emacs-marshals.c: INT return type is gint, not guint.
+	* event-gtk.c: Add args to gtk_keysym_to_emacs_keysym() prototype.
+	* event-gtk.c (gtk_event_to_emacs_event): Cast button posn from
+	double to int.
+	* event-gtk.c (gtk_reset_key_mapping): Avoid casts to void* for
+	keysym_map.
+	* frame-gtk.c (gtk_set_initial_frame_size): Avoid '|' of bitfield enum.
+	* frame-gtk.c (gtk_initialize_frame_size): Cast to right type.
+	* frame-gtk.c (gtk_get_frame_parent): Cast to right type.
+	* frame-gtk.c (gtk_set_frame_size): Avoid '|' of bitfield enum.
+	* gccache-gtk.c: mask type is unsigned long, not enum.
+	* gccache-gtk.c (gc_cache_lookup): mask type is unsigned long, not enum.
+	* gccache-gtk.h (gc_cache_lookup): mask type is unsigned long, not enum
+	* glade.c (Fglade_xml_signal_connect): Cast Ibtye to char*.
+	* glyphs-gtk.c: Remove extra definition of Qxface.
+	* glyphs-gtk.c (gtk_print_image_instance):  #ifdef, not #if, HAVE_SUBWINDOWS.
+	* glyphs-gtk.c (gtk_finalize_image_instance): cast to right type.
+	* glyphs-gtk.c (gtk_image_instance_equal): #ifdef, not #if, HAVE_SUBWINDOWS.
+	* glyphs-gtk.c (gtk_image_instance_hash): #ifdef, not #if, HAVE_SUBWINDOWS.
+	* glyphs-gtk.c (xbm_instantiate_1): Use Extbyte*, not char*.
+	* glyphs-gtk.c (struct color_symbol): Use Ibyte, not char*.
+	* glyphs-gtk.c (extract_xpm_color_names): Pass correct data to free_cons().
+	* glyphs-gtk.c (gtk_xpm_instantiate): width, height are gint, not
+	unsigned.  Use proper internal strcasecmp function.
+	* glyphs-gtk.c (resource_name_to_resource): Expect
+	image_instance_type, not int.
+	* glyphs-gtk.c (resource_symbol_to_type): Return
+	image_instance_type, not int.
+	* glyphs-gtk.c (gtk_resource_instantiate): Use
+	image_instance_type, not int.
+	* glyphs-gtk.c (cursor_name_to_index): Return GdkCursorType, not
+	gint.
+	* glyphs-gtk.c (cursor_font_instantiate): Use  GdkCursorType, not
+	gint.
+	* glyphs-gtk.c (gtk_redisplay_widget): Commented out unused var.
+	* glyphs-gtk.c (BUILD_GLYPH_INST): Use ExtByte, not char*
+	* glyphs-gtk.c (gtk_colorize_image_instance): Cast to enum
+	bitfield.
+	* glyphs.h: typedef image_instance_type.
+	* gtk-glue.c (xemacs_gtklist_to_list): Cast first arg of
+	g_list_foreach() to right type.
+	* gtk-glue.c (xemacs_list_to_array): Cast to cghar*.
+	* gtk-glue.c (gdk_event_to_emacs_event): Cast button posn from
+	double to int.
+	* gtk-xemacs.c (gtk_xemacs_new): Cast constructor return to right type.
+	* gtk-xemacs.c (gtk_xemacs_draw): Cast data to right type.
+	* gui-gtk.c: Removed double definition of Qmenu_no_selection_hook.
+	* menubar-gtk.c (gtk_xemacs_menubar_new): Cast constructor return to right type.
+	* menubar-gtk.c (menu_name_to_accelerator): Remove unnecessary
+	cast to unsigned char.
+	* menubar-gtk.c (remove_underscores): Use Ibyte, char char*
+	* menubar-gtk.c (menu_descriptor_to_widget_1): ditto
+	* menubar-gtk.c (menu_can_reuse_widget): ditto
+	* objects-gtk.c (gtk_initialize_font_instance): Cast to right type.
+	* objects-gtk.c (gtk_find_charset_font): Use Ibyte, not char*.
+	* objects-gtk.c (__get_gtk_font_truename): ditto.
+	* redisplay-gtk.c (gtk_get_gc): Cast mask to right type.
+	* redisplay-gtk.c (gtk_output_string):Font attibs are int, not
+	unsigned.
+	* scrollbar-gtk.c (scrollbar_cb): Cast to right type.
+	* select-gtk.c (gtk_own_selection): Removed unused var selection_time.
+	* sysdll.c (search_linked_libs): Count is unsigned.
+	* sysdll.c (dll_function): Cast function pointer to void*.
+	* ui-byhand.c (generic_toolbar_insert_item): Cast Ibyte to char*.
+	* ui-gtk.c: Macro to hide manipulation of fundamental types.
+	* ui-gtk.c (initialize_dll_cache): Type problems with literal
+	strings.
+	* ui-gtk.c (Fdll_load): Use Ibyte form of strdup.
+	* ui-gtk.c (__allocate_object_storage): Cast during fundamental type test.
+	* ui-gtk.c (type_to_marshaller_type): Cast during fundamental type test.
+	* ui-gtk.c (__dll_mapper): Use CIbyte, not char*.
+	* ui-gtk.c (Fgtk_import_function_internal): Cast during fundamental type test.
+	* ui-gtk.c (Fgtk_call_function): Cast during fundamental type test.
+	* ui-gtk.c (Fgtk_describe_type): Cast during fundamental type test.
+	* ui-gtk.c (gtk_type_to_lisp): Cast during fundamental type test.
+	* ui-gtk.c (lisp_to_gtk_type): Cast during fundamental type test.
+	* ui-gtk.c (lisp_to_gtk_ret_type): Cast during fundamental type test.
+
 2004-04-30  Jerry James  <james@xemacs.org>
 
 	* number.c (vars_of_number): Fix comment.  Initialize

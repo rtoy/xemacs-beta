@@ -527,9 +527,9 @@ generic_toolbar_insert_item (Lisp_Object toolbar,
     {
       w = (NILP (prepend_p) ? gtk_toolbar_append_item : gtk_toolbar_prepend_item)
 	(GTK_TOOLBAR (XGTK_OBJECT (toolbar)->object),
-	 XSTRING_DATA (text),
-	 XSTRING_DATA (tooltip_text),
-	 XSTRING_DATA (tooltip_private_text),
+	 (char*) XSTRING_DATA (text),
+	 (char*) XSTRING_DATA (tooltip_text),
+	 (char*) XSTRING_DATA (tooltip_private_text),
 	 GTK_WIDGET (XGTK_OBJECT (icon)->object),
 	 GTK_SIGNAL_FUNC (__generic_toolbar_callback),
 	 LISP_TO_VOID (callback));
@@ -537,9 +537,9 @@ generic_toolbar_insert_item (Lisp_Object toolbar,
   else
     {
       w = gtk_toolbar_insert_item (GTK_TOOLBAR (XGTK_OBJECT (toolbar)->object),
-				   XSTRING_DATA (text),
-				   XSTRING_DATA (tooltip_text),
-				   XSTRING_DATA (tooltip_private_text),
+				   (char*) XSTRING_DATA (text),
+				   (char*) XSTRING_DATA (tooltip_text),
+				   (char*) XSTRING_DATA (tooltip_private_text),
 				   GTK_WIDGET (XGTK_OBJECT (icon)->object),
 				   GTK_SIGNAL_FUNC (__generic_toolbar_callback),
 				   LISP_TO_VOID (callback),

@@ -153,7 +153,7 @@ gtk_xemacs_menubar_size_request	(GtkWidget *widget, GtkRequisition *requisition)
 GtkWidget *
 gtk_xemacs_menubar_new (struct frame *f)
 {
-  GtkXEmacsMenubar *menubar = gtk_type_new (gtk_xemacs_menubar_get_type ());
+  GtkXEmacsMenubar *menubar = (GtkXEmacsMenubar*) gtk_type_new (gtk_xemacs_menubar_get_type ());
 
   menubar->frame = f;
 
@@ -173,7 +173,7 @@ int tear_off_menus;
 
 /* Converting from XEmacs to GTK representation */
 static Lisp_Object
-menu_name_to_accelerator (char *name)
+menu_name_to_accelerator (Ibyte *name)
 {
   while (*name) {
     if (*name=='%') {
@@ -182,7 +182,7 @@ menu_name_to_accelerator (char *name)
 	return Qnil;
       if (*name=='_' && *(name+1))
 	{
-	  int accelerator = (int) (unsigned char) (*(name+1));
+	  int accelerator = (int) (*(name+1));
 	  return make_char (tolower (accelerator));
 	}
     }
@@ -356,9 +356,9 @@ __kill_stupid_gtk_timer (GtkObject *obj, gpointer user_data)
 }
 
 static char *
-remove_underscores(const char *name)
+remove_underscores(const Ibyte* name)
 {
-  char *rval = xmalloc_and_zero (strlen(name) + 1);
+  char *rval = (char*) xmalloc_and_zero (strlen((char*) name) + 1);
   int i,j;
 
   for (i = 0, j = 0; name[i]; i++)
@@ -698,18 +698,18 @@ menu_descriptor_to_widget_1 (Lisp_Object descr)
 
       if (!separator_string_p (XSTRING_DATA (name)))
 	{
-	  char *label_buffer = NULL;
+	  Ibyte *label_buffer = NULL;
 	  char *temp_label = NULL;
 
 	  if (STRINGP (suffix) && XSTRING_LENGTH (suffix))
 	    {
-	      label_buffer = ALLOCA (XSTRING_LENGTH (name) + 15 + XSTRING_LENGTH (suffix));
-	      sprintf (label_buffer, "%s %s ", XSTRING_DATA (name), XSTRING_DATA (suffix));
+	      label_buffer = (Ibyte*) ALLOCA (XSTRING_LENGTH (name) + 15 + XSTRING_LENGTH (suffix));
+	      sprintf ((char*) label_buffer, "%s %s ", XSTRING_DATA (name), XSTRING_DATA (suffix));
 	    }
 	  else
 	    {
-	      label_buffer = ALLOCA (XSTRING_LENGTH (name) + 15);
-	      sprintf (label_buffer, "%s ", XSTRING_DATA (name));
+	      label_buffer = (Ibyte*) ALLOCA (XSTRING_LENGTH (name) + 15);
+	      sprintf ((char*) label_buffer, "%s ", XSTRING_DATA (name));
 	    }
 
 	  temp_label = remove_underscores (label_buffer);
@@ -898,7 +898,7 @@ menu_descriptor_to_widget (Lisp_Object descr)
 }
 
 static gboolean
-menu_can_reuse_widget (GtkWidget *child, const char *label)
+menu_can_reuse_widget (GtkWidget *child, const Ibyte *label)
 {
   /* Everything up at the top level was done using
   ** gtk_menu_item_new_with_label(), but we still double check to make

@@ -236,7 +236,8 @@ gtk_init_device (struct device *d, Lisp_Object props)
 
 	new_rc_files = xnew_array_and_zero (gchar *, num_files + 3);
 
-	new_rc_files[0] = XSTRING_DATA (gtkrc);
+	LISP_STRING_TO_EXTERNAL (gtkrc, new_rc_files[0], Qfile_name);
+
 	for (ctr = 1; default_files[ctr-1]; ctr++)
 	  new_rc_files[ctr] = g_strdup (default_files[ctr-1]);
 
@@ -553,13 +554,13 @@ Returns t if the grab is successful, nil otherwise.
   w = GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (device_selected_frame (d)));
 
   result = gdk_pointer_grab (w, FALSE,
-			     GDK_POINTER_MOTION_MASK |
-			     GDK_POINTER_MOTION_HINT_MASK |
-			     GDK_BUTTON1_MOTION_MASK |
-			     GDK_BUTTON2_MOTION_MASK |
-			     GDK_BUTTON3_MOTION_MASK |
-			     GDK_BUTTON_PRESS_MASK |
-			     GDK_BUTTON_RELEASE_MASK,
+			     (GdkEventMask) (GDK_POINTER_MOTION_MASK |
+					     GDK_POINTER_MOTION_HINT_MASK |
+					     GDK_BUTTON1_MOTION_MASK |
+					     GDK_BUTTON2_MOTION_MASK |
+					     GDK_BUTTON3_MOTION_MASK |
+					     GDK_BUTTON_PRESS_MASK |
+					     GDK_BUTTON_RELEASE_MASK),
 			     w,
 			     NULL, /* #### BILL!!! Need to create a GdkCursor * as necessary! */
 			     GDK_CURRENT_TIME);

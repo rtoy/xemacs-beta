@@ -460,6 +460,7 @@ enum image_instance_type
   IMAGE_SUBWINDOW,
   IMAGE_WIDGET
 };
+typedef enum image_instance_type image_instance_type;
 
 #define IMAGE_NOTHING_MASK (1 << 0)
 #define IMAGE_TEXT_MASK (1 << 1)

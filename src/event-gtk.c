@@ -82,7 +82,7 @@ static int tty_events_occurred;
 extern SELECT_TYPE input_wait_mask, non_fake_input_wait_mask;
 extern SELECT_TYPE process_only_mask, tty_only_mask;
 
-static Lisp_Object gtk_keysym_to_emacs_keysym ();
+static Lisp_Object gtk_keysym_to_emacs_keysym (guint keysym, int simple_p);
 void debug_process_finalization (struct Lisp_Process *p);
 gboolean emacs_gtk_event_handler (GtkWidget *wid /* unused */,
 				  GdkEvent *event,
@@ -1392,8 +1392,8 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 	    SET_EVENT_BUTTON_MODIFIERS (emacs_event, modifiers);
 	    SET_EVENT_TIMESTAMP (emacs_event, button_event->time);
 	    SET_EVENT_BUTTON_BUTTON (emacs_event, button_event->button);
-	    SET_EVENT_BUTTON_X (emacs_event, button_event->x);
-	    SET_EVENT_BUTTON_Y (emacs_event, button_event->y);
+	    SET_EVENT_BUTTON_X (emacs_event, (int) button_event->x);
+	    SET_EVENT_BUTTON_Y (emacs_event, (int) button_event->y);
 	  }
       }
       break;
@@ -1720,22 +1720,20 @@ gtk_reset_key_mapping (struct device *d)
 {
   Display *display = GDK_DISPLAY ();
   struct gtk_device *xd = DEVICE_GTK_DATA (d);
-  XModifierKeymap *map = (XModifierKeymap *) xd->x_keysym_map;
   KeySym *keysym, *keysym_end;
   Lisp_Object hashtable;
   int key_code_count, keysyms_per_code;
 
-  if (map)
-    XFree ((char *) map);
+  if (xd->x_keysym_map)
+    XFree ((char *) xd->x_keysym_map);
   XDisplayKeycodes (display,
 		    &xd->x_keysym_map_min_code,
 		    &xd->x_keysym_map_max_code);
   key_code_count = xd->x_keysym_map_max_code - xd->x_keysym_map_min_code + 1;
-  map = (XModifierKeymap *)
+  xd->x_keysym_map =
     XGetKeyboardMapping (display, xd->x_keysym_map_min_code, key_code_count,
 			 &xd->x_keysym_map_keysyms_per_code);
 
-  xd->x_keysym_map = (void *)map;
   hashtable = xd->x_keysym_map_hashtable;
   if (HASH_TABLEP (hashtable))
     {
@@ -1747,7 +1745,7 @@ gtk_reset_key_mapping (struct device *d)
 	make_lisp_hash_table (128, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
     }
 
-  for (keysym = (KeySym *) map,
+  for (keysym = xd->x_keysym_map,
 	 keysyms_per_code = xd->x_keysym_map_keysyms_per_code,
 	 keysym_end = keysym + (key_code_count * keysyms_per_code);
        keysym < keysym_end;

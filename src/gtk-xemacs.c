@@ -96,7 +96,7 @@ gtk_xemacs_new (struct frame *f)
 {
   GtkXEmacs *xemacs;
 
-  xemacs = gtk_type_new (gtk_xemacs_get_type ());
+  xemacs = (GtkXEmacs*) gtk_type_new (gtk_xemacs_get_type ());
   xemacs->f = f;
 
   return GTK_WIDGET (xemacs);
@@ -321,7 +321,7 @@ gtk_xemacs_draw (GtkWidget *widget, GdkRectangle *area)
 
     while (children)
       {
-	child = children->data;
+	child = (GtkFixedChild*) children->data;
 	children = children->next;
 	/* #### This is what causes the scrollbar flickering!
 	   Evidently the scrollbars pretty much take care of drawing

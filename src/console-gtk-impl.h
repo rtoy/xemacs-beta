@@ -37,6 +37,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-impl.h"
 #include "console-gtk.h"
+#include <X11/Xlib.h>
 
 #define GDK_DRAWABLE(x) (GdkDrawable *) (x)
 #define GET_GTK_WIDGET_WINDOW(x) (GTK_WIDGET (x)->window)
@@ -66,11 +67,11 @@ struct gtk_device
 
   /* The following items are all used exclusively in event-gtk.c. */
   int MetaMask, HyperMask, SuperMask, AltMask, ModeMask;
-  guint lock_interpretation;
+  KeySym lock_interpretation;
 
-  void *x_modifier_keymap; /* Really an (XModifierKeymap *)*/
+  XModifierKeymap *x_modifier_keymap;
 
-  guint *x_keysym_map;
+  KeySym *x_keysym_map;
   int x_keysym_map_min_code;
   int x_keysym_map_max_code;
   int x_keysym_map_keysyms_per_code;
