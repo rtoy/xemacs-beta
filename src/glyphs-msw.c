@@ -2036,7 +2036,7 @@ mswindows_redisplay_widget (Lisp_Image_Instance *p)
       if (CONSP (item))
 	item = XCAR (item);
 
-      if (gui_item_active_p (item, 1))
+      if (gui_item_active_p (item))
 	qxeSetWindowLong (WIDGET_INSTANCE_MSWINDOWS_HANDLE (p),
 			  GWL_STYLE, style & ~WS_DISABLED);
       else
@@ -2227,7 +2227,7 @@ mswindows_widget_instantiate (Lisp_Object image_instance,
 
   CHECK_MSWINDOWS_DEVICE (device);
 
-  if (!gui_item_active_p (gui, 0))
+  if (!gui_item_active_p (gui))
     flags |= WS_DISABLED;
 
   style = pgui->style;
@@ -2372,7 +2372,7 @@ mswindows_button_instantiate (Lisp_Object image_instance,
 
   wnd = WIDGET_INSTANCE_MSWINDOWS_HANDLE (ii);
   /* set the checked state */
-  if (gui_item_selected_p (gui, 0))
+  if (gui_item_selected_p (gui))
     qxeSendMessage (wnd, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
   else
     qxeSendMessage (wnd, BM_SETCHECK, (WPARAM)BST_UNCHECKED, 0);
@@ -2398,7 +2398,7 @@ mswindows_button_redisplay (Lisp_Object image_instance)
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
 
   /* buttons checked or otherwise */
-  if (gui_item_selected_p (IMAGE_INSTANCE_WIDGET_ITEM (ii), 1))
+  if (gui_item_selected_p (IMAGE_INSTANCE_WIDGET_ITEM (ii)))
     qxeSendMessage (WIDGET_INSTANCE_MSWINDOWS_HANDLE (ii),
 		    BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
   else
@@ -2640,7 +2640,7 @@ mswindows_tab_control_instantiate (Lisp_Object image_instance,
     {
       int idx = add_tab_item (image_instance, wnd, XCAR (rest), domain, i);
       assert (idx == i);
-      if (gui_item_selected_p (XCAR (rest), 0))
+      if (gui_item_selected_p (XCAR (rest)))
 	selected = i;
       i++;
     }
@@ -2680,7 +2680,7 @@ mswindows_tab_control_redisplay (Lisp_Object image_instance)
 
 	  LIST_LOOP (rest, XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)))
 	    {
-	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0, 1))
+	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0))
 		{
 		  Lisp_Object old_selected =
 		    gui_item_list_find_selected
@@ -2715,7 +2715,7 @@ mswindows_tab_control_redisplay (Lisp_Object image_instance)
 	    {
 	      add_tab_item (image_instance, wnd, XCAR (rest),
 			    IMAGE_INSTANCE_FRAME (ii), i);
-	      if (gui_item_selected_p (XCAR (rest), 1))
+	      if (gui_item_selected_p (XCAR (rest)))
 		selected_idx = i;
 	      i++;
 	    }

@@ -2698,7 +2698,7 @@ x_tab_control_redisplay (Lisp_Object image_instance)
 
 	  LIST_LOOP (rest, XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)))
 	    {
-	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0, 1))
+	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0))
 		{
 		  /* There may be an encapsulated way of doing this,
 		     but I couldn't find it. */

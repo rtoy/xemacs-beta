@@ -1017,7 +1017,7 @@ tab_control_order_only_changed (Lisp_Object image_instance)
 		     XCDR (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii)))
 	    {
 	      if (gui_item_equal_sans_selected (XCAR (rest),
-						XCAR (pending_rest), 0, 1))
+						XCAR (pending_rest), 0))
 		{
 		  found = 1;
 		  break;

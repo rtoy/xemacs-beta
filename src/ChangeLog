@@ -1,3 +1,34 @@
+2004-02-16  Jerry James  <james@xemacs.org>
+
+	* gui-x.c (wv_set_evalable_slot): Check for eval within redisplay.
+
+2004-02-14  Jerry James  <james@xemacs.org>
+
+	* gui.c (gui_item_value): Remove in_redisplay parameter; check the
+	in_display global variable instead.
+	* gui.c (gui_item_active_p): Ditto.
+	* gui.c (gui_item_selected_p): Ditto.
+	* gui.c (gui_value_equal): Ditto.
+	* gui.c (gui_item_equal_sans_selected): Ditto.
+	* gui.c (gui_item_list_find_selected): Change calls to drop
+	in_redisplay parameter.
+	* gui.c (gui_item_included_p): Ditto.
+	* gui.c (gui_item_equal): Ditto.
+	* gui.h: Change prototypes accordingly.
+	* dialog-msw.c (handle_question_dialog_box): Change calls to drop
+	in_redisplay parameter.
+	* glyphs-gtk.c (gtk_tab_control_redisplay): Ditto.
+	* glyphs-msw.c (mswindows_redisplay_widget): Ditto.
+	* glyphs-msw.c (mswindows_widget_instantiate): Ditto.
+	* glyphs-msw.c (mswindows_button_instantiate): Ditto.
+	* glyphs-msw.c (mswindows_button_redisplay): Ditto.
+	* glyphs-msw.c (mswindows_tab_control_instantiate): Ditto.
+	* glyphs-msw.c (mswindows_tab_control_redisplay): Ditto.
+	* glyphs-widget.c (tab_control_order_only_changed): Ditto.
+	* glyphs-x.c (x_tab_control_redisplay): Ditto.
+	* menubar-msw.c (populate_menu_add_item): Ditto.
+	* menubar.c (Fmenu_find_real_submenu): Ditto.
+
 2004-01-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* Makefile.in.in:  Use XE_CFLAGS, not CFLAGS.

@@ -273,7 +273,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 	  goto done;
 	}
 
-      if (!gui_item_active_p (gui_item, 0))
+      if (!gui_item_active_p (gui_item))
 	item_info.fState = MFS_GRAYED;
       /* Temptation is to put 'else' right here. Although, the
 	 displayed item won't have an arrow indicating that it is a
@@ -328,7 +328,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       if (!STRINGP (pgui_item->name))
 	pgui_item->name = Feval (pgui_item->name);
 
-      if (!gui_item_active_p (gui_item, 0))
+      if (!gui_item_active_p (gui_item))
 	item_info.fState = MFS_GRAYED;
 
       style = (NILP (pgui_item->selected) || NILP (Feval (pgui_item->selected))

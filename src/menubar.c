@@ -202,7 +202,7 @@ See also 'find-menu-item'.
       desc = menu_parse_submenu_keywords (desc, gui_item);
 
       /* Check that this (sub)menu is active */
-      if (!gui_item_active_p (gui_item, 0))
+      if (!gui_item_active_p (gui_item))
 	RETURN_UNGCPRO (Qnil);
 
       /* Apply :filter */

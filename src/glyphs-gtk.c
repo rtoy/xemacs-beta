@@ -2450,7 +2450,7 @@ gtk_tab_control_redisplay (Lisp_Object image_instance)
 
 	  LIST_LOOP (rest, XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)))
 	    {
-	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0, 1))
+	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0))
 		{
 		  Lisp_Object old_selected =gui_item_list_find_selected
 		    (XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)));

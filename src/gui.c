@@ -383,7 +383,7 @@ gui_add_item_keywords_to_plist (Lisp_Object plist, Lisp_Object gui_item)
 }
 
 static int
-gui_item_value (Lisp_Object form, int in_redisplay)
+gui_item_value (Lisp_Object form)
 {
   /* This function can call Lisp. */
 
@@ -395,10 +395,7 @@ gui_item_value (Lisp_Object form, int in_redisplay)
   if (EQ (form, Qt))
     return 1;
 #endif
-  if (in_redisplay)
-    return !NILP (eval_within_redisplay (form));
-  else
-    return !NILP (Feval (form));
+  return !NILP (in_display ? eval_within_redisplay (form) : Feval (form));
 }
 
 /*
@@ -406,9 +403,9 @@ gui_item_value (Lisp_Object form, int in_redisplay)
  * if any
  */
 int
-gui_item_active_p (Lisp_Object gui_item, int in_redisplay)
+gui_item_active_p (Lisp_Object gui_item)
 {
-  return gui_item_value (XGUI_ITEM (gui_item)->active, in_redisplay);
+  return gui_item_value (XGUI_ITEM (gui_item)->active);
 }
 
 /* set menu accelerator key to first underlined character in menu name */
@@ -452,9 +449,9 @@ gui_name_accelerator (Lisp_Object nm)
  * if any
  */
 int
-gui_item_selected_p (Lisp_Object gui_item, int in_redisplay)
+gui_item_selected_p (Lisp_Object gui_item)
 {
-  return gui_item_value (XGUI_ITEM (gui_item)->selected, in_redisplay);
+  return gui_item_value (XGUI_ITEM (gui_item)->selected);
 }
 
 Lisp_Object
@@ -465,7 +462,7 @@ gui_item_list_find_selected (Lisp_Object gui_item_list)
   Lisp_Object rest;
   LIST_LOOP (rest, gui_item_list)
     {
-      if (gui_item_selected_p (XCAR (rest), 1))
+      if (gui_item_selected_p (XCAR (rest)))
 	return XCAR (rest);
     }
   return XCAR (gui_item_list);
@@ -483,7 +480,7 @@ gui_item_included_p (Lisp_Object gui_item, Lisp_Object conflist)
   Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
 
   /* Evaluate :included first. Shortcut to avoid evaluating Qt each time */
-  if (!gui_item_value (pgui_item->included, 0))
+  if (!gui_item_value (pgui_item->included))
     return 0;
 
   /* Do :config if conflist is given */
@@ -632,9 +629,9 @@ gui_item_id_hash (Lisp_Object hashtable, Lisp_Object gitem, int slot)
 }
 
 static int
-gui_value_equal (Lisp_Object a, Lisp_Object b, int depth, int in_redisplay)
+gui_value_equal (Lisp_Object a, Lisp_Object b, int depth)
 {
-  if (in_redisplay)
+  if (in_display)
     return internal_equal_trapping_problems
       (Qredisplay, "Error calling function within redisplay", 0, 0,
        /* say they're not equal in case of error; code calling
@@ -646,18 +643,16 @@ gui_value_equal (Lisp_Object a, Lisp_Object b, int depth, int in_redisplay)
 }
 
 int
-gui_item_equal_sans_selected (Lisp_Object obj1, Lisp_Object obj2, int depth,
-			      int in_redisplay)
+gui_item_equal_sans_selected (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
   Lisp_Gui_Item *p1 = XGUI_ITEM (obj1);
   Lisp_Gui_Item *p2 = XGUI_ITEM (obj2);
 
-  if (!(gui_value_equal (p1->name, p2->name, depth + 1, in_redisplay)
+  if (!(gui_value_equal (p1->name, p2->name, depth + 1)
 	&&
-	gui_value_equal (p1->callback, p2->callback, depth + 1, in_redisplay)
+	gui_value_equal (p1->callback, p2->callback, depth + 1)
 	&&
-	gui_value_equal (p1->callback_ex, p2->callback_ex, depth + 1,
-			 in_redisplay)
+	gui_value_equal (p1->callback_ex, p2->callback_ex, depth + 1)
 	&&
 	EQ (p1->suffix, p2->suffix)
 	&&
@@ -686,7 +681,7 @@ gui_item_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   Lisp_Gui_Item *p1 = XGUI_ITEM (obj1);
   Lisp_Gui_Item *p2 = XGUI_ITEM (obj2);
 
-  if (!(gui_item_equal_sans_selected (obj1, obj2, depth, 0) &&
+  if (!(gui_item_equal_sans_selected (obj1, obj2, depth) &&
 	EQ (p1->selected, p2->selected)))
     return 0;
   return 1;
