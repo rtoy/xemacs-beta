@@ -1,5 +1,10 @@
 2001-08-08  Didier Verna  <didier@xemacs.org>
 
+	* autoload.el (make-autoload): handle the case of
+	`define-derived-mode'.
+
+2001-08-08  Didier Verna  <didier@xemacs.org>
+
 	* autoload.el (update-autoload-files): make defdir a file name,
 	not directory name.
 

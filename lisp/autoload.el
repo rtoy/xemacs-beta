@@ -43,21 +43,25 @@
   "Turn FORM, a defun or defmacro, into an autoload for source file FILE.
 Returns nil if FORM is not a defun, define-skeleton or defmacro."
   (let ((car (car-safe form)))
-    (if (memq car '(defun define-skeleton defmacro))
+    (if (memq car '(defun define-skeleton defmacro define-derived-mode))
 	(let ((macrop (eq car 'defmacro))
 	      name doc)
 	  (setq form (cdr form)
 		name (car form)
 		;; Ignore the arguments.
-		form (cdr (if (eq car 'define-skeleton)
-			      form
-			    (cdr form)))
+		form (cdr (cond ((eq car 'define-skeleton)
+				 form)
+				((eq car 'define-derived-mode)
+				 (cddr form))
+				(t
+				 (cdr form))))
 		doc (car form))
 	  (if (stringp doc)
 	      (setq form (cdr form))
 	    (setq doc nil))
 	  (list 'autoload (list 'quote name) file doc
 		(or (eq car 'define-skeleton)
+		    (eq car 'define-derived-mode)
 		    (eq (car-safe (car form)) 'interactive))
 		(if macrop (list 'quote 'macro) nil)))
       nil)))
