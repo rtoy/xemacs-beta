@@ -1,3 +1,7 @@
+2003-08-28  Jerry James  <james@xemacs.org>
+
+	* configure.in: Link modules with -lstdc++ if g++ is used.
+
 2003-08-28  Steve Youngs  <youngs@xemacs.org>
 
 	* README.packages: Update.

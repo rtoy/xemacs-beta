@@ -3184,6 +3184,16 @@ dnl o same as the regular compiler, (determined previously)
 test -n "$xemacs_compiler" && XEMACS_CC="$xemacs_compiler"
 : ${XEMACS_CC:="$CC"}
 
+dnl If g++ is used, we have to explicitly link modules with -lstdc++ on Cygwin
+dnl to avoid undefined symbol errors.  This will never hurt, so just do it on
+dnl all platforms in case others have the same brain damage.
+if test "$xemacs_compiler" = "g++"; then
+  LIBSTDCPP=-lstdc++
+else
+  LIBSTDCPP=
+fi
+AC_SUBST(LIBSTDCPP)
+
 dnl Autodetect dll support
 dnl This must come before the detection code for anything that is in a module
 if test "$with_modules" != "no"; then
