@@ -183,7 +183,6 @@ The value returned is the value of the last form in BODY."
   `(save-selected-window
      (select-window ,window)
      ,@body))
-
 
 (defun count-windows (&optional minibuf)
    "Return the number of visible windows.
@@ -487,8 +486,7 @@ or if the window is the only window of its frame."
   (or window (setq window (selected-window)))
   (save-excursion
     (set-buffer (window-buffer window))
-    (let ((n 0)
-	  (test-pos
+    (let ((test-pos
 	   (- (point-max)
 	      ;; If buffer ends with a newline, ignore it when counting
 	      ;; height unless point is after it.
@@ -510,18 +508,12 @@ or if the window is the only window of its frame."
 	       ;; The frame must not be minibuffer-only.
 	       (not (eq mini 'only)))
 	  (progn
-	    (save-window-excursion
-	      (goto-char (point-min))
-	      (while (and (window-live-p window)
-			  (pos-visible-in-window-p test-pos window))
-		(shrink-window 1 nil window)
-		(setq n (1+ n))))
-	    (if (> n 0)
-		(shrink-window (min (1- n)
-				    (- (window-height window)
-				       (1+ window-min-height)))
-			       nil
-			       window)))))))
+	    (goto-char (point-min))
+       	    (while (and (pos-visible-in-window-p test-pos window)
+			(> (window-height window) window-min-height))
+	      (shrink-window 1 nil window))
+	    (if (not (pos-visible-in-window-p test-pos window))
+		(enlarge-window 1 nil window)))))))
 
 (defun kill-buffer-and-window ()
   "Kill the current buffer and delete the selected window."
