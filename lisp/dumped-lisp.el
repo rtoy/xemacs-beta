@@ -86,7 +86,7 @@
 				; auto-gc-threshold
 	"itimer-autosave"
 	"printer"
-	"debug"
+	"diagnose"
 
 	;;;;;;;;;;;;;;;;;; GUI support
 	(when-feature window-system "gui")

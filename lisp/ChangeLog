@@ -1,3 +1,9 @@
+2002-03-20  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list): debug.el -> diagnose.el.
+	* diagnose.el: Renamed from debug.el because of existing debug.el
+	in xemacs-base.
+
 2002-03-18  Ben Wing  <ben@xemacs.org>
 
 	* dumped-lisp.el (preloaded-file-list): Add debug.el.
