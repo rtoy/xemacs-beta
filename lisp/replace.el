@@ -212,53 +212,220 @@ which will run faster and will not set the mark or print anything."
   (perform-replace regexp to-string nil t delimited))
 
 
+
+;; gse wonders: Is there a better place for this to go?  Might other packages
+;; want to use it?
 (defvar regexp-history nil
   "History list for some commands that read regular expressions.")
 
-(define-function 'keep-lines 'delete-non-matching-lines)
-(defun delete-non-matching-lines (regexp)
-  "Delete all lines except those containing matches for REGEXP.
+(defun operate-on-non-matching-lines (regexp delete kill &optional beg end)
+  "Internal function used by delete-non-matching-lines,
+kill-non-matching-lines, and copy-matching-lines.
+
+REGEXP is a regular expression to *not* match when performing
+operations.
+
+If DELETE is non-nil, the lines of text are deleted.  It doesn't make
+sense to set this to nil if KILL is nil -- nothing will happen.
+
+If KILL is non-nil, the lines of text are stored in the kill ring (as
+one block of text).
+
+BEG and END, if non-nil, specify the start and end locations to work
+within.  If these are nil, point and point-max are used.
+
 A match split across lines preserves all the lines it lies in.
-Applies to all lines after point."
-  (interactive (list (read-from-minibuffer
-		      "Keep lines (containing match for regexp): "
-		      nil nil nil 'regexp-history)))
-  (with-interactive-search-caps-disable-folding regexp t
+Applies to all lines after point.
+
+Returns the number of lines matched."
+  (with-search-caps-disable-folding regexp t
     (save-excursion
+      ;; Move to a beginning point if specified.
+      (when beg (goto-char beg))
+      ;; Always start on the beginning of a line.
       (or (bolp) (forward-line 1))
-      (let ((start (point)))
-	(while (not (eobp))
-	  ;; Start is first char not preserved by previous match.
-	  (if (not (re-search-forward regexp nil 'move))
-	      (delete-region start (point-max))
-	    (let ((end (save-excursion (goto-char (match-beginning 0))
+
+      (let ((matched-text nil)
+            (curmatch-start (point))
+            (limit (copy-marker (point-max))))
+        ;; Limit search if limits were specified.
+        (when end (setq limit (copy-marker end)))
+
+        ;; Search.  Stop if we are at end of buffer or outside the
+        ;; limit.
+	(while (not (or
+                     (eobp)
+                     (and limit (>= (point) limit))))
+	  ;; curmatch-start is first char not preserved by previous match.
+	  (if (not (re-search-forward regexp limit 'move))
+              (let ((curmatch-end limit))
+                (setq matched-text (concat matched-text (buffer-substring curmatch-start curmatch-end)))
+                (if delete (delete-region curmatch-start curmatch-end)))
+	    (let ((curmatch-end (save-excursion (goto-char (match-beginning 0))
 				       (beginning-of-line)
 				       (point))))
-	      ;; Now end is first char preserved by the new match.
-	      (if (< start end)
-		  (delete-region start end))))
-	  (setq start (save-excursion (forward-line 1)
+	      ;; Now curmatch-end is first char preserved by the new match.
+	      (if (< curmatch-start curmatch-end)
+                  (progn
+                    (setq matched-text (concat matched-text (buffer-substring curmatch-start curmatch-end)))
+                    (if delete (delete-region curmatch-start curmatch-end))))))
+	  (setq curmatch-start (save-excursion (forward-line 1)
 				      (point)))
 	  ;; If the match was empty, avoid matching again at same place.
 	  (and (not (eobp)) (= (match-beginning 0) (match-end 0))
-	       (forward-char 1)))))))
+	       (forward-char 1)))
+
+        ;; If any lines were matched and KILL is non-nil, insert the
+        ;; matched lines into the kill ring.
+        (if (and matched-text kill) (kill-new matched-text))
+
+        ;; Return the number of matched lines.
+        (with-temp-buffer
+          ;; Use concat to make a string even if matched-text is nil.
+          (insert (concat matched-text))
+          (count-lines (point-min) (point-max)))
+        ))))
+
+(define-function 'keep-lines 'delete-non-matching-lines)
+(defun delete-non-matching-lines (regexp)
+  "Delete lines that do not match REGEXP, from point to the end of the
+buffer (or within the region, if it is active)."
+  (interactive (list (read-from-minibuffer
+		      "Keep lines (containing match for regexp): "
+		      nil nil nil 'regexp-history)))
+  (let ((beg nil)
+        (end nil)
+        (count nil))
+    (when (region-active-p)
+      (setq beg (region-beginning))
+      (setq end (region-end)))
+    (setq count (operate-on-non-matching-lines regexp t nil beg end))
+    (message "%i lines deleted" count)))
+
+(defun kill-non-matching-lines (regexp)
+  "Delete the lines that do not match REGEXP, from point to the end of
+the buffer (or within the region, if it is active).  The deleted lines
+are placed in the kill ring as one block of text."
+  (interactive (list (read-from-minibuffer
+		      "Kill non-matching lines (regexp): "
+		      nil nil nil 'regexp-history)))
+  (let ((beg nil)
+        (end nil)
+        (count nil))
+    (when (region-active-p)
+      (setq beg (region-beginning))
+      (setq end (region-end)))
+    (setq count (operate-on-non-matching-lines regexp t t beg end))
+    (message "%i lines killed" count)))
+
+(defun copy-non-matching-lines (regexp)
+  "Find all lines that do not match REGEXP from point to the end of the
+buffer (or within the region, if it is active), and place them in the
+kill ring as one block of text."
+  (interactive (list (read-from-minibuffer
+		      "Copy non-matching lines (regexp): "
+		      nil nil nil 'regexp-history)))
+  (let ((beg nil)
+        (end nil)
+        (count nil))
+    (when (region-active-p)
+      (setq beg (region-beginning))
+      (setq end (region-end)))
+    (setq count (operate-on-non-matching-lines regexp nil t beg end))
+    (message "%i lines copied" count)))
+
+(defun operate-on-matching-lines (regexp delete kill &optional beg end)
+  "Internal function used by delete-matching-lines, kill-matching-lines,
+and copy-matching-lines.
+
+If DELETE is non-nil, the lines of text are deleted.  It doesn't make
+sense to set this to nil if KILL is nil -- nothing will happen.
+
+If KILL is non-nil, the lines of text are stored in the kill ring (as
+one block of text).
+
+BEG and END, if non-nil, specify the start and end locations to work
+within.  If these are nil, point and point-max are used.
+
+If a match is split across lines, all the lines it lies in are deleted.
+Applies to lines after point.
+Returns the number of lines matched."
+  (with-search-caps-disable-folding regexp t
+    (save-excursion
+      (let ((matched-text nil)
+            (curmatch-start nil)
+            (curmatch-end nil)
+            (limit nil))
+
+        ;; Limit search if limits were specified.
+        (when beg (goto-char beg))
+        (when end (setq limit (copy-marker end)))
+
+        (while (and (not (eobp))
+                    (re-search-forward regexp limit t))
+          (setq curmatch-start (save-excursion (goto-char (match-beginning 0))
+                                               (beginning-of-line)
+                                               (point)))
+          (setq curmatch-end (progn (forward-line 1) (point)))
+          (setq matched-text (concat matched-text (buffer-substring curmatch-start curmatch-end)))
+          (if delete (delete-region curmatch-start curmatch-end)))
+
+        (if (and matched-text kill) (kill-new matched-text))
+
+        ;; Return the number of matched lines.
+        (with-temp-buffer
+          ;; Use concat to make a string even if matched-text is nil.
+          (insert (concat matched-text))
+          (count-lines (point-min) (point-max)))
+        ))))
 
 (define-function 'flush-lines 'delete-matching-lines)
 (defun delete-matching-lines (regexp)
-  "Delete lines containing matches for REGEXP.
-If a match is split across lines, all the lines it lies in are deleted.
-Applies to lines after point."
+  "Delete the lines that match REGEXP, from point to the end of the
+buffer (or within the region, if it is active)."
   (interactive (list (read-from-minibuffer
 		      "Flush lines (containing match for regexp): "
 		      nil nil nil 'regexp-history)))
-  (with-interactive-search-caps-disable-folding regexp t
-    (save-excursion
-      (while (and (not (eobp))
-		  (re-search-forward regexp nil t))
-	(delete-region (save-excursion (goto-char (match-beginning 0))
-				       (beginning-of-line)
-				       (point))
-		       (progn (forward-line 1) (point)))))))
+  (let ((beg nil)
+        (end nil)
+        (count nil))
+    (when (region-active-p)
+      (setq beg (region-beginning))
+      (setq end (region-end)))
+    (setq count (operate-on-matching-lines regexp t nil beg end))
+    (message "%i lines deleted" count)))
+
+(defun kill-matching-lines (regexp)
+  "Delete the lines that match REGEXP, from point to the end of the
+buffer (or within the region, if it is active).  The deleted lines are
+placed in the kill ring as one block of text."
+  (interactive (list (read-from-minibuffer
+		      "Kill lines (containing match for regexp): "
+		      nil nil nil 'regexp-history)))
+  (let ((beg nil)
+        (end nil)
+        (count nil))
+    (when (region-active-p)
+      (setq beg (region-beginning))
+      (setq end (region-end)))
+    (setq count (operate-on-matching-lines regexp t t beg end))
+    (message "%i lines killed" count)))
+
+(defun copy-matching-lines (regexp)
+  "Find all lines that match REGEXP from point to the end of the
+buffer (or within the region, if it is active), and place them in the
+kill ring as one block of text."
+  (interactive (list (read-from-minibuffer
+		      "Copy lines (containing match for regexp): "
+		      nil nil nil 'regexp-history)))
+  (let ((beg nil)
+        (end nil)
+        (count nil))
+    (when (region-active-p)
+      (setq beg (region-beginning))
+      (setq end (region-end)))
+    (setq count (operate-on-matching-lines regexp nil t beg end))
+    (message "%i lines copied" count)))
 
 (define-function 'how-many 'count-matches)
 (defun count-matches (regexp)

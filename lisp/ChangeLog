@@ -1,3 +1,17 @@
+2002-10-25  Scott Evans  <gse@antisleep.com>
+
+	* replace.el (operate-on-non-matching-lines)
+	(operate-on-non-matching-lines): Generalized from
+	delete-non-matching-lines and delete-matching-lines.  The
+	"operate" versions work with regions, can copy to the kill ring,
+	and return the number of lines copied/deleted.
+	(delete-non-matching-lines): Use operate-on-non-matching-lines.
+	(delete-matching-lines): Use operate-on-matching-lines.
+	(kill-non-matching-lines): New.
+	(copy-non-matching-lines): New.
+	(kill-matching-lines): New.
+	(copy-matching-lines): New.
+
 2002-10-24  Andy Piper  <andy@xemacs.org>
 
 	* dialog.el (make-dialog-box): for general dialogs only
