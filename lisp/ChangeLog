@@ -1,3 +1,28 @@
+2001-04-23  Didier Verna  <didier@xemacs.org>
+
+	* cus-edit.el (custom-variable-pre-save): New.
+	* cus-edit.el (custom-variable-post-save): New.
+	* cus-edit.el (custom-variable-save): use them.
+	* cus-edit.el (custom-face-pre-save): New.
+	* cus-edit.el (custom-face-post-save): New.
+	* cus-edit.el (custom-face-save): use them.
+	* cus-edit.el (custom-group-pre-save): New.
+	* cus-edit.el (custom-group-post-save): New.
+	* cus-edit.el (custom-group-save): use them.
+	* cus-edit.el (Custom-save): use the pre/post functions above,
+	call `custom-save-all' only once.
+	* cus-edit.el (custom-variable-pre-reset-standard): New.
+	* cus-edit.el (custom-variable-post-reset-standard): New.
+	* cus-edit.el (custom-variable-reset-standard): use them.
+	* cus-edit.el (custom-face-pre-reset-standard): New.
+	* cus-edit.el (custom-face-post-reset-standard): New.
+	* cus-edit.el (custom-face-reset-standard): use them.
+	* cus-edit.el (custom-group-pre-reset-standard): New.
+	* cus-edit.el (custom-group-post-reset-standard): New.
+	* cus-edit.el (Custom-reset-standard): use them.
+	* cus-edit.el (custom-face-reset-saved): use the pre/post
+	functions above, call `custom-save-all' only once.
+
 2001-04-15  Ben Wing  <ben@xemacs.org>
 
 	* about.el:
@@ -23,11 +48,11 @@
 	link handling, separate info on contributors into personal
 	and contribution info, add new contributors, update personal
 	info, etc. etc.
-	
+
 	* menubar-items.el (default-menubar):
 	Help menubar entry for News now says more accurately
 	"What's New in XEmacs".
-	
+
 	* mouse.el:
 	* mouse.el (mouse-track-cleanup-hook):
 	* mouse.el (mouse-track):
