@@ -27,7 +27,7 @@
 
 ## Note: This will be appended to the individual module Makefiles by configure.
 
-SRC_SRCS=$(SRCS:%=$(srcdir)/%)
+SRC_SRCS:=$(SRCS:%=$(srcdir)/%)
 OBJS=$(SRCS:.c=.o)
 
 SHELL=/bin/sh
@@ -47,7 +47,7 @@ with_modules=@with_modules@
 srcdir=@srcdir@
 VPATH=@srcdir@
 
-CC=@MOD_CC@
+MODCC=@MOD_CC@
 MODARCHDIR=@MODARCHDIR@
 MAKE_DOCFILE=@MAKE_DOCFILE@
 MODCFLAGS=@MODCFLAGS@
@@ -59,13 +59,13 @@ OBJECT_TO_BUILD=@OBJECT_TO_BUILD@
 all: $(OBJECT_TO_BUILD)
 
 .c.o:
-	$(CC) $(MODCFLAGS) -c $<
+	$(MODCC) $(MODCFLAGS) -c $<
 
 $(MODNAME).ell: $(OBJS) $(MODNAME)_i.o
-	$(CC) --mode=link --mode=verbose --mod-output=$@ $^ $(LDFLAGS)
+	$(MODCC) --mode=link --mode=verbose --mod-output=$@ $^ $(LDFLAGS)
 
 $(MODNAME)_i.c: $(SRCS)
-	ELLMAKEDOC=$(MAKE_DOCFILE) $(CC) --mode=init --mod-output=$@ \
+	ELLMAKEDOC=$(MAKE_DOCFILE) $(MODCC) --mode=init --mod-output=$@ \
 	--mod-name=$(MODNAME) --mod-version=$(MODVER) \
 	--mod-title=$(MODTITLE) $(SRC_SRCS)
 

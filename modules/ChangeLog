@@ -1,3 +1,9 @@
+2003-01-30  Robert Pluim  <rpluim@bigfoot.com>
+
+	* Makefile.common: FreeBSD make compatability fixes: expand
+	SRC_SRCS immediately, use MODCC rather than CC to prevent
+	overriding by top-level makefile.
+
 2003-01-15  Jerry James  <james@eecs.ku.edu>
 
 	* ldap/eldap.c: Apply Ben's postgresql change to LDAP also.
