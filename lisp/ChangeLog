@@ -1,3 +1,8 @@
+2002-09-22  Ville Skyttä  <ville.skytta@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Bring sites list
+	up to date, prefer xx.xemacs.org addresses.
+
 2002-09-12  John Paul Wallington  <jpw@shootybangbang.com>
 
 	* hyper-apropos.el (hyper-apropos-popup-menu): Add "Find Variable"
