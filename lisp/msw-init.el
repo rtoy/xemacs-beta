@@ -46,7 +46,6 @@
     ;; Old-style mswindows bindings. The new-style mswindows bindings
     ;; (namely Ctrl-X, Ctrl-C and Ctrl-V) are already spoken for by XEmacs.
     (global-set-key '(shift delete)   'kill-primary-selection)
-    (global-set-key '(control delete) 'delete-primary-selection)
     (global-set-key '(shift insert)   'yank-clipboard-selection)
     (global-set-key '(control insert) 'copy-primary-selection)
 

@@ -614,10 +614,12 @@ Keymap for characters following C-c.")
 
 ;; the infamous delete key
 (define-key global-map 'delete	        'backward-or-forward-delete-char)
+(define-key global-map '(control delete) 'backward-or-forward-kill-word)
 (define-key global-map '(meta delete)	'backward-or-forward-kill-word)
 (define-key global-map [(control x) (delete)]
 				        'backward-or-forward-kill-sentence)
 (define-key global-map 'kp-delete	'backward-or-forward-delete-char)
+(define-key global-map '(control kp-delete) 'backward-or-forward-kill-word)
 (define-key global-map '(meta kp-delete) 'backward-or-forward-kill-word)
 (define-key global-map [(control x) (kp-delete)]
 					'backward-or-forward-kill-sentence)

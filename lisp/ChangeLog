@@ -1,3 +1,11 @@
+2002-05-09  Ben Wing  <ben@xemacs.org>
+
+	* keydefs.el (global-map): New.
+	* msw-init.el (init-post-mswindows-win):
+	ctrl-delete is like M-d, in keeping with PC standards.  it still
+	will function at its original (delete-selection), when there's a
+	selection, with the new associated pending-del patch.
+
 2002-04-14  Golubev I. N.  <gin@mo.msk.ru>
 
 	* info.el (Info-find-index-alternatives): fix missing \ in \t.
