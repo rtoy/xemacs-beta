@@ -1,3 +1,12 @@
+2003-08-12  Mike Sperber  <mike@xemacs.org>
+
+	* bytecode.c (GCPRO_STACK): Added.
+	(execute_optimized_program): Use GCPRO_STACK, fixing a space leak:
+	Formerly, the byte-code engine would always hold on to the entire
+	stack memory area, including the stuff above the top.  Now, we
+	adjust the GCPRO record via GCPRO_STACK just before a GC may
+	occur.
+
 2003-07-31  René Kyllingstad  <listmailxemacs@kyllingstad.com>
 
 	* event-msw.c (mswindows_enqueue_mouse_button_event):
