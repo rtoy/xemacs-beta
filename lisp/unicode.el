@@ -101,6 +101,7 @@ Setting this at run-time does nothing.")
 	    ;; "8859-13.TXT"
 	    ("8859-14.TXT" latin-iso8859-14 #xA0 #xFF #x-80)
 	    ("8859-15.TXT" latin-iso8859-15 #xA0 #xFF #x-80)
+	    ("8859-16.TXT" latin-iso8859-16 #xA0 #xFF #x-80)
 	    ("8859-2.TXT" latin-iso8859-2 #xA0 #xFF #x-80)
 	    ("8859-3.TXT" latin-iso8859-3 #xA0 #xFF #x-80)
 	    ("8859-4.TXT" latin-iso8859-4 #xA0 #xFF #x-80)

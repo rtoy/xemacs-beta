@@ -1,5 +1,17 @@
 2005-02-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/european.el: Create the 8859-16 character set and coding system.
+	* mule/european.el (latin-iso8859-16): Make the character set available.
+
+2005-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (load-unicode-tables):
+	  Initialise mapping tables for ISO
+	8859-16--cf. s3tk6pieyuk.fsf@magellan.suse.de , DOUBLE LOW-9
+	QUOTATION MARK is very much used for German and in Central Europe.
+
+2005-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* unicode.el: 
 	Add coding system aliases for utf-16-be and utf-16-le, for 
 	improved compatibility with Mule-UCS and the FSF.  

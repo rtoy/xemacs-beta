@@ -27,7 +27,7 @@
 
 ;;; Commentary:
 
-;; For Europeans, six coded character sets ISO8859-1,2,3,4,9 are supported.
+;; For Europeans, seven coded character sets ISO8859-1,2,3,4,9,10 are supported.
 ;; Note: ISO 8859/15 (Latin-9) is supported via the latin-unity package.
 
 ;; #### latin.el would be a better name for this file.
@@ -130,6 +130,27 @@
 		short-name "RHP of Latin-8"
 		long-name "RHP of Latin-8 (ISO 8859-14)"
 		))
+
+(make-charset 'latin-iso8859-16
+	      "Right-Hand Part of Latin Alphabet 10 (ISO/IEC 8859-16)"
+	      '(dimension
+		1
+		registry "ISO8859-16"
+		chars 96
+		columns 1
+		direction l2r
+		final ?f			; octet 06/06; cf ISO-IR 226
+		graphic 1
+		short-name "RHP of Latin-10"
+		long-name "RHP of Latin-10 (ISO 8859-16)"
+		))
+
+(loop for c from 64 to 127
+  do (modify-syntax-entry (make-char 'latin-iso8859-16 c) "w"))
+(mapc (lambda (c)
+	(modify-syntax-entry (make-char 'latin-iso8859-16 c) "w"))
+      '(#xA1 #xA2 #xA3 #xA6 #xA8 #xAA #xAC #xAE #xAF
+	#xB3 #xB4 #xB5 #xB8 #xB9 #xBA #xBC #xBD #xBE #xBF))
 
 
 ;; For syntax of Latin-1 characters.
@@ -350,6 +371,15 @@
    charset-g3 t
    mnemonic "MIME/Ltn-5"
    ))
+
+;; Add a coding system for ISO 8859-16.
+(make-coding-system
+ 'iso-8859-16 'iso2022 "MIME ISO-8859-16"
+ '(charset-g0 ascii
+   charset-g1 latin-iso8859-16
+   charset-g2 t			; grrr
+   charset-g3 t			; grrr
+   mnemonic "MIME/Ltn-10"))
 
 (loop for ((charset codesys default-input nice-charset-1 nice-charset-2
 		    supported-langs ;; a list if the doc string is replaced
