@@ -46,6 +46,10 @@
 
 ;;;  Defuns:
 
+(defun sup-window-edges (&optional win)
+  (error "not implemented")
+  (window-pixel-edges win))
+
 (defun sup-mouse-report ()
   "This function is called directly by the mouse, it parses and
 executes the mouse commands.
@@ -71,7 +75,7 @@ on modeline		    on \"scroll bar\"	in minibuffer
        (x (sup-get-tty-num ?\;))
        (y (sup-get-tty-num ?c))
        (window (sup-pos-to-window x y))
-       (edges (window-edges window))
+       (edges (sup-window-edges window))
        (old-window (selected-window))
        (in-minibuf-p (eq y (1- (frame-height))))
        (same-window-p (and (not in-minibuf-p) (eq window old-window)))
@@ -190,7 +194,7 @@ X and Y are 0-based character positions in the window."
 (defun sup-pos-to-window (x y)
   "Find window corresponding to frame coordinates.
 X and Y are 0-based character positions on the frame."
-  (let ((edges (window-edges))
+  (let ((edges (sup-window-edges))
 	(window nil))
     (while (and (not (eq window (selected-window)))
 		(or (<  y (nth 1 edges))
@@ -198,7 +202,7 @@ X and Y are 0-based character positions on the frame."
 		    (<  x (nth 0 edges))
 		    (>= x (nth 2 edges))))
       (setq window (next-window window))
-      (setq edges (window-edges window))
+      (setq edges (sup-window-edges window))
       )
     (or window (selected-window))
     )

@@ -3,7 +3,7 @@
 ;; Copyright (C) 1985, 1986, 1992, 1994-5, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995 Sun Microsystems.
-;; Copyright (C) 2000, 2001 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: extensions, dumped
@@ -516,9 +516,10 @@ simply returns the length of the string."
       (let ((col 0)
 	    (len (length string))
 	    (i 0))
-	(while (< i len)
-	  (setq col (+ col (charset-width (char-charset (aref string i)))))
-	  (setq i (1+ i)))
+	(with-fboundp '(charset-width char-charset)
+	  (while (< i len)
+	    (setq col (+ col (charset-width (char-charset (aref string i)))))
+	    (setq i (1+ i))))
 	col)
     (length string)))
 

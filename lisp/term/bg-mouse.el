@@ -25,6 +25,9 @@
 
 ;;; Code:
 
+;;; #### utterly broken.  I've put in hacks so we don't get byte-comp
+;;; warnings, but this shit should go NOW. --ben
+
 ;;;  Original version by John Robinson (jr@bbn-unix.arpa, bbncca!jr), Oct 1985
 ;;;  Modularized and enhanced by gildea@bbn.com Nov 1987
 ;;;  Time stamp <89/03/21 14:27:08 gildea>
@@ -49,6 +52,13 @@
 
 ;;;  Defuns:
 
+;; #### bunch of crap.
+(globally-declare-boundp 'mouse-map)
+
+(defun bg-window-edges (&optional win)
+  (error "not implemented")
+  (window-pixel-edges win))
+
 (defun bg-mouse-report (prefix-arg)
   "Read, parse, and execute a BBN BitGraph mouse click.
 
@@ -66,6 +76,7 @@ L-- scroll-up		    line to top		execute-extended-command
 
 To reinitialize the mouse if the terminal is reset, type ESC : RET"
   (interactive "P")
+  (declare (special bg-mouse-x bg-mouse-y bg-cursor-window))
   (bg-get-tty-num semicolon)
   (let*
       ((screen-mouse-x (min (1- (frame-width))	;don't hit column 86!
@@ -75,8 +86,8 @@ To reinitialize the mouse if the terminal is reset, type ESC : RET"
        (bg-mouse-buttons (% (bg-get-tty-num ?c) 8))
        (bg-mouse-window (bg-window-from-x-y screen-mouse-x screen-mouse-y))
        (bg-cursor-window (selected-window))
-       (edges (window-edges bg-mouse-window))
-       (minibuf-p (= screen-mouse-y (1- (screen-height))))
+       (edges (bg-window-edges bg-mouse-window))
+       (minibuf-p (= screen-mouse-y (1- (frame-height))))
        (in-modeline-p (and (not minibuf-p)
 			   (= screen-mouse-y (1- (nth 3 edges)))))
        (in-scrollbar-p (and (not minibuf-p) (not in-modeline-p)
@@ -110,6 +121,7 @@ To reinitialize the mouse if the terminal is reset, type ESC : RET"
 (defun bg-set-point ()
   "Move point to location of BitGraph mouse."
   (interactive)
+  (declare (special bg-mouse-x bg-mouse-y))
   (bg-move-point-to-x-y bg-mouse-x bg-mouse-y)
   (setq this-command 'next-line)	;make subsequent line moves work
   (setq temporary-goal-column bg-mouse-x))
@@ -117,6 +129,7 @@ To reinitialize the mouse if the terminal is reset, type ESC : RET"
 (defun bg-set-mark ()
   "Set mark at location of BitGraph mouse."
   (interactive)
+  (declare (special bg-mouse-x bg-mouse-y))
   (push-mark)
   (bg-move-point-to-x-y bg-mouse-x bg-mouse-y)
   (exchange-point-and-mark))
@@ -124,6 +137,7 @@ To reinitialize the mouse if the terminal is reset, type ESC : RET"
 (defun bg-yank ()
   "Move point to location of BitGraph mouse and yank."
   (interactive "*")
+  (declare (special bg-mouse-x bg-mouse-y))
   (bg-move-point-to-x-y bg-mouse-x bg-mouse-y)
   (setq this-command 'yank)
   (yank))
@@ -147,6 +161,7 @@ was a yank, do a yank-pop."
   "Go to location in buffer that is the same percentage of the way
 through the buffer as the BitGraph mouse's X position in the window."
   (interactive)
+  (declare (special bg-mouse-x bg-mouse-y))
   ;; check carefully for overflow in intermediate calculations
   (goto-char
    (cond ((zerop bg-mouse-x)
@@ -165,17 +180,20 @@ through the buffer as the BitGraph mouse's X position in the window."
 (defun bg-mouse-line-to-top ()
   "Scroll the line pointed to by the BitGraph mouse to the top of the window."
   (interactive)
+  (declare (special bg-mouse-x bg-mouse-y))
   (scroll-up bg-mouse-y))
 
 (defun bg-mouse-line-to-center ()
   "Scroll the line pointed to by the BitGraph mouse to the center
 of the window."
   (interactive)
+  (declare (special bg-mouse-x bg-mouse-y))
   (scroll-up (/ (+ 2 bg-mouse-y bg-mouse-y (- (window-height))) 2)))
 
 (defun bg-mouse-line-to-bottom ()
   "Scroll the line pointed to by the mouse to the bottom of the window."
   (interactive)
+  (declare (special bg-mouse-x bg-mouse-y))
   (scroll-up (+ bg-mouse-y (- 2 (window-height)))))
 
 (defun bg-kill-region ()
@@ -186,6 +204,7 @@ of the window."
   "Insert a copy of the word (actually sexp) that the mouse is pointing at.
 Sexp is inserted into the buffer at point (where the text cursor is)."
   (interactive)
+  (declare (special bg-mouse-x bg-mouse-y bg-cursor-window))
   (let ((moused-text
 	  (save-excursion
 	    (bg-move-point-to-x-y bg-mouse-x bg-mouse-y)
@@ -254,7 +273,7 @@ X and Y are 0-based character positions in the window."
 (defun bg-window-from-x-y (x y)
   "Find window corresponding to screen coordinates.
 X and Y are 0-based character positions on the screen."
-  (let ((edges (window-edges))
+  (let ((edges (bg-window-edges))
 	(window nil))
     (while (and (not (eq window (selected-window)))
 		(or (<  y (nth 1 edges))
@@ -262,7 +281,7 @@ X and Y are 0-based character positions on the screen."
 		    (<  x (nth 0 edges))
 		    (>= x (nth 2 edges))))
       (setq window (next-window window))
-      (setq edges (window-edges window)))
+      (setq edges (bg-window-edges window)))
     (cond ((eq window (selected-window))
 	   nil)				;we've looped: not found
 	  ((not window)
