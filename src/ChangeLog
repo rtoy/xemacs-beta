@@ -1,3 +1,11 @@
+2003-12-29  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
+
+	* sysdll.c (dll_function): Added support for finding symbols in
+	Darwin shared libraries as well in Darwin bundles.
+	* sysdll.c (image_for_address): New.
+	* sysdll.c (my_find_image): New.
+	* sysdll.c (search_linked_libs): New.
+
 2004-01-03  James C. McPherson  <james.mcpherson@optusnet.com.au>
 
 	* doc.c (Fdocumentation_property): GCPROd variables cannot be
