@@ -1,3 +1,8 @@
+2005-01-27  Ben Wing  <ben@xemacs.org>
+
+	* gtk-marshal.el (find-file):
+	Propagate hash changes to gtk-marshal.el.
+	
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
 	* newcomment.el:
