@@ -26,3 +26,4 @@ DOC
 *.pdb
 *.idb
 *.ilk
+make-dump-id

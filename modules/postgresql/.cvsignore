@@ -1,2 +1,5 @@
 *.ell
 *_i.c
+GNUmakefile
+Makefile
+Makefile.in
