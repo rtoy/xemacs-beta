@@ -1,3 +1,8 @@
+2003-08-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el: Update copyright notice and
+	maintainer name.  Improve comment on stale match tests.
+
 2003-06-01  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.14 "cassava" is released.

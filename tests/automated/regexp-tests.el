@@ -1,9 +1,9 @@
 ;;; -*- coding: iso-8859-1 -*-
 
-;; Copyright (C) 2000 Free Software Foundation, Inc.
+;; Copyright (C) 2000, 2002, 2003 Free Software Foundation, Inc.
 
 ;; Author: Yoshiki Hayashi  <yoshiki@xemacs.org>
-;; Maintainer: Yoshiki Hayashi  <yoshiki@xemacs.org>
+;; Maintainer: Stephen J. Turnbull <stephen@xemacs.org>
 ;; Created: 2000
 ;; Keywords: tests
 
@@ -284,9 +284,8 @@
 ;; Thanks to <bjacob@ca.metsci.com>.
 ;; These tests used to fail because we cleared match data only on success.
 ;; Fixed 2003-04-17.
-;; Have to revert 2003-05-09; too much code depends on failed matches
-;; preserving match-data.
-;; string match and regexp match are equivalent
+;; Must change sense of failing tests 2003-05-09.  Too much code depends on
+;; failed matches preserving match-data.
 (let ((a "a"))
   (Assert (string= (progn (string-match "a" a)
 			  (string-match "b" a)
