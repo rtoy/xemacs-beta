@@ -563,7 +563,8 @@ face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 				       domain, errb, no_fallback, depth);
   if (UNBOUNDP (retval))
     {
-      Fsetcdr (matchspec, Qt);
+      if (CONSP (matchspec))
+	  Fsetcdr (matchspec, Qt);
       retval = specifier_instance_no_quit (Fget (face, property, Qnil),
 					   matchspec, domain, errb,
 					   no_fallback, depth);

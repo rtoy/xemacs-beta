@@ -72,6 +72,8 @@ DECLARE_LRECORD (console, struct console);
 /* Basic properties available to non-privileged users; redefined in
    console-impl.h */
 
+struct console_methods;
+
 int console_live_p (struct console *c);
 Lisp_Object console_device_list (struct console *c);
 

@@ -1,3 +1,14 @@
+2002-06-22  Mike Sperber  <mike@xemacs.org>
+
+	* faces.c (face_property_matching_instance): Only set cdr of
+	matchspec if it's actually a cons.
+
+	* console.h: Define opaque console_methods to unbreak the build.
+
+	* objects.c (initialize_charset_font_caches): 
+	(invalidate_charset_font_caches): Only define if we're MULE.
+	(font_instantiate): Unbreak for non-MULE.
+
 2002-06-20  Ben Wing  <ben@xemacs.org>
 
 	* s/cygwin32.h:

@@ -689,8 +689,6 @@ font_validate_matchspec (Lisp_Object matchspec)
   Fget_charset (XCAR (matchspec));
 }
 
-#endif /* MULE */
-
 void
 initialize_charset_font_caches (struct device *d)
 {
@@ -719,6 +717,9 @@ invalidate_charset_font_caches (Lisp_Object charset)
         Fclrhash (hash_table);
     }
 }
+
+#endif /* MULE */
+
 
 static Lisp_Object
 font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
@@ -761,8 +762,12 @@ font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 
   if (STRINGP (instantiator))
     {
+#ifdef MULE
       Lisp_Object cache = stage ? d->charset_font_cache_stage_2 :
         d->charset_font_cache_stage_1;
+#else
+      Lisp_Object cache = d->font_instance_cache;
+#endif
 
 #ifdef MULE
       if (!NILP (charset))
