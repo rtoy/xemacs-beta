@@ -366,7 +366,7 @@ gtk_get_window_property_as_lisp_data (struct device *d,
 
 static Lisp_Object
 gtk_own_selection (Lisp_Object selection_name, Lisp_Object selection_value,
-		   Lisp_Object how_to_add, Lisp_Object selection_type)
+		   Lisp_Object how_to_add, Lisp_Object selection_type, int owned_p)
 {
   struct device *d = decode_gtk_device (Qnil);
   GtkWidget *selecting_window = GTK_WIDGET (DEVICE_GTK_APP_SHELL (d));
