@@ -477,11 +477,13 @@ For example, invoke \"xemacs -batch -f batch-test-emacs tests/*.el\""
 		 (fname (file-name-nondirectory (first head)))
 		 (nsucc (second head))
 		 (ntest (third head)))
-	    (message template
-		     (concat fname ":")
-		     nsucc
-		     ntest
-		     (/ (* 100 nsucc) ntest))
+	    (if (> ntest 0)
+		(message template
+			 (concat fname ":")
+			 nsucc
+			 ntest
+			 (/ (* 100 nsucc) ntest))
+	      (message "%s: No tests run\n" fname))
 	    (setq results (cdr results))))))
     (message "\nDone")
     (kill-emacs (if error 1 0))))

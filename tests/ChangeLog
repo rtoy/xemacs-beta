@@ -1,3 +1,8 @@
+2003-09-28  Adrian Aichner  <adrian@xemacs.org>
+
+	* automated/test-harness.el (batch-test-emacs): Emergency fix for
+	arithmetic error when no tests are run.
+
 2003-09-27  Adrian Aichner  <adrian@xemacs.org>
 
 	* automated/test-harness.el: Syntax emergency fix.
