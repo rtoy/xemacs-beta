@@ -3931,7 +3931,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	      ;; `defconst' sets `var' unconditionally.
 	      `(setq ,var ,value)
 	    ;; `defvar' sets `var' only when unbound.
-	    `(if (not (boundp ',var)) (setq ,var ,value))))
+	    `(if (not (default-boundp ',var)) (set-default ',var ,value))))
       `',var))))
 
 (defun byte-compile-autoload (form)
