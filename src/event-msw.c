@@ -2646,6 +2646,30 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc (hwnd, message_, wParam, lParam);
       }
 
+    case WM_SHOWWINDOW:
+      /*
+         The WM_SHOWWINDOW message is sent to a window when the window
+         is about to be hidden or shown.
+         APA: This message is also sent when switching to a virtual
+         desktop under the virtuawin virtual window manager.
+      
+      */
+      {
+	fobj = mswindows_find_frame (hwnd);
+	frame = XFRAME (fobj);
+        if (wParam == TRUE)
+          {
+            mswindows_enqueue_magic_event (hwnd, XM_MAPFRAME);
+            FRAME_VISIBLE_P (frame) = 1;
+          }
+        else
+          {
+            mswindows_enqueue_magic_event (hwnd, XM_UNMAPFRAME);
+            FRAME_VISIBLE_P (frame) = 0;
+          }
+      }
+      break;
+
     case WM_SIZE:
       /* We only care about this message if our size has really changed */
       if (wParam==SIZE_RESTORED || wParam==SIZE_MAXIMIZED || wParam==SIZE_MINIMIZED)

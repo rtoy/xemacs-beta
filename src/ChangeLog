@@ -1,3 +1,9 @@
+2002-01-15  Adrian Aichner  <adrian@xemacs.org>
+
+	* event-msw.c (mswindows_wnd_proc): Add handling of WM_SHOWWINDOW
+	to fix problem switching between virtual desktops under virtuawin
+	virtual window manager.
+
 2002-01-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* mule-charset.c (global):
