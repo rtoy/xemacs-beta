@@ -1,3 +1,7 @@
+2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.7 "broccoflower" is released.
+
 2002-02-04  Andy Piper  <andy@xemacs.org>
 
 	* install.cc (install_one): Munge installed filename to fit inside
@@ -451,6 +455,6 @@
 
 	* all: port from cygwin setup.
 
-%%% $Id: ChangeLog,v 1.19 2002/06/04 06:09:51 andyp Exp $
-$Revision: 1.19 $
+%%% $Id: ChangeLog,v 1.20 2002/07/02 15:01:01 stephent Exp $
+$Revision: 1.20 $
 

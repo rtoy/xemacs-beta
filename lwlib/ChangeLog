@@ -1,3 +1,7 @@
+2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.7 "broccoflower" is released.
+
 2002-06-20  Ben Wing  <ben@xemacs.org>
 
 	* lwlib.c:

@@ -1,3 +1,7 @@
+2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.7 "broccoflower" is released.
+
 2002-06-25  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs.mak (DEBUG_DEFINES): Initialize to empty for
