@@ -1,3 +1,11 @@
+2002-04-23  Jerry James  <james@xemacs.org>
+
+	* select.c (Fown_selection_internal): Document connection with
+        interprogram-cut-function.
+	* select.c (Fget_selection_internal): return Qnil if XEmacs owns
+        the selection and it does not need coercion.
+        Document connection with interprogram-paste-function.
+
 2002-05-06  Jonathan Harris  <jonathan@xemacs.org>
 
 	* console-msw.h:

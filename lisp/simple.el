@@ -1271,7 +1271,7 @@ interact nicely with `interprogram-cut-function' and
 interaction; you may want to use them instead of manipulating the kill
 ring directly.")
 
-(defcustom kill-ring-max 30
+(defcustom kill-ring-max 60
   "*Maximum length of kill ring before oldest elements are thrown away."
   :type 'integer
   :group 'killing)
@@ -1282,12 +1282,13 @@ ring directly.")
 (defun kill-new (string &optional replace)
   "Make STRING the latest kill in the kill ring.
 Set `kill-ring-yank-pointer' to point to it.
+If `interprogram-cut-function' is non-nil, apply it to STRING.
 Run `kill-hooks'.
 Optional second argument REPLACE non-nil means that STRING will replace
 the front of the kill ring, rather than being added to the list."
 ;  (and (fboundp 'menu-bar-update-yank-menu)
 ;       (menu-bar-update-yank-menu string (and replace (car kill-ring))))
-  (if replace
+  (if (and replace kill-ring)
       (setcar kill-ring string)
     (setq kill-ring (cons string kill-ring))
     (if (> (length kill-ring) kill-ring-max)

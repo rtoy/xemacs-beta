@@ -1,3 +1,13 @@
+2002-04-23  Jerry James  <james@xemacs.org>
+
+	* select.el (get-clipboard): Document connection with
+        interprogram-paste-function.
+	* select.el (get-selection): Document that nil should be
+        returned if XEmacs owns the selection.
+        Remove unnecessary variable.
+	* simple.el (kill-ring-max): Synch with FSF Emacs 21.2.
+	* simple.el (kill-new): Synch with FSF Emacs 21.2
+
 2002-05-05  Ben Wing  <ben@xemacs.org>
 
 	* bytecomp-runtime.el (with-obsolete-variable):

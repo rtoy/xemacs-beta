@@ -75,7 +75,8 @@ set the clipboard.")
       (insert clip))))
 
 (defun get-clipboard ()
-  "Return text pasted to the clipboard."
+  "Return text pasted to the clipboard.
+See `interprogram-paste-function' for more information."
   (get-selection 'CLIPBOARD))
 
 (define-device-method get-cutbuffer
@@ -90,22 +91,21 @@ says how to convert the data. Returns NIL if there is no selection."
   (condition-case nil (get-selection type data-type) (t nil)))
 
 (defun get-selection (&optional type data-type)
-  "Return the value of a window-system selection.
+  "Return the value of a window-system selection, or nil if XEmacs owns it.
 The argument TYPE (default `PRIMARY') says which selection,
 and the argument DATA-TYPE (default `STRING', or `COMPOUND_TEXT' under Mule)
-says how to convert the data. If there is no selection an error is signalled."
+says how to convert the data. If there is no selection an error is signalled.
+See `interprogram-paste-function' for more information."
   (or type (setq type 'PRIMARY))
   (or data-type (setq data-type selected-text-type))
-  (let ((text
-	 (if (consp data-type)
-	     (condition-case err
-		 (get-selection-internal type (car data-type))
-	       (selection-conversion-error
-		(if (cdr data-type)
-		    (get-selection type (cdr data-type))
-		  (signal (car err) (cdr err)))))
-	   (get-selection-internal type data-type))))
-    text))
+  (if (consp data-type)
+      (condition-case err
+	  (get-selection-internal type (car data-type))
+	(selection-conversion-error
+	 (if (cdr data-type)
+	     (get-selection type (cdr data-type))
+	   (signal (car err) (cdr err)))))
+    (get-selection-internal type data-type)))
 
 ;; FSFmacs calls this `x-set-selection', and reverses the
 ;; first two arguments (duh ...).  This order is more logical.

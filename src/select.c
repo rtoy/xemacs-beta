@@ -139,8 +139,8 @@ SELECTION-NAME is a symbol, typically PRIMARY, SECONDARY, or CLIPBOARD.
 SELECTION-VALUE is typically a string, or a cons of two markers, but may be
 anything that the functions on selection-converter-out-alist know about.
 Optional arg HOW-TO-ADD specifies how the selection will be combined
-with any existing selection(s) - see `own-selection' for more
-information.
+with any existing selection(s) - see `own-selection' and
+`interprogram-cut-function' for more information.
 Optional arg DATA-TYPE is a window-system-specific type.
 Optional arg DEVICE specifies the device on which to assert the selection.
 It defaults to the selected device.
@@ -509,8 +509,8 @@ visible from Lisp.
 }
 
 /* Request the selection value from the owner.  If we are the owner,
-   simply return our selection value.  If we are not the owner, this
-   will block until all of the data has arrived.
+   return Qnil.  If we are not the owner, this will block until all of
+   the data has arrived.
  */
 DEFUN ("get-selection-internal", Fget_selection_internal, 2, 3, 0, /*
 Return text selected from some window-system window.
@@ -518,6 +518,8 @@ SELECTION is a symbol, typically PRIMARY, SECONDARY, or CLIPBOARD.
 TARGET-TYPE is the type of data desired, typically STRING or COMPOUND_TEXT.
 Under Mule, if the resultant data comes back as 8-bit data in type
 TEXT or COMPOUND_TEXT, it will be decoded as Compound Text.
+If XEmacs already owns the selection, return nil.  See
+`interprogram-paste-function' for more information.
 */
        (selection, target_type, device))
 {
@@ -559,7 +561,8 @@ TEXT or COMPOUND_TEXT, it will be decoded as Compound Text.
     {
       /* If we get something from the local cache, we may need to convert
          it slightly - to do this, we call select-coerce */
-      val = call3 (Qselect_coerce, selection, target_type, val);
+      Lisp_Object val2 = call3 (Qselect_coerce, selection, target_type, val);
+      return (EQ (val, val2)) ? Qnil : val2;
     }
   else if (HAS_DEVMETH_P (XDEVICE (device), get_foreign_selection))
     {
