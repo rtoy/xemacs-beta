@@ -1,3 +1,53 @@
+2002-12-02  Mike Sperber <mike@xemacs.org>
+
+	* The Great Window Configuration rewrite: Re-implement window
+	configuration functionality in Emacs Lisp.
+
+	* window.h (Fcurrent_window_configuration): Don't export anymore.
+	(Qcurrent_window_configuration): Declare.
+	(Qset_window_configuration): Declare.
+	* event-stream.c (execute_help_form): 
+	* bytecode.c (execute_rare_opcode): Call out to Lisp to save
+	window excursion.
+	* window.c (Qcurrent_window_configuration): Declare.
+	(Qwindow_configurationp):
+	(Vwindow_configuration_free_list):
+	(Qset_window_configuration):
+	(Qtemp_buffer_show_hook):
+	(struct saved_window): 
+	(struct window_config): 
+	(SAVED_WINDOW_N): 
+	(XWINDOW_CONFIGURATION): 
+	(wrap_window_configuration): 
+	(WINDOW_CONFIGURATIONP): 
+	(CHECK_WINDOW_CONFIGURATION): 
+	(mark_window_config): 
+	(sizeof_window_config_for_n_windows): 
+	(sizeof_window_config): 
+	(print_window_config): 
+	(saved_window_equal): 
+	(window_config_equal): 
+	(Fwindow_configuration_p): 
+	(mark_windows_in_use_closure): 
+	(mark_windows_in_use): 
+	(free_window_configuration): 
+	(Fset_window_configuration): 
+	(count_windows): 
+	(saved_window_index): 
+	(save_window_save): 
+	(Fcurrent_window_configuration): 
+	(Fsave_window_excursion): Remove.
+	(mark_window_as_deleted): Rectify comment about
+	`set-window-configuration'.
+	(Fset_window_buffer): Reinstate code not activated because of old
+	implementation of window configurations.
+	(temp_output_buffer_show): Don't run `temp-buffer-show-hook'
+	anymore---this wasn't supposed to happen anyway according to the
+	documentation of `temp-buffer-show-function'.
+	(reinit_vars_of_window): Don't do the window configuration stuff
+	no more
+	(vars_of_window): Don't set up `temp-buffer-show-hook' any more.
+
 2002-12-02  Greg Allen  <greg_allen@westlb-systems.co.uk>
 
 	* database.c: Fix open_database. Berkeley DB API has changed in

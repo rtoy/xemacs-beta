@@ -1061,7 +1061,7 @@ execute_help_form (struct command_builder *command_builder,
   GCPRO2 (echo, help);
 
   record_unwind_protect (save_window_excursion_unwind,
-			 Fcurrent_window_configuration (Qnil));
+			 call1 (Qcurrent_window_configuration, Qnil));
   reset_key_echo (command_builder, 1);
 
   help = Feval (Vhelp_form);

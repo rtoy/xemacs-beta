@@ -51,7 +51,7 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "window-impl.h"
 
-Lisp_Object Qwindowp, Qwindow_live_p, Qwindow_configurationp;
+Lisp_Object Qwindowp, Qwindow_live_p;
 Lisp_Object Qdisplay_buffer;
 
 #ifdef MEMORY_USAGE_STATS
@@ -119,20 +119,14 @@ Lisp_Object Vother_window_scroll_buffer;
 /* Non-nil means it's the function to call to display temp buffers.  */
 Lisp_Object Vtemp_buffer_show_function;
 
-Lisp_Object Vtemp_buffer_show_hook;
-
 /* If a window gets smaller than either of these, it is removed. */
 Fixnum window_min_height;
 Fixnum window_min_width;
 
-/* Hook run at end of temp_output_buffer_show.  */
-Lisp_Object Qtemp_buffer_show_hook;
-
 /* Number of lines of continuity in scrolling by screenfuls.  */
 Fixnum next_screen_context_lines;
 
-/* List of freed window configurations with 1 - 10 windows. */
-static Lisp_Object Vwindow_configuration_free_list[10];
+Lisp_Object Qcurrent_window_configuration, Qset_window_configuration;
 
 Lisp_Object Qtruncate_partial_width_windows;
 
@@ -2029,15 +2023,7 @@ mark_window_as_deleted (struct window *w)
      reinitialized by the window-configuration code as necessary. */
   finalize_window ((void *) w, 0);
 
-  /* "Nobody should be accessing anything in this object any more...",
-     I said, but unfortunately that's not quite true.
-     set-window-configuration undeletes the window and relies on
-     certain items to be there already.  Fuckme!  we really should
-     rewrite it in Lisp and just recreate the windows. (But does any
-     code depend on the pointers being the same?  At the very least,
-     we should reinit everything in the window.)
-
-     Nobody should be accessing anything in this object any more,
+  /* Nobody should be accessing anything in this object any more,
      and making them Qnil allows for better GC'ing in case a pointer
      to the dead window continues to hang around.  Zero all other
      structs in case someone tries to access something through them.
@@ -2055,12 +2041,7 @@ mark_window_as_deleted (struct window *w)
      through the `next' slot.  This might not seem so bad, as they're
      deleted, and will presumably be GCed - but if even *one* of those
      windows is still being pointed to, by the user, or by a window
-     configuration, then *all* of those windows stick around.
-
-     Since the window-configuration code doesn't need any of the
-     pointers to other windows (they are all recreated from the
-     window-config data), we set them all to nil so that we
-     are able to collect more actual garbage. */
+     configuration, then *all* of those windows stick around. */
 
 #define WINDOW_SLOT(slot)
 #define WINDOW_SAVED_SLOT(slot, compare) w->slot = Qnil;
@@ -2195,9 +2176,7 @@ will automatically call `save-buffers-kill-emacs'.)
       unchain_marker (w->start[DESIRED_DISP]);
       unchain_marker (w->start[CMOTION_DISP]);
       unchain_marker (w->sb_point);
-      /* This breaks set-window-configuration if windows in the saved
-	 configuration get deleted and multiple frames are in use. */
-      /* w->buffer = Qnil; */
+      w->buffer = Qnil;
     }
 
   /* close up the hole in the sibling list */
@@ -3551,20 +3530,8 @@ global or per-frame buffer ordering.
   tem = w->buffer;
   if (NILP (tem))
     invalid_operation ("Window is deleted", Qunbound);
-
-  /* While this seems like a logical thing to do, it causes problems
-     because of saved window configurations.  It is possible for a
-     buffer to get restored into a window in which it is already being
-     displayed, but start and point are actually at completely
-     different locations.  So we let this function complete fully and
-     it will then make sure redisplay correctly updates things.
-
-     #### This is a kludge.  The correct approach is not to do this
-     but to fix set-window-configuration. */
-#if 0
   else if (EQ (tem, buffer))
     return Qnil;
-#endif
   else if (! EQ (tem, Qt))	/* w->buffer is t when the window
 				   is first being set up.  */
     {
@@ -3743,30 +3710,6 @@ temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_frame)
       set_marker_restricted (w->start[CURRENT_DISP], make_int (1), buf);
       set_marker_restricted (w->pointm[CURRENT_DISP], make_int (1), buf);
       set_marker_restricted (w->sb_point, make_int (1), buf);
-
-      /* Run temp-buffer-show-hook, with the chosen window selected.  */
-      if (!preparing_for_armageddon)
-	{
-	  Lisp_Object tem;
-	  tem = Fboundp (Qtemp_buffer_show_hook);
-	  if (!NILP (tem))
-	    {
-	      tem = Fsymbol_value (Qtemp_buffer_show_hook);
-	      if (!NILP (tem))
-		{
-		  int count = specpdl_depth ();
-
-		  /* Select the window that was chosen, for running
-                     the hook.  */
-		  record_unwind_protect (save_window_excursion_unwind,
-					 Fcurrent_window_configuration (Qnil));
-
-		  Fselect_window (window, Qnil);
-		  run_hook (Qtemp_buffer_show_hook);
-		  unbind_to (count);
-		}
-	    }
-	}
     }
 }
 
@@ -5146,790 +5089,7 @@ represents all the memory concerned.
 }
 
 #endif /* MEMORY_USAGE_STATS */
-
 
-/************************************************************************/
-/*                         Window configurations                        */
-/************************************************************************/
-
-/* #### This window configuration stuff has had serious bugs lurking in it
-   for years; it would be a -huge- win if this was reimplemented in lisp.
- */
-
-/* If you add anything to this structure make sure saved_window_equal
-   knows about it. */
-struct saved_window
-{
-  Lisp_Object window;         /* window */
-  Lisp_Object buffer;         /* buffer */
-  Lisp_Object start;          /* copied marker */
-  Lisp_Object pointm;         /* copied marker */
-  Lisp_Object sb_point;	      /* copied marker */
-  Lisp_Object mark;           /* copied marker */
-  int pixel_left;
-  int pixel_top;
-  int pixel_width;
-  int pixel_height;
-  int hscroll;
-  Charcount modeline_hscroll;
-  int parent_index;           /* index into saved_windows */
-  int prev_index;             /* index into saved_windows */
-  char start_at_line_beg; /* boolean */
-
-#define WINDOW_SLOT_DECLARATION
-#define WINDOW_SLOT(slot)
-#define WINDOW_SAVED_SLOT(slot, compare) Lisp_Object slot;
-#include "winslots.h"
-};
-
-/* If you add anything to this structure make sure window_config_equal
-   knows about it. */
-struct window_config
-{
-  struct lcrecord_header header;
-  /*  int frame_width; No longer needed, JV
-      int frame_height; */
-#if 0 /* FSFmacs */
-  Lisp_Object selected_frame;
-#endif
-  Lisp_Object current_window;
-  Lisp_Object current_buffer;
-  Lisp_Object minibuffer_scroll_window;
-  Lisp_Object root_window;
-  int minibuf_height; /* 0 = no minibuffer, <0, size in lines, >0 in pixels */
-  /* Record the values of window-min-width and window-min-height
-     so that window sizes remain consistent with them.  */
-  int min_width, min_height;
-  int saved_windows_count;
-  /* Zero-sized arrays aren't ANSI C */
-  struct saved_window saved_windows[1];
-};
-
-#define SAVED_WINDOW_N(conf, n) (&((conf)->saved_windows[(n)]))
-#define XWINDOW_CONFIGURATION(x) XRECORD (x, window_configuration, struct window_config)
-#define wrap_window_configuration(p) wrap_record (p, window_configuration)
-#define WINDOW_CONFIGURATIONP(x) RECORDP (x, window_configuration)
-#define CHECK_WINDOW_CONFIGURATION(x) CHECK_RECORD (x, window_configuration)
-
-#ifdef USE_KKCC
-static const struct struct_description saved_window_description = {
-};
-
-static const struct lrecord_description window_config_description [] = {
-  { XD_LISP_OBJECT, offsetof (struct window_config, current_window) },
-  { XD_LISP_OBJECT, offsetof (struct window_config, current_buffer) },
-  { XD_LISP_OBJECT, offsetof (struct window_config, minibuffer_scroll_window) },
-  { XD_LISP_OBJECT, offsetof (struct window_config, root_window) },
-  { XD_END }
-};
-#endif /* USE_KKCC */
-
-static Lisp_Object
-mark_window_config (Lisp_Object obj)
-{
-  struct window_config *config = XWINDOW_CONFIGURATION (obj);
-  int i;
-  mark_object (config->current_window);
-  mark_object (config->current_buffer);
-  mark_object (config->minibuffer_scroll_window);
-  mark_object (config->root_window);
-
-  for (i = 0; i < config->saved_windows_count; i++)
-    {
-      struct saved_window *s = SAVED_WINDOW_N (config, i);
-      mark_object (s->window);
-      mark_object (s->buffer);
-      mark_object (s->start);
-      mark_object (s->pointm);
-      mark_object (s->sb_point);
-      mark_object (s->mark);
-#if 0
-      /* #### This looked like this. I do not see why specifier cached
-	 values should not be marked, as such specifiers as toolbars
-	 might have GC-able instances. Freed configs are not marked,
-	 aren't they?  -- kkm */
-      mark_object (s->dedicated);
-#else
-#define WINDOW_SLOT(slot)
-#define WINDOW_SAVED_SLOT(slot, compare) mark_object (s->slot);
-#include "winslots.h"
-#endif
-    }
-  return Qnil;
-}
-
-inline static Bytecount
-sizeof_window_config_for_n_windows (int n)
-{
-  return FLEXIBLE_ARRAY_STRUCT_SIZEOF (struct window_config,
-				       struct saved_window, saved_windows, n);
-}
-
-static Bytecount
-sizeof_window_config (const void *h)
-{
-  const struct window_config *c = (const struct window_config *) h;
-  return sizeof_window_config_for_n_windows (c->saved_windows_count);
-}
-
-static void
-print_window_config (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
-{
-  struct window_config *config = XWINDOW_CONFIGURATION (obj);
-  if (print_readably)
-    printing_unreadable_object ("#<window-configuration 0x%x>",
-				config->header.uid);
-  write_c_string (printcharfun, "#<window-configuration ");
-  write_fmt_string (printcharfun, "0x%x>", config->header.uid);
-}
-
-#ifdef USE_KKCC
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("window-configuration",
-					window_configuration,
-					0, /*dumpable-flag*/
-					mark_window_config,
-					print_window_config,
-					0, 0, 0, 
-					0/*window_config_description*/, sizeof_window_config,
-					struct window_config);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("window-configuration",
-					window_configuration,
-					mark_window_config,
-					print_window_config,
-					0, 0, 0, 0, sizeof_window_config,
-					struct window_config);
-#endif /* not USE_KKCC */
-
-/* Returns a boolean indicating whether the two saved windows are
-   identical. */
-static int
-saved_window_equal (struct saved_window *win1, struct saved_window *win2)
-{
-#define WINDOW_SLOT(slot)
-#define WINDOW_SAVED_SLOT(slot, compare)	\
-  if (!compare (win1->slot, win2->slot))	\
-    return 0;
-#include "winslots.h"
-
-  return
-    EQ (win1->window, win2->window) &&
-    EQ (win1->buffer, win2->buffer) &&
-    internal_equal (win1->start,    win2->start, 0) &&
-    internal_equal (win1->pointm,   win2->pointm, 0) &&
-    internal_equal (win1->sb_point, win2->sb_point, 0) &&
-    internal_equal (win1->mark,     win2->mark, 0) &&
-    win1->pixel_left   == win2->pixel_left &&
-    win1->pixel_top    == win2->pixel_top &&
-    win1->pixel_width  == win2->pixel_width &&
-    win1->pixel_height == win2->pixel_height &&
-    win1->hscroll      == win2->hscroll &&
-    win1->modeline_hscroll == win2->modeline_hscroll &&
-    win1->parent_index == win2->parent_index &&
-    win1->prev_index   == win2->prev_index &&
-    win1->start_at_line_beg == win2->start_at_line_beg;
-}
-
-/* Returns a boolean indicating whether the two given configurations
-   are identical. */
-static int
-window_config_equal (Lisp_Object conf1, Lisp_Object conf2)
-{
-  struct window_config *fig1, *fig2;
-  int i;
-
-  /* First check if they are truly the same. */
-  if (EQ (conf1, conf2))
-    return 1;
-
-  fig1 = XWINDOW_CONFIGURATION (conf1);
-  fig2 = XWINDOW_CONFIGURATION (conf2);
-
-  if (!((fig1->saved_windows_count == fig2->saved_windows_count) &&
-	EQ (fig1->current_window,	    fig2->current_window) &&
-	EQ (fig1->current_buffer,	    fig2->current_buffer) &&
-	EQ (fig1->root_window,		    fig2->root_window) &&
-	EQ (fig1->minibuffer_scroll_window, fig2->minibuffer_scroll_window)))
-	/* &&
-	fig1->frame_width  == fig2->frame_width &&
-	fig1->frame_height == fig2->frame_height)) */
-    return 0;
-
-  for (i = 0; i < fig1->saved_windows_count; i++)
-    {
-      if (!saved_window_equal (SAVED_WINDOW_N (fig1, i),
-			       SAVED_WINDOW_N (fig2, i)))
-	return 0;
-    }
-
-  return 1;
-}
-
-DEFUN ("window-configuration-p", Fwindow_configuration_p, 1, 1, 0, /*
-Return t if OBJECT is a window-configuration object.
-*/
-       (object))
-{
-  return WINDOW_CONFIGURATIONP (object) ? Qt : Qnil;
-}
-
-static int
-mark_windows_in_use_closure (struct window *w, void *closure)
-{
-  int mark = *(int *)closure;
-  w->config_mark = mark;
-  return 0;
-}
-
-static void
-mark_windows_in_use (struct frame *f, int mark)
-{
-  map_windows (f, mark_windows_in_use_closure, &mark);
-}
-
-/* Lisp_Object return value so it can be used in record_unwind_protect() */
-static Lisp_Object
-free_window_configuration (Lisp_Object window_config)
-{
-  int i;
-  struct window_config *config = XWINDOW_CONFIGURATION (window_config);
-
-  /* Free all the markers.  It's not completely necessary that
-     we do this (window configs sitting in a free list aren't
-     marked normally so the markers wouldn't be marked anyway)
-     but it's more efficient. */
-  for (i = 0; i < config->saved_windows_count; i++)
-    {
-      struct saved_window *p = SAVED_WINDOW_N (config, i);
-
-      if (!NILP (p->pointm))
-	{
-	  free_marker (XMARKER (p->pointm));
-	  p->pointm = Qnil;
-	}
-      if (!NILP (p->start))
-	{
-	  free_marker (XMARKER (p->start));
-	  p->start = Qnil;
-	}
-      if (!NILP (p->sb_point))
-	{
-	  free_marker (XMARKER (p->sb_point));
-	  p->sb_point = Qnil;
-	}
-      if (!NILP (p->mark))
-	{
-	  free_marker (XMARKER (p->mark));
-	  p->mark = Qnil;
-	}
-    }
-
-  if (config->saved_windows_count <= countof (Vwindow_configuration_free_list))
-    free_managed_lcrecord (Vwindow_configuration_free_list
-			   [config->saved_windows_count - 1],
-			   window_config);
-
-  return Qnil;
-}
-
-DEFUN ("set-window-configuration", Fset_window_configuration, 1, 1, 0, /*
-Set the configuration of windows and buffers as specified by CONFIGURATION.
-CONFIGURATION must be a value previously returned
-by `current-window-configuration' (which see).
-*/
-       (configuration))
-{
-  struct window *w;
-  struct window_config *config;
-  struct saved_window *p;
-  Lisp_Object new_current_buffer;
-  int k;
-  Lisp_Object frame;
-  struct frame *f;
-  struct gcpro gcpro1;
-  Lisp_Object old_window_config;
-  /*  int previous_frame_height;
-      int previous_frame_width;*/
-  int previous_pixel_top;
-  int previous_pixel_height;
-  int previous_pixel_left;
-  int previous_pixel_width;
-  int previous_minibuf_height, previous_minibuf_top,previous_minibuf_width;
-  int real_font_height;
-  int converted_minibuf_height,target_minibuf_height;
-  int specpdl_count = specpdl_depth ();
-
-  GCPRO1 (configuration);
-
-  CHECK_WINDOW_CONFIGURATION (configuration);
-  config = XWINDOW_CONFIGURATION (configuration);
-
-  frame = XWINDOW (SAVED_WINDOW_N (config, 0)->window)->frame;
-  f = XFRAME (frame);
-
-  /* Do not signal an error here if the frame was deleted.  There are
-     reasonable cases where we could get here with a deleted frame and
-     just want to do close to nothing instead. */
-
-  if (FRAME_LIVE_P (f))
-    {
-      /* restore the frame characteristics */
-
-      new_current_buffer = config->current_buffer;
-      if (!BUFFER_LIVE_P (XBUFFER (new_current_buffer)))
-	new_current_buffer = Qnil;
-
-      /*
-       * Assumed precondition:  w->config_mark = 0 for all w
-       * This procedure should ensure this is true by the time it exits
-       * to ensure the precondition for future calls.
-       *
-       * We use w->config_mark to know whether we're modifying a
-       * window that is currently visible on the frame (#### we
-       * should just be able to check whether the window is dead
-       * or not, but this way is safer?).  As we process each
-       * window, we set its config_mark to 0.  At the end, we
-       * go through all the windows that used to be on the frame,
-       * set each one's config_mark to 0 (to maintain the
-       * assumed precondition) and delete each one that's no
-       * longer in use.
-       *
-       * #### Using a window-configuration to keep track of
-       * the current windows is wasteful.  All we need is the
-       * list of windows, so we could just use a dynarr.
-       */
-      old_window_config = Fcurrent_window_configuration (frame);
-
-      /* If the new configuration is already equal to the old, then stop
-	 right here.  This saves the work below and it also saves
-	 triggering a full redisplay of this window.  This is a huge win
-	 when using the mouse since the mode motion code uses
-	 save-window-excursion extensively but will rarely cause the
-	 configuration to actually change. */
-      if (window_config_equal (configuration, old_window_config))
-	{
-	  free_window_configuration (old_window_config);
-	  UNGCPRO;
-	  return Qnil;
-	}
-
-      /* We can't quit or even check for quit because that may cause
-	 investigation of the frame state, which may crash if the frame is
-	 in an inconsistent state. */
-      begin_dont_check_for_quit ();
-      record_unwind_protect (free_window_configuration, old_window_config);
-
-      mark_windows_in_use (f, 1);
-#ifdef BROKEN_SUBWINDOW_REDISPLAY
-      /* Force subwindows to be remapped. This is overkill but saves
-	us having to rely on the redisplay code to unmap any extant
-	subwindows.
-
-	#### It does cause some extra flashing though which we could
-	possibly avoid. So consider trying to get redisplay to work
-	correctly.
-
-	Removing the instances from the frame cache is wrong because
-	an instance is only put in the frame cache when it is
-	instantiated. So if we do this there is a chance that stuff
-	will never get put back in the frame cache. */
-      reset_frame_subwindow_instance_cache (f);
-#endif
-#if 0
-      /* JV: This is bogus,
-	 First of all, the units are inconsistent. The frame sizes are measured
-	 in characters but the window sizes are stored in pixels. So if a
-	 font size change happened between saving and restoring, the
-	 frame "sizes" maybe equal but the windows still should be
-	 resized. This is tickled a lot by the new "character size
-	 stays constant" policy in 21.0. It leads to very weird
-	 glitches (and possibly crashes when asserts are tickled).
-
-	 Just changing the units doesn't help because changing the
-	 toolbar configuration can also change the pixel positions.
-	 Luckily there is a much simpler way of doing this, see below.
-       */
-      previous_frame_width = FRAME_WIDTH (f);
-      previous_frame_height = FRAME_HEIGHT (f);
-      /* If the frame has been resized since this window configuration was
-	 made, we change the frame to the size specified in the
-	 configuration, restore the configuration, and then resize it
-	 back.  We keep track of the prevailing height in these variables.  */
-      if (config->frame_height != FRAME_HEIGHT (f)
-	  || config->frame_width != FRAME_WIDTH (f))
-	change_frame_size (f, config->frame_height, config->frame_width, 0);
-#endif
-
-      previous_pixel_top = XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top;
-      previous_pixel_height = XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_height;
-      previous_pixel_left = XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left;
-      previous_pixel_width = XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_width;
-
-      /* remember some properties of the minibuffer */
-
-      default_face_height_and_width (frame, &real_font_height, 0);
-      assert(real_font_height > 0);
-
-      if (FRAME_HAS_MINIBUF_P (f) && ! FRAME_MINIBUF_ONLY_P (f))
-	{
-	  previous_minibuf_height
-	    = XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_height;
-	  previous_minibuf_top
-	    = XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_top;
-	  previous_minibuf_width
-	    = XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_width;
-	}
-      else
-	{
-	  previous_minibuf_height = 0;
-	  previous_minibuf_top = 0;
-	  previous_minibuf_width = 0;
-	}
-      converted_minibuf_height =
-	(previous_minibuf_height % real_font_height) == 0 ?
-	- (previous_minibuf_height / real_font_height ) :    /* lines */
-	    previous_minibuf_height;   /* pixels */
-
-      /* Temporarily avoid any problems with windows that are smaller
-	 than they are supposed to be.  */
-      window_min_height = 1;
-      window_min_width = 1;
-
-      /* OK, now restore all the windows in the window config.
-	 This may involve "undeleting" windows, since the
-	 windows in the window config may be deleted.
-	 */
-      for (k = 0; k < config->saved_windows_count; k++)
-	{
-	  p = SAVED_WINDOW_N (config, k);
-	  w = XWINDOW (p->window);
-	  w->next = Qnil;
-
-	  /* The window might be dead.  In this case, its redisplay
-	     structures were freed, so we need to reallocate them. */
-	  if (!w->face_cachels)
-	    {
-	      w->face_cachels = Dynarr_new (face_cachel);
-	      reset_face_cachels (w);
-	    }
-	  if (!w->glyph_cachels)
-	    w->glyph_cachels = Dynarr_new (glyph_cachel);
-	  if (!w->line_start_cache)
-	    w->line_start_cache = Dynarr_new (line_start_cache);
-	  w->gutter_extent_modiff[0] = 0;
-	  w->gutter_extent_modiff[1] = 0;
-	  w->gutter_extent_modiff[2] = 0;
-	  w->gutter_extent_modiff[3] = 0;
-	  w->dead = 0;
-
-	  note_object_created (p->window);
-
-	  if (p->parent_index >= 0)
-	    w->parent = SAVED_WINDOW_N (config, p->parent_index)->window;
-	  else
-	    w->parent = Qnil;
-
-	  if (p->prev_index >= 0)
-	    {
-	      w->prev = SAVED_WINDOW_N (config, p->prev_index)->window;
-
-	      /* This is true for a minibuffer-only frame. */
-	      if (!NILP (w->mini_p) && EQ (w->prev, p->window))
-		w->next = Qnil;
-	      else
-		XWINDOW (w->prev)->next = p->window;
-	    }
-	  else
-	    {
-	      w->prev = Qnil;
-	      if (!NILP (w->parent))
-		{
-		  if (WINDOW_WIDTH (p) == WINDOW_WIDTH (XWINDOW (w->parent)))
-		    {
-		      XWINDOW (w->parent)->vchild = p->window;
-		      XWINDOW (w->parent)->hchild = Qnil;
-		    }
-		  else
-		    {
-		      XWINDOW (w->parent)->hchild = p->window;
-		      XWINDOW (w->parent)->vchild = Qnil;
-		    }
-		}
-	    }
-	  if (!w->config_mark)
-	    {
-	      /* #### This should be equivalent to the window previously
-		 having been dead.  If we're brave, we'll put in an
-		 assertion to this effect. */
-	      MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
-	    }
-	  else /* if (!EQ (w->buffer, p->buffer)) */
-	    {
-	      /* With the new redisplay we let it know that a change has
-		 been made and it will take care of the rest.  If we don't
-		 tell it something has possibly changed it could lead to
-		 incorrect display. */
-	      MARK_WINDOWS_CHANGED (w);
-	    }
-
-	  WINDOW_LEFT (w) = WINDOW_LEFT (p);
-	  WINDOW_TOP (w) = WINDOW_TOP (p);
-	  WINDOW_WIDTH (w) = WINDOW_WIDTH (p);
-	  WINDOW_HEIGHT (w) = WINDOW_HEIGHT (p);
-	  w->hscroll = p->hscroll;
-	  w->modeline_hscroll = p->modeline_hscroll;
-	  w->line_cache_last_updated = Qzero;
-	  /* When we restore a window's configuration, the identity of
-	     the window hasn't actually changed - so there is no
-	     reason why we shouldn't preserve the instance cache for
-	     it - unless it was originally deleted. This will often
-	     buy us something as we will not have to re-instantiate
-	     all the instances. This is because this is an instance
-	     cache - not a display cache. Preserving the display cache
-	     would definitely be wrong.
-
-	     We specifically want to do this for tabs, since for some
-	     reason finding a file will cause the configuration to be
-	     set. */
-	  if (NILP (w->subwindow_instance_cache))
-	    w->subwindow_instance_cache =
-	      make_image_instance_cache_hash_table ();
-
-	  SET_LAST_MODIFIED (w, 1);
-	  SET_LAST_FACECHANGE (w);
-	  w->config_mark = 0;
-
-	  /* #### Consider making the instance cache a WINDOW_SAVED_SLOT. */
-#define WINDOW_SLOT(slot)
-#define WINDOW_SAVED_SLOT(slot, compare) w->slot = p->slot;
-#include "winslots.h"
-
-	  /* Reinstall the saved buffer and pointers into it.  */
-	  if (NILP (p->buffer))
-	    w->buffer = p->buffer;
-	  else
-	    {
-	      if (BUFFER_LIVE_P (XBUFFER (p->buffer)))
-		/* If saved buffer is alive, install it.  */
-		{
-		  w->buffer = p->buffer;
-		  w->start_at_line_beg = p->start_at_line_beg;
-		  set_marker_restricted (w->start[CURRENT_DISP],
-					 Fmarker_position (p->start),
-					 w->buffer);
-		  set_marker_restricted (w->pointm[CURRENT_DISP],
-					 Fmarker_position (p->pointm),
-					 w->buffer);
-		  set_marker_restricted (w->sb_point,
-					 Fmarker_position (p->sb_point),
-					 w->buffer);
-		  Fset_marker (XBUFFER (w->buffer)->mark,
-			       Fmarker_position (p->mark), w->buffer);
-
-		  /* As documented in Fcurrent_window_configuration, don't
-		     save the location of point in the buffer which was current
-		     when the window configuration was recorded.  */
-		  if (!EQ (p->buffer, new_current_buffer) &&
-		      XBUFFER (p->buffer) == current_buffer)
-		    Fgoto_char (w->pointm[CURRENT_DISP], Qnil);
-		}
-	      else if (NILP (w->buffer) ||
-		       !BUFFER_LIVE_P (XBUFFER (w->buffer)))
-		/* Else if window's old buffer is dead too, get a live one.  */
-		{
-		  /* #### The following line makes me nervous... */
-		  /* w->buffer = Fcdr (Fcar (XFRAME (w->frame)->buffer_alist));*/
-		  w->buffer = Fget_buffer_create (QSscratch);
-		  /* w->buffer = Fother_buffer (Qnil, w->frame, Qnil); */
-		  /* This will set the markers to beginning of visible
-                     range.  */
-		  set_marker_restricted (w->start[CURRENT_DISP], Qzero, w->buffer);
-		  set_marker_restricted (w->pointm[CURRENT_DISP], Qzero,
-					 w->buffer);
-		  set_marker_restricted (w->sb_point, Qzero, w->buffer);
-		  w->start_at_line_beg = 1;
-		}
-	      else
-		/* Keeping window's old buffer; make sure the markers
-                   are real.  */
-		{
-		  /* Set window markers at start of visible range.  */
-		  if (XMARKER (w->start[CURRENT_DISP])->buffer == 0)
-		    set_marker_restricted (w->start[CURRENT_DISP], Qzero,
-					   w->buffer);
-		  if (XMARKER (w->sb_point)->buffer == 0)
-		    set_marker_restricted (w->sb_point, Qzero, w->buffer);
-		  if (XMARKER (w->pointm[CURRENT_DISP])->buffer == 0)
-		    set_marker_restricted (w->pointm[CURRENT_DISP],
-					   make_int
-					   (BUF_PT (XBUFFER (w->buffer))),
-					   w->buffer);
-		  w->start_at_line_beg = 1;
-		}
-	    }
-	}
-
-      FRAME_ROOT_WINDOW (f) = config->root_window;
-      /* Note that FSFmacs unilaterally calls Fselect_window() here, and
-	 then calls do_switch_frame() below to select the frame that was
-	 recorded in the window config as being selected.
-
-	 Instead, we don't ever change the selected frame, and either
-	 call Fselect_window() below if the window config's frame is
-	 currently selected, or just set the selected window of the
-	 window config's frame. */
-
-#if 0
-      /* Set the frame height to the value it had before this function.  */
-      if (previous_frame_height != FRAME_HEIGHT (f)
-	  || previous_frame_width != FRAME_WIDTH (f))
-	change_frame_size (f, previous_frame_height, previous_frame_width, 0);
-#endif
-      /* We just reset the size and position of the minibuffer, to its old
-	 value, which needn't be valid. So we do some magic to see which value
-	 to actually take. Then we set it.
-
-	 The magic:
-	 We take the old value if is in the same units but differs from the
-	 current value.
-
-         #### Now we get more cases correct then ever before, but
-	 are we treating all? For instance what if the frames minibuf window
-	 is no longer the same one?
-      */
-      target_minibuf_height = previous_minibuf_height;
-      if (converted_minibuf_height &&
-	  (converted_minibuf_height * config->minibuf_height) > 0 &&
-	  (converted_minibuf_height !=  config->minibuf_height))
-	{
-	  target_minibuf_height = config->minibuf_height < 0 ?
-	    - (config->minibuf_height * real_font_height) :
-	    config->minibuf_height;
-	  target_minibuf_height =
-	    max(target_minibuf_height,real_font_height);
-	}
-      if (previous_minibuf_height)
-	{
-	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top
-	    = previous_minibuf_top -
-	          (target_minibuf_height - previous_minibuf_height);
-	  set_window_pixheight (FRAME_MINIBUF_WINDOW (f),
-				target_minibuf_height, 0);
-	  set_window_pixwidth  (FRAME_MINIBUF_WINDOW (f),
-			    previous_minibuf_width, 0);
-	}
-
-      /* This is a better way to deal with frame resizing, etc.
-	 What we _actually_ want is for the old (just restored)
-	 root window to fit
-	 into the place of the new one. So we just do that. Simple! */
-      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top = previous_pixel_top;
-      /* Note that this function also updates the subwindow
-	 "pixel_top"s */
-      set_window_pixheight (FRAME_ROOT_WINDOW (f),
-	  previous_pixel_height -
-		  (target_minibuf_height - previous_minibuf_height), 0);
-      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left = previous_pixel_left;
-      /* Note that this function also updates the subwindow
-	 "pixel_left"s */
-      set_window_pixwidth (FRAME_ROOT_WINDOW (f), previous_pixel_width, 0);
-
-      /* If restoring in the current frame make the window current,
-	 otherwise just update the frame selected_window slot to be
-	 the restored current_window. */
-      if (f == selected_frame ())
-	{
-#if 0
-	  /* When using `pop-window-configuration', often the minibuffer
-	     ends up as the selected window even though it's not active ...
-	     I really don't know the cause of this, but it should never
-	     happen.  This kludge should fix it.
-
-	     #### Find out why this is really going wrong. */
-	  if (!minibuf_level &&
-	      MINI_WINDOW_P (XWINDOW (config->current_window)))
-	    window_to_select = Fnext_window (config->current_window,
-					     Qnil, Qnil, Qnil);
-	  else
-	    window_to_select = config->current_window;
-#endif
-	  /* Do this last so that buffer stacking is calculated
-	     correctly. */
-	  Fselect_window (config->current_window, Qnil);
-
-	  if (!NILP (new_current_buffer))
-	    {
-	      Fset_buffer (new_current_buffer);
-	      Frecord_buffer (new_current_buffer);
-	    }
-	  else
-	    {
-	      Fset_buffer (XWINDOW (config->current_window)->buffer);
-	      Frecord_buffer (XWINDOW (config->current_window)->buffer);
-	    }
-	}
-      else
-	set_frame_selected_window (f, config->current_window);
-    }
-  else
-    old_window_config = Qnil; /* Warning suppression */
-
-  /* Restore the minimum heights recorded in the configuration.  */
-  window_min_height = config->min_height;
-  window_min_width = config->min_width;
-
-#if 0 /* FSFmacs */
-  /* see above comment */
-  /* Fselect_window will have made f the selected frame, so we
-     reselect the proper frame here.  Fhandle_switch_frame will change the
-     selected window too, but that doesn't make the call to
-     Fselect_window above totally superfluous; it still sets f's
-     selected window.  */
-  if (FRAME_LIVE_P (XFRAME (config->selected_frame)))
-    do_switch_frame (config->selected_frame, Qnil, 0);
-#endif
-
-  Vminibuffer_scroll_window = config->minibuffer_scroll_window;
-
-  if (FRAME_LIVE_P (f))
-    {
-      /* Do this before calling recompute_all_cached_specifiers_in_window()
-	 so that things like redisplay_redraw_cursor() won't abort due
-	 to no window mirror present. */
-      f->mirror_dirty = 1;
-
-      config = XWINDOW_CONFIGURATION (old_window_config);
-      for (k = 0; k < config->saved_windows_count; k++)
-	{
-	  p = SAVED_WINDOW_N (config, k);
-	  w = XWINDOW (p->window);
-	  /* Remember, we set w->config_mark on all currently visible
-	     windows, and reset it on all newly visible windows.
-	     Any windows still marked need to be deleted. */
-	  if (w->config_mark)
-	    {
-	      mark_window_as_deleted (w);
-	      w->config_mark = 0;
-	    }
-	  else
-	    {
-	      /* We just potentially changed the window's buffer and
-		 potentially turned a dead window into a live one,
-		 so we need to recompute the cached specifier values. */
-	      recompute_all_cached_specifiers_in_window (w);
-	    }
-	}
-    }
-
-  /* Now restore things, when everything else if OK. */
-
-  unbind_to (specpdl_count);
-
-  UNGCPRO;
-
-  return Qnil;
-}
-
 /* Mark all subwindows of a window as deleted.  The argument
    W is actually the subwindow tree of the window in question. */
 
@@ -5943,185 +5103,10 @@ delete_all_subwindows (struct window *w)
   mark_window_as_deleted (w);
 }
 
-
-static int
-count_windows (struct window *window)
-{
-  return 1 +
-    (!NILP (window->next)   ? count_windows (XWINDOW (window->next))   : 0) +
-    (!NILP (window->vchild) ? count_windows (XWINDOW (window->vchild)) : 0) +
-    (!NILP (window->hchild) ? count_windows (XWINDOW (window->hchild)) : 0);
-}
-
-static int
-saved_window_index (Lisp_Object window, struct window_config *config, int lim)
-{
-  int j;
-  for (j = 0; j < lim; j++)
-    {
-      if (EQ (SAVED_WINDOW_N (config, j)->window, window))
-	return j;
-    }
-  abort ();
-  return 0;	/* suppress compiler warning */
-}
-
-static int
-save_window_save (Lisp_Object window, struct window_config *config, int i)
-{
-  struct window *w;
-
-  for (; !NILP (window); window = w->next)
-    {
-      struct saved_window *p = SAVED_WINDOW_N (config, i);
-
-      w = XWINDOW (window);
-      i++;
-      p->window = window;
-      p->buffer = w->buffer;
-      WINDOW_LEFT (p) = WINDOW_LEFT (w);
-      WINDOW_TOP (p) = WINDOW_TOP (w);
-      WINDOW_WIDTH (p) = WINDOW_WIDTH (w);
-      WINDOW_HEIGHT (p) = WINDOW_HEIGHT (w);
-      p->hscroll = w->hscroll;
-      p->modeline_hscroll = w->modeline_hscroll;
-
-#define WINDOW_SLOT(slot)
-#define WINDOW_SAVED_SLOT(slot, compare) p->slot = w->slot;
-#include "winslots.h"
-
-      if (!NILP (w->buffer))
-	{
-	  /* Save w's value of point in the window configuration.
-	     If w is the selected window, then get the value of point
-	     from the buffer; pointm is garbage in the selected window.  */
-	  if (EQ (window, Fselected_window (Qnil)))
-	    {
-	      p->pointm = noseeum_make_marker ();
-	      Fset_marker (p->pointm,
-			   make_int (BUF_PT (XBUFFER (w->buffer))),
-			   w->buffer);
-	    }
-	  else
-	    p->pointm = noseeum_copy_marker (w->pointm[CURRENT_DISP], Qnil);
-
-	  p->start = noseeum_copy_marker (w->start[CURRENT_DISP], Qnil);
-	  p->sb_point = noseeum_copy_marker (w->sb_point, Qnil);
-	  p->start_at_line_beg = w->start_at_line_beg;
-
-	  p->mark = noseeum_copy_marker (XBUFFER (w->buffer)->mark, Qnil);
-	}
-      else
-	{
-	  p->pointm = Qnil;
-	  p->start = Qnil;
-	  p->sb_point = Qnil;
-	  p->mark = Qnil;
-	  p->start_at_line_beg = 0;
-	}
-
-      if (NILP (w->parent))
-	p->parent_index = -1;
-      else
-        p->parent_index = saved_window_index (w->parent, config, i);
-      if (NILP (w->prev))
-	p->prev_index = -1;
-      else
-        p->prev_index = saved_window_index (w->prev, config, i);
-      if (!NILP (w->vchild))
-	i = save_window_save (w->vchild, config, i);
-      if (!NILP (w->hchild))
-	i = save_window_save (w->hchild, config, i);
-    }
-
-  return i;
-}
-
-#if 0 /* FSFmacs */
-/* Added to doc string:
-
-This also records the currently selected frame, and FRAME's focus
-redirection (see `redirect-frame-focus').
-
-*/
-#endif
-
-DEFUN ("current-window-configuration", Fcurrent_window_configuration, 0, 1, 0, /*
-Return an object representing the current window configuration of FRAME.
-If FRAME is nil or omitted, use the selected frame.
-This describes the number of windows, their sizes and current buffers,
-and for each window on FRAME the displayed buffer, where display
-starts, and the positions of point and mark.
-An exception is made for point in the current buffer:
-its value is -not- saved.
-*/
-       (frame))
-{
-  Lisp_Object result;
-  struct frame *f = decode_frame (frame);
-  struct window_config *config;
-  int n_windows = count_windows (XWINDOW (FRAME_ROOT_WINDOW (f)));
-  int minibuf_height;
-  int real_font_height;
-
-  if (n_windows <= countof (Vwindow_configuration_free_list))
-    config = XWINDOW_CONFIGURATION (allocate_managed_lcrecord
-				    (Vwindow_configuration_free_list
-				     [n_windows - 1]));
-  else
-    /* More than ten windows; just allocate directly */
-    config = (struct window_config *)
-      alloc_lcrecord (sizeof_window_config_for_n_windows (n_windows),
-		      &lrecord_window_configuration);
-  result = wrap_window_configuration (config);
-  /*
-  config->frame_width = FRAME_WIDTH (f);
-  config->frame_height = FRAME_HEIGHT (f); */
-  /* #### When using `push-window-configuration', often the minibuffer ends
-     up as the selected window because functions run as the result of
-     user interaction e.g. hyper-apropos. It seems to me the sensible
-     thing to do is not record the minibuffer here. 
-
-     #### Unfortunately this is a change to previous behaviour, however logical
-     it may be, so revert for the moment. */
-#if 0
-  if (FRAME_MINIBUF_ONLY_P (f) || minibuf_level)
-    config->current_window = FRAME_SELECTED_WINDOW (f);
-  else
-    config->current_window = FRAME_LAST_NONMINIBUF_WINDOW (f);
-#endif
-  config->current_window = FRAME_SELECTED_WINDOW (f);
-  config->current_buffer = wrap_buffer (current_buffer);
-  config->minibuffer_scroll_window = Vminibuffer_scroll_window;
-  config->root_window = FRAME_ROOT_WINDOW (f);
-  config->min_height = window_min_height;
-  config->min_width = window_min_width;
-  config->saved_windows_count = n_windows;
-  save_window_save (FRAME_ROOT_WINDOW (f), config, 0);
-
-  /* save the minibuffer height using the heuristics from
-     change_frame_size_1 */
-
-  frame = wrap_frame (f); /* frame could have been nil ! */
-  default_face_height_and_width (frame, &real_font_height, 0);
-  assert(real_font_height > 0);
-
-  if (FRAME_HAS_MINIBUF_P (f) && ! FRAME_MINIBUF_ONLY_P (f))
-    minibuf_height = XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_height;
-  else
-    minibuf_height = 0;
-  config->minibuf_height = (minibuf_height % real_font_height) == 0 ?
-    - (minibuf_height / real_font_height ) :    /* lines */
-    minibuf_height;   /* pixels */
-
-  return result;
-}
-
 Lisp_Object
 save_window_excursion_unwind (Lisp_Object window_config)
 {
-  Lisp_Object val = Fset_window_configuration (window_config);
-  free_window_configuration (window_config);
+  Lisp_Object val = call1 (Qset_window_configuration, window_config);
   return val;
 }
 
@@ -6137,10 +5122,10 @@ Does not restore the value of point in current buffer.
   int speccount = specpdl_depth ();
 
   record_unwind_protect (save_window_excursion_unwind,
-			 Fcurrent_window_configuration (Qnil));
+			 call1 (Qcurrent_window_configuration, Qnil));
   return unbind_to_1 (speccount, Fprogn (args));
 }
-
+
 DEFUN ("current-pixel-column", Fcurrent_pixel_column, 0, 2, 0, /*
 Return the horizontal pixel position of POS in window.
 Beginning of line is column 0. This is calculated using the redisplay
@@ -6263,13 +5248,10 @@ void
 syms_of_window (void)
 {
   INIT_LRECORD_IMPLEMENTATION (window);
-  INIT_LRECORD_IMPLEMENTATION (window_configuration);
   INIT_LRECORD_IMPLEMENTATION (window_mirror);
 
   DEFSYMBOL (Qwindowp);
   DEFSYMBOL (Qwindow_live_p);
-  DEFSYMBOL_MULTIWORD_PREDICATE (Qwindow_configurationp);
-  DEFSYMBOL (Qtemp_buffer_show_hook);
   DEFSYMBOL (Qdisplay_buffer);
 
 #ifdef MEMORY_USAGE_STATS
@@ -6284,6 +5266,8 @@ syms_of_window (void)
 #endif
 
   DEFSYMBOL (Qtruncate_partial_width_windows);
+  DEFSYMBOL (Qcurrent_window_configuration);
+  DEFSYMBOL (Qset_window_configuration);
   
   DEFSUBR (Fselected_window);
   DEFSUBR (Flast_nonminibuf_window);
@@ -6363,9 +5347,6 @@ syms_of_window (void)
 #ifdef MEMORY_USAGE_STATS
   DEFSUBR (Fwindow_memory_usage);
 #endif
-  DEFSUBR (Fwindow_configuration_p);
-  DEFSUBR (Fset_window_configuration);
-  DEFSUBR (Fcurrent_window_configuration);
   DEFSUBR (Fsave_window_excursion);
   DEFSUBR (Fcurrent_pixel_column);
 }
@@ -6373,18 +5354,9 @@ syms_of_window (void)
 void
 reinit_vars_of_window (void)
 {
-  int i;
   /* Make sure all windows get marked */
   minibuf_window = Qnil;
   staticpro_nodump (&minibuf_window);
-
-  for (i = 0; i < countof (Vwindow_configuration_free_list); i++)
-    {
-      Vwindow_configuration_free_list[i] =
-	make_lcrecord_list (sizeof_window_config_for_n_windows (i + 1),
-			    &lrecord_window_configuration);
-      staticpro_nodump (&Vwindow_configuration_free_list[i]);
-    }
 }
 
 void
@@ -6396,11 +5368,6 @@ vars_of_window (void)
 *Non-nil means to scroll if point lands on a line which is clipped.
 */ );
   scroll_on_clipped_lines = 1;
-
-  DEFVAR_LISP ("temp-buffer-show-hook", &Vtemp_buffer_show_hook /*
-See `temp-buffer-show-function'.
-*/ );
-  Vtemp_buffer_show_hook = Qnil;
 
   DEFVAR_LISP ("temp-buffer-show-function", &Vtemp_buffer_show_function /*
 Non-nil means call as function to display a help buffer.

@@ -1,3 +1,12 @@
+2002-12-02  Mike Sperber <mike@xemacs.org>
+
+	* The Great Window Configuration rewrite: Re-implement window
+	configuration functionality in Emacs Lisp.
+
+	* window-xemacs.el (current-window-configuration): 
+	(set-window-configuration): (plus many functions they depend on)
+	Re-implement window configurations in Emacs Lisp.
+
 2002-12-03  Didier Verna  <didier@xemacs.org>
 
 	* faces.el (set-face-background-pixmap-file): Ensure default value

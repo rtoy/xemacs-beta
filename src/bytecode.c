@@ -1098,7 +1098,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       {
 	int count = specpdl_depth ();
 	record_unwind_protect (save_window_excursion_unwind,
-			       Fcurrent_window_configuration (Qnil));
+			       call1 (Qcurrent_window_configuration, Qnil));
 	TOP = Fprogn (TOP);
 	unbind_to (count);
 	break;
