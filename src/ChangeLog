@@ -1,3 +1,10 @@
+2003-08-30  Mike Sperber  <mike@xemacs.org>
+
+	* bytecode.c (execute_optimized_program): Remove broken
+	special-case code in Bvarset for buffer-local variables, reverting
+	previous patch to bytecode.c from 2003-08-18 by Jerry James
+	<james@xemacs.org>.
+
 2003-08-28  Jerry James  <james@xemacs.org>
 
 	* emodules.h: Add extern "C" declarations for C++ module builds.
