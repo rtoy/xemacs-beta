@@ -1,3 +1,14 @@
+2003-09-18  Steve Youngs  <youngs@xemacs.org>
+
+	* configure: Re-generate after Martin's configure.in patch.
+
+2003-09-13  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in (OS_RELEASE): Add support for SunOS 5.10.
+	On current OSes produced by Sun, `uname -r' prints "5.9".
+	It seems likely that on future OSes, `uname -r' will print "5.10".
+	We need to accept multi-digit release numbers.
+
 2003-05-10  Andrew Begel  <abegel@CS.Berkeley.EDU>
 
 	* aclocal.m4 (XE_SHLIB_STUFF): Use -bundle when testing the

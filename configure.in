@@ -1484,9 +1484,14 @@ case "$canonical" in
     esac
 
     case "$canonical" in
-      *-solaris*	  )
+      *-solaris* )
 	opsys=sol2
-	os_release=`uname -r | sed -e 's/^\([[0-9]]\)\.\([[0-9]]\).*/\1\2/'`
+	os_release_major=`uname -r | sed -e 's/^\([[0-9]]\{1,\}\)\.\([[0-9]]\{1,\}\).*/\1/'`
+	os_release_minor=`uname -r | sed -e 's/^\([[0-9]]\{1,\}\)\.\([[0-9]]\{1,\}\).*/\2/'`
+	case "$os_release_minor" in [[0-9]])
+	  os_release_minor="0${os_release_minor}";;
+	esac
+	os_release="${os_release_major}${os_release_minor}"
 	AC_DEFINE_UNQUOTED(OS_RELEASE, $os_release) ;;
 
       dnl The last Sun386 ran 4.0.
@@ -1756,7 +1761,7 @@ case "$opsys" in
   sol2)
    AC_DEFINE(__EXTENSIONS__)
    dnl Solaris 2 before 2.5 had some bugs with feature test macro interaction.
-   if test "$os_release" -ge 55; then
+   if test "$os_release" -ge 505; then
      AC_DEFINE(_XOPEN_SOURCE,500)
      AC_DEFINE(_XOPEN_SOURCE_EXTENDED)
    fi ;;
@@ -2663,7 +2668,7 @@ fi
 
 dnl Link with "-z ignore" on Solaris if supported
 if test "$opsys" = "sol2"; then
-  if test "$os_release" -ge 56; then
+  if test "$os_release" -ge 506; then
     AC_MSG_CHECKING(for \"-z ignore\" linker flag)
     case "`ld -h 2>&1`" in
       *-z\ ignore\|record* ) AC_MSG_RESULT(yes)

@@ -1,3 +1,7 @@
+2003-09-13  Martin Buchholz  <martin@xemacs.org>
+
+	* s/sol2.h: Use OS_RELEASE=os_release_major*100+os_release_minor
+
 2003-09-16  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* xemacs.def.in.in: Add lrecord_memory_descriptions.
