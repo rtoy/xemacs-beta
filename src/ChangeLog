@@ -1,3 +1,12 @@
+2001-05-01  Martin Buchholz  <martin@xemacs.org>
+
+	Fix link error with gcc 3.0 on Linux.
+	* terminfo.c (UP): Remove.
+	* terminfo.c (BC): Remove.
+	* terminfo.c (PC): Remove.
+	They weren't used, and in any case, these symbols should be
+	defined in the *library*.
+
 2001-04-30  Martin Buchholz  <martin@xemacs.org>
 
 	Make string hashing more efficient.
