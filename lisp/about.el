@@ -359,10 +359,19 @@
 		   :format "%t"
 		   :tag-glyph xemacs-logo)
     (widget-insert "\n")
-    (let* ((emacs-short-version (format "%d.%d"
-					emacs-major-version
-					emacs-minor-version))
-	   (emacs-about-version (format "version %s; April 2001"
+    (let* ((emacs-short-version
+	    (cond (emacs-beta-version (format "%d.%d.%d"
+					      emacs-major-version
+					      emacs-minor-version
+					      emacs-beta-version))
+		  (emacs-patch-level (format "%d.%d.%d"
+					     emacs-major-version
+					     emacs-minor-version
+					     emacs-patch-level))
+		  (t (format "%d.%d"
+			     emacs-major-version
+			     emacs-minor-version))))
+	   (emacs-about-version (format "version %s of September 2004"
 					emacs-short-version)))
       (widget-insert (about-center emacs-about-version))
       (widget-create 'link :help-echo "What's new in XEmacs"
@@ -398,9 +407,12 @@ XEmacs has many ")
 		   :button-prefix ""
 		   :button-suffix ""
 		   "advantages")
-    (widget-insert " over GNU Emacs.  In addition, XEmacs 21.4
-provides many ")
-    (widget-create 'link :help-echo "See a list of new features in XEmacs 21.4"
+    (widget-insert (format " over GNU Emacs.  In addition, XEmacs %d.%d
+provides many " emacs-major-version emacs-minor-version))
+    (widget-create 'link
+		   :help-echo (format
+			       "See a list of new features in XEmacs %d.%d"
+			       emacs-major-version emacs-minor-version)
 		   :action 'about-news
 		   :button-prefix ""
 		   :button-suffix ""

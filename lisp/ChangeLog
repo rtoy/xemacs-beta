@@ -1,3 +1,9 @@
+2004-07-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* about.el (about-xemacs):
+	Give more precise version info.
+	Compute version numbers.
+
 2004-09-21  Jerry James  <james@xemacs.org>
 
 	* itimer.el (start-itimer): Fix my bungling of Martin's intentions.
