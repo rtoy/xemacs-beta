@@ -1,3 +1,7 @@
+2004-02-06  Jerry James  <james@xemacs.org>
+
+	* term/linux.el: Change iso-latin-1 to iso-8859-1.
+
 2004-01-28  Jerry James  <james@xemacs.org>
 
 	* subr.el (add-to-invisibility-spec): New, from Emacs 21.3.
