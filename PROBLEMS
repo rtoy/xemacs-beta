@@ -40,6 +40,7 @@ General advice:
 ===============================
 
 ** General
+
     Much general information is in INSTALL.  If it's covered in
     INSTALL, we don't repeat it here.
 
@@ -170,6 +171,132 @@ when attempting to link against libMagick.  The fix is to remove the old
 libz.a in the X11 binary directory.
 
 
+** Motif
+
+Motif is the X11 version of the Gnus torture test: if there's a way to
+crash, Motif will find it.  With the open source release of Motif, it
+seems like a good idea to collect all Motif-related issues in one
+place.
+
+You should also look in your OS's section, as it may not be Motif's
+fault.
+
+*** XEmacs crashes on exit (#1).
+
+The backtrace is something like:
+
+    (gdb) where
+    #0  0xfeb9a480 in _libc_kill () from /usr/lib/libc.so.1
+    #1  0x000b0388 in fatal_error_signal ()
+    #2  <signal handler called>
+    #3  YowIter (ht=0xb, id=0x0, v=0x74682074, client=0x47e3c0)
+        at ImageCache.c:1159
+    #4  0xff26cc5c in _LTHashTableForEachItem (ht=0x4725e8,
+        iter=0xff26dda0 <YowIter>, ClientData=0x47e3c0) at Hash.c:671
+    #5  0xff2a4664 in destroy (w=0x496550) at Screen.c:352
+    #6  0xfef92118 in Phase2Destroy () from /usr/openwin/lib/libXt.so.4
+    #7  0xfef91940 in Recursive () from /usr/openwin/lib/libXt.so.4
+    #8  0xfef91e44 in XtPhase2Destroy () from /usr/openwin/lib/libXt.so.4
+    #9  0xfef91ae8 in _XtDoPhase2Destroy () from /usr/openwin/lib/libXt.so.4
+    #10 0xfef918cc in XtDestroyWidget () from /usr/openwin/lib/libXt.so.4
+    #11 0xfef91438 in CloseDisplay () from /usr/openwin/lib/libXt.so.4
+    #12 0xfef91394 in XtCloseDisplay () from /usr/openwin/lib/libXt.so.4
+    #13 0x0025b8b0 in x_delete_device ()
+    #14 0x000940b0 in delete_device_internal ()
+    #15 0x000806a0 in delete_console_internal ()
+
+This is known to happen with Lesstif version 0.93.36.  Similar
+backtraces have also been observed on HP/UX and Solaris.  There is a
+patch for Lesstif.  (This is not a solution; it just stops the crash.
+It may or may not be harmless, but "it works for the author".)
+
+Note that this backtrace looks a lot like the one in the next item.
+However, this one is invulnerable to the Solaris patches mentioned there.
+
+Frank McIngvale <frankm@hiwaay.net> says:
+
+    Ok, 0.93.34 works, and I tracked down the crash to a section
+    marked "experimental" in 0.93.36. Patch attached, "works for me".
+
+diff -u -r lesstif-0.93.36/lib/Xm/ImageCache.c lesstif-0.93.36-mod/lib/Xm/ImageCache.c
+--- lesstif-0.93.36/lib/Xm/ImageCache.c	2002-08-05 14:53:24.000000000 -0500
++++ lesstif-0.93.36-mod/lib/Xm/ImageCache.c	2002-11-11 11:13:12.000000000 -0600
+@@ -1166,5 +1166,4 @@
+ 	DEBUGOUT(_LtDebug0(__FILE__, NULL, "_LtImageCacheScreenDestroy (XmGetPixmapByDepth) %p\n",
+ 		s));
+ 
+-	(void) _LTHashTableForEachItem(PixmapCache, YowIter, (XtPointer)s);
+ }
+
+*** XEmacs crashes on exit (#2)
+
+Especially frequent with multiple frames.  Crashes that produce C
+backtraces like this:
+
+#0  0xfec9a118 in _libc_kill () from /usr/lib/libc.so.1
+#1  0x77f48 in fatal_error_signal (sig=11)
+    at /codes/rpluim/xemacs-21.4/src/emacs.c:539
+#2  <signal handler called>
+#3  0xfee929f4 in XFindContext () from /usr/openwin/lib/libX11.so.4
+#4  0xfee92930 in XFindContext () from /usr/openwin/lib/libX11.so.4
+#5  0xff297e54 in DisplayDestroy () from /usr/dt/lib/libXm.so.4
+#6  0xfefbece0 in XtCallCallbackList () from /usr/openwin/lib/libXt.so.4
+#7  0xfefc486c in XtPhase2Destroy () from /usr/openwin/lib/libXt.so.4
+#8  0xfefc45d0 in _XtDoPhase2Destroy () from /usr/openwin/lib/libXt.so.4
+#9  0xfefc43b4 in XtDestroyWidget () from /usr/openwin/lib/libXt.so.4
+#10 0x15cf9c in x_delete_device (d=0x523f00)
+
+are caused by buggy Motif libraries.  Installing the following patches
+has been reported to solve the problem on Solaris 2.7:
+
+107081-40 107656-07
+
+For information (although they have not been confirmed to work), the
+equivalent patches for Solaris 2.8 are:
+
+108940-33 108652-25
+
+*** On HP-UX 11.0 XEmacs causes excessive X11 errors when running.
+    (also appears on AIX as reported in comp.emacs.xemacs)
+
+Marcus Thiessel <marcus@xemacs.org>
+
+  Unfortunately, XEmacs releases prior to 21.0 don't work with
+  Motif2.1. It will compile but you will get excessive X11 errors like
+
+  xemacs: X Error of failed request:  BadGC (invalid GC parameter)
+
+  and finally XEmacs gets killed. A workaround is to use the
+  Motif1.2_R6 libraries. You can the following line to your call to
+  configure:
+
+     --x-libraries="/usr/lib/Motif1.2_R6 -L/usr/lib/X11R6"
+
+  Make sure /usr/lib/Motif1.2_R6/libXm.sl is a link to
+  /usr/lib/Motif1.2_R6/libXm.3.
+
+*** On HP-UX 11.0: Object "" does not have windowed ancestor
+
+Marcus Thiessel <marcus@xemacs.org>
+
+  XEmacs dies without core file and reports:
+
+    Error: Object "" does not have windowed ancestor.
+
+  This is a bug. Please apply the patch PHSS_19964 (check if
+  superseded). The other alternative is to link with Motif1.2_R6 (see
+  previous item).
+
+*** Motif dialog boxes lose on Irix.
+
+Larry Auton <lda@control.att.com> writes:
+Beware of not specifying
+
+	--with-dialogs=athena
+
+if it builds with the motif dialogs [boom!] you're a dead man.
+
+
 ** AIX
 *** IBM compiler fails: "The character # is not a valid C source character."
 
@@ -233,33 +360,6 @@ Valdis.Kletnieks@vt.edu writes:
 
 
 ** SunOS/Solaris
-*** Crashes when using Motif libraries, especially with multiple frames.
-
-Crashes that produce C-backtraces like this:
-
-#0  0xfec9a118 in _libc_kill () from /usr/lib/libc.so.1
-#1  0x77f48 in fatal_error_signal (sig=11)
-    at /codes/rpluim/xemacs-21.4/src/emacs.c:539
-#2  <signal handler called>
-#3  0xfee929f4 in XFindContext () from /usr/openwin/lib/libX11.so.4
-#4  0xfee92930 in XFindContext () from /usr/openwin/lib/libX11.so.4
-#5  0xff297e54 in DisplayDestroy () from /usr/dt/lib/libXm.so.4
-#6  0xfefbece0 in XtCallCallbackList () from /usr/openwin/lib/libXt.so.4
-#7  0xfefc486c in XtPhase2Destroy () from /usr/openwin/lib/libXt.so.4
-#8  0xfefc45d0 in _XtDoPhase2Destroy () from /usr/openwin/lib/libXt.so.4
-#9  0xfefc43b4 in XtDestroyWidget () from /usr/openwin/lib/libXt.so.4
-#10 0x15cf9c in x_delete_device (d=0x523f00)
-
-are caused by buggy Motif libraries.  Installing the following patches
-has been reported to solve the problem on Solaris 2.7:
-
-107081-40 107656-07
-
-For information (although they have not been confirmed to work), the
-equivalent patches for Solaris 2.8 are:
-
-108940-33 108652-25
-
 *** Dumping error when using GNU binutils / GNU ld on a Sun.
 
 Errors similar to the following:
@@ -563,37 +663,6 @@ Marcus Thiessel <marcus@xemacs.org>
 
   This might be a sed problem. For your own safety make sure to use
   GNU sed while dumping XEmacs.
-
-*** On HP-UX 11.0 XEmacs causes excessive X11 errors when running.
-    (also appears on AIX as reported in comp.emacs.xemacs)
-
-Marcus Thiessel <marcus@xemacs.org>
-
-  Unfortunately, XEmacs releases prior to 21.0 don't work with
-  Motif2.1. It will compile but you will get excessive X11 errors like
-
-  xemacs: X Error of failed request:  BadGC (invalid GC parameter)
-
-  and finally XEmacs gets killed. A workaround is to use the
-  Motif1.2_R6 libraries. You can the following line to your call to
-  configure:
-
-     --x-libraries="/usr/lib/Motif1.2_R6 -L/usr/lib/X11R6"
-
-  Make sure /usr/lib/Motif1.2_R6/libXm.sl is a link to
-  /usr/lib/Motif1.2_R6/libXm.3.
-
-*** On HP-UX 11.0: Object "" does not have windowed ancestor
-
-Marcus Thiessel <marcus@xemacs.org>
-
-  XEmacs dies without core file and reports:
-
-    Error: Object "" does not have windowed ancestor.
-
-  This is a bug. Please apply the patch PHSS_19964 (check if
-  superseded). The other alternative is to link with Motif1.2_R6 (see
-  previous item).
 
 
 ** SCO OpenServer
@@ -1480,27 +1549,6 @@ affected virtually all ioctl() calls.
 
 
 ** Linux
-*** XEmacs crashes on exit.
-
-This is known to happen with Lesstif version 0.93.36.  It is
-apparently due to breakage in Lesstif.  There is a patch for Lesstif.
-
-Frank McIngvale <frankm@hiwaay.net> says:
-
-    Ok, 0.93.34 works, and I tracked down the crash to a section
-    marked "experimental" in 0.93.36. Patch attached, "works for me".
-
-diff -u -r lesstif-0.93.36/lib/Xm/ImageCache.c lesstif-0.93.36-mod/lib/Xm/ImageCache.c
---- lesstif-0.93.36/lib/Xm/ImageCache.c	2002-08-05 14:53:24.000000000 -0500
-+++ lesstif-0.93.36-mod/lib/Xm/ImageCache.c	2002-11-11 11:13:12.000000000 -0600
-@@ -1166,5 +1166,4 @@
- 	DEBUGOUT(_LtDebug0(__FILE__, NULL, "_LtImageCacheScreenDestroy (XmGetPixmapByDepth) %p\n",
- 		s));
- 
--	(void) _LTHashTableForEachItem(PixmapCache, YowIter, (XtPointer)s);
- }
-
-
 *** XEmacs crashes on startup, in make-frame.
 
 Typically the Lisp backtrace includes
@@ -1688,15 +1736,6 @@ latest version of Xpm somewhere and then use the --site-includes and
 The program mkpts (which may be in `/usr/adm' or `/usr/sbin') needs to
 be set-UID to root, or non-root programs like Emacs will not be able
 to allocate ptys reliably.
-
-*** Motif dialog boxes lose on Irix.
-
-Larry Auton <lda@control.att.com> writes:
-Beware of not specifying
-
-	--with-dialogs=athena
-
-if it builds with the motif dialogs [boom!] you're a dead man.
 
 *** Beware of the default image & graphics library on Irix
 
