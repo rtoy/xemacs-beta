@@ -95,3 +95,30 @@ do							\
   if (do_backtrace)					\
     POP_BACKTRACE (backtrace);				\
 } while (0)
+
+#define RETURN_EXIT_PROFILING(tag, type, expr)	\
+do						\
+{						\
+  type _ret_exitpr_ = (expr);			\
+  PROFILE_RECORD_EXITING_SECTION (tag);		\
+  RETURN_SANS_WARNINGS _ret_exitpr_;		\
+} while (0)
+
+#define RETURN_LISP_EXIT_PROFILING(tag, expr)		\
+  RETURN_EXIT_PROFILING (tag, Lisp_Object, expr)
+  
+#define RETURN_UNGCPRO_EXIT_PROFILING(tag, expr)	\
+{							\
+  Lisp_Object ret_ungc_val = (expr);			\
+  UNGCPRO;						\
+  PROFILE_RECORD_EXITING_SECTION (tag);			\
+  RETURN_SANS_WARNINGS ret_ungc_val;			\
+} while (0)
+
+#ifdef DEBUG_XEMACS
+extern Lisp_Object QSin_temp_spot_1;
+extern Lisp_Object QSin_temp_spot_2;
+extern Lisp_Object QSin_temp_spot_3;
+extern Lisp_Object QSin_temp_spot_4;
+extern Lisp_Object QSin_temp_spot_5;
+#endif /* DEBUG_XEMACS */

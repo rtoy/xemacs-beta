@@ -1,5 +1,5 @@
 /* Why the hell is XEmacs so fucking slow?
-   Copyright (C) 1996, 2002, 2003 Ben Wing.
+   Copyright (C) 1996, 2002, 2003, 2004 Ben Wing.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -67,6 +67,15 @@ int profiling_active;
 
 static Lisp_Object QSprocessing_events_at_top_level;
 static Lisp_Object QSunknown, QSprofile_overhead;
+
+#ifdef DEBUG_XEMACS
+/* For temporary profiling */
+Lisp_Object QSin_temp_spot_1;
+Lisp_Object QSin_temp_spot_2;
+Lisp_Object QSin_temp_spot_3;
+Lisp_Object QSin_temp_spot_4;
+Lisp_Object QSin_temp_spot_5;
+#endif /* DEBUG_XEMACS */
 
 static Lisp_Object Qtiming, Qtotal_timing, Qcall_count;
 static Lisp_Object Qgc_usage, Qtotal_gc_usage;
@@ -672,6 +681,23 @@ value can be.
 #endif /* 0 */
 
   profiling_lock = 0;
+
+#ifdef DEBUG_XEMACS
+  QSin_temp_spot_1 = build_msg_string ("(in temp spot 1)");
+  staticpro (&QSin_temp_spot_1);
+
+  QSin_temp_spot_2 = build_msg_string ("(in temp spot 2)");
+  staticpro (&QSin_temp_spot_2);
+
+  QSin_temp_spot_3 = build_msg_string ("(in temp spot 3)");
+  staticpro (&QSin_temp_spot_3);
+
+  QSin_temp_spot_4 = build_msg_string ("(in temp spot 4)");
+  staticpro (&QSin_temp_spot_4);
+
+  QSin_temp_spot_5 = build_msg_string ("(in temp spot 5)");
+  staticpro (&QSin_temp_spot_5);
+#endif /* DEBUG_XEMACS */
 
   QSunknown = build_msg_string ("(unknown)");
   staticpro (&QSunknown);
