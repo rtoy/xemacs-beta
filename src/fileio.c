@@ -374,10 +374,12 @@ Given a Unix syntax file name, returns a string ending in slash.
       
       res = alloca_array (Ibyte,
 			  (wd ? qxestrlen (wd) : 0) + 10); /* go overboard */
+      res[0] = '\0';
       if (p == beg + 4 && IS_DIRECTORY_SEP (*beg) && beg[1] == ':')
 	{
 	  qxestrncpy (res, beg, 2);
 	  beg += 2;
+	  res[2] = '\0';
 	}
 
       if (wd)

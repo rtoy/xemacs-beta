@@ -1,3 +1,13 @@
+2002-11-22  Ben Wing  <ben@xemacs.org>
+
+	* fileio.c: Fix crashes due to incorrectly ported code from
+	FSF.
+
+	* realpath.c: Don't return EIO when a filename is incorrect,
+	since the I/O error gets passed all the way up.  Clean up this
+	file and avoid using macros as a poor-man's dispatch mechanism --
+	it just makes it impossible to follow the code.
+
 2002-11-17  Ben Wing  <ben@xemacs.org>
 
 	* s/cygwin32.h:
