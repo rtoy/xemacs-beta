@@ -1,3 +1,7 @@
+2005-01-06  Andrey Slusar  <anrays@gmail.com>
+
+	* s/freebsd.h: fix build on the FreeBSD 6
+
 2005-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* emacs.c (xemacs-release-date): New version info variable.
