@@ -1,5 +1,19 @@
 2002-03-29  Jonathan Harris  <jonathan@xemacs.org>
 
+	* make-nt-depend:
+	* xemacs.mak (DEPEND):
+	* xemacs.mak (PERL_NEEDS_MORE_QUOTING):
+	* config.inc.samp (PERL_NEEDS_MORE_QUOTING):
+	Moved perl dependency script out into new make-nt-depend file to
+	hopefully finally solve never-ending perl quoting problems.
+
+	* xemacs.mak (TEMACS):
+	* xemacs.mak (make-docargs):
+	* .cvsignore:
+	Generate intermediate files in obj subdirectory, not in nt dir.
+
+2002-03-29  Jonathan Harris  <jonathan@xemacs.org>
+
 	* xemacs.mak: Define STACK_TRACE_EYE_CATCHER.
 
 2002-03-18  Ben Wing  <ben@xemacs.org>

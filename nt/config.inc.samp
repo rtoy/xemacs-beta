@@ -72,13 +72,9 @@ QUICK_BUILD=0
 # generally recommended).
 VERBOSECC=0
 
-# Set this to get nmake to use dependency info (requires Perl to be installed)
+# Set this to get nmake to use dependency info (recommended for development).
+# Requires cygwin or ActiveState versions of Perl to be installed.
 DEPEND=0
-
-# Sometimes perl needs more backslash quoting when it's being run to
-# compute dependency info, sometimes less.  Allah only knows why.  If you
-# get syntax errors in depend.tmp, try changing this.
-PERL_NEEDS_MORE_QUOTING=1
 
 ############################################################################
 

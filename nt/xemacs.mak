@@ -1,6 +1,8 @@
-#   Makefile for Microsoft NMAKE
+# Makefile for Microsoft NMAKE	-*- Makefile -*-
+#
 #   Copyright (C) 1995 Board of Trustees, University of Illinois.
 #   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+#   Copyright (C) 1997, 1998, 2000 Jonathan Harris.
 #   Copyright (C) 1995 Sun Microsystems, Inc.
 #   Copyright (C) 1998 Free Software Foundation, Inc.
 #
@@ -37,7 +39,7 @@ XEMACS=$(MAKEDIR)\..
 LISP=$(XEMACS)\lisp
 LIB_SRC=$(XEMACS)\lib-src
 MODULES=$(XEMACS)\modules
-NT=$(XEMACS)\nt
+NT=$(MAKEDIR)
 OUTDIR=$(NT)\obj
 SRC=$(XEMACS)\src
 LWLIB_SRCDIR=$(XEMACS)\lwlib
@@ -328,33 +330,11 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 !if !defined(DEPEND)
 DEPEND=0
 !endif
-!if !defined(PERL_NEEDS_MORE_QUOTING)
-PERL_NEEDS_MORE_QUOTING=1
-!endif
 !if $(DEPEND) && exist("$(SRC)\depend")
 ! if [if not exist $(OUTDIR)\nul mkdir "$(OUTDIR)"]
 ! endif
-# #### Yuuuuuuuuuuck!!!  Cygwin is too smart for its own good.  If we are
-# being run from within Cygwin, a Cygwin Perl seems to require twice as
-# much backslash quoting.  This does not happen, of course, with a non-
-# Cygwin Perl, so in that circumstance, you'd be screwed and would have
-# to fix this Makefile to not have a special Cygwin case.
-# ! if defined(_)
-# #### 3-17-02 Double yuck!  Suddenly, perl is wanting more quoting always.
-# #### I have no idea what changed.  So I'm just making a variable for
-# #### this. --ben
-! if $(PERL_NEEDS_MORE_QUOTING)
-!  if [perl -p -e "s/^\\x23if defined(.+)/!if defined$$1/; s/^\\x23e/!e/;" \
-	-e "s/([\\s=^])([\\w\\d\\.\\-^]+\\.[ch^])/$$1$(SRC:\=\\\\)\\\\$$2/g;" \
-	-e "s/^(.+)\\.o:(.+)/$(OUTDIR:\=\\\\)\\\\$$1.obj:$$2 $(NT:\=\\\\)\\\\config.inc/;" \
-	< $(SRC)\depend > $(OUTDIR)\depend.tmp]
-!  endif
-! else
-!  if [perl -p -e "s/^\x23if defined(.+)/!if defined$$1/; s/^\x23e/!e/;" \
-	-e "s/([\s=^])([\w\d\.\-^]+\.[ch^])/$$1$(SRC:\=\\)\\$$2/g;" \
-	-e "s/^(.+)\.o:(.+)/$(OUTDIR:\=\\)\\$$1.obj:$$2 $(NT:\=\\)\\config.inc/;" \
-	< $(SRC)\depend > $(OUTDIR)\depend.tmp]
-!  endif
+# This perl script used to be inline but that caused too many quoting problems
+! if [perl .\make-nt-depend -s=$(SRC) -c=$(NT) -o=$(OUTDIR) < $(SRC)\depend > $(OUTDIR)\depend.tmp]
 ! endif
 ! include "$(OUTDIR)\depend.tmp"
 !else
@@ -930,9 +910,9 @@ $(OUTDIR)\TransientEmacsShell.obj: $(TEMACS_SRC)\EmacsShell-sub.c
 
 $(TEMACS): $(TEMACS_INCLUDES) $(TEMACS_OBJS) $(OUTDIR)\xemacs.res
 !if $(DEBUG_XEMACS)
-	@dir /b/s $(OUTDIR)\*.sbr > bscmake.tmp
-	bscmake -nologo -o$(TEMACS_BROWSE) @bscmake.tmp
-	-$(DEL) bscmake.tmp
+	@dir /b/s $(OUTDIR)\*.sbr > $(OUTDIR)\bscmake.tmp
+	bscmake -nologo -o$(TEMACS_BROWSE) @$(OUTDIR)\bscmake.tmp
+	-$(DEL) $(OUTDIR)\bscmake.tmp
 !endif
 !if $(USE_PORTABLE_DUMPER)
 	@if exist $(SRC)\dump-id.c $(DEL) $(SRC)\dump-id.c
@@ -1221,8 +1201,8 @@ docfile :: $(DOC)
 # to contain special code to frob $(OUTDIR)\foo.obj into the right file.
 make-docargs: $(TEMACS_OBJS)
 	@echo Creating make-docfile argument file ...
-	-$(DEL) make-docfile.out
-	@!echo $(SRC)\$(**B).c >> make-docfile.out
+	-$(DEL) $(OUTDIR)\make-docfile.tmp
+	@!echo $(SRC)\$(**B).c >> $(OUTDIR)\make-docfile.tmp
 	@echo Done.
 
 $(DOC): $(LIB_SRC)\make-docfile.exe make-docargs
@@ -1230,7 +1210,7 @@ $(DOC): $(LIB_SRC)\make-docfile.exe make-docargs
 	set EMACSBOOTSTRAPLOADPATH=$(LISP);$(PACKAGE_PATH)
 	set EMACSBOOTSTRAPMODULEPATH=$(MODULES)
 	$(TEMACS_BATCH) -l $(TEMACS_DIR)\..\lisp\make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) @make-docfile.out
+	$(LIB_SRC)\make-docfile.exe -a $(DOC) @$(OUTDIR)\make-docfile.tmp
 
 update-elc:
 	set EMACSBOOTSTRAPLOADPATH=$(LISP);$(PACKAGE_PATH)
