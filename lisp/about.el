@@ -1324,7 +1324,14 @@ Sorry, no personal information available about me yet.\n"))
     (purvis
      (widget-insert
       "\
-Sorry, no personal information available about me yet.\n"))
+Graduate of the University of New South Wales and resident of Sydney,
+Australia.  My day job involves developing and maintaining software
+development tools for a telco manufacturer.  I've yet to get XEmacs hacking
+added to my job description.
+
+When not hacking, I relax by chasing after my young son, reading SciFi,
+listening to Hip Hop and serving on various boards and committees of the
+Anglican Church in Sydney.\n"))
     (rickc
      (widget-insert "\
 The hacker formerly known as Rick Busdiecker is a developer and
@@ -1428,6 +1435,10 @@ into serving on the board of directors of the Ultimate Players
 Association.  See ")
      (about-url-link 'vin nil "Visit the UPA homepage")
      (widget-insert ".\n"))
+    (viteno
+     (widget-insert
+      "\
+Sorry, no personal information available about me yet.\n"))
     (vladimir
      (widget-insert "\
 Former technical lead for XEmacs at Sun.  He is now writing a book on
@@ -1845,6 +1856,10 @@ stable XEmacs.  (Actually, he does it 'cause it's fun and he's been
 using emacs for a long, long time.)  Vin also contributed the detached
 minibuffer code as well as a few minor enhancements to the menubar
 options.\n"))
+    (viteno
+     (widget-insert
+      "\
+Norbert is XEmacs' package release manager.\n"))
     (vladimir
      (widget-insert "\
 Former technical lead for XEmacs at Sun.\n"))
