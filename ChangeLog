@@ -1,3 +1,8 @@
+2004-09-21  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.in: Unused parameter and variables warnings are GCC 3
+	or greater.
+
 2004-09-14  Jerry James  <james@xemacs.org>
 
 	* configure.in (TAB): Add unused parameter and variables warnings
