@@ -48,7 +48,6 @@ Boston, MA 02111-1307, USA.  */
 #include "window-impl.h"
 
 #include "console-x-impl.h"
-#include "gui-x.h"
 
 #include "EmacsFrame.h"
 #include "../lwlib/lwlib.h"
@@ -56,9 +55,6 @@ Boston, MA 02111-1307, USA.  */
 static int set_frame_menubar (struct frame *f,
 			      int deep_p,
 			      int first_time_p);
-
-#define FRAME_MENUBAR_DATA(frame) ((frame)->menubar_data)
-#define XFRAME_MENUBAR_DATA(frame) XPOPUP_DATA ((frame)->menubar_data)
 
 #define MENUBAR_TYPE	0
 #define SUBMENU_TYPE	1
@@ -481,9 +477,9 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
       /* Now that we've destructively modified part of the widget value
 	 hierarchy, our list of protected callbacks will no longer be
 	 valid, so we need to recompute it. */
-      snarf_widget_values_for_gcpro (FRAME_MENUBAR_DATA (f));
+      gcpro_popup_callbacks (FRAME_X_MENUBAR_ID (f));
     }
-  else if (!POPUP_DATAP (FRAME_MENUBAR_DATA (f)))
+  else if (!FRAME_X_MENUBAR_ID (f))
     return;
   else
     {
@@ -565,21 +561,12 @@ set_frame_menubar (struct frame *f, int deep_p, int first_time_p)
   if (!data || (!data->next && !data->contents))
     abort ();
 
-  if (NILP (FRAME_MENUBAR_DATA (f)))
-    {
-      struct popup_data *mdata =
-	alloc_lcrecord_type (struct popup_data, &lrecord_popup_data);
-
-      mdata->id = new_lwlib_id ();
-      mdata->last_menubar_buffer = Qnil;
-      mdata->protect_me = Qnil;
-      mdata->menubar_contents_up_to_date = 0;
-      FRAME_MENUBAR_DATA (f) = wrap_popup_data (mdata);
-    }
+  if (!FRAME_X_MENUBAR_ID (f))
+    FRAME_X_MENUBAR_ID (f) = new_lwlib_id ();
 
   /***** now store into the menubar widget, creating it if necessary *****/
 
-  id = XFRAME_MENUBAR_DATA (f)->id;
+  id = FRAME_X_MENUBAR_ID (f);
   if (!FRAME_X_MENUBAR_WIDGET (f))
     {
       Widget parent = FRAME_X_CONTAINER_WIDGET (f);
@@ -612,10 +599,10 @@ set_frame_menubar (struct frame *f, int deep_p, int first_time_p)
      have been freshly created.  They need to be GC-protected, so snarf them
      now and record them into the popup-data object associated with the
      frame. */
-  snarf_widget_values_for_gcpro (FRAME_MENUBAR_DATA (f));
+  gcpro_popup_callbacks (id);
 
-  XFRAME_MENUBAR_DATA (f)->menubar_contents_up_to_date = deep_p;
-  XFRAME_MENUBAR_DATA (f)->last_menubar_buffer =
+  FRAME_X_MENUBAR_CONTENTS_UP_TO_DATE (f) = deep_p;
+  FRAME_X_LAST_MENUBAR_BUFFER (f) =
     XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer;
   return menubar_visible;
 }
@@ -721,8 +708,8 @@ x_update_frame_menubar_internal (struct frame *f)
    */
   int menubar_contents_changed =
     (f->menubar_changed
-     || NILP (FRAME_MENUBAR_DATA (f))
-     || (!EQ (XFRAME_MENUBAR_DATA (f)->last_menubar_buffer,
+     || !FRAME_X_MENUBAR_ID (f)
+     || (!EQ (FRAME_X_LAST_MENUBAR_BUFFER (f),
 	      XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer)));
 
   Boolean menubar_was_visible = XtIsManaged (FRAME_X_MENUBAR_WIDGET (f));
@@ -765,9 +752,10 @@ x_free_frame_menubars (struct frame *f)
   menubar_widget = FRAME_X_MENUBAR_WIDGET (f);
   if (menubar_widget)
     {
-      LWLIB_ID id = XFRAME_MENUBAR_DATA (f)->id;
+      LWLIB_ID id = FRAME_X_MENUBAR_ID (f);
       lw_destroy_all_widgets (id);
-      XFRAME_MENUBAR_DATA (f)->id = 0;
+      ungcpro_popup_callbacks (id);
+      FRAME_X_MENUBAR_ID (f) = 0;
     }
 }
 
@@ -1234,7 +1222,7 @@ command_builder_find_menu_accelerator (struct command_builder *builder)
       Lisp_Object matchp;
 
       widget_value *val;
-      LWLIB_ID id = XPOPUP_DATA (f->menubar_data)->id;
+      LWLIB_ID id = FRAME_X_MENUBAR_ID (f);
 
       val = lw_get_all_values (id);
       if (val)
@@ -1323,10 +1311,10 @@ or by actions defined in menu-accelerator-map.
   LWLIB_ID id;
   widget_value *val;
 
-  if (NILP (f->menubar_data))
+  if (!FRAME_X_MENUBAR_ID (f))
     invalid_argument ("Frame has no menubar", Qunbound);
 
-  id = XPOPUP_DATA (f->menubar_data)->id;
+  id = FRAME_X_MENUBAR_ID (f);
   val = lw_get_all_values (id);
   val = val->contents;
   lw_set_menu (FRAME_X_MENUBAR_WIDGET (f), val);

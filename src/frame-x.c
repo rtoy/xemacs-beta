@@ -70,6 +70,7 @@ Lisp_Object Vdefault_x_frame_plist;
 Lisp_Object Qx_resource_name;
 
 static const struct memory_description x_frame_data_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct x_frame, last_menubar_buffer) },
   { XD_LISP_OBJECT, offsetof (struct x_frame, icon_pixmap) },
   { XD_LISP_OBJECT, offsetof (struct x_frame, icon_pixmap_mask) },
   { XD_END }
@@ -2119,6 +2120,7 @@ allocate_x_frame_struct (struct frame *f)
   f->frame_data = xnew_and_zero (struct x_frame);
 
   /* yeah, except the lisp ones */
+  FRAME_X_LAST_MENUBAR_BUFFER (f) = Qnil;
   FRAME_X_ICON_PIXMAP (f) = Qnil;
   FRAME_X_ICON_PIXMAP_MASK (f) = Qnil;
 }
@@ -2194,6 +2196,7 @@ x_init_frame_3 (struct frame *f)
 static void
 x_mark_frame (struct frame *f)
 {
+  mark_object (FRAME_X_LAST_MENUBAR_BUFFER (f));
   mark_object (FRAME_X_ICON_PIXMAP (f));
   mark_object (FRAME_X_ICON_PIXMAP_MASK (f));
 }

@@ -51,8 +51,15 @@ int mswindows_is_blocking;
    The basic idea is simple.  We set a profiling timer using setitimer
    (ITIMER_PROF), which generates a SIGPROF every so often.  (This runs not
    in real time but rather when the process is executing or the system is
-   running on behalf of the process.) When the signal goes off, we see what
-   we're in, and add 1 to the count associated with that function.
+   running on behalf of the process -- at least, that is the case under
+   Unix.  Under MS Windows and Cygwin, there is no setitimer(), so we
+   simulate it using multimedia timers, which run in real time.  To make
+   the results a bit more realistic, we ignore ticks that go off while
+   blocking on an event wait.  Note that Cygwin does provide a simulation
+   of setitimer(), but it's in real time anyway, since Windows doesn't
+   provide a way to have process-time timers, and furthermore, it's broken,
+   so we don't use it.) When the signal goes off, we see what we're in, and
+   add 1 to the count associated with that function.
 
    It would be nice to use the Lisp allocation mechanism etc. to keep track
    of the profiling information (i.e. to use Lisp hash tables), but we
@@ -706,9 +713,12 @@ vars_of_profile (void)
   DEFVAR_INT ("default-profiling-interval", &default_profiling_interval /*
 Default CPU time in microseconds between profiling sampling.
 Used when the argument to `start-profiling' is nil or omitted.
-Note that the time in question is CPU time (when the program is executing
-or the kernel is executing on behalf of the program) and not real time, and
-there is usually a machine-dependent limit on how small this value can be.
+Under Unix, the time in question is CPU time (when the program is executing
+or the kernel is executing on behalf of the program) and not real time.
+Under MS Windows and Cygwin, the time is real time, but time spent blocking
+while waiting for an event is ignored, to get more accurate results.
+Note that there is usually a machine-dependent limit on how small this
+value can be.
 */ );
   default_profiling_interval = 1000;
 

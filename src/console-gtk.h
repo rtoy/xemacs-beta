@@ -91,5 +91,12 @@ void emacs_gtk_selection_received (GtkWidget *widget,
 				   GtkSelectionData *selection_data,
 				   gpointer user_data);
 
+typedef unsigned int GUI_ID;
+extern GUI_ID new_gui_id (void);
+
+extern void gcpro_popup_callbacks (GUI_ID id, Lisp_Object data);
+extern void ungcpro_popup_callbacks (GUI_ID id);
+extern Lisp_Object get_gcpro_popup_callbacks (GUI_ID id);
+
 #endif /* HAVE_GTK */
 #endif /* _XEMACS_DEVICE_X_H_ */

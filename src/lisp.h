@@ -4541,6 +4541,7 @@ void write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt,
 void stderr_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 void stderr_out_lisp (const CIbyte *, int nargs, ...);
 void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+void external_out (int dest, const CIbyte *fmt, ...) PRINTF_ARGS (2, 3);
 void debug_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (fatal (const CIbyte *,
 							   ...), 1, 2);

@@ -1,6 +1,6 @@
 /* I-connector utility
    Copyright (C) 2000 Kirill M. Katsnelson
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -67,9 +67,18 @@ pump (LPVOID pv_i)
   BYTE buffer [256];
   DWORD really_read, unused;
 
+  /* The docs for ReadFile claim:
+
+  The ReadFile function returns when one of the following is true: a write
+  operation completes on the write end of the pipe, the number of bytes
+  requested has been read, or an error occurs.
+
+  But this is just not true.  ReadFile never seems to block, and unless we
+  Sleep(), we will chew up all the CPU time. --ben
+  */
   while (ReadFile (pi->source, buffer, sizeof (buffer), &really_read, NULL) &&
 	 WriteFile (pi->drain, buffer, really_read, &unused, NULL))
-    ;
+    Sleep (100);
 
   return 0;
 }

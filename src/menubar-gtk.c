@@ -1,7 +1,7 @@
 /* Implements an elisp-programmable menubar -- X interface.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -29,9 +29,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "commands.h"           /* zmacs_regions */
-#include "device.h"
-#include "events.h"
 #include "device-impl.h"
+#include "events.h"
 #include "frame-impl.h"
 #include "gui.h"
 #include "opaque.h"
@@ -39,7 +38,6 @@ Boston, MA 02111-1307, USA.  */
 #include "window-impl.h"
 
 #include "console-gtk-impl.h"
-#include "gui-gtk.h"
 #include "ui-gtk.h"
 #include "menubar.h"
 
@@ -53,9 +51,9 @@ Boston, MA 02111-1307, USA.  */
 
 static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr);
 
-#define FRAME_MENUBAR_DATA(frame) ((frame)->menubar_data)
-#define XFRAME_MENUBAR_DATA_LASTBUFF(frame) (XCAR ((frame)->menubar_data))
-#define XFRAME_MENUBAR_DATA_UPTODATE(frame) (XCDR ((frame)->menubar_data))
+#define FRAME_GTK_MENUBAR_DATA(f) (FRAME_GTK_DATA (f)->menubar_data)
+#define XFRAME_GTK_MENUBAR_DATA_LASTBUFF(f) XCAR (FRAME_GTK_MENUBAR_DATA (f))
+#define XFRAME_GTK_MENUBAR_DATA_UPTODATE(f) XCDR (FRAME_GTK_MENUBAR_DATA (f))
 
 
 /* This is a bogus subclass of GtkMenuBar so that the menu never tries
@@ -1126,7 +1124,7 @@ set_frame_menubar (struct frame *f, int first_time_p)
     unbind_to (count);
   }
 
-  FRAME_MENUBAR_DATA (f) = Fcons (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer, Qt);
+  FRAME_GTK_MENUBAR_DATA (f) = Fcons (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer, Qt);
 
   return (menubar_visible);
 }
@@ -1152,8 +1150,8 @@ gtk_update_frame_menubar_internal (struct frame *f)
    */
   int menubar_contents_changed =
     (f->menubar_changed
-     || NILP (FRAME_MENUBAR_DATA (f))
-     || (!EQ (XFRAME_MENUBAR_DATA_LASTBUFF (f),
+     || NILP (FRAME_GTK_MENUBAR_DATA (f))
+     || (!EQ (XFRAME_GTK_MENUBAR_DATA_LASTBUFF (f),
 	      XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer)));
 
   gboolean menubar_was_visible = GTK_WIDGET_VISIBLE (FRAME_GTK_MENUBAR_WIDGET (f));

@@ -32,7 +32,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-gtk-impl.h"
 #include "glyphs-gtk.h"
-#include "gui-gtk.h"
 #include "scrollbar-gtk.h"
 
 static gboolean scrollbar_cb (GtkAdjustment *adj, gpointer user_data);

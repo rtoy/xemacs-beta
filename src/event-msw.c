@@ -83,7 +83,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_MENUBARS
 # include "menubar.h"
-# include "menubar-msw.h"
 #endif
 
 #ifdef HAVE_DRAGNDROP

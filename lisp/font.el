@@ -42,7 +42,8 @@
 
 (globally-declare-boundp
  '(global-face-data
-   x-font-regexp x-font-regexp-foundry-and-family))
+   x-font-regexp x-font-regexp-foundry-and-family
+   mswindows-font-regexp))
 
 (require 'cl)
 

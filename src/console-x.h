@@ -37,6 +37,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console.h"
 #include "xintrinsic.h"
+#include "../lwlib/lwlib.h"
 
 #include <X11/cursorfont.h>
 #include <X11/keysym.h>
@@ -110,6 +111,26 @@ void expect_x_error (Display *dpy);
 int x_error_occurred_p (Display *dpy);
 int signal_if_x_error (Display *dpy, int resumable_p);
 int x_IO_error_handler (Display *disp);
+
+widget_value *xmalloc_widget_value (void);
+
+LWLIB_ID new_lwlib_id (void);
+
+void gcpro_popup_callbacks (LWLIB_ID id);
+void ungcpro_popup_callbacks (LWLIB_ID id);
+int popup_handled_p (LWLIB_ID id);
+void free_popup_widget_value_tree (widget_value *wv);
+void popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
+			       XtPointer client_data);
+Extbyte *add_accel_and_to_external (Lisp_Object string);
+int button_item_to_widget_value (Lisp_Object gui_object_instance,
+				 Lisp_Object gui_item, widget_value *wv,
+				 int allow_text_field_p, int no_keys_p,
+				 int menu_entry_p, int accel_p);
+widget_value * gui_items_to_widget_values (Lisp_Object gui_object_instance,
+					   Lisp_Object items, int accel_p);
+Extbyte *menu_separator_style_and_to_external (const Ibyte *s);
+Lisp_Object widget_value_unwind (Lisp_Object closure);
 
 void x_output_string (struct window *w, struct display_line *dl,
 		      Ichar_dynarr *buf, int xpos, int xoffset,

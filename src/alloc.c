@@ -4285,7 +4285,6 @@ disksave_object_finalization (void)
   Vdata_directory = Qnil;
   Vsite_directory = Qnil;
   Vdoc_directory = Qnil;
-  Vconfigure_info_directory = Qnil;
   Vexec_path = Qnil;
   Vload_path = Qnil;
   /* Vdump_load_path = Qnil; */

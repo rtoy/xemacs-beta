@@ -1,3 +1,123 @@
+2003-03-06  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (build-the-mofo):
+	* Makefile.in.in (.NO_PARALLEL): Removed.
+	* Makefile.in.in (release): Removed.
+	* Makefile.in.in (update-elc-2): Removed.
+	* Makefile.in.in (link_deps):
+	* Makefile.in.in (dump-id.c): New.
+	* Makefile.in.in (load-shadows): Removed.
+	* Makefile.in.in (.PHONY): Removed.
+	* Makefile.in.in (FRC.needtodump): Removed.
+	* Makefile.in.in (temacs_link_args):
+	* Makefile.in.in (obj_src):
+	Order sections in main build process and add comments.  Add
+	additional dependencies to try and prevent later steps from
+	happening when failures in earlier steps have occurred.
+
+	* alloc.c (disksave_object_finalization):
+	Don't arbitrarily clear Vconfigure_info_directory since it
+	messes up separate build/source dirs.
+	
+	* console.c (get_console_variant):
+	* console.c (Fvalid_console_type_p):
+	* console.c (Fconsole_type):
+	* console.h (console_variant):
+	* device-msw.c:
+	* device.c:
+	Add accidentally omitted msprinter console and data descriptions.
+	
+	* print.c:
+	* print.c (write_string_to_stdio_stream_1):
+	* print.c (write_string_to_stdio_stream):
+	* print.c (write_string_to_external_output_va):
+	* print.c (stderr_out):
+	* print.c (stdout_out):
+	* print.c (debug_out):
+	* print.c (fatal):
+	* print.c (write_string_to_alternate_debugging_output):
+	* print.c (debug_prin1):
+	* print.c (ext_print_begin):
+	* print.c (debug_print):
+	* print.c (dpa):
+	* print.c (debug_short_backtrace):
+	* print.c (syms_of_print):
+	* console-msw.c (write_string_to_mswindows_debugging_output):
+	Add clear-left-side functionality to help keep stdio/stderr
+	output from separate sources on separate lines.  Generalize
+	the different kinds of debugging output. Add dpa().
+	
+	* profile.c:
+	* profile.c (vars_of_profile):
+	Add better docs on Unix/Windows differences.
+	
+	* regex.c:
+	* regex.c (RE_TRANSLATE_1):
+	* regex.c (REGEX_ALLOCATE_STACK):
+	* regex.c (RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS):
+	* regex.c (RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS):
+	* regex.c (re_search_2):
+	* regex.c (re_match_2_internal):
+	Fix problems with rel-alloc compilation caused by previous patch.
+
+	* emacs.c (assert_failed):
+	Seg fault rather than abort on Cygwin, since gdb doesn't trap
+	aborts properly.
+	
+	* console-gtk-impl.h:
+	* console-gtk-impl.h (struct gtk_frame):
+	* console-gtk.h:
+	* console-msw.h:
+	* console-x-impl.h:
+	* console-x-impl.h (struct x_frame):
+	* console-x.h:
+	* dialog-gtk.c:
+	* dialog-x.c:
+	* event-msw.c:
+	* frame-gtk.c:
+	* frame-gtk.c (allocate_gtk_frame_struct):
+	* frame-gtk.c (gtk_mark_frame):
+	* frame-x.c:
+	* frame-x.c (allocate_x_frame_struct):
+	* frame-x.c (x_mark_frame):
+	* frameslots.h:
+	* glyphs-gtk.c:
+	* glyphs-x.c:
+	* glyphs-x.c (x_redisplay_widget):
+	* glyphs-x.c (x_button_redisplay):
+	* glyphs-x.c (x_tab_control_redisplay):
+	* gui-gtk.c:
+	* gui-x.c:
+	* gui-x.c (new_lwlib_id):
+	* gui-x.c (struct widget_value_mapper):
+	* gui-x.c (snarf_widget_value_mapper):
+	* gui-x.c (snarf_widget_values_for_gcpro):
+	* gui-x.c (gcpro_popup_callbacks):
+	* gui-x.c (ungcpro_popup_callbacks):
+	* gui-x.c (syms_of_gui_x):
+	* gui-x.c (reinit_vars_of_gui_x):
+	* inline.c:
+	* menubar-gtk.c:
+	* menubar-gtk.c (FRAME_GTK_MENUBAR_DATA):
+	* menubar-gtk.c (set_frame_menubar):
+	* menubar-gtk.c (gtk_update_frame_menubar_internal):
+	* menubar-msw.c:
+	* menubar-x.c:
+	* menubar-x.c (MENUBAR_TYPE):
+	* menubar-x.c (pre_activate_callback):
+	* menubar-x.c (set_frame_menubar):
+	* menubar-x.c (x_update_frame_menubar_internal):
+	* menubar-x.c (x_free_frame_menubars):
+	* menubar-x.c (command_builder_find_menu_accelerator):
+	* menubar-x.c (Faccelerate_menu):
+	* scrollbar-gtk.c:
+	* scrollbar-x.c:
+	* ui-gtk.c:
+	Delete popup-data object.  Delete menubar_data field from frames,
+	since its usage is frame-specific.  Delete menubar-msw.h,
+	gui-x.h, gui-gtk.h.  Clean up handling of lwlib callback data
+	GCPRO'ing and add missing GCPRO recomputation in widget code.
+
 2003-03-01  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:

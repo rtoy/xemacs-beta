@@ -69,9 +69,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-x-impl.h"
 #include "glyphs-x.h"
-#ifdef HAVE_X_WIDGETS
-#include "gui-x.h"
-#endif
 #include "objects-x-impl.h"
 #include "xmu.h"
 
@@ -2202,9 +2199,9 @@ x_redisplay_widget (Lisp_Image_Instance *p)
     }
 
   /* now modify the widget */
-  lw_modify_all_widgets (IMAGE_INSTANCE_X_WIDGET_LWID (p),
-			 wv, True);
+  lw_modify_all_widgets (IMAGE_INSTANCE_X_WIDGET_LWID (p), wv, True);
   free_widget_value_tree (wv);
+  gcpro_popup_callbacks (IMAGE_INSTANCE_X_WIDGET_LWID (p));
 #endif
 }
 
@@ -2574,9 +2571,9 @@ x_button_redisplay (Lisp_Object image_instance)
 				IMAGE_INSTANCE_WIDGET_ITEMS (p), 1);
 
   /* now modify the widget */
-  lw_modify_all_widgets (IMAGE_INSTANCE_X_WIDGET_LWID (p),
-			 wv, True);
+  lw_modify_all_widgets (IMAGE_INSTANCE_X_WIDGET_LWID (p), wv, True);
   free_widget_value_tree (wv);
+  gcpro_popup_callbacks (IMAGE_INSTANCE_X_WIDGET_LWID (p));
 }
 
 /* get properties of a button */
@@ -2766,6 +2763,7 @@ x_tab_control_redisplay (Lisp_Object image_instance)
 
       lw_modify_all_widgets (IMAGE_INSTANCE_X_WIDGET_LWID (ii), wv, True);
       free_widget_value_tree (wv);
+      gcpro_popup_callbacks (IMAGE_INSTANCE_X_WIDGET_LWID (ii));
     }
 }
 

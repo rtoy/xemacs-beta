@@ -53,6 +53,7 @@ enum console_variant
   gtk_console,
   x_console,
   mswindows_console,
+  msprinter_console,
   stream_console
 };
 

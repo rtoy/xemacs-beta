@@ -142,6 +142,11 @@ Lisp_Object mswindows_enumerate_fonts (HDC hdc);
 
 #ifdef HAVE_MENUBARS
 int mswindows_char_is_accelerator (struct frame *f, Ichar ch);
+
+/* Message handlers. Called from window procedure */
+Lisp_Object mswindows_handle_wm_initmenupopup (HMENU hmenu, struct frame *frm);
+Lisp_Object mswindows_handle_wm_initmenu (HMENU hmenu, struct frame *f);
+Lisp_Object mswindows_handle_wm_command (struct frame *f, WORD command);
 #endif
 
 #ifdef HAVE_TOOLBARS
@@ -178,7 +183,8 @@ EXFUN (Fmswindows_message_box, 3);
 extern int mswindows_message_outputted;
 void mswindows_hide_console (void);
 int mswindows_output_console_string (const Ibyte *ptr, Bytecount len);
-void write_string_to_mswindows_debugging_output (Ibyte *str, Bytecount len);
+void write_string_to_mswindows_debugging_output (const Ibyte *str,
+						 Bytecount len);
 
 
 #ifdef MULE

@@ -79,6 +79,19 @@ const struct sized_memory_description mswindows_device_data_description = {
   sizeof (struct mswindows_device), mswindows_device_data_description_1
 };
 
+static const struct memory_description msprinter_device_data_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct msprinter_device, name) },
+  { XD_LISP_OBJECT, offsetof (struct msprinter_device, devmode) },
+  { XD_LISP_OBJECT, offsetof (struct msprinter_device, fontlist) },
+  { XD_END }
+};
+
+extern const struct sized_memory_description msprinter_device_data_description;
+
+const struct sized_memory_description msprinter_device_data_description = {
+  sizeof (struct msprinter_device), msprinter_device_data_description_1
+};
+
 static Lisp_Object allocate_devmode (DEVMODEW *src_devmode, int do_copy,
 				     Lisp_Object src_name, struct device *d);
 

@@ -246,13 +246,20 @@ or go back to just one window (by deleting all but the selected window)."
 
 (put 'file-error 'display-error
      #'(lambda (error-object stream)
-         (let ((tail (cdr error-object))
-               (first t))
-           (princ (car tail) stream)
-           (while (setq tail (cdr tail))
-             (princ (if first ": " ", ") stream)
-             (princ (car tail) stream)
-             (setq first nil)))))
+	 (let ((type (car error-object))
+	       (tail (cdr error-object))
+	       (first t)
+	       (print-message-label 'error))
+	   (if (eq type 'file-error)
+	       (progn (princ (car tail) stream)
+		      (setq tail (cdr tail)))
+	     (princ (or (gettext (get type 'error-message)) type)
+		    stream))
+	   (while tail
+	     (princ (if first ": " ", ") stream)
+	     (prin1 (car tail) stream)
+	     (setq tail (cdr tail)
+		   first nil)))))
 
 (put 'undefined-keystroke-sequence 'display-error
      #'(lambda (error-object stream)
@@ -594,7 +601,7 @@ any other non-digit terminates the character code and is then used as input."))
 	    ((not first)
 	     (setq unread-command-events (list char)
 		   done t))
-	    (t (setq code char
+	    (t (setq code (char-to-int char)
 		     done t)))
       (setq first nil))
     (int-to-char code)))

@@ -1238,7 +1238,7 @@ If RAWFILE is non-nil, the file is read literally."
 	     (number (nthcdr 10 (file-attributes truename)))
 ;	   ;; Find any buffer for a file which has same truename.
 ;	   (other (and (not buf) (find-buffer-visiting filename)))
-	     (error nil))
+	     )
 
 ; 	;; Let user know if there is a buffer with the same truename.
 ; 	(if other
@@ -3554,7 +3554,8 @@ Return nil if identical, and the new buffer if different."
 		 (with-output-to-temp-buffer "*Directory*"
 		   (buffer-disable-undo standard-output)
 		   (save-excursion
-		     (let ((switches dired-listing-switches))
+		     (let ((switches
+			    (declare-boundp dired-listing-switches)))
 		       (if (file-symlink-p file)
 			   (setq switches (concat switches "L")))
 		       (set-buffer standard-output)
@@ -3634,18 +3635,25 @@ Return nil if identical, and the new buffer if different."
 						(list temp file-name)))
 				      (io-error
 				       (save-excursion
-					 (let ((switches dired-listing-switches))
+					 (let ((switches
+						(declare-boundp
+						 dired-listing-switches)))
 					   (if (file-symlink-p file)
 					       (setq switches (concat switches "L")))
 					   (set-buffer standard-output)
 					   ;; XEmacs had the following line, not in FSF.
 					   (setq default-directory (file-name-directory file))
-					   ;; Use insert-directory-safely, not insert-directory,
-					   ;; because these files might not exist.  In particular,
-					   ;; FILE might not exist if the auto-save file was for
-					   ;; a buffer that didn't visit a file, such as "*mail*".
-					   ;; The code in v20.x called `ls' directly, so we need
-					   ;; to emulate what `ls' did in that case.
+					   ;; Use insert-directory-safely,
+					   ;; not insert-directory, because
+					   ;; these files might not exist.
+					   ;; In particular, FILE might not
+					   ;; exist if the auto-save file
+					   ;; was for a buffer that didn't
+					   ;; visit a file, such as
+					   ;; "*mail*".  The code in v20.x
+					   ;; called `ls' directly, so we
+					   ;; need to emulate what `ls' did
+					   ;; in that case.
 					   (insert-directory-safely file switches)
 					   (insert-directory-safely file-name switches))
 					 (terpri)
@@ -3755,10 +3763,10 @@ This command is used in the special Dired buffer created by
   (interactive)
   ;; Get the name of the session file to recover from.
   (let ((file (declare-fboundp (dired-get-filename))))
-    (dired-unmark 1)
+    (declare-fboundp (dired-unmark 1))
     ;; #### dired-do-flagged-delete in FSF.
     ;; This version is for ange-ftp
-    ;;(dired-do-deletions t)
+    ;;(declare-fboundp (dired-do-deletions t))
     ;; This version is for efs
     (declare-fboundp (dired-expunge-deletions))
     (let ((files (Recover-session-files-from-auto-save-list-file file)))

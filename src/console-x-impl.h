@@ -1,7 +1,7 @@
 /* Define X specific console, device, and frame object for XEmacs.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1996, 2002 Ben Wing.
+   Copyright (C) 1996, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -245,7 +245,22 @@ struct x_frame
   Widget top_widgets[MAX_CONCURRENT_TOP_WIDGETS];
   int num_top_widgets;
 
-  /*************************** Miscellaneous **************************/
+  /* lwlib ID of the tree of widgets corresponding to this popup.  We pass
+     this to lw_map_widget_values() to retrieve all of our Lispy call-data
+     and accel values that need to be GCPRO'd, and store them in the
+     following list. (We used to call lw_map_widget_values() during GC
+     mark, but that isn't compatible with KKCC.) */
+  LWLIB_ID menubar_id;
+
+  /* For the frame popup data, this is the last buffer for which the
+     menubar was displayed.  If the buffer has changed, we may have to
+     update things. */
+  Lisp_Object last_menubar_buffer;
+
+  /* This flag tells us if the menubar contents are up-to-date with respect
+     to the current menubar structure.  If we want to actually pull down a
+     menu and this is false, then we need to update things. */
+  char menubar_contents_up_to_date;
 
   /* The icon pixmaps; these are Lisp_Image_Instance objects, or Qnil. */
   Lisp_Object icon_pixmap;
@@ -304,6 +319,11 @@ struct x_frame
 #define FRAME_X_TEXT_WIDGET(f)	    (FRAME_X_DATA (f)->edit_widget)
 #define FRAME_X_TOP_WIDGETS(f)	    (FRAME_X_DATA (f)->top_widgets)
 #define FRAME_X_NUM_TOP_WIDGETS(f)  (FRAME_X_DATA (f)->num_top_widgets)
+
+#define FRAME_X_MENUBAR_ID(f)       (FRAME_X_DATA (f)->menubar_id)
+#define FRAME_X_LAST_MENUBAR_BUFFER(f) (FRAME_X_DATA (f)->last_menubar_buffer)
+#define FRAME_X_MENUBAR_CONTENTS_UP_TO_DATE(f) \
+       (FRAME_X_DATA (f)->menubar_contents_up_to_date)
 
 #define FRAME_X_ICON_PIXMAP(f)	    (FRAME_X_DATA (f)->icon_pixmap)
 #define FRAME_X_ICON_PIXMAP_MASK(f) (FRAME_X_DATA (f)->icon_pixmap_mask)

@@ -1,6 +1,6 @@
 /* Definitions of marked slots in frames
    Copyright (C) 1988, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2002 Ben Wing.
+   Copyright (C) 1996, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -117,11 +117,6 @@ Boston, MA 02111-1307, USA.  */
 
   /* The current icon for the frame. */
   MARKED_SLOT (icon)
-
-#ifdef HAVE_MENUBARS
-  /* Vector representing the menubar currently displayed.  See menubar-x.c. */
-  MARKED_SLOT (menubar_data)
-#endif
 
   /* specifier values cached in the struct frame: */
 

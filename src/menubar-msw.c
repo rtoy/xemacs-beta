@@ -91,7 +91,6 @@ Boston, MA 02111-1307, USA.  */
 #include "gui.h"
 #include "lisp.h"
 #include "menubar.h"
-#include "menubar-msw.h"
 #include "opaque.h"
 #include "window-impl.h"
 

@@ -1,3 +1,9 @@
+2003-03-06  Ben Wing  <ben@xemacs.org>
+
+	* i.c:
+	* i.c (pump):
+	Sleep between calls to check for I/O, since these calls are non-blocking.
+
 2003-02-16  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.11 "cabbage" is released.

@@ -282,7 +282,7 @@ This function can be used as the STREAM argument of Fprint() or the like.
 }
 
 void
-write_string_to_mswindows_debugging_output (Ibyte *str, Bytecount len)
+write_string_to_mswindows_debugging_output (const Ibyte *str, Bytecount len)
 {
   const Extbyte *extptr;
   if (initialized && !inhibit_non_essential_printing_operations)

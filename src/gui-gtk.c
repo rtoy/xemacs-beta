@@ -33,7 +33,6 @@ Boston, MA 02111-1307, USA.  */
 #include "opaque.h"
 
 #include "console-gtk-impl.h"
-#include "gui-gtk.h"
 
 #ifdef HAVE_POPUPS
 Lisp_Object Qmenu_no_selection_hook;

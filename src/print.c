@@ -116,19 +116,20 @@ int print_unbuffered;
 
 FILE *termscript;	/* Stdio stream being used for copy of all output.  */
 
-static void write_string_to_alternate_debugging_output (Ibyte *str,
+static void write_string_to_alternate_debugging_output (const Ibyte *str,
 							Bytecount len);
 
 
 
 int stdout_needs_newline;
+int stdout_clear_before_next_output;
 
 /* Basic function to actually write to a stdio stream or TTY console. */
 
 static void
-write_string_to_stdio_stream (FILE *stream, struct console *con,
-			      const Ibyte *ptr, Bytecount len,
-			      int must_flush)
+write_string_to_stdio_stream_1 (FILE *stream, struct console *con,
+				const Ibyte *ptr, Bytecount len,
+				int must_flush)
 {
   Extbyte *extptr = 0;
   Bytecount extlen = 0;
@@ -187,15 +188,74 @@ write_string_to_stdio_stream (FILE *stream, struct console *con,
 	  retry_fwrite (extptr, 1, extlen, termscript);
 	  fflush (termscript);
 	}
-      stdout_needs_newline = (ptr[extlen - 1] != '\n');
+      stdout_needs_newline = (ptr[len - 1] != '\n');
     }
 }
 
-/* #### The following function should be replaced a call to the
-   emacs_vsprintf_*() functions.  This is the only way to ensure that
-   I18N3 works properly (many implementations of the *printf()
-   functions, including the ones included in glibc, do not implement
-   the %###$ argument-positioning syntax).
+/* Write to a stdio stream or TTY console, first clearing the left side
+   if necessary. */
+
+static void
+write_string_to_stdio_stream (FILE *stream, struct console *con,
+			      const Ibyte *ptr, Bytecount len,
+			      int must_flush)
+{
+  if (stdout_clear_before_next_output &&
+      (stream ? stream == stdout || stream == stderr :
+       CONSOLE_TTY_DATA (con)->is_stdio))
+    {
+      if (stdout_needs_newline)
+	write_string_to_stdio_stream_1 (stream, con, (Ibyte *) "\n", 1,
+					must_flush);
+      stdout_clear_before_next_output = 0;
+    }
+
+  write_string_to_stdio_stream_1 (stream, con, ptr, len, must_flush);
+}
+
+/*
+    EXT_PRINT_STDOUT    = stdout or its equivalent (may be a
+                          console window under MS Windows)
+    EXT_PRINT_STDERR    = stderr or its equivalent (may be a
+                          console window under MS Windows)
+    EXT_PRINT_ALTERNATE = an internal character array; see
+                          `alternate-debugging-output'
+    EXT_PRINT_MSWINDOWS = Under MS Windows, the "debugging output" that
+                          debuggers can hook into; uses OutputDebugString()
+                          system call
+    EXT_PRINT_ALL       = all of the above except stdout
+*/
+
+enum ext_print
+  {
+    EXT_PRINT_STDOUT = 1,
+    EXT_PRINT_STDERR = 2,
+    EXT_PRINT_ALTERNATE = 4,
+    EXT_PRINT_MSWINDOWS = 8,
+    EXT_PRINT_ALL = 14
+  };
+
+static void
+write_string_to_external_output (const Ibyte *ptr, Bytecount len,
+				 int dest)
+{
+  if (dest & EXT_PRINT_STDOUT)
+    write_string_to_stdio_stream (stdout, 0, ptr, len, 1);
+  if (dest & EXT_PRINT_STDERR)
+    write_string_to_stdio_stream (stderr, 0, ptr, len, 1);
+  if (dest & EXT_PRINT_ALTERNATE)
+    write_string_to_alternate_debugging_output (ptr, len);
+#ifdef WIN32_NATIVE
+  if (dest & EXT_PRINT_MSWINDOWS)
+    write_string_to_mswindows_debugging_output (ptr, len);
+#endif
+}
+
+/* #### The following function should make use of a call to the
+   emacs_vsprintf_*() functions rather than just using vsprintf.  This is
+   the only way to ensure that I18N3 works properly (many implementations
+   of the *printf() functions, including the ones included in glibc, do not
+   implement the %###$ argument-positioning syntax).
 
    Note, however, that to do this, we'd have to
 
@@ -204,11 +264,14 @@ write_string_to_stdio_stream (FILE *stream, struct console *con,
    called from fatal_error_signal().
 
    2) (to be really correct) make a new lstream that outputs using
-   mswindows_output_console_string().  */
+   mswindows_output_console_string().
+
+   3) A reasonable compromise might be to use emacs_vsprintf() when we're
+   in a safe state, and when not, use plain vsprintf(). */
 
 static void
-std_handle_out_va (FILE *stream, const CIbyte *fmt, va_list args,
-		   int debug_output_as_well)
+write_string_to_external_output_va (const CIbyte *fmt, va_list args,
+				    int dest)
 {
   Ibyte kludge[8192];
   Bytecount kludgelen;
@@ -217,15 +280,7 @@ std_handle_out_va (FILE *stream, const CIbyte *fmt, va_list args,
     fmt = GETTEXT (fmt);
   vsprintf ((CIbyte *) kludge, fmt, args);
   kludgelen = qxestrlen (kludge);
-
-  write_string_to_stdio_stream (stream, 0, kludge, kludgelen, 1);
-  if (debug_output_as_well)
-    {
-      write_string_to_alternate_debugging_output (kludge, kludgelen);
-#ifdef WIN32_NATIVE
-      write_string_to_mswindows_debugging_output (kludge, kludgelen);
-#endif
-    }
+  write_string_to_external_output (kludge, kludgelen, dest);
 }
 
 /* Output portably to stderr or its equivalent (i.e. may be a console
@@ -240,7 +295,7 @@ stderr_out (const CIbyte *fmt, ...)
 {
   va_list args;
   va_start (args, fmt);
-  std_handle_out_va (stderr, fmt, args, 0);
+  write_string_to_external_output_va (fmt, args, EXT_PRINT_STDERR);
   va_end (args);
 }
 
@@ -252,7 +307,18 @@ stdout_out (const CIbyte *fmt, ...)
 {
   va_list args;
   va_start (args, fmt);
-  std_handle_out_va (stdout, fmt, args, 0);
+  write_string_to_external_output_va (fmt, args, EXT_PRINT_STDOUT);
+  va_end (args);
+}
+
+/* Output portably to print destination as specified by DEST. */
+
+void
+external_out (int dest, const CIbyte *fmt, ...)
+{
+  va_list args;
+  va_start (args, fmt);
+  write_string_to_external_output_va (fmt, args, dest);
   va_end (args);
 }
 
@@ -266,7 +332,7 @@ debug_out (const CIbyte *fmt, ...)
 {
   va_list args;
   va_start (args, fmt);
-  std_handle_out_va (stderr, fmt, args, 1);
+  write_string_to_external_output_va (fmt, args, EXT_PRINT_ALL);
   va_end (args);
 }
 
@@ -277,7 +343,7 @@ fatal (const CIbyte *fmt, ...)
   va_start (args, fmt);
 
   stderr_out ("\nXEmacs: fatal error: ");
-  std_handle_out_va (stderr, fmt, args, 0);
+  write_string_to_external_output_va (fmt, args, EXT_PRINT_STDERR);
   stderr_out ("\n");
 
   va_end (args);
@@ -1812,7 +1878,7 @@ to 0.
 }
 
 static void
-write_string_to_alternate_debugging_output (Ibyte *str, Bytecount len)
+write_string_to_alternate_debugging_output (const Ibyte *str, Bytecount len)
 {
   int extlen;
   const Extbyte *extptr;
@@ -1830,6 +1896,35 @@ write_string_to_alternate_debugging_output (Ibyte *str, Bytecount len)
   memcpy (alternate_do_string + alternate_do_pointer, extptr, extlen);
   alternate_do_pointer += extlen;
   alternate_do_string[alternate_do_pointer] = 0;
+}
+
+
+DEFUN ("set-device-clear-left-side", Fset_device_clear_left_side, 2, 2, 0, /*
+Set whether to output a newline before the next output to a stream device.
+This will happen only if the most recently-outputted character was not
+a newline -- i.e. it will make sure the left side is "clear" of text.
+*/
+       (device, value))
+{
+  if (!NILP (device))
+    CHECK_LIVE_DEVICE (device);
+  if (NILP (device) || DEVICE_STREAM_P (XDEVICE (device)))
+    /* #### This should be per-device */
+    stdout_clear_before_next_output = !NILP (value);
+  return Qnil;
+}
+
+DEFUN ("device-left-side-clear-p", Fdevice_left_side_clear_p, 0, 1, 0, /*
+For stream devices, true if the most recent-outputted character was a newline.
+*/
+       (device))
+{
+  if (!NILP (device))
+    CHECK_LIVE_DEVICE (device);
+  if (NILP (device) || DEVICE_STREAM_P (XDEVICE (device)))
+    /* #### This should be per-device */
+    return stdout_needs_newline ? Qt : Qnil;
+  return Qnil;
 }
 
 DEFUN ("external-debugging-output", Fexternal_debugging_output, 1, 3, 0, /*
@@ -1917,9 +2012,14 @@ static int debug_print_length   = 50;
 static int debug_print_level    = 15;
 static int debug_print_readably = -1;
 
-/* Debugging kludge -- unbuffered */
+/* Print an object, `prin1'-style, to various possible debugging outputs.
+   Make sure it's completely unbuffered so that, in the event of a crash
+   somewhere, we see as much as possible that happened before it.
+
+
+   */
 static void
-debug_print_no_newline (Lisp_Object debug_print_obj)
+debug_prin1 (Lisp_Object debug_print_obj, int flags)
 {
   /* This function can GC */
 
@@ -1938,13 +2038,17 @@ debug_print_no_newline (Lisp_Object debug_print_obj)
     internal_bind_lisp_object (&Vprint_level, make_int (debug_print_level));
   /* #### Do we need this?  It was in the old code. */
   internal_bind_lisp_object (&Vinhibit_quit, Vinhibit_quit);
-  
-  print_internal (debug_print_obj, Qexternal_debugging_output, 1);
-  alternate_do_pointer = 0;
-  print_internal (debug_print_obj, Qalternate_debugging_output, 1);
+
+  if ((flags & EXT_PRINT_STDOUT) || (flags & EXT_PRINT_STDERR))
+    print_internal (debug_print_obj, Qexternal_debugging_output, 1);
+  if (flags & EXT_PRINT_ALTERNATE)
+    print_internal (debug_print_obj, Qalternate_debugging_output, 1);
 #ifdef WIN32_NATIVE
-  /* Write out to the debugger, as well */
-  print_internal (debug_print_obj, Qmswindows_debugging_output, 1);
+  if (flags & EXT_PRINT_MSWINDOWS)
+    {
+      /* Write out to the debugger, as well */
+      print_internal (debug_print_obj, Qmswindows_debugging_output, 1);
+    }
 #endif
 
   unbind_to (specdepth);
@@ -2023,6 +2127,31 @@ debug_p4 (Lisp_Object obj)
   inhibit_non_essential_printing_operations = 0;
 }
 
+static void
+ext_print_begin (int dest)
+{
+  if (dest & EXT_PRINT_ALTERNATE)
+    alternate_do_pointer = 0;
+  if (dest & (EXT_PRINT_STDERR | EXT_PRINT_STDOUT))
+    stdout_clear_before_next_output = 1;
+}
+
+static void
+ext_print_end (int dest)
+{
+  if (dest & (EXT_PRINT_MSWINDOWS | EXT_PRINT_STDERR | EXT_PRINT_STDOUT))
+    external_out (dest & (EXT_PRINT_MSWINDOWS | EXT_PRINT_STDERR |
+			  EXT_PRINT_STDOUT), "\n");
+}
+
+static void
+external_debug_print (Lisp_Object object, int dest)
+{
+  ext_print_begin (dest);
+  debug_prin1 (object, dest);
+  ext_print_end (dest);
+}
+
 void
 debug_p3 (Lisp_Object obj)
 {
@@ -2035,8 +2164,7 @@ debug_p3 (Lisp_Object obj)
 void
 debug_print (Lisp_Object debug_print_obj)
 {
-  debug_print_no_newline (debug_print_obj);
-  debug_out ("\n");
+  external_debug_print (debug_print_obj, EXT_PRINT_ALL);
 }
 
 /* Getting tired of typing debug_print() ... */
@@ -2045,6 +2173,16 @@ void
 dp (Lisp_Object debug_print_obj)
 {
   debug_print (debug_print_obj);
+}
+
+/* Alternate debug printer: Return a char * pointer to the output */
+char *dpa (Lisp_Object debug_print_obj);
+char *
+dpa (Lisp_Object debug_print_obj)
+{
+  external_debug_print (debug_print_obj, EXT_PRINT_ALTERNATE);
+  
+  return alternate_do_string;
 }
 
 /* Debugging kludge -- unbuffered */
@@ -2097,7 +2235,7 @@ debug_short_backtrace (int length)
 	}
       if (COMPILED_FUNCTIONP (*bt->function))
 	{
-#if defined(COMPILED_FUNCTION_ANNOTATION_HACK)
+#if defined (COMPILED_FUNCTION_ANNOTATION_HACK)
 	  Lisp_Object ann =
 	    compiled_function_annotation (XCOMPILED_FUNCTION (*bt->function));
 #else
@@ -2106,7 +2244,7 @@ debug_short_backtrace (int length)
 	  if (!NILP (ann))
 	    {
 	      debug_out ("<compiled-function from ");
-	      debug_print_no_newline (ann);
+	      debug_prin1 (ann, EXT_PRINT_ALL);
 	      debug_out (">");
 	    }
 	  else
@@ -2115,7 +2253,7 @@ debug_short_backtrace (int length)
 	    }
 	}
       else
-	debug_print_no_newline (*bt->function);
+	debug_prin1 (*bt->function, EXT_PRINT_ALL);
       first = 0;
       length--;
       bt = bt->next;
@@ -2145,6 +2283,8 @@ syms_of_print (void)
   DEFSUBR (Fterpri);
   DEFSUBR (Fwrite_char);
   DEFSUBR (Falternate_debugging_output);
+  DEFSUBR (Fset_device_clear_left_side);
+  DEFSUBR (Fdevice_left_side_clear_p);
   DEFSUBR (Fexternal_debugging_output);
   DEFSUBR (Fopen_termscript);
   DEFSYMBOL (Qexternal_debugging_output);

@@ -89,7 +89,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_X_WINDOWS
 #include "glyphs-x.h"
-#include "gui-x.h"
 #endif
 
 #ifdef HAVE_MS_WINDOWS

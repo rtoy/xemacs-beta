@@ -33,9 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 #include "console-impl.h"
 
-#include "console-gtk.h"
 #include "console-gtk-impl.h"
-#include "gui-gtk.h"
 
 Lisp_Object Qgtk_make_dialog_box_internal;
 

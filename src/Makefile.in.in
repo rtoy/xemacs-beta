@@ -498,53 +498,9 @@ dump_temacs = $(TEMACS_BATCH) $(dump_temacs_args)
 ## -ben
 
 .PHONY: build-the-mofo
-build-the-mofo: $(DUMP_TARGET) $(mo_file) $(other_files) update-elc-2 $(LISP)/finder-inf.el load-shadows
-.NO_PARALLEL: $(DUMP_TARGET) update-elc-2 $(LISP)/finder-inf.el load-shadows
+build-the-mofo: update-elc-2 $(mo_file) $(other_files) $(LISP)/finder-inf.el load-shadows
 
-release: all
-	-if [ -w $(LISP) ]; then \
-	  w=`pwd`; cd $(SRC) && $$w/$(RAW_EXE) -nd $(BATCH) -l $(LISP)/inc-vers; \
-	else true; fi
-	-$(dump_temacs)
-	touch release
-
-## Update out-of-date .elcs, other than needed for dumping.
-.PHONY: update-elc-2
-update-elc-2:
-	$(XEMACS_BATCH) -no-autoloads -l update-elc-2.el -f batch-update-elc-2 $(LISP)
-
-$(LISP)/finder-inf.el:
-	@echo "Building finder database ..."
-	$(XEMACS_BATCH)	-eval "(setq finder-compile-keywords-quiet t)" \
-		-l finder -f finder-compile-keywords
-	@echo "Building finder database ...(done)"
-
-.PHONY: load-shadows
-load-shadows:
-#ifndef QUICK_BUILD
-	@echo "Testing for Lisp shadows ..."
-	@$(XEMACS_BATCH) -f list-load-path-shadows
-#endif
-
-.PHONY: FRC.needtodump
-FRC.needtodump:
-
-## This file is touched by update-elc.el when redumping is necessary.
-## We use $(BLDSRC) == `.' here to help keep sync with nt/xemacs.mak,
-## where $(BLDSRC) is not `.'.
-$(BLDSRC)/NEEDTODUMP: FRC.needtodump
-	$(TEMACS_BATCH) -l $(LISP)/update-elc.el
-
-$(DUMP_TARGET): $(RAW_EXE) $(BLDSRC)/NEEDTODUMP $(LIB_SRC)/DOC
-#ifdef HEAP_IN_DATA
-	@$(RM) $@ && touch SATISFIED
-	$(dump_temacs)
-	@if test -f SATISFIED; then $(RM) SATISFIED; else $(RM) $@; \
-	$(RECURSIVE_MAKE) $@; fi
-#else
-	@$(RM) $@
-	$(dump_temacs)
-#endif
+## (1) Compile all dependencies of the XEmacs executable
 
 #ifdef HAVE_X_WINDOWS
 lwlib_deps = $(lwlib_lib)
@@ -560,6 +516,14 @@ dynodump_deps = ../dynodump/dynodump.so
 
 link_deps = $(start_files) $(objs) $(otherobjs) $(lwlib_deps) $(dynodump_deps)
 
+$(LIB_SRC)/make-dump-id:
+	cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-dump-id
+
+dump-id.c: $(LIB_SRC)/make-dump-id $(link_deps)
+	$(LIB_SRC)/make-dump-id
+
+## (2) Link the XEmacs executable
+
 temacs_deps = $(link_deps) $(DUMP_ID)
 
 temacs_link_args = \
@@ -569,10 +533,23 @@ temacs_link_args = \
 $(RAW_EXE): $(temacs_deps)
 	$(LD) $(temacs_link_args)
 
-dump-id.c: $(LIB_SRC)/make-dump-id $(link_deps)
-	$(LIB_SRC)/make-dump-id
+## (3) Update the .elc's needed for dumping
+
+.PHONY: FRC.needtodump
+FRC.needtodump:
+
+## This file is touched by update-elc.el when redumping is necessary.
+## We use $(BLDSRC) == `.' here to help keep sync with nt/xemacs.mak,
+## where $(BLDSRC) is not `.'.
+$(BLDSRC)/NEEDTODUMP: FRC.needtodump
+	$(TEMACS_BATCH) -l $(LISP)/update-elc.el
+
+## (4) Build the DOC file
 
 obj_src = $(objs:.o=.c)
+
+$(LIB_SRC)/make-docfile:
+	cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-docfile
 
 $(LIB_SRC)/DOC: $(LIB_SRC)/make-docfile $(BLDSRC)/NEEDTODUMP $(temacs_deps)
 #ifdef QUICK_BUILD
@@ -585,11 +562,48 @@ $(LIB_SRC)/DOC: $(LIB_SRC)/make-docfile $(BLDSRC)/NEEDTODUMP $(temacs_deps)
 		$(obj_src) $(mallocdocsrc) $(rallocdocsrc) \
 		$(extra_doc_files) ; fi
 
-$(LIB_SRC)/make-dump-id:
-	cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-dump-id
+## (5) Dump
 
-$(LIB_SRC)/make-docfile:
-	cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-docfile
+$(DUMP_TARGET): $(RAW_EXE) $(BLDSRC)/NEEDTODUMP $(LIB_SRC)/DOC
+#ifdef HEAP_IN_DATA
+	@$(RM) $@ && touch SATISFIED
+	$(dump_temacs)
+	@if test -f SATISFIED; then $(RM) SATISFIED; else $(RM) $@; \
+	$(RECURSIVE_MAKE) $@; fi
+#else
+	@$(RM) $@
+	$(dump_temacs)
+#endif
+
+## (6) Update the remaining .elc's, post-dumping
+
+.PHONY: update-elc-2
+update-elc-2: $(DUMP_TARGET)
+	$(XEMACS_BATCH) -no-autoloads -l update-elc-2.el -f batch-update-elc-2 $(LISP)
+
+## (7) Other random stuff
+
+$(LISP)/finder-inf.el: update-elc-2
+	@echo "Building finder database ..."
+	$(XEMACS_BATCH)	-eval "(setq finder-compile-keywords-quiet t)" \
+		-l finder -f finder-compile-keywords
+	@echo "Building finder database ...(done)"
+
+.PHONY: load-shadows
+load-shadows: update-elc-2
+#ifndef QUICK_BUILD
+	@echo "Testing for Lisp shadows ..."
+	@$(XEMACS_BATCH) -f list-load-path-shadows
+#endif
+
+###################### Misc targets
+
+release: all
+	-if [ -w $(LISP) ]; then \
+	  w=`pwd`; cd $(SRC) && $$w/$(RAW_EXE) -nd $(BATCH) -l $(LISP)/inc-vers; \
+	else true; fi
+	-$(dump_temacs)
+	touch release
 
 .PHONY: fastdump
 fastdump: $(RAW_EXE)

@@ -3977,6 +3977,7 @@ when appropriate.  Calling this function will call the hook
 (when (and
        (not (fboundp 'display-message))
        (not (featurep 'debug)))
+  (set-device-clear-left-side nil nil)
   (send-string-to-terminal "\n"))
 
 (defvar message-stack nil
@@ -4144,8 +4145,12 @@ you should just use (message nil)."
     (remove-message label frame)
     (let ((inhibit-read-only t))
       (erase-buffer " *Echo Area*"))
-    (if clear-stream
-	(send-string-to-terminal ?\n stdout-p))
+    ;; If outputting to the terminal, make sure we clear the left side.
+    (when (or clear-stream
+	      (and (eq 'stream (frame-type frame))
+		   (not (device-left-side-clear-p (frame-device frame)))))
+      (set-device-clear-left-side (frame-device frame) nil)
+      (send-string-to-terminal ?\n stdout-p))
     (if no-restore
 	nil			; just preparing to put another msg up
       (if message-stack
@@ -4189,12 +4194,19 @@ you should just use (message nil)."
 
 (defun append-message (label message &optional frame stdout-p)
   (or frame (setq frame (selected-frame)))
+  ;; If outputting to the terminal, make sure output from anyone else clears
+  ;; the left side first, but don't do it ourselves, otherwise we won't be
+  ;; able to append to an existing message.
+  (if (eq 'stream (frame-type frame))
+      (set-device-clear-left-side (frame-device frame) nil))
   ;; Add a new entry to the message-stack, or modify an existing one
   (let ((top (car message-stack)))
     (if (eq label (car top))
 	(setcdr top (concat (cdr top) message))
       (push (cons label message) message-stack)))
-  (raw-append-message message frame stdout-p))
+  (raw-append-message message frame stdout-p)
+  (if (eq 'stream (frame-type frame))
+      (set-device-clear-left-side (frame-device frame) t)))
 
 ;; Really append the message to the echo area.  no fiddling with
 ;; message-stack.

@@ -146,7 +146,7 @@ struct gtk_frame
   /* Our container widget as a Lisp_Object */
   Lisp_Object lisp_visible_widgets[3];
 
-  /*************************** Miscellaneous **************************/
+  Lisp_Object menubar_data;
 
   /* The icon pixmaps; these are Lisp_Image_Instance objects, or Qnil. */
   Lisp_Object icon_pixmap;
@@ -182,6 +182,8 @@ struct gtk_frame
 #define FRAME_GTK_TOP_WIDGETS(f)	    (FRAME_GTK_DATA (f)->top_widgets)
 #define FRAME_GTK_NUM_TOP_WIDGETS(f)	  (FRAME_GTK_DATA (f)->num_top_widgets)
 #define FRAME_GTK_ICONIFIED_P(f)	  (FRAME_GTK_DATA (f)->iconfigied_p)
+
+#define FRAME_GTK_MENUBAR_DATA(f)   (FRAME_GTK_DATA (f)->menubar_data)
 
 #define FRAME_GTK_LISP_WIDGETS(f)      (FRAME_GTK_DATA (f)->lisp_visible_widgets)
 #define FRAME_GTK_ICON_PIXMAP(f)	    (FRAME_GTK_DATA (f)->icon_pixmap)

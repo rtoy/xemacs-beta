@@ -1,7 +1,7 @@
 /* Implements elisp-programmable dialog boxes -- X interface.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 2000, 2002 Ben Wing.
+   Copyright (C) 2000, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -36,7 +36,6 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 
 #include "console-x-impl.h"
-#include "gui-x.h"
 
 #include "EmacsFrame.h"
 

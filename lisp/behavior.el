@@ -95,7 +95,7 @@ an error unless you use the `force' option."
        :require
        :enable
        :disable)
-      ()
+      t
     (let ((entry (list :short-doc cl-short-doc :require cl-require
 		       :enable cl-enable :disable cl-disable)))
       (puthash name entry behavior-hash-table))))

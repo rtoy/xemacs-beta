@@ -992,7 +992,16 @@ either `being each foo' or `being the foos'.)
 				     '--cl-map loop-map-form))
 			    (list* 'while (car ands) while-body)))
 		    (if loop-finish-flag
-			(if (equal epilogue '(nil)) (list loop-result-var)
+			(if (equal epilogue '(nil))
+			    ;; XEmacs change: When epilogue is nil and
+			    ;; loop-finish-flag exists, you get a byte-compiler
+			    ;; warning using the original (commented-out)
+			    ;; code below.  So instead we create a form that
+			    ;; gives the same result but uses loop-finish-flag.
+			    ;; --ben
+			    ;(list loop-result-var)
+			    (list (list 'if loop-finish-flag
+					loop-result-var loop-result-var))
 			  (list (list 'if loop-finish-flag
 				      (cons 'progn epilogue) loop-result-var)))
 		      epilogue))))

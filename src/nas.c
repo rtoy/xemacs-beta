@@ -852,7 +852,7 @@ WaveOpenDataForReading (const Char_Binary *data,
 
   fileSize = PAD2(ck.ckSize) - sizeof(RIFF_FOURCC);
 
-  while (fileSize >= sizeof(RiffChunk))
+  while (fileSize >= (AuInt32) sizeof(RiffChunk))
     {
       if (!readChunk(&ck))
 	Err();

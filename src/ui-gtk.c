@@ -9,20 +9,20 @@
 
 #include <config.h>
 #include "lisp.h"
+
 #include "buffer.h"
 #include "console-gtk.h"
 #include "device.h"
-#include "window.h"
-#include "glyphs-gtk.h"
-#include "objects-gtk.h"
-#include "ui-gtk.h"
-#include "faces.h"
-#include "gui-gtk.h"
-#include "sysdll.h"
-#include "hash.h"
-#include "events.h"
 #include "elhash.h"
 #include "event-gtk.h"
+#include "events.h"
+#include "faces.h"
+#include "glyphs-gtk.h"
+#include "hash.h"
+#include "objects-gtk.h"
+#include "sysdll.h"
+#include "ui-gtk.h"
+#include "window.h"
 
 /* XEmacs specific GTK types */
 #include "gtk-glue.c"

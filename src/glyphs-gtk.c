@@ -65,7 +65,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-gtk-impl.h"
 #include "glyphs-gtk.h"
-#include "gui-gtk.h"
 #include "objects-gtk-impl.h"
 #include "ui-gtk.h"
 

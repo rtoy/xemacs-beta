@@ -39,7 +39,6 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 
 #include "console-x-impl.h"
-#include "gui-x.h"
 
 #ifdef LWLIB_USES_MOTIF
 #include "xmotif.h" /* for XmVersion */
@@ -51,7 +50,10 @@ static LWLIB_ID lwlib_id_tick;
 LWLIB_ID
 new_lwlib_id (void)
 {
-  return ++lwlib_id_tick;
+  lwlib_id_tick++;
+  if (!lwlib_id_tick)
+    lwlib_id_tick++;
+  return lwlib_id_tick;
 }
 
 widget_value *
@@ -63,93 +65,75 @@ xmalloc_widget_value (void)
 }
 
 
-static Lisp_Object
-mark_popup_data (Lisp_Object obj)
-{
-  struct popup_data *data = (struct popup_data *) XPOPUP_DATA (obj);
-
-  mark_object (data->last_menubar_buffer);
-  return data->protect_me;
-}
-
-static const struct memory_description popup_data_description [] = {
-  { XD_LISP_OBJECT, offsetof (struct popup_data, last_menubar_buffer) },
-  { XD_LISP_OBJECT, offsetof (struct popup_data, protect_me) },
-  { XD_END }
-};
-
-DEFINE_LRECORD_IMPLEMENTATION ("popup-data", popup_data,
-			       0, /*dumpable-flag*/
-                               mark_popup_data, internal_object_printer,
-			       0, 0, 0,
-			       popup_data_description,
-			       struct popup_data);
 
-/* This is like FRAME_MENUBAR_DATA (f), but contains an alist of
-   (id . popup-data) for GCPRO'ing the callbacks of the popup menus
-   and dialog boxes. */
+/* This contains an alist of (id . protect-me) for GCPRO'ing the callbacks
+   of the popup menus and dialog boxes. */
 static Lisp_Object Vpopup_callbacks;
+
+struct widget_value_mapper
+{
+  Lisp_Object protect_me;
+};
 
 static int
 snarf_widget_value_mapper (widget_value *val, void *closure)
 {
-  struct popup_data *pdata = (struct popup_data *) closure;
+  struct widget_value_mapper *z = (struct widget_value_mapper *) closure;
 
   if (val->call_data)
-    pdata->protect_me = Fcons (VOID_TO_LISP (val->call_data),
-			      pdata->protect_me);
+    z->protect_me = Fcons (VOID_TO_LISP (val->call_data), z->protect_me);
   if (val->accel)
-    pdata->protect_me = Fcons (VOID_TO_LISP (val->accel),
-			      pdata->protect_me);
+    z->protect_me = Fcons (VOID_TO_LISP (val->accel), z->protect_me);
 
   return 0;
 }
 
 /* Snarf the callbacks and other Lisp data that are hidden in the lwlib
-   call-data and accel and stick them into POPUP-DATA for proper marking. */
+   call-data and accel associated with id ID and return them for
+   proper marking. */
 
-void
-snarf_widget_values_for_gcpro (Lisp_Object popup_data)
+static Lisp_Object
+snarf_widget_values_for_gcpro (LWLIB_ID id)
 {
-  struct popup_data *pdata = XPOPUP_DATA (popup_data);
+  struct widget_value_mapper z;
 
-  free_list (pdata->protect_me);
-  pdata->protect_me = Qnil;
-
-  if (pdata->id)
-    lw_map_widget_values (pdata->id, snarf_widget_value_mapper, pdata);
+  z.protect_me = Qnil;
+  lw_map_widget_values (id, snarf_widget_value_mapper, &z);
+  return z.protect_me;
 }
+
+/* Given an lwlib id ID associated with a widget tree, make sure that all
+   Lisp callbacks in the tree are GC-protected.  This can be called
+   multiple times on the same widget tree -- this should be done at
+   creation time and each time the tree is modified. */
 
 void
 gcpro_popup_callbacks (LWLIB_ID id)
 {
-  struct popup_data *pdata;
   Lisp_Object lid = make_int (id);
-  Lisp_Object lpdata;
+  Lisp_Object this = assq_no_quit (lid, Vpopup_callbacks);
 
-  assert (NILP (assq_no_quit (lid, Vpopup_callbacks)));
-  pdata = alloc_lcrecord_type (struct popup_data, &lrecord_popup_data);
-  pdata->id = id;
-  pdata->last_menubar_buffer = Qnil;
-  pdata->protect_me = Qnil;
-  pdata->menubar_contents_up_to_date = 0;
-  lpdata = wrap_popup_data (pdata);
-
-  snarf_widget_values_for_gcpro (lpdata);
-
-  Vpopup_callbacks = Fcons (Fcons (lid, lpdata), Vpopup_callbacks);
+  if (!NILP (this))
+    {
+      free_list (XCDR (this));
+      XCDR (this) = snarf_widget_values_for_gcpro (id);
+    }
+  else
+    Vpopup_callbacks = Fcons (Fcons (lid, snarf_widget_values_for_gcpro (id)),
+			      Vpopup_callbacks);
 }
+
+/* Remove GC-protection from the just-destroyed widget tree associated
+   with lwlib id ID. */
 
 void
 ungcpro_popup_callbacks (LWLIB_ID id)
 {
-  struct popup_data *pdata;
   Lisp_Object lid = make_int (id);
   Lisp_Object this = assq_no_quit (lid, Vpopup_callbacks);
+
   assert (!NILP (this));
-  pdata = XPOPUP_DATA (XCDR (this));
-  free_list (pdata->protect_me);
-  pdata->protect_me = Qnil;
+  free_list (XCDR (this));
   Vpopup_callbacks = delq_no_quit (this, Vpopup_callbacks);
 }
 
@@ -692,7 +676,6 @@ gui_items_to_widget_values (Lisp_Object gui_object_instance, Lisp_Object items,
 void
 syms_of_gui_x (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (popup_data);
 }
 
 void

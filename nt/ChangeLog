@@ -1,3 +1,20 @@
+2003-03-06  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.mak (INFO): New.
+	* xemacs.mak (PATH_DEFINES):
+	Add override for info/ as well when separate source/build dirs.
+	
+	* xemacs.mak (dump_temacs):
+	* xemacs.mak (all):
+	* xemacs.mak (TEMACS_DUMP_DEP):
+	* xemacs.mak (update-elc): New.
+	* xemacs.mak (docfile):
+	* xemacs.mak (update-elc-2):
+	* xemacs.mak (load-shadows):
+	Order sections in main build process and add comments.  Add
+	additional dependencies to try and prevent later steps from
+	happening when failures in earlier steps have occurred.
+
 2003-03-01  Ben Wing  <ben@xemacs.org>
 
 	* PROBLEMS: Delete.

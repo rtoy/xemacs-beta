@@ -1,6 +1,6 @@
 /* Functions for the X window system.
    Copyright (C) 1989, 1992-5, 1997 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -98,6 +98,7 @@ static const struct memory_description gtk_frame_data_description_1 [] = {
   { XD_LISP_OBJECT, offsetof (struct gtk_frame, icon_pixmap_mask) },
   { XD_LISP_OBJECT_ARRAY, offsetof (struct gtk_frame, lisp_visible_widgets),
     3 },
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame, menubar_data) },
   { XD_END }
 };
 
@@ -942,12 +943,17 @@ gtk_popup_frame (struct frame *f)
 static void
 allocate_gtk_frame_struct (struct frame *f)
 {
+  int i;
+
   /* zero out all slots. */
   f->frame_data = xnew_and_zero (struct gtk_frame);
 
   /* yeah, except the lisp ones */
   FRAME_GTK_ICON_PIXMAP (f) = Qnil;
   FRAME_GTK_ICON_PIXMAP_MASK (f) = Qnil;
+  FRAME_GTK_MENUBAR_DATA (f) = Qnil;
+  for (i = 0; i < 3; i++)
+    FRAME_GTK_LISP_WIDGETS (f)[i] = Qnil;
 }
 
 
@@ -1031,6 +1037,7 @@ gtk_mark_frame (struct frame *f)
 {
   mark_object (FRAME_GTK_ICON_PIXMAP (f));
   mark_object (FRAME_GTK_ICON_PIXMAP_MASK (f));
+  mark_object (FRAME_GTK_MENUBAR_DATA (f));
   mark_object (FRAME_GTK_LISP_WIDGETS (f)[0]);
   mark_object (FRAME_GTK_LISP_WIDGETS (f)[1]);
   mark_object (FRAME_GTK_LISP_WIDGETS (f)[2]);

@@ -166,7 +166,7 @@ Format is the same as `printer-page-header'."
 	 (left-width (- middle-start left-start))
 	 (middle-width (- right-start middle-start))
 	 (right-width (- right-end right-start))
-	 (winwidth (- (window-width (Print-context-window context)) 1))
+	 (winwidth (- (window-width (Print-context-window context)) 2))
 	 (spaces1 (max (- (/ (- winwidth middle-width) 2) left-width) 0))
 	 (spaces2 (max (- (- winwidth right-width)
 			  (+ left-width spaces1 middle-width))

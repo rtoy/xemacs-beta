@@ -346,7 +346,7 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
 #ifdef HAVE_NAS_SOUND
   if (DEVICE_CONNECTED_TO_NAS_P (d) && STRINGP (sound))
     {
-      const UChar_Binary *soundext;
+      UChar_Binary *soundext;
       Bytecount soundextlen;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, sound,

@@ -247,6 +247,9 @@ get_console_variant (Lisp_Object type)
   if (EQ (type, Qmswindows)) 
     return mswindows_console;
 
+  if (EQ (type, Qmsprinter)) 
+    return msprinter_console;
+
   if (EQ (type, Qstream)) 
     return stream_console;
 
@@ -262,7 +265,7 @@ valid_console_type_p (Lisp_Object type)
 
 DEFUN ("valid-console-type-p", Fvalid_console_type_p, 1, 1, 0, /*
 Return t if CONSOLE-TYPE is a valid console type.
-Valid types are 'x, 'tty, 'mswindows, 'gtk, and 'stream.
+Valid types are 'x, 'tty, 'mswindows, 'msprinter, 'gtk, and 'stream.
 */
        (console_type))
 {
@@ -390,11 +393,12 @@ Return non-nil if OBJECT is a console that has not been deleted.
 
 DEFUN ("console-type", Fconsole_type, 0, 1, 0, /*
 Return the console type (e.g. `x' or `tty') of CONSOLE.
-Value is `tty' for a tty console (a character-only terminal),
+Value is
+`tty' for a tty console (a character-only terminal),
 `x' for a console that is an X display,
-`mswindows' for a console that is a Windows NT/95/97 connection,
-`pc' for a console that is a direct-write MS-DOS connection (not yet
-  implemented),
+`mswindows' for a console that is an MS Windows connection,
+`msprinter' for a console that is an MS Windows printer connection,
+`gtk' for a console that is a GTK connection,
 `stream' for a stream console (which acts like a stdio stream), and
 `dead' for a deleted console.
 */

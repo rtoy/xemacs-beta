@@ -3702,8 +3702,8 @@ assert_failed (const char *file, int line, const char *expr)
      were in the middle of doing something */
   /* debugging_breakpoint (); */
 #if !defined (ASSERTIONS_DONT_ABORT)
-#ifdef _MSC_VER
-  /* Calling abort() directly just seems to exit, in a way we can't
+#if defined (_MSC_VER) || defined (CYGWIN)
+  /* In VC++, calling abort() directly just seems to exit, in a way we can't
      trap. (#### The docs say it does raise (SIGABRT), which we should be
      able to trap.  Perhaps we're messing up somewhere?  Or perhaps MS is
      messed up.)
@@ -3720,12 +3720,14 @@ assert_failed (const char *file, int line, const char *expr)
      software exception ..." without the obvious "OK to terminate", "Cancel
      to debug"; instead, you just get OK/Cancel, which in fact do those
      same things. */
+  /* In Cygwin, abort() doesn't get trapped properly in gdb but seg faults
+     do, so we resort to the same trick. */
   * ((int *) 0) = 666;
   /* RaiseException (STATUS_ASSERTION_FAILURE, EXCEPTION_NONCONTINUABLE, 0,
 	             0); */
 #else
   really_abort ();
-#endif /* _MSC_VER */
+#endif /* defined (_MSC_VER) || defined (CYGWIN) */
 #endif /* !defined (ASSERTIONS_DONT_ABORT) */
   inhibit_non_essential_printing_operations = 0;
   in_assert_failed = 0;

@@ -87,6 +87,7 @@ Lisp_Object Vdevice_class_list;
 
 extern const struct sized_memory_description gtk_device_data_description;
 extern const struct sized_memory_description mswindows_device_data_description;
+extern const struct sized_memory_description msprinter_device_data_description;
 extern const struct sized_memory_description x_device_data_description;
 
 static const struct memory_description device_data_description_1 []= {
@@ -95,6 +96,7 @@ static const struct memory_description device_data_description_1 []= {
 #endif
 #ifdef HAVE_MS_WINDOWS
   { XD_STRUCT_PTR, mswindows_console, 1, &mswindows_device_data_description},
+  { XD_STRUCT_PTR, msprinter_console, 1, &msprinter_device_data_description},
 #endif
 #ifdef HAVE_X_WINDOWS
   { XD_STRUCT_PTR, x_console, 1, &x_device_data_description},

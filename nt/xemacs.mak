@@ -86,6 +86,7 @@ LIB_SRC=$(SRCROOT)\lib-src
 NT=$(SRCROOT)\nt
 SRC=$(SRCROOT)\src
 ETC=$(SRCROOT)\etc
+INFO=$(SRCROOT)\info
 
 BLDLIB_SRC=$(BLDROOT)\lib-src
 BLDNT=$(BLDROOT)\nt
@@ -355,7 +356,7 @@ PATH_PREFIX=..
 PATH_DEFINES=-DPATH_PREFIX=\"$(PATH_PREFIX)\"
 
 !if $(SEPARATE_BUILD)
-PATH_DEFINES=-DPATH_LOADSEARCH=\"$(LISP:\=\\)\" -DPATH_DATA=\"$(ETC:\=\\)\"
+PATH_DEFINES=$(PATH_DEFINES) -DPATH_LOADSEARCH=\"$(LISP:\=\\)\" -DPATH_DATA=\"$(ETC:\=\\)\" -DPATH_INFO=\"$(INFO:\=\\)\"
 !endif
 
 ########################### Determine system configuration.
@@ -1293,17 +1294,20 @@ dump_temacs = $(TEMACS_BATCH) $(dump_temacs_args)
 
 ########################### Build rules
 
-# use this rule to build the complete system
-all:	installation $(OUTDIR)\nul $(LASTFILE) \
-	$(LIB_SRC_TOOLS) update-elc $(DUMP_TARGET) \
-	update-elc-2 $(LISP)/finder-inf.el load-shadows info
+## Use this rule to build the complete system.  We need both update-elc
+## and update-elc-2 due to the sideways dependency of NEEDTODUMP.  See
+## src/Makefile.in.in for a more detailed discussion of this.
+
+all:	installation $(OUTDIR)\nul $(LIB_SRC_TOOLS) \
+	update-elc update-elc-2 \
+	$(LISP)/finder-inf.el load-shadows info
 
 $(TEMACS_BROWSE): $(TEMACS_OBJS)
 	@dir /b/s $(OUTDIR)\*.sbr > $(OUTDIR)\bscmake.tmp
 	bscmake -nologo -o$(TEMACS_BROWSE) @$(OUTDIR)\bscmake.tmp
 	-$(DEL) $(OUTDIR)\bscmake.tmp
 
-# dump-id.c file that contains the dump id
+## (1) Compile all dependencies of the XEmacs executable
 
 $(OUTDIR)\dump-id.obj : $(BLDSRC)\dump-id.c
 	$(CCV) $(TEMACS_CPP_FLAGS) $(BLDSRC)\$(@B).c -Fo$@ $(BROWSERFLAGS)
@@ -1315,6 +1319,8 @@ $(BLDSRC)\dump-id.c : $(BLDLIB_SRC)/make-dump-id.exe $(TEMACS_OBJS)
 $(OUTDIR)\temacs.res: $(NT)\xemacs.rc
 	cd $(NT)
 	rc -Fo$@ xemacs.rc
+
+## (2) Link the XEmacs executable
 
 !if $(USE_PORTABLE_DUMPER)
 TEMACS_DUMP_DEP = $(OUTDIR)\dump-id.obj
@@ -1331,7 +1337,16 @@ $(RAW_EXE): $(TEMACS_OBJS) $(LASTFILE) $(TEMACS_DUMP_DEP)
 $(RAW_EXE): $(TEMACS_BROWSE)
 !endif
 
-# Rebuild docfile target
+## (3) Update the .elc's needed for dumping
+
+update-elc: $(RAW_EXE)
+	$(TEMACS_BATCH) -l $(LISP)\update-elc.el
+
+## This file is touched by update-elc.el when redumping is necessary.
+$(BLDSRC)\NEEDTODUMP:
+	@echo >$(BLDSRC)\NEEDTODUMP
+
+## (4) Build the DOC file
 
 DOC=$(BLDLIB_SRC)\DOC
 
@@ -1355,12 +1370,7 @@ $(**)
 <<
 !endif
 
-update-elc: $(RAW_EXE)
-	$(TEMACS_BATCH) -l $(LISP)\update-elc.el
-
-## This file is touched by update-elc.el when redumping is necessary.
-$(BLDSRC)\NEEDTODUMP:
-	@echo >$(BLDSRC)\NEEDTODUMP
+## (5) Dump
 
 !if $(USE_PORTABLE_DUMPER)
 $(DUMP_TARGET): $(NT)\xemacs.rc
@@ -1382,11 +1392,14 @@ $(DUMP_TARGET): $(DOC) $(RAW_EXE) $(BLDSRC)\NEEDTODUMP
 	-$(DEL) $(BLDSRC)\xemacs.dmp
 !endif
 
-## Update out-of-date .elcs, other than needed for dumping.
-update-elc-2:
+## (6) Update the remaining .elc's, post-dumping
+
+update-elc-2: $(DUMP_TARGET)
 	$(XEMACS_BATCH) -no-autoloads -l update-elc-2.el -f batch-update-elc-2 $(LISP)
 
-$(LISP)/finder-inf.el:
+## (7) Other random stuff
+
+$(LISP)/finder-inf.el: update-elc-2
 !if !$(QUICK_BUILD)
 	@echo Building finder database ...
 	$(XEMACS_BATCH)	-eval "(setq finder-compile-keywords-quiet t)" \
@@ -1394,7 +1407,7 @@ $(LISP)/finder-inf.el:
 	@echo Building finder database ...(done)
 !endif
 
-load-shadows:
+load-shadows: update-elc-2
 !if !$(QUICK_BUILD)
 	@echo Testing for Lisp shadows ...
 	@$(XEMACS_BATCH) -f list-load-path-shadows

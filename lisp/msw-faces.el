@@ -29,6 +29,11 @@
 ;; This file does the magic to parse mswindows font names, and make sure that
 ;; the default and modeline attributes of new frames are specified enough.
 
+(globally-declare-boundp
+ '(mswindows-font-regexp mswindows-font-regexp-missing-1
+   mswindows-font-regexp-missing-2 mswindows-font-regexp-missing-3
+   mswindows-font-regexp-missing-4))
+
 (defun mswindows-init-global-faces ()
   (set-face-font 'gui-element "MS Sans Serif:Regular:8" nil 'mswindows))
 

@@ -81,91 +81,12 @@
 #define DEBUG
 #endif
 
-#ifdef MULE
-
-Lisp_Object Vthe_lisp_rangetab;
-
-void
-vars_of_regex (void)
-{
-  Vthe_lisp_rangetab = Fmake_range_table ();
-  staticpro (&Vthe_lisp_rangetab);
-}
-
-#else /* not MULE */
-
-void
-vars_of_regex (void)
-{
-}
-
-#endif /* MULE */
-
 #define RE_TRANSLATE_1(ch) TRT_TABLE_OF (translate, (Ichar) ch)
 #define TRANSLATE_P(tr) (!NILP (tr))
 
 /* Converts the pointer to the char to BEG-based offset from the start.	 */
 #define PTR_TO_OFFSET(d) (MATCHING_IN_FIRST_STRING			\
 			  ? (d) - string1 : (d) - (string2 - size1))
-
-/* Convert an offset from the start of the logical text string formed by
-   concatenating the two strings together into a character position in the
-   Lisp buffer or string that the text represents.  Knows that
-   when handling buffer text, the "string" we're passed in is always
-   BEGV - ZV. */
-
-static Charxpos
-offset_to_charxpos (Lisp_Object lispobj, int off)
-{
-  if (STRINGP (lispobj))
-    return string_index_byte_to_char (lispobj, off);
-  else if (BUFFERP (lispobj))
-    return bytebpos_to_charbpos (XBUFFER (lispobj),
-				 off + BYTE_BUF_BEGV (XBUFFER (lispobj)));
-  else
-    return 0;
-}
-
-#ifdef REL_ALLOC
-
-/* STRING1 is the value of STRING1 given to re_match_2().  LISPOBJ is
-   the Lisp object (if any) from which the string is taken.  If LISPOBJ
-   is a buffer, return a relocation offset to be added to all pointers to
-   string data so that they will be accurate again, after an allocation or
-   reallocation that potentially relocated the buffer data.
-*/
-static Bytecount
-offset_post_relocation (Lisp_Object lispobj, char *string1)
-{
-  struct buffer *buf;
-  
-  if (!BUFFERP (lispobj))
-    return 0;
-  return (BYTE_BUF_BYTE_ADDRESS (XBUFFER (lispobj),
-				BYTE_BUF_BEGV (XBUFFER (lispobj))) -
-	  string1);
-}
-
-#endif /* REL_ALLOC */
-
-#ifdef ERROR_CHECK_MALLOC
-
-/* NOTE that this can run malloc() so you need to adjust afterwards. */
-
-static int
-bind_regex_malloc_disallowed (int value)
-{
-  /* Tricky, because the act of binding can run malloc(). */
-  int old_regex_malloc_disallowed = regex_malloc_disallowed;
-  int depth;
-  regex_malloc_disallowed = 0;
-  depth = record_unwind_protect_restoring_int (&regex_malloc_disallowed,
-					       old_regex_malloc_disallowed);
-  regex_malloc_disallowed = value;
-  return depth;
-}
-
-#endif /* ERROR_CHECK_MALLOC */
 
 #else  /* not emacs */
 
@@ -437,11 +358,11 @@ void *alloca ();
 
 #ifdef REGEX_REL_ALLOC
 #define REGEX_ALLOCATE_STACK(size)				\
-  r_alloc ((char **) &failure_stack_ptr, (size))
+  r_alloc ((unsigned char **) &failure_stack_ptr, (size))
 #define REGEX_REALLOCATE_STACK(source, osize, nsize)		\
-  r_re_alloc ((char **) &failure_stack_ptr, (nsize))
+  r_re_alloc ((unsigned char **) &failure_stack_ptr, (nsize))
 #define REGEX_FREE_STACK(ptr)					\
-  r_alloc_free ((void **) &failure_stack_ptr)
+  r_alloc_free ((unsigned char **) &failure_stack_ptr)
 
 #else /* not REGEX_REL_ALLOC */
 
@@ -490,6 +411,88 @@ typedef const unsigned char re_char;
 typedef char re_bool;
 #define false 0
 #define true 1
+
+
+#ifdef emacs
+
+#ifdef MULE
+
+Lisp_Object Vthe_lisp_rangetab;
+
+void
+vars_of_regex (void)
+{
+  Vthe_lisp_rangetab = Fmake_range_table ();
+  staticpro (&Vthe_lisp_rangetab);
+}
+
+#else /* not MULE */
+
+void
+vars_of_regex (void)
+{
+}
+
+#endif /* MULE */
+
+/* Convert an offset from the start of the logical text string formed by
+   concatenating the two strings together into a character position in the
+   Lisp buffer or string that the text represents.  Knows that
+   when handling buffer text, the "string" we're passed in is always
+   BEGV - ZV. */
+
+static Charxpos
+offset_to_charxpos (Lisp_Object lispobj, int off)
+{
+  if (STRINGP (lispobj))
+    return string_index_byte_to_char (lispobj, off);
+  else if (BUFFERP (lispobj))
+    return bytebpos_to_charbpos (XBUFFER (lispobj),
+				 off + BYTE_BUF_BEGV (XBUFFER (lispobj)));
+  else
+    return 0;
+}
+
+#ifdef REL_ALLOC
+
+/* STRING1 is the value of STRING1 given to re_match_2().  LISPOBJ is
+   the Lisp object (if any) from which the string is taken.  If LISPOBJ
+   is a buffer, return a relocation offset to be added to all pointers to
+   string data so that they will be accurate again, after an allocation or
+   reallocation that potentially relocated the buffer data.
+*/
+static Bytecount
+offset_post_relocation (Lisp_Object lispobj, Ibyte *orig_buftext)
+{
+  if (!BUFFERP (lispobj))
+    return 0;
+  return (BYTE_BUF_BYTE_ADDRESS (XBUFFER (lispobj),
+				 BYTE_BUF_BEGV (XBUFFER (lispobj))) -
+	  orig_buftext);
+}
+
+#endif /* REL_ALLOC */
+
+#ifdef ERROR_CHECK_MALLOC
+
+/* NOTE that this can run malloc() so you need to adjust afterwards. */
+
+static int
+bind_regex_malloc_disallowed (int value)
+{
+  /* Tricky, because the act of binding can run malloc(). */
+  int old_regex_malloc_disallowed = regex_malloc_disallowed;
+  int depth;
+  regex_malloc_disallowed = 0;
+  depth = record_unwind_protect_restoring_int (&regex_malloc_disallowed,
+					       old_regex_malloc_disallowed);
+  regex_malloc_disallowed = value;
+  return depth;
+}
+
+#endif /* ERROR_CHECK_MALLOC */
+
+#endif /* emacs */
 
 
 /* These are the command codes that appear in compiled regular
@@ -1403,85 +1406,59 @@ typedef struct
 #else
 /* Don't change NULL pointers */
 #define ADD_IF_NZ(val) if (val) val += rmdp_offset
-#define RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS()			\
-do									\
-{									\
-  Bytecount rmdp_offset = offset_post_relocation (lispobj, string1);	\
-									\
-  if (rmdp_offset)							\
-    {									\
-      int i;								\
-									\
-      ADD_IF_NZ (string1);						\
-      ADD_IF_NZ (string2);						\
-      ADD_IF_NZ (d);							\
-      ADD_IF_NZ (dend);							\
-      ADD_IF_NZ (end1);							\
-      ADD_IF_NZ (end2);							\
-      ADD_IF_NZ (end_match_1);						\
-      ADD_IF_NZ (end_match_2);						\
-									\
-      if (bufp->re_ngroups)						\
-	{								\
-	  for (i = 0; i < numregs; i++)					\
-	    {								\
-	      ADD_IF_NZ (regstart[i]);					\
-	      ADD_IF_NZ (regend[i]);					\
-	      ADD_IF_NZ (old_regstart[i]);				\
-	      ADD_IF_NZ (old_regend[i]);				\
-	      ADD_IF_NZ (best_regstart[i]);				\
-	      ADD_IF_NZ (best_regend[i]);				\
-	      ADD_IF_NZ (reg_dummy[i]);					\
-	    }								\
-	}								\
-									\
-      ADD_IF_NZ (match_end);						\
-    }									\
+#define RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS()			  \
+do									  \
+{									  \
+  Bytecount rmdp_offset = offset_post_relocation (lispobj, orig_buftext); \
+									  \
+  if (rmdp_offset)							  \
+    {									  \
+      int i;								  \
+									  \
+      ADD_IF_NZ (string1);						  \
+      ADD_IF_NZ (string2);						  \
+      ADD_IF_NZ (d);							  \
+      ADD_IF_NZ (dend);							  \
+      ADD_IF_NZ (end1);							  \
+      ADD_IF_NZ (end2);							  \
+      ADD_IF_NZ (end_match_1);						  \
+      ADD_IF_NZ (end_match_2);						  \
+									  \
+      if (bufp->re_ngroups)						  \
+	{								  \
+	  for (i = 0; i < num_regs; i++)				  \
+	    {								  \
+	      ADD_IF_NZ (regstart[i]);					  \
+	      ADD_IF_NZ (regend[i]);					  \
+	      ADD_IF_NZ (old_regstart[i]);				  \
+	      ADD_IF_NZ (old_regend[i]);				  \
+	      ADD_IF_NZ (best_regstart[i]);				  \
+	      ADD_IF_NZ (best_regend[i]);				  \
+	      ADD_IF_NZ (reg_dummy[i]);					  \
+	    }								  \
+	}								  \
+									  \
+      ADD_IF_NZ (match_end);						  \
+    }									  \
 } while (0)
 #endif /* !defined (emacs) || !defined (REL_ALLOC) */
 
 #if !defined (emacs) || !defined (REL_ALLOC)
 #define RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS()
 #else
-#define RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS()			\
-do									\
-{									\
-  Bytecount rmdp_offset = offset_post_relocation (lispobj, str1);	\
-									\
-  if (rmdp_offset)							\
-    {									\
-      int i;								\
-									\
-      ADD_IF_NZ (str1);							\
-      ADD_IF_NZ (str2);							\
-      ADD_IF_NZ (string1);						\
-      ADD_IF_NZ (string2);						\
-      ADD_IF_NZ (d);							\
-									\
-									\
-									\
-      ADD_IF_NZ (dend);							\
-      ADD_IF_NZ (end1);							\
-      ADD_IF_NZ (end2);							\
-      ADD_IF_NZ (end_match_1);						\
-      ADD_IF_NZ (end_match_2);						\
-									\
-      if (bufp->re_ngroups)						\
-	{								\
-	  for (i = 0; i < numregs; i++)					\
-	    {								\
-	      ADD_IF_NZ (regstart[i]);					\
-	      ADD_IF_NZ (regend[i]);					\
-	      ADD_IF_NZ (old_regstart[i]);				\
-	      ADD_IF_NZ (old_regend[i]);				\
-	      ADD_IF_NZ (best_regstart[i]);				\
-	      ADD_IF_NZ (best_regend[i]);				\
-	      ADD_IF_NZ (reg_dummy[i]);					\
-	    }								\
-	}								\
-									\
-      ADD_IF_NZ (match_end);						\
-    }									\
+#define RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS()			  \
+do									  \
+{									  \
+  Bytecount rmdp_offset = offset_post_relocation (lispobj, orig_buftext); \
+									  \
+  if (rmdp_offset)							  \
+    {									  \
+      ADD_IF_NZ (str1);							  \
+      ADD_IF_NZ (str2);							  \
+      ADD_IF_NZ (string1);						  \
+      ADD_IF_NZ (string2);						  \
+      ADD_IF_NZ (d);							  \
+    }									  \
 } while (0)
 
 #endif /* emacs */
@@ -4286,6 +4263,13 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
   re_char *d;
 #ifdef emacs
   Internal_Format fmt = buffer_or_other_internal_format (lispobj);
+#ifdef REL_ALLOC
+  Ibyte *orig_buftext =
+    BUFFERP (lispobj) ?
+    BYTE_BUF_BYTE_ADDRESS (XBUFFER (lispobj),
+			   BYTE_BUF_BEGV (XBUFFER (lispobj))) :
+    0;
+#endif
 #ifdef ERROR_CHECK_MALLOC
   int depth;
 #endif
@@ -4914,6 +4898,14 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
 #ifdef emacs
   Internal_Format fmt = buffer_or_other_internal_format (lispobj);
+#ifdef REL_ALLOC
+  Ibyte *orig_buftext =
+    BUFFERP (lispobj) ?
+    BYTE_BUF_BYTE_ADDRESS (XBUFFER (lispobj),
+			   BYTE_BUF_BEGV (XBUFFER (lispobj))) :
+    0;
+#endif
+
 #ifdef ERROR_CHECK_MALLOC
   int depth = bind_regex_malloc_disallowed (1);
 #endif
@@ -4967,7 +4959,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
     /* If the allocations above (or the call to setup_syntax_cache() in
        re_match_2) caused a rel-alloc relocation, then fix up the data
        pointers */
-    Bytecount offset = offset_post_relocation (lispobj, string1);
+    Bytecount offset = offset_post_relocation (lispobj, orig_buftext);
     if (offset)
       {
 	string1 += offset;
@@ -5055,7 +5047,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	  BEGIN_REGEX_MALLOC_OK ();
 	  QUIT;
 	  END_REGEX_MALLOC_OK ();
-	  RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
+	  RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
 	}
 #endif
 
