@@ -1,3 +1,7 @@
+2004-08-26  Jerry James  <james@xemacs.org>
+
+	* gutter.c (output_gutter): Removed unused variable frame.
+
 2004-08-25  Jerry James  <james@xemacs.org>
 
 	* redisplay-x.c (x_output_string): Remove unused variable device.

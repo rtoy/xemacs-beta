@@ -380,7 +380,6 @@ calculate_gutter_size (struct window *w, enum gutter_pos pos)
 static void
 output_gutter (struct frame *f, enum gutter_pos pos, int force)
 {
-  Lisp_Object frame;
   Lisp_Object window = FRAME_LAST_NONMINIBUF_WINDOW (f);
   struct device *d = XDEVICE (f->device);
   struct window* w = XWINDOW (window);
@@ -405,8 +404,6 @@ output_gutter (struct frame *f, enum gutter_pos pos, int force)
   ddla = f->desired_display_lines[pos];
   cdla = f->current_display_lines[pos];
   cdla_len = Dynarr_length (cdla);
-
-  frame = wrap_frame (f);
 
   get_gutter_coords (f, pos, &x, &y, &width, &height);
   /* generate some display lines */
