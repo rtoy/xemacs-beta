@@ -319,6 +319,14 @@ megabyte for buffers in `rmail-mode', and size is irrelevant otherwise."
 string text when fontifying."
   :type 'boolean
   :group 'font-lock)
+
+;;;###autoload
+(defcustom font-lock-mode-line-string " Font"
+  "*String to display in the modeline when Font Lock mode is active.
+Set this to nil if you don't want a modeline indicator."
+  :type '(choice string
+		 (const :tag "none" nil))
+  :group 'font-lock)
 
 ;; Fontification variables:
 
@@ -2755,7 +2763,7 @@ The name is assumed to begin with a capital letter.")
 (add-hook 'find-file-hooks 'font-lock-set-defaults t)
 
 ;;;###autoload
-(add-minor-mode 'font-lock-mode " Font")
+(add-minor-mode 'font-lock-mode 'font-lock-mode-line-string)
 
 ;; Provide ourselves:
 

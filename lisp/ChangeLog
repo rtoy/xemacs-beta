@@ -1,3 +1,8 @@
+2001-12-12  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* font-lock.el (font-lock-mode-line-string): new customizable
+	variable
+
 2001-10-16  Michael Diers  <mdiers@elego.de>
 
 	* about.el: Update e-mail address.
