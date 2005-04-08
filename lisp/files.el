@@ -864,12 +864,20 @@ can be suppressed by setting `find-file-wildcards' to `nil'."
 			  (read-coding-system "Coding system: "))
 		     t))
   (if codesys
-      (let ((coding-system-for-read
-	     (get-coding-system codesys)))
-	(let ((value (find-file-noselect filename nil nil wildcards)))
-	  (if (listp value)
-	      (mapcar 'switch-to-buffer (nreverse value))
-	    (switch-to-buffer value))))
+      (let* ((coding-system-for-read (get-coding-system codesys))
+	     (value (find-file-noselect filename nil nil wildcards))
+	     (bufname (if (listp value) (car (nreverse value)) value)))
+	;; If a user explicitly specified the coding system with a prefix
+	;; argument when opening a nonexistent file, insert-file-contents
+	;; hasn't preserved that coding system as the local
+	;; buffer-file-coding-system. Do that ourselves.
+	(unless (and bufname
+		     (file-exists-p (buffer-file-name bufname)) 
+		     (local-variable-p 'buffer-file-coding-system bufname))
+	  (save-excursion
+	    (set-buffer bufname)
+	    (setq buffer-file-coding-system coding-system-for-read)))
+	(switch-to-buffer bufname))
     (let ((value (find-file-noselect filename nil nil wildcards)))
       (if (listp value)
 	  (mapcar 'switch-to-buffer (nreverse value))

@@ -1,3 +1,8 @@
+2005-04-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* files.el (find-file): Honour the coding system argument even in
+	the case where we're creating a new file. 
+
 2005-04-04  Steve Youngs  <steve@sxemacs.org>
 
 	* files.el (backup-buffer): Write "%backup%~" in
