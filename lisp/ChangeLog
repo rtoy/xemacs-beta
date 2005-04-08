@@ -1,3 +1,13 @@
+2005-04-01  Marcus Crestani  <crestani@xemacs.org>
+
+	The new allocator.
+
+	MEMORY_USAGE_STATS
+
+	* diagnose.el: Add new lisp function to pretty print statistics
+	about the new allocator.
+	* diagnose.el (show-mc-alloc-memory-usage): New.
+
 2005-04-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* files.el (find-file): Honour the coding system argument even in

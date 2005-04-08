@@ -140,7 +140,11 @@ struct buffer_text
 
 struct buffer
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
 
   /* This structure holds the coordinates of the buffer contents
      in ordinary buffers.  In indirect buffers, this is not used.  */

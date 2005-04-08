@@ -194,10 +194,18 @@ static struct console *
 allocate_console (Lisp_Object type)
 {
   Lisp_Object console;
+#ifdef MC_ALLOC
+  struct console *con = alloc_lrecord_type (struct console, &lrecord_console);
+#else /* not MC_ALLOC */
   struct console *con = alloc_lcrecord_type (struct console, &lrecord_console);
+#endif /* not MC_ALLOC */
   struct gcpro gcpro1;
 
+#ifdef MC_ALLOC
+  copy_lrecord (con, XCONSOLE (Vconsole_defaults));
+#else /* not MC_ALLOC */
   copy_lcrecord (con, XCONSOLE (Vconsole_defaults));
+#endif /* not MC_ALLOC */
 
   console = wrap_console (con);
   GCPRO1 (console);
@@ -662,7 +670,11 @@ find_nonminibuffer_frame_not_on_console (Lisp_Object console)
 static void
 nuke_all_console_slots (struct console *con, Lisp_Object zap)
 {
+#ifdef MC_ALLOC
+  zero_lrecord (con);
+#else /* not MC_ALLOC */
   zero_lcrecord (con);
+#endif /* not MC_ALLOC */
 
 #define MARKED_SLOT(x)	con->x = zap;
 #include "conslots.h"
@@ -1311,6 +1323,31 @@ One argument, the to-be-deleted console.
 }
 
 /* The docstrings for DEFVAR_* are recorded externally by make-docfile.  */
+#ifdef MC_ALLOC
+#define DEFVAR_CONSOLE_LOCAL_1(lname, field_name, forward_type, magic_fun) \
+do {									   \
+  struct symbol_value_forward *I_hate_C =				   \
+    alloc_lrecord_type (struct symbol_value_forward,			   \
+			&lrecord_symbol_value_forward);			   \
+  /*mcpro ((Lisp_Object) I_hate_C);*/					\
+									   \
+  I_hate_C->magic.value = &(console_local_flags.field_name);		   \
+  I_hate_C->magic.type = forward_type;					   \
+  I_hate_C->magicfun = magic_fun;					   \
+									   \
+  MARK_LRECORD_AS_LISP_READONLY (I_hate_C);				   \
+									   \
+  {									   \
+    int offset = ((char *)symbol_value_forward_forward (I_hate_C)	   \
+		  - (char *)&console_local_flags);			   \
+									   \
+    defvar_magic (lname, I_hate_C);					   \
+									   \
+    *((Lisp_Object *)(offset + (char *)XCONSOLE (Vconsole_local_symbols))) \
+      = intern (lname);							   \
+  }									   \
+} while (0)
+#else /* not MC_ALLOC */
 #define DEFVAR_CONSOLE_LOCAL_1(lname, field_name, forward_type, magicfun)   \
 do {									    \
   static const struct symbol_value_forward I_hate_C =			    \
@@ -1343,6 +1380,7 @@ do {									    \
       = intern (lname);							    \
   }									    \
 } while (0)
+#endif /* not MC_ALLOC */
 
 #define DEFVAR_CONSOLE_LOCAL_MAGIC(lname, field_name, magicfun)		\
 	DEFVAR_CONSOLE_LOCAL_1 (lname, field_name,			\
@@ -1367,8 +1405,13 @@ common_init_complex_vars_of_console (void)
   /* Make sure all markable slots in console_defaults
      are initialized reasonably, so mark_console won't choke.
    */
+#ifdef MC_ALLOC
+  struct console *defs = alloc_lrecord_type (struct console, &lrecord_console);
+  struct console *syms = alloc_lrecord_type (struct console, &lrecord_console);
+#else /* not MC_ALLOC */
   struct console *defs = alloc_lcrecord_type (struct console, &lrecord_console);
   struct console *syms = alloc_lcrecord_type (struct console, &lrecord_console);
+#endif /* not MC_ALLOC */
 
   staticpro_nodump (&Vconsole_defaults);
   staticpro_nodump (&Vconsole_local_symbols);

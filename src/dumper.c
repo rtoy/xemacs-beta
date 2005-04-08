@@ -50,7 +50,9 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_MMAP
 #include <sys/mman.h>
 #endif
+#ifdef DUMP_IN_EXEC
 #include "dump-data.h"
+#endif
 #endif
 
 typedef struct
@@ -235,6 +237,7 @@ typedef struct
 
 static Rawbyte *pdump_rt_list = 0;
 
+#ifndef MC_ALLOC
 void
 pdump_objects_unmark (void)
 {
@@ -258,8 +261,27 @@ pdump_objects_unmark (void)
 	    break;
       }
 }
+#endif /* not MC_ALLOC */
 
 
+#ifdef MC_ALLOC
+/* The structure of the dump file looks like this:
+ 0		- header
+		- dumped objects
+ stab_offset	- mc allocation table (count, size, address) for individual
+		  allocation and  relocation at load time.
+        	- nb_cv_data*struct(dest, adr) for in-object externally
+		  represented data
+		- nb_cv_ptr*(adr) for pointed-to externally represented data
+            	- relocation table
+             	- nb_root_struct_ptrs*struct(void *, adr)
+		  for global pointers to structures
+		- nb_root_blocks*struct(void *, size, info) for global
+		  objects to restore
+		- root lisp object address/value couples with the count
+		  preceding the list
+ */
+#else /* not MC_ALLOC */
 /* The structure of the dump file looks like this:
  0		- header
 		- dumped objects
@@ -274,6 +296,7 @@ pdump_objects_unmark (void)
 		- root lisp object address/value couples with the count
 		  preceding the list
  */
+#endif /* not MC_ALLOC */
 
 
 #define PDUMP_SIGNATURE "XEmacsDP"
@@ -411,7 +434,13 @@ static int pdump_fd;
 static void *pdump_buf;
 static FILE *pdump_out;
 
+#if defined (MC_ALLOC)
+/* With mc_alloc, way more entries are added to the hash tables:
+   increase hash table size to avoid collisions. */
+#define PDUMP_HASHSIZE 1000001
+#else /* not MC_ALLOC */
 #define PDUMP_HASHSIZE 200001
+#endif /* not MC_ALLOC */
 
 static pdump_block_list_elt **pdump_hash;
 
@@ -419,7 +448,12 @@ static pdump_block_list_elt **pdump_hash;
 static int
 pdump_make_hash (const void *obj)
 {
+#if defined (MC_ALLOC)
+  /* Use >>2 for a better hash to avoid collisions. */
+  return ((unsigned long)(obj)>>2) % PDUMP_HASHSIZE;
+#else /* not MC_ALLOC */
   return ((unsigned long)(obj)>>3) % PDUMP_HASHSIZE;
+#endif /* not MC_ALLOC */
 }
 
 /* Return the entry for an already-registered memory block at OBJ,
@@ -483,6 +517,71 @@ pdump_add_block (pdump_block_list *list, const void *obj, Bytecount size,
       list->align = align;
   }
 }
+
+#ifdef MC_ALLOC
+typedef struct mc_addr_elt
+{
+  const void *obj;
+  EMACS_INT addr;
+} mc_addr_elt;
+
+static mc_addr_elt *pdump_mc_hash;
+
+/* Return the entry for an already-registered memory block at OBJ,
+   or NULL if none. */
+static EMACS_INT
+pdump_get_mc_addr (const void *obj)
+{
+  int pos = pdump_make_hash (obj);
+  mc_addr_elt *mc_addr;
+
+  assert (obj != 0);
+
+  while ((mc_addr = &pdump_mc_hash[pos]) && (mc_addr->obj != 0))
+    {
+      if (mc_addr->obj == obj)
+	return mc_addr->addr;
+
+      pos++;
+      if (pos == PDUMP_HASHSIZE)
+	pos = 0;
+    }
+
+  /* If this code is reached, an heap address occurred which has not
+     been written to the lookup table before.
+     This is a bug! */
+  ABORT();
+  return 0;
+}
+
+/* For indirect address lookups, needed for convertibles: Ptr points
+   to an address within an object. Indirect gives the offset by how
+   many bytes the address of the object has to be adjusted to do a
+   lookup in the mc_addr translation table and get the new location of
+   the data. */
+#define pdump_get_indirect_mc_addr(ptr, indirect) \
+  pdump_get_mc_addr ((void *)((ptr) - indirect)) + indirect
+
+static void
+pdump_put_mc_addr (const void *obj, EMACS_INT addr)
+{
+  mc_addr_elt *mc_addr;
+  int pos = pdump_make_hash (obj);
+
+  while ((mc_addr = &pdump_mc_hash[pos]) && (mc_addr->obj != 0))
+    {
+      if (mc_addr->obj == obj)
+	return;
+
+      pos++;
+      if (pos == PDUMP_HASHSIZE)
+	pos = 0;
+    }
+
+  pdump_mc_hash[pos].obj = obj;
+  pdump_mc_hash[pos].addr = addr;
+}
+#endif /* MC_ALLOC */
 
 static pdump_block_list *
 pdump_get_block_list (const struct memory_description *desc)
@@ -1031,6 +1130,207 @@ pdump_dump_data (pdump_block_list_elt *elt,
   retry_fwrite (desc ? pdump_buf : elt->obj, size, count, pdump_out);
 }
 
+#ifdef MC_ALLOC
+/* To be able to relocate during load time, more information about the
+   dumped objects are needed: The count (for array-like data
+   structures), the size of the object, and the location in the dumped
+   data.
+ */
+static void
+pdump_dump_mc_data (pdump_block_list_elt *elt,
+		   const struct memory_description *UNUSED(desc))
+{
+  EMACS_INT rdata = pdump_get_block (elt->obj)->save_offset;
+  int j;
+  PDUMP_WRITE_ALIGNED (int, elt->count);
+  PDUMP_WRITE_ALIGNED (Bytecount, elt->size);
+  for (j = 0; j < elt->count; j++)
+    {
+      PDUMP_WRITE_ALIGNED (EMACS_INT, rdata);
+      rdata += elt->size;
+    }
+}
+
+static void
+pdump_scan_lisp_objects_by_alignment (void (*f)
+				      (pdump_block_list_elt *,
+				       const struct memory_description *))
+{
+  int align;
+
+  for (align = ALIGNOF (max_align_t); align; align>>=1)
+    {
+      int i;
+      pdump_block_list_elt *elt;
+
+      for (i=0; i<lrecord_type_count; i++)
+	if (pdump_object_table[i].align == align)
+	  for (elt = pdump_object_table[i].first; elt; elt = elt->next)
+	    {
+	      assert (elt->count == 1);
+	      f (elt, lrecord_implementations_table[i]->description);
+	    }
+    }
+}
+
+static void
+pdump_scan_non_lisp_objects_by_alignment (void (*f)
+					  (pdump_block_list_elt *,
+					   const struct memory_description *))
+{
+  int align;
+
+  for (align = ALIGNOF (max_align_t); align; align>>=1)
+    {
+      int i;
+      pdump_block_list_elt *elt;
+
+      for (i=0; i<pdump_desc_table.count; i++)
+	{
+	  pdump_desc_list_elt list = pdump_desc_table.list[i];
+	  if (list.list.align == align)
+	    for (elt = list.list.first; elt; elt = elt->next)
+	      f (elt, list.desc);
+	}
+
+      for (elt = pdump_opaque_data_list.first; elt; elt = elt->next)
+	if (pdump_size_to_align (elt->size) == align)
+	  f (elt, 0);
+    }
+}
+
+
+
+static void
+pdump_reloc_one_mc (void *data, const struct memory_description *desc)
+{
+  int pos;
+
+  for (pos = 0; desc[pos].type != XD_END; pos++)
+    {
+      const struct memory_description *desc1 = &desc[pos];
+      void *rdata =
+	(Rawbyte *) data + lispdesc_indirect_count (desc1->offset,
+							desc, data);
+
+    union_switcheroo:
+
+      /* If the flag says don't dump, then don't dump. */
+      if ((desc1->flags) & XD_FLAG_NO_PDUMP)
+	continue;
+
+      switch (desc1->type)
+	{
+	case XD_BYTECOUNT:
+	case XD_ELEMCOUNT:
+	case XD_HASHCODE:
+	case XD_INT:
+	case XD_LONG:
+	case XD_INT_RESET:
+	  break;
+	case XD_OPAQUE_DATA_PTR:
+	case XD_ASCII_STRING:
+	case XD_BLOCK_PTR:
+	case XD_LO_LINK:
+	  {
+	    EMACS_INT ptr = *(EMACS_INT *) rdata;
+	    if (ptr)
+	      *(EMACS_INT *) rdata = pdump_get_mc_addr ((void *) ptr);
+	    break;
+	  }
+	case XD_LISP_OBJECT:
+	  {
+	    Lisp_Object *pobj = (Lisp_Object *) rdata;
+
+	    assert (desc1->data1 == 0);
+
+	    if (POINTER_TYPE_P (XTYPE (*pobj))
+		&& ! EQ (*pobj, Qnull_pointer))
+	      *pobj = wrap_pointer_1 ((char *) pdump_get_mc_addr 
+				      (XPNTR (*pobj)));
+	    break;
+	  }
+	case XD_LISP_OBJECT_ARRAY:
+	  {
+	    EMACS_INT num = lispdesc_indirect_count (desc1->data1, desc,
+						     data);
+	    int j;
+
+	    for (j=0; j<num; j++)
+	      {
+		Lisp_Object *pobj = (Lisp_Object *) rdata + j;
+
+		if (POINTER_TYPE_P (XTYPE (*pobj))
+		    && ! EQ (*pobj, Qnull_pointer))
+		  *pobj = wrap_pointer_1 ((char *) pdump_get_mc_addr 
+					   (XPNTR (*pobj)));
+	      }
+	    break;
+	  }
+	case XD_DOC_STRING:
+	  {
+	    EMACS_INT str = *(EMACS_INT *) rdata;
+	    if (str > 0)
+	      *(EMACS_INT *) rdata = pdump_get_mc_addr ((void *) str);
+	    break;
+	  }
+	case XD_BLOCK_ARRAY:
+	  {
+	    EMACS_INT num = lispdesc_indirect_count (desc1->data1, desc,
+						     data);
+	    int j;
+	    const struct sized_memory_description *sdesc =
+	      lispdesc_indirect_description (data, desc1->data2.descr);
+	    Bytecount size = lispdesc_block_size (rdata, sdesc);
+
+	    /* Note: We are recursing over data in the block itself */
+	    for (j = 0; j < num; j++)
+	      pdump_reloc_one_mc ((Rawbyte *) rdata + j * size,
+				  sdesc->description);
+
+	    break;
+	  }
+	case XD_UNION:
+	case XD_UNION_DYNAMIC_SIZE:
+	  desc1 = lispdesc_process_xd_union (desc1, desc, data);
+	  if (desc1)
+	    goto union_switcheroo;
+	  break;
+
+	case XD_OPAQUE_PTR_CONVERTIBLE:
+	  {
+	    pdump_cv_ptr_load_info *p = pdump_loaded_cv_ptr + *(EMACS_INT *)rdata;
+	    if (!p->adr)
+	      p->adr = desc1->data2.funcs->deconvert(0, 
+						     pdump_start + p->save_offset,
+						     p->size);
+	    *(void **)rdata = p->adr;
+	    break;
+	  }
+
+	case XD_OPAQUE_DATA_CONVERTIBLE:
+	  {
+	    EMACS_INT dest_offset = (EMACS_INT) rdata;
+	    EMACS_INT indirect = 
+	      lispdesc_indirect_count (desc1->offset, desc, data);
+	    pdump_cv_data_dump_info *p;
+
+	    for(p = pdump_loaded_cv_data; 
+		pdump_get_indirect_mc_addr (p->dest_offset, indirect)
+		  != dest_offset; 
+		p++);
+
+	    desc1->data2.funcs->deconvert(rdata, pdump_start + p->save_offset,
+					  p->size);
+	    break;
+	  }
+
+	default:
+	  pdump_unsupported_dump_type (desc1->type, 0);
+	}
+    }
+}
+#else /* not MC_ALLOC */
 /* Relocate a single memory block at DATA, described by DESC, from its
    assumed load location to its actual one by adding DELTA to all pointers
    in the block.  Does not recursively relocate any other memory blocks
@@ -1164,6 +1464,7 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 	}
     }
 }
+#endif /* not MC_ALLOC */
 
 static void
 pdump_allocate_offset (pdump_block_list_elt *elt,
@@ -1775,11 +2076,25 @@ pdump (void)
 
   fseek (pdump_out, header.stab_offset, SEEK_SET);
 
+#ifdef MC_ALLOC
+  {
+    EMACS_INT zero = 0;
+    pdump_scan_lisp_objects_by_alignment (pdump_dump_mc_data);
+    PDUMP_WRITE_ALIGNED (EMACS_INT, zero);
+    pdump_scan_non_lisp_objects_by_alignment (pdump_dump_mc_data);
+    PDUMP_WRITE_ALIGNED (EMACS_INT, zero);
+  }
+#endif /* MC_ALLOC */
   pdump_dump_cv_data_info ();
   pdump_dump_cv_ptr_info ();
+#ifdef MC_ALLOC
+  pdump_dump_rtables ();
+#endif /* MC_ALLOC */
   pdump_dump_root_block_ptrs ();
   pdump_dump_root_blocks ();
+#ifndef MC_ALLOC
   pdump_dump_rtables ();
+#endif /* not MC_ALLOC */
   pdump_dump_root_lisp_objects ();
 
   retry_fclose (pdump_out);
@@ -1820,6 +2135,45 @@ pdump_load_finish (void)
   delta = ((EMACS_INT) pdump_start) - header->reloc_address;
   p = pdump_start + header->stab_offset;
 
+#ifdef MC_ALLOC
+  pdump_mc_hash = xnew_array_and_zero (mc_addr_elt, PDUMP_HASHSIZE);
+
+  /* Allocate space for each object individually. First the
+     Lisp_Objects, then the blocks. */
+  count = 2;
+  for (;;)
+    {
+      int elt_count = PDUMP_READ_ALIGNED (p, int);
+      if (elt_count)
+	{
+	  Rawbyte *mc_addr = 0;
+	  Bytecount size = PDUMP_READ_ALIGNED (p, Bytecount);
+	  for (i = 0; i < elt_count; i++)
+	    {
+	      EMACS_INT rdata = PDUMP_READ_ALIGNED (p, EMACS_INT);
+	  
+	      if (i == 0)
+		{
+		  Bytecount real_size = size * elt_count;
+#ifdef MC_ALLOC
+		  if (count == 2)
+		    mc_addr = (Rawbyte *) mc_alloc (real_size);
+		  else
+#endif /* not MC_ALLOC */
+		    mc_addr = (Rawbyte *) xmalloc_and_zero (real_size);
+		}
+	      else
+		mc_addr += size;
+	  
+	      pdump_put_mc_addr ((void *) rdata, (EMACS_INT) mc_addr);
+	      memcpy (mc_addr, (char *) rdata + delta, size);
+	    }
+	}
+      else if (!(--count))
+	break;
+    }
+#endif /* MC_ALLOC */
+
   /* Get the cv_data array */
   p = (Rawbyte *) ALIGN_PTR (p, pdump_cv_data_dump_info);
   pdump_loaded_cv_data = (pdump_cv_data_dump_info *)p;
@@ -1837,12 +2191,39 @@ pdump_load_finish (void)
       pdump_loaded_cv_ptr[i].adr         = 0;
     }
 
+#ifdef MC_ALLOC
+  /* Relocate the heap objects */
+  pdump_rt_list = p;
+  count = 2;
+  for (;;)
+    {
+      pdump_reloc_table rt = PDUMP_READ_ALIGNED (p, pdump_reloc_table);
+      p = (Rawbyte *) ALIGN_PTR (p, Rawbyte *);
+      if (rt.desc)
+	{
+	  char **reloc = (char **) p;
+	  for (i = 0; i < rt.count; i++)
+	    {
+	      reloc[i] = (char *) pdump_get_mc_addr (reloc[i]);
+	      pdump_reloc_one_mc (reloc[i], rt.desc);
+	    }
+	  p += rt.count * sizeof (char *);
+	}
+      else if (!(--count))
+	  break;
+    }
+#endif /* MC_ALLOC */
+
   /* Put back the pdump_root_block_ptrs */
   p = (Rawbyte *) ALIGN_PTR (p, pdump_static_pointer);
   for (i = 0; i < header->nb_root_block_ptrs; i++)
     {
       pdump_static_pointer ptr = PDUMP_READ (p, pdump_static_pointer);
+#ifdef MC_ALLOC
+      (* ptr.address) = (Rawbyte *) pdump_get_mc_addr (ptr.value);
+#else /* not MC_ALLOC */
       (* ptr.address) = ptr.value + delta;
+#endif /* not MC_ALLOC */
     }
 
   /* Put back the pdump_root_blocks and relocate */
@@ -1851,10 +2232,15 @@ pdump_load_finish (void)
       pdump_root_block info = PDUMP_READ_ALIGNED (p, pdump_root_block);
       memcpy ((void *) info.blockaddr, p, info.size);
       if (info.desc)
+#ifdef MC_ALLOC
+	pdump_reloc_one_mc ((void *) info.blockaddr, info.desc);
+#else /* not MC_ALLOC */
 	pdump_reloc_one ((void *) info.blockaddr, delta, info.desc);
+#endif /* not MC_ALLOC */
       p += info.size;
     }
 
+#ifndef MC_ALLOC
   /* Relocate the heap objects */
   pdump_rt_list = p;
   count = 2;
@@ -1875,6 +2261,7 @@ pdump_load_finish (void)
       else if (!(--count))
 	  break;
     }
+#endif /* not MC_ALLOC */
 
   /* Put the pdump_root_lisp_objects variables in place */
   i = PDUMP_READ_ALIGNED (p, Elemcount);
@@ -1884,7 +2271,12 @@ pdump_load_finish (void)
       pdump_static_Lisp_Object obj = PDUMP_READ (p, pdump_static_Lisp_Object);
 
       if (POINTER_TYPE_P (XTYPE (obj.value)))
-	obj.value = wrap_pointer_1 ((Rawbyte *) XPNTR (obj.value) + delta);
+#ifdef MC_ALLOC
+	obj.value = wrap_pointer_1 ((Rawbyte *) pdump_get_mc_addr 
+				    (XPNTR (obj.value)));
+#else /* not MC_ALLOC */
+        obj.value = wrap_pointer_1 ((Rawbyte *) XPNTR (obj.value) + delta);
+#endif /* not MC_ALLOC */
 
       (* obj.address) = obj.value;
     }
@@ -1907,6 +2299,10 @@ pdump_load_finish (void)
       else
 	p += sizeof (Lisp_Object) * rt.count;
     }
+
+#ifdef MC_ALLOC
+  xfree (pdump_mc_hash, mc_addr_elt *);
+#endif /* MC_ALLOC */
 
   return 1;
 }
@@ -2069,6 +2465,7 @@ pdump_file_get (const Wexttext *path)
   return 1;
 }
 
+#ifdef DUMP_IN_EXEC
 static int
 pdump_ram_try (void)
 {
@@ -2077,6 +2474,7 @@ pdump_ram_try (void)
 
   return pdump_load_check ();
 }
+#endif
 
 #endif /* !WIN32_NATIVE */
 
@@ -2160,12 +2558,14 @@ pdump_load (const Wexttext *argv0)
   Wexttext *w;
   const Wexttext *dir, *p;
 
+#ifdef DUMP_IN_EXEC
   if (pdump_ram_try ())
     {
       pdump_load_finish ();
       in_pdump = 0;
       return 1;
     }
+#endif
 
   in_pdump = 1;
   dir = argv0;
@@ -2242,6 +2642,9 @@ pdump_load (const Wexttext *argv0)
     {
       pdump_load_finish ();
       in_pdump = 0;
+#ifdef MC_ALLOC
+      pdump_free ();
+#endif /* MC_ALLOC */
       return 1;
     }
 
@@ -2252,6 +2655,9 @@ pdump_load (const Wexttext *argv0)
 	{
 	  pdump_load_finish ();
 	  in_pdump = 0;
+#ifdef MC_ALLOC
+	  pdump_free ();
+#endif /* MC_ALLOC */
 	  return 1;
 	}
       pdump_free ();

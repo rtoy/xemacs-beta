@@ -548,10 +548,15 @@ compute_from_unicode_table_size_1 (void *table, int level,
       }
     }
 
+#ifdef MC_ALLOC
+  size += mc_alloced_storage_size (256 * (level == 1 ? sizeof (short) :
+					  sizeof (void *)), stats);
+#else /* not MC_ALLOC */
   size += malloced_storage_size (table,
 				 256 * (level == 1 ? sizeof (short) :
 					sizeof (void *)),
 				 stats);
+#endif /* not MC_ALLOC */
   return size;
 }
 
@@ -573,10 +578,15 @@ compute_to_unicode_table_size_1 (void *table, int level,
 	}
     }
 
+#ifdef MC_ALLOC
+  size += mc_alloced_storage_size (96 * (level == 1 ? sizeof (int) :
+					 sizeof (void *)), stats);
+#else /* not MC_ALLOC */
   size += malloced_storage_size (table,
 				 96 * (level == 1 ? sizeof (int) :
 				       sizeof (void *)),
 				 stats);
+#endif /* not MC_ALLOC */
   return size;
 }
 

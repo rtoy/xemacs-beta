@@ -476,7 +476,11 @@ fill_char_table (Lisp_Char_Table *ct, Lisp_Object value)
       if (!EQ (ct->level1[i], Qnull_pointer) &&
 	  CHAR_TABLE_ENTRYP (ct->level1[i]) &&
 	  !OBJECT_DUMPED_P (ct->level1[1]))
+#ifdef MC_ALLOC
+	free_lrecord (ct->level1[i]);
+#else /* not MC_ALLOC */
 	free_lcrecord (ct->level1[i]);
+#endif /* not MC_ALLOC */
       ct->level1[i] = value;
     }
 #endif /* MULE */
@@ -592,7 +596,11 @@ sorts of values.  The different char table types are
   Lisp_Object obj;
   enum char_table_type ty = symbol_to_char_table_type (type);
 
+#ifdef MC_ALLOC
+  ct = alloc_lrecord_type (Lisp_Char_Table, &lrecord_char_table);
+#else /* not MC_ALLOC */
   ct = alloc_lcrecord_type (Lisp_Char_Table, &lrecord_char_table);
+#endif /* not MC_ALLOC */
   ct->type = ty;
   obj = wrap_char_table (ct);
   if (ty == CHAR_TABLE_TYPE_SYNTAX)
@@ -625,7 +633,11 @@ make_char_table_entry (Lisp_Object initval)
 {
   int i;
   Lisp_Char_Table_Entry *cte =
+#ifdef MC_ALLOC
+    alloc_lrecord_type (Lisp_Char_Table_Entry, &lrecord_char_table_entry);
+#else /* not MC_ALLOC */
     alloc_lcrecord_type (Lisp_Char_Table_Entry, &lrecord_char_table_entry);
+#endif /* not MC_ALLOC */
 
   for (i = 0; i < 96; i++)
     cte->level2[i] = initval;
@@ -639,7 +651,11 @@ copy_char_table_entry (Lisp_Object entry)
   Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (entry);
   int i;
   Lisp_Char_Table_Entry *ctenew =
+#ifdef MC_ALLOC
+    alloc_lrecord_type (Lisp_Char_Table_Entry, &lrecord_char_table_entry);
+#else /* not MC_ALLOC */
     alloc_lcrecord_type (Lisp_Char_Table_Entry, &lrecord_char_table_entry);
+#endif /* not MC_ALLOC */
 
   for (i = 0; i < 96; i++)
     {
@@ -668,7 +684,11 @@ as CHAR-TABLE.  The values will not themselves be copied.
 
   CHECK_CHAR_TABLE (char_table);
   ct = XCHAR_TABLE (char_table);
+#ifdef MC_ALLOC
+  ctnew = alloc_lrecord_type (Lisp_Char_Table, &lrecord_char_table);
+#else /* not MC_ALLOC */
   ctnew = alloc_lcrecord_type (Lisp_Char_Table, &lrecord_char_table);
+#endif /* not MC_ALLOC */
   ctnew->type = ct->type;
   ctnew->parent = ct->parent;
   ctnew->default_ = ct->default_;
@@ -1060,7 +1080,11 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
 	  int lb = XCHARSET_LEADING_BYTE (range->charset) - MIN_LEADING_BYTE;
 	  if (CHAR_TABLE_ENTRYP (ct->level1[lb]) &&
 	      !OBJECT_DUMPED_P (ct->level1[lb]))
+#ifdef MC_ALLOC
+	    free_lrecord (ct->level1[lb]);
+#else /* not MC_ALLOC */
 	    free_lcrecord (ct->level1[lb]);
+#endif /* not MC_ALLOC */
 	  ct->level1[lb] = val;
 	}
       break;

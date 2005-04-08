@@ -1,3 +1,12 @@
+2005-04-01  Marcus Crestani  <crestani@xemacs.org>
+
+	The new allocator.
+
+	DUMP_IN_EXEC:
+	
+	* Makefile.in.in: Only compile insert-data-in-exec if 
+        DUMP_IN_EXEC is defined.
+
 2005-03-25  Andrey Slusar  <anrays@gmail.com>
  
         * fakemail.c (CURRENT_USER): Define it if FreeBSD version is >= 

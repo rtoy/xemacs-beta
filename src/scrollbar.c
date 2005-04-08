@@ -199,8 +199,13 @@ create_scrollbar_instance (struct frame *f, int vertical)
 {
   struct device *d = XDEVICE (f->device);
   struct scrollbar_instance *instance =
+#ifdef MC_ALLOC
+    alloc_lrecord_type (struct scrollbar_instance,
+			&lrecord_scrollbar_instance);
+#else /* not MC_ALLOC */
     alloc_lcrecord_type (struct scrollbar_instance,
 			 &lrecord_scrollbar_instance);
+#endif /* not MC_ALLOC */
 
   MAYBE_DEVMETH (d, create_scrollbar_instance, (f, vertical, instance));
 
@@ -272,7 +277,11 @@ compute_scrollbar_instance_usage (struct device *d,
 
   while (inst)
     {
+#ifdef MC_ALLOC
+      total += mc_alloced_storage_size (sizeof (*inst), ovstats);
+#else /* not MC_ALLOC */
       total += malloced_storage_size (inst, sizeof (*inst), ovstats);
+#endif /* not MC_ALLOC */
       inst = inst->next;
     }
 

@@ -42,7 +42,11 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Char_Table_Entry
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
 
   /* In the interests of simplicity, we just use a fixed 96-entry
      table.  If we felt like being smarter, we could make this
@@ -80,7 +84,11 @@ enum char_table_type
 
 struct Lisp_Char_Table
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
 
   Lisp_Object ascii[NUM_ASCII_CHARS];
   Lisp_Object default_;

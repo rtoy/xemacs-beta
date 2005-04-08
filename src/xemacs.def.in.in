@@ -9,7 +9,17 @@ NAME xemacs.exe
 EXPORTS
 /* Exported functions */
 acons
+#ifdef MC_ALLOC
+alloc_lrecord			/* alloc_lrecord_type */
+lrecord_subr			/* DEFSUBR */
+lrecord_symbol_value_forward	/* DEFVAR_SYMVAL_FWD */
+#ifdef DEBUG_XEMACS
+mcpro_1				/* mcpro */
+#endif
+mc_allocate			/* DEFSUBR */
+#else /* not MC_ALLOC */
 alloc_automanaged_lcrecord	/* alloc_lcrecord_type */
+#endif /* not MC_ALLOC */
 apply1
 #ifdef USE_ASSERTIONS
 assert_failed			/* abort(), assert(), etc. */

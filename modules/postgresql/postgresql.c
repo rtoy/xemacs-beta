@@ -238,11 +238,21 @@ static Lisp_PGconn *
 allocate_pgconn (void)
 {
 #ifdef RUNNING_XEMACS_21_1
+#ifdef MC_ALLOC
+  Lisp_PGconn *pgconn = alloc_lrecord_type (Lisp_PGconn,
+					    lrecord_pgconn);
+#else /* not MC_ALLOC */
   Lisp_PGconn *pgconn = alloc_lcrecord_type (Lisp_PGconn,
 					     lrecord_pgconn);
+#endif /* not MC_ALLOC */
 #else
+#ifdef MC_ALLOC
+  Lisp_PGconn *pgconn = alloc_lrecord_type (Lisp_PGconn,
+					    &lrecord_pgconn);
+#else /* not MC_ALLOC */
   Lisp_PGconn *pgconn = alloc_lcrecord_type (Lisp_PGconn,
 					     &lrecord_pgconn);
+#endif /* not MC_ALLOC */
 #endif
   pgconn->pgconn = (PGconn *)NULL;
   return pgconn;
@@ -363,11 +373,21 @@ static Lisp_PGresult *
 allocate_pgresult (void)
 {
 #ifdef RUNNING_XEMACS_21_1
+#ifdef MC_ALLOC
+  Lisp_PGresult *pgresult = alloc_lrecord_type (Lisp_PGresult,
+						lrecord_pgresult);
+#else /* not MC_ALLOC */
   Lisp_PGresult *pgresult = alloc_lcrecord_type (Lisp_PGresult,
 						 lrecord_pgresult);
+#endif /* not MC_ALLOC */
 #else
+#ifdef MC_ALLOC
+  Lisp_PGresult *pgresult = alloc_lrecord_type (Lisp_PGresult,
+						&lrecord_pgresult);
+#else /* not MC_ALLOC */
   Lisp_PGresult *pgresult = alloc_lcrecord_type (Lisp_PGresult,
 						 &lrecord_pgresult);
+#endif /* not MC_ALLOC */
 #endif
   pgresult->pgresult = (PGresult *)NULL;
   return pgresult;

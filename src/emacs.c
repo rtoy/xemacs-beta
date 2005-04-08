@@ -456,8 +456,10 @@ Epoch 4.0 released August 27, 1990.
 #include "console-msw.h"
 #endif
 
+#ifdef DUMP_IN_EXEC
 #ifndef WIN32_NATIVE
 #include "dump-data.h"
+#endif
 #endif
 
 /* For PATH_EXEC */
@@ -909,6 +911,18 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   display_use = 0;
   inhibit_non_essential_conversion_operations = 1;
 
+#ifdef MC_ALLOC
+#ifndef PDUMP
+  if (!initialized)
+#endif
+    {
+      init_mc_allocator ();
+#ifdef MC_ALLOC_TYPE_STATS
+      init_lrecord_stats ();
+#endif /* not MC_ALLOC_TYPE_STATS */
+    }
+#endif /* MC_ALLOC */
+
 #ifdef NeXT
   /* 19-Jun-1995 -baw
    * NeXT secret magic, ripped from Emacs-for-NS by Carl Edman
@@ -1003,10 +1017,10 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
      alignment and max size of the inline data and quit */
   if (argmatch (argv, argc, "-si", "--show-inline-info", 0, NULL, &skip_args))
     {
-#if defined (PDUMP) && !defined (WIN32_NATIVE)
+#if defined (PDUMP) && defined (DUMP_IN_EXEC) && !defined (WIN32_NATIVE)
       printf ("%u %u\n", dumped_data_max_size (), dumped_data_align_offset ());
 #else
-      printf ("Portable dumper not configured or windows native; -si just forces exit.\n");
+      printf ("Portable dumper not configured for dumping into executable or windows native; -si just forces exit.\n");
 #endif
       exit (0);
     }
@@ -1424,6 +1438,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
       syms_of_abbrev ();
       syms_of_alloc ();
+#ifdef MC_ALLOC
+      syms_of_mc_alloc ();
+#endif /* MC_ALLOC */
       syms_of_buffer ();
       syms_of_bytecode ();
       syms_of_callint ();
@@ -1831,7 +1848,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
     {
       reinit_alloc_early ();
       reinit_symbols_early ();
+#ifndef MC_ALLOC
       reinit_opaque_early ();
+#endif /* not MC_ALLOC */
       reinit_eistring_early ();
 
       reinit_console_type_create_stream ();
@@ -2244,7 +2263,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_vars_of_glyphs_widget ();
       reinit_vars_of_insdel ();
       reinit_vars_of_lread ();
+#ifndef MC_ALLOC
       reinit_vars_of_lstream ();
+#endif /* not MC_ALLOC */
       reinit_vars_of_minibuf ();
 #ifdef HAVE_SHLIB
       reinit_vars_of_module ();
@@ -3169,7 +3190,9 @@ and announce itself normally when it is run.
   fflush (stdout);
 
   disksave_object_finalization ();
+#ifndef MC_ALLOC
   release_breathing_space ();
+#endif /* not MC_ALLOC */
 
   /* Tell malloc where start of impure now is */
   /* Also arrange for warnings when nearly out of space.  */

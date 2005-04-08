@@ -216,7 +216,11 @@ struct specifier_methods
 
 struct Lisp_Specifier
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
   struct specifier_methods *methods;
 
   /* we keep a chained list of all current specifiers, for GC cleanup

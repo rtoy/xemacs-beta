@@ -2187,8 +2187,13 @@ sets it.
 
   {
     struct symbol_value_buffer_local *bfwd
+#ifdef MC_ALLOC
+      = alloc_lrecord_type (struct symbol_value_buffer_local,
+			    &lrecord_symbol_value_buffer_local);
+#else /* not MC_ALLOC */
       = alloc_lcrecord_type (struct symbol_value_buffer_local,
 			     &lrecord_symbol_value_buffer_local);
+#endif /* not MC_ALLOC */
     Lisp_Object foo;
     bfwd->magic.type = SYMVAL_BUFFER_LOCAL;
 
@@ -2295,8 +2300,13 @@ Use `make-local-hook' instead.
     }
 
   /* Make sure variable is set up to hold per-buffer values */
+#ifdef MC_ALLOC
+  bfwd = alloc_lrecord_type (struct symbol_value_buffer_local,
+			     &lrecord_symbol_value_buffer_local);
+#else /* not MC_ALLOC */
   bfwd = alloc_lcrecord_type (struct symbol_value_buffer_local,
 			      &lrecord_symbol_value_buffer_local);
+#endif /* not MC_ALLOC */
   bfwd->magic.type = SYMVAL_SOME_BUFFER_LOCAL;
 
   bfwd->current_buffer = Qnil;
@@ -3015,8 +3025,13 @@ pity, thereby invalidating your code.
   valcontents = XSYMBOL (variable)->value;
   if (!SYMBOL_VALUE_LISP_MAGIC_P (valcontents))
     {
+#ifdef MC_ALLOC
+      bfwd = alloc_lrecord_type (struct symbol_value_lisp_magic,
+				 &lrecord_symbol_value_lisp_magic);
+#else /* MC_ALLOC */
       bfwd = alloc_lcrecord_type (struct symbol_value_lisp_magic,
 				  &lrecord_symbol_value_lisp_magic);
+#endif /* not MC_ALLOC */
       bfwd->magic.type = SYMVAL_LISP_MAGIC;
       for (i = 0; i < MAGIC_HANDLER_MAX; i++)
 	{
@@ -3151,8 +3166,13 @@ has a buffer-local value in any buffer, or the symbols nil or t.
     invalid_change ("Variable is magic and cannot be aliased", variable);
   reject_constant_symbols (variable, Qunbound, 0, Qt);
 
+#ifdef MC_ALLOC
+  bfwd = alloc_lrecord_type (struct symbol_value_varalias,
+			     &lrecord_symbol_value_varalias);
+#else /* not MC_ALLOC */
   bfwd = alloc_lcrecord_type (struct symbol_value_varalias,
 			      &lrecord_symbol_value_varalias);
+#endif /* not MC_ALLOC */
   bfwd->magic.type = SYMVAL_VARALIAS;
   bfwd->aliasee = alias;
   bfwd->shadowed = valcontents;
@@ -3252,6 +3272,7 @@ Lisp_Object Qzero;
 Lisp_Object Qnull_pointer;
 #endif
 
+#ifndef MC_ALLOC
 /* some losing systems can't have static vars at function scope... */
 static const struct symbol_value_magic guts_of_unbound_marker =
 { /* struct symbol_value_magic */
@@ -3269,6 +3290,7 @@ static const struct symbol_value_magic guts_of_unbound_marker =
   0, /* value */
   SYMVAL_UNBOUND_MARKER
 };
+#endif /* not MC_ALLOC */
 
 void
 init_symbols_once_early (void)
@@ -3300,7 +3322,18 @@ init_symbols_once_early (void)
   {
     /* Required to get around a GCC syntax error on certain
        architectures */
+#ifdef MC_ALLOC
+    struct symbol_value_magic *tem = (struct symbol_value_magic *)
+      mc_alloc (sizeof (struct symbol_value_magic));
+    MARK_LRECORD_AS_LISP_READONLY (tem);
+    MARK_LRECORD_AS_NOT_FREE (tem);
+    tem->header.type = lrecord_type_symbol_value_forward;
+    mcpro (wrap_pointer_1 (tem));
+    tem->value = 0;
+    tem->type = SYMVAL_UNBOUND_MARKER;
+#else /* not MC_ALLOC */
     const struct symbol_value_magic *tem = &guts_of_unbound_marker;
+#endif /* not MC_ALLOC */
 
     Qunbound = wrap_symbol_value_magic (tem);
   }

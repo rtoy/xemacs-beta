@@ -1,3 +1,498 @@
+2005-04-01  Marcus Crestani  <crestani@xemacs.org>
+
+	The new allocator.
+
+	New configure flag: `MC_ALLOC':
+
+	* config.h.in: Add new flag `MC_ALLOC'.
+
+	New files:
+
+	* Makefile.in.in: Add new object file mc-alloc.o.
+	* depend: Add new files to dependencies.
+	* mc-alloc.c: New.
+	* mc-alloc.h: New.
+
+	Running the new allocator from XEmacs:
+
+	* alloc.c (deadbeef_memory): Moved to mc-alloc.c.
+	* emacs.c (main_1): Initialize the new allocator and add
+	syms_of_mc_alloc.
+	* symsinit.h: Add syms_of_mc_alloc.
+
+	New lrecord allocation and free functions:
+
+	* alloc.c (alloc_lrecord): New. Allocates an lrecord, includes 
+        type checking and initializing of the lrecord_header.
+	* alloc.c (noseeum_alloc_lrecord): Same as above, but increments
+        the NOSEEUM cons counter.
+	* alloc.c (free_lrecord): New. Calls the finalizer and frees the 
+	lrecord.
+	* lrecord.h: Add lrecord allocation prototypes and comments.
+
+	Remove old lrecord FROB block allocation:
+	
+	* alloc.c (allocate_lisp_storage): Former function to expand
+	heap. Not needed anymore, remove.
+	* alloc.c: Completely remove `Fixed-size type macros'
+	* alloc.c (release_breathing_space): Remove.
+	* alloc.c (memory_full): Remove release_breathing_space.
+	* alloc.c (refill_memory_reserve): Remove.
+	* alloc.c (TYPE_ALLOC_SIZE): Remove.
+	* alloc.c (DECLARE_FIXED_TYPE_ALLOC): Remove.
+	* alloc.c (ALLOCATE_FIXED_TYPE_FROM_BLOCK): Remove.
+	* alloc.c (ALLOCATE_FIXED_TYPE_1): Remove.
+	* alloc.c (ALLOCATE_FIXED_TYPE): Remove.
+	* alloc.c (NOSEEUM_ALLOCATE_FIXED_TYPE): Remove.
+	* alloc.c (struct Lisp_Free): Remove.
+	* alloc.c (LRECORD_FREE_P): Remove.
+	* alloc.c (MARK_LRECORD_AS_FREE): Remove.
+	* alloc.c (MARK_LRECORD_AS_NOT_FREE): Remove.
+	* alloc.c (PUT_FIXED_TYPE_ON_FREE_LIST): Remove.
+	* alloc.c (FREE_FIXED_TYPE): Remove.
+	* alloc.c (FREE_FIXED_TYPE_WHEN_NOT_IN_GC): Remove.
+
+	Allocate old lrecords with new allocator:
+	
+	* alloc.c: DECLARE_FIXED_TYPE_ALLOC removed for all lrecords
+        defined in alloc.c.
+	* alloc.c (Fcons): Allocate with new allocator.
+	* alloc.c (noseeum_cons): Allocate with new allocator.
+	* alloc.c (make_float): Allocate with new allocator.
+	* alloc.c (make_bignum): Allocate with new allocator.
+	* alloc.c (make_bignum_bg): Allocate with new allocator.
+	* alloc.c (make_ratio): Allocate with new allocator.
+	* alloc.c (make_ratio_bg): Allocate with new allocator.
+	* alloc.c (make_ratio_rt): Allocate with new allocator.
+	* alloc.c (make_bigfloat): Allocate with new allocator.
+	* alloc.c (make_bigfloat_bf): Allocate with new allocator.
+	* alloc.c (make_compiled_function): Allocate with new allocator.
+	* alloc.c (Fmake_symbol): Allocate with new allocator.
+	* alloc.c (allocate_extent): Allocate with new allocator.
+	* alloc.c (allocate_event): Allocate with new allocator.
+	* alloc.c (make_key_data): Allocate with new allocator.
+	* alloc.c (make_button_data): Allocate with new allocator.
+	* alloc.c (make_motion_data): Allocate with new allocator.
+	* alloc.c (make_process_data): Allocate with new allocator.
+	* alloc.c (make_timeout_data): Allocate with new allocator.
+	* alloc.c (make_magic_data): Allocate with new allocator.
+	* alloc.c (make_magic_eval_data): Allocate with new allocator.
+	* alloc.c (make_eval_data): Allocate with new allocator.
+	* alloc.c (make_misc_user_data): Allocate with new allocator.
+	* alloc.c (Fmake_marker): Allocate with new allocator.
+	* alloc.c (noseeum_make_marker): Allocate with new allocator.
+	* alloc.c (make_uninit_string): Allocate with new allocator.
+	* alloc.c (resize_string): Allocate with new allocator.
+	* alloc.c (make_string_nocopy): Allocate with new allocator.
+
+	Garbage Collection:
+
+	* alloc.c (GC_CHECK_NOT_FREE): Remove obsolete assertions.
+	* alloc.c (SWEEP_FIXED_TYPE_BLOCK): Remove.
+	* alloc.c (SWEEP_FIXED_TYPE_BLOCK_1): Remove.
+	* alloc.c (sweep_conses): Remove.
+	* alloc.c (free_cons): Use new allocator to free.
+	* alloc.c (sweep_compiled_functions): Remove.
+	* alloc.c (sweep_floats): Remove.
+	* alloc.c (sweep_bignums): Remove.
+	* alloc.c (sweep_ratios): Remove.
+	* alloc.c (sweep_bigfloats): Remove.
+	* alloc.c (sweep_symbols): Remove.
+	* alloc.c (sweep_extents): Remove.
+	* alloc.c (sweep_events): Remove.
+	* alloc.c (sweep_key_data): Remove.
+	* alloc.c (free_key_data): Use new allocator to free.
+	* alloc.c (sweep_button_data): Remove.
+	* alloc.c (free_button_data): Use new allocator to free.
+	* alloc.c (sweep_motion_data): Remove.
+	* alloc.c (free_motion_data): Use new allocator to free.
+	* alloc.c (sweep_process_data): Remove.
+	* alloc.c (free_process_data): Use new allocator to free.
+	* alloc.c (sweep_timeout_data): Remove.
+	* alloc.c (free_timeout_data): Use new allocator to free.
+	* alloc.c (sweep_magic_data): Remove.
+	* alloc.c (free_magic_data): Use new allocator to free.
+	* alloc.c (sweep_magic_eval_data): Remove.
+	* alloc.c (free_magic_eval_data): Use new allocator to free.
+	* alloc.c (sweep_eval_data): Remove.
+	* alloc.c (free_eval_data): Use new allocator to free.
+	* alloc.c (sweep_misc_user_data): Remove.
+	* alloc.c (free_misc_user_data): Use new allocator to free.
+	* alloc.c (sweep_markers): Remove.
+	* alloc.c (free_marker): Use new allocator to free.
+	* alloc.c (garbage_collect_1): Remove release_breathing_space.
+	* alloc.c (gc_sweep): Remove all the old lcrecord and lrecord
+        related	stuff. Sweeping now works like this: compact string
+        chars, finalize, sweep.
+	* alloc.c (common_init_alloc_early): Remove old lrecord 
+	initializations, remove breathing_space.
+	* emacs.c (Fdump_emacs): Remove release_breathing_space.
+	* lisp.h: Remove prototype for release_breathing_space.
+	* lisp.h: Adjust the special cons mark makros.
+
+	Lrecord Finalizer:
+
+	* alloc.c: Add finalizer to lrecord definition.
+	* alloc.c (finalize_string): Add finalizer for string.
+	* bytecode.c: Add finalizer to lrecord definition.
+	* bytecode.c (finalize_compiled_function): Add finalizer for
+	compiled function.
+	* marker.c: Add finalizer to lrecord definition.
+	* marker.c (finalize_marker): Add finalizer for marker.
+
+	These changes build the interface to mc-alloc:
+
+	* lrecord.h (MC_ALLOC_CALL_FINALIZER): Tell mc-alloc how to
+        finalize lrecords.
+	* lrecord.h (MC_ALLOC_CALL_FINALIZER_FOR_DISKSAVE): Tell
+        mc-alloc how to finalize for disksave.
+
+        Unify lrecords and lcrecords:
+
+	* lisp.h (struct Lisp_String): Adjust string union hack to 
+        new lrecord header.
+	* lrecord.h: Adjust comments.
+	* lrecord.h (struct lrecord_header): The new lrecord header
+        includes type, lisp-readonly, free, and uid.
+	* lrecord.h (set_lheader_implementation): Adjust to new 
+        lrecord_header.
+	* lrecord.h (struct lrecord_implementation): The field basic_p
+        for indication of an old lrecord is not needed anymore, remove.
+	* lrecord.h (MAKE_LRECORD_IMPLEMENTATION): Remove basic_p.
+	* lrecord.h (MAKE_EXTERNAL_LRECORD_IMPLEMENTATION): Remove
+        basic_p.
+	* lrecord.h (copy_sized_lrecord): Remove distinction between
+        old lrecords and lcrecords.
+	* lrecord.h (copy_lrecord): Remove distinction between old 
+        lrecords and lcrecords.
+	* lrecord.h (zero_sized_lrecord): Remove distinction between 
+        old lrecords and lcrecords.
+	* lrecord.h (zero_lrecord): Remove distinction between old
+        lrecords and lcrecords.
+
+	Remove lcrecords and lcrecord lists:
+
+	* alloc.c (basic_alloc_lcrecord): Not needed anymore, remove.
+	* alloc.c (very_old_free_lcrecord): Not needed anymore, remove.
+	* alloc.c (copy_lisp_object): No more distinction between 
+        lrecords and lcrecords.
+	* alloc.c (all_lcrecords): Not needed anymore, remove.
+	* alloc.c (make_vector_internal): Allocate as lrecord.
+	* alloc.c (make_bit_vector_internal): Allocate as lrecord.
+	* alloc.c: Completely remove `lcrecord lists'.
+	* alloc.c (free_description): Remove.
+	* alloc.c (lcrecord_list_description): Remove.
+	* alloc.c (mark_lcrecord_list): Remove.
+	* alloc.c (make_lcrecord_list): Remove.
+	* alloc.c (alloc_managed_lcrecord): Remove.
+	* alloc.c (free_managed_lcrecord): Remove.
+	* alloc.c (alloc_automanaged_lcrecord): Remove.
+	* alloc.c (free_lcrecord): Remove.
+	* alloc.c (lcrecord_stats): Remove.
+	* alloc.c (tick_lcrecord_stats): Remove.
+	* alloc.c (disksave_object_finalization_1): Add call to 
+	mc_finalize_for_disksave. Remove the lcrecord way to visit all
+	objects.
+	* alloc.c (kkcc_marking): Remove XD_FLAG_FREE_LISP_OBJECT
+	* alloc.c (sweep_lcrecords_1): Remove.
+	* alloc.c (common_init_alloc_early): Remove everything related
+        to lcrecords, remove old lrecord initializations, 
+	* alloc.c (init_lcrecord_lists): Not needed anymore, remove.
+	* alloc.c (reinit_alloc_early): Remove everything related to
+	lcrecords.
+	* alloc.c (init_alloc_once_early): Remove everything related to
+	lcrecords.
+ 	* buffer.c (allocate_buffer): Allocate as lrecord.
+	* buffer.c (nuke_all_buffer_slots): Use lrecord functions.
+	* buffer.c (common_init_complex_vars_of_buffer): Allocate as 
+	lrecord.
+	* buffer.h (struct buffer): Add lrecord_header.
+	* casetab.c (allocate_case_table): Allocate as lrecord.
+	* casetab.h (struct Lisp_Case_Table): Add lrecord_header.
+	* charset.h (struct Lisp_Charset): Add lrecord_header.
+	* chartab.c (fill_char_table): Use lrecord functions.
+	* chartab.c (Fmake_char_table): Allocate as lrecord.
+	* chartab.c (make_char_table_entry): Allocate as lrecord.
+	* chartab.c (copy_char_table_entry): Allocate as lrecord.
+	* chartab.c (Fcopy_char_table): Allocate as lrecord.
+	* chartab.c (put_char_table): Use lrecord functions.
+	* chartab.h (struct Lisp_Char_Table_Entry): Add lrecord_header.
+	* chartab.h (struct Lisp_Char_Table): Add lrecord_header.
+	* console-impl.h (struct console): Add lrecord_header.
+	* console-msw-impl.h (struct Lisp_Devmode): Add lrecord_header.
+	* console-msw-impl.h (struct mswindows_dialog_id): Add 
+	lrecord_header.
+	* console.c (allocate_console): Allocate as lrecord.
+	* console.c (nuke_all_console_slots): Use lrecord functions.
+	* console.c (common_init_complex_vars_of_console): Allocate as 
+	lrecord.
+	* data.c (make_weak_list): Allocate as lrecord.
+	* data.c (make_weak_box): Allocate as lrecord.
+	* data.c (make_ephemeron): Allocate as lrecord.
+	* database.c (struct Lisp_Database): Add lrecord_header.
+	* database.c (allocate_database): Allocate as lrecord.
+	* device-impl.h (struct device): Add lrecord_header.
+	* device-msw.c (allocate_devmode): Allocate as lrecord.
+	* device.c (nuke_all_device_slots): Use lrecord functions.
+	* device.c (allocate_device): Allocate as lrecord.
+	* dialog-msw.c (handle_question_dialog_box): Allocate as lrecord.
+	* elhash.c (struct Lisp_Hash_Table): Add lrecord_header.
+	* elhash.c (make_general_lisp_hash_table): Allocate as lrecord.
+	* elhash.c (Fcopy_hash_table): Allocate as lrecord.
+	* event-stream.c: Lcrecord lists Vcommand_builder_free_list and
+	Vtimeout_free_list are no longer needed. Remove.
+	* event-stream.c (allocate_command_builder): Allocate as lrecord.
+	* event-stream.c (free_command_builder): Use lrecord functions.
+	* event-stream.c (event_stream_generate_wakeup): Allocate as
+        lrecord.
+	* event-stream.c (event_stream_resignal_wakeup): Use lrecord 
+	functions.
+	* event-stream.c (event_stream_disable_wakeup): Use lrecord
+	functions.
+	* event-stream.c (reinit_vars_of_event_stream): Lcrecord lists
+	remove.
+	* events.h (struct Lisp_Timeout): Add lrecord_header.
+	* events.h (struct command_builder): Add lrecord_header.
+	* extents-impl.h (struct extent_auxiliary): Add lrecord_header.
+	* extents-impl.h (struct extent_info): Add lrecord_header.
+	* extents.c (allocate_extent_auxiliary): Allocate as lrecord.
+	* extents.c (allocate_extent_info): Allocate as lrecord.
+	* extents.c (copy_extent): Allocate as lrecord.
+	* faces.c (allocate_face): Allocate as lrecord.
+	* faces.h (struct Lisp_Face): Add lrecord_header.
+	* file-coding.c (allocate_coding_system): Allocate as lrecord.
+	* file-coding.c (Fcopy_coding_system): Allocate as lrecord.
+	* file-coding.h (struct Lisp_Coding_System): Add lrecord_header.
+	* fns.c (Ffillarray): Allocate as lrecord.
+	* frame-impl.h (struct frame): Add lrecord_header.
+	* frame.c (nuke_all_frame_slots): Use lrecord functions.
+	* frame.c (allocate_frame_core): Allocate as lrecord.
+	* glyphs.c (allocate_image_instance): Allocate as lrecord.
+	* glyphs.c (Fcolorize_image_instance): Allocate as lrecord.
+	* glyphs.c (allocate_glyph): Allocate as lrecord.
+	* glyphs.h (struct Lisp_Image_Instance): Add lrecord_header.
+	* glyphs.h (struct Lisp_Glyph): Add lrecord_header.
+	* gui.c (allocate_gui_item): Allocate as lrecord.
+	* gui.h (struct Lisp_Gui_Item): Add lrecord_header.
+	* keymap.c (struct Lisp_Keymap): Add lrecord_header.
+	* keymap.c (make_keymap): Allocate as lrecord.
+	* lisp.h (struct Lisp_Vector): Add lrecord_header.
+	* lisp.h (struct Lisp_Bit_Vector): Add lrecord_header.
+	* lisp.h (struct weak_box): Add lrecord_header.
+	* lisp.h (struct ephemeron): Add lrecord_header.
+	* lisp.h (struct weak_list): Add lrecord_header.
+	* lrecord.h (struct lcrecord_header): Not used, remove.
+	* lrecord.h (struct free_lcrecord_header): Not used, remove.
+	* lrecord.h (struct lcrecord_list): Not needed anymore, remove.
+	* lrecord.h (lcrecord_list): Not needed anymore, remove.
+	* lrecord.h: (enum data_description_entry_flags): Remove
+	XD_FLAG_FREE_LISP_OBJECT.
+	* lstream.c: Lrecord list Vlstream_free_list remove.
+	* lstream.c (Lstream_new): Allocate as lrecord.
+	* lstream.c (Lstream_delete): Use lrecod functions.
+	* lstream.c (reinit_vars_of_lstream): Vlstream_free_list
+	initialization remove.  
+	* lstream.h (struct lstream): Add lrecord_header.
+	* emacs.c (main_1): Remove lstream initialization.
+	* mule-charset.c (make_charset): Allocate as lrecord.
+	* objects-impl.h (struct Lisp_Color_Instance): Add 
+        lrecord_header.
+	* objects-impl.h (struct Lisp_Font_Instance): Add lrecord_header.
+	* objects.c (Fmake_color_instance): Allocate as lrecord.
+	* objects.c (Fmake_font_instance): Allocate as lrecord.
+	* objects.c (reinit_vars_of_objects): Allocate as lrecord.
+	* opaque.c: Lcreord list Vopaque_ptr_list remove.
+	* opaque.c (make_opaque): Allocate as lrecord.
+	* opaque.c (make_opaque_ptr): Allocate as lrecord.
+	* opaque.c (free_opaque_ptr): Use lrecord functions.
+	* opaque.c (reinit_opaque_early): 
+	* opaque.c (init_opaque_once_early): Vopaque_ptr_list
+	initialization remove.
+	* opaque.h (Lisp_Opaque): Add lrecord_header.
+	* opaque.h (Lisp_Opaque_Ptr): Add lrecord_header.
+	* emacs.c (main_1): Remove opaque variable initialization.
+	* print.c (default_object_printer): Use new lrecord_header.
+	* print.c (print_internal): Use new lrecord_header.
+	* print.c (debug_p4): Use new lrecord_header.
+	* process.c (make_process_internal): Allocate as lrecord.
+	* procimpl.h (struct Lisp_Process): Add lrecord_header.
+	* rangetab.c (Fmake_range_table): Allocate as lrecord.
+	* rangetab.c (Fcopy_range_table): Allocate as lrecord.
+	* rangetab.h (struct Lisp_Range_Table): Add lrecord_header.
+	* scrollbar.c (create_scrollbar_instance): Allocate as lrecord.
+	* scrollbar.h (struct scrollbar_instance): Add lrecord_header.
+	* specifier.c (make_specifier_internal): Allocate as lrecord.
+	* specifier.h (struct Lisp_Specifier): Add lrecord_header.
+	* symbols.c:
+	* symbols.c (Fmake_variable_buffer_local): Allocate as lrecord.
+	* symbols.c (Fdontusethis_set_symbol_value_handler): Allocate 
+	as lrecord.
+	* symbols.c (Fdefvaralias): Allocate as lrecord.
+	* symeval.h (struct symbol_value_magic): Add lrecord_header.
+	* toolbar.c (update_toolbar_button): Allocate as lrecord.
+	* toolbar.h (struct toolbar_button): Add lrecord_header.
+	* tooltalk.c (struct Lisp_Tooltalk_Message): Add lrecord_header.
+	* tooltalk.c (make_tooltalk_message): Allocate as lrecord.
+	* tooltalk.c (struct Lisp_Tooltalk_Pattern): Add lrecord_header.
+	* tooltalk.c (make_tooltalk_pattern): Allocate as lrecord.
+	* ui-gtk.c (allocate_ffi_data): Allocate as lrecord.
+	* ui-gtk.c (allocate_emacs_gtk_object_data): Allocate as lrecord.
+	* ui-gtk.c (allocate_emacs_gtk_boxed_data): Allocate as lrecord.
+	* ui-gtk.h (structs): Add lrecord_header.
+	* window-impl.h (struct window): Add lrecord_header.
+	* window-impl.h (struct window_mirror): Add lrecord_header.
+	* window.c (allocate_window): Allocate as lrecord.
+	* window.c (new_window_mirror): Allocate as lrecord.
+	* window.c (make_dummy_parent): Allocate as lrecord.
+
+	MEMORY_USAGE_STATS
+
+	* alloc.c (fixed_type_block_overhead): Not used anymore, remove.
+	* buffer.c (compute_buffer_usage): Get storage size from new
+	allocator.
+	* marker.c (compute_buffer_marker_usage): Get storage size from 
+	new allocator.
+	* mule-charset.c (compute_charset_usage): Get storage size from 
+	new allocator.
+	* scrollbar-gtk.c (gtk_compute_scrollbar_instance_usage): Get
+	storage size from new allocator.
+	* scrollbar-msw.c (mswindows_compute_scrollbar_instance_usage): 
+	Get storage size from new allocator.
+	* scrollbar-x.c (x_compute_scrollbar_instance_usage): Get
+        storage	size from new allocator.
+	* scrollbar.c (compute_scrollbar_instance_usage): Get storage
+        size from new allocator.
+	* unicode.c (compute_from_unicode_table_size_1): Get storage
+        size from new allocator.
+	* unicode.c (compute_to_unicode_table_size_1): Get storage size
+	from new allocator.
+	* window.c (compute_window_mirror_usage): Get storage size from
+	new allocator.
+	* window.c (compute_window_usage): Get storage size from new 
+	allocator.
+
+	MC_ALLOC_TYPE_STATS:
+
+	* alloc.c (alloc_lrecord): Bump lrecord count.
+	* alloc.c (noseeum_alloc_lrecord): Bump lrecord count.
+	* alloc.c (struct lrecord_stats): Storage for counts.
+	* alloc.c (init_lrecord_stats): Zero statistics.
+	* alloc.c (inc_lrecord_stats): Increase the statistic.
+	* alloc.c (dec_lrecord_stats): Decrease the statistic.
+	* alloc.c (gc_plist_hack): Used to print the information.
+	* alloc.c (Fgarbage_collect): Return the collected information.
+	* mc-alloc.c (remove_cell): Decrease lrecord count.
+	* mc-alloc.h: Set flag MC_ALLOC_TYPE_STATS.
+	* emacs.c (main_1): Init lrecord statistics.
+	* lrecord.h: Add prototypes for *_lrecord_stats.
+
+	Strings:
+
+        * alloc.c (Fmake_string): Initialize ascii_begin to zero.
+	* alloc.c (gc_count_num_short_string_in_use): Remove.
+	* alloc.c (gc_count_string_total_size): Remove.
+	* alloc.c (gc_count_short_string_total_size): Remove.
+	* alloc.c (debug_string_purity): Remove.
+	* alloc.c (debug_string_purity_print): Remove.
+	* alloc.c (sweep_strings): Remove.
+	
+	Remove static C-readonly Lisp objects:
+
+	* alloc.c (c_readonly): Not needed anymore, remove.
+	* alloc.c (GC_CHECK_LHEADER_INVARIANTS): Remove some obsolete
+        lheader invariants assertions.
+	* buffer.c (DEFVAR_BUFFER_LOCAL_1): Allocate dynamically.
+	* console.c (DEFVAR_CONSOLE_LOCAL_1): Allocate dynamically.
+	* gpmevent.c: Indirection via MC_ALLOC_Freceive_gpm_event.
+	* gpmevent.c (Fgpm_enable): Allocate dynamically.
+	* gpmevent.c (syms_of_gpmevent): Allocate dynamically.
+	* lisp.h (C_READONLY): Not needed anymore, remove.
+	* lisp.h (DEFUN): Allocate dynamically.
+	* lrecord.h (C_READONLY_RECORD_HEADER_P): Not needed anymore,
+        remove.
+	* lrecord.h (SET_C_READONLY_RECORD_HEADER): Not needed anymore,
+        remove.
+	* symbols.c (guts_of_unbound_marker):
+	* symeval.h (defsubr): Allocate dynamically.
+	* symeval.h (DEFSUBR_MACRO): Allocate dynamically.
+	* symeval.h (DEFVAR_ SYMVAL_FWD): Allocate dynamically.
+	* tests.c (TESTS_DEFSUBR): Allocate dynamically.
+
+	Definition of mcpro:
+
+	* lisp.h: Add mcpro prototypes.
+	* alloc.c (common_init_alloc_early): Add initialization for
+        mcpros.
+	* alloc.c (mcpro_description_1): New.
+	* alloc.c (mcpro_description): New.
+	* alloc.c (mcpros_description_1): New.
+	* alloc.c (mcpros_description): New.
+	* alloc.c (mcpro_one_name_description_1): New.
+	* alloc.c (mcpro_one_name_description): New.
+	* alloc.c (mcpro_names_description_1): New.
+	* alloc.c (mcpro_names_description): New.
+	* alloc.c (mcpros): New.
+	* alloc.c (mcpro_names): New.
+	* alloc.c (mcpro_1): New.
+	* alloc.c (mc_pro): New.
+	* alloc.c (garbage_collect_1): Add mcpros to root set.
+
+	Usage of mcpro:
+
+	* alloc.c (make_string_nocopy): Add string to root set.
+	* symbols.c (init_symbols_once_early): Add Qunbound to root set.
+
+	Changes to the Portable Dumper:
+	
+	* alloc.c (FREE_OR_REALLOC_BEGIN): Since dumped objects can be
+	freed with the new allocator, remove assertion for !DUMPEDP.
+	* dumper.c: Adjust comments, increase PDUMP_HASHSIZE.
+	* dumper.c (pdump_make_hash): Shift address only 2 bytes, to
+	avoid collisions.
+	* dumper.c (pdump_objects_unmark): No more mark bits within
+	the object, remove.
+	* dumper.c (mc_addr_elt): New. Element data structure for mc 
+	hash table.
+	* dumper.c (pdump_mc_hash): New hash table: `lookup table'.
+	* dumper.c (pdump_get_mc_addr): New. Lookup for hash table.
+	* dumper.c (pdump_get_indirect_mc_addr): New. Lookup for
+	convertibles.
+	* dumper.c (pdump_put_mc_addr): New. Putter for hash table.
+	* dumper.c (pdump_dump_mc_data): New. Writes the table for
+	relocation at load time to the dump file.
+	* dumper.c (pdump_scan_lisp_objects_by_alignment): New. 
+	Visits all dumped Lisp objects.
+	* dumper.c (pdump_scan_non_lisp_objects_by_alignment): New.
+	Visits all other dumped objects.
+	* dumper.c (pdump_reloc_one_mc): New. Updates all pointers
+	of an object by using the hash table pdump_mc_hash.
+	* dumper.c (pdump_reloc_one): Replaced by pdump_reloc_one_mc.
+	* dumper.c (pdump): Change the structure of the dump file, add 
+	the mc post dump relocation table to dump file.
+	* dumper.c (pdump_load_finish): Hand all dumped objects to the 
+	new allocator and use the mc post dump relocation table for 
+	relocating the dumped objects at dump file load time, free not
+	longer used data structures.
+	* dumper.c (pdump_load): Free the dump file.
+	* dumper.h: Remove pdump_objects_unmark.
+	* lrecord.h (DUMPEDP): Dumped objects can be freed, remove.	
+
+	DUMP_IN_EXEC:
+
+	* Makefile.in.in: Linking for and with dump in executable only if
+	DUMP_IN_EXEC is defined.
+	* config.h.in: Add new flag `DUMP_IN_EXEC'
+	* emacs.c: Condition dump-data.h on DUMP_IN_EXEC.
+	* emacs.c (main_1): Flag `-si' only works if dump image is
+        written	into executable.
+
+	Miscellanious
+
+	* lrecord.h (enum lrecord_type): Added numbers to all types,
+        very handy for debugging.
+	* xemacs.def.in.in: Add mc-alloc functions to make them visible
+        to the modules.
+
 2005-04-06  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* chartab.c (Fchar_table_p):

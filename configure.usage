@@ -382,7 +382,11 @@ Developer options:
 			might say. (Infamous for being the former
 			"experimental, don't-sue-me-if-your-house-collapses-
 			and-your-wife-leaves-you" portable dumper.)
+--dump-in-exec		Put the dump image into the executable (enabled by
+			default for `pdump', not enabled by default in
+			combination with `mc-alloc'.
 --use-kkcc              Enable the use of new GC algorithms. (EXPERIMENTAL)
+--mc-alloc              Enable the new allocator. (EXPERIMENTAL)
 --with-modules (*)      Compile in experimental support for dynamically
                         loaded libraries (Dynamic Shared Objects).
 

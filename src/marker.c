@@ -104,11 +104,30 @@ static const struct memory_description marker_description[] = {
   { XD_END }
 };
 
+#ifdef MC_ALLOC
+static void
+finalize_marker (void *header, int for_disksave)
+{
+  if (!for_disksave) 
+    {
+      Lisp_Object tem = wrap_marker (header);
+      unchain_marker (tem);
+    }
+}
+
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
+				     1, /*dumpable-flag*/
+				     mark_marker, print_marker,
+				     finalize_marker,
+				     marker_equal, marker_hash,
+				     marker_description, Lisp_Marker);
+#else /* not MC_ALLOC */
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
 				     1, /*dumpable-flag*/
 				     mark_marker, print_marker, 0,
 				     marker_equal, marker_hash,
 				     marker_description, Lisp_Marker);
+#endif /* not MC_ALLOC */
 
 /* Operations on markers. */
 
@@ -493,7 +512,11 @@ compute_buffer_marker_usage (struct buffer *b, struct overhead_stats *ovstats)
   for (m = BUF_MARKERS (b); m; m = m->next)
     total += sizeof (Lisp_Marker);
   ovstats->was_requested += total;
+#ifdef MC_ALLOC
+  overhead = mc_alloced_storage_size (total, 0);
+#else /* not MC_ALLOC */
   overhead = fixed_type_block_overhead (total);
+#endif /* not MC_ALLOC */
   /* #### claiming this is all malloc overhead is not really right,
      but it has to go somewhere. */
   ovstats->malloc_overhead += overhead;

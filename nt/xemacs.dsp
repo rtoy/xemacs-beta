@@ -787,6 +787,14 @@ SOURCE=..\src\marker.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\mc-alloc.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\mc-alloc.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\md5.c
 # End Source File
 # Begin Source File

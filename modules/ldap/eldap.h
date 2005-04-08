@@ -31,8 +31,13 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_LDAP
 {
+#ifdef MC_ALLOC
+  /* lrecord header */
+  struct lrecord_header header;
+#else /* not MC_ALLOC */
   /* lcrecord header */
   struct lcrecord_header header;
+#endif /* not MC_ALLOC */
   /* The LDAP connection handle used by the LDAP API */
   LDAP *ld;
   /* Name of the host we connected to */

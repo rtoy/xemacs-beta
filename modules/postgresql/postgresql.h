@@ -28,7 +28,11 @@ xemacs-patches.
 */
 struct Lisp_PGconn
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* not MC_ALLOC */
   struct lcrecord_header header;
+#endif /* not MC_ALLOC */
   PGconn *pgconn;
 };
 typedef struct Lisp_PGconn Lisp_PGconn;
@@ -48,7 +52,11 @@ DECLARE_LRECORD (pgconn, Lisp_PGconn);
 */
 struct Lisp_PGresult
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* not MC_ALLOC */
   struct lcrecord_header header;
+#endif /* not MC_ALLOC */
   PGresult *pgresult;
 };
 typedef struct Lisp_PGresult Lisp_PGresult;

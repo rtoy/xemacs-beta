@@ -328,8 +328,13 @@ Range tables allow you to efficiently set values for ranges of integers.
 */
        (type))
 {
+#ifdef MC_ALLOC
+  Lisp_Range_Table *rt = alloc_lrecord_type (Lisp_Range_Table,
+					     &lrecord_range_table);
+#else /* not MC_ALLOC */
   Lisp_Range_Table *rt = alloc_lcrecord_type (Lisp_Range_Table,
 					      &lrecord_range_table);
+#endif /* not MC_ALLOC */
   rt->entries = Dynarr_new (range_table_entry);
   rt->type = range_table_symbol_to_type (type);
   return wrap_range_table (rt);
@@ -347,7 +352,11 @@ The values will not themselves be copied.
   CHECK_RANGE_TABLE (range_table);
   rt = XRANGE_TABLE (range_table);
 
+#ifdef MC_ALLOC
+  rtnew = alloc_lrecord_type (Lisp_Range_Table, &lrecord_range_table);
+#else /* not MC_ALLOC */
   rtnew = alloc_lcrecord_type (Lisp_Range_Table, &lrecord_range_table);
+#endif /* not MC_ALLOC */
   rtnew->entries = Dynarr_new (range_table_entry);
   rtnew->type = rt->type;
 

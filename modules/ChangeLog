@@ -1,3 +1,20 @@
+2005-04-01  Marcus Crestani  <crestani@xemacs.org>
+
+	The new allocator.
+
+	Remove Lcrecords:
+	
+	* postgresql/postgresql.c (allocate_pgconn): Allocate with new
+	allocator.
+	* postgresql/postgresql.c (allocate_pgresult): Allocate PGresult
+	with new allocator.  
+	* postgresql/postgresql.h (struct Lisp_PGconn): Add
+        lrecord_header.
+	* postgresql/postgresql.h (struct Lisp_PGresult): Add 
+	lrecord_header.
+	* ldap/eldap.c (allocate_ldap): Allocate with new allocator.
+	* ldap/eldap.h (struct Lisp_LDAP): Add lrecord_header.
+
 2005-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.20 "cilantro" is released.

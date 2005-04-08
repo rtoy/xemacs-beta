@@ -703,9 +703,14 @@ x_compute_scrollbar_instance_usage (struct device *UNUSED (d),
       struct x_scrollbar_data *data =
 	(struct x_scrollbar_data *) inst->scrollbar_data;
 
+#ifdef MC_ALLOC
+      total += mc_alloced_storage_size (sizeof (*data), ovstats);
+      total += mc_alloced_storage_size (1 + strlen (data->name), ovstats);
+#else /* not MC_ALLOC */
       total += malloced_storage_size (data, sizeof (*data), ovstats);
       total += malloced_storage_size (data->name, 1 + strlen (data->name),
 				      ovstats);
+#endif /* not MC_ALLOC */
       inst = inst->next;
     }
 

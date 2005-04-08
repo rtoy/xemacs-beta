@@ -346,7 +346,11 @@ DEFINE_LRECORD_IMPLEMENTATION ("window", window,
 Lisp_Object
 allocate_window (void)
 {
+#ifdef MC_ALLOC
+  struct window *p = alloc_lrecord_type (struct window, &lrecord_window);
+#else /* not MC_ALLOC */
   struct window *p = alloc_lcrecord_type (struct window, &lrecord_window);
+#endif /* not MC_ALLOC */
   Lisp_Object val = wrap_window (p);
 
 #define WINDOW_SLOT(slot) p->slot = Qnil;
@@ -483,7 +487,11 @@ static struct window_mirror *
 new_window_mirror (struct frame *f)
 {
   struct window_mirror *t =
+#ifdef MC_ALLOC
+    alloc_lrecord_type (struct window_mirror, &lrecord_window_mirror);
+#else /* not MC_ALLOC */
     alloc_lcrecord_type (struct window_mirror, &lrecord_window_mirror);
+#endif /* not MC_ALLOC */
 
   t->frame = f;
   t->current_display_lines = Dynarr_new (display_line);
@@ -3802,10 +3810,18 @@ make_dummy_parent (Lisp_Object window)
 {
   Lisp_Object new;
   struct window *o = XWINDOW (window);
+#ifdef MC_ALLOC
+  struct window *p = alloc_lrecord_type (struct window, &lrecord_window);
+#else /* not MC_ALLOC */
   struct window *p = alloc_lcrecord_type (struct window, &lrecord_window);
+#endif /* not MC_ALLOC */
 
   new = wrap_window (p);
+#ifdef MC_ALLOC
+  copy_lrecord (p, o);
+#else /* MC_ALLOC */
   copy_lcrecord (p, o);
+#endif /* MC_ALLOC */
 
   /* Don't copy the pointers to the line start cache or the face
      instances. */
@@ -5096,8 +5112,13 @@ compute_window_mirror_usage (struct window_mirror *mir,
 {
   if (!mir)
     return;
+#ifdef MC_ALLOC
+  stats->other += mc_alloced_storage_size (sizeof (struct window_mirror),
+					   ovstats);
+#else /* not MC_ALLOC */
   stats->other += malloced_storage_size (mir, sizeof (struct window_mirror),
 					 ovstats);
+#endif /* not MC_ALLOC */
 #ifdef HAVE_SCROLLBARS
   {
     struct device *d = XDEVICE (FRAME_DEVICE (mir->frame));
@@ -5121,7 +5142,11 @@ compute_window_usage (struct window *w, struct window_stats *stats,
 		      struct overhead_stats *ovstats)
 {
   xzero (*stats);
+#ifdef MC_ALLOC
+  stats->other += mc_alloced_storage_size (sizeof (struct window), ovstats);
+#else /* not MC_ALLOC */
   stats->other += malloced_storage_size (w, sizeof (struct window), ovstats);
+#endif /* not MC_ALLOC */
   stats->face += compute_face_cachel_usage (w->face_cachels, ovstats);
   stats->glyph += compute_glyph_cachel_usage (w->glyph_cachels, ovstats);
   stats->line_start +=

@@ -708,11 +708,19 @@ AC_ARG_ENABLE([external-widget],
 AC_ARG_ENABLE([kkcc],
 	AC_HELP_STRING([--enable-kkcc],[Enable new GC algorithms.]),
 	[], [])
+AC_ARG_ENABLE([mc-alloc],
+	AC_HELP_STRING([--enable-mc-alloc],[Enable new allocator.]),
+	[], [])
 AC_ARG_ENABLE([union-type],
 	AC_HELP_STRING([--enable-union-type],[Use union definition of Lisp_Object type.  Known to trigger bugs in some compilers.]),
 	[], [])
 AC_ARG_ENABLE([pdump],
 	AC_HELP_STRING([--enable-pdump],[Enable portable LISP preloader.]),
+	[], [])
+AC_ARG_ENABLE([dump-in-exec],
+	AC_HELP_STRING([--enable-dump-in-exec],[Enable dumping into executable (enabled by default
+			for `pdump', not enabled by default in combination 
+			with `mc-alloc').]),
 	[], [])
 AC_ARG_ENABLE([debug],
 	AC_HELP_STRING([--enable-debug],[Enable additional debugging information.  No time cost.]),
@@ -1981,6 +1989,17 @@ if test "$enable_pdump" = "yes"; then
   libs_standard=
   unexec=
   lib_gcc=
+fi
+
+dnl Dump into executable
+if test -z "$enable_dump_in_exec"; then
+  if test "$enable_pdump" = "yes"; then
+    if test "$enable_mc_alloc" = "yes"; then
+      enable_dump_in_exec=no
+    else
+      enable_dump_in_exec=yes
+    fi
+  fi
 fi
 
 dnl For debugging...
@@ -5449,6 +5468,7 @@ fi
 test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
 test "$enable_external_widget" = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
 test "$enable_kkcc"        = "yes" && AC_DEFINE(USE_KKCC)
+test "$enable_mc_alloc"    = "yes" && AC_DEFINE(MC_ALLOC)
 test "$enable_quick_build" = "yes" && AC_DEFINE(QUICK_BUILD)
 test "$with_purify"        = "yes" && AC_DEFINE(PURIFY)
 test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
@@ -5457,6 +5477,7 @@ test "$with_kerberos"      = "yes" && AC_DEFINE(KERBEROS)
 test "$with_hesiod"        = "yes" && AC_DEFINE(HESIOD)
 test "$enable_union_type"  = "yes" && AC_DEFINE(USE_UNION_TYPE)
 test "$enable_pdump"       = "yes" && AC_DEFINE(PDUMP)
+test "$enable_dump_in_exec" = "yes" && AC_DEFINE(DUMP_IN_EXEC)
 test "$with_ipv6_cname"    = "yes" && AC_DEFINE(IPV6_CANONICALIZE)
 
 
@@ -5709,7 +5730,9 @@ if test "$enable_union_type" = yes ; then
   echo "  WARNING: ---------------------------------------------------------"
 fi
 test "$enable_kkcc" = yes && echo "  Using the new GC algorithms."
+test "$enable_mc_alloc" = yes && echo "  Using the new allocator."
 test "$enable_pdump" = yes && echo "  Using the new portable dumper."
+test "$enable_dump_in_exec" = yes && echo "  Dumping into executable."
 test "$enable_debug" = yes && echo "  Compiling in support for extra debugging code."
 test "$usage_tracking" = yes && echo "  Compiling in support for active usage tracking (Sun internal)."
 if test "$enable_error_checking_extents $enable_error_checking_types $enable_error_checking_text $enable_error_checking_gc $enable_error_checking_malloc $enable_error_checking_glyphs $enable_error_checking_byte_code $enable_error_checking_display $enable_error_checking_structures" \

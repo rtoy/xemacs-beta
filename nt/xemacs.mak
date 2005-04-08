@@ -184,6 +184,9 @@ CPLUSPLUS_COMPILE=0
 !if !defined(USE_KKCC)
 USE_KKCC=0
 !endif
+!if !defined(MC_ALLOC)
+MC_ALLOC=0
+!endif
 !if !defined(USE_UNION_TYPE)
 USE_UNION_TYPE=0
 !endif
@@ -503,6 +506,11 @@ TEMACS_DUMP_OBJS=$(OUTDIR)\unexnt.obj
 KKCC_DEFINES=-DUSE_KKCC
 !endif
 
+!if $(MC_ALLOC)
+MC_ALLOC_DEFINES=-DMC_ALLOC
+TEMACS_MC_ALLOC_OBJS=$(OUTDIR)\mc-alloc.obj
+!endif
+
 !if $(USE_SYSTEM_MALLOC)
 MALLOC_DEFINES=-DSYSTEM_MALLOC
 !else
@@ -605,9 +613,9 @@ CPLUSPLUS_COMPILE_FLAGS=
 INCLUDES=-I$(NT)\inc -I$(SRC) $(MSW_INCLUDES)
 
 DEFINES=$(MSW_DEFINES) $(MULE_DEFINES) $(UNION_DEFINES) \
-	$(DUMPER_DEFINES) $(KKCC_DEFINES) $(MALLOC_DEFINES) \
-	$(QUICK_DEFINES) $(ERROR_CHECK_DEFINES) $(DEBUG_DEFINES) \
-	-DWIN32_LEAN_AND_MEAN -DWIN32_NATIVE -Demacs \
+	$(DUMPER_DEFINES) $(KKCC_DEFINES) $(MC_ALLOC_DEFINES) \
+	$(MALLOC_DEFINES) $(QUICK_DEFINES) $(ERROR_CHECK_DEFINES) \
+	$(DEBUG_DEFINES) -DWIN32_LEAN_AND_MEAN -DWIN32_NATIVE -Demacs \
 	-DHAVE_CONFIG_H $(PROGRAM_DEFINES) $(PATH_DEFINES)
 
 CFLAGS_NO_OPT=-nologo -W3 -DSTRICT $(DEBUG_FLAGS_COMPILE)
@@ -651,6 +659,7 @@ TEMACS_OBJS= \
 	$(TEMACS_DEBUG_OBJS)\
 	$(TEMACS_ALLOC_OBJS)\
 	$(TEMACS_DUMP_OBJS)\
+	$(TEMACS_MC_ALLOC_OBJS)\
 	$(OUTDIR)\abbrev.obj \
 	$(OUTDIR)\alloc.obj \
 	$(OUTDIR)\alloca.obj \
@@ -1240,6 +1249,9 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
 !endif
 !if $(USE_KKCC)
   Using new experimental GC algorithms.
+!endif
+!if $(MC_ALLOC)
+  Using new experimental allocator.
 !endif
 <<NOKEEP
 	@echo --------------------------------------------------------------------

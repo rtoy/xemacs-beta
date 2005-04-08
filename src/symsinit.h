@@ -140,6 +140,9 @@ void syms_of_keymap (void);
 void syms_of_lread (void);
 void syms_of_macros (void);
 void syms_of_marker (void);
+#ifdef MC_ALLOC
+void syms_of_mc_alloc (void);
+#endif /* MC_ALLOC */
 void syms_of_md5 (void);
 void syms_of_menubar (void);
 void syms_of_menubar_mswindows (void);

@@ -1188,7 +1188,11 @@ allocate_devmode (DEVMODEW* src_devmode, int do_copy,
 {
   Lisp_Devmode *dm;
 
+#ifdef MC_ALLOC
+  dm = alloc_lrecord_type (Lisp_Devmode, &lrecord_devmode);
+#else /* not MC_ALLOC */
   dm = alloc_lcrecord_type (Lisp_Devmode, &lrecord_devmode);
+#endif /* not MC_ALLOC */
 
   if (d)
     dm->device = wrap_device (d);

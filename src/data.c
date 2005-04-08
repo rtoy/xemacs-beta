@@ -2577,7 +2577,11 @@ make_weak_list (enum weak_list_type type)
 {
   Lisp_Object result;
   struct weak_list *wl =
+#ifdef MC_ALLOC
+    alloc_lrecord_type (struct weak_list, &lrecord_weak_list);
+#else /* not MC_ALLOC */
     alloc_lcrecord_type (struct weak_list, &lrecord_weak_list);
+#endif /* not MC_ALLOC */
 
   wl->list = Qnil;
   wl->type = type;
@@ -3052,7 +3056,11 @@ make_weak_box (Lisp_Object value)
   Lisp_Object result;
 
   struct weak_box *wb =
+#ifdef MC_ALLOC
+    alloc_lrecord_type (struct weak_box, &lrecord_weak_box);
+#else /* not MC_ALLOC */
     alloc_lcrecord_type (struct weak_box, &lrecord_weak_box);
+#endif /* not MC_ALLOC */
 
   wb->value = value;
   result = wrap_weak_box (wb);
@@ -3275,7 +3283,11 @@ make_ephemeron(Lisp_Object key, Lisp_Object value, Lisp_Object finalizer)
   struct gcpro gcpro1, gcpro2;
 
   struct ephemeron *eph =
+#ifdef MC_ALLOC
+    alloc_lrecord_type (struct ephemeron, &lrecord_ephemeron);
+#else /* not MC_ALLOC */
     alloc_lcrecord_type (struct ephemeron, &lrecord_ephemeron);
+#endif /* not MC_ALLOC */
 
   eph->key = Qnil;
   eph->cons_chain = Qnil;

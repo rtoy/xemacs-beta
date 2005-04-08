@@ -594,7 +594,11 @@ struct subwindow_image_instance
 
 struct Lisp_Image_Instance
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
   Lisp_Object domain;		/* The domain in which we were cached. */
   Lisp_Object device;		/* The device of the domain. Recorded
 				   since the domain may get deleted
@@ -946,7 +950,11 @@ enum glyph_type
 
 struct Lisp_Glyph
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
 
   enum glyph_type type;
 

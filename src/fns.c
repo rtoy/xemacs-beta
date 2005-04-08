@@ -2959,8 +2959,8 @@ ARRAY is a vector, bit vector, or string.
       Ibyte *end;
 
       CHECK_CHAR_COERCE_INT (item);
-      CHECK_LISP_WRITEABLE (array);
 
+      CHECK_LISP_WRITEABLE (array);
       sledgehammer_check_ascii_begin (array);
       item_bytecount = set_itext_ichar (item_buf, XCHAR (item));
       new_bytecount = item_bytecount * (Bytecount) string_char_length (array);

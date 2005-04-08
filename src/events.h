@@ -639,7 +639,11 @@ DECLARE_LRECORD (magic_data, Lisp_Magic_Data);
 
 struct Lisp_Timeout
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
   int id; /* Id we use to identify the timeout over its lifetime */
   int interval_id; /* Id for this particular interval; this may
                       be different each time the timeout is
@@ -1088,7 +1092,11 @@ void event_stream_unixoid_delete_io_streams (Lisp_Object instream,
  */
 struct command_builder
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
   Lisp_Object console; /* back pointer to the console this command
                           builder is for */
 #if 0

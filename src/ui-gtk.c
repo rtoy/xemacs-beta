@@ -280,7 +280,11 @@ import_gtk_type (GtkType t)
 static emacs_ffi_data *
 allocate_ffi_data (void)
 {
+#ifdef MC_ALLOC
+  emacs_ffi_data *data = alloc_lrecord_type (emacs_ffi_data, &lrecord_emacs_ffi);
+#else /* not MC_ALLOC */
   emacs_ffi_data *data = alloc_lcrecord_type (emacs_ffi_data, &lrecord_emacs_ffi);
+#endif /* not MC_ALLOC */
 
   data->return_type = GTK_TYPE_NONE;
   data->n_args = 0;
@@ -944,8 +948,13 @@ DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkObject", emacs_gtk_object,
 static emacs_gtk_object_data *
 allocate_emacs_gtk_object_data (void)
 {
+#ifdef MC_ALLOC
+  emacs_gtk_object_data *data = alloc_lrecord_type (emacs_gtk_object_data,
+						    &lrecord_emacs_gtk_object);
+#else /* not MC_ALLOC */
   emacs_gtk_object_data *data = alloc_lcrecord_type (emacs_gtk_object_data,
 						     &lrecord_emacs_gtk_object);
+#endif /* not MC_ALLOC */
 
   data->object = NULL;
   data->alive_p = FALSE;
@@ -1153,8 +1162,13 @@ DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkBoxed", emacs_gtk_boxed,
 static emacs_gtk_boxed_data *
 allocate_emacs_gtk_boxed_data (void)
 {
+#ifdef MC_ALLOC
+  emacs_gtk_boxed_data *data = alloc_lrecord_type (emacs_gtk_boxed_data,
+						   &lrecord_emacs_gtk_boxed);
+#else /* not MC_ALLOC */
   emacs_gtk_boxed_data *data = alloc_lcrecord_type (emacs_gtk_boxed_data,
 						    &lrecord_emacs_gtk_boxed);
+#endif /* not MC_ALLOC */
 
   data->object = NULL;
   data->object_type = GTK_TYPE_INVALID;

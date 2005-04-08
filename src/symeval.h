@@ -77,7 +77,11 @@ typedef EMACS_INT Fixnum;
 
 struct symbol_value_magic
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header lcheader;
+#endif /* MC_ALLOC */
   void *value;
   enum symbol_value_type type;
 };
@@ -277,6 +281,44 @@ DECLARE_LRECORD (symbol_value_varalias,	struct symbol_value_varalias);
    DEFUN ("name, Fname, ...); // at top level in foo.c
    DEFSUBR (Fname);           // in syms_of_foo();
 */
+#ifdef MC_ALLOC
+MODULE_API void defsubr (Lisp_Subr *);
+#define DEFSUBR_MC_ALLOC(Fname)						\
+  struct Lisp_Subr *S##Fname= (struct Lisp_Subr *)			\
+   mc_alloc (sizeof (struct Lisp_Subr));				\
+  set_lheader_implementation (&S##Fname->lheader, &lrecord_subr);	\
+									\
+  S##Fname->min_args = MC_ALLOC_S##Fname.min_args;			\
+  S##Fname->max_args = MC_ALLOC_S##Fname.max_args;			\
+  S##Fname->prompt = MC_ALLOC_S##Fname.prompt;				\
+  S##Fname->doc = MC_ALLOC_S##Fname.doc;				\
+  S##Fname->name = MC_ALLOC_S##Fname.name;				\
+  S##Fname->subr_fn = MC_ALLOC_S##Fname.subr_fn;			\
+  MARK_LRECORD_AS_LISP_READONLY (S##Fname);
+
+
+#define DEFSUBR(Fname)				\
+do {						\
+  DEFSUBR_MC_ALLOC (Fname);			\
+  defsubr (S##Fname);				\
+} while (0)
+
+/* To define a Lisp primitive macro using a C function `Fname', do this:
+   DEFUN ("name, Fname, ...); // at top level in foo.c
+   DEFSUBR_MACRO (Fname);     // in syms_of_foo();
+*/
+MODULE_API void defsubr_macro (Lisp_Subr *);
+#define DEFSUBR_MACRO(Fname)			\
+do {						\
+  DEFSUBR_MC_ALLOC (Fname);			\
+  defsubr_macro (S##Fname);			\
+} while (0)
+
+#else /* not MC_ALLOC */
+/* To define a Lisp primitive function using a C function `Fname', do this:
+   DEFUN ("name, Fname, ...); // at top level in foo.c
+   DEFSUBR (Fname);           // in syms_of_foo();
+*/
 MODULE_API void defsubr (Lisp_Subr *);
 #define DEFSUBR(Fname) defsubr (&S##Fname)
 
@@ -286,6 +328,7 @@ MODULE_API void defsubr (Lisp_Subr *);
 */
 MODULE_API void defsubr_macro (Lisp_Subr *);
 #define DEFSUBR_MACRO(Fname) defsubr_macro (&S##Fname)
+#endif /* not MC_ALLOC */
 
 MODULE_API void defsymbol_massage_name (Lisp_Object *location,
 					const char *name);
@@ -358,6 +401,24 @@ MODULE_API void deferror_massage_name_and_message (Lisp_Object *symbol,
 MODULE_API void defvar_magic (const char *symbol_name,
 			      const struct symbol_value_forward *magic);
 
+#ifdef MC_ALLOC
+#define DEFVAR_SYMVAL_FWD(lname, c_location, forward_type, magic_fun)	\
+do									\
+{									\
+  struct symbol_value_forward *I_hate_C =				\
+    alloc_lrecord_type (struct symbol_value_forward,			\
+		        &lrecord_symbol_value_forward);			\
+  /*  mcpro ((Lisp_Object) I_hate_C);*/					\
+									\
+  MARK_LRECORD_AS_LISP_READONLY (I_hate_C);				\
+									\
+  I_hate_C->magic.value = c_location;					\
+  I_hate_C->magic.type = forward_type;					\
+  I_hate_C->magicfun = magic_fun;					\
+									\
+  defvar_magic ((lname), I_hate_C);					\
+} while (0)
+#else /* not MC_ALLOC */
 #define DEFVAR_SYMVAL_FWD(lname, c_location, forward_type, magicfun)	\
 do									\
 {									\
@@ -383,7 +444,7 @@ do									\
   };									\
   defvar_magic ((lname), &I_hate_C);					\
 } while (0)
-
+#endif /* not MC_ALLOC */
 #define DEFVAR_SYMVAL_FWD_INT(lname, c_location, forward_type, magicfun) \
 do									 \
 {									 \

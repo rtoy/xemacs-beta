@@ -57,7 +57,11 @@ DECLARE_CONSOLE_TYPE (msprinter);
 
 struct Lisp_Devmode
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
 
   /* Pointer to the DEVMODE structure */
   DEVMODEW *devmode;
@@ -275,7 +279,11 @@ struct msprinter_frame
 
 struct mswindows_dialog_id
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
 
   Lisp_Object frame;
   Lisp_Object callbacks;

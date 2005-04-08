@@ -102,7 +102,11 @@ typedef struct htentry
 
 struct Lisp_Hash_Table
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
   Elemcount size;
   Elemcount count;
   Elemcount rehash_count;
@@ -550,7 +554,11 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 			      enum hash_table_weakness weakness)
 {
   Lisp_Object hash_table;
+#ifdef MC_ALLOC
+  Lisp_Hash_Table *ht = alloc_lrecord_type (Lisp_Hash_Table, &lrecord_hash_table);
+#else /* not MC_ALLOC */
   Lisp_Hash_Table *ht = alloc_lcrecord_type (Lisp_Hash_Table, &lrecord_hash_table);
+#endif /* not MC_ALLOC */
 
   ht->test_function = test_function;
   ht->hash_function = hash_function;
@@ -967,9 +975,14 @@ The keys and values will not themselves be copied.
        (hash_table))
 {
   const Lisp_Hash_Table *ht_old = xhash_table (hash_table);
-  Lisp_Hash_Table *ht = alloc_lcrecord_type (Lisp_Hash_Table, &lrecord_hash_table);
+#ifdef MC_ALLOC
+  Lisp_Hash_Table *ht = alloc_lrecord_type (Lisp_Hash_Table, &lrecord_hash_table);
 
+  copy_lrecord (ht, ht_old);
+#else /* not MC_ALLOC */
+  Lisp_Hash_Table *ht = alloc_lcrecord_type (Lisp_Hash_Table, &lrecord_hash_table);
   copy_lcrecord (ht, ht_old);
+#endif /* not MC_ALLOC */
 
   ht->hentries = xnew_array (htentry, ht_old->size + 1);
   memcpy (ht->hentries, ht_old->hentries, (ht_old->size + 1) * sizeof (htentry));

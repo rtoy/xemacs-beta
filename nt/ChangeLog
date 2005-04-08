@@ -1,3 +1,17 @@
+2005-04-01  Marcus Crestani  <crestani@xemacs.org>
+
+	The new allocator.
+
+	New configure flag: `MC_ALLOC':
+
+	* config.inc.samp: Add new flag `MC_ALLOC'.
+	* xemacs.mak: Add flag and configuration output for `MC_ALLOC'.
+
+	New files:
+
+	* xemacs.dsp: Add source files mc-alloc.c and mc-alloc.h.
+	* xemacs.mak: Add new object file mc-alloc.obj to dependencies.
+
 2005-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.20 "cilantro" is released.

@@ -98,7 +98,11 @@ typedef struct
 
 struct Lisp_Database
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
   Lisp_Object fname;
   int mode;
   int access_;
@@ -131,7 +135,11 @@ struct Lisp_Database
 static Lisp_Database *
 allocate_database (void)
 {
+#ifdef MC_ALLOC
+  Lisp_Database *db = alloc_lrecord_type (Lisp_Database, &lrecord_database);
+#else /* not MC_ALLOC */
   Lisp_Database *db = alloc_lcrecord_type (Lisp_Database, &lrecord_database);
+#endif /* not MC_ALLOC */
 
   db->fname = Qnil;
   db->live_p = 0;

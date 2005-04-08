@@ -1,3 +1,29 @@
+2005-04-01  Marcus Crestani  <crestani@xemacs.org>
+
+	The new allocator.
+
+	New configure flag: `MC_ALLOC':
+
+	* configure.ac (XE_COMPLEX_ARG_ENABLE): Add `--enable-mc-alloc' as
+	a new configure flag.
+	* configure.in (AC_INIT_PARSE_ARGS): Add `--mc-alloc' as a new
+	configure flag.
+	* configure.usage: Add description for `mc-alloc'.
+
+	DUMP_IN_EXEC:
+
+	* Makefile.in.in: Condition the installation of a separate dump
+	file on !DUMP_ON_EXEC.
+	* configure.ac (XE_COMPLEX_ARG_ENABLE): Add
+	`--enable-dump-in-exec' as a new configure flag.
+	* configure.ac: DUMP_IN_EXEC is define as default for PDUMP but
+	not default for MC_ALLOC.
+	* configure.in (AC_INIT_PARSE_ARGS): Add `--dump-in-exec' as a
+        new configure flag.
+	* configure.in: DUMP_IN_EXEC is define as default for PDUMP but
+	not default for MC_ALLOC.
+	* configure.usage: Add description for `dump-in-exec'.
+
 2005-03-31  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Aidan's 2005-03-30 patch, but against

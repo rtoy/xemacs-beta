@@ -28,7 +28,11 @@ Boston, MA 02111-1307, USA.  */
 
 typedef struct Lisp_Opaque
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
   Bytecount size;
   max_align_t data[1];
 } Lisp_Opaque;
@@ -54,7 +58,11 @@ Lisp_Object make_opaque (const void *data, Bytecount size);
 
 typedef struct Lisp_Opaque_Ptr
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
   void *ptr;
 } Lisp_Opaque_Ptr;
 

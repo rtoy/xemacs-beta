@@ -49,7 +49,11 @@ enum range_table_type
 
 struct Lisp_Range_Table
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
   range_table_entry_dynarr *entries;
   enum range_table_type type;
 };

@@ -116,7 +116,11 @@ static Lisp_Object
 allocate_case_table (int init_tables)
 {
   Lisp_Case_Table *ct =
+#ifdef MC_ALLOC
+    alloc_lrecord_type (Lisp_Case_Table, &lrecord_case_table);
+#else /* not MC_ALLOC */
     alloc_lcrecord_type (Lisp_Case_Table, &lrecord_case_table);
+#endif /* not MC_ALLOC */
 
   if (init_tables)
     {

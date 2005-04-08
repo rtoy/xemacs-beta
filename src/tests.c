@@ -479,12 +479,22 @@ Test C interface to hash tables.
 
 
 
+#ifdef MC_ALLOC
+#define TESTS_DEFSUBR(Fname) do {		\
+  DEFSUBR_MC_ALLOC (Fname);			\
+  defsubr (S##Fname);				\
+  Vtest_function_list =				\
+    Fcons (intern (subr_name (S##Fname)),	\
+	   Vtest_function_list);		\
+} while (0)
+#else /* not MC_ALLOC */
 #define TESTS_DEFSUBR(Fname) do {		\
   DEFSUBR (Fname);				\
   Vtest_function_list =				\
     Fcons (intern (subr_name (&S##Fname)),	\
 	   Vtest_function_list);		\
 } while (0)
+#endif /* not MC_ALLOC */
 
 void
 syms_of_tests (void)

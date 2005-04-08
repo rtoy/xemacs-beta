@@ -907,9 +907,13 @@ Optional Features:
                           Support XEmacs server for text widgets in other
                           applications.
   --enable-kkcc           Enable new GC algorithms.
+  --enable-mc-alloc       Enable new allocator.
   --enable-union-type     Use union definition of Lisp_Object type. Known to
                           trigger bugs in some compilers.
   --enable-pdump          Enable portable LISP preloader.
+  --enable-dump-in-exec   Enable dumping into executable (enabled by default
+                          for `pdump', not enabled by default in combination
+                          with `mc-alloc').
   --enable-debug          Enable additional debugging information. No time
                           cost.
   --enable-assertions
@@ -2133,6 +2137,11 @@ if test "${enable_kkcc+set}" = set; then
   enableval="$enable_kkcc"
 
 fi;
+# Check whether --enable-mc-alloc or --disable-mc-alloc was given.
+if test "${enable_mc_alloc+set}" = set; then
+  enableval="$enable_mc_alloc"
+
+fi;
 # Check whether --enable-union-type or --disable-union-type was given.
 if test "${enable_union_type+set}" = set; then
   enableval="$enable_union_type"
@@ -2141,6 +2150,11 @@ fi;
 # Check whether --enable-pdump or --disable-pdump was given.
 if test "${enable_pdump+set}" = set; then
   enableval="$enable_pdump"
+
+fi;
+# Check whether --enable-dump-in-exec or --disable-dump-in-exec was given.
+if test "${enable_dump_in_exec+set}" = set; then
+  enableval="$enable_dump_in_exec"
 
 fi;
 # Check whether --enable-debug or --disable-debug was given.
@@ -7580,6 +7594,16 @@ if test "$enable_pdump" = "yes"; then
   libs_standard=
   unexec=
   lib_gcc=
+fi
+
+if test -z "$enable_dump_in_exec"; then
+  if test "$enable_pdump" = "yes"; then
+    if test "$enable_mc_alloc" = "yes"; then
+      enable_dump_in_exec=no
+    else
+      enable_dump_in_exec=yes
+    fi
+  fi
 fi
 
 test "$verbose" = "yes" && \
@@ -36353,6 +36377,10 @@ test "$enable_kkcc"        = "yes" && cat >>confdefs.h <<\_ACEOF
 #define USE_KKCC 1
 _ACEOF
 
+test "$enable_mc_alloc"    = "yes" && cat >>confdefs.h <<\_ACEOF
+#define MC_ALLOC 1
+_ACEOF
+
 test "$enable_quick_build" = "yes" && cat >>confdefs.h <<\_ACEOF
 #define QUICK_BUILD 1
 _ACEOF
@@ -36383,6 +36411,10 @@ _ACEOF
 
 test "$enable_pdump"       = "yes" && cat >>confdefs.h <<\_ACEOF
 #define PDUMP 1
+_ACEOF
+
+test "$enable_dump_in_exec" = "yes" && cat >>confdefs.h <<\_ACEOF
+#define DUMP_IN_EXEC 1
 _ACEOF
 
 test "$with_ipv6_cname"    = "yes" && cat >>confdefs.h <<\_ACEOF
@@ -36631,7 +36663,9 @@ if test "$enable_union_type" = yes ; then
   echo "  WARNING: ---------------------------------------------------------"
 fi
 test "$enable_kkcc" = yes && echo "  Using the new GC algorithms."
+test "$enable_mc_alloc" = yes && echo "  Using the new allocator."
 test "$enable_pdump" = yes && echo "  Using the new portable dumper."
+test "$enable_dump_in_exec" = yes && echo "  Dumping into executable."
 test "$enable_debug" = yes && echo "  Compiling in support for extra debugging code."
 test "$usage_tracking" = yes && echo "  Compiling in support for active usage tracking (Sun internal)."
 if test "$enable_error_checking_extents $enable_error_checking_types $enable_error_checking_text $enable_error_checking_gc $enable_error_checking_malloc $enable_error_checking_glyphs $enable_error_checking_byte_code $enable_error_checking_display $enable_error_checking_structures" \

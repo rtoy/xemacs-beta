@@ -27,7 +27,11 @@ Boston, MA 02111-1307, USA.  */
 
 struct scrollbar_instance
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
 
   /* Used by the frame caches. */
   struct scrollbar_instance *next;

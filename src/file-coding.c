@@ -698,8 +698,13 @@ allocate_coding_system (struct coding_system_methods *codesys_meths,
 {
   Bytecount total_size = offsetof (Lisp_Coding_System, data) + data_size;
   Lisp_Coding_System *codesys =
+#ifdef MC_ALLOC
+    (Lisp_Coding_System *) alloc_lrecord (total_size,
+					  &lrecord_coding_system);
+#else /* not MC_ALLOC */
     (Lisp_Coding_System *) basic_alloc_lcrecord (total_size,
 						 &lrecord_coding_system);
+#endif /* not MC_ALLOC */
 
   codesys->methods = codesys_meths;
 #define MARKED_SLOT(x) codesys->x = Qnil;
@@ -1404,7 +1409,11 @@ Use `define-coding-system-alias' instead.
   {
     Lisp_Coding_System *to = XCODING_SYSTEM (new_coding_system);
     Lisp_Coding_System *from = XCODING_SYSTEM (old_coding_system);
+#ifdef MC_ALLOC
+    copy_sized_lrecord (to, from, sizeof_coding_system (from));
+#else /* not MC_ALLOC */
     copy_sized_lcrecord (to, from, sizeof_coding_system (from));
+#endif /* not MC_ALLOC */
     to->name = new_name;
   }
   return new_coding_system;

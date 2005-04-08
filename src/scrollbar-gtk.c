@@ -484,7 +484,11 @@ gtk_compute_scrollbar_instance_usage (struct device *UNUSED (d),
       struct gtk_scrollbar_data *data =
 	(struct gtk_scrollbar_data *) inst->scrollbar_data;
 
+#ifdef MC_ALLOC
+      total += mc_alloced_storage_size (sizeof (*data), ovstats);
+#else /* not MC_ALLOC */
       total += malloced_storage_size (data, sizeof (*data), ovstats);
+#endif /* not MC_ALLOC */
       inst = inst->next;
     }
 

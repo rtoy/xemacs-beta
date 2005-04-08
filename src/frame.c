@@ -259,7 +259,11 @@ DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,
 static void
 nuke_all_frame_slots (struct frame *f)
 {
+#ifdef MC_ALLOC
+  zero_lrecord (f);
+#else /* not MC_ALLOC */
   zero_lcrecord (f);
+#endif /* not MC_ALLOC */
 
 #define MARKED_SLOT(x)	f->x = Qnil;
 #include "frameslots.h"
@@ -275,7 +279,11 @@ allocate_frame_core (Lisp_Object device)
   /* This function can GC */
   Lisp_Object frame;
   Lisp_Object root_window;
+#ifdef MC_ALLOC
+  struct frame *f = alloc_lrecord_type (struct frame, &lrecord_frame);
+#else /* not MC_ALLOC */
   struct frame *f = alloc_lcrecord_type (struct frame, &lrecord_frame);
+#endif /* not MC_ALLOC */
 
   nuke_all_frame_slots (f);
   frame = wrap_frame (f);

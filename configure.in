@@ -535,11 +535,13 @@ while test $# != 0; do
 	with_ipv6_cname | \
 	external_widget | \
 	use_kkcc	| \
+	mc_alloc	| \
 	verbose		| \
 	extra_verbose	| \
 	usage_tracking	| \
 	use_union_type	| \
 	pdump		| \
+	dump_in_exec    | \
 	debug		| \
 	use_assertions	| \
 	memory_usage_stats | \
@@ -1610,6 +1612,17 @@ if test -z "$pdump"; then
     cygwin* ) pdump=yes ;;          dnl unexec is broken
     * )       pdump=no ;;
   esac
+fi
+
+dnl Dump into executable
+if test -z "$dump_in_exec"; then
+  if test "$pdump" = "yes"; then
+    if test "$mc_alloc" = "yes"; then
+      dump_in_exec=no
+    else
+      dump_in_exec=yes
+    fi
+  fi
 fi
 
 if test -z "$dynamic"; then
@@ -5457,6 +5470,7 @@ fi
 test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
 test "$external_widget"    = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
 test "$use_kkcc"           = "yes" && AC_DEFINE(USE_KKCC)
+test "$mc_alloc"           = "yes" && AC_DEFINE(MC_ALLOC)
 test "$quick_build"        = "yes" && AC_DEFINE(QUICK_BUILD)
 test "$with_purify"        = "yes" && AC_DEFINE(PURIFY)
 test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
@@ -5465,6 +5479,7 @@ test "$with_kerberos"      = "yes" && AC_DEFINE(KERBEROS)
 test "$with_hesiod"        = "yes" && AC_DEFINE(HESIOD)
 test "$use_union_type"     = "yes" && AC_DEFINE(USE_UNION_TYPE)
 test "$pdump"              = "yes" && AC_DEFINE(PDUMP)
+test "$dump_in_exec"       = "yes" && AC_DEFINE(DUMP_IN_EXEC)
 test "$with_ipv6_cname"    = "yes" && AC_DEFINE(IPV6_CANONICALIZE)
 
 dnl -------------------------------
@@ -5708,7 +5723,9 @@ if test "$use_union_type" = yes ; then
   echo "  WARNING: ---------------------------------------------------------"
 fi
 test "$use_kkcc" = yes && echo "  Using the new GC algorithms."
+test "$mc_alloc" = yes && echo "  Using the new allocator."
 test "$pdump" = yes && echo "  Using the new portable dumper."
+test "$dump_in_exec" = yes && echo "  Dumping into executable."
 test "$debug" = yes && echo "  Compiling in support for extra debugging code."
 test "$usage_tracking" = yes && echo "  Compiling in support for active usage tracking (Sun internal)."
 if test "$error_check_extents $error_check_types $error_check_text $error_check_gc $error_check_malloc $error_check_glyphs $error_check_byte_code $error_check_display $error_check_structures" \

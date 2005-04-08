@@ -230,7 +230,11 @@ typedef struct lstream_implementation
 
 struct lstream
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
   const Lstream_implementation *imp; /* methods for this stream */
   Lstream_buffering buffering; /* type of buffering in use */
   Bytecount buffering_size; /* number of bytes buffered */

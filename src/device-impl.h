@@ -71,7 +71,11 @@ struct pixel_to_glyph_translation_cache
 
 struct device
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else /* MC_ALLOC */
   struct lcrecord_header header;
+#endif /* MC_ALLOC */
 
   /* Methods for this device's console.  This can also be retrieved
      through device->console, but it's faster this way. */

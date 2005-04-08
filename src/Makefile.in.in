@@ -251,6 +251,10 @@ win32_objs=win32.o intl-win32.o intl-auto-encap-win32.o intl-encap-win32.o \
  xemacs_res.o
 #endif
 
+#ifdef MC_ALLOC
+mc_alloc_objs=mc-alloc.o
+#endif
+
 ## lastfile must follow all files whose initialized data areas should
 ## be dumped as pure by dump-emacs.
 
@@ -274,6 +278,7 @@ objs=\
  gutter.o\
  hash.o imgproc.o indent.o insdel.o intl.o\
  keymap.o $(RTC_patch_objs) line-number.o $(ldap_objs) lread.o lstream.o\
+ $(mc_alloc_objs) \
  macros.o marker.o md5.o minibuf.o $(mswindows_objs) $(mswindows_gui_objs)\
  $(mule_objs) $(mule_canna_objs) $(mule_wnn_objs) $(number_objs) objects.o\
  opaque.o $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\
@@ -418,7 +423,7 @@ ldflags += -Wl,--script=s/cygwin.sc
 DUMP_TARGET = $(PROGNAME).dmp
 RAW_EXE  = $(PROGNAME)
 DUMP_ID     = dump-id.o
-#ifndef WIN32_NATIVE
+#if !defined(WIN32_NATIVE) && defined(DUMP_IN_EXEC)
 DUMP_TARGET = $(PROGNAME)
 #ifndef CYGWIN
 RAW_EXE  = temacs
@@ -545,7 +550,7 @@ dump-id.c: $(LIB_SRC)/make-dump-id $(link_deps)
 
 ## (2) Link the XEmacs executable
 
-#if !defined(PDUMP) || defined(WIN32_NATIVE)
+#if !defined(PDUMP) || !defined(DUMP_IN_EXEC) || defined(WIN32_NATIVE)
 $(RAW_EXE): $(link_deps) $(DUMP_ID)
 	$(LD) $(start_flags) $(ldflags) -o $@ $(start_files) $(objs) $(otherobjs) $(DUMP_ID) $(LIBES)
 #else
@@ -599,7 +604,7 @@ $(DUMP_TARGET): $(RAW_EXE) $(BLDSRC)/NEEDTODUMP $(LIB_SRC)/DOC
 	@$(RM) $@
 	$(dump_temacs)
 #endif
-#if defined(PDUMP) && !defined(WIN32_NATIVE)
+#if defined(PDUMP) && defined(DUMP_IN_EXEC) && !defined(WIN32_NATIVE)
 	if test -f dump-size; then \
 		$(LIB_SRC)/insert-data-in-exec $(RAW_EXE) $(DUMP_TARGET).dmp $(DUMP_TARGET) `$(DO_TEMACS) -si`; \
 		ret=$$? ; \

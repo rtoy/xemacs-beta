@@ -587,9 +587,15 @@ get_truename_buffer (REGISTER Lisp_Object filename)
 static struct buffer *
 allocate_buffer (void)
 {
+#ifdef MC_ALLOC
+  struct buffer *b = alloc_lrecord_type (struct buffer, &lrecord_buffer);
+
+  copy_lrecord (b, XBUFFER (Vbuffer_defaults));
+#else /* not MC_ALLOC */
   struct buffer *b = alloc_lcrecord_type (struct buffer, &lrecord_buffer);
 
   copy_lcrecord (b, XBUFFER (Vbuffer_defaults));
+#endif /* not MC_ALLOC */
 
   return b;
 }
@@ -1757,7 +1763,11 @@ compute_buffer_usage (struct buffer *b, struct buffer_stats *stats,
 		      struct overhead_stats *ovstats)
 {
   xzero (*stats);
+#ifdef MC_ALLOC
+  stats->other   += mc_alloced_storage_size (sizeof (*b), ovstats);
+#else /* not MC_ALLOC */
   stats->other   += malloced_storage_size (b, sizeof (*b), ovstats);
+#endif /* not MC_ALLOC */
   stats->text    += compute_buffer_text_usage   (b, ovstats);
   stats->markers += compute_buffer_marker_usage (b, ovstats);
   stats->extents += compute_buffer_extent_usage (b, ovstats);
@@ -2113,38 +2123,67 @@ List of functions called with no args to query before killing a buffer.
 
 /* The docstrings for DEFVAR_* are recorded externally by make-docfile.  */
 
+#ifdef MC_ALLOC
+#define DEFVAR_BUFFER_LOCAL_1(lname, field_name, forward_type, magic_fun) \
+do									  \
+{									  \
+  struct symbol_value_forward *I_hate_C =				  \
+    alloc_lrecord_type (struct symbol_value_forward,			  \
+			&lrecord_symbol_value_forward);			  \
+  /*mcpro ((Lisp_Object) I_hate_C);*/					\
+									  \
+  I_hate_C->magic.value = &(buffer_local_flags.field_name);		  \
+  I_hate_C->magic.type = forward_type;					  \
+  I_hate_C->magicfun = magic_fun;					  \
+									  \
+  MARK_LRECORD_AS_LISP_READONLY (I_hate_C);				  \
+									  \
+  {									  \
+    int offset = ((char *)symbol_value_forward_forward (I_hate_C) -	  \
+		  (char *)&buffer_local_flags);				  \
+    defvar_magic (lname, I_hate_C);					  \
+									  \
+    *((Lisp_Object *)(offset + (char *)XBUFFER (Vbuffer_local_symbols)))  \
+      = intern (lname);							  \
+  }									  \
+} while (0)
+
+#else /* not MC_ALLOC */
 /* Renamed from DEFVAR_PER_BUFFER because FSFmacs D_P_B takes
    a bogus extra arg, which confuses an otherwise identical make-docfile.c */
-#define DEFVAR_BUFFER_LOCAL_1(lname, field_name, forward_type, magicfun) do { \
-  static const struct symbol_value_forward I_hate_C =			      \
-  { /* struct symbol_value_forward */					      \
-    { /* struct symbol_value_magic */					      \
-      { /* struct lcrecord_header */					      \
-	{ /* struct lrecord_header */					      \
-	  lrecord_type_symbol_value_forward, /* lrecord_type_index */	      \
-	  1, /* mark bit */						      \
-	  1, /* c_readonly bit */					      \
-	  1  /* lisp_readonly bit */					      \
-	},								      \
-	0, /* next */							      \
-	0, /* uid  */							      \
-	0  /* free */							      \
-      },								      \
-      &(buffer_local_flags.field_name),					      \
-      forward_type							      \
-    },									      \
-    magicfun								      \
-  };									      \
-									      \
-  {									      \
-    int offset = ((char *)symbol_value_forward_forward (&I_hate_C) -	      \
-		  (char *)&buffer_local_flags);				      \
-    defvar_magic (lname, &I_hate_C);					      \
-									      \
-    *((Lisp_Object *)(offset + (char *)XBUFFER (Vbuffer_local_symbols)))      \
-      = intern (lname);							      \
-  }									      \
+#define DEFVAR_BUFFER_LOCAL_1(lname, field_name, forward_type, magicfun) \
+do {									 \
+  static const struct symbol_value_forward I_hate_C =			 \
+  { /* struct symbol_value_forward */					 \
+    { /* struct symbol_value_magic */					 \
+      { /* struct lcrecord_header */					 \
+	{ /* struct lrecord_header */					 \
+	  lrecord_type_symbol_value_forward, /* lrecord_type_index */	 \
+	  1, /* mark bit */						 \
+	  1, /* c_readonly bit */					 \
+	  1  /* lisp_readonly bit */					 \
+	},								 \
+	0, /* next */							 \
+	0, /* uid  */							 \
+	0  /* free */							 \
+      },								 \
+      &(buffer_local_flags.field_name),					 \
+      forward_type							 \
+    },									 \
+    magicfun								 \
+  };									 \
+									 \
+  {									 \
+    int offset = ((char *)symbol_value_forward_forward (&I_hate_C) -	 \
+		  (char *)&buffer_local_flags);				 \
+    defvar_magic (lname, &I_hate_C);					 \
+									 \
+    *((Lisp_Object *)(offset + (char *)XBUFFER (Vbuffer_local_symbols))) \
+      = intern (lname);							 \
+  }									 \
 } while (0)
+#endif /* not MC_ALLOC */
+
 #define DEFVAR_BUFFER_LOCAL_MAGIC(lname, field_name, magicfun)		\
 	DEFVAR_BUFFER_LOCAL_1 (lname, field_name,			\
 			       SYMVAL_CURRENT_BUFFER_FORWARD, magicfun)
@@ -2165,7 +2204,11 @@ List of functions called with no args to query before killing a buffer.
 static void
 nuke_all_buffer_slots (struct buffer *b, Lisp_Object zap)
 {
+#ifdef MC_ALLOC
+  zero_lrecord (b);
+#else /* not MC_ALLOC */
   zero_lcrecord (b);
+#endif /* not MC_ALLOC */
 
   b->extent_info = Qnil;
   b->indirect_children = Qnil;
@@ -2180,8 +2223,13 @@ common_init_complex_vars_of_buffer (void)
 {
   /* Make sure all markable slots in buffer_defaults
      are initialized reasonably, so mark_buffer won't choke. */
+#ifdef MC_ALLOC
+  struct buffer *defs = alloc_lrecord_type (struct buffer, &lrecord_buffer);
+  struct buffer *syms = alloc_lrecord_type (struct buffer, &lrecord_buffer);
+#else /* not MC_ALLOC */
   struct buffer *defs = alloc_lcrecord_type (struct buffer, &lrecord_buffer);
   struct buffer *syms = alloc_lcrecord_type (struct buffer, &lrecord_buffer);
+#endif /* not MC_ALLOC */
 
   staticpro_nodump (&Vbuffer_defaults);
   staticpro_nodump (&Vbuffer_local_symbols);

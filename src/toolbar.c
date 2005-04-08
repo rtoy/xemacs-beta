@@ -303,7 +303,11 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
 
   if (!tb)
     {
+#ifdef MC_ALLOC
+      tb = alloc_lrecord_type (struct toolbar_button, &lrecord_toolbar_button);
+#else /* not MC_ALLOC */
       tb = alloc_lcrecord_type (struct toolbar_button, &lrecord_toolbar_button);
+#endif /* not MC_ALLOC */
       tb->next = Qnil;
       tb->frame = wrap_frame (f);
       tb->up_glyph = Qnil;

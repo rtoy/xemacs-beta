@@ -26,6 +26,26 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_lrecord_h_
 #define INCLUDED_lrecord_h_
 
+#ifdef MC_ALLOC
+/* The "lrecord" type of Lisp object is used for all object types
+   other than a few simple ones (like char and int). This allows many
+   types to be implemented but only a few bits required in a Lisp
+   object for type information. (The tradeoff is that each object has
+   its type marked in it, thereby increasing its size.) All lrecords
+   begin with a `struct lrecord_header', which identifies the lisp
+   object type, by providing an index into a table of `struct
+   lrecord_implementation', which describes the behavior of the lisp
+   object.  It also contains some other data bits.
+
+   Creating a new lrecord type is fairly easy; just follow the
+   lead of some existing type (e.g. hash tables).  Note that you
+   do not need to supply all the methods (see below); reasonable
+   defaults are provided for many of them.  Alternatively, if you're
+   just looking for a way of encapsulating data (which possibly
+   could contain Lisp_Objects in it), you may well be able to use
+   the opaque type.
+*/
+#else /* not MC_ALLOC */
 /* The "lrecord" type of Lisp object is used for all object types
    other than a few simple ones.  This allows many types to be
    implemented but only a few bits required in a Lisp object for type
@@ -59,6 +79,7 @@ Boston, MA 02111-1307, USA.  */
    could contain Lisp_Objects in it), you may well be able to use
    the opaque type. --ben
 */
+#endif /* not MC_ALLOC */
 
 BEGIN_C_DECLS
 
@@ -69,6 +90,21 @@ struct lrecord_header
      field. */
   unsigned int type :8;
 
+#ifdef MC_ALLOC
+  /* 1 if the object is readonly from lisp */
+  unsigned int lisp_readonly :1;
+
+  /* The `free' field is a flag that indicates whether this lrecord
+     is currently free or not. This is used for error checking and
+     debugging. */
+  unsigned int free :1;
+
+  /* The `uid' field is just for debugging/printing convenience.
+     Having this slot doesn't hurt us much spacewise, since the
+     bits are unused anyway. */
+  unsigned int uid :22;
+
+#else /* not MC_ALLOC */
   /* If `mark' is 0 after the GC mark phase, the object will be freed
      during the GC sweep phase.  There are 2 ways that `mark' can be 1:
      - by being referenced from other objects during the GC mark phase
@@ -85,11 +121,20 @@ struct lrecord_header
 
   unsigned int unused :21;
 
+#endif /* not MC_ALLOC */
 };
 
 struct lrecord_implementation;
 int lrecord_type_index (const struct lrecord_implementation *implementation);
 
+#ifdef MC_ALLOC
+#define set_lheader_implementation(header,imp) do {	\
+  struct lrecord_header* SLI_header = (header);		\
+  SLI_header->type = (imp)->lrecord_type_index;		\
+  SLI_header->lisp_readonly = 0;			\
+  SLI_header->free = 0;					\
+} while (0)
+#else /* not MC_ALLOC */
 #define set_lheader_implementation(header,imp) do {	\
   struct lrecord_header* SLI_header = (header);		\
   SLI_header->type = (imp)->lrecord_type_index;		\
@@ -97,7 +142,9 @@ int lrecord_type_index (const struct lrecord_implementation *implementation);
   SLI_header->c_readonly = 0;				\
   SLI_header->lisp_readonly = 0;			\
 } while (0)
+#endif /* not MC_ALLOC */
 
+#ifndef MC_ALLOC
 struct lcrecord_header
 {
   struct lrecord_header lheader;
@@ -135,45 +182,47 @@ struct free_lcrecord_header
   struct lcrecord_header lcheader;
   Lisp_Object chain;
 };
+#endif /* not MC_ALLOC */
 
 enum lrecord_type
 {
   /* Symbol value magic types come first to make SYMBOL_VALUE_MAGIC_P fast.
      #### This should be replaced by a symbol_value_magic_p flag
      in the Lisp_Symbol lrecord_header. */
-  lrecord_type_symbol_value_forward, /* 0 */
-  lrecord_type_symbol_value_varalias, /* 1 */
-  lrecord_type_symbol_value_lisp_magic, /* 2 */
-  lrecord_type_symbol_value_buffer_local, /* 3 */
+  lrecord_type_symbol_value_forward,      /*  0 */
+  lrecord_type_symbol_value_varalias,     /*  1 */
+  lrecord_type_symbol_value_lisp_magic,   /*  2 */
+  lrecord_type_symbol_value_buffer_local, /*  3 */
   lrecord_type_max_symbol_value_magic = lrecord_type_symbol_value_buffer_local,
-
-  lrecord_type_symbol, /* 4 */
-  lrecord_type_subr, /* 5 */
-  lrecord_type_cons, /* 6 */
-  lrecord_type_vector,
-  lrecord_type_string,
+  lrecord_type_symbol,                    /*  4 */
+  lrecord_type_subr,                      /*  5 */
+  lrecord_type_cons,                      /*  6 */
+  lrecord_type_vector,                    /*  7 */
+  lrecord_type_string,                    /*  8 */
+#ifndef MC_ALLOC
   lrecord_type_lcrecord_list,
-  lrecord_type_compiled_function,
-  lrecord_type_weak_list,
-  lrecord_type_bit_vector,
-  lrecord_type_float,
-  lrecord_type_hash_table,
-  lrecord_type_lstream,
-  lrecord_type_process,
-  lrecord_type_charset,
-  lrecord_type_coding_system,
-  lrecord_type_char_table,
-  lrecord_type_char_table_entry,
-  lrecord_type_range_table,
-  lrecord_type_opaque,
-  lrecord_type_opaque_ptr,
-  lrecord_type_buffer,
-  lrecord_type_extent,
-  lrecord_type_extent_info,
-  lrecord_type_extent_auxiliary,
-  lrecord_type_marker,
-  lrecord_type_event,
-#ifdef EVENT_DATA_AS_OBJECTS
+#endif /* not MC_ALLOC */
+  lrecord_type_compiled_function,         /*  9 */
+  lrecord_type_weak_list,                 /* 10 */
+  lrecord_type_bit_vector,                /* 11 */
+  lrecord_type_float,                     /* 12 */
+  lrecord_type_hash_table,                /* 13 */
+  lrecord_type_lstream,                   /* 14 */
+  lrecord_type_process,                   /* 15 */
+  lrecord_type_charset,                   /* 16 */
+  lrecord_type_coding_system,             /* 17 */
+  lrecord_type_char_table,                /* 18 */
+  lrecord_type_char_table_entry,          /* 19 */
+  lrecord_type_range_table,               /* 20 */
+  lrecord_type_opaque,                    /* 21 */
+  lrecord_type_opaque_ptr,                /* 22 */
+  lrecord_type_buffer,                    /* 23 */
+  lrecord_type_extent,                    /* 24 */
+  lrecord_type_extent_info,               /* 25 */
+  lrecord_type_extent_auxiliary,          /* 26 */
+  lrecord_type_marker,                    /* 27 */
+  lrecord_type_event,                     /* 28 */
+#ifdef EVENT_DATA_AS_OBJECTS /* not defined */
   lrecord_type_key_data,
   lrecord_type_button_data,
   lrecord_type_motion_data,
@@ -184,45 +233,47 @@ enum lrecord_type
   lrecord_type_magic_eval_data,
   lrecord_type_magic_data,
 #endif /* EVENT_DATA_AS_OBJECTS */
-  lrecord_type_keymap,
-  lrecord_type_command_builder,
-  lrecord_type_timeout,
-  lrecord_type_specifier,
-  lrecord_type_console,
-  lrecord_type_device,
-  lrecord_type_frame,
-  lrecord_type_window,
-  lrecord_type_window_mirror,
-  lrecord_type_window_configuration,
-  lrecord_type_gui_item,
-  lrecord_type_popup_data,
-  lrecord_type_toolbar_button,
-  lrecord_type_scrollbar_instance,
-  lrecord_type_color_instance,
-  lrecord_type_font_instance,
-  lrecord_type_image_instance,
-  lrecord_type_glyph,
-  lrecord_type_face,
-  lrecord_type_database,
-  lrecord_type_tooltalk_message,
-  lrecord_type_tooltalk_pattern,
-  lrecord_type_ldap,
-  lrecord_type_pgconn,
-  lrecord_type_pgresult,
-  lrecord_type_devmode,
-  lrecord_type_mswindows_dialog_id,
-  lrecord_type_case_table,
-  lrecord_type_emacs_ffi,
-  lrecord_type_emacs_gtk_object,
-  lrecord_type_emacs_gtk_boxed,
-  lrecord_type_weak_box,
-  lrecord_type_ephemeron,
-  lrecord_type_bignum,
-  lrecord_type_ratio,
-  lrecord_type_bigfloat,
+  lrecord_type_keymap,                    /* 29 */
+  lrecord_type_command_builder,           /* 30 */
+  lrecord_type_timeout,                   /* 31 */
+  lrecord_type_specifier,                 /* 32 */
+  lrecord_type_console,                   /* 33 */
+  lrecord_type_device,                    /* 34 */
+  lrecord_type_frame,                     /* 35 */
+  lrecord_type_window,                    /* 36 */
+  lrecord_type_window_mirror,             /* 37 */
+  lrecord_type_window_configuration,      /* 38 */
+  lrecord_type_gui_item,                  /* 39 */
+  lrecord_type_popup_data,                /* 40 */
+  lrecord_type_toolbar_button,            /* 41 */
+  lrecord_type_scrollbar_instance,        /* 42 */
+  lrecord_type_color_instance,            /* 43 */
+  lrecord_type_font_instance,             /* 44 */
+  lrecord_type_image_instance,            /* 45 */
+  lrecord_type_glyph,                     /* 46 */
+  lrecord_type_face,                      /* 47 */
+  lrecord_type_database,                  /* 48 */
+  lrecord_type_tooltalk_message,          /* 49 */
+  lrecord_type_tooltalk_pattern,          /* 50 */
+  lrecord_type_ldap,                      /* 51 */
+  lrecord_type_pgconn,                    /* 52 */
+  lrecord_type_pgresult,                  /* 53 */
+  lrecord_type_devmode,                   /* 54 */
+  lrecord_type_mswindows_dialog_id,       /* 55 */
+  lrecord_type_case_table,                /* 56 */
+  lrecord_type_emacs_ffi,                 /* 57 */
+  lrecord_type_emacs_gtk_object,          /* 58 */
+  lrecord_type_emacs_gtk_boxed,           /* 59 */
+  lrecord_type_weak_box,                  /* 60 */
+  lrecord_type_ephemeron,                 /* 61 */
+  lrecord_type_bignum,                    /* 62 */
+  lrecord_type_ratio,                     /* 63 */
+  lrecord_type_bigfloat,                  /* 64 */
+#ifndef MC_ALLOC
   lrecord_type_free, /* only used for "free" lrecords */
   lrecord_type_undefined, /* only used for debugging */
-  lrecord_type_last_built_in_type /* must be last */
+#endif /* not MC_ALLOC */
+  lrecord_type_last_built_in_type         /* 65 */ /* must be last */
 };
 
 extern MODULE_API int lrecord_type_count;
@@ -289,18 +340,24 @@ struct lrecord_implementation
   int (*remprop) (Lisp_Object obj, Lisp_Object prop);
   Lisp_Object (*plist) (Lisp_Object obj);
 
+#ifdef MC_ALLOC
+  /* Only one of `static_size' and `size_in_bytes_method' is non-0. */
+#else /* not MC_ALLOC */
   /* Only one of `static_size' and `size_in_bytes_method' is non-0.
      If both are 0, this type is not instantiable by basic_alloc_lcrecord(). */
+#endif /* not MC_ALLOC */
   Bytecount static_size;
   Bytecount (*size_in_bytes_method) (const void *header);
 
   /* The (constant) index into lrecord_implementations_table */
   enum lrecord_type lrecord_type_index;
 
+#ifndef MC_ALLOC
   /* A "basic" lrecord is any lrecord that's not an lcrecord, i.e.
      one that does not have an lcrecord_header at the front and which
      is (usually) allocated in frob blocks. */
   unsigned int basic_p :1;
+#endif /* not MC_ALLOC */
 };
 
 /* All the built-in lisp object types are enumerated in `enum lrecord_type'.
@@ -317,6 +374,76 @@ lrecord_implementations_table[lrecord_type_last_built_in_type + MODULE_DEFINABLE
 
 extern int gc_in_progress;
 
+#ifdef MC_ALLOC
+#include "mc-alloc.h"
+#endif /* MC_ALLOC */
+
+#ifdef MC_ALLOC_TYPE_STATS
+void init_lrecord_stats (void);
+void inc_lrecord_stats (Bytecount size, const struct lrecord_header *h);
+void dec_lrecord_stats (Bytecount size_including_overhead, 
+			const struct lrecord_header *h);
+#endif /* MC_ALLOC_TYPE_STATS */
+
+#ifdef MC_ALLOC
+/* Tell mc-alloc how to call a finalizer. */
+#define MC_ALLOC_CALL_FINALIZER(ptr)					\
+{									\
+  Lisp_Object MCACF_obj = wrap_pointer_1 (ptr);				\
+  struct lrecord_header *MCACF_lheader = XRECORD_LHEADER (MCACF_obj);   \
+  if (XRECORD_LHEADER (MCACF_obj) && LRECORDP (MCACF_obj)		\
+      && !LRECORD_FREE_P (MCACF_lheader)  )				\
+    {									\
+      const struct lrecord_implementation *MCACF_implementation		\
+	= LHEADER_IMPLEMENTATION (MCACF_lheader);			\
+      if (MCACF_implementation && MCACF_implementation->finalizer)	\
+	MCACF_implementation->finalizer (ptr, 0);			\
+    }									\
+} while (0)
+
+/* Tell mc-alloc how to call a finalizer for disksave. */
+#define MC_ALLOC_CALL_FINALIZER_FOR_DISKSAVE(ptr)			\
+{									\
+  Lisp_Object MCACF_obj = wrap_pointer_1 (ptr);				\
+  struct lrecord_header *MCACF_lheader = XRECORD_LHEADER (MCACF_obj);   \
+  if (XRECORD_LHEADER (MCACF_obj) && LRECORDP (MCACF_obj)		\
+      && !LRECORD_FREE_P (MCACF_lheader)  )				\
+    {									\
+      const struct lrecord_implementation *MCACF_implementation		\
+	= LHEADER_IMPLEMENTATION (MCACF_lheader);			\
+      if (MCACF_implementation && MCACF_implementation->finalizer)	\
+	MCACF_implementation->finalizer (ptr, 1);			\
+    }									\
+} while (0)
+
+#define LRECORD_FREE_P(ptr)			\
+(((struct lrecord_header *) ptr)->free)
+
+#define MARK_LRECORD_AS_FREE(ptr)			\
+((void) (((struct lrecord_header *) ptr)->free = 1))
+
+#define MARK_LRECORD_AS_NOT_FREE(ptr)			\
+((void) (((struct lrecord_header *) ptr)->free = 0))
+
+#define MARKED_RECORD_P(obj) MARKED_P (obj)
+#define MARKED_RECORD_HEADER_P(lheader) MARKED_P (lheader)
+#define MARK_RECORD_HEADER(lheader)   MARK (lheader)
+#define UNMARK_RECORD_HEADER(lheader) UNMARK (lheader)
+
+#define LISP_READONLY_RECORD_HEADER_P(lheader)  ((lheader)->lisp_readonly)
+#define SET_LISP_READONLY_RECORD_HEADER(lheader) \
+  ((void) ((lheader)->lisp_readonly = 1))
+#define MARK_LRECORD_AS_LISP_READONLY(ptr)			\
+((void) (((struct lrecord_header *) ptr)->lisp_readonly = 1))
+
+#else /* not MC_ALLOC */
+
+#define LRECORD_FREE_P(ptr)					\
+(((struct lrecord_header *) ptr)->type == lrecord_type_free)
+
+#define MARK_LRECORD_AS_FREE(ptr)					\
+((void) (((struct lrecord_header *) ptr)->type = lrecord_type_free))
+
 #define MARKED_RECORD_P(obj) (XRECORD_LHEADER (obj)->mark)
 #define MARKED_RECORD_HEADER_P(lheader) ((lheader)->mark)
 #define MARK_RECORD_HEADER(lheader)   ((void) ((lheader)->mark = 1))
@@ -332,6 +459,7 @@ extern int gc_in_progress;
 } while (0)
 #define SET_LISP_READONLY_RECORD_HEADER(lheader) \
   ((void) ((lheader)->lisp_readonly = 1))
+#endif /* not MC_ALLOC */
 
 #ifdef USE_KKCC
 #define RECORD_DESCRIPTION(lheader) lrecord_memory_descriptions[(lheader)->type]
@@ -531,7 +659,11 @@ extern int gc_in_progress;
    
    struct Lisp_Hash_Table
    {
+#ifdef MC_ALLOC
+     struct lrecord_header header;
+#else
      struct lcrecord_header header;
+#endif
      Elemcount size;
      Elemcount count;
      Elemcount rehash_count;
@@ -596,7 +728,11 @@ extern int gc_in_progress;
 
    struct Lisp_Specifier
    {
+#ifdef MC_ALLOC
+     struct lrecord_header header;
+#else
      struct lcrecord_header header;
+#endif
      struct specifier_methods *methods;
    
      ...
@@ -838,12 +974,14 @@ enum data_description_entry_flags
   XD_FLAG_NO_PDUMP = 2,
   /* Indicates that this is a "default" entry in a union map. */
   XD_FLAG_UNION_DEFAULT_ENTRY = 4,
+#ifndef MC_ALLOC
   /* Indicates that this is a free Lisp object we're marking.
      Only relevant for ERROR_CHECK_GC.  This occurs when we're marking
      lcrecord-lists, where the objects have had their type changed to
      lrecord_type_free and also have had their free bit set, but we mark
      them as normal. */
   XD_FLAG_FREE_LISP_OBJECT = 8
+#endif /* not MC_ALLOC */
 #if 0
   ,
   /* Suggestions for other possible flags: */
@@ -962,12 +1100,21 @@ MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash
 #define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
 MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
+#ifdef MC_ALLOC
+#define MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
+DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
+const struct lrecord_implementation lrecord_##c_name =			\
+  { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
+    getprop, putprop, remprop, plist, size, sizer,			\
+    lrecord_type_##c_name }
+#else /* not MC_ALLOC */
 #define MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 const struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_##c_name, basic_p }
+#endif /* not MC_ALLOC */
 
 #define DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
 DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
@@ -981,6 +1128,15 @@ DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,
 #define DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
 MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
+#ifdef MC_ALLOC
+#define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
+DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
+int lrecord_type_##c_name;						\
+struct lrecord_implementation lrecord_##c_name =			\
+  { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
+    getprop, putprop, remprop, plist, size, sizer,			\
+    lrecord_type_last_built_in_type }
+#else /* not MC_ALLOC */
 #define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 int lrecord_type_##c_name;						\
@@ -988,6 +1144,7 @@ struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_last_built_in_type, basic_p }
+#endif /* not MC_ALLOC */
 
 #ifdef USE_KKCC
 extern MODULE_API const struct memory_description *lrecord_memory_descriptions[];
@@ -1049,7 +1206,11 @@ extern MODULE_API Lisp_Object (*lrecord_markers[]) (Lisp_Object);
    1. Declare the struct for your object in a header file somewhere.
    Remember that it must begin with
 
+#ifdef MC_ALLOC
+   struct lrecord_header header;
+#else
    struct lcrecord_header header;
+#endif
 
    2. Put the "standard junk" (DECLARE_RECORD()/XFOO/etc.) below the
       struct definition -- see below.
@@ -1083,7 +1244,11 @@ An example:
 
 struct toolbar_button
 {
+#ifdef MC_ALLOC
+  struct lrecord_header header;
+#else
   struct lcrecord_header header;
+#endif
 
   Lisp_Object next;
   Lisp_Object frame;
@@ -1342,6 +1507,7 @@ extern Lisp_Object Q##c_name##p
    dead_wrong_type_argument (predicate, x);		\
  } while (0)
 
+#ifndef MC_ALLOC
 /*-------------------------- lcrecord-list -----------------------------*/
 
 struct lcrecord_list
@@ -1454,6 +1620,7 @@ alloc_automanaged_lcrecord (Bytecount size,
 			    const struct lrecord_implementation *);
 #define alloc_lcrecord_type(type, lrecord_implementation) \
   ((type *) alloc_automanaged_lcrecord (sizeof (type), lrecord_implementation))
+
 void free_lcrecord (Lisp_Object rec);
 
 
@@ -1472,6 +1639,55 @@ void free_lcrecord (Lisp_Object rec);
 	   (size) - sizeof (struct lcrecord_header))
 
 #define zero_lcrecord(lcr) zero_sized_lcrecord (lcr, sizeof (*(lcr)))
+
+#else /* MC_ALLOC */
+
+/* How to allocate a lrecord:
+   
+   - If the size of the lrecord is fix, say it equals its size of its
+   struct, then use alloc_lrecord_type.
+
+   - If the size varies, i.e. it is not equal to the size of its
+   struct, use alloc_lrecord and specify the amount of storage you
+   need for the object.
+
+   - Some lrecords, which are used totally internally, use the
+   noseeum-* functions for the reason of debugging. 
+
+   - To free a Lisp_Object manually, use free_lrecord. */
+
+void *alloc_lrecord (Bytecount size,
+		     const struct lrecord_implementation *);
+
+#define alloc_lrecord_type(type, lrecord_implementation) \
+  ((type *) alloc_lrecord (sizeof (type), lrecord_implementation))
+
+void *noseeum_alloc_lrecord (Bytecount size,
+			     const struct lrecord_implementation *);
+
+#define noseeum_alloc_lrecord_type(type, lrecord_implementation) \
+  ((type *) noseeum_alloc_lrecord (sizeof (type), lrecord_implementation))
+
+void free_lrecord (Lisp_Object rec);
+
+
+/* Copy the data from one lrecord structure into another, but don't
+   overwrite the header information. */
+
+#define copy_sized_lrecord(dst, src, size)			\
+  memcpy ((char *) (dst) + sizeof (struct lrecord_header),	\
+	  (char *) (src) + sizeof (struct lrecord_header),	\
+	  (size) - sizeof (struct lrecord_header))
+
+#define copy_lrecord(dst, src) copy_sized_lrecord (dst, src, sizeof (*(dst)))
+
+#define zero_sized_lrecord(lcr, size)				\
+   memset ((char *) (lcr) + sizeof (struct lrecord_header), 0,	\
+	   (size) - sizeof (struct lrecord_header))
+
+#define zero_lrecord(lcr) zero_sized_lrecord (lcr, sizeof (*(lcr)))
+
+#endif /* MC_ALLOC */
 
 DECLARE_INLINE_HEADER (
 Bytecount
@@ -1584,8 +1800,12 @@ extern MODULE_API int initialized;
 
 #ifdef PDUMP
 #include "dumper.h"
+#ifdef MC_ALLOC
+#define DUMPEDP(adr) 0
+#else /* not MC_ALLOC */
 #define DUMPEDP(adr) ((((Rawbyte *) (adr)) < pdump_end) && \
                       (((Rawbyte *) (adr)) >= pdump_start))
+#endif /* not MC_ALLOC */
 #else
 #define DUMPEDP(adr) 0
 #endif
