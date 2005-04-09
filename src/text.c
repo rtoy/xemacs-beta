@@ -4588,7 +4588,8 @@ new_dfc_convert_size (const char *srctext, const void *src,
 {
   alloca_convert_vals vals;
 
-  assert (find_pos_of_existing_active_alloca_convert (srctext) < 0);
+  int i = find_pos_of_existing_active_alloca_convert (srctext);
+  assert (i < 0);
 
   vals.srctext = srctext;
 
