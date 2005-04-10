@@ -1,3 +1,13 @@
+2005-04-10  Marcus Crestani  <crestani@xemacs.org>
+
+	* dumper.c (pdump_get_mc_addr): Use clearer code.
+	* dumper.c (pdump_put_mc_addr): Use clearer code.
+	* emacs.c (main_1): Initialize the new allocator only once.
+	* mc-alloc.c (get_page_header): Split up the assertions to better
+	spot the problem.
+	* mc-alloc.c (mc_alloc_1): Move definitions of local variables to
+	the beginning of the function.
+
 2005-04-01  Melvin Hadasht <melvin.hadasht@free.fr>
 
 	* text.c (new_dfc_convert_size): Move active code out of assert.

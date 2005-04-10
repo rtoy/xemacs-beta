@@ -537,7 +537,7 @@ pdump_get_mc_addr (const void *obj)
 
   assert (obj != 0);
 
-  while ((mc_addr = &pdump_mc_hash[pos]) && (mc_addr->obj != 0))
+  while (((mc_addr = &pdump_mc_hash[pos]) != 0) && (mc_addr->obj != 0))
     {
       if (mc_addr->obj == obj)
 	return mc_addr->addr;
@@ -568,7 +568,7 @@ pdump_put_mc_addr (const void *obj, EMACS_INT addr)
   mc_addr_elt *mc_addr;
   int pos = pdump_make_hash (obj);
 
-  while ((mc_addr = &pdump_mc_hash[pos]) && (mc_addr->obj != 0))
+  while (((mc_addr = &pdump_mc_hash[pos]) != 0) && (mc_addr->obj != 0))
     {
       if (mc_addr->obj == obj)
 	return;

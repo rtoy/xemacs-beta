@@ -571,11 +571,12 @@ get_page_header (void *ptr)
 {
   int l1_index = L1_INDEX (ptr);
   level_2_lookup_tree *l2 = PTR_LOOKUP_TABLE (l1_index);
+  assert (l2);
 #ifdef USE_HASH_TABLE
   while ((l2) && (LEVEL2_KEY (l2) != l1_index))
     l2 = LEVEL2_HASH_LINK (l2);
 #endif
-  assert (l2 && LEVEL2 (l2, L2_INDEX (ptr)));
+  assert (LEVEL2 (l2, L2_INDEX (ptr)));
   return LEVEL2 (l2, L2_INDEX (ptr));
 }
 
@@ -1414,13 +1415,14 @@ static void *
 mc_alloc_1 (size_t size, int managed)
 {
   page_list_header *plh = 0;
+  page_header *ph = 0;
+  void *result = 0;
+
   if (managed)
     plh = USED_HEAP_PAGES (get_used_list_index (size));
   else
     plh = UNMANAGED_HEAP_PAGES (get_unmanaged_list_index (size));
 
-  page_header *ph = 0;
-  void *result = 0;
   if (size == 0)
     return 0;
   if (size < PAGE_SIZE_DIV_2)

@@ -916,10 +916,13 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   if (!initialized)
 #endif
     {
-      init_mc_allocator ();
+      if (!restart)
+	{
+	  init_mc_allocator ();
 #ifdef MC_ALLOC_TYPE_STATS
-      init_lrecord_stats ();
+	  init_lrecord_stats ();
 #endif /* not MC_ALLOC_TYPE_STATS */
+	}
     }
 #endif /* MC_ALLOC */
 
