@@ -1,3 +1,7 @@
+2005-04-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	(Fmap_char_table): Add note about proper usage.
+
 2005-04-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* eval.c (issue_call_trapping_problems_warning): Fix argument

@@ -1191,7 +1191,8 @@ one of the following:
    (only allowed when Mule support is present)
 -- A single character
 
-With the values removed, the default value will be returned.
+With all values removed, the default value will be returned by 
+`get-char-table' and `get-range-char-table'.
 */
        (range, char_table))
 {
@@ -1482,12 +1483,18 @@ slow_map_char_table_fun (struct chartab_range *range,
 }
 
 DEFUN ("map-char-table", Fmap_char_table, 2, 3, 0, /*
-Map FUNCTION over entries in CHAR-TABLE, calling it with two args,
-each key and value in the table.
+Map FUNCTION over CHAR-TABLE until it returns non-nil; return that value.
+FUNCTION is called with two arguments, each key and entry in the table.
 
-RANGE specifies a subrange to map over and is in the same format as
-the RANGE argument to `put-char-table'.  If omitted or t, it defaults to
-the entire table.  See also `char-table-p'.
+RANGE specifies a subrange to map over.  If omitted or t, it defaults to
+the entire table.
+
+Both RANGE and the keys passed to FUNCTION are in the same format as the
+RANGE argument to `put-char-table'.  N.B. This function does NOT map over
+all characters in RANGE, but over the subranges that have been assigned to.
+Thus this function is most suitable for searching a char-table, or for
+populating one char-table based on the contents of another.  The current
+implementation does not coalesce ranges all of whose values are the same.
 */
        (function, char_table, range))
 {
