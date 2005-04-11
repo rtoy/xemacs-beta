@@ -4911,7 +4911,7 @@ issue_call_trapping_problems_warning (Lisp_Object warning_class,
 	    emacs_sprintf_string_lisp
 	    ("%s: Attempt to throw outside of function:"
 	     "To catch `%s' with value `%s'\n\nBacktrace follows:\n\n%s",
-	     Qnil, 3,
+	     Qnil, 4,
 	     build_msg_string (warning_string ? warning_string : "error"),
 	     p->thrown_tag, p->thrown_value, p->backtrace);
 	  warn_when_safe_lispobj (Qerror, current_warning_level (), errstr);
