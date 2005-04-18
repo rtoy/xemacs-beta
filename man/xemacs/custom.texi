@@ -43,9 +43,14 @@ file to do the customization in each session.  @xref{Init File}.
 @cindex minor modes
 
 @cindex mode line
-  Minor modes are options which you can use or not.  For example, Auto
-Fill mode is a minor mode in which @key{SPC} breaks lines between words
-as you type.  All the minor modes are independent of each other and of
+  Minor modes are common options which may be useful in many major
+modes, but which may need to be enabled or disabled independently of the
+major mode.  (This may be because user preferences for the feature vary,
+or because the feature is sometimes more of a hindrance than an aid
+depending on the specific content of the buffer.)  For example, Auto
+Fill mode is a minor mode in which @key{SPC} automatically breaks lines
+between words at the right margin
+as you type.  Minor modes are independent of each other and of
 the selected major mode.  Most minor modes inform you in the mode line
 when they are on; for example, @samp{Fill} in the mode line means that
 Auto Fill mode is on.
@@ -55,9 +60,11 @@ command function that turns the mode on or off.  Thus, the command to
 enable or disable Auto Fill mode is called @kbd{M-x auto-fill-mode}.  These
 commands are usually invoked with @kbd{M-x}, but you can bind keys to them
 if you wish.  With no argument, the function turns the mode on if it was
-off and off if it was on.  This is known as @dfn{toggling}.  A positive
+off and off if it was on.  This is called @dfn{toggling}.  A positive
 argument always turns the mode on, and an explicit zero argument or a
 negative argument always turns it off.
+
+@c #### maybe this list should be extended and moved to its own node?
 
 @cindex Auto Fill mode
 @findex auto-fill-mode
@@ -65,12 +72,31 @@ negative argument always turns it off.
 explicitly.  Emacs inserts newlines as necessary to prevent lines from
 becoming too long.  @xref{Filling}.
 
+@cindex Filladapt mode
+@findex filladapt-mode
+  Filladapt mode is an extension of Auto Fill mode which recognizes
+@dfn{line prefixes} and automatically prepends them when automatically
+breaking lines.  Filladapt mode is smart enough to recognize common
+idioms for bullets (e.g., leading isolated hyphens) and enumerated
+paragraphs, and insert appropriate leading whitespace (and omit the
+bullet!)  It also does a good job of recognizing common quotation styles
+in email.  Filladapt mode must be enabled in addition to Auto Fill
+mode.  If Auto Fill mode is disabled, Filladapt mode will be
+inactivated, but the indicator will remain in the modeline.
+
 @cindex Overwrite mode
 @findex overwrite-mode
   Overwrite mode causes ordinary printing characters to replace existing
 text instead of moving it to the right.  For example, if point is in
 front of the @samp{B} in @samp{FOOBAR}, and you type a @kbd{G} in Overwrite
 mode, it changes to @samp{FOOGAR}, instead of @samp{FOOGBAR}.@refill
+
+@cindex Pending Delete mode
+@findex pending-delete-mode
+Pending Delete mode cause buffer insertions and deletions to replace the
+active region (with nothing, for deletions).  This is the common
+behavior in most modern programs, but conflicts with the ``lightweight
+selections'' used in the X Window System.
 
 @cindex Abbrev mode
 @findex abbrev-mode
@@ -83,35 +109,48 @@ mode}.  @xref{Abbrevs}, for full information.
 @section Behaviors
 @cindex behavior
 
-Some functionality requires a fair amount of effort to enable globally
-in a session.  For example, someone who discovers filladapt and really
+@dfn{Behaviors} are an alternative interface to minor modes.  The toggle
+interface emphasizes the case-specific nature of a minor mode: use it
+with @emph{this} major mode but not in @emph{those} buffers.  However,
+this is inconvenient for behavior that depends on user preference.
+For example, someone who discovers filladapt and really
 likes it must toggle it separately in each buffer.  On the other hand,
 after trying it for a while she might like to disable it everywhere,
-having decided it doesn't work very well for her.  Such a functionality
-is called a @dfn{behavior}.
+having decided it doesn't work very well for her.
 
-The package developer will register behaviors with XEmacs.  Then the
-user invokes the @code{enable-behavior} and @code{disable-behavior}
-functions to enable or disable a given behavior.  The behavior registry
-was introduced in XEmacs 21.5.6.
+Use of mode hooks will invoke the minor mode automatically in the
+future, but this is inconvenient (you must switch tasks to editing the
+init file) and doesn't help with existing buffers in the session.  The
+behavior interface addresses this problem.  The command
+@code{enable-behavior} prompts (with completion) for a registered
+behavior (denoted by a symbol), and enables it.  Conversely,
+@code{disable-behavior} prompts for a behavior, and disables it.
 
-@defun enable-behavior behavior [force]
-Called interactively, prompt the user, read a behavior symbol name with
-completion for @var{behavior}, and take @var{force} from the prefix
-argument.  Then enable the behavior registered under the symbol
-@var{behavior}.
+@c #### This belongs in the Lispref in the description of creating
+@c packages or in customize or both.
 
-The optional argument @var{force} is unimplemented in 21.5.6.
-@end defun
-
-@defun disable-behavior behavior [force]
-Called interactively, prompt the user, read a behavior symbol name with
-completion for @var{behavior}, and take @var{force} from the prefix
-argument.  Then disable the behavior registered under the symbol
-@var{behavior}.
-
-The optional argument @var{force} is unimplemented in 21.5.6.
-@end defun
+@c The package developer will register behaviors with XEmacs.  Then the
+@c user invokes the @code{enable-behavior} and @code{disable-behavior}
+@c functions to enable or disable a given behavior.  The behavior registry
+@c was introduced in XEmacs 21.5.6.
+@c
+@c @defun enable-behavior behavior &optionl force
+@c Called interactively, prompt the user, read a behavior symbol name with
+@c completion for @var{behavior}, and take @var{force} from the prefix
+@c argument.  Then enable the behavior registered under the symbol
+@c @var{behavior}.
+@c
+@c The optional argument @var{force} is unimplemented in 21.5.6.
+@c @end defun
+@c
+@c @defun disable-behavior behavior &optional force
+@c Called interactively, prompt the user, read a behavior symbol name with
+@c completion for @var{behavior}, and take @var{force} from the prefix
+@c argument.  Then disable the behavior registered under the symbol
+@c @var{behavior}.
+@c
+@c The optional argument @var{force} is unimplemented in 21.5.6.
+@c @end defun
 
 
 @node Variables
@@ -788,12 +827,15 @@ there.  The purpose is twofold: a stray @samp{Local Variables:}@: not in
 the last page does not confuse Emacs, and Emacs never needs to search a
 long file that contains no page markers and has no local variables list.
 
-  You may be tempted to turn on Auto Fill mode with a local variable
-list.  That is inappropriate.  Whether you use Auto Fill mode or not is
+  You may be tempted to turn on minor modes like Auto Fill mode with a
+local variable list.  That is inappropriate.  Those behaviors that seem
+appropriate for almost any personal taste, such as setting up the syntax
+table "symbol constituent" character class, are collected into a major
+mode.  But whether you use Auto Fill mode or not is
 a matter of personal taste, not a matter of the contents of particular
 files.  If you want to use Auto Fill, set up major mode hooks with your
 init file to turn it on (when appropriate) for you alone
-(@pxref{Init File}).  Don't try to use a local variable list that would
+(@pxref{Init File}).  Don't use a local variable list that would
 impose your taste on everyone working with the file.
 
 XEmacs allows you to specify local variables in the first line
@@ -1459,8 +1501,8 @@ table of syntactic classes, with the characters that specify them.
 
 @table @samp
 @item @w{-}
-The class of whitespace characters.  Please don't use the formerly
-advertised @w{ }, which is not supported by GNU Emacs.
+The class of whitespace characters.  Avoid use of the formerly
+advertised @w{ }, because it is not supported by GNU Emacs.
 @item w
 The class of word-constituent characters.
 @item _
@@ -2146,34 +2188,36 @@ This section is not written yet.  Try the Lisp Reference Manual:
 @findex x-create-frame
 
 Historically, XEmacs used the X resource application class @samp{Emacs}
-for its resources.  Unfortunately, GNU Emacs uses the same application
-class, and resources are not compatible between the two Emacsen.  This
-sharing of the application class often led to trouble if you wanted to
-run both variants.
+for its resources.  Unfortunately, GNU Emacs's usage of resources has
+evolved differently from XEmacs's, and especially in the case of fonts
+semantics are not compatible between the two Emacsen.  Thus, sharing of
+the application class can easily lead to trouble.
 
 XEmacs now uses the X resource application class @samp{XEmacs}.
-Versions since 21.5.21 normally do this without any acrobatics of code,
-but previous versions checked the X resource database for resources
-starting in @samp{XEmacs}, and if none were found, they used
-@samp{Emacs}, for greater backward compatibility.  Currently, we advise
-moving your X resources to using the @samp{XEmacs} class, but if, in the
-short term, you want to stay with the old behavior, you can start XEmacs
-with the environment variable @b{USE_EMACS_AS_DEFAULT_APPLICATION_CLASS}
-set to some value; this will restore the pre-21.5.21 behavior.
+Versions since 21.5.21 do this unconditionally.  To attempt to maintain
+some backward compatibility, previous versions checked the X resource
+database for resources starting in @samp{XEmacs}, and if none were
+found, @samp{Emacs} was used.  This behavior is likely to be obsoleted,
+so you should move your X resources to using the @samp{XEmacs} class.
+In the short term, to stay with the old behavior, start XEmacs with the
+environment variable @b{USE_EMACS_AS_DEFAULT_APPLICATION_CLASS} set to
+some non-empty value; this will restore the pre-21.5.21 behavior.
+@c #### is this documented in the Lispref?
+Lisp programs can examine the variable @code{x-emacs-application-class}
+to determine which is being used in the running application.
 
 The examples in this section assume the application class is
-@samp{XEmacs}. From Lisp, you can examine the
-@code{x-emacs-application-class} variable to determine which is being
-used in the running application. 
+@samp{XEmacs}.
 
-XEmacs' resources are generally set per-frame. Each XEmacs frame can
+Most of XEmacs's resources are set per-frame.  Each XEmacs frame can
 have its own name or the same name as another, depending on the name
 passed to the @code{make-frame} function.  Up until 21.5.21, the default
 frame name was @samp{emacs}; since then, it has been @samp{XEmacs}, but
 in the short term the old default can be restored by the
 @b{USE_EMACS_AS_DEFAULT_APPLICATION_CLASS} environment variable
-mentioned above. See the docstring for the Lisp variable
-`default-frame-name'.
+mentioned above.
+@c #### Cheesy.  Variable should be documented here.
+See the docstring for the Lisp variable `default-frame-name'.
 
 You can specify resources for all frames with the syntax:
 
@@ -2571,7 +2615,7 @@ x-emacs-application-class  "EmacsShell"  "EmacsManager"  "EmacsFrame"
 
 where INVOCATION-NAME is the terminal component of the name of the
 XEmacs executable (usually @samp{xemacs}), and
-@samp{x-emacs-application-class} is generally @samp{Emacs}.
+@samp{x-emacs-application-class} is generally @samp{XEmacs}.
 
 @node Menubar Resources
 @subsection Menubar Resources

@@ -14,7 +14,7 @@ normally contains the name of the current major mode in parentheses.
 
   The least specialized major mode is called @dfn{Fundamental mode}.  This
 mode has no mode-specific redefinitions or variable settings.  Each
-Emacs command behaves in its most general manner, and each option is in its
+Emacs command behaves in its most generic manner, and each option is in its
 default state.  For editing any specific type of text, such as Lisp code or
 English text, you should switch to the appropriate major mode, such as Lisp
 mode or Text mode.
@@ -27,7 +27,9 @@ Many major modes redefine the syntactical properties of characters
 appearing in the buffer.  @xref{Syntax}.
 
   The major modes fall into three major groups.  Programming modes
-(@pxref{Programs}) are for specific programming languages.  Text modes
+(@pxref{Programs}) are for specific programming languages.  They tend to
+be line-oriented, often enforcing indentation.  They emphasize
+facilities for creating and displaying structure.  Text modes
 (like Nroff mode, @TeX{} mode, Outline mode, XML mode, etc.@:) are for
 editing human readable text.  The remaining major modes are not intended
 for direct use in editing user files; they are used in buffers created
@@ -39,7 +41,8 @@ for buffers used for communicating with an inferior shell process
 
   Most programming language major modes specify that only blank lines
 separate paragraphs.  This is so that the paragraph commands remain useful.
-@xref{Paragraphs}.  They also cause Auto Fill mode to use the definition of
+@xref{Paragraphs}.  They also cause Auto Fill minor mode to use the
+definition of
 @key{TAB} to indent the new lines it creates.  This is because most lines
 in a program are usually indented.  @xref{Indentation}.
 
@@ -127,28 +130,35 @@ taken from the previously selected buffer.
 @vindex scheme-mode-hook
 
   The last step taken by a major mode, by convention, is to invoke a
-list of user supplied functions that are stored in a ``hook'' variable.
-This allows a user to further customize the major mode, and is
-particularly convenient for setting up buffer local variables
-(@pxref{Locals}).
-
-  The name of the hook variable is created by appending the string
-@code{-hook} to the name of the major mode.  For example, the hook
-variable used by @code{text-mode} would be named @code{text-mode-hook}.
-By convention the mode hook function receives no arguments. If a hook
-variable does not exist, or it has the value @code{nil}, the major mode
-simply ignores it.
-
-  The recommended way to add functions to a hook variable is with the
-@code{add-hook} function.  For example, to automatically turn on the
-Auto Fill mode when Text mode is invoked the following code can be used in
-the initialization file (@pxref{Init File})
+list of user supplied functions that are stored in a @dfn{hook}
+variable.  This allows a user to further customize the major mode, and
+is particularly convenient for associating minor modes with major modes.
+@xref{Minor Modes}.  For example, to automatically turn on the Auto Fill
+minor mode when Text mode is invoked, add the following code to the
+initialization file (@pxref{Init File})
 
 @example
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 @end example
 
-The @code{add-hook} function will check that the function is not already
+  Derived modes often @dfn{inherit} the parent mode's hooks.  For
+example, Texinfo Mode is derived from Text Mode, so customizing
+@code{text-mode-hook} as above will also enable Auto Fill minor mode in
+buffers containing Texinfo files.
+
+Hooks are also commonly used to set up buffer local variables
+(@pxref{Locals}).
+
+  The name of the hook variable is created by appending the string
+@code{-hook} to the name of the function used to invoke the major mode.
+For example, as seen above, the hook variable used by Text Mode would be
+named @code{text-mode-hook}.  By convention the mode hook function
+receives no arguments. If a hook variable does not exist, or it has the
+value @code{nil}, the major mode simply ignores it.
+
+  The recommended way to add functions to a hook variable is with the
+@code{add-hook} function.
+@code{add-hook} will check that the function is not already
 listed in the hook variable before adding it. It will also create a hook
 variable with the value @code{nil} if one does not exist before adding
 the function. @code{add-hook} adds functions to the front of the hook

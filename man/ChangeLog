@@ -1,3 +1,28 @@
+2005-04-18  Turnbull Stephen  <stephen@xemacs.org>
+
+	* internals/internals.texi
+	(Better Rendering Support -- Modern Font Support):
+	(Modern Font Support -- Font Concepts):
+	(Modern Font Support -- fontconfig):
+	(Modern Font Support -- Xft):
+	New nodes describing the Lisp API.
+	(Future Work -- Better Rendering Support):
+	Add Better Rendering Support -- Modern Font Support to menu.
+
+2005-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/custom.texi (X Resources): Improve wording.
+
+2005-03-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/custom.texi (Minor Modes): Improve general description.
+	Add description of Pending Delete and Filladapt modes.
+	(File Variables): Improve caution against invoking minor modes.
+	(Syntax Entry): Strengthen caution against "\s ".
+
+	* xemacs/major.texi (Major Modes): Improve accuracy of wording.
+	(Mode Hooks): Describe use of hooks to invoke minor modes.
+
 2005-04-06  Ben Wing  <ben@xemacs.org>
 
 	* internals/internals.texi (Authorship of XEmacs): Copy authorship

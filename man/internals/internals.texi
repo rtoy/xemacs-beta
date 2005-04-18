@@ -23984,6 +23984,7 @@ one may be made available for the Knauel-Matthias patch soon.
 * Better Rendering Support -- Implementation::
 * Better Rendering Support -- Current Status::
 * Better Rendering Support -- Configuration with the Interim Patches::
+* Better Rendering Support -- Modern Font Support::
 @end menu
 
 
@@ -24249,7 +24250,7 @@ I think this is probably an Xft bug, but I'm not sure.
 @end table
 
 
-@node Better Rendering Support -- Configuration with the Interim Patches, , Better Rendering Support -- Current Status, Future Work -- Better Rendering Support
+@node Better Rendering Support -- Configuration with the Interim Patches, Better Rendering Support -- Modern Font Support, Better Rendering Support -- Current Status, Future Work -- Better Rendering Support
 @subsection Better Rendering Support -- Configuration with the Interim Patches
 @cindex better rendering support, configuration with the interim patches
 @cindex configuration with the interim patches, better rendering support
@@ -24327,6 +24328,478 @@ quite varied, and there was a comment that this weirdness gave good
 balance.  This isn't true on my main platform, Mac OS X, and needs to be
 rechecked on Linux, where it was observed.)
 @end itemize
+
+
+
+@node Better Rendering Support -- Modern Font Support, , Better Rendering Support -- Configuration with the Interim Patches, Future Work -- Better Rendering Support
+@subsection Better Rendering Support -- Modern Font Support
+
+@c Maybe eventually all these @cindexes should be spread about?
+@cindex fonts
+@cindex fonts, scalable
+@cindex fonts, antialiased
+@cindex fonts, TrueType
+@cindex fonts, OpenType
+@cindex fonts, Type1
+@cindex TrueType fonts
+@cindex OpenType fonts
+@cindex Type1 fonts
+@cindex antialiasing
+@cindex Xft
+@cindex fontconfig
+
+@strong{NB: This subtree eventually needs to be moved to the Lispref.}
+
+This chapter describes integration of the @file{Xft} font support
+library into XEmacs.  This library is a layer over the separate
+@file{FreeType} rendering engine and @file{fontconfig} font query and
+selection libraries.  @file{FreeType} provides rendering facilities for
+modern, good-looking TrueType fonts with hinting and antialiasing, while
+@file{fontconfig} provides a coherent interface to font query and
+selection which is independent of the rendering engine, although
+currently it is only used in @file{Xft} to interface to @file{FreeType}.
+
+From the user's point of view, @file{fontconfig} provides a naming
+convention which is @emph{precise}, @emph{accurate}, and
+@emph{convenient}.  Precision means that all properties available in the
+programming API can be individually specified.  Accuracy means that the
+truename of the font is exactly the list of all properties specified by
+the font.  Thus, the anomolies that occur with XLFDs on many servers
+(including modern Linux distributions with XFree86 or X.org servers)
+cannot occur.  Convenience is subjective, of course.  However,
+@file{fontconfig} provides a configuration system which (1) explicitly
+specifies the defaults and substitutions that will be made in processing
+user queries, and (2) allows the user to specify search configuration,
+abbreviations, substitutions, and defaults that override the system's,
+in the same format as used by system files.  Further, a @dfn{standard
+minimal configuration} is defined that ensures that at least
+@emph{serif}, @emph{sans-serif}, and @emph{monospace} fonts are
+available on all @file{fontconfig} systems.
+
+@menu
+* Modern Font Support -- Font Concepts:: GUI devices, fonts, glyphs, rendering.
+* Modern Font Support -- fontconfig::    Querying and selecting fonts.
+* Modern Font Support -- Xft::           Rendering fonts on X11.
+@end menu
+
+@node Modern Font Support -- Font Concepts, Modern Font Support -- fontconfig, , Better Rendering Support -- Modern Font Support
+@subsubsection Modern Font Support -- Font Concepts
+
+In modern systems, displays are invariably @dfn{raster graphic devices},
+which present an abstract interface of @dfn{pixel array} where each
+@dfn{pixel value} is a color, and each pixel is individually mutable,
+and (usually) readable.  In XEmacs, such devices are collectively called
+@dfn{GUI devices}, as opposed to @dfn{TTY devices} which are character
+stream devices but may support control sequences for setting the color
+of individual characters, and the insertion position in a rectangular
+array.  Here we are concerned only with control of GUI devices but use
+TTY devices as a standard for comparison.
+
+A @dfn{font} is an indexed collection of @dfn{glyphs}, which are
+specifications of character shapes.  On a TTY device, these shapes are
+entirely abstract, and the index is the identity function.  Typically
+fonts are embedded in TTY devices, the user has no control over the font
+from within the application, and where choice is available, there is
+limited selection, and no extensibility.  Simple, functional, and
+... ugly.
+
+On GUI devices, the situation is different in every respect.  Glyphs may
+be provided by the device, the application, or the user.  Additional
+glyphs may be added at will at any of those levels.  Arbitrary index
+functions allow the same glyph to be used to display characters in
+different languages or using application-specific codes.  Glyphs have
+concrete APIs, allowing fine control of rendering parameters, even
+user-specified shapes.  To provide convenient, consistent handling of
+collections of glyphs, we need a well-defined font API.
+
+We can separate the necessary properties into two types: properties
+which are common to all glyphs in the collection or a property of the
+collection itself, and those which are glyph-specific.  Henceforth, the
+former are called @dfn{font properties} and the latter @dfn{glyph
+properties}.
+
+Font properties include identification like the font @dfn{family},
+font-wide design parameters like @dfn{slant} and @dfn{weight}, font
+@dfn{metrics} like @dfn{size} (nominal height) and @dfn{average width}
+used for approximate layout (such as sizing a popup dialog), and
+properties like the @dfn{default glyph} that are associated with the
+font for convenient use by APIs, but aren't really an intrinsic property
+of the font as a collection of glyphs.  There may also be a @dfn{kerning
+table} (used to improve spacing of adjacent glyphs).
+
+Glyph properties include the @dfn{index}, glyph metrics such as
+@dfn{ascent}, @dfn{descent}, @dfn{width}, @dfn{offset} (the offset to
+the normal position of the next glyph), @dfn{italic correction} (used to
+improve spacing when slanted and unslanted glyphs are juxtaposed).  Most
+important, of course, is the glyph's shape, which is provided in a
+format specific to a rendering engine.  Common formats include bitmaps
+(X11 BDF), Postcript programs (Type 1), and collections of spline curves
+(TrueType).  When the shape is not itself a bitmap, it must be
+@dfn{rendered} to a pixmap, either a region on the display or a separate
+object which is copied to the display.  In that case, the shape may
+include ``multiple masters'' or ``hints'' to allow context-specific
+rendering which improves the appearance of the glyph on the display.
+
+Note that this use of ``glyph'' is mostly independent of the XEmacs LISP
+glyph API.  @ref{Glyphs}.  It is possible to extract a single glyph from
+a font and encapsulate it in Lisp_Glyph object, but the LISP glyph API
+allows access to only a very few glyph properties, none of them related
+to the rendering process.
+
+XEmacs LISP does provide an API for selecting and querying fonts, in the
+form of a fairly complete set of wrappers for @file{fontconfig}
+(@pxref{Modern Font Support -- fontconfig}).  It also provides some
+control of rendering of text via wrappers for @file{Xft} APIs
+(@pxref{Modern Font Support -- Xft}), but this API is quite incomplete.
+Also, since the font selection and query facilities of @file{Xft} are
+provided by @file{fontconfig}, there is some confusion in the API.  For
+example, use of antialiasing to improve the appearance of rendered
+glyphs can be enabled or disabled.  The API for this is to set the
+@file{fontconfig} font property @code{antialias} on the font.  However,
+from the point of view of @file{fontconfig} this is merely a hint that
+the rendering engine may or may not respect.  This property cannot be
+used to select only fonts suitable for being antialiased, for example.
+And @code{rgba} (subpixel geometry) and @code{dpi} (pixel density) are
+conceptually properties of the display, not of either the font.  They
+function as hints to the rendering process.
+
+As a final confusing touch, @file{Xft} also provides some access to the
+@file{XRender} extension provided by some modern X servers.  This is
+mostly limited to colors, but rectangle APIs are also provided.  These
+are (of course) completely independent of fonts, but @file{Xft} is
+designed for client-side font rendering, and thus uses the
+@file{XRender} extension heavily.
+
+
+@node Modern Font Support -- fontconfig, Modern Font Support -- Xft, Modern Font Support -- Font Concepts, Better Rendering Support -- Modern Font Support
+@subsubsection Modern Font Support -- fontconfig
+
+@cindex fontconfig API
+@cindex API, fontconfig
+@cindex fonts, configuring
+@cindex configuring fonts
+@cindex fonts, selecting
+@cindex selecting fonts
+@cindex fonts, querying
+@cindex querying fonts
+
+@emph{Implementation notes}: The functions which initialize the library
+and handle memory management (@emph{e.g.}, @code{FcInit} and
+@code{FcPatternDestroy}) are intentionally not wrapped (in the latter
+case, @code{fc-pattern-destroy} was provided, but this was
+ill-considered and will be removed; LISP code should @strong{never} call
+this function).  Thinking about some of the auxiliary constructs used by
+@file{fontconfig} is in transition.  The @code{FcObjectSet} API has been
+internalized; it is exposed to LISP as a list of strings.  The
+@code{FcFontSet} API is still in use, but it also will be internalized,
+probably as a list (alternatively, vector) of @code{Lisp_fc_pattern}
+objects.  Changing the representation of @file{fontconfig} objects
+(property names) from LISP strings to keywords is under consideration.
+
+If @file{Xft} (including @file{fontconfig}) support is integrated into
+the XEmacs build, XEmacs provides the symbol @code{xft} at
+initialization.
+
+XEmacs provides the following functions wrapping the @file{fontconfig}
+library API.
+
+@defun fc-fontset-p object
+
+Returns t if @var{object} is of type fc-fontset, nil otherwise.
+@emph{This API is likely to be removed in the near future.}
+@end defun
+
+@defun fc-fontset-count fcfontset
+
+Counts the number of fc pattern objects stored in the fc fontset object
+@var{fcfontset}.  @emph{This API is likely to be removed in the near
+future.}
+@end defun
+
+@defun fc-fontset-ref fcfontset i
+
+Return the fc pattern object at index @var{i} in fc fontset object
+@var{fcfontset}.  Return nil if the index exceeds the bounds of
+@var{fcfontset}.  @emph{This API is likely to be removed in the near
+future.}
+@end defun
+
+@defun fc-fontset-destroy fcfontset
+
+Explicitly deallocate @var{fcfontset}.  @emph{Do not call this function
+from LISP code.  You will crash.  This API will be removed in the near
+future.}
+@end defun
+
+@defun fc-pattern-p object
+
+Returns t if @var{object} is of type fc-pattern, nil otherwise.
+@end defun
+
+@defun fc-pattern-create
+
+Return a fresh and empty fc-pattern object.
+@end defun
+
+@defun fc-name-parse name
+
+Parse string @var{name} as a fontconfig font name and return its
+representation as a fc pattern object.
+@end defun
+
+@defun fc-name-unparse pattern
+
+Unparse pattern object @var{pattern} to a string.
+@end defun
+
+@file{Xft}'s similar function is actually a different API.  We provide
+both for now.  (They probably invoke the same code from
+@file{fontconfig} internally, but the @file{fontconfig} implementation
+is more conveniently called from C.)
+
+@defun xft-name-unparse pattern
+
+Unparse pattern object @var{pattern} to a string (using the @file{Xft}
+API).
+@end defun
+  
+@defun fc-pattern-duplicate pattern
+
+Make a copy of pattern object @var{pattern} and return it.
+@end defun
+
+@defun fc-pattern-add pattern property value
+
+Add attributes to the pattern object @var{pattern}.  @var{property} is a
+string naming the attribute to add, @var{value} the value for this attribute.
+
+@var{value} may be a string, integer, float, or symbol, in which case
+the value will be added as an FcChar8[], int, double, or FcBool
+respectively.
+@end defun
+
+@defun fc-pattern-del pattern, property
+
+Remove attribute @var{property} from pattern object @var{pattern}.
+@end defun
+
+This is the generic interface to @code{FcPatternGet}.
+We don't support the losing symbol-for-property interface.  However, it
+might be a very good idea to use keywords for property names in LISP.
+
+@defun fc-pattern-get pattern property &optional id type
+
+From @var{pattern}, extract @var{property} for the @var{id}'th member, of
+type @var{type}.
+
+@var{pattern} is an @file{Xft} (@file{fontconfig}) pattern object.
+@var{property} is a string naming a @file{fontconfig} font property.
+Optional @var{id} is a nonnegative integer indexing the list of values
+for @var{property} stored in @var{pattern}, defaulting to 0 (the first
+value).
+Optional @var{type} is a symbol, one of 'string, 'boolean, 'integer, 'float,
+'double, 'matrix, 'charset, or 'void, corresponding to the FcValue types.
+('float is an alias for 'double).
+
+Symbols with names of the form @samp{fc-result-@var{DESCRIPTION}} are
+returned when the desired value is not available.  These are
+
+@example
+fc-result-type-mismatch   the value found has an unexpected type
+fc-result-no-match        there is no such attribute
+fc-result-no-id           there is no value for the requested ID
+@end example
+@end defun
+
+The Lisp types returned will conform to @var{type}:
+
+@example
+string          string
+boolean         `t' or `nil'
+integer         integer
+double (float)  float
+matrix          not implemented
+charset         not implemented
+void            not implemented
+@end example
+
+The types of the following standard properties are predefined by
+fontconfig.  The symbol 'fc-result-type-mismatch will be returned if the
+object exists but @var{type} does not match the predefined type.  It is
+best not to specify a type for predefined properties, as a mistake here
+ensures error returns on the correct type.
+
+Each standard property has a convenience accessor defined in
+@file{fontconfig.el}, named in the form
+@samp{fc-pattern-get-@var{property}}.  The convenience functions are
+preferred to @code{fc-pattern-get} since a typo in the string naming a
+property will result in a silent null return, while a typo in a function
+name will usually result in a compiler or runtime \"not fboundp\" error.
+You may use @code{defsubst} to define convenience functions for non-standard
+properties.
+
+@example
+family         String  Font family name 
+style          String  Font style. Overrides weight and slant 
+slant          Int     Italic, oblique or roman 
+weight         Int     Light, medium, demibold, bold or black 
+size           Double  Point size 
+aspect         Double  Stretches glyphs horizontally before hinting 
+pixelsize      Double  Pixel size 
+spacing        Int     Proportional, monospace or charcell 
+foundry        String  Font foundry name 
+antialias      Bool    Whether glyphs can be antialiased 
+hinting        Bool    Whether the rasterizer should use hinting 
+verticallayout Bool    Use vertical layout 
+autohint       Bool    Use autohinter instead of normal hinter 
+globaladvance  Bool    Use font global advance data 
+file           String  The filename holding the font 
+index          Int     The index of the font within the file 
+ftface         FT_Face Use the specified FreeType face object 
+rasterizer     String  Which rasterizer is in use 
+outline        Bool    Whether the glyphs are outlines 
+scalable       Bool    Whether glyphs can be scaled 
+scale          Double  Scale factor for point->pixel conversions 
+dpi            Double  Target dots per inch 
+rgba           Int     unknown, rgb, bgr, vrgb, vbgr, none - subpixel geometry 
+minspace       Bool    Eliminate leading from line spacing 
+charset        CharSet Unicode chars encoded by the font 
+lang           String  List of RFC-3066-style languages this font supports
+@end example
+
+The FT_Face, Matrix, CharSet types are unimplemented, so the corresponding
+properties are not accessible from Lisp at this time.  If the value of a
+property returned has type FT_Face, FcCharSet, or FcMatrix,
+@code{fc-result-type-mismatch} is returned.
+
+The following properties which were standard in @file{Xft} v.1 are
+obsolete in @file{Xft} v.2: @code{encoding}, @code{charwidth},
+@code{charheight}, @code{core}, and @code{render}.
+
+@defun fc-pattern-destroy pattern
+
+Explicitly deallocate pattern object @var{pattern}.  @emph{Do not call
+this function from LISP code.  You will crash.  This API will be removed
+in the near future.}
+@end defun
+
+@defun fc-font-match device pattern
+
+Return the font on @var{device} that most closely matches @var{pattern}.
+
+@var{pattern} is a @file{fontconfig} pattern object.  @var{device} is an
+X11 device.  Returns a @file{fontconfig} pattern object representing the
+closest match to the given pattern, or an error code.  Possible error
+codes are @code{fc-result-no-match} and @code{fc-result-no-id}.
+@end defun
+     
+@defun fc-list-fonts-pattern-objects device pattern properties
+
+List the fonts on @var{device} that match @var{pattern} for
+@var{properties}.  @var{device} is an X11 device.  @var{pattern} is a
+@file{fontconfig} pattern to be matched.  @var{properties} is the list of
+property names (strings) that should be included in each returned
+pattern.  The result is a @file{fontconfig} fontset object containing
+the set of unique matching patterns.
+@end defun
+
+The @var{properties} argument does not affect the matching.  So, for
+example,
+
+@example
+(mapcar #'fc-name-unparse
+  (let ((xfl (fc-list-fonts-pattern-objects nil
+              (fc-name-parse "FreeMono") '("style")))
+        (i 0)
+        (fl nil))
+    (while (< i (fc-fontset-count xfl))
+      (push (fc-fontset-ref xfl i) fl)
+      (setq i (1+ i)))
+    fl))
+@end example
+
+will return something like
+@samp{(":style=Bold" ":style=Medium" ":style=Oblique" ":style=BoldOblique")}
+if you have the FreeFont package installed.  Note that the sets of
+objects in the target pattern and the returned patterns don't even
+intersect.
+
+In using @code{fc-list-fonts-pattern-objects}, be careful that only
+intrinsic properties of fonts be included in the pattern.  Those
+properties included in the pattern must be matched, or the candidate
+font will be eliminated from the list.  When a font leaves a property
+unspecified, it is considered to be a mismatch for any pattern with that
+property specified.  Thus, inclusion of extraneous properties will
+result in the list being empty.  Note that for scalable fonts (at
+least), @code{size} is not an intrinsic property!  Thus a specification
+such as @code{"Bitstream Vera Sans-12"} will return an empty list
+regardless of whether the font is available or not---probably not what
+you (as programmer or user) want.
+
+The list is unsorted.  In particular, the pattern
+@code{":style=italic,oblique"} will not return italic fonts first, then
+oblique ones.  The fonts will be returned in some arbitrary order.
+
+@emph{Implementation notes}:  Fontset objects are slated for removal
+from the API.  In the future @code{fc-list-fonts-pattern-objects} will 
+return a list.  The @var{device} argument is unused, ignored, and may be
+removed if it's not needed to match other font-listing APIs.  This name
+will be changed to correspond to Ben's new nomenclature, probably simply
+@code{fc-font-list}.
+
+@defun fc-font-sort device pattern trim
+
+Return a fontset object listing all fonts sorted by proximity to
+@var{pattern}.  @var{device} is an X11 device.  @var{pattern} is a
+fontconfig pattern to be matched.  Optional argument @var{trim}, if
+non-nil, means to trim trailing fonts that do not contribute new
+characters to the union repertoire.
+@end defun
+
+@emph{Implementation notes}:  Fontset objects are slated for removal
+from the API.  In the future @code{fc-font-sort} will return a list (or
+perhaps a vector) of FcPatterns.  The @var{device} argument is unused,
+ignored, and may be removed if it's not needed to match other
+font-listing APIs.
+
+@defun fc-font-real-pattern fontname xdevice
+
+Temporarily open font @var{fontname} (a string) on device @var{xdevice}
+and return the actual fc pattern matched by the Fc library.  @emph{This
+function doesn't make much sense and will be removed from the API.}
+@end defun
+
+@defun xlfd-font-name-p fontname
+
+Check whether string @var{fontname} is a XLFD font name.
+@end defun
+
+@defvar xft-debug-level
+
+Level of debugging messages to issue to stderr for @var{Xft}.
+A nonnegative integer.  Set to 0 to suppress all warnings.
+Default is 1 to ensure a minimum of debugging output at initialization.
+Higher levels give more information.
+@end defvar
+
+@defvar xft-version
+
+The major version number of the Xft library compiled with.
+@end defvar
+
+@defvar xft-xlfd-font-regexp
+
+Regular expression matching XLFD font names.
+@end defvar
+
+
+
+@node Modern Font Support -- Xft, , Modern Font Support -- fontconfig, Better Rendering Support -- Modern Font Support
+@subsubsection Modern Font Support -- fontconfig
+
+IIRC, we don't really provide any @file{Xft} APIs at the LISP level yet.
+
+
 
 
 
