@@ -356,7 +356,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS inststaticdir statedir build build_cpu build_vendor build_os LN_S blddir configuration CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP start_flags ld_switch_shared start_files ld lib_gcc RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA YACC SET_MAKE GTK_CONFIG X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS install_pp libs_xauth dnd_objs LIBSTDCPP dll_ld dll_cflags dll_ldflags dll_post dll_ldo ld_dynamic_link_flags with_modules MOD_CC MODARCHDIR MAKE_DOCFILE MODCFLAGS INSTALLPATH MOD_INSTALL_PROGRAM OBJECT_TO_BUILD ldap_libs postgresql_libs lwlib_objs ALLOCA have_esd_config SRC_SUBDIR_DEPS INSTALL_ARCH_DEP_SUBDIR MAKE_SUBDIR SUBDIR_MAKEFILES PROGNAME version instvardir srcdir extra_includes PREFIX_USER_DEFINED PREFIX EXEC_PREFIX_USER_DEFINED EXEC_PREFIX INFODIR_USER_DEFINED INFODIR infopath INFOPATH_USER_DEFINED INFOPATH package_path PACKAGE_PATH_USER_DEFINED PACKAGE_PATH lispdir LISPDIR_USER_DEFINED LISPDIR moduledir MODULEDIR_USER_DEFINED MODULEDIR sitelispdir SITELISPDIR_USER_DEFINED SITELISPDIR sitemoduledir SITEMODULEDIR_USER_DEFINED SITEMODULEDIR etcdir ETCDIR_USER_DEFINED ETCDIR archlibdir ARCHLIBDIR_USER_DEFINED ARCHLIBDIR docdir DOCDIR_USER_DEFINED DOCDIR bitmapdir extra_objs machfile opsysfile c_switch_general c_switch_window_system c_switch_all ld_switch_general ld_switch_window_system ld_switch_all ld_libs_general ld_libs_window_system ld_libs_all RECURSIVE_MAKE_ARGS native_sound_lib sound_cflags dynodump_arch XEMACS_CC XE_CFLAGS internal_makefile_list LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS inststaticdir statedir LN_S blddir build build_cpu build_vendor build_os configuration CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP start_flags ld_switch_shared start_files ld lib_gcc RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA YACC SET_MAKE GTK_CONFIG X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS install_pp libs_xauth dnd_objs LIBSTDCPP dll_ld dll_cflags dll_ldflags dll_post dll_ldo ld_dynamic_link_flags with_modules MOD_CC MODARCHDIR MAKE_DOCFILE MODCFLAGS INSTALLPATH MOD_INSTALL_PROGRAM OBJECT_TO_BUILD ldap_libs postgresql_libs lwlib_objs ALLOCA have_esd_config SRC_SUBDIR_DEPS INSTALL_ARCH_DEP_SUBDIR MAKE_SUBDIR SUBDIR_MAKEFILES PROGNAME version instvardir srcdir extra_includes PREFIX_USER_DEFINED PREFIX EXEC_PREFIX_USER_DEFINED EXEC_PREFIX INFODIR_USER_DEFINED INFODIR infopath INFOPATH_USER_DEFINED INFOPATH package_path PACKAGE_PATH_USER_DEFINED PACKAGE_PATH lispdir LISPDIR_USER_DEFINED LISPDIR moduledir MODULEDIR_USER_DEFINED MODULEDIR sitelispdir SITELISPDIR_USER_DEFINED SITELISPDIR sitemoduledir SITEMODULEDIR_USER_DEFINED SITEMODULEDIR etcdir ETCDIR_USER_DEFINED ETCDIR archlibdir ARCHLIBDIR_USER_DEFINED ARCHLIBDIR docdir DOCDIR_USER_DEFINED DOCDIR bitmapdir extra_objs machfile opsysfile c_switch_general c_switch_window_system c_switch_all ld_switch_general ld_switch_window_system ld_switch_all ld_libs_general ld_libs_window_system ld_libs_all RECURSIVE_MAKE_ARGS native_sound_lib sound_cflags dynodump_arch XEMACS_CC XE_CFLAGS internal_makefile_list LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -2729,63 +2729,6 @@ sitemoduledir='${libdir}/${inststaticdir}/site-modules'
 statedir=$with_statedir
 
 
-ac_aux_dir=
-for ac_dir in $srcdir $srcdir/.. $srcdir/../..; do
-  if test -f $ac_dir/install-sh; then
-    ac_aux_dir=$ac_dir
-    ac_install_sh="$ac_aux_dir/install-sh -c"
-    break
-  elif test -f $ac_dir/install.sh; then
-    ac_aux_dir=$ac_dir
-    ac_install_sh="$ac_aux_dir/install.sh -c"
-    break
-  elif test -f $ac_dir/shtool; then
-    ac_aux_dir=$ac_dir
-    ac_install_sh="$ac_aux_dir/shtool install -c"
-    break
-  fi
-done
-if test -z "$ac_aux_dir"; then
-  { { echo "$as_me:$LINENO: error: cannot find install-sh or install.sh in $srcdir $srcdir/.. $srcdir/../.." >&5
-echo "$as_me: error: cannot find install-sh or install.sh in $srcdir $srcdir/.. $srcdir/../.." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-ac_config_guess="$SHELL $ac_aux_dir/config.guess"
-ac_config_sub="$SHELL $ac_aux_dir/config.sub"
-ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
-
-# Make sure we can run config.sub.
-$ac_config_sub sun4 >/dev/null 2>&1 ||
-  { { echo "$as_me:$LINENO: error: cannot run $ac_config_sub" >&5
-echo "$as_me: error: cannot run $ac_config_sub" >&2;}
-   { (exit 1); exit 1; }; }
-
-echo "$as_me:$LINENO: checking build system type" >&5
-echo $ECHO_N "checking build system type... $ECHO_C" >&6
-if test "${ac_cv_build+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_build_alias=$build_alias
-test -z "$ac_cv_build_alias" &&
-  ac_cv_build_alias=`$ac_config_guess`
-test -z "$ac_cv_build_alias" &&
-  { { echo "$as_me:$LINENO: error: cannot guess build type; you must specify one" >&5
-echo "$as_me: error: cannot guess build type; you must specify one" >&2;}
-   { (exit 1); exit 1; }; }
-ac_cv_build=`$ac_config_sub $ac_cv_build_alias` ||
-  { { echo "$as_me:$LINENO: error: $ac_config_sub $ac_cv_build_alias failed" >&5
-echo "$as_me: error: $ac_config_sub $ac_cv_build_alias failed" >&2;}
-   { (exit 1); exit 1; }; }
-
-fi
-echo "$as_me:$LINENO: result: $ac_cv_build" >&5
-echo "${ECHO_T}$ac_cv_build" >&6
-build=$ac_cv_build
-build_cpu=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
-build_vendor=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
-build_os=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
-
-
 
 echo "$as_me:$LINENO: checking whether ln -s works" >&5
 echo $ECHO_N "checking whether ln -s works... $ECHO_C" >&6
@@ -2843,6 +2786,64 @@ vpath %.l $(srcdir)\
 vpath %.s $(srcdir)\
 vpath %.in $(srcdir)'
 fi
+
+ac_aux_dir=
+for ac_dir in $srcdir $srcdir/.. $srcdir/../..; do
+  if test -f $ac_dir/install-sh; then
+    ac_aux_dir=$ac_dir
+    ac_install_sh="$ac_aux_dir/install-sh -c"
+    break
+  elif test -f $ac_dir/install.sh; then
+    ac_aux_dir=$ac_dir
+    ac_install_sh="$ac_aux_dir/install.sh -c"
+    break
+  elif test -f $ac_dir/shtool; then
+    ac_aux_dir=$ac_dir
+    ac_install_sh="$ac_aux_dir/shtool install -c"
+    break
+  fi
+done
+if test -z "$ac_aux_dir"; then
+  { { echo "$as_me:$LINENO: error: cannot find install-sh or install.sh in $srcdir $srcdir/.. $srcdir/../.." >&5
+echo "$as_me: error: cannot find install-sh or install.sh in $srcdir $srcdir/.. $srcdir/../.." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+ac_config_guess="$SHELL $ac_aux_dir/config.guess"
+ac_config_sub="$SHELL $ac_aux_dir/config.sub"
+ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
+
+# Make sure we can run config.sub.
+$ac_config_sub sun4 >/dev/null 2>&1 ||
+  { { echo "$as_me:$LINENO: error: cannot run $ac_config_sub" >&5
+echo "$as_me: error: cannot run $ac_config_sub" >&2;}
+   { (exit 1); exit 1; }; }
+
+echo "$as_me:$LINENO: checking build system type" >&5
+echo $ECHO_N "checking build system type... $ECHO_C" >&6
+if test "${ac_cv_build+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_build_alias=$build_alias
+test -z "$ac_cv_build_alias" &&
+  ac_cv_build_alias=`$ac_config_guess`
+test -z "$ac_cv_build_alias" &&
+  { { echo "$as_me:$LINENO: error: cannot guess build type; you must specify one" >&5
+echo "$as_me: error: cannot guess build type; you must specify one" >&2;}
+   { (exit 1); exit 1; }; }
+ac_cv_build=`$ac_config_sub $ac_cv_build_alias` ||
+  { { echo "$as_me:$LINENO: error: $ac_config_sub $ac_cv_build_alias failed" >&5
+echo "$as_me: error: $ac_config_sub $ac_cv_build_alias failed" >&2;}
+   { (exit 1); exit 1; }; }
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_build" >&5
+echo "${ECHO_T}$ac_cv_build" >&6
+build=$ac_cv_build
+build_cpu=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+build_vendor=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+build_os=`echo $ac_cv_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
+
+
 
 . "$srcdir/version.sh" || exit 1;
 if test -n "$emacs_is_beta"; then beta=yes; else beta=no; fi
@@ -17996,25 +17997,22 @@ echo "$as_me: WARNING: --$feature ignored:  Not valid without X support" >&2;}
 fi
 
 if test "$with_x11" = "yes"; then
-  if test "${ac_cv_header_X11_extensions_shape_h+set}" = set; then
   echo "$as_me:$LINENO: checking for X11/extensions/shape.h" >&5
 echo $ECHO_N "checking for X11/extensions/shape.h... $ECHO_C" >&6
 if test "${ac_cv_header_X11_extensions_shape_h+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_X11_extensions_shape_h" >&5
-echo "${ECHO_T}$ac_cv_header_X11_extensions_shape_h" >&6
 else
-  # Is the header compilable?
-echo "$as_me:$LINENO: checking X11/extensions/shape.h usability" >&5
-echo $ECHO_N "checking X11/extensions/shape.h usability... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
+  cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-$ac_includes_default
+
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
+
 #include <X11/extensions/shape.h>
 _ACEOF
 rm -f conftest.$ac_objext
@@ -18039,100 +18037,17 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_header_compiler=yes
+  ac_cv_header_X11_extensions_shape_h=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_header_compiler=no
+ac_cv_header_X11_extensions_shape_h=no
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-echo "${ECHO_T}$ac_header_compiler" >&6
-
-# Is the header present?
-echo "$as_me:$LINENO: checking X11/extensions/shape.h presence" >&5
-echo $ECHO_N "checking X11/extensions/shape.h presence... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/extensions/shape.h>
-_ACEOF
-if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
-  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null; then
-  if test -s conftest.err; then
-    ac_cpp_err=$ac_c_preproc_warn_flag
-    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
-  else
-    ac_cpp_err=
-  fi
-else
-  ac_cpp_err=yes
-fi
-if test -z "$ac_cpp_err"; then
-  ac_header_preproc=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-echo "${ECHO_T}$ac_header_preproc" >&6
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
-  yes:no: )
-    { echo "$as_me:$LINENO: WARNING: X11/extensions/shape.h: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: X11/extensions/shape.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: X11/extensions/shape.h: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: X11/extensions/shape.h: proceeding with the compiler's result" >&2;}
-    ac_header_preproc=yes
-    ;;
-  no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: X11/extensions/shape.h: present but cannot be compiled" >&5
-echo "$as_me: WARNING: X11/extensions/shape.h: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: X11/extensions/shape.h:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: X11/extensions/shape.h:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: X11/extensions/shape.h: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: X11/extensions/shape.h: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: X11/extensions/shape.h:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: X11/extensions/shape.h:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: X11/extensions/shape.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: X11/extensions/shape.h: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: X11/extensions/shape.h: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: X11/extensions/shape.h: in the future, the compiler will take precedence" >&2;}
-    (
-      cat <<\_ASBOX
-## ------------------------------------------ ##
-## Report this to the AC_PACKAGE_NAME lists.  ##
-## ------------------------------------------ ##
-_ASBOX
-    ) |
-      sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-esac
-echo "$as_me:$LINENO: checking for X11/extensions/shape.h" >&5
-echo $ECHO_N "checking for X11/extensions/shape.h... $ECHO_C" >&6
-if test "${ac_cv_header_X11_extensions_shape_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_header_X11_extensions_shape_h=$ac_header_preproc
 fi
 echo "$as_me:$LINENO: result: $ac_cv_header_X11_extensions_shape_h" >&5
 echo "${ECHO_T}$ac_cv_header_X11_extensions_shape_h" >&6
-
-fi
 if test $ac_cv_header_X11_extensions_shape_h = yes; then
 
    cat >>confdefs.h <<\_ACEOF
@@ -18602,12 +18517,15 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-   have_dl=yes
+   have_dl=yes ; echo "$as_me:$LINENO: result: $have_dl" >&5
+echo "${ECHO_T}$have_dl" >&6
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 
+	  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
 	  echo "$as_me:$LINENO: checking for dlopen in -ldl" >&5
 echo $ECHO_N "checking for dlopen in -ldl... $ECHO_C" >&6
 	  ac_save_LIBS="$LIBS"
@@ -18649,12 +18567,15 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-   have_dl=yes
+   have_dl=yes; echo "$as_me:$LINENO: result: $have_dl" >&5
+echo "${ECHO_T}$have_dl" >&6
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 
+	    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
 	    echo "$as_me:$LINENO: checking for dlopen in -lsvld" >&5
 echo $ECHO_N "checking for dlopen in -lsvld... $ECHO_C" >&6
 	    LIBS="$ac_save_LIBS -lsvld"
@@ -18695,12 +18616,14 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-   have_dl=yes
+   have_dl=yes; echo "$as_me:$LINENO: result: $have_dl" >&5
+echo "${ECHO_T}$have_dl" >&6
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-LIBS="$ac_save_LIBS"
+LIBS="$ac_save_LIBS" ; echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -18897,12 +18820,15 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  have_dl=yes
+  have_dl=yes; echo "$as_me:$LINENO: result: $have_dl" >&5
+echo "${ECHO_T}$have_dl" >&6
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 
+	    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
 	    echo "$as_me:$LINENO: checking for shl_load in -ldl" >&5
 echo $ECHO_N "checking for shl_load in -ldl... $ECHO_C" >&6
 	    ac_save_LIBS="$LIBS"
@@ -18949,7 +18875,8 @@ else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-LIBS="$ac_save_LIBS"
+LIBS="$ac_save_LIBS"; echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
@@ -19157,6 +19084,8 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 
 
+	  echo "$as_me:$LINENO: result: $have_dl" >&5
+echo "${ECHO_T}$have_dl" >&6
 	  if test "$have_dl" = "yes"; then
 	    cat >>confdefs.h <<\_ACEOF
 #define HAVE_LTDL 1
@@ -37344,12 +37273,12 @@ s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
 s,@inststaticdir@,$inststaticdir,;t t
 s,@statedir@,$statedir,;t t
+s,@LN_S@,$LN_S,;t t
+s,@blddir@,$blddir,;t t
 s,@build@,$build,;t t
 s,@build_cpu@,$build_cpu,;t t
 s,@build_vendor@,$build_vendor,;t t
 s,@build_os@,$build_os,;t t
-s,@LN_S@,$LN_S,;t t
-s,@blddir@,$blddir,;t t
 s,@configuration@,$configuration,;t t
 s,@CC@,$CC,;t t
 s,@CFLAGS@,$CFLAGS,;t t

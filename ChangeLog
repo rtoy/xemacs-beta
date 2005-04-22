@@ -1,3 +1,10 @@
+2005-04-22  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.ac: Make srcdir absolute before calling
+	AC_CONFIG_AUX_DIR_DEFAULT, include X headers for shape.h,
+	terminate checking lines when testing for dynamic libraries.
+	* configure: Regenerated.
+
 2005-04-01  Marcus Crestani  <crestani@xemacs.org>
 
 	The new allocator.

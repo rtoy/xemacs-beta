@@ -964,9 +964,6 @@ AC_SUBST(inststaticdir)
 AC_SUBST(statedir,$with_statedir)
 
 dnl -------------------------------------------------------------------------
-AC_CONFIG_AUX_DIR_DEFAULT
-AC_CANONICAL_BUILD
-dnl -------------------------------------------------------------------------
 
 AC_PROG_LN_S
 
@@ -1018,6 +1015,11 @@ vpath %.l $(srcdir)\
 vpath %.s $(srcdir)\
 vpath %.in $(srcdir)'
 fi
+
+dnl -------------------------------------------------------------------------
+AC_CONFIG_AUX_DIR_DEFAULT
+AC_CANONICAL_BUILD
+dnl -------------------------------------------------------------------------
 
 dnl ----------------------------------------
 dnl Find out which version of XEmacs this is
@@ -3359,7 +3361,11 @@ dnl for example not on AIX 4.3.
 if test "$with_x11" = "yes"; then
   AC_CHECK_HEADER(X11/extensions/shape.h, [
    AC_DEFINE(HAVE_BALLOON_HELP)
-   ])
+   ],[],
+[
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+])
 fi
 
 dnl FSF 19.29 has some bitmapdir stuff here.
@@ -3430,16 +3436,19 @@ if test "$enable_modules" != "no"; then
       AC_CHECK_HEADER(dlfcn.h, [
 	AC_MSG_CHECKING([for dlopen in -lc])
 	AC_TRY_LINK([#include <dlfcn.h>],dnl
-	 [dlopen ("", 0);], [ have_dl=yes ], [
+	 [dlopen ("", 0);], [ have_dl=yes ; AC_MSG_RESULT($have_dl)], [
+	  AC_MSG_RESULT([no])
 	  AC_MSG_CHECKING([for dlopen in -ldl])
 	  ac_save_LIBS="$LIBS"
 	  LIBS="$LIBS -ldl"
 	  AC_TRY_LINK([#include <dlfcn.h>],dnl
-	   [dlopen ("", 0);], [ have_dl=yes ], [
+	   [dlopen ("", 0);], [ have_dl=yes; AC_MSG_RESULT($have_dl)], [
+	    AC_MSG_RESULT([no])
 	    AC_MSG_CHECKING([for dlopen in -lsvld])
 	    LIBS="$ac_save_LIBS -lsvld"
 	    AC_TRY_LINK([#include <dlfcn.h>],dnl
-	     [dlopen ("", 0);], [ have_dl=yes ], [LIBS="$ac_save_LIBS"])])])])
+	     [dlopen ("", 0);], [ have_dl=yes; AC_MSG_RESULT($have_dl) ],
+	     [LIBS="$ac_save_LIBS" ; AC_MSG_RESULT([no])])])])])
       if test "$have_dl" = "yes"; then
 	AC_DEFINE(HAVE_DLOPEN)
       else
@@ -3447,12 +3456,14 @@ if test "$enable_modules" != "no"; then
 	AC_CHECK_HEADER(dl.h, [
 	  AC_MSG_CHECKING([for shl_load in -lc])
 	  AC_TRY_LINK([#include <dl.h>],dnl
-	   [shl_load ("", 0, 0);], [have_dl=yes], [
+	   [shl_load ("", 0, 0);], [have_dl=yes; AC_MSG_RESULT($have_dl)], [
+	    AC_MSG_RESULT([no])
 	    AC_MSG_CHECKING([for shl_load in -ldl])
 	    ac_save_LIBS="$LIBS"
 	    LIBS="$LIBS -ldld"
 	    AC_TRY_LINK([#include <dl.h>],dnl
-	     [shl_load ("", 0, 0);], [have_dl=yes], [LIBS="$ac_save_LIBS"])])])
+	     [shl_load ("", 0, 0);], [have_dl=yes],
+	     [LIBS="$ac_save_LIBS"; AC_MSG_RESULT([no])])])])
 	if test "$have_dl" = "yes"; then
 	  AC_DEFINE(HAVE_SHL_LOAD) 
 	else
@@ -3463,6 +3474,7 @@ if test "$enable_modules" != "no"; then
 	    LIBS="$LIBS -lltdl"
 	    AC_TRY_LINK([#include <ltdl.h>],dnl
 	     [lt_dlinit ();], [have_dl=yes], [LIBS="$ac_save_LIBS"])])
+	  AC_MSG_RESULT($have_dl)
 	  if test "$have_dl" = "yes"; then
 	    AC_DEFINE(HAVE_LTDL)
 	  fi
