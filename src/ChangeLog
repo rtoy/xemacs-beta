@@ -1,3 +1,15 @@
+2005-04-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Allow suppression of WM decorations.
+
+	* frame-x.c (Qoverride_redirect): New Lisp symbol.
+	(syms_of_frame_x): DEFSYMBOL it.
+	(x_create_widgets): Maybe set override_redirect property on frame.
+	(x_init_frame_1): Parse override-redirect from arguments.
+	(default-x-frame-plist): Document usage.
+
+	* frame.c (vars_of_frame): Improve docstring.
+
 2005-04-12  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* print.c (stderr_out): Document need to convert arguments.

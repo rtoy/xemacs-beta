@@ -67,6 +67,7 @@ Boston, MA 02111-1307, USA.  */
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_x_frame_plist;
 
+Lisp_Object Qoverride_redirect;
 Lisp_Object Qx_resource_name;
 
 static const struct memory_description x_frame_data_description_1 [] = {
@@ -1464,8 +1465,8 @@ x_initialize_frame_size (struct frame *f)
   Widget app_shell = XtParent (wmshell);
   Widget ew = FRAME_X_TEXT_WIDGET (f);
 
-/* set the position of the frame's root window now.  When the
-   frame was created, the position was initialized to (0,0). */
+  /* set the position of the frame's root window now.  When the
+     frame was created, the position was initialized to (0,0). */
   {
     struct window *win = XWINDOW (f->root_window);
 
@@ -1770,13 +1771,15 @@ x_do_query_geometry (Widget UNUSED (w), XtPointer client_data,
 /* Creates the widgets for a frame.
    lisp_window_id is a Lisp description of an X window or Xt
    widget to parse.
+   parent is a frame to use as the parent.
+   overridep if non-nil says to set the override-redirect setting.
 
    This function does not create or map the windows.  (That is
    done by x_popup_frame().)
  */
 static void
 x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
-		  Lisp_Object parent)
+		  Lisp_Object parent, Lisp_Object overridep)
 {
   struct device *d = XDEVICE (f->device);
   Visual *visual = DEVICE_X_VISUAL (d);
@@ -1874,6 +1877,12 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
       XtSetArg (al[ac], XtNcolormap, cmap);    ac++;
     }
 
+  if (!NILP (overridep))
+    {
+      XtSetArg (al[ac], XtNoverrideRedirect, True);    ac++;
+    }
+
+  /* #### maybe we should check for FRAMEP instead? */
   if (!NILP (parent))
     {
       parentwid = FRAME_X_SHELL_WIDGET (XFRAME (parent));
@@ -2085,6 +2094,7 @@ x_init_frame_1 (struct frame *f, Lisp_Object props,
   Lisp_Object device = FRAME_DEVICE (f);
   Lisp_Object lisp_window_id = Fplist_get (props, Qwindow_id, Qnil);
   Lisp_Object popup = Fplist_get (props, Qpopup, Qnil);
+  Lisp_Object overridep = Fplist_get (props, Qoverride_redirect, Qnil);
 
   if (!NILP (popup))
     {
@@ -2109,7 +2119,7 @@ x_init_frame_1 (struct frame *f, Lisp_Object props,
   f->visible = 1;
 
   allocate_x_frame_struct (f);
-  x_create_widgets (f, lisp_window_id, popup);
+  x_create_widgets (f, lisp_window_id, popup, overridep);
 }
 
 static void
@@ -2710,6 +2720,7 @@ x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
 void
 syms_of_frame_x (void)
 {
+  DEFSYMBOL (Qoverride_redirect);
   DEFSYMBOL (Qx_resource_name);
 
   DEFSUBR (Fx_window_id);
@@ -2800,6 +2811,10 @@ set at any time, except as otherwise noted):
 				doing different things (e.g. not asking
 				for positioning, and not iconifying
 				separate from its parent).
+  override-redirect		If non-nil, the frame will not be subject to
+				window-manager control.  In particular, it
+				will lack decorations, for more attractive
+				appearance of balloon help, aka tooltips.
   inter-line-space		Not currently implemented.
   toolbar-shadow-thickness	Thickness of toolbar shadows.
   background-toolbar-color	Color of toolbar background.

@@ -3857,23 +3857,23 @@ These may be set in your init file, like this:
 
   \(setq default-frame-plist '(width 80 height 55))
 
+Predefined properties are described in `set-frame-properties'.
+
 The properties may be in alist format for backward compatibility
 but you should not rely on this behavior.
 
 These override values given in window system configuration data,
- including X Windows' defaults database.
+including X Windows' defaults database.
 
-Since the first X frame is created before loading your .emacs file,
-you must use the X resource database for that.
+Values for the first Emacs frame are taken from `initial-frame-plist'.
+Since the first X frame is created before loading your .emacs file, you
+may wish use the X resource database to avoid flashing.
 
-For values specific to the first Emacs frame, see `initial-frame-plist'.
 For values specific to the separate minibuffer frame, see
- `minibuffer-frame-plist'.
-
-See also the variables `default-x-frame-plist' and
-`default-tty-frame-plist', which are like `default-frame-plist'
-except that they apply only to X or tty frames, respectively
-\(whereas `default-frame-plist' applies to all types of frames).
+`minibuffer-frame-plist'.  See also the variables `default-x-frame-plist'
+and `default-tty-frame-plist', which are like `default-frame-plist'
+except that they apply only to X or tty frames, respectively \(whereas
+`default-frame-plist' applies to all types of frames).
 */ );
   Vdefault_frame_plist = Qnil;
 
