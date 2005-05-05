@@ -5456,6 +5456,7 @@ DEFUN ("set-extent-property", Fset_extent_property, 3, 3, 0, /*
 Change a property of an extent.
 PROPERTY may be any symbol; the value stored may be accessed with
  the `extent-property' function.
+
 The following symbols have predefined meanings:
 
  detached           Removes the extent from its buffer; setting this is
@@ -5600,6 +5601,14 @@ The following symbols have predefined meanings:
 		            characters in the extent is looked up in the syntax table.
 		            You should use the text property API to manipulate this
 		            property.  (This may be required in the future.)
+
+The following property is available if `atomic-extents.el' has been loaded:
+
+  atomic	    When set, point will never fall inside the extent. 
+		    Not as useful as you might think, as
+		    `delete-backward-char' still removes characters one by
+		    one.
+
 */
        (extent, property, value))
 {

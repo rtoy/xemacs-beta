@@ -1,5 +1,10 @@
 2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* extents.c: Add some info on atomic-extents.el to the
+	set-extent-property docstring. 
+
+2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* select.c:
 	* sound.c: 
 	Spelling fixes to docstrings. 
