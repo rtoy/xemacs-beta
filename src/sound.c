@@ -430,7 +430,7 @@ Sound symbols that map directly to data should be considered named sounds;
 sound symbols that map to other sounds should be considered abstract
 sounds, and are used when a particular behavior or state occurs.
 
-Rremember that the sound symbol is the *second* argument to `ding', not the
+Remember that the sound symbol is the *second* argument to `ding', not the
 first.
 
 The following abstract sounds are used by XEmacs itself:

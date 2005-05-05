@@ -924,12 +924,13 @@ parentheses, indicates that Auto Fill mode is in effect.  Auto Fill mode
 is a minor mode; you can turn it on or off for each buffer individually.
 @xref{Minor Modes}.
 
-  In Auto Fill mode, lines are broken automatically at spaces when they get
-longer than desired.  Line breaking and rearrangement takes place
-only when you type @key{SPC} or @key{RET}.  To insert a space
-or newline without permitting line-breaking, type @kbd{C-q @key{SPC}} or
-@kbd{C-q @key{LFD}} (recall that a newline is really a linefeed).
-@kbd{C-o} inserts a newline without line breaking.
+  In Auto Fill mode, lines are broken automatically at spaces when they
+get longer than desired.  Line breaking and rearrangement takes place
+only when you type @key{SPC} or @key{RET}.  To insert a space or newline
+without permitting line-breaking, type @kbd{C-q @key{SPC}} or @kbd{C-q
+C-j}. This last inserts the LINE FEED character, which is how a newline
+is represented in XEmacs' internal encoding.  @kbd{C-o} inserts a
+newline without line breaking.
 
   Auto Fill mode works well with Lisp mode: when it makes a new line in
 Lisp mode, it indents that line with @key{TAB}.  If a line ending in a

@@ -1,5 +1,14 @@
 2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/mule-ccl.el (define-ccl-program): Spelling and grammar fix
+	in docstring. 
+
+2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* map-ynp.el: Grammar fix in comment. 
+
+2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* startup.el (command-line): Call font-lock-set-defaults to make
 	the user's choice of fontification take effect in *scratch*. 
 

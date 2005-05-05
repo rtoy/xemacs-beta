@@ -28,9 +28,12 @@ give a command to specify a file to edit.  Since Emacs must always have
 a current buffer for editing, it presents a buffer, by default, a buffer
 named @samp{*scratch*}.  The buffer is in Lisp Interaction mode; you can
 use it to type Lisp expressions and evaluate them, or you can ignore
-that capability and simply doodle.  (You can specify a different major
-mode for this buffer by setting the variable @code{initial-major-mode}
-in your init file.  @xref{Init File}.)
+that capability and simply doodle. (Which is where the name comes from;
+a ``scratch pad'' is a set of paper for doodling on, something not
+necessarily clear to all the English-speakers who read this.)
+
+You can specify a different major mode for this buffer by setting the
+variable @code{initial-major-mode} in your init file.  @xref{Init File}.
 
   It is possible to specify files to be visited, Lisp files to be
 loaded, and functions to be called, by giving Emacs arguments in the

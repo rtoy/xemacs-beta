@@ -139,7 +139,7 @@ This mode defines @kbd{C-M-x} to evaluate the current defun.
 @xref{Lisp Libraries}.
 @item Lisp Interaction mode
 The mode for an interactive session with Emacs Lisp.  It defines
-@key{LFD} to evaluate the sexp before point and insert its value in the
+@kbd{C-j} to evaluate the sexp before point and insert its value in the
 buffer.  @xref{Lisp Interaction}.
 @item Lisp mode
 The mode for editing source files of programs that run in other dialects
@@ -551,14 +551,14 @@ provided for evaluating Lisp expressions interactively inside Emacs.  Both
 the expressions you evaluate and their output goes in the buffer.
 
   The @samp{*scratch*} buffer's major mode is Lisp Interaction mode, which
-is the same as Emacs-Lisp mode except for one command, @key{LFD}.  In
-Emacs-Lisp mode, @key{LFD} is an indentation command.  In Lisp
-Interaction mode, @key{LFD} is bound to @code{eval-print-last-sexp}.  This
+is the same as Emacs-Lisp mode except for one command, @kbd{C-j}.  In
+Emacs-Lisp mode, @kbd{C-j} is an indentation command.  In Lisp
+Interaction mode, @kbd{C-j} is bound to @code{eval-print-last-sexp}.  This
 function reads the Lisp expression before point, evaluates it, and inserts
 the value in printed representation before point.
 
  The way to use the @samp{*scratch*} buffer is to insert Lisp
-expressions at the end, ending each one with @key{LFD} so that it will
+expressions at the end, ending each one with @kbd{C-j} so that it will
 be evaluated.  The result is a complete typescript of the expressions
 you have evaluated and their values.
 

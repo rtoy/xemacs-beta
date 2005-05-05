@@ -1,3 +1,9 @@
+2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select.c:
+	* sound.c: 
+	Spelling fixes to docstrings. 
+
 2005-04-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Allow suppression of WM decorations.

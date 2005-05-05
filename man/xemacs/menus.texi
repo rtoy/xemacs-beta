@@ -175,8 +175,8 @@ to the Emacs command @code{print-buffer} (@kbd{M-x print-buffer}).@refill
 
 @item New Frame
 Creates a new Emacs frame displaying the @code{*scratch*} buffer.  This
-is like the @b{Open File, New Frame...} menu item, except that it does
-not prompt for or load a file.@refill
+is like the @b{Open in New Frame...} menu item, except that it does
+not prompt for nor load a file.@refill
 
 @item Delete Frame 
 Allows you to close all but one of the frames created by @b{New Frame}.

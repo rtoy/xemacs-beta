@@ -47,14 +47,14 @@ manipulated.
 ** "XEmacs" used as X11 application class
 
 Previously, XEmacs checked the X11 resource database for resources starting
-with XEmacs, and used "XEmacs" as its application class if any existed,
-otherwise using "Emacs" for backward compatibility.  Because of divergence
-between the reseource GNU Emacs and XEmacs use, this has been changed; if
-you don't have the time to migrate your resource DB right now, set
-USE_EMACS_AS_DEFAULT_APPLICATION_CLASS in your environment before starting
-XEmacs, for the old behavior.  This workaround will go away in the course of
-the next major release, though, so you will have to migrate your resources
-at some point. 
+with XEmacs, and used "XEmacs" as its application class if any existed;
+otherwise it used "Emacs", for backward compatibility.  Because of
+divergence between the resources that GNU Emacs and XEmacs use, we've
+changed this.  If you don't have the time to migrate your resource DB right
+now, set USE_EMACS_AS_DEFAULT_APPLICATION_CLASS in your environment before
+starting XEmacs, for the old behavior.  This workaround will go away in the
+course of the next major release, though, so you will have to migrate your
+resources at some point.
 
 
 * Changes in XEmacs 21.4

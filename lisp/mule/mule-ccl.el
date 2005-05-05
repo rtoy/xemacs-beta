@@ -1238,7 +1238,7 @@ Optional arg VECTOR is a compiled CCL code of the CCL program."
 
 ;;;###autoload
 (defmacro define-ccl-program (name ccl-program &optional doc)
-  "Set NAME the compiled code of CCL-PROGRAM.
+  "Set NAME to be the compiled CCL code of CCL-PROGRAM.
 
 CCL-PROGRAM has this form:
 	(BUFFER_MAGNIFICATION
@@ -1250,14 +1250,13 @@ output buffer magnification size compared with the bytes of input data
 text.  If the value is zero, the CCL program can't execute `read' and
 `write' commands.
 
-CCL_MAIN_CODE and CCL_EOF_CODE are CCL program codes.  CCL_MAIN_CODE
-executed at first.  If there's no more input data when `read' command
-is executed in CCL_MAIN_CODE, CCL_EOF_CODE is executed.  If
-CCL_MAIN_CODE is terminated, CCL_EOF_CODE is not executed.
+CCL_MAIN_CODE and CCL_EOF_CODE are CCL program codes.  CCL_MAIN_CODE is
+executed first.  If there are no more input data when a `read' command is
+executed in CCL_MAIN_CODE, CCL_EOF_CODE is executed.  If CCL_MAIN_CODE is
+terminated, CCL_EOF_CODE is not executed.
 
-Here's the syntax of CCL program code in BNF notation.  The lines
-starting by two semicolons (and optional leading spaces) describe the
-semantics.
+Here's the syntax of CCL program code in BNF notation.  The lines starting
+with two semicolons (and optional leading spaces) describe the semantics.
 
 CCL_MAIN_CODE := CCL_BLOCK
 
@@ -1276,7 +1275,7 @@ SET :=	(REG = EXPRESSION)
 
 EXPRESSION := ARG | (EXPRESSION OPERATOR ARG)
 
-;; Evaluate EXPRESSION.  If the result is nonzeor, execute
+;; Evaluate EXPRESSION.  If the result is nonzero, execute
 ;; CCL_BLOCK_0.  Otherwise, execute CCL_BLOCK_1.
 IF :=	(if EXPRESSION CCL_BLOCK_0 [CCL_BLOCK_1])
 
@@ -1287,11 +1286,11 @@ BRANCH := (branch EXPRESSION CCL_BLOCK_0 [CCL_BLOCK_1 ...])
 ;; Execute STATEMENTs until (break) or (end) is executed.
 LOOP := (loop STATEMENT [STATEMENT ...])
 
-;; Terminate the most inner loop.
+;; Terminate the innermost loop.
 BREAK := (break)
 
 REPEAT :=
-	;; Jump to the head of the most inner loop.
+	;; Jump to the head of the innermost loop.
 	(repeat)
 	;; Same as: ((write [REG | INT-OR-CHAR | string])
 	;;	     (repeat))
@@ -1306,7 +1305,11 @@ REPEAT :=
 	| (write-read-repeat REG INT-OR-CHAR)
 
 READ := ;; Set REG_0 to a byte read from the input text, set REG_1
-	;; to the next byte read, and so on.
+	;; to the next byte read, and so on. Note that \"byte\" here means
+	;; \"some octet from XEmacs' internal representation\", which may
+	;; not be that useful to you when non-ASCII characters are involved.
+        ;;
+        ;; Yes, this is exactly the opposite of what (write ...) does.
 	(read REG_0 [REG_1 ...])
 	;; Same as: ((read REG)
 	;;	     (if (REG OPERATOR ARG) CCL_BLOCK_0 CCL_BLOCK_1))
@@ -1314,12 +1317,12 @@ READ := ;; Set REG_0 to a byte read from the input text, set REG_1
 	;; Same as: ((read REG)
 	;;	     (branch REG CCL_BLOCK_0 [CCL_BLOCK_1 ...]))
 	| (read-branch REG CCL_BLOCK_0 [CCL_BLOCK_1 ...])
-	;; Read a character from the input text while parsing
-	;; multibyte representation, set REG_0 to the charset ID of
-	;; the character, set REG_1 to the code point of the
-	;; character.  If the dimension of charset is two, set REG_1
-	;; to ((CODE0 << 8) | CODE1), where CODE0 is the first code
-	;; point and CODE1 is the second code point.
+	;; Read a character from the input text, splitting it into its
+	;; multibyte representation. Set REG_0 to the charset ID of the
+	;; character, and set REG_1 to the code point of the character.  If
+	;; the dimension of charset is two, set REG_1 to ((CODE0 << 8) |
+	;; CODE1), where CODE0 is the first code point and CODE1 is the
+	;; second code point.
 	| (read-multibyte-character REG_0 REG_1)
 
 WRITE :=
@@ -1356,7 +1359,7 @@ WRITE :=
 ;; Call CCL program whose name is ccl-program-name.
 CALL := (call ccl-program-name)
 
-TRANSLATE :=
+TRANSLATE := ;; Not implemented under XEmacs.
 	(translate-character REG(table) REG(charset) REG(codepoint))
 	| (translate-character SYMBOL REG(charset) REG(codepoint))
 MAP :=
@@ -1370,17 +1373,17 @@ MAP-ID := INT-OR-CHAR
 ;; Terminate the CCL program.
 END := (end)
 
-;; CCL registers that can contain any integer value.  As r7 is also
-;; used by CCL interpreter, its value is changed unexpectedly.
+;; CCL registers. These can contain any integer value.  As r7 is used by CCL
+;; interpreter itself, its value change unexpectedly.
 REG := r0 | r1 | r2 | r3 | r4 | r5 | r6 | r7
 
 ARG := REG | INT-OR-CHAR
 
 OPERATOR :=
-	;; Normal arithmethic operators (same meaning as C code).
+	;; Normal arithmetical operators (same meaning as C code).
 	+ | - | * | / | %
 
-	;; Bitwize operators (same meaning as C code)
+	;; Bitwise operators (same meaning as C code)
 	| & | `|' | ^
 
 	;; Shifting operators (same meaning as C code)

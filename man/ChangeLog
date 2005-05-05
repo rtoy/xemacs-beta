@@ -1,3 +1,15 @@
+2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/building.texi (Lisp Modes):
+	* xemacs/building.texi (Lisp Interaction):
+	* xemacs/entering.texi (Entering Emacs):
+	* xemacs/menus.texi (File Menu):
+	* xemacs/text.texi (Auto Fill):
+	None of the keymaps I have access to have linefeed keys; they all
+	use Return. As such, for new users, C-j is really the only option
+	for evaluation in Lisp interaction mode, and should be documented
+	as such. 
+	
 2005-04-18  Turnbull Stephen  <stephen@xemacs.org>
 
 	* internals/internals.texi

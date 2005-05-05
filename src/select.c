@@ -514,7 +514,7 @@ get_selection_raw_time(Lisp_Object selection)
 
 /* Get the timestamp of the given selection */
 DEFUN ("get-xemacs-selection-timestamp", Fget_selection_timestamp, 1, 1, 0, /*
-Return timestamp for SELECTION, if belongs to XEmacs and exists.
+Return timestamp for SELECTION, if it belongs to XEmacs and exists.
 
 The timestamp is a cons of two integers, the first being the higher-order
 sixteen bits of the device-specific thirty-two-bit quantity, the second
