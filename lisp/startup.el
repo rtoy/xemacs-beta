@@ -755,7 +755,22 @@ If this is nil, no message will be displayed.")
       ;; (insert initial-scratch-message)
       (set-buffer-modified-p nil)
       (when (eq major-mode 'fundamental-mode)
-	(funcall initial-major-mode)))
+	(funcall initial-major-mode))
+      ;; The docstring for font-lock-set-defaults says that major modes that
+      ;; have any font-lock defaults specified should call the function
+      ;; after initialising the `major-mode' variable. None of them do,
+      ;; however, and any font locking that is ever put in place is done as
+      ;; a result of `font-lock-set-defaults' being in find-file-hook and
+      ;; various other places. We could make *scratch* honour the user's
+      ;; choice of whether font-locking is in place by adding a call to
+      ;; font-lock-set-defaults in `lisp-interaction-mode'; but that'll
+      ;; break if `intial-major-mode' is anything else. 
+      ;;
+      ;; So, despite what `font-lock-set-defaults'' docstring says, this
+      ;; *is* where we should call it to have the user's choice of font-lock
+      ;; level take effect in *scratch*. If the modes are rewritten to do
+      ;; the right then, we're okay too, the function is idempotent.
+      (font-lock-set-defaults))
 
     ;; Load library for our terminal type.
     ;; User init file can set term-file-prefix to nil to prevent this.

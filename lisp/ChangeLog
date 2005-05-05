@@ -1,3 +1,8 @@
+2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* startup.el (command-line): Call font-lock-set-defaults to make
+	the user's choice of fontification take effect in *scratch*. 
+
 2005-04-12  Mike Sperber  <mike@xemacs.org>
 
 	* minibuf.el (get-user-response): Move here from dialog.el so it
