@@ -3829,7 +3829,7 @@ get_random (void)
 /*               Strings corresponding to defined signals               */
 /************************************************************************/
 
-#if !defined (SYS_SIGLIST_DECLARED) && !defined (HAVE_SYS_SIGLIST)
+#if (!defined(HAVE_DECL_SYS_SIGLIST) || !HAVE_DECL_SYS_SIGLIST ) && !defined (HAVE_SYS_SIGLIST)
 
 #if defined(WIN32_NATIVE) || defined(CYGWIN)
 const char *sys_siglist[] =
@@ -4031,7 +4031,7 @@ const char *sys_siglist[NSIG + 1] =
   };
 #endif /* DGUX */
 
-#endif /* ! SYS_SIGLIST_DECLARED && ! HAVE_SYS_SIGLIST */
+#endif /* (!defined(HAVE_DECL_SYS_SIGLIST) || !HAVE_DECL_SYS_SIGLIST ) && !defined (HAVE_SYS_SIGLIST) */
 
 
 /************************************************************************/

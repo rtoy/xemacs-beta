@@ -1,3 +1,8 @@
+2005-05-06  Dr. Volker Zell  <Dr.Volker.Zell@oracle.com>
+
+	* sysdep.c: Use autoconf 2.59's HAVE_DECL_SYS_SIGLIST instead of
+	SYS_SIGLIST_DECLARED.
+
 2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* extents.c: Add some info on atomic-extents.el to the
