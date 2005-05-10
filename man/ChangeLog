@@ -1,3 +1,9 @@
+2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/sending.texi (Sending Mail):Document that sendmail.el is 
+        underfeatured and not getting better anytime soon; suggest using 
+        another mailer.  
+
 2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* xemacs/building.texi (Lisp Modes):

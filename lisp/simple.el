@@ -3306,16 +3306,20 @@ when it is off screen."
 
 ;; BEGIN SYNCHED WITH FSF 21.2.
 
-(defcustom mail-user-agent 'sendmail-user-agent
+(defcustom mail-user-agent 'xemacs-default-mail-user-agent
   "*Your preference for a mail composition package.
 Various Emacs Lisp packages (e.g. Reporter) require you to compose an
 outgoing email message.  This variable lets you specify which
 mail-sending package you prefer.
 
-Valid values include:
-
-  `sendmail-user-agent' -- use the default Emacs Mail package.
-                           See Info node `(emacs)Sending Mail'.
+Valid values may include:
+ 
+  `vm-user-agent'	-- use Kyle Jones' VM, as documented in the `(vm)' 
+                           Info node. Compatible with `sendmail-user-agent' 
+                           and can handle attachments and non-ASCII content,
+                           which the former can't.
+  `sendmail-user-agent' -- use the default, bare-bones, Emacs Mail
+                           package.  See Info node `(xemacs)Sending Mail'.
   `mh-e-user-agent'     -- use the Emacs interface to the MH mail system.
                            See Info node `(mh-e)'.
   `message-user-agent'  -- use the Gnus Message package.
@@ -3324,12 +3328,22 @@ Valid values include:
                            paraphernalia, particularly the Gcc: header for
                            archiving.
 
+If you examine the value of this variable before setting it or composing a
+mail, it will have another value, `xemacs-default-mail-user-agent'--this is to
+allow XEmacs to suggest that you use another email client instead of
+`sendmail-user-agent'. The latter, while part of the base XEmacs Lisp code,
+and very lightweight, doesn't support MIME, a considerable disadvantage
+today.
+
 Additional valid symbols may be available; check with the author of
 your package for details.  The function should return non-nil if it
 succeeds.
 
 See also `read-mail-command' concerning reading mail."
-  :type '(radio (function-item :tag "Default Emacs mail"
+  :type '(radio (function-item :tag "VM mail package"
+			       :format "%t\n"
+			       vm-user-agent)
+	        (function-item :tag "Bare-bones Emacs mail"
 			       :format "%t\n"
 			       sendmail-user-agent)
 		(function-item :tag "Emacs interface to MH"
@@ -3379,8 +3393,57 @@ The properties used on SYMBOL are `composefunc', `sendfunc',
   (put symbol 'abortfunc (or abortfunc 'kill-buffer))
   (put symbol 'hookvar (or hookvar 'mail-send-hook)))
 
+(define-mail-user-agent 'vm-user-agent
+  'vm-compose-mail
+  'vm-mail-send-and-exit)
+
 (define-mail-user-agent 'sendmail-user-agent
   'sendmail-user-agent-compose 'mail-send-and-exit)
+
+;; Recent GNU sendmail.el does have MIME support, but it's buggy (as of
+;; 2005-05-01.) For example, if you FCC to a file more than once with
+;; different coding systems, your non-ASCII data will get
+;; trashed. quoted-printable encoding isn't done by default, attachments
+;; just add a line:
+;;
+;;    ===File /path/to/file/here=================
+;;
+;; the file's contents, 
+;;
+;;    ===========================================
+;;
+;; and hope for the best. Not code we want to use, IMO.
+
+(defun xemacs-default-composefunc (&rest args) 
+  "Warn that the default mail-reading package is heinously underfeatured;
+compose a mail using it, all the same.  "
+  (warn "
+
+Defaulting to the GNU Emacs-derived `sendmail.el' mail client. This facility,
+while part of base XEmacs, is heinously underfeatured, and not going to get
+better in the medium term. We include it so that bug reports work without
+packages; we suggest that you choose and/or install one of the other mail
+clients from packages if you're doing something other than M-x
+report-xemacs-bug , or even if you are reporting bugs regularly.
+
+To choose a package from those installed, click on \"Options\" ->
+\"Internet\" -> \"Compose Mail With ...\" and decide on one from the
+list. Gnus and VM are full-featured and have active user communities.
+
+To disable this warning and stick with the old behavior, you can explicitly
+initialize `mail-user-agent' to 'sendmail-user-agent . ") 
+  (setq mail-user-agent 'sendmail-user-agent)
+  (apply (get 'sendmail-user-agent 'composefunc) args))
+
+ 
+(defun xemacs-default-sendfunc (&rest args) 
+  "Set `mail-user-agent' to `sendmail-user-agent'; call the send function
+associated with that package, passing it the supplied arguments. "
+  (setq mail-user-agent 'sendmail-user-agent)
+  (apply (get 'sendmail-user-agent 'sendfunc) args))
+
+(define-mail-user-agent 'xemacs-default-mail-user-agent 
+  'xemacs-default-composefunc 'xemacs-default-sendfunc) 
 
 (define-mail-user-agent 'message-user-agent
   'message-mail 'message-send-and-exit

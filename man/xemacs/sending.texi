@@ -40,6 +40,14 @@ the normal buffer selection mechanisms.
 @kbd{C-u C-x m} is another way to switch back to a message in progress:
 it will search for an existing, unsent mail message buffer and select it.
 
+Beware that this email client was inherited from GNU Emacs and is very
+underfeatured; its support for MIME attachments and writing non-ASCII
+content to files without trashing data is weak to nonexistent. There
+exist excellent, full-featured email clients in @xref{Packages}, notably
+VM @pxref{(vm)} and Gnus @pxref{(gnus)}---the XEmacs developers
+recommend that you choose one of them, and at most use this mail client
+for reporting simple bugs, the reason we include it.
+
 @menu
 * Format: Mail Format.    Format of the mail being composed.
 * Headers: Mail Headers.  Details of allowed mail header fields.

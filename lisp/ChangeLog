@@ -1,5 +1,20 @@
 2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* menubar-items.el (default-menubar):
+	* simple.el:
+	* simple.el (mail-user-agent):
+	* simple.el (vm-user-agent):
+	* simple.el ('vm-user-agent): New.
+	* simple.el (xemacs-default-composefunc): New.
+	* simple.el (xemacs-default-sendfunc): New.
+	* simple.el ('xemacs-default-mail-user-agent): New.
+        Update the docstring for mail-user-agent to mention VM; default to 
+        sendmail-user-agent, but on first use, give a huge warning that it 
+        is underfeatured and not likely to get better in the medium term, 
+        and the user should choose another mail client. 
+	
+2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* x-init.el (x-initialize-keyboard): Give info about any unbound
 	Unicode keysyms. 
 

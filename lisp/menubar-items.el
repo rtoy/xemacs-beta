@@ -886,7 +886,12 @@ Write your filter like this:
 	:active (boundp 'ps-print-color-p)])
       ("%_Internet"
        ("%_Compose Mail With"
-	["Default Emacs Mailer"
+	["VM mail package"
+	 (customize-set-variable 'mail-user-agent 'vm-user-agent)
+	 :style radio
+	 :selected (eq mail-user-agent 'vm-user-agent)
+	 :active (get 'vm-user-agent 'composefunc)]
+	["Bare-bones Emacs Mailer"
 	 (customize-set-variable 'mail-user-agent 'sendmail-user-agent)
 	 :style radio
 	 :selected (eq mail-user-agent 'sendmail-user-agent)]
