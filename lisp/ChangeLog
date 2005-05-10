@@ -1,5 +1,10 @@
 2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* x-init.el (x-initialize-keyboard): Give info about any unbound
+	Unicode keysyms. 
+
+2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule/european.el:
 	* mule/latin.el:
 	Add full syntax table and case mapping information for
