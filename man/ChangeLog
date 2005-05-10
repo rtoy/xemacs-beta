@@ -1,5 +1,10 @@
 2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* xemacs-faq.texi (Q3.2.5): (setq text-mode-hook
+	'turn-on-auto-fill) is not a good idea. 
+
+2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* xemacs/sending.texi (Sending Mail):Document that sendmail.el is 
         underfeatured and not getting better anytime soon; suggest using 
         another mailer.  

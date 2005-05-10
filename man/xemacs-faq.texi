@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/02/04 02:51:21 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/05/10 17:56:15 $
 @sp 1
 @author Ben Wing <ben@@xemacs.org>
 @author Tony Rossini <rossini@@u.washington.edu>
@@ -5064,7 +5064,7 @@ Try the following lisp in your @file{init.el}:
 
 @lisp
 (setq default-major-mode 'text-mode)
-(setq text-mode-hook 'turn-on-auto-fill)
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
 @end lisp
 
 @strong{WARNING}: note that changing the value of
