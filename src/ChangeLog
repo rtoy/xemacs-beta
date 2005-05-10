@@ -1,3 +1,8 @@
+2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* extents.c: Clarify that the atomic extent property is a kludge
+	and will go away if and when we implement something better. 
+
 2005-05-06  Dr. Volker Zell  <Dr.Volker.Zell@oracle.com>
 
 	* sysdep.c: Use autoconf 2.59's HAVE_DECL_SYS_SIGLIST instead of

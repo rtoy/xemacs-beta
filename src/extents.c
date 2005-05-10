@@ -5596,18 +5596,22 @@ The following symbols have predefined meanings:
  end-glyph-layout   The layout policy of the extent's end glyph.
 
  syntax-table       A cons or a syntax table object.  If a cons, the car must
-                    be an integer (interpreted as a syntax code, applicable to
-		            all characters in the extent).  Otherwise, syntax of
-		            characters in the extent is looked up in the syntax table.
-		            You should use the text property API to manipulate this
-		            property.  (This may be required in the future.)
+                    be an integer (interpreted as a syntax code, applicable
+                    to all characters in the extent).  Otherwise, syntax of
+                    characters in the extent is looked up in the syntax
+                    table.  You should use the text property API to
+                    manipulate this property.  (This may be required in the
+                    future.)
 
-The following property is available if `atomic-extents.el' has been loaded:
+The following property is available if `atomic-extents.el'--part of the
+`edit-utils' package--has been loaded:
 
   atomic	    When set, point will never fall inside the extent. 
 		    Not as useful as you might think, as
 		    `delete-backward-char' still removes characters one by
-		    one.
+		    one.  This property as currently implemented is a
+		    kludge, and be prepared for it to go away if and when we
+		    implement something better.
 
 */
        (extent, property, value))
