@@ -145,34 +145,79 @@
 		long-name "RHP of Latin-10 (ISO 8859-16)"
 		))
 
-(loop for c from 64 to 127
+;; Latin-1 is dealt with in iso8859-1.el, which see. 
+
+;; ISO 8859-14. 
+;; 
+;; Initialise all characters to word syntax.
+(loop for c from #xa0 to #xff
+  do (modify-syntax-entry (make-char 'latin-iso8859-14 c) "w"))
+
+;; Now, the exceptions. There's just punctuation in this character set. 
+(dolist (code '(#xa0	;; NO BREAK SPACE
+		#xa3	;; POUND SIGN
+		#xa7	;; SECTION SIGN
+		#xa9	;; COPYRIGHT
+		#xad	;; SOFT HYPHEN
+		#xae	;; REGISTERED
+		#xb6))	;; PILCROW SIGN
+  (modify-syntax-entry (make-char 'latin-iso8859-14 code) "_"))
+;; end of ISO 8859-14.
+
+;; ISO 8859-16.
+;;
+;; Initialise all of iso-8859-16 to word syntax. 
+(loop for c from #xa0 to #xff
   do (modify-syntax-entry (make-char 'latin-iso8859-16 c) "w"))
-(mapc (lambda (c)
-	(modify-syntax-entry (make-char 'latin-iso8859-16 c) "w"))
-      '(#xA1 #xA2 #xA3 #xA6 #xA8 #xAA #xAC #xAE #xAF
-	#xB3 #xB4 #xB5 #xB8 #xB9 #xBA #xBC #xBD #xBE #xBF))
 
+;; And then do the exceptions. First, the punctuation (following the model
+;; of Latin-1):
+(dolist (code '(#xa0	;; NO BREAK SPACE
+		#xa4	;; EURO SIGN
+		#xa7	;; SECTION SIGN
+		#xa9	;; COPYRIGHT
+		#xad	;; SOFT HYPHEN
+		#xb0	;; DEGREE
+		#xb1	;; PLUS-MINUS SIGN
+		#xb6	;; PILCROW SIGN
+		#xb7)) ;; MIDDLE DOT 
+  (modify-syntax-entry (make-char 'latin-iso8859-16 code) "_"))
 
-;; For syntax of Latin-1 characters.
-(loop for c from 64 to 127              ; from ',A@(B' to ',A(B'
-      do (modify-syntax-entry (make-char 'latin-iso8859-1 c) "w"))
+;; Mark the DOUBLE LOW-9 QUOTATION MARK and its closing character as
+;; quotation marks.
+(modify-syntax-entry (make-char 'latin-iso8859-16 #xa5) "\"")
+(modify-syntax-entry (make-char 'latin-iso8859-16 #xb5) "\"")
 
-(modify-syntax-entry (make-char 'latin-iso8859-1 32) "w") ; no-break space
-(modify-syntax-entry ?,AW(B "_")
-(modify-syntax-entry ?,Aw(B "_")
+;; For some crazy reason--well, in truth, probably because Jamie never used
+;; them in anger--the guillemets have open- and close-parenthesis syntax in
+;; Latin 1. We will probably change that in the future; for the moment, I'm
+;; preserving it.
+(modify-syntax-entry (make-char 'latin-iso8859-16 #xab) 
+		     (format "(%c" (make-char 'latin-iso8859-16 #xbb)))
+(modify-syntax-entry (make-char 'latin-iso8859-16 #xbb) 
+		     (format ")%c" (make-char 'latin-iso8859-16 #xab)))
 
-;; For syntax of Latin-9 characters.
-;; Based on Latin-1 and differences from Jukka Korpela
-;; http://www.cs.tut.fi/~jkorpela/latin9.html
+;; end of ISO 8859-16. 
+
+;; ISO 8859-15. 
+;; 
+;; Based on Latin-1 and differences therefrom.
+;; 
+;; First, initialise the syntax from the corresponding Latin-1 characters. 
+(loop for c from #xa0 to #xff
+      do (modify-syntax-entry 
+	  (make-char 'latin-iso8859-15 c)
+	  (string (char-syntax (make-char 'latin-iso8859-1 c)))))
+;; Now, the exceptions
 (loop for c in '(?,b&(B ?,b((B ?,b4(B ?,b8(B ?,b<(B ?,b=(B ?,b>(B)
       do (modify-syntax-entry c "w"))
 
-(loop for c from 64 to 127              ; from ',b@(B' to ',b(B'
-      do (modify-syntax-entry (make-char 'latin-iso8859-1 c) "w"))
-
-(modify-syntax-entry (make-char 'latin-iso8859-15 32) "w") ; no-break space
-(modify-syntax-entry ?,bW(B "_")
-(modify-syntax-entry ?,bw(B "_")
+;; Again, perpetuating insanity with the guillemets.
+(modify-syntax-entry (make-char 'latin-iso8859-16 #xab) 
+		     (format "(%c" (make-char 'latin-iso8859-16 #xbb)))
+(modify-syntax-entry (make-char 'latin-iso8859-16 #xbb) 
+		     (format ")%c" (make-char 'latin-iso8859-16 #xab)))
+;; end of ISO 8859-15. 
 
 ;; For syntax of Latin-2
 (loop for c in '(?,B!(B ?,B#(B ?,B%(B ?,B&(B ?,B)(B ?,B*(B ?,B+(B ?,B,(B ?,B.(B ?,B/(B ?,B1(B ?,B3(B ?,B5(B ?,B6(B ?,B9(B ?,B:(B ?,B;(B ?,B<(B)

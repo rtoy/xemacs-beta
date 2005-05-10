@@ -1,3 +1,10 @@
+2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/european.el:
+	* mule/latin.el:
+	Add full syntax table and case mapping information for
+	iso-8859-14, iso-8859-15, iso-8859-16. 
+	
 2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-ccl.el (define-ccl-program): Spelling and grammar fix

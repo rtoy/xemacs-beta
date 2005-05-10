@@ -1,6 +1,6 @@
 ;;; latin.el --- Support for Latin charsets. -*- coding: iso-2022-7bit; -*-
 
-;; Copyright (C) 2001 Free Software Foundation, Inc.
+;; Copyright (C) 2001, 2005 Free Software Foundation, Inc.
 
 ;; Author: Hrvoje Niksic <hniksic@xemacs.org>
 ;; Maintainer: XEmacs Development Team
@@ -242,6 +242,140 @@
 ;   (220 252)				;latin letter u with diaeresis
 ;   (222 254)				;latin letter s with cedilla
 ;   ))
+
+;; Latin 9. 
+(setup-case-pairs
+ 'latin-iso8859-15
+ '((166 168)				;latin letter s with caron *
+   (180 184)				;latin letter z with caron *
+   (188 189)				;latin ligature oe *
+   (190 255)				;latin letter y with diaeresis *
+   (192 224)				;latin letter a with grave
+   (193 225)				;latin letter a with acute
+   (194 226)				;latin letter a with circumflex
+   (195 227)				;latin letter a with tilde
+   (196 228)				;latin letter a with diaeresis
+   (197 229)				;latin letter a with ring above
+   (198 230)				;latin letter ae
+   (199 231)				;latin letter c with cedilla
+   (200 232)				;latin letter e with grave
+   (201 233)				;latin letter e with acute
+   (202 234)				;latin letter e with circumflex
+   (203 235)				;latin letter e with diaeresis
+   (204 236)				;latin letter i with grave
+   (205 237)				;latin letter i with acute
+   (206 238)				;latin letter i with circumflex
+   (207 239)				;latin letter i with diaeresis
+   (208 240)				;latin letter eth
+   (209 241)				;latin letter n with tilde
+   (210 242)				;latin letter o with grave
+   (211 243)				;latin letter o with acute
+   (212 244)				;latin letter o with circumflex
+   (213 245)				;latin letter o with tilde
+   (214 246)				;latin letter o with diaeresis
+   (216 248)				;latin letter o with stroke
+   (217 249)				;latin letter u with grave
+   (218 250)				;latin letter u with acute
+   (219 251)				;latin letter u with circumflex
+   (220 252)				;latin letter u with diaeresis
+   (221 253)				;latin letter y with acute
+   (222 254)				;latin letter thorn
+   ))
+
+;; ISO 8859-14, not in FSF, our mapping.
+(setup-case-pairs
+ 'latin-iso8859-14
+ '((161 162)				;latin letter b with dot above
+   (164 165)				;latin letter c with dot above
+   (166 171)				;latin letter d with dot above
+   (168 184)				;latin letter w with grave
+   (170 186)				;latin letter w with acute
+   (172 188)				;latin letter y with grave
+   (175 255)				;latin letter y with diaeresis
+   (176 177)				;latin letter f with dot above
+   (178 179)				;latin letter g with dot above
+   (180 181)				;latin letter m with dot above
+   (183 185)				;latin letter p with dot above
+   (187 191)				;latin letter s with dot above
+   (189 190)				;latin letter w with diaeresis
+   (192 224)				;latin letter a with grave
+   (193 225)				;latin letter a with acute
+   (194 226)				;latin letter a with circumflex
+   (195 227)				;latin letter a with tilde
+   (196 228)				;latin letter a with diaeresis
+   (197 229)				;latin letter a with ring above
+   (198 230)				;latin letter ae
+   (199 231)				;latin letter c with cedilla
+   (200 232)				;latin letter e with grave
+   (201 233)				;latin letter e with acute
+   (202 234)				;latin letter e with circumflex
+   (203 235)				;latin letter e with diaeresis
+   (204 236)				;latin letter i with grave
+   (205 237)				;latin letter i with acute
+   (206 238)				;latin letter i with circumflex
+   (207 239)				;latin letter i with diaeresis
+   (208 240)				;latin letter w with circumflex
+   (209 241)				;latin letter n with tilde
+   (210 242)				;latin letter o with grave
+   (211 243)				;latin letter o with acute
+   (212 244)				;latin letter o with circumflex
+   (213 245)				;latin letter o with tilde
+   (214 246)				;latin letter o with diaeresis
+   (215 247)				;latin letter t with dot above
+   (216 248)				;latin letter o with stroke
+   (217 249)				;latin letter u with grave
+   (218 250)				;latin letter u with acute
+   (219 251)				;latin letter u with circumflex
+   (220 252)				;latin letter u with diaeresis
+   (221 253)				;latin letter y with acute
+   (222 254)				;latin letter y with circumflex
+   ))
+
+;; ISO 8859-16, not in FSF, our mapping. 
+(setup-case-pairs
+ 'latin-iso8859-16
+ '((161 162)				;latin letter a with ogonek
+   (163 179)				;latin letter l with stroke
+   (166 168)				;latin letter s with caron
+   (170 186)				;latin letter s with comma below
+   (172 174)				;latin letter z with acute
+   (175 191)				;latin letter z with dot above
+   (178 185)				;latin letter c with caron
+   (180 184)				;latin letter z with caron
+   (190 255)				;latin letter y with diaeresis
+   (192 224)				;latin letter a with grave
+   (193 225)				;latin letter a with acute
+   (194 226)				;latin letter a with circumflex
+   (195 227)				;latin letter a with breve
+   (196 228)				;latin letter a with diaeresis
+   (197 229)				;latin letter c with acute
+   (198 230)				;latin letter ae
+   (199 231)				;latin letter c with cedilla
+   (200 232)				;latin letter e with grave
+   (201 233)				;latin letter e with acute
+   (202 234)				;latin letter e with circumflex
+   (203 235)				;latin letter e with diaeresis
+   (204 236)				;latin letter i with grave
+   (205 237)				;latin letter i with acute
+   (206 238)				;latin letter i with circumflex
+   (207 239)				;latin letter i with diaeresis
+   (208 240)				;latin letter d with stroke
+   (209 241)				;latin letter n with acute
+   (210 242)				;latin letter o with grave
+   (211 243)				;latin letter o with acute
+   (212 244)				;latin letter o with circumflex
+   (213 245)				;latin letter o with double acute
+   (214 246)				;latin letter o with diaeresis
+   (215 247)				;latin letter s with acute
+   (216 248)				;latin letter u with double acute
+   (217 249)				;latin letter u with grave
+   (218 250)				;latin letter u with acute
+   (219 251)				;latin letter u with circumflex
+   (220 252)				;latin letter u with diaeresis
+   (221 253)				;latin letter e with ogonek
+   (222 254)				;latin letter t with comma below
+   ))
+
 
 ;; This is our utility function; we don't want it in the dumped XEmacs.
 
