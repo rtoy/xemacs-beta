@@ -434,23 +434,29 @@ static int pdump_fd;
 static void *pdump_buf;
 static FILE *pdump_out;
 
-#if defined (MC_ALLOC)
-/* With mc_alloc, way more entries are added to the hash tables:
-   increase hash table size to avoid collisions. */
-#define PDUMP_HASHSIZE 1000001
+#ifdef MC_ALLOC
+/* PDUMP_HASHSIZE is a large prime. */
+#define PDUMP_HASHSIZE        1000003
+/* Nothing special about PDUMP_HASH_MULTIPLIER: arbitrary odd integer
+   smaller than PDUMP_HASHSIZE. */
+#define PDUMP_HASH_MULTIPLIER   12347
+/* Nothing special about PDUMP_HASH_STEP: arbitrary integer for linear
+   probing. */
+#define PDUMP_HASH_STEP        574853
 #else /* not MC_ALLOC */
 #define PDUMP_HASHSIZE 200001
 #endif /* not MC_ALLOC */
 
 static pdump_block_list_elt **pdump_hash;
 
+#ifndef MC_ALLOC
 /* Since most pointers are eight bytes aligned, the >>3 allows for a better hash */
+#endif /* not MC_ALLOC */
 static int
 pdump_make_hash (const void *obj)
 {
-#if defined (MC_ALLOC)
-  /* Use >>2 for a better hash to avoid collisions. */
-  return ((unsigned long)(obj)>>2) % PDUMP_HASHSIZE;
+#ifdef MC_ALLOC
+  return ((unsigned long)(obj) * PDUMP_HASH_MULTIPLIER) % PDUMP_HASHSIZE;
 #else /* not MC_ALLOC */
   return ((unsigned long)(obj)>>3) % PDUMP_HASHSIZE;
 #endif /* not MC_ALLOC */
@@ -542,9 +548,9 @@ pdump_get_mc_addr (const void *obj)
       if (mc_addr->obj == obj)
 	return mc_addr->addr;
 
-      pos++;
-      if (pos == PDUMP_HASHSIZE)
-	pos = 0;
+      pos += PDUMP_HASH_STEP;
+      if (pos >= PDUMP_HASHSIZE)
+	pos -= PDUMP_HASHSIZE;
     }
 
   /* If this code is reached, an heap address occurred which has not
@@ -573,9 +579,9 @@ pdump_put_mc_addr (const void *obj, EMACS_INT addr)
       if (mc_addr->obj == obj)
 	return;
 
-      pos++;
-      if (pos == PDUMP_HASHSIZE)
-	pos = 0;
+      pos += PDUMP_HASH_STEP;
+      if (pos >= PDUMP_HASHSIZE)
+	pos -= PDUMP_HASHSIZE;
     }
 
   pdump_mc_hash[pos].obj = obj;
@@ -1263,7 +1269,7 @@ pdump_reloc_one_mc (void *data, const struct memory_description *desc)
 		if (POINTER_TYPE_P (XTYPE (*pobj))
 		    && ! EQ (*pobj, Qnull_pointer))
 		  *pobj = wrap_pointer_1 ((char *) pdump_get_mc_addr 
-					   (XPNTR (*pobj)));
+					  (XPNTR (*pobj)));
 	      }
 	    break;
 	  }
@@ -2155,11 +2161,21 @@ pdump_load_finish (void)
 	      if (i == 0)
 		{
 		  Bytecount real_size = size * elt_count;
-#ifdef MC_ALLOC
 		  if (count == 2)
-		    mc_addr = (Rawbyte *) mc_alloc (real_size);
+		    {
+		      mc_addr = (Rawbyte *) mc_alloc (real_size);
+#ifdef MC_ALLOC_TYPE_STATS
+		      inc_lrecord_stats (real_size, 
+					 (const struct lrecord_header *) 
+					 ((char *) rdata + delta));
+		      if (((const struct lrecord_header *) 
+			   ((char *) rdata + delta))->type 
+			  == lrecord_type_string)
+			inc_lrecord_string_data_stats 
+			  (((Lisp_String *) ((char *) rdata + delta))->size_);
+#endif /* not MC_ALLOC_TYPE_STATS */
+		    }
 		  else
-#endif /* not MC_ALLOC */
 		    mc_addr = (Rawbyte *) xmalloc_and_zero (real_size);
 		}
 	      else

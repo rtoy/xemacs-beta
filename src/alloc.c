@@ -519,10 +519,33 @@ static struct
 } lrecord_stats [countof (lrecord_implementations_table)
 		 + MODULE_DEFINABLE_TYPE_COUNT];
 
+int lrecord_string_data_instances_in_use;
+int lrecord_string_data_bytes_in_use; 
+int lrecord_string_data_bytes_in_use_including_overhead;
+
 void
 init_lrecord_stats ()
 {
   xzero (lrecord_stats);
+  lrecord_string_data_instances_in_use = 0;
+  lrecord_string_data_bytes_in_use = 0;
+  lrecord_string_data_bytes_in_use_including_overhead = 0;
+}
+
+void
+inc_lrecord_string_data_stats (Bytecount size)
+{
+  lrecord_string_data_instances_in_use++;
+  lrecord_string_data_bytes_in_use += size;
+  lrecord_string_data_bytes_in_use_including_overhead += size;
+}
+
+void
+dec_lrecord_string_data_stats (Bytecount size)
+{
+  lrecord_string_data_instances_in_use--;
+  lrecord_string_data_bytes_in_use -= size;
+  lrecord_string_data_bytes_in_use_including_overhead -= size;
 }
 
 void
@@ -547,13 +570,14 @@ dec_lrecord_stats (Bytecount size_including_overhead,
 		   const struct lrecord_header *h)
 {
   int type_index = h->type;
+  int size = detagged_lisp_object_size (h);
 
   lrecord_stats[type_index].instances_in_use--;
-  lrecord_stats[type_index].bytes_in_use -= detagged_lisp_object_size (h);
+  lrecord_stats[type_index].bytes_in_use -= size;
   lrecord_stats[type_index].bytes_in_use_including_overhead
     -= size_including_overhead;
 
-  DECREMENT_CONS_COUNTER (lrecord_stats[type_index].bytes_in_use);
+  DECREMENT_CONS_COUNTER (size);
 }
 #endif /* not MC_ALLOC_TYPE_STATS */
 
@@ -2468,6 +2492,9 @@ finalize_string (void *header, int for_disksave)
     {
       Lisp_String *s = (Lisp_String *) header;
       Bytecount size = s->size_;
+#ifdef MC_ALLOC_TYPE_STATS
+      dec_lrecord_string_data_stats (size);
+#endif /* MC_ALLOC_TYPE_STATS */
       if (BIG_STRING_SIZE_P (size))
 	xfree (s->data_, Ibyte *);
     }
@@ -2587,6 +2614,9 @@ make_uninit_string (Bytecount length)
 
 #ifdef MC_ALLOC
   s = alloc_lrecord_type (Lisp_String, &lrecord_string);
+#ifdef MC_ALLOC_TYPE_STATS
+  inc_lrecord_string_data_stats (length);
+#endif /* MC_ALLOC_TYPE_STATS */
 #else /* not MC_ALLOC */
   /* Allocate the string header */
   ALLOCATE_FIXED_TYPE (string, Lisp_String, s);
@@ -2970,6 +3000,9 @@ make_string_nocopy (const Ibyte *contents, Bytecount length)
 
 #ifdef MC_ALLOC
   s = alloc_lrecord_type (Lisp_String, &lrecord_string);
+#ifdef MC_ALLOC_TYPE_STATS
+  inc_lrecord_string_data_stats (length);
+#endif /* MC_ALLOC_TYPE_STATS */
   mcpro (wrap_pointer_1 (s)); /* otherwise nocopy_strings get
 				 collected and static data is tried to
 				 be freed. */
@@ -4113,8 +4146,8 @@ kkcc_marking (void)
 		mark_object_maybe_checking_free
 		  (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT,
 		   level, pos);
-		break;
 #endif /* not MC_ALLOC */
+		break;
 	      }
 	    case XD_LISP_OBJECT_ARRAY:
 	      {
@@ -5644,29 +5677,15 @@ gc_plist_hack (const Ascbyte *name, int value, Lisp_Object tail)
      arrays, or exceptions, or ...) */
   return cons3 (intern (name), make_int (value), tail);
 }
-#endif /* MC_ALLOC_TYPE_STATS */
 
-DEFUN ("garbage-collect", Fgarbage_collect, 0, 0, "", /*
-Reclaim storage for Lisp objects no longer needed.
-Return info on amount of space in use:
- ((USED-CONSES . STORAGE-CONSES) (USED-SYMS . STORAGE-SYMS)
-  (USED-MARKERS . STORAGE-MARKERS) USED-STRING-CHARS USED-VECTOR-SLOTS
-  PLIST)
-  where `PLIST' is a list of alternating keyword/value pairs providing
-  more detailed information.
-Garbage collection happens automatically if you cons more than
-`gc-cons-threshold' bytes of Lisp data since previous garbage collection.
+DEFUN("lrecord-stats", Flrecord_stats, 0, 0 ,"", /*
+Return statistics about lrecords in a property list.
 */
        ())
 {
-#ifdef MC_ALLOC_TYPE_STATS
   Lisp_Object pl = Qnil;
   int i;
-#endif /* not MC_ALLOC_TYPE_STATS */
-
-  garbage_collect_1 ();
-
-#ifdef MC_ALLOC_TYPE_STATS
+  
   for (i = 0; i < (countof (lrecord_implementations_table)
 		   + MODULE_DEFINABLE_TYPE_COUNT); i++)
     {
@@ -5698,14 +5717,40 @@ Garbage collection happens automatically if you cons more than
 	  pl = gc_plist_hack (buf, lrecord_stats[i].instances_in_use, pl);
         }
     }
+  pl = gc_plist_hack ("string-data-storage-including-overhead", 
+		      lrecord_string_data_bytes_in_use_including_overhead, pl);
+  pl = gc_plist_hack ("string-data-storage-additional", 
+		      lrecord_string_data_bytes_in_use, pl);
+  pl = gc_plist_hack ("string-data-used", 
+		      lrecord_string_data_instances_in_use, pl);
+  
+  return pl;
+}
+#endif /* not MC_ALLOC_TYPE_STATS */
 
+DEFUN ("garbage-collect", Fgarbage_collect, 0, 0, "", /*
+Reclaim storage for Lisp objects no longer needed.
+Return info on amount of space in use:
+ ((USED-CONSES . STORAGE-CONSES) (USED-SYMS . STORAGE-SYMS)
+  (USED-MARKERS . STORAGE-MARKERS) USED-STRING-CHARS USED-VECTOR-SLOTS
+  PLIST)
+  where `PLIST' is a list of alternating keyword/value pairs providing
+  more detailed information.
+Garbage collection happens automatically if you cons more than
+`gc-cons-threshold' bytes of Lisp data since previous garbage collection.
+*/
+       ())
+{
+  garbage_collect_1 ();
+
+#ifdef MC_ALLOC_TYPE_STATS
   /* The things we do for backwards-compatibility */
   return
     list6 
     (Fcons (make_int (lrecord_stats[lrecord_type_cons].instances_in_use),
 	    make_int (lrecord_stats[lrecord_type_cons]
 		      .bytes_in_use_including_overhead)),
-    Fcons (make_int (lrecord_stats[lrecord_type_symbol].instances_in_use),
+     Fcons (make_int (lrecord_stats[lrecord_type_symbol].instances_in_use),
 	    make_int (lrecord_stats[lrecord_type_symbol]
 		      .bytes_in_use_including_overhead)),
      Fcons (make_int (lrecord_stats[lrecord_type_marker].instances_in_use),
@@ -5715,7 +5760,7 @@ Garbage collection happens automatically if you cons more than
 	       .bytes_in_use_including_overhead),
      make_int (lrecord_stats[lrecord_type_vector]
 	       .bytes_in_use_including_overhead),
-     pl);
+     Flrecord_stats ());
 #else /* not MC_ALLOC_TYPE_STATS */
   return Qnil;
 #endif /* not MC_ALLOC_TYPE_STATS */
@@ -6302,6 +6347,9 @@ syms_of_alloc (void)
   DEFSUBR (Fmake_symbol);
   DEFSUBR (Fmake_marker);
   DEFSUBR (Fpurecopy);
+#ifdef MC_ALLOC_TYPE_STATS
+  DEFSUBR (Flrecord_stats);
+#endif /* MC_ALLOC_TYPE_STATS */
   DEFSUBR (Fgarbage_collect);
 #if 0
   DEFSUBR (Fmemory_limit);

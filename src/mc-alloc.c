@@ -1484,17 +1484,18 @@ remove_cell (void *ptr, page_header *ph)
   else
     PLH_USED_SPACE (PH_PLH (ph)) -= PH_CELL_SIZE (ph);
 #endif
-#ifdef ERROR_CHECK_GC
-  if (PH_ON_USED_LIST_P (ph)) {
+  if (PH_ON_USED_LIST_P (ph)) 
+    {
 #ifdef MC_ALLOC_TYPE_STATS
-    dec_lrecord_stats (PH_CELL_SIZE (ph), 
-		       (const struct lrecord_header *) ptr);
+      dec_lrecord_stats (PH_CELL_SIZE (ph), 
+			 (const struct lrecord_header *) ptr);
 #endif /* MC_ALLOC_TYPE_STATS */
-    assert (!LRECORD_FREE_P (ptr));
-    deadbeef_memory (ptr, PH_CELL_SIZE (ph));
-    MARK_LRECORD_AS_FREE (ptr);
-  }
+#ifdef ERROR_CHECK_GC
+      assert (!LRECORD_FREE_P (ptr));
+      deadbeef_memory (ptr, PH_CELL_SIZE (ph));
+      MARK_LRECORD_AS_FREE (ptr);
 #endif
+    }
 
   /* hooks cell into free list */
   NEXT_FREE (ptr) = PH_FREE_LIST (ph);

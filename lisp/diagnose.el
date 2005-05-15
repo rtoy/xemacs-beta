@@ -139,8 +139,9 @@
 	    (princ (make-string 40 ?-))
 	    (princ "\n")
 	    (map-plist #'(lambda (stat num)
-			   (when (string-match "\\(.*\\)-storage$"
-					       (symbol-name stat))
+			   (when (string-match 
+				  "\\(.*\\)-storage\\(-additional\\)?$"
+				  (symbol-name stat))
 			     (incf total num)
 			     (princ (format fmt
 					    (match-string 1 (symbol-name stat))
@@ -164,6 +165,83 @@
 	  (princ (format "\n\ngrand total: %s\n" grandtotal)))
 	grandtotal))))
 
+
+(defun show-lrecord-stats ()
+  "Show statistics about lrecord usage in XEmacs."
+  (interactive)
+  (garbage-collect)
+  (let ((buffer "*lrecord statistics*")
+	(plist (lrecord-stats))
+	(fmt "%-30s%10s%10s\n")
+	(grandtotal 0)
+	begin)
+  (flet ((show-stats (match-string)
+	(princ (format fmt "object" "count" "storage"))
+	(princ (make-string 50 ?-))
+	(princ "\n")
+	(let ((total-use 0)
+	      (total-use-overhead 0)
+	      (total-count 0))
+	  (map-plist 
+	   #'(lambda (stat num)
+	       (when (string-match match-string
+				   (symbol-name stat))
+		 (let ((storage-use num)
+		       (storage-use-overhead 
+			(plist-get 
+			 plist 
+			 (intern (concat (match-string 1 (symbol-name stat))
+					 "-storage-including-overhead"))))
+		       (storage-count 
+			(or (plist-get 
+			     plist 
+			     (intern 
+			      (concat (match-string 1 (symbol-name stat)) 
+				      "s-used")))
+			    (plist-get 
+			     plist 
+			     (intern 
+			      (concat (match-string 1 (symbol-name stat))
+				      "es-used")))
+			    (plist-get 
+			     plist 
+			     (intern 
+			      (concat (match-string 1 (symbol-name stat))
+				      "-used"))))))
+		   (incf total-use storage-use)
+		   (incf total-use-overhead (if storage-use-overhead 
+						storage-use-overhead 
+					      storage-use))
+		   (incf total-count storage-count)
+		   (princ (format fmt
+				  (match-string 1 (symbol-name stat)) 
+				  storage-count storage-use)))))
+	   plist)
+	  (princ "\n")
+	  (princ (format fmt "total" 
+			 total-count total-use-overhead))
+	  (incf grandtotal total-use-overhead)
+	  (sort-numeric-fields -1
+			       (save-excursion
+				 (goto-char begin)
+				 (forward-line 2)
+				 (point))
+			       (save-excursion
+				 (forward-line -2)
+				 (point))))))
+    (with-output-to-temp-buffer buffer
+      (save-excursion
+	(set-buffer buffer)
+	(setq begin (point))
+	(princ "Allocated with new allocator:\n")
+	(show-stats "\\(.*\\)-storage$")
+	(princ "\n\n")
+	(setq begin (point))
+	(princ "Allocated additionally:\n")
+	(show-stats "\\(.*\\)-storage-additional$")
+	(princ (format "\n\ngrand total: %s\n" grandtotal)))
+      grandtotal))))
+  
 
 (defun show-mc-alloc-memory-usage ()
   "Show statistics about memory usage of the new allocator."

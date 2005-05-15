@@ -380,6 +380,8 @@ extern int gc_in_progress;
 
 #ifdef MC_ALLOC_TYPE_STATS
 void init_lrecord_stats (void);
+void inc_lrecord_string_data_stats (Bytecount size);
+void dec_lrecord_string_data_stats (Bytecount size);
 void inc_lrecord_stats (Bytecount size, const struct lrecord_header *h);
 void dec_lrecord_stats (Bytecount size_including_overhead, 
 			const struct lrecord_header *h);

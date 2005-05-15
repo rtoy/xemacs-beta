@@ -246,7 +246,7 @@ static const struct memory_description window_description [] = {
   { XD_BLOCK_PTR, offsetof (struct window, glyph_cachels),
     1, { &glyph_cachel_dynarr_description } },
   { XD_BLOCK_PTR, offsetof (struct window, line_start_cache),
-    1, { &line_start_cache_dynarr_description } },
+    1, { &line_start_cache_dynarr_description }, XD_FLAG_NO_KKCC },
   { XD_END }
 };
 

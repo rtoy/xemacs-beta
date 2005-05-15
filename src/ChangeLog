@@ -1,3 +1,30 @@
+2005-05-15  Marcus Crestani  <crestani@xemacs.org>
+
+	* alloc.c: Add string data statistics.
+	* alloc.c (dec_lrecord_stats): Use size of lrecord for statistics
+	and cons counter bookkeeping.
+	* alloc.c (finalize_string): Add string data statistics.
+	* alloc.c (make_uninit_string): Add string data statistics.
+	* alloc.c (make_string_nocopy): Add string data statistics.
+	* alloc.c (kkcc_marking): Move break out of #ifdef.
+	* alloc.c (Flrecord_stats): New. Collect lrecord statistics.
+	* alloc.c (Fgarbage_collect): Use Flrecord_stats.
+	* alloc.c (syms_of_alloc): Add Flrecord_stats.
+	* dumper.c: Fix hash table.
+	* dumper.c (pdump_make_hash): Fix hash table.
+	* dumper.c (pdump_get_mc_addr): Fix hash table.
+	* dumper.c (pdump_put_mc_addr): Fix hash table.
+	* dumper.c (pdump_reloc_one_mc): Fix indentation.
+	* dumper.c (pdump_load_finish): Add lrecord statistics
+	bookkeeping.
+	* lrecord.h: Add string data statistics.
+	* mc-alloc.c (remove_cell): Lrecord statistics, fix indentation.
+	* mule-charset.c: Marking through *_unicode_description not
+	needed.
+	* symbols.c (init_symbols_once_early): Bump lrecord statistics.
+	* window.c: Marking through line_start_cache not needed.
+	* xemacs.def.in.in: Fix typo.
+
 2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* extents.c: Clarify that the atomic extent property is a kludge
