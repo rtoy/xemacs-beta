@@ -1,8 +1,74 @@
+to 21.5.21 "corn"
+
+Major features
+
+-- New: An alternative memory allocator. (Marcus Crestani)
+
+User-Visible Bug Fixes and Minor Improvements
+
+-- Fix: Calculations in font-spatial-to-canonical. (Ralf Angeli)
+-- Fix: Honor coding system argument when creating a file. (Aidan Kehoe)
+-- Fix: Prevent stripping of items from Command menu. (Ralf Angeli)
+-- Fix: Selection handling on Win32. (Fabrice Popineau)
+-- Improve: Better defaults for mail-user-agent. (Aidan Kehoe)
+-- Improve: Deprecate use of Emacs X resource class. (Aidan Kehoe)
+-- Improve: Initialize fontlock properly in *scratch*. (Aidan Kehoe)
+-- Improve: Make %backup%~ honor auto-save-directory. (Steve Youngs,
+   Jamie Zawinski)
+-- Improve: Recognize some constructed Unicode keysyms. (Aidan Kehoe)
+-- Improve: Synch dired features from GNU Emacs. (Mike Sperber,
+   Richard Stallman, Luc Teirlinck, Stefan Monnier, Andreas Schwab)
+-- Improve: Syntax and case mapping for ISO 8859 parts 14-16. (Aidan Kehoe)
+-- Improve: Warn about unbound Unicode keysyms. (Aidan Kehoe)
+
+Build Infrastructure
+
+-- Fix: Asserts can't contain active code. (Melvin Hadasht)
+-- Fix: Avoid "head -#", coreutils doesn't like it. (Vin Shelton)
+-- Fix: Build for non-DEBUG_XEMACS native Windows build. (Marcus Crestani)
+-- Fix: Cater to OpenBSD /bin/sh. (Malcolm Purvis)
+-- Fix: Check $ac_cv_build not $canonical for libossaudio. (Aidan Kehoe)
+-- Fix: Define elfw(type) for unexec on Alpha and amd64 for FreeBSD.
+   (Andrey Slusar)
+-- Fix: Make get-user-response available regardless of config. (Mike Sperber)
+-- Fix: Make srcdir absolute, include X header, terminate lines.
+   (Malcolm Purvis)
+-- Fix: Remove do-nothing --no-gnu-linker in Solaris builds. (Vin Shelton)
+-- Fix: Specifying optimization flags implies optimization. (Stephen Turnbull)
+-- Fix: Use HAVE_DECL_SYS_SIGLIST, not SYS_SIGLIST_DECLARED. (Volker Zell)
+-- Fix: configure needs to include X11/Intrinsic.h to check for Xaw.
+   (Robert Delius Royar, Aidan Kehoe, Jerry James)
+-- Fix: egetenv needs process.h in device-x.c. (Marcus Crestani)
+-- New: Conditionally compile insert-data-in-exec. (Marcus Crestani)
+
+Documentation
+
+-- Fix: Add "--with" prefix in docstrings in configure.ac. (Aidan Kehoe)
+-- Fix: Documentation typos. (Aidan Kehoe, Adrian Aichner)
+-- Improve: Mention and deprecate atomic extents in docstring. (Aidan Kehoe)
+-- Improve: Texinfo docs. (Aidan Kehoe, Stephen Turnbull, Ben Wing)
+
+Lisp API
+
+-- Improve: Use override-redirect to suppress WM decorations.
+   (Stephen Turnbull)
+-- New: More stats for show-memory-usage. (Marcus Crestani)
+
+Internal API and Implementation
+
+-- Fix: Argument count in issue_call_trapping_problems_warning.
+   (Stephen Turnbull)
+-- Fix: Avoid use of nonexistent insert-for-yank. (Aidan Kehoe)
+-- Fix: Buffer overflow in pdump backtrace array. (Jerry James)
+-- Fix: Control-1 handling in CCL. (Aidan Kehoe)
+-- Fix: fakemail for FreeBSD >= 4. (Andrey Slusar)
+-- Improve: Dynamic diagnostic backtrace for KKCC. (Marcus Crestani)
+
 to 21.5.20 "cilantro"
 
 Major Features
 
--- New: Handle various X selection targets properly.  (Aidan Kehoe)
+-- New: Handle various X selection targets properly. (Aidan Kehoe)
 
 User-Visible Bug Fixes and Minor Improvements
 
