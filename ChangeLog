@@ -1,5 +1,9 @@
 2005-05-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* XEmacs 21.5.21 "corn" is released.
+
+2005-05-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* configure.ac: Explain how to turn off KKCC, too.
 
 2005-05-19  Marcus Crestani  <crestani@xemacs.org>
