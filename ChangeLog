@@ -1,3 +1,16 @@
+2005-05-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac: Explain how to turn off KKCC, too.
+
+2005-05-19  Marcus Crestani  <crestani@xemacs.org>
+
+	* configure:
+	* configure.ac: Enable new allocator and KKCC by default.
+
+2005-05-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* CHANGES-beta: Update for release.
+
 2005-04-22  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* configure.ac: Make srcdir absolute before calling

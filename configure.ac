@@ -1993,6 +1993,10 @@ if test "$enable_pdump" = "yes"; then
   lib_gcc=
 fi
 
+dnl Enable KKCC and MC-ALLOC by default
+test -z "$enable_kkcc" && enable_kkcc=yes
+test -z "$enable_mc_alloc" && enable_mc_alloc=yes
+
 dnl Dump into executable
 if test -z "$enable_dump_in_exec"; then
   if test "$enable_pdump" = "yes"; then
@@ -5741,8 +5745,22 @@ if test "$enable_union_type" = yes ; then
   echo "  WARNING: More recent versions may be safer, or not."
   echo "  WARNING: ---------------------------------------------------------"
 fi
-test "$enable_kkcc" = yes && echo "  Using the new GC algorithms."
-test "$enable_mc_alloc" = yes && echo "  Using the new allocator."
+if test "$enable_kkcc" = yes ; then
+  echo "  Using the new GC algorithms."
+  echo "  WARNING: ---------------------------------------------------------"
+  echo "  WARNING: The new algorithms are experimental. They are enabled by"
+  echo "  WARNING: default for this release. Use \`--disable-kkcc' to"
+  echo "  WARNING: turn it off."
+  echo "  WARNING: ---------------------------------------------------------"
+fi
+if test "$enable_mc_alloc" = yes ; then
+  echo "  Using the new allocator."
+  echo "  WARNING: ---------------------------------------------------------"
+  echo "  WARNING: The new allocator is experimental. It is enabled by"
+  echo "  WARNING: default for this release. Use \`--disable-mc-alloc' to"
+  echo "  WARNING: turn it off."
+  echo "  WARNING: ---------------------------------------------------------"
+fi
 test "$enable_pdump" = yes && echo "  Using the new portable dumper."
 test "$enable_dump_in_exec" = yes && echo "  Dumping into executable."
 test "$enable_debug" = yes && echo "  Compiling in support for extra debugging code."

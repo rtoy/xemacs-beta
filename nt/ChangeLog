@@ -1,3 +1,8 @@
+2005-05-19  Marcus Crestani  <crestani@xemacs.org>
+
+	* config.inc.samp (USE_KKCC): Enable by default.
+	* config.inc.samp (MC_ALLOC): Enable by default.
+
 2005-04-01  Marcus Crestani  <crestani@xemacs.org>
 
 	The new allocator.

@@ -178,10 +178,10 @@ USE_PORTABLE_DUMPER=1
 
 # Set this to use the new experimental garbage-collection routines instead
 # of the traditional XEmacs garbage-collection routines.
-USE_KKCC=0
+USE_KKCC=1
 
 # Set this to use the new experimental allocator routines
-MC_ALLOC=0
+MC_ALLOC=1
 
 # Set this to turn on the use of the union type, which gets you improved
 # type checking of Lisp_Objects -- they're declared as unions instead of
