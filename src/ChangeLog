@@ -1,3 +1,9 @@
+2005-06-01  Marcus Crestani  <crestani@xemacs.org>
+
+	* ralloc.c:
+	* ralloc.c (r_alloc_free): Call refill_memory_reserve only if
+	MC_ALLOC is not defined.
+
 2005-05-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.21 "corn" is released.
