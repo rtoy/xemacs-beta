@@ -841,14 +841,7 @@ Return `t' upon complete success, `nil' if any errors occurred."
 	(progn
 	  ;; Add lispdir to load-path if it doesn't already exist.
 	  ;; NOTE: this does not take symlinks, etc., into account.
-	  (if (let ((dirs load-path))
-		(catch 'done
-		  (while dirs
-		    (if (string-equal (car dirs) lispdir)
-			(throw 'done nil))
-		    (setq dirs (cdr dirs)))
-		  t))
-	      (setq load-path (cons lispdir load-path)))
+          (add-to-list 'load-path (file-name-as-directory lispdir))
 	  (if (not (package-get-load-package-file lispdir "auto-autoloads"))
 	      (package-get-load-package-file lispdir "_pkg"))
 	  t)

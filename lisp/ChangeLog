@@ -1,3 +1,10 @@
+2005-06-06  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-init-package):
+	package-get-init-package buglet (21.4.17) by Jeff Mincy
+	<mincy@rcn.com> fixing false temporary load-path shadows reported
+	after package installation and simplifying code.
+
 2005-05-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.21 "corn" is released.
