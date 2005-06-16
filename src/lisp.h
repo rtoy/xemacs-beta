@@ -2994,6 +2994,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
     lname,								\
     (lisp_fn_t) Fname							\
   };									\
+  static struct Lisp_Subr *S##Fname;					\
   Lisp_Object Fname (DEFUN_##max_args arglist)
 
 #define DEFUN_NORETURN(lname, Fname, min_args, max_args, prompt, arglist) \
@@ -3013,6 +3014,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
     lname,								  \
     (lisp_fn_t) Fname							  \
   };									  \
+  static struct Lisp_Subr *S##Fname;					  \
   DOESNT_RETURN_TYPE (Lisp_Object) Fname (DEFUN_##max_args arglist)
 #else /* not MC_ALLOC */
 #define DEFUN(lname, Fname, min_args, max_args, prompt, arglist)	\

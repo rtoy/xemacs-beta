@@ -284,8 +284,7 @@ DECLARE_LRECORD (symbol_value_varalias,	struct symbol_value_varalias);
 #ifdef MC_ALLOC
 MODULE_API void defsubr (Lisp_Subr *);
 #define DEFSUBR_MC_ALLOC(Fname)						\
-  struct Lisp_Subr *S##Fname= (struct Lisp_Subr *)			\
-   mc_alloc (sizeof (struct Lisp_Subr));				\
+  S##Fname= (struct Lisp_Subr *) mc_alloc (sizeof (struct Lisp_Subr));	\
   set_lheader_implementation (&S##Fname->lheader, &lrecord_subr);	\
 									\
   S##Fname->min_args = MC_ALLOC_S##Fname.min_args;			\

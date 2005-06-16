@@ -1,3 +1,9 @@
+2005-06-06  Marcus Crestani  <crestani@xemacs.org>
+
+	* lisp.h (DEFUN): Define S##fname here.
+	* lisp.h (DEFUN_NORETURN): Define S##fname here.
+	* symeval.h (DEFSUBR_MC_ALLOC): Use already defined S##fname.
+
 2005-06-01  Marcus Crestani  <crestani@xemacs.org>
 
 	* ralloc.c:
