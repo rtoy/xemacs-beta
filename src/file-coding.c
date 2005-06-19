@@ -1080,7 +1080,7 @@ nil or 'undecided
      Compound Text (the encoding used in X11).  You can specify more
      specific information about the conversion with the PROPS argument.
 'big5
-     Big5 (the encoding commonly used for Taiwanese).
+     Big5 (the encoding commonly used for Mandarin Chinese in Taiwan).
 'ccl
      The conversion is performed using a user-written pseudo-code
      program.  CCL (Code Conversion Language) is the name of this
@@ -2799,13 +2799,13 @@ no_conversion_detect (struct detection_state *st, const UExtbyte *UNUSED (src),
 /************************************************************************/
 
 /* This is used to handle end-of-line (EOL) differences.  It is
-character-to-character, and works (when encoding) *BEFORE* sending
-data to the main encoding routine -- thus, that routine must handle
-different EOL types itself if it does line-oriented type processing.
-This is unavoidable because we don't know whether the output of the
-main encoding routine is ASCII compatible (Unicode is definitely not,
-for example).  [[ sjt sez this is bogus.  There should be _no_ EOL
-processing (or processing of any kind) after conversion to external. ]]
+character-to-character, and works (when encoding) *BEFORE* sending data to
+the main encoding routine -- thus, that routine must handle different EOL
+types itself if it does line-oriented type processing.  This is unavoidable
+because we don't know whether the output of the main encoding routine is
+ASCII compatible (UTF-16 is definitely not, for example).  [[ sjt sez this
+is bogus.  There should be _no_ EOL processing (or processing of any kind)
+after conversion to external. ]]
 
 There is one parameter: `subtype', either `cr', `lf', `crlf', or nil.
 */

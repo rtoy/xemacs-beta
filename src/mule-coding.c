@@ -324,7 +324,7 @@ shift_jis_detect (struct detection_state *st, const UExtbyte *src,
 /*                            Big5 methods                              */
 /************************************************************************/
 
-/* BIG5 (used for Taiwanese). */
+/* BIG5 (used for Mandarin in Taiwan). */
 DEFINE_CODING_SYSTEM_TYPE (big5);
 
 /* BIG5 is a coding system encoding two character sets: ASCII and

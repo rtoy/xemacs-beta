@@ -1,3 +1,11 @@
+2005-06-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c:
+	* mule-coding.c:
+	The vernacular in Taiwan, and thus the language for which Big5 is
+	most used, is Mandarin. Taiwanese does exist, but since the
+	Chinese civil war, it's used less and less in Taiwan. 
+	
 2005-06-06  Marcus Crestani  <crestani@xemacs.org>
 
 	* lisp.h (DEFUN): Define S##fname here.
