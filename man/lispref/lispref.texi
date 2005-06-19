@@ -1199,7 +1199,6 @@ Tips
 Building XEmacs and Object Allocation
 
 * Building XEmacs::         How to preload Lisp libraries into XEmacs.
-* Pure Storage::            A kludge to make preloaded Lisp functions sharable.
 * Garbage Collection::      Reclaiming space for Lisp objects no longer used.
 
 @end menu

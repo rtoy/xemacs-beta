@@ -141,29 +141,39 @@ directly match ASCII printing characters.
   An @dfn{encoding} is a way of numerically representing characters from
 one or more character sets into a stream of like-sized numerical values
 called @dfn{words} -- typically 8-bit bytes, but sometimes 16-bit or
-32-bit quantities.  It's very important to clearly distinguish between
-charsets and encodings.  For a simple charset like ASCII, there is only
-one encoding normally used -- each character is represented by a single
-byte, with the same value as its code point.  For more complicated
-charsets, however, or when a single encoding needs to represent more
-than charset, things are not so obvious.  Unicode version 2, for
-example, is a large charset with thousands of characters, each indexed
-by a 16-bit number, often represented in hex, e.g. 0x05D0 for the Hebrew
-letter "aleph".  One obvious encoding (actually two encodings, depending
-on which of the two possible byte orderings is chosen) simply uses two
-bytes per character.  This encoding is convenient for internal
-processing of Unicode text; however, it's incompatible with ASCII, and
-thus external text (files, e-mail, etc.) that is encoded this way is
-completely uninterpretable by programs lacking Unicode support.  For
-this reason, a different, ASCII-compatible encoding, e.g. UTF-8, is
-usually used for external text.  UTF-8 represents Unicode characters
-with one to three bytes (often extended to six bytes to handle
-characters with up to 31-bit indices).  Unicode characters 00 to 7F
-(identical with ASCII) are directly represented with one byte, and other
-characters with two or more bytes, each in the range 80 to FF.
-Applications that don't understand Unicode will still be able to process
-ASCII characters represented in UTF-8-encoded text, and will typically
-ignore (and hopefully preserve) the high-bit characters.
+32-bit quantities.  In a context where dealing with Japanese motivates
+much of XEmacs' design in this area, it's important to clearly
+distinguish between charsets and encodings.  For a simple charset like
+ASCII, there is only one encoding normally used -- each character is
+represented by a single byte, with the same value as its code point.
+For more complicated charsets, however, or when a single encoding needs
+to represent more than charset, things are not so obvious.  Unicode
+version 2, for example, is a large charset with thousands of characters,
+each indexed by a 16-bit number, often represented in hex, e.g. 0x05D0
+for the Hebrew letter "aleph".  One obvious encoding (actually two
+encodings, depending on which of the two possible byte orderings is
+chosen) simply uses two bytes per character.  This encoding is
+convenient for internal processing of Unicode text; however, it's
+incompatible with ASCII, and thus external text (files, e-mail, etc.) 
+that is encoded this way is completely uninterpretable by programs
+lacking Unicode support.  For this reason, a different, ASCII-compatible
+encoding, e.g. UTF-8, is usually used for external text.  UTF-8
+represents Unicode characters with one to three bytes (often extended to
+six bytes to handle characters with up to 31-bit indices).  Unicode
+characters 00 to 7F (identical with ASCII) are directly represented with
+one byte, and other characters with two or more bytes, each in the range
+80 to FF.  Applications that don't understand Unicode will still be able
+to process ASCII characters represented in UTF-8-encoded text, and will
+typically ignore (and hopefully preserve) the high-bit characters.
+
+Similarly, Shift-JIS and EUC-JP are different encodings normally used to
+encode the same character set(s), these character sets being subsets of
+Unicode.  However, the obvious approach of unifying XEmacs' internal
+encoding across character sets, as was part of the motivation behind
+Unicode, wasn't taken.  This means that characters in these character
+sets that are identical to characters in other character sets---for
+example, the Greek alphabet is in the large Japanese character sets and
+at least one European character set--are unfortunately disjoint. 
 
   Naive use of code points is also not possible if more than one
 character set is to be used in the encoding.  For example, printed

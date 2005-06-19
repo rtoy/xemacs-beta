@@ -17,7 +17,6 @@ aspects related to the internals of XEmacs.
 
 @menu
 * Building XEmacs::     How to preload Lisp libraries into XEmacs.
-* Pure Storage::        A kludge to make preloaded Lisp functions sharable.
 * Garbage Collection::  Reclaiming space for Lisp objects no longer used.
 @end menu
 
@@ -34,9 +33,8 @@ information is pertinent to XEmacs maintenance.
   The @cite{XEmacs Internals Manual} contains more information about this.
 
   Compilation of the C source files in the @file{src} directory
-produces an executable file called @file{temacs}, also called a
-@dfn{bare impure XEmacs}.  It contains the XEmacs Lisp interpreter and I/O
-routines, but not the editing commands.
+produces an executable file called @file{temacs}.  It contains the
+XEmacs Lisp interpreter and I/O routines, but not the editing commands.
 
 @cindex @file{loadup.el}
   Before XEmacs is actually usable, a number of Lisp files need to be
@@ -80,17 +78,12 @@ out @file{xemacs}.  If both of these are missing or corrupted, you are
 out of luck unless you're able to bootstrap @file{xemacs} from
 @file{temacs}.  Note that @samp{make all-elc} actually loads the
 alternative loadup file @file{loadup-el.el}, which works like
-@file{loadup.el} but disables the pure-copying process and forces
-XEmacs to ignore any compiled Lisp files even if they exist.)
+@file{loadup.el} but forces XEmacs to ignore any compiled Lisp files
+even if they exist.)
 
 @cindex @file{site-load.el}
   You can specify additional files to preload by writing a library named
-@file{site-load.el} that loads them.  You may need to increase the value
-of @code{PURESIZE}, in @file{src/puresize.h}, to make room for the
-additional files.  You should @emph{not} modify this file directly,
-however; instead, use the @samp{--puresize} configuration option. (If
-you run out of pure space while dumping @file{xemacs}, you will be told
-how much pure space you actually will need.) However, the advantage of
+@file{site-load.el} that loads them.  However, the advantage of
 preloading additional files decreases as machines get faster.  On modern
 machines, it is often not advisable, especially if the Lisp code is
 on a file system local to the machine running XEmacs.
@@ -176,61 +169,6 @@ The major version number of Emacs, as an integer.  For XEmacs version
 @defvar emacs-minor-version
 The minor version number of Emacs, as an integer.  For XEmacs version
 20.1, the value is 1.
-@end defvar
-
-@node Pure Storage
-@appendixsec Pure Storage
-@cindex pure storage
-
-  XEmacs Lisp uses two kinds of storage for user-created Lisp objects:
-@dfn{normal storage} and @dfn{pure storage}.  Normal storage is where
-all the new data created during an XEmacs session is kept; see the
-following section for information on normal storage.  Pure storage is
-used for certain data in the preloaded standard Lisp files---data that
-should never change during actual use of XEmacs.
-
-  Pure storage is allocated only while @file{temacs} is loading the
-standard preloaded Lisp libraries.  In the file @file{xemacs}, it is
-marked as read-only (on operating systems that permit this), so that the
-memory space can be shared by all the XEmacs jobs running on the machine
-at once.  Pure storage is not expandable; a fixed amount is allocated
-when XEmacs is compiled, and if that is not sufficient for the preloaded
-libraries, @file{temacs} aborts with an error message.  If that happens,
-you must increase the compilation parameter @code{PURESIZE} using the
-@samp{--puresize} option to @file{configure}.  This normally won't
-happen unless you try to preload additional libraries or add features to
-the standard ones.
-
-@defun purecopy object
-This function makes a copy of @var{object} in pure storage and returns
-it.  It copies strings by simply making a new string with the same
-characters in pure storage.  It recursively copies the contents of
-vectors and cons cells.  It does not make copies of other objects such
-as symbols, but just returns them unchanged.  It signals an error if
-asked to copy markers.
-
-This function is a no-op in XEmacs, and its use is deprecated.
-@end defun
-
-@defvar pure-bytes-used
-The value of this variable is the number of bytes of pure storage
-allocated so far.  Typically, in a dumped XEmacs, this number is very
-close to the total amount of pure storage available---if it were not,
-we would preallocate less.
-@end defvar
-
-@defvar purify-flag
-This variable determines whether @code{defun} should make a copy of the
-function definition in pure storage.  If it is non-@code{nil}, then the
-function definition is copied into pure storage.
-
-This flag is @code{t} while loading all of the basic functions for
-building XEmacs initially (allowing those functions to be sharable and
-non-collectible).  Dumping XEmacs as an executable always writes
-@code{nil} in this variable, regardless of the value it actually has
-before and after dumping.
-
-You should not change this flag in a running XEmacs.
 @end defvar
 
 @node Garbage Collection
