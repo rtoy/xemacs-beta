@@ -2149,7 +2149,7 @@ pdump_load_finish (void)
   count = 2;
   for (;;)
     {
-      int elt_count = PDUMP_READ_ALIGNED (p, int);
+      EMACS_INT elt_count = PDUMP_READ_ALIGNED (p, EMACS_INT);
       if (elt_count)
 	{
 	  Rawbyte *mc_addr = 0;

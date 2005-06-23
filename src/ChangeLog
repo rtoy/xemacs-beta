@@ -1,3 +1,7 @@
+2005-06-23  Marcus Crestani  <crestani@xemacs.org>
+
+	* dumper.c (pdump_load_finish): Use EMACS_INT for elt_count.
+
 2005-06-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c:
