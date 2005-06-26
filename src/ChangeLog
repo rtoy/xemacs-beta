@@ -1,5 +1,12 @@
 2005-06-26  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* event-stream.c (command_builder_find_leaf):
+	* mule-ccl.c (POSSIBLE_LEADING_BYTE_P):
+	* mule-ccl.c (ccl_driver):
+	Couple of build fixes. 
+	
+2005-06-26  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule-ccl.c (POSSIBLE_LEADING_BYTE_P): Add.
 	* mule-ccl.c: Check that a character set exists before using it
 	to create a character. 

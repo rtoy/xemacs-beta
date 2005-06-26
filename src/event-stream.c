@@ -3591,7 +3591,8 @@ command_builder_find_leaf (struct command_builder *builder,
 
 	  newb = XCOMMAND_BUILDER(newbuilder);
 
-	  XSET_EVENT_KEY_KEYSYM(event_chain_tail (newbuilder->current_events), 
+	  XSET_EVENT_KEY_KEYSYM(event_chain_tail 
+				(XCOMMAND_BUILDER(newbuilder)->current_events),
 				make_char(this_alternative));
 
 	  result = command_builder_find_leaf_no_jit_binding
@@ -3602,12 +3603,15 @@ command_builder_find_leaf (struct command_builder *builder,
 	      copy_command_builder (newb, builder);
 	      *did_munge = 1;
 	    }
-	  else if (event_upshifted_p (newbuilder->most_current_event) &&
+	  else if (event_upshifted_p 
+		   (XCOMMAND_BUILDER(newbuilder)->most_current_event) &&
 		   !NILP (Vretry_undefined_key_binding_unshifted)
 		   && isascii(this_alternative))
 	    {
-	      downshift_event (event_chain_tail (newbuilder->current_events));
-	      XSET_EVENT_KEY_KEYSYM(event_chain_tail (newb->current_events), 
+	      downshift_event (event_chain_tail 
+			       (XCOMMAND_BUILDER(newbuilder)->current_events));
+	      XSET_EVENT_KEY_KEYSYM(event_chain_tail
+				    (newb->current_events),
 				    make_char(tolower(this_alternative)));
 	      result = command_builder_find_leaf_no_jit_binding
 		(newb, allow_misc_user_events_p, did_munge);

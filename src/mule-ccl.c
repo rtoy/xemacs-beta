@@ -826,7 +826,7 @@ static int stack_idx_of_map_multiple;
       }							\
   } while (0)
 
-#define POSSIBLE_LEADING_BYTE_P(lb) \
+#define POSSIBLE_LEADING_BYTE_P(leading_byte) \
   ((leading_byte > MIN_LEADING_BYTE) && \
    (leading_byte - MIN_LEADING_BYTE) < NUM_LEADING_BYTES)
 
@@ -1367,7 +1367,7 @@ ccl_driver (struct ccl_program *ccl,
 	      else if (LEADING_BYTE_CONTROL_1 == i)
 		i = ((reg[rrr] & 0xFF) - 0xA0);
 	      else if (POSSIBLE_LEADING_BYTE_P(i) &&
-		       !NILP(charset_by_leading_byte(i))
+		       !NILP(charset_by_leading_byte(i)))
 		{
 		  if (XCHARSET_DIMENSION (charset_by_leading_byte (i)) == 1)
 		    i = (((i - FIELD2_TO_OFFICIAL_LEADING_BYTE) << 7)
