@@ -1,5 +1,11 @@
 2005-06-26  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule-ccl.c (POSSIBLE_LEADING_BYTE_P): Add.
+	* mule-ccl.c: Check that a character set exists before using it
+	to create a character. 
+	
+2005-06-26  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cmds.c (Fself_insert_command):
 	No 4th arg to event_to_character. 
 
