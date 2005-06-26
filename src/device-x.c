@@ -1812,6 +1812,14 @@ The keysym name can be provided in two forms:
 - if keysym is a string, it must be the name as known to X windows.
 - if keysym is a symbol, it must be the name as known to XEmacs.
 The two names differ in capitalization and underscoring.
+
+This function is not entirely trustworthy, in that Xlib compose processing
+can produce keysyms that XEmacs will not have seen when it examined the
+keysyms available on startup.  So pressing `dead-diaeresis' and then 'a' may
+pass `adiaeresis' to XEmacs, or (in some implementations) even `U00E4',
+where `(x-keysym-on-keyboard-p 'adiaeresis)' and `(x-keysym-on-keyboard-p
+'U00E4)' would both have returned nil.  Subsequent to XEmacs seeing a keysym
+it was previously unaware of, the predicate will take note of it, though.
 */
        (keysym, device))
 {
@@ -2108,7 +2116,7 @@ in the file lisp/term/x-win.el.
 If this variable is nil on startup, the application uses `XEmacs'.  Versions
 previous to 21.5.21 examined the resource database and used `XEmacs' if any
 resources beginning with that string existed, and `Emacs' otherwise, for
-greated backward compatibility. However, this has always tended to conflict
+greater backward compatibility. However, this has always tended to conflict
 with GNU Emacs, so this behavior is deprecated--in the short term, you can
 restore it in a post-21.5.21 XEmacs by setting the
 USE_EMACS_AS_DEFAULT_APPLICATION_CLASS environment variable to some value,

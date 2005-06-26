@@ -1602,7 +1602,7 @@ tty_init_sys_modes_on_device (struct device *d)
   if (CONSOLE_TTY_DATA (con)->controlling_terminal)
     {
       tty.main.c_cc[VINTR] = /* C-g (usually) gives SIGINT */
-	event_to_character (CONSOLE_QUIT_EVENT (con), 0, 1, 0);
+	event_to_character (CONSOLE_QUIT_EVENT (con), 0, 1);
       /* Set up C-g for both SIGQUIT and SIGINT.
 	 We don't know which we will get, but we handle both alike
 	 so which one it really gives us does not matter.  */
@@ -1696,7 +1696,7 @@ tty_init_sys_modes_on_device (struct device *d)
   /* Note: if not using CBREAK mode, it makes no difference how we
      set this */
   tty.tchars = new_tchars;
-  tty.tchars.t_intrc = event_to_character (CONSOLE_QUIT_EVENT (con), 0, 1, 0);
+  tty.tchars.t_intrc = event_to_character (CONSOLE_QUIT_EVENT (con), 0, 1);
   if (TTY_FLAGS (con).flow_control)
     {
       tty.tchars.t_startc = '\021';

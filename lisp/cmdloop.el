@@ -567,7 +567,7 @@ RET terminates the character code and is discarded;
 any other non-digit terminates the character code and is then used as input."))
 	(and prompt (display-message 'prompt (format "%s-" prompt)))
 	(setq event (next-command-event)
-	      char (or (event-to-character event nil nil t)
+	      char (or (event-to-character event)
 		       (signal 'error
 			       (list "key read cannot be inserted in a buffer"
 				     event))))

@@ -74,6 +74,8 @@ struct console_methods
     (Lisp_Object connection, Error_Behavior errb);
   Lisp_Object (*device_to_console_connection_method)
     (Lisp_Object connection, Error_Behavior errb);
+  Lisp_Object (*perhaps_init_unseen_key_defaults_method)
+    (struct console *, Lisp_Object keysym);
 
   /* device methods */
   void (*init_device_method) (struct device *, Lisp_Object props);

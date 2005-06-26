@@ -338,10 +338,9 @@ Optional arg NO-MICE means that button events are not allowed."
             ;; any ambiguity.
             (setq c (event-to-character ce))
             (if (and c
-                     character-set-property
                      (key-press-event-p ce))
                 (cond ((symbolp (event-key ce))
-                       (if (get (event-key ce) character-set-property)
+                       (if (get (event-key ce) 'character-of-keysym)
                            ;; Don't use a string for `backspace' and `tab' to
                            ;;  avoid that unpleasant little ambiguity.
                            (setq c nil)))
@@ -349,7 +348,7 @@ Optional arg NO-MICE means that button events are not allowed."
                             (integerp (event-key ce)))
                        (let* ((te (character-to-event c)))
                          (if (and (symbolp (event-key te))
-                                  (get (event-key te) character-set-property))
+                                  (get (event-key te) 'character-of-keysym))
                              ;; Don't "normalize" (control i) to tab
                              ;;  to avoid the ambiguity in the other direction
                              (setq c nil))

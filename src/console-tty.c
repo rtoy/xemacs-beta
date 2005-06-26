@@ -30,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty-impl.h"
 #include "console-stream.h"
 
+#include "elhash.h"
 #include "faces.h"
 #include "file-coding.h"
 #include "frame.h"
@@ -48,6 +49,8 @@ DECLARE_IMAGE_INSTANTIATOR_FORMAT (inherit);
 
 Lisp_Object Qterminal_type;
 Lisp_Object Qcontrolling_process;
+
+static Lisp_Object Qseen_characters;
 
 static const struct memory_description tty_console_data_description_1 [] = {
   { XD_LISP_OBJECT, offsetof (struct tty_console, terminal_type) },
@@ -344,6 +347,56 @@ tty_canonicalize_device_connection (Lisp_Object connection,
   return stream_canonicalize_console_connection (connection, errb);
 }
 
+static Lisp_Object
+tty_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
+				      Lisp_Object key)
+{
+  Ichar val;
+  extern Lisp_Object Vcurrent_global_map;
+
+  if (SYMBOLP(key))
+    {
+      /* We've no idea what to default an unknown symbol to on the TTY. */
+      return Qnil;
+    }
+
+  CHECK_CHAR(key);
+
+  if (!(HASH_TABLEP(Qseen_characters)))
+    {
+      /* All the keysyms we deal with are character objects; therefore, we
+	 can use eq as the test without worrying. */
+      Qseen_characters = make_lisp_hash_table (128, HASH_TABLE_NON_WEAK,
+					       HASH_TABLE_EQ);
+    }
+
+  /* Might give the user an opaque error if make_lisp_hash_table fails,
+     but it won't crash. */
+  CHECK_HASH_TABLE(Qseen_characters);
+
+  val = XCHAR(key);
+
+  /* Same logic as in x_has_keysym; I'm not convinced it's always sane. */
+  if (val < 0x80) 
+    {
+      return Qnil; 
+    }
+
+  if (!NILP(Fgethash(key, Qseen_characters, Qnil)))
+    {
+      return Qnil;
+    }
+
+  if (NILP (Flookup_key (Vcurrent_global_map, key, Qnil))) 
+    {
+      Fputhash(key, Qt, Qseen_characters);
+      Fdefine_key (Vcurrent_global_map, key, Qself_insert_command); 
+      return Qt; 
+    }
+
+  return Qnil;
+}
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -377,6 +430,7 @@ console_type_create_tty (void)
   CONSOLE_HAS_METHOD (tty, canonicalize_device_connection);
   CONSOLE_HAS_METHOD (tty, semi_canonicalize_console_connection);
   CONSOLE_HAS_METHOD (tty, semi_canonicalize_device_connection);
+  CONSOLE_HAS_METHOD (tty, perhaps_init_unseen_key_defaults);
 }
 
 void
@@ -397,5 +451,6 @@ image_instantiator_format_create_glyphs_tty (void)
 void
 vars_of_console_tty (void)
 {
+  Qseen_characters = Qnil;
   Fprovide (Qtty);
 }

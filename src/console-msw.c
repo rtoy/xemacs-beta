@@ -37,6 +37,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console-msw-impl.h"
 #include "events.h"
 #include "opaque.h"
+#include "elhash.h"
 
 DEFINE_CONSOLE_TYPE (mswindows);
 DEFINE_CONSOLE_TYPE (msprinter);
@@ -67,6 +68,7 @@ Lisp_Object Qtaskmodal;
 Lisp_Object Qtopmost;
 Lisp_Object Qyesno;
 Lisp_Object Qyesnocancel;
+static Lisp_Object Qseen_characters = Qnil;
 
 /* Lisp_Object Qabort; */
 /* Lisp_Object Qcancel; */
@@ -182,6 +184,60 @@ mswindows_canonicalize_device_connection (Lisp_Object connection,
 					  Error_Behavior errb)
 {
   return mswindows_canonicalize_console_connection (connection, errb);
+}
+
+/* The actual console doesn't matter, because the global map is global. See
+   console-x.c for a corner case, though. */
+
+static Lisp_Object
+mswindows_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
+					    Lisp_Object key)
+{
+  Ichar val;
+  extern Lisp_Object Vcurrent_global_map;
+
+  if (SYMBOLP(key))
+    {
+      /* We've no idea what to default a symbol to on MS Windows, and most
+	 of the keys I'm aware of that have
+	 symbols--cf. event-msw.c--_shouldn't_ have associated chars. */
+      return Qnil;
+    }
+
+  CHECK_CHAR(key);
+
+  if (!(HASH_TABLEP(Qseen_characters)))
+    {
+      /* All the keysym we deal with are character objects; therefore, we
+	 can use eq as the test without worrying. */
+      Qseen_characters = make_lisp_hash_table (128, HASH_TABLE_NON_WEAK,
+					       HASH_TABLE_EQ);
+    }
+  /* Might give the user an opaque error if make_lisp_hash_table fails,
+     but it shouldn't crash. */
+  CHECK_HASH_TABLE(Qseen_characters);
+
+  val = XCHAR(key);
+
+  /* Same logic as in x_has_keysym; I'm not convinced it's sane. */
+  if (val < 0x80) 
+    {
+      return Qnil; 
+    }
+
+  if (!NILP(Fgethash(key, Qseen_characters, Qnil)))
+    {
+      return Qnil;
+    }
+
+  if (NILP (Flookup_key (Vcurrent_global_map, key, Qnil))) 
+    {
+      Fputhash(key, Qt, Qseen_characters);
+      Fdefine_key (Vcurrent_global_map, key, Qself_insert_command); 
+      return Qt; 
+    }
+
+  return Qnil;
 }
 
 void
@@ -684,6 +740,7 @@ console_type_create_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, canonicalize_device_connection);
 /*  CONSOLE_HAS_METHOD (mswindows, semi_canonicalize_console_connection); */
 /*  CONSOLE_HAS_METHOD (mswindows, semi_canonicalize_device_connection); */
+  CONSOLE_HAS_METHOD (mswindows, perhaps_init_unseen_key_defaults);
 
   INITIALIZE_CONSOLE_TYPE (msprinter, "msprinter", "console-msprinter-p");
   CONSOLE_HAS_METHOD (msprinter, canonicalize_console_connection);
@@ -700,5 +757,6 @@ reinit_console_type_create_mswindows (void)
 void
 vars_of_console_mswindows (void)
 {
+  Qseen_characters = Qnil;
   Fprovide (Qmswindows);
 }

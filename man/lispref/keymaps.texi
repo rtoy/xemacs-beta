@@ -245,12 +245,22 @@ these.
 keysym and some set of modifiers (such as @key{CONTROL} and @key{META}).
 A @dfn{keysym} is what is printed on the keys on your keyboard.
 
-  A keysym may be represented by a symbol, or (if and only if it is
-equivalent to an @sc{ascii} character in the range 32 - 255) by a
-character or its equivalent @sc{ascii} code.  The @kbd{A} key may be
-represented by the symbol @code{A}, the character @code{?A}, or by the
-number 65.  The @kbd{break} key may be represented only by the symbol
-@code{break}.
+  A keysym may be represented by a symbol, by a character, or by a
+character's Mule code. The @kbd{A} key may be represented by the symbol
+@code{A}, the character @code{?A}, or by the number 65.  The @kbd{break}
+key may be represented only by the symbol @code{break}, and non-ASCII
+X11 keys in general are limited to the symbol form with XEmacs.
+@footnote{A quirk of our X11 implementation means that non-ASCII keysyms
+have different internal representations in the X11 (with GTK) and other
+worlds (like the TTY, or Microsoft Windows), so, for example, binding
+@kbd{EuroSign} to a command will normally work, but will not invoke that
+command if someone presses the Euro sign in a TTY console; conversely,
+binding @code{(make-char 'latin-iso8859-15 #xa4)} or @code{(char-to-int
+(make-char 'latin-iso8859-15 #xa4))} to a command will call that command
+on a TTY console, but not in an X11 window of the same process.}
+@footnote{See the documentation for `set-input-mode' and
+`set-console-tty-coding-system' if you're having trouble inputting
+non-ASCII characters in the TTY.}
 
   A keystroke may be represented by a list: the last element of the list
 is the key (a symbol, character, or number, as above) and the preceding

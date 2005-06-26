@@ -67,7 +67,7 @@ Lisp_Object Qmouse_event_p;
 Lisp_Object Qprocess_event_p;
 
 Lisp_Object Qkey_press, Qbutton_press, Qbutton_release, Qmisc_user;
-Lisp_Object Qascii_character;
+Lisp_Object Qcharacter_of_keysym, Qascii_character;
 
 
 /************************************************************************/
@@ -1196,7 +1196,6 @@ command_event_p (Lisp_Object event)
    define-key, which must be able to handle all consoles.  #### What about
    in other circumstances?  #### Should the user have access to this flag? 
 
-
    #### We need to go through and review all the flags in
    character_to_event() and event_to_character() and figure out exactly
    under what circumstances they should or should not be set, then go
@@ -1208,17 +1207,34 @@ command_event_p (Lisp_Object event)
    #### Some of this garbage, and some of the flags, could go away if we
    implemented the suggestion, originally from event-Xt.c:
 
-   #### The way that keysym correspondence to characters should work:
+   [[ The way that keysym correspondence to characters should work:
    - a Lisp_Event should contain a keysym AND a character slot.
    - keybindings are tried with the keysym.  If no binding can be found,
-     and there is a corresponding character, call self-insert-command.
+     and there is a corresponding character, call self-insert-command. ]]
 
-   #### Nuke x-iso8859-1.el.
-   #### Nuke the Qascii_character property.
-   #### Nuke Vcharacter_set_property.
+       That's an X-specific way of thinking. All the other platforms--even
+       the TTY, make sure you've done (set-input-mode t nil 1) and set your
+       console coding system appropriately when checking--just use
+       characters as emacs keysyms, and, together with defaulting to
+       self-insert-command if an unbound key with a character correspondence
+       is typed, that works fine for them. (Yes, this ignores GTK.)
 
-   This would apparently solve a lot of different problems.
-*/
+   [[  [... snipping other suggestions which I've implemented.]
+       Nuke the Qascii_character property. ]]
+
+       Well, we've renamed it anyway--it was badly named.
+       Qcharacter_of_keysym, here we go. It's really only with X11 that how
+       to map between adiaeresis and (int-to-char #xE4), or ellipsis and
+       whatever, becomes an issue, and IMO the property approach to this is
+       fine. Aidan Kehoe, 2005-05-15.
+
+   [[ This would apparently solve a lot of different problems. ]]
+
+      I'd be interested to know what's left. Removing the allow-meta
+      argument from event-to-character would be a Good Thing, IMO, but
+      beyond that, I'm not sure what else there is to do wrt. key
+      mappings. Of course, feedback from users of the Russian C-x facility
+      is still needed. */
 
 void
 character_to_event (Ichar c, Lisp_Event *event, struct console *con,
@@ -1294,21 +1310,10 @@ character_to_event (Ichar c, Lisp_Event *event, struct console *con,
   SET_EVENT_KEY_MODIFIERS (event, m);
 }
 
-/* This variable controls what character name -> character code mapping
-   we are using.  Window-system-specific code sets this to some symbol,
-   and we use that symbol as the plist key to convert keysyms into 8-bit
-   codes.  In this way one can have several character sets predefined and
-   switch them by changing this.
-
-   #### This is utterly bogus and should be removed.
- */
-Lisp_Object Vcharacter_set_property;
-
 Ichar
 event_to_character (Lisp_Object event,
 		    int allow_extra_modifiers,
-		    int allow_meta,
-		    int map_device_key_names)
+		    int allow_meta)
 {
   Ichar c = 0;
   Lisp_Object code;
@@ -1319,25 +1324,42 @@ event_to_character (Lisp_Object event,
       return -1;
     }
   if (!allow_extra_modifiers &&
-      XEVENT_KEY_MODIFIERS (event) & (XEMACS_MOD_SUPER|XEMACS_MOD_HYPER|XEMACS_MOD_ALT))
+      XEVENT_KEY_MODIFIERS (event) & 
+      (XEMACS_MOD_SUPER|XEMACS_MOD_HYPER|XEMACS_MOD_ALT))
     return -1;
   if (CHAR_OR_CHAR_INTP (XEVENT_KEY_KEYSYM (event)))
     c = XCHAR_OR_CHAR_INT (XEVENT_KEY_KEYSYM (event));
   else if (!SYMBOLP (XEVENT_KEY_KEYSYM (event)))
     ABORT ();
-  else if (map_device_key_names && !NILP (Vcharacter_set_property)
-	   /* Allow window-system-specific extensibility of
-	      keysym->code mapping */
-	   && CHAR_OR_CHAR_INTP (code = Fget (XEVENT_KEY_KEYSYM (event),
-					      Vcharacter_set_property,
-					      Qnil)))
-    c = XCHAR_OR_CHAR_INT (code);
   else if (CHAR_OR_CHAR_INTP (code = Fget (XEVENT_KEY_KEYSYM (event),
-					   Qascii_character, Qnil)))
+					   Qcharacter_of_keysym, Qnil)))
     c = XCHAR_OR_CHAR_INT (code);
   else
-    return -1;
+    {
+      Lisp_Object thekeysym = XEVENT_KEY_KEYSYM (event);
 
+      if (CHAR_OR_CHAR_INTP (code = Fget (thekeysym, Qascii_character, Qnil)))
+	{
+	  extern Lisp_Object Qkey_mapping;
+
+	  c = XCHAR_OR_CHAR_INT (code);
+	  warn_when_safe(Qkey_mapping, Qwarning, 
+			 "Obsolete key binding technique.\n"
+
+"Some code you're using bound %s to `self-insert-command' and messed around\n"
+"with its `ascii-character' property.  Doing this is deprecated, and the code\n"
+"should be updated to use the `set-character-of-keysym' interface.\n"
+"If you're the one updating the code, first check if there's still a need\n"
+"for it; we support many more X11 keysyms out of the box now than we did\n"
+"in the past. ", XSTRING_DATA(XSYMBOL_NAME(thekeysym)));
+	  /* Only show the warning once for each keysym. */
+	  Fput(thekeysym, Qcharacter_of_keysym, code);
+	}
+      else
+	{
+	  return -1;
+	}
+    }
   if (XEVENT_KEY_MODIFIERS (event) & XEMACS_MOD_CONTROL)
     {
       if (c >= 'a' && c <= 'z')
@@ -1365,8 +1387,8 @@ event_to_character (Lisp_Object event,
   return c;
 }
 
-DEFUN ("event-to-character", Fevent_to_character, 1, 4, 0, /*
-Return the closest ASCII approximation to the given event object.
+DEFUN ("event-to-character", Fevent_to_character, 1, 3, 0, /*
+Return the closest character approximation to the given event object.
 If the event isn't a keypress, this returns nil.
 If the ALLOW-EXTRA-MODIFIERS argument is non-nil, then this is lenient in
  its translation; it will ignore modifier keys other than control and meta,
@@ -1376,24 +1398,16 @@ If the ALLOW-EXTRA-MODIFIERS argument is non-nil, then this is lenient in
 If the ALLOW-META argument is non-nil, then the Meta modifier will be
  represented by turning on the high bit of the byte returned; otherwise, nil
  will be returned for events containing the Meta modifier.
-If the MAP-DEVICE-KEY-NAMES argument is non-nil, then named keysyms that
- represent printable characters will be converted to that character.  This
- means, for example, that under X, where a circumflexed lowercase o returns
- a key with the name `ocircumflex' rather than the actual character, this
- name will be converted to the appropriate character.  See
- `character-set-property' for some sense of how this works. #### This
- should not be exposed and may be removed at some point.
 Note that ALLOW-META may cause ambiguity between meta characters and
  Latin-1 characters.
 */
-     (event, allow_extra_modifiers, allow_meta, map_device_key_names))
+       (event, allow_extra_modifiers, allow_meta))
 {
   Ichar c;
   CHECK_LIVE_EVENT (event);
   c = event_to_character (event,
 			  !NILP (allow_extra_modifiers),
-			  !NILP (allow_meta),
-			  !NILP (map_device_key_names));
+			  !NILP (allow_meta));
   return c < 0 ? Qnil : make_char (c);
 }
 
@@ -2613,6 +2627,7 @@ syms_of_events (void)
   DEFSYMBOL (Qbutton_press);
   DEFSYMBOL (Qbutton_release);
   DEFSYMBOL (Qmisc_user);
+  DEFSYMBOL (Qcharacter_of_keysym);
   DEFSYMBOL (Qascii_character);
 
   defsymbol (&QKbackspace, "backspace");
@@ -2634,16 +2649,4 @@ reinit_vars_of_events (void)
 void
 vars_of_events (void)
 {
-  DEFVAR_LISP ("character-set-property", &Vcharacter_set_property /*
-This is used to map e.g. `ocircumflex' to the appropriate character under X.
-This value of this variable (a symbol, normally `x-iso8859-1' if not nil)
-if used to look up a property on the keysym in question, which should
-correspond to a character.
-
-#### This is way bogus and will be removed soon.
-
-The conversion between X keysyms and characters is now handled more or less
-automatically using XDisplayKeycodes().
-*/ );
-  Vcharacter_set_property = Qnil;
 }

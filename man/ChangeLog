@@ -1,3 +1,14 @@
+2005-06-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/commands.texi (Converting Events): 
+	* lispref/keymaps.texi (Key Sequences):
+	Stop pretending ASCII is an eight-bit character set, and remove
+	documentation of event-to-character's vanished fourth argument.
+
+	* internals/internals.texi (Old Future Work -- Improvements in
+	support for non-ASCII (European) keysyms under X):
+	Rename the ascii-character property. 
+	
 2005-06-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/building.texi (Building XEmacs and Object Allocation):

@@ -110,10 +110,10 @@ Convert CHARACTER to a one-character string containing that character.
 
   if (EVENTP (character))
     {
-      Lisp_Object ch2 = Fevent_to_character (character, Qt, Qnil, Qnil);
+      Lisp_Object ch2 = Fevent_to_character (character, Qt, Qnil);
       if (NILP (ch2))
         invalid_argument
-	  ("character has no ASCII equivalent:", Fcopy_event (character, Qnil));
+	  ("key has no character equivalent:", Fcopy_event (character, Qnil));
       character = ch2;
     }
 

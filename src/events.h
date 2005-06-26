@@ -108,8 +108,6 @@ typedef enum emacs_event_type
 #define first_event_type empty_event
 #define last_event_type dead_event
 
-#ifdef MULE
-
 enum alternative_key_chars
 {
   KEYCHAR_CURRENT_LANGENV,
@@ -122,8 +120,6 @@ enum alternative_key_chars
   KEYCHAR_LAST
 };
 
-#endif /* MULE */
-
 struct Lisp_Key_Data
 {
 #ifdef EVENT_DATA_AS_OBJECTS
@@ -135,7 +131,6 @@ struct Lisp_Key_Data
      Also includes buttons.  For many keys, Shift is not a bit; that
      is implicit in the keyboard layout. */
   int modifiers;
-#ifdef MULE
   /* Alternate character interpretations for this key in different
      keyboard layouts.  This deals with the problem of pressing C-x in
      the Russian layout (the so-called "Russian C-x problem"), for
@@ -149,12 +144,38 @@ struct Lisp_Key_Data
      (AZERTY layout) who temporarily switches to Russian: The virtual
      keys underlying Russian are US-ASCII, so what the French speaker
      things of as C-a (the key just to the right of TAB) appears as
-     C-q. (#### We should probably ignore the current char and look
+     C-q. 
+
+         I've just implemented this in event-stream.c, and I really want to
+         see feedback from actual Russians about it, and whether it needs to
+         be much more complete than what I've done. E.g, the mapping back to
+         US Qwerty is hardcoded on the X11 side of things, and only deals
+         with the alphabetic characters. 
+
+	 Also, I think it's downright confusing for people with Roman
+	 letters on their keyboard to have random other letters than are
+	 described as calling some command, call that command. So I want to
+	 consider enabling it by language environment.
+
+     [[ (#### We should probably ignore the current char and look
      *ONLY* in alt_keychars for all control keys.  What about the
      English speaker who temporarily switches to the French layout and
-     finds C-q mapped to C-a?) */
+     finds C-q mapped to C-a?) ]] 
+
+         No, we shouldn't. People who use the French layout expect that
+         pressing control with the key to the right of tab passes C-a to
+         emacs; English speakers (more exactly, Qwerty users) who
+         temporarily switch to the French layout encounter that issue in
+         every other app too, and they normally remap the keyboard in
+         software as soon as they can, or learn to live with Azerty. That
+         applies for all the Roman-alphabet keyboard layouts. Aidan Kehoe,
+         2005-05-15
+
+         I've taken out the dependency on MULE for this feature because it's
+         also useful in a non-Mule XEmacs where the user has set their font
+         to something ending in iso8859-5. How many of those users there
+         are, is another question. */
   Ichar alt_keychars[KEYCHAR_LAST];
-#endif /* MULE */
 };
 
 typedef struct Lisp_Key_Data Lisp_Key_Data;
@@ -949,7 +970,7 @@ Lisp_Object key_sequence_to_event_chain (Lisp_Object seq);
    (keyboard press, menu, scrollbar, mouse button) */
 int command_event_p (Lisp_Object event);
 void define_self_inserting_symbol (Lisp_Object, Lisp_Object);
-Ichar event_to_character (Lisp_Object, int, int, int);
+Ichar event_to_character (Lisp_Object, int, int);
 struct console *event_console_or_selected (Lisp_Object event);
 void upshift_event (Lisp_Object event);
 void downshift_event (Lisp_Object event);

@@ -1,3 +1,112 @@
+2005-06-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cmds.c (Fself_insert_command):
+	No 4th arg to event_to_character. 
+
+	* console-impl.h (struct console_methods): Add a new member
+	method, perhaps_init_unseen_key_defaults, which is to allow the
+	console to take appropriate action--often a default binding to
+	self-insert-command--when notified about a character it may not
+	have seen before. 
+	
+	* console-gtk.c:
+	Add gtk_perhaps_init_unseen_key_defaults, a new console method,
+	and a hash table it uses. 
+
+	* console-msw.c:
+	Add mswindows_perhaps_init_unseen_key_defaults, a new console
+	method, and a hash table it uses. 
+	
+	* console-tty.c:
+	Add tty_perhaps_init_unseen_key_defaults, a new console method,
+	and a hash table used by it. 
+
+	* console-x.c:
+	* console-x.c (x_perhaps_init_unseen_key_defaults): New. 
+	Given a key, if it maps to a character and we weren't previously
+	aware that it could be generated on console CON, and if it's
+	unbound in the global map, bind it to self-insert-command. Return
+	Qt if the binding was done; Qnil if not.
+	
+	* device-gtk.c:
+	* device-gtk.c (vars_of_device_gtk):
+	Add a hash table var used by gtk_perhaps_init_unseen_key_defaults.
+
+	* editfns.c (Fchar_to_string):
+	Call Fevent_to_character with three arguments, not four; don't
+	express a belief that the only XEmacs character encoding is
+	ASCII. 
+	
+	* event-Xt.c:
+	* event-Xt.c (maybe_define_x_key_as_self_inserting_character):
+	ascii-character -> character-of-keysym property renaming. 
+	
+	* event-Xt.c (x_has_keysym):
+	Make it visible to the console code, make it a little more Mule-safe. 
+	
+	* event-Xt.c (index_to_name):
+	Move to Mule declaration conventions. 
+
+	* event-Xt.c (x_reset_modifier_mapping):
+	Move large comment from Jamie before this function. 
+
+	* event-Xt.c (x_keysym_to_emacs_keysym):
+	Move to Mule declaration conventions and coding practices. 
+	
+	* event-Xt.c (x_event_to_emacs_event):
+	Add some comments, and the initial steps necessary for Russian C-x
+	support. 
+
+	* event-msw.c (mswindows_wnd_proc):
+	Don't conditionalize Russian C-x support on Mule. (I'm not certain
+	if this is correct on MSW, but it's the approach I'm taking on
+	X11.)
+	
+	* event-stream.c:
+	Add Russian C-x support, a var to enable and disable it, remove
+	composed-character-default-binding in favour of
+	self-insert-command, rename
+	command_builder_find_leaf_no_mule_processing to
+	command_builder_find_leaf_no_jit_binding, change
+	command_builder_find_leaf to tell the console-specific code to
+	perhaps add a binding for keys its never seen before, and then
+	retry the lookup if it would otherwise fail.  
+
+	* event-stream.c (execute_command_event):
+	event-to-character has three arguments now, not four. 
+	
+	* event-stream.c (vars_of_event_stream):
+	Formatting clean up for inhibit-input-event-recoding. 
+	
+	* event-xlike-inc.c:
+	* event-xlike-inc.c (endif):
+	Move x_keysym_to_character here from event-Xt.c so it can be used
+	by GTK 1.0 as well; greatly expand it, to handle many more
+	characters than previously.
+
+	* events.c:
+	Rename the ascii-character property, remove
+	character-set-property, remove the now unused fourth argument to
+	event_to_character, ditto for the event-to-character, 
+
+	* events.h (enum alternative_key_chars):
+	* events.h (struct Lisp_Key_Data):
+	Russian C-x processing is no longer Mule specific. (Though I'm not
+	certain why a Russian speaker would be using a non-Mule build.)
+
+	* keymap.c:
+	* keymap.c (event_matches_key_specifier_p):
+	* keymap.c (map_keymap_sort_predicate):
+	* keymap.c (Ftext_char_description):
+	* keymap.c (elide_next_two_p):
+	* keymap.c (describe_map):
+	Rename ascii-character to character-of-keysym, stop pretending the
+	internal encoding of XEmacs is purely ASCII, 
+
+	* lisp.h:
+	* sysdep.c (tty_init_sys_modes_on_device):
+	One less argument to event-to-character. 
+
 2005-06-23  Marcus Crestani  <crestani@xemacs.org>
 
 	* dumper.c (pdump_load_finish): Use EMACS_INT for elt_count.

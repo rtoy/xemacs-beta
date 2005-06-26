@@ -32,6 +32,9 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h" /* canonicalize_host_name */
 #include "redisplay.h" /* for display_arg */
 
+#include "charset.h"
+#include "elhash.h"
+
 #include "console-gtk-impl.h"
 
 DEFINE_CONSOLE_TYPE (gtk);
@@ -112,6 +115,80 @@ gtk_canonicalize_device_connection (Lisp_Object connection,
   RETURN_UNGCPRO (connection);
 }
 
+extern Lisp_Object gtk_keysym_to_character(guint keysym);
+
+static Lisp_Object
+gtk_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
+				      Lisp_Object key)
+{
+  Lisp_Object char_to_associate = Qnil;
+  extern Lisp_Object Vcurrent_global_map, Qgtk_seen_characters,
+    Qcharacter_of_keysym;
+
+  if (SYMBOLP(key))
+    {
+      gchar *symbol_name;
+      guint keyval;
+      DECLARE_EISTRING(ei_symname);
+      
+      eicpy_rawz(ei_symname, XSTRING_DATA(symbol_name(XSYMBOL(key))));
+
+      /* No information on the coding system of the string key names in GDK,
+	 to my knowledge. Defaulting to binary, */
+      eito_external(ei_symname, Qbinary);
+      symbol_name = eiextdata(ei_symname);
+
+/* GTK 2.0 has an API we can use, and makes this available in gdkkeys.h
+
+   This has yet to be compiled, because XEmacs' GTK support hasn't yet moved
+   to 2.0. So if you're porting XEmacs to GTK 2.0, bear that in mind. */
+      char_to_associate 
+#ifdef __GDK_KEYS_H__ 
+	= Funicode_to_char
+	      (make_int(gdk_keyval_to_unicode
+			(gdk_keyval_from_name(symbol_name))), Qnil);
+#else /* GTK 1.whatever doesn't. Use the X11 map. */
+        = gtk_keysym_to_character(gdk_keyval_from_name(symbol_name));
+#endif
+    }
+  else
+    {
+      CHECK_CHAR(key);
+    }
+
+  if (!(HASH_TABLEP(Qgtk_seen_characters)))
+    {
+      Qgtk_seen_characters = make_lisp_hash_table (128, HASH_TABLE_NON_WEAK,
+						   HASH_TABLE_EQUAL);
+    }
+
+  /* Might give the user an opaque error if make_lisp_hash_table fails,
+     but it shouldn't crash. */
+  CHECK_HASH_TABLE(Qgtk_seen_characters);
+
+  if (EQ(char_to_associate, Qnil) /* If there's no char to bind,  */
+      || (XCHAR(char_to_associate) < 0x80) /* or it's ASCII */
+      || !NILP(Fgethash(key, Qgtk_seen_characters, Qnil))) /* Or we've seen
+							      it already, */
+    {
+      /* then don't bind the key. */
+      return Qnil;
+    }
+
+  if (NILP (Flookup_key (Vcurrent_global_map, key, Qnil))) 
+    {
+      Fputhash(key, Qt, Qgtk_seen_characters);
+      Fdefine_key (Vcurrent_global_map, key, Qself_insert_command); 
+      if (SYMBOLP(key))
+	{
+	  Fput (key, Qcharacter_of_keysym, char_to_associate);
+	}
+      return Qt; 
+    }
+
+  return Qnil;
+}
+
 void
 console_type_create_gtk (void)
 {
@@ -123,6 +200,7 @@ console_type_create_gtk (void)
   CONSOLE_HAS_METHOD (gtk, canonicalize_device_connection);
   CONSOLE_HAS_METHOD (gtk, device_to_console_connection);
   CONSOLE_HAS_METHOD (gtk, initially_selected_for_input);
+  CONSOLE_HAS_METHOD (gtk, perhaps_init_unseen_key_defaults);
   /* CONSOLE_HAS_METHOD (gtk, delete_console); */
 }
 

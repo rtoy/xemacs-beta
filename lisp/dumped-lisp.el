@@ -246,8 +246,7 @@ in dumped-lisp.el and is not itself listed.")
 ;; preload the X code.
        (when (featurep '(and x scrollbar)) "x-scrollbar")
        (when (featurep 'x)
-	 '("x-iso8859-1"
-	   "x-mouse"
+	 '("x-mouse"
 	   "x-select"
 	   "x-misc"
 	   "x-init"
@@ -259,7 +258,6 @@ in dumped-lisp.el and is not itself listed.")
 	   "gtk-widgets"
 	   "gdk"
 	   "gtk-init"
-	   "gtk-iso8859-1"
 	   "gtk-select"
 	   "gtk-mouse"
 	   "gtk-glyphs"

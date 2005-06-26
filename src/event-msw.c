@@ -2774,7 +2774,6 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 							   mods_with_quit);
 	      } /* while */
 
-#ifdef MULE
 	    /* Also figure out what the character would be in other
 	       possible keyboard layouts, in this order:
 
@@ -2912,7 +2911,6 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		      }
 		  }
 	      }
-#endif /* MULE */
 
 	    /* This generates WM_SYSCHAR messages, which are interpreted
 	       by DefWindowProc as the menu selections. */

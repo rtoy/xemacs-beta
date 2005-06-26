@@ -120,39 +120,59 @@ See `keyboard-translate-table' for more information."
   (while pairs
     (puthash (pop pairs) (pop pairs) keyboard-translate-table)))
 
-(put 'tab       'ascii-character ?\t)
-(put 'linefeed  'ascii-character ?\n)
-(put 'clear     'ascii-character 12)
-(put 'return    'ascii-character ?\r)
-(put 'escape    'ascii-character ?\e)
-(put 'space	'ascii-character ? )
+(defun set-character-of-keysym (keysym character)
+  "Make CHARACTER be inserted when KEYSYM is pressed, 
+and the key has been bound to `self-insert-command'.  "
+  (check-argument-type 'symbolp keysym) 
+  (check-argument-type 'characterp character)
+  (put keysym 'character-of-keysym character))
 
- ;; Do the same voodoo for the keypad keys.  I used to bind these to keyboard
- ;; macros (for instance, kp-0 was bound to "0") so that they would track the
- ;; bindings of the corresponding keys by default, but that made the display
- ;; of M-x describe-bindings much harder to read, so now we'll just bind them
- ;; to self-insert by default.  Not a big difference...
- 
-(put 'kp-0 'ascii-character ?0)
-(put 'kp-1 'ascii-character ?1)
-(put 'kp-2 'ascii-character ?2)
-(put 'kp-3 'ascii-character ?3)
-(put 'kp-4 'ascii-character ?4)
-(put 'kp-5 'ascii-character ?5)
-(put 'kp-6 'ascii-character ?6)
-(put 'kp-7 'ascii-character ?7)
-(put 'kp-8 'ascii-character ?8)
-(put 'kp-9 'ascii-character ?9)
+(defun get-character-of-keysym (keysym)
+  "Return the character inserted when KEYSYM is pressed, 
+and the key is bound to `self-insert-command'.  "
+  (check-argument-type 'symbolp keysym)
+  (event-to-character (make-event 'key-press (list 'key keysym))))
 
-(put 'kp-space     'ascii-character ? )
-(put 'kp-tab       'ascii-character ?\t)
-(put 'kp-enter     'ascii-character ?\r)
-(put 'kp-equal     'ascii-character ?=)
-(put 'kp-multiply  'ascii-character ?*)
-(put 'kp-add       'ascii-character ?+)
-(put 'kp-separator 'ascii-character ?,)
-(put 'kp-subtract  'ascii-character ?-)
-(put 'kp-decimal   'ascii-character ?.)
-(put 'kp-divide    'ascii-character ?/)
+;; We could take the first few of these out by removing the "/* Optimize for
+;; ASCII keysyms */" code in event-Xt.c, and I've a suspicion that may be
+;; the right thing to do anyway.
+
+(loop for (keysym char) in
+  '((tab ?\t)
+    (linefeed ?\n)
+    (clear ?\014)
+    (return ?\r)
+    (escape ?\e)
+    (space ? )
+
+    ;; Do the same voodoo for the keypad keys.  I used to bind these to
+    ;; keyboard macros (for instance, kp-0 was bound to "0") so that they
+    ;; would track the bindings of the corresponding keys by default, but
+    ;; that made the display of M-x describe-bindings much harder to read,
+    ;; so now we'll just bind them to self-insert by default.  Not a big
+    ;; difference...
+
+    (kp-0 ?0)
+    (kp-1 ?1)
+    (kp-2 ?2)
+    (kp-3 ?3)
+    (kp-4 ?4)
+    (kp-5 ?5)
+    (kp-6 ?6)
+    (kp-7 ?7)
+    (kp-8 ?8)
+    (kp-9 ?9)
+
+    (kp-space ? )
+    (kp-tab ?\t)
+    (kp-enter ?\r)
+    (kp-equal ?=)
+    (kp-multiply ?*)
+    (kp-add ?+)
+    (kp-separator ?,)
+    (kp-subtract ?-)
+    (kp-decimal ?.)
+    (kp-divide ?/))
+  do (set-character-of-keysym keysym char))
 
 ;;; events.el ends here

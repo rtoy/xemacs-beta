@@ -1482,11 +1482,11 @@ in a list containing the character.
 
 Beware that @code{character-to-event} and @code{event-to-character} are
 not strictly inverse functions, since events contain much more
-information than the @sc{ascii} character set can encode.
+information than the XEmacs internal character encoding can store.
 @end defun
 
-@defun event-to-character event &optional allow-extra-modifiers allow-meta allow-non-ascii
-This function returns the closest @sc{ascii} approximation to
+@defun event-to-character event &optional allow-extra-modifiers allow-meta
+This function returns the closest character approximation to
 @var{event}.  If the event isn't a keypress, this returns @code{nil}.
 
 If @var{allow-extra-modifiers} is non-@code{nil}, then this is lenient
@@ -1501,15 +1501,9 @@ be represented by turning on the high bit of the byte returned;
 otherwise, @code{nil} will be returned for events containing the
 @key{Meta} modifier.
 
-If @var{allow-non-ascii} is non-@code{nil}, then characters which are
-present in the prevailing character set (@pxref{Keymaps, variable
-@code{character-set-property}}) will be returned as their code in that
-character set, instead of the return value being restricted to
-@sc{ascii}.
-
-Note that specifying both @var{allow-meta} and @var{allow-non-ascii} is
-ambiguous, as both use the high bit; @key{M-x} and @key{oslash} will be
-indistinguishable.
+Specifying @var{allow-meta} will give ambiguous results---@key{M-x} and
+@key{oslash} will return the same thing, for example---so you should
+probably not use it.
 @end defun
 
 @defun events-to-keys events &optional no-mice

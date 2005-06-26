@@ -65,6 +65,8 @@ Lisp_Object Vgtk_emacs_application_class;
 Lisp_Object Vgtk_initial_argv_list; /* #### ugh! */
 Lisp_Object Vgtk_initial_geometry;
 
+Lisp_Object Qgtk_seen_characters;
+
 static void gtk_device_init_x_specific_cruft (struct device *d);
 
 static const struct memory_description gtk_device_data_description_1 [] = {
@@ -729,6 +731,8 @@ This is used during startup to communicate the default geometry to GTK.
 
   Vgtk_initial_geometry = Qnil;
   Vgtk_initial_argv_list = Qnil;
+
+  Qgtk_seen_characters = Qnil;
 }
 
 #include <gdk/gdkx.h>

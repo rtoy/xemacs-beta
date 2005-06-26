@@ -1,3 +1,27 @@
+2005-06-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cmdloop.el (read-quoted-char):
+	* isearch-mode.el (isearch-char-to-string):
+	Remove the fourth argument from event-to-character. 
+	
+	* dumped-lisp.el (preloaded-file-list):
+	No longer dump x-iso8859-1.el--we don't need it any more. 
+
+	* x-init.el (x-initialize-keyboard):
+	* keymap.el (events-to-keys):	
+	* events.el:
+	Rename the ascii-character keysym property to character-of-keysym. 
+
+	* gtk-compose.el:
+	Don't depend on gtk-iso8859-1.el
+
+	* x-compose.el:
+	Move to using character literals rather than X11 keysyms as macro
+	expansions. Loses the ability to use another character encoding
+	for the Latin-1 characters in X11 composition with a bit of
+	programming, which no-one uses; also happily reduces dependence on
+	x-iso8859-1.el, which is no longer of use.
+
 2005-06-06  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el (package-get-init-package):

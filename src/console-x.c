@@ -31,12 +31,17 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "device.h"
+#include "elhash.h"
 #include "process.h" /* canonicalize_host_name */
 #include "redisplay.h" /* for display_arg */
 
+#include "device-impl.h"
 #include "console-x-impl.h"
 
 DEFINE_CONSOLE_TYPE (x);
+
+extern void x_has_keysym (KeySym, Lisp_Object, int);
 
 static int
 x_initially_selected_for_input (struct console *UNUSED (con))
@@ -296,6 +301,70 @@ x_canonicalize_device_connection (Lisp_Object connection, Error_Behavior errb)
   RETURN_UNGCPRO (concat2 (connection, screen_str));
 }
 
+/* Given a key, if it maps to a character and we weren't previously aware
+   that it could be generated on console CON, and if it's unbound in the
+   global map, bind it to self-insert-command. Return Qt if the binding was
+   done; Qnil if not. */
+
+static Lisp_Object
+x_perhaps_init_unseen_key_defaults (struct console *con, Lisp_Object key)
+{
+  KeySym xkeysym;
+  const Extbyte *keysym_ext;
+  Lisp_Object key_name, previous_binding = Qnil;
+  extern Lisp_Object Qcharacter_of_keysym, Vcurrent_global_map;
+
+  /* Getting the device exactly right is not horrendously important; as long
+     as it's an X11 device it should be okay, because the global keymap (and
+     whether the key is bound) _is_ global, and any previously seen keysym
+     will already be bound, or not, in it. However, there is a corner case
+     where a symbol has been typed, and then explicitly unbound; if the next
+     event using that symbol comes in on some other frame, it'll get bound
+     again. This is not realistically an issue. */
+  struct device *d = XDEVICE(con->selected_device);
+
+  if (SYMBOLP (key))
+    {
+      key_name = symbol_name(XSYMBOL(key));
+    }
+  else
+    {
+      Ibyte buf[MAX_ICHAR_LEN + 1];
+      CHECK_CHAR(key);
+
+      buf[set_itext_ichar(buf, XCHAR(key))] = '\0';
+      key_name = build_string(buf);
+
+      /* We need to do the lookup and compare later, because we can't check
+	 the Qcharacter_of_keysym property belonging to an actual character. */
+      previous_binding = Flookup_key (Vcurrent_global_map, key, Qnil);
+    }
+
+  if (!NILP(Fgethash(key, DEVICE_X_KEYSYM_MAP_HASH_TABLE (d), Qnil)))
+    {
+      return Qnil;
+    }
+
+  LISP_STRING_TO_EXTERNAL (key_name, keysym_ext, Qctext);
+  xkeysym = XStringToKeysym(keysym_ext);
+  if (NoSymbol == xkeysym) 
+    {
+      return Qnil;
+    }
+
+  x_has_keysym(xkeysym, DEVICE_X_KEYSYM_MAP_HASH_TABLE (d), 0);
+
+  if (SYMBOLP(key))
+    {
+      return NILP(Fget (key, Qcharacter_of_keysym, Qnil)) ? Qnil : Qt;
+    }
+  else
+    {
+      return EQ(previous_binding, Flookup_key(Vcurrent_global_map, key, Qnil))
+	? Qnil : Qt;
+    }
+}
+
 void
 console_type_create_x (void)
 {
@@ -307,6 +376,7 @@ console_type_create_x (void)
   CONSOLE_HAS_METHOD (x, canonicalize_device_connection);
   CONSOLE_HAS_METHOD (x, device_to_console_connection);
   CONSOLE_HAS_METHOD (x, initially_selected_for_input);
+  CONSOLE_HAS_METHOD (x, perhaps_init_unseen_key_defaults);
 }
 
 

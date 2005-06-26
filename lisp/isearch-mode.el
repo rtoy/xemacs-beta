@@ -1813,7 +1813,7 @@ have special meaning in a regexp."
 
 (defun isearch-char-to-string (c)
   (if (eventp c)
-      (make-string 1 (event-to-character c nil nil t))
+      (make-string 1 (event-to-character c))
     (make-string 1 c)))
 
 ;(defun isearch-text-char-description (c)

@@ -1586,7 +1586,7 @@ event_matches_key_specifier_p (Lisp_Object event, Lisp_Object key_specifier)
      Fcharacter_to_event() will only match 'escape'. */
   if (CHAR_OR_CHAR_INTP (key_specifier))
     return (XCHAR_OR_CHAR_INT (key_specifier)
-	    == event_to_character (event, 0, 0, 0));
+	    == event_to_character (event, 0, 0));
 
   /* Otherwise, we cannot call event_to_character() because we may
      be dealing with non-ASCII keystrokes.  In any case, if I ask
@@ -1609,8 +1609,8 @@ event_matches_key_specifier_p (Lisp_Object event, Lisp_Object key_specifier)
     {
       int ch1, ch2;
 
-      ch1 = event_to_character (event, 0, 0, 0);
-      ch2 = event_to_character (event2, 0, 0, 0);
+      ch1 = event_to_character (event, 0, 0);
+      ch2 = event_to_character (event2, 0, 0);
       retval = (ch1 >= 0 && ch2 >= 0 && ch1 == ch2);
     }
   else if (EQ (XEVENT_KEY_KEYSYM (event), XEVENT_KEY_KEYSYM (event2)) &&
@@ -1810,10 +1810,10 @@ set of modifiers (such as control and meta).  A `keysym' is what is printed
 on the keys on your keyboard.
 
 A keysym may be represented by a symbol, or (if and only if it is equivalent
-to an ASCII character in the range 32 - 255) by a character or its equivalent
-ASCII code.  The `A' key may be represented by the symbol `A', the character
-`?A', or by the number 65.  The `break' key may be represented only by the
-symbol `break'.
+to a character with a code in the range 32 - 255) by a character or its
+equivalent code.  The `A' key may be represented by the symbol `A', the
+character `?A', or by the number 65.  The `break' key may be represented
+only by the symbol `break'.
 
 A keystroke may be represented by a list: the last element of the list
 is the key (a symbol, character, or number, as above) and the
@@ -2912,6 +2912,8 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
   int bit1, bit2;
   int sym1_p = 0;
   int sym2_p = 0;
+  extern Lisp_Object Qcharacter_of_keysym;
+
   obj1 = XCAR (obj1);
   obj2 = XCAR (obj2);
 
@@ -2920,12 +2922,12 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
   bit1 = MODIFIER_HASH_KEY_BITS (obj1);
   bit2 = MODIFIER_HASH_KEY_BITS (obj2);
 
-  /* If either is a symbol with a character-set-property, then sort it by
+  /* If either is a symbol with a Qcharacter_of_keysym property, then sort it by
      that code instead of alphabetically.
      */
   if (! bit1 && SYMBOLP (obj1))
     {
-      Lisp_Object code = Fget (obj1, Vcharacter_set_property, Qnil);
+      Lisp_Object code = Fget (obj1, Qcharacter_of_keysym, Qnil);
       if (CHAR_OR_CHAR_INTP (code))
 	{
 	  obj1 = code;
@@ -2935,7 +2937,7 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
     }
   if (! bit2 && SYMBOLP (obj2))
     {
-      Lisp_Object code = Fget (obj2, Vcharacter_set_property, Qnil);
+      Lisp_Object code = Fget (obj2, Qcharacter_of_keysym, Qnil);
       if (CHAR_OR_CHAR_INTP (code))
 	{
 	  obj2 = code;
@@ -3397,12 +3399,13 @@ of a character from a buffer rather than a key read from the user.
 
   if (EVENTP (chr))
     {
-      Lisp_Object ch = Fevent_to_character (chr, Qnil, Qnil, Qt);
+      Lisp_Object ch = Fevent_to_character (chr, Qnil, Qnil);
       if (NILP (ch))
 	return
 	  signal_continuable_error
 	    (Qinvalid_argument,
-	     "character has no ASCII equivalent", Fcopy_event (chr, Qnil));
+	     "key has no character equivalent (that we know of)",
+	     Fcopy_event (chr, Qnil));
       chr = ch;
     }
 
@@ -4124,6 +4127,7 @@ static int
 elide_next_two_p (Lisp_Object list)
 {
   Lisp_Object s1, s2;
+  extern Lisp_Object Qcharacter_of_keysym;
 
   if (NILP (XCDR (list)))
     return 0;
@@ -4143,7 +4147,7 @@ elide_next_two_p (Lisp_Object list)
 
   if (SYMBOLP (s1))
     {
-      Lisp_Object code = Fget (s1, Vcharacter_set_property, Qnil);
+      Lisp_Object code = Fget (s1, Qcharacter_of_keysym, Qnil);
       if (CHAR_OR_CHAR_INTP (code))
 	{
 	  s1 = code;
@@ -4153,7 +4157,7 @@ elide_next_two_p (Lisp_Object list)
     }
   if (SYMBOLP (s2))
     {
-      Lisp_Object code = Fget (s2, Vcharacter_set_property, Qnil);
+      Lisp_Object code = Fget (s2, Qcharacter_of_keysym, Qnil);
       if (CHAR_OR_CHAR_INTP (code))
 	{
 	  s2 = code;
@@ -4204,6 +4208,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 			     ? 256 : 160));
   int elided = 0;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  extern Lisp_Object Qcharacter_of_keysym;
 
   keymap = get_keymap (keymap, 1, 1);
   describe_map_closure.partial = (partial ? Qsuppress_keymap : Qnil);
@@ -4244,7 +4249,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	    buffer_insert_c_string (buf, "Sh-");
 	  if (SYMBOLP (keysym))
 	    {
-	      Lisp_Object code = Fget (keysym, Vcharacter_set_property, Qnil);
+	      Lisp_Object code = Fget (keysym, Qcharacter_of_keysym, Qnil);
 	      Ichar c = (CHAR_OR_CHAR_INTP (code)
 			  ? XCHAR_OR_CHAR_INT (code) : (Ichar) -1);
 	      /* Calling Fsingle_key_description() would cons more */

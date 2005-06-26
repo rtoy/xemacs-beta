@@ -192,7 +192,11 @@
   (x-define-dead-key XK_mute_asciicircum	compose-circumflex-map)
   (x-define-dead-key XK_mute_asciitilde		compose-tilde-map)
 
-  ;; Xfree86 seems to use lower case and a hyphen
+  ;; [[ XFree86 seems to use lower case and a hyphen ]] Not true; they use
+  ;; lower case and an underscore. XEmacs converts the underscore to a
+  ;; hyphen in x_keysym_to_emacs_keysym because the keysym is in the
+  ;; "Keyboard" character set, which is just totally fucking random,
+  ;; considering it doesn't happen for any other character sets. 
   (x-define-dead-key dead-acute			compose-acute-map)
   (x-define-dead-key dead-grave			compose-grave-map)
   (x-define-dead-key dead-cedilla		compose-cedilla-map)
@@ -240,7 +244,7 @@
   (let (unknown-code-points sym-string)
     (dolist (x-keysym (hash-table-key-list (x-keysym-hash-table)))
       (setq sym-string (if (stringp x-keysym) x-keysym (symbol-name x-keysym)))
-      (when (and (not (get (intern sym-string) 'ascii-character))
+      (when (and (not (get (intern sym-string) 'character-of-keysym))
 		 (string-match "^U[0-9A-F]+$" sym-string))
 	(pushnew (concat sym-string " ") unknown-code-points :test 'equal)))
     (when unknown-code-points
@@ -288,9 +292,6 @@ based on Unicode.  "
 (defun init-pre-x-win ()
   "Initialize X Windows at startup (pre).  Don't call this."
   (when (not pre-x-win-initted)
-    (require 'x-iso8859-1)
-    (setq character-set-property 'x-iso8859/1) ; see x-iso8859-1.el
-
     (setq initial-frame-plist (if initial-frame-unmapped-p
                                   '(initially-unmapped t)
                                 nil))

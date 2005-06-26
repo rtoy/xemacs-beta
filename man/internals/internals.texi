@@ -28257,7 +28257,7 @@ the known X keysym names and the corresponding (charset, octet) pairs.
 
 @quotation
    For every key on the keyboard that has a known character correspondence,
-   we define the ascii-character property of the keysym, and make the
+   we define the character-of-keysym property of the keysym, and make the
    default binding for the key be self-insert-command.
 
    The following magic is basically intimate knowledge of X11/keysymdef.h.

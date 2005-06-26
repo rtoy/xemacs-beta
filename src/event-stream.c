@@ -128,6 +128,9 @@ int modifier_keys_are_sticky;
 /* Modifier keys are sticky for this many milliseconds. */
 Lisp_Object Vmodifier_keys_sticky_time;
 
+/* If true, "Russian C-x processing" is enabled. */
+int try_alternate_layouts_for_commands;
+
 /* Here FSF Emacs 20.7 defines Vpost_command_idle_hook,
    post_command_idle_delay, Vdeferred_action_list, and
    Vdeferred_action_function, but we don't because that stuff is crap,
@@ -214,11 +217,6 @@ Lisp_Object Vkeyboard_translate_table;
 /* If control-meta-super-shift-X is undefined, try control-meta-super-x */
 Lisp_Object Vretry_undefined_key_binding_unshifted;
 Lisp_Object Qretry_undefined_key_binding_unshifted;
-
-#ifdef MULE
-/* If composed input is undefined, use self-insert-char */
-Lisp_Object Vcomposed_character_default_binding;
-#endif
 
 /* Console that corresponds to our controlling terminal */
 Lisp_Object Vcontrolling_terminal;
@@ -2364,7 +2362,7 @@ The returned event will be one of the following types:
      Note that last-input-char will never have its high-bit set, in an
      effort to sidestep the ambiguity between M-x and oslash.
      */
-  Vlast_input_char = Fevent_to_character (Vlast_input_event, Qnil, Qnil, Qnil);
+  Vlast_input_char = Fevent_to_character (Vlast_input_event, Qnil, Qnil);
   {
     EMACS_TIME t;
     EMACS_GET_TIME (t);
@@ -3169,7 +3167,7 @@ maybe_kbd_translate (Lisp_Object event)
   if (EQ (Fhash_table_count (Vkeyboard_translate_table), Qzero))
     return;
 
-  c = event_to_character (event, 0, 0, 0);
+  c = event_to_character (event, 0, 0);
   if (c != -1)
     {
       Lisp_Object traduit = Fgethash (make_char (c), Vkeyboard_translate_table,
@@ -3315,12 +3313,14 @@ munge_keymap_translate (struct command_builder *builder,
   return Qnil;
 }
 
-/* Same as command_builder_find_leaf() below but no Russian C-x
-   processing and no defaulting to self-insert-command.
- */
+/* Same as command_builder_find_leaf() below, but without offering the
+   platform-specific event code the opportunity to give a default binding of
+   an unseen keysym to self-insert-command, and without the fallback to
+   other keymaps for lookups that allows someone with a Cyrillic keyboard
+   to pretend it's Qwerty for C-x C-f, for example. */
 
 static Lisp_Object
-command_builder_find_leaf_no_mule_processing (struct command_builder *builder,
+command_builder_find_leaf_no_jit_binding (struct command_builder *builder,
 					      int allow_misc_user_events_p,
 					      int *did_munge)
 {
@@ -3397,7 +3397,7 @@ command_builder_find_leaf_no_mule_processing (struct command_builder *builder,
 	  GCPRO1 (neubauten);
 	  downshift_event (event_chain_tail (neub->current_events));
           result =
-	    command_builder_find_leaf_no_mule_processing
+	    command_builder_find_leaf_no_jit_binding
 	      (neub, allow_misc_user_events_p, did_munge);
 
           if (!NILP (result))
@@ -3442,7 +3442,42 @@ command_builder_find_leaf_no_mule_processing (struct command_builder *builder,
 
    DID_MUNGE must be initialized before calling this function.  If munging
    happened, DID_MUNGE will be non-zero; otherwise, it will be left alone.
- */
+
+   (The above was Ben, I think.)
+
+   It might be nice to have lookup-key call this function, directly or
+   indirectly. Though it is arguably the right thing if lookup-key fails on
+   a keysym that the X11 event code hasn't seen. There's no way to know if
+   that keysym is generatable by the keyboard until it's generated,
+   therefore there's no reasonable expectation that it be bound before it's
+   generated--all the other default bindings depend on our knowing the
+   keyboard layout and relying on it. And describe-key works without it, so
+   I think we're fine.
+
+   Some weirdness with this code--try this on a keyboard where X11 will
+   produce ediaeresis with dead-diaeresis and e, but it's not produced by
+   any other combination of keys on the keyboard;
+
+   (defun ding-command ()
+     (interactive)
+     (ding))
+
+   (define-key global-map 'ediaeresis 'ding-command)
+
+   Now, pressing dead-diaeresis and then e will ding. Next; 
+
+   (define-key global-map 'ediaeresis 'self-insert-command) 
+   
+   and press dead-diaeresis and then e. It'll give you "Invalid argument:
+   typed key has no ASCII equivalent" Then; 
+
+   (define-key global-map 'ediaeresis nil)
+
+   and press the combination again; it'll self-insert. The moral of the
+   story is, if you want to suppress all bindings to a non-ASCII X11 key,
+   bind it to a trivial no-op command, because the automatic mapping to
+   self-insert-command will happen if there's no existing binding for the
+   symbol. I can't see a way around this. -- Aidan Kehoe, 2005-05-14 */
 
 static Lisp_Object
 command_builder_find_leaf (struct command_builder *builder,
@@ -3450,24 +3485,141 @@ command_builder_find_leaf (struct command_builder *builder,
 			   int *did_munge)
 {
   Lisp_Object result =
-    command_builder_find_leaf_no_mule_processing
+    command_builder_find_leaf_no_jit_binding
       (builder, allow_misc_user_events_p, did_munge);
+  Lisp_Object event, console, channel, lookup_res;
+  int redolookup = 0, i;
 
   if (!NILP (result))
     return result;
 
-#ifdef MULE
-  /* #### Do Russian C-x processing here */
+  /* If some of the events are keyboard events, and this is the first time
+     the platform event code has seen their keysyms--which will be the case
+     the first time we see a composed keysym on X11, for example--offer it
+     the chance to define them as a self-insert-command, and do the lookup
+     again.
 
-  /* If keysym is a non-ASCII char, bind it to self-insert-char by default. */
-  if (XEVENT_TYPE (builder->most_current_event) == key_press_event
-      && !NILP (Vcomposed_character_default_binding))
+     This isn't Mule-specific; in a world where x-iso8859-1.el is gone, it's
+     needed for non-Mule too.
+
+     Probably this can just be limited to the checking the last
+     keypress. */
+
+  EVENT_CHAIN_LOOP (event, builder->current_events)
     {
-      Lisp_Object keysym = XEVENT_KEY_KEYSYM (builder->most_current_event);
-      if (CHARP (keysym) && !ichar_ascii_p (XCHAR (keysym)))
-        return Vcomposed_character_default_binding;
+      /* We can ignore key release events because the preceding presses will
+     	 have initiated the mapping. */
+      if (key_press_event != XEVENT_TYPE (event))
+     	continue;
+
+      channel = XEVENT_CHANNEL (event);
+      if (object_dead_p (channel))
+	continue;
+
+      console = CDFW_CONSOLE (channel);
+      if (NILP (console))
+     	console = Vselected_console;
+
+      if (CONSOLE_LIVE_P(XCONSOLE(console)))
+	{
+	  lookup_res = MAYBE_LISP_CONMETH(XCONSOLE(console), 
+					  perhaps_init_unseen_key_defaults, 
+					  (XCONSOLE(console),
+					   XEVENT_KEY_KEYSYM(event)));
+	  if (EQ(lookup_res, Qt))
+	    {
+	      redolookup += 1;
+	    }
+	}
     }
-#endif
+
+  if (redolookup)
+    {
+      result = command_builder_find_leaf_no_jit_binding
+	(builder, allow_misc_user_events_p, did_munge);
+      if (!NILP (result))
+	{
+	  return result;
+	}
+    }
+
+  /* The old composed-character-default-binding handling that used to be
+     here was wrong--if a user wants to bind a given key to something other
+     than self-insert-command, then they should go ahead and do it, we won't
+     override it, and the sane thing to do with any key that has a known
+     character correspondence is _always_ to default it to
+     self-insert-command, nothing else.
+
+     I'm adding the variable to control whether "Russian C-x processing" is
+     used because I have a feeling that it's not always the most appropriate
+     thing to do--in cases where people are using a non-Qwerty
+     Roman-alphabet layout, do they really want C-x with some random letter
+     to call `switch-to-buffer'? I can imagine that being very confusing,
+     certainly for new users, and it might be that defaulting the value for
+     `try-alternate-layouts-for-commands' as part of the language
+     environment is the right thing to do, only defaulting to `t' for those
+     languages that don't use the Roman alphabet. 
+
+     Much of that reasoning is tentative on my part, and feel free to change
+     this code if you have more experience with the problem and an intuition
+     that differs from mine. (Aidan Kehoe, 2005-05-29)*/ 
+
+  if (!try_alternate_layouts_for_commands)
+    {
+      return Qnil; 
+    }
+
+  if (key_press_event == XEVENT_TYPE (builder->most_current_event))
+    {
+      Lisp_Object ev = builder->most_current_event, newbuilder;
+      Ichar this_alternative;
+
+      struct command_builder *newb;
+      struct gcpro gcpro1;
+
+      /* Ignore the value for CURRENT_LANGENV, because we've checked it
+	 already, above. */
+      for (i = KEYCHAR_CURRENT_LANGENV, ++i; i < KEYCHAR_LAST; ++i)
+	{
+	  this_alternative = XEVENT_KEY_ALT_KEYCHARS(ev, i);
+
+	  if (0 == this_alternative)
+	    continue;
+
+	  newbuilder = copy_command_builder(builder, 0);
+	  GCPRO1(newbuilder);
+
+	  newb = XCOMMAND_BUILDER(newbuilder);
+
+	  XSET_EVENT_KEY_KEYSYM(event_chain_tail (newbuilder->current_events), 
+				make_char(this_alternative));
+
+	  result = command_builder_find_leaf_no_jit_binding
+	    (newb, allow_misc_user_events_p, did_munge);
+
+	  if (!NILP (result))
+	    {
+	      copy_command_builder (newb, builder);
+	      *did_munge = 1;
+	    }
+	  else if (event_upshifted_p (newbuilder->most_current_event) &&
+		   !NILP (Vretry_undefined_key_binding_unshifted)
+		   && isascii(this_alternative))
+	    {
+	      downshift_event (event_chain_tail (newbuilder->current_events));
+	      XSET_EVENT_KEY_KEYSYM(event_chain_tail (newb->current_events), 
+				    make_char(tolower(this_alternative)));
+	      result = command_builder_find_leaf_no_jit_binding
+		(newb, allow_misc_user_events_p, did_munge);
+	    }
+
+	  free_command_builder (newb);
+	  UNGCPRO;
+
+	  if (!NILP (result))
+	    return result;
+	}
+    }
 
   return Qnil;
 }
@@ -4096,7 +4248,7 @@ execute_command_event (struct command_builder *command_builder,
   /* Note that last-command-char will never have its high-bit set, in
      an effort to sidestep the ambiguity between M-x and oslash. */
   Vlast_command_char = Fevent_to_character (Vlast_command_event,
-					    Qnil, Qnil, Qnil);
+					    Qnil, Qnil);
 
   /* Actually call the command, with all sorts of hair to preserve or clear
      the echo-area and region as appropriate and call the pre- and post-
@@ -5062,17 +5214,6 @@ Currently only implemented under X Window System.
 */ );
   Vmodifier_keys_sticky_time = make_int (500);
 
-#ifdef MULE
-  DEFVAR_LISP ("composed-character-default-binding",
-               &Vcomposed_character_default_binding /*
-The default keybinding to use for key events from composed input.
-Window systems frequently have ways to allow the user to compose
-single characters in a language using multiple keystrokes.
-XEmacs sees these as single character keypress events.
-*/ );
-  Vcomposed_character_default_binding = Qself_insert_command;
-#endif
-
   Vcontrolling_terminal = Qnil;
   staticpro (&Vcontrolling_terminal);
 
@@ -5118,13 +5259,32 @@ and is one of the following:
   debug_emacs_events = 0;
 #endif
 
-  DEFVAR_BOOL ("inhibit-input-event-recording", &inhibit_input_event_recording /*
+  DEFVAR_BOOL ("inhibit-input-event-recording",
+	       &inhibit_input_event_recording /*
 Non-nil inhibits recording of input-events to recent-keys ring.
 */ );
   inhibit_input_event_recording = 0;
 
   Vkeyboard_translate_table =
     make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+
+  DEFVAR_BOOL ("try-alternate-layouts-for-commands",
+	       &try_alternate_layouts_for_commands /*
+Non-nil means that if looking up a command from a sequence of keys typed by
+the user would otherwise fail, try it again with some other keyboard
+layout. On X11, the only alternative to the default mapping is American
+QWERTY; on Windows, other mappings may be available, depending on things
+like the default language environment for the current user, for the system,
+&c.
+
+With a Russian keyboard layout on X11, for example, this means that
+C-Cyrillic_che C-Cyrillic_a, if you haven't given that sequence a binding
+yourself, will invoke `find-file.' This is because `Cyrillic_che' is
+physically where `x' is, and `Cyrillic_a' is where `f' is, on an American
+Qwerty layout, and, of course, C-x C-f is a default emacs binding for that
+command.
+*/ );
+  try_alternate_layouts_for_commands = 1;
 }
 
 void
