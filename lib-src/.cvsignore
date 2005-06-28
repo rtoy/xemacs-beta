@@ -27,3 +27,4 @@ DOC
 *.idb
 *.ilk
 make-dump-id
+insert-data-in-exec

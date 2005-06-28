@@ -1,5 +1,9 @@
 2005-06-28  Marcus Crestani  <crestani@xemacs.org>
 
+	* .cvsignore: Add dump-size, xemacs.def, xemacs.def.in.
+
+2005-06-28  Marcus Crestani  <crestani@xemacs.org>
+
 	* gpmevent.c: Remove workaround.
 	* gpmevent.c (Fgpm_enable): Use GET_DEFUN_LISP_OBJECT to get
 	Lisp_Object of a built-in function.
