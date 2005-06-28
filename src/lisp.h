@@ -3016,6 +3016,8 @@ Lisp_Object,Lisp_Object,Lisp_Object
   };									  \
   static struct Lisp_Subr *S##Fname;					  \
   DOESNT_RETURN_TYPE (Lisp_Object) Fname (DEFUN_##max_args arglist)
+#define GET_DEFUN_LISP_OBJECT(Fname) \
+  wrap_subr (S##Fname);
 #else /* not MC_ALLOC */
 #define DEFUN(lname, Fname, min_args, max_args, prompt, arglist)	\
   Lisp_Object Fname (EXFUN_##max_args);					\
@@ -3056,6 +3058,8 @@ Lisp_Object,Lisp_Object,Lisp_Object
     (lisp_fn_t) Fname							\
   };									\
   DOESNT_RETURN_TYPE (Lisp_Object) Fname (DEFUN_##max_args arglist)
+#define GET_DEFUN_LISP_OBJECT(Fname) \
+  wrap_subr (&S##Fname);
 #endif /* not MC_ALLOC */
 
 /* Heavy ANSI C preprocessor hackery to get DEFUN to declare a

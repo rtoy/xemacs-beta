@@ -1289,7 +1289,7 @@ init_tooltalk (void)
     {
       /* Don't ask the user for confirmation when exiting Emacs */
       Fprocess_kill_without_query (lp, Qnil);
-      fil = wrap_subr (&SFreceive_tooltalk_message);
+      fil = GET_DEFUN_LISP_OBJECT (Freceive_tooltalk_message);
       set_process_filter (lp, fil, 1, 0);
     }
   else

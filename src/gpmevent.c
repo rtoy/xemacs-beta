@@ -59,10 +59,6 @@ static void (*orig_next_event_cb) (Lisp_Event *);
 static Lisp_Object gpm_event_queue;
 static Lisp_Object gpm_event_queue_tail;
 
-#ifdef MC_ALLOC
-static Lisp_Object MC_ALLOC_Freceive_gpm_event;
-#endif /* MC_ALLOC */
-
 struct __gpm_state
 {
   int gpm_tried;
@@ -597,11 +593,7 @@ Toggle accepting of GPM mouse events.
 	{
 	  rval = 0;
 	  Fprocess_kill_without_query (gpm_process, Qnil);
-#ifdef MC_ALLOC
-	  gpm_filter = MC_ALLOC_Freceive_gpm_event;
-#else /* not MC_ALLOC */
-	  gpm_filter = wrap_subr (&SFreceive_gpm_event);
-#endif /* not MC_ALLOC */
+	  gpm_filter = GET_DEFUN_LISP_OBJECT (Freceive_gpm_event);
 	  set_process_filter (gpm_process, gpm_filter, 1, 0);
 
 	  /* Keep track of the device for later */
@@ -629,17 +621,7 @@ void vars_of_gpmevent (void)
 
 void syms_of_gpmevent (void)
 {
-#ifdef MC_ALLOC
-#define DEFSUBR_receive_gpm_event(Fname)		\
-do {							\
-  DEFSUBR_MC_ALLOC (Fname);				\
-  defsubr (S##Fname);					\
-  MC_ALLOC_Freceive_gpm_event = wrap_subr (S##Fname);	\
-} while (0)
-  DEFSUBR_receive_gpm_event (Freceive_gpm_event);
-#else /* not MC_ALLOC */
   DEFSUBR (Freceive_gpm_event);
-#endif /* not MC_ALLOC */
   DEFSUBR (Fgpm_enable);
   DEFSUBR (Fgpm_enabled_p);
 }
