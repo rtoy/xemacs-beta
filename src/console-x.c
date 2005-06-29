@@ -333,7 +333,7 @@ x_perhaps_init_unseen_key_defaults (struct console *con, Lisp_Object key)
       CHECK_CHAR(key);
 
       buf[set_itext_ichar(buf, XCHAR(key))] = '\0';
-      key_name = build_string(buf);
+      key_name = build_intstring (buf);
 
       /* We need to do the lookup and compare later, because we can't check
 	 the Qcharacter_of_keysym property belonging to an actual character. */

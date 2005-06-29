@@ -826,7 +826,7 @@ x_keysym_to_emacs_keysym (KeySym keysym, int simple_p)
 	      INC_IBYTEPTR(iname);
 	    }
 	}
-      return KEYSYM (eidata(einame));
+      return KEYSYM ((const CIbyte *) eidata (einame));
     }
 }
 

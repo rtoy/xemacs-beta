@@ -1,5 +1,12 @@
 2005-06-28  Marcus Crestani  <crestani@xemacs.org>
 
+	* console-x.c (x_perhaps_init_unseen_key_defaults): Use
+	build_intstring to avoid type error.
+	* event-Xt.c (x_keysym_to_emacs_keysym): Add cast to avoid type
+	error.
+
+2005-06-28  Marcus Crestani  <crestani@xemacs.org>
+
 	* .cvsignore: Add dump-size, xemacs.def, xemacs.def.in.
 
 2005-06-28  Marcus Crestani  <crestani@xemacs.org>
