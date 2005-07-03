@@ -94,7 +94,6 @@ gboolean emacs_gtk_event_handler (GtkWidget *wid /* unused */,
 
 static int last_quit_check_signal_tick_count;
 
-Lisp_Object Qkey_mapping;
 Lisp_Object Qsans_modifiers;
 
 /*
@@ -1627,7 +1626,6 @@ emacs_gtk_force_event_pending (struct frame* UNUSED (f))
 void
 syms_of_event_gtk (void)
 {
-  DEFSYMBOL (Qkey_mapping);
   DEFSYMBOL (Qsans_modifiers);
 }
 

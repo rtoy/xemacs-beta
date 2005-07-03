@@ -169,6 +169,7 @@ SYMBOL_KEYWORD (Q_vertically_justify);
 SYMBOL_KEYWORD (Q_horizontally_justify);
 SYMBOL (Qkey);
 SYMBOL (Qkey_assoc);
+SYMBOL (Qkey_mapping);
 SYMBOL_KEYWORD (Q_key_sequence);
 SYMBOL (Qkeyboard);
 SYMBOL (Qkeymap);

@@ -1,3 +1,12 @@
+2005-07-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-Xt.c:
+	* event-gtk.c:
+	* events.c (event_to_character):
+	* general-slots.h:
+	Move the Qkey_mapping variable to general-slots.h, now that it's
+	used outside the platform specific keyboard warning code. 
+
 2005-06-28  Marcus Crestani  <crestani@xemacs.org>
 
 	* console-x.c (x_perhaps_init_unseen_key_defaults): Use

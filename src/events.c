@@ -1340,8 +1340,6 @@ event_to_character (Lisp_Object event,
 
       if (CHAR_OR_CHAR_INTP (code = Fget (thekeysym, Qascii_character, Qnil)))
 	{
-	  extern Lisp_Object Qkey_mapping;
-
 	  c = XCHAR_OR_CHAR_INT (code);
 	  warn_when_safe(Qkey_mapping, Qwarning, 
 			 "Obsolete key binding technique.\n"
