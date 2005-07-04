@@ -247,7 +247,7 @@ unexapollo.o: $(CONFIG_H)
 unexconvex.o: $(CONFIG_H) compiler.h getpagesize.h
 unexcw.o: $(LISP_H) sysfile.h
 unexec.o: $(LISP_H) getpagesize.h
-unexelf.o: $(CONFIG_H) compiler.h
+unexelf.o: $(LISP_H)
 unexelfsgi.o: $(CONFIG_H) compiler.h
 unexencap.o: compiler.h
 unexenix.o: $(CONFIG_H) compiler.h
