@@ -1,3 +1,10 @@
+2005-06-29  Marcus Crestani  <crestani@xemacs.org>
+
+	Fix C++ build for unexec.
+	* unexelf.c: Adjust fatal and unexec to the declarations in
+	lisp.h.
+	* unexelf.c (unexec): Remove unneeded arguments from fatal calls.
+
 2005-07-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-Xt.c:

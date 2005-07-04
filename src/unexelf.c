@@ -413,7 +413,8 @@ Filesz      Memsz       Flags       Align
 #define fatal(a, b, c) fprintf (stderr, a, b, c), exit (1)
 #else
 #include <config.h>
-extern void fatal (const char *, ...);
+#include "lisp.h"
+extern DOESNT_RETURN fatal (const CIbyte *, ...);
 #endif
 
 #include <sys/types.h>
@@ -563,10 +564,8 @@ round_up (ElfW(Addr) x, ElfW(Addr) y)
  * .data section, and inserting an empty .bss immediately afterwards.
  *
  */
-void unexec (char *new_name, char *old_name, unsigned int data_start,
-	    unsigned int bss_start, unsigned int entry_address);
-void
-unexec (char *new_name, char *old_name, unsigned int UNUSED (data_start),
+int
+unexec (Extbyte *new_name, Extbyte *old_name, unsigned int UNUSED (data_start),
 	unsigned int UNUSED (bss_start), unsigned int UNUSED (entry_address))
 {
   int new_file, old_file, new_file_size;
@@ -637,7 +636,7 @@ unexec (char *new_name, char *old_name, unsigned int UNUSED (data_start),
 	break;
     }
   if (old_bss_index == old_file_h->e_shnum)
-    fatal ("Can't find .bss in %s.\n", old_name, 0);
+    fatal ("Can't find .bss in %s.\n", old_name);
 
   for (old_sbss_index = 1; old_sbss_index < (int) old_file_h->e_shnum;
        old_sbss_index++)
@@ -714,7 +713,7 @@ unexec (char *new_name, char *old_name, unsigned int UNUSED (data_start),
 #endif
 
   if ((unsigned) new_bss_addr < (unsigned) old_bss_addr + old_bss_size)
-    fatal (".bss shrank when undumping???\n", 0, 0);
+    fatal (".bss shrank when undumping???\n");
 
   /* Set the output file to the right size and mmap it.  Set
    * pointers to various interesting objects.  stat_buf still has
@@ -797,7 +796,7 @@ unexec (char *new_name, char *old_name, unsigned int UNUSED (data_start),
 	  > (old_sbss_index == -1
 	     ? old_bss_addr
 	     : round_up (old_bss_addr, alignment)))
-	  fatal ("Program segment above .bss in %s\n", old_name, 0);
+	  fatal ("Program segment above .bss in %s\n", old_name);
 
       if (NEW_PROGRAM_H (n).p_type == PT_LOAD
 	  && (round_up ((NEW_PROGRAM_H (n)).p_vaddr
@@ -807,7 +806,7 @@ unexec (char *new_name, char *old_name, unsigned int UNUSED (data_start),
 	break;
     }
   if (n < 0)
-    fatal ("Couldn't find segment next to .bss in %s\n", old_name, 0);
+    fatal ("Couldn't find segment next to .bss in %s\n", old_name);
 
   /* Make sure that the size includes any padding before the old .bss
      section.  */
@@ -838,7 +837,7 @@ unexec (char *new_name, char *old_name, unsigned int UNUSED (data_start),
 		 ".data"))
       break;
   if (old_data_index == old_file_h->e_shnum)
-    fatal ("Can't find .data in %s.\n", old_name, 0);
+    fatal ("Can't find .data in %s.\n", old_name);
 
   /* Walk through all section headers, insert the new data2 section right
      before the new bss section. */
@@ -1180,4 +1179,5 @@ unexec (char *new_name, char *old_name, unsigned int UNUSED (data_start),
   stat_buf.st_mode |= 0111 & ~n;
   if (chmod (new_name, stat_buf.st_mode) == -1)
     fatal ("Can't chmod (%s): errno %d\n", new_name, errno);
+  return 0;
 }
