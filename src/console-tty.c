@@ -50,7 +50,7 @@ DECLARE_IMAGE_INSTANTIATOR_FORMAT (inherit);
 Lisp_Object Qterminal_type;
 Lisp_Object Qcontrolling_process;
 
-static Lisp_Object Qseen_characters;
+Lisp_Object Vtty_seen_characters;
 
 static const struct memory_description tty_console_data_description_1 [] = {
   { XD_LISP_OBJECT, offsetof (struct tty_console, terminal_type) },
@@ -362,17 +362,17 @@ tty_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
 
   CHECK_CHAR(key);
 
-  if (!(HASH_TABLEP(Qseen_characters)))
+  if (!(HASH_TABLEP(Vtty_seen_characters)))
     {
       /* All the keysyms we deal with are character objects; therefore, we
 	 can use eq as the test without worrying. */
-      Qseen_characters = make_lisp_hash_table (128, HASH_TABLE_NON_WEAK,
+      Vtty_seen_characters = make_lisp_hash_table (128, HASH_TABLE_NON_WEAK,
 					       HASH_TABLE_EQ);
     }
 
   /* Might give the user an opaque error if make_lisp_hash_table fails,
      but it won't crash. */
-  CHECK_HASH_TABLE(Qseen_characters);
+  CHECK_HASH_TABLE(Vtty_seen_characters);
 
   val = XCHAR(key);
 
@@ -382,14 +382,14 @@ tty_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
       return Qnil; 
     }
 
-  if (!NILP(Fgethash(key, Qseen_characters, Qnil)))
+  if (!NILP(Fgethash(key, Vtty_seen_characters, Qnil)))
     {
       return Qnil;
     }
 
   if (NILP (Flookup_key (Vcurrent_global_map, key, Qnil))) 
     {
-      Fputhash(key, Qt, Qseen_characters);
+      Fputhash(key, Qt, Vtty_seen_characters);
       Fdefine_key (Vcurrent_global_map, key, Qself_insert_command); 
       return Qt; 
     }
@@ -451,6 +451,9 @@ image_instantiator_format_create_glyphs_tty (void)
 void
 vars_of_console_tty (void)
 {
-  Qseen_characters = Qnil;
+  DEFVAR_LISP ("tty-seen-characters", &Vtty_seen_characters /*
+Hash table of non-ASCII characters the TTY subsystem has seen.
+*/ );
+  Vtty_seen_characters = Qnil;
   Fprovide (Qtty);
 }

@@ -68,7 +68,7 @@ Lisp_Object Qtaskmodal;
 Lisp_Object Qtopmost;
 Lisp_Object Qyesno;
 Lisp_Object Qyesnocancel;
-static Lisp_Object Qseen_characters = Qnil;
+Lisp_Object Vmswindows_seen_characters;
 
 /* Lisp_Object Qabort; */
 /* Lisp_Object Qcancel; */
@@ -206,16 +206,17 @@ mswindows_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
 
   CHECK_CHAR(key);
 
-  if (!(HASH_TABLEP(Qseen_characters)))
+  if (!(HASH_TABLEP(Vmswindows_seen_characters)))
     {
       /* All the keysym we deal with are character objects; therefore, we
 	 can use eq as the test without worrying. */
-      Qseen_characters = make_lisp_hash_table (128, HASH_TABLE_NON_WEAK,
-					       HASH_TABLE_EQ);
+      Vmswindows_seen_characters = make_lisp_hash_table (128,
+							 HASH_TABLE_NON_WEAK,
+							 HASH_TABLE_EQ);
     }
   /* Might give the user an opaque error if make_lisp_hash_table fails,
      but it shouldn't crash. */
-  CHECK_HASH_TABLE(Qseen_characters);
+  CHECK_HASH_TABLE(Vmswindows_seen_characters);
 
   val = XCHAR(key);
 
@@ -225,14 +226,14 @@ mswindows_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
       return Qnil; 
     }
 
-  if (!NILP(Fgethash(key, Qseen_characters, Qnil)))
+  if (!NILP(Fgethash(key, Vmswindows_seen_characters, Qnil)))
     {
       return Qnil;
     }
 
   if (NILP (Flookup_key (Vcurrent_global_map, key, Qnil))) 
     {
-      Fputhash(key, Qt, Qseen_characters);
+      Fputhash(key, Qt, Vmswindows_seen_characters);
       Fdefine_key (Vcurrent_global_map, key, Qself_insert_command); 
       return Qt; 
     }
@@ -757,6 +758,9 @@ reinit_console_type_create_mswindows (void)
 void
 vars_of_console_mswindows (void)
 {
-  Qseen_characters = Qnil;
+  DEFVAR_LISP ("mswindows-seen-characters", &Vmswindows_seen_characters /*
+Hash table of non-ASCII characters the MS Windows subsystem has seen.
+*/ );
+  Vmswindows_seen_characters = Qnil;
   Fprovide (Qmswindows);
 }

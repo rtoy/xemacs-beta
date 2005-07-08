@@ -1,3 +1,16 @@
+2005-07-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* console-msw.c:
+	* console-msw.c (mswindows_perhaps_init_unseen_key_defaults):
+	* console-msw.c (vars_of_console_mswindows):
+	Rename Qseen_characters to Vmswindows_seen_characters, dump it
+	when pdump is in use. 
+	
+	* console-tty.c (tty_perhaps_init_unseen_key_defaults):
+	* console-tty.c (vars_of_console_tty):
+	Rename Qseen_characters to Vttyxo_seen_characters, dump it
+	when pdump is in use. 
+
 2005-06-29  Marcus Crestani  <crestani@xemacs.org>
 
 	Fix C++ build for unexec.
