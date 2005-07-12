@@ -228,9 +228,15 @@ dll_open (Lisp_Object fname)
   NSModule out;
   NSObjectFileImageReturnCode ret;
 
+  /*
+   * MacOS X dll support is for bundles, not the current executable, so return
+   * NULL is this case.  However, dll_function() uses a special hack where a
+   * NULL handle can be used to find executable symbols.  This satisfies the
+   * needs of ui-gtk.c but is not a general solution.
+   */
   if (NILP (fname))
     {
-      soname = NULL;
+      return NULL;
     }
   else
     {
