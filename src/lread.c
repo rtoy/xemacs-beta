@@ -3247,7 +3247,7 @@ would also be safe, but much slower.
 *Whether `load' should always display loading messages.
 If this is true, every file loaded will be shown, regardless of the setting
 of the NOMESSAGE parameter, and even when files are loaded indirectly, e.g.
-due to `requre'.
+due to `require'.
 */ );
   load_always_display_messages = 0;
 
