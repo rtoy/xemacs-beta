@@ -1,3 +1,8 @@
+2005-07-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* NEWS: Add information on the last argument to event-to-character
+	being ignored. 
+
 2005-05-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.21 "corn" is released.

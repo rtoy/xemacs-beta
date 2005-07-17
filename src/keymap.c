@@ -3399,7 +3399,7 @@ of a character from a buffer rather than a key read from the user.
 
   if (EVENTP (chr))
     {
-      Lisp_Object ch = Fevent_to_character (chr, Qnil, Qnil);
+      Lisp_Object ch = Fevent_to_character (chr, Qnil, Qnil, Qnil);
       if (NILP (ch))
 	return
 	  signal_continuable_error

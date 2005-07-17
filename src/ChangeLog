@@ -1,3 +1,15 @@
+2005-07-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cmds.c (Fself_insert_command):
+	* editfns.c (Fchar_to_string):
+	* event-stream.c (Fnext_event):
+	* event-stream.c (execute_command_event):
+	* events.c (Fevent_to_character):
+	* keymap.c (Ftext_char_description):
+	* lisp.h:
+	Add back the last argument to event-to-character; document that
+	it's unused. 
+	
 2005-07-11  Atanu Ghosh <atanu@icsi.berkeley.edu>
 
 	* sysdll.c (dll_open): Under MacOS X return NULL under the

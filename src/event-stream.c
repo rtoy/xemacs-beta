@@ -2362,7 +2362,7 @@ The returned event will be one of the following types:
      Note that last-input-char will never have its high-bit set, in an
      effort to sidestep the ambiguity between M-x and oslash.
      */
-  Vlast_input_char = Fevent_to_character (Vlast_input_event, Qnil, Qnil);
+  Vlast_input_char = Fevent_to_character (Vlast_input_event, Qnil, Qnil, Qnil);
   {
     EMACS_TIME t;
     EMACS_GET_TIME (t);
@@ -4252,7 +4252,7 @@ execute_command_event (struct command_builder *command_builder,
   /* Note that last-command-char will never have its high-bit set, in
      an effort to sidestep the ambiguity between M-x and oslash. */
   Vlast_command_char = Fevent_to_character (Vlast_command_event,
-					    Qnil, Qnil);
+					    Qnil, Qnil, Qnil);
 
   /* Actually call the command, with all sorts of hair to preserve or clear
      the echo-area and region as appropriate and call the pre- and post-

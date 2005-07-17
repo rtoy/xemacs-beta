@@ -1385,7 +1385,7 @@ event_to_character (Lisp_Object event,
   return c;
 }
 
-DEFUN ("event-to-character", Fevent_to_character, 1, 3, 0, /*
+DEFUN ("event-to-character", Fevent_to_character, 1, 4, 0, /*
 Return the closest character approximation to the given event object.
 If the event isn't a keypress, this returns nil.
 If the ALLOW-EXTRA-MODIFIERS argument is non-nil, then this is lenient in
@@ -1398,8 +1398,9 @@ If the ALLOW-META argument is non-nil, then the Meta modifier will be
  will be returned for events containing the Meta modifier.
 Note that ALLOW-META may cause ambiguity between meta characters and
  Latin-1 characters.
+ALLOW-NON-ASCII is unused, and retained for compatibility. 
 */
-       (event, allow_extra_modifiers, allow_meta))
+       (event, allow_extra_modifiers, allow_meta, UNUSED(allow_non_ascii)))
 {
   Ichar c;
   CHECK_LIVE_EVENT (event);

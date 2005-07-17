@@ -57,6 +57,17 @@ course of the next major release, though, so you will have to migrate your
 resources at some point.
 
 
+* Lisp and internal changes in XEmacs 21.5
+==========================================
+
+** The ALLOW-NON-ASCII argument to event-to-character is not used. 
+
+While it is still accepted, for compatibilty with older code,
+event-to-character no longer takes note of this argument, since the specific
+type of mapping between characters and keysyms that it affected is no longer
+in place. 
+
+
 * Changes in XEmacs 21.4
 ========================
 

@@ -339,7 +339,7 @@ If a prefix arg COUNT is specified, the character is inserted COUNT times.
   if (CHAR_OR_CHAR_INTP (Vlast_command_char))
     c = Vlast_command_char;
   else
-    c = Fevent_to_character (Vlast_command_event, Qnil, Qnil);
+    c = Fevent_to_character (Vlast_command_event, Qnil, Qnil, Qnil);
 
   if (NILP (c))
     invalid_operation (

@@ -1485,7 +1485,7 @@ not strictly inverse functions, since events contain much more
 information than the XEmacs internal character encoding can store.
 @end defun
 
-@defun event-to-character event &optional allow-extra-modifiers allow-meta
+@defun event-to-character event &optional allow-extra-modifiers allow-meta allow-no-ascii
 This function returns the closest character approximation to
 @var{event}.  If the event isn't a keypress, this returns @code{nil}.
 
@@ -1504,6 +1504,20 @@ otherwise, @code{nil} will be returned for events containing the
 Specifying @var{allow-meta} will give ambiguous results---@key{M-x} and
 @key{oslash} will return the same thing, for example---so you should
 probably not use it.
+
+@var{allow-non-ascii} is ignored; in previous versions of XEmacs, it
+controlled whether one particular type of mapping between X11 keysyms
+and characters would take place.  The intention was that this flag could
+be clear and you could be sure that if you got a Latin-1 character with
+the high bit set back, you could assume that the lower seven bits of the
+character were the ASCII code of the character in question, and that the
+Meta key was pressed at the same time.  This didn't work in the general
+case, however, because it left the other type of X11 keysym-to-character
+mapping in place, ready to give you a Latin-1 character for a Latin-1
+key.  If you feel the need to use such a flag, sit back and think about
+abstracting your code, and if you still feel the need, bear in mind that
+it will be buggy in earlier versions of XEmacs.
+
 @end defun
 
 @defun events-to-keys events &optional no-mice

@@ -4309,7 +4309,7 @@ void signal_special_Xt_user_event (Lisp_Object, Lisp_Object, Lisp_Object);
 
 /* Defined in events.c */
 EXFUN (Fcopy_event, 2);
-EXFUN (Fevent_to_character, 3);
+EXFUN (Fevent_to_character, 4);
 
 void clear_event_resource (void);
 Lisp_Object allocate_event (void);
