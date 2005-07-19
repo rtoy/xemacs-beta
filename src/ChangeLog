@@ -1,3 +1,9 @@
+2005-07-19  Didier Verna  <didier@xemacs.org>
+
+	* faces.c (Ffind_face): Implement face aliasing.
+	* faces.c (syms_of_faces): Define Qface_alias symbol, and
+	Qcyclic_face_aliasing error symbol.
+
 2005-07-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cmds.c (Fself_insert_command):
@@ -8,8 +14,8 @@
 	* keymap.c (Ftext_char_description):
 	* lisp.h:
 	Add back the last argument to event-to-character; document that
-	it's unused. 
-	
+	it's unused.
+
 2005-07-11  Atanu Ghosh <atanu@icsi.berkeley.edu>
 
 	* sysdll.c (dll_open): Under MacOS X return NULL under the
@@ -22,12 +28,12 @@
 	* console-msw.c (mswindows_perhaps_init_unseen_key_defaults):
 	* console-msw.c (vars_of_console_mswindows):
 	Rename Qseen_characters to Vmswindows_seen_characters, dump it
-	when pdump is in use. 
-	
+	when pdump is in use.
+
 	* console-tty.c (tty_perhaps_init_unseen_key_defaults):
 	* console-tty.c (vars_of_console_tty):
 	Rename Qseen_characters to Vttyxo_seen_characters, dump it
-	when pdump is in use. 
+	when pdump is in use.
 
 2005-06-29  Marcus Crestani  <crestani@xemacs.org>
 
@@ -43,7 +49,7 @@
 	* events.c (event_to_character):
 	* general-slots.h:
 	Move the Qkey_mapping variable to general-slots.h, now that it's
-	used outside the platform specific keyboard warning code. 
+	used outside the platform specific keyboard warning code.
 
 2005-06-28  Marcus Crestani  <crestani@xemacs.org>
 
@@ -72,44 +78,44 @@
 	* event-stream.c (command_builder_find_leaf):
 	* mule-ccl.c (POSSIBLE_LEADING_BYTE_P):
 	* mule-ccl.c (ccl_driver):
-	Couple of build fixes. 
-	
+	Couple of build fixes.
+
 2005-06-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-ccl.c (POSSIBLE_LEADING_BYTE_P): Add.
 	* mule-ccl.c: Check that a character set exists before using it
-	to create a character. 
-	
+	to create a character.
+
 2005-06-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cmds.c (Fself_insert_command):
-	No 4th arg to event_to_character. 
+	No 4th arg to event_to_character.
 
 	* console-impl.h (struct console_methods): Add a new member
 	method, perhaps_init_unseen_key_defaults, which is to allow the
 	console to take appropriate action--often a default binding to
 	self-insert-command--when notified about a character it may not
-	have seen before. 
-	
+	have seen before.
+
 	* console-gtk.c:
 	Add gtk_perhaps_init_unseen_key_defaults, a new console method,
-	and a hash table it uses. 
+	and a hash table it uses.
 
 	* console-msw.c:
 	Add mswindows_perhaps_init_unseen_key_defaults, a new console
-	method, and a hash table it uses. 
-	
+	method, and a hash table it uses.
+
 	* console-tty.c:
 	Add tty_perhaps_init_unseen_key_defaults, a new console method,
-	and a hash table used by it. 
+	and a hash table used by it.
 
 	* console-x.c:
-	* console-x.c (x_perhaps_init_unseen_key_defaults): New. 
+	* console-x.c (x_perhaps_init_unseen_key_defaults): New.
 	Given a key, if it maps to a character and we weren't previously
 	aware that it could be generated on console CON, and if it's
 	unbound in the global map, bind it to self-insert-command. Return
 	Qt if the binding was done; Qnil if not.
-	
+
 	* device-gtk.c:
 	* device-gtk.c (vars_of_device_gtk):
 	Add a hash table var used by gtk_perhaps_init_unseen_key_defaults.
@@ -117,33 +123,33 @@
 	* editfns.c (Fchar_to_string):
 	Call Fevent_to_character with three arguments, not four; don't
 	express a belief that the only XEmacs character encoding is
-	ASCII. 
-	
+	ASCII.
+
 	* event-Xt.c:
 	* event-Xt.c (maybe_define_x_key_as_self_inserting_character):
-	ascii-character -> character-of-keysym property renaming. 
-	
+	ascii-character -> character-of-keysym property renaming.
+
 	* event-Xt.c (x_has_keysym):
-	Make it visible to the console code, make it a little more Mule-safe. 
-	
+	Make it visible to the console code, make it a little more Mule-safe.
+
 	* event-Xt.c (index_to_name):
-	Move to Mule declaration conventions. 
+	Move to Mule declaration conventions.
 
 	* event-Xt.c (x_reset_modifier_mapping):
-	Move large comment from Jamie before this function. 
+	Move large comment from Jamie before this function.
 
 	* event-Xt.c (x_keysym_to_emacs_keysym):
-	Move to Mule declaration conventions and coding practices. 
-	
+	Move to Mule declaration conventions and coding practices.
+
 	* event-Xt.c (x_event_to_emacs_event):
 	Add some comments, and the initial steps necessary for Russian C-x
-	support. 
+	support.
 
 	* event-msw.c (mswindows_wnd_proc):
 	Don't conditionalize Russian C-x support on Mule. (I'm not certain
 	if this is correct on MSW, but it's the approach I'm taking on
 	X11.)
-	
+
 	* event-stream.c:
 	Add Russian C-x support, a var to enable and disable it, remove
 	composed-character-default-binding in favour of
@@ -152,14 +158,14 @@
 	command_builder_find_leaf_no_jit_binding, change
 	command_builder_find_leaf to tell the console-specific code to
 	perhaps add a binding for keys its never seen before, and then
-	retry the lookup if it would otherwise fail.  
+	retry the lookup if it would otherwise fail.
 
 	* event-stream.c (execute_command_event):
-	event-to-character has three arguments now, not four. 
-	
+	event-to-character has three arguments now, not four.
+
 	* event-stream.c (vars_of_event_stream):
-	Formatting clean up for inhibit-input-event-recoding. 
-	
+	Formatting clean up for inhibit-input-event-recoding.
+
 	* event-xlike-inc.c:
 	* event-xlike-inc.c (endif):
 	Move x_keysym_to_character here from event-Xt.c so it can be used
@@ -169,7 +175,7 @@
 	* events.c:
 	Rename the ascii-character property, remove
 	character-set-property, remove the now unused fourth argument to
-	event_to_character, ditto for the event-to-character, 
+	event_to_character, ditto for the event-to-character,
 
 	* events.h (enum alternative_key_chars):
 	* events.h (struct Lisp_Key_Data):
@@ -183,11 +189,11 @@
 	* keymap.c (elide_next_two_p):
 	* keymap.c (describe_map):
 	Rename ascii-character to character-of-keysym, stop pretending the
-	internal encoding of XEmacs is purely ASCII, 
+	internal encoding of XEmacs is purely ASCII,
 
 	* lisp.h:
 	* sysdep.c (tty_init_sys_modes_on_device):
-	One less argument to event-to-character. 
+	One less argument to event-to-character.
 
 2005-06-23  Marcus Crestani  <crestani@xemacs.org>
 
@@ -199,8 +205,8 @@
 	* mule-coding.c:
 	The vernacular in Taiwan, and thus the language for which Big5 is
 	most used, is Mandarin. Taiwanese does exist, but since the
-	Chinese civil war, it's used less and less in Taiwan. 
-	
+	Chinese civil war, it's used less and less in Taiwan.
+
 2005-06-06  Marcus Crestani  <crestani@xemacs.org>
 
 	* lisp.h (DEFUN): Define S##fname here.
@@ -247,7 +253,7 @@
 2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* extents.c: Clarify that the atomic extent property is a kludge
-	and will go away if and when we implement something better. 
+	and will go away if and when we implement something better.
 
 2005-05-06  Dr. Volker Zell  <Dr.Volker.Zell@oracle.com>
 
@@ -257,13 +263,13 @@
 2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* extents.c: Add some info on atomic-extents.el to the
-	set-extent-property docstring. 
+	set-extent-property docstring.
 
 2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select.c:
-	* sound.c: 
-	Spelling fixes to docstrings. 
+	* sound.c:
+	Spelling fixes to docstrings.
 
 2005-04-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -328,16 +334,16 @@
 
 	New lrecord allocation and free functions:
 
-	* alloc.c (alloc_lrecord): New. Allocates an lrecord, includes 
+	* alloc.c (alloc_lrecord): New. Allocates an lrecord, includes
         type checking and initializing of the lrecord_header.
 	* alloc.c (noseeum_alloc_lrecord): Same as above, but increments
         the NOSEEUM cons counter.
-	* alloc.c (free_lrecord): New. Calls the finalizer and frees the 
+	* alloc.c (free_lrecord): New. Calls the finalizer and frees the
 	lrecord.
 	* lrecord.h: Add lrecord allocation prototypes and comments.
 
 	Remove old lrecord FROB block allocation:
-	
+
 	* alloc.c (allocate_lisp_storage): Former function to expand
 	heap. Not needed anymore, remove.
 	* alloc.c: Completely remove `Fixed-size type macros'
@@ -359,7 +365,7 @@
 	* alloc.c (FREE_FIXED_TYPE_WHEN_NOT_IN_GC): Remove.
 
 	Allocate old lrecords with new allocator:
-	
+
 	* alloc.c: DECLARE_FIXED_TYPE_ALLOC removed for all lrecords
         defined in alloc.c.
 	* alloc.c (Fcons): Allocate with new allocator.
@@ -430,7 +436,7 @@
 	* alloc.c (gc_sweep): Remove all the old lcrecord and lrecord
         related	stuff. Sweeping now works like this: compact string
         chars, finalize, sweep.
-	* alloc.c (common_init_alloc_early): Remove old lrecord 
+	* alloc.c (common_init_alloc_early): Remove old lrecord
 	initializations, remove breathing_space.
 	* emacs.c (Fdump_emacs): Remove release_breathing_space.
 	* lisp.h: Remove prototype for release_breathing_space.
@@ -455,12 +461,12 @@
 
         Unify lrecords and lcrecords:
 
-	* lisp.h (struct Lisp_String): Adjust string union hack to 
+	* lisp.h (struct Lisp_String): Adjust string union hack to
         new lrecord header.
 	* lrecord.h: Adjust comments.
 	* lrecord.h (struct lrecord_header): The new lrecord header
         includes type, lisp-readonly, free, and uid.
-	* lrecord.h (set_lheader_implementation): Adjust to new 
+	* lrecord.h (set_lheader_implementation): Adjust to new
         lrecord_header.
 	* lrecord.h (struct lrecord_implementation): The field basic_p
         for indication of an old lrecord is not needed anymore, remove.
@@ -469,9 +475,9 @@
         basic_p.
 	* lrecord.h (copy_sized_lrecord): Remove distinction between
         old lrecords and lcrecords.
-	* lrecord.h (copy_lrecord): Remove distinction between old 
+	* lrecord.h (copy_lrecord): Remove distinction between old
         lrecords and lcrecords.
-	* lrecord.h (zero_sized_lrecord): Remove distinction between 
+	* lrecord.h (zero_sized_lrecord): Remove distinction between
         old lrecords and lcrecords.
 	* lrecord.h (zero_lrecord): Remove distinction between old
         lrecords and lcrecords.
@@ -480,7 +486,7 @@
 
 	* alloc.c (basic_alloc_lcrecord): Not needed anymore, remove.
 	* alloc.c (very_old_free_lcrecord): Not needed anymore, remove.
-	* alloc.c (copy_lisp_object): No more distinction between 
+	* alloc.c (copy_lisp_object): No more distinction between
         lrecords and lcrecords.
 	* alloc.c (all_lcrecords): Not needed anymore, remove.
 	* alloc.c (make_vector_internal): Allocate as lrecord.
@@ -496,13 +502,13 @@
 	* alloc.c (free_lcrecord): Remove.
 	* alloc.c (lcrecord_stats): Remove.
 	* alloc.c (tick_lcrecord_stats): Remove.
-	* alloc.c (disksave_object_finalization_1): Add call to 
+	* alloc.c (disksave_object_finalization_1): Add call to
 	mc_finalize_for_disksave. Remove the lcrecord way to visit all
 	objects.
 	* alloc.c (kkcc_marking): Remove XD_FLAG_FREE_LISP_OBJECT
 	* alloc.c (sweep_lcrecords_1): Remove.
 	* alloc.c (common_init_alloc_early): Remove everything related
-        to lcrecords, remove old lrecord initializations, 
+        to lcrecords, remove old lrecord initializations,
 	* alloc.c (init_lcrecord_lists): Not needed anymore, remove.
 	* alloc.c (reinit_alloc_early): Remove everything related to
 	lcrecords.
@@ -510,7 +516,7 @@
 	lcrecords.
  	* buffer.c (allocate_buffer): Allocate as lrecord.
 	* buffer.c (nuke_all_buffer_slots): Use lrecord functions.
-	* buffer.c (common_init_complex_vars_of_buffer): Allocate as 
+	* buffer.c (common_init_complex_vars_of_buffer): Allocate as
 	lrecord.
 	* buffer.h (struct buffer): Add lrecord_header.
 	* casetab.c (allocate_case_table): Allocate as lrecord.
@@ -526,11 +532,11 @@
 	* chartab.h (struct Lisp_Char_Table): Add lrecord_header.
 	* console-impl.h (struct console): Add lrecord_header.
 	* console-msw-impl.h (struct Lisp_Devmode): Add lrecord_header.
-	* console-msw-impl.h (struct mswindows_dialog_id): Add 
+	* console-msw-impl.h (struct mswindows_dialog_id): Add
 	lrecord_header.
 	* console.c (allocate_console): Allocate as lrecord.
 	* console.c (nuke_all_console_slots): Use lrecord functions.
-	* console.c (common_init_complex_vars_of_console): Allocate as 
+	* console.c (common_init_complex_vars_of_console): Allocate as
 	lrecord.
 	* data.c (make_weak_list): Allocate as lrecord.
 	* data.c (make_weak_box): Allocate as lrecord.
@@ -551,7 +557,7 @@
 	* event-stream.c (free_command_builder): Use lrecord functions.
 	* event-stream.c (event_stream_generate_wakeup): Allocate as
         lrecord.
-	* event-stream.c (event_stream_resignal_wakeup): Use lrecord 
+	* event-stream.c (event_stream_resignal_wakeup): Use lrecord
 	functions.
 	* event-stream.c (event_stream_disable_wakeup): Use lrecord
 	functions.
@@ -597,11 +603,11 @@
 	* lstream.c (Lstream_new): Allocate as lrecord.
 	* lstream.c (Lstream_delete): Use lrecod functions.
 	* lstream.c (reinit_vars_of_lstream): Vlstream_free_list
-	initialization remove.  
+	initialization remove.
 	* lstream.h (struct lstream): Add lrecord_header.
 	* emacs.c (main_1): Remove lstream initialization.
 	* mule-charset.c (make_charset): Allocate as lrecord.
-	* objects-impl.h (struct Lisp_Color_Instance): Add 
+	* objects-impl.h (struct Lisp_Color_Instance): Add
         lrecord_header.
 	* objects-impl.h (struct Lisp_Font_Instance): Add lrecord_header.
 	* objects.c (Fmake_color_instance): Allocate as lrecord.
@@ -611,7 +617,7 @@
 	* opaque.c (make_opaque): Allocate as lrecord.
 	* opaque.c (make_opaque_ptr): Allocate as lrecord.
 	* opaque.c (free_opaque_ptr): Use lrecord functions.
-	* opaque.c (reinit_opaque_early): 
+	* opaque.c (reinit_opaque_early):
 	* opaque.c (init_opaque_once_early): Vopaque_ptr_list
 	initialization remove.
 	* opaque.h (Lisp_Opaque): Add lrecord_header.
@@ -631,7 +637,7 @@
 	* specifier.h (struct Lisp_Specifier): Add lrecord_header.
 	* symbols.c:
 	* symbols.c (Fmake_variable_buffer_local): Allocate as lrecord.
-	* symbols.c (Fdontusethis_set_symbol_value_handler): Allocate 
+	* symbols.c (Fdontusethis_set_symbol_value_handler): Allocate
 	as lrecord.
 	* symbols.c (Fdefvaralias): Allocate as lrecord.
 	* symeval.h (struct symbol_value_magic): Add lrecord_header.
@@ -656,13 +662,13 @@
 	* alloc.c (fixed_type_block_overhead): Not used anymore, remove.
 	* buffer.c (compute_buffer_usage): Get storage size from new
 	allocator.
-	* marker.c (compute_buffer_marker_usage): Get storage size from 
+	* marker.c (compute_buffer_marker_usage): Get storage size from
 	new allocator.
-	* mule-charset.c (compute_charset_usage): Get storage size from 
+	* mule-charset.c (compute_charset_usage): Get storage size from
 	new allocator.
 	* scrollbar-gtk.c (gtk_compute_scrollbar_instance_usage): Get
 	storage size from new allocator.
-	* scrollbar-msw.c (mswindows_compute_scrollbar_instance_usage): 
+	* scrollbar-msw.c (mswindows_compute_scrollbar_instance_usage):
 	Get storage size from new allocator.
 	* scrollbar-x.c (x_compute_scrollbar_instance_usage): Get
         storage	size from new allocator.
@@ -674,7 +680,7 @@
 	from new allocator.
 	* window.c (compute_window_mirror_usage): Get storage size from
 	new allocator.
-	* window.c (compute_window_usage): Get storage size from new 
+	* window.c (compute_window_usage): Get storage size from new
 	allocator.
 
 	MC_ALLOC_TYPE_STATS:
@@ -701,7 +707,7 @@
 	* alloc.c (debug_string_purity): Remove.
 	* alloc.c (debug_string_purity_print): Remove.
 	* alloc.c (sweep_strings): Remove.
-	
+
 	Remove static C-readonly Lisp objects:
 
 	* alloc.c (c_readonly): Not needed anymore, remove.
@@ -749,7 +755,7 @@
 	* symbols.c (init_symbols_once_early): Add Qunbound to root set.
 
 	Changes to the Portable Dumper:
-	
+
 	* alloc.c (FREE_OR_REALLOC_BEGIN): Since dumped objects can be
 	freed with the new allocator, remove assertion for !DUMPEDP.
 	* dumper.c: Adjust comments, increase PDUMP_HASHSIZE.
@@ -757,7 +763,7 @@
 	avoid collisions.
 	* dumper.c (pdump_objects_unmark): No more mark bits within
 	the object, remove.
-	* dumper.c (mc_addr_elt): New. Element data structure for mc 
+	* dumper.c (mc_addr_elt): New. Element data structure for mc
 	hash table.
 	* dumper.c (pdump_mc_hash): New hash table: `lookup table'.
 	* dumper.c (pdump_get_mc_addr): New. Lookup for hash table.
@@ -766,22 +772,22 @@
 	* dumper.c (pdump_put_mc_addr): New. Putter for hash table.
 	* dumper.c (pdump_dump_mc_data): New. Writes the table for
 	relocation at load time to the dump file.
-	* dumper.c (pdump_scan_lisp_objects_by_alignment): New. 
+	* dumper.c (pdump_scan_lisp_objects_by_alignment): New.
 	Visits all dumped Lisp objects.
 	* dumper.c (pdump_scan_non_lisp_objects_by_alignment): New.
 	Visits all other dumped objects.
 	* dumper.c (pdump_reloc_one_mc): New. Updates all pointers
 	of an object by using the hash table pdump_mc_hash.
 	* dumper.c (pdump_reloc_one): Replaced by pdump_reloc_one_mc.
-	* dumper.c (pdump): Change the structure of the dump file, add 
+	* dumper.c (pdump): Change the structure of the dump file, add
 	the mc post dump relocation table to dump file.
-	* dumper.c (pdump_load_finish): Hand all dumped objects to the 
-	new allocator and use the mc post dump relocation table for 
+	* dumper.c (pdump_load_finish): Hand all dumped objects to the
+	new allocator and use the mc post dump relocation table for
 	relocating the dumped objects at dump file load time, free not
 	longer used data structures.
 	* dumper.c (pdump_load): Free the dump file.
 	* dumper.h: Remove pdump_objects_unmark.
-	* lrecord.h (DUMPEDP): Dumped objects can be freed, remove.	
+	* lrecord.h (DUMPEDP): Dumped objects can be freed, remove.
 
 	DUMP_IN_EXEC:
 
@@ -811,13 +817,13 @@
 
 	* mule-ccl.c (ccl_driver): Calculate the charset and position code
 	for control-1 characters properly, both when reading multibyte
-	characters and writing them. 
+	characters and writing them.
 
 2005-03-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.c (set_unicode_conversion): Don't try to write to the
 	non-existent conversion tables for ASCII and control-1, in the
-	interest of not segfaulting. 
+	interest of not segfaulting.
 	* unicode.c (unicode_convert): The "position code" for a control-1
 	character has #xA0 added to it when encoded in Mule, unlike #x80
 	for all the other non-ASCII character sets ; take this into
@@ -825,9 +831,9 @@
 
 2005-03-29  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* event-Xt.c: Declare Funicode_to_char. 
+	* event-Xt.c: Declare Funicode_to_char.
 	* event-Xt.c (x_keysym_to_character): Use it, if we're handed a
-	keysym for which it's appropriate. 
+	keysym for which it's appropriate.
 
 2005-03-26  Jerry James  <james@xemacs.org>
 
@@ -838,7 +844,7 @@
 
 2005-02-24  Andrey Slusar  <anrays@gmail.com>
 
-        * unexelf.c: define `Elfw(type)' for FreeBSD alpha and amd64. 
+        * unexelf.c: define `Elfw(type)' for FreeBSD alpha and amd64.
 
 2005-03-25  Marcus Crestani  <crestani@xemacs.org>
 
@@ -849,11 +855,11 @@
 	* device-x.c (x_init_device): Only do the old application class
 	determination behaviour if the
 	USE_EMACS_AS_DEFAULT_APPLICATION_CLASS environment variable is
-	set; otherwise, we use XEmacs. 
+	set; otherwise, we use XEmacs.
 	* device-x.c (vars_of_device_x): Update the docstring for
-	x-emacs-application-class. 
+	x-emacs-application-class.
 	* frame.c: default-frame-name is now "XEmacs", unless the old X11
-	resources behaviour has been requested. 
+	resources behaviour has been requested.
 
 2005-03-15  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
@@ -937,7 +943,7 @@
 
 2005-01-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
-	* regex.c (re_match_2_internal): 
+	* regex.c (re_match_2_internal):
 	* regex.h (struct re_pattern_buffer):
 	Improve comments.  Add a DEBUG_PRINT2 for null matches.
 
@@ -945,24 +951,24 @@
 
 	* select-x.c (x_reply_selection_request): Check that
 	XtWindowToWidget returns NULL before calling XtRegisterDrawable,
-	document why. 
+	document why.
 
 2005-03-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select-x.c (x_reply_selection_request): Make the error message
 	in the absence of HAVE_XTREGISTERDRAWABLE more polite, pass a
 	second argument to invalid_operation to have it actually compile
-	in that case. 
+	in that case.
 
 2005-03-01  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* config.h.in: New macro, HAVE_XTREGISTERDRAWABLE. 
-	* select-x.c (x_reply_selection_request): Use it. 
+	* config.h.in: New macro, HAVE_XTREGISTERDRAWABLE.
+	* select-x.c (x_reply_selection_request): Use it.
 
 2005-03-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select-x.c (x_reply_selection_request): Wrap
-	DEVICE_SELECTED_FRAME in XFRAME --> fixes a build failure. 
+	DEVICE_SELECTED_FRAME in XFRAME --> fixes a build failure.
 
 2005-03-01  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -970,39 +976,39 @@
 	Unicode coding systems will lose data. Make this clear in the
 	docstring of unicode-to-char, give sample code to implement
 	support for some desired code points should our distributors want
-	to do that. 
+	to do that.
 
 2005-02-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select-gtk.c (emacs_gtk_selection_handle):
 	* select-gtk.c (emacs_gtk_selection_clear_event_handle):
-	Use get_selection_raw_timestamp instead of Fget_selection_timestamp. 
+	Use get_selection_raw_timestamp instead of Fget_selection_timestamp.
 	* select-gtk.c (gtk_own_selection):
 	Cross reference to some debate in select-x.c
 	* select-x.c:
 	* select-x.c (x_handle_selection_request):
 	Discuss Time vs. time_t--I think Time is _always_ thirty-two-bit
-	and time_t is variable in size. 
+	and time_t is variable in size.
 	* select-x.c (x_handle_selection_clear):
 	Replace call to Fget_selection_timestamp with call to
 	get_selection_raw_time, check that pasted data pointer is non-zero
-	before trying to free it. 
+	before trying to free it.
 	* select.c:
 	* select.c (Fown_selection_internal):
 	Informative comment! Shouldn't actually be needed outside of the X
-	world. 
-	* select.c (get_selection_raw_time): New function. 
+	world.
+	* select.c (get_selection_raw_time): New function.
 	* select.c (Fget_selection_timestamp): Rework to use
 	get_selection_raw_time.
 	* select.h:
-	Make get_selection_raw_time available. 
-	
+	Make get_selection_raw_time available.
+
 2005-02-26  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* select-x.c (x_reply_selection_request): Use XtRegisterDrawable 
-        to tell Xt not to drop PropertyChange events destined for the 
-        selection request target window. This makes incremental selection 
-        transfer work, instead of looping until interrupted.  
+	* select-x.c (x_reply_selection_request): Use XtRegisterDrawable
+        to tell Xt not to drop PropertyChange events destined for the
+        selection request target window. This makes incremental selection
+        transfer work, instead of looping until interrupted.
 
 2005-01-06  Andrey Slusar  <anrays@gmail.com>
 
@@ -1044,7 +1050,7 @@
 	* dumper.c (DUMP_SLACK):
 	* dumper.c (pdump_load):
 	Include extra DUMP_SLACK when allocating space for exe path.
-	
+
 	* glyphs-eimage.c:
 	Reformat comment.
 
@@ -1128,14 +1134,14 @@
 	* menubar.c:
 	* menubar.c (Fcompare_menu_text):
 	New fun to compare menu itext as if the two were normalized.
-	
+
 	* menubar.c (Fnormalize_menu_text):
 	* menubar.c (syms_of_menubar):
 	Rename; there are no external callers of this function.
 	Remove unneeded BUFFER argument.  Don't downcase.
 	(This will be done in compare-menu-text.)
 	Document that return value may be same string.
-	
+
 2003-02-15  Ben Wing  <ben@xemacs.org>
 
 	* syswindows.h: Define W32API_2_2 for w32api.h v2.2 or higher.
@@ -1217,7 +1223,7 @@
 	* nt.c:
 	* fileio.c:
 	Fix sync comments.
-	
+
 	* config.h.in:
 	* dired-msw.c (mswindows_get_files):
 	* emacs.c (main_1):
@@ -1282,12 +1288,12 @@
 	* nt.c (mswindows_unlink):
 	* sysdep.c (sys_subshell):
 	Unicode-ize.
-	
+
 	* realpath.c (readlink_or_correct_case):
 	Renamed from readlink_and_correct_case.  Fix some problems with
 	Windows implementation due to incorrect understanding of workings
 	of the function.
-	
+
 	* sound.c (Fplay_sound_file):
 	* ntplay.c (nt_play_sound_file):
 	* sound.c:
@@ -1303,7 +1309,7 @@
 
 	* free-hook.c (check_free):
 	Fix aliasing warning.
-	
+
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
 	* redisplay.c:
@@ -1401,7 +1407,7 @@
 	* bytecode.c (optimize_compiled_function):
 	* print.c (ONE_DIGIT):
 	Add casts to avoid warning.
-	
+
 	* compiler.h:
 	Add MSC_VERSION and include definitions of DOESNT_RETURN and
 	friends here, like for GCC.  Need different definitions for VC7
@@ -1417,10 +1423,10 @@
 	Some really nasty hacks to allow TIFF and JPEG to both be compiled.
 	#### The better solution is to move the TIFF and JPEG code to
 	different files.
-	
+
 	* glyphs-msw.c (mswindows_xbm_instantiate):
 	Define __STDC__ to avoid problems with compface.h.
-	
+
 	* intl-auto-encap-win32.c (qxeImmGetCandidateListCount):
 	* intl-auto-encap-win32.c (qxeFindResourceEx):
 	* intl-auto-encap-win32.h:
@@ -1431,7 +1437,7 @@
 	Various functions change parameter types semi-randomly between
 	VC6 and VC7, so we need to include our own versions that
 	can handle both kinds with appropriate casting.
-	
+
 	* EmacsFrame.c (EmacsFrameRecomputeCellSize):
 	* EmacsShell-sub.c:
 	* EmacsShell-sub.c (ABORT):
@@ -1725,7 +1731,7 @@
 
 2005-01-21  Robert Royar <xemacs@frinabulax.org>
 
-	* database.c: Repair typo in NetBSD fix. 
+	* database.c: Repair typo in NetBSD fix.
 
 2005-01-21  Malcolm Purvis  <malcolmp@xemacs.org>
 
@@ -1780,7 +1786,7 @@
 	entry.  Use in profile.c to try to reduce profiling overhead.
 	Increase initial size of profile hash tables to reduce profiling
 	overhead.
-	
+
 	* buffer.c (init_initial_directory):
 	* device-msw.c (mswindows_handle_page_setup_dialog_box):
 	* dialog-msw.c (handle_directory_proc):
@@ -1836,7 +1842,7 @@
 	dumper.c to avoid use of PATH_MAX.  When necessary in nt.c,
 	use _MAX_PATH instead of MAX_PATH to be consistent with
 	other places.
-	
+
 	* text.c (dfc_convert_to_internal_format):
 	Code to short-circuit when binary or Unicode was not working
 	due to EOL wrapping.  Fix this code to work when either no
@@ -1931,11 +1937,11 @@
 	previous version.  Track the char position of the gap.  Add
 	functions to do char-byte conversion downwards as well as upwards.
 	Move comments about algorithm workings to internals manual.
-	
+
 	---------------------------
 	       work on types
 	---------------------------
-	
+
 	* alloc.c:
 	* alloc.c (gc_plist_hack):
 	* console-x-impl.h (struct x_frame):
@@ -2150,7 +2156,7 @@
 	the basic semantics of `char' that I have so far identified, so that
 	its semantics can always be identified for the purposes of proper
 	Mule-safe code, and the raw use of `char' always avoided.
-	
+
 	(1) More type renaming, for consistency of naming.
 
 	Char_ASCII -> Ascbyte
@@ -2174,25 +2180,25 @@
 
 	* lisp.h:
 	Group generic int-type defs together with EMACS_INT defs.
-	
+
 	* lisp.h (EXTTEXT_ZTERM_SIZE):
 	* lisp.h (ITEXT_SIZE):
 	* lisp.h (NON_ASCII_INTERNAL_FORMAT):
 	* lisp.h (UTF16_IBYTE_FORMAT):
 	* lisp.h (WEXTTEXT_IS_WIDE)
 	New defns.
-	
+
 	* lisp.h (Boolean):
 	New type to replace places where int occurs as a boolean.
 	It's signed because occasionally people may want to use -1 as
 	an error value, and because unsigned ints are viral -- see comments
 	in the internals manual against using them.
-	
+
 	* dynarr.c:
 	* dynarr.c (Dynarr_realloc):
 	* dynarr.c (Dynarr_resize):
 	int -> Bytecount.
-	
+
 	---------------------------
    	         Mule-izing
 	---------------------------
@@ -2204,7 +2210,7 @@
 	* device-x.c (Fx_set_font_path):
 	* device-x.c (reinit_console_type_create_device_x):
 	Partially Mule-ize.
-	
+
 	* dumper.c (see above):
 	* dumper.c (pdump_file_get):
 	* dumper.c (pdump_resource_get):
@@ -2252,14 +2258,14 @@
 	Rename win32 init function and call it even earlier, to
 	initialize mswindows_9x_p even earlier, for use in startup code
 	(XEUNICODE_P).
-	
+
 	* process.c (init_xemacs_process):
 	Use _wenviron not environ under Windows, to get Unicode environment
 	variables.
 
 	* event-Xt.c (x_event_to_emacs_event):
 	Mule-ize drag-n-drop related stuff.
-	
+
 	* dragdrop.c (dnd_url_hexify_string):
 	* dragdrop.h:
 	* frame-x.c:
@@ -2703,7 +2709,7 @@
 	* intl-auto-encap-win32.h (OpenJobObject):
 	* intl-auto-encap-win32.h (qxemciGetErrorString):
 	Regenerate.
-	
+
 	---------------------------
    	         Unicode-work
 	---------------------------
@@ -2724,7 +2730,7 @@
 
 	* alloc.c (build_ext_string):
 	Use dfc_external_data_len() in case of unicode coding system.
-	
+
 	* alloc.c:
 	* mule-charset.c:
 	* mule-charset.c (make_charset):
@@ -2762,7 +2768,7 @@
 	* console-msw.c:
 	* console-msw.h:
 	Add pointer to docs in win32.c.
-	
+
 	* emacs.c:
 	Add comments on sources of doc info.
 
@@ -2777,7 +2783,7 @@
 	* intl-encap-win32.c:
 	* text.h:
 	* text.h (internal_format):
-	* file-coding.c (encode_decode_coding_region): 
+	* file-coding.c (encode_decode_coding_region):
 	* file-coding.c:
 	* mule-coding.c (parse_iso2022_esc):
 	Collect background comments and related to text matters and
@@ -2805,17 +2811,17 @@
 	builds and environments under Windows and how they work.
 	Collect this info in win32.c.  Add pointers to these docs in
 	the relevant s/* files.
-	
+
 	* emacs.c (mswindows_handle_hardware_exceptions_1):
 	* emacs.c:
 	Document places with long comments.
 	Remove comment about exiting, move to internals manual, put
 	in pointer.
-	
+
 	* event-stream.c:
 	Move docs about event queues and focus to internals manual, put
 	in pointer.
-	
+
 	* events.h:
 	Move docs about event stream callbacks to internals manual, put
 	in pointer.
@@ -2827,17 +2833,17 @@
 
 	* process-nt.c:
 	Add pointer to comment in win32-native.el.
-	
+
 	* lisp.h:
 	Add comments about some comment conventions.
 
 	* lisp.h (xfree):
 	Add comment about the second argument.
-	
+
 	* device-msw.c (msprinter_init_device):
 	* redisplay-msw.c (mswindows_text_width_single_run):
 	@@#### comments are out-of-date.
-	
+
 	---------------------------------------------------------------
                    PDUMP WORK (MOTIVATED BY UNICODE CHANGES)
 	---------------------------------------------------------------
@@ -2903,19 +2909,19 @@
 
 	Properly implement dump_add_root_block(), which never worked before,
 	and is necessary for dumping Unicode tables.
-	
+
 	Pdump name changes for accuracy:
 	XD_STRUCT_PTR -> XD_BLOCK_PTR.
 	XD_STRUCT_ARRAY -> XD_BLOCK_ARRAY.
 	XD_C_STRING -> XD_ASCII_STRING.
 	*_structure_* -> *_block_*.
-	
+
 	* lrecord.h (XD_DYNARR_DESC): some comments added about
 	dump_add_root_block() vs dump_add_root_block_ptr().
 
 	* extents.c:
 	remove incorrect comment about pdump problems with gap array.
-	
+
 	---------------------------------------------------------------
                                     ALLOCATION
 	---------------------------------------------------------------
@@ -3005,7 +3011,7 @@
 	more convenient allocation of these commonly requested items.
 	Modify functions to use alloca_ibytes, alloca_array, alloca_extbytes,
 	xnew_ibytes, etc. also XREALLOC_ARRAY, xnew.
-	
+
 	* alloc.c (FREE_FIXED_TYPE):
 	* alloc.c (Fstring):
 	* alloc.c (MALLOC_BEGIN):
@@ -3018,11 +3024,11 @@
 	* alloc.c:
 	Rewrite the allocation functions to factor out repeated code.
 	Add assertions for freeing dumped data.
-	
+
 	* lisp.h (xmalloc_and_record_unwind):
 	* lisp.h (xfree):
 	Moved down and consolidated with other allocation stuff.
-	
+
 	* lisp.h:
 	* dynarr.c (stack_like_malloc):
 	* dynarr.c (stack_like_free):
@@ -3038,7 +3044,7 @@
 	* text.c (new_dfc_convert_malloc):
 	* text.h:
 	Factor out some stuff for general use by alloca()-conversion funs.
-	
+
 	* text.h (xmalloc_ibytes):
 	* lisp.h:
 	Fill out convenience routines for allocating various kinds of
@@ -3075,7 +3081,7 @@
 	Redo GCPRO declarations.  Create a "base" set of functions that can
 	be used to generate any kind of gcpro sets -- regular, ngcpro,
 	nngcpro, private ones used in GC_EXTERNAL_LIST_LOOP_2.
-	
+
 	* buffer.c (Fkill_buffer):
 	* callint.c (quotify_args):
 	* chartab.c (chartab_data_validate):
@@ -3120,7 +3126,7 @@
 	Use EXTERNAL_LIST_LOOP_2 instead or EXTERNAL_LIST_LOOP_3
 	or EXTERNAL_PROPERTY_LIST_LOOP_3 or GC_EXTERNAL_LIST_LOOP_2
 	(new macro).  Removed/redid comments on EXTERNAL_LIST_LOOP.
-	
+
 
 	---------------------------------------------------------------
                                  SPACING FIXES
@@ -3148,7 +3154,7 @@
                         FIX FOR LEAKING PROCESS HANDLES:
 	---------------------------------------------------------------
 
-	
+
 	* process-nt.c (free_process_memory):
 	* process-nt.c (alloc_process_memory):
 	* process-nt.c (run_in_other_process):
@@ -3174,7 +3180,7 @@
 
 	* console-stream.c (init_console_stream):
 	`reinit' is unused.
-	
+
 	* compiler.h:
 	* event-msw.c (mswindows_wnd_proc):
 	* frame-msw.c (mswindows_frame_totally_visible_p):
@@ -3267,7 +3273,7 @@
 	* text.c (dfc_convert_to_external_format):
 	* text.c (dfc_convert_to_internal_format):
 	Assert on !inhibit_non_essential_conversion_operations.
-	
+
 	* console-msw.c (Fmswindows_message_box):
 	* console-msw.c (GetConsoleHwnd):
 	* console-msw.c (mswindows_output_console_string):
@@ -3276,7 +3282,7 @@
 	Don't do conversion in SetConsoleTitle or FindWindow to avoid
 	problems during armageddon.  Put #errors for NON_ASCII_INTERNAL_FORMAT
 	in places where problems would arise.
-	
+
 	---------------------------------------------------------------
                         CHANGES TO THE BUILD PROCEDURE:
 	---------------------------------------------------------------
@@ -3441,7 +3447,7 @@
 	Fix some typos in comments.
 
 2003-11-21  Stephen J. Turnbull  <stephen@xemacs.org>
- 
+
 	* dired.c (Fdirectory_files): MATCH is only tried against basename.
 
 2003-11-02  Stephen J. Turnbull  <stephen@xemacs.org>
@@ -3451,7 +3457,7 @@
 2003-10-31  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* procimpl.h (struct Lisp_Process):
-	* undo.c (Fprimitive_undo): 
+	* undo.c (Fprimitive_undo):
 	Remove obsolete references to ENERGIZE in comments.
 
 2004-07-18  Stephen J. Turnbull  <stephen@xemacs.org>

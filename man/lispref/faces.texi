@@ -141,6 +141,17 @@ copy just parts of the old face rather than the whole face, and are as
 in @code{copy-specifier} (@pxref{Specifiers}).
 @end defun
 
+
+  Finally, you have the possibility to give faces different names by
+means of aliases. One typical use of this feature is to change the name
+of a face while preserving backward compatibility. If a symbol has the
+@code{face-alias} property set to another symbol, then this other symbol
+will be used as the real face name instead (this is actually a recursive
+process). There is currently a limit of 32 consecutive face aliases, in
+order to prevent aliasing loops.
+
+
+
 @node Face Properties
 @subsection Face Properties
 

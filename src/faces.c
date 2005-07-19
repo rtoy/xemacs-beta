@@ -60,6 +60,8 @@ Lisp_Object Vpointer_face, Vvertical_divider_face, Vtoolbar_face, Vwidget_face;
 /* Qdefault, Qhighlight, Qleft_margin, Qright_margin defined in general.c */
 Lisp_Object Qmodeline, Qgui_element, Qtext_cursor, Qvertical_divider;
 
+Lisp_Object Qface_alias, Qcyclic_face_aliasing;
+
 /* In the old implementation Vface_list was a list of the face names,
    not the faces themselves.  We now distinguish between permanent and
    temporary faces.  Permanent faces are kept in a regular hash table,
@@ -629,18 +631,43 @@ nil is returned.  Otherwise the associated face object is returned.
        (face_or_name))
 {
   Lisp_Object retval;
+  Lisp_Object face_name;
+  Lisp_Object face_alias;
+  int i;
 
   if (FACEP (face_or_name))
     return face_or_name;
-  CHECK_SYMBOL (face_or_name);
+
+  face_name = face_or_name;
+  CHECK_SYMBOL (face_name);
+
+# define FACE_ALIASING_MAX_DEPTH 32
+
+  i = 0;
+  while (! NILP ((face_alias = Fget (face_name, Qface_alias, Qnil)))
+	 && i < FACE_ALIASING_MAX_DEPTH)
+    {
+      face_name = face_alias;
+      CHECK_SYMBOL (face_alias);
+      i += 1;
+    }
+
+  /* #### This test actually makes the aliasing max depth to 30, which is more
+     #### than enough IMO. -- dvl */
+  if (i == FACE_ALIASING_MAX_DEPTH)
+    signal_error (Qcyclic_face_aliasing,
+		  "Max face aliasing depth reached",
+		  face_name);
+
+# undef  FACE_ALIASING_MAX_DEPTH
 
   /* Check if the name represents a permanent face. */
-  retval = Fgethash (face_or_name, Vpermanent_faces_cache, Qnil);
+  retval = Fgethash (face_name, Vpermanent_faces_cache, Qnil);
   if (!NILP (retval))
     return retval;
 
   /* Check if the name represents a temporary face. */
-  return Fgethash (face_or_name, Vtemporary_faces_cache, Qnil);
+  return Fgethash (face_name, Vtemporary_faces_cache, Qnil);
 }
 
 DEFUN ("get-face", Fget_face, 1, 1, 0, /*
@@ -1864,6 +1891,9 @@ syms_of_faces (void)
   DEFSYMBOL (Qdim);
   DEFSYMBOL (Qblinking);
 
+  DEFSYMBOL (Qface_alias);
+  DEFERROR_STANDARD (Qcyclic_face_aliasing, Qinvalid_state);
+
   DEFSYMBOL (Qinit_face_from_resources);
   DEFSYMBOL (Qinit_global_faces);
   DEFSYMBOL (Qinit_device_faces);
@@ -1977,7 +2007,7 @@ complex_vars_of_faces (void)
     Lisp_Object inst_list = Qnil;
 
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_GTK)
-    
+
     const Ascbyte *fonts[] =
     {
       /************** ISO-8859 fonts *************/
@@ -2016,7 +2046,7 @@ complex_vars_of_faces (void)
       "-sun-gothic-medium-r-normal--14-120-75-75-c-60-jisx0201.1976-0",
       "-sun-gothic-medium-r-normal--14-120-75-75-c-120-jisx0208.1983-0",
       "-wadalab-gothic-medium-r-normal--14-120-75-75-c-120-jisx0212.1990-0",
-      
+
       /* Other Japanese fonts */
       "-*-fixed-medium-r-*--*-jisx0201.1976-*",
       "-*-fixed-medium-r-*--*-jisx0208.1983-*",
@@ -2029,7 +2059,7 @@ complex_vars_of_faces (void)
 
       "-*-*-medium-r-*--*-gb2312.1980-*",
       "-*-fixed-medium-r-*--*-cns11643*-*",
-       
+
       "-*-fixed-medium-r-*--*-big5*-*,"
       "-*-fixed-medium-r-*--*-sisheng_cwnn-0",
 
@@ -2042,7 +2072,7 @@ complex_vars_of_faces (void)
       "-*-fixed-medium-r-*--*-tis620.2529-1",
 
       /************* Other fonts (nonstandard) *************/
-       
+
       "-*-fixed-medium-r-*--*-viscii1.1-1",
       "-*-fixed-medium-r-*--*-mulearabic-*",
       "-*-fixed-medium-r-*--*-muleipa-*",
@@ -2137,23 +2167,23 @@ complex_vars_of_faces (void)
  	      ":Regular:10::"
  	    };
        const Ascbyte **mswfontptr;
- 
+
        for (mswfontptr = mswfonts + countof (mswfonts) - 1;
 	    mswfontptr >= mswfonts; mswfontptr--)
  	{
  	  /* display device */
- 	  inst_list = Fcons (Fcons (list1 (Qmswindows), 
+ 	  inst_list = Fcons (Fcons (list1 (Qmswindows),
  				    build_string (*mswfontptr)),
  			     inst_list);
  	  /* printer device */
- 	  inst_list = Fcons (Fcons (list1 (Qmsprinter), 
+ 	  inst_list = Fcons (Fcons (list1 (Qmsprinter),
  				    build_string (*mswfontptr)),
  			     inst_list);
  	}
        /* Use Lucida Console rather than Courier New if it exists -- the
           line spacing is much less, so many more lines fit with the same
           size font. (And it's specifically designed for screens.) */
-       inst_list = Fcons (Fcons (list1 (Qmswindows), 
+       inst_list = Fcons (Fcons (list1 (Qmswindows),
 				 build_string ("Lucida Console:Regular:10::")),
 			  inst_list);
     }

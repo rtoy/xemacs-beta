@@ -1,3 +1,7 @@
+2005-07-19  Didier Verna  <didier@xemacs.org>
+
+	* CHANGES-beta: Announce the face aliasing feature.
+
 2005-05-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.21 "corn" is released.
@@ -56,8 +60,8 @@
 2005-03-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure: #include <X11/Intrinsic.h.> -> #include
-	<X11/Intrinsic.h>, thank you Robert Delius Royar. 
-	
+	<X11/Intrinsic.h>, thank you Robert Delius Royar.
+
 2005-03-15  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Include <X11/Intrinsic.h> when checking for
@@ -73,9 +77,9 @@
 
 2005-03-24  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* configure: Regenerate. 
+	* configure: Regenerate.
 	* configure.ac (XE_COMPLEX_ARG_ENABLE): --OPTION -> --with-OPTION
-	in various docstrings and error messages. 
+	in various docstrings and error messages.
 
 2005-03-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -86,7 +90,7 @@
 
 2005-03-15  Malcolm Purvis  <malcolmp@xemacs.org>
 
-	* configure.ac: Fix problems with OpenBSD /bin/sh.  
+	* configure.ac: Fix problems with OpenBSD /bin/sh.
 
 2005-03-13  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -113,7 +117,7 @@
 
 2005-03-01  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* configure: Regenerated. 
+	* configure: Regenerated.
 	* configure.in (XE_COMPUTE_RUNPATH): Check for the availability of
 	XtRegisterDrawable.
 
@@ -167,7 +171,7 @@
 2005-01-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure:
-	* configure.in (XE_COMPUTE_RUNPATH): 
+	* configure.in (XE_COMPUTE_RUNPATH):
 	NetBSD can use Linux's sound API, but it needs an extra library at
 	link time to do so.
 
@@ -447,7 +451,7 @@
 	* aclocal.m4 (XE_SHLIB_STUFF): Use -bundle when testing the
 	ability to build shared libraries, but use -bundle_loader in
 	ellcc.  Properly handle other flags for MacOS X.
-	
+
 2003-09-03  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.15 "celery" is released.
@@ -503,7 +507,7 @@
 	        * aclocal.m4 (XE_SHLIB_STUFF): Properly define ellcc flags for
 	        MacOS X.
 	It was stopping certain libs from making their way into the
-	Makefiles. 
+	Makefiles.
 
 	* configure: Regenerate.
 
@@ -620,7 +624,7 @@
 	Add comment about Cygwin, unexec and sysmalloc.
 	Move some non-general stuff out of general.
 	Make a section for x86.
-	
+
 	* configure.in (AC_INIT_NOTICE):
 	* configure.in (XE_COMPUTE_RUNPATH):
 	Add check for broken alloca in funcalls.
@@ -814,7 +818,7 @@
 
 2002-10-31  John Paul Wallington  <jpw@shootybangbang.com>
 
-	* info/dir (File): button1 on a highlighted word doesn't 
+	* info/dir (File): button1 on a highlighted word doesn't
 	follow that cross-reference.
 
 2002-10-31  Stephen J. Turnbull  <stephen@xemacs.org>
@@ -832,7 +836,7 @@
 	* configure.in (Check for POSIX functions):  New section head.
 	getaddrinfo is detected on HP-UX 11.XX, but appears to be
 	non-functional.  Disable it.  Based on work by Darryl Okahata.
-	
+
 2002-10-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* PROBLEMS (Running/Cygwin): "No cygXpm-noX" fatal error.
@@ -886,7 +890,7 @@
 	* version.sh (xemacs_extra_name): New var to identify XEmacs
 	version > release < next release.  ie, release+cvs.
 
-	* configure.in: Test for xemacs_extra_name. 
+	* configure.in: Test for xemacs_extra_name.
 
 	* configure: Re-generate.
 
@@ -909,7 +913,7 @@
 
 2002-07-09  Mike Sperber <mike@xemacs.org>
 
-	* configure.usage: 
+	* configure.usage:
 	* configure.in: Add --use-kkcc option for new GC algorithms.
 
 2002-06-04  Jerry James  <james@xemacs.org>
@@ -972,7 +976,7 @@
 
 	* configure.in: Detect MacOS/X "Darwin".
 	Thanks to Greg Parker <gparker@cs.stanford.edu>.
-	
+
 2002-03-30  Steve Youngs  <youngs@xemacs.org>
 
 	* etc/package-index.LATEST.pgp: Update to current reality.
@@ -993,7 +997,7 @@
 2001-12-13  William M. Perry  <wmperry@gnu.org>
 
 	* configure.in (GTK): add -Wno-shadow.
-	
+
 2002-01-23  Jarl Friis  <jarl@diku.dk>
 
 	* etc/BETA (http): Informing of xemacs-patches mailing list. Added
@@ -1058,7 +1062,7 @@
 2002-03-31  Ben Wing  <ben@xemacs.org>
 
 	* TODO.ben-mule-21-5 (bugs): Update.
-	
+
 	* configure.in (USAGE_ERROR):
 	* configure.in (CANONICALIZE_PATH):
 	* configure.in (XE_COMPUTE_RUNPATH):

@@ -1,3 +1,10 @@
+to 21.5.22 "???"
+
+User-Visible Bug Fixes and Minor Improvements
+
+-- Improve: Face aliasing from NAME1 to NAME2 by means of
+   (put 'NAME1 'face-alias 'NAME2). (Didier Verna)
+
 to 21.5.21 "corn"
 
 Major features
@@ -515,7 +522,7 @@ Documentation
      and Events") - Kyllingstad.
 -- Various typo and docstring fixes - Turnbull, Sperber.
 -- Add missing '@end' defun in lists.texi - Shelton.
--- Document ?\x00 read syntax and range limitations on ?\000 and 
+-- Document ?\x00 read syntax and range limitations on ?\000 and
      ?\x00 read syntaxes (objects.texi "Character Type") - Turnbull.
 -- Document `true-list-p' (lists.texi "List-related Predicates")
      - Turnbull.
@@ -551,7 +558,7 @@ Lisp API
 -- Updates to cl-macs.el - Pakoulin.
 -- Fix "do-nothing" bug in `derived-mode-merge-syntax-tables' - Turnbull.
 -- Fixes to `restore-saved-window' - James.
--- Handle missing "EMACSPACKAGEPATH" env var in 
+-- Handle missing "EMACSPACKAGEPATH" env var in
      `package-get-package-index-file-location' - Aichner.
 -- Fix substring errors in `package-admin-find-top-directory' - Aichner.
 -- Fix `byte-compile-lambda' so it only discards the docstring if it is
@@ -657,9 +664,9 @@ Build
 
 -- Updates to configure.in - Steuck, James, Skyttä, Wing.
 -- Major updates to Makefile.in.in - Wing.
--- Allow for separate build and source directories - Wing. 
+-- Allow for separate build and source directories - Wing.
 -- Fix some compiler warnings - Wing.
--- Major clean up of xemacs.mak and friends - Wing, Aichner. 
+-- Major clean up of xemacs.mak and friends - Wing, Aichner.
 -- Fix some Solaris 2.7 CC compiler warnings - Persico.
 -- Fix for building on Mac - Palmer.
 -- Work around a problem compiling with '--use-union-type' on Intel's
@@ -667,7 +674,7 @@ Build
 -- Fix problems with rel-alloc compilation - Wing.
 -- Sequentialize dependencies even more in update-elc-2 - Sperber.
 -- Don't fatal() in 'report_sheap_usage' when need to rerun Make -
-     Wing. 
+     Wing.
 -- Various updates to the test suite - Turnbull.
 
 Documentation
@@ -686,7 +693,7 @@ Internals
 -- Reformat function definitions correctly in menubar-gtk.c and
      event-gtk.c - Turnbull.
 -- Fix bug matching ASCII character classes to Mule characters -
-     Ueno. 
+     Ueno.
 -- Frame updates for MS Win - Alexander.
 -- Add .dylib as an acceptable shared library file extension to
      support MacOS X - Begel.
@@ -695,20 +702,20 @@ Internals
 -- Coding system updates - Wing.
 -- Add clear-left-side functionality in print.c - Wing.
 -- Seg fault rather than abort on Cygwin in 'assert_failed' - Wing.
--- Delete popup-data object - Wing.  
+-- Delete popup-data object - Wing.
 -- Delete menubar_data field from frames - Wing.
 -- Clean up handling of lwlib callback data GCPRO'ing - Wing.
 -- Use ALLOCA() in regex.c to avoid excessive stack allocation -
-     Wing. 
+     Wing.
 -- Fix subtle problem with REL_ALLOC() - Wing.
 -- Change *run_hook*_trapping_problems to take a warning class, not a
      string - Wing.
 -- Mule-ize encrypt/decrypt-string code - Wing.
 -- Delete all support for bit-rotten CANNOT_DUMP - Wing.
 -- Fix crash due to attempt to free objects across dump/undump -
-     Wing. 
+     Wing.
 -- Don't get in an infinite loop running post-redisplay actions -
-     Wing. 
+     Wing.
 -- Make gc_currently_forbidden static - Wing.
 -- Defer redrawing if already in redisplay - Wing.
 -- Add debug code for locking a dynarr to catch invalid mods - Wing.
@@ -716,7 +723,7 @@ Internals
      protect the evals - Wing.
 -- Defer specifier-changed updating till after redisplay - Wing.
 -- Require that every place inside of redisplay catch errors itself -
-     Wing. 
+     Wing.
 -- Introduce separate means of holding frame-size changes - Wing.
 -- Introduce "post-redisplay" methods for deferring things till after
      redisplay - Wing.
@@ -729,7 +736,7 @@ Internals
      reinitialization - Wing.
 -- Define new function `emacs-run-status' - Wing.
 -- Fix crash caused by an edge condition in the syntax-cache macros -
-     Wing. 
+     Wing.
 -- Eliminate HAVE_WIN32_CODING_SYSTEMS, use WIN32_ANY instead - Wing.
 -- Don't check_quit() unless we're unbinding a real Lisp
      `unwind-protect' - Wing.
@@ -745,7 +752,7 @@ Lisp API
 -- Use 'equal' instead of '=' in 'saved-window-equal' - James.
 -- Updates to wid-edit.el - Turnbull.
 -- Better layout for Tools -> Packages -> Download Site menu -
-     Aichner. 
+     Aichner.
 -- More sites added to packages download sites menu - Aichner.
 -- Byte-compiler warning clean up and lots of synching with FSF 21.2
      code - Wing.
@@ -779,7 +786,7 @@ Build
 -- Fix --srcdir processing - Turnbull.
 -- Define DLSYM_NEEDS_UNDERSCORE on Darwin - Turnbull.
 -- Use opsys=aix4-2 for AIX 5 and above - Buchholz.
--- Make ellcc search XEmacs directories for include files 1st - James. 
+-- Make ellcc search XEmacs directories for include files 1st - James.
 -- Set stack-trace-on-error, load-always-display-messages - Wing.
 -- Overhaul update-elc.el, cus-dep, autoload (speed ups) - Wing.
 -- Various compiler warning fixes - Wing.
@@ -822,7 +829,7 @@ Internals
 -- Synch rcs2log to GNU upstream - Youngs.
 -- Use symbolic name `XtExposeCompressMaximal' instead of `TRUE' in
    xlwMenuClassRec - Buchholz.
--- In xm_update_progress, don't define unless LWLIB_WIDGETS_MOTIF - Buchholz. 
+-- In xm_update_progress, don't define unless LWLIB_WIDGETS_MOTIF - Buchholz.
 -- Rename class -> class_ & new -> new_ - Wing.
 -- KKCC update in postgresql.c - Wing.
 -- KKCC update in eldap.c - James.
@@ -851,7 +858,7 @@ Internals
 -- Add support for "description maps" - Wing.
 -- Redo XD_UNION so it works inline and change format to provide info
    for pdump - Wing.
--- Textual changes: 
+-- Textual changes:
 	- lrecord_description -> memory_description - Wing.
 	- struct_description -> sized_memory_description - Wing.
 -- Initialize protect_me field of popup_data in set_frame_menubar - Sperber
@@ -979,7 +986,7 @@ Documentation
 	Mention bug report commands - Turnbull.
 	Revise Q1.3.[1-6] - Turnbull.
 	New FAQ for "no cygXpm-noX" fatal error - Turnbull.
--- New TeXinfo nodes: 
+-- New TeXinfo nodes:
 	"Widget Internals" - Turnbull.
 	"Simple Specifier Usage" - Turnbull.
 	"Compilation Options" - Turnbull.
@@ -1109,7 +1116,7 @@ document updates.
 -- Fix x_locate_pixmap_file make sure path is not 0 - MacLennan.
 -- Fix memory leak - Verna.
 -- Add missing call to 'xfree (newname)' in 'make_coding_system_1
-   - Verna. 
+   - Verna.
 -- Fix --with-mule --with-gtk builds - Barta.
 -- Make SEPCHAR a required arg to Fsplit_string_by_char - Palmer.
 -- Make locate_file indicate success with nonnegative return if MODE
@@ -1139,7 +1146,7 @@ categories.  Maybe next release...
 -- New configure option "--use-kkcc" for the upcoming new GC
    algorithms - Sperber.
 -- Identify "--with-modules" as an autodetected configure option -
-   James. 
+   James.
 -- Add a couple of configuration questions to PROBLEMS - Turnbull.
 -- Test for wchar.h in configure - Sperber.
 -- Update package-index files - Youngs.
@@ -1760,7 +1767,7 @@ to 21.5.1 "anise"
    -- Fix shy group regexp code
    -- etc. etc.
 
--- The `short-name' argument to make-charset now works correctly 
+-- The `short-name' argument to make-charset now works correctly
    -- Yoshiaki Kasahara
 -- `custom' changes -- Didier Verna
 -- SET_FACE_PROPERTY bug fix -- Jerry James

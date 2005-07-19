@@ -1,28 +1,33 @@
+2005-07-19  Didier Verna  <didier@xemacs.org>
+
+	* lispref/faces.texi (Basic Face Functions): Document the face
+	aliasing feature.
+
 2005-07-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/commands.texi (Converting Events):
 	Give details on the deprecated ALLOW-NON-ASCII argument to
-	event-to-character, and why you shouldn't use it. 
+	event-to-character, and why you shouldn't use it.
 
 2005-06-26  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* lispref/commands.texi (Converting Events): 
+	* lispref/commands.texi (Converting Events):
 	* lispref/keymaps.texi (Key Sequences):
 	Stop pretending ASCII is an eight-bit character set, and remove
 	documentation of event-to-character's vanished fourth argument.
 
 	* internals/internals.texi (Old Future Work -- Improvements in
 	support for non-ASCII (European) keysyms under X):
-	Rename the ascii-character property. 
-	
+	Rename the ascii-character property.
+
 2005-06-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/building.texi (Building XEmacs and Object Allocation):
-	Pure storage has been gone for half a decade or more. 
-	* lispref/mule.texi (Internationalization Terminology): 
-	Phrase stuff a little more clearly, compare Mule with Unicode. 
+	Pure storage has been gone for half a decade or more.
+	* lispref/mule.texi (Internationalization Terminology):
+	Phrase stuff a little more clearly, compare Mule with Unicode.
 	* lispref/lispref.texi (Top):
-	Take out info on pure storage. 
+	Take out info on pure storage.
 
 2005-05-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -31,13 +36,13 @@
 2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* xemacs-faq.texi (Q3.2.5): (setq text-mode-hook
-	'turn-on-auto-fill) is not a good idea. 
+	'turn-on-auto-fill) is not a good idea.
 
 2005-05-10  Aidan Kehoe  <kehoea@parhasard.net>
 
-	* xemacs/sending.texi (Sending Mail):Document that sendmail.el is 
-        underfeatured and not getting better anytime soon; suggest using 
-        another mailer.  
+	* xemacs/sending.texi (Sending Mail):Document that sendmail.el is
+        underfeatured and not getting better anytime soon; suggest using
+        another mailer.
 
 2005-05-05  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -49,8 +54,8 @@
 	None of the keymaps I have access to have linefeed keys; they all
 	use Return. As such, for new users, C-j is really the only option
 	for evaluation in Lisp interaction mode, and should be documented
-	as such. 
-	
+	as such.
+
 2005-04-18  Turnbull Stephen  <stephen@xemacs.org>
 
 	* internals/internals.texi
@@ -86,18 +91,18 @@
 
 	* lispref/mule.texi (CCL Example):
 	char-int -> char-to-int, and hex 41 is decimal 65, both problems
-	with my previous patch pointed out by Stephen. 
+	with my previous patch pointed out by Stephen.
 	* lispref/mule.texi (The actual coding system):
 	Give information on the make-coding-system call, and where the
-	actual package can be found. 
-	
+	actual package can be found.
+
 2005-03-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* xemacs/custom.texi (X Resources):
 	"Emacs" as the application class -> "XEmacs" as the application
 	class, mention the old resource class determination behaviour, and
-	how one can temporarily re-instate it. 
-	
+	how one can temporarily re-instate it.
+
 2005-03-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (The XEmacs Split):
@@ -123,7 +128,7 @@
 2005-01-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/mule.texi (CCL Example): Detail an implementation of the
-	web's URL encoding as a CCL coding system example. 
+	web's URL encoding as a CCL coding system example.
 
 2005-02-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -147,7 +152,7 @@
 
 	* lispref/searching.texi (Syntax of Regexps):
 	Mention the \c and \C regular expression constructs; cross
-	reference to the Category Table documentation. 
+	reference to the Category Table documentation.
 
 2005-02-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -291,26 +296,26 @@
 2005-02-02  Robert Delius Royar <xemacs@frinabulax.org>
 
 	* beta.texi (Top):
-	Add reference to Index in catalog to prevent 
+	Add reference to Index in catalog to prevent
 	errors compiling with GNU makeinfo 4.5.
 
 	* beta.texi (Syncing with GNU Emacs):
-	Add forward reference to Index in next node to prevent 
+	Add forward reference to Index in next node to prevent
 	errors compiling with GNU makeinfo 4.5.
 
 	* beta.texi (Index):
 	Add backward reference to Syncing with GNU Emacs to
-	replace obsolete reference to Defining Variables to 
+	replace obsolete reference to Defining Variables to
 	prevent errors compiling with GNU makeinfo 4.5.
 
 2005-01-31  Ben Wing  <ben@xemacs.org>
 
 	* xemacs/help.texi (Misc Help):
 	Delete references to DISTRIB.  Point to FAQ.
-	
+
 	* xemacs/new.texi:
 	Update sample code for version checking.
-	
+
 	* xemacs/xemacs.texi (Distrib):
 	* xemacs/xemacs.texi (Intro):
 	Delete references to DISTRIB.  Point directly to web site.
@@ -325,7 +330,7 @@
 	* Makefile (pdf_files):
 	* Makefile ($(INFODIR)/beta.info):
 	Add beta.texi and built files.
-	
+
 	* xemacs-faq.texi (Top):
 	* xemacs-faq.texi (Introduction):
 	* xemacs-faq.texi (Q1.0.3):
@@ -421,7 +426,7 @@
 	manual. Also introduce C/AWK modes in prog-modes package
 	* xemacs/programs.texi (C Ident): Removed - it was
 	obsolete. prog-modes package documentation now contains
-	indentation description for old C mode 
+	indentation description for old C mode
 	* xemacs/major.texi (Mode Hooks): Add description of major mode
 	hooks. Cleaned up and updated programming mode descriptions.
 	* xemacs/xemacs.texi (Top): Updated Detailed Node listing for new
@@ -447,9 +452,9 @@
 	of a command further up the list, give information on a trivial
 	(interactive) declaration, and cross-reference to the key binding
 	detail. Cf. 87vf9wgd08.fsf@tleepslib.sk.tsukuba.ac.jp
-	(comp.emacs.xemacs, 2005-01-18). 
+	(comp.emacs.xemacs, 2005-01-18).
 	* man/lispref/eval.texi man/lispref/lispref.texi
-	  man/lispref/macros.texi man/lispref/symbols.texi 
+	  man/lispref/macros.texi man/lispref/symbols.texi
 	man/lispref/variables.texi: Fix cross references.
 
 2004-12-28  Ben Wing  <ben@xemacs.org>
@@ -1017,7 +1022,7 @@
 
 	* internals/internals.texi (Future Work -- Better Rendering Support):
 	New node.
-	(Top): 
+	(Top):
 	(Future Work):
 	(Future Work -- Lisp Engine Replacement):
 	Add pointers to new node.
@@ -1405,7 +1410,7 @@
 	* internals/index.texi:
 	Deleted.  Incorporated into internals.texi.  Having a separate
 	index file messes up texinfo-master-menu.
-	
+
 	* internals/internals.texi:
 	* internals/internals.texi (Top):
 	* internals/internals.texi (Introduction):
@@ -1844,7 +1849,7 @@
 	New nodes.
 
 	* lispref/lispref.texi (Top):
-	* lispref/numbers.texi (Numbers): 
+	* lispref/numbers.texi (Numbers):
 	Add nodes "Ratio Basics" and "The Bignum Extension" to menus.
 
 2004-01-26  Stephen J. Turnbull  <stephen@xemacs.org>
@@ -1858,9 +1863,9 @@
 
 	* lispref/gutter.texi (Gutter Descriptor Format): Node deleted.
 	(Gutter):
-	(Gutter Intro): 
-	(Creating Gutter): 
-	(Specifying a Gutter): 
+	(Gutter Intro):
+	(Creating Gutter):
+	(Specifying a Gutter):
 	Pluralize node name to Creating Gutters.
 	(Creating Gutters): Improve explanation of gutter descriptors.
 	(Other Gutter Variables): Remove extraneous text.
@@ -1981,7 +1986,7 @@
 	* lispref/mule.texi (Charset Property Functions): Charset registry
 	can be set.
 	(Predefined Charsets): Add registry to Vietnamese charset names.
-	
+
 2003-09-26  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.16 "celeriac" is released.
@@ -2028,7 +2033,7 @@
 	entry.
 	(Package Terminology): Whitespace clean up.
 	(Installing Packages): Whitespace clean up and add some @code
-	formatters. 
+	formatters.
 	Re-organise the menu so that installation via PUI is first and
 	Sumo is last.
 	(Automatically): mule-base is no longer a requirement for using
@@ -2041,12 +2046,12 @@
 	(Building Packages): Remove duplicated stuff that is in
 	lispref/packaging.texi, xref to it instead.
 	(Local.rules File): xref to the appropriate node in
-	lispref/packaging.texi. 
+	lispref/packaging.texi.
 	(Available Packages): Update to current reality.
 	(all): Removed.
 	(srckit): Removed.
 	(binkit): Removed.
-	
+
 	* xemacs/reading.texi (Reading Mail): Mention Gnus and MEW.
 
 	* new-users-guide/custom2.texi (Init File): big-menubar.el is in
@@ -2183,7 +2188,7 @@
 
 	* xemacs/packages.texi (Automatically): Refer to
 	'pui-set-local-package-get-directory' instead of
-	'pui-add-install-directory'. 
+	'pui-add-install-directory'.
 	Remove comment about PGP not being intergrated into PUI.
 	Document balloon-help in PUI.
 	Add heading "Keeping Packages Up To Date".
