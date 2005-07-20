@@ -1,3 +1,9 @@
+2005-07-20  Didier Verna  <didier@xemacs.org>
+
+	* lispref/faces.texi (Basic Face Functions): Rephrase the face
+	aliasing paragraph following a suggestion from Stephen J.
+	Turnbull.
+
 2005-07-19  Didier Verna  <didier@xemacs.org>
 
 	* lispref/faces.texi (Basic Face Functions): Document the face

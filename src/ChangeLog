@@ -1,3 +1,12 @@
+2005-07-20  Didier Verna  <didier@xemacs.org>
+
+	Following suggestions from Stephen J. Turnbull:
+	* faces.c (Qcyclic_face_alias): New name for
+	Qcyclic_face_aliasing.
+	* faces.c (Ffind_face): Use it. Rename FACE_ALIASING_MAX_DEPTH to
+	FACE_ALIAS_MAX_DEPTH.
+	* faces.c (syms_of_faces): Ditto.
+
 2005-07-19  Didier Verna  <didier@xemacs.org>
 
 	* faces.c (Ffind_face): Implement face aliasing.

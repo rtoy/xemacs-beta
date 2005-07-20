@@ -1,3 +1,7 @@
+2005-07-20  Didier Verna  <didier@xemacs.org>
+
+	* CHANGES-beta: Remove the face aliasing feature announcement.
+
 2005-07-19  Didier Verna  <didier@xemacs.org>
 
 	* CHANGES-beta: Announce the face aliasing feature.

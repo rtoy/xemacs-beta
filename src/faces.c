@@ -60,7 +60,7 @@ Lisp_Object Vpointer_face, Vvertical_divider_face, Vtoolbar_face, Vwidget_face;
 /* Qdefault, Qhighlight, Qleft_margin, Qright_margin defined in general.c */
 Lisp_Object Qmodeline, Qgui_element, Qtext_cursor, Qvertical_divider;
 
-Lisp_Object Qface_alias, Qcyclic_face_aliasing;
+Lisp_Object Qface_alias, Qcyclic_face_alias;
 
 /* In the old implementation Vface_list was a list of the face names,
    not the faces themselves.  We now distinguish between permanent and
@@ -641,11 +641,11 @@ nil is returned.  Otherwise the associated face object is returned.
   face_name = face_or_name;
   CHECK_SYMBOL (face_name);
 
-# define FACE_ALIASING_MAX_DEPTH 32
+# define FACE_ALIAS_MAX_DEPTH 32
 
   i = 0;
   while (! NILP ((face_alias = Fget (face_name, Qface_alias, Qnil)))
-	 && i < FACE_ALIASING_MAX_DEPTH)
+	 && i < FACE_ALIAS_MAX_DEPTH)
     {
       face_name = face_alias;
       CHECK_SYMBOL (face_alias);
@@ -654,12 +654,12 @@ nil is returned.  Otherwise the associated face object is returned.
 
   /* #### This test actually makes the aliasing max depth to 30, which is more
      #### than enough IMO. -- dvl */
-  if (i == FACE_ALIASING_MAX_DEPTH)
-    signal_error (Qcyclic_face_aliasing,
+  if (i == FACE_ALIAS_MAX_DEPTH)
+    signal_error (Qcyclic_face_alias,
 		  "Max face aliasing depth reached",
 		  face_name);
 
-# undef  FACE_ALIASING_MAX_DEPTH
+# undef  FACE_ALIAS_MAX_DEPTH
 
   /* Check if the name represents a permanent face. */
   retval = Fgethash (face_name, Vpermanent_faces_cache, Qnil);
@@ -1892,7 +1892,7 @@ syms_of_faces (void)
   DEFSYMBOL (Qblinking);
 
   DEFSYMBOL (Qface_alias);
-  DEFERROR_STANDARD (Qcyclic_face_aliasing, Qinvalid_state);
+  DEFERROR_STANDARD (Qcyclic_face_alias, Qinvalid_state);
 
   DEFSYMBOL (Qinit_face_from_resources);
   DEFSYMBOL (Qinit_global_faces);

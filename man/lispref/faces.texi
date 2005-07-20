@@ -146,9 +146,9 @@ in @code{copy-specifier} (@pxref{Specifiers}).
 means of aliases. One typical use of this feature is to change the name
 of a face while preserving backward compatibility. If a symbol has the
 @code{face-alias} property set to another symbol, then this other symbol
-will be used as the real face name instead (this is actually a recursive
-process). There is currently a limit of 32 consecutive face aliases, in
-order to prevent aliasing loops.
+will be used as the real face name instead. Recursive aliases (aliases
+of aliases) are allowed, but the depth of indirection is limited to 32
+to prevent alias loops.
 
 
 
