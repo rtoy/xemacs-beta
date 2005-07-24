@@ -353,7 +353,7 @@ mswindows_set_frame_size (struct frame *f, int width, int height)
 		      GetMenu (FRAME_MSWINDOWS_HANDLE (f)) != NULL,
 		      qxeGetWindowLong (FRAME_MSWINDOWS_HANDLE (f), GWL_EXSTYLE));
 
-  if (IsIconic (FRAME_MSWINDOWS_HANDLE (f)) || IsZoomed (FRAME_MSWINDOWS_HANDLE (f)))
+  if (IsIconic (FRAME_MSWINDOWS_HANDLE (f)))
     ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_RESTORE);
 
   SetWindowPos (FRAME_MSWINDOWS_HANDLE (f), NULL, 

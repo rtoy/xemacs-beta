@@ -1,3 +1,8 @@
+2005-07-24  Fabrice Popineau <Fabrice.Popineau@supelec.fr>
+
+	* frame-msw.c (mswindows_set_frame_size): Don't have a frame size
+	change trigger restoring the frame.
+
 2005-07-20  Didier Verna  <didier@xemacs.org>
 
 	Following suggestions from Stephen J. Turnbull:
