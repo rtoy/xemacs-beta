@@ -1,3 +1,13 @@
+2005-07-29  Darryl Okahata  <darrylo@xemacs.org>
+
+	* extents.c (lispobj_gap_array_description_1): fix the memory
+	descriptions for the "gap", "offset_past_gap", and "els_past_gap"
+	members.  Before, they were incorrectly defined as "XD_INT"
+	objects.  They've been corrected to use "XD_ELEMCOUNT" and
+	"XD_BYTECOUNT", as that is how they are defined in the actual
+	Gap_Array declaration.  This is important on systems where
+	sizeof(int) != sizeof(long), such as some 64-bit systems.
+
 2005-07-24  Fabrice Popineau <Fabrice.Popineau@supelec.fr>
 
 	* frame-msw.c (mswindows_set_frame_size): Don't have a frame size

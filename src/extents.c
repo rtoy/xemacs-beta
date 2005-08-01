@@ -1046,9 +1046,9 @@ const struct sized_memory_description gap_array_marker_description = {
 };
 
 static const struct memory_description lispobj_gap_array_description_1[] = { 
-  { XD_INT, offsetof (Gap_Array, gap) },
-  { XD_INT, offsetof (Gap_Array, offset_past_gap) },
-  { XD_INT, offsetof (Gap_Array, els_past_gap) },
+  { XD_ELEMCOUNT, offsetof (Gap_Array, gap) },
+  { XD_BYTECOUNT, offsetof (Gap_Array, offset_past_gap) },
+  { XD_ELEMCOUNT, offsetof (Gap_Array, els_past_gap) },
   { XD_BLOCK_PTR, offsetof (Gap_Array, markers), 1,
     { &gap_array_marker_description }, XD_FLAG_NO_KKCC },
   { XD_BLOCK_ARRAY, offsetof (Gap_Array, array), XD_INDIRECT (0, 0),
