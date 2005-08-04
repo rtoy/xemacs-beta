@@ -1,3 +1,8 @@
+2005-08-04  Mike Sperber  <mike@xemacs.org>
+
+	* window-xemacs.el (window-configuration-equal): Compare frame top
+	and left via `equal' rather than '=', as it can be nil.
+
 2005-07-24  Fabrice Popineau <Fabrice.Popineau@supelec.fr>
 
 	* window-xemacs.el (really-set-window-configuration): 

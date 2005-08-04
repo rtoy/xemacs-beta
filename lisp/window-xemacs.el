@@ -136,10 +136,10 @@ are identical."
 	      (window-configuration-frame-pixel-width conf-2))
 	   (= (window-configuration-frame-pixel-height conf-1)
 	      (window-configuration-frame-pixel-height conf-2))
-          (= (window-configuration-frame-top conf-1)
-             (window-configuration-frame-top conf-2))
-          (= (window-configuration-frame-left conf-1)
-             (window-configuration-frame-left conf-2))
+	   (equal (window-configuration-frame-top conf-1)
+		  (window-configuration-frame-top conf-2))
+	   (equal (window-configuration-frame-left conf-1)
+		  (window-configuration-frame-left conf-2))
 	   (eq (window-configuration-current-buffer conf-1)
 	       (window-configuration-current-buffer conf-2))
 	   (saved-window-equal (window-configuration-saved-root-window conf-1)
@@ -218,8 +218,8 @@ its value is -not- saved."
 	      
     (make-window-configuration
      :frame frame
-:frame-top (frame-property frame 'top)
-:frame-left (frame-property frame 'left)
+     :frame-top (frame-property frame 'top)
+     :frame-left (frame-property frame 'left)
      :frame-pixel-width (frame-pixel-width frame)
      :frame-pixel-height (frame-pixel-height frame)
      :current-buffer (current-buffer)
