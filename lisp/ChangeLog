@@ -1,3 +1,8 @@
+2005-08-06  Mike Sperber  <mike@xemacs.org>
+
+	* window-xemacs.el (really-set-window-configuration): Only set
+	the frame top and left if they've changed.
+
 2005-08-04  Mike Sperber  <mike@xemacs.org>
 
 	* window-xemacs.el (window-configuration-equal): Compare frame top

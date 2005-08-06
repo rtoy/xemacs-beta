@@ -291,8 +291,15 @@ by `current-window-configuration'."
 
   (frame-reduce-to-one-window frame)
   (set-window-configuration-frame-size configuration)
-  (set-frame-property frame 'left (window-configuration-frame-left configuration)) 
-  (set-frame-property frame 'top (window-configuration-frame-top configuration)) 
+
+  ; avoid setting these if they're already up-to-date
+  ; This also avoids potential inaccuracies in these settings --Mike
+  (let ((left (window-configuration-frame-left configuration))
+	(top (window-configuration-frame-top configuration)))
+    (if (not (equal left (frame-property frame 'left)))
+	(set-frame-property frame 'left left))
+    (if (not (equal top (frame-property frame 'top)))
+	(set-frame-property frame 'top top))) 
 
   ;; these may have changed because of the delete
   (let ((root-window (frame-root-window frame)))
