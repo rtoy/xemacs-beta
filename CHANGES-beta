@@ -2,15 +2,41 @@ to 21.5.22 "cucumber"
 
 Major features
 
+--New: support for Unnnn-style keysyms on X11. (Aidan Kehoe)
+
 User-Visible Bug Fixes and Minor Improvements
+
+-- Fix: window configuration subsystem. (Michael Sperber, Fabrice Popineau)
 
 Build Infrastructure
 
+-- Fix: add generated dumper files to .cvsignore. (Marcus Crestani)
+-- Fix: add generated makefiles to .cvsignore in ./modules. (Craig Lanning)
+
 Documentation
+
+-- Fix: lispref - compose processing now goes direct to character, not
+   keysym. (Aidan Kehoe)
+-- Improve: lispref - Mule explanations. (Aidan Kehoe)
+-- Improve: lispref - remove discussion of pure storage, long disabled.
+   (Aidan Kehoe)
+-- New: lispref - face aliasing. (Didier Verna)
 
 Lisp API
 
+-- New: face aliasing. (Didier Verna)
+
 Internal API and Implementation
+
+-- Fix: DLL implementation for Mac OS X "Tiger". (Atanu Ghosh)
+-- Fix: false load path shadows after package update. (Jeff Mincy,
+   Adrian Aichner)
+-- Fix: make CCL check for existence before using characters. (Aidan Kehoe)
+-- Fix: memory descriptions for gap variables for better 64-bit support.
+   (Darryl Okahata)
+-- Fix: various cleanups for MC_ALLOC. (Marcus Crestani)
+-- Improve: use characters instead of keysyms in x-compose.el.  Remove
+   iso8859 .els from dumped-lisp.el. (Aidan Kehoe)
 
 to 21.5.21 "corn"
 
