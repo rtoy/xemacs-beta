@@ -2,602 +2,603 @@ to 21.5.22 "cucumber"
 
 Major features
 
---New: support for Unnnn-style keysyms on X11. (Aidan Kehoe)
+--New: support for Unnnn-style keysyms on X11. -- Aidan Kehoe
 
 User-Visible Bug Fixes and Minor Improvements
 
--- Fix: window configuration subsystem. (Michael Sperber, Fabrice Popineau)
+-- Fix: window configuration subsystem. -- Michael Sperber, Fabrice Popineau
 
 Build Infrastructure
 
--- Fix: add generated dumper files to .cvsignore. (Marcus Crestani)
--- Fix: add generated makefiles to .cvsignore in ./modules. (Craig Lanning)
+-- Fix: add generated dumper files to .cvsignore. -- Marcus Crestani
+-- Fix: add generated makefiles to .cvsignore in ./modules. -- Craig Lanning
 
 Documentation
 
 -- Fix: lispref - compose processing now goes direct to character, not
-   keysym. (Aidan Kehoe)
--- Improve: lispref - Mule explanations. (Aidan Kehoe)
+   keysym. -- Aidan Kehoe
+-- Improve: lispref - Mule explanations. -- Aidan Kehoe
 -- Improve: lispref - remove discussion of pure storage, long disabled.
-   (Aidan Kehoe)
--- New: lispref - face aliasing. (Didier Verna)
+   -- Aidan Kehoe
+-- New: lispref - face aliasing. -- Didier Verna
 
 Lisp API
 
--- New: face aliasing. (Didier Verna)
+-- New: face aliasing. -- Didier Verna
 
 Internal API and Implementation
 
--- Fix: DLL implementation for Mac OS X "Tiger". (Atanu Ghosh)
--- Fix: false load path shadows after package update. (Jeff Mincy,
-   Adrian Aichner)
--- Fix: make CCL check for existence before using characters. (Aidan Kehoe)
+-- Fix: DLL implementation for Mac OS X "Tiger". -- Atanu Ghosh
+-- Fix: false load path shadows after package update. -- Jeff Mincy,
+   Adrian Aichner
+-- Fix: make CCL check for existence before using characters. -- Aidan Kehoe
 -- Fix: memory descriptions for gap variables for better 64-bit support.
-   (Darryl Okahata)
--- Fix: various cleanups for MC_ALLOC. (Marcus Crestani)
+   -- Darryl Okahata
+-- Fix: various cleanups for MC_ALLOC. -- Marcus Crestani
 -- Improve: use characters instead of keysyms in x-compose.el.  Remove
-   iso8859 .els from dumped-lisp.el. (Aidan Kehoe)
+   iso8859 .els from dumped-lisp.el. -- Aidan Kehoe
 
 to 21.5.21 "corn"
 
 Major features
 
--- New: An alternative memory allocator. (Marcus Crestani)
+-- New: An alternative memory allocator. -- Marcus Crestani
 
 User-Visible Bug Fixes and Minor Improvements
 
--- Fix: Calculations in font-spatial-to-canonical. (Ralf Angeli)
--- Fix: Honor coding system argument when creating a file. (Aidan Kehoe)
--- Fix: Prevent stripping of items from Command menu. (Ralf Angeli)
--- Fix: Selection handling on Win32. (Fabrice Popineau)
--- Improve: Better defaults for mail-user-agent. (Aidan Kehoe)
--- Improve: Deprecate use of Emacs X resource class. (Aidan Kehoe)
--- Improve: Initialize fontlock properly in *scratch*. (Aidan Kehoe)
--- Improve: Make %backup%~ honor auto-save-directory. (Steve Youngs,
-   Jamie Zawinski)
--- Improve: Recognize some constructed Unicode keysyms. (Aidan Kehoe)
--- Improve: Synch dired features from GNU Emacs. (Mike Sperber,
-   Richard Stallman, Luc Teirlinck, Stefan Monnier, Andreas Schwab)
--- Improve: Syntax and case mapping for ISO 8859 parts 14-16. (Aidan Kehoe)
--- Improve: Warn about unbound Unicode keysyms. (Aidan Kehoe)
+-- Fix: Calculations in font-spatial-to-canonical. -- Ralf Angeli
+-- Fix: Honor coding system argument when creating a file. -- Aidan Kehoe
+-- Fix: Prevent stripping of items from Command menu. -- Ralf Angeli
+-- Fix: Selection handling on Win32. -- Fabrice Popineau
+-- Improve: Better defaults for mail-user-agent. -- Aidan Kehoe
+-- Improve: Deprecate use of Emacs X resource class. -- Aidan Kehoe
+-- Improve: Initialize fontlock properly in *scratch*. -- Aidan Kehoe
+-- Improve: Make %backup%~ honor auto-save-directory. -- Steve Youngs,
+   Jamie Zawinski
+-- Improve: Recognize some constructed Unicode keysyms. -- Aidan Kehoe
+-- Improve: Synch dired features from GNU Emacs. -- Mike Sperber,
+   Richard Stallman, Luc Teirlinck, Stefan Monnier, Andreas Schwab
+-- Improve: Syntax and case mapping for ISO 8859 parts 14-16. -- Aidan Kehoe
+-- Improve: Warn about unbound Unicode keysyms. -- Aidan Kehoe
 
 Build Infrastructure
 
--- Fix: Asserts can't contain active code. (Melvin Hadasht)
--- Fix: Avoid "head -#", coreutils doesn't like it. (Vin Shelton)
--- Fix: Build for non-DEBUG_XEMACS native Windows build. (Marcus Crestani)
--- Fix: Cater to OpenBSD /bin/sh. (Malcolm Purvis)
--- Fix: Check $ac_cv_build not $canonical for libossaudio. (Aidan Kehoe)
+-- Fix: Asserts can't contain active code. -- Melvin Hadasht
+-- Fix: Avoid "head -#", coreutils doesn't like it. -- Vin Shelton
+-- Fix: Build for non-DEBUG_XEMACS native Windows build. -- Marcus Crestani
+-- Fix: Cater to OpenBSD /bin/sh. -- Malcolm Purvis
+-- Fix: Check $ac_cv_build not $canonical for libossaudio. -- Aidan Kehoe
 -- Fix: Define elfw(type) for unexec on Alpha and amd64 for FreeBSD.
-   (Andrey Slusar)
--- Fix: Make get-user-response available regardless of config. (Mike Sperber)
+   -- Andrey Slusar
+-- Fix: Make get-user-response available regardless of config. -- Mike Sperber
 -- Fix: Make srcdir absolute, include X header, terminate lines.
-   (Malcolm Purvis)
--- Fix: Remove do-nothing --no-gnu-linker in Solaris builds. (Vin Shelton)
--- Fix: Specifying optimization flags implies optimization. (Stephen Turnbull)
--- Fix: Use HAVE_DECL_SYS_SIGLIST, not SYS_SIGLIST_DECLARED. (Volker Zell)
+   -- Malcolm Purvis
+-- Fix: Remove do-nothing --no-gnu-linker in Solaris builds. -- Vin Shelton
+-- Fix: Specifying optimization flags implies optimization. -- Stephen Turnbull
+-- Fix: Use HAVE_DECL_SYS_SIGLIST, not SYS_SIGLIST_DECLARED. -- Volker Zell
 -- Fix: configure needs to include X11/Intrinsic.h to check for Xaw.
-   (Robert Delius Royar, Aidan Kehoe, Jerry James)
--- Fix: egetenv needs process.h in device-x.c. (Marcus Crestani)
--- New: Conditionally compile insert-data-in-exec. (Marcus Crestani)
+   -- Robert Delius Royar, Aidan Kehoe, Jerry James
+-- Fix: egetenv needs process.h in device-x.c. -- Marcus Crestani
+-- New: Conditionally compile insert-data-in-exec. -- Marcus Crestani
 
 Documentation
 
--- Fix: Add "--with" prefix in docstrings in configure.ac. (Aidan Kehoe)
--- Fix: Documentation typos. (Aidan Kehoe, Adrian Aichner)
--- Improve: Mention and deprecate atomic extents in docstring. (Aidan Kehoe)
--- Improve: Texinfo docs. (Aidan Kehoe, Stephen Turnbull, Ben Wing)
+-- Fix: Add "--with" prefix in docstrings in configure.ac. -- Aidan Kehoe
+-- Fix: Documentation typos. -- Aidan Kehoe, Adrian Aichner
+-- Improve: Mention and deprecate atomic extents in docstring. -- Aidan Kehoe
+-- Improve: Texinfo docs. -- Aidan Kehoe, Stephen Turnbull, Ben Wing
 
 Lisp API
 
 -- Improve: Use override-redirect to suppress WM decorations.
-   (Stephen Turnbull)
--- New: More stats for show-memory-usage. (Marcus Crestani)
+   -- Stephen Turnbull
+-- New: More stats for show-memory-usage. -- Marcus Crestani
 
 Internal API and Implementation
 
 -- Fix: Argument count in issue_call_trapping_problems_warning.
-   (Stephen Turnbull)
--- Fix: Avoid use of nonexistent insert-for-yank. (Aidan Kehoe)
--- Fix: Buffer overflow in pdump backtrace array. (Jerry James)
--- Fix: Control-1 handling in CCL. (Aidan Kehoe)
--- Fix: fakemail for FreeBSD >= 4. (Andrey Slusar)
--- Improve: Dynamic diagnostic backtrace for KKCC. (Marcus Crestani)
+   -- Stephen Turnbull
+-- Fix: Avoid use of nonexistent insert-for-yank. -- Aidan Kehoe
+-- Fix: Buffer overflow in pdump backtrace array. -- Jerry James
+-- Fix: Control-1 handling in CCL. -- Aidan Kehoe
+-- Fix: fakemail for FreeBSD >= 4. -- Andrey Slusar
+-- Improve: Dynamic diagnostic backtrace for KKCC. -- Marcus Crestani
 
 to 21.5.20 "cilantro"
 
 Major Features
 
--- New: Handle various X selection targets properly. (Aidan Kehoe)
+-- New: Handle various X selection targets properly. -- Aidan Kehoe
 
 User-Visible Bug Fixes and Minor Improvements
 
--- Fix: Handle active regions properly. (Adrian Aichner)
--- Fix: pui-list-packages handles longer filenames. (Norbert Koch)
+-- Fix: Handle active regions properly. -- Adrian Aichner
+-- Fix: pui-list-packages handles longer filenames. -- Norbert Koch
 
 Build Infrastructure
 
--- Improve: Port configure to autoconf 2.59. (Malcolm Purvis)
--- Fix: make-docfile.c misparsed UNUSED macro in defuns. (Stephen Turnbull)
--- Fix: Don't copy non-existent BUGS file on NT. (Adrian Aichner)
--- Fix: Typo in PDUMP section of Makefile.in.in. (Mike Alexander)
+-- Improve: Port configure to autoconf 2.59. -- Malcolm Purvis
+-- Fix: make-docfile.c misparsed UNUSED macro in defuns. -- Stephen Turnbull
+-- Fix: Don't copy non-existent BUGS file on NT. -- Adrian Aichner
+-- Fix: Typo in PDUMP section of Makefile.in.in. -- Mike Alexander
 
 Documentation
 
--- Improve: Update info/dir. (Adrian Aichner)
--- Improve: Automate updating of release date in about.el. (Stephen Turnbull)
--- New: about.el entry for Simon Josefsson.  (Simon Joseffson)
--- Fix: Typos.  (Adrian Aichner)
--- Improve: Sort memory usage report sections by usage. (Adrian Aichner)
--- Improve: Glyphs documentation. (Ben Wing)
--- Improve: Description of build configuration system. (Malcolm Purvis)
--- New: Description of build configuration system. (Stephen Turnbull)
--- New: Lispref node on CCL Example. (Aidan Kehoe)
--- Improve: Describe \c and \C in Syntax of Regexps. (Aidan Kehoe)
--- Improve: Future Work -- Better Rendering Support. (Stephen Turnbull)
--- Improve: Comments. (Stephen Turnbull, Aidan Kehoe)
+-- Improve: Update info/dir. -- Adrian Aichner
+-- Improve: Automate updating of release date in about.el. -- Stephen Turnbull
+-- New: about.el entry for Simon Josefsson.  (Simon Joseffson
+-- Fix: Typos.  (Adrian Aichner
+-- Improve: Sort memory usage report sections by usage. -- Adrian Aichner
+-- Improve: Glyphs documentation. -- Ben Wing
+-- Improve: Description of build configuration system. -- Malcolm Purvis
+-- New: Description of build configuration system. -- Stephen Turnbull
+-- New: Lispref node on CCL Example. -- Aidan Kehoe
+-- Improve: Describe \c and \C in Syntax of Regexps. -- Aidan Kehoe
+-- Improve: Future Work -- Better Rendering Support. -- Stephen Turnbull
+-- Improve: Comments. -- Stephen Turnbull, Aidan Kehoe
 
 Lisp API
 
--- New: GNU semi-compatible decode-char and encode-char.  (Aidan Kehoe)
+-- New: GNU semi-compatible decode-char and encode-char.  (Aidan Kehoe
 
 Internal API and Implementation
 
--- Fix: Avoid consing in operate-on-matching-lines. (Adrian Aichner)
--- Fix: Correctly disable geometry negotiation in tabs widget. (Stephen Turnbull)
--- New: Backtrace feature for KKCC. (Marcus Crestani)
--- Fix: Type casts in database.c. (Marcus Crestani)
--- Fix: Adjust s&m to FreeBSD 6.x reality. (Andrey Slusar)
+-- Fix: Avoid consing in operate-on-matching-lines. -- Adrian Aichner
+-- Fix: Correctly disable geometry negotiation in tabs widget. -- Stephen Turnbull
+-- New: Backtrace feature for KKCC. -- Marcus Crestani
+-- Fix: Type casts in database.c. -- Marcus Crestani
+-- Fix: Adjust s&m to FreeBSD 6.x reality. -- Andrey Slusar
 
 Quality Assurance Infrastructure
 
--- New: USED_IF_BIGFLOAT macro. (Jerry James)
--- New: region-tests.el. (Adrian Aichner)
--- New: autoconf/regressiontest.pl. (Malcolm Purvis)
+-- New: USED_IF_BIGFLOAT macro. -- Jerry James
+-- New: region-tests.el. -- Adrian Aichner
+-- New: autoconf/regressiontest.pl. -- Malcolm Purvis
 
 to 21.5.19 "chives"
 
 Major Features
 
--- Improve: major reorganization of source tree docs. (Ben Wing)
--- Improve: behaviors get new code and many new implementations. (Ben Wing)
+-- Improve: major reorganization of source tree docs. -- Ben Wing
+-- Improve: behaviors get new code and many new implementations. -- Ben Wing
 
 User-Visible Bug Fixes and Minor Improvements
 
--- Fix: security hole (CAN-2005-0100) in movemail. (Vin Shelton)
--- Fix: data truncation in i.c. (Ben Wing)
--- Fix: region deletion bug. (Stephen Turnbull)
--- Fix: crash in Frecord_buffer. (Yoshiki Hayashi)
--- Fix: Metacity maximize bug. (Stephen Turnbull)
--- Fix: data truncation bugs in unix_send_process. (David Evers, Jerry James)
--- Fix: recognise AltGr as a valid modifier in GTK. (Malcolm Purvis)
--- Fix: recognize ISO keysyms. (Ville Skyttä)
+-- Fix: security hole (CAN-2005-0100) in movemail. -- Vin Shelton
+-- Fix: data truncation in i.c. -- Ben Wing
+-- Fix: region deletion bug. -- Stephen Turnbull
+-- Fix: crash in Frecord_buffer. -- Yoshiki Hayashi
+-- Fix: Metacity maximize bug. -- Stephen Turnbull
+-- Fix: data truncation bugs in unix_send_process. -- David Evers, Jerry James
+-- Fix: recognise AltGr as a valid modifier in GTK. -- Malcolm Purvis
+-- Fix: recognize ISO keysyms. -- Ville Skyttä
 -- New: on Windows, dump Unicode tables to allow non-ASCII invocation.
-   (Ben Wing)
--- New: splash screen. (Ben Wing)
--- New: support treating shortcuts under Windows as symbolic links. (Ben Wing)
--- Improve: GNU-compatible coding system aliases. (Aidan Kehoe)
--- Improve: help system. (Ben Wing)
--- Improve: mouse-track. (Ben Wing)
--- Improve: support ISO 8859/16 by default. (Aidan Kehoe)
+   -- Ben Wing
+-- New: splash screen. -- Ben Wing
+-- New: support treating shortcuts under Windows as symbolic links. -- Ben Wing
+-- Improve: GNU-compatible coding system aliases. -- Aidan Kehoe
+-- Improve: help system. -- Ben Wing
+-- Improve: mouse-track. -- Ben Wing
+-- Improve: support ISO 8859/16 by default. -- Aidan Kehoe
 
 Build Infrastructure
 
 -- Fix: copy BUGS, README, COPYING and Installation on installation on
-   Windows. (Ben Wing)
--- Fix: installation for Cygwin. (Marcus Crestani)
--- Fix: various build problems. (Ben Wing)
--- Fix: various things in configure. (Ben Wing)
--- New: default pdump on for Cygwin. (Marcus Crestani)
--- New: support NetBSD sound via Linux API. (Aidan Kehoe)
--- Improve: generation of CFLAGS (Jerry James, Ben Wing)
--- Improve: parallel build support. (Malcolm Purvis)
+   Windows. -- Ben Wing
+-- Fix: installation for Cygwin. -- Marcus Crestani
+-- Fix: various build problems. -- Ben Wing
+-- Fix: various things in configure. -- Ben Wing
+-- New: default pdump on for Cygwin. -- Marcus Crestani
+-- New: support NetBSD sound via Linux API. -- Aidan Kehoe
+-- Improve: generation of CFLAGS (Jerry James, Ben Wing
+-- Improve: parallel build support. -- Malcolm Purvis
 -- Improve: support --package-prefix as simple interface to --package-path
-   facility. (Ben Wing)
--- Improve: support mmdf and pop arguments to --mail-locking. (Ben Wing)
+   facility. -- Ben Wing
+-- Improve: support mmdf and pop arguments to --mail-locking. -- Ben Wing
 
 Documentation
 
--- Fix: beta.texi. (Stephen Turnbull, Robert Royar)
--- Fix: typos. (Alexey Mahotkin, Andreas Eder)
--- New: "Future Work -- Better Rendering Support". (Stephen turnbull)
--- New: "Future Work" collects feature proposals in Internals. (Ben Wing)
--- New: empty ChangeLog entry. (Ben Wing)
--- New: personal photos. (Malcolm Purvis)
--- Improve: Lispref (Shyamal Prasad, Stephen Turnbull, Aidan Kehoe)
--- Improve: Users' Guide. (Ben Wing)
--- Improve: about.el. (Malcolm Purvis, Ben Wing)
--- Improve: docstrings. (Ben Wing, Stephen Turnbull, Adrian Aichner,
-   Aidan Kehoe)
--- Improve: gnuserv docs. (Stephen J. Turnbull)
--- Improve: incorporate source tree docs in FAQ. (Ben Wing)
--- Improve: major overhauls of FAQ, Internals. (Ben Wing)
--- Improve: various comments. (Ben Wing)
+-- Fix: beta.texi. -- Stephen Turnbull, Robert Royar
+-- Fix: typos. -- Alexey Mahotkin, Andreas Eder
+-- New: "Future Work -- Better Rendering Support". -- Stephen Turnbull
+-- New: "Future Work" collects feature proposals in Internals. -- Ben Wing
+-- New: empty ChangeLog entry. -- Ben Wing
+-- New: personal photos. -- Malcolm Purvis
+-- Improve: Lispref (Shyamal Prasad, Stephen Turnbull, Aidan Kehoe
+-- Improve: Users' Guide. -- Ben Wing
+-- Improve: about.el. -- Malcolm Purvis, Ben Wing
+-- Improve: docstrings. -- Ben Wing, Stephen Turnbull, Adrian Aichner,
+   Aidan Kehoe
+-- Improve: gnuserv docs. -- Stephen J. Turnbull
+-- Improve: incorporate source tree docs in FAQ. -- Ben Wing
+-- Improve: major overhauls of FAQ, Internals. -- Ben Wing
+-- Improve: various comments. -- Ben Wing
 
 Lisp API
 
 -- Improve: sync bytecomp-runtime.el (make-obsolete, make-obsolete-variable).
-   (Ville Skyttä)
+   -- Ville Skyttä
 -- Improve: sync paragraphs.el, custom.el, subr.el, newcomment.el,
-   fill.el, page.el, register.el. (Ben Wing)
--- New: move regexp-opt.el and easy-mmode.el from packages to core. (Ben Wing)
+   fill.el, page.el, register.el. -- Ben Wing
+-- New: move regexp-opt.el and easy-mmode.el from packages to core. -- Ben Wing
 -- New: next/previous-single-char-property-change and make
-   next/previous-single-property-change work like in FSF. (Ben Wing)
--- New: xemacs-font-lock-c-keywords and friends. (Ben Wing)
+   next/previous-single-property-change work like in FSF. -- Ben Wing
+-- New: xemacs-font-lock-c-keywords and friends. -- Ben Wing
 
 Internal API and Implementation
 
--- Fix: ^M brokenness in res.rc. (Ben Wing)
--- Fix: adapt to recent changes in Cygwin. (Ben Wing)
+-- Fix: ^M brokenness in res.rc. -- Ben Wing
+-- Fix: adapt to recent changes in Cygwin. -- Ben Wing
 -- Fix: byte-char conversion, should speed up Mule if there are
-   non-ASCII characters in the buffer. (Ben Wing)
--- Fix: coding cookie recognition in .elc. (Ben Wing)
--- Fix: data-in-executable problems. (Olivier Galibert, Ben Wing)
--- Fix: find-coding-system-magic-cookie-in-file. (Ben Wing)
--- Fix: leaking process handles. (Ben Wing)
+   non-ASCII characters in the buffer. -- Ben Wing
+-- Fix: coding cookie recognition in .elc. -- Ben Wing
+-- Fix: data-in-executable problems. -- Olivier Galibert, Ben Wing
+-- Fix: find-coding-system-magic-cookie-in-file. -- Ben Wing
+-- Fix: leaking process handles. -- Ben Wing
 -- Fix: only call device method compute_scrollbar_instance_usage() if it
-   is defined. (Zajcev Evgeny)
+   is defined. -- Zajcev Evgeny
 -- Fix: protect callers of MSFT syscalls from MSFT API randomization.
-   (Ben Wing)
--- Fix: typos. (Robert Royar)
--- Fix: warnings. (Aidan Kehoe, Ben Wing)
--- New: Hashcode type. (Ben Wing)
--- New: color API. (Ben Wing)
--- New: rename abort() macro to ABORT() to placate VC 7. (Ben Wing)
--- Improve: GCPRO macros. (Ben Wing)
--- Improve: Mule-ize various things. (Ben Wing)
+   -- Ben Wing
+-- Fix: typos. -- Robert Royar
+-- Fix: warnings. -- Aidan Kehoe, Ben Wing
+-- New: Hashcode type. -- Ben Wing
+-- New: color API. -- Ben Wing
+-- New: rename abort() macro to ABORT() to placate VC 7. -- Ben Wing
+-- Improve: GCPRO macros. -- Ben Wing
+-- Improve: Mule-ize various things. -- Ben Wing
 -- Improve: Suppress aliasing warning in free_hook; Jerry says not a fix?
-   (Ben Wing)
--- Improve: UNUSED parameter marking, UNO support. (Malcolm Purvis,
-   Jerry James)
--- Improve: Unicode-ize various things. (Ben Wing)
--- Improve: critical section protection. (Ben Wing)
+   -- Ben Wing
+-- Improve: UNUSED parameter marking, UNO support. -- Malcolm Purvis,
+   Jerry James
+-- Improve: Unicode-ize various things. -- Ben Wing
+-- Improve: critical section protection. -- Ben Wing
 -- Improve: debug info on attempt to throw outside of a function where
-   call_trapping_problems() has been used. (Ben Wing)
--- Improve: menubar support. (Ben Wing)
--- Improve: more orthogonality in emacs-root-finding. (Mike Sperber)
--- Improve: move etc/aliases.ksh to xemacs-builds CVS module. (Ben Wing)
--- Improve: move etc/chr.png, etc/chrm.png to etc/photos/ (Ben Wing)
--- Improve: partially rework Unicode support. (Ben Wing)
--- Improve: path handling correctness. (Ben Wing)
+   call_trapping_problems() has been used. -- Ben Wing
+-- Improve: menubar support. -- Ben Wing
+-- Improve: more orthogonality in emacs-root-finding. -- Mike Sperber
+-- Improve: move etc/aliases.ksh to xemacs-builds CVS module. -- Ben Wing
+-- Improve: move etc/chr.png, etc/chrm.png to etc/photos/ (Ben Wing
+-- Improve: partially rework Unicode support. -- Ben Wing
+-- Improve: path handling correctness. -- Ben Wing
 -- Improve: rangetabs get different types of ranges (open/closed start
-   and end).  Change default to be start-closed, end-open. (Ben Wing)
--- Improve: refactor Initialization changes: (Ben Wing)
--- Improve: refer to init.el not .emacs in menus. (Stephen Turnbull)
--- Improve: s&m files by removing autodetected stuff. (Ben Wing)
--- Improve: support dumping bignums. (Jerry James, Olivier Galibert)
--- Improve: support for crashing gently. (Ben Wing)
--- Improve: type and keyword pedantry. (Jerry James, Ben Wing)
--- Improve: update etags from upstream. (Jerry James)
--- Remove: EXTERNAL_LIST_LOOP because it can infloop. (Ben Wing)
+   and end).  Change default to be start-closed, end-open. -- Ben Wing
+-- Improve: refactor Initialization changes: (Ben Wing
+-- Improve: refer to init.el not .emacs in menus. -- Stephen Turnbull
+-- Improve: s&m files by removing autodetected stuff. -- Ben Wing
+-- Improve: support dumping bignums. -- Jerry James, Olivier Galibert
+-- Improve: support for crashing gently. -- Ben Wing
+-- Improve: type and keyword pedantry. -- Jerry James, Ben Wing
+-- Improve: update etags from upstream. -- Jerry James
+-- Remove: EXTERNAL_LIST_LOOP because it can infloop. -- Ben Wing
 -- Remove: etc/gnu.xpm, etc/gnu.xbm, etc/sink.xbm, etc/ms-kermit,
-   etc/ms-kermit-7bit (Ben Wing)
--- Remove: unneeded/unused code. (Ben Wing, Stephen Turnbull)
+   etc/ms-kermit-7bit (Ben Wing
+-- Remove: unneeded/unused code. -- Ben Wing, Stephen Turnbull
 
 Quality Assurance Infrastructure
 
--- Fix: conflict with builtin in .gdbinit. (Golubev I. N.)
--- New: regexp tests. (Stephen Turnbull, Vin Shelton)
--- New: os-tests.el. (Stephen Turnbull)
--- Improve: profiling support. (Ben Wing)
+-- Fix: conflict with builtin in .gdbinit. -- Golubev I. N.
+-- New: regexp tests. -- Stephen Turnbull, Vin Shelton
+-- New: os-tests.el. -- Stephen Turnbull
+-- Improve: profiling support. -- Ben Wing
 
 to 21.5.18 "chestnut"
 
 Major Features
 
--- Improve: GTK support gets many fixes and improvements - Purvis.
--- Improve: pdump gets data in executable support, -si option - Galibert.
--- New: GTK gets default gtkrc - Purvis.
--- New: bignum support - James (lead), Sivakumar, Turnbull.
+-- Improve: GTK support gets many fixes and improvements -- Purvis.
+-- Improve: pdump gets data in executable support, -si option -- Galibert.
+-- New: GTK gets default gtkrc -- Purvis.
+-- New: bignum support -- James (lead), Sivakumar, Turnbull.
 
 User-Visible Bug Fixes and Minor Improvements
 
--- Fix: 'no-conversion is special in eol detection - Turnbull.
--- Fix: `display-completion-list' does not overflow window - Grundmann.
--- Fix: X error handler must not call stderr_out - Clements.
--- Fix: bogus error in `apropros' - Turnbull.
--- Fix: bogus error in `package-require' - Youngs.
--- Fix: buffer editing by `call-process-region' - Aichner.
--- Fix: coredump from bogus position computation in syntax cache - Euler.
--- Fix: coredump from redisplay wrapping in signal.c - James.
--- Fix: coredump in giflib - Hines.
--- Fix: etags.el correctly handles tags with name fields - Grundmann.
--- Fix: prevent minibuffer from hijacking marks - Sperber.
--- Fix: respect `allow-deletion-of-last-visible-frame' - Zajcev.
--- Fix: sync revert-buffer to 21.4 - Turnbull, Sparapani.
--- Improve: error message formatting - Gatzemeier.
--- Improve: etags.el optimized for exuberant ctags - Grundmann.
--- Improve: isearch-abort preserves interim successes - Turnbull, Zawinski.
--- Improve: package info reporting - Youngs.
--- Improve: window configuration handling - Rychter.
+-- Fix: 'no-conversion is special in eol detection -- Turnbull.
+-- Fix: `display-completion-list' does not overflow window -- Grundmann.
+-- Fix: X error handler must not call stderr_out -- Clements.
+-- Fix: bogus error in `apropros' -- Turnbull.
+-- Fix: bogus error in `package-require' -- Youngs.
+-- Fix: buffer editing by `call-process-region' -- Aichner.
+-- Fix: coredump from bogus position computation in syntax cache -- Euler.
+-- Fix: coredump from redisplay wrapping in signal.c -- James.
+-- Fix: coredump in giflib -- Hines.
+-- Fix: etags.el correctly handles tags with name fields -- Grundmann.
+-- Fix: prevent minibuffer from hijacking marks -- Sperber.
+-- Fix: respect `allow-deletion-of-last-visible-frame' -- Zajcev.
+-- Fix: sync revert-buffer to 21.4 -- Turnbull, Sparapani.
+-- Improve: error message formatting -- Gatzemeier.
+-- Improve: etags.el optimized for exuberant ctags -- Grundmann.
+-- Improve: isearch-abort preserves interim successes -- Turnbull, Zawinski.
+-- Improve: package info reporting -- Youngs.
+-- Improve: window configuration handling -- Rychter.
 
 Build Infrastructure
 
--- Fix: 64-bit support - Purvis, SuSE.
--- Fix: configure.in syntax, logic - Turnbull, James, Purvis.
--- Fix: make install went interactive - Aichner.
--- Fix: rebuild finder-inf.el - Turnbull.
--- Improve: Makefile diagnostics - Turnbull.
--- Improve: Windows build support - Aichner.
--- Improve: configure compiler warning setup - James, Purvis.
--- Improve: configure diagnostics - Turnbull.
--- Improve: configure feature detection - Purvis, James, Turnbull.
--- Improve: configure report - Turnbull, James.
--- Improve: icc support - James.
--- Improve: install procedure - Galibert.
--- New: configure supports Playstation2 - Myrkraverk.
--- New: support for parallel builds - Purvis.
+-- Fix: 64-bit support -- Purvis, SuSE.
+-- Fix: configure.in syntax, logic -- Turnbull, James, Purvis.
+-- Fix: make install went interactive -- Aichner.
+-- Fix: rebuild finder-inf.el -- Turnbull.
+-- Improve: Makefile diagnostics -- Turnbull.
+-- Improve: Windows build support -- Aichner.
+-- Improve: configure compiler warning setup -- James, Purvis.
+-- Improve: configure diagnostics -- Turnbull.
+-- Improve: configure feature detection -- Purvis, James, Turnbull.
+-- Improve: configure report -- Turnbull, James.
+-- Improve: icc support -- James.
+-- Improve: install procedure -- Galibert.
+-- New: configure supports Playstation2 -- Myrkraverk.
+-- New: support for parallel builds -- Purvis.
 
 Documentation
 
--- Improve: about.el version reporting - Turnbull.
--- Improve: comments and docstrings - Turnbull, Aichner, Gatzemeier.
--- New: lispref.texi documents bignum support - Turnbull, James.
--- New: lispref.texi documents text field support - James.
--- Update: FAQ - Turnbull.
--- Update: NEWS - Turnbull.
--- Update: PACKAGES - Koch.
--- Update: about.el - Turnbull.
--- Update: internals.texi - James, Turnbull.
--- Update: lispref.texi - Turnbull, Okahata.
--- Update: menus to XEmacs config file reality - Turnbull.
+-- Improve: about.el version reporting -- Turnbull.
+-- Improve: comments and docstrings -- Turnbull, Aichner, Gatzemeier.
+-- New: lispref.texi documents bignum support -- Turnbull, James.
+-- New: lispref.texi documents text field support -- James.
+-- Update: FAQ -- Turnbull.
+-- Update: NEWS -- Turnbull.
+-- Update: PACKAGES -- Koch.
+-- Update: about.el -- Turnbull.
+-- Update: internals.texi -- James, Turnbull.
+-- Update: lispref.texi -- Turnbull, Okahata.
+-- Update: menus to XEmacs config file reality -- Turnbull.
 
 Lisp API
 
--- Improve: pixel position reporting - Okahata.
+-- Improve: pixel position reporting -- Okahata.
 
 Internal API and Implementation
 
--- Fix: C macro definition for icc - James.
--- Fix: C++ build problems - James, Verna.
--- Fix: Cygwin bug workaround conditionalized - James.
--- Fix: Lisp internal type manipulation - James.
--- Fix: bogus CVS conflict in package-ui.el - Aichner.
--- Fix: callproc.c vestiges removed - James.
--- Fix: format conversions in pdump report - Turnbull.
--- Fix: function argument usage - James.
--- Fix: incomplete macro in external widget support - Golubev.
--- Fix: lwlib GC handling - James.
--- Fix: lwlib computation of widget changes - James.
--- Fix: mark unused parameters - James, Wing.
--- Fix: remove duplicate functions - Turnbull.
--- Fix: remove unused variables - James.
--- Fix: specifier validation - James.
--- Fix: update byte compiler function database - James.
--- Fix: warning suppression - James, Gatzemeier.
+-- Fix: C macro definition for icc -- James.
+-- Fix: C++ build problems -- James, Verna.
+-- Fix: Cygwin bug workaround conditionalized -- James.
+-- Fix: Lisp internal type manipulation -- James.
+-- Fix: bogus CVS conflict in package-ui.el -- Aichner.
+-- Fix: callproc.c vestiges removed -- James.
+-- Fix: format conversions in pdump report -- Turnbull.
+-- Fix: function argument usage -- James.
+-- Fix: incomplete macro in external widget support -- Golubev.
+-- Fix: lwlib GC handling -- James.
+-- Fix: lwlib computation of widget changes -- James.
+-- Fix: mark unused parameters -- James, Wing.
+-- Fix: remove duplicate functions -- Turnbull.
+-- Fix: remove unused variables -- James.
+-- Fix: specifier validation -- James.
+-- Fix: update byte compiler function database -- James.
+-- Fix: warning suppression -- James, Gatzemeier.
 -- Fix: workaround Darwin's distaste for ISO 8859/2 filenames.
--- Improve: custom database save - Aichner, Niksic.
--- Improve: itimer implementation - James, Jones, Buchholz, Yamaoka.
--- Improve: test-harness.el Assert macro - James.
--- New: LTDL support in ELLs - James.
--- Update: INSTALL Canna, Make descriptions - James, Purvis.
--- Update: SERVICE sync with upstream - James.
--- Update: derived.el, subr.el, cl*.el sync to Emacs 21.3 - James.
--- Update: etags sync with upstream v17.6 - James.
+-- Improve: custom database save -- Aichner, Niksic.
+-- Improve: itimer implementation -- James, Jones, Buchholz, Yamaoka.
+-- Improve: test-harness.el Assert macro -- James.
+-- New: LTDL support in ELLs -- James.
+-- Update: INSTALL Canna, Make descriptions -- James, Purvis.
+-- Update: SERVICE sync with upstream -- James.
+-- Update: derived.el, subr.el, cl*.el sync to Emacs 21.3 -- James.
+-- Update: etags sync with upstream v17.6 -- James.
 
 Quality Assurance Infrastructure
 
--- Fix: regression tests using most-negative-fixnum - James.
--- Improve: faster Mule tests - Turnbull.
--- New: Uno support - James.
--- New: regression tests - Turnbull, Youngs, Yamaoka, Shelton, James.
+-- Fix: regression tests using most-negative-fixnum -- James.
+-- Improve: faster Mule tests -- Turnbull.
+-- New: Uno support -- James.
+-- New: regression tests -- Turnbull, Youngs, Yamaoka, Shelton, James.
 
 to 21.5.17 "chayote"
 
 Build
 
--- New: configure reports cc and libc versions - Kletnieks, Turnbull.
--- New: configure supports icc - James.
--- New: configure supports typeof extension - James.
--- New: use XCFLAGS to allow different flags for XEMACS_CC - Turnbull.
--- Improve: module build process - James.-- Fix: compiler warnings - Turnbull.
--- Fix: configure CFLAGS detection - James, Turnbull.
--- Fix: configure arg parsing on Solaris - Niksic, Shelton, Turnbull.
--- Fix: configure warning and progress messages - Turnbull.
--- Fix: force regeneration of Lisp on every build - Turnbull.
--- Fix: minitar compiler warnings, errors - Aichner.
--- Fix: mislocation of installexe.sh - James.
--- Fix: missing $(ldflags) in libsrc - James.
--- Fix: remove dead references to GNU DLD - James.
--- Fix: remove obsolete makefile cruft - Turnbull.
+-- New: configure reports cc and libc versions -- Kletnieks, Turnbull.
+-- New: configure supports icc -- James.
+-- New: configure supports typeof extension -- James.
+-- New: use XCFLAGS to allow different flags for XEMACS_CC -- Turnbull.
+-- Improve: module build process -- James.
+-- Fix: compiler warnings -- Turnbull.
+-- Fix: configure CFLAGS detection -- James, Turnbull.
+-- Fix: configure arg parsing on Solaris -- Niksic, Shelton, Turnbull.
+-- Fix: configure warning and progress messages -- Turnbull.
+-- Fix: force regeneration of Lisp on every build -- Turnbull.
+-- Fix: minitar compiler warnings, errors -- Aichner.
+-- Fix: mislocation of installexe.sh -- James.
+-- Fix: missing $(ldflags) in libsrc -- James.
+-- Fix: remove dead references to GNU DLD -- James.
+-- Fix: remove obsolete makefile cruft -- Turnbull.
 
 Documentation
 
--- Improve: charset registry docs - Golubev.
--- Improve: specifier and internals docs - Turnbull.
--- Improve: test-harness reporting - Aichner, Shelton, Turnbull.
--- New: weak data structure testing - Kaltenbach.
--- Remove: own photos and personal information - Youngs.
--- Update: library versions in Windows docs - James.
--- Update: package list - Koch.
--- Fix: TeXinfo syntax - Golubev, Turnbull.
--- Fix: clarifications - Turnbull.
--- Fix: typos - Aichner, Golubev, Turnbull.
--- Fix: workaround version issues in NAS headers - Turnbull.
+-- Improve: charset registry docs -- Golubev.
+-- Improve: specifier and internals docs -- Turnbull.
+-- Improve: test-harness reporting -- Aichner, Shelton, Turnbull.
+-- New: weak data structure testing -- Kaltenbach.
+-- Remove: own photos and personal information -- Youngs.
+-- Update: library versions in Windows docs -- James.
+-- Update: package list -- Koch.
+-- Fix: TeXinfo syntax -- Golubev, Turnbull.
+-- Fix: clarifications -- Turnbull.
+-- Fix: typos -- Aichner, Golubev, Turnbull.
+-- Fix: workaround version issues in NAS headers -- Turnbull.
 
 Lisp API
 
 -- New: device-num-screens, device-backing-store, device-save-under,
-    add-to-invisibility-spec, remove-from-invisibility-spec - James.
+    add-to-invisibility-spec, remove-from-invisibility-spec -- James.
 -- New: lazy (widget), widget-child-value-get, widget-child-value-inline,
     widget-child-validate, widget-type-value-create, widget-type-default-get,
-    widget-type-match - Abrahamsen, Youngs.
--- New: package-get-list-packages-where - Youngs.
--- New: pui-display-maintainer command - Youngs.
--- New: pui-help-echo displays both installed and available versions - Youngs.
--- Synch: frame.el to GNU Emacs 21.3 - James.
--- Fix: cl-do-prettyprint formatting of prog* - Youngs.
--- Fix: update coding system name usage - James.
+    widget-type-match -- Abrahamsen, Youngs.
+-- New: package-get-list-packages-where -- Youngs.
+-- New: pui-display-maintainer command -- Youngs.
+-- New: pui-help-echo displays both installed and available versions -- Youngs.
+-- Synch: frame.el to GNU Emacs 21.3 -- James.
+-- Fix: cl-do-prettyprint formatting of prog* -- Youngs.
+-- Fix: update coding system name usage -- James.
 
 Internals
 
--- Improve: KKCC - Kaltenbach.
--- Improve: compiler.h for use with modules - James.
--- Improve: make QUIT-related APIs visible to modules - James.
--- New: support more device metrics on X11 - James.
--- New: support symbols in Darwin shared libraries - Purvis.
--- New: widget-default-create uses char-table - Haddock.
--- New: xfree gets a type parameter for error-checking - James.
--- Fix: (remove) duplicated code - James.
--- Fix: GCPRO_STACK in byte interpreter - Turnbull.
--- Fix: GTK marshalling code - Purvis.
--- Fix: aliasing problems - Turnbull.
--- Fix: bad interaction in initialization of args with pdumper - Benson.
--- Fix: bit fields need to be unsigned in unicode detectors - James.
--- Fix: coding system for GPG verification - Youngs.
--- Fix: hard-coded options to use APIs - Pakoulin.
--- Fix: improper use of XSetArg in frame-x.c - Turnbull.
--- Fix: lstream close code - Euler.
--- Fix: paragraph detection in Japanese - Yamaoka, Turnbull.
--- Fix: regexps using \{ - Monnier, Turnbull.
--- Fix: set dirty flag in mirror window at proper time - Galibert.
--- Fix: several missing GC wrappers which caused crashes - James.
--- Fix: some GCPROed variables were declared register - McPherson.
--- Fix: stale info in realpath computation - James.
--- Fix: two infloops in GC - James.
--- Fix: usage of prin1 and princ in help - Eide, Shelton.
+-- Improve: KKCC -- Kaltenbach.
+-- Improve: compiler.h for use with modules -- James.
+-- Improve: make QUIT-related APIs visible to modules -- James.
+-- New: support more device metrics on X11 -- James.
+-- New: support symbols in Darwin shared libraries -- Purvis.
+-- New: widget-default-create uses char-table -- Haddock.
+-- New: xfree gets a type parameter for error-checking -- James.
+-- Fix: (remove) duplicated code -- James.
+-- Fix: GCPRO_STACK in byte interpreter -- Turnbull.
+-- Fix: GTK marshalling code -- Purvis.
+-- Fix: aliasing problems -- Turnbull.
+-- Fix: bad interaction in initialization of args with pdumper -- Benson.
+-- Fix: bit fields need to be unsigned in unicode detectors -- James.
+-- Fix: coding system for GPG verification -- Youngs.
+-- Fix: hard-coded options to use APIs -- Pakoulin.
+-- Fix: improper use of XSetArg in frame-x.c -- Turnbull.
+-- Fix: lstream close code -- Euler.
+-- Fix: paragraph detection in Japanese -- Yamaoka, Turnbull.
+-- Fix: regexps using \{ -- Monnier, Turnbull.
+-- Fix: set dirty flag in mirror window at proper time -- Galibert.
+-- Fix: several missing GC wrappers which caused crashes -- James.
+-- Fix: some GCPROed variables were declared register -- McPherson.
+-- Fix: stale info in realpath computation -- James.
+-- Fix: two infloops in GC -- James.
+-- Fix: usage of prin1 and princ in help -- Eide, Shelton.
 
 
 to 21.5.16 "celeriac"
 
 Build
 
--- Don't detect GNU DLD - James.
--- Better detection of sound on Solaris9 - Buchholz.
--- Add support detecting SunOS 5.10 in configure - Buchholz.
+-- Don't detect GNU DLD -- James.
+-- Better detection of sound on Solaris9 -- Buchholz.
+-- Add support detecting SunOS 5.10 in configure -- Buchholz.
 -- Use '-bundle' when testing ability to build shared libs, but use
-     '-bundle_loader' in ellcc - Begel.
--- Output separate declaration and definition for dump_id - James.
--- Add Makefile targets to build PDF docs - Wambold.
+     '-bundle_loader' in ellcc -- Begel.
+-- Output separate declaration and definition for dump_id -- James.
+-- Add Makefile targets to build PDF docs -- Wambold.
 -- Don't mangle the unload function in `unload_postgresql' and
-     `unload_ldap' when compiling with C++ - James.
--- Use extern "C" for C++ builds - James.
--- Conditionally compile messages missing from the Cygwin headers - James.
--- Add cast to quiet compiler in unexcw.c - James.
--- Quiet compiler warnings about struct stat in syswindows.h - James.
--- Test \{m,n\} in regexp-tests - Turnbull.
+     `unload_ldap' when compiling with C++ -- James.
+-- Use extern "C" for C++ builds -- James.
+-- Conditionally compile messages missing from the Cygwin headers -- James.
+-- Add cast to quiet compiler in unexcw.c -- James.
+-- Quiet compiler warnings about struct stat in syswindows.h -- James.
+-- Test \{m,n\} in regexp-tests -- Turnbull.
 
 Documentation
 
--- Propose bash as workaround for buggy Solaris sh in PROBLEMS - Sparapani.
+-- Propose bash as workaround for buggy Solaris sh in PROBLEMS -- Sparapani.
 -- Fix the PRINTED-MANUAL-TITLE arg for cross ref to "The XEmacs User's Manual"
-     - Aichner.
--- New node: "A Reader's Guide to XEmacs Coding Conventions" - Turnbull.
--- New node: "Customizing Message Display" - Golubev.
+     -- Aichner.
+-- New node: "A Reader's Guide to XEmacs Coding Conventions" -- Turnbull.
+-- New node: "Customizing Message Display" -- Golubev.
 
 Internals
 
--- In ellcc.c don't mangle external symbols in generated doc file - James.
+-- In ellcc.c don't mangle external symbols in generated doc file -- James.
 -- Add PARTIALLY parameter to support Fpos_visible_in_window_p parameter in
-     redisplay - James.
--- Use 'point_would_be_visible' parameter in `scrollbar_reset_cursor' - James.
--- Add PARTIALLY parameter fo `Fpos_visible_in_window_p' - James.
--- Use new 'point_would_be_visible' parameter in `window_scroll' - James.
--- dll_open now takes a Lisp_Object - James.
--- Remove useless call to dll_init - James.
--- char to CIbyte conversion in emodules.c, sysdll.c - James.
--- Do not mangle module initialisation function names - James.
--- char to Extbyte conversion in sysdll.c - James.
--- Return a Lisp_Object instead of a string in `dll_error' - James.
--- Make eval-related functions visible to modules - James.
+     redisplay -- James.
+-- Use 'point_would_be_visible' parameter in `scrollbar_reset_cursor' -- James.
+-- Add PARTIALLY parameter fo `Fpos_visible_in_window_p' -- James.
+-- Use new 'point_would_be_visible' parameter in `window_scroll' -- James.
+-- dll_open now takes a Lisp_Object -- James.
+-- Remove useless call to dll_init -- James.
+-- char to CIbyte conversion in emodules.c, sysdll.c -- James.
+-- Do not mangle module initialisation function names -- James.
+-- char to Extbyte conversion in sysdll.c -- James.
+-- Return a Lisp_Object instead of a string in `dll_error' -- James.
+-- Make eval-related functions visible to modules -- James.
 -- Allow specifying elisp function for waithing user input while displaying
-     message while in minibuffer - Golubev.
--- Use OS_RELEASE=os_release_major*100+os_release_minor in s/sol2.h - Buchholz.
--- Add lrecord_memory_descriptions - Crestani.
--- Remove GetLongPathNameW - Harris.
--- A couple of new macros to compare w32api versions - James.
--- KKCC fixes - Crestani.
+     message while in minibuffer -- Golubev.
+-- Use OS_RELEASE=os_release_major*100+os_release_minor in s/sol2.h -- Buchholz.
+-- Add lrecord_memory_descriptions -- Crestani.
+-- Remove GetLongPathNameW -- Harris.
+-- A couple of new macros to compare w32api versions -- James.
+-- KKCC fixes -- Crestani.
 
 Lisp API
 
--- Allow user to specify alternative function for displaying message - Golubev.
--- New var to specify the maximum received fonts - LewisMoss.
--- Allow gnuserv to fallback to GTK if X device fails - LewisMoss.
--- Eval the initialisation value of `eol-detection-enabled-p' - Alexander.
--- Make sure `setbuffer-file-coding-system' sets the eol type - Alexander.
--- Remove unnecessary definitions of 'null-device' - Turnbull.
--- Actually implement the specified semantics for 'defvar' - Sperber.
--- Fix `shrink-to-fit' by calling `shrink-window-if-larger-than-buffer' - Aichner.
+-- Allow user to specify alternative function for displaying message -- Golubev.
+-- New var to specify the maximum received fonts -- LewisMoss.
+-- Allow gnuserv to fallback to GTK if X device fails -- LewisMoss.
+-- Eval the initialisation value of `eol-detection-enabled-p' -- Alexander.
+-- Make sure `setbuffer-file-coding-system' sets the eol type -- Alexander.
+-- Remove unnecessary definitions of 'null-device' -- Turnbull.
+-- Actually implement the specified semantics for 'defvar' -- Sperber.
+-- Fix `shrink-to-fit' by calling `shrink-window-if-larger-than-buffer' -- Aichner.
 
 
 to 21.5.15 "celery"
 
 Build
 
--- Autoconf configure updates - James, Turnbull.
--- Makefile updates - James.
--- Minor updates to make-docfile.c - Begel.
--- Wrap assert_failed with EXTERN_C for modules - James.
--- Updates to modules Makefile.common - James.
+-- Autoconf configure updates -- James, Turnbull.
+-- Makefile updates -- James.
+-- Minor updates to make-docfile.c -- Begel.
+-- Wrap assert_failed with EXTERN_C for modules -- James.
+-- Updates to modules Makefile.common -- James.
 -- Include emodules.h when building modules in postgresql.c
-     and ldap.c - James.
--- Updates to xemacs.mak - Aichner.
+     and ldap.c -- James.
+-- Updates to xemacs.mak -- Aichner.
 -- Add some extern "C" declarations for C++ module builds
-     - James.
--- Add casts for C++ builds in mule-canna.c - James.
+     -- James.
+-- Add casts for C++ builds in mule-canna.c -- James.
 -- Add type casts in database.c to satisy C++ compilers.
 -- Log result summary of tests when the testsuite is running
-     noninteractive - Aichner.
--- Add some tests for weak-lists - Crestani, Kaltenbach.
+     noninteractive -- Aichner.
+-- Add some tests for weak-lists -- Crestani, Kaltenbach.
 
 
 Documentation
 
--- Update README.(HYPERBOLE|OO-BROWSER) - Turnbull.
--- Update etc/PACKAGES - Turnbull, Koch, Youngs.
--- Update etc/sample.Xresources - Turnbull.
--- Major update and audit of all documents relating to PUI - Youngs.
+-- Update README.(HYPERBOLE|OO-BROWSER) -- Turnbull.
+-- Update etc/PACKAGES -- Turnbull, Koch, Youngs.
+-- Update etc/sample.Xresources -- Turnbull.
+-- Major update and audit of all documents relating to PUI -- Youngs.
 -- Mention `line-move-ignore-invisible' (display.texi "Invisible Text")
-     - Kyllingstad.
+     -- Kyllingstad.
 -- Document that end-glyph is still displayed when invisible
-     is set (extents.texi "Extent Properties") - Kyllingstad.
+     is set (extents.texi "Extent Properties") -- Kyllingstad.
 -- Document that only begin-glyph is highlighted (extents.texi "Extents
-     and Events") - Kyllingstad.
--- Various typo and docstring fixes - Turnbull, Sperber.
--- Add missing '@end' defun in lists.texi - Shelton.
+     and Events") -- Kyllingstad.
+-- Various typo and docstring fixes -- Turnbull, Sperber.
+-- Add missing '@end' defun in lists.texi -- Shelton.
 -- Document ?\x00 read syntax and range limitations on ?\000 and
-     ?\x00 read syntaxes (objects.texi "Character Type") - Turnbull.
+     ?\x00 read syntaxes (objects.texi "Character Type") -- Turnbull.
 -- Document `true-list-p' (lists.texi "List-related Predicates")
-     - Turnbull.
+     -- Turnbull.
 
 
 Internals
 
--- KKCC updates - Crestani, Kyllingstad.
+-- KKCC updates -- Crestani, Kyllingstad.
 -- Define DECLARE_MODULE_API_LRECORD when not ERROR_CHECK_TYPES
-     - James.
--- Updates to DSO code - James.
--- Remove unused (X)OPAQUE_MARKFUN definitions - James.
--- GCPRO updates - Sperber.
--- Mouse wheel fixes in event-msw.c - Kyllingstad.
--- Use 'HAVE_DLD_INIT' instead of 'HAVE_INIT_DLD' in sysdll.c - James.
--- Rewrite ephemeron marker code - Sperber.
--- Fix printing of symbol names in .gdbinit - Golubev.
--- Fixes to `update_frame_toolbars_geometry' - Sperber.
--- Fix missing commas in `fonts' initialiser - Golubev.
--- Add `opaque_ptr_description' - Crestani.
--- Add `allocate_big_string_chars' - Turnbull, Buchholz.
+     -- James.
+-- Updates to DSO code -- James.
+-- Remove unused (X)OPAQUE_MARKFUN definitions -- James.
+-- GCPRO updates -- Sperber.
+-- Mouse wheel fixes in event-msw.c -- Kyllingstad.
+-- Use 'HAVE_DLD_INIT' instead of 'HAVE_INIT_DLD' in sysdll.c -- James.
+-- Rewrite ephemeron marker code -- Sperber.
+-- Fix printing of symbol names in .gdbinit -- Golubev.
+-- Fixes to `update_frame_toolbars_geometry' -- Sperber.
+-- Fix missing commas in `fonts' initialiser -- Golubev.
+-- Add `opaque_ptr_description' -- Crestani.
+-- Add `allocate_big_string_chars' -- Turnbull, Buchholz.
 
 
 Lisp API
 
--- New alias `apropos-customize' -> `customize-apropos' - Aichner.
--- Remove unecessary arg from `pui-set-local-package-get-directory - Youngs.
--- New key bindings in mwheel.el - Kyllingstad.
--- Make `insert-directory' to be more like FSF version - Sperber.
--- Window configuration fixes in isearch code - Sperber.
--- Implement simple object finalisation in post-gc.el - Sperber.
--- Updates to etags.el - Turnbull.
--- Updates to cl-macs.el - Pakoulin.
--- Fix "do-nothing" bug in `derived-mode-merge-syntax-tables' - Turnbull.
--- Fixes to `restore-saved-window' - James.
+-- New alias `apropos-customize' -> `customize-apropos' -- Aichner.
+-- Remove unecessary arg from `pui-set-local-package-get-directory -- Youngs.
+-- New key bindings in mwheel.el -- Kyllingstad.
+-- Make `insert-directory' to be more like FSF version -- Sperber.
+-- Window configuration fixes in isearch code -- Sperber.
+-- Implement simple object finalisation in post-gc.el -- Sperber.
+-- Updates to etags.el -- Turnbull.
+-- Updates to cl-macs.el -- Pakoulin.
+-- Fix "do-nothing" bug in `derived-mode-merge-syntax-tables' -- Turnbull.
+-- Fixes to `restore-saved-window' -- James.
 -- Handle missing "EMACSPACKAGEPATH" env var in
-     `package-get-package-index-file-location' - Aichner.
--- Fix substring errors in `package-admin-find-top-directory' - Aichner.
+     `package-get-package-index-file-location' -- Aichner.
+-- Fix substring errors in `package-admin-find-top-directory' -- Aichner.
 -- Fix `byte-compile-lambda' so it only discards the docstring if it is
-     not also the value of the lambda - Turnbull.
--- Don't insist in lib-src directory in `path-emacs-root-p' on WinNT - Aichner.
--- Don't include '(' in `font-lock-function-name-face' - Aichner.
+     not also the value of the lambda -- Turnbull.
+-- Don't insist in lib-src directory in `path-emacs-root-p' on WinNT -- Aichner.
+-- Don't include '(' in `font-lock-function-name-face' -- Aichner.
 
 
 to 21.5.14 "cassava"
@@ -610,31 +611,31 @@ use, see `package-get-package-index-file-location'.
 
 Build
 
--- Autoconf tweaks for building modules on MacOSX - James.
--- GCC fixes in ellcc.c - James.
--- Module Makefile fixes - Begel, James.
--- Fix shadow warning in regex.c - James.
+-- Autoconf tweaks for building modules on MacOSX -- James.
+-- GCC fixes in ellcc.c -- James.
+-- Module Makefile fixes -- Begel, James.
+-- Fix shadow warning in regex.c -- James.
 
 Documentation
 
--- New TeXinfo node "Searching and Matching" - Turnbull.
--- New section "Legacy Versions" in FAQ - Turnbull.
--- New FAQ question Q8.0.1 - Turnbull.
--- Update split-string specs in "Regexp Search" - Turnbull.
+-- New TeXinfo node "Searching and Matching" -- Turnbull.
+-- New section "Legacy Versions" in FAQ -- Turnbull.
+-- New FAQ question Q8.0.1 -- Turnbull.
+-- Update split-string specs in "Regexp Search" -- Turnbull.
 
 Internals
 
--- Package index file updated - Koch.
--- Add some debug checks in file-coding.c - Turnbull.
+-- Package index file updated -- Koch.
+-- Add some debug checks in file-coding.c -- Turnbull.
 
 Lisp API
 
 -- Make error message report the sym checked in
      `autoload-featurep-protect-autoloads' -- Turnbull.
--- `split-string' tweaks - Turnbull.
--- Make the location of the package-index file user customisable - Youngs.
--- Turn on package-index file PGP verification - Youngs.
--- Only use message if interactive for functions in replace.el - Josefsson.
+-- `split-string' tweaks -- Turnbull.
+-- Make the location of the package-index file user customisable -- Youngs.
+-- Turn on package-index file PGP verification -- Youngs.
+-- Only use message if interactive for functions in replace.el -- Josefsson.
 
 to 21.5.13 "cauliflower"
 
@@ -647,41 +648,41 @@ Here are the highlights:
 
 Build
 
--- Don't look for Motif if it's already been found - Buchholz.
--- Darwin, Cygwin, BerkDB autoconf fixes - Turnbull.
--- Make DEFUNed functions be tags - Buchholz.
--- Allow compiling with Motif 1 and linking with Motif 2 - Buchholz.
--- Update regexp tests - Turnbull.
--- Don't autodetect ESD (Enlightened Sound Daemon) - Turnbull.
+-- Don't look for Motif if it's already been found -- Buchholz.
+-- Darwin, Cygwin, BerkDB autoconf fixes -- Turnbull.
+-- Make DEFUNed functions be tags -- Buchholz.
+-- Allow compiling with Motif 1 and linking with Motif 2 -- Buchholz.
+-- Update regexp tests -- Turnbull.
+-- Don't autodetect ESD (Enlightened Sound Daemon) -- Turnbull.
 
 
 Documentation
 
--- New section in PROBLEMS auxilary programs for Windows - Turnbull.
+-- New section in PROBLEMS auxilary programs for Windows -- Turnbull.
 -- FAQ updates
-	Q6.4.3 New aux programs for Windows - Turnbull.
--- Document failed match preserves data - Turnbull.
+	Q6.4.3 New aux programs for Windows -- Turnbull.
+-- Document failed match preserves data -- Turnbull.
 
 
 Internals
 
--- Don't use the u_int8_t etc typedefs on FreeBSD in database.c - Pluim.
--- Better support for externally defined lrecord types - Begel.
--- Only call `xm_update_progress' if Motif is defined - Youngs.
--- Define __STDC__ for BerkeleyDB - Buchholz.
--- Fix bug where XEmacs couldn't find its .dmp file - Buchholz.
--- Move `filemodestring' from lisp.h to sysfile.h - Golubev.
--- Clean ups against the possibility of sys/stat.h defining stat - Turnbull.
--- Search/match updates - Turnbull.
+-- Don't use the u_int8_t etc typedefs on FreeBSD in database.c -- Pluim.
+-- Better support for externally defined lrecord types -- Begel.
+-- Only call `xm_update_progress' if Motif is defined -- Youngs.
+-- Define __STDC__ for BerkeleyDB -- Buchholz.
+-- Fix bug where XEmacs couldn't find its .dmp file -- Buchholz.
+-- Move `filemodestring' from lisp.h to sysfile.h -- Golubev.
+-- Clean ups against the possibility of sys/stat.h defining stat -- Turnbull.
+-- Search/match updates -- Turnbull.
 
 
 Lisp API
 
--- Fix bug preventing installing new packages - Youngs.
--- Put exit message on separate line in `command-error' - Turnbull.
--- Temporarily turn off PGP verification of package-index - Youngs.
--- Remove keymapings for 'function-key-error' - James.
--- Fix bug that mapped RET to LFD in TTYs - James.
+-- Fix bug preventing installing new packages -- Youngs.
+-- Put exit message on separate line in `command-error' -- Turnbull.
+-- Temporarily turn off PGP verification of package-index -- Youngs.
+-- Remove keymapings for 'function-key-error' -- James.
+-- Fix bug that mapped RET to LFD in TTYs -- James.
 
 
 to 21.5.12 "carrot"
@@ -695,103 +696,103 @@ Here are the highlights:
 
 Build
 
--- Updates to configure.in - Steuck, James, Skyttä, Wing.
--- Major updates to Makefile.in.in - Wing.
--- Allow for separate build and source directories - Wing.
--- Fix some compiler warnings - Wing.
--- Major clean up of xemacs.mak and friends - Wing, Aichner.
--- Fix some Solaris 2.7 CC compiler warnings - Persico.
--- Fix for building on Mac - Palmer.
+-- Updates to configure.in -- Steuck, James, Skyttä, Wing.
+-- Major updates to Makefile.in.in -- Wing.
+-- Allow for separate build and source directories -- Wing.
+-- Fix some compiler warnings -- Wing.
+-- Major clean up of xemacs.mak and friends -- Wing, Aichner.
+-- Fix some Solaris 2.7 CC compiler warnings -- Persico.
+-- Fix for building on Mac -- Palmer.
 -- Work around a problem compiling with '--use-union-type' on Intel's
-     ICC compiler - Buchholz.
--- Fix problems with rel-alloc compilation - Wing.
--- Sequentialize dependencies even more in update-elc-2 - Sperber.
+     ICC compiler -- Buchholz.
+-- Fix problems with rel-alloc compilation -- Wing.
+-- Sequentialize dependencies even more in update-elc-2 -- Sperber.
 -- Don't fatal() in 'report_sheap_usage' when need to rerun Make -
      Wing.
--- Various updates to the test suite - Turnbull.
+-- Various updates to the test suite -- Turnbull.
 
 Documentation
 
 -- Updates to
-	INSTALL - Turnbull, Wing.
-	PROBLEMS - Turnbull, Wing.
--- Global substition of .Xresources for .Xdefaults - Turnbull.
--- Update packages in ./etc/BETA - Skyttä.
--- Doc string updates - Korytov, Turnbull, Wing.
--- TeXinfo updates - Aichner, Turnbull, Wing, Youngs.
+	INSTALL -- Turnbull, Wing.
+	PROBLEMS -- Turnbull, Wing.
+-- Global substition of .Xresources for .Xdefaults -- Turnbull.
+-- Update packages in ./etc/BETA -- Skyttä.
+-- Doc string updates -- Korytov, Turnbull, Wing.
+-- TeXinfo updates -- Aichner, Turnbull, Wing, Youngs.
 
 Internals
 
--- Fix stale match data after failed search bug - Turnbull.
+-- Fix stale match data after failed search bug -- Turnbull.
 -- Reformat function definitions correctly in menubar-gtk.c and
-     event-gtk.c - Turnbull.
+     event-gtk.c -- Turnbull.
 -- Fix bug matching ASCII character classes to Mule characters -
      Ueno.
--- Frame updates for MS Win - Alexander.
+-- Frame updates for MS Win -- Alexander.
 -- Add .dylib as an acceptable shared library file extension to
-     support MacOS X - Begel.
--- Fix bug in database.c for Berkdb 4.1 - Turnbull.
--- Regex fixes - Turnbull, Wing.
--- Coding system updates - Wing.
--- Add clear-left-side functionality in print.c - Wing.
--- Seg fault rather than abort on Cygwin in 'assert_failed' - Wing.
--- Delete popup-data object - Wing.
--- Delete menubar_data field from frames - Wing.
--- Clean up handling of lwlib callback data GCPRO'ing - Wing.
+     support MacOS X -- Begel.
+-- Fix bug in database.c for Berkdb 4.1 -- Turnbull.
+-- Regex fixes -- Turnbull, Wing.
+-- Coding system updates -- Wing.
+-- Add clear-left-side functionality in print.c -- Wing.
+-- Seg fault rather than abort on Cygwin in 'assert_failed' -- Wing.
+-- Delete popup-data object -- Wing.
+-- Delete menubar_data field from frames -- Wing.
+-- Clean up handling of lwlib callback data GCPRO'ing -- Wing.
 -- Use ALLOCA() in regex.c to avoid excessive stack allocation -
      Wing.
--- Fix subtle problem with REL_ALLOC() - Wing.
+-- Fix subtle problem with REL_ALLOC() -- Wing.
 -- Change *run_hook*_trapping_problems to take a warning class, not a
-     string - Wing.
--- Mule-ize encrypt/decrypt-string code - Wing.
--- Delete all support for bit-rotten CANNOT_DUMP - Wing.
+     string -- Wing.
+-- Mule-ize encrypt/decrypt-string code -- Wing.
+-- Delete all support for bit-rotten CANNOT_DUMP -- Wing.
 -- Fix crash due to attempt to free objects across dump/undump -
      Wing.
 -- Don't get in an infinite loop running post-redisplay actions -
      Wing.
--- Make gc_currently_forbidden static - Wing.
--- Defer redrawing if already in redisplay - Wing.
--- Add debug code for locking a dynarr to catch invalid mods - Wing.
+-- Make gc_currently_forbidden static -- Wing.
+-- Defer redrawing if already in redisplay -- Wing.
+-- Add debug code for locking a dynarr to catch invalid mods -- Wing.
 -- Ensure that various glyph functions that eval within redisplay
-     protect the evals - Wing.
--- Defer specifier-changed updating till after redisplay - Wing.
+     protect the evals -- Wing.
+-- Defer specifier-changed updating till after redisplay -- Wing.
 -- Require that every place inside of redisplay catch errors itself -
      Wing.
--- Introduce separate means of holding frame-size changes - Wing.
+-- Introduce separate means of holding frame-size changes -- Wing.
 -- Introduce "post-redisplay" methods for deferring things till after
-     redisplay - Wing.
--- Disable all quit checking in redisplay - Wing.
+     redisplay -- Wing.
+-- Disable all quit checking in redisplay -- Wing.
 -- Use _wexecve() when under Windows NT for Unicode correctness -
      Wing.
--- Update list of possibly valid console types - Wing.
+-- Update list of possibly valid console types -- Wing.
 -- Turn on Vstack_trace_on_error 'Frun_emacs_from_temacs' so that
      errors are debuggable even when occurring extremely early in
-     reinitialization - Wing.
--- Define new function `emacs-run-status' - Wing.
+     reinitialization -- Wing.
+-- Define new function `emacs-run-status' -- Wing.
 -- Fix crash caused by an edge condition in the syntax-cache macros -
      Wing.
--- Eliminate HAVE_WIN32_CODING_SYSTEMS, use WIN32_ANY instead - Wing.
+-- Eliminate HAVE_WIN32_CODING_SYSTEMS, use WIN32_ANY instead -- Wing.
 -- Don't check_quit() unless we're unbinding a real Lisp
-     `unwind-protect' - Wing.
+     `unwind-protect' -- Wing.
 -- Make absolutely sure there is no quit checking while we are in a
-     "critical section" during frame deletion - Wing.
+     "critical section" during frame deletion -- Wing.
 
 Lisp API
 
--- Fix infloop in font-lock for java files - Choi.
--- Fix split-string - Turnbull.
--- Support '(filename)nodename' as argument to 'info' - Steib.
--- Major clean up of the PUI code - Youngs.
--- Use 'equal' instead of '=' in 'saved-window-equal' - James.
--- Updates to wid-edit.el - Turnbull.
+-- Fix infloop in font-lock for java files -- Choi.
+-- Fix split-string -- Turnbull.
+-- Support '(filename)nodename' as argument to 'info' -- Steib.
+-- Major clean up of the PUI code -- Youngs.
+-- Use 'equal' instead of '=' in 'saved-window-equal' -- James.
+-- Updates to wid-edit.el -- Turnbull.
 -- Better layout for Tools -> Packages -> Download Site menu -
      Aichner.
--- More sites added to packages download sites menu - Aichner.
+-- More sites added to packages download sites menu -- Aichner.
 -- Byte-compiler warning clean up and lots of synching with FSF 21.2
-     code - Wing.
+     code -- Wing.
 -- Move lots of high-level code for computing paths into
-   setup-paths.el from various places - Wing.
--- Mule and coding system updates - Wing, Turnbull.
+   setup-paths.el from various places -- Wing.
+-- Mule and coding system updates -- Wing, Turnbull.
 
 
 to 21.5.11 "cabbage"
@@ -812,135 +813,135 @@ Here are the highlights:
 
 Build
 
--- Updates to test suite - Turnbull.
--- Use -no-autoloads with update-elc-2 - Wing.
--- Check for strupr and strlwr - Sperber.
--- Delete auto-autoloads.el* & cutom-load.el* files on make clean - Turnbull.
--- Fix --srcdir processing - Turnbull.
--- Define DLSYM_NEEDS_UNDERSCORE on Darwin - Turnbull.
--- Use opsys=aix4-2 for AIX 5 and above - Buchholz.
--- Make ellcc search XEmacs directories for include files 1st - James.
--- Set stack-trace-on-error, load-always-display-messages - Wing.
--- Overhaul update-elc.el, cus-dep, autoload (speed ups) - Wing.
--- Various compiler warning fixes - Wing.
--- FreeBSD updates in modules/Makefile.common - Pluim.
--- Warning fix in eldap.c - James.
--- Support C++ & KKCC compilation in Windows - Wing.
--- Various fixups in nt/config.in.samp - Wing.
--- Fixes in xemacs.mak - Wing.
--- Clean up compile errors with C++ under Windows - Wing.
--- Re-order sections in ldflags for gcc 3.2 - Okhapkin.
--- Restore USE_XFONTSET - Turnbull.
--- New symbol: DLSYM_NEEDS_UNDERSCORE - Turnbull.
--- Guard against multiple definitions of _ALL_SOURCE - Buchholz.
--- QUICK_BUILD updates - Wing.
+-- Updates to test suite -- Turnbull.
+-- Use -no-autoloads with update-elc-2 -- Wing.
+-- Check for strupr and strlwr -- Sperber.
+-- Delete auto-autoloads.el* & cutom-load.el* files on make clean -- Turnbull.
+-- Fix --srcdir processing -- Turnbull.
+-- Define DLSYM_NEEDS_UNDERSCORE on Darwin -- Turnbull.
+-- Use opsys=aix4-2 for AIX 5 and above -- Buchholz.
+-- Make ellcc search XEmacs directories for include files 1st -- James.
+-- Set stack-trace-on-error, load-always-display-messages -- Wing.
+-- Overhaul update-elc.el, cus-dep, autoload (speed ups) -- Wing.
+-- Various compiler warning fixes -- Wing.
+-- FreeBSD updates in modules/Makefile.common -- Pluim.
+-- Warning fix in eldap.c -- James.
+-- Support C++ & KKCC compilation in Windows -- Wing.
+-- Various fixups in nt/config.in.samp -- Wing.
+-- Fixes in xemacs.mak -- Wing.
+-- Clean up compile errors with C++ under Windows -- Wing.
+-- Re-order sections in ldflags for gcc 3.2 -- Okhapkin.
+-- Restore USE_XFONTSET -- Turnbull.
+-- New symbol: DLSYM_NEEDS_UNDERSCORE -- Turnbull.
+-- Guard against multiple definitions of _ALL_SOURCE -- Buchholz.
+-- QUICK_BUILD updates -- Wing.
 
 Documentation
 
--- Major update to configure.usage - Wing.
--- New developer bio's - James, Skyttä, Golubev.
+-- Major update to configure.usage -- Wing.
+-- New developer bio's -- James, Skyttä, Golubev.
 -- Amendments/additions to PROBLEMS:
-	- PostgreSQL DSO with --error-checking=all - James.
-	- Consolidate Motif problems into one section - Turnbull.
+	- PostgreSQL DSO with --error-checking=all -- James.
+	- Consolidate Motif problems into one section -- Turnbull.
 -- Amendments/additions to INSTALL:
-	- Recommend Mule - Turnbull.
-	- Deprecate stripped binaries - Turnbull.
+	- Recommend Mule -- Turnbull.
+	- Deprecate stripped binaries -- Turnbull.
 -- General tidy up of etc/BETA, rewrite sections dealing with packages
-   and building from scratch - Youngs.
--- General doc fixes, typos etc - Youngs, Turnbull, Palmer, Wing.
--- Fix xref in Auto-Saving - Aichner.
--- Update Local.rules File section in packages.texi - Youngs.
--- Clarify package hierarchy structure - Turnbull.
--- Major fixup of internals.texi - Wing.
--- Lots of Mule rewriting in lispref/mule.texi - Wing.
--- Document USE_UNION_TYPE evilness - Wing.
--- Document event-matches-key-specifier-p better - Wing.
--- Change illegal (for C) '//' comments to '/* */' - Shelton, Turnbull.
+   and building from scratch -- Youngs.
+-- General doc fixes, typos etc -- Youngs, Turnbull, Palmer, Wing.
+-- Fix xref in Auto-Saving -- Aichner.
+-- Update Local.rules File section in packages.texi -- Youngs.
+-- Clarify package hierarchy structure -- Turnbull.
+-- Major fixup of internals.texi -- Wing.
+-- Lots of Mule rewriting in lispref/mule.texi -- Wing.
+-- Document USE_UNION_TYPE evilness -- Wing.
+-- Document event-matches-key-specifier-p better -- Wing.
+-- Change illegal (for C) '//' comments to '/* */' -- Shelton, Turnbull.
 
 Internals
 
--- Synch rcs2log to GNU upstream - Youngs.
+-- Synch rcs2log to GNU upstream -- Youngs.
 -- Use symbolic name `XtExposeCompressMaximal' instead of `TRUE' in
-   xlwMenuClassRec - Buchholz.
--- In xm_update_progress, don't define unless LWLIB_WIDGETS_MOTIF - Buchholz.
--- Rename class -> class_ & new -> new_ - Wing.
--- KKCC update in postgresql.c - Wing.
--- KKCC update in eldap.c - James.
--- Fix for unix_create_process - Ueno.
--- Set stack reserve size during unexec() - Piper.
--- Use 'struct htentry' not 'struct hentry' in elhash.c - Wing.
+   xlwMenuClassRec -- Buchholz.
+-- In xm_update_progress, don't define unless LWLIB_WIDGETS_MOTIF -- Buchholz.
+-- Rename class -> class_ & new -> new_ -- Wing.
+-- KKCC update in postgresql.c -- Wing.
+-- KKCC update in eldap.c -- James.
+-- Fix for unix_create_process -- Ueno.
+-- Set stack reserve size during unexec() -- Piper.
+-- Use 'struct htentry' not 'struct hentry' in elhash.c -- Wing.
 -- New macros ALIST_LOOP_3, ALIST_LOOP_4.
--- Fix 'xemacs -batch -l dunnet' under Cygwin - Wing.
--- Implement delaying of XFlush() if pending expose events - Wing.
--- Fix some longstanding bugs in X quit handling - Wing.
--- Correct the message output upon crashing to be more up-to-date - Wing.
+-- Fix 'xemacs -batch -l dunnet' under Cygwin -- Wing.
+-- Implement delaying of XFlush() if pending expose events -- Wing.
+-- Fix some longstanding bugs in X quit handling -- Wing.
+-- Correct the message output upon crashing to be more up-to-date -- Wing.
 -- Add dp() & db() as short synonyms of debug_print() &
-   debug_backtrace() - Wing.
--- Add C++ error-checking code to verify problems with GCPRO/UNGCPRO - Wing.
--- Change the way gap arrays are allocated (for KKCC) - Wing.
+   debug_backtrace() -- Wing.
+-- Add C++ error-checking code to verify problems with GCPRO/UNGCPRO -- Wing.
+-- Change the way gap arrays are allocated (for KKCC) -- Wing.
 -- Now lcrecords set the type of items sitting on the free list to
-   lcrecord_type_free - Wing.
+   lcrecord_type_free -- Wing.
 -- All lcrecord allocation functions now zero out the returned
-   lcrecords - Wing.
--- Additional asserts in FREE_FIXED_TYPE - Wing.
--- Make bit vectors lcrecords, like vectors - Wing.
--- MARKED_SLOT() call no longer includes semicolon - Wing.
--- Factor out some code duplicated in KKCC and pdump - Wing.
--- KKCC updates - Wing.
--- Add a fifth field "flags" to memory_description - Wing.
--- Add support for "description maps" - Wing.
+   lcrecords -- Wing.
+-- Additional asserts in FREE_FIXED_TYPE -- Wing.
+-- Make bit vectors lcrecords, like vectors -- Wing.
+-- MARKED_SLOT() call no longer includes semicolon -- Wing.
+-- Factor out some code duplicated in KKCC and pdump -- Wing.
+-- KKCC updates -- Wing.
+-- Add a fifth field "flags" to memory_description -- Wing.
+-- Add support for "description maps" -- Wing.
 -- Redo XD_UNION so it works inline and change format to provide info
-   for pdump - Wing.
+   for pdump -- Wing.
 -- Textual changes:
-	- lrecord_description -> memory_description - Wing.
-	- struct_description -> sized_memory_description - Wing.
--- Initialize protect_me field of popup_data in set_frame_menubar - Sperber
--- GTK updates - Sperber.
+	- lrecord_description -> memory_description -- Wing.
+	- struct_description -> sized_memory_description -- Wing.
+-- Initialize protect_me field of popup_data in set_frame_menubar -- Sperber
+-- GTK updates -- Sperber.
 -- Don't lead to a crash if dealing with a dead
-   window/frame/device/console - Sperber.
--- Prevent crash for combination windows - Sperber.
--- Window fixes in Fdelete_window - Sperber.
--- Module updates in emodules.h - James.
--- Fprovide from 'vars_of_file_coding' not 'syms_of_file_coding' - Turnbull.
--- Fix syntax of macro in 'mark_object_maybe_checking_free - Turnbull.
--- Eliminate bogus require-prints-loading-message - Wing.
--- Turn on `load-warn-when-source-newer' by default - Wing.
+   window/frame/device/console -- Sperber.
+-- Prevent crash for combination windows -- Sperber.
+-- Window fixes in Fdelete_window -- Sperber.
+-- Module updates in emodules.h -- James.
+-- Fprovide from 'vars_of_file_coding' not 'syms_of_file_coding' -- Turnbull.
+-- Fix syntax of macro in 'mark_object_maybe_checking_free -- Turnbull.
+-- Eliminate bogus require-prints-loading-message -- Wing.
+-- Turn on `load-warn-when-source-newer' by default -- Wing.
 -- Fix up crashes when selecting menubar items due to lack of GCPROing
-   - Wing.
--- Implement tail-recursion in KKCC - Wing.
--- Fix UTF-(8|16) detector - Wing.
+   -- Wing.
+-- Implement tail-recursion in KKCC -- Wing.
+-- Fix UTF-(8|16) detector -- Wing.
 -- Fix problems with reentrant calling of lwlib and associated crashes
-   when selecting menu items - Wing.
--- Improve redisplay handling of preemption - Wing.
--- Return the parameter from strlvr, strupr, depend on !HAVE_STRUPR - James.
--- In sysdll.c included lisp.h to define needed alloca_array - Begel.
--- Pull GC_CHECK_NOT_FREE out of USE_KKCC - Sperber.
--- Abort when any attempts to output a stream console are made - Wing.
--- Formatting fixes in redisplay-output.c - Wing.
--- Clean up redisplay a bit - Wing.
--- Fix scrollbar code TTY devices don't have them - Sperber.
--- Major reworking of profile code - Wing.
--- Dramatically improve redisplay speed over slow X connections - Buchholz.
--- Move syntax table description from buffer.c to syntax.c - Wing.
--- Updates to char,mirror,syntax tables code - Wing.
--- Niggly whitespace fixups - Wing.
+   when selecting menu items -- Wing.
+-- Improve redisplay handling of preemption -- Wing.
+-- Return the parameter from strlvr, strupr, depend on !HAVE_STRUPR -- James.
+-- In sysdll.c included lisp.h to define needed alloca_array -- Begel.
+-- Pull GC_CHECK_NOT_FREE out of USE_KKCC -- Sperber.
+-- Abort when any attempts to output a stream console are made -- Wing.
+-- Formatting fixes in redisplay-output.c -- Wing.
+-- Clean up redisplay a bit -- Wing.
+-- Fix scrollbar code TTY devices don't have them -- Sperber.
+-- Major reworking of profile code -- Wing.
+-- Dramatically improve redisplay speed over slow X connections -- Buchholz.
+-- Move syntax table description from buffer.c to syntax.c -- Wing.
+-- Updates to char,mirror,syntax tables code -- Wing.
+-- Niggly whitespace fixups -- Wing.
 
 Lisp API
 
--- Updates to (japan|cryil)-util.el - Turnbull.
--- Updates to how XEmacs computes various paths - Sperber.
--- Window configuration fixes - Sperber, Wing.
--- Make Info-insert-dir end n separator - Buchholz.
--- Drastically reorganise autoload.el - Turnbull.
--- Omit M-S-home/end from motion keys - Wing.
--- Synch wid-edit to GNU/Emacs 21.3.50 - Turnbull.
--- Updates to hyper-apropos - Wing.
--- Reorganise Help -> Info submenu - Wing.
--- Fix bug when end > start in text-props - Wing.
--- Fix walk-windows - Wing.
--- Fix for call to set-language-unicode-precedence-list - Nyyss~nen.
--- Synch up byte-optimize.el - Wing.
--- Include FUNLIST argument to generate-c-file-autoloads-1 - Wing.
+-- Updates to (japan|cryil)-util.el -- Turnbull.
+-- Updates to how XEmacs computes various paths -- Sperber.
+-- Window configuration fixes -- Sperber, Wing.
+-- Make Info-insert-dir end n separator -- Buchholz.
+-- Drastically reorganise autoload.el -- Turnbull.
+-- Omit M-S-home/end from motion keys -- Wing.
+-- Synch wid-edit to GNU/Emacs 21.3.50 -- Turnbull.
+-- Updates to hyper-apropos -- Wing.
+-- Reorganise Help -> Info submenu -- Wing.
+-- Fix bug when end > start in text-props -- Wing.
+-- Fix walk-windows -- Wing.
+-- Fix for call to set-language-unicode-precedence-list -- Nyyss~nen.
+-- Synch up byte-optimize.el -- Wing.
+-- Include FUNLIST argument to generate-c-file-autoloads-1 -- Wing.
 
 
 to 21.5.10 "burdock"
@@ -957,166 +958,166 @@ DSO's.  We have Jerry James to thank/blame/worship for that.
 
 Build
 
--- Reset sheap-adjustment to zero - Piper.
--- Make --pdump default to yes on Linux - Turnbull.
--- Only use -Wpacked in GCC v3 - Wing.
--- Remove LISP_FLOAT_TYPE definition. - James.
--- Temporarily disable DSO's under Cygwin - Wing.
--- Updates to DSO building code (Makefile.in, configure.in etc) - Wing, James.
--- Separate compiler warning flags from CFLAGS - Wing.
--- Delete auto-autoloads.e* & custom-load.e* on 'make clean' - Turnbull.
--- Disable detection of 'getaddrinfo' for HP-UX 11.XX - Turnbull.
--- Include modules directories in 'make tags' - Youngs.
--- Fix shadowing warnings in make-docfile.c - Wing.
+-- Reset sheap-adjustment to zero -- Piper.
+-- Make --pdump default to yes on Linux -- Turnbull.
+-- Only use -Wpacked in GCC v3 -- Wing.
+-- Remove LISP_FLOAT_TYPE definition. -- James.
+-- Temporarily disable DSO's under Cygwin -- Wing.
+-- Updates to DSO building code (Makefile.in, configure.in etc) -- Wing, James.
+-- Separate compiler warning flags from CFLAGS -- Wing.
+-- Delete auto-autoloads.e* & custom-load.e* on 'make clean' -- Turnbull.
+-- Disable detection of 'getaddrinfo' for HP-UX 11.XX -- Turnbull.
+-- Include modules directories in 'make tags' -- Youngs.
+-- Fix shadowing warnings in make-docfile.c -- Wing.
 -- Move the common stuff from postgresql/ldap Makefile.in.in &
      configure.ac's into a "common" Makefile and configure script -
      Wing.
--- Major cleanup of ellcc - Wing, James.
--- Add Makefile var to pick up '--site-libraries' in DSO's - Youngs.
+-- Major cleanup of ellcc -- Wing, James.
+-- Add Makefile var to pick up '--site-libraries' in DSO's -- Youngs.
 -- Avoid unnecessary deviations from UNIX 'describe-installation' in
-     xemacs.mak - Aichner.
--- Don't confirm overwriting files in xemacs.mak - Aichner.
--- Support 'xemacs_extra_name' in xemacs.mak - Aichner.
--- Some gcc/g++ 3 fixes - Wing.
--- Warning fixes - Wing.
--- Fix some C++ errors - Wing.
+     xemacs.mak -- Aichner.
+-- Don't confirm overwriting files in xemacs.mak -- Aichner.
+-- Support 'xemacs_extra_name' in xemacs.mak -- Aichner.
+-- Some gcc/g++ 3 fixes -- Wing.
+-- Warning fixes -- Wing.
+-- Fix some C++ errors -- Wing.
 -- Allow for C needing volatile and C++ that can't have volatile,
-     remove previous volatile hacks - Wing.
--- Try for a working Cygwin build with old unexec - Wing.
--- Warning suppression - Turnbull.
--- New Mule character class regexp tests - Turnbull, Ueno.
--- Better handling of known bugs in tests - Turnbull.
--- Add test for stale subexpr match-data - Turnbull.
--- Update syntax-table tests - Turnbull.
--- Add word-boundary regexp tests - Turnbull.
+     remove previous volatile hacks -- Wing.
+-- Try for a working Cygwin build with old unexec -- Wing.
+-- Warning suppression -- Turnbull.
+-- New Mule character class regexp tests -- Turnbull, Ueno.
+-- Better handling of known bugs in tests -- Turnbull.
+-- Add test for stale subexpr match-data -- Turnbull.
+-- Update syntax-table tests -- Turnbull.
+-- Add word-boundary regexp tests -- Turnbull.
 
 Documentation
 
 -- Updates to PROBLEMS file
-	Running/Linux - Lesstif 0.93.36 - Turnbull
-	Running/IRIX - Irix 6.5 coredumps - Turnbull
-	Running/Cygwin - "No cygXpm-noX" fatal error - Turnbull
-	Missing charsets - Remove ambiguity - Turnbull
-	Running, General - FontSet warnings - Turnbull
-	MacOS/X - Stack limitation - Turnbull
-	Digital Unix - Generalise - Turnbull
-	AIX - USE_KKCC lossage - Turnbull.
--- Update instructions in info/dir - Wallington.
--- Recommend TeXinfo 4.2 in INSTALL - Turnbull.
--- Add example in sample.Xdefaults - Boffi.
--- Typo fixes - Yamaoka, Youngs, Turnbull, Wing.
--- Docstring fixes - Turnbull, Piper, Skyttä, Wing.
--- Update description of XEmacs Patches and Design ML's - Turnbull.
--- Incorportate ChangeLog.X into ChangeLog - Wing.
+	Running/Linux - Lesstif 0.93.36 -- Turnbull
+	Running/IRIX - Irix 6.5 coredumps -- Turnbull
+	Running/Cygwin - "No cygXpm-noX" fatal error -- Turnbull
+	Missing charsets - Remove ambiguity -- Turnbull
+	Running, General - FontSet warnings -- Turnbull
+	MacOS/X - Stack limitation -- Turnbull
+	Digital Unix - Generalise -- Turnbull
+	AIX - USE_KKCC lossage -- Turnbull.
+-- Update instructions in info/dir -- Wallington.
+-- Recommend TeXinfo 4.2 in INSTALL -- Turnbull.
+-- Add example in sample.Xdefaults -- Boffi.
+-- Typo fixes -- Yamaoka, Youngs, Turnbull, Wing.
+-- Docstring fixes -- Turnbull, Piper, Skyttä, Wing.
+-- Update description of XEmacs Patches and Design ML's -- Turnbull.
+-- Incorportate ChangeLog.X into ChangeLog -- Wing.
 -- FAQ additions/amendments:
-	Debugging FAQ improvements - Wing.
-	Mention union type bugs - Turnbull.
-	Debugging HOWTO improvements - Turnbull.
-	Decoding Lisp objects in the debugger - Turnbull.
-	Fix location of FAQ on website - Skyttä.
-	Add missing menu entry for Q3.2.7 - Verna.
-	Displaying non-ASCII - Turnbull.
-	Mention bug report commands - Turnbull.
-	Revise Q1.3.[1-6] - Turnbull.
-	New FAQ for "no cygXpm-noX" fatal error - Turnbull.
+	Debugging FAQ improvements -- Wing.
+	Mention union type bugs -- Turnbull.
+	Debugging HOWTO improvements -- Turnbull.
+	Decoding Lisp objects in the debugger -- Turnbull.
+	Fix location of FAQ on website -- Skyttä.
+	Add missing menu entry for Q3.2.7 -- Verna.
+	Displaying non-ASCII -- Turnbull.
+	Mention bug report commands -- Turnbull.
+	Revise Q1.3.[1-6] -- Turnbull.
+	New FAQ for "no cygXpm-noX" fatal error -- Turnbull.
 -- New TeXinfo nodes:
-	"Widget Internals" - Turnbull.
-	"Simple Specifier Usage" - Turnbull.
-	"Compilation Options" - Turnbull.
--- Document charset Unification and Tables - Turnbull.
--- Better short description of Mule in Mule submenu - Turnbull.
--- Regression Testing XEmacs design hints & rewrite - Turnbull.
--- Document 'face-frob-from-locale-first' - Golubev.
--- Document 'set-face-background-pixmap-file' - Verna.
+	"Widget Internals" -- Turnbull.
+	"Simple Specifier Usage" -- Turnbull.
+	"Compilation Options" -- Turnbull.
+-- Document charset Unification and Tables -- Turnbull.
+-- Better short description of Mule in Mule submenu -- Turnbull.
+-- Regression Testing XEmacs design hints & rewrite -- Turnbull.
+-- Document 'face-frob-from-locale-first' -- Golubev.
+-- Document 'set-face-background-pixmap-file' -- Verna.
 -- Add urefs to Doug Lea's * Wolfram Gloger's home pages in "Low-Level
-     Modules" - Turnbull.
--- Update "Available Packages" - Skyttä.
--- Document 'append' arg of 'add-to-list' - Skyttä.
--- Add optimisation hints in "Techniques for XEmacs Developers" - Turnbull.
+     Modules" -- Turnbull.
+-- Update "Available Packages" -- Skyttä.
+-- Document 'append' arg of 'add-to-list' -- Skyttä.
+-- Add optimisation hints in "Techniques for XEmacs Developers" -- Turnbull.
 
 Internals
 
--- Add *menubar*FontSet and *popup*FontSet entries - Turnbull, Skyttä.
--- Extract ldap and postgresql code from core and put them into DSO's - James.
+-- Add *menubar*FontSet and *popup*FontSet entries -- Turnbull, Skyttä.
+-- Extract ldap and postgresql code from core and put them into DSO's -- James.
 -- 'Fset_window_point' Correct to GNU/Emacs behaviour (fixes some bugs
-     in Gnus) - Wing.
--- Inhibit GC in critical sections - Wing.
--- Fix calculation in 'report_sheap_usage' - Piper.
--- Implement and use new var 'garbage_collection_messages' - Wallington.
--- Fix 'open_database' for Berkeley DB 4.1.x - Allen.
--- Updates to frame code - Sperber.
+     in Gnus) -- Wing.
+-- Inhibit GC in critical sections -- Wing.
+-- Fix calculation in 'report_sheap_usage' -- Piper.
+-- Implement and use new var 'garbage_collection_messages' -- Wallington.
+-- Fix 'open_database' for Berkeley DB 4.1.x -- Allen.
+-- Updates to frame code -- Sperber.
 -- Change C debugger entrance: error message, then stack trace, then
-     exiting message, then force debugger - Wing.
--- Use EQ not EQUAL in 'mswindows_init_frame_1' - Wing.
--- Better redisplay-related asserts - Wing.
--- Don't generate large warning strings when they'll be discarded - Wing.
--- Implement 'debug-on-error' as documented - Wing.
--- Fix docs relating to QUIT which can't GC under any circumstances - Wing.
--- More robust package compilation and debugging - Wing.
--- Overhaul profile code - Wing.
--- Fix crashes due to incorrectly ported GNU/Emacs code - Wing.
--- Clean up realpath.c - Wing.
--- DdeCreateStringHandle needs to be manual due to new Cygwin bug - Wing.
--- Fix some Cygwin complaints - Wing.
--- Unconditionally use LISP_FLOAT_TYPE code - James.
--- Improve crash message in 'shut_down_emacs' - Turnbull.
--- Update NAS code for NAS 1.6 and later - Toy.
--- Fix "unused variable" warnings in mule-canna.c - Turnbull.
--- Prototype 'enqueue_focus_event' - Turnbull.
--- Use BORDER_FIDDLE_FACTOR instead of 10 in 'layout_layout' - Piper.
--- Add optional 'noerror' arg to 'Frequire' - Wallington.
+     exiting message, then force debugger -- Wing.
+-- Use EQ not EQUAL in 'mswindows_init_frame_1' -- Wing.
+-- Better redisplay-related asserts -- Wing.
+-- Don't generate large warning strings when they'll be discarded -- Wing.
+-- Implement 'debug-on-error' as documented -- Wing.
+-- Fix docs relating to QUIT which can't GC under any circumstances -- Wing.
+-- More robust package compilation and debugging -- Wing.
+-- Overhaul profile code -- Wing.
+-- Fix crashes due to incorrectly ported GNU/Emacs code -- Wing.
+-- Clean up realpath.c -- Wing.
+-- DdeCreateStringHandle needs to be manual due to new Cygwin bug -- Wing.
+-- Fix some Cygwin complaints -- Wing.
+-- Unconditionally use LISP_FLOAT_TYPE code -- James.
+-- Improve crash message in 'shut_down_emacs' -- Turnbull.
+-- Update NAS code for NAS 1.6 and later -- Toy.
+-- Fix "unused variable" warnings in mule-canna.c -- Turnbull.
+-- Prototype 'enqueue_focus_event' -- Turnbull.
+-- Use BORDER_FIDDLE_FACTOR instead of 10 in 'layout_layout' -- Piper.
+-- Add optional 'noerror' arg to 'Frequire' -- Wallington.
 -- Only resize 'layout_query_geometry' dynamically if static sizes
-     haven't been set - Piper.
--- Fix infloop upon a gdm logout - Sigelman.
--- Fix scope of 'num_nonshy_regs' - Turnbull.
--- Fix "stale match data" bug - Turnbull.
--- Don't call 'XtDisplay' on a destroyed widget - Golubev.
--- Update specifier code - Sperber.
--- Update process code - Sperber.
--- Move ldap/postgresql code out to DSO's - James.
+     haven't been set -- Piper.
+-- Fix infloop upon a gdm logout -- Sigelman.
+-- Fix scope of 'num_nonshy_regs' -- Turnbull.
+-- Fix "stale match data" bug -- Turnbull.
+-- Don't call 'XtDisplay' on a destroyed widget -- Golubev.
+-- Update specifier code -- Sperber.
+-- Update process code -- Sperber.
+-- Move ldap/postgresql code out to DSO's -- James.
 -- Normalise Ffile_truename and drive spec on cygwing to win32 format
-     - Piper.
--- Use 'closesocket' instead of 'CloseHandle' in 'winsock_closer' - Alexander.
--- Coding system updates - Ikiuo.
+     -- Piper.
+-- Use 'closesocket' instead of 'CloseHandle' in 'winsock_closer' -- Alexander.
+-- Coding system updates -- Ikiuo.
 
 Lisp API
 
--- Update window-xemacs.el to fix 'goto-line' - Wing.
--- Add garbage collection messages - Wallington.
--- Re-implement window configurations in Emacs Lisp - Sperber.
--- Enhance background-pixmap-file code - Verna.
+-- Update window-xemacs.el to fix 'goto-line' -- Wing.
+-- Add garbage collection messages -- Wallington.
+-- Re-implement window configurations in Emacs Lisp -- Sperber.
+-- Enhance background-pixmap-file code -- Verna.
 -- New macro 'save-window-excursion' to eventually replace bytecode
-     instruction - Sperber.
--- Move window.el et al up the order in dumped-lisp.el - Sperber.
+     instruction -- Sperber.
+-- Move window.el et al up the order in dumped-lisp.el -- Sperber.
 -- Don't use 'save-window-excursion' in
-     'shrink-window-if-larger-than-buffer' - Sperber.
--- Updates to pixel-size code in dialog.el - Sperber.
--- Remove nonworking 'breakpoint-on-error' - Wing.
+     'shrink-window-if-larger-than-buffer' -- Sperber.
+-- Updates to pixel-size code in dialog.el -- Sperber.
+-- Remove nonworking 'breakpoint-on-error' -- Wing.
 -- Extract out 'with-displaying-help-buffer' into a more general mechanism
-     - Wing.
--- Don't catch errors when noninteractive in startup.el - Wing.
--- Fix warnings in code-files.el, loadhist.el, & package-get.el - Wing.
--- Simplify code in '*-reset-device-font-menus' - James.
--- Synch font-menu.el to the 21.4 version - Turnbull.
--- Preserve return value from 'call-process' - Sperber.
--- New functions in replace.el that operate on regions - Evans.
--- Run 'delete-frame-hook' in general dialogs only - Piper.
--- Add a margin parameter in autoload.el for DSO autoloads - James.
--- Conditionalise autoloads for DSO's on the existence of the DSO - James.
--- Always set module directories/paths in dump-paths.el - James.
--- Bring list of package sites up to date - Skyttä.
+     -- Wing.
+-- Don't catch errors when noninteractive in startup.el -- Wing.
+-- Fix warnings in code-files.el, loadhist.el, & package-get.el -- Wing.
+-- Simplify code in '*-reset-device-font-menus' -- James.
+-- Synch font-menu.el to the 21.4 version -- Turnbull.
+-- Preserve return value from 'call-process' -- Sperber.
+-- New functions in replace.el that operate on regions -- Evans.
+-- Run 'delete-frame-hook' in general dialogs only -- Piper.
+-- Add a margin parameter in autoload.el for DSO autoloads -- James.
+-- Conditionalise autoloads for DSO's on the existence of the DSO -- James.
+-- Always set module directories/paths in dump-paths.el -- James.
+-- Bring list of package sites up to date -- Skyttä.
 -- Add "Find Variable" menu entry for 'hyper-apropos-find-variable' -
      Wallington
--- Fix 'view-lossage' interactive spec - Wallington.
--- Synch 'with-output-to-string' with GNU/Emacs 21 - Wallington.
--- Bind C-xrd to 'delete-rectangle' - Yamaoka.
+-- Fix 'view-lossage' interactive spec -- Wallington.
+-- Synch 'with-output-to-string' with GNU/Emacs 21 -- Wallington.
+-- Bind C-xrd to 'delete-rectangle' -- Yamaoka.
 -- Move entries in 'auto-mode-alist' out to packages for the modes
-     that are in packages - Skyttä
+     that are in packages -- Skyttä
 -- New compatible alias for 'lookup-syntax-properties'
-     ('parse-sexp-lookup-properties') - Turnbull.
--- Enable C autoloads for DSO's - James.
--- Update revert-buffer code - Piper.
--- Add new coding system 'utf-8-bom' - Ikiuo.
+     ('parse-sexp-lookup-properties') -- Turnbull.
+-- Enable C autoloads for DSO's -- James.
+-- Update revert-buffer code -- Piper.
+-- Add new coding system 'utf-8-bom' -- Ikiuo.
 
 
 to 21.5.9 "brussels sprouts"
@@ -1128,43 +1129,43 @@ There are of course, the usual swag of bug fixes, typo fixes, and
 document updates.
 
 -- Add an extra element to the version string that can be used to
-   include a date in the version string - Youngs.
--- Improve help string for --with-widgets configure option - Skyttä.
+   include a date in the version string -- Youngs.
+-- Improve help string for --with-widgets configure option -- Skyttä.
 -- Define runtime & build problems, and rewrite "Hannibal Lecter"
-   stuff in PROBLEMS - Turnbull.
--- Add builtin and constant faces to font-lock-face-list - Skyttä.
--- Japanese language fixes - Yamaoka.
+   stuff in PROBLEMS -- Turnbull.
+-- Add builtin and constant faces to font-lock-face-list -- Skyttä.
+-- Japanese language fixes -- Yamaoka.
 -- Fix find-library to allow Mule XEmacsen to find compressed
-   libraries - Youngs.
--- New alias for 'delete-indentation' (join-line) - Wallington.
--- Support docstring for define-derived-mode - Turnbull
--- Doc fix for keybindings in term.texi and misc.texi - Skyttä.
--- Bring package list up to date in packages.texi - Skyttä.
--- Document purecopy as a no-op - Josefsson.
--- New document chapter "Regression Testing XEmacs" - Turnbull.
--- Add "USE_KKCC" option to ./nt/xemacs.mak - Aichner.
+   libraries -- Youngs.
+-- New alias for 'delete-indentation' (join-line) -- Wallington.
+-- Support docstring for define-derived-mode -- Turnbull
+-- Doc fix for keybindings in term.texi and misc.texi -- Skyttä.
+-- Bring package list up to date in packages.texi -- Skyttä.
+-- Document purecopy as a no-op -- Josefsson.
+-- New document chapter "Regression Testing XEmacs" -- Turnbull.
+-- Add "USE_KKCC" option to ./nt/xemacs.mak -- Aichner.
 -- New GC algorithms implemented (Turn them on with --use-kkcc
-   configure option) - Sperber, Crestani, Kaltenbach, Bush.
--- Define HAVE_WCHAR_H for native Win32 builds - Harris.
--- Fix x_locate_pixmap_file make sure path is not 0 - MacLennan.
--- Fix memory leak - Verna.
+   configure option) -- Sperber, Crestani, Kaltenbach, Bush.
+-- Define HAVE_WCHAR_H for native Win32 builds -- Harris.
+-- Fix x_locate_pixmap_file make sure path is not 0 -- MacLennan.
+-- Fix memory leak -- Verna.
 -- Add missing call to 'xfree (newname)' in 'make_coding_system_1
-   - Verna.
--- Fix --with-mule --with-gtk builds - Barta.
--- Make SEPCHAR a required arg to Fsplit_string_by_char - Palmer.
+   -- Verna.
+-- Fix --with-mule --with-gtk builds -- Barta.
+-- Make SEPCHAR a required arg to Fsplit_string_by_char -- Palmer.
 -- Make locate_file indicate success with nonnegative return if MODE
-   is nonnegative - James.
--- Fix splitting window horizontally not splitting evenly - James.
--- ORDINARY_LINK OK for Linux - James.
+   is nonnegative -- James.
+-- Fix splitting window horizontally not splitting evenly -- James.
+-- ORDINARY_LINK OK for Linux -- James.
 -- Don't bogusly reinitialise ascii_character property in
-   maybe_define_x_key_as_self_inserting_character - Astapov.
+   maybe_define_x_key_as_self_inserting_character -- Astapov.
 -- Add warning to SOE_DEBUG about not using until debugging functions
-   are rewritten - Turnbull.
--- Update 'do_autoload' to GCPRO both arguments - Turnbull.
+   are rewritten -- Turnbull.
+-- Update 'do_autoload' to GCPRO both arguments -- Turnbull.
 -- Update automated tests so they don't barf if required packages
-   aren't present - Turnbull.
--- Organise NSIG setting code for SVR4 in a better way - James.
--- Various typo fixes - Skyttä, Turnbull, James.
+   aren't present -- Turnbull.
+-- Organise NSIG setting code for SVR4 in a better way -- James.
+-- Various typo fixes -- Skyttä, Turnbull, James.
 
 
 to 21.5.8 "broccoli"
@@ -1177,50 +1178,50 @@ contributors.  And I haven't sorted the changes into different
 categories.  Maybe next release...
 
 -- New configure option "--use-kkcc" for the upcoming new GC
-   algorithms - Sperber.
+   algorithms -- Sperber.
 -- Identify "--with-modules" as an autodetected configure option -
    James.
--- Add a couple of configuration questions to PROBLEMS - Turnbull.
--- Test for wchar.h in configure - Sperber.
--- Update package-index files - Youngs.
--- s/Xemacs/XEmacs/ doc fixes - Aichner.
--- Sync make-docfile.c with GNU - James.
--- Updates to gutter-items - Palmieri.
--- Sync setenv with GNU - Wallington.
--- Remove package-get's dependence on APEL - Youngs.
--- Fix case fold bug in replace-in-string - Verna.
--- Updates to code-process.el and process.el - Alexander.
--- Updates to mule/kinsoku.el - Yamaoka.
--- Updates to define-derived-mode - Wallington.
--- Printer fixes - Piper.
--- Updates to window-xemacs.el & frame.el - James.
--- Doc fix gutter-items.el - Piper.
--- Sync ":set-after" in custom with GNU - Piper.
--- Sort the lists in enabled-behavior-list - Galibert
--- Updates to lwlib-Xm.c - Piper.
--- Various doc fixes to the TeXinfo docs - Aichner.
--- GC fixes - Sperber.
--- Updates to lisp.h, symbols.c for DSO's - James.
--- Fix to mswindows_need_event - Alexander.
--- Declare Fcdr_safe to be callable from C - Turnbull.
--- Ffunctionp return nil for autoloaded macros & keymaps - Niksic.
--- Subwindow fixes - Ueno.
--- Include wchar.h only if available, define wclsen if not - Sperber.
--- Fixes to Fstart_process_internal - Sperber.
--- Fixes to init_ralloc for pdump - Sperber.
--- Remove duplicated definition of Lisp_Devmode - Bush.
--- Fixes to toolbar/redisplay - Piper.
--- Windows DDE fixes - Moore.
+-- Add a couple of configuration questions to PROBLEMS -- Turnbull.
+-- Test for wchar.h in configure -- Sperber.
+-- Update package-index files -- Youngs.
+-- s/Xemacs/XEmacs/ doc fixes -- Aichner.
+-- Sync make-docfile.c with GNU -- James.
+-- Updates to gutter-items -- Palmieri.
+-- Sync setenv with GNU -- Wallington.
+-- Remove package-get's dependence on APEL -- Youngs.
+-- Fix case fold bug in replace-in-string -- Verna.
+-- Updates to code-process.el and process.el -- Alexander.
+-- Updates to mule/kinsoku.el -- Yamaoka.
+-- Updates to define-derived-mode -- Wallington.
+-- Printer fixes -- Piper.
+-- Updates to window-xemacs.el & frame.el -- James.
+-- Doc fix gutter-items.el -- Piper.
+-- Sync ":set-after" in custom with GNU -- Piper.
+-- Sort the lists in enabled-behavior-list -- Galibert
+-- Updates to lwlib-Xm.c -- Piper.
+-- Various doc fixes to the TeXinfo docs -- Aichner.
+-- GC fixes -- Sperber.
+-- Updates to lisp.h, symbols.c for DSO's -- James.
+-- Fix to mswindows_need_event -- Alexander.
+-- Declare Fcdr_safe to be callable from C -- Turnbull.
+-- Ffunctionp return nil for autoloaded macros & keymaps -- Niksic.
+-- Subwindow fixes -- Ueno.
+-- Include wchar.h only if available, define wclsen if not -- Sperber.
+-- Fixes to Fstart_process_internal -- Sperber.
+-- Fixes to init_ralloc for pdump -- Sperber.
+-- Remove duplicated definition of Lisp_Devmode -- Bush.
+-- Fixes to toolbar/redisplay -- Piper.
+-- Windows DDE fixes -- Moore.
 -- Fixes to 'query_string_geometry' and 'widget_logical_unit_height' -
    Piper.
 -- Fix problem with XEmacs freezing with certain virtual window
-   managers on Windows - Rankin.
+   managers on Windows -- Rankin.
 -- Conditionalise calls to syms_of_dired_mswindows &
    vars_of_dired_mswindows on WIN32_NATIVE instead of HAVE_MSW_C_DIRED
-   - Harris.
--- Process related fixes - Sperber.
--- Fix #includes in input-method-motif.c - Galibert.
--- Fixes to automated tests - Sperber.
+   -- Harris.
+-- Process related fixes -- Sperber.
+-- Fix #includes in input-method-motif.c -- Galibert.
+-- Fixes to automated tests -- Sperber.
 
 
 to 21.5.7 "broccoflower"
@@ -1368,7 +1369,7 @@ Internals
 -- Fix: create new process-synchronize-point to avoid dynamic binding
    problems; fix bogosity in setting process sentinels -- ben, mike
 -- Fix: make a lot of code use common includes and implementations
-   (see 2002-06-20 src/ChangeLog) -- ben
+   -- see 2002-06-20 src/ChangeLog) -- ben
 -- Fix: move global-map to keydefs.el -- ben
 -- Fix: new signal/C-g handling (src/ChangeLog 2002-05-28) -- ben
 -- Fix: numerous problems with the case-table implementation -- ben
