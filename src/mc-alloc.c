@@ -521,7 +521,7 @@ set_lookup_table (void *ptr, page_header *ph)
       MC_MALLOCED_BYTES += 
 	malloced_storage_size (0, sizeof (level_2_lookup_tree), 0);
 #endif
-      memset (l2, 0, sizeof (level_2_lookup_tree));
+      memset (l2, '\0', sizeof (level_2_lookup_tree));
 #ifdef USE_HASH_TABLE
       LEVEL2_HASH_LINK (l2) = PTR_LOOKUP_TABLE (l1_index);
 #endif
@@ -1689,6 +1689,8 @@ void
 init_mc_allocator (void)
 {
   int i;
+
+  memset (&mc_allocator_globals, '\0', sizeof (mc_allocator_globals_type));
 
   for (i = 0; i < N_USED_PAGE_LISTS; i++)
     {

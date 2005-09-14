@@ -1,3 +1,9 @@
+2005-09-14  Marcus Crestani  <crestani@xemacs.org>
+
+	* mc-alloc.c (set_lookup_table): Adjust parameter to other memset
+	calls.
+	* mc-alloc.c (init_mc_allocator): Zero global allocator structure.
+
 2005-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.22 "cucumber" is released.
