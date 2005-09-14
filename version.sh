@@ -2,8 +2,8 @@
 emacs_is_beta=t
 emacs_major_version=21
 emacs_minor_version=5
-emacs_beta_version=21
-xemacs_codename="corn"
+emacs_beta_version=22
+xemacs_codename="cucumber"
 emacs_kit_version=
 infodock_major_version=4
 infodock_minor_version=0
