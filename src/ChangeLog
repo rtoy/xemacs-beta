@@ -1,3 +1,8 @@
+2005-09-12  Mike Alexander  <mta@arbortext.com>
+
+	* intl-win32.c (mswindows_current_locale): Define in non-MULE
+	build.
+
 2005-09-14  Marcus Crestani  <crestani@xemacs.org>
 
 	* mc-alloc.c (set_lookup_table): Adjust parameter to other memset

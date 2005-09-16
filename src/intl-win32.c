@@ -1550,6 +1550,13 @@ mswindows_locale_to_code_page (LCID UNUSED (lcid))
   return CP_ACP;
 }
 
+LCID
+mswindows_current_locale (void)
+{
+  /* In non-MULE version just return the default locale */
+  return GetUserDefaultLCID ();
+}
+
 #endif /* MULE */
 
 
