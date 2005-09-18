@@ -1,3 +1,8 @@
+2005-09-17  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.in: Replace with warning to use autoconf 2.59.
+	* configure.ac: Removed warning about the use of autoconf 2.59.
+
 2005-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.22 "cucumber" is released.

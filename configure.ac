@@ -5531,13 +5531,7 @@ dnl Start stdout redirection to '| tee -a Installation'
 (
 echo "
 
-XEmacs ${emacs_major_version}.${emacs_minor_version}${xemacs_betaname} \"$xemacs_codename\" $xemacs_extra_name configured for \`$ac_cv_build'.
-"
-echo "  WARNING: --------------------------------------------------------------"
-echo "  WARNING: This was produced from a new autoconf-2.5 based configuration."
-echo "  WARNING: If this configuration seems buggy then copy etc/configure-2.13"
-echo "  WARNING: to configure and try again.  Also please report the bug."
-echo "  WARNING: --------------------------------------------------------------"
+XEmacs ${emacs_major_version}.${emacs_minor_version}${xemacs_betaname} \"$xemacs_codename\" $xemacs_extra_name configured for \`$ac_cv_build'."
 
 echo "
 Compilation Environment and Installation Defaults:"

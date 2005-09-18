@@ -1,3 +1,7 @@
+2005-09-17  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure-2.13: Remove.  autoconf 2.59 support is stable.
+
 2005-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.22 "cucumber" is released.
