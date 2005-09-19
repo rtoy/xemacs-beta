@@ -1,3 +1,8 @@
+2005-09-18  Mike Alexander  <mta@arbortext.com>
+
+	* configure.ac: Fix the cygwin, non-X build by adding XPM header
+	and library files to XE_CFLAGS.  Patch from Rick Rankin.
+
 2005-09-17  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* configure.in: Replace with warning to use autoconf 2.59.

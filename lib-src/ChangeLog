@@ -1,3 +1,8 @@
+2005-09-18  Mike Alexander  <mta@arbortext.com>
+
+	* installexe.sh: Don't add an exe extention to a file that already
+	has one.  Patch from Rick Rankin.
+
 2005-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.22 "cucumber" is released.

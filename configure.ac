@@ -3755,6 +3755,7 @@ if test "$window_system" != "none"; then
   xpm_problem=""
   if test -z "$with_xpm"; then
     XE_PREPEND("$incpath_xpm", CFLAGS)
+    XE_PREPEND("$incpath_xpm", XE_CFLAGS)
     XE_PREPEND("$libpath_xpm", LDFLAGS)
     AC_MSG_CHECKING(for Xpm - no older than 3.4f)
     xe_check_libs=-lXpm
@@ -3794,6 +3795,7 @@ if test "$window_system" != "none"; then
     XE_PREPEND("$libpath_xpm", LDFLAGS)
     XE_PREPEND(-lXpm, libs_x)
     XE_PREPEND("$incpath_xpm", CFLAGS)
+    XE_PREPEND("$incpath_xpm", XE_CFLAGS)
     AC_MSG_CHECKING(for \"FOR_MSW\" xpm)
     xe_check_libs=-lXpm
     AC_TRY_LINK(, [XpmCreatePixmapFromData()],
