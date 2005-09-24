@@ -70,26 +70,31 @@ Otherwise, returns the locale, or possibly a more-specified version.
        (locale))
 {
   Extbyte *loc;
+  Lisp_Object str;
 
   CHECK_STRING (locale);
   /* RedHat 6.2 contains a locale called "Francais" with the C-cedilla
      encoded in ISO2022! */
   LISP_STRING_TO_EXTERNAL (locale, loc, Qctext);
   loc = setlocale (LC_ALL, loc);
-  setlocale (LC_NUMERIC, "C");
   if (!loc)
     return Qnil;
+  loc = xstrdup (loc);
+  setlocale (LC_NUMERIC, "C");
 #ifdef HAVE_X_WINDOWS
   if (!init_x_locale (locale))
     {
       /* Locale not supported under X.  Put it back. */
       setlocale (LC_ALL, loc);
       setlocale (LC_NUMERIC, "C");
+      free (loc);
       return Qnil;
     }
 #endif
 
-  return build_ext_string (loc, Qctext);
+  str = build_ext_string (loc, Qctext);
+  xfree (loc, Extbyte *);
+  return str;
 }
 
 #if 0

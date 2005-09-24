@@ -1,3 +1,8 @@
+2005-09-17  Olivier Galibert  <galibert@xemacs.org>
+
+	* intl.c (Fset_current_locale): setlocale return string is valid
+	only until the next setlocale call.
+
 2005-09-12  Mike Alexander  <mta@arbortext.com>
 
 	* intl-win32.c (mswindows_current_locale): Define in non-MULE
