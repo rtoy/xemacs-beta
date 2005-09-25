@@ -944,181 +944,6 @@ LIB_SRC_TOOLS = \
 	$(LIB_SRC_TOOLS)
 !endif
 
-###################### Building the info files
-
-!if !defined(MAKEINFO)
-MAKEINFO=$(XEMACS_BATCH_PACKAGES) -l texinfmt -f batch-texinfo-format
-!endif
-
-MANDIR = $(SRCROOT)\man
-INFODIR = $(SRCROOT)\info
-INFO_FILES= \
-	$(INFODIR)\cl.info \
-	$(INFODIR)\custom.info \
-	$(INFODIR)\emodules.info \
-	$(INFODIR)\external-widget.info \
-	$(INFODIR)\info.info \
-	$(INFODIR)\standards.info \
-	$(INFODIR)\term.info \
-	$(INFODIR)\termcap.info \
-	$(INFODIR)\texinfo.info \
-	$(INFODIR)\widget.info \
-	$(INFODIR)\xemacs-faq.info \
-	$(INFODIR)\xemacs.info \
-	$(INFODIR)\lispref.info \
-	$(INFODIR)\new-users-guide.info \
-	$(INFODIR)\internals.info
-
-{$(MANDIR)}.texi{$(INFODIR)}.info:
-	cd $(MANDIR)
-	$(MAKEINFO) $(**F)
-
-XEMACS_SRCS = \
-	$(MANDIR)\xemacs\abbrevs.texi \
-	$(MANDIR)\xemacs\basic.texi \
-	$(MANDIR)\xemacs\buffers.texi \
-	$(MANDIR)\xemacs\building.texi \
-	$(MANDIR)\xemacs\calendar.texi \
-	$(MANDIR)\xemacs\cmdargs.texi \
-	$(MANDIR)\xemacs\custom.texi \
-	$(MANDIR)\xemacs\display.texi \
-	$(MANDIR)\xemacs\entering.texi \
-	$(MANDIR)\xemacs\files.texi \
-	$(MANDIR)\xemacs\fixit.texi \
-	$(MANDIR)\xemacs\frame.texi \
-	$(MANDIR)\xemacs\glossary.texi \
-	$(MANDIR)\xemacs\gnu.texi \
-	$(MANDIR)\xemacs\help.texi \
-	$(MANDIR)\xemacs\indent.texi \
-	$(MANDIR)\xemacs\keystrokes.texi \
-	$(MANDIR)\xemacs\killing.texi \
-	$(MANDIR)\xemacs\m-x.texi \
-	$(MANDIR)\xemacs\major.texi \
-	$(MANDIR)\xemacs\mark.texi \
-	$(MANDIR)\xemacs\menus.texi \
-	$(MANDIR)\xemacs\mini.texi \
-	$(MANDIR)\xemacs\misc.texi \
-	$(MANDIR)\xemacs\mouse.texi \
-	$(MANDIR)\xemacs\mule.texi \
-	$(MANDIR)\xemacs\new.texi \
-	$(MANDIR)\xemacs\packages.texi \
-	$(MANDIR)\xemacs\picture.texi \
-	$(MANDIR)\xemacs\programs.texi \
-	$(MANDIR)\xemacs\reading.texi \
-	$(MANDIR)\xemacs\regs.texi \
-	$(MANDIR)\xemacs\search.texi \
-	$(MANDIR)\xemacs\sending.texi \
-	$(MANDIR)\xemacs\startup.texi \
-	$(MANDIR)\xemacs\text.texi \
-	$(MANDIR)\xemacs\trouble.texi \
-	$(MANDIR)\xemacs\undo.texi \
-	$(MANDIR)\xemacs\windows.texi \
-	$(MANDIR)\xemacs\xemacs.texi
-
-LISPREF_SRCS = \
-	$(MANDIR)\lispref\abbrevs.texi \
-	$(MANDIR)\lispref\annotations.texi \
-	$(MANDIR)\lispref\back.texi \
-	$(MANDIR)\lispref\backups.texi \
-	$(MANDIR)\lispref\buffers.texi \
-	$(MANDIR)\lispref\building.texi \
-	$(MANDIR)\lispref\commands.texi \
-	$(MANDIR)\lispref\compile.texi \
-	$(MANDIR)\lispref\consoles-devices.texi \
-	$(MANDIR)\lispref\control.texi \
-	$(MANDIR)\lispref\customize.texi \
-	$(MANDIR)\lispref\databases.texi \
-	$(MANDIR)\lispref\debugging.texi \
-	$(MANDIR)\lispref\dialog.texi \
-	$(MANDIR)\lispref\display.texi \
-	$(MANDIR)\lispref\dragndrop.texi \
-	$(MANDIR)\lispref\edebug-inc.texi \
-	$(MANDIR)\lispref\edebug.texi \
-	$(MANDIR)\lispref\errors.texi \
-	$(MANDIR)\lispref\eval.texi \
-	$(MANDIR)\lispref\extents.texi \
-	$(MANDIR)\lispref\faces.texi \
-	$(MANDIR)\lispref\files.texi \
-	$(MANDIR)\lispref\frames.texi \
-	$(MANDIR)\lispref\functions.texi \
-	$(MANDIR)\lispref\glyphs.texi \
-	$(MANDIR)\lispref\hash-tables.texi \
-	$(MANDIR)\lispref\help.texi \
-	$(MANDIR)\lispref\hooks.texi \
-	$(MANDIR)\lispref\index.texi \
-	$(MANDIR)\lispref\internationalization.texi \
-	$(MANDIR)\lispref\intro.texi \
-	$(MANDIR)\lispref\keymaps.texi \
-	$(MANDIR)\lispref\ldap.texi \
-	$(MANDIR)\lispref\lispref.texi \
-	$(MANDIR)\lispref\lists.texi \
-	$(MANDIR)\lispref\loading.texi \
-	$(MANDIR)\lispref\locals.texi \
-	$(MANDIR)\lispref\macros.texi \
-	$(MANDIR)\lispref\maps.texi \
-	$(MANDIR)\lispref\markers.texi \
-	$(MANDIR)\lispref\menus.texi \
-	$(MANDIR)\lispref\minibuf.texi \
-	$(MANDIR)\lispref\modes.texi \
-	$(MANDIR)\lispref\mouse.texi \
-	$(MANDIR)\lispref\mule.texi \
-	$(MANDIR)\lispref\numbers.texi \
-	$(MANDIR)\lispref\objects.texi \
-	$(MANDIR)\lispref\os.texi \
-	$(MANDIR)\lispref\positions.texi \
-	$(MANDIR)\lispref\processes.texi \
-	$(MANDIR)\lispref\range-tables.texi \
-	$(MANDIR)\lispref\scrollbars.texi \
-	$(MANDIR)\lispref\searching.texi \
-	$(MANDIR)\lispref\sequences.texi \
-	$(MANDIR)\lispref\specifiers.texi \
-	$(MANDIR)\lispref\streams.texi \
-	$(MANDIR)\lispref\strings.texi \
-	$(MANDIR)\lispref\symbols.texi \
-	$(MANDIR)\lispref\syntax.texi \
-	$(MANDIR)\lispref\text.texi \
-	$(MANDIR)\lispref\tips.texi \
-	$(MANDIR)\lispref\toolbar.texi \
-	$(MANDIR)\lispref\tooltalk.texi \
-	$(MANDIR)\lispref\variables.texi \
-	$(MANDIR)\lispref\windows.texi \
-	$(MANDIR)\lispref\x-windows.texi
-
-INTERNALS_SRCS = \
-	$(MANDIR)\internals\internals.texi
-
-NEW_USERS_GUIDE_SRCS = \
-	$(MANDIR)\new-users-guide\custom1.texi \
-	$(MANDIR)\new-users-guide\custom2.texi \
-	$(MANDIR)\new-users-guide\edit.texi \
-	$(MANDIR)\new-users-guide\enter.texi \
-	$(MANDIR)\new-users-guide\files.texi \
-	$(MANDIR)\new-users-guide\help.texi \
-	$(MANDIR)\new-users-guide\modes.texi \
-	$(MANDIR)\new-users-guide\new-users-guide.texi \
-	$(MANDIR)\new-users-guide\region.texi \
-	$(MANDIR)\new-users-guide\search.texi \
-	$(MANDIR)\new-users-guide\xmenu.texi
-
-$(INFODIR)\xemacs.info: $(XEMACS_SRCS)
-	cd $(MANDIR)\xemacs
-	$(MAKEINFO) xemacs.texi
-
-
-$(INFODIR)\lispref.info: $(LISPREF_SRCS)
-	cd $(MANDIR)\lispref
-	$(MAKEINFO) lispref.texi
-
-$(INFODIR)\internals.info: $(INTERNALS_SRCS)
-	cd $(MANDIR)\internals
-	$(MAKEINFO) internals.texi
-
-$(INFODIR)\new-users-guide.info: $(NEW_USERS_GUIDE_SRCS)
-	cd $(MANDIR)\new-users-guide
-	$(MAKEINFO) new-users-guide.texi
-
-info:	makeinfo-test $(INFO_FILES)
-
 ########################### Create the Installation file
 
 $(BLDROOT)\Installation::	installation
@@ -1421,8 +1246,182 @@ load-shadows: update-elc-2
 	@$(XEMACS_BATCH) -f list-load-path-shadows
 !endif
 
+###################### Building the info files
+
+!if !defined(MAKEINFO)
+MAKEINFO=$(XEMACS_BATCH_PACKAGES) -l texinfmt -f batch-texinfo-format
+!endif
+
+MANDIR = $(SRCROOT)\man
+INFODIR = $(SRCROOT)\info
+INFO_FILES= \
+	$(INFODIR)\cl.info \
+	$(INFODIR)\custom.info \
+	$(INFODIR)\emodules.info \
+	$(INFODIR)\external-widget.info \
+	$(INFODIR)\info.info \
+	$(INFODIR)\standards.info \
+	$(INFODIR)\term.info \
+	$(INFODIR)\termcap.info \
+	$(INFODIR)\texinfo.info \
+	$(INFODIR)\widget.info \
+	$(INFODIR)\xemacs-faq.info \
+	$(INFODIR)\xemacs.info \
+	$(INFODIR)\lispref.info \
+	$(INFODIR)\new-users-guide.info \
+	$(INFODIR)\internals.info
+
+{$(MANDIR)}.texi{$(INFODIR)}.info:
+	cd $(MANDIR)
+	$(MAKEINFO) $(**F)
+
+XEMACS_SRCS = \
+	$(MANDIR)\xemacs\abbrevs.texi \
+	$(MANDIR)\xemacs\basic.texi \
+	$(MANDIR)\xemacs\buffers.texi \
+	$(MANDIR)\xemacs\building.texi \
+	$(MANDIR)\xemacs\calendar.texi \
+	$(MANDIR)\xemacs\cmdargs.texi \
+	$(MANDIR)\xemacs\custom.texi \
+	$(MANDIR)\xemacs\display.texi \
+	$(MANDIR)\xemacs\entering.texi \
+	$(MANDIR)\xemacs\files.texi \
+	$(MANDIR)\xemacs\fixit.texi \
+	$(MANDIR)\xemacs\frame.texi \
+	$(MANDIR)\xemacs\glossary.texi \
+	$(MANDIR)\xemacs\gnu.texi \
+	$(MANDIR)\xemacs\help.texi \
+	$(MANDIR)\xemacs\indent.texi \
+	$(MANDIR)\xemacs\keystrokes.texi \
+	$(MANDIR)\xemacs\killing.texi \
+	$(MANDIR)\xemacs\m-x.texi \
+	$(MANDIR)\xemacs\major.texi \
+	$(MANDIR)\xemacs\mark.texi \
+	$(MANDIR)\xemacs\menus.texi \
+	$(MANDIR)\xemacs\mini.texi \
+	$(MANDIR)\xemacs\misc.texi \
+	$(MANDIR)\xemacs\mouse.texi \
+	$(MANDIR)\xemacs\mule.texi \
+	$(MANDIR)\xemacs\new.texi \
+	$(MANDIR)\xemacs\packages.texi \
+	$(MANDIR)\xemacs\picture.texi \
+	$(MANDIR)\xemacs\programs.texi \
+	$(MANDIR)\xemacs\reading.texi \
+	$(MANDIR)\xemacs\regs.texi \
+	$(MANDIR)\xemacs\search.texi \
+	$(MANDIR)\xemacs\sending.texi \
+	$(MANDIR)\xemacs\startup.texi \
+	$(MANDIR)\xemacs\text.texi \
+	$(MANDIR)\xemacs\trouble.texi \
+	$(MANDIR)\xemacs\undo.texi \
+	$(MANDIR)\xemacs\windows.texi \
+	$(MANDIR)\xemacs\xemacs.texi
+
+LISPREF_SRCS = \
+	$(MANDIR)\lispref\abbrevs.texi \
+	$(MANDIR)\lispref\annotations.texi \
+	$(MANDIR)\lispref\back.texi \
+	$(MANDIR)\lispref\backups.texi \
+	$(MANDIR)\lispref\buffers.texi \
+	$(MANDIR)\lispref\building.texi \
+	$(MANDIR)\lispref\commands.texi \
+	$(MANDIR)\lispref\compile.texi \
+	$(MANDIR)\lispref\consoles-devices.texi \
+	$(MANDIR)\lispref\control.texi \
+	$(MANDIR)\lispref\customize.texi \
+	$(MANDIR)\lispref\databases.texi \
+	$(MANDIR)\lispref\debugging.texi \
+	$(MANDIR)\lispref\dialog.texi \
+	$(MANDIR)\lispref\display.texi \
+	$(MANDIR)\lispref\dragndrop.texi \
+	$(MANDIR)\lispref\edebug-inc.texi \
+	$(MANDIR)\lispref\edebug.texi \
+	$(MANDIR)\lispref\errors.texi \
+	$(MANDIR)\lispref\eval.texi \
+	$(MANDIR)\lispref\extents.texi \
+	$(MANDIR)\lispref\faces.texi \
+	$(MANDIR)\lispref\files.texi \
+	$(MANDIR)\lispref\frames.texi \
+	$(MANDIR)\lispref\functions.texi \
+	$(MANDIR)\lispref\glyphs.texi \
+	$(MANDIR)\lispref\hash-tables.texi \
+	$(MANDIR)\lispref\help.texi \
+	$(MANDIR)\lispref\hooks.texi \
+	$(MANDIR)\lispref\index.texi \
+	$(MANDIR)\lispref\internationalization.texi \
+	$(MANDIR)\lispref\intro.texi \
+	$(MANDIR)\lispref\keymaps.texi \
+	$(MANDIR)\lispref\ldap.texi \
+	$(MANDIR)\lispref\lispref.texi \
+	$(MANDIR)\lispref\lists.texi \
+	$(MANDIR)\lispref\loading.texi \
+	$(MANDIR)\lispref\locals.texi \
+	$(MANDIR)\lispref\macros.texi \
+	$(MANDIR)\lispref\maps.texi \
+	$(MANDIR)\lispref\markers.texi \
+	$(MANDIR)\lispref\menus.texi \
+	$(MANDIR)\lispref\minibuf.texi \
+	$(MANDIR)\lispref\modes.texi \
+	$(MANDIR)\lispref\mouse.texi \
+	$(MANDIR)\lispref\mule.texi \
+	$(MANDIR)\lispref\numbers.texi \
+	$(MANDIR)\lispref\objects.texi \
+	$(MANDIR)\lispref\os.texi \
+	$(MANDIR)\lispref\positions.texi \
+	$(MANDIR)\lispref\processes.texi \
+	$(MANDIR)\lispref\range-tables.texi \
+	$(MANDIR)\lispref\scrollbars.texi \
+	$(MANDIR)\lispref\searching.texi \
+	$(MANDIR)\lispref\sequences.texi \
+	$(MANDIR)\lispref\specifiers.texi \
+	$(MANDIR)\lispref\streams.texi \
+	$(MANDIR)\lispref\strings.texi \
+	$(MANDIR)\lispref\symbols.texi \
+	$(MANDIR)\lispref\syntax.texi \
+	$(MANDIR)\lispref\text.texi \
+	$(MANDIR)\lispref\tips.texi \
+	$(MANDIR)\lispref\toolbar.texi \
+	$(MANDIR)\lispref\tooltalk.texi \
+	$(MANDIR)\lispref\variables.texi \
+	$(MANDIR)\lispref\windows.texi \
+	$(MANDIR)\lispref\x-windows.texi
+
+INTERNALS_SRCS = \
+	$(MANDIR)\internals\internals.texi
+
+NEW_USERS_GUIDE_SRCS = \
+	$(MANDIR)\new-users-guide\custom1.texi \
+	$(MANDIR)\new-users-guide\custom2.texi \
+	$(MANDIR)\new-users-guide\edit.texi \
+	$(MANDIR)\new-users-guide\enter.texi \
+	$(MANDIR)\new-users-guide\files.texi \
+	$(MANDIR)\new-users-guide\help.texi \
+	$(MANDIR)\new-users-guide\modes.texi \
+	$(MANDIR)\new-users-guide\new-users-guide.texi \
+	$(MANDIR)\new-users-guide\region.texi \
+	$(MANDIR)\new-users-guide\search.texi \
+	$(MANDIR)\new-users-guide\xmenu.texi
+
+$(INFODIR)\xemacs.info: $(XEMACS_SRCS)
+	cd $(MANDIR)\xemacs
+	$(MAKEINFO) xemacs.texi
+
+$(INFODIR)\lispref.info: $(LISPREF_SRCS)
+	cd $(MANDIR)\lispref
+	$(MAKEINFO) lispref.texi
+
+$(INFODIR)\internals.info: $(INTERNALS_SRCS)
+	cd $(MANDIR)\internals
+	$(MAKEINFO) internals.texi
+
+$(INFODIR)\new-users-guide.info: $(NEW_USERS_GUIDE_SRCS)
+	cd $(MANDIR)\new-users-guide
+	$(MAKEINFO) new-users-guide.texi
+
+info:	makeinfo-test $(INFO_FILES)
+
 #########################################################################
-##                          Other random crap                          ##
+##                       Testing-related targets                       ##
 #########################################################################
 
 ########################### Automated tests
