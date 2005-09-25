@@ -1,3 +1,9 @@
+2005-09-25  Adrian Aichner  <adrian@xemacs.org>
+
+	* lispref/compile.texi (Compilation Options): Supply missing
+	argument to @var{}, using same SYMBOL as in variable docstring of
+	`byte-compile-print-gensym'.
+
 2005-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.22 "cucumber" is released.
