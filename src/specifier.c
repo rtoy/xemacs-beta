@@ -1,6 +1,6 @@
 /* Specifier implementation
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2005 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -23,9 +23,8 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: Not in FSF. */
 
 /* Design by Ben Wing;
-   Original version by Chuck Thompson;
-   rewritten by Ben Wing;
-   Magic specifiers by Kirill Katsnelson;
+   Written by Ben Wing based on prototype for 19.12 by Chuck Thompson.
+   Magic specifiers by Kirill Katsnelson.
 */
 
 #include <config.h>
@@ -460,8 +459,8 @@ valid_specifier_type_p (Lisp_Object type)
 
 DEFUN ("valid-specifier-type-p", Fvalid_specifier_type_p, 1, 1, 0, /*
 Given a SPECIFIER-TYPE, return non-nil if it is valid.
-Valid types are 'generic, 'integer, 'boolean, 'color, 'font, 'image,
-'face-boolean, and 'toolbar.
+Valid types are `generic', `integer', `boolean', `color', `font', `image',
+`face-boolean', and `toolbar'.
 */
        (specifier_type))
 {
@@ -578,8 +577,11 @@ lower-level functions `add-spec-to-specifier' and
 `add-spec-list-to-specifier'.  You can also temporarily bind a setting
 to a specifier using `let-specifier'.  To retrieve settings, use
 `specifier-specs', or its lower-level counterpart
-`specifier-spec-list'.  To determine the actual value, use
-`specifier-instance'.
+`specifier-spec-list'.
+
+To determine the actual value (i.e. the instance) in a particular domain, use
+`specifier-instance'.  To determine the corresponding setting that yielded
+the value (i.e. the instantiator), use `specifier-instantiator'.
 
 For more information, see `set-specifier', `specifier-instance',
 `specifier-specs', and `add-spec-to-specifier'; or, for a detailed
@@ -588,9 +590,9 @@ process works, see the chapter on specifiers in the XEmacs Lisp
 Reference Manual.
 
 TYPE specifies the particular type of specifier, and should be one of
-the symbols 'generic, 'integer, 'natnum, 'boolean, 'color, 'font,
-'image, 'face-boolean, 'display-table, 'gutter, 'gutter-size,
-'gutter-visible or 'toolbar.
+the symbols `generic', `integer', `natnum', `boolean', `color', `font',
+`image', `face-boolean', `display-table', `gutter', `gutter-size',
+`gutter-visible' or `toolbar'.
 
 For more information on particular types of specifiers, see the
 functions `make-generic-specifier', `make-integer-specifier',
@@ -637,7 +639,7 @@ Return the type of SPECIFIER.
 
 DEFUN ("valid-specifier-locale-p", Fvalid_specifier_locale_p, 1, 1, 0, /*
 Return t if LOCALE is a valid specifier locale.
-Valid locales are devices, frames, windows, buffers, and 'global.
+Valid locales are devices, frames, windows, buffers, and `global'.
 \(nil is not valid.)
 */
        (locale))
@@ -655,7 +657,7 @@ Valid locales are devices, frames, windows, buffers, and 'global.
 
 DEFUN ("valid-specifier-domain-p", Fvalid_specifier_domain_p, 1, 1, 0, /*
 Return t if DOMAIN is a valid specifier domain.
-A domain is used to instance a specifier (i.e. determine the specifier's
+A domain is used to instantiate a specifier (i.e. determine the specifier's
 value in that domain).  Valid domains are image instances, windows, frames,
 and devices. \(nil is not valid.) image instances are pseudo-domains since
 instantiation will actually occur in the window the image instance itself is
@@ -675,9 +677,9 @@ instantiated in.
 DEFUN ("valid-specifier-locale-type-p", Fvalid_specifier_locale_type_p, 1, 1, 0,
        /*
 Given a specifier LOCALE-TYPE, return non-nil if it is valid.
-Valid locale types are 'global, 'device, 'frame, 'window, and 'buffer.
+Valid locale types are `global', `device', `frame', `window', and `buffer'.
 \(Note, however, that in functions that accept either a locale or a locale
-type, 'global is considered an individual locale.)
+type, `global' is considered an individual locale.)
 */
      (locale_type))
 {
@@ -828,8 +830,8 @@ Each tag has a predicate associated with it, which specifies whether
 that tag applies to a particular device.  The tags which are device types
 and classes match devices of that type or class.  User-defined tags can
 have any predicate, or none (meaning that all devices match).  When
-attempting to instance a specifier, a particular instantiator is only
-considered if the device of the domain being instanced over matches
+attempting to instantiate a specifier, a particular instantiator is only
+considered if the device of the domain being instantiated over matches
 all tags in the tag set attached to that instantiator.
 
 Most of the time, a tag set is not specified, and the instantiator
@@ -976,7 +978,7 @@ device.  If PREDICATE is omitted, the tag matches all devices.
 
 You can redefine an existing user-defined specifier tag.  However,
 you cannot redefine the built-in specifier tags (the device types
-and classes) or the symbols nil, t, 'all, or 'global.
+and classes) or the symbols nil, t, `all', or `global'.
 */
        (tag, predicate))
 {
@@ -990,7 +992,7 @@ and classes) or the symbols nil, t, 'all, or 'global.
   /* Try to prevent common instantiators and locales from being
      redefined, to reduce ambiguity */
   if (NILP (tag) || EQ (tag, Qt) || EQ (tag, Qall) || EQ (tag, Qglobal))
-    invalid_change ("Cannot define nil, t, 'all, or 'global", tag);
+    invalid_change ("Cannot define nil, t, `all', or `global'", tag);
   assoc = assq_no_quit (tag, Vuser_defined_tags);
   if (NILP (assoc))
     {
@@ -1476,7 +1478,7 @@ specifier_get_external_inst_list (Lisp_Object specifier, Lisp_Object locale,
 						    type);
   if (!inst_list || NILP (*inst_list))
     {
-      /* nil for *inst_list should only occur in 'global */
+      /* nil for *inst_list should only occur in `global' */
       assert (!inst_list || EQ (locale, Qglobal));
       return Qnil;
     }
@@ -1834,12 +1836,12 @@ specifier_copy_locale_type (Lisp_Object specifier, Lisp_Object dest,
 /* map MAPFUN over the locales in SPECIFIER that are given in LOCALE.
    CLOSURE is passed unchanged to MAPFUN.  LOCALE can be one of
 
-     -- nil (same as 'all)
-     -- a single locale, locale type, or 'all
-     -- a list of locales, locale types, and/or 'all
+     -- nil (same as `all')
+     -- a single locale, locale type, or `all'
+     -- a list of locales, locale types, and/or `all'
 
-   MAPFUN is called for each locale and locale type given; for 'all,
-   it is called for the locale 'global and for the four possible
+   MAPFUN is called for each locale and locale type given; for `all',
+   it is called for the locale `global' and for the four possible
    locale types.  In each invocation, either LOCALE will be a locale
    and LOCALE_TYPE will be the locale type of this locale,
    or LOCALE will be nil and LOCALE_TYPE will be a locale type.
@@ -1920,7 +1922,7 @@ map_specifier (Lisp_Object specifier, Lisp_Object locale,
 DEFUN ("add-spec-to-specifier", Fadd_spec_to_specifier, 2, 5, 0, /*
 Add a specification to SPECIFIER.
 The specification maps from LOCALE (which should be a window, buffer,
-frame, device, or 'global, and defaults to 'global) to INSTANTIATOR,
+frame, device, or `global', and defaults to `global') to INSTANTIATOR,
 whose allowed values depend on the type of the specifier.  Optional
 argument TAG-SET limits the instantiator to apply only to the specified
 tag set, which should be a list of tags all of which must match the
@@ -1931,26 +1933,26 @@ containing that symbol.  Optional argument HOW-TO-ADD specifies what to
 do if there are already specifications in the specifier.
 It should be one of
 
-  'prepend		Put at the beginning of the current list of
+  `prepend'		Put at the beginning of the current list of
 			instantiators for LOCALE.
-  'append		Add to the end of the current list of
+  `append'		Add to the end of the current list of
 			instantiators for LOCALE.
-  'remove-tag-set-prepend (this is the default)
+  `remove-tag-set-prepend' (this is the default)
 			Remove any existing instantiators whose tag set is
 			the same as TAG-SET; then put the new instantiator
 			at the beginning of the current list. ("Same tag
 			set" means that they contain the same elements.
 			The order may be different.)
-  'remove-tag-set-append
+  `remove-tag-set-append'
 			Remove any existing instantiators whose tag set is
 			the same as TAG-SET; then put the new instantiator
 			at the end of the current list.
-  'remove-locale	Remove all previous instantiators for this locale
+  `remove-locale'	Remove all previous instantiators for this locale
 			before adding the new spec.
-  'remove-locale-type	Remove all specifications for all locales of the
+  `remove-locale-type'	Remove all specifications for all locales of the
 			same type as LOCALE (this includes LOCALE itself)
 			before adding the new spec.
-  'remove-all		Remove all specifications from the specifier
+  `remove-all'		Remove all specifications from the specifier
 			before adding the new spec.
 
 You can retrieve the specifications for a particular locale or locale type
@@ -1989,7 +1991,7 @@ The format of SPEC-LIST is
   ((LOCALE (TAG-SET . INSTANTIATOR) ...) ...)
 
 where
-  LOCALE := a window, a buffer, a frame, a device, or 'global
+  LOCALE := a window, a buffer, a frame, a device, or `global'
   TAG-SET := an unordered list of zero or more TAGS, each of which
              is a symbol
   TAG := a device class (see `valid-device-class-p'), a device type
@@ -2105,17 +2107,17 @@ DEFUN ("specifier-spec-list", Fspecifier_spec_list, 1, 4, 0, /*
 Return the spec-list of specifications for SPECIFIER in LOCALE.
 
 If LOCALE is a particular locale (a buffer, window, frame, device,
-or 'global), a spec-list consisting of the specification for that
+or `global'), a spec-list consisting of the specification for that
 locale will be returned.
 
-If LOCALE is a locale type (i.e. 'buffer, 'window, 'frame, or 'device),
+If LOCALE is a locale type (i.e. `buffer', `window', `frame', or `device'),
 a spec-list of the specifications for all locales of that type will be
 returned.
 
-If LOCALE is nil or 'all, a spec-list of all specifications in SPECIFIER
+If LOCALE is nil or `all', a spec-list of all specifications in SPECIFIER
 will be returned.
 
-LOCALE can also be a list of locales, locale types, and/or 'all; the
+LOCALE can also be a list of locales, locale types, and/or `all'; the
 result is as if `specifier-spec-list' were called on each element of the
 list and the results concatenated together.
 
@@ -2155,11 +2157,11 @@ in Lisp programs, and is as follows:
 1. If there is only one instantiator, then an inst-pair (i.e. cons of
    tag and instantiator) will be returned; otherwise a list of
    inst-pairs will be returned.
-2. For each inst-pair returned, if the instantiator's tag is 'any,
+2. For each inst-pair returned, if the instantiator's tag is `any',
    the tag will be removed and the instantiator itself will be returned
    instead of the inst-pair.
 3. If there is only one instantiator, its value is nil, and its tag is
-   'any, a one-element list containing nil will be returned rather
+   `any', a one-element list containing nil will be returned rather
    than just nil, to distinguish this case from there being no
    instantiators at all.
 */
@@ -2205,15 +2207,15 @@ DEFUN ("remove-specifier", Fremove_specifier, 1, 4, 0, /*
 Remove specification(s) for SPECIFIER.
 
 If LOCALE is a particular locale (a window, buffer, frame, device,
-or 'global), the specification for that locale will be removed.
+or `global'), the specification for that locale will be removed.
 
-If instead, LOCALE is a locale type (i.e. 'window, 'buffer, 'frame,
-or 'device), the specifications for all locales of that type will be
+If instead, LOCALE is a locale type (i.e. `window', `buffer', `frame',
+or `device'), the specifications for all locales of that type will be
 removed.
 
-If LOCALE is nil or 'all, all specifications will be removed.
+If LOCALE is nil or `all', all specifications will be removed.
 
-LOCALE can also be a list of locales, locale types, and/or 'all; this
+LOCALE can also be a list of locales, locale types, and/or `all'; this
 is equivalent to calling `remove-specifier' for each of the elements
 in the list.
 
@@ -2284,11 +2286,11 @@ If DEST is nil or omitted, a new specifier will be created and the
 specifications copied into it.  Otherwise, the specifications will be
 copied into the existing specifier in DEST.
 
-If LOCALE is nil or 'all, all specifications will be copied.  If LOCALE
+If LOCALE is nil or `all', all specifications will be copied.  If LOCALE
 is a particular locale, the specification for that particular locale will
 be copied.  If LOCALE is a locale type, the specifications for all locales
 of that type will be copied.  LOCALE can also be a list of locales,
-locale types, and/or 'all; this is equivalent to calling `copy-specifier'
+locale types, and/or `all'; this is equivalent to calling `copy-specifier'
 for each of the elements of the list.  See `specifier-spec-list' for more
 information about LOCALE.
 
@@ -2339,7 +2341,7 @@ the same as in `add-spec-to-specifier'.
 
 
 /************************************************************************/
-/*                              Instancing                              */
+/*                              Instantiation                              */
 /************************************************************************/
 
 static Lisp_Object
@@ -2440,20 +2442,20 @@ set_specifier_fallback (Lisp_Object specifier, Lisp_Object fallback)
 DEFUN ("specifier-fallback", Fspecifier_fallback, 1, 1, 0, /*
 Return the fallback value for SPECIFIER.
 Fallback values are provided by the C code for certain built-in
-specifiers to make sure that instancing won't fail even if all
+specifiers to make sure that instantiation won't fail even if all
 specs are removed from the specifier, or to implement simple
 inheritance behavior (e.g. this method is used to ensure that
-faces other than 'default inherit their attributes from 'default).
+faces other than `default' inherit their attributes from `default').
 By design, you cannot change the fallback value, and specifiers
 created with `make-specifier' will never have a fallback (although
 a similar, Lisp-accessible capability may be provided in the future
 to allow for inheritance).
 
-The fallback value will be an inst-list that is instanced like
+The fallback value will be an inst-list that is instantiated like
 any other inst-list, a specifier of the same type as SPECIFIER
 \(results in inheritance), or nil for no fallback.
 
-When you instance a specifier, you can explicitly request that the
+When you instantiate a specifier, you can explicitly request that the
 fallback not be consulted. (The C code does this, for example, when
 merging faces.) See `specifier-instance'.
 */
@@ -2469,7 +2471,8 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 				   Lisp_Object domain,
 				   Lisp_Object inst_list,
 				   Error_Behavior errb, int no_quit,
-				   Lisp_Object depth)
+				   Lisp_Object depth,
+				   Lisp_Object *instantiator)
 {
   /* This function can GC */
   Lisp_Specifier *sp;
@@ -2498,6 +2501,8 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
       if (device_matches_specifier_tag_set_p (device, tag_set))
 	{
 	  Lisp_Object val = XCDR (tagged_inst);
+	  Lisp_Object the_instantiator = val;
+
 
 	  if (HAS_SPECMETH_P (sp, instantiate))
 	    val = call_with_suspended_errors
@@ -2509,6 +2514,8 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 	    {
 	      unbind_to (count);
 	      UNGCPRO;
+	      if (instantiator)
+		*instantiator = the_instantiator;
 	      return val;
 	    }
 	}
@@ -2532,7 +2539,8 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
       Lisp_Object CIE_val =						\
 	specifier_instance_from_inst_list (specifier, matchspec,	\
 					   domain, *CIE_inst_list,	\
-					   errb, no_quit, depth);	\
+					   errb, no_quit, depth,	\
+                                           instantiator);		\
       if (!UNBOUNDP (CIE_val))						\
 	return CIE_val;							\
     }									\
@@ -2544,16 +2552,21 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
    as we can determine.  In practice, when called from redisplay the
    arg will usually be a window and occasionally a frame.  If
    triggered by a user call, who knows what it will usually be. */
-Lisp_Object
-specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
-		    Lisp_Object domain, Error_Behavior errb, int no_quit,
-		    int no_fallback, Lisp_Object depth)
+
+static Lisp_Object
+specifier_instance_1 (Lisp_Object specifier, Lisp_Object matchspec,
+		      Lisp_Object domain, Error_Behavior errb, int no_quit,
+		      int no_fallback, Lisp_Object depth,
+		      Lisp_Object *instantiator)
 {
   Lisp_Object buffer = Qnil;
   Lisp_Object window = Qnil;
   Lisp_Object frame = Qnil;
   Lisp_Object device = Qnil;
   Lisp_Specifier *sp = XSPECIFIER (specifier);
+
+  if (instantiator)
+    *instantiator = Qunbound;
 
   /* Attempt to determine buffer, window, frame, and device from the
      domain. */
@@ -2639,28 +2652,91 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
   assert (CONSP (sp->fallback));
   return specifier_instance_from_inst_list (specifier, matchspec, domain,
 					    sp->fallback, errb, no_quit,
-					    depth);
+					    depth, instantiator);
 }
 #undef CHECK_INSTANCE_ENTRY
+
+Lisp_Object
+specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
+		    Lisp_Object domain, Error_Behavior errb, int no_quit,
+		    int no_fallback, Lisp_Object depth)
+{
+  return specifier_instance_1 (specifier, matchspec, domain, errb,
+			       no_quit, no_fallback, depth, NULL);
+}
 
 Lisp_Object
 specifier_instance_no_quit (Lisp_Object specifier, Lisp_Object matchspec,
 			    Lisp_Object domain, Error_Behavior errb,
 			    int no_fallback, Lisp_Object depth)
 {
-  return specifier_instance (specifier, matchspec, domain, errb,
-			     1, no_fallback, depth);
+  return specifier_instance_1 (specifier, matchspec, domain, errb,
+			       1, no_fallback, depth, NULL);
+}
+
+static Lisp_Object
+specifier_matching_foo (Lisp_Object specifier,
+			Lisp_Object matchspec,
+			Lisp_Object domain,
+			Lisp_Object default_,
+			Lisp_Object no_fallback,
+			int want_instantiator)
+{
+  Lisp_Object instance, instantiator;
+
+  CHECK_SPECIFIER (specifier);
+  if (!UNBOUNDP (matchspec))
+    check_valid_specifier_matchspec (matchspec,
+				     XSPECIFIER (specifier)->methods,
+				     ERROR_ME);
+  domain = decode_domain (domain);
+
+  instance = specifier_instance_1 (specifier, matchspec, domain, ERROR_ME,
+				   0, !NILP (no_fallback), Qzero,
+				   &instantiator);
+  return UNBOUNDP (instance) ? default_ : want_instantiator ? instantiator :
+    instance;
 }
 
 DEFUN ("specifier-instance", Fspecifier_instance, 1, 4, 0, /*
 Instantiate SPECIFIER (return its value) in DOMAIN.
 If no instance can be generated for this domain, return DEFAULT.
 
-DOMAIN should be a window, frame, or device.  Other values that are legal
+DOMAIN is nearly always a window (defaulting to the selected window if
+omitted), but can be a window, frame, or device.  Other values that are legal
 as a locale (e.g. a buffer) are not valid as a domain because they do not
 provide enough information to identify a particular device (see
-`valid-specifier-domain-p').  DOMAIN defaults to the selected window
-if omitted.
+`valid-specifier-domain-p').  Window domains are used internally in nearly
+all circumstances when computing specifier instances of display properties.
+Frame domains are used in a few circumstances (such as when computing the
+geometry of a frame based on properties such as the toolbar widths), and
+device domains are rarely if ever used internally.
+
+This function looks through the specifications in SPECIFIER that correspond
+to DOMAIN, from most specific (specifications for DOMAIN itself) to most
+general (global specifications), for matching instantiators, and attempts
+to compute an instance value for each instantiator found.  The first
+successfully computed value is returned.  The corresponding instantiator
+can be returned using `specifier-instantiator'.
+
+A specifier is a generalized object for controlling the value of a property --
+typically, but not necessarily, a display-related property -- that can vary
+over particular buffers, frames, device types, etc.
+
+A fundamental distinction must be made between the specification of a
+property's value, and the resulting value itself.  This distinction is
+clearest in the case of an image -- the specification describes the source
+of the image (for example, a file of JPEG data), and the resulting value
+encapsulates a window-system object describing the image as displayed on a
+particular device (for example, a particular X display).  The specification
+might also be an instruction of the form "use the background pixmap of the
+`modeline' face".  A similar mapping exists between color strings and
+color-instance objects, and font strings and font-instance objects.  In
+some cases, the specification and the resulting value are of the same type,
+but the distinction is still logically made.
+
+The specification of a value is called an instantiator, and the resulting
+value the instance.
 
 "Instantiating" a specifier in a particular domain means determining
 the specifier's "value" in that domain.  This is accomplished by
@@ -2673,7 +2749,7 @@ specifications are searched for as follows:
 2. A specification whose locale is the window's buffer;
 3. A specification whose locale is the window's frame;
 4. A specification whose locale is the window's frame's device;
-5. A specification whose locale is 'global.
+5. A specification whose locale is `global'.
 
 If all of those fail, then the C-code-provided fallback value for
 this specifier is consulted (see `specifier-fallback').  If it is
@@ -2701,20 +2777,32 @@ trying to debug why particular instantiators are not being processed.
 The returned value is dependent on the type of specifier.  For example,
 for a font specifier (as returned by the `face-font' function), the returned
 value will be a font-instance object.  For glyphs, the returned value
-will be a string, pixmap, or subwindow.
+will be an image-instance object.
 
 See also `specifier-matching-instance'.
 */
        (specifier, domain, default_, no_fallback))
 {
-  Lisp_Object instance;
+  return specifier_matching_foo (specifier, Qunbound, domain, default_,
+				 no_fallback, 0);
+}
 
-  CHECK_SPECIFIER (specifier);
-  domain = decode_domain (domain);
+DEFUN ("specifier-instantiator", Fspecifier_instantiator, 1, 4, 0, /*
+Return instantiator that would be used to instantiate SPECIFIER in DOMAIN.
+If no instance can be generated for this domain, return DEFAULT.
 
-  instance = specifier_instance (specifier, Qunbound, domain, ERROR_ME, 0,
-				 !NILP (no_fallback), Qzero);
-  return UNBOUNDP (instance) ? default_ : instance;
+DOMAIN should be a window, frame, or device.  Other values that are legal
+as a locale (e.g. a buffer) are not valid as a domain because they do not
+provide enough information to identify a particular device (see
+`valid-specifier-domain-p').  DOMAIN defaults to the selected window
+if omitted.
+
+See `specifier-instance' for more information about the instantiation process.
+*/
+       (specifier, domain, default_, no_fallback))
+{
+  return specifier_matching_foo (specifier, Qunbound, domain, default_,
+				 no_fallback, 1);
 }
 
 DEFUN ("specifier-matching-instance", Fspecifier_matching_instance, 2, 5, 0, /*
@@ -2745,16 +2833,55 @@ dependent on the particular type of specifier.  Here are some examples:
 */
        (specifier, matchspec, domain, default_, no_fallback))
 {
-  Lisp_Object instance;
+  return specifier_matching_foo (specifier, matchspec, domain, default_,
+				 no_fallback, 0);
+}
+
+DEFUN ("specifier-matching-instantiator", Fspecifier_matching_instantiator,
+       2, 5, 0, /*
+Return instantiator for instance of SPECIFIER in DOMAIN that matches MATCHSPEC.
+If no instance can be generated for this domain, return DEFAULT.
+
+This function is identical to `specifier-matching-instance' but returns
+the instantiator used to generate the instance, rather than the actual
+instance.
+*/
+       (specifier, matchspec, domain, default_, no_fallback))
+{
+  return specifier_matching_foo (specifier, matchspec, domain, default_,
+				 no_fallback, 1);
+}
+
+static Lisp_Object
+specifier_matching_foo_from_inst_list (Lisp_Object specifier,
+				       Lisp_Object matchspec,
+				       Lisp_Object domain,
+				       Lisp_Object inst_list,
+				       Lisp_Object default_,
+				       int want_instantiator)
+{
+  Lisp_Object val = Qunbound;
+  Lisp_Specifier *sp = XSPECIFIER (specifier);
+  struct gcpro gcpro1;
+  Lisp_Object built_up_list = Qnil;
+  Lisp_Object instantiator;
 
   CHECK_SPECIFIER (specifier);
-  check_valid_specifier_matchspec (matchspec, XSPECIFIER (specifier)->methods,
-				   ERROR_ME);
-  domain = decode_domain (domain);
+  if (!UNBOUNDP (matchspec))
+    check_valid_specifier_matchspec (matchspec,
+				     XSPECIFIER (specifier)->methods,
+				     ERROR_ME);
+  check_valid_domain (domain);
+  check_valid_inst_list (inst_list, sp->methods, ERROR_ME);
+  GCPRO1 (built_up_list);
+  built_up_list = build_up_processed_list (specifier, domain, inst_list);
+  if (!NILP (built_up_list))
+    val = specifier_instance_from_inst_list (specifier, matchspec, domain,
+					     built_up_list, ERROR_ME,
+					     0, Qzero, &instantiator);
+  UNGCPRO;
+  return UNBOUNDP (val) ? default_ : want_instantiator ? instantiator : val;
 
-  instance = specifier_instance (specifier, matchspec, domain, ERROR_ME,
-				 0, !NILP (no_fallback), Qzero);
-  return UNBOUNDP (instance) ? default_ : instance;
 }
 
 DEFUN ("specifier-instance-from-inst-list", Fspecifier_instance_from_inst_list,
@@ -2767,22 +2894,23 @@ you should not use this function; use `specifier-instance' instead.
 */
        (specifier, domain, inst_list, default_))
 {
-  Lisp_Object val = Qunbound;
-  Lisp_Specifier *sp = XSPECIFIER (specifier);
-  struct gcpro gcpro1;
-  Lisp_Object built_up_list = Qnil;
+  return specifier_matching_foo_from_inst_list (specifier, Qunbound,
+						domain, inst_list, default_,
+						0);
+}
 
-  CHECK_SPECIFIER (specifier);
-  check_valid_domain (domain);
-  check_valid_inst_list (inst_list, sp->methods, ERROR_ME);
-  GCPRO1 (built_up_list);
-  built_up_list = build_up_processed_list (specifier, domain, inst_list);
-  if (!NILP (built_up_list))
-    val = specifier_instance_from_inst_list (specifier, Qunbound, domain,
-					     built_up_list, ERROR_ME,
-					     0, Qzero);
-  UNGCPRO;
-  return UNBOUNDP (val) ? default_ : val;
+DEFUN ("specifier-instantiator-from-inst-list", Fspecifier_instantiator_from_inst_list,
+       3, 4, 0, /*
+Attempt to convert an inst-list into an instance; return instantiator.
+This is identical to `specifier-instance-from-inst-list' but returns
+the instantiator used to generate the instance, rather than the instance
+itself.
+*/
+       (specifier, domain, inst_list, default_))
+{
+  return specifier_matching_foo_from_inst_list (specifier, Qunbound,
+						domain, inst_list, default_,
+						1);
 }
 
 DEFUN ("specifier-matching-instance-from-inst-list",
@@ -2800,24 +2928,24 @@ works.
 */
        (specifier, matchspec, domain, inst_list, default_))
 {
-  Lisp_Object val = Qunbound;
-  Lisp_Specifier *sp = XSPECIFIER (specifier);
-  struct gcpro gcpro1;
-  Lisp_Object built_up_list = Qnil;
+  return specifier_matching_foo_from_inst_list (specifier, matchspec,
+						domain, inst_list, default_,
+						0);
+}
 
-  CHECK_SPECIFIER (specifier);
-  check_valid_specifier_matchspec (matchspec, XSPECIFIER (specifier)->methods,
-				   ERROR_ME);
-  check_valid_domain (domain);
-  check_valid_inst_list (inst_list, sp->methods, ERROR_ME);
-  GCPRO1 (built_up_list);
-  built_up_list = build_up_processed_list (specifier, domain, inst_list);
-  if (!NILP (built_up_list))
-    val = specifier_instance_from_inst_list (specifier, matchspec, domain,
-					     built_up_list, ERROR_ME,
-					     0, Qzero);
-  UNGCPRO;
-  return UNBOUNDP (val) ? default_ : val;
+DEFUN ("specifier-matching-instantiator-from-inst-list",
+       Fspecifier_matching_instantiator_from_inst_list,
+       4, 5, 0, /*
+Attempt to convert an inst-list into an instance; return instantiator.
+This is identical to `specifier-matching-instance-from-inst-list' but returns
+the instantiator used to generate the instance, rather than the instance
+itself.
+*/
+       (specifier, matchspec, domain, inst_list, default_))
+{
+  return specifier_matching_foo_from_inst_list (specifier, matchspec,
+						domain, inst_list, default_,
+						1);
 }
 
 
@@ -3058,10 +3186,10 @@ DEFINE_SPECIFIER_TYPE (generic);
 "instance computed from it is likewise any kind of Lisp object.  The\n"
 "SPECIFIER-DATA should be an alist of methods governing how the specifier\n"
 "works.  All methods are optional, and reasonable default methods will be\n"
-"provided.  Currently there are two defined methods: 'instantiate and\n"
-"'validate.\n"
+"provided.  Currently there are two defined methods: `instantiate' and\n"
+"`validate'.\n"
 "\n"
-"'instantiate specifies how to do the instantiation; if omitted, the\n"
+"`instantiate' specifies how to do the instantiation; if omitted, the\n"
 "instantiator itself is simply returned as the instance.  The method\n"
 "should be a function that accepts three parameters (a specifier, the\n"
 "instantiator that matched the domain being instantiated over, and that\n"
@@ -3073,7 +3201,7 @@ DEFINE_SPECIFIER_TYPE (generic);
 "the locale corresponding to the passed instantiator could be the window's\n"
 "buffer or frame).\n"
 "\n"
-"'validate specifies whether a given instantiator is valid; if omitted,\n"
+"`validate' specifies whether a given instantiator is valid; if omitted,\n"
 "all instantiators are considered valid.  It should be a function of\n"
 "two arguments: an instantiator and a flag CAN-SIGNAL-ERROR.  If this\n"
 "flag is false, the function must simply return t or nil indicating\n"
@@ -3271,9 +3399,13 @@ syms_of_specifier (void)
   DEFSUBR (Fvalid_specifier_matchspec_p);
   DEFSUBR (Fspecifier_fallback);
   DEFSUBR (Fspecifier_instance);
+  DEFSUBR (Fspecifier_instantiator);
   DEFSUBR (Fspecifier_matching_instance);
+  DEFSUBR (Fspecifier_matching_instantiator);
   DEFSUBR (Fspecifier_instance_from_inst_list);
+  DEFSUBR (Fspecifier_instantiator_from_inst_list);
   DEFSUBR (Fspecifier_matching_instance_from_inst_list);
+  DEFSUBR (Fspecifier_matching_instantiator_from_inst_list);
   DEFSUBR (Fset_specifier_dirty_flag);
 
   DEFSUBR (Fgeneric_specifier_p);

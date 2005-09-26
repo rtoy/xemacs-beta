@@ -1,3 +1,26 @@
+2005-09-26  Ben Wing  <ben@xemacs.org>
+
+	* lispref/glyphs.texi (Images):
+	* lispref/glyphs.texi (Image Instantiators):
+	* lispref/glyphs.texi (Image Instantiator Formats):
+	* lispref/glyphs.texi (Image Instances):
+	* lispref/glyphs.texi (Image Instance Functions):
+	* lispref/glyphs.texi (Creating Glyphs):
+	* lispref/glyphs.texi (Lisp API to Native Widgets):
+	* lispref/glyphs.texi (Glyph Properties):
+	* lispref/glyphs.texi (Glyph Examples):
+	* lispref/lispref.texi (Top):
+	* lispref/specifiers.texi (Specifiers):
+	* lispref/specifiers.texi (Introduction to Specifiers):
+	* lispref/specifiers.texi (Simple Specifier Usage):
+	* lispref/specifiers.texi (Specifiers In-Depth):
+	* lispref/specifiers.texi (Specifier Instantiation):
+	* lispref/specifiers.texi (Retrieving Specifications):
+	* lispref/specifiers.texi (Specifier Tag Functions):
+	* lispref/specifiers.texi (Specifier Validation Functions):
+	Use "instantiation" not "instancing".  Fix some places where
+	"specifier" is used to mean "instantiator".
+
 2005-09-25  Adrian Aichner  <adrian@xemacs.org>
 
 	* lispref/compile.texi (Compilation Options): Supply missing

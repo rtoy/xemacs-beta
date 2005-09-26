@@ -941,15 +941,15 @@ Specifiers
 				(under user control) in a wide variety
 				of contexts.
 * Specifiers In-Depth::		Gory details about specifier innards.
-* Specifier Instancing::	Instancing means obtaining the ``value'' of
+* Specifier Instantiation::	Instantiation means obtaining the ``value'' of
 				a specifier in a particular context.
 * Specifier Types::		Specifiers come in different flavors.
 * Adding Specifications::	Specifications control a specifier's ``value''
 				by giving conditions under which a
 				particular value is valid.
 * Retrieving Specifications::	Querying a specifier's specifications.
-* Specifier Instancing Functions::
-				Functions to instance a specifier.
+* Specifier Instantiation Functions::
+				Functions to instantiate a specifier.
 * Specifier Examples::		Making all this stuff clearer.
 * Creating Specifiers::		Creating specifiers for your own use.
 * Specifier Validation Functions::
@@ -977,21 +977,21 @@ Faces
 Fonts
 
 * Font Specifiers::		Specifying how a font will appear.
-* Font Instances::		What a font specifier gets instanced as.
+* Font Instances::		What a font specifier gets instantiated as.
 * Font Instance Names::		The name of a font instance.
 * Font Instance Size::		The size of a font instance.
 * Font Instance Characteristics:: Display characteristics of font instances.
 * Font Convenience Functions::	Convenience functions that automatically
-				  instance and retrieve the properties
+				  instantiate and retrieve the properties
 				  of a font specifier.
 
 Colors
 
 * Color Specifiers::		Specifying how a color will appear.
-* Color Instances::		What a color specifier gets instanced as.
+* Color Instances::		What a color specifier gets instantiated as.
 * Color Instance Properties::	Properties of color instances.
 * Color Convenience Functions::	Convenience functions that automatically
-				  instance and retrieve the properties
+				  instantiate and retrieve the properties
 				  of a color specifier.
 
 Glyphs
@@ -1004,22 +1004,14 @@ Glyphs
 
 Images
 
-* Image Specifiers::			Specifying an image's appearance.
+* Image Instantiators::			Specifying an image's appearance.
 * Image Instantiator Conversion::	Lazy realization of graphics.
 * Image Instantiator Formats::		A catalog of image descriptors.
 * Image Instances::			Classes of graphical objects.
 
 Image Instances
 
-* Image Instance Types::         Each image instances has a particular type.
-* Image Instance Functions::	 Functions for working with image instances.
-
-Using Glyphs
-
-
-Image Instances
-
-* Image Instance Types::         Each image instances has a particular type.
+* Image Instance Types::         Each image instance has a particular type.
 * Image Instance Functions::	 Functions for working with image instances.
 
 Using Glyphs

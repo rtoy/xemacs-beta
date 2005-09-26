@@ -1,5 +1,28 @@
 2005-09-26  Ben Wing  <ben@xemacs.org>
 
+	* specifier.c:
+	* specifier.c (Fvalid_specifier_type_p):
+	* specifier.c (Fvalid_specifier_locale_p):
+	* specifier.c (Fvalid_specifier_domain_p):
+	* specifier.c (Fvalid_specifier_locale_type_p):
+	* specifier.c (Fdefine_specifier_tag):
+	* specifier.c (specifier_get_external_inst_list):
+	* specifier.c (Fspecifier_specs):
+	* specifier.c (Fspecifier_fallback):
+	* specifier.c (specifier_instance_from_inst_list):
+	* specifier.c (CHECK_INSTANCE_ENTRY):
+	* specifier.c (specifier_instance_1):
+	* specifier.c (specifier_instance):
+	* specifier.c (specifier_matching_foo):
+	* specifier.c (Fspecifier_instance):
+	* specifier.c (Fspecifier_instantiator):
+	* specifier.c (Fspecifier_matching_instance):
+	* specifier.c (specifier_matching_foo_from_inst_list):
+	* specifier.c (syms_of_specifier):
+	Add `specifier-instantiator' and related primitives.
+
+2005-09-26  Ben Wing  <ben@xemacs.org>
+
 	* rangetab.c:
 	* rangetab.c (Fmap_range_table):
 	Fix bug in handling of range endpoints when not start-closed, end-open.

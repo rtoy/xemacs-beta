@@ -14,7 +14,7 @@ device.  The value of many built-in properties, such as the font,
 foreground, background, and such properties of a face and variables
 such as @code{modeline-shadow-thickness} and
 @code{top-toolbar-height}, is actually a specifier object.  The
-specifier object, in turn, is ``instanced'' in a particular situation
+specifier object, in turn, is ``instantiated'' in a particular situation
 to yield the real value of the property in the current context.
 
 @defun specifierp object
@@ -28,7 +28,7 @@ This function returns non-@code{nil} if @var{object} is a specifier.
                                 of contexts.
 * Simple Specifier Usage::      Getting started with specifiers.
 * Specifiers In-Depth::         Gory details about specifier innards.
-* Specifier Instancing::        Instancing means obtaining the ``value'' of
+* Specifier Instantiation::     Instantiation means obtaining the ``value'' of
                                 a specifier in a particular context.
 * Specifier Types::             Specifiers come in different flavors.
 * Adding Specifications::       Specifications control a specifier's ``value''
@@ -36,8 +36,8 @@ This function returns non-@code{nil} if @var{object} is a specifier.
                                 particular value is valid.
 * Retrieving Specifications::   Querying a specifier's specifications.
 * Specifier Tag Functions::     Working with specifier tags.
-* Specifier Instancing Functions::
-                                Functions to instance a specifier.
+* Specifier Instantiation Functions::
+                                Functions to instantiate a specifier.
 * Specifier Examples::          Making all this stuff clearer.
 * Creating Specifiers::         Creating specifiers for your own use.
 * Specifier Validation Functions::
@@ -89,12 +89,12 @@ is available.  The complex calculations and device querying are
 transparent to both user and programmer.  You ask for what you want;
 it's up to XEmacs to provide it, or a reasonable approximation.
 
-We call such a declaration a @dfn{specification}.  A @dfn{specification}
-applies in a particular @dfn{locale}, which is a window, buffer, frame,
-device, or the global locale.  The value part of the specification is
-called an @dfn{instantiator}.  The process of determining the value in a
-particular context, or @dfn{domain}, is called @dfn{instantiation} or
-@dfn{instancing}.  A domain is a window, frame, or device.
+We call such a declaration a @dfn{specification}.  A
+@dfn{specification} applies in a particular @dfn{locale}, which is a
+window, buffer, frame, device, or the global locale.  The value part
+of the specification is called an @dfn{instantiator}.  The process of
+determining the value in a particular context, or @dfn{domain}, is
+called @dfn{instantiation}.  A domain is a window, frame, or device.
 
 The difference between @dfn{locale} and @dfn{domain} is somewhat subtle.
 You may think of a locale as a class of domains, which may span
@@ -199,8 +199,8 @@ a program manipulates specifications, clearly it's the latter that is
 desirable.
 
 In the case of the toolbar descriptor, it turns out that these are the
-same:  the instancing process is trivial.  However, many specifications
-have non-trivial instancing.  Compare the results of the following forms
+same:  the instantiation process is trivial.  However, many specifications
+have non-trivial instantiation.  Compare the results of the following forms
 on my system.  (The @samp{(cdr (first ...))} form is due to my use of
 Mule.  On non-Mule XEmacsen, just use @code{specifier-specs}.)
 
@@ -216,16 +216,16 @@ In this case, @code{specifier-instance} returns an opaque object;
 programs can't work on it, they can only pass it around.  Worse, in some
 environments the instantiation will fail, resulting in a different value
 (when another instantiation succeeds), or worse yet, an error, if all
-attempts to instance the specifier fail.  @code{specifier-instance} is
+attempts to instantiate the specifier fail.  @code{specifier-instance} is
 context-dependent, even for the exact same specification.
 @code{specifier-specs} is deterministic, and only depends on the
 specifications.
 
 Note that in the toolbar-changing code we operate in the global locale.
 This means that narrower locales, if they have specifications, will
-shadow our changes.  (Specifier instancing does not merge
+shadow our changes.  (Specifier instantiation does not merge
 specifications.  It selects the "highest-priority successful
-specification" and instances that.)
+specification" and instantiates that.)
 
 In fact, in our example, it seems pretty likely that different buffers
 @emph{should} have different buttons.  (The icon can be the same, but
@@ -283,7 +283,7 @@ Specifications}, for documentation of @code{specifier-specs} and
 @cindex domain (in a specifier)
 @cindex locale (in a specifier)
 @cindex instantiator (in a specifier)
-@cindex instancing (in a specifier)
+@cindex instantiation (in a specifier)
 @cindex instance (in a specifier)
 @cindex inst-list (in a specifier)
 @cindex inst-pair (in a specifier)
@@ -293,7 +293,7 @@ Specifications}, for documentation of @code{specifier-specs} and
 @cindex specifier, domain
 @cindex specifier, locale
 @cindex specifier, instantiator
-@cindex specifier, instancing
+@cindex specifier, instantiation
 @cindex specifier, instance
 @cindex specifier, inst-list
 @cindex specifier, inst-pair
@@ -335,11 +335,11 @@ particular situation?'' This involves looking through the specifications
 to see which ones apply to this particular situation, and perhaps
 preferring one over another if more than one applies.  In specifier
 terminology, a ``particular situation'' is called a @dfn{domain}, and
-determining its value in a particular domain is called @dfn{instancing}.
+determining its value in a particular domain is called @dfn{instantiation}.
 Most of the time, a domain is identified by a particular window.  For
 example, if the redisplay engine is drawing text in the default face in
 a particular window, it retrieves the specifier for the foreground color
-of the default face and @dfn{instances} it in the domain given by that
+of the default face and @dfn{instantiates} it in the domain given by that
 window; in other words, it asks the specifier, ``What is your value in
 this window?''.
 
@@ -372,28 +372,28 @@ All tags in a tag set must match a device for the associated inst-pair
 to be instantiable over that device.  (A null tag set is perfectly
 valid, and trivially matches all devices.)
 
-@c #### don't we have more device types now, gtk, ms-windows, mac-carbon?
-The valid device types (normally @code{x}, @code{tty}, and
-@code{stream}) and device classes (normally @code{color},
-@code{grayscale}, and @code{mono}) can always be used as tags, and match
-devices of the associated type or class (@pxref{Consoles and Devices}).
-User-defined tags may be defined, with an optional predicate specified.
-An application can create its own tag, use it to mark all its
+The valid device types (normally @code{x}, @code{tty}, @code{stream},
+@code{mswindows}, @code{msprinter}, and possibly @code{carbon}) and
+device classes (normally @code{color}, @code{grayscale}, and
+@code{mono}) can always be used as tags, and match devices of the
+associated type or class (@pxref{Consoles and Devices}).  User-defined
+tags may be defined, with an optional predicate specified.  An
+application can create its own tag, use it to mark all its
 instantiators, and be fairly confident that it will not interfere with
 other applications that modify the same specifier---Functions that add
 a specification to a specifier usually only overwrite existing
 inst-pairs with the same tag set as was given, and a particular tag or
 tag set can be specified when removing instantiators.
 
-When a specifier is instanced in a domain, both the locale and the tag
+When a specifier is instantiated in a domain, both the locale and the tag
 set can be viewed as specifying necessary conditions that must apply in
 that domain for an instantiator to be considered as a possible result of
-the instancing.  More specific locales always override more general
+the instantiation.  More specific locales always override more general
 locales (thus, there is no particular ordering of the specifications in
 a specifier); however, the tag sets are simply considered in the order
 that the inst-pairs occur in the specification's inst-list.
 
-Note also that the actual object that results from the instancing
+Note also that the actual object that results from the instantiation
 (called an @dfn{instance object}) may not be the same as the instantiator
 from which it was derived.  For some specifier types (such as integer
 specifiers and boolean specifiers), the instantiator will be returned
@@ -410,12 +410,12 @@ device, etc.  Furthermore, this conversion (called @dfn{instantiation})
 might fail---a font or color might not exist on a particular device,
 for example.
 
-@node Specifier Instancing
-@section How a Specifier Is Instanced
+@node Specifier Instantiation
+@section How a Specifier Is Instantiated
 @cindex fallback (in a specifier)
 @cindex specifier, fallback
 
-Instancing of a specifier in a particular window domain proceeds as
+Instantiation of a specifier in a particular window domain proceeds as
 follows:
 
 @itemize @bullet
@@ -437,7 +437,7 @@ match the device.)
 If a matching tag set is found, the corresponding instantiator is passed
 to the specifier's instantiation method, which is specific to the type
 of the specifier.  If it succeeds, the resulting instance object is
-returned as the result of the instancing and the instancing is done.
+returned as the result of the instantiation and the instantiation is done.
 Otherwise, the operation continues, looking for another matching
 inst-pair in the current specification.
 @item
@@ -446,36 +446,36 @@ specification, the search starts over, looking for another specification
 as in the first step above.
 @item
 If all specifications are exhausted and no instance object can be
-derived, the instancing fails. (Actually, this is not completely true.
+derived, the instantiation fails. (Actually, this is not completely true.
 Some specifier objects for built-in properties have a @dfn{fallback}
 value, which is either an inst-list or another specifier object, that is
-consulted if the instancing is about to fail.  If it is an inst-list,
+consulted if the instantiation is about to fail.  If it is an inst-list,
 the searching proceeds using the inst-pairs in that list.  If it is a
-specifier, the entire instancing starts over using that specifier
+specifier, the entire instantiation starts over using that specifier
 instead of the given one.  Fallback values are set by the C code and
 cannot be modified, except perhaps indirectly, using any Lisp functions.
 The purpose of them is to supply some values to make sure that
-instancing of built-in properties can't fail and to implement some basic
+instantiation of built-in properties can't fail and to implement some basic
 specifier inheritance, such as the fact that faces inherit their
 properties from the @code{default} face.)
 @end itemize
 
-It is also possible to instance a specifier over a frame domain or
+It is also possible to instantiate a specifier over a frame domain or
 device domain instead of over a window domain.  The C code, for example,
-instances the @code{top-toolbar-height} variable over a frame domain in
-order to determine the height of a frame's top toolbar.  Instancing over
-a frame or device is similar to instancing over a window except that
+instantiates the @code{top-toolbar-height} variable over a frame domain in
+order to determine the height of a frame's top toolbar.  Instantiation over
+a frame or device is similar to instantiation over a window except that
 specifications for locales that cannot be derived from the domain are
-ignored.  Specifically, instancing over a frame looks first for frame
-locales, then device locales, then the @code{global} locale.  Instancing
+ignored.  Specifically, instantiation over a frame looks first for frame
+locales, then device locales, then the @code{global} locale.  Instantiation
 over a device domain looks only for device locales and the @code{global}
 locale.
 
-Note that specifiers are instanced on @emph{every} redisplay.  (This is
+Note that specifiers are instantiated on @emph{every} redisplay.  (This is
 the concept; of course the implementation keeps track of changes and
-doesn't reinstance unchanged specifiers.)  That means that changes in
+doesn't reinstantiate unchanged specifiers.)  That means that changes in
 specifiers controlling appearance are reflected immediately in the UI.
-Also, since specifiers are instanced completely, removing a
+Also, since specifiers are instantiated completely, removing a
 specification can be just as effective as adding one.
 
 @emph{E.g.}, Giacomo Boffi wanted a modeline that indicates whether the
@@ -1109,7 +1109,7 @@ no instantiators at all.
 @defun specifier-fallback specifier
 This function returns the fallback value for @var{specifier}.  Fallback
 values are provided by the C code for certain built-in specifiers to
-make sure that instancing won't fail even if all specs are removed from
+make sure that instantiation won't fail even if all specs are removed from
 the specifier, or to implement simple inheritance behavior (e.g. this
 method is used to ensure that faces other than @code{default} inherit
 their attributes from @code{default}).  By design, you cannot change the
@@ -1117,11 +1117,11 @@ fallback value, and specifiers created with @code{make-specifier} will
 never have a fallback (although a similar, Lisp-accessible capability
 may be provided in the future to allow for inheritance).
 
-The fallback value will be an inst-list that is instanced like
+The fallback value will be an inst-list that is instantiated like
 any other inst-list, a specifier of the same type as @var{specifier}
 (results in inheritance), or @code{nil} for no fallback.
 
-When you instance a specifier, you can explicitly request that the
+When you instantiate a specifier, you can explicitly request that the
 fallback not be consulted. (The C code does this, for example, when
 merging faces.) See @code{specifier-instance}.
 @end defun
@@ -1145,8 +1145,8 @@ Each tag has a predicate associated with it, which specifies whether
 that tag applies to a particular device.  The tags which are device
 types and classes match devices of that type or class.  User-defined
 tags can have any predicate, or none (meaning that all devices match).
-When attempting to instance a specifier, a particular instantiator is
-only considered if the device of the domain being instanced over matches
+When attempting to instantiate a specifier, a particular instantiator is
+only considered if the device of the domain being instantiated over matches
 all tags in the tag set attached to that instantiator.
 
 Most of the time, a tag set is not specified, and the instantiator gets
@@ -1201,8 +1201,8 @@ This includes the built-in ones (the device types and classes).
 This function returns the predicate for the given specifier tag.
 @end defun
 
-@node Specifier Instancing Functions
-@section Functions for Instancing a Specifier
+@node Specifier Instantiation Functions
+@section Functions for Instantiating a Specifier
 
 @defun specifier-instance specifier &optional domain default no-fallback
 This function instantiates @var{specifier} (returns its value) in
@@ -1605,7 +1605,7 @@ Display Table}).
 
 @defun valid-specifier-domain-p domain
 This function returns non-@code{nil} if @var{domain} is a valid
-specifier domain.  A domain is used to instance a specifier
+specifier domain.  A domain is used to instantiate a specifier
 (i.e. determine the specifier's value in that domain).  Valid domains
 are a window, frame, or device.  (@code{nil} is not valid.)
 @end defun
