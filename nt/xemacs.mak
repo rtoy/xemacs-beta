@@ -1,7 +1,7 @@
 # Makefile for Microsoft NMAKE	-*- Makefile -*-
 #
 #   Copyright (C) 1995 Board of Trustees, University of Illinois.
-#   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2004 Ben Wing.
+#   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2004, 2005 Ben Wing.
 #   Copyright (C) 1997, 1998, 2000 Jonathan Harris.
 #   Copyright (C) 1995 Sun Microsystems, Inc.
 #   Copyright (C) 1998 Free Software Foundation, Inc.
@@ -95,6 +95,14 @@ BLDSRC=$(BLDROOT)\src
 # This appears in the dependency file
 LWLIB_SRCDIR=$(SRCROOT)\lwlib
 
+########################### Figure out current version of VC++.
+
+!if [echo MSC_VER=_MSC_VER > $(OUTDIR)\vcversion.c]
+!endif
+!if [cl /nologo /EP $(OUTDIR)\vcversion.c > $(OUTDIR)\vcversion.tmp]
+!endif
+!include "$(OUTDIR)\vcversion.tmp"
+
 ########################### Process the config.inc options.
 
 !if !defined(INFODOCK)
@@ -147,6 +155,21 @@ HAVE_NATIVE_SOUND=1
 !endif
 !if !defined(HAVE_WIDGETS)
 HAVE_WIDGETS=1
+!endif
+!if !defined(HAVE_DATABASE)
+HAVE_DATABASE=0
+!endif
+!if !defined(BUILD_DATABASE_SHARED)
+BUILD_DATABASE_SHARED=0
+!endif
+!if !defined(HAVE_POSTGRESQL)
+HAVE_POSTGRESQL=0
+!endif
+!if !defined(HAVE_LDAP)
+HAVE_LDAP=0
+!endif
+!if !defined(HAVE_BIGNUM)
+HAVE_BIGNUM=0
 !endif
 !if !defined(OPTIMIZED_BUILD)
 OPTIMIZED_BUILD=1
@@ -249,6 +272,7 @@ CONFIG_ERROR=1
 !message Please specify root directory for your GTK installation: GTK_DIR=path
 CONFIG_ERROR=1
 !endif
+
 !if $(HAVE_MS_WINDOWS) && $(HAVE_XPM) && !defined(XPM_DIR)
 !message Please specify root directory for your XPM installation: XPM_DIR=path
 CONFIG_ERROR=1
@@ -257,6 +281,7 @@ CONFIG_ERROR=1
 !message Specified XPM directory does not contain "$(XPM_DIR)\lib\Xpm.lib"
 CONFIG_ERROR=1
 !endif
+
 !if $(HAVE_MS_WINDOWS) && $(HAVE_PNG) && !defined(PNG_DIR)
 !message Please specify root directory for your PNG installation: PNG_DIR=path
 CONFIG_ERROR=1
@@ -265,6 +290,7 @@ CONFIG_ERROR=1
 !message Specified PNG directory does not contain "$(PNG_DIR)\libpng.lib"
 CONFIG_ERROR=1
 !endif
+
 !if $(HAVE_MS_WINDOWS) && $(HAVE_PNG) && !defined(ZLIB_DIR)
 !message Please specify root directory for your ZLIB installation: ZLIB_DIR=path
 CONFIG_ERROR=1
@@ -273,6 +299,7 @@ CONFIG_ERROR=1
 !message Specified ZLIB directory does not contain "$(ZLIB_DIR)\zlib.lib"
 CONFIG_ERROR=1
 !endif
+
 !if $(HAVE_MS_WINDOWS) && $(HAVE_TIFF) && !defined(TIFF_DIR)
 !message Please specify root directory for your TIFF installation: TIFF_DIR=path
 CONFIG_ERROR=1
@@ -281,6 +308,7 @@ CONFIG_ERROR=1
 !message Specified TIFF directory does not contain "$(TIFF_DIR)\libtiff\libtiff.lib"
 CONFIG_ERROR=1
 !endif
+
 !if $(HAVE_MS_WINDOWS) && $(HAVE_JPEG) && !defined(JPEG_DIR)
 !message Please specify root directory for your JPEG installation: JPEG_DIR=path
 CONFIG_ERROR=1
@@ -289,6 +317,7 @@ CONFIG_ERROR=1
 !message Specified JPEG directory does not contain "$(JPEG_DIR)\libjpeg.lib"
 CONFIG_ERROR=1
 !endif
+
 !if $(HAVE_MS_WINDOWS) && $(HAVE_XFACE) && !defined(COMPFACE_DIR)
 !message Please specify root directory for your COMPFACE installation: COMPFACE_DIR=path
 CONFIG_ERROR=1
@@ -297,8 +326,69 @@ CONFIG_ERROR=1
 !message Specified COMPFACE directory does not contain "$(COMPFACE_DIR)\libcompface.lib"
 CONFIG_ERROR=1
 !endif
+
 !if $(HAVE_MS_WINDOWS) && $(HAVE_TOOLBARS) && !$(HAVE_XPM)
 !message Toolbars require XPM support
+CONFIG_ERROR=1
+!endif
+
+!if $(HAVE_MS_WINDOWS) && $(HAVE_BIGNUM) && !defined(BIGNUM_DIR)
+!message Please specify root directory for your BIGNUM installation: BIGNUM_DIR=path
+CONFIG_ERROR=1
+!endif
+!if $(HAVE_MS_WINDOWS) && $(HAVE_BIGNUM) && defined(BIGNUM_DIR)
+!if $(BUILD_BIGNUM_MINGW_SHARED)
+!if !exist("$(BIGNUM_DIR)\libgmp-3.lib")
+!message Specified BIGNUM directory does not contain "$(BIGNUM_DIR)\libgmp-3.lib"
+CONFIG_ERROR=1
+!endif
+!else
+!if $(BUILD_BIGNUM_NATIVE_SHARED)
+!if !exist("$(BIGNUM_DIR)\gmp-dynamic\gmp.lib")
+!message Specified BIGNUM directory does not contain "$(BIGNUM_DIR)\gmp-dynamic\gmp.lib"
+CONFIG_ERROR=1
+!endif
+!else
+!if !exist("$(BIGNUM_DIR)\gmp-static\gmp.lib")
+!message Specified BIGNUM directory does not contain "$(BIGNUM_DIR)\gmp-static\gmp.lib"
+CONFIG_ERROR=1
+!endif
+!endif
+!endif
+!endif
+
+!if $(HAVE_MS_WINDOWS) && $(HAVE_DATABASE) && !defined(DATABASE_DIR)
+!message Please specify root directory for your DATABASE installation: DATABASE_DIR=path
+CONFIG_ERROR=1
+!endif
+!if $(HAVE_MS_WINDOWS) && $(HAVE_DATABASE) && defined(DATABASE_DIR)
+!if $(BUILD_DATABASE_SHARED)
+!if !exist("$(DATABASE_DIR)\build_win32\Release\libdb43.lib")
+!message Specified DATABASE directory does not contain "$(DATABASE_DIR)\build_win32\Release\libdb43.lib"
+CONFIG_ERROR=1
+!endif
+!else
+!if !exist("$(DATABASE_DIR)\build_win32\Release_static\libdb43s.lib")
+!message Specified DATABASE directory does not contain "$(DATABASE_DIR)\build_win32\Release_static\libdb43s.lib"
+CONFIG_ERROR=1
+!endif
+!endif
+!endif
+
+!if $(HAVE_MS_WINDOWS) && $(HAVE_POSTGRESQL) && !defined(POSTGRESQL_DIR)
+!message Please specify root directory for your POSTGRESQL installation: POSTGRESQL_DIR=path
+CONFIG_ERROR=1
+!endif
+!if $(HAVE_MS_WINDOWS) && $(HAVE_POSTGRESQL) && defined(POSTGRESQL_DIR) && !exist("$(POSTGRESQL_DIR)\src\interfaces\libpq\Release\libpq.lib")
+!message Specified POSTGRESQL directory does not contain "$(POSTGRESQL_DIR)\src\interfaces\libpq\Release\libpq.lib"
+CONFIG_ERROR=1
+!endif
+!if $(HAVE_MS_WINDOWS) && $(HAVE_LDAP) && !defined(LDAP_DIR)
+!message Please specify root directory for your LDAP installation: LDAP_DIR=path
+CONFIG_ERROR=1
+!endif
+!if $(HAVE_MS_WINDOWS) && $(HAVE_LDAP) && defined(LDAP_DIR) && !exist("$(LDAP_DIR)\openldap.lib")
+!message Specified LDAP directory does not contain "$(LDAP_DIR)\openldap.lib"
 CONFIG_ERROR=1
 !endif
 !if $(CONFIG_ERROR)
@@ -386,72 +476,20 @@ STACK_TRACE_EYE_CATCHER=$(XEMACS_VERSION_STRING:.=_)
 STACK_TRACE_EYE_CATCHER=xemacs_$(STACK_TRACE_EYE_CATCHER:-=_)_$(EMACS_CONFIGURATION:-=_)
 PROGRAM_DEFINES=$(PROGRAM_DEFINES) -DSTACK_TRACE_EYE_CATCHER=$(STACK_TRACE_EYE_CATCHER)
 
-########################### Determine includes/defines/object file for
-########################### various options.
+########################### Determine includes/defines/object files/libraries
+########################### for all configuration options given.
+
+OPT_DEFINES=
+OPT_INCLUDES=
+OPT_LIBS=
+OPT_OBJS=
+TEMACS_MODULE_OBJS=
+TEMACS_MODULE_SRCS=
 
 !if $(HAVE_MS_WINDOWS)
-MSW_DEFINES=-DHAVE_MS_WINDOWS
-MSW_INCLUDES=
-MSW_LIBS=comctl32.lib
-
-!if $(HAVE_XPM)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_XPM -DFOR_MSW
-MSW_INCLUDES=$(MSW_INCLUDES) -I"$(XPM_DIR)" -I"$(XPM_DIR)\lib"
-MSW_LIBS=$(MSW_LIBS) "$(XPM_DIR)\lib\Xpm.lib"
-!endif
-!if $(HAVE_GIF)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_GIF
-MSW_GIF_OBJ=$(OUTDIR)\dgif_lib.obj $(OUTDIR)\gif_io.obj
-!endif
-!if $(HAVE_PNG)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_PNG
-MSW_INCLUDES=$(MSW_INCLUDES) -I"$(PNG_DIR)" -I"$(ZLIB_DIR)"
-MSW_LIBS=$(MSW_LIBS) "$(PNG_DIR)\libpng.lib" "$(ZLIB_DIR)\zlib.lib"
-!endif
-!if $(HAVE_TIFF)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_TIFF
-MSW_INCLUDES=$(MSW_INCLUDES) -I"$(TIFF_DIR)\libtiff"
-MSW_LIBS=$(MSW_LIBS) "$(TIFF_DIR)\libtiff\libtiff.lib"
-!endif
-!if $(HAVE_JPEG)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_JPEG
-MSW_INCLUDES=$(MSW_INCLUDES) -I"$(JPEG_DIR)"
-MSW_LIBS=$(MSW_LIBS) "$(JPEG_DIR)\libjpeg.lib"
-!endif
-!if $(HAVE_XFACE)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_XFACE
-MSW_INCLUDES=$(MSW_INCLUDES) -I"$(COMPFACE_DIR)"
-MSW_LIBS=$(MSW_LIBS) "$(COMPFACE_DIR)\libcompface.lib"
-!endif
-!if $(HAVE_ZLIB)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_ZLIB
-MSW_INCLUDES=$(MSW_INCLUDES) -I"$(ZLIB_DIR)"
-MSW_LIBS=$(MSW_LIBS) "$(ZLIB_DIR)\zlib.lib"
-!endif
-!if $(HAVE_MENUBARS)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_MENUBARS
-MSW_MENUBAR_OBJ=$(OUTDIR)\menubar.obj $(OUTDIR)\menubar-msw.obj
-!endif
-!if $(HAVE_SCROLLBARS)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_SCROLLBARS
-MSW_SCROLLBAR_OBJ=$(OUTDIR)\scrollbar.obj $(OUTDIR)\scrollbar-msw.obj
-!endif
-!if $(HAVE_TOOLBARS)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_TOOLBARS
-MSW_TOOLBAR_OBJ=$(OUTDIR)\toolbar.obj $(OUTDIR)\toolbar-msw.obj
-!endif
-!if $(HAVE_WIDGETS)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_WIDGETS
-!endif
-!if $(HAVE_DIALOGS)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_DIALOGS
-MSW_DIALOG_OBJ=$(OUTDIR)\dialog.obj $(OUTDIR)\dialog-msw.obj
-!endif
-!if $(HAVE_NATIVE_SOUND)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_NATIVE_SOUND
-!endif
-
-TEMACS_MSW_OBJS=\
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_MS_WINDOWS
+OPT_LIBS=$(OPT_LIBS) comctl32.lib
+OPT_OBJS=$(OPT_OBJS) \
 	$(OUTDIR)\console-msw.obj \
 	$(OUTDIR)\device-msw.obj \
 	$(OUTDIR)\event-msw.obj \
@@ -461,61 +499,151 @@ TEMACS_MSW_OBJS=\
 	$(OUTDIR)\objects-msw.obj \
 	$(OUTDIR)\redisplay-msw.obj \
 	$(OUTDIR)\select-msw.obj \
-	$(OUTDIR)\dired-msw.obj \
-	$(MSW_MENUBAR_OBJ) \
-	$(MSW_SCROLLBAR_OBJ) \
-	$(MSW_TOOLBAR_OBJ) \
-	$(MSW_DIALOG_OBJ) \
-	$(MSW_GIF_OBJ)
-
+	$(OUTDIR)\dired-msw.obj
+!if $(HAVE_MENUBARS)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_MENUBARS
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\menubar.obj $(OUTDIR)\menubar-msw.obj
+!endif
+!if $(HAVE_SCROLLBARS)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_SCROLLBARS
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\scrollbar.obj $(OUTDIR)\scrollbar-msw.obj
+!endif
+!if $(HAVE_TOOLBARS)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_TOOLBARS
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\toolbar.obj $(OUTDIR)\toolbar-msw.obj
+!endif
+!if $(HAVE_WIDGETS)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_WIDGETS
+!endif
+!if $(HAVE_DIALOGS)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_DIALOGS
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\dialog.obj $(OUTDIR)\dialog-msw.obj
+!endif
 # end !if $(HAVE_MS_WINDOWS)
 !endif
 
+!if $(HAVE_XPM)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_XPM -DFOR_MSW
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(XPM_DIR)" -I"$(XPM_DIR)\lib"
+OPT_LIBS=$(OPT_LIBS) "$(XPM_DIR)\lib\Xpm.lib"
+!endif
+!if $(HAVE_GIF)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_GIF
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\dgif_lib.obj $(OUTDIR)\gif_io.obj
+!endif
+!if $(HAVE_PNG)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_PNG
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(PNG_DIR)" -I"$(ZLIB_DIR)"
+OPT_LIBS=$(OPT_LIBS) "$(PNG_DIR)\libpng.lib" "$(ZLIB_DIR)\zlib.lib"
+!endif
+!if $(HAVE_TIFF)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_TIFF
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(TIFF_DIR)\libtiff"
+OPT_LIBS=$(OPT_LIBS) "$(TIFF_DIR)\libtiff\libtiff.lib"
+!endif
+!if $(HAVE_JPEG)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_JPEG
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(JPEG_DIR)"
+OPT_LIBS=$(OPT_LIBS) "$(JPEG_DIR)\libjpeg.lib"
+!endif
+!if $(HAVE_XFACE)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_XFACE
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(COMPFACE_DIR)"
+OPT_LIBS=$(OPT_LIBS) "$(COMPFACE_DIR)\libcompface.lib"
+!endif
+!if $(HAVE_ZLIB)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_ZLIB
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(ZLIB_DIR)"
+OPT_LIBS=$(OPT_LIBS) "$(ZLIB_DIR)\zlib.lib"
+!endif
+!if $(HAVE_BIGNUM)
+OPT_DEFINES=$(OPT_DEFINES) -DWITH_NUMBER_TYPES -DWITH_GMP
+!if $(BUILD_BIGNUM_MINGW_SHARED)
+OPT_LIBS=$(OPT_LIBS) "$(BIGNUM_DIR)\libgmp-3.lib"
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(BIGNUM_DIR)"
+!else
+!if $(BUILD_BIGNUM_NATIVE_SHARED)
+OPT_LIBS=$(OPT_LIBS) "$(BIGNUM_DIR)\gmp-dynamic\gmp.lib"
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(BIGNUM_DIR)\gmp-dynamic"
+!else
+OPT_LIBS=$(OPT_LIBS) "$(BIGNUM_DIR)\gmp-static\gmp.lib"
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(BIGNUM_DIR)\gmp-static"
+!endif
+!endif
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\number-gmp.obj $(OUTDIR)\number.obj
+!endif
+!if $(HAVE_DATABASE)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_DATABASE -DHAVE_BERKELEY_DB -DDB_H_FILE=\"db.h\"
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(DATABASE_DIR)\build_win32"
+!if $(BUILD_DATABASE_SHARED)
+OPT_LIBS=$(OPT_LIBS) "$(DATABASE_DIR)\build_win32\Release\libdb43.lib"
+!else
+OPT_LIBS=$(OPT_LIBS) "$(DATABASE_DIR)\build_win32\Release_static\libdb43s.lib"
+!endif
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\database.obj
+!endif
+!if $(HAVE_POSTGRESQL)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_POSTGRESQL -DHAVE_POSTGRESQLV7 -DLIBPQ_FE_H_FILE=\"libpq-fe.h\"
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(POSTGRESQL_DIR)\src\include" -I"$(POSTGRESQL_DIR)\src\interfaces\libpq"
+OPT_LIBS=$(OPT_LIBS) "$(POSTGRESQL_DIR)\src\interfaces\libpq\Release\libpq.lib"
+TEMACS_MODULE_OBJS=$(TEMACS_MODULE_OBJS) $(OUTDIR)\postgresql.obj
+TEMACS_MODULE_SRCS=$(TEMACS_MODULE_SRCS) $(SRCROOT)\modules\postgresql\postgresql.c
+!endif
+!if $(HAVE_LDAP)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_LDAP -DHAVE_LDAP_SET_OPTION -DHAVE_LDAP_RESULT2ERROR -DHAVE_LDAP_PARSE_RESULT
+OPT_INCLUDES=$(OPT_INCLUDES) -I"$(LDAP_DIR)"
+OPT_LIBS=$(OPT_LIBS) "$(LDAP_DIR)\openldap.lib"
+TEMACS_MODULE_OBJS=$(TEMACS_MODULE_OBJS) $(OUTDIR)\eldap.obj
+TEMACS_MODULE_SRCS=$(TEMACS_MODULE_SRCS) $(SRCROOT)\modules\ldap\eldap.c
+!endif
+!if $(HAVE_NATIVE_SOUND)
+OPT_DEFINES=$(OPT_DEFINES) -DHAVE_NATIVE_SOUND
+!endif
+
 !if $(MULE)
-MULE_DEFINES=-DMULE
-TEMACS_MULE_OBJS=\
+OPT_DEFINES=$(OPT_DEFINES) -DMULE
+OPT_OBJS=$(OPT_OBJS) \
 	$(OUTDIR)\mule-ccl.obj \
 	$(OUTDIR)\mule-charset.obj \
 	$(OUTDIR)\mule-coding.obj
 !endif
 
 !if $(DEBUG_XEMACS)
-TEMACS_DEBUG_OBJS=$(OUTDIR)\debug.obj $(OUTDIR)\tests.obj
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\debug.obj $(OUTDIR)\tests.obj
 !endif
 
 !if $(QUICK_BUILD)
-QUICK_DEFINES=-DQUICK_BUILD
+OPT_DEFINES=$(OPT_DEFINES) -DQUICK_BUILD
 !endif
 
 !if $(ERROR_CHECK_ALL)
-ERROR_CHECK_DEFINES=-DERROR_CHECK_ALL
+OPT_DEFINES=$(OPT_DEFINES) -DERROR_CHECK_ALL
 !endif
 
 !if $(USE_UNION_TYPE)
-UNION_DEFINES=-DUSE_UNION_TYPE
+OPT_DEFINES=$(OPT_DEFINES) -DUSE_UNION_TYPE
 !endif
 
 !if $(USE_PORTABLE_DUMPER)
-DUMPER_DEFINES=-DPDUMP
-TEMACS_DUMP_OBJS=$(OUTDIR)\dumper.obj
+OPT_DEFINES=$(OPT_DEFINES) -DPDUMP
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\dumper.obj
 !else
-TEMACS_DUMP_OBJS=$(OUTDIR)\unexnt.obj
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\unexnt.obj
 !endif
 
 !if $(USE_KKCC)
-KKCC_DEFINES=-DUSE_KKCC
+OPT_DEFINES=$(OPT_DEFINES) -DUSE_KKCC
 !endif
-
 !if $(MC_ALLOC)
-MC_ALLOC_DEFINES=-DMC_ALLOC
-TEMACS_MC_ALLOC_OBJS=$(OUTDIR)\mc-alloc.obj
+OPT_DEFINES=$(OPT_DEFINES) -DMC_ALLOC
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\mc-alloc.obj
 !endif
 
 !if $(USE_SYSTEM_MALLOC)
-MALLOC_DEFINES=-DSYSTEM_MALLOC
+OPT_DEFINES=$(OPT_DEFINES) -DSYSTEM_MALLOC
 !else
-MALLOC_DEFINES=-DGNU_MALLOC
-TEMACS_ALLOC_OBJS=$(OUTDIR)\free-hook.obj $(OUTDIR)\gmalloc.obj \
+OPT_DEFINES=$(OPT_DEFINES) -DGNU_MALLOC
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\free-hook.obj $(OUTDIR)\gmalloc.obj \
 	$(OUTDIR)\ntheap.obj $(OUTDIR)\vm-limit.obj
 !endif
 
@@ -533,27 +661,46 @@ CCV=@$(CC)
 !if $(DEBUG_XEMACS)
 
 # ---- Debugging support ----
+! if $(MSC_VER) >= 1400
+# VC 7 sets opt:noref automatically with -debug.  VC 8 apparently doesn't
+# do this, and then complains if you try to use edit-and-continue without
+# giving it.
+DEBUG_FLAG_LINK_DEBUG=-debug -opt:noref
+# This turns on additional run-time checking
+# For some reason it causes spawning of make-docfile to crash in VC 7
+DEBUG_FLAG_COMPILE_DEBUG=-RTC1
+! else
+DEBUG_FLAG_LINK_DEBUG=-debug:full
+DEBUG_FLAG_COMPILE_DEBUG=
+! endif
+
 ! if $(SUPPORT_EDIT_AND_CONTINUE)
 # support edit-and-continue
-DEBUG_FLAGS_COMPILE=-ZI
+DEBUG_FLAGS_COMPILE=$(DEBUG_FLAG_COMPILE_DEBUG) -ZI
 # WARNING: There is a very good reason for -incremental:no, as it can cause
 # all sorts of weird crashes in or after a pdump load.  We must allow
 # incremental linking for edit-and-continue to work, however.
-DEBUG_FLAGS_LINK=-debug:full
+DEBUG_FLAGS_LINK=$(DEBUG_FLAG_LINK_DEBUG)
 ! else
-DEBUG_FLAGS_COMPILE=-Zi
-DEBUG_FLAGS_LINK=-debug:full -incremental:no
+DEBUG_FLAGS_COMPILE=$(DEBUG_FLAG_COMPILE_DEBUG) -Zi
+DEBUG_FLAGS_LINK=$(DEBUG_FLAG_LINK_DEBUG) -incremental:no
 ! endif
-DEBUG_DEFINES=-DDEBUG_XEMACS -D_DEBUG 
+
+OPT_DEFINES=$(OPT_DEFINES) -DDEBUG_XEMACS -D_DEBUG 
+
+! if $(MSC_VER) >= 1300
+#BROWSERFLAGS=-FR -Fd$(OUTDIR)\temacs.pdb
+BROWSERFLAGS=-FR$*.sbr -Fd$(OUTDIR)\temacs.pdb
+! else
 #BROWSERFLAGS=-Fr -Fd$(OUTDIR)\temacs.pdb
 BROWSERFLAGS=-Fr$*.sbr -Fd$(OUTDIR)\temacs.pdb
+! endif
 
 !else
 
 # ---- No debugging support ----
 DEBUG_FLAGS_COMPILE=
 DEBUG_FLAGS_LINK=-incremental:no
-DEBUG_DEFINES=
 BROWSERFLAGS=
 
 !endif
@@ -572,6 +719,9 @@ LIBC_LIB=libc.lib
 !endif
 
 !if $(OPTIMIZED_BUILD)
+!if $(SUPPORT_EDIT_AND_CONTINUE)
+!error Edit-and-continue is not compatible with optimization.
+!endif
 # -G5 means optimize for Pentium. (According to the code-optimization
 # article, -GB is the same as -G5, and -G6, i.e. optimze for Pentium Pro,
 # gains you little over -G5 for PPro's but causes big slowdowns for
@@ -610,12 +760,10 @@ CPLUSPLUS_COMPILE_FLAGS=
 
 ########################### Determine generic includes/defines/flags.
 
-INCLUDES=-I$(NT)\inc -I$(SRC) $(MSW_INCLUDES)
+INCLUDES=-I$(NT)\inc -I$(SRC) $(OPT_INCLUDES)
 
-DEFINES=$(MSW_DEFINES) $(MULE_DEFINES) $(UNION_DEFINES) \
-	$(DUMPER_DEFINES) $(KKCC_DEFINES) $(MC_ALLOC_DEFINES) \
-	$(MALLOC_DEFINES) $(QUICK_DEFINES) $(ERROR_CHECK_DEFINES) \
-	$(DEBUG_DEFINES) -DWIN32_LEAN_AND_MEAN -DWIN32_NATIVE -Demacs \
+DEFINES=$(OPT_DEFINES) \
+	-DWIN32_LEAN_AND_MEAN -DWIN32_NATIVE -Demacs \
 	-DHAVE_CONFIG_H $(PROGRAM_DEFINES) $(PATH_DEFINES)
 
 CFLAGS_NO_OPT=-nologo -W3 -DSTRICT $(DEBUG_FLAGS_COMPILE)
@@ -653,13 +801,8 @@ TEMACS_CPP_CDECL_FLAGS=$(CFLAGS_CDECL) $(TEMACS_CPP_FLAGS_NO_CFLAGS)
 
 ########################### Determine XEmacs object files.
 
-TEMACS_OBJS= \
-	$(TEMACS_MSW_OBJS)\
-	$(TEMACS_MULE_OBJS)\
-	$(TEMACS_DEBUG_OBJS)\
-	$(TEMACS_ALLOC_OBJS)\
-	$(TEMACS_DUMP_OBJS)\
-	$(TEMACS_MC_ALLOC_OBJS)\
+TEMACS_COMMON_OBJS= \
+	$(OPT_OBJS)\
 	$(OUTDIR)\abbrev.obj \
 	$(OUTDIR)\alloc.obj \
 	$(OUTDIR)\alloca.obj \
@@ -753,6 +896,14 @@ TEMACS_OBJS= \
 	$(OUTDIR)\window.obj \
 	$(OUTDIR)\win32.obj
 
+TEMACS_OBJS= \
+	$(TEMACS_COMMON_OBJS) \
+	$(TEMACS_MODULE_OBJS)
+
+TEMACS_DOC_SOURCES= \
+	$(TEMACS_COMMON_OBJS) \
+	$(TEMACS_MODULE_SRCS)
+
 #########################################################################
 ##                           Implicit rules                            ##
 #########################################################################
@@ -821,6 +972,12 @@ $(OUTDIR)\emacs.obj: $(SRCROOT)\version.sh
 
 $(OUTDIR)\libinterface.obj: $(SRC)\libinterface.c
 	$(CCV) $(TEMACS_CPP_CDECL_FLAGS) $(SRC)\$(@B).c -Fo$@ $(BROWSERFLAGS)
+
+$(OUTDIR)\postgresql.obj: $(SRCROOT)\modules\postgresql\postgresql.c
+	$(CCV) -I$(SRC) $(TEMACS_CPP_FLAGS) $(SRCROOT)\modules\postgresql\postgresql.c -Fo$@ $(BROWSERFLAGS)
+
+$(OUTDIR)\eldap.obj: $(SRCROOT)\modules\ldap\eldap.c
+	$(CCV) -I$(SRC) $(TEMACS_CPP_FLAGS) $(SRCROOT)\modules\ldap\eldap.c -Fo$@ $(BROWSERFLAGS)
 
 ###################### Generated source files
 
@@ -920,7 +1077,7 @@ $(BLDLIB_SRC)/movemail.exe : $(LIB_SRC)/movemail.c $(LIB_SRC)/pop.c $(ETAGS_DEPS
 
 # Minitar uses zlib so just use cdecl to simplify things
 $(BLDLIB_SRC)/minitar.exe : $(NT)/minitar.c
-	$(CCV) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS_CDECL_NO_LIB) -MD $(LINK_DEPENDENCY_ARGS) "$(ZLIB_DIR)\zlib.lib"
+	$(CCV) -I$(SRC) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS_CDECL_NO_LIB) -MD $(LINK_DEPENDENCY_ARGS) "$(ZLIB_DIR)\zlib.lib"
 
 LIB_SRC_TOOLS = \
 	$(BLDLIB_SRC)/etags.exe		\
@@ -1034,6 +1191,22 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
 !if $(HAVE_WIDGETS)
   Compiling in support for widgets.
 !endif
+!if $(HAVE_BIGNUM)
+  Compiling in support for arbitrary-precision numbers.
+!endif
+!if $(HAVE_DATABASE)
+!if $(BUILD_DATABASE_SHARED)
+  Compiling in support for Berkeley Databases (DLL version).
+!else
+  Compiling in support for Berkeley Databases (static-library version).
+!endif
+!endif
+!if $(HAVE_POSTGRESQL)
+  Compiling in support for PostgreSQL.
+!endif
+!if $(HAVE_LDAP)
+  Compiling in support for LDAP.
+!endif
 !if $(HAVE_NATIVE_SOUND)
   Compiling in support for native sounds.
 !endif
@@ -1096,7 +1269,7 @@ TEMACS_ENTRYPOINT=-entry:mainCRTStartup
 !endif
 
 TEMACS_BROWSE=$(BLDSRC)\temacs.bsc
-TEMACS_LIBS=$(LASTFILE) $(MSW_LIBS) \
+TEMACS_LIBS=$(LASTFILE) $(OPT_LIBS) \
  oldnames.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib \
  shell32.lib wsock32.lib netapi32.lib winmm.lib winspool.lib ole32.lib \
  mpr.lib uuid.lib imm32.lib $(LIBC_LIB)
@@ -1162,6 +1335,7 @@ TEMACS_DUMP_DEP = $(OUTDIR)\temacs.res
 !endif
 
 $(RAW_EXE): $(TEMACS_OBJS) $(LASTFILE) $(TEMACS_DUMP_DEP)
+	@echo link $(TEMACS_LFLAGS) -out:$@ $(TEMACS_OBJS) $(TEMACS_DUMP_DEP) $(TEMACS_LIBS)
 	link.exe @<<
   $(TEMACS_LFLAGS) -out:$@ $(TEMACS_OBJS) $(TEMACS_DUMP_DEP) $(TEMACS_LIBS)
 <<
@@ -1188,10 +1362,10 @@ docfile ::
 docfile :: $(DOC)
 
 # We need to write the QUICK_BUILD stuff as-is (and not just have no
-# dependencies for DOC) because DOC needs TEMACS_OBJS as dependencies to
+# dependencies for DOC) because DOC needs TEMACS_DOC_SOURCES as dependencies to
 # get $(**) right.  The `touch' is needed because of the way nmake
 # calculates dependencies; see comments in src/Makefile.in.in.
-$(DOC): $(BLDLIB_SRC)\make-docfile.exe $(BLDSRC)\NEEDTODUMP $(TEMACS_OBJS)
+$(DOC): $(BLDLIB_SRC)\make-docfile.exe $(BLDSRC)\NEEDTODUMP $(TEMACS_DOC_SOURCES)
 !if $(QUICK_BUILD)
 	if not exist $(DOC) $(TEMACS_BATCH) -l $(LISP)\make-docfile.el -- -o $(DOC) -i $(SRCROOT)\site-packages @<<
 $(**)
@@ -1421,7 +1595,7 @@ $(INFODIR)\new-users-guide.info: $(NEW_USERS_GUIDE_SRCS)
 info:	makeinfo-test $(INFO_FILES)
 
 #########################################################################
-##                       Testing-related targets                       ##
+##              Testing, TAGS, install, clean, etc.                    ##
 #########################################################################
 
 ########################### Automated tests
@@ -1502,18 +1676,24 @@ mostlyclean:
 	-$(DEL) $(OUTDIR)\*.lib
 	-$(DEL) $(OUTDIR)\*.obj
 	-$(DEL) $(OUTDIR)\*.pdb
+	-$(DEL) $(OUTDIR)\*.idb
+	-$(DEL) $(OUTDIR)\*.ilk
 	-$(DEL) $(OUTDIR)\*.res
 	-$(DEL) $(OUTDIR)\*.sbr
 	-$(DEL) $(BLDSRC)\*.exe
 	-$(DEL) $(BLDSRC)\*.dmp
 	-$(DEL) $(BLDSRC)\*.map
 	-$(DEL) $(BLDSRC)\*.pdb
+	-$(DEL) $(BLDSRC)\*.idb
+	-$(DEL) $(BLDSRC)\*.ilk
 	-$(DEL) $(BLDSRC)\NEEDTODUMP
 	-$(DEL) $(BLDSRC)\dump-id.c
 	-$(DEL) $(SRC)\*.bsc
 	-$(DEL) $(BLDLIB_SRC)\*.exe
 	-$(DEL) $(BLDLIB_SRC)\*.obj
 	-$(DEL) $(BLDLIB_SRC)\*.pdb
+	-$(DEL) $(BLDLIB_SRC)\*.idb
+	-$(DEL) $(BLDLIB_SRC)\*.ilk
 	-$(DEL) $(BLDLIB_SRC)\*.res
 
 versionclean:

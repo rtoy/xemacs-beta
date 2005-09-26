@@ -1,18 +1,21 @@
 Building and Installing XEmacs on Windows 95/98/NT/2000/XP -*- mode:outline -*-
 
+			       Ben Wing
+
+                         based on old version by
+	
 			     David Hobley
 			     Marc Paquette
 			    Jonathan Harris
-			       Ben Wing
 
-This is a port of XEmacs to Windows 95/98/NT/2000/XP.  If you are looking for a
-port of GNU Emacs, get the latest release of the 21.x series from gnu.org.
-(At the time of writing, GNU Emacs does not support images but does support
-Mule.)  NT 4.0 or later is required for building on Windows NT.  Note that the
-developers typically use NT 4.0 and Windows 2000, and there may possibly be
-problems under Windows 95/98.  If so, please report them to
-xemacs-nt@xemacs.org; we are committed to maintaining compatibility with all
-systems listed.
+This is a port of XEmacs to Windows 95/98/ME/NT/2000/XP.  If you are
+looking for a port of GNU Emacs, get the latest release of the 21.x series
+from gnu.org.  NT 4.0 or later is required for building on Windows NT.
+Note that the developers typically use NT 4.0 and Windows 2000 or XP, and
+there may possibly be problems under Windows 95/98. (One developer has
+successfully built on Windows ME, though, which is the successor of Windows
+98.)  If so, please report them to xemacs-nt@xemacs.org; we are committed
+to maintaining compatibility with all systems listed.
 
 * Required tools and sources
 ============================
@@ -38,7 +41,7 @@ systems listed.
 
 2.  Grab the latest XEmacs source from
 
-      ftp://ftp.xemacs.org/pub/xemacs/
+      http://ftp.xemacs.org/pub/xemacs/
 
     or one of its mirrors listed at http://www.xemacs.org/Download/index.html.
 
@@ -48,16 +51,16 @@ systems listed.
     You'll also need the packages.  You probably want to get the unified
     packages bundle from
 
-      ftp://ftp.xemacs.org/pub/xemacs/packages/xemacs-sumo.tar.gz
+      http://ftp.xemacs.org/pub/xemacs/packages/xemacs-sumo.tar.gz
 
     If you are building with international support, you also need
 
-      ftp://ftp.xemacs.org/pub/xemacs/packages/xemacs-mule-sumo.tar.gz
+      http://ftp.xemacs.org/pub/xemacs/packages/xemacs-mule-sumo.tar.gz
 
     Although we don't recommend it, you can also retrieve just the packages
     you really need if you have an extremely slow net connection or are very
     short on disk space.  You can find the various packages in
-    ftp://ftp.xemacs.org/pub/xemacs/packages/.  You will need the xemacs-base
+    http://ftp.xemacs.org/pub/xemacs/packages/.  You will need the xemacs-base
     package (and mule-base, if building with international support).  You'll
     also need the texinfo package unless you have a copy of makeinfo.exe on
     your machine.  If you want to download additional or updated packages
@@ -76,37 +79,116 @@ systems listed.
 * Optional libraries
 ====================
 
-1.  You really want the XPM library.  Grab the latest version of the xpm
-    sources (xpm-3.4k.tar.gz as of 2003-10-27) from
-    ftp://ftp.xemacs.org/pub/xemacs/aux/ and unpack them somewhere.  Copy
-    nt\xpm.mak from the xemacs sources to the lib subdirectory of the xpm
-    sources, cd to that directory and build xpm with 'nmake -f xpm.mak'.
+The easiest way to get the optional libraries is to grab the appropriate
+set of precompiled versions for your compiler:
 
-2.  You probably also want PNG image support. Grab the latest versions of
-    zlib and libpng (zlib-1.1.4 and libpng-1.2.5 as of 2003-10-27) from
-    ftp://ftp.xemacs.org/pub/xemacs/aux/, unpack them somewhere and read the
-    respective READMEs for details on how to build them.  The following
-    build procedure works for zlib-1.1.4 and libpng-1.2.5:
+http://www.xemacs.org/Download/win32/optional-libs.exe
 
-    cd to the zlib directory and type 'nmake -f nt\Makefile.nt'.
+or for VC++ 2005 (VC8)
 
-    cd to the libpng directory, rename or move the zlib directory to ..\zlib
-    and type 'nmake -f scripts\makefile.vcwin32'.
+http://www.xemacs.org/Download/win32/optional-libs-vc8.exe
 
-3.  If you want TIFF support, grab the latest version of libtiff (tiff-v3.5.7
-    as of 2003-10-27) from ftp://ftp.xemacs.org/pub/xemacs/aux/ and unpack
-    it somewhere. Then cd to the libtiff subdirectory of the tiff directory
-    and type 'nmake -f makefile.vc'.
+unpack them somewhere and set the OPTIONAL_LIBRARY_DIR in config.inc
+to point to where you put them.  This will automatically give you
+all the graphics libraries. (NOTE: optional-libs.exe was compiled with
+VC++ .NET and may or may not work with VC++ 6.0.  If not, you will have
+to build them yourself until we provide VC6 binaries.)
 
-4.  If you want JPEG support grab the latest version of jpegsrc (jpeg-6b as
-    of 2003-10-27) from ftp://ftp.xemacs.org/pub/xemacs/aux/ and read the
-    README for details on how to build it.
+* Alternative: Building the optional libraries yourself
+=======================================================
 
-5.  If you want X-Face support, grab the latest version of the compface
-    distribution (1.4 as of 2003-10-27) from
-    ftp://ftp.xemacs.org/pub/xemacs/aux/ and unpack it somewhere.
-    Copy nt\compface.mak from the xemacs sources to the compface directory.
-    cd to that directory and build libcompface with 'nmake -f compface.mak'.
+If you need to build the libraries yourself, grab them from 
+http://ftp.xemacs.org/pub/xemacs/aux or get the latest version from the
+home page of the appropriate library, as listed on
+http://www.xemacs.org/Download/optLibs.html.  The following instructions
+assume that you have the appropriate libraries and have unpacked them
+somewhere, e.g. c:\src.
+
+Directions for building the various libraries:
+
+1.  You really want the XPM library.  Copy nt\xpm.mak from the xemacs sources
+    to the lib/ subdirectory of the XPM sources, cd to that directory and
+    build xpm with 'nmake -f xpm.mak'.
+
+2.  You probably also want PNG image support.  Get PNG and ZLIB and read the
+    respective READMEs for details on how to build them.
+
+    cd to the ZLIB source directory and type 'nmake -f win32\Makefile.msc'.
+
+    cd to the libpng source directory, rename or move the zlib directory to
+    ..\zlib and type 'nmake -f scripts\makefile.vcawin32'.
+
+3.  If you want TIFF support, cd to the TIFF source directory and type
+    'nmake -f Makefile.vc'.
+
+4.  If you want JPEG support, cd to the JPEG source directory and type
+    'nmake -f makefile.vc'.
+
+5.  If you want X-Face support, copy nt\compface.mak from the xemacs sources
+    to the compface directory, cd to that directory and build libcompface
+    with 'nmake -f compface.mak'.
+
+6.  It's also possible to build the Sleepycat DB libraries.  Open up the file
+
+    DB-SOURCE-DIR\docs\ref\build_win\intro.html
+
+    in a browser, where DB-SOURCE-DIR is the top-level source directory for
+    the Sleepcat DB libraries, and follow the directions.  You should build the
+    `Release_static' target if you want to use the static version of this
+    library, or the `Release' target if you want to use the DLL version of
+    the library.  To use the DLL version, you need to set BUILD_DATABASE_SHARED
+    to 1 in config.inc.  The DLL version will make the executable much smaller,
+    but you will have to have the DLL present at run-time -- either in the
+    same directory as the XEmacs executable or somewhere in your path.
+
+7.  It's possible, but difficult, to build shared libraries for GNU MP.
+    (Static libraries are not yet possible, as there is no makefile.vc for
+    this; you can't build static libraries for VC++ using MinGW.) Basically,
+    you need to build using MinGW and then generate native import libraries.
+    This is more or less described in the documentation, but the following
+    procedure seems to work:
+
+    -- In the top level of the GMP sources, configure using
+
+       CC='gcc -mno-cygwin' configure --build=pentium3-pc-mingw32 --disable-static --enable-shared
+
+    -- Edit the `libtool' script in the same directory and change the value
+       of CC from `gcc' to `gcc -mno-cygwin'.
+
+    -- Run `make'.
+
+    -- Run these commands:
+
+       lib /machine:IX86 /def:.libs/libgmp-3.dll-def
+       cp .libs/libgmp-3.dll-exp libgmp-3.exp
+       cp .libs/libgmp-3.dll .
+
+    -- You should now have an import library named libgmp-3.lib and a DLL
+       libgmp-3.dll.
+
+    -- NOTE: You will need to have this DLL accessible when XEmacs runs.
+       It either needs to be in the same directory as the XEmacs executable
+       or in your path.
+
+8.  There are also pre-built binaries for GMP-4.1.2 at
+
+    http://www.cs.nyu.edu/exact/core/gmp/.
+
+    However, they don't seem to work properly for our purposes, as they
+    require LIBC.LIB rather than MSVCRT.DLL.
+
+9.  You can build the client library for PostgreSQL by cd'ing to the src/
+    subdirectory of the PostgreSQL sources and running `nmake -f win32.mak'.
+
+10.  It does not appear to be very easy to build OpenLDAP under
+     native MS Windows, as it is only experimentally supported.  However, there
+     is a mailing list for this, which contains postings of recent binaries and
+     build patches; see
+
+     http://lucas.bergmans.us/hacks/openldap/
+
+     If you know how to build OpenLDAP, please write up a description of the
+     process and send it to us at xemacs-beta@xemacs.org.
 
 
 * Building
@@ -121,31 +203,46 @@ systems listed.
 
        MULE=1
 
-    -- If you're building with XPM support, modify the appropriate lines in
+    -- If you're using the pre-supplied optional library pack, all you should
+       have to do is set OPTIONAL_LIBRARY_DIR to the top-level directory
+       where you unpacked everything.
+
+    -- By default, support is enabled for all graphics formats, but not
+       currently for any of the other libraries in the optional library
+       pack.  If you want support for GMP, Berkeley DB or PostgreSQL, set
+       the appropriate flag (HAVE_BIGNUM, HAVE_DATABASE or HAVE_POSTGRESQL,
+       respectively) to 1.  We do not currently enable these by default
+       because of lack of sufficient testing, questionable usefulness in
+       the case of Berkeley DB and PostgreSQL, excessive library size in
+       the case of Berkeley DB (more than 2 MB for the static library!),
+       and lack of a static library in the case of GMP.
+
+    -- If you want to turn off support for any of the graphics libraries,
+       set the appropriate flag (HAVE_XPM, HAVE_GIF, HAVE_PNG, HAVE_JPEG,
+       HAVE_TIFF or HAVE_XFACE) to 0.
+
+    -- If you have compiled some of the libraries yourself, you will have to
+       specify the location of the top-level source directory for each of
+       these libraries.  XEmacs assumes that the directory structure under
+       these directories is as it is in the sources, rather than in any
+       installed format.
+
+       For example, for XPM support, modify the appropriate lines in
        config.inc as follows:
 
        HAVE_XPM=1
        XPM_DIR="x:\location\of\your\xpm\sources"
     
-       and similarly for JPEG and TIFF support.
+       Similarly for JPEG, TIFF, etc. support.
 
-    -- If you're building with PNG support, modify the appropriate lines in
-       config.inc as follows:
+       For PNG support, you also need to specify ZLIB_DIR.
+       For GIF support, no directory is necessary as the appropriate code
+       is already in XEmacs.
 
-       HAVE_PNG=1
-       PNG_DIR="x:\location\of\your\png\sources"
-       ZLIB_DIR="x:\location\of\your\zlib\sources"
-
-    -- If you're building with GIF support, modify the appropriate lines in
-       config.inc as follows:
-
-       HAVE_GIF=1
-
-    -- If you're building with X-Face support, modify the appropriate lines in
-       config.inc as follows:
-
-       HAVE_XFACE=1
-       COMPFACE_DIR="x:\location\of\your\compface\sources"
+       If you want to use the DLL version of the Sleepycat DB library,
+       set BUILD_DATABASE_SHARED to 1.  You will have to have the DLL
+       present at run-time -- either in the same directory as the XEmacs
+       executable or somewhere in your path.
 
     -- By default, XEmacs will expect to find its packages in the
        subdirectories "site-packages", "mule-packages" and "xemacs-packages"
@@ -201,12 +298,16 @@ systems listed.
     Start Menu.
 
 5.  To build using MS Visual Studio, you can use the workspace file
-    `nt/xemacs.dsw'. This was prepared for Visual C++ 6.0. If you have a
-    different version and neither file works, just open up `nt/xemacs.mak'
-    from within Visual Studio and it will offer to wrap this Makefile in a
-    workspace file, from which you can build. Assuming you want to run from
-    the build directory (which you will want to do if you are planning on
-    doing any development work on XEmacs), use the following settings in
+    `nt/xemacs.dsw'. This was prepared for Visual C++ 6.0.  If you are using
+    Visual Studio .NET, open this file up inside of it and it will offer to
+    convert it to a .NET "solution" file.  The same procedure should work
+    for newer versions of Visual Studio (e.g. Visual Studio 2005).  If this
+    doesn't work (e.g. you are using Visual C++ 5 or even earlier), just
+    open up `nt/xemacs.mak' from within Visual Studio and it will offer to
+    wrap this Makefile in a workspace file, from which you can build.
+    Assuming you want to run from the build directory (which you will want
+    to do if you are planning on doing any development work on XEmacs), use
+    the following settings (for Visual C++ 6.0, at least) in
     Project/Settings...:
 
     Under the General tab:
@@ -267,8 +368,8 @@ Ben Wing (current primary MS Windows maintainer; author of the MS Windows
           Mule code and some of the dialog box code)
 Andy Piper (MS Windows contributor; author of the Cygwin support and the
             MS Windows glyph and widget code)
-Jonathan Harris (MS Windows contributor; author of the MS Windows redisplay
-                 and underlying GUI code)
+Jonathan Harris (MS Windows contributor; original author of the MS Windows
+                 redisplay and underlying GUI code)
 Kirill Katsnelson (MS Windows contributor; author of the MS Windows process
                    and printing code and some of the dialog box code;
                    general guru on obscure MS Windows programming topics)

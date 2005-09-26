@@ -1,3 +1,40 @@
+2005-09-26  Ben Wing  <ben@xemacs.org>
+
+	* README:
+	Major rewrite.  Document how to compile various optional libs.
+	
+	* config.inc.samp:
+	Update to recent versions of optional libs.  Add support for
+	gmp, db, postgresql, ldap.  Turn on optimization when not debug.
+	
+	* minitar.c:
+	Include config.h.
+	
+	* xemacs.mak:
+	* xemacs.mak (HAVE_WIDGETS):
+	* xemacs.mak (OPT_DEFINES):
+	* xemacs.mak (OPT_OBJS):
+	* xemacs.mak (BROWSERFLAGS):
+	* xemacs.mak (INCLUDES):
+	* xemacs.mak (DEFINES):
+	* xemacs.mak (TEMACS_COMMON_OBJS):
+	* xemacs.mak (TEMACS_OBJS):
+	* xemacs.mak ($(OUTDIR)\postgresql.obj):
+	* xemacs.mak ($(BLDLIB_SRC)/minitar.exe):
+	* xemacs.mak (  NOTE):
+	* xemacs.mak (TEMACS_LIBS):
+	* xemacs.mak ($(RAW_EXE)):
+	* xemacs.mak (mostlyclean):
+	* xemacs.mak (versionclean):
+	Figure out VC++ version and use it to set debug and browser flags
+	appropriately.
+	Add support for building gmp, db, postgresql, ldap.
+	Rewrite handling of optional stuff so it is all added to single
+	variables OPT_* rather than to various FOO_* variables.
+	Pass -I$(SRC) to minitar.c so it compiles.
+	Pass module sources, not objects, to make-docfile.
+	Delete more stuff in `make clean'.
+
 2005-09-25  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs.mak: Fix variable initialization order.
