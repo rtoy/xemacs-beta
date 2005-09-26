@@ -1,3 +1,9 @@
+2005-09-26  Ben Wing  <ben@xemacs.org>
+
+	* rangetab.c:
+	* rangetab.c (Fmap_range_table):
+	Fix bug in handling of range endpoints when not start-closed, end-open.
+
 2005-09-17  Olivier Galibert  <galibert@xemacs.org>
 
 	* intl.c (Fset_current_locale): setlocale return string is valid

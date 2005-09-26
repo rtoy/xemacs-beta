@@ -1,6 +1,6 @@
 /* XEmacs routines to deal with range tables.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 2002, 2004 Ben Wing.
+   Copyright (C) 1995, 2002, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -606,8 +606,20 @@ exactly once) if FUNCTION modifies or deletes the current entry
       last = entry->last;
       oldlen = Dynarr_length (rt->entries);
       args[0] = function;
-      args[1] = make_int (first);
-      args[2] = make_int (last);
+      /* Fix up the numbers in accordance with the open/closedness of the
+	 table. */
+      {
+	EMACS_INT premier = first, dernier = last;
+	switch (rt->type)
+	  {
+	  case RANGE_START_CLOSED_END_OPEN: break;
+	  case RANGE_START_CLOSED_END_CLOSED: dernier--; break;
+	  case RANGE_START_OPEN_END_OPEN: premier--; break;
+	  case RANGE_START_OPEN_END_CLOSED: premier--, dernier--; break;
+	  }
+	args[1] = make_int (premier);
+	args[2] = make_int (dernier);
+      }
       args[3] = entry->val;
       Ffuncall (countof (args), args);
       /* Has FUNCTION removed the entry? */
