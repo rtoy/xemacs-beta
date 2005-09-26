@@ -1,3 +1,23 @@
+2005-09-27  Adrian Aichner  <adrian@xemacs.org>
+
+	* lispref/packaging.texi: Get file to compile with teinfmt.el.
+	* lispref/packaging.texi (Packaging): Ditto.
+	* lispref/packaging.texi (Package Overview): Ditto.
+	* lispref/packaging.texi (The User View): Ditto.
+	* lispref/packaging.texi (The Library Maintainer View): Ditto.
+	* lispref/packaging.texi (Infrastructure): Ditto.
+	* lispref/packaging.texi (Obtaining): Ditto.
+	* lispref/packaging.texi (Local.rules File): Ditto.
+	* lispref/packaging.texi (package-info.in): Ditto.
+	* lispref/packaging.texi (Makefile): Ditto.
+	* lispref/packaging.texi (Documenting Packages): Ditto.
+
+2005-09-27  Adrian Aichner  <adrian@xemacs.org>
+
+	* internals/internals.texi (A Summary of the Various XEmacs
+	Modules): Get file to compile with texinfmt.el.
+	* internals/internals.texi (Windows Build Flags): Ditto.
+
 2005-09-26  Ben Wing  <ben@xemacs.org>
 
 	* lispref/glyphs.texi (Images):

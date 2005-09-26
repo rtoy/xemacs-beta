@@ -8,18 +8,14 @@
 @c Macro to make formatting of the XEmacs pms name consistent.
 @c Maybe @sc looks OK in HTML?  If so, condition on Info.
 @iftex
-@macro xpms
-XE@sc{macs} Packaging System
-@end macro
+@set xpms XE@sc{macs} Packaging System
 @end iftex
 @ifnottex
-@macro xpms
-XEmacs Packaging System
-@end macro
+@set xpms XEmacs Packaging System
 @end ifnottex
 
 @node Packaging, Lisp Data Types, Introduction, Top
-@chapter The @xpms{}
+@chapter The @value{xpms}
 @cindex package
 @cindex packaging
 
@@ -32,7 +28,7 @@ easy.  This gives an installer the ability to tailor an XEmacs
 installation for local needs with safe removal of unnecessary code.
 
 This chapter describes how to package Lisp libraries for use with the
-@xpms{}.
+@value{xpms}.
 
 @emph{Please note carefully} that the term @dfn{package} as used in
 XEmacs refers to an aggregation of Lisp code and/or data distributed as
@@ -50,13 +46,13 @@ Packaging Lisp Libraries:
 * Package Terminology::         Basic stuff.
 * Building Packages::           Turn packaged source into a tarball.
 * Makefile Targets::            Package @file{Makefile} targets
-* Local.rules File::            Tell the @xpms{} about your host.
-* Creating Packages::           Tell the @xpms{} about your package.
+* Local.rules File::            Tell the @value{xpms} about your host.
+* Creating Packages::           Tell the @value{xpms} about your package.
 * Documenting Packages::        Explain your package to users and hackers.
-@c * History::                     History of the @xpms{}
-@c * Installation::                Installing the @xpms{} with your (X)Emacs.
-@c * Configuration::               Configuring the @xpms{} for use.
-@c * Usage::                       An overview of the operation of the @xpms{}.
+@c * History::                     History of the @value{xpms}
+@c * Installation::                Installing the @value{xpms} with your (X)Emacs.
+@c * Configuration::               Configuring the @value{xpms} for use.
+@c * Usage::                       An overview of the operation of the @value{xpms}.
 @c * Bug Reports::                 Reporting Bugs and Problems
 @c * Frequently Asked Questions::  Questions and answers from the mailing list.
 
@@ -65,9 +61,9 @@ Internals and Package Release Engineering:
 @end menu
 
 @node Package Overview, Package Terminology, , Packaging
-@chapter An overview of the @xpms{}
+@chapter An overview of the @value{xpms}
 
-The @xpms{} is a system for administering the installation, upgrade, and
+The @value{xpms} is a system for administering the installation, upgrade, and
 removal of Lisp libraries.  For the end user, it provides facilities for
 determining availability of packages and which versions at remote
 sites.  It will download and automatically install a package, ensuring
@@ -92,10 +88,10 @@ the structure of an installed package.
 
 Meeting these requirements, as well as simply providing the
 auto-autoloads and the information about availability and so on does
-impose some costs on the library maintainer.  The @xpms{} also provides
+impose some costs on the library maintainer.  The @value{xpms} also provides
 structure and utilities to the library maintainer to make these tasks
 easier.  This manual documents the requirements and the tools that the
-@xpms{} provides to ensure that a package satisfies them.
+@value{xpms} provides to ensure that a package satisfies them.
 
 @menu
 * The User View::
@@ -122,7 +118,7 @@ unpacked from the top of a package hierarchy.  A @dfn{package hierarchy}
 is basically an image of a classic Emacs ``run-in-place'' tree, with
 @file{lisp}, @file{etc}, @file{info}, @file{man}, @file{lib-src}, and
 @file{pkginfo} subdirectories of the top.  The @file{pkginfo}
-subdirectory is for use by the @xpms{} administration tools, and
+subdirectory is for use by the @value{xpms} administration tools, and
 currently contains a @file{MANIFEST.@var{package-name}} file for each
 package to ensure that no cruft remains when a package is removed or
 updated.  The @file{lisp}, @file{etc}, and @file{lib-src} subdirectories
@@ -242,7 +238,7 @@ receiving a @code{load-path} initialized to the core Lisp directories.
 @node The Library Maintainer View, The Package Release Engineer View, The User View, Package Overview
 @section The Library Maintainer View
 
-From the library maintainer's viewpoint, the advantages to the @xpms{}
+From the library maintainer's viewpoint, the advantages to the @value{xpms}
 stem from the convenience to the user of installation and upgrade.
 Since an installed package automatically registers its entry points via
 autoload and its configuration variables with the Customize system,
@@ -252,14 +248,14 @@ posting a FAQ whose answer is ``long since fixed, please upgrade.''
 
 This comes at some cost, as the library maintainer needs to arrange that
 the package be installed in a directory structure that satisfies the
-requirements of the @xpms{}.  Autoload cookies and defcustoms must also
-be added to existing libraries.  The @xpms{} provides infrastructure to
+requirements of the @value{xpms}.  Autoload cookies and defcustoms must also
+be added to existing libraries.  The @value{xpms} provides infrastructure to
 assure that all of these annoyances need only be dealt with once.  The
 autoload cookies and defcustoms are beyond the scope of this chapter, but
 most maintainers of modern packages are already familiar with these
 mechanisms.
 
-The @xpms{} may be divided into the @dfn{infrastructure} common to all
+The @value{xpms} may be divided into the @dfn{infrastructure} common to all
 packages, and the package-specific @dfn{control files}.  The
 infrastructure supports global builds, installation, and generation of
 the ``sumo'' bundles of packages, as well as generation of individual
@@ -269,13 +265,13 @@ package's source tree and provide administrative information.
 @menu
 * Infrastructure::              Global Makefiles and common rules.
 * Control Files::               Package-specific Makefiles and administrative files.
-* Obtaining::                   Obtaining the @xpms{} and required utilities.
+* Obtaining::                   Obtaining the @value{xpms} and required utilities.
 @end menu
 
 @node Infrastructure, Control Files, , The Library Maintainer View
 @subsection Infrastructure
 
-In order to get the greatest benefit from the @xpms{}, a library
+In order to get the greatest benefit from the @value{xpms}, a library
 maintainer should place the package sources in an appropriate place in
 the XEmacs source package hierarchy, and arrange to have the source
 package imported into the XEmacs CVS repository.
@@ -412,14 +408,14 @@ forms for the usre configuration variables of the package.
 
 
 @node Obtaining, , Control Files, The Library Maintainer View
-@subsection Obtaining the @xpms{} and Required Utilities
+@subsection Obtaining the @value{xpms} and Required Utilities
 
 Currently both the infrastructure for creating XEmacs packages and the
 package sources themselves are available only by CVS.  See
 @uref{http://www.xemacs.org/Develop/cvsaccess.html} for more
 intformation.
 
-The @xpms{} currently requires GNU @file{make}, and XEmacs, to build
+The @value{xpms} currently requires GNU @file{make}, and XEmacs, to build
 packages.
 
 
@@ -617,7 +613,7 @@ Does most of the work.  Builds the elcs, infos at a minimum.
 @comment  node-name,  next,  previous,  up
 @cindex local.rules
 @heading The Local.rules File:
-This file in @file{packages} provides the @xpms{} with information about
+This file in @file{packages} provides the @value{xpms} with information about
 the local configuration and environment.  To create @file{Local.rules},
 simply copy @file{Local.rules.template} from that directory to
 @file{Local.rules} and edit it to suit your needs.
@@ -905,7 +901,7 @@ The @samp{category} of the package.  It is taken from the
 packages.  The is also provision for @samp{unsupported} in this field
 which would be for packages that XEmacs.org do not distribute.
 
-@strong{N.B.} As yet, the @xpms{} does @emph{not} support this type of
+@strong{N.B.} As yet, the @value{xpms} does @emph{not} support this type of
 package.  It will in the future.
 
 @item dump
@@ -983,7 +979,7 @@ specified in the @samp{REQUIRES} variable (for packaged Lisp) or in
 some cases the @samp{PRELOADS} (autoloads used in libraries mentioned
 in @samp{PRELOADS}).
 
-There isn't much to an @xpms{} @file{Makefile}, basically it just
+There isn't much to an @value{xpms} @file{Makefile}, basically it just
 contains a few @file{Makefile} variables and that's it.  See the
 example. 
 
@@ -1040,11 +1036,11 @@ be the first to need such hackery and it is probably already catered
 for. 
 
 @subheading @file{Makefile} Variables Explained:
-A number of @file{make} variables are defined by the @xpms{}.  Some are
+A number of @file{make} variables are defined by the @value{xpms}.  Some are
 required, others are optional.  Of course your @file{Makefile} may
 define other variables for private use, but you should be careful not to
 choose names that conflict with variables defined and used by the
-@xpms{}.
+@value{xpms}.
 
 The required variables are described in the table below.
 The corresponding field names for @file{package-info.in}, where
@@ -1280,7 +1276,7 @@ rules to build these files.
 @section @file{package-compile.el}
 @cindex package-compile.el
 @cindex compiling packages
-The @xpms{} does not automatically become aware of your package simply
+The @value{xpms} does not automatically become aware of your package simply
 because there is a new subtree.  If any package, including your own,
 requires any of your files, it must be explicitly added to the compile
 environment or loads/requires that search load-path will fail.  The
@@ -1288,7 +1284,7 @@ changes that need to be made are
 
 @table @strong
 @item an entry in @code{package-directory-map}
-This tells the @xpms{} which distribution (currently
+This tells the @value{xpms} which distribution (currently
 @samp{xemacs-packages} or @samp{mule-packages}) your package is found
 in.  It then looks in the distribution subdirectory whose name is the
 same as the package's.
@@ -1300,13 +1296,13 @@ tree, eg, in @file{packages/xemacs-packages/$(PACKAGE)/lisp}.
 @end table
 
 This only needs to be done once, when the package is first added to the
-@xpms{}.  (Well, when you randomly change the subdirectory layout, too.)
+@value{xpms}.  (Well, when you randomly change the subdirectory layout, too.)
 Your changes to @file{package-compile.el} must be cleared and checked in
 by the XEmacs Package Release Engineer before your package will build
 correctly from a fresh checkout.
 
 This is unfortunate; it works pretty well once set up, but can cause
-confusion when first building a package in the @xpms{} context.  In
+confusion when first building a package in the @value{xpms} context.  In
 particular, if the @code{package-directory-map} entry for a required
 package, including the package itself, is not found, the necessary
 requires will not be executed by @file{package-compile.el}.  If
@@ -1333,7 +1329,7 @@ Some random notes on documenting your package.
 Do write a Texinfo file.  It's not that hard to do basically, and even
 using the more advanced features of Texinfo soon become natural.  For a
 start, just grab the template @file{Samples/package.texi} from the
-@xpms{} source tree, and drop your current README into the Top node.  At
+@value{xpms} source tree, and drop your current README into the Top node.  At
 least this way your documentation will be accessible from the standard
 Info readers.  Next, try to add lots of cross-referencing and logical
 markup, and then node structure.
