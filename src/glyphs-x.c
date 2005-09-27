@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004, 2005 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1999, 2000, 2002 Andy Piper
 
@@ -724,6 +724,159 @@ maybe_recolor_cursor (Lisp_Object image_instance, Lisp_Object foreground,
 /*                        color pixmap functions                        */
 /************************************************************************/
 
+/* Create a pointer from a color pixmap. */
+
+static void
+image_instance_convert_to_pointer (Lisp_Image_Instance *ii,
+				   Lisp_Object instantiator,
+				   Lisp_Object pointer_fg,
+				   Lisp_Object pointer_bg)
+{
+  Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
+  Display *dpy = DEVICE_X_DISPLAY (XDEVICE (device));
+  Screen *xs = DefaultScreenOfDisplay (dpy);
+  int npixels = IMAGE_INSTANCE_X_NPIXELS (ii);
+  unsigned long *pixels = IMAGE_INSTANCE_X_PIXELS (ii);
+  Pixmap pixmap = IMAGE_INSTANCE_X_PIXMAP (ii);
+  Pixmap mask = (Pixmap) IMAGE_INSTANCE_PIXMAP_MASK (ii);
+  Colormap cmap;
+  XColor fg, bg;
+  int i;
+  int xhot = 0, yhot = 0;
+  int w, h;
+
+  if (INTP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)))
+    xhot = XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii));
+  if (INTP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
+    yhot = XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii));
+  w = IMAGE_INSTANCE_PIXMAP_WIDTH (ii);
+  h = IMAGE_INSTANCE_PIXMAP_HEIGHT (ii);
+
+#if 1
+  /* Although I haven't found it documented yet, it appears that pointers are
+     always colored via the default window colormap... Sigh. */
+  cmap = DefaultColormap (dpy, DefaultScreen (dpy));
+  IMAGE_INSTANCE_X_COLORMAP (ii) = cmap;
+#else
+  cmap = IMAGE_INSTANCE_X_COLORMAP (ii);
+#endif
+
+  check_pointer_sizes (xs, w, h, instantiator);
+
+  /* If the loaded pixmap has colors allocated (meaning it came from an
+     XPM file), then use those as the default colors for the cursor we
+     create.  Otherwise, default to pointer_fg and pointer_bg.
+  */
+  if (npixels >= 2)
+    {
+      /* With an XBM file, it's obvious which bit is foreground
+	 and which is background, or rather, it's implicit: in
+	 an XBM file, a 1 bit is foreground, and a 0 bit is
+	 background.
+
+	 XCreatePixmapCursor() assumes this property of the
+	 pixmap it is called with as well; the `foreground'
+	 color argument is used for the 1 bits.
+
+	 With an XPM file, it's tricker, since the elements of
+	 the pixmap don't represent FG and BG, but are actual
+	 pixel values.  So we need to figure out which of those
+	 pixels is the foreground color and which is the
+	 background.  We do it by comparing RGB and assuming
+	 that the darker color is the foreground.  This works
+	 with the result of xbmtopbm|ppmtoxpm, at least.
+
+	 It might be nice if there was some way to tag the
+	 colors in the XPM file with whether they are the
+	 foreground - perhaps with logical color names somehow?
+
+	 Once we have decided which color is the foreground, we
+	 need to ensure that that color corresponds to a `1' bit
+	 in the Pixmap.  The XPM library wrote into the (1-bit)
+	 pixmap with XPutPixel, which will ignore all but the
+	 least significant bit.
+
+	 This means that a 1 bit in the image corresponds to
+	 `fg' only if `fg.pixel' is odd.
+
+	 (This also means that the image will be all the same
+	 color if both `fg' and `bg' are odd or even, but we can
+	 safely assume that that won't happen if the XPM file is
+	 sensible I think.)
+
+	 The desired result is that the image use `1' to
+	 represent the foreground color, and `0' to represent
+	 the background color.  So, we may need to invert the
+	 image to accomplish this; we invert if fg is
+	 odd. (Remember that WhitePixel and BlackPixel are not
+	 necessarily 1 and 0 respectively, though I think it
+	 might be safe to assume that one of them is always 1
+	 and the other is always 0.  We also pretty much need to
+	 assume that one is even and the other is odd.)
+      */
+
+      fg.pixel = pixels[0];	/* pick a pixel at random. */
+      bg.pixel = fg.pixel;
+      for (i = 1; i < npixels; i++) /* Look for an "other" pixel value.*/
+	{
+	  bg.pixel = pixels[i];
+	  if (fg.pixel != bg.pixel)
+	    break;
+	}
+
+      /* If (fg.pixel == bg.pixel) then probably something has
+	 gone wrong, but I don't think signalling an error would
+	 be appropriate. */
+
+      XQueryColor (dpy, cmap, &fg);
+      XQueryColor (dpy, cmap, &bg);
+
+      /* If the foreground is lighter than the background, swap them.
+	 (This occurs semi-randomly, depending on the ordering of the
+	 color list in the XPM file.)
+      */
+      {
+	unsigned short fg_total = ((fg.red / 3) + (fg.green / 3)
+				   + (fg.blue / 3));
+	unsigned short bg_total = ((bg.red / 3) + (bg.green / 3)
+				   + (bg.blue / 3));
+	if (fg_total > bg_total)
+	  {
+	    XColor swap;
+	    swap = fg;
+	    fg = bg;
+	    bg = swap;
+	  }
+      }
+
+      /* If the fg pixel corresponds to a `0' in the bitmap, invert it.
+	 (This occurs (only?) on servers with Black=0, White=1.)
+      */
+      if ((fg.pixel & 1) == 0)
+	{
+	  XGCValues gcv;
+	  GC gc;
+	  gcv.function = GXxor;
+	  gcv.foreground = 1;
+	  gc = XCreateGC (dpy, pixmap, (GCFunction | GCForeground),
+			  &gcv);
+	  XFillRectangle (dpy, pixmap, gc, 0, 0, w, h);
+	  XFreeGC (dpy, gc);
+	}
+    }
+  else
+    {
+      generate_cursor_fg_bg (device, &pointer_fg, &pointer_bg,
+			     &fg, &bg);
+      IMAGE_INSTANCE_PIXMAP_FG (ii) = pointer_fg;
+      IMAGE_INSTANCE_PIXMAP_BG (ii) = pointer_bg;
+    }
+
+  IMAGE_INSTANCE_X_CURSOR (ii) =
+    XCreatePixmapCursor
+    (dpy, pixmap, mask, &fg, &bg, xhot, yhot);
+}
+
 /* Initialize an image instance from an XImage.
 
    DEST_MASK specifies the mask of allowed image types.
@@ -740,9 +893,7 @@ maybe_recolor_cursor (Lisp_Object image_instance, Lisp_Object foreground,
 
    If this fails, signal an error.  INSTANTIATOR is only used
    in the error message.
-
-   #### This should be able to handle conversion into `pointer'.
-   Use the same code as for `xpm'. */
+*/
 
 static void
 init_image_instance_from_x_image (Lisp_Image_Instance *ii,
@@ -752,23 +903,31 @@ init_image_instance_from_x_image (Lisp_Image_Instance *ii,
 				  unsigned long *pixels,
 				  int npixels,
 				  int slices,
-				  Lisp_Object instantiator)
+				  Lisp_Object instantiator,
+				  Lisp_Object pointer_fg,
+				  Lisp_Object pointer_bg)
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Display *dpy;
   GC gc;
   Drawable d;
   Pixmap pixmap;
+  enum image_instance_type type;
 
   if (!DEVICE_X_P (XDEVICE (device)))
     gui_error ("Not an X device", device);
 
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
-  d = XtWindow(DEVICE_XT_APP_SHELL (XDEVICE (device)));
+  d = XtWindow (DEVICE_XT_APP_SHELL (XDEVICE (device)));
 
-  if (!(dest_mask & IMAGE_COLOR_PIXMAP_MASK))
+  if (dest_mask & IMAGE_COLOR_PIXMAP_MASK)
+    type = IMAGE_COLOR_PIXMAP;
+  else if (dest_mask & IMAGE_POINTER_MASK)
+    type = IMAGE_POINTER;
+  else
     incompatible_image_types (instantiator, dest_mask,
-			      IMAGE_COLOR_PIXMAP_MASK);
+			      IMAGE_COLOR_PIXMAP_MASK
+			      | IMAGE_POINTER_MASK);
 
   pixmap = XCreatePixmap (dpy, d, ximage->width,
 			  ximage->height, ximage->depth);
@@ -802,6 +961,10 @@ init_image_instance_from_x_image (Lisp_Image_Instance *ii,
   IMAGE_INSTANCE_X_COLORMAP (ii) = cmap;
   IMAGE_INSTANCE_X_PIXELS (ii) = pixels;
   IMAGE_INSTANCE_X_NPIXELS (ii) = npixels;
+
+  if (type == IMAGE_POINTER)
+    image_instance_convert_to_pointer (ii, instantiator, pointer_fg,
+				       pointer_bg);
 }
 
 static void
@@ -846,6 +1009,8 @@ x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 				   Binbyte *eimage,
 				   int dest_mask,
 				   Lisp_Object instantiator,
+				   Lisp_Object pointer_fg,
+				   Lisp_Object pointer_bg,
 				   Lisp_Object UNUSED (domain))
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
@@ -864,14 +1029,16 @@ x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 	{
 	  if (pixtbl)
 	    xfree (pixtbl, unsigned long *);
-	  signal_image_error("EImage to XImage conversion failed", instantiator);
+	  signal_image_error ("EImage to XImage conversion failed",
+			      instantiator);
 	}
 
       /* Now create the pixmap and set up the image instance */
       if (slice == 0)
 	init_image_instance_from_x_image (ii, ximage, dest_mask,
 					  cmap, pixtbl, npixels, slices,
-					  instantiator);
+					  instantiator, pointer_fg,
+					  pointer_bg);
       else
 	image_instance_add_x_image (ii, ximage, slice, instantiator);
 
@@ -1236,20 +1403,20 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
      always colored via the default window colormap... Sigh. */
   if (type == IMAGE_POINTER)
     {
-      cmap = DefaultColormap(dpy, DefaultScreen(dpy));
+      cmap = DefaultColormap (dpy, DefaultScreen (dpy));
       depth = DefaultDepthOfScreen (xs);
       visual = DefaultVisualOfScreen (xs);
     }
   else
     {
-      cmap = DEVICE_X_COLORMAP (XDEVICE(device));
-      depth = DEVICE_X_DEPTH (XDEVICE(device));
-      visual = DEVICE_X_VISUAL (XDEVICE(device));
+      cmap = DEVICE_X_COLORMAP (XDEVICE (device));
+      depth = DEVICE_X_DEPTH (XDEVICE (device));
+      visual = DEVICE_X_VISUAL (XDEVICE (device));
     }
 #else
-  cmap = DEVICE_X_COLORMAP (XDEVICE(device));
-  depth = DEVICE_X_DEPTH (XDEVICE(device));
-  visual = DEVICE_X_VISUAL (XDEVICE(device));
+  cmap = DEVICE_X_COLORMAP (XDEVICE (device));
+  depth = DEVICE_X_DEPTH (XDEVICE (device));
+  visual = DEVICE_X_VISUAL (XDEVICE (device));
 #endif
 
   x_initialize_pixmap_image_instance (ii, 1, type);
@@ -1382,145 +1549,17 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       break;
 
     case IMAGE_COLOR_PIXMAP:
-      {
-	IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = depth;
-      }
+      IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = depth;
       break;
 
     case IMAGE_POINTER:
-      {
-	int npixels = xpmattrs.npixels;
-	Pixel *pixels = xpmattrs.pixels;
-	XColor fg, bg;
-	int i;
-	int xhot = 0, yhot = 0;
-
-	if (xpmattrs.valuemask & XpmHotspot)
-	  {
-	    xhot = xpmattrs.x_hotspot;
-	    IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (xpmattrs.x_hotspot);
-	  }
-	if (xpmattrs.valuemask & XpmHotspot)
-	  {
-	    yhot = xpmattrs.y_hotspot;
-	    IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (xpmattrs.y_hotspot);
-	  }
-	check_pointer_sizes (xs, w, h, instantiator);
-
-	/* If the loaded pixmap has colors allocated (meaning it came from an
-	   XPM file), then use those as the default colors for the cursor we
-	   create.  Otherwise, default to pointer_fg and pointer_bg.
-	   */
-	if (npixels >= 2)
-	  {
-	    /* With an XBM file, it's obvious which bit is foreground
-	       and which is background, or rather, it's implicit: in
-	       an XBM file, a 1 bit is foreground, and a 0 bit is
-	       background.
-
-	       XCreatePixmapCursor() assumes this property of the
-	       pixmap it is called with as well; the `foreground'
-	       color argument is used for the 1 bits.
-
-	       With an XPM file, it's tricker, since the elements of
-	       the pixmap don't represent FG and BG, but are actual
-	       pixel values.  So we need to figure out which of those
-	       pixels is the foreground color and which is the
-	       background.  We do it by comparing RGB and assuming
-	       that the darker color is the foreground.  This works
-	       with the result of xbmtopbm|ppmtoxpm, at least.
-
-	       It might be nice if there was some way to tag the
-	       colors in the XPM file with whether they are the
-	       foreground - perhaps with logical color names somehow?
-
-	       Once we have decided which color is the foreground, we
-	       need to ensure that that color corresponds to a `1' bit
-	       in the Pixmap.  The XPM library wrote into the (1-bit)
-	       pixmap with XPutPixel, which will ignore all but the
-	       least significant bit.
-
-	       This means that a 1 bit in the image corresponds to
-	       `fg' only if `fg.pixel' is odd.
-
-	       (This also means that the image will be all the same
-	       color if both `fg' and `bg' are odd or even, but we can
-	       safely assume that that won't happen if the XPM file is
-	       sensible I think.)
-
-	       The desired result is that the image use `1' to
-	       represent the foreground color, and `0' to represent
-	       the background color.  So, we may need to invert the
-	       image to accomplish this; we invert if fg is
-	       odd. (Remember that WhitePixel and BlackPixel are not
-	       necessarily 1 and 0 respectively, though I think it
-	       might be safe to assume that one of them is always 1
-	       and the other is always 0.  We also pretty much need to
-	       assume that one is even and the other is odd.)
-	       */
-
-	    fg.pixel = pixels[0];	/* pick a pixel at random. */
-	    bg.pixel = fg.pixel;
-	    for (i = 1; i < npixels; i++) /* Look for an "other" pixel value.*/
-	      {
-		bg.pixel = pixels[i];
-		if (fg.pixel != bg.pixel)
-		  break;
-	      }
-
-	    /* If (fg.pixel == bg.pixel) then probably something has
-	       gone wrong, but I don't think signalling an error would
-	       be appropriate. */
-
-	    XQueryColor (dpy, cmap, &fg);
-	    XQueryColor (dpy, cmap, &bg);
-
-	    /* If the foreground is lighter than the background, swap them.
-	       (This occurs semi-randomly, depending on the ordering of the
-	       color list in the XPM file.)
-	       */
-	    {
-	      unsigned short fg_total = ((fg.red / 3) + (fg.green / 3)
-					 + (fg.blue / 3));
-	      unsigned short bg_total = ((bg.red / 3) + (bg.green / 3)
-					 + (bg.blue / 3));
-	      if (fg_total > bg_total)
-		{
-		  XColor swap;
-		  swap = fg;
-		  fg = bg;
-		  bg = swap;
-		}
-	    }
-
-	    /* If the fg pixel corresponds to a `0' in the bitmap, invert it.
-	       (This occurs (only?) on servers with Black=0, White=1.)
-	       */
-	    if ((fg.pixel & 1) == 0)
-	      {
-		XGCValues gcv;
-		GC gc;
-		gcv.function = GXxor;
-		gcv.foreground = 1;
-		gc = XCreateGC (dpy, pixmap, (GCFunction | GCForeground),
-				&gcv);
-		XFillRectangle (dpy, pixmap, gc, 0, 0, w, h);
-		XFreeGC (dpy, gc);
-	      }
-	  }
-	else
-	  {
-	    generate_cursor_fg_bg (device, &pointer_fg, &pointer_bg,
-				   &fg, &bg);
-	    IMAGE_INSTANCE_PIXMAP_FG (ii) = pointer_fg;
-	    IMAGE_INSTANCE_PIXMAP_BG (ii) = pointer_bg;
-	  }
-
-	IMAGE_INSTANCE_X_CURSOR (ii) =
-	  XCreatePixmapCursor
-	    (dpy, pixmap, mask, &fg, &bg, xhot, yhot);
-      }
-
+      if (xpmattrs.valuemask & XpmHotspot)
+	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (xpmattrs.x_hotspot);
+      if (xpmattrs.valuemask & XpmHotspot)
+	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (xpmattrs.y_hotspot);
+      
+      image_instance_convert_to_pointer (ii, instantiator, pointer_fg,
+					 pointer_bg);
       break;
 
     default:
@@ -1986,7 +2025,7 @@ x_colorize_image_instance (Lisp_Object image_instance,
     Display *dpy = DEVICE_X_DISPLAY (XDEVICE (IMAGE_INSTANCE_DEVICE (p)));
     Drawable draw = XtWindow(DEVICE_XT_APP_SHELL (XDEVICE (IMAGE_INSTANCE_DEVICE (p))));
     Dimension d = DEVICE_X_DEPTH (XDEVICE (IMAGE_INSTANCE_DEVICE (p)));
-    Pixmap new = XCreatePixmap (dpy, draw,
+    Pixmap new_ = XCreatePixmap (dpy, draw,
 				IMAGE_INSTANCE_PIXMAP_WIDTH (p),
 				IMAGE_INSTANCE_PIXMAP_HEIGHT (p), d);
     XColor color;
@@ -1996,13 +2035,13 @@ x_colorize_image_instance (Lisp_Object image_instance,
     gcv.foreground = color.pixel;
     color = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (background));
     gcv.background = color.pixel;
-    gc = XCreateGC (dpy, new, GCBackground|GCForeground, &gcv);
-    XCopyPlane (dpy, IMAGE_INSTANCE_X_PIXMAP (p), new, gc, 0, 0,
+    gc = XCreateGC (dpy, new_, GCBackground|GCForeground, &gcv);
+    XCopyPlane (dpy, IMAGE_INSTANCE_X_PIXMAP (p), new_, gc, 0, 0,
 		IMAGE_INSTANCE_PIXMAP_WIDTH (p),
 		IMAGE_INSTANCE_PIXMAP_HEIGHT (p),
 		0, 0, 1);
     XFreeGC (dpy, gc);
-    IMAGE_INSTANCE_X_PIXMAP (p) = new;
+    IMAGE_INSTANCE_X_PIXMAP (p) = new_;
     IMAGE_INSTANCE_PIXMAP_DEPTH (p) = d;
     IMAGE_INSTANCE_PIXMAP_FG (p) = foreground;
     IMAGE_INSTANCE_PIXMAP_BG (p) = background;

@@ -1,5 +1,5 @@
 /* Define console object for XEmacs.
-   Copyright (C) 1996, 2002, 2003 Ben Wing
+   Copyright (C) 1996, 2002, 2003, 2005 Ben Wing
 
 This file is part of XEmacs.
 
@@ -252,6 +252,8 @@ struct console_methods
 						  unsigned char *eimage,
 						  int dest_mask,
 						  Lisp_Object instantiator,
+						  Lisp_Object pointer_fg,
+						  Lisp_Object pointer_bg,
 						  Lisp_Object domain);
   Lisp_Object (*locate_pixmap_file_method) (Lisp_Object file_method);
   int (*colorize_image_instance_method) (Lisp_Object image_instance,

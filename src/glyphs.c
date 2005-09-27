@@ -1,7 +1,7 @@
 /* Generic glyph/image implementation + display tables
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004 Ben Wing
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004, 2005 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1998, 1999, 2000 Andy Piper
 
@@ -24,8 +24,24 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* Written by Ben Wing and Chuck Thompson. Heavily modified /
-   rewritten by Andy Piper. */
+/* This file mostly written by Ben Wing, with some code by Chuck Thompson.
+   Heavily modified / rewritten by Andy Piper.
+
+   Earliest glyph support, Jamie Zawinski for 19.8?
+   subwindow support added by Chuck Thompson
+   additional XPM support added by Chuck Thompson
+   initial X-Face support added by Stig
+   Majorly rewritten/restructured by Ben Wing, including creation of
+   glyph and image-instance objects, for 19.12/19.13
+   GIF/JPEG/etc. support originally in this file -- see glyph-eimage.c
+   Pointer/icon overhaul, more restructuring by Ben Wing for 19.14
+   Many changes for color work and optimizations by Jareth Hein for 21.0
+   Switch of GIF/JPEG/PNG to new EImage intermediate code by Jareth Hein for 21.0
+   TIFF code by Jareth Hein for 21.0
+   Generalization for ms-windows by Andy Piper for 21.0
+   TODO:
+   Convert images.el to C and stick it in here?
+ */
 
 #include <config.h>
 #include "lisp.h"
@@ -232,12 +248,12 @@ Given an IMAGE-INSTANTIATOR-FORMAT, return non-nil if it is valid.
 If LOCALE is non-nil then the format is checked in that locale.
 If LOCALE is nil the current console is used.
 
-Valid formats are some subset of 'nothing, 'string, 'formatted-string,
-'xpm, 'xbm, 'xface, 'gif, 'jpeg, 'png, 'tiff, 'cursor-font, 'font,
-'autodetect, 'subwindow, 'inherit, 'mswindows-resource, 'bmp,
-'native-layout, 'layout, 'label, 'tab-control, 'tree-view,
-'progress-gauge, 'scrollbar, 'combo-box, 'edit-field, 'button,
-'widget, 'pointer, and 'text, depending on how XEmacs was compiled.
+Valid formats are some subset of `nothing', `string', `formatted-string',
+`xpm', `xbm', `xface', `gif', `jpeg', `png', `tiff', `cursor-font', `font',
+`autodetect', `subwindow', `inherit', `mswindows-resource', `bmp',
+`native-layout', `layout', `label', `tab-control', `tree-view',
+`progress-gauge', `scrollbar', `combo-box', `edit-field', `button',
+`widget', `pointer', and `text', depending on how XEmacs was compiled.
 */
        (image_instantiator_format, locale))
 {
@@ -437,12 +453,12 @@ find_keyword_in_vector (Lisp_Object vector, Lisp_Object keyword)
 }
 
 static Lisp_Object
-find_instantiator_differences (Lisp_Object new, Lisp_Object old)
+find_instantiator_differences (Lisp_Object new_, Lisp_Object old)
 {
   Lisp_Object alist = Qnil;
-  Lisp_Object *elt = XVECTOR_DATA (new);
+  Lisp_Object *elt = XVECTOR_DATA (new_);
   Lisp_Object *old_elt = XVECTOR_DATA (old);
-  int len = XVECTOR_LENGTH (new);
+  int len = XVECTOR_LENGTH (new_);
   struct gcpro gcpro1;
 
   /* If the vector length has changed then consider everything
@@ -450,7 +466,7 @@ find_instantiator_differences (Lisp_Object new, Lisp_Object old)
      disappeared or been added, but this code is only used as an
      optimization anyway so lets not bother. */
   if (len != XVECTOR_LENGTH (old))
-    return new;
+    return new_;
 
   GCPRO1 (alist);
 
@@ -1450,8 +1466,9 @@ valid_image_instance_type_p (Lisp_Object type)
 
 DEFUN ("valid-image-instance-type-p", Fvalid_image_instance_type_p, 1, 1, 0, /*
 Given an IMAGE-INSTANCE-TYPE, return non-nil if it is valid.
-Valid types are some subset of 'nothing, 'text, 'mono-pixmap, 'color-pixmap,
-'pointer, 'subwindow, and 'widget, depending on how XEmacs was compiled.
+Valid types are some subset of `nothing', `text', `mono-pixmap',
+`color-pixmap', `pointer', `subwindow', and `widget', depending on how
+XEmacs was compiled.
 */
        (image_instance_type))
 {
@@ -1550,27 +1567,27 @@ DATA is an image instantiator, which describes the image; see
 DEST-TYPES should be a list of allowed image instance types that can
 be generated.  The recognized image instance types are
 
-'nothing
+`nothing'
   Nothing is displayed.
-'text
+`text'
   Displayed as text.  The foreground and background colors and the
   font of the text are specified independent of the pixmap.  Typically
   these attributes will come from the face of the surrounding text,
   unless a face is specified for the glyph in which the image appears.
-'mono-pixmap
+`mono-pixmap'
   Displayed as a mono pixmap (a pixmap with only two colors where the
   foreground and background can be specified independent of the pixmap;
   typically the pixmap assumes the foreground and background colors of
   the text around it, unless a face is specified for the glyph in which
   the image appears).
-'color-pixmap
+`color-pixmap'
   Displayed as a color pixmap.
-'pointer
+`pointer'
   Used as the mouse pointer for a window.
-'subwindow
+`subwindow'
   A child window that is treated as an image.  This allows (e.g.)
   another program to be responsible for drawing into the window.
-'widget
+`widget'
   A child window that contains a window-system widget, e.g. a push
   button, text field, or slider.
 
@@ -1648,8 +1665,8 @@ Return non-nil if OBJECT is an image instance.
 
 DEFUN ("image-instance-type", Fimage_instance_type, 1, 1, 0, /*
 Return the type of the given image instance.
-The return value will be one of 'nothing, 'text, 'mono-pixmap,
-'color-pixmap, 'pointer, 'subwindow, or 'widget.
+The return value will be one of `nothing', `text', `mono-pixmap',
+`color-pixmap', `pointer', `subwindow', or `widget'.
 */
        (image_instance))
 {
@@ -1964,7 +1981,7 @@ instance is a mono pixmap; otherwise, the same image instance is returned.
 */
        (image_instance, foreground, background))
 {
-  Lisp_Object new;
+  Lisp_Object new_;
   Lisp_Object device;
 
   CHECK_IMAGE_INSTANCE (image_instance);
@@ -1978,20 +1995,20 @@ instance is a mono pixmap; otherwise, the same image instance is returned.
 
   /* #### There should be a copy_image_instance(), which calls a
      device-specific method to copy the window-system subobject. */
-  new = allocate_image_instance (XIMAGE_INSTANCE_DOMAIN (image_instance),
+  new_ = allocate_image_instance (XIMAGE_INSTANCE_DOMAIN (image_instance),
 				 Qnil, Qnil);
 #ifdef MC_ALLOC
-  copy_lrecord (XIMAGE_INSTANCE (new), XIMAGE_INSTANCE (image_instance));
+  copy_lrecord (XIMAGE_INSTANCE (new_), XIMAGE_INSTANCE (image_instance));
 #else /* not MC_ALLOC */
-  copy_lcrecord (XIMAGE_INSTANCE (new), XIMAGE_INSTANCE (image_instance));
+  copy_lcrecord (XIMAGE_INSTANCE (new_), XIMAGE_INSTANCE (image_instance));
 #endif /* not MC_ALLOC */
   /* note that if this method returns non-zero, this method MUST
      copy any window-system resources, so that when one image instance is
      freed, the other one is not hosed. */
-  if (!DEVMETH (XDEVICE (device), colorize_image_instance, (new, foreground,
+  if (!DEVMETH (XDEVICE (device), colorize_image_instance, (new_, foreground,
 							    background)))
     return image_instance;
-  return new;
+  return new_;
 }
 
 
@@ -3942,7 +3959,7 @@ information.
 
 DEFUN ("glyph-type", Fglyph_type, 1, 1, 0, /*
 Return the type of the given glyph.
-The return value will be one of 'buffer, 'pointer, or 'icon.
+The return value will be one of `buffer', `pointer', or `icon'.
 */
        (glyph))
 {
@@ -3962,7 +3979,7 @@ glyph_image_instance (Lisp_Object glyph, Lisp_Object domain,
 {
   Lisp_Object specifier = GLYPH_IMAGE (XGLYPH (glyph));
 
-  /* This can never return Qunbound.  All glyphs have 'nothing as
+  /* This can never return Qunbound.  All glyphs have `nothing' as
      a fallback. */
   Lisp_Object image_instance = specifier_instance (specifier, Qunbound,
 						   domain, errb, no_quit, 0,
@@ -5401,6 +5418,8 @@ image_instantiator_format_create (void)
 
   IIFORMAT_VALID_KEYWORD (xface, Q_data, check_valid_string);
   IIFORMAT_VALID_KEYWORD (xface, Q_file, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (xface, Q_mask_data, check_valid_xbm_inline);
+  IIFORMAT_VALID_KEYWORD (xface, Q_mask_file, check_valid_string);
   IIFORMAT_VALID_KEYWORD (xface, Q_hotspot_x, check_valid_int);
   IIFORMAT_VALID_KEYWORD (xface, Q_hotspot_y, check_valid_int);
   IIFORMAT_VALID_KEYWORD (xface, Q_foreground, check_valid_string);

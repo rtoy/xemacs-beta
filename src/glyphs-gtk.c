@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001, 2002, 2004 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2005 Ben Wing
    Copyright (C) 1995 Sun Microsystems
 
 This file is part of XEmacs.
@@ -677,6 +677,51 @@ maybe_recolor_cursor (Lisp_Object UNUSED (image_instance),
 /*                        color pixmap functions                        */
 /************************************************************************/
 
+/* Create a pointer from a color pixmap. */
+
+static void
+image_instance_convert_to_pointer (Lisp_Image_Instance *ii,
+				   Lisp_Object instantiator,
+				   Lisp_Object pointer_fg,
+				   Lisp_Object pointer_bg)
+{
+  Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
+  GdkPixmap *pixmap = IMAGE_INSTANCE_X_PIXMAP (ii);
+  GdkPixmap *mask = (GdkPixmap *) IMAGE_INSTANCE_PIXMAP_MASK (ii);
+  GdkColor fg, bg;
+  int xhot = 0, yhot = 0;
+  int w, h;
+
+  if (INTP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)))
+    xhot = XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii));
+  if (INTP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
+    yhot = XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii));
+  w = IMAGE_INSTANCE_PIXMAP_WIDTH (ii);
+  h = IMAGE_INSTANCE_PIXMAP_HEIGHT (ii);
+
+  check_pointer_sizes (w, h, instantiator);
+
+  /* If the loaded pixmap has colors allocated (meaning it came from an
+     XPM file), then use those as the default colors for the cursor we
+     create.  Otherwise, default to pointer_fg and pointer_bg.
+  */
+  if (DEVICE_GTK_DEPTH (XDEVICE (device)) > 1)
+    {
+      warn_when_safe (Qunimplemented, Qnotice,
+		      "GTK does not support XPM cursors...\n");
+      IMAGE_INSTANCE_GTK_CURSOR (ii) = gdk_cursor_new (GDK_COFFEE_MUG);
+    }
+  else
+    {
+      generate_cursor_fg_bg (device, &pointer_fg, &pointer_bg,
+			     &fg, &bg);
+      IMAGE_INSTANCE_PIXMAP_FG (ii) = pointer_fg;
+      IMAGE_INSTANCE_PIXMAP_BG (ii) = pointer_bg;
+      IMAGE_INSTANCE_GTK_CURSOR (ii) =
+	gdk_cursor_new_from_pixmap (pixmap, mask, &fg, &bg, xhot, yhot);
+    }
+}
+
 /* Initialize an image instance from an XImage.
 
    DEST_MASK specifies the mask of allowed image types.
@@ -705,21 +750,29 @@ init_image_instance_from_gdk_image (struct Lisp_Image_Instance *ii,
 				    unsigned long *pixels,
 				    int npixels,
 				    int slices,
-				    Lisp_Object instantiator)
+				    Lisp_Object instantiator,
+				    Lisp_Object pointer_fg,
+				    Lisp_Object pointer_bg)
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   GdkGC *gc;
   GdkWindow *d;
   GdkPixmap *pixmap;
+  enum image_instance_type type;
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
     gui_error ("Not a Gtk device", device);
 
   d = GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (device)));
 
-  if (!(dest_mask & IMAGE_COLOR_PIXMAP_MASK))
+  if (dest_mask & IMAGE_COLOR_PIXMAP_MASK)
+    type = IMAGE_COLOR_PIXMAP;
+  else if (dest_mask & IMAGE_POINTER_MASK)
+    type = IMAGE_POINTER;
+  else
     incompatible_image_types (instantiator, dest_mask,
-			      IMAGE_COLOR_PIXMAP_MASK);
+			      IMAGE_COLOR_PIXMAP_MASK
+			      | IMAGE_POINTER_MASK);
 
   pixmap = gdk_pixmap_new (d, gdk_image->width, gdk_image->height, gdk_image->depth);
   if (!pixmap)
@@ -750,6 +803,10 @@ init_image_instance_from_gdk_image (struct Lisp_Image_Instance *ii,
   IMAGE_INSTANCE_GTK_COLORMAP (ii) = cmap;
   IMAGE_INSTANCE_GTK_PIXELS (ii) = pixels;
   IMAGE_INSTANCE_GTK_NPIXELS (ii) = npixels;
+
+  if (type == IMAGE_POINTER)
+    image_instance_convert_to_pointer (ii, instantiator, pointer_fg,
+				       pointer_bg);
 }
 
 #if 0
@@ -831,6 +888,8 @@ gtk_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
 				     unsigned char *eimage, 
 				     int dest_mask,
 				     Lisp_Object instantiator,
+				     Lisp_Object pointer_fg,
+				     Lisp_Object pointer_bg,
 				     Lisp_Object UNUSED (domain))
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
@@ -856,7 +915,8 @@ gtk_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
 	/* Now create the pixmap and set up the image instance */
 	init_image_instance_from_gdk_image (ii, gdk_image, dest_mask,
 					    cmap, pixtbl, npixels, slices,
-					    instantiator);
+					    instantiator, pointer_fg,
+					    pointer_bg);
       else
 	image_instance_add_gdk_image (ii, gdk_image, slice, instantiator);
 
@@ -1269,38 +1329,13 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       break;
 
     case IMAGE_POINTER:
-      {
-	GdkColor fg, bg;
-	unsigned int xhot, yhot;
-
-	/* #### Gtk does not give us access to the hotspots of a pixmap */
-	xhot = yhot = 1;
-	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (xhot);
-	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (yhot);
-
-	check_pointer_sizes (w, h, instantiator);
-
-	/* If the loaded pixmap has colors allocated (meaning it came from an
-	   XPM file), then use those as the default colors for the cursor we
-	   create.  Otherwise, default to pointer_fg and pointer_bg.
-	*/
-	if (depth > 1)
-	  {
-	    warn_when_safe (Qunimplemented, Qnotice,
-			    "GTK does not support XPM cursors...\n");
-	    IMAGE_INSTANCE_GTK_CURSOR (ii) = gdk_cursor_new (GDK_COFFEE_MUG);
-	  }
-	else
-	  {
-	    generate_cursor_fg_bg (device, &pointer_fg, &pointer_bg,
-				   &fg, &bg);
-	    IMAGE_INSTANCE_PIXMAP_FG (ii) = pointer_fg;
-	    IMAGE_INSTANCE_PIXMAP_BG (ii) = pointer_bg;
-	    IMAGE_INSTANCE_GTK_CURSOR (ii) =
-	      gdk_cursor_new_from_pixmap (pixmap, mask, &fg, &bg, xhot, yhot);
-	  }
-      }
-
+      if (xpmattrs.valuemask & XpmHotspot)
+	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (xpmattrs.x_hotspot);
+      if (xpmattrs.valuemask & XpmHotspot)
+	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (xpmattrs.y_hotspot);
+      
+      image_instance_convert_to_pointer (ii, instantiator, pointer_fg,
+					 pointer_bg);
       break;
 
     default:

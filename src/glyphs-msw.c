@@ -1,6 +1,6 @@
 /* mswindows-specific glyph objects.
    Copyright (C) 1998, 1999, 2000 Andy Piper.
-   Copyright (C) 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -436,6 +436,8 @@ mswindows_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 					   Binbyte *eimage,
 					   int dest_mask,
 					   Lisp_Object instantiator,
+					   Lisp_Object UNUSED (pointer_fg),
+					   Lisp_Object UNUSED (pointer_bg),
 					   Lisp_Object domain)
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);

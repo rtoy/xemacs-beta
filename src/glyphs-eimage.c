@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994, 1998 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001, 2002, 2004 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2005 Ben Wing
    Copyright (C) 1995 Sun Microsystems
 
 This file is part of XEmacs.
@@ -24,22 +24,16 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* Original author: Jamie Zawinski for 19.8
-   font-truename stuff added by Jamie Zawinski for 19.10
-   subwindow support added by Chuck Thompson
-   additional XPM support added by Chuck Thompson
-   initial X-Face support added by Stig
-   rewritten/restructured by Ben Wing for 19.12/19.13
+/* Originally part of glyphs.c.
+
    GIF/JPEG support added by Ben Wing for 19.14
    PNG support added by Bill Perry for 19.14
    Improved GIF/JPEG support added by Bill Perry for 19.14
    Cleanup/simplification of error handling by Ben Wing for 19.14
-   Pointer/icon overhaul, more restructuring by Ben Wing for 19.14
    GIF support changed to external Gifreader lib by Jareth Hein for 21.0
    Many changes for color work and optimizations by Jareth Hein for 21.0
    Switch of GIF/JPEG/PNG to new EImage intermediate code by Jareth Hein for 21.0
    TIFF code by Jareth Hein for 21.0
-   Generalization for ms-windows by Andy Piper for 21.0
    TODO:
    Convert images.el to C and stick it in here?
  */
@@ -325,8 +319,7 @@ my_jpeg_output_message (j_common_ptr cinfo)
    source code and from gif_instantiate() */
 static void
 jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		  Lisp_Object UNUSED (pointer_fg),
-		  Lisp_Object UNUSED (pointer_bg),
+		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		  int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -500,7 +493,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		 init_image_instance_from_eimage,
 		 (ii, cinfo.output_width, cinfo.output_height, 1,
 		  unwind.eimage, dest_mask,
-		  instantiator, domain));
+		  instantiator, pointer_fg, pointer_bg, domain));
 
   /* Step 7: Finish decompression */
 
@@ -614,8 +607,7 @@ gif_error_func (const Extbyte *err_str, VoidPtr error_ptr)
 
 static void
 gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		 Lisp_Object UNUSED (pointer_fg),
-		 Lisp_Object UNUSED (pointer_bg),
+		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		 int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -729,8 +721,9 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     /* now instantiate */
     MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain),
 		   init_image_instance_from_eimage,
-		   (ii, width, height, unwind.giffile->ImageCount, unwind.eimage, dest_mask,
-		    instantiator, domain));
+		   (ii, width, height, unwind.giffile->ImageCount,
+		    unwind.eimage, dest_mask, instantiator, pointer_fg,
+		    pointer_bg, domain));
   }
 
   /* We read the gif successfully. If we have more than one slice then
@@ -864,8 +857,7 @@ png_instantiate_unwind (Lisp_Object unwind_obj)
 
 static void
 png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		 Lisp_Object UNUSED (pointer_fg),
-		 Lisp_Object UNUSED (pointer_bg),
+		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		 int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -1046,7 +1038,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain),
 		 init_image_instance_from_eimage,
 		 (ii, width, height, 1, unwind.eimage, dest_mask,
-		  instantiator, domain));
+		  instantiator, pointer_fg, pointer_bg, domain));
 
   /* This will clean up everything else. */
   unbind_to (speccount);
@@ -1242,8 +1234,7 @@ tiff_warning_func (const char *module, const char *fmt, ...)
 
 static void
 tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		  Lisp_Object UNUSED (pointer_fg),
-		  Lisp_Object UNUSED (pointer_bg),
+		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		  int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -1336,7 +1327,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain),
 		 init_image_instance_from_eimage,
 		 (ii, width, height, 1, unwind.eimage, dest_mask,
-		  instantiator, domain));
+		  instantiator, pointer_fg, pointer_bg, domain));
 
   unbind_to (speccount);
 }

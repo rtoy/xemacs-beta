@@ -1,5 +1,38 @@
 2005-09-27  Ben Wing  <ben@xemacs.org>
 
+	* glyphs.c:
+	* glyphs.c (find_instantiator_differences):
+	* glyphs.c (Fvalid_image_instance_type_p):
+	* glyphs.c (Fimage_instance_type):
+	* glyphs.c (Fcolorize_image_instance):
+	* glyphs.c (Fglyph_type):
+	* glyphs.c (glyph_image_instance):
+	* glyphs.c (image_instantiator_format_create):
+	* glyphs-eimage.c:
+	* glyphs-eimage.c (jpeg_instantiate):
+	* glyphs-eimage.c (gif_instantiate):
+	* glyphs-eimage.c (png_instantiate):
+	* glyphs-eimage.c (tiff_instantiate):
+	* glyphs-x.c:
+	* glyphs-x.c (image_instance_convert_to_pointer):
+	* glyphs-x.c (init_image_instance_from_x_image):
+	* glyphs-x.c (x_init_image_instance_from_eimage):
+	* glyphs-x.c (x_xpm_instantiate):
+	* glyphs-x.c (x_colorize_image_instance):
+	* glyphs-gtk.c:
+	* glyphs-gtk.c (image_instance_convert_to_pointer):
+	* glyphs-gtk.c (init_image_instance_from_gdk_image):
+	* glyphs-gtk.c (gtk_init_image_instance_from_eimage):
+	* glyphs-gtk.c (gtk_xpm_instantiate):
+	* glyphs-msw.c:
+	* glyphs-msw.c (mswindows_init_image_instance_from_eimage):
+	* console-impl.h:
+	* console-impl.h (struct console_methods):
+	Allow all kinds of color images (GIF, JPEG, ...) to be mouse pointers.
+	new -> new_, 'foo -> `foo'.
+
+2005-09-27  Ben Wing  <ben@xemacs.org>
+
 	* Makefile.in.in (cppflags):
 	Always include SRC, so <config.h> in lib-src always works.
 
