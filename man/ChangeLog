@@ -1,5 +1,11 @@
 2005-09-27  Adrian Aichner  <adrian@xemacs.org>
 
+	* lispref/compile.texi (Compilation Options): Lowercase SYMBOL
+	argument in `byte-compile-print-gensym' documentation, as
+	suggested by Stephen.
+
+2005-09-27  Adrian Aichner  <adrian@xemacs.org>
+
 	* lispref/packaging.texi: Get file to compile with teinfmt.el.
 	* lispref/packaging.texi (Packaging): Ditto.
 	* lispref/packaging.texi (Package Overview): Ditto.

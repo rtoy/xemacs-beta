@@ -503,7 +503,7 @@ Default: @code{nil} when Emacs version is 20 or above, otherwise
 @defvar byte-compile-print-gensym
 When non-@code{nil}, the compiler may generate code that creates unique
 symbols at run-time.  This is achieved by printing uninterned symbols
-using the @code{#:@var{SYMBOL}} notation, so that they will be read
+using the @code{#:@var{symbol}} notation, so that they will be read
 uninterned when run.
 
 With this feature, code that uses uninterned symbols in macros will
