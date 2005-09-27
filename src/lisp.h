@@ -506,7 +506,7 @@ typedef EMACS_INT Memxpos;
    them to be classes and using operator overloading.  Unfortunately this
    is a huge pain in the ass because C++ doesn't strongly distinguish
    "bool" and "size_t" from int.  The problem is especially bad with "bool"
-   -- if you want to be able to say 'if (len--)' where len is e.g. a
+   -- if you want to be able to say `if (len--)' where len is e.g. a
    Bytecount, you need to declare a conversion operator to bool(); and
    since bool is just an alias for int, you suddenly get tons and tons of
    ambiguities, which need to be resolved by lots of laborious declarations
@@ -1049,11 +1049,15 @@ MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
   ((x) ? (void) 0 : assert_failed (file, line, #x))
 #elif defined (DEBUG_XEMACS)
 # define assert(x) ((x) ? (void) 0 : (void) ABORT ())
-# define assert_with_message(x, msg) ((x) ? (void) 0 : (void) ABORT ())
+# define assert_with_message(x, msg) assert (x)
 # define assert_at_line(x, file, line) assert (x)
 #else
-# define assert(x) ((void) 0)
-# define assert_with_message(x, msg)
+/* This used to be ((void) (0)) but that triggers lots of unused variable
+   warnings.  It's pointless to force all that code to be rewritten, with
+   added ifdefs.  Any reasonable compiler will eliminate an expression with
+   no effects. */
+# define assert(x) ((void) (x))
+# define assert_with_message(x, msg) assert (x)
 # define assert_at_line(x, file, line) assert (x)
 #endif
 

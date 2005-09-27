@@ -1686,7 +1686,7 @@ wcscmp_ascii (const wchar_t *s1, const Ascbyte *s2)
 {
   while (*s1 && *s2)
     {
-      if (*s1 != *s2)
+      if (*s1 != (wchar_t) *s2)
        break;
       s1++, s2++;
     }
@@ -1809,7 +1809,7 @@ do									 \
 									 \
 	    if (dstp + len <= dstend)					 \
 	      {								 \
-		set_itext_ichar_fmt (dstp, ch, dstfmt, dstobj);	 \
+		(void) set_itext_ichar_fmt (dstp, ch, dstfmt, dstobj);	 \
 		dstp += len;						 \
 	      }								 \
 	    else							 \

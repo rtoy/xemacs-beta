@@ -1314,7 +1314,8 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		      Ibyte *dataint;
 		      len = strlen (data);
 		      EXTERNAL_TO_C_STRING (data, dataint, Qfile_name);
-		      hurl = dnd_url_hexify_string (dataint, "file:");
+		      hurl = dnd_url_hexify_string (dataint,
+						    (const Ibyte *) "file:");
 		      l_item = build_intstring (hurl);
 		      l_dndlist = Fcons (l_item, l_dndlist);
 		      data += len + 1;
@@ -3144,14 +3145,14 @@ Information is displayed on stderr.  Currently defined values are:
 
 static XtInitProc orig_shell_init_proc;
 
-static void ShellVisualPatch(Widget wanted, Widget new,
+static void ShellVisualPatch(Widget wanted, Widget new_,
 			     ArgList args, Cardinal *num_args)
 {
   Widget p;
-  ShellWidget w = (ShellWidget) new;
+  ShellWidget w = (ShellWidget) new_;
 
   /* first, call the original setup */
-  (*orig_shell_init_proc)(wanted, new, args, num_args);
+  (*orig_shell_init_proc)(wanted, new_, args, num_args);
 
   /* if the visual isn't explicitly set, grab it from the nearest shell ancestor */
   if (w->shell.visual == CopyFromParent) {

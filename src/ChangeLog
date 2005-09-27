@@ -1,3 +1,16 @@
+2005-09-27  Ben Wing  <ben@xemacs.org>
+
+	* text.c (wcscmp_ascii):
+	* text.c (COPY_TEXT_BETWEEN_FORMATS):
+	* event-Xt.c (x_event_to_emacs_event):
+	* event-Xt.c (ShellVisualPatch):
+	* lisp.h:
+	* lisp.h (assert_with_message):
+	* number-gmp.c (bigfloat_to_string):
+	* number-gmp.h:
+	Fix compilation warnings.  A couple of changes of new -> new_,
+	'foo -> `foo'.
+
 2005-09-26  Ben Wing  <ben@xemacs.org>
 
 	* specifier.c:

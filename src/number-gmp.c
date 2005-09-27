@@ -66,8 +66,8 @@ bigfloat_to_string(mpf_t f, int base)
       /* Computerized scientific notation */
       /* We need room for a radix point, format identifier, and exponent */
       const int space = (expt < 0)
-        ? (int)(log (-expt) / log (base)) + 3
-        : (int)(log (expt) / log (base)) + 2;
+        ? (int)(log ((double) (-expt)) / log ((double) base)) + 3
+        : (int)(log ((double) expt) / log ((double) base)) + 2;
       XREALLOC_ARRAY (str, CIbyte, len + space);
       memmove (&str[neg + 2], &str[neg + 1], len - neg);
       str[len + 1] = 'l';

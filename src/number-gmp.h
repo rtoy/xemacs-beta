@@ -35,7 +35,15 @@ Boston, MA 02111-1307, USA.  */
 #undef __GNUC__
 #endif
 
+#ifdef _MSC_VER
+/* "unary minus operator applied to unsigned type, result still unsigned":
+   Occurs on line 1596 of gmp.h in version 4.1.4. */
+#pragma warning ( disable : 4146 )
+#endif
 #include <gmp.h>
+#ifdef _MSC_VER
+#pragma warning ( default : 4146 )
+#endif
 
 typedef mpz_t bignum;
 typedef mpq_t ratio;
