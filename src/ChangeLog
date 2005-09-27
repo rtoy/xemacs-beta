@@ -1,5 +1,10 @@
 2005-09-27  Ben Wing  <ben@xemacs.org>
 
+	* Makefile.in.in (cppflags):
+	Always include SRC, so <config.h> in lib-src always works.
+
+2005-09-27  Ben Wing  <ben@xemacs.org>
+
 	* sysdep.c (emacs_set_tty):
 	* sysdep.c (qxe_link):
 	* sysdep.c (qxe_rename):

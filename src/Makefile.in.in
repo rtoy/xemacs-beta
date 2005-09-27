@@ -380,7 +380,7 @@ mo_file = $(LIB_SRC)/emacs.mo
 ## -Demacs is needed to make some files produce the correct version
 ## for use in Emacs.
 
-cppflags = $(CPPFLAGS) -Demacs -I. $(c_switch_all)
+cppflags = $(CPPFLAGS) -Demacs -I. -I$(SRC) $(c_switch_all)
 cflags   = $(CFLAGS) $(cppflags)
 #if defined (WIN32_NATIVE)
 ldflags  = $(LDFLAGS) -mwindows -e _mainCRTStartup $(ld_switch_all) $(ld_dynamic_link_flags)
