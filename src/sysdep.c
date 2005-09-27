@@ -1458,19 +1458,19 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
       }
     else
       {
-	struct termios new;
+	struct termios new_;
 
 	/* Get the current settings, and see if they're what we asked for.  */
-	tcgetattr (fd, &new);
+	tcgetattr (fd, &new_);
 	/* We cannot use memcmp on the whole structure here because under
 	 * aix386 the termios structure has some reserved field that may
 	 * not be filled in.
 	 */
-	if (   new.c_iflag == settings->main.c_iflag
-	    && new.c_oflag == settings->main.c_oflag
-	    && new.c_cflag == settings->main.c_cflag
-	    && new.c_lflag == settings->main.c_lflag
-	    && memcmp(new.c_cc, settings->main.c_cc, NCCS) == 0)
+	if (   new_.c_iflag == settings->main.c_iflag
+	    && new_.c_oflag == settings->main.c_oflag
+	    && new_.c_cflag == settings->main.c_cflag
+	    && new_.c_lflag == settings->main.c_lflag
+	    && memcmp(new_.c_cc, settings->main.c_cc, NCCS) == 0)
 	  break;
 	else
 	  continue;
@@ -3293,28 +3293,28 @@ qxe_chmod (const Ibyte *path, mode_t mode)
 
 #if defined (HAVE_LINK)
 int
-qxe_link (const Ibyte *existing, const Ibyte *new)
+qxe_link (const Ibyte *existing, const Ibyte *new_)
 {
 #ifdef WIN32_NATIVE
-  return mswindows_link (existing, new);
+  return mswindows_link (existing, new_);
 #else /* not WIN32_NATIVE */
   Extbyte *existingout, *newout;
   PATHNAME_CONVERT_OUT (existing, existingout);
-  PATHNAME_CONVERT_OUT (new, newout);
+  PATHNAME_CONVERT_OUT (new_, newout);
   return link (existingout, newout);
 #endif /* WIN32_NATIVE */
 }
 #endif /* defined (HAVE_LINK) */
 
 int
-qxe_rename (const Ibyte *old, const Ibyte *new)
+qxe_rename (const Ibyte *old, const Ibyte *new_)
 {
 #ifdef WIN32_NATIVE
-  return mswindows_rename (old, new);
+  return mswindows_rename (old, new_);
 #else /* not WIN32_NATIVE */
   Extbyte *oldout, *newout;
   PATHNAME_CONVERT_OUT (old, oldout);
-  PATHNAME_CONVERT_OUT (new, newout);
+  PATHNAME_CONVERT_OUT (new_, newout);
   return rename (oldout, newout);
 #endif /* WIN32_NATIVE */
 }
@@ -3594,12 +3594,12 @@ dup2 (int oldd, int newd)
     signal_ferror_with_frob (Qfile_error, lisp_strerror (errno),
 			     "can't dup2 (%i, %i)", oldd, newd);
 #else
-  fd = dup (old);
+  fd = dup (oldd);
   if (fd == -1)
     return -1;
-  if (fd == new)
-    return new;
-  ret = dup2 (old, new);
+  if (fd == newd)
+    return newd;
+  ret = dup2 (oldd, newd);
   retry_close (fd);
   return ret;
 #endif /*  F_DUPFD */

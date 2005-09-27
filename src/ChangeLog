@@ -1,5 +1,17 @@
 2005-09-27  Ben Wing  <ben@xemacs.org>
 
+	* sysdep.c (emacs_set_tty):
+	* sysdep.c (qxe_link):
+	* sysdep.c (qxe_rename):
+	* sysdep.c (dup2):
+	Fix bit-rotted dup2 code.  Also new -> new_.
+	* nt.c:
+	* nt.c (mswindows_closedir):
+	* nt.c (mswindows_link):
+	Fix possible use of uninitialized var.  Also new -> new_.
+
+2005-09-27  Ben Wing  <ben@xemacs.org>
+
 	* text.c (wcscmp_ascii):
 	* text.c (COPY_TEXT_BETWEEN_FORMATS):
 	* event-Xt.c (x_event_to_emacs_event):

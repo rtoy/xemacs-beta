@@ -1,6 +1,6 @@
 /* Utility and Unix shadow routines under MS Windows (WIN32_NATIVE defined).
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -834,7 +834,7 @@ mswindows_opendir (const Ibyte *filename)
 int
 mswindows_closedir (DIR *dirp)
 {
-  int retval;
+  int retval = -1;
 
   /* If we have a find-handle open, close it.  */
   if (dir_find_handle != INVALID_HANDLE_VALUE)
@@ -1081,13 +1081,13 @@ mswindows_access (const Ibyte *path, int mode)
 /* #### NT 5.0 has a function CreateHardLink to do this directly,
    and it may do more things. */
 int
-mswindows_link (const Ibyte *old, const Ibyte *new)
+mswindows_link (const Ibyte *old, const Ibyte *new_)
 {
   HANDLE fileh;
   int result = -1;
   Extbyte *oldext;
 
-  if (old == NULL || new == NULL)
+  if (old == NULL || new_ == NULL)
     {
       errno = ENOENT;
       return -1;
@@ -1114,7 +1114,7 @@ mswindows_link (const Ibyte *old, const Ibyte *new)
 	  WCHAR wbuffer[_MAX_PATH];	/* extra space for link name */
 	} data;
 
-      TO_EXTERNAL_FORMAT (C_STRING, new,
+      TO_EXTERNAL_FORMAT (C_STRING, new_,
 			  ALLOCA, (newuni, wlen), Qmswindows_unicode);
       if (wlen / sizeof (WCHAR) < _MAX_PATH)
 	{
