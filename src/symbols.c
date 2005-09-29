@@ -3474,6 +3474,7 @@ check_sane_subr (Lisp_Subr *subr, Lisp_Object sym)
 #endif
 
 #ifdef HAVE_SHLIB
+#ifndef MC_ALLOC
 /*
  * If we are not in a pure undumped Emacs, we need to make a duplicate of
  * the subr. This is because the only time this function will be called
@@ -3533,6 +3534,45 @@ do {									      \
     subr = newsubr;							      \
   }									      \
 } while (0)
+#else /* MC_ALLOC */
+/* 
+ * If we have the new allocator enabled, we do not need to make a
+ * duplicate of the subr.  The new allocator already does allocate all
+ * subrs in Lisp-accessible memory rather than have it in the static
+ * subr struct.
+ *
+ * NOTE: The DOC pointer is not set here as described above.
+ */   
+#define check_module_subr(subr)						      \
+do {									      \
+  if (initialized) {							      \
+    Lisp_Object f;							      \
+									      \
+    if (subr->min_args < 0)						      \
+      signal_ferror (Qdll_error, "%s min_args (%hd) too small",		      \
+		     subr_name (subr), subr->min_args);			      \
+    if (subr->min_args > SUBR_MAX_ARGS)					      \
+      signal_ferror (Qdll_error, "%s min_args (%hd) too big (max = %d)",      \
+		     subr_name (subr), subr->min_args, SUBR_MAX_ARGS);	      \
+									      \
+    if (subr->max_args != MANY &&					      \
+	subr->max_args != UNEVALLED)					      \
+      {									      \
+	/* Need to fix lisp.h and eval.c if SUBR_MAX_ARGS too small */	      \
+	if (subr->max_args > SUBR_MAX_ARGS)				      \
+	  signal_ferror (Qdll_error, "%s max_args (%hd) too big (max = %d)",  \
+			 subr_name (subr), subr->max_args, SUBR_MAX_ARGS);    \
+	if (subr->min_args > subr->max_args)				      \
+	  signal_ferror (Qdll_error, "%s min_args (%hd) > max_args (%hd)",    \
+			 subr_name (subr), subr->min_args, subr->max_args);   \
+      }									      \
+									      \
+    f = XSYMBOL (sym)->function;					      \
+    if (!UNBOUNDP (f) && (!CONSP (f) || !EQ (XCAR (f), Qautoload)))	      \
+      signal_ferror (Qdll_error, "Attempt to redefine %s", subr_name (subr)); \
+  }									      \
+} while (0)
+#endif /* MC_ALLOC */
 #else /* ! HAVE_SHLIB */
 #define check_module_subr(subr)
 #endif

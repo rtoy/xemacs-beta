@@ -1,3 +1,8 @@
+2005-09-26  Marcus Crestani  <crestani@xemacs.org>
+
+	* symbols.c (check_module_subr): Fix new allocator's module
+	support: remove duplicating the subr.
+
 2005-09-27  Ben Wing  <ben@xemacs.org>
 
 	* glyphs.c:
