@@ -143,7 +143,7 @@ xemacs_c_alloca (unsigned int size)
      was allocated from deeper in the stack than currently. */
 
   {
-    register header *hp;	/* Traverses linked list.  */
+    header *hp;	/* Traverses linked list.  */
 
     for (hp = last_alloca_header; hp != NULL;)
       if ((STACK_DIR > 0 && hp->h.deep > depth)
@@ -177,20 +177,20 @@ xemacs_c_alloca (unsigned int size)
 
   {
 #ifdef emacs
-    register pointer new = xmalloc (sizeof (header) + size);
+    register pointer new_ = xmalloc (sizeof (header) + size);
 #else
-    register pointer new = malloc (sizeof (header) + size);
+    register pointer new_ = malloc (sizeof (header) + size);
 #endif
     /* Address of header.  */
 
-    ((header *) new)->h.next = last_alloca_header;
-    ((header *) new)->h.deep = depth;
+    ((header *) new_)->h.next = last_alloca_header;
+    ((header *) new_)->h.deep = depth;
 
-    last_alloca_header = (header *) new;
+    last_alloca_header = (header *) new_;
 
     /* User storage begins just after header.  */
 
-    return (pointer) ((char *) new + sizeof (header));
+    return (pointer) ((char *) new_ + sizeof (header));
   }
 }
 

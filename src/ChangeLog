@@ -1,3 +1,33 @@
+2005-09-29  Ben Wing  <ben@xemacs.org>
+
+	* alloca.c (xemacs_c_alloca):
+	Don't declare a variable `register' when it can be passed to
+	xfree(), which may take its address.
+
+	new -> new_.
+
+2005-09-27  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c (garbage_collect_1):
+	Avoid use of reserved C++ `catch'.
+	
+	* alloc.c:
+	* alloc.c (gc_plist_hack):
+	* alloc.c (HACK_O_MATIC):
+	* alloc.c (Fgarbage_collect):
+	* alloc.c (Ftotal_memory_usage):
+	* alloc.c (Flisp_object_memory_usage):
+	* alloc.c (recompute_need_to_garbage_collect):
+	* alloc.c (common_init_alloc_early):
+	* alloc.c (syms_of_alloc):
+	* alloc.c (vars_of_alloc):
+	Rename underused `memory-usage' to `total-memory-usage'.
+	Add `lisp-object-memory-usage'.  Reimplement `gc-cons-percentage'
+	to be a percentage of total Lisp object allocation (not total
+	memory of all sorts, which is hard to calculate in any case) and
+	give it a preliminary value of 40%.  Use EMACS_INT instead of
+	int in a couple of places.
+
 2005-09-26  Marcus Crestani  <crestani@xemacs.org>
 
 	* symbols.c (check_module_subr): Fix new allocator's module
