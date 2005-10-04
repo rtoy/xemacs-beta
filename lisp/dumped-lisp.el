@@ -218,7 +218,7 @@ in dumped-lisp.el and is not itself listed.")
 	   ))
 	    
 	;; Specialized language support
-       (when (featurep '(and mule CANNA)) "mule/canna-leim")
+       (when (featurep 'mule) "mule/canna-leim")
 ;; Egg/Its is now a package
 ;	(when (featurep '(and mule wnn))
 ;         '("egg-leim" "egg-kwnn-leim" "egg-cwnn-leim"))

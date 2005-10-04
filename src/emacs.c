@@ -1641,8 +1641,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_WNN
       syms_of_mule_wnn ();
 #endif
-#ifdef HAVE_CANNA
-      syms_of_mule_canna ();
+#if defined(HAVE_CANNA) && !defined (HAVE_SHLIB)
+      syms_of_canna_api ();
 #endif /* HAVE_CANNA */
 #endif /* MULE */
 
@@ -2210,8 +2210,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_WNN
       vars_of_mule_wnn ();
 #endif
-#ifdef HAVE_CANNA
-      vars_of_mule_canna ();
+#if defined(HAVE_CANNA) && !defined (HAVE_SHLIB)
+      vars_of_canna_api ();
 #endif /* HAVE_CANNA */
 #endif /* MULE */
 

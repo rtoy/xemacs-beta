@@ -1,3 +1,24 @@
+2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* canna/Makefile.in.in (MODVER): Bump to 0.5.
+
+	* canna/canna-api.c:
+	* canna/Makefile.in.in (MODNAME,SRCS):
+	Rename module from canna_api to canna-api.
+
+2005-09-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* canna: New module.
+
+	* canna/canna_api.c: Move from $srcdir/src/mule-canna.c.  Add module
+	initialization function and some boilerplate.  Change name to
+	canna_api to reflect changed role.
+
+	* canna/configure.ac:
+	* canna/Makefile.in.in:
+	* canna/install-sh:
+	Standard module boilerplate, adapted to Canna.
+
 2005-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.22 "cucumber" is released.

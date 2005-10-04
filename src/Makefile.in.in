@@ -196,8 +196,8 @@ ldap_objs=$(BLDMODULES)/ldap/eldap.o
 mule_objs=mule-ccl.o mule-charset.o mule-coding.o
 #endif
 
-#ifdef HAVE_CANNA
-mule_canna_objs=mule-canna.o
+#if defined(HAVE_CANNA) && !defined(HAVE_SHLIB)
+mule_canna_objs=$(BLDMODULES)/canna/canna-api.o
 #endif
 
 #ifdef HAVE_WNN

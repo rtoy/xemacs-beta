@@ -153,6 +153,9 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#ifdef HAVE_SHLIB
+#include "emodules.h"
+#endif
 
 #include "buffer.h"
 #include "file-coding.h"
@@ -165,9 +168,10 @@ Boston, MA 02111-1307, USA.  */
 #else /* !CANNA2 */
 #include "iroha/jrkanji.h"
 #include "iroha/RK.h"
-extern int (*jrBeepFunc) (void);
 #endif /* !CANNA2 */
 extern char *jrKanjiError;
+
+extern int (*jrBeepFunc) (void);
 
 /* #### is this global really necessary? */
 #define KEYTOSTRSIZE 2048
@@ -442,9 +446,9 @@ If nil is specified for each arg, the default value will be used.
 
 #ifdef KC_SETAPPNAME
 #ifndef CANNA_MULE
-      wcKanjiControl (0, KC_SETAPPNAME, "nemacs");
+      jrKanjiControl (0, KC_SETAPPNAME, "nemacs");
 #else /* CANNA_MULE */
-      wcKanjiControl (0, KC_SETAPPNAME, "mule");
+      jrKanjiControl (0, KC_SETAPPNAME, "mule");
 #endif /* CANNA_MULE */
 #endif /* KC_SETAPPNAME */
 
@@ -1035,8 +1039,52 @@ static Fixnum canna_key_Cntrl_Down;
 Lisp_Object VCANNA; /* by MORIOKA Tomohiko <morioka@jaist.ac.jp>
 		          1996/6/7 */
 
+/*
+ * Each dynamically loaded Emacs module is given a name at compile
+ * time. This is a short name, and must be a valid part of a C
+ * identifier.  This name is used to construct the name of several
+ * functions which must appear in the module source code.
+ * The first such function, modules_of_XXXX, should load in any dependent
+ * modules. This function is optional, and the module will still load if
+ * it is not present in the module.
+ *
+ * The second function, which is NOT optional, is syms_of_XXXX, in which
+ * all functions that the module will be provided are declared. This
+ * function will contain calls to DEFSUBR().
+ *
+ * The third function, which is also NOT optional, is vars_of_XXXX, in
+ * which you declare all variables that the module provides. This
+ * function will contain calls to DEFVAR_LISP(), DEFVAR_BOOL() etc.
+ *
+ * When declaring functions and variables in the syms_of_XXXX and
+ * vars_of_XXXX functions, you use the exact same syntax that you
+ * would as if this module were being compiled into the pure Emacs.
+ *
+ * The fourth function, which is optional, is unload_XXXX, in which actions
+ * that must be taken to unload the module are listed.  XEmacs will unbind
+ * functions and variables for you.  Anything else that must be done should
+ * appear in this function.
+ *
+ * All four of these functions are declared as void functions,
+ * taking no parameters. Since this sample module is called 'sample',
+ * the functions will be named 'modules_of_sample', 'syms_of_sample',
+ * 'vars_of_sample', and 'unload_sample'.
+ */
+
+#if 0
 void
-syms_of_mule_canna (void)
+modules_of_canna_api (void)
+{
+  /*
+   * This function isn't actually required as we will not be loading
+   * in any dependent modules, but if we were, we would do something like:
+   * emodules_load ("dependent.ell", "canna2", "1.0.0");
+   */
+}
+#endif
+
+void
+syms_of_canna_api (void)
 {
   DEFSUBR (Fcanna_key_proc);
   DEFSUBR (Fcanna_initialize);
@@ -1059,7 +1107,7 @@ syms_of_mule_canna (void)
 }
 
 void
-vars_of_mule_canna (void)
+vars_of_canna_api (void)
 {
   DEFVAR_LISP ("CANNA", &VCANNA);		/* hir@nec, 1992.5.21 */
   VCANNA = Qt;					/* hir@nec, 1992.5.21 */
@@ -1783,8 +1831,23 @@ For canna
 */ );
   canna_key_Cntrl_Down = IROHA_KEY_Cntrl_Down;
 
-  Fprovide(intern("CANNA"));
+  Fprovide (intern ("CANNA"));
 }
+
+#if 0
+#ifdef HAVE_SHLIB
+void unload_canna_api (void);
+void
+unload_canna_api (void)
+{
+  /* We don't need to do anything here in the sample case.  However, if you
+     create any new types with INIT_LRECORD_IMPLEMENTATION (sample_type), then
+     UNDEF_LRECORD_IMPLEMENTATION (sample_type) must appear here.  Also, any
+     symbols declared with DEFSYMBOL (Qsample_var), or one of its variants,
+     must have a corresponding unstaticpro_nodump (&Qsample_var) here. */
+}
+#endif
+#endif
 
 #ifdef CANNA_MULE
 /* To handle MULE internal code and EUC.

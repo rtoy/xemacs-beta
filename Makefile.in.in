@@ -313,7 +313,8 @@ ${SUBDIR}: ${SUBDIR_MAKEFILES} ${GENERATED_HEADERS} FRC
 	cd ./$@ && $(MAKE) $(RECURSIVE_MAKE_ARGS) all
 
 ## Building modules depends on ellcc, found in lib-src.
-modules/sample modules/ldap modules/zlib modules/base64 modules/postgresql: lib-src
+modules/sample modules/ldap modules/zlib modules/base64: lib-src
+modules/postgresql modules/canna: lib-src
 
 Makefile: ${srcdir}/Makefile.in.in config.status
 	./config.status

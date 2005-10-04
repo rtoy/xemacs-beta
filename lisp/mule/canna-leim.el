@@ -35,10 +35,22 @@
 (globally-declare-boundp 'canna:*japanese-mode*)
 (globally-declare-fboundp '(canna canna-toggle-japanese-mode))
 
+;; use (locate-file "canna/canna-api" module-load-path module-extensions)
+;; to locate the module without loading it.
+;; then we could autoload canna-activate and dump and/or autoload:
+;; (and (locate-file "canna/canna-api" module-load-path module-extensions)
+;;      (locate-library "canna")
+;;      (register-input-method 'japanese-canna "Japanese" 'canna-activate nil
+;;       "Canna - a kana to kanji conversion program"))
+
 (defun canna-activate (&optional name)
-  (if (featurep 'CANNA)
-      (require 'canna)
-    (error "Canna is not built into this XEmacs"))
+  ;; XEmacs 21.5.10 and later have 3-argument require.
+  (unless (require 'CANNA "canna/canna-api" 'no-error)
+    (error 'file-error
+	   "No Canna API support!? See M-x describe-installation & C-h v module-load-path."))
+  (unless (require 'canna nil 'no-error)
+    (error 'file-error
+	   "Canna LISP support not found.  Is the mule-base package missing?"))
   (setq inactivate-current-input-method-function 'canna-inactivate)
   (unless (featurep 'leim-canna-initialized)
     (canna)

@@ -1,3 +1,20 @@
+2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule/canna-leim.el: Rename canna_api to canna-api.
+
+2005-09-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule/canna-leim.el (canna-activate): Fix typo in error symbol.
+	Improve docstring.
+
+2005-09-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule/canna-leim.el: Add comment on autoloading strategy.
+	(canna-activate): Handle CANNA in ELL.
+
+	* dumped-lisp.el (preloaded-file-list): Remove dependency of
+	canna-leim on CANNA.  Canna may be an ELL.
+
 2005-09-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* mule/mule-cmds.el (input-method-alist, register-input-method):

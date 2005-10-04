@@ -1,3 +1,19 @@
+2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Makefile.in.in (mule_canna_objs): Use correct name of .o.
+
+2005-09-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Makefile.in.in (HAVE_CANNA): Handle Canna as a module.
+
+	* emacs.c (main_1): Update Canna initializers to *_canna_api names.
+
+	* mule-canna.c: Moved to modules/canna/canna_api.c.
+
+	* symsinit.h (syms_of_mule_canna):
+	(vars_of_mule_canna):
+	Rename to *_of_canna_api.
+
 2005-09-29  Ben Wing  <ben@xemacs.org>
 
 	* alloca.c (xemacs_c_alloca):

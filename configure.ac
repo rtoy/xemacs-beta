@@ -4201,6 +4201,10 @@ if test "$enable_default_eol_detection" = "yes"; then
   AC_DEFINE(HAVE_DEFAULT_EOL_DETECTION)
 fi
 
+dnl initialize _libs variables for possible modules at top level
+canna_libs=
+wnn_libs=
+
 if test "$enable_mule" = "yes" ; then
   AC_CHECKING([for Mule-related features])
   AC_DEFINE(MULE)
@@ -4277,6 +4281,7 @@ if test "$enable_mule" = "yes" ; then
   fi
 
   dnl Autodetect canna
+  dnl canna_libs variable is initialized at toplevel
   canna_includes_found=no
   if test "$with_canna" != "no"; then
     AC_CHECK_HEADER(canna/jrkanji.h,canna_includes_found=yes)
@@ -4298,8 +4303,14 @@ if test "$enable_mule" = "yes" ; then
   test -z "$with_canna" && with_canna=yes
   if test "$with_canna" = "yes"; then
     AC_DEFINE(HAVE_CANNA)
-    XE_PREPEND(-lcanna -lRKC, libs_x)
+    XE_APPEND(modules/canna, MAKE_SUBDIR)
+    need_modules_common=yes
+    if test "$with_modules" = "yes"; then
+      XE_APPEND(modules/canna, INSTALL_ARCH_DEP_SUBDIR)
+    fi
+    XE_PREPEND(-lcanna -lRKC, canna_libs)
   fi
+AC_SUBST(canna_libs)
 
 else dnl "$enable_mule" = "no"
   for feature in xim canna wnn; do
@@ -5150,7 +5161,7 @@ dnl Use XE_SPACE instead of plain assignment statements to remove extraneous bla
 if test "$enable_modules" = "yes"; then
   ld_libs_module=
 else
-  XE_SPACE(ld_libs_module, $ldap_libs $postgresql_libs)
+  XE_SPACE(ld_libs_module, $ldap_libs $postgresql_libs $canna_libs)
 fi
 
 XE_SPACE(CFLAGS, $CFLAGS)
