@@ -1,7 +1,7 @@
 /* Storage allocation and gc for XEmacs Lisp interpreter.
    Copyright (C) 1985-1998 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -94,6 +94,8 @@ static Fixnum debug_allocation_backtrace_length;
 /* Number of bytes of consing done since the last gc */
 static EMACS_INT consing_since_gc;
 EMACS_UINT total_consing;
+EMACS_INT total_gc_usage;
+int total_gc_usage_set;
 
 int need_to_garbage_collect;
 int need_to_check_c_alloca;
@@ -5525,13 +5527,13 @@ garbage_collect_1 (void)
   }
 
   {
-    struct catchtag *catch;
-    for (catch = catchlist; catch; catch = catch->next)
+    struct catchtag *c;
+    for (c = catchlist; c; c = c->next)
       {
-	mark_object (catch->tag);
-	mark_object (catch->val);
-	mark_object (catch->actual_tag);
-	mark_object (catch->backtrace);
+	mark_object (c->tag);
+	mark_object (c->val);
+	mark_object (c->actual_tag);
+	mark_object (c->backtrace);
       }
   }
 
@@ -5769,7 +5771,7 @@ Garbage collection happens automatically if you cons more than
 /* Debugging aids.  */
 
 static Lisp_Object
-gc_plist_hack (const Ascbyte *name, int value, Lisp_Object tail)
+gc_plist_hack (const Ascbyte *name, EMACS_INT value, Lisp_Object tail)
 {
   /* C doesn't have local functions (or closures, or GC, or readable syntax,
      or portable numeric datatypes, or bit-vectors, or characters, or
@@ -5778,9 +5780,10 @@ gc_plist_hack (const Ascbyte *name, int value, Lisp_Object tail)
 }
 
 #define HACK_O_MATIC(type, name, pl) do {				\
-  int s = 0;								\
+  EMACS_INT s = 0;							\
   struct type##_block *x = current_##type##_block;			\
   while (x) { s += sizeof (*x) + MALLOC_OVERHEAD; x = x->prev; }	\
+  object_usage += s;							\
   (pl) = gc_plist_hack ((name), s, (pl));				\
 } while (0)
 
@@ -5800,7 +5803,10 @@ Garbage collection happens automatically if you cons more than
   Lisp_Object pl = Qnil;
   int i;
   int gc_count_vector_total_size = 0;
+  EMACS_INT object_usage = 0;
+
   garbage_collect_1 ();
+
 
   for (i = 0; i < lrecord_type_count; i++)
     {
@@ -5818,6 +5824,7 @@ Garbage collection happens automatically if you cons more than
 
           sprintf (buf, "%s-storage", name);
           pl = gc_plist_hack (buf, lcrecord_stats[i].bytes_in_use, pl);
+	  object_usage += lcrecord_stats[i].bytes_in_use;
 	  /* Okay, simple pluralization check for `symbol-value-varalias' */
 	  if (name[len-1] == 's')
 	    sprintf (buf, "%ses-freed", name);
@@ -5895,6 +5902,10 @@ Garbage collection happens automatically if you cons more than
   pl = gc_plist_hack ("conses-free", gc_count_num_cons_freelist, pl);
   pl = gc_plist_hack ("conses-used", gc_count_num_cons_in_use, pl);
 
+  /* Record total usage for purposes of determining next GC */
+  total_gc_usage = object_usage;
+  total_gc_usage_set = 1;
+
   /* The things we do for backwards-compatibility */
   return
     list6 (Fcons (make_int (gc_count_num_cons_in_use),
@@ -5934,13 +5945,27 @@ The value is divided by 1024 to make sure it will fit in a lisp integer.
 }
 #endif
 
-DEFUN ("memory-usage", Fmemory_usage, 0, 0, 0, /*
+DEFUN ("total-memory-usage", Ftotal_memory_usage, 0, 0, 0, /*
 Return the total number of bytes used by the data segment in XEmacs.
 This may be helpful in debugging XEmacs's memory usage.
+NOTE: This may or may not be accurate!  It is hard to determine this
+value in a system-independent fashion.
 */
        ())
 {
   return make_int (total_data_usage ());
+}
+
+DEFUN ("lisp-object-memory-usage", Flisp_object_memory_usage, 0, 0, 0, /*
+Return the total number of bytes used for object storage in XEmacs.
+This may be helpful in debugging XEmacs's memory usage.
+This value is only recomputed when garbage collection happens; thus, a
+better value of the real number of bytes used is
+  (+ (lisp-object-memory-usage) (consing-since-gc))
+*/
+       ())
+{
+  return make_int (total_gc_usage);
 }
 
 void
@@ -5961,11 +5986,15 @@ recompute_need_to_garbage_collect (void)
   else
     need_to_garbage_collect =
       (consing_since_gc > gc_cons_threshold
-#if 0 /* #### implement this better */
        &&
+#if 0 /* #### implement this better */
        (100 * consing_since_gc) / total_data_usage () >=
        gc_cons_percentage
-#endif /* 0 */
+#else
+       (!total_gc_usage_set ||
+	(100 * consing_since_gc) / total_gc_usage >=
+	gc_cons_percentage)
+#endif
        );
   recompute_funcall_allocation_flag ();
 }
@@ -6220,9 +6249,8 @@ common_init_alloc_early (void)
 #else
   gc_cons_threshold = 15000; /* debugging */
 #endif
-  gc_cons_percentage = 0; /* #### 20; Don't have an accurate measure of
-			     memory usage on Windows; not verified on other
-			     systems */
+  gc_cons_percentage = 40; /* #### what is optimal? */
+  total_gc_usage_set = 0;
   lrecord_uid_counter = 259;
 #ifndef MC_ALLOC
   debug_string_purity = 0;
@@ -6354,7 +6382,8 @@ syms_of_alloc (void)
 #if 0
   DEFSUBR (Fmemory_limit);
 #endif
-  DEFSUBR (Fmemory_usage);
+  DEFSUBR (Ftotal_memory_usage);
+  DEFSUBR (Flisp_object_memory_usage);
   DEFSUBR (Fconsing_since_gc);
 }
 
@@ -6386,26 +6415,22 @@ effective way to check GCPRO problems, but be warned that your XEmacs
 will be unusable!  You almost certainly won't have the patience to wait
 long enough to be able to set it back.
  
-See also `consing-since-gc'.
+See also `consing-since-gc' and `gc-cons-percentage'.
 */ );
 
   DEFVAR_INT ("gc-cons-percentage", &gc_cons_percentage /*
 *Percentage of memory allocated between garbage collections.
 
 Garbage collection will happen if this percentage of the total amount of
-memory used for data has been allocated since the last garbage collection.
-However, it will not happen if less than `gc-cons-threshold' bytes have
-been allocated -- this sets an absolute minimum in case very little data
-has been allocated or the percentage is set very low.  Set this to 0 to
-have garbage collection always happen after `gc-cons-threshold' bytes have
-been allocated, regardless of current memory usage.
+memory used for data (see `lisp-object-memory-usage') has been allocated
+since the last garbage collection.  However, it will not happen if less
+than `gc-cons-threshold' bytes have been allocated -- this sets an absolute
+minimum in case very little data has been allocated or the percentage is
+set very low.  Set this to 0 to have garbage collection always happen after
+`gc-cons-threshold' bytes have been allocated, regardless of current memory
+usage.
 
-Garbage collection happens automatically when `eval' or `funcall' are
-called.  (Note that `funcall' is called implicitly as part of evaluation.)
-By binding this temporarily to a large number, you can effectively
-prevent garbage collection during a part of the program.
-
-See also `consing-since-gc'.
+See also `consing-since-gc' and `gc-cons-threshold'.
 */ );
 
 #ifdef DEBUG_XEMACS

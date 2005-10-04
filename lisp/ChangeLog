@@ -1,3 +1,8 @@
+2005-09-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule/mule-cmds.el (input-method-alist, register-input-method):
+	Improve docstrings and formal parameter names.
+
 2005-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.22 "cucumber" is released.

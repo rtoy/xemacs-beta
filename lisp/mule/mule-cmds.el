@@ -347,44 +347,41 @@ This function is called with no argument.")
 (put 'describe-current-input-method-function 'permanent-local t)
 
 (defvar input-method-alist nil
-  "Alist of input method names vs how to use them.
-Each element has the form:
-   (INPUT-METHOD LANGUAGE-ENV ACTIVATE-FUNC TITLE DESCRIPTION ARGS...)
-See the function `register-input-method' for the meanings of the elements.")
+  "Alist mapping input method names to information used by the LEIM API.
+Elements have the form (METHOD LANGUAGE ACTIVATOR TITLE DESCRIPTION ARGS...).
+Use `register-input-method' to add input methods to the database.  See its
+documentation for the meanings of the elements.")
 
-(defun register-input-method (input-method lang-env &rest args)
-  "Register INPUT-METHOD as an input method for language environment ENV.
-INPUT-METHOD and LANG-ENV are symbols or strings.
+(defun register-input-method (method language
+			      ;; #### shouldn't be optional, but need to
+			      ;; audit callers
+			      &optional activator title description
+			      &rest args)
+  "Register METHOD as an input method for language environment LANGUAGE.
 
-The remaining arguments are:
-	ACTIVATE-FUNC, TITLE, DESCRIPTION, and ARGS...
-ACTIVATE-FUNC is a function to call to activate this method.
+METHOD and LANGUAGE may be symbols or strings.
+ACTIVATOR is the function called to activate this method.  METHOD (the
+  invocation name) and ARGS are passed to the function on activation.
 TITLE is a string to show in the mode line when this method is active.
 DESCRIPTION is a string describing this method and what it is good for.
-The ARGS, if any, are passed as arguments to ACTIVATE-FUNC.
-All told, the arguments to ACTIVATE-FUNC are INPUT-METHOD and the ARGS.
+Optional ARGS, if any, are stored and passed as arguments to ACTIVATOR.
 
-This function is mainly used in the file \"leim-list.el\" which is
-created at building time of emacs, registering all quail input methods
-contained in the emacs distribution.
+When registering a new Quail input method, the input method title should be
+the one given in the third parameter of `quail-define-package' (if the values
+are different, the string specified in this function takes precedence).
 
-In case you want to register a new quail input method by yourself, be
-careful to use the same input method title as given in the third
-parameter of `quail-define-package' (if the values are different, the
-string specified in this function takes precedence).
-
-The commands `describe-input-method' and `list-input-methods' need
-this duplicated values to show some information about input methods
-without loading the affected quail packages."
-  (if (symbolp lang-env)
-      (setq lang-env (symbol-name lang-env)))
-  (if (symbolp input-method)
-      (setq input-method (symbol-name input-method)))
-  (let ((info (cons lang-env args))
-	(slot (assoc input-method input-method-alist)))
+The information provided is registered in `input-method-alist'.  The commands
+`describe-input-method' and `list-input-methods' use this database to show
+information about input methods without loading them."
+  (if (symbolp language)
+      (setq language (symbol-name language)))
+  (if (symbolp method)
+      (setq method (symbol-name method)))
+  (let ((info (append (list language activator title description) args))
+	(slot (assoc method input-method-alist)))
     (if slot
 	(setcdr slot info)
-      (setq slot (cons input-method info))
+      (setq slot (cons method info))
       (setq input-method-alist (cons slot input-method-alist)))))
 
 (defun read-input-method-name (prompt &optional default inhibit-null)

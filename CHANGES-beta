@@ -2,21 +2,53 @@ to 21.5.23 "daikon"
 
 Major features
 
+-- New: non-XPM color images can be mouse pointers. -- Ben Wing
+
 User-Visible Bug Fixes and Minor Improvements
+
+-- Fix: crash due to duplicate subrs with MC_ALLOC and modules. -- Marcus Crestani
 
 Build Infrastructure
 
+-- Fix: Cygwin, non-X build needs XPM header and library files in XE_CFLAGS. -- Mike Alexander, Rick Rankin
+-- Fix: Stop installexe.sh from adding redundant exe extension. -- Rick Rankin
+-- Fix: variable initialization misordering in xemacs.mak. -- Adrian Aichner
+-- Improve: replace support for autoconf 2.13 with warning to use autoconf 2.59. -- Malcolm Purvis
+-- Improve: update config.inc.samp to recent versions and add gmp, db, postgresql, ldap support; also optimization in non-debug builds. -- Ben Wing
+-- Improve: xemacs.mak now caters to VC++ version,  support for building gmp, db, postgresql, ldap; other fixes. -- Ben Wing
+
 Documentation
+
+-- Fix: texinfmt.el can build all Info files again. -- Adrian Aichner
+-- Fix: typos in Texinfo docs. -- Adrian Aichner
+-- Improve: Texinfo docs about specifiers. -- Ben Wing
+-- Improve: comment style, 'foo -> `foo'. -- Ben Wing
+-- Improve: rewrite nt/README
 
 Lisp API
 
+-- Improve: GC now triggers on relative, not absolute, consing. -- Ben Wing
+-- Improve: memory usage reporting. -- Ben Wing
+-- New: `specifier-instantiator' and related primitives. -- Ben Wing
+
 Internal API and Implementation
+
+-- Fix: Non-MULE needs mswindows_current_locale too. -- Mike Alexander
+-- Fix: address of register variable can't be taken. -- Ben Wing
+-- Fix: bitrot in sysdep.c and nt.c. -- Ben Wing
+-- Fix: bug in range tables with non-default closure. -- Ben Wing
+-- Fix: don't use C++ reserved words "new" and "catch", append '_'. -- Ben Wing
+-- Fix: initialization in mc-alloc. -- Marcus Crestani
+-- Fix: setlocale return string is volatile, dup it. -- Olivier Galibert
+-- Improve: include from ../src so <config.h> works in lib-src. -- Ben Wing
+-- Improve: minitar.c now includes config.h. -- Ben Wing
+-- Improve: warning elimination. -- Ben Wing
 
 to 21.5.22 "cucumber"
 
 Major features
 
---New: support for Unnnn-style keysyms on X11. -- Aidan Kehoe
+-- New: support for Unnnn-style keysyms on X11. -- Aidan Kehoe
 
 User-Visible Bug Fixes and Minor Improvements
 
