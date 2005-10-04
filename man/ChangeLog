@@ -1,3 +1,9 @@
+2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* emodules.texi (Distribution with XEmacs): New node describing
+	organization of module-related code in top-level configure.ac and
+	src/Makefile.in.in.
+
 2005-09-27  Adrian Aichner  <adrian@xemacs.org>
 
 	* lispref/compile.texi (Compilation Options): Lowercase SYMBOL

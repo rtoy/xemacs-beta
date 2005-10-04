@@ -124,6 +124,7 @@ module support documentation.
 * Introduction::                Introducing Emacs Modules
 * Anatomy of a Module::         Basic module layout and technology
 * Using ellcc::                 How to use the module compiler
+* Distribution with XEmacs::    Adding your module to the distribution
 * Defining Functions::          Creating new Lisp primitives
 * Defining Variables::          Creating new Lisp variables
 * Index::                       Concept Index
@@ -497,7 +498,7 @@ shared library containing those symbols, and link your modules with
 that library.  Otherwise, interactions between modules must take place
 via Lisp function calls and Lisp variables accesses.
 
-@node Using ellcc, Defining Functions, Anatomy of a Module, Top
+@node Using ellcc, Distribution with XEmacs, Anatomy of a Module, Top
 @chapter Using @code{ellcc}
 @cindex @code{ellcc}
 @cindex module compiler
@@ -822,7 +823,55 @@ Sets the name of the @file{make-docfile} program to use.  Usually
 Used during the compile phase of @value{emacs} itself.
 @end table
 
-@node Defining Functions, Defining Variables, Using ellcc, Top
+@node Distribution with XEmacs, Defining Functions, Using ellcc, Top
+@chapter Adding Modules to the XEmacs Distribution
+@cindex XEmacs integration
+@cindex integration, XEmacs
+@cindex modules and configure.ac
+@cindex configure.ac, modules and
+@cindex modules and Makefiles
+@cindex Makefiles, modules and
+
+#### This section needs to be filled out.
+
+@strong{Warning: The procedure described in the section is subject to
+change, as it is very stylized and thus a good candidate for further
+automation.}
+
+Modules distributed with XEmacs are placed in the @file{modules}
+subdirectory of the root of the source tree.  Each module's code is
+placed in a separate subdirectory.  The build infrastructure for a
+module consists of a @file{Makefile.in.in}, a @file{configure.ac}, and
+@file{install-sh}.  @file{install-sh} is a constant, and may simply be
+copied from an existing module.
+
+Most of the job of building a module is encapsulated in
+@file{modules/common/Makefile.common} and in @file{ellcc}.  The module's
+@file{Makefile.in.in} normally needs only to define module name and
+version information, and include @file{modules/common/Makefile.common}.
+The @file{configure.ac} is very module-specific, and little can be said
+about its contents.  However, since no logic that depends on XEmacs
+itself or other modules needs to be present, it is easier to write and
+maintain than if it were contained in the XEmacs distribution's
+@file{configure.ac}.
+
+Modules can usually be trivially built in to the XEmacs binary.  To make
+this work, you need to duplicate the detection logic for any resources
+the module requires in the top-level @file{configure.ac}.  Since module
+objects may be linked into modules or into @file{xemacs}, instead of
+adding library path and library information directly to some
+@file{@var{subsystem}_libs} variable, you should add them to a
+@file{@var{module}_libs} variable, which in turn must be added to
+@code{ld_libs_module} in the section ``Compute SUBST-itutable variables.''
+
+Furthermore, in @file{src/Makefile.in.in} you add rules to build the
+object without the module wrapper, and conditionalize these and the
+addition of the object to @code{objs} on @code{HAVE_SHLIB}.  The right
+way to do this is somewhat indirect.  Study the integration of LDAP and
+PostgreSQL for the details.
+
+
+@node Defining Functions, Defining Variables, Distribution with XEmacs, Top
 @chapter Defining Functions
 @cindex defining functions
 
