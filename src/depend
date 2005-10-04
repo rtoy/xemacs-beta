@@ -91,7 +91,6 @@ ui-gtk.o: $(LISP_H) buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h
 database.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h database.h sysfile.h
 #endif
 #if defined(MULE)
-mule-canna.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h file-coding.h
 mule-ccl.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h file-coding.h mule-ccl.h
 mule-charset.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h console.h device.h elhash.h faces.h lstream.h mule-ccl.h objects.h
 mule-coding.o: $(LISP_H) charset.h coding-system-slots.h file-coding.h mule-ccl.h
