@@ -1,3 +1,7 @@
+2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org> 
+
+	* build-report.el: Synch to Adrian's packaged version.
+
 2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* mule/canna-leim.el: Rename canna_api to canna-api.

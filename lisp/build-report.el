@@ -1,8 +1,10 @@
 ;;; build-report.el --- Automatically formatted build reports for XEmacs
 
-;; Copyright (C) 1997-2001 Adrian Aichner
+;; Copyright (C) 1997-2003 Adrian Aichner
 
 ;; Author: Adrian Aichner <adrian@xemacs.org>
+;; Date: $Date: 2005/10/05 04:11:25 $
+;; Version: $Revision: 1.12 $
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -66,8 +68,8 @@
   "emacs_major_version\\s-*=\\s-*\\([0-9]+\\)
 emacs_minor_version\\s-*=\\s-*\\([0-9]+\\)
 emacs_beta_version\\s-*=\\s-*\\([0-9]+\\)?
-xemacs_codename\\s-*=\\s-*\"\\([^\"]+\\)\"
-xemacs_extra_name\\s-*=\\s-*\"\\([^\"]+\\)\""
+xemacs_codename\\s-*=\\s-*\"\\([^\"]+\\)\"\\(
+xemacs_extra_name\\s-*=\\s-*\"\\([^\"]+\\)\"\\)?"
   "*REGEXP matching XEmacs Beta Version variable assignments in
 `build-report-version-file' file.  This variable is used by
 `build-report-version-file-data'.")
@@ -113,7 +115,11 @@ go to."
    "^Note:"
    "Installing"
    "[Ff]ile(s) copied"
-   "\\s-+tests\\s-+")
+   "\\s-+tests\\s-+"
+   "^[A-Z] [^ ]+$"
+   "^Wrong number of arguments:"
+   "^  \\*\\* "
+   "^\\(FAIL\\|SKIP\\):")
   "*Regexp of make process output lines to keep in the report."
   :type '(repeat
           :custom-show t
@@ -125,6 +131,8 @@ go to."
   (list
    "confl.*with.*auto-inlining"
    "^Formatting:"
+   "^\\s-*0 .*\\(failure\\|error\\)s?"
+   "^PASS:"
    "(100%) tests successful")
   "*Regexp of make process output lines to delete from the report."
   :type '(repeat
@@ -198,6 +206,8 @@ under csh, so that you get beta.err when you run `mk beta'."
 
 (defcustom build-report-subject
   (concat "[%s] " emacs-version " on " system-configuration)
+  ;; #### this should allow variable names which will be evalled and
+  ;; formatted using %s, see `build-report-prompts'
   "*XEmacs Build Report Subject Line. %s-sequences will be substituted
   with user input through `build-report' according to
   `build-report-prompts' using `format'."
@@ -208,6 +218,8 @@ under csh, so that you get beta.err when you run `mk beta'."
 
 (defcustom build-report-prompts
   (quote (("Status?: "  ("Success" "Failure"))))
+  ;; #### this should allow variable names which will be evalled and
+  ;; formatted using %s, see `build-report-prompts'
   "*XEmacs Build Report Prompt(s). This is a list of prompt-string
   lists used by `build-report' in conjunction with
   `build-report-subject'. Each list consists of a prompt string
@@ -248,7 +260,7 @@ under csh, so that you get beta.err when you run `mk beta'."
       'mime-editor/insert-binary-file)))
 
 (defun build-report-make-output-get ()
-  "Returns the filename the XEmacs make output is saved in."
+  "Return the filename the XEmacs make output is saved in."
   (interactive)
   (if (or (string-equal build-report-make-output-dir "")
           (null build-report-make-output-dir))
@@ -312,13 +324,13 @@ See also `mail-user-agent', `build-report-destination', and
             (major minor beta codename extraname configuration)
             (build-report-installation-data build-report-installation-file)
           (setq build-report-subject
-                (format "[%%s] XEmacs %s.%s%s \"%s\" %s %s"
+                (format "[%%s] XEmacs %s.%s%s \"%s\" %s%s"
                         major minor beta codename extraname configuration)))
       (multiple-value-bind
           (major minor beta codename extraname)
           (build-report-version-file-data build-report-version-file)
         (setq build-report-subject
-              (format "[%%s] XEmacs %s.%s%s \"%s\" %s %s"
+              (format "[%%s] XEmacs %s.%s%s \"%s\" %s%s"
                       major minor beta codename extraname system-configuration))))
     (compose-mail
      ;; `build-report-destination' used to be a single string, so
@@ -501,15 +513,15 @@ which defaults to `build-report-installation-file'."
         (cond
          ((looking-at build-report-installation-version-regexp)
           (goto-char (match-end 0))
-          (setq major (match-string 1))
-          (setq minor (match-string 2))
-          (setq beta (match-string 3))
-          (setq codename (match-string 6))
-	  (setq extraname (match-string 7))
-          (setq configuration (match-string 8)))
+          (setq major (or (match-string 1) ""))
+          (setq minor (or (match-string 2) ""))
+          (setq beta (or (match-string 3) ""))
+          (setq codename (or (match-string 6) ""))
+	  (setq extraname (or (match-string 7) ""))
+          (setq configuration (or (match-string 8) "")))
          ((looking-at build-report-installation-srcdir-regexp)
           (goto-char (match-end 0))
-          (setq srcdir (match-string 1)))
+          (setq srcdir (or (match-string 1) "")))
          ;; We avoid matching a potentially zero-length string to avoid
          ;; infinite looping.
          ((looking-at
@@ -535,11 +547,11 @@ defaults to `build-report-version-file'."
         (cond
          ((looking-at build-report-version-file-regexp)
           (goto-char (match-end 0))
-          (setq major (match-string 1))
-          (setq minor (match-string 2))
-          (setq beta (match-string 3))
-          (setq codename (match-string 4))
-	  (setq extraname (match-string 5)))
+          (setq major (or (match-string 1) ""))
+          (setq minor (or (match-string 2) ""))
+          (setq beta (or (match-string 3) ""))
+          (setq codename (or (match-string 4) ""))
+	  (setq extraname (or (match-string 6) "")))
          ;; We avoid matching a potentially zero-length string to avoid
          ;; infinite looping.
          ((looking-at
