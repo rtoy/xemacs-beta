@@ -356,7 +356,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS inststaticdir statedir LN_S blddir build build_cpu build_vendor build_os configuration CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP start_flags ld_switch_shared start_files ld lib_gcc RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA YACC SET_MAKE GTK_CONFIG X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS install_pp libs_xauth dnd_objs LIBSTDCPP dll_ld dll_cflags dll_ldflags dll_post dll_ldo ld_dynamic_link_flags with_modules MOD_CC MODARCHDIR MAKE_DOCFILE MODCFLAGS INSTALLPATH MOD_INSTALL_PROGRAM OBJECT_TO_BUILD ldap_libs postgresql_libs lwlib_objs ALLOCA have_esd_config SRC_SUBDIR_DEPS INSTALL_ARCH_DEP_SUBDIR MAKE_SUBDIR SUBDIR_MAKEFILES PROGNAME version instvardir srcdir extra_includes PREFIX_USER_DEFINED PREFIX EXEC_PREFIX_USER_DEFINED EXEC_PREFIX INFODIR_USER_DEFINED INFODIR infopath INFOPATH_USER_DEFINED INFOPATH package_path PACKAGE_PATH_USER_DEFINED PACKAGE_PATH lispdir LISPDIR_USER_DEFINED LISPDIR moduledir MODULEDIR_USER_DEFINED MODULEDIR sitelispdir SITELISPDIR_USER_DEFINED SITELISPDIR sitemoduledir SITEMODULEDIR_USER_DEFINED SITEMODULEDIR etcdir ETCDIR_USER_DEFINED ETCDIR archlibdir ARCHLIBDIR_USER_DEFINED ARCHLIBDIR docdir DOCDIR_USER_DEFINED DOCDIR bitmapdir extra_objs machfile opsysfile c_switch_general c_switch_window_system c_switch_all ld_switch_general ld_switch_window_system ld_switch_all ld_libs_general ld_libs_window_system ld_libs_all RECURSIVE_MAKE_ARGS native_sound_lib sound_cflags dynodump_arch XEMACS_CC XE_CFLAGS internal_makefile_list LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS inststaticdir statedir LN_S blddir build build_cpu build_vendor build_os configuration CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP start_flags ld_switch_shared start_files ld lib_gcc RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA YACC SET_MAKE GTK_CONFIG X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS install_pp libs_xauth dnd_objs LIBSTDCPP dll_ld dll_cflags dll_ldflags dll_post dll_ldo ld_dynamic_link_flags with_modules MOD_CC MODARCHDIR MAKE_DOCFILE MODCFLAGS INSTALLPATH MOD_INSTALL_PROGRAM OBJECT_TO_BUILD ldap_libs postgresql_libs lwlib_objs canna_libs ALLOCA have_esd_config SRC_SUBDIR_DEPS INSTALL_ARCH_DEP_SUBDIR MAKE_SUBDIR SUBDIR_MAKEFILES PROGNAME version instvardir srcdir extra_includes PREFIX_USER_DEFINED PREFIX EXEC_PREFIX_USER_DEFINED EXEC_PREFIX INFODIR_USER_DEFINED INFODIR infopath INFOPATH_USER_DEFINED INFOPATH package_path PACKAGE_PATH_USER_DEFINED PACKAGE_PATH lispdir LISPDIR_USER_DEFINED LISPDIR moduledir MODULEDIR_USER_DEFINED MODULEDIR sitelispdir SITELISPDIR_USER_DEFINED SITELISPDIR sitemoduledir SITEMODULEDIR_USER_DEFINED SITEMODULEDIR etcdir ETCDIR_USER_DEFINED ETCDIR archlibdir ARCHLIBDIR_USER_DEFINED ARCHLIBDIR docdir DOCDIR_USER_DEFINED DOCDIR bitmapdir extra_objs machfile opsysfile c_switch_general c_switch_window_system c_switch_all ld_switch_general ld_switch_window_system ld_switch_all ld_libs_general ld_libs_window_system ld_libs_all RECURSIVE_MAKE_ARGS native_sound_lib sound_cflags dynodump_arch XEMACS_CC XE_CFLAGS internal_makefile_list LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -21554,6 +21554,7 @@ echo "$as_me: checking for graphics libraries..." >&6;}
     xpm_problem=""
   if test -z "$with_xpm"; then
     CFLAGS=""$incpath_xpm" $CFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$incpath_xpm"\" to \$CFLAGS"; fi
+    XE_CFLAGS=""$incpath_xpm" $XE_CFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$incpath_xpm"\" to \$XE_CFLAGS"; fi
     LDFLAGS=""$libpath_xpm" $LDFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$libpath_xpm"\" to \$LDFLAGS"; fi
     echo "$as_me:$LINENO: checking for Xpm - no older than 3.4f" >&5
 echo $ECHO_N "checking for Xpm - no older than 3.4f... $ECHO_C" >&6
@@ -21629,6 +21630,7 @@ _ACEOF
     LDFLAGS=""$libpath_xpm" $LDFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$libpath_xpm"\" to \$LDFLAGS"; fi
     libs_x="-lXpm $libs_x" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lXpm\" to \$libs_x"; fi
     CFLAGS=""$incpath_xpm" $CFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$incpath_xpm"\" to \$CFLAGS"; fi
+    XE_CFLAGS=""$incpath_xpm" $XE_CFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$incpath_xpm"\" to \$XE_CFLAGS"; fi
     echo "$as_me:$LINENO: checking for \"FOR_MSW\" xpm" >&5
 echo $ECHO_N "checking for \"FOR_MSW\" xpm... $ECHO_C" >&6
     xe_check_libs=-lXpm
@@ -25146,6 +25148,9 @@ _ACEOF
 
 fi
 
+canna_libs=
+wnn_libs=
+
 if test "$enable_mule" = "yes" ; then
   { echo "$as_me:$LINENO: checking for Mule-related features..." >&5
 echo "$as_me: checking for Mule-related features..." >&6;}
@@ -26469,7 +26474,7 @@ _ACEOF
     fi
   fi
 
-    canna_includes_found=no
+      canna_includes_found=no
   if test "$with_canna" != "no"; then
     if test "${ac_cv_header_canna_jrkanji_h+set}" = set; then
   echo "$as_me:$LINENO: checking for canna/jrkanji.h" >&5
@@ -27056,8 +27061,14 @@ fi
 #define HAVE_CANNA 1
 _ACEOF
 
-    libs_x="-lcanna -lRKC $libs_x" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lcanna -lRKC\" to \$libs_x"; fi
+    MAKE_SUBDIR="$MAKE_SUBDIR modules/canna" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/canna\" to \$MAKE_SUBDIR"; fi
+    need_modules_common=yes
+    if test "$with_modules" = "yes"; then
+      INSTALL_ARCH_DEP_SUBDIR="$INSTALL_ARCH_DEP_SUBDIR modules/canna" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/canna\" to \$INSTALL_ARCH_DEP_SUBDIR"; fi
+    fi
+    canna_libs="-lcanna -lRKC $canna_libs" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lcanna -lRKC\" to \$canna_libs"; fi
   fi
+
 
 else   for feature in xim canna wnn; do
     if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
@@ -35891,7 +35902,7 @@ if test "$enable_modules" = "yes"; then
 else
 
 T=""
-for W in $ldap_libs $postgresql_libs; do if test -z "$T"; then T="$W"; else T="$T $W"; fi; done
+for W in $ldap_libs $postgresql_libs $canna_libs; do if test -z "$T"; then T="$W"; else T="$T $W"; fi; done
 ld_libs_module="$T"
 
 fi
@@ -37338,6 +37349,7 @@ s,@OBJECT_TO_BUILD@,$OBJECT_TO_BUILD,;t t
 s,@ldap_libs@,$ldap_libs,;t t
 s,@postgresql_libs@,$postgresql_libs,;t t
 s,@lwlib_objs@,$lwlib_objs,;t t
+s,@canna_libs@,$canna_libs,;t t
 s,@ALLOCA@,$ALLOCA,;t t
 s,@have_esd_config@,$have_esd_config,;t t
 s,@SRC_SUBDIR_DEPS@,$SRC_SUBDIR_DEPS,;t t
