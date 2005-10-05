@@ -1,3 +1,7 @@
+2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* simple.el (xemacs-default-composefunc): Don't warn when batch.
+
 2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org> 
 
 	* build-report.el: Synch to Adrian's packaged version.

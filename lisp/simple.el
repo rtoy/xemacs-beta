@@ -3417,7 +3417,8 @@ The properties used on SYMBOL are `composefunc', `sendfunc',
 (defun xemacs-default-composefunc (&rest args) 
   "Warn that the default mail-reading package is heinously underfeatured;
 compose a mail using it, all the same.  "
-  (warn "
+  (unless (noninteractive)
+    (warn "
 
 Defaulting to the GNU Emacs-derived `sendmail.el' mail client. This facility,
 while part of base XEmacs, is heinously underfeatured, and not going to get
@@ -3431,11 +3432,10 @@ To choose a package from those installed, click on \"Options\" ->
 list. Gnus and VM are full-featured and have active user communities.
 
 To disable this warning and stick with the old behavior, you can explicitly
-initialize `mail-user-agent' to 'sendmail-user-agent . ") 
+initialize `mail-user-agent' to 'sendmail-user-agent . "))
   (setq mail-user-agent 'sendmail-user-agent)
   (apply (get 'sendmail-user-agent 'composefunc) args))
 
- 
 (defun xemacs-default-sendfunc (&rest args) 
   "Set `mail-user-agent' to `sendmail-user-agent'; call the send function
 associated with that package, passing it the supplied arguments. "
