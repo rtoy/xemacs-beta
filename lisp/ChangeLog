@@ -1,3 +1,9 @@
+2005-10-10  Steve Youngs  <steve@sxemacs.org>
+
+	* help.el (view-emacs-news): Use `expand-file-name' instead of
+	`locate-data-file' as the latter will find any "NEWS" files that
+	might exist in packages _before_ the one in core.
+
 2005-10-09  Adrian Aichner  <adrian@xemacs.org>
 
 	* finder.el (finder-find-library): Return filename actually
