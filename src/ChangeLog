@@ -1,3 +1,9 @@
+2005-10-10  Andrey Slusar <anrays@gmail.com>
+
+	* unexelf.c: define `Elfw(type)' for FreeBSD alpha and all _LP64
+	archs. 
+	From Dejan Lesjak <dejan.lesjak@ijs.si>
+
 2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* Makefile.in.in (mule_canna_objs): Use correct name of .o.
