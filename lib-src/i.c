@@ -31,6 +31,10 @@ does.  It can be used also when xemacs should be run as a batch
 command ina script, especially when its standart output should be
 obtained programmatically. */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>

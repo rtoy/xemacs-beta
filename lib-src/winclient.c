@@ -22,10 +22,11 @@
 
 /* -- Includes -------------------------------------------------------------- */
 
-#include <windows.h>
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
+#include <windows.h>
+#include <ddeml.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>

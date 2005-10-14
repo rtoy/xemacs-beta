@@ -13,6 +13,9 @@ OF THIS MATERIAL FOR ANY PURPOSE.  IT IS PROVIDED "AS IS",
 WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES.
 */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
 #define NEWLINE_CHAR '\n'
 #include <stdlib.h>
 #include <stdio.h>
