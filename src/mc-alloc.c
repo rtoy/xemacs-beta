@@ -1486,10 +1486,10 @@ remove_cell (void *ptr, page_header *ph)
 #endif
   if (PH_ON_USED_LIST_P (ph)) 
     {
-#ifdef MC_ALLOC_TYPE_STATS
+#ifdef ALLOC_TYPE_STATS
       dec_lrecord_stats (PH_CELL_SIZE (ph), 
 			 (const struct lrecord_header *) ptr);
-#endif /* MC_ALLOC_TYPE_STATS */
+#endif /* ALLOC_TYPE_STATS */
 #ifdef ERROR_CHECK_GC
       assert (!LRECORD_FREE_P (ptr));
       deadbeef_memory (ptr, PH_CELL_SIZE (ph));

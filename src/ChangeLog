@@ -1,3 +1,49 @@
+2005-10-13  Ben Wing  <ben@xemacs.org>
+
+	* config.h.in:
+	* alloc.c:
+	* alloc.c (struct):
+	* alloc.c (alloc_lrecord):
+	* alloc.c (noseeum_alloc_lrecord):
+	* alloc.c (finalize_string):
+	* alloc.c (make_uninit_string):
+	* alloc.c (make_string_nocopy):
+	* alloc.c (garbage_collect_1):
+	* alloc.c (object_memory_usage_stats):
+	* alloc.c (HACK_O_MATIC):
+	* alloc.c (Fgarbage_collect):
+	* alloc.c (Ftotal_memory_usage):
+	* alloc.c (recompute_need_to_garbage_collect):
+	* alloc.c (common_init_alloc_early):
+	* alloc.c (syms_of_alloc):
+	* alloc.c (vars_of_alloc):
+	* dumper.c (pdump_load_finish):
+	* emacs.c:
+	* emacs.c (main_1):
+	* emacs.c (shut_down_emacs):
+	* lrecord.h:
+	* lrecord.h (MC_ALLOC_CALL_FINALIZER):
+	* mc-alloc.c (remove_cell):
+	* mc-alloc.h:
+	* symbols.c (init_symbols_once_early):
+	Rename MC_ALLOC_TYPE_STATS to ALLOC_TYPE_STATS, since
+	(with refactoring) this is not really specific to mc-alloc.
+	Generalize code to implement the GC % threshold for garbage
+	collecting.  Rename `lrecord-stats' to `object-memory-usage-stats'
+	(defined when not mc-alloc, too).  Rename `memory-usage' to
+	`total-memory-usage' and add `object-memory-usage'.  Bump
+	gc_cons_threshold to 2,000,000 (suggestion by Stephen Turnbull).
+
+	Avoid use of C++ reserved word `catch'.
+
+	Change address for crash reporting to xemacs-beta@xemacs.org from
+	crashes@xemacs.org.
+
+	new -> new_ in emacs.c.
+
+	Turn on _CRT_SECURE_NO_DEPRECATE under Visual C++ to avoid tons of
+	warnings in VC8.
+
 2005-10-10  Andrey Slusar <anrays@gmail.com>
 
 	* unexelf.c: define `Elfw(type)' for FreeBSD alpha and all _LP64

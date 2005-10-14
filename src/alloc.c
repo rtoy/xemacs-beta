@@ -1,7 +1,7 @@
 /* Storage allocation and gc for XEmacs Lisp interpreter.
    Copyright (C) 1985-1998 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2003, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -94,6 +94,8 @@ static Fixnum debug_allocation_backtrace_length;
 /* Number of bytes of consing done since the last gc */
 static EMACS_INT consing_since_gc;
 EMACS_UINT total_consing;
+EMACS_INT total_gc_usage;
+int total_gc_usage_set;
 
 int need_to_garbage_collect;
 int need_to_check_c_alloca;
@@ -510,7 +512,7 @@ allocate_lisp_storage (Bytecount size)
 }
 #endif /* not MC_ALLOC */
 
-#ifdef MC_ALLOC_TYPE_STATS
+#if defined (MC_ALLOC) && defined (ALLOC_TYPE_STATS)
 static struct
 {
   int instances_in_use;
@@ -579,7 +581,7 @@ dec_lrecord_stats (Bytecount size_including_overhead,
 
   DECREMENT_CONS_COUNTER (size);
 }
-#endif /* not MC_ALLOC_TYPE_STATS */
+#endif /* not (MC_ALLOC && ALLOC_TYPE_STATS) */
 
 #ifndef MC_ALLOC
 /* lcrecords are chained together through their "next" field.
@@ -605,9 +607,9 @@ alloc_lrecord (Bytecount size,
   gc_checking_assert (LRECORD_FREE_P (lheader));
   set_lheader_implementation (lheader, implementation);
   lheader->uid = lrecord_uid_counter++;
-#ifdef MC_ALLOC_TYPE_STATS
+#ifdef ALLOC_TYPE_STATS
   inc_lrecord_stats (size, lheader);
-#endif /* not MC_ALLOC_TYPE_STATS */
+#endif /* ALLOC_TYPE_STATS */
   INCREMENT_CONS_COUNTER (size, implementation->name);
   return lheader;
 }
@@ -627,9 +629,9 @@ noseeum_alloc_lrecord (Bytecount size,
   gc_checking_assert (LRECORD_FREE_P (lheader));
   set_lheader_implementation (lheader, implementation);
   lheader->uid = lrecord_uid_counter++;
-#ifdef MC_ALLOC_TYPE_STATS
+#ifdef ALLOC_TYPE_STATS
   inc_lrecord_stats (size, lheader);
-#endif /* not MC_ALLOC_TYPE_STATS */
+#endif /* ALLOC_TYPE_STATS */
   NOSEEUM_INCREMENT_CONS_COUNTER (size, implementation->name);
   return lheader;
 }
@@ -2492,9 +2494,9 @@ finalize_string (void *header, int for_disksave)
     {
       Lisp_String *s = (Lisp_String *) header;
       Bytecount size = s->size_;
-#ifdef MC_ALLOC_TYPE_STATS
+#ifdef ALLOC_TYPE_STATS
       dec_lrecord_string_data_stats (size);
-#endif /* MC_ALLOC_TYPE_STATS */
+#endif /* ALLOC_TYPE_STATS */
       if (BIG_STRING_SIZE_P (size))
 	xfree (s->data_, Ibyte *);
     }
@@ -2614,9 +2616,9 @@ make_uninit_string (Bytecount length)
 
 #ifdef MC_ALLOC
   s = alloc_lrecord_type (Lisp_String, &lrecord_string);
-#ifdef MC_ALLOC_TYPE_STATS
+#ifdef ALLOC_TYPE_STATS
   inc_lrecord_string_data_stats (length);
-#endif /* MC_ALLOC_TYPE_STATS */
+#endif /* ALLOC_TYPE_STATS */
 #else /* not MC_ALLOC */
   /* Allocate the string header */
   ALLOCATE_FIXED_TYPE (string, Lisp_String, s);
@@ -3000,9 +3002,9 @@ make_string_nocopy (const Ibyte *contents, Bytecount length)
 
 #ifdef MC_ALLOC
   s = alloc_lrecord_type (Lisp_String, &lrecord_string);
-#ifdef MC_ALLOC_TYPE_STATS
+#ifdef ALLOC_TYPE_STATS
   inc_lrecord_string_data_stats (length);
-#endif /* MC_ALLOC_TYPE_STATS */
+#endif /* ALLOC_TYPE_STATS */
   mcpro (wrap_pointer_1 (s)); /* otherwise nocopy_strings get
 				 collected and static data is tried to
 				 be freed. */
@@ -5525,13 +5527,13 @@ garbage_collect_1 (void)
   }
 
   {
-    struct catchtag *catch;
-    for (catch = catchlist; catch; catch = catch->next)
+    struct catchtag *c;
+    for (c = catchlist; c; c = c->next)
       {
-	mark_object (catch->tag);
-	mark_object (catch->val);
-	mark_object (catch->actual_tag);
-	mark_object (catch->backtrace);
+	mark_object (c->tag);
+	mark_object (c->val);
+	mark_object (c->actual_tag);
+	mark_object (c->backtrace);
       }
   }
 
@@ -5667,10 +5669,10 @@ garbage_collect_1 (void)
   return;
 }
 
-#ifdef MC_ALLOC
-#ifdef MC_ALLOC_TYPE_STATS
+#ifdef ALLOC_TYPE_STATS
+
 static Lisp_Object
-gc_plist_hack (const Ascbyte *name, int value, Lisp_Object tail)
+gc_plist_hack (const Ascbyte *name, EMACS_INT value, Lisp_Object tail)
 {
   /* C doesn't have local functions (or closures, or GC, or readable syntax,
      or portable numeric datatypes, or bit-vectors, or characters, or
@@ -5678,13 +5680,14 @@ gc_plist_hack (const Ascbyte *name, int value, Lisp_Object tail)
   return cons3 (intern (name), make_int (value), tail);
 }
 
-DEFUN("lrecord-stats", Flrecord_stats, 0, 0 ,"", /*
-Return statistics about lrecords in a property list.
-*/
-       ())
+static Lisp_Object
+object_memory_usage_stats (int set_total_gc_usage)
 {
   Lisp_Object pl = Qnil;
   int i;
+  EMACS_INT tgu_val = 0;
+
+#ifdef MC_ALLOC
   
   for (i = 0; i < (countof (lrecord_implementations_table)
 		   + MODULE_DEFINABLE_TYPE_COUNT); i++)
@@ -5709,6 +5712,7 @@ Return statistics about lrecords in a property list.
 	  pl = gc_plist_hack (buf, 
 			      lrecord_stats[i].bytes_in_use,
 			      pl);
+	  tgu_val += lrecord_stats[i].bytes_in_use_including_overhead;
 	  
 	  if (name[len-1] == 's')
 	    sprintf (buf, "%ses-used", name);
@@ -5723,84 +5727,17 @@ Return statistics about lrecords in a property list.
 		      lrecord_string_data_bytes_in_use, pl);
   pl = gc_plist_hack ("string-data-used", 
 		      lrecord_string_data_instances_in_use, pl);
-  
-  return pl;
-}
-#endif /* not MC_ALLOC_TYPE_STATS */
+  tgu_val += lrecord_string_data_bytes_in_use_including_overhead;
 
-DEFUN ("garbage-collect", Fgarbage_collect, 0, 0, "", /*
-Reclaim storage for Lisp objects no longer needed.
-Return info on amount of space in use:
- ((USED-CONSES . STORAGE-CONSES) (USED-SYMS . STORAGE-SYMS)
-  (USED-MARKERS . STORAGE-MARKERS) USED-STRING-CHARS USED-VECTOR-SLOTS
-  PLIST)
-  where `PLIST' is a list of alternating keyword/value pairs providing
-  more detailed information.
-Garbage collection happens automatically if you cons more than
-`gc-cons-threshold' bytes of Lisp data since previous garbage collection.
-*/
-       ())
-{
-  garbage_collect_1 ();
-
-#ifdef MC_ALLOC_TYPE_STATS
-  /* The things we do for backwards-compatibility */
-  return
-    list6 
-    (Fcons (make_int (lrecord_stats[lrecord_type_cons].instances_in_use),
-	    make_int (lrecord_stats[lrecord_type_cons]
-		      .bytes_in_use_including_overhead)),
-     Fcons (make_int (lrecord_stats[lrecord_type_symbol].instances_in_use),
-	    make_int (lrecord_stats[lrecord_type_symbol]
-		      .bytes_in_use_including_overhead)),
-     Fcons (make_int (lrecord_stats[lrecord_type_marker].instances_in_use),
-	    make_int (lrecord_stats[lrecord_type_marker]
-		      .bytes_in_use_including_overhead)),
-     make_int (lrecord_stats[lrecord_type_string]
-	       .bytes_in_use_including_overhead),
-     make_int (lrecord_stats[lrecord_type_vector]
-	       .bytes_in_use_including_overhead),
-     Flrecord_stats ());
-#else /* not MC_ALLOC_TYPE_STATS */
-  return Qnil;
-#endif /* not MC_ALLOC_TYPE_STATS */
-}
 #else /* not MC_ALLOC */
-/* Debugging aids.  */
-
-static Lisp_Object
-gc_plist_hack (const Ascbyte *name, int value, Lisp_Object tail)
-{
-  /* C doesn't have local functions (or closures, or GC, or readable syntax,
-     or portable numeric datatypes, or bit-vectors, or characters, or
-     arrays, or exceptions, or ...) */
-  return cons3 (intern (name), make_int (value), tail);
-}
 
 #define HACK_O_MATIC(type, name, pl) do {				\
-  int s = 0;								\
+  EMACS_INT s = 0;							\
   struct type##_block *x = current_##type##_block;			\
   while (x) { s += sizeof (*x) + MALLOC_OVERHEAD; x = x->prev; }	\
+  tgu_val += s;							\
   (pl) = gc_plist_hack ((name), s, (pl));				\
 } while (0)
-
-DEFUN ("garbage-collect", Fgarbage_collect, 0, 0, "", /*
-Reclaim storage for Lisp objects no longer needed.
-Return info on amount of space in use:
- ((USED-CONSES . FREE-CONSES) (USED-SYMS . FREE-SYMS)
-  (USED-MARKERS . FREE-MARKERS) USED-STRING-CHARS USED-VECTOR-SLOTS
-  PLIST)
-  where `PLIST' is a list of alternating keyword/value pairs providing
-  more detailed information.
-Garbage collection happens automatically if you cons more than
-`gc-cons-threshold' bytes of Lisp data since previous garbage collection.
-*/
-       ())
-{
-  Lisp_Object pl = Qnil;
-  int i;
-  int gc_count_vector_total_size = 0;
-  garbage_collect_1 ();
 
   for (i = 0; i < lrecord_type_count; i++)
     {
@@ -5811,13 +5748,10 @@ Garbage collection happens automatically if you cons more than
           char buf [255];
           const char *name = lrecord_implementations_table[i]->name;
 	  int len = strlen (name);
-	  /* save this for the FSFmacs-compatible part of the summary */
-	  if (i == lrecord_type_vector)
-	    gc_count_vector_total_size =
-	      lcrecord_stats[i].bytes_in_use + lcrecord_stats[i].bytes_freed;
 
           sprintf (buf, "%s-storage", name);
           pl = gc_plist_hack (buf, lcrecord_stats[i].bytes_in_use, pl);
+	  tgu_val += lcrecord_stats[i].bytes_in_use;
 	  /* Okay, simple pluralization check for `symbol-value-varalias' */
 	  if (name[len-1] == 's')
 	    sprintf (buf, "%ses-freed", name);
@@ -5895,7 +5829,70 @@ Garbage collection happens automatically if you cons more than
   pl = gc_plist_hack ("conses-free", gc_count_num_cons_freelist, pl);
   pl = gc_plist_hack ("conses-used", gc_count_num_cons_in_use, pl);
 
+#undef HACK_O_MATIC
+
+#endif /* MC_ALLOC */
+
+  if (set_total_gc_usage)
+    {
+      total_gc_usage = tgu_val;
+      total_gc_usage_set = 1;
+    }
+
+  return pl;
+}
+
+DEFUN("object-memory-usage-stats", Fobject_memory_usage_stats, 0, 0 ,"", /*
+Return statistics about memory usage of Lisp objects.
+*/
+       ())
+{
+  return object_memory_usage_stats (0);
+}
+
+#endif /* ALLOC_TYPE_STATS */
+
+/* Debugging aids.  */
+
+DEFUN ("garbage-collect", Fgarbage_collect, 0, 0, "", /*
+Reclaim storage for Lisp objects no longer needed.
+Return info on amount of space in use:
+ ((USED-CONSES . FREE-CONSES) (USED-SYMS . FREE-SYMS)
+  (USED-MARKERS . FREE-MARKERS) USED-STRING-CHARS USED-VECTOR-SLOTS
+  PLIST)
+  where `PLIST' is a list of alternating keyword/value pairs providing
+  more detailed information.
+Garbage collection happens automatically if you cons more than
+`gc-cons-threshold' bytes of Lisp data since previous garbage collection.
+*/
+       ())
+{
+  /* Record total usage for purposes of determining next GC */
+  garbage_collect_1 ();
+
+  /* This will get set to 1, and total_gc_usage computed, as part of the
+     call to object_memory_usage_stats() -- if ALLOC_TYPE_STATS is enabled. */
+  total_gc_usage_set = 0;
+#ifdef ALLOC_TYPE_STATS
   /* The things we do for backwards-compatibility */
+#ifdef MC_ALLOC
+  return
+    list6 
+    (Fcons (make_int (lrecord_stats[lrecord_type_cons].instances_in_use),
+	    make_int (lrecord_stats[lrecord_type_cons]
+		      .bytes_in_use_including_overhead)),
+     Fcons (make_int (lrecord_stats[lrecord_type_symbol].instances_in_use),
+	    make_int (lrecord_stats[lrecord_type_symbol]
+		      .bytes_in_use_including_overhead)),
+     Fcons (make_int (lrecord_stats[lrecord_type_marker].instances_in_use),
+	    make_int (lrecord_stats[lrecord_type_marker]
+		      .bytes_in_use_including_overhead)),
+     make_int (lrecord_stats[lrecord_type_string]
+	       .bytes_in_use_including_overhead),
+     make_int (lrecord_stats[lrecord_type_vector]
+	       .bytes_in_use_including_overhead),
+     object_memory_usage_stats (1));
+#else /* not MC_ALLOC */
   return
     list6 (Fcons (make_int (gc_count_num_cons_in_use),
 		  make_int (gc_count_num_cons_freelist)),
@@ -5904,11 +5901,14 @@ Garbage collection happens automatically if you cons more than
 	   Fcons (make_int (gc_count_num_marker_in_use),
 		  make_int (gc_count_num_marker_freelist)),
 	   make_int (gc_count_string_total_size),
-	   make_int (gc_count_vector_total_size),
-	   pl);
-}
-#undef HACK_O_MATIC
+	   make_int (lcrecord_stats[lrecord_type_vector].bytes_in_use +
+		     lcrecord_stats[lrecord_type_vector].bytes_freed),
+	   object_memory_usage_stats (1));
 #endif /* not MC_ALLOC */
+#else /* not ALLOC_TYPE_STATS */
+  return Qnil;
+#endif /* ALLOC_TYPE_STATS */
+}
 
 DEFUN ("consing-since-gc", Fconsing_since_gc, 0, 0, "", /*
 Return the number of bytes consed since the last garbage collection.
@@ -5934,14 +5934,29 @@ The value is divided by 1024 to make sure it will fit in a lisp integer.
 }
 #endif
 
-DEFUN ("memory-usage", Fmemory_usage, 0, 0, 0, /*
+DEFUN ("total-memory-usage", Ftotal_memory_usage, 0, 0, 0, /*
 Return the total number of bytes used by the data segment in XEmacs.
 This may be helpful in debugging XEmacs's memory usage.
+NOTE: This may or may not be accurate!  It is hard to determine this
+value in a system-independent fashion.  On Windows, for example, the
+returned number tends to be much greater than reality.
 */
        ())
 {
   return make_int (total_data_usage ());
 }
+
+#ifdef ALLOC_TYPE_STATS
+DEFUN ("object-memory-usage", Fobject_memory_usage, 0, 0, 0, /*
+Return total number of bytes used for object storage in XEmacs.
+This may be helpful in debugging XEmacs's memory usage.
+See also `consing-since-gc' and `object-memory-usage-stats'.
+*/
+       ())
+{
+  return make_int (total_gc_usage + consing_since_gc);
+}
+#endif /* ALLOC_TYPE_STATS */
 
 void
 recompute_funcall_allocation_flag (void)
@@ -5961,11 +5976,15 @@ recompute_need_to_garbage_collect (void)
   else
     need_to_garbage_collect =
       (consing_since_gc > gc_cons_threshold
-#if 0 /* #### implement this better */
        &&
+#if 0 /* #### implement this better */
        (100 * consing_since_gc) / total_data_usage () >=
        gc_cons_percentage
-#endif /* 0 */
+#else
+       (!total_gc_usage_set ||
+	(100 * consing_since_gc) / total_gc_usage >=
+	gc_cons_percentage)
+#endif
        );
   recompute_funcall_allocation_flag ();
 }
@@ -6216,13 +6235,12 @@ common_init_alloc_early (void)
   funcall_alloca_count = 0;
 
 #if 1
-  gc_cons_threshold = 500000; /* XEmacs change */
+  gc_cons_threshold = 2000000; /* XEmacs change */
 #else
   gc_cons_threshold = 15000; /* debugging */
 #endif
-  gc_cons_percentage = 0; /* #### 20; Don't have an accurate measure of
-			     memory usage on Windows; not verified on other
-			     systems */
+  gc_cons_percentage = 40; /* #### what is optimal? */
+  total_gc_usage_set = 0;
   lrecord_uid_counter = 259;
 #ifndef MC_ALLOC
   debug_string_purity = 0;
@@ -6347,14 +6365,15 @@ syms_of_alloc (void)
   DEFSUBR (Fmake_symbol);
   DEFSUBR (Fmake_marker);
   DEFSUBR (Fpurecopy);
-#ifdef MC_ALLOC_TYPE_STATS
-  DEFSUBR (Flrecord_stats);
-#endif /* MC_ALLOC_TYPE_STATS */
+#ifdef ALLOC_TYPE_STATS
+  DEFSUBR (Fobject_memory_usage_stats);
+  DEFSUBR (Fobject_memory_usage);
+#endif /* ALLOC_TYPE_STATS */
   DEFSUBR (Fgarbage_collect);
 #if 0
   DEFSUBR (Fmemory_limit);
 #endif
-  DEFSUBR (Fmemory_usage);
+  DEFSUBR (Ftotal_memory_usage);
   DEFSUBR (Fconsing_since_gc);
 }
 
@@ -6386,26 +6405,22 @@ effective way to check GCPRO problems, but be warned that your XEmacs
 will be unusable!  You almost certainly won't have the patience to wait
 long enough to be able to set it back.
  
-See also `consing-since-gc'.
+See also `consing-since-gc' and `gc-cons-percentage'.
 */ );
 
   DEFVAR_INT ("gc-cons-percentage", &gc_cons_percentage /*
 *Percentage of memory allocated between garbage collections.
 
 Garbage collection will happen if this percentage of the total amount of
-memory used for data has been allocated since the last garbage collection.
-However, it will not happen if less than `gc-cons-threshold' bytes have
-been allocated -- this sets an absolute minimum in case very little data
-has been allocated or the percentage is set very low.  Set this to 0 to
-have garbage collection always happen after `gc-cons-threshold' bytes have
-been allocated, regardless of current memory usage.
+memory used for data (see `lisp-object-memory-usage') has been allocated
+since the last garbage collection.  However, it will not happen if less
+than `gc-cons-threshold' bytes have been allocated -- this sets an absolute
+minimum in case very little data has been allocated or the percentage is
+set very low.  Set this to 0 to have garbage collection always happen after
+`gc-cons-threshold' bytes have been allocated, regardless of current memory
+usage.
 
-Garbage collection happens automatically when `eval' or `funcall' are
-called.  (Note that `funcall' is called implicitly as part of evaluation.)
-By binding this temporarily to a large number, you can effectively
-prevent garbage collection during a part of the program.
-
-See also `consing-since-gc'.
+See also `consing-since-gc' and `gc-cons-threshold'.
 */ );
 
 #ifdef DEBUG_XEMACS

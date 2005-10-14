@@ -35,18 +35,6 @@ Boston, MA 02111-1307, USA.  */
 # endif
 #endif /* MALLOC_OVERHEAD */
 
-
-/* This enables type based information (updated during gc). The output
-   is used by show-memory-usage to print memory information for each
-   type. Since the new allocator does not distinguish between types
-   anymore, this functionality is additionally implemented and
-   consumes a lot of time.  That is why it is kept conditioned on a
-   separate flag called MC_ALLOC_TYPE_STATS. */
-#if 1 
-# define MC_ALLOC_TYPE_STATS 1 
-#endif
-
-
 /*--- prototypes -------------------------------------------------------*/
 
 BEGIN_C_DECLS

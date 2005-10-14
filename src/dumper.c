@@ -2164,7 +2164,7 @@ pdump_load_finish (void)
 		  if (count == 2)
 		    {
 		      mc_addr = (Rawbyte *) mc_alloc (real_size);
-#ifdef MC_ALLOC_TYPE_STATS
+#ifdef ALLOC_TYPE_STATS
 		      inc_lrecord_stats (real_size, 
 					 (const struct lrecord_header *) 
 					 ((char *) rdata + delta));
@@ -2173,7 +2173,7 @@ pdump_load_finish (void)
 			  == lrecord_type_string)
 			inc_lrecord_string_data_stats 
 			  (((Lisp_String *) ((char *) rdata + delta))->size_);
-#endif /* not MC_ALLOC_TYPE_STATS */
+#endif /* ALLOC_TYPE_STATS */
 		    }
 		  else
 		    mc_addr = (Rawbyte *) xmalloc_and_zero (real_size);

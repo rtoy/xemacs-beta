@@ -3331,10 +3331,10 @@ init_symbols_once_early (void)
     mcpro (wrap_pointer_1 (tem));
     tem->value = 0;
     tem->type = SYMVAL_UNBOUND_MARKER;
-#ifdef MC_ALLOC_TYPE_STATS
+#ifdef ALLOC_TYPE_STATS
     inc_lrecord_stats (sizeof (struct symbol_value_magic), 
 		       (const struct lrecord_header *) tem);
-#endif /* not MC_ALLOC_TYPE_STATS */
+#endif /* ALLOC_TYPE_STATS */
 #else /* not MC_ALLOC */
     const struct symbol_value_magic *tem = &guts_of_unbound_marker;
 #endif /* not MC_ALLOC */

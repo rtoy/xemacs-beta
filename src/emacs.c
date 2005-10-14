@@ -919,9 +919,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       if (!restart)
 	{
 	  init_mc_allocator ();
-#ifdef MC_ALLOC_TYPE_STATS
+#ifdef ALLOC_TYPE_STATS
 	  init_lrecord_stats ();
-#endif /* not MC_ALLOC_TYPE_STATS */
+#endif /* ALLOC_TYPE_STATS */
 	}
     }
 #endif /* MC_ALLOC */
@@ -1217,16 +1217,16 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 This requires inserting a new element into argv.  */
       if (dpy != 0 && skip_args - count_before == 1)
 	{
-	  Wexttext **new = xnew_array (Wexttext *, argc + 2);
+	  Wexttext **new_ = xnew_array (Wexttext *, argc + 2);
 	  int j;
 
 	  for (j = 0; j < count_before + 1; j++)
-	    new[j] = argv[j];
-	  new[count_before + 1] = WEXTSTRING ("-d");
-	  new[count_before + 2] = dpy;
+	    new_[j] = argv[j];
+	  new_[count_before + 1] = WEXTSTRING ("-d");
+	  new_[count_before + 2] = dpy;
 	  for (j = count_before + 2; j <argc; j++)
-	    new[j + 1] = argv[j];
-	  argv = new;
+	    new_[j + 1] = argv[j];
+	  argv = new_;
 	  argc++;
 	}
       /* Change --display to -d, when its arg is separate.  */
@@ -2913,7 +2913,7 @@ DEFUN_NORETURN ("run-emacs-from-temacs", Frun_emacs_from_temacs, 0, MANY, 0, /*
 Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
 */
 /* If this function is called from startup.el, it will be possible to run
-   temacs as an editor using 'temacs -batch -l loadup.el run-temacs', instead
+   temacs as an editor using `temacs -batch -l loadup.el run-temacs', instead
    of having to dump an emacs and then run that (when debugging emacs itself,
    this can be much faster)). [Actually, the speed difference isn't that
    much as long as your filesystem is local, and you don't end up with
@@ -3472,17 +3472,17 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 "the crash anyway.\n\n"
 #ifdef INFODOCK
 "Please report this bug by selecting `Report-Bug' in the InfoDock menu, or\n"
-"(last resort) by emailing `crashes@xemacs.org' -- note that this is for XEmacs\n"
-"in general, not just Infodock."
+"(last resort) by emailing `xemacs-beta@xemacs.org' -- note that this is for\n"
+"XEmacs in general, not just Infodock."
 #else
 "Please report this bug by invoking M-x report-emacs-bug, or by selecting\n"
 "`Send Bug Report' from the Help menu.  If that won't work, send ordinary\n"
-"email to `crashes@xemacs.org'."
+"email to `xemacs-beta@xemacs.org'."
 #endif
-"  *MAKE SURE* to include this entire output\n"
-"from this crash, especially including the Lisp backtrace, as well as the\n"
-"XEmacs configuration from M-x describe-installation (or equivalently, the\n"
-"file `Installation' in the top of the build tree).\n"
+"  *MAKE SURE* to include this entire\n"
+"output from this crash, especially including the Lisp backtrace, as well as\n"
+"the XEmacs configuration from M-x describe-installation (or equivalently,\n"
+"the file `Installation' in the top of the build tree).\n"
 #ifdef _MSC_VER
 "\n"
 "If you are fortunate enough to have some sort of debugging aid installed\n"
