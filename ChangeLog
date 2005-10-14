@@ -1,3 +1,13 @@
+2005-10-13  Ben Wing  <ben@xemacs.org>
+
+	* configure.ac (XE_COMPLEX_ARG_ENABLE):
+	Break lines.
+	* configure.ac (TAB):
+	Rewrite optimization help to be accurate.  Setting
+	`--with-cflags-optimization=""' will now unilaterally turn off
+	optimization; setting it to something non-null unilaterally turns it
+	on.
+
 2005-09-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (Canna): Configure as module if appropriate.

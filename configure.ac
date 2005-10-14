@@ -757,16 +757,16 @@ AC_ARG_WITH([compiler],
 	[], [])
 
 AC_ARG_WITH([xemacs-compiler],
-	AC_HELP_STRING([--with-xemacs-compiler],[compiler to use to compile just the xemacs executable and C modules.
+	AC_HELP_STRING([--with-xemacs-compiler],
+	[compiler to use to compile just the xemacs executable and C modules.
 			If you want to compile XEmacs as C++, use e.g.
 			`--with-xemacs-compiler=g++'.  This turns on a lot of
 			additional error-checking.]),
 	[], [])
 
 AC_ARG_WITH([cflags],
-	AC_HELP_STRING([--with-cflags],[Compiler flags (such as -O); setting this overrides
-                        all default compiler flags except those that control
-                        warnings.]),
+	AC_HELP_STRING([--with-cflags],
+	[Compiler flags.  These flags will be placed after any flags inserted for warnings, debugging or optimization; setting this does not disable the insertion of those flags.  Use configure settings such as `--with-optimization=no' or `enable-debug=no' to turn them off, or override them with `--with-cflags-optimization', `--with-cflags-debugging', or `with-cflags-warning'.]),
 	[], [])
 
 AC_ARG_WITH([cflags-warning],
@@ -777,7 +777,7 @@ AC_ARG_WITH([cflags-warning],
 
 AC_ARG_WITH([cflags-optimization],
 	AC_HELP_STRING([--with-cflags-optimization=FLAGS],
-	[Override compiler flags used to control optimization.  Only has an effect when optimization is enabled.  Normally, don't set this, as XEmacs will already set the maximum safe optimization flags appropriate for the compiler being invoked.]),
+	[Override compiler flags used to control optimization.  If blank, forces no optimization; if non-blank, forces optimization.  Normally, don't set this; XEmacs automatically sets the maximum safe optimization flags appropriate for the compiler being invoked.  If you just want to turn optimization on or off, use `with-optimization' instead.]),
 	[], [])
 
 AC_ARG_WITH([cflags-debugging],
@@ -2074,7 +2074,15 @@ dnl Calculate optimization flags.  These will be off by default in beta
 dnl versions and on in release versions.
 
 if test -z "$with_optimization"; then
-  if test -z "$emacs_is_beta" -o "$cflags_optimization_specified" = "yes"; then
+  # If user set --with-cflags-optimization, use it to unilaterally
+  # determine whether optimization should be enabled.
+  if test "$cflags_optimization_specified" = "yes" ; then
+    if -z "$with_cflags_optimization" ; then
+      with_optimization=no
+    else
+      with_optimization=yes
+    fi
+  elif test -z "$emacs_is_beta" ; then
     with_optimization=yes
   else
     with_optimization=no
