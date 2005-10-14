@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/05/10 17:56:15 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/10/14 02:11:49 $
 @sp 1
 @author Ben Wing <ben@@xemacs.org>
 @author Tony Rossini <rossini@@u.washington.edu>
@@ -455,6 +455,7 @@ library directory>/info/}. For example in
 * Q5.4.3::    Telnet from shell filters too much
 * Q5.4.4::    Strange things are happening in Shell Mode.
 * Q5.4.5::    XEmacs complains "No such file or directory, diff"
+* Q5.4.6::    Cygwin error "fork_copy: linked dll/bss pass 0 failed"
 
 5.5: Multiple Device Support
 * Q5.5.1::    How do I open a frame on another screen of my multi-headed display?
@@ -6091,6 +6092,7 @@ as speakers and the printer.
 * Q5.4.3::    Telnet from shell filters too much
 * Q5.4.4::    Strange things are happening in Shell Mode.
 * Q5.4.5::    XEmacs complains "No such file or directory, diff"
+* Q5.4.6::    Cygwin error "fork_copy: linked dll/bss pass 0 failed"
 
 5.5: Multiple Device Support
 * Q5.5.1::    How do I open a frame on another screen of my multi-headed display?
@@ -6527,7 +6529,7 @@ if ( "$TERM" == emacs || "$TERM" == unknown ) unset filec
 @end example
 @end quotation
 
-@node Q5.4.5, Q5.5.1, Q5.4.4, External Subsystems
+@node Q5.4.5, Q5.4.6, Q5.4.4, External Subsystems
 @unnumberedsubsec Q5.4.5: XEmacs complains "No such file or directory, diff"
 
 or "ispell" or other commands that seem related to whatever you just
@@ -6542,9 +6544,43 @@ Unix utilities nearly trivial).  Another implementation is that from
 MinGW (@uref{http://www.mingw.org/msys.shtml}).  If you know of others,
 please let us know!
 
+@node Q5.4.6, Q5.5.1, Q5.4.5, External Subsystems
+@unnumberedsubsec Q5.4.6: Cygwin error "fork_copy: linked dll/bss pass 0 failed"
+
+If you are getting an error like
+
+@example
+17797832 [main] bash 3468 fork_copy: linked dll/bss pass 0 failed,
+0x675000..0x6756A0, done 0, windows pid 2708, Win 32 error 487
+bash: fork: resource temporarily unavailable
+@end example
+
+when trying to run bash using @kbd{M-x shell}, then you need to rebase
+your Cygwin DLL's.  This is a known problem with Cygwin.  To fix:
+
+@enumerate
+@item
+Download the @file{rebase} utility from Cygwin setup (it's under
+@samp{System}).
+@item
+Kill @strong{all} of your Cygwin processes, including all of your
+shells and all background processes.  Use @code{ps -a} to list all the
+processes you need to kill.
+@item
+From a DOS prompt, run @file{ash} (@strong{not} @file{bash},
+@file{tcsh} or @file{zsh}).  Do not try to be clever and @code{exec
+/bin/ash} from your last shell; it won't work.
+@item
+Type @code{/bin/rebaseall -v}.
+@end enumerate
+
+The problem should now be fixed -- at least, until you install another
+Cygwin package with DLL's, in which case you may have to repeat the
+procedure.
+
 @unnumberedsec 5.5: Multiple Device Support
 
-@node Q5.5.1, Q5.5.2, Q5.4.5, External Subsystems
+@node Q5.5.1, Q5.5.2, Q5.4.6, External Subsystems
 @unnumberedsubsec Q5.5.1: How do I open a frame on another screen of my multi-headed display?
 
 Use the command @kbd{M-x make-frame-on-display}.  This command is also
