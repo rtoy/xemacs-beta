@@ -23,8 +23,8 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
 
 ;;; Synched up with: FSF 19.34.  Some things synched up with later versions.
 
@@ -1619,6 +1619,20 @@ FILE should be the name of a library, with no directory name."
 (make-compatible 'eval-next-after-load "")
 
 ;; END SYNC WITH FSF 21.2
+
+;; BEGIN SYNC WITH FSF 22.0.50.1 (CVS)
+(defun delete-dups (list)
+  "Destructively remove `equal' duplicates from LIST.
+Store the result in LIST and return it.  LIST must be a proper list.
+Of several `equal' occurrences of an element in LIST, the first
+one is kept."
+  (let ((tail list))
+    (while tail
+      (setcdr tail (delete (car tail) (cdr tail)))
+      (setq tail (cdr tail))))
+  list)
+
+;; END SYNC WITH FSF 22.0.50.1 (CVS)
 
 ;; (defun shell-quote-argument (argument) in process.el.
 

@@ -23,8 +23,8 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
 
 ;;; Synched up with: all the minibuffer history stuff is synched with
 ;;; 19.30.  Not sure about the rest.
@@ -1495,7 +1495,7 @@ only existing buffer names are allowed."
                     (setq result default)
                     nil)
                    ((not default)
-                    t)
+                    nil)
                    ((not (get-buffer default))
                     t)
                    (t

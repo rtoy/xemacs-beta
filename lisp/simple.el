@@ -21,12 +21,12 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
 
 ;;; Synched up with: FSF 19.34 [But not very closely].
-;;; Occasional synching to FSF 21.2, as marked.  Comment stuff also
-;;; synched, and in newcomment.el.
+;;; Occasional synching to FSF 21.2 and FSF 22.0, as marked.  Comment stuff
+;;; also synched, and in newcomment.el.
 
 ;;; Commentary:
 
@@ -745,6 +745,10 @@ be given to `goto-line' to get back to the current line."
 	(goto-char pos)
 	(line-number nil respect-narrowing))
     (1+ (count-lines (if respect-narrowing (point-min) 1) (point-at-bol)))))
+
+;; FSF 22.0.50.1 (CVS) version of above.
+(defun line-number-at-pos (&optional pos)
+  (line-number pos t))
 
 (defun count-lines (start end &optional ignore-invisible-lines-flag)
   "Return number of lines between START and END.

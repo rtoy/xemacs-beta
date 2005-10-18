@@ -1,3 +1,16 @@
+2005-10-10  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* minibuf.el:
+	* minibuf.el (read-buffer): Follow GNU Emacs behaviour: Can return
+	empty string if require-match is t and default is nil.
+	* replace.el: Moved occur code to occur.el
+	* simple.el:
+	* simple.el (line-number-at-pos): New.
+	* subr.el:
+	* subr.el (delete-dups): New.
+	* occur.el: New.  Sync with 22.0.50.1 (CVS)
+	* next-error.el: New.  Sync with 22.0.50.1 (CVS)
+
 2005-10-10  Steve Youngs  <steve@sxemacs.org>
 
 	* help.el (view-emacs-news): Use `expand-file-name' instead of
