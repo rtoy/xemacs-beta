@@ -892,85 +892,10 @@ if test -n "$ac_init_help"; then
   cat <<\_ACEOF
 
 Optional Features:
-  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
-  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --with-toolbars         Enable toolbar support. Default: yes.
-  --enable-mule           Compile with Mule (MUlti-Lingual Emacs) support,
-                          needed to support non-Latin-1 (including Asian)
-                          languages.
-  --enable-default-eol-detection
-                          Turns on by default auto-detection of end-of-line
-                          type when reading a file. Applies to those platforms
-                          where auto-detection is off by default (non-Mule
-                          Unix). Has no effect otherwise.
-  --enable-external-widget
-                          Support XEmacs server for text widgets in other
-                          applications.
-  --enable-kkcc           Enable new GC algorithms.
-  --enable-mc-alloc       Enable new allocator.
-  --enable-union-type     Use union definition of Lisp_Object type. Known to
-                          trigger bugs in some compilers.
-  --enable-pdump          Enable portable LISP preloader.
-  --enable-dump-in-exec   Enable dumping into executable (enabled by default
-                          for `pdump', not enabled by default in combination
-                          with `mc-alloc').
-  --enable-debug          Enable additional debugging information. No time
-                          cost.
-  --enable-assertions
-  --enable-memory-usage-stats
-                          Enable LISP memory usage API.
-  --enable-clash-detection
-                          Disable use of lock files to detect multiple edits
-                          of the same file.
-  --enable-modules        Compile in experimental support for dynamically
-                          loaded libraries (Dynamic Shared Objects).
-  --enable-quick-build    Speed up the build cycle by leaving out steps where
-                          XEmacs will still work (more or less) without them.
-                          Potentially dangerous if you don't know what you're
-                          doing. This (1) doesn't garbage-collect after
-                          loading each file during dumping, (2) doesn't
-                          automatically rebuild the DOC file (remove it by
-                          hand to get it rebuilt), (3) Removes config.h,
-                          lisp.h and associated files from the dependency
-                          lists, so changes to these files don't automatically
-                          cause all .c files to be rebuilt.
-  --enable-database       Compile with database support. Valid types are `no'
-                          or a comma-separated list of one or more of `berkdb'
-                          and either `dbm' or `gnudbm'.
-  --enable-sound          Compile with sound support. Valid types are
-                          `native', `nas' and `esd'. Prefix a type with 'no'
-                          to disable. The first type can be `none' or `all'.
-                          `none' means `nonative,nonas,noesd'. `all' means
-                          `native,nas,esd'. Later options override earlier
-                          ones for the same TYPE. The default is to autodetect
-                          all sound support except for ESD which defaults to
-                          off.
-  --enable-bignum=TYPE    Compile in support for bignums, ratios, or bigfloats
-                          using library support. TYPE must be one of "gmp"
-                          (for GNU MP), "mp" (for BSD MP), or "no" (disabled).
-  --enable-error-checking Compile with internal error-checking added. Causes
-                          noticeable loss of speed. Valid types are extents,
-                          bufpos, malloc, gc, types, text, byte_code, glyphs,
-                          display, structures.
-  --enable-menubars=TYPE  Use TYPE menubars (lucid, motif, or no). The Lucid
-                          widgets emulate Motif (mostly) but are faster.
-                          *WARNING* The Motif menubar is currently broken.
-                          Lucid menubars are the default.
-  --enable-scrollbars=TYPE
-                          Use TYPE scrollbars (lucid, motif, athena, or no).
-                          Lucid scrollbars are the default.
-  --enable-dialogs=TYPE   Use TYPE dialog boxes (lucid, motif, athena, or no).
-                          There are no true Lucid dialogs; Motif dialogs will
-                          be used if Motif can be found, else Athena is used.
-  --enable-widgets        Use TYPE native widgets (lucid, motif, athena, or
-                          no). Other widget types are currently unsupported.
-                          There are no true Lucid widgets; Motif widgets will
-                          be used if Motif can be found, else Athena is used.
-
-Optional Packages:
-  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
-  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-
+  --with-FEATURE[=ARG]    include FEATURE [ARG=yes]
+  --enable-FEATURE[=ARG]  alias for --with-FEATURE
+  --without-FEATURE       do not use FEATURE (same as --with-FEATURE=no)
+  --disable-FEATURE       alias for --without-FEATURE
   --with-prefix=no        Don't compile the value for `prefix' into the
                           executable.
   --with-site-lisp=no     Allow for a site-lisp directory in the XEmacs
@@ -1024,11 +949,20 @@ Optional Packages:
   --with-xmu              Use Xmu utilities. Default: yes.
   --with-purify           Support memory debugging using Purify.
   --with-quantify         Support performance debugging using Quantify.
+  --with-toolbars         Enable toolbar support. Default: yes.
   --with-tty              Enable TTY support. Default: yes.
   --with-xfs              Enable XFontSet support for internationalized
                           menubar. Incompatible with `--with-xim=motif'.
-                          `--enable-menubars=lucid' (the default) is
+                          `--with-menubars=lucid'   (the default) is
                           desirable.
+  --with-mule             Compile with Mule (Multi-Lingual Emacs) support,
+                          needed to support non-Latin-1 (including Asian)
+                          languages.
+  --with-default-eol-detection
+                          Turns on by default auto-detection of end-of-line
+                          type when reading a file. Applies to those platforms
+                          where auto-detection is off by default (non-Mule
+                          Unix). Has no effect otherwise.
   --with-canna            Support the Canna Japanese input method. Requires
                           Mule.
   --with-wnn              Support the Wnn Asian language input method.
@@ -1073,24 +1007,62 @@ Optional Packages:
 
   --with-package-prefix   Specify packages root.
   --with-package-path     Search path for package hierarchies.
+  --with-external-widget
+                          Support XEmacs server for text widgets in other
+                          applications.
+  --with-kkcc             Enable new GC algorithms.
+  --with-mc-alloc         Enable new allocator.
+  --with-union-type       Use union definition of Lisp_Object type. Known to
+                          trigger bugs in some compilers.
+  --with-pdump            Enable portable LISP preloader.
+  --with-dump-in-exec     Enable dumping into executable (enabled by default
+                          for `pdump', not enabled by default in combination
+                          with `mc-alloc').
+  --with-debug            Enable additional debugging information. No time
+                          cost.
+  --with-assertions
+  --with-memory-usage-stats
+                          Enable LISP memory usage API.
+  --with-clash-detection
+                          Disable use of lock files to detect multiple edits
+                          of the same file.
+  --with-modules          Compile in experimental support for dynamically
+                          loaded libraries (Dynamic Shared Objects).
+  --with-quick-build      Speed up the build cycle by leaving out steps where
+                          XEmacs will still work (more or less) without them.
+                          Potentially dangerous if you don't know what you're
+                          doing. This (1) doesn't garbage-collect after
+                          loading each file during dumping, (2) doesn't
+                          automatically rebuild the DOC file (remove it by
+                          hand to get it rebuilt), (3) Removes config.h,
+                          lisp.h and associated files from the dependency
+                          lists, so changes to these files don't automatically
+                          cause all .c files to be rebuilt.
   --with-compiler         C compiler to use
   --with-xemacs-compiler  compiler to use to compile just the xemacs
                           executable and C modules. If you want to compile
                           XEmacs as C++, use e.g.
                           `--with-xemacs-compiler=g++'. This turns on a lot of
                           additional error-checking.
-  --with-cflags           Compiler flags (such as -O); setting this overrides
-                          all default compiler flags except those that control
-                          warnings.
+  --with-cflags           Compiler flags. These flags will be placed after any
+                          flags inserted for warnings, debugging or
+                          optimization; setting this does not disable the
+                          insertion of those flags. Use configure settings
+                          such as `--with-optimization=no' or
+                          `enable-debug=no' to turn them off, or override them
+                          with `--with-cflags-optimization',
+                          `--with-cflags-debugging', or `with-cflags-warning'.
   --with-cflags-warning   Override compiler flags used to control warnings.
                           Normally, don't set this, as XEmacs already turns on
                           the maximum safe warning level.
   --with-cflags-optimization=FLAGS
                           Override compiler flags used to control
-                          optimization. Only has an effect when optimization
-                          is enabled. Normally, don't set this, as XEmacs will
-                          already set the maximum safe optimization flags
-                          appropriate for the compiler being invoked.
+                          optimization. If blank, forces no optimization; if
+                          non-blank, forces optimization. Normally, don't set
+                          this; XEmacs automatically sets the maximum safe
+                          optimization flags appropriate for the compiler
+                          being invoked. If you just want to turn optimization
+                          on or off, use `with-optimization' instead.
   --with-cflags-debugging=FLAGS
                           Override compiler flags used to add debugging
                           information to the executable. Normally, debugging
@@ -1107,11 +1079,48 @@ Optional Packages:
   --with-debug-malloc     Use a debugging malloc.
   --with-system-malloc    Use the system malloc, not the one distributed with
                           XEmacs.
+  --with-database         Compile with database support. Valid types are `no'
+                          or a comma-separated list of one or more of `berkdb'
+                          and either `dbm' or `gnudbm'.
+  --with-sound            Compile with sound support. Valid types are
+                          `native', `nas' and `esd'. Prefix a type with 'no'
+                          to disable. The first type can be `none' or `all'.
+                          `none' means `nonative,nonas,noesd'. `all' means
+                          `native,nas,esd'. Later options override earlier
+                          ones for the same TYPE. The default is to autodetect
+                          all sound support except for ESD which defaults to
+                          off.
   --with-athena           Use TYPE Athena widgets (xaw, 3d, next, 95, or xpm).
+
   --with-mail-locking     Specify the locking to be used by movemail to
                           prevent concurrent updates of mail spool files.
                           Valid types are `lockf', `flock', `dot', `locking'
                           or `mmdf'.
+  --with-bignum=TYPE      Compile in support for bignums, ratios, or bigfloats
+                          using library support. TYPE must be one of "gmp"
+                          (for GNU MP), "mp" (for BSD MP), or "no" (disabled).
+  --with-error-checking   Compile with internal error-checking added. Causes
+                          noticeable loss of speed. Valid types are extents,
+                          bufpos, malloc, gc, types, text, byte_code, glyphs,
+                          display, structures.
+  --with-menubars=TYPE    Use TYPE menubars (lucid, motif, or no). The Lucid
+                          widgets emulate Motif (mostly) but are faster.
+                          *WARNING* The Motif menubar is currently broken.
+                          Lucid menubars are the default.
+  --with-scrollbars=TYPE
+                          Use TYPE scrollbars (lucid, motif, athena, or no).
+                          Lucid scrollbars are the default.
+  --with-dialogs=TYPE     Use TYPE dialog boxes (lucid, motif, athena, or no).
+                          There are no true Lucid dialogs; Motif dialogs will
+                          be used if Motif can be found, else Athena is used.
+  --with-widgets          Use TYPE native widgets (lucid, motif, athena, or
+                          no). Other widget types are currently unsupported.
+                          There are no true Lucid widgets; Motif widgets will
+                          be used if Motif can be found, else Athena is used.
+
+Optional Packages:
+  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-x                use the X Window System
 
 Some influential environment variables:
@@ -1613,435 +1622,958 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-
 progname="`echo $0 | sed 's:^\./\./:\./:'`"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 MAKE_SUBDIR="$MAKE_SUBDIR lib-src" &&  if test "$verbose" = "yes"; then echo "    Appending \"lib-src\" to \$MAKE_SUBDIR"; fi
 INSTALL_ARCH_DEP_SUBDIR="$INSTALL_ARCH_DEP_SUBDIR lib-src" &&  if test "$verbose" = "yes"; then echo "    Appending \"lib-src\" to \$INSTALL_ARCH_DEP_SUBDIR"; fi
 with_dragndrop_default="no"
-
-# Check whether --with-mule or --without-mule was given.
-if test "${with_mule+set}" = set; then
-  withval="$with_mule"
-  { echo "Error:" --enable-mule, NOT --with-mule >&2; exit 1; }
+# If --with-prefix or --without-prefix were given then copy the value to the
+# equivalent enable_prefix variable.
+if test "${with_prefix+set}" = set; then
+  echo prefix Setting enable to "$with_prefix"
+  enable_prefix="$with_prefix"
 fi;
-
-# Check whether --with-menubars or --without-menubars was given.
-if test "${with_menubars+set}" = set; then
-  withval="$with_menubars"
-  { echo "Error:" --enable-menubars, NOT --with-menubars >&2; exit 1; }
+# If -enable-prefix or --disable-prefix were given then copy the value to the
+# equivalent with_prefix variable.
+if test "${enable_prefix+set}" = set; then
+  echo prefix Setting with to "$enable_prefix"
+  with_prefix="$enable_prefix"
 fi;
-
-# Check whether --with-scrollbars or --without-scrollbars was given.
-if test "${with_scrollbars+set}" = set; then
-  withval="$with_scrollbars"
-  { echo "Error:" --enable-scrollbars, NOT --with-scrollbars >&2; exit 1; }
-fi;
-
-# Check whether --with-dialogs or --without-dialogs was given.
-if test "${with_dialogs+set}" = set; then
-  withval="$with_dialogs"
-  { echo "Error:" --enable-dialogs, NOT --with-dialogs >&2; exit 1; }
-fi;
-
-# Check whether --with-widgets or --without-widgets was given.
-if test "${with_widgets+set}" = set; then
-  withval="$with_widgets"
-  { echo "Error:" --enable-widgets, NOT --with-widgets >&2; exit 1; }
-fi;
-
-# Check whether --with-sound or --without-sound was given.
-if test "${with_sound+set}" = set; then
-  withval="$with_sound"
-  { echo "Error:" --enable-sound, NOT --with-sound >&2; exit 1; }
-fi;
-
-# Check whether --with-default-eol-detection or --without-default-eol-detection was given.
-if test "${with_default_eol_detection+set}" = set; then
-  withval="$with_default_eol_detection"
-  { echo "Error:" --enable-default-eol-detection, NOT --with-default-eol-detection >&2; exit 1; }
-fi;
-
-# Check whether --with-clash-detection or --without-clash-detection was given.
-if test "${with_clash_detection+set}" = set; then
-  withval="$with_clash_detection"
-  { echo "Error:" --enable-clash-detection, NOT --with-clash-detection >&2; exit 1; }
-fi;
-
-# Check whether --with-database or --without-database was given.
-if test "${with_database+set}" = set; then
-  withval="$with_database"
-  { echo "Error:" --enable-database, NOT --with-database >&2; exit 1; }
-fi;
-
-# Check whether --with-modules or --without-modules was given.
-if test "${with_modules+set}" = set; then
-  withval="$with_modules"
-  { echo "Error:" --enable-modules, NOT --with-modules >&2; exit 1; }
-fi;
-
-# Check whether --with-toolbars or --without-toolbars was given.
-if test "${with_toolbars+set}" = set; then
-  withval="$with_toolbars"
-  { echo "Error:" --enable-toolbars, NOT --with-toolbars >&2; exit 1; }
-fi;
-
-
-
 # Check whether --with-prefix or --without-prefix was given.
 if test "${with_prefix+set}" = set; then
+  enableval="$with_prefix"
   withval="$with_prefix"
   true
 else
   with_prefix=yes
 fi;
-
+# If --with-site-lisp or --without-site-lisp were given then copy the value to the
+# equivalent enable_site-lisp variable.
+if test "${with_site_lisp+set}" = set; then
+  echo site-lisp Setting enable to "$with_site_lisp"
+  enable_site_lisp="$with_site_lisp"
+fi;
+# If -enable-site-lisp or --disable-site-lisp were given then copy the value to the
+# equivalent with_site-lisp variable.
+if test "${enable_site_lisp+set}" = set; then
+  echo site-lisp Setting with to "$enable_site_lisp"
+  with_site_lisp="$enable_site_lisp"
+fi;
 # Check whether --with-site-lisp or --without-site-lisp was given.
 if test "${with_site_lisp+set}" = set; then
+  enableval="$with_site_lisp"
   withval="$with_site_lisp"
   true
 else
   with_site_lisp=no
 fi;
-
+# If --with-site-modules or --without-site-modules were given then copy the value to the
+# equivalent enable_site-modules variable.
+if test "${with_site_modules+set}" = set; then
+  echo site-modules Setting enable to "$with_site_modules"
+  enable_site_modules="$with_site_modules"
+fi;
+# If -enable-site-modules or --disable-site-modules were given then copy the value to the
+# equivalent with_site-modules variable.
+if test "${enable_site_modules+set}" = set; then
+  echo site-modules Setting with to "$enable_site_modules"
+  with_site_modules="$enable_site_modules"
+fi;
 # Check whether --with-site-modules or --without-site-modules was given.
 if test "${with_site_modules+set}" = set; then
+  enableval="$with_site_modules"
   withval="$with_site_modules"
 
 fi;
-
+# If --with-gtk or --without-gtk were given then copy the value to the
+# equivalent enable_gtk variable.
+if test "${with_gtk+set}" = set; then
+  echo gtk Setting enable to "$with_gtk"
+  enable_gtk="$with_gtk"
+fi;
+# If -enable-gtk or --disable-gtk were given then copy the value to the
+# equivalent with_gtk variable.
+if test "${enable_gtk+set}" = set; then
+  echo gtk Setting with to "$enable_gtk"
+  with_gtk="$enable_gtk"
+fi;
 # Check whether --with-gtk or --without-gtk was given.
 if test "${with_gtk+set}" = set; then
+  enableval="$with_gtk"
   withval="$with_gtk"
   true
 else
   with_gtk=no
 fi;
-
+# If --with-gnome or --without-gnome were given then copy the value to the
+# equivalent enable_gnome variable.
+if test "${with_gnome+set}" = set; then
+  echo gnome Setting enable to "$with_gnome"
+  enable_gnome="$with_gnome"
+fi;
+# If -enable-gnome or --disable-gnome were given then copy the value to the
+# equivalent with_gnome variable.
+if test "${enable_gnome+set}" = set; then
+  echo gnome Setting with to "$enable_gnome"
+  with_gnome="$enable_gnome"
+fi;
 # Check whether --with-gnome or --without-gnome was given.
 if test "${with_gnome+set}" = set; then
+  enableval="$with_gnome"
   withval="$with_gnome"
   true
 else
   with_gnome=no
 fi;
-
+# If --with-msw or --without-msw were given then copy the value to the
+# equivalent enable_msw variable.
+if test "${with_msw+set}" = set; then
+  echo msw Setting enable to "$with_msw"
+  enable_msw="$with_msw"
+fi;
+# If -enable-msw or --disable-msw were given then copy the value to the
+# equivalent with_msw variable.
+if test "${enable_msw+set}" = set; then
+  echo msw Setting with to "$enable_msw"
+  with_msw="$enable_msw"
+fi;
 # Check whether --with-msw or --without-msw was given.
 if test "${with_msw+set}" = set; then
+  enableval="$with_msw"
   withval="$with_msw"
 
 fi;
-
+# If --with-gcc or --without-gcc were given then copy the value to the
+# equivalent enable_gcc variable.
+if test "${with_gcc+set}" = set; then
+  echo gcc Setting enable to "$with_gcc"
+  enable_gcc="$with_gcc"
+fi;
+# If -enable-gcc or --disable-gcc were given then copy the value to the
+# equivalent with_gcc variable.
+if test "${enable_gcc+set}" = set; then
+  echo gcc Setting with to "$enable_gcc"
+  with_gcc="$enable_gcc"
+fi;
 # Check whether --with-gcc or --without-gcc was given.
 if test "${with_gcc+set}" = set; then
+  enableval="$with_gcc"
   withval="$with_gcc"
 
 fi;
-
+# If --with-dynamic or --without-dynamic were given then copy the value to the
+# equivalent enable_dynamic variable.
+if test "${with_dynamic+set}" = set; then
+  echo dynamic Setting enable to "$with_dynamic"
+  enable_dynamic="$with_dynamic"
+fi;
+# If -enable-dynamic or --disable-dynamic were given then copy the value to the
+# equivalent with_dynamic variable.
+if test "${enable_dynamic+set}" = set; then
+  echo dynamic Setting with to "$enable_dynamic"
+  with_dynamic="$enable_dynamic"
+fi;
 # Check whether --with-dynamic or --without-dynamic was given.
 if test "${with_dynamic+set}" = set; then
+  enableval="$with_dynamic"
   withval="$with_dynamic"
 
 fi;
-
+# If --with-ncurses or --without-ncurses were given then copy the value to the
+# equivalent enable_ncurses variable.
+if test "${with_ncurses+set}" = set; then
+  echo ncurses Setting enable to "$with_ncurses"
+  enable_ncurses="$with_ncurses"
+fi;
+# If -enable-ncurses or --disable-ncurses were given then copy the value to the
+# equivalent with_ncurses variable.
+if test "${enable_ncurses+set}" = set; then
+  echo ncurses Setting with to "$enable_ncurses"
+  with_ncurses="$enable_ncurses"
+fi;
 # Check whether --with-ncurses or --without-ncurses was given.
 if test "${with_ncurses+set}" = set; then
+  enableval="$with_ncurses"
   withval="$with_ncurses"
 
 fi;
-
+# If --with-dnet or --without-dnet were given then copy the value to the
+# equivalent enable_dnet variable.
+if test "${with_dnet+set}" = set; then
+  echo dnet Setting enable to "$with_dnet"
+  enable_dnet="$with_dnet"
+fi;
+# If -enable-dnet or --disable-dnet were given then copy the value to the
+# equivalent with_dnet variable.
+if test "${enable_dnet+set}" = set; then
+  echo dnet Setting with to "$enable_dnet"
+  with_dnet="$enable_dnet"
+fi;
 # Check whether --with-dnet or --without-dnet was given.
 if test "${with_dnet+set}" = set; then
+  enableval="$with_dnet"
   withval="$with_dnet"
 
 fi;
-
+# If --with-socks or --without-socks were given then copy the value to the
+# equivalent enable_socks variable.
+if test "${with_socks+set}" = set; then
+  echo socks Setting enable to "$with_socks"
+  enable_socks="$with_socks"
+fi;
+# If -enable-socks or --disable-socks were given then copy the value to the
+# equivalent with_socks variable.
+if test "${enable_socks+set}" = set; then
+  echo socks Setting with to "$enable_socks"
+  with_socks="$enable_socks"
+fi;
 # Check whether --with-socks or --without-socks was given.
 if test "${with_socks+set}" = set; then
+  enableval="$with_socks"
   withval="$with_socks"
 
 fi;
-
+# If --with-dragndrop or --without-dragndrop were given then copy the value to the
+# equivalent enable_dragndrop variable.
+if test "${with_dragndrop+set}" = set; then
+  echo dragndrop Setting enable to "$with_dragndrop"
+  enable_dragndrop="$with_dragndrop"
+fi;
+# If -enable-dragndrop or --disable-dragndrop were given then copy the value to the
+# equivalent with_dragndrop variable.
+if test "${enable_dragndrop+set}" = set; then
+  echo dragndrop Setting with to "$enable_dragndrop"
+  with_dragndrop="$enable_dragndrop"
+fi;
 # Check whether --with-dragndrop or --without-dragndrop was given.
 if test "${with_dragndrop+set}" = set; then
+  enableval="$with_dragndrop"
   withval="$with_dragndrop"
 
 fi;
-
+# If --with-cde or --without-cde were given then copy the value to the
+# equivalent enable_cde variable.
+if test "${with_cde+set}" = set; then
+  echo cde Setting enable to "$with_cde"
+  enable_cde="$with_cde"
+fi;
+# If -enable-cde or --disable-cde were given then copy the value to the
+# equivalent with_cde variable.
+if test "${enable_cde+set}" = set; then
+  echo cde Setting with to "$enable_cde"
+  with_cde="$enable_cde"
+fi;
 # Check whether --with-cde or --without-cde was given.
 if test "${with_cde+set}" = set; then
+  enableval="$with_cde"
   withval="$with_cde"
 
 fi;
-
+# If --with-offix or --without-offix were given then copy the value to the
+# equivalent enable_offix variable.
+if test "${with_offix+set}" = set; then
+  echo offix Setting enable to "$with_offix"
+  enable_offix="$with_offix"
+fi;
+# If -enable-offix or --disable-offix were given then copy the value to the
+# equivalent with_offix variable.
+if test "${enable_offix+set}" = set; then
+  echo offix Setting with to "$enable_offix"
+  with_offix="$enable_offix"
+fi;
 # Check whether --with-offix or --without-offix was given.
 if test "${with_offix+set}" = set; then
+  enableval="$with_offix"
   withval="$with_offix"
 
 fi;
-
+# If --with-gpm or --without-gpm were given then copy the value to the
+# equivalent enable_gpm variable.
+if test "${with_gpm+set}" = set; then
+  echo gpm Setting enable to "$with_gpm"
+  enable_gpm="$with_gpm"
+fi;
+# If -enable-gpm or --disable-gpm were given then copy the value to the
+# equivalent with_gpm variable.
+if test "${enable_gpm+set}" = set; then
+  echo gpm Setting with to "$enable_gpm"
+  with_gpm="$enable_gpm"
+fi;
 # Check whether --with-gpm or --without-gpm was given.
 if test "${with_gpm+set}" = set; then
+  enableval="$with_gpm"
   withval="$with_gpm"
 
 fi;
-
+# If --with-xpm or --without-xpm were given then copy the value to the
+# equivalent enable_xpm variable.
+if test "${with_xpm+set}" = set; then
+  echo xpm Setting enable to "$with_xpm"
+  enable_xpm="$with_xpm"
+fi;
+# If -enable-xpm or --disable-xpm were given then copy the value to the
+# equivalent with_xpm variable.
+if test "${enable_xpm+set}" = set; then
+  echo xpm Setting with to "$enable_xpm"
+  with_xpm="$enable_xpm"
+fi;
 # Check whether --with-xpm or --without-xpm was given.
 if test "${with_xpm+set}" = set; then
+  enableval="$with_xpm"
   withval="$with_xpm"
 
 fi;
-
+# If --with-xface or --without-xface were given then copy the value to the
+# equivalent enable_xface variable.
+if test "${with_xface+set}" = set; then
+  echo xface Setting enable to "$with_xface"
+  enable_xface="$with_xface"
+fi;
+# If -enable-xface or --disable-xface were given then copy the value to the
+# equivalent with_xface variable.
+if test "${enable_xface+set}" = set; then
+  echo xface Setting with to "$enable_xface"
+  with_xface="$enable_xface"
+fi;
 # Check whether --with-xface or --without-xface was given.
 if test "${with_xface+set}" = set; then
+  enableval="$with_xface"
   withval="$with_xface"
 
 fi;
-
+# If --with-gif or --without-gif were given then copy the value to the
+# equivalent enable_gif variable.
+if test "${with_gif+set}" = set; then
+  echo gif Setting enable to "$with_gif"
+  enable_gif="$with_gif"
+fi;
+# If -enable-gif or --disable-gif were given then copy the value to the
+# equivalent with_gif variable.
+if test "${enable_gif+set}" = set; then
+  echo gif Setting with to "$enable_gif"
+  with_gif="$enable_gif"
+fi;
 # Check whether --with-gif or --without-gif was given.
 if test "${with_gif+set}" = set; then
+  enableval="$with_gif"
   withval="$with_gif"
 
 fi;
-
+# If --with-jpeg or --without-jpeg were given then copy the value to the
+# equivalent enable_jpeg variable.
+if test "${with_jpeg+set}" = set; then
+  echo jpeg Setting enable to "$with_jpeg"
+  enable_jpeg="$with_jpeg"
+fi;
+# If -enable-jpeg or --disable-jpeg were given then copy the value to the
+# equivalent with_jpeg variable.
+if test "${enable_jpeg+set}" = set; then
+  echo jpeg Setting with to "$enable_jpeg"
+  with_jpeg="$enable_jpeg"
+fi;
 # Check whether --with-jpeg or --without-jpeg was given.
 if test "${with_jpeg+set}" = set; then
+  enableval="$with_jpeg"
   withval="$with_jpeg"
 
 fi;
-
+# If --with-png or --without-png were given then copy the value to the
+# equivalent enable_png variable.
+if test "${with_png+set}" = set; then
+  echo png Setting enable to "$with_png"
+  enable_png="$with_png"
+fi;
+# If -enable-png or --disable-png were given then copy the value to the
+# equivalent with_png variable.
+if test "${enable_png+set}" = set; then
+  echo png Setting with to "$enable_png"
+  with_png="$enable_png"
+fi;
 # Check whether --with-png or --without-png was given.
 if test "${with_png+set}" = set; then
+  enableval="$with_png"
   withval="$with_png"
 
 fi;
-
+# If --with-tiff or --without-tiff were given then copy the value to the
+# equivalent enable_tiff variable.
+if test "${with_tiff+set}" = set; then
+  echo tiff Setting enable to "$with_tiff"
+  enable_tiff="$with_tiff"
+fi;
+# If -enable-tiff or --disable-tiff were given then copy the value to the
+# equivalent with_tiff variable.
+if test "${enable_tiff+set}" = set; then
+  echo tiff Setting with to "$enable_tiff"
+  with_tiff="$enable_tiff"
+fi;
 # Check whether --with-tiff or --without-tiff was given.
 if test "${with_tiff+set}" = set; then
+  enableval="$with_tiff"
   withval="$with_tiff"
 
 fi;
-
+# If --with-zlib or --without-zlib were given then copy the value to the
+# equivalent enable_zlib variable.
+if test "${with_zlib+set}" = set; then
+  echo zlib Setting enable to "$with_zlib"
+  enable_zlib="$with_zlib"
+fi;
+# If -enable-zlib or --disable-zlib were given then copy the value to the
+# equivalent with_zlib variable.
+if test "${enable_zlib+set}" = set; then
+  echo zlib Setting with to "$enable_zlib"
+  with_zlib="$enable_zlib"
+fi;
 # Check whether --with-zlib or --without-zlib was given.
 if test "${with_zlib+set}" = set; then
+  enableval="$with_zlib"
   withval="$with_zlib"
 
 fi;
-
+# If --with-wmcommand or --without-wmcommand were given then copy the value to the
+# equivalent enable_wmcommand variable.
+if test "${with_wmcommand+set}" = set; then
+  echo wmcommand Setting enable to "$with_wmcommand"
+  enable_wmcommand="$with_wmcommand"
+fi;
+# If -enable-wmcommand or --disable-wmcommand were given then copy the value to the
+# equivalent with_wmcommand variable.
+if test "${enable_wmcommand+set}" = set; then
+  echo wmcommand Setting with to "$enable_wmcommand"
+  with_wmcommand="$enable_wmcommand"
+fi;
 # Check whether --with-wmcommand or --without-wmcommand was given.
 if test "${with_wmcommand+set}" = set; then
+  enableval="$with_wmcommand"
   withval="$with_wmcommand"
 
 fi;
-
+# If --with-xmu or --without-xmu were given then copy the value to the
+# equivalent enable_xmu variable.
+if test "${with_xmu+set}" = set; then
+  echo xmu Setting enable to "$with_xmu"
+  enable_xmu="$with_xmu"
+fi;
+# If -enable-xmu or --disable-xmu were given then copy the value to the
+# equivalent with_xmu variable.
+if test "${enable_xmu+set}" = set; then
+  echo xmu Setting with to "$enable_xmu"
+  with_xmu="$enable_xmu"
+fi;
 # Check whether --with-xmu or --without-xmu was given.
 if test "${with_xmu+set}" = set; then
+  enableval="$with_xmu"
   withval="$with_xmu"
 
 fi;
-
+# If --with-purify or --without-purify were given then copy the value to the
+# equivalent enable_purify variable.
+if test "${with_purify+set}" = set; then
+  echo purify Setting enable to "$with_purify"
+  enable_purify="$with_purify"
+fi;
+# If -enable-purify or --disable-purify were given then copy the value to the
+# equivalent with_purify variable.
+if test "${enable_purify+set}" = set; then
+  echo purify Setting with to "$enable_purify"
+  with_purify="$enable_purify"
+fi;
 # Check whether --with-purify or --without-purify was given.
 if test "${with_purify+set}" = set; then
+  enableval="$with_purify"
   withval="$with_purify"
 
 fi;
-
+# If --with-quantify or --without-quantify were given then copy the value to the
+# equivalent enable_quantify variable.
+if test "${with_quantify+set}" = set; then
+  echo quantify Setting enable to "$with_quantify"
+  enable_quantify="$with_quantify"
+fi;
+# If -enable-quantify or --disable-quantify were given then copy the value to the
+# equivalent with_quantify variable.
+if test "${enable_quantify+set}" = set; then
+  echo quantify Setting with to "$enable_quantify"
+  with_quantify="$enable_quantify"
+fi;
 # Check whether --with-quantify or --without-quantify was given.
 if test "${with_quantify+set}" = set; then
+  enableval="$with_quantify"
   withval="$with_quantify"
 
 fi;
-# Check whether --enable-toolbars or --disable-toolbars was given.
+# If --with-toolbars or --without-toolbars were given then copy the value to the
+# equivalent enable_toolbars variable.
+if test "${with_toolbars+set}" = set; then
+  echo toolbars Setting enable to "$with_toolbars"
+  enable_toolbars="$with_toolbars"
+fi;
+# If -enable-toolbars or --disable-toolbars were given then copy the value to the
+# equivalent with_toolbars variable.
 if test "${enable_toolbars+set}" = set; then
-  enableval="$enable_toolbars"
+  echo toolbars Setting with to "$enable_toolbars"
+  with_toolbars="$enable_toolbars"
+fi;
+# Check whether --with-toolbars or --without-toolbars was given.
+if test "${with_toolbars+set}" = set; then
+  enableval="$with_toolbars"
+  withval="$with_toolbars"
 
 fi;
-
+# If --with-tty or --without-tty were given then copy the value to the
+# equivalent enable_tty variable.
+if test "${with_tty+set}" = set; then
+  echo tty Setting enable to "$with_tty"
+  enable_tty="$with_tty"
+fi;
+# If -enable-tty or --disable-tty were given then copy the value to the
+# equivalent with_tty variable.
+if test "${enable_tty+set}" = set; then
+  echo tty Setting with to "$enable_tty"
+  with_tty="$enable_tty"
+fi;
 # Check whether --with-tty or --without-tty was given.
 if test "${with_tty+set}" = set; then
+  enableval="$with_tty"
   withval="$with_tty"
 
 fi;
-
+# If --with-xfs or --without-xfs were given then copy the value to the
+# equivalent enable_xfs variable.
+if test "${with_xfs+set}" = set; then
+  echo xfs Setting enable to "$with_xfs"
+  enable_xfs="$with_xfs"
+fi;
+# If -enable-xfs or --disable-xfs were given then copy the value to the
+# equivalent with_xfs variable.
+if test "${enable_xfs+set}" = set; then
+  echo xfs Setting with to "$enable_xfs"
+  with_xfs="$enable_xfs"
+fi;
 # Check whether --with-xfs or --without-xfs was given.
 if test "${with_xfs+set}" = set; then
+  enableval="$with_xfs"
   withval="$with_xfs"
 
 fi;
-# Check whether --enable-mule or --disable-mule was given.
+# If --with-mule or --without-mule were given then copy the value to the
+# equivalent enable_mule variable.
+if test "${with_mule+set}" = set; then
+  echo mule Setting enable to "$with_mule"
+  enable_mule="$with_mule"
+fi;
+# If -enable-mule or --disable-mule were given then copy the value to the
+# equivalent with_mule variable.
 if test "${enable_mule+set}" = set; then
-  enableval="$enable_mule"
+  echo mule Setting with to "$enable_mule"
+  with_mule="$enable_mule"
+fi;
+# Check whether --with-mule or --without-mule was given.
+if test "${with_mule+set}" = set; then
+  enableval="$with_mule"
+  withval="$with_mule"
 
 fi;
-# Check whether --enable-default-eol-detection or --disable-default-eol-detection was given.
+# If --with-default-eol-detection or --without-default-eol-detection were given then copy the value to the
+# equivalent enable_default-eol-detection variable.
+if test "${with_default_eol_detection+set}" = set; then
+  echo default-eol-detection Setting enable to "$with_default_eol_detection"
+  enable_default_eol_detection="$with_default_eol_detection"
+fi;
+# If -enable-default-eol-detection or --disable-default-eol-detection were given then copy the value to the
+# equivalent with_default-eol-detection variable.
 if test "${enable_default_eol_detection+set}" = set; then
-  enableval="$enable_default_eol_detection"
+  echo default-eol-detection Setting with to "$enable_default_eol_detection"
+  with_default_eol_detection="$enable_default_eol_detection"
+fi;
+# Check whether --with-default-eol-detection or --without-default-eol-detection was given.
+if test "${with_default_eol_detection+set}" = set; then
+  enableval="$with_default_eol_detection"
+  withval="$with_default_eol_detection"
 
 fi;
-
+# If --with-canna or --without-canna were given then copy the value to the
+# equivalent enable_canna variable.
+if test "${with_canna+set}" = set; then
+  echo canna Setting enable to "$with_canna"
+  enable_canna="$with_canna"
+fi;
+# If -enable-canna or --disable-canna were given then copy the value to the
+# equivalent with_canna variable.
+if test "${enable_canna+set}" = set; then
+  echo canna Setting with to "$enable_canna"
+  with_canna="$enable_canna"
+fi;
 # Check whether --with-canna or --without-canna was given.
 if test "${with_canna+set}" = set; then
+  enableval="$with_canna"
   withval="$with_canna"
 
 fi;
-
+# If --with-wnn or --without-wnn were given then copy the value to the
+# equivalent enable_wnn variable.
+if test "${with_wnn+set}" = set; then
+  echo wnn Setting enable to "$with_wnn"
+  enable_wnn="$with_wnn"
+fi;
+# If -enable-wnn or --disable-wnn were given then copy the value to the
+# equivalent with_wnn variable.
+if test "${enable_wnn+set}" = set; then
+  echo wnn Setting with to "$enable_wnn"
+  with_wnn="$enable_wnn"
+fi;
 # Check whether --with-wnn or --without-wnn was given.
 if test "${with_wnn+set}" = set; then
+  enableval="$with_wnn"
   withval="$with_wnn"
 
 fi;
-
+# If --with-wnn6 or --without-wnn6 were given then copy the value to the
+# equivalent enable_wnn6 variable.
+if test "${with_wnn6+set}" = set; then
+  echo wnn6 Setting enable to "$with_wnn6"
+  enable_wnn6="$with_wnn6"
+fi;
+# If -enable-wnn6 or --disable-wnn6 were given then copy the value to the
+# equivalent with_wnn6 variable.
+if test "${enable_wnn6+set}" = set; then
+  echo wnn6 Setting with to "$enable_wnn6"
+  with_wnn6="$enable_wnn6"
+fi;
 # Check whether --with-wnn6 or --without-wnn6 was given.
 if test "${with_wnn6+set}" = set; then
+  enableval="$with_wnn6"
   withval="$with_wnn6"
 
 fi;
-
+# If --with-workshop or --without-workshop were given then copy the value to the
+# equivalent enable_workshop variable.
+if test "${with_workshop+set}" = set; then
+  echo workshop Setting enable to "$with_workshop"
+  enable_workshop="$with_workshop"
+fi;
+# If -enable-workshop or --disable-workshop were given then copy the value to the
+# equivalent with_workshop variable.
+if test "${enable_workshop+set}" = set; then
+  echo workshop Setting with to "$enable_workshop"
+  with_workshop="$enable_workshop"
+fi;
 # Check whether --with-workshop or --without-workshop was given.
 if test "${with_workshop+set}" = set; then
+  enableval="$with_workshop"
   withval="$with_workshop"
 
 fi;
-
+# If --with-sparcworks or --without-sparcworks were given then copy the value to the
+# equivalent enable_sparcworks variable.
+if test "${with_sparcworks+set}" = set; then
+  echo sparcworks Setting enable to "$with_sparcworks"
+  enable_sparcworks="$with_sparcworks"
+fi;
+# If -enable-sparcworks or --disable-sparcworks were given then copy the value to the
+# equivalent with_sparcworks variable.
+if test "${enable_sparcworks+set}" = set; then
+  echo sparcworks Setting with to "$enable_sparcworks"
+  with_sparcworks="$enable_sparcworks"
+fi;
 # Check whether --with-sparcworks or --without-sparcworks was given.
 if test "${with_sparcworks+set}" = set; then
+  enableval="$with_sparcworks"
   withval="$with_sparcworks"
 
 fi;
-
+# If --with-tooltalk or --without-tooltalk were given then copy the value to the
+# equivalent enable_tooltalk variable.
+if test "${with_tooltalk+set}" = set; then
+  echo tooltalk Setting enable to "$with_tooltalk"
+  enable_tooltalk="$with_tooltalk"
+fi;
+# If -enable-tooltalk or --disable-tooltalk were given then copy the value to the
+# equivalent with_tooltalk variable.
+if test "${enable_tooltalk+set}" = set; then
+  echo tooltalk Setting with to "$enable_tooltalk"
+  with_tooltalk="$enable_tooltalk"
+fi;
 # Check whether --with-tooltalk or --without-tooltalk was given.
 if test "${with_tooltalk+set}" = set; then
+  enableval="$with_tooltalk"
   withval="$with_tooltalk"
 
 fi;
-
+# If --with-ldap or --without-ldap were given then copy the value to the
+# equivalent enable_ldap variable.
+if test "${with_ldap+set}" = set; then
+  echo ldap Setting enable to "$with_ldap"
+  enable_ldap="$with_ldap"
+fi;
+# If -enable-ldap or --disable-ldap were given then copy the value to the
+# equivalent with_ldap variable.
+if test "${enable_ldap+set}" = set; then
+  echo ldap Setting with to "$enable_ldap"
+  with_ldap="$enable_ldap"
+fi;
 # Check whether --with-ldap or --without-ldap was given.
 if test "${with_ldap+set}" = set; then
+  enableval="$with_ldap"
   withval="$with_ldap"
 
 fi;
-
+# If --with-postgresql or --without-postgresql were given then copy the value to the
+# equivalent enable_postgresql variable.
+if test "${with_postgresql+set}" = set; then
+  echo postgresql Setting enable to "$with_postgresql"
+  enable_postgresql="$with_postgresql"
+fi;
+# If -enable-postgresql or --disable-postgresql were given then copy the value to the
+# equivalent with_postgresql variable.
+if test "${enable_postgresql+set}" = set; then
+  echo postgresql Setting with to "$enable_postgresql"
+  with_postgresql="$enable_postgresql"
+fi;
 # Check whether --with-postgresql or --without-postgresql was given.
 if test "${with_postgresql+set}" = set; then
+  enableval="$with_postgresql"
   withval="$with_postgresql"
 
 fi;
-
+# If --with-pop or --without-pop were given then copy the value to the
+# equivalent enable_pop variable.
+if test "${with_pop+set}" = set; then
+  echo pop Setting enable to "$with_pop"
+  enable_pop="$with_pop"
+fi;
+# If -enable-pop or --disable-pop were given then copy the value to the
+# equivalent with_pop variable.
+if test "${enable_pop+set}" = set; then
+  echo pop Setting with to "$enable_pop"
+  with_pop="$enable_pop"
+fi;
 # Check whether --with-pop or --without-pop was given.
 if test "${with_pop+set}" = set; then
+  enableval="$with_pop"
   withval="$with_pop"
 
 fi;
-
+# If --with-kerberos or --without-kerberos were given then copy the value to the
+# equivalent enable_kerberos variable.
+if test "${with_kerberos+set}" = set; then
+  echo kerberos Setting enable to "$with_kerberos"
+  enable_kerberos="$with_kerberos"
+fi;
+# If -enable-kerberos or --disable-kerberos were given then copy the value to the
+# equivalent with_kerberos variable.
+if test "${enable_kerberos+set}" = set; then
+  echo kerberos Setting with to "$enable_kerberos"
+  with_kerberos="$enable_kerberos"
+fi;
 # Check whether --with-kerberos or --without-kerberos was given.
 if test "${with_kerberos+set}" = set; then
+  enableval="$with_kerberos"
   withval="$with_kerberos"
 
 fi;
-
+# If --with-hesiod or --without-hesiod were given then copy the value to the
+# equivalent enable_hesiod variable.
+if test "${with_hesiod+set}" = set; then
+  echo hesiod Setting enable to "$with_hesiod"
+  enable_hesiod="$with_hesiod"
+fi;
+# If -enable-hesiod or --disable-hesiod were given then copy the value to the
+# equivalent with_hesiod variable.
+if test "${enable_hesiod+set}" = set; then
+  echo hesiod Setting with to "$enable_hesiod"
+  with_hesiod="$enable_hesiod"
+fi;
 # Check whether --with-hesiod or --without-hesiod was given.
 if test "${with_hesiod+set}" = set; then
+  enableval="$with_hesiod"
   withval="$with_hesiod"
 
 fi;
-
+# If --with-infodock or --without-infodock were given then copy the value to the
+# equivalent enable_infodock variable.
+if test "${with_infodock+set}" = set; then
+  echo infodock Setting enable to "$with_infodock"
+  enable_infodock="$with_infodock"
+fi;
+# If -enable-infodock or --disable-infodock were given then copy the value to the
+# equivalent with_infodock variable.
+if test "${enable_infodock+set}" = set; then
+  echo infodock Setting with to "$enable_infodock"
+  with_infodock="$enable_infodock"
+fi;
 # Check whether --with-infodock or --without-infodock was given.
 if test "${with_infodock+set}" = set; then
+  enableval="$with_infodock"
   withval="$with_infodock"
 
 fi;
-
+# If --with-native-sound-lib or --without-native-sound-lib were given then copy the value to the
+# equivalent enable_native-sound-lib variable.
+if test "${with_native_sound_lib+set}" = set; then
+  echo native-sound-lib Setting enable to "$with_native_sound_lib"
+  enable_native_sound_lib="$with_native_sound_lib"
+fi;
+# If -enable-native-sound-lib or --disable-native-sound-lib were given then copy the value to the
+# equivalent with_native-sound-lib variable.
+if test "${enable_native_sound_lib+set}" = set; then
+  echo native-sound-lib Setting with to "$enable_native_sound_lib"
+  with_native_sound_lib="$enable_native_sound_lib"
+fi;
 # Check whether --with-native-sound-lib or --without-native-sound-lib was given.
 if test "${with_native_sound_lib+set}" = set; then
+  enableval="$with_native_sound_lib"
   withval="$with_native_sound_lib"
 
 fi;
-
+# If --with-netinstall or --without-netinstall were given then copy the value to the
+# equivalent enable_netinstall variable.
+if test "${with_netinstall+set}" = set; then
+  echo netinstall Setting enable to "$with_netinstall"
+  enable_netinstall="$with_netinstall"
+fi;
+# If -enable-netinstall or --disable-netinstall were given then copy the value to the
+# equivalent with_netinstall variable.
+if test "${enable_netinstall+set}" = set; then
+  echo netinstall Setting with to "$enable_netinstall"
+  with_netinstall="$enable_netinstall"
+fi;
 # Check whether --with-netinstall or --without-netinstall was given.
 if test "${with_netinstall+set}" = set; then
+  enableval="$with_netinstall"
   withval="$with_netinstall"
 
 else
   with_netinstall="no"
 fi;
-
+# If --with-optimization or --without-optimization were given then copy the value to the
+# equivalent enable_optimization variable.
+if test "${with_optimization+set}" = set; then
+  echo optimization Setting enable to "$with_optimization"
+  enable_optimization="$with_optimization"
+fi;
+# If -enable-optimization or --disable-optimization were given then copy the value to the
+# equivalent with_optimization variable.
+if test "${enable_optimization+set}" = set; then
+  echo optimization Setting with to "$enable_optimization"
+  with_optimization="$enable_optimization"
+fi;
 # Check whether --with-optimization or --without-optimization was given.
 if test "${with_optimization+set}" = set; then
+  enableval="$with_optimization"
   withval="$with_optimization"
 
 fi;
-
+# If --with-ipv6-cname or --without-ipv6-cname were given then copy the value to the
+# equivalent enable_ipv6-cname variable.
+if test "${with_ipv6_cname+set}" = set; then
+  echo ipv6-cname Setting enable to "$with_ipv6_cname"
+  enable_ipv6_cname="$with_ipv6_cname"
+fi;
+# If -enable-ipv6-cname or --disable-ipv6-cname were given then copy the value to the
+# equivalent with_ipv6-cname variable.
+if test "${enable_ipv6_cname+set}" = set; then
+  echo ipv6-cname Setting with to "$enable_ipv6_cname"
+  with_ipv6_cname="$enable_ipv6_cname"
+fi;
 # Check whether --with-ipv6-cname or --without-ipv6-cname was given.
 if test "${with_ipv6_cname+set}" = set; then
+  enableval="$with_ipv6_cname"
   withval="$with_ipv6_cname"
 
 else
   with_ipv6_cname="no"
 fi;
-
+# If --with-site-includes or --without-site-includes were given then copy the value to the
+# equivalent enable_site-includes variable.
+if test "${with_site_includes+set}" = set; then
+  echo site-includes Setting enable to "$with_site_includes"
+  enable_site_includes="$with_site_includes"
+fi;
+# If -enable-site-includes or --disable-site-includes were given then copy the value to the
+# equivalent with_site-includes variable.
+if test "${enable_site_includes+set}" = set; then
+  echo site-includes Setting with to "$enable_site_includes"
+  with_site_includes="$enable_site_includes"
+fi;
 # Check whether --with-site-includes or --without-site-includes was given.
 if test "${with_site_includes+set}" = set; then
+  enableval="$with_site_includes"
   withval="$with_site_includes"
 
 fi;
-
+# If --with-site-libraries or --without-site-libraries were given then copy the value to the
+# equivalent enable_site-libraries variable.
+if test "${with_site_libraries+set}" = set; then
+  echo site-libraries Setting enable to "$with_site_libraries"
+  enable_site_libraries="$with_site_libraries"
+fi;
+# If -enable-site-libraries or --disable-site-libraries were given then copy the value to the
+# equivalent with_site-libraries variable.
+if test "${enable_site_libraries+set}" = set; then
+  echo site-libraries Setting with to "$enable_site_libraries"
+  with_site_libraries="$enable_site_libraries"
+fi;
 # Check whether --with-site-libraries or --without-site-libraries was given.
 if test "${with_site_libraries+set}" = set; then
+  enableval="$with_site_libraries"
   withval="$with_site_libraries"
 
 fi;
-
+# If --with-site-prefixes or --without-site-prefixes were given then copy the value to the
+# equivalent enable_site-prefixes variable.
+if test "${with_site_prefixes+set}" = set; then
+  echo site-prefixes Setting enable to "$with_site_prefixes"
+  enable_site_prefixes="$with_site_prefixes"
+fi;
+# If -enable-site-prefixes or --disable-site-prefixes were given then copy the value to the
+# equivalent with_site-prefixes variable.
+if test "${enable_site_prefixes+set}" = set; then
+  echo site-prefixes Setting with to "$enable_site_prefixes"
+  with_site_prefixes="$enable_site_prefixes"
+fi;
 # Check whether --with-site-prefixes or --without-site-prefixes was given.
 if test "${with_site_prefixes+set}" = set; then
+  enableval="$with_site_prefixes"
   withval="$with_site_prefixes"
 
 fi;
-
+# If --with-statedir or --without-statedir were given then copy the value to the
+# equivalent enable_statedir variable.
+if test "${with_statedir+set}" = set; then
+  echo statedir Setting enable to "$with_statedir"
+  enable_statedir="$with_statedir"
+fi;
+# If -enable-statedir or --disable-statedir were given then copy the value to the
+# equivalent with_statedir variable.
+if test "${enable_statedir+set}" = set; then
+  echo statedir Setting with to "$enable_statedir"
+  with_statedir="$enable_statedir"
+fi;
 # Check whether --with-statedir or --without-statedir was given.
 if test "${with_statedir+set}" = set; then
+  enableval="$with_statedir"
   withval="$with_statedir"
 
 else
   with_statedir='${prefix}/lib'
 fi;
-
+# If --with-lispdir or --without-lispdir were given then copy the value to the
+# equivalent enable_lispdir variable.
+if test "${with_lispdir+set}" = set; then
+  echo lispdir Setting enable to "$with_lispdir"
+  enable_lispdir="$with_lispdir"
+fi;
+# If -enable-lispdir or --disable-lispdir were given then copy the value to the
+# equivalent with_lispdir variable.
+if test "${enable_lispdir+set}" = set; then
+  echo lispdir Setting with to "$enable_lispdir"
+  with_lispdir="$enable_lispdir"
+fi;
 # Check whether --with-lispdir or --without-lispdir was given.
 if test "${with_lispdir+set}" = set; then
+  enableval="$with_lispdir"
   withval="$with_lispdir"
   cat >>confdefs.h <<\_ACEOF
 #define LISPDIR_USER_DEFINED 1
@@ -2050,9 +2582,21 @@ _ACEOF
 else
   with_lispdir='${datadir}/${instvardir}/lisp'
 fi;
-
+# If --with-archlibdir or --without-archlibdir were given then copy the value to the
+# equivalent enable_archlibdir variable.
+if test "${with_archlibdir+set}" = set; then
+  echo archlibdir Setting enable to "$with_archlibdir"
+  enable_archlibdir="$with_archlibdir"
+fi;
+# If -enable-archlibdir or --disable-archlibdir were given then copy the value to the
+# equivalent with_archlibdir variable.
+if test "${enable_archlibdir+set}" = set; then
+  echo archlibdir Setting with to "$enable_archlibdir"
+  with_archlibdir="$enable_archlibdir"
+fi;
 # Check whether --with-archlibdir or --without-archlibdir was given.
 if test "${with_archlibdir+set}" = set; then
+  enableval="$with_archlibdir"
   withval="$with_archlibdir"
   cat >>confdefs.h <<\_ACEOF
 #define ARCHLIBDIR_USER_DEFINED 1
@@ -2061,9 +2605,21 @@ _ACEOF
 else
   with_archlibdir='${libdir}/${instvardir}/${configuration}'
 fi;
-
+# If --with-moduledir or --without-moduledir were given then copy the value to the
+# equivalent enable_moduledir variable.
+if test "${with_moduledir+set}" = set; then
+  echo moduledir Setting enable to "$with_moduledir"
+  enable_moduledir="$with_moduledir"
+fi;
+# If -enable-moduledir or --disable-moduledir were given then copy the value to the
+# equivalent with_moduledir variable.
+if test "${enable_moduledir+set}" = set; then
+  echo moduledir Setting with to "$enable_moduledir"
+  with_moduledir="$enable_moduledir"
+fi;
 # Check whether --with-moduledir or --without-moduledir was given.
 if test "${with_moduledir+set}" = set; then
+  enableval="$with_moduledir"
   withval="$with_moduledir"
   cat >>confdefs.h <<\_ACEOF
 #define MODULEDIR_USER_DEFINED 1
@@ -2072,9 +2628,21 @@ _ACEOF
 else
   with_moduledir='${libdir}/${instvardir}/${configuration}/modules'
 fi;
-
+# If --with-etcdir or --without-etcdir were given then copy the value to the
+# equivalent enable_etcdir variable.
+if test "${with_etcdir+set}" = set; then
+  echo etcdir Setting enable to "$with_etcdir"
+  enable_etcdir="$with_etcdir"
+fi;
+# If -enable-etcdir or --disable-etcdir were given then copy the value to the
+# equivalent with_etcdir variable.
+if test "${enable_etcdir+set}" = set; then
+  echo etcdir Setting with to "$enable_etcdir"
+  with_etcdir="$enable_etcdir"
+fi;
 # Check whether --with-etcdir or --without-etcdir was given.
 if test "${with_etcdir+set}" = set; then
+  enableval="$with_etcdir"
   withval="$with_etcdir"
   cat >>confdefs.h <<\_ACEOF
 #define ETCDIR_USER_DEFINED 1
@@ -2083,18 +2651,42 @@ _ACEOF
 else
   with_etcdir='${datadir}/${instvardir}/etc'
 fi;
-
+# If --with-infopath or --without-infopath were given then copy the value to the
+# equivalent enable_infopath variable.
+if test "${with_infopath+set}" = set; then
+  echo infopath Setting enable to "$with_infopath"
+  enable_infopath="$with_infopath"
+fi;
+# If -enable-infopath or --disable-infopath were given then copy the value to the
+# equivalent with_infopath variable.
+if test "${enable_infopath+set}" = set; then
+  echo infopath Setting with to "$enable_infopath"
+  with_infopath="$enable_infopath"
+fi;
 # Check whether --with-infopath or --without-infopath was given.
 if test "${with_infopath+set}" = set; then
+  enableval="$with_infopath"
   withval="$with_infopath"
   cat >>confdefs.h <<\_ACEOF
 #define INFOPATH_USER_DEFINED 1
 _ACEOF
 
 fi;
-
+# If --with-docdir or --without-docdir were given then copy the value to the
+# equivalent enable_docdir variable.
+if test "${with_docdir+set}" = set; then
+  echo docdir Setting enable to "$with_docdir"
+  enable_docdir="$with_docdir"
+fi;
+# If -enable-docdir or --disable-docdir were given then copy the value to the
+# equivalent with_docdir variable.
+if test "${enable_docdir+set}" = set; then
+  echo docdir Setting with to "$enable_docdir"
+  with_docdir="$enable_docdir"
+fi;
 # Check whether --with-docdir or --without-docdir was given.
 if test "${with_docdir+set}" = set; then
+  enableval="$with_docdir"
   withval="$with_docdir"
   cat >>confdefs.h <<\_ACEOF
 #define DOCDIR_USER_DEFINED 1
@@ -2103,189 +2695,553 @@ _ACEOF
 else
   with_docdir='${archlibdir}'
 fi;
-
+# If --with-site-runtime-libraries or --without-site-runtime-libraries were given then copy the value to the
+# equivalent enable_site-runtime-libraries variable.
+if test "${with_site_runtime_libraries+set}" = set; then
+  echo site-runtime-libraries Setting enable to "$with_site_runtime_libraries"
+  enable_site_runtime_libraries="$with_site_runtime_libraries"
+fi;
+# If -enable-site-runtime-libraries or --disable-site-runtime-libraries were given then copy the value to the
+# equivalent with_site-runtime-libraries variable.
+if test "${enable_site_runtime_libraries+set}" = set; then
+  echo site-runtime-libraries Setting with to "$enable_site_runtime_libraries"
+  with_site_runtime_libraries="$enable_site_runtime_libraries"
+fi;
 # Check whether --with-site-runtime-libraries or --without-site-runtime-libraries was given.
 if test "${with_site_runtime_libraries+set}" = set; then
+  enableval="$with_site_runtime_libraries"
   withval="$with_site_runtime_libraries"
 
 fi;
-
+# If --with-package-prefix or --without-package-prefix were given then copy the value to the
+# equivalent enable_package-prefix variable.
+if test "${with_package_prefix+set}" = set; then
+  echo package-prefix Setting enable to "$with_package_prefix"
+  enable_package_prefix="$with_package_prefix"
+fi;
+# If -enable-package-prefix or --disable-package-prefix were given then copy the value to the
+# equivalent with_package-prefix variable.
+if test "${enable_package_prefix+set}" = set; then
+  echo package-prefix Setting with to "$enable_package_prefix"
+  with_package_prefix="$enable_package_prefix"
+fi;
 # Check whether --with-package-prefix or --without-package-prefix was given.
 if test "${with_package_prefix+set}" = set; then
+  enableval="$with_package_prefix"
   withval="$with_package_prefix"
   cat >>confdefs.h <<\_ACEOF
 #define PACKAGE_PATH_USER_DEFINED 1
 _ACEOF
 
 fi;
-
+# If --with-package-path or --without-package-path were given then copy the value to the
+# equivalent enable_package-path variable.
+if test "${with_package_path+set}" = set; then
+  echo package-path Setting enable to "$with_package_path"
+  enable_package_path="$with_package_path"
+fi;
+# If -enable-package-path or --disable-package-path were given then copy the value to the
+# equivalent with_package-path variable.
+if test "${enable_package_path+set}" = set; then
+  echo package-path Setting with to "$enable_package_path"
+  with_package_path="$enable_package_path"
+fi;
 # Check whether --with-package-path or --without-package-path was given.
 if test "${with_package_path+set}" = set; then
+  enableval="$with_package_path"
   withval="$with_package_path"
   cat >>confdefs.h <<\_ACEOF
 #define PACKAGE_PATH_USER_DEFINED 1
 _ACEOF
 
 fi;
-# Check whether --enable-external-widget or --disable-external-widget was given.
+# If --with-external-widget or --without-external-widget were given then copy the value to the
+# equivalent enable_external-widget variable.
+if test "${with_external_widget+set}" = set; then
+  echo external-widget Setting enable to "$with_external_widget"
+  enable_external_widget="$with_external_widget"
+fi;
+# If -enable-external-widget or --disable-external-widget were given then copy the value to the
+# equivalent with_external-widget variable.
 if test "${enable_external_widget+set}" = set; then
-  enableval="$enable_external_widget"
+  echo external-widget Setting with to "$enable_external_widget"
+  with_external_widget="$enable_external_widget"
+fi;
+# Check whether --with-external-widget or --without-external-widget was given.
+if test "${with_external_widget+set}" = set; then
+  enableval="$with_external_widget"
+  withval="$with_external_widget"
 
 fi;
-# Check whether --enable-kkcc or --disable-kkcc was given.
+# If --with-kkcc or --without-kkcc were given then copy the value to the
+# equivalent enable_kkcc variable.
+if test "${with_kkcc+set}" = set; then
+  echo kkcc Setting enable to "$with_kkcc"
+  enable_kkcc="$with_kkcc"
+fi;
+# If -enable-kkcc or --disable-kkcc were given then copy the value to the
+# equivalent with_kkcc variable.
 if test "${enable_kkcc+set}" = set; then
-  enableval="$enable_kkcc"
-
+  echo kkcc Setting with to "$enable_kkcc"
+  with_kkcc="$enable_kkcc"
 fi;
-# Check whether --enable-mc-alloc or --disable-mc-alloc was given.
+# Check whether --with-kkcc or --without-kkcc was given.
+if test "${with_kkcc+set}" = set; then
+  enableval="$with_kkcc"
+  withval="$with_kkcc"
+
+else
+  enable_kkcc=yes
+fi;
+# If --with-mc-alloc or --without-mc-alloc were given then copy the value to the
+# equivalent enable_mc-alloc variable.
+if test "${with_mc_alloc+set}" = set; then
+  echo mc-alloc Setting enable to "$with_mc_alloc"
+  enable_mc_alloc="$with_mc_alloc"
+fi;
+# If -enable-mc-alloc or --disable-mc-alloc were given then copy the value to the
+# equivalent with_mc-alloc variable.
 if test "${enable_mc_alloc+set}" = set; then
-  enableval="$enable_mc_alloc"
-
+  echo mc-alloc Setting with to "$enable_mc_alloc"
+  with_mc_alloc="$enable_mc_alloc"
 fi;
-# Check whether --enable-union-type or --disable-union-type was given.
+# Check whether --with-mc-alloc or --without-mc-alloc was given.
+if test "${with_mc_alloc+set}" = set; then
+  enableval="$with_mc_alloc"
+  withval="$with_mc_alloc"
+
+else
+  enable_mc_alloc=yes
+fi;
+# If --with-union-type or --without-union-type were given then copy the value to the
+# equivalent enable_union-type variable.
+if test "${with_union_type+set}" = set; then
+  echo union-type Setting enable to "$with_union_type"
+  enable_union_type="$with_union_type"
+fi;
+# If -enable-union-type or --disable-union-type were given then copy the value to the
+# equivalent with_union-type variable.
 if test "${enable_union_type+set}" = set; then
-  enableval="$enable_union_type"
+  echo union-type Setting with to "$enable_union_type"
+  with_union_type="$enable_union_type"
+fi;
+# Check whether --with-union-type or --without-union-type was given.
+if test "${with_union_type+set}" = set; then
+  enableval="$with_union_type"
+  withval="$with_union_type"
 
 fi;
-# Check whether --enable-pdump or --disable-pdump was given.
+# If --with-pdump or --without-pdump were given then copy the value to the
+# equivalent enable_pdump variable.
+if test "${with_pdump+set}" = set; then
+  echo pdump Setting enable to "$with_pdump"
+  enable_pdump="$with_pdump"
+fi;
+# If -enable-pdump or --disable-pdump were given then copy the value to the
+# equivalent with_pdump variable.
 if test "${enable_pdump+set}" = set; then
-  enableval="$enable_pdump"
+  echo pdump Setting with to "$enable_pdump"
+  with_pdump="$enable_pdump"
+fi;
+# Check whether --with-pdump or --without-pdump was given.
+if test "${with_pdump+set}" = set; then
+  enableval="$with_pdump"
+  withval="$with_pdump"
 
 fi;
-# Check whether --enable-dump-in-exec or --disable-dump-in-exec was given.
+# If --with-dump-in-exec or --without-dump-in-exec were given then copy the value to the
+# equivalent enable_dump-in-exec variable.
+if test "${with_dump_in_exec+set}" = set; then
+  echo dump-in-exec Setting enable to "$with_dump_in_exec"
+  enable_dump_in_exec="$with_dump_in_exec"
+fi;
+# If -enable-dump-in-exec or --disable-dump-in-exec were given then copy the value to the
+# equivalent with_dump-in-exec variable.
 if test "${enable_dump_in_exec+set}" = set; then
-  enableval="$enable_dump_in_exec"
+  echo dump-in-exec Setting with to "$enable_dump_in_exec"
+  with_dump_in_exec="$enable_dump_in_exec"
+fi;
+# Check whether --with-dump-in-exec or --without-dump-in-exec was given.
+if test "${with_dump_in_exec+set}" = set; then
+  enableval="$with_dump_in_exec"
+  withval="$with_dump_in_exec"
 
 fi;
-# Check whether --enable-debug or --disable-debug was given.
+# If --with-debug or --without-debug were given then copy the value to the
+# equivalent enable_debug variable.
+if test "${with_debug+set}" = set; then
+  echo debug Setting enable to "$with_debug"
+  enable_debug="$with_debug"
+fi;
+# If -enable-debug or --disable-debug were given then copy the value to the
+# equivalent with_debug variable.
 if test "${enable_debug+set}" = set; then
-  enableval="$enable_debug"
+  echo debug Setting with to "$enable_debug"
+  with_debug="$enable_debug"
+fi;
+# Check whether --with-debug or --without-debug was given.
+if test "${with_debug+set}" = set; then
+  enableval="$with_debug"
+  withval="$with_debug"
 
 fi;
-# Check whether --enable-assertions or --disable-assertions was given.
+# If --with-assertions or --without-assertions were given then copy the value to the
+# equivalent enable_assertions variable.
+if test "${with_assertions+set}" = set; then
+  echo assertions Setting enable to "$with_assertions"
+  enable_assertions="$with_assertions"
+fi;
+# If -enable-assertions or --disable-assertions were given then copy the value to the
+# equivalent with_assertions variable.
 if test "${enable_assertions+set}" = set; then
-  enableval="$enable_assertions"
+  echo assertions Setting with to "$enable_assertions"
+  with_assertions="$enable_assertions"
+fi;
+# Check whether --with-assertions or --without-assertions was given.
+if test "${with_assertions+set}" = set; then
+  enableval="$with_assertions"
+  withval="$with_assertions"
 
 fi;
-# Check whether --enable-memory-usage-stats or --disable-memory-usage-stats was given.
+# If --with-memory-usage-stats or --without-memory-usage-stats were given then copy the value to the
+# equivalent enable_memory-usage-stats variable.
+if test "${with_memory_usage_stats+set}" = set; then
+  echo memory-usage-stats Setting enable to "$with_memory_usage_stats"
+  enable_memory_usage_stats="$with_memory_usage_stats"
+fi;
+# If -enable-memory-usage-stats or --disable-memory-usage-stats were given then copy the value to the
+# equivalent with_memory-usage-stats variable.
 if test "${enable_memory_usage_stats+set}" = set; then
-  enableval="$enable_memory_usage_stats"
+  echo memory-usage-stats Setting with to "$enable_memory_usage_stats"
+  with_memory_usage_stats="$enable_memory_usage_stats"
+fi;
+# Check whether --with-memory-usage-stats or --without-memory-usage-stats was given.
+if test "${with_memory_usage_stats+set}" = set; then
+  enableval="$with_memory_usage_stats"
+  withval="$with_memory_usage_stats"
 
 fi;
-# Check whether --enable-clash-detection or --disable-clash-detection was given.
+# If --with-clash-detection or --without-clash-detection were given then copy the value to the
+# equivalent enable_clash-detection variable.
+if test "${with_clash_detection+set}" = set; then
+  echo clash-detection Setting enable to "$with_clash_detection"
+  enable_clash_detection="$with_clash_detection"
+fi;
+# If -enable-clash-detection or --disable-clash-detection were given then copy the value to the
+# equivalent with_clash-detection variable.
 if test "${enable_clash_detection+set}" = set; then
-  enableval="$enable_clash_detection"
+  echo clash-detection Setting with to "$enable_clash_detection"
+  with_clash_detection="$enable_clash_detection"
+fi;
+# Check whether --with-clash-detection or --without-clash-detection was given.
+if test "${with_clash_detection+set}" = set; then
+  enableval="$with_clash_detection"
+  withval="$with_clash_detection"
 
 fi;
-# Check whether --enable-modules or --disable-modules was given.
+# If --with-modules or --without-modules were given then copy the value to the
+# equivalent enable_modules variable.
+if test "${with_modules+set}" = set; then
+  echo modules Setting enable to "$with_modules"
+  enable_modules="$with_modules"
+fi;
+# If -enable-modules or --disable-modules were given then copy the value to the
+# equivalent with_modules variable.
 if test "${enable_modules+set}" = set; then
-  enableval="$enable_modules"
+  echo modules Setting with to "$enable_modules"
+  with_modules="$enable_modules"
+fi;
+# Check whether --with-modules or --without-modules was given.
+if test "${with_modules+set}" = set; then
+  enableval="$with_modules"
+  withval="$with_modules"
 
 fi;
-# Check whether --enable-quick-build or --disable-quick-build was given.
+# If --with-quick-build or --without-quick-build were given then copy the value to the
+# equivalent enable_quick-build variable.
+if test "${with_quick_build+set}" = set; then
+  echo quick-build Setting enable to "$with_quick_build"
+  enable_quick_build="$with_quick_build"
+fi;
+# If -enable-quick-build or --disable-quick-build were given then copy the value to the
+# equivalent with_quick-build variable.
 if test "${enable_quick_build+set}" = set; then
-  enableval="$enable_quick_build"
+  echo quick-build Setting with to "$enable_quick_build"
+  with_quick_build="$enable_quick_build"
+fi;
+# Check whether --with-quick-build or --without-quick-build was given.
+if test "${with_quick_build+set}" = set; then
+  enableval="$with_quick_build"
+  withval="$with_quick_build"
 
 fi;
 
-
+# If --with-compiler or --without-compiler were given then copy the value to the
+# equivalent enable_compiler variable.
+if test "${with_compiler+set}" = set; then
+  echo compiler Setting enable to "$with_compiler"
+  enable_compiler="$with_compiler"
+fi;
+# If -enable-compiler or --disable-compiler were given then copy the value to the
+# equivalent with_compiler variable.
+if test "${enable_compiler+set}" = set; then
+  echo compiler Setting with to "$enable_compiler"
+  with_compiler="$enable_compiler"
+fi;
 # Check whether --with-compiler or --without-compiler was given.
 if test "${with_compiler+set}" = set; then
+  enableval="$with_compiler"
   withval="$with_compiler"
 
 fi;
 
-
+# If --with-xemacs-compiler or --without-xemacs-compiler were given then copy the value to the
+# equivalent enable_xemacs-compiler variable.
+if test "${with_xemacs_compiler+set}" = set; then
+  echo xemacs-compiler Setting enable to "$with_xemacs_compiler"
+  enable_xemacs_compiler="$with_xemacs_compiler"
+fi;
+# If -enable-xemacs-compiler or --disable-xemacs-compiler were given then copy the value to the
+# equivalent with_xemacs-compiler variable.
+if test "${enable_xemacs_compiler+set}" = set; then
+  echo xemacs-compiler Setting with to "$enable_xemacs_compiler"
+  with_xemacs_compiler="$enable_xemacs_compiler"
+fi;
 # Check whether --with-xemacs-compiler or --without-xemacs-compiler was given.
 if test "${with_xemacs_compiler+set}" = set; then
+  enableval="$with_xemacs_compiler"
   withval="$with_xemacs_compiler"
 
 fi;
 
-
+# If --with-cflags or --without-cflags were given then copy the value to the
+# equivalent enable_cflags variable.
+if test "${with_cflags+set}" = set; then
+  echo cflags Setting enable to "$with_cflags"
+  enable_cflags="$with_cflags"
+fi;
+# If -enable-cflags or --disable-cflags were given then copy the value to the
+# equivalent with_cflags variable.
+if test "${enable_cflags+set}" = set; then
+  echo cflags Setting with to "$enable_cflags"
+  with_cflags="$enable_cflags"
+fi;
 # Check whether --with-cflags or --without-cflags was given.
 if test "${with_cflags+set}" = set; then
+  enableval="$with_cflags"
   withval="$with_cflags"
 
 fi;
 
-
+# If --with-cflags-warning or --without-cflags-warning were given then copy the value to the
+# equivalent enable_cflags-warning variable.
+if test "${with_cflags_warning+set}" = set; then
+  echo cflags-warning Setting enable to "$with_cflags_warning"
+  enable_cflags_warning="$with_cflags_warning"
+fi;
+# If -enable-cflags-warning or --disable-cflags-warning were given then copy the value to the
+# equivalent with_cflags-warning variable.
+if test "${enable_cflags_warning+set}" = set; then
+  echo cflags-warning Setting with to "$enable_cflags_warning"
+  with_cflags_warning="$enable_cflags_warning"
+fi;
 # Check whether --with-cflags-warning or --without-cflags-warning was given.
 if test "${with_cflags_warning+set}" = set; then
+  enableval="$with_cflags_warning"
   withval="$with_cflags_warning"
 
 fi;
 
-
+# If --with-cflags-optimization or --without-cflags-optimization were given then copy the value to the
+# equivalent enable_cflags-optimization variable.
+if test "${with_cflags_optimization+set}" = set; then
+  echo cflags-optimization Setting enable to "$with_cflags_optimization"
+  enable_cflags_optimization="$with_cflags_optimization"
+fi;
+# If -enable-cflags-optimization or --disable-cflags-optimization were given then copy the value to the
+# equivalent with_cflags-optimization variable.
+if test "${enable_cflags_optimization+set}" = set; then
+  echo cflags-optimization Setting with to "$enable_cflags_optimization"
+  with_cflags_optimization="$enable_cflags_optimization"
+fi;
 # Check whether --with-cflags-optimization or --without-cflags-optimization was given.
 if test "${with_cflags_optimization+set}" = set; then
+  enableval="$with_cflags_optimization"
   withval="$with_cflags_optimization"
 
 fi;
 
-
+# If --with-cflags-debugging or --without-cflags-debugging were given then copy the value to the
+# equivalent enable_cflags-debugging variable.
+if test "${with_cflags_debugging+set}" = set; then
+  echo cflags-debugging Setting enable to "$with_cflags_debugging"
+  enable_cflags_debugging="$with_cflags_debugging"
+fi;
+# If -enable-cflags-debugging or --disable-cflags-debugging were given then copy the value to the
+# equivalent with_cflags-debugging variable.
+if test "${enable_cflags_debugging+set}" = set; then
+  echo cflags-debugging Setting with to "$enable_cflags_debugging"
+  with_cflags_debugging="$enable_cflags_debugging"
+fi;
 # Check whether --with-cflags-debugging or --without-cflags-debugging was given.
 if test "${with_cflags_debugging+set}" = set; then
+  enableval="$with_cflags_debugging"
   withval="$with_cflags_debugging"
 
 fi;
 
-
+# If --with-cpp or --without-cpp were given then copy the value to the
+# equivalent enable_cpp variable.
+if test "${with_cpp+set}" = set; then
+  echo cpp Setting enable to "$with_cpp"
+  enable_cpp="$with_cpp"
+fi;
+# If -enable-cpp or --disable-cpp were given then copy the value to the
+# equivalent with_cpp variable.
+if test "${enable_cpp+set}" = set; then
+  echo cpp Setting with to "$enable_cpp"
+  with_cpp="$enable_cpp"
+fi;
 # Check whether --with-cpp or --without-cpp was given.
 if test "${with_cpp+set}" = set; then
+  enableval="$with_cpp"
   withval="$with_cpp"
   CPP="$with_cpp"
 fi;
 
-
+# If --with-cppflags or --without-cppflags were given then copy the value to the
+# equivalent enable_cppflags variable.
+if test "${with_cppflags+set}" = set; then
+  echo cppflags Setting enable to "$with_cppflags"
+  enable_cppflags="$with_cppflags"
+fi;
+# If -enable-cppflags or --disable-cppflags were given then copy the value to the
+# equivalent with_cppflags variable.
+if test "${enable_cppflags+set}" = set; then
+  echo cppflags Setting with to "$enable_cppflags"
+  with_cppflags="$enable_cppflags"
+fi;
 # Check whether --with-cppflags or --without-cppflags was given.
 if test "${with_cppflags+set}" = set; then
+  enableval="$with_cppflags"
   withval="$with_cppflags"
   CPPFLAGS="$with_cppflags"
 fi;
 
-
+# If --with-libs or --without-libs were given then copy the value to the
+# equivalent enable_libs variable.
+if test "${with_libs+set}" = set; then
+  echo libs Setting enable to "$with_libs"
+  enable_libs="$with_libs"
+fi;
+# If -enable-libs or --disable-libs were given then copy the value to the
+# equivalent with_libs variable.
+if test "${enable_libs+set}" = set; then
+  echo libs Setting with to "$enable_libs"
+  with_libs="$enable_libs"
+fi;
 # Check whether --with-libs or --without-libs was given.
 if test "${with_libs+set}" = set; then
+  enableval="$with_libs"
   withval="$with_libs"
   LIBS="$with_libs"
 fi;
 
-
+# If --with-ldflags or --without-ldflags were given then copy the value to the
+# equivalent enable_ldflags variable.
+if test "${with_ldflags+set}" = set; then
+  echo ldflags Setting enable to "$with_ldflags"
+  enable_ldflags="$with_ldflags"
+fi;
+# If -enable-ldflags or --disable-ldflags were given then copy the value to the
+# equivalent with_ldflags variable.
+if test "${enable_ldflags+set}" = set; then
+  echo ldflags Setting with to "$enable_ldflags"
+  with_ldflags="$enable_ldflags"
+fi;
 # Check whether --with-ldflags or --without-ldflags was given.
 if test "${with_ldflags+set}" = set; then
+  enableval="$with_ldflags"
   withval="$with_ldflags"
   LDFLAGS="$with_ldflags"
 fi;
 
-
+# If --with-rel-alloc or --without-rel-alloc were given then copy the value to the
+# equivalent enable_rel-alloc variable.
+if test "${with_rel_alloc+set}" = set; then
+  echo rel-alloc Setting enable to "$with_rel_alloc"
+  enable_rel_alloc="$with_rel_alloc"
+fi;
+# If -enable-rel-alloc or --disable-rel-alloc were given then copy the value to the
+# equivalent with_rel-alloc variable.
+if test "${enable_rel_alloc+set}" = set; then
+  echo rel-alloc Setting with to "$enable_rel_alloc"
+  with_rel_alloc="$enable_rel_alloc"
+fi;
 # Check whether --with-rel-alloc or --without-rel-alloc was given.
 if test "${with_rel_alloc+set}" = set; then
+  enableval="$with_rel_alloc"
   withval="$with_rel_alloc"
 
 else
   with_rel_alloc='default'
 fi;
 
-
+# If --with-dlmalloc or --without-dlmalloc were given then copy the value to the
+# equivalent enable_dlmalloc variable.
+if test "${with_dlmalloc+set}" = set; then
+  echo dlmalloc Setting enable to "$with_dlmalloc"
+  enable_dlmalloc="$with_dlmalloc"
+fi;
+# If -enable-dlmalloc or --disable-dlmalloc were given then copy the value to the
+# equivalent with_dlmalloc variable.
+if test "${enable_dlmalloc+set}" = set; then
+  echo dlmalloc Setting with to "$enable_dlmalloc"
+  with_dlmalloc="$enable_dlmalloc"
+fi;
 # Check whether --with-dlmalloc or --without-dlmalloc was given.
 if test "${with_dlmalloc+set}" = set; then
+  enableval="$with_dlmalloc"
   withval="$with_dlmalloc"
 
 else
   with_dlmalloc='default'
 fi;
 
-
+# If --with-debug-malloc or --without-debug-malloc were given then copy the value to the
+# equivalent enable_debug-malloc variable.
+if test "${with_debug_malloc+set}" = set; then
+  echo debug-malloc Setting enable to "$with_debug_malloc"
+  enable_debug_malloc="$with_debug_malloc"
+fi;
+# If -enable-debug-malloc or --disable-debug-malloc were given then copy the value to the
+# equivalent with_debug-malloc variable.
+if test "${enable_debug_malloc+set}" = set; then
+  echo debug-malloc Setting with to "$enable_debug_malloc"
+  with_debug_malloc="$enable_debug_malloc"
+fi;
 # Check whether --with-debug-malloc or --without-debug-malloc was given.
 if test "${with_debug_malloc+set}" = set; then
+  enableval="$with_debug_malloc"
   withval="$with_debug_malloc"
 
 fi;
 
-
+# If --with-system-malloc or --without-system-malloc were given then copy the value to the
+# equivalent enable_system-malloc variable.
+if test "${with_system_malloc+set}" = set; then
+  echo system-malloc Setting enable to "$with_system_malloc"
+  enable_system_malloc="$with_system_malloc"
+fi;
+# If -enable-system-malloc or --disable-system-malloc were given then copy the value to the
+# equivalent with_system-malloc variable.
+if test "${enable_system_malloc+set}" = set; then
+  echo system-malloc Setting with to "$enable_system_malloc"
+  with_system_malloc="$enable_system_malloc"
+fi;
 # Check whether --with-system-malloc or --without-system-malloc was given.
 if test "${with_system_malloc+set}" = set; then
+  enableval="$with_system_malloc"
   withval="$with_system_malloc"
 
 else
@@ -2294,118 +3250,154 @@ fi;
 
 #Enable code.
 
-enable_database_notfirst=""
+_database_notfirst=""
+with_database_berkdb=""
 enable_database_berkdb=""
+with_database_dbm=""
 enable_database_dbm=""
+with_database_gdbm=""
 enable_database_gdbm=""
 
-_enable_database_types="berkdb dbm gdbm"
-_enable_database_default="berkdb,dbm,gdbm"
+_database_types="berkdb dbm gdbm"
+_database_default="berkdb,dbm,gdbm"
 
 
 
-# Check whether --enable-database or --disable-database was given.
+# If --with-database or --without-database were given then copy the value to the
+# equivalent enable_database variable.
+if test "${with_database+set}" = set; then
+  echo database Setting enable to "$with_database"
+  enable_database="$with_database"
+fi;
+# If -enable-database or --disable-database were given then copy the value to the
+# equivalent with_database variable.
 if test "${enable_database+set}" = set; then
-  enableval="$enable_database"
-  for x in `echo "$enable_database" | sed -e 's/,/ /g'` ; do
-    _enable_database_all_default=""
-    _enable_database_found=""
+  echo database Setting with to "$enable_database"
+  with_database="$enable_database"
+fi;
+# Check whether --with-database or --without-database was given.
+if test "${with_database+set}" = set; then
+  enableval="$with_database"
+  withval="$with_database"
+  for x in `echo "$with_database" | sed -e 's/,/ /g'` ; do
+    _database_all_default=""
+    _database_found=""
     case "$x" in
-        n | no | non | none ) _enable_database_all_default=no ;;
-        a | al | all | both ) _enable_database_all_default=yes ;;
+        n | no | non | none ) _database_all_default=no ;;
+        a | al | all | both ) _database_all_default=yes ;;
     esac
 
-    if test -z "$_enable_database_all_default"; then
-        for y in $_enable_database_types; do
+    if test -z "$_database_all_default"; then
+        for y in $_database_types; do
                         if test "$x" = "$y"; then
-		                _enable_database_found=yes
-                                eval "enable_database_$y=yes"
+		                _database_found=yes
+                                eval "with_database_$y=yes"
+                eval "enable_database_$y=yes"
             elif test "$x" = "no$y"; then
-                                _enable_database_found=yes
-                                eval "enable_database_$y=no"
+                                _database_found=yes
+                                eval "with_database_$y=no"
+                eval "enable_database_$y=no"
             fi
         done
-        test -z "$_enable_database_found" && _enable_database_bogus=yes
+        test -z "$_database_found" && _database_bogus=yes
     fi
-    if test "$_enable_database_bogus" = "yes" -o \
-         \( -n "$_enable_database_all_default" -a -n "$_enable_database_notfirst" \) ; then
+    if test "$_database_bogus" = "yes" -o \
+         \( -n "$_database_all_default" -a -n "$_database_notfirst" \) ; then
 	(echo "$progname: Usage error:"
-echo " " "Valid values for the --enable-database option are:
-$_enable_database_types.  With prefix \"no\", switch it off.
+echo " " "Valid values for the --with-database option are:
+$_database_types.  With prefix \"no\", switch it off.
 Defaults may be overridden with \`all' or \`none' first in the list.
-Hardcoded default is: $_enable_database_default."
+Hardcoded default is: $_database_default."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
-    elif test -n "$_enable_database_all_default" ; then
-        for y in $_enable_database_types; do
-	    eval "enable_database_$y=$_enable_database_all_default"
+    elif test -n "$_database_all_default" ; then
+        for y in $_database_types; do
+	    eval "database_$y=$_database_all_default"
         done
     fi
-    _enable_database_notfirst=yes
+    _database_notfirst=yes
 done
-unset _enable_database_bogus _enable_database_found _enable_database_notfirst _enable_database_types
-unset _enable_database_default _enable_database_all_default x y
+unset _database_bogus _database_found _database_notfirst _database_types
+unset _database_default _database_all_default x y
 
 
 if test "$enable_database_dbm"  = "yes" -a "$enable_database_gdbm" = "yes"; then
 	(echo "$progname: Usage error:"
 echo " " "Only one of \`dbm' and \`gnudbm' may be specified
-with the \`--enable-database' option."
+with the \`--with-database' option."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
 fi
 
 
 fi;
 
-enable_sound_notfirst=""
+_sound_notfirst=""
+with_sound_native=""
 enable_sound_native=""
+with_sound_nas=""
 enable_sound_nas=""
+with_sound_esd=no
 enable_sound_esd=no
 
-_enable_sound_types="native nas esd"
-_enable_sound_default="native,nas,noesd"
+_sound_types="native nas esd"
+_sound_default="native,nas,noesd"
 
 
 
-# Check whether --enable-sound or --disable-sound was given.
+# If --with-sound or --without-sound were given then copy the value to the
+# equivalent enable_sound variable.
+if test "${with_sound+set}" = set; then
+  echo sound Setting enable to "$with_sound"
+  enable_sound="$with_sound"
+fi;
+# If -enable-sound or --disable-sound were given then copy the value to the
+# equivalent with_sound variable.
 if test "${enable_sound+set}" = set; then
-  enableval="$enable_sound"
-  for x in `echo "$enable_sound" | sed -e 's/,/ /g'` ; do
-    _enable_sound_all_default=""
-    _enable_sound_found=""
+  echo sound Setting with to "$enable_sound"
+  with_sound="$enable_sound"
+fi;
+# Check whether --with-sound or --without-sound was given.
+if test "${with_sound+set}" = set; then
+  enableval="$with_sound"
+  withval="$with_sound"
+  for x in `echo "$with_sound" | sed -e 's/,/ /g'` ; do
+    _sound_all_default=""
+    _sound_found=""
     case "$x" in
-        n | no | non | none ) _enable_sound_all_default=no ;;
-        a | al | all | both ) _enable_sound_all_default=yes ;;
+        n | no | non | none ) _sound_all_default=no ;;
+        a | al | all | both ) _sound_all_default=yes ;;
     esac
 
-    if test -z "$_enable_sound_all_default"; then
-        for y in $_enable_sound_types; do
+    if test -z "$_sound_all_default"; then
+        for y in $_sound_types; do
                         if test "$x" = "$y"; then
-		                _enable_sound_found=yes
-                                eval "enable_sound_$y=yes"
+		                _sound_found=yes
+                                eval "with_sound_$y=yes"
+                eval "enable_sound_$y=yes"
             elif test "$x" = "no$y"; then
-                                _enable_sound_found=yes
-                                eval "enable_sound_$y=no"
+                                _sound_found=yes
+                                eval "with_sound_$y=no"
+                eval "enable_sound_$y=no"
             fi
         done
-        test -z "$_enable_sound_found" && _enable_sound_bogus=yes
+        test -z "$_sound_found" && _sound_bogus=yes
     fi
-    if test "$_enable_sound_bogus" = "yes" -o \
-         \( -n "$_enable_sound_all_default" -a -n "$_enable_sound_notfirst" \) ; then
+    if test "$_sound_bogus" = "yes" -o \
+         \( -n "$_sound_all_default" -a -n "$_sound_notfirst" \) ; then
 	(echo "$progname: Usage error:"
-echo " " "Valid values for the --enable-sound option are:
-$_enable_sound_types.  With prefix \"no\", switch it off.
+echo " " "Valid values for the --with-sound option are:
+$_sound_types.  With prefix \"no\", switch it off.
 Defaults may be overridden with \`all' or \`none' first in the list.
-Hardcoded default is: $_enable_sound_default."
+Hardcoded default is: $_sound_default."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
-    elif test -n "$_enable_sound_all_default" ; then
-        for y in $_enable_sound_types; do
-	    eval "enable_sound_$y=$_enable_sound_all_default"
+    elif test -n "$_sound_all_default" ; then
+        for y in $_sound_types; do
+	    eval "sound_$y=$_sound_all_default"
         done
     fi
-    _enable_sound_notfirst=yes
+    _sound_notfirst=yes
 done
-unset _enable_sound_bogus _enable_sound_found _enable_sound_notfirst _enable_sound_types
-unset _enable_sound_default _enable_sound_all_default x y
+unset _sound_bogus _sound_found _sound_notfirst _sound_types
+unset _sound_default _sound_all_default x y
 
 
 
@@ -2414,85 +3406,134 @@ else
 fi;
 
 
-
+# If --with-athena or --without-athena were given then copy the value to the
+# equivalent enable_athena variable.
+if test "${with_athena+set}" = set; then
+  echo athena Setting enable to "$with_athena"
+  enable_athena="$with_athena"
+fi;
+# If -enable-athena or --disable-athena were given then copy the value to the
+# equivalent with_athena variable.
+if test "${enable_athena+set}" = set; then
+  echo athena Setting with to "$enable_athena"
+  with_athena="$enable_athena"
+fi;
 # Check whether --with-athena or --without-athena was given.
 if test "${with_athena+set}" = set; then
+  enableval="$with_athena"
   withval="$with_athena"
-  _with_athena_bogus=yes
+  _athena_bogus=yes
  for x in xaw 3d next 95 xpm ; do
    if test $x = $with_athena ; then
-	_with_athena_bogus=no
+	_athena_bogus=no
    fi
  done
- if test "$_with_athena_bogus" = "yes" ; then
+ if test "$_athena_bogus" = "yes" ; then
 	(echo "$progname: Usage error:"
 echo " " "The --with-athena option must have one of these values: \`xaw',\`3d',\`next',\`95',\`xpm'."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
  fi
-unset _with_athena_bogus
+unset _athena_bogus
 
 
 
 fi;
 
-
+# If --with-xim or --without-xim were given then copy the value to the
+# equivalent enable_xim variable.
+if test "${with_xim+set}" = set; then
+  echo xim Setting enable to "$with_xim"
+  enable_xim="$with_xim"
+fi;
+# If -enable-xim or --disable-xim were given then copy the value to the
+# equivalent with_xim variable.
+if test "${enable_xim+set}" = set; then
+  echo xim Setting with to "$enable_xim"
+  with_xim="$enable_xim"
+fi;
 # Check whether --with-xim or --without-xim was given.
 if test "${with_xim+set}" = set; then
+  enableval="$with_xim"
   withval="$with_xim"
-  _with_xim_bogus=yes
+  _xim_bogus=yes
  for x in yes no xlib motif ; do
    if test $x = $with_xim ; then
-	_with_xim_bogus=no
+	_xim_bogus=no
    fi
  done
- if test "$_with_xim_bogus" = "yes" ; then
+ if test "$_xim_bogus" = "yes" ; then
 	(echo "$progname: Usage error:"
 echo " " "The --with-xim option must have one of these values: \`yes',\`no',\`xlib',\`motif'."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
  fi
-unset _with_xim_bogus
+unset _xim_bogus
 
 
 
 fi;
 
-
+# If --with-mail-locking or --without-mail-locking were given then copy the value to the
+# equivalent enable_mail-locking variable.
+if test "${with_mail_locking+set}" = set; then
+  echo mail-locking Setting enable to "$with_mail_locking"
+  enable_mail_locking="$with_mail_locking"
+fi;
+# If -enable-mail-locking or --disable-mail-locking were given then copy the value to the
+# equivalent with_mail-locking variable.
+if test "${enable_mail_locking+set}" = set; then
+  echo mail-locking Setting with to "$enable_mail_locking"
+  with_mail_locking="$enable_mail_locking"
+fi;
 # Check whether --with-mail-locking or --without-mail-locking was given.
 if test "${with_mail_locking+set}" = set; then
+  enableval="$with_mail_locking"
   withval="$with_mail_locking"
-  _with_mail_locking_bogus=yes
+  _mail_locking_bogus=yes
  for x in lockf flock file locking mmdf pop ; do
    if test $x = $with_mail_locking ; then
-	_with_mail_locking_bogus=no
+	_mail_locking_bogus=no
    fi
  done
- if test "$_with_mail_locking_bogus" = "yes" ; then
+ if test "$_mail_locking_bogus" = "yes" ; then
 	(echo "$progname: Usage error:"
 echo " " "The --with-mail-locking option must have one of these values: \`lockf',\`flock',\`file',\`locking',\`mmdf',\`pop'."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
  fi
-unset _with_mail_locking_bogus
+unset _mail_locking_bogus
 
 
 
 fi;
 
 
-# Check whether --enable-bignum or --disable-bignum was given.
+# If --with-bignum or --without-bignum were given then copy the value to the
+# equivalent enable_bignum variable.
+if test "${with_bignum+set}" = set; then
+  echo bignum Setting enable to "$with_bignum"
+  enable_bignum="$with_bignum"
+fi;
+# If -enable-bignum or --disable-bignum were given then copy the value to the
+# equivalent with_bignum variable.
 if test "${enable_bignum+set}" = set; then
-  enableval="$enable_bignum"
-  _enable_bignum_bogus=yes
+  echo bignum Setting with to "$enable_bignum"
+  with_bignum="$enable_bignum"
+fi;
+# Check whether --with-bignum or --without-bignum was given.
+if test "${with_bignum+set}" = set; then
+  enableval="$with_bignum"
+  withval="$with_bignum"
+  _bignum_bogus=yes
  for x in no gmp mp ; do
-   if test $x = $enable_bignum ; then
-	_enable_bignum_bogus=no
+   if test $x = $with_bignum ; then
+	_bignum_bogus=no
    fi
  done
- if test "$_enable_bignum_bogus" = "yes" ; then
+ if test "$_bignum_bogus" = "yes" ; then
 	(echo "$progname: Usage error:"
-echo " " "The --enable-bignum option must have one of these values: \`no',\`gmp',\`mp'."
+echo " " "The --with-bignum option must have one of these values: \`no',\`gmp',\`mp'."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
  fi
-unset _enable_bignum_bogus
+unset _bignum_bogus
 
 
 
@@ -2500,146 +3541,222 @@ else
   enable_bignum="no"
 fi;
 
-enable_error_checking_notfirst=""
+_error_checking_notfirst=""
+with_error_checking_extents=""
 enable_error_checking_extents=""
+with_error_checking_types=""
 enable_error_checking_types=""
+with_error_checking_text=""
 enable_error_checking_text=""
+with_error_checking_gc=""
 enable_error_checking_gc=""
+with_error_checking_malloc=""
 enable_error_checking_malloc=""
+with_error_checking_byte_code=""
 enable_error_checking_byte_code=""
+with_error_checking_glyphs=""
 enable_error_checking_glyphs=""
+with_error_checking_display=""
 enable_error_checking_display=""
+with_error_checking_structures=""
 enable_error_checking_structures=""
 
-_enable_error_checking_types="extents types text gc malloc byte_code glyphs display structures"
-_enable_error_checking_default="extents,types,text,gc,malloc,byte_code,glyphs,display,structures"
+_error_checking_types="extents types text gc malloc byte_code glyphs display structures"
+_error_checking_default="extents,types,text,gc,malloc,byte_code,glyphs,display,structures"
 
 
 
-# Check whether --enable-error-checking or --disable-error-checking was given.
+# If --with-error-checking or --without-error-checking were given then copy the value to the
+# equivalent enable_error-checking variable.
+if test "${with_error_checking+set}" = set; then
+  echo error-checking Setting enable to "$with_error_checking"
+  enable_error_checking="$with_error_checking"
+fi;
+# If -enable-error-checking or --disable-error-checking were given then copy the value to the
+# equivalent with_error-checking variable.
 if test "${enable_error_checking+set}" = set; then
-  enableval="$enable_error_checking"
-  for x in `echo "$enable_error_checking" | sed -e 's/,/ /g'` ; do
-    _enable_error_checking_all_default=""
-    _enable_error_checking_found=""
+  echo error-checking Setting with to "$enable_error_checking"
+  with_error_checking="$enable_error_checking"
+fi;
+# Check whether --with-error-checking or --without-error-checking was given.
+if test "${with_error_checking+set}" = set; then
+  enableval="$with_error_checking"
+  withval="$with_error_checking"
+  for x in `echo "$with_error_checking" | sed -e 's/,/ /g'` ; do
+    _error_checking_all_default=""
+    _error_checking_found=""
     case "$x" in
-        n | no | non | none ) _enable_error_checking_all_default=no ;;
-        a | al | all | both ) _enable_error_checking_all_default=yes ;;
+        n | no | non | none ) _error_checking_all_default=no ;;
+        a | al | all | both ) _error_checking_all_default=yes ;;
     esac
 
-    if test -z "$_enable_error_checking_all_default"; then
-        for y in $_enable_error_checking_types; do
+    if test -z "$_error_checking_all_default"; then
+        for y in $_error_checking_types; do
                         if test "$x" = "$y"; then
-		                _enable_error_checking_found=yes
-                                eval "enable_error_checking_$y=yes"
+		                _error_checking_found=yes
+                                eval "with_error_checking_$y=yes"
+                eval "enable_error_checking_$y=yes"
             elif test "$x" = "no$y"; then
-                                _enable_error_checking_found=yes
-                                eval "enable_error_checking_$y=no"
+                                _error_checking_found=yes
+                                eval "with_error_checking_$y=no"
+                eval "enable_error_checking_$y=no"
             fi
         done
-        test -z "$_enable_error_checking_found" && _enable_error_checking_bogus=yes
+        test -z "$_error_checking_found" && _error_checking_bogus=yes
     fi
-    if test "$_enable_error_checking_bogus" = "yes" -o \
-         \( -n "$_enable_error_checking_all_default" -a -n "$_enable_error_checking_notfirst" \) ; then
+    if test "$_error_checking_bogus" = "yes" -o \
+         \( -n "$_error_checking_all_default" -a -n "$_error_checking_notfirst" \) ; then
 	(echo "$progname: Usage error:"
-echo " " "Valid values for the --enable-error-checking option are:
-$_enable_error_checking_types.  With prefix \"no\", switch it off.
+echo " " "Valid values for the --with-error-checking option are:
+$_error_checking_types.  With prefix \"no\", switch it off.
 Defaults may be overridden with \`all' or \`none' first in the list.
-Hardcoded default is: $_enable_error_checking_default."
+Hardcoded default is: $_error_checking_default."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
-    elif test -n "$_enable_error_checking_all_default" ; then
-        for y in $_enable_error_checking_types; do
-	    eval "enable_error_checking_$y=$_enable_error_checking_all_default"
+    elif test -n "$_error_checking_all_default" ; then
+        for y in $_error_checking_types; do
+	    eval "error_checking_$y=$_error_checking_all_default"
         done
     fi
-    _enable_error_checking_notfirst=yes
+    _error_checking_notfirst=yes
 done
-unset _enable_error_checking_bogus _enable_error_checking_found _enable_error_checking_notfirst _enable_error_checking_types
-unset _enable_error_checking_default _enable_error_checking_all_default x y
+unset _error_checking_bogus _error_checking_found _error_checking_notfirst _error_checking_types
+unset _error_checking_default _error_checking_all_default x y
 
 
 
 fi;
 
 
-# Check whether --enable-menubars or --disable-menubars was given.
+# If --with-menubars or --without-menubars were given then copy the value to the
+# equivalent enable_menubars variable.
+if test "${with_menubars+set}" = set; then
+  echo menubars Setting enable to "$with_menubars"
+  enable_menubars="$with_menubars"
+fi;
+# If -enable-menubars or --disable-menubars were given then copy the value to the
+# equivalent with_menubars variable.
 if test "${enable_menubars+set}" = set; then
-  enableval="$enable_menubars"
-  _enable_menubars_bogus=yes
+  echo menubars Setting with to "$enable_menubars"
+  with_menubars="$enable_menubars"
+fi;
+# Check whether --with-menubars or --without-menubars was given.
+if test "${with_menubars+set}" = set; then
+  enableval="$with_menubars"
+  withval="$with_menubars"
+  _menubars_bogus=yes
  for x in yes no lucid motif athena gtk msw ; do
-   if test $x = $enable_menubars ; then
-	_enable_menubars_bogus=no
+   if test $x = $with_menubars ; then
+	_menubars_bogus=no
    fi
  done
- if test "$_enable_menubars_bogus" = "yes" ; then
+ if test "$_menubars_bogus" = "yes" ; then
 	(echo "$progname: Usage error:"
-echo " " "The --enable-menubars option must have one of these values: \`yes',\`no',\`lucid',\`motif',\`athena',\`gtk',\`msw'."
+echo " " "The --with-menubars option must have one of these values: \`yes',\`no',\`lucid',\`motif',\`athena',\`gtk',\`msw'."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
  fi
-unset _enable_menubars_bogus
+unset _menubars_bogus
 
 
 
 fi;
 
 
-# Check whether --enable-scrollbars or --disable-scrollbars was given.
+# If --with-scrollbars or --without-scrollbars were given then copy the value to the
+# equivalent enable_scrollbars variable.
+if test "${with_scrollbars+set}" = set; then
+  echo scrollbars Setting enable to "$with_scrollbars"
+  enable_scrollbars="$with_scrollbars"
+fi;
+# If -enable-scrollbars or --disable-scrollbars were given then copy the value to the
+# equivalent with_scrollbars variable.
 if test "${enable_scrollbars+set}" = set; then
-  enableval="$enable_scrollbars"
-  _enable_scrollbars_bogus=yes
+  echo scrollbars Setting with to "$enable_scrollbars"
+  with_scrollbars="$enable_scrollbars"
+fi;
+# Check whether --with-scrollbars or --without-scrollbars was given.
+if test "${with_scrollbars+set}" = set; then
+  enableval="$with_scrollbars"
+  withval="$with_scrollbars"
+  _scrollbars_bogus=yes
  for x in yes no lucid motif athena gtk msw ; do
-   if test $x = $enable_scrollbars ; then
-	_enable_scrollbars_bogus=no
+   if test $x = $with_scrollbars ; then
+	_scrollbars_bogus=no
    fi
  done
- if test "$_enable_scrollbars_bogus" = "yes" ; then
+ if test "$_scrollbars_bogus" = "yes" ; then
 	(echo "$progname: Usage error:"
-echo " " "The --enable-scrollbars option must have one of these values: \`yes',\`no',\`lucid',\`motif',\`athena',\`gtk',\`msw'."
+echo " " "The --with-scrollbars option must have one of these values: \`yes',\`no',\`lucid',\`motif',\`athena',\`gtk',\`msw'."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
  fi
-unset _enable_scrollbars_bogus
+unset _scrollbars_bogus
 
 
 
 fi;
 
 
-# Check whether --enable-dialogs or --disable-dialogs was given.
+# If --with-dialogs or --without-dialogs were given then copy the value to the
+# equivalent enable_dialogs variable.
+if test "${with_dialogs+set}" = set; then
+  echo dialogs Setting enable to "$with_dialogs"
+  enable_dialogs="$with_dialogs"
+fi;
+# If -enable-dialogs or --disable-dialogs were given then copy the value to the
+# equivalent with_dialogs variable.
 if test "${enable_dialogs+set}" = set; then
-  enableval="$enable_dialogs"
-  _enable_dialogs_bogus=yes
+  echo dialogs Setting with to "$enable_dialogs"
+  with_dialogs="$enable_dialogs"
+fi;
+# Check whether --with-dialogs or --without-dialogs was given.
+if test "${with_dialogs+set}" = set; then
+  enableval="$with_dialogs"
+  withval="$with_dialogs"
+  _dialogs_bogus=yes
  for x in yes no lucid motif athena gtk msw ; do
-   if test $x = $enable_dialogs ; then
-	_enable_dialogs_bogus=no
+   if test $x = $with_dialogs ; then
+	_dialogs_bogus=no
    fi
  done
- if test "$_enable_dialogs_bogus" = "yes" ; then
+ if test "$_dialogs_bogus" = "yes" ; then
 	(echo "$progname: Usage error:"
-echo " " "The --enable-dialogs option must have one of these values: \`yes',\`no',\`lucid',\`motif',\`athena',\`gtk',\`msw'."
+echo " " "The --with-dialogs option must have one of these values: \`yes',\`no',\`lucid',\`motif',\`athena',\`gtk',\`msw'."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
  fi
-unset _enable_dialogs_bogus
+unset _dialogs_bogus
 
 
 
 fi;
 
 
-# Check whether --enable-widgets or --disable-widgets was given.
+# If --with-widgets or --without-widgets were given then copy the value to the
+# equivalent enable_widgets variable.
+if test "${with_widgets+set}" = set; then
+  echo widgets Setting enable to "$with_widgets"
+  enable_widgets="$with_widgets"
+fi;
+# If -enable-widgets or --disable-widgets were given then copy the value to the
+# equivalent with_widgets variable.
 if test "${enable_widgets+set}" = set; then
-  enableval="$enable_widgets"
-  _enable_widgets_bogus=yes
+  echo widgets Setting with to "$enable_widgets"
+  with_widgets="$enable_widgets"
+fi;
+# Check whether --with-widgets or --without-widgets was given.
+if test "${with_widgets+set}" = set; then
+  enableval="$with_widgets"
+  withval="$with_widgets"
+  _widgets_bogus=yes
  for x in yes no lucid motif athena gtk msw ; do
-   if test $x = $enable_widgets ; then
-	_enable_widgets_bogus=no
+   if test $x = $with_widgets ; then
+	_widgets_bogus=no
    fi
  done
- if test "$_enable_widgets_bogus" = "yes" ; then
+ if test "$_widgets_bogus" = "yes" ; then
 	(echo "$progname: Usage error:"
-echo " " "The --enable-widgets option must have one of these values: \`yes',\`no',\`lucid',\`motif',\`athena',\`gtk',\`msw'."
+echo " " "The --with-widgets option must have one of these values: \`yes',\`no',\`lucid',\`motif',\`athena',\`gtk',\`msw'."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
  fi
-unset _enable_widgets_bogus
+unset _widgets_bogus
 
 
 
@@ -7748,7 +8865,15 @@ fi
 
 
 if test -z "$with_optimization"; then
-  if test -z "$emacs_is_beta" -o "$cflags_optimization_specified" = "yes"; then
+  # If user set --with-cflags-optimization, use it to unilaterally
+  # determine whether optimization should be enabled.
+  if test "$cflags_optimization_specified" = "yes" ; then
+    if -z "$with_cflags_optimization" ; then
+      with_optimization=no
+    else
+      with_optimization=yes
+    fi
+  elif test -z "$emacs_is_beta" ; then
     with_optimization=yes
   else
     with_optimization=no

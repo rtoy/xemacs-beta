@@ -470,7 +470,7 @@ Multilingual Support
 * Encodings::                   
 * Internal Mule Encodings::     
 * Byte/Character Types; Buffer Positions; Other Typedefs::  
-* Internal Text API's::         
+* Internal Text APIs::         
 * Coding for Mule::             
 * CCL::                         
 * Microsoft Windows-Related Multilingual Issues::  
@@ -495,9 +495,9 @@ Byte/Character Types; Buffer Positions; Other Typedefs
 * Usage of the Various Representations::  
 * Working With the Various Representations::  
 
-Internal Text API's
+Internal Text APIs
 
-* Basic internal-format API's::  
+* Basic internal-format APIs::  
 * The DFC API::                 
 * The Eistring API::            
 
@@ -4499,6 +4499,8 @@ some of the important features:
 @item
 Selectively enabling debugging, error checking, and tracing.
 @item
+Specifying options by either @code{--with} or @code{--enable}.
+@item
 Complex options, which are set-valued (@i{i.e.}, unordered; ordered
 lists of options, for example ``take the first available from the
 list,'' are neither used currently nor given special support).
@@ -4572,6 +4574,29 @@ Generate the appropriate shared library support black magic. This is
 implemented in the file @file{aclocal.m4}.
 @end table
 
+@heading XEmacs merged option support
+
+Autoconf 2.59 divides the @file{configure} options into those that
+specify features (@samp{--enable}) and those that specify external
+libraries (@samp{--with}).  Many XEmacs options to not fall neatly into
+either of these catagories and so as a matter of policy all options can
+be specified by either method.
+
+These merged options are declared with the @code{XE_MERGED_ARG} macro.
+The arguments to the option are the same as @code{AC_ARG_WITH} and
+@code{AC_ARG_ENABLE} and code that worked with either of these macros
+will worked unchanged with @code{XE_MERGED_ARG}.  The option value is
+stored in both @code{with_FEATURE} and @code{enable_FEATURE} shell
+variables.
+
+@table @code
+@item XE_MERGED_ARG(package, help-string, action-if-true, action-if-false)
+Declare an option that can be selected by either @samp{--enable} or
+@samp{--with}.  The value of the option is stored in both
+@code{with_FEATURE} and @code{enable_FEATURE}.
+
+@end table
+
 @heading XEmacs keyword option support
 
 A @dfn{keyword} option is one that accepts one of a number of
@@ -4579,19 +4604,19 @@ pre-defined values (if support for sets of values is needed, x1see
 ``complex options'' below).  For example,
 @samp{--with-mail-locking=flock}.
 
-Keyword options are defined with expanded forms of
-@samp{AC_ARG_[WITH|ENABLE]} called @samp{XE_KEYWORD_ARG_[WITH|ENABLE]},
-both taking 5 parameters.  The first 4 parameters of these macros are
-the same as original macros with the exception that all four parameters
-are @strong{required}.  The @var{action-if-true} code is run after the
-argument list has been parsed.
+Keyword options are defined with an expanded form of
+@samp{XE_MERGED_ARG} called @samp{XE_KEYWORD_ARG}, which taks 5
+parameters.  The first 4 parameters are the same as original macro with
+the exception that all of these four parameters are @strong{required}.
+The @var{action-if-true} code is run after the argument list has been
+parsed.
 
 The 5th parameter is a list of supported keywords.  The whole list must
 be quoted but the individual keywords should not.  Here is how the
 @samp{mail-locking} flag is defined:
 
 @example
-XE_KEYWORD_ARG_WITH([mail-locking],
+XE_KEYWORD_ARG([mail-locking],
 	AC_HELP_STRING([--with-mail-locking],[Specify the locking to be
                         used by movemail to prevent concurrent updates
                         of mail spool files. Valid types are `lockf',
@@ -4615,13 +4640,8 @@ Macros labeled @dfn{internal} are not expected to be used by
 higher-level features.
 
 @table @code
-@item XE_KEYWORD_ARG_WITH(package, help-string, action-if-true, action-if-false, [keyword1, keyword2, ....])
-Expanded version of @code{AC_ARG_WITH} for keyword options.  All the
-parameters are required.  The last argument is a comma-separated list of
-supported keywords, @file{m4}-quoted with @samp{[]}.
-
-@item XE_KEYWORD_ARG_ENABLE(feature, help-string, action-if-true, action-if-false, [keyword1, keyword2, ....])
-Expanded version of @code{AC_ARG_ENABLE} for keyword options.  All the
+@item XE_KEYWORD_ARG(package, help-string, action-if-true, action-if-false, [keyword1, keyword2, ....])
+Expanded version of @code{XE_MERGED_ARG} for keyword options.  All the
 parameters are required.  The last argument is a comma-separated list of
 supported keywords, @file{m4}-quoted with @samp{[]}.
 
@@ -4641,12 +4661,12 @@ A @dfn{complex option} is one that takes a number of related values, as
 a set.  For example, we might use @code{--with-sound=native,nas} to play
 sounds using the native libraries and via NAS.
 
-Complex options are defined with expanded forms of
-@samp{AC_ARG_[WITH|ENABLE]} called @samp{XE_COMPLEX_ARG_[WITH|ENABLE]},
-both taking 5 parameters.  The first 4 parameters of these macros are
-the same as original macros with the exception that all four parameters
-are @strong{required}.  The @var{action-if-true} code is run after the
-argument list has been parsed.
+Complex options are defined with an expanded form of
+@samp{XE_MERGED_ARG} called @samp{XE_COMPLEX_ARG}, taking 5 parameters.
+The first 4 parameters are the same as original macro with the exception
+that all four parameters are @strong{required}.  The
+@var{action-if-true} code is run after the argument list has been
+parsed.
 
 The 5th parameter is a list of @code{XE_COMPLEX_OPTION} macro calls that
 define the valid components and their default values.  The list must be
@@ -4654,7 +4674,7 @@ quoted but the individual macro calls should not.  Here is how the
 @samp{sound} flag is defined:
 
 @example
-XE_COMPLEX_ARG_ENABLE([sound],
+XE_COMPLEX_ARG([sound],
 	AC_HELP_STRING([--enable-sound],[Compile with sound support.
                         Valid types are `native', `nas' and `esd'.
                         Prefix a type with 'no' to disable.
@@ -4723,12 +4743,8 @@ This was originally written for the Xft option, and doesn't read so well
 for options based on alternative libraries like sound.  Hackers beware:
 the API may be enhanced to deal with this in the future.
 
-@item XE_COMPLEX_ARG_WITH(PACKAGE, HELP-STRING, ACTION-IF-TRUE, ACTION-IF-FALSE, [XE_COMPLEX_OPTION(a,yes), ....])
-Extended version of @code{AC_ARG_WITH} for complex options.  All the
-parameters are required.
-
-@item XE_COMPLEX_ARG_ENABLE(FEATURE, HELP-STRING, ACTION-IF-TRUE, ACTION-IF-FALSE, [XE_COMPLEX_OPTION(a,yes), ....])
-Expanded version of @code{AC_ARG_ENABLE} for complex options.  All the
+@item XE_COMPLEX_ARG(PACKAGE, HELP-STRING, ACTION-IF-TRUE, ACTION-IF-FALSE, [XE_COMPLEX_OPTION(a,yes), ....])
+Extended version of @code{XE_MERGED_ARG} for complex options.  All the
 parameters are required.
 
 @item XE_EXPAND_COMPLEX_OPTION(prefix, component, yesno)
@@ -5816,7 +5832,7 @@ regular quantity of any sort.  The only exceptions are
 When there's a reasonable possibility you will actually need all 32 or
 64 bits to store the quantity.
 @item
-When calling existing API's that require unsigned types.  In this case,
+When calling existing APIs that require unsigned types.  In this case,
 you should still do all manipulation using signed types, and do the
 conversion at the very threshold of the API call.
 @item
@@ -10168,7 +10184,7 @@ integrated.
   @emph{NOTE}: The information at the top of the source file
 @file{text.c} is more complete than the following, and there is also a
 list of all other places to look for text/I18N-related info.  Also look in
-@file{text.h} for info about the DFC and Eistring API's.
+@file{text.h} for info about the DFC and Eistring APIs.
 
   Recall that there are two primary ways that text is represented in
 XEmacs.  The @dfn{buffer} representation sees the text as a series of
@@ -10191,7 +10207,7 @@ representation is that it's compact and is compatible with ASCII.
 * Encodings::                   
 * Internal Mule Encodings::     
 * Byte/Character Types; Buffer Positions; Other Typedefs::  
-* Internal Text API's::         
+* Internal Text APIs::         
 * Coding for Mule::             
 * CCL::                         
 * Microsoft Windows-Related Multilingual Issues::  
@@ -11161,7 +11177,7 @@ always corresponds to the last byte in the textual representation of the
 character. (This is important because the Boyer-Moore algorithm works by
 looking at the last byte of the search string and &&#### finish this.
 
-@node Byte/Character Types; Buffer Positions; Other Typedefs, Internal Text API's, Internal Mule Encodings, Multilingual Support
+@node Byte/Character Types; Buffer Positions; Other Typedefs, Internal Text APIs, Internal Mule Encodings, Multilingual Support
 @section Byte/Character Types; Buffer Positions; Other Typedefs
 @cindex byte/character types; buffer positions; other typedefs
 @cindex byte/character types
@@ -11211,7 +11227,7 @@ h) [Chbyte] null-semantics @code{char *}; used when casting an argument to
 Types (b), (c), (f) and (h) are defined as @code{char}, while the others are
 @code{unsigned char}.  This is for maximum safety (signed characters are
 dangerous to work with) while maintaining as much compatibility with
-external API's and string constants as possible.
+external APIs and string constants as possible.
 
 We also provide versions of the above types defined with different
 underlying C types, for API compatibility.  These use the following
@@ -11226,7 +11242,7 @@ S = signed
 (Formerly I had a comment saying that type (e) "should be replaced with
 void *".  However, there are in fact many places where an unsigned char
 * might be used -- e.g. for ease in pointer computation, since void *
-doesn't allow this, and for compatibility with external API's.)
+doesn't allow this, and for compatibility with external APIs.)
 
 Note that these typedefs are purely for documentation purposes; from
 the C code's perspective, they are exactly equivalent to @code{char *},
@@ -11532,27 +11548,27 @@ MAX_BYTEBPOS_GAP_SIZE_3 is a multiple of 3. (As it happens,
 65535 is a multiple of 3, but this may not always be the
 case. #### unfinished
 
-@node Internal Text API's, Coding for Mule, Byte/Character Types; Buffer Positions; Other Typedefs, Multilingual Support
-@section Internal Text API's
-@cindex internal text API's
-@cindex text API's, internal
-@cindex API's, text, internal
+@node Internal Text APIs, Coding for Mule, Byte/Character Types; Buffer Positions; Other Typedefs, Multilingual Support
+@section Internal Text APIs
+@cindex internal text APIs
+@cindex text APIs, internal
+@cindex APIs, text, internal
 
-@strong{NOTE}: The most current documentation for these API's is in
+@strong{NOTE}: The most current documentation for these APIs is in
 @file{text.h}.  In case of error, assume that file is correct and this
 one wrong.
 
 @menu
-* Basic internal-format API's::  
+* Basic internal-format APIs::  
 * The DFC API::                 
 * The Eistring API::            
 @end menu
 
-@node Basic internal-format API's, The DFC API, Internal Text API's, Internal Text API's
-@subsection Basic internal-format API's
-@cindex basic internal-format API's
-@cindex internal-format API's, basic
-@cindex API's, basic internal-format
+@node Basic internal-format APIs, The DFC API, Internal Text APIs, Internal Text APIs
+@subsection Basic internal-format APIs
+@cindex basic internal-format APIs
+@cindex internal-format APIs, basic
+@cindex APIs, basic internal-format
 
 These are simple functions and macros to convert between text
 representation and characters, move forward and back in text, etc.
@@ -11581,7 +11597,7 @@ a Lisp character.  Stuff working with Lisp characters often just says
 "char", so we consistently use "Ichar" when that's what we're working
 with.
 
-@node The DFC API, The Eistring API, Basic internal-format API's, Internal Text API's
+@node The DFC API, The Eistring API, Basic internal-format APIs, Internal Text APIs
 @subsection The DFC API
 @cindex DFC API
 @cindex API, DFC
@@ -11804,13 +11820,13 @@ this appears to cause no problems -- so we should consider
 switching, and feel no compunctions about writing further such function-
 like @code{alloca()} routines in lieu of statement-like ones. --ben
 
-@node The Eistring API,  , The DFC API, Internal Text API's
+@node The Eistring API,  , The DFC API, Internal Text APIs
 @subsection The Eistring API
 @cindex Eistring API
 @cindex API, Eistring
 
 (This API is currently under-used) When doing simple things with
-internal text, the basic internal-format API's are enough.  But to do
+internal text, the basic internal-format APIs are enough.  But to do
 things like delete or replace a substring, concatenate various strings,
 etc. is difficult to do cleanly because of the allocation issues.
 The Eistring API is designed to deal with this, and provides a clean
@@ -12268,7 +12284,7 @@ void eiupr (Eistring *eistr);
      Convert all characters in the Eistring to uppercase.
 @end example
 
-@node Coding for Mule, CCL, Internal Text API's, Multilingual Support
+@node Coding for Mule, CCL, Internal Text APIs, Multilingual Support
 @section Coding for Mule
 @cindex coding for Mule
 @cindex Mule, coding for
@@ -12665,7 +12681,7 @@ input or output is a Lisp_Object of type opaque
 A source type of @code{C_STRING} or a sink type of
 @code{C_STRING_ALLOCA} or @code{C_STRING_MALLOC} is appropriate where
 the external API is not '\0'-byte-clean -- i.e. it expects strings to be
-terminated with a null byte.  For external API's that are in fact
+terminated with a null byte.  For external APIs that are in fact
 '\0'-byte-clean, we should of course not use these.
 
 The sinks to be specified must be lvalues, unless they are the lisp
@@ -13373,7 +13389,7 @@ Qmswindows_tstr as the external conversion format, calling the appropriate
 qxe...() Unicode-split version of library functions, and doing other things
 in certain cases, e.g. when a qxe() function is not present.
 
-Unicode support also requires that the various Windows API's be
+Unicode support also requires that the various Windows APIs be
 "Unicode-encapsulated", so that they automatically call the ANSI or
 Unicode version of the API call appropriately and handle the size
 differences in structures.  What this means is:
@@ -13381,7 +13397,7 @@ differences in structures.  What this means is:
 @itemize @bullet
 @item
 first, note that Windows already provides a sort of encapsulation
-of all API's that deal with text.  All such API's are underlyingly
+of all APIs that deal with text.  All such APIs are underlyingly
 provided in two versions, with an A or W suffix (ANSI or "wide"
 i.e. Unicode), and the compile-time constant UNICODE controls which is
 selected by the unsuffixed API.  Same thing happens with structures, and
@@ -13611,7 +13627,7 @@ NOTE:
 @item
 wsetargv.obj uses routines that were buggily left out of MSVCRT; anyway,
 from looking at the source, it does NOT correctly work under Win 9x as
-it blindly calls the Unicode version of Unicode-split API's such as
+it blindly calls the Unicode version of Unicode-split APIs such as
 FindFirstFile)
 
 @item
@@ -18955,7 +18971,7 @@ started and I'll be doing more work to make this real.
 IV. GUTTER ETC.
 
 This stuff needs to be "stable" and generally free from bugs. Any
-API's we create need to be well-reviewed or marked clearly as
+APIs we create need to be well-reviewed or marked clearly as
 experimental.
 
 V. PORTABLE DUMPER
@@ -19510,7 +19526,7 @@ Author: @uref{mailto:ben@@xemacs.org,Ben Wing}
 
 NOTE: These changes are partly motivated by the various user-interface
 changes elsewhere in this document, and partly for Mule support.  In
-general the various API's in this document would benefit greatly from
+general the various APIs in this document would benefit greatly from
 built-in keywords.
 
 I would like to make keyword parameters an integral part of Elisp.  The
@@ -21909,7 +21925,7 @@ API is set-unicode-mapping:
   each byte.  (Most common values are 128, for codepoints given with
   the high bit set, or -32, for codepoints given as 1-94 or 0-95.)
 
-Other API's:
+Other APIs:
 
 @example
 (write-unicode-mapping file charset)

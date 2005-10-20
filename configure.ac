@@ -15,13 +15,17 @@ ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&AS_MESSAGE_LOG_FD
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&AS_MESSAGE_LOG_FD'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 ])
-
+dnl
 dnl -------------------------------------------------------------------------
 dnl Autoconf startup.
-
+dnl
+dnl Due to a dependence on the implementation of certain internal autoconf
+dnl macros, die if any version other than 2.59 is used.
 AC_PREREQ(2.59)dnl
+m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]), [2.59]), 1,
+	[m4_fatal([This script can only be generated with autoconf 2.59])], [])dnl
 AC_INIT(src/lisp.h)dnl
-
+dnl
 dnl -------------------------------------------------------------------------
 dnl Local copyright notices.
 
@@ -85,39 +89,39 @@ dnl
 dnl If there's reason to prefer $0 over this, make sure you fix all the
 dnl uses in this script!!
 progname="`echo $0 | sed 's:^\./\./:\./:'`"
-
+dnl
 dnl -------------------------------------------------------------------------
 dnl Local macros
-
+dnl
 define([USAGE_ERROR],
 [(echo "$progname: Usage error:"
 echo " " $1
-echo "  Use \`$progname --help' to show usage.") >&2 && exit 1])
-
+echo "  Use \`$progname --help' to show usage.") >&2 && exit 1])dnl
+dnl
 dnl PRINT_VAR(var var ...)  prints values of shell variables
 define([PRINT_VAR],[for var in patsubst([$1],[[
-]+],[ ]); do eval "echo \"$var = '\$$var'\""; done])
-
+]+],[ ]); do eval "echo \"$var = '\$$var'\""; done])dnl
+dnl
 dnl XE_ADD_OBJS(foo.o)
 define([XE_ADD_OBJS],
 [extra_objs="$extra_objs [$1]" && dnl
  if test "$verbose" = "yes"; then
    echo "    xemacs will be linked with \"[$1]\""
  fi])dnl XE_ADD_OBJS
-
+dnl
 dnl XE_APPEND(value, varname)
 define([XE_APPEND],
 [[$2]="$[$2] [$1]" && dnl
- if test "$verbose" = "yes"; then echo "    Appending \"[$1]\" to \$[$2]"; fi])
-
+ if test "$verbose" = "yes"; then echo "    Appending \"[$1]\" to \$[$2]"; fi])dnl
+dnl
 dnl XE_PREPEND(value, varname)
 define([XE_PREPEND],
 [[$2]="[$1] $[$2]" && dnl
- if test "$verbose" = "yes"; then echo "    Prepending \"[$1]\" to \$[$2]"; fi])
-
+ if test "$verbose" = "yes"; then echo "    Prepending \"[$1]\" to \$[$2]"; fi])dnl
+dnl
 dnl XE_DIE(message)
-define([XE_DIE], [{ echo "Error:" $1 >&2; exit 1; }])
-
+define([XE_DIE], [{ echo "Error:" $1 >&2; exit 1; }])dnl
+dnl
 dnl XE_CHECK_FEATURE_DEPENDENCY(feature1, feature2)
 define([XE_CHECK_FEATURE_DEPENDENCY],
 [if test "$with_[$1] $with_[$2]" = "yes no"; then
@@ -125,13 +129,13 @@ define([XE_CHECK_FEATURE_DEPENDENCY],
 elif test "$with_[$2]" = "no" ; then with_[$1]=no
 elif test "$with_[$1]" = "yes"; then with_[$2]=yes
 fi
-])
-
+])dnl
+dnl
 dnl XE_STRIP_4TH_COMPONENT(var)
 dnl Changes i986-pc-linux-gnu to i986-pc-linux, as God (not RMS) intended.
 define([XE_STRIP_4TH_COMPONENT],
-[$1=`echo "$$1" | sed '[s/^\([^-][^-]*-[^-][^-]*-[^-][^-]*\)-.*$/\1/]'`])
-
+[$1=`echo "$$1" | sed '[s/^\([^-][^-]*-[^-][^-]*-[^-][^-]*\)-.*$/\1/]'`])dnl
+dnl
 dnl Do our best to deal with automounter brokenness
 dnl CANONICALIZE_PATH(varname)
 define([CANONICALIZE_PATH],
@@ -140,7 +144,7 @@ define([CANONICALIZE_PATH],
   $1=`echo "[$]$1" | \
    sed -e "s|^${tdir}/|/net/|" -e "s|^/a/|/net/|" -e "s|^/amd/|/net/|"`
 fi])dnl
-
+dnl
 dnl XE_PROTECT_LINKER_FLAGS(shell_var)
 define([XE_PROTECT_LINKER_FLAGS], [
 if test "$GCC" = "yes"; then
@@ -155,11 +159,11 @@ if test "$GCC" = "yes"; then
     shift
   done
 fi])dnl
-
+dnl
 dnl Allow use of either ":" or spaces for lists of directories
 define(COLON_TO_SPACE,
   [case "$[$1]" in *:* [)] [$1]="`echo '' $[$1] | sed -e 's/^ //' -e 's/:/ /g'`";; esac])dnl
-
+dnl
 dnl XE_ADD_RUNPATH_DIR(directory)
 define([XE_ADD_RUNPATH_DIR],[{
 xe_runpath_dir=$1
@@ -169,7 +173,7 @@ dnl PRINT_VAR(ld_switch_site ld_switch_x_site runpath xe_runpath_dir LD_RUN_PATH
 	-n "`ls ${xe_runpath_dir}/*.s[[ol]] 2>/dev/null`" && \
   eval "$xe_add_unique_runpath_dir"
 }])dnl
-
+dnl
 dnl XE_COMPUTE_RUNPATH()
 define([XE_COMPUTE_RUNPATH],[
 if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
@@ -217,7 +221,7 @@ if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
   fi
 fi
 ])dnl
-
+dnl
 dnl The construct foo=`echo $w1 $w2 $w3` fails on some systems if $w1 = -e or -n
 dnl So we use the following instead.
 dnl XE_SPACE(var, words)
@@ -226,7 +230,44 @@ T=""
 for W in $2; do if test -z "$T"; then T="$W"; else T="$T $W"; fi; done
 $1="$T"
 ])dnl XE_SPACE
-
+dnl
+dnl XE_MERGED_ARG(FEATURE, HELP-STRING, [ACTION-IF-TRUE], [ACTION-IF-FALSE])
+dnl ------------------------------------------------------------------------
+dnl
+dnl Arguments that can be specified with either --enable or --with.  The
+dnl majority of  XEmacs arguments do not fit neatly into the division between
+dnl --enable and --with, so allow those to be specified by either argument.
+dnl The value is stored in both enable_FEATURE and with_FEATURE.
+AC_DEFUN([XE_MERGED_ARG],
+[m4_divert_once([HELP_ENABLE], [[
+Optional Features:
+  --with-FEATURE[=ARG]    include FEATURE [ARG=yes]
+  --enable-FEATURE[=ARG]  alias for --with-FEATURE
+  --without-FEATURE       do not use FEATURE (same as --with-FEATURE=no)
+  --disable-FEATURE       alias for --without-FEATURE]])dnl
+m4_divert_once([HELP_ENABLE], m4_bpatsubst([[$2]],[--enable\([^ ]+\) ],[--with\1   ]))dnl
+# If --with-$1 or --without-$1 were given then copy the value to the
+# equivalent enable_$1 variable.
+if test "[${with_]m4_bpatsubst([$1], -, _)+set}" = set; then
+  echo $1 Setting enable to "[$with_]m4_bpatsubst([$1], -, _)"
+  [enable_]m4_bpatsubst([$1], -, _)="[$with_]m4_bpatsubst([$1], -, _)"
+fi;
+# If -enable-$1 or --disable-$1 were given then copy the value to the
+# equivalent with_$1 variable.
+if test "[${enable_]m4_bpatsubst([$1], -, _)+set}" = set; then
+  echo $1 Setting with to "[$enable_]m4_bpatsubst([$1], -, _)"
+  [with_]m4_bpatsubst([$1], -, _)="[$enable_]m4_bpatsubst([$1], -, _)"
+fi;
+# Check whether --with-$1 or --without-$1 was given.
+if test "[${with_]m4_bpatsubst([$1], -, _)+set}" = set; then
+  enableval="[$with_]m4_bpatsubst([$1], -, _)"
+  withval="[$with_]m4_bpatsubst([$1], -, _)"
+  $3
+m4_ifvaln([$4], [else
+  $4])dnl
+fi; dnl
+])dnl XE_MERGED_ARG
+dnl
 dnl XEmacs keyword option support
 dnl =============================
 dnl 
@@ -249,7 +290,7 @@ dnl
 define([XE_PARSE_KEYWORD_OPTION],
 [_[$1]_bogus=yes
  for x in XE_KEYWORD_LIST ; do
-   if test $x = $[$1] ; then
+   if test $x = $with_[$1] ; then
 	_[$1]_bogus=no
    fi
  done
@@ -258,7 +299,7 @@ define([XE_PARSE_KEYWORD_OPTION],
  fi
 unset _[$1]_bogus
 undefine([XE_KEYWORD_LIST])dnl
-undefine([XE_KEYWORD_VALUES])])
+undefine([XE_KEYWORD_VALUES])])dnl
 dnl
 dnl XE_KEYWORD(keyword)
 dnl --------------------------------
@@ -269,35 +310,21 @@ define([XE_KEYWORD],
 dnl Separate with a ':' instead of a ',' (see the parsing code above) to avoid
 dnl confusion with marco parameter lists.
 m4_append([XE_KEYWORD_VALUES],[\`$1'],[:])dnl
-])
+])dnl
 dnl
-dnl XE_KEYWORD_ARG_WITH(PACKAGE, HELP-STRING, ACTION-IF-TRUE, ACTION-IF-FALSE,
+dnl XE_KEYWORD_ARG(PACKAGE, HELP-STRING, ACTION-IF-TRUE, ACTION-IF-FALSE,
 dnl                     [XE_KEYWORD(keyword), ....])
 dnl --------------------------------------------------------------------------
 dnl
-dnl Expanded version of AC_ARG_WITH for keyword options.  All the parameters
+dnl Expanded version of XE_MERGED_ARG for keyword options.  All the parameters
 dnl are required.
 dnl
-define([XE_KEYWORD_ARG_WITH],
+define([XE_KEYWORD_ARG],
 [m4_map([XE_KEYWORD],m4_shiftn(4, $@))
-AC_ARG_WITH([$1],[$2],
-[XE_PARSE_KEYWORD_OPTION([with_]patsubst([$1], -, _), [--with-$1])
+XE_MERGED_ARG([$1],[$2],
+[XE_PARSE_KEYWORD_OPTION(patsubst([$1], -, _), [--with-$1])
 $3
-],[$4])])
-dnl
-dnl XE_KEYWORD_ARG_ENABLE(FEATURE, HELP-STRING, ACTION-IF-TRUE, ACTION-IF-FALSE,
-dnl                     [XE_KEYWORD(keyword), ....])
-dnl --------------------------------------------------------------------------
-dnl
-dnl Expanded version of AC_ARG_ENABLE for keyword options.  All the parameters
-dnl are required.
-dnl
-define([XE_KEYWORD_ARG_ENABLE],
-[m4_map([XE_KEYWORD],m4_shiftn(4, $@))
-AC_ARG_ENABLE([$1],[$2],
-[XE_PARSE_KEYWORD_OPTION([enable_]patsubst([$1], -, _), [--enable-$1])
-$3
-],[$4])])
+],[$4])])dnl
 dnl
 dnl XEmacs complex option support
 dnl =============================
@@ -320,7 +347,8 @@ dnl Internal macro create the option's shell variable containing the default
 dnl value and to note the values in an option list.
 dnl
 define([XE_EXPAND_COMPLEX_OPTION],
-[[$1]_[$2]=[$3]
+[with_[$1]_[$2]=[$3]
+enable_[$1]_[$2]=[$3]
 m4_append([XE_COMPONENT_LIST],[$2],[ ])dnl
 dnl Separate with a ':' instead of a ',' (see <prefix>_default below) to avoid
 dnl confusion with marco parameter lists.
@@ -335,7 +363,7 @@ dnl
 define([XE_EXPAND_COMPLEX_OPTIONS],
 [m4_if([$2], [[]], [],
        [XE_EXPAND_COMPLEX_OPTION([$1], m4_fst($2))[]dnl
-XE_EXPAND_COMPLEX_OPTIONS([$1], m4_cdr($2))])])
+XE_EXPAND_COMPLEX_OPTIONS([$1], m4_cdr($2))])])dnl
 dnl
 dnl XE_INIT_COMPLEX_OPTION(prefix, option_list)
 dnl -------------------------------------------
@@ -347,7 +375,7 @@ dnl and <prefix>_default contains a comma-separated list of all the default
 dnl values.
 dnl
 define([XE_INIT_COMPLEX_OPTION],
-[[$1]_notfirst=""
+[_[$1]_notfirst=""
 dnl
 XE_EXPAND_COMPLEX_OPTIONS($@)
 _[$1]_types="XE_COMPONENT_LIST"
@@ -356,8 +384,8 @@ dnl Undefine these macros so that they can be reused by later complex
 dnl options.
 undefine([XE_COMPONENT_LIST])
 undefine([XE_COMPONENT_DEFAULT])
-])
-
+])dnl
+dnl
 dnl XE_PARSE_COMPLEX_OPTION(prefix, cmdline-flag)
 dnl ---------------------------------------------
 dnl
@@ -365,7 +393,7 @@ dnl Internal macro to parse the option values.  If an undeclared option is
 dnl found then an error is generated.
 dnl
 define([XE_PARSE_COMPLEX_OPTION],
-[for x in `echo "$[$1]" | sed -e 's/,/ /g'` ; do
+[for x in `echo "$with_[$1]" | sed -e 's/,/ /g'` ; do
     _[$1]_all_default=""
     _[$1]_found=""
     case "$x" in
@@ -380,12 +408,14 @@ define([XE_PARSE_COMPLEX_OPTION],
 		dnl echo "$x" = "$y"
                 _[$1]_found=yes
                 dnl echo eval `echo "[$1]_$y=yes"`
-                eval "[$1]_$y=yes"
+                eval "with_[$1]_$y=yes"
+                eval "enable_[$1]_$y=yes"
             elif test "$x" = "no$y"; then
                 dnl echo "$x" = "no$y"
                 _[$1]_found=yes
                 dnl echo eval `echo "[$1]_$y=no"`
-                eval "[$1]_$y=no"
+                eval "with_[$1]_$y=no"
+                eval "enable_[$1]_$y=no"
             fi
         done
         test -z "$_[$1]_found" && _[$1]_bogus=yes
@@ -405,8 +435,8 @@ Hardcoded default is: $_[$1]_default."])
 done
 unset _[$1]_bogus _[$1]_found _[$1]_notfirst _[$1]_types
 unset _[$1]_default _[$1]_all_default x y
-])
-
+])dnl
+dnl
 dnl XE_COMPLEX_OPTION(option, yesno)
 dnl --------------------------------
 dnl
@@ -423,35 +453,21 @@ dnl
 define([XE_COMPLEX_OPTION_HELP_STRING],
 [AC_HELP_STRING([$1],[Compile with support for $2. Components that can use
 $3 are $4. Prefix component with `no' to disable its use of $3. Requires
-$5 support. Default is $6.])])
+$5 support. Default is $6.])])dnl
 dnl
-dnl XE_COMPLEX_ARG_WITH(PACKAGE, HELP-STRING, ACTION-IF-TRUE, ACTION-IF-FALSE,
+dnl XE_COMPLEX_ARG(PACKAGE, HELP-STRING, ACTION-IF-TRUE, ACTION-IF-FALSE,
 dnl                     [XE_COMPLEX_OPTION(a,yes), ....])
 dnl --------------------------------------------------------------------------
 dnl
-dnl Expanded version of AC_ARG_WITH for complex options.  All the parameters
+dnl Expanded version of XE_MERGED_ARG for complex options.  All the parameters
 dnl are required.
 dnl
-define([XE_COMPLEX_ARG_WITH],
-[XE_INIT_COMPLEX_OPTION([with_]patsubst([$1], -, _), m4_shiftn(4, $@))
-AC_ARG_WITH([$1],[$2],
-[XE_PARSE_COMPLEX_OPTION([with_]patsubst([$1], -, _), [--with-$1])
+define([XE_COMPLEX_ARG],
+[XE_INIT_COMPLEX_OPTION(patsubst([$1], -, _), m4_shiftn(4, $@))
+XE_MERGED_ARG([$1],[$2],
+[XE_PARSE_COMPLEX_OPTION(patsubst([$1], -, _), [--with-$1])
 $3
-],[$4])])
-dnl
-dnl XE_COMPLEX_ARG_ENABLE(FEATURE, HELP-STRING, ACTION-IF-TRUE, ACTION-IF-FALSE,
-dnl                     [XE_COMPLEX_OPTION, ....])
-dnl --------------------------------------------------------------------------
-dnl
-dnl Expanded version of AC_ARG_ENABLE for complex options.  All the parameters
-dnl are required.
-dnl
-define([XE_COMPLEX_ARG_ENABLE],
-[XE_INIT_COMPLEX_OPTION([enable_]patsubst([$1], -, _), m4_shiftn(4, $@))
-AC_ARG_ENABLE([$1],[$2],
-[XE_PARSE_COMPLEX_OPTION([enable_]patsubst([$1], -, _), [--enable-$1])
-$3
-],[$4])])
+],[$4])])dnl
 dnl
 dnl -------------------------------------------------------------------------
 XE_APPEND(lib-src, MAKE_SUBDIR)
@@ -462,19 +478,6 @@ dnl Command line argument processing.
 dnl Note that AC_HELP_STRING compresses whitespace, wraps, and indents the
 dnl string to fit the --help display; there's no need to preformat.
 dnl
-dnl Error-checking on old-style flags
-AC_ARG_WITH([mule],[],[XE_DIE([--enable-mule, NOT --with-mule])],[])
-AC_ARG_WITH([menubars],[],[XE_DIE([--enable-menubars, NOT --with-menubars])],[])
-AC_ARG_WITH([scrollbars],[],[XE_DIE([--enable-scrollbars, NOT --with-scrollbars])],[])
-AC_ARG_WITH([dialogs],[],[XE_DIE([--enable-dialogs, NOT --with-dialogs])],[])
-AC_ARG_WITH([widgets],[],[XE_DIE([--enable-widgets, NOT --with-widgets])],[])
-AC_ARG_WITH([sound],[],[XE_DIE([--enable-sound, NOT --with-sound])],[])
-AC_ARG_WITH([default-eol-detection],[],[XE_DIE([--enable-default-eol-detection, NOT --with-default-eol-detection])],[])
-AC_ARG_WITH([clash-detection],[],[XE_DIE([--enable-clash-detection, NOT --with-clash-detection])],[])
-AC_ARG_WITH([database],[],[XE_DIE([--enable-database, NOT --with-database])],[])
-AC_ARG_WITH([modules],[],[XE_DIE([--enable-modules, NOT --with-modules])],[])
-AC_ARG_WITH([toolbars],[],[XE_DIE([--enable-toolbars, NOT --with-toolbars])],[])
-
 dnl I think these will be caught by autoconf internal checks,
 dnl only --with-* are unchecked
 dnl --external-widget         --enable-external-widget
@@ -489,52 +492,52 @@ dnl --quick-build             --enable-quick-build
 dnl --use-union-type          --enable-union-type
 dnl --pdump                   --enable-pdump
 dnl --use-kkcc                --enable-kkcc
-
+dnl
 dnl parse flags
-AC_ARG_WITH([prefix],
+XE_MERGED_ARG([prefix],
 	AC_HELP_STRING([--with-prefix=no],[Don't compile the value for `prefix' into the executable.]),
 	[true], [with_prefix=yes])
-AC_ARG_WITH([site-lisp],
+XE_MERGED_ARG([site-lisp],
 	AC_HELP_STRING([--with-site-lisp=no],[Allow for a site-lisp directory in the XEmacs hierarchy searched before the installation packages.]),
 	[true], [with_site_lisp=no])
-AC_ARG_WITH([site-modules],
+XE_MERGED_ARG([site-modules],
 	AC_HELP_STRING([--with-site-modules],[Disable site-modules directory in the XEmacs hierarchy, which is searched before the installation modules.]),
 	[], [])
-AC_ARG_WITH([gtk],
+XE_MERGED_ARG([gtk],
 	AC_HELP_STRING([--with-gtk],[Support GTK on the X Window System. (EXPERIMENTAL)]),
 	[true], [with_gtk=no])
-AC_ARG_WITH([gnome],
+XE_MERGED_ARG([gnome],
 	AC_HELP_STRING([--with-gnome],[Support GNOME on the X Window System. (EXPERIMENTAL)]),
 	[true], [with_gnome=no])
-AC_ARG_WITH([msw],
+XE_MERGED_ARG([msw],
 	AC_HELP_STRING([--with-msw],[Support MS Windows as a window system (only under Cygwin and MinGW).  `--with-msw=no' may be needed on *nix systems with Wine installed.]),
 	[], [])
-AC_ARG_WITH([gcc],
+XE_MERGED_ARG([gcc],
 	AC_HELP_STRING([--with-gcc],[Use GCC to compile XEmacs.]),
 	[], [])
-AC_ARG_WITH([dynamic],
+XE_MERGED_ARG([dynamic],
 	AC_HELP_STRING([--with-dynamic],[Link dynamically if supported by system.  'No' forces static linking.]),
 	[], [])
-AC_ARG_WITH([ncurses],
+XE_MERGED_ARG([ncurses],
 	AC_HELP_STRING([--with-ncurses],[Use the ncurses library for tty support.]),
 	[], [])
-AC_ARG_WITH([dnet],
+XE_MERGED_ARG([dnet],
 	AC_HELP_STRING([--with-dnet],[Compile with support for DECnet.]),
 	[], [])
-AC_ARG_WITH([socks],
+XE_MERGED_ARG([socks],
 	AC_HELP_STRING([--with-socks],[Compile with support for SOCKS (an Internet proxy).]),
 	[], [])
-AC_ARG_WITH([dragndrop],
+XE_MERGED_ARG([dragndrop],
 	AC_HELP_STRING([--with-dragndrop],[Compile in the generic drag and drop API. This is automatically added if one of the drag and drop
                         protocols is found (currently CDE, OffiX, MSWindows,
                         and GTK).
                         *WARNING*  The Drag'n'drop support is under development
                                    and is considered experimental.]),
 	[], [])
-AC_ARG_WITH([cde],
+XE_MERGED_ARG([cde],
 	AC_HELP_STRING([--with-cde],[Compile in support for CDE drag and drop.]),
 	[], [])
-AC_ARG_WITH([offix],
+XE_MERGED_ARG([offix],
 	AC_HELP_STRING([--with-offix],[Compile in support for OffiX drag and drop.
                         *WARNING*  If you compile in OffiX, you may not be
                                    able to use multiple X displays success-
@@ -542,204 +545,204 @@ AC_ARG_WITH([offix],
                                    different vendors, the results may be
                                    unpredictable.]),
 	[], [])
-AC_ARG_WITH([gpm],
+XE_MERGED_ARG([gpm],
 	AC_HELP_STRING([--with-gpm],[Compile in GPM mouse support for ttys.]),
 	[], [])
-AC_ARG_WITH([xpm],
+XE_MERGED_ARG([xpm],
 	AC_HELP_STRING([--with-xpm],[Compile with support for XPM images.  PRACTICALLY
                         REQUIRED.  Although this library is nonstandard and
                         a real hassle to build, many basic things (e.g.
                         toolbars) depend on it, and you will run into
                         many problems without it.]),
 	[], [])
-AC_ARG_WITH([xface],
+XE_MERGED_ARG([xface],
 	AC_HELP_STRING([--with-xface],[Compile with support for X-Face mail headers.
                         Requires the compface package.]),
 	[], [])
-AC_ARG_WITH([gif],
+XE_MERGED_ARG([gif],
 	AC_HELP_STRING([--with-gif],[Compile without the (builtin) support for GIF images.]),
 	[], [])
-AC_ARG_WITH([jpeg],
+XE_MERGED_ARG([jpeg],
 	AC_HELP_STRING([--with-jpeg],[Compile with support for JPEG images.  Useful if
                         you are using a mail, news reader, or web browser
                         in XEmacs, so that JPEG images can be displayed.]),
 	[], [])
-AC_ARG_WITH([png],
+XE_MERGED_ARG([png],
 	AC_HELP_STRING([--with-png],[Compile with support for PNG images.  Recommended
                         because the images on the About page are not viewable
                         without it.]),
 	[], [])
-AC_ARG_WITH([tiff],
+XE_MERGED_ARG([tiff],
 	AC_HELP_STRING([--with-tiff],[Compile with support for TIFF images.  Possibly
                         useful, for the same reason as JPEG images.]),
 	[], [])
-AC_ARG_WITH([zlib],
+XE_MERGED_ARG([zlib],
 	AC_HELP_STRING([--with-zlib],[Support inflate (de)compression internally.]),
 	[], [])
-AC_ARG_WITH([wmcommand],
+XE_MERGED_ARG([wmcommand],
 	AC_HELP_STRING([--with-wmcommand],[Compile without realized leader window which will
                         keep the WM_COMMAND property.]),
 	[], [])
-AC_ARG_WITH([xmu],
+XE_MERGED_ARG([xmu],
 	AC_HELP_STRING([--with-xmu],[Use Xmu utilities. Default: yes.]),
 	[], [])
-AC_ARG_WITH([purify],
+XE_MERGED_ARG([purify],
 	AC_HELP_STRING([--with-purify],[Support memory debugging using Purify.]),
 	[], [])
-AC_ARG_WITH([quantify],
+XE_MERGED_ARG([quantify],
 	AC_HELP_STRING([--with-quantify],[Support performance debugging using Quantify.]),
 	[], [])
-AC_ARG_ENABLE([toolbars],
-	AC_HELP_STRING([--with-toolbars],[Enable toolbar support. Default: yes.]),
+XE_MERGED_ARG([toolbars],
+	AC_HELP_STRING([--enable-toolbars],[Enable toolbar support. Default: yes.]),
 	[], [])
-AC_ARG_WITH([tty],
+XE_MERGED_ARG([tty],
 	AC_HELP_STRING([--with-tty],[Enable TTY support. Default: yes.]),
 	[], [])
-AC_ARG_WITH([xfs],
+XE_MERGED_ARG([xfs],
 	AC_HELP_STRING([--with-xfs],[Enable XFontSet support for internationalized
                         menubar.  Incompatible with `--with-xim=motif'.
                         `--enable-menubars=lucid' (the default) is desirable.]),
 	[], [])
-AC_ARG_ENABLE([mule],
-	AC_HELP_STRING([--enable-mule],[Compile with Mule (MUlti-Lingual Emacs) support,
+XE_MERGED_ARG([mule],
+	AC_HELP_STRING([--enable-mule],[Compile with Mule (Multi-Lingual Emacs) support,
                         needed to support non-Latin-1 (including Asian)
                         languages.]),
 	[], [])
-AC_ARG_ENABLE([default-eol-detection],
+XE_MERGED_ARG([default-eol-detection],
 	AC_HELP_STRING([--enable-default-eol-detection],[Turns on by default auto-detection of end-of-line type
 			when reading a file.  Applies to those platforms where
 			auto-detection is off by default (non-Mule Unix).  Has
 			no effect otherwise.]),
 	[], [])
-AC_ARG_WITH([canna],
+XE_MERGED_ARG([canna],
 	AC_HELP_STRING([--with-canna],[Support the Canna Japanese input method. Requires Mule.]),
 	[], [])
-AC_ARG_WITH([wnn],
+XE_MERGED_ARG([wnn],
 	AC_HELP_STRING([--with-wnn],[Support the Wnn Asian language input
                         method. Requires Mule.]),
 	[], [])
-AC_ARG_WITH([wnn6],
+XE_MERGED_ARG([wnn6],
 	AC_HELP_STRING([--with-wnn6],[Support the Wnn6 Asian language input
                         method (proprietary). Requires Mule.]),
 	[], [])
-AC_ARG_WITH([workshop],
+XE_MERGED_ARG([workshop],
 	AC_HELP_STRING([--with-workshop],[Support the Sun WorkShop (formerly Sparcworks)
                         development environment.]),
 	[], [])
-AC_ARG_WITH([sparcworks],
+XE_MERGED_ARG([sparcworks],
 	AC_HELP_STRING([--with-sparcworks],[Alias for --with-workshop]),
 	[], [])
-AC_ARG_WITH([tooltalk],
+XE_MERGED_ARG([tooltalk],
 	AC_HELP_STRING([--with-tooltalk],[Support the ToolTalk IPC protocol.]),
 	[], [])
-AC_ARG_WITH([ldap],
+XE_MERGED_ARG([ldap],
 	AC_HELP_STRING([--with-ldap],[Support the LDAP protocol.]),
 	[], [])
-AC_ARG_WITH([postgresql],
+XE_MERGED_ARG([postgresql],
 	AC_HELP_STRING([--with-postgresql],[Support the PostgreSQL RDBMS.]),
 	[], [])
-AC_ARG_WITH([pop],
+XE_MERGED_ARG([pop],
 	AC_HELP_STRING([--with-pop],[Support POP for mail retrieval.]),
 	[], [])
-AC_ARG_WITH([kerberos],
+XE_MERGED_ARG([kerberos],
 	AC_HELP_STRING([--with-kerberos],[Support Kerberos-authenticated POP.]),
 	[], [])
-AC_ARG_WITH([hesiod],
+XE_MERGED_ARG([hesiod],
 	AC_HELP_STRING([--with-hesiod],[Support Hesiod to get the POP server host.]),
 	[], [])
-AC_ARG_WITH([infodock],
+XE_MERGED_ARG([infodock],
 	AC_HELP_STRING([--with-infodock],[Support the Infodock version of XEmacs.  Infodock is a SourceForge project).]),
 	[], [])
-AC_ARG_WITH([native-sound-lib],
+XE_MERGED_ARG([native-sound-lib],
 	AC_HELP_STRING([--with-native-sound-lib],[Path to sound library (for systems with name conflicts).]),
 	[], [])
-AC_ARG_WITH([netinstall],
+XE_MERGED_ARG([netinstall],
 	AC_HELP_STRING([--with-netinstall],[Support for installation over the internet.
                         Only functional on the MS Windows platforms.]),
 	[], [with_netinstall="no"])
-AC_ARG_WITH([optimization],
+XE_MERGED_ARG([optimization],
 	AC_HELP_STRING([--with-optimization],[Control whether compilation is optimized.  By default, optimization is on in release versions and off in beta versions, since it can interfere with proper stack backtraces.]),
 	[], [])
-AC_ARG_WITH([ipv6-cname],
+XE_MERGED_ARG([ipv6-cname],
 	AC_HELP_STRING([--with-ipv6-cname],[Try IPv6 information first when canonicalizing host names.  This option has no effect unless system supports getaddrinfo(3) and getnameinfo(3).]),
 	[], [with_ipv6_cname="no"])
-AC_ARG_WITH([site-includes],
+XE_MERGED_ARG([site-includes],
 	AC_HELP_STRING([--with-site-includes],[Prepend to include search path.]),
 	[], [])
-AC_ARG_WITH([site-libraries],
+XE_MERGED_ARG([site-libraries],
 	AC_HELP_STRING([--with-site-libraries],[Prepend to library search path.]),
 	[], [])
-AC_ARG_WITH([site-prefixes],
+XE_MERGED_ARG([site-prefixes],
 	AC_HELP_STRING([--with-site-prefixes],[Prepend to include and library search paths, with /include and /lib added.  Comes after site-includes and site-libraries, if any.]),
 	[], [])
-AC_ARG_WITH([statedir],
+XE_MERGED_ARG([statedir],
 	AC_HELP_STRING([--with-statedir],[]),
 	[], [with_statedir='${prefix}/lib'])
-AC_ARG_WITH([lispdir],
+XE_MERGED_ARG([lispdir],
 	AC_HELP_STRING([--with-lispdir],[]),
 	[AC_DEFINE(LISPDIR_USER_DEFINED)], [with_lispdir='${datadir}/${instvardir}/lisp'])
-AC_ARG_WITH([archlibdir],
+XE_MERGED_ARG([archlibdir],
 	AC_HELP_STRING([--with-archlibdir],[]),
 	[AC_DEFINE(ARCHLIBDIR_USER_DEFINED)], [with_archlibdir='${libdir}/${instvardir}/${configuration}'])
-AC_ARG_WITH([moduledir],
+XE_MERGED_ARG([moduledir],
 	AC_HELP_STRING([--with-moduledir],[]),
 	[AC_DEFINE(MODULEDIR_USER_DEFINED)], [with_moduledir='${libdir}/${instvardir}/${configuration}/modules'])
-AC_ARG_WITH([etcdir],
+XE_MERGED_ARG([etcdir],
 	AC_HELP_STRING([--with-etcdir],[]),
 	[AC_DEFINE(ETCDIR_USER_DEFINED)], [with_etcdir='${datadir}/${instvardir}/etc'])
-AC_ARG_WITH([infopath],
+XE_MERGED_ARG([infopath],
 	AC_HELP_STRING([--with-infopath],[]),
 	[AC_DEFINE(INFOPATH_USER_DEFINED)], [])
-AC_ARG_WITH([docdir],
+XE_MERGED_ARG([docdir],
 	AC_HELP_STRING([--with-docdir],[]),
 	[AC_DEFINE(DOCDIR_USER_DEFINED)], [with_docdir='${archlibdir}'])
-AC_ARG_WITH([site-runtime-libraries],
+XE_MERGED_ARG([site-runtime-libraries],
 	AC_HELP_STRING([--with-site-runtime-libraries],[]),
 	[], [])
-AC_ARG_WITH([package-prefix],
+XE_MERGED_ARG([package-prefix],
 	AC_HELP_STRING([--with-package-prefix],[Specify packages root.]),
 	[AC_DEFINE(PACKAGE_PATH_USER_DEFINED)], [])
-AC_ARG_WITH([package-path],
+XE_MERGED_ARG([package-path],
 	AC_HELP_STRING([--with-package-path],[Search path for package hierarchies.]),
 	[AC_DEFINE(PACKAGE_PATH_USER_DEFINED)], [])
-AC_ARG_ENABLE([external-widget],
+XE_MERGED_ARG([external-widget],
 	AC_HELP_STRING([--enable-external-widget],[Support XEmacs server for text widgets in other applications.]),
 	[], [])
-AC_ARG_ENABLE([kkcc],
+XE_MERGED_ARG([kkcc],
 	AC_HELP_STRING([--enable-kkcc],[Enable new GC algorithms.]),
-	[], [])
-AC_ARG_ENABLE([mc-alloc],
+	[], [enable_kkcc=yes])
+XE_MERGED_ARG([mc-alloc],
 	AC_HELP_STRING([--enable-mc-alloc],[Enable new allocator.]),
-	[], [])
-AC_ARG_ENABLE([union-type],
+	[], [enable_mc_alloc=yes])
+XE_MERGED_ARG([union-type],
 	AC_HELP_STRING([--enable-union-type],[Use union definition of Lisp_Object type.  Known to trigger bugs in some compilers.]),
 	[], [])
-AC_ARG_ENABLE([pdump],
+XE_MERGED_ARG([pdump],
 	AC_HELP_STRING([--enable-pdump],[Enable portable LISP preloader.]),
 	[], [])
-AC_ARG_ENABLE([dump-in-exec],
+XE_MERGED_ARG([dump-in-exec],
 	AC_HELP_STRING([--enable-dump-in-exec],[Enable dumping into executable (enabled by default
 			for `pdump', not enabled by default in combination 
 			with `mc-alloc').]),
 	[], [])
-AC_ARG_ENABLE([debug],
+XE_MERGED_ARG([debug],
 	AC_HELP_STRING([--enable-debug],[Enable additional debugging information.  No time cost.]),
 	[], [])
-AC_ARG_ENABLE([assertions],
+XE_MERGED_ARG([assertions],
 	AC_HELP_STRING([--enable-assertions],[]),
 	[], [])
-AC_ARG_ENABLE([memory-usage-stats],
+XE_MERGED_ARG([memory-usage-stats],
 	AC_HELP_STRING([--enable-memory-usage-stats],[Enable LISP memory usage API.]),
 	[], [])
-AC_ARG_ENABLE([clash-detection],
+XE_MERGED_ARG([clash-detection],
 	AC_HELP_STRING([--enable-clash-detection],[Disable use of lock files to detect multiple edits
 			of the same file.]),
 	[], [])
-AC_ARG_ENABLE([modules],
+XE_MERGED_ARG([modules],
 	AC_HELP_STRING([--enable-modules],[Compile in experimental support for dynamically
                         loaded libraries (Dynamic Shared Objects).]),
 	[], [])
-AC_ARG_ENABLE([quick-build],
+XE_MERGED_ARG([quick-build],
 	AC_HELP_STRING([--enable-quick-build],[Speed up the build cycle by leaving out steps where
                         XEmacs will still work (more or less) without them.
                         Potentially dangerous if you don't know what you're
@@ -752,11 +755,11 @@ AC_ARG_ENABLE([quick-build],
                         to be rebuilt.]),
 	[], [])
 
-AC_ARG_WITH([compiler],
+XE_MERGED_ARG([compiler],
 	AC_HELP_STRING([--with-compiler],[C compiler to use]),
 	[], [])
 
-AC_ARG_WITH([xemacs-compiler],
+XE_MERGED_ARG([xemacs-compiler],
 	AC_HELP_STRING([--with-xemacs-compiler],
 	[compiler to use to compile just the xemacs executable and C modules.
 			If you want to compile XEmacs as C++, use e.g.
@@ -764,69 +767,69 @@ AC_ARG_WITH([xemacs-compiler],
 			additional error-checking.]),
 	[], [])
 
-AC_ARG_WITH([cflags],
+XE_MERGED_ARG([cflags],
 	AC_HELP_STRING([--with-cflags],
 	[Compiler flags.  These flags will be placed after any flags inserted for warnings, debugging or optimization; setting this does not disable the insertion of those flags.  Use configure settings such as `--with-optimization=no' or `enable-debug=no' to turn them off, or override them with `--with-cflags-optimization', `--with-cflags-debugging', or `with-cflags-warning'.]),
 	[], [])
 
-AC_ARG_WITH([cflags-warning],
+XE_MERGED_ARG([cflags-warning],
 	AC_HELP_STRING([--with-cflags-warning],[Override compiler flags used to control warnings.
                         Normally, don't set this, as XEmacs already turns on
                         the maximum safe warning level.]),
 	[], [])
 
-AC_ARG_WITH([cflags-optimization],
+XE_MERGED_ARG([cflags-optimization],
 	AC_HELP_STRING([--with-cflags-optimization=FLAGS],
 	[Override compiler flags used to control optimization.  If blank, forces no optimization; if non-blank, forces optimization.  Normally, don't set this; XEmacs automatically sets the maximum safe optimization flags appropriate for the compiler being invoked.  If you just want to turn optimization on or off, use `with-optimization' instead.]),
 	[], [])
 
-AC_ARG_WITH([cflags-debugging],
+XE_MERGED_ARG([cflags-debugging],
 	AC_HELP_STRING([--with-cflags-debugging=FLAGS],
 	[Override compiler flags used to add debugging information to the executable.  Normally, debugging information is added whenever possible (i.e. unless optimization is turned on and the compiler does not permit debugging and optimization simultaneously).]),
 	[], [])
 
-AC_ARG_WITH([cpp],
+XE_MERGED_ARG([cpp],
 	AC_HELP_STRING([--with-cpp],[C preprocessor to use (e.g. /usr/ccs/lib/cpp or cc -E)]),
 	[CPP="$with_cpp"], [])
 
-AC_ARG_WITH([cppflags],
+XE_MERGED_ARG([cppflags],
 	AC_HELP_STRING([--with-cppflags],[C preprocessor flags (e.g. -I/foo or -Dfoo=bar)]),
 	[CPPFLAGS="$with_cppflags"], [])
 
-AC_ARG_WITH([libs],
+XE_MERGED_ARG([libs],
 	AC_HELP_STRING([--with-libs],[Additional libraries (e.g. -lfoo)]),
 	[LIBS="$with_libs"], [])
 
-AC_ARG_WITH([ldflags],
+XE_MERGED_ARG([ldflags],
 	AC_HELP_STRING([--with-ldflags],[Additional linker flags (e.g. -L/foo)]),
 	[LDFLAGS="$with_ldflags"], [])
 
-AC_ARG_WITH([rel-alloc],
+XE_MERGED_ARG([rel-alloc],
 	AC_HELP_STRING([--with-rel-alloc],[Enable the relocating allocator.]),
 	[], [with_rel_alloc='default'])
 
-AC_ARG_WITH([dlmalloc],
+XE_MERGED_ARG([dlmalloc],
 	AC_HELP_STRING([--with-dlmalloc],[Use Doug Lea's malloc implementation.]),
 	[], [with_dlmalloc='default'])
 
-AC_ARG_WITH([debug-malloc],
+XE_MERGED_ARG([debug-malloc],
 	AC_HELP_STRING([--with-debug-malloc],[Use a debugging malloc.]),
 	[], [])
 
-AC_ARG_WITH([system-malloc],
+XE_MERGED_ARG([system-malloc],
 	AC_HELP_STRING([--with-system-malloc],[Use the system malloc, not the one distributed with XEmacs.]),
 	[], [with_system_malloc='default'])
 
 #Enable code.
 
-XE_COMPLEX_ARG_ENABLE([database],
+XE_COMPLEX_ARG([database],
 	AC_HELP_STRING([--enable-database],[Compile with database support.  Valid types are
                         `no' or a comma-separated list of one or more
                         of `berkdb' and either `dbm' or `gnudbm'.]),
 	[
 if test "$enable_database_dbm"  = "yes" -a "$enable_database_gdbm" = "yes"; then
 	USAGE_ERROR("Only one of \`dbm' and \`gnudbm' may be specified
-with the \`--enable-database' option.")
+with the \`--with-database' option.")
 fi
 ],
 [],
@@ -834,7 +837,7 @@ fi
  XE_COMPLEX_OPTION([dbm],[""]),
  XE_COMPLEX_OPTION([gdbm],[""])])
 
-XE_COMPLEX_ARG_ENABLE([sound],
+XE_COMPLEX_ARG([sound],
 	AC_HELP_STRING([--enable-sound],[Compile with sound support.
                         Valid types are `native', `nas' and `esd'.
                         Prefix a type with 'no' to disable.
@@ -849,26 +852,26 @@ XE_COMPLEX_ARG_ENABLE([sound],
 	 XE_COMPLEX_OPTION([nas],[""]),
 	 XE_COMPLEX_OPTION([esd],[no])])
 
-XE_KEYWORD_ARG_WITH([athena],
+XE_KEYWORD_ARG([athena],
 	AC_HELP_STRING([--with-athena],[Use TYPE Athena widgets (xaw, 3d, next, 95, or xpm).]),
 [],[],[xaw,3d,next,95,xpm])dnl
 
-XE_KEYWORD_ARG_WITH([xim],[],[],[],[yes,no,xlib,motif])dnl
+XE_KEYWORD_ARG([xim],[],[],[],[yes,no,xlib,motif])dnl
 
-XE_KEYWORD_ARG_WITH([mail-locking],
+XE_KEYWORD_ARG([mail-locking],
 	AC_HELP_STRING([--with-mail-locking],[Specify the locking to be used by movemail to prevent
                         concurrent updates of mail spool files. Valid types
                         are `lockf', `flock', `dot', `locking' or `mmdf'.]),
 [],[],[lockf,flock,file,locking,mmdf,pop])dnl
 
 
-XE_KEYWORD_ARG_ENABLE([bignum],
+XE_KEYWORD_ARG([bignum],
 	AC_HELP_STRING([--enable-bignum=TYPE],[Compile in support for bignums, ratios, or bigfloats
                         using library support.  TYPE must be one of "gmp"
                         (for GNU MP), "mp" (for BSD MP), or "no" (disabled).]),
 	[], [enable_bignum="no"],[no,gmp,mp])
 
-XE_COMPLEX_ARG_ENABLE([error-checking],
+XE_COMPLEX_ARG([error-checking],
 	AC_HELP_STRING([--enable-error-checking],[Compile with internal error-checking added.
                         Causes noticeable loss of speed.  Valid types
                         are extents, bufpos, malloc, gc, types, text, byte_code, glyphs, display, structures.]),
@@ -883,25 +886,25 @@ XE_COMPLEX_ARG_ENABLE([error-checking],
  XE_COMPLEX_OPTION([display],[""]),
  XE_COMPLEX_OPTION([structures],[""])])
 
-XE_KEYWORD_ARG_ENABLE([menubars],
+XE_KEYWORD_ARG([menubars],
 	AC_HELP_STRING([--enable-menubars=TYPE],[Use TYPE menubars (lucid, motif, or no).  The Lucid
                         widgets emulate Motif (mostly) but are faster.
                         *WARNING*  The Motif menubar is currently broken.
                         Lucid menubars are the default.]),
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 
-XE_KEYWORD_ARG_ENABLE([scrollbars],
+XE_KEYWORD_ARG([scrollbars],
 	AC_HELP_STRING([--enable-scrollbars=TYPE],[Use TYPE scrollbars (lucid, motif, athena, or no).
                         Lucid scrollbars are the default.]),
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 
-XE_KEYWORD_ARG_ENABLE([dialogs],
+XE_KEYWORD_ARG([dialogs],
 	AC_HELP_STRING([--enable-dialogs=TYPE],[Use TYPE dialog boxes (lucid, motif, athena, or no).
                         There are no true Lucid dialogs; Motif dialogs will be
                         used if Motif can be found, else Athena is used.]),
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 
-XE_KEYWORD_ARG_ENABLE([widgets],
+XE_KEYWORD_ARG([widgets],
 	AC_HELP_STRING([--enable-widgets],[Use TYPE native widgets (lucid, motif, athena, or no).
                         Other widget types are currently unsupported.
                         There are no true Lucid widgets; Motif widgets will be

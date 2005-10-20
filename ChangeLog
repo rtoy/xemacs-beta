@@ -1,3 +1,10 @@
+2005-10-15  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.ac: Added XE_MERGED_ARG to alias all local --enable
+	and --with options.  Configure can only be built with autoconf
+	2.59.  Prevent many unwanted blank lines from appearing in
+	configure.
+
 2005-10-13  Ben Wing  <ben@xemacs.org>
 
 	* configure.ac (XE_COMPLEX_ARG_ENABLE):

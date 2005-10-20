@@ -1,3 +1,10 @@
+2005-10-15  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* internals/internals.texi: "API's" -> "APIs".  This fixes
+	problems generating dvi and pdf versions.
+	* internals/internals.texi (The configure Script):
+	Describe the use of XE_MERGED_ARG.
+
 2005-10-13  Ben Wing  <ben@xemacs.org>
 
 	* xemacs-faq.texi (Top):
