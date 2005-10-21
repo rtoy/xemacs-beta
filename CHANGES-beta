@@ -2,46 +2,70 @@ to 21.5.23 "daikon"
 
 Major features
 
+-- New: all-singing, all-dancing --with/--enable aliasing.  -- Malcolm Purvis
+-- New: native NT support for building gmp, db, postgresql, ldap. -- Ben Wing
 -- New: non-XPM color images can be mouse pointers. -- Ben Wing
 
 User-Visible Bug Fixes and Minor Improvements
 
+-- Fix: change address for crash reporting to xemacs-beta. -- Ben Wing
 -- Fix: crash due to duplicate subrs with MC_ALLOC and modules. -- Marcus Crestani
+-- Improve: memory usage reporting, especially with MC_ALLOC. -- Ben Wing
+-- Improve: remove obsolete autoconf 2.13 files. -- Malcolm Purvis.
+-- Improve: --with-cflags-optimization now forces optimization. -- Ben Wing
 
 Build Infrastructure
 
 -- Fix: Cygwin, non-X build needs XPM header and library files in XE_CFLAGS. -- Mike Alexander, Rick Rankin
--- Fix: Stop installexe.sh from adding redundant exe extension. -- Rick Rankin
+-- Fix: guess VC++ version; set debug and browser flags appropriately. -- Ben Wing
+-- Fix: pass -I$(SRC) to minitar.c so it compiles. -- Ben Wing
+-- Fix: pass module sources, not objects, to make-docfile. -- Ben Wing
+-- Fix: stop installexe.sh from adding redundant exe extension. -- Rick Rankin
 -- Fix: variable initialization misordering in xemacs.mak. -- Adrian Aichner
+-- Improve: Canna API is now a module. -- Stephen Turnbull
+-- Improve: delete more stuff in `make clean'. -- Ben Wing
+-- Improve: options now added to one OPT_*, rather than many FOO_*, variables. -- Ben Wing
 -- Improve: replace support for autoconf 2.13 with warning to use autoconf 2.59. -- Malcolm Purvis
 -- Improve: update config.inc.samp to recent versions and add gmp, db, postgresql, ldap support; also optimization in non-debug builds. -- Ben Wing
 -- Improve: xemacs.mak now caters to VC++ version,  support for building gmp, db, postgresql, ldap; other fixes. -- Ben Wing
 
 Documentation
 
+-- Fix: force C-h N to find etc/NEWS, not some package's. -- Steve Youngs
 -- Fix: texinfmt.el can build all Info files again. -- Adrian Aichner
 -- Fix: typos in Texinfo docs. -- Adrian Aichner
 -- Improve: Texinfo docs about specifiers. -- Ben Wing
 -- Improve: comment style, 'foo -> `foo'. -- Ben Wing
--- Improve: rewrite nt/README
+-- Improve: mule-cmds docstrings. -- Stephen Turnbull
+-- Improve: emodules.texi tells how to add modules to core. -- Stephen Turnbull
+-- Improve: nt/README tells how to compile optional libs. -- Ben Wing
+-- New: FAQ on `rebaseall' under Cygwin. -- Ben Wing
+-- New: internals documents XEmacs treatment of --with/--enable configure args. -- Malcolm Purvis
 
 Lisp API
 
+-- Fix: finder-find-library returns accurate filename. -- Adrian Aichner
+-- Fix: xemacs-composefunc kvetching when noninteractive. -- Stephen Turnbull
 -- Improve: GC now triggers on relative, not absolute, consing. -- Ben Wing
 -- Improve: memory usage reporting. -- Ben Wing
+-- Improve: sync build-report.el to Adrian's version. -- Stephen Turnbull
+-- Improve: sync read-buffer, line-number-at-pos, delete-dups, occur to GNU Emacs 22.0.50. -- Malcolm Purvis
+-- New: batch-build-report command. -- Stephen Turnbull
+-- New: next-error from GNU Emacs. -- Malcolm Purvis
 -- New: `specifier-instantiator' and related primitives. -- Ben Wing
 
 Internal API and Implementation
 
--- Fix: Non-MULE needs mswindows_current_locale too. -- Mike Alexander
 -- Fix: address of register variable can't be taken. -- Ben Wing
 -- Fix: bitrot in sysdep.c and nt.c. -- Ben Wing
 -- Fix: bug in range tables with non-default closure. -- Ben Wing
 -- Fix: don't use C++ reserved words "new" and "catch", append '_'. -- Ben Wing
 -- Fix: initialization in mc-alloc. -- Marcus Crestani
+-- Fix: non-MULE needs mswindows_current_locale too. -- Mike Alexander
 -- Fix: setlocale return string is volatile, dup it. -- Olivier Galibert
--- Improve: include from ../src so <config.h> works in lib-src. -- Ben Wing
--- Improve: minitar.c now includes config.h. -- Ben Wing
+-- Fix: unexec for _LP64 ELF architectures. -- Andrey Slusar
+-- Fix: use of config.h, especially in Windows files. -- Ben Wing
+-- Improve: use _CRT_SECURE_NO_DEPRECATE to suppress VC8 warnings. -- Ben Wing
 -- Improve: warning elimination. -- Ben Wing
 
 to 21.5.22 "cucumber"
