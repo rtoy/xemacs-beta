@@ -1,5 +1,12 @@
 2005-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	UNDO:
+	* canna/canna-api.c:
+	* canna/Makefile.in.in (MODNAME,SRCS):
+	Rename module from canna_api to canna-api.
+
+2005-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* canna/configure: Create and CVS add.
 
 2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org>

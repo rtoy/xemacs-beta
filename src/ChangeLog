@@ -1,3 +1,7 @@
+2005-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Makefile.in.in (mule_canna_objs): Revert canna-api to canna_api.
+
 2005-10-13  Ben Wing  <ben@xemacs.org>
 
 	* config.h.in:

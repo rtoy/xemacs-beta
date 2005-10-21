@@ -26,11 +26,11 @@
 ## source tree.
 
 ### Specialize this part for your module
-MODNAME=canna-api
+MODNAME=canna_api
 MODVER=0.5.0
 MODTITLE="Module wrapping Canna libraries for XEmacs"
 CFLAGS=@CFLAGS@
 LDFLAGS=@LDFLAGS@ @ld_switch_all@ @canna_libs@
-SRCS=canna-api.c
+SRCS=canna_api.c
 
 ## Note: modules/common/Makefile.common will be appended by configure

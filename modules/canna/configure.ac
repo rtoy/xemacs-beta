@@ -2,7 +2,7 @@
 # This is only used for independent module building.
 AC_INIT([Sample module], [1.0], [xemacs-beta@xemacs.org])
 AC_PREREQ(2.53)
-AC_REVISION($Revision: 1.2 $)
+AC_REVISION($Revision: 1.3 $)
 AC_COPYRIGHT([Configuration script for the sample module.
 Copyright (C) 2002 Jerry James.
 

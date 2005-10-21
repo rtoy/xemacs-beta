@@ -197,7 +197,7 @@ mule_objs=mule-ccl.o mule-charset.o mule-coding.o
 #endif
 
 #if defined(HAVE_CANNA) && !defined(HAVE_SHLIB)
-mule_canna_objs=$(BLDMODULES)/canna/canna-api.o
+mule_canna_objs=$(BLDMODULES)/canna/canna_api.o
 #endif
 
 #ifdef HAVE_WNN

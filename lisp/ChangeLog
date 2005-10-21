@@ -1,5 +1,10 @@
 2005-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	UNDO:
+	* mule/canna-leim.el: Rename canna_api to canna-api.
+
+2005-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* build-report.el: Note synch to XEmacs build package version 1.49.
 
 2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org> 
