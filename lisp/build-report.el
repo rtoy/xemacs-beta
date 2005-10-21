@@ -3,8 +3,8 @@
 ;; Copyright (C) 1997-2003 Adrian Aichner
 
 ;; Author: Adrian Aichner <adrian@xemacs.org>
-;; Date: $Date: 2005/10/21 10:23:16 $
-;; Version: $Revision: 1.13 $
+;; Date: $Date: 2005/10/21 10:34:35 $
+;; Version: $Revision: 1.14 $
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -24,7 +24,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Not synched.
+;;; Synched up with: XEmacs build package build-report.el Revision 1.49.
 
 ;;; Commentary:
 
