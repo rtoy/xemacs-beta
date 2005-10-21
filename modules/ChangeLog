@@ -1,3 +1,7 @@
+2005-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* canna/configure: Create and CVS add.
+
 2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* canna/Makefile.in.in (MODVER): Bump to 0.5.
