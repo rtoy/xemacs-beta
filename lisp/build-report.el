@@ -3,8 +3,8 @@
 ;; Copyright (C) 1997-2003 Adrian Aichner
 
 ;; Author: Adrian Aichner <adrian@xemacs.org>
-;; Date: $Date: 2005/10/05 04:11:25 $
-;; Version: $Revision: 1.12 $
+;; Date: $Date: 2005/10/21 10:23:16 $
+;; Version: $Revision: 1.13 $
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -318,59 +318,85 @@ See also `mail-user-agent', `build-report-destination', and
          (setq prompts (cdr prompts))
          (setq arg (cons (read-string prompt "" 'hist) arg)))
        arg)))
+  (let ((destination-address
+	 ;; `build-report-destination' used to be a single string, so
+	 ;; let's test if we really get a list of destinations.
+	 (if (listp build-report-destination)
+	     (read-string
+	      "Build Report Destination: "
+	      (car build-report-destination)
+	      'build-report-destination)
+	   (read-string
+	    "Build Report Destination: "
+	    build-report-destination)
+	   )))
+    (save-excursion
+      (build-report-create-report destination-address args))))
+
+;;;###autoload
+(defun batch-build-report (&optional status destination)
+  "Format a build report.  Save it as \"./BUILD-REPORT\".
+If the file \"./BUILD-REPORT-COMMENT\" is readable, insert its contents.
+Optional STATUS is a string to insert in the subject.  It defaults to
+\"Success\".  \(This will be made customizable.)
+Optional DESTINATION is a string containing the destination mailbox.  It
+defaults to \"XEmacs Build Reports <xemacs-buildreports@xemacs.org>\".
+\(This will be made customizable.)
+This function may be invoked as a command."
+  (interactive)
+  (unless (stringp status) (setq status "Success"))
+  (unless (stringp destination)
+    (setq destination "XEmacs Build Reports <xemacs-buildreports@xemacs.org>"))
   (save-excursion
-    (if (file-exists-p build-report-installation-file)
-        (multiple-value-bind
-            (major minor beta codename extraname configuration)
-            (build-report-installation-data build-report-installation-file)
-          (setq build-report-subject
-                (format "[%%s] XEmacs %s.%s%s \"%s\" %s%s"
-                        major minor beta codename extraname configuration)))
+    (build-report-create-report destination
+				;; #### listify in the internal function?
+				(list status)))
+  (when (file-readable-p "BUILD-REPORT-COMMENT")
+    (insert-file "BUILD-REPORT-COMMENT"))
+  (write-file "BUILD-REPORT"))
+
+(defun build-report-create-report (destination status)
+  "Format current buffer as an XEmacs build report to DESTINATION.
+
+DESTINATION is the mailbox to which the report will be submitted.
+STATUS is the status of the build.
+You probably don't want to use this function; see `build-report' for the
+interactive command, and `batch-build-report' for a command suitable for
+use in shell scripts and Makefiles."
+  (if (file-exists-p build-report-installation-file)
       (multiple-value-bind
-          (major minor beta codename extraname)
-          (build-report-version-file-data build-report-version-file)
-        (setq build-report-subject
-              (format "[%%s] XEmacs %s.%s%s \"%s\" %s%s"
-                      major minor beta codename extraname system-configuration))))
-    (compose-mail
-     ;; `build-report-destination' used to be a single string, so
-     ;; let's test if we really get a list of destinations.
-     (if (listp build-report-destination)
-         (read-string
-          "Build Report Destination: "
-          (car build-report-destination)
-          'build-report-destination)
-       (read-string
-        "Build Report Destination: "
-        build-report-destination)
-       )
-     (apply 'format build-report-subject args)
-     nil
-     nil
-     nil
-     nil
-     nil)
-    (let* ((report-begin (point))
-           (files (reverse (build-report-make-output-get)))
-           (file (car files)))
-      (while file
-        (if (file-exists-p file)
-            (insert (build-report-insert-make-output report-begin file))
-          (insert (format "%s not found!\n" file)))
-        (insert "\n")
-        (setq files (cdr files))
-        (setq file (car files)))
-      (if (file-exists-p build-report-installation-file)
-          (insert (build-report-insert-installation-file
-                   report-begin
-                   build-report-installation-insert-all))
-        (insert (format "%s not found!\n" build-report-installation-file)))
-;;;       (when (and (>= major 21) (>= minor 2) (or (null beta) (>= beta 32)))
-;;;         (insert "\n")
-;;;         (insert (build-report-insert-config-inc report-begin)))
+	  (major minor beta codename extraname configuration)
+	  (build-report-installation-data build-report-installation-file)
+	(setq build-report-subject
+	      (format "[%%s] XEmacs %s.%s%s \"%s\" %s%s"
+		      major minor beta codename extraname configuration)))
+    (multiple-value-bind
+	(major minor beta codename extraname)
+	(build-report-version-file-data build-report-version-file)
+      (setq build-report-subject
+	    (format "[%%s] XEmacs %s.%s%s \"%s\" %s%s"
+		    major minor beta codename extraname system-configuration))))
+  (compose-mail destination
+		(apply 'format build-report-subject status)
+		nil nil nil nil nil)
+  (let* ((report-begin (point))
+	 (files (reverse (build-report-make-output-get)))
+	 (file (car files)))
+    (while file
+      (if (file-exists-p file)
+	  (insert (build-report-insert-make-output report-begin file))
+	(insert (format "%s not found!\n" file)))
       (insert "\n")
-      (insert (build-report-insert-header report-begin))
-      (goto-char report-begin))))
+      (setq files (cdr files))
+      (setq file (car files)))
+    (if (file-exists-p build-report-installation-file)
+	(insert (build-report-insert-installation-file
+		 report-begin
+		 build-report-installation-insert-all))
+      (insert (format "%s not found!\n" build-report-installation-file)))
+    (insert "\n")
+    (insert (build-report-insert-header report-begin))
+    (goto-char report-begin)))
 
 (defun build-report-insert-header (where)
   "Inserts the build-report-header at the point specified by `where'."

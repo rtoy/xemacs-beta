@@ -1,3 +1,11 @@
+2005-10-04  Stephen J. Turnbull  <stephen@xemacs.org> 
+
+	* build-report.el (build-report): Refactor into interactive
+	portion and `build-report-create-report'.
+	(build-report-create-report): New function.
+	(batch-build-report): Non-interactive version of `build-report'
+	using `build-report-create-report'.
+
 2005-10-10  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* minibuf.el:
