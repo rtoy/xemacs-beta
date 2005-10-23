@@ -1,5 +1,4 @@
 to 21.5.23 "daikon"
-
 Major features
 
 -- New: all-singing, all-dancing --with/--enable aliasing.  -- Malcolm Purvis
@@ -13,6 +12,7 @@ User-Visible Bug Fixes and Minor Improvements
 -- Improve: memory usage reporting, especially with MC_ALLOC. -- Ben Wing
 -- Improve: remove obsolete autoconf 2.13 files. -- Malcolm Purvis.
 -- Improve: --with-cflags-optimization now forces optimization. -- Ben Wing
+-- Update: sync package-get.el mirrors with website. -- Adrian Aichner, Ville Skyttä
 
 Build Infrastructure
 
@@ -36,7 +36,7 @@ Documentation
 -- Fix: typos in Texinfo docs. -- Adrian Aichner
 -- Improve: Texinfo docs about specifiers. -- Ben Wing
 -- Improve: comment style, 'foo -> `foo'. -- Ben Wing
--- Improve: mule-cmds docstrings. -- Stephen Turnbull
+-- Improve: comments and docstrings. -- Stephen Turnbull
 -- Improve: emodules.texi tells how to add modules to core. -- Stephen Turnbull
 -- Improve: nt/README tells how to compile optional libs. -- Ben Wing
 -- New: FAQ on `rebaseall' under Cygwin. -- Ben Wing
