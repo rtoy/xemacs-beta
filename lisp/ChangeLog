@@ -1,3 +1,16 @@
+2005-10-23  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Sync packages
+	mirrors list with website, based on Ville's work.
+	* package-get.el (package-get-pre-release-download-sites): Sync
+	with `package-get-download-sites'.
+
+2005-10-18  Ville Skyttä  <scop@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Sync mirrors list
+	with the XEmacs website.
+	(package-get-pre-release-download-sites): Ditto.
+
 2005-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	UNDO:
