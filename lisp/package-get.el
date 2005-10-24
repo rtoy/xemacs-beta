@@ -236,16 +236,16 @@ directory."
     ("Norway (no.xemacs.org)" "ftp.no.xemacs.org" "pub/xemacs/packages")
     ("Poland (pl.xemacs.org)" "ftp.pl.xemacs.org" "pub/unix/editors/xemacs/packages")
     ("Russia (ru.xemacs.org)" "ftp.ru.xemacs.org" "pub/xemacs/packages")
-    ("South Africa (za.xemacs.org)" "ftp.za.xemacs.org" "mirrorsites/ftp.xemacs.org/packages")
+;   ("South Africa (za.xemacs.org)" "ftp.za.xemacs.org" "mirrorsites/ftp.xemacs.org/packages")
     ("Sweden (se.xemacs.org)" "ftp.se.xemacs.org" "pub/gnu/xemacs/packages")
     ("Switzerland (ch.xemacs.org)" "ftp.ch.xemacs.org" "mirror/xemacs/packages")
+    ("Taiwan (ftp.tw.xemacs.org)" "ftp.tw.xemacs.org" "Unix/Editors/XEmacs/packages")
     ("UK (uk.xemacs.org)" "ftp.uk.xemacs.org" "sites/ftp.xemacs.org/pub/xemacs/packages")
-    ("US (ibiblio.org)" "ibiblio.org" "pub/packages/editors/xemacs/packages")
+    ("US (ibiblio.org)" "mirrors.ibiblio.org" "pub/mirrors/xemacs/packages")
     ("US (stealth.net)" "ftp.stealth.net" "pub/mirrors/ftp.xemacs.org/pub/xemacs/packages")
     ("US (unc.edu)" "metalab.unc.edu" "pub/packages/editors/xemacs/packages")
     ("US (us.xemacs.org)" "ftp.us.xemacs.org" "pub/xemacs/packages")
-    ("US (utk.edu)" "ftp.sunsite.utk.edu" "pub/xemacs/packages")
-    )
+    ("US (utk.edu)" "ftp.sunsite.utk.edu" "pub/xemacs/packages"))
   "*List of remote sites available for downloading packages.
 List format is '(site-description site-name directory-on-site).
 SITE-DESCRIPTION is a textual description of the site.  SITE-NAME
@@ -326,16 +326,18 @@ variable actually used to specify package download sites."
      "pub/unix/editors/xemacs/beta/experimental/packages")
     ("Russia Pre-Releases (ru.xemacs.org)" "ftp.ru.xemacs.org"
      "pub/xemacs/beta/experimental/packages")
-    ("South Africa Pre-Releases (za.xemacs.org)" "ftp.za.xemacs.org"
-     "mirrorsites/ftp.xemacs.org/beta/experimental/packages")
+;   ("South Africa Pre-Releases (za.xemacs.org)" "ftp.za.xemacs.org"
+;    "mirrorsites/ftp.xemacs.org/beta/experimental/packages")
     ("Sweden Pre-Releases (se.xemacs.org)" "ftp.se.xemacs.org"
      "pub/gnu/xemacs/beta/experimental/packages")
     ("Switzerland Pre-Releases (ch.xemacs.org)" "ftp.ch.xemacs.org"
      "mirror/xemacs/beta/experimental/packages")
+    ("Taiwan Pre-Releases (ftp.tw.xemacs.org)" "ftp.tw.xemacs.org"
+     "Unix/Editors/XEmacs/beta/experimental/packages")
     ("UK Pre-Releases (uk.xemacs.org)" "ftp.uk.xemacs.org"
      "sites/ftp.xemacs.org/pub/xemacs/beta/experimental/packages")
-    ("US Pre-Releases (ibiblio.org)" "ibiblio.org"
-     "pub/packages/editors/xemacs/beta/experimental/packages")
+    ("US Pre-Releases (ibiblio.org)" "mirrors.ibiblio.org"
+     "pub/mirrors/xemacs/beta/experimental/packages")
     ("US Pre-Releases (stealth.net)" "ftp.stealth.net"
      "pub/mirrors/ftp.xemacs.org/pub/xemacs/beta/experimental/packages")
     ("US Pre-Releases (unc.edu)" "metalab.unc.edu"
