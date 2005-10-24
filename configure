@@ -1630,13 +1630,11 @@ with_dragndrop_default="no"
 # If --with-prefix or --without-prefix were given then copy the value to the
 # equivalent enable_prefix variable.
 if test "${with_prefix+set}" = set; then
-  echo prefix Setting enable to "$with_prefix"
   enable_prefix="$with_prefix"
 fi;
 # If -enable-prefix or --disable-prefix were given then copy the value to the
 # equivalent with_prefix variable.
 if test "${enable_prefix+set}" = set; then
-  echo prefix Setting with to "$enable_prefix"
   with_prefix="$enable_prefix"
 fi;
 # Check whether --with-prefix or --without-prefix was given.
@@ -1650,13 +1648,11 @@ fi;
 # If --with-site-lisp or --without-site-lisp were given then copy the value to the
 # equivalent enable_site-lisp variable.
 if test "${with_site_lisp+set}" = set; then
-  echo site-lisp Setting enable to "$with_site_lisp"
   enable_site_lisp="$with_site_lisp"
 fi;
 # If -enable-site-lisp or --disable-site-lisp were given then copy the value to the
 # equivalent with_site-lisp variable.
 if test "${enable_site_lisp+set}" = set; then
-  echo site-lisp Setting with to "$enable_site_lisp"
   with_site_lisp="$enable_site_lisp"
 fi;
 # Check whether --with-site-lisp or --without-site-lisp was given.
@@ -1670,13 +1666,11 @@ fi;
 # If --with-site-modules or --without-site-modules were given then copy the value to the
 # equivalent enable_site-modules variable.
 if test "${with_site_modules+set}" = set; then
-  echo site-modules Setting enable to "$with_site_modules"
   enable_site_modules="$with_site_modules"
 fi;
 # If -enable-site-modules or --disable-site-modules were given then copy the value to the
 # equivalent with_site-modules variable.
 if test "${enable_site_modules+set}" = set; then
-  echo site-modules Setting with to "$enable_site_modules"
   with_site_modules="$enable_site_modules"
 fi;
 # Check whether --with-site-modules or --without-site-modules was given.
@@ -1688,13 +1682,11 @@ fi;
 # If --with-gtk or --without-gtk were given then copy the value to the
 # equivalent enable_gtk variable.
 if test "${with_gtk+set}" = set; then
-  echo gtk Setting enable to "$with_gtk"
   enable_gtk="$with_gtk"
 fi;
 # If -enable-gtk or --disable-gtk were given then copy the value to the
 # equivalent with_gtk variable.
 if test "${enable_gtk+set}" = set; then
-  echo gtk Setting with to "$enable_gtk"
   with_gtk="$enable_gtk"
 fi;
 # Check whether --with-gtk or --without-gtk was given.
@@ -1708,13 +1700,11 @@ fi;
 # If --with-gnome or --without-gnome were given then copy the value to the
 # equivalent enable_gnome variable.
 if test "${with_gnome+set}" = set; then
-  echo gnome Setting enable to "$with_gnome"
   enable_gnome="$with_gnome"
 fi;
 # If -enable-gnome or --disable-gnome were given then copy the value to the
 # equivalent with_gnome variable.
 if test "${enable_gnome+set}" = set; then
-  echo gnome Setting with to "$enable_gnome"
   with_gnome="$enable_gnome"
 fi;
 # Check whether --with-gnome or --without-gnome was given.
@@ -1728,13 +1718,11 @@ fi;
 # If --with-msw or --without-msw were given then copy the value to the
 # equivalent enable_msw variable.
 if test "${with_msw+set}" = set; then
-  echo msw Setting enable to "$with_msw"
   enable_msw="$with_msw"
 fi;
 # If -enable-msw or --disable-msw were given then copy the value to the
 # equivalent with_msw variable.
 if test "${enable_msw+set}" = set; then
-  echo msw Setting with to "$enable_msw"
   with_msw="$enable_msw"
 fi;
 # Check whether --with-msw or --without-msw was given.
@@ -1746,13 +1734,11 @@ fi;
 # If --with-gcc or --without-gcc were given then copy the value to the
 # equivalent enable_gcc variable.
 if test "${with_gcc+set}" = set; then
-  echo gcc Setting enable to "$with_gcc"
   enable_gcc="$with_gcc"
 fi;
 # If -enable-gcc or --disable-gcc were given then copy the value to the
 # equivalent with_gcc variable.
 if test "${enable_gcc+set}" = set; then
-  echo gcc Setting with to "$enable_gcc"
   with_gcc="$enable_gcc"
 fi;
 # Check whether --with-gcc or --without-gcc was given.
@@ -1764,13 +1750,11 @@ fi;
 # If --with-dynamic or --without-dynamic were given then copy the value to the
 # equivalent enable_dynamic variable.
 if test "${with_dynamic+set}" = set; then
-  echo dynamic Setting enable to "$with_dynamic"
   enable_dynamic="$with_dynamic"
 fi;
 # If -enable-dynamic or --disable-dynamic were given then copy the value to the
 # equivalent with_dynamic variable.
 if test "${enable_dynamic+set}" = set; then
-  echo dynamic Setting with to "$enable_dynamic"
   with_dynamic="$enable_dynamic"
 fi;
 # Check whether --with-dynamic or --without-dynamic was given.
@@ -1782,13 +1766,11 @@ fi;
 # If --with-ncurses or --without-ncurses were given then copy the value to the
 # equivalent enable_ncurses variable.
 if test "${with_ncurses+set}" = set; then
-  echo ncurses Setting enable to "$with_ncurses"
   enable_ncurses="$with_ncurses"
 fi;
 # If -enable-ncurses or --disable-ncurses were given then copy the value to the
 # equivalent with_ncurses variable.
 if test "${enable_ncurses+set}" = set; then
-  echo ncurses Setting with to "$enable_ncurses"
   with_ncurses="$enable_ncurses"
 fi;
 # Check whether --with-ncurses or --without-ncurses was given.
@@ -1800,13 +1782,11 @@ fi;
 # If --with-dnet or --without-dnet were given then copy the value to the
 # equivalent enable_dnet variable.
 if test "${with_dnet+set}" = set; then
-  echo dnet Setting enable to "$with_dnet"
   enable_dnet="$with_dnet"
 fi;
 # If -enable-dnet or --disable-dnet were given then copy the value to the
 # equivalent with_dnet variable.
 if test "${enable_dnet+set}" = set; then
-  echo dnet Setting with to "$enable_dnet"
   with_dnet="$enable_dnet"
 fi;
 # Check whether --with-dnet or --without-dnet was given.
@@ -1818,13 +1798,11 @@ fi;
 # If --with-socks or --without-socks were given then copy the value to the
 # equivalent enable_socks variable.
 if test "${with_socks+set}" = set; then
-  echo socks Setting enable to "$with_socks"
   enable_socks="$with_socks"
 fi;
 # If -enable-socks or --disable-socks were given then copy the value to the
 # equivalent with_socks variable.
 if test "${enable_socks+set}" = set; then
-  echo socks Setting with to "$enable_socks"
   with_socks="$enable_socks"
 fi;
 # Check whether --with-socks or --without-socks was given.
@@ -1836,13 +1814,11 @@ fi;
 # If --with-dragndrop or --without-dragndrop were given then copy the value to the
 # equivalent enable_dragndrop variable.
 if test "${with_dragndrop+set}" = set; then
-  echo dragndrop Setting enable to "$with_dragndrop"
   enable_dragndrop="$with_dragndrop"
 fi;
 # If -enable-dragndrop or --disable-dragndrop were given then copy the value to the
 # equivalent with_dragndrop variable.
 if test "${enable_dragndrop+set}" = set; then
-  echo dragndrop Setting with to "$enable_dragndrop"
   with_dragndrop="$enable_dragndrop"
 fi;
 # Check whether --with-dragndrop or --without-dragndrop was given.
@@ -1854,13 +1830,11 @@ fi;
 # If --with-cde or --without-cde were given then copy the value to the
 # equivalent enable_cde variable.
 if test "${with_cde+set}" = set; then
-  echo cde Setting enable to "$with_cde"
   enable_cde="$with_cde"
 fi;
 # If -enable-cde or --disable-cde were given then copy the value to the
 # equivalent with_cde variable.
 if test "${enable_cde+set}" = set; then
-  echo cde Setting with to "$enable_cde"
   with_cde="$enable_cde"
 fi;
 # Check whether --with-cde or --without-cde was given.
@@ -1872,13 +1846,11 @@ fi;
 # If --with-offix or --without-offix were given then copy the value to the
 # equivalent enable_offix variable.
 if test "${with_offix+set}" = set; then
-  echo offix Setting enable to "$with_offix"
   enable_offix="$with_offix"
 fi;
 # If -enable-offix or --disable-offix were given then copy the value to the
 # equivalent with_offix variable.
 if test "${enable_offix+set}" = set; then
-  echo offix Setting with to "$enable_offix"
   with_offix="$enable_offix"
 fi;
 # Check whether --with-offix or --without-offix was given.
@@ -1890,13 +1862,11 @@ fi;
 # If --with-gpm or --without-gpm were given then copy the value to the
 # equivalent enable_gpm variable.
 if test "${with_gpm+set}" = set; then
-  echo gpm Setting enable to "$with_gpm"
   enable_gpm="$with_gpm"
 fi;
 # If -enable-gpm or --disable-gpm were given then copy the value to the
 # equivalent with_gpm variable.
 if test "${enable_gpm+set}" = set; then
-  echo gpm Setting with to "$enable_gpm"
   with_gpm="$enable_gpm"
 fi;
 # Check whether --with-gpm or --without-gpm was given.
@@ -1908,13 +1878,11 @@ fi;
 # If --with-xpm or --without-xpm were given then copy the value to the
 # equivalent enable_xpm variable.
 if test "${with_xpm+set}" = set; then
-  echo xpm Setting enable to "$with_xpm"
   enable_xpm="$with_xpm"
 fi;
 # If -enable-xpm or --disable-xpm were given then copy the value to the
 # equivalent with_xpm variable.
 if test "${enable_xpm+set}" = set; then
-  echo xpm Setting with to "$enable_xpm"
   with_xpm="$enable_xpm"
 fi;
 # Check whether --with-xpm or --without-xpm was given.
@@ -1926,13 +1894,11 @@ fi;
 # If --with-xface or --without-xface were given then copy the value to the
 # equivalent enable_xface variable.
 if test "${with_xface+set}" = set; then
-  echo xface Setting enable to "$with_xface"
   enable_xface="$with_xface"
 fi;
 # If -enable-xface or --disable-xface were given then copy the value to the
 # equivalent with_xface variable.
 if test "${enable_xface+set}" = set; then
-  echo xface Setting with to "$enable_xface"
   with_xface="$enable_xface"
 fi;
 # Check whether --with-xface or --without-xface was given.
@@ -1944,13 +1910,11 @@ fi;
 # If --with-gif or --without-gif were given then copy the value to the
 # equivalent enable_gif variable.
 if test "${with_gif+set}" = set; then
-  echo gif Setting enable to "$with_gif"
   enable_gif="$with_gif"
 fi;
 # If -enable-gif or --disable-gif were given then copy the value to the
 # equivalent with_gif variable.
 if test "${enable_gif+set}" = set; then
-  echo gif Setting with to "$enable_gif"
   with_gif="$enable_gif"
 fi;
 # Check whether --with-gif or --without-gif was given.
@@ -1962,13 +1926,11 @@ fi;
 # If --with-jpeg or --without-jpeg were given then copy the value to the
 # equivalent enable_jpeg variable.
 if test "${with_jpeg+set}" = set; then
-  echo jpeg Setting enable to "$with_jpeg"
   enable_jpeg="$with_jpeg"
 fi;
 # If -enable-jpeg or --disable-jpeg were given then copy the value to the
 # equivalent with_jpeg variable.
 if test "${enable_jpeg+set}" = set; then
-  echo jpeg Setting with to "$enable_jpeg"
   with_jpeg="$enable_jpeg"
 fi;
 # Check whether --with-jpeg or --without-jpeg was given.
@@ -1980,13 +1942,11 @@ fi;
 # If --with-png or --without-png were given then copy the value to the
 # equivalent enable_png variable.
 if test "${with_png+set}" = set; then
-  echo png Setting enable to "$with_png"
   enable_png="$with_png"
 fi;
 # If -enable-png or --disable-png were given then copy the value to the
 # equivalent with_png variable.
 if test "${enable_png+set}" = set; then
-  echo png Setting with to "$enable_png"
   with_png="$enable_png"
 fi;
 # Check whether --with-png or --without-png was given.
@@ -1998,13 +1958,11 @@ fi;
 # If --with-tiff or --without-tiff were given then copy the value to the
 # equivalent enable_tiff variable.
 if test "${with_tiff+set}" = set; then
-  echo tiff Setting enable to "$with_tiff"
   enable_tiff="$with_tiff"
 fi;
 # If -enable-tiff or --disable-tiff were given then copy the value to the
 # equivalent with_tiff variable.
 if test "${enable_tiff+set}" = set; then
-  echo tiff Setting with to "$enable_tiff"
   with_tiff="$enable_tiff"
 fi;
 # Check whether --with-tiff or --without-tiff was given.
@@ -2016,13 +1974,11 @@ fi;
 # If --with-zlib or --without-zlib were given then copy the value to the
 # equivalent enable_zlib variable.
 if test "${with_zlib+set}" = set; then
-  echo zlib Setting enable to "$with_zlib"
   enable_zlib="$with_zlib"
 fi;
 # If -enable-zlib or --disable-zlib were given then copy the value to the
 # equivalent with_zlib variable.
 if test "${enable_zlib+set}" = set; then
-  echo zlib Setting with to "$enable_zlib"
   with_zlib="$enable_zlib"
 fi;
 # Check whether --with-zlib or --without-zlib was given.
@@ -2034,13 +1990,11 @@ fi;
 # If --with-wmcommand or --without-wmcommand were given then copy the value to the
 # equivalent enable_wmcommand variable.
 if test "${with_wmcommand+set}" = set; then
-  echo wmcommand Setting enable to "$with_wmcommand"
   enable_wmcommand="$with_wmcommand"
 fi;
 # If -enable-wmcommand or --disable-wmcommand were given then copy the value to the
 # equivalent with_wmcommand variable.
 if test "${enable_wmcommand+set}" = set; then
-  echo wmcommand Setting with to "$enable_wmcommand"
   with_wmcommand="$enable_wmcommand"
 fi;
 # Check whether --with-wmcommand or --without-wmcommand was given.
@@ -2052,13 +2006,11 @@ fi;
 # If --with-xmu or --without-xmu were given then copy the value to the
 # equivalent enable_xmu variable.
 if test "${with_xmu+set}" = set; then
-  echo xmu Setting enable to "$with_xmu"
   enable_xmu="$with_xmu"
 fi;
 # If -enable-xmu or --disable-xmu were given then copy the value to the
 # equivalent with_xmu variable.
 if test "${enable_xmu+set}" = set; then
-  echo xmu Setting with to "$enable_xmu"
   with_xmu="$enable_xmu"
 fi;
 # Check whether --with-xmu or --without-xmu was given.
@@ -2070,13 +2022,11 @@ fi;
 # If --with-purify or --without-purify were given then copy the value to the
 # equivalent enable_purify variable.
 if test "${with_purify+set}" = set; then
-  echo purify Setting enable to "$with_purify"
   enable_purify="$with_purify"
 fi;
 # If -enable-purify or --disable-purify were given then copy the value to the
 # equivalent with_purify variable.
 if test "${enable_purify+set}" = set; then
-  echo purify Setting with to "$enable_purify"
   with_purify="$enable_purify"
 fi;
 # Check whether --with-purify or --without-purify was given.
@@ -2088,13 +2038,11 @@ fi;
 # If --with-quantify or --without-quantify were given then copy the value to the
 # equivalent enable_quantify variable.
 if test "${with_quantify+set}" = set; then
-  echo quantify Setting enable to "$with_quantify"
   enable_quantify="$with_quantify"
 fi;
 # If -enable-quantify or --disable-quantify were given then copy the value to the
 # equivalent with_quantify variable.
 if test "${enable_quantify+set}" = set; then
-  echo quantify Setting with to "$enable_quantify"
   with_quantify="$enable_quantify"
 fi;
 # Check whether --with-quantify or --without-quantify was given.
@@ -2106,13 +2054,11 @@ fi;
 # If --with-toolbars or --without-toolbars were given then copy the value to the
 # equivalent enable_toolbars variable.
 if test "${with_toolbars+set}" = set; then
-  echo toolbars Setting enable to "$with_toolbars"
   enable_toolbars="$with_toolbars"
 fi;
 # If -enable-toolbars or --disable-toolbars were given then copy the value to the
 # equivalent with_toolbars variable.
 if test "${enable_toolbars+set}" = set; then
-  echo toolbars Setting with to "$enable_toolbars"
   with_toolbars="$enable_toolbars"
 fi;
 # Check whether --with-toolbars or --without-toolbars was given.
@@ -2124,13 +2070,11 @@ fi;
 # If --with-tty or --without-tty were given then copy the value to the
 # equivalent enable_tty variable.
 if test "${with_tty+set}" = set; then
-  echo tty Setting enable to "$with_tty"
   enable_tty="$with_tty"
 fi;
 # If -enable-tty or --disable-tty were given then copy the value to the
 # equivalent with_tty variable.
 if test "${enable_tty+set}" = set; then
-  echo tty Setting with to "$enable_tty"
   with_tty="$enable_tty"
 fi;
 # Check whether --with-tty or --without-tty was given.
@@ -2142,13 +2086,11 @@ fi;
 # If --with-xfs or --without-xfs were given then copy the value to the
 # equivalent enable_xfs variable.
 if test "${with_xfs+set}" = set; then
-  echo xfs Setting enable to "$with_xfs"
   enable_xfs="$with_xfs"
 fi;
 # If -enable-xfs or --disable-xfs were given then copy the value to the
 # equivalent with_xfs variable.
 if test "${enable_xfs+set}" = set; then
-  echo xfs Setting with to "$enable_xfs"
   with_xfs="$enable_xfs"
 fi;
 # Check whether --with-xfs or --without-xfs was given.
@@ -2160,13 +2102,11 @@ fi;
 # If --with-mule or --without-mule were given then copy the value to the
 # equivalent enable_mule variable.
 if test "${with_mule+set}" = set; then
-  echo mule Setting enable to "$with_mule"
   enable_mule="$with_mule"
 fi;
 # If -enable-mule or --disable-mule were given then copy the value to the
 # equivalent with_mule variable.
 if test "${enable_mule+set}" = set; then
-  echo mule Setting with to "$enable_mule"
   with_mule="$enable_mule"
 fi;
 # Check whether --with-mule or --without-mule was given.
@@ -2178,13 +2118,11 @@ fi;
 # If --with-default-eol-detection or --without-default-eol-detection were given then copy the value to the
 # equivalent enable_default-eol-detection variable.
 if test "${with_default_eol_detection+set}" = set; then
-  echo default-eol-detection Setting enable to "$with_default_eol_detection"
   enable_default_eol_detection="$with_default_eol_detection"
 fi;
 # If -enable-default-eol-detection or --disable-default-eol-detection were given then copy the value to the
 # equivalent with_default-eol-detection variable.
 if test "${enable_default_eol_detection+set}" = set; then
-  echo default-eol-detection Setting with to "$enable_default_eol_detection"
   with_default_eol_detection="$enable_default_eol_detection"
 fi;
 # Check whether --with-default-eol-detection or --without-default-eol-detection was given.
@@ -2196,13 +2134,11 @@ fi;
 # If --with-canna or --without-canna were given then copy the value to the
 # equivalent enable_canna variable.
 if test "${with_canna+set}" = set; then
-  echo canna Setting enable to "$with_canna"
   enable_canna="$with_canna"
 fi;
 # If -enable-canna or --disable-canna were given then copy the value to the
 # equivalent with_canna variable.
 if test "${enable_canna+set}" = set; then
-  echo canna Setting with to "$enable_canna"
   with_canna="$enable_canna"
 fi;
 # Check whether --with-canna or --without-canna was given.
@@ -2214,13 +2150,11 @@ fi;
 # If --with-wnn or --without-wnn were given then copy the value to the
 # equivalent enable_wnn variable.
 if test "${with_wnn+set}" = set; then
-  echo wnn Setting enable to "$with_wnn"
   enable_wnn="$with_wnn"
 fi;
 # If -enable-wnn or --disable-wnn were given then copy the value to the
 # equivalent with_wnn variable.
 if test "${enable_wnn+set}" = set; then
-  echo wnn Setting with to "$enable_wnn"
   with_wnn="$enable_wnn"
 fi;
 # Check whether --with-wnn or --without-wnn was given.
@@ -2232,13 +2166,11 @@ fi;
 # If --with-wnn6 or --without-wnn6 were given then copy the value to the
 # equivalent enable_wnn6 variable.
 if test "${with_wnn6+set}" = set; then
-  echo wnn6 Setting enable to "$with_wnn6"
   enable_wnn6="$with_wnn6"
 fi;
 # If -enable-wnn6 or --disable-wnn6 were given then copy the value to the
 # equivalent with_wnn6 variable.
 if test "${enable_wnn6+set}" = set; then
-  echo wnn6 Setting with to "$enable_wnn6"
   with_wnn6="$enable_wnn6"
 fi;
 # Check whether --with-wnn6 or --without-wnn6 was given.
@@ -2250,13 +2182,11 @@ fi;
 # If --with-workshop or --without-workshop were given then copy the value to the
 # equivalent enable_workshop variable.
 if test "${with_workshop+set}" = set; then
-  echo workshop Setting enable to "$with_workshop"
   enable_workshop="$with_workshop"
 fi;
 # If -enable-workshop or --disable-workshop were given then copy the value to the
 # equivalent with_workshop variable.
 if test "${enable_workshop+set}" = set; then
-  echo workshop Setting with to "$enable_workshop"
   with_workshop="$enable_workshop"
 fi;
 # Check whether --with-workshop or --without-workshop was given.
@@ -2268,13 +2198,11 @@ fi;
 # If --with-sparcworks or --without-sparcworks were given then copy the value to the
 # equivalent enable_sparcworks variable.
 if test "${with_sparcworks+set}" = set; then
-  echo sparcworks Setting enable to "$with_sparcworks"
   enable_sparcworks="$with_sparcworks"
 fi;
 # If -enable-sparcworks or --disable-sparcworks were given then copy the value to the
 # equivalent with_sparcworks variable.
 if test "${enable_sparcworks+set}" = set; then
-  echo sparcworks Setting with to "$enable_sparcworks"
   with_sparcworks="$enable_sparcworks"
 fi;
 # Check whether --with-sparcworks or --without-sparcworks was given.
@@ -2286,13 +2214,11 @@ fi;
 # If --with-tooltalk or --without-tooltalk were given then copy the value to the
 # equivalent enable_tooltalk variable.
 if test "${with_tooltalk+set}" = set; then
-  echo tooltalk Setting enable to "$with_tooltalk"
   enable_tooltalk="$with_tooltalk"
 fi;
 # If -enable-tooltalk or --disable-tooltalk were given then copy the value to the
 # equivalent with_tooltalk variable.
 if test "${enable_tooltalk+set}" = set; then
-  echo tooltalk Setting with to "$enable_tooltalk"
   with_tooltalk="$enable_tooltalk"
 fi;
 # Check whether --with-tooltalk or --without-tooltalk was given.
@@ -2304,13 +2230,11 @@ fi;
 # If --with-ldap or --without-ldap were given then copy the value to the
 # equivalent enable_ldap variable.
 if test "${with_ldap+set}" = set; then
-  echo ldap Setting enable to "$with_ldap"
   enable_ldap="$with_ldap"
 fi;
 # If -enable-ldap or --disable-ldap were given then copy the value to the
 # equivalent with_ldap variable.
 if test "${enable_ldap+set}" = set; then
-  echo ldap Setting with to "$enable_ldap"
   with_ldap="$enable_ldap"
 fi;
 # Check whether --with-ldap or --without-ldap was given.
@@ -2322,13 +2246,11 @@ fi;
 # If --with-postgresql or --without-postgresql were given then copy the value to the
 # equivalent enable_postgresql variable.
 if test "${with_postgresql+set}" = set; then
-  echo postgresql Setting enable to "$with_postgresql"
   enable_postgresql="$with_postgresql"
 fi;
 # If -enable-postgresql or --disable-postgresql were given then copy the value to the
 # equivalent with_postgresql variable.
 if test "${enable_postgresql+set}" = set; then
-  echo postgresql Setting with to "$enable_postgresql"
   with_postgresql="$enable_postgresql"
 fi;
 # Check whether --with-postgresql or --without-postgresql was given.
@@ -2340,13 +2262,11 @@ fi;
 # If --with-pop or --without-pop were given then copy the value to the
 # equivalent enable_pop variable.
 if test "${with_pop+set}" = set; then
-  echo pop Setting enable to "$with_pop"
   enable_pop="$with_pop"
 fi;
 # If -enable-pop or --disable-pop were given then copy the value to the
 # equivalent with_pop variable.
 if test "${enable_pop+set}" = set; then
-  echo pop Setting with to "$enable_pop"
   with_pop="$enable_pop"
 fi;
 # Check whether --with-pop or --without-pop was given.
@@ -2358,13 +2278,11 @@ fi;
 # If --with-kerberos or --without-kerberos were given then copy the value to the
 # equivalent enable_kerberos variable.
 if test "${with_kerberos+set}" = set; then
-  echo kerberos Setting enable to "$with_kerberos"
   enable_kerberos="$with_kerberos"
 fi;
 # If -enable-kerberos or --disable-kerberos were given then copy the value to the
 # equivalent with_kerberos variable.
 if test "${enable_kerberos+set}" = set; then
-  echo kerberos Setting with to "$enable_kerberos"
   with_kerberos="$enable_kerberos"
 fi;
 # Check whether --with-kerberos or --without-kerberos was given.
@@ -2376,13 +2294,11 @@ fi;
 # If --with-hesiod or --without-hesiod were given then copy the value to the
 # equivalent enable_hesiod variable.
 if test "${with_hesiod+set}" = set; then
-  echo hesiod Setting enable to "$with_hesiod"
   enable_hesiod="$with_hesiod"
 fi;
 # If -enable-hesiod or --disable-hesiod were given then copy the value to the
 # equivalent with_hesiod variable.
 if test "${enable_hesiod+set}" = set; then
-  echo hesiod Setting with to "$enable_hesiod"
   with_hesiod="$enable_hesiod"
 fi;
 # Check whether --with-hesiod or --without-hesiod was given.
@@ -2394,13 +2310,11 @@ fi;
 # If --with-infodock or --without-infodock were given then copy the value to the
 # equivalent enable_infodock variable.
 if test "${with_infodock+set}" = set; then
-  echo infodock Setting enable to "$with_infodock"
   enable_infodock="$with_infodock"
 fi;
 # If -enable-infodock or --disable-infodock were given then copy the value to the
 # equivalent with_infodock variable.
 if test "${enable_infodock+set}" = set; then
-  echo infodock Setting with to "$enable_infodock"
   with_infodock="$enable_infodock"
 fi;
 # Check whether --with-infodock or --without-infodock was given.
@@ -2412,13 +2326,11 @@ fi;
 # If --with-native-sound-lib or --without-native-sound-lib were given then copy the value to the
 # equivalent enable_native-sound-lib variable.
 if test "${with_native_sound_lib+set}" = set; then
-  echo native-sound-lib Setting enable to "$with_native_sound_lib"
   enable_native_sound_lib="$with_native_sound_lib"
 fi;
 # If -enable-native-sound-lib or --disable-native-sound-lib were given then copy the value to the
 # equivalent with_native-sound-lib variable.
 if test "${enable_native_sound_lib+set}" = set; then
-  echo native-sound-lib Setting with to "$enable_native_sound_lib"
   with_native_sound_lib="$enable_native_sound_lib"
 fi;
 # Check whether --with-native-sound-lib or --without-native-sound-lib was given.
@@ -2430,13 +2342,11 @@ fi;
 # If --with-netinstall or --without-netinstall were given then copy the value to the
 # equivalent enable_netinstall variable.
 if test "${with_netinstall+set}" = set; then
-  echo netinstall Setting enable to "$with_netinstall"
   enable_netinstall="$with_netinstall"
 fi;
 # If -enable-netinstall or --disable-netinstall were given then copy the value to the
 # equivalent with_netinstall variable.
 if test "${enable_netinstall+set}" = set; then
-  echo netinstall Setting with to "$enable_netinstall"
   with_netinstall="$enable_netinstall"
 fi;
 # Check whether --with-netinstall or --without-netinstall was given.
@@ -2450,13 +2360,11 @@ fi;
 # If --with-optimization or --without-optimization were given then copy the value to the
 # equivalent enable_optimization variable.
 if test "${with_optimization+set}" = set; then
-  echo optimization Setting enable to "$with_optimization"
   enable_optimization="$with_optimization"
 fi;
 # If -enable-optimization or --disable-optimization were given then copy the value to the
 # equivalent with_optimization variable.
 if test "${enable_optimization+set}" = set; then
-  echo optimization Setting with to "$enable_optimization"
   with_optimization="$enable_optimization"
 fi;
 # Check whether --with-optimization or --without-optimization was given.
@@ -2468,13 +2376,11 @@ fi;
 # If --with-ipv6-cname or --without-ipv6-cname were given then copy the value to the
 # equivalent enable_ipv6-cname variable.
 if test "${with_ipv6_cname+set}" = set; then
-  echo ipv6-cname Setting enable to "$with_ipv6_cname"
   enable_ipv6_cname="$with_ipv6_cname"
 fi;
 # If -enable-ipv6-cname or --disable-ipv6-cname were given then copy the value to the
 # equivalent with_ipv6-cname variable.
 if test "${enable_ipv6_cname+set}" = set; then
-  echo ipv6-cname Setting with to "$enable_ipv6_cname"
   with_ipv6_cname="$enable_ipv6_cname"
 fi;
 # Check whether --with-ipv6-cname or --without-ipv6-cname was given.
@@ -2488,13 +2394,11 @@ fi;
 # If --with-site-includes or --without-site-includes were given then copy the value to the
 # equivalent enable_site-includes variable.
 if test "${with_site_includes+set}" = set; then
-  echo site-includes Setting enable to "$with_site_includes"
   enable_site_includes="$with_site_includes"
 fi;
 # If -enable-site-includes or --disable-site-includes were given then copy the value to the
 # equivalent with_site-includes variable.
 if test "${enable_site_includes+set}" = set; then
-  echo site-includes Setting with to "$enable_site_includes"
   with_site_includes="$enable_site_includes"
 fi;
 # Check whether --with-site-includes or --without-site-includes was given.
@@ -2506,13 +2410,11 @@ fi;
 # If --with-site-libraries or --without-site-libraries were given then copy the value to the
 # equivalent enable_site-libraries variable.
 if test "${with_site_libraries+set}" = set; then
-  echo site-libraries Setting enable to "$with_site_libraries"
   enable_site_libraries="$with_site_libraries"
 fi;
 # If -enable-site-libraries or --disable-site-libraries were given then copy the value to the
 # equivalent with_site-libraries variable.
 if test "${enable_site_libraries+set}" = set; then
-  echo site-libraries Setting with to "$enable_site_libraries"
   with_site_libraries="$enable_site_libraries"
 fi;
 # Check whether --with-site-libraries or --without-site-libraries was given.
@@ -2524,13 +2426,11 @@ fi;
 # If --with-site-prefixes or --without-site-prefixes were given then copy the value to the
 # equivalent enable_site-prefixes variable.
 if test "${with_site_prefixes+set}" = set; then
-  echo site-prefixes Setting enable to "$with_site_prefixes"
   enable_site_prefixes="$with_site_prefixes"
 fi;
 # If -enable-site-prefixes or --disable-site-prefixes were given then copy the value to the
 # equivalent with_site-prefixes variable.
 if test "${enable_site_prefixes+set}" = set; then
-  echo site-prefixes Setting with to "$enable_site_prefixes"
   with_site_prefixes="$enable_site_prefixes"
 fi;
 # Check whether --with-site-prefixes or --without-site-prefixes was given.
@@ -2542,13 +2442,11 @@ fi;
 # If --with-statedir or --without-statedir were given then copy the value to the
 # equivalent enable_statedir variable.
 if test "${with_statedir+set}" = set; then
-  echo statedir Setting enable to "$with_statedir"
   enable_statedir="$with_statedir"
 fi;
 # If -enable-statedir or --disable-statedir were given then copy the value to the
 # equivalent with_statedir variable.
 if test "${enable_statedir+set}" = set; then
-  echo statedir Setting with to "$enable_statedir"
   with_statedir="$enable_statedir"
 fi;
 # Check whether --with-statedir or --without-statedir was given.
@@ -2562,13 +2460,11 @@ fi;
 # If --with-lispdir or --without-lispdir were given then copy the value to the
 # equivalent enable_lispdir variable.
 if test "${with_lispdir+set}" = set; then
-  echo lispdir Setting enable to "$with_lispdir"
   enable_lispdir="$with_lispdir"
 fi;
 # If -enable-lispdir or --disable-lispdir were given then copy the value to the
 # equivalent with_lispdir variable.
 if test "${enable_lispdir+set}" = set; then
-  echo lispdir Setting with to "$enable_lispdir"
   with_lispdir="$enable_lispdir"
 fi;
 # Check whether --with-lispdir or --without-lispdir was given.
@@ -2585,13 +2481,11 @@ fi;
 # If --with-archlibdir or --without-archlibdir were given then copy the value to the
 # equivalent enable_archlibdir variable.
 if test "${with_archlibdir+set}" = set; then
-  echo archlibdir Setting enable to "$with_archlibdir"
   enable_archlibdir="$with_archlibdir"
 fi;
 # If -enable-archlibdir or --disable-archlibdir were given then copy the value to the
 # equivalent with_archlibdir variable.
 if test "${enable_archlibdir+set}" = set; then
-  echo archlibdir Setting with to "$enable_archlibdir"
   with_archlibdir="$enable_archlibdir"
 fi;
 # Check whether --with-archlibdir or --without-archlibdir was given.
@@ -2608,13 +2502,11 @@ fi;
 # If --with-moduledir or --without-moduledir were given then copy the value to the
 # equivalent enable_moduledir variable.
 if test "${with_moduledir+set}" = set; then
-  echo moduledir Setting enable to "$with_moduledir"
   enable_moduledir="$with_moduledir"
 fi;
 # If -enable-moduledir or --disable-moduledir were given then copy the value to the
 # equivalent with_moduledir variable.
 if test "${enable_moduledir+set}" = set; then
-  echo moduledir Setting with to "$enable_moduledir"
   with_moduledir="$enable_moduledir"
 fi;
 # Check whether --with-moduledir or --without-moduledir was given.
@@ -2631,13 +2523,11 @@ fi;
 # If --with-etcdir or --without-etcdir were given then copy the value to the
 # equivalent enable_etcdir variable.
 if test "${with_etcdir+set}" = set; then
-  echo etcdir Setting enable to "$with_etcdir"
   enable_etcdir="$with_etcdir"
 fi;
 # If -enable-etcdir or --disable-etcdir were given then copy the value to the
 # equivalent with_etcdir variable.
 if test "${enable_etcdir+set}" = set; then
-  echo etcdir Setting with to "$enable_etcdir"
   with_etcdir="$enable_etcdir"
 fi;
 # Check whether --with-etcdir or --without-etcdir was given.
@@ -2654,13 +2544,11 @@ fi;
 # If --with-infopath or --without-infopath were given then copy the value to the
 # equivalent enable_infopath variable.
 if test "${with_infopath+set}" = set; then
-  echo infopath Setting enable to "$with_infopath"
   enable_infopath="$with_infopath"
 fi;
 # If -enable-infopath or --disable-infopath were given then copy the value to the
 # equivalent with_infopath variable.
 if test "${enable_infopath+set}" = set; then
-  echo infopath Setting with to "$enable_infopath"
   with_infopath="$enable_infopath"
 fi;
 # Check whether --with-infopath or --without-infopath was given.
@@ -2675,13 +2563,11 @@ fi;
 # If --with-docdir or --without-docdir were given then copy the value to the
 # equivalent enable_docdir variable.
 if test "${with_docdir+set}" = set; then
-  echo docdir Setting enable to "$with_docdir"
   enable_docdir="$with_docdir"
 fi;
 # If -enable-docdir or --disable-docdir were given then copy the value to the
 # equivalent with_docdir variable.
 if test "${enable_docdir+set}" = set; then
-  echo docdir Setting with to "$enable_docdir"
   with_docdir="$enable_docdir"
 fi;
 # Check whether --with-docdir or --without-docdir was given.
@@ -2698,13 +2584,11 @@ fi;
 # If --with-site-runtime-libraries or --without-site-runtime-libraries were given then copy the value to the
 # equivalent enable_site-runtime-libraries variable.
 if test "${with_site_runtime_libraries+set}" = set; then
-  echo site-runtime-libraries Setting enable to "$with_site_runtime_libraries"
   enable_site_runtime_libraries="$with_site_runtime_libraries"
 fi;
 # If -enable-site-runtime-libraries or --disable-site-runtime-libraries were given then copy the value to the
 # equivalent with_site-runtime-libraries variable.
 if test "${enable_site_runtime_libraries+set}" = set; then
-  echo site-runtime-libraries Setting with to "$enable_site_runtime_libraries"
   with_site_runtime_libraries="$enable_site_runtime_libraries"
 fi;
 # Check whether --with-site-runtime-libraries or --without-site-runtime-libraries was given.
@@ -2716,13 +2600,11 @@ fi;
 # If --with-package-prefix or --without-package-prefix were given then copy the value to the
 # equivalent enable_package-prefix variable.
 if test "${with_package_prefix+set}" = set; then
-  echo package-prefix Setting enable to "$with_package_prefix"
   enable_package_prefix="$with_package_prefix"
 fi;
 # If -enable-package-prefix or --disable-package-prefix were given then copy the value to the
 # equivalent with_package-prefix variable.
 if test "${enable_package_prefix+set}" = set; then
-  echo package-prefix Setting with to "$enable_package_prefix"
   with_package_prefix="$enable_package_prefix"
 fi;
 # Check whether --with-package-prefix or --without-package-prefix was given.
@@ -2737,13 +2619,11 @@ fi;
 # If --with-package-path or --without-package-path were given then copy the value to the
 # equivalent enable_package-path variable.
 if test "${with_package_path+set}" = set; then
-  echo package-path Setting enable to "$with_package_path"
   enable_package_path="$with_package_path"
 fi;
 # If -enable-package-path or --disable-package-path were given then copy the value to the
 # equivalent with_package-path variable.
 if test "${enable_package_path+set}" = set; then
-  echo package-path Setting with to "$enable_package_path"
   with_package_path="$enable_package_path"
 fi;
 # Check whether --with-package-path or --without-package-path was given.
@@ -2758,13 +2638,11 @@ fi;
 # If --with-external-widget or --without-external-widget were given then copy the value to the
 # equivalent enable_external-widget variable.
 if test "${with_external_widget+set}" = set; then
-  echo external-widget Setting enable to "$with_external_widget"
   enable_external_widget="$with_external_widget"
 fi;
 # If -enable-external-widget or --disable-external-widget were given then copy the value to the
 # equivalent with_external-widget variable.
 if test "${enable_external_widget+set}" = set; then
-  echo external-widget Setting with to "$enable_external_widget"
   with_external_widget="$enable_external_widget"
 fi;
 # Check whether --with-external-widget or --without-external-widget was given.
@@ -2776,13 +2654,11 @@ fi;
 # If --with-kkcc or --without-kkcc were given then copy the value to the
 # equivalent enable_kkcc variable.
 if test "${with_kkcc+set}" = set; then
-  echo kkcc Setting enable to "$with_kkcc"
   enable_kkcc="$with_kkcc"
 fi;
 # If -enable-kkcc or --disable-kkcc were given then copy the value to the
 # equivalent with_kkcc variable.
 if test "${enable_kkcc+set}" = set; then
-  echo kkcc Setting with to "$enable_kkcc"
   with_kkcc="$enable_kkcc"
 fi;
 # Check whether --with-kkcc or --without-kkcc was given.
@@ -2796,13 +2672,11 @@ fi;
 # If --with-mc-alloc or --without-mc-alloc were given then copy the value to the
 # equivalent enable_mc-alloc variable.
 if test "${with_mc_alloc+set}" = set; then
-  echo mc-alloc Setting enable to "$with_mc_alloc"
   enable_mc_alloc="$with_mc_alloc"
 fi;
 # If -enable-mc-alloc or --disable-mc-alloc were given then copy the value to the
 # equivalent with_mc-alloc variable.
 if test "${enable_mc_alloc+set}" = set; then
-  echo mc-alloc Setting with to "$enable_mc_alloc"
   with_mc_alloc="$enable_mc_alloc"
 fi;
 # Check whether --with-mc-alloc or --without-mc-alloc was given.
@@ -2816,13 +2690,11 @@ fi;
 # If --with-union-type or --without-union-type were given then copy the value to the
 # equivalent enable_union-type variable.
 if test "${with_union_type+set}" = set; then
-  echo union-type Setting enable to "$with_union_type"
   enable_union_type="$with_union_type"
 fi;
 # If -enable-union-type or --disable-union-type were given then copy the value to the
 # equivalent with_union-type variable.
 if test "${enable_union_type+set}" = set; then
-  echo union-type Setting with to "$enable_union_type"
   with_union_type="$enable_union_type"
 fi;
 # Check whether --with-union-type or --without-union-type was given.
@@ -2834,13 +2706,11 @@ fi;
 # If --with-pdump or --without-pdump were given then copy the value to the
 # equivalent enable_pdump variable.
 if test "${with_pdump+set}" = set; then
-  echo pdump Setting enable to "$with_pdump"
   enable_pdump="$with_pdump"
 fi;
 # If -enable-pdump or --disable-pdump were given then copy the value to the
 # equivalent with_pdump variable.
 if test "${enable_pdump+set}" = set; then
-  echo pdump Setting with to "$enable_pdump"
   with_pdump="$enable_pdump"
 fi;
 # Check whether --with-pdump or --without-pdump was given.
@@ -2852,13 +2722,11 @@ fi;
 # If --with-dump-in-exec or --without-dump-in-exec were given then copy the value to the
 # equivalent enable_dump-in-exec variable.
 if test "${with_dump_in_exec+set}" = set; then
-  echo dump-in-exec Setting enable to "$with_dump_in_exec"
   enable_dump_in_exec="$with_dump_in_exec"
 fi;
 # If -enable-dump-in-exec or --disable-dump-in-exec were given then copy the value to the
 # equivalent with_dump-in-exec variable.
 if test "${enable_dump_in_exec+set}" = set; then
-  echo dump-in-exec Setting with to "$enable_dump_in_exec"
   with_dump_in_exec="$enable_dump_in_exec"
 fi;
 # Check whether --with-dump-in-exec or --without-dump-in-exec was given.
@@ -2870,13 +2738,11 @@ fi;
 # If --with-debug or --without-debug were given then copy the value to the
 # equivalent enable_debug variable.
 if test "${with_debug+set}" = set; then
-  echo debug Setting enable to "$with_debug"
   enable_debug="$with_debug"
 fi;
 # If -enable-debug or --disable-debug were given then copy the value to the
 # equivalent with_debug variable.
 if test "${enable_debug+set}" = set; then
-  echo debug Setting with to "$enable_debug"
   with_debug="$enable_debug"
 fi;
 # Check whether --with-debug or --without-debug was given.
@@ -2888,13 +2754,11 @@ fi;
 # If --with-assertions or --without-assertions were given then copy the value to the
 # equivalent enable_assertions variable.
 if test "${with_assertions+set}" = set; then
-  echo assertions Setting enable to "$with_assertions"
   enable_assertions="$with_assertions"
 fi;
 # If -enable-assertions or --disable-assertions were given then copy the value to the
 # equivalent with_assertions variable.
 if test "${enable_assertions+set}" = set; then
-  echo assertions Setting with to "$enable_assertions"
   with_assertions="$enable_assertions"
 fi;
 # Check whether --with-assertions or --without-assertions was given.
@@ -2906,13 +2770,11 @@ fi;
 # If --with-memory-usage-stats or --without-memory-usage-stats were given then copy the value to the
 # equivalent enable_memory-usage-stats variable.
 if test "${with_memory_usage_stats+set}" = set; then
-  echo memory-usage-stats Setting enable to "$with_memory_usage_stats"
   enable_memory_usage_stats="$with_memory_usage_stats"
 fi;
 # If -enable-memory-usage-stats or --disable-memory-usage-stats were given then copy the value to the
 # equivalent with_memory-usage-stats variable.
 if test "${enable_memory_usage_stats+set}" = set; then
-  echo memory-usage-stats Setting with to "$enable_memory_usage_stats"
   with_memory_usage_stats="$enable_memory_usage_stats"
 fi;
 # Check whether --with-memory-usage-stats or --without-memory-usage-stats was given.
@@ -2924,13 +2786,11 @@ fi;
 # If --with-clash-detection or --without-clash-detection were given then copy the value to the
 # equivalent enable_clash-detection variable.
 if test "${with_clash_detection+set}" = set; then
-  echo clash-detection Setting enable to "$with_clash_detection"
   enable_clash_detection="$with_clash_detection"
 fi;
 # If -enable-clash-detection or --disable-clash-detection were given then copy the value to the
 # equivalent with_clash-detection variable.
 if test "${enable_clash_detection+set}" = set; then
-  echo clash-detection Setting with to "$enable_clash_detection"
   with_clash_detection="$enable_clash_detection"
 fi;
 # Check whether --with-clash-detection or --without-clash-detection was given.
@@ -2942,13 +2802,11 @@ fi;
 # If --with-modules or --without-modules were given then copy the value to the
 # equivalent enable_modules variable.
 if test "${with_modules+set}" = set; then
-  echo modules Setting enable to "$with_modules"
   enable_modules="$with_modules"
 fi;
 # If -enable-modules or --disable-modules were given then copy the value to the
 # equivalent with_modules variable.
 if test "${enable_modules+set}" = set; then
-  echo modules Setting with to "$enable_modules"
   with_modules="$enable_modules"
 fi;
 # Check whether --with-modules or --without-modules was given.
@@ -2960,13 +2818,11 @@ fi;
 # If --with-quick-build or --without-quick-build were given then copy the value to the
 # equivalent enable_quick-build variable.
 if test "${with_quick_build+set}" = set; then
-  echo quick-build Setting enable to "$with_quick_build"
   enable_quick_build="$with_quick_build"
 fi;
 # If -enable-quick-build or --disable-quick-build were given then copy the value to the
 # equivalent with_quick-build variable.
 if test "${enable_quick_build+set}" = set; then
-  echo quick-build Setting with to "$enable_quick_build"
   with_quick_build="$enable_quick_build"
 fi;
 # Check whether --with-quick-build or --without-quick-build was given.
@@ -2979,13 +2835,11 @@ fi;
 # If --with-compiler or --without-compiler were given then copy the value to the
 # equivalent enable_compiler variable.
 if test "${with_compiler+set}" = set; then
-  echo compiler Setting enable to "$with_compiler"
   enable_compiler="$with_compiler"
 fi;
 # If -enable-compiler or --disable-compiler were given then copy the value to the
 # equivalent with_compiler variable.
 if test "${enable_compiler+set}" = set; then
-  echo compiler Setting with to "$enable_compiler"
   with_compiler="$enable_compiler"
 fi;
 # Check whether --with-compiler or --without-compiler was given.
@@ -2998,13 +2852,11 @@ fi;
 # If --with-xemacs-compiler or --without-xemacs-compiler were given then copy the value to the
 # equivalent enable_xemacs-compiler variable.
 if test "${with_xemacs_compiler+set}" = set; then
-  echo xemacs-compiler Setting enable to "$with_xemacs_compiler"
   enable_xemacs_compiler="$with_xemacs_compiler"
 fi;
 # If -enable-xemacs-compiler or --disable-xemacs-compiler were given then copy the value to the
 # equivalent with_xemacs-compiler variable.
 if test "${enable_xemacs_compiler+set}" = set; then
-  echo xemacs-compiler Setting with to "$enable_xemacs_compiler"
   with_xemacs_compiler="$enable_xemacs_compiler"
 fi;
 # Check whether --with-xemacs-compiler or --without-xemacs-compiler was given.
@@ -3017,13 +2869,11 @@ fi;
 # If --with-cflags or --without-cflags were given then copy the value to the
 # equivalent enable_cflags variable.
 if test "${with_cflags+set}" = set; then
-  echo cflags Setting enable to "$with_cflags"
   enable_cflags="$with_cflags"
 fi;
 # If -enable-cflags or --disable-cflags were given then copy the value to the
 # equivalent with_cflags variable.
 if test "${enable_cflags+set}" = set; then
-  echo cflags Setting with to "$enable_cflags"
   with_cflags="$enable_cflags"
 fi;
 # Check whether --with-cflags or --without-cflags was given.
@@ -3036,13 +2886,11 @@ fi;
 # If --with-cflags-warning or --without-cflags-warning were given then copy the value to the
 # equivalent enable_cflags-warning variable.
 if test "${with_cflags_warning+set}" = set; then
-  echo cflags-warning Setting enable to "$with_cflags_warning"
   enable_cflags_warning="$with_cflags_warning"
 fi;
 # If -enable-cflags-warning or --disable-cflags-warning were given then copy the value to the
 # equivalent with_cflags-warning variable.
 if test "${enable_cflags_warning+set}" = set; then
-  echo cflags-warning Setting with to "$enable_cflags_warning"
   with_cflags_warning="$enable_cflags_warning"
 fi;
 # Check whether --with-cflags-warning or --without-cflags-warning was given.
@@ -3055,13 +2903,11 @@ fi;
 # If --with-cflags-optimization or --without-cflags-optimization were given then copy the value to the
 # equivalent enable_cflags-optimization variable.
 if test "${with_cflags_optimization+set}" = set; then
-  echo cflags-optimization Setting enable to "$with_cflags_optimization"
   enable_cflags_optimization="$with_cflags_optimization"
 fi;
 # If -enable-cflags-optimization or --disable-cflags-optimization were given then copy the value to the
 # equivalent with_cflags-optimization variable.
 if test "${enable_cflags_optimization+set}" = set; then
-  echo cflags-optimization Setting with to "$enable_cflags_optimization"
   with_cflags_optimization="$enable_cflags_optimization"
 fi;
 # Check whether --with-cflags-optimization or --without-cflags-optimization was given.
@@ -3074,13 +2920,11 @@ fi;
 # If --with-cflags-debugging or --without-cflags-debugging were given then copy the value to the
 # equivalent enable_cflags-debugging variable.
 if test "${with_cflags_debugging+set}" = set; then
-  echo cflags-debugging Setting enable to "$with_cflags_debugging"
   enable_cflags_debugging="$with_cflags_debugging"
 fi;
 # If -enable-cflags-debugging or --disable-cflags-debugging were given then copy the value to the
 # equivalent with_cflags-debugging variable.
 if test "${enable_cflags_debugging+set}" = set; then
-  echo cflags-debugging Setting with to "$enable_cflags_debugging"
   with_cflags_debugging="$enable_cflags_debugging"
 fi;
 # Check whether --with-cflags-debugging or --without-cflags-debugging was given.
@@ -3093,13 +2937,11 @@ fi;
 # If --with-cpp or --without-cpp were given then copy the value to the
 # equivalent enable_cpp variable.
 if test "${with_cpp+set}" = set; then
-  echo cpp Setting enable to "$with_cpp"
   enable_cpp="$with_cpp"
 fi;
 # If -enable-cpp or --disable-cpp were given then copy the value to the
 # equivalent with_cpp variable.
 if test "${enable_cpp+set}" = set; then
-  echo cpp Setting with to "$enable_cpp"
   with_cpp="$enable_cpp"
 fi;
 # Check whether --with-cpp or --without-cpp was given.
@@ -3112,13 +2954,11 @@ fi;
 # If --with-cppflags or --without-cppflags were given then copy the value to the
 # equivalent enable_cppflags variable.
 if test "${with_cppflags+set}" = set; then
-  echo cppflags Setting enable to "$with_cppflags"
   enable_cppflags="$with_cppflags"
 fi;
 # If -enable-cppflags or --disable-cppflags were given then copy the value to the
 # equivalent with_cppflags variable.
 if test "${enable_cppflags+set}" = set; then
-  echo cppflags Setting with to "$enable_cppflags"
   with_cppflags="$enable_cppflags"
 fi;
 # Check whether --with-cppflags or --without-cppflags was given.
@@ -3131,13 +2971,11 @@ fi;
 # If --with-libs or --without-libs were given then copy the value to the
 # equivalent enable_libs variable.
 if test "${with_libs+set}" = set; then
-  echo libs Setting enable to "$with_libs"
   enable_libs="$with_libs"
 fi;
 # If -enable-libs or --disable-libs were given then copy the value to the
 # equivalent with_libs variable.
 if test "${enable_libs+set}" = set; then
-  echo libs Setting with to "$enable_libs"
   with_libs="$enable_libs"
 fi;
 # Check whether --with-libs or --without-libs was given.
@@ -3150,13 +2988,11 @@ fi;
 # If --with-ldflags or --without-ldflags were given then copy the value to the
 # equivalent enable_ldflags variable.
 if test "${with_ldflags+set}" = set; then
-  echo ldflags Setting enable to "$with_ldflags"
   enable_ldflags="$with_ldflags"
 fi;
 # If -enable-ldflags or --disable-ldflags were given then copy the value to the
 # equivalent with_ldflags variable.
 if test "${enable_ldflags+set}" = set; then
-  echo ldflags Setting with to "$enable_ldflags"
   with_ldflags="$enable_ldflags"
 fi;
 # Check whether --with-ldflags or --without-ldflags was given.
@@ -3169,13 +3005,11 @@ fi;
 # If --with-rel-alloc or --without-rel-alloc were given then copy the value to the
 # equivalent enable_rel-alloc variable.
 if test "${with_rel_alloc+set}" = set; then
-  echo rel-alloc Setting enable to "$with_rel_alloc"
   enable_rel_alloc="$with_rel_alloc"
 fi;
 # If -enable-rel-alloc or --disable-rel-alloc were given then copy the value to the
 # equivalent with_rel-alloc variable.
 if test "${enable_rel_alloc+set}" = set; then
-  echo rel-alloc Setting with to "$enable_rel_alloc"
   with_rel_alloc="$enable_rel_alloc"
 fi;
 # Check whether --with-rel-alloc or --without-rel-alloc was given.
@@ -3190,13 +3024,11 @@ fi;
 # If --with-dlmalloc or --without-dlmalloc were given then copy the value to the
 # equivalent enable_dlmalloc variable.
 if test "${with_dlmalloc+set}" = set; then
-  echo dlmalloc Setting enable to "$with_dlmalloc"
   enable_dlmalloc="$with_dlmalloc"
 fi;
 # If -enable-dlmalloc or --disable-dlmalloc were given then copy the value to the
 # equivalent with_dlmalloc variable.
 if test "${enable_dlmalloc+set}" = set; then
-  echo dlmalloc Setting with to "$enable_dlmalloc"
   with_dlmalloc="$enable_dlmalloc"
 fi;
 # Check whether --with-dlmalloc or --without-dlmalloc was given.
@@ -3211,13 +3043,11 @@ fi;
 # If --with-debug-malloc or --without-debug-malloc were given then copy the value to the
 # equivalent enable_debug-malloc variable.
 if test "${with_debug_malloc+set}" = set; then
-  echo debug-malloc Setting enable to "$with_debug_malloc"
   enable_debug_malloc="$with_debug_malloc"
 fi;
 # If -enable-debug-malloc or --disable-debug-malloc were given then copy the value to the
 # equivalent with_debug-malloc variable.
 if test "${enable_debug_malloc+set}" = set; then
-  echo debug-malloc Setting with to "$enable_debug_malloc"
   with_debug_malloc="$enable_debug_malloc"
 fi;
 # Check whether --with-debug-malloc or --without-debug-malloc was given.
@@ -3230,13 +3060,11 @@ fi;
 # If --with-system-malloc or --without-system-malloc were given then copy the value to the
 # equivalent enable_system-malloc variable.
 if test "${with_system_malloc+set}" = set; then
-  echo system-malloc Setting enable to "$with_system_malloc"
   enable_system_malloc="$with_system_malloc"
 fi;
 # If -enable-system-malloc or --disable-system-malloc were given then copy the value to the
 # equivalent with_system-malloc variable.
 if test "${enable_system_malloc+set}" = set; then
-  echo system-malloc Setting with to "$enable_system_malloc"
   with_system_malloc="$enable_system_malloc"
 fi;
 # Check whether --with-system-malloc or --without-system-malloc was given.
@@ -3266,13 +3094,11 @@ _database_default="berkdb,dbm,gdbm"
 # If --with-database or --without-database were given then copy the value to the
 # equivalent enable_database variable.
 if test "${with_database+set}" = set; then
-  echo database Setting enable to "$with_database"
   enable_database="$with_database"
 fi;
 # If -enable-database or --disable-database were given then copy the value to the
 # equivalent with_database variable.
 if test "${enable_database+set}" = set; then
-  echo database Setting with to "$enable_database"
   with_database="$enable_database"
 fi;
 # Check whether --with-database or --without-database was given.
@@ -3311,7 +3137,8 @@ Hardcoded default is: $_database_default."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
     elif test -n "$_database_all_default" ; then
         for y in $_database_types; do
-	    eval "database_$y=$_database_all_default"
+	    eval "with_database_$y=$_database_all_default"
+	    eval "enable_database_$y=$_database_all_default"
         done
     fi
     _database_notfirst=yes
@@ -3346,13 +3173,11 @@ _sound_default="native,nas,noesd"
 # If --with-sound or --without-sound were given then copy the value to the
 # equivalent enable_sound variable.
 if test "${with_sound+set}" = set; then
-  echo sound Setting enable to "$with_sound"
   enable_sound="$with_sound"
 fi;
 # If -enable-sound or --disable-sound were given then copy the value to the
 # equivalent with_sound variable.
 if test "${enable_sound+set}" = set; then
-  echo sound Setting with to "$enable_sound"
   with_sound="$enable_sound"
 fi;
 # Check whether --with-sound or --without-sound was given.
@@ -3391,7 +3216,8 @@ Hardcoded default is: $_sound_default."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
     elif test -n "$_sound_all_default" ; then
         for y in $_sound_types; do
-	    eval "sound_$y=$_sound_all_default"
+	    eval "with_sound_$y=$_sound_all_default"
+	    eval "enable_sound_$y=$_sound_all_default"
         done
     fi
     _sound_notfirst=yes
@@ -3409,13 +3235,11 @@ fi;
 # If --with-athena or --without-athena were given then copy the value to the
 # equivalent enable_athena variable.
 if test "${with_athena+set}" = set; then
-  echo athena Setting enable to "$with_athena"
   enable_athena="$with_athena"
 fi;
 # If -enable-athena or --disable-athena were given then copy the value to the
 # equivalent with_athena variable.
 if test "${enable_athena+set}" = set; then
-  echo athena Setting with to "$enable_athena"
   with_athena="$enable_athena"
 fi;
 # Check whether --with-athena or --without-athena was given.
@@ -3442,13 +3266,11 @@ fi;
 # If --with-xim or --without-xim were given then copy the value to the
 # equivalent enable_xim variable.
 if test "${with_xim+set}" = set; then
-  echo xim Setting enable to "$with_xim"
   enable_xim="$with_xim"
 fi;
 # If -enable-xim or --disable-xim were given then copy the value to the
 # equivalent with_xim variable.
 if test "${enable_xim+set}" = set; then
-  echo xim Setting with to "$enable_xim"
   with_xim="$enable_xim"
 fi;
 # Check whether --with-xim or --without-xim was given.
@@ -3475,13 +3297,11 @@ fi;
 # If --with-mail-locking or --without-mail-locking were given then copy the value to the
 # equivalent enable_mail-locking variable.
 if test "${with_mail_locking+set}" = set; then
-  echo mail-locking Setting enable to "$with_mail_locking"
   enable_mail_locking="$with_mail_locking"
 fi;
 # If -enable-mail-locking or --disable-mail-locking were given then copy the value to the
 # equivalent with_mail-locking variable.
 if test "${enable_mail_locking+set}" = set; then
-  echo mail-locking Setting with to "$enable_mail_locking"
   with_mail_locking="$enable_mail_locking"
 fi;
 # Check whether --with-mail-locking or --without-mail-locking was given.
@@ -3509,13 +3329,11 @@ fi;
 # If --with-bignum or --without-bignum were given then copy the value to the
 # equivalent enable_bignum variable.
 if test "${with_bignum+set}" = set; then
-  echo bignum Setting enable to "$with_bignum"
   enable_bignum="$with_bignum"
 fi;
 # If -enable-bignum or --disable-bignum were given then copy the value to the
 # equivalent with_bignum variable.
 if test "${enable_bignum+set}" = set; then
-  echo bignum Setting with to "$enable_bignum"
   with_bignum="$enable_bignum"
 fi;
 # Check whether --with-bignum or --without-bignum was given.
@@ -3569,13 +3387,11 @@ _error_checking_default="extents,types,text,gc,malloc,byte_code,glyphs,display,s
 # If --with-error-checking or --without-error-checking were given then copy the value to the
 # equivalent enable_error-checking variable.
 if test "${with_error_checking+set}" = set; then
-  echo error-checking Setting enable to "$with_error_checking"
   enable_error_checking="$with_error_checking"
 fi;
 # If -enable-error-checking or --disable-error-checking were given then copy the value to the
 # equivalent with_error-checking variable.
 if test "${enable_error_checking+set}" = set; then
-  echo error-checking Setting with to "$enable_error_checking"
   with_error_checking="$enable_error_checking"
 fi;
 # Check whether --with-error-checking or --without-error-checking was given.
@@ -3614,7 +3430,8 @@ Hardcoded default is: $_error_checking_default."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
     elif test -n "$_error_checking_all_default" ; then
         for y in $_error_checking_types; do
-	    eval "error_checking_$y=$_error_checking_all_default"
+	    eval "with_error_checking_$y=$_error_checking_all_default"
+	    eval "enable_error_checking_$y=$_error_checking_all_default"
         done
     fi
     _error_checking_notfirst=yes
@@ -3630,13 +3447,11 @@ fi;
 # If --with-menubars or --without-menubars were given then copy the value to the
 # equivalent enable_menubars variable.
 if test "${with_menubars+set}" = set; then
-  echo menubars Setting enable to "$with_menubars"
   enable_menubars="$with_menubars"
 fi;
 # If -enable-menubars or --disable-menubars were given then copy the value to the
 # equivalent with_menubars variable.
 if test "${enable_menubars+set}" = set; then
-  echo menubars Setting with to "$enable_menubars"
   with_menubars="$enable_menubars"
 fi;
 # Check whether --with-menubars or --without-menubars was given.
@@ -3664,13 +3479,11 @@ fi;
 # If --with-scrollbars or --without-scrollbars were given then copy the value to the
 # equivalent enable_scrollbars variable.
 if test "${with_scrollbars+set}" = set; then
-  echo scrollbars Setting enable to "$with_scrollbars"
   enable_scrollbars="$with_scrollbars"
 fi;
 # If -enable-scrollbars or --disable-scrollbars were given then copy the value to the
 # equivalent with_scrollbars variable.
 if test "${enable_scrollbars+set}" = set; then
-  echo scrollbars Setting with to "$enable_scrollbars"
   with_scrollbars="$enable_scrollbars"
 fi;
 # Check whether --with-scrollbars or --without-scrollbars was given.
@@ -3698,13 +3511,11 @@ fi;
 # If --with-dialogs or --without-dialogs were given then copy the value to the
 # equivalent enable_dialogs variable.
 if test "${with_dialogs+set}" = set; then
-  echo dialogs Setting enable to "$with_dialogs"
   enable_dialogs="$with_dialogs"
 fi;
 # If -enable-dialogs or --disable-dialogs were given then copy the value to the
 # equivalent with_dialogs variable.
 if test "${enable_dialogs+set}" = set; then
-  echo dialogs Setting with to "$enable_dialogs"
   with_dialogs="$enable_dialogs"
 fi;
 # Check whether --with-dialogs or --without-dialogs was given.
@@ -3732,13 +3543,11 @@ fi;
 # If --with-widgets or --without-widgets were given then copy the value to the
 # equivalent enable_widgets variable.
 if test "${with_widgets+set}" = set; then
-  echo widgets Setting enable to "$with_widgets"
   enable_widgets="$with_widgets"
 fi;
 # If -enable-widgets or --disable-widgets were given then copy the value to the
 # equivalent with_widgets variable.
 if test "${enable_widgets+set}" = set; then
-  echo widgets Setting with to "$enable_widgets"
   with_widgets="$enable_widgets"
 fi;
 # Check whether --with-widgets or --without-widgets was given.
@@ -9585,7 +9394,7 @@ xe_runpath_dir=`echo '' "$arg" | sed -e 's:^ ::' -e 's/^-L//'`
   eval "$xe_add_unique_runpath_dir"
 };; esac
     done
-        if test "$opsys $need_motif" = "sol2 yes"; then
+            if test "$opsys $need_motif" = "sol2 yes"; then
       xe_runpath_dir="/opt/SUNWdt/lib";
       eval "$xe_add_unique_runpath_dir";
     fi
@@ -17801,7 +17610,7 @@ xe_runpath_dir=`echo '' "$arg" | sed -e 's:^ ::' -e 's/^-L//'`
   eval "$xe_add_unique_runpath_dir"
 };; esac
     done
-        if test "$opsys $need_motif" = "sol2 yes"; then
+            if test "$opsys $need_motif" = "sol2 yes"; then
       xe_runpath_dir="/opt/SUNWdt/lib";
       eval "$xe_add_unique_runpath_dir";
     fi
@@ -24322,8 +24131,12 @@ echo "$as_me: checking for X11 graphics libraries..." >&6;}
 fi
 
 case "$enable_widgets" in
-  "yes" | "athena")		detect_athena=yes ;;
+  "" | "yes" | "athena")	detect_athena=yes ;;
    *)				detect_athena=no ;;
+esac
+
+case "$enable_dialogs" in
+  "" | "yes" | "athena")	detect_athena=yes ;;
 esac
 
 if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
@@ -26061,24 +25874,45 @@ echo "${ECHO_T}$have_lesstif" >&6
 
 fi
 
+case "$opsys" in
+  *linux* | *darwin* | *bsd* )  lucid_prefers_motif="no"  ;;
+  * )        lucid_prefers_motif="yes" ;;
+esac
+
 case "$enable_menubars" in "" | "yes" | "athena" )
   enable_menubars="lucid" ;;
 esac
 case "$enable_dialogs" in "" | "yes" | "lucid" )
-  if   test "$have_motif"     = "yes"; then enable_dialogs="motif"
-  elif test "$have_xaw"       = "yes"; then enable_dialogs="athena"
-  elif test "$with_msw"       = "yes"; then enable_dialogs="msw"
-  else enable_dialogs=no
+  if test "$lucid_prefers_motif" = "yes"; then
+    if   test "$have_motif"     = "yes"; then enable_dialogs="motif"
+    elif test "$have_xaw"       = "yes"; then enable_dialogs="athena"
+    elif test "$with_msw"       = "yes"; then enable_dialogs="msw"
+    else enable_dialogs=no
+    fi
+  else
+    if   test "$have_xaw"       = "yes"; then enable_dialogs="athena"
+    elif test "$have_motif"     = "yes"; then enable_dialogs="motif"
+    elif test "$with_msw"       = "yes"; then enable_dialogs="msw"
+    else enable_dialogs=no
+    fi
   fi ;;
 esac
 case "$enable_scrollbars" in "" | "yes" )
   enable_scrollbars="lucid" ;;
 esac
 case "$enable_widgets" in "" | "yes" | "lucid")
-  if   test "$have_motif" = "yes"; then enable_widgets="motif"
-  elif test "$have_xaw"   = "yes"; then enable_widgets="athena"
-  elif test "$with_msw"   = "yes"; then enable_widgets="msw"
-  else enable_widgets=no
+  if test "$lucid_prefers_motif" = "yes"; then
+    if   test "$have_motif" = "yes"; then enable_widgets="motif"
+    elif test "$have_xaw"   = "yes"; then enable_widgets="athena"
+    elif test "$with_msw"   = "yes"; then enable_widgets="msw"
+    else enable_widgets=no
+    fi
+  else
+    if   test "$have_xaw"   = "yes"; then enable_widgets="athena"
+    elif test "$have_motif" = "yes"; then enable_widgets="motif"
+    elif test "$with_msw"   = "yes"; then enable_widgets="msw"
+    else enable_widgets=no
+    fi
   fi ;;
 esac
 
@@ -26584,7 +26418,76 @@ else
   with_xim=no
 fi
 
-        if test "$have_motif $have_lesstif" = "yes no"; then
+            if test "$need_motif $have_lesstif" = "yes no"; then
+      echo "$as_me:$LINENO: checking for XmImMbLookupString in -lXm" >&5
+echo $ECHO_N "checking for XmImMbLookupString in -lXm... $ECHO_C" >&6
+if test "${ac_cv_lib_Xm_XmImMbLookupString+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lXm  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XmImMbLookupString ();
+int
+main ()
+{
+XmImMbLookupString ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_Xm_XmImMbLookupString=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_Xm_XmImMbLookupString=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_Xm_XmImMbLookupString" >&5
+echo "${ECHO_T}$ac_cv_lib_Xm_XmImMbLookupString" >&6
+if test $ac_cv_lib_Xm_XmImMbLookupString = yes; then
+  with_xim=motif
+fi
+
+    elif test "$have_motif $have_lesstif $with_xim" = "yes no no"; then
       echo "$as_me:$LINENO: checking for XmImMbLookupString in -lXm" >&5
 echo $ECHO_N "checking for XmImMbLookupString in -lXm... $ECHO_C" >&6
 if test "${ac_cv_lib_Xm_XmImMbLookupString+set}" = set; then
@@ -28311,7 +28214,7 @@ xe_runpath_dir=`echo '' "$arg" | sed -e 's:^ ::' -e 's/^-L//'`
   eval "$xe_add_unique_runpath_dir"
 };; esac
     done
-        if test "$opsys $need_motif" = "sol2 yes"; then
+            if test "$opsys $need_motif" = "sol2 yes"; then
       xe_runpath_dir="/opt/SUNWdt/lib";
       eval "$xe_add_unique_runpath_dir";
     fi
@@ -37582,6 +37485,16 @@ if test "$with_x11" = "yes"; then
   if test "$with_wmcommand" != no; then
     echo "    - Handling WM_COMMAND properly."
   fi
+fi
+if test "$need_motif" = "yes" ; then
+  echo "  Compiling in support for Motif."
+  if test "$have_lesstif" = "yes"; then
+    echo "    - Using LessTif implementation."
+  fi
+  echo "  *WARNING*  Many versions of Motif are buggy, requiring workarounds."
+  echo "             You are likely to experience slow redisplay."
+  echo "             You may need to install vendor patches to Motif."
+  echo "             See PROBLEMS for more information."
 fi
 if test "$need_athena" = "yes"; then
   echo "  Compiling in support for the Athena widget set:"

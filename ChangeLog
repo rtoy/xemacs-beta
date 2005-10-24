@@ -1,3 +1,10 @@
+2005-10-25  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.ac: Prefer Xaw to Motif on Linux, Mac and BSD.  From
+	21.4.
+	* configure.ac (XE_PARSE_COMPLEX_OPTION):  Remove debugging.
+	Fix broken --with-<complex>=no.
+
 2005-10-20  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* INSTALL: Reflect changes in the configure options.  Update MacOS

@@ -208,6 +208,7 @@ if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
       case "$arg" in -L*) XE_ADD_RUNPATH_DIR(`echo '' "$arg" | sed -e 's:^ ::' -e 's/^-L//'`);; esac
     done
     dnl Sometimes /opt/SUNWdt/lib is the only installed Motif available
+    dnl #### this test always fails here as need_motif is null
     if test "$opsys $need_motif" = "sol2 yes"; then
       xe_runpath_dir="/opt/SUNWdt/lib";
       eval "$xe_add_unique_runpath_dir";
@@ -249,13 +250,11 @@ m4_divert_once([HELP_ENABLE], m4_bpatsubst([[$2]],[--enable\([^ ]+\) ],[--with\1
 # If --with-$1 or --without-$1 were given then copy the value to the
 # equivalent enable_$1 variable.
 if test "[${with_]m4_bpatsubst([$1], -, _)+set}" = set; then
-  echo $1 Setting enable to "[$with_]m4_bpatsubst([$1], -, _)"
   [enable_]m4_bpatsubst([$1], -, _)="[$with_]m4_bpatsubst([$1], -, _)"
 fi;
 # If -enable-$1 or --disable-$1 were given then copy the value to the
 # equivalent with_$1 variable.
 if test "[${enable_]m4_bpatsubst([$1], -, _)+set}" = set; then
-  echo $1 Setting with to "[$enable_]m4_bpatsubst([$1], -, _)"
   [with_]m4_bpatsubst([$1], -, _)="[$enable_]m4_bpatsubst([$1], -, _)"
 fi;
 # Check whether --with-$1 or --without-$1 was given.
@@ -428,7 +427,8 @@ Defaults may be overridden with \`all' or \`none' first in the list.
 Hardcoded default is: $_[$1]_default."])
     elif test -n "$_[$1]_all_default" ; then
         for y in $_[$1]_types; do
-	    eval "[$1]_$y=$_[$1]_all_default"
+	    eval "with_[$1]_$y=$_[$1]_all_default"
+	    eval "enable_[$1]_$y=$_[$1]_all_default"
         done
     fi
     _[$1]_notfirst=yes
@@ -3925,12 +3925,13 @@ if test "$with_x11" = "yes"; then
   AC_CHECKING([for X11 graphics libraries])
 fi
 
-dnl We don't automatically trigger widgets if athena is present
-dnl because of stability concerns.
-dnl But if the user wants widgets, still offer him autodetections
 case "$enable_widgets" in
-  "yes" | "athena")		detect_athena=yes ;;
+  "" | "yes" | "athena")	detect_athena=yes ;;
    *)				detect_athena=no ;;
+esac
+
+case "$enable_dialogs" in
+  "" | "yes" | "athena")	detect_athena=yes ;;
 esac
 
 if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
@@ -4085,26 +4086,47 @@ fi dnl "$with_x11" = "yes"
 
 dnl Finish ensuring that we have values for the various toolkit items.
 dnl Not all toolkits support all widgets
-dnl if Motif is available we use it for the dialog boxes.
+
+dnl Avoid using Motif :-(
+case "$opsys" in
+  *linux* | *darwin* | *bsd* )  lucid_prefers_motif="no"  ;;
+  * )        lucid_prefers_motif="yes" ;;
+esac
 
 case "$enable_menubars" in "" | "yes" | "athena" )
   enable_menubars="lucid" ;;
 esac
 case "$enable_dialogs" in "" | "yes" | "lucid" )
-  if   test "$have_motif"     = "yes"; then enable_dialogs="motif"
-  elif test "$have_xaw"       = "yes"; then enable_dialogs="athena"
-  elif test "$with_msw"       = "yes"; then enable_dialogs="msw"
-  else enable_dialogs=no
+  if test "$lucid_prefers_motif" = "yes"; then
+    if   test "$have_motif"     = "yes"; then enable_dialogs="motif"
+    elif test "$have_xaw"       = "yes"; then enable_dialogs="athena"
+    elif test "$with_msw"       = "yes"; then enable_dialogs="msw"
+    else enable_dialogs=no
+    fi
+  else
+    if   test "$have_xaw"       = "yes"; then enable_dialogs="athena"
+    elif test "$have_motif"     = "yes"; then enable_dialogs="motif"
+    elif test "$with_msw"       = "yes"; then enable_dialogs="msw"
+    else enable_dialogs=no
+    fi
   fi ;;
 esac
 case "$enable_scrollbars" in "" | "yes" )
   enable_scrollbars="lucid" ;;
 esac
 case "$enable_widgets" in "" | "yes" | "lucid")
-  if   test "$have_motif" = "yes"; then enable_widgets="motif"
-  elif test "$have_xaw"   = "yes"; then enable_widgets="athena"
-  elif test "$with_msw"   = "yes"; then enable_widgets="msw"
-  else enable_widgets=no
+  if test "$lucid_prefers_motif" = "yes"; then
+    if   test "$have_motif" = "yes"; then enable_widgets="motif"
+    elif test "$have_xaw"   = "yes"; then enable_widgets="athena"
+    elif test "$with_msw"   = "yes"; then enable_widgets="msw"
+    else enable_widgets=no
+    fi
+  else
+    if   test "$have_xaw"   = "yes"; then enable_widgets="athena"
+    elif test "$have_motif" = "yes"; then enable_widgets="motif"
+    elif test "$with_msw"   = "yes"; then enable_widgets="msw"
+    else enable_widgets=no
+    fi
   fi ;;
 esac
 
@@ -4232,7 +4254,10 @@ if test "$enable_mule" = "yes" ; then
     AC_CHECKING([for XIM])
     AC_CHECK_LIB(X11, XOpenIM, with_xim=xlib, with_xim=no)
     dnl XIM + Lesstif is not (yet?) usable
-    if test "$have_motif $have_lesstif" = "yes no"; then
+    dnl Only use Motif if linking Motif anyway, or don't have xlib XIM
+    if test "$need_motif $have_lesstif" = "yes no"; then
+      AC_CHECK_LIB(Xm, XmImMbLookupString, with_xim=motif)
+    elif test "$have_motif $have_lesstif $with_xim" = "yes no no"; then
       AC_CHECK_LIB(Xm, XmImMbLookupString, with_xim=motif)
     fi ;;
   esac
@@ -5621,6 +5646,16 @@ if test "$with_x11" = "yes"; then
   if test "$with_wmcommand" != no; then
     echo "    - Handling WM_COMMAND properly."
   fi
+fi
+if test "$need_motif" = "yes" ; then
+  echo "  Compiling in support for Motif."
+  if test "$have_lesstif" = "yes"; then
+    echo "    - Using LessTif implementation."
+  fi
+  echo "  *WARNING*  Many versions of Motif are buggy, requiring workarounds."
+  echo "             You are likely to experience slow redisplay."
+  echo "             You may need to install vendor patches to Motif."
+  echo "             See PROBLEMS for more information."
 fi
 if test "$need_athena" = "yes"; then
   echo "  Compiling in support for the Athena widget set:"
