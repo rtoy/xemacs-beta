@@ -1,3 +1,12 @@
+2005-10-24  Ben Wing  <ben@xemacs.org>
+
+	* next-error.el (compilation-current-error):
+	* next-error.el (compilation-current-error)): New.
+	* next-error.el (compilation-context-lines)): New.
+	* occur.el (occur-accumulate-lines):
+	* occur.el (multi-occur):
+	Fix some byte-compile warnings.
+
 2005-10-23  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el (package-get-download-sites): Sync packages

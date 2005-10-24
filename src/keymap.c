@@ -148,11 +148,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct Lisp_Keymap
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   Lisp_Object parents;		/* Keymaps to be searched after this one.
 				   An ordered list */
   Lisp_Object prompt;           /* Qnil or a string to print in the minibuffer
@@ -760,11 +756,7 @@ static Lisp_Object
 make_keymap (Elemcount size)
 {
   Lisp_Object result;
-#ifdef MC_ALLOC
-  Lisp_Keymap *keymap = alloc_lrecord_type (Lisp_Keymap, &lrecord_keymap);
-#else /* not MC_ALLOC */
-  Lisp_Keymap *keymap = alloc_lcrecord_type (Lisp_Keymap, &lrecord_keymap);
-#endif /* not MC_ALLOC */
+  Lisp_Keymap *keymap = ALLOC_LCRECORD_TYPE (Lisp_Keymap, &lrecord_keymap);
 
   result = wrap_keymap (keymap);
 

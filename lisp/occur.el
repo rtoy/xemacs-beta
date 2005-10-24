@@ -247,9 +247,9 @@ If the value is nil, don't highlight the buffer names specially."
 	(setq count (+ count (if forwardp -1 1)))
 	(setq beg (line-beginning-position)
 	      end (line-end-position))
-	(if (and keep-props (if (boundp 'jit-lock-mode) jit-lock-mode)
+	(if (and keep-props (if-boundp 'jit-lock-mode jit-lock-mode)
 		 (text-property-not-all beg end 'fontified t))
-	    (if (fboundp 'jit-lock-fontify-now)
+	    (if-fboundp 'jit-lock-fontify-now
 		(jit-lock-fontify-now beg end)))
 	(push
 	 (funcall (if keep-props
@@ -324,6 +324,7 @@ the matching is case-sensitive."
   "Show all lines in buffers BUFS containing a match for REGEXP.
 This function acts on multiple buffers; otherwise, it is exactly like
 `occur'."
+  (defvar ido-ignore-item-temp-list)
   (interactive
    (cons
     (let* ((bufs (list (read-buffer "First buffer to search: "

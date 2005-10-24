@@ -194,18 +194,10 @@ static struct console *
 allocate_console (Lisp_Object type)
 {
   Lisp_Object console;
-#ifdef MC_ALLOC
-  struct console *con = alloc_lrecord_type (struct console, &lrecord_console);
-#else /* not MC_ALLOC */
-  struct console *con = alloc_lcrecord_type (struct console, &lrecord_console);
-#endif /* not MC_ALLOC */
+  struct console *con = ALLOC_LCRECORD_TYPE (struct console, &lrecord_console);
   struct gcpro gcpro1;
 
-#ifdef MC_ALLOC
-  copy_lrecord (con, XCONSOLE (Vconsole_defaults));
-#else /* not MC_ALLOC */
-  copy_lcrecord (con, XCONSOLE (Vconsole_defaults));
-#endif /* not MC_ALLOC */
+  COPY_LCRECORD (con, XCONSOLE (Vconsole_defaults));
 
   console = wrap_console (con);
   GCPRO1 (console);
@@ -670,11 +662,7 @@ find_nonminibuffer_frame_not_on_console (Lisp_Object console)
 static void
 nuke_all_console_slots (struct console *con, Lisp_Object zap)
 {
-#ifdef MC_ALLOC
-  zero_lrecord (con);
-#else /* not MC_ALLOC */
-  zero_lcrecord (con);
-#endif /* not MC_ALLOC */
+  ZERO_LCRECORD (con);
 
 #define MARKED_SLOT(x)	con->x = zap;
 #include "conslots.h"
@@ -1405,13 +1393,8 @@ common_init_complex_vars_of_console (void)
   /* Make sure all markable slots in console_defaults
      are initialized reasonably, so mark_console won't choke.
    */
-#ifdef MC_ALLOC
-  struct console *defs = alloc_lrecord_type (struct console, &lrecord_console);
-  struct console *syms = alloc_lrecord_type (struct console, &lrecord_console);
-#else /* not MC_ALLOC */
-  struct console *defs = alloc_lcrecord_type (struct console, &lrecord_console);
-  struct console *syms = alloc_lcrecord_type (struct console, &lrecord_console);
-#endif /* not MC_ALLOC */
+  struct console *defs = ALLOC_LCRECORD_TYPE (struct console, &lrecord_console);
+  struct console *syms = ALLOC_LCRECORD_TYPE (struct console, &lrecord_console);
 
   staticpro_nodump (&Vconsole_defaults);
   staticpro_nodump (&Vconsole_local_symbols);

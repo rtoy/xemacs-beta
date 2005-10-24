@@ -483,11 +483,7 @@ make_process_internal (Lisp_Object name)
 {
   Lisp_Object val, name1;
   int i;
-#ifdef MC_ALLOC
-  Lisp_Process *p = alloc_lrecord_type (Lisp_Process, &lrecord_process);
-#else /* not MC_ALLOC */
-  Lisp_Process *p = alloc_lcrecord_type (Lisp_Process, &lrecord_process);
-#endif /* not MC_ALLOC */
+  Lisp_Process *p = ALLOC_LCRECORD_TYPE (Lisp_Process, &lrecord_process);
 
 #define MARKED_SLOT(x)	p->x = Qnil;
 #include "process-slots.h"

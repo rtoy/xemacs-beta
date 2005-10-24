@@ -188,11 +188,7 @@ enum eol_type
 
 struct Lisp_Coding_System
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   struct coding_system_methods *methods;
 
 #define CODING_SYSTEM_SLOT_DECLARATION

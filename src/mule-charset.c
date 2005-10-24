@@ -197,11 +197,7 @@ make_charset (int id, Lisp_Object name, int rep_bytes,
 
   if (!overwrite)
     {
-#ifdef MC_ALLOC
-      cs = alloc_lrecord_type (Lisp_Charset, &lrecord_charset);
-#else /* not MC_ALLOC */
-      cs = alloc_lcrecord_type (Lisp_Charset, &lrecord_charset);
-#endif /* not MC_ALLOC */
+      cs = ALLOC_LCRECORD_TYPE (Lisp_Charset, &lrecord_charset);
       obj = wrap_charset (cs);
 
       if (final)
@@ -884,11 +880,7 @@ compute_charset_usage (Lisp_Object charset, struct charset_stats *stats,
 {
   struct Lisp_Charset *c = XCHARSET (charset);
   xzero (*stats);
-#ifdef MC_ALLOC
-  stats->other   += mc_alloced_storage_size (sizeof (*c), ovstats);
-#else /* not MC_ALLOC */
-  stats->other   += malloced_storage_size (c, sizeof (*c), ovstats);
-#endif /* not MC_ALLOC */
+  stats->other   += MALLOCED_STORAGE_SIZE (c, sizeof (*c), ovstats);
   stats->from_unicode += compute_from_unicode_table_size (charset, ovstats);
   stats->to_unicode += compute_to_unicode_table_size (charset, ovstats);
 }

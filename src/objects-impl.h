@@ -99,11 +99,7 @@ extern Lisp_Object Qface_boolean;
 
 struct Lisp_Color_Instance
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   Lisp_Object name;
   Lisp_Object device;
 
@@ -123,11 +119,7 @@ struct Lisp_Color_Instance
 
 struct Lisp_Font_Instance
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   Lisp_Object name; /* the instantiator used to create the font instance */
   Lisp_Object truename; /* used by the device-specific methods; we need to
 			   call them to get the truename (#### in reality,

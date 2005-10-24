@@ -986,17 +986,9 @@ void
 allocate_extent_auxiliary (EXTENT ext)
 {
   Lisp_Object extent_aux;
-#ifdef MC_ALLOC
   struct extent_auxiliary *data =
-    alloc_lrecord_type (struct extent_auxiliary, &lrecord_extent_auxiliary);
-
-  copy_lrecord (data, &extent_auxiliary_defaults);
-#else /* not MC_ALLOC */
-  struct extent_auxiliary *data =
-    alloc_lcrecord_type (struct extent_auxiliary, &lrecord_extent_auxiliary);
-
-  copy_lcrecord (data, &extent_auxiliary_defaults);
-#endif /* not MC_ALLOC */
+    ALLOC_LCRECORD_TYPE (struct extent_auxiliary, &lrecord_extent_auxiliary);
+  COPY_LCRECORD (data, &extent_auxiliary_defaults);
   extent_aux = wrap_extent_auxiliary (data);
   ext->plist = Fcons (extent_aux, ext->plist);
   ext->flags.has_aux = 1;
@@ -1174,11 +1166,7 @@ allocate_extent_info (void)
 {
   Lisp_Object extent_info;
   struct extent_info *data =
-#ifdef MC_ALLOC
-    alloc_lrecord_type (struct extent_info, &lrecord_extent_info);
-#else /* not MC_ALLOC */
-    alloc_lcrecord_type (struct extent_info, &lrecord_extent_info);
-#endif /* not MC_ALLOC */
+    ALLOC_LCRECORD_TYPE (struct extent_info, &lrecord_extent_info);
 
   extent_info = wrap_extent_info (data);
   data->extents = allocate_extent_list ();
@@ -3909,19 +3897,11 @@ copy_extent (EXTENT original, Bytexpos from, Bytexpos to, Lisp_Object object)
       /* also need to copy the aux struct.  It won't work for
 	 this extent to share the same aux struct as the original
 	 one. */
-#ifdef MC_ALLOC
       struct extent_auxiliary *data =
-	alloc_lrecord_type (struct extent_auxiliary,
-			    &lrecord_extent_auxiliary);
-
-      copy_lrecord (data, XEXTENT_AUXILIARY (XCAR (original->plist)));
-#else /* not MC_ALLOC */
-      struct extent_auxiliary *data =
-	alloc_lcrecord_type (struct extent_auxiliary,
+	ALLOC_LCRECORD_TYPE (struct extent_auxiliary,
 			     &lrecord_extent_auxiliary);
 
-      copy_lcrecord (data, XEXTENT_AUXILIARY (XCAR (original->plist)));
-#endif /* not MC_ALLOC */
+      COPY_LCRECORD (data, XEXTENT_AUXILIARY (XCAR (original->plist)));
       XCAR (e->plist) = wrap_extent_auxiliary (data);
     }
 

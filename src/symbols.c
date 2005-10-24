@@ -2187,13 +2187,8 @@ sets it.
 
   {
     struct symbol_value_buffer_local *bfwd
-#ifdef MC_ALLOC
-      = alloc_lrecord_type (struct symbol_value_buffer_local,
-			    &lrecord_symbol_value_buffer_local);
-#else /* not MC_ALLOC */
-      = alloc_lcrecord_type (struct symbol_value_buffer_local,
+      = ALLOC_LCRECORD_TYPE (struct symbol_value_buffer_local,
 			     &lrecord_symbol_value_buffer_local);
-#endif /* not MC_ALLOC */
     Lisp_Object foo;
     bfwd->magic.type = SYMVAL_BUFFER_LOCAL;
 
@@ -2300,13 +2295,8 @@ Use `make-local-hook' instead.
     }
 
   /* Make sure variable is set up to hold per-buffer values */
-#ifdef MC_ALLOC
-  bfwd = alloc_lrecord_type (struct symbol_value_buffer_local,
-			     &lrecord_symbol_value_buffer_local);
-#else /* not MC_ALLOC */
-  bfwd = alloc_lcrecord_type (struct symbol_value_buffer_local,
+  bfwd = ALLOC_LCRECORD_TYPE (struct symbol_value_buffer_local,
 			      &lrecord_symbol_value_buffer_local);
-#endif /* not MC_ALLOC */
   bfwd->magic.type = SYMVAL_SOME_BUFFER_LOCAL;
 
   bfwd->current_buffer = Qnil;
@@ -3025,13 +3015,8 @@ pity, thereby invalidating your code.
   valcontents = XSYMBOL (variable)->value;
   if (!SYMBOL_VALUE_LISP_MAGIC_P (valcontents))
     {
-#ifdef MC_ALLOC
-      bfwd = alloc_lrecord_type (struct symbol_value_lisp_magic,
-				 &lrecord_symbol_value_lisp_magic);
-#else /* MC_ALLOC */
-      bfwd = alloc_lcrecord_type (struct symbol_value_lisp_magic,
+      bfwd = ALLOC_LCRECORD_TYPE (struct symbol_value_lisp_magic,
 				  &lrecord_symbol_value_lisp_magic);
-#endif /* not MC_ALLOC */
       bfwd->magic.type = SYMVAL_LISP_MAGIC;
       for (i = 0; i < MAGIC_HANDLER_MAX; i++)
 	{
@@ -3166,13 +3151,8 @@ has a buffer-local value in any buffer, or the symbols nil or t.
     invalid_change ("Variable is magic and cannot be aliased", variable);
   reject_constant_symbols (variable, Qunbound, 0, Qt);
 
-#ifdef MC_ALLOC
-  bfwd = alloc_lrecord_type (struct symbol_value_varalias,
-			     &lrecord_symbol_value_varalias);
-#else /* not MC_ALLOC */
-  bfwd = alloc_lcrecord_type (struct symbol_value_varalias,
+  bfwd = ALLOC_LCRECORD_TYPE (struct symbol_value_varalias,
 			      &lrecord_symbol_value_varalias);
-#endif /* not MC_ALLOC */
   bfwd->magic.type = SYMVAL_VARALIAS;
   bfwd->aliasee = alias;
   bfwd->shadowed = valcontents;

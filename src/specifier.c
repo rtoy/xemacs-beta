@@ -493,13 +493,8 @@ make_specifier_internal (struct specifier_methods *spec_meths,
 {
   Lisp_Object specifier;
   Lisp_Specifier *sp = (Lisp_Specifier *)
-#ifdef MC_ALLOC
-    alloc_lrecord (aligned_sizeof_specifier (data_size),
-		   &lrecord_specifier);
-#else /* not MC_ALLOC */
-    basic_alloc_lcrecord (aligned_sizeof_specifier (data_size),
+    BASIC_ALLOC_LCRECORD (aligned_sizeof_specifier (data_size),
 			  &lrecord_specifier);
-#endif /* not MC_ALLOC */
 
   sp->methods = spec_meths;
   sp->global_specs = Qnil;

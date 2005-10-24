@@ -21,11 +21,7 @@ typedef void (*ffi_marshalling_function) (ffi_actual_function, GtkArg *);
 #define MAX_GTK_ARGS 100
 
 typedef struct {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   GtkType return_type;
   GtkType args[MAX_GTK_ARGS];
   gint n_args;
@@ -43,11 +39,7 @@ DECLARE_LRECORD (emacs_ffi, emacs_ffi_data);
 
 /* Encapsulate a GtkObject in Lisp */
 typedef struct {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   gboolean alive_p;
   GtkObject *object;
   Lisp_Object plist;
@@ -64,11 +56,7 @@ extern Lisp_Object build_gtk_object (GtkObject *obj);
 
 /* Encapsulate a GTK_TYPE_BOXED in lisp */
 typedef struct {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   GtkType object_type;
   void *object;
 } emacs_gtk_boxed_data;

@@ -187,11 +187,7 @@ Return a list of valid device classes.
 static void
 nuke_all_device_slots (struct device *d, Lisp_Object zap)
 {
-#ifdef MC_ALLOC
-  zero_lrecord (d);
-#else /* not MC_ALLOC */
-  zero_lcrecord (d);
-#endif /* not MC_ALLOC */
+  ZERO_LCRECORD (d);
 
 #define MARKED_SLOT(x)	d->x = zap;
 #include "devslots.h"
@@ -201,11 +197,7 @@ static struct device *
 allocate_device (Lisp_Object console)
 {
   Lisp_Object device;
-#ifdef MC_ALLOC
-  struct device *d = alloc_lrecord_type (struct device, &lrecord_device);
-#else /* not MC_ALLOC */
-  struct device *d = alloc_lcrecord_type (struct device, &lrecord_device);
-#endif /* not MC_ALLOC */
+  struct device *d = ALLOC_LCRECORD_TYPE (struct device, &lrecord_device);
   struct gcpro gcpro1;
 
   device = wrap_device (d);

@@ -270,6 +270,8 @@ location."
 
 ;;; Used as a `post-command-hook' by `next-error-follow-mode'
 ;;; for the *Compilation* *grep* and *Occur* buffers.
+(defvar compilation-current-error)
+(defvar compilation-context-lines)
 (defun next-error-follow-mode-post-command-hook ()
   (unless (equal next-error-follow-last-line (line-number-at-pos))
     (setq next-error-follow-last-line (line-number-at-pos))

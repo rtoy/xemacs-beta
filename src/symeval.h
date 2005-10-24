@@ -77,11 +77,7 @@ typedef EMACS_INT Fixnum;
 
 struct symbol_value_magic
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header lcheader;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   void *value;
   enum symbol_value_type type;
 };

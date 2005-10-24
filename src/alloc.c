@@ -811,7 +811,9 @@ dbg_eq (Lisp_Object obj1, Lisp_Object obj2)
 }
 
 
-#ifndef MC_ALLOC
+#ifdef MC_ALLOC
+#define DECLARE_FIXED_TYPE_ALLOC(type, structture) struct __foo__
+#else
 /************************************************************************/
 /*			  Fixed-size type macros			*/
 /************************************************************************/
@@ -1085,7 +1087,6 @@ do								\
   NOSEEUM_INCREMENT_CONS_COUNTER (sizeof (structtype), #type);	\
 } while (0)
 
-
 /* Lisp_Free is the type to represent a free list member inside a frob
    block of any lisp object type.  */
 typedef struct Lisp_Free
@@ -1172,18 +1173,42 @@ do { FREE_FIXED_TYPE (type, structtype, ptr);			\
 #endif
 #endif /* not MC_ALLOC */
 
+#ifdef MC_ALLOC
+#define ALLOCATE_FIXED_TYPE_AND_SET_IMPL(type, lisp_type, var, lrec_ptr) \
+do {									\
+  (var) = alloc_lrecord_type (lisp_type, lrec_ptr);			\
+} while (0)
+#define NOSEEUM_ALLOCATE_FIXED_TYPE_AND_SET_IMPL(type, lisp_type, var,	\
+                                                 lrec_ptr)		\
+do {									\
+  (var) = noseeum_alloc_lrecord_type (lisp_type, lrec_ptr);		\
+} while (0)
+#else /* not MC_ALLOC */
+#define ALLOCATE_FIXED_TYPE_AND_SET_IMPL(type, lisp_type, var, lrec_ptr) \
+do									\
+{									\
+  ALLOCATE_FIXED_TYPE (type, lisp_type, var);				\
+  set_lheader_implementation (&(var)->lheader, lrec_ptr);		\
+} while (0)
+#define NOSEEUM_ALLOCATE_FIXED_TYPE_AND_SET_IMPL(type, lisp_type, var,	\
+                                                 lrec_ptr)		\
+do									\
+{									\
+  NOSEEUM_ALLOCATE_FIXED_TYPE (type, lisp_type, var);			\
+  set_lheader_implementation (&(var)->lheader, lrec_ptr);		\
+} while (0)
+#endif /* MC_ALLOC */
+
 
 
 /************************************************************************/
 /*			   Cons allocation				*/
 /************************************************************************/
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (cons, Lisp_Cons);
 /* conses are used and freed so often that we set this really high */
 /* #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_cons 20000 */
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_cons 2000
-#endif /* not MC_ALLOC */
 
 static Lisp_Object
 mark_cons (Lisp_Object obj)
@@ -1237,12 +1262,7 @@ Create a new cons, give it CAR and CDR as components, and return it.
   Lisp_Object val;
   Lisp_Cons *c;
 
-#ifdef MC_ALLOC
-  c = alloc_lrecord_type (Lisp_Cons, &lrecord_cons);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (cons, Lisp_Cons, c);
-  set_lheader_implementation (&c->lheader, &lrecord_cons);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (cons, Lisp_Cons, c, &lrecord_cons);
   val = wrap_cons (c);
   XSETCAR (val, car);
   XSETCDR (val, cdr);
@@ -1258,12 +1278,7 @@ noseeum_cons (Lisp_Object car, Lisp_Object cdr)
   Lisp_Object val;
   Lisp_Cons *c;
 
-#ifdef MC_ALLOC
-  c = noseeum_alloc_lrecord_type (Lisp_Cons, &lrecord_cons);
-#else /* not MC_ALLOC */
-  NOSEEUM_ALLOCATE_FIXED_TYPE (cons, Lisp_Cons, c);
-  set_lheader_implementation (&c->lheader, &lrecord_cons);
-#endif /* not MC_ALLOC */
+  NOSEEUM_ALLOCATE_FIXED_TYPE_AND_SET_IMPL (cons, Lisp_Cons, c, &lrecord_cons);
   val = wrap_cons (c);
   XCAR (val) = car;
   XCDR (val) = cdr;
@@ -1365,27 +1380,20 @@ Return a new list of length LENGTH, with each element being OBJECT.
 
 /*** With enhanced number support, these are short floats */
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (float, Lisp_Float);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_float 1000
-#endif /* not MC_ALLOC */
 
 Lisp_Object
 make_float (double float_value)
 {
   Lisp_Float *f;
 
-#ifdef MC_ALLOC
-  f = alloc_lrecord_type (Lisp_Float, &lrecord_float);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (float, Lisp_Float, f);
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (float, Lisp_Float, f, &lrecord_float);
 
   /* Avoid dump-time `uninitialized memory read' purify warnings. */
   if (sizeof (struct lrecord_header) + sizeof (double) != sizeof (*f))
-    xzero (*f);
-#endif /* not MC_ALLOC */
+    zero_lrecord (f);
 
-  set_lheader_implementation (&f->lheader, &lrecord_float);
   float_data (f) = float_value;
   return wrap_float (f);
 }
@@ -1397,10 +1405,8 @@ make_float (double float_value)
 
 /*** Bignum ***/
 #ifdef HAVE_BIGNUM
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (bignum, Lisp_Bignum);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_bignum 250
-#endif /* not MC_ALLOC */
 
 /* WARNING: This function returns a bignum even if its argument fits into a
    fixnum.  See Fcanonicalize_number(). */
@@ -1409,12 +1415,7 @@ make_bignum (long bignum_value)
 {
   Lisp_Bignum *b;
 
-#ifdef MC_ALLOC
-  b = alloc_lrecord_type (Lisp_Bignum, &lrecord_bignum);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (bignum, Lisp_Bignum, b);
-  set_lheader_implementation (&b->lheader, &lrecord_bignum);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (bignum, Lisp_Bignum, b, &lrecord_bignum);
   bignum_init (bignum_data (b));
   bignum_set_long (bignum_data (b), bignum_value);
   return wrap_bignum (b);
@@ -1427,12 +1428,7 @@ make_bignum_bg (bignum bg)
 {
   Lisp_Bignum *b;
 
-#ifdef MC_ALLOC
-  b = alloc_lrecord_type (Lisp_Bignum, &lrecord_bignum);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (bignum, Lisp_Bignum, b);
-  set_lheader_implementation (&b->lheader, &lrecord_bignum);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (bignum, Lisp_Bignum, b, &lrecord_bignum);
   bignum_init (bignum_data (b));
   bignum_set (bignum_data (b), bg);
   return wrap_bignum (b);
@@ -1441,22 +1437,15 @@ make_bignum_bg (bignum bg)
 
 /*** Ratio ***/
 #ifdef HAVE_RATIO
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (ratio, Lisp_Ratio);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_ratio 250
-#endif /* not MC_ALLOC */
 
 Lisp_Object
 make_ratio (long numerator, unsigned long denominator)
 {
   Lisp_Ratio *r;
 
-#ifdef MC_ALLOC
-  r = alloc_lrecord_type (Lisp_Ratio, &lrecord_ratio);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (ratio, Lisp_Ratio, r);
-  set_lheader_implementation (&r->lheader, &lrecord_ratio);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (ratio, Lisp_Ratio, r, &lrecord_ratio);
   ratio_init (ratio_data (r));
   ratio_set_long_ulong (ratio_data (r), numerator, denominator);
   ratio_canonicalize (ratio_data (r));
@@ -1468,12 +1457,7 @@ make_ratio_bg (bignum numerator, bignum denominator)
 {
   Lisp_Ratio *r;
 
-#ifdef MC_ALLOC
-  r = alloc_lrecord_type (Lisp_Ratio, &lrecord_ratio);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (ratio, Lisp_Ratio, r);
-  set_lheader_implementation (&r->lheader, &lrecord_ratio);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (ratio, Lisp_Ratio, r, &lrecord_ratio);
   ratio_init (ratio_data (r));
   ratio_set_bignum_bignum (ratio_data (r), numerator, denominator);
   ratio_canonicalize (ratio_data (r));
@@ -1485,12 +1469,7 @@ make_ratio_rt (ratio rat)
 {
   Lisp_Ratio *r;
 
-#ifdef MC_ALLOC
-  r = alloc_lrecord_type (Lisp_Ratio, &lrecord_ratio);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (ratio, Lisp_Ratio, r);
-  set_lheader_implementation (&r->lheader, &lrecord_ratio);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (ratio, Lisp_Ratio, r, &lrecord_ratio);
   ratio_init (ratio_data (r));
   ratio_set (ratio_data (r), rat);
   return wrap_ratio (r);
@@ -1499,10 +1478,8 @@ make_ratio_rt (ratio rat)
 
 /*** Bigfloat ***/
 #ifdef HAVE_BIGFLOAT
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (bigfloat, Lisp_Bigfloat);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_bigfloat 250
-#endif /* not MC_ALLOC */
 
 /* This function creates a bigfloat with the default precision if the
    PRECISION argument is zero. */
@@ -1511,12 +1488,7 @@ make_bigfloat (double float_value, unsigned long precision)
 {
   Lisp_Bigfloat *f;
 
-#ifdef MC_ALLOC
-  f = alloc_lrecord_type (Lisp_Bigfloat, &lrecord_bigfloat);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (bigfloat, Lisp_Bigfloat, f);
-  set_lheader_implementation (&f->lheader, &lrecord_bigfloat);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (bigfloat, Lisp_Bigfloat, f, &lrecord_bigfloat);
   if (precision == 0UL)
     bigfloat_init (bigfloat_data (f));
   else
@@ -1531,12 +1503,7 @@ make_bigfloat_bf (bigfloat float_value)
 {
   Lisp_Bigfloat *f;
 
-#ifdef MC_ALLOC
-  f = alloc_lrecord_type (Lisp_Bigfloat, &lrecord_bigfloat);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (bigfloat, Lisp_Bigfloat, f);
-  set_lheader_implementation (&f->lheader, &lrecord_bigfloat);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (bigfloat, Lisp_Bigfloat, f, &lrecord_bigfloat);
   bigfloat_init_prec (bigfloat_data (f), bigfloat_get_prec (float_value));
   bigfloat_set (bigfloat_data (f), float_value);
   return wrap_bigfloat (f);
@@ -1613,11 +1580,7 @@ make_vector_internal (Elemcount sizei)
   Bytecount sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Vector, Lisp_Object,
 						  contents, sizei);
   Lisp_Vector *p =
-#ifdef MC_ALLOC
-    (Lisp_Vector *) alloc_lrecord (sizem, &lrecord_vector);
-#else /* not MC_ALLOC */
-    (Lisp_Vector *) basic_alloc_lcrecord (sizem, &lrecord_vector);
-#endif /* not MC_ALLOC */
+    (Lisp_Vector *) BASIC_ALLOC_LCRECORD (sizem, &lrecord_vector);
 
   p->size = sizei;
   return p;
@@ -1774,11 +1737,7 @@ make_bit_vector_internal (Elemcount sizei)
 						  unsigned long,
 						  bits, num_longs);
   Lisp_Bit_Vector *p = (Lisp_Bit_Vector *)
-#ifdef MC_ALLOC
-    alloc_lrecord (sizem, &lrecord_bit_vector);
-#else /* not MC_ALLOC */
-    basic_alloc_lcrecord (sizem, &lrecord_bit_vector);
-#endif /* not MC_ALLOC */
+    BASIC_ALLOC_LCRECORD (sizem, &lrecord_bit_vector);
 
   bit_vector_length (p) = sizei;
   return p;
@@ -1854,22 +1813,16 @@ Each argument must be one of the integers 0 or 1.
 /*		     Compiled-function allocation			*/
 /************************************************************************/
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (compiled_function, Lisp_Compiled_Function);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_compiled_function 1000
-#endif /* not MC_ALLOC */
 
 static Lisp_Object
 make_compiled_function (void)
 {
   Lisp_Compiled_Function *f;
 
-#ifdef MC_ALLOC
-  f = alloc_lrecord_type (Lisp_Compiled_Function, &lrecord_compiled_function);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (compiled_function, Lisp_Compiled_Function, f);
-  set_lheader_implementation (&f->lheader, &lrecord_compiled_function);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (compiled_function, Lisp_Compiled_Function,
+				    f, &lrecord_compiled_function);
 
   f->stack_depth = 0;
   f->specpdl_depth = 0;
@@ -2001,10 +1954,8 @@ This is terrible behavior which is retained for compatibility with old
 /*			    Symbol allocation				*/
 /************************************************************************/
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (symbol, Lisp_Symbol);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_symbol 1000
-#endif /* not MC_ALLOC */
 
 DEFUN ("make-symbol", Fmake_symbol, 1, 1, 0, /*
 Return a newly allocated uninterned symbol whose name is NAME.
@@ -2016,12 +1967,7 @@ Its value and function definition are void, and its property list is nil.
 
   CHECK_STRING (name);
 
-#ifdef MC_ALLOC
-  p = alloc_lrecord_type (Lisp_Symbol, &lrecord_symbol);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (symbol, Lisp_Symbol, p);
-  set_lheader_implementation (&p->lheader, &lrecord_symbol);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (symbol, Lisp_Symbol, p, &lrecord_symbol);
   p->name     = name;
   p->plist    = Qnil;
   p->value    = Qunbound;
@@ -2035,22 +1981,15 @@ Its value and function definition are void, and its property list is nil.
 /*			   Extent allocation				*/
 /************************************************************************/
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (extent, struct extent);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_extent 1000
-#endif /* not MC_ALLOC */
 
 struct extent *
 allocate_extent (void)
 {
   struct extent *e;
 
-#ifdef MC_ALLOC
-  e = alloc_lrecord_type (struct extent, &lrecord_extent);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (extent, struct extent, e);
-  set_lheader_implementation (&e->lheader, &lrecord_extent);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (extent, struct extent, e, &lrecord_extent);
   extent_object (e) = Qnil;
   set_extent_start (e, -1);
   set_extent_end (e, -1);
@@ -2070,221 +2009,151 @@ allocate_extent (void)
 /*			   Event allocation				*/
 /************************************************************************/
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (event, Lisp_Event);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_event 1000
-#endif /* not MC_ALLOC */
 
 Lisp_Object
 allocate_event (void)
 {
   Lisp_Event *e;
 
-#ifdef MC_ALLOC
-  e = alloc_lrecord_type (Lisp_Event, &lrecord_event);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (event, Lisp_Event, e);
-  set_lheader_implementation (&e->lheader, &lrecord_event);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (event, Lisp_Event, e, &lrecord_event);
 
   return wrap_event (e);
 }
 
 #ifdef EVENT_DATA_AS_OBJECTS
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (key_data, Lisp_Key_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_key_data 1000
-#endif /* not MC_ALLOC */
 
 Lisp_Object
 make_key_data (void)
 {
   Lisp_Key_Data *d;
 
-#ifdef MC_ALLOC
-  d = alloc_lrecord_type (Lisp_Key_Data, &lrecord_key_data);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (key_data, Lisp_Key_Data, d);
-  xzero (*d);
-  set_lheader_implementation (&d->lheader, &lrecord_key_data);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (key_data, Lisp_Key_Data, d,
+				    &lrecord_key_data);
+  zero_lrecord (d);
   d->keysym = Qnil;
 
   return wrap_key_data (d);
 }
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (button_data, Lisp_Button_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_button_data 1000
-#endif /* not MC_ALLOC */
 
 Lisp_Object
 make_button_data (void)
 {
   Lisp_Button_Data *d;
 
-#ifdef MC_ALLOC
-  d = alloc_lrecord_type (Lisp_Button_Data, &lrecord_button_data);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (button_data, Lisp_Button_Data, d);
-  xzero (*d);
-  set_lheader_implementation (&d->lheader, &lrecord_button_data);
-
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (button_data, Lisp_Button_Data, d, &lrecord_button_data);
+  zero_lrecord (d);
   return wrap_button_data (d);
 }
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (motion_data, Lisp_Motion_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_motion_data 1000
-#endif /* not MC_ALLOC */
 
 Lisp_Object
 make_motion_data (void)
 {
   Lisp_Motion_Data *d;
 
-#ifdef MC_ALLOC
-  d = alloc_lrecord_type (Lisp_Motion_Data, &lrecord_motion_data);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (motion_data, Lisp_Motion_Data, d);
-  xzero (*d);
-  set_lheader_implementation (&d->lheader, &lrecord_motion_data);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (motion_data, Lisp_Motion_Data, d, &lrecord_motion_data);
+  zero_lrecord (d);
 
   return wrap_motion_data (d);
 }
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (process_data, Lisp_Process_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_process_data 1000
-#endif /* not MC_ALLOC */
 
 Lisp_Object
 make_process_data (void)
 {
   Lisp_Process_Data *d;
 
-#ifdef MC_ALLOC
-  d = alloc_lrecord_type (Lisp_Process_Data, &lrecord_process_data);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (process_data, Lisp_Process_Data, d);
-  xzero (*d);
-  set_lheader_implementation (&d->lheader, &lrecord_process_data);
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (process_data, Lisp_Process_Data, d, &lrecord_process_data);
+  zero_lrecord (d);
   d->process = Qnil;
-#endif /* not MC_ALLOC */
 
   return wrap_process_data (d);
 }
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (timeout_data, Lisp_Timeout_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_timeout_data 1000
-#endif /* not MC_ALLOC */
 
 Lisp_Object
 make_timeout_data (void)
 {
   Lisp_Timeout_Data *d;
 
-#ifdef MC_ALLOC
-  d = alloc_lrecord_type (Lisp_Timeout_Data, &lrecord_timeout_data);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (timeout_data, Lisp_Timeout_Data, d);
-  xzero (*d);
-  set_lheader_implementation (&d->lheader, &lrecord_timeout_data);
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (timeout_data, Lisp_Timeout_Data, d, &lrecord_timeout_data);
+  zero_lrecord (d);
   d->function = Qnil;
   d->object = Qnil;
-#endif /* not MC_ALLOC */
 
   return wrap_timeout_data (d);
 }
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (magic_data, Lisp_Magic_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_magic_data 1000
-#endif /* not MC_ALLOC */
 
 Lisp_Object
 make_magic_data (void)
 {
   Lisp_Magic_Data *d;
 
-#ifdef MC_ALLOC
-  d = alloc_lrecord_type (Lisp_Magic_Data, &lrecord_magic_data);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (magic_data, Lisp_Magic_Data, d);
-  xzero (*d);
-  set_lheader_implementation (&d->lheader, &lrecord_magic_data);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (magic_data, Lisp_Magic_Data, d, &lrecord_magic_data);
+  zero_lrecord (d);
 
   return wrap_magic_data (d);
 }
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (magic_eval_data, Lisp_Magic_Eval_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_magic_eval_data 1000
-#endif /* not MC_ALLOC */
 
 Lisp_Object
 make_magic_eval_data (void)
 {
   Lisp_Magic_Eval_Data *d;
 
-#ifdef MC_ALLOC
-  d = alloc_lrecord_type (Lisp_Magic_Eval_Data, &lrecord_magic_eval_data);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (magic_eval_data, Lisp_Magic_Eval_Data, d);
-  xzero (*d);
-  set_lheader_implementation (&d->lheader, &lrecord_magic_eval_data);
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (magic_eval_data, Lisp_Magic_Eval_Data, d, &lrecord_magic_eval_data);
+  zero_lrecord (d);
   d->object = Qnil;
-#endif /* not MC_ALLOC */
 
   return wrap_magic_eval_data (d);
 }
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (eval_data, Lisp_Eval_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_eval_data 1000
-#endif /* not MC_ALLOC */
 
 Lisp_Object
 make_eval_data (void)
 {
   Lisp_Eval_Data *d;
 
-#ifdef MC_ALLOC
-  d = alloc_lrecord_type (Lisp_Eval_Data, &lrecord_eval_data);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (eval_data, Lisp_Eval_Data, d);
-  xzero (*d);
-  set_lheader_implementation (&d->lheader, &lrecord_eval_data);
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (eval_data, Lisp_Eval_Data, d, &lrecord_eval_data);
+  zero_lrecord (d);
   d->function = Qnil;
   d->object = Qnil;
-#endif /* not MC_ALLOC */
 
   return wrap_eval_data (d);
 }
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (misc_user_data, Lisp_Misc_User_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_misc_user_data 1000
-#endif /* not MC_ALLOC */
 
 Lisp_Object
 make_misc_user_data (void)
 {
   Lisp_Misc_User_Data *d;
 
-#ifdef MC_ALLOC
-  d = alloc_lrecord_type (Lisp_Misc_User_Data, &lrecord_misc_user_data);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (misc_user_data, Lisp_Misc_User_Data, d);
-  xzero (*d);
-  set_lheader_implementation (&d->lheader, &lrecord_misc_user_data);
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (misc_user_data, Lisp_Misc_User_Data, d, &lrecord_misc_user_data);
+  zero_lrecord (d);
   d->function = Qnil;
   d->object = Qnil;
-#endif /* not MC_ALLOC */
 
   return wrap_misc_user_data (d);
 }
@@ -2295,10 +2164,8 @@ make_misc_user_data (void)
 /*			 Marker allocation				*/
 /************************************************************************/
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (marker, Lisp_Marker);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_marker 1000
-#endif /* not MC_ALLOC */
 
 DEFUN ("make-marker", Fmake_marker, 0, 0, 0, /*
 Return a new marker which does not point at any place.
@@ -2307,12 +2174,7 @@ Return a new marker which does not point at any place.
 {
   Lisp_Marker *p;
 
-#ifdef MC_ALLOC
-  p = alloc_lrecord_type (Lisp_Marker, &lrecord_marker);
-#else /* not MC_ALLOC */
-  ALLOCATE_FIXED_TYPE (marker, Lisp_Marker, p);
-  set_lheader_implementation (&p->lheader, &lrecord_marker);
-#endif /* not MC_ALLOC */
+  ALLOCATE_FIXED_TYPE_AND_SET_IMPL (marker, Lisp_Marker, p, &lrecord_marker);
   p->buffer = 0;
   p->membpos = 0;
   marker_next (p) = 0;
@@ -2326,12 +2188,8 @@ noseeum_make_marker (void)
 {
   Lisp_Marker *p;
 
-#ifdef MC_ALLOC
-  p = noseeum_alloc_lrecord_type (Lisp_Marker, &lrecord_marker);
-#else /* not MC_ALLOC */
-  NOSEEUM_ALLOCATE_FIXED_TYPE (marker, Lisp_Marker, p);
-  set_lheader_implementation (&p->lheader, &lrecord_marker);
-#endif /* not MC_ALLOC */
+  NOSEEUM_ALLOCATE_FIXED_TYPE_AND_SET_IMPL (marker, Lisp_Marker, p,
+					    &lrecord_marker);
   p->buffer = 0;
   p->membpos = 0;
   marker_next (p) = 0;
@@ -2358,12 +2216,10 @@ noseeum_make_marker (void)
 
    This new method makes things somewhat bigger, but it is MUCH safer.  */
 
-#ifndef MC_ALLOC
 DECLARE_FIXED_TYPE_ALLOC (string, Lisp_String);
 /* strings are used and freed quite often */
 /* #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_string 10000 */
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_string 1000
-#endif /* not MC_ALLOC */
 
 static Lisp_Object
 mark_string (Lisp_Object obj)

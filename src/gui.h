@@ -44,11 +44,7 @@ extern int popup_up_p;
    menu item or submenu properties */
 struct Lisp_Gui_Item
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   Lisp_Object name;		/* String */
   Lisp_Object callback;		/* Symbol or form */
   Lisp_Object callback_ex;	/* Form taking context arguments */

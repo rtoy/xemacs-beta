@@ -1,3 +1,150 @@
+2005-10-24  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (Lisp_Free):
+	* alloc.c (Fcons):
+	* alloc.c (noseeum_cons):
+	* alloc.c (make_float):
+	* alloc.c (make_bignum):
+	* alloc.c (make_bignum_bg):
+	* alloc.c (make_ratio):
+	* alloc.c (make_ratio_bg):
+	* alloc.c (make_ratio_rt):
+	* alloc.c (make_bigfloat):
+	* alloc.c (make_bigfloat_bf):
+	* alloc.c (make_vector_internal):
+	* alloc.c (make_bit_vector_internal):
+	* alloc.c (make_compiled_function):
+	* alloc.c (Fmake_symbol):
+	* alloc.c (allocate_extent):
+	* alloc.c (allocate_event):
+	* alloc.c (make_key_data):
+	* alloc.c (make_button_data):
+	* alloc.c (make_motion_data):
+	* alloc.c (make_process_data):
+	* alloc.c (make_timeout_data):
+	* alloc.c (make_magic_data):
+	* alloc.c (make_magic_eval_data):
+	* alloc.c (make_eval_data):
+	* alloc.c (make_misc_user_data):
+	* alloc.c (Fmake_marker):
+	* alloc.c (noseeum_make_marker):
+	* buffer.c (allocate_buffer):
+	* buffer.c (compute_buffer_usage):
+	* buffer.c (nuke_all_buffer_slots):
+	* buffer.c (common_init_complex_vars_of_buffer):
+	* buffer.h (struct buffer):
+	* casetab.c (allocate_case_table):
+	* casetab.h (struct Lisp_Case_Table):
+	* charset.h (struct Lisp_Charset):
+	* chartab.c (fill_char_table):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (make_char_table_entry):
+	* chartab.c (copy_char_table_entry):
+	* chartab.c (Fcopy_char_table):
+	* chartab.c (put_char_table):
+	* chartab.h (struct Lisp_Char_Table_Entry):
+	* chartab.h (struct Lisp_Char_Table):
+	* console-impl.h (struct console):
+	* console-msw-impl.h (struct Lisp_Devmode):
+	* console-msw-impl.h (struct mswindows_dialog_id):
+	* console.c (allocate_console):
+	* console.c (nuke_all_console_slots):
+	* console.c (common_init_complex_vars_of_console):
+	* data.c (make_weak_list):
+	* data.c (make_weak_box):
+	* data.c (make_ephemeron):
+	* database.c (struct Lisp_Database):
+	* database.c (allocate_database):
+	* device-impl.h (struct device):
+	* device-msw.c (allocate_devmode):
+	* device.c (nuke_all_device_slots):
+	* device.c (allocate_device):
+	* dialog-msw.c (handle_question_dialog_box):
+	* elhash.c (struct Lisp_Hash_Table):
+	* elhash.c (make_general_lisp_hash_table):
+	* elhash.c (Fcopy_hash_table):
+	* events.h (struct Lisp_Timeout):
+	* events.h (struct command_builder):
+	* extents-impl.h (struct extent_auxiliary):
+	* extents-impl.h (struct extent_info):
+	* extents.c (allocate_extent_auxiliary):
+	* extents.c (allocate_extent_info):
+	* extents.c (copy_extent):
+	* faces.c (allocate_face):
+	* faces.h (struct Lisp_Face):
+	* file-coding.c (Fcopy_coding_system):
+	* file-coding.h (struct Lisp_Coding_System):
+	* frame-impl.h (struct frame):
+	* frame.c (nuke_all_frame_slots):
+	* frame.c (allocate_frame_core):
+	* glyphs.c (allocate_image_instance):
+	* glyphs.c (Fcolorize_image_instance):
+	* glyphs.c (allocate_glyph):
+	* glyphs.h (struct Lisp_Image_Instance):
+	* glyphs.h (struct Lisp_Glyph):
+	* gui.c (allocate_gui_item):
+	* gui.h (struct Lisp_Gui_Item):
+	* keymap.c (struct Lisp_Keymap):
+	* keymap.c (make_keymap):
+	* lisp.h (struct Lisp_Vector):
+	* lisp.h (struct Lisp_Bit_Vector):
+	* lisp.h (struct weak_box):
+	* lisp.h (struct ephemeron):
+	* lisp.h (struct weak_list):
+	* lrecord.h:
+	* lrecord.h (struct toolbar_button):
+	* lstream.c (COPY_SIZED_LCRECORD):
+	* lstream.h (struct lstream):
+	* mule-charset.c (make_charset):
+	* mule-charset.c (compute_charset_usage):
+	* objects-impl.h (struct Lisp_Color_Instance):
+	* objects-impl.h (struct Lisp_Font_Instance):
+	* objects.c (Fmake_color_instance):
+	* objects.c (Fmake_font_instance):
+	* objects.c (reinit_vars_of_objects):
+	* opaque.c (make_opaque):
+	* opaque.h (Lisp_Opaque):
+	* opaque.h (Lisp_Opaque_Ptr):
+	* print.c (default_object_printer):
+	* process.c (make_process_internal):
+	* procimpl.h (struct Lisp_Process):
+	* rangetab.c (Fmake_range_table):
+	* rangetab.c (Fcopy_range_table):
+	* rangetab.h (struct Lisp_Range_Table):
+	* scrollbar-gtk.c (gtk_compute_scrollbar_instance_usage):
+	* scrollbar-msw.c (mswindows_compute_scrollbar_instance_usage):
+	* scrollbar-x.c (x_compute_scrollbar_instance_usage):
+	* scrollbar.c (create_scrollbar_instance):
+	* scrollbar.c (compute_scrollbar_instance_usage):
+	* scrollbar.h (struct scrollbar_instance):
+	* specifier.c (make_specifier_internal):
+	* specifier.h (struct Lisp_Specifier):
+	* symbols.c (Fdefvaralias):
+	* symeval.h (SYMBOL_VALUE_MAGIC_P):
+	* toolbar.c (update_toolbar_button):
+	* toolbar.h (struct toolbar_button):
+	* tooltalk.c (struct Lisp_Tooltalk_Message):
+	* tooltalk.c (make_tooltalk_message):
+	* tooltalk.c (struct Lisp_Tooltalk_Pattern):
+	* tooltalk.c (make_tooltalk_pattern):
+	* ui-gtk.c (allocate_ffi_data):
+	* ui-gtk.c (allocate_emacs_gtk_object_data):
+	* ui-gtk.c (allocate_emacs_gtk_boxed_data):
+	* ui-gtk.h:
+	* unicode.c (compute_from_unicode_table_size_1):
+	* unicode.c (compute_to_unicode_table_size_1):
+	* window-impl.h (struct window):
+	* window-impl.h (struct window_mirror):
+	* window.c (allocate_window):
+	* window.c (new_window_mirror):
+	* window.c (make_dummy_parent):
+	* window.c (compute_window_mirror_usage):
+	* window.c (compute_window_usage):
+	Eliminate the majority of #ifdef MC_ALLOC occurrences through
+	macros LCRECORD_HEADER, ALLOC_LCRECORD_TYPE, MALLOCED_STORAGE_SIZE,
+	etc. (defined in lrecord.h).
+
 2005-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* Makefile.in.in (mule_canna_objs): Revert canna-api to canna_api.

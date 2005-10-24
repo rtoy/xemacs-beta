@@ -94,11 +94,7 @@ extern struct process_methods the_process_methods;
 
 struct Lisp_Process
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
 
   /* Exit code if process has terminated,
      signal which stopped/interrupted process

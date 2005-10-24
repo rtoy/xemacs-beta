@@ -1,6 +1,6 @@
 /* The "lrecord" structure (header of a compound lisp object).
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -659,11 +659,7 @@ void dec_lrecord_stats (Bytecount size_including_overhead,
    
    struct Lisp_Hash_Table
    {
-#ifdef MC_ALLOC
-     struct lrecord_header header;
-#else
-     struct lcrecord_header header;
-#endif
+     struct LCRECORD_HEADER header;
      Elemcount size;
      Elemcount count;
      Elemcount rehash_count;
@@ -728,11 +724,7 @@ void dec_lrecord_stats (Bytecount size_including_overhead,
 
    struct Lisp_Specifier
    {
-#ifdef MC_ALLOC
-     struct lrecord_header header;
-#else
-     struct lcrecord_header header;
-#endif
+     struct LCRECORD_HEADER header;
      struct specifier_methods *methods;
    
      ...
@@ -1206,11 +1198,7 @@ extern MODULE_API Lisp_Object (*lrecord_markers[]) (Lisp_Object);
    1. Declare the struct for your object in a header file somewhere.
    Remember that it must begin with
 
-#ifdef MC_ALLOC
-   struct lrecord_header header;
-#else
-   struct lcrecord_header header;
-#endif
+   struct LCRECORD_HEADER header;
 
    2. Put the "standard junk" (DECLARE_RECORD()/XFOO/etc.) below the
       struct definition -- see below.
@@ -1244,11 +1232,7 @@ An example:
 
 struct toolbar_button
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else
-  struct lcrecord_header header;
-#endif
+  struct LCRECORD_HEADER header;
 
   Lisp_Object next;
   Lisp_Object frame;
@@ -1618,6 +1602,7 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 MODULE_API void *
 alloc_automanaged_lcrecord (Bytecount size,
 			    const struct lrecord_implementation *);
+
 #define alloc_lcrecord_type(type, lrecord_implementation) \
   ((type *) alloc_automanaged_lcrecord (sizeof (type), lrecord_implementation))
 
@@ -1681,13 +1666,13 @@ void free_lrecord (Lisp_Object rec);
 
 #define copy_lrecord(dst, src) copy_sized_lrecord (dst, src, sizeof (*(dst)))
 
+#endif /* MC_ALLOC */
+
 #define zero_sized_lrecord(lcr, size)				\
    memset ((char *) (lcr) + sizeof (struct lrecord_header), 0,	\
 	   (size) - sizeof (struct lrecord_header))
 
 #define zero_lrecord(lcr) zero_sized_lrecord (lcr, sizeof (*(lcr)))
-
-#endif /* MC_ALLOC */
 
 DECLARE_INLINE_HEADER (
 Bytecount
@@ -1708,6 +1693,27 @@ lisp_object_size (Lisp_Object o)
 {
   return detagged_lisp_object_size (XRECORD_LHEADER (o));
 }
+
+#ifdef MC_ALLOC
+#define ALLOC_LCRECORD_TYPE alloc_lrecord_type
+#define COPY_SIZED_LCRECORD copy_sized_lrecord
+#define COPY_LCRECORD copy_lrecord
+#define MALLOCED_STORAGE_SIZE(ptr, size, stats) \
+  mc_alloced_storage_size (size, stats)
+#define ZERO_LCRECORD zero_lrecord
+#define LCRECORD_HEADER lrecord_header
+#define BASIC_ALLOC_LCRECORD alloc_lrecord
+#define FREE_LCRECORD free_lrecord
+#else
+#define ALLOC_LCRECORD_TYPE alloc_lcrecord_type
+#define COPY_SIZED_LCRECORD copy_sized_lcrecord
+#define COPY_LCRECORD copy_lcrecord
+#define MALLOCED_STORAGE_SIZE malloced_storage_size
+#define ZERO_LCRECORD zero_lcrecord
+#define LCRECORD_HEADER lcrecord_header
+#define BASIC_ALLOC_LCRECORD basic_alloc_lcrecord
+#define FREE_LCRECORD free_lcrecord
+#endif
 
 
 /************************************************************************/

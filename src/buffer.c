@@ -587,15 +587,9 @@ get_truename_buffer (REGISTER Lisp_Object filename)
 static struct buffer *
 allocate_buffer (void)
 {
-#ifdef MC_ALLOC
-  struct buffer *b = alloc_lrecord_type (struct buffer, &lrecord_buffer);
+  struct buffer *b = ALLOC_LCRECORD_TYPE (struct buffer, &lrecord_buffer);
 
-  copy_lrecord (b, XBUFFER (Vbuffer_defaults));
-#else /* not MC_ALLOC */
-  struct buffer *b = alloc_lcrecord_type (struct buffer, &lrecord_buffer);
-
-  copy_lcrecord (b, XBUFFER (Vbuffer_defaults));
-#endif /* not MC_ALLOC */
+  COPY_LCRECORD (b, XBUFFER (Vbuffer_defaults));
 
   return b;
 }
@@ -1763,11 +1757,7 @@ compute_buffer_usage (struct buffer *b, struct buffer_stats *stats,
 		      struct overhead_stats *ovstats)
 {
   xzero (*stats);
-#ifdef MC_ALLOC
-  stats->other   += mc_alloced_storage_size (sizeof (*b), ovstats);
-#else /* not MC_ALLOC */
-  stats->other   += malloced_storage_size (b, sizeof (*b), ovstats);
-#endif /* not MC_ALLOC */
+  stats->other   += MALLOCED_STORAGE_SIZE (b, sizeof (*b), ovstats);
   stats->text    += compute_buffer_text_usage   (b, ovstats);
   stats->markers += compute_buffer_marker_usage (b, ovstats);
   stats->extents += compute_buffer_extent_usage (b, ovstats);
@@ -2204,11 +2194,7 @@ do {									 \
 static void
 nuke_all_buffer_slots (struct buffer *b, Lisp_Object zap)
 {
-#ifdef MC_ALLOC
-  zero_lrecord (b);
-#else /* not MC_ALLOC */
-  zero_lcrecord (b);
-#endif /* not MC_ALLOC */
+  ZERO_LCRECORD (b);
 
   b->extent_info = Qnil;
   b->indirect_children = Qnil;
@@ -2223,13 +2209,8 @@ common_init_complex_vars_of_buffer (void)
 {
   /* Make sure all markable slots in buffer_defaults
      are initialized reasonably, so mark_buffer won't choke. */
-#ifdef MC_ALLOC
-  struct buffer *defs = alloc_lrecord_type (struct buffer, &lrecord_buffer);
-  struct buffer *syms = alloc_lrecord_type (struct buffer, &lrecord_buffer);
-#else /* not MC_ALLOC */
-  struct buffer *defs = alloc_lcrecord_type (struct buffer, &lrecord_buffer);
-  struct buffer *syms = alloc_lcrecord_type (struct buffer, &lrecord_buffer);
-#endif /* not MC_ALLOC */
+  struct buffer *defs = ALLOC_LCRECORD_TYPE (struct buffer, &lrecord_buffer);
+  struct buffer *syms = ALLOC_LCRECORD_TYPE (struct buffer, &lrecord_buffer);
 
   staticpro_nodump (&Vbuffer_defaults);
   staticpro_nodump (&Vbuffer_local_symbols);

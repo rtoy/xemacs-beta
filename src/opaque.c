@@ -75,11 +75,7 @@ Lisp_Object
 make_opaque (const void *data, Bytecount size)
 {
   Lisp_Opaque *p = (Lisp_Opaque *)
-#ifdef MC_ALLOC
-    alloc_lrecord (aligned_sizeof_opaque (size), &lrecord_opaque);
-#else /* not MC_ALLOC */
-    basic_alloc_lcrecord (aligned_sizeof_opaque (size), &lrecord_opaque);
-#endif /* not MC_ALLOC */
+    BASIC_ALLOC_LCRECORD (aligned_sizeof_opaque (size), &lrecord_opaque);
   p->size = size;
 
   if (data == OPAQUE_CLEAR)

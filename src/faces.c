@@ -373,11 +373,7 @@ reset_face (Lisp_Face *f)
 static Lisp_Face *
 allocate_face (void)
 {
-#ifdef MC_ALLOC
-  Lisp_Face *result = alloc_lrecord_type (Lisp_Face, &lrecord_face);
-#else /* not MC_ALLOC */
-  Lisp_Face *result = alloc_lcrecord_type (Lisp_Face, &lrecord_face);
-#endif /* not MC_ALLOC */
+  Lisp_Face *result = ALLOC_LCRECORD_TYPE (Lisp_Face, &lrecord_face);
 
   reset_face (result);
   return result;

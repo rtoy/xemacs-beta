@@ -751,13 +751,8 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
     Lisp_Object dialog_data;
     int i;
     struct mswindows_dialog_id *did =
-#ifdef MC_ALLOC
-      alloc_lrecord_type (struct mswindows_dialog_id,
-			  &lrecord_mswindows_dialog_id);
-#else /* not MC_ALLOC */
-      alloc_lcrecord_type (struct mswindows_dialog_id,
+      ALLOC_LCRECORD_TYPE (struct mswindows_dialog_id,
 			   &lrecord_mswindows_dialog_id);
-#endif /* not MC_ALLOC */
     
     dialog_data = wrap_mswindows_dialog_id (did);
     

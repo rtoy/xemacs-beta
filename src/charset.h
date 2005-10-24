@@ -181,11 +181,7 @@ leading_byte_prefix_p (Ibyte lb)
 
 struct Lisp_Charset
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
 
   int id;
   Lisp_Object name;

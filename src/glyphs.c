@@ -1326,11 +1326,7 @@ allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
 			 Lisp_Object instantiator)
 {
   Lisp_Image_Instance *lp =
-#ifdef MC_ALLOC
-    alloc_lrecord_type (Lisp_Image_Instance, &lrecord_image_instance);
-#else /* not MC_ALLOC */
-    alloc_lcrecord_type (Lisp_Image_Instance, &lrecord_image_instance);
-#endif /* not MC_ALLOC */
+    ALLOC_LCRECORD_TYPE (Lisp_Image_Instance, &lrecord_image_instance);
   Lisp_Object val;
 
   /* It's not possible to simply keep a record of the domain in which
@@ -1997,11 +1993,7 @@ instance is a mono pixmap; otherwise, the same image instance is returned.
      device-specific method to copy the window-system subobject. */
   new_ = allocate_image_instance (XIMAGE_INSTANCE_DOMAIN (image_instance),
 				 Qnil, Qnil);
-#ifdef MC_ALLOC
-  copy_lrecord (XIMAGE_INSTANCE (new_), XIMAGE_INSTANCE (image_instance));
-#else /* not MC_ALLOC */
-  copy_lcrecord (XIMAGE_INSTANCE (new_), XIMAGE_INSTANCE (image_instance));
-#endif /* not MC_ALLOC */
+  COPY_LCRECORD (XIMAGE_INSTANCE (new_), XIMAGE_INSTANCE (image_instance));
   /* note that if this method returns non-zero, this method MUST
      copy any window-system resources, so that when one image instance is
      freed, the other one is not hosed. */
@@ -3814,11 +3806,7 @@ allocate_glyph (enum glyph_type type,
 {
   /* This function can GC */
   Lisp_Object obj = Qnil;
-#ifdef MC_ALLOC
-  Lisp_Glyph *g = alloc_lrecord_type (Lisp_Glyph, &lrecord_glyph);
-#else /* not MC_ALLOC */
-  Lisp_Glyph *g = alloc_lcrecord_type (Lisp_Glyph, &lrecord_glyph);
-#endif /* not MC_ALLOC */
+  Lisp_Glyph *g = ALLOC_LCRECORD_TYPE (Lisp_Glyph, &lrecord_glyph);
 
   g->type = type;
   g->image = Fmake_specifier (Qimage); /* This function can GC */

@@ -147,11 +147,7 @@ Lisp_Object Qtooltalk_messagep;
 
 struct Lisp_Tooltalk_Message
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   Lisp_Object plist_sym, callback;
   Tt_message m;
 };
@@ -195,11 +191,7 @@ make_tooltalk_message (Tt_message m)
 {
   Lisp_Object val;
   Lisp_Tooltalk_Message *msg =
-#ifdef MC_ALLOC
-    alloc_lrecord_type (Lisp_Tooltalk_Message, &lrecord_tooltalk_message);
-#else /* not MC_ALLOC */
-    alloc_lcrecord_type (Lisp_Tooltalk_Message, &lrecord_tooltalk_message);
-#endif /* not MC_ALLOC */
+    ALLOC_LCRECORD_TYPE (Lisp_Tooltalk_Message, &lrecord_tooltalk_message);
 
   msg->m = m;
   msg->callback = Qnil;
@@ -233,11 +225,7 @@ Lisp_Object Qtooltalk_patternp;
 
 struct Lisp_Tooltalk_Pattern
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   Lisp_Object plist_sym, callback;
   Tt_pattern p;
 };
@@ -280,11 +268,7 @@ static Lisp_Object
 make_tooltalk_pattern (Tt_pattern p)
 {
   Lisp_Tooltalk_Pattern *pat =
-#ifdef MC_ALLOC
-    alloc_lrecord_type (Lisp_Tooltalk_Pattern, &lrecord_tooltalk_pattern);
-#else /* not MC_ALLOC */
-    alloc_lcrecord_type (Lisp_Tooltalk_Pattern, &lrecord_tooltalk_pattern);
-#endif /* not MC_ALLOC */
+    ALLOC_LCRECORD_TYPE (Lisp_Tooltalk_Pattern, &lrecord_tooltalk_pattern);
   Lisp_Object val;
 
   pat->p = p;

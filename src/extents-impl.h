@@ -103,11 +103,7 @@ struct extent
 typedef struct extent_auxiliary extent_auxiliary;
 struct extent_auxiliary
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
 
   Lisp_Object begin_glyph;
   Lisp_Object end_glyph;
@@ -133,11 +129,7 @@ extern struct extent_auxiliary extent_auxiliary_defaults;
 
 struct extent_info
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
 
   struct extent_list *extents;
   struct stack_of_extents *soe;

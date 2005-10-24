@@ -197,11 +197,7 @@ gui_item_init (Lisp_Object gui_item)
 Lisp_Object
 allocate_gui_item (void)
 {
-#ifdef MC_ALLOC
-  Lisp_Gui_Item *lp = alloc_lrecord_type (Lisp_Gui_Item, &lrecord_gui_item);
-#else /* not MC_ALLOC */
-  Lisp_Gui_Item *lp = alloc_lcrecord_type (Lisp_Gui_Item, &lrecord_gui_item);
-#endif /* not MC_ALLOC */
+  Lisp_Gui_Item *lp = ALLOC_LCRECORD_TYPE (Lisp_Gui_Item, &lrecord_gui_item);
   Lisp_Object val;
 
   val = wrap_gui_item (lp);

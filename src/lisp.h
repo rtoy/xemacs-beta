@@ -2372,11 +2372,7 @@ DECLARE_MODULE_API_LRECORD (string, Lisp_String);
 
 struct Lisp_Vector
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   long size;
   Lisp_Object contents[1];
 };
@@ -2413,11 +2409,7 @@ DECLARE_LRECORD (vector, Lisp_Vector);
 
 struct Lisp_Bit_Vector
 {
-#ifdef MC_ALLOC
-  struct lrecord_header lheader;
-#else /* MC_ALLOC */
-  struct lcrecord_header lheader;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER lheader;
   Elemcount size;
   unsigned long bits[1];
 };
@@ -2778,11 +2770,7 @@ void define_structure_type_keyword (struct structure_type *st,
 
 struct weak_box
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   Lisp_Object value;
 
   Lisp_Object next_weak_box; /* don't mark through this! */
@@ -2804,11 +2792,7 @@ DECLARE_LRECORD (weak_box, struct weak_box);
 
 struct ephemeron 
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
 
   Lisp_Object key;
 
@@ -2867,11 +2851,7 @@ enum weak_list_type
 
 struct weak_list
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
   Lisp_Object list; /* don't mark through this! */
   enum weak_list_type type;
   Lisp_Object next_weak; /* don't mark through this! */

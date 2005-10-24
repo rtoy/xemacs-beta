@@ -84,11 +84,7 @@ the window configuration. */
 
 struct window
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
 
   /* The upper left corner coordinates of this window,
      as integers (pixels) relative to upper left corner of frame = 0, 0 */
@@ -172,11 +168,7 @@ struct window
 
 struct window_mirror
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
 
   /* Frame this mirror is on. */
   struct frame *frame;

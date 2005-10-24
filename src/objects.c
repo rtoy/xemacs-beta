@@ -178,11 +178,7 @@ is deallocated as well.
   CHECK_STRING (name);
   device = wrap_device (decode_device (device));
 
-#ifdef MC_ALLOC
-  c = alloc_lrecord_type (Lisp_Color_Instance, &lrecord_color_instance);
-#else /* not MC_ALLOC */
-  c = alloc_lcrecord_type (Lisp_Color_Instance, &lrecord_color_instance);
-#endif /* not MC_ALLOC */
+  c = ALLOC_LCRECORD_TYPE (Lisp_Color_Instance, &lrecord_color_instance);
   c->name = name;
   c->device = device;
   c->data = 0;
@@ -391,11 +387,7 @@ these objects are GCed, the underlying X data is deallocated as well.
 
   device = wrap_device (decode_device (device));
 
-#ifdef MC_ALLOC
-  f = alloc_lrecord_type (Lisp_Font_Instance, &lrecord_font_instance);
-#else /* not MC_ALLOC */
-  f = alloc_lcrecord_type (Lisp_Font_Instance, &lrecord_font_instance);
-#endif /* not MC_ALLOC */
+  f = ALLOC_LCRECORD_TYPE (Lisp_Font_Instance, &lrecord_font_instance);
   f->name = name;
   f->truename = Qnil;
   f->device = device;
@@ -1206,11 +1198,7 @@ reinit_vars_of_objects (void)
   staticpro_nodump (&Vthe_null_color_instance);
   {
     Lisp_Color_Instance *c =
-#ifdef MC_ALLOC
-      alloc_lrecord_type (Lisp_Color_Instance, &lrecord_color_instance);
-#else /* not MC_ALLOC */
-      alloc_lcrecord_type (Lisp_Color_Instance, &lrecord_color_instance);
-#endif /* not MC_ALLOC */
+      ALLOC_LCRECORD_TYPE (Lisp_Color_Instance, &lrecord_color_instance);
     c->name = Qnil;
     c->device = Qnil;
     c->data = 0;
@@ -1221,11 +1209,7 @@ reinit_vars_of_objects (void)
   staticpro_nodump (&Vthe_null_font_instance);
   {
     Lisp_Font_Instance *f =
-#ifdef MC_ALLOC
-      alloc_lrecord_type (Lisp_Font_Instance, &lrecord_font_instance);
-#else /* not MC_ALLOC */
-      alloc_lcrecord_type (Lisp_Font_Instance, &lrecord_font_instance);
-#endif /* not MC_ALLOC */
+      ALLOC_LCRECORD_TYPE (Lisp_Font_Instance, &lrecord_font_instance);
     f->name = Qnil;
     f->truename = Qnil;
     f->device = Qnil;

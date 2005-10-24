@@ -1409,11 +1409,7 @@ Use `define-coding-system-alias' instead.
   {
     Lisp_Coding_System *to = XCODING_SYSTEM (new_coding_system);
     Lisp_Coding_System *from = XCODING_SYSTEM (old_coding_system);
-#ifdef MC_ALLOC
-    copy_sized_lrecord (to, from, sizeof_coding_system (from));
-#else /* not MC_ALLOC */
-    copy_sized_lcrecord (to, from, sizeof_coding_system (from));
-#endif /* not MC_ALLOC */
+    COPY_SIZED_LCRECORD (to, from, sizeof_coding_system (from));
     to->name = new_name;
   }
   return new_coding_system;

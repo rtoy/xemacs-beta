@@ -412,11 +412,7 @@ struct console_methods * type##_console_methods
 
 struct console
 {
-#ifdef MC_ALLOC
-  struct lrecord_header header;
-#else /* MC_ALLOC */
-  struct lcrecord_header header;
-#endif /* MC_ALLOC */
+  struct LCRECORD_HEADER header;
 
   /* Description of this console's methods.  */
   struct console_methods *conmeths;

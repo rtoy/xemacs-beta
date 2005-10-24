@@ -1453,13 +1453,7 @@ static void
 default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			int UNUSED (escapeflag))
 {
-#ifdef MC_ALLOC
-  struct lrecord_header *header =
-    (struct lrecord_header *) XPNTR (obj);
-#else /* not MC_ALLOC */
-  struct lcrecord_header *header =
-    (struct lcrecord_header *) XPNTR (obj);
-#endif /* not MC_ALLOC */
+  struct LCRECORD_HEADER *header = (struct LCRECORD_HEADER *) XPNTR (obj);
 
   if (print_readably)
     printing_unreadable_object
