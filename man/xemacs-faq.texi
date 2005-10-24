@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/10/14 02:11:49 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/10/24 20:39:47 $
 @sp 1
 @author Ben Wing <ben@@xemacs.org>
 @author Tony Rossini <rossini@@u.washington.edu>
@@ -1103,9 +1103,10 @@ sparc-sun-solaris2.7 (both Sun's Forte C and gcc)
 sparc-sun-sunos4.1.4 (gcc)
 @end example
 
-Some systems have a dual mode 32-bit/64-bit compiler.  On most of
-these, XEmacs requires the @samp{--pdump} configure option to build
-correctly with the 64-bit version of the compiler.
+Some systems have a dual mode 32-bit/64-bit compiler.  On most of these,
+XEmacs requires the @samp{--pdump} (in XEmacs 21.5,
+@samp{--enable-pdump}) configure option to build correctly with the
+64-bit version of the compiler.
 
 @example
 mips-sgi-irix6.5, CC="gcc -mabi=64"
@@ -3263,14 +3264,14 @@ If you have GNU tar you can use:
 
 @code{cd $prefix/lib/xemacs ; tar zxvf <tarballname>}
 
-If you have the packages somewhere nonstandard and don't want to
-bother with @samp{$prefix} (for example, you're a developer and are
-compiling the packages yourself, and want your own private copy of
-everything), you can also directly specify this using @file{configure}.
-To do this under 21.5 and above use the @samp{--package-prefix} parameter
-to specify the directory under which you untarred the above tarballs.
-Under 21.4 and previous you need to use @samp{--package-path},
-something like this:
+If you have the packages somewhere nonstandard and don't want to bother
+with @samp{$prefix} (for example, you're a developer and are compiling
+the packages yourself, and want your own private copy of everything),
+you can also directly specify this using @file{configure}.  To do this
+with 21.5 and above use the @samp{--with-package-prefix} parameter to
+specify the directory under which you untarred the above tarballs.
+Under 21.4 and previous you need to use @samp{--package-path}.  Using
+these options looks something like this:
 
 @example
    configure --package-path="~/.xemacs::/src/xemacs/site-packages:/src/xemacs/xemacs-packages:/src/xemacs/mule-packages" ...
@@ -3505,11 +3506,10 @@ XEmacs in its default installation will find packages that you put
 under @file{/usr/local/lib/xemacs}.
 
 You can specify where exactly XEmacs looks for packages by using the
-@samp{--package-prefix} or @samp{--package-path} parameters to
-@file{configure} (or the equivalent settings in @file{config.inc},
-under Windows), or setting the @samp{EMACSPACKAGEPATH} environment
-variable (which has the same format as @samp{--package-path}).
-@xref{Q2.1.1}.
+@samp{--with-package-prefix} or @samp{--with-package-path} parameters to
+@file{configure} (or the equivalent settings in @file{config.inc}, under
+Windows), or setting the @samp{EMACSPACKAGEPATH} environment variable
+(which has the same format as @samp{--with-package-path}).  @xref{Q2.1.1}.
 
 See @file{configure.usage} for more info about the format of these
 @file{configure} parameters.
@@ -3545,17 +3545,38 @@ needed flag with `man ftp' or other local documentation.
 @unnumberedsubsec Q2.2.1: Libraries in non-standard locations
 
 If your libraries are in a non-standard location, you can specify the location
-using the following flags to @file{configure}:
+using the following flags to @file{configure}.  Under 21.4 or earlier:
 
 @example
 --site-libraries=WHATEVER
 --site-includes=WHATEVER
 @end example
 
+Under 21.5 or later:
+
+@example
+--with-site-libraries=WHATEVER
+--with-site-includes=WHATEVER
+@end example
+
 If you have multiple paths to specify, use the following syntax:
 
 @example
 --site-libraries='/path/one /path/two /path/etc'
+@end example
+
+If the libraries and headers reside in the directories @samp{lib} and
+@samp{include} of a common root (say @samp{/sw}) then both can be
+specified with a single option:
+
+@example
+--site-prefixes=WHATEVER
+@end example
+
+or for 21.5:
+
+@example
+--with-site-prefixes=WHATEVER
 @end example
 
 @node Q2.2.2, Q2.3.1, Q2.2.1, Installation
@@ -3751,8 +3772,10 @@ Build @samp{gcc -mno-cygwin} versions of the extra libs, i.e. @file{libpng},
 
 @item
 Specify the target location of the extra libs on the command line
-to @file{configure}, e.g.
-@samp{./configure --site-prefixes=/build/libs i586-pc-mingw32}.
+to @file{configure}, e.g.for 21.4 or earlier
+@samp{./configure --site-prefixes=/build/libs i586-pc-mingw32} and for
+21.5 or later 
+@samp{./configure --with-site-prefixes=/build/libs i586-pc-mingw32}.
 @end itemize
 
 @node Q2.3.7, Q2.3.8, Q2.3.6, Installation
@@ -3965,10 +3988,11 @@ Please see the @file{PROBLEMS} file that comes with XEmacs (it's in
 the top-level source directory) to read what it says about your
 platform.
 
-If you compiled XEmacs using @samp{--use-union-type} (or the option
-@samp{USE_UNION_TYPE} in @file{config.inc} under Windows), try
-recompiling again without it.  The union type has been known to trigger
-compiler errors in a number of cases.
+If you compiled XEmacs 21.4 or ealier using @samp{--use-union-type}, or
+21.5 or later using @samp{--enable-union-type} (or in either case used
+the option @samp{USE_UNION_TYPE} in @file{config.inc} under Windows),
+try recompiling again without it.  The union type has been known to
+trigger compiler errors in a number of cases.
 
 @node Q2.4.4, Q2.4.5, Q2.4.3, Installation
 @unnumberedsubsec Q2.4.4: How to debug an XEmacs problem with a debugger
@@ -3983,12 +4007,14 @@ First of all, if the crash is at all reproducible, consider very
 strongly recompiling your XEmacs with debugging symbols and with no
 optimization (e.g. with GCC use the compiler flags @samp{-g -O0} --
 that's an "oh" followed by a zero), and with the configure options
-@samp{--debug=yes} and @samp{--error-checking=all}.  This will make
-your XEmacs run somewhat slower, but you are a lot more likely to
-catch the problem earlier (closer to its source).  It makes it a lot
-easier to determine what's going on with a debugger.  The way to
-control the compiler flags is with the configuration option
-@samp{--cflags}.  If you have a recent version of 21.5, you should use
+@samp{--debug=yes} and @samp{--error-checking=all}
+(@samp{--enable-debug=yes} and @samp{--enable-error-checking=all} on
+XEmacs 21.5 or later).  This will make your XEmacs run somewhat slower,
+but you are a lot more likely to catch the problem earlier (closer to
+its source).  It makes it a lot easier to determine what's going on with
+a debugger.  The way to control the compiler flags is with the
+configuration option @samp{--cflags} (@samp{--with-cflags} in 21.5).  If
+you have a recent version of 21.5, you should use
 @samp{--without-optimization} in preference to directly setting
 @samp{--cflags}.
 
@@ -4146,11 +4172,11 @@ If you are using Sun's @file{dbx} debugger, there is an equivalent file
 If you're using a debugger to get a C stack backtrace and you're seeing
 stack traces with some of the innermost frames mangled, it may be due to
 dynamic linking. (This happens especially under Linux.) Consider
-reconfiguring with @samp{--dynamic=no}.  Also, sometimes (again under
-Linux), stack backtraces of core dumps will have the frame where the
-fatal signal occurred mangled; if you can obtain a stack trace while
-running the XEmacs process under a debugger, the stack trace should be
-clean.
+reconfiguring with @samp{--dynamic=no} (@samp{--with-dynamic=no} in 21.5
+or later).  Also, sometimes (again under Linux), stack backtraces of
+core dumps will have the frame where the fatal signal occurred mangled;
+if you can obtain a stack trace while running the XEmacs process under a
+debugger, the stack trace should be clean.
 
 @email{1CMC3466@@ibm.mtsac.edu, Curtiss} suggests upgrading to ld.so
 version 1.8 if dynamic linking and debugging is a problem on Linux.
@@ -4293,14 +4319,14 @@ errors often occur during compiling, which is often triggered by a
 complex command run from a make suite, it may be easier to attach to
 the process once it's running.
 
-Under Microsoft Windows (and perhaps other operating systems), there
-is another useful trick you can do if you have configured with
-debugging support (configure option @samp{--debug} or setting
-@samp{DEBUG_XEMACS} in @file{nt/config.inc}).  Set the environment
-variable @samp{XEMACSDEBUG} (as described above) to @samp{(setq
-debug-on-error t)}.  Then, when an error occurs noninteractively,
-instead of trying to invoke the Lisp debugger (which obviously won't
-work), XEmacs will break out to a C debugger using
+Under Microsoft Windows (and perhaps other operating systems), there is
+another useful trick you can do if you have configured with debugging
+support (configure option @samp{--debug} (@samp{--with-debug} in 21.5)
+or setting @samp{DEBUG_XEMACS} in @file{nt/config.inc}).  Set the
+environment variable @samp{XEMACSDEBUG} (as described above) to
+@samp{(setq debug-on-error t)}.  Then, when an error occurs
+noninteractively, instead of trying to invoke the Lisp debugger (which
+obviously won't work), XEmacs will break out to a C debugger using
 @code{(force-debugging-signal t)}.  @emph{NOTE}: This runs
 @code{abort()}!!! (As well as and after executing INT 3 under MS
 Windows, which should invoke a debugger if it's active.) This is
@@ -6441,15 +6467,19 @@ in your @file{init.el}:
 
 @uref{http://radscan.com/nas.html}.
 
-To build XEmacs with it, use the @file{configure} flag @samp{--with-sound=nas}.
+To build XEmacs with it, use the @file{configure} flag
+@samp{--with-sound=nas} (@samp{--enable-sound=nas} in 21.5 or later).
 
 @dfn{Enlightened Sound Daemon} (ESD or EsounD) is yet another sound system.
 
 @uref{http://www.tux.org/~ricdude/EsounD.html}.
 
-To build XEmacs with it, use the @file{configure} flag @samp{--with-sound=esd}.
+To build XEmacs with it, use the @file{configure} flag
+@samp{--with-sound=esd} (@samp{--enable-sound=esd} in 21.5 or later).
 
-You can specify support for both with a flag like @samp{--with-sound=nas,esd}.
+You can specify support for both with a flag like
+@samp{--with-sound=nas,esd} (@samp{--enable-sound=nas,esd} in 21.5 or
+later).
 
 @node Q5.3.4, Q5.4.1, Q5.3.3, External Subsystems
 @unnumberedsubsec Q5.3.4: Sunsite sounds don't play.
@@ -6873,7 +6903,8 @@ This program interlocks with @code{/bin/mail} using the protocol
 defined by @code{/bin/mail}.
 
 There are various different protocols in general use, which you need to
-specify using the @samp{--mail-locking} option to @file{configure}:
+specify using the @samp{--mail-locking} option
+(@samp{--with-mail-locking} in 21.5 or later) to @file{configure}:
 
 @table @samp
 @item lockf
@@ -7794,10 +7825,10 @@ says.  If you work with extremely large numbers, your machine may
 arbitrarily decide to hand you an unpleasant surprise rather than a
 bignum @ref{Q7.2.2, XEmacs segfaults when I use very big numbers!}.
 
-To configure with GNU MP, add
-@samp{--use-number-lib=gmp}
-to your invocation of @file{configure}.  For BSD MP, use
-@samp{--use-number-lib=mp}.
+To configure with GNU MP, add @samp{--use-number-lib=gmp}
+(@samp{--enable-bignum=gmp} in 21.5 or later) to your invocation of
+@file{configure}.  For BSD MP, use @samp{--use-number-lib=mp}
+(@samp{--enable-bignum=mp} for 21.5).
 
 If you would like to help with bignum support, especially on BSD MP,
 please subscribe to the @uref{http://www.xemacs.org/Lists/#xemacs-beta,

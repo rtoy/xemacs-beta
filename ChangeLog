@@ -1,3 +1,9 @@
+2005-10-20  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* INSTALL: Reflect changes in the configure options.  Update MacOS
+	X X11 installation instructions to reflect the changes in recent
+	OS releases.
+
 2005-10-15  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* configure.ac: Added XE_MERGED_ARG to alias all local --enable

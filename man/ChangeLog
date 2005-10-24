@@ -1,3 +1,19 @@
+2005-10-20  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* xemacs-faq.texi (Q1.2.2):
+	* xemacs-faq.texi (Q2.1.1):
+	* xemacs-faq.texi (Q2.1.6):
+	* xemacs-faq.texi (Q2.2.1):
+	* xemacs-faq.texi (Q2.3.6):
+	* xemacs-faq.texi (Q2.4.3):
+	* xemacs-faq.texi (Q2.4.4):
+	* xemacs-faq.texi (Q2.4.7):
+	* xemacs-faq.texi (Q5.3.3):
+	* xemacs-faq.texi (Q6.0.8):
+	* xemacs-faq.texi (Q7.2.1):
+	Add 21.5 specific examples of configure options in addition to the
+	existing 21.4 ones.
+
 2005-10-15  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* internals/internals.texi: "API's" -> "APIs".  This fixes
