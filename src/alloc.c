@@ -587,7 +587,7 @@ dec_lrecord_stats (Bytecount size_including_overhead,
 /* lcrecords are chained together through their "next" field.
    After doing the mark phase, GC will walk this linked list
    and free any lcrecord which hasn't been marked. */
-static struct lcrecord_header *all_lcrecords;
+static struct old_lcrecord_header *all_lcrecords;
 #endif /* not MC_ALLOC */
 
 #ifdef MC_ALLOC
@@ -653,10 +653,10 @@ free_lrecord (Lisp_Object lrecord)
    specified size.  See lrecord.h. */
 
 void *
-basic_alloc_lcrecord (Bytecount size,
-		      const struct lrecord_implementation *implementation)
+old_basic_alloc_lcrecord (Bytecount size,
+			  const struct lrecord_implementation *implementation)
 {
-  struct lcrecord_header *lcheader;
+  struct old_lcrecord_header *lcheader;
 
   type_checking_assert
     ((implementation->static_size == 0 ?
@@ -667,7 +667,7 @@ basic_alloc_lcrecord (Bytecount size,
      &&
      (! (implementation->hash == NULL && implementation->equal != NULL)));
 
-  lcheader = (struct lcrecord_header *) allocate_lisp_storage (size);
+  lcheader = (struct old_lcrecord_header *) allocate_lisp_storage (size);
   set_lheader_implementation (&lcheader->lheader, implementation);
   lcheader->next = all_lcrecords;
 #if 1                           /* mly prefers to see small ID numbers */
@@ -689,7 +689,7 @@ basic_alloc_lcrecord (Bytecount size,
  * Otherwise, just let the GC do its job -- that's what it's there for
  */
 void
-very_old_free_lcrecord (struct lcrecord_header *lcrecord)
+very_old_free_lcrecord (struct old_lcrecord_header *lcrecord)
 {
   if (all_lcrecords == lcrecord)
     {
@@ -697,10 +697,10 @@ very_old_free_lcrecord (struct lcrecord_header *lcrecord)
     }
   else
     {
-      struct lrecord_header *header = all_lcrecords;
+      struct old_lcrecord_header *header = all_lcrecords;
       for (;;)
 	{
-	  struct lrecord_header *next = header->next;
+	  struct old_lcrecord_header *next = header->next;
 	  if (next == lcrecord)
 	    {
 	      header->next = lrecord->next;
@@ -727,7 +727,7 @@ disksave_object_finalization_1 (void)
 #ifdef MC_ALLOC
   mc_finalize_for_disksave ();
 #else /* not MC_ALLOC */
-  struct lcrecord_header *header;
+  struct old_lcrecord_header *header;
 
   for (header = all_lcrecords; header; header = header->next)
     {
@@ -760,9 +760,11 @@ copy_lisp_object (Lisp_Object dst, Lisp_Object src)
 	    (char *) XRECORD_LHEADER (src) + sizeof (struct lrecord_header),
 	    size - sizeof (struct lrecord_header));
   else
-    memcpy ((char *) XRECORD_LHEADER (dst) + sizeof (struct lcrecord_header),
-	    (char *) XRECORD_LHEADER (src) + sizeof (struct lcrecord_header),
-	    size - sizeof (struct lcrecord_header));
+    memcpy ((char *) XRECORD_LHEADER (dst) +
+	    sizeof (struct old_lcrecord_header),
+	    (char *) XRECORD_LHEADER (src) +
+	    sizeof (struct old_lcrecord_header),
+	    size - sizeof (struct old_lcrecord_header));
 #endif /* not MC_ALLOC */
 }
 
@@ -2887,7 +2889,7 @@ make_string_nocopy (const Ibyte *contents, Bytecount length)
 /************************************************************************/
 
 /* Lcrecord lists are used to manage the allocation of particular
-   sorts of lcrecords, to avoid calling basic_alloc_lcrecord() (and thus
+   sorts of lcrecords, to avoid calling BASIC_ALLOC_LCRECORD() (and thus
    malloc() and garbage-collection junk) as much as possible.
    It is similar to the Blocktype class.
 
@@ -2959,11 +2961,11 @@ Lisp_Object
 make_lcrecord_list (Elemcount size,
 		    const struct lrecord_implementation *implementation)
 {
-  /* Don't use alloc_lcrecord_type() avoid infinite recursion
+  /* Don't use old_alloc_lcrecord_type() avoid infinite recursion
      allocating this, */
   struct lcrecord_list *p = (struct lcrecord_list *)
-    basic_alloc_lcrecord (sizeof (struct lcrecord_list),
-			  &lrecord_lcrecord_list);
+    old_basic_alloc_lcrecord (sizeof (struct lcrecord_list),
+			      &lrecord_lcrecord_list);
 
   p->implementation = implementation;
   p->size = size;
@@ -3005,12 +3007,12 @@ alloc_managed_lcrecord (Lisp_Object lcrecord_list)
       free_header->lcheader.free = 0;
       /* Put back the correct type, as we set it to lrecord_type_free. */
       lheader->type = list->implementation->lrecord_type_index;
-      zero_sized_lcrecord (free_header, list->size);
+      old_zero_sized_lcrecord (free_header, list->size);
       return val;
     }
   else
-    return wrap_pointer_1 (basic_alloc_lcrecord (list->size,
-						 list->implementation));
+    return wrap_pointer_1 (old_basic_alloc_lcrecord (list->size,
+						     list->implementation));
 }
 
 /* "Free" a Lisp object LCRECORD by placing it on its associated free list
@@ -3081,7 +3083,7 @@ alloc_automanaged_lcrecord (Bytecount size,
 }
 
 void
-free_lcrecord (Lisp_Object rec)
+old_free_lcrecord (Lisp_Object rec)
 {
   int type = XRECORD_LHEADER (rec)->type;
 
@@ -3617,7 +3619,7 @@ lispdesc_block_size_1 (const void *obj, Bytecount size,
 #define GC_CHECK_NOT_FREE(lheader)					\
       gc_checking_assert (! LRECORD_FREE_P (lheader));			\
       gc_checking_assert (LHEADER_IMPLEMENTATION (lheader)->basic_p ||	\
-			  ! ((struct lcrecord_header *) lheader)->free)
+			  ! ((struct old_lcrecord_header *) lheader)->free)
 #endif /* MC_ALLOC */
 
 #ifdef USE_KKCC
@@ -4148,7 +4150,7 @@ tick_lcrecord_stats (const struct lrecord_header *h, int free_p)
 {
   int type_index = h->type;
 
-  if (((struct lcrecord_header *) h)->free)
+  if (((struct old_lcrecord_header *) h)->free)
     {
       gc_checking_assert (!free_p);
       lcrecord_stats[type_index].instances_on_free_list++;
@@ -4175,9 +4177,9 @@ tick_lcrecord_stats (const struct lrecord_header *h, int free_p)
 #ifndef MC_ALLOC
 /* Free all unmarked records */
 static void
-sweep_lcrecords_1 (struct lcrecord_header **prev, int *used)
+sweep_lcrecords_1 (struct old_lcrecord_header **prev, int *used)
 {
-  struct lcrecord_header *header;
+  struct old_lcrecord_header *header;
   int num_used = 0;
   /* int total_size = 0; */
 
@@ -4222,11 +4224,11 @@ sweep_lcrecords_1 (struct lcrecord_header **prev, int *used)
 	}
       else
 	{
-	  struct lcrecord_header *next = header->next;
+	  struct old_lcrecord_header *next = header->next;
           *prev = next;
 	  tick_lcrecord_stats (h, 1);
 	  /* used to call finalizer right here. */
-	  xfree (header, struct lcrecord_header *);
+	  xfree (header, struct old_lcrecord_header *);
 	  header = next;
 	}
     }

@@ -1,5 +1,61 @@
 2005-10-25  Ben Wing  <ben@xemacs.org>
 
+	* alloc.c:
+	* alloc.c (old_basic_alloc_lcrecord):
+	* alloc.c (very_old_free_lcrecord):
+	* alloc.c (disksave_object_finalization_1):
+	* alloc.c (copy_lisp_object):
+	* alloc.c (make_lcrecord_list):
+	* alloc.c (alloc_managed_lcrecord):
+	* alloc.c (old_free_lcrecord):
+	* alloc.c (GC_CHECK_NOT_FREE):
+	* alloc.c (tick_lcrecord_stats):
+	* alloc.c (sweep_lcrecords_1):
+	* buffer.c (compute_buffer_usage):
+	* buffer.c (DEFVAR_BUFFER_LOCAL_1):
+	* console.c (DEFVAR_CONSOLE_LOCAL_1):
+	* emacs.c:
+	* emacs.c (main_1):
+	* file-coding.c (allocate_coding_system):
+	* lrecord.h:
+	* lrecord.h (struct old_lcrecord_header):
+	* lrecord.h (struct free_lcrecord_header):
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (struct lcrecord_list):
+	* lrecord.h (old_alloc_lcrecord_type):
+	* lrecord.h (old_copy_sized_lcrecord):
+	* lrecord.h (old_zero_lcrecord):
+	* lstream.c (Lstream_new):
+	* mule-charset.c (compute_charset_usage):
+	* print.c (debug_p4):
+	* scrollbar-gtk.c (gtk_compute_scrollbar_instance_usage):
+	* scrollbar-msw.c (mswindows_compute_scrollbar_instance_usage):
+	* scrollbar-x.c (x_compute_scrollbar_instance_usage):
+	* scrollbar.c (compute_scrollbar_instance_usage):
+	* symbols.c (guts_of_unbound_marker):
+	* symeval.h (DEFVAR_SYMVAL_FWD):
+	* unicode.c (compute_from_unicode_table_size_1):
+	* unicode.c (compute_to_unicode_table_size_1):
+	* window.c (compute_window_mirror_usage):
+	* window.c (compute_window_usage):
+	* xemacs.def.in.in:
+	rename `struct lcrecord_header' to `struct old_lcrecord_header';
+	likewise for `old_basic_alloc_lcrecord', `old_free_lcrecord',
+	`old_zero_lcrecord', `old_zero_sized_lcrecord', `old_copy_lcrecord',
+	`old_copy_sized_lcrecord', `old_alloc_lcrecord_type'.  Created new
+	LISPOBJ_STORAGE_SIZE() used only on objects created through allocation
+	of Lisp-Object memory instead of basic xmalloc()/xfree().  This is
+	distinguished from malloced_storage_size(), for non-Lisp-Objects.
+	The definition of LISPOBJ_STORAGE_SIZE() can reduce down to
+	malloced_storage_size() when not MC-ALLOC, but with MC-ALLOC it's
+	a different function.
+
+	The whole point other than cleaning up the use of LISPOBJ_STORAGE_SIZE
+	is to make it harder to accidentally use the old kind (lowercase) of
+	function in new code, since you get a compile error.
+
+2005-10-25  Ben Wing  <ben@xemacs.org>
+
 	* frame-msw.c (mswindows_window_id):
 	Fix warning.
 

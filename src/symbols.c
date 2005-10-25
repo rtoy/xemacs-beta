@@ -3256,7 +3256,7 @@ Lisp_Object Qnull_pointer;
 /* some losing systems can't have static vars at function scope... */
 static const struct symbol_value_magic guts_of_unbound_marker =
 { /* struct symbol_value_magic */
-  { /* struct lcrecord_header */
+  { /* struct old_lcrecord_header */
     { /* struct lrecord_header */
       lrecord_type_symbol_value_forward, /* lrecord_type_index */
       1, /* mark bit */

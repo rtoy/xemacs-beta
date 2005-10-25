@@ -272,7 +272,7 @@ compute_scrollbar_instance_usage (struct device *d,
 
   while (inst)
     {
-      total += MALLOCED_STORAGE_SIZE (inst, sizeof (*inst), ovstats);
+      total += LISPOBJ_STORAGE_SIZE (inst, sizeof (*inst), ovstats);
       inst = inst->next;
     }
 

@@ -1757,7 +1757,7 @@ compute_buffer_usage (struct buffer *b, struct buffer_stats *stats,
 		      struct overhead_stats *ovstats)
 {
   xzero (*stats);
-  stats->other   += MALLOCED_STORAGE_SIZE (b, sizeof (*b), ovstats);
+  stats->other   += LISPOBJ_STORAGE_SIZE (b, sizeof (*b), ovstats);
   stats->text    += compute_buffer_text_usage   (b, ovstats);
   stats->markers += compute_buffer_marker_usage (b, ovstats);
   stats->extents += compute_buffer_extent_usage (b, ovstats);
@@ -2146,7 +2146,7 @@ do {									 \
   static const struct symbol_value_forward I_hate_C =			 \
   { /* struct symbol_value_forward */					 \
     { /* struct symbol_value_magic */					 \
-      { /* struct lcrecord_header */					 \
+      { /* struct old_lcrecord_header */				 \
 	{ /* struct lrecord_header */					 \
 	  lrecord_type_symbol_value_forward, /* lrecord_type_index */	 \
 	  1, /* mark bit */						 \

@@ -220,7 +220,6 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
     }
 
   p = XLSTREAM (alloc_managed_lcrecord (Vlstream_free_list[i]));
-#define COPY_SIZED_LCRECORD copy_sized_lcrecord
 #endif /* not MC_ALLOC */
   /* Zero it out, except the header. */
   memset ((char *) p + sizeof (p->header), '\0',

@@ -67,9 +67,9 @@ Boston, MA 02111-1307, USA.  */
    Lcrecords are used for less common sorts of objects that don't do
    their own allocation.  Each such object is malloc()ed individually,
    and the objects are chained together through a `next' pointer.
-   Lcrecords have a `struct lcrecord_header' at the top, which
+   Lcrecords have a `struct old_lcrecord_header' at the top, which
    contains a `struct lrecord_header' and a `next' pointer, and are
-   allocated using alloc_lcrecord_type() or its variants.
+   allocated using old_alloc_lcrecord_type() or its variants.
 
    Creating a new lcrecord type is fairly easy; just follow the
    lead of some existing type (e.g. hash tables).  Note that you
@@ -80,6 +80,27 @@ Boston, MA 02111-1307, USA.  */
    the opaque type. --ben
 */
 #endif /* not MC_ALLOC */
+
+#ifdef MC_ALLOC
+#define ALLOC_LCRECORD_TYPE alloc_lrecord_type
+#define COPY_SIZED_LCRECORD copy_sized_lrecord
+#define COPY_LCRECORD copy_lrecord
+#define LISPOBJ_STORAGE_SIZE(ptr, size, stats) \
+  mc_alloced_storage_size (size, stats)
+#define ZERO_LCRECORD zero_lrecord
+#define LCRECORD_HEADER lrecord_header
+#define BASIC_ALLOC_LCRECORD alloc_lrecord
+#define FREE_LCRECORD free_lrecord
+#else
+#define ALLOC_LCRECORD_TYPE old_alloc_lcrecord_type
+#define COPY_SIZED_LCRECORD old_copy_sized_lcrecord
+#define COPY_LCRECORD old_copy_lcrecord
+#define LISPOBJ_STORAGE_SIZE malloced_storage_size
+#define ZERO_LCRECORD old_zero_lcrecord
+#define LCRECORD_HEADER old_lcrecord_header
+#define BASIC_ALLOC_LCRECORD old_basic_alloc_lcrecord
+#define FREE_LCRECORD old_free_lcrecord
+#endif
 
 BEGIN_C_DECLS
 
@@ -145,13 +166,13 @@ int lrecord_type_index (const struct lrecord_implementation *implementation);
 #endif /* not MC_ALLOC */
 
 #ifndef MC_ALLOC
-struct lcrecord_header
+struct old_lcrecord_header
 {
   struct lrecord_header lheader;
 
   /* The `next' field is normally used to chain all lcrecords together
      so that the GC can find (and free) all of them.
-     `basic_alloc_lcrecord' threads lcrecords together.
+     `old_basic_alloc_lcrecord' threads lcrecords together.
 
      The `next' field may be used for other purposes as long as some
      other mechanism is provided for letting the GC do its work.
@@ -159,7 +180,7 @@ struct lcrecord_header
      For example, the event and marker object types allocate members
      out of memory chunks, and are able to find all unmarked members
      by sweeping through the elements of the list of chunks.  */
-  struct lcrecord_header *next;
+  struct old_lcrecord_header *next;
 
   /* The `uid' field is just for debugging/printing convenience.
      Having this slot doesn't hurt us much spacewise, since an
@@ -179,7 +200,7 @@ struct lcrecord_header
 /* Used for lcrecords in an lcrecord-list. */
 struct free_lcrecord_header
 {
-  struct lcrecord_header lcheader;
+  struct old_lcrecord_header lcheader;
   Lisp_Object chain;
 };
 #endif /* not MC_ALLOC */
@@ -344,7 +365,8 @@ struct lrecord_implementation
   /* Only one of `static_size' and `size_in_bytes_method' is non-0. */
 #else /* not MC_ALLOC */
   /* Only one of `static_size' and `size_in_bytes_method' is non-0.
-     If both are 0, this type is not instantiable by basic_alloc_lcrecord(). */
+     If both are 0, this type is not instantiable by
+     old_basic_alloc_lcrecord(). */
 #endif /* not MC_ALLOC */
   Bytecount static_size;
   Bytecount (*size_in_bytes_method) (const void *header);
@@ -354,7 +376,7 @@ struct lrecord_implementation
 
 #ifndef MC_ALLOC
   /* A "basic" lrecord is any lrecord that's not an lcrecord, i.e.
-     one that does not have an lcrecord_header at the front and which
+     one that does not have an old_lcrecord_header at the front and which
      is (usually) allocated in frob blocks. */
   unsigned int basic_p :1;
 #endif /* not MC_ALLOC */
@@ -1496,7 +1518,7 @@ extern Lisp_Object Q##c_name##p
 
 struct lcrecord_list
 {
-  struct lcrecord_header header;
+  struct LCRECORD_HEADER header;
   Lisp_Object free;
   Elemcount size;
   const struct lrecord_implementation *implementation;
@@ -1517,7 +1539,7 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
    lrecords.  lcrecords themselves are divided into three types: (1)
    auto-managed, (2) hand-managed, and (3) unmanaged.  "Managed" refers to
    using a special object called an lcrecord-list to keep track of freed
-   lcrecords, which can freed with free_lcrecord() or the like and later be
+   lcrecords, which can freed with FREE_LCRECORD() or the like and later be
    recycled when a new lcrecord is required, rather than requiring new
    malloc().  Thus, allocation of lcrecords can be very
    cheap. (Technically, the lcrecord-list manager could divide up large
@@ -1531,9 +1553,9 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
    in particular dictate the various types of management:
 
    -- "Auto-managed" means that you just go ahead and allocate the lcrecord
-   whenever you want, using alloc_lcrecord_type(), and the appropriate
+   whenever you want, using old_alloc_lcrecord_type(), and the appropriate
    lcrecord-list manager is automatically created.  To free, you just call
-   "free_lcrecord()" and the appropriate lcrecord-list manager is
+   "FREE_LCRECORD()" and the appropriate lcrecord-list manager is
    automatically located and called.  The limitation here of course is that
    all your objects are of the same size. (#### Eventually we should have a
    more sophisticated system that tracks the sizes seen and creates one
@@ -1554,7 +1576,7 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
    to hand-manage them, or (b) the objects you create are always or almost
    always Lisp-visible, and thus there's no point in freeing them (and it
    wouldn't be safe to do so).  You just create them with
-   basic_alloc_lcrecord(), and that's it.
+   BASIC_ALLOC_LCRECORD(), and that's it.
 
    --ben
 
@@ -1567,9 +1589,9 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
    1) Create an lcrecord-list object using make_lcrecord_list().  This is
       often done at initialization.  Remember to staticpro_nodump() this
       object!  The arguments to make_lcrecord_list() are the same as would be
-      passed to basic_alloc_lcrecord().
+      passed to BASIC_ALLOC_LCRECORD().
 
-   2) Instead of calling basic_alloc_lcrecord(), call alloc_managed_lcrecord()
+   2) Instead of calling BASIC_ALLOC_LCRECORD(), call alloc_managed_lcrecord()
       and pass the lcrecord-list earlier created.
 
    3) When done with the lcrecord, call free_managed_lcrecord().  The
@@ -1580,7 +1602,7 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
       lcrecord goodbye as if it were garbage-collected.  This means:
       -- the contents of the freed lcrecord are undefined, and the
          contents of something produced by alloc_managed_lcrecord()
-	 are undefined, just like for basic_alloc_lcrecord().
+	 are undefined, just like for BASIC_ALLOC_LCRECORD().
       -- the mark method for the lcrecord's type will *NEVER* be called
          on freed lcrecords.
       -- the finalize method for the lcrecord's type will be called
@@ -1588,8 +1610,8 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
  */
 
 /* UNMANAGED MODEL: */
-void *basic_alloc_lcrecord (Bytecount size,
-			    const struct lrecord_implementation *);
+void *old_basic_alloc_lcrecord (Bytecount size,
+				const struct lrecord_implementation *);
 
 /* HAND-MANAGED MODEL: */
 Lisp_Object make_lcrecord_list (Elemcount size,
@@ -1603,27 +1625,28 @@ MODULE_API void *
 alloc_automanaged_lcrecord (Bytecount size,
 			    const struct lrecord_implementation *);
 
-#define alloc_lcrecord_type(type, lrecord_implementation) \
+#define old_alloc_lcrecord_type(type, lrecord_implementation) \
   ((type *) alloc_automanaged_lcrecord (sizeof (type), lrecord_implementation))
 
-void free_lcrecord (Lisp_Object rec);
+void old_free_lcrecord (Lisp_Object rec);
 
 
 /* Copy the data from one lcrecord structure into another, but don't
    overwrite the header information. */
 
-#define copy_sized_lcrecord(dst, src, size)			\
-  memcpy ((Rawbyte *) (dst) + sizeof (struct lcrecord_header),	\
-	  (Rawbyte *) (src) + sizeof (struct lcrecord_header),	\
-	  (size) - sizeof (struct lcrecord_header))
+#define old_copy_sized_lcrecord(dst, src, size)				\
+  memcpy ((Rawbyte *) (dst) + sizeof (struct old_lcrecord_header),	\
+	  (Rawbyte *) (src) + sizeof (struct old_lcrecord_header),	\
+	  (size) - sizeof (struct old_lcrecord_header))
 
-#define copy_lcrecord(dst, src) copy_sized_lcrecord (dst, src, sizeof (*(dst)))
+#define old_copy_lcrecord(dst, src) \
+  old_copy_sized_lcrecord (dst, src, sizeof (*(dst)))
 
-#define zero_sized_lcrecord(lcr, size)				\
-   memset ((Rawbyte *) (lcr) + sizeof (struct lcrecord_header), 0,	\
-	   (size) - sizeof (struct lcrecord_header))
+#define old_zero_sized_lcrecord(lcr, size)				\
+   memset ((Rawbyte *) (lcr) + sizeof (struct old_lcrecord_header), 0,	\
+	   (size) - sizeof (struct old_lcrecord_header))
 
-#define zero_lcrecord(lcr) zero_sized_lcrecord (lcr, sizeof (*(lcr)))
+#define old_zero_lcrecord(lcr) old_zero_sized_lcrecord (lcr, sizeof (*(lcr)))
 
 #else /* MC_ALLOC */
 
@@ -1693,27 +1716,6 @@ lisp_object_size (Lisp_Object o)
 {
   return detagged_lisp_object_size (XRECORD_LHEADER (o));
 }
-
-#ifdef MC_ALLOC
-#define ALLOC_LCRECORD_TYPE alloc_lrecord_type
-#define COPY_SIZED_LCRECORD copy_sized_lrecord
-#define COPY_LCRECORD copy_lrecord
-#define MALLOCED_STORAGE_SIZE(ptr, size, stats) \
-  mc_alloced_storage_size (size, stats)
-#define ZERO_LCRECORD zero_lrecord
-#define LCRECORD_HEADER lrecord_header
-#define BASIC_ALLOC_LCRECORD alloc_lrecord
-#define FREE_LCRECORD free_lrecord
-#else
-#define ALLOC_LCRECORD_TYPE alloc_lcrecord_type
-#define COPY_SIZED_LCRECORD copy_sized_lcrecord
-#define COPY_LCRECORD copy_lcrecord
-#define MALLOCED_STORAGE_SIZE malloced_storage_size
-#define ZERO_LCRECORD zero_lcrecord
-#define LCRECORD_HEADER lcrecord_header
-#define BASIC_ALLOC_LCRECORD basic_alloc_lcrecord
-#define FREE_LCRECORD free_lcrecord
-#endif
 
 
 /************************************************************************/

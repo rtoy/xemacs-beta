@@ -698,13 +698,8 @@ allocate_coding_system (struct coding_system_methods *codesys_meths,
 {
   Bytecount total_size = offsetof (Lisp_Coding_System, data) + data_size;
   Lisp_Coding_System *codesys =
-#ifdef MC_ALLOC
-    (Lisp_Coding_System *) alloc_lrecord (total_size,
-					  &lrecord_coding_system);
-#else /* not MC_ALLOC */
-    (Lisp_Coding_System *) basic_alloc_lcrecord (total_size,
+    (Lisp_Coding_System *) BASIC_ALLOC_LCRECORD (total_size,
 						 &lrecord_coding_system);
-#endif /* not MC_ALLOC */
 
   codesys->methods = codesys_meths;
 #define MARKED_SLOT(x) codesys->x = Qnil;

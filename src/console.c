@@ -1341,7 +1341,7 @@ do {									    \
   static const struct symbol_value_forward I_hate_C =			    \
   { /* struct symbol_value_forward */					    \
     { /* struct symbol_value_magic */					    \
-      { /* struct lcrecord_header */					    \
+      { /* struct old_lcrecord_header */				    \
 	{ /* struct lrecord_header */					    \
 	  lrecord_type_symbol_value_forward, /* lrecord_type_index */	    \
 	  1, /* mark bit */						    \

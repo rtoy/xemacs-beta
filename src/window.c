@@ -5096,8 +5096,7 @@ compute_window_mirror_usage (struct window_mirror *mir,
 {
   if (!mir)
     return;
-  stats->other += MALLOCED_STORAGE_SIZE (mir, sizeof (struct window_mirror),
-					 ovstats);
+  stats->other += LISPOBJ_STORAGE_SIZE (mir, sizeof (*mir), ovstats);
 #ifdef HAVE_SCROLLBARS
   {
     struct device *d = XDEVICE (FRAME_DEVICE (mir->frame));
@@ -5121,7 +5120,7 @@ compute_window_usage (struct window *w, struct window_stats *stats,
 		      struct overhead_stats *ovstats)
 {
   xzero (*stats);
-  stats->other += MALLOCED_STORAGE_SIZE (w, sizeof (struct window), ovstats);
+  stats->other += LISPOBJ_STORAGE_SIZE (w, sizeof (*w), ovstats);
   stats->face += compute_face_cachel_usage (w->face_cachels, ovstats);
   stats->glyph += compute_glyph_cachel_usage (w->glyph_cachels, ovstats);
   stats->line_start +=

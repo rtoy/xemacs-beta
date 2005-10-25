@@ -548,7 +548,7 @@ compute_from_unicode_table_size_1 (void *table, int level,
       }
     }
 
-  size += MALLOCED_STORAGE_SIZE (table,
+  size += malloced_storage_size (table,
 				 256 * (level == 1 ? sizeof (short) :
 					sizeof (void *)),
 				 stats);
@@ -573,7 +573,7 @@ compute_to_unicode_table_size_1 (void *table, int level,
 	}
     }
 
-  size += MALLOCED_STORAGE_SIZE (table,
+  size += malloced_storage_size (table,
 				 96 * (level == 1 ? sizeof (int) :
 				       sizeof (void *)),
 				 stats);

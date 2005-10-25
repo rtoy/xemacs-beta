@@ -433,7 +433,7 @@ mswindows_compute_scrollbar_instance_usage (struct device *UNUSED (d),
       struct mswindows_scrollbar_data *data =
 	(struct mswindows_scrollbar_data *) inst->scrollbar_data;
 
-      total += MALLOCED_STORAGE_SIZE (data, sizeof (*data), ovstats);
+      total += malloced_storage_size (data, sizeof (*data), ovstats);
       inst = inst->next;
     }
 

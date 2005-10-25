@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1992, 1993, 1994
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1973,7 +1973,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	    - make_int()
 	    - make_char()
 	    - make_extent()
-	    - basic_alloc_lcrecord()
+	    - BASIC_ALLOC_LCRECORD()
+	    - ALLOC_LCRECORD_TYPE()
 	    - Fcons()
 	    - listN()
             - make_lcrecord_list()

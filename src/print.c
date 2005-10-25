@@ -2219,7 +2219,7 @@ debug_p4 (Lisp_Object obj)
 		   LHEADER_IMPLEMENTATION (header)->name,
 		   LHEADER_IMPLEMENTATION (header)->basic_p ?
 		   (EMACS_INT) header :
-		   ((struct lcrecord_header *) header)->uid);
+		   ((struct old_lcrecord_header *) header)->uid);
 #endif /* not MC_ALLOC */
     }
 

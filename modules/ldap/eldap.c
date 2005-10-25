@@ -141,11 +141,7 @@ print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
 static Lisp_LDAP *
 allocate_ldap (void)
 {
-#ifdef MC_ALLOC
-  Lisp_LDAP *ldap = alloc_lrecord_type (Lisp_LDAP, &lrecord_ldap);
-#else /* not MC_ALLOC */
-  Lisp_LDAP *ldap = alloc_lcrecord_type (Lisp_LDAP, &lrecord_ldap);
-#endif /* not MC_ALLOC */
+  Lisp_LDAP *ldap = ALLOC_LCRECORD_TYPE (Lisp_LDAP, &lrecord_ldap);
 
   ldap->ld = NULL;
   ldap->host = Qnil;

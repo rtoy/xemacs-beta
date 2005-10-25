@@ -18,7 +18,7 @@ mcpro_1				/* mcpro */
 #endif
 mc_alloc			/* DEFSUBR */
 #else /* not MC_ALLOC */
-alloc_automanaged_lcrecord	/* alloc_lcrecord_type */
+alloc_automanaged_lcrecord	/* old_alloc_lcrecord_type */
 #endif /* not MC_ALLOC */
 apply1
 #ifdef USE_ASSERTIONS
