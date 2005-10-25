@@ -581,7 +581,7 @@ mswindows_window_id (Lisp_Object frame)
   Ibyte str[255];
   struct frame *f = decode_mswindows_frame (frame);
 
-  qxesprintf (str, "%lu", FRAME_MSWINDOWS_HANDLE (f));
+  qxesprintf (str, "%lu", (unsigned long) FRAME_MSWINDOWS_HANDLE (f));
   return build_intstring (str);
 }
 

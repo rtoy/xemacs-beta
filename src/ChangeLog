@@ -1,3 +1,8 @@
+2005-10-25  Ben Wing  <ben@xemacs.org>
+
+	* frame-msw.c (mswindows_window_id):
+	Fix warning.
+
 2005-10-24  Ben Wing  <ben@xemacs.org>
 
 	* frame-msw.c:
