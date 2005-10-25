@@ -1059,10 +1059,6 @@ extern "C" {
 
 #ifndef NOT_C_CODE /* Actually means C or C++ */
 # if defined (__cplusplus)
-/* Avoid C++ keywords used as ordinary C identifiers */
-#  define new   c_new
-#  define catch c_catch
-
 #  define EXTERN_C extern "C"
 # else /* C code */
 #  define EXTERN_C extern

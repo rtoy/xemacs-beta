@@ -1,5 +1,12 @@
 2005-10-25  Ben Wing  <ben@xemacs.org>
 
+	* config.h.in (EXTERN_C):
+	Don't define new and catch under C++ any more.
+	(Places using new were just fixed by the last patch, places using
+	catch were fixed a couple of weeks ago.)
+
+2005-10-25  Ben Wing  <ben@xemacs.org>
+
 	* EmacsFrame.c (EmacsFrameInitialize):
 	* EmacsFrame.c (EmacsFrameSetValues):
 	* ExternalClient.c:
