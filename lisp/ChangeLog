@@ -1,3 +1,42 @@
+2005-10-25  Ben Wing  <ben@xemacs.org>
+
+	* cus-face.el:
+	* cus-face.el (custom-face-attributes):
+	* cus-face.el (custom-face-background-pixmap):
+	* cus-face.el (custom-set-face-inherit): New.
+	* cus-face.el (custom-face-inherit): New.
+	* faces.el:
+	* faces.el (face-property):
+	* faces.el (convert-face-property-into-specifier):
+	* faces.el (face-property-instance):
+	* faces.el (set-face-property):
+	* faces.el (reset-face):
+	* faces.el (set-face-parent):
+	* faces.el (face-font-name):
+	* faces.el (face-font):
+	* faces.el (face-font-instance):
+	* faces.el (set-face-font):
+	* faces.el (face-foreground):
+	* faces.el (face-foreground-instance):
+	* faces.el (set-face-foreground):
+	* faces.el (face-background):
+	* faces.el (face-background-instance):
+	* faces.el (set-face-background):
+	* faces.el (face-background-pixmap):
+	* faces.el (face-background-pixmap-instance):
+	* faces.el (set-face-background-pixmap):
+	* faces.el (face-display-table):
+	* faces.el (face-display-table-instance):
+	* faces.el (face-equal):
+	* faces.el (init-face-from-resources):
+	Provide a basic implementation of the `inherit' property for
+	faces and the :inherit property in custom.  Use the new
+	`specifier-instantiator' function.
+
+	Update the documentation for various places in faces.el.
+
+	'foo -> `foo'.
+
 2005-10-25  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el (package-get-download-sites): Fixes after

@@ -8,12 +8,11 @@
 ;; Version: 1.9960-x
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
+;;; Synched with: Not synched.
+
 ;;; Commentary:
 ;;
 ;; See `custom.el'.
-
-;; This file should probably be dissolved, and code moved to faces.el,
-;; like Stallman did.
 
 ;;; Code:
 
@@ -102,7 +101,26 @@ Control whether the text should be strikethru.")
     (:inverse-video (toggle :format "%[Inverse Video%]: %v\n"
 			    :help-echo "\
 Control whether the text should be inverted.  Works only on TTY-s")
-		    set-face-reverse-p face-reverse-p))
+		    set-face-reverse-p face-reverse-p)
+    (:inherit
+     (repeat :tag "Inherit"
+	     :help-echo "List of faces to inherit attributes from."
+	     (face :Tag "Face" default))
+     ;; FSF 21.3
+;      ;; filter to make value suitable for customize
+;      (lambda (real-value)
+;        (cond ((or (null real-value) (eq real-value 'unspecified))
+; 	      nil)
+; 	     ((symbolp real-value)
+; 	      (list real-value))
+; 	     (t
+; 	      real-value)))
+;      ;; filter to make customized-value suitable for storing
+;      (lambda (cus-value)
+;        (if (and (consp cus-value) (null (cdr cus-value)))
+; 	   (car cus-value)
+; 	 cus-value))
+     custom-set-face-inherit custom-face-inherit))
   "Alist of face attributes.
 
 The elements are lists of the form (KEY TYPE SET GET) where:
@@ -199,10 +217,23 @@ If FRAME is nil, use the default face."
 
 (defun custom-face-background-pixmap (face &rest args)
   "Return the name of the background pixmap file used for FACE."
-  (let ((image  (apply 'specifier-instance
-		       (face-background-pixmap face) args)))
+  (let ((image (apply 'specifier-instance
+		      (face-background-pixmap face) args)))
     (and image
 	 (image-instance-file-name image))))
+
+(defun custom-set-face-inherit (face value &optional frame tags)
+  "Set FACE to inherit its properties from another face."
+  (if (listp value) (setq value (car value))) ;; #### Temporary hack!
+  (if (find-face value)
+      (set-face-parent face value frame tags)))
+
+(defun custom-face-inherit (face &rest args)
+  "Return the value (instance) of the `inherit' property for FACE."
+  ;; #### Major, temporary hack!
+  (let ((spec (apply 'specifier-instantiator
+		     (face-font face) args)))
+    (and spec (vector spec) (aref spec 0))))
 
 ;; This consistently fails to dtrt
 ;;(defun custom-set-face-font-size (face size &optional locale tags)

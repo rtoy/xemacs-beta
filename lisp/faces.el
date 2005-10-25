@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
-;; Copyright (C) 1995, 1996, 2002 Ben Wing
+;; Copyright (C) 1995, 1996, 2002, 2005 Ben Wing
 
 ;; Author: Ben Wing <ben@xemacs.org>
 ;; Keywords: faces, internal, dumped
@@ -96,35 +96,55 @@ Such a collection of attributes is called a \"face\"."
 (defun face-property (face property &optional locale tag-set exact-p)
   "Return FACE's value of the given PROPERTY.
 
-If LOCALE is omitted, the FACE's actual value for PROPERTY will be
-  returned.  For built-in properties, this will be a specifier object
-  of a type appropriate to the property (e.g. a font or color
-  specifier).  For other properties, this could be anything.
+NOTE: If you are looking for the \"value\" of a built-in face property
+  (`foreground', `background', `font', `background-pixmap', etc.), you
+  are probably better off calling `face-property-instance'.  The return
+  value of `face-property' for built-in properties describes the original
+  specification used to determine the face property, which may be nil,
+  a list of instantiators, or something else that is unexpected.  For
+  example, if you ask for a face property in a particular buffer (by
+  specifying a buffer for LOCALE), you will get a non-nil return value
+  only if a buffer-local specification for that particular buffer had
+  previously been given.
 
-If LOCALE is supplied, then instead of returning the actual value,
-  the specification(s) for the given locale or locale type will
-  be returned.  This will only work if the actual value of
-  PROPERTY is a specifier (this will always be the case for built-in
-  properties, but not or not may apply to user-defined properties).
-  If the actual value of PROPERTY is not a specifier, this value
-  will simply be returned regardless of LOCALE.
+For a full list of built-in property names and their semantics, see
+  `set-face-property'.
+
+If LOCALE is omitted, the FACE's actual value for PROPERTY will be
+  returned.  In this case, this function appears to behave rather
+  differently depending on whether PROPERTY is a built-in face property of
+  a user-defined face property.  This is because the most basic value of a
+  user-defined property is simply whatever was set using
+  `set-face-property', but for a built-in property it's always a specifier,
+  which is an abstract object encapsulating all the specifications for that
+  particular property.
+
+LOCALE, if supplied, will generally be a buffer, frame or
+  `global' (for the global value), but there are other possibilities -- see
+  the following paragraph.  This mostly applies to built-in properties.  In
+  this case, the return value will not be a specifier object but the
+  specification(s) for the given locale or locale type will be returned
+  (equivalent to calling `specifier-specs' on the specifier).
+  (Technically, the same thing happens if the basic value of a user-
+  defined property is a specifier, although this usage is rare.)
 
 The return value will be a list of instantiators (e.g. strings
   specifying a font or color name), or a list of specifications, each
   of which is a cons of a locale and a list of instantiators.
   Specifically, if LOCALE is a particular locale (a buffer, window,
-  frame, device, or 'global), a list of instantiators for that locale
+  frame, device, or `global'), a list of instantiators for that locale
   will be returned.  Otherwise, if LOCALE is a locale type (one of
-  the symbols 'buffer, 'window, 'frame, or 'device), the specifications
+  the symbols `buffer', `window', `frame', or `device'), the specifications
   for all locales of that type will be returned.  Finally, if LOCALE is
-  'all, the specifications for all locales of all types will be returned.
+  `all', the specifications for all locales of all types will be returned.
 
 The specifications in a specifier determine what the value of
   PROPERTY will be in a particular \"domain\" or set of circumstances,
-  which is typically a particular Emacs window along with the buffer
-  it contains and the frame and device it lies within.  The value is
+  which is typically a particular Emacs window -- which in turn defines
+  a buffer (the buffer in the window), a frame (the frame that the window
+  is in), and a device (the device that the frame is in).  The value is
   derived from the instantiator associated with the most specific
-  locale (in the order buffer, window, frame, device, and 'global)
+  locale (in the order buffer, window, frame, device, and `global')
   that matches the domain in question.  In other words, given a domain
   (i.e. an Emacs window, usually), the specifier for PROPERTY will
   first be searched for a specification whose locale is the buffer
@@ -133,11 +153,10 @@ The specifications in a specifier determine what the value of
   frame that the window is contained within; etc.  The first
   instantiator that is valid for the domain (usually this means that
   the instantiator is recognized by the device [i.e. MS Windows, the X
-  server or TTY device] that the domain is on.  The function
-  `face-property-instance' actually does all this, and is used to
-  determine how to display the face.
-
-See `set-face-property' for the built-in property-names."
+  server or TTY device]) will be \"instantiated\", which generates
+  a Lisp object encapsulating the original instantiator and the underlying
+  window-system object describing the property.  The function
+  `face-property-instance' actually does all this."
 
   (setq face (get-face face))
   (let ((value (get face property)))
@@ -154,7 +173,7 @@ See `set-face-property' for the built-in property-names."
     ;; if a user-property does not have a specifier but a
     ;; locale was specified, put a specifier there.
     ;; If there was already a value there, convert it to a
-    ;; specifier with the value as its 'global instantiator.
+    ;; specifier with the value as its `global' instantiator.
     (unless (specifierp specifier)
       (let ((new-specifier (make-specifier 'generic)))
 	(if (or (not (null specifier))
@@ -179,11 +198,11 @@ Under most circumstances, DOMAIN will be a particular window,
   the returned instance would be different.
 
 The returned instance will typically be a color-instance,
-  font-instance, or pixmap-instance object, and you can query
+  font-instance, or image-instance object, and you can query
   it using the appropriate object-specific functions.  For example,
   you could use `color-instance-rgb-components' to find out the
-  RGB (red, green, and blue) components of how the 'background
-  property of the 'highlight face is displayed in a particular
+  RGB (red, green, and blue) components of how the `background'
+  property of the `highlight' face is displayed in a particular
   window.  The results might be different from the results
   you would get for another window (perhaps the user
   specified a different color for the frame that window is on;
@@ -265,7 +284,7 @@ If PROPERTY is a built-in property, the specifications to be added to
   -- If VALUE is a simple instantiator (e.g. a string naming a font or
      color) or a list of instantiators, then the instantiator(s) will
      be added as a specification of the property for the given LOCALE
-     (which defaults to 'global if omitted).
+     (which defaults to `global' if omitted).
   -- If VALUE is a list of specifications (each of which is a cons of
      a locale and a list of instantiators), then LOCALE must be nil
      (it does not make sense to explicitly specify a locale in this
@@ -277,12 +296,12 @@ If PROPERTY is a built-in property, the specifications to be added to
      `copy-specifier' and LOCALE has the same semantics (if it is
      a particular locale, the specification for the locale will be
      copied; if a locale type, specifications for all locales of
-     that type will be copied; if nil or 'all, then all
+     that type will be copied; if nil or `all', then all
      specifications will be copied).
 
-HOW-TO-ADD should be either nil or one of the symbols 'prepend,
-  'append, 'remove-tag-set-prepend, 'remove-tag-set-append, 'remove-locale,
-  'remove-locale-type, or 'remove-all.  See `copy-specifier' and
+HOW-TO-ADD should be either nil or one of the symbols `prepend',
+  `append', `remove-tag-set-prepend', `remove-tag-set-append', `remove-locale',
+  `remove-locale-type', or `remove-all'.  See `copy-specifier' and
   `add-spec-to-specifier' for a description of what each of
   these means.  Most of the time, you do not need to worry about
   this argument; the default behavior usually is fine.
@@ -291,7 +310,7 @@ In general, it is OK to pass an instance object (e.g. as returned
   by `face-property-instance') as an instantiator in place of
   an actual instantiator.  In such a case, the instantiator used
   to create that instance object will be used (for example, if
-  you set a font-instance object as the value of the 'font
+  you set a font-instance object as the value of the `font'
   property, then the font name used to create that object will
   be used instead).  If some cases, however, doing this
   conversion does not make sense, and this will be noted in
@@ -302,7 +321,7 @@ If PROPERTY is not a built-in property, then this function will
   given, then this function will attempt to add VALUE as the
   instantiator for the given LOCALE, using `add-spec-to-specifier'.
   If the value of the property is not a specifier, it will
-  automatically be converted into a 'generic specifier.
+  automatically be converted into a `generic' specifier.
 
 
 The following symbols have predefined meanings:
@@ -344,6 +363,11 @@ The following symbols have predefined meanings:
                     Only used by faces on TTY devices.
                     For valid instantiators, see `make-face-boolean-specifier'.
 
+ inherit	    Face name or face object from which to inherit attributes,
+                    or a list of such elements.  Attributes from inherited
+                    faces are merged into the face like an underlying face
+                    would be, with higher priority than underlying faces.
+
  doc-string         Description of what the face's normal use is.
                     NOTE: This is not a specifier, unlike all
                     the other built-in properties, and cannot
@@ -377,7 +401,7 @@ arguments."
 
 (defun reset-face (face &optional locale tag-set exact-p)
   "Clear all existing built-in specifications from FACE.
-This makes FACE inherit all its display properties from 'default.
+This makes FACE inherit all its display properties from `default'.
 WARNING: Be absolutely sure you want to do this!!!  It is a dangerous
 operation and is not undoable.
 
@@ -395,9 +419,8 @@ This makes all properties of FACE inherit from PARENT."
   (mapcar (lambda (x)
 	    (set-face-property face x (vector parent) locale tag-set
 			       how-to-add))
-	  (delq 'display-table
-		(delq 'background-pixmap
-		      (copy-sequence built-in-face-specifiers))))
+	  (set-difference built-in-face-specifiers
+			  '(display-table background-pixmap inherit)))
   (set-face-background-pixmap face (vector 'inherit ':face parent)
 			      locale tag-set how-to-add)
   nil)
@@ -413,18 +436,25 @@ This makes all properties of FACE inherit from PARENT."
 
 (defun face-font-name (face &optional domain charset)
   "Return the font name of FACE in DOMAIN, or nil if it is unspecified.
-DOMAIN is as in `face-font-instance'."
+DOMAIN is as in `face-font-instance'.
+
+Font names are strings, as described in `make-font-specifier'."
   (let ((f (face-font-instance face domain charset)))
     (and f (font-instance-name f))))
 
 (defun face-font (face &optional locale tag-set exact-p)
-  "Return the font of FACE in LOCALE, or nil if it is unspecified.
+  "Return the font spec of FACE in LOCALE, or nil if it is unspecified.
+
+NOTE: This returns a locale-specific specification, not any sort of value
+corresponding to the actual font being used.  If you want to know the
+actual font used in a particular domain, use `face-font-instance', or
+`face-font-name' for its name (i.e. the instantiator used to create it).
 
 FACE may be either a face object or a symbol representing a face.
 
 LOCALE may be a locale (the instantiators for that particular locale
   will be returned), a locale type (the specifications for all locales
-  of that type will be returned), 'all (all specifications will be
+  of that type will be returned), `all' (all specifications will be
   returned), or nil (the actual specifier object will be returned).
 
 See `face-property' for more information."
@@ -432,6 +462,9 @@ See `face-property' for more information."
 
 (defun face-font-instance (face &optional domain charset)
   "Return the instance of FACE's font in DOMAIN.
+
+Return value will be a font instance object; query its properties using
+`font-instance-name', `font-instance-height', `font-instance-width', etc.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -454,23 +487,29 @@ FONT should be an instantiator (see `make-font-specifier'), a list of
   locale to an instantiator list), or a font specifier object.
 
 If FONT is an alist, LOCALE must be omitted.  If FONT is a
-  specifier object, LOCALE can be a locale, a locale type, 'all,
+  specifier object, LOCALE can be a locale, a locale type, `all',
   or nil; see `copy-specifier' for its semantics.  Otherwise LOCALE
   specifies the locale under which the specified instantiator(s)
-  will be added, and defaults to 'global.
+  will be added, and defaults to `global'.
 
 See `set-face-property' for more information."
   (interactive (face-interactive "font"))
   (set-face-property face 'font font locale tag-set how-to-add))
 
 (defun face-foreground (face &optional locale tag-set exact-p)
-  "Return the foreground of FACE in LOCALE, or nil if it is unspecified.
+  "Return the foreground spec of FACE in LOCALE, or nil if it is unspecified.
+
+NOTE: This returns a locale-specific specification, not any sort of value
+corresponding to the actual foreground being used.  If you want to know the
+actual foreground color used in a particular domain, use
+`face-foreground-instance', or `face-foreground-name' for its name
+\(i.e. the instantiator used to create it).
 
 FACE may be either a face object or a symbol representing a face.
 
 LOCALE may be a locale (the instantiators for that particular locale
   will be returned), a locale type (the specifications for all locales
-  of that type will be returned), 'all (all specifications will be
+  of that type will be returned), `all' (all specifications will be
   returned), or nil (the actual specifier object will be returned).
 
 See `face-property' for more information."
@@ -478,6 +517,9 @@ See `face-property' for more information."
 
 (defun face-foreground-instance (face &optional domain default no-fallback)
   "Return the instance of FACE's foreground in DOMAIN.
+
+Return value will be a color instance object; query its properties using
+`color-instance-name' or `color-instance-rgb-properties'.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -511,10 +553,10 @@ COLOR should be an instantiator (see `make-color-specifier'), a list of
   an instantiator list), or a color specifier object.
 
 If COLOR is an alist, LOCALE must be omitted.  If COLOR is a
-  specifier object, LOCALE can be a locale, a locale type, 'all,
+  specifier object, LOCALE can be a locale, a locale type, `all',
   or nil; see `copy-specifier' for its semantics.  Otherwise LOCALE
   specifies the locale under which the specified instantiator(s)
-  will be added, and defaults to 'global.
+  will be added, and defaults to `global'.
 
 See `set-face-property' for more information."
   (interactive (face-interactive "foreground"))
@@ -523,11 +565,17 @@ See `set-face-property' for more information."
 (defun face-background (face &optional locale tag-set exact-p)
   "Return the background color of FACE in LOCALE, or nil if it is unspecified.
 
+NOTE: This returns a locale-specific specification, not any sort of value
+corresponding to the actual background being used.  If you want to know the
+actual background color used in a particular domain, use
+`face-background-instance', or `face-background-name' for its name
+\(i.e. the instantiator used to create it).
+
 FACE may be either a face object or a symbol representing a face.
 
 LOCALE may be a locale (the instantiators for that particular locale
   will be returned), a locale type (the specifications for all locales
-  of that type will be returned), 'all (all specifications will be
+  of that type will be returned), `all' (all specifications will be
   returned), or nil (the actual specifier object will be returned).
 
 See `face-property' for more information."
@@ -535,6 +583,9 @@ See `face-property' for more information."
 
 (defun face-background-instance (face &optional domain default no-fallback)
   "Return the instance of FACE's background in DOMAIN.
+
+Return value will be a color instance object; query its properties using
+`color-instance-name' or `color-instance-rgb-properties'.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -568,24 +619,29 @@ COLOR should be an instantiator (see `make-color-specifier'), a list of
   an instantiator list), or a color specifier object.
 
 If COLOR is an alist, LOCALE must be omitted.  If COLOR is a
-  specifier object, LOCALE can be a locale, a locale type, 'all,
+  specifier object, LOCALE can be a locale, a locale type, `all',
   or nil; see `copy-specifier' for its semantics.  Otherwise LOCALE
   specifies the locale under which the specified instantiator(s)
-  will be added, and defaults to 'global.
+  will be added, and defaults to `global'.
 
 See `set-face-property' for more information."
   (interactive (face-interactive "background"))
   (set-face-property face 'background color locale tag-set how-to-add))
 
 (defun face-background-pixmap (face &optional locale tag-set exact-p)
-  "Return the background pixmap of FACE in LOCALE, or nil if it is unspecified.
+  "Return the background pixmap spec of FACE in LOCALE, or nil if unspecified.
 This property is only used on window system devices.
+
+NOTE: This returns a locale-specific specification, not any sort of value
+corresponding to the actual background pixmap being used.  If you want to
+know the actual background pixmap used in a particular domain, use
+`face-background-pixmap-instance'.
 
 FACE may be either a face object or a symbol representing a face.
 
 LOCALE may be a locale (the instantiators for that particular locale
   will be returned), a locale type (the specifications for all locales
-  of that type will be returned), 'all (all specifications will be
+  of that type will be returned), `all' (all specifications will be
   returned), or nil (the actual specifier object will be returned).
 
 See `face-property' for more information."
@@ -594,6 +650,12 @@ See `face-property' for more information."
 (defun face-background-pixmap-instance (face &optional domain default
 					     no-fallback)
   "Return the instance of FACE's background pixmap in DOMAIN.
+
+Return value will be an image instance object; query its properties using
+`image-instance-instantiator' (the original instantiator used to create
+the image, which may be a complex beast -- see `make-image-specifier'),
+`image-instance-file-name' (the file, if any, from which the image was
+created), `image-instance-height', etc.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -616,10 +678,10 @@ PIXMAP should be an instantiator (see `make-image-specifier'), a list
   to an instantiator list), or an image specifier object.
 
 If PIXMAP is an alist, LOCALE must be omitted.  If PIXMAP is a
-  specifier object, LOCALE can be a locale, a locale type, 'all,
+  specifier object, LOCALE can be a locale, a locale type, `all',
   or nil; see `copy-specifier' for its semantics.  Otherwise LOCALE
   specifies the locale under which the specified instantiator(s)
-  will be added, and defaults to 'global.
+  will be added, and defaults to `global'.
 
 See `set-face-property' for more information."
   (interactive (face-interactive "background-pixmap"))
@@ -647,13 +709,18 @@ designed for interactive use."
   (set-face-property face 'background-pixmap file))
 
 (defun face-display-table (face &optional locale tag-set exact-p)
-  "Return the display table of FACE in LOCALE.
+  "Return the display table spec of FACE in LOCALE, or nil if unspecified..
 
-A vector (as returned by `make-display-table') will be returned.
+NOTE: This returns a locale-specific specification, not any sort of value
+corresponding to the actual display table being used.  If you want to
+know the actual display table used in a particular domain, use
+`face-display-table-instance'.
+
+FACE may be either a face object or a symbol representing a face.
 
 LOCALE may be a locale (the instantiators for that particular locale
   will be returned), a locale type (the specifications for all locales
-  of that type will be returned), 'all (all specifications will be
+  of that type will be returned), `all' (all specifications will be
   returned), or nil (the actual specifier object will be returned).
 
 See `face-property' for more information."
@@ -661,9 +728,17 @@ See `face-property' for more information."
 
 (defun face-display-table-instance (face &optional domain default no-fallback)
   "Return the instance of FACE's display table in DOMAIN.
-A vector (as returned by `make-display-table') will be returned.
 
-See `face-property-instance' for the semantics of the DOMAIN argument."
+Return value will be a vector, char table or range table; see
+`current-display-table'.
+
+FACE may be either a face object or a symbol representing a face.
+
+Normally DOMAIN will be a window or nil (meaning the selected window),
+  and the actual display table used in that particular window and buffer
+  will be returned.
+
+See `face-property-instance' for more information."
   (face-property-instance face 'display-table domain default no-fallback))
 
 (defun set-face-display-table (face display-table &optional locale tag-set
@@ -787,7 +862,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
       (error "Invalid specifier domain"))
   (let ((device (dfw-device domain))
 	(common-props '(foreground background font display-table underline
-				   dim))
+				   dim inherit))
 	(win-props '(background-pixmap strikethru))
 	(tty-props '(highlight blinking reverse)))
 
@@ -1631,10 +1706,10 @@ Don't use this function in your program."
 
 (defun init-face-from-resources (face &optional locale)
   "Initialize FACE from the resource database.
-If LOCALE is specified, it should be a frame, device, or 'global, and
+If LOCALE is specified, it should be a frame, device, or `global', and
 the face will be resourced over that locale.  Otherwise, the face will
 be resourced over all possible locales (i.e. all frames, all devices,
-and 'global)."
+and `global')."
   (cond ((null init-face-from-resources)
 	 ;; Do nothing.
 	 )
