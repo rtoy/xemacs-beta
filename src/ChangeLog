@@ -1,5 +1,18 @@
 2005-10-24  Ben Wing  <ben@xemacs.org>
 
+	* frame-msw.c:
+	* frame-msw.c (decode_mswindows_frame):
+	New function, like decode_x_frame.
+	
+	* frame-msw.c (mswindows_window_id):
+	* frame-msw.c (mswindows_frame_property):
+	* frame-msw.c (mswindows_internal_frame_property_p):
+	* frame-msw.c (mswindows_frame_properties):
+	* frame-msw.c (vars_of_frame_mswindows):
+	Add `window-id' property for MS Windows frames.
+
+2005-10-24  Ben Wing  <ben@xemacs.org>
+
 	* alloc.c:
 	* alloc.c (Lisp_Free):
 	* alloc.c (Fcons):

@@ -102,6 +102,18 @@ const struct sized_memory_description mswindows_frame_data_description = {
 /*-----                    DISPLAY FRAME                          -----*/
 /*---------------------------------------------------------------------*/
 
+static struct frame *
+decode_mswindows_frame (Lisp_Object frame)
+{
+  if (NILP (frame))
+    frame = wrap_frame (selected_frame ());
+  CHECK_LIVE_FRAME (frame);
+  /* this will also catch dead frames, but putting in the above check
+     results in a more useful error */
+  CHECK_MSWINDOWS_FRAME (frame);
+  return XFRAME (frame);
+}
+
 HWND
 mswindows_get_selected_frame_hwnd (void)
 {
@@ -564,6 +576,16 @@ mswindows_set_title_from_ibyte (struct frame *f, Ibyte *title)
 }
 
 static Lisp_Object
+mswindows_window_id (Lisp_Object frame)
+{
+  Ibyte str[255];
+  struct frame *f = decode_mswindows_frame (frame);
+
+  qxesprintf (str, "%lu", FRAME_MSWINDOWS_HANDLE (f));
+  return build_intstring (str);
+}
+
+static Lisp_Object
 mswindows_frame_property (struct frame *f, Lisp_Object property)
 {
   if (EQ (Qleft, property) || EQ (Qtop, property))
@@ -572,6 +594,9 @@ mswindows_frame_property (struct frame *f, Lisp_Object property)
       GetWindowRect (FRAME_MSWINDOWS_HANDLE (f), &rc);
       return make_int (EQ (Qtop,  property) ? rc.top : rc.left);
     }
+  if (EQ (Qwindow_id, property))
+    return mswindows_window_id (wrap_frame (f));
+
   return Qunbound;
 }
 
@@ -580,7 +605,8 @@ mswindows_internal_frame_property_p (struct frame *UNUSED (f),
 				     Lisp_Object property)
 {
   return EQ (property, Qleft)
-    || EQ (property, Qtop);
+    || EQ (property, Qtop)
+    || EQ (property, Qwindow_id);
   /* #### frame-x.c has also this. Why?
     || STRINGP (property);
   */
@@ -595,6 +621,7 @@ mswindows_frame_properties (struct frame *f)
 
   props = cons3 (Qtop,  make_int (rc.top), props);
   props = cons3 (Qleft, make_int (rc.left), props);
+  props = cons3 (Qwindow_id, mswindows_window_id (wrap_frame (f)), props);
 
   return props;
 }
@@ -1209,6 +1236,8 @@ set at any time, except as otherwise noted):
 				outermost corner of the frame (i.e. the
 				upper-left of the window-manager
 				decorations).
+  window-id			Window handle (HWND) of the frame.
+				Cannot be set.
 
 See also `default-frame-plist', which specifies properties which apply
 to all frames, not just mswindows frames.
