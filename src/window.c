@@ -3800,11 +3800,11 @@ temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_frame)
 static void
 make_dummy_parent (Lisp_Object window)
 {
-  Lisp_Object new;
+  Lisp_Object new_;
   struct window *o = XWINDOW (window);
   struct window *p = ALLOC_LCRECORD_TYPE (struct window, &lrecord_window);
 
-  new = wrap_window (p);
+  new_ = wrap_window (p);
   COPY_LCRECORD (p, o);
 
   /* Don't copy the pointers to the line start cache or the face
@@ -3816,13 +3816,13 @@ make_dummy_parent (Lisp_Object window)
     make_image_instance_cache_hash_table ();
 
   /* Put new into window structure in place of window */
-  replace_window (window, new);
+  replace_window (window, new_);
 
   o->next = Qnil;
   o->prev = Qnil;
   o->vchild = Qnil;
   o->hchild = Qnil;
-  o->parent = new;
+  o->parent = new_;
 
   p->start[CURRENT_DISP] = Qnil;
   p->start[DESIRED_DISP] = Qnil;
@@ -3845,7 +3845,7 @@ returned.
 */
        (window, size, horflag))
 {
-  Lisp_Object new;
+  Lisp_Object new_;
   struct window *o, *p;
   struct frame *f;
   int csize;
@@ -3908,8 +3908,8 @@ returned.
 	     and see the difference.  See redisplay-tests.el  --yh */
 	  reset_face_cachels (XWINDOW (window));
 #endif
-	  new = o->parent;
-	  XWINDOW (new)->vchild = window;
+	  new_ = o->parent;
+	  XWINDOW (new_)->vchild = window;
 	  XFRAME (o->frame)->mirror_dirty = 1;
 	}
     }
@@ -3928,8 +3928,8 @@ returned.
 	  /* #### See above. */
 	  reset_face_cachels (XWINDOW (window));
 #endif
-	  new = o->parent;
-	  XWINDOW (new)->hchild = window;
+	  new_ = o->parent;
+	  XWINDOW (new_)->hchild = window;
 	  XFRAME (o->frame)->mirror_dirty = 1;
 	}
     }
@@ -3939,15 +3939,15 @@ returned.
      if we are making side-by-side windows */
 
   MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
-  new = allocate_window ();
-  p = XWINDOW (new);
+  new_ = allocate_window ();
+  p = XWINDOW (new_);
 
   p->frame = o->frame;
   p->next = o->next;
   if (!NILP (p->next))
-    XWINDOW (p->next)->prev = new;
+    XWINDOW (p->next)->prev = new_;
   p->prev = window;
-  o->next = new;
+  o->next = new_;
   p->parent = o->parent;
   p->buffer = Qt;
 
@@ -3976,13 +3976,13 @@ returned.
 
   XFRAME (p->frame)->mirror_dirty = 1;
 
-  note_object_created (new);
+  note_object_created (new_);
 
   /* do this last (after the window is completely initialized and
      the mirror-dirty flag is set) so that specifier recomputation
      caused as a result of this will work properly and not abort. */
-  Fset_window_buffer (new, o->buffer, Qt);
-  return new;
+  Fset_window_buffer (new_, o->buffer, Qt);
+  return new_;
 }
 
 

@@ -166,10 +166,10 @@ store_kbd_macro_event (Lisp_Object event)
       int i;
       int old_size = XVECTOR_LENGTH (con->kbd_macro_builder);
       int new_size = old_size * 2;
-      Lisp_Object new = make_vector (new_size, Qnil);
+      Lisp_Object new_ = make_vector (new_size, Qnil);
       for (i = 0; i < old_size; i++)
-	XVECTOR_DATA (new) [i] = XVECTOR_DATA (con->kbd_macro_builder) [i];
-      con->kbd_macro_builder = new;
+	XVECTOR_DATA (new_) [i] = XVECTOR_DATA (con->kbd_macro_builder) [i];
+      con->kbd_macro_builder = new_;
     }
   XVECTOR_DATA (con->kbd_macro_builder) [con->kbd_macro_ptr++] =
     Fcopy_event (event, Qnil);

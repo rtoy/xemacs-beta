@@ -1,7 +1,7 @@
 /* Implements an elisp-programmable menubar.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -712,7 +712,7 @@ See also menu-accelerator-enabled and menu-accelerator-prefix.
 
   DEFVAR_LISP ("menu-accelerator-enabled", &Vmenu_accelerator_enabled /*
 Whether menu accelerator keys can cause the menubar to become active.
-If 'menu-force or 'menu-fallback, then menu accelerator keys can
+If `menu-force' or `menu-fallback', then menu accelerator keys can
 be used to activate the top level menu.  Once the menubar becomes active, the
 accelerator keys can be used regardless of the value of this variable.
 

@@ -739,15 +739,15 @@ decode_gutter_position (Lisp_Object position)
 
 DEFUN ("set-default-gutter-position", Fset_default_gutter_position, 1, 1, 0, /*
 Set the position that the `default-gutter' will be displayed at.
-Valid positions are 'top, 'bottom, 'left and 'right.
+Valid positions are `top', `bottom', `left' and `right'.
 See `default-gutter-position'.
 */
        (position))
 {
   enum gutter_pos cur = decode_gutter_position (Vdefault_gutter_position);
-  enum gutter_pos new = decode_gutter_position (position);
+  enum gutter_pos new_ = decode_gutter_position (position);
 
-  if (cur != new)
+  if (cur != new_)
     {
       /* The following calls will automatically cause the dirty
 	 flags to be set; we delay frame size changes to avoid
@@ -756,18 +756,18 @@ See `default-gutter-position'.
       int depth = begin_hold_frame_size_changes ();
 
       set_specifier_fallback (Vgutter[cur], list1 (Fcons (Qnil, Qnil)));
-      set_specifier_fallback (Vgutter[new], Vdefault_gutter);
+      set_specifier_fallback (Vgutter[new_], Vdefault_gutter);
       set_specifier_fallback (Vgutter_size[cur], list1 (Fcons (Qnil, Qzero)));
-      set_specifier_fallback (Vgutter_size[new],
-			      new == TOP_GUTTER || new == BOTTOM_GUTTER
+      set_specifier_fallback (Vgutter_size[new_],
+			      new_ == TOP_GUTTER || new_ == BOTTOM_GUTTER
 			      ? Vdefault_gutter_height
 			      : Vdefault_gutter_width);
       set_specifier_fallback (Vgutter_border_width[cur],
 			      list1 (Fcons (Qnil, Qzero)));
-      set_specifier_fallback (Vgutter_border_width[new],
+      set_specifier_fallback (Vgutter_border_width[new_],
 			      Vdefault_gutter_border_width);
       set_specifier_fallback (Vgutter_visible_p[cur], list1 (Fcons (Qnil, Qt)));
-      set_specifier_fallback (Vgutter_visible_p[new], Vdefault_gutter_visible_p);
+      set_specifier_fallback (Vgutter_visible_p[new_], Vdefault_gutter_visible_p);
       Vdefault_gutter_position = position;
 
       unbind_to (depth);
@@ -1035,7 +1035,7 @@ gutter_size_validate (Lisp_Object instantiator)
     return;
 
   if (!INTP (instantiator) && !EQ (instantiator, Qautodetect))
-    invalid_argument ("Gutter size must be an integer or 'autodetect", instantiator);
+    invalid_argument ("Gutter size must be an integer or `autodetect'", instantiator);
 }
 
 DEFUN ("gutter-size-specifier-p", Fgutter_size_specifier_p, 1, 1, 0, /*
@@ -1235,7 +1235,7 @@ Use `set-specifier' to change this.
 
 The position of this gutter is specified in the function
 `default-gutter-position'.  If the corresponding position-specific
-gutter (e.g. `top-gutter' if `default-gutter-position' is 'top)
+gutter (e.g. `top-gutter' if `default-gutter-position' is `top')
 does not specify a gutter in a particular domain (usually a window),
 then the value of `default-gutter' in that domain, if any, will be
 used instead.
@@ -1356,21 +1356,21 @@ This is a specifier; use `set-specifier' to change it.
 The position of the default gutter is specified by the function
 `set-default-gutter-position'.  If the corresponding position-specific
 gutter thickness specifier (e.g. `top-gutter-height' if
-`default-gutter-position' is 'top) does not specify a thickness in a
+`default-gutter-position' is `top') does not specify a thickness in a
 particular domain (a window or a frame), then the value of
 `default-gutter-height' or `default-gutter-width' (depending on the
 gutter orientation) in that domain, if any, will be used instead.
 
 Note that `default-gutter-height' is only used when
-`default-gutter-position' is 'top or 'bottom, and `default-gutter-width'
-is only used when `default-gutter-position' is 'left or 'right.
+`default-gutter-position' is `top' or `bottom', and `default-gutter-width'
+is only used when `default-gutter-position' is `left' or `right'.
 
 Note that all of the position-specific gutter thickness specifiers
 have a fallback value of zero when they do not correspond to the
 default gutter.  Therefore, you will have to set a non-zero thickness
 value if you want a position-specific gutter to be displayed.
 
-If you set the height to 'autodetect the size of the gutter will be
+If you set the height to `autodetect' the size of the gutter will be
 calculated to be large enough to hold the contents of the gutter. This
 is the default.
 */ );
@@ -1488,7 +1488,7 @@ This is a specifier; use `set-specifier' to change it.
 The position of the default gutter is specified by the function
 `set-default-gutter-position'.  If the corresponding position-specific
 gutter border width specifier (e.g. `top-gutter-border-width' if
-`default-gutter-position' is 'top) does not specify a border width in a
+`default-gutter-position' is `top') does not specify a border width in a
 particular domain (a window or a frame), then the value of
 `default-gutter-border-width' in that domain, if any, will be used
 instead.
@@ -1579,7 +1579,7 @@ This is a specifier; use `set-specifier' to change it.
 The position of the default gutter is specified by the function
 `set-default-gutter-position'.  If the corresponding position-specific
 gutter visibility specifier (e.g. `top-gutter-visible-p' if
-`default-gutter-position' is 'top) does not specify a visible-p value
+`default-gutter-position' is `top') does not specify a visible-p value
 in a particular domain (a window or a frame), then the value of
 `default-gutter-visible-p' in that domain, if any, will be used
 instead.

@@ -100,23 +100,23 @@ tparam1 (const char *string, char *outstring, int len, const char *up,
       /* If the buffer might be too short, make it bigger.  */
       if (op + 5 >= outend)
 	{
-	  char *new;
+	  char *new_;
 	  if (outlen == 0)
 	    {
 	      outlen = len + 40;
-	      new = (char *) malloc (outlen);
+	      new_ = (char *) malloc (outlen);
 	      outend += 40;
-	      memcpy (new, outstring, op - outstring);
+	      memcpy (new_, outstring, op - outstring);
 	    }
 	  else
 	    {
 	      outend += outlen;
 	      outlen *= 2;
-	      new = (char *) realloc (outstring, outlen);
+	      new_ = (char *) realloc (outstring, outlen);
 	    }
-	  op += new - outstring;
-	  outend += new - outstring;
-	  outstring = new;
+	  op += new_ - outstring;
+	  outend += new_ - outstring;
+	  outstring = new_;
 	}
       c = *p++;
       if (!c)

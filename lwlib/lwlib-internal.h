@@ -8,12 +8,12 @@
 /*   (thanks, Jamie, I feel better now -- ben) */
 EXTERN_C void assert_failed (const char *, int, const char *);
 # define abort() (assert_failed (__FILE__, __LINE__, "abort()"))
-# define assert(x) ((x) ? 1 : (assert_failed (__FILE__, __LINE__, #x), 0))
+# define assert(x) ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, #x))
 #else
 # ifdef DEBUG_XEMACS
-#  define assert(x) ((x) ? 1 : ((void) abort (), 0))
+#  define assert(x) ((x) ? (void) 0 : (void) abort ())
 # else
-#  define assert(x) (1)
+#  define assert(x) ((void) 0)
 # endif
 #endif
 

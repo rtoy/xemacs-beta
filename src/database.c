@@ -1,6 +1,6 @@
 /* Database access routines
    Copyright (C) 1996, William M. Perry
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2005 Ben Wing.
 
 This file is part of XEmacs.
 

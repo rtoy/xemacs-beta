@@ -3082,7 +3082,7 @@ execute_internal_event (Lisp_Object event)
 	       continuous stream of process events for them.  Since we don't
 	       return until all process events have been flushed, we would
 	       get stuck here, processing events on a process whose status
-	       was 'exit.  Call this after dispatch-event, or the fds will
+	       was `exit'.  Call this after dispatch-event, or the fds will
 	       have been closed before we read the last data from them.
 	       It's safe for the filter to signal an error because
 	       status_notify() will be called on return to top-level.
@@ -3892,10 +3892,10 @@ reset_this_command_keys (Lisp_Object console, int clear_echo_area_p)
 static void
 push_this_command_keys (Lisp_Object event)
 {
-  Lisp_Object new = Fmake_event (Qnil, Qnil);
+  Lisp_Object new_ = Fmake_event (Qnil, Qnil);
 
-  Fcopy_event (event, new);
-  enqueue_event (new, &Vthis_command_keys, &Vthis_command_keys_tail);
+  Fcopy_event (event, new_);
+  enqueue_event (new_, &Vthis_command_keys, &Vthis_command_keys_tail);
 }
 
 /* The following two functions are used in call-interactively,

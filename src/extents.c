@@ -3733,10 +3733,10 @@ See `extent-parent'.
 		      Dynarr_length (newprops), sizeof (Lisp_Object_pair),
 		      compare_key_value_pairs))
 	  {
-	    Lisp_Object_pair new;
-	    new.key = Dynarr_at (oldprops, i).key;
-	    new.value = Qunbound;
-	    Dynarr_add (newprops, new);
+	    Lisp_Object_pair new_;
+	    new_.key = Dynarr_at (oldprops, i).key;
+	    new_.value = Qunbound;
+	    Dynarr_add (newprops, new_);
 	  }
       }
     for (i = 0; i < orignewlength; i++)
@@ -3747,10 +3747,10 @@ See `extent-parent'.
 						   sizeof (Lisp_Object_pair),
 						   compare_key_value_pairs))
 	  {
-	    Lisp_Object_pair new;
-	    new.key = Dynarr_at (newprops, i).key;
-	    new.value = Qunbound;
-	    Dynarr_add (oldprops, new);
+	    Lisp_Object_pair new_;
+	    new_.key = Dynarr_at (newprops, i).key;
+	    new_.value = Qunbound;
+	    Dynarr_add (oldprops, new_);
 	  }
       }
     qsort (Dynarr_atp (oldprops, 0), Dynarr_length (oldprops),
@@ -6525,7 +6525,7 @@ get_char_property (Bytexpos position, Lisp_Object prop,
   Lisp_Object extent;
 
   /* text_props_only specifies whether we only consider text-property
-     extents (those with the 'text-prop property set) or all extents. */
+     extents (those with the `text-prop' property set) or all extents. */
   if (!text_props_only)
     extent = extent_at (position, object, prop, 0, fl, 0);
   else
@@ -6665,8 +6665,8 @@ put_text_prop_mapper (EXTENT e, void *arg)
 
   extent = wrap_extent (e);
 
-  /* Note: in some cases when the property itself is 'start-open
-     or 'end-closed, the checks to set the openness may do a bit
+  /* Note: in some cases when the property itself is `start-open'
+     or `end-closed', the checks to set the openness may do a bit
      of extra work; but it won't hurt because we then fix up the
      openness later on in put_text_prop_openness_mapper(). */
   if (!EQ (Fextent_property (extent, Qtext_prop, Qnil), closure->prop))

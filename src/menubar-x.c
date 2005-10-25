@@ -893,30 +893,30 @@ static void
 menu_move_down (void)
 {
   widget_value *current = lw_get_entries (False);
-  widget_value *new = current;
+  widget_value *new_ = current;
 
-  while (new->next)
+  while (new_->next)
     {
-      new = new->next;
-      if (new->name /*&& new->enabled*/) break;
+      new_ = new_->next;
+      if (new_->name /*&& new_->enabled*/) break;
     }
 
-  if (new==current||!(new->name/*||new->enabled*/))
+  if (new_==current||!(new_->name/*||new_->enabled*/))
     {
-      new = lw_get_entries (True);
-      while (new!=current)
+      new_ = lw_get_entries (True);
+      while (new_!=current)
 	{
-	  if (new->name /*&& new->enabled*/) break;
-	  new = new->next;
+	  if (new_->name /*&& new_->enabled*/) break;
+	  new_ = new_->next;
 	}
-      if (new==current&&!(new->name /*|| new->enabled*/))
+      if (new_==current&&!(new_->name /*|| new_->enabled*/))
 	{
 	  lw_pop_menu ();
 	  return;
 	}
     }
 
-  lw_set_item (new);
+  lw_set_item (new_);
 }
 
 static void

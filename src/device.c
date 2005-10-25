@@ -169,7 +169,7 @@ valid_device_class_p (Lisp_Object class_)
 
 DEFUN ("valid-device-class-p", Fvalid_device_class_p, 1, 1, 0, /*
 Given a DEVICE-CLASS, return t if it is valid.
-Valid classes are 'color, 'grayscale, and 'mono.
+Valid classes are `color', `grayscale', and `mono'.
 */
        (device_class))
 {
@@ -973,7 +973,7 @@ If DEVICE is nil, the selected device will be used.
 
 DEFUN ("device-class", Fdevice_class, 0, 1, 0, /*
 Return the class (color behavior) of DEVICE.
-This will be one of 'color, 'grayscale, or 'mono.
+This will be one of `color', `grayscale', or `mono'.
 */
        (device))
 {
@@ -982,7 +982,7 @@ This will be one of 'color, 'grayscale, or 'mono.
 
 DEFUN ("set-device-class", Fset_device_class, 2, 2, 0, /*
 Set the class (color behavior) of DEVICE.
-CLASS should be one of 'color, 'grayscale, or 'mono.
+CLASS should be one of `color', `grayscale', or `mono'.
 This is only allowed on device such as TTY devices, where the color
 behavior cannot necessarily be determined automatically.
 */
@@ -1294,7 +1294,7 @@ window_system_pixelated_geometry (Lisp_Object domain)
 }
 
 DEFUN ("domain-device-type", Fdomain_device_type, 0, 1, 0, /*
-Return the device type symbol for a DOMAIN, e.g. 'x or 'tty.
+Return the device type symbol for a DOMAIN, e.g. `x' or `tty'.
 DOMAIN can be either a window, frame, device or console.
 */
        (domain))

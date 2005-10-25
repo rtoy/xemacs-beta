@@ -50,7 +50,7 @@ Boston, MA 02111-1307, USA.  */
    table	   A hash table, hashing keysyms to their bindings.
    		   It will be one of the following:
 
-		   -- a symbol, e.g. 'home
+		   -- a symbol, e.g. `home'
 		   -- a character, representing something printable
 		      (not ?\C-c meaning C-c, for instance)
 		   -- an integer representing a modifier combination
@@ -1177,7 +1177,7 @@ copy_keymap_mapper (Lisp_Object key, Lisp_Object value,
   /* When we encounter a keymap which is indirected through a
      symbol, we need to copy the sub-map.  In v18, the form
        (lookup-key (copy-keymap global-map) "\C-x")
-     returned a new keymap, not the symbol 'Control-X-prefix.
+     returned a new keymap, not the symbol `Control-X-prefix'.
    */
   value = get_keymap (value, 0, 1); /* #### autoload GC-safe here? */
   if (KEYMAPP (value))
@@ -1297,11 +1297,12 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
     {
       Ibyte *name = XSTRING_DATA (XSYMBOL (*keysym)->name);
 
-      /* FSFmacs uses symbols with the printed representation of keysyms in
-	 their names, like 'M-x, and we use the syntax '(meta x).  So, to avoid
-	 confusion, notice the M-x syntax and signal an error - because
-	 otherwise it would be interpreted as a regular keysym, and would even
-	 show up in the list-buffers output, causing confusion to the naive.
+      /* GNU Emacs uses symbols with the printed representation of keysyms in
+	 their names, like `M-x', and we use the syntax '(meta x).  So, to
+	 avoid confusion, notice the M-x syntax and signal an error -
+	 because otherwise it would be interpreted as a regular keysym, and
+	 would even show up in the list-buffers output, causing confusion
+	 to the naive.
 
 	 We can get away with this because none of the X keysym names contain
 	 a hyphen (some contain underscore, however).
@@ -1574,19 +1575,19 @@ event_matches_key_specifier_p (Lisp_Object event, Lisp_Object key_specifier)
     return 0;
 
   /* if the specifier is an integer such as 27, then it should match
-     both of the events 'escape' and 'control ['.  Calling
-     Fcharacter_to_event() will only match 'escape'. */
+     both of the events `escape' and `control ['.  Calling
+     Fcharacter_to_event() will only match `escape'. */
   if (CHAR_OR_CHAR_INTP (key_specifier))
     return (XCHAR_OR_CHAR_INT (key_specifier)
 	    == event_to_character (event, 0, 0));
 
   /* Otherwise, we cannot call event_to_character() because we may
      be dealing with non-ASCII keystrokes.  In any case, if I ask
-     for 'control [' then I should get exactly that, and not
-     'escape'.
+     for `control [' then I should get exactly that, and not
+     `escape'.
 
-     However, we have to behave differently on TTY's, where 'control ['
-     is silently converted into 'escape' by the keyboard driver.
+     However, we have to behave differently on TTY's, where `control ['
+     is silently converted into `escape' by the keyboard driver.
      In this case, ASCII is the only thing we know about, so we have
      to compare the ASCII values. */
 
@@ -2687,7 +2688,7 @@ static Lisp_Object
 process_event_binding_result (Lisp_Object result)
 {
   if (EQ (result, Qundefined))
-    /* The suppress-keymap function binds keys to 'undefined - special-case
+    /* The suppress-keymap function binds keys to `undefined' - special-case
        that here, so that being bound to that has the same error-behavior as
        not being defined at all.
        */
@@ -3735,8 +3736,8 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	  int size = lower_keys_count + 50;
 	  if (! c->keys_so_far_malloced)
 	    {
-	      Lisp_Key_Data *new = xnew_array (Lisp_Key_Data, size);
-	      memcpy ((void *)new, (const void *)c->keys_so_far,
+	      Lisp_Key_Data *new_ = xnew_array (Lisp_Key_Data, size);
+	      memcpy ((void *)new_, (const void *)c->keys_so_far,
 		      c->keys_so_far_total_size * sizeof (Lisp_Key_Data));
 	    }
 	  else

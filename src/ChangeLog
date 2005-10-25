@@ -1,5 +1,140 @@
 2005-10-25  Ben Wing  <ben@xemacs.org>
 
+	* EmacsFrame.c (EmacsFrameInitialize):
+	* EmacsFrame.c (EmacsFrameSetValues):
+	* ExternalClient.c:
+	* ExternalClient.c (externalClientInitialize):
+	* ExternalShell.c:
+	* ExternalShell.c (ExternalShellInitialize):
+	* chartab.c (copy_char_table_entry):
+	* chartab.c (Fcopy_char_table):
+	* cmdloop.c:
+	* cmdloop.c (initial_command_loop):
+	* compiler.h:
+	* console.c (Fvalid_console_type_p):
+	* database.c:
+	* device-msw.c:
+	* device-x.c:
+	* device.c (Fvalid_device_class_p):
+	* device.c (Fdevice_class):
+	* device.c (Fset_device_class):
+	* device.c (Fdomain_device_type):
+	* doc.c (Fsubstitute_command_keys):
+	* dragdrop.c:
+	* eval.c:
+	* eval.c (throw_or_bomb_out):
+	* eval.c (Fsignal):
+	* event-msw.c:
+	* event-msw.c (vars_of_event_mswindows):
+	* event-stream.c (execute_internal_event):
+	* event-stream.c (push_this_command_keys):
+	* events.c:
+	* extents.c (Fset_extent_parent):
+	* extents.c (get_char_property):
+	* extents.c (put_text_prop_mapper):
+	* file-coding.c:
+	* file-coding.c (Fvalid_coding_system_type_p):
+	* file-coding.c (Fdetect_coding_region):
+	* fns.c (Freplace_list):
+	* frame-tty.c (tty_lower_frame):
+	* frame.c:
+	* frame.c (Fframe_visible_p):
+	* gpmevent.c (Fgpm_enable):
+	* gutter.c (Fset_default_gutter_position):
+	* gutter.c (gutter_size_validate):
+	* gutter.c (specifier_vars_of_gutter):
+	* hash.c (KEYS_DIFFER_P):
+	* imgproc.c (splitbox):
+	* indent.c:
+	* keymap.c:
+	* keymap.c (copy_keymap_mapper):
+	* keymap.c (define_key_check_and_coerce_keysym):
+	* keymap.c (event_matches_key_specifier_p):
+	* keymap.c (process_event_binding_result):
+	* keymap.c (where_is_recursive_mapper):
+	* lisp-union.h:
+	* lisp-union.h (union Lisp_Object):
+	* macros.c (store_kbd_macro_event):
+	* malloc.c (realloc):
+	* marker.c (copy_marker_1):
+	* menubar-x.c (menu_move_down):
+	* menubar.c:
+	* menubar.c (vars_of_menubar):
+	* mule-charset.c:
+	* mule-charset.c (Fmake_charset):
+	* mule-charset.c (Fcharset_property):
+	* mule-charset.c (Fset_charset_ccl_program):
+	* mule-charset.c (Fset_charset_registry):
+	* number.c:
+	* process.c:
+	* profile.h:
+	* ralloc.c (obtain):
+	* redisplay.c:
+	* redisplay.c (get_display_block_from_line):
+	* redisplay.c (redisplay_frame):
+	* redisplay.c (vars_of_redisplay):
+	* redisplay.c (specifier_vars_of_redisplay):
+	* select-common.h:
+	* select.c:
+	* select.c (vars_of_select):
+	* syntax.c:
+	* syntax.c (scan_sexps_forward):
+	* sysfile.h:
+	* sysproc.h:
+	* systime.h:
+	* syswindows.h:
+	* toolbar.c (Fset_default_toolbar_position):
+	* toolbar.c (Fcheck_toolbar_button_syntax):
+	* toolbar.c (specifier_vars_of_toolbar):
+	* tooltalk.c:
+	* tooltalk.c (Freturn_tooltalk_message):
+	* tooltalk.c (Fadd_tooltalk_message_arg):
+	* tooltalk.c (Fadd_tooltalk_pattern_attribute):
+	* tparam.c (tparam1):
+	* unexaix.c (PERROR):
+	* unexaix.c (ERROR0):
+	* unexaix.c (unexec):
+	* unexaix.c (make_hdr):
+	* unexaix.c (copy_text_and_data):
+	* unexaix.c (write_segment):
+	* unexaix.c (copy_sym):
+	* unexaix.c (mark_x):
+	* unexaix.c (adjust_lnnoptrs):
+	* unexaix.c (unrelocate_symbols):
+	* unexalpha.c (unexec):
+	* unexalpha.c (update_dynamic_symbols):
+	* unexconvex.c (PERROR):
+	* unexconvex.c (ERROR0):
+	* unexconvex.c (entry_address;):
+	* unexconvex.c (make_hdr):
+	* unexconvex.c (new_;):
+	* unexconvex.c (sptr;):
+	* unexconvex.c (copy_sym):
+	* unexconvex.c (name;):
+	* unexec.c:
+	* unexec.c (PERROR):
+	* unexec.c (ERROR0):
+	* unexec.c (unexec):
+	* unexec.c (make_hdr):
+	* unexec.c (write_segment):
+	* unexec.c (copy_sym):
+	* unexec.c (mark_x):
+	* unexec.c (adjust_lnnoptrs):
+	* unexhp9k800.c:
+	* unexhp9k800.c (unexec):
+	* unexhp9k800.c (copy_file):
+	* unexhp9k800.c (copy_rest):
+	* unexmips.c (unexec):
+	* unicode.c:
+	* unicode.c (Fchar_to_unicode):
+	* window.c (make_dummy_parent):
+	* window.c (Fsplit_window):
+	* window.c (Fenlarge_window):
+	new -> new_.
+	'foo -> `foo'.
+
+2005-10-25  Ben Wing  <ben@xemacs.org>
+
 	* alloc.c:
 	* alloc.c (old_basic_alloc_lcrecord):
 	* alloc.c (very_old_free_lcrecord):

@@ -1418,7 +1418,7 @@ second.  This function contains knowledge about what various kinds of
 arguments ``mean'' -- for example, the number 9 is converted to the
 character ``Tab'', not the distinct character ``Control-I''.
 
-KEY-DESCRIPTION can be an integer, a character, a symbol such as 'clear,
+KEY-DESCRIPTION can be an integer, a character, a symbol such as `clear',
 or a list such as '(control backspace).
 
 If the optional second argument EVENT is an event, it is modified and

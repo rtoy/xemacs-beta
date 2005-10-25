@@ -1,7 +1,7 @@
 /* Functions to handle multilingual characters.
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 2001, 2002, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -416,21 +416,21 @@ DOC-STRING is a string describing the character set.
 PROPS is a property list, describing the specific nature of the
 character set.  Recognized properties are:
 
-'short-name	Short version of the charset name (ex: Latin-1)
-'long-name	Long version of the charset name (ex: ISO8859-1 (Latin-1))
-'registry	A regular expression matching the font registry field for
+`short-name'	Short version of the charset name (ex: Latin-1)
+`long-name'	Long version of the charset name (ex: ISO8859-1 (Latin-1))
+`registry'	A regular expression matching the font registry field for
 		this character set.
-'dimension	Number of octets used to index a character in this charset.
+`dimension'	Number of octets used to index a character in this charset.
 		Either 1 or 2.  Defaults to 1.
-'columns	Number of columns used to display a character in this charset.
+`columns'	Number of columns used to display a character in this charset.
 		Only used in TTY mode. (Under X, the actual width of a
 		character can be derived from the font used to display the
 		characters.) If unspecified, defaults to the dimension
 		(this is almost	always the correct value).
-'chars		Number of characters in each dimension (94 or 96).
+`chars'		Number of characters in each dimension (94 or 96).
 		Defaults to 94.  Note that if the dimension is 2, the
 		character set thus described is 94x94 or 96x96.
-'final		Final byte of ISO 2022 escape sequence.  Must be
+`final'		Final byte of ISO 2022 escape sequence.  Must be
 		supplied.  Each combination of (DIMENSION, CHARS) defines a
 		separate namespace for final bytes.  Note that ISO
 		2022 restricts the final byte to the range
@@ -438,22 +438,22 @@ character set.  Recognized properties are:
 		dimension == 2.  Note also that final bytes in the range
 		0x30 - 0x3F are reserved for user-defined (not official)
 		character sets.
-'graphic	0 (use left half of font on output) or 1 (use right half
+`graphic'	0 (use left half of font on output) or 1 (use right half
 		of font on output).  Defaults to 0.  For example, for
 		a font whose registry is ISO8859-1, the left half
 		(octets 0x20 - 0x7F) is the `ascii' character set, while
 		the right half (octets 0xA0 - 0xFF) is the `latin-1'
-		character set.  With 'graphic set to 0, the octets
+		character set.  With `graphic' set to 0, the octets
 		will have their high bit cleared; with it set to 1,
 		the octets will have their high bit set.
-'direction	'l2r (left-to-right) or 'r2l (right-to-left).
-		Defaults to 'l2r.
-'ccl-program	A compiled CCL program used to convert a character in
+`direction'	`l2r' (left-to-right) or `r2l' (right-to-left).
+		Defaults to `l2r'.
+`ccl-program'	A compiled CCL program used to convert a character in
 		this charset into an index into the font.  This is in
-		addition to the 'graphic property.  The CCL program
+		addition to the `graphic' property.  The CCL program
 		is passed the octets of the character, with the high
 		bit cleared and set depending upon whether the value
-		of the 'graphic property is 0 or 1.
+		of the `graphic' property is 0 or 1.
 */
        (name, doc_string, props))
 {
@@ -503,7 +503,7 @@ character set.  Recognized properties are:
 	    CHECK_INT (value);
 	    dimension = XINT (value);
 	    if (dimension < 1 || dimension > 2)
-	      invalid_constant ("Invalid value for 'dimension", value);
+	      invalid_constant ("Invalid value for `dimension'", value);
 	  }
 
 	else if (EQ (keyword, Qchars))
@@ -511,7 +511,7 @@ character set.  Recognized properties are:
 	    CHECK_INT (value);
 	    chars = XINT (value);
 	    if (chars != 94 && chars != 96)
-	      invalid_constant ("Invalid value for 'chars", value);
+	      invalid_constant ("Invalid value for `chars'", value);
 	  }
 
 	else if (EQ (keyword, Qcolumns))
@@ -519,7 +519,7 @@ character set.  Recognized properties are:
 	    CHECK_INT (value);
 	    columns = XINT (value);
 	    if (columns != 1 && columns != 2)
-	      invalid_constant ("Invalid value for 'columns", value);
+	      invalid_constant ("Invalid value for `columns'", value);
 	  }
 
 	else if (EQ (keyword, Qgraphic))
@@ -527,7 +527,7 @@ character set.  Recognized properties are:
 	    CHECK_INT (value);
 	    graphic = XINT (value);
 	    if (graphic < 0 || graphic > 1)
-	      invalid_constant ("Invalid value for 'graphic", value);
+	      invalid_constant ("Invalid value for `graphic'", value);
 	  }
 
 	else if (EQ (keyword, Qregistry))
@@ -543,7 +543,7 @@ character set.  Recognized properties are:
 	    else if (EQ (value, Qr2l))
 	      direction = CHARSET_RIGHT_TO_LEFT;
 	    else
-	      invalid_constant ("Invalid value for 'direction", value);
+	      invalid_constant ("Invalid value for `direction'", value);
 	  }
 
 	else if (EQ (keyword, Qfinal))
@@ -551,7 +551,7 @@ character set.  Recognized properties are:
 	    CHECK_CHAR_COERCE_INT (value);
 	    final = XCHAR (value);
 	    if (final < '0' || final > '~')
-	      invalid_constant ("Invalid value for 'final", value);
+	      invalid_constant ("Invalid value for `final'", value);
 	  }
 
 	else if (EQ (keyword, Qccl_program))
@@ -559,7 +559,7 @@ character set.  Recognized properties are:
 	    struct ccl_program test_ccl;
 
 	    if (setup_ccl_program (&test_ccl, value) < 0)
-	      invalid_argument ("Invalid value for 'ccl-program", value);
+	      invalid_argument ("Invalid value for `ccl-program'", value);
 	    ccl_program = value;
 	  }
 	else
@@ -568,7 +568,7 @@ character set.  Recognized properties are:
   }
 
   if (!final)
-    invalid_argument ("'final must be specified", Qunbound);
+    invalid_argument ("`final' must be specified", Qunbound);
   if (dimension == 2 && final > 0x5F)
     invalid_constant
       ("Final must be in the range 0x30 - 0x5F for dimension == 2",
@@ -787,7 +787,7 @@ Return dimension of CHARSET.
 DEFUN ("charset-property", Fcharset_property, 2, 2, 0, /*
 Return property PROP of CHARSET, a charset object or symbol naming a charset.
 Recognized properties are those listed in `make-charset', as well as
-'name and 'doc-string.
+`name' and `doc-string'.
 */
        (charset, prop))
 {
@@ -832,7 +832,7 @@ Return charset identification number of CHARSET.
    allow to be set. */
 
 DEFUN ("set-charset-ccl-program", Fset_charset_ccl_program, 2, 2, 0, /*
-Set the 'ccl-program property of CHARSET to CCL-PROGRAM.
+Set the `ccl-program' property of CHARSET to CCL-PROGRAM.
 */
        (charset, ccl_program))
 {
@@ -848,7 +848,7 @@ Set the 'ccl-program property of CHARSET to CCL-PROGRAM.
 
 /* Japanese folks may want to (set-charset-registry 'ascii "jisx0201") */
 DEFUN ("set-charset-registry", Fset_charset_registry, 2, 2, 0, /*
-Set the 'registry property of CHARSET to REGISTRY.
+Set the `registry' property of CHARSET to REGISTRY.
 */
        (charset, registry))
 {

@@ -1,7 +1,7 @@
 /* The mswindows event_stream interface.
    Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1996, 2000, 2001, 2002, 2003, 2005 Ben Wing.
    Copyright (C) 1997 Jonathan Harris.
 
 This file is part of XEmacs.
@@ -1797,11 +1797,11 @@ dde_eval (Lisp_Object str)
 /* A list of DDE advise tokens. Each token is an uninterned symbol,
  * whose value is the DDE string handle for its name (stored as a float,
  * as a Lisp int cannot hold a full C int).
- * The token's 'dde-data property is used to store data for a dde-advise.
+ * The token's `dde-data' property is used to store data for a dde-advise.
  */
 Lisp_Object Vdde_advise_items;
 
-/* The symbol 'HSZ */
+/* The symbol `HSZ' */
 Lisp_Object QHSZ;
 
 DEFUN("dde-alloc-advise-item", Fdde_alloc_advise_item, 0, 1, 0, /*
@@ -5058,7 +5058,7 @@ Each item is an uninterned symbol, created using dde-alloc-advise-item.
 The symbol's value is the data which is returned to the DDE client when
 a request for the item is made (or a dde-advise call is made).
 
-The symbol also has a 'HSZ property, which holds the DDE string handle
+The symbol also has a `HSZ' property, which holds the DDE string handle
 for the item, as a float. This is for internal use only, and should not
 be modified.
 */ );

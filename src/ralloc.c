@@ -274,22 +274,22 @@ obtain (POINTER address, size_t size)
      get more space.  */
   if (heap == NIL_HEAP)
     {
-      POINTER new = (*real_morecore)(0);
+      POINTER new_ = (*real_morecore)(0);
       size_t get;
 
       already_available = (char *)last_heap->end - (char *)address;
 
-      if (new != last_heap->end)
+      if (new_ != last_heap->end)
 	{
 	  /* Someone else called sbrk.  Make a new heap.  */
 
-	  heap_ptr new_heap = (heap_ptr) MEM_ROUNDUP (new);
+	  heap_ptr new_heap = (heap_ptr) MEM_ROUNDUP (new_);
 	  POINTER bloc_start = (POINTER) MEM_ROUNDUP ((POINTER)(new_heap + 1));
 
-	  if ((*real_morecore) (bloc_start - new) != new)
+	  if ((*real_morecore) (bloc_start - new_) != new_)
 	    return 0;
 
-	  new_heap->start = new;
+	  new_heap->start = new_;
 	  new_heap->end = bloc_start;
 	  new_heap->bloc_start = bloc_start;
 	  new_heap->free = bloc_start;

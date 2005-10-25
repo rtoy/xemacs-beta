@@ -1155,7 +1155,7 @@ DECLARE_INLINE_HEADER (int strcasecmp (const char *a, const char *b))
 
 /* in nt.c */
 int mswindows_access (const Ibyte *path, int mode);
-int mswindows_link (const Ibyte *old, const Ibyte *new);
+int mswindows_link (const Ibyte *old, const Ibyte *new_);
 int mswindows_rename (const Ibyte *oldname, const Ibyte *newname);
 int mswindows_unlink (const Ibyte *path);
 int mswindows_stat (const Ibyte *path, struct stat *buf);

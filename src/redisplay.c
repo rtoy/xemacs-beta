@@ -1,7 +1,7 @@
 /* Display generation from window structure and buffer text.
    Copyright (C) 1994, 1995, 1996 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2005 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1996 Chuck Thompson.
 
@@ -472,7 +472,7 @@ int no_redraw_on_reenter;
 
 Lisp_Object Vwindow_system;	/* nil or a symbol naming the window system
 				   under which emacs is running
-				   ('x is the only current possibility) */
+				   (`x' is the only current possibility) */
 Lisp_Object Vinitial_window_system;
 
 Lisp_Object Vglobal_mode_string;
@@ -715,7 +715,7 @@ get_display_block_from_line (struct display_line *dl, enum display_type type)
 	{
 	  struct display_block *dbp = Dynarr_atp (dl->display_blocks, elt);
 
-	  /* 'add' the block to the list */
+	  /* "add" the block to the list */
 	  Dynarr_increment (dl->display_blocks);
 
 	  /* initialize and return */
@@ -1784,7 +1784,7 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
     }
 }
 
-/* Add 'text layout glyphs at position POS_TYPE that are contained to
+/* Add `text' layout glyphs at position POS_TYPE that are contained to
    the display block, but add all other types to the appropriate list
    of the display line.  They will be added later by different
    routines. */
@@ -6864,7 +6864,7 @@ redisplay_frame (struct frame *f, int preemption_check)
 
   /* The menubar, toolbar, and icon updates should be done before
      enter_redisplay_critical_section is called and we are officially
-     'in_display'.  They is because they tend to eval Lisp code, which
+     `in_display'.  They is because they tend to eval Lisp code, which
      needs to be carefully wrapped within the critical section (and hence
      is difficult to debug). */
 
@@ -9909,8 +9909,8 @@ If this is zero, point is always centered after it moves off screen.
 Default behavior is to flash the whole screen.  On some platforms,
 special effects are available using the following values:
 
-'display       Flash the whole screen (ie, the default behavior).
-'top-bottom    Flash only the top and bottom lines of the selected frame.
+`display'       Flash the whole screen (ie, the default behavior).
+`top-bottom'    Flash only the top and bottom lines of the selected frame.
 
 When effects are unavailable on a platform, the visual bell is the
 default, whole screen.  (Currently only X supports any special effects.)
@@ -10043,7 +10043,7 @@ This is a specifier; use `set-specifier' to change it.
 
   DEFVAR_SPECIFIER ("use-left-overflow", &Vuse_left_overflow /*
 *Non-nil means use the left outside margin as extra whitespace when
-displaying 'whitespace or 'inside-margin glyphs.
+displaying `whitespace' or `inside-margin' glyphs.
 This is a specifier; use `set-specifier' to change it.
 */ );
   Vuse_left_overflow = Fmake_specifier (Qboolean);
@@ -10055,7 +10055,7 @@ This is a specifier; use `set-specifier' to change it.
 
   DEFVAR_SPECIFIER ("use-right-overflow", &Vuse_right_overflow /*
 *Non-nil means use the right outside margin as extra whitespace when
-displaying 'whitespace or 'inside-margin glyphs.
+displaying `whitespace' or `inside-margin' glyphs.
 This is a specifier; use `set-specifier' to change it.
 */ );
   Vuse_right_overflow = Fmake_specifier (Qboolean);

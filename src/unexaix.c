@@ -57,7 +57,7 @@ Boston, MA 02111-1307, USA.  */
 #define PERROR(arg) perror (arg); return -1
 #else
 #include <config.h>
-#define PERROR(file) report_error (file, new)
+#define PERROR(file) report_error (file, new_)
 #endif
 
 #include <a.out.h>
@@ -126,9 +126,9 @@ report_error (char *file, int fd)
 }
 #endif /* emacs */
 
-#define ERROR0(msg) report_error_1 (new, msg, 0, 0); return -1
-#define ERROR1(msg,x) report_error_1 (new, msg, x, 0); return -1
-#define ERROR2(msg,x,y) report_error_1 (new, msg, x, y); return -1
+#define ERROR0(msg) report_error_1 (new_, msg, 0, 0); return -1
+#define ERROR1(msg,x) report_error_1 (new_, msg, x, 0); return -1
+#define ERROR2(msg,x,y) report_error_1 (new_, msg, x, y); return -1
 
 static void
 report_error_1 (int fd, char *msg, int a1, int a2)
@@ -158,30 +158,30 @@ int unexec (char *new_name, char *a_name,
 	    uintptr_t bss_start,
 	    uintptr_t entry_address)
 {
-  int new = -1, a_out = -1;
+  int new_ = -1, a_out = -1;
 
   if (a_name && (a_out = open (a_name, O_RDONLY)) < 0)
     {
       PERROR (a_name);
     }
-  if ((new = creat (new_name, 0666)) < 0)
+  if ((new_ = creat (new_name, 0666)) < 0)
     {
       PERROR (new_name);
     }
-  if (make_hdr (new, a_out,
+  if (make_hdr (new_, a_out,
 		data_start, bss_start,
 		entry_address,
 		a_name, new_name) < 0
-      || copy_text_and_data (new) < 0
-      || copy_sym (new, a_out, a_name, new_name) < 0
-      || adjust_lnnoptrs (new, a_out, new_name) < 0
-      || unrelocate_symbols (new, a_out, a_name, new_name) < 0)
+      || copy_text_and_data (new_) < 0
+      || copy_sym (new_, a_out, a_name, new_name) < 0
+      || adjust_lnnoptrs (new_, a_out, new_name) < 0
+      || unrelocate_symbols (new_, a_out, a_name, new_name) < 0)
     {
-      close (new);
+      close (new_);
       return -1;	
     }
 
-  close (new);
+  close (new_);
   if (a_out >= 0)
     close (a_out);
   mark_x (new_name);
@@ -195,7 +195,7 @@ int unexec (char *new_name, char *a_name,
  * Modify the text and data sizes.
  */
 static int
-make_hdr (int new, int a_out,
+make_hdr (int new_, int a_out,
 	  unsigned data_start, unsigned bss_start,
 	  unsigned UNUSED (entry_address),
 	  char *a_name, char *new_name)
@@ -391,14 +391,14 @@ make_hdr (int new, int a_out,
   data_scnptr = f_dhdr->s_scnptr;
   load_scnptr = f_lhdr ? f_lhdr->s_scnptr : 0;
 
-  if (write (new, &f_hdr, sizeof (f_hdr)) != sizeof (f_hdr))
+  if (write (new_, &f_hdr, sizeof (f_hdr)) != sizeof (f_hdr))
     {
       PERROR (new_name);
     }
 
   if (f_hdr.f_opthdr > 0)
     {
-      if (write (new, &f_ohdr, sizeof (f_ohdr)) != sizeof (f_ohdr))
+      if (write (new_, &f_ohdr, sizeof (f_ohdr)) != sizeof (f_ohdr))
 	{
 	  PERROR (new_name);
 	}
@@ -406,7 +406,7 @@ make_hdr (int new, int a_out,
 
   for (scns = 0; scns < f_hdr.f_nscns; scns++) {
     struct scnhdr *s = &section[scns];
-    if (write (new, s, sizeof (*s)) != sizeof (*s))
+    if (write (new_, s, sizeof (*s)) != sizeof (*s))
       {
 	PERROR (new_name);
       }
@@ -421,27 +421,27 @@ make_hdr (int new, int a_out,
  * Copy the text and data segments from memory to the new a.out
  */
 static int
-copy_text_and_data (int new)
+copy_text_and_data (int new_)
 {
   char *end;
   char *ptr;
 
-  lseek (new, (long) text_scnptr, SEEK_SET);
+  lseek (new_, (long) text_scnptr, SEEK_SET);
   ptr = start_of_text () + text_scnptr;
   end = ptr + f_ohdr.tsize;
-  write_segment (new, ptr, end);
+  write_segment (new_, ptr, end);
 
-  lseek (new, (long) data_scnptr, SEEK_SET);
+  lseek (new_, (long) data_scnptr, SEEK_SET);
   ptr = (char *) f_ohdr.data_start;
   end = ptr + f_ohdr.dsize;
-  write_segment (new, ptr, end);
+  write_segment (new_, ptr, end);
 
   return 0;
 }
 
 #define UnexBlockSz (1<<12)			/* read/write block size */
 static void
-write_segment (int new, char *ptr, char *end)
+write_segment (int new_, char *ptr, char *end)
 {
   int i, nwrite, ret;
   char buf[80];
@@ -453,7 +453,7 @@ write_segment (int new, char *ptr, char *end)
       nwrite = (((int) ptr + UnexBlockSz) & -UnexBlockSz) - (int) ptr;
       /* But not beyond specified end.  */
       if (nwrite > end - ptr) nwrite = end - ptr;
-      ret = write (new, ptr, nwrite);
+      ret = write (new_, ptr, nwrite);
       /* If write gets a page fault, it means we reached
 	 a gap between the old text segment and the old data segment.
 	 This gap has probably been remapped into part of the text segment.
@@ -461,13 +461,13 @@ write_segment (int new, char *ptr, char *end)
       if (ret == -1 && errno == EFAULT)
 	{
 	  memset (zeros, 0, nwrite);
-	  write (new, zeros, nwrite);
+	  write (new_, zeros, nwrite);
 	}
       else if (nwrite != ret)
 	{
 	  sprintf (buf,
 		   "unexec write failure: addr 0x%lx, fileno %d, size 0x%x, wrote 0x%x, errno %d",
-		   (unsigned long)ptr, new, nwrite, ret, errno);
+		   (unsigned long)ptr, new_, nwrite, ret, errno);
 	  PERROR (buf);
 	}
       i += nwrite;
@@ -481,7 +481,7 @@ write_segment (int new, char *ptr, char *end)
  * Copy the relocation information and symbol table from the a.out to the new
  */
 static int
-copy_sym (int new, int a_out, char *a_name, char *new_name)
+copy_sym (int new_, int a_out, char *a_name, char *new_name)
 {
   char page[UnexBlockSz];
   int n;
@@ -499,7 +499,7 @@ copy_sym (int new, int a_out, char *a_name, char *new_name)
 
   while ((n = read (a_out, page, sizeof (page))) > 0)
     {
-      if (write (new, page, n) != n)
+      if (write (new_, page, n) != n)
 	{
 	  PERROR (new_name);
 	}
@@ -521,7 +521,7 @@ mark_x (char *name)
 {
   struct stat sbuf;
   int um;
-  int new = 0;  /* for PERROR */
+  int new_ = 0;  /* for PERROR */
 
   um = umask (777);
   umask (um);
@@ -539,50 +539,50 @@ adjust_lnnoptrs (int UNUSED (writedesc), int UNUSED (readdesc), char *new_name)
 {
   int nsyms;
   int naux;
-  int new;
+  int new_;
   struct syment symentry;
   union auxent auxentry;
 
   if (!lnnoptr || !f_hdr.f_symptr)
     return 0;
 
-  if ((new = open (new_name, O_RDWR)) < 0)
+  if ((new_ = open (new_name, O_RDWR)) < 0)
     {
       PERROR (new_name);
       return -1;
     }
 
-  lseek (new, f_hdr.f_symptr, SEEK_SET);
+  lseek (new_, f_hdr.f_symptr, SEEK_SET);
   for (nsyms = 0; nsyms < f_hdr.f_nsyms; nsyms++)
     {
-      read (new, &symentry, SYMESZ);
+      read (new_, &symentry, SYMESZ);
       if (symentry.n_sclass == C_BINCL || symentry.n_sclass == C_EINCL)
 	{
 	  symentry.n_value += bias;
-	  lseek (new, -SYMESZ, SEEK_CUR);
-	  write (new, &symentry, SYMESZ);
+	  lseek (new_, -SYMESZ, SEEK_CUR);
+	  write (new_, &symentry, SYMESZ);
 	}
 
       for (naux = symentry.n_numaux; naux-- != 0; )
 	{
-	  read (new, &auxentry, AUXESZ);
+	  read (new_, &auxentry, AUXESZ);
 	  nsyms++;
 	  if (naux != 0              /* skip csect auxentry (last entry) */
               && (symentry.n_sclass == C_EXT || symentry.n_sclass == C_HIDEXT))
             {
               auxentry.x_sym.x_fcnary.x_fcn.x_lnnoptr += bias;
-              lseek (new, -AUXESZ, SEEK_CUR);
-              write (new, &auxentry, AUXESZ);
+              lseek (new_, -AUXESZ, SEEK_CUR);
+              write (new_, &auxentry, AUXESZ);
             }
 	}
     }
-  close (new);
+  close (new_);
 
   return 0;
 }
 
 static int
-unrelocate_symbols (int new, int a_out, char *a_name, char *new_name)
+unrelocate_symbols (int new_, int a_out, char *a_name, char *new_name)
 {
   int i;
   LDHDR ldhdr;
@@ -626,11 +626,11 @@ unrelocate_symbols (int new, int a_out, char *a_name, char *new_name)
 	{
 	  ldrel.l_symndx = SYMNDX_DATA;
 
-	  lseek (new,
+	  lseek (new_,
 		 load_scnptr + LDHDRSZ + LDSYMSZ*ldhdr.l_nsyms + LDRELSZ*i,
 		 SEEK_SET);
 
-	  if (write (new, &ldrel, LDRELSZ) != LDRELSZ)
+	  if (write (new_, &ldrel, LDRELSZ) != LDRELSZ)
 	    {
 	      PERROR (new_name);
 	    }
@@ -665,10 +665,10 @@ unrelocate_symbols (int new, int a_out, char *a_name, char *new_name)
 
           if (orig_int != * p)
             {
-              lseek (new,
+              lseek (new_,
                      data_scnptr + (ldrel.l_vaddr - f_ohdr.data_start),
 		     SEEK_SET);
-              if (write (new, (void *) &orig_int, sizeof (orig_int))
+              if (write (new_, (void *) &orig_int, sizeof (orig_int))
                   != sizeof (orig_int))
                 {
                   PERROR (new_name);

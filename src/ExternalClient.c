@@ -57,7 +57,7 @@ ERROR!  This ought not be getting compiled if EXTERNAL_WIDGET is undefined
   extw_send_notify_3(XtDisplay((Widget)(w)), XtWindow((Widget)(w)),\
 		     type, l0, l1, l2)
 
-static void externalClientInitialize (Widget req, Widget new, ArgList args,
+static void externalClientInitialize (Widget req, Widget new_, ArgList args,
 				      Cardinal *num_args);
 static void externalClientRealize (Widget widget, XtValueMask *mask,
 		    XSetWindowAttributes *attrs);
@@ -174,13 +174,13 @@ ExternalClientClassRec externalClientClassRec = {
 WidgetClass externalClientWidgetClass = (WidgetClass) &externalClientClassRec;
 
 static void
-externalClientInitialize (Widget UNUSED (req), Widget new,
+externalClientInitialize (Widget UNUSED (req), Widget new_,
 			  ArgList UNUSED (args), Cardinal *UNUSED (num_args))
 {
-  ExternalClientWidget ecw = (ExternalClientWidget) new;
+  ExternalClientWidget ecw = (ExternalClientWidget) new_;
   static int error_handler_added = 0;
 
-  extw_initialize_atoms (XtDisplay (new));
+  extw_initialize_atoms (XtDisplay (new_));
   extw_which_side = extw_client_send;
 
 #ifdef EXTW_USES_MOTIF
@@ -194,7 +194,7 @@ externalClientInitialize (Widget UNUSED (req), Widget new,
 
   */
 
-  XtOverrideTranslations (new,
+  XtOverrideTranslations (new_,
 			  XtParseTranslationTable ("None<Key>Tab:\n"
 						   "<FocusIn>:focusIn()\n"
 						   "<FocusOut>:focusOut()\n"
@@ -203,7 +203,7 @@ externalClientInitialize (Widget UNUSED (req), Widget new,
 
 #endif
 
-  XtAddEventHandler (new, 0, TRUE, EventHandler, (XtPointer) NULL);
+  XtAddEventHandler (new_, 0, TRUE, EventHandler, (XtPointer) NULL);
 
   ecw->externalClient.shell_ready = False;
   ecw->externalClient.has_focus = False;

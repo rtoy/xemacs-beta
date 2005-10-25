@@ -99,7 +99,7 @@ extern char *tzname[];	/* RS6000 and others want it this way.  */
 #endif
 
 /* EMACS_TIME is the type to use to represent temporal intervals.
-   At one point this was 'struct timeval' on some systems, int on others.
+   At one point this was `struct timeval' on some systems, int on others.
    But this is stupid.  Other things than select() code like to
    manipulate time values, and so microsecond precision should be
    maintained.  Separate typedefs and conversion functions are provided

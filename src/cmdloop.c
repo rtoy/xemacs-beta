@@ -174,18 +174,18 @@ You should almost certainly not be using this.
    call_command_loop() is called when a macro is started and when the
    minibuffer is entered; normal termination of the macro or
    minibuffer causes a throw out of the recursive command loop. (To
-   'execute-kbd-macro for macros and 'exit for minibuffers.  Note also
+   `execute-kbd-macro' for macros and `exit' for minibuffers.  Note also
    that the low-level minibuffer-entering function,
    `read-minibuffer-internal', provides its own error handling and
    does not need command_loop_2()'s error encapsulation; so it tells
    call_command_loop() to invoke command_loop_1() directly.)
 
    Note that both read-minibuffer-internal and recursive-edit set
-   up a catch for 'exit; this is why `abort-recursive-edit', which
+   up a catch for `exit'; this is why `abort-recursive-edit', which
    throws to this catch, exits out of either one.
 
    initial_command_loop(), called from main(), sets up a catch
-   for 'top-level when invoking command_loop_2(), allowing functions
+   for `top-level' when invoking command_loop_2(), allowing functions
    to throw all the way to the top level if they really need to.
    Before invoking command_loop_2(), initial_command_loop() calls
    top_level_1(), which handles all of the startup stuff (creating
@@ -194,7 +194,7 @@ You should almost certainly not be using this.
    is in Lisp and is pointed to by the variable `top-level';
    normally this function is `normal-top-level'.  top_level_1() is
    just an error-handling wrapper similar to command_loop_2().
-   Note also that initial_command_loop() sets up a catch for 'top-level
+   Note also that initial_command_loop() sets up a catch for `top-level'
    when invoking top_level_1(), just like when it invokes
    command_loop_2(). */
 
@@ -286,7 +286,7 @@ initial_command_loop (Lisp_Object load_me)
     Vtop_level = list2 (Qload, load_me);
 
   /* First deal with startup and command-line arguments.  A throw
-     to 'top-level gets us back here directly (does this ever happen?).
+     to `top-level' gets us back here directly (does this ever happen?).
      Otherwise, this function will return normally when all command-
      line arguments have been processed, the user's initialization
      file has been read in, and the first frame has been created. */
@@ -309,7 +309,7 @@ initial_command_loop (Lisp_Object load_me)
       command_loop_level = 0;
       MARK_MODELINE_CHANGED;
       /* Now invoke the command loop.  It never returns; however, a
-	 throw to 'top-level will place us at the end of this loop. */
+	 throw to `top-level' will place us at the end of this loop. */
       internal_catch (Qtop_level, command_loop_2, Qnil, 0, 0, 0);
       /* #### wrong with selected-console? */
       /* We don't actually call clear_echo_area() here, partially

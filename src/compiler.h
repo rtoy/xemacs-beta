@@ -36,7 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #define INCLUDED_compiler_h
 
 /* Define min() and max(). (Some compilers put them in strange places that
-   won't be referenced by include files used by XEmacs, such as 'macros.h'
+   won't be referenced by include files used by XEmacs, such as `macros.h'
    under Solaris.) */
 
 #ifndef min

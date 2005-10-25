@@ -202,7 +202,7 @@ splitbox(quant_table *qt, Colorbox* ptr)
 {
   int		hist2[B_LEN];
   int		first = 0, last = 0;
-  register Colorbox	*new;
+  register Colorbox	*new_;
   register int	*iptr, *histp;
   register int	i, j;
   register int	ir,ig,ib;
@@ -286,45 +286,45 @@ splitbox(quant_table *qt, Colorbox* ptr)
     i++;
 
   /* Create new box, re-allocate points */
-  new = qt->freeboxes;
-  qt->freeboxes = new->next;
+  new_ = qt->freeboxes;
+  qt->freeboxes = new_->next;
   if (qt->freeboxes)
     qt->freeboxes->prev = NULL;
   if (qt->usedboxes)
-    qt->usedboxes->prev = new;
-  new->next = qt->usedboxes;
-  qt->usedboxes = new;
+    qt->usedboxes->prev = new_;
+  new_->next = qt->usedboxes;
+  qt->usedboxes = new_;
 
   histp = &hist2[first];
   for (sum1 = 0, j = first; j < i; j++)
     sum1 += *histp++;
   for (sum2 = 0, j = i; j <= last; j++)
     sum2 += *histp++;
-  new->total = sum1;
+  new_->total = sum1;
   ptr->total = sum2;
 
-  new->rmin = ptr->rmin;
-  new->rmax = ptr->rmax;
-  new->gmin = ptr->gmin;
-  new->gmax = ptr->gmax;
-  new->bmin = ptr->bmin;
-  new->bmax = ptr->bmax;
+  new_->rmin = ptr->rmin;
+  new_->rmax = ptr->rmax;
+  new_->gmin = ptr->gmin;
+  new_->gmax = ptr->gmax;
+  new_->bmin = ptr->bmin;
+  new_->bmax = ptr->bmax;
   switch (axis)
     {
     case RED:
-      new->rmax = i-1;
+      new_->rmax = i-1;
       ptr->rmin = i;
       break;
     case GREEN:
-      new->gmax = i-1;
+      new_->gmax = i-1;
       ptr->gmin = i;
       break;
     case BLUE:
-      new->bmax = i-1;
+      new_->bmax = i-1;
       ptr->bmin = i;
       break;
     }
-  shrinkbox (qt, new);
+  shrinkbox (qt, new_);
   shrinkbox (qt, ptr);
 }
 

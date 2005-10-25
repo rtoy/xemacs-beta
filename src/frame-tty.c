@@ -151,7 +151,7 @@ static void
 tty_lower_frame (struct frame *f)
 {
   Lisp_Object frame_list = DEVICE_FRAME_LIST (XDEVICE (FRAME_DEVICE (f)));
-  Lisp_Object tail, new;
+  Lisp_Object tail, new_;
 
   if (!FRAME_REPAINT_P (f))
     return;
@@ -169,11 +169,11 @@ tty_lower_frame (struct frame *f)
 
   tty_make_frame_hidden (f);
   if (CONSP (XCDR (tail)))
-    new = XCAR (XCDR (tail));
+    new_ = XCAR (XCDR (tail));
   else
-    new = XCAR (frame_list);
-  tty_make_frame_unhidden (XFRAME (new));
-  tty_schedule_frame_select (XFRAME (new));
+    new_ = XCAR (frame_list);
+  tty_make_frame_unhidden (XFRAME (new_));
+  tty_schedule_frame_select (XFRAME (new_));
 }
 
 static void

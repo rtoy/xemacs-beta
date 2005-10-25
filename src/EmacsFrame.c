@@ -266,10 +266,10 @@ update_various_frame_slots (EmacsFrame ew)
 }
 
 static void
-EmacsFrameInitialize (Widget UNUSED (request), Widget new,
+EmacsFrameInitialize (Widget UNUSED (request), Widget new_,
 		      ArgList UNUSED (unused1), Cardinal *UNUSED (unused2))
 {
-  EmacsFrame ew = (EmacsFrame)new;
+  EmacsFrame ew = (EmacsFrame)new_;
   struct frame *f = ew->emacs_frame.frame;
 
   if (!f)
@@ -380,8 +380,8 @@ EmacsFrameSetValues (Widget cur_widget, Widget UNUSED (req_widget),
 		     Widget new_widget, ArgList argv, Cardinal *argc)
 {
   EmacsFrame cur = (EmacsFrame) cur_widget;
-  EmacsFrame new = (EmacsFrame) new_widget;
-  struct frame *f = new->emacs_frame.frame;
+  EmacsFrame new_ = (EmacsFrame) new_widget;
+  struct frame *f = new_->emacs_frame.frame;
   in_resource_setting++;
   /* This function does not need to do much.  Pretty much everything
      interesting will get done in the resize method, which will
@@ -396,10 +396,10 @@ EmacsFrameSetValues (Widget cur_widget, Widget UNUSED (req_widget),
      called or XtSetValues() is called.
      */
 
-  if (cur->emacs_frame.iconic != new->emacs_frame.iconic &&
-      FRAME_X_TOP_LEVEL_FRAME_P (new->emacs_frame.frame))
-    x_wm_set_shell_iconic_p (FRAME_X_SHELL_WIDGET (new->emacs_frame.frame),
-			     new->emacs_frame.iconic);
+  if (cur->emacs_frame.iconic != new_->emacs_frame.iconic &&
+      FRAME_X_TOP_LEVEL_FRAME_P (new_->emacs_frame.frame))
+    x_wm_set_shell_iconic_p (FRAME_X_SHELL_WIDGET (new_->emacs_frame.frame),
+			     new_->emacs_frame.iconic);
 
       /* If we got here, then we were likely called as a result of
 	 the EditRes protocol, so go ahead and change scrollbar-width
@@ -407,74 +407,74 @@ EmacsFrameSetValues (Widget cur_widget, Widget UNUSED (req_widget),
 	 a change made to scrollbar-width etc. so don't do anything
 	 special. */
   if (cur->emacs_frame.internal_border_width !=
-      new->emacs_frame.internal_border_width)
+      new_->emacs_frame.internal_border_width)
     {
-      f->internal_border_width = new->emacs_frame.internal_border_width;
+      f->internal_border_width = new_->emacs_frame.internal_border_width;
       MARK_FRAME_SIZE_SLIPPED (f);
     }
 
 #ifdef HAVE_SCROLLBARS
       if (cur->emacs_frame.scrollbar_width !=
-	  new->emacs_frame.scrollbar_width)
+	  new_->emacs_frame.scrollbar_width)
 	Fadd_spec_to_specifier
 	  (Vscrollbar_width,
-	   make_int (new->emacs_frame.scrollbar_width),
+	   make_int (new_->emacs_frame.scrollbar_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.scrollbar_height !=
-	  new->emacs_frame.scrollbar_height)
+	  new_->emacs_frame.scrollbar_height)
 	Fadd_spec_to_specifier
 	  (Vscrollbar_height,
-	   make_int (new->emacs_frame.scrollbar_height),
+	   make_int (new_->emacs_frame.scrollbar_height),
 	   wrap_frame (f), Qnil, Qnil);
 #endif /* HAVE_SCROLLBARS */
 #ifdef HAVE_TOOLBARS
       if (cur->emacs_frame.top_toolbar_height !=
-	  new->emacs_frame.top_toolbar_height)
+	  new_->emacs_frame.top_toolbar_height)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_size[TOP_TOOLBAR],
-	   make_int (new->emacs_frame.top_toolbar_height),
+	   make_int (new_->emacs_frame.top_toolbar_height),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.bottom_toolbar_height !=
-	  new->emacs_frame.bottom_toolbar_height)
+	  new_->emacs_frame.bottom_toolbar_height)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_size[BOTTOM_TOOLBAR],
-	   make_int (new->emacs_frame.bottom_toolbar_height),
+	   make_int (new_->emacs_frame.bottom_toolbar_height),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.left_toolbar_width !=
-	  new->emacs_frame.left_toolbar_width)
+	  new_->emacs_frame.left_toolbar_width)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_size[LEFT_TOOLBAR],
-	   make_int (new->emacs_frame.left_toolbar_width),
+	   make_int (new_->emacs_frame.left_toolbar_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.right_toolbar_width !=
-	  new->emacs_frame.right_toolbar_width)
+	  new_->emacs_frame.right_toolbar_width)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_size[RIGHT_TOOLBAR],
-	   make_int (new->emacs_frame.right_toolbar_width),
+	   make_int (new_->emacs_frame.right_toolbar_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.top_toolbar_border_width !=
-	  new->emacs_frame.top_toolbar_border_width)
+	  new_->emacs_frame.top_toolbar_border_width)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_border_width[TOP_TOOLBAR],
-	   make_int (new->emacs_frame.top_toolbar_border_width),
+	   make_int (new_->emacs_frame.top_toolbar_border_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.bottom_toolbar_border_width !=
-	  new->emacs_frame.bottom_toolbar_border_width)
+	  new_->emacs_frame.bottom_toolbar_border_width)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_border_width[BOTTOM_TOOLBAR],
-	   make_int (new->emacs_frame.bottom_toolbar_border_width),
+	   make_int (new_->emacs_frame.bottom_toolbar_border_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.left_toolbar_border_width !=
-	  new->emacs_frame.left_toolbar_border_width)
+	  new_->emacs_frame.left_toolbar_border_width)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_border_width[LEFT_TOOLBAR],
-	   make_int (new->emacs_frame.left_toolbar_border_width),
+	   make_int (new_->emacs_frame.left_toolbar_border_width),
 	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.right_toolbar_border_width !=
-	  new->emacs_frame.right_toolbar_border_width)
+	  new_->emacs_frame.right_toolbar_border_width)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_border_width[RIGHT_TOOLBAR],
-	   make_int (new->emacs_frame.right_toolbar_border_width),
+	   make_int (new_->emacs_frame.right_toolbar_border_width),
 	   wrap_frame (f), Qnil, Qnil);
 #endif /* HAVE_TOOLBARS */
 
@@ -485,8 +485,8 @@ EmacsFrameSetValues (Widget cur_widget, Widget UNUSED (req_widget),
      request might be issued as a result of hiding/showing menubar or
      changing toolbar placement, where we rely on relayout made by the
      callback, we go ahead and simulate such a call */
-  if (cur->core.width == new->core.width
-      && cur->core.height == new->core.height)
+  if (cur->core.width == new_->core.width
+      && cur->core.height == new_->core.height)
     {
       int i;
       for (i = 0; i < (int) *argc; i++)

@@ -34,10 +34,10 @@ Boston, MA 02111-1307, USA.  */
    defined in ../lisp/dragdrop.el.
    The object of the misc-user-event has the following format:
               ( TYPE . DATA )
-   TYPE  is one of 'dragdrop-MIME and 'dragdrop-URL
-   DATA  - if TYPE is 'dragdrop-URL, DATA is a list of valid URL strings. It
+   TYPE  is one of `dragdrop-MIME' and `dragdrop-URL'
+   DATA  - if TYPE is `dragdrop-URL', DATA is a list of valid URL strings. It
 	   is always a list, also if only one URL string is within it.
-	 - if TYPE is 'dragdrop-MIME, DATA is a list of MIME elements.
+	 - if TYPE is `dragdrop-MIME', DATA is a list of MIME elements.
 	   Each can be a string or a list.
 	   if it is a string it is the pure MIME data complete with header
 	   and body.

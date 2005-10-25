@@ -169,7 +169,7 @@ pointer looks like an int) but not on all machines.
 #else
 #define IN_UNEXEC
 #include <config.h>
-#define PERROR(file) report_error (file, new)
+#define PERROR(file) report_error (file, new_)
 #endif
 
 #if __STDC__ || defined(STDC_HEADERS)
@@ -341,9 +341,9 @@ report_error (const char *file, int fd)
 }
 #endif /* emacs */
 
-#define ERROR0(msg) report_error_1 (new, msg, 0, 0); return -1
-#define ERROR1(msg,x) report_error_1 (new, msg, x, 0); return -1
-#define ERROR2(msg,x,y) report_error_1 (new, msg, x, y); return -1
+#define ERROR0(msg) report_error_1 (new_, msg, 0, 0); return -1
+#define ERROR1(msg,x) report_error_1 (new_, msg, x, 0); return -1
+#define ERROR2(msg,x,y) report_error_1 (new_, msg, x, y); return -1
 
 static void
 report_error_1 (fd, msg, a1, a2)
@@ -360,11 +360,11 @@ report_error_1 (fd, msg, a1, a2)
 #endif
 }
 
-static int make_hdr (int new, int a_out, unsigned data_start,
+static int make_hdr (int new_, int a_out, unsigned data_start,
 		     unsigned bss_start, unsigned entry_address,
 		     char *a_name, char *new_name);
-static int copy_text_and_data (int new, int a_out);
-static int copy_sym (int new, int a_out, char *a_name, char *new_name);
+static int copy_text_and_data (int new_, int a_out);
+static int copy_sym (int new_, int a_out, char *a_name, char *new_name);
 static void mark_x (char *name);
 
 /* ****************************************************************
@@ -377,33 +377,33 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
      char *new_name, *a_name;
      unsigned data_start, bss_start, entry_address;
 {
-  int new, a_out = -1;
+  int new_, a_out = -1;
 
   if (a_name && (a_out = open (a_name, O_RDONLY)) < 0)
     {
       PERROR (a_name);
     }
-  if ((new = creat (new_name, 0666)) < 0)
+  if ((new_ = creat (new_name, 0666)) < 0)
     {
       PERROR (new_name);
     }
 
-  if (make_hdr (new, a_out, data_start, bss_start, entry_address, a_name, new_name) < 0
-      || copy_text_and_data (new, a_out) < 0
-      || copy_sym (new, a_out, a_name, new_name) < 0
+  if (make_hdr (new_, a_out, data_start, bss_start, entry_address, a_name, new_name) < 0
+      || copy_text_and_data (new_, a_out) < 0
+      || copy_sym (new_, a_out, a_name, new_name) < 0
 #ifdef COFF
 #ifndef COFF_BSD_SYMBOLS
-      || adjust_lnnoptrs (new, a_out, new_name) < 0
+      || adjust_lnnoptrs (new_, a_out, new_name) < 0
 #endif
 #endif
       )
     {
-      close (new);
+      close (new_);
       /* unlink (new_name);	    	/ * Failed, unlink new a.out */
       return -1;
     }
 
-  close (new);
+  close (new_);
   if (a_out >= 0)
     close (a_out);
   mark_x (new_name);
@@ -417,7 +417,7 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
  * Modify the text and data sizes.
  */
 static int
-make_hdr (int new, int a_out, unsigned data_start, unsigned bss_start,
+make_hdr (int new_, int a_out, unsigned data_start, unsigned bss_start,
 	  unsigned entry_address, char *a_name, char *new_name)
 {
 #ifdef COFF
@@ -618,29 +618,29 @@ make_hdr (int new, int a_out, unsigned data_start, unsigned bss_start,
   ADJUST_EXEC_HEADER;
 #endif /* ADJUST_EXEC_HEADER */
 
-  if (write (new, &f_hdr, sizeof (f_hdr)) != sizeof (f_hdr))
+  if (write (new_, &f_hdr, sizeof (f_hdr)) != sizeof (f_hdr))
     {
       PERROR (new_name);
     }
 
-  if (write (new, &f_ohdr, sizeof (f_ohdr)) != sizeof (f_ohdr))
+  if (write (new_, &f_ohdr, sizeof (f_ohdr)) != sizeof (f_ohdr))
     {
       PERROR (new_name);
     }
 
 #ifndef USG_SHARED_LIBRARIES
 
-  if (write (new, &f_thdr, sizeof (f_thdr)) != sizeof (f_thdr))
+  if (write (new_, &f_thdr, sizeof (f_thdr)) != sizeof (f_thdr))
     {
       PERROR (new_name);
     }
 
-  if (write (new, &f_dhdr, sizeof (f_dhdr)) != sizeof (f_dhdr))
+  if (write (new_, &f_dhdr, sizeof (f_dhdr)) != sizeof (f_dhdr))
     {
       PERROR (new_name);
     }
 
-  if (write (new, &f_bhdr, sizeof (f_bhdr)) != sizeof (f_bhdr))
+  if (write (new_, &f_bhdr, sizeof (f_bhdr)) != sizeof (f_bhdr))
     {
       PERROR (new_name);
     }
@@ -671,24 +671,24 @@ make_hdr (int new, int a_out, unsigned data_start, unsigned bss_start,
 
       if (!strcmp (scntemp.s_name, f_thdr.s_name))	/* .text */
 	{
-	  if (write (new, &f_thdr, sizeof (f_thdr)) != sizeof (f_thdr))
+	  if (write (new_, &f_thdr, sizeof (f_thdr)) != sizeof (f_thdr))
 	    PERROR (new_name);
 	}
       else if (!strcmp (scntemp.s_name, f_dhdr.s_name))	/* .data */
 	{
-	  if (write (new, &f_dhdr, sizeof (f_dhdr)) != sizeof (f_dhdr))
+	  if (write (new_, &f_dhdr, sizeof (f_dhdr)) != sizeof (f_dhdr))
 	    PERROR (new_name);
 	}
       else if (!strcmp (scntemp.s_name, f_bhdr.s_name))	/* .bss */
 	{
-	  if (write (new, &f_bhdr, sizeof (f_bhdr)) != sizeof (f_bhdr))
+	  if (write (new_, &f_bhdr, sizeof (f_bhdr)) != sizeof (f_bhdr))
 	    PERROR (new_name);
 	}
       else
 	{
 	  if (scntemp.s_scnptr)
 	    scntemp.s_scnptr += bias;
-	  if (write (new, &scntemp, sizeof (scntemp)) != sizeof (scntemp))
+	  if (write (new_, &scntemp, sizeof (scntemp)) != sizeof (scntemp))
 	    PERROR (new_name);
 	}
     }
@@ -780,13 +780,13 @@ make_hdr (int new, int a_out, unsigned data_start, unsigned bss_start,
     coffheader.text_start = tp->s_vaddr;
     coffheader.data_start = dp->s_vaddr;
   }
-  if (write (new, &coffheader, sizeof (coffheader)) != sizeof (coffheader))
+  if (write (new_, &coffheader, sizeof (coffheader)) != sizeof (coffheader))
     {
       PERROR(new_name);
     }
 #endif /* COFF_ENCAPSULATE */
 
-  if (write (new, (char *) &hdr, sizeof (hdr)) != sizeof (hdr))
+  if (write (new_, (char *) &hdr, sizeof (hdr)) != sizeof (hdr))
     {
       PERROR (new_name);
     }
@@ -813,7 +813,7 @@ static void write_segment (int, char *, char *);
  * Copy the text and data segments from memory to the new a.out
  */
 static int
-copy_text_and_data (int new, 
+copy_text_and_data (int new_, 
 #if defined (COFF) && defined (USG_SHARED_LIBRARIES)
 		    int a_out
 #else
@@ -850,17 +850,17 @@ copy_text_and_data (int new,
 
       if (!strcmp (scntemp.s_name, ".text"))
 	{
-	  lseek (new, (long) text_scnptr, 0);
+	  lseek (new_, (long) text_scnptr, 0);
 	  ptr = (char *) f_ohdr.text_start;
 	  end = ptr + f_ohdr.tsize;
-	  write_segment (new, ptr, end);
+	  write_segment (new_, ptr, end);
 	}
       else if (!strcmp (scntemp.s_name, ".data"))
 	{
-	  lseek (new, (long) data_scnptr, 0);
+	  lseek (new_, (long) data_scnptr, 0);
 	  ptr = (char *) f_ohdr.data_start;
 	  end = ptr + f_ohdr.dsize;
-	  write_segment (new, ptr, end);
+	  write_segment (new_, ptr, end);
 	}
       else if (!scntemp.s_scnptr)
 	; /* do nothing - no data for this section */
@@ -874,7 +874,7 @@ copy_text_and_data (int new,
 	  for (size = scntemp.s_size; size > 0; size -= sizeof (page))
 	    {
 	      n = size > sizeof (page) ? sizeof (page) : size;
-	      if (read (a_out, page, n) != n || write (new, page, n) != n)
+	      if (read (a_out, page, n) != n || write (new_, page, n) != n)
 		PERROR ("emacs");
 	    }
 	  lseek (a_out, old_a_out_ptr, 0);
@@ -883,19 +883,19 @@ copy_text_and_data (int new,
 
 #else /* COFF, but not USG_SHARED_LIBRARIES */
 
-  lseek (new, (long) text_scnptr, 0);
+  lseek (new_, (long) text_scnptr, 0);
   ptr = (char *) f_ohdr.text_start;
 #ifdef HEADER_INCL_IN_TEXT
   /* For Gould UTX/32, text starts after headers */
   ptr = (char *) (ptr + text_scnptr);
 #endif /* HEADER_INCL_IN_TEXT */
   end = ptr + f_ohdr.tsize;
-  write_segment (new, ptr, end);
+  write_segment (new_, ptr, end);
 
-  lseek (new, (long) data_scnptr, 0);
+  lseek (new_, (long) data_scnptr, 0);
   ptr = (char *) f_ohdr.data_start;
   end = ptr + f_ohdr.dsize;
-  write_segment (new, ptr, end);
+  write_segment (new_, ptr, end);
 
 #endif /* USG_SHARED_LIBRARIES */
 
@@ -910,9 +910,9 @@ copy_text_and_data (int new,
    the extra A_TEXT_OFFSET bytes, only the actual bytes of code.  */
 
 #ifdef A_TEXT_SEEK
-  lseek (new, (long) A_TEXT_SEEK (hdr), 0);
+  lseek (new_, (long) A_TEXT_SEEK (hdr), 0);
 #else
-  lseek (new, (long) N_TXTOFF (hdr), 0);
+  lseek (new_, (long) N_TXTOFF (hdr), 0);
 #endif /* no A_TEXT_SEEK */
 
 #ifdef RISCiX
@@ -980,26 +980,26 @@ copy_text_and_data (int new,
 
     end = ptr + mcount_offset - EDATA_OFFSET;
 
-    write_segment (new, ptr, end);
+    write_segment (new_, ptr, end);
 
     proforma[0] = bss_end;	/* becomes _edata */
     proforma[1] = bss_end;	/* becomes _end */
     proforma[2] = bss_end;	/* becomes _minbrk */
     proforma[3] = bss_end;	/* becomes _curbrk */
 
-    write (new, proforma, 16);
+    write (new_, proforma, 16);
 
     temp_ptr = ptr;
     ptr = end + 16;
     end = temp_ptr + hdr.a_text;
 
-    write_segment (new, ptr, end);
+    write_segment (new_, ptr, end);
   }
 
 #else /* !RISCiX */
   ptr = (char *) unexec_text_start;
   end = ptr + hdr.a_text;
-  write_segment (new, ptr, end);
+  write_segment (new_, ptr, end);
 #endif /* RISCiX */
 
   ptr = (char *) unexec_data_start;
@@ -1007,8 +1007,8 @@ copy_text_and_data (int new,
 /*  This lseek is certainly incorrect when A_TEXT_OFFSET
     and I believe it is a no-op otherwise.
     Let's see if its absence ever fails.  */
-/*  lseek (new, (long) N_TXTOFF (hdr) + hdr.a_text, 0); */
-  write_segment (new, ptr, end);
+/*  lseek (new_, (long) N_TXTOFF (hdr) + hdr.a_text, 0); */
+  write_segment (new_, ptr, end);
 
 #endif /* not COFF */
 
@@ -1016,8 +1016,8 @@ copy_text_and_data (int new,
 }
 
 static void
-write_segment (new, ptr, end)
-     int new;
+write_segment (new_, ptr, end)
+     int new_;
      char *ptr, *end;
 {
   int i, nwrite, ret;
@@ -1038,7 +1038,7 @@ write_segment (new, ptr, end)
       nwrite = (((int) ptr + writesize) & -writesize) - (int) ptr;
       /* But not beyond specified end.  */
       if (nwrite > end - ptr) nwrite = end - ptr;
-      ret = write (new, ptr, nwrite);
+      ret = write (new_, ptr, nwrite);
       /* If write gets a page fault, it means we reached
 	 a gap between the old text segment and the old data segment.
 	 This gap has probably been remapped into part of the text segment.
@@ -1054,7 +1054,7 @@ write_segment (new, ptr, end)
 	     of the valid memory in the old data segment.  */
 	  if (nwrite > pagesize)
 	    nwrite = pagesize;
-	  write (new, zeros, nwrite);
+	  write (new_, zeros, nwrite);
 	}
 #if 0 /* Now that we have can ask `write' to write more than a page,
 	 it is legit for write do less than the whole amount specified.  */
@@ -1062,7 +1062,7 @@ write_segment (new, ptr, end)
 	{
 	  sprintf (buf,
 		   "unexec write failure: addr 0x%lx, fileno %d, size 0x%x, wrote 0x%x, errno %d",
-		   (unsigned long) ptr, new, nwrite, ret, errno);
+		   (unsigned long) ptr, new_, nwrite, ret, errno);
 	  PERROR (buf);
 	}
 #endif
@@ -1077,7 +1077,7 @@ write_segment (new, ptr, end)
  * Copy the relocation information and symbol table from the a.out to the new
  */
 static int
-copy_sym (int new, int a_out, char *a_name, char *new_name)
+copy_sym (int new_, int a_out, char *a_name, char *new_name)
 {
   char page[1024];
   int n;
@@ -1099,7 +1099,7 @@ copy_sym (int new, int a_out, char *a_name, char *new_name)
 
   while ((n = read (a_out, page, sizeof (page))) > 0)
     {
-      if (write (new, page, n) != n)
+      if (write (new_, page, n) != n)
 	{
 	  PERROR (new_name);
 	}
@@ -1121,7 +1121,7 @@ mark_x (char *name)
 {
   struct stat sbuf;
   int um;
-  int new = 0;  /* for PERROR */
+  int new_ = 0;  /* for PERROR */
 
   um = umask (777);
   umask (um);
@@ -1166,7 +1166,7 @@ adjust_lnnoptrs (writedesc, readdesc, new_name)
      char *new_name;
 {
   int nsyms;
-  int new;
+  int new_;
 #if defined (amdahl_uts) || defined (pfa)
   SYMENT symentry;
   AUXENT auxentry;
@@ -1178,29 +1178,29 @@ adjust_lnnoptrs (writedesc, readdesc, new_name)
   if (!lnnoptr || !f_hdr.f_symptr)
     return 0;
 
-  if ((new = open (new_name, O_RDWR)) < 0)
+  if ((new_ = open (new_name, O_RDWR)) < 0)
     {
       PERROR (new_name);
       return -1;
     }
 
-  lseek (new, f_hdr.f_symptr, 0);
+  lseek (new_, f_hdr.f_symptr, 0);
   for (nsyms = 0; nsyms < f_hdr.f_nsyms; nsyms++)
     {
-      read (new, &symentry, SYMESZ);
+      read (new_, &symentry, SYMESZ);
       if (symentry.n_numaux)
 	{
-	  read (new, &auxentry, AUXESZ);
+	  read (new_, &auxentry, AUXESZ);
 	  nsyms++;
 	  if (ISFCN (symentry.n_type) || symentry.n_type == 0x2400)
 	    {
 	      auxentry.x_sym.x_fcnary.x_fcn.x_lnnoptr += bias;
-	      lseek (new, -AUXESZ, 1);
-	      write (new, &auxentry, AUXESZ);
+	      lseek (new_, -AUXESZ, 1);
+	      write (new_, &auxentry, AUXESZ);
 	    }
 	}
     }
-  close (new);
+  close (new_);
   return 0;
 }
 

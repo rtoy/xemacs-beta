@@ -244,34 +244,34 @@ decode_toolbar_position (Lisp_Object position)
 
 DEFUN ("set-default-toolbar-position", Fset_default_toolbar_position, 1, 1, 0, /*
 Set the position that the `default-toolbar' will be displayed at.
-Valid positions are 'top, 'bottom, 'left and 'right.
+Valid positions are `top', `bottom', `left' and `right'.
 See `default-toolbar-position'.
 */
        (position))
 {
   enum toolbar_pos cur = decode_toolbar_position (Vdefault_toolbar_position);
-  enum toolbar_pos new = decode_toolbar_position (position);
+  enum toolbar_pos new_ = decode_toolbar_position (position);
 
-  if (cur != new)
+  if (cur != new_)
     {
       /* The following calls will automatically cause the dirty
 	 flags to be set; we delay frame size changes to avoid
 	 lots of frame flickering. */
       int depth = begin_hold_frame_size_changes ();
       set_specifier_fallback (Vtoolbar[cur], list1 (Fcons (Qnil, Qnil)));
-      set_specifier_fallback (Vtoolbar[new], Vdefault_toolbar);
+      set_specifier_fallback (Vtoolbar[new_], Vdefault_toolbar);
       set_specifier_fallback (Vtoolbar_size[cur], list1 (Fcons (Qnil, Qzero)));
-      set_specifier_fallback (Vtoolbar_size[new],
-			      new == TOP_TOOLBAR || new == BOTTOM_TOOLBAR
+      set_specifier_fallback (Vtoolbar_size[new_],
+			      new_ == TOP_TOOLBAR || new_ == BOTTOM_TOOLBAR
 			      ? Vdefault_toolbar_height
 			      : Vdefault_toolbar_width);
       set_specifier_fallback (Vtoolbar_border_width[cur],
 			      list1 (Fcons (Qnil, Qzero)));
-      set_specifier_fallback (Vtoolbar_border_width[new],
+      set_specifier_fallback (Vtoolbar_border_width[new_],
 			      Vdefault_toolbar_border_width);
       set_specifier_fallback (Vtoolbar_visible_p[cur],
 			      list1 (Fcons (Qnil, Qt)));
-      set_specifier_fallback (Vtoolbar_visible_p[new],
+      set_specifier_fallback (Vtoolbar_visible_p[new_],
 			      Vdefault_toolbar_visible_p);
       Vdefault_toolbar_position = position;
       unbind_to (depth);
@@ -1047,7 +1047,7 @@ check_toolbar_button_keywords (Lisp_Object button, Lisp_Object key,
 DEFUN ("check-toolbar-button-syntax", Fcheck_toolbar_button_syntax, 1, 2, 0, /*
 Verify the syntax of entry BUTTON in a toolbar description list.
 If you want to verify the syntax of a toolbar description list as a
-whole, use `check-valid-instantiator' with a specifier type of 'toolbar.
+whole, use `check-valid-instantiator' with a specifier type of `toolbar'.
 */
        (button, noerror))
 {
@@ -1394,7 +1394,7 @@ Use `set-specifier' to change this.
 
 The position of this toolbar is specified in the function
 `default-toolbar-position'.  If the corresponding position-specific
-toolbar (e.g. `top-toolbar' if `default-toolbar-position' is 'top)
+toolbar (e.g. `top-toolbar' if `default-toolbar-position' is `top')
 does not specify a toolbar in a particular domain (usually a window),
 then the value of `default-toolbar' in that domain, if any, will be
 used instead.
@@ -1486,7 +1486,7 @@ For the first vector format:
 
 For the other vector formats (specifying blank areas of the toolbar):
 
--- 2D-OR-3D should be one of the symbols '2d or '3d, indicating
+-- 2D-OR-3D should be one of the symbols `2d' or `3d', indicating
    whether the area is displayed with shadows (giving it a raised,
    3-d appearance) or without shadows (giving it a flat appearance).
 
@@ -1583,14 +1583,14 @@ This is a specifier; use `set-specifier' to change it.
 The position of the default toolbar is specified by the function
 `set-default-toolbar-position'.  If the corresponding position-specific
 toolbar thickness specifier (e.g. `top-toolbar-height' if
-`default-toolbar-position' is 'top) does not specify a thickness in a
+`default-toolbar-position' is `top') does not specify a thickness in a
 particular domain (a window or a frame), then the value of
 `default-toolbar-height' or `default-toolbar-width' (depending on the
 toolbar orientation) in that domain, if any, will be used instead.
 
 Note that `default-toolbar-height' is only used when
-`default-toolbar-position' is 'top or 'bottom, and `default-toolbar-width'
-is only used when `default-toolbar-position' is 'left or 'right.
+`default-toolbar-position' is `top' or `bottom', and `default-toolbar-width'
+is only used when `default-toolbar-position' is `left' or `right'.
 
 Note that all of the position-specific toolbar thickness specifiers
 have a fallback value of zero when they do not correspond to the
@@ -1768,7 +1768,7 @@ This is a specifier; use `set-specifier' to change it.
 The position of the default toolbar is specified by the function
 `set-default-toolbar-position'.  If the corresponding position-specific
 toolbar border width specifier (e.g. `top-toolbar-border-width' if
-`default-toolbar-position' is 'top) does not specify a border width in a
+`default-toolbar-position' is `top') does not specify a border width in a
 particular domain (a window or a frame), then the value of
 `default-toolbar-border-width' in that domain, if any, will be used
 instead.
@@ -1882,7 +1882,7 @@ This is a specifier; use `set-specifier' to change it.
 The position of the default toolbar is specified by the function
 `set-default-toolbar-position'.  If the corresponding position-specific
 toolbar visibility specifier (e.g. `top-toolbar-visible-p' if
-`default-toolbar-position' is 'top) does not specify a visible-p value
+`default-toolbar-position' is `top') does not specify a visible-p value
 in a particular domain (a window or a frame), then the value of
 `default-toolbar-visible-p' in that domain, if any, will be used
 instead.

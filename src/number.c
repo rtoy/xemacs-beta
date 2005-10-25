@@ -675,8 +675,8 @@ DEFUN ("coerce-number", Fcoerce_number, 2, 3, 0, /*
 Convert NUMBER to the indicated type, possibly losing information.
 Do not call this function.  Use `coerce' instead.
 
-TYPE is one of the symbols 'fixnum, 'integer, 'ratio, 'float, or 'bigfloat.
-Not all of these types may be supported.
+TYPE is one of the symbols `fixnum', `integer', `ratio', `float', or
+`bigfloat'.  Not all of these types may be supported.
 
 PRECISION is the number of bits of precision to use when converting to
 bigfloat; it is ignored otherwise.  If nil, the default precision is used.

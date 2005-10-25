@@ -203,7 +203,7 @@ struct backtrace *backtrace_list;
    array of `struct specbinding's, grown (using realloc()) as
    necessary. (Note that all four of these lists behave as a stacks.)
 
-   Catches are created by declaring a 'struct catchtag' locally,
+   Catches are created by declaring a `struct catchtag' locally,
    filling the .TAG field in with the tag, and doing a setjmp() on
    .JMP.  Fthrow() will store the value passed to it in .VAL and
    longjmp() back to .JMP, back to the function that established the
@@ -479,7 +479,7 @@ call_debugger_259 (Lisp_Object arg)
    as a backtrace is displayed, so that further errors can indeed be
    handled normally.
 
-   We also establish a catch for 'debugger.  If the debugger function
+   We also establish a catch for `debugger'.  If the debugger function
    throws to this instead of returning a value, it means that the user
    pressed 'c' (pretend like the debugger was never entered).  The
    function then returns Qunbound. (If the user pressed 'r', for
@@ -549,7 +549,7 @@ do_debug_on_exit (Lisp_Object val)
 
 /* Called when debug-on-call behavior is called for.  Enter the debugger
    with the appropriate args for this.  VAL is either t for a call
-   through `eval' or 'lambda for a call through `funcall'.
+   through `eval' or `lambda' for a call through `funcall'.
 
    #### The differentiation here between EVAL and FUNCALL is bogus.
    FUNCALL can be defined as
@@ -1656,14 +1656,14 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
   /* If bomb_out_p is t, this is being called from Fsignal as a
      "last resort" when there is no handler for this error and
       the debugger couldn't be invoked, so we are throwing to
-     'top-level.  If this tag doesn't exist (happens during the
+     `top-level'.  If this tag doesn't exist (happens during the
      initialization stages) we would get in an infinite recursive
      Fsignal/Fthrow loop, so instead we bomb out to the
      really-early-error-handler.
 
      Note that in fact the only time that the "last resort"
-     occurs is when there's no catch for 'top-level -- the
-     'top-level catch and the catch-all error handler are
+     occurs is when there's no catch for `top-level' -- the
+     `top-level' catch and the catch-all error handler are
      established at the same time, in initial_command_loop/
      top_level_1.
 
@@ -2385,7 +2385,7 @@ user invokes the "return from signal" option.
 
      #### The only time that no handler is present is during
      temacs or perhaps very early in XEmacs.  In both cases,
-     there is no 'top-level catch. (That's why the
+     there is no `top-level' catch. (That's why the
      "bomb-out" hack was added.)
 
      [[#### Fix this horrifitude!]]

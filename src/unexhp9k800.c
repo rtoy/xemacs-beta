@@ -90,8 +90,8 @@ void write_header(int file, struct header *hdr, struct som_exec_auxhdr *auxhdr);
 void read_header (int file, struct header *hdr, struct som_exec_auxhdr *auxhdr);
 void save_data_space (int file, struct header *hdr,
 		      struct som_exec_auxhdr *auxhdr, int size);
-void copy_rest (int old, int new);
-void copy_file (int old, int new, int size);
+void copy_rest (int old, int new_);
+void copy_file (int old, int new_, int size);
 void update_file_ptrs(int file, struct header *hdr,
 		      struct som_exec_auxhdr *auxhdr,
 		      unsigned int location, int offset);
@@ -105,7 +105,7 @@ unexec (char *new_name,		/* name of the new a.out file to be created */
         uintptr_t UNUSED (dummy1), /* not used by emacs */
 	uintptr_t UNUSED (dummy2))
 {
-  int old, new;
+  int old, new_;
   int old_size, new_size;
   struct header hdr;
   struct som_exec_auxhdr auxhdr;
@@ -122,8 +122,8 @@ unexec (char *new_name,		/* name of the new a.out file to be created */
   old = open (old_name, O_RDONLY);
   if (old < 0)
     { perror(old_name); exit(1); }
-  new = open (new_name, O_CREAT|O_RDWR|O_TRUNC, 0777);
-  if (new < 0)
+  new_ = open (new_name, O_CREAT|O_RDWR|O_TRUNC, 0777);
+  if (new_ < 0)
     { perror(new_name); exit(1); }
 
   /* Read the old headers */
@@ -141,24 +141,24 @@ unexec (char *new_name,		/* name of the new a.out file to be created */
 
   /* Copy the old file to the new, up to the data space */
   lseek(old, 0, 0);
-  copy_file(old, new, auxhdr.exec_dfile);
+  copy_file(old, new_, auxhdr.exec_dfile);
 
   /* Skip the old data segment and write a new one */
   lseek(old, old_size, 1);
-  save_data_space(new, &hdr, &auxhdr, new_size);
+  save_data_space(new_, &hdr, &auxhdr, new_size);
 
   /* Copy the rest of the file */
-  copy_rest(old, new);
+  copy_rest(old, new_);
 
   /* Update file pointers since we probably changed size of data area */
-  update_file_ptrs(new, &hdr, &auxhdr, auxhdr.exec_dfile, new_size-old_size);
+  update_file_ptrs(new_, &hdr, &auxhdr, auxhdr.exec_dfile, new_size-old_size);
 
   /* Save the modified header */
-  write_header(new, &hdr, &auxhdr);
+  write_header(new_, &hdr, &auxhdr);
 
   /* Close the binary file */
   close (old);
-  close (new);
+  close (new_);
   return 0;
 }
 
@@ -284,7 +284,7 @@ calculate_checksum(struct header *hdr)
 
 /* Copy size bytes from the old file to the new one.  */
 void
-copy_file (int old, int new, int size)
+copy_file (int old, int new_, int size)
 {
   int len;
   int buffer[8192];  /* word aligned will be faster */
@@ -297,7 +297,7 @@ copy_file (int old, int new, int size)
 	  perror ("Read failure on a.out file");
 	  exit (1);
 	}
-      if (write (new, buffer, len) != len)
+      if (write (new_, buffer, len) != len)
 	{
 	  perror ("Write failure in a.out file");
 	  exit (1);
@@ -307,14 +307,14 @@ copy_file (int old, int new, int size)
 
 /* Copy the rest of the file, up to EOF.  */
 void
-copy_rest (int old, int new)
+copy_rest (int old, int new_)
 {
   int buffer[4096];
   int len;
 
   /* Copy bytes until end of file or error */
   while ( (len = read(old, buffer, sizeof(buffer))) > 0)
-    if (write(new, buffer, len) != len) break;
+    if (write(new_, buffer, len) != len) break;
 
   if (len != 0)
     { perror("Unable to copy the rest of the file"); exit(1); }

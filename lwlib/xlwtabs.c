@@ -238,7 +238,7 @@ static	void	TabsAllocGreyGC() ;
 #else
 
 static	void	TabsClassInit(void) ;
-static	void	TabsInit( Widget req, Widget new, ArgList, Cardinal *nargs) ;
+static	void	TabsInit( Widget req, Widget new_, ArgList, Cardinal *nargs) ;
 static	void	TabsConstraintInitialize(Widget, Widget, ArgList, Cardinal *) ;
 static	void	TabsRealize(Widget, Mask *, XSetWindowAttributes *) ;
 static	void	TabsDestroy( Widget w) ;
@@ -421,10 +421,10 @@ TabsClassInit(void)
 /* ARGSUSED */
 
 static void
-TabsInit(Widget request, Widget new, ArgList UNUSED (args),
+TabsInit(Widget request, Widget new_, ArgList UNUSED (args),
 	 Cardinal *UNUSED (num_args))
 {
-    TabsWidget newTw = (TabsWidget)new;
+    TabsWidget newTw = (TabsWidget)new_;
 
     newTw->tabs.numRows = 0 ;
     newTw->tabs.realRows = 0;
@@ -448,9 +448,9 @@ TabsInit(Widget request, Widget new, ArgList UNUSED (args),
     {
       Dimension	w,h ;
       PreferredSize(newTw, &w, &h, NULL,NULL) ;
-      if( request->core.width == 0 ) new->core.width = w ;
-      if( request->core.height == 0 ) new->core.height = h ;
-      XtClass(new)->core_class.resize(new) ;
+      if( request->core.width == 0 ) new_->core.width = w ;
+      if( request->core.height == 0 ) new_->core.height = h ;
+      XtClass(new_)->core_class.resize(new_) ;
     }
 
     /* defer GC allocation, etc., until Realize() time. */
@@ -478,15 +478,15 @@ TabsInit(Widget request, Widget new, ArgList UNUSED (args),
 	 */
 /* ARGSUSED */
 static	void
-TabsConstraintInitialize(Widget UNUSED (request), Widget new,
+TabsConstraintInitialize(Widget UNUSED (request), Widget new_,
 			 ArgList UNUSED (args), Cardinal *UNUSED (num_args))
 {
-	TabsConstraints tab = (TabsConstraints) new->core.constraints ;
+	TabsConstraints tab = (TabsConstraints) new_->core.constraints ;
 	tab->tabs.greyAlloc = False ;	/* defer allocation of pixel */
 	tab->tabs.visible = False ;
 
-	getBitmapInfo((TabsWidget)XtParent(new), tab) ;
-	TabWidth(new) ;
+	getBitmapInfo((TabsWidget)XtParent(new_), tab) ;
+	TabWidth(new_) ;
 }
 
 
@@ -605,11 +605,11 @@ TabsExpose(Widget w, XEvent *UNUSED (event), Region UNUSED (region))
 
 /* ARGSUSED */
 static	Boolean
-TabsSetValues(Widget current, Widget UNUSED (request), Widget new,
+TabsSetValues(Widget current, Widget UNUSED (request), Widget new_,
 	      ArgList UNUSED (args), Cardinal *UNUSED (num_args))
 {
 	TabsWidget curtw = (TabsWidget) current ;
-	TabsWidget tw = (TabsWidget) new ;
+	TabsWidget tw = (TabsWidget) new_ ;
 	Boolean	needRedraw = False ;
 	Widget	*childP ;
 	int	i ;
@@ -641,7 +641,7 @@ TabsSetValues(Widget current, Widget UNUSED (request), Widget new,
 	if( tw->core.background_pixel != curtw->core.background_pixel ||
 	    tw->core.background_pixmap != curtw->core.background_pixmap ||
 	    tw->tabs.font != curtw->tabs.font )
-	  if( XtIsRealized(new) )
+	  if( XtIsRealized(new_) )
 	  {
 	    TabsFreeGCs(tw) ;
 	    TabsAllocGCs(tw) ;
@@ -685,12 +685,12 @@ TabsSetValues(Widget current, Widget UNUSED (request), Widget new,
 
 /* ARGSUSED */
 static	Boolean
-TabsConstraintSetValues(Widget current, Widget UNUSED (request), Widget new,
+TabsConstraintSetValues(Widget current, Widget UNUSED (request), Widget new_,
 			ArgList UNUSED (args), Cardinal *UNUSED (num_args))
 {
-	TabsWidget tw = (TabsWidget) XtParent(new) ;
+	TabsWidget tw = (TabsWidget) XtParent(new_) ;
 	TabsConstraints ctab = (TabsConstraints) current->core.constraints ;
-	TabsConstraints tab = (TabsConstraints) new->core.constraints ;
+	TabsConstraints tab = (TabsConstraints) new_->core.constraints ;
 
 
 	/* if label changes, need to re-layout the entire widget */
@@ -703,7 +703,7 @@ TabsConstraintSetValues(Widget current, Widget UNUSED (request), Widget new,
 	if( tab->tabs.label != ctab->tabs.label ||  /* Tab size has changed. */
 	    tab->tabs.left_bitmap != ctab->tabs.left_bitmap )
 	{
-	  TabWidth(new) ;
+	  TabWidth(new_) ;
 	  tw->tabs.needs_layout = True ;
 
 	  if( tab->tabs.left_bitmap != ctab->tabs.left_bitmap )
@@ -722,7 +722,7 @@ TabsConstraintSetValues(Widget current, Widget UNUSED (request), Widget new,
 	 * Tabs widget might.
 	 */
 
-	if( XtIsRealized(new) )
+	if( XtIsRealized(new_) )
 	{
 	  if( tw->tabs.needs_layout ) {
 	    XClearWindow(XtDisplay((Widget)tw), XtWindow((Widget)tw)) ;
@@ -730,7 +730,7 @@ TabsConstraintSetValues(Widget current, Widget UNUSED (request), Widget new,
 	  }
 
 	  else if( tab->tabs.foreground != ctab->tabs.foreground )
-	    DrawTab(tw, new, True) ;
+	    DrawTab(tw, new_, True) ;
 	}
 
 	return False ;

@@ -2,7 +2,7 @@
    #### rename me to coding-system.c or coding.c
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -406,8 +406,8 @@ valid_coding_system_type_p (Lisp_Object type)
 DEFUN ("valid-coding-system-type-p", Fvalid_coding_system_type_p, 1, 1, 0, /*
 Given a CODING-SYSTEM-TYPE, return non-nil if it is valid.
 Valid types depend on how XEmacs was compiled but may include
-'undecided, 'chain, 'integer, 'ccl, 'iso2022, 'big5, 'shift-jis,
-'utf-16, 'ucs-4, 'utf-8, etc.
+`undecided', `chain', `integer', `ccl', `iso2022', `big5', `shift-jis',
+`utf-16', `ucs-4', `utf-8', etc.
 */
        (coding_system_type))
 {
@@ -1044,54 +1044,54 @@ Register symbol NAME as a coding system.
 
 TYPE describes the conversion method used and should be one of
 
-nil or 'undecided
+nil or `undecided'
      Automatic conversion.  XEmacs attempts to detect the coding system
      used in the file.
-'chain
+`chain'
      Chain two or more coding systems together to make a combination coding
      system.
-'no-conversion
+`no-conversion'
      No conversion.  Use this for binary files and such.  On output,
      graphic characters that are not in ASCII or Latin-1 will be
      replaced by a ?. (For a no-conversion-encoded buffer, these
      characters will only be present if you explicitly insert them.)
-'convert-eol
+`convert-eol'
      Convert CRLF sequences or CR to LF.
-'shift-jis
+`shift-jis'
      Shift-JIS (a Japanese encoding commonly used in PC operating systems).
-'unicode
+`unicode'
      Any Unicode encoding (UCS-4, UTF-8, UTF-16, etc.).
-'mswindows-unicode-to-multibyte
+`mswindows-unicode-to-multibyte'
      (MS Windows only) Converts from Windows Unicode to Windows Multibyte
      (any code page encoding) upon encoding, and the other way upon decoding.
-'mswindows-multibyte
+`mswindows-multibyte'
      Converts to or from Windows Multibyte (any code page encoding).
      This is resolved into a chain of `mswindows-unicode' and
      `mswindows-unicode-to-multibyte'.
-'iso2022
+`iso2022'
      Any ISO2022-compliant encoding.  Among other things, this includes
      JIS (the Japanese encoding commonly used for e-mail), EUC (the
      standard Unix encoding for Japanese and other languages), and
      Compound Text (the encoding used in X11).  You can specify more
      specific information about the conversion with the PROPS argument.
-'big5
+`big5'
      Big5 (the encoding commonly used for Mandarin Chinese in Taiwan).
-'ccl
+`ccl'
      The conversion is performed using a user-written pseudo-code
      program.  CCL (Code Conversion Language) is the name of this
      pseudo-code.
-'gzip
+`gzip'
      GZIP compression format.
-'internal
+`internal'
      Write out or read in the raw contents of the memory representing
      the buffer's text.  This is primarily useful for debugging
      purposes, and is only enabled when XEmacs has been compiled with
      DEBUG_XEMACS defined (via the --debug configure option).
-     WARNING: Reading in a file using 'internal conversion can result
+     WARNING: Reading in a file using `internal' conversion can result
      in an internal inconsistency in the memory representing a
      buffer's text, which will produce unpredictable results and may
      cause XEmacs to crash.  Under normal circumstances you should
-     never use 'internal conversion.
+     never use `internal' conversion.
 
 DESCRIPTION is a short English phrase describing the coding system,
 suitable for use as a menu item. (See also the `documentation' property
@@ -1100,14 +1100,14 @@ below.)
 PROPS is a property list, describing the specific nature of the
 character set.  Recognized properties are:
 
-'mnemonic
+`mnemonic'
      String to be displayed in the modeline when this coding system is
      active.
 
-'documentation
+`documentation'
      Detailed documentation on the coding system.
 
-'eol-type
+`eol-type'
      End-of-line conversion to be used.  It should be one of
 
 	nil
@@ -1115,18 +1115,18 @@ character set.  Recognized properties are:
 		or CR).  Also generate subsidiary coding systems named
 		`NAME-unix', `NAME-dos', and `NAME-mac', that are
 		identical to this coding system but have an EOL-TYPE
-		value of 'lf, 'crlf, and 'cr, respectively.
-	'lf
+		value of `lf', `crlf', and `cr', respectively.
+	`lf'
 		The end of a line is marked externally using ASCII LF.
 		Since this is also the way that XEmacs represents an
 		end-of-line internally, specifying this option results
 		in no end-of-line conversion.  This is the standard
 		format for Unix text files.
-	'crlf
+	`crlf'
 		The end of a line is marked externally using ASCII
 		CRLF.  This is the standard format for MS-DOS text
 		files.
-	'cr
+	`cr'
 		The end of a line is marked externally using ASCII CR.
 		This is the standard format for Macintosh text files.
 	t
@@ -1135,7 +1135,7 @@ character set.  Recognized properties are:
 		converted to nil when stored internally, and
 		`coding-system-property' will return nil.)
 
-'post-read-conversion
+`post-read-conversion'
      The value is a function to call after some text is inserted and
      decoded by the coding system itself and before any functions in
      `after-change-functions' are called. (#### Not actually true in
@@ -1145,7 +1145,7 @@ character set.  Recognized properties are:
      `after-insert-file-functions', i.e. LENGTH of the text inserted,
      with point at the head of the text to be decoded.
 
-'pre-write-conversion
+`pre-write-conversion'
      The value is a function to call after all functions in
      `write-region-annotate-functions' and `buffer-file-format' are
      called, and before the text is encoded by the coding system itself.
@@ -1158,21 +1158,21 @@ character set.  Recognized properties are:
 The following properties are allowed for FSF compatibility but currently
 ignored:
 
-'translation-table-for-decode
+`translation-table-for-decode'
      The value is a translation table to be applied on decoding.  See
      the function `make-translation-table' for the format of translation
      table.  This is not applicable to CCL-based coding systems.
     
-'translation-table-for-encode
+`translation-table-for-encode'
      The value is a translation table to be applied on encoding.  This is
      not applicable to CCL-based coding systems.
     
-'safe-chars
+`safe-chars'
      The value is a char table.  If a character has non-nil value in it,
      the character is safely supported by the coding system.  This
      overrides the specification of safe-charsets.
    
-'safe-charsets
+`safe-charsets'
      The value is a list of charsets safely supported by the coding
      system.  The value t means that all charsets Emacs handles are
      supported.  Even if some charset is not in this list, it doesn't
@@ -1180,11 +1180,11 @@ ignored:
      it just means that some other receiver of text encoded
      in the coding system won't be able to handle that charset.
     
-'mime-charset
+`mime-charset'
      The value is a symbol of which name is `MIME-charset' parameter of
      the coding system.
     
-'valid-codes (meaningful only for a coding system based on CCL)
+`valid-codes' (meaningful only for a coding system based on CCL)
      The value is a list to indicate valid byte ranges of the encoded
      file.  Each element of the list is an integer or a cons of integer.
      In the former case, the integer value is a valid byte code.  In the
@@ -1192,9 +1192,9 @@ ignored:
 
 
 
-The following additional property is recognized if TYPE is 'convert-eol:
+The following additional property is recognized if TYPE is `convert-eol':
 
-'subtype
+`subtype'
      One of `lf', `crlf', `cr' or nil (for autodetection).  When decoding,
      the corresponding sequence will be converted to LF.  When encoding,
      the opposite happens.  This coding system converts characters to
@@ -1202,12 +1202,12 @@ The following additional property is recognized if TYPE is 'convert-eol:
 
 
 
-The following additional properties are recognized if TYPE is 'iso2022:
+The following additional properties are recognized if TYPE is `iso2022':
 
-'charset-g0
-'charset-g1
-'charset-g2
-'charset-g3
+`charset-g0'
+`charset-g1'
+`charset-g2'
+`charset-g3'
      The character set initially designated to the G0 - G3 registers.
      The value should be one of
 
@@ -1217,38 +1217,38 @@ The following additional properties are recognized if TYPE is 'iso2022:
 		the register, but may be later on; this automatically
 		sets the corresponding `force-g*-on-output' property)
 
-'force-g0-on-output
-'force-g1-on-output
-'force-g2-on-output
-'force-g2-on-output
+`force-g0-on-output'
+`force-g1-on-output'
+`force-g2-on-output'
+`force-g2-on-output'
      If non-nil, send an explicit designation sequence on output before
      using the specified register.
 
-'short
+`short'
      If non-nil, use the short forms "ESC $ @", "ESC $ A", and
      "ESC $ B" on output in place of the full designation sequences
      "ESC $ ( @", "ESC $ ( A", and "ESC $ ( B".
 
-'no-ascii-eol
+`no-ascii-eol'
      If non-nil, don't designate ASCII to G0 at each end of line on output.
      Setting this to non-nil also suppresses other state-resetting that
      normally happens at the end of a line.
 
-'no-ascii-cntl
+`no-ascii-cntl'
      If non-nil, don't designate ASCII to G0 before control chars on output.
 
-'seven
+`seven'
      If non-nil, use 7-bit environment on output.  Otherwise, use 8-bit
      environment.
 
-'lock-shift
+`lock-shift'
      If non-nil, use locking-shift (SO/SI) instead of single-shift
      or designation by escape sequence.
 
-'no-iso6429
+`no-iso6429'
      If non-nil, don't use ISO6429's direction specification.
 
-'escape-quoted
+`escape-quoted'
      If non-nil, literal control characters that are the same as
      the beginning of a recognized ISO2022 or ISO6429 escape sequence
      (in particular, ESC (0x1B), SO (0x0E), SI (0x0F), SS2 (0x8E),
@@ -1261,44 +1261,44 @@ The following additional properties are recognized if TYPE is 'iso2022:
      or Control-1 character sets; this is explicitly disallowed by the
      ISO2022 standard.
 
-'input-charset-conversion
+`input-charset-conversion'
      A list of conversion specifications, specifying conversion of
      characters in one charset to another when decoding is performed.
      Each specification is a list of two elements: the source charset,
      and the destination charset.
 
-'output-charset-conversion
+`output-charset-conversion'
      A list of conversion specifications, specifying conversion of
      characters in one charset to another when encoding is performed.
      The form of each specification is the same as for
-     'input-charset-conversion.
+     `input-charset-conversion'.
 
 
 
 The following additional properties are recognized (and required)
-if TYPE is 'ccl:
+if TYPE is `ccl':
 
-'decode
+`decode'
      CCL program used for decoding (converting to internal format).
 
-'encode
+`encode'
      CCL program used for encoding (converting to external format).
 
 
-The following additional properties are recognized if TYPE is 'chain:
+The following additional properties are recognized if TYPE is `chain':
 
-'chain
+`chain'
      List of coding systems to be chained together, in decoding order.
 
-'canonicalize-after-coding
+`canonicalize-after-coding'
      Coding system to be returned by the detector routines in place of
      this coding system.
 
 
 
-The following additional properties are recognized if TYPE is 'unicode:
+The following additional properties are recognized if TYPE is `unicode':
 
-'type
+`type'
      One of `utf-16', `utf-8', `ucs-4', or `utf-7' (the latter is not
      yet implemented).  `utf-16' is the basic two-byte encoding;
      `ucs-4' is the four-byte encoding; `utf-8' is an ASCII-compatible
@@ -1307,12 +1307,12 @@ The following additional properties are recognized if TYPE is 'unicode:
      [[ This should be \"transformation format\".  There should also be
      `ucs-2' (or `bmp' -- no surrogates) and `utf-32' (range checked). ]]
 
-'little-endian
+`little-endian'
      If non-nil, `utf-16' and `ucs-4' will write out the groups of two
      or four bytes little-endian instead of big-endian.  This is required,
      for example, under Windows.
 
-'need-bom
+`need-bom'
      If non-nil, a byte order mark (BOM, or Unicode FFFE) should be
      written out at the beginning of the data.  This serves both to
      identify the endianness of the following data and to mark the
@@ -1322,16 +1322,16 @@ The following additional properties are recognized if TYPE is 'unicode:
 
 
 The following additional properties are recognized if TYPE is
-'mswindows-multibyte:
+`mswindows-multibyte':
 
-'code-page
+`code-page'
      Either a number (specifying a particular code page) or one of the
      symbols `ansi', `oem', `mac', or `ebcdic', specifying the ANSI,
      OEM, Macintosh, or EBCDIC code page associated with a particular
      locale (given by the `locale' property).  NOTE: EBCDIC code pages
      only exist in Windows 2000 and later.
 
-'locale
+`locale'
      If `code-page' is a symbol, this specifies the locale whose code
      page of the corresponding type should be used.  This should be
      one of the following: A cons of two strings, (LANGUAGE
@@ -1344,16 +1344,16 @@ The following additional properties are recognized if TYPE is
 
 
 
-The following additional properties are recognized if TYPE is 'undecided:
+The following additional properties are recognized if TYPE is `undecided':
 [[ Doesn't GNU use \"detect-*\" for the following two? ]]
 
-'do-eol
+`do-eol'
      Do EOL detection.
 
-'do-coding
+`do-coding'
      Do encoding detection.
 
-'coding-system
+`coding-system'
      If encoding detection is not done, use the specified coding system
      to do decoding.  This is used internally when implementing coding
      systems with an EOL type that specifies autodetection (the default),
@@ -1361,9 +1361,9 @@ The following additional properties are recognized if TYPE is 'undecided:
 
 
 
-The following additional property is recognized if TYPE is 'gzip:
+The following additional property is recognized if TYPE is `gzip':
 
-'level
+`level'
      Compression level: 0 through 9, or `default' (currently 6).
 
 */
@@ -4064,7 +4064,7 @@ detect_coding_stream (Lisp_Object stream)
 DEFUN ("detect-coding-region", Fdetect_coding_region, 2, 3, 0, /*
 Detect coding system of the text in the region between START and END.
 Return a list of possible coding systems ordered by priority.
-If only ASCII characters are found, return 'undecided or one of
+If only ASCII characters are found, return `undecided' or one of
 its subsidiary coding systems according to a detected end-of-line
 type.  Optional arg BUFFER defaults to the current buffer.
 */

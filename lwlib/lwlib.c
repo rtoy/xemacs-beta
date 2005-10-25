@@ -193,7 +193,7 @@ copy_scrollbar_values (widget_value *val, widget_value *copy)
 
 /*
  * Return true if old->scrollbar_data were not equivalent
- * to new->scrollbar_data.
+ * to new_->scrollbar_data.
  */
 static Boolean
 merge_scrollbar_values (widget_value *old, widget_value *new_)
@@ -238,33 +238,33 @@ merge_scrollbar_values (widget_value *old, widget_value *new_)
 #ifdef HAVE_X_WIDGETS
 /*
  * Return true if old->args was not equivalent
- * to new->args.
+ * to new_->args.
  */
 static Boolean
-merge_widget_value_args (widget_value *old, widget_value *new)
+merge_widget_value_args (widget_value *old, widget_value *new_)
 {
   Boolean changed = False;
 
-  if (new->args && !old->args)
+  if (new_->args && !old->args)
     {
-      lw_copy_widget_value_args (new, old);
+      lw_copy_widget_value_args (new_, old);
       changed = True;
     }
   /* Generally we don't want to lose values that are already in the
      widget. */
-  else if (!new->args && old->args)
+  else if (!new_->args && old->args)
     {
-      lw_copy_widget_value_args (old, new);
+      lw_copy_widget_value_args (old, new_);
       changed = True;
     }
-  else if (new->args && old->args && new->args != old->args)
+  else if (new_->args && old->args && new_->args != old->args)
     {
       /* #### Do something more sensible here than just copying the
          new values (like actually merging the values). */
-      lw_copy_widget_value_args (new, old);
+      lw_copy_widget_value_args (new_, old);
       changed = True;
     }
-  else if (new->args && new->args == old->args && new->args->args_changed == True)
+  else if (new_->args && new_->args == old->args && new_->args->args_changed == True)
     {
       changed = True;
     }

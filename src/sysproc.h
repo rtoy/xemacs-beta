@@ -102,7 +102,7 @@ Boston, MA 02111-1307, USA.  */
 #define EREMOTE                 WSAEREMOTE
 #endif /* WIN32_NATIVE */
 
-/* On some systems, e.g. DGUX, inet_addr returns a 'struct in_addr'. */
+/* On some systems, e.g. DGUX, inet_addr returns a `struct in_addr'. */
 #ifdef HAVE_BROKEN_INET_ADDR
 # define IN_ADDR struct in_addr
 # define NUMERIC_ADDR_ERROR (numeric_addr.s_addr == -1)

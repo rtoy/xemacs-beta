@@ -3348,11 +3348,11 @@ This is like (copy-sequence NEW) except that it reuses the
 conses in OLD as much as possible.  If OLD and NEW are the same
 length, no consing will take place.
 */
-       (old, new))
+       (old, new_))
 {
   Lisp_Object oldtail = old, prevoldtail = Qnil;
 
-  EXTERNAL_LIST_LOOP_2 (elt, new)
+  EXTERNAL_LIST_LOOP_2 (elt, new_)
     {
       if (!NILP (oldtail))
 	{

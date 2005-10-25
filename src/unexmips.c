@@ -129,7 +129,7 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
      unsigned UNUSED (bss_start);
      unsigned entry_address;
 {
-  int new, old;
+  int new_, old;
   int pagesize, brk;
   int newsyms, symrel;
   int nread;
@@ -142,8 +142,8 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
   old = open (a_name, O_RDONLY, 0);
   if (old < 0) fatal_unexec ("opening %s", a_name);
 
-  new = creat (new_name, 0666);
-  if (new < 0) fatal_unexec ("creating %s", new_name);
+  new_ = creat (new_name, 0666);
+  if (new_ < 0) fatal_unexec ("creating %s", new_name);
 
   hdr = *((struct headers *)TEXT_START);
 #ifdef MIPS2
@@ -275,9 +275,9 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
       bss_section->s_scnptr = scnptr;
     }
 
-  WRITE (new, (void *) TEXT_START, hdr.aout.tsize,
+  WRITE (new_, (void *) TEXT_START, hdr.aout.tsize,
 	"writing text section to %s", new_name);
-  WRITE (new, (void *) DATA_START, hdr.aout.dsize,
+  WRITE (new_, (void *) DATA_START, hdr.aout.dsize,
 	"writing data section to %s", new_name);
 
   SEEK (old, hdr.fhdr.f_symptr, "seeking to start of symbols in %s", a_name);
@@ -307,19 +307,19 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
 #undef symhdr
   do
     {
-      if (write (new, buffer, nread) != nread)
+      if (write (new_, buffer, nread) != nread)
 	fatal_unexec ("writing symbols to %s", new_name);
       nread = read (old, buffer, BUFSIZE);
       if (nread < 0) fatal_unexec ("reading symbols from %s", a_name);
 #undef BUFSIZE
     } while (nread != 0);
 
-  SEEK (new, 0, "seeking to start of header in %s", new_name);
-  WRITE (new, &hdr, sizeof (hdr),
+  SEEK (new_, 0, "seeking to start of header in %s", new_name);
+  WRITE (new_, &hdr, sizeof (hdr),
 	"writing header of %s", new_name);
 
   close (old);
-  close (new);
+  close (new_);
   mark_x (new_name);
 }
 

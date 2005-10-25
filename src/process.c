@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -842,9 +842,9 @@ Third arg HOST (a string) is  the name of the host to connect to,
  or its IP address.
 Fourth arg SERVICE is the name of the service desired (a string),
  or an integer specifying a port number to connect to.
-Optional fifth arg PROTOCOL is a network protocol.  Currently only 'tcp
- (Transmission Control Protocol) and 'udp (User Datagram Protocol) are
- supported.  When omitted, 'tcp is assumed.
+Optional fifth arg PROTOCOL is a network protocol.  Currently only `tcp'
+ (Transmission Control Protocol) and `udp' (User Datagram Protocol) are
+ supported.  When omitted, `tcp' is assumed.
 
 Output via `process-send-string' and input via buffer or filter (see
 `set-process-filter') are stream-oriented.  That means UDP datagrams are

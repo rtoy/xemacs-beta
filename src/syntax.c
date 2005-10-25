@@ -423,7 +423,7 @@ signal_syntax_table_extent_adjust (struct buffer *buf)
    `syntax_cache.*_change' are the next and previous positions at
    which syntax_code and c_s_t will need to be recalculated.
 
-   #### Currently this code uses 'get-char-property', which will
+   #### Currently this code uses `get-char-property', which will
    return the "last smallest" extent at a given position. In cases
    where overlapping extents are defined, this code will simply use
    whatever is returned by get-char-property.
@@ -1828,7 +1828,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
       start_quoted = !NILP (tem);
 
       /* if the eighth element of the list is nil, we are in comment style
-	 a; if it is t, we are in comment style b; if it is 'syntax-table,
+	 a; if it is t, we are in comment style b; if it is `syntax-table',
 	 we are in a generic comment */
       oldstate = Fcdr (oldstate);
       oldstate = Fcdr (oldstate);

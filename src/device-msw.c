@@ -1044,7 +1044,7 @@ Return value is the previously selected settings object.
 }
 
 DEFUN ("msprinter-apply-settings", Fmsprinter_apply_settings, 2, 2, 0, /*
-Apply settings from a SETTINGS object to a 'msprinter DEVICE.
+Apply settings from a SETTINGS object to a `msprinter' DEVICE.
 The settings from the settings object are immediately applied to the
 printer, possibly changing even the target printer itself. The SETTING
 object is not modified, unlike `msprinter-select-settings', and the

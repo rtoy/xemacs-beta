@@ -1,6 +1,6 @@
 /* Generic frame functions.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003, 2005 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -1294,24 +1294,24 @@ returned.
 
 Possible values for WHICH-FRAMES are
 
-'visible		 Consider only frames that are visible.
-'iconic			 Consider only frames that are iconic.
-'invisible		 Consider only frames that are invisible
-			 (this is different from iconic).
-'visible-iconic		 Consider frames that are visible or iconic.
-'invisible-iconic	 Consider frames that are invisible or iconic.
-'nomini			 Consider all frames except minibuffer-only ones.
-'visible-nomini		 Like `visible' but omits minibuffer-only frames.
-'iconic-nomini		 Like `iconic' but omits minibuffer-only frames.
-'invisible-nomini	 Like `invisible' but omits minibuffer-only frames.
-'visible-iconic-nomini	 Like `visible-iconic' but omits minibuffer-only
-			 frames.
-'invisible-iconic-nomini Like `invisible-iconic' but omits minibuffer-only
-			 frames.
-any other value		 Consider all frames.
+`visible'                 Consider only frames that are visible.
+`iconic'                  Consider only frames that are iconic.
+`invisible'               Consider only frames that are invisible
+                          (this is different from iconic).
+`visible-iconic'          Consider frames that are visible or iconic.
+`invisible-iconic'        Consider frames that are invisible or iconic.
+`nomini'                  Consider all frames except minibuffer-only ones.
+`visible-nomini'          Like `visible' but omits minibuffer-only frames.
+`iconic-nomini'           Like `iconic' but omits minibuffer-only frames.
+`invisible-nomini'        Like `invisible' but omits minibuffer-only frames.
+`visible-iconic-nomini'   Like `visible-iconic' but omits minibuffer-only
+                          frames.
+`invisible-iconic-nomini' Like `invisible-iconic' but omits minibuffer-only
+                          frames.
+any other value           Consider all frames.
 
-If WHICH-FRAMES is omitted, 'nomini is used.  A value for WHICH-FRAMES
-of 0 (a number) is treated like 'iconic, for backwards compatibility.
+If WHICH-FRAMES is omitted, `nomini' is used.  A value for WHICH-FRAMES
+of 0 (a number) is treated like `iconic', for backwards compatibility.
 
 If WHICH-FRAMES is a window, include only its own frame and any frame
 now using that window as the minibuffer.
@@ -2095,14 +2095,14 @@ Also raises the frame so that nothing obscures it.
   return Fmake_frame_visible (frame);
 }
 
-/* FSF returns 'icon for iconized frames.  What a crock! */
+/* FSF returns `icon' for iconized frames.  What a crock! */
 
 DEFUN ("frame-visible-p", Fframe_visible_p, 0, 1, 0, /*
 Return non NIL if FRAME is now "visible" (actually in use for display).
 A frame that is not visible is not updated, and, if it works through a
 window system, may not show at all.
 N.B. Under X "visible" means Mapped. It the window is mapped but not
-actually visible on screen then `frame-visible-p' returns 'hidden.
+actually visible on screen then `frame-visible-p' returns `hidden'.
 */
        (frame))
 {

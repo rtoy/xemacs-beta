@@ -1,7 +1,7 @@
 /* Fundamental definitions for XEmacs Lisp interpreter -- union objects.
    Copyright (C) 1985, 1986, 1987, 1992, 1993, 1994
    Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -73,7 +73,7 @@ union Lisp_Object
   EMACS_UINT ui;
   signed EMACS_INT i;
 
-  /* This was formerly declared 'void *v' etc. but that causes
+  /* This was formerly declared `void *v' etc. but that causes
      GCC to accept any (yes, any) pointer as the argument of
      a function declared to accept a Lisp_Object. */
   struct nosuchstruct *v;

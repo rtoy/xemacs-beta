@@ -391,10 +391,10 @@ Ibyte *qxe_realpath (const Ibyte *path, Ibyte resolved_path [],
 int qxe_chmod (const Ibyte *path, mode_t mode);
 
 #if defined (HAVE_LINK)
-int qxe_link (const Ibyte *existing, const Ibyte *new);
+int qxe_link (const Ibyte *existing, const Ibyte *new_);
 #endif /* defined (HAVE_LINK) */
 
-int qxe_rename (const Ibyte *old, const Ibyte *new);
+int qxe_rename (const Ibyte *old, const Ibyte *new_);
 
 #if defined (HAVE_SYMLINK)
 int qxe_symlink (const Ibyte *name1, const Ibyte *name2);

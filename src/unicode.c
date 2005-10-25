@@ -1,5 +1,5 @@
 /* Code to handle Unicode conversion.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1260,7 +1260,7 @@ CHARACTER is one of the following:
 
 DEFUN ("char-to-unicode", Fchar_to_unicode, 1, 1, 0, /*
 Convert character to Unicode codepoint.
-When there is no international support (i.e. the 'mule feature is not
+When there is no international support (i.e. the `mule' feature is not
 present), this function simply does `char-to-int'.
 */
        (character))
@@ -1281,7 +1281,7 @@ charsets will be consulted, in the given order, for a translation.
 Otherwise, the default ordering of all charsets will be given (see
 `set-unicode-charset-precedence').
 
-When there is no international support (i.e. the 'mule feature is not
+When there is no international support (i.e. the `mule' feature is not
 present), this function simply does `int-to-char' and ignores the CHARSETS
 argument.
 

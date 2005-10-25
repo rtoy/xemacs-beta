@@ -656,13 +656,13 @@ realloc (mem, n)
   if (n < tocopy)
     tocopy = n;
   {
-    char *new;
+    char *new_;
 
-    if ((new = malloc (n)) == 0)
+    if ((new_ = malloc (n)) == 0)
       return 0;
-    memcpy (new, mem, tocopy);
+    memcpy (new_, mem, tocopy);
     free (mem);
-    return new;
+    return new_;
   }
 }
 

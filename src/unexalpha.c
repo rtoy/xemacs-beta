@@ -96,7 +96,7 @@ unexec (char *new_name, char *a_name,
 	unsigned long UNUSED (bss_start),
 	unsigned long entry_address)
 {
-  int new, old;
+  int new_, old;
   char * oldptr;
   struct headers ohdr, nhdr;
   struct stat stat;
@@ -110,8 +110,8 @@ unexec (char *new_name, char *a_name,
   if ((old = open (a_name, O_RDONLY)) < 0)
     fatal_unexec ("opening %s", a_name);
 
-  new = creat (new_name, 0666);
-  if (new < 0) fatal_unexec ("creating %s", new_name);
+  new_ = creat (new_name, 0666);
+  if (new_ < 0) fatal_unexec ("creating %s", new_name);
 
   if ((fstat (old, &stat) == -1))
     fatal_unexec ("fstat %s", a_name);
@@ -290,9 +290,9 @@ unexec (char *new_name, char *a_name,
       bss_section->s_scnptr = scnptr;
     }
 
-  WRITE (new, (char *)TEXT_START, nhdr.aout.tsize,
+  WRITE (new_, (char *)TEXT_START, nhdr.aout.tsize,
 	 "writing text section to %s", new_name);
-  WRITE (new, (char *)DATA_START, nhdr.aout.dsize,
+  WRITE (new_, (char *)DATA_START, nhdr.aout.dsize,
 	 "writing data section to %s", new_name);
 
 
@@ -318,12 +318,12 @@ unexec (char *new_name, char *a_name,
   symhdr->cbRfdOffset += symrel;
   symhdr->cbExtOffset += symrel;
 
-  WRITE (new, buffer, cbHDRR, "writing symbol table header of %s", new_name);
+  WRITE (new_, buffer, cbHDRR, "writing symbol table header of %s", new_name);
 
   /*
    * Copy the symbol table and line numbers
    */
-  WRITE (new, oldptr + ohdr.fhdr.f_symptr + cbHDRR,
+  WRITE (new_, oldptr + ohdr.fhdr.f_symptr + cbHDRR,
 	 stat.st_size - ohdr.fhdr.f_symptr - cbHDRR,
 	 "writing symbol table of %s", new_name);
 
@@ -331,7 +331,7 @@ unexec (char *new_name, char *a_name,
 
 /* Not needed for now */
 
-  update_dynamic_symbols (oldptr, new_name, new, newsyms,
+  update_dynamic_symbols (oldptr, new_name, new_, newsyms,
 			  ((pHDRR) (oldptr + ohdr.fhdr.f_symptr))->issExtMax,
                           ((pHDRR) (oldptr + ohdr.fhdr.f_symptr))->cbExtOffset,
                           ((pHDRR) (oldptr + ohdr.fhdr.f_symptr))->cbSsExtOffset);
@@ -340,12 +340,12 @@ unexec (char *new_name, char *a_name,
 
 #undef symhdr
 
-  SEEK (new, 0, "seeking to start of header in %s", new_name);
-  WRITE (new, &nhdr, sizeof (nhdr),
+  SEEK (new_, 0, "seeking to start of header in %s", new_name);
+  WRITE (new_, &nhdr, sizeof (nhdr),
 	 "writing header of %s", new_name);
 
   close (old);
-  close (new);
+  close (new_);
   mark_x (new_name);
   return 0;
 }
@@ -367,7 +367,7 @@ int
 update_dynamic_symbols (
      char *old,			/* Pointer to old executable */
      char *new_name,            /* Name of new executable */
-     int new,			/* File descriptor for new executable */
+     int new_,			/* File descriptor for new executable */
      long newsyms,		/* Offset of Symbol table in new executable */
      int nsyms,			/* Number of symbol table entries */
      long symoff,		/* Offset of External Symbols in old file */
@@ -394,9 +394,9 @@ update_dynamic_symbols (
 	  found++;
           memcpy (&n_edata, x, cbEXTR);
 	  n_edata.asym.value = Brk;
-	  SEEK (new, newsyms + cbHDRR + i,
+	  SEEK (new_, newsyms + cbHDRR + i,
 		"seeking to symbol _edata in %s", new_name);
-	  WRITE (new, &n_edata, cbEXTR,
+	  WRITE (new_, &n_edata, cbEXTR,
 		 "writing symbol table entry for _edata into %s", new_name);
 	}
       else if (!strcmp(s,"_end"))
@@ -404,9 +404,9 @@ update_dynamic_symbols (
 	  found++;
           memcpy (&n_end, x, cbEXTR);
 	  n_end.asym.value = Brk;
-	  SEEK (new, newsyms + cbHDRR + i,
+	  SEEK (new_, newsyms + cbHDRR + i,
 		"seeking to symbol _end in %s", new_name);
-	  WRITE (new, &n_end, cbEXTR,
+	  WRITE (new_, &n_end, cbEXTR,
 		 "writing symbol table entry for _end into %s", new_name);
 	}
     }

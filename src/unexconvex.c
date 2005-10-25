@@ -159,7 +159,7 @@ pointer looks like an int) but not on all machines.
 */
 
 #include <config.h>
-#define PERROR(file) report_error (file, new)
+#define PERROR(file) report_error (file, new_)
 
 #include <a.out.h>
 /* Define getpagesize () if the system does not.
@@ -205,9 +205,9 @@ report_error (file, fd)
 		  build_string (file));
 }
 
-#define ERROR0(msg) report_error_1 (new, msg, 0, 0); return -1
-#define ERROR1(msg,x) report_error_1 (new, msg, x, 0); return -1
-#define ERROR2(msg,x,y) report_error_1 (new, msg, x, y); return -1
+#define ERROR0(msg) report_error_1 (new_, msg, 0, 0); return -1
+#define ERROR1(msg,x) report_error_1 (new_, msg, x, 0); return -1
+#define ERROR2(msg,x,y) report_error_1 (new_, msg, x, y); return -1
 
 static
 report_error_1 (fd, msg, a1, a2)
@@ -228,23 +228,23 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
 char *new_name, *a_name;
 unsigned data_start, bss_start, entry_address;
 {
-    int new, a_out = -1;
+    int new_, a_out = -1;
 
     if (a_name && (a_out = open (a_name, 0)) < 0) {
 	PERROR (a_name);
     }
-    if ((new = creat (new_name, 0666)) < 0) {
+    if ((new_ = creat (new_name, 0666)) < 0) {
 	PERROR (new_name);
     }
 
-    if (make_hdr (new, a_out, data_start, bss_start, entry_address, a_name, new_name) < 0
-      || copy_text_and_data (new) < 0
-      || copy_sym (new, a_out, a_name, new_name) < 0 ) {
-	close (new);
+    if (make_hdr (new_, a_out, data_start, bss_start, entry_address, a_name, new_name) < 0
+      || copy_text_and_data (new_) < 0
+      || copy_sym (new_, a_out, a_name, new_name) < 0 ) {
+	close (new_);
 	return -1;	
     }
 
-    close (new);
+    close (new_);
     if (a_out >= 0)
 	close (a_out);
     mark_x (new_name);
@@ -266,8 +266,8 @@ unsigned data_start, bss_start, entry_address;
  struct scnhdr *f_tbhdr;	/* Thread Bss section header */
 
 static int
-make_hdr (new, a_out, data_start, bss_start, entry_address, a_name, new_name)
-     int new, a_out;
+make_hdr (new_, a_out, data_start, bss_start, entry_address, a_name, new_name)
+     int new_, a_out;
      unsigned data_start, bss_start;
      unsigned UNUSED (entry_address);
      char *a_name;
@@ -427,11 +427,11 @@ make_hdr (new, a_out, data_start, bss_start, entry_address, a_name, new_name)
 	f_hdr.h_strptr += bias;
     }
 
-    if (write (new, &f_hdr, sizeof (f_hdr)) != sizeof (f_hdr)) {
+    if (write (new_, &f_hdr, sizeof (f_hdr)) != sizeof (f_hdr)) {
 	PERROR (new_name);
     }
 
-    if (write (new, &f_ohdr, sizeof (f_ohdr)) != sizeof (f_ohdr)) {
+    if (write (new_, &f_ohdr, sizeof (f_ohdr)) != sizeof (f_ohdr)) {
 	PERROR (new_name);
     }
 
@@ -453,7 +453,7 @@ make_hdr (new, a_out, data_start, bss_start, entry_address, a_name, new_name)
 
     for( scns = 0; scns < f_hdr.h_nscns; scns++ ) {
 
-	if( write( new, &stbl[scns], sizeof(*stbl)) != sizeof(*stbl)) {
+	if( write( new_, &stbl[scns], sizeof(*stbl)) != sizeof(*stbl)) {
 	    PERROR (new_name);
 	}
 
@@ -469,19 +469,19 @@ make_hdr (new, a_out, data_start, bss_start, entry_address, a_name, new_name)
  * Copy the text and data segments from memory to the new a.out
  */
 static int
-copy_text_and_data (new)
-int new;
+copy_text_and_data (new_)
+int new_;
 {
     int scns;
 
     for( scns = 0; scns < f_hdr.h_nscns; scns++ )
-	write_segment( new, &stbl[scns] );
+	write_segment( new_, &stbl[scns] );
 
     return 0;
 }
 
-write_segment( new, sptr )
-int new;
+write_segment( new_, sptr )
+int new_;
 struct scnhdr *sptr;
 {
     char *ptr, *end;
@@ -493,7 +493,7 @@ struct scnhdr *sptr;
     if( sptr->s_scnptr == 0 )
 	return;			/* Nothing to do */
 
-    if( lseek( new, (long) sptr->s_scnptr, 0 ) == -1 )
+    if( lseek( new_, (long) sptr->s_scnptr, 0 ) == -1 )
 	PERROR( "unexecing" );
 
     memset (zeros, 0, sizeof (zeros));
@@ -507,17 +507,17 @@ struct scnhdr *sptr;
 	nwrite = (((int) ptr + 128) & -128) - (int) ptr;
 	/* But not beyond specified end.  */
 	if (nwrite > end - ptr) nwrite = end - ptr;
-	ret = write (new, ptr, nwrite);
+	ret = write (new_, ptr, nwrite);
 	/* If write gets a page fault, it means we reached
 	   a gap between the old text segment and the old data segment.
 	   This gap has probably been remapped into part of the text segment.
 	   So write zeros for it.  */
 	if (ret == -1 && errno == EFAULT)
-	    write (new, zeros, nwrite);
+	    write (new_, zeros, nwrite);
 	else if (nwrite != ret) {
 	    sprintf (buf,
 		     "unexec write failure: addr 0x%x, fileno %d, size 0x%x, wrote 0x%x, errno %d",
-		     ptr, new, nwrite, ret, errno);
+		     ptr, new_, nwrite, ret, errno);
 	    PERROR (buf);
 	}
 	ptr += nwrite;
@@ -530,8 +530,8 @@ struct scnhdr *sptr;
  * Copy the relocation information and symbol table from the a.out to the new
  */
 static int
-copy_sym (new, a_out, a_name, new_name)
-     int new, a_out;
+copy_sym (new_, a_out, a_name, new_name)
+     int new_, a_out;
      char *a_name, *new_name;
 {
     char page[1024];
@@ -544,10 +544,10 @@ copy_sym (new, a_out, a_name, new_name)
 	return 0;
 
     lseek (a_out, SYMS_START, 0);	/* Position a.out to symtab. */
-    lseek( new, (long)f_ohdr.o_symptr, 0 );
+    lseek( new_, (long)f_ohdr.o_symptr, 0 );
 
     while ((n = read (a_out, page, sizeof (page))) > 0) {
-	if (write (new, page, n) != n) {
+	if (write (new_, page, n) != n) {
 	    PERROR (new_name);
 	}
     }
@@ -568,7 +568,7 @@ char *name;
 {
     struct stat sbuf;
     int um;
-    int new = 0;  /* for PERROR */
+    int new_ = 0;  /* for PERROR */
 
     um = umask (777);
     umask (um);

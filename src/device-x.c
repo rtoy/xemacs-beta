@@ -1392,11 +1392,11 @@ Retrieve an X resource from the resource manager.
 
 The first arg is the name of the resource to retrieve, such as "font".
 The second arg is the class of the resource to retrieve, such as "Font".
-The third arg must be one of the symbols 'string, 'integer, 'natnum, or
-  'boolean, specifying the type of object that the database is searched for.
+The third arg must be one of the symbols `string', `integer', `natnum', or
+  `boolean', specifying the type of object that the database is searched for.
 The fourth arg is the locale to search for the resources on, and can
-  currently be a buffer, a frame, a device, or 'global.  If omitted, it
-  defaults to 'global.
+  currently be a buffer, a frame, a device, or `global'.  If omitted, it
+  defaults to `global'.
 The fifth arg is the device to search for the resources on. (The resource
   database for a particular device is constructed by combining non-device-
   specific resources such as any command-line resources specified and any
@@ -1449,7 +1449,7 @@ is an interface to a C call something like
 			"Emacs.EmacsLocaleType.EmacsDevice.Foreground",
 			"String");
 
-4) If LOCALE is 'global, a call
+4) If LOCALE is `global', a call
 
     (x-get-resource "foreground" "Foreground" 'string 'global)
 
@@ -1459,7 +1459,7 @@ is an interface to a C call something like
 			"Emacs.Foreground",
 			"String");
 
-Note that for 'global, no prefix is added other than that of the
+Note that for `global', no prefix is added other than that of the
 application itself; thus, you can use this locale to retrieve
 arbitrary application resources, if you really want to.
 

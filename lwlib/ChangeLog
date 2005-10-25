@@ -1,3 +1,17 @@
+2005-10-25  Ben Wing  <ben@xemacs.org>
+
+	* lwlib-internal.h (assert):
+	redo assert macros to follow lisp.h and not trigger warnings.
+	
+	* lwlib.c (merge_scrollbar_values):
+	* lwlib.c (merge_widget_value_args):
+	* xlwtabs.c:
+	* xlwtabs.c (TabsInit):
+	* xlwtabs.c (TabsConstraintInitialize):
+	* xlwtabs.c (TabsSetValues):
+	* xlwtabs.c (TabsConstraintSetValues):
+	new -> new_.
+
 2005-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.22 "cucumber" is released.

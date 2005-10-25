@@ -557,30 +557,30 @@ Return the indicated Tooltalk message attribute.  Attributes are
 identified by symbols with the same name (underscores and all) as the
 suffix of the Tooltalk tt_message_<attribute> function that extracts the value.
 String attribute values are copied, enumerated type values (except disposition)
-are converted to symbols - e.g. TT_HANDLER is 'TT_HANDLER, uid and gid are
+are converted to symbols - e.g. TT_HANDLER is `TT_HANDLER', uid and gid are
 represented by fixnums (small integers), opnum is converted to a string,
 and disposition is converted to a fixnum.  We convert opnum (a C int) to a
 string, e.g. 123 => "123" because there's no guarantee that opnums will fit
 within the range of Lisp integers.
 
-Use the 'plist attribute instead of the C API 'user attribute
+Use the `plist' attribute instead of the C API `user' attribute
 for user defined message data.  To retrieve the value of a message property
 specify the indicator for argn.  For example to get the value of a property
-called 'rflag, use
+called `rflag', use
    (get-tooltalk-message-attribute message 'plist 'rflag)
 
-To get the value of a message argument use one of the 'arg_val (strings),
-'arg_ival (integers), or 'arg_bval (strings with embedded nulls), attributes.
+To get the value of a message argument use one of the `arg_val' (strings),
+`arg_ival' (integers), or `arg_bval' (strings with embedded nulls), attributes.
 For example to get the integer value of the third argument:
 
    (get-tooltalk-message-attribute message 'arg_ival 2)
 
 As you can see, argument numbers are zero based.  The type of each argument
-can be retrieved with the 'arg_type attribute; however, Tooltalk doesn't
-define any semantics for the string value of 'arg_type.  Conventionally
+can be retrieved with the `arg_type' attribute; however, Tooltalk doesn't
+define any semantics for the string value of `arg_type'.  Conventionally
 "string" is used for strings and "int" for 32 bit integers.  Note that
 Emacs Lisp stores the lengths of strings explicitly (unlike C) so treating the
-value returned by 'arg_bval like a string is fine.
+value returned by `arg_bval' like a string is fine.
 */
        (message_, attribute, argn))
 {
@@ -699,7 +699,7 @@ Initialize one Tooltalk message attribute.
 
 Attribute names and values are the same as for
 `get-tooltalk-message-attribute'.  A property list is provided for user
-data (instead of the 'user message attribute); see
+data (instead of the `user' message attribute); see
 `get-tooltalk-message-attribute'.
 
 The value of callback should be the name of a function of one argument.
@@ -708,8 +708,8 @@ message changes.  This is usually used to notice when the messages state has
 changed to TT_HANDLED (or TT_FAILED), so that reply argument values
 can be used.
 
-If one of the argument attributes is specified, 'arg_val, 'arg_ival, or
-'arg_bval then argn must be the number of an already created argument.
+If one of the argument attributes is specified, `arg_val', `arg_ival', or
+`arg_bval' then argn must be the number of an already created argument.
 New arguments can be added to a message with add-tooltalk-message-arg.
 */
        (value, message_, attribute, argn))
@@ -823,7 +823,7 @@ New arguments can be added to a message with add-tooltalk-message-arg.
 
 DEFUN ("return-tooltalk-message", Freturn_tooltalk_message, 1, 2, 0, /*
 Send a reply to this message.  The second argument can be
-'reply, 'reject or 'fail; the default is 'reply.  Before sending
+`reply', `reject' or `fail'; the default is `reply'.  Before sending
 a reply all message arguments whose mode is TT_INOUT or TT_OUT should
 have been filled in - see set-tooltalk-message-attribute.
 */
@@ -913,7 +913,7 @@ Conventionally "string" is used for strings and "int" for 32 bit integers.
 Arguments can initialized by providing a value or with
 `set-tooltalk-message-attribute'.  The latter is necessary if you
 want to initialize the argument with a string that can contain
-embedded nulls (use 'arg_bval).
+embedded nulls (use `arg_bval').
 */
        (message_, mode, vtype, value))
 {
@@ -1001,7 +1001,7 @@ This effectively unregisters the pattern.
 
 DEFUN ("add-tooltalk-pattern-attribute", Fadd_tooltalk_pattern_attribute, 3, 3, 0, /*
 Add one value to the indicated pattern attribute.
-All Tooltalk pattern attributes are supported except 'user.  The names
+All Tooltalk pattern attributes are supported except `user'.  The names
 of attributes are the same as the Tooltalk accessors used to set them
 less the "tooltalk_pattern_" prefix and the "_add" ...
 */

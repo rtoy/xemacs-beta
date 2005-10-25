@@ -397,20 +397,20 @@ set_marker_position (Lisp_Object marker, Charbpos pos)
 static Lisp_Object
 copy_marker_1 (Lisp_Object marker, Lisp_Object type, int noseeum)
 {
-  REGISTER Lisp_Object new;
+  REGISTER Lisp_Object new_;
 
   while (1)
     {
       if (INTP (marker) || MARKERP (marker))
 	{
 	  if (noseeum)
-	    new = noseeum_make_marker ();
+	    new_ = noseeum_make_marker ();
 	  else
-	    new = Fmake_marker ();
-	  Fset_marker (new, marker,
+	    new_ = Fmake_marker ();
+	  Fset_marker (new_, marker,
 		       (MARKERP (marker) ? Fmarker_buffer (marker) : Qnil));
-	  XMARKER (new)->insertion_type = !NILP (type);
-	  return new;
+	  XMARKER (new_)->insertion_type = !NILP (type);
+	  return new_;
 	}
       else
 	marker = wrong_type_argument (Qinteger_or_marker_p, marker);

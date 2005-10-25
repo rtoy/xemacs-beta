@@ -107,7 +107,7 @@ get_local_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
   return Qnil;
 }
 
-/* #### Should perhaps handle 'MULTIPLE. The code below is now completely
+/* #### Should perhaps handle `MULTIPLE'. The code below is now completely
    broken due to a re-organization of get_local_selection, but I've left
    it here should anyone show an interest - ajh */
 #if 0
@@ -861,33 +861,33 @@ For X, the return value should be one of:
    explicitly specifies the type that will be sent.
 -- a string (If the type is not specified, then if Mule support exists,
              the string will be converted to Compound Text and sent in
-             the 'COMPOUND_TEXT format; otherwise (no Mule support),
-             the string will be left as-is and sent in the 'STRING
+             the `COMPOUND_TEXT' format; otherwise (no Mule support),
+             the string will be left as-is and sent in the `STRING'
              format.  If the type is specified, the string will be
              left as-is (or converted to binary format under Mule).
              In all cases, 8-bit data it sent.)
 -- a character (With Mule support, will be converted to Compound Text
                 whether or not a type is specified.  If a type is not
-                specified, a type of 'STRING or 'COMPOUND_TEXT will be
+                specified, a type of `STRING' or `COMPOUND_TEXT' will be
 		sent, as for strings.)
--- the symbol 'NULL (Indicates that there is no meaningful return value.
-                     Empty 32-bit data with a type of 'NULL will be sent.)
+-- the symbol `NULL' (Indicates that there is no meaningful return value.
+                     Empty 32-bit data with a type of `NULL' will be sent.)
 -- a symbol (Will be converted into an atom.  If the type is not specified,
-             a type of 'ATOM will be sent.)
+             a type of `ATOM' will be sent.)
 -- an integer (Will be converted into a 16-bit or 32-bit integer depending
                on the value.  If the type is not specified, a type of
-	       'INTEGER will be sent.)
+	       `INTEGER' will be sent.)
 -- a cons (HIGH . LOW) of integers (Will be converted into a 32-bit integer.
                                     If the type is not specified, a type of
-				    'INTEGER will be sent.)
+				    `INTEGER' will be sent.)
 -- a vector of symbols (Will be converted into a list of atoms.  If the type
-                        is not specified, a type of 'ATOM will be sent.)
+                        is not specified, a type of `ATOM' will be sent.)
 -- a vector of integers (Will be converted into a list of 16-bit integers.
-                         If the type is not specified, a type of 'INTEGER
+                         If the type is not specified, a type of `INTEGER'
 			 will be sent.)
 -- a vector of integers and/or conses (HIGH . LOW) of integers
                         (Will be converted into a list of 16-bit integers.
-                         If the type is not specified, a type of 'INTEGER
+                         If the type is not specified, a type of `INTEGER'
 			 will be sent.)
 */ );
   Vselection_converter_out_alist = Qnil;

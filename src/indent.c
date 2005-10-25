@@ -2,7 +2,7 @@
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -392,7 +392,7 @@ and horizontal scrolling has no effect.
 If specified column is within a character, point goes after that character.
 If it's past end of line, point goes to end of line.
 
-A value of 'coerce for the second (optional) argument FORCE means if
+A value of `coerce' for the second (optional) argument FORCE means if
 COLUMN is in the middle of a tab character, change it to spaces.
 Any other non-nil value means the same, plus if the line is too short to
 reach column COLUMN, then add spaces/tabs to get there.

@@ -643,11 +643,11 @@ copy_char_table_entry (Lisp_Object entry)
 
   for (i = 0; i < 96; i++)
     {
-      Lisp_Object new = cte->level2[i];
-      if (CHAR_TABLE_ENTRYP (new))
-	ctenew->level2[i] = copy_char_table_entry (new);
+      Lisp_Object new_ = cte->level2[i];
+      if (CHAR_TABLE_ENTRYP (new_))
+	ctenew->level2[i] = copy_char_table_entry (new_);
       else
-	ctenew->level2[i] = new;
+	ctenew->level2[i] = new_;
     }
 
   return wrap_char_table_entry (ctenew);
@@ -677,22 +677,22 @@ as CHAR-TABLE.  The values will not themselves be copied.
 
   for (i = 0; i < NUM_ASCII_CHARS; i++)
     {
-      Lisp_Object new = ct->ascii[i];
+      Lisp_Object new_ = ct->ascii[i];
 #ifdef MULE
-      assert (! (CHAR_TABLE_ENTRYP (new)));
+      assert (! (CHAR_TABLE_ENTRYP (new_)));
 #endif /* MULE */
-      ctnew->ascii[i] = new;
+      ctnew->ascii[i] = new_;
     }
 
 #ifdef MULE
 
   for (i = 0; i < NUM_LEADING_BYTES; i++)
     {
-      Lisp_Object new = ct->level1[i];
-      if (CHAR_TABLE_ENTRYP (new))
-	ctnew->level1[i] = copy_char_table_entry (new);
+      Lisp_Object new_ = ct->level1[i];
+      if (CHAR_TABLE_ENTRYP (new_))
+	ctnew->level1[i] = copy_char_table_entry (new_);
       else
-	ctnew->level1[i] = new;
+	ctnew->level1[i] = new_;
     }
 
 #endif /* MULE */

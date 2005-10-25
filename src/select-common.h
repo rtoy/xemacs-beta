@@ -59,7 +59,7 @@ Boston, MA 02111-1307, USA.  */
    representation are as above.
 
    NOTE: Under Mule, when someone shoves us a string without a type, we
-   set the type to 'COMPOUND_TEXT and automatically convert to Compound
+   set the type to `COMPOUND_TEXT' and automatically convert to Compound
    Text.  If the string has a type, we assume that the user wants the
    data sent as-is so we just do "binary" conversion.
  */

@@ -32,8 +32,8 @@ Boston, MA 02111-1307, USA.  */
 
 #define COMFORTABLE_SIZE(size) (21 * (size) / 16)
 
-#define KEYS_DIFFER_P(old, new, testfun) \
-  (((old) != (new)) && (!(testfun) || !(testfun) ((old),(new))))
+#define KEYS_DIFFER_P(old, new_, testfun) \
+  (((old) != (new_)) && (!(testfun) || !(testfun) ((old),(new_))))
 
 static void rehash (hentry *harray, struct hash_table *ht, Elemcount size);
 

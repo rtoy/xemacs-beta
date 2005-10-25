@@ -562,7 +562,7 @@ Toggle accepting of GPM mouse events.
   gpm_consolefd = fd;
 
   /* We have to pass the virtual console manually, otherwise if you
-   ** use 'gnuclient -nw' to connect to an XEmacs that is running in
+   ** use `gnuclient -nw' to connect to an XEmacs that is running in
    ** X, Gpm_Open() tries to use ttyname(0 | 1 | 2) to find out which
    ** console you are using, which is of course not correct for the
    ** new tty device.

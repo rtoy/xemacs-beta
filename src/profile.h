@@ -1,5 +1,5 @@
 /* Profiling.
-   Copyright (C) 2003 Ben Wing.
+   Copyright (C) 2003, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -71,6 +71,11 @@ while (0)
    function. (To do this, we always need some sort of collusion between
    profile and eval; this is one way.) */
 
+/* Or, we could call xzero() to zero the whole thing, and avoid four
+   of the statements below; or we could create a global backtrace object,
+   uninitialized (i.e. it will be initialized to all 0), and do structure
+   copy to initialize.  It's not clear it will make much difference here,
+   but someone who really cared about counting cycles could implement it. */
 #define PROFILE_RECORD_ENTERING_SECTION(var)		\
 do							\
 {							\

@@ -793,7 +793,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
   Bytecount strlength;
   Bytecount idx;
   Bytecount bsize;
-  Ibyte *new;
+  Ibyte *new_;
   Lisp_Object tem = Qnil;
   Lisp_Object keymap = Qnil;
   Lisp_Object name = Qnil;
@@ -904,9 +904,9 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 
 	    if (NILP (tem))	/* but not on any keys */
 	      {
-		new = (Ibyte *) xrealloc (buf, bsize += 4);
-		bufp += new - buf;
-		buf = new;
+		new_ = (Ibyte *) xrealloc (buf, bsize += 4);
+		bufp += new_ - buf;
+		buf = new_;
 		memcpy (bufp, "M-x ", 4);
 		bufp += 4;
 		goto subst;
@@ -978,9 +978,9 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 	  length = XSTRING_LENGTH (tem);
 	subst:
 	  bsize += length;
-	  new = (Ibyte *) xrealloc (buf, bsize);
-	  bufp += new - buf;
-	  buf = new;
+	  new_ = (Ibyte *) xrealloc (buf, bsize);
+	  bufp += new_ - buf;
+	  buf = new_;
 	  memcpy (bufp, start, length);
 	  bufp += length;
 

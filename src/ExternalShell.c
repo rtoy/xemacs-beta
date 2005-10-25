@@ -153,7 +153,7 @@ extern void emacs_Xt_handle_focus_event (XEvent *event);
   extw_send_notify_3(XtDisplay((Widget)(w)),\
    (w)->externalShell.external_window, type, l0, l1, l2)
 
-static void ExternalShellInitialize (Widget req, Widget new, ArgList args,
+static void ExternalShellInitialize (Widget req, Widget new_, ArgList args,
 				     Cardinal *num_args);
 static void ExternalShellRealize (Widget wid, Mask *vmask, XSetWindowAttributes
 				  *attr);
@@ -252,10 +252,10 @@ ExternalShellClassRec externalShellClassRec = {
 WidgetClass externalShellWidgetClass = (WidgetClass) &externalShellClassRec;
 
 static void
-ExternalShellInitialize (Widget req, Widget new, ArgList UNUSED (args),
+ExternalShellInitialize (Widget req, Widget new_, ArgList UNUSED (args),
 			 Cardinal *UNUSED (num_args))
 {
-  XtAddEventHandler(new, 0,
+  XtAddEventHandler(new_, 0,
 		    TRUE, EventHandler, (XtPointer) NULL);
   extw_initialize_atoms(XtDisplay(req));
   extw_which_side = extw_shell_send;
