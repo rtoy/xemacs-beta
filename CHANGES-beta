@@ -8,6 +8,7 @@ Major features
 User-Visible Bug Fixes and Minor Improvements
 
 -- Fix: change address for crash reporting to xemacs-beta. -- Ben Wing
+-- Fix: configure requires explicit choice of Motif (from 21.4). -- Malcolm Purvis
 -- Fix: crash due to duplicate subrs with MC_ALLOC and modules. -- Marcus Crestani
 -- Improve: memory usage reporting, especially with MC_ALLOC. -- Ben Wing
 -- Improve: remove obsolete autoconf 2.13 files. -- Malcolm Purvis.
@@ -37,7 +38,9 @@ Documentation
 -- Improve: Texinfo docs about specifiers. -- Ben Wing
 -- Improve: comment style, 'foo -> `foo'. -- Ben Wing
 -- Improve: comments and docstrings. -- Stephen Turnbull
+-- Improve: document --with/--enable, improve Mac OS X in INSTALL. -- Malcolm Purvis
 -- Improve: emodules.texi tells how to add modules to core. -- Stephen Turnbull
+-- Improve: FAQ includes examples of 21.5 configure options. -- Malcolm Purvis
 -- Improve: nt/README tells how to compile optional libs. -- Ben Wing
 -- New: FAQ on `rebaseall' under Cygwin. -- Ben Wing
 -- New: internals documents XEmacs treatment of --with/--enable configure args. -- Malcolm Purvis
@@ -51,12 +54,14 @@ Lisp API
 -- Improve: sync build-report.el to Adrian's version. -- Stephen Turnbull
 -- Improve: sync read-buffer, line-number-at-pos, delete-dups, occur to GNU Emacs 22.0.50. -- Malcolm Purvis
 -- New: batch-build-report command. -- Stephen Turnbull
+-- New: inherit properties for faces and custom. -- Ben Wing
 -- New: next-error from GNU Emacs. -- Malcolm Purvis
 -- New: `specifier-instantiator' and related primitives. -- Ben Wing
 
 Internal API and Implementation
 
 -- Fix: address of register variable can't be taken. -- Ben Wing
+-- Fix: asserts in lwlib are now consistent with src. -- Ben Wing
 -- Fix: bitrot in sysdep.c and nt.c. -- Ben Wing
 -- Fix: bug in range tables with non-default closure. -- Ben Wing
 -- Fix: don't use C++ reserved words "new" and "catch", append '_'. -- Ben Wing
@@ -65,8 +70,9 @@ Internal API and Implementation
 -- Fix: setlocale return string is volatile, dup it. -- Olivier Galibert
 -- Fix: unexec for _LP64 ELF architectures. -- Andrey Slusar
 -- Fix: use of config.h, especially in Windows files. -- Ben Wing
+-- Improve: refactor MC_ALLOC to reduce #ifdefs. -- Ben Wing
 -- Improve: use _CRT_SECURE_NO_DEPRECATE to suppress VC8 warnings. -- Ben Wing
--- Improve: warning elimination. -- Ben Wing
+-- Improve: warning elimination. -- Ben Wing, Stephen Turnbull
 
 to 21.5.22 "cucumber"
 
