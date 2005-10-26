@@ -1373,7 +1373,8 @@ enum lrecord_type
 Note: Object types defined in external dynamically-loaded modules (not
 part of the XEmacs main source code) should use DECLARE_EXTERNAL_LRECORD
 and DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION rather than DECLARE_LRECORD
-and DEFINE_LRECORD_IMPLEMENTATION.
+and DEFINE_LRECORD_IMPLEMENTATION.  The EXTERNAL versions declare and
+allocate an enumerator for the type being defined.
 
 */
 

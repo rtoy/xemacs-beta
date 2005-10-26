@@ -1,3 +1,7 @@
+2005-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lrecord.h: Explain the EXTERNAL_LRECORD macros better.
+
 2005-10-25  Ben Wing  <ben@xemacs.org>
 
 	* config.h.in (EXTERN_C):

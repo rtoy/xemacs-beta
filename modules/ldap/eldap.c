@@ -619,7 +619,6 @@ containing attribute/value string pairs.
   int i, j;
   Elemcount len;
 
-  Lisp_Object current = Qnil;
   Lisp_Object values  = Qnil;
   struct gcpro gcpro1;
 
@@ -720,7 +719,7 @@ or `replace'. ATTR is the LDAP attribute type to modify.
   Elemcount len;
 
   Lisp_Object values  = Qnil;
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1;
 
   /* Do all the parameter checking  */
   CHECK_LIVE_LDAP (ldap);
