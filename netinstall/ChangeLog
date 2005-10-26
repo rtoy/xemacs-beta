@@ -1,3 +1,7 @@
+2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.23 "daikon" is released.
+
 2005-09-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.22 "cucumber" is released.
@@ -520,6 +524,6 @@
 
 	* all: port from cygwin setup.
 
-%%% $Id: ChangeLog,v 1.36 2005/09/14 05:30:14 stephent Exp $
-$Revision: 1.36 $
+%%% $Id: ChangeLog,v 1.37 2005/10/26 15:14:20 stephent Exp $
+$Revision: 1.37 $
 
