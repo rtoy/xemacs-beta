@@ -1,3 +1,11 @@
+2005-10-28  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.mak (HAVE_BIGNUM):
+	Set default values for BUILD_BIGNUM_MINGW_SHARED,
+	BUILD_BIGNUM_NATIVE_SHARED to 0 to avoid make problems.
+	* xemacs.mak (OPT_INCLUDES):
+	Don't look in gmp-dynamic, gmp-static; the include file doesn't vary.
+
 2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.23 "daikon" is released.
