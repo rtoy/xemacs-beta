@@ -1,3 +1,8 @@
+2005-10-29  Steve Youngs  <steve@sxemacs.org>
+
+	* unexelf.c (unexec): Fix data types.
+	From: Andrey Slusar <anrays@gmail.com>
+
 2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.23 "daikon" is released.
