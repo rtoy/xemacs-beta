@@ -166,12 +166,12 @@
 	grandtotal))))
 
 
-(defun show-lrecord-stats ()
-  "Show statistics about lrecord usage in XEmacs."
+(defun show-object-memory-usage-stats ()
+  "Show statistics about object memeory usage in XEmacs."
   (interactive)
   (garbage-collect)
-  (let ((buffer "*lrecord statistics*")
-	(plist (lrecord-stats))
+  (let ((buffer "*object memory usage statistics*")
+	(plist (object-memory-usage-stats))
 	(fmt "%-30s%10s%10s\n")
 	(grandtotal 0)
 	begin)
@@ -233,7 +233,7 @@
       (save-excursion
 	(set-buffer buffer)
 	(setq begin (point))
-	(princ "Allocated with new allocator:\n")
+	(princ "Allocated with lisp allocator:\n")
 	(show-stats "\\(.*\\)-storage$")
 	(princ "\n\n")
 	(setq begin (point))

@@ -1,3 +1,9 @@
+2005-11-02  Marcus Crestani  <crestani@xemacs.org>
+
+	* diagnose.el: Rename `show-lrecord-stats' to
+	`show-object-memory-usage-stats', to keep in sync with the C
+	sources.
+
 2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.23 "daikon" is released.
