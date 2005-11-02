@@ -1,5 +1,10 @@
 2005-11-02  Marcus Crestani  <crestani@xemacs.org>
 
+	* realpath.c (readlink_or_correct_case): Move the closing paren
+	outside the ifdef.
+
+2005-11-02  Marcus Crestani  <crestani@xemacs.org>
+
 	* realpath.c (readlink_or_correct_case): Mark parameter as unused.
 
 2005-10-29  Steve Youngs  <steve@sxemacs.org>

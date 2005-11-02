@@ -81,10 +81,11 @@ abs_start (const Ibyte *name)
 static int
 readlink_or_correct_case (const Ibyte *name, Ibyte *buf, Bytecount size,
 #ifndef WIN32_ANY
-			  Boolint UNUSED (links_only))
+			  Boolint UNUSED (links_only)
 #else
-			  Boolint links_only)
+			  Boolint links_only
 #endif
+			  )
 {
 #ifndef WIN32_ANY
   return qxe_readlink (name, buf, (size_t) size);
