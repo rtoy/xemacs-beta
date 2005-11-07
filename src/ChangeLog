@@ -1,3 +1,7 @@
+2005-11-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* inline.c: Include modules headers regardless of HAVE_SHLIB.
+
 2005-11-02  Marcus Crestani  <crestani@xemacs.org>
 
 	* realpath.c (readlink_or_correct_case): Move the closing paren

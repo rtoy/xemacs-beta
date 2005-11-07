@@ -1,3 +1,19 @@
+2005-11-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (AC_INIT): Use it correctly.
+
+2005-11-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (PostgreSQL): Check for link against SSL+crypto.
+
+2005-11-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* INSTALL: Add map from old options as appendix.
+
+2005-11-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* INSTALL: Various minor improvements.
+
 2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.23 "daikon" is released.

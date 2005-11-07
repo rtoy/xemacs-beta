@@ -67,11 +67,22 @@ Boston, MA 02111-1307, USA.  */
 #include "syntax.h"
 #include "window.h"
 
-#if defined (HAVE_LDAP) && !defined (HAVE_SHLIB)
+/* If we demand !defined (HAVE_SHLIB) the INLINE_HEADERS aren't instantiated.
+   This only shows up in --with-error-checking=types builds AFAIK.
+   On Mac OS X 10.3.9 with the Apple toolchain (GCC 3.3) gives a buildtime
+   link error (the lrecord error_check functions are undefined).
+   Debian GNU/Linux `sid' with GCC 4.0.3 prerelease & binutils 2.16.91 gives
+   a runtime link error (the lrecord error_check functions are undefined).
+   It is possible that this can be fixed trickily by appropriately defining
+   INLINE, or that it should be done in the module itself somehow.  If you
+   can do it better or more elegantly, please feel free to consult me.
+   --stephen 2005-11-07 */
+#if defined (HAVE_LDAP)
 #include "../modules/ldap/eldap.h"
 #endif
 
-#if defined (HAVE_POSTGRESQL) && !defined (HAVE_SHLIB)
+/* We can't ask for !defined (HAVE_SHLIB).  See HAVE_LDAP, above. */
+#if defined (HAVE_POSTGRESQL)
 #include "../modules/postgresql/postgresql.h"
 #endif
 

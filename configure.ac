@@ -24,7 +24,8 @@ dnl macros, die if any version other than 2.59 is used.
 AC_PREREQ(2.59)dnl
 m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]), [2.59]), 1,
 	[m4_fatal([This script can only be generated with autoconf 2.59])], [])dnl
-AC_INIT(src/lisp.h)dnl
+AC_INIT([XEmacs],[21.5],[xemacs-beta@xemacs.org])dnl
+AC_CONFIG_SRCDIR(src/lisp.h)dnl
 dnl
 dnl -------------------------------------------------------------------------
 dnl Local copyright notices.
@@ -3707,16 +3708,31 @@ dnl Look for these standard header file locations, known to be used on Linux
                     libpq_fe_h_file=${header_dir}libpq-fe.h; break)
   done
 
-  test -n "$libpq_fe_h_file" && { AC_CHECK_LIB(pq,PQconnectdb,have_libpq=yes) }
+  pq_libs=
+  extra_libs=
+  if test -n "$libpq_fe_h_file"; then
+    dnl #### Would it be nicer to do this with a loop?
+    dnl It seems unlikely that checking for SSL/crypto support can hurt,
+    dnl even if it's found.
+    AC_CHECK_LIB(pq, PQconnectdb,[pq_libs="-lpq"],[
+      unset ac_cv_lib_pq_PQconnectdb;
+      AC_CHECK_LIB(pq, PQconnectdb,[pq_libs="-lpq -lcrypto -lssl"],,
+        [-lcrypto -lssl])])
+    if test -z "$pq_libs"; then
+      have_libpq="no"
+    else
+      have_libpq="yes"
+    fi
+  fi
 
   if test -n "$libpq_fe_h_file" -a "$have_libpq" = "yes"; then
     with_postgresql=yes
     AC_DEFINE(HAVE_POSTGRESQL)
     AC_CHECK_LIB(pq,PQconnectStart, [
                  with_postgresqlv7=yes;
-                 AC_DEFINE(HAVE_POSTGRESQLV7)])
+                 AC_DEFINE(HAVE_POSTGRESQLV7)], [:], $extra_libs)
     AC_DEFINE_UNQUOTED(LIBPQ_FE_H_FILE, "$libpq_fe_h_file")
-    XE_PREPEND(-lpq, postgresql_libs)
+    XE_PREPEND([$pq_libs], postgresql_libs)
     XE_APPEND(modules/postgresql, MAKE_SUBDIR)
     need_modules_common=yes
     if test "$enable_modules" = "yes"; then

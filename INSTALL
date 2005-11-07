@@ -16,8 +16,6 @@ Copyright (c) 1994-1999, 2003 Free Software Foundation, Inc.
    and that any new or changed statements about the activities
    of the Free Software Foundation are approved by the Foundation.
 
-Last modified by Stephen J. Turnbull <stephen@xemacs.org> 2003-02-12
-
 BUILDING AND INSTALLATION FOR UNIX AND CYGWIN
 
 (for Microsoft Windows, see nt/README also.)
@@ -145,6 +143,11 @@ Options are generally of the form `--with-FEATURE' or
 program used in other applications, either `--with-FEATURE' or
 `--enable-FEATURE' can be used to use the same feature.
 
+If you haven't built XEmacs 21.5 recently, the change from the
+configure script based on Autoconf 2.13 can be a shock.  Appendix:
+Correspondence to Old Configure Options (at the end of this document)
+contains a list of old options and their new equivalents.
+
 Controlling the Host Type
 -------------------------
 
@@ -205,22 +208,36 @@ CFLAGS is consulted.  If that is also undefined, CFLAGS defaults to "-g
 
 The `--with-cflags-warning=FLAGS' option specifies the warnings to be
 generated.  There is normally no reason to use this flag, as XEmacs
-turns on as many warnings as possible, and is still expected to build
-with no, or at most a few warnings.
+turns on as many warnings as possible, and is still intended to build
+with no warnings.  If you get any undocumented warnings, please report
+them as bugs---they very often are, or at least indicate possible
+bitrot.
 
 The `--with-cflags-optimization=FLAGS' option specifies the
-optimizations to be used.  There is normally no reason to use this flag,
-as XEmacs will already set the maximum safe
-optimization flags appropriate for the compiler being invoked.
+optimizations to be used.  There is normally no reason to use this
+flag, as XEmacs will already set the maximum safe optimization flags
+appropriate for the compiler being invoked.
 
 The `--with-cflags-debugging=FLAGS' option specifies debugging
-information to be generated.  There is normally no reason to use this
-flag, as XEmacs will include debugging information whenever possible
-(i.e. unless optimization is turned on and the compiler does not permit
-debugging and optimization simultaneously).
+information to be generated.  You should avoid using this flag, as it
+makes most severe or fatal bugs hard-to-impossible to diagnose and
+fix.  Debugging information does not slow down XEmacs at runtime, and
+it doesn't make the binary very much bigger.
 
-The `--with-dynamic' option specifies that configure should try to link
-emacs dynamically rather than statically.
+The `--with-dynamic' option specifies that configure should try to
+link XEmacs dynamically rather than statically.  `--with-static'
+specifies the reverse.  XEmacs's configure script detects whether
+dynamic linking can be done on all platforms we know of; these options
+are normally unnecessary.
+
+The `--with-modules' option specifies that XEmacs be built with
+support for runtime loadable modules.  NOTE TO OEMS: XEmacs can be
+distributed configured to support several options based on external
+APIs (currently LDAP, PostgreSQL, and Canna) as loadable modules.  You
+can distribute an XEmacs binary package with these options enabled
+without depending on the external package.  XEmacs will fail
+gracefully at runtime, issuing an error message indicating that the
+required support was not found on the system.
 
 You can build XEmacs for several different machine types from a single
 source directory.  To do this, you must use a version of `make' that
@@ -275,27 +292,27 @@ system has X Window System support, and arrange to use it if present.
 The `--without-xmu' option can be used if your vendor doesn't ship
 the Xmu library.
 
-The `--enable-menubars=TYPE' option allows you to specify which X
+The `--with-menubars=TYPE' option allows you to specify which X
 toolkit you wish to use for the menubar.  The valid options are
 `lucid', `motif' and `no'.  The default is `lucid' which is a
 Motif-lookalike menubar.  We highly recommend its usage over the real
 Motif menubar. (In fact, the Motif menubar is currently broken.)  If
 `no' is specified then support for menubars will not be compiled in.
 
-The `--enable-scrollbars=TYPE' option allows you to specify which X
+The `--with-scrollbars=TYPE' option allows you to specify which X
 toolkit you wish to use for the scrollbars.  The valid options are
 `lucid', `motif', `athena', `athena3d', and `no'.  The default is
 `lucid' which is a Motif-lookalike scrollbar.  If `no' is specified then
 support for scrollbars will not be compiled in.
 
-The `--enable-dialogs=TYPE' option allows you to specify which X toolkit
+The `--with-dialogs=TYPE' option allows you to specify which X toolkit
 you wish to use for the dialog boxes.  The valid options are `athena',
 `athena3d', `motif, and `no.  The `lucid' option is accepted and will
 result in the `athena' toolkit being used.  If the Motif toolkit can be
 found the default is `motif'.  Otherwise, the default is `athena'.  If
 `no' is specified then support for dialog boxes will not be compiled in.
 
-The `--enable-toolbars' option allows you to enable or disable toolbar
+The `--with-toolbars' option allows you to enable or disable toolbar
 support.  The default is `yes' if support for a windowing system is
 included.
 
@@ -307,38 +324,41 @@ The `--with-xface' option specifies that XEmacs should support
 X-Faces.  `configure' will attempt to detect if you have the compface
 library and define `--with-xface' for you.
 
-The `--enable-database' option specifies that XEmacs should be built
+The `--with-database' option specifies that XEmacs should be built
 with simple database support.  The valid options are `no' or a
 comma-separated list of one or more of `dbm', `gnudbm' or `berkdb'.
 `configure' will attempt to detect the necessary libraries and header
-files and define `--enable-database' for you.
+files and define `--with-database' for you.
 
 The `--with-postgresql' option specifies that XEmacs should be built
 with PostgreSQL support, linking with libpq.  `configure' will attempt
 to detect whether PostgreSQL support is available, and automatically
-define `--with-postgresql' for you.
+define `--with-postgresql' for you.  NOTE TO OEMS: If modules are
+supported and enabled, the libpq API support will be build as a
+module.
 
 The `--with-ldap' option specifies that XEmacs should be build with
 LDAP support, using the OpenLDAP libraries.  `configure' will attempt
 to detect whether LDAP support is available, and automatically define
-`--with-ldap' for you.
+`--with-ldap' for you.  NOTE TO OEMS: If modules are supported and
+enabled, the OpenLDAP API support will be build as a module.
 
 The `--with-socks' option specifies that XEmacs should be built with
 SOCKS support.  This requires the libsocks library.
 
-The `--enable-external-widget' option specifies that XEmacs should be
+The `--with-external-widget' option specifies that XEmacs should be
 built with support for being used as a widget by other X11 applications.
 This functionality should be considered beta.
 
-The `--enable-sound=TYPE' option specifies that XEmacs should be built
-with sound support.  Native (`--enable-sound=native') sound support is
+The `--with-sound=TYPE' option specifies that XEmacs should be built
+with sound support.  Native (`--with-sound=native') sound support is
 currently available only on Sun SparcStations, SGI's, HP9000s, and
 systems (such as Linux) with soundcard.h.  Network Audio Support (NAS)
-(`--enable-sound=nas') is an extension to X that you may or may not have
+(`--with-sound=nas') is an extension to X that you may or may not have
 for your system.  For NAS, you will probably need to provide the paths
 to the nas include and library directories to configure.  If
-`--enable-sound' is not specified, `configure' will attempt to determine
-if your configuration supports native sound and define --enable-sound
+`--with-sound' is not specified, `configure' will attempt to determine
+if your configuration supports native sound and define --with-sound
 for you.  If your native sound library is not in a standard location you
 can specify it with the `--with-native-sound-lib=LIB' flag.  For Linux,
 `/dev/audio' is required for SunAudio files and `/dev/dsp' is required
@@ -368,7 +388,7 @@ support can be explicitly disabled via the `--with-offix=no' option.
 Internationalization Options
 ----------------------------
 
-The `--enable-mule' option enables MUlti-Lingual Emacs (Mule) support,
+The `--with-mule' option enables MUlti-Lingual Emacs (Mule) support,
 needed to support non-Latin-1 (including Asian) languages.  Mule
 support is required for Asian language and Unicode (multibyte and wide
 character) support.  With the advent of the Euro and European
@@ -409,7 +429,8 @@ still unknown.  If Canna is already installed, configure will autodetect
 it, so you never need to explicitly use this option unless your Canna
 libraries are somewhere strange.  Canna run time support is currently
 bundled with the `mule-base' package so there is nothing additional to
-install in order to use it.
+install in order to use it.  NOTE TO OEMS: If modules are supported
+and enabled, the libcanna API support will be build as a module.
 
 The `--with-wnn' and `--with-wnn6' options are for compiling with the Wnn
 multi-language input method.  `--with-wnn' is for compiling with Wnn-4.2,
@@ -788,3 +809,205 @@ without downloading some additional packages.
 See the file PROBLEMS in this directory for a list of various problems
 sometimes encountered, and what to do about them.  PROBLEMS is also
 the place where platform-specific build notes can be found.
+
+APPENDIX: CORRESPONDENCE TO OLD CONFIGURE OPTIONS
+=================================================
+
+Here is a full translation of command line arguments.  Note that any
+option starting with "--with" may also be specified with "--enable".
+This list may not be up-to-date.
+
+Old                     |  New
+------------------------------------------
+General options:
+----------------
+
+--help                    Unchanged
+--usage                   Removed
+--verbose                 Unchanged
+--extra-verbose           Removed
+
+Compilation options:
+--------------------
+
+--compiler                --with-compiler
+--xemacs-compiler         --with-xemacs-compiler
+--with-gcc                Unchanged
+--cflags                  --with-cflags
+--cflags-warning          --with-cflags-warning
+--debug                   --with-debug
+New                       --with-cflags-debug
+New                       --with-optimization
+New                       --with-cflags-optimization
+--cpp                     --with-cpp
+--cppflags                --with-cppflags
+--libs                    --with-libs
+--ldflags                 --with-ldflags
+--site-includes           --with-site-includes
+--site-libraries          --with-site-libraries
+--site-prefixes           --with-site-prefixes
+--site-runtime-libraries  --with-site-runtime-libraries 
+--dynamic                 --with-dynamic
+--srcdir                  Unchanged
+
+Installation options:
+---------------------
+
+--prefix                  Unchanged
+--with-prefix             Unchanged
+--with-netinstall         Unchanged
+--bindir                  Unchanged
+--datadir                 Unchanged
+--statedir                Unchanged
+--libdir                  Unchanged
+--infodir                 Unchanged
+--mandir                  Unchanged
+--lispdir                 --with-lispdir
+--sitelispdir             Removed
+--etcdir                  --with-etcdir
+--lockdir                 Removed
+--archlibdir              --with-archlibdir
+--docdir                  --with-docdir
+--moduledir               --with-moduledir
+
+Run-time path-searching options:
+--------------------------------
+
+--with-site-lisp          Unchanged
+--with-site-modules       Unchanged
+--package-prefix          --with-package-prefix
+--package-path            --with-package-path
+--infopath                --with-infopath
+
+Window-system options:
+----------------------
+
+--with-gtk                Unchanged
+--with-gnome              Unchanged
+--with-x11                Unchanged
+--x-includes              Unchanged
+--x-libraries             Unchanged
+--with-msw                Unchanged
+--with-toolbars           Unchanged
+--with-wmcommand          Unchanged
+--with-athena             Unchanged
+--with-menubars           Unchanged
+--with-scrollbars         Unchanged
+--with-dialogs            Unchanged
+--with-widgets            Unchanged
+--with-dragndrop          Unchanged
+--with-cde                Unchanged
+--with-offix              Unchanged
+--with-xmu                Unchanged
+--external-widget         --with-external-widget
+
+TTY (character terminal) options:
+---------------------------------
+
+--with-tty                Unchanged
+--with-ncurses            Unchanged
+--with-gpm                Unchanged
+
+Image options:
+--------------
+
+--with-xpm                Unchanged
+--with-png                Unchanged
+--with-jpeg               Unchanged
+--with-tiff               Unchanged
+--with-xface              Unchanged
+--with-gif                Unchanged
+
+Sound options:
+--------------
+
+--with-sound              Unchanged
+--native-sound-lib=LIB    --with-native-sound-lib
+
+Internationalization options:
+-----------------------------
+
+--with-mule               Unchanged
+--with-xim                Unchanged
+--with-canna              Unchanged
+--with-wnn                Unchanged
+--with-wnn6               Unchanged
+--with-xfs                Unchanged
+
+File-related options:
+---------------------
+
+--with-default-eol-detection  Unchanged
+--with-clash-detection        Unchanged
+
+Database options:
+-----------------
+
+--with-database           Unchanged
+--with-ldap               Unchanged
+--with-postgresql         Unchanged
+
+Mail options:
+-------------
+
+--mail-locking=TYPE       --with-mail-locking
+--with-pop                Unchanged
+--with-kerberos           Unchanged
+--with-hesiod             Unchanged
+
+Networking options:
+-------------------
+
+--with-tooltalk           Unchanged
+--with-socks              Unchanged
+--with-dnet               Unchanged
+--with-ipv6-cname	  Unchanged
+
+Memory allocation options:
+--------------------------
+
+--rel-alloc               --with-rel-alloc
+--with-dlmalloc           Unchanged
+--with-system-malloc      Unchanged
+--with-debug-malloc       Unchanged
+
+Emacs Lisp options:
+-------------------
+
+--use-number-lib          --with-bignum
+
+Debugging options:
+------------------
+
+--debug                   --with-debug
+--error-checking          --with-error-checking
+--memory-usage-stats      --with-memory-usage-stats
+--quick-build             --with-quick-build
+--use-union-type          --with-union-type
+--with-quantify           Unchanged
+--with-purify             Unchanged
+
+Developer options:
+------------------
+
+--with-workshop           Unchanged
+--pdump                   --with-pdump
+--use-kkcc                --with-kkcc
+--with-modules            Unchanged
+
+The output files produced by this new configure should be almost
+identical to those produced by the old.  This can be tested with the
+provided regression test script.  This script runs the two versions of
+configure with the supplied list of command line arguments and reports
+any differences.  Please add your favorite configuration command lines
+to the list before running the test.  The script is run as:
+
+$ tests/autoconf/regressiontest.pl /absolute/path/to/2.13/configure \
+   /absolute/path/to/2.59/configure >diffs.txt
+
+The only differences should be:
+- those related to changes in the command line arguments
+- the change of SYS_SIGLIST_DECLARED to HAVE_DECL_SYS_SIGLIST (because the old
+  form has been removed), and
+- The removal of trailing comments in src/config.h.
+

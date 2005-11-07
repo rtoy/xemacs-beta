@@ -163,7 +163,7 @@
 	for evaluation in Lisp interaction mode, and should be documented
 	as such.
 
-2005-04-18  Turnbull Stephen  <stephen@xemacs.org>
+2005-04-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi
 	(Better Rendering Support -- Modern Font Support):
