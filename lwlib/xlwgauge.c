@@ -240,11 +240,11 @@ GaugeClassInit (void)
 /* ARGSUSED */
 static void
 GaugeInit (Widget   request,
-	   Widget   new,
+	   Widget   new_,
 	   ArgList  UNUSED (args),
 	   Cardinal *UNUSED (num_args))
 {
-    GaugeWidget gw = (GaugeWidget) new;
+    GaugeWidget gw = (GaugeWidget) new_;
 
     if( gw->gauge.v0 == 0  &&  gw->gauge.v1 == 0 ) {
       gw->gauge.autoScaleUp = gw->gauge.autoScaleDown = TRUE ;
@@ -258,10 +258,10 @@ GaugeInit (Widget   request,
       Dimension w,h ;
       GaugeSize(gw, &w,&h, DEF_LEN) ;
       if( request->core.width == 0 )
-	new->core.width = w ;
+	new_->core.width = w ;
       if( request->core.height == 0 )
-	new->core.height = h ;
-      gw->core.widget_class->core_class.resize(new) ;
+	new_->core.height = h ;
+      gw->core.widget_class->core_class.resize(new_) ;
     }
 
     gw->gauge.selected = None ;
@@ -501,16 +501,16 @@ register Window	win = XtWindow(w) ;
 static Boolean
 GaugeSetValues (Widget   old,
 		Widget   UNUSED (request),
-		Widget   new,
+		Widget   new_,
 		ArgList  UNUSED (args),
 		Cardinal *UNUSED (num_args))
 {
 	GaugeWidget oldgw = (GaugeWidget) old;
-	GaugeWidget gw = (GaugeWidget) new;
+	GaugeWidget gw = (GaugeWidget) new_;
 	Boolean was_resized = False;
 
 	if( gw->gauge.selected != None ) {
-	  XtDisownSelection(new, gw->gauge.selected, CurrentTime) ;
+	  XtDisownSelection(new_, gw->gauge.selected, CurrentTime) ;
 	  gw->gauge.selected = None ;
 	}
 
@@ -535,7 +535,7 @@ GaugeSetValues (Widget   old,
 	  if( gw->label.resize )
 	    GaugeSize(gw, &gw->core.width, &gw->core.height, DEF_LEN) ;
 	  else
-	    GaugeResize(new) ;
+	    GaugeResize(new_) ;
 	}
 
 	if( gw->gauge.update != oldgw->gauge.update )
@@ -548,12 +548,12 @@ GaugeSetValues (Widget   old,
 
 	if( gw->core.background_pixel != oldgw->core.background_pixel )
 	{
-	  XtReleaseGC(new, gw->gauge.inverse_GC) ;
+	  XtReleaseGC(new_, gw->gauge.inverse_GC) ;
 	  gw->gauge.inverse_GC = Get_GC(gw, gw->core.background_pixel) ;
 	}
 
 	return was_resized || gw->gauge.value != oldgw->gauge.value  ||
-	   XtIsSensitive(old) != XtIsSensitive(new);
+	   XtIsSensitive(old) != XtIsSensitive(new_);
 }
 
 

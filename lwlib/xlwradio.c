@@ -218,11 +218,11 @@ RadioClassPartInit (WidgetClass class_)
 /*ARGSUSED*/
 static void
 RadioInit (Widget   request,
-	   Widget   new,
+	   Widget   new_,
 	   ArgList  UNUSED (args),
 	   Cardinal *UNUSED (num_args))
 {
-    RadioWidget rw = (RadioWidget) new;
+    RadioWidget rw = (RadioWidget) new_;
     RadioWidget rw_req = (RadioWidget) request;
     Dimension	w,h ;
 
@@ -234,7 +234,7 @@ RadioInit (Widget   request,
 	rw->core.width = w ;
       if( rw_req->core.height == 0 )
 	rw->core.height = h ;
-      rw->core.widget_class->core_class.resize(new) ;
+      rw->core.widget_class->core_class.resize(new_) ;
     }
 }
 
@@ -345,12 +345,12 @@ RadioExpose (Widget w,
 static Boolean
 RadioSetValues (Widget   current,
 		Widget   UNUSED (request),
-		Widget   new,
+		Widget   new_,
 		ArgList  UNUSED (args),
 		Cardinal *UNUSED (num_args))
 {
     RadioWidget oldrw = (RadioWidget) current;
-    RadioWidget newrw = (RadioWidget) new;
+    RadioWidget newrw = (RadioWidget) new_;
 
     /* Need to find out if the size of the widget changed.  Set new size
      * if it did and resize is permitted.  One way to determine of the
@@ -373,7 +373,7 @@ RadioSetValues (Widget   current,
      */
     if (newrw->label.label_x != oldrw->label.label_x)
     {
-      RadioResize (new);
+      RadioResize (new_);
     }
     return FALSE ;
 }

@@ -1,3 +1,10 @@
+2005-11-08  Marcus Crestani  <crestani@xemacs.org>
+
+	* xlwgauge.c (GaugeInit):
+	* xlwgauge.c (GaugeSetValues):
+	* xlwradio.c (RadioInit):
+	* xlwradio.c (RadioSetValues): Rename new->new_.
+
 2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.23 "daikon" is released.
