@@ -1186,7 +1186,8 @@ arguments in the standard Lisp style."
 		 (nth 1 fndef))
 		((subrp fndef)
 		 (let* ((doc (documentation function))
-			(args (and (string-match
+			(args (and doc
+				   (string-match
 				    "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'"
 				    doc)
 				   (match-string 1 doc))))

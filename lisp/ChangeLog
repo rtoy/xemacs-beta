@@ -1,5 +1,10 @@
 2005-11-13  Ben Wing  <ben@xemacs.org>
 
+	* help.el (function-arglist):
+	Don't bomb out when fun has no documentation.
+
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
 	* simple.el (log-warning-minimum-level):
 	* simple.el (display-warning-minimum-level):
 	`foo.' -> `foo'.
