@@ -185,7 +185,7 @@ int garbage_collection_messages;
 EMACS_INT gc_generation_number[1];
 
 /* This is just for use by the printer, to allow things to print uniquely */
-static int lrecord_uid_counter;
+int lrecord_uid_counter;
 
 /* Nonzero when calling certain hooks or doing other things where
    a GC would be bad */
@@ -606,7 +606,6 @@ alloc_lrecord (Bytecount size,
   lheader = (struct lrecord_header *) mc_alloc (size);
   gc_checking_assert (LRECORD_FREE_P (lheader));
   set_lheader_implementation (lheader, implementation);
-  lheader->uid = lrecord_uid_counter++;
 #ifdef ALLOC_TYPE_STATS
   inc_lrecord_stats (size, lheader);
 #endif /* ALLOC_TYPE_STATS */
@@ -628,7 +627,6 @@ noseeum_alloc_lrecord (Bytecount size,
   lheader = (struct lrecord_header *) mc_alloc (size);
   gc_checking_assert (LRECORD_FREE_P (lheader));
   set_lheader_implementation (lheader, implementation);
-  lheader->uid = lrecord_uid_counter++;
 #ifdef ALLOC_TYPE_STATS
   inc_lrecord_stats (size, lheader);
 #endif /* ALLOC_TYPE_STATS */
@@ -2484,6 +2482,10 @@ make_uninit_string (Bytecount length)
   set_lheader_implementation (&s->u.lheader, &lrecord_string);
 #endif /* not MC_ALLOC */
 
+  /* The above allocations set the UID field, which overlaps with the
+     ascii-length field, to some non-zero value.  We need to zero it. */
+  XSET_STRING_ASCII_BEGIN (wrap_string (s), 0);
+
   set_lispstringp_data (s, BIG_STRING_FULLSIZE_P (fullsize)
 			? allocate_big_string_chars (length + 1)
 			: allocate_string_chars_struct (wrap_string (s),
@@ -2712,16 +2714,6 @@ LENGTH must be a non-negative integer.
 	EMACS_INT i;
 	Ibyte *ptr = XSTRING_DATA (val);
 
-#ifdef MC_ALLOC
-	/* Need this for the new allocator: strings are using the uid
-	   field for ascii_begin. The uid field is set for debugging,
-	   but the string code assumes here that ascii_begin is always
-	   zero, when not touched. This assumption is not true with
-	   the new allocator, so ascii_begin has to be set to zero
-	   here. */
-	XSET_STRING_ASCII_BEGIN (val, 0);
-#endif /* not MC_ALLOC */
-
 	for (i = XINT (length); i; i--)
 	  {
 	    Ibyte *init_ptr = init_str;
@@ -2872,6 +2864,8 @@ make_string_nocopy (const Ibyte *contents, Bytecount length)
   set_lheader_implementation (&s->u.lheader, &lrecord_string);
   SET_C_READONLY_RECORD_HEADER (&s->u.lheader);
 #endif /* not MC_ALLOC */
+  /* Don't need to XSET_STRING_ASCII_BEGIN() here because it happens in
+     init_string_ascii_begin(). */
   s->plist = Qnil;
   set_lispstringp_data (s, (Ibyte *) contents);
   set_lispstringp_length (s, length);

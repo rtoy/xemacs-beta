@@ -1,7 +1,7 @@
 /* Events: printing them, converting them to and from characters.
    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -86,11 +86,14 @@ static void
 deinitialize_event (Lisp_Object ev)
 {
   Lisp_Event *event = XEVENT (ev);
-
   int i;
+  /* Preserve the old UID for this event, for tracking it */
+  unsigned int old_uid = event->lheader.uid;
+
   for (i = 0; i < (int) (sizeof (Lisp_Event) / sizeof (int)); i++)
     ((int *) event) [i] = 0xdeadbeef; /* -559038737 base 10 */
   set_lheader_implementation (&event->lheader, &lrecord_event);
+  event->lheader.uid = old_uid;
   set_event_type (event, dead_event);
   SET_EVENT_CHANNEL (event, Qnil);
   XSET_EVENT_NEXT (ev, Qnil);
@@ -100,8 +103,12 @@ deinitialize_event (Lisp_Object ev)
 void
 zero_event (Lisp_Event *e)
 {
+  /* Preserve the old UID for this event, for tracking it */
+  unsigned int old_uid = e->lheader.uid;
+
   xzero (*e);
   set_lheader_implementation (&e->lheader, &lrecord_event);
+  e->lheader.uid = old_uid;
   set_event_type (e, empty_event);
   SET_EVENT_CHANNEL (e, Qnil);
   SET_EVENT_NEXT (e, Qnil);

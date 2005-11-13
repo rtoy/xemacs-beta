@@ -1,6 +1,6 @@
 /* Lisp object printing and output streams.
    Copyright (C) 1985, 1986, 1988, 1992-1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -2211,14 +2211,16 @@ debug_p4 (Lisp_Object obj)
 		   (EMACS_INT) header);
       else
 #ifdef MC_ALLOC
-	debug_out ("#<%s 0x%lx>",
+	debug_out ("#<%s addr=0x%lx uid=0x%lx>",
 		   LHEADER_IMPLEMENTATION (header)->name,
+		   (EMACS_INT) header,
 		   (EMACS_INT) ((struct lrecord_header *) header)->uid);
 #else /* not MC_ALLOC */
-	debug_out ("#<%s 0x%lx>",
+	debug_out ("#<%s addr=0x%lx uid=0x%lx>",
 		   LHEADER_IMPLEMENTATION (header)->name,
+		   (EMACS_INT) header,
 		   LHEADER_IMPLEMENTATION (header)->basic_p ?
-		   (EMACS_INT) header :
+		   ((struct lrecord_header *) header)->uid :
 		   ((struct old_lcrecord_header *) header)->uid);
 #endif /* not MC_ALLOC */
     }

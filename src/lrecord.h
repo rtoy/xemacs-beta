@@ -120,9 +120,9 @@ struct lrecord_header
      debugging. */
   unsigned int free :1;
 
-  /* The `uid' field is just for debugging/printing convenience.
-     Having this slot doesn't hurt us much spacewise, since the
-     bits are unused anyway. */
+  /* The `uid' field is just for debugging/printing convenience.  Having
+     this slot doesn't hurt us spacewise, since the bits are unused
+     anyway. (The bits are used for strings, though.) */
   unsigned int uid :22;
 
 #else /* not MC_ALLOC */
@@ -140,13 +140,17 @@ struct lrecord_header
   /* 1 if the object is readonly from lisp */
   unsigned int lisp_readonly :1;
 
-  unsigned int unused :21;
+  /* The `uid' field is just for debugging/printing convenience.  Having
+     this slot doesn't hurt us spacewise, since the bits are unused
+     anyway. (The bits are used for strings, though.) */
+  unsigned int uid :21;
 
 #endif /* not MC_ALLOC */
 };
 
 struct lrecord_implementation;
 int lrecord_type_index (const struct lrecord_implementation *implementation);
+extern int lrecord_uid_counter;
 
 #ifdef MC_ALLOC
 #define set_lheader_implementation(header,imp) do {	\
@@ -154,6 +158,7 @@ int lrecord_type_index (const struct lrecord_implementation *implementation);
   SLI_header->type = (imp)->lrecord_type_index;		\
   SLI_header->lisp_readonly = 0;			\
   SLI_header->free = 0;					\
+  SLI_header->uid = lrecord_uid_counter++;		\
 } while (0)
 #else /* not MC_ALLOC */
 #define set_lheader_implementation(header,imp) do {	\
@@ -162,6 +167,7 @@ int lrecord_type_index (const struct lrecord_implementation *implementation);
   SLI_header->mark = 0;					\
   SLI_header->c_readonly = 0;				\
   SLI_header->lisp_readonly = 0;			\
+  SLI_header->uid = lrecord_uid_counter++;		\
 } while (0)
 #endif /* not MC_ALLOC */
 

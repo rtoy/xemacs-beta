@@ -1,7 +1,7 @@
 /* Header file for text manipulation primitives and macros.
    Copyright (C) 1985-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1005,73 +1005,6 @@ itext_copy_ichar (const Ibyte *src, Ibyte *dst)
      
 #define itext_ichar_n(ptr, offset) \
   itext_ichar (itext_n_addr (ptr, offset))
-
-
-/* ---------------------------- */
-/*      Working with Ichars     */
-/* ---------------------------- */
-
-/* NOTE: There are other functions/macros for working with Ichars in
-   charset.h, for retrieving the charset of an Ichar, the length of an
-   Ichar when converted to text, etc.
-*/
-
-#ifdef MULE
-
-MODULE_API int non_ascii_valid_ichar_p (Ichar ch);
-
-/* Return whether the given Ichar is valid.
- */
-
-DECLARE_INLINE_HEADER (
-int
-valid_ichar_p (Ichar ch)
-)
-{
-  return (! (ch & ~0xFF)) || non_ascii_valid_ichar_p (ch);
-}
-
-#else /* not MULE */
-
-#define valid_ichar_p(ch) (! (ch & ~0xFF))
-
-#endif /* not MULE */
-
-DECLARE_INLINE_HEADER (
-Lisp_Object
-make_char (Ichar val)
-)
-{
-  type_checking_assert (valid_ichar_p (val));
-  return make_char_1 (val);
-}
-
-#define CHAR_INTP(x) (INTP (x) && valid_ichar_p (XINT (x)))
-
-#define CHAR_OR_CHAR_INTP(x) (CHARP (x) || CHAR_INTP (x))
-
-DECLARE_INLINE_HEADER (
-Ichar
-XCHAR_OR_CHAR_INT (Lisp_Object obj)
-)
-{
-  return CHARP (obj) ? XCHAR (obj) : XINT (obj);
-}
-
-/* Signal an error if CH is not a valid character or integer Lisp_Object.
-   If CH is an integer Lisp_Object, convert it to a character Lisp_Object,
-   but merely by repackaging, without performing tests for char validity.
-   */
-
-#define CHECK_CHAR_COERCE_INT(x) do {		\
-  if (CHARP (x))				\
-     ;						\
-  else if (CHAR_INTP (x))			\
-    x = make_char (XINT (x));			\
-  else						\
-    x = wrong_type_argument (Qcharacterp, x);	\
-} while (0)
-
 
 
 /************************************************************************/

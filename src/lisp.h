@@ -2314,7 +2314,11 @@ struct Lisp_String
 };
 typedef struct Lisp_String Lisp_String;
 
+#ifdef MC_ALLOC
+#define MAX_STRING_ASCII_BEGIN ((1 << 22) - 1)
+#else
 #define MAX_STRING_ASCII_BEGIN ((1 << 21) - 1)
+#endif
 
 DECLARE_MODULE_API_LRECORD (string, Lisp_String);
 #define XSTRING(x) XRECORD (x, string, Lisp_String)
@@ -2559,32 +2563,221 @@ DECLARE_MODULE_API_LRECORD (marker, Lisp_Marker);
 #define marker_next(m) ((m)->next)
 #define marker_prev(m) ((m)->prev)
 
-/*------------------------------- char ---------------------------------*/
+/*-------------------basic int (no connection to char)------------------*/
 
-#define CHARP(x) (XTYPE (x) == Lisp_Type_Char)
+#define ZEROP(x) EQ (x, Qzero)
 
 #ifdef ERROR_CHECK_TYPES
+
+#define XINT(x) XINT_1 (x, __FILE__, __LINE__) 
+
+DECLARE_INLINE_HEADER (
+EMACS_INT
+XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
+)
+{
+  assert_at_line (INTP (obj), file, line);
+  return XREALINT (obj);
+}
+
+#else /* no error checking */
+
+#define XINT(obj) XREALINT (obj)
+
+#endif /* no error checking */
+
+#define CHECK_INT(x) do {			\
+  if (!INTP (x))				\
+    dead_wrong_type_argument (Qintegerp, x);	\
+} while (0)
+
+#define CONCHECK_INT(x) do {			\
+  if (!INTP (x))				\
+    x = wrong_type_argument (Qintegerp, x);	\
+} while (0)
+
+#define NATNUMP(x) (INTP (x) && XINT (x) >= 0)
+
+#define CHECK_NATNUM(x) do {			\
+  if (!NATNUMP (x))				\
+    dead_wrong_type_argument (Qnatnump, x);	\
+} while (0)
+
+#define CONCHECK_NATNUM(x) do {			\
+  if (!NATNUMP (x))				\
+    x = wrong_type_argument (Qnatnump, x);	\
+} while (0)
+
+/*------------------------------- char ---------------------------------*/
+
+/* NOTE: There are basic functions for converting between a character and
+   the string representation of a character in text.h, as well as lots of
+   other character-related stuff.  There are other functions/macros for
+   working with Ichars in charset.h, for retrieving the charset of an
+   Ichar, the length of an Ichar when converted to text, etc.
+*/
+
+#ifdef MULE
+
+MODULE_API int non_ascii_valid_ichar_p (Ichar ch);
+
+/* Return whether the given Ichar is valid.
+ */
+
+DECLARE_INLINE_HEADER (
+int
+valid_ichar_p (Ichar ch)
+)
+{
+  return (! (ch & ~0xFF)) || non_ascii_valid_ichar_p (ch);
+}
+
+#else /* not MULE */
+
+/* This works when CH is negative, and correctly returns non-zero only when CH
+   is in the range [0, 255], inclusive. */
+#define valid_ichar_p(ch) (! (ch & ~0xFF))
+
+#endif /* not MULE */
+
+#ifdef ERROR_CHECK_TYPES
+
+DECLARE_INLINE_HEADER (
+int
+CHARP_1 (Lisp_Object obj, const Ascbyte *file, int line)
+)
+{
+  if (XTYPE (obj) != Lisp_Type_Char)
+    return 0;
+  assert_at_line (valid_ichar_p (XCHARVAL (obj)), file, line);
+  return 1;
+}
+
+#define CHARP(x) CHARP_1 (x, __FILE__, __LINE__) 
 
 DECLARE_INLINE_HEADER (
 Ichar
 XCHAR_1 (Lisp_Object obj, const Ascbyte *file, int line)
 )
 {
+  Ichar ch;
   assert_at_line (CHARP (obj), file, line);
-  return XCHARVAL (obj);
+  ch = XCHARVAL (obj);
+  assert_at_line (valid_ichar_p (ch), file, line);
+  return ch;
 }
 
 #define XCHAR(x) XCHAR_1 (x, __FILE__, __LINE__) 
 
+#else /* not ERROR_CHECK_TYPES */
+
+#define CHARP(x) (XTYPE (x) == Lisp_Type_Char)
+#define XCHAR(x) ((Ichar) XCHARVAL (x))
+
+#endif /* (else) not ERROR_CHECK_TYPES */
+
+#define CONCHECK_CHAR(x) do {			\
+ if (!CHARP (x))				\
+   x = wrong_type_argument (Qcharacterp, x);	\
+ } while (0)
+
+#define CHECK_CHAR(x) do {			\
+ if (!CHARP (x))				\
+   dead_wrong_type_argument (Qcharacterp, x);	\
+ } while (0)
+
+
+DECLARE_INLINE_HEADER (
+Lisp_Object
+make_char (Ichar val)
+)
+{
+  type_checking_assert (valid_ichar_p (val));
+  /* This is defined in lisp-union.h or lisp-disunion.h */
+  return make_char_1 (val);
+}
+
+/*------------------------- int-char connection ------------------------*/
+
+#ifdef ERROR_CHECK_TYPES
+
+#define XCHAR_OR_INT(x) XCHAR_OR_INT_1 (x, __FILE__, __LINE__) 
+
+DECLARE_INLINE_HEADER (
+EMACS_INT
+XCHAR_OR_INT_1 (Lisp_Object obj, const Ascbyte *file, int line)
+)
+{
+  assert_at_line (INTP (obj) || CHARP (obj), file, line);
+  return CHARP (obj) ? XCHAR (obj) : XINT (obj);
+}
+
 #else /* no error checking */
 
-#define XCHAR(x) ((Ichar) XCHARVAL (x))
+#define XCHAR_OR_INT(obj) (CHARP (obj) ? XCHAR (obj) : XINT (obj))
 
 #endif /* no error checking */
 
-#define CHECK_CHAR(x) CHECK_NONRECORD (x, Lisp_Type_Char, Qcharacterp)
-#define CONCHECK_CHAR(x) CONCHECK_NONRECORD (x, Lisp_Type_Char, Qcharacterp)
+/* True of X is an integer whose value is the valid integral equivalent of a
+   character. */
 
+#define CHAR_INTP(x) (INTP (x) && valid_ichar_p (XINT (x)))
+
+/* True of X is a character or an integral value that can be converted into a
+   character. */
+#define CHAR_OR_CHAR_INTP(x) (CHARP (x) || CHAR_INTP (x))
+
+DECLARE_INLINE_HEADER (
+Ichar
+XCHAR_OR_CHAR_INT (Lisp_Object obj)
+)
+{
+  return CHARP (obj) ? XCHAR (obj) : XINT (obj);
+}
+
+/* Signal an error if CH is not a valid character or integer Lisp_Object.
+   If CH is an integer Lisp_Object, convert it to a character Lisp_Object,
+   but merely by repackaging, without performing tests for char validity.
+   */
+
+#define CHECK_CHAR_COERCE_INT(x) do {		\
+  if (CHARP (x))				\
+     ;						\
+  else if (CHAR_INTP (x))			\
+    x = make_char (XINT (x));			\
+  else						\
+    x = wrong_type_argument (Qcharacterp, x);	\
+} while (0)
+
+/* next three always continuable because they coerce their arguments. */
+#define CHECK_INT_COERCE_CHAR(x) do {			\
+  if (INTP (x))						\
+    ;							\
+  else if (CHARP (x))					\
+    x = make_int (XCHAR (x));				\
+  else							\
+    x = wrong_type_argument (Qinteger_or_char_p, x);	\
+} while (0)
+
+#define CHECK_INT_COERCE_MARKER(x) do {			\
+  if (INTP (x))						\
+    ;							\
+  else if (MARKERP (x))					\
+    x = make_int (marker_position (x));			\
+  else							\
+    x = wrong_type_argument (Qinteger_or_marker_p, x);	\
+} while (0)
+
+#define CHECK_INT_COERCE_CHAR_OR_MARKER(x) do {			\
+  if (INTP (x))							\
+    ;								\
+  else if (CHARP (x))						\
+    x = make_int (XCHAR (x));					\
+  else if (MARKERP (x))						\
+    x = make_int (marker_position (x));				\
+  else								\
+    x = wrong_type_argument (Qinteger_char_or_marker_p, x);	\
+} while (0)
 
 /*------------------------------ float ---------------------------------*/
 
@@ -2623,93 +2816,6 @@ DECLARE_LRECORD (float, Lisp_Float);
 } while (0)
 
 # define INT_OR_FLOATP(x) (INTP (x) || FLOATP (x))
-
-/*-------------------------------- int ---------------------------------*/
-
-#define ZEROP(x) EQ (x, Qzero)
-
-#ifdef ERROR_CHECK_TYPES
-
-#define XCHAR_OR_INT(x) XCHAR_OR_INT_1 (x, __FILE__, __LINE__) 
-#define XINT(x) XINT_1 (x, __FILE__, __LINE__) 
-
-DECLARE_INLINE_HEADER (
-EMACS_INT
-XINT_1 (Lisp_Object obj, const Ascbyte *file, int line)
-)
-{
-  assert_at_line (INTP (obj), file, line);
-  return XREALINT (obj);
-}
-
-DECLARE_INLINE_HEADER (
-EMACS_INT
-XCHAR_OR_INT_1 (Lisp_Object obj, const Ascbyte *file, int line)
-)
-{
-  assert_at_line (INTP (obj) || CHARP (obj), file, line);
-  return CHARP (obj) ? XCHAR (obj) : XINT (obj);
-}
-
-#else /* no error checking */
-
-#define XINT(obj) XREALINT (obj)
-#define XCHAR_OR_INT(obj) (CHARP (obj) ? XCHAR (obj) : XINT (obj))
-
-#endif /* no error checking */
-
-#define CHECK_INT(x) do {			\
-  if (!INTP (x))				\
-    dead_wrong_type_argument (Qintegerp, x);	\
-} while (0)
-
-#define CONCHECK_INT(x) do {			\
-  if (!INTP (x))				\
-    x = wrong_type_argument (Qintegerp, x);	\
-} while (0)
-
-#define NATNUMP(x) (INTP (x) && XINT (x) >= 0)
-
-#define CHECK_NATNUM(x) do {			\
-  if (!NATNUMP (x))				\
-    dead_wrong_type_argument (Qnatnump, x);	\
-} while (0)
-
-#define CONCHECK_NATNUM(x) do {			\
-  if (!NATNUMP (x))				\
-    x = wrong_type_argument (Qnatnump, x);	\
-} while (0)
-
-/* next three always continuable because they coerce their arguments. */
-#define CHECK_INT_COERCE_CHAR(x) do {			\
-  if (INTP (x))						\
-    ;							\
-  else if (CHARP (x))					\
-    x = make_int (XCHAR (x));				\
-  else							\
-    x = wrong_type_argument (Qinteger_or_char_p, x);	\
-} while (0)
-
-#define CHECK_INT_COERCE_MARKER(x) do {			\
-  if (INTP (x))						\
-    ;							\
-  else if (MARKERP (x))					\
-    x = make_int (marker_position (x));			\
-  else							\
-    x = wrong_type_argument (Qinteger_or_marker_p, x);	\
-} while (0)
-
-#define CHECK_INT_COERCE_CHAR_OR_MARKER(x) do {			\
-  if (INTP (x))							\
-    ;								\
-  else if (CHARP (x))						\
-    x = make_int (XCHAR (x));					\
-  else if (MARKERP (x))						\
-    x = make_int (marker_position (x));				\
-  else								\
-    x = wrong_type_argument (Qinteger_char_or_marker_p, x);	\
-} while (0)
-
 
 /*--------------------------- readonly objects -------------------------*/
 
