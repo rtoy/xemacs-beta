@@ -59,11 +59,11 @@
 ;;  (define-key hypertext-mode-map [down-mouse-3] 'do-hyper-link)
 ;;
 ;; will create a function `hypertext-mode' with its own (sparse)
-;; keymap `hypertext-mode-map.'  The command M-x hypertext-mode will
+;; keymap `hypertext-mode-map'.  The command M-x hypertext-mode will
 ;; perform the following actions:
 ;;
 ;; - run the command (text-mode) to get its default setup
-;; - replace the current keymap with 'hypertext-mode-map,' which will
+;; - replace the current keymap with 'hypertext-mode-map', which will
 ;;   inherit from 'text-mode-map'.
 ;; - replace the current syntax table with
 ;;   'hypertext-mode-syntax-table', which will borrow its defaults
@@ -77,7 +77,7 @@
 ;;   set the local variable `case-fold-search' to nil.
 ;;
 ;; The advantages of this system are threefold.  First, text mode is
-;; untouched -- if you had added the new keystroke to `text-mode-map,'
+;; untouched -- if you had added the new keystroke to `text-mode-map',
 ;; possibly using hooks, you would have added it to all text buffers
 ;; -- here, it appears only in hypertext buffers, where it makes
 ;; sense.  Second, it is possible to build even further, and make

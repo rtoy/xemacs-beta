@@ -406,7 +406,7 @@ If any function returns non-nil, the remaining functions will not be
 called.
 
 Note that most applications should take action when the mouse is
-released, not when it is pressed.'")
+released, not when it is pressed.")
 
 (defvar mouse-track-drag-hook nil
   "Function or functions called when the user drags the mouse.

@@ -1774,16 +1774,16 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 				    shrink-to-fit)
   "Select and return a frame in which to display BUFFER.
 Normally, the buffer will simply be displayed in the selected frame.
-But if the symbol naming the major-mode of the buffer has a 'frame-name
+But if the symbol naming the major-mode of the buffer has a `frame-name'
 property (which should be a symbol), then the buffer will be displayed in
 a frame of that name.  If there is no frame of that name, then one is
 created.
 
-If the major-mode doesn't have a 'frame-name property, then the frame
+If the major-mode doesn't have a `frame-name' property, then the frame
 named by `get-frame-for-buffer-default-frame-name' will be used.  If
 that is nil (the default) then the currently selected frame will used.
 
-If the frame-name symbol has an 'instance-limit property (an integer)
+If the frame-name symbol has an `instance-limit' property (an integer)
 then each time a buffer of the mode in question is displayed, a new frame
 with that name will be created, until there are `instance-limit' of them.
 If instance-limit is 0, then a new frame will be created each time.
@@ -1791,7 +1791,7 @@ If instance-limit is 0, then a new frame will be created each time.
 If a buffer is already displayed in a frame, then `instance-limit' is
 ignored, and that frame is used.
 
-If the frame-name symbol has a 'frame-defaults property, then that is
+If the frame-name symbol has a `frame-defaults' property, then that is
 prepended to the `default-frame-plist' when creating a frame for the
 first time.
 

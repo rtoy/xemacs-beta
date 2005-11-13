@@ -1,3 +1,26 @@
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
+	* derived.el:
+	* frame.el (get-frame-for-buffer):
+	* toolbar.el (press-toolbar-button):
+	* toolbar.el (release-and-activate-toolbar-button):
+	* glyphs.el:
+	* glyphs.el (set-glyph-property):
+	* glyphs.el (set-glyph-image):
+	* glyphs.el (set-glyph-contrib-p):
+	* glyphs.el (set-glyph-baseline):
+	* hyper-apropos.el (hyper-apropos-map):
+	* mouse.el (mouse-track-down-hook):
+	* files.el (file-name-extension):
+	* specifier.el:
+	* specifier.el (map-specifier):
+	* specifier.el (set-specifier):
+	Fix uses of `foo'; change 'foo -> `foo', and put punctuation outside
+	of quotes.
+
+	Add comments in specifier.el about needing better and new convenience
+	functions.
+
 2005-11-02  Marcus Crestani  <crestani@xemacs.org>
 
 	* diagnose.el: Rename `show-lrecord-stats' to

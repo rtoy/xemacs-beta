@@ -1,7 +1,7 @@
 ;;; specifier.el --- Lisp interface to specifiers
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1995, 1996, 2000, 2002 Ben Wing.
+;; Copyright (C) 1995, 1996, 2000, 2002, 2005 Ben Wing.
 
 ;; Author: Ben Wing <ben@xemacs.org>
 ;; Keywords: internal, dumped
@@ -55,7 +55,7 @@ Optional DONT-CANONICALIZE, if non-nil, inhibits the conversion, and the
 
 If optional MS-LOCALE is a locale, MS-FUNC will be called for that locale.
 If MS-LOCALE is a locale type, MS-FUNC will be mapped over all locales of that
-type.  If MS-LOCALE is 'all or nil, MS-FUNC will be mapped over all locales in
+type.  If MS-LOCALE is `all' or nil, MS-FUNC will be mapped over all locales in
 MS-SPECIFIER.
 
 Optional MS-TAG-SET and MS-EXACT-P are as in `specifier-spec-list'.
@@ -306,7 +306,7 @@ otherwise return t."
 VALUE may be any of the values accepted by `canonicalize-spec-list', including
 
 -- an instantiator (either a Lisp object which will be returned when the
-   specifier is instanced, or a Lisp object that can be instantiated to
+   specifier is instantiated, or a Lisp object that can be instantiated to
    produce an opaque value: eg, a font name (string) can be used for a font
    specifier, but an instance will be a font object)
 -- a list of instantiators
@@ -330,7 +330,7 @@ that function.
 Note that a VALUE of `nil' is either illegal or will be treated as a value of
 `nil'; it does not remove existing specifications.  Use `remove-specifier' for
 that.  N.B. `remove-specifier' defaults to removing all specifications, not
-just the 'global one!
+just the `global' one!
 
 Warning: this function is inherently heuristic, and should not be relied on to
 properly resolve ambiguities, when specifier instantiators can be lists
@@ -410,6 +410,12 @@ in such a way as to avoid any such ambiguities.)"
 	    (canonicalize-spec-list nval (specifier-type specifier))
 	    how-to-add))))
   value)
+
+;; #### Misnamed and wrong behavior.  Should operate on INSTANTIATORS, not
+;; instances.  Need to come up with clean and general functions for
+;; modifying a specifier.  New `specifier-instantiator' may help.
+;; #### Also need `instantiator-to-instance', a convenient version of
+;; `specifier-instance-from-inst-list'.
 
 (defun modify-specifier-instances (specifier func &optional args force default
 				   locale tag-set)

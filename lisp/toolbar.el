@@ -146,7 +146,7 @@ or through the Options menu."
 ;;
 (defun press-toolbar-button (event)
   "Press a toolbar button.  This only changes its appearance.
-Call function stored in `toolbar-blank-press-function,' if any, with EVENT as
+Call function stored in `toolbar-blank-press-function', if any, with EVENT as
 an argument if press is over a blank area of the toolbar."
   (interactive "_e")
   (setq this-command last-command)
@@ -165,7 +165,7 @@ an argument if press is over a blank area of the toolbar."
 
 (defun release-and-activate-toolbar-button (event)
   "Release a toolbar button and activate its callback.
-Call function stored in `toolbar-blank-release-function,' if any, with EVENT
+Call function stored in `toolbar-blank-release-function', if any, with EVENT
 as an argument if release is over a blank area of the toolbar."
   (interactive "_e")
   (or (button-release-event-p event)

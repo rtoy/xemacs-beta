@@ -584,7 +584,7 @@ If PROPERTY is a built-in property, the specifications to be added to
 
 HOW-TO-ADD should be either nil or one of the symbols `prepend',
   `append', `remove-tag-set-prepend', `remove-tag-set-append', `remove-locale',
-  `remove-locale-type', or `remove-all.'  See `copy-specifier' and
+  `remove-locale-type', or `remove-all'.  See `copy-specifier' and
   `add-spec-to-specifier' for a description of what each of
   these means.  Most of the time, you do not need to worry about
   this argument; the default behavior usually is fine.
@@ -695,7 +695,7 @@ If SPEC is an alist, LOCALE must be omitted.  If SPEC is a
   specifier object, LOCALE can be a locale, a locale type, `all',
   or nil; see `copy-specifier' for its semantics.  Otherwise LOCALE
   specifies the locale under which the specified instantiator(s)
-  will be added, and defaults to `global.'
+  will be added, and defaults to `global'.
 
 See `set-glyph-property' for more information."
   ; (interactive (glyph-interactive "image"))
@@ -733,7 +733,7 @@ If SPEC is an alist, LOCALE must be omitted.  If SPEC is a
   specifier object, LOCALE can be a locale, a locale type, `all',
   or nil; see `copy-specifier' for its semantics.  Otherwise LOCALE
   specifies the locale under which the specified instantiator(s)
-  will be added, and defaults to `global.'
+  will be added, and defaults to `global'.
 
 See `set-glyph-property' for more information."
   ; (interactive (glyph-interactive "contrib-p"))
@@ -772,7 +772,7 @@ If SPEC is an alist, LOCALE must be omitted.  If SPEC is a
   specifier object, LOCALE can be a locale, a locale type, `all',
   or nil; see `copy-specifier' for its semantics.  Otherwise LOCALE
   specifies the locale under which the specified instantiator(s)
-  will be added, and defaults to `global.'
+  will be added, and defaults to `global'.
 
 See `set-glyph-property' for more information."
   ; (interactive (glyph-interactive "baseline"))
@@ -1133,7 +1133,7 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
       (set-glyph-image (symbol-value harg) value))))
 
 ;; It might or might not be garbage, but it's rude.  Make these
-;; `compatible' instead of `obsolete.'  -slb
+;; `compatible' instead of `obsolete'.  -slb
 (defun define-obsolete-pointer-glyph (old new)
   (define-compatible-variable-alias old new)
   (dontusethis-set-symbol-value-handler

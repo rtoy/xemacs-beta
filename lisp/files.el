@@ -2478,7 +2478,7 @@ The extension, in a file name, is the part that follows the last `.'."
   "Return FILENAME's final \"extension\".
 The extension, in a file name, is the part that follows the last `.'.
 Return nil for extensionless file names such as `foo'.
-Return the empty string for file names such as `foo.'.
+Return the empty string for file names such as `foo'.
 
 If PERIOD is non-nil, then the returned value includes the period
 that delimits the extension, and if FILENAME has no extension,

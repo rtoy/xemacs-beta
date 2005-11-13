@@ -208,7 +208,7 @@ you can get the full output by using \\[universal-argument] \\[hyper-apropos].)"
     (define-key map "e"     'hyper-apropos-eliminate-keyword)
     map)
   "Keybindings for the *Hyper Apropos* buffer.
-This map inherits from `hyper-apropos-help-map.'")
+This map inherits from `hyper-apropos-help-map'.")
 (define-obsolete-variable-alias
   'hypropos-map 'hyper-apropos-map)
 
