@@ -4821,13 +4821,14 @@ if test "$enable_sound_native" != "no"; then
     esac
   fi
 
-  dnl Win32 Native uses native sound
+  dnl Win32 uses native sound
   if test -z "$sound_found"; then
-    if test "$with_msw" = "yes"; then
+    case "$opsys" in cygwin* | mingw* )
       sound_found=yes
       with_native_sound_lib=
       XE_ADD_OBJS(ntplay.o)
-    fi
+      ;;
+    esac
   fi
 
   dnl Check for Linux/BSD native sound (also on recent Cygwins)

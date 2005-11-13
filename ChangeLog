@@ -1,3 +1,8 @@
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
+	* configure.ac (win32 native sound):
+	Dependent on operating system, not on window system.
+
 2005-11-07  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (AC_INIT): Use it correctly.
