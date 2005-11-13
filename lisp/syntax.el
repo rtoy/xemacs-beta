@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1993, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Sun Microsystems.
+;; Copyright (C) 2005 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -238,7 +239,11 @@ This is similar to `map-char-table', but works only on syntax tables, and
 ;                           spec (aref o ?a) (aref n ?a))))))))
 
 
-(defun describe-syntax-table (table stream)
+(defun describe-char-table (table mapper describe-value stream)
+"Describe char-table TABLE, outputting to STREAM.
+MAPPER maps over the table and should be `map-char-table' or
+`map-syntax-table'.  DESCRIBE-VALUE is a function of two arguments,
+VALUE and STREAM, and should output a description of VALUE."
   (let (first-char
 	last-char
 	prev-val
@@ -272,7 +277,7 @@ This is similar to `map-char-table', but works only on syntax tables, and
 					 (text-char-description first)
 					 (text-char-description last))
 				 stream))))
-		 (describe-syntax-code value stream))
+		 (funcall describe-value value stream))
 	   #'(lambda (first last value stream)
 	       (let* ((tem (text-char-description first))
 		      (pos (length tem))
@@ -290,8 +295,8 @@ This is similar to `map-char-table', but works only on syntax tables, and
 		 (while (progn (write-char ?\  stream)
 			       (setq pos (1+ pos))
 			       (< pos 16))))
-	       (describe-syntax-code value stream)))))
-    (map-syntax-table
+	       (funcall describe-value value stream)))))
+    (funcall mapper
      #'(lambda (range value)
 	 (cond
 	  ((not first-char)
@@ -320,6 +325,10 @@ This is similar to `map-char-table', but works only on syntax tables, and
      table)
     (if first-char
 	(funcall describe-one first-char last-char prev-val stream))))
+
+(defun describe-syntax-table (table stream)
+  "Output a description of TABLE (a syntax table) to STREAM."
+  (describe-char-table table 'map-syntax-table 'describe-syntax-code stream))
 
 (defun describe-syntax-code (code stream)
   (let ((match (and (consp code) (cdr code)))

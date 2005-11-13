@@ -1,5 +1,14 @@
 2005-11-13  Ben Wing  <ben@xemacs.org>
 
+	* syntax.el:
+	* syntax.el (describe-syntax-table): Removed.
+	* syntax.el (describe-char-table): New.
+	Convert describe-syntax-table to more general describe-char-table.
+	(Will also be used by display tables.) Create new describe-syntax-table,
+	compatible with old function, that uses describe-char-table.
+
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
 	* diagnose.el (show-memory-usage):
 	Conditionalize `sort-numeric-fields' on when-fboundp.
 
