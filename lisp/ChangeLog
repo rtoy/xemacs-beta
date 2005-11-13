@@ -1,5 +1,13 @@
 2005-11-13  Ben Wing  <ben@xemacs.org>
 
+	* simple.el (log-warning-minimum-level):
+	* simple.el (display-warning-minimum-level):
+	`foo.' -> `foo'.
+	* simple.el (debug-print-1):
+	princ() a formatted debug string, not prin1(), or it just looks stupid.
+
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
 	* derived.el:
 	* frame.el (get-frame-for-buffer):
 	* toolbar.el (press-toolbar-button):

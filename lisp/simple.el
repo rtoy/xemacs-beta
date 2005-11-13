@@ -4387,7 +4387,7 @@ You can also control which warnings are displayed on a class-by-class
 basis.  See `display-warning-suppressed-classes' and
 `log-warning-suppressed-classes'.
 
-For a description of the meaning of the levels, see `display-warning.'"
+For a description of the meaning of the levels, see `display-warning'."
   :type '(choice (const emergency) (const critical)
 		 (const error) (const warning) (const alert) (const notice)
 		 (const info) (const debug))
@@ -4410,7 +4410,7 @@ You can also control which warnings are displayed on a class-by-class
 basis.  See `display-warning-suppressed-classes' and
 `log-warning-suppressed-classes'.
 
-For a description of the meaning of the levels, see `display-warning.'"
+For a description of the meaning of the levels, see `display-warning'."
   :type '(choice (const emergency) (const critical)
 		 (const error) (const warning) (const alert) (const notice)
 		 (const info) (const debug))
@@ -4676,7 +4676,7 @@ individually in a numbered list."
 	       (error nil))))
     (if fmt
 	(progn
-	  (prin1 (apply #'format args))
+	  (princ (apply #'format args))
 	  (terpri))
       (princ "--> ")
       (let ((i 1))
