@@ -1,5 +1,10 @@
 2005-11-13  Ben Wing  <ben@xemacs.org>
 
+	* diagnose.el (show-memory-usage):
+	Conditionalize `sort-numeric-fields' on when-fboundp.
+
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
 	* help.el (function-arglist):
 	Don't bomb out when fun has no documentation.
 

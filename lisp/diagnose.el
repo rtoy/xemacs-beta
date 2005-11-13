@@ -96,26 +96,28 @@
 	    (incf grandtotal
 		  (show-foo-stats 'charset (charset-list)
 				  #'charset-memory-usage))
-	    (sort-numeric-fields -1
-				 (save-excursion
-				   (goto-char begin)
-				   (forward-line 2)
-				   (point))
-				 (save-excursion
-				   (forward-line -2)
-				   (point)))
+	    (when-fboundp 'sort-numeric-fields
+	      (sort-numeric-fields -1
+				   (save-excursion
+				     (goto-char begin)
+				     (forward-line 2)
+				     (point))
+				   (save-excursion
+				     (forward-line -2)
+				     (point))))
 	    (princ "\n"))
 	  (setq begin (point))
 	  (incf grandtotal
 		(show-foo-stats 'buffer (buffer-list) #'buffer-memory-usage))
-	  (sort-numeric-fields -1
-			       (save-excursion
-				 (goto-char begin)
-				 (forward-line 3)
-				 (point))
-			       (save-excursion
-				 (forward-line -2)
-				 (point)))
+	  (when-fboundp 'sort-numeric-fields
+	    (sort-numeric-fields -1
+				 (save-excursion
+				   (goto-char begin)
+				   (forward-line 3)
+				   (point))
+				 (save-excursion
+				   (forward-line -2)
+				   (point))))
 	  (princ "\n")
 	  (setq begin (point))
 	  (incf grandtotal
