@@ -1,4 +1,5 @@
 ## Copyright (c) 2000, Red Hat, Inc.
+## Copyright (C) 2005 Ben Wing.
 ##
 ##     This program is free software; you can redistribute it and/or modify
 ##     it under the terms of the GNU General Public License as published by
@@ -199,18 +200,22 @@ inilex.c : inilex.l iniparse.h
 	mv lex.yy.c inilex.c
 
 .PHONY: mostlyclean clean distclean realclean extraclean
-
+.PHONY: distclean-noconfig realclean-noconfig extraclean-noconfig
 mostlyclean:
-	$(RM) *.o *.i *.ini core $(PROGS)
-
+	$(RM) *.o *.i *.ini core
 clean: mostlyclean
-
-distclean: clean
-	$(RM) GNUmakefile Makefile Makefile.in TAGS
-
+	$(RM) $(PROGS)
+distclean-noconfig: clean
+	$(RM) TAGS
+## This is used in making a distribution.
+## Do not use it on development directories!
+distclean: distclean-noconfig
+	$(RM) GNUmakefile Makefile Makefile.in
+realclean-noconfig: distclean-noconfig
 realclean: distclean
-
-extraclean: distclean
+extraclean-noconfig: realclean-noconfig
+	$(RM) *~ \#*
+extraclean: realclean
 	$(RM) *~ \#*
 
 choose.o: choose.cc win32.h dialog.h resource.h state.h ini.h concat.h \

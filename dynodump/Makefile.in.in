@@ -1,6 +1,7 @@
 ##   Makefile for dynodump subdirectory in XEmacs
 ##   Copyright (C) 1995 Board of Trustees, University of Illinois
 ##   Copyright (C) 1996, 1997 Sun Microsystems, Inc.
+##   Copyright (C) 2005 Ben Wing.
 
 ## This file is part of XEmacs.
 
@@ -75,12 +76,20 @@ uninit.o: ${srcdir}/$(ARCH)/uninit.c
 	$(CC) -c $(ALL_CFLAGS) ${srcdir}/$(ARCH)/uninit.c
 
 .PHONY: mostlyclean clean distclean realclean extraclean
+.PHONY: distclean-noconfig realclean-noconfig extraclean-noconfig
 mostlyclean:
 	$(RM) *.o *.i core
 clean: mostlyclean
 	$(RM) *.so *.so.1
-distclean: clean
-	$(RM) GNUmakefile Makefile Makefile.in TAGS
+distclean-noconfig: clean
+	$(RM) TAGS
+## This is used in making a distribution.
+## Do not use it on development directories!
+distclean: distclean-noconfig
+	$(RM) GNUmakefile Makefile Makefile.in
+realclean-noconfig: distclean-noconfig
 realclean: distclean
+extraclean-noconfig: realclean-noconfig
+	$(RM) *~ \#*
 extraclean: realclean
 	$(RM) *~ \#*

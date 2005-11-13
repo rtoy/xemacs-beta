@@ -1,3 +1,9 @@
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	Add targets distclean-noconfig, realclean-noconfig, extraclean-noconfig.
+	Do some refactoring for cleanliness.
+
 2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.23 "daikon" is released.

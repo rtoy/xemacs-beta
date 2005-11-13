@@ -3,7 +3,7 @@
 ##   Copyright (C) 1994, 1995 Board of Trustees, University of Illinois
 ##   Copyright (C) 1996, 1997 Sun Microsystems, Inc.
 ##   Copyright (C) 1998, 1999 J. Kean Johnston.
-##   Copyright (C) 2001, 2002, 2003 Ben Wing.
+##   Copyright (C) 2001, 2002, 2003, 2005 Ben Wing.
 
 ## This file is part of XEmacs.
 
@@ -1005,6 +1005,7 @@ covmacs: $(temacs_deps)
 ###################### Clean
 
 .PHONY: mostlyclean clean distclean realclean versionclean extraclean
+.PHONY: distclean-noconfig realclean-noconfig extraclean-noconfig
 mostlyclean:
 	$(RM) *.o *.i *.rtl *.ln core \
 	temacs puremacs quantmacs covmacs rtcmacs temacs.exe \
@@ -1020,11 +1021,17 @@ clean: mostlyclean versionclean
 	$(SRCMODULES)/auto-autoloads.el* $(SRCMODULES)/custom-load.el*
 ## This is used in making a distribution.
 ## Do not use it on development directories!
-distclean: clean
+distclean-noconfig: clean
 	$(RM) config.h paths.h Emacs.ad.h $(LISP)/finder-inf.el* \
-	GNUmakefile Makefile Makefile.in TAGS $(DUMP_TARGET) $(RAW_EXE) \
-	xemacs.def xemacs.def.in
+	TAGS xemacs.def xemacs.def.in
+## This is used in making a distribution.
+## Do not use it on development directories!
+distclean: distclean-noconfig
+	$(RM) GNUmakefile Makefile Makefile.in
+realclean-noconfig: distclean-noconfig
 realclean: distclean
+extraclean-noconfig: realclean-noconfig
+	$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#*
 extraclean: realclean
 	$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#*
 

@@ -1,3 +1,9 @@
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	Add targets distclean-noconfig, realclean-noconfig, extraclean-noconfig.
+	Do some refactoring for cleanliness.
+
 2005-11-06  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* ChangeLog: Nuke useless CVS keyword.

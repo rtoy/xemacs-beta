@@ -1,6 +1,7 @@
 #  Makefile for man subdirectory in XEmacs
 #   Copyright (C) 1995 Board of Trustees, University of Illinois
 #   Copyright (C) 1994, 1995 Sun Microsystems.
+#   Copyright (C) 2005 Ben Wing.
 
 # This file is part of XEmacs.
 
@@ -335,14 +336,19 @@ new-users-guide.pdf: $(new-users-guide-srcs)
 pdf: $(pdf_files)
 
 .PHONY: mostlyclean clean distclean realclean extraclean
+.PHONY: distclean-noconfig realclean-noconfig extraclean-noconfig
 mostlyclean:
 	$(RM) *.toc *.aux *.log *.op *.cp *.cps *.fn *.fns
 	$(RM) *.ky *.kys *.pg *.pgs *.tp *.tps *.vr *.vrs
 clean: mostlyclean
 	$(RM) core *.dvi *.pdf
-distclean: clean
+distclean-noconfig: clean
+distclean: distclean-noconfig
+realclean-noconfig: distclean-noconfig
 realclean: distclean
-extraclean: distclean
+extraclean-noconfig: realclean-noconfig
+	$(RM) *~ \#* */*~ */\#*
+extraclean: realclean
 	$(RM) *~ \#* */*~ */\#*
 
 ############################################################################

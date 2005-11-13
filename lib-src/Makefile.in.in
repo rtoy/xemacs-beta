@@ -1,6 +1,7 @@
 ##   Makefile for lib-src subdirectory in XEmacs.
 ##   Copyright (C) 1985, 1987, 1988, 1993, 1994 Free Software Foundation, Inc.
 ##   Copyright (C) 1996, 1997 Sun Microsystems, Inc.
+##   Copyright (C) 2005 Ben Wing.
 
 ## This file is part of XEmacs.
 
@@ -270,15 +271,22 @@ uninstall:
 	cd ${archlibdir} && $(RM) ${PRIVATE_INSTALLABLES}
 
 .PHONY: mostlyclean clean distclean realclean extraclean
+.PHONY: distclean-noconfig realclean-noconfig extraclean-noconfig
 mostlyclean:
 	$(RM) *.o *.i core
 clean: mostlyclean
 	$(RM) ${EXES} *.exe
-distclean: clean
-	$(RM) DOC *.tab.c *.tab.h TAGS ellcc.h
-	$(RM) GNUmakefile Makefile Makefile.in blessmail config.values
+distclean-noconfig: clean
+	$(RM) DOC *.tab.c *.tab.h TAGS ellcc.h blessmail config.values
+## This is used in making a distribution.
+## Do not use it on development directories!
+distclean: distclean-noconfig
+	$(RM) GNUmakefile Makefile Makefile.in
+realclean-noconfig: distclean-noconfig
 realclean: distclean
-extraclean: distclean
+extraclean-noconfig: realclean-noconfig
+	$(RM) *~ \#*
+extraclean: realclean
 	$(RM) *~ \#*
 
 ## Test the contents of the directory.

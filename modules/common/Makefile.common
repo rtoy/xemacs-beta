@@ -1,5 +1,6 @@
 ##   Common Makefile section for modules in XEmacs.
 ##   Copyright (C) 2002 Jerry James.
+##   Copyright (C) 2005 Ben Wing.
 
 ## This file is part of XEmacs.
 
@@ -62,7 +63,7 @@ LIBSTDCPP=@LIBSTDCPP@
 IMPORT_LIB=../../src/xemacs-import.a
 #endif
 
-.PHONY:	clean distclean install
+.PHONY:	install
 all: $(OBJECT_TO_BUILD)
 
 .c.o:
@@ -77,13 +78,30 @@ $(MODNAME)_i.c: $(SRCS)
 	--mod-name=$(MODNAME) --mod-version=$(MODVER) \
 	--mod-title=$(MODTITLE) $(SRC_SRCS)
 
-clean:
-	$(RM) $(MODNAME).ell $(OBJS) $(MODNAME)_i.* *~
-
-distclean: clean
-	$(RM) Makefile config.* configure
-
-extraclean: distclean
+.PHONY: mostlyclean clean distclean realclean extraclean
+.PHONY: distclean-noconfig realclean-noconfig extraclean-noconfig
+mostlyclean:
+	$(RM) $(OBJS) $(MODNAME)_i.* core
+clean: mostlyclean
+	$(RM) $(MODNAME).ell
+distclean-noconfig: clean
+	$(RM) config.* TAGS
+## This is used in making a distribution.
+## Do not use it on development directories!
+distclean: distclean-noconfig
+	$(RM) GNUmakefile Makefile Makefile.in configure
+realclean-noconfig: distclean-noconfig
+realclean: distclean
+extraclean-noconfig: realclean-noconfig
+	$(RM) *~ \#*
+extraclean: realclean
+	$(RM) *~ \#*
 
 install: $(OBJECT_TO_BUILD)
 	$(INSTALL_PROGRAM) $< $(INSTALLPATH)
+
+##
+## Local Variables:
+## mode: makefile
+## End:
+##

@@ -1,5 +1,32 @@
 2005-11-13  Ben Wing  <ben@xemacs.org>
 
+	* dynodump/Makefile.in.in:
+	* dynodump/Makefile.in.in (.PHONY):
+	Add targets distclean-noconfig, realclean-noconfig, extraclean-noconfig.
+	Do some refactoring for cleanliness.
+
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	* Makefile.in.in (beta):
+	* Makefile.in.in (FRC.mostlyclean FRC.clean FRC.distclean FRC.realclean FRC.extraclean FRC.tags):
+	* Makefile.in.in (.PHONY):
+	* Makefile.in.in (top-mostlyclean):
+	* Makefile.in.in (mostlyclean):
+	* Makefile.in.in (top-clean):
+	* Makefile.in.in (clean):
+	* Makefile.in.in (distclean):
+	* Makefile.in.in (realclean):
+	Add targets distclean-noconfig, realclean-noconfig, extraclean-noconfig.
+	*-noconfig targets are like the base targets they're based off of, but
+	don't delete Makefiles and certain other files needed to rebuild the
+	Makefiles as necessary.  Refactor things to be more consistent.
+	Top-level `elcclean' is an alias for `realclean-noconfig' and is used
+	by target `beta'.  `realclean-noconfig' (and, by extension, `realclean'
+	and `extraclean') remove the .elc files.
+
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
 	* configure.ac (win32 native sound):
 	Dependent on operating system, not on window system.
 

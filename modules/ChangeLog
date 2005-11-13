@@ -1,3 +1,12 @@
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
+	* common/Makefile.common:
+	* common/Makefile.common (.PHONY):
+	* common/Makefile.common (install):
+	Add targets distclean-noconfig, realclean-noconfig, extraclean-noconfig.
+	Do some refactoring for cleanliness.  Put in some magic cookies in
+	comments so this file gets read as a make file by XEmacs.
+
 2005-11-02  Marcus Crestani  <crestani@xemacs.org>
 
 	* canna/.cvsignore: New.

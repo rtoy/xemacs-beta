@@ -1,3 +1,9 @@
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (distclean-noconfig):
+	Add targets distclean-noconfig, realclean-noconfig, extraclean-noconfig.
+	Do some refactoring for cleanliness.
+
 2005-11-07  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* inline.c: Include modules headers regardless of HAVE_SHLIB.
