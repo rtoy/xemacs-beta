@@ -393,6 +393,7 @@ Regression Testing XEmacs
 
 CVS Techniques
 
+* Creating a Branch::  
 * Merging a Branch into the Trunk::  
 
 Low-Level Allocation
@@ -6532,12 +6533,120 @@ XEmacs facilities.  @xref{Regression Testing XEmacs}.
 @cindex CVS techniques
 
 @menu
+* Creating a Branch::  
 * Merging a Branch into the Trunk::  
 @end menu
 
-@node Merging a Branch into the Trunk,  , CVS Techniques, CVS Techniques
+@node Creating a Branch, Merging a Branch into the Trunk, CVS Techniques, CVS Techniques
+@section Creating a Branch
+@cindex creating a branch
+@cindex branch, creating
+
+This assumes that you have an existing workspace modified off of the
+main line, and you want to put it onto a branch.
+
+@enumerate
+@item
+Preliminary comment: @emph{All} commands are to be executed at the
+top level of your workspace, unless otherwise indicated (which will be
+rare, if ever).  Don't ever forget this and screw up, or you will get a real
+mess.
+
+@item
+First, make a backup copy of your entire repository using @code{cp -a}
+(in the directory above your repository!) before doing anything.
+
+@item
+
+Now, rule #1: @strong{Never try to create a branch from a workspace
+with added or deleted files.} If you are lucky, the operation will
+simply fail.  If you are less lucky, it will proceed, but make the
+adds and deletes on the main line, which you do not want at all.
+Therefore, you must undo all adds and deletes.  To find out what is
+added and deleted, use something like @code{cvs -n update >&! 
+cvs.out}, which does a "dry run". (You did make a backup copy first,
+right?  What if you forgot the @samp{-n}, for example, and wasn't
+prepared for the sudden onslaught of merging action?) Take a look at
+the output file @file{cvs.out} and check very carefully for newly
+added files (marked with an @samp{A}) and newly removed files (marked
+with an @samp{R}).  Double check that your newly added files are in
+your backup copy, then @code{rm} and @code{crw rm} each of them to
+undo the addition.  For each removed file, do @code{crw add} to undo
+the removal.
+
+@item
+create a branch point. (This is a tag marking the point at which
+your branch split from the main line.  It is @strong{extremely}
+important to create such a branch point!  The creation of the actual
+branch only creates a tag that marks the end of the branch, which will
+move as you check in changes to your branch.  The CVS designers, in
+their infinite wisdom, didn't provide any automatic mechanism for
+tracking the branching point, so you need to do it manually.)
+
+@example
+crw tag ben-mule-21-5-bp
+@end example
+
+@item
+Next, create the actual branch:
+
+@example
+crw tag -b ben-mule-21-5
+@end example
+
+Note that this doesn't actually do anything to your local workspace!
+It basically just creates another tag in the repository, identical to
+the branch point tag but internally marked as a "branch tag" rather
+than a regular tag.
+
+@item
+Now, move your workspace onto the branch:
+
+@example
+cvs update -r ben-mule-21-5
+@end example
+
+For unknown reasons, this may generate conflicts for each file that
+you have modified locally.  If so, you can fix this by touching the
+conflicting files (the conflicts are bogus if you followed the above
+procedure).  Run the following command in the top-level directory:
+
+@example
+cvs-mods | xargs touch --no-create
+@end example
+
+@item
+Now, carefully redo all adds and deletes; refer to the @file{cvs.out}
+file to remember what needs to be redone.
+
+@item
+Now, check in the files on the branch:
+
+@example
+crw commit -m "first commit of ben-mule-21-5 branch"
+@end example
+@end enumerate
+
+@node Merging a Branch into the Trunk,  , Creating a Branch, CVS Techniques
 @section Merging a Branch into the Trunk
 @cindex merging a branch into the trunk
+@cindex branch, merging into the trunk
+
+Preliminary comment: Beware of the symlink problem with `cvs rtag':
+
+@example
+cvs [rtag aborted]: received abort signal
+cvs [rtag aborted]: received abort signal
+lock.c:178: failed assertion `strncmp (repository, current_parsed_root->directory, strlen (current_parsed_root->directory)) == 0'
+lock.c:178: failed assertion `strncmp (repository, current_parsed_root->directory, strlen (current_parsed_root->directory)) == 0'
+@end example
+
+It will fail with a message like this if the directory component of
+your root (CVSROOT environment variable or `-d' option) is a symbolic
+link, which is the case for the standard /pack/xemacscvs.  You need to
+find the real directory name; one trick is to execute a command that
+attempts to write to the repository, using read-only access.  This
+will output an error message showing the actual repository directory.
 
 @enumerate
 @item
@@ -6547,11 +6656,14 @@ should be marked by a tag, e.g. @samp{last-sync-ben-mule-21-5}.  In the
 former case, create the last-sync tag, e.g.
 
 @example
-crw rtag -r ben-mule-21-5-bp last-sync-ben-mule-21-5 xemacs
+cvs -d :ext:xemacs@@cvs.xemacs.org:/mnt/home1/cvsroots/xemacscvs rtag -r ben-mule-21-5-bp last-sync-ben-mule-21-5 xemacs
 @end example
 
 (You did create a branch point tag when you created the branch, didn't
 you?)
+
+Note the way this command is specified, overriding the root to avoid
+the symlink problem, as described above.
 
 @item
 Check everything in on your branch.
@@ -6560,7 +6672,7 @@ Check everything in on your branch.
 Tag your branch with a pre-sync tag, e.g.
 
 @example
-crw rtag -r ben-mule-21-5 ben-mule-21-5-pre-feb-20-2002-sync xemacs
+cvs -d :ext:xemacs@@cvs.xemacs.org:/mnt/home1/cvsroots/xemacscvs rtag -r ben-mule-21-5 ben-mule-21-5-pre-feb-20-2002-sync xemacs
 @end example
 
 Note, you need to use rtag and specify a version with @samp{-r} (use
@@ -6572,8 +6684,8 @@ Tag the trunk so you have a stable place to merge up to in case people
 are asynchronously committing to the trunk, e.g.
 
 @example
-crw rtag -r HEAD main-branch-ben-mule-21-5-syncpoint-feb-20-2002 xemacs
-crw rtag -F -r main-branch-ben-mule-21-5-syncpoint-feb-20-2002 next-sync-ben-mule-21-5 xemacs
+cvs -d :ext:xemacs@@cvs.xemacs.org:/mnt/home1/cvsroots/xemacscvs rtag -r HEAD main-branch-ben-mule-21-5-syncpoint-feb-20-2002 xemacs
+cvs -d :ext:xemacs@@cvs.xemacs.org:/mnt/home1/cvsroots/xemacscvs rtag -F -r main-branch-ben-mule-21-5-syncpoint-feb-20-2002 next-sync-ben-mule-21-5 xemacs
 @end example
 
 Use -F in the second case because the name might already exist, e.g. if
@@ -6605,14 +6717,14 @@ Fix all merge conflicts.  Get the sucker to compile and run.
 Tag your branch with a post-sync tag, e.g.
 
 @example
-crw rtag -r ben-mule-21-5 ben-mule-21-5-post-feb-20-2002-sync xemacs
+cvs -d :ext:xemacs@@cvs.xemacs.org:/mnt/home1/cvsroots/xemacscvs rtag -r ben-mule-21-5 ben-mule-21-5-post-feb-20-2002-sync xemacs
 @end example
 
 @item
 Update the last-sync tag, e.g.
 
 @example
-crw rtag -F -r next-sync-ben-mule-21-5 last-sync-ben-mule-21-5 xemacs
+cvs -d :ext:xemacs@@cvs.xemacs.org:/mnt/home1/cvsroots/xemacscvs rtag -F -r next-sync-ben-mule-21-5 last-sync-ben-mule-21-5 xemacs
 @end example
 @end enumerate
 

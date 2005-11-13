@@ -1,3 +1,12 @@
+2005-11-13  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Top):
+	* internals/internals.texi (CVS Techniques):
+	* internals/internals.texi (Creating a Branch):
+	* internals/internals.texi (Merging a Branch into the Trunk):
+	Add node on Creating a Branch.  Update info concerning problems
+	with rtag on symlinks. (#### Is this still valid?)
+
 2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.23 "daikon" is released.
