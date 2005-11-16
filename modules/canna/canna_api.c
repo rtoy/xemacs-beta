@@ -2,6 +2,7 @@
 
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -175,8 +176,7 @@ extern int (*jrBeepFunc) (void);
 
 /* #### is this global really necessary? */
 #define KEYTOSTRSIZE 2048
-static char key_buffer[KEYTOSTRSIZE];
-static char **warning;
+static Extbyte key_buffer[KEYTOSTRSIZE];
 
 static int canna_empty_info, canna_through_info;
 static int canna_underline;
@@ -200,13 +200,15 @@ static int IRCP_context;
 static Lisp_Object storeResults (char *, int, jrKanjiStatus *);
 static Lisp_Object kanjiYomiList (int, int);
 static Lisp_Object CANNA_mode_keys (void);
+static Lisp_Object Qeuc_jp;
+
+#define make_euc_string(p, len) make_ext_string ((Extbyte *) p, len, Qeuc_jp)
+#define build_euc_string(p) build_ext_string ((Extbyte *) p, Qeuc_jp)
 
 #ifdef CANNA_MULE
-static void m2c (unsigned char *, int, unsigned char *);
-static Lisp_Object mule_make_string (unsigned char *, int);
-static int mule_strlen (unsigned char *, int);
-static void count_char (unsigned char *,int, int, int, Fixnum *, Fixnum *, Fixnum *);
-#define make_string mule_make_string
+static int euc_jp_num_chars (unsigned char *, int);
+static void count_char (unsigned char *,int, int, int, Fixnum *, Fixnum *,
+			Fixnum *);
 #endif
 
 /* Lisp functions definition */
@@ -234,12 +236,12 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
 
   if (len < 0)
     { /* Error detected */
-      val = make_string ((unsigned char*) jrKanjiError, strlen (jrKanjiError));
+      val = build_euc_string (jrKanjiError);
     }
   else
     {
       /* 確定した文字列 (the confirmed string) */
-      Vcanna_kakutei_string = make_string ((unsigned char *) buf, len);
+      Vcanna_kakutei_string = make_euc_string (buf, len);
       val = make_int (len);
       /* 確定した文字列の読みの情報...
 	 (info about the reading of the confirmed string) */
@@ -254,13 +256,13 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
 	      int yomilen2;
 
 	      Vcanna_kakutei_yomi =
-		make_string ((unsigned char *) p, yomilen); /* 読み (reading) */
+		make_euc_string (p, yomilen); /* 読み (reading) */
 	      p += yomilen + 1;
 	      yomilen2 = strlen (p);
 	      if (len + yomilen + yomilen2 + 2 < KEYTOSTRSIZE)
 		{
 		  Vcanna_kakutei_romaji =
-		    make_string ((unsigned char *) p, yomilen2);
+		    make_euc_string (p, yomilen2);
 				/* ローマ字 (romanization) */
 		}
 	    }
@@ -272,7 +274,7 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
       Vcanna_henkan_string = Qnil;
       if (ks->length >= 0)
 	{
-	  Vcanna_henkan_string = make_string (ks->echoStr, ks->length);
+	  Vcanna_henkan_string = make_euc_string (ks->echoStr, ks->length);
 #ifndef CANNA_MULE
 	  canna_henkan_length = ks->length;
 	  canna_henkan_revPos = ks->revPos;
@@ -280,10 +282,10 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
 #else /* CANNA_MULE */
 	  if (canna_underline)
 	    {
-	      canna_henkan_length = mule_strlen (ks->echoStr,ks->length);
-	      canna_henkan_revPos = mule_strlen (ks->echoStr,ks->revPos);
-	      canna_henkan_revLen = mule_strlen (ks->echoStr+ks->revPos,
-						 ks->revLen);
+	      canna_henkan_length = euc_jp_num_chars (ks->echoStr,ks->length);
+	      canna_henkan_revPos = euc_jp_num_chars (ks->echoStr,ks->revPos);
+	      canna_henkan_revLen = euc_jp_num_chars (ks->echoStr+ks->revPos,
+						      ks->revLen);
 	    }
 	  else
 	    {
@@ -298,8 +300,8 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
       Vcanna_ichiran_string = Qnil;
       if (ks->info & KanjiGLineInfo && ks->gline.length >= 0)
 	{
-	  Vcanna_ichiran_string = make_string (ks->gline.line,
-					       ks->gline.length);
+	  Vcanna_ichiran_string = make_euc_string (ks->gline.line,
+						   ks->gline.length);
 #ifndef CANNA_MULE
 	  canna_ichiran_length = ks->gline.length;
 	  canna_ichiran_revPos = ks->gline.revPos;
@@ -316,8 +318,7 @@ storeResults (char *buf, int len, jrKanjiStatus *ks)
       Vcanna_mode_string = Qnil;
       if (ks->info & KanjiModeInfo)
 	{
-	  Vcanna_mode_string =
-	    make_string (ks->mode, strlen ((const char *) ks->mode));
+	  Vcanna_mode_string = build_euc_string ((Extbyte *) ks->mode);
 	}
 
       /* その他の情報 (other information) */
@@ -365,7 +366,7 @@ If nil is specified for each arg, the default value will be used.
 {
   Lisp_Object val;
   int res;
-  unsigned char **p, **q;
+  char **p, **q;
 
   int kugiri; /* 文節区切りをするか？ (display clause separator?) */
 
@@ -388,13 +389,10 @@ If nil is specified for each arg, the default value will be used.
     }
   else
     {
-      char servername[256];
-
       CHECK_STRING (server);
-      strncpy (servername, (const char *) XSTRING_DATA (server),
-	       XSTRING_LENGTH (server));
-      servername[XSTRING_LENGTH (server)] = '\0';
-      jrKanjiControl (0, KC_SETSERVERNAME, servername);
+      jrKanjiControl (0, KC_SETSERVERNAME,
+		      /* !!#### Check encoding */
+		      NEW_LISP_STRING_TO_EXTERNAL (server, Qnative));
     }
 
   if (NILP (rcfile))
@@ -403,40 +401,37 @@ If nil is specified for each arg, the default value will be used.
     }
   else
     {
-      char rcname[256];
-
       CHECK_STRING (rcfile);
-      strncpy (rcname, (const char *) XSTRING_DATA (rcfile),
-	       XSTRING_LENGTH (rcfile));
-      rcname[XSTRING_LENGTH (rcfile)] = '\0';
-      jrKanjiControl (0, KC_SETINITFILENAME, rcname);
+      jrKanjiControl (0, KC_SETINITFILENAME,
+		      NEW_LISP_STRING_TO_EXTERNAL (rcfile, Qfile_name));
     }
 
-  warning = (char **) 0;
+  {
+    char **warning = (char **) 0;
 #ifdef nec_ews_svr4
-  stop_polling ();
+    stop_polling ();
 #endif /* nec_ews_svr4 */
-  res = jrKanjiControl (0, KC_INITIALIZE, (char *)&warning);
+    res = jrKanjiControl (0, KC_INITIALIZE, (char *) &warning);
 #ifdef nec_ews_svr4
-  start_polling ();
+    start_polling ();
 #endif /* nec_ews_svr4 */
-  val = Qnil;
-  if (warning)
-    {
-      for (p = q = (unsigned char **) warning ; *q ; q++)
-	;
-      while (p < q)
-	{
-	  q--;
-	  val = Fcons (make_string (*q, strlen ((const char *) *q)), val);
-	}
-    }
-  val = Fcons (val, Qnil);
+    val = Qnil;
+    if (warning)
+      {
+	for (p = q = warning ; *q ; q++)
+	  ;
+	while (p < q)
+	  {
+	    q--;
+	    val = Fcons (build_euc_string (*q), val);
+	  }
+      }
+    val = Fcons (val, Qnil);
+  }
 
   if (res == -1)
     {
-      val = Fcons (make_string ((unsigned char *) jrKanjiError,
-				strlen (jrKanjiError)), val);
+      val = Fcons (build_euc_string (jrKanjiError), val);
       /* イニシャライズで失敗した場合。 (on initialization failure) */
       return Fcons (Qnil, val);
     }
@@ -477,16 +472,20 @@ This cause to write miscellaneous informations to kana-to-kanji dictionary.
        ())
 {
   Lisp_Object val;
-  unsigned char **p;
+  char **p;
+  char **warning = (char **) 0;
 
-  jrKanjiControl (0, KC_FINALIZE, (char *)&warning);
+  jrKanjiControl (0, KC_FINALIZE, (char *) &warning);
 
   val = Qnil;
   if (warning)
     {
-      for (p = (unsigned char**) warning ; *p ; p++)
+      for (p = warning ; *p; p++)
 	{
-	  val = Fcons (make_string (*p, strlen ((const char *) *p)), val);
+	  /* !!#### This is almost certainly wrong; `canna-initialize
+	     starts at the end of the warnings so the resulting list is
+	     in the correct order.  We should do the same. */
+	  val = Fcons (build_euc_string (*p), val);
 	}
     }
   val = Fcons (val, Qnil);
@@ -501,21 +500,11 @@ Register Kanji words into kana-to-kanji conversion dictionary.
 {
   jrKanjiStatusWithValue ksv;
   jrKanjiStatus ks;
-#ifdef CANNA_MULE
-  unsigned char cbuf[4096];
-#endif
 
   CHECK_STRING (str);
   ksv.buffer = (unsigned char *) key_buffer;
   ksv.bytes_buffer = KEYTOSTRSIZE;
-#ifndef CANNA_MULE
-  ks.echoStr = XSTRING_DATA (str);
-  ks.length = XSTRING_LENGTH (str);
-#else /* CANNA_MULE */
-  m2c (XSTRING_DATA (str), XSTRING_LENGTH (str), cbuf);
-  ks.echoStr = cbuf;
-  ks.length = strlen ((const char *) cbuf);
-#endif /* CANNA_MULE */
+  LISP_STRING_TO_SIZED_EXTERNAL (str, ks.echoStr, ks.length, Qeuc_jp);
   ksv.ks = &ks;
   jrKanjiControl (0, KC_DEFINEKANJI, (char *)&ksv);
   return storeResults (key_buffer, ksv.val, ksv.ks);
@@ -577,17 +566,13 @@ Store yomi characters as a YOMI of kana-to-kanji conversion.
 {
   jrKanjiStatusWithValue ksv;
   jrKanjiStatus ks;
+  Extbyte *ext;
 
   CHECK_STRING (yomi);
-#ifndef CANNA_MULE
-  strncpy (key_buffer, XSTRING_DATA (yomi), XSTRING_LENGTH (yomi));
-  ks.length = XSTRING_LENGTH (yomi);
-  key_buffer[ks.length] = '\0';
-#else /* CANNA_MULE */
-  m2c (XSTRING_DATA (yomi), XSTRING_LENGTH (yomi),
-       (unsigned char *) key_buffer);
+  LISP_STRING_TO_EXTERNAL (yomi, ext, Qeuc_jp);
+  strncpy (key_buffer, ext, sizeof (key_buffer));
+  key_buffer[sizeof (key_buffer) - 1] = '\0';
   ks.length = strlen (key_buffer);
-#endif /* CANNA_MULE */
 
   if (NILP (roma))
     {
@@ -596,17 +581,11 @@ Store yomi characters as a YOMI of kana-to-kanji conversion.
   else
     {
       CHECK_STRING (roma);
-
-#ifndef CANNA_MULE
-      strncpy (key_buffer + XSTRING_LENGTH (yomi) + 1, XSTRING_DATA (roma),
-	       XSTRING_LENGTH (roma));
-      key_buffer[XSTRING_LENGTH (yomi) + 1 + XSTRING_LENGTH (roma)] = '\0';
-      ks.mode = (unsigned char *)(key_buffer + XSTRING_LENGTH (yomi) + 1);
-#else /* CANNA_MULE */
-      ks.mode = (unsigned char *)(key_buffer + ks.length + 1);
-      m2c (XSTRING_DATA (roma), XSTRING_LENGTH (roma),
-	   (unsigned char *) ks.mode);
-#endif /* CANNA_MULE */
+      LISP_STRING_TO_EXTERNAL (roma, ext, Qeuc_jp);
+      ks.mode = (unsigned char *) (key_buffer + ks.length + 1);
+      strncpy (key_buffer + ks.length + 1, ext,
+	       sizeof (key_buffer) - ks.length - 1);
+      key_buffer[sizeof (key_buffer) - 1] = '\0';
     }
 
   ks.echoStr = (unsigned char *) key_buffer;
@@ -653,24 +632,21 @@ Parse customize string.
        (str))
 {
   Lisp_Object val;
-  unsigned char **p;
+  Extbyte **p;
   int n;
+  Extbyte *ext;
 
   CHECK_STRING (str);
-
-#ifndef CANNA_MULE
-  strncpy (key_buffer, XSTRING_DATA (str), XSTRING_LENGTH (str));
-  key_buffer[XSTRING_LENGTH (str)] = '\0';
-#else /* CANNA_MULE */
-  m2c (XSTRING_DATA (str), XSTRING_LENGTH (str), (unsigned char *) key_buffer);
-#endif /* CANNA_MULE */
-  p = (unsigned char**) key_buffer;
+  LISP_STRING_TO_EXTERNAL (str, ext, Qeuc_jp);
+  strncpy (key_buffer, ext, sizeof (key_buffer));
+  key_buffer[sizeof (key_buffer) - 1] = '\0';
+  p = (Extbyte **) key_buffer;
   n = jrKanjiControl (0, KC_PARSE,  (char *) &p);
   val = Qnil;
   while (n > 0)
     {
       n--;
-      val = Fcons (make_string (p[n], strlen ((const char *) p[n])), val);
+      val = Fcons (build_euc_string (p[n]), val);
     }
   return val;
 }
@@ -683,7 +659,7 @@ Get current mode string.
   char buf[256];
 
   jrKanjiControl (0, KC_QUERYMODE, buf);
-  return make_string ((unsigned char *) buf, strlen (buf));
+  return build_euc_string (buf);
 }
 
 /*
@@ -740,23 +716,20 @@ Clause separator is set.
        (yomi))
 {
   int nbun;
+  Extbyte *ext;
 
   CHECK_STRING (yomi);
   if (confirmContext () == 0)
     {
       return Qnil;
     }
-#ifndef CANNA_MULE
-  strncpy (yomibuf, XSTRING_DATA (yomi), XSTRING_LENGTH (yomi));
-  yomibuf[XSTRING_LENGTH (yomi)] = '\0';
-  nbun = RkBgnBun (IRCP_context, XSTRING_DATA (yomi), XSTRING_LENGTH (yomi),
+
+  LISP_STRING_TO_EXTERNAL (yomi, ext, Qeuc_jp);
+  strncpy ((char *) yomibuf, ext, sizeof (yomibuf));
+  yomibuf[sizeof (yomibuf) - 1] = '\0';
+
+  nbun = RkBgnBun (IRCP_context, yomibuf, strlen ((char *) yomibuf),
 		   (RK_XFER << RK_XFERBITS) | RK_KFER);
-#else /* CANNA_MULE */
-  m2c (XSTRING_DATA (yomi), XSTRING_LENGTH (yomi), yomibuf);
-  nbun = RkBgnBun (IRCP_context, (char *) yomibuf,
-		   strlen ((const char *) yomibuf),
-		   (RK_XFER << RK_XFERBITS) | RK_KFER);
-#endif /* CANNA_MULE */
 
   return kanjiYomiList (IRCP_context, nbun);
 }
@@ -765,7 +738,7 @@ static Lisp_Object
 kanjiYomiList (int context, int nbun)
 {
   Lisp_Object val, res = Qnil;
-  unsigned char RkBuf[RKBUFSIZE];
+  UExtbyte RkBuf[RKBUFSIZE];
   int len, i, total;
 
   for (i = nbun ; i > 0 ; )
@@ -773,9 +746,9 @@ kanjiYomiList (int context, int nbun)
       i--;
       RkGoTo (context, i);
       len = RkGetKanji (context, RkBuf, RKBUFSIZE);
-      val = make_string (RkBuf, len);
+      val = make_euc_string (RkBuf, len);
       len = RkGetYomi (context, RkBuf, RKBUFSIZE);
-      res = Fcons (Fcons (val, make_string (RkBuf, len)), res);
+      res = Fcons (Fcons (val, make_euc_string (RkBuf, len)), res);
       if (i < RKBUFSIZE / 2)
 	{
 	  kugiri[i] = len;
@@ -796,7 +769,7 @@ Return the list of candidates.
        (bunsetsu))
 {
   int i, slen, len;
-  unsigned char *p, RkBuf[RKBUFSIZE];
+  UExtbyte *p, RkBuf[RKBUFSIZE];
   Lisp_Object res = Qnil;
 
   CHECK_INT (bunsetsu);
@@ -809,14 +782,14 @@ Return the list of candidates.
   p = RkBuf;
   for (i = 0 ; i < len ; i++)
     {
-      slen = strlen ((const char *) p);
+      slen = strlen ((char *) p);
       if (NILP(res))
 	{
-	  res = Fcons (make_string (p, slen), Qnil);
+	  res = Fcons (make_euc_string (p, slen), Qnil);
 	}
       else
 	{
-	  XCDR (res) = Fcons (make_string (p, slen), Qnil);
+	  XCDR (res) = Fcons (make_euc_string (p, slen), Qnil);
 	}
       p += slen + 1;
     }
@@ -1104,6 +1077,8 @@ syms_of_canna_api (void)
   DEFSUBR (Fcanna_henkan_kakutei);
   DEFSUBR (Fcanna_henkan_end);
   DEFSUBR (Fcanna_henkan_quit);
+
+  DEFSYMBOL (Qeuc_jp);
 }
 
 void
@@ -1850,84 +1825,10 @@ unload_canna_api (void)
 #endif
 
 #ifdef CANNA_MULE
-/* To handle MULE internal code and EUC.
-   I assume CANNA can handle only Japanese EUC. */
 
-/* EUC multibyte string to MULE internal string */
-
-static void
-c2mu (unsigned char *cp, int l, unsigned char *mp)
-{
-  unsigned char ch, *ep = cp+l;
-
-  while ((cp < ep) && (ch = *cp))
-    {
-      if ((unsigned char) ch == ISO_CODE_SS2)
-	{
-	  *mp++ = LEADING_BYTE_KATAKANA_JISX0201;
-	  cp++;
-	}
-      else if ((unsigned char) ch == ISO_CODE_SS3)
-	{
-	  *mp++ = LEADING_BYTE_JAPANESE_JISX0212;
-	  cp++;
-	  *mp++ = *cp++;
-	}
-      else if (ch & 0x80)
-	{
-	  *mp++ = LEADING_BYTE_JAPANESE_JISX0208;
-	  *mp++ = *cp++;
-	}
-      *mp++ = *cp++;
-    }
-  *mp = 0;
-}
-
-/* MULE internal string to EUC multibyte string */
-
-static void
-m2c (unsigned char *mp, int l, unsigned char *cp)
-{
-  unsigned char	ch, *ep = mp + l;
-
-  while ((mp < ep) && (ch = *mp++))
-    {
-      switch (ch)
-	{
-	case LEADING_BYTE_KATAKANA_JISX0201:
-	  *cp++ = ISO_CODE_SS2;
-	  *cp++ = *mp++;
-	  break;
-	case LEADING_BYTE_JAPANESE_JISX0212:
-	  *cp++ = ISO_CODE_SS3;
-	case LEADING_BYTE_JAPANESE_JISX0208:
-	  *cp++ = *mp++;
-	  *cp++ = *mp++;
-	  break;
-	default:
-	  *cp++ = ch;
-	  break;
-	}
-    }
-  *cp = 0;
-}
-
-#undef make_string
-
-/* make_string after converting EUC string to MULE internal string */
-static Lisp_Object
-mule_make_string (unsigned char *p, int l)
-{
-  unsigned char cbuf[4096];
-
-  c2mu (p,l,cbuf);
-  return (make_string (cbuf, strlen ((const char *) cbuf)));
-}
-
-/* return the MULE internal string length of EUC string */
-/* Modified by sb to return a character count not byte count. */
+/* Return the number of characters in an EUC-JP string. */
 static int
-mule_strlen (unsigned char *p, int l)
+euc_jp_num_chars (unsigned char *p, int l)
 {
   unsigned char ch, *cp = p;
   int len = 0;
