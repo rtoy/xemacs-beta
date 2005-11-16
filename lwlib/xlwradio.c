@@ -89,13 +89,17 @@ Boston, MA 02111-1307, USA.  */
 static void RadioInit (Widget, Widget, ArgList, Cardinal *);
 static void RadioExpose (Widget, XEvent *, Region);
 static void RadioResize (Widget);
-static void RadioDestroy (Widget, XtPointer, XtPointer);
 static void RadioClassInit (void);
 static void RadioClassPartInit (WidgetClass);
 static Boolean RadioSetValues (Widget, Widget, Widget, ArgList, Cardinal *);
 static void DrawDiamond (Widget);
 static XtGeometryResult RadioQueryGeometry (Widget, XtWidgetGeometry *,
 					    XtWidgetGeometry *);
+#if 0
+/* #### This function isn't used and is slated for destruction.
+   Can we just nuke it? */
+static void RadioDestroy (Widget, XtPointer, XtPointer);
+#endif
 
 	/* Action procs */
 
@@ -245,6 +249,9 @@ RadioInit (Widget   request,
  *	Returns: none.
  */
 
+#if 0
+/* #### This function isn't used and is slated for destruction.
+   Can we just nuke it? */
 /* ARGSUSED */
 static void
 RadioDestroy (Widget UNUSED (w),
@@ -253,7 +260,7 @@ RadioDestroy (Widget UNUSED (w),
 {
 	/* TODO: get rid of this */
 }
-
+#endif
 
 /* React to size change from manager.  Label widget will compute some internal
  * stuff, but we need to override.  This code requires knowledge of the

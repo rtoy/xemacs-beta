@@ -1,3 +1,18 @@
+2005-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* sound.c (USED_IF_HAVE_NATIVE_OR_NAS, USED_IF_HAVE_ANY):
+	New conditional UNUSED macros.
+	(Fplay_sound_file, Fdevice_sound_enabled_p, init_device_sound):
+	Use them.
+
+2005-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* event-Xt.c (x_to_emacs_keysym): Initialize len.
+
+2005-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* database.c: Don't redefine integer types for Mac OS X, either.
+
 2005-11-13  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:

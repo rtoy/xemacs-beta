@@ -836,7 +836,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
   KeySym keysym = 0;
 
 #ifdef HAVE_XIM
-  int len;
+  int len = 0;
   /* Some implementations of XmbLookupString don't return
      XBufferOverflow correctly, so increase the size of the xim input
      buffer from 64 to the more reasonable size 513, as Emacs has done.
@@ -893,7 +893,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 	stderr_out (" keysym=%s",  XKeysymToString (keysym));
       if (status == XLookupChars  || status == XLookupBoth)
 	{
-	  if (len != 1)
+	  if (len > 1)
 	    {
 	      int j;
 	      stderr_out (" chars=\"");

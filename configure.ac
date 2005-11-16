@@ -2763,6 +2763,7 @@ AC_TYPE_PID_T
 AC_TYPE_UID_T
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
+dnl #### deprecated 2.13-ism
 AC_CHECK_TYPE(ssize_t, int)
 
 dnl not AC_CHECK_TYPE; lisp.h does hairy conditional typedef

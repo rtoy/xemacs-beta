@@ -51,6 +51,25 @@ Boston, MA 02111-1307, USA.  */
 #include "syswindows.h"
 #endif
 
+#ifdef HAVE_NAS_SOUND
+#define USED_IF_HAVE_NAS(decl) decl
+#else
+#define USED_IF_HAVE_NAS(decl) UNUSED (decl)
+#endif
+
+#if defined(HAVE_NATIVE_SOUND) || defined(HAVE_NAS_SOUND)
+#define USED_IF_HAVE_NATIVE_OR_NAS(decl) decl
+#else
+#define USED_IF_HAVE_NATIVE_OR_NAS(decl) UNUSED (decl)
+#endif
+
+#if defined(HAVE_NATIVE_SOUND) || defined(HAVE_NAS_SOUND) \
+  || defined(HAVE_ESD_SOUND)
+#define USED_IF_HAVE_ANY(decl) decl
+#else
+#define USED_IF_HAVE_ANY(decl) UNUSED (decl)
+#endif
+
 #ifdef HAVE_ESD_SOUND
 extern int esd_play_sound_file (Extbyte *file, int vol);
 extern int esd_play_sound_data (Binbyte *data, size_t length, int vol);
@@ -87,7 +106,7 @@ except under Linux where WAV files are also supported.  On Microsoft
 Windows the sound file must be in WAV format.
   DEVICE defaults to the selected device.
 */
-     (file, volume, device))
+       (file, volume, USED_IF_HAVE_ANY (device)))
 {
   /* This function can call lisp */
   int vol;
@@ -402,7 +421,7 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
 DEFUN ("device-sound-enabled-p", Fdevice_sound_enabled_p, 0, 1, 0, /*
 Return t if DEVICE is able to play sound.  Defaults to selected device.
 */
-       (device))
+       (USED_IF_HAVE_NATIVE_OR_NAS (device)))
 {
 #ifdef HAVE_NAS_SOUND
   if (DEVICE_CONNECTED_TO_NAS_P (decode_device (device)))
@@ -486,12 +505,6 @@ the C kernel of Emacs uses.
   last_bell_device = d;
   return Qnil;    
 }
-
-#ifdef HAVE_NAS_SOUND
-#define USED_IF_HAVE_NAS(decl) decl
-#else
-#define USED_IF_HAVE_NAS(decl) UNUSED (decl)
-#endif
 
 DEFUN ("wait-for-sounds", Fwait_for_sounds, 0, 1, 0, /*
 Wait for all sounds to finish playing on DEVICE.
@@ -608,7 +621,7 @@ init_native_sound (struct device *d)
 #endif /* HAVE_NATIVE_SOUND */
 
 void
-init_device_sound (struct device *d)
+init_device_sound (struct device * USED_IF_HAVE_NATIVE_OR_NAS (d))
 {
 #ifdef HAVE_NAS_SOUND
   init_nas_sound (d);

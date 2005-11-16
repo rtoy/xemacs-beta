@@ -225,13 +225,13 @@ CheckboxInit (Widget   UNUSED (request),
 #if DRAW_CHECK
 	      Widget   new,
 #else
-	      Widget   UNUSED (new),
+	      Widget   UNUSED (new_),
 #endif
 	      ArgList  UNUSED (args),
 	      Cardinal *UNUSED (num_args))
 {
 #if DRAW_CHECK
-    CheckboxWidget cw = (CheckboxWidget) new;
+    CheckboxWidget cw = (CheckboxWidget) new_;
     cw->checkbox.checkmark = None ;
     cw->checkbox.checkmark_GC = None ;
 #endif
@@ -280,17 +280,13 @@ CheckboxRealize(Widget w,
  */
 
 /* ARGSUSED */
+#if DRAW_CHECK
 static void
 CheckboxDestroy (
-#if DRAW_CHECK
 		 Widget w,
-#else
-		 Widget UNUSED (w),
-#endif
 		 XtPointer UNUSED (junk),
 		 XtPointer UNUSED (garbage))
 {
-#if DRAW_CHECK
     CheckboxWidget cw = (CheckboxWidget) w;
 
     /* TODO: cache this via xmu */
@@ -298,8 +294,8 @@ CheckboxDestroy (
       XFreePixmap( XtDisplay(w), cw->checkbox.checkmark ) ;
     if( cw->checkbox.checkmark_GC != None )
       XtReleaseGC(w, cw->checkbox.checkmark_GC) ;
-#endif
 }
+#endif /* DRAW_CHECK */
 
 
 

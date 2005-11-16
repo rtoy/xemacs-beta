@@ -131,7 +131,7 @@ there is no selection an error is signalled.  Not suitable in a
 	(catch 'converted
 	  (if targets
 	      (dolist (current-preference data-type)
-		(condition-case err
+		(condition-case nil
 		    (if (and (memq current-preference targets)
 			     (setq res (get-selection-internal
 					type current-preference)))
