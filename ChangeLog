@@ -1,3 +1,8 @@
+2005-11-08  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.ac : Reorganised the option list so that the help
+	output looks like configure.usage from 21.4
+
 2005-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (checks for typedefs): TODO comment.

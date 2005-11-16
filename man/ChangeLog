@@ -1,3 +1,8 @@
+2005-11-08  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* internals/internals.texi (The configure Script):  Added the
+	definition of the new macro XE_HELP_SUBSECTION.
+
 2005-11-13  Ben Wing  <ben@xemacs.org>
 
 	* Makefile:

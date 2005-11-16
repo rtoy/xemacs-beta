@@ -4595,7 +4595,11 @@ variables.
 Declare an option that can be selected by either @samp{--enable} or
 @samp{--with}.  The value of the option is stored in both
 @code{with_FEATURE} and @code{enable_FEATURE}.
+@end table
 
+@table @code
+@item XE_HELP_SUBSECTION(heading)
+Add a subsection heading to the help output of merged arguments.
 @end table
 
 @heading XEmacs keyword option support
