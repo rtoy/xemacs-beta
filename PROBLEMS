@@ -1387,10 +1387,10 @@ shell.
 *** XEmacs crashes on MacOS within font-lock, or when dealing
 with large compilation buffers, or in other regex applications.
 
-The default stack size under MacOS/X is rather small (512k as opposed
-to Solaris 8M), hosing the regexp code, which uses alloca()
-extensively, overflowing the stack when complex regexps are used.
-Workarounds:
+The default stack size under MacOS/X prior to 10.3 (Panther) is rather
+small (512k as opposed to Solaris 8M), hosing the regexp code, which
+uses alloca() extensively, overflowing the stack when complex regexps
+are used.  Workarounds:
 
 1) Increase your stack size, using `ulimit -s 8192' or a (t)csh
    equivalent;

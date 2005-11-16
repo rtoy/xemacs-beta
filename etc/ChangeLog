@@ -1,3 +1,7 @@
+2005-11-16  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* .cvsignore: New
+
 2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.23 "daikon" is released.

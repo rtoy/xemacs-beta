@@ -1,5 +1,10 @@
 2005-11-08  Malcolm Purvis  <malcolmp@xemacs.org>
 
+	* Makefile.in.in: Install PROBLEMS into .../etc
+	* PROBLEMS: Update description of MacOS X stack size limit.
+
+2005-11-08  Malcolm Purvis  <malcolmp@xemacs.org>
+
 	* configure.ac : Reorganised the option list so that the help
 	output looks like configure.usage from 21.4
 

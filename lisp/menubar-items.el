@@ -1559,6 +1559,7 @@ Write your filter like this:
       ("%_Other"
        ["%_Current Installation Info" describe-installation
 	:active (boundp 'Installation-string)]
+       ["%_Known Problems" view-xemacs-problems ]
        ["%_Obtaining the Latest Version" describe-distribution]
        ["%_No Warranty" describe-no-warranty]
        ["XEmacs %_License" describe-copying]

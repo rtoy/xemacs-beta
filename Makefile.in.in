@@ -238,7 +238,7 @@ INSTALL_ARCH_DEP_SUBDIR = @INSTALL_ARCH_DEP_SUBDIR@
 ## instead, we have written out explicit code in the `install' targets.
 COPYDIR = ${srcdir}/etc ${srcdir}/lisp
 COPYDESTS = ${etcdir} ${lispdir}
-GENERATED_HEADERS = src/paths.h src/Emacs.ad.h src/config.h lwlib/config.h src/sheap-adjust.h src/xemacs.def
+GENERATED_HEADERS = src/paths.h src/Emacs.ad.h src/config.h lwlib/config.h src/sheap-adjust.h src/xemacs.def etc/PROBLEMS
 
 ## MAKE_SUBDIR will always be of the form lib-src ... src, where
 ## `...' includes various other directories that may be inserted by
@@ -343,6 +343,9 @@ lwlib/config.h: ${srcdir}/lwlib/config.h.in
 
 src/xemacs.def: $(srcdir)/src/xemacs.def.in.in
 	./config.status && touch $@
+
+etc/PROBLEMS: $(srcdir)/PROBLEMS
+	cp $^ $@
 
 ## ==================== Installation ====================
 
@@ -552,6 +555,7 @@ top-clean: FRC.clean
 	$(RM) core lisp/auto-autoloads.el* lisp/custom-load.el*
 	$(RM) lisp/mule/auto-autoloads.el* lisp/mule/custom-load.el*
 	$(RM) modules/auto-autoloads.el* modules/custom-load.el*
+	$(RM) etc/PROBLEMS
 
 clean: top-mostlyclean top-clean
 	for d in $(SUBDIR); do (cd ./$$d && $(MAKE) $(RECURSIVE_MAKE_ARGS) $@); done

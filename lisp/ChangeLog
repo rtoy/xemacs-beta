@@ -1,3 +1,9 @@
+2005-11-08  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* help.el:
+	* menubar-items.el (default-menubar):
+	 Add 'Known Problems' to the Help menu.
+
 2005-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* select.el (get-selection):
