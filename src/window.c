@@ -4314,7 +4314,14 @@ change_window_height (Lisp_Object window, int delta, Lisp_Object horizontalp,
       if (NILP (parent))
 	{
 	  if (widthflag)
-	    invalid_operation ("No other window to side of this one", Qunbound);
+	    {
+	      int new_pixsize;
+	      sizep = &CURSIZE (w);
+	      dim = CURCHARSIZE (w);
+	      new_pixsize = inpixels?(*sizep + delta):(dim+delta);
+	      set_window_pixsize (window, new_pixsize, 0, 0);
+	      return;
+	    }
 	  break;
 	}
       if (widthflag

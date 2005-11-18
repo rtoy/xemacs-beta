@@ -1,3 +1,9 @@
+2005-11-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* window.c (change_window_height): Have change_window_height
+	change the window width when requested to do so; fixes bugs and
+	error messages with VM, BBDB. 
+
 2005-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* sound.c (USED_IF_HAVE_NATIVE_OR_NAS, USED_IF_HAVE_ANY):
