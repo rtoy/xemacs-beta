@@ -1,3 +1,10 @@
+2005-11-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* HELLO: Add Irish, Tajik. Don't give the local name for the
+	latter language, because we don't support CYRILLIC SMALL LETTER
+	CHE WITH DESCENDER nor CYRILLIC SMALL LETTER I WITH MACRON by
+	default. 
+
 2005-11-16  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* .cvsignore: New
