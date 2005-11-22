@@ -686,8 +686,8 @@ image_instance_convert_to_pointer (Lisp_Image_Instance *ii,
 				   Lisp_Object pointer_bg)
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
-  GdkPixmap *pixmap = IMAGE_INSTANCE_X_PIXMAP (ii);
-  GdkPixmap *mask = (GdkPixmap *) IMAGE_INSTANCE_PIXMAP_MASK (ii);
+  GdkPixmap *pixmap = IMAGE_INSTANCE_GTK_PIXMAP (ii);
+  GdkPixmap *mask = (GdkPixmap *) IMAGE_INSTANCE_GTK_MASK (ii);
   GdkColor fg, bg;
   int xhot = 0, yhot = 0;
   int w, h;
@@ -1310,7 +1310,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   gdk_window_get_geometry (pixmap, NULL, NULL, &w, &h, &depth);
 
   IMAGE_INSTANCE_GTK_PIXMAP (ii) = pixmap;
-  IMAGE_INSTANCE_PIXMAP_MASK (ii) = (void*)mask;
+  IMAGE_INSTANCE_PIXMAP_MASK (ii) = mask;
   IMAGE_INSTANCE_GTK_COLORMAP (ii) = cmap;
   IMAGE_INSTANCE_GTK_PIXELS (ii) = 0;
   IMAGE_INSTANCE_GTK_NPIXELS (ii) = 0;
@@ -1329,11 +1329,12 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       break;
 
     case IMAGE_POINTER:
-      if (xpmattrs.valuemask & XpmHotspot)
-	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = make_int (xpmattrs.x_hotspot);
-      if (xpmattrs.valuemask & XpmHotspot)
-	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = make_int (xpmattrs.y_hotspot);
-      
+	/* #### Gtk does not give us access to the hotspots of a pixmap */
+
+	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = 1;
+	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = 1;
+
+     
       image_instance_convert_to_pointer (ii, instantiator, pointer_fg,
 					 pointer_bg);
       break;

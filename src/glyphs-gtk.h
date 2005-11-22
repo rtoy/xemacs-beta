@@ -86,7 +86,7 @@ void init_image_instance_from_gdk_pixmap (struct Lisp_Image_Instance *ii,
      (GTK_IMAGE_INSTANCE_DATA (i)->pixmaps[slice])
 #define IMAGE_INSTANCE_GTK_PIXMAP_SLICES(i) \
      (GTK_IMAGE_INSTANCE_DATA (i)->pixmaps)
-#define IMAGE_INSTANCE_GTK_MASK(i) (GdkPixmap*)(IMAGE_INSTANCE_PIXMAP_MASK (i))
+#define IMAGE_INSTANCE_GTK_MASK(i) ((GdkPixmap*)(IMAGE_INSTANCE_PIXMAP_MASK (i)))
 #define IMAGE_INSTANCE_GTK_CURSOR(i) (GTK_IMAGE_INSTANCE_DATA (i)->cursor)
 #define IMAGE_INSTANCE_GTK_COLORMAP(i) (GTK_IMAGE_INSTANCE_DATA (i)->colormap)
 #define IMAGE_INSTANCE_GTK_PIXELS(i) (GTK_IMAGE_INSTANCE_DATA (i)->pixels)

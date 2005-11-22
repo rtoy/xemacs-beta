@@ -1,3 +1,14 @@
+2005-11-22  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* frame-gtk.c (gtk_internal_frame_property_p):
+	* glyphs-gtk.c (image_instance_convert_to_pointer):
+	* glyphs-gtk.c (gtk_xpm_instantiate):
+	* glyphs-gtk.h (IMAGE_INSTANCE_GTK_MASK):
+	* gtk-xemacs.c (gtk_xemacs_expose):
+	* redisplay-gtk.c (gtk_output_vertical_divider):
+	Fix compilation errors and warnings that have appeared over the
+	last few months.
+
 2005-11-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* keymap.c (Fdefine_key): More focused docstring.

@@ -410,6 +410,8 @@ gtk_xemacs_expose (GtkWidget *widget, GdkEventExpose *event)
 	redisplay_redraw_exposed_area (f, a->x, a->y, a->width, a->height);
       return (TRUE);
     }
+
+  return FALSE;
 }
 
 Lisp_Object

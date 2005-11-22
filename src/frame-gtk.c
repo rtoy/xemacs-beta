@@ -265,7 +265,7 @@ gtk_frame_property (struct frame *f, Lisp_Object property)
 }
 
 static int
-gtk_internal_frame_property_p (struct frame *f, Lisp_Object property)
+gtk_internal_frame_property_p (struct frame *UNUSED(f), Lisp_Object property)
 {
   return EQ (property, Qleft)
     || EQ (property, Qtop)

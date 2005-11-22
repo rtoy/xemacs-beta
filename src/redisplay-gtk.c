@@ -1176,7 +1176,7 @@ gtk_output_pixmap (struct window *w,
  Draw a vertical divider down the right side of the given window.
  ****************************************************************************/
 static void
-gtk_output_vertical_divider (struct window *w, int clear)
+gtk_output_vertical_divider (struct window *w, int UNUSED(clear))
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
