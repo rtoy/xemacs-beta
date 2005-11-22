@@ -2643,10 +2643,10 @@ iso2022_print (Lisp_Object cs, Lisp_Object printcharfun,
 	write_c_string (printcharfun, "(force)");
     }
 
-#define FROB(prop)					\
-  if (!NILP (iso2022_getprop (cs, prop)))		\
-    {							\
-      write_fmt_string (printcharfun, ", %s", prop);	\
+#define FROB(prop)					        \
+  if (!NILP (iso2022_getprop (cs, prop)))		        \
+    {						                \
+      write_fmt_string_lisp (printcharfun, ", %s", 1, prop);	\
     }
   
   FROB (Qshort);

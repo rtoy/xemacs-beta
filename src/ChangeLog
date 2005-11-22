@@ -1,5 +1,10 @@
 2005-11-22  Ben Wing  <ben@xemacs.org>
 
+	* mule-coding.c (FROB):
+	Fix crashes printing ISO2022 coding systems.
+
+2005-11-22  Ben Wing  <ben@xemacs.org>
+
 	* Makefile.in.in (mostlyclean):
 	Ignore errors from rm during clean.
 
