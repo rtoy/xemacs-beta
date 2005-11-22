@@ -1331,7 +1331,7 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 #endif /* unused */
           )
 	invalid_argument
-          ("Invalid (FSF Emacs) key format (see doc of define-key)",
+          ("Invalid (GNU Emacs) key format (see doc of define-key)",
 	   *keysym);
 
       /* #### Ok, this is a bit more dubious - make people not lose if they
@@ -1780,7 +1780,7 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
 DEFUN ("define-key", Fdefine_key, 3, 3, 0, /*
 Define key sequence KEYS, in KEYMAP, as DEF.
 KEYMAP is a keymap object.
-KEYS is the sequence of keystrokes to bind, described below.
+KEYS is the key sequence to bind, described below.
 DEF is anything that can be a key's definition:
  nil (means key is undefined in this keymap);
  a command (a Lisp function suitable for interactive calling);
@@ -1793,68 +1793,96 @@ DEF is anything that can be a key's definition:
     (DEFN should be a valid definition in its own right);
  or a cons (KEYMAP . CHAR), meaning use definition of CHAR in map KEYMAP.
 
-Contrary to popular belief, the world is not ASCII.  When running under a
-window system, XEmacs can tell the difference between, for example, the
-keystrokes control-h, control-shift-h, and backspace.  You can, in fact,
-bind different commands to each of these.
+A `key sequence' is a vector of one or more keystrokes.
+A `keystroke' is a list containing a key and zero or more modifiers.  The
+key must be the last element of the list.
+A `key' is a symbol corresponding to a key on the keyboard, or to a mouse
+gesture.  Mouse clicks are denoted by symbols prefixed with "button",
+followed by a digit for which button, and optionally "up".  Thus `button1'
+means the down-stroke and `button1up' means the up-stroke when clicking
+mouse button 1.
+A `modifier' is a symbol naming a physical key which is only "noticed" by
+XEmacs when chorded with another key.  The `shift' modifier is a special
+case.  You cannot use `(meta shift a)' to mean `(meta A)', since for
+characters that have ASCII equivalents, the state of the shift key is
+implicit in the keysym (a vs. A).  You also cannot say `(shift =)' to mean
+`+', as that correspondence varies from keyboard to keyboard.  The shift
+modifier can only be applied to keys that do not have a second keysym on the
+same key, such as `backspace' and `tab'.  A mouse click may be combined with
+modifiers to create a compound "keystroke".
 
-A `key sequence' is a set of keystrokes.  A `keystroke' is a keysym and some
-set of modifiers (such as control and meta).  A `keysym' is what is printed
-on the keys on your keyboard.
+The keys, mouse gestures, and modifiers that are available depend on your
+console and its driver.  At a minimum the ASCII graphic characters will be
+available as keys, and shift, control, and meta as modifiers.
 
-A keysym may be represented by a symbol, or (if and only if it is equivalent
-to a character with a code in the range 32 - 255) by a character or its
-equivalent code.  The `A' key may be represented by the symbol `A', the
-character `?A', or by the number 65.  The `break' key may be represented
-only by the symbol `break'.
+To find out programmatically what a key is bound to, use `key-binding' to
+check all applicable keymaps, or `lookup-key' to check a specific keymap.
+The documentation for `key-binding' also contains a description of which
+keymaps are applicable in various situations.  `where-is-internal' does
+the opposite of `key-binding', i.e. searches keymaps for the keys that
+map to a particular binding.
 
-A keystroke may be represented by a list: the last element of the list
-is the key (a symbol, character, or number, as above) and the
-preceding elements are the symbolic names of modifier keys (control,
-meta, super, hyper, alt, and shift).  Thus, the sequence control-b is
-represented by the forms `(control b)', `(control ?b)', and `(control
-98)'.  A keystroke may also be represented by an event object, as
-returned by the `next-command-event' and `read-key-sequence'
-functions.
+If you are confused about why a particular key sequence is generating a
+particular binding, and looking through the keymaps doesn't help, setting
+the variable `debug-emacs-events' may help.  If not, try checking
+what's in `function-key-map' and `key-translation-map'.
 
-Note that in this context, the keystroke `control-b' is *not* represented
-by the number 2 (the ASCII code for ^B) or the character `?\^B'.  See below.
+When running under a window system, typically the repertoire of keys is
+vastly expanded.  XEmacs does its best to use the names defined on each
+platform.  Also, when running under a window system, XEmacs can tell the
+difference between the keystrokes control-h, control-shift-h, and backspace.
+If the symbols differ, you can bind different actions to each.  For mouse
+clicks, different commands may be bound to the up and down strokes, though
+that is probably not what you want, so be careful.
 
-The `shift' modifier is somewhat of a special case.  You should not (and
-cannot) use `(meta shift a)' to mean `(meta A)', since for characters that
-have ASCII equivalents, the state of the shift key is implicit in the
-keysym (a vs. A).  You also cannot say `(shift =)' to mean `+', as that
-sort of thing varies from keyboard to keyboard.  The shift modifier is for
-use only with characters that do not have a second keysym on the same key,
-such as `backspace' and `tab'.
+Variant representations:
 
-A key sequence is a vector of keystrokes.  As a degenerate case, elements
-of this vector may also be keysyms if they have no modifiers.  That is,
-the `A' keystroke is represented by all of these forms:
-	A	?A	65	(A)	(?A)	(65)
-	[A]	[?A]	[65]	[(A)]	[(?A)]	[(65)]
+Besides the canonical representation as a vector of lists of symbols,
+`define-key' also accepts a number of abbreviations, aliases, and variants
+for convenience, compatibility, and internal use.
 
-the `control-a' keystroke is represented by these forms:
-	(control A)	(control ?A)	(control 65)
-	[(control A)]	[(control ?A)]	[(control 65)]
-the key sequence `control-c control-a' is represented by these forms:
-	[(control c) (control a)]	[(control ?c) (control ?a)]
-	[(control 99) (control 65)]	etc.
+A keystroke may be represented by a key; this is treated as though it were a
+list containing that key as the only element.  A keystroke may also be
+represented by an event object, as returned by the `next-command-event' and
+`read-key-sequence' functions.  A key sequence may be represented by a
+single keystroke; this is treated as a vector containing that keystroke as
+its only element.
 
-Mouse button clicks work just like keypresses: (control button1) means
-pressing the left mouse button while holding down the control key.
-\[(control c) (shift button3)] means control-c, hold shift, click right.
-
-Commands may be bound to the mouse-button up-stroke rather than the down-
-stroke as well.  `button1' means the down-stroke, and `button1up' means the
-up-stroke.  Different commands may be bound to the up and down strokes,
-though that is probably not what you want, so be careful.
+A key may be represented by a character or its equivalent integer code,
+if and only if it is equivalent to a character with a code in the range
+32 - 255.
 
 For backward compatibility, a key sequence may also be represented by a
 string.  In this case, it represents the key sequence(s) that would
-produce that sequence of ASCII characters in a purely ASCII world.  For
-example, a string containing the ASCII backspace character, "\\^H", would
-represent two key sequences: `(control h)' and `backspace'.  Binding a
+produce that sequence of ASCII characters in a purely ASCII world.  An
+alternative string representation is keyboard macro notation, which can
+be translated to the canonical representation with `kbd'.
+
+Examples:
+
+The key sequence `A' (which invokes `self-insert-command') is represented
+by all of these forms:
+	A	?A	65	(A)	(?A)	(65)
+	[A]	[?A]	[65]	[(A)]	[(?A)]	[(65)]
+
+The key sequence `control-a' is represented by these forms:
+	(control A)	(control ?A)	(control 65)
+	[(control A)]	[(control ?A)]	[(control 65)]
+
+The key sequence `control-c control-a' is represented by these forms:
+	[(control c) (control a)]	[(control ?c) (control ?a)]
+	[(control 99) (control 65)]	etc.
+
+The keystroke `control-b' *may not* be represented by the number 2 (the
+ASCII code for ^B) or the character `?\^B'.
+
+The `break' key may be represented only by the symbol `break'.
+
+Mouse button clicks work just like keypresses: (control button1) means
+pressing the left mouse button while holding down the control key.
+
+A string containing the ASCII backspace character, "\\^H", would represent
+two key sequences: `(control h)' and `backspace'.  Binding a
 command to this will actually bind both of those key sequences.  Likewise
 for the following pairs:
 
@@ -1873,22 +1901,6 @@ it is possible to redefine only one of those sequences like so:
 
 	(define-key global-map [(control x) (control i)] \'command-2)
 	(define-key global-map [(control x) tab] \'command-3)
-
-Of course, all of this applies only when running under a window system.  If
-you're talking to XEmacs through a TTY connection, you don't get any of
-these features.
-
-To find out programmatically what a key is bound to, use `key-binding' to
-check all applicable keymaps, or `lookup-key' to check a specific keymap.
-The documentation for `key-binding' also contains a description of which
-keymaps are applicable in various situations.  `where-is-internal' does
-the opposite of `key-binding', i.e. searches keymaps for the keys that
-map to a particular binding.
-
-If you are confused about why a particular key sequence is generating a
-particular binding, and looking through the keymaps doesn't help, setting
-the variable `debug-emacs-events' may help.  If not, try checking
-what's in `function-key-map' and `key-translation-map'.
 */
        (keymap, keys, def))
 {
@@ -1925,8 +1937,8 @@ what's in `function-key-map' and `key-translation-map'.
      for example) then the binding will be made for both keysyms.
 
      This is done if the user binds a command to a string, as in
-     (define-key map "\^H" 'something), but not when using one of the new
-     syntaxes, like (define-key map '(control h) 'something).
+     (define-key map "\^H" 'something), but not when using the canonical
+     syntax (define-key map '(control h) 'something).
      */
   ascii_hack = (STRINGP (keys));
 
