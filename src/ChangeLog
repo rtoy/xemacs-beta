@@ -1,3 +1,11 @@
+2005-11-20  Marcus Crestani  <crestani@xemacs.org>
+
+	* lisp.h: Add default_object_printer prototype.
+	* print.c (default_object_printer): Remove static.
+	* print.c (print_internal): Use internal_object_printer if a
+	object has no print method.
+	* toolbar.c: Use default_object_printer for toolbar-button.
+
 2005-11-22  Ben Wing  <ben@xemacs.org>
 
 	* mule-coding.c (FROB):

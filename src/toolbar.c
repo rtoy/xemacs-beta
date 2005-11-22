@@ -90,7 +90,9 @@ mark_toolbar_button (Lisp_Object obj)
 
 DEFINE_LRECORD_IMPLEMENTATION ("toolbar-button", toolbar_button,
 			       0, /*dumpable-flag*/
-			       mark_toolbar_button, 0, 0, 0, 0, 
+			       mark_toolbar_button,
+			       default_object_printer,
+			       0, 0, 0,
 			       toolbar_button_description,
 			       struct toolbar_button);
 

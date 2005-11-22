@@ -4744,6 +4744,7 @@ EXFUN (Fprint, 2);
 
 
 /* Lower-level ways to output data: */
+void default_object_printer (Lisp_Object, Lisp_Object, int);
 void print_internal (Lisp_Object, Lisp_Object, int);
 void debug_print (Lisp_Object);
 void debug_p4 (Lisp_Object obj);

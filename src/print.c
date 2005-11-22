@@ -1449,7 +1449,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   UNGCPRO;
 }
 
-static void
+void
 default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			int UNUSED (escapeflag))
 {
@@ -1749,7 +1749,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  ((LHEADER_IMPLEMENTATION (lheader)->printer)
 	   (obj, printcharfun, escapeflag));
 	else
-	  default_object_printer (obj, printcharfun, escapeflag);
+	  internal_object_printer (obj, printcharfun, escapeflag);
 	break;
       }
 
