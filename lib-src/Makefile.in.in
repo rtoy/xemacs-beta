@@ -273,21 +273,21 @@ uninstall:
 .PHONY: mostlyclean clean distclean realclean extraclean
 .PHONY: distclean-noconfig realclean-noconfig extraclean-noconfig
 mostlyclean:
-	$(RM) *.o *.i core
+	-$(RM) *.o *.i core
 clean: mostlyclean
-	$(RM) ${EXES} *.exe
+	-$(RM) ${EXES} *.exe
 distclean-noconfig: clean
-	$(RM) DOC *.tab.c *.tab.h TAGS ellcc.h blessmail config.values
+	-$(RM) DOC *.tab.c *.tab.h TAGS ellcc.h blessmail config.values
 ## This is used in making a distribution.
 ## Do not use it on development directories!
 distclean: distclean-noconfig
-	$(RM) GNUmakefile Makefile Makefile.in
+	-$(RM) GNUmakefile Makefile Makefile.in
 realclean-noconfig: distclean-noconfig
 realclean: distclean
 extraclean-noconfig: realclean-noconfig
-	$(RM) *~ \#*
+	-$(RM) *~ \#*
 extraclean: realclean
-	$(RM) *~ \#*
+	-$(RM) *~ \#*
 
 ## Test the contents of the directory.
 check:

@@ -1,3 +1,20 @@
+2005-11-22  Ben Wing  <ben@xemacs.org>
+
+	* dynodump/Makefile.in.in (mostlyclean):
+	Ignore errors from rm during clean.
+
+2005-11-22  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (top-mostlyclean):
+	* Makefile.in.in (top-clean):
+	* Makefile.in.in (top-distclean-noconfig):
+	* Makefile.in.in (top-distclean):
+	* Makefile.in.in (top-realclean-noconfig):
+	* Makefile.in.in (top-extraclean-noconfig):
+	* Makefile.in.in (TAGS tags):
+	Ignore errors from rm during clean, to prevent problems trying to
+	remove lock/CVS.
+
 2005-11-08  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* Makefile.in.in: Install PROBLEMS into .../etc

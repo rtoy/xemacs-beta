@@ -1,3 +1,8 @@
+2005-11-22  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (mostlyclean):
+	Ignore errors from rm during clean.
+
 2005-11-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* window.c (change_window_height): Have change_window_height

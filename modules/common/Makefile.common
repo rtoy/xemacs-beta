@@ -81,21 +81,21 @@ $(MODNAME)_i.c: $(SRCS)
 .PHONY: mostlyclean clean distclean realclean extraclean
 .PHONY: distclean-noconfig realclean-noconfig extraclean-noconfig
 mostlyclean:
-	$(RM) $(OBJS) $(MODNAME)_i.* core
+	-$(RM) $(OBJS) $(MODNAME)_i.* core
 clean: mostlyclean
-	$(RM) $(MODNAME).ell
+	-$(RM) $(MODNAME).ell
 distclean-noconfig: clean
-	$(RM) config.* TAGS
+	-$(RM) config.* TAGS
 ## This is used in making a distribution.
 ## Do not use it on development directories!
 distclean: distclean-noconfig
-	$(RM) GNUmakefile Makefile Makefile.in configure
+	-$(RM) GNUmakefile Makefile Makefile.in configure
 realclean-noconfig: distclean-noconfig
 realclean: distclean
 extraclean-noconfig: realclean-noconfig
-	$(RM) *~ \#*
+	-$(RM) *~ \#*
 extraclean: realclean
-	$(RM) *~ \#*
+	-$(RM) *~ \#*
 
 install: $(OBJECT_TO_BUILD)
 	$(INSTALL_PROGRAM) $< $(INSTALLPATH)

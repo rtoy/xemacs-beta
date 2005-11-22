@@ -1,3 +1,8 @@
+2005-11-22  Ben Wing  <ben@xemacs.org>
+
+	* common/Makefile.common (mostlyclean):
+	Ignore errors from rm during clean.
+
 2005-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* canna/canna_api.c: Small fixes to Mule-ization patch.

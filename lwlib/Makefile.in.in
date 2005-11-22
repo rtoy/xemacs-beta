@@ -85,20 +85,20 @@ liblw.a: $(objs)
 .PHONY: mostlyclean clean distclean realclean extraclean
 .PHONY: distclean-noconfig realclean-noconfig extraclean-noconfig
 mostlyclean:
-	$(RM) liblw.a liblw_pure_*.a *.o *.i core
+	-$(RM) liblw.a liblw_pure_*.a *.o *.i core
 clean: mostlyclean
 distclean-noconfig: clean
-	$(RM) config.h TAGS
+	-$(RM) config.h TAGS
 ## This is used in making a distribution.
 ## Do not use it on development directories!
 distclean: distclean-noconfig
-	$(RM) GNUmakefile Makefile Makefile.in
+	-$(RM) GNUmakefile Makefile Makefile.in
 realclean-noconfig: distclean-noconfig
 realclean: distclean
 extraclean-noconfig: realclean-noconfig
-	$(RM) *~ \#*
+	-$(RM) *~ \#*
 extraclean: realclean
-	$(RM) *~ \#*
+	-$(RM) *~ \#*
 
 CONFIG_H = ../src/config.h config.h
 
