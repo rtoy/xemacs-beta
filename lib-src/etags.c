@@ -1,6 +1,7 @@
 /* Tags file maker to go with GNU Emacs           -*- coding: latin-1 -*-
-   Copyright (C) 1984, 1987-1989, 1993-1995, 1998-2004
-   Free Software Foundation, Inc. and Ken Arnold
+   Copyright (C) 1984, 1987, 1988, 1989, 1993, 1994, 1995,
+                 1998, 1999, 2000, 2001, 2002, 2003, 2004,
+                 2005 Free Software Foundation, Inc. and Ken Arnold
 
  This file is not considered part of GNU Emacs.
 
@@ -16,7 +17,7 @@
 
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software Foundation,
- Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 /*
  * Authors:
@@ -40,7 +41,7 @@
  * configuration file containing regexp definitions for etags.
  */
 
-char pot_etags_version[] = "@(#) pot revision number is 17.11";
+char pot_etags_version[] = "@(#) pot revision number is 17.15";
 
 #define	TRUE	1
 #define	FALSE	0
@@ -489,6 +490,7 @@ static bool need_filebuf;	/* some regexes are multi-line */
 #if LONG_OPTIONS
 static struct option longopts[] =
 {
+  { "append",		  no_argument,	     NULL,	     	 'a'   },
   { "packages-only",      no_argument,	     &packages_only, 	 TRUE  },
   { "c++",		  no_argument,	     NULL,	     	 'C'   },
   { "declarations",	  no_argument,	     &declarations,  	 TRUE  },
@@ -508,7 +510,7 @@ static struct option longopts[] =
   { "parse-stdin",        required_argument, NULL,               STDIN },
   { "version",		  no_argument,	     NULL,     	     	 'V'   },
 
-#if CTAGS /* Etags options */
+#if CTAGS /* Ctags options */
   { "backward-search",	  no_argument,	     NULL,	     	 'B'   },
   { "cxref",		  no_argument,	     NULL,	     	 'x'   },
   { "defines",		  no_argument,	     NULL,	     	 'd'   },
@@ -519,8 +521,7 @@ static struct option longopts[] =
   { "vgrind",		  no_argument,	     NULL,     	     	 'v'   },
   { "no-warn",		  no_argument,	     NULL,	     	 'w'   },
 
-#else /* Ctags options */
-  { "append",		  no_argument,	     NULL,	     	 'a'   },
+#else /* Etags options */
   { "no-defines",	  no_argument,	     NULL,	     	 'D'   },
   { "no-globals",	  no_argument,	     &globals, 	     	 FALSE },
   { "include",		  required_argument, NULL,     	     	 'i'   },
@@ -888,8 +889,7 @@ linked with GNU getopt.");
 Absolute names are stored in the output file as they are.\n\
 Relative ones are stored relative to the output file's directory.\n");
 
-  if (!CTAGS)
-    puts ("-a, --append\n\
+  puts ("-a, --append\n\
         Append tag entries to existing tags file.");
 
   puts ("--packages-only\n\
@@ -989,9 +989,9 @@ Relative ones are stored relative to the output file's directory.\n");
   if (CTAGS)
     {
       puts ("-v, --vgrind\n\
-        Generates an index of items intended for human consumption,\n\
-        similar to the output of vgrind.  The index is sorted, and\n\
-        gives the page number of each item.");
+        Print on the standard output an index of items intended for\n\
+        human consumption, similar to the output of vgrind.  The index\n\
+        is sorted, and gives the page number of each item.");
       puts ("-w, --no-warn\n\
         Suppress warning messages about entries defined in multiple\n\
         files.");
@@ -1196,10 +1196,10 @@ main (argc, argv)
   if (!LONG_OPTIONS)
     optstring += 1;		/* remove the initial '-' */
   optstring = concat (optstring,
-		      "Cf:Il:o:SVhH",
-		      (CTAGS) ? "BxdtTuvw" : "aDi:");
+		      "aCf:Il:o:SVhH",
+		      (CTAGS) ? "BxdtTuvw" : "Di:");
 
-  while ((opt = getopt_long (argc, argv, optstring, longopts, 0)) != EOF)
+  while ((opt = getopt_long (argc, argv, optstring, longopts, NULL)) != EOF)
     switch (opt)
       {
       case 0:
@@ -1227,6 +1227,7 @@ main (argc, argv)
 	break;
 
 	/* Common options. */
+      case 'a': append_to_tagfile = TRUE;	break;
       case 'C': cplusplus = TRUE;		break;
       case 'f':		/* for compatibility with old makefiles */
       case 'o':
@@ -1276,7 +1277,6 @@ main (argc, argv)
 	break;
 
 	/* Etags options */
-      case 'a': append_to_tagfile = TRUE;			break;
       case 'D': constantypedefs = FALSE;			break;
       case 'i': included_files[nincluded_files++] = optarg;	break;
 
@@ -1423,7 +1423,8 @@ main (argc, argv)
 
   if (!CTAGS || cxref_style)
     {
-      put_entries (nodehead);	/* write the remainig tags (ETAGS) */
+      /* Write the remaining tags to tagf (ETAGS) or stdout (CXREF). */
+      put_entries (nodehead);
       free_tree (nodehead);
       nodehead = NULL;
       if (!CTAGS)
@@ -1437,10 +1438,11 @@ main (argc, argv)
 
 	  while (nincluded_files-- > 0)
 	    fprintf (tagf, "\f\n%s,include\n", *included_files++);
+
+	  if (fclose (tagf) == EOF)
+	    pfatal (tagfile);
 	}
 
-      if (fclose (tagf) == EOF)
-	pfatal (tagfile);
       exit (EXIT_SUCCESS);
     }
 
@@ -1475,12 +1477,13 @@ main (argc, argv)
   if (fclose (tagf) == EOF)
     pfatal (tagfile);
 
-  if (update)
-    {
-      char cmd[2*BUFSIZ+10];
-      sprintf (cmd, "sort -o %.*s %.*s", BUFSIZ, tagfile, BUFSIZ, tagfile);
-      exit (system (cmd));
-    }
+  if (CTAGS)
+    if (append_to_tagfile || update)
+      {
+	char cmd[2*BUFSIZ+10];
+	sprintf (cmd, "sort -o %.*s %.*s", BUFSIZ, tagfile, BUFSIZ, tagfile);
+	exit (system (cmd));
+      }
   return EXIT_SUCCESS;
 }
 

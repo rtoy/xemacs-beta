@@ -1,3 +1,7 @@
+2005-11-22  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* etags.c: Update to author version 17.15.
+
 2005-11-22  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in:
