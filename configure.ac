@@ -875,6 +875,18 @@ XE_MERGED_ARG([kkcc],
 XE_MERGED_ARG([mc-alloc],
 	AC_HELP_STRING([--enable-mc-alloc],[Enable experimental new allocator.]),
 	[], [enable_mc_alloc=yes])
+XE_MERGED_ARG([newgc],
+	AC_HELP_STRING([--enable-newgc],[Enable new incremental garbage collector.]),
+	[], [])
+XE_COMPLEX_ARG([vdb],
+	AC_HELP_STRING([--enable-vdb=TYPE],[Override auto-detection of 
+			virtual-dirty-bit write-barrier implementation for the
+			new garbage collector. TYPE must be one of "auto" (for 
+			auto-detection), "posix", "win32", "mach", or "fake" 
+			(uses the new garbage collector but disables 
+			incremental collections). The default is to
+			use auto-detection.]),
+	[], [enable_vdb="auto"],[auto,posix,win32,mach,fake,no])
 dnl
 XE_HELP_SUBSECTION([Emacs Lisp options])
 XE_MERGED_ARG([modules],
@@ -1683,6 +1695,29 @@ if test -z "$enable_pdump"; then
   esac
 fi
 
+if test "$enable_newgc" = "yes"; then
+  if test "$enable_vdb" = "auto"; then
+    case "$opsys" in
+      darwin )  AC_DEFINE(VDB_MACH)  have_vdb_mach=yes ;;
+      cygwin* ) AC_DEFINE(VDB_WIN32) have_vdb_win32=yes ;;
+      linux* )  check_vdb_posix=yes ;;
+      freebsd ) check_vdb_posix=yes ;;
+dnl bail out immediately
+dnl      * )       have_vdb_fake=yes ;;
+dnl if not sure, try posix first, maybe we are lucky
+      * )       check_vdb_posix=yes ;;
+    esac
+  else
+    case "$enable_vdb" in
+      mach )  AC_DEFINE(VDB_MACH)  have_vdb_mach=yes ;;
+      win32 ) AC_DEFINE(VDB_WIN32) have_vdb_win32=yes ;;
+      posix ) check_vdb_posix=yes ;;
+      fake )  have_vdb_fake=yes ;;
+      no )    have_vdb_fake=yes ;;
+    esac
+  fi
+fi
+
 if test -z "$with_dynamic"; then
   case "$opsys" in
     hpux* | sunos4* ) with_dynamic=no ;;
@@ -2042,6 +2077,12 @@ if test -z "$enable_dump_in_exec"; then
       enable_dump_in_exec=yes
     fi
   fi
+fi
+
+dnl New incremental garbage collector
+if test "$enable_newgc" = "yes"; then
+  enable_mc_alloc=yes
+  enable_kkcc=yes
 fi
 
 dnl For debugging...
@@ -4431,6 +4472,48 @@ if test "$ac_cv_func_getaddrinfo" != "no" ; then
   esac
 fi
 
+dnl check for vdb-related stuff
+if test "$check_vdb_posix" = "yes" ; then
+  dnl no mprotect, no vdb
+  AC_CHECK_FUNC(mprotect,AC_DEFINE(HAVE_MPROTECT) have_vdb_mprotect=yes,)
+
+  dnl sigaction needs either struct siginfo or siginfo_t
+  AC_CHECK_FUNC(sigaction, AC_DEFINE(HAVE_SIGACTION) have_vdb_sigaction=yes, 
+	        have_vdb_sigaction=no)
+  AC_CHECK_MEMBER(struct siginfo.si_addr, 
+		  AC_DEFINE(HAVE_STRUCT_SIGINFO_SI_ADDR) have_si_addr=yes,,
+	          [#include <signal.h>])
+  AC_CHECK_MEMBER(siginfo_t.si_addr,
+		  AC_DEFINE(HAVE_SIGINFO_T_SI_ADDR) have_si_addr=yes,,
+	          [#include <signal.h>])
+  if test "$have_si_addr" != "yes" ; then
+    have_vdb_sigaction=no
+  fi
+
+  dnl signal needs struct sigcontext
+  AC_CHECK_FUNC(signal, AC_DEFINE(HAVE_SIGNAL) have_vdb_signal=yes,)
+  AC_CHECK_MEMBER(struct sigcontext.cr2, 
+	          AC_DEFINE(HAVE_STRUCT_SIGCONTEXT_CR2) have_cr2=yes,, 
+		  [#include <signal.h>])
+
+  if test "$have_cr2" != "yes" ; then
+    have_vdb_signal=no
+  fi
+
+  if test "$have_vdb_mprotect" != "yes" ; then 
+    have_vdb_sigaction=no
+    have_vdb_signal=no
+  fi
+
+  if test "$have_vdb_sigaction" != "yes" -a "$have_vdb_signal" != "yes" ; then
+    have_vdb_posix=no
+    have_vdb_fake=yes
+  else
+    have_vdb_posix=yes
+    have_vdb_fake=no
+  fi
+fi
+
 dnl ----------------------------------------------------------------
 dnl Check for Unixoid pty/process support.
 dnl ----------------------------------------------------------------
@@ -5318,15 +5401,15 @@ dnl Create some auxiliary files for developers.
 dnl ----------------------------------------------
 
 dnl Create a .gdbinit useful for debugging XEmacs
-if test -f "$srcdir/src/.gdbinit" -a ! -f "src/.gdbinit"; then
-  test "$verbose" = "yes" && echo "creating src/.gdbinit"
-  echo "source $srcdir/src/.gdbinit" > "src/.gdbinit"
+if test -f "$srcdir/src/.gdbinit.in" -a ! -f "src/.gdbinit.in"; then
+  test "$verbose" = "yes" && echo "creating src/.gdbinit.in"
+  echo "source $srcdir/src/.gdbinit.in" > "src/.gdbinit.in"
 fi
 
 dnl Create a .dbxrc useful for debugging XEmacs
-if test -f "$srcdir/src/.dbxrc" -a ! -f "src/.dbxrc"; then
-  test "$verbose" = "yes" && echo "creating src/.dbxrc"
-  echo ". $srcdir/src/.dbxrc" > "src/.dbxrc"
+if test -f "$srcdir/src/.dbxrc.in" -a ! -f "src/.dbxrc.in"; then
+  test "$verbose" = "yes" && echo "creating src/.dbxrc.in"
+  echo ". $srcdir/src/.dbxrc.in" > "src/.dbxrc.in"
 fi
 
 dnl Create a useful TAGS file
@@ -5584,6 +5667,9 @@ test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
 test "$enable_external_widget" = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
 test "$enable_kkcc"        = "yes" && AC_DEFINE(USE_KKCC)
 test "$enable_mc_alloc"    = "yes" && AC_DEFINE(MC_ALLOC)
+test "$enable_newgc"       = "yes" && AC_DEFINE(NEW_GC)
+test "$have_vdb_posix"     = "yes" && AC_DEFINE(VDB_POSIX)
+test "$have_vdb_fake"      = "yes" && AC_DEFINE(VDB_FAKE)
 test "$enable_quick_build" = "yes" && AC_DEFINE(QUICK_BUILD)
 test "$with_purify"        = "yes" && AC_DEFINE(PURIFY)
 test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
@@ -5864,6 +5950,32 @@ if test "$enable_mc_alloc" = yes ; then
   echo "  WARNING: turn it off."
   echo "  WARNING: ---------------------------------------------------------"
 fi
+test "$enable_newgc" = yes && echo "  Using the new incremental garbage collector."
+if test "$have_vdb_posix" = yes ; then
+  if test "$have_vdb_sigaction" = yes ; then 
+    echo "  Using POSIX sigaction() to install fault handler."
+  else
+    echo "  Using POSIX signal() to install vdb fault handler."
+  fi
+fi
+if test "$have_vdb_win32" = yes ; then
+  echo "  Using special WIN32 vdb fault handler."
+fi
+if test "$have_vdb_mach" = yes ; then
+  echo "  Using mach exception mechanism as vdb fault handler."
+fi
+if test "$have_vdb_fake" = yes && test "$enable_vdb" != fake; then
+  echo "  WARNING: ---------------------------------------------------------"
+  echo "  WARNING: The new incremental garbage collector is enabled, but"
+  echo "  WARNING: a virtual dirty bit implementation is not yet available"
+  echo "  WARNING: on this system. XEmacs will crash if you try to switch on"
+  echo "  WARNUNG: incremental garbage collection!"
+  echo "  WARNING: Use \`--disable-newgc' to turn incremental gc off."
+  echo "  WARNING: ---------------------------------------------------------"
+fi
+if test "$have_vdb_fake" = yes && test "$enable_vdb" == fake; then
+  echo "  Virtual dirty bit write barrier manually disabled."
+fi
 test "$enable_pdump" = yes && echo "  Using the new portable dumper."
 test "$enable_dump_in_exec" = yes && echo "  Dumping into executable."
 test "$enable_debug" = yes && echo "  Compiling in support for extra debugging code."
@@ -5981,6 +6093,14 @@ dnl if it exists (i.e. in the src/ directory).
     MAKE_JUNK_C(Makefile.in)
     CPP_MAKEFILE(,Makefile)
     CPP_MAKEFILE(-DUSE_GNU_MAKE,GNUmakefile)
+    if test -r ".gdbinit.in"; then
+      MAKE_JUNK_C(.gdbinit.in)
+      CPP_MAKEFILE(,.gdbinit)
+    fi
+    if test -r ".dbxrc.in"; then
+      MAKE_JUNK_C(.dbxrc.in)
+      CPP_MAKEFILE(,.dbxrc)
+    fi
     if test -r "xemacs.def.in"; then
 dnl #### We should be using MAKE_JUNK_C instead of the next two lines.
 dnl #### But the comments in xemacs.def.in need to be converted from C-style

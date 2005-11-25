@@ -414,6 +414,14 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_WCSCMP
 #undef HAVE_WCSLEN
 
+/* Functions and structs checked for vdb. */
+#undef HAVE_MPROTECT
+#undef HAVE_SIGACTION
+#undef HAVE_STRUCT_SIGINFO_SI_ADDR
+#undef HAVE_SIGINFO_T_SI_ADDR
+#undef HAVE_SIGNAL
+#undef HAVE_STRUCT_SIGCONTEXT_CR2
+
 #undef HAVE_UTIME
 #undef HAVE_UTIMES
 #undef HAVE_SIGSETJMP
@@ -680,6 +688,15 @@ things are arranged in config.h.in.  In particular:
 
 /* If defined, use experimental allocator. */
 #undef MC_ALLOC
+
+/* If defined, use experimental incremental garbage collector. */
+#undef NEW_GC
+
+/* Virtual dirty bit implementation for incremental gc. */
+#undef VDB_POSIX
+#undef VDB_MACH
+#undef VDB_WIN32
+#undef VDB_FAKE
 
 /* Enable special GNU Make features in the Makefiles. */
 #undef USE_GNU_MAKE

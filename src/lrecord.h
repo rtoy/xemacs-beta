@@ -1,3 +1,5 @@
+#define NEW_GC_REMOVE
+
 /* The "lrecord" structure (header of a compound lisp object).
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1996, 2001, 2002, 2004, 2005 Ben Wing.
@@ -217,38 +219,38 @@ enum lrecord_type
      #### This should be replaced by a symbol_value_magic_p flag
      in the Lisp_Symbol lrecord_header. */
   lrecord_type_symbol_value_forward,      /*  0 */
-  lrecord_type_symbol_value_varalias,     /*  1 */
-  lrecord_type_symbol_value_lisp_magic,   /*  2 */
-  lrecord_type_symbol_value_buffer_local, /*  3 */
+  lrecord_type_symbol_value_varalias,
+  lrecord_type_symbol_value_lisp_magic,
+  lrecord_type_symbol_value_buffer_local,
   lrecord_type_max_symbol_value_magic = lrecord_type_symbol_value_buffer_local,
-  lrecord_type_symbol,                    /*  4 */
-  lrecord_type_subr,                      /*  5 */
-  lrecord_type_cons,                      /*  6 */
-  lrecord_type_vector,                    /*  7 */
-  lrecord_type_string,                    /*  8 */
+  lrecord_type_symbol,
+  lrecord_type_subr,
+  lrecord_type_cons,
+  lrecord_type_vector,
+  lrecord_type_string,
 #ifndef MC_ALLOC
   lrecord_type_lcrecord_list,
 #endif /* not MC_ALLOC */
-  lrecord_type_compiled_function,         /*  9 */
-  lrecord_type_weak_list,                 /* 10 */
-  lrecord_type_bit_vector,                /* 11 */
-  lrecord_type_float,                     /* 12 */
-  lrecord_type_hash_table,                /* 13 */
-  lrecord_type_lstream,                   /* 14 */
-  lrecord_type_process,                   /* 15 */
-  lrecord_type_charset,                   /* 16 */
-  lrecord_type_coding_system,             /* 17 */
-  lrecord_type_char_table,                /* 18 */
-  lrecord_type_char_table_entry,          /* 19 */
-  lrecord_type_range_table,               /* 20 */
-  lrecord_type_opaque,                    /* 21 */
-  lrecord_type_opaque_ptr,                /* 22 */
-  lrecord_type_buffer,                    /* 23 */
-  lrecord_type_extent,                    /* 24 */
-  lrecord_type_extent_info,               /* 25 */
-  lrecord_type_extent_auxiliary,          /* 26 */
-  lrecord_type_marker,                    /* 27 */
-  lrecord_type_event,                     /* 28 */
+  lrecord_type_compiled_function,
+  lrecord_type_weak_list,
+  lrecord_type_bit_vector,
+  lrecord_type_float,
+  lrecord_type_hash_table,
+  lrecord_type_lstream,
+  lrecord_type_process,
+  lrecord_type_charset,
+  lrecord_type_coding_system,
+  lrecord_type_char_table,
+  lrecord_type_char_table_entry,
+  lrecord_type_range_table,
+  lrecord_type_opaque,
+  lrecord_type_opaque_ptr,
+  lrecord_type_buffer,
+  lrecord_type_extent,
+  lrecord_type_extent_info,
+  lrecord_type_extent_auxiliary,
+  lrecord_type_marker,
+  lrecord_type_event,
 #ifdef EVENT_DATA_AS_OBJECTS /* not defined */
   lrecord_type_key_data,
   lrecord_type_button_data,
@@ -260,47 +262,79 @@ enum lrecord_type
   lrecord_type_magic_eval_data,
   lrecord_type_magic_data,
 #endif /* EVENT_DATA_AS_OBJECTS */
-  lrecord_type_keymap,                    /* 29 */
-  lrecord_type_command_builder,           /* 30 */
-  lrecord_type_timeout,                   /* 31 */
-  lrecord_type_specifier,                 /* 32 */
-  lrecord_type_console,                   /* 33 */
-  lrecord_type_device,                    /* 34 */
-  lrecord_type_frame,                     /* 35 */
-  lrecord_type_window,                    /* 36 */
-  lrecord_type_window_mirror,             /* 37 */
-  lrecord_type_window_configuration,      /* 38 */
-  lrecord_type_gui_item,                  /* 39 */
-  lrecord_type_popup_data,                /* 40 */
-  lrecord_type_toolbar_button,            /* 41 */
-  lrecord_type_scrollbar_instance,        /* 42 */
-  lrecord_type_color_instance,            /* 43 */
-  lrecord_type_font_instance,             /* 44 */
-  lrecord_type_image_instance,            /* 45 */
-  lrecord_type_glyph,                     /* 46 */
-  lrecord_type_face,                      /* 47 */
-  lrecord_type_database,                  /* 48 */
-  lrecord_type_tooltalk_message,          /* 49 */
-  lrecord_type_tooltalk_pattern,          /* 50 */
-  lrecord_type_ldap,                      /* 51 */
-  lrecord_type_pgconn,                    /* 52 */
-  lrecord_type_pgresult,                  /* 53 */
-  lrecord_type_devmode,                   /* 54 */
-  lrecord_type_mswindows_dialog_id,       /* 55 */
-  lrecord_type_case_table,                /* 56 */
-  lrecord_type_emacs_ffi,                 /* 57 */
-  lrecord_type_emacs_gtk_object,          /* 58 */
-  lrecord_type_emacs_gtk_boxed,           /* 59 */
-  lrecord_type_weak_box,                  /* 60 */
-  lrecord_type_ephemeron,                 /* 61 */
-  lrecord_type_bignum,                    /* 62 */
-  lrecord_type_ratio,                     /* 63 */
-  lrecord_type_bigfloat,                  /* 64 */
+  lrecord_type_keymap,
+  lrecord_type_command_builder,
+  lrecord_type_timeout,
+  lrecord_type_specifier,
+  lrecord_type_console,
+  lrecord_type_device,
+  lrecord_type_frame,
+  lrecord_type_window,
+  lrecord_type_window_mirror,
+  lrecord_type_window_configuration,
+  lrecord_type_gui_item,
+  lrecord_type_popup_data,
+  lrecord_type_toolbar_button,
+  lrecord_type_scrollbar_instance,
+  lrecord_type_color_instance,
+  lrecord_type_font_instance,
+  lrecord_type_image_instance,
+  lrecord_type_glyph,
+  lrecord_type_face,
+  lrecord_type_database,
+  lrecord_type_tooltalk_message,
+  lrecord_type_tooltalk_pattern,
+  lrecord_type_ldap,
+  lrecord_type_pgconn,
+  lrecord_type_pgresult,
+  lrecord_type_devmode,
+  lrecord_type_mswindows_dialog_id,
+  lrecord_type_case_table,
+  lrecord_type_emacs_ffi,
+  lrecord_type_emacs_gtk_object,
+  lrecord_type_emacs_gtk_boxed,
+  lrecord_type_weak_box,
+  lrecord_type_ephemeron,
+  lrecord_type_bignum,
+  lrecord_type_ratio,
+  lrecord_type_bigfloat,
 #ifndef MC_ALLOC
   lrecord_type_free, /* only used for "free" lrecords */
   lrecord_type_undefined, /* only used for debugging */
 #endif /* not MC_ALLOC */
-  lrecord_type_last_built_in_type         /* 65 */ /* must be last */
+#ifdef NEW_GC
+  lrecord_type_string_indirect_data,
+  lrecord_type_string_direct_data,
+  lrecord_type_hash_table_entry,
+  lrecord_type_syntax_cache,
+  lrecord_type_buffer_text,
+  lrecord_type_compiled_function_args,
+  lrecord_type_tty_console,
+  lrecord_type_stream_console,
+  lrecord_type_dynarr,
+  lrecord_type_face_cachel,
+  lrecord_type_face_cachel_dynarr,
+  lrecord_type_glyph_cachel,
+  lrecord_type_glyph_cachel_dynarr,
+  lrecord_type_x_device,
+  lrecord_type_gtk_device,
+  lrecord_type_tty_device,
+  lrecord_type_mswindows_device,
+  lrecord_type_msprinter_device,
+  lrecord_type_x_frame,
+  lrecord_type_gtk_frame,
+  lrecord_type_mswindows_frame,
+  lrecord_type_gap_array_marker,
+  lrecord_type_gap_array,
+  lrecord_type_extent_list_marker,
+  lrecord_type_extent_list,
+  lrecord_type_stack_of_extents,
+  lrecord_type_tty_color_instance_data,
+  lrecord_type_tty_font_instance_data,
+  lrecord_type_specifier_caching,
+  lrecord_type_expose_ignore,
+#endif /* NEW_GC */
+  lrecord_type_last_built_in_type         /* must be last */
 };
 
 extern MODULE_API int lrecord_type_count;
@@ -400,6 +434,12 @@ lrecord_implementations_table[lrecord_type_last_built_in_type + MODULE_DEFINABLE
    LHEADER_IMPLEMENTATION (XRECORD_LHEADER (obj))
 #define LHEADER_IMPLEMENTATION(lh) lrecord_implementations_table[(lh)->type]
 
+#include "gc.h"
+
+#ifdef NEW_GC
+#include "vdb.h"
+#endif /* NEW_GC */
+
 extern int gc_in_progress;
 
 #ifdef MC_ALLOC
@@ -407,14 +447,31 @@ extern int gc_in_progress;
 
 #ifdef ALLOC_TYPE_STATS
 void init_lrecord_stats (void);
-void inc_lrecord_string_data_stats (Bytecount size);
-void dec_lrecord_string_data_stats (Bytecount size);
 void inc_lrecord_stats (Bytecount size, const struct lrecord_header *h);
 void dec_lrecord_stats (Bytecount size_including_overhead, 
 			const struct lrecord_header *h);
+int lrecord_stats_heap_size (void);
 #endif /* ALLOC_TYPE_STATS */
 
 /* Tell mc-alloc how to call a finalizer. */
+#ifdef NEW_GC
+#define MC_ALLOC_CALL_FINALIZER(ptr)					\
+{									\
+  Lisp_Object MCACF_obj = wrap_pointer_1 (ptr);				\
+  struct lrecord_header *MCACF_lheader = XRECORD_LHEADER (MCACF_obj);   \
+  if (XRECORD_LHEADER (MCACF_obj) && LRECORDP (MCACF_obj)		\
+      && !LRECORD_FREE_P (MCACF_lheader)  )				\
+    {									\
+      const struct lrecord_implementation *MCACF_implementation		\
+	= LHEADER_IMPLEMENTATION (MCACF_lheader);			\
+      if (MCACF_implementation && MCACF_implementation->finalizer)	\
+        {								\
+	  GC_STAT_FINALIZED;						\
+          MCACF_implementation->finalizer (ptr, 0);			\
+        }								\
+    }									\
+} while (0)
+#else /* not NEW_GC */
 #define MC_ALLOC_CALL_FINALIZER(ptr)					\
 {									\
   Lisp_Object MCACF_obj = wrap_pointer_1 (ptr);				\
@@ -428,6 +485,7 @@ void dec_lrecord_stats (Bytecount size_including_overhead,
 	MCACF_implementation->finalizer (ptr, 0);			\
     }									\
 } while (0)
+#endif /* not NEW_GC */
 
 /* Tell mc-alloc how to call a finalizer for disksave. */
 #define MC_ALLOC_CALL_FINALIZER_FOR_DISKSAVE(ptr)			\
@@ -952,6 +1010,9 @@ enum memory_description_type
 {
   XD_LISP_OBJECT_ARRAY,
   XD_LISP_OBJECT,
+#ifdef NEW_GC
+  XD_LISP_OBJECT_BLOCK_PTR,
+#endif /* NEW_GC */
   XD_LO_LINK,
   XD_OPAQUE_PTR,
   XD_OPAQUE_PTR_CONVERTIBLE,
@@ -1087,6 +1148,14 @@ extern const struct sized_memory_description lisp_object_description;
   { XD_BLOCK_PTR, offsetof (base_type, base), XD_INDIRECT(1, 0), {sub_desc} },\
   { XD_INT,        offsetof (base_type, cur) },				      \
   { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }	      \
+
+#ifdef NEW_GC
+#define XD_LISP_DYNARR_DESC(base_type, sub_desc)			\
+  { XD_LISP_OBJECT_BLOCK_PTR, offsetof (base_type, base),		\
+    XD_INDIRECT(1, 0), {sub_desc} },					\
+  { XD_INT,        offsetof (base_type, cur) },				\
+  { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }
+#endif /* not NEW_GC */
 
 /* DEFINE_LRECORD_IMPLEMENTATION is for objects with constant size.
    DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION is for objects whose size varies.
@@ -1673,6 +1742,9 @@ void old_free_lcrecord (Lisp_Object rec);
 
 void *alloc_lrecord (Bytecount size,
 		     const struct lrecord_implementation *);
+
+void *alloc_lrecord_array (Bytecount size, int elemcount,
+			   const struct lrecord_implementation *);
 
 #define alloc_lrecord_type(type, lrecord_implementation) \
   ((type *) alloc_lrecord (sizeof (type), lrecord_implementation))

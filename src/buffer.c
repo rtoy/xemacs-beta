@@ -233,6 +233,14 @@ static const struct memory_description buffer_text_description_1 [] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("buffer-text", buffer_text,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       buffer_text_description_1,
+			       Lisp_Buffer_Text);
+#endif /* NEW_GC */
+
 static const struct sized_memory_description buffer_text_description = {
   sizeof (struct buffer_text),
   buffer_text_description_1
@@ -244,10 +252,16 @@ static const struct memory_description buffer_description [] = {
 
   { XD_LISP_OBJECT, offsetof (struct buffer, extent_info) },
 
+#ifdef NEW_GC
+  { XD_BLOCK_PTR, offsetof (struct buffer, text),
+    1, { &buffer_text_description } },
+  { XD_LISP_OBJECT, offsetof (struct buffer, syntax_cache) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (struct buffer, text),
     1, { &buffer_text_description } },
   { XD_BLOCK_PTR, offsetof (struct buffer, syntax_cache),
     1, { &syntax_cache_description } },
+#endif /* not NEW_GC */
 
   { XD_LISP_OBJECT, offsetof (struct buffer, indirect_children) },
   { XD_LISP_OBJECT, offsetof (struct buffer, base_buffer) },
@@ -1889,6 +1903,9 @@ void
 syms_of_buffer (void)
 {
   INIT_LRECORD_IMPLEMENTATION (buffer);
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (buffer_text);
+#endif /* NEW_GC */
 
   DEFSYMBOL (Qbuffer_live_p);
   DEFSYMBOL (Qbuffer_or_string_p);

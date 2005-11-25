@@ -223,6 +223,9 @@ USE_KKCC=1
 # Set this to use the new experimental allocator routines
 MC_ALLOC=1
 
+# Set this to use the new experimental incremental garbage collector routines
+NEW_GC=0
+
 # Set this to turn on the use of the union type, which gets you improved
 # type checking of Lisp_Objects -- they're declared as unions instead of
 # ints, and so places where a Lisp_Object is mistakenly passed to a routine

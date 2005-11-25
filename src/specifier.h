@@ -423,6 +423,9 @@ enum spec_add_meth
 
 struct specifier_caching
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
   int offset_into_struct_window;
   void (*value_changed_in_window) (Lisp_Object specifier, struct window *w,
 				   Lisp_Object oldval);
@@ -431,6 +434,19 @@ struct specifier_caching
 				  Lisp_Object oldval);
   int always_recompute;
 };
+
+#ifdef NEW_GC
+DECLARE_LRECORD (specifier_caching, struct specifier_caching);
+#define XSPECIFIER_CACHING(x) \
+  XRECORD (x, specifier_caching, struct specifier_caching)
+#define wrap_specifier_caching(p) \
+  wrap_record (p, specifier_caching)
+#define SPECIFIER_CACHINGP(x) RECORDP (x, specifier_caching)
+#define CHECK_SPECIFIER_CACHING(x) \
+  CHECK_RECORD (x, specifier_caching)
+#define CONCHECK_SPECIFIER_CACHING(x) \
+  CONCHECK_RECORD (x, specifier_caching)
+#endif /* NEW_GC */
 
 /* #### get image instances out of domains! */
 

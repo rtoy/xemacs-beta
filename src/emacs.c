@@ -1312,6 +1312,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
      the Lisp engine and need to be done both at dump time and at run time. */
 
   init_signals_very_early ();
+#ifdef NEW_GC
+  vdb_install_signal_handler ();
+#endif
   init_data_very_early (); /* Catch math errors. */
   init_floatfns_very_early (); /* Catch floating-point math errors. */
   init_process_times_very_early (); /* Initialize our process timers.
@@ -1397,6 +1400,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
   init_alloc_early ();
 
+  init_gc_early ();
+
   if (!initialized)
     {
       /* Initialize things so that new Lisp objects
@@ -1405,6 +1410,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 because pretty much all of the initialization
 	 routines below create new objects. */
       init_alloc_once_early ();
+
+      init_gc_once_early ();
 
       /* Initialize Qnil, Qt, Qunbound, and the
 	 obarray.  After this, symbols can be
@@ -1444,6 +1451,10 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef MC_ALLOC
       syms_of_mc_alloc ();
 #endif /* MC_ALLOC */
+      syms_of_gc ();
+#ifdef NEW_GC
+      syms_of_vdb ();
+#endif /* NEW_GC */
       syms_of_buffer ();
       syms_of_bytecode ();
       syms_of_callint ();
@@ -1850,6 +1861,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 				 (note, we are inside ifdef PDUMP) */
     {
       reinit_alloc_early ();
+      reinit_gc_early ();
       reinit_symbols_early ();
 #ifndef MC_ALLOC
       reinit_opaque_early ();
@@ -2054,6 +2066,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_font_lock ();
 #endif /* USE_C_FONT_LOCK */
       vars_of_frame ();
+      vars_of_gc ();
       vars_of_glyphs ();
       vars_of_glyphs_eimage ();
       vars_of_glyphs_widget ();
@@ -2394,9 +2407,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
 
       /* This calls Fmake_glyph_internal(). */
-      complex_vars_of_alloc ();
-
-      /* This calls Fmake_glyph_internal(). */
 #ifdef HAVE_MENUBARS
       complex_vars_of_menubar ();
 #endif
@@ -2439,6 +2449,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 might depend on all sorts of things; I'm not sure. */
       complex_vars_of_emacs ();
 
+      complex_vars_of_gc ();
+
       /* This creates a couple of basic keymaps and depends on Lisp
 	 hash tables and Ffset() (both of which depend on some variables
 	 initialized in the vars_of_*() section) and possibly other
@@ -2449,7 +2461,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       {
 	extern int always_gc;
 	if (always_gc)                /* purification debugging hack */
+#ifdef NEW_GC
+	  gc_full ();
+#else /* not NEW_GC */
 	  garbage_collect_1 ();
+#endif /* not NEW_GC */
       }
 #endif
     }
@@ -2928,7 +2944,11 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
 {
   int i;
 
+#ifdef NEW_GC
+  if (gc_in_progress) gc_full ();
+#else /* not NEW_GC */
   assert (!gc_in_progress);
+#endif /* not NEW_GC */
 
   if (run_temacs_argc < 0)
     invalid_operation ("I've lost my temacs-hood", Qunbound);
@@ -3204,7 +3224,11 @@ and announce itself normally when it is run.
   memory_warnings (my_edata, malloc_warning);
 #endif
 
+#ifdef NEW_GC
+  gc_full ();
+#else /* not NEW_GC */
   garbage_collect_1 ();
+#endif /* not NEW_GC */
 
 #ifdef PDUMP
   pdump ();
@@ -3728,12 +3752,28 @@ fatal_error_signal (int sig)
 
   guts_of_fatal_error_signal (sig);
 
+#ifdef NEW_GC
+  /* This time the signal will really be fatal. To be able to debug
+     SIGSEGV and SIGBUS also during write barrier, send SIGABRT. */
+#ifdef WIN32_NATIVE
+  if (sig == SIGSEGV)
+    raise (SIGABRT);
+  else
+    raise (sig);
+#else
+  if ((sig == SIGSEGV) || (sig == SIGBUS))
+    kill (qxe_getpid (), SIGABRT);
+  else
+    kill (qxe_getpid (),  sig);
+#endif
+#else /* not NEW_GC */
   /* Signal the same code; this time it will really be fatal. */
 #ifdef WIN32_NATIVE
   raise (sig);
 #else
   kill (qxe_getpid (), sig);
 #endif
+#endif /* not NEW_GC */
   SIGRETURN;
 }
 

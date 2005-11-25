@@ -44,10 +44,26 @@ Boston, MA 02111-1307, USA.  */
 Lisp_Object Qinit_pre_tty_win, Qinit_post_tty_win;
 
 
+#ifdef NEW_GC
+static const struct memory_description tty_device_data_description_1 [] = {
+  { XD_END }
+};
+
+DEFINE_LRECORD_IMPLEMENTATION ("tty-device", tty_device,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       tty_device_data_description_1,
+			       Lisp_Tty_Device);
+#endif /* NEW_GC */
+
 static void
 allocate_tty_device_struct (struct device *d)
 {
+#ifdef NEW_GC
+  d->device_data = alloc_lrecord_type (struct tty_device, &lrecord_tty_device);
+#else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct tty_device);
+#endif /* not NEW_GC */
 }
 
 static void
@@ -97,6 +113,7 @@ tty_init_device (struct device *d, Lisp_Object UNUSED (props))
   call0 (Qinit_pre_tty_win);
 }
 
+#ifndef NEW_GC
 static void
 free_tty_device_struct (struct device *d)
 {
@@ -109,6 +126,7 @@ tty_delete_device (struct device *d)
 {
   free_tty_device_struct (d);
 }
+#endif /* not NEW_GC */
 
 #ifdef SIGWINCH
 
@@ -189,6 +207,10 @@ tty_device_system_metrics (struct device *d,
 void
 syms_of_device_tty (void)
 {
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (tty_device);
+#endif /* NEW_GC */
+
   DEFSYMBOL (Qinit_pre_tty_win);
   DEFSYMBOL (Qinit_post_tty_win);
 }
@@ -198,7 +220,9 @@ console_type_create_device_tty (void)
 {
   /* device methods */
   CONSOLE_HAS_METHOD (tty, init_device);
+#ifndef NEW_GC
   CONSOLE_HAS_METHOD (tty, delete_device);
+#endif /* not NEW_GC */
 #ifdef SIGWINCH
   CONSOLE_HAS_METHOD (tty, asynch_device_change);
 #endif /* SIGWINCH */

@@ -302,7 +302,11 @@ finalize_specifier (void *header, int for_disksave)
   /* don't be snafued by the disksave finalization. */
   if (!for_disksave && !GHOST_SPECIFIER_P(sp) && sp->caching)
     {
+#ifdef NEW_GC
+      mc_free (sp->caching);
+#else /* not NEW_GC */
       xfree (sp->caching, struct specifier_caching *);
+#endif /* not NEW_GC */
       sp->caching = 0;
     }
 }
@@ -382,10 +386,19 @@ static const struct memory_description specifier_caching_description_1[] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("specifier-caching", 
+			       specifier_caching,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0, 
+			       specifier_caching_description_1,
+			       struct specifier_caching);
+#else /* not NEW_GC */
 static const struct sized_memory_description specifier_caching_description = {
   sizeof (struct specifier_caching),
   specifier_caching_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct sized_memory_description specifier_extra_description_map[]
 = {
@@ -403,8 +416,12 @@ const struct memory_description specifier_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, frame_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, window_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, buffer_specs) },
+#ifdef NEW_GC
+  { XD_LISP_OBJECT,  offsetof (Lisp_Specifier, caching) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR,  offsetof (Lisp_Specifier, caching), 1,
     { &specifier_caching_description } },
+#endif /* not NEW_GC */
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, magic_parent) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, fallback) },
   { XD_BLOCK_ARRAY, offsetof (Lisp_Specifier, data), 1,
@@ -2996,7 +3013,12 @@ set_specifier_caching (Lisp_Object specifier, int struct_window_offset,
   assert (!GHOST_SPECIFIER_P (sp));
 
   if (!sp->caching)
+#ifdef NEW_GC
+    sp->caching = alloc_lrecord_type (struct specifier_caching,
+				      &lrecord_specifier_caching);
+#else /* not NEW_GC */
     sp->caching = xnew_and_zero (struct specifier_caching);
+#endif /* not NEW_GC */
   sp->caching->offset_into_struct_window = struct_window_offset;
   sp->caching->value_changed_in_window = value_changed_in_window;
   sp->caching->offset_into_struct_frame = struct_frame_offset;
@@ -3349,6 +3371,9 @@ void
 syms_of_specifier (void)
 {
   INIT_LRECORD_IMPLEMENTATION (specifier);
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (specifier_caching);
+#endif /* NEW_GC */
 
   DEFSYMBOL (Qspecifierp);
 

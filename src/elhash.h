@@ -33,6 +33,19 @@ DECLARE_LRECORD (hash_table, Lisp_Hash_Table);
 #define CHECK_HASH_TABLE(x) CHECK_RECORD (x, hash_table)
 #define CONCHECK_HASH_TABLE(x) CONCHECK_RECORD (x, hash_table)
 
+#ifdef NEW_GC
+typedef struct htentry Lisp_Hash_Table_Entry;
+
+DECLARE_LRECORD (hash_table_entry, Lisp_Hash_Table_Entry);
+
+#define XHASH_TABLE_ENTRY(x) \
+  XRECORD (x, hash_table_entry, Lisp_Hash_Table_Entry)
+#define wrap_hash_table_entry(p) wrap_record (p, hash_table_entry)
+#define HASH_TABLE_ENTRYP(x) RECORDP (x, hash_table_entry)
+#define CHECK_HASH_TABLE_ENTRY(x) CHECK_RECORD (x, hash_table_entry)
+#define CONCHECK_HASH_TABLE_ENTRY(x) CONCHECK_RECORD (x, hash_table_entry)
+#endif /* NEW_GC */
+
 enum hash_table_weakness
 {
   HASH_TABLE_NON_WEAK,

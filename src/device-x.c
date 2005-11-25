@@ -109,11 +109,19 @@ static const struct memory_description x_device_data_description_1 [] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("x-device", x_device,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       x_device_data_description_1,
+			       Lisp_X_Device);
+#else /* not NEW_GC */
 extern const struct sized_memory_description x_device_data_description;
 
 const struct sized_memory_description x_device_data_description = {
   sizeof (struct x_device), x_device_data_description_1
 };
+#endif /* not NEW_GC */
 
 /* Functions to synchronize mirroring resources and specifiers */
 int in_resource_setting;
@@ -202,7 +210,11 @@ static struct device *device_being_initialized = NULL;
 static void
 allocate_x_device_struct (struct device *d)
 {
+#ifdef NEW_GC
+  d->device_data = alloc_lrecord_type (struct x_device, &lrecord_x_device);
+#else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct x_device);
+#endif /* not NEW_GC */
 }
 
 static void
@@ -885,7 +897,11 @@ x_mark_device (struct device *d)
 static void
 free_x_device_struct (struct device *d)
 {
+#ifdef NEW_GC
+  mc_free (d->device_data);
+#else /* not NEW_GC */
   xfree (d->device_data, void *);
+#endif /* not NEW_GC */
 }
 
 static void
@@ -2037,6 +2053,10 @@ See also `x-get-font-path'.
 void
 syms_of_device_x (void)
 {
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (x_device);
+#endif /* NEW_GC */
+
   DEFSUBR (Fx_debug_mode);
   DEFSUBR (Fx_get_resource);
   DEFSUBR (Fx_get_resource_prefix);

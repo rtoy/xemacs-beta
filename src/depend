@@ -11,7 +11,7 @@ CONFIG_H=
 LISP_H=
 #else
 CONFIG_H=config.h
-LISP_H=lisp.h compiler.h config.h dumper.h general-slots.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h $(LISP_UNION_H)
+LISP_H=lisp.h compiler.h config.h dumper.h gc.h general-slots.h lisp.h lrecord.h mc-alloc.h number-gmp.h number-mp.h number.h symeval.h symsinit.h text.h vdb.h $(LISP_UNION_H)
 #endif
 
 #if defined(HAVE_MS_WINDOWS)
@@ -152,6 +152,7 @@ fns.o: $(LISP_H) buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h co
 font-lock.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h insdel.h syntax.h
 frame.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h events.h extents.h faces.h frame-impl.h frame.h frameslots.h glyphs.h gui.h gutter.h menubar.h process.h redisplay.h scrollbar.h specifier.h systime.h toolbar.h window-impl.h window.h winslots.h
 free-hook.o: $(LISP_H) hash.h
+gc.o: $(LISP_H) backtrace.h buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h coding-system-slots.h conslots.h console-impl.h console-stream.h console.h device.h elhash.h events.h extents-impl.h extents.h file-coding.h frame-impl.h frame.h frameslots.h glyphs.h lstream.h opaque.h process.h profile.h redisplay.h scrollbar.h specifier.h sysdep.h sysfile.h systime.h window-impl.h window.h winslots.h
 general.o: $(LISP_H) general-slots.h
 getloadavg.o: $(LISP_H) sysfile.h syssignal.h
 gif_io.o: $(LISP_H) gifrlib.h sysfile.h
@@ -187,7 +188,7 @@ lstream.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h insdel.h 
 macros.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h commands.h conslots.h console-impl.h console.h device.h events.h frame.h keymap.h macros.h redisplay.h scrollbar.h systime.h window.h
 malloc.o: $(CONFIG_H) getpagesize.h syssignal.h
 marker.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h
-mc-alloc.o: $(LISP_H)
+mc-alloc.o: $(LISP_H) blocktype.h getpagesize.h
 md5.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h file-coding.h lstream.h
 menubar.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h frame-impl.h frame.h frameslots.h gui.h keymap.h menubar.h redisplay.h scrollbar.h specifier.h window-impl.h window.h winslots.h
 minibuf.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h commands.h conslots.h console-impl.h console-stream.h console.h events.h frame-impl.h frame.h frameslots.h insdel.h redisplay.h scrollbar.h systime.h window-impl.h window.h winslots.h
@@ -261,6 +262,11 @@ unexsol2-6.o: compiler.h
 unexsol2.o: compiler.h
 unexsunos4.o: $(CONFIG_H) compiler.h
 unicode.o: $(LISP_H) charset.h coding-system-slots.h file-coding.h opaque.h sysfile.h
+vdb-fake.o: $(LISP_H)
+vdb-mach.o: $(LISP_H)
+vdb-posix.o: $(LISP_H)
+vdb-win32.o: $(LISP_H) intl-auto-encap-win32.h syswindows.h
+vdb.o: $(LISP_H)
 vm-limit.o: $(LISP_H) mem-limits.h
 widget.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h
 win32.o: $(LISP_H) backtrace.h buffer.h bufslots.h casetab.h charset.h chartab.h console-msw.h console.h hash.h intl-auto-encap-win32.h profile.h sysfile.h sysproc.h syssignal.h systime.h syswindows.h

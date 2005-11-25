@@ -42,6 +42,9 @@ DECLARE_CONSOLE_TYPE (x);
 
 struct x_device
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
   /* The X connection of this device. */
   Display *display;
 
@@ -159,6 +162,17 @@ struct x_device
   Time modifier_release_time;
 };
 
+#ifdef NEW_GC
+typedef struct x_device Lisp_X_Device;
+
+DECLARE_LRECORD (x_device, Lisp_X_Device);
+
+#define XX_DEVICE(x) \
+  XRECORD (x, x_device, Lisp_X_Device)
+#define wrap_x_device(p) wrap_record (p, x_device)
+#define X_DEVICE_P(x) RECORDP (x, x_device)
+#endif /* NEW_GC */
+
 #define DEVICE_X_DATA(d) DEVICE_TYPE_DATA (d, x)
 
 #define FRAME_X_DISPLAY(f) (DEVICE_X_DISPLAY (XDEVICE (f->device)))
@@ -225,6 +239,10 @@ struct x_device
 
 struct x_frame
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
+
   /* The widget of this frame.  This is an EmacsShell or an
      ExternalShell. */
   Widget widget;
@@ -311,6 +329,16 @@ struct x_frame
 #endif /* EXTERNAL_WIDGET */
 };
 
+#ifdef NEW_GC
+typedef struct x_frame Lisp_X_Frame;
+
+DECLARE_LRECORD (x_frame, Lisp_X_Frame);
+
+#define XX_FRAME(x) \
+  XRECORD (x, x_frame, Lisp_X_Frame)
+#define wrap_x_frame(p) wrap_record (p, x_frame)
+#define X_FRAME_P(x) RECORDP (x, x_frame)
+#endif /* NEW_GC */
 #define FRAME_X_DATA(f) FRAME_TYPE_DATA (f, x)
 
 #define FRAME_X_SHELL_WIDGET(f)	    (FRAME_X_DATA (f)->widget)

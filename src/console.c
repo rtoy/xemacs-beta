@@ -115,9 +115,17 @@ console_type_entry_dynarr *the_console_type_entry_dynarr;
 
 static const struct memory_description console_data_description_1 []= {
 #ifdef HAVE_TTY
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, tty_console },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, tty_console, 1, { &tty_console_data_description} },
+#endif /* not NEW_GC */
 #endif
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, stream_console },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, stream_console, 1, { &stream_console_data_description} },
+#endif /* not NEW_GC */
   { XD_END }
 };
 
@@ -1189,6 +1197,12 @@ void
 syms_of_console (void)
 {
   INIT_LRECORD_IMPLEMENTATION (console);
+#ifdef NEW_GC
+#ifdef HAVE_TTY
+  INIT_LRECORD_IMPLEMENTATION (tty_console);
+#endif
+  INIT_LRECORD_IMPLEMENTATION (stream_console);
+#endif /* not NEW_GC */
 
   DEFSUBR (Fvalid_console_type_p);
   DEFSUBR (Fconsole_type_list);

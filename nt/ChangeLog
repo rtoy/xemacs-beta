@@ -1,3 +1,12 @@
+2005-11-21  Marcus Crestani  <crestani@xemacs.org>
+
+	Incremental Garbage Collector
+
+	* config.inc.samp: Add NEW_GC option.
+	* xemacs.dsp: Add files gc.c, gc.h, vdb.c, vdb.h, and vdb-win32.c.
+	* xemacs.mak: Add NEW_GC option; if NEW_GC, turn on KKCC and
+	MC_ALLOC.
+
 2005-11-08  Marcus Crestani  <crestani@xemacs.org>
 
 	* xemacs.mak:

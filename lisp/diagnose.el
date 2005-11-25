@@ -142,7 +142,7 @@
 	    (princ "\n")
 	    (map-plist #'(lambda (stat num)
 			   (when (string-match 
-				  "\\(.*\\)-storage\\(-additional\\)?$"
+				  "\\(.*\\)-storage\\$"
 				  (symbol-name stat))
 			     (incf total num)
 			     (princ (format fmt
@@ -237,10 +237,6 @@
 	(setq begin (point))
 	(princ "Allocated with lisp allocator:\n")
 	(show-stats "\\(.*\\)-storage$")
-	(princ "\n\n")
-	(setq begin (point))
-	(princ "Allocated additionally:\n")
-	(show-stats "\\(.*\\)-storage-additional$")
 	(princ (format "\n\ngrand total: %s\n" grandtotal)))
       grandtotal))))
   
@@ -253,10 +249,9 @@
 	 (page-size (first stats))
 	 (heap-sects (second stats))
 	 (used-plhs (third stats))
-	 (unmanaged-plhs (fourth stats))
-	 (free-plhs (fifth stats))
-	 (globals (sixth stats))
-	 (mc-malloced-bytes (seventh stats)))
+	 (free-plhs (fourth stats))
+	 (globals (fifth stats))
+	 (mc-malloced-bytes (sixth stats)))
     (with-output-to-temp-buffer "*memory usage*"
       (flet ((print-used-plhs (text plhs)
 	       (let ((sum-n-pages 0)
@@ -372,9 +367,6 @@
 	(print-used-plhs "USED HEAP" used-plhs)
 	(princ "\n\n")
 
-	(print-used-plhs "UNMANAGED HEAP" unmanaged-plhs)
-	(princ "\n\n")
-	
 	(print-free-plhs "FREE HEAP" free-plhs)
 	(princ "\n\n")
 	
@@ -399,3 +391,50 @@
 	  (princ (format fmt "grand total" mc-malloced-bytes)))
 	
 	(+ mc-malloced-bytes)))))
+
+
+(defun show-gc-stats ()
+  "Show statistics about garbage collection cycles."
+  (interactive)
+  (let ((buffer "*garbage collection statistics*")
+	(plist (gc-stats))
+	(fmt "%-9s %10s %10s %10s %10s %10s\n"))
+    (flet ((plist-get-stat (category field)
+	     (or (plist-get plist (intern (concat category field)))
+		 "-"))
+	   (show-stats (category)
+	     (princ (format fmt category
+			    (plist-get-stat category "-total")
+			    (plist-get-stat category "-in-last-gc")
+			    (plist-get-stat category "-in-this-gc")
+			    (plist-get-stat category "-in-last-cycle")
+			    (plist-get-stat category "-in-this-cycle")))))
+      (with-output-to-temp-buffer buffer
+	(save-excursion
+	  (set-buffer buffer)
+	  (princ (format "%s %s\n" "Current phase" (plist-get plist 'phase)))
+	  (princ (make-string 64 ?-))
+	  (princ "\n")
+	  (princ (format fmt "stat" "total" "last-gc" "this-gc" 
+			 "last-cycle" "this-cylce"))
+	  (princ (make-string 64 ?-))
+	  (princ "\n")
+	  (show-stats "n-gc")
+	  (show-stats "n-cycles")
+	  (show-stats "enqueued")
+	  (show-stats "dequeued")
+	  (show-stats "repushed")
+	  (show-stats "enqueued2")
+	  (show-stats "dequeued2")
+	  (show-stats "finalized")
+	  (show-stats "freed")
+	  (princ (make-string 64 ?-))
+	  (princ "\n")
+	  (princ (format fmt "explicitly"
+			 "freed:"
+			 (plist-get-stat "explicitly" "-freed")
+			 "tried:"
+			 (plist-get-stat "explicitly" "-tried-freed")
+			 "")))
+
+	(plist-get plist 'n-gc-total)))))

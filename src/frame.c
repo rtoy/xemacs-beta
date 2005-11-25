@@ -139,11 +139,24 @@ static Ichar_dynarr *title_string_ichar_dynarr;
 
 
 
+#ifndef NEW_GC
 extern const struct sized_memory_description gtk_frame_data_description;
 extern const struct sized_memory_description mswindows_frame_data_description;
 extern const struct sized_memory_description x_frame_data_description;
+#endif /* not NEW_GC */
 
 static const struct memory_description frame_data_description_1 []= {
+#ifdef NEW_GC
+#ifdef HAVE_GTK
+  { XD_LISP_OBJECT, gtk_console },
+#endif
+#ifdef HAVE_MS_WINDOWS
+  { XD_LISP_OBJECT, mswindows_console },
+#endif
+#ifdef HAVE_X_WINDOWS
+  { XD_LISP_OBJECT, x_console },
+#endif
+#else /* not NEW_GC */
 #ifdef HAVE_GTK
   { XD_BLOCK_PTR, gtk_console, 1, { &gtk_frame_data_description} },
 #endif
@@ -153,6 +166,7 @@ static const struct memory_description frame_data_description_1 []= {
 #ifdef HAVE_X_WINDOWS
   { XD_BLOCK_PTR, x_console, 1, { &x_frame_data_description} },
 #endif
+#endif /* not NEW_GC */
   { XD_END }
 };
 
@@ -160,6 +174,19 @@ static const struct sized_memory_description frame_data_description = {
   sizeof (void *), frame_data_description_1
 };
 
+#ifdef NEW_GC
+static const struct memory_description expose_ignore_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct expose_ignore, next) },
+  { XD_END }
+};
+
+DEFINE_LRECORD_IMPLEMENTATION ("expose-ignore", 
+			       expose_ignore,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0, 
+			       expose_ignore_description_1,
+			       struct expose_ignore);
+#else /* not NEW_GC */
 extern const struct sized_memory_description expose_ignore_description;
 
 static const struct memory_description expose_ignore_description_1 [] = {
@@ -172,6 +199,7 @@ const struct sized_memory_description expose_ignore_description = {
   sizeof (struct expose_ignore),
   expose_ignore_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description display_line_dynarr_pointer_description_1 []= {
   { XD_BLOCK_PTR, 0, 1, { &display_line_dynarr_description} },
@@ -189,10 +217,15 @@ static const struct memory_description frame_description [] = {
   { XD_LISP_OBJECT_ARRAY, offsetof (struct frame, slot), size },
 #include "frameslots.h"
 
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (struct frame, subwindow_exposures) },
+  { XD_LISP_OBJECT, offsetof (struct frame, subwindow_exposures_tail) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (struct frame, subwindow_exposures),
     1, { &expose_ignore_description } },
   { XD_BLOCK_PTR, offsetof (struct frame, subwindow_exposures_tail),
     1, { &expose_ignore_description } },
+#endif /* not NEW_GC */
 
 #ifdef HAVE_SCROLLBARS
   { XD_LISP_OBJECT, offsetof (struct frame, sb_vcache) },
@@ -3406,7 +3439,11 @@ change_frame_size (struct frame *f, int newheight, int newwidth, int delay)
      --andy. */
   MARK_FRAME_SIZE_CHANGED (f);
 
+#ifdef NEW_GC
+  if (delay || hold_frame_size_changes)
+#else /* not NEW_GC */
   if (delay || hold_frame_size_changes || gc_in_progress)
+#endif /* not NEW_GC */
     {
       f->new_width = newwidth;
       f->new_height = newheight;
@@ -3576,6 +3613,9 @@ void
 syms_of_frame (void)
 {
   INIT_LRECORD_IMPLEMENTATION (frame);
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (expose_ignore);
+#endif /* NEW_GC */
 
   DEFSYMBOL (Qdelete_frame_hook);
   DEFSYMBOL (Qselect_frame_hook);

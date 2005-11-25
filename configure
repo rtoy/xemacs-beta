@@ -1154,6 +1154,14 @@ Memory allocation options
                           with `mc-alloc').
   --with-kkcc             Enable experimental new GC algorithms.
   --with-mc-alloc         Enable experimental new allocator.
+  --with-newgc            Enable new incremental garbage collector.
+  --with-vdb=TYPE         Override auto-detection of virtual-dirty-bit
+                          write-barrier implementation for the new garbage
+                          collector. TYPE must be one of "auto" (for
+                          auto-detection), "posix", "win32", "mach", or "fake"
+                          (uses the new garbage collector but disables
+                          incremental collections). The default is to use
+                          auto-detection.
 
 Emacs Lisp options
 ------------------
@@ -3366,6 +3374,105 @@ if test "${with_mc_alloc+set}" = set; then
 else
   enable_mc_alloc=yes
 fi;
+# If --with-newgc or --without-newgc were given then copy the value to the
+# equivalent enable_newgc variable.
+if test "${with_newgc+set}" = set; then
+  enable_newgc="$with_newgc"
+fi;
+# If -enable-newgc or --disable-newgc were given then copy the value to the
+# equivalent with_newgc variable.
+if test "${enable_newgc+set}" = set; then
+  with_newgc="$enable_newgc"
+fi;
+# Check whether --with-newgc or --without-newgc was given.
+if test "${with_newgc+set}" = set; then
+  enableval="$with_newgc"
+  withval="$with_newgc"
+
+fi;
+_vdb_notfirst=""
+with_vdb_auto=
+enable_vdb_auto=
+with_vdb_posix=
+enable_vdb_posix=
+with_vdb_win32=
+enable_vdb_win32=
+with_vdb_mach=
+enable_vdb_mach=
+with_vdb_fake=
+enable_vdb_fake=
+with_vdb_no=
+enable_vdb_no=
+
+_vdb_types="auto posix win32 mach fake no"
+_vdb_default="auto,posix,win32,mach,fake,no"
+
+
+
+# If --with-vdb or --without-vdb were given then copy the value to the
+# equivalent enable_vdb variable.
+if test "${with_vdb+set}" = set; then
+  enable_vdb="$with_vdb"
+fi;
+# If -enable-vdb or --disable-vdb were given then copy the value to the
+# equivalent with_vdb variable.
+if test "${enable_vdb+set}" = set; then
+  with_vdb="$enable_vdb"
+fi;
+# Check whether --with-vdb or --without-vdb was given.
+if test "${with_vdb+set}" = set; then
+  enableval="$with_vdb"
+  withval="$with_vdb"
+  for y in $_vdb_types; do
+  eval "with_vdb_$y=no"
+  eval "enable_vdb_$y=no"
+done
+for x in `echo "$with_vdb" | sed -e 's/,/ /g'` ; do
+    _vdb_all_default=""
+    _vdb_found=""
+    case "$x" in
+        n | no | non | none ) _vdb_all_default=no ;;
+        a | al | all | both ) _vdb_all_default=yes ;;
+    esac
+
+    if test -z "$_vdb_all_default"; then
+        for y in $_vdb_types; do
+                        if test "$x" = "$y"; then
+		                _vdb_found=yes
+                                eval "with_vdb_$y=yes"
+                eval "enable_vdb_$y=yes"
+            elif test "$x" = "no$y"; then
+                                _vdb_found=yes
+                                eval "with_vdb_$y=no"
+                eval "enable_vdb_$y=no"
+            fi
+        done
+        test -z "$_vdb_found" && _vdb_bogus=yes
+    fi
+    if test "$_vdb_bogus" = "yes" -o \
+         \( -n "$_vdb_all_default" -a -n "$_vdb_notfirst" \) ; then
+	(echo "$progname: Usage error:"
+echo " " "Valid values for the --with-vdb option are:
+$_vdb_types.  With prefix \"no\", switch it off.
+Defaults may be overridden with \`all' or \`none' first in the list.
+Hardcoded default is: $_vdb_default."
+echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
+    elif test -n "$_vdb_all_default" ; then
+        for y in $_vdb_types; do
+	    eval "with_vdb_$y=$_vdb_all_default"
+	    eval "enable_vdb_$y=$_vdb_all_default"
+        done
+    fi
+    _vdb_notfirst=yes
+done
+unset _vdb_bogus _vdb_found _vdb_notfirst _vdb_types
+unset _vdb_default _vdb_all_default x y
+
+
+
+else
+  enable_vdb="auto"
+fi;
 
 # If --with-modules or --without-modules were given then copy the value to the
 # equivalent enable_modules variable.
@@ -4429,6 +4536,38 @@ if test -z "$enable_pdump"; then
   case "$opsys" in
     linux* )  enable_pdump=yes ;;              darwin )  enable_pdump=yes ;;              cygwin* ) enable_pdump=yes ;;              * )       enable_pdump=no ;;
   esac
+fi
+
+if test "$enable_newgc" = "yes"; then
+  if test "$enable_vdb" = "auto"; then
+    case "$opsys" in
+      darwin )  cat >>confdefs.h <<\_ACEOF
+#define VDB_MACH 1
+_ACEOF
+  have_vdb_mach=yes ;;
+      cygwin* ) cat >>confdefs.h <<\_ACEOF
+#define VDB_WIN32 1
+_ACEOF
+ have_vdb_win32=yes ;;
+      linux* )  check_vdb_posix=yes ;;
+      freebsd ) check_vdb_posix=yes ;;
+      * )       check_vdb_posix=yes ;;
+    esac
+  else
+    case "$enable_vdb" in
+      mach )  cat >>confdefs.h <<\_ACEOF
+#define VDB_MACH 1
+_ACEOF
+  have_vdb_mach=yes ;;
+      win32 ) cat >>confdefs.h <<\_ACEOF
+#define VDB_WIN32 1
+_ACEOF
+ have_vdb_win32=yes ;;
+      posix ) check_vdb_posix=yes ;;
+      fake )  have_vdb_fake=yes ;;
+      no )    have_vdb_fake=yes ;;
+    esac
+  fi
 fi
 
 if test -z "$with_dynamic"; then
@@ -8628,6 +8767,11 @@ if test -z "$enable_dump_in_exec"; then
       enable_dump_in_exec=yes
     fi
   fi
+fi
+
+if test "$enable_newgc" = "yes"; then
+  enable_mc_alloc=yes
+  enable_kkcc=yes
 fi
 
 test "$verbose" = "yes" && \
@@ -28581,6 +28725,654 @@ echo "$as_me: WARNING: Use of getaddrinfo is disabled for HP-UX 11.XX." >&2;}
   esac
 fi
 
+if test "$check_vdb_posix" = "yes" ; then
+    echo "$as_me:$LINENO: checking for mprotect" >&5
+echo $ECHO_N "checking for mprotect... $ECHO_C" >&6
+if test "${ac_cv_func_mprotect+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+/* Define mprotect to an innocuous variant, in case <limits.h> declares mprotect.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define mprotect innocuous_mprotect
+
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char mprotect (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+
+#undef mprotect
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char mprotect ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_mprotect) || defined (__stub___mprotect)
+choke me
+#else
+char (*f) () = mprotect;
+#endif
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+return f != mprotect;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_func_mprotect=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_func_mprotect=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_func_mprotect" >&5
+echo "${ECHO_T}$ac_cv_func_mprotect" >&6
+if test $ac_cv_func_mprotect = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_MPROTECT 1
+_ACEOF
+ have_vdb_mprotect=yes
+fi
+
+
+    echo "$as_me:$LINENO: checking for sigaction" >&5
+echo $ECHO_N "checking for sigaction... $ECHO_C" >&6
+if test "${ac_cv_func_sigaction+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+/* Define sigaction to an innocuous variant, in case <limits.h> declares sigaction.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define sigaction innocuous_sigaction
+
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char sigaction (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+
+#undef sigaction
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char sigaction ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_sigaction) || defined (__stub___sigaction)
+choke me
+#else
+char (*f) () = sigaction;
+#endif
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+return f != sigaction;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_func_sigaction=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_func_sigaction=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_func_sigaction" >&5
+echo "${ECHO_T}$ac_cv_func_sigaction" >&6
+if test $ac_cv_func_sigaction = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_SIGACTION 1
+_ACEOF
+ have_vdb_sigaction=yes
+else
+  have_vdb_sigaction=no
+fi
+
+  echo "$as_me:$LINENO: checking for struct siginfo.si_addr" >&5
+echo $ECHO_N "checking for struct siginfo.si_addr... $ECHO_C" >&6
+if test "${ac_cv_member_struct_siginfo_si_addr+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <signal.h>
+
+int
+main ()
+{
+static struct siginfo ac_aggr;
+if (ac_aggr.si_addr)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_struct_siginfo_si_addr=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <signal.h>
+
+int
+main ()
+{
+static struct siginfo ac_aggr;
+if (sizeof ac_aggr.si_addr)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_struct_siginfo_si_addr=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_member_struct_siginfo_si_addr=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_member_struct_siginfo_si_addr" >&5
+echo "${ECHO_T}$ac_cv_member_struct_siginfo_si_addr" >&6
+if test $ac_cv_member_struct_siginfo_si_addr = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_STRUCT_SIGINFO_SI_ADDR 1
+_ACEOF
+ have_si_addr=yes
+fi
+
+  echo "$as_me:$LINENO: checking for siginfo_t.si_addr" >&5
+echo $ECHO_N "checking for siginfo_t.si_addr... $ECHO_C" >&6
+if test "${ac_cv_member_siginfo_t_si_addr+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <signal.h>
+
+int
+main ()
+{
+static siginfo_t ac_aggr;
+if (ac_aggr.si_addr)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_siginfo_t_si_addr=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <signal.h>
+
+int
+main ()
+{
+static siginfo_t ac_aggr;
+if (sizeof ac_aggr.si_addr)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_siginfo_t_si_addr=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_member_siginfo_t_si_addr=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_member_siginfo_t_si_addr" >&5
+echo "${ECHO_T}$ac_cv_member_siginfo_t_si_addr" >&6
+if test $ac_cv_member_siginfo_t_si_addr = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_SIGINFO_T_SI_ADDR 1
+_ACEOF
+ have_si_addr=yes
+fi
+
+  if test "$have_si_addr" != "yes" ; then
+    have_vdb_sigaction=no
+  fi
+
+    echo "$as_me:$LINENO: checking for signal" >&5
+echo $ECHO_N "checking for signal... $ECHO_C" >&6
+if test "${ac_cv_func_signal+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+/* Define signal to an innocuous variant, in case <limits.h> declares signal.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define signal innocuous_signal
+
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char signal (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+
+#undef signal
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char signal ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_signal) || defined (__stub___signal)
+choke me
+#else
+char (*f) () = signal;
+#endif
+#ifdef __cplusplus
+}
+#endif
+
+int
+main ()
+{
+return f != signal;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_func_signal=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_func_signal=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_func_signal" >&5
+echo "${ECHO_T}$ac_cv_func_signal" >&6
+if test $ac_cv_func_signal = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_SIGNAL 1
+_ACEOF
+ have_vdb_signal=yes
+fi
+
+  echo "$as_me:$LINENO: checking for struct sigcontext.cr2" >&5
+echo $ECHO_N "checking for struct sigcontext.cr2... $ECHO_C" >&6
+if test "${ac_cv_member_struct_sigcontext_cr2+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <signal.h>
+
+int
+main ()
+{
+static struct sigcontext ac_aggr;
+if (ac_aggr.cr2)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_struct_sigcontext_cr2=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <signal.h>
+
+int
+main ()
+{
+static struct sigcontext ac_aggr;
+if (sizeof ac_aggr.cr2)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_struct_sigcontext_cr2=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_member_struct_sigcontext_cr2=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_member_struct_sigcontext_cr2" >&5
+echo "${ECHO_T}$ac_cv_member_struct_sigcontext_cr2" >&6
+if test $ac_cv_member_struct_sigcontext_cr2 = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_STRUCT_SIGCONTEXT_CR2 1
+_ACEOF
+ have_cr2=yes
+fi
+
+
+  if test "$have_cr2" != "yes" ; then
+    have_vdb_signal=no
+  fi
+
+  if test "$have_vdb_mprotect" != "yes" ; then
+    have_vdb_sigaction=no
+    have_vdb_signal=no
+  fi
+
+  if test "$have_vdb_sigaction" != "yes" -a "$have_vdb_signal" != "yes" ; then
+    have_vdb_posix=no
+    have_vdb_fake=yes
+  else
+    have_vdb_posix=yes
+    have_vdb_fake=no
+  fi
+fi
+
 
 
 
@@ -37220,14 +38012,14 @@ if test "$verbose" = "yes"; then
 fi
 
 
-if test -f "$srcdir/src/.gdbinit" -a ! -f "src/.gdbinit"; then
-  test "$verbose" = "yes" && echo "creating src/.gdbinit"
-  echo "source $srcdir/src/.gdbinit" > "src/.gdbinit"
+if test -f "$srcdir/src/.gdbinit.in" -a ! -f "src/.gdbinit.in"; then
+  test "$verbose" = "yes" && echo "creating src/.gdbinit.in"
+  echo "source $srcdir/src/.gdbinit.in" > "src/.gdbinit.in"
 fi
 
-if test -f "$srcdir/src/.dbxrc" -a ! -f "src/.dbxrc"; then
-  test "$verbose" = "yes" && echo "creating src/.dbxrc"
-  echo ". $srcdir/src/.dbxrc" > "src/.dbxrc"
+if test -f "$srcdir/src/.dbxrc.in" -a ! -f "src/.dbxrc.in"; then
+  test "$verbose" = "yes" && echo "creating src/.dbxrc.in"
+  echo ". $srcdir/src/.dbxrc.in" > "src/.dbxrc.in"
 fi
 
 if test -f "$srcdir/TAGS" -a ! -f "TAGS"; then
@@ -37527,6 +38319,18 @@ _ACEOF
 
 test "$enable_mc_alloc"    = "yes" && cat >>confdefs.h <<\_ACEOF
 #define MC_ALLOC 1
+_ACEOF
+
+test "$enable_newgc"       = "yes" && cat >>confdefs.h <<\_ACEOF
+#define NEW_GC 1
+_ACEOF
+
+test "$have_vdb_posix"     = "yes" && cat >>confdefs.h <<\_ACEOF
+#define VDB_POSIX 1
+_ACEOF
+
+test "$have_vdb_fake"      = "yes" && cat >>confdefs.h <<\_ACEOF
+#define VDB_FAKE 1
 _ACEOF
 
 test "$enable_quick_build" = "yes" && cat >>confdefs.h <<\_ACEOF
@@ -37829,6 +38633,32 @@ if test "$enable_mc_alloc" = yes ; then
   echo "  WARNING: default for this release. Use \`--disable-mc-alloc' to"
   echo "  WARNING: turn it off."
   echo "  WARNING: ---------------------------------------------------------"
+fi
+test "$enable_newgc" = yes && echo "  Using the new incremental garbage collector."
+if test "$have_vdb_posix" = yes ; then
+  if test "$have_vdb_sigaction" = yes ; then
+    echo "  Using POSIX sigaction() to install fault handler."
+  else
+    echo "  Using POSIX signal() to install vdb fault handler."
+  fi
+fi
+if test "$have_vdb_win32" = yes ; then
+  echo "  Using special WIN32 vdb fault handler."
+fi
+if test "$have_vdb_mach" = yes ; then
+  echo "  Using mach exception mechanism as vdb fault handler."
+fi
+if test "$have_vdb_fake" = yes && test "$enable_vdb" != fake; then
+  echo "  WARNING: ---------------------------------------------------------"
+  echo "  WARNING: The new incremental garbage collector is enabled, but"
+  echo "  WARNING: a virtual dirty bit implementation is not yet available"
+  echo "  WARNING: on this system. XEmacs will crash if you try to switch on"
+  echo "  WARNUNG: incremental garbage collection!"
+  echo "  WARNING: Use \`--disable-newgc' to turn incremental gc off."
+  echo "  WARNING: ---------------------------------------------------------"
+fi
+if test "$have_vdb_fake" = yes && test "$enable_vdb" == fake; then
+  echo "  Virtual dirty bit write barrier manually disabled."
 fi
 test "$enable_pdump" = yes && echo "  Using the new portable dumper."
 test "$enable_dump_in_exec" = yes && echo "  Dumping into executable."
@@ -39254,6 +40084,70 @@ $CPP -I. -I${srcdir}/src -DUSE_GNU_MAKE junk.c \
     chmod 444 Makefile.new
     mv -f Makefile.new GNUmakefile
 
+    if test -r ".gdbinit.in"; then
+          rm -f junk.c
+    < .gdbinit.in \
+      sed -e '/^# Generated/d' \
+          -e 's%/\*\*/#.*%%' \
+          -e 's/^ *# */#/' \
+          -e '/^##/d' \
+          -e '/^#/ {
+p
+d
+}'        \
+	  -e '/./ {
+s/\([\"]\)/\\\1/g
+s/^/"/
+s/$/"/
+}'  > junk.c;
+
+      echo creating $dir/.gdbinit
+$CPP -I. -I${srcdir}/src  junk.c \
+  | sed -e 's/^\#.*//'		\
+	-e 's/^[ TAB][ TAB]*$//'\
+	-e 's/^ /	/'		\
+	-e '/^[ ]*$/d'	\
+	-e '/^\"/ {
+	s/\\\([\"]\)/\1/g
+	s/^[ TAB]*\"//
+	s/\"[ TAB]*$//
+}' > Makefile.new
+    chmod 444 Makefile.new
+    mv -f Makefile.new .gdbinit
+
+    fi
+    if test -r ".dbxrc.in"; then
+          rm -f junk.c
+    < .dbxrc.in \
+      sed -e '/^# Generated/d' \
+          -e 's%/\*\*/#.*%%' \
+          -e 's/^ *# */#/' \
+          -e '/^##/d' \
+          -e '/^#/ {
+p
+d
+}'        \
+	  -e '/./ {
+s/\([\"]\)/\\\1/g
+s/^/"/
+s/$/"/
+}'  > junk.c;
+
+      echo creating $dir/.dbxrc
+$CPP -I. -I${srcdir}/src  junk.c \
+  | sed -e 's/^\#.*//'		\
+	-e 's/^[ TAB][ TAB]*$//'\
+	-e 's/^ /	/'		\
+	-e '/^[ ]*$/d'	\
+	-e '/^\"/ {
+	s/\\\([\"]\)/\1/g
+	s/^[ TAB]*\"//
+	s/\"[ TAB]*$//
+}' > Makefile.new
+    chmod 444 Makefile.new
+    mv -f Makefile.new .dbxrc
+
+    fi
     if test -r "xemacs.def.in"; then
       rm -f junk.c
       cp xemacs.def.in junk.c

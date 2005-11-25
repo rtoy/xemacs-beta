@@ -1,3 +1,328 @@
+2005-11-21  Marcus Crestani  <crestani@xemacs.org>
+
+	Incremental Garbage Collector
+
+	* .cvsignore: Add .dbxrc and .gdbinit.
+	
+	* .dbxrc: Remove.
+	* .dbxrc.in: New, used to generate .dbxrc: If newgc is enabled, do
+	not break on SIGBUS and SIGSEGV.
+        * .gdbinit: Remove.
+	* .gdbinit: New, used to generate .gdbinit: If newgc is enabled,
+	do not break on SIGBUS and SIGSEGV.
+
+	* Makefile.in.in: Add gc.c, newgc_objs and vdb_objs.
+
+	* alloc.c: Move the GC related code to gc.c: marking, gc hooks,
+	garbage_collect_1, GC related Lisp functions and variables.  Left
+	in alloc.c are the allocation functions, the definition of
+	lrecords, the sweep functions of the old garbage collector, and
+	root-set code like staticpro and mcpro.  Remove
+	lrecord_string_data_stats.
+	* alloc.c (DECREMENT_CONS_COUNTER): Remove call to
+	recompute_need_to_garbage_collect.
+	* alloc.c (init_lrecord_stats): Remove additionally allocated
+	memory statistics, i.e. statistics for string data.
+	* alloc.c (alloc_lrecord_array): New.
+	* alloc.c (free_lrecord): Do not explicitly free during gc.  Add
+	recompute_need_to_garbage_collect.
+	* alloc.c (make_compiled_function): Field arguments is now a Lisp
+	object, thus init it to Qnil rather than NULL.
+	* alloc.c (struct string_chars_block): 
+	* alloc.c (finalize_string):
+	* alloc.c (struct string_chars):
+	* alloc.c (make_uninit_string):
+	* alloc.c (resize_string):
+	* alloc.c (make_string_nocopy):
+	String data is now a Lisp object.  Remove code that handled string
+	data specially.
+	* alloc.c (init_lrecord_stats): Remove lrecord_string_data_stats.
+	* alloc.c (common_init_alloc_early):
+	* alloc.c (init_alloc_once_early):
+	* alloc.c (syms_of_alloc):
+	* alloc.c (vars_of_alloc):
+	* alloc.c (complex_vars_of_alloc):
+	Move init code to gc.c's inizializers.
+
+	* buffer.c:
+	* buffer.c (syms_of_buffer):
+	* buffer.h:
+	* buffer.h (struct buffer_text): Add new Lisp object: buffer_text.
+
+	* bytecode.c:
+	* bytecode.c (make_compiled_function_args):
+	* bytecode.c (optimize_compiled_function):
+	* bytecode.c (mark_compiled_function):
+	* bytecode.c (finalize_compiled_function):
+	* bytecode.c (syms_of_bytecode):
+	* bytecode.h:
+	* bytecode.h (struct compiled_function_args): 
+	* bytecode.h (struct Lisp_Compiled_Function): Add new Lisp object:
+	compiled_function_args.
+
+	* config.h.in: Add NEW_GC symbol, add VDB_* symbols, and symbols
+	for functions and structs checked for vdb.
+
+	* console-gtk-impl.h:
+	* console-gtk-impl.h (struct gtk_device):
+	* console-gtk-impl.h (struct gtk_frame):
+	* console-msw-impl.h:
+	* console-msw-impl.h (struct mswindows_device):
+	* console-msw-impl.h (struct msprinter_device):
+	* console-msw-impl.h (struct mswindows_frame):
+	* console-stream-impl.h:
+	* console-stream-impl.h (struct stream_console):
+	* console-stream.c:
+	* console-stream.c (stream_init_console):
+	* console-stream.c (stream_delete_console):
+	* console-stream.h:
+	* console-tty-impl.h:
+	* console-tty-impl.h (struct tty_console):
+	* console-tty-impl.h (struct tty_device):
+	* console-tty.c:
+	* console-tty.c (allocate_tty_console_struct):
+	* console-tty.c (free_tty_console_struct):
+	* console-x-impl.h:
+	* console-x-impl.h (struct x_device):
+	* console-x-impl.h (struct x_frame):
+	* console.c:
+	* console.c (syms_of_console): Add new Lisp objects: tty_console,
+	stream_consle.
+
+	* device-gtk.c:
+	* device-gtk.c (allocate_gtk_device_struct):
+	* device-gtk.c (free_gtk_device_struct):
+	* device-gtk.c (syms_of_device_gtk):
+	* device-msw.c:
+	* device-msw.c (mswindows_init_device):
+	* device-msw.c (mswindows_delete_device):
+	* device-msw.c (msprinter_init_device):
+	* device-msw.c (msprinter_delete_device):
+	* device-msw.c (syms_of_device_mswindows):
+	* device-tty.c:
+	* device-tty.c (free_tty_device_struct):
+	* device-tty.c (syms_of_device_tty):
+	* device-x.c:
+	* device-x.c (allocate_x_device_struct):
+	* device-x.c (free_x_device_struct):
+	* device-x.c (syms_of_device_x):
+	* device.c: Add new Lisp objects: x_device, gtk_device,
+	tty_device, mswindows_device, msprinter_device.
+
+	* dumper.c:
+	* dumper.c (pdump_register_sub): Add XD_LISP_OBJECT_PTR.
+	* dumper.c (pdump_register_object_array): New.
+	* dumper.c (pdump_store_new_pointer_offsets): Add XD_LISP_OBJECT_PTR.
+	* dumper.c (pdump_scan_lisp_objects_by_alignment): Remove assert,
+	XD_LISP_OBJECT_PTR may occur as arrays.
+	* dumper.c (pdump_reloc_one_mc): Add XD_LISP_OBJECT_PTR.
+	* dumper.c (pdump_dump_rtables): Dump arrays.
+	* dumper.c (pdump_load_finish): Store and restore state of
+	allow_incremental_gc.  Remove lrecord_string_data_stats.
+
+	* dynarr.c:
+	* dynarr.c (Dynarr_lisp_newf): Special case dynamic Lisp array.
+	* dynarr.c (Dynarr_resize): Special case dynamic Lisp array.
+	* dynarr.c (Dynarr_free): Add dynamic Lisp array.
+
+	* elhash.c:
+	* elhash.c (htentry):
+	* elhash.c (make_general_lisp_hash_table):
+	* elhash.c (Fcopy_hash_table):
+	* elhash.c (resize_hash_table):
+	* elhash.c (pdump_reorganize_hash_table):
+	* elhash.c (init_elhash_once_early):
+	* elhash.h: Add new Lisp object: hash_table_entry. Make
+	hash_table_entries Lisp objects.
+
+	* emacs.c (main_1): Install platform's vdb signal handler, add GC
+	init, add syms of GC and vdb, .
+	* emacs.c: Replace garbage_collect_1 calls with gc_full calls.
+	* emacs.c (fatal_error_signal): With vdb enabled, convert SIGSEGV
+	and SIGBUS to SIGABRT.
+
+	* eval.c (Fsignal): Incremental GC may always run, changes are
+	caught by the write barrier.
+	* eval.c (handle_compiled_function_with_and_rest):
+	* eval.c (funcall_compiled_function):
+	* eval.c (Feval): Invoke incremental GC if need to GC.
+	* eval.c (Ffuncall): Invoke incremental GC if need to GC.
+	* eval.c (run_hook_with_args_in_buffer): Add new Lisp object:
+	compiled_function_args.
+
+	* event-msw.c (mswindows_wnd_proc): Incremental GC may always run,
+	changes are caught by the write barrier.
+	* events.c (reinit_vars_of_events): Vevent_resource now
+	collectible, staticpro it.
+
+	* extents.c:
+	* extents.c (gap_array_marker):
+	* extents.c (gap_array):
+	* extents.c (extent_list_marker):
+	* extents.c (extent_list):
+	* extents.c (stack_of_extents):
+	* extents.c (gap_array_make_gap):
+	* extents.c (gap_array_make_marker):
+	* extents.c (gap_array_delete_marker):
+	* extents.c (gap_array_delete_all_markers):
+	* extents.c (make_gap_array):
+	* extents.c (free_gap_array):
+	* extents.c (extent_list_insert):
+	* extents.c (extent_list_make_marker):
+	* extents.c (extent_list_delete_marker):
+	* extents.c (allocate_extent_list):
+	* extents.c (free_extent_list):
+	* extents.c (finalize_extent_info):
+	* extents.c (flush_cached_extent_info):
+	* extents.c (uninit_buffer_extents):
+	* extents.c (allocate_soe):
+	* extents.c (free_soe):
+	* extents.c (syms_of_extents):
+	* extents.h: Add new Lisp object: gap_array_marker, gap_array,
+	extent_list_marker, extent_list, and stack_of_extents.
+
+	* faces.h:
+	* faces.h (struct face_cachel): Add new Lisp object: face cachel.
+
+	* frame-gtk.c:
+	* frame-gtk.c (allocate_gtk_frame_struct):
+	* frame-gtk.c (gtk_delete_frame):
+	* frame-gtk.c (syms_of_frame_gtk):
+	* frame-msw.c:
+	* frame-msw.c (mswindows_init_frame_1):
+	* frame-msw.c (mswindows_delete_frame):
+	* frame-msw.c (syms_of_frame_mswindows):
+	* frame-x.c:
+	* frame-x.c (allocate_x_frame_struct):
+	* frame-x.c (x_delete_frame):
+	* frame-x.c (syms_of_frame_x):
+	* frame.c:
+	* frame.c (change_frame_size):
+	* frame.c (syms_of_frame): Add new Lisp object: gtk_console,
+	mswindows_console, and x_console.
+
+	* glyphs.c (struct expose_ignore_blocktype):
+	* glyphs.c (check_for_ignored_expose):
+	* glyphs.c (register_ignored_expose):
+	* glyphs.c (reinit_vars_of_glyphs):
+	* glyphs.h:
+	* glyphs.h (struct glyph_cachel): 
+	* glyphs.h (struct expose_ignore): Add new Lisp object:
+	glyph_cachel and expose_ignore.
+
+	* lisp.h: Move dynamic array definition down after lrecord
+	inclusion.  Add dynamic lisp array macros.  Add direct and
+	indirect string data. Add string accessors.  Remove
+	lrecord_string_data_stats.
+	* lisp.h (struct Lisp_String_Direct_Data): New.
+	* lisp.h (struct Lisp_String_Indirect_Data): New.
+	* lisp.h (struct Lisp_String): Add indirect flag and Lisp object
+	data.
+
+	* lrecord.h: Remove lrecord_type numbering.
+	* lrecord.h (enum lrecord_type): Add new Lisp objects.
+	* lrecord.h (MC_ALLOC_CALL_FINALIZER): Add GC statistics.  
+	* lrecord.h (enum memory_description_type): Add
+	XD_LISP_OBJECT_BLOCK_PTR.
+	* lrecord.h (XD_LISP_DYNARR_DESC): New.
+	* lrecord.h (alloc_lrecord_array): New.
+
+	* mc-alloc.c:
+	* mc-alloc.c (MIN_HEAP_INCREASE):
+	* mc-alloc.c (free_link):
+	* mc-alloc.c (page_header):
+	* mc-alloc.c (FREE_HEAP_PAGES):
+	* mc-alloc.c (PH_BLACK_BIT):
+	* mc-alloc.c (get_mark_bit_index):
+	* mc-alloc.c (add_pages_to_lookup_table):
+	* mc-alloc.c (alloc_bit_array):
+	* mc-alloc.c (get_bit):
+	* mc-alloc.c (set_bit):
+	* mc-alloc.c (USE_PNTR_MARK_BITS):
+	* mc-alloc.c (GET_BIT_WORD):
+	* mc-alloc.c (SET_BIT_WORD):
+	* mc-alloc.c (ZERO_MARK_BITS_PNTR):
+	* mc-alloc.c (alloc_mark_bits):
+	* mc-alloc.c (free_mark_bits):
+	* mc-alloc.c (set_mark_bit):
+	* mc-alloc.c (alloc_page_header):
+	* mc-alloc.c (free_page_header):
+	* mc-alloc.c (get_used_list_index):
+	* mc-alloc.c (get_free_list_index):
+	* mc-alloc.c (install_cell_free_list):
+	* mc-alloc.c (install_page_in_used_list):
+	* mc-alloc.c (remove_page_from_used_list):
+	* mc-alloc.c (allocate_new_page):
+	* mc-alloc.c (mc_alloc_1):
+	* mc-alloc.c (mc_alloc_array):
+	* mc-alloc.c (mc_alloc):
+	* mc-alloc.c (mark_free_list):
+	* mc-alloc.c (finalize_page):
+	* mc-alloc.c (finalize_page_for_disksave):
+	* mc-alloc.c (sweep_page):
+	* mc-alloc.c (mc_free):
+	* mc-alloc.c (mc_realloc_1):
+	* mc-alloc.c (mc_realloc_array):
+	* mc-alloc.c (init_mc_allocator):
+	* mc-alloc.c (Fmc_alloc_memory_usage):
+	* mc-alloc.c (maybe_mark_black):
+	* mc-alloc.h: Add incremental garbage collector support, various
+	cleanups.
+
+	* objects-tty-impl.h:
+	* objects-tty-impl.h (struct tty_color_instance_data):
+	* objects-tty-impl.h (struct tty_font_instance_data):
+	* objects-tty.c:
+	* objects-tty.c (tty_initialize_color_instance):
+	* objects-tty.c (tty_finalize_color_instance):
+	* objects-tty.c (tty_initialize_font_instance):
+	* objects-tty.c (tty_finalize_font_instance):
+	* objects-tty.c (syms_of_objects_tty):
+	* objects.c: New Lisp objects: color_instance_data and
+	font_instance_data.
+
+	* print.c (print_internal): New Lisp object: string_data.
+
+	* specifier.c:
+	* specifier.c (finalize_specifier):
+	* specifier.c (set_specifier_caching):
+	* specifier.c (syms_of_specifier):
+	* specifier.h:
+	* specifier.h (struct specifier_caching): New Lisp object:
+	specifier caching.
+
+	* syntax.c:
+	* syntax.c (init_buffer_syntax_cache):
+	* syntax.c (uninit_buffer_syntax_cache):
+	* syntax.c (syms_of_syntax):
+	* syntax.h:
+	* syntax.h (struct syntax_cache): New Lisp object: syntax_cache.
+
+	* window.c:
+	* window.c (allocate_window):
+	* window.c (make_dummy_parent):
+	* window.c (syms_of_window): New Lisp objects: face_cachel,
+	fache_cachel_dynarr, glyph_cachel, and glyph_cachel_dynarr.
+	
+
+	New files:
+	* gc.c: Moved code from alloc.c.  Split up garbage_collect_1 in a
+	couple of smaller functions.
+	* gc.h: Incremental Garbage Collector
+
+	* vdb-fake.c: Virtual dirty bit fake implementation.
+	* vdb-mach.c: Virtual dirty bit implementation for Mach systems.
+	* vdb-posix.c: Virtual dirty bit implementation for POSIX systems.
+	* vdb-win32.c: Virtual dirty bit implementation for Win32 systems.
+
+	* vdb.c:
+	* vdb.h: Platform independent virtual dirty bit implementation.
+
+
+	Remove files:
+	* .dbxrc:
+	* .gdbinit: Now generated by configure script.
+
 2005-11-22  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* frame-gtk.c (gtk_internal_frame_property_p):

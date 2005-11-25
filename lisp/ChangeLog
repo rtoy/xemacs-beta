@@ -1,3 +1,16 @@
+2005-11-21  Marcus Crestani  <crestani@xemacs.org>
+
+	Incremental Garbage Collector
+
+	* cus-start.el (all): Add allow-incremental-gc,
+	gc-cons-incremental-threshold, and
+	gc-incremental-traversal-threshold to alloc customization group.
+	* diagnose.el (show-memory-usage): Additionally allocated memory
+	no longer in use, remove.
+	* diagnose.el (show-lrecord-stats): Additionally allocated memory
+	no longer in use, remove.
+	* diagnose.el (show-gc-stats): New.
+
 2005-11-08  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* help.el:

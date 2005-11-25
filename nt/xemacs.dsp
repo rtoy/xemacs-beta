@@ -555,6 +555,14 @@ SOURCE="..\src\free-hook.c"
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\gc.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\gc.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\general.c
 # End Source File
 # Begin Source File
@@ -1336,6 +1344,18 @@ SOURCE=..\src\unexsunos4.c
 # Begin Source File
 
 SOURCE=..\src\universe.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\vdb.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\vdb.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\vdb-win32.c
 # End Source File
 # Begin Source File
 

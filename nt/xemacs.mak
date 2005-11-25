@@ -218,6 +218,9 @@ USE_KKCC=0
 !if !defined(MC_ALLOC)
 MC_ALLOC=0
 !endif
+!if !defined(NEW_GC)
+NEW_GC=0
+!endif
 !if !defined(USE_UNION_TYPE)
 USE_UNION_TYPE=0
 !endif
@@ -639,9 +642,17 @@ OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\dumper.obj
 OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\unexnt.obj
 !endif
 
+!if $(NEW_GC)
+OPT_DEFINES=$(OPT_DEFINES) -DNEW_GC
+OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\vdb.obj $(OUTDIR)\vdb-win32.obj
+USE_KKCC=1
+MC_ALLOC=1
+!endif
+
 !if $(USE_KKCC)
 OPT_DEFINES=$(OPT_DEFINES) -DUSE_KKCC
 !endif
+
 !if $(MC_ALLOC)
 OPT_DEFINES=$(OPT_DEFINES) -DMC_ALLOC
 OPT_OBJS=$(OPT_OBJS) $(OUTDIR)\mc-alloc.obj
@@ -848,6 +859,7 @@ TEMACS_COMMON_OBJS= \
 	$(OUTDIR)\fns.obj \
 	$(OUTDIR)\font-lock.obj \
 	$(OUTDIR)\frame.obj \
+	$(OUTDIR)\gc.obj \
 	$(OUTDIR)\general.obj \
 	$(OUTDIR)\getloadavg.obj \
 	$(OUTDIR)\glyphs.obj \
@@ -1258,6 +1270,9 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
 !endif
 !if $(MC_ALLOC)
   Using new experimental allocator.
+!endif
+!if $(NEW_GC)
+  Using new experimental incremental garbage collector.
 !endif
 <<NOKEEP
 	@echo --------------------------------------------------------------------

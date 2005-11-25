@@ -2650,6 +2650,9 @@ void
 reinit_vars_of_events (void)
 {
   Vevent_resource = Qnil;
+#ifdef NEW_GC
+  staticpro (&Vevent_resource);
+#endif /* NEW_GC */
 }
 
 void

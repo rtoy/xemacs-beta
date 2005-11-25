@@ -309,10 +309,19 @@ static const struct memory_description syntax_cache_description_1 [] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("syntax-cache", syntax_cache,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       syntax_cache_description_1,
+			       Lisp_Syntax_Cache);
+#else /* not NEW_GC */
+
 const struct sized_memory_description syntax_cache_description = {
   sizeof (struct syntax_cache),
   syntax_cache_description_1
 };
+#endif /* not NEW_GC */
 
 void
 mark_buffer_syntax_cache (struct buffer *buf)
@@ -344,7 +353,12 @@ void
 init_buffer_syntax_cache (struct buffer *buf)
 {
   struct syntax_cache *cache;
+#ifdef NEW_GC
+  buf->syntax_cache = alloc_lrecord_type (struct syntax_cache,
+					  &lrecord_syntax_cache);
+#else /* not NEW_GC */
   buf->syntax_cache = xnew_and_zero (struct syntax_cache);
+#endif /* not NEW_GC */
   cache = buf->syntax_cache;
   cache->object = wrap_buffer (buf);
   cache->buffer = buf;
@@ -359,7 +373,11 @@ init_buffer_syntax_cache (struct buffer *buf)
 void
 uninit_buffer_syntax_cache (struct buffer *buf)
 {
+#ifdef NEW_GC
+  mc_free (buf->syntax_cache);
+#else /* not NEW_GC */
   xfree (buf->syntax_cache, struct syntax_cache *);
+#endif /* not NEW_GC */
   buf->syntax_cache = 0;
 }
 
@@ -2313,6 +2331,9 @@ update_syntax_table (Lisp_Object table)
 void
 syms_of_syntax (void)
 {
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (syntax_cache);
+#endif /* NEW_GC */
   DEFSYMBOL (Qsyntax_table_p);
   DEFSYMBOL (Qsyntax_table);
 

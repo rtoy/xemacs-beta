@@ -42,18 +42,36 @@ static const struct memory_description tty_color_instance_data_description_1 [] 
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("tty-color-instance-data", 
+			       tty_color_instance_data,
+			       0, /*dumpable-flag*/
+                               0, 0, 0, 0, 0, 
+			       tty_color_instance_data_description_1,
+			       struct tty_color_instance_data);
+#else /* not NEW_GC */
 const struct sized_memory_description tty_color_instance_data_description = {
   sizeof (struct tty_color_instance_data), tty_color_instance_data_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description tty_font_instance_data_description_1 [] = {
   { XD_LISP_OBJECT, offsetof (struct tty_font_instance_data, charset) },
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("tty-font-instance-data", 
+			       tty_font_instance_data,
+			       0, /*dumpable-flag*/
+                               0, 0, 0, 0, 0, 
+			       tty_font_instance_data_description_1,
+			       struct tty_font_instance_data);
+#else /* not NEW_GC */
 const struct sized_memory_description tty_font_instance_data_description = {
   sizeof (struct tty_font_instance_data), tty_font_instance_data_description_1
 };
+#endif /* not NEW_GC */
 
 DEFUN ("register-tty-color", Fregister_tty_color, 3, 3, 0, /*
 Register COLOR as a recognized TTY color.
@@ -176,7 +194,12 @@ tty_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
     }
 
   /* Don't allocate the data until we're sure that we will succeed. */
+#ifdef NEW_GC
+  c->data = alloc_lrecord_type (struct tty_color_instance_data,
+				&lrecord_tty_color_instance_data);
+#else /* not NEW_GC */
   c->data = xnew (struct tty_color_instance_data);
+#endif /* not NEW_GC */
   COLOR_INSTANCE_TTY_SYMBOL (c) = name;
 
   return 1;
@@ -199,7 +222,11 @@ static void
 tty_finalize_color_instance (Lisp_Color_Instance *c)
 {
   if (c->data)
+#ifdef NEW_GC
+    mc_free (c->data);
+#else /* not NEW_GC */
     xfree (c->data, void *);
+#endif /* not NEW_GC */
 }
 
 static int
@@ -254,7 +281,12 @@ tty_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
     }
 
   /* Don't allocate the data until we're sure that we will succeed. */
+#ifdef NEW_GC
+  f->data = alloc_lrecord_type (struct tty_font_instance_data,
+				&lrecord_tty_font_instance_data);
+#else /* not NEW_GC */
   f->data = xnew (struct tty_font_instance_data);
+#endif /* not NEW_GC */
   FONT_INSTANCE_TTY_CHARSET (f) = charset;
 #ifdef MULE
   if (CHARSETP (charset))
@@ -287,7 +319,11 @@ static void
 tty_finalize_font_instance (Lisp_Font_Instance *f)
 {
   if (f->data)
+#ifdef NEW_GC
+    mc_free (f->data);
+#else /* not NEW_GC */
     xfree (f->data, void *);
+#endif /* not NEW_GC */
 }
 
 static Lisp_Object
@@ -363,6 +399,11 @@ tty_find_charset_font (Lisp_Object device, Lisp_Object font,
 void
 syms_of_objects_tty (void)
 {
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (tty_color_instance_data);
+  INIT_LRECORD_IMPLEMENTATION (tty_font_instance_data);
+#endif /* NEW_GC */
+
   DEFSUBR (Fregister_tty_color);
   DEFSUBR (Funregister_tty_color);
   DEFSUBR (Ffind_tty_color);

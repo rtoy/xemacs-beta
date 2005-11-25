@@ -150,6 +150,39 @@ Dynarr_newf (int elsize)
   return d;
 }
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("dynarr", dynarr,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       0,
+			       Dynarr);
+
+static void
+Dynarr_lisp_realloc (Dynarr *dy, Elemcount new_size)
+{
+  void *new_base = alloc_lrecord_array (dy->elsize, new_size, dy->lisp_imp);
+  void *old_base = dy->base;
+  if (dy->base)
+    memcpy (new_base, dy->base, 
+	    (dy->max > new_size ? dy->max : new_size) * dy->elsize);
+  dy->base = new_base;
+  if (old_base)
+    mc_free (old_base);
+}
+
+void *
+Dynarr_lisp_newf (int elsize, 
+		  const struct lrecord_implementation *dynarr_imp, 
+		  const struct lrecord_implementation *imp)
+{
+  Dynarr *d = (Dynarr *) alloc_lrecord (sizeof (Dynarr), dynarr_imp);
+  d->elsize = elsize;
+  d->lisp_imp = imp;
+
+  return d;
+}
+#endif /* not NEW_GC */
+
 void
 Dynarr_resize (void *d, Elemcount size)
 {
@@ -168,7 +201,14 @@ Dynarr_resize (void *d, Elemcount size)
   /* Don't do anything if the array is already big enough. */
   if (newsize > dy->max)
     {
+#ifdef NEW_GC
+      if (dy->lisp_imp)
+	Dynarr_lisp_realloc (dy, newsize);
+      else
+	Dynarr_realloc (dy, newsize*dy->elsize);
+#else /* not NEW_GC */
       Dynarr_realloc (dy, newsize*dy->elsize);
+#endif /* not NEW_GC */
       dy->max = newsize;
     }
 }
@@ -222,10 +262,27 @@ Dynarr_free (void *d)
 {
   Dynarr *dy = (Dynarr *) d;
 
+#ifdef NEW_GC
+  if (dy->base && !DUMPEDP (dy->base))
+    {
+      if (dy->lisp_imp)
+	mc_free (dy->base);
+      else
+	xfree (dy->base, void *);
+    }
+  if(!DUMPEDP (dy))
+    {
+      if (dy->lisp_imp)
+	mc_free (dy);
+      else
+	xfree (dy, Dynarr *);
+    }
+#else /* not NEW_GC */
   if (dy->base && !DUMPEDP (dy->base))
     xfree (dy->base, void *);
   if(!DUMPEDP (dy))
     xfree (dy, Dynarr *);
+#endif /* not NEW_GC */
 }
 
 #ifdef MEMORY_USAGE_STATS

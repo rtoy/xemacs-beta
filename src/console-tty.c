@@ -59,16 +59,29 @@ static const struct memory_description tty_console_data_description_1 [] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("tty-console", tty_console,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       tty_console_data_description_1,
+			       Lisp_Tty_Console);
+#else /* not NEW_GC */
 const struct sized_memory_description tty_console_data_description = {
   sizeof (struct tty_console), tty_console_data_description_1
 };
+#endif /* not NEW_GC */
 
 
 static void
 allocate_tty_console_struct (struct console *con)
 {
   /* zero out all slots except the lisp ones ... */
+#ifdef NEW_GC
+  CONSOLE_TTY_DATA (con) = alloc_lrecord_type (struct tty_console,
+					       &lrecord_tty_console);
+#else /* not NEW_GC */
   CONSOLE_TTY_DATA (con) = xnew_and_zero (struct tty_console);
+#endif /* not NEW_GC */
   CONSOLE_TTY_DATA (con)->terminal_type = Qnil;
   CONSOLE_TTY_DATA (con)->instream = Qnil;
   CONSOLE_TTY_DATA (con)->outstream = Qnil;
@@ -202,7 +215,11 @@ free_tty_console_struct (struct console *con)
 	  xfree (tty_con->term_entry_buffer, char *);
 	  tty_con->term_entry_buffer = NULL;
 	}
+#ifdef NEW_GC
+      mc_free (tty_con);
+#else /* not NEW_GC */
       xfree (tty_con, struct tty_console *);
+#endif /* not NEW_GC */
       CONSOLE_TTY_DATA (con) = NULL;
     }
 }

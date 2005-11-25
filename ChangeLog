@@ -1,3 +1,12 @@
+2005-11-21  Marcus Crestani  <crestani@xemacs.org>
+
+	Incremental Garbage Collector
+	
+	* configure.ac: Add newgc option; if newgc, turn on kkcc and
+	mc-alloc.  Add checks for write barrier, determine which write
+	barrier to use.  Add vdb option to override write barrier
+	auto-detection.  Generate .gdbinit and .dbxrc.
+
 2005-11-22  Ben Wing  <ben@xemacs.org>
 
 	* dynodump/Makefile.in.in (mostlyclean):

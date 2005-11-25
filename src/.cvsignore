@@ -30,3 +30,5 @@ REBUILD_AUTOLOADS
 dump-size
 xemacs.def
 xemacs.def.in
+.dbxrc
+.gdbinit

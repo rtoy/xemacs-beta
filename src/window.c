@@ -181,25 +181,53 @@ static const struct memory_description face_cachel_description_1[] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("face-cachel", face_cachel,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       face_cachel_description_1,
+			       Lisp_Face_Cachel);
+#endif /* NEW_GC */
+
 static const struct sized_memory_description face_cachel_description = {
   sizeof (face_cachel),
   face_cachel_description_1
 };
 
 static const struct memory_description face_cachel_dynarr_description_1[] = {
+#ifdef NEW_GC
+  XD_LISP_DYNARR_DESC (face_cachel_dynarr, &face_cachel_description),
+#else /* not NEW_GC */
   XD_DYNARR_DESC (face_cachel_dynarr, &face_cachel_description),
+#endif /* not NEW_GC */
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("face-cachel-dynarr", face_cachel_dynarr,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       face_cachel_dynarr_description_1,
+			       face_cachel_dynarr);
+#else /* not NEW_GC */
 static const struct sized_memory_description face_cachel_dynarr_description = {
   sizeof (face_cachel_dynarr),
   face_cachel_dynarr_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description glyph_cachel_description_1[] = {
   { XD_LISP_OBJECT, offsetof (glyph_cachel, glyph) },
   { XD_END }
 };
+
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("glyph-cachel", glyph_cachel,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       glyph_cachel_description_1,
+			       Lisp_Glyph_Cachel);
+#endif /* NEW_GC */
 
 static const struct sized_memory_description glyph_cachel_description = {
   sizeof (glyph_cachel),
@@ -207,14 +235,26 @@ static const struct sized_memory_description glyph_cachel_description = {
 };
 
 static const struct memory_description glyph_cachel_dynarr_description_1[] = {
+#ifdef NEW_GC
+  XD_LISP_DYNARR_DESC (glyph_cachel_dynarr, &glyph_cachel_description),
+#else /* not NEW_GC */
   XD_DYNARR_DESC (glyph_cachel_dynarr, &glyph_cachel_description),
+#endif /* not NEW_GC */
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("glyph-cachel-dynarr", glyph_cachel_dynarr,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       glyph_cachel_dynarr_description_1,
+			       glyph_cachel_dynarr);
+#else /* not NEW_GC */
 static const struct sized_memory_description glyph_cachel_dynarr_description = {
   sizeof (glyph_cachel_dynarr),
   glyph_cachel_dynarr_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description line_start_cache_description_1[] = {
   { XD_END }
@@ -241,10 +281,15 @@ static const struct memory_description window_description [] = {
   { XD_LISP_OBJECT_ARRAY, offsetof (struct window, slot), size },
 #include "winslots.h"
 
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (struct window, face_cachels) },
+  { XD_LISP_OBJECT, offsetof (struct window, glyph_cachels) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (struct window, face_cachels),
     1, { &face_cachel_dynarr_description } },
   { XD_BLOCK_PTR, offsetof (struct window, glyph_cachels),
     1, { &glyph_cachel_dynarr_description } },
+#endif /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (struct window, line_start_cache),
     1, { &line_start_cache_dynarr_description }, XD_FLAG_NO_KKCC },
   { XD_END }
@@ -362,8 +407,17 @@ allocate_window (void)
   INIT_DISP_VARIABLE (last_point, Fmake_marker ());
   INIT_DISP_VARIABLE (last_start, Fmake_marker ());
   INIT_DISP_VARIABLE (last_facechange, Qzero);
+#ifdef NEW_GC
+  p->face_cachels = Dynarr_lisp_new (face_cachel,
+				     &lrecord_face_cachel_dynarr,
+				     &lrecord_face_cachel);
+  p->glyph_cachels = Dynarr_lisp_new (glyph_cachel,
+				      &lrecord_glyph_cachel_dynarr,
+				      &lrecord_glyph_cachel);
+#else /* not NEW_GC */
   p->face_cachels     = Dynarr_new (face_cachel);
   p->glyph_cachels    = Dynarr_new (glyph_cachel);
+#endif /* not NEW_GC */
   p->line_start_cache = Dynarr_new (line_start_cache);
   p->subwindow_instance_cache = make_image_instance_cache_hash_table ();
 
@@ -3810,8 +3864,17 @@ make_dummy_parent (Lisp_Object window)
   /* Don't copy the pointers to the line start cache or the face
      instances. */
   p->line_start_cache = Dynarr_new (line_start_cache);
+#ifdef NEW_GC
+  p->face_cachels = Dynarr_lisp_new (face_cachel,
+				     &lrecord_face_cachel_dynarr,
+				     &lrecord_face_cachel);
+  p->glyph_cachels = Dynarr_lisp_new (glyph_cachel,
+				      &lrecord_glyph_cachel_dynarr,
+				      &lrecord_glyph_cachel);
+#else /* not NEW_GC */
   p->face_cachels     = Dynarr_new (face_cachel);
   p->glyph_cachels    = Dynarr_new (glyph_cachel);
+#endif /* not NEW_GC */
   p->subwindow_instance_cache =
     make_image_instance_cache_hash_table ();
 
@@ -5384,6 +5447,12 @@ syms_of_window (void)
 {
   INIT_LRECORD_IMPLEMENTATION (window);
   INIT_LRECORD_IMPLEMENTATION (window_mirror);
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (face_cachel);
+  INIT_LRECORD_IMPLEMENTATION (face_cachel_dynarr);
+  INIT_LRECORD_IMPLEMENTATION (glyph_cachel);
+  INIT_LRECORD_IMPLEMENTATION (glyph_cachel_dynarr);
+#endif /* NEW_GC */
 
   DEFSYMBOL (Qwindowp);
   DEFSYMBOL (Qwindow_live_p);

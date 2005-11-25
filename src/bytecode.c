@@ -58,6 +58,45 @@ by Hallvard:
 #include "syntax.h"
 #include "window.h"
 
+#ifdef NEW_GC
+static Lisp_Object
+make_compiled_function_args (int totalargs)
+{
+  Lisp_Compiled_Function_Args *args;
+  args = (Lisp_Compiled_Function_Args *) 
+    alloc_lrecord 
+    (FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
+				   Lisp_Object, args, totalargs),
+     &lrecord_compiled_function_args);
+  args->size = totalargs;
+  return wrap_compiled_function_args (args);
+}
+
+static Bytecount
+size_compiled_function_args (const void *lheader)
+{
+  return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
+				       Lisp_Object, args,
+				       ((Lisp_Compiled_Function_Args *) 
+					lheader)->size);
+}
+
+static const struct memory_description compiled_function_args_description[] = {
+  { XD_LONG,              offsetof (Lisp_Compiled_Function_Args, size) },
+  { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Compiled_Function_Args, args), 
+    XD_INDIRECT(0, 0) },
+  { XD_END }
+};
+
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("compiled-function-args",
+					compiled_function_args,
+					1, /*dumpable-flag*/
+					0, 0, 0, 0, 0,
+					compiled_function_args_description,
+					size_compiled_function_args,
+					Lisp_Compiled_Function_Args);
+#endif /* NEW_GC */
+
 EXFUN (Ffetch_bytecode, 1);
 
 Lisp_Object Qbyte_code, Qcompiled_functionp, Qinvalid_byte_code;
@@ -2022,13 +2061,21 @@ optimize_compiled_function (Lisp_Object compiled_function)
     }
   
     if (totalargs)
+#ifdef NEW_GC
+      f->arguments = make_compiled_function_args (totalargs); 
+#else /* not NEW_GC */
       f->args = xnew_array (Lisp_Object, totalargs);
+#endif /* not NEW_GC */
 
     {
       LIST_LOOP_2 (arg, f->arglist)
 	{
 	  if (!EQ (arg, Qand_optional) && !EQ (arg, Qand_rest))
+#ifdef NEW_GC
+	    XCOMPILED_FUNCTION_ARGS_DATA (f->arguments)[i++] = arg;
+#else /* not NEW_GC */
 	    f->args[i++] = arg;
+#endif /* not NEW_GC */
 	}
     }
 
@@ -2061,6 +2108,7 @@ optimize_compiled_function (Lisp_Object compiled_function)
 /************************************************************************/
 /*		The compiled-function object type			*/
 /************************************************************************/
+
 static void
 print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
 			 int escapeflag)
@@ -2143,7 +2191,11 @@ mark_compiled_function (Lisp_Object obj)
   mark_object (f->annotated);
 #endif
   for (i = 0; i < f->args_in_array; i++)
+#ifdef NEW_GC
+    mark_object (XCOMPILED_FUNCTION_ARGS_DATA (f->arguments)[i]);
+#else /* not NEW_GC */
     mark_object (f->args[i]);
+#endif /* not NEW_GC */
 
   /* tail-recurse on constants */
   return f->constants;
@@ -2179,8 +2231,12 @@ compiled_function_hash (Lisp_Object obj, int depth)
 
 static const struct memory_description compiled_function_description[] = {
   { XD_INT,         offsetof (Lisp_Compiled_Function, args_in_array) },
-  { XD_BLOCK_PTR,  offsetof (Lisp_Compiled_Function, args),
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, arguments) },
+#else /* not NEW_GC */
+  { XD_BLOCK_PTR,   offsetof (Lisp_Compiled_Function, args),
     XD_INDIRECT (0, 0), { &lisp_object_description } },
+#endif /* not NEW_GC */
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, instructions) },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, constants) },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, arglist) },
@@ -2191,7 +2247,7 @@ static const struct memory_description compiled_function_description[] = {
   { XD_END }
 };
 
-#ifdef MC_ALLOC
+#if defined(MC_ALLOC) && !defined(NEW_GC)
 static void
 finalize_compiled_function (void *header, int for_disksave)
 {
@@ -2213,7 +2269,7 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     compiled_function_hash,
 				     compiled_function_description,
 				     Lisp_Compiled_Function);
-#else /* not MC_ALLOC */
+#else /* !MC_ALLOC || NEW_GC */
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     1, /*dumpable_flag*/
 				     mark_compiled_function,
@@ -2222,7 +2278,8 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     compiled_function_hash,
 				     compiled_function_description,
 				     Lisp_Compiled_Function);
-#endif /* not MC_ALLOC */
+#endif /* !MC_ALLOC || NEW_GC */
+
 
 DEFUN ("compiled-function-p", Fcompiled_function_p, 1, 1, 0, /*
 Return t if OBJECT is a byte-compiled function object.
@@ -2594,6 +2651,9 @@ void
 syms_of_bytecode (void)
 {
   INIT_LRECORD_IMPLEMENTATION (compiled_function);
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (compiled_function_args);
+#endif /* NEW_GC */
 
   DEFERROR_STANDARD (Qinvalid_byte_code, Qinvalid_state);
   DEFSYMBOL (Qbyte_code);

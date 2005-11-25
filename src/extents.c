@@ -242,6 +242,9 @@ Boston, MA 02111-1307, USA.  */
 
 typedef struct gap_array_marker
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
   int pos;
   struct gap_array_marker *next;
 } Gap_Array_Marker;
@@ -269,6 +272,9 @@ typedef struct gap_array_marker
 
 typedef struct gap_array
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
   Elemcount gap;
   Elemcount gapsize;
   Elemcount numels;
@@ -281,7 +287,9 @@ typedef struct gap_array
   char array[1];
 } Gap_Array;
 
+#ifndef NEW_GC
 static Gap_Array_Marker *gap_array_marker_freelist;
+#endif /* not NEW_GC */
 
 /* Convert a "memory position" (i.e. taking the gap into account) into
    the address of the element at (i.e. after) that position.  "Memory
@@ -310,6 +318,9 @@ static Gap_Array_Marker *gap_array_marker_freelist;
 
 typedef struct extent_list_marker
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
   Gap_Array_Marker *m;
   int endp;
   struct extent_list_marker *next;
@@ -317,12 +328,17 @@ typedef struct extent_list_marker
 
 typedef struct extent_list
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
   Gap_Array *start;
   Gap_Array *end;
   Extent_List_Marker *markers;
 } Extent_List;
 
+#ifndef NEW_GC
 static Extent_List_Marker *extent_list_marker_freelist;
+#endif /* not NEW_GC */
 
 #define EXTENT_LESS_VALS(e,st,nd) ((extent_start (e) < (st)) || \
 				   ((extent_start (e) == (st)) && \
@@ -377,6 +393,9 @@ struct extent_auxiliary extent_auxiliary_defaults;
 
 typedef struct stack_of_extents
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
   Extent_List *extents;
   Memxpos pos; /* Position of stack of extents.  EXTENTS is the list of
 		 all extents that overlap this position.  This position
@@ -569,10 +588,17 @@ gap_array_make_gap (Gap_Array *ga, Elemcount increment)
      a geometric progression that saves on realloc space. */
   increment += 100 + ga->numels / 8;
 
+#ifdef NEW_GC
+  ga = (Gap_Array *) mc_realloc (ga,
+				 offsetof (Gap_Array, array) +
+				 (ga->numels + ga->gapsize + increment) *
+				 ga->elsize);
+#else /* not NEW_GC */
   ga = (Gap_Array *) xrealloc (ga,
 			       offsetof (Gap_Array, array) +
 			       (ga->numels + ga->gapsize + increment) *
 			       ga->elsize);
+#endif /* not NEW_GC */
   if (ga == 0)
     memory_full ();
 
@@ -664,6 +690,9 @@ gap_array_make_marker (Gap_Array *ga, Elemcount pos)
   Gap_Array_Marker *m;
 
   assert (pos >= 0 && pos <= ga->numels);
+#ifdef NEW_GC
+    m = alloc_lrecord_type (Gap_Array_Marker, &lrecord_gap_array_marker);
+#else /* not NEW_GC */
   if (gap_array_marker_freelist)
     {
       m = gap_array_marker_freelist;
@@ -671,6 +700,7 @@ gap_array_make_marker (Gap_Array *ga, Elemcount pos)
     }
   else
     m = xnew (Gap_Array_Marker);
+#endif /* not NEW_GC */
 
   m->pos = GAP_ARRAY_ARRAY_TO_MEMORY_POS (ga, pos);
   m->next = ga->markers;
@@ -690,11 +720,16 @@ gap_array_delete_marker (Gap_Array *ga, Gap_Array_Marker *m)
     prev->next = p->next;
   else
     ga->markers = p->next;
+#ifdef NEW_GC
+  mc_free (m);
+#else /* not NEW_GC */
   m->next = gap_array_marker_freelist;
   m->pos = 0xDEADBEEF; /* -559038737 base 10 */
   gap_array_marker_freelist = m;
+#endif /* not NEW_GC */
 }
 
+#ifndef NEW_GC
 static void
 gap_array_delete_all_markers (Gap_Array *ga)
 {
@@ -708,6 +743,7 @@ gap_array_delete_all_markers (Gap_Array *ga)
       gap_array_marker_freelist = p;
     }
 }
+#endif /* not NEW_GC */
 
 static void
 gap_array_move_marker (Gap_Array *ga, Gap_Array_Marker *m, Elemcount pos)
@@ -722,17 +758,23 @@ gap_array_move_marker (Gap_Array *ga, Gap_Array_Marker *m, Elemcount pos)
 static Gap_Array *
 make_gap_array (Elemcount elsize)
 {
+#ifdef NEW_GC
+  Gap_Array *ga = alloc_lrecord_type (Gap_Array, &lrecord_gap_array);
+#else /* not NEW_GC */
   Gap_Array *ga = xnew_and_zero (Gap_Array);
+#endif /* not NEW_GC */
   ga->elsize = elsize;
   return ga;
 }
 
+#ifndef NEW_GC
 static void
 free_gap_array (Gap_Array *ga)
 {
   gap_array_delete_all_markers (ga);
   xfree (ga, Gap_Array *);
 }
+#endif /* not NEW_GC */
 
 
 /************************************************************************/
@@ -887,6 +929,9 @@ extent_list_make_marker (Extent_List *el, int pos, int endp)
 {
   Extent_List_Marker *m;
 
+#ifdef NEW_GC
+  m = alloc_lrecord_type (Extent_List_Marker, &lrecord_extent_list_marker);
+#else /* not NEW_GC */
   if (extent_list_marker_freelist)
     {
       m = extent_list_marker_freelist;
@@ -894,6 +939,7 @@ extent_list_make_marker (Extent_List *el, int pos, int endp)
     }
   else
     m = xnew (Extent_List_Marker);
+#endif /* not NEW_GC */
 
   m->m = gap_array_make_marker (endp ? el->end : el->start, pos);
   m->endp = endp;
@@ -917,9 +963,13 @@ extent_list_delete_marker (Extent_List *el, Extent_List_Marker *m)
     prev->next = p->next;
   else
     el->markers = p->next;
+#ifdef NEW_GC
+  gap_array_delete_marker (m->endp ? el->end : el->start, m->m);
+#else /* not NEW_GC */
   m->next = extent_list_marker_freelist;
   extent_list_marker_freelist = m;
   gap_array_delete_marker (m->endp ? el->end : el->start, m->m);
+#endif /* not NEW_GC */
 }
 
 #define extent_list_marker_pos(el, mkr) \
@@ -928,13 +978,18 @@ extent_list_delete_marker (Extent_List *el, Extent_List_Marker *m)
 static Extent_List *
 allocate_extent_list (void)
 {
+#ifdef NEW_GC
+  Extent_List *el = alloc_lrecord_type (Extent_List, &lrecord_extent_list);
+#else /* not NEW_GC */
   Extent_List *el = xnew (Extent_List);
+#endif /* not NEW_GC */
   el->start = make_gap_array (sizeof (EXTENT));
   el->end = make_gap_array (sizeof (EXTENT));
   el->markers = 0;
   return el;
 }
 
+#ifndef NEW_GC
 static void
 free_extent_list (Extent_List *el)
 {
@@ -942,6 +997,7 @@ free_extent_list (Extent_List *el)
   free_gap_array (el->end);
   xfree (el, Extent_List *);
 }
+#endif /* not NEW_GC */
 
 
 /************************************************************************/
@@ -1021,28 +1077,46 @@ allocate_extent_auxiliary (EXTENT ext)
    structure to be there. */
 
 static struct stack_of_extents *allocate_soe (void);
+#ifndef NEW_GC
 static void free_soe (struct stack_of_extents *soe);
+#endif /* not NEW_GC */
 static void soe_invalidate (Lisp_Object obj);
 
 extern const struct sized_memory_description gap_array_marker_description;
 
 static const struct memory_description gap_array_marker_description_1[] = { 
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (Gap_Array_Marker, next) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (Gap_Array_Marker, next), 1,
     { &gap_array_marker_description } },
+#endif /* not NEW_GC */
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("gap-array-marker", gap_array_marker,
+			       0, /*dumpable-flag*/
+                               0, 0, 0, 0, 0, 
+			       gap_array_marker_description_1,
+			       struct gap_array_marker);
+#else /* not NEW_GC */
 const struct sized_memory_description gap_array_marker_description = {
   sizeof (Gap_Array_Marker),
   gap_array_marker_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description lispobj_gap_array_description_1[] = { 
   { XD_ELEMCOUNT, offsetof (Gap_Array, gap) },
   { XD_BYTECOUNT, offsetof (Gap_Array, offset_past_gap) },
   { XD_ELEMCOUNT, offsetof (Gap_Array, els_past_gap) },
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (Gap_Array, markers) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (Gap_Array, markers), 1,
     { &gap_array_marker_description }, XD_FLAG_NO_KKCC },
+#endif /* not NEW_GC */
   { XD_BLOCK_ARRAY, offsetof (Gap_Array, array), XD_INDIRECT (0, 0),
     { &lisp_object_description } },
   { XD_BLOCK_ARRAY, XD_INDIRECT (1, offsetof (Gap_Array, array)),
@@ -1050,57 +1124,118 @@ static const struct memory_description lispobj_gap_array_description_1[] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+
+static Bytecount
+size_gap_array (const void *lheader)
+{
+  Gap_Array *ga = (Gap_Array *) lheader;
+  return offsetof (Gap_Array, array) + (ga->numels + ga->gapsize) * ga->elsize;
+}
+
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("gap-array", gap_array,
+					0, /*dumpable-flag*/
+					0, 0, 0, 0, 0, 
+					lispobj_gap_array_description_1,
+					size_gap_array,
+					struct gap_array);
+#else /* not NEW_GC */
 static const struct sized_memory_description lispobj_gap_array_description = {
   sizeof (Gap_Array),
   lispobj_gap_array_description_1
 };
 
 extern const struct sized_memory_description extent_list_marker_description;
+#endif /* not NEW_GC */
 
 static const struct memory_description extent_list_marker_description_1[] = { 
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (Extent_List_Marker, m) },
+  { XD_LISP_OBJECT, offsetof (Extent_List_Marker, next) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (Extent_List_Marker, m), 1,
     { &gap_array_marker_description } },
   { XD_BLOCK_PTR, offsetof (Extent_List_Marker, next), 1,
     { &extent_list_marker_description } },
+#endif /* not NEW_GC */
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("extent-list-marker", extent_list_marker,
+			       0, /*dumpable-flag*/
+                               0, 0, 0, 0, 0, 
+			       extent_list_marker_description_1,
+			       struct extent_list_marker);
+#else /* not NEW_GC */
 const struct sized_memory_description extent_list_marker_description = {
   sizeof (Extent_List_Marker),
   extent_list_marker_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description extent_list_description_1[] = { 
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (Extent_List, start) },
+  { XD_LISP_OBJECT, offsetof (Extent_List, end) },
+  { XD_LISP_OBJECT, offsetof (Extent_List, markers) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (Extent_List, start), 1,
     { &lispobj_gap_array_description } },
   { XD_BLOCK_PTR, offsetof (Extent_List, end), 1,
     { &lispobj_gap_array_description }, XD_FLAG_NO_KKCC },
   { XD_BLOCK_PTR, offsetof (Extent_List, markers), 1,
     { &extent_list_marker_description }, XD_FLAG_NO_KKCC },
+#endif /* not NEW_GC */
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("extent-list", extent_list,
+			       0, /*dumpable-flag*/
+                               0, 0, 0, 0, 0, 
+			       extent_list_description_1,
+			       struct extent_list);
+#else /* not NEW_GC */
 static const struct sized_memory_description extent_list_description = {
   sizeof (Extent_List),
   extent_list_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description stack_of_extents_description_1[] = { 
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (Stack_Of_Extents, extents) },
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (Stack_Of_Extents, extents), 1,
     { &extent_list_description } },
+#endif /* not NEW_GC */
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("stack-of-extents", stack_of_extents,
+			       0, /*dumpable-flag*/
+                               0, 0, 0, 0, 0, 
+			       stack_of_extents_description_1,
+			       struct stack_of_extents);
+#else /* not NEW_GC */
 static const struct sized_memory_description stack_of_extents_description = {
   sizeof (Stack_Of_Extents),
   stack_of_extents_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description extent_info_description [] = {
+#ifdef NEW_GC
+  { XD_LISP_OBJECT, offsetof (struct extent_info, extents) },
+  { XD_LISP_OBJECT, offsetof (struct extent_info, soe) }, 
+#else /* not NEW_GC */
   { XD_BLOCK_PTR, offsetof (struct extent_info, extents), 1,
     { &extent_list_description } },
   { XD_BLOCK_PTR, offsetof (struct extent_info, soe), 1,
     { &stack_of_extents_description }, XD_FLAG_NO_KKCC },
+#endif /* not NEW_GC */
   { XD_END }
 };
 
@@ -1142,6 +1277,10 @@ finalize_extent_info (void *header, int for_disksave)
   if (for_disksave)
     return;
 
+#ifdef NEW_GC
+  data->soe = 0;
+  data->extents = 0;
+#else /* not NEW_GC */
   if (data->soe)
     {
       free_soe (data->soe);
@@ -1152,6 +1291,7 @@ finalize_extent_info (void *header, int for_disksave)
       free_extent_list (data->extents);
       data->extents = 0;
     }
+#endif /* not NEW_GC */
 }
 
 DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
@@ -1181,7 +1321,9 @@ flush_cached_extent_info (Lisp_Object extent_info)
 
   if (data->soe)
     {
+#ifndef NEW_GC
       free_soe (data->soe);
+#endif /* not NEW_GC */
       data->soe = 0;
     }
 }
@@ -1326,12 +1468,16 @@ init_buffer_extents (struct buffer *b)
 void
 uninit_buffer_extents (struct buffer *b)
 {
+#ifndef NEW_GC
   struct extent_info *data = XEXTENT_INFO (b->extent_info);
+#endif /* not NEW_GC */
 
   /* Don't destroy the extents here -- there may still be children
      extents pointing to the extents. */
   detach_all_extents (wrap_buffer (b));
+#ifndef NEW_GC
   finalize_extent_info (data, 0);
+#endif /* not NEW_GC */
 }
 
 /* Retrieve the extent list that an extent is a member of; the
@@ -1649,18 +1795,25 @@ soe_invalidate (Lisp_Object obj)
 static struct stack_of_extents *
 allocate_soe (void)
 {
+#ifdef NEW_GC
+  struct stack_of_extents *soe = 
+    alloc_lrecord_type (struct stack_of_extents, &lrecord_stack_of_extents);
+#else /* not NEW_GC */
   struct stack_of_extents *soe = xnew_and_zero (struct stack_of_extents);
+#endif /* not NEW_GC */
   soe->extents = allocate_extent_list ();
   soe->pos = -1;
   return soe;
 }
 
+#ifndef NEW_GC
 static void
 free_soe (struct stack_of_extents *soe)
 {
   free_extent_list (soe->extents);
   xfree (soe, struct stack_of_extents *);
 }
+#endif /* not NEW_GC */
 
 /* ------------------------------- */
 /*        other primitives         */
@@ -7299,6 +7452,13 @@ syms_of_extents (void)
   INIT_LRECORD_IMPLEMENTATION (extent);
   INIT_LRECORD_IMPLEMENTATION (extent_info);
   INIT_LRECORD_IMPLEMENTATION (extent_auxiliary);
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (gap_array_marker);
+  INIT_LRECORD_IMPLEMENTATION (gap_array);
+  INIT_LRECORD_IMPLEMENTATION (extent_list_marker);
+  INIT_LRECORD_IMPLEMENTATION (extent_list);
+  INIT_LRECORD_IMPLEMENTATION (stack_of_extents);
+#endif /* not NEW_GC */
 
   DEFSYMBOL (Qextentp);
   DEFSYMBOL (Qextent_live_p);

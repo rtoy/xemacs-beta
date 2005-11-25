@@ -92,11 +92,19 @@ static const struct memory_description mswindows_frame_data_description_1 [] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("mswindows-frame", mswindows_frame,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       mswindows_frame_data_description_1,
+			       Lisp_Mswindows_Frame);
+#else /* not NEW_GC */
 extern const struct sized_memory_description mswindows_frame_data_description;
 
 const struct sized_memory_description mswindows_frame_data_description = {
   sizeof (struct mswindows_frame), mswindows_frame_data_description_1
 };
+#endif /* not NEW_GC */
 
 /*---------------------------------------------------------------------*/
 /*-----                    DISPLAY FRAME                          -----*/
@@ -165,7 +173,12 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
   if (!NILP (height))
     CHECK_INT (height);
 
+#ifdef NEW_GC
+  f->frame_data = alloc_lrecord_type (struct mswindows_frame,
+				      &lrecord_mswindows_frame);
+#else /* not NEW_GC */
   f->frame_data = xnew_and_zero (struct mswindows_frame);
+#endif /* not NEW_GC */
   FRAME_MSWINDOWS_TARGET_RECT (f) = xnew_and_zero (XEMACS_RECT_WH);
 
   FRAME_MSWINDOWS_TARGET_RECT (f)->left = NILP (left) ? -1 : abs (XINT (left));
@@ -340,7 +353,11 @@ mswindows_delete_frame (struct frame *f)
 #endif
       ReleaseDC (FRAME_MSWINDOWS_HANDLE (f), FRAME_MSWINDOWS_DC (f));
       DestroyWindow (FRAME_MSWINDOWS_HANDLE (f));
+#ifdef NEW_GC
+      mc_free (f->frame_data);
+#else /* not NEW_GC */
       xfree (f->frame_data, void *);
+#endif /* not NEW_GC */
     }
   f->frame_data = 0;
 }
@@ -1185,6 +1202,9 @@ console_type_create_frame_mswindows (void)
 void
 syms_of_frame_mswindows (void)
 {
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (mswindows_frame);
+#endif /* NEW_GC */
 }
 
 void

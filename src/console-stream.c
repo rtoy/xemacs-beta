@@ -53,9 +53,17 @@ static const struct memory_description stream_console_data_description_1 [] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("stream-console", stream_console,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       stream_console_data_description_1,
+			       Lisp_Stream_Console);
+#else /* not NEW_GC */
 const struct sized_memory_description stream_console_data_description = {
   sizeof (struct stream_console), stream_console_data_description_1
 };
+#endif /* not NEW_GC */
 
 static void
 stream_init_console (struct console *con, Lisp_Object UNUSED (params))
@@ -63,8 +71,14 @@ stream_init_console (struct console *con, Lisp_Object UNUSED (params))
   Lisp_Object tty = CONSOLE_CONNECTION (con);
   struct stream_console *stream_con;
 
+#ifdef NEW_GC
+  if (CONSOLE_STREAM_DATA (con) == NULL)
+    CONSOLE_STREAM_DATA (con) = alloc_lrecord_type (struct stream_console,
+						    &lrecord_stream_console);
+#else /* not NEW_GC */
   if (CONSOLE_STREAM_DATA (con) == NULL)
     CONSOLE_STREAM_DATA (con) = xnew_and_zero (struct stream_console);
+#endif /* not NEW_GC */
 
   stream_con = CONSOLE_STREAM_DATA (con);
 
@@ -123,7 +137,11 @@ stream_delete_console (struct console *con)
       if (stream_con->in != stdin)
 	retry_fclose (stream_con->in);
 
+#ifdef NEW_GC
+      mc_free (stream_con);
+#else /* not NEW_GC */
       xfree (stream_con, struct stream_console *);
+#endif /* not NEW_GC */
       CONSOLE_STREAM_DATA (con) = NULL;
     }
 }

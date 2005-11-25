@@ -77,11 +77,19 @@ static const struct memory_description x_frame_data_description_1 [] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("x-frame", x_frame,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       x_frame_data_description_1,
+			       Lisp_X_Frame);
+#else /* not NEW_GC */
 extern const struct sized_memory_description x_frame_data_description;
 
 const struct sized_memory_description x_frame_data_description = {
   sizeof (struct x_frame), x_frame_data_description_1
 };
+#endif /* not NEW_GC */
 
 EXFUN (Fx_window_id, 1);
 
@@ -2073,7 +2081,11 @@ static void
 allocate_x_frame_struct (struct frame *f)
 {
   /* zero out all slots. */
+#ifdef NEW_GC
+  f->frame_data = alloc_lrecord_type (struct x_frame, &lrecord_x_frame);
+#else /* not NEW_GC */
   f->frame_data = xnew_and_zero (struct x_frame);
+#endif /* not NEW_GC */
 
   /* yeah, except the lisp ones */
   FRAME_X_LAST_MENUBAR_BUFFER (f) = Qnil;
@@ -2642,7 +2654,11 @@ x_delete_frame (struct frame *f)
 
   if (f->frame_data)
     {
+#ifdef NEW_GC
+      mc_free (f->frame_data);
+#else /* not NEW_GC */
       xfree (f->frame_data, void *);
+#endif /* not NEW_GC */
       f->frame_data = 0;
     }
 }
@@ -2720,6 +2736,10 @@ x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
 void
 syms_of_frame_x (void)
 {
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (x_frame);
+#endif /* NEW_GC */
+
   DEFSYMBOL (Qoverride_redirect);
   DEFSYMBOL (Qx_resource_name);
 

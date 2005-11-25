@@ -117,6 +117,9 @@ struct Lisp_Face
 typedef struct face_cachel face_cachel;
 struct face_cachel
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* not NEW_GC */
   /* There are two kinds of cachels; those created from a single face
      and those created by merging more than one face.  In the former
      case, the FACE element specifies the face used.  In the latter
@@ -221,6 +224,19 @@ struct face_cachel
   /* #### Of course we should use a bit array or something. */
   unsigned char font_updated[NUM_LEADING_BYTES];
 };
+
+#ifdef NEW_GC
+typedef struct face_cachel Lisp_Face_Cachel;
+
+DECLARE_LRECORD (face_cachel, Lisp_Face_Cachel);
+
+#define XFACE_CACHEL(x) \
+  XRECORD (x, face_cachel, Lisp_Face_Cachel)
+#define wrap_face_cachel(p) wrap_record (p, face_cachel)
+#define FACE_CACHEL_P(x) RECORDP (x, face_cachel)
+#define CHECK_FACE_CACHEL(x) CHECK_RECORD (x, face_cachel)
+#define CONCHECK_FACE_CACHEL(x) CONCHECK_RECORD (x, face_cachel)
+#endif /* NEW_GC */
 
 DECLARE_LRECORD (face, Lisp_Face);
 #define XFACE(x) XRECORD (x, face, Lisp_Face)

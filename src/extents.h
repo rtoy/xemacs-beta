@@ -49,6 +49,56 @@ DECLARE_LRECORD (extent_info, struct extent_info);
 #define CHECK_EXTENT_INFO(x) CHECK_RECORD (x, extent_info)
 #define CONCHECK_EXTENT_INFO(x) CONCHECK_RECORD (x, extent_info)
 
+#ifdef NEW_GC
+struct gap_array_marker;
+
+DECLARE_LRECORD (gap_array_marker, struct gap_array_marker);
+#define XGAP_ARRAY_MARKER(x) \
+  XRECORD (x, gap_array_marker, struct gap_array_marker)
+#define wrap_gap_array_marker(p) wrap_record (p, gap_array_marker)
+#define GAP_ARRAY_MARKERP(x) RECORDP (x, gap_array_marker)
+#define CHECK_GAP_ARRAY_MARKER(x) CHECK_RECORD (x, gap_array_marker)
+#define CONCHECK_GAP_ARRAY_MARKER(x) CONCHECK_RECORD (x, gap_array_marker)
+
+struct gap_array;
+
+DECLARE_LRECORD (gap_array, struct gap_array);
+#define XGAP_ARRAY(x) XRECORD (x, gap_array, struct gap_array)
+#define wrap_gap_array(p) wrap_record (p, gap_array)
+#define GAP_ARRAYP(x) RECORDP (x, gap_array)
+#define CHECK_GAP_ARRAY(x) CHECK_RECORD (x, gap_array)
+#define CONCHECK_GAP_ARRAY(x) CONCHECK_RECORD (x, gap_array)
+
+struct extent_list_marker;
+
+DECLARE_LRECORD (extent_list_marker, struct extent_list_marker);
+#define XEXTENT_LIST_MARKER(x) \
+  XRECORD (x, extent_list_marker, struct extent_list_marker)
+#define wrap_extent_list_marker(p) wrap_record (p, extent_list_marker)
+#define EXTENT_LIST_MARKERP(x) RECORDP (x, extent_list_marker)
+#define CHECK_EXTENT_LIST_MARKER(x) CHECK_RECORD (x, extent_list_marker)
+#define CONCHECK_EXTENT_LIST_MARKER(x) CONCHECK_RECORD (x, extent_list_marker)
+
+struct extent_list;
+
+DECLARE_LRECORD (extent_list, struct extent_list);
+#define XEXTENT_LIST(x) XRECORD (x, extent_list, struct extent_list)
+#define wrap_extent_list(p) wrap_record (p, extent_list)
+#define EXTENT_LISTP(x) RECORDP (x, extent_list)
+#define CHECK_EXTENT_LIST(x) CHECK_RECORD (x, extent_list)
+#define CONCHECK_EXTENT_LIST(x) CONCHECK_RECORD (x, extent_list)
+
+struct stack_of_extents;
+
+DECLARE_LRECORD (stack_of_extents, struct stack_of_extents);
+#define XSTACK_OF_EXTENTS(x) \
+  XRECORD (x, stack_of_extents, struct stack_of_extents)
+#define wrap_stack_of_extents(p) wrap_record (p, stack_of_extents)
+#define STACK_OF_EXTENTSP(x) RECORDP (x, stack_of_extents)
+#define CHECK_STACK_OF_EXTENTS(x) CHECK_RECORD (x, stack_of_extents)
+#define CONCHECK_STACK_OF_EXTENTS(x) CONCHECK_RECORD (x, stack_of_extents)
+#endif /* NEW_GC */
+
 /* the layouts for glyphs (extent->flags.glyph_layout).  Must fit in 2 bits. */
 typedef enum glyph_layout
 {

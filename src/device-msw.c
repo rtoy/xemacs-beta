@@ -73,11 +73,19 @@ static const struct memory_description mswindows_device_data_description_1 [] = 
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("mswindows-device", mswindows_device,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       mswindows_device_data_description_1,
+			       Lisp_Mswindows_Device);
+#else /* not NEW_GC */
 extern const struct sized_memory_description mswindows_device_data_description;
 
 const struct sized_memory_description mswindows_device_data_description = {
   sizeof (struct mswindows_device), mswindows_device_data_description_1
 };
+#endif /* not NEW_GC */
 
 static const struct memory_description msprinter_device_data_description_1 [] = {
   { XD_LISP_OBJECT, offsetof (struct msprinter_device, name) },
@@ -86,11 +94,19 @@ static const struct memory_description msprinter_device_data_description_1 [] = 
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("msprinter-device", msprinter_device,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       msprinter_device_data_description_1,
+			       Lisp_Msprinter_Device);
+#else /* not NEW_GC */
 extern const struct sized_memory_description msprinter_device_data_description;
 
 const struct sized_memory_description msprinter_device_data_description = {
   sizeof (struct msprinter_device), msprinter_device_data_description_1
 };
+#endif /* not NEW_GC */
 
 static Lisp_Object allocate_devmode (DEVMODEW *src_devmode, int do_copy,
 				     Lisp_Object src_name, struct device *d);
@@ -146,7 +162,12 @@ mswindows_init_device (struct device *d, Lisp_Object UNUSED (props))
   init_baud_rate (d);
   init_one_device (d);
 
+#ifdef NEW_GC
+  d->device_data = alloc_lrecord_type (struct mswindows_device,
+				       &lrecord_mswindows_device);
+#else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct mswindows_device);
+#endif /* not NEW_GC */
   hdc = CreateCompatibleDC (NULL);
   assert (hdc != NULL);
   DEVICE_MSWINDOWS_HCDC (d) = hdc;
@@ -279,7 +300,11 @@ mswindows_delete_device (struct device *d)
 #endif
 
   DeleteDC (DEVICE_MSWINDOWS_HCDC (d));
+#ifdef NEW_GC
+  mc_free (d->device_data);
+#else /* not NEW_GC */
   xfree (d->device_data, void *);
+#endif /* not NEW_GC */
 }
 
 void
@@ -495,7 +520,12 @@ msprinter_init_device (struct device *d, Lisp_Object UNUSED (props))
   LONG dm_size;
   Extbyte *printer_name;
 
+#ifdef NEW_GC
+  d->device_data = alloc_lrecord_type (struct msprinter_device,
+				       &lrecord_msprinter_device);
+#else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct msprinter_device);
+#endif /* not NEW_GC */
 
   DEVICE_INFD (d) = DEVICE_OUTFD (d) = -1;
   DEVICE_MSPRINTER_DEVMODE (d) = Qnil;
@@ -546,7 +576,11 @@ msprinter_delete_device (struct device *d)
 	  DEVICE_MSPRINTER_DEVMODE (d) = Qnil;
 	}
 
+#ifdef NEW_GC
+      mc_free (d->device_data);
+#else /* not NEW_GC */
       xfree (d->device_data, void *);
+#endif /* not NEW_GC */
     }
 }
 
@@ -1344,6 +1378,11 @@ void
 syms_of_device_mswindows (void)
 {
   INIT_LRECORD_IMPLEMENTATION (devmode);
+
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (mswindows_device);
+  INIT_LRECORD_IMPLEMENTATION (msprinter_device);
+#endif /* NEW_GC */
 
   DEFSUBR (Fmsprinter_get_settings);
   DEFSUBR (Fmsprinter_select_settings);

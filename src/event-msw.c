@@ -2498,9 +2498,11 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
   struct frame *frame;
   struct mswindows_frame *msframe;
 
+#ifndef NEW_GC
   /* If you hit this, rewrite the offending API call to occur after GC,
      using register_post_gc_action(). */
   assert (!gc_in_progress);
+#endif /* NEW_GC */
 
 #ifdef DEBUG_XEMACS
   if (debug_mswindows_events)

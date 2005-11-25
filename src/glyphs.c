@@ -4540,10 +4540,12 @@ reset_frame_subwindow_instance_cache (struct frame* f)
    expose events that are going to come and ignore them as
    required. */
 
+#ifndef NEW_GC
 struct expose_ignore_blocktype
 {
   Blocktype_declare (struct expose_ignore);
 } *the_expose_ignore_blocktype;
+#endif /* not NEW_GC */
 
 int
 check_for_ignored_expose (struct frame* f, int x, int y, int width, int height)
@@ -4574,7 +4576,11 @@ check_for_ignored_expose (struct frame* f, int x, int y, int width, int height)
 	  if (ei == f->subwindow_exposures_tail)
 	    f->subwindow_exposures_tail = prev;
 
+#ifdef NEW_GC
+	  mc_free (ei);
+#else /* not NEW_GC */
 	  Blocktype_free (the_expose_ignore_blocktype, ei);
+#endif /* not NEW_GC */
 	  return 1;
 	}
       prev = ei;
@@ -4589,7 +4595,11 @@ register_ignored_expose (struct frame* f, int x, int y, int width, int height)
     {
       struct expose_ignore *ei;
 
+#ifdef NEW_GC
+      ei = alloc_lrecord_type (struct expose_ignore, &lrecord_expose_ignore);
+#else /* not NEW_GC */
       ei = Blocktype_alloc (the_expose_ignore_blocktype);
+#endif /* not NEW_GC */
 
       ei->next = NULL;
       ei->x = x;
@@ -5430,8 +5440,10 @@ image_instantiator_format_create (void)
 void
 reinit_vars_of_glyphs (void)
 {
+#ifndef NEW_GC
   the_expose_ignore_blocktype =
     Blocktype_new (struct expose_ignore_blocktype);
+#endif /* not NEW_GC */
 
   hold_ignored_expose_registration = 0;
 }

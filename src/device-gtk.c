@@ -75,11 +75,19 @@ static const struct memory_description gtk_device_data_description_1 [] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("gtk-device", gtk_device,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       gtk_device_data_description_1,
+			       Lisp_Gtk_Device);
+#else /* not NEW_GC */
 extern const struct sized_memory_description gtk_device_data_description;
 
 const struct sized_memory_description gtk_device_data_description = {
   sizeof (struct gtk_device), gtk_device_data_description_1
 };
+#endif /* not NEW_GC */
 
 
 /************************************************************************/
@@ -108,7 +116,11 @@ extern Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
 static void
 allocate_gtk_device_struct (struct device *d)
 {
+#ifdef NEW_GC
+  d->device_data = alloc_lrecord_type (struct gtk_device, &lrecord_gtk_device);
+#else /* not NEW_GC */
   d->device_data = xnew_and_zero (struct gtk_device);
+#endif /* not NEW_GC */
   DEVICE_GTK_DATA (d)->x_keysym_map_hashtable = Qnil;
 }
 
@@ -350,7 +362,11 @@ gtk_mark_device (struct device *d)
 static void
 free_gtk_device_struct (struct device *d)
 {
+#ifdef NEW_GC
+  mc_free (d->device_data);
+#else /* not NEW_GC */
   xfree (d->device_data, void *);
+#endif /* not NEW_GC */
 }
 
 static void
@@ -681,6 +697,10 @@ Get the style information for a Gtk device.
 void
 syms_of_device_gtk (void)
 {
+#ifdef NEW_GC
+  INIT_LRECORD_IMPLEMENTATION (gtk_device);
+#endif /* NEW_GC */
+
   DEFSUBR (Fgtk_keysym_on_keyboard_p);
   DEFSUBR (Fgtk_display_visual_class);
   DEFSUBR (Fgtk_display_visual_depth);

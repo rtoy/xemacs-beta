@@ -34,12 +34,26 @@ DECLARE_CONSOLE_TYPE (stream);
 
 struct stream_console
 {
+#ifdef NEW_GC
+  struct lrecord_header header;
+#endif /* NEW_GC */
   FILE *in;
   FILE *out;
   FILE *err;
   int needs_newline;
   Lisp_Object instream;
 };
+
+#ifdef NEW_GC
+typedef struct stream_console Lisp_Stream_Console;
+
+DECLARE_LRECORD (stream_console, Lisp_Stream_Console);
+
+#define XSTREAM_CONSOLE(x) \
+  XRECORD (x, stream_console, Lisp_Stream_Console)
+#define wrap_stream_console(p) wrap_record (p, stream_console)
+#define STREAM_CONSOLE_P(x) RECORDP (x, stream_console)
+#endif /* NEW_GC */
 
 #define CONSOLE_STREAM_DATA(con) CONSOLE_TYPE_DATA (con, stream)
 

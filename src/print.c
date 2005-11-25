@@ -1733,6 +1733,17 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
 	    if (STRINGP (obj))
 	      {
+#ifdef NEW_GC
+		if (!debug_can_access_memory (XSTRING_DATA (obj), 
+					      XSTRING_LENGTH (obj)))
+		  {
+		    write_fmt_string
+		      (printcharfun,
+		       "#<EMACS BUG: %p (BAD STRING DATA %p)>",
+		       lheader, XSTRING_DATA (obj));
+		    break;
+		  }
+#else /* not NEW_GC */
 		Lisp_String *l = (Lisp_String *) lheader;
 		if (!debug_can_access_memory (l->data_, l->size_))
 		  {
@@ -1742,6 +1753,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		       lheader, l->data_);
 		    break;
 		  }
+#endif /* not NEW_GC */
 	      }
 	  }
 
@@ -2219,9 +2231,9 @@ debug_p4 (Lisp_Object obj)
 	debug_out ("#<%s addr=0x%lx uid=0x%lx>",
 		   LHEADER_IMPLEMENTATION (header)->name,
 		   (EMACS_INT) header,
-		   LHEADER_IMPLEMENTATION (header)->basic_p ?
-		   ((struct lrecord_header *) header)->uid :
-		   ((struct old_lcrecord_header *) header)->uid);
+		   (EMACS_INT) (LHEADER_IMPLEMENTATION (header)->basic_p ?
+				((struct lrecord_header *) header)->uid :
+				((struct old_lcrecord_header *) header)->uid));
 #endif /* not MC_ALLOC */
     }
 

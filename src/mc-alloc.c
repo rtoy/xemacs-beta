@@ -21,16 +21,42 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: Not in FSF. */
 
 #include <config.h>
+
 #include "lisp.h"
 #include "mc-alloc.h"
+#include "getpagesize.h"
+
+
+#if 0
+# define USE_MARK_BITS_FREE_LIST 1
+#endif
+#if 1
+# define BLOCKTYPE_ALLOC_PAGE_HEADER 1
+#endif
+
+/* Memory protection needs the real system-dependent pagesize. */
+#ifndef WIN32_NATIVE
+#include <unistd.h> /* for getpagesize () */
+#endif
+#if defined (HAVE_GETPAGESIZE)
+# define SYS_PAGE_SIZE getpagesize ()
+#elif defined (_SC_PAGESIZE)
+# define SYS_PAGE_SIZE sysconf (_SC_PAGESIZE)
+#elif defined (_SC_PAGE_SIZE)
+# define SYS_PAGE_SIZE sysconf (_SC_PAGE_SIZE)
+#elif defined(get_page_size)
+# define SYS_PAGE_SIZE get_page_size ()
+#elif defined(PAGESIZE)
+# define SYS_PAGE_SIZE PAGESIZE 
+#elif defined(PAGE_SIZE)
+# define SYS_PAGE_SIZE PAGE_SIZE
+#else
+ /* Valid page sizes are powers of 2. */
+# define SYS_PAGE_SIZE 4096
+#endif
 
 
 /*--- configurable values ----------------------------------------------*/
-
-/* Valid page sizes are powers of 2. */
-#undef PAGE_SIZE   /* for FreeBSD */
-#define PAGE_SIZE                2048
-
 
 /* Definition of size classes */
 
@@ -41,11 +67,19 @@ Boston, MA 02111-1307, USA.  */
    avoid wasting memory. */
 
 /* Minimum object size in bytes. */
-#define USED_LIST_MIN_OBJECT_SIZE    8
+#if BITS_PER_EMACS_INT > 32
+# define USED_LIST_MIN_OBJECT_SIZE   16
+#else
+# define USED_LIST_MIN_OBJECT_SIZE    8
+#endif
 
 /* The step size by which the size classes increase (up to upper
    threshold). This many bytes are mapped to a single used list: */
-#define USED_LIST_LIN_STEP           4
+#if BITS_PER_EMACS_INT > 32
+# define USED_LIST_LIN_STEP           8
+#else
+# define USED_LIST_LIN_STEP           4
+#endif
 
 /* The upper threshold should always be set to PAGE_SIZE/2, because if
    a object is larger than PAGE_SIZE/2 there is no room for any other
@@ -53,26 +87,7 @@ Boston, MA 02111-1307, USA.  */
    the multiple pages, since a quick search for free spots is not
    needed for this kind of pages (because there are no free spots).
    PAGE_SIZES_DIV_2 defines maximum size of a used space list. */
-#define USED_LIST_UPPER_THRESHOLD PAGE_SIZE_DIV_2
-
-
-/* Unmanaged memory used list constants: Like in the used heap, it is
-   important to quickly find a free spot for a new object. Therefore
-   the size classes of the unmanaged heap are defined by the size of
-   the cells on the pages. The size classes should match common object
-   sizes, to avoid wasting memory. */
-/* Minimum object size in bytes. */
-#define UNMANAGED_LIST_MIN_OBJECT_SIZE    8
-/* The step size by which the size classes increase (up to upper
-   threshold). This many bytes are mapped to a single unmanaged list: */
-#define UNMANAGED_LIST_LIN_STEP           4
-/* The upper threshold should always be set to PAGE_SIZE/2, because if
-   a object is larger than PAGE_SIZE/2 there is no room for any other
-   object on this page. Objects this big are kept in the page list of
-   the multiple pages, since a quick search for free spots is not
-   needed for this kind of pages (because there are no free spots).
-   PAGE_SIZES defines maximum size of a unmanaged space list. */
-#define UNMANAGED_LIST_UPPER_THRESHOLD PAGE_SIZE_DIV_2
+#define USED_LIST_UPPER_THRESHOLD    PAGE_SIZE_DIV_2
 
 
 /* Heap free list constants: In the unused heap, the size of
@@ -93,6 +108,18 @@ Boston, MA 02111-1307, USA.  */
 #define FREE_LIST_UPPER_THRESHOLD  256
 
 
+/* used heap list count */
+#define N_USED_PAGE_LISTS (((USED_LIST_UPPER_THRESHOLD		\
+                             - USED_LIST_MIN_OBJECT_SIZE)	\
+                            / USED_LIST_LIN_STEP) + 1 ) + 1
+
+/* free heap list count */
+#define N_FREE_PAGE_LISTS (((FREE_LIST_UPPER_THRESHOLD		\
+                              - FREE_LIST_LOWER_THRESHOLD)	\
+                             / FREE_LIST_LIN_STEP)		\
+                            + FREE_LIST_LOWER_THRESHOLD)
+
+
 /* Maximum number of separately added heap sections. */
 #if BITS_PER_EMACS_INT > 32
 # define MAX_HEAP_SECTS          2048
@@ -103,7 +130,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Heap growth constants. Heap increases by any number between the
    boundaries (unit is PAGE_SIZE). */
-#define MIN_HEAP_INCREASE          32
+#define MIN_HEAP_INCREASE         256
 #define MAX_HEAP_INCREASE         256 /* not used */
 
 /* Every heap growth is calculated like this:
@@ -120,96 +147,22 @@ Boston, MA 02111-1307, USA.  */
 #define ZERO_MEM                     1
 
 
-
-
-/*--- calculations done by macros --------------------------------------*/
-
 #ifndef CHAR_BIT    /* should be included by limits.h */
 # define CHAR_BIT BITS_PER_CHAR
 #endif
 
-#if PAGE_SIZE == 512
-# define CPP_LOG_PAGE_SIZE  9
-#endif
-#if PAGE_SIZE == 1024
-# define CPP_LOG_PAGE_SIZE 10
-#endif
-#if PAGE_SIZE == 2048
-# define CPP_LOG_PAGE_SIZE 11
-#endif
-#if PAGE_SIZE == 4096
-# define CPP_LOG_PAGE_SIZE 12
-#endif
-#if PAGE_SIZE == 8192
-# define CPP_LOG_PAGE_SIZE 13
-#endif
-#if PAGE_SIZE == 16384
-# define CPP_LOG_PAGE_SIZE 14
-#endif
-#ifndef CPP_LOG_PAGE_SIZE
---> fix PAGE_SIZE
-#endif
+
+
+/*--- values depending on PAGE_SIZE ------------------------------------*/
+
+/* initialized in init_mc_allocator () */
+static EMACS_INT log_page_size;
+static EMACS_INT page_size_div_2;
+
 #undef PAGE_SIZE
-#define CPP_PAGE_SIZE    (1 << CPP_LOG_PAGE_SIZE)
-#define LOG_PAGE_SIZE    ((EMACS_INT) CPP_LOG_PAGE_SIZE)
-#define PAGE_SIZE        ((EMACS_INT) CPP_PAGE_SIZE)
-#define PAGE_SIZE_DIV_2  (PAGE_SIZE >> 1)
-
-
-/* NOT USED ANYMORE */
-#ifdef USE_EXPONENTIAL_USED_LIST_GROWTH
-/* used heap list logarithms */
-#if USED_LIST_LOWER_THRESHOLD == 8
-# define CPP_LOG_USED_LIST_LOWER_THRESHOLD 3
-#endif
-#if USED_LIST_LOWER_THRESHOLD == 16
-# define CPP_LOG_USED_LIST_LOWER_THRESHOLD 4
-#endif
-#if USED_LIST_LOWER_THRESHOLD == 32
-# define CPP_LOG_USED_LIST_LOWER_THRESHOLD 5
-#endif
-#if USED_LIST_LOWER_THRESHOLD == 64
-# define CPP_LOG_USED_LIST_LOWER_THRESHOLD 6
-#endif
-#if USED_LIST_LOWER_THRESHOLD == 128
-# define CPP_LOG_USED_LIST_LOWER_THRESHOLD 7
-#endif
-#if USED_LIST_LOWER_THRESHOLD == 256
-# define CPP_LOG_USED_LIST_LOWER_THRESHOLD 8
-#endif
-#ifndef CPP_LOG_USED_LIST_LOWER_THRESHOLD
---> fix USED_LIST_LOWER_THRESHOLD
-#endif
-#define LOG_USED_LIST_LOWER_THRESHOLD CPP_LOG_USED_LIST_LOWER_THRESHOLD
-#endif /* USE_EXPONENTIAL_USED_LIST_GROWTH */
-
-/* used heap list count */
-#define N_USED_PAGE_LISTS (((USED_LIST_UPPER_THRESHOLD		\
-                             - USED_LIST_MIN_OBJECT_SIZE)	\
-                            / USED_LIST_LIN_STEP) + 1 ) + 1
-
-/* unmanaged memory list count */
-#define N_UNMANAGED_PAGE_LISTS (((UNMANAGED_LIST_UPPER_THRESHOLD	\
-                             - UNMANAGED_LIST_MIN_OBJECT_SIZE)		\
-                            / UNMANAGED_LIST_LIN_STEP) + 1 ) + 1
-
-/* NOT USED ANYMORE */
-#ifdef USE_EXPONENTIAL_USED_LIST_GROWTH
-#define N_USED_PAGE_LISTS_LIN (((USED_LIST_LOWER_THRESHOLD	\
-                                 - USED_LIST_MIN_OBJECT_SIZE)	\
-                                / USED_LIST_LIN_STEP) + 1 )
-#define N_USED_PAGE_LISTS_EXP \
-  (LOG_PAGE_SIZE - LOG_USED_LIST_LOWER_THRESHOLD)
-
-#define N_USED_PAGE_LISTS \
-  (N_USED_PAGE_LISTS_LIN + N_USED_PAGE_LISTS_EXP + 1)
-#endif /* USE_EXPONENTIAL_USED_LIST_GROWTH */
-
-/* free heap list count */
-#define N_FREE_PAGE_LISTS (((FREE_LIST_UPPER_THRESHOLD		\
-                              - FREE_LIST_LOWER_THRESHOLD)	\
-                             / FREE_LIST_LIN_STEP)		\
-                            + FREE_LIST_LOWER_THRESHOLD)
+#define PAGE_SIZE        SYS_PAGE_SIZE
+#define LOG_PAGE_SIZE    log_page_size
+#define PAGE_SIZE_DIV_2  page_size_div_2
 
 
 /* Constants for heap address to page header mapping. */
@@ -237,8 +190,7 @@ Boston, MA 02111-1307, USA.  */
 
 /*--- structs and typedefs ---------------------------------------------*/
 
-/* Links the free lists (mark_bit_free_list, page_header_free_list,
-   cell free list). */
+/* Links the free lists (mark_bit_free_list and cell free list). */
 typedef struct free_link
 {
   struct lrecord_header lheader;
@@ -246,7 +198,7 @@ typedef struct free_link
 } free_link;
 
 
-/* Header for pages. They are hold in a doubly linked list. */
+/* Header for pages. They are held in a doubly linked list. */
 typedef struct page_header
 {
   struct page_header      *next;         /* next page_header */
@@ -263,7 +215,11 @@ typedef struct page_header
      mark_bits holds the pointer to this area. Is the number of
      objects smaller than BITS_PER_EMACS_INT, the mark bits are held in the
      mark_bit EMACS_INT directly, without an additional indirection. */
-  char                    *mark_bits;    /* pointer to mark bits */
+  unsigned int            black_bit:1;   /* objects on page are black */
+  unsigned int            dirty_bit:1;   /* page is dirty */
+  unsigned int            protection_bit:1;   /* page is write protected */
+  unsigned int            array_bit:1;   /* page holds arrays */
+  Rawbyte                 *mark_bits;    /* pointer to mark bits */
   void                    *heap_space;   /* pointer to heap, where objects
                                             are stored */
 } page_header;
@@ -272,7 +228,6 @@ typedef struct page_header
 /* Different list types. */
 enum list_type_enum {
   USED_LIST,
-  UNMANAGED_LIST,
   FREE_LIST
 };
 
@@ -339,20 +294,19 @@ typedef struct mc_allocator_globals_type {
 
   /* Holds all allocated pages, each object size class in its separate list,
      to guarantee fast allocation on partially filled pages. */
-  page_list_header     used_heap_pages[N_USED_PAGE_LISTS];
-
-  /* Holds all unmanaged pages. */
-  page_list_header     unmanaged_heap_pages[N_UNMANAGED_PAGE_LISTS];
+  page_list_header     *used_heap_pages;
 
   /* Holds all free pages in the heap. N multiples of PAGE_SIZE are
      kept on the Nth free list. Contiguos pages are coalesced. */
   page_list_header     free_heap_pages[N_FREE_PAGE_LISTS];
 
   /* ptr lookup table */
-  level_2_lookup_tree  *ptr_lookup_table[LEVEL1_SIZE];
+  level_2_lookup_tree  **ptr_lookup_table;
 
+#ifndef BLOCKTYPE_ALLOC_PAGE_HEADER
   /* page header free list */
   free_link            *page_header_free_list;
+#endif /* not BLOCKTYPE_ALLOC_PAGE_HEADER */
 
 #ifdef MEMORY_USAGE_STATS
   EMACS_INT            malloced_bytes;
@@ -368,9 +322,6 @@ mc_allocator_globals_type mc_allocator_globals;
 
 #define USED_HEAP_PAGES(i) \
   ((page_list_header*) &mc_allocator_globals.used_heap_pages[i])
-
-#define UNMANAGED_HEAP_PAGES(i) \
-  ((page_list_header*) &mc_allocator_globals.unmanaged_heap_pages[i])
 
 #define FREE_HEAP_PAGES(i) \
   ((page_list_header*) &mc_allocator_globals.free_heap_pages[i])
@@ -398,6 +349,10 @@ mc_allocator_globals_type mc_allocator_globals;
 # define PH_CELL_SIZE(ph) PH (ph)->cell_size
 # define PH_CELLS_ON_PAGE(ph) PH (ph)->cells_on_page
 # define PH_CELLS_USED(ph) PH (ph)->cells_used
+# define PH_BLACK_BIT(ph) PH (ph)->black_bit
+# define PH_DIRTY_BIT(ph) PH (ph)->dirty_bit
+# define PH_PROTECTION_BIT(ph) PH (ph)->protection_bit
+# define PH_ARRAY_BIT(ph) PH (ph)->array_bit
 # define PH_MARK_BITS(ph) PH (ph)->mark_bits
 # define PH_HEAP_SPACE(ph) PH (ph)->heap_space
 #define PH_LIST_TYPE(ph) PLH_LIST_TYPE (PH_PLH (ph))
@@ -412,7 +367,9 @@ mc_allocator_globals_type mc_allocator_globals;
 #define HEAP_SECTION(index) mc_allocator_globals.heap_sections[index]
 #define N_HEAP_SECTIONS mc_allocator_globals.n_heap_sections
 
+#ifndef BLOCKTYPE_ALLOC_PAGE_HEADER
 #define PAGE_HEADER_FREE_LIST mc_allocator_globals.page_header_free_list
+#endif /* not BLOCKTYPE_ALLOC_PAGE_HEADER */
 
 #define NEXT_FREE(free_list) ((free_link*) free_list)->next_free
 #define FREE_LIST(free_list) (free_link*) (free_list)
@@ -444,21 +401,19 @@ mc_allocator_globals_type mc_allocator_globals;
 #define PH_ON_USED_LIST_P(ph) \
   (ph && PH_PLH (ph) && (PLH_LIST_TYPE (PH_PLH (ph)) == USED_LIST))
 
-#define PH_ON_UNMANAGED_LIST_P(ph) \
-  (ph && PH_PLH (ph) && (PLH_LIST_TYPE (PH_PLH (ph)) == UNMANAGED_LIST))
 
+/* Number of mark bits: minimum 1, maximum 8. */
+#ifdef NEW_GC
+#define N_MARK_BITS 2
+#else /* not NEW_GC */
+#define N_MARK_BITS 1
+#endif /* not NEW_GC */
 
 
 
 /************************************************************************/
 /*                           MC Allocator                               */
 /************************************************************************/
-
-
-/* ###TODO### */
-#if 1
-# define ALLOC_MB_UNMANAGED 1
-#endif
 
 
 /*--- misc functions ---------------------------------------------------*/
@@ -483,7 +438,7 @@ deadbeef_memory (void *ptr, Bytecount size)
 static void
 visit_all_used_page_headers (void (*f) (page_header *ph))
 {
-  int i;
+  EMACS_INT i;
   for (i = 0; i < N_USED_PAGE_LISTS; i++)
     if (PLH_FIRST (USED_HEAP_PAGES (i)))
       {
@@ -507,7 +462,7 @@ visit_all_used_page_headers (void (*f) (page_header *ph))
 static void
 set_lookup_table (void *ptr, page_header *ph)
 {
-  int l1_index = L1_INDEX (ptr);
+  EMACS_INT l1_index = L1_INDEX (ptr);
   level_2_lookup_tree *l2 = PTR_LOOKUP_TABLE (l1_index);
 #ifdef USE_HASH_TABLE
   while ((l2) && (LEVEL2_KEY (l2) != l1_index))
@@ -537,7 +492,7 @@ set_lookup_table (void *ptr, page_header *ph)
 static void
 unset_lookup_table (void *ptr)
 {
-  int l1_index = L1_INDEX (ptr);
+  EMACS_INT l1_index = L1_INDEX (ptr);
   level_2_lookup_tree *l2 = PTR_LOOKUP_TABLE (l1_index);
 #ifdef USE_HASH_TABLE
   while ((l2) && (LEVEL2_KEY (l2) != l1_index))
@@ -554,7 +509,7 @@ unset_lookup_table (void *ptr)
 static page_header *
 get_page_header_internal (void *ptr)
 {
-  int l1_index = L1_INDEX (ptr);
+  EMACS_INT l1_index = L1_INDEX (ptr);
   level_2_lookup_tree *l2 = PTR_LOOKUP_TABLE (l1_index);
 #ifdef USE_HASH_TABLE
   while ((l2) && (LEVEL2_KEY (l2) != l1_index))
@@ -569,7 +524,7 @@ get_page_header_internal (void *ptr)
 static page_header *
 get_page_header (void *ptr)
 {
-  int l1_index = L1_INDEX (ptr);
+  EMACS_INT l1_index = L1_INDEX (ptr);
   level_2_lookup_tree *l2 = PTR_LOOKUP_TABLE (l1_index);
   assert (l2);
 #ifdef USE_HASH_TABLE
@@ -580,14 +535,14 @@ get_page_header (void *ptr)
   return LEVEL2 (l2, L2_INDEX (ptr));
 }
 
-
 /* Returns the mark bit index of a given heap address. */
 static EMACS_INT
 get_mark_bit_index (void *ptr, page_header *ph)
 {
   EMACS_INT cell_size = PH_CELL_SIZE (ph);
   if (cell_size)
-    return (((EMACS_INT) ptr - (EMACS_INT)(PH_HEAP_SPACE (ph))) / cell_size);
+    return (((EMACS_INT) ptr - (EMACS_INT)(PH_HEAP_SPACE (ph))) / cell_size) 
+      * N_MARK_BITS;
   else /* only one object on page */
     return 0;
 }
@@ -597,9 +552,9 @@ get_mark_bit_index (void *ptr, page_header *ph)
 static void
 add_pages_to_lookup_table (page_header *ph, EMACS_INT n_pages)
 {
-  char *p = (char*) PH_HEAP_SPACE (ph);
+  Rawbyte *p = (Rawbyte *) PH_HEAP_SPACE (ph);
   EMACS_INT end_of_section = (EMACS_INT) p + (PAGE_SIZE * n_pages);
-  for (p = (char*) PH_HEAP_SPACE (ph);
+  for (p = (Rawbyte *) PH_HEAP_SPACE (ph);
        (EMACS_INT) p < end_of_section; p += PAGE_SIZE)
     set_lookup_table (p, ph);
 }
@@ -609,7 +564,7 @@ add_pages_to_lookup_table (page_header *ph, EMACS_INT n_pages)
 static void
 init_lookup_table (void)
 {
-  int i;
+  EMACS_INT i;
   for (i = 0; i < LEVEL1_SIZE; i++)
     PTR_LOOKUP_TABLE (i) = 0;
 }
@@ -619,35 +574,32 @@ init_lookup_table (void)
 
 /*--- mark bits --------------------------------------------------------*/
 
-/* Number of mark bits: minimum 1, maximum 8. */
-#define N_MARK_BITS                  1
-
 /*--- bit operations --- */
 
 /* Allocates a bit array of length bits. */
-static char *
+static Rawbyte *
 alloc_bit_array(size_t bits)
 {
-#ifdef ALLOC_MB_UNMANAGED
-  size_t size = ((bits + CHAR_BIT - 1) / CHAR_BIT) * sizeof(char);
+  Rawbyte *bit_array;
+#ifdef USE_MARK_BITS_FREE_LIST
+  size_t size = ((bits + CHAR_BIT - 1) / CHAR_BIT) * sizeof (Rawbyte); 
+#else /* not USE_MARK_BITS_FREE_LIST */
+  size_t size = 
+    ALIGN_FOR_TYPE (((bits + CHAR_BIT - 1) / CHAR_BIT) * sizeof (Rawbyte), 
+		    Rawbyte *);
+#endif /* not USE_MARK_BITS_FREE_LIST */
   if (size < sizeof (free_link)) size = sizeof (free_link);
-  return (char *) mc_alloc_unmanaged (size);
-#else /* not ALLOC_MB_UNMANAGED */
-  size_t size = ((bits + CHAR_BIT - 1) / CHAR_BIT) * sizeof(char);
-  char *bit_array;
-  if (size < sizeof (free_link)) size = sizeof (free_link);
-  bit_array = (char*) xmalloc_and_zero (size);
 #ifdef MEMORY_USAGE_STATS
   MC_MALLOCED_BYTES += malloced_storage_size (0, size, 0);
 #endif
+  bit_array = (Rawbyte *) xmalloc_and_zero (size);
   return bit_array;
-#endif /* not ALLOC_MB_UNMANAGED */
 }
 
 
 /* Returns the bit value at pos. */
 static EMACS_INT
-get_bit (char *bit_array, EMACS_INT pos)
+get_bit (Rawbyte *bit_array, EMACS_INT pos)
 {
 #if N_MARK_BITS > 1
   EMACS_INT result = 0;
@@ -656,8 +608,8 @@ get_bit (char *bit_array, EMACS_INT pos)
   bit_array += pos / CHAR_BIT;
 #if N_MARK_BITS > 1
   for (i = 0; i < N_MARK_BITS; i++)
-    result |= (*bit_array & (1 << ((pos + i) % CHAR_BIT)));
-  return result >> pos;
+    result |= ((*bit_array & (1 << ((pos + i) % CHAR_BIT))) != 0) << i;
+  return result;
 #else
   return (*bit_array & (1 << (pos % CHAR_BIT))) != 0;
 #endif
@@ -666,10 +618,9 @@ get_bit (char *bit_array, EMACS_INT pos)
 
 /* Bit_Arrays bit at pos to val. */
 static void
-set_bit(char *bit_array, EMACS_INT pos, EMACS_INT val)
+set_bit (Rawbyte *bit_array, EMACS_INT pos, EMACS_INT val)
 {
 #if N_MARK_BITS > 1
-  EMACS_INT result = 0;
   EMACS_INT i;
 #endif
   bit_array += pos / CHAR_BIT;
@@ -689,21 +640,23 @@ set_bit(char *bit_array, EMACS_INT pos, EMACS_INT val)
 
 
 /*--- mark bit functions ---*/
-#define USE_PNTR_MARK_BITS(ph) (PH_CELLS_ON_PAGE (ph) > BITS_PER_EMACS_INT)
-#define USE_WORD_MARK_BITS(ph) (PH_CELLS_ON_PAGE (ph) <= BITS_PER_EMACS_INT)
+#define USE_PNTR_MARK_BITS(ph) \
+  ((PH_CELLS_ON_PAGE (ph) * N_MARK_BITS) > BITS_PER_EMACS_INT)
+#define USE_WORD_MARK_BITS(ph) \
+  ((PH_CELLS_ON_PAGE (ph) * N_MARK_BITS) <= BITS_PER_EMACS_INT)
 
-#define GET_BIT_WORD(b, p) get_bit ((char*) &b, p)
+#define GET_BIT_WORD(b, p) get_bit ((Rawbyte *) &b, p)
 #define GET_BIT_PNTR(b, p) get_bit (b, p)
 
-#define SET_BIT_WORD(b, p, v) set_bit ((char*) &b, p, v)
+#define SET_BIT_WORD(b, p, v) set_bit ((Rawbyte *) &b, p, v)
 #define SET_BIT_PNTR(b, p, v) set_bit (b, p, v)
 
 #define ZERO_MARK_BITS_WORD(ph) PH_MARK_BITS (ph) = 0
-#define ZERO_MARK_BITS_PNTR(ph)				\
-do {							\
-  memset (PH_MARK_BITS (ph), '\0',			\
-          (PH_CELLS_ON_PAGE (ph) + CHAR_BIT - 1) 	\
-	  / CHAR_BIT * sizeof(char));			\
+#define ZERO_MARK_BITS_PNTR(ph)					\
+do {								\
+  memset (PH_MARK_BITS (ph), '\0',				\
+          ((PH_CELLS_ON_PAGE (ph) * N_MARK_BITS)		\
+          + CHAR_BIT - 1) / CHAR_BIT * sizeof (Rawbyte));	\
 } while (0)
 
 #define GET_BIT(bit, ph, p)			\
@@ -733,17 +686,21 @@ do {						\
 
 /* Allocates mark-bit space either from a free list or from the OS
    for the given page header. */
-static char *
+static Rawbyte *
 alloc_mark_bits (page_header *ph)
 {
-  char *result;
+  Rawbyte *result;
+#ifdef USE_MARK_BITS_FREE_LIST
   if (PH_MARK_BIT_FREE_LIST (ph) == 0)
-    result = (char*) alloc_bit_array (PH_CELLS_ON_PAGE (ph) * N_MARK_BITS);
+    result = (Rawbyte *) alloc_bit_array (PH_CELLS_ON_PAGE (ph) * N_MARK_BITS);
   else
     {
-      result = (char*) PH_MARK_BIT_FREE_LIST (ph);
+      result = (Rawbyte *) PH_MARK_BIT_FREE_LIST (ph);
       PH_MARK_BIT_FREE_LIST (ph) = NEXT_FREE (result);
     }
+#else /* not USE_MARK_BITS_FREE_LIST */
+  result = (Rawbyte *) alloc_bit_array (PH_CELLS_ON_PAGE (ph) * N_MARK_BITS);
+#endif /* not USE_MARK_BITS_FREE_LIST */
   return result;
 }
 
@@ -752,15 +709,13 @@ alloc_mark_bits (page_header *ph)
 static void
 free_mark_bits (page_header *ph)
 {
-#ifdef ALLOC_MB_UNMANAGED
+#ifdef USE_MARK_BITS_FREE_LIST
+  NEXT_FREE (PH_MARK_BITS (ph)) = PH_MARK_BIT_FREE_LIST (ph);
+  PH_MARK_BIT_FREE_LIST (ph) = FREE_LIST (PH_MARK_BITS (ph));
+#else /* not USE_MARK_BITS_FREE_LIST */
   if (PH_MARK_BITS (ph))
-    mc_free (PH_MARK_BITS (ph));
-#else /* not ALLOC_MB_UNMANAGED */
-  if (PH_MARK_BITS (ph)) {
-    NEXT_FREE (PH_MARK_BITS (ph)) = PH_MARK_BIT_FREE_LIST (ph);
-    PH_MARK_BIT_FREE_LIST (ph) = FREE_LIST (PH_MARK_BITS (ph));
-  }
-#endif /* not ALLOC_MB_UNMANAGED */
+    free (PH_MARK_BITS (ph));
+#endif /* not USE_MARK_BITS_FREE_LIST */
 }
 
 
@@ -818,6 +773,11 @@ set_mark_bit (void *ptr, EMACS_INT value)
   assert (ph && PH_ON_USED_LIST_P (ph));
   if (ph)
     {
+#ifdef NEW_GC
+      if (value == BLACK)
+	if (!PH_BLACK_BIT (ph))
+	  PH_BLACK_BIT (ph) = 1;
+#endif /* NEW_GC */
       SET_BIT (ph, get_mark_bit_index (ptr, ph), value);
     }
 }
@@ -827,10 +787,28 @@ set_mark_bit (void *ptr, EMACS_INT value)
 
 /*--- page header functions --------------------------------------------*/
 
+#ifdef BLOCKTYPE_ALLOC_PAGE_HEADER
+#include "blocktype.h"
+
+struct page_header_blocktype 
+{ 
+  Blocktype_declare (page_header); 
+} *the_page_header_blocktype;
+#endif /* BLOCKTYPE_ALLOC_PAGE_HEADER */
+
 /* Allocates a page header either from a free list or from the OS. */
 static page_header *
 alloc_page_header (void)
 {
+#ifdef BLOCKTYPE_ALLOC_PAGE_HEADER
+  page_header *result;
+#ifdef MEMORY_USAGE_STATS
+  MC_MALLOCED_BYTES += malloced_storage_size (0, sizeof (page_header), 0);
+#endif
+  result = Blocktype_alloc (the_page_header_blocktype);
+  ZERO_PAGE_HEADER (result);
+  return result;
+#else /* not BLOCKTYPE_ALLOC_PAGE_HEADER */
   page_header *result;
   if (PAGE_HEADER_FREE_LIST == 0)
     {
@@ -839,7 +817,6 @@ alloc_page_header (void)
 #ifdef MEMORY_USAGE_STATS
       MC_MALLOCED_BYTES += malloced_storage_size (0, sizeof (page_header), 0);
 #endif
-
     }
   else
     {
@@ -847,6 +824,7 @@ alloc_page_header (void)
       PAGE_HEADER_FREE_LIST = NEXT_FREE (result);
     }
   return result;
+#endif /* not BLOCKTYPE_ALLOC_PAGE_HEADER */
 }
 
 
@@ -854,11 +832,15 @@ alloc_page_header (void)
 static void
 free_page_header (page_header *ph)
 {
+#ifdef BLOCKTYPE_ALLOC_PAGE_HEADER
+  Blocktype_free (the_page_header_blocktype, ph);
+#else /* not BLOCKTYPE_ALLOC_PAGE_HEADER */
 #if ZERO_MEM
   ZERO_PAGE_HEADER (ph);
 #endif
   NEXT_FREE (ph) = PAGE_HEADER_FREE_LIST;
   PAGE_HEADER_FREE_LIST = FREE_LIST (ph);
+#endif /* not BLOCKTYPE_ALLOC_PAGE_HEADER */
 }
 
 
@@ -940,13 +922,21 @@ static int
 get_used_list_index (size_t size)
 {
   if (size <= USED_LIST_MIN_OBJECT_SIZE)
-    return 0;
-  if (size <= USED_LIST_UPPER_THRESHOLD)
-    return ((size - USED_LIST_MIN_OBJECT_SIZE - 1)
-            / USED_LIST_LIN_STEP) + 1;
+    {
+      //      printf ("size %d -> index %d\n", size, 0);
+      return 0;
+    }
+  if (size <= (size_t) USED_LIST_UPPER_THRESHOLD)
+    {
+      //      printf ("size %d -> index %d\n", size, 
+      //	      ((size - USED_LIST_MIN_OBJECT_SIZE - 1)
+      //	       / USED_LIST_LIN_STEP) + 1);
+      return ((size - USED_LIST_MIN_OBJECT_SIZE - 1)
+	      / USED_LIST_LIN_STEP) + 1;
+    }
+  //  printf ("size %d -> index %d\n", size, N_USED_PAGE_LISTS - 1);
   return N_USED_PAGE_LISTS - 1;
 }
-
 
 /* Returns the size of the used heap list according to given index. */
 static size_t
@@ -958,32 +948,8 @@ get_used_list_size_value (int used_index)
 }
 
 
-/* Returns the index of the used heap list according to given size. */
-static int
-get_unmanaged_list_index (size_t size)
-{
-  if (size <= UNMANAGED_LIST_MIN_OBJECT_SIZE)
-    return 0;
-  if (size <= UNMANAGED_LIST_UPPER_THRESHOLD)
-    return ((size - UNMANAGED_LIST_MIN_OBJECT_SIZE - 1)
-            / UNMANAGED_LIST_LIN_STEP) + 1;
-  return N_UNMANAGED_PAGE_LISTS - 1;
-}
-
-
-/* Returns the size of the unmanaged heap list according to given index. */
-static size_t
-get_unmanaged_list_size_value (int unmanaged_index)
-{
-  if (unmanaged_index < N_UNMANAGED_PAGE_LISTS - 1)
-    return (unmanaged_index * UNMANAGED_LIST_LIN_STEP) 
-      + UNMANAGED_LIST_MIN_OBJECT_SIZE;
-  return 0;
-}
-
-
 /* Returns the index of the free heap list according to given size. */
-static int
+static EMACS_INT
 get_free_list_index (EMACS_INT n_pages)
 {
   if (n_pages == 0)
@@ -1000,7 +966,7 @@ get_free_list_index (EMACS_INT n_pages)
 
 /* Returns the size in number of pages of the given free list at index. */
 static size_t
-get_free_list_size_value (int free_index)
+get_free_list_size_value (EMACS_INT free_index)
 {
   if (free_index < FREE_LIST_LOWER_THRESHOLD)
     return free_index + 1;
@@ -1038,8 +1004,8 @@ mc_alloced_storage_size (Bytecount claimed_size, struct overhead_stats *stats)
 static EMACS_INT
 free_heap_section (page_header *ph)
 {
-  int i;
-  int removed = 0;
+  EMACS_INT i;
+  EMACS_INT removed = 0;
   for (i = 0; i < N_HEAP_SECTIONS; i++)
     if (!removed)
       {
@@ -1220,22 +1186,23 @@ expand_heap (EMACS_INT needed_pages)
 /*--- used heap functions ----------------------------------------------*/
 /* Installs initial free list. */
 static void
-install_cell_free_list (page_header *ph)
+install_cell_free_list (page_header *ph, EMACS_INT elemcount)
 {
-  char *p;
-  int i;
+  Rawbyte *p;
+  EMACS_INT i;
   EMACS_INT cell_size = PH_CELL_SIZE (ph);
   /* write initial free list if cell_size is < PAGE_SIZE */
-  p = (char *) PH_HEAP_SPACE (ph);
+  p = (Rawbyte *) PH_HEAP_SPACE (ph);
   for (i = 0; i < PH_CELLS_ON_PAGE (ph) - 1; i++)
     {
 #ifdef ERROR_CHECK_GC
       assert (!LRECORD_FREE_P (p));
       MARK_LRECORD_AS_FREE (p);
 #endif
-      NEXT_FREE (p) = FREE_LIST (p + cell_size);
+      if (elemcount == 1)
+	NEXT_FREE (p) = FREE_LIST (p + cell_size);
       set_lookup_table (p, ph);
-        p += cell_size;
+      p += cell_size;
     }
 #ifdef ERROR_CHECK_GC
   assert (!LRECORD_FREE_P (p));
@@ -1263,7 +1230,7 @@ remove_cell_free_list (page_header *ph)
 /* Installs a new page and hooks it into given page_list_header. */
 static page_header *
 install_page_in_used_list (page_header *ph, page_list_header *plh, 
-			   size_t size, int managed)
+			   size_t size, EMACS_INT elemcount)
 {
   /* add to list */
   add_page_header_to_plh (ph, plh);
@@ -1273,16 +1240,21 @@ install_page_in_used_list (page_header *ph, page_list_header *plh,
     PH_CELL_SIZE (ph) = PLH_SIZE (plh);
   else
     PH_CELL_SIZE (ph) = size;
-  PH_CELLS_ON_PAGE (ph) = (PAGE_SIZE * PH_N_PAGES (ph)) / PH_CELL_SIZE (ph);
+  if (elemcount == 1)
+    PH_CELLS_ON_PAGE (ph) = (PAGE_SIZE * PH_N_PAGES (ph)) / PH_CELL_SIZE (ph);
+  else
+    {
+      PH_CELLS_ON_PAGE (ph) = elemcount;
+      PH_ARRAY_BIT (ph) = 1;
+    }
 
   /* init cell count */
   PH_CELLS_USED (ph) = 0;
 
   /* install mark bits and initialize cell free list */
-  if (managed)
-    install_mark_bits (ph);
+  install_mark_bits (ph);
 
-  install_cell_free_list (ph);
+  install_cell_free_list (ph, elemcount);
 
 #ifdef MEMORY_USAGE_STATS
   PLH_TOTAL_CELLS (plh) += PH_CELLS_ON_PAGE (ph);
@@ -1298,6 +1270,11 @@ static void
 remove_page_from_used_list (page_header *ph)
 {
   page_list_header *plh = PH_PLH (ph);
+
+#ifdef NEW_GC
+  if (gc_in_progress && PH_PROTECTION_BIT (ph)) ABORT();
+  /* cleanup: remove memory protection, zero page_header bits. */
+#endif /* not NEW_GC */
 
 #ifdef MEMORY_USAGE_STATS
   PLH_TOTAL_CELLS (plh) -= PH_CELLS_ON_PAGE (ph);
@@ -1377,7 +1354,7 @@ static page_header *
 allocate_page_from_free_list (EMACS_INT needed_pages)
 {
   page_header *ph = 0;
-  int i;
+  EMACS_INT i;
   for (i = get_free_list_index (needed_pages); i < N_FREE_PAGE_LISTS; i++)
     if ((ph = find_free_page_first_fit (needed_pages,
                                         PLH_FIRST (FREE_HEAP_PAGES (i)))) != 0)
@@ -1396,15 +1373,15 @@ allocate_page_from_free_list (EMACS_INT needed_pages)
 
 /* Allocates a new page, either from free list or by expanding the heap. */
 static page_header *
-allocate_new_page (page_list_header *plh, size_t size, int managed)
+allocate_new_page (page_list_header *plh, size_t size, EMACS_INT elemcount)
 {
-  EMACS_INT needed_pages = BYTES_TO_PAGES (size);
+  EMACS_INT needed_pages = BYTES_TO_PAGES (size * elemcount);
   /* first check free list */
   page_header *result = allocate_page_from_free_list (needed_pages);
   if (!result)
     /* expand heap */
     result = expand_heap (needed_pages);
-  install_page_in_used_list (result, plh, size, managed);
+  install_page_in_used_list (result, plh, size, elemcount);
   return result;
 }
 
@@ -1412,47 +1389,47 @@ allocate_new_page (page_list_header *plh, size_t size, int managed)
 /* Selects the correct size class, tries to allocate a cell of this size
    from the free list, if this fails, a new page is allocated. */
 static void *
-mc_alloc_1 (size_t size, int managed)
+mc_alloc_1 (size_t size, EMACS_INT elemcount)
 {
   page_list_header *plh = 0;
   page_header *ph = 0;
   void *result = 0;
 
-  if (managed)
-    plh = USED_HEAP_PAGES (get_used_list_index (size));
-  else
-    plh = UNMANAGED_HEAP_PAGES (get_unmanaged_list_index (size));
+  plh = USED_HEAP_PAGES (get_used_list_index (size));
 
   if (size == 0)
     return 0;
-  if (size < PAGE_SIZE_DIV_2)
+  if ((elemcount == 1) && (size < (size_t) PAGE_SIZE_DIV_2))
     /* first check any free cells */
     ph = allocate_cell (plh);
   if (!ph)
     /* allocate a new page */
-    ph = allocate_new_page (plh, size, managed);
+    ph = allocate_new_page (plh, size, elemcount);
 
   /* return first element of free list and remove it from the list */
   result = (void*) PH_FREE_LIST (ph);
   PH_FREE_LIST (ph) =
     NEXT_FREE (PH_FREE_LIST (ph));
 
-  memset (result, '\0', size);
-  if (managed)
-    MARK_LRECORD_AS_FREE (result);
+  memset (result, '\0', (size * elemcount));
+  MARK_LRECORD_AS_FREE (result);
 
   /* bump used cells counter */
-  PH_CELLS_USED (ph)++;
+  PH_CELLS_USED (ph) += elemcount;
 
 #ifdef MEMORY_USAGE_STATS
-  PLH_USED_CELLS (plh)++;
-  if (managed)
-    PLH_USED_SPACE (plh) += size;
-  else
-    PLH_USED_SPACE (plh) += PLH_SIZE (plh);
+  PLH_USED_CELLS (plh) += elemcount;
+  PLH_USED_SPACE (plh) += size * elemcount;
 #endif
 
   return result;
+}
+
+/* Array allocation. */
+void *
+mc_alloc_array (size_t size, EMACS_INT elemcount)
+{
+  return mc_alloc_1 (size, elemcount);
 }
 
 void *
@@ -1460,13 +1437,6 @@ mc_alloc (size_t size)
 {
   return mc_alloc_1 (size, 1);
 }
-
-void *
-mc_alloc_unmanaged (size_t size)
-{
-  return mc_alloc_1 (size, 0);
-}
-
 
 
 
@@ -1512,7 +1482,11 @@ mark_free_list (page_header *ph)
   free_link *fl = PH_FREE_LIST (ph);
   while (fl)
     {
+#ifdef NEW_GC
+      SET_BIT (ph, get_mark_bit_index (fl, ph), BLACK);
+#else /* not NEW_GC */
       SET_BIT (ph, get_mark_bit_index (fl, ph), 1);
+#endif /* not NEW_GC */
       fl = NEXT_FREE (fl);
     }
 }
@@ -1529,14 +1503,31 @@ finalize_page (page_header *ph)
   EMACS_INT heap_space_step = PH_CELL_SIZE (ph);
   EMACS_INT mark_bit = 0;
   EMACS_INT mark_bit_max_index = PH_CELLS_ON_PAGE (ph);
-  int bit = 0;
+  unsigned int bit = 0;
 
   mark_free_list (ph);
 
+#ifdef NEW_GC
+  /* ARRAY_BIT_HACK */
+  if (PH_ARRAY_BIT (ph))
+    for (mark_bit = 0; mark_bit < mark_bit_max_index; mark_bit++)
+      {
+	GET_BIT (bit, ph, mark_bit * N_MARK_BITS);
+	if (bit)
+	  {
+	    return;
+	  }
+      }
+#endif /* NEW_GC */
+
   for (mark_bit = 0; mark_bit < mark_bit_max_index; mark_bit++)
     {
-      GET_BIT (bit, ph, mark_bit);
-      if (!bit) 
+      GET_BIT (bit, ph, mark_bit * N_MARK_BITS);
+#ifdef NEW_GC
+      if (bit == WHITE) 
+#else /* not NEW_GC */
+      if (bit == 0) 
+#endif /* not NEW_GC */
         {
 	  EMACS_INT ptr = (heap_space + (heap_space_step * mark_bit));
 	  MC_ALLOC_CALL_FINALIZER ((void *) ptr);
@@ -1558,8 +1549,6 @@ finalize_page_for_disksave (page_header *ph)
   EMACS_INT heap_space_step = PH_CELL_SIZE (ph);
   EMACS_INT mark_bit = 0;
   EMACS_INT mark_bit_max_index = PH_CELLS_ON_PAGE (ph);
-
-  mark_free_list (ph);
 
   for (mark_bit = 0; mark_bit < mark_bit_max_index; mark_bit++)
     {
@@ -1591,23 +1580,46 @@ mc_finalize_for_disksave (void)
 static void
 sweep_page (page_header *ph)
 {
-  char *heap_space = (char *) PH_HEAP_SPACE (ph);
+  Rawbyte *heap_space = (Rawbyte *) PH_HEAP_SPACE (ph);
   EMACS_INT heap_space_step = PH_CELL_SIZE (ph);
   EMACS_INT mark_bit = 0;
   EMACS_INT mark_bit_max_index = PH_CELLS_ON_PAGE (ph);
-  int bit = 0;
+  unsigned int bit = 0;
 
   mark_free_list (ph);
 
+#ifdef NEW_GC
+  /* ARRAY_BIT_HACK */
+  if (PH_ARRAY_BIT (ph))
+    for (mark_bit = 0; mark_bit < mark_bit_max_index; mark_bit++)
+      {
+	GET_BIT (bit, ph, mark_bit * N_MARK_BITS);
+	if (bit)
+	  {
+	    zero_mark_bits (ph);
+	    PH_BLACK_BIT (ph) = 0;
+	    return;
+	  }
+      }
+#endif /* NEW_GC */
+
   for (mark_bit = 0; mark_bit < mark_bit_max_index; mark_bit++)
     {
-      GET_BIT (bit, ph, mark_bit);
-      if (!bit) 
+      GET_BIT (bit, ph, mark_bit * N_MARK_BITS);
+#ifdef NEW_GC
+      if (bit == WHITE) 
+#else /* not NEW_GC */
+      if (bit == 0) 
+#endif /* not NEW_GC */
 	{
+#ifdef NEW_GC
+	  GC_STAT_FREED;
+#endif /* NEW_GC */
 	  remove_cell (heap_space + (heap_space_step * mark_bit), ph);
 	}
     }
   zero_mark_bits (ph);
+  PH_BLACK_BIT (ph) = 0;
   if (PH_CELLS_USED (ph) == 0)
     remove_page_from_used_list (ph);
   else if (PH_CELLS_USED (ph) < PH_CELLS_ON_PAGE (ph))
@@ -1627,9 +1639,24 @@ mc_sweep (void)
 void
 mc_free (void *ptr)
 {
-  page_header *ph = get_page_header (ptr);
-  assert (!PH_ON_FREE_LIST_P (ph));
+  page_header *ph;
 
+#ifdef NEW_GC
+  /* Do not allow manual freeing while a gc is running. Data is going
+     to be freed next gc cycle. */
+  if (write_barrier_enabled || gc_in_progress)
+    return;
+#endif /* NEW_GC */
+
+  ph = get_page_header (ptr);
+  assert (ph);
+  assert (PH_PLH (ph));
+  assert (PLH_LIST_TYPE (PH_PLH (ph)) != FREE_LIST);
+
+#ifdef NEW_GC
+  if (PH_ON_USED_LIST_P (ph))
+    SET_BIT (ph, get_mark_bit_index (ptr, ph), WHITE);
+#endif /* NEW_GC */
   remove_cell (ptr, ph);
 
   if (PH_CELLS_USED (ph) == 0)
@@ -1642,29 +1669,32 @@ mc_free (void *ptr)
 /* Changes the size of the cell pointed to by ptr.
    Returns the new address of the new cell with new size. */
 void *
-mc_realloc_1 (void *ptr, size_t size, int managed)
+mc_realloc_1 (void *ptr, size_t size, int elemcount)
 {
   if (ptr)
     {
-      if (size)
+      if (size * elemcount)
 	{
-	  void *result = mc_alloc_1 (size, managed);
+	  void *result = mc_alloc_1 (size, elemcount);
 	  size_t from_size = PH_CELL_SIZE (get_page_header (ptr));
-	  size_t cpy_size = size;
-	  if (size > from_size) 
+	  size_t cpy_size = size * elemcount;
+	  if (cpy_size > from_size) 
 	    cpy_size = from_size;
 	  memcpy (result, ptr, cpy_size);
-	  mc_free (ptr);
+#ifdef ALLOC_TYPE_STATS
+	  inc_lrecord_stats (size, (struct lrecord_header *) result);
+#endif /* not ALLOC_TYPE_STATS */
+	  /* mc_free (ptr); not needed, will be collected next gc */
 	  return result;
 	}
       else
 	{
-	  mc_free (ptr);
+	  /* mc_free (ptr); not needed, will be collected next gc */
 	  return 0;
 	}
     }
   else
-    return mc_alloc_1 (size, managed);
+    return mc_alloc_1 (size, elemcount);
 }
 
 void *
@@ -1674,11 +1704,10 @@ mc_realloc (void *ptr, size_t size)
 }
 
 void *
-mc_realloc_unmanaged (void *ptr, size_t size)
+mc_realloc_array (void *ptr, size_t size, EMACS_INT elemcount)
 {
-  return mc_realloc_1 (ptr, size, 0);
+  return mc_realloc_1 (ptr, size, elemcount);
 }
-
 
 
 
@@ -1688,32 +1717,49 @@ mc_realloc_unmanaged (void *ptr, size_t size)
 void
 init_mc_allocator (void)
 {
-  int i;
+  EMACS_INT i;
 
-  memset (&mc_allocator_globals, '\0', sizeof (mc_allocator_globals_type));
+#ifdef MEMORY_USAGE_STATS
+  MC_MALLOCED_BYTES = 0;
+#endif
+
+  /* init of pagesize dependent values */
+  switch (SYS_PAGE_SIZE)
+    {
+    case   512: log_page_size =  9; break;
+    case  1024: log_page_size = 10; break;
+    case  2048: log_page_size = 11; break;
+    case  4096: log_page_size = 12; break;
+    case  8192: log_page_size = 13; break;
+    case 16384: log_page_size = 14; break;
+    default: ABORT ();
+    }
+  
+  page_size_div_2 = (EMACS_INT) SYS_PAGE_SIZE >> 1;
+  
+  mc_allocator_globals.used_heap_pages = 
+    (page_list_header *) xmalloc_and_zero ((N_USED_PAGE_LISTS + 1)
+					   * sizeof (page_list_header));
+#ifdef MEMORY_USAGE_STATS
+  MC_MALLOCED_BYTES += (N_USED_PAGE_LISTS + 1) * sizeof (page_list_header);
+#endif
+
+  mc_allocator_globals.ptr_lookup_table = 
+    (level_2_lookup_tree **) 
+    xmalloc_and_zero ((LEVEL1_SIZE + 1) * sizeof (level_2_lookup_tree *));
+#ifdef MEMORY_USAGE_STATS
+  MC_MALLOCED_BYTES += (LEVEL1_SIZE + 1) * sizeof (level_2_lookup_tree *);
+#endif
+				
+#ifdef BLOCKTYPE_ALLOC_PAGE_HEADER
+  the_page_header_blocktype = Blocktype_new (struct page_header_blocktype);
+#endif /* BLOCKTYPE_ALLOC_PAGE_HEADER */
 
   for (i = 0; i < N_USED_PAGE_LISTS; i++)
     {
       page_list_header *plh = USED_HEAP_PAGES (i);
       PLH_LIST_TYPE (plh) = USED_LIST;
       PLH_SIZE (plh) = get_used_list_size_value (i);
-      PLH_FIRST (plh) = 0;
-      PLH_LAST (plh) = 0;
-      PLH_MARK_BIT_FREE_LIST (plh) = 0;
-#ifdef MEMORY_USAGE_STATS
-      PLH_PAGE_COUNT (plh) = 0;
-      PLH_USED_CELLS (plh) = 0;
-      PLH_USED_SPACE (plh) = 0;
-      PLH_TOTAL_CELLS (plh) = 0;
-      PLH_TOTAL_SPACE (plh) = 0;
-#endif
-    }
-
-  for (i = 0; i < N_UNMANAGED_PAGE_LISTS; i++)
-    {
-      page_list_header *plh = UNMANAGED_HEAP_PAGES (i);
-      PLH_LIST_TYPE (plh) = UNMANAGED_LIST;
-      PLH_SIZE (plh) = get_unmanaged_list_size_value (i);
       PLH_FIRST (plh) = 0;
       PLH_LAST (plh) = 0;
       PLH_MARK_BIT_FREE_LIST (plh) = 0;
@@ -1743,10 +1789,12 @@ init_mc_allocator (void)
 #endif
     }
 
+#ifndef BLOCKTYPE_ALLOC_PAGE_HEADER
   PAGE_HEADER_FREE_LIST = 0;
+#endif /* not BLOCKTYPE_ALLOC_PAGE_HEADER */
 
 #ifdef MEMORY_USAGE_STATS
-  MC_MALLOCED_BYTES = sizeof (mc_allocator_globals);
+  MC_MALLOCED_BYTES += sizeof (mc_allocator_globals);
 #endif
 
   init_lookup_table ();
@@ -1765,12 +1813,11 @@ Returns stats about the mc-alloc memory usage. See diagnose.el.
 {
   Lisp_Object free_plhs = Qnil;
   Lisp_Object used_plhs = Qnil;
-  Lisp_Object unmanaged_plhs = Qnil;
   Lisp_Object heap_sects = Qnil;
-  int used_size = 0;
-  int real_size = 0;
+  EMACS_INT used_size = 0;
+  EMACS_INT real_size = 0;
 
-  int i;
+  EMACS_INT i;
 
   for (i = 0; i < N_FREE_PAGE_LISTS; i++) 
     if (PLH_PAGE_COUNT (FREE_HEAP_PAGES(i)) > 0)
@@ -1778,17 +1825,6 @@ Returns stats about the mc-alloc memory usage. See diagnose.el.
 	acons (make_int (PLH_SIZE (FREE_HEAP_PAGES(i))),
 	       list1 (make_int (PLH_PAGE_COUNT (FREE_HEAP_PAGES(i)))),
 	       free_plhs);
-
-  for (i = 0; i < N_UNMANAGED_PAGE_LISTS; i++) 
-    if (PLH_PAGE_COUNT (UNMANAGED_HEAP_PAGES(i)) > 0)
-      unmanaged_plhs = 
-	acons (make_int (PLH_SIZE (UNMANAGED_HEAP_PAGES(i))),
-	       list5 (make_int (PLH_PAGE_COUNT (UNMANAGED_HEAP_PAGES(i))),
-		      make_int (PLH_USED_CELLS (UNMANAGED_HEAP_PAGES(i))),
-		      make_int (PLH_USED_SPACE (UNMANAGED_HEAP_PAGES(i))),
-		      make_int (PLH_TOTAL_CELLS (UNMANAGED_HEAP_PAGES(i))),
-		      make_int (PLH_TOTAL_SPACE (UNMANAGED_HEAP_PAGES(i)))),
-	       unmanaged_plhs);
 
   for (i = 0; i < N_USED_PAGE_LISTS; i++) 
     if (PLH_PAGE_COUNT (USED_HEAP_PAGES(i)) > 0)
@@ -1813,9 +1849,8 @@ Returns stats about the mc-alloc memory usage. See diagnose.el.
 	   make_int (real_size));
 
   return Fcons (make_int (PAGE_SIZE), 
-		list6 (heap_sects, 
+		list5 (heap_sects, 
 		       Fnreverse (used_plhs), 
-		       Fnreverse (unmanaged_plhs), 
 		       Fnreverse (free_plhs), 
 		       make_int (sizeof (mc_allocator_globals)), 
 		       make_int (MC_MALLOCED_BYTES)));
@@ -1829,3 +1864,198 @@ syms_of_mc_alloc (void)
   DEFSUBR (Fmc_alloc_memory_usage);
 #endif /* MEMORY_USAGE_STATS */
 }
+
+
+#ifdef NEW_GC
+/*--- incremental garbage collector ----------------------------------*/
+
+/* access dirty bit of page header */
+void
+set_dirty_bit (page_header *ph, unsigned int value)
+{
+  PH_DIRTY_BIT (ph) = value;
+}
+
+void
+set_dirty_bit_for_address (void *ptr, unsigned int value)
+{
+  set_dirty_bit (get_page_header (ptr), value);
+}
+
+unsigned int
+get_dirty_bit (page_header *ph)
+{
+  return PH_DIRTY_BIT (ph);
+}
+
+unsigned int
+get_dirty_bit_for_address (void *ptr)
+{
+  return get_dirty_bit (get_page_header (ptr));
+}
+
+
+/* access protection bit of page header */
+void
+set_protection_bit (page_header *ph, unsigned int value)
+{
+  PH_PROTECTION_BIT (ph) = value;
+}
+
+void
+set_protection_bit_for_address (void *ptr, unsigned int value)
+{
+  set_protection_bit (get_page_header (ptr), value);
+}
+
+unsigned int
+get_protection_bit (page_header *ph)
+{
+  return PH_PROTECTION_BIT (ph);
+}
+
+unsigned int
+get_protection_bit_for_address (void *ptr)
+{
+  return get_protection_bit (get_page_header (ptr));
+}
+
+
+/* Returns the start of the page of the object pointed to by ptr. */
+void *
+get_page_start (void *ptr)
+{
+  return PH_HEAP_SPACE (get_page_header (ptr));
+}
+
+/* Make PAGE_SIZE globally available. */
+EMACS_INT
+mc_get_page_size ()
+{
+  return PAGE_SIZE;
+}
+
+/* Is the fault at ptr on a protected page? */
+EMACS_INT
+fault_on_protected_page (void *ptr)
+{
+  page_header *ph = get_page_header_internal (ptr);
+  return (ph
+	  && PH_HEAP_SPACE (ph)
+	  && (PH_HEAP_SPACE (ph) <= ptr) 
+	  && ((void *) ((EMACS_INT) PH_HEAP_SPACE (ph) 
+			+ PH_N_PAGES (ph) * PAGE_SIZE) > ptr)
+	  && (PH_PROTECTION_BIT (ph) == 1));
+}
+
+
+/* Protect the heap page of given page header ph if black objects are
+   on the page. */
+static void
+protect_heap_page (page_header *ph)
+{
+  if (PH_BLACK_BIT (ph))
+    {
+      void *heap_space = PH_HEAP_SPACE (ph);
+      EMACS_INT heap_space_size = PH_N_PAGES (ph) * PAGE_SIZE;
+      vdb_protect ((void *) heap_space, heap_space_size);
+      PH_PROTECTION_BIT (ph) = 1;
+    }
+}
+
+/* Protect all heap pages with black objects. */
+void
+protect_heap_pages (void)
+{
+  visit_all_used_page_headers (protect_heap_page);
+}
+
+
+/* Remove protection (if there) of heap page of given page header
+   ph. */
+static void
+unprotect_heap_page (page_header *ph)
+{
+  if (PH_PROTECTION_BIT (ph))
+    {
+      void *heap_space = PH_HEAP_SPACE (ph);
+      EMACS_INT heap_space_size = PH_N_PAGES (ph) * PAGE_SIZE;
+      vdb_unprotect (heap_space, heap_space_size);
+      PH_PROTECTION_BIT (ph) = 0;
+    }
+}
+
+/* Remove protection for all heap pages which are protected. */
+void
+unprotect_heap_pages (void)
+{
+  visit_all_used_page_headers (unprotect_heap_page);
+}
+
+/* Remove protection and mark page dirty. */
+void
+unprotect_page_and_mark_dirty (void *ptr)
+{
+  page_header *ph = get_page_header (ptr);
+  unprotect_heap_page (ph);
+  PH_DIRTY_BIT (ph) = 1;
+}
+
+/* Repush all objects on dirty pages onto the mark stack. */
+int
+repush_all_objects_on_page (void *ptr)
+{
+  int repushed_objects = 0;
+  page_header *ph = get_page_header (ptr);
+  Rawbyte *heap_space = (Rawbyte *) PH_HEAP_SPACE (ph);
+  EMACS_INT heap_space_step = PH_CELL_SIZE (ph);
+  EMACS_INT mark_bit = 0;
+  EMACS_INT mark_bit_max_index = PH_CELLS_ON_PAGE (ph);
+  unsigned int bit = 0;
+  for (mark_bit = 0; mark_bit < mark_bit_max_index; mark_bit++)
+    {
+      GET_BIT (bit, ph, mark_bit * N_MARK_BITS);
+      if (bit == BLACK)
+	{
+	  repushed_objects++;
+	  gc_write_barrier 
+	    (wrap_pointer_1 ((heap_space + (heap_space_step * mark_bit))));
+	}
+    }
+  PH_BLACK_BIT (ph) = 0;
+  PH_DIRTY_BIT (ph) = 0;
+  return repushed_objects;
+}
+
+/* Mark black if object is currently grey.  This first checks, if the
+   object is really allocated on the mc-heap.  If it is, it can be
+   marked black; if it is not, it cannot be marked. */
+EMACS_INT
+maybe_mark_black (void *ptr)
+{
+  page_header *ph = get_page_header_internal (ptr);
+  unsigned int bit = 0;
+
+  if (ph && PH_PLH (ph) && PH_ON_USED_LIST_P (ph))
+    {
+      GET_BIT (bit, ph, get_mark_bit_index (ptr, ph));
+      if (bit == GREY)
+	{
+	  if (!PH_BLACK_BIT (ph))
+	    PH_BLACK_BIT (ph) = 1;
+	  SET_BIT (ph, get_mark_bit_index (ptr, ph), BLACK);
+	}
+      return 1;
+    }
+  return 0;
+}
+
+/* Only for debugging --- not used anywhere in the sources. */
+EMACS_INT
+object_on_heap_p (void *ptr)
+{
+  page_header *ph = get_page_header_internal (ptr);
+  return (ph && PH_ON_USED_LIST_P (ph));
+}
+
+#endif /* NEW_GC */

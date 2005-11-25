@@ -31,6 +31,32 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_bytecode_h_
 #define INCLUDED_bytecode_h_
 
+#ifdef NEW_GC
+struct compiled_function_args
+{
+  struct lrecord_header header;
+  long size;
+  Lisp_Object args[1];
+};
+
+typedef struct compiled_function_args Lisp_Compiled_Function_Args;
+
+DECLARE_LRECORD (compiled_function_args, Lisp_Compiled_Function_Args);
+
+#define XCOMPILED_FUNCTION_ARGS(x) \
+  XRECORD (x, compiled_function_args, Lisp_Compiled_Function_Args)
+#define wrap_compiled_function_args(p) wrap_record (p, compiled_function_args)
+#define COMPILED_FUNCTION_ARGS_P(x) RECORDP (x, compiled_function_args)
+#define CHECK_COMPILED_FUNCTION_ARGS(x) \
+  CHECK_RECORD (x, compiled_function_args)
+#define CONCHECK_COMPILED_FUNCTION_ARGS(x) \
+  CONCHECK_RECORD (x, compiled_function_args)
+
+#define compiled_function_args_data(v) ((v)->args)
+#define XCOMPILED_FUNCTION_ARGS_DATA(s) \
+  compiled_function_args_data (XCOMPILED_FUNCTION_ARGS (s))
+#endif /* not NEW_GC */
+
 /* Meanings of slots in a Lisp_Compiled_Function.
    Don't use these!  For backward compatibility only.  */
 #define COMPILED_ARGLIST	0
@@ -64,7 +90,11 @@ struct Lisp_Compiled_Function
   Lisp_Object arglist;
   /* For speed, we unroll arglist into an array of argument symbols, so we
      don't have to process arglist every time we make a function call. */
+#ifdef NEW_GC
+  Lisp_Object arguments;
+#else /* not NEW_GC */
   Lisp_Object *args;
+#endif /* not NEW_GC */
   /* Minimum and maximum number of arguments.  If MAX_ARGS == MANY, the
      function was declared with &rest, and (args_in_array - 1) indicates
      how many arguments there are before the &rest argument. (We could
