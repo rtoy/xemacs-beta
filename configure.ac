@@ -637,12 +637,12 @@ XE_COMPLEX_ARG([xft],
 		[Xft],
 		[`emacs' (buffers), `menubars', `tabs', and `gauges'],
 		[X11, Xft, Xrender, freetype, and fontconfig],
-		[`emacs,menubars,tabs,gauges'])],
+		[`noemacs, nomenubars, notabs, nogauges'])],
 	[],[],
-	[XE_COMPLEX_OPTION([emacs],[yes]),
-	XE_COMPLEX_OPTION([menubars],[yes]),
-	XE_COMPLEX_OPTION([tabs],[yes]),
-	XE_COMPLEX_OPTION([gauges],[yes])])
+	[XE_COMPLEX_OPTION([emacs],[no]),
+	XE_COMPLEX_OPTION([menubars],[no]),
+	XE_COMPLEX_OPTION([tabs],[no]),
+	XE_COMPLEX_OPTION([gauges],[no])])
 XE_MERGED_ARG([gtk],
 	AC_HELP_STRING([--with-gtk],[Support GTK on the X Window System. (EXPERIMENTAL)]),
 	[true], [with_gtk=no])

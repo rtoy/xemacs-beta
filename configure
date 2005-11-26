@@ -996,8 +996,8 @@ Window-system options
                           Xft are `emacs' (buffers), `menubars', `tabs', and
                           `gauges'. Prefix component with `no' to disable its
                           use of Xft. Requires X11, Xft, Xrender, freetype,
-                          and fontconfig support. Default is
-                          `emacs,menubars,tabs,gauges'.
+                          and fontconfig support. Default is `noemacs,
+                          nomenubars, notabs, nogauges'.
   --with-gtk              Support GTK on the X Window System. (EXPERIMENTAL)
   --with-gnome            Support GNOME on the X Window System. (EXPERIMENTAL)
   --with-msw              Support MS Windows as a window system (only under
@@ -2264,17 +2264,17 @@ _ACEOF
 fi;
 
 _xft_notfirst=""
-with_xft_emacs=yes
-enable_xft_emacs=yes
-with_xft_menubars=yes
-enable_xft_menubars=yes
-with_xft_tabs=yes
-enable_xft_tabs=yes
-with_xft_gauges=yes
-enable_xft_gauges=yes
+with_xft_emacs=no
+enable_xft_emacs=no
+with_xft_menubars=no
+enable_xft_menubars=no
+with_xft_tabs=no
+enable_xft_tabs=no
+with_xft_gauges=no
+enable_xft_gauges=no
 
 _xft_types="emacs menubars tabs gauges"
-_xft_default="emacs,menubars,tabs,gauges"
+_xft_default="noemacs,nomenubars,notabs,nogauges"
 
 
 

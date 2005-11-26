@@ -1,5 +1,10 @@
 2005-11-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* configure.ac (XE_COMPLEX_ARG[xft]): Default everything off;
+	change doc.
+
+2005-11-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* configure.ac (XE_COMPLEX_ARG[xft]): Remove merge detritus and
 	regenerate configure to fix syntax error.
 
