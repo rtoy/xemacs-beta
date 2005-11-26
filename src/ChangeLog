@@ -1,3 +1,7 @@
+2004-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* keymap.c (Fwhere_is_internal): Rewrite docstring.
+
 2005-11-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Merge Xft.
@@ -469,10 +473,6 @@
 	* glyphs-x.c,objects-x.c: Deemphasize warnings (to debug or alert).
 
 	* redisplay-x.c: Don't abort() when ichar_to_unicode returns error.
-
-    2004-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* keymap.c (Fwhere_is_internal): Rewrite docstring.
 
     2004-12-17  Stephen J. Turnbull  <stephen@xemacs.org>
 

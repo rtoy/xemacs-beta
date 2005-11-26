@@ -3474,17 +3474,20 @@ DEFUN ("where-is-internal", Fwhere_is_internal, 1, 5, 0, /*
 Return list of keys that invoke DEFINITION in KEYMAPS.
 KEYMAPS can be either a keymap (meaning search in that keymap and the
 current global keymap) or a list of keymaps (meaning search in exactly
-those keymaps and no others).  If KEYMAPS is nil, search in the currently
-applicable maps for EVENT-OR-KEYS (this is equivalent to specifying
-`(current-keymaps EVENT-OR-KEYS)' as the argument to KEYMAPS).
+those keymaps and no others).
 
 If optional 3rd arg FIRSTONLY is non-nil, return a vector representing
  the first key sequence found, rather than a list of all possible key
  sequences.
 
-If optional 4th arg NOINDIRECT is non-nil, don't follow indirections
- to other keymaps or slots.  This makes it possible to search for an
- indirect definition itself.
+Optional 4th argument NOINDIRECT is ignored.  (GNU Emacs uses it to allow
+searching for an indirect keymap by inhibiting following of indirections to
+keymaps or slots, but XEmacs doesn't need it because keymaps are a type.)
+
+If optional 5th argument EVENT-OR-KEYS is non-nil and KEYMAPS is nil,
+search in the currently applicable maps for EVENT-OR-KEYS (this is
+equivalent to specifying `(current-keymaps EVENT-OR-KEYS)' as the
+argument to KEYMAPS).
 */
        (definition, keymaps, firstonly, UNUSED (noindirect), event_or_keys))
 {
