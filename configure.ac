@@ -643,7 +643,6 @@ XE_COMPLEX_ARG([xft],
 	XE_COMPLEX_OPTION([menubars],[yes]),
 	XE_COMPLEX_OPTION([tabs],[yes]),
 	XE_COMPLEX_OPTION([gauges],[yes])])
-	[], [])
 XE_MERGED_ARG([gtk],
 	AC_HELP_STRING([--with-gtk],[Support GTK on the X Window System. (EXPERIMENTAL)]),
 	[true], [with_gtk=no])

@@ -2340,7 +2340,6 @@ unset _xft_default _xft_all_default x y
 
 
 fi;
-	, )
 # If --with-gtk or --without-gtk were given then copy the value to the
 # equivalent enable_gtk variable.
 if test "${with_gtk+set}" = set; then

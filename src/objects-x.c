@@ -1155,11 +1155,14 @@ static struct charset_reporter charset_table[] =
 
 /* Choose appropriate font name for debug messages.
    Use only in the top half of next function (enforced with #undef). */
-#define SET_DEBUG_FONTNAME(name)                                     \
-  do { name =                                                        \
-         debug_xft > 2 ? eistr_fullname                              \
-                       : debug_xft > 1 ? eistr_longname              \
-                                       : eistr_shortname } while (0)
+#define DECLARE_DEBUG_FONTNAME(__xemacs_name)          \
+  Eistring *__xemacs_name;                             \
+  do                                                   \
+    {	       					       \
+      __xemacs_name = debug_xft > 2 ? eistr_fullname   \
+                      : debug_xft > 1 ? eistr_longname \
+                      : eistr_shortname;               \
+    } while (0)
 
 #endif /* USE_XFT */
 
@@ -1302,11 +1305,8 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 
       if (cr->rfc3066)
 	{
-	  if (debug_xft > 0)
-	    {
-	      SET_DEBUG_FONTNAME (name);
-	      CHECKING_LANG (0, eidata(name), cr->language);
-	    }
+	  DECLARE_DEBUG_FONTNAME (name);
+	  CHECKING_LANG (0, eidata(name), cr->language);
 	  lang = cr->rfc3066;
 	}
       else if (cr->charset)
@@ -1348,12 +1348,9 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 		 should have the full thing internally as truename, and
 		 filter stuff the client doesn't want to see on output.
 		 Should we just store it into the truename right here? */
-	      if (debug_xft > 0)
-		{
-		  SET_DEBUG_FONTNAME (name);
-		  DEBUG_XFT2 (0, "Xft font %s supports %s\n",
-			      eidata(name), lang);
-		}
+	      DECLARE_DEBUG_FONTNAME (name);
+	      DEBUG_XFT2 (0, "Xft font %s supports %s\n",
+			  eidata(name), lang);
 #ifdef RETURN_LONG_FONTCONFIG_NAMES
 	      result = eimake_string(eistr_fullname);
 #else
@@ -1362,12 +1359,9 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	    }
 	  else
 	    {
-	      if (debug_xft > 0)
-		{
-		  SET_DEBUG_FONTNAME (name);
-		  DEBUG_XFT2 (0, "Xft font %s doesn't support %s\n",
-			      eidata(name), lang);
-		}
+	      DECLARE_DEBUG_FONTNAME (name);
+	      DEBUG_XFT2 (0, "Xft font %s doesn't support %s\n",
+			  eidata(name), lang);
 	      result = Qnil;
 	    }
 
@@ -1394,12 +1388,9 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 		}
 	      else if (FcLangSetHasLang (v.u.l, lang) != FcLangDifferentLang)
 		{
-		  if (debug_xft > 0)
-		    {
-		      SET_DEBUG_FONTNAME (name);
-		      DEBUG_XFT2 (0, "Xft font %s supports %s\n",
-				  eidata(name), lang);
-		    }
+		  DECLARE_DEBUG_FONTNAME (name);
+		  DEBUG_XFT2 (0, "Xft font %s supports %s\n",
+			      eidata(name), lang);
 #ifdef RETURN_LONG_FONTCONFIG_NAMES
 		  result = eimake_string(eistr_fullname);
 #else
@@ -1408,12 +1399,9 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 		}
 	      else
 		{
-		  if (debug_xft > 0)
-		    {
-		      SET_DEBUG_FONTNAME (name);
-		      DEBUG_XFT2 (0, "Xft font %s doesn't support %s\n",
-				  eidata(name), lang);
-		    }
+		  DECLARE_DEBUG_FONTNAME (name);
+		  DEBUG_XFT2 (0, "Xft font %s doesn't support %s\n",
+			      eidata(name), lang);
 		  result = Qnil;
 		}
 	    }
@@ -1434,7 +1422,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 
   DEBUG_XFT1 (0, "shit happens, try X11 charset match for %s\n", 
 	      XSTRING_DATA(font));
-#undef SET_DEBUG_FONTNAME
+#undef DECLARE_DEBUG_FONTNAME
 #endif /* USE_XFT */
 
   LISP_STRING_TO_EXTERNAL (font, patternext, Qx_font_name_encoding);

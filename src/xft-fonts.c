@@ -463,25 +463,6 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
     }
 }
 
-#if 0
-/* #### delete this after some testing!! don't forget the DEFSUBR */
-/* #### This is a big mistake, no? --- crap, there's no implicit finalizer */
-DEFUN("fc-pattern-destroy", Ffc_pattern_destroy, 1, 1, 0, /*
-Explicitly deallocate a fc pattern object PATTERN. */
-      (pattern))
-{
-  CHECK_FCPATTERN(pattern); 
-
-  /* paranoia strikes deep */
-  if (XFCPATTERN_PTR(pattern))
-    {
-      FcPatternDestroy(XFCPATTERN_PTR(pattern));
-      XFCPATTERN_PTR(pattern) = 0;
-    }
-  return Qnil;
-}
-#endif
-
 DEFUN("fc-font-match", Ffc_font_match, 2, 2, 0, /*
 Return the font on DEVICE that most closely matches PATTERN.
 
@@ -785,14 +766,13 @@ syms_of_xft_fonts (void)
   DEFSUBR(Ffc_pattern_create);
   DEFSUBR(Ffc_name_parse);
   DEFSUBR(Ffc_name_unparse);
+#if 0
   DEFSUBR(Fxft_name_unparse);	/* URK! */
+#endif
   DEFSUBR(Ffc_pattern_duplicate);
   DEFSUBR(Ffc_pattern_add);
   DEFSUBR(Ffc_pattern_del);
   DEFSUBR(Ffc_pattern_get);
-#if 0
-  DEFSUBR(Ffc_pattern_destroy);
-#endif
   DEFSUBR(Ffc_list_fonts_pattern_objects);
   DEFSUBR(Ffc_font_sort);
   DEFSUBR(Ffc_font_match);
