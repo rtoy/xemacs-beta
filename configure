@@ -991,6 +991,13 @@ Run-time path-searching options
 Window-system options
 ---------------------
 
+  --with-xft              Compile with support for Xft client-side font
+                          rendering and anti-aliasing. Components that can use
+                          Xft are `emacs' (buffers), `menubars', `tabs', and
+                          `gauges'. Prefix component with `no' to disable its
+                          use of Xft. Requires X11, Xft, Xrender, freetype,
+                          and fontconfig support. Default is
+                          `emacs,menubars,tabs,gauges'.
   --with-gtk              Support GTK on the X Window System. (EXPERIMENTAL)
   --with-gnome            Support GNOME on the X Window System. (EXPERIMENTAL)
   --with-msw              Support MS Windows as a window system (only under
@@ -1092,9 +1099,9 @@ Internationalization options
   --with-wnn6             Support the Wnn6 Asian language input method
                           (proprietary). Requires Mule.
   --with-xfs              Enable XFontSet support for internationalized
-                          menubar. Incompatible with `--with-xim=motif'.
-                          `--with-menubars=lucid'   (the default) is
-                          desirable.
+                          menubar. Incompatible with `--with-xim=motif' and
+                          `--with-xft'. `--with-menubars=lucid'   (the
+                          default) is desirable.
 
 File-related options
 --------------------
@@ -2256,6 +2263,84 @@ _ACEOF
 
 fi;
 
+_xft_notfirst=""
+with_xft_emacs=yes
+enable_xft_emacs=yes
+with_xft_menubars=yes
+enable_xft_menubars=yes
+with_xft_tabs=yes
+enable_xft_tabs=yes
+with_xft_gauges=yes
+enable_xft_gauges=yes
+
+_xft_types="emacs menubars tabs gauges"
+_xft_default="emacs,menubars,tabs,gauges"
+
+
+
+# If --with-xft or --without-xft were given then copy the value to the
+# equivalent enable_xft variable.
+if test "${with_xft+set}" = set; then
+  enable_xft="$with_xft"
+fi;
+# If -enable-xft or --disable-xft were given then copy the value to the
+# equivalent with_xft variable.
+if test "${enable_xft+set}" = set; then
+  with_xft="$enable_xft"
+fi;
+# Check whether --with-xft or --without-xft was given.
+if test "${with_xft+set}" = set; then
+  enableval="$with_xft"
+  withval="$with_xft"
+  for y in $_xft_types; do
+  eval "with_xft_$y=no"
+  eval "enable_xft_$y=no"
+done
+for x in `echo "$with_xft" | sed -e 's/,/ /g'` ; do
+    _xft_all_default=""
+    _xft_found=""
+    case "$x" in
+        n | no | non | none ) _xft_all_default=no ;;
+        a | al | all | both ) _xft_all_default=yes ;;
+    esac
+
+    if test -z "$_xft_all_default"; then
+        for y in $_xft_types; do
+                        if test "$x" = "$y"; then
+		                _xft_found=yes
+                                eval "with_xft_$y=yes"
+                eval "enable_xft_$y=yes"
+            elif test "$x" = "no$y"; then
+                                _xft_found=yes
+                                eval "with_xft_$y=no"
+                eval "enable_xft_$y=no"
+            fi
+        done
+        test -z "$_xft_found" && _xft_bogus=yes
+    fi
+    if test "$_xft_bogus" = "yes" -o \
+         \( -n "$_xft_all_default" -a -n "$_xft_notfirst" \) ; then
+	(echo "$progname: Usage error:"
+echo " " "Valid values for the --with-xft option are:
+$_xft_types.  With prefix \"no\", switch it off.
+Defaults may be overridden with \`all' or \`none' first in the list.
+Hardcoded default is: $_xft_default."
+echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
+    elif test -n "$_xft_all_default" ; then
+        for y in $_xft_types; do
+	    eval "with_xft_$y=$_xft_all_default"
+	    eval "enable_xft_$y=$_xft_all_default"
+        done
+    fi
+    _xft_notfirst=yes
+done
+unset _xft_bogus _xft_found _xft_notfirst _xft_types
+unset _xft_default _xft_all_default x y
+
+
+
+fi;
+	, )
 # If --with-gtk or --without-gtk were given then copy the value to the
 # equivalent enable_gtk variable.
 if test "${with_gtk+set}" = set; then
@@ -3785,6 +3870,19 @@ elif test "$with_tooltalk" = "no" ; then with_cde=no
 elif test "$with_cde" = "yes"; then with_tooltalk=yes
 fi
 
+
+if test \( "$with_xft_menubars" = "yes" -o "$with_xft_tabs" = "yes" \
+           -o "$with_xft_gauges" = "yes" \) -a "$with_xft_emacs" = "no"; then
+    { echo "$as_me:$LINENO: WARNING: Forcing --with-xft=emacs because Xft is enabled" >&5
+echo "$as_me: WARNING: Forcing --with-xft=emacs because Xft is enabled" >&2;}
+    with_xft_emacs=yes
+fi
+
+if test "$with_xfs" = "yes" -a "$with_xft_menubars" = "yes"; then
+  (echo "$progname: Usage error:"
+echo " " "XFS and Xft in the menubars are incompatible!"
+echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
+fi
 
 test "x$prefix" = xNONE && prefix=$ac_default_prefix
 # Let make expand exec_prefix.
@@ -18995,6 +19093,548 @@ fi
     fi
   fi
 
+
+  if test "$with_xft_emacs" = "yes"; then
+    { echo "$as_me:$LINENO: checking for Xrender, fontconfig, and Xft..." >&5
+echo "$as_me: checking for Xrender, fontconfig, and Xft..." >&6;}
+    xft_includes_found=no
+
+for ac_header in freetype/config/ftheader.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking $ac_header usability" >&5
+echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking $ac_header presence" >&5
+echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <$ac_header>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------- ##
+## Report this to xemacs-beta@xemacs.org ##
+## ------------------------------------- ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  eval "$as_ac_Header=\$ac_header_preproc"
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+
+fi
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ xft_includes_found=yes
+else
+
+                  for freetype_include_top in "/usr/X11R6/include/freetype2" \
+				  "/usr/include/freetype2"
+      do
+	if test -d $freetype_include_top; then
+	  { echo "$as_me:$LINENO: checking in ${freetype_include_top}/freetype2..." >&5
+echo "$as_me: checking in ${freetype_include_top}/freetype2..." >&6;}
+	  	  	  	  unset "$as_ac_Header"
+          save_c_switch_site="$c_switch_site"
+          c_switch_site="$c_switch_site -I${freetype_include_top}"
+
+for ac_header in freetype/config/ftheader.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking $ac_header usability" >&5
+echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking $ac_header presence" >&5
+echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <$ac_header>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------- ##
+## Report this to xemacs-beta@xemacs.org ##
+## ------------------------------------- ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  eval "$as_ac_Header=\$ac_header_preproc"
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+
+fi
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ xft_includes_found=yes
+else
+  c_switch_site=$save_c_switch_site
+fi
+
+done
+
+	fi
+      done
+      if test "$xft_includes_found" != "yes"; then
+        { echo "Error:" "Unable to find headers for --with-xft" >&2; exit 1; }
+      else
+        echo "$as_me:$LINENO: checking for XRenderQueryExtension in -lXrender" >&5
+echo $ECHO_N "checking for XRenderQueryExtension in -lXrender... $ECHO_C" >&6
+if test "${ac_cv_lib_Xrender_XRenderQueryExtension+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lXrender  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XRenderQueryExtension ();
+int
+main ()
+{
+XRenderQueryExtension ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_Xrender_XRenderQueryExtension=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_Xrender_XRenderQueryExtension=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_Xrender_XRenderQueryExtension" >&5
+echo "${ECHO_T}$ac_cv_lib_Xrender_XRenderQueryExtension" >&6
+if test $ac_cv_lib_Xrender_XRenderQueryExtension = yes; then
+  libs_x="-lXrender $libs_x" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lXrender\" to \$libs_x"; fi
+else
+  { echo "Error:" "Unable to find libXrender for --with-xft" >&2; exit 1; }
+fi
+
+        echo "$as_me:$LINENO: checking for FcPatternCreate in -lfontconfig" >&5
+echo $ECHO_N "checking for FcPatternCreate in -lfontconfig... $ECHO_C" >&6
+if test "${ac_cv_lib_fontconfig_FcPatternCreate+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfontconfig  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char FcPatternCreate ();
+int
+main ()
+{
+FcPatternCreate ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_fontconfig_FcPatternCreate=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_fontconfig_FcPatternCreate=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_fontconfig_FcPatternCreate" >&5
+echo "${ECHO_T}$ac_cv_lib_fontconfig_FcPatternCreate" >&6
+if test $ac_cv_lib_fontconfig_FcPatternCreate = yes; then
+  libs_x="-lfontconfig $libs_x" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lfontconfig\" to \$libs_x"; fi
+else
+  { echo "Error:" "Unable to find libfontconfig for --with-xft" >&2; exit 1; }
+fi
+
+        echo "$as_me:$LINENO: checking for XftFontOpen in -lXft" >&5
+echo $ECHO_N "checking for XftFontOpen in -lXft... $ECHO_C" >&6
+if test "${ac_cv_lib_Xft_XftFontOpen+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lXft  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XftFontOpen ();
+int
+main ()
+{
+XftFontOpen ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_Xft_XftFontOpen=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_Xft_XftFontOpen=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_Xft_XftFontOpen" >&5
+echo "${ECHO_T}$ac_cv_lib_Xft_XftFontOpen" >&6
+if test $ac_cv_lib_Xft_XftFontOpen = yes; then
+  libs_x="-lXft $libs_x" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lXft\" to \$libs_x"; fi
+else
+  { echo "Error:" "Unable to find libXft for --with-xft" >&2; exit 1; }
+fi
+
+        cat >>confdefs.h <<\_ACEOF
+#define USE_XFT 1
+_ACEOF
+
+                	unset xft_includes_found
+      fi
+
+fi
+
+done
+
+  fi
+
 fi
 if test "$with_msw" != "no"; then
   { echo "$as_me:$LINENO: checking for MS-Windows..." >&5
@@ -26202,6 +26842,13 @@ esac
 case "$enable_menubars" in "" | "yes" | "athena" )
   enable_menubars="lucid" ;;
 esac
+if test "$with_xft_menubars" != "no" ; then
+  if test "$with_xft_emacs" = "yes" -a "$with_menubars" != "no" ; then
+    with_xft_menubars="yes"
+  else
+    with_xft_menubars="no"
+  fi
+fi
 case "$enable_dialogs" in "" | "yes" | "lucid" )
   if test "$lucid_prefers_motif" = "yes"; then
     if   test "$have_motif"     = "yes"; then enable_dialogs="motif"
@@ -26235,6 +26882,20 @@ case "$enable_widgets" in "" | "yes" | "lucid")
     fi
   fi ;;
 esac
+if test "$with_xft_tabs" != "no" ; then
+  if test "$with_xft_emacs" = "yes" -a "$enable_widgets" != "no" ; then
+    with_xft_tabs="yes"
+  else
+    with_xft_tabs="no"
+  fi
+fi
+if test "$with_xft_gauge" != "no" ; then
+  if test "$with_xft_emacs" = "yes" -a "$enable_widgets" != "no" ; then
+    with_xft_gauge="yes"
+  else
+    with_xft_gauge="no"
+  fi
+fi
 
 all_widgets="$enable_menubars $enable_scrollbars $enable_dialogs $enable_toolbars $enable_widgets"
 
@@ -26413,6 +27074,19 @@ _ACEOF
 
 test "$enable_widgets"    = "motif"  && cat >>confdefs.h <<\_ACEOF
 #define LWLIB_WIDGETS_MOTIF 1
+_ACEOF
+
+
+test "$with_xft_menubars" = "yes"  && cat >>confdefs.h <<\_ACEOF
+#define USE_XFT_MENUBARS 1
+_ACEOF
+
+test "$with_xft_tabs" = "yes"  && cat >>confdefs.h <<\_ACEOF
+#define USE_XFT_TABS 1
+_ACEOF
+
+test "$with_xft_gauge" = "yes"  && cat >>confdefs.h <<\_ACEOF
+#define USE_XFT_GAUGE 1
 _ACEOF
 
 
@@ -38466,6 +39140,9 @@ if test "$with_x11" = "yes"; then
   if test "$with_wmcommand" != no; then
     echo "    - Handling WM_COMMAND properly."
   fi
+  if test "$with_xft" = "yes"; then
+    echo "    - Compiling in support for Xft antialiased fonts (EXPERIMENTAL)."
+  fi
 fi
 if test "$need_motif" = "yes" ; then
   echo "  Compiling in support for Motif."
@@ -38491,6 +39168,10 @@ case "$enable_menubars" in
           echo "             Re-run configure with --enable-menubars='lucid'." ;;
     msw ) echo "  Using MS-Windows menubars." ;;
 esac
+if test "$with_xft_menubars" = "yes"; then
+  echo "    - Using Xft to render antialiased fonts in menubars."
+  echo "      WARNING: This feature will be replaced with a face."
+fi
 case "$enable_scrollbars" in
   gtk    ) echo "  Using GTK scrollbars."        ;;
   lucid  ) echo "  Using Lucid scrollbars."      ;;
@@ -38516,6 +39197,15 @@ case "$enable_widgets" in
   athena ) echo "  Using Athena native widgets."     ;;
      msw ) echo "  Using MS-Windows native widgets." ;;
 esac
+if test "$with_xft_tabs" = "yes"; then
+  echo "    - Using Xft to render antialiased fonts in tab controls."
+  echo "      WARNING: This feature will be replaced with a face."
+fi
+if test "$with_xft_gauge" = "yes"; then
+  echo "    - Using Xft to render antialiased fonts in progress bars."
+  echo "      WARNING: This feature will be replaced with a face."
+  echo "      WARNING: This feature not yet implemented; setting ignored."
+fi
 if test "$with_dragndrop" = yes; then
   echo "  Compiling in support for Drag'n'Drop (EXPERIMENTAL)."
   echo "    -  Drag'n'Drop prototype:                             $dragndrop_proto."
