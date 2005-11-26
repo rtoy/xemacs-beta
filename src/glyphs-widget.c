@@ -346,7 +346,7 @@ widget_property (Lisp_Object image_instance, Lisp_Object prop)
    #### property is still a valid function since we have to be able to
    extract information from the actual widget.
 
-   #### update_widget should probably be re-written to use the
+   #### widget_update should probably be re-written to use the
    instantiator. We probably want to keep a record of the differences
    also to make this easy. We would also need a pending_instantiator
    so that changes could be delayed. */
@@ -1296,7 +1296,7 @@ layout_post_instantiate (Lisp_Object UNUSED (image_instance),
    allow users to stack widgets vertically or horizontally. These
    layouts also allow the widgets to be centered (space evenly
    distributed), left or right justified (fixed spacing widgets
-   stacked against the left, righ, top or bottom edge). Unfortunately
+   stacked against the left, right, top or bottom edge). Unfortunately
    this doesn't allow widgets in different layouts to be aligned. For
    instance how should the search dialog be organized for alignment?
    The obvious choice of two vertical columns does not work since the
@@ -1642,8 +1642,8 @@ native_layout_layout (Lisp_Object image_instance,
 
 DEFUN ("widget-logical-to-character-width", Fwidget_logical_to_character_width, 1, 3, 0, /*
 Convert the width in logical widget units to characters.
-Logical widget units do not take into account adjusments made for
-layout borders, so this adjusment is approximated.
+Logical widget units do not take into account adjustments made for
+layout borders, so this adjustment is approximated.
 */
        (width, UNUSED (face), domain))
 {
@@ -1668,7 +1668,7 @@ layout borders, so this adjusment is approximated.
 
 DEFUN ("widget-logical-to-character-height", Fwidget_logical_to_character_height, 1, 3, 0, /*
 Convert the height in logical widget units to characters.
-Logical widget units do not take into account adjusments made for
+Logical widget units do not take into account adjustments made for
 layout borders, so this adjustment is approximated.
 
 If the components of a widget layout are justified to the top or the
@@ -1819,7 +1819,7 @@ static void image_instantiator_scrollbar (void)
   IIFORMAT_VALID_KEYWORD (scrollbar, Q_face, check_valid_face);
 }
 
-static void image_instantiator_progress_guage (void)
+static void image_instantiator_progress_gauge (void)
 {
   INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (progress_gauge, "progress-gauge");
   IIFORMAT_HAS_SHARED_METHOD (progress_gauge, validate, widget);
@@ -1927,7 +1927,7 @@ image_instantiator_format_create_glyphs_widget (void)
   image_instantiator_edit_fields();
   image_instantiator_combo_box();
   image_instantiator_scrollbar();
-  image_instantiator_progress_guage();
+  image_instantiator_progress_gauge();
   image_instantiator_tree_view();
   image_instantiator_tab_control();
   image_instantiator_labels();

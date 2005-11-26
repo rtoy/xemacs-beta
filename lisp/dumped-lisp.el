@@ -53,6 +53,8 @@ in dumped-lisp.el and is not itself listed.")
        "obsolete"
        "specifier"
        "frame"			; needed by faces
+       ;; #### this should be (featurep 'xft)
+       (when (featurep 'x) "fontconfig") ; needed by x-faces
        (when (featurep 'x) "x-faces") ; needed by faces
        (when (featurep 'gtk) "gtk-faces")
        (when (valid-console-type-p 'mswindows) "msw-faces")

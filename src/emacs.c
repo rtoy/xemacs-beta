@@ -1021,7 +1021,10 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   if (argmatch (argv, argc, "-si", "--show-inline-info", 0, NULL, &skip_args))
     {
 #if defined (PDUMP) && defined (DUMP_IN_EXEC) && !defined (WIN32_NATIVE)
-      printf ("%u %u\n", dumped_data_max_size (), dumped_data_align_offset ());
+      /* #### We really should check for sizeof (size_t) > sizeof (long) */
+      printf ("%lu %lu\n", (unsigned long) dumped_data_max_size (),
+			   (unsigned long) dumped_data_align_offset ());
+
 #else
       printf ("Portable dumper not configured for dumping into executable or windows native; -si just forces exit.\n");
 #endif
@@ -1612,6 +1615,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_input_method_xlib ();
 #endif
 #endif /* HAVE_XIM */
+
+#ifdef USE_XFT
+      syms_of_xft_fonts();
+#endif
+
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_MS_WINDOWS
@@ -2192,6 +2200,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_X_DIALOGS) || defined (HAVE_TOOLBARS)
       vars_of_gui_x ();
 #endif
+
+#ifdef USE_XFT
+      vars_of_xft_fonts ();
+#endif
+
 #endif /* HAVE_X_WINDOWS */
 
 
@@ -2318,6 +2331,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_X_DIALOGS) || defined (HAVE_TOOLBARS)
       reinit_vars_of_gui_x ();
 #endif
+#ifdef USE_XFT
+      reinit_vars_of_xft_fonts ();
+#endif
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef MULE
@@ -2384,6 +2400,12 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
          just-previous complex-vars calls).  We will in fact do conversion
 	 quite soon, e.g. in complex_vars_of_glyphs_x(). */
       inhibit_non_essential_conversion_operations = 0;
+
+#ifdef USE_XFT
+      /* This uses coding systems.  Must be done before faces are init'ed. */
+      /* not in xft reloaded #3 */
+      complex_vars_of_xft_fonts ();
+#endif
 
       /* Depends on specifiers. */
       complex_vars_of_faces ();

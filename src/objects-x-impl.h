@@ -29,6 +29,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include "objects-impl.h"
 #include "objects-x.h"
+#ifdef USE_XFT
+/* for resource name definitions, etc */
+#include "../lwlib/lwlib-fonts.h"
+#endif
 
 #ifdef HAVE_X_WINDOWS
 
@@ -39,11 +43,19 @@ Boston, MA 02111-1307, USA.  */
 struct x_color_instance_data
 {
   XColor color;
+  /* Yes, it looks crazy to have both the XColor and the XftColor, but
+     pragmatically both are used. */
+#ifdef USE_XFT
+  XftColor xftColor;
+#endif
   char dealloc_on_gc;
 };
 
 #define X_COLOR_INSTANCE_DATA(c) ((struct x_color_instance_data *) (c)->data)
 #define COLOR_INSTANCE_X_COLOR(c) (X_COLOR_INSTANCE_DATA (c)->color)
+#ifdef USE_XFT
+#define COLOR_INSTANCE_X_XFTCOLOR(c) (X_COLOR_INSTANCE_DATA (c)->xftColor)
+#endif
 #define COLOR_INSTANCE_X_DEALLOC(c) (X_COLOR_INSTANCE_DATA (c)->dealloc_on_gc)
 
 /*****************************************************************************
@@ -53,11 +65,21 @@ struct x_color_instance_data
 struct x_font_instance_data
 {
   /* X-specific information */
-  XFontStruct *font;
+  /* Yes, it looks crazy to have both the XFontStruct and the XftFont, but
+     pragmatically both are used (lwlib delegates labels to the widget sets,
+     which internally use XFontStructs). */
+  XFontStruct * font;
+#ifdef USE_XFT
+  XftFont *xftFont;
+#endif
+
 };
 
 #define X_FONT_INSTANCE_DATA(f) ((struct x_font_instance_data *) (f)->data)
 #define FONT_INSTANCE_X_FONT(f) (X_FONT_INSTANCE_DATA (f)->font)
+#ifdef USE_XFT
+#define FONT_INSTANCE_X_XFTFONT(f) (X_FONT_INSTANCE_DATA (f)->xftFont)
+#endif
 
 #endif /* HAVE_X_WINDOWS */
 

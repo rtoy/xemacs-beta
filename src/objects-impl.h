@@ -125,8 +125,13 @@ struct Lisp_Font_Instance
 			   call them to get the truename (#### in reality,
 			   they all probably just store the truename here
 			   if they know it, and nil otherwise; we should
-			   check this and enforce it as a general policy) */
+			   check this and enforce it as a general policy
+			   X and GTK do this, except that when they don't
+			   know they return NAME and don't update TRUENAME.
+			   MS Windows initializes TRUENAME when the font is
+			   initialized.  TTY doesn't do truename.) */
   Lisp_Object device;
+  Lisp_Object charset;  /* Mule charset, or whatever */
 
   /* See comment in struct console about console variants. */
   enum console_variant font_instance_type;
@@ -142,7 +147,8 @@ struct Lisp_Font_Instance
 };
 
 #define FONT_INSTANCE_NAME(f)	 ((f)->name)
-#define FONT_INSTANCE_TRUENAME(f) ((f)->name)
+#define FONT_INSTANCE_TRUENAME(f) ((f)->truename)
+#define FONT_INSTANCE_CHARSET(f) ((f)->charset)
 #define FONT_INSTANCE_DEVICE(f)	 ((f)->device)
 #define FONT_INSTANCE_ASCENT(f)	 ((f)->ascent)
 #define FONT_INSTANCE_DESCENT(f) ((f)->descent)
@@ -151,6 +157,7 @@ struct Lisp_Font_Instance
 
 #define XFONT_INSTANCE_NAME(f)	   FONT_INSTANCE_NAME (XFONT_INSTANCE (f))
 #define XFONT_INSTANCE_TRUENAME(f) FONT_INSTANCE_TRUENAME (XFONT_INSTANCE (f))
+#define XFONT_INSTANCE_CHARSET(f)  FONT_INSTANCE_CHARSET (XFONT_INSTANCE (f))
 #define XFONT_INSTANCE_DEVICE(f)   FONT_INSTANCE_DEVICE (XFONT_INSTANCE (f))
 #define XFONT_INSTANCE_ASCENT(f)   FONT_INSTANCE_ASCENT (XFONT_INSTANCE (f))
 #define XFONT_INSTANCE_DESCENT(f)  FONT_INSTANCE_DESCENT (XFONT_INSTANCE (f))

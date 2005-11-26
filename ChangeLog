@@ -1,3 +1,155 @@
+2005-11-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Merge Xft.
+
+    2005-03-05  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.ac: Correct the filename of the old copy of configure.
+
+    2005-03-05  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* config.guess:
+	* config.sub: Sync with the latest upstream versions.
+	* configure.ac:  Use --verbose for --extra-verbose.   Better
+	quoting of arguments.  Internal shell vars statr with '_' to avoid
+	name clashes.  Pick up the latest changes to configure.in.
+	Improve the testing of Athena 3d widgets.
+
+    2005-02-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (athena): Spells as 3d, not xaw3d, in declaration.
+	(sound): quickfix: AC_DEFINE, not AC_DEFINE_UNQUOTED, at top level.
+
+    2005-02-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (XE_EXPAND_COMPLEX_OPTION): Use same name in comment.
+	(XEmacs keyword option support):
+	(XEmacs complex option support):
+	Move long header comments to internals.texi(The configure Script).
+
+    2005-02-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac:  Trap --with-style flags, now --enable.
+
+    2005-02-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (Autodetect native sound):
+	Handle NetBSD per Aidan's patch.
+
+    2005-02-11  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.ac: Added keyword option support.  Converted database,
+	sound, athena, xim, bignum, error-checking, menubars, scrollbars,
+	dialogs and widgets command line arguments to use keyword option
+	and complex option macros.
+
+    2005-02-09  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.ac (XE_COMPLEX_OPTION):
+	* configure.ac (XE_COMPLEX_OPTION_HELP_STRING):
+	* configure.ac (XE_COMPLEX_ARG_WITH):
+	* configure.ac (XE_COMPLEX_ARG_ENABLE):
+	Rewritten complex option support with a simpler API and support
+	for --enable as well a --with.
+
+    2005-02-02  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.ac Align with the current mainline version of
+	configure.in.
+
+    2005-02-01  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (Xrender, fontconfig, and Xft):
+	Check /usr/include/freetype2.
+
+    2005-01-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (AC_COPYRIGHT): Update.
+	(progname): Restore and improve documentation.
+
+	(XE_INIT_COMPLEX_OPTION):
+	(XE_APPEND_COMPLEX_OPTION_DEFAULT):
+	(XE_PARSE_COMPLEX_OPTION):
+	(XE_CLEANUP_COMPLEX_OPTION):
+	(XE_COMPLEX_OPTION_HELP_STRING): Support complex options.
+	(--with-xft): Add Xft support using the complex option support.
+
+	(--with-xface):
+	(--with-zlib):
+	(--with-xmu):
+	(--with-purify):
+	(--with-quantify):
+	(--with-toolbars):
+	(--with-tty):
+	(--with-xfs):
+	(--with-canna):
+	(--with-wnn):
+	(--with-wnn6):
+	(--with-ldap):
+	(--with-postgresql):
+	(--with-infodock):
+	(--with-native-sound-lib):
+	(--with-netinstall):
+	(--with-site-includes):
+	(--with-site-libraries):
+	(--with-site-prefixes):
+	(--with-package-prefix):
+	(--with-package-path):
+	(--enable-external-widget):
+	(--enable-kkcc):
+	(--enable-union-type):
+	(--enable-pdump):
+	(--enable-debug):
+	(--enable-memory-usage-stats):
+	(--enable-error-checking):
+	(--with-rel-alloc):
+	(--with-dlmalloc):
+	(--with-debug-malloc):
+	(--with-system-malloc):
+	Improve (including add) help strings.
+
+	(--with-athena):
+	(--with-xim):
+	(--with-mail-locking):
+	(--enable-bignum):
+	(--enable-menubars):
+	(--enable-scrollbars):
+	(--enable-dialogs):
+	(--enable-widgets):
+	Fix `eval "$FEATURE=\"$val\"" bug.
+	
+    2005-01-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* INSTALL (CONFIGURATION OPTIONS):
+	Insert Malcolm's notes on autoconf 2.59 support.
+
+    2005-01-04  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* aclocal.m4: Changes to support autoconf 2.59
+	* config.guess:
+	* config.sub: Upgraded to the version in from automake 1.9
+	* configure.ac: Rewritten for autoconf 2.59 support.
+
+    2004-12-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.usage: Various minor improvements.
+
+    2004-12-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in: Update FSF's copyright.  Support --with-xft=LIST
+	syntax.  Try to find a directory containing freetype/ftheader.h.
+
+	* configure.usage (--with-xft): Update.
+
+    2004-11-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Xft branch based on "Xft reloaded #3" patch by Eric Knauel and
+	Mathias Neuebaur, and other contributors.
+
+	* configure.in:
+	* configure.usage:
+	Implement and document switches for configuring Xft.
+
 2005-11-21  Marcus Crestani  <crestani@xemacs.org>
 
 	Incremental Garbage Collector
@@ -275,7 +427,12 @@
 
 	* version.sh (XEMACS_RELEASE_DATE): New version info variable.
 
-	* configure.in (XEMACS_RELEASE_DATE): Use it.
+	* configure.in (XEMACS_RELEASE_DATE):
+	* configure.ac (XEMACS_RELEASE_DATE):
+	Use it.
+
+	* configure.ac (sound):
+	AC_DEFINE_UNQUOTED seems OK, if it's not m4-quoted.
 
 2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
 

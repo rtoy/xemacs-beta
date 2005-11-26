@@ -294,6 +294,7 @@ static const struct memory_description font_instance_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, name)},
   { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, truename)},
   { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, device)},
+  { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, charset)},
   { XD_UNION, offsetof (Lisp_Font_Instance, data), 
     XD_INDIRECT (0, 0), { &font_instance_data_description } },
   { XD_END }
@@ -370,19 +371,23 @@ DEFINE_LRECORD_IMPLEMENTATION ("font-instance", font_instance,
 			       Lisp_Font_Instance);
 
 
-DEFUN ("make-font-instance", Fmake_font_instance, 1, 3, 0, /*
+/* #### Why is this exposed to Lisp?  Used in:
+x-frob-font-size, gtk-font-menu-load-font, x-font-menu-load-font-xft,
+x-font-menu-load-font-core, mswindows-font-menu-load-font,
+mswindows-frob-font-style-and-sizify, mswindows-frob-font-size. */
+DEFUN ("make-font-instance", Fmake_font_instance, 1, 4, 0, /*
 Return a new `font-instance' object named NAME.
 DEVICE specifies the device this object applies to and defaults to the
 selected device.  An error is signalled if the font is unknown or cannot
 be allocated; however, if NOERROR is non-nil, nil is simply returned in
-this case.
+this case.  CHARSET is used internally.  #### make helper function?
 
 The returned object is a normal, first-class lisp object.  The way you
 `deallocate' the font is the way you deallocate any other lisp object:
 you drop all pointers to it and allow it to be garbage collected.  When
-these objects are GCed, the underlying X data is deallocated as well.
+these objects are GCed, the underlying GUI data is deallocated as well.
 */
-       (name, device, noerror))
+       (name, device, noerror, charset))
 {
   Lisp_Font_Instance *f;
   int retval = 0;
@@ -407,6 +412,7 @@ these objects are GCed, the underlying X data is deallocated as well.
   f->ascent = f->height = 1;
   f->descent = 0;
   f->width = 1;
+  f->charset = charset;
   f->proportional_p = 0;
 
   retval = MAYBE_INT_DEVMETH (XDEVICE (device), initialize_font_instance,
@@ -507,6 +513,15 @@ the first found is used.  This returns an unambiguous name for that font
 {
   CHECK_FONT_INSTANCE (font_instance);
   return font_instance_truename_internal (font_instance, ERROR_ME);
+}
+
+DEFUN ("font-instance-charset", Ffont_instance_charset, 1, 1, 0, /*
+Return the Mule charset that FONT-INSTANCE was allocated to handle.
+*/
+       (font_instance))
+{
+  CHECK_FONT_INSTANCE (font_instance);
+  return XFONT_INSTANCE (font_instance)->charset;
 }
 
 DEFUN ("font-instance-properties", Ffont_instance_properties, 1, 1, 0, /*
@@ -898,7 +913,7 @@ font_instantiate (Lisp_Object UNUSED (specifier),
       if (UNBOUNDP (instance))
 	{
 	  /* make sure we cache the failures, too. */
-	  instance = Fmake_font_instance (instantiator, device, Qt);
+	  instance = Fmake_font_instance (instantiator, device, Qt, charset);
 	  Fputhash (instantiator, instance, cache);
 	}
 
@@ -1150,6 +1165,7 @@ syms_of_objects (void)
   DEFSUBR (Ffont_instance_ascent);
   DEFSUBR (Ffont_instance_descent);
   DEFSUBR (Ffont_instance_width);
+  DEFSUBR (Ffont_instance_charset);
   DEFSUBR (Ffont_instance_proportional_p);
   DEFSUBR (Ffont_instance_truename);
   DEFSUBR (Ffont_instance_properties);

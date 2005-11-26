@@ -2625,6 +2625,19 @@ x_delete_frame (struct frame *f)
   DtDndDropUnregister (FRAME_X_TEXT_WIDGET (f));
 #endif /* HAVE_CDE */
 
+#ifdef USE_XFT
+  /* If we have an XftDraw structure, we need to free it here.
+     We can't ever have an XftDraw without a Display, so we are safe
+     to free it in here, and we avoid too much playing around with the 
+     malloc checking hooks this way. */
+  if (FRAME_X_XFTDRAW (f)) 
+    {
+      XftDrawDestroy (FRAME_X_XFTDRAW (f));
+      FRAME_X_XFTDRAW (f) = NULL;
+    }
+#endif
+
+
   assert (FRAME_X_SHELL_WIDGET (f) != 0);
   dpy = XtDisplay (FRAME_X_SHELL_WIDGET (f));
 
@@ -2702,11 +2715,28 @@ x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
    {
      Lisp_Object font = FACE_FONT (Vdefault_face, frame, Vcharset_ascii);
 
+     /* #### what to do about Xft?  I don't think the font is actually used
+	to compute cell size for computing frame pixel dimensions (see call
+	to EmacsFrameRecomputeCellSize() below); where is it used? -- sjt
+        What does XtSetValues() do if that resource isn't present? */
      if (!EQ (font, Vthe_null_font_instance))
        {
-	 XtSetArg (al[ac], XtNfont,
-		   (void *) FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)));
-	 ac++;
+	 if (0)
+	   ;
+#ifdef USE_XFT
+	 else if (FONT_INSTANCE_X_XFTFONT (XFONT_INSTANCE (font)))
+	   {
+	     XtSetArg (al[ac], XtNxftFont,
+		       (void *) FONT_INSTANCE_X_XFTFONT (XFONT_INSTANCE (font)));
+	     ac++;
+	   }
+#endif
+	 else if (FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)))
+	   {
+	     XtSetArg (al[ac], XtNfont,
+		       (void *) FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)));
+	     ac++;
+	   }
        }
    }
   else

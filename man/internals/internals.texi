@@ -5114,10 +5114,15 @@ are constants whose value is a symbol.  The name of the variable should
 be derived from the name of the symbol using the same rules as for Lisp
 primitives.  Such variables allow the C code to check whether a
 particular @code{Lisp_Object} is equal to a given symbol.  Symbols are
-Lisp objects, so these variables may be passed to Lisp primitives.  (An
-alternative to the use of @samp{Q...} variables is to call the
+Lisp objects, so these variables may be passed to Lisp primitives.  (A
+tempting alternative to the use of @samp{Q...} variables is to call the
 @code{intern} function at initialization in the
-@code{vars_of_@var{module}} function, which is hardly less efficient.)
+@code{vars_of_@var{module}} function.  But this does not
+@code{staticpro} the symbol, which in theory could get uninterned, and
+then garbage collected while you're not looking.  You could
+@code{staticpro} yourself, but in a production XEmacs @code{intern} and
+@code{staticpro} is all that @code{DEFSYMBOL} does, while in a debugging
+XEmacs it also does some error-checking, which you normally want.)
 
   @strong{Convention}: Global variables whose names begin with @samp{V}
 are variables that contain Lisp objects.  The convention here is that

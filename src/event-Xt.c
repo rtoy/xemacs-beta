@@ -2986,7 +2986,7 @@ Boolean EmacsXtCvtStringToPixel (
     } else {
       status = XParseColor (dpy, colormap, (char*)str, &screenColor);
       if (status) {
-	status = allocate_nearest_color (dpy, colormap, visual, &screenColor);
+	status = x_allocate_nearest_color (dpy, colormap, visual, &screenColor);
       }
     }
   } else {

@@ -4177,9 +4177,13 @@ tail_recurse:
                       dash_pixsize =
                         redisplay_text_width_string (w, findex, &ch, Qnil, 0,
                                                      1);
-
-                      num_to_add = (max_pixsize - cur_pixsize) / dash_pixsize;
-                      num_to_add++;
+		      
+		      if (dash_pixsize == 0) 
+			num_to_add = 0;
+		      else {
+			num_to_add = (max_pixsize - cur_pixsize) / dash_pixsize;
+			num_to_add++;
+		      }
                     }
 
                   while (num_to_add--)

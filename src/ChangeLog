@@ -1,3 +1,542 @@
+2005-11-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Merge Xft.
+
+    2005-11-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c: Improve comments.
+	
+    2005-11-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xft-fonts.h:
+	* xft-fonts.c:
+	* redisplay-x.c:
+	Remove or comment out dead code.
+
+    2005-11-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_find_charset_font): Encapsulate debug print in macro.
+
+    2005-11-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xft-fonts.h:
+	* xft-fonts.c:
+	* objects-x.c:
+	Xft font names are encoded in UTF-8 (Qxft_font_name_encoding).
+
+    2005-11-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xft-fonts.h:
+	* xft-fonts.c:
+	Substitute new *LCRECORD* macros for #ifdef MC_ALLOC.
+
+    2005-09-10  Clemens Fruhwirth  <clemens@endorphin.org>
+
+	* glyphs-x.c (update_widget_face): Wrap error checking of rf in an
+	#ifdef USE_XFT.
+
+    2005-09-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_initialize_font_instance): Must encode extname
+	twice, Qxft_font_name_encoding != Qx_font_name_encoding.
+
+    2005-09-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_finalize_font_instance): Add newline to message.
+
+    2005-09-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_find_charset_font): Give user more control of
+	debug verbosity.  Reduce verbosity at debug_xft=1.  Reduce
+	verbosity of truename by removing properties that are rarely
+	specified from fontconfig font name.
+
+    2005-09-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_find_charset_font): Work around buggy return
+	value in FcInit().
+
+    2005-09-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c: Improve various header comments.
+	(x_font_instance_truename): Remove obsolete #ifdef 0 code.
+
+    2005-09-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* console-x-impl.h (struct x_frame): Rewrite comment.
+
+	* redisplay-x.c (x_output_string):
+	* frame-x.c (x_delete_frame):
+	Improve style, let compiler optimize.
+
+    2005-09-05  Daniel Pittman <daniel@rimspace.net>
+
+	* console-x-impl.h (struct x_frame): New member xftDraw.
+	(FRAME_X_XFTDRAW): Accessor for xftDraw member.
+
+	* redisplay-x.c (x_output_string): Lazily initialize frame's
+	xftDraw member, and don't destroy it here.
+
+	* frame-x.c (x_delete_frame): Destroy xftDraw here.
+
+    2005-08-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xft-fonts.c (Ffc_pattern_create): Improve docstring, remove todo.
+	(fc_intern): Add todo.
+
+    2005-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xft-fonts.c (finalize_fc_pattern): New static function.
+	Add it to lcrecord implementation of fc_pattern.
+
+	* xft-fonts.c (Ffc_pattern_destroy): Disable with #if 0.
+
+    2005-08-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	-- Minor cleanups. --
+
+	* xft-fonts.c (Ffc_font_real_pattern):
+	Update FIXME at top.
+	(Ffc_font_sort):
+	(Ffc_font_match):
+	Improve docstrings.
+
+	* xft-fonts.c (Ffc_pattern_destroy):
+	Partially protect against double frees.
+
+	-- Eliminate Lisp fc_fontset objects. --
+
+	* xft-fonts.c (fontset_to_list): New helper function.
+	(Ffc_list_fonts_pattern_objects):
+	(Ffc_font_sort):
+	Made to use `fontset_to_list' and return list.  Updated docstrings.
+
+	* xft-fonts.h (struct fc_pattern): Removed fc_fontset member.
+	(fc_fontset): Removed struct and lrecord declarations and typedef.
+	(XFCFONTSET):
+	(wrap_fcfontset):
+	(FCFONTSETP):
+	(CHECK_FCFONTSET):
+	(CONCHECK_FCFONTSET):
+	(XFCFONTSET_PTR):
+	Removed macros.
+
+	* xft-fonts.c (fcfontset_description):
+	(fc_fontset):
+	(Ffc_fontset_p):
+	(Ffc_fontset_count):
+	(Ffc_fontset_destroy):
+	(Ffc_fontset_ref):
+	Removed unused functions.
+	(fcpattern_description): Removed fc_fontset member.
+	(Ffc_pattern_create):
+	(Ffc_name_parse):
+	(Ffc_pattern_duplicate):
+	(Ffc_pattern_destroy):
+	(Ffc_font_match):
+	(Ffc_font_real_pattern):
+	Removed reference to fc_fontset member.
+	(syms_of_xft_fonts): Removed DEFSYMBOLs, DEFSUBRs for fc_fontset.
+
+	* lrecord.h (enum lrecord_type): Removed lrecord_fc_fontset.
+	Removed indicies, which depended on #ifdefs so can't be accurate.
+
+    2005-07-31  Daniel Pittman  <daniel@rimspace.net>
+
+	* xft-fonts.c: Update Ffc_list_fonts_pattern_objects to use the 
+	FontConfig API nicely, preventing it from rebuilding the list of
+	available fonts on *every* access.
+
+    2005-06-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xft-fonts.c: MC_ALLOC-ify.
+	* xft-fonts.h: MC_ALLOC-ify.
+
+    2005-04-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xft-fonts.c:  Improve comment on property name hash table.
+
+	(Ffc_list_fonts_pattern_objects):
+	(Ffc_font_sort):
+	(reinit_vars_of_xft_fonts):
+	Call FcInit only once in reinit_vars_of_xft_fonts.
+
+	(Ffc_list_fonts_pattern_objects):
+	(Ffc_font_sort):
+	Signal error if returned FcFontSet object is NULL.
+
+	(string_list_to_fcobjectset): Use fc_intern.
+
+	* objects-x.c ():  Move declaration of `name' out of #ifdef.
+
+    2005-04-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xft-fonts.c (fc_intern): val is const.
+	(xft_get_color): Use dead_wrong_type_argument.
+
+	* objects-x.c (Qxft_font_name_encoding): New documentary #define.
+	(truename_via_XListFonts): Improve comments.
+
+	Followup on Aidan's partial cleanup/Mulization.
+
+	* objects-x.c (DEBUG_XFT0):
+	(DEBUG_XFT1):
+	(DEBUG_XFT2):
+	(PRINT_XFT_PATTERN):
+	(CHECKING_LANG):
+	Move to top of font object block.
+	(DEBUG_XFT3):
+	(DEBUG_XFT4):
+	New.
+	(x_initialize_font_instance):
+	(x_finalize_font_instance):
+	Use them.
+
+	(x_font_instance_truename): Comment complaint about structure.
+	Clarify variable usage by moving declaration inside block.
+
+	(x_find_charset_font):  Clarify block structure by eliminating
+	early returns.  Remove bogus "must free" comments.  Free FcPattern
+	objects that were leaking.  Use block structure to indicate
+	lifetimes of FcPattern objects.  Use "font" rather than "pattern"
+	in names of FcPatterns that name fonts rather than search
+	criteria.  Use shortnames more consistently in debug messages.
+	#ifdef shortname vs longname return values.  Correct comment to
+	note that FcCharSets are Unparsed to ASCII.  Don't ever fall
+	through to X core fonts if we had an Xft font (it should be NULL
+	anyway).  Use Qxft_font_name_encoding; this means we have to parse
+	FONT separately for Qx_font_name_encoding.
+
+    2005-04-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Xft/fontconfig assumes that strings used as object names are
+	statically allocated.  Implement a hash table to keep track of
+	them:
+
+	* xft-fonts.c (reinit_vars_of_xft_fonts): Initialize hash table.
+	(fc_intern):
+	New static functions.
+
+	(fc_property_name_hash_table):
+	(fc_standard_properties):
+	New static variables.
+
+	* symsinit.h (reinit_vars_of_xft_fonts): Declare it.
+
+	* emacs.c (main_1): Call it.  Reorder complex_vars_of_xft_fonts.
+
+	Renaming and reorganization:
+
+	* xft-fonts.c: Group FcPattern stuff separately from FcFontSet in
+	preparation for removing latter from LISP visibility.  Use
+	"pattern" for Lisp_Objects, reserve "fcpat" for FcPatterns.
+	Similarly change "object" to "property".
+
+	(Ffc_pattern_destroy):
+	(Ffc_fontset_destroy):
+	Deprecate these; they should not be LISP-visible.
+
+	(Ffc_pattern_print): Removed.
+
+	(extract_fcapi_string): Make this a macro, because
+	in C "inline" is a hint.  But this _must_ be a macro because it
+	implicitly uses alloca.
+
+    2005-04-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xft-fonts.c (fc-pattern-get-antialias):
+	(fc-pattern-get-dpi):
+	(fc-pattern-get-family):
+	(fc-pattern-get-file):
+	(fc-pattern-get-foundry):
+	(fc-pattern-get-minspace):
+	(fc-pattern-get-outline):
+	(fc-pattern-get-pixelsize):
+	(fc-pattern-get-rasterizer):
+	(fc-pattern-get-scalable):
+	(fc-pattern-get-scale):
+	(fc-pattern-get-size):
+	(fc-pattern-get-style):
+	(fc-pattern-get-xlfd):
+	(xft-pattern-get-core):
+	(xft-pattern-get-encoding):
+	(xft-pattern-get-render):
+	(fc_get_pattern_bool):
+	(fc_get_pattern_double):
+	(fc_get_pattern_integer):
+	(fc_get_pattern_string):
+	(xft_font_open_name):
+	Delete definitions of long-unused functions.
+
+	(syms_of_xft_fonts):
+	Delete references.
+
+	* xft-fonts.h (fc_get_pattern_bool):
+	(fc_get_pattern_double):
+	(fc_get_pattern_integer):
+	(fc_get_pattern_string):
+	Delete declarations of long-unused helper functions.
+
+	* xft-fonts.c (Ffc_font_match): s/poosible/possible/ in docstring.
+
+    2005-04-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* objects-x.c:
+	* objects-x.c (x_initialize_font_instance):
+	* objects-x.c (CHECKING_LANG):
+	General mule-sanity cleanup for the debug messages, to eliminate
+	the issue Giacomo Boffi saw in
+	16970.44359.621213.994821@boffi95.stru.polimi.it. 
+
+	* objects-x.c (x_find_charset_font):
+	Font names are also treated as UTF-8; relatedly, when passing back
+	the font's full name, the character coverage bitmap isn't included
+	any more, because that would make it an invalid UTF-8 string.
+	
+    2005-03-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (charset_table): Fix ISO 639 code for Greek.  Reported
+	by Stefan Holst <holst@mathematik.uni-mainz.de>.
+	(charset_table): Add information for Hebrew, whine about ISO prices.
+
+    2005-03-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_font_instance_truename): Try to fix XListFonts
+	crash by not handing random Xft results to core Xlib functions.
+	Replace bizarre gymnastics with simple FcNameUnparse.
+
+    2005-03-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x-impl.h: Include lwlib-fonts.h
+
+	* objects-x.c (x_font_instance_truename): 
+	* glyphs-x.c (update_widget_face):
+	* frame-x.c (x_update_frame_external_traits):
+	Use the correct variant of FONT_INSTANCE_{X,XFT}_FONT.
+	Protect against access of uninitialized objects.
+
+	* redisplay-x.c (x_get_gc): Fix typo.
+	* (x_output_string): Add comments, clarify logic slightly.
+
+    2005-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Refactor language/charset checking in Xft.
+
+	* objects-x.c (struct charset_reporter): New type.
+	(charset_table): New internal table.
+	(DEBUG_XFT0):
+	(DEBUG_XFT1):
+	(DEBUG_XFT2):
+	(PRINT_XFT_PATTERN):
+	(CHECKING_LANG):
+	New debugging macros.
+	(mule_to_fc_charset): New function.
+	(x_find_charset_font): Completely rewrite Xft part using the above.
+
+	Cache knowledge of charset in font instances.
+
+	* objects-impl.h (struct Lisp_Font_Instance): New member charset.
+	Update comment on use of truename.
+	* objects.c (syms_of_objects): DEFSUBR Ffont_instance_charset.
+	(Ffont_instance_charset): New accessor.
+	(Fmake_font_instance): New argument CHARSET, update charset member.
+	(font_instantiate): Update call to Fmake_font_instance.
+	(font_instance_description): Add charset member.
+	* objects.h (Fmake_font_instance):  Update EXFUN.
+	(Ffont_instance_charset): New EXFUN.
+
+	Make Xft debug level adjustable from Lisp.
+
+	* xft-fonts.c (vars_of_xft_fonts): New DEFVAR_INT
+	xft-debug-level (from debug_xft), adjust style of xft-version.
+	* xft-fonts.h (debug_xft): Now Lisp-visible, change declaration.
+
+	Miscellaneous.
+
+	* lisp.h (Vcharset_iso8859_15): Export it.
+	* faces.h (struct face_cachel): Update comment on space usage.
+	* faces.c: Comment proposed changes to improve font handling.
+	* frame-x.c:
+	* EmacsShell-sub.c:
+	Disable geometry debugging.
+
+    2005-02-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xft-fonts.h:
+	* xft-fonts.c:
+	Update copyright notices.
+
+	* xft.fonts.h (string_list_to_fcobjectset):
+	(extract_fcapi_string):
+	Delete; static function declarations don't belong in headers.
+
+	* xft.fonts.c (string_list_to_fcobjectset):
+	(extract_fcapi_string):
+	Declare.
+
+    2005-02-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_find_charset_font): ConfigSubstitute in the
+	_pattern_ before matching.
+
+    2005-02-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* faces.c (complex_vars_of_faces): Default to monospace-12 for
+	Xft.  (Suggestion by Aidan Kehoe.)
+
+    2005-02-24  Hrvoje Niksic  <hniksic@xemacs.org>
+
+	* xgccache.h (XE_GCONTEXT): Move out of DEBUG_XEMACS block.
+
+    2005-02-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xft-fonts.c (debug_xft): Suppress all debug output for now.
+
+    2005-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* emacs.c (xemacs-release-date): New version info variable.
+	* config.h.in (XEMACS_RELEASE_DATE): New config.h macro.
+
+	* emacs.c (inhibit-early-packages):
+	(inhibit-all-packages):
+	(xemacs-extra-name): Improve docstrings.
+
+    2005-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_finalize_font_instance): Improve debug message.
+
+    2005-02-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_initialize_font_instance): Estimate average cell
+	width based on dimensions of "representative" string.  Suppress
+	some excessive debug output.  Get rid of spurious tests.
+
+    2005-02-11  Eric Knauel  <eric@xemacs.org>
+
+	* xft-fonts.c: throw away old code that was wrapped inside
+	comments
+
+    2005-02-11  Eric Knauel  <eric@xemacs.org>
+
+	* xft-fonts.h: New prototype
+
+	* xft-fonts.c (Ffc_name_parse, Ffc_pattern_add, Ffc_pattern_del)
+	(Ffc_pattern_get, fc_font_real_pattern)
+	(string_list_to_fcobjectset): Use extract_fcapi_string()
+	(extract_fcapi_string): New function
+
+    2005-02-09  Eric Knauel  <eric@xemacs.org>
+
+	* xft-fonts.c (string_list_to_fcobjectset): Use loop macro instead
+	of for.
+
+    2005-02-03  Eric Knauel  <eric@xemacs.org>
+
+	* lrecord.h (enum lrecord_type): remove lrecord for FcObjectSets 
+	
+	* xft-fonts.h (struct fc_fontset): remove lrecord for FcObjectSets 
+
+	* xft-fonts.c (DEFINE_LRECORD_IMPLEMENTATION): 
+	(Ffc_objectset_create, Ffc_objectset_p, Ffc_objectset_add)
+	(Ffc_objectset_destroy): remove lrecord for FcObjectSets
+	(Ffc_list_fonts_pattern_objects): adapt for new representation of
+	FcObjectSets
+	(string_list_to_fcobjectset): New utility function
+
+    2005-02-01  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* redisplay-x.c (separate_textual_runs): Check for MULE properly.
+
+    2005-01-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* glyphs-widget.c (Fwidget_logical_to_character_height):
+	(Fwidget_logical_to_character_width):
+	(layout_query_geometry):
+	(widget_update):
+	Fix typos in docstrings and preceding comments.
+
+    2005-01-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* redisplay-x.c (x_output_string): Position strikethru by dl
+	geometry.  Kludge to fix remnants from antialiased underscores.
+
+    2004-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* compiler.h (UNUSED): Document make-docfile.c hack.
+
+    2004-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* glyphs-x.c,objects-x.c: Deemphasize warnings (to debug or alert).
+
+	* redisplay-x.c: Don't abort() when ichar_to_unicode returns error.
+
+    2004-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* keymap.c (Fwhere_is_internal): Rewrite docstring.
+
+    2004-12-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* regex.c (re_match_2_internal): DEBUG_PRINT "can match null".
+
+    2004-12-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* redisplay-x.c (x_text_width_single_run): Whitespace improvement.
+
+    2004-12-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* glyphs-widget.c (image_instantiator_progress_gauge):
+	(image_instantiator_format_create_glyphs_widget):
+	Fix typo guage->gauge.
+
+	* emacs.c (main_1): Casting out devils (size_t).
+
+	* compiler.h (USED_IF_XFT): New variant.
+	* objects-x.c (x_font_spec_matches_charset):
+	* redisplay-x.c (x_text_width_single_run):
+	Use it.
+
+	* config.h.in: Support USE_XFT_TABS and USE_XFT_GAUGE.
+
+    2004-11-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_initialize_font_instance): Make sure
+	FONT_INSTANCE_X_FONT is cleared for Xft fonts.  Add comments.
+	Fiddle whitespace.
+	(x_print_font_instance): Clarify printed font instance.
+
+    2004-11-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xft-fonts.h: Declare debug_xft.
+
+	* objects-x.c (x_font_instance_truename):
+	Convert Xft* identifiers to Fc* versions.
+
+	(x_initialize_font_instance):
+	(x_find_charset_font):
+	Condition debugging on debug_xft.  Get rid of unneeded "####
+	debug" markers.  Change fprintf to stderr_out.
+
+	(x_find_charset_font): Restore missing argument to
+	DebugFcTypeOfValue.  Remove nonworking debug cruft.
+
+	(FcResultToString):
+	(FcTypeOfValueToString):
+	(x_find_charset_font):
+	Change DebugFc* to Fc*ToString.
+
+    2004-11-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Xft branch based on "Xft reloaded #3" patch by Eric Knauel and
+	Mathias Neuebaur, and other contributors.
+
+	* xft-fonts.h: New file.  Declares new Lisp objects wrapping
+	FcPattern, FcFontSet, and FcObjectSet.
+	* xft-fonts.c: New file.  Implements new Lisp objects wrapping
+	FcPattern, FcFontSet, and FcObjectSet.
+	* objects-x-impl.h: Declare XftFont component of font instance.
+	* objects-x.c: Implement XftFont component of font instance.
+	* redisplay-x.c: Implement drawing via Xft.
+
 2005-11-21  Marcus Crestani  <crestani@xemacs.org>
 
 	Incremental Garbage Collector
@@ -2805,7 +3344,9 @@
 
 2004-12-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
-	* EmacsManager.c (EmacsManagerChangeSize): Respect XtGeometryNo.
+	* EmacsManager.c (EmacsManagerChangeSize):
+	Respect XtGeometryNo, and exit immediately if geometry change
+	refused.  Fixes notorious metacity maximize bug.
 
 2004-12-07  Malcolm Purvis  <malcolmp@xemacs.org>
 

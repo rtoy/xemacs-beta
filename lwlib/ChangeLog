@@ -1,3 +1,116 @@
+2005-11-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Merge Xft.
+
+    2005-11-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-colors: Improve comments.
+	
+    2005-11-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-colors: Remove or comment out dead code.
+	
+    2005-09-26 Olivier Galibert   <galibert@xemacs.org>
+
+	* xlwmenu.c:
+	* xlwmenuP.h:
+	Give USE_XFT_MENUBARS priority over USE_MOTIF.
+
+    2005-09-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-fonts.c (xft_open_font_by_name): Fix heuristic for XLFDs.
+
+	* xlwmenu.c (string_draw_range): Recommend persistent xftDraw.
+
+    2005-09-02  Daniel Pittman <daniel@rimspace.net>
+
+	* lwlib-fonts.c (xft_open_font_by_name): Eliminate code to avoid
+	use of scaled fonts (probably bogus, anyway).  Add error message
+	in case of fatal failure to find any fonts at all.
+	<87ll2fucw1.fsf@rimspace.net>
+
+	* xlwmenu.c (string_draw_range): Plug leak of XftDraw.
+
+    2005-03-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwtabs.c (TabsGeometryManager): Fix "fat fingers" mistake.
+
+    2005-03-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-Xaw.c (debug_gauge): Fix and suppress gauge debug message.
+
+	* xlwtabs.c (TabsGeometryManager): Suppress "kludging" message, too.
+	(TabsGeometryManager): Make straight the paths of the layout, or
+	at least improve the approximation to Xt conventions by 50%.
+
+    2005-02-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwtabs.c(debug_tabs): Suppress debug output for now.
+
+    2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwtabs.c (TabsGeometryManager,TabsQueryGeometry): Improve comments.
+	(debug_tabs): New variable, substitute for debug_xft globally.
+	(TabsGeometryManager): Substitute "request" for "req".
+
+    2005-02-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwtabs.c (PreferredSize3): Let TabLayout choose constraints.
+	(TabLayout): Default size to current size.  Fix header comment.
+	(TabsGeometryManager): Comment on redesigning internal API.
+	(TabsGeometryManager): Fix typo in format string.
+
+    2005-01-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwtabs.c (DrawTab):
+	Correct geometry when clearing rectangle.
+	Remove some "check me" comments.
+	Deemphasize a lot of debugging output.
+	(TabLayout): Add debugging fprintf.
+	(TabWidth): Deemphasize some debugging output.
+
+    2004-12-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-Xaw.c (xaw_create_button):
+	(xaw_create_progress):
+	(xaw_create_text_field):
+	Changed XtCreateManagedWidget to XtCreateWidget when child is
+	managed later in the same function.
+
+	(debug_gauge): New variable.
+	(lw_debug_print_xt_arglist):
+	(lw_debug_print_class_resources):
+	New debug functions.
+
+    2004-12-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwmenu.c (xlwMenuResources): Use "redundant" XftFont resource.
+
+	* xlwtabs.c:
+	* xlwtabsP.h:
+	Use USE_XFT_TABS consistently.
+
+    2004-12-01  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwtabs.c: Move debug_xft to ../src/xft-fonts.c.
+
+    2004-11-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Xft branch based on "Xft reloaded #3" patch by Eric Knauel and
+	Mathias Neuebaur, and other contributors.
+
+	* lwlib-fonts.h:
+	* lwlib-colors.h:
+	Declare common facilities use by Xft.
+	* lwlib-fonts.c:
+	* lwlib-colors.c:
+	Implement them.
+	* xlwtabs.c:
+	* xlwtabsP.h:
+	* xlwmenu.c:
+	* xlwmenuP.h:
+	Implement Xft text drawing.
+
 2005-11-22  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in:

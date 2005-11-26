@@ -31,4 +31,18 @@ struct gc_cache *make_gc_cache (Display *, Window);
 void free_gc_cache (struct gc_cache *cache);
 GC gc_cache_lookup (struct gc_cache *, XGCValues *, unsigned long mask);
 
+#define XE_GCONTEXT(cell) (XGContextFromGC(cell->gc))
+
+#ifdef DEBUG_XEMACS
+
+void describe_gc_cache (struct gc_cache *cache, int flags);
+
+#define DGCCFLAG_DISABLE		0
+#define DGCCFLAG_SUMMARY		1 << 0
+#define DGCCFLAG_LIST_CELLS		1 << 1
+#define DGCCFLAG_CELL_DETAILS		1 << 2
+/* A combination of the flags above. */
+#define DGCCFLAG_DEFAULT		DGCCFLAG_SUMMARY | DGCCFLAG_LIST_CELLS
+#endif
+
 #endif /* INCLUDED_xgccache_h_ */

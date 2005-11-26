@@ -1060,7 +1060,10 @@ mark_face_cachels (face_cachel_dynarr *elements)
 }
 
 /* ensure that the given cachel contains an updated font value for
-   the given charset.  Return the updated font value. */
+   the given charset.  Return the updated font value (which can be
+   Qunbound, so this value must not be passed unchecked to Lisp).
+
+   #### Xft: This function will need to be updated for new font model. */
 
 Lisp_Object
 ensure_face_cachel_contains_charset (struct face_cachel *cachel,
@@ -1411,6 +1414,7 @@ merge_face_cachel_data (struct window *w, face_index findex,
 }
 
 /* Initialize a cachel. */
+/* #### Xft: this function will need to be changed for new font model. */
 
 void
 reset_face_cachel (struct face_cachel *cachel)
@@ -1492,6 +1496,7 @@ mark_face_cachels_as_clean (struct window *w)
     Dynarr_atp (w->face_cachels, elt)->dirty = 0;
 }
 
+/* #### Xft: this function will need to be changed for new font model. */
 void
 mark_face_cachels_as_not_updated (struct window *w)
 {
@@ -1684,6 +1689,43 @@ get_extent_fragment_face_cache_index (struct window *w,
 	}
       return findex;
     }
+}
+
+/* Return a cache index for window W from merging the faces in FACE_LIST.
+   COUNT is the number of faces in the list.
+
+   The default face should not be included in the list, as it is always
+   implicitly merged into the cachel.
+
+   WARNING: this interface may change. */
+
+face_index
+merge_face_list_to_cache_index (struct window *w,
+				Lisp_Object *face_list, int count)
+{
+  int i;
+  face_index findex = 0;
+  struct face_cachel cachel;
+
+  reset_face_cachel (&cachel);
+
+  for (i = 0; i < count; i++)
+    {
+      Lisp_Object face = face_list[i];
+
+      if (!NILP (face))
+	{
+	  CHECK_FACE(face);	/* #### presumably unnecessary */
+	  findex = get_builtin_face_cache_index (w, face);
+	  merge_face_cachel_data (w, findex, &cachel);
+	}
+    }
+
+  /* Now finally merge in the default face. */
+  findex = get_builtin_face_cache_index (w, Vdefault_face);
+  merge_face_cachel_data (w, findex, &cachel);
+
+  return get_merged_face_cache_index (w, &cachel);
 }
 
 
@@ -2006,9 +2048,24 @@ complex_vars_of_faces (void)
 
     const Ascbyte *fonts[] =
     {
+#ifdef USE_XFT
+      /************** Xft fonts *************/
+
+      /* Note that fontconfig can search for several font families in one
+	 call.  We should use this facility. */
+      "monospace-12",		/* Western #### add encoding info? */
+      /* do we need to worry about non-Latin characters for monospace?
+         No, at least in Debian's implementation of Xft.
+	 We should recommend that "gothic" and "mincho" aliases be created? */
+      "Sazanami Mincho-12",	/* Japanese #### add encoding info? */
+      				/* Arphic for Chinese? */
+      				/* Korean */
+#else
+
       /************** ISO-8859 fonts *************/
 
       "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*",
+      /* under USE_XFT, we always succeed, so let's not waste the effort */
       "-*-fixed-medium-r-*-*-*-120-*-*-*-*-iso8859-*",
       "-*-courier-*-r-*-*-*-120-*-*-*-*-iso8859-*",
       "-*-fixed-*-r-*-*-*-120-*-*-*-*-iso8859-*",
@@ -2086,6 +2143,13 @@ complex_vars_of_faces (void)
 	 check whether we have support for some of the chars in the
 	 charset. (#### Bogus, but that's the way it currently works)
 
+	 sjt sez: With Xft/fontconfig that information is available as a
+	 language support property.   The character set (actually a bit
+         vector) is also available.  So what we need to do is to map charset
+	 -> language (Mule redesign Phase 1) and eventually use language
+	 information in the buffer, then map to charsets (Phase 2) at font
+	 instantiation time.
+
 	 (2) Record in the font instance a flag indicating when we're
 	 dealing with a Unicode font.
 
@@ -2133,6 +2197,7 @@ complex_vars_of_faces (void)
       "-*-*-*-*-*-*-*-120-*-*-*-*-*-*",
       "-*-*-*-*-*-*-*-*-*-*-*-*-*-*",
       "*"
+#endif
     };
     const Ascbyte **fontptr;
 
@@ -2212,6 +2277,8 @@ complex_vars_of_faces (void)
   {
     Lisp_Object fg_fb = Qnil, bg_fb = Qnil;
 
+    /* #### gui-element face doesn't have a font property?
+       But it gets referred to later! */
 #ifdef HAVE_GTK
     /* We need to put something in there, or error checking gets
        #%!@#ed up before the styles are set, which override the
@@ -2283,6 +2350,7 @@ complex_vars_of_faces (void)
   Vwidget_face = Fmake_face (Qwidget,
 			     build_msg_string ("widget face"),
 			     Qnil);
+  /* #### weird ... the gui-element face doesn't have its own font yet */
   set_specifier_fallback (Fget (Vwidget_face, Qfont, Qunbound),
 			  Fget (Vgui_element_face, Qfont, Qunbound));
   set_specifier_fallback (Fget (Vwidget_face, Qforeground, Qunbound),

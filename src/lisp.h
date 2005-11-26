@@ -5415,6 +5415,7 @@ extern Lisp_Object Vcharset_katakana_jisx0201;
 extern Lisp_Object Vcharset_latin_jisx0201;
 extern Lisp_Object Vcharset_cyrillic_iso8859_5;
 extern Lisp_Object Vcharset_latin_iso8859_9;
+extern Lisp_Object Vcharset_latin_iso8859_15;
 extern Lisp_Object Vcharset_japanese_jisx0208_1978;
 extern Lisp_Object Vcharset_chinese_gb2312;
 extern Lisp_Object Vcharset_japanese_jisx0208;

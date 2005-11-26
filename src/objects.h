@@ -58,10 +58,11 @@ DECLARE_LRECORD (font_instance, Lisp_Font_Instance);
 #define CHECK_FONT_INSTANCE(x) CHECK_RECORD (x, font_instance)
 #define CONCHECK_FONT_INSTANCE(x) CONCHECK_RECORD (x, font_instance)
 
-EXFUN (Fmake_font_instance, 3);
+EXFUN (Fmake_font_instance, 4);
 EXFUN (Ffont_instance_name, 1);
 EXFUN (Ffont_instance_p, 1);
 EXFUN (Ffont_instance_truename, 1);
+EXFUN (Ffont_instance_charset, 1);
 
 extern Lisp_Object Vthe_null_font_instance;
 

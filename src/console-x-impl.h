@@ -308,6 +308,17 @@ struct x_frame
 #endif /* XIM_XLIB */
 #endif /* HAVE_XIM */
 
+#ifdef USE_XFT
+  /* The Xft Drawable wrapper for this device.
+     #### Should this be per-device, or per-frame? */
+  /* This is persistent to take advantage of the ability of Xft's glyph
+     cache in the server, and avoid rendering the font again and again... 
+
+     This is created the first time through redisplay, and destroyed when our 
+     connection to the X display is destroyed. */
+  XftDraw *xftDraw;
+#endif
+
   /* 1 if the frame is completely visible on the display, 0 otherwise.
      if 0 the frame may have been iconified or may be totally
      or partially hidden by another X window */
@@ -366,6 +377,10 @@ DECLARE_LRECORD (x_frame, Lisp_X_Frame);
 #endif /* HAVE_TOOLBARS */
 
 #define FRAME_X_GEOM_FREE_ME_PLEASE(f) (FRAME_X_DATA (f)->geom_free_me_please)
+
+#ifdef USE_XFT
+#define FRAME_X_XFTDRAW(f)   (FRAME_X_DATA (f)->xftDraw)
+#endif
 
 #define FRAME_X_TOTALLY_VISIBLE_P(f) (FRAME_X_DATA (f)->totally_visible_p)
 #define FRAME_X_TOP_LEVEL_FRAME_P(f) (FRAME_X_DATA (f)->top_level_frame_p)

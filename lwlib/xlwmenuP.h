@@ -4,6 +4,11 @@
 #include "xlwmenu.h"
 #include <X11/CoreP.h>
 
+#ifdef USE_XFT_MENUBARS
+#include <X11/Xft/Xft.h>
+#endif
+
+
 /* Elements in the stack arrays. */
 typedef struct _window_state
 {
@@ -22,12 +27,17 @@ typedef struct _XlwMenu_part
 {
   /* slots set by the resources */
 
-#ifdef NEED_MOTIF
+#if defined(NEED_MOTIF) && !defined(USE_XFT_MENUBARS)
   XmFontList	font_list;
   XmFontList	font_list_2;
   XmFontList	fallback_font_list;
 #else
   XFontStruct *	font;
+#ifdef USE_XFT_MENUBARS
+  /* #### Fix naming convention here */
+  String renderFontSpec;
+  XftFont *renderFont;
+#endif
 # ifdef USE_XFONTSET
   XFontSet font_set;
 # endif
@@ -47,6 +57,8 @@ typedef struct _XlwMenu_part
   Pixel 	top_shadow_color;
   Pixel 	bottom_shadow_color;
   Pixel 	select_color;
+#ifdef USE_XFT_MENUBARS
+#endif
   Pixmap	top_shadow_pixmap;
   Pixmap	bottom_shadow_pixmap;
   Cursor	cursor_shape;

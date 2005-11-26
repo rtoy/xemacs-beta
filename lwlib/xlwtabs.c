@@ -18,13 +18,6 @@
  the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  Boston, MA 02111-1307, USA.  */
 
- /* Synched up with: Tabs.c 1.27.  
-
- #### This file contains essential XEmacs related fixes to the original
- verison of the Tabs widget. Be VERY careful about syncing if you ever
- update to a more recent version. In general this is probably now a
- bad idea. */
-
  /*
  * Tabs.c - Index Tabs composite widget
  *
@@ -56,6 +49,18 @@
  * the frame.
  */
 
+ /* Synched up with: Tabs.c 1.27.  
+
+ This file contains essential XEmacs-related fixes to the original
+ version of the Tabs widget. Be VERY careful about syncing if you ever
+ update to a more recent version. In general this is probably now a
+ bad idea.
+
+ #### We need to check that various windows (the  whole widget, or a single
+ tab) are of "reasonable" size, ie, we need to try for more sanity in the
+ geometry management routines.
+ */
+
 /*
  * TODO: min child height = tab height
  */
@@ -67,11 +72,17 @@
 #include	<X11/IntrinsicP.h>
 #include	<X11/StringDefs.h>
 
+/* #### This may be risky, lwlib-internal.h redefines abort() */
+#include	"lwlib-fonts.h"
+#include	"lwlib-colors.h"
 #include	"lwlib-internal.h"
 #include	"../src/xmu.h"
 #include	"xlwtabsP.h"
 #include	"xlwgcs.h"
 
+#define XFT_USE_HEIGHT_NOT_ASCENT_DESCENT 0
+
+/* #### These should probably be resources. */
 #define	MIN_WID		10
 #define	MIN_HGT		10
 #define	INDENT		3	/* tabs indented from edge by this much */
@@ -138,6 +149,12 @@ static XtResource resources[] = {
 	offset(selectInsensitive), XtRImmediate, (XtPointer) True},
   {XtNfont, XtCFont, XtRFontStruct, sizeof(XFontStruct *),
 	offset(font), XtRString, (XtPointer) XtDefaultFont},
+#ifdef USE_XFT_TABS
+  /* #### Maybe use "-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1" here? */
+  {XtNxftFont, XtCXftFont, XtRString, sizeof (String),
+	offset(renderFontSpec), XtRString,
+        (XtPointer) "AirCut-16" /* XtDefaultFont */},
+#endif
   {XtNinternalWidth, XtCWidth, XtRDimension, sizeof(Dimension),
 	offset(internalWidth), XtRImmediate, (XtPointer)4 },
   {XtNinternalHeight, XtCHeight, XtRDimension, sizeof(Dimension),
@@ -400,6 +417,27 @@ WidgetClass tabsWidgetClass = (WidgetClass)&tabsClassRec;
 	 ((TabsConstraints)((tab)->core.constraints))->tabs.visible)
 
 
+
+static int debug_tabs = 0;	/* increase for more verbosity */
+
+#ifdef USE_XFT_TABS
+/* #### duplicated from xlwmenu.c -- CLEAN THIS SHIT UP!
+   Undeclared so define at top. */
+#define MINL(x,y) ((((unsigned long) (x)) < ((unsigned long) (y))) \
+		   ? ((unsigned long) (x)) : ((unsigned long) (y)))
+
+static int
+x_xft_text_width (Display *dpy, XftFont *xft_font, FcChar8 *run, int len)
+{
+  static XGlyphInfo glyphinfo;	/* #### static? */
+
+  XftTextExtents8 (dpy,
+		   xft_font,
+		   run, len, &glyphinfo);
+  return glyphinfo.xOff;
+}
+#endif
+
 /****************************************************************
  *
  * Member Procedures
@@ -436,11 +474,26 @@ TabsInit(Widget request, Widget new_, ArgList UNUSED (args),
      */
     newTw->tabs.tab_height = 2 * newTw->tabs.internalHeight + SHADWID ;
 
-    if( newTw->tabs.font != NULL )
+#ifdef USE_XFT_TABS
+    /* must get font here
+       to do this right, we should add a new Xt Resource type +
+       conversion function
+    */
+    newTw->tabs.renderFont =
+      xft_open_font_by_name (XtDisplay ((Widget) newTw),
+			     newTw->tabs.renderFontSpec);
+    if (newTw->tabs.renderFont != NULL) 
+#if XFT_USE_HEIGHT_NOT_ASCENT_DESCENT
+      newTw->tabs.tab_height += newTw->tabs.renderFont->height;
+#else
+      newTw->tabs.tab_height += newTw->tabs.renderFont->ascent +
+				newTw->tabs.renderFont->descent;
+#endif /* XFT_USE_HEIGHT_NOT_ASCENT_DESCENT */
+#else  /* ! USE_XFT_TABS */
+    if (newTw->tabs.font != NULL)
       newTw->tabs.tab_height += newTw->tabs.font->max_bounds.ascent +
-				newTw->tabs.font->max_bounds.descent ;
-
-    /* GC allocation is deferred until XtRealize() */
+				newTw->tabs.font->max_bounds.descent;
+#endif /* ! USE_XFT_TABS */
 
     /* if size not explicitly set, set it to our preferred size now. */
 
@@ -614,16 +667,30 @@ TabsSetValues(Widget current, Widget UNUSED (request), Widget new_,
 	Widget	*childP ;
 	int	i ;
 
-
-	if( tw->tabs.font != curtw->tabs.font  ||
-	    tw->tabs.internalWidth != curtw->tabs.internalWidth ||
-	    tw->tabs.internalHeight != curtw->tabs.internalHeight )
+	if(
+#ifdef USE_XFT_TABS
+            tw->tabs.renderFont != curtw->tabs.renderFont  ||
+#else
+	    tw->tabs.font != curtw->tabs.font  ||
+#endif
+            tw->tabs.internalWidth != curtw->tabs.internalWidth ||
+	    tw->tabs.internalHeight != curtw->tabs.internalHeight)
 	{
-	  tw->tabs.tab_height = 2 * tw->tabs.internalHeight + SHADWID ;
+	  tw->tabs.tab_height = 2 * tw->tabs.internalHeight + SHADWID;
 
-	  if( tw->tabs.font != NULL )
+#ifdef USE_XFT_TABS
+	  if (tw->tabs.renderFont != NULL)
+#if XFT_USE_HEIGHT_NOT_ASCENT_DESCENT
+	    tw->tabs.tab_height += tw->tabs.renderFont->height;
+#else
+	    tw->tabs.tab_height += tw->tabs.renderFont->ascent +
+				   tw->tabs.renderFont->descent;
+#endif /* XFT_USE_HEIGHT_NOT_ASCENT_DESCENT */
+#else  /* ! USE_XFT_TABS */
+	  if (tw->tabs.font != NULL)
 	    tw->tabs.tab_height += tw->tabs.font->max_bounds.ascent +
-				   tw->tabs.font->max_bounds.descent ;
+				   tw->tabs.font->max_bounds.descent;
+#endif /* ! USE_XFT_TABS */
 
 	  /* Tab size has changed.  Resize all tabs and request a new size */
 	  for(i=0, childP=tw->composite.children;
@@ -640,7 +707,12 @@ TabsSetValues(Widget current, Widget UNUSED (request), Widget new_,
 
 	if( tw->core.background_pixel != curtw->core.background_pixel ||
 	    tw->core.background_pixmap != curtw->core.background_pixmap ||
-	    tw->tabs.font != curtw->tabs.font )
+#ifdef USE_XFT_TABS
+	    tw->tabs.renderFont != curtw->tabs.renderFont
+#else
+	    tw->tabs.font != curtw->tabs.font
+#endif
+	    )
 	  if( XtIsRealized(new_) )
 	  {
 	    TabsFreeGCs(tw) ;
@@ -755,83 +827,167 @@ TabsAcceptFocus(Widget w, Time *UNUSED (t))
 
 
 /*
- * Return preferred size.  Happily accept anything >= our preferred size.
- * (TODO: is that the right thing to do?  Should we always return "almost"
- * if offered more than we need?)
+ * Return status, with preferred size in PREFERRED.
+ *
+ * According to the X Toolkit Intrinsics manual
+ *   XtGeometryYes    = accept INTENDED without change
+ *   XtGeometryNo     = request to stay _exactly_ the same
+ *   XtGeometryAlmost = suggest PREFERRED as a compromise
+ * and the PREFERRED argument must be filled in completely (ie, any fields
+ * whose bits are set in the request_mode mask must correspond to the
+ * preferred geometry, which must be consistent with the return value).
+ *
+ * Assuming horizontal orientation, in XEmacs, we should always accept if
+ * the width is more than we need.  There's no problem if there are only a
+ * couple of tabs packed to the left.  OTOH there's probably something wrong
+ * if we're offered a height more than 1.5x or 2x the preferred height.
+ * (#### Do tab controls do vertical?)
  */
 
+/* compute the height above which we complain */
+#define TAB_HEIGHT_TOLERANCE(x) (2*x)
+
 static XtGeometryResult
-TabsQueryGeometry(Widget w,
-	XtWidgetGeometry *intended, XtWidgetGeometry *preferred)
+TabsQueryGeometry (Widget w,
+		   XtWidgetGeometry *intended,
+		   XtWidgetGeometry *preferred)	/* RETURN */
 {
-    register TabsWidget tw = (TabsWidget)w ;
-    XtGeometryMask mode = intended->request_mode ;
+    TabsWidget tw = (TabsWidget) w;
+    XtGeometryMask mode = intended->request_mode;
+    
+    preferred->request_mode = CWWidth | CWHeight;
+    PreferredSize (tw, &preferred->width, &preferred->height, NULL, NULL);
 
-    preferred->request_mode = CWWidth | CWHeight ;
-    PreferredSize(tw, &preferred->width, &preferred->height, NULL,NULL) ;
+    /* If width is big enough, accept it. */
+    if ((mode & CWWidth) && intended->width >= preferred->width)
+      preferred->width = intended->width;
 
-    if( (!(mode & CWWidth) || intended->width == w->core.width)  &&
-        (!(mode & CWHeight) || intended->height == w->core.height) )
-      return XtGeometryNo ;
+    /* If height is within range, accept it.
+       #### If too tall, we could offer a compromise at TAB_HEIGHT_TOLERANCE.
+       Should we? */
+    if ((mode & CWHeight) && intended->height >= preferred->height
+	&& intended->height <= TAB_HEIGHT_TOLERANCE (preferred->height))
+      preferred->height = intended->height;
 
-    if( (!(mode & CWWidth) || intended->width >= preferred->width)  &&
-	(!(mode & CWHeight) || intended->height >= preferred->height) )
+    /* Compute return value. */
+    if (preferred->width == ((mode & CWWidth) ? intended->width
+					      : w->core.width)
+	&& preferred->height == ((mode & CWHeight) ? intended->height
+						   : w->core.height))
       return XtGeometryYes;
-
-    return XtGeometryAlmost;
+    else if (preferred->width == w->core.width
+	     && preferred->height == w->core.height)
+      return XtGeometryNo;
+    else
+      return XtGeometryAlmost;
 }
 
 
 
 /*
- * Geometry Manager; called when a child wants to be resized.
+ * Geometry Manager; called when TAB (a child) wants to be resized.
+ *
+ * According to the X Toolkit Intrinsics manual
+ *   XtGeometryDone   = accept REQUEST and do it (#### check this)
+ *   XtGeometryYes    = accept REQUEST without change
+ *   XtGeometryNo     = refuse REQUEST (ie, stay _exactly_ the same)
+ *   XtGeometryAlmost = suggest REPLY as a compromise
  */
 
 static XtGeometryResult
-TabsGeometryManager(Widget w, XtWidgetGeometry *req, XtWidgetGeometry *reply)
+TabsGeometryManager (Widget tab,
+		     XtWidgetGeometry *request,
+		     XtWidgetGeometry *reply) /* RETURN */
 {
-	TabsWidget		tw = (TabsWidget) XtParent(w);
-	Dimension		s = SHADWID ;
-	TabsConstraints		tab = (TabsConstraints)w->core.constraints;
-	XtGeometryResult	result ;
-	Dimension		rw, rh ;
+	TabsWidget	 control = (TabsWidget) XtParent(tab);
+	Dimension	 s = SHADWID;
+	TabsConstraints	 constraint = (TabsConstraints) tab->core.constraints;
+	XtGeometryResult result, best_offer = XtGeometryYes;
+	Dimension	 rw, rh;
 
-	/* Position request always denied */
+	static int debug_count = 0;
+        static int debug_mask = 1;
 
-	if( ((req->request_mode & CWX) && req->x != w->core.x) ||
-	    ((req->request_mode & CWY) && req->y != w->core.y) ||
-	    !tab->tabs.resizable )
-	  return XtGeometryNo ;
+	/* Position request cannot be satisfied, so if tabs are not resizable,
+	   no nontrivial request can be satisfied: return XGeometryNo. */
+	if (!constraint->tabs.resizable)
+	  return XtGeometryNo;
 
-	/* Make all three fields in the request valid */
-	if( !(req->request_mode & CWWidth) )
-	    req->width = w->core.width;
-	if( !(req->request_mode & CWHeight) )
-	    req->height = w->core.height;
-	if( !(req->request_mode & CWBorderWidth) )
-	    req->border_width = w->core.border_width;
+	fprintf (stderr, "Urk! label is resizable!\n");
 
-	if( req->width == w->core.width &&
-	    req->height == w->core.height &&
-	    req->border_width == w->core.border_width )
-	  return XtGeometryNo ;
+	/* Assume we will refuse these; toggle iff we accept them.
+	   Reply won't specify any fields not in the request. */
+	reply->request_mode = request->request_mode;
+	reply->x = tab->core.x;
+	reply->y = tab->core.y;
 
-	rw = req->width + 2 * req->border_width ;
-	rh = req->height + 2 * req->border_width ;
+	/* If a position request would result in a change, best offer is
+	   XtGeometryAlmost.  Otherwise toggle reply->request_mode. */
+	if ((request->request_mode & CWX) && request->x != tab->core.x)
+	  best_offer = XtGeometryAlmost;
+	else
+	  reply->request_mode &= ~CWX;
+	if ((request->request_mode & CWY) && request->y != tab->core.y)
+	  best_offer = XtGeometryAlmost;
+	else
+	  reply->request_mode &= ~CWY;
+
+	/* Make all three fields in the reply valid */
+	reply->width = (request->request_mode & CWWidth)
+		       ? request->width : tab->core.width;
+	reply->height = (request->request_mode & CWHeight)
+			? request->height : tab->core.height;
+	reply->border_width = (request->request_mode & CWBorderWidth)
+			      ? request->border_width : tab->core.border_width;
+
+	/* check if we can already offer a compromise */
+	if (best_offer == XtGeometryAlmost &&
+	    reply->width == tab->core.width &&
+	    reply->height == tab->core.height &&
+	    reply->border_width == tab->core.border_width)
+	  {
+	    reply->request_mode &= ~(CWWidth | CWHeight | CWBorderWidth);
+	    return best_offer;
+	  }
+
+#ifndef DONT_DEBUG_REQUESTS
+#define DBG_REQUEST_PRINT(name,field,size)				\
+do {									\
+  if (reply->field > size)						\
+    {									\
+      if (++debug_count == debug_mask)					\
+	{								\
+	  debug_mask <<= 1;						\
+	  fprintf (stderr, "ridiculous %s request #%d: %d > %d\n",	\
+		   name, debug_count, reply->field, size);		\
+	}								\
+      reply->field = tab->core.field;					\
+    }									\
+} while (0)
+
+	DBG_REQUEST_PRINT ("width",width,1024);
+	DBG_REQUEST_PRINT ("height",height,768);
+	DBG_REQUEST_PRINT ("border_width",border_width,30);
+#undef DBG_REQUEST_PRINT
+#endif
+
+	rw = reply->width + 2 * reply->border_width;
+	rh = reply->height + 2 * reply->border_width;
 
 	/* find out how big the children want to be now */
-	MaxChild(tw, w, rw, rh) ;
+	MaxChild (control, tab, rw, rh);
 
 
 	/* Size changes must see if the new size can be accommodated.
-	 * The Tabs widget keeps all of its children the same
-	 * size.  A request to shrink will be accepted only if the
+	 * The Tabs widget keeps all of its children the same height, but
+	 * widths may vary.
+	 * A request to shrink will be accepted only if the
 	 * new size is still big enough for all other children.  A
 	 * request to shrink that is not big enough for all children
 	 * returns an "almost" response with the new proposed size
 	 * or a "no" response if unable to shrink at all.
 	 *
-	 * A request to grow will be accepted only if the Tabs parent can
+	 * A request to grow will be accepted only if the Tabs control can
 	 * grow to accommodate.
 	 *
 	 * TODO:
@@ -840,25 +996,33 @@ TabsGeometryManager(Widget w, XtWidgetGeometry *req, XtWidgetGeometry *reply)
 	 * for another day.
 	 */
 
-	if (req->request_mode & (CWWidth | CWHeight | CWBorderWidth))
+	if (request->request_mode & (CWWidth | CWHeight | CWBorderWidth))
 	{
 	  Dimension	cw,ch ;		/* children's preferred size */
 	  Dimension	aw,ah ;		/* available size we can give child */
 	  Dimension	th ;		/* space used by tabs */
 	  Dimension	wid,hgt ;	/* Tabs widget size */
+	  int check_nrows;
 
-	  cw = tw->tabs.max_cw ;
-	  ch = tw->tabs.max_ch ;
+	  cw = control->tabs.max_cw ;
+	  ch = control->tabs.max_ch ;
 
 	  /* find out what *my* resulting preferred size would be */
-
-	  PreferredSize2(tw, cw, ch, &wid, &hgt) ;
+	  /* #### this whole API is wrong; what should happen is
+	     1. app should hint as to #rows and/or aspect ratio
+	     2. tab control should attempt to layout in current space
+	     3. if not all tabs fit, should request resize to achieve
+		layout hints
+	     Probably can and should cache preferred size in widget, with
+	     cache cleared when labels or core size changes. */
+	  PreferredSize2(control, cw, ch, &wid, &hgt) ;
 
 	  /* Would my size change?  If so, ask to be resized. */
 
-	  if( wid != tw->core.width || hgt != tw->core.height )
+	  if (wid != control->core.width || hgt != control->core.height)
 	  {
-	    Dimension	oldWid = tw->core.width, oldHgt = tw->core.height ;
+	    Dimension oldWid = control->core.width,
+		      oldHgt = control->core.height;
 	    XtWidgetGeometry	myrequest, myreply ;
 
 	    myrequest.width = wid ;
@@ -870,10 +1034,11 @@ TabsGeometryManager(Widget w, XtWidgetGeometry *req, XtWidgetGeometry *reply)
 	     * offer the child a compromise, then make this a query only.
 	     */
 
-	    if( (req->request_mode & XtCWQueryOnly)  || rw < cw || rh < ch )
-	      myrequest.request_mode |= XtCWQueryOnly ;
+	    if ((request->request_mode & XtCWQueryOnly) || rw < cw || rh < ch)
+	      myrequest.request_mode |= XtCWQueryOnly;
 
-	    result = XtMakeGeometryRequest((Widget)tw, &myrequest, &myreply) ;
+	    result = XtMakeGeometryRequest ((Widget) control,
+					    &myrequest, &myreply);
 
 	    /* !$@# Athena Box widget changes the core size even if QueryOnly
 	     * is set.  I'm convinced this is a bug.  At any rate, to work
@@ -881,81 +1046,104 @@ TabsGeometryManager(Widget w, XtWidgetGeometry *req, XtWidgetGeometry *reply)
 	     * query geometry request.  This is only partly effective,
 	     * as there may be other boxes further up the tree.
 	     */
-	    if( myrequest.request_mode & XtCWQueryOnly ) {
-	      tw->core.width = oldWid ;
-	      tw->core.height = oldHgt ;
+	    if (myrequest.request_mode & XtCWQueryOnly) {
+	      control->core.width = oldWid;
+	      control->core.height = oldHgt;
 	    }
 
 	    /* based on the parent's response, determine what the
 	     * resulting Tabs widget size would be.
 	     */
 
-	    switch( result ) {
+	    switch (result) {
 	      case XtGeometryYes:
 	      case XtGeometryDone:
-		tw->tabs.needs_layout = True ;
-		break ;
+		control->tabs.needs_layout = True;
+		break;
 
 	      case XtGeometryNo:
-		wid = tw->core.width ;
-		hgt = tw->core.height ;
-		break ;
+		wid = control->core.width;
+		hgt = control->core.height;
+		break;
 
 	      case XtGeometryAlmost:
-		wid = myreply.width ;
-		hgt = myreply.height ;
-		tw->tabs.needs_layout = True ;
-		break ;
+		wid = myreply.width;
+		hgt = myreply.height;
+		control->tabs.needs_layout = True;
+		break;
 	    }
 	  }
 
 	  /* Within the constraints imposed by the parent, what is
 	   * the max size we can give the child?
 	   */
-	  (void) TabLayout(tw, wid, hgt, &th, True) ;
-	  aw = wid - 2*s ;
-	  ah = hgt - th - 2*s ;
+	  check_nrows = TabLayout (control, wid, hgt, &th, True);
+	  aw = wid - 2*s;
+	  if (check_nrows == 1)
+	    {
+	      ah = hgt - th - 2*s;
+	    }
+	  else
+	    {
+	      /* this rarely gets triggered, but when it does it seems to
+		 get triggered forever after */
+	      int n = control->composite.num_children;
+	      ah = control->tabs.tab_height;
+	      if (debug_tabs > 0)
+		fprintf (stderr, "Kludging around %d != 1 rows,"
+			 " #children = %d, total height %d, using %d.\n",
+			 check_nrows, n, th, ah);
+	    }
 
 	  /* OK, make our decision.  If requested size is >= max sibling
 	   * preferred size, AND requested size <= available size, then
 	   * we accept.  Otherwise, we offer a compromise.
 	   */
 
-	  if( rw == aw && rh == ah )
+	  if (rw == aw && rh == ah)
 	  {
 	    /* Acceptable.  If this wasn't a query, change *all* children
 	     * to this size.
 	     */
-	    if( req->request_mode & XtCWQueryOnly )
-	      return XtGeometryYes ;
+	    if (request->request_mode & XtCWQueryOnly)
+	      {
+		control->tabs.needs_layout = False;
+		return XtGeometryYes ;
+	      }
 	    else
 	    {
-	      Widget	*childP = tw->composite.children ;
-	      int	i,bw ;
-	      w->core.border_width = req->border_width ;
-	      for(i=TabsNumChildren (tw); --i >= 0; ++childP)
-		if( TabVisible(*childP) )
+	      Widget	*childP = control->composite.children;
+	      int	i, bw;
+	      tab->core.border_width = request->border_width;
+	      for (i = TabsNumChildren (control); --i >= 0; ++childP)
+		if (TabVisible (*childP))
 		{
-		  bw = (*childP)->core.border_width ;
-		  XtConfigureWidget(*childP, s,tw->tabs.tab_total+s,
-			    rw-2*bw, rh-2*bw, bw) ;
+		  bw = (*childP)->core.border_width;
+		  XtConfigureWidget (*childP, s, control->tabs.tab_total+s,
+				     rw-2*bw, rh-2*bw, bw);
 		}
 #ifdef	COMMENT
 	      /* TODO: under what conditions will we need to redraw? */
-	      XClearWindow(XtDisplay((Widget)tw), XtWindow((Widget)tw)) ;
-	      XtClass(tw)->core_class.expose((Widget)tw,NULL,NULL) ;
+	      XClearWindow (XtDisplay ((Widget) control),
+			    XtWindow ((Widget) control));
+	      XtClass (control)->core_class.expose ((Widget)control,
+						    NULL, NULL);
 #endif	/* COMMENT */
-	      return XtGeometryDone ;
+	      return XtGeometryDone;
 	    }
 	  }
 
 	  /* Cannot grant child's request.  Describe what we *can* do
 	   * and return counter-offer.
 	   */
-	  reply->width  = aw - 2 * req->border_width ;
-	  reply->height = ah - 2 * req->border_width ;
-	  reply->border_width = req->border_width ;
-	  reply->request_mode = CWWidth | CWHeight | CWBorderWidth ;
+	  control->tabs.needs_layout = False;
+	  reply->width  = aw - 2 * request->border_width ;
+	  reply->height = ah - 2 * request->border_width ;
+	  reply->request_mode &=
+	    ~((reply->border_width == tab->core.border_width
+	       ? CWBorderWidth : 0)
+	      |(reply->width == tab->core.width ? CWWidth : 0)
+	      |(reply->height == tab->core.height ? CWHeight : 0));
 	  return XtGeometryAlmost ;
 	}
 
@@ -1428,6 +1616,8 @@ DrawTab(TabsWidget tw, Widget child, Bool labels)
 	GC	gc ;
 	int	x,y ;
 
+	if (debug_tabs > 1) fprintf (stderr, "DrawTab called.\n");
+
  	if( !XtIsRealized((Widget)tw))
  	  return ;
 
@@ -1440,55 +1630,142 @@ DrawTab(TabsWidget tw, Widget child, Bool labels)
 	  Window	win = XtWindow((Widget)tw) ;
 	  String	lbl = tab->tabs.label != NULL ?
 			      tab->tabs.label : XtName(child) ;
+#ifdef USE_XFT_TABS
+	  XftColor color;
+	  XftColor colorBG;
+	  Colormap cmap = tw->core.colormap;
+	  Visual *visual;
+	  int ignored;
 
-	  if( XtIsSensitive(child) )
+	  visual_info_from_widget ((Widget) tw, &visual, &ignored);
+	  colorBG = xft_convert_color (dpy, cmap, visual,
+				       tw->core.background_pixel, 0);
+#endif
+
+	  if (debug_tabs > 2)
+	    fprintf (stderr, "(Re)drawing labels.\n");
+
+	  if (XtIsSensitive(child))
 	  {
-	    gc = tw->tabs.foregroundGC ;
-	    XSetForeground(dpy, gc, tab->tabs.foreground) ;
+	    gc = tw->tabs.foregroundGC;
+#ifdef USE_XFT_TABS
+	    color = xft_convert_color (dpy, cmap, visual,
+				       tab->tabs.foreground, 0);
+#else
+	    XSetForeground(dpy, gc, tab->tabs.foreground);
+#endif
 	  }
 	  else
 	  {
 	    /* grey pixel allocation deferred until now */
-	    if( !tab->tabs.greyAlloc )
+	    if (!tab->tabs.greyAlloc)
 	    {
-	      if( tw->tabs.be_nice_to_cmap || tw->core.depth == 1 )
-		tab->tabs.grey = tab->tabs.foreground ;
+	      if (tw->tabs.be_nice_to_cmap || tw->core.depth == 1)
+		tab->tabs.grey = tab->tabs.foreground;
 	      else
-		tab->tabs.grey = AllocGreyPixel((Widget)tw,
+		tab->tabs.grey = AllocGreyPixel ((Widget) tw,
 					tab->tabs.foreground,
 					tw->core.background_pixel,
-					tw->tabs.insensitive_contrast ) ;
-	      tab->tabs.greyAlloc = True ;
+					tw->tabs.insensitive_contrast);
+	      tab->tabs.greyAlloc = True;
 	    }
-	    gc = tw->tabs.greyGC ;
-	    XSetForeground(dpy, gc, tab->tabs.grey) ;
+	    gc = tw->tabs.greyGC;
+#ifdef USE_XFT_TABS
+	    color = xft_convert_color (dpy, cmap, visual, tab->tabs.grey, 0);
+#else
+	    XSetForeground(dpy, gc, tab->tabs.grey);
+#endif
 	  }
 
-	  x = tab->tabs.x ;
-	  y = tab->tabs.y ;
-	  if( child == tw->tabs.topWidget )
-	    y -= TABLDELTA ;
+	  x = tab->tabs.x;
+	  y = tab->tabs.y;
+	  if (child == tw->tabs.topWidget)
+	    y -= TABLDELTA;
 
-	  if( tab->tabs.left_bitmap != None && tab->tabs.lbm_width > 0 )
+	  if (tab->tabs.left_bitmap != None && tab->tabs.lbm_width > 0)
 	  {
-	    if( tab->tabs.lbm_depth == 1 )
+	    if (tab->tabs.lbm_depth == 1)
 	      XCopyPlane(dpy, tab->tabs.left_bitmap, win,gc,
 		0,0, tab->tabs.lbm_width, tab->tabs.lbm_height,
-		x+tab->tabs.lbm_x, y+tab->tabs.lbm_y, 1L) ;
+		x+tab->tabs.lbm_x, y+tab->tabs.lbm_y, 1L);
 	    else
 	      XCopyArea(dpy, tab->tabs.left_bitmap, win,gc,
 		0,0, tab->tabs.lbm_width, tab->tabs.lbm_height,
-		x+tab->tabs.lbm_x, y+tab->tabs.lbm_y) ;
+		x+tab->tabs.lbm_x, y+tab->tabs.lbm_y);
 	  }
 
-	  if( lbl != NULL && tw->tabs.font != NULL )
-	    XDrawString(dpy,win,gc,
-	      x+tab->tabs.l_x, y+tab->tabs.l_y,
-	      lbl, (int)strlen(lbl)) ;
+	  if (lbl != NULL &&
+#ifdef USE_XFT_TABS
+	      tw->tabs.renderFont != NULL
+#else
+	      tw->tabs.font != NULL
+#endif
+	      )
+	    {
+#ifdef USE_XFT_TABS
+	      XftDraw *xftDraw = XftDrawCreate (dpy, win, visual, cmap);
+	      XftFont *renderFont = tw->tabs.renderFont;
+	      XGlyphInfo glyphinfo;
+	      XftColor colorDBG;
+	      XftColorAllocName (dpy, visual, cmap, "wheat", &colorDBG);
+	      XftTextExtents8 (dpy, renderFont, lbl, (int) strlen (lbl),
+			       &glyphinfo);
+	      /* #### unnecessary? for the moment, give visual extent */
+	      /* draw background rect */
+#if 1
+	      if (debug_tabs > 2)
+		{
+		  fprintf (stderr, "background color:  pixel=%08lx, r=%04x,"
+			   " g=%04x, b=%04x, alpha=%04x.\n",
+			   colorDBG.pixel, colorDBG.color.red,
+			   colorDBG.color.green, colorDBG.color.blue,
+			   colorDBG.color.alpha);
+ 		  fprintf (stderr, "label geometry: x=%d, y=%d, xOff=%d,"
+ 			   " yOff=%d, width=%d, height=%d\n",
+ 			   glyphinfo.x, glyphinfo.y, glyphinfo.xOff,
+ 			   glyphinfo.yOff, glyphinfo.width, glyphinfo.height);
+ 		}
+	      XftDrawRect (xftDraw, &colorDBG,
+			   /* left, top, width, height */
+			   x+tab->tabs.l_x-glyphinfo.x,
+			   y+tab->tabs.l_y-glyphinfo.y,
+			   glyphinfo.width, glyphinfo.height);
+#endif
+	      /* draw text */
+	      if (debug_tabs > 2)
+		{
+		  FcValue name;
+		  FcValue size;
+		  FcPatternGet (renderFont->pattern, FC_FAMILY, 0, &name);
+		  FcPatternGet (renderFont->pattern, FC_SIZE, 0, &size);
+		  fprintf (stderr, "label:             %s.\n", lbl);
+		  fprintf (stderr, "foreground color:  pixel=%08lx, r=%04x,"
+				   " g=%04x, b=%04x, alpha=%04x.\n",
+			   color.pixel, color.color.red, color.color.green,
+			   color.color.blue, color.color.alpha);
+		  fprintf (stderr, "extent:            x=%d, y=%d, xOffset=%d,"
+				   " yOffset=%d, height=%d, width=%d.\n",
+			   glyphinfo.x, glyphinfo.y, glyphinfo.xOff,
+			   glyphinfo.yOff, glyphinfo.height, glyphinfo.width);
+		  fprintf (stderr, "font:              name=%s-%.1f,"
+				   " height=%d, ascent=%d, descent=%d.\n",
+			   name.u.s, size.u.d, renderFont->height,
+			   renderFont->ascent, renderFont->descent);
+		}
+	      XftDrawString8 (xftDraw, &color, renderFont,
+			      x+tab->tabs.l_x, y+tab->tabs.l_y,
+			      lbl, (int) strlen (lbl));
+	      XftDrawDestroy (xftDraw);
+#else
+	      XDrawString(dpy,win,gc,
+			  x+tab->tabs.l_x, y+tab->tabs.l_y,
+			  lbl, (int)strlen(lbl));
+#endif
+	    }
 	}
 
-	if( child == tw->tabs.hilight )
-	  DrawHighlight(tw, child, False) ;
+	if (child == tw->tabs.hilight)
+	  DrawHighlight(tw, child, False);
 }
 
 
@@ -1689,9 +1966,13 @@ TabWidth(Widget w)
 	TabsConstraints tab = (TabsConstraints) w->core.constraints ;
 	TabsWidget	tw = (TabsWidget)XtParent(w) ;
 	String		lbl = tab->tabs.label != NULL ?
-				tab->tabs.label : XtName(w) ;
-	XFontStruct	*font = tw->tabs.font ;
-	int		iw = tw->tabs.internalWidth ;
+				tab->tabs.label : XtName(w);
+#ifdef USE_XFT_TABS
+	XftFont		*font = tw->tabs.renderFont;
+#else
+	XFontStruct	*font = tw->tabs.font;
+#endif
+	int		iw = tw->tabs.internalWidth;
 
 	tab->tabs.width = iw + SHADWID*2 ;
 	tab->tabs.l_x = tab->tabs.lbm_x = SHADWID + iw ;
@@ -1705,10 +1986,27 @@ TabWidth(Widget w)
 
 	if( lbl != NULL && font != NULL )
 	{
-	  tab->tabs.width += XTextWidth( font, lbl, (int)strlen(lbl) ) + iw ;
+#ifdef USE_XFT_TABS
+	  tab->tabs.width += x_xft_text_width (XtDisplay(tw), font,
+						 lbl, (int)strlen(lbl)) + iw;
+	  tab->tabs.l_y = (tw->tabs.tab_height
+			   + tw->tabs.renderFont->ascent
+			   /* #### how can this subtraction be correct? */
+			   - tw->tabs.renderFont->descent)/2;
+	  if (debug_tabs > 2)
+	    fprintf (stderr, "tab:  height=%d, width=%d, baseline=%d.\n",
+		     tw->tabs.tab_height, tab->tabs.width, tab->tabs.l_y);
+	  if (debug_tabs > 1)
+	    fprintf (stderr, "font: height=%d, ascent=%d, descent=%d.\n",
+		     tw->tabs.renderFont->height,
+		     tw->tabs.renderFont->ascent,
+		     tw->tabs.renderFont->descent);
+#else
+	  tab->tabs.width += XTextWidth (font, lbl, (int)strlen(lbl)) + iw;
 	  tab->tabs.l_y = (tw->tabs.tab_height +
 		 tw->tabs.font->max_bounds.ascent -
-		 tw->tabs.font->max_bounds.descent)/2 ;
+		 tw->tabs.font->max_bounds.descent)/2;
+#endif
 	}
 }
 
@@ -1723,19 +2021,32 @@ TabWidth(Widget w)
 	 *
 	 * TODO: if they require more than two rows and the total height:width
 	 * ratio is more than 2:1, then try something else.
+	 * Gaak!  This is actually already done in PreferredSize()!
+	 *
+	 * TODO SOONER: for reasons unclear, some applications (specifically
+	 * XEmacs) give a nominal geometry (in the core record) which doesn't
+	 * make much sense (eg, may be smaller than some of the tab children).
+	 * This results in bizarre values for DISPLAY_ROWS and REPLY_HEIGHT.
+	 * Specify a way to say "tell me what you really want" (eg, with WID
+	 * and/or HGT == 0 or == Dimension_MAX), and use it where appropriate.
+	 * LATE-BREAKING LOSE: This happens in PreferredSize(), not XEmacs!
+	 *
+	 * TODO EVEN SOONER: some applications lay out the tab control by
+	 * repeatedly querying until a fixed width and height has been filled
+	 * by the tabs (XEmacs).  There should be an API to cache this?
 	 */
 
 static	int
 TabLayout(TabsWidget tw, 
-	  Dimension wid, 
-	  Dimension hgt, 
+	  Dimension wid,	/* if 0, use core.width as guess */
+	  Dimension hgt,	/* if 0, use core.height as guess */
 	  Dimension *reply_height, Bool query_only)
 {
 	int		i, row, done = 0, display_rows = 0 ;
 	int		num_children = tw->composite.num_children ;
 	Widget		*childP ;
 	Dimension	w ;
-	Position	x,y ;
+	Position	x,y ;	/* #### gaak, these are dimensions! */
 	TabsConstraints	tab ;
 
 	/* Algorithm: loop through children, assign X positions.  If a tab
@@ -1750,22 +2061,33 @@ TabLayout(TabsWidget tw,
 	  row = 0 ;
 	  x = INDENT ;
 	  y = 0 ;
-	  wid -= INDENT ;
+	  /* If wid or hgt is 0, we want to guess our own dimensions.
+	     Currently the guessing functions are broken....
+	     #### When PreferredSize*() get fixed, fix this too. */
+	  if (debug_tabs > 0)
+	    fprintf (stderr, "arg=%d,", wid);
+	  wid = (wid ? wid : tw->core.width) - INDENT ;
+	  hgt = hgt ? hgt : tw->core.height;
+	  if (debug_tabs > 0)
+	    fprintf (stderr, "wid=%d: x,w,y=", wid);
 	  for(i=num_children, childP=tw->composite.children; --i >= 0; ++childP)
 	    if( XtIsManaged(*childP) )
 	    {
 	      tab = (TabsConstraints) (*childP)->core.constraints ;
 	      w = tab->tabs.width ;
 
+	      if (debug_tabs > 0)
+		fprintf (stderr, "%d,%d,%d;", x, w, y);
 	      if( x + w > wid ) {			/* new row */
- 		if (y + tw->tabs.tab_height > hgt && !done)
+		/* #### algorithm is not robust to wid < child's width */
+		++row;
+		x = INDENT ;
+		y += tw->tabs.tab_height ;
+ 		if (y > hgt && !done)
 		  {
 		    display_rows = row;
 		    done = 1;
 		  }
-		++row;
-		x = INDENT ;
-		y += tw->tabs.tab_height ;
 	      }
 	      if( !query_only ) {
 		tab->tabs.x = x ;
@@ -1777,10 +2099,11 @@ TabLayout(TabsWidget tw,
 		tab->tabs.visible = 1;
 
 	    }
+	  if (debug_tabs > 0)
+	    fprintf (stderr, "\n");
 	  /* If there was only one row, increase the height by TABDELTA */
 	  if( ++display_rows == 1 )
 	  {
-	    row++;
 	    y = TABDELTA ;
 	    if( !query_only )
 	      for(i=num_children, childP=tw->composite.children;
@@ -1791,6 +2114,7 @@ TabLayout(TabsWidget tw,
 		  tab->tabs.y = y ;
 		}
 	  }
+	  row++;
 	  y += tw->tabs.tab_height ;
 	}
 	else
@@ -1801,6 +2125,12 @@ TabLayout(TabsWidget tw,
 	  tw->tabs.numRows = display_rows ;
 	  tw->tabs.realRows = row;
 	}
+
+	if (debug_tabs > 0 && (row > 1 || display_rows > 1))
+	  fprintf (stderr, "tab: %d display rows, #children = %d,"
+		   " total height %d, total rows %d%s.\n",
+		   display_rows, num_children, y, row,
+		   query_only ? " (query)" : "");
 
 	if( reply_height != NULL )
 	  *reply_height = y ;
@@ -1822,8 +2152,8 @@ GetPreferredSizes(TabsWidget tw)
 
 
 
-	/* Find max preferred child size.  Returned sizes include child
-	 * border widths.  If except is non-null, don't ask that one.
+	/* Find max preferred child size and store in control widget.
+	 * If except is non-null, don't ask that one.
 	 */
 
 static	void
@@ -2009,7 +2339,10 @@ PreferredSize3(
 	int		nrows ;
 
 	if( tw->composite.num_children > 0 )
-	  nrows = TabLayout(tw, wid, hgt, &th, True) ;
+	  /* used to be wid, hgt not 0, 0 but that's obviously wrong
+	     since TabLayout wants dimensions of control parent but
+	     wid, hgt are dimensions of some child */
+	  nrows = TabLayout(tw, 0, 0, &th, True) ;
 	else {
 	  th = 0 ;
 	  nrows = 0 ;
@@ -2091,17 +2424,29 @@ TabsAllocFgGC(TabsWidget tw)
 	Widget		w = (Widget) tw;
 	XGCValues	values ;
 
-	values.background = tw->core.background_pixel ;
-	values.font = tw->tabs.font->fid ;
-	values.line_style = LineOnOffDash ;
-	values.line_style = LineSolid ;
+	values.background = tw->core.background_pixel;
+	values.font =
+#ifdef USE_XFT_TABS
+	  None;
+#else
+	  tw->tabs.font->fid;
+#endif
+	values.line_style = LineOnOffDash;
+	values.line_style = LineSolid;
 
 	tw->tabs.foregroundGC =
 	  XtAllocateGC(w, w->core.depth,
-	    GCBackground|GCFont|GCLineStyle, &values,
-	    GCForeground,
-	    GCSubwindowMode|GCGraphicsExposures|GCDashOffset|
-		GCDashList|GCArcMode) ;
+#ifndef USE_XFT_TABS
+		       GCFont|
+#endif
+		       GCBackground|GCLineStyle,
+		       &values,
+		       GCForeground,
+#ifdef USE_XFT_TABS
+		       GCFont|
+#endif
+		       GCSubwindowMode|GCGraphicsExposures|GCDashOffset|
+		       GCDashList|GCArcMode);
 }
 
 static	void
@@ -2110,30 +2455,49 @@ TabsAllocGreyGC(TabsWidget tw)
 	Widget		w = (Widget) tw;
 	XGCValues	values ;
 
-	values.background = tw->core.background_pixel ;
-	values.font = tw->tabs.font->fid ;
+	values.background = tw->core.background_pixel;
+	values.font =
+#ifdef USE_XFT_TABS
+	  None;
+#else
+	  tw->tabs.font->fid;
+#endif
 #ifdef HAVE_XMU
-	if( tw->tabs.be_nice_to_cmap || w->core.depth == 1)
+	if (tw->tabs.be_nice_to_cmap || w->core.depth == 1)
 	{
-	  values.fill_style = FillStippled ;
+	  values.fill_style = FillStippled;
 	  tw->tabs.grey50 =
-	  values.stipple = XmuCreateStippledPixmap(XtScreen(w), 1L, 0L, 1) ;
+	  values.stipple = XmuCreateStippledPixmap(XtScreen(w), 1L, 0L, 1);
 
 	  tw->tabs.greyGC =
 	    XtAllocateGC(w, w->core.depth,
-	      GCBackground|GCFont|GCStipple|GCFillStyle, &values,
+#ifndef USE_XFT_TABS
+	      GCFont|
+#endif
+	      GCBackground|GCStipple|GCFillStyle, &values,
 	      GCForeground,
+#ifdef USE_XFT_TABS
+	      GCFont|
+#endif
 	      GCSubwindowMode|GCGraphicsExposures|GCDashOffset|
-		  GCDashList|GCArcMode) ;
+		  GCDashList|GCArcMode);
 	}
 	else
 #endif
 	{
 	  tw->tabs.greyGC =
 	    XtAllocateGC(w, w->core.depth,
-	      GCFont, &values,
+#ifdef USE_XFT_TABS
+	      0L,
+#else
+	      GCFont,
+#endif
+	      &values,
 	      GCForeground,
+#ifdef USE_XFT_TABS
+	      GCFont|
+#endif
 	      GCBackground|GCSubwindowMode|GCGraphicsExposures|GCDashOffset|
-		  GCDashList|GCArcMode) ;
+		  GCDashList|GCArcMode);
 	}
 }

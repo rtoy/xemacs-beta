@@ -133,6 +133,9 @@ gui_objs += toolbar.o
 #ifdef HAVE_X_WINDOWS
 x_objs=console-x.o device-x.o event-Xt.o frame-x.o \
  glyphs-x.o objects-x.o redisplay-x.o select-x.o xgccache.o intl-x.o
+#ifdef USE_XFT
+x_objs += xft-fonts.o
+#endif
 x_gui_objs=$(gui_objs:.o=-x.o)
 #ifdef HAVE_TOOLBARS
 x_gui_objs += toolbar-common.o

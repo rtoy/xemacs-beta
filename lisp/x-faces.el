@@ -66,6 +66,8 @@
  '(x-get-resource-and-maybe-bogosity-check
    x-get-resource x-init-pointer-shape))
 
+(require 'fontconfig)
+
 (defconst x-font-regexp nil)
 (defconst x-font-regexp-head nil)
 (defconst x-font-regexp-head-2 nil)
@@ -78,6 +80,7 @@
 (defconst x-font-regexp-spacing nil)
 
 ;;; Regexps matching font names in "Host Portable Character Representation."
+;;; #### But more recently Latin-1 is permitted, and Xft needs it in C (?).
 ;;;
 (let ((- 		"[-?]")
       (foundry		"[^-]*")
@@ -134,6 +137,11 @@
 			  - registry - encoding "\\'"))
   )
 
+(defun x-font-xlfd-font-name-p (font)
+  "Check if FONT is an XLFD font name"
+  (and (stringp font)
+       (string-match x-font-regexp font)))
+
 ;; A "loser font" is something like "8x13" -> "8x13bold".
 ;; These are supported only through extreme generosity.
 (defconst x-loser-font-regexp "\\`[0-9]+x[0-9]+\\'")
@@ -167,6 +175,46 @@
 (defun x-make-font-bold (font &optional device)
   "Given an X font specification, this attempts to make a `bold' font.
 If it fails, it returns nil."
+  (if (featurep 'xft-fonts)
+      (if (x-font-xlfd-font-name-p font)
+	  (x-make-font-bold-core font device)
+	(x-make-font-bold-xft font device))
+    (x-make-font-bold-core font device)))
+
+(defun x-make-font-bold-xft (font &optional device)
+  (let ((pattern (fc-font-real-pattern 
+		  font (or device (default-x-device)))))
+    (if pattern
+	(let ((size (fc-pattern-get-size pattern 0))
+	      (copy (fc-copy-pattern-partial 
+		     pattern (list fc-font-name-property-family))))
+	  (fc-pattern-del copy fc-font-name-property-weight)
+	  (fc-pattern-del copy fc-font-name-property-style)
+	  (when copy
+	    (or 
+	     ;; try bold font
+	     (let ((copy-2 (fc-pattern-duplicate copy)))
+	       (fc-pattern-add copy-2 fc-font-name-property-weight
+				fc-font-name-weight-bold)
+	       (when (fc-try-font copy-2 device)
+		 (fc-pattern-add copy-2 fc-font-name-property-size size)
+		 (fc-name-unparse copy-2)))
+	     ;; try black font
+	     (let ((copy-2 (fc-pattern-duplicate copy)))
+	       (fc-pattern-add copy-2 fc-font-name-property-weight
+				fc-font-name-weight-black)
+	       (when (fc-try-font copy-2 device)
+		 (fc-pattern-add copy-2 fc-font-name-property-size size)
+		 (fc-name-unparse copy-2)))
+	     ;; try demibold font
+	     (let ((copy-2 (fc-pattern-duplicate copy)))
+	       (fc-pattern-add copy-2 fc-font-name-property-weight
+				fc-font-name-weight-demibold)
+	       (when (fc-try-font copy-2 device)
+		 (fc-pattern-add copy-2 fc-font-name-property-size size)
+		 (fc-name-unparse copy-2)))))))))
+  
+(defun x-make-font-bold-core (font &optional device)
   ;; Certain Type1 fonts know "bold" as "black"...
   (or (try-font-name (x-frob-font-weight font "bold") device)
       (try-font-name (x-frob-font-weight font "black") device)
@@ -175,6 +223,23 @@ If it fails, it returns nil."
 (defun x-make-font-unbold (font &optional device)
   "Given an X font specification, this attempts to make a non-bold font.
 If it fails, it returns nil."
+  (if (featurep 'xft-fonts)
+      (if (x-font-xlfd-font-name-p font)
+	  (x-make-font-unbold-core font device)
+	(x-make-font-unbold-xft font device))
+    (x-make-font-unbold-core font device)))
+  
+(defun x-make-font-unbold-xft (font &optional device)
+  (let ((pattern (fc-font-real-pattern 
+		  font (or device (default-x-device)))))
+    (when pattern
+      (fc-pattern-del pattern fc-font-name-property-weight)
+      (fc-pattern-add pattern fc-font-name-property-weight
+		       fc-font-name-weight-medium)
+      (if (fc-try-font pattern device)
+	  (fc-name-unparse pattern)))))
+
+(defun x-make-font-unbold-core (font &optional device)
   (try-font-name (x-frob-font-weight font "medium") device))
 
 (defcustom try-oblique-before-italic-fonts nil
@@ -189,6 +254,53 @@ applicable to adobe-courier fonts"
 (defun x-make-font-italic (font &optional device)
   "Given an X font specification, this attempts to make an `italic' font.
 If it fails, it returns nil."
+  (if (featurep 'xft-fonts)
+      (if (x-font-xlfd-font-name-p font)
+	  (x-make-font-italic-core font device)
+	(x-make-font-italic-xft font device))
+    (x-make-font-italic-core font device)))
+
+(defun x-make-font-italic-xft (font &optional device)
+  (let ((pattern (fc-font-real-pattern 
+		  font (or device (default-x-device)))))
+    (if pattern
+      (let ((size (fc-pattern-get-size pattern 0))
+	    (copy (fc-copy-pattern-partial
+		   pattern (list fc-font-name-property-family))))
+	(when copy
+	  (fc-pattern-del copy fc-font-name-property-slant)
+	  (fc-pattern-del copy fc-font-name-property-style)
+	  (let ((pattern-oblique (fc-pattern-duplicate copy))
+		(pattern-italic (fc-pattern-duplicate copy)))
+	    (fc-pattern-add pattern-oblique fc-font-name-property-slant
+			     fc-font-name-slant-oblique)
+	    (fc-pattern-add pattern-italic fc-font-name-property-slant
+			     fc-font-name-slant-italic)
+	    (let ((have-oblique (fc-try-font pattern-oblique device))
+		  (have-italic (fc-try-font pattern-italic device)))
+	      (if try-oblique-before-italic-fonts
+		  (if have-oblique
+		      (progn 
+			(if size
+			    (fc-pattern-add pattern-oblique fc-font-name-property-size size))
+			(fc-name-unparse pattern-oblique))
+		    (if have-italic
+			(progn
+			  (if size
+			      (fc-pattern-add pattern-italic fc-font-name-property-size size))
+			  (fc-name-unparse pattern-italic))))
+		(if have-italic
+		    (progn
+		      (if size
+			  (fc-pattern-add pattern-italic fc-font-name-property-size size))
+		      (fc-name-unparse pattern-italic))
+		  (if have-oblique
+		      (progn
+			(if size
+			    (fc-pattern-add pattern-oblique fc-font-name-property-size size))
+			(fc-name-unparse pattern-oblique))))))))))))
+  
+(defun x-make-font-italic-core (font &optional device)
   (if try-oblique-before-italic-fonts
       (or (try-font-name (x-frob-font-slant font "o") device)
 	  (try-font-name (x-frob-font-slant font "i") device))
@@ -198,11 +310,40 @@ If it fails, it returns nil."
 (defun x-make-font-unitalic (font &optional device)
   "Given an X font specification, this attempts to make a non-italic font.
 If it fails, it returns nil."
+  (if (featurep 'xft-fonts)
+      (if (x-font-xlfd-font-name-p font)
+	  (x-make-font-unitalic-core font device)
+	(x-make-font-unitalic-xft font device))
+    (x-make-font-unitalic-core font device)))
+  
+(defun x-make-font-unitalic-xft (font &optional device)
+  (let ((pattern (fc-font-real-pattern 
+		  font (or device (default-x-device)))))
+    (when pattern
+      (fc-pattern-del pattern fc-font-name-property-slant)
+      (fc-pattern-add pattern fc-font-name-property-slant
+		       fc-font-name-slant-roman)
+      (if (fc-try-font pattern device)
+	  (fc-name-unparse pattern)))))
+
+(defun x-make-font-unitalic-core (font &optional device)
   (try-font-name (x-frob-font-slant font "r") device))
 
 (defun x-make-font-bold-italic (font &optional device)
   "Given an X font specification, this attempts to make a `bold-italic' font.
 If it fails, it returns nil."
+  (if (featurep 'xft-fonts) 
+      (if (x-font-xlfd-font-name-p font)
+	  (x-make-font-bold-italic-core font device)
+	(x-make-font-bold-italic-xft font device))
+    (x-make-font-bold-italic-core font device)))
+
+(defun x-make-font-bold-italic-xft (font &optional device)
+  (let ((italic (x-make-font-italic-xft font device)))
+    (if italic
+	(x-make-font-bold-xft italic device))))
+
+(defun x-make-font-bold-italic-core (font &optional device)
   ;; This is haired up to avoid loading the "intermediate" fonts.
   (if try-oblique-before-italic-fonts
       (or (try-font-name
@@ -236,6 +377,21 @@ This is done by parsing its name, so it's likely to lose.
 X fonts can be specified (by the user) in either pixels or 10ths of points,
  and this returns the first one it finds, so you have to decide which units
  the returned value is measured in yourself..."
+  (if (featurep 'xft-fonts) 
+      (if (x-font-xlfd-font-name-p font)
+	  (x-font-size-core font)
+	(x-font-size-xft font))
+    (x-font-size-core font)))
+
+;; this is unbelievable &*@#
+(defun x-font-size-xft (font)
+  (let ((pattern (fc-font-real-pattern 
+		  font (default-x-device))))
+    (when pattern
+      (let ((pixelsize (fc-pattern-get-pixelsize pattern 0)))
+	(if (floatp pixelsize) (round pixelsize))))))
+
+(defun x-font-size-core (font)
   (if (font-instance-p font) (setq font (font-instance-name font)))
   (cond ((or (string-match x-font-regexp font)
 	     (string-match x-font-regexp-head-2 font))
@@ -354,6 +510,29 @@ X fonts can be specified (by the user) in either pixels or 10ths of points,
 Returns the font if it succeeds, nil otherwise.
 If scalable fonts are available, this returns a font which is 1 point smaller.
 Otherwise, it returns the next smaller version of this font that is defined."
+  (if (featurep 'xft-fonts)
+      (if (x-font-xlfd-font-name-p font)
+	  (x-find-smaller-font-core font device)
+	(x-find-smaller-font-xft font device))
+    (x-find-smaller-font-core font device)))
+
+(defun x-find-xft-font-of-size (font new-size-proc &optional device)
+  (let* ((pattern (fc-font-real-pattern 
+		   font (or device (default-x-device)))))
+    (when pattern
+      (let ((size (fc-pattern-get-size pattern 0)))
+	(if (floatp size)
+	    (let ((copy (fc-pattern-duplicate pattern)))
+	      (fc-pattern-del copy fc-font-name-property-size)
+	      (fc-pattern-add copy fc-font-name-property-size 
+			       (funcall new-size-proc size))
+	      (if (fc-try-font font device)
+		  (fc-name-unparse copy))))))))
+
+(defun x-find-smaller-font-xft (font &optional device)
+  (x-find-xft-font-of-size font '(lambda (old-size) (- old-size 1.0)) device))
+
+(defun x-find-smaller-font-core (font &optional device)
   (x-frob-font-size font nil device))
 
 (defun x-find-larger-font (font &optional device)
@@ -361,6 +540,16 @@ Otherwise, it returns the next smaller version of this font that is defined."
 Returns the font if it succeeds, nil otherwise.
 If scalable fonts are available, this returns a font which is 1 point larger.
 Otherwise, it returns the next larger version of this font that is defined."
+  (if (featurep 'xft-fonts)
+      (if (x-font-xlfd-font-name-p font)
+	  (x-find-larger-font-core font device)
+	(x-find-larger-font-xft font device))
+    (x-find-larger-font-core font device)))
+
+(defun x-find-larger-font-xft (font &optional device)
+  (x-find-xft-font-of-size font '(lambda (old-size) (+ old-size 1.0)) device))
+
+(defun x-find-larger-font-core (font &optional device)
   (x-frob-font-size font t device))
 
 (defalias 'x-make-face-bold 'make-face-bold)

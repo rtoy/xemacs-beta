@@ -239,7 +239,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
 	  color.green = qtable->gm[i] ? qtable->gm[i] << 8 : 0;
 	  color.blue = qtable->bm[i] ? qtable->bm[i] << 8 : 0;
 	  color.flags = DoRed | DoGreen | DoBlue;
-	  res = allocate_nearest_color (dpy, cmap, vis, &color);
+	  res = x_allocate_nearest_color (dpy, cmap, vis, &color);
 	  if (res > 0 && res < 3)
 	    {
 	      DO_REALLOC(*pixtbl, pixcount, n+1, unsigned long);
@@ -2364,21 +2364,41 @@ update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
   bcolor = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (pixel));
   lw_add_widget_value_arg (wv, XtNbackground, bcolor.pixel);
 
-#ifdef LWLIB_WIDGETS_MOTIF
-  fontList = XmFontListCreate
-    (FONT_INSTANCE_X_FONT
-     (XFONT_INSTANCE (query_string_font
-		      (IMAGE_INSTANCE_WIDGET_TEXT (ii),
-		       IMAGE_INSTANCE_WIDGET_FACE (ii),
-		       domain))),  XmSTRING_DEFAULT_CHARSET);
-  lw_add_widget_value_arg (wv, XmNfontList, (XtArgVal)fontList);
+  {
+    Lisp_Object face = IMAGE_INSTANCE_WIDGET_FACE (ii);
+    Lisp_Font_Instance *fi =
+      XFONT_INSTANCE (query_string_font (IMAGE_INSTANCE_WIDGET_TEXT (ii),
+					 face,
+					 domain));
+    XFontStruct *fs = FONT_INSTANCE_X_FONT (fi);
+#ifdef USE_XFT
+    XftFont *rf = FONT_INSTANCE_X_XFTFONT (fi);
+
+    if (rf)
+      {
+	/* #### What to do about Motif? */
+	lw_add_widget_value_arg (wv, XtNxftFont, (XtArgVal) rf);
+      }
 #endif
-  lw_add_widget_value_arg
-    (wv, XtNfont, (XtArgVal)FONT_INSTANCE_X_FONT
-     (XFONT_INSTANCE (query_string_font
-		      (IMAGE_INSTANCE_WIDGET_TEXT (ii),
-		       IMAGE_INSTANCE_WIDGET_FACE (ii),
-		       domain))));
+
+    if (fs)
+      {
+#ifdef LWLIB_WIDGETS_MOTIF
+	fontList = XmFontListCreate (fs, XmSTRING_DEFAULT_CHARSET);
+	lw_add_widget_value_arg (wv, XmNfontList, (XtArgVal) fontList);
+#endif
+	lw_add_widget_value_arg (wv, XtNfont, (XtArgVal) fs);
+      }
+
+#ifdef USE_XFT
+    /* #### sanity check, should wrap in appropriate ERROR_CHECK macro */
+    if (!rf && !fs)
+      warn_when_safe_lispobj
+	(intern ("xft"), Qdebug,
+	 Fcons (build_string ("missing font in update_widget_face"),
+		Fface_name (face)));
+#endif
+  }
   wv->change = VISIBLE_CHANGE;
   /* #### Megahack - but its just getting too complicated to do this
      in the right place. */

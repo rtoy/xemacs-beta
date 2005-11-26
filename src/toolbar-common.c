@@ -144,7 +144,8 @@ static void __prepare_button_area (struct frame *f,
 		     (w, toolbar_findex, sx + x_adj,
 		      sy + y_adj, swidth + width_adj,
 		      sheight + height_adj, abs(shadow_thickness),
-		      EDGE_ALL, (shadow_thickness < 0) ? EDGE_BEVEL_IN : EDGE_BEVEL_OUT));
+		      EDGE_ALL, (shadow_thickness < 0) ? EDGE_BEVEL_IN
+						       : EDGE_BEVEL_OUT));
     }
 
   /* Handle the borders... */
@@ -173,7 +174,7 @@ common_output_toolbar_button (struct frame *f, Lisp_Object button)
   struct window *w;
   int vertical = tb->vertical;
   int border_width = tb->border_width;
-  face_index toolbar_findex;
+  face_index button_findex;
 
   if (vertical)
     {
@@ -211,16 +212,23 @@ common_output_toolbar_button (struct frame *f, Lisp_Object button)
       shadow_thickness = 0;
     }
 
-  toolbar_findex = get_builtin_face_cache_index (w, Vtoolbar_face);
-
-  __prepare_button_area (f, tb);
-
   /* #### It is currently possible for users to trash us by directly
      changing the toolbar glyphs.  Avoid crashing in that case. */
   if (GLYPHP (glyph))
-    instance = glyph_image_instance (glyph, window, ERROR_ME_DEBUG_WARN, 1);
+    {
+      /* WARNING: this interface may change */
+      Lisp_Object face_list[2] = { XGLYPH_FACE (glyph), Vtoolbar_face };
+
+      button_findex = merge_face_list_to_cache_index (w, face_list, 2);
+      instance = glyph_image_instance (glyph, window, ERROR_ME_DEBUG_WARN, 1);
+    }
   else
-    instance = Qnil;
+    {
+      button_findex = get_builtin_face_cache_index (w, Vtoolbar_face);
+      instance = Qnil;
+    }
+
+  __prepare_button_area (f, tb);
 
   if (IMAGE_INSTANCEP (instance))
     {
@@ -263,7 +271,7 @@ common_output_toolbar_button (struct frame *f, Lisp_Object button)
 	  
 	  redisplay_output_pixmap (w, instance,
 				   &db, &dga, 
-				   toolbar_findex, 0, 0, 0, 0);
+				   button_findex, 0, 0, 0, 0);
 	}
       else if (IMAGE_INSTANCE_TYPE (p) == IMAGE_TEXT)
 	{
@@ -309,7 +317,7 @@ common_output_toolbar_button (struct frame *f, Lisp_Object button)
 
 	  MAYBE_DEVMETH (d, output_string,
 			 (w, &dl, buf, tb->x + x_offset, 0, 0, width,
-			  toolbar_findex, 0, 0, 0, 0));
+			  button_findex, 0, 0, 0, 0));
 	  Dynarr_free (buf);
 	}
 

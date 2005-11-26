@@ -479,8 +479,8 @@ xlw_create_clip_window (widget_instance *instance)
   Widget clip = 0;
   widget_value* val = instance->info->val;
 
-  XtSetArg (al [ac], XtNmappedWhenManaged, FALSE);	ac++;
-  XtSetArg (al [ac], XtNsensitive, TRUE);		ac++;
+  XtSetArg (al [ac], XtNmappedWhenManaged, False);	ac++;
+  XtSetArg (al [ac], XtNsensitive, True);		ac++;
   /* add any args the user supplied for creation time */
   lw_add_value_args_to_args (val, al, &ac);
 

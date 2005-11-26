@@ -34,6 +34,10 @@
 
 (require 'font-menu)
 
+(when (featurep 'xft-fonts)
+  (require 'xft)
+  (require 'fontconfig))
+
 (globally-declare-boundp
  '(x-font-regexp
    x-font-regexp-foundry-and-family
@@ -80,8 +84,70 @@ E.g. cursor fonts.")
   "This is used to filter out font families that can't display ASCII text.
 It must be set at run-time.")
 
+;; #### move these to font-menu.el, and maybe make them defcustoms
+(defvar font-menu-common-sizes
+  '(60 80 100 110 120 130 140 150 160 170 180 200 220 240 300 360)
+  "List of commonly desired font sizes in decipoints.")
+
 ;;;###autoload
 (defun x-reset-device-font-menus (device &optional debug)
+  (if (featurep 'xft-fonts)
+      (x-reset-device-font-menus-xft device debug)
+    (x-reset-device-font-menus-core device debug)))
+
+(defun fc-make-font-menu-entry (family)
+  (let ((weights (fc-find-available-weights-for-family family)))
+    (vector
+     family
+     (mapcar 
+      '(lambda (weight-symbol) 
+	 (let ((pair (assoc weight-symbol
+			    '((:light "Light")
+			      (:medium "Medium")
+			      (:demibold "Demibold")
+			      (:bold "Bold")
+			      (:black "Black")))))
+	   (if pair (cadr pair))))
+      weights)
+     '(0)
+     nil)))
+
+(defun x-reset-device-font-menus-xft (device &optional debug)
+  (let* ((families-1 (fc-find-available-font-families device))
+	 (families (delete-if (lambda (x)
+				(string-match x-fonts-menu-junk-families x))
+			      (sort families-1 'string-lessp)))
+	 (data
+	  (vector
+	   (mapcar 'fc-make-font-menu-entry families)
+	   (mapcar 
+	    '(lambda (family)
+	       (vector family `(font-menu-set-font ,family nil nil)
+		       :style 'radio :active nil :selected nil))
+	    families)
+	   (mapcar
+	    '(lambda (size)
+	       (vector
+		(number-to-string size)
+		`(font-menu-set-font nil nil ,size)
+		:style 'radio :active nil :selected nil))
+	    ;; common size list in decipoints, fontconfig wants points
+	    (mapcar (lambda (x) (/ x 10)) font-menu-common-sizes))
+	   (mapcar
+	    '(lambda (weight)
+	       (vector
+		weight
+		`(font-menu-set-font nil ,weight nil)
+		:style 'radio :active nil :selected nil))
+	    '("Light" "Medium" "Demibold" "Bold" "Black"))))
+	 ;; get or initialize the entry for device
+	 (dev-cache (or (assq device device-fonts-cache)
+			(car (push (list device) device-fonts-cache)))))
+    ;; update the device-fonts-cache entry for device in place
+    (setcdr dev-cache data)
+    data))
+
+(defun x-reset-device-font-menus-core (device &optional debug)
   "Generates the `Font', `Size', and `Weight' submenus for the Options menu.
 This is run the first time that a font-menu is needed for each device.
 If you don't like the lazy invocation of this function, you can add it to
@@ -136,7 +202,7 @@ or if you change your font path, you can call this to re-initialize the menus."
     ;; up not getting mentioned explicitly.
     ;;
     (if (member 0 sizes)
-	(let ((common '(60 80 100 120 140 160 180 240)))
+	(let ((common font-menu-common-sizes))
 	  (while common
 	    (or;;(member (car common) sizes)   ; not enough slack
 	     (let ((rest sizes)
@@ -195,6 +261,51 @@ or if you change your font path, you can call this to re-initialize the menus."
 ;; get the truename and use the possibly suboptimal data from that.
 ;;;###autoload
 (defun x-font-menu-font-data (face dcache)
+   (let* ((case-fold-search t)
+ 	 (domain (if font-menu-this-frame-only-p
+		     (selected-frame)
+		   (selected-device)))
+	 (name (font-instance-name (face-font-instance face domain))))
+     (if (featurep 'xft-fonts)
+	 (if (xlfd-font-name-p name)
+	     ;; #### this call to x-font-menu-font-data-core originally
+	     ;; had 4 args, and that's probably the right way to go
+	     (x-font-menu-font-data-core face dcache)
+	   (x-font-menu-font-data-xft face dcache name domain))
+       ;; #### this one, too
+       (x-font-menu-font-data-core face dcache))))
+
+(defun x-font-menu-font-data-xft (face dcache name domain)
+  (let* ((truename (font-instance-truename
+		    (face-font-instance face domain
+					(if (featurep 'mule) 'ascii))))
+	 entry)
+    (if (xlfd-font-name-p truename)
+	(progn
+	  nil)
+      (progn
+	(let* ((pattern (fc-font-real-pattern name domain))
+	       (family (and pattern
+			    (fc-pattern-get-family pattern 0))))
+	  (if (fc-pattern-get-successp family)
+	    (setq entry (vassoc family (aref dcache 0))))
+	  (if (null entry)
+	      (make-vector 5 nil)
+	    (let ((weight (fc-pattern-get-weight pattern 0))
+		  (size (fc-pattern-get-size pattern 0))
+		  (slant (fc-pattern-get-slant pattern 0)))
+	      (vector
+	       entry
+	       (if (fc-pattern-get-successp family) 
+		   family)
+	       (if (fc-pattern-get-successp size)
+		   size)
+	       (if (fc-pattern-get-successp weight)
+		   (fc-font-weight-translate-to-string weight))
+	       (if (fc-pattern-get-successp slant)
+		   (fc-font-slant-translate-to-string slant))))))))))
+
+(defun x-font-menu-font-data-core (face dcache)
   (let* ((case-fold-search t)
 	 (domain (if font-menu-this-frame-only-p
 				  (selected-frame)
@@ -229,6 +340,24 @@ or if you change your font path, you can call this to re-initialize the menus."
       (vector entry family size weight slant))))
 
 (defun x-font-menu-load-font (family weight size slant resolution)
+  (if (featurep 'xft-fonts)
+      (x-font-menu-load-font-xft family weight size slant resolution)
+    (x-font-menu-load-font-core family weight size slant resolution)))
+
+(defun x-font-menu-load-font-xft (family weight size slant resolution)
+  (let ((pattern (make-fc-pattern)))
+    (fc-pattern-add pattern fc-font-name-property-family family)
+    (if weight 
+	(fc-pattern-add pattern fc-font-name-property-weight
+			 (fc-font-weight-translate-from-string weight)))
+    (if size
+	(fc-pattern-add pattern fc-font-name-property-size size))
+    (if slant
+	(fc-pattern-add pattern fc-font-name-property-slant
+			 (fc-font-slant-translate-from-string slant)))
+    (make-font-instance (fc-name-unparse pattern))))
+
+(defun x-font-menu-load-font-core (family weight size slant resolution)
   "Try to load a font with the requested properties.
 The weight, slant and resolution are only hints."
   (when (integerp size) (setq size (int-to-string size)))

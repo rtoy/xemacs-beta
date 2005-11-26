@@ -281,6 +281,7 @@ enum lrecord_type
   lrecord_type_image_instance,
   lrecord_type_glyph,
   lrecord_type_face,
+  lrecord_type_fc_pattern,
   lrecord_type_database,
   lrecord_type_tooltalk_message,
   lrecord_type_tooltalk_pattern,

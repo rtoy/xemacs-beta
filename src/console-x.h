@@ -51,6 +51,19 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/xpm.h>
 #endif
 
+#ifdef USE_XFT
+/* shut up GCC */
+#define face_index face_index_arg
+#define glyph_index glyph_index_arg
+#include <X11/Xft/Xft.h>
+#undef glyph_index
+#undef face_index
+/* #### this should be made gone */
+#ifndef XFT_VERSION
+#define XFT_VERSION 1
+#endif
+#endif
+
 /* R5 defines the XPointer type, but R4 doesn't.
    R4 also doesn't define a version number, but R5 does. */
 #if (XlibSpecificationRelease < 5)

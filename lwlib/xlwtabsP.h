@@ -41,6 +41,9 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #include "xlwtabs.h"
+#ifdef USE_XFT_TABS
+#include <X11/Xft/Xft.h>
+#endif
 
 /* New fields for the Tabs widget class record */
 typedef struct {XtPointer extension;} TabsClassPart;
@@ -70,6 +73,10 @@ extern TabsClassRec tabsClassRec;
 typedef struct {
     /* resources */
     XFontStruct	*font ;
+#ifdef USE_XFT_TABS
+    String renderFontSpec;
+    XftFont *renderFont;
+#endif
     Dimension   internalHeight, internalWidth ;
     Widget	topWidget ;
     XtCallbackList callbacks ;

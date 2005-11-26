@@ -158,6 +158,10 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
   struct gc_cache_cell *cell, *next, *prev;
   struct gcv_and_mask gcvm;
 
+#ifdef DEBUG_XEMACS
+  (void) describe_gc_cache (cache, DGCCFLAG_DISABLE);
+#endif
+
   if ((!!cache->head) != (!!cache->tail)) ABORT ();
   if (cache->head && (cache->head->prev || cache->tail->next)) ABORT ();
 
@@ -196,6 +200,9 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
 	 will be less likely to be collected than a cell that was accessed
 	 less recently.
        */
+#if 0
+      debug_out ("Returning cached GC: %08lx\n", XE_GCONTEXT(cell));
+#endif
       if (cell == cache->tail)
 	return cell->gc;
 
@@ -226,6 +233,7 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
       cache->head = cell->next;
       cache->head->prev = 0;
       if (cache->tail == cell) cache->tail = 0; /* only one */
+      debug_out ("Cache full, freeing GC: %08lx\n  ", XE_GCONTEXT(cell));
       XFreeGC (cache->dpy, cell->gc);
       cache->delete_count++;
 #ifdef GCCACHE_HASH
@@ -264,68 +272,92 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
   /* debug */
   assert (cell->gc == gc_cache_lookup (cache, gcv, mask));
 
+#if 0
+  debug_out ("Returning new GC: %08lx\n  ", XE_GCONTEXT(cell));
+#endif
   return cell->gc;
 }
 
 
 #ifdef DEBUG_XEMACS
 
-void describe_gc_cache (struct gc_cache *cache);
+/* FLAGS
+   The flags argument is a bitwise or of any of the following:
+
+   DGCCFLAG_SUMMARY		Summary statistics for cache
+   DGCCFLAG_LIST_CELLS		If summary is being printed, print cell IDs too.
+   DGCCFLAG_CELL_DETAILS	If cell IDs are being printed, additionally
+				print the internal fields used and values.
+
+   DGCCFLAG_DEFAULT		A predefined combination giving whatever the
+				maintainers are currently interested in seeing.
+*/
 void
-describe_gc_cache (struct gc_cache *cache)
+describe_gc_cache (struct gc_cache *cache, int flags)
 {
   int count = 0;
   struct gc_cache_cell *cell = cache->head;
+
+  if (! flags & DGCCFLAG_SUMMARY) return;
+
   stderr_out ("\nsize:    %d", cache->size);
   stderr_out ("\ncreated: %d", cache->create_count);
   stderr_out ("\ndeleted: %d", cache->delete_count);
-  while (cell)
-  {
-    struct gc_cache_cell *cell2;
-    int i = 0;
-    stderr_out ("\n%d:\t0x%lx  GC: 0x%08lx  hash: 0x%08lx\n",
-	     count, (long) cell, (long) cell->gc, gc_cache_hash (&cell->gcvm));
-    for (cell2 = cache->head; cell2; cell2 = cell2->next, i++)
-      if (count != i &&
-	  gc_cache_hash (&cell->gcvm) == gc_cache_hash (&cell2->gcvm))
-	stderr_out ("\tHASH COLLISION with cell %d\n", i);
-    stderr_out ("\tmask:       %8lx\n", cell->gcvm.mask);
 
+  if (flags & DGCCFLAG_LIST_CELLS)
+    while (cell)
+      {
+	struct gc_cache_cell *cell2;
+	int i = 0;
+	stderr_out ("\n%d:\t0x%lx  GC: 0x%08lx  hash: 0x%08lx\n",
+		    count, (long) cell, (long) XE_GCONTEXT(cell),
+		    gc_cache_hash (&cell->gcvm));
+
+	for (cell2 = cache->head; cell2; cell2 = cell2->next, i++)
+	  if (count != i &&
+	      gc_cache_hash (&cell->gcvm) == gc_cache_hash (&cell2->gcvm))
+	    stderr_out ("\tHASH COLLISION with cell %d\n", i);
+	stderr_out ("\tmask:       %8lx\n", cell->gcvm.mask);
+
+	if (flags & DGCCFLAG_CELL_DETAILS)
+	  {
 #define FROB(field) do {						\
   if ((int)cell->gcvm.gcv.field != (~0))				\
     stderr_out ("\t%-12s%8x\n", #field ":", (int)cell->gcvm.gcv.field);	\
 } while (0)
-    FROB (function);
-    FROB (plane_mask);
-    FROB (foreground);
-    FROB (background);
-    FROB (line_width);
-    FROB (line_style);
-    FROB (cap_style);
-    FROB (join_style);
-    FROB (fill_style);
-    FROB (fill_rule);
-    FROB (arc_mode);
-    FROB (tile);
-    FROB (stipple);
-    FROB (ts_x_origin);
-    FROB (ts_y_origin);
-    FROB (font);
-    FROB (subwindow_mode);
-    FROB (graphics_exposures);
-    FROB (clip_x_origin);
-    FROB (clip_y_origin);
-    FROB (clip_mask);
-    FROB (dash_offset);
+	    FROB (function);
+	    FROB (plane_mask);
+	    FROB (foreground);
+	    FROB (background);
+	    FROB (line_width);
+	    FROB (line_style);
+	    FROB (cap_style);
+	    FROB (join_style);
+	    FROB (fill_style);
+	    FROB (fill_rule);
+	    FROB (arc_mode);
+	    FROB (tile);
+	    FROB (stipple);
+	    FROB (ts_x_origin);
+	    FROB (ts_y_origin);
+	    FROB (font);
+	    FROB (subwindow_mode);
+	    FROB (graphics_exposures);
+	    FROB (clip_x_origin);
+	    FROB (clip_y_origin);
+	    FROB (clip_mask);
+	    FROB (dash_offset);
 #undef FROB
+	  }
 
-    count++;
-    if (cell->next && cell == cache->tail)
-      stderr_out ("\nERROR!  tail is here!\n\n");
-    else if (!cell->next && cell != cache->tail)
-      stderr_out ("\nERROR!  tail is not at the end\n\n");
-    cell = cell->next;
-  }
+	count++;
+	if (cell->next && cell == cache->tail)
+	  stderr_out ("\nERROR!  tail is here!\n\n");
+	else if (!cell->next && cell != cache->tail)
+	  stderr_out ("\nERROR!  tail is not at the end\n\n");
+	cell = cell->next;
+      }	/* while (cell) */
+
   if (count != cache->size)
     stderr_out ("\nERROR!  count should be %d\n\n", cache->size);
 }

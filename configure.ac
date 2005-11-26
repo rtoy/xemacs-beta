@@ -630,6 +630,20 @@ XE_MERGED_ARG([infopath],
 	[AC_DEFINE(INFOPATH_USER_DEFINED)], [])
 dnl
 XE_HELP_SUBSECTION([Window-system options])
+dnl if you change defaults, make sure to fix arg 6 of the OPTION_HELP macro.
+XE_COMPLEX_ARG([xft],
+	[XE_COMPLEX_OPTION_HELP_STRING([--with-xft],
+		[Xft client-side font rendering and anti-aliasing],
+		[Xft],
+		[`emacs' (buffers), `menubars', `tabs', and `gauges'],
+		[X11, Xft, Xrender, freetype, and fontconfig],
+		[`emacs,menubars,tabs,gauges'])],
+	[],[],
+	[XE_COMPLEX_OPTION([emacs],[yes]),
+	XE_COMPLEX_OPTION([menubars],[yes]),
+	XE_COMPLEX_OPTION([tabs],[yes]),
+	XE_COMPLEX_OPTION([gauges],[yes])])
+	[], [])
 XE_MERGED_ARG([gtk],
 	AC_HELP_STRING([--with-gtk],[Support GTK on the X Window System. (EXPERIMENTAL)]),
 	[true], [with_gtk=no])
@@ -777,7 +791,7 @@ XE_MERGED_ARG([wnn6],
 	[], [])
 XE_MERGED_ARG([xfs],
 	AC_HELP_STRING([--with-xfs],[Enable XFontSet support for internationalized
-                        menubar.  Incompatible with `--with-xim=motif'.
+                        menubar.  Incompatible with `--with-xim=motif' and `--with-xft'.
                         `--enable-menubars=lucid' (the default) is desirable.]),
 	[], [])
 dnl
@@ -966,6 +980,20 @@ fi
 
 dnl CDE requires tooltalk
 XE_CHECK_FEATURE_DEPENDENCY(cde, tooltalk)
+
+dnl Xft sanity checking
+dnl #### Maybe we should XE_DIE here instead?  Or fix the UI so that
+dnl emacs is always implicit?  (I worry that --without-xft would be weird.)
+if test \( "$with_xft_menubars" = "yes" -o "$with_xft_tabs" = "yes" \
+           -o "$with_xft_gauges" = "yes" \) -a "$with_xft_emacs" = "no"; then
+    AC_MSG_WARN([Forcing --with-xft=emacs because Xft is enabled])
+    with_xft_emacs=yes
+fi
+
+dnl XFS and Xft in menubars conflict
+if test "$with_xfs" = "yes" -a "$with_xft_menubars" = "yes"; then
+  USAGE_ERROR("XFS and Xft in the menubars are incompatible!")
+fi
 
 dnl -------------------------------------------------------------------------
 dnl Local paths
@@ -3362,6 +3390,50 @@ extern Bool XRegisterIMInstantiateCallback(
     fi
   fi
 
+  dnl include xft/AA support?
+  dnl #### need to check for includes here (especially, freetype.h for v.2)
+
+  if test "$with_xft_emacs" = "yes"; then
+    AC_CHECKING([for Xrender, fontconfig, and Xft])
+    xft_includes_found=no
+    AC_CHECK_HEADERS([freetype/config/ftheader.h],
+		     [xft_includes_found=yes],
+		     [
+      dnl #### How about /sw/include, and /opt/local/include?
+      dnl these directories need to be the parent of the freetype directory
+      for freetype_include_top in "/usr/X11R6/include/freetype2" \
+				  "/usr/include/freetype2"
+      do
+	if test -d $freetype_include_top; then
+	  AC_CHECKING([in ${freetype_include_top}/freetype2])
+	  dnl disable autoconf's fucking cache; why these fuckheads think it
+	  dnl is better to be broken than to be slow, I don't know!
+	  dnl #### there's gotta be a better-looking way to do this!!
+	  unset "$as_ac_Header"
+          save_c_switch_site="$c_switch_site"
+          c_switch_site="$c_switch_site -I${freetype_include_top}"
+          AC_CHECK_HEADERS([freetype/config/ftheader.h],
+			   [xft_includes_found=yes],
+			   [c_switch_site=$save_c_switch_site])
+	fi
+      done
+      if test "$xft_includes_found" != "yes"; then
+        XE_DIE(["Unable to find headers for --with-xft"])
+      else
+        AC_CHECK_LIB(Xrender, XRenderQueryExtension, XE_PREPEND(-lXrender, libs_x),
+	    [XE_DIE(["Unable to find libXrender for --with-xft"])])
+        AC_CHECK_LIB(fontconfig, FcPatternCreate, XE_PREPEND(-lfontconfig, libs_x),
+	    [XE_DIE(["Unable to find libfontconfig for --with-xft"])])
+        AC_CHECK_LIB(Xft, XftFontOpen, XE_PREPEND(-lXft, libs_x),
+	    [XE_DIE(["Unable to find libXft for --with-xft"])])
+        AC_DEFINE(USE_XFT)
+        dnl Due to interactions with other libraries, must postpone AC_DEFINE
+        dnl of USE_XFT_MENUBARS, USE_XFT_TABS, and USE_XFT_GAUGE.
+	unset xft_includes_found
+      fi
+])
+  fi
+
 fi dnl $with_x11 = yes
 
 if test "$with_msw" != "no"; then
@@ -4186,6 +4258,14 @@ esac
 case "$enable_menubars" in "" | "yes" | "athena" )
   enable_menubars="lucid" ;;
 esac
+dnl this is not in xft reloaded #3
+if test "$with_xft_menubars" != "no" ; then
+  if test "$with_xft_emacs" = "yes" -a "$with_menubars" != "no" ; then
+    with_xft_menubars="yes"
+  else
+    with_xft_menubars="no"
+  fi
+fi
 case "$enable_dialogs" in "" | "yes" | "lucid" )
   if test "$lucid_prefers_motif" = "yes"; then
     if   test "$have_motif"     = "yes"; then enable_dialogs="motif"
@@ -4219,6 +4299,22 @@ case "$enable_widgets" in "" | "yes" | "lucid")
     fi
   fi ;;
 esac
+dnl this is not in xft reloaded #3
+if test "$with_xft_tabs" != "no" ; then
+  if test "$with_xft_emacs" = "yes" -a "$enable_widgets" != "no" ; then
+    with_xft_tabs="yes"
+  else
+    with_xft_tabs="no"
+  fi
+fi
+dnl this is not in xft reloaded #3
+if test "$with_xft_gauge" != "no" ; then
+  if test "$with_xft_emacs" = "yes" -a "$enable_widgets" != "no" ; then
+    with_xft_gauge="yes"
+  else
+    with_xft_gauge="no"
+  fi
+fi
 
 all_widgets="$enable_menubars $enable_scrollbars $enable_dialogs $enable_toolbars $enable_widgets"
 
@@ -4306,6 +4402,12 @@ test "$enable_menubars"   = "motif"  && AC_DEFINE(LWLIB_MENUBARS_MOTIF)
 test "$enable_scrollbars" = "motif"  && AC_DEFINE(LWLIB_SCROLLBARS_MOTIF)
 test "$enable_dialogs"    = "motif"  && AC_DEFINE(LWLIB_DIALOGS_MOTIF)
 test "$enable_widgets"    = "motif"  && AC_DEFINE(LWLIB_WIDGETS_MOTIF)
+
+dnl this is not in xft reloaded #3
+test "$with_xft_menubars" = "yes"  && AC_DEFINE(USE_XFT_MENUBARS)
+dnl these are new in sjt-xft
+test "$with_xft_tabs" = "yes"  && AC_DEFINE(USE_XFT_TABS)
+test "$with_xft_gauge" = "yes"  && AC_DEFINE(USE_XFT_GAUGE)
 
 dnl ----------------------
 dnl Mule-dependent options
@@ -5782,6 +5884,9 @@ if test "$with_x11" = "yes"; then
   if test "$with_wmcommand" != no; then
     echo "    - Handling WM_COMMAND properly."
   fi
+  if test "$with_xft" = "yes"; then 
+    echo "    - Compiling in support for Xft antialiased fonts (EXPERIMENTAL)."
+  fi
 fi
 if test "$need_motif" = "yes" ; then
   echo "  Compiling in support for Motif."
@@ -5807,6 +5912,11 @@ case "$enable_menubars" in
           echo "             Re-run configure with --enable-menubars='lucid'." ;;
     msw ) echo "  Using MS-Windows menubars." ;;
 esac
+dnl this is not in xft reloaded #3
+if test "$with_xft_menubars" = "yes"; then
+  echo "    - Using Xft to render antialiased fonts in menubars."
+  echo "      WARNING: This feature will be replaced with a face."
+fi
 case "$enable_scrollbars" in
   gtk    ) echo "  Using GTK scrollbars."        ;;
   lucid  ) echo "  Using Lucid scrollbars."      ;;
@@ -5832,6 +5942,17 @@ case "$enable_widgets" in
   athena ) echo "  Using Athena native widgets."     ;;
      msw ) echo "  Using MS-Windows native widgets." ;;
 esac
+dnl this is not in xft reloaded #3
+if test "$with_xft_tabs" = "yes"; then
+  echo "    - Using Xft to render antialiased fonts in tab controls."
+  echo "      WARNING: This feature will be replaced with a face."
+fi
+dnl this is not in xft reloaded #3
+if test "$with_xft_gauge" = "yes"; then
+  echo "    - Using Xft to render antialiased fonts in progress bars."
+  echo "      WARNING: This feature will be replaced with a face."
+  echo "      WARNING: This feature not yet implemented; setting ignored."
+fi
 if test "$with_dragndrop" = yes; then
   echo "  Compiling in support for Drag'n'Drop (EXPERIMENTAL)."
   echo "    -  Drag'n'Drop prototype:                             $dragndrop_proto."

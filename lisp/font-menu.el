@@ -264,7 +264,9 @@ or if you change your font path, you can call this to re-initialize the menus."
 		      (member 0 (aref entry 2))))
 	     (enable-menu-item item)
 	   (disable-menu-item item))
-	 (if (eq size s)
+	 ;; #### God save the Queen!
+	 ;; well, if this fails because s or size is non-numeric, fuck 'em
+	 (if (= size (if (featurep 'xft-fonts) (float s) s))
 	     (select-toggle-menu-item item)
 	   (deselect-toggle-menu-item item))
 	 item)
@@ -345,6 +347,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 				   (or weight from-weight)
 				   (or size from-size))
 	  (error
+	   (message "Error updating font of `%s'" face)
 	   (display-error c nil)
 	   (sit-for 1)))))
     ;; Set the default face's font after hacking the other faces, so that
@@ -356,16 +359,18 @@ or if you change your font path, you can call this to re-initialize the menus."
 	(set-face-font 'default new-default-face-font
 		       (and font-menu-this-frame-only-p (selected-frame)))
       ;; OK Let Customize do it.
-      (custom-set-face-update-spec 'default
-				   (list (list 'type (device-type)))
-				   (list :family (or family from-family)
-					 :size (concat
-						(int-to-string
-						 (/ (or size from-size)
-						    (specifier-instance font-menu-size-scaling
-									(selected-device))))
-						"pt")))
-      (message "Font %s" (face-font-name 'default)))))
+      (let ((fsize (if (featurep 'xft-fonts)
+		       (int-to-string (or size from-size))
+		     (concat (int-to-string
+			      (/ (or size from-size)
+				 (specifier-instance font-menu-size-scaling
+						     (selected-device))))
+			     "pt"))))
+	(custom-set-face-update-spec 'default
+				     (list (list 'type (device-type)))
+				     (list :family (or family from-family)
+					   :size fsize))))
+    (message "Font %s" (face-font-name 'default))))
 
 
 ;; #### This should be called `font-menu-maybe-change-face'

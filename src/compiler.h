@@ -211,6 +211,13 @@ Boston, MA 02111-1307, USA.  */
 #endif /* ATTRIBUTE_CONST */
 
 /* Unused declarations; g++ and icc do not support this. */
+/*
+   NOTE:  These macros MUST be named UNUSED (exactly) or something
+   prefixed with USED_IF_, or DEFUN docstrings will be parsed incorrectly.
+   See comments in make_docfile.c (write_c_args).  You'd think that this
+   wouldn't happen, but unfortunately we do indeed have some arguments
+   of DEFUNs unused for GNU compatibility or because features are missing.
+*/
 #ifndef UNUSED_ARG
 # define UNUSED_ARG(decl) unused_##decl
 #endif
@@ -230,6 +237,11 @@ Boston, MA 02111-1307, USA.  */
 #  define USED_IF_MULE_OR_CHECK_TEXT(decl) decl
 # else
 #  define USED_IF_MULE_OR_CHECK_TEXT(decl) UNUSED (decl)
+# endif
+# ifdef USE_XFT
+#  define USED_IF_XFT(decl) decl
+# else
+#  define USED_IF_XFT(decl) UNUSED (decl)
 # endif
 #endif /* UNUSED */
 

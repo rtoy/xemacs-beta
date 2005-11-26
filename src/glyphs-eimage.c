@@ -36,6 +36,7 @@ Boston, MA 02111-1307, USA.  */
    TIFF code by Jareth Hein for 21.0
    TODO:
    Convert images.el to C and stick it in here?
+   This file is really repetitious; can we refactor?
  */
 
 #include <config.h>

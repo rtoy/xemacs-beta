@@ -206,6 +206,13 @@ things are arranged in config.h.in.  In particular:
 /* Compile in support for the X window system? */
 #undef HAVE_X_WINDOWS
 
+/* Compile with support for Xft? */
+#undef USE_XFT
+/* Per-widget stuff will go away? */
+#undef USE_XFT_MENUBARS
+#undef USE_XFT_TABS
+#undef USE_XFT_GAUGE
+
 /* Defines for building X applications */
 #ifdef HAVE_X_WINDOWS
 /* The following will be defined if xmkmf thinks they are necessary */

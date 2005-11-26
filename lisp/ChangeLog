@@ -1,3 +1,91 @@
+2005-11-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Merge Xft.
+
+    2005-09-07  Clemens Fruhwirth  <clemens@endorphin.org>
+
+	* font.el (font-default-font-for-device): Remove vestigial code
+	from incomplete removal of conditional.
+
+    2005-08-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* fontconfig.el (fc-try-font): Improve docstring, add todo comment.
+	(make-fc-pattern): Use defalias, not defun.
+
+    2005-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* fontconfig.el (make-fc-pattern): Don't add finalizer, now
+	finalizer is in lrecord implementation.
+
+    2005-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	`fc-list-fonts-pattern-objects' now returns a LISP list.
+
+	* fontconfig.el (fc-try-font):
+	(fc-find-available-font-families):
+	(fc-find-available-weights-for-family):
+	Adapt to it.
+
+	(fc-try-font): Return list of pattern objects.
+
+	(fc-fontset-list): Remove.
+
+    2005-03-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* font.el (font-running-xemacs): Remove definition.
+	(font-x-font-regexp):
+	(font-x-registry-and-encoding-regexp):
+	(font-default-font-for-device):
+	(x-font-create-name-core):
+	(mswindows-font-create-name):
+	(font-set-face-font):
+	(font-blink-callback):
+	Remove references.
+
+	(define-font-keywords): Remove definition and top-level references.
+
+	(set-font-style-by-keywords):
+	(font-properties-from-style):
+	Comment out.
+
+    2005-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	General cleanup of references to functions Eric has deleted 
+	and renamed in the C core. 
+	* font.el (x-font-create-object): 
+	  xft-xlfd-font-name-p -> xlfd-font-name-p
+	* font.el (x-font-create-object-xft):
+	xft-pattern-* -> fc-pattern-*, return the created font. 
+	* font.el (x-font-create-name-xft):
+	xft* -> fc*
+	* fontconfig.el (fc-font-name-weight-regular): New.
+	* fontconfig.el (fc-font-name-weight-mapping):
+	* fontconfig.el (fc-font-name-weight-mapping-string):
+	* fontconfig.el (fc-font-name-weight-mapping-string-reverse):
+	* fontconfig.el (fc-font-name-weight-mapping-reverse):
+	* fontconfig.el (fc-font-weight-translate-from-symbol):
+	Add information on the "regular" font weight, taken from
+	fontconfig.h, which is the weight my local system returns by
+	default.
+	
+    2005-02-03  Eric Knauel  <eric@xemacs.org>
+
+	* fontconfig.el (fc-try-font): 
+	(fc-find-available-font-families): 
+	(fc-find-available-weights-for-family): adapt to new representation of
+	FcObjectSets
+
+    2004-11-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Xft branch based on "Xft reloaded #3" patch by Eric Knauel and
+	Mathias Neuebaur, and other contributors.
+
+	* fontconfig.el: New file implementing fontconfig interfaces.
+
+	* font.el:
+	* face.el:
+	Use fontconfig to access Xft fonts.
+
 2005-11-21  Marcus Crestani  <crestani@xemacs.org>
 
 	Incremental Garbage Collector

@@ -78,6 +78,8 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/StringDefs.h>
 #include <X11/bitmaps/gray>
 
+#include "lwlib-colors.h"
+
 #include "xlwscrollbarP.h"
 #include "xlwscrollbar.h"
 
@@ -523,65 +525,25 @@ get_gc (XlwScrollBarWidget w, Pixel fg, Pixel bg, Pixmap pm)
   return XtGetGC((Widget) w, mask, &values);
 }
 
-/* Replacement for XAllocColor() that tries to return the nearest
-   available color if the colormap is full.  From FSF Emacs. */
-
-static int
-allocate_nearest_color (Display *display, Colormap screen_colormap,
-		        XColor *color_def)
-{
-  int status = XAllocColor (display, screen_colormap, color_def);
-  if (status)
-    return status;
-
-    {
-      /* If we got to this point, the colormap is full, so we're
-	 going to try to get the next closest color.
-	 The algorithm used is a least-squares matching, which is
-	 what X uses for closest color matching with StaticColor visuals.  */
-
-      int nearest, x;
-      unsigned long nearest_delta = ULONG_MAX;
-
-      int no_cells = XDisplayCells (display, XDefaultScreen (display));
-      /* Don't use alloca here because lwlib doesn't have the
-         necessary configuration information that src does. */
-      XColor *cells = (XColor *) malloc (sizeof (XColor) * no_cells);
-
-      for (x = 0; x < no_cells; x++)
-	cells[x].pixel = x;
-
-      XQueryColors (display, screen_colormap, cells, no_cells);
-
-      for (nearest = 0, x = 0; x < no_cells; x++)
-	{
-	  long dred   = (color_def->red   >> 8) - (cells[x].red   >> 8);
-	  long dgreen = (color_def->green >> 8) - (cells[x].green >> 8);
-	  long dblue  = (color_def->blue  >> 8) - (cells[x].blue  >> 8);
-	  unsigned long delta = dred * dred + dgreen * dgreen + dblue * dblue;
-
-	  if (delta < nearest_delta)
-	    {
-	      nearest = x;
-	      nearest_delta = delta;
-	    }
-	}
-      color_def->red   = cells[nearest].red;
-      color_def->green = cells[nearest].green;
-      color_def->blue  = cells[nearest].blue;
-      free (cells);
-      return XAllocColor (display, screen_colormap, color_def);
-    }
-}
-
 static void
 make_shadow_pixels (XlwScrollBarWidget w)
 {
-  Display *dpy = XtDisplay((Widget) w);
+  Display *dpy = XtDisplay ((Widget) w);
   Colormap cmap = w->core.colormap;
   XColor topc, botc;
   int top_frobbed, bottom_frobbed;
   Pixel bg, fg;
+  Visual *visual;
+  int ignored;
+
+  visual_info_from_widget ((Widget) w, &visual, &ignored);
+  /* #### Apparently this is called before any shell has a visual?
+     or maybe the widget doesn't have a parent yet? */
+  if (visual == CopyFromParent)
+    {
+      Screen *screen = DefaultScreenOfDisplay (dpy);
+      visual = DefaultVisualOfScreen (screen);
+    }
 
   top_frobbed = bottom_frobbed = 0;
 
@@ -595,11 +557,12 @@ make_shadow_pixels (XlwScrollBarWidget w)
     {
       topc.pixel = bg;
       XQueryColor (dpy, cmap, &topc);
+      /* #### can we use a (generalized) xft_convert_color here? */
       /* don't overflow/wrap! */
       topc.red   = MINL(65535, topc.red   * 1.2);
       topc.green = MINL(65535, topc.green * 1.2);
       topc.blue  = MINL(65535, topc.blue  * 1.2);
-      if (allocate_nearest_color (dpy, cmap, &topc))
+      if (x_allocate_nearest_color (dpy, cmap, visual, &topc))
 	{
 	  if (topc.pixel == bg)
 	    {
@@ -607,7 +570,7 @@ make_shadow_pixels (XlwScrollBarWidget w)
 	      topc.red   = MINL(65535, topc.red   + 0x8000);
 	      topc.green = MINL(65535, topc.green + 0x8000);
 	      topc.blue  = MINL(65535, topc.blue  + 0x8000);
-	      if (allocate_nearest_color (dpy, cmap, &topc))
+	      if (x_allocate_nearest_color (dpy, cmap, visual, &topc))
 		{
 		  w->sb.topShadowColor = topc.pixel;
 		}
@@ -628,7 +591,7 @@ make_shadow_pixels (XlwScrollBarWidget w)
       botc.red   = (botc.red   * 3) / 5;
       botc.green = (botc.green * 3) / 5;
       botc.blue  = (botc.blue  * 3) / 5;
-      if (allocate_nearest_color (dpy, cmap, &botc))
+      if (x_allocate_nearest_color (dpy, cmap, visual, &botc))
 	{
 	  if (botc.pixel == bg)
 	    {
@@ -636,7 +599,7 @@ make_shadow_pixels (XlwScrollBarWidget w)
 	      botc.red   = MINL(65535, botc.red   + 0x4000);
 	      botc.green = MINL(65535, botc.green + 0x4000);
 	      botc.blue  = MINL(65535, botc.blue  + 0x4000);
-	      if (allocate_nearest_color (dpy, cmap, &botc))
+	      if (x_allocate_nearest_color (dpy, cmap, visual, &botc))
 		{
 		  w->sb.bottomShadowColor = botc.pixel;
 		}
@@ -703,6 +666,17 @@ make_trough_pixel (XlwScrollBarWidget w)
   Display *dpy = XtDisplay((Widget) w);
   Colormap cmap = w->core.colormap;
   XColor troughC;
+  Visual *visual;
+  int ignored;
+
+  visual_info_from_widget ((Widget) w, &visual, &ignored);
+  /* #### Apparently this is called before any shell has a visual?
+     or maybe the widget doesn't have a parent yet? */
+  if (visual == CopyFromParent)
+    {
+      Screen *screen = DefaultScreenOfDisplay (dpy);
+      visual = DefaultVisualOfScreen (screen);
+    }
 
   if (w->sb.troughColor == (Pixel)~0) w->sb.troughColor = w->core.background_pixel;
 
@@ -713,7 +687,7 @@ make_trough_pixel (XlwScrollBarWidget w)
       troughC.red   = (troughC.red   * 4) / 5;
       troughC.green = (troughC.green * 4) / 5;
       troughC.blue  = (troughC.blue  * 4) / 5;
-      if (allocate_nearest_color (dpy, cmap, &troughC))
+      if (x_allocate_nearest_color (dpy, cmap, visual, &troughC))
 	w->sb.troughColor = troughC.pixel;
     }
 }

@@ -83,6 +83,7 @@ my %config_args =
    "--libdir=/tmp/foo" => undef,
    "--exec-prefix=/tmp/foo" => undef,
    "--with-athena=3d" => undef,
+   "--with-mule --with-xft=emacs --debug --error-checking=all --with-xim=xlib --with-widgets=athena --with-athena=3d --with-dialogs=athena --memory-usage-stats --use-number-lib=gmp --site-prefixes=/opt/local:/sw --with-ldap=no --use-union-type" => "--enable-mule --with-xft=emacs --enable-debug --enable-error-checking=all --with-xim=xlib --enable-widgets=athena --with-athena=3d --enable-dialogs=athena --enable-memory-usage-stats --enable-bignum=gmp --with-site-prefixes=/opt/local:/sw --with-ldap=no --enable-union-type"
   );
 
 die "Usage: $0 /path/to/configure-2.13 /path/to/configure-2.59\n" if scalar(@ARGV) != 2;

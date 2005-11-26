@@ -52,6 +52,7 @@ Boston, MA 02111-1307, USA.  */
 
 static void xaw_generic_callback (Widget, XtPointer, XtPointer);
 
+extern int debug_xft;
 
 Boolean
 lw_xaw_widget_p (Widget widget)
@@ -738,7 +739,7 @@ xaw_create_button (widget_instance *instance)
   lw_add_value_args_to_args (val, al, &ac);
 
   if (!val->call_data)
-    button = XtCreateManagedWidget (val->name, labelWidgetClass, 
+    button = XtCreateWidget (val->name, labelWidgetClass, 
 				    instance->parent, al, ac);
 
   else 
@@ -746,20 +747,21 @@ xaw_create_button (widget_instance *instance)
       if (val->type == TOGGLE_TYPE || val->type == RADIO_TYPE)
 	{
 	  XtSetArg (al [ac], XtNstate, val->selected);	ac++;
-	  button = XtCreateManagedWidget 
+	  button = XtCreateWidget 
 	    (val->name, 
 	     val->type == TOGGLE_TYPE ? checkboxWidgetClass : radioWidgetClass,
 	     instance->parent, al, ac);
 	}
       else 
 	{
-	  button = XtCreateManagedWidget (val->name, commandWidgetClass,
+	  button = XtCreateWidget (val->name, commandWidgetClass,
 					  instance->parent, al, ac);
 	}
       XtRemoveAllCallbacks (button, XtNcallback);
       XtAddCallback (button, XtNcallback, xaw_generic_callback, (XtPointer)instance);
     }
 
+  /* #### this maybe can be folded into the XtCreateWidget calls above */
   XtManageChild (button);
 
   return button;
@@ -788,7 +790,8 @@ xaw_create_label (Widget parent, widget_value* val)
   label = XtCreateManagedWidget (val->name, labelWidgetClass, 
 				 parent, al, ac);
 
-  /* Do it again for arguments that have no effect until the widget is realized. */
+  /* Do it again for arguments that have no effect until the widget is realized.
+     #### Uh, but the widget isn't realized until later?  Do we mean "created"? */
   ac = 0;
   lw_add_value_args_to_args (val, al, &ac);
   if (ac > 20)
@@ -796,6 +799,60 @@ xaw_create_label (Widget parent, widget_value* val)
   XtSetValues (label, al, ac);
 
   return label;
+}
+
+static int debug_gauge = 0;
+
+static void
+lw_debug_print_xt_arglist (ArgList al, int ac)
+{
+  int i;
+  for (i = 0; i < ac; i++)
+    fprintf (stderr, "Widget has arg %s with value %lu.\n",
+	     al[i].name, (unsigned long) al[i].value);
+}
+
+static void
+lw_debug_print_class_resources (WidgetClass class_)
+{
+  Cardinal i;
+  do {
+    Cardinal m, n = class_->core_class.num_resources;
+    XtResourceList rl;
+    fprintf (stderr, "Class is %s (%p/%p) with %d resources.\n",
+	     class_->core_class.class_name, class_, &(class_->core_class), n);
+    fprintf (stderr, "  Class's resources are at %p.  Converting...\n",
+	     class_->core_class.resources);
+    /* resources may be compiled to an internal format */
+    XtGetResourceList (class_, &rl, &m);
+    for (i = 0; i < m; i++)
+      fprintf (stderr,
+	       "  Class has a %s resource of type %s initialized from %s.\n",
+	       rl[i].resource_class, rl[i].resource_type, rl[i].default_type);
+    /* special cases for commonly problematic resources */
+    for (i = 0; i < m; i++)
+      {
+	if (!strcmp (rl[i].resource_class, "Font"))
+	  {
+	    fprintf (stderr, "  Class has a Font resource.\n");
+	    fprintf (stderr, "    Font resource is %s.\n",
+		     (char *) rl[i].default_addr);
+	  }
+	if (!strcmp (rl[i].resource_class, "FontSet"))
+	  {
+	    fprintf (stderr, "  Class has a FontSet resource.\n");
+	    fprintf (stderr, "    FontSet resource is %s.\n",
+		     (char *) rl[i].default_addr);
+	  }
+	if (!strcmp (rl[i].resource_class, "International"))
+	  {
+	    fprintf (stderr, "  Class has an International resource.\n");
+	    fprintf (stderr, "    International resource is %d.\n",
+		     (int) rl[i].default_addr);
+	  }
+      }
+    class_ = class_->core_class.superclass;
+  } while (class_ != NULL);
 }
 
 static Widget
@@ -826,12 +883,20 @@ xaw_create_progress (widget_instance *instance)
   /* add any args the user supplied for creation time */
   lw_add_value_args_to_args (val, al, &ac);
 
-  scale = XtCreateManagedWidget (val->name, gaugeWidgetClass,
-				 instance->parent, al, ac);
+  if (debug_gauge > 1)
+    lw_debug_print_class_resources (gaugeWidgetClass);
+  if (debug_gauge > 0)
+    lw_debug_print_xt_arglist (al, ac);
+
+  scale = XtCreateWidget (val->name, gaugeWidgetClass,
+			  instance->parent, al, ac);
+
   /* add the callback */
   if (val->call_data)
-    XtAddCallback (scale, XtNgetValue, xaw_generic_callback, (XtPointer)instance);
+    XtAddCallback (scale, XtNgetValue, xaw_generic_callback,
+		   (XtPointer) instance);
 
+  /* #### this maybe can be folded into the XtCreateWidget call above */
   XtManageChild (scale);
 
   return scale;
@@ -864,7 +929,7 @@ xaw_create_text_field (widget_instance *instance)
   /* add any args the user supplied for creation time */
   lw_add_value_args_to_args (val, al, &ac);
 
-  text = XtCreateManagedWidget (val->name, asciiTextWidgetClass,
+  text = XtCreateWidget (val->name, asciiTextWidgetClass,
 				      instance->parent, al, ac);
 
   /* add the callback */

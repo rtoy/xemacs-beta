@@ -164,7 +164,9 @@ struct face_cachel
      of them.  This avoids messing with Dynarrs.
 
      #### We should look into this and probably clean it up
-     to use Dynarrs.  This may be a big space hog as is. */
+     to use Dynarrs.  This may be a big space hog as is.
+     sjt sez: doesn't look like it, my total face cache is 170KB.
+     Could be reduced to maybe 50KB. */
   Lisp_Object font[NUM_LEADING_BYTES];
 
   Lisp_Object display_table;
@@ -263,6 +265,10 @@ void reset_face_cachel (struct face_cachel *inst);
 void reset_face_cachels (struct window *w);
 face_index get_builtin_face_cache_index (struct window *w,
 					 Lisp_Object face);
+/* WARNING: this interface may change. */
+face_index merge_face_list_to_cache_index (struct window *w,
+					   Lisp_Object *face_list, int count);
+
 #ifdef MEMORY_USAGE_STATS
 int compute_face_cachel_usage (face_cachel_dynarr *face_cachels,
 			       struct overhead_stats *ovstats);
