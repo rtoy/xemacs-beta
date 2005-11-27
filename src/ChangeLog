@@ -1,3 +1,7 @@
+2005-11-27  Marcus Crestani  <crestani@xemacs.org>
+
+	* lrecord.h: Remove NEWGC junk.
+
 2005-11-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Build fixes and dead code removal.
