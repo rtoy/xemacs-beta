@@ -1729,8 +1729,6 @@ if test "$enable_newgc" = "yes"; then
       cygwin* ) AC_DEFINE(VDB_WIN32) have_vdb_win32=yes ;;
       linux* )  check_vdb_posix=yes ;;
       freebsd ) check_vdb_posix=yes ;;
-dnl bail out immediately
-dnl      * )       have_vdb_fake=yes ;;
 dnl if not sure, try posix first, maybe we are lucky
       * )       check_vdb_posix=yes ;;
     esac
@@ -4609,6 +4607,8 @@ if test "$check_vdb_posix" = "yes" ; then
   if test "$have_vdb_sigaction" != "yes" -a "$have_vdb_signal" != "yes" ; then
     have_vdb_posix=no
     have_vdb_fake=yes
+    XE_DIE("No working write-barrier implementation found for this system.
+       Please report this and provide information about your system.")
   else
     have_vdb_posix=yes
     have_vdb_fake=no
@@ -6083,15 +6083,6 @@ if test "$have_vdb_win32" = yes ; then
 fi
 if test "$have_vdb_mach" = yes ; then
   echo "  Using mach exception mechanism as vdb fault handler."
-fi
-if test "$have_vdb_fake" = yes && test "$enable_vdb" != fake; then
-  echo "  WARNING: ---------------------------------------------------------"
-  echo "  WARNING: The new incremental garbage collector is enabled, but"
-  echo "  WARNING: a virtual dirty bit implementation is not yet available"
-  echo "  WARNING: on this system. XEmacs will crash if you try to switch on"
-  echo "  WARNUNG: incremental garbage collection!"
-  echo "  WARNING: Use \`--disable-newgc' to turn incremental gc off."
-  echo "  WARNING: ---------------------------------------------------------"
 fi
 if test "$have_vdb_fake" = yes && test "$enable_vdb" == fake; then
   echo "  Virtual dirty bit write barrier manually disabled."
