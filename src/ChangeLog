@@ -1,3 +1,8 @@
+2005-11-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs.def.in.in (lrecord_uid_counter): Add it.  Patch by Rick
+	Rankin <20051120054349.52906.qmail@web61019.mail.yahoo.com>.
+
 2005-11-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* dumper.c: Move comment to where it apparently belongs.

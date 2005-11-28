@@ -207,6 +207,7 @@ lrecord_markers			/* INIT_LRECORD_IMPLEMENTATION */
 lrecord_string			/* STRINGP */
 lrecord_symbol	 		/* SYMBOLP */
 lrecord_type_count		/* INIT_EXTERNAL_LRECORD_IMPLEMENTATION */
+lrecord_uid_counter
 need_to_check_c_alloca		/* ALLOCA */
 print_readably
 quit_check_signal_happened	/* QUITP */
