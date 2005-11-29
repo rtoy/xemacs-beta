@@ -207,7 +207,7 @@
     (dv         . "http://www.lrde.epita.fr/~didier/")
     (fabrice    . "http://www.ese-metz.fr/~popineau/")
     (fptex      . "http://www.fptex.org/")
-    (james      . "http://www.ittc.ku.edu/~james/")
+    (james      . "http://www.cs.usu.edu/~jerry/")
     (jas	. "http://josefsson.org/")
     (jason      . "http://www.mastaler.com/")
     (juhp       . "http://www.01.246.ne.jp/~juhp/")
@@ -1102,11 +1102,15 @@ from FSF Emacs to XEmacs.  He thought that Gnus looked a lot cooler in
 XEmacs, and soon had a web page containing small patches to XEmacs
 20.3, which were picked up by the Debian Linux distribution.
 
-He has since given up his native California to join the faculty at the
+He has since given up his native California, to join the faculty at the
 University of Kansas.  He is learning to like the weather in Lawrence,
-Kansas, where he lives with his wife and 3 children.  His work on XEmacs
-mostly consists of extensions to the loadable module support in XEmacs,
-which was introduced by J. Kean Johnston and others.  He has a ")
+Kansas, where he lives with his wife and 3 children.  (Ed. note: I guess
+he didn't like the weather enough; he is now teaching at Utah State
+University.)
+
+His work on XEmacs mostly consists of extensions to the loadable module
+support in XEmacs, which was introduced by J. Kean Johnston and others.
+He has a ")
      (about-url-link 'james "home page" "Visit Jerry's home page")
      (widget-insert " (doesn't everybody?)\n"))
     (jan
