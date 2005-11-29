@@ -1,4 +1,63 @@
 to 21.5.24 "dandelion"
+Major features
+
+-- New: Xft font support. -- Stephen J. Turnbull, Aidan Kehoe, Daniel Pittman, Clemens Fruhwirth, Eric Knauel, Matthias Neuebaur, Hrvoje Niksic, Olivier Galibert
+-- New: incremental garbage collector. -- Marcus Crestani
+
+User-Visible Bug Fixes and Minor Improvements
+
+-- Fix: change_window_height must change the window width when requested. -- Aidan Kehoe
+-- Fix: crashes printing ISO2022 coding systems. -- Ben Wing
+-- Update: etags to upstream 17.15. -- Malcolm Purvis
+
+Build Infrastructure
+
+-- Fix build output directory structure on Windows. -- Marcus Crestani
+-- Fix: configuration of native sound on Windows. -- Ben Wing
+-- Fix: small bugs in configure of AC_INIT and PostgreSQL. -- Stephen J. Turnbull
+-- Improve: CVS behavior. -- Stephen J. Turnbull, Marcus Crestani, Malcolm Purvis
+-- Improve: refactor make clean, nuke .elcs. -- Ben Wing
+
+Documentation
+
+-- Improve: Add 'Known Problems' to the Help menu. -- Malcolm Purvis
+-- Improve: HELLO in Irish and Tajik. -- Aidan Kehoe
+-- Improve: INSTALL. -- Stephen J. turnbull
+-- Improve: consistency of symbol quoting in documentation. -- Ben Wing
+-- Improve: docstrings. -- Stephen J. Turnbull
+-- Improve: reorganize option list from configure. -- Malcolm Purvis
+-- Improve: texi document CVS branching. -- Ben Wing
+-- Improve: texi documentation of DEFSYMBOL. --
+-- Improve: texi documentation of XEmacs Autoconf macros. -- Malcolm Purvis
+-- Improve: update PROBLEMS, and install in etc. -- Malcolm Purvis
+
+Lisp API
+
+-- Improve: generalize describe-syntax-table to describe-char-table. -- Ben Wing
+-- Improve: memory statistics reporting. -- Marcus Crestani
+
+Internal API and Implementation
+
+-- Fix: C++ build. -- Ben Wing, Marcus Crestani
+-- Fix: Mule-ize canna_api module. -- Ben Wing, Stephen J. Turnbull
+-- Fix: byte compile by conditional compilation. -- Ben Wing
+-- Fix: compilation errors and warnings in GTK code. -- Malcolm Purvis
+-- Fix: help on functions without documentation. -- Ben Wing
+-- Fix: integer types for Berkeley db. -- Stephen J. Turnbull, Volker Zell
+-- Fix: make modules build on Cygwin and Mac. -- Stephen J. Turnbull, Rick Rankin
+-- Fix: quiet byte-compiler. -- Stephen J. Turnbull
+-- Fix: syntax error -- Marcus Crestani
+-- Fix: uninitialized local variables. -- Stephen J. Turnbull
+-- Fix: use princ, not prin1 in debug print. -- Ben Wing
+-- Fix: use uint32_t declaration, fixing build on FreeBSD. -- Steve Youngs, Andrey Slusar
+-- Fix: value of MAX_STRING_ASCII_BEGIN under MC_ALLOC. -- Ben Wing
+-- Fix: warning elimination, mark UNUSED paramters -- Marcus Crestani, Stephen J. Turnbull
+-- Improve: bignum support on mingwin. -- Ben Wing
+-- Improve: lrecord uid handling. -- Ben Wing
+-- Improve: refactor default_object_printer. -- Marcus Crestani
+-- Improve: remove dead code in lwlib. Stephen J. Turnbull
+-- Improve: reorganize lisp.h. -- Ben Wing
+-- Improve: tabs widget. -- Stephen J. Turnbull
 
 to 21.5.23 "daikon"
 Major features
