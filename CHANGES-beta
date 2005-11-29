@@ -30,6 +30,7 @@ Documentation
 -- Improve: texi documentation of DEFSYMBOL. -- Stephen J. Turnbull
 -- Improve: texi documentation of XEmacs Autoconf macros. -- Malcolm Purvis
 -- Improve: update PROBLEMS, and install in etc. -- Malcolm Purvis
+-- Update: about Jerry James. -- Stephen J. Turnbull
 
 Lisp API
 
@@ -44,7 +45,7 @@ Internal API and Implementation
 -- Fix: compilation errors and warnings in GTK code. -- Malcolm Purvis
 -- Fix: help on functions without documentation. -- Ben Wing
 -- Fix: integer types for Berkeley db. -- Stephen J. Turnbull, Volker Zell
--- Fix: make modules build on Cygwin and Mac. -- Stephen J. Turnbull, Rick Rankin
+-- Fix: make modules build on Cygwin and Mac. -- Stephen J. Turnbull, Rick Rankin, Ben Wing
 -- Fix: quiet byte-compiler. -- Stephen J. Turnbull
 -- Fix: syntax error -- Marcus Crestani
 -- Fix: uninitialized local variables. -- Stephen J. Turnbull
@@ -57,7 +58,7 @@ Internal API and Implementation
 -- Improve: refactor default_object_printer. -- Marcus Crestani
 -- Improve: remove dead code in lwlib. -- Stephen J. Turnbull
 -- Improve: reorganize lisp.h. -- Ben Wing
--- Improve: tabs widget. -- Stephen J. Turnbull
+-- Improve: tabs widget internals. -- Stephen J. Turnbull
 
 to 21.5.23 "daikon"
 Major features

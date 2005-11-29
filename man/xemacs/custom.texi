@@ -2148,7 +2148,7 @@ before the @code{x-bitmap-file-path} variable.
 Alternately, you can use a simpler version of
 @code{set-face-background-pixmap} called
 @code{set-face-background-pixmap-file}. This function does not give you
-as much control on the pixmap instanciator, but provides filename
+as much control on the pixmap instantiator, but provides filename
 completion.
 
 @findex set-face-font
@@ -2157,6 +2157,49 @@ You can set the font of the specified @var{face} with the function
 name of a font.  When called from a program, if the
 optional @var{frame} argument is provided, the face is changed only
 in that frame; otherwise, it is changed in all frames.
+
+The syntax of the @var{font} argument varies according to platform.  In
+each of the following syntaxes, the example shows how to specify a
+14-point upright bold Courier font.
+
+@table @strong
+@item X11
+The X11 syntax is defined by the @dfn{X Logical Font Descriptor} (XLFD)
+standard.  An XLFD contains 14 fields each preceded by a hyphen:
+foundry, family, weight, slant, swidth, adstyle, pixelsize, pointsize,
+xresolution, yresolution, spacing, averagewidth, registry, and encoding.
+It is usually sufficient to specify family, weight, slant, pointsize,
+registry, and encoding, wildcarding the rest with @samp{*}.  If you're
+not sure what's available, you can wildcard some of the fields usually
+specified, too.  Here's our example font in XLFD syntax:
+@code{"-*-courier-bold-r-*-*-*-140-*-*-*-*-iso8859-*"}.
+The XLFD syntax is also used for GTK+ version 1.  XLFD names must be
+encoding in ISO-8859-1.
+
+@item Xft
+The Xft syntax is defined by the @file{fontconfig} library
+@ref{Font Names,,,fontconfig}.  It is less a font naming convention than
+a way to express any arbitrary subset of the font's properties in a
+syntax that is both human- and machine-readable.  A @file{fontconfig}
+font name contains the family, a hyphen, and the pointsize, followed by
+an arbitrary sequence of properties.  Each property consists of a colon,
+a keyword, an equals sign, and the property value.  Here's our example
+font in @file{fontconfig} syntax: @code{"Courier-14:weight=bold"}.  This
+syntax admits ``style abbreviations'' which can be user-defined.  A
+style is a single keyword denoting a sequence of properties.  So the
+example font may be abbreviated to @code{"Courier-14:bold"} ("bold" is a
+standard abbreviation for "weight=bold").  The @file{fontconfig} syntax
+is also used for GTK+ version 2.  @file{fontconfig} names must be
+encoded in UTF-8.
+
+@item MS-Windows
+The MS Windows syntax is superficially similar to that of Xft but
+actually is more like XLFD.  A font name consists of five fields,
+family, size, slant, weight, and encoding, each expressed as a keyword
+taking on standardized values (except family, which is just a name).
+Here's our example font in MS Windows syntax:
+@code{"Courier:14:Bold:Western"}.
+@end table
 
 @findex set-face-foreground
 You can set the foreground color of the specified @var{face} with the

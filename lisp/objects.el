@@ -50,9 +50,11 @@ specifiers.
 
 Valid instantiators for font specifiers are:
 
--- a string naming a font (e.g. under X this might be
-   \"-*-courier-medium-r-*-*-*-140-*-*-*-*-iso8859-*\" for a 14-point
-   upright medium-weight Courier font)
+-- a string naming a font; syntax is platform dependent.  Some examples for
+   a 14-point upright medium-weight Courier font:
+   X11 (and GTK1): \"-*-courier-medium-r-*-*-*-140-*-*-*-*-iso8859-*\"
+   Xft (and GTK2): \"Courier-14\"
+   MS-Windows:     \"Courier:14:Western\"
 -- a font instance (use that instance directly if the device matches,
    or use the string that generated it)
 -- a vector of no elements (only on TTY's; this means to set no font

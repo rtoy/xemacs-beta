@@ -1,5 +1,9 @@
 2005-11-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* objects.el (make-font-specifier): Document font name syntaxes.
+
+2005-11-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* about.el (about-personal-info, about-url-alist): Update `jerry'.
 
 2005-11-26  Stephen J. Turnbull  <stephen@xemacs.org>
