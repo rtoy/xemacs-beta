@@ -1,3 +1,7 @@
+2005-11-29  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* occur.el: Add autoload cookie for list-matching-lines.
+
 2005-11-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* objects.el (make-font-specifier): Document font name syntaxes.

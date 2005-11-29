@@ -222,6 +222,7 @@ A positive number means to include that many lines both before and after."
   :type 'integer
   :group 'matching)
 
+;;;###autoload
 (defalias 'list-matching-lines 'occur)
 
 (defcustom list-matching-lines-face 'match
