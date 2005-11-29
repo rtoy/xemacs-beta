@@ -82,6 +82,12 @@ emodules_doc_sym		/* CDOCSYM */
 eputenv
 #ifdef DEBUG_XEMACS
 eq_with_ebola_notice		/* EQ_WITH_EBOLA_NOTICE */
+error_check_cons
+error_check_ldap
+error_check_opaque_ptr
+error_check_pgconn
+error_check_pgresult
+error_check_string
 #endif
 free_opaque_ptr
 get_coding_system_for_text_file
@@ -144,6 +150,9 @@ vector1
 vector2
 vector3
 warn_when_safe
+#ifdef DEBUG_XEMACS
+wrap_record_1
+#endif
 write_c_string
 write_fmt_string
 write_fmt_string_lisp
@@ -187,6 +196,9 @@ Fset_buffer
 Fsignal
 Fthrow
 Fvector
+#ifdef DEBUG_XEMACS
+XINT_1
+#endif
 
 /* Exported variables */
 __temp_alloca_size__		/* ALLOCA */
