@@ -227,15 +227,15 @@ directory."
     ("Japan (aist.go.jp)" "ring.aist.go.jp" "pub/text/xemacs/packages")
     ("Japan (asahi-net.or.jp)" "ring.asahi-net.or.jp" "pub/text/xemacs/packages")
     ("Japan (dti.ad.jp)" "ftp.dti.ad.jp" "pub/unix/editor/xemacs/packages")
-    ("Japan (jaist.ac.jp)" "ftp.jaist.ac.jp" "pub/GNU/xemacs/packages")
-    ("Japan (jp.xemacs.org)" "ftp.jp.xemacs.org" "pub/GNU/xemacs/packages")
+;   ("Japan (jaist.ac.jp)" "ftp.jaist.ac.jp" "pub/GNU/xemacs/packages")
+;   ("Japan (jp.xemacs.org)" "ftp.jp.xemacs.org" "pub/GNU/xemacs/packages")
 ;   ("Japan (nucba.ac.jp)" "mirror.nucba.ac.jp" "mirror/xemacs/packages")
     ("Japan (sut.ac.jp)" "sunsite.sut.ac.jp" "pub/archives/packages/xemacs/packages")
     ("Korea (kr.xemacs.org)" "ftp.kr.xemacs.org" "pub/tools/emacs/xemacs/packages")
     ("New Zealand (nz.xemacs.org)" "ftp.nz.xemacs.org" "mirror/ftp.xemacs.org/packages")
     ("Norway (no.xemacs.org)" "ftp.no.xemacs.org" "pub/xemacs/packages")
     ("Poland (pl.xemacs.org)" "ftp.pl.xemacs.org" "pub/unix/editors/xemacs/packages")
-    ("Russia (ru.xemacs.org)" "ftp.ru.xemacs.org" "pub/xemacs/packages")
+    ("Russia (ru.xemacs.org)" "ftp.ru.xemacs.org" "pub/emacs/xemacs/packages")
 ;   ("South Africa (za.xemacs.org)" "ftp.za.xemacs.org" "mirrorsites/ftp.xemacs.org/packages")
     ("Sweden (se.xemacs.org)" "ftp.se.xemacs.org" "pub/gnu/xemacs/packages")
     ("Switzerland (ch.xemacs.org)" "ftp.ch.xemacs.org" "mirror/xemacs/packages")
@@ -245,7 +245,8 @@ directory."
     ("US (stealth.net)" "ftp.stealth.net" "pub/mirrors/ftp.xemacs.org/pub/xemacs/packages")
     ("US (unc.edu)" "metalab.unc.edu" "pub/packages/editors/xemacs/packages")
     ("US (us.xemacs.org)" "ftp.us.xemacs.org" "pub/xemacs/packages")
-    ("US (utk.edu)" "ftp.sunsite.utk.edu" "pub/xemacs/packages"))
+;   ("US (utk.edu)" "ftp.sunsite.utk.edu" "pub/xemacs/packages")
+    )
   "*List of remote sites available for downloading packages.
 List format is '(site-description site-name directory-on-site).
 SITE-DESCRIPTION is a textual description of the site.  SITE-NAME
@@ -261,7 +262,7 @@ variable actually used to specify package download sites."
 (defcustom package-get-pre-release-download-sites
   '(
     ;; Main XEmacs Site (ftp.xemacs.org)
-    ("Pre-Releases (Main XEmacs Site)" "ftp.xemacs.org"
+    ("US Pre-Releases (Main XEmacs Site)" "ftp.xemacs.org"
      "pub/xemacs/beta/experimental/packages")
     ;; In alphabetical order of Country, our mirrors...
     ("Argentina Pre-Releases (xmundo.net)" "xemacs.xmundo.net"
@@ -310,10 +311,10 @@ variable actually used to specify package download sites."
      "pub/text/xemacs/beta/experimental/packages")
     ("Japan Pre-Releases (dti.ad.jp)" "ftp.dti.ad.jp"
      "pub/unix/editor/xemacs/beta/experimental/packages")
-    ("Japan Pre-Releases (jaist.ac.jp)" "ftp.jaist.ac.jp"
-     "pub/GNU/xemacs/beta/experimental/packages")
-    ("Japan Pre-Releases (jp.xemacs.org)" "ftp.jp.xemacs.org"
-     "pub/GNU/xemacs/beta/experimental/packages")
+;   ("Japan Pre-Releases (jaist.ac.jp)" "ftp.jaist.ac.jp"
+;    "pub/GNU/xemacs/beta/experimental/packages")
+;   ("Japan Pre-Releases (jp.xemacs.org)" "ftp.jp.xemacs.org"
+;    "pub/GNU/xemacs/beta/experimental/packages")
     ("Japan Pre-Releases (sut.ac.jp)" "sunsite.sut.ac.jp"
      "pub/archives/packages/xemacs/xemacs-21.5/experimental/packages")
     ("Korea (kr.xemacs.org)" "ftp.kr.xemacs.org"
@@ -325,7 +326,7 @@ variable actually used to specify package download sites."
     ("Poland Pre-Releases (pl.xemacs.org)" "ftp.pl.xemacs.org"
      "pub/unix/editors/xemacs/beta/experimental/packages")
     ("Russia Pre-Releases (ru.xemacs.org)" "ftp.ru.xemacs.org"
-     "pub/xemacs/beta/experimental/packages")
+     "pub/emacs/xemacs/beta/experimental/packages")
 ;   ("South Africa Pre-Releases (za.xemacs.org)" "ftp.za.xemacs.org"
 ;    "mirrorsites/ftp.xemacs.org/beta/experimental/packages")
     ("Sweden Pre-Releases (se.xemacs.org)" "ftp.se.xemacs.org"
@@ -344,8 +345,9 @@ variable actually used to specify package download sites."
      "pub/packages/editors/xemacs/beta/experimental/packages")
     ("US Pre-Releases (us.xemacs.org)" "ftp.us.xemacs.org"
      "pub/xemacs/beta/experimental/packages")
-    ("US Pre-Releases (utk.edu)" "ftp.sunsite.utk.edu"
-     "pub/xemacs/beta/experimental/packages"))
+;   ("US Pre-Releases (utk.edu)" "ftp.sunsite.utk.edu"
+;    "pub/xemacs/beta/experimental/packages")
+)
   "*List of remote sites available for downloading \"Pre-Release\" packages.
 List format is '(site-description site-name directory-on-site).
 SITE-DESCRIPTION is a textual description of the site.  SITE-NAME
