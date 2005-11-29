@@ -22,12 +22,12 @@ Documentation
 
 -- Improve: Add 'Known Problems' to the Help menu. -- Malcolm Purvis
 -- Improve: HELLO in Irish and Tajik. -- Aidan Kehoe
--- Improve: INSTALL. -- Stephen J. turnbull
+-- Improve: INSTALL. -- Stephen J. Turnbull
 -- Improve: consistency of symbol quoting in documentation. -- Ben Wing
 -- Improve: docstrings. -- Stephen J. Turnbull
 -- Improve: reorganize option list from configure. -- Malcolm Purvis
 -- Improve: texi document CVS branching. -- Ben Wing
--- Improve: texi documentation of DEFSYMBOL. --
+-- Improve: texi documentation of DEFSYMBOL. -- Stephen J. Turnbull
 -- Improve: texi documentation of XEmacs Autoconf macros. -- Malcolm Purvis
 -- Improve: update PROBLEMS, and install in etc. -- Malcolm Purvis
 
@@ -51,11 +51,11 @@ Internal API and Implementation
 -- Fix: use princ, not prin1 in debug print. -- Ben Wing
 -- Fix: use uint32_t declaration, fixing build on FreeBSD. -- Steve Youngs, Andrey Slusar
 -- Fix: value of MAX_STRING_ASCII_BEGIN under MC_ALLOC. -- Ben Wing
--- Fix: warning elimination, mark UNUSED paramters -- Marcus Crestani, Stephen J. Turnbull
+-- Fix: warning elimination, mark UNUSED parameters -- Marcus Crestani, Stephen J. Turnbull
 -- Improve: bignum support on mingwin. -- Ben Wing
 -- Improve: lrecord uid handling. -- Ben Wing
 -- Improve: refactor default_object_printer. -- Marcus Crestani
--- Improve: remove dead code in lwlib. Stephen J. Turnbull
+-- Improve: remove dead code in lwlib. -- Stephen J. Turnbull
 -- Improve: reorganize lisp.h. -- Ben Wing
 -- Improve: tabs widget. -- Stephen J. Turnbull
 
