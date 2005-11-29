@@ -1,6 +1,6 @@
-2005-11-29  Stephen J. Turnbull  <stephen@xemacs.org>
+2005-11-29  Malcolm Purvis  <malcolmp@xemacs.org>
 
-	* XEmacs 21.5.24 "dandelion" is released.
+	* occur.el: Add autoload cookie for list-matching-lines.
 
 2005-11-29  Stephen J. Turnbull  <stephen@xemacs.org>
 

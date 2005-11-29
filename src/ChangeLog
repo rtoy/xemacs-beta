@@ -1,9 +1,5 @@
 2005-11-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
-	* XEmacs 21.5.24 "dandelion" is released.
-
-2005-11-29  Stephen J. Turnbull  <stephen@xemacs.org>
-
 	* xemacs.def.in.in (error_check_cons, error_check_ldap):
 	(error_check_opaque_ptr, error_check_pgconn, error_check_pgresult):
 	(error_check_string, wrap_record_1, XINT_1): Add.  Patch by Rick
