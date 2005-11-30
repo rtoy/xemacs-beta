@@ -1,3 +1,8 @@
+2005-11-29  Marcus Crestani  <crestani@xemacs.org>
+
+	* xemacs.def.in.in: Condition error_check_* symbols on
+	ERROR_CHECK_TYPES.
+
 2005-11-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs.def.in.in (error_check_cons, error_check_ldap):

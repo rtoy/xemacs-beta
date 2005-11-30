@@ -82,12 +82,22 @@ emodules_doc_sym		/* CDOCSYM */
 eputenv
 #ifdef DEBUG_XEMACS
 eq_with_ebola_notice		/* EQ_WITH_EBOLA_NOTICE */
+#endif
+#ifdef ERROR_CHECK_TYPES
 error_check_cons
+#ifdef HAVE_LDAP
 error_check_ldap
+#endif
 error_check_opaque_ptr
+#ifdef HAVE_POSTGRESQL
 error_check_pgconn
 error_check_pgresult
+#endif
 error_check_string
+#ifdef NEW_GC
+error_check_string_direct_data
+error_check_string_indirect_data
+#endif
 #endif
 free_opaque_ptr
 get_coding_system_for_text_file
@@ -150,7 +160,7 @@ vector1
 vector2
 vector3
 warn_when_safe
-#ifdef DEBUG_XEMACS
+#ifdef ERROR_CHECK_TYPES
 wrap_record_1
 #endif
 write_c_string
@@ -196,7 +206,7 @@ Fset_buffer
 Fsignal
 Fthrow
 Fvector
-#ifdef DEBUG_XEMACS
+#ifdef ERROR_CHECK_TYPES
 XINT_1
 #endif
 
