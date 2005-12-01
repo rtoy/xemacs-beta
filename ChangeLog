@@ -1,11 +1,3 @@
-2005-11-29  Malcolm Purvis  <malcolmp@xemacs.org>
-
-	* configure.ac (XE_PARSE_COMPLEX_OPTION): Correctly handle
-	--with-FOO[=yes].  Only enable defaults when the arg is
-	specified.
-	* configure.ac (XE_COMPLEX_ARG[xft]): Default everything on;
-	change doc.
-
 2005-11-27  Marcus Crestani  <crestani@xemacs.org>
 
 	* configure.ac: Remove vdb-fake warning, die if POSIX checks fail.
