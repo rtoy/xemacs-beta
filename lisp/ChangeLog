@@ -1,3 +1,8 @@
+2005-12-03  Ville Skyttä  <scop@xemacs.org>
+
+	* x-faces.el (x-library-search-path): Add /usr(/local)/share/X11.
+	* font.el (font-lookup-rgb-components): Ditto, remove stale comment.
+
 2005-10-28  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el (package-get-download-sites): Update reflecting
