@@ -1,3 +1,8 @@
+2005-12-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/syntax-tests.el (backward-up-list): New test.
+	Thanks to Zacjev Evgeny for report, Aidan Kehoe for reproduction.
+
 2005-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.23 "daikon" is released.
