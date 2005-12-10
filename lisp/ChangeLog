@@ -1,3 +1,8 @@
+2005-12-10  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* about.el (about-personal-info, about-hacker-contribution):
+	Update `malcolmp'.
+
 2005-12-03  Ville Skyttä  <scop@xemacs.org>
 
 	* x-faces.el (x-library-search-path): Add /usr(/local)/share/X11.

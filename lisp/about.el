@@ -1372,11 +1372,11 @@ Sorry, no personal information available about me yet.\n"))
      (widget-insert
       "\
 Graduate of the University of New South Wales and resident of Sydney,
-Australia.  My day job involves developing and maintaining software
-development tools for a telco manufacturer.  I've yet to get XEmacs hacking
-added to my job description.
+Australia.  By day I'm a senior Unix/Linux application and tools
+developer, and wielder of the Dinosaur of Cluefulness, at a small ISV.
+I've yet to get XEmacs hacking added to my job description.
 
-When not hacking, I relax by chasing after my young son, reading SciFi,
+When not hacking, I relax by chasing after my young sons, reading SF,
 listening to Hip Hop and serving on various boards and committees of the
 Anglican Church in Sydney.\n"))
     (rickc
@@ -1840,7 +1840,8 @@ Sorry, no information about my XEmacs contributions yet.\n"))
     (purvis
      (widget-insert
       "\
-Currently filing off some of the splinters in the GTK port.\n"))
+Filing off some of the splinters in the GTK port.  Ported configure to
+autoconf 2.5. Miscellaneous fixes, mainly to the C code.\n"))
     (rickc
      (widget-insert "\
 Maintainer of ILISP.\n"))
