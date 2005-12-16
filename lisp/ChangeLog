@@ -1,3 +1,9 @@
+2005-12-17  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Add Hong Kong
+	download site.
+	* package-get.el (package-get-pre-release-download-sites): Ditto.
+
 2005-12-10  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* about.el (about-personal-info, about-hacker-contribution):
