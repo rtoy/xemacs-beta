@@ -349,6 +349,26 @@ x_perhaps_init_unseen_key_defaults (struct console *con, Lisp_Object key)
   xkeysym = XStringToKeysym(keysym_ext);
   if (NoSymbol == xkeysym) 
     {
+      /* Keysym is NoSymbol; this may mean the key event passed to us came
+	 from an input method, which stored the actual character intended to
+	 be inserted in the key name, and didn't trouble itself to set the
+	 keycode to anything useful. Thus, if the key name is a single
+	 character, and the keysym is NoSymbol, give it a default binding,
+	 if that is possible. */
+      Lisp_Object keychar;
+
+      if (1 != string_char_length(key_name))
+	{
+	  /* Don't let them pass us more than one character. */
+	  return Qnil;
+	}
+      keychar = make_char(itext_ichar(XSTRING_DATA(key_name)));
+      if (NILP (Flookup_key (Vcurrent_global_map, keychar, Qnil))) 
+        {
+	  Fdefine_key (Vcurrent_global_map, keychar, Qself_insert_command); 
+	  Fputhash (keychar, Qt, DEVICE_X_KEYSYM_MAP_HASH_TABLE (d));
+	  return Qt; 
+        }
       return Qnil;
     }
 

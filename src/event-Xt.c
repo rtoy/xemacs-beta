@@ -898,7 +898,16 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 	      int j;
 	      stderr_out (" chars=\"");
 	      for (j=0; j<len; j++)
-		stderr_out ("%c", bufptr[j]);
+		{
+		  if (040 <= bufptr[j] && bufptr[j] >= 0177)
+		    {
+		      stderr_out ("%c", bufptr[j]);
+		    }
+		  else
+		    {
+		      stderr_out ("\\%o", (unsigned)(bufptr[j]));
+		    }
+		}
 	      stderr_out ("\"");
 	    }
 	  else if (bufptr[0] <= 32 || bufptr[0] >= 127)
@@ -928,10 +937,18 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 
 	fb_instream = make_fixed_buffer_input_stream (bufptr, len);
 
-        /* #### Use get_coding_system_for_text_file (Vcomposed_input_coding_system, 0) */
+        /* [[ Use get_coding_system_for_text_file
+		(Vcomposed_input_coding_system, 0) ]] 
+
+	   Nope. If it is possible for the X libraries to have multiple IM
+	   connections on different DISPLAYs active at once, this should be
+	   a console-specific variable (like a TTY's coding system) but I've
+	   seen no evidence that that is possible. Aidan Kehoe,
+	   2005-12-17. */
+	
 	instream =
 	  make_coding_input_stream
-	    (XLSTREAM (fb_instream), Qundecided, CODING_DECODE, 0);
+	    (XLSTREAM (fb_instream), Qkeyboard, CODING_DECODE, 0);
 
 	istr = XLSTREAM (instream);
 

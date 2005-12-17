@@ -1271,6 +1271,20 @@ of buffer-file-coding-system set by this function."
 	 (warn "Invalid native-coding-system %s in language environment %s"
 	       native language-name)))
       (define-coding-system-alias 'file-name 'native)
+      ;; Set the default keyboard and terminal coding systems to the native
+      ;; coding system of the language environment. 
+      ;;
+      (setq keyboard-coding-system native
+	    terminal-coding-system native)
+
+      ;; And do the same for any TTYs. 
+      (dolist (con (console-list))
+	(when (eq 'tty (device-type (car (console-device-list con))))
+	  ;; Calling set-input-mode at the same time would be a sane thing
+	  ;; to do here. I would prefer to default to accepting eight bit
+	  ;; input and not using the top bit for Meta.
+	  (set-console-tty-coding-system con native)))
+
       ;; process output should not have EOL conversion.  under MS Windows
       ;; and Cygwin, this screws things up (`cmd' is fine with just LF and
       ;; `bash' chokes on CR-LF).
@@ -1327,7 +1341,7 @@ of buffer-file-coding-system set by this function."
 	;;     locale but we should still use the right code page, etc.
 	(declare-fboundp (mswindows-set-current-locale userdef)))
       ;; Unix:
-      (let ((locstring (set-current-locale "")))
+      (let ((locstring (current-locale)))
 	;; assume C lib locale and LANG env var are set correctly.  use
 	;; them to find the langenv.
 	(setq langenv

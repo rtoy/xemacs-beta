@@ -1,3 +1,18 @@
+2005-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* console-x.c (x_perhaps_init_unseen_key_defaults):
+	If the key name is a single character, and the keysym is NoSymbol,
+	give it a default binding, if that is possible. This addresses the
+	problem Zhang Wei points out in <871x118lc4.fsf@gmail.com>
+	* event-Xt.c (x_to_emacs_keysym):
+	Print the characters of a keysym's name directly if it's printable
+	ASCII, or as an octal escape if it's not.
+
+	Use keyboard-coding-system rather than undecided for decoding the
+	keysym name passed to us by an input method. 
+	* file-coding.c (vars_of_file_coding):
+	Document that keyboard-coding-system is also used for X11. 
+
 2005-11-29  Marcus Crestani  <crestani@xemacs.org>
 
 	* xemacs.def.in.in: Condition error_check_* symbols on

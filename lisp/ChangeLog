@@ -1,3 +1,15 @@
+2005-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el (set-language-environment-coding-systems):
+	Initialise keyboard-coding-system, terminal-coding-system when
+	applying a language environment, together with the input and
+	output coding systems for any active TTY console. 
+	* mule/mule-cmds.el (init-locale-at-early-startup):
+	If set-current-locale returns a `more-specified version' of the
+	current locale when passed a zero length argument, the magic used
+	to work out the current language environment from the C locale
+	will fail. Call current-locale instead. 
+
 2005-12-17  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el (package-get-download-sites): Add Hong Kong

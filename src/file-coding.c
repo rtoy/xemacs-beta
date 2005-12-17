@@ -4600,8 +4600,14 @@ vars_of_file_coding (void)
 #endif
 
   DEFVAR_LISP ("keyboard-coding-system", &Vkeyboard_coding_system /*
-Coding system used for TTY keyboard input.
-Not used under a windowing system.
+Default coding system used for TTY and X11 keyboard input.
+Under X11, used only to interpet the character for a key event when that
+event has a KeySym of NoSymbol but does have an associated string keysym,
+something that's seen with input methods.
+
+If you need to set these things to different coding systems, call the
+function `set-console-tty-coding-system' for the TTY and use this variable
+for X11.
 */ );
   Vkeyboard_coding_system = Qnil;
 
