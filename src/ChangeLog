@@ -1,5 +1,11 @@
 2005-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* buffer.c:
+	standard-syntax-table and standard-category-table are not
+	available from Lisp any more, don't mention as Lisp variables. 
+	
+2005-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* console-x.c (x_perhaps_init_unseen_key_defaults):
 	If the key name is a single character, and the keysym is NoSymbol,
 	give it a default binding, if that is possible. This addresses the

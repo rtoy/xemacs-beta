@@ -1710,8 +1710,8 @@ DEFUN ("kill-all-local-variables", Fkill_all_local_variables, 0, 0, 0, /*
 Switch to Fundamental mode by killing current buffer's local variables.
 Most local variable bindings are eliminated so that the default values
 become effective once more.  Also, the syntax table is set from
-`standard-syntax-table', the category table is set from
-`standard-category-table' (if support for Mule exists), local keymap is set
+the standard syntax table, the category table is set from the
+standard category table (if support for Mule exists), local keymap is set
 to nil, the abbrev table is set from `fundamental-mode-abbrev-table',
 and all specifier specifications whose locale is the current buffer
 are removed.  This function also forces redisplay of the modeline.
