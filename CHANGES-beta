@@ -6,9 +6,13 @@ Major features
 
 User-Visible Bug Fixes and Minor Improvements
 
+-- Fix: autoload list-matching-lines. --  Malcolm Purvis
 -- Fix: change_window_height must change the window width when requested. -- Aidan Kehoe
 -- Fix: crashes printing ISO2022 coding systems. -- Ben Wing
+-- Improve: initializations depending on locale or language environment. -- Aidan Kehoe
 -- Update: etags to upstream 17.15. -- Malcolm Purvis
+-- Update: package download site list. -- Adrian Aichner
+-- Update: X11 search pathes to include /usr(/local)/share/X11. -- Ville Skyttä
 
 Build Infrastructure
 
@@ -16,10 +20,14 @@ Build Infrastructure
 -- Fix: configuration of native sound on Windows. -- Ben Wing
 -- Fix: small bugs in configure of AC_INIT and PostgreSQL. -- Stephen J. Turnbull
 -- Improve: CVS behavior. -- Stephen J. Turnbull, Marcus Crestani, Malcolm Purvis
+-- Improve: treatment and docs XE_COMPLEX_ARGs defaults. -- Malcolm Purvis, Stephen Turnbull
 -- Improve: refactor make clean, nuke .elcs. -- Ben Wing
+-- New: tests for backward-up-list. -- Stephen J. Turnbull
 
 Documentation
 
+-- Fix: Don't mention standard-syntax-table and standard-category-table. -- Aidan Kehoe
+-- Fix: typos. -- Stephen J. Turnbull, Adrian Aichner
 -- Improve: Add 'Known Problems' to the Help menu. -- Malcolm Purvis
 -- Improve: HELLO in Irish and Tajik. -- Aidan Kehoe
 -- Improve: INSTALL. -- Stephen J. Turnbull
@@ -31,6 +39,8 @@ Documentation
 -- Improve: texi documentation of XEmacs Autoconf macros. -- Malcolm Purvis
 -- Improve: update PROBLEMS, and install in etc. -- Malcolm Purvis
 -- Update: about Jerry James. -- Stephen J. Turnbull
+-- Update: about Malcolm Purvis. -- Malcolm Purvis
+-- Update: descriptions of font name syntaxes. -- Stephen J. Turnbull
 
 Lisp API
 
@@ -43,6 +53,7 @@ Internal API and Implementation
 -- Fix: Mule-ize canna_api module. -- Ben Wing, Stephen J. Turnbull
 -- Fix: byte compile by conditional compilation. -- Ben Wing
 -- Fix: compilation errors and warnings in GTK code. -- Malcolm Purvis
+-- Fix: compile stuff_buffered_input only if HAVE_TTY. -- Malcolm Purvis
 -- Fix: help on functions without documentation. -- Ben Wing
 -- Fix: integer types for Berkeley db. -- Stephen J. Turnbull, Volker Zell
 -- Fix: make modules build on Cygwin and Mac. -- Stephen J. Turnbull, Rick Rankin, Ben Wing
@@ -58,6 +69,7 @@ Internal API and Implementation
 -- Improve: refactor default_object_printer. -- Marcus Crestani
 -- Improve: remove dead code in lwlib. -- Stephen J. Turnbull
 -- Improve: reorganize lisp.h. -- Ben Wing
+-- Improve: set default syntax class to word. -- Aidan Kehoe, Ben Wing
 -- Improve: tabs widget internals. -- Stephen J. Turnbull
 
 to 21.5.23 "daikon"
