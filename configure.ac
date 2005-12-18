@@ -515,10 +515,10 @@ XE_MERGED_ARG([$1],[$2],
 $3
 ],[
 # set default for each type
-for y in $_[$1]_types; do
-    eval "with_[$1]_$y=\$_[$1]_${y}_default"
-    eval "enable_[$1]_$y=\$_[$1]_${y}_default"
-    unset _[$1]_${y}_default
+for y in [$_]patsubst([$1], -, _)[_types]; do
+    eval "[with_]patsubst([$1], -, _)[_$y]=[\$_]patsubst([$1], -, _)[_${y}_default]"
+    eval "[enable_]patsubst([$1], -, _)[_$y]=[\$_]patsubst([$1], -, _)[_${y}_default]"
+    unset [_]patsubst([$1], -, _)[_${y}_default]
 done
 $4])])dnl
 dnl

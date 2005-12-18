@@ -3784,10 +3784,10 @@ unset _with_error_checking_args _error_checking_found x y _require_error_checkin
 else
 
 # set default for each type
-for y in $_error-checking_types; do
-    eval "with_error-checking_$y=\$_error-checking_${y}_default"
-    eval "enable_error-checking_$y=\$_error-checking_${y}_default"
-    unset _error-checking_${y}_default
+for y in $_error_checking_types; do
+    eval "with_error_checking_$y=\$_error_checking_${y}_default"
+    eval "enable_error_checking_$y=\$_error_checking_${y}_default"
+    unset _error_checking_${y}_default
 done
 
 fi;

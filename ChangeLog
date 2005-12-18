@@ -1,3 +1,8 @@
+2005-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (XE_COMPLEX_ARG): Substitute '_' for '-' in default
+	variable names.
+
 2005-12-09  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* configure.ac (XE_EXPAND_COMPLEX_OPTION):
