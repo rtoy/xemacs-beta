@@ -1,3 +1,8 @@
+2005-12-09  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* internals/internals.texi (The configure Script):  Documented
+	more fully the behaviour of complex options.  Provided examples.
+
 2005-12-03  Adrian Aichner  <adrian@xemacs.org>
 
 	* custom.texi (Declaring Variables): Typo fixes.

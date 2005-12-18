@@ -1,3 +1,13 @@
+2005-12-09  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.ac (XE_EXPAND_COMPLEX_OPTION):
+	* configure.ac (XE_INIT_COMPLEX_OPTION):
+	* configure.ac (XE_PARSE_COMPLEX_OPTION):
+	* configure.ac (XE_COMPLEX_ARG):
+	With the help of Stephen Turnbull rewrote the option processing to
+	give more consistent under the various combinations of all, none,
+	no, yes, --without, --with, etc that can occur.
+
 2005-11-27  Marcus Crestani  <crestani@xemacs.org>
 
 	* configure.ac: Remove vdb-fake warning, die if POSIX checks fail.

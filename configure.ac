@@ -368,8 +368,7 @@ dnl Internal macro create the option's shell variable containing the default
 dnl value and to note the values in an option list.
 dnl
 define([XE_EXPAND_COMPLEX_OPTION],
-[with_[$1]_[$2]=[$3]
-enable_[$1]_[$2]=[$3]
+[_[$1]_[$2]_default=[$3]
 m4_append([XE_COMPONENT_LIST],[$2],[ ])dnl
 dnl Separate with a ':' instead of a ',' (see <prefix>_default below) to avoid
 dnl confusion with marco parameter lists.
@@ -398,13 +397,13 @@ dnl
 define([XE_INIT_COMPLEX_OPTION],
 [_[$1]_notfirst=""
 dnl
-XE_EXPAND_COMPLEX_OPTIONS($@)
+XE_EXPAND_COMPLEX_OPTIONS($@)dnl
 _[$1]_types="XE_COMPONENT_LIST"
 _[$1]_default="m4_translit(XE_COMPONENT_DEFAULT,[:],[,])"
 dnl Undefine these macros so that they can be reused by later complex
 dnl options.
-undefine([XE_COMPONENT_LIST])
-undefine([XE_COMPONENT_DEFAULT])
+undefine([XE_COMPONENT_LIST])dnl
+undefine([XE_COMPONENT_DEFAULT])dnl
 ])dnl
 dnl
 dnl XE_PARSE_COMPLEX_OPTION(prefix, cmdline-flag)
@@ -413,57 +412,75 @@ dnl
 dnl Internal macro to parse the option values.  If an undeclared option is
 dnl found then an error is generated.  Because something has been supplied on
 dnl the command line initialise all the complex options to 'no' rather than
-dnl the default.  In thius way --enable-complex=foo will give the expected
+dnl the default.  In this way --enable-complex=foo will give the expected
 dnl value (no) for bar.
 dnl
+dnl #### I think we should add a couple more features.
+dnl First, at the end of XE_PARSE_COMPLEX_OPTION check for contradictory args,
+dnl specifically if `all' is specified but the options are all individually
+dnl disabled, or if `none' is specified but the options are all individually
+dnl enabled, we should _warn_ about this situation.  
+dnl Second, we should provide an XE_VALIDATE_COMPLEX_OPTION macro to be used
+dnl at the end of detection.  If any feature is `yes' but we don't have it,
+dnl then we should XE_DIE.
+dnl
 define([XE_PARSE_COMPLEX_OPTION],
-[for y in $_[$1]_types; do
-  eval "with_[$1]_$y=no"
-  eval "enable_[$1]_$y=no"
+[dnl Initialize variables for COMPLEX_OPTION [$1].  Leading underscore or
+dnl  single letter variables are internal to the XE_PARSE_COMPLEX_OPTION macro.
+_[$1]_all_default=""
+_require_[$1]=""
+dnl check first arg for default spec
+case "$with_[$1]" in
+    n | no | non | none )         _[$1]_all_default=no ;;
+    n,* | no,* | non,* | none,* ) _[$1]_all_default=no ;;
+    a | al | all | both )         _[$1]_all_default=yes ;;
+    a,* | al,* | all,* | both,* ) _[$1]_all_default=yes ;;
+    y | yes )                     _require_[$1]=yes ;;
+esac
+dnl if first arg was a default spec, trim it
+if test -n "$_[$1]_all_default$_require_[$1]"; then
+    _with_[$1]_args=`echo $with_[$1] | sed -e 's/^[[a-z]]*\(,\(.*\)\)\{0,1\}$/\2/'`
+else
+    _with_[$1]_args=$with_[$1]
+fi
+dnl set default for each type
+for y in $_[$1]_types; do
+    if test -n "$_[$1]_all_default" ; then
+        eval "with_[$1]_${y}=$_[$1]_all_default"
+    else
+	eval "with_[$1]_$y=\$_[$1]_${y}_default"
+    fi
 done
-for x in `echo "$with_[$1]" | sed -e 's/,/ /g'` ; do
-    _[$1]_all_default=""
+dnl parse the command line arg and set types found appropriately
+for x in `echo "$_with_[$1]_args" | sed -e 's/,/ /g'` ; do
     _[$1]_found=""
-    case "$x" in
-        n | no | non | none ) _[$1]_all_default=no ;;
-        a | al | all | both ) _[$1]_all_default=yes ;;
-    esac
-
-    if test -z "$_[$1]_all_default"; then
-        for y in $_[$1]_types; do
-            dnl echo "testing x='$x' against y='$y'"
-            if test "$x" = "$y"; then
-		dnl echo "$x" = "$y"
-                _[$1]_found=yes
-                dnl echo eval `echo "[$1]_$y=yes"`
-                eval "with_[$1]_$y=yes"
-                eval "enable_[$1]_$y=yes"
-            elif test "$x" = "no$y"; then
-                dnl echo "$x" = "no$y"
-                _[$1]_found=yes
-                dnl echo eval `echo "[$1]_$y=no"`
-                eval "with_[$1]_$y=no"
-                eval "enable_[$1]_$y=no"
-            fi
-        done
-        test -z "$_[$1]_found" && _[$1]_bogus=yes
-    fi
-    if test "$_[$1]_bogus" = "yes" -o \
-         \( -n "$_[$1]_all_default" -a -n "$_[$1]_notfirst" \) ; then
-	USAGE_ERROR(["Valid values for the [$2] option are:
-$_[$1]_types.  With prefix \"no\", switch it off.
-Defaults may be overridden with \`all' or \`none' first in the list.
-Hardcoded default is: $_[$1]_default."])
-    elif test -n "$_[$1]_all_default" ; then
-        for y in $_[$1]_types; do
-	    eval "with_[$1]_$y=$_[$1]_all_default"
-	    eval "enable_[$1]_$y=$_[$1]_all_default"
-        done
-    fi
-    _[$1]_notfirst=yes
+    for y in $_[$1]_types; do
+        if test "$x" = "$y"; then
+            _[$1]_found=yes
+            eval "with_[$1]_$y=yes"
+        elif test "$x" = "no$y"; then
+            _[$1]_found=yes
+            eval "with_[$1]_$y=no"
+        fi
+    done
+    test -z "$_[$1]_found" && \
+	USAGE_ERROR(["\
+Invalid type list supplied.  Valid types for the [$2] option are:
+	$_[$1]_types.
+  A prefix of \"no\" (eg, \"notype\" for \"type\") turns a type off.
+  Types not explicitly specified or negated take their defaults.
+  The list of defaults is \"$_[$1]_default\".  Prefixing \`all' or
+  \`none' to the list sets all defaults to on and off respectively.
+  \`yes' as the sole argument is equivalent to omitting the argument."])
 done
-unset _[$1]_bogus _[$1]_found _[$1]_notfirst _[$1]_types
-unset _[$1]_default _[$1]_all_default x y
+dnl copy values to enable_FEATURE_TYPE.  Cleanup default vars.
+for y in $_[$1]_types; do
+  eval "enable_[$1]_$y=\$with_[$1]_$y"
+  unset _[$1]_${y}_default
+done
+dnl clean up
+unset _[$1]_types _[$1]_default _[$1]_all_default _[$1]_use_defaults
+unset _with_[$1]_args _[$1]_found x y _require_[$1]
 ])dnl
 dnl
 dnl XE_COMPLEX_OPTION(option, yesno)
@@ -496,7 +513,14 @@ define([XE_COMPLEX_ARG],
 XE_MERGED_ARG([$1],[$2],
 [XE_PARSE_COMPLEX_OPTION(patsubst([$1], -, _), [--with-$1])
 $3
-],[$4])])dnl
+],[
+# set default for each type
+for y in $_[$1]_types; do
+    eval "with_[$1]_$y=\$_[$1]_${y}_default"
+    eval "enable_[$1]_$y=\$_[$1]_${y}_default"
+    unset _[$1]_${y}_default
+done
+$4])])dnl
 dnl
 dnl -------------------------------------------------------------------------
 XE_APPEND(lib-src, MAKE_SUBDIR)

@@ -4695,21 +4695,18 @@ XE_COMPLEX_ARG([sound],
 	 XE_COMPLEX_OPTION([esd],[no])])
 @end example
 
-@c #### verify for INSTALL and xemacs Texinfo.
+@c #### verify  xemacs Texinfo.
 Each option is interpreted as a separate feature to be enabled or
-disabled.  As usual, the distinction between ``with'' and ``enable'' is
-that ``with'' features require specific support from the system, usually
-one or more optional libraries, and ``enable'' features are supported
-entirely by code in XEmacs, but the user might want to switch it off for
-some reason.  Option values are stored in the variables
-@code{with_@var{package}_@var{component}} or
-@code{enable_@var{feature}_@var{component}} (@i{e.g.} 
-@code{enable_sound_native}).
+disabled.  In keeping with @samp{XE_MERGED_ARG}, option values are
+stored in the variables @code{with_@var{package}_@var{component}} and
+@code{enable_@var{feature}_@var{component}} (@i{e.g.}
+@code{with_sound_native} and @code{enable_sound_native}).
 
 The user of @code{configure} specifies the configuration by providing a
 list of components.  The special components @samp{all} and @samp{none}
 may occur first in the list, setting the defaults for all components to
-@samp{yes} or @samp{no} respectively.
+@samp{yes} or @samp{no} respectively.  Prefixing a component with
+@samp{no} (eg @samp{nofoo}) disables the component.
 
 In @file{configure.ac}, default values of option values may be
 @samp{yes} which means that the option must be used and an error must
@@ -4731,6 +4728,49 @@ library which may or may not be supported by multiple components of
 XEmacs, as exemplified by Xft.  This latter usage may be more common
 during development of a feature.  Perhaps specialized APIs should be
 provided, see comment on @code{XE_COMPLEX_OPTION_HELP_STRING} below.
+
+@subheading Examples
+
+Given a complex option @code{--with-quux} with three values: @samp{foo},
+@samp{bar} and @samp{baz} that have defaults of @samp{yes}, @samp{no} and "" the
+corresponding shell variables under different conditions are:
+
+@example
+$ configure
+with_quux_foo=yes
+with_quux_bar=no
+with_quux_baz=""
+
+$ configure --with-quux
+with_quux_foo=yes
+with_quux_bar=no
+with_quux_baz=""
+
+$ configure --without-quux
+with_quux_foo=no
+with_quux_bar=no
+with_quux_baz=no
+
+$ configure --with-quux=bar
+with_quux_foo=yes
+with_quux_bar=yes
+with_quux_baz=no
+
+$ configure --with-quux=all
+with_quux_foo=yes
+with_quux_bar=yes
+with_quux_baz=yes
+
+$ configure --with-quux=none,bar
+with_quux_foo=no
+with_quux_bar=yes
+with_quux_baz=no
+
+$ configure --with-quux=all,nofoo
+with_quux_foo=no
+with_quux_bar=yes
+with_quux_baz=yes
+@end example
 
 @table @code
 @item XE_COMPLEX_OPTION(option, yesno)

@@ -2264,19 +2264,12 @@ _ACEOF
 fi;
 
 _xft_notfirst=""
-with_xft_emacs=no
-enable_xft_emacs=no
-with_xft_menubars=no
-enable_xft_menubars=no
-with_xft_tabs=no
-enable_xft_tabs=no
-with_xft_gauges=no
-enable_xft_gauges=no
-
+_xft_emacs_default=no
+_xft_menubars_default=no
+_xft_tabs_default=no
+_xft_gauges_default=no
 _xft_types="emacs menubars tabs gauges"
 _xft_default="noemacs,nomenubars,notabs,nogauges"
-
-
 
 # If --with-xft or --without-xft were given then copy the value to the
 # equivalent enable_xft variable.
@@ -2292,52 +2285,67 @@ fi;
 if test "${with_xft+set}" = set; then
   enableval="$with_xft"
   withval="$with_xft"
-  for y in $_xft_types; do
-  eval "with_xft_$y=no"
-  eval "enable_xft_$y=no"
+  _xft_all_default=""
+_require_xft=""
+case "$with_xft" in
+    n | no | non | none )         _xft_all_default=no ;;
+    n,* | no,* | non,* | none,* ) _xft_all_default=no ;;
+    a | al | all | both )         _xft_all_default=yes ;;
+    a,* | al,* | all,* | both,* ) _xft_all_default=yes ;;
+    y | yes )                     _require_xft=yes ;;
+esac
+if test -n "$_xft_all_default$_require_xft"; then
+    _with_xft_args=`echo $with_xft | sed -e 's/^[a-z]*\(,\(.*\)\)\{0,1\}$/\2/'`
+else
+    _with_xft_args=$with_xft
+fi
+for y in $_xft_types; do
+    if test -n "$_xft_all_default" ; then
+        eval "with_xft_${y}=$_xft_all_default"
+    else
+	eval "with_xft_$y=\$_xft_${y}_default"
+    fi
 done
-for x in `echo "$with_xft" | sed -e 's/,/ /g'` ; do
-    _xft_all_default=""
+for x in `echo "$_with_xft_args" | sed -e 's/,/ /g'` ; do
     _xft_found=""
-    case "$x" in
-        n | no | non | none ) _xft_all_default=no ;;
-        a | al | all | both ) _xft_all_default=yes ;;
-    esac
-
-    if test -z "$_xft_all_default"; then
-        for y in $_xft_types; do
-                        if test "$x" = "$y"; then
-		                _xft_found=yes
-                                eval "with_xft_$y=yes"
-                eval "enable_xft_$y=yes"
-            elif test "$x" = "no$y"; then
-                                _xft_found=yes
-                                eval "with_xft_$y=no"
-                eval "enable_xft_$y=no"
-            fi
-        done
-        test -z "$_xft_found" && _xft_bogus=yes
-    fi
-    if test "$_xft_bogus" = "yes" -o \
-         \( -n "$_xft_all_default" -a -n "$_xft_notfirst" \) ; then
+    for y in $_xft_types; do
+        if test "$x" = "$y"; then
+            _xft_found=yes
+            eval "with_xft_$y=yes"
+        elif test "$x" = "no$y"; then
+            _xft_found=yes
+            eval "with_xft_$y=no"
+        fi
+    done
+    test -z "$_xft_found" && \
 	(echo "$progname: Usage error:"
-echo " " "Valid values for the --with-xft option are:
-$_xft_types.  With prefix \"no\", switch it off.
-Defaults may be overridden with \`all' or \`none' first in the list.
-Hardcoded default is: $_xft_default."
+echo " " "\
+Invalid type list supplied.  Valid types for the --with-xft option are:
+	$_xft_types.
+  A prefix of \"no\" (eg, \"notype\" for \"type\") turns a type off.
+  Types not explicitly specified or negated take their defaults.
+  The list of defaults is \"$_xft_default\".  Prefixing \`all' or
+  \`none' to the list sets all defaults to on and off respectively.
+  \`yes' as the sole argument is equivalent to omitting the argument."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
-    elif test -n "$_xft_all_default" ; then
-        for y in $_xft_types; do
-	    eval "with_xft_$y=$_xft_all_default"
-	    eval "enable_xft_$y=$_xft_all_default"
-        done
-    fi
-    _xft_notfirst=yes
 done
-unset _xft_bogus _xft_found _xft_notfirst _xft_types
-unset _xft_default _xft_all_default x y
+for y in $_xft_types; do
+  eval "enable_xft_$y=\$with_xft_$y"
+  unset _xft_${y}_default
+done
+unset _xft_types _xft_default _xft_all_default _xft_use_defaults
+unset _with_xft_args _xft_found x y _require_xft
 
 
+
+else
+
+# set default for each type
+for y in $_xft_types; do
+    eval "with_xft_$y=\$_xft_${y}_default"
+    eval "enable_xft_$y=\$_xft_${y}_default"
+    unset _xft_${y}_default
+done
 
 fi;
 # If --with-gtk or --without-gtk were given then copy the value to the
@@ -2806,17 +2814,11 @@ if test "${with_gif+set}" = set; then
 fi;
 
 _sound_notfirst=""
-with_sound_native=""
-enable_sound_native=""
-with_sound_nas=""
-enable_sound_nas=""
-with_sound_esd=no
-enable_sound_esd=no
-
+_sound_native_default=""
+_sound_nas_default=""
+_sound_esd_default=no
 _sound_types="native nas esd"
 _sound_default="native,nas,noesd"
-
-
 
 # If --with-sound or --without-sound were given then copy the value to the
 # equivalent enable_sound variable.
@@ -2832,55 +2834,68 @@ fi;
 if test "${with_sound+set}" = set; then
   enableval="$with_sound"
   withval="$with_sound"
-  for y in $_sound_types; do
-  eval "with_sound_$y=no"
-  eval "enable_sound_$y=no"
+  _sound_all_default=""
+_require_sound=""
+case "$with_sound" in
+    n | no | non | none )         _sound_all_default=no ;;
+    n,* | no,* | non,* | none,* ) _sound_all_default=no ;;
+    a | al | all | both )         _sound_all_default=yes ;;
+    a,* | al,* | all,* | both,* ) _sound_all_default=yes ;;
+    y | yes )                     _require_sound=yes ;;
+esac
+if test -n "$_sound_all_default$_require_sound"; then
+    _with_sound_args=`echo $with_sound | sed -e 's/^[a-z]*\(,\(.*\)\)\{0,1\}$/\2/'`
+else
+    _with_sound_args=$with_sound
+fi
+for y in $_sound_types; do
+    if test -n "$_sound_all_default" ; then
+        eval "with_sound_${y}=$_sound_all_default"
+    else
+	eval "with_sound_$y=\$_sound_${y}_default"
+    fi
 done
-for x in `echo "$with_sound" | sed -e 's/,/ /g'` ; do
-    _sound_all_default=""
+for x in `echo "$_with_sound_args" | sed -e 's/,/ /g'` ; do
     _sound_found=""
-    case "$x" in
-        n | no | non | none ) _sound_all_default=no ;;
-        a | al | all | both ) _sound_all_default=yes ;;
-    esac
-
-    if test -z "$_sound_all_default"; then
-        for y in $_sound_types; do
-                        if test "$x" = "$y"; then
-		                _sound_found=yes
-                                eval "with_sound_$y=yes"
-                eval "enable_sound_$y=yes"
-            elif test "$x" = "no$y"; then
-                                _sound_found=yes
-                                eval "with_sound_$y=no"
-                eval "enable_sound_$y=no"
-            fi
-        done
-        test -z "$_sound_found" && _sound_bogus=yes
-    fi
-    if test "$_sound_bogus" = "yes" -o \
-         \( -n "$_sound_all_default" -a -n "$_sound_notfirst" \) ; then
+    for y in $_sound_types; do
+        if test "$x" = "$y"; then
+            _sound_found=yes
+            eval "with_sound_$y=yes"
+        elif test "$x" = "no$y"; then
+            _sound_found=yes
+            eval "with_sound_$y=no"
+        fi
+    done
+    test -z "$_sound_found" && \
 	(echo "$progname: Usage error:"
-echo " " "Valid values for the --with-sound option are:
-$_sound_types.  With prefix \"no\", switch it off.
-Defaults may be overridden with \`all' or \`none' first in the list.
-Hardcoded default is: $_sound_default."
+echo " " "\
+Invalid type list supplied.  Valid types for the --with-sound option are:
+	$_sound_types.
+  A prefix of \"no\" (eg, \"notype\" for \"type\") turns a type off.
+  Types not explicitly specified or negated take their defaults.
+  The list of defaults is \"$_sound_default\".  Prefixing \`all' or
+  \`none' to the list sets all defaults to on and off respectively.
+  \`yes' as the sole argument is equivalent to omitting the argument."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
-    elif test -n "$_sound_all_default" ; then
-        for y in $_sound_types; do
-	    eval "with_sound_$y=$_sound_all_default"
-	    eval "enable_sound_$y=$_sound_all_default"
-        done
-    fi
-    _sound_notfirst=yes
 done
-unset _sound_bogus _sound_found _sound_notfirst _sound_types
-unset _sound_default _sound_all_default x y
+for y in $_sound_types; do
+  eval "enable_sound_$y=\$with_sound_$y"
+  unset _sound_${y}_default
+done
+unset _sound_types _sound_default _sound_all_default _sound_use_defaults
+unset _with_sound_args _sound_found x y _require_sound
 
 
 
 else
-  enable_sound_nas=""
+
+# set default for each type
+for y in $_sound_types; do
+    eval "with_sound_$y=\$_sound_${y}_default"
+    eval "enable_sound_$y=\$_sound_${y}_default"
+    unset _sound_${y}_default
+done
+enable_sound_nas=""
 fi;
 # If --with-native-sound-lib or --without-native-sound-lib were given then copy the value to the
 # equivalent enable_native-sound-lib variable.
@@ -3060,17 +3075,11 @@ if test "${with_zlib+set}" = set; then
 fi;
 
 _database_notfirst=""
-with_database_berkdb=""
-enable_database_berkdb=""
-with_database_dbm=""
-enable_database_dbm=""
-with_database_gdbm=""
-enable_database_gdbm=""
-
+_database_berkdb_default=""
+_database_dbm_default=""
+_database_gdbm_default=""
 _database_types="berkdb dbm gdbm"
 _database_default="berkdb,dbm,gdbm"
-
-
 
 # If --with-database or --without-database were given then copy the value to the
 # equivalent enable_database variable.
@@ -3086,50 +3095,56 @@ fi;
 if test "${with_database+set}" = set; then
   enableval="$with_database"
   withval="$with_database"
-  for y in $_database_types; do
-  eval "with_database_$y=no"
-  eval "enable_database_$y=no"
+  _database_all_default=""
+_require_database=""
+case "$with_database" in
+    n | no | non | none )         _database_all_default=no ;;
+    n,* | no,* | non,* | none,* ) _database_all_default=no ;;
+    a | al | all | both )         _database_all_default=yes ;;
+    a,* | al,* | all,* | both,* ) _database_all_default=yes ;;
+    y | yes )                     _require_database=yes ;;
+esac
+if test -n "$_database_all_default$_require_database"; then
+    _with_database_args=`echo $with_database | sed -e 's/^[a-z]*\(,\(.*\)\)\{0,1\}$/\2/'`
+else
+    _with_database_args=$with_database
+fi
+for y in $_database_types; do
+    if test -n "$_database_all_default" ; then
+        eval "with_database_${y}=$_database_all_default"
+    else
+	eval "with_database_$y=\$_database_${y}_default"
+    fi
 done
-for x in `echo "$with_database" | sed -e 's/,/ /g'` ; do
-    _database_all_default=""
+for x in `echo "$_with_database_args" | sed -e 's/,/ /g'` ; do
     _database_found=""
-    case "$x" in
-        n | no | non | none ) _database_all_default=no ;;
-        a | al | all | both ) _database_all_default=yes ;;
-    esac
-
-    if test -z "$_database_all_default"; then
-        for y in $_database_types; do
-                        if test "$x" = "$y"; then
-		                _database_found=yes
-                                eval "with_database_$y=yes"
-                eval "enable_database_$y=yes"
-            elif test "$x" = "no$y"; then
-                                _database_found=yes
-                                eval "with_database_$y=no"
-                eval "enable_database_$y=no"
-            fi
-        done
-        test -z "$_database_found" && _database_bogus=yes
-    fi
-    if test "$_database_bogus" = "yes" -o \
-         \( -n "$_database_all_default" -a -n "$_database_notfirst" \) ; then
+    for y in $_database_types; do
+        if test "$x" = "$y"; then
+            _database_found=yes
+            eval "with_database_$y=yes"
+        elif test "$x" = "no$y"; then
+            _database_found=yes
+            eval "with_database_$y=no"
+        fi
+    done
+    test -z "$_database_found" && \
 	(echo "$progname: Usage error:"
-echo " " "Valid values for the --with-database option are:
-$_database_types.  With prefix \"no\", switch it off.
-Defaults may be overridden with \`all' or \`none' first in the list.
-Hardcoded default is: $_database_default."
+echo " " "\
+Invalid type list supplied.  Valid types for the --with-database option are:
+	$_database_types.
+  A prefix of \"no\" (eg, \"notype\" for \"type\") turns a type off.
+  Types not explicitly specified or negated take their defaults.
+  The list of defaults is \"$_database_default\".  Prefixing \`all' or
+  \`none' to the list sets all defaults to on and off respectively.
+  \`yes' as the sole argument is equivalent to omitting the argument."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
-    elif test -n "$_database_all_default" ; then
-        for y in $_database_types; do
-	    eval "with_database_$y=$_database_all_default"
-	    eval "enable_database_$y=$_database_all_default"
-        done
-    fi
-    _database_notfirst=yes
 done
-unset _database_bogus _database_found _database_notfirst _database_types
-unset _database_default _database_all_default x y
+for y in $_database_types; do
+  eval "enable_database_$y=\$with_database_$y"
+  unset _database_${y}_default
+done
+unset _database_types _database_default _database_all_default _database_use_defaults
+unset _with_database_args _database_found x y _require_database
 
 
 if test "$enable_database_dbm"  = "yes" -a "$enable_database_gdbm" = "yes"; then
@@ -3139,6 +3154,15 @@ with the \`--with-database' option."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
 fi
 
+
+else
+
+# set default for each type
+for y in $_database_types; do
+    eval "with_database_$y=\$_database_${y}_default"
+    eval "enable_database_$y=\$_database_${y}_default"
+    unset _database_${y}_default
+done
 
 fi;
 # If --with-ldap or --without-ldap were given then copy the value to the
@@ -3475,23 +3499,14 @@ if test "${with_newgc+set}" = set; then
 
 fi;
 _vdb_notfirst=""
-with_vdb_auto=
-enable_vdb_auto=
-with_vdb_posix=
-enable_vdb_posix=
-with_vdb_win32=
-enable_vdb_win32=
-with_vdb_mach=
-enable_vdb_mach=
-with_vdb_fake=
-enable_vdb_fake=
-with_vdb_no=
-enable_vdb_no=
-
+_vdb_auto_default=
+_vdb_posix_default=
+_vdb_win32_default=
+_vdb_mach_default=
+_vdb_fake_default=
+_vdb_no_default=
 _vdb_types="auto posix win32 mach fake no"
 _vdb_default="auto,posix,win32,mach,fake,no"
-
-
 
 # If --with-vdb or --without-vdb were given then copy the value to the
 # equivalent enable_vdb variable.
@@ -3507,55 +3522,68 @@ fi;
 if test "${with_vdb+set}" = set; then
   enableval="$with_vdb"
   withval="$with_vdb"
-  for y in $_vdb_types; do
-  eval "with_vdb_$y=no"
-  eval "enable_vdb_$y=no"
+  _vdb_all_default=""
+_require_vdb=""
+case "$with_vdb" in
+    n | no | non | none )         _vdb_all_default=no ;;
+    n,* | no,* | non,* | none,* ) _vdb_all_default=no ;;
+    a | al | all | both )         _vdb_all_default=yes ;;
+    a,* | al,* | all,* | both,* ) _vdb_all_default=yes ;;
+    y | yes )                     _require_vdb=yes ;;
+esac
+if test -n "$_vdb_all_default$_require_vdb"; then
+    _with_vdb_args=`echo $with_vdb | sed -e 's/^[a-z]*\(,\(.*\)\)\{0,1\}$/\2/'`
+else
+    _with_vdb_args=$with_vdb
+fi
+for y in $_vdb_types; do
+    if test -n "$_vdb_all_default" ; then
+        eval "with_vdb_${y}=$_vdb_all_default"
+    else
+	eval "with_vdb_$y=\$_vdb_${y}_default"
+    fi
 done
-for x in `echo "$with_vdb" | sed -e 's/,/ /g'` ; do
-    _vdb_all_default=""
+for x in `echo "$_with_vdb_args" | sed -e 's/,/ /g'` ; do
     _vdb_found=""
-    case "$x" in
-        n | no | non | none ) _vdb_all_default=no ;;
-        a | al | all | both ) _vdb_all_default=yes ;;
-    esac
-
-    if test -z "$_vdb_all_default"; then
-        for y in $_vdb_types; do
-                        if test "$x" = "$y"; then
-		                _vdb_found=yes
-                                eval "with_vdb_$y=yes"
-                eval "enable_vdb_$y=yes"
-            elif test "$x" = "no$y"; then
-                                _vdb_found=yes
-                                eval "with_vdb_$y=no"
-                eval "enable_vdb_$y=no"
-            fi
-        done
-        test -z "$_vdb_found" && _vdb_bogus=yes
-    fi
-    if test "$_vdb_bogus" = "yes" -o \
-         \( -n "$_vdb_all_default" -a -n "$_vdb_notfirst" \) ; then
+    for y in $_vdb_types; do
+        if test "$x" = "$y"; then
+            _vdb_found=yes
+            eval "with_vdb_$y=yes"
+        elif test "$x" = "no$y"; then
+            _vdb_found=yes
+            eval "with_vdb_$y=no"
+        fi
+    done
+    test -z "$_vdb_found" && \
 	(echo "$progname: Usage error:"
-echo " " "Valid values for the --with-vdb option are:
-$_vdb_types.  With prefix \"no\", switch it off.
-Defaults may be overridden with \`all' or \`none' first in the list.
-Hardcoded default is: $_vdb_default."
+echo " " "\
+Invalid type list supplied.  Valid types for the --with-vdb option are:
+	$_vdb_types.
+  A prefix of \"no\" (eg, \"notype\" for \"type\") turns a type off.
+  Types not explicitly specified or negated take their defaults.
+  The list of defaults is \"$_vdb_default\".  Prefixing \`all' or
+  \`none' to the list sets all defaults to on and off respectively.
+  \`yes' as the sole argument is equivalent to omitting the argument."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
-    elif test -n "$_vdb_all_default" ; then
-        for y in $_vdb_types; do
-	    eval "with_vdb_$y=$_vdb_all_default"
-	    eval "enable_vdb_$y=$_vdb_all_default"
-        done
-    fi
-    _vdb_notfirst=yes
 done
-unset _vdb_bogus _vdb_found _vdb_notfirst _vdb_types
-unset _vdb_default _vdb_all_default x y
+for y in $_vdb_types; do
+  eval "enable_vdb_$y=\$with_vdb_$y"
+  unset _vdb_${y}_default
+done
+unset _vdb_types _vdb_default _vdb_all_default _vdb_use_defaults
+unset _with_vdb_args _vdb_found x y _require_vdb
 
 
 
 else
-  enable_vdb="auto"
+
+# set default for each type
+for y in $_vdb_types; do
+    eval "with_vdb_$y=\$_vdb_${y}_default"
+    eval "enable_vdb_$y=\$_vdb_${y}_default"
+    unset _vdb_${y}_default
+done
+enable_vdb="auto"
 fi;
 
 # If --with-modules or --without-modules were given then copy the value to the
@@ -3674,29 +3702,17 @@ if test "${with_debug+set}" = set; then
 
 fi;
 _error_checking_notfirst=""
-with_error_checking_extents=""
-enable_error_checking_extents=""
-with_error_checking_types=""
-enable_error_checking_types=""
-with_error_checking_text=""
-enable_error_checking_text=""
-with_error_checking_gc=""
-enable_error_checking_gc=""
-with_error_checking_malloc=""
-enable_error_checking_malloc=""
-with_error_checking_byte_code=""
-enable_error_checking_byte_code=""
-with_error_checking_glyphs=""
-enable_error_checking_glyphs=""
-with_error_checking_display=""
-enable_error_checking_display=""
-with_error_checking_structures=""
-enable_error_checking_structures=""
-
+_error_checking_extents_default=""
+_error_checking_types_default=""
+_error_checking_text_default=""
+_error_checking_gc_default=""
+_error_checking_malloc_default=""
+_error_checking_byte_code_default=""
+_error_checking_glyphs_default=""
+_error_checking_display_default=""
+_error_checking_structures_default=""
 _error_checking_types="extents types text gc malloc byte_code glyphs display structures"
 _error_checking_default="extents,types,text,gc,malloc,byte_code,glyphs,display,structures"
-
-
 
 # If --with-error-checking or --without-error-checking were given then copy the value to the
 # equivalent enable_error-checking variable.
@@ -3712,52 +3728,67 @@ fi;
 if test "${with_error_checking+set}" = set; then
   enableval="$with_error_checking"
   withval="$with_error_checking"
-  for y in $_error_checking_types; do
-  eval "with_error_checking_$y=no"
-  eval "enable_error_checking_$y=no"
+  _error_checking_all_default=""
+_require_error_checking=""
+case "$with_error_checking" in
+    n | no | non | none )         _error_checking_all_default=no ;;
+    n,* | no,* | non,* | none,* ) _error_checking_all_default=no ;;
+    a | al | all | both )         _error_checking_all_default=yes ;;
+    a,* | al,* | all,* | both,* ) _error_checking_all_default=yes ;;
+    y | yes )                     _require_error_checking=yes ;;
+esac
+if test -n "$_error_checking_all_default$_require_error_checking"; then
+    _with_error_checking_args=`echo $with_error_checking | sed -e 's/^[a-z]*\(,\(.*\)\)\{0,1\}$/\2/'`
+else
+    _with_error_checking_args=$with_error_checking
+fi
+for y in $_error_checking_types; do
+    if test -n "$_error_checking_all_default" ; then
+        eval "with_error_checking_${y}=$_error_checking_all_default"
+    else
+	eval "with_error_checking_$y=\$_error_checking_${y}_default"
+    fi
 done
-for x in `echo "$with_error_checking" | sed -e 's/,/ /g'` ; do
-    _error_checking_all_default=""
+for x in `echo "$_with_error_checking_args" | sed -e 's/,/ /g'` ; do
     _error_checking_found=""
-    case "$x" in
-        n | no | non | none ) _error_checking_all_default=no ;;
-        a | al | all | both ) _error_checking_all_default=yes ;;
-    esac
-
-    if test -z "$_error_checking_all_default"; then
-        for y in $_error_checking_types; do
-                        if test "$x" = "$y"; then
-		                _error_checking_found=yes
-                                eval "with_error_checking_$y=yes"
-                eval "enable_error_checking_$y=yes"
-            elif test "$x" = "no$y"; then
-                                _error_checking_found=yes
-                                eval "with_error_checking_$y=no"
-                eval "enable_error_checking_$y=no"
-            fi
-        done
-        test -z "$_error_checking_found" && _error_checking_bogus=yes
-    fi
-    if test "$_error_checking_bogus" = "yes" -o \
-         \( -n "$_error_checking_all_default" -a -n "$_error_checking_notfirst" \) ; then
+    for y in $_error_checking_types; do
+        if test "$x" = "$y"; then
+            _error_checking_found=yes
+            eval "with_error_checking_$y=yes"
+        elif test "$x" = "no$y"; then
+            _error_checking_found=yes
+            eval "with_error_checking_$y=no"
+        fi
+    done
+    test -z "$_error_checking_found" && \
 	(echo "$progname: Usage error:"
-echo " " "Valid values for the --with-error-checking option are:
-$_error_checking_types.  With prefix \"no\", switch it off.
-Defaults may be overridden with \`all' or \`none' first in the list.
-Hardcoded default is: $_error_checking_default."
+echo " " "\
+Invalid type list supplied.  Valid types for the --with-error-checking option are:
+	$_error_checking_types.
+  A prefix of \"no\" (eg, \"notype\" for \"type\") turns a type off.
+  Types not explicitly specified or negated take their defaults.
+  The list of defaults is \"$_error_checking_default\".  Prefixing \`all' or
+  \`none' to the list sets all defaults to on and off respectively.
+  \`yes' as the sole argument is equivalent to omitting the argument."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
-    elif test -n "$_error_checking_all_default" ; then
-        for y in $_error_checking_types; do
-	    eval "with_error_checking_$y=$_error_checking_all_default"
-	    eval "enable_error_checking_$y=$_error_checking_all_default"
-        done
-    fi
-    _error_checking_notfirst=yes
 done
-unset _error_checking_bogus _error_checking_found _error_checking_notfirst _error_checking_types
-unset _error_checking_default _error_checking_all_default x y
+for y in $_error_checking_types; do
+  eval "enable_error_checking_$y=\$with_error_checking_$y"
+  unset _error_checking_${y}_default
+done
+unset _error_checking_types _error_checking_default _error_checking_all_default _error_checking_use_defaults
+unset _with_error_checking_args _error_checking_found x y _require_error_checking
 
 
+
+else
+
+# set default for each type
+for y in $_error-checking_types; do
+    eval "with_error-checking_$y=\$_error-checking_${y}_default"
+    eval "enable_error-checking_$y=\$_error-checking_${y}_default"
+    unset _error-checking_${y}_default
+done
 
 fi;
 # If --with-assertions or --without-assertions were given then copy the value to the
