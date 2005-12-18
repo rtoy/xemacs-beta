@@ -1,3 +1,7 @@
+2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.24 "dandelion" is released.
+
 2005-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (XE_COMPLEX_ARG): Substitute '_' for '-' in default
