@@ -990,7 +990,7 @@ On such systems, Emacs will start a subshell and wait for it to exit.
 
 void
 stuff_buffered_input (
-#ifdef BSD
+#if defined(BSD) && defined(HAVE_TTY)
 		      Lisp_Object stuffstring
 #else
 		      Lisp_Object UNUSED (stuffstring)
@@ -998,7 +998,7 @@ stuff_buffered_input (
 		      )
 {
 /* stuff_char works only in BSD, versions 4.2 and up.  */
-#if defined (BSD)
+#if defined(BSD) && defined(HAVE_TTY)
   if (!CONSOLEP (Vcontrolling_terminal) ||
       !CONSOLE_LIVE_P (XCONSOLE (Vcontrolling_terminal)))
     return;
@@ -1024,7 +1024,7 @@ stuff_buffered_input (
       stuff_char (XCONSOLE (Vcontrolling_terminal), *kbd_fetch_ptr++);
     }
 # endif
-#endif /* BSD */
+#endif /* BSD && HAVE_TTY */
 }
 
 DEFUN ("suspend-console", Fsuspend_console, 0, 1, "", /*

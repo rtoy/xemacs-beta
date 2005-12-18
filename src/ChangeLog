@@ -1,3 +1,8 @@
+2005-12-14  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* console.c (stuff_buffered_input): Compile body only if
+	HAVE_TTY.
+
 2005-12-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* chartab.c (Fmake_char_table):
