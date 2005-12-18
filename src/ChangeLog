@@ -1,3 +1,8 @@
+2005-12-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* chartab.c (Fmake_char_table):
+	Set the default character class to word, not whitespace. 
+	
 2005-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* buffer.c:

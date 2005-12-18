@@ -600,7 +600,7 @@ sorts of values.  The different char table types are
       /* Qgeneric not Qsyntax because a syntax table has a mirror table
 	 and we don't want infinite recursion */
       ct->mirror_table = Fmake_char_table (Qgeneric);
-      set_char_table_default (ct->mirror_table, make_int (Spunct));
+      set_char_table_default (ct->mirror_table, make_int (Sword));
       XCHAR_TABLE (ct->mirror_table)->mirror_table_p = 1;
       XCHAR_TABLE (ct->mirror_table)->mirror_table = obj;
     }
