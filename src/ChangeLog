@@ -1,3 +1,13 @@
+2005-12-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* syntax.c (charset_syntax):
+	* syntax.c (update_just_this_syntax_table):
+	* syntax.c (complex_vars_of_syntax):
+	To my embarrassment, my previous change didn't actually work. This
+	change makes
+	    (char-syntax (make-char 'chinese-cns11643-1 50 50)) 
+	give ?w, the expected result after the last change.
+	
 2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.24 "dandelion" is released.

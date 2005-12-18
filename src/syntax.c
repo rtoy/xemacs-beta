@@ -613,7 +613,7 @@ charset_syntax (struct buffer *UNUSED (buf), Lisp_Object UNUSED (charset),
 {
   *multi_p_out = 1;
   /* !!#### get this right */
-  return Spunct;
+  return Sword;
 }
 
 #endif
@@ -2296,8 +2296,8 @@ update_just_this_syntax_table (Lisp_Object table)
   if (!EQ (table, Vstandard_syntax_table) && !NILP (Vstandard_syntax_table))
     map_char_table (Vstandard_syntax_table, &range,
 		    copy_if_not_already_present, LISP_TO_VOID (mirrortab));
-  /* The resetting made the default be Qnil.  Put it back to Spunct. */
-  set_char_table_default (mirrortab, make_int (Spunct));
+  /* The resetting made the default be Qnil.  Put it back to Sword. */
+  set_char_table_default (mirrortab, make_int (Sword));
   XCHAR_TABLE (mirrortab)->dirty = 0;
 }
 
@@ -2419,7 +2419,7 @@ complex_vars_of_syntax (void)
 							Smax);
   staticpro (&Vsyntax_designator_chars_string);
 
-  set_char_table_default (Vstandard_syntax_table, make_int (Spunct));
+  set_char_table_default (Vstandard_syntax_table, make_int (Sword));
 
   for (i = 0; i <= 32; i++)	/* Control 0 plus SPACE */
     Fput_char_table (make_char (i), make_int (Swhitespace),
