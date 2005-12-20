@@ -1,3 +1,10 @@
+2005-12-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* objects-x.c (x_find_charset_font):
+	Return Qnil on no match, not Qunbound. Fixes performance issues 
+	based on the use of this return value in 
+	objects.c:font_instantiate  
+	
 2005-12-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* syntax.c (charset_syntax):

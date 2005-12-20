@@ -1175,7 +1175,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
   Extbyte **names;
   int count = 0;
   const Extbyte *patternext;
-  Lisp_Object result = Qunbound;
+  Lisp_Object result = Qnil;
   int i;
 
   /* #### with Xft need to handle second stage here -- sjt
