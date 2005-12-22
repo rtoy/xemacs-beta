@@ -2828,8 +2828,9 @@ make_drawing_gcs (XlwMenuWidget mw)
 	  XColor xcolor;
 	  Visual *visual;
 	  int ignore;
+	  Colormap cmap;
 	  visual_info_from_widget ((Widget) mw, &visual, &ignore);
-	  Colormap cmap = mw->core.colormap;
+	  cmap = mw->core.colormap;
 	  xcolor.pixel = mw->core.background_pixel;
 	  XQueryColor (dpy, cmap, &xcolor);
 	  xcolor.red   = (xcolor.red   * 17) / 20;
