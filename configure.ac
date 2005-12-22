@@ -3437,22 +3437,21 @@ extern Bool XRegisterIMInstantiateCallback(
 			   [xft_includes_found=yes],
 			   [c_switch_site=$save_c_switch_site])
 	fi
-      done
-      if test "$xft_includes_found" != "yes"; then
-        XE_DIE(["Unable to find headers for --with-xft"])
-      else
-        AC_CHECK_LIB(Xrender, XRenderQueryExtension, XE_PREPEND(-lXrender, libs_x),
-	    [XE_DIE(["Unable to find libXrender for --with-xft"])])
-        AC_CHECK_LIB(fontconfig, FcPatternCreate, XE_PREPEND(-lfontconfig, libs_x),
-	    [XE_DIE(["Unable to find libfontconfig for --with-xft"])])
-        AC_CHECK_LIB(Xft, XftFontOpen, XE_PREPEND(-lXft, libs_x),
-	    [XE_DIE(["Unable to find libXft for --with-xft"])])
-        AC_DEFINE(USE_XFT)
-        dnl Due to interactions with other libraries, must postpone AC_DEFINE
-        dnl of USE_XFT_MENUBARS, USE_XFT_TABS, and USE_XFT_GAUGE.
-	unset xft_includes_found
-      fi
-])
+      done])
+    if test "$xft_includes_found" != "yes"; then
+      XE_DIE(["Unable to find headers for --with-xft"])
+    else
+      AC_CHECK_LIB(Xrender, XRenderQueryExtension, XE_PREPEND(-lXrender, libs_x),
+          [XE_DIE(["Unable to find libXrender for --with-xft"])])
+      AC_CHECK_LIB(fontconfig, FcPatternCreate, XE_PREPEND(-lfontconfig, libs_x),
+          [XE_DIE(["Unable to find libfontconfig for --with-xft"])])
+      AC_CHECK_LIB(Xft, XftFontOpen, XE_PREPEND(-lXft, libs_x),
+          [XE_DIE(["Unable to find libXft for --with-xft"])])
+      AC_DEFINE(USE_XFT)
+      dnl Due to interactions with other libraries, must postpone AC_DEFINE
+      dnl of USE_XFT_MENUBARS, USE_XFT_TABS, and USE_XFT_GAUGE.
+      unset xft_includes_found
+    fi
   fi
 
 fi dnl $with_x11 = yes
