@@ -284,7 +284,7 @@ Optional Features:
 dnl NOTE: The next eol adds a blank line before the heading.
 m4_divert_once([HELP_ENABLE], [[
 $1]])dnl
-dnl Add an underscpne
+dnl Add an underscore
 dnl NOTE: The next eol adds a blank line after the underscore.
 m4_divert_text([HELP_ENABLE], patsubst([$1], [.], [-])
 )])dnl
@@ -329,7 +329,7 @@ dnl
 define([XE_KEYWORD],
 [m4_append([XE_KEYWORD_LIST],[$1],[ ])dnl
 dnl Separate with a ':' instead of a ',' (see the parsing code above) to avoid
-dnl confusion with marco parameter lists.
+dnl confusion with macro parameter lists.
 m4_append([XE_KEYWORD_VALUES],[\`$1'],[:])dnl
 ])dnl
 dnl
@@ -371,7 +371,7 @@ define([XE_EXPAND_COMPLEX_OPTION],
 [_[$1]_[$2]_default=[$3]
 m4_append([XE_COMPONENT_LIST],[$2],[ ])dnl
 dnl Separate with a ':' instead of a ',' (see <prefix>_default below) to avoid
-dnl confusion with marco parameter lists.
+dnl confusion with macro parameter lists.
 m4_append([XE_COMPONENT_DEFAULT],[m4_if([$3],no,no)[$2]],[:])dnl
 ])dnl
 dnl
