@@ -1,3 +1,8 @@
+2005-12-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (Xft): Fix typo preventing report of Xft buffers.
+	Remove now-irrelevant comments.
+
 2005-12-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac: Three typos fixed.

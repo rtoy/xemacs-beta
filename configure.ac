@@ -4423,9 +4423,7 @@ test "$enable_scrollbars" = "motif"  && AC_DEFINE(LWLIB_SCROLLBARS_MOTIF)
 test "$enable_dialogs"    = "motif"  && AC_DEFINE(LWLIB_DIALOGS_MOTIF)
 test "$enable_widgets"    = "motif"  && AC_DEFINE(LWLIB_WIDGETS_MOTIF)
 
-dnl this is not in xft reloaded #3
 test "$with_xft_menubars" = "yes"  && AC_DEFINE(USE_XFT_MENUBARS)
-dnl these are new in sjt-xft
 test "$with_xft_tabs" = "yes"  && AC_DEFINE(USE_XFT_TABS)
 test "$with_xft_gauge" = "yes"  && AC_DEFINE(USE_XFT_GAUGE)
 
@@ -5906,7 +5904,7 @@ if test "$with_x11" = "yes"; then
   if test "$with_wmcommand" != no; then
     echo "    - Handling WM_COMMAND properly."
   fi
-  if test "$with_xft" = "yes"; then 
+  if test "$with_xft_emacs" = "yes"; then
     echo "    - Compiling in support for Xft antialiased fonts (EXPERIMENTAL)."
   fi
 fi
@@ -5934,7 +5932,6 @@ case "$enable_menubars" in
           echo "             Re-run configure with --enable-menubars='lucid'." ;;
     msw ) echo "  Using MS-Windows menubars." ;;
 esac
-dnl this is not in xft reloaded #3
 if test "$with_xft_menubars" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in menubars."
   echo "      WARNING: This feature will be replaced with a face."
@@ -5964,12 +5961,10 @@ case "$enable_widgets" in
   athena ) echo "  Using Athena native widgets."     ;;
      msw ) echo "  Using MS-Windows native widgets." ;;
 esac
-dnl this is not in xft reloaded #3
 if test "$with_xft_tabs" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in tab controls."
   echo "      WARNING: This feature will be replaced with a face."
 fi
-dnl this is not in xft reloaded #3
 if test "$with_xft_gauge" = "yes"; then
   echo "    - Using Xft to render antialiased fonts in progress bars."
   echo "      WARNING: This feature will be replaced with a face."
