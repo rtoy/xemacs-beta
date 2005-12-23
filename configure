@@ -19439,10 +19439,14 @@ done
 
 	fi
       done
-      if test "$xft_includes_found" != "yes"; then
-        { echo "Error:" "Unable to find headers for --with-xft" >&2; exit 1; }
-      else
-        echo "$as_me:$LINENO: checking for XRenderQueryExtension in -lXrender" >&5
+fi
+
+done
+
+    if test "$xft_includes_found" != "yes"; then
+      { echo "Error:" "Unable to find headers for --with-xft" >&2; exit 1; }
+    else
+      echo "$as_me:$LINENO: checking for XRenderQueryExtension in -lXrender" >&5
 echo $ECHO_N "checking for XRenderQueryExtension in -lXrender... $ECHO_C" >&6
 if test "${ac_cv_lib_Xrender_XRenderQueryExtension+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -19512,7 +19516,7 @@ else
   { echo "Error:" "Unable to find libXrender for --with-xft" >&2; exit 1; }
 fi
 
-        echo "$as_me:$LINENO: checking for FcPatternCreate in -lfontconfig" >&5
+      echo "$as_me:$LINENO: checking for FcPatternCreate in -lfontconfig" >&5
 echo $ECHO_N "checking for FcPatternCreate in -lfontconfig... $ECHO_C" >&6
 if test "${ac_cv_lib_fontconfig_FcPatternCreate+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -19582,7 +19586,7 @@ else
   { echo "Error:" "Unable to find libfontconfig for --with-xft" >&2; exit 1; }
 fi
 
-        echo "$as_me:$LINENO: checking for XftFontOpen in -lXft" >&5
+      echo "$as_me:$LINENO: checking for XftFontOpen in -lXft" >&5
 echo $ECHO_N "checking for XftFontOpen in -lXft... $ECHO_C" >&6
 if test "${ac_cv_lib_Xft_XftFontOpen+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -19652,17 +19656,12 @@ else
   { echo "Error:" "Unable to find libXft for --with-xft" >&2; exit 1; }
 fi
 
-        cat >>confdefs.h <<\_ACEOF
+      cat >>confdefs.h <<\_ACEOF
 #define USE_XFT 1
 _ACEOF
 
-                	unset xft_includes_found
-      fi
-
-fi
-
-done
-
+                  unset xft_includes_found
+    fi
   fi
 
 fi
