@@ -1,3 +1,8 @@
+2005-12-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* buff-menu.el (Buffer-menu-rename): New command.
+	(Buffer-menu-mode-map): Bind it to ?r.
+
 2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.24 "dandelion" is released.

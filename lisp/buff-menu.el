@@ -91,6 +91,7 @@
   (define-key Buffer-menu-mode-map "k" 'Buffer-menu-delete)
   (define-key Buffer-menu-mode-map "\C-d" 'Buffer-menu-delete-backwards)
   (define-key Buffer-menu-mode-map "\C-k" 'Buffer-menu-delete)
+  (define-key Buffer-menu-mode-map "r" 'Buffer-menu-rename)
   (define-key Buffer-menu-mode-map "x" 'Buffer-menu-execute)
   (define-key Buffer-menu-mode-map " " 'next-line)
   (define-key Buffer-menu-mode-map "n" 'next-line)
@@ -260,6 +261,18 @@ and then move up one line.  Prefix arg means move that many lines."
   (Buffer-menu-delete (- (or arg 1)))
   (while (looking-at " [-M]")
     (forward-line 1)))
+
+(defun Buffer-menu-rename (newname unique)
+  "Rename buffer on this line to NEWNAME, immediately.
+If given a prefix argument, automatically uniquify.  See `rename-buffer'."
+  (interactive "sNew name for buffer: \np")
+  (beginning-of-line)
+  (if (looking-at " [-M]")		;header lines
+      (ding)
+    (save-excursion
+      (set-buffer (Buffer-menu-buffer t))
+      (rename-buffer newname unique))
+    (revert-buffer)))
 
 (defun Buffer-menu-save ()
   "Mark buffer on this line to be saved by \\<Buffer-menu-mode-map>\\[Buffer-menu-execute] command."
