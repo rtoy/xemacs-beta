@@ -62,67 +62,6 @@ BUFFER defaults to the current buffer if omitted."
 	  (forward-char))))
     list))
 
-(defun fixed-charsets-in-region (start end &optional buffer)
-  "Return a list of the charsets in the region between START and END.
-BUFFER defaults to the current buffer if omitted."
-  (let (list)
-    (save-excursion
-      (if buffer
-	  (set-buffer buffer))
-      (save-restriction
-	(narrow-to-region start end)
-	(goto-char (point-min))
-	(let ((prev-charset nil))
-	  (while (not (eobp))
-	    (let* ((charset (char-charset (char-after (point)))))
-	      (if (not (eq prev-charset charset))
-		  (progn
-		    (setq prev-charset charset)
-		    (or (memq charset list)
-			(setq list (cons charset list))))))
-	    (forward-char)))))
-    list))
-
-(defun list-charsets-in-region (start end &optional buffer)
-  "Return a list of the charsets in the region between START and END.
-BUFFER defaults to the current buffer if omitted."
-  (let (list)
-    (save-excursion
-      (if buffer
-	  (set-buffer buffer))
-      (save-restriction
-	(narrow-to-region start end)
-	(goto-char (point-min))
-	;; this could be optimized by maintaining prev-charset and checking
-	;; for equality, but memq is not that slow for a short list.
-	(while (not (eobp))
-	  (let* ((charset (char-charset (char-after (point)))))
-	    (or (memq charset list)
-		(setq list (cons charset list))))
-	  (forward-char))))
-    list))
-
-(defun hash-charsets-in-region (start end &optional buffer)
-  "Return a list of the charsets in the region between START and END.
-BUFFER defaults to the current buffer if omitted."
-  (let ((ht (make-hash-table :size 10)))
-    (save-excursion
-      (if buffer
-	  (set-buffer buffer))
-      (save-restriction
-	(narrow-to-region start end)
-	(goto-char (point-min))
-	(while (not (eobp))
-	  (puthash (char-charset (char-after (point))) t ht)
-	  (forward-char))))
-    (hash-table-key-list ht)))
-
-(defun c-charsets-in-region (start end &optional buffer)
-  "Return a list of the charsets in the region between START and END.
-BUFFER defaults to the current buffer if omitted."
-  (setq buffer (or buffer (current-buffer)))
-  (charsets-in-region-internal buffer start end))
-
 (defun charsets-in-string (string)
   "Return a list of the charsets in STRING."
   (let (list)
@@ -134,15 +73,7 @@ BUFFER defaults to the current buffer if omitted."
 	  string)
     list))
 
-(defun c-charsets-in-string (string)
-  "Return a list of the charsets in STRING."
-  (charsets-in-string-internal string nil nil))
-
-(or (fboundp 'charsets-in-string)
-    (defalias 'charsets-in-string 'c-charsets-in-string))
 (defalias 'find-charset-string 'charsets-in-string)
-(or (fboundp 'charsets-in-region)
-    (defalias 'charsets-in-region 'c-charsets-in-region))
 (defalias 'find-charset-region 'charsets-in-region)
 
 
