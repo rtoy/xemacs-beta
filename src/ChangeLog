@@ -1,3 +1,8 @@
+2005-12-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_font_instance_truename): Mule-ize handling of
+	font name (Xft names are UTF-8).  Fixes crash.
+
 2005-12-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* objects-x.c (x_find_charset_font):

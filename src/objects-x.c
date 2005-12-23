@@ -807,7 +807,8 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
       FcChar8 *res = FcNameUnparse (FONT_INSTANCE_X_XFTFONT (f)->pattern);
       if (res)
 	{
-	  FONT_INSTANCE_TRUENAME (f) = make_string (res, strlen (res));
+	  FONT_INSTANCE_TRUENAME (f) =
+	    build_ext_string (res, Qxft_font_name_encoding);
 	  free (res);
 	  return FONT_INSTANCE_TRUENAME (f);
 	}
