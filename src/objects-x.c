@@ -1442,7 +1442,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
       if (x_font_spec_matches_charset (XDEVICE (device), charset,
 				       intname, Qnil, 0, -1, 0))
 	{
-	  result = make_string (intname, intlen);
+	  result = build_ext_string (intname, Qx_font_name_encoding);
 	  break;
 	}
     }
