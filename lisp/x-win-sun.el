@@ -242,6 +242,21 @@ to more mnemonic ones,like `kp-3'."
      'SunF37 'f12			; Used to be Stop & Again
      ))
 
+  ;; Initialise the information needed for processing of function keys on
+  ;; keyboards without Roman-alpabet characters available. This keyboard
+  ;; description was taken from gkb-new/xmodmap.sun/xmodmap.us in the
+  ;; gnome-applets 2.12.0 distribution.
+  (setq x-us-keymap-first-keycode 37
+	x-us-keymap-description
+	[[?1 ?!] [?2 ?@] [?3 ?\#] [?4 ?$] [?5 ?%] [?6 ?^] [?7 ?&] [?8 ?*] 
+	 [?9 ?\(] [?0 ?\)] [?- ?_] [?= ?+] [?\` ?~] nil nil nil ?/ ?* nil
+	 nil ?\. nil nil ?\t [?q ?Q] [?w ?W] [?e ?E] [?r ?R] [?t ?T] [?y ?Y]
+	 [?u ?U] [?i ?I] [?o ?O] [?p ?P] [?\[ ?{] [?\] ?}] nil nil ?7 ?8 ?9
+	 ?- nil nil nil nil nil [?a ?A] [?s ?S] [?d ?D] [?f ?F] [?g ?G] 
+	 [?h ?H] [?j ?J] [?k ?K] [?l ?L] [?\; ?:] [?\' ?\"] [?\\ ?|] nil nil
+	 ?4 ?5 ?6 ?0 nil nil nil nil nil [?z ?Z] [?x ?X] [?c ?C] [?v ?V]
+	 [?b ?B] [?n ?N] [?m ?M] [?\, ?<] [?\. ?>] [?/ ?\?] nil nil ?1 ?2 
+	 ?3 nil nil nil nil nil nil ?\ nil nil nil ?+])
   
 ;;; OpenWindows-like "find" processing.
 ;;; As far as I know, the `find' key is a Sunism, so we do that binding

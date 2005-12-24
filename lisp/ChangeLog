@@ -1,3 +1,10 @@
+2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-win-sun.el (x-win-init-sun):
+	* x-win-xfree86.el (x-win-init-xfree86):
+	Initialise the hardware-specific mapping from raw keycodes to the 
+	US key layout. 
+
 2005-12-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* buff-menu.el (Buffer-menu-rename): New command.

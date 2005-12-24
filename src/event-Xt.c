@@ -72,8 +72,8 @@ extern int mswindows_is_blocking;
 #endif
 
 /* For Russian C-x processing. */
-#define FIRST_ALPHABETIC_QWERTY_KEYCODE 24	
-#define LAST_ALPHABETIC_QWERTY_KEYCODE  58
+Lisp_Object Vx_us_keymap_description;
+Fixnum Vx_us_keymap_first_keycode;
 
 /* used in glyphs-x.c */
 void enqueue_focus_event (Widget wants_it, Lisp_Object frame, int in_p);
@@ -1115,6 +1115,64 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	    if (NILP (keysym))
 	      return 0;
 
+	    /* If we have the map from keycodes to the US layout for our
+	       keyboard available, store the US layout interpretation of
+	       that key in the event structure, in case a binding lookup
+	       fails and we want to fall back to the US layout binding.
+
+	       This _might_ be possible within an XKB framework, changing
+	       the keyboard to a US XKB layout for a moment at startup,
+	       storing the correspondance, and changing it back. But that
+	       won't work on non-XKB servers, it makes our already slow
+	       startup slower, and it's not clear that it's really any
+	       easier or more maintainable than storing a correspondence in
+	       Lisp. */
+
+	    if (!NILP(Vx_us_keymap_description) && 
+		VECTORP(Vx_us_keymap_description) && 
+		ev->keycode >= (unsigned)Vx_us_keymap_first_keycode && 
+		ev->keycode 
+		< (unsigned)XVECTOR_LENGTH(Vx_us_keymap_description)) 
+	      {
+		Lisp_Object entr = XVECTOR_DATA(Vx_us_keymap_description)
+		  [ev->keycode - Vx_us_keymap_first_keycode];
+		Ichar alternate = '\0';
+
+		if (!NILP (entr))
+		  {
+		    if (CHARP(entr)) 
+		      {
+			alternate = XCHAR(entr);
+		      }
+		    else if (VECTORP(entr))
+		      {
+			if (modifiers & XEMACS_MOD_SHIFT
+			    && XVECTOR_LENGTH(Vx_us_keymap_description) > 1)
+			  {
+			    entr = XVECTOR_DATA(entr)[1];
+			    if (CHARP(entr))
+			      {
+				alternate = XCHAR(entr);
+			      }
+			  }
+			else if (XVECTOR_LENGTH(Vx_us_keymap_description) 
+				 > 0)
+			  {
+			    entr = XVECTOR_DATA(entr)[0];
+			    if (CHARP(entr))
+			      {
+				alternate = XCHAR(entr);
+			      }
+			  }
+		      }
+		    if ('\0' != alternate)
+		      {
+			SET_EVENT_KEY_ALT_KEYCHARS(emacs_event, KEYCHAR_QWERTY,
+						   alternate);
+		      }
+		  }
+	      }
+
 	    /* More Caps_Lock garbage: Caps_Lock should *only* add the
 	       shift modifier to two-case keys (that is, A-Z and
 	       related characters). So at this point (after looking up
@@ -1130,6 +1188,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	       intermediate KeySym it used to calculate the string XEmacs
 	       keysym. Then we can call keysym_obeys_caps_lock_p with
 	       exactly the right argument. */
+
 	    /* !!#### maybe fix for Mule
 
 	       Hard, in the absence of a full case infrastructure for
@@ -1153,6 +1212,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	       in the modifiers slot.  Neither the characters "a",
 	       "A", "2", nor "@" normally have the shift bit set.
 	       However, "F1" normally does. */
+
 	    if (modifiers & XEMACS_MOD_SHIFT)
 	      {
 		int Mode_switch_p = *state & xd->ModeMask;
@@ -1165,29 +1225,6 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	    SET_EVENT_TIMESTAMP (emacs_event, ev->time);
 	    SET_EVENT_KEY_MODIFIERS (emacs_event, modifiers);
 	    SET_EVENT_KEY_KEYSYM (emacs_event, keysym);
-
-	    if (ev->keycode >= FIRST_ALPHABETIC_QWERTY_KEYCODE
-		&& ev->keycode <= LAST_ALPHABETIC_QWERTY_KEYCODE)
-	      {
-		/* This correspondence isn't guaranteed by the standards, to
-		   my knowledge. Also, it's incomplete--doesn't include the
-		   upper-case characters, etc--I need to get some feedback
-		   on it once this is out in the world and actually being
-		   used by Russians. */
-		static const Ascbyte qwerty_map[] = 
-		  { 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 
-		    '[', ']', '\015', '\014',
-		    'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l',
-		    ';', '\'', '`', 0, '\\',
-		    'z', 'x', 'c', 'v', 'b', 'n', 'm' };
-		Ichar val = qwerty_map
-		  [ev->keycode - FIRST_ALPHABETIC_QWERTY_KEYCODE];
-		if (val)
-		  {
-		    SET_EVENT_KEY_ALT_KEYCHARS(emacs_event, KEYCHAR_QWERTY,
-					       val);
-		  }
-	      }
 	  }
 	else                    /* Mouse press/release event */
 	  {
@@ -3155,6 +3192,35 @@ Information is displayed on stderr.  Currently defined values are:
 */ );
   debug_x_events = 0;
 #endif
+  DEFVAR_LISP ("x-us-keymap-description", &Vx_us_keymap_description /*
+X11-specific vector describing the current keyboard hardware, and how to map
+from its keycodes to those alphanumeric and punctuation characters that
+would be produced by it if a US layout were configured in software.
+
+We use this to make possible the usage of standard key bindings on keyboards
+where the keys that those bindings assume are not available; for example, on
+a Russian keyboard, one can type C-Cyrillic_che C-Cyrillic_a and have XEmacs
+use the binding for C-x C-f, rather than give an error message that
+C-Cyrillic_che C-Cyrillic_a is not bound.
+
+Entries are either nil, which means the corresponding key code does not map
+to a non-function key in the US layout, a single character, meaning it maps to
+that character, or a vector of two characters, the first indicating the
+unshifted mapping, the second the shifted mapping for the US layout.
+
+`x-us-keymap-first-keycode' tells XEmacs the keycode of the first entry in
+this vector. 
+*/ );
+  Vx_us_keymap_description = Qnil;
+
+  DEFVAR_INT ("x-us-keymap-first-keycode", &Vx_us_keymap_first_keycode /*
+The X11 keycode that the first entry in `x-us-keymap-description'
+corresponds to.  See the documentation for that variable. 
+
+The X11 documentation for XDisplayKeycodes says this can never be less than
+8, but XEmacs doesn't enforce any limitation on what you set it to. 
+*/ );
+  Vx_us_keymap_first_keycode = 0;
 }
 
 /* This mess is a hack that patches the shell widget to treat visual inheritance

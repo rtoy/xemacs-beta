@@ -1,5 +1,18 @@
 2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* event-Xt.c:
+ 	Add two new lisp variables, x-us-keymap-description and
+	x-us-keymap-first-keycode to better provide a fallback to the US
+	layout with keyboards where typing the Roman alphabet and those
+	punctuation symbols that have command bindings associated with
+	them is difficult.
+	* event-Xt.c (x_event_to_emacs_event): 
+ 	Use those two Lisp variables to improve Russian C-x processing.  
+	* event-stream.c (command_builder_find_leaf): 
+ 	Make a comment more readable.  
+
+2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* alloc.c (MALLOC_BEGIN):
 	Assert that we're either not in malloc, or warning about memory
 	being low. 

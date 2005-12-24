@@ -1,3 +1,11 @@
+2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/keystrokes.texi (Keystrokes): 
+	Add new node on keyboards with which one can't type Latin.  
+	* xemacs/keystrokes.texi (Non-Latin keyboards): 
+	Describe the support for falling back to a US key layout on 
+ 	keyboards where typing the Roman alphabet is difficult.  
+
 2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.24 "dandelion" is released.

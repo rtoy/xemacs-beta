@@ -36,6 +36,7 @@ create new ones.
 * Super and Hyper Keys::     Adding modifier keys on certain keyboards.
 * Character Representation:: How characters appear in Emacs buffers.
 * Commands::                 How commands are bound to key sequences.
+* Non-Latin keyboards::      Commands on keyboards where one can't type Latin.
 @end menu
  
 @node Intro to Keystrokes, Representing Keystrokes, Keystrokes, Keystrokes
@@ -456,7 +457,7 @@ character, is displayed as @samp{\243}.
 The variable @code{ctl-arrow} may be used to alter this behavior.
 @xref{Display Vars}.
 
-@node Commands, , Character Representation, Keystrokes
+@node Commands, Non-Latin keyboards, Character Representation, Keystrokes
 @section Keys and Commands
 
 @cindex binding
@@ -514,3 +515,38 @@ customizing, you can ignore the information about variables.  When you
 are ready to be interested, read the basic information on variables, and 
 then the information on individual variables will make sense.
 @xref{Variables}.
+
+@node Non-Latin keyboards, ,Commands, Keystrokes
+
+@cindex russian
+@cindex greek
+@cindex ``russian c-x''
+@cindex try-alternate-layouts-for-commands
+
+  If your computer has a keyboard designed for a language like Russian or
+Greek, where you have to go to some trouble to type Roman-alphabet
+characters, then typing @kbd{C-f} to call @code{forward-character} is
+very inconvenient. 
+
+To address this, XEmacs allows you to pretend that your keyboard has a
+US layout for such commands. That is, you can type @kbd{C-Cyrillic_che
+C-Cyrillic_a} and XEmacs will work out that it should call the command
+that @kbd{C-x C-f} is bound to@footnote{You can, of course, override
+this with an explicit binding for @kbd{C-Cyrillic_che C-Cyrillic_a} to
+something else.}.  Function keys, like @key{F1},
+@key{Shift} or @key{Control} are not handled by this, just alphanumeric
+characters and punctuation.
+
+The main user variable associated with this functionality is
+@code{try-alternate-layouts-for-commands}.  Setting this to @code{nil}
+inhibits this translation, which would be appropriate if your keyboard
+can handle the Roman alphabet but doesn't have the US layout, and you
+want to avoid the possible confusion. 
+
+If @code{try-alternate-layouts-for-commands} is @code{t} but this
+functionality doesn't work for you under X11, check the value of the
+variable @code{x-us-keymap-description}.  This is a hardware-specific
+map from key codes to the US layout, and can be initialized from the
+output of @code{xmodmap -pke}; see the documentation for that variable
+and for @code{x-us-keymap-first-keycode}. 
+
