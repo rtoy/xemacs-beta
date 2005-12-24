@@ -1,5 +1,12 @@
 2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* objects-x.c (x_font_instance_truename):
+	* objects-x.c (x_find_charset_font):
+	Reintroduce my change of 2005-12-20 and Stephen's of 2005-12-23,
+	which my last commit overrode. 
+	
+2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* event-Xt.c:
  	Add two new lisp variables, x-us-keymap-description and
 	x-us-keymap-first-keycode to better provide a fallback to the US

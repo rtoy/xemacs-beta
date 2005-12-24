@@ -1,5 +1,11 @@
 2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/chinese.el:
+	* mule/chinese.el ('euc-china): Removed. Shouldn't have been
+	uncommented in the first place. 
+
+2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule/mule-cmds.el (set-language-environment-coding-systems):
 	* mule/mule-cmds.el (init-locale-at-early-startup):
 	Call set-current-locale (the wrapper for setlocale(3)) before
