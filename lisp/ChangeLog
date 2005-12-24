@@ -1,5 +1,12 @@
 2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/mule-cmds.el (set-language-environment-coding-systems):
+	* mule/mule-cmds.el (init-locale-at-early-startup):
+	Call set-current-locale (the wrapper for setlocale(3)) before
+	checking the current locale, because the C code doesn't. 
+	
+2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule/chinese.el:
 	Make euc-cn available as a coding system alias for cn-gb-2312, for
 	the sake of consistency with euc-jp, euc-ko and the FSF. 
