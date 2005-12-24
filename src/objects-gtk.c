@@ -485,8 +485,7 @@ vars_of_objects_gtk (void)
 /* X Specific stuff */
 #include <X11/Xatom.h>
 
-/* Unbounded, for sufficiently small values of infinity... */
-#define MAX_FONT_COUNT 5000
+#define MAX_FONT_COUNT INT_MAX
 
 #ifdef MULE
 /* find a font spec that matches font spec FONT and also matches
@@ -536,9 +535,6 @@ gtk_find_charset_font (Lisp_Object device, Lisp_Object font,
   return result;
 }
 #endif /* MULE */
-
-/* Unbounded, for sufficiently small values of infinity... */
-#define MAX_FONT_COUNT 5000
 
 static int
 valid_font_name_p (Display *dpy, char *name)

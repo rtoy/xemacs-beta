@@ -693,8 +693,9 @@ truename_via_random_props (Display *dpy, XFontStruct *font)
   return result;
 }
 
-/* Unbounded, for sufficiently small values of infinity... */
-#define MAX_FONT_COUNT 5000
+/* XListFonts doesn't allocate memory unconditionally based on this. (For
+   XFree86 in 2005, at least. */
+#define MAX_FONT_COUNT INT_MAX
 
 static Extbyte *
 truename_via_XListFonts (Display *dpy, Extbyte *font_name)
@@ -807,8 +808,7 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
       FcChar8 *res = FcNameUnparse (FONT_INSTANCE_X_XFTFONT (f)->pattern);
       if (res)
 	{
-	  FONT_INSTANCE_TRUENAME (f) =
-	    build_ext_string (res, Qxft_font_name_encoding);
+	  FONT_INSTANCE_TRUENAME (f) = make_string (res, strlen (res));
 	  free (res);
 	  return FONT_INSTANCE_TRUENAME (f);
 	}
@@ -1176,7 +1176,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
   Extbyte **names;
   int count = 0;
   const Extbyte *patternext;
-  Lisp_Object result = Qnil;
+  Lisp_Object result = Qunbound;
   int i;
 
   /* #### with Xft need to handle second stage here -- sjt
@@ -1442,7 +1442,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
       if (x_font_spec_matches_charset (XDEVICE (device), charset,
 				       intname, Qnil, 0, -1, 0))
 	{
-	  result = build_ext_string (intname, Qx_font_name_encoding);
+	  result = make_string (intname, intlen);
 	  break;
 	}
     }

@@ -1,3 +1,9 @@
+2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* objects-gtk.c (MAX_FONT_COUNT):
+	* objects-x.c (MAX_FONT_COUNT): Increase MAX_FONT_COUNT from 5000
+	to INT_MAX. Applies to both the X and GTK platforms. 
+
 2005-12-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* objects-x.c (x_find_charset_font): More mule-ization.
