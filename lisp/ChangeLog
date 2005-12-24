@@ -1,5 +1,11 @@
 2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/chinese.el:
+	Make euc-cn available as a coding system alias for cn-gb-2312, for
+	the sake of consistency with euc-jp, euc-ko and the FSF. 
+	
+2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* x-win-sun.el (x-win-init-sun):
 	* x-win-xfree86.el (x-win-init-xfree86):
 	Initialise the hardware-specific mapping from raw keycodes to the 

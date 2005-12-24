@@ -266,9 +266,10 @@ G1: Chinese-GB2312
 G2: Sisheng (PinYin - ZhuYin)"
    ))
 
-;; (define-coding-system-alias 'cn-gb-2312 'chinese-iso-8bit)
-;; (define-coding-system-alias 'euc-china 'chinese-iso-8bit)
-;; (define-coding-system-alias 'euc-cn 'chinese-iso-8bit)
+(define-coding-system-alias 'euc-china 'chinese-iso-8bit)
+
+;; For consistency with euc-jp, euc-ko
+(define-coding-system-alias 'euc-cn 'cn-gb-2312)
 
 (define-coding-system-alias 'gb2312 'cn-gb-2312)
 (define-coding-system-alias 'chinese-euc 'cn-gb-2312)
