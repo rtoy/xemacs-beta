@@ -1,5 +1,17 @@
 2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* alloc.c (MALLOC_BEGIN):
+	Assert that we're either not in malloc, or warning about memory
+	being low. 
+	* alloc.c (MALLOC_WARNING_BEGIN, MALLOC_WARNING_END):
+	Add two clauses to set and clear a flag that we're in a low-memory
+	warning situation. 
+	* alloc.c (malloc_warning): 
+	Move it after the definition of MALLOC_WARNING_BEGIN,
+	MALLOC_WARNING_END
+
+2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* objects-gtk.c (MAX_FONT_COUNT):
 	* objects-x.c (MAX_FONT_COUNT): Increase MAX_FONT_COUNT from 5000
 	to INT_MAX. Applies to both the X and GTK platforms. 
