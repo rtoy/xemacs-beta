@@ -1,3 +1,12 @@
+2005-12-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c:
+	* alloc.c (malloc_warning):
+	* alloc.c (MALLOC_BEGIN):
+	* alloc.c (FREE_OR_REALLOC_BEGIN):
+	Revert the alloc warning bugfix, in response to Stephen's mail
+	87acepzl6e.fsf@tleepslib.sk.tsukuba.ac.jp . 
+
 2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* objects-x.c (x_font_instance_truename):

@@ -231,6 +231,22 @@ release_breathing_space (void)
 }
 #endif /* not MC_ALLOC */
 
+/* malloc calls this if it finds we are near exhausting storage */
+void
+malloc_warning (const char *str)
+{
+  if (ignore_malloc_warnings)
+    return;
+
+  warn_when_safe
+    (Qmemory, Qemergency,
+     "%s\n"
+     "Killing some buffers may delay running out of memory.\n"
+     "However, certainly by the time you receive the 95%% warning,\n"
+     "you should clean up, kill this Emacs, and start a new one.",
+     str);
+}
+
 /* Called if malloc returns zero */
 DOESNT_RETURN
 memory_full (void)
@@ -274,20 +290,17 @@ set_alloc_mins_and_maxes (void *val, Bytecount size)
 }
 
 #ifdef ERROR_CHECK_MALLOC
-static int in_malloc, in_malloc_warning;
+static int in_malloc;
 extern int regex_malloc_disallowed;
 
 #define MALLOC_BEGIN()				\
 do						\
 {						\
-  assert (!in_malloc || in_malloc_warning);	\
+  assert (!in_malloc);				\
   assert (!regex_malloc_disallowed);		\
   in_malloc = 1;				\
 }						\
 while (0)
-
-#define MALLOC_WARNING_BEGIN()	(++in_malloc_warning)
-#define MALLOC_WARNING_END()	(--in_malloc_warning)
 
 #ifdef MC_ALLOC
 #define FREE_OR_REALLOC_BEGIN(block)					\
@@ -328,33 +341,10 @@ while (0)
 #else /* ERROR_CHECK_MALLOC */
 
 #define MALLOC_BEGIN()
-#define MALLOC_WARNING_BEGIN()
-#define MALLOC_WARNING_END()
 #define FREE_OR_REALLOC_BEGIN(block)
 #define MALLOC_END()
 
 #endif /* ERROR_CHECK_MALLOC */
-
-/* malloc calls this if it finds we are near exhausting storage */
-void
-malloc_warning (const char *str)
-{
-  if (ignore_malloc_warnings)
-    return;
-
-  MALLOC_WARNING_BEGIN();
-
-  warn_when_safe
-    (Qmemory, Qemergency,
-     "%s\n"
-     "Killing some buffers may delay running out of memory.\n"
-     "However, certainly by the time you receive the 95%% warning,\n"
-     "you should clean up, kill this Emacs, and start a new one.\n"
-     "On Unix, look into your resource limits; ulimit -d, especially.",
-     str);
-
-  MALLOC_WARNING_END();
-}
 
 static void
 malloc_after (void *val, Bytecount size)
