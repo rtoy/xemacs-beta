@@ -1,3 +1,11 @@
+2005-11-25  Mike Sperber  <mike@xemacs.org>
+
+	* lispref/packaging.texi (The User View): 
+	* xemacs/startup.texi (Startup Paths): 
+	* xemacs-faq.texi (Q2.1.6): Document new configure options and
+	environment variables for
+	package locations.
+
 2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* xemacs/keystrokes.texi (Keystrokes): 

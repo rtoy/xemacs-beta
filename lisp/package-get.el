@@ -171,7 +171,16 @@ one version of a package available.")
 
 ;;;###autoload
 (defcustom package-get-package-index-file-location 
-  (car (split-path (or (getenv "EMACSPACKAGEPATH") user-init-directory)))
+  (cond
+   ;; historical backage
+   ((getenv "EMACSPACKAGEPATH") 
+    (split-path (getenv "EMACSPACKAGEPATH")))
+   ((getenv "EMACSEARLYPACKAGES")
+    (split-path (getenv "EMACSEARLYPACKAGES")))
+   (configure-early-package-directories
+    (car configure-early-package-directories))
+   (t
+    user-init-directory))
   "*The directory where the package-index file can be found."
   :type 'directory
   :group 'package-get)

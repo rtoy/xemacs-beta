@@ -1,3 +1,21 @@
+2005-11-25  Mike Sperber  <mike@xemacs.org>
+
+	* nt.c (init_mswindows_environment): Add EMACSEARLYPACKAGES,
+	EMACSLATEPACKAGES, EMACSLASTPACKAGES.
+
+	* config.h.in: 
+	(PATH_EARLY_PACKAGE_DIRECTORIES, PATH_LATE_PACKAGE_DIRECTORIES)
+	(PATH_LAST_PACKAGE_DIRECTORIES): Add.
+
+	* paths.h.in: 
+	(PATH_EARLY_PACKAGE_DIRECTORIES, PATH_LATE_PACKAGE_DIRECTORIES)
+	(PATH_LAST_PACKAGE_DIRECTORIES): Add.
+
+	* emacs.c: Add Vconfigure_early_package_directories,
+	Vconfigure_late_package_directories,
+	Vconfigure_last_package_directories.
+	(complex_vars_of_emacs): Set them.
+
 2005-12-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* alloc.c:

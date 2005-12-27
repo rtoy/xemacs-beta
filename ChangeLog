@@ -1,3 +1,16 @@
+2005-11-25  Mike Sperber  <mike@xemacs.org>
+
+	* CHANGES-beta: 
+	* configure.ac: Zap --with-package-prefix; instead, add
+	--with-user-packages/--with-early-packages,
+	--with-system-packages/--with-late-packages, and
+	--with-legacy-packages/--with-last-packages.
+
+2005-12-13  Mike Sperber  <mike@xemacs.org>
+
+	* configure.ac: Move the checks for the Xft-associated library out
+	of a conditional.
+
 2005-12-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (Xft): Fix typo preventing report of Xft buffers.

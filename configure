@@ -359,7 +359,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS inststaticdir statedir LN_S blddir build build_cpu build_vendor build_os configuration CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP start_flags ld_switch_shared start_files ld lib_gcc RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA YACC SET_MAKE GTK_CONFIG X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS install_pp libs_xauth dnd_objs LIBSTDCPP dll_ld dll_cflags dll_ldflags dll_post dll_ldo ld_dynamic_link_flags with_modules MOD_CC MODARCHDIR MAKE_DOCFILE MODCFLAGS INSTALLPATH MOD_INSTALL_PROGRAM OBJECT_TO_BUILD ldap_libs postgresql_libs lwlib_objs canna_libs ALLOCA have_esd_config SRC_SUBDIR_DEPS INSTALL_ARCH_DEP_SUBDIR MAKE_SUBDIR SUBDIR_MAKEFILES PROGNAME version instvardir srcdir extra_includes PREFIX_USER_DEFINED PREFIX EXEC_PREFIX_USER_DEFINED EXEC_PREFIX INFODIR_USER_DEFINED INFODIR infopath INFOPATH_USER_DEFINED INFOPATH package_path PACKAGE_PATH_USER_DEFINED PACKAGE_PATH lispdir LISPDIR_USER_DEFINED LISPDIR moduledir MODULEDIR_USER_DEFINED MODULEDIR sitelispdir SITELISPDIR_USER_DEFINED SITELISPDIR sitemoduledir SITEMODULEDIR_USER_DEFINED SITEMODULEDIR etcdir ETCDIR_USER_DEFINED ETCDIR archlibdir ARCHLIBDIR_USER_DEFINED ARCHLIBDIR docdir DOCDIR_USER_DEFINED DOCDIR bitmapdir extra_objs machfile opsysfile c_switch_general c_switch_window_system c_switch_all ld_switch_general ld_switch_window_system ld_switch_all ld_libs_general ld_libs_window_system ld_libs_all RECURSIVE_MAKE_ARGS native_sound_lib sound_cflags dynodump_arch XEMACS_CC XE_CFLAGS internal_makefile_list LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS inststaticdir statedir LN_S blddir build build_cpu build_vendor build_os configuration CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP start_flags ld_switch_shared start_files ld lib_gcc RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA YACC SET_MAKE GTK_CONFIG X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS install_pp libs_xauth dnd_objs LIBSTDCPP dll_ld dll_cflags dll_ldflags dll_post dll_ldo ld_dynamic_link_flags with_modules MOD_CC MODARCHDIR MAKE_DOCFILE MODCFLAGS INSTALLPATH MOD_INSTALL_PROGRAM OBJECT_TO_BUILD ldap_libs postgresql_libs lwlib_objs canna_libs ALLOCA have_esd_config SRC_SUBDIR_DEPS INSTALL_ARCH_DEP_SUBDIR MAKE_SUBDIR SUBDIR_MAKEFILES PROGNAME version instvardir srcdir extra_includes PREFIX_USER_DEFINED PREFIX EXEC_PREFIX_USER_DEFINED EXEC_PREFIX INFODIR_USER_DEFINED INFODIR infopath INFOPATH_USER_DEFINED INFOPATH early_packages EARLY_PACKAGE_DIRECTORIES_USER_DEFINED EARLY_PACKAGE_DIRECTORIES late_packages LATE_PACKAGE_DIRECTORIES_USER_DEFINED LATE_PACKAGE_DIRECTORIES last_packages LAST_PACKAGE_DIRECTORIES_USER_DEFINED LAST_PACKAGE_DIRECTORIES package_path PACKAGE_PATH_USER_DEFINED PACKAGE_PATH lispdir LISPDIR_USER_DEFINED LISPDIR moduledir MODULEDIR_USER_DEFINED MODULEDIR sitelispdir SITELISPDIR_USER_DEFINED SITELISPDIR sitemoduledir SITEMODULEDIR_USER_DEFINED SITEMODULEDIR etcdir ETCDIR_USER_DEFINED ETCDIR archlibdir ARCHLIBDIR_USER_DEFINED ARCHLIBDIR docdir DOCDIR_USER_DEFINED DOCDIR bitmapdir extra_objs machfile opsysfile c_switch_general c_switch_window_system c_switch_all ld_switch_general ld_switch_window_system ld_switch_all ld_libs_general ld_libs_window_system ld_libs_all RECURSIVE_MAKE_ARGS native_sound_lib sound_cflags dynodump_arch XEMACS_CC XE_CFLAGS internal_makefile_list LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -982,10 +982,26 @@ Run-time path-searching options
   --with-site-modules=no  Disable site-modules directory in the XEmacs
                           hierarchy, which is searched before the installation
                           modules.
-  --with-package-prefix=DIR
-                          Specify packages root.
+  --with-early-packages=DIR
+                          Specify location of early/user packages (instead of
+                          ~/.xemacs; same as --with-user-packages).
+  --with-user-packages=DIR
+                          Specify location of early/user packages (instead of
+                          ~/.xemacs; same as --with-early-packages).
+  --with-late-packages=DIR
+                          Specify location of late/system packages (instead of
+                          default location; same as --with-system-packages).
+  --with-late-packages=DIR
+                          Specify location of late/system packages (instead of
+                          default location; same as --with-late-packages).
+  --with-last-packages=DIR
+                          Specify location of last/legacy packages (instead of
+                          default location; same as --with-legacy-packages).
+  --with-late-packages=DIR
+                          Specify location of late/legacy packages (instead of
+                          default location; same as --with-late-packages).
   --with-package-path=PATH
-                          Search path for package hierarchies.
+                          Search path for package directories.
   --with-infopath=PATH    Location of info directories
 
 Window-system options
@@ -2205,22 +2221,117 @@ if test "${with_site_modules+set}" = set; then
   withval="$with_site_modules"
 
 fi;
-# If --with-package-prefix or --without-package-prefix were given then copy the value to the
-# equivalent enable_package-prefix variable.
-if test "${with_package_prefix+set}" = set; then
-  enable_package_prefix="$with_package_prefix"
+# If --with-early-packages or --without-early-packages were given then copy the value to the
+# equivalent enable_early-packages variable.
+if test "${with_early_packages+set}" = set; then
+  enable_early_packages="$with_early_packages"
 fi;
-# If -enable-package-prefix or --disable-package-prefix were given then copy the value to the
-# equivalent with_package-prefix variable.
-if test "${enable_package_prefix+set}" = set; then
-  with_package_prefix="$enable_package_prefix"
+# If -enable-early-packages or --disable-early-packages were given then copy the value to the
+# equivalent with_early-packages variable.
+if test "${enable_early_packages+set}" = set; then
+  with_early_packages="$enable_early_packages"
 fi;
-# Check whether --with-package-prefix or --without-package-prefix was given.
-if test "${with_package_prefix+set}" = set; then
-  enableval="$with_package_prefix"
-  withval="$with_package_prefix"
+# Check whether --with-early-packages or --without-early-packages was given.
+if test "${with_early_packages+set}" = set; then
+  enableval="$with_early_packages"
+  withval="$with_early_packages"
   cat >>confdefs.h <<\_ACEOF
-#define PACKAGE_PATH_USER_DEFINED 1
+#define EARLY_PACKAGE_DIRECTORIES_USER_DEFINED 1
+_ACEOF
+
+fi;
+# If --with-user-packages or --without-user-packages were given then copy the value to the
+# equivalent enable_user-packages variable.
+if test "${with_user_packages+set}" = set; then
+  enable_user_packages="$with_user_packages"
+fi;
+# If -enable-user-packages or --disable-user-packages were given then copy the value to the
+# equivalent with_user-packages variable.
+if test "${enable_user_packages+set}" = set; then
+  with_user_packages="$enable_user_packages"
+fi;
+# Check whether --with-user-packages or --without-user-packages was given.
+if test "${with_user_packages+set}" = set; then
+  enableval="$with_user_packages"
+  withval="$with_user_packages"
+  cat >>confdefs.h <<\_ACEOF
+#define EARLY_PACKAGE_DIRECTORIES_USER_DEFINED 1
+_ACEOF
+
+fi;
+# If --with-late-packages or --without-late-packages were given then copy the value to the
+# equivalent enable_late-packages variable.
+if test "${with_late_packages+set}" = set; then
+  enable_late_packages="$with_late_packages"
+fi;
+# If -enable-late-packages or --disable-late-packages were given then copy the value to the
+# equivalent with_late-packages variable.
+if test "${enable_late_packages+set}" = set; then
+  with_late_packages="$enable_late_packages"
+fi;
+# Check whether --with-late-packages or --without-late-packages was given.
+if test "${with_late_packages+set}" = set; then
+  enableval="$with_late_packages"
+  withval="$with_late_packages"
+  cat >>confdefs.h <<\_ACEOF
+#define LATE_PACKAGE_DIRECTORIES_USER_DEFINED 1
+_ACEOF
+
+fi;
+# If --with-system-packages or --without-system-packages were given then copy the value to the
+# equivalent enable_system-packages variable.
+if test "${with_system_packages+set}" = set; then
+  enable_system_packages="$with_system_packages"
+fi;
+# If -enable-system-packages or --disable-system-packages were given then copy the value to the
+# equivalent with_system-packages variable.
+if test "${enable_system_packages+set}" = set; then
+  with_system_packages="$enable_system_packages"
+fi;
+# Check whether --with-system-packages or --without-system-packages was given.
+if test "${with_system_packages+set}" = set; then
+  enableval="$with_system_packages"
+  withval="$with_system_packages"
+  cat >>confdefs.h <<\_ACEOF
+#define LATE_PACKAGE_DIRECTORIES_USER_DEFINED 1
+_ACEOF
+
+fi;
+# If --with-last-packages or --without-last-packages were given then copy the value to the
+# equivalent enable_last-packages variable.
+if test "${with_last_packages+set}" = set; then
+  enable_last_packages="$with_last_packages"
+fi;
+# If -enable-last-packages or --disable-last-packages were given then copy the value to the
+# equivalent with_last-packages variable.
+if test "${enable_last_packages+set}" = set; then
+  with_last_packages="$enable_last_packages"
+fi;
+# Check whether --with-last-packages or --without-last-packages was given.
+if test "${with_last_packages+set}" = set; then
+  enableval="$with_last_packages"
+  withval="$with_last_packages"
+  cat >>confdefs.h <<\_ACEOF
+#define LAST_PACKAGE_DIRECTORIES_USER_DEFINED 1
+_ACEOF
+
+fi;
+# If --with-legacy-packages or --without-legacy-packages were given then copy the value to the
+# equivalent enable_legacy-packages variable.
+if test "${with_legacy_packages+set}" = set; then
+  enable_legacy_packages="$with_legacy_packages"
+fi;
+# If -enable-legacy-packages or --disable-legacy-packages were given then copy the value to the
+# equivalent with_legacy-packages variable.
+if test "${enable_legacy_packages+set}" = set; then
+  with_legacy_packages="$enable_legacy_packages"
+fi;
+# Check whether --with-legacy-packages or --without-legacy-packages was given.
+if test "${with_legacy_packages+set}" = set; then
+  enableval="$with_legacy_packages"
+  withval="$with_legacy_packages"
+  cat >>confdefs.h <<\_ACEOF
+#define LATE_PACKAGE_DIRECTORIES_USER_DEFINED 1
 _ACEOF
 
 fi;
@@ -38802,13 +38913,44 @@ while true; do
 done
 
 
-if test -z "$with_package_path" && test -n "$with_package_prefix" ; then
-  if test "$enable_mule" = "yes" ; then
-    with_package_path="~/.xemacs::${with_package_prefix}/site-packages:${with_package_prefix}/xemacs-packages:${with_package_prefix}/mule-packages"
-  else
-    with_package_path="~/.xemacs::${with_package_prefix}/site-packages:${with_package_prefix}/xemacs-packages"
-  fi
-fi
+test -n "$with_user_packages" && with_early_packages=$with_user_packages
+early_packages=$with_early_packages
+
+
+EARLY_PACKAGE_DIRECTORIES=$with_early_packages
+while true; do
+  case "$EARLY_PACKAGE_DIRECTORIES" in
+    *\$* ) eval "EARLY_PACKAGE_DIRECTORIES=$EARLY_PACKAGE_DIRECTORIES" ;;
+    *) break ;;
+  esac
+done
+
+
+test -n "$with_system_packages" && with_late_packages=$with_system_packages
+late_packages=$with_late_packages
+
+
+LATE_PACKAGE_DIRECTORIES=$with_late_packages
+while true; do
+  case "$LATE_PACKAGE_DIRECTORIES" in
+    *\$* ) eval "LATE_PACKAGE_DIRECTORIES=$LATE_PACKAGE_DIRECTORIES" ;;
+    *) break ;;
+  esac
+done
+
+
+test -n "$with_legacy_packages" && with_last_packages=$with_legacy_packages
+last_packages=$with_last_packages
+
+
+LAST_PACKAGE_DIRECTORIES=$with_last_packages
+while true; do
+  case "$LAST_PACKAGE_DIRECTORIES" in
+    *\$* ) eval "LAST_PACKAGE_DIRECTORIES=$LAST_PACKAGE_DIRECTORIES" ;;
+    *) break ;;
+  esac
+done
+
 
 package_path=$with_package_path
 
@@ -40127,6 +40269,15 @@ s,@INFODIR@,$INFODIR,;t t
 s,@infopath@,$infopath,;t t
 s,@INFOPATH_USER_DEFINED@,$INFOPATH_USER_DEFINED,;t t
 s,@INFOPATH@,$INFOPATH,;t t
+s,@early_packages@,$early_packages,;t t
+s,@EARLY_PACKAGE_DIRECTORIES_USER_DEFINED@,$EARLY_PACKAGE_DIRECTORIES_USER_DEFINED,;t t
+s,@EARLY_PACKAGE_DIRECTORIES@,$EARLY_PACKAGE_DIRECTORIES,;t t
+s,@late_packages@,$late_packages,;t t
+s,@LATE_PACKAGE_DIRECTORIES_USER_DEFINED@,$LATE_PACKAGE_DIRECTORIES_USER_DEFINED,;t t
+s,@LATE_PACKAGE_DIRECTORIES@,$LATE_PACKAGE_DIRECTORIES,;t t
+s,@last_packages@,$last_packages,;t t
+s,@LAST_PACKAGE_DIRECTORIES_USER_DEFINED@,$LAST_PACKAGE_DIRECTORIES_USER_DEFINED,;t t
+s,@LAST_PACKAGE_DIRECTORIES@,$LAST_PACKAGE_DIRECTORIES,;t t
 s,@package_path@,$package_path,;t t
 s,@PACKAGE_PATH_USER_DEFINED@,$PACKAGE_PATH_USER_DEFINED,;t t
 s,@PACKAGE_PATH@,$PACKAGE_PATH,;t t

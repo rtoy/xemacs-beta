@@ -875,7 +875,6 @@ Run-time path-searching options:
 
 --with-site-lisp          Unchanged
 --with-site-modules       Unchanged
---package-prefix          --with-package-prefix
 --package-path            --with-package-path
 --infopath                --with-infopath
 

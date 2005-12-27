@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/10/24 20:39:47 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/12/27 18:51:21 $
 @sp 1
 @author Ben Wing <ben@@xemacs.org>
 @author Tony Rossini <rossini@@u.washington.edu>
@@ -3268,7 +3268,7 @@ If you have the packages somewhere nonstandard and don't want to bother
 with @samp{$prefix} (for example, you're a developer and are compiling
 the packages yourself, and want your own private copy of everything),
 you can also directly specify this using @file{configure}.  To do this
-with 21.5 and above use the @samp{--with-package-prefix} parameter to
+with 21.5 and above use the @samp{--with-late-packages} parameter to
 specify the directory under which you untarred the above tarballs.
 Under 21.4 and previous you need to use @samp{--package-path}.  Using
 these options looks something like this:
@@ -3506,10 +3506,15 @@ XEmacs in its default installation will find packages that you put
 under @file{/usr/local/lib/xemacs}.
 
 You can specify where exactly XEmacs looks for packages by using the
-@samp{--with-package-prefix} or @samp{--with-package-path} parameters to
-@file{configure} (or the equivalent settings in @file{config.inc}, under
-Windows), or setting the @samp{EMACSPACKAGEPATH} environment variable
-(which has the same format as @samp{--with-package-path}).  @xref{Q2.1.1}.
+@samp{--with-user-packages} (an alias for @samp{--with-early-packages})
+or @samp{--with-system-packages} (an alias for
+@samp{--with-late-packages}) or @samp{--with-legacy-packages}
+(an alias for @samp{--with-last-packages})
+parameters to @file{configure} (or the equivalent settings in
+@file{config.inc}, under Windows), or setting the
+@samp{EMACSEARLYPACKAGES}, @samp{EMACSLATEPACKAGES}, and
+@samp{EMACSLASTPACKAGES} environment variables (which have the same
+format as the configure options).  @xref{Q2.1.1}.
 
 See @file{configure.usage} for more info about the format of these
 @file{configure} parameters.

@@ -345,7 +345,9 @@ BASE is a subdirectory name for the hierarchy.
 Returns list of hierarchies."
   (paths-directories-which-exist
    (mapcar #'(lambda (package-directory)
-	       (file-name-as-directory (concat package-directory base)))
+	       (file-name-as-directory
+		(concat (file-name-as-directory package-directory)
+			base)))
 	   package-directories)))
 
 (defun packages-split-path (path)
@@ -387,44 +389,67 @@ ROOTS is a list of installation roots."
   (paths-uniq-append (paths-find-version-directories roots "" nil nil t)
 		     (paths-find-site-directories roots "")))
 
-(defun packages-find-package-hierarchies (package-directories &optional default)
+(defun packages-find-package-hierarchies (package-directories &optional envvar default)
   "Find package hierarchies in a list of package directories.
 PACKAGE-DIRECTORIES is a list of package directories.
-DEFAULT is a default list of package hierarchies."
-  (or default
-      (let ((package-hierarchies '())
-	    (hierarchy-directories (packages-package-hierarchy-directory-names)))
-	(while hierarchy-directories
-	  (setq package-hierarchies
-		(nconc package-hierarchies
-		       (packages-find-package-hierarchies-named
-			package-directories
-			(car hierarchy-directories))))
-	  (setq hierarchy-directories (cdr hierarchy-directories)))
-	package-hierarchies)))
+DEFAULT is a default list of package hierarchies.
+ENVVAR is the name of an environment variable that may override
+the default."
+  (let* ((envvar-value (and envvar (getenv envvar)))
+	 (package-directories
+	  (if envvar-value
+	      (split-path envvar-value)
+	    package-directories)))
+
+    (or (and (not envvar-value) default)
+	(let ((package-hierarchies '())
+	      (hierarchy-directories (packages-package-hierarchy-directory-names)))
+	  (while hierarchy-directories
+	    (setq package-hierarchies
+		  (nconc package-hierarchies
+			 (packages-find-package-hierarchies-named
+			  package-directories
+			  (car hierarchy-directories))))
+	    (setq hierarchy-directories (cdr hierarchy-directories)))
+	  package-hierarchies))))
   
 (defun packages-find-all-package-hierarchies (roots)
- "Find the package hierarchies.
+  "Find the package hierarchies.
 ROOTS is a list of installation roots.
 Returns a list of three directory lists, the first being the list of early
 hierarchies, the second that of the late hierarchies, and the third the
 list of the last hierarchies."
+  ;; EMACSPACKAGEPATH is a historical kludge
   (let ((envvar-value (getenv "EMACSPACKAGEPATH")))
-    (if envvar-value
-	(packages-split-package-path (paths-decode-directory-path envvar-value))
+    (cond
+     (envvar-value
+      (packages-split-package-path (paths-decode-directory-path envvar-value)))
+     (configure-package-path
       (packages-deconstruct
        (packages-split-package-path configure-package-path)
-       #'(lambda (configure-early-package-hierarchies
-		  configure-late-package-hierarchies
-		  configure-last-package-hierarchies)
+       #'(lambda (early late last)
 	   (list
 	    (packages-find-package-hierarchies (list user-init-directory)
-					       configure-early-package-hierarchies)
+					       "EMACSEARLYPACKAGES"
+					       early)
 	    (packages-find-package-hierarchies (packages-find-installation-package-directories roots)
-					       configure-late-package-hierarchies)
+					       "EMACSLATEPACKAGES"
+					       
+					       late)
 	    (packages-find-package-hierarchies '()
-					       configure-last-package-hierarchies)))))))
-
+					       "EMACSLASTPACKAGES"
+					       last)))))
+     (t
+      (list
+       (packages-find-package-hierarchies (or configure-early-package-directories
+					      (list user-init-directory))
+					  "EMACSEARLYPACKAGES")
+       (packages-find-package-hierarchies (or configure-late-package-directories
+					      (packages-find-installation-package-directories roots))
+					  "EMACSLATEPACKAGES")
+       (packages-find-package-hierarchies configure-last-package-directories
+					  "EMACSLASTPACKAGES"))))))
+      
 (defun packages-find-package-library-path (package-hierarchies suffixes)
   "Construct a path into a component of the packages hierarchy.
 PACKAGE-HIERARCHIES is a list of package hierarchies.

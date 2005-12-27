@@ -1,3 +1,9 @@
+2005-11-25  Mike Sperber  <mike@xemacs.org>
+
+	* reginfo.h (XEMACS_INFO_XEMACS_EARLY_PACKAGES_KEY)
+	(XEMACS_INFO_XEMACS_LATE_PACKAGES_KEY)
+	(XEMACS_INFO_XEMACS_LAST_PACKAGES_KEY): Add.
+
 2005-12-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.24 "dandelion" is released.

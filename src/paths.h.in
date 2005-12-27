@@ -36,6 +36,10 @@
 
    PATH_MODULESEARCH	The default value of `module-load-path'.
 
+   PATH_EARLY_PACKAGE_DIRECTORIES The value of `--with-early-packages'.
+   PATH_LATE_PACKAGE_DIRECTORIES  The value of `--with-late-packages'.
+   PATH_EARLY_PACKAGE_DIRECTORIES The value of `--with-last-packages'.
+
    PATH_PACKAGEPATH     The default value of `package-path'.
 
    PATH_SITE            The default location of site-specific Lisp files.
@@ -82,6 +86,18 @@
 
 #ifdef SITEMODULEDIR_USER_DEFINED
 #define  PATH_SITE_MODULES "@SITEMODULEDIR@"
+#endif
+
+#ifdef EARLY_PACKAGE_DIRECTORIES_USER_DEFINED
+#define PATH_EARLY_PACKAGE_DIRECTORIES "@EARLY_PACKAGE_DIRECTORIES@"
+#endif
+
+#ifdef LATE_PACKAGE_DIRECTORIES_USER_DEFINED
+#define PATH_LATE_PACKAGE_DIRECTORIES "@LATE_PACKAGE_DIRECTORIES@"
+#endif
+
+#ifdef LAST_PACKAGE_DIRECTORIES_USER_DEFINED
+#define PATH_LAST_PACKAGE_DIRECTORIES "@LAST_PACKAGE_DIRECTORIES@"
 #endif
 
 #ifdef PACKAGE_PATH_USER_DEFINED

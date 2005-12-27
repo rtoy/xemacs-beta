@@ -150,12 +150,7 @@ Argument TYPE is a symbol that determines the type of package we're
 trying to find a directory for.
 
 Optional Argument USER-DIR if non-nil use directories off
-`user-init-directory'.  This overrides everything except
-\"EMACSPACKAGEPATH\".
-
-This function honours the environment variable \"EMACSPACKAGEPATH\"
-and returns directories found there as a priority.  If that variable
-doesn't exist and USER-DIR is nil, check in the normal places.
+`early-package-directories'.
 
 If we still can't find a suitable directory, return nil.
 
@@ -164,55 +159,31 @@ Possible values for TYPE are:
     std  == For \"standard\" packages that go in '/xemacs-packages/'
     mule == For \"mule\" packages that go in '/mule-packages/'
     site == For \"unsupported\" packages that go in '/site-packages/'
-
-Note:  Type \"site\" is not yet fully supported."
-  (let* ((env-value (getenv "EMACSPACKAGEPATH"))
+"
+  (let* ((hierarchies late-package-hierarchies)
+	 
+	 (hierarchy-suffix
+	  (file-name-as-directory
+	   (cond
+	    ((eq type 'std) "xemacs-packages")
+	    ((eq type 'mule) "mule-packages")
+	    ((eq type 'site) "site-packages"))))
+	 (suffix-length (length hierarchy-suffix))
 	 top-dir)
-    ;; First, check the environment var.
-    (if env-value
-	(let ((path-list (paths-decode-directory-path env-value 'drop-empties)))
-	  (cond ((eq type 'std)
-		 (while path-list
-		   (if (equal (file-name-nondirectory 
-			       (directory-file-name (car path-list)))
-			      "xemacs-packages")
-		       (setq top-dir (car path-list)))
-		   (setq path-list (cdr path-list))))
-		((eq type 'mule)
-		 (while path-list
-		   (if (equal (file-name-nondirectory 
-			       (directory-file-name (car path-list)))
-			      "mule-packages")
-		       (setq top-dir (car path-list)))
-		   (setq path-list (cdr path-list)))))))
-    ;; Wasn't in the environment, try `user-init-directory' if
-    ;; USER-DIR is non-nil.
-    (if (and user-dir
-	     (not top-dir))
-	(cond ((eq type 'std)
-	       (setq top-dir (file-name-as-directory
-			      (expand-file-name "xemacs-packages" user-init-directory))))
-	      ((eq type 'mule)
-	       (setq top-dir (file-name-as-directory
-			      (expand-file-name "mule-packages" user-init-directory))))))
-    ;; Finally check the normal places
-    (if (not top-dir)
-	(let ((path-list (nth 1 (packages-find-all-package-hierarchies
-				 emacs-data-roots))))
-	  (cond ((eq type 'std)
-		 (while path-list
-		   (if (equal (substring (car path-list) -16) 
-			      (concat "xemacs-packages" (char-to-string directory-sep-char)))
-		       (setq top-dir (car path-list)))
-		   (setq path-list (cdr path-list))))
-		((eq type 'mule)
-		 (while path-list
-		   (if (equal (substring (car path-list) -14) 
-			      (concat "mule-packages" (char-to-string directory-sep-char)))
-		       (setq top-dir (car path-list)))
-		   (setq path-list (cdr path-list)))))))
-    ;; Now return either the directory or nil.
-    top-dir))
+
+    (if user-dir
+	(expand-file-name hierarchy-suffix
+			  (if configure-early-package-directories
+			      (car configure-early-package-directories)
+			    user-init-directory))
+      
+      (while hierarchies
+	(if (string-equal (substring (car hierarchies) (- suffix-length))
+			  hierarchy-suffix)
+	    (setq top-dir (car hierarchies)))
+	(setq hierarchies (cdr hierarchies)))
+      top-dir)))
+  
 
 (defun package-admin-get-install-dir (package &optional pkg-dir)
   "Find a suitable installation directory for a package.

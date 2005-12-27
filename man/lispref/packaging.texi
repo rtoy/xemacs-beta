@@ -168,9 +168,13 @@ run-time.  This approach is somewhat costly at initialization, but
 results in a very ``clean'' @code{load-path}.
 
 The order of search can be changed at build time by specifying the
-@samp{--package-path} option to @file{configure}, or at run-time by
-specifying the @code{EMACSPACKAGEPATH} environment variable.
-@xref{Packages,,,xemacs}.
+@samp{--with-user-packages} (an alias for @samp{--with-early-packages}),
+@samp{--with-system-packages} (an alias for
+@samp{--with-late-packages}), and @samp{--with-legacy-packages} (an
+alias for @samp{--with-last-packages}) options to @file{configure}, or
+at run-time by specifying the @code{EMACSEARLYPACKAGES},
+@code{EMACSLATEPACKAGES}, @code{EMACSLASTPACKAGES} environment
+variables.  @xref{Packages,,,xemacs}.
 
 @c #### The following description is quite possibly inaccurate.
 @c Please, Michael, write some specs up!

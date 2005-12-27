@@ -542,6 +542,9 @@ Lisp_Object Vmule_lisp_directory, Vconfigure_mule_lisp_directory;
 Lisp_Object Vmodule_directory, Vconfigure_module_directory;
 Lisp_Object Vsite_module_directory, Vconfigure_site_module_directory;
 Lisp_Object Vconfigure_package_path;
+Lisp_Object Vconfigure_early_package_directories;
+Lisp_Object Vconfigure_late_package_directories;
+Lisp_Object Vconfigure_last_package_directories;
 Lisp_Object Vdata_directory, Vconfigure_data_directory;
 Lisp_Object Vdoc_directory, Vconfigure_doc_directory;
 Lisp_Object Vconfigure_lock_directory;
@@ -4506,6 +4509,36 @@ configure's idea of what `module-directory' will be.
     (build_ext_string (PATH_MODULESEARCH, Qfile_name));
 #else
   Vconfigure_module_directory = Qnil;
+#endif
+
+  DEFVAR_LISP ("configure-early-package-directories", &Vconfigure_early_package_directories /*
+For internal use by the build procedure only.
+configure's idea of what the early package directories will be.
+*/ );
+#ifdef PATH_EARLY_PACKAGE_DIRECTORIES
+  Vconfigure_early_package_directories = split_external_path (PATH_EARLY_PACKAGE_DIRECTORIES);
+#else
+  Vconfigure_early_package_directories = Qnil;
+#endif
+
+  DEFVAR_LISP ("configure-late-package-directories", &Vconfigure_late_package_directories /*
+For internal use by the build procedure only.
+configure's idea of what the late package directories will be.
+*/ );
+#ifdef PATH_LATE_PACKAGE_DIRECTORIES
+  Vconfigure_late_package_directories = split_external_path (PATH_LATE_PACKAGE_DIRECTORIES);
+#else
+  Vconfigure_late_package_directories = Qnil;
+#endif
+
+  DEFVAR_LISP ("configure-last-package-directories", &Vconfigure_last_package_directories /*
+For internal use by the build procedure only.
+configure's idea of what the last package directories will be.
+*/ );
+#ifdef PATH_LAST_PACKAGE_DIRECTORIES
+  Vconfigure_last_package_directories = split_external_path (PATH_LAST_PACKAGE_DIRECTORIES);
+#else
+  Vconfigure_last_package_directories = Qnil;
 #endif
 
   DEFVAR_LISP ("configure-package-path", &Vconfigure_package_path /*

@@ -443,6 +443,9 @@ init_mswindows_environment (void)
       "EMACSDATA",
       "EMACSPATH",
       "EMACSPACKAGEPATH",
+      "EMACSEARLYPACKAGES",
+      "EMACSLATEPACKAGES",
+      "EMACSLASTPACKAGES",
       "EMACSLOCKMETHOD",
       "INFOPATH"
     };

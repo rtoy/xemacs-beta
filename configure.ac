@@ -643,11 +643,26 @@ XE_MERGED_ARG([site-lisp],
 XE_MERGED_ARG([site-modules],
 	AC_HELP_STRING([--with-site-modules=no],[Disable site-modules directory in the XEmacs hierarchy, which is searched before the installation modules.]),
 	[], [])
-XE_MERGED_ARG([package-prefix],
-	AC_HELP_STRING([--with-package-prefix=DIR],[Specify packages root.]),
-	[AC_DEFINE(PACKAGE_PATH_USER_DEFINED)], [])
+XE_MERGED_ARG([early-packages],
+	AC_HELP_STRING([--with-early-packages=DIR],[Specify location of early/user packages (instead of ~/.xemacs; same as --with-user-packages).]),
+	[AC_DEFINE(EARLY_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
+XE_MERGED_ARG([user-packages],
+	AC_HELP_STRING([--with-user-packages=DIR],[Specify location of early/user packages (instead of ~/.xemacs; same as --with-early-packages).]),
+	[AC_DEFINE(EARLY_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
+XE_MERGED_ARG([late-packages],
+	AC_HELP_STRING([--with-late-packages=DIR],[Specify location of late/system packages (instead of default location; same as --with-system-packages).]),
+	[AC_DEFINE(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
+XE_MERGED_ARG([system-packages],
+	AC_HELP_STRING([--with-late-packages=DIR],[Specify location of late/system packages (instead of default location; same as --with-late-packages).]),
+	[AC_DEFINE(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
+XE_MERGED_ARG([last-packages],
+	AC_HELP_STRING([--with-last-packages=DIR],[Specify location of last/legacy packages (instead of default location; same as --with-legacy-packages).]),
+	[AC_DEFINE(LAST_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
+XE_MERGED_ARG([legacy-packages],
+	AC_HELP_STRING([--with-late-packages=DIR],[Specify location of late/legacy packages (instead of default location; same as --with-late-packages).]),
+	[AC_DEFINE(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
 XE_MERGED_ARG([package-path],
-	AC_HELP_STRING([--with-package-path=PATH],[Search path for package hierarchies.]),
+	AC_HELP_STRING([--with-package-path=PATH],[Search path for package directories.]),
 	[AC_DEFINE(PACKAGE_PATH_USER_DEFINED)], [])
 XE_MERGED_ARG([infopath],
 	AC_HELP_STRING([--with-infopath=PATH],[Location of info directories]),
@@ -5617,13 +5632,41 @@ while true; do
 done
 AC_SUBST(INFOPATH)
 
-if test -z "$with_package_path" && test -n "$with_package_prefix" ; then
-  if test "$enable_mule" = "yes" ; then
-    with_package_path="~/.xemacs::${with_package_prefix}/site-packages:${with_package_prefix}/xemacs-packages:${with_package_prefix}/mule-packages"
-  else
-    with_package_path="~/.xemacs::${with_package_prefix}/site-packages:${with_package_prefix}/xemacs-packages"
-  fi
-fi
+test -n "$with_user_packages" && with_early_packages=$with_user_packages
+AC_SUBST(early_packages,$with_early_packages)
+AC_SUBST(EARLY_PACKAGE_DIRECTORIES_USER_DEFINED)
+EARLY_PACKAGE_DIRECTORIES=$with_early_packages
+while true; do
+  case "$EARLY_PACKAGE_DIRECTORIES" in
+    *\$* ) eval "EARLY_PACKAGE_DIRECTORIES=$EARLY_PACKAGE_DIRECTORIES" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(EARLY_PACKAGE_DIRECTORIES)
+
+test -n "$with_system_packages" && with_late_packages=$with_system_packages
+AC_SUBST(late_packages,$with_late_packages)
+AC_SUBST(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)
+LATE_PACKAGE_DIRECTORIES=$with_late_packages
+while true; do
+  case "$LATE_PACKAGE_DIRECTORIES" in
+    *\$* ) eval "LATE_PACKAGE_DIRECTORIES=$LATE_PACKAGE_DIRECTORIES" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(LATE_PACKAGE_DIRECTORIES)
+
+test -n "$with_legacy_packages" && with_last_packages=$with_legacy_packages
+AC_SUBST(last_packages,$with_last_packages)
+AC_SUBST(LAST_PACKAGE_DIRECTORIES_USER_DEFINED)
+LAST_PACKAGE_DIRECTORIES=$with_last_packages
+while true; do
+  case "$LAST_PACKAGE_DIRECTORIES" in
+    *\$* ) eval "LAST_PACKAGE_DIRECTORIES=$LAST_PACKAGE_DIRECTORIES" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(LAST_PACKAGE_DIRECTORIES)
 
 AC_SUBST(package_path,$with_package_path)
 AC_SUBST(PACKAGE_PATH_USER_DEFINED)

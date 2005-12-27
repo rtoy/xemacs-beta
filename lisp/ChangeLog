@@ -1,3 +1,21 @@
+2005-11-25  Mike Sperber  <mike@xemacs.org>
+
+	* packages.el (packages-find-package-hierarchies-named): Use
+	`file-name-as-directory' to normalize something which may not
+	have a trailing path separator.
+
+	* package-get.el (package-get-package-index-file-location): Fix
+	essentially bogus definition.
+
+	* package-admin.el (package-admin-find-top-directory): Use the
+	existing variables rather than groking the paths from scratch, and
+	greatly simplify.
+
+	* packages.el (packages-find-all-package-hierarchies): 
+	Take into account `configure-early-package-hierarchies',
+	`configure-late-package-hierarchies',
+	`configure-last-package-hierarchies', as set by configure.
+
 2005-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/chinese.el:
