@@ -342,7 +342,8 @@ Build Infrastructure
 -- New: support NetBSD sound via Linux API. -- Aidan Kehoe
 -- Improve: generation of CFLAGS (Jerry James, Ben Wing
 -- Improve: parallel build support. -- Malcolm Purvis
--- Improve: supersede --package-path by --with-{user/early,system/late,legacy/last}--packages
+-- Improve: support --package-prefix as simple interface to --package-path
+   facility. -- Ben Wing
 -- Improve: support mmdf and pop arguments to --mail-locking. -- Ben Wing
 
 Documentation
