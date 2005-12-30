@@ -423,10 +423,22 @@ list of the last hierarchies."
   (let ((envvar-value (getenv "EMACSPACKAGEPATH")))
     (cond
      (envvar-value
-      (packages-split-package-path (paths-decode-directory-path envvar-value)))
+      (packages-deconstruct
+       (packages-split-package-path (paths-decode-directory-path envvar-value))
+       ;; we get package *directories*
+       #'(lambda (early late last)
+	   (list
+	    (packages-find-package-hierarchies early
+					       "EMACSEARLYPACKAGES")
+	    (packages-find-package-hierarchies late
+					       "EMACSLATEPACKAGES")
+	    (packages-find-package-hierarchies last
+					       "EMACSLATEPACKAGES")))))
+     ;; --with-package-path is also a historical kludge
      (configure-package-path
       (packages-deconstruct
        (packages-split-package-path configure-package-path)
+       ;; we get package *hierarchies*
        #'(lambda (early late last)
 	   (list
 	    (packages-find-package-hierarchies (list user-init-directory)
