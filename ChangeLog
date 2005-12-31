@@ -1,3 +1,9 @@
+2005-12-29  Mike Sperber  <mike@xemacs.org>
+
+	* Makefile.in.in (top-distclean-noconfig): Don't delete
+	site-packages xemacs-packages mule-packages site-lisp---those are
+	supposed to stick around.
+
 2005-11-25  Mike Sperber  <mike@xemacs.org>
 
 	* CHANGES-beta: 

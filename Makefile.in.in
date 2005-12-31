@@ -564,7 +564,6 @@ clean: top-mostlyclean top-clean
 ##      Like `distclean' but don't delete files created by `configure'.
 top-distclean-noconfig: FRC.distclean-noconfig
 	-$(RM) TAGS .sbinit lock/* lisp/finder-inf.el*
-	-$(RM) -r site-packages xemacs-packages mule-packages site-lisp
 
 distclean-noconfig: top-mostlyclean top-clean top-distclean-noconfig
 	for d in $(SUBDIR); do (cd ./$$d && $(MAKE) $(RECURSIVE_MAKE_ARGS) $@); done
