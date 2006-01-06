@@ -245,6 +245,7 @@ directory."
     ("New Zealand (nz.xemacs.org)" "ftp.nz.xemacs.org" "mirror/ftp.xemacs.org/packages")
     ("Norway (no.xemacs.org)" "ftp.no.xemacs.org" "pub/xemacs/packages")
     ("Poland (pl.xemacs.org)" "ftp.pl.xemacs.org" "pub/unix/editors/xemacs/packages")
+    ("Portugal (pt.xemacs.org)" "ftp.pt.xemacs.org" "pub/MIRRORS/ftp.xemacs.org/packages")
     ("Russia (ru.xemacs.org)" "ftp.ru.xemacs.org" "pub/emacs/xemacs/packages")
 ;   ("South Africa (za.xemacs.org)" "ftp.za.xemacs.org" "mirrorsites/ftp.xemacs.org/packages")
     ("Sweden (se.xemacs.org)" "ftp.se.xemacs.org" "pub/gnu/xemacs/packages")
@@ -337,6 +338,8 @@ variable actually used to specify package download sites."
      "pub/xemacs/beta/experimental/packages")
     ("Poland Pre-Releases (pl.xemacs.org)" "ftp.pl.xemacs.org"
      "pub/unix/editors/xemacs/beta/experimental/packages")
+    ("Portugal Pre-Releases (pt.xemacs.org)" "ftp.pt.xemacs.org"
+     "pub/MIRRORS/ftp.xemacs.org/beta/experimental/packages")
     ("Russia Pre-Releases (ru.xemacs.org)" "ftp.ru.xemacs.org"
      "pub/emacs/xemacs/beta/experimental/packages")
 ;   ("South Africa Pre-Releases (za.xemacs.org)" "ftp.za.xemacs.org"
