@@ -1,3 +1,7 @@
+2006-01-19  Marcus Crestani  <crestani@xemacs.org>
+
+	* objects-x.c (x_find_charset_font): Add cast to fix C++ build.
+
 2005-11-25  Mike Sperber  <mike@xemacs.org>
 
 	* nt.c (init_mswindows_environment): Add EMACSEARLYPACKAGES,
