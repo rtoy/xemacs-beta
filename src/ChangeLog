@@ -1,5 +1,14 @@
 2006-01-19  Marcus Crestani  <crestani@xemacs.org>
 
+	* dynarr.c (Dynarr_realloc): Determine size of memory region to
+	copy correctly, fix types.
+	* dynarr.c (Dynarr_lisp_realloc): Determine size of memory region
+	to copy correctly.
+	* dynarr.c (Dynarr_resize): Call Dynarr_realloc with number of
+	elements instead of memory region size.
+
+2006-01-19  Marcus Crestani  <crestani@xemacs.org>
+
 	* objects-x.c (x_find_charset_font): Add cast to fix C++ build.
 
 2005-11-25  Mike Sperber  <mike@xemacs.org>
