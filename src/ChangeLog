@@ -1,3 +1,12 @@
+2006-01-21  Marcus Crestani  <crestani@xemacs.org>
+
+	* mc-alloc.c (init_mc_allocator): Cygwin claims to have a 64k
+	page size, add it.
+
+2006-01-20  Rick Rankin <rrankin1424-xemacs@yahoo.com>
+
+	* sysdir.h: Workaround missing d_ino field from 'struct dirent'.
+
 2006-01-19  Marcus Crestani  <crestani@xemacs.org>
 
 	* dynarr.c (Dynarr_realloc): Determine size of memory region to

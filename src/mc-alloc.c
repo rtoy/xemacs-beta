@@ -1732,7 +1732,12 @@ init_mc_allocator (void)
     case  4096: log_page_size = 12; break;
     case  8192: log_page_size = 13; break;
     case 16384: log_page_size = 14; break;
-    default: ABORT ();
+    case 32768: log_page_size = 15; break;
+    case 65536: log_page_size = 16; break;
+    default: 
+      fprintf(stderr, "##### SYS_PAGE_SIZE=%d not supported #####\n",
+	      SYS_PAGE_SIZE);
+      ABORT ();
     }
   
   page_size_div_2 = (EMACS_INT) SYS_PAGE_SIZE >> 1;
