@@ -1,3 +1,11 @@
+2006-01-30  Vin Shelton  <acs@xemacs.org>
+
+	* configure.ac: Simplify cygwin include and no-X Xpm handling.
+	As of cygwin-1.5.19 (if you're using /bin/gcc),
+	'gcc -print-file-name=libc.a' (effectively) returns '/lib'
+	instead of '/usr/lib', so we'll use 'gcc -print-search-dirs'
+	instead.
+
 2005-12-29  Mike Sperber  <mike@xemacs.org>
 
 	* Makefile.in.in (top-distclean-noconfig): Don't delete

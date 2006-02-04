@@ -2162,9 +2162,9 @@ dnl We only cope with headers in mingw, not mingw32: no previous version of
 dnl XEmacs supported mingw and cygnus have made this incompatible change
 dnl so we just go with the flow.
 case "$opsys" in mingw* | cygwin*)
-  cygwin_include=`eval "gcc -print-file-name=libc.a"` ;
-  cygwin_include=`eval "dirname $cygwin_include"` ;
-  cygwin_include="-I$cygwin_include/../include" ;
+  cygwin_include=`eval gcc -print-search-dirs | sed -ne s'/install: //p'`
+  cygwin_include=`eval "cd $cygwin_include/../../../..; pwd"`
+  cygwin_include="-I$cygwin_include/include" ;
   extra_includes="$cygwin_include/mingw $cygwin_include" ;
   case "$opsys" in mingw*)
     XE_APPEND($extra_includes, c_switch_system) ;;
@@ -3938,9 +3938,8 @@ if test "$window_system" != "none"; then
   incpath_xpm=
   case "$opsys" in 
     cygwin*)
-      cygwin_top=`eval "gcc -print-file-name=libc.a"` ;
-      cygwin_top=`eval "dirname ${cygwin_top}"`;
-      cygwin_top="${cygwin_top}/..";
+      cygwin_top=`eval gcc -print-search-dirs | sed -ne s'/install: //p'`
+      cygwin_top=`eval "cd $cygwin_top/../../../..; pwd"`
       case "$window_system" in
         dnl use "standard" search pattern
         x11)  ;;
