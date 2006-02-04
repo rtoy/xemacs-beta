@@ -1,3 +1,8 @@
+2004-01-19  Martin Buchholz  <martin@xemacs.org>
+
+	* font-lock.el: Add support for not-so recent changes in Java to
+	java-mode.
+
 2006-01-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cmdloop.el (read-quoted-char):

@@ -2587,9 +2587,10 @@ The name is assumed to begin with a capital letter.")
 	 (list        
 	  (concat
 	   "\\<\\("
+	   "assert\\|"
 	   "break\\|byvalue\\|"
 	   "case\\|cast\\|catch\\|class\\|continue\\|"
-	   "do\\|else\\|extends\\|"
+	   "do\\|else\\|enum\\|extends\\|"
 	   "finally\\|for\\|future\\|"
 	   "generic\\|goto\\|"
 	   "if\\|implements\\|import\\|"
@@ -2775,10 +2776,10 @@ The name is assumed to begin with a capital letter.")
 	  '("\\(@beaninfo\\)"
 	    0 font-lock-keyword-face t)
 	  ;; Doc tag - Links
-	  '("{ *@link\\s +\\([^}]+\\)}"
+	  '("{ *@link\\(?:plain\\)?\\s +\\([^}]+\\)}"
 	    0 font-lock-keyword-face t)
 	  ;; Doc tag - Links
-	  '("{ *@link\\s +\\(\\(\\S +\\)\\|\\(\\S +\\s +\\S +\\)\\) *}"
+	  '("{ *@link\\(?:plain\\)?\\s +\\(\\(\\S +\\)\\|\\(\\S +\\s +\\S +\\)\\) *}"
 	    1 font-lock-function-name-face t)
     
 	  )))
