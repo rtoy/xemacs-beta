@@ -233,7 +233,9 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
       cache->head = cell->next;
       cache->head->prev = 0;
       if (cache->tail == cell) cache->tail = 0; /* only one */
+#if 0
       debug_out ("Cache full, freeing GC: %08lx\n  ", XE_GCONTEXT(cell));
+#endif
       XFreeGC (cache->dpy, cell->gc);
       cache->delete_count++;
 #ifdef GCCACHE_HASH
