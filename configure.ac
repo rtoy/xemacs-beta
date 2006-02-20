@@ -4472,8 +4472,6 @@ if test "$enable_mule" = "yes" ; then
 
   AC_CHECKING([for Mule input methods])
   dnl Do we have the XmIm* routines?  And if so, do we want to use them?
-  dnl XIM seems to be flaky except on Solaris...
-  dnl test -z "$with_xim" -a "$opsys" != "sol2" && with_xim=no
   case "$with_xim" in "" | "yes" )
     AC_CHECKING([for XIM])
     AC_CHECK_LIB(X11, XOpenIM, with_xim=xlib, with_xim=no)
@@ -4481,6 +4479,8 @@ if test "$enable_mule" = "yes" ; then
     dnl Only use Motif if linking Motif anyway, or don't have xlib XIM
     if test "$need_motif $have_lesstif" = "yes no"; then
       AC_CHECK_LIB(Xm, XmImMbLookupString, with_xim=motif)
+    dnl #### This is always false.
+    dnl Not clear what we want, although "yes no yes" is insufficient.
     elif test "$have_motif $have_lesstif $with_xim" = "yes no no"; then
       AC_CHECK_LIB(Xm, XmImMbLookupString, with_xim=motif)
     fi ;;

@@ -1,3 +1,11 @@
+2006-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (Mule): Mark broken test with ####.
+
+2006-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (Mule): Remove obsolete comment on XIM.
+
 2006-01-30  Vin Shelton  <acs@xemacs.org>
 
 	* configure.ac: Simplify cygwin include and no-X Xpm handling.
