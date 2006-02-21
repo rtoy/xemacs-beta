@@ -1265,7 +1265,7 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
 
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      signal_syntax_table_extent_adjust (mbuf);
+      signal_syntax_cache_extent_adjust (mbuf);
     }
 
   signal_after_change (buf, pos, pos, pos + cclen);
@@ -1546,7 +1546,7 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
 
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      signal_syntax_table_extent_adjust (mbuf);
+      signal_syntax_cache_extent_adjust (mbuf);
     }
 
   /* &&#### Here we consider converting the buffer from default to

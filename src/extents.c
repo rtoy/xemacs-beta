@@ -1922,7 +1922,7 @@ signal_single_extent_changed (EXTENT extent, Lisp_Object property,
   if (NILP (property) ? !NILP (Fextent_property (wrap_extent (extent),
 						 Qsyntax_table, Qnil)) :
       EQ (property, Qsyntax_table))
-    signal_syntax_table_extent_changed (extent);
+    signal_syntax_cache_extent_changed (extent);
 }
 
 /* Make note that a change has happened in EXTENT.  The change was either

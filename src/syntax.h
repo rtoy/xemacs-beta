@@ -354,7 +354,7 @@ DECLARE_LRECORD (syntax_cache, Lisp_Syntax_Cache);
 extern const struct sized_memory_description syntax_cache_description;
 
 /* Note that the external interface to the syntax-cache uses charpos's, but
-   intnernally we use bytepos's, for speed. */
+   internally we use bytepos's, for speed. */
 
 void update_syntax_cache (struct syntax_cache *cache, Charxpos pos, int count);
 struct syntax_cache *setup_syntax_cache (struct syntax_cache *cache,

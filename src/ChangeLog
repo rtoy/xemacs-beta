@@ -1,3 +1,34 @@
+2006-02-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Fix crash (cf. Holger Schauer <yxz7j7xzk97.fsf@gimli.holgi.priv>).
+	Improve nomenclature (some identifiers were misnamed with
+	"syntax_table" although they are purely related to syntax cache).
+	Add lots of comments explaining logic and use of arguments.
+
+	* syntax.c (setup_syntax_cache):  Fix broken logic that
+	initialized prev_change and next_change members to Qnil for syntax
+	caches associated with buffers, triggering an assertion because
+	the update functions expect those members to markers.
+
+	* syntax.c (signal_syntax_cache_extent_changed):
+	* syntax.c (reset_buffer_syntax_cache_range):
+	Rename reset_buffer_cache_range to reset_buffer_syntax_cache_range.
+
+	* lisp.h (signal_syntax_cache_extent_changed):
+	* syntax.c (signal_syntax_cache_extent_changed)
+	* syntax.c (update_syntax_cache):
+	* extents.c (signal_single_extent_changed):
+	Rename signal_syntax_table_extent_changed to
+	signal_syntax_cache_extent_changed.
+
+	* lisp.h (signal_syntax_cache_extent_adjust):
+	* syntax.c (signal_syntax_cache_extent_adjust):
+	* insdel.c (buffer_delete_range, buffer_insert_string_1):
+	Rename signal_syntax_table_extent_adjust to
+	signal_syntax_cache_extent_adjust.
+
+	* syntax.h (update_syntax_cache): Fix typo in comment.
+
 2006-02-16  Marcus Crestani  <crestani@xemacs.org>
 
 	* xgccache.c (gc_cache_lookup): Remove "Cache full" warning.
