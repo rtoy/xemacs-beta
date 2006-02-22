@@ -1,3 +1,7 @@
+2006-02-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* syntax.c: Move static functions in syntax_cache page to top.
+
 2006-02-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Fix crash (cf. Holger Schauer <yxz7j7xzk97.fsf@gimli.holgi.priv>).

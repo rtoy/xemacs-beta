@@ -238,7 +238,75 @@ BUFFER defaults to the current buffer if omitted.
   buf->local_var_flags |= XINT (buffer_local_flags.syntax_table);
   return syntax_table;
 }
+
+
 
+/*
+ * Syntax caching
+ */
+
+/* syntax_cache object implementation */
+
+static const struct memory_description syntax_cache_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, object) },
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, buffer) },
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, syntax_table) },
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, mirror_table) },
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, start) },
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, end) },
+  { XD_END }
+};
+
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("syntax-cache", syntax_cache,
+			       1, /*dumpable-flag*/
+                               0, 0, 0, 0, 0,
+			       syntax_cache_description_1,
+			       Lisp_Syntax_Cache);
+#else /* not NEW_GC */
+
+const struct sized_memory_description syntax_cache_description = {
+  sizeof (struct syntax_cache),
+  syntax_cache_description_1
+};
+#endif /* not NEW_GC */
+
+/* static syntax cache utilities */
+
+static void
+syntax_cache_table_was_changed (struct buffer *buf)
+{
+  struct syntax_cache *cache = buf->syntax_cache;
+  if (cache->no_syntax_table_prop)
+    {
+      cache->syntax_table =
+	BUFFER_SYNTAX_TABLE (buf);
+      cache->mirror_table =
+	BUFFER_MIRROR_SYNTAX_TABLE (buf);
+    }
+}
+
+static void
+reset_buffer_syntax_cache_range (struct syntax_cache *cache,
+				 Lisp_Object buffer, int infinite)
+{
+  Fset_marker (cache->start, make_int (1), buffer);
+  Fset_marker (cache->end, make_int (1), buffer);
+  Fset_marker_insertion_type (cache->start, Qt);
+  Fset_marker_insertion_type (cache->end, Qnil);
+  /* #### Should we "cache->no_syntax_table_prop = 1;" here? */
+  /* #### Cf comment on INFINITE in init_syntax_cache. -- sjt */
+  if (infinite)
+    {
+      cache->prev_change = EMACS_INT_MIN;
+      cache->next_change = EMACS_INT_MAX;
+    }
+  else
+    {
+      cache->prev_change = -1;
+      cache->next_change = -1;
+    }
+}
 
 static void
 init_syntax_cache (struct syntax_cache *cache, Lisp_Object object,
@@ -270,6 +338,8 @@ init_syntax_cache (struct syntax_cache *cache, Lisp_Object object,
       cache->next_change = -1;
     }
 }
+
+/* external syntax cache API */
 
 /* #### This function and associated logic still needs work, and especially
    documentation. */
@@ -316,158 +386,6 @@ struct syntax_cache *
 setup_buffer_syntax_cache (struct buffer *buffer, Charxpos from, int count)
 {
   return setup_syntax_cache (NULL, wrap_buffer (buffer), buffer, from, count);
-}
-
-static const struct memory_description syntax_cache_description_1 [] = {
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, object) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, buffer) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, syntax_table) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, mirror_table) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, start) },
-  { XD_LISP_OBJECT, offsetof (struct syntax_cache, end) },
-  { XD_END }
-};
-
-#ifdef NEW_GC
-DEFINE_LRECORD_IMPLEMENTATION ("syntax-cache", syntax_cache,
-			       1, /*dumpable-flag*/
-                               0, 0, 0, 0, 0,
-			       syntax_cache_description_1,
-			       Lisp_Syntax_Cache);
-#else /* not NEW_GC */
-
-const struct sized_memory_description syntax_cache_description = {
-  sizeof (struct syntax_cache),
-  syntax_cache_description_1
-};
-#endif /* not NEW_GC */
-
-void
-mark_buffer_syntax_cache (struct buffer *buf)
-{
-  struct syntax_cache *cache = buf->syntax_cache;
-  if (!cache) /* Vbuffer_defaults and such don't have caches */
-    return;
-  mark_object (cache->object);
-  if (cache->buffer)
-    mark_object (wrap_buffer (cache->buffer));
-  mark_object (cache->syntax_table);
-  mark_object (cache->mirror_table);
-  mark_object (cache->start);
-  mark_object (cache->end);
-}
-
-static void
-reset_buffer_syntax_cache_range (struct syntax_cache *cache,
-				 Lisp_Object buffer, int infinite)
-{
-  Fset_marker (cache->start, make_int (1), buffer);
-  Fset_marker (cache->end, make_int (1), buffer);
-  Fset_marker_insertion_type (cache->start, Qt);
-  Fset_marker_insertion_type (cache->end, Qnil);
-  /* #### Should we "cache->no_syntax_table_prop = 1;" here? */
-  /* #### Cf comment on INFINITE in init_syntax_cache. -- sjt */
-  if (infinite)
-    {
-      cache->prev_change = EMACS_INT_MIN;
-      cache->next_change = EMACS_INT_MAX;
-    }
-  else
-    {
-      cache->prev_change = -1;
-      cache->next_change = -1;
-    }
-}
-
-void
-init_buffer_syntax_cache (struct buffer *buf)
-{
-  struct syntax_cache *cache;
-#ifdef NEW_GC
-  buf->syntax_cache = alloc_lrecord_type (struct syntax_cache,
-					  &lrecord_syntax_cache);
-#else /* not NEW_GC */
-  buf->syntax_cache = xnew_and_zero (struct syntax_cache);
-#endif /* not NEW_GC */
-  cache = buf->syntax_cache;
-  cache->object = wrap_buffer (buf);
-  cache->buffer = buf;
-  cache->no_syntax_table_prop = 1;
-  cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
-  cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
-  cache->start = Fmake_marker ();
-  cache->end = Fmake_marker ();
-  reset_buffer_syntax_cache_range (cache, cache->object, 0);
-}
-
-/* finalize the syntax cache for BUF */
-void
-uninit_buffer_syntax_cache (struct buffer *buf)
-{
-#ifdef NEW_GC
-  mc_free (buf->syntax_cache);
-#else /* not NEW_GC */
-  xfree (buf->syntax_cache, struct syntax_cache *);
-#endif /* not NEW_GC */
-  buf->syntax_cache = 0;
-}
-
-
-static void
-syntax_cache_table_was_changed (struct buffer *buf)
-{
-  struct syntax_cache *cache = buf->syntax_cache;
-  if (cache->no_syntax_table_prop)
-    {
-      cache->syntax_table =
-	BUFFER_SYNTAX_TABLE (buf);
-      cache->mirror_table =
-	BUFFER_MIRROR_SYNTAX_TABLE (buf);
-    }
-}
-
-/* The syntax-table property on the range covered by EXTENT may be changing,
-   either because EXTENT has a syntax-table property and is being attached
-   or detached (this includes having its endpoints changed), or because
-   the value of EXTENT's syntax-table property is changing. */
-
-void
-signal_syntax_cache_extent_changed (EXTENT extent)
-{
-  Lisp_Object buffer = Fextent_object (wrap_extent (extent));
-  if (BUFFERP (buffer))
-    {
-      /* This was getting called with the buffer's start and end null, eg in
-	 cperl mode, which triggers an assert in byte_marker_position.  Cf
-	 thread rooted at <yxz7j7xzk97.fsf@gimli.holgi.priv> on xemacs-beta.
-	 <yxzfymklb6p.fsf@gimli.holgi.priv> has a recipe, but you also need
-	 to delete or type SPC to get the crash.
-	 #### Delete this comment when setup_syntax_cache is made sane. */
-      struct syntax_cache *cache = XBUFFER (buffer)->syntax_cache;
-      /* #### would this be slower or less accurate in character terms? */
-      Bytexpos start = extent_endpoint_byte (extent, 0);
-      Bytexpos end = extent_endpoint_byte (extent, 1);
-      Bytexpos start2 = byte_marker_position (cache->start);
-      Bytexpos end2 = byte_marker_position (cache->end);
-      /* If the extent is entirely before or entirely after the cache
-	 range, it doesn't overlap.  Otherwise, invalidate the range. */
-      if (!(end < start2 || start > end2))
-	reset_buffer_syntax_cache_range (cache, buffer, 0);
-    }
-}
-
-/* Extents have been adjusted for insertion or deletion, so we need to
-   refetch the start and end position of the extent */
-void
-signal_syntax_cache_extent_adjust (struct buffer *buf)
-{
-  struct syntax_cache *cache = buf->syntax_cache;
-  /* If the cache was invalid before, leave it that way.  We only want
-     to update the limits of validity when they were actually valid. */
-  if (cache->prev_change < 0)
-    return;
-  cache->prev_change = marker_position (cache->start);
-  cache->next_change = marker_position (cache->end);
 }
 
 /* 
@@ -579,6 +497,107 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
 #endif /* NOT_WORTH_THE_EFFORT */
     }
 }
+
+/* buffer-specific APIs used in buffer.c
+   #### This is really unclean;
+   the syntax cache should just be a LISP object */
+
+void
+mark_buffer_syntax_cache (struct buffer *buf)
+{
+  struct syntax_cache *cache = buf->syntax_cache;
+  if (!cache) /* Vbuffer_defaults and such don't have caches */
+    return;
+  mark_object (cache->object);
+  if (cache->buffer)
+    mark_object (wrap_buffer (cache->buffer));
+  mark_object (cache->syntax_table);
+  mark_object (cache->mirror_table);
+  mark_object (cache->start);
+  mark_object (cache->end);
+}
+
+void
+init_buffer_syntax_cache (struct buffer *buf)
+{
+  struct syntax_cache *cache;
+#ifdef NEW_GC
+  buf->syntax_cache = alloc_lrecord_type (struct syntax_cache,
+					  &lrecord_syntax_cache);
+#else /* not NEW_GC */
+  buf->syntax_cache = xnew_and_zero (struct syntax_cache);
+#endif /* not NEW_GC */
+  cache = buf->syntax_cache;
+  cache->object = wrap_buffer (buf);
+  cache->buffer = buf;
+  cache->no_syntax_table_prop = 1;
+  cache->syntax_table = BUFFER_SYNTAX_TABLE (cache->buffer);
+  cache->mirror_table = BUFFER_MIRROR_SYNTAX_TABLE (cache->buffer);
+  cache->start = Fmake_marker ();
+  cache->end = Fmake_marker ();
+  reset_buffer_syntax_cache_range (cache, cache->object, 0);
+}
+
+/* finalize the syntax cache for BUF */
+
+void
+uninit_buffer_syntax_cache (struct buffer *buf)
+{
+#ifdef NEW_GC
+  mc_free (buf->syntax_cache);
+#else /* not NEW_GC */
+  xfree (buf->syntax_cache, struct syntax_cache *);
+#endif /* not NEW_GC */
+  buf->syntax_cache = 0;
+}
+
+/* extent-specific APIs used in extents.c and insdel.c */
+
+/* The syntax-table property on the range covered by EXTENT may be changing,
+   either because EXTENT has a syntax-table property and is being attached
+   or detached (this includes having its endpoints changed), or because
+   the value of EXTENT's syntax-table property is changing. */
+
+void
+signal_syntax_cache_extent_changed (EXTENT extent)
+{
+  Lisp_Object buffer = Fextent_object (wrap_extent (extent));
+  if (BUFFERP (buffer))
+    {
+      /* This was getting called with the buffer's start and end null, eg in
+	 cperl mode, which triggers an assert in byte_marker_position.  Cf
+	 thread rooted at <yxz7j7xzk97.fsf@gimli.holgi.priv> on xemacs-beta.
+	 <yxzfymklb6p.fsf@gimli.holgi.priv> has a recipe, but you also need
+	 to delete or type SPC to get the crash.
+	 #### Delete this comment when setup_syntax_cache is made sane. */
+      struct syntax_cache *cache = XBUFFER (buffer)->syntax_cache;
+      /* #### would this be slower or less accurate in character terms? */
+      Bytexpos start = extent_endpoint_byte (extent, 0);
+      Bytexpos end = extent_endpoint_byte (extent, 1);
+      Bytexpos start2 = byte_marker_position (cache->start);
+      Bytexpos end2 = byte_marker_position (cache->end);
+      /* If the extent is entirely before or entirely after the cache
+	 range, it doesn't overlap.  Otherwise, invalidate the range. */
+      if (!(end < start2 || start > end2))
+	reset_buffer_syntax_cache_range (cache, buffer, 0);
+    }
+}
+
+/* Extents have been adjusted for insertion or deletion, so we need to
+   refetch the start and end position of the extent */
+void
+signal_syntax_cache_extent_adjust (struct buffer *buf)
+{
+  struct syntax_cache *cache = buf->syntax_cache;
+  /* If the cache was invalid before, leave it that way.  We only want
+     to update the limits of validity when they were actually valid. */
+  if (cache->prev_change < 0)
+    return;
+  cache->prev_change = marker_position (cache->start);
+  cache->next_change = marker_position (cache->end);
+}
+
+
 
 /* Convert a letter which signifies a syntax code
    into the code it signifies.
