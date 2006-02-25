@@ -1,3 +1,53 @@
+to 21.5.25 "eggplant"
+
+Major Features and Backward Incompatible Changes
+
+-- Fix: crash due to broken initialization of syntax cache. -- Stephen Turnbull
+-- Fix: crash due to incomplete Mule-ization of x_font_instance_truename. -- Stephen Turnbull
+-- Improve: configure UI for packages. -- Mike Sperber
+
+User-Visible Bug Fixes and Minor Improvements
+
+-- Fix: default char-syntax of CJK to ?w failed. -- Aidan Kehoe
+-- Fix: missing fonts due to MAX_FONT_COUNT = 5000 isn't infinite any more. -- Aidan Kehoe
+-- Fix: missing setlocale(3) initialization in Mule. -- Aidan Kehoe
+-- Improve: Java support in font-lock. -- Martin Buchholz
+-- Improve: Russian C-x processing. -- Aidan Kehoe
+-- Improve: use logical "beta" path to downloads. -- Adrian	
+-- New: euc-cn coding system alias for cn-gb-2312. -- Aidan Kehoe	
+-- Update: package download sites. -- Adrian Aichner
+
+Build Infrastructure
+
+-- Fix: conditionalization of checks for Xft library. -- Mike Sperber
+-- Fix: deletion of user-created links in distclean. -- Mike Sperber
+-- Fix: reporting of Xft in Installation. -- Stephen Turnbull
+-- Improve: cygwin include and no-X Xpm handling in configure. -- Vin Shelton
+
+Documentation
+
+-- Improve: comments. -- Aidan Kehoe, Stephen Turnbull
+-- New: node on keyboards with which one can't type Latin. -- Aidan Kehoe
+
+Lisp API
+
+-- New: rename command and binding in buffer menu mode. -- Stephen Turnbull
+
+Internal API and Implementation
+
+-- Fix: "not char-or-int-p: nil" bug in easymenu. -- Aidan Kehoe
+-- Fix: C++ correctness. -- Marcus Crestani
+-- Fix: buggy computation of dynarr size. -- Marcus Crestani
+-- Fix: char/event confusion introduced by a GNU Emacs sync. -- Aidan Kehoe
+-- Fix: missing hardware-specific X11 keycode initialization. -- Aidan Kehoe
+-- Fix: syntax errors. -- Andrey Slusar
+-- Fix: workaround missing d_ino field from 'struct dirent'. -- Rick Rankin
+-- Fix: x_find_charset_font returned Qunboundp inefficiently. -- Aidan Kehoe
+-- Fix: x_find_charset_font wasn't Mule-ized. -- Stephen Turnbull
+-- Improve: Cygwin support in MC_ALLOC. -- Marcus Crestani
+-- Improve: silence redundant gc cache warning. -- Marcus Crestani
+-- Improve: syntax cache factoring and documentation. -- Stephen Turnbull
+
 to 21.5.24 "dandelion"
 Major features
 
