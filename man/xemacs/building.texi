@@ -580,7 +580,8 @@ the Emacs buffers in which you edit the Lisp programs to the inferior Lisp
 process.
 
 @findex run-lisp
-  To run an inferior Lisp process, type @kbd{M-x run-lisp}.  This runs the
+  To run an inferior Lisp process, type @kbd{M-x run-lisp}.
+(You need to the @file{os-utils} package installed for this.) This runs the
 program named @code{lisp}, the same program you would run by typing
 @code{lisp} as a shell command, with both input and output going through an
 Emacs buffer named @samp{*lisp*}.  In other words, any ``terminal output''

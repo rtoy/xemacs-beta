@@ -1,3 +1,8 @@
+2006-02-26  Mike Sperber  <mike@xemacs.org>
+
+	* xemacs/building.texi (External Lisp): Document that `run-lisp'
+	needs the os-utils package.
+
 2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.25 "eggplant" is released.
