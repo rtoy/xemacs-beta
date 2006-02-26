@@ -28,6 +28,7 @@ Documentation
 
 -- Improve: comments. -- Aidan Kehoe, Stephen Turnbull
 -- New: node on keyboards with which one can't type Latin. -- Aidan Kehoe
+-- Update: Info docs for new package-path configuratin syntax. -- Mike Sperber
 
 Lisp API
 
