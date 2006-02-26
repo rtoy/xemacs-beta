@@ -1,3 +1,9 @@
+2006-02-26  Mike Sperber  <mike@xemacs.org>
+
+	* lisp-mode.el (lisp-send-defun): Remove this function; the
+	definition here didn't do anything---once upon a time, it may have
+	gotten overwritten by some code that has evaporated since then.
+
 2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.25 "eggplant" is released.

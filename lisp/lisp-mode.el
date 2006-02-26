@@ -340,7 +340,6 @@ All commands in `shared-lisp-mode-map' are inherited by this map.")
   (setq lisp-mode-map (make-sparse-keymap))
   (set-keymap-name lisp-mode-map 'lisp-mode-map)
   (set-keymap-parents lisp-mode-map (list shared-lisp-mode-map))
-  (define-key lisp-mode-map "\e\C-x" 'lisp-send-defun)
   ;; gag, no.  use ilisp.  -jwz
 ;;  (define-key lisp-mode-map "\C-c\C-z" 'run-lisp)
   )
@@ -364,13 +363,6 @@ if that value is non-nil."
   (lisp-mode-variables t)
   (set-syntax-table lisp-mode-syntax-table)
   (run-hooks 'lisp-mode-hook))
-
-;; This will do unless shell.el is loaded.
-;; XEmacs change
-(defun lisp-send-defun ()
-  "Send the current defun to the Lisp process made by \\[run-lisp]."
-  (interactive)
-  (error "Process lisp does not exist"))
 
 ;; XEmacs change: emacs-lisp-mode-map is a more appropriate parent.
 (defvar lisp-interaction-mode-map ()
