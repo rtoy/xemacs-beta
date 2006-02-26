@@ -1,3 +1,7 @@
+2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.25 "eggplant" is released.
+
 2006-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (Mule): Mark broken test with ####.

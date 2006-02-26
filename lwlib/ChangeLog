@@ -1,3 +1,7 @@
+2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.25 "eggplant" is released.
+
 2005-12-21  Andrey Slusar  <anrays@gmail.com>
 
 	* xlwmenu.c (make_drawing_gcs): Fix build with gcc 2.95.

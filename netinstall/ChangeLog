@@ -1,3 +1,7 @@
+2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.25 "eggplant" is released.
+
 2005-11-25  Mike Sperber  <mike@xemacs.org>
 
 	* reginfo.h (XEMACS_INFO_XEMACS_EARLY_PACKAGES_KEY)
