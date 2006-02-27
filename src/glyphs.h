@@ -1069,7 +1069,7 @@ struct glyph_cachel
 {
 #ifdef NEW_GC
   struct lrecord_header header;
-#endif /* not NEW_GC */
+#endif /* NEW_GC */
   Lisp_Object glyph;
 
   unsigned int dirty :1;	/* I'm copying faces here. I'm not

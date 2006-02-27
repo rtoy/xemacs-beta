@@ -169,10 +169,14 @@ void complex_vars_of_gc (void);
    alloc.c to gc.c. */
 void gc_sweep_1 (void);
 
-#ifndef MC_ALLOC
 extern void *breathing_space;
-#endif /* not MC_ALLOC */
 #endif /* not NEW_GC */
+
+#ifdef NEW_GC
+void add_finalizable_obj (Lisp_Object obj);
+void register_for_finalization (void);
+void run_finalizers (void);
+#endif /* NEW_GC */
 
 END_C_DECLS
 

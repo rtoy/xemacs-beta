@@ -220,10 +220,8 @@ USE_PORTABLE_DUMPER=1
 # of the traditional XEmacs garbage-collection routines.
 USE_KKCC=1
 
-# Set this to use the new experimental allocator routines
-MC_ALLOC=1
-
-# Set this to use the new experimental incremental garbage collector routines
+# Set this to use the new experimental incremental garbage collector
+# and the new allocator routines
 NEW_GC=0
 
 # Set this to turn on the use of the union type, which gets you improved

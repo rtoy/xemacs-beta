@@ -180,11 +180,11 @@ Lstream_set_buffering (Lstream *lstr, Lstream_buffering buffering,
     }
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static const Lstream_implementation *lstream_types[32];
 static Lisp_Object Vlstream_free_list[32];
 static int lstream_type_count;
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 /* Allocate and return a new Lstream.  This function is not really
    meant to be called directly; rather, each stream type should
@@ -196,11 +196,11 @@ Lstream *
 Lstream_new (const Lstream_implementation *imp, const char *mode)
 {
   Lstream *p;
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   p = XLSTREAM (wrap_pointer_1 
 		(alloc_lrecord (aligned_sizeof_lstream (imp->size),
 				&lrecord_lstream)));
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   int i;
 
   for (i = 0; i < lstream_type_count; i++)
@@ -220,7 +220,7 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
     }
 
   p = XLSTREAM (alloc_managed_lcrecord (Vlstream_free_list[i]));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
   /* Zero it out, except the header. */
   memset ((char *) p + sizeof (p->header), '\0',
 	  aligned_sizeof_lstream (imp->size) - sizeof (p->header));
@@ -296,14 +296,14 @@ Lstream_unset_character_mode (Lstream *lstr)
 void
 Lstream_delete (Lstream *lstr)
 {
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   int i;
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
   Lisp_Object val = wrap_lstream (lstr);
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (val);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   for (i = 0; i < lstream_type_count; i++)
     {
       if (lstream_types[i] == lstr->imp)
@@ -314,7 +314,7 @@ Lstream_delete (Lstream *lstr)
     }
 
   ABORT ();
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
 #define Lstream_internal_error(reason, lstr) \
@@ -1865,7 +1865,7 @@ lstream_type_create (void)
   LSTREAM_HAS_METHOD (lisp_buffer, marker);
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 void
 reinit_vars_of_lstream (void)
 {
@@ -1877,7 +1877,7 @@ reinit_vars_of_lstream (void)
       staticpro_nodump (&Vlstream_free_list[i]);
     }
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 vars_of_lstream (void)

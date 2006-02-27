@@ -403,11 +403,7 @@ mc_allocator_globals_type mc_allocator_globals;
 
 
 /* Number of mark bits: minimum 1, maximum 8. */
-#ifdef NEW_GC
 #define N_MARK_BITS 2
-#else /* not NEW_GC */
-#define N_MARK_BITS 1
-#endif /* not NEW_GC */
 
 
 
@@ -773,11 +769,9 @@ set_mark_bit (void *ptr, EMACS_INT value)
   assert (ph && PH_ON_USED_LIST_P (ph));
   if (ph)
     {
-#ifdef NEW_GC
       if (value == BLACK)
 	if (!PH_BLACK_BIT (ph))
 	  PH_BLACK_BIT (ph) = 1;
-#endif /* NEW_GC */
       SET_BIT (ph, get_mark_bit_index (ptr, ph), value);
     }
 }
@@ -1271,10 +1265,8 @@ remove_page_from_used_list (page_header *ph)
 {
   page_list_header *plh = PH_PLH (ph);
 
-#ifdef NEW_GC
   if (gc_in_progress && PH_PROTECTION_BIT (ph)) ABORT();
   /* cleanup: remove memory protection, zero page_header bits. */
-#endif /* not NEW_GC */
 
 #ifdef MEMORY_USAGE_STATS
   PLH_TOTAL_CELLS (plh) -= PH_CELLS_ON_PAGE (ph);
@@ -1482,56 +1474,8 @@ mark_free_list (page_header *ph)
   free_link *fl = PH_FREE_LIST (ph);
   while (fl)
     {
-#ifdef NEW_GC
       SET_BIT (ph, get_mark_bit_index (fl, ph), BLACK);
-#else /* not NEW_GC */
-      SET_BIT (ph, get_mark_bit_index (fl, ph), 1);
-#endif /* not NEW_GC */
       fl = NEXT_FREE (fl);
-    }
-}
-
-/* Finalize a page. You have to tell mc-alloc how to call your
-   object's finalizer. Therefore, you have to define the macro
-   MC_ALLOC_CALL_FINALIZER(ptr). This macro should do nothing else
-   then test if there is a finalizer and call it on the given
-   argument, which is the heap address of the object. */
-static void
-finalize_page (page_header *ph)
-{
-  EMACS_INT heap_space = (EMACS_INT) PH_HEAP_SPACE (ph);
-  EMACS_INT heap_space_step = PH_CELL_SIZE (ph);
-  EMACS_INT mark_bit = 0;
-  EMACS_INT mark_bit_max_index = PH_CELLS_ON_PAGE (ph);
-  unsigned int bit = 0;
-
-  mark_free_list (ph);
-
-#ifdef NEW_GC
-  /* ARRAY_BIT_HACK */
-  if (PH_ARRAY_BIT (ph))
-    for (mark_bit = 0; mark_bit < mark_bit_max_index; mark_bit++)
-      {
-	GET_BIT (bit, ph, mark_bit * N_MARK_BITS);
-	if (bit)
-	  {
-	    return;
-	  }
-      }
-#endif /* NEW_GC */
-
-  for (mark_bit = 0; mark_bit < mark_bit_max_index; mark_bit++)
-    {
-      GET_BIT (bit, ph, mark_bit * N_MARK_BITS);
-#ifdef NEW_GC
-      if (bit == WHITE) 
-#else /* not NEW_GC */
-      if (bit == 0) 
-#endif /* not NEW_GC */
-        {
-	  EMACS_INT ptr = (heap_space + (heap_space_step * mark_bit));
-	  MC_ALLOC_CALL_FINALIZER ((void *) ptr);
-        }
     }
 }
 
@@ -1558,14 +1502,6 @@ finalize_page_for_disksave (page_header *ph)
 }
 
 
-/* Finalizes the heap. */
-void
-mc_finalize (void)
-{
-  visit_all_used_page_headers (finalize_page);
-}
-
-
 /* Finalizes the heap for disksave. */
 void
 mc_finalize_for_disksave (void)
@@ -1588,7 +1524,6 @@ sweep_page (page_header *ph)
 
   mark_free_list (ph);
 
-#ifdef NEW_GC
   /* ARRAY_BIT_HACK */
   if (PH_ARRAY_BIT (ph))
     for (mark_bit = 0; mark_bit < mark_bit_max_index; mark_bit++)
@@ -1601,20 +1536,13 @@ sweep_page (page_header *ph)
 	    return;
 	  }
       }
-#endif /* NEW_GC */
 
   for (mark_bit = 0; mark_bit < mark_bit_max_index; mark_bit++)
     {
       GET_BIT (bit, ph, mark_bit * N_MARK_BITS);
-#ifdef NEW_GC
       if (bit == WHITE) 
-#else /* not NEW_GC */
-      if (bit == 0) 
-#endif /* not NEW_GC */
 	{
-#ifdef NEW_GC
 	  GC_STAT_FREED;
-#endif /* NEW_GC */
 	  remove_cell (heap_space + (heap_space_step * mark_bit), ph);
 	}
     }
@@ -1637,32 +1565,10 @@ mc_sweep (void)
 
 /* Frees the cell pointed to by ptr. */
 void
-mc_free (void *ptr)
+mc_free (void *UNUSED (ptr))
 {
-  page_header *ph;
-
-#ifdef NEW_GC
-  /* Do not allow manual freeing while a gc is running. Data is going
-     to be freed next gc cycle. */
-  if (write_barrier_enabled || gc_in_progress)
-    return;
-#endif /* NEW_GC */
-
-  ph = get_page_header (ptr);
-  assert (ph);
-  assert (PH_PLH (ph));
-  assert (PLH_LIST_TYPE (PH_PLH (ph)) != FREE_LIST);
-
-#ifdef NEW_GC
-  if (PH_ON_USED_LIST_P (ph))
-    SET_BIT (ph, get_mark_bit_index (ptr, ph), WHITE);
-#endif /* NEW_GC */
-  remove_cell (ptr, ph);
-
-  if (PH_CELLS_USED (ph) == 0)
-    remove_page_from_used_list (ph);
-  else if (PH_CELLS_USED (ph) < PH_CELLS_ON_PAGE (ph))
-    move_page_header_to_front (ph);
+  /* Manual frees are not allowed with asynchronous finalization */
+  return;
 }
 
 
@@ -1871,7 +1777,6 @@ syms_of_mc_alloc (void)
 }
 
 
-#ifdef NEW_GC
 /*--- incremental garbage collector ----------------------------------*/
 
 /* access dirty bit of page header */
@@ -2062,5 +1967,3 @@ object_on_heap_p (void *ptr)
   page_header *ph = get_page_header_internal (ptr);
   return (ph && PH_ON_USED_LIST_P (ph));
 }
-
-#endif /* NEW_GC */

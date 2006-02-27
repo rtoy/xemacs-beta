@@ -119,7 +119,7 @@ struct face_cachel
 {
 #ifdef NEW_GC
   struct lrecord_header header;
-#endif /* not NEW_GC */
+#endif /* NEW_GC */
   /* There are two kinds of cachels; those created from a single face
      and those created by merging more than one face.  In the former
      case, the FACE element specifies the face used.  In the latter

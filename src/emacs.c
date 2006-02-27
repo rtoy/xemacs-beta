@@ -914,7 +914,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   display_use = 0;
   inhibit_non_essential_conversion_operations = 1;
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #ifndef PDUMP
   if (!initialized)
 #endif
@@ -927,7 +927,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif /* ALLOC_TYPE_STATS */
 	}
     }
-#endif /* MC_ALLOC */
+#endif /* NEW_GC */
 
 #ifdef NeXT
   /* 19-Jun-1995 -baw
@@ -1320,7 +1320,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   init_signals_very_early ();
 #ifdef NEW_GC
   vdb_install_signal_handler ();
-#endif
+#endif /* NEW_GC */
   init_data_very_early (); /* Catch math errors. */
   init_floatfns_very_early (); /* Catch floating-point math errors. */
   init_process_times_very_early (); /* Initialize our process timers.
@@ -1454,9 +1454,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
       syms_of_abbrev ();
       syms_of_alloc ();
-#ifdef MC_ALLOC
+#ifdef NEW_GC
       syms_of_mc_alloc ();
-#endif /* MC_ALLOC */
+#endif /* NEW_GC */
       syms_of_gc ();
 #ifdef NEW_GC
       syms_of_vdb ();
@@ -1874,9 +1874,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_alloc_early ();
       reinit_gc_early ();
       reinit_symbols_early ();
-#ifndef MC_ALLOC
+#ifndef NEW_GC
       reinit_opaque_early ();
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
       reinit_eistring_early ();
 
       reinit_console_type_create_stream ();
@@ -2296,9 +2296,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_vars_of_glyphs_widget ();
       reinit_vars_of_insdel ();
       reinit_vars_of_lread ();
-#ifndef MC_ALLOC
+#ifndef NEW_GC
       reinit_vars_of_lstream ();
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
       reinit_vars_of_minibuf ();
 #ifdef HAVE_SHLIB
       reinit_vars_of_module ();
@@ -3239,9 +3239,9 @@ and announce itself normally when it is run.
   fflush (stdout);
 
   disksave_object_finalization ();
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   release_breathing_space ();
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
   /* Tell malloc where start of impure now is */
   /* Also arrange for warnings when nearly out of space.  */

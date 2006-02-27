@@ -1202,7 +1202,7 @@ syms_of_console (void)
   INIT_LRECORD_IMPLEMENTATION (tty_console);
 #endif
   INIT_LRECORD_IMPLEMENTATION (stream_console);
-#endif /* not NEW_GC */
+#endif /* NEW_GC */
 
   DEFSUBR (Fvalid_console_type_p);
   DEFSUBR (Fconsole_type_list);
@@ -1325,7 +1325,7 @@ One argument, the to-be-deleted console.
 }
 
 /* The docstrings for DEFVAR_* are recorded externally by make-docfile.  */
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define DEFVAR_CONSOLE_LOCAL_1(lname, field_name, forward_type, magic_fun) \
 do {									   \
   struct symbol_value_forward *I_hate_C =				   \
@@ -1349,7 +1349,7 @@ do {									   \
       = intern (lname);							   \
   }									   \
 } while (0)
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 #define DEFVAR_CONSOLE_LOCAL_1(lname, field_name, forward_type, magicfun)   \
 do {									    \
   static const struct symbol_value_forward I_hate_C =			    \
@@ -1382,7 +1382,7 @@ do {									    \
       = intern (lname);							    \
   }									    \
 } while (0)
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #define DEFVAR_CONSOLE_LOCAL_MAGIC(lname, field_name, magicfun)		\
 	DEFVAR_CONSOLE_LOCAL_1 (lname, field_name,			\

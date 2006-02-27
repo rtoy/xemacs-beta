@@ -72,7 +72,6 @@ void *mc_realloc_array (void *ptr, size_t size, EMACS_INT elemcount);
 
 /* Garbage collection related functions and macros: */
 
-#ifdef NEW_GC
 enum mark_bit_colors
 {
   WHITE = 0,
@@ -103,23 +102,6 @@ EMACS_INT get_mark_bit (void *ptr);
 #define MARKED_WHITE_P(ptr) (get_mark_bit (ptr) == WHITE)
 #define MARKED_GREY_P(ptr) (get_mark_bit (ptr) == GREY)
 #define MARKED_BLACK_P(ptr) (get_mark_bit (ptr) == BLACK)
-#else /* not NEW_GC */
-/* Set the mark bit of the object pointed to by ptr to value.*/
-void set_mark_bit (void *ptr, EMACS_INT value);
-
-/* Return the mark bit of the object pointed to by ptr. */
-EMACS_INT get_mark_bit (void *ptr);
-
-/* mark bit macros */
-/* Returns true if the mark bit of the object pointed to by ptr is set. */
-#define MARKED_P(ptr) (get_mark_bit (ptr) == 1)
-
-/* Marks the object pointed to by ptr (sets the mark bit to 1). */
-#define MARK(ptr)     set_mark_bit (ptr, 1)
-
-/* Unmarks the object pointed to by ptr (sets the mark bit to 0). */
-#define UNMARK(ptr)   set_mark_bit (ptr, 0)
-#endif /* not NEW_GC */
 
 /* The finalizer of every not marked object is called.  The macro
    MC_ALLOC_CALL_FINALIZER has to be defined and call the finalizer of
@@ -150,7 +132,6 @@ Bytecount mc_alloced_storage_size (Bytecount claimed_size,
 #endif /* MEMORY_USAGE_STATS */
 
 
-#ifdef NEW_GC
 /* Incremental Garbage Collector / Write Barrier Support: */
 
 /* Return the PAGESIZE the allocator uses.  Generally equals to the
@@ -179,8 +160,6 @@ EMACS_INT maybe_mark_black (void *ptr);
 
 /* Only for debugging---not used anywhere in the sources. */
 EMACS_INT object_on_heap_p (void *ptr);
-
-#endif /* NEW_GC */
 
 END_C_DECLS
 

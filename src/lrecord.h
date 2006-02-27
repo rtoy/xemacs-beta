@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_lrecord_h_
 #define INCLUDED_lrecord_h_
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 /* The "lrecord" type of Lisp object is used for all object types
    other than a few simple ones (like char and int). This allows many
    types to be implemented but only a few bits required in a Lisp
@@ -45,7 +45,7 @@ Boston, MA 02111-1307, USA.  */
    could contain Lisp_Objects in it), you may well be able to use
    the opaque type.
 */
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 /* The "lrecord" type of Lisp object is used for all object types
    other than a few simple ones.  This allows many types to be
    implemented but only a few bits required in a Lisp object for type
@@ -79,9 +79,9 @@ Boston, MA 02111-1307, USA.  */
    could contain Lisp_Objects in it), you may well be able to use
    the opaque type. --ben
 */
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define ALLOC_LCRECORD_TYPE alloc_lrecord_type
 #define COPY_SIZED_LCRECORD copy_sized_lrecord
 #define COPY_LCRECORD copy_lrecord
@@ -91,7 +91,7 @@ Boston, MA 02111-1307, USA.  */
 #define LCRECORD_HEADER lrecord_header
 #define BASIC_ALLOC_LCRECORD alloc_lrecord
 #define FREE_LCRECORD free_lrecord
-#else
+#else /* not NEW_GC */
 #define ALLOC_LCRECORD_TYPE old_alloc_lcrecord_type
 #define COPY_SIZED_LCRECORD old_copy_sized_lcrecord
 #define COPY_LCRECORD old_copy_lcrecord
@@ -100,7 +100,7 @@ Boston, MA 02111-1307, USA.  */
 #define LCRECORD_HEADER old_lcrecord_header
 #define BASIC_ALLOC_LCRECORD old_basic_alloc_lcrecord
 #define FREE_LCRECORD old_free_lcrecord
-#endif
+#endif /* not NEW_GC */
 
 BEGIN_C_DECLS
 
@@ -111,7 +111,7 @@ struct lrecord_header
      field. */
   unsigned int type :8;
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   /* 1 if the object is readonly from lisp */
   unsigned int lisp_readonly :1;
 
@@ -125,7 +125,7 @@ struct lrecord_header
      anyway. (The bits are used for strings, though.) */
   unsigned int uid :22;
 
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   /* If `mark' is 0 after the GC mark phase, the object will be freed
      during the GC sweep phase.  There are 2 ways that `mark' can be 1:
      - by being referenced from other objects during the GC mark phase
@@ -145,14 +145,14 @@ struct lrecord_header
      anyway. (The bits are used for strings, though.) */
   unsigned int uid :21;
 
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 };
 
 struct lrecord_implementation;
 int lrecord_type_index (const struct lrecord_implementation *implementation);
 extern int lrecord_uid_counter;
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define set_lheader_implementation(header,imp) do {	\
   struct lrecord_header* SLI_header = (header);		\
   SLI_header->type = (imp)->lrecord_type_index;		\
@@ -160,7 +160,7 @@ extern int lrecord_uid_counter;
   SLI_header->free = 0;					\
   SLI_header->uid = lrecord_uid_counter++;		\
 } while (0)
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 #define set_lheader_implementation(header,imp) do {	\
   struct lrecord_header* SLI_header = (header);		\
   SLI_header->type = (imp)->lrecord_type_index;		\
@@ -169,9 +169,9 @@ extern int lrecord_uid_counter;
   SLI_header->lisp_readonly = 0;			\
   SLI_header->uid = lrecord_uid_counter++;		\
 } while (0)
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 struct old_lcrecord_header
 {
   struct lrecord_header lheader;
@@ -209,7 +209,7 @@ struct free_lcrecord_header
   struct old_lcrecord_header lcheader;
   Lisp_Object chain;
 };
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 enum lrecord_type
 {
@@ -226,9 +226,9 @@ enum lrecord_type
   lrecord_type_cons,
   lrecord_type_vector,
   lrecord_type_string,
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   lrecord_type_lcrecord_list,
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
   lrecord_type_compiled_function,
   lrecord_type_weak_list,
   lrecord_type_bit_vector,
@@ -297,10 +297,10 @@ enum lrecord_type
   lrecord_type_bignum,
   lrecord_type_ratio,
   lrecord_type_bigfloat,
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   lrecord_type_free, /* only used for "free" lrecords */
   lrecord_type_undefined, /* only used for debugging */
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 #ifdef NEW_GC
   lrecord_type_string_indirect_data,
   lrecord_type_string_direct_data,
@@ -400,25 +400,25 @@ struct lrecord_implementation
   int (*remprop) (Lisp_Object obj, Lisp_Object prop);
   Lisp_Object (*plist) (Lisp_Object obj);
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   /* Only one of `static_size' and `size_in_bytes_method' is non-0. */
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   /* Only one of `static_size' and `size_in_bytes_method' is non-0.
      If both are 0, this type is not instantiable by
      old_basic_alloc_lcrecord(). */
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
   Bytecount static_size;
   Bytecount (*size_in_bytes_method) (const void *header);
 
   /* The (constant) index into lrecord_implementations_table */
   enum lrecord_type lrecord_type_index;
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   /* A "basic" lrecord is any lrecord that's not an lcrecord, i.e.
      one that does not have an old_lcrecord_header at the front and which
      is (usually) allocated in frob blocks. */
   unsigned int basic_p :1;
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 };
 
 /* All the built-in lisp object types are enumerated in `enum lrecord_type'.
@@ -441,7 +441,7 @@ lrecord_implementations_table[lrecord_type_last_built_in_type + MODULE_DEFINABLE
 
 extern int gc_in_progress;
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #include "mc-alloc.h"
 
 #ifdef ALLOC_TYPE_STATS
@@ -453,7 +453,6 @@ int lrecord_stats_heap_size (void);
 #endif /* ALLOC_TYPE_STATS */
 
 /* Tell mc-alloc how to call a finalizer. */
-#ifdef NEW_GC
 #define MC_ALLOC_CALL_FINALIZER(ptr)					\
 {									\
   Lisp_Object MCACF_obj = wrap_pointer_1 (ptr);				\
@@ -470,21 +469,6 @@ int lrecord_stats_heap_size (void);
         }								\
     }									\
 } while (0)
-#else /* not NEW_GC */
-#define MC_ALLOC_CALL_FINALIZER(ptr)					\
-{									\
-  Lisp_Object MCACF_obj = wrap_pointer_1 (ptr);				\
-  struct lrecord_header *MCACF_lheader = XRECORD_LHEADER (MCACF_obj);   \
-  if (XRECORD_LHEADER (MCACF_obj) && LRECORDP (MCACF_obj)		\
-      && !LRECORD_FREE_P (MCACF_lheader)  )				\
-    {									\
-      const struct lrecord_implementation *MCACF_implementation		\
-	= LHEADER_IMPLEMENTATION (MCACF_lheader);			\
-      if (MCACF_implementation && MCACF_implementation->finalizer)	\
-	MCACF_implementation->finalizer (ptr, 0);			\
-    }									\
-} while (0)
-#endif /* not NEW_GC */
 
 /* Tell mc-alloc how to call a finalizer for disksave. */
 #define MC_ALLOC_CALL_FINALIZER_FOR_DISKSAVE(ptr)			\
@@ -521,7 +505,7 @@ int lrecord_stats_heap_size (void);
 #define MARK_LRECORD_AS_LISP_READONLY(ptr)			\
 ((void) (((struct lrecord_header *) ptr)->lisp_readonly = 1))
 
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 
 #define LRECORD_FREE_P(ptr)					\
 (((struct lrecord_header *) ptr)->type == lrecord_type_free)
@@ -544,7 +528,7 @@ int lrecord_stats_heap_size (void);
 } while (0)
 #define SET_LISP_READONLY_RECORD_HEADER(lheader) \
   ((void) ((lheader)->lisp_readonly = 1))
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #ifdef USE_KKCC
 #define RECORD_DESCRIPTION(lheader) lrecord_memory_descriptions[(lheader)->type]
@@ -1054,14 +1038,14 @@ enum data_description_entry_flags
   XD_FLAG_NO_PDUMP = 2,
   /* Indicates that this is a "default" entry in a union map. */
   XD_FLAG_UNION_DEFAULT_ENTRY = 4,
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   /* Indicates that this is a free Lisp object we're marking.
      Only relevant for ERROR_CHECK_GC.  This occurs when we're marking
      lcrecord-lists, where the objects have had their type changed to
      lrecord_type_free and also have had their free bit set, but we mark
      them as normal. */
   XD_FLAG_FREE_LISP_OBJECT = 8
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 #if 0
   ,
   /* Suggestions for other possible flags: */
@@ -1188,21 +1172,21 @@ MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash
 #define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
 MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 const struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_##c_name }
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 #define MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 const struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_##c_name, basic_p }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #define DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
 DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
@@ -1216,7 +1200,7 @@ DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,
 #define DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
 MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 int lrecord_type_##c_name;						\
@@ -1224,7 +1208,7 @@ struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_last_built_in_type }
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 #define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 int lrecord_type_##c_name;						\
@@ -1232,7 +1216,7 @@ struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_last_built_in_type, basic_p }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #ifdef USE_KKCC
 extern MODULE_API const struct memory_description *lrecord_memory_descriptions[];
@@ -1588,7 +1572,7 @@ extern Lisp_Object Q##c_name##p
    dead_wrong_type_argument (predicate, x);		\
  } while (0)
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 /*-------------------------- lcrecord-list -----------------------------*/
 
 struct lcrecord_list
@@ -1723,7 +1707,7 @@ void old_free_lcrecord (Lisp_Object rec);
 
 #define old_zero_lcrecord(lcr) old_zero_sized_lcrecord (lcr, sizeof (*(lcr)))
 
-#else /* MC_ALLOC */
+#else /* NEW_GC */
 
 /* How to allocate a lrecord:
    
@@ -1767,7 +1751,7 @@ void free_lrecord (Lisp_Object rec);
 
 #define copy_lrecord(dst, src) copy_sized_lrecord (dst, src, sizeof (*(dst)))
 
-#endif /* MC_ALLOC */
+#endif /* NEW_GC */
 
 #define zero_sized_lrecord(lcr, size)				\
    memset ((char *) (lcr) + sizeof (struct lrecord_header), 0,	\
@@ -1886,12 +1870,12 @@ extern MODULE_API int initialized;
 
 #ifdef PDUMP
 #include "dumper.h"
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define DUMPEDP(adr) 0
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 #define DUMPEDP(adr) ((((Rawbyte *) (adr)) < pdump_end) && \
                       (((Rawbyte *) (adr)) >= pdump_start))
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 #else
 #define DUMPEDP(adr) 0
 #endif

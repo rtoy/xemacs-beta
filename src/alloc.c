@@ -191,13 +191,13 @@ Error_Behavior ERROR_ME, ERROR_ME_NOT, ERROR_ME_WARN, ERROR_ME_DEBUG_WARN;
 void *minimum_address_seen;
 void *maximum_address_seen;
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 int
 c_readonly (Lisp_Object obj)
 {
   return POINTER_TYPE_P (XTYPE (obj)) && C_READONLY (obj);
 }
-#endif /* MC_ALLOC */
+#endif /* not NEW_GC */
 
 int
 lisp_readonly (Lisp_Object obj)
@@ -216,7 +216,7 @@ lisp_readonly (Lisp_Object obj)
 int ignore_malloc_warnings;
 
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 void *breathing_space;
 
 void
@@ -229,7 +229,7 @@ release_breathing_space (void)
       xfree (tmp, void *);
     }
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 /* malloc calls this if it finds we are near exhausting storage */
 void
@@ -258,9 +258,9 @@ memory_full (void)
    */
   consing_since_gc = gc_cons_threshold + 1;
   recompute_need_to_garbage_collect ();
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   release_breathing_space ();
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
   /* Flush some histories which might conceivably contain garbalogical
      inhibitors.  */
@@ -302,7 +302,7 @@ do						\
 }						\
 while (0)
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define FREE_OR_REALLOC_BEGIN(block)					\
 do									\
 {									\
@@ -313,7 +313,7 @@ do									\
   MALLOC_BEGIN ();							\
 }									\
 while (0)
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 #define FREE_OR_REALLOC_BEGIN(block)					\
 do									\
 {									\
@@ -329,7 +329,7 @@ do									\
   MALLOC_BEGIN ();							\
 }									\
 while (0)
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #define MALLOC_END()				\
 do						\
@@ -415,7 +415,7 @@ xfree_1 (void *block)
 
 #ifdef ERROR_CHECK_GC
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 deadbeef_memory (void *ptr, Bytecount size)
 {
@@ -426,7 +426,7 @@ deadbeef_memory (void *ptr, Bytecount size)
   while (beefs--)
     (*ptr4++) = 0xDEADBEEF; /* -559038737 base 10 */
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #else /* !ERROR_CHECK_GC */
 
@@ -455,7 +455,7 @@ strdup (const char *s)
 #endif /* NEED_STRDUP */
 
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void *
 allocate_lisp_storage (Bytecount size)
 {
@@ -480,9 +480,9 @@ allocate_lisp_storage (Bytecount size)
 
   return val;
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
-#if defined (MC_ALLOC) && defined (ALLOC_TYPE_STATS)
+#if defined (NEW_GC) && defined (ALLOC_TYPE_STATS)
 static struct
 {
   int instances_in_use;
@@ -539,16 +539,16 @@ lrecord_stats_heap_size (void)
     size += lrecord_stats[i].bytes_in_use;
   return size;
 }
-#endif /* not (MC_ALLOC && ALLOC_TYPE_STATS) */
+#endif /* NEW_GC && ALLOC_TYPE_STATS */
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 /* lcrecords are chained together through their "next" field.
    After doing the mark phase, GC will walk this linked list
    and free any lcrecord which hasn't been marked. */
 static struct old_lcrecord_header *all_lcrecords;
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 /* The basic lrecord allocation functions. See lrecord.h for details. */
 void *
 alloc_lrecord (Bytecount size,
@@ -567,6 +567,8 @@ alloc_lrecord (Bytecount size,
 #ifdef ALLOC_TYPE_STATS
   inc_lrecord_stats (size, lheader);
 #endif /* ALLOC_TYPE_STATS */
+  if (implementation->finalizer)
+    add_finalizable_obj (wrap_pointer_1 (lheader));
   INCREMENT_CONS_COUNTER (size, implementation->name);
   return lheader;
 }
@@ -589,11 +591,12 @@ noseeum_alloc_lrecord (Bytecount size,
 #ifdef ALLOC_TYPE_STATS
   inc_lrecord_stats (size, lheader);
 #endif /* ALLOC_TYPE_STATS */
+  if (implementation->finalizer)
+    add_finalizable_obj (wrap_pointer_1 (lheader));
   NOSEEUM_INCREMENT_CONS_COUNTER (size, implementation->name);
   return lheader;
 }
 
-#ifdef NEW_GC
 void *
 alloc_lrecord_array (Bytecount size, int elemcount,
 		     const struct lrecord_implementation *implementation)
@@ -619,35 +622,20 @@ alloc_lrecord_array (Bytecount size, int elemcount,
 #ifdef ALLOC_TYPE_STATS
       inc_lrecord_stats (size, lh);
 #endif /* not ALLOC_TYPE_STATS */
+      if (implementation->finalizer)
+	add_finalizable_obj (wrap_pointer_1 (lh));
     }
   INCREMENT_CONS_COUNTER (size * elemcount, implementation->name);
   return lheader;
 }
-#endif /* NEW_GC */
 
 void
-free_lrecord (Lisp_Object lrecord)
+free_lrecord (Lisp_Object UNUSED (lrecord))
 {
-#ifndef NEW_GC
-  gc_checking_assert (!gc_in_progress);
-#endif /* not NEW_GC */
-  gc_checking_assert (!LRECORD_FREE_P (XRECORD_LHEADER (lrecord)));
-  gc_checking_assert (!XRECORD_LHEADER (lrecord)->free);
-
-#ifdef NEW_GC
-  GC_STAT_EXPLICITLY_TRIED_FREED;
-  /* Ignore requests to manual free objects while in garbage collection. */
-  if (write_barrier_enabled || gc_in_progress)
-    return;
-
-  GC_STAT_EXPLICITLY_FREED;
-#endif /* NEW_GC */
-
-  MC_ALLOC_CALL_FINALIZER (XPNTR (lrecord));
-  mc_free (XPNTR (lrecord));
-  recompute_need_to_garbage_collect ();
+  /* Manual frees are not allowed with asynchronous finalization */
+  return;
 }
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 
 /* The most basic of the lcrecord allocation functions.  Not usually called
    directly.  Allocates an lrecord not managed by any lcrecord-list, of a
@@ -719,15 +707,15 @@ very_old_free_lcrecord (struct old_lcrecord_header *lcrecord)
   return;
 }
 #endif /* Unused */
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 
 static void
 disksave_object_finalization_1 (void)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   mc_finalize_for_disksave ();
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   struct old_lcrecord_header *header;
 
   for (header = all_lcrecords; header; header = header->next)
@@ -736,7 +724,7 @@ disksave_object_finalization_1 (void)
 	  !header->free)
 	LHEADER_IMPLEMENTATION (&header->lheader)->finalizer (header, 1);
     }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
 /* Bitwise copy all parts of a Lisp object other than the header */
@@ -751,11 +739,11 @@ copy_lisp_object (Lisp_Object dst, Lisp_Object src)
   assert (imp == XRECORD_LHEADER_IMPLEMENTATION (dst));
   assert (size == lisp_object_size (dst));
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   memcpy ((char *) XRECORD_LHEADER (dst) + sizeof (struct lrecord_header),
 	  (char *) XRECORD_LHEADER (src) + sizeof (struct lrecord_header),
 	  size - sizeof (struct lrecord_header));
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   if (imp->basic_p)
     memcpy ((char *) XRECORD_LHEADER (dst) + sizeof (struct lrecord_header),
 	    (char *) XRECORD_LHEADER (src) + sizeof (struct lrecord_header),
@@ -766,7 +754,7 @@ copy_lisp_object (Lisp_Object dst, Lisp_Object src)
 	    (char *) XRECORD_LHEADER (src) +
 	    sizeof (struct old_lcrecord_header),
 	    size - sizeof (struct old_lcrecord_header));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
 
@@ -814,7 +802,7 @@ dbg_eq (Lisp_Object obj1, Lisp_Object obj2)
 }
 
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define DECLARE_FIXED_TYPE_ALLOC(type, structture) struct __foo__
 #else
 /************************************************************************/
@@ -1164,9 +1152,9 @@ do { FREE_FIXED_TYPE (type, structtype, ptr);			\
 #else
 #define FREE_FIXED_TYPE_WHEN_NOT_IN_GC(type, structtype, ptr)
 #endif
-#endif /* not MC_ALLOC */
+#endif /* NEW_GC */
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define ALLOCATE_FIXED_TYPE_AND_SET_IMPL(type, lisp_type, var, lrec_ptr) \
 do {									\
   (var) = alloc_lrecord_type (lisp_type, lrec_ptr);			\
@@ -1176,7 +1164,7 @@ do {									\
 do {									\
   (var) = noseeum_alloc_lrecord_type (lisp_type, lrec_ptr);		\
 } while (0)
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 #define ALLOCATE_FIXED_TYPE_AND_SET_IMPL(type, lisp_type, var, lrec_ptr) \
 do									\
 {									\
@@ -1190,7 +1178,7 @@ do									\
   NOSEEUM_ALLOCATE_FIXED_TYPE (type, lisp_type, var);			\
   set_lheader_implementation (&(var)->lheader, lrec_ptr);		\
 } while (0)
-#endif /* MC_ALLOC */
+#endif /* not NEW_GC */
 
 
 
@@ -2292,7 +2280,7 @@ string_plist (Lisp_Object string)
   return *string_plist_ptr (string);
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 /* No `finalize', or `hash' methods.
    internal_hash() already knows how to hash strings and finalization
    is done with the ADDITIONAL_FREE_string macro, which is the
@@ -2309,7 +2297,7 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
 						string_remprop,
 						string_plist,
 						Lisp_String);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #ifdef NEW_GC
 #define STRING_FULLSIZE(size) \
@@ -2348,32 +2336,7 @@ static struct string_chars_block *current_string_chars_block;
 #define MARK_STRING_CHARS_AS_FREE(ptr) ((void) ((ptr)->string = NULL))
 #endif /* not NEW_GC */
 
-#ifdef MC_ALLOC
-#ifndef NEW_GC
-static void
-finalize_string (void *header, int for_disksave)
-{
-  if (!for_disksave)
-    {
-      Lisp_String *s = (Lisp_String *) header;
-      Bytecount size = s->size_;
-      if (BIG_STRING_SIZE_P (size))
-	xfree (s->data_, Ibyte *);
-    }
-}
-
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
-					  1, /*dumpable-flag*/
-					  mark_string, print_string,
-					  finalize_string,
-					  string_equal, 0,
-					  string_description,
-					  string_getprop,
-					  string_putprop,
-					  string_remprop,
-					  string_plist,
-					  Lisp_String);
-#else /* NEW_GC */
+#ifdef NEW_GC
 DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
 					  1, /*dumpable-flag*/
 					  mark_string, print_string,
@@ -2422,7 +2385,6 @@ DEFINE_LRECORD_IMPLEMENTATION ("string-indirect-data",
 			       string_indirect_data_description,
 			       Lisp_String_Indirect_Data);
 #endif /* NEW_GC */
-#endif /* MC_ALLOC */
 
 #ifndef NEW_GC
 struct string_chars
@@ -2524,14 +2486,14 @@ make_uninit_string (Bytecount length)
 
   assert (length >= 0 && fullsize > 0);
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   s = alloc_lrecord_type (Lisp_String, &lrecord_string);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   /* Allocate the string header */
   ALLOCATE_FIXED_TYPE (string, Lisp_String, s);
   xzero (*s);
   set_lheader_implementation (&s->u.lheader, &lrecord_string);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
   /* The above allocations set the UID field, which overlaps with the
      ascii-length field, to some non-zero value.  We need to zero it. */
@@ -2616,7 +2578,7 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
     memmove (XSTRING_DATA (s) + pos + delta, XSTRING_DATA (s) + pos,
 	     len);
   
-#else /* NEW_GC */
+#else /* not NEW_GC */
   oldfullsize = STRING_FULLSIZE (XSTRING_LENGTH (s));
   newfullsize = STRING_FULLSIZE (XSTRING_LENGTH (s) + delta);
 
@@ -2929,17 +2891,17 @@ make_string_nocopy (const Ibyte *contents, Bytecount length)
   bytecount_to_charcount (contents, length); /* Just for the assertions */
 #endif
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   s = alloc_lrecord_type (Lisp_String, &lrecord_string);
   mcpro (wrap_pointer_1 (s)); /* otherwise nocopy_strings get
 				 collected and static data is tried to
 				 be freed. */
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   /* Allocate the string header */
   ALLOCATE_FIXED_TYPE (string, Lisp_String, s);
   set_lheader_implementation (&s->u.lheader, &lrecord_string);
   SET_C_READONLY_RECORD_HEADER (&s->u.lheader);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
   /* Don't need to XSET_STRING_ASCII_BEGIN() here because it happens in
      init_string_ascii_begin(). */
   s->plist = Qnil;
@@ -2963,7 +2925,7 @@ make_string_nocopy (const Ibyte *contents, Bytecount length)
 }
 
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 /************************************************************************/
 /*                           lcrecord lists                             */
 /************************************************************************/
@@ -3171,7 +3133,7 @@ old_free_lcrecord (Lisp_Object rec)
 
   free_managed_lcrecord (all_lcrecord_lists[type], rec);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 
 DEFUN ("purecopy", Fpurecopy, 1, 1, 0, /*
@@ -3350,7 +3312,7 @@ unstaticpro_nodump (Lisp_Object *varaddress)
 
 
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 static const struct memory_description mcpro_description_1[] = {
   { XD_END }
 };
@@ -3421,10 +3383,10 @@ mcpro (Lisp_Object varaddress)
 }
 
 #endif /* not DEBUG_XEMACS */
-#endif /* MC_ALLOC */
+#endif /* NEW_GC */
 
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static int gc_count_num_short_string_in_use;
 static Bytecount gc_count_string_total_size;
 static Bytecount gc_count_short_string_total_size;
@@ -3470,10 +3432,10 @@ tick_lcrecord_stats (const struct lrecord_header *h, int free_p)
 	}
     }
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 /* Free all unmarked records */
 static void
 sweep_lcrecords_1 (struct old_lcrecord_header **prev, int *used)
@@ -3669,10 +3631,10 @@ do {									     \
 #define SWEEP_FIXED_TYPE_BLOCK(typename, obj_type) \
   SWEEP_FIXED_TYPE_BLOCK_1 (typename, obj_type, lheader)
 
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_conses (void)
 {
@@ -3681,20 +3643,20 @@ sweep_conses (void)
 
   SWEEP_FIXED_TYPE_BLOCK (cons, Lisp_Cons);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 /* Explicitly free a cons cell.  */
 void
 free_cons (Lisp_Object cons)
 {
-#ifndef MC_ALLOC /* to avoid compiler warning */
+#ifndef NEW_GC /* to avoid compiler warning */
   Lisp_Cons *ptr = XCONS (cons);
-#endif /* MC_ALLOC */
+#endif /* not NEW_GC */
 
 #ifdef ERROR_CHECK_GC
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   Lisp_Cons *ptr = XCONS (cons);
-#endif /* MC_ALLOC */
+#endif /* NEW_GC */
   /* If the CAR is not an int, then it will be a pointer, which will
      always be four-byte aligned.  If this cons cell has already been
      placed on the free list, however, its car will probably contain
@@ -3709,11 +3671,11 @@ free_cons (Lisp_Object cons)
     ASSERT_VALID_POINTER (XPNTR (cons_car (ptr)));
 #endif /* ERROR_CHECK_GC */
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (cons);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (cons, Lisp_Cons, ptr);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
 /* explicitly free a list.  You **must make sure** that you have
@@ -3751,7 +3713,7 @@ free_alist (Lisp_Object alist)
     }
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_compiled_functions (void)
 {
@@ -3830,11 +3792,11 @@ sweep_events (void)
 
   SWEEP_FIXED_TYPE_BLOCK (event, Lisp_Event);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #ifdef EVENT_DATA_AS_OBJECTS
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_key_data (void)
 {
@@ -3843,19 +3805,19 @@ sweep_key_data (void)
 
   SWEEP_FIXED_TYPE_BLOCK (key_data, Lisp_Key_Data);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 free_key_data (Lisp_Object ptr)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (ptr);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (key_data, Lisp_Key_Data, XKEY_DATA (ptr));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_button_data (void)
 {
@@ -3864,19 +3826,19 @@ sweep_button_data (void)
 
   SWEEP_FIXED_TYPE_BLOCK (button_data, Lisp_Button_Data);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 free_button_data (Lisp_Object ptr)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (ptr);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (button_data, Lisp_Button_Data, XBUTTON_DATA (ptr));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_motion_data (void)
 {
@@ -3885,19 +3847,19 @@ sweep_motion_data (void)
 
   SWEEP_FIXED_TYPE_BLOCK (motion_data, Lisp_Motion_Data);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 free_motion_data (Lisp_Object ptr)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (ptr);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (motion_data, Lisp_Motion_Data, XMOTION_DATA (ptr));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_process_data (void)
 {
@@ -3906,19 +3868,19 @@ sweep_process_data (void)
 
   SWEEP_FIXED_TYPE_BLOCK (process_data, Lisp_Process_Data);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 free_process_data (Lisp_Object ptr)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (ptr);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (process_data, Lisp_Process_Data, XPROCESS_DATA (ptr));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_timeout_data (void)
 {
@@ -3927,19 +3889,19 @@ sweep_timeout_data (void)
 
   SWEEP_FIXED_TYPE_BLOCK (timeout_data, Lisp_Timeout_Data);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 free_timeout_data (Lisp_Object ptr)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (ptr);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (timeout_data, Lisp_Timeout_Data, XTIMEOUT_DATA (ptr));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_magic_data (void)
 {
@@ -3948,19 +3910,19 @@ sweep_magic_data (void)
 
   SWEEP_FIXED_TYPE_BLOCK (magic_data, Lisp_Magic_Data);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 free_magic_data (Lisp_Object ptr)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (ptr);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (magic_data, Lisp_Magic_Data, XMAGIC_DATA (ptr));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_magic_eval_data (void)
 {
@@ -3969,19 +3931,19 @@ sweep_magic_eval_data (void)
 
   SWEEP_FIXED_TYPE_BLOCK (magic_eval_data, Lisp_Magic_Eval_Data);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 free_magic_eval_data (Lisp_Object ptr)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (ptr);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (magic_eval_data, Lisp_Magic_Eval_Data, XMAGIC_EVAL_DATA (ptr));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_eval_data (void)
 {
@@ -3990,19 +3952,19 @@ sweep_eval_data (void)
 
   SWEEP_FIXED_TYPE_BLOCK (eval_data, Lisp_Eval_Data);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 free_eval_data (Lisp_Object ptr)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (ptr);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (eval_data, Lisp_Eval_Data, XEVAL_DATA (ptr));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_misc_user_data (void)
 {
@@ -4011,21 +3973,21 @@ sweep_misc_user_data (void)
 
   SWEEP_FIXED_TYPE_BLOCK (misc_user_data, Lisp_Misc_User_Data);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 free_misc_user_data (Lisp_Object ptr)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (ptr);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (misc_user_data, Lisp_Misc_User_Data, XMISC_USER_DATA (ptr));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
 #endif /* EVENT_DATA_AS_OBJECTS */
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_markers (void)
 {
@@ -4038,17 +4000,17 @@ sweep_markers (void)
 
   SWEEP_FIXED_TYPE_BLOCK (marker, Lisp_Marker);
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 /* Explicitly free a marker.  */
 void
 free_marker (Lisp_Object ptr)
 {
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   free_lrecord (ptr);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (marker, Lisp_Marker, XMARKER (ptr));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
 
@@ -4201,7 +4163,7 @@ compact_string_chars (void)
 }
 #endif /* not NEW_GC */
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 #if 1 /* Hack to debug missing purecopy's */
 static int debug_string_purity;
 
@@ -4224,9 +4186,9 @@ debug_string_purity_print (Lisp_Object p)
   stderr_out ("\"\n");
 }
 #endif /* 1 */
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 sweep_strings (void)
 {
@@ -4259,17 +4221,12 @@ sweep_strings (void)
   gc_count_string_total_size = num_bytes;
   gc_count_short_string_total_size = num_small_bytes;
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #ifndef NEW_GC
 void
 gc_sweep_1 (void)
 {
-#ifdef MC_ALLOC
-  compact_string_chars ();
-  mc_finalize ();
-  mc_sweep ();
-#else /* not MC_ALLOC */
   /* Free all unmarked records.  Do this at the very beginning,
      before anything else, so that the finalize methods can safely
      examine items in the objects.  sweep_lcrecords_1() makes
@@ -4344,13 +4301,12 @@ gc_sweep_1 (void)
   sweep_eval_data ();
   sweep_misc_user_data ();
 #endif /* EVENT_DATA_AS_OBJECTS */
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 #ifdef PDUMP
   pdump_objects_unmark ();
 #endif
-#endif /* not MC_ALLOC */
 }
 #endif /* not NEW_GC */
 
@@ -4440,7 +4396,7 @@ object_memory_usage_stats (int set_total_gc_usage)
   int i;
   EMACS_INT tgu_val = 0;
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   
   for (i = 0; i < (countof (lrecord_implementations_table)
 		   + MODULE_DEFINABLE_TYPE_COUNT); i++)
@@ -4475,7 +4431,7 @@ object_memory_usage_stats (int set_total_gc_usage)
         }
     }
 
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 
 #define HACK_O_MATIC(type, name, pl) do {				\
   EMACS_INT s = 0;							\
@@ -4577,7 +4533,7 @@ object_memory_usage_stats (int set_total_gc_usage)
 
 #undef HACK_O_MATIC
 
-#endif /* MC_ALLOC */
+#endif /* NEW_GC */
 
   if (set_total_gc_usage)
     {
@@ -4625,7 +4581,7 @@ Garbage collection happens automatically if you cons more than
   total_gc_usage_set = 0;
 #ifdef ALLOC_TYPE_STATS
   /* The things we do for backwards-compatibility */
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   return
     list6 
     (Fcons (make_int (lrecord_stats[lrecord_type_cons].instances_in_use),
@@ -4642,7 +4598,7 @@ Garbage collection happens automatically if you cons more than
      make_int (lrecord_stats[lrecord_type_vector]
 	       .bytes_in_use_including_overhead),
      object_memory_usage_stats (1));
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
   return
     list6 (Fcons (make_int (gc_count_num_cons_in_use),
 		  make_int (gc_count_num_cons_freelist)),
@@ -4654,7 +4610,7 @@ Garbage collection happens automatically if you cons more than
 	   make_int (lcrecord_stats[lrecord_type_vector].bytes_in_use +
 		     lcrecord_stats[lrecord_type_vector].bytes_freed),
 	   object_memory_usage_stats (1));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 #else /* not ALLOC_TYPE_STATS */
   return Qnil;
 #endif /* ALLOC_TYPE_STATS */
@@ -4849,7 +4805,7 @@ malloced_storage_size (void *UNUSED (ptr), Bytecount claimed_size,
   return claimed_size;
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 Bytecount
 fixed_type_block_overhead (Bytecount size)
 {
@@ -4865,7 +4821,7 @@ fixed_type_block_overhead (Bytecount size)
     overhead += sizeof (void *) + per_block - storage_size;
   return overhead;
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 #endif /* MEMORY_USAGE_STATS */
 
 
@@ -4883,12 +4839,10 @@ common_init_alloc_early (void)
   Qnull_pointer = wrap_pointer_1 (0);
 #endif
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   breathing_space = 0;
-#endif /* not MC_ALLOC */
-#ifndef MC_ALLOC
   all_lcrecords = 0;
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
   ignore_malloc_warnings = 1;
 #ifdef DOUG_LEA_MALLOC
   mallopt (M_TRIM_THRESHOLD, 128*1024); /* trim threshold */
@@ -4899,8 +4853,6 @@ common_init_alloc_early (void)
 #endif
 #ifndef NEW_GC
   init_string_chars_alloc ();
-#endif /* not NEW_GC */
-#ifndef MC_ALLOC
   init_string_alloc ();
   init_string_chars_alloc ();
   init_cons_alloc ();
@@ -4930,7 +4882,7 @@ common_init_alloc_early (void)
   init_eval_data_alloc ();
   init_misc_user_data_alloc ();
 #endif /* EVENT_DATA_AS_OBJECTS */
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
   ignore_malloc_warnings = 0;
 
@@ -4945,7 +4897,7 @@ common_init_alloc_early (void)
   Dynarr_resize (staticpro_nodump_names, 100); /* ditto */
 #endif
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   mcpros = Dynarr_new2 (Lisp_Object_dynarr, Lisp_Object);
   Dynarr_resize (mcpros, 1410); /* merely a small optimization */
   dump_add_root_block_ptr (&mcpros, &mcpros_description);
@@ -4954,7 +4906,7 @@ common_init_alloc_early (void)
   Dynarr_resize (mcpro_names, 1410); /* merely a small optimization */
   dump_add_root_block_ptr (&mcpro_names, &mcpro_names_description);
 #endif
-#endif /* MC_ALLOC */
+#endif /* NEW_GC */
 
   consing_since_gc = 0;
   need_to_check_c_alloca = 0;
@@ -4962,9 +4914,9 @@ common_init_alloc_early (void)
   funcall_alloca_count = 0;
 
   lrecord_uid_counter = 259;
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   debug_string_purity = 0;
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #ifdef ERROR_CHECK_TYPES
   ERROR_ME.really_unlikely_name_to_have_accidentally_in_a_non_errb_structure =
@@ -4980,7 +4932,7 @@ common_init_alloc_early (void)
 #endif /* ERROR_CHECK_TYPES */
 }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 static void
 init_lcrecord_lists (void)
 {
@@ -4992,7 +4944,7 @@ init_lcrecord_lists (void)
       staticpro_nodump (&all_lcrecord_lists[i]);
     }
 }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 init_alloc_early (void)
@@ -5013,9 +4965,9 @@ void
 reinit_alloc_early (void)
 {
   common_init_alloc_early ();
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   init_lcrecord_lists ();
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
 void
@@ -5036,10 +4988,10 @@ init_alloc_once_early (void)
   INIT_LRECORD_IMPLEMENTATION (string_indirect_data);
   INIT_LRECORD_IMPLEMENTATION (string_direct_data);
 #endif /* NEW_GC */
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   INIT_LRECORD_IMPLEMENTATION (lcrecord_list);
   INIT_LRECORD_IMPLEMENTATION (free);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
   staticpros = Dynarr_new2 (Lisp_Object_ptr_dynarr, Lisp_Object *);
   Dynarr_resize (staticpros, 1410); /* merely a small optimization */
@@ -5050,7 +5002,7 @@ init_alloc_once_early (void)
   dump_add_root_block_ptr (&staticpro_names, &staticpro_names_description);
 #endif
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   mcpros = Dynarr_new2 (Lisp_Object_dynarr, Lisp_Object);
   Dynarr_resize (mcpros, 1410); /* merely a small optimization */
   dump_add_root_block_ptr (&mcpros, &mcpros_description);
@@ -5059,11 +5011,9 @@ init_alloc_once_early (void)
   Dynarr_resize (mcpro_names, 1410); /* merely a small optimization */
   dump_add_root_block_ptr (&mcpro_names, &mcpro_names_description);
 #endif
-#endif /* MC_ALLOC */
-
-#ifndef MC_ALLOC
+#else /* not NEW_GC */
   init_lcrecord_lists ();
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 }
 
 void

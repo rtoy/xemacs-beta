@@ -3835,6 +3835,9 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
 	{
 	  need_to_signal_post_gc = 0;
 	  recompute_funcall_allocation_flag ();
+#ifdef NEW_GC
+	  run_finalizers ();
+#endif /* NEW_GC */
 	  run_post_gc_hook ();
 	}
     }

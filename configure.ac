@@ -919,16 +919,14 @@ XE_MERGED_ARG([pdump],
 XE_MERGED_ARG([dump-in-exec],
 	AC_HELP_STRING([--enable-dump-in-exec],[Enable dumping into executable (enabled by default
 			for `pdump', not enabled by default in combination 
-			with `mc-alloc').]),
+			with `newgc').]),
 	[], [])
 XE_MERGED_ARG([kkcc],
-	AC_HELP_STRING([--enable-kkcc],[Enable experimental new GC algorithms.]),
+	AC_HELP_STRING([--enable-kkcc],[Enable experimental new GC mark algorithms.]),
 	[], [enable_kkcc=yes])
-XE_MERGED_ARG([mc-alloc],
-	AC_HELP_STRING([--enable-mc-alloc],[Enable experimental new allocator.]),
-	[], [enable_mc_alloc=yes])
+
 XE_MERGED_ARG([newgc],
-	AC_HELP_STRING([--enable-newgc],[Enable new incremental garbage collector.]),
+	AC_HELP_STRING([--enable-newgc],[Enable new incremental garbage collector and new allocator.]),
 	[], [])
 XE_COMPLEX_ARG([vdb],
 	AC_HELP_STRING([--enable-vdb=TYPE],[Override auto-detection of 
@@ -2128,14 +2126,13 @@ if test "$enable_pdump" = "yes"; then
   lib_gcc=
 fi
 
-dnl Enable KKCC and MC-ALLOC by default
+dnl Enable KKCC by default
 test -z "$enable_kkcc" && enable_kkcc=yes
-test -z "$enable_mc_alloc" && enable_mc_alloc=yes
 
 dnl Dump into executable
 if test -z "$enable_dump_in_exec"; then
   if test "$enable_pdump" = "yes"; then
-    if test "$enable_mc_alloc" = "yes"; then
+    if test "$enable_newgc" = "yes"; then
       enable_dump_in_exec=no
     else
       enable_dump_in_exec=yes
@@ -2145,7 +2142,6 @@ fi
 
 dnl New incremental garbage collector
 if test "$enable_newgc" = "yes"; then
-  enable_mc_alloc=yes
   enable_kkcc=yes
 fi
 
@@ -5830,7 +5826,6 @@ fi
 test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
 test "$enable_external_widget" = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
 test "$enable_kkcc"        = "yes" && AC_DEFINE(USE_KKCC)
-test "$enable_mc_alloc"    = "yes" && AC_DEFINE(MC_ALLOC)
 test "$enable_newgc"       = "yes" && AC_DEFINE(NEW_GC)
 test "$have_vdb_posix"     = "yes" && AC_DEFINE(VDB_POSIX)
 test "$have_vdb_fake"      = "yes" && AC_DEFINE(VDB_FAKE)
@@ -6115,22 +6110,14 @@ if test "$enable_union_type" = yes ; then
   echo "  WARNING: ---------------------------------------------------------"
 fi
 if test "$enable_kkcc" = yes ; then
-  echo "  Using the new GC algorithms."
+  echo "  Using the new GC mark algorithms (KKCC)."
   echo "  WARNING: ---------------------------------------------------------"
   echo "  WARNING: The new algorithms are experimental. They are enabled by"
   echo "  WARNING: default for this release. Use \`--disable-kkcc' to"
   echo "  WARNING: turn it off."
   echo "  WARNING: ---------------------------------------------------------"
 fi
-if test "$enable_mc_alloc" = yes ; then
-  echo "  Using the new allocator."
-  echo "  WARNING: ---------------------------------------------------------"
-  echo "  WARNING: The new allocator is experimental. It is enabled by"
-  echo "  WARNING: default for this release. Use \`--disable-mc-alloc' to"
-  echo "  WARNING: turn it off."
-  echo "  WARNING: ---------------------------------------------------------"
-fi
-test "$enable_newgc" = yes && echo "  Using the new incremental garbage collector."
+test "$enable_newgc" = yes && echo "  Using the new incremental garbage collector and the new allocator."
 if test "$have_vdb_posix" = yes ; then
   if test "$have_vdb_sigaction" = yes ; then 
     echo "  Using POSIX sigaction() to install fault handler."

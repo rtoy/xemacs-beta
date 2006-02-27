@@ -417,9 +417,9 @@ free_hentries (
 #endif
 #ifdef ERROR_CHECK_STRUCTURES
 	       size_t size
-#else
+#else /* not (NEW_GC && ! ERROR_CHECK_STRUCTURES) */
 	       size_t UNUSED (size)
-#endif
+#endif /* not (NEW_GC && ! ERROR_CHECK_STRUCTURES) */
 	       )
 {
 #ifdef NEW_GC
@@ -443,6 +443,7 @@ free_hentries (
 #endif /* not NEW_GC */
 }
 
+#ifndef NEW_GC
 static void
 finalize_hash_table (void *header, int for_disksave)
 {
@@ -453,6 +454,7 @@ finalize_hash_table (void *header, int for_disksave)
       ht->hentries = 0;
     }
 }
+#endif /* not NEW_GC */
 
 static const struct memory_description htentry_description_1[] = {
   { XD_LISP_OBJECT, offsetof (htentry, key) },
@@ -515,6 +517,14 @@ const struct memory_description hash_table_description[] = {
   { XD_END }
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("hash-table", hash_table,
+			       1, /*dumpable-flag*/
+                               mark_hash_table, print_hash_table,
+			       0, hash_table_equal, hash_table_hash,
+			       hash_table_description,
+			       Lisp_Hash_Table);
+#else /* not NEW_GC */
 DEFINE_LRECORD_IMPLEMENTATION ("hash-table", hash_table,
 			       1, /*dumpable-flag*/
                                mark_hash_table, print_hash_table,
@@ -522,6 +532,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("hash-table", hash_table,
 			       hash_table_equal, hash_table_hash,
 			       hash_table_description,
 			       Lisp_Hash_Table);
+#endif /* not NEW_GC */
 
 static Lisp_Hash_Table *
 xhash_table (Lisp_Object hash_table)

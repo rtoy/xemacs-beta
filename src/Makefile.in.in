@@ -254,12 +254,8 @@ win32_objs=win32.o intl-win32.o intl-auto-encap-win32.o intl-encap-win32.o \
  xemacs_res.o
 #endif
 
-#ifdef MC_ALLOC
-mc_alloc_objs=mc-alloc.o
-#endif
-
 #ifdef NEW_GC
-new_gc_objs=vdb.o
+new_gc_objs=mc-alloc.o vdb.o
 # if defined (WIN32_ANY) || defined (VDB_WIN32)
 vdb_objs=vdb-win32.o
 # elif defined (VDB_MACH)
@@ -294,7 +290,7 @@ objs=\
  gutter.o\
  hash.o imgproc.o indent.o insdel.o intl.o\
  keymap.o $(RTC_patch_objs) line-number.o $(ldap_objs) lread.o lstream.o\
- $(mc_alloc_objs) $(new_gc_objs) $(vdb_objs) \
+ $(new_gc_objs) $(vdb_objs) \
  macros.o marker.o md5.o minibuf.o $(mswindows_objs) $(mswindows_gui_objs)\
  $(mule_objs) $(mule_canna_objs) $(mule_wnn_objs) $(number_objs) objects.o\
  opaque.o $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\

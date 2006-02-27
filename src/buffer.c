@@ -2130,7 +2130,7 @@ List of functions called with no args to query before killing a buffer.
 
 /* The docstrings for DEFVAR_* are recorded externally by make-docfile.  */
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define DEFVAR_BUFFER_LOCAL_1(lname, field_name, forward_type, magic_fun) \
 do									  \
 {									  \
@@ -2155,7 +2155,7 @@ do									  \
   }									  \
 } while (0)
 
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 /* Renamed from DEFVAR_PER_BUFFER because FSFmacs D_P_B takes
    a bogus extra arg, which confuses an otherwise identical make-docfile.c */
 #define DEFVAR_BUFFER_LOCAL_1(lname, field_name, forward_type, magicfun) \
@@ -2189,7 +2189,7 @@ do {									 \
       = intern (lname);							 \
   }									 \
 } while (0)
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #define DEFVAR_BUFFER_LOCAL_MAGIC(lname, field_name, magicfun)		\
 	DEFVAR_BUFFER_LOCAL_1 (lname, field_name,			\

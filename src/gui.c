@@ -804,15 +804,10 @@ parse_gui_item_tree_list (Lisp_Object list)
   RETURN_UNGCPRO (ret);
 }
 
-static void
-finalize_gui_item (void *UNUSED (header), int UNUSED (for_disksave))
-{
-}
-
 DEFINE_LRECORD_IMPLEMENTATION ("gui-item", gui_item,
 			       0, /*dumpable-flag*/
 			       mark_gui_item, print_gui_item,
-			       finalize_gui_item, gui_item_equal,
+			       0, gui_item_equal,
 			       gui_item_hash,
 			       gui_item_description,
 			       Lisp_Gui_Item);

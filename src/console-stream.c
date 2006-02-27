@@ -137,9 +137,7 @@ stream_delete_console (struct console *con)
       if (stream_con->in != stdin)
 	retry_fclose (stream_con->in);
 
-#ifdef NEW_GC
-      mc_free (stream_con);
-#else /* not NEW_GC */
+#ifndef NEW_GC
       xfree (stream_con, struct stream_console *);
 #endif /* not NEW_GC */
       CONSOLE_STREAM_DATA (con) = NULL;

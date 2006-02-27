@@ -1458,19 +1458,19 @@ default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_object
       ("#<%s 0x%x>",
-#ifdef MC_ALLOC
+#ifdef NEW_GC
        LHEADER_IMPLEMENTATION (header)->name,
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
        LHEADER_IMPLEMENTATION (&header->lheader)->name,
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
        header->uid);
 
   write_fmt_string (printcharfun, "#<%s 0x%x>",
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 		    LHEADER_IMPLEMENTATION (header)->name,
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 		    LHEADER_IMPLEMENTATION (&header->lheader)->name,
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 		    header->uid);
 }
 
@@ -1692,7 +1692,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	      }
 	  }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 	if (lheader->type == lrecord_type_free)
 	  {
 	    printing_major_badness (printcharfun, "freed lrecord", 0,
@@ -1705,7 +1705,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 				    lheader, BADNESS_NO_TYPE);
 	    break;
 	  }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 	else if ((int) (lheader->type) >= lrecord_type_count)
 	  {
 	    printing_major_badness (printcharfun, "illegal lrecord type",
@@ -2222,19 +2222,19 @@ debug_p4 (Lisp_Object obj)
 	debug_out ("<< bad object type=%d 0x%lx>>", header->type,
 		   (EMACS_INT) header);
       else
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 	debug_out ("#<%s addr=0x%lx uid=0x%lx>",
 		   LHEADER_IMPLEMENTATION (header)->name,
 		   (EMACS_INT) header,
 		   (EMACS_INT) ((struct lrecord_header *) header)->uid);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 	debug_out ("#<%s addr=0x%lx uid=0x%lx>",
 		   LHEADER_IMPLEMENTATION (header)->name,
 		   (EMACS_INT) header,
 		   (EMACS_INT) (LHEADER_IMPLEMENTATION (header)->basic_p ?
 				((struct lrecord_header *) header)->uid :
 				((struct old_lcrecord_header *) header)->uid));
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
     }
 
   inhibit_non_essential_conversion_operations = 0;

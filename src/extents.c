@@ -1269,6 +1269,14 @@ mark_extent_info (Lisp_Object obj)
   return Qnil;
 }
 
+#ifdef NEW_GC
+DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
+			       0, /*dumpable-flag*/
+                               mark_extent_info, internal_object_printer,
+			       0, 0, 0, 
+			       extent_info_description,
+			       struct extent_info);
+#else /* not NEW_GC */
 static void
 finalize_extent_info (void *header, int for_disksave)
 {
@@ -1277,10 +1285,8 @@ finalize_extent_info (void *header, int for_disksave)
   if (for_disksave)
     return;
 
-#ifdef NEW_GC
   data->soe = 0;
   data->extents = 0;
-#else /* not NEW_GC */
   if (data->soe)
     {
       free_soe (data->soe);
@@ -1291,7 +1297,6 @@ finalize_extent_info (void *header, int for_disksave)
       free_extent_list (data->extents);
       data->extents = 0;
     }
-#endif /* not NEW_GC */
 }
 
 DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
@@ -1300,6 +1305,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
 			       finalize_extent_info, 0, 0, 
 			       extent_info_description,
 			       struct extent_info);
+#endif /* not NEW_GC */
 
 static Lisp_Object
 allocate_extent_info (void)
@@ -7458,7 +7464,7 @@ syms_of_extents (void)
   INIT_LRECORD_IMPLEMENTATION (extent_list_marker);
   INIT_LRECORD_IMPLEMENTATION (extent_list);
   INIT_LRECORD_IMPLEMENTATION (stack_of_extents);
-#endif /* not NEW_GC */
+#endif /* NEW_GC */
 
   DEFSYMBOL (Qextentp);
   DEFSYMBOL (Qextent_live_p);

@@ -1,3 +1,8 @@
+2006-02-22  Marcus Crestani  <crestani@xemacs.org>
+
+	* xemacs.mak: Remove mc-alloc, replace with newgc, adjust output.
+	* config.inc.samp: Remove MC_ALLOC option.
+
 2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.25 "eggplant" is released.

@@ -2247,29 +2247,6 @@ static const struct memory_description compiled_function_description[] = {
   { XD_END }
 };
 
-#if defined(MC_ALLOC) && !defined(NEW_GC)
-static void
-finalize_compiled_function (void *header, int for_disksave)
-{
-  if (!for_disksave)
-    {
-      struct Lisp_Compiled_Function *cf = 
-	(struct Lisp_Compiled_Function *) header;
-      if (cf->args_in_array) 
-      	xfree (cf->args, Lisp_Object *);
-    }
-}
-
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
-				     1, /*dumpable_flag*/
-				     mark_compiled_function,
-				     print_compiled_function,
-				     finalize_compiled_function,
-				     compiled_function_equal,
-				     compiled_function_hash,
-				     compiled_function_description,
-				     Lisp_Compiled_Function);
-#else /* !MC_ALLOC || NEW_GC */
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     1, /*dumpable_flag*/
 				     mark_compiled_function,
@@ -2278,7 +2255,6 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     compiled_function_hash,
 				     compiled_function_description,
 				     Lisp_Compiled_Function);
-#endif /* !MC_ALLOC || NEW_GC */
 
 
 DEFUN ("compiled-function-p", Fcompiled_function_p, 1, 1, 0, /*

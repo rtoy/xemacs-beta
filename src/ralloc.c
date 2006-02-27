@@ -61,9 +61,9 @@ typedef unsigned char *POINTER;
 #include "getpagesize.h"
 
 #include <string.h>
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 void refill_memory_reserve (void);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #else	/* Not emacs.  */
 
@@ -986,9 +986,9 @@ r_alloc_free (POINTER *ptr)
   *ptr = 0;
 
 #ifdef emacs
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   refill_memory_reserve ();
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 #endif
 }
 

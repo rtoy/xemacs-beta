@@ -295,6 +295,7 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
   write_fmt_string (printcharfun, " 0x%x>", sp->header.uid);
 }
 
+#ifndef NEW_GC
 static void
 finalize_specifier (void *header, int for_disksave)
 {
@@ -302,14 +303,11 @@ finalize_specifier (void *header, int for_disksave)
   /* don't be snafued by the disksave finalization. */
   if (!for_disksave && !GHOST_SPECIFIER_P(sp) && sp->caching)
     {
-#ifdef NEW_GC
-      mc_free (sp->caching);
-#else /* not NEW_GC */
       xfree (sp->caching, struct specifier_caching *);
-#endif /* not NEW_GC */
       sp->caching = 0;
     }
 }
+#endif /* not NEW_GC */
 
 static int
 specifier_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
@@ -438,6 +436,15 @@ const struct sized_memory_description specifier_empty_extra_description = {
   0, specifier_empty_extra_description_1
 };
 
+#ifdef NEW_GC
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
+					1, /*dumpable-flag*/
+					mark_specifier, print_specifier,
+					0, specifier_equal, specifier_hash,
+					specifier_description,
+					sizeof_specifier,
+					Lisp_Specifier);
+#else /* not NEW_GC */
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
 					1, /*dumpable-flag*/
 					mark_specifier, print_specifier,
@@ -446,6 +453,7 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
 					specifier_description,
 					sizeof_specifier,
 					Lisp_Specifier);
+#endif /* not NEW_GC */
 
 /************************************************************************/
 /*                       Creating specifiers                            */

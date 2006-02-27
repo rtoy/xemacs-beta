@@ -55,7 +55,7 @@ DECLARE_LRECORD (compiled_function_args, Lisp_Compiled_Function_Args);
 #define compiled_function_args_data(v) ((v)->args)
 #define XCOMPILED_FUNCTION_ARGS_DATA(s) \
   compiled_function_args_data (XCOMPILED_FUNCTION_ARGS (s))
-#endif /* not NEW_GC */
+#endif /* NEW_GC */
 
 /* Meanings of slots in a Lisp_Compiled_Function.
    Don't use these!  For backward compatibility only.  */

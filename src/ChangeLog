@@ -1,3 +1,78 @@
+2006-02-22  Marcus Crestani  <crestani@xemacs.org>
+
+	Asynchronous finalization:
+	
+	* Makefile.in.in: Remove mc-alloc, replace with newgc.
+	* alloc.c (alloc_lrecord): Add object that has a finalizer
+	to Vall_finalizable_objs.
+	* alloc.c (noseeum_alloc_lrecord): Add object that has a finalizer
+	to Vall_finalizable_objs.
+	* alloc.c (alloc_lrecord_array): Add object that has a finalizer
+	to Vall_finalizable_objs.
+	* alloc.c (free_lrecord): Disable manual free.
+	* dumper.c (pdump_register_object): Objects with finalizers cannot
+	be dumped.
+	* eval.c (Ffuncall): Add call to run_finalizers.
+	* gc.c (finalize_elem): New.
+	* gc.c (add_finalizable_object): New.
+	* gc.c (register_for_finalization): New.
+	* gc.c (gc_finalize): Call register_for_finalization.
+	* gc.c (gc_1): Move kkcc_gc_stack_free after finalization. 
+	* gc.c (common_init_gc_early): Add asynchronous finalization
+	variables.
+	* gc.c (init_gc_early): Add asynchronous finalization variables.
+	* gc.c (vars_of_gc): Add asynchronous finalization variables.
+	* gc.h: Add asynchronous finalization prototypes.
+	* mc-alloc.c (finalize_heap): Remove.
+	* mc-alloc.c (mc_free): Disable manual free.
+
+	* elhash.c (finalize_hash_table): Remove unneeded finalizer for
+	NEW_GC
+	* extents.c (finalize_extent_info): Remove unneeded finalizer for
+	NEW_GC.
+	* file-coding.c (finalize_coding_system): Remove unneeded
+	finalizer for NEW_GC.
+	* gui.c (finalize_gui_item): Remove unneeded finalizer.
+	* specifier.c (finalize_specifier): Remove unneeded finalizer for
+	NEW_GC.
+
+        Merge #ifdef MC_ALLOC into #ifdef NEW_GC, remove no longer needed
+	MC_ALLOC specific code in all files: 
+	* alloc.c:
+	* buffer.c:
+	* bytecode.c:
+	* bytecode.h:
+	* config.h.in:
+	* console-stream.c:
+	* console.c:
+	* dumper.c:
+	* dumper.h:
+	* elhash.c:
+	* emacs.c:
+	* event-msw.c:
+	* event-stream.c:
+	* extents.c:
+	* extents.c:
+	* faces.h:
+	* file-coding.c:
+	* gc.c:
+	* glyphs.h:
+	* lisp.h:
+	* lrecord.h:
+	* lstream.c:
+	* marker.c:
+	* mc-alloc.c:
+	* mc-alloc.h:
+	* opaque.c:
+	* print.c:
+	* ralloc.c:
+	* specifier.c:
+	* symbols.c:
+	* symeval.h:
+	* symsinit.h:
+	* tests.c:
+	* xemacs.def.in.in:
+
 2006-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.25 "eggplant" is released.

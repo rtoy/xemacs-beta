@@ -3252,7 +3252,7 @@ Lisp_Object Qzero;
 Lisp_Object Qnull_pointer;
 #endif
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 /* some losing systems can't have static vars at function scope... */
 static const struct symbol_value_magic guts_of_unbound_marker =
 { /* struct symbol_value_magic */
@@ -3270,7 +3270,7 @@ static const struct symbol_value_magic guts_of_unbound_marker =
   0, /* value */
   SYMVAL_UNBOUND_MARKER
 };
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 void
 init_symbols_once_early (void)
@@ -3302,7 +3302,7 @@ init_symbols_once_early (void)
   {
     /* Required to get around a GCC syntax error on certain
        architectures */
-#ifdef MC_ALLOC
+#ifdef NEW_GC
     struct symbol_value_magic *tem = (struct symbol_value_magic *)
       mc_alloc (sizeof (struct symbol_value_magic));
     MARK_LRECORD_AS_LISP_READONLY (tem);
@@ -3315,9 +3315,9 @@ init_symbols_once_early (void)
     inc_lrecord_stats (sizeof (struct symbol_value_magic), 
 		       (const struct lrecord_header *) tem);
 #endif /* ALLOC_TYPE_STATS */
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
     const struct symbol_value_magic *tem = &guts_of_unbound_marker;
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
     Qunbound = wrap_symbol_value_magic (tem);
   }
@@ -3454,7 +3454,7 @@ check_sane_subr (Lisp_Subr *subr, Lisp_Object sym)
 #endif
 
 #ifdef HAVE_SHLIB
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 /*
  * If we are not in a pure undumped Emacs, we need to make a duplicate of
  * the subr. This is because the only time this function will be called
@@ -3514,7 +3514,7 @@ do {									      \
     subr = newsubr;							      \
   }									      \
 } while (0)
-#else /* MC_ALLOC */
+#else /* NEW_GC */
 /* 
  * If we have the new allocator enabled, we do not need to make a
  * duplicate of the subr.  The new allocator already does allocate all
@@ -3552,7 +3552,7 @@ do {									      \
       signal_ferror (Qdll_error, "Attempt to redefine %s", subr_name (subr)); \
   }									      \
 } while (0)
-#endif /* MC_ALLOC */
+#endif /* NEW_GC */
 #else /* ! HAVE_SHLIB */
 #define check_module_subr(subr)
 #endif

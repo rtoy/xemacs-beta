@@ -2038,13 +2038,13 @@ DECLARE_MODULE_API_LRECORD (cons, Lisp_Cons);
 #define CHECK_CONS(x) CHECK_RECORD (x, cons)
 #define CONCHECK_CONS(x) CONCHECK_RECORD (x, cons)
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define CONS_MARKED_P(c) MARKED_P (&((c)->lheader))
 #define MARK_CONS(c) MARK (&((c)->lheader))
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 #define CONS_MARKED_P(c) MARKED_RECORD_HEADER_P(&((c)->lheader))
 #define MARK_CONS(c) MARK_RECORD_HEADER (&((c)->lheader))
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 extern MODULE_API Lisp_Object Qnil;
 
@@ -2637,20 +2637,20 @@ struct Lisp_String
 	  /* WARNING: Everything before ascii_begin must agree exactly with
 	     struct lrecord_header */
 	  unsigned int type :8;
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 	  unsigned int lisp_readonly :1;
 	  unsigned int free :1;
 	  /* Number of chars at beginning of string that are one byte in length
 	     (byte_ascii_p) */
 	  unsigned int ascii_begin :22;
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 	  unsigned int mark :1;
 	  unsigned int c_readonly :1;
 	  unsigned int lisp_readonly :1;
 	  /* Number of chars at beginning of string that are one byte in length
 	     (byte_ascii_p) */
 	  unsigned int ascii_begin :21;
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 	} v;
     } u;
 #ifdef NEW_GC
@@ -2664,11 +2664,11 @@ struct Lisp_String
 };
 typedef struct Lisp_String Lisp_String;
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define MAX_STRING_ASCII_BEGIN ((1 << 22) - 1)
-#else
+#else /* not NEW_GC */
 #define MAX_STRING_ASCII_BEGIN ((1 << 21) - 1)
-#endif
+#endif /* not NEW_GC */
 
 DECLARE_MODULE_API_LRECORD (string, Lisp_String);
 #define XSTRING(x) XRECORD (x, string, Lisp_String)
@@ -3185,12 +3185,12 @@ DECLARE_LRECORD (float, Lisp_Float);
 
 /*--------------------------- readonly objects -------------------------*/
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 #define CHECK_C_WRITEABLE(obj)					\
   do { if (c_readonly (obj)) c_write_error (obj); } while (0)
 
 #define C_READONLY(obj) (C_READONLY_RECORD_HEADER_P(XRECORD_LHEADER (obj)))
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 #define CHECK_LISP_WRITEABLE(obj)					\
   do { if (lisp_readonly (obj)) lisp_write_error (obj); } while (0)
@@ -3432,7 +3432,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
 /* Can't be const, because then subr->doc is read-only and
    Snarf_documentation chokes */
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define DEFUN(lname, Fname, min_args, max_args, prompt, arglist)	\
   Lisp_Object Fname (EXFUN_##max_args);					\
   static struct Lisp_Subr MC_ALLOC_S##Fname =			        \
@@ -3474,7 +3474,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
   DOESNT_RETURN_TYPE (Lisp_Object) Fname (DEFUN_##max_args arglist)
 #define GET_DEFUN_LISP_OBJECT(Fname) \
   wrap_subr (S##Fname);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 #define DEFUN(lname, Fname, min_args, max_args, prompt, arglist)	\
   Lisp_Object Fname (EXFUN_##max_args);					\
   static struct Lisp_Subr S##Fname =					\
@@ -3516,7 +3516,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
   DOESNT_RETURN_TYPE (Lisp_Object) Fname (DEFUN_##max_args arglist)
 #define GET_DEFUN_LISP_OBJECT(Fname) \
   wrap_subr (&S##Fname);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 /* Heavy ANSI C preprocessor hackery to get DEFUN to declare a
    prototype that matches max_args, and add the obligatory
@@ -4021,7 +4021,7 @@ MODULE_API void unstaticpro_nodump (Lisp_Object *);
 
 #endif
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 extern Lisp_Object_dynarr *mcpros;
 #ifdef DEBUG_XEMACS
 /* Help debug crashes gc-marking a mcpro'ed object. */
@@ -4031,7 +4031,7 @@ MODULE_API void mcpro_1 (Lisp_Object, char *);
 /* Call mcpro (&var) to protect mc variable `var'. */
 MODULE_API void mcpro (Lisp_Object);
 #endif /* not DEBUG_XEMACS */
-#endif /* MC_ALLOC */
+#endif /* NEW_GC */
 
 void register_post_gc_action (void (*fun) (void *), void *arg);
 int begin_gc_forbidden (void);
@@ -4089,9 +4089,9 @@ MODULE_API EXFUN (Fmake_symbol, 1);
 MODULE_API EXFUN (Fmake_vector, 2);
 MODULE_API EXFUN (Fvector, MANY);
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
 void release_breathing_space (void);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 Lisp_Object noseeum_cons (Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object make_vector (Elemcount, Lisp_Object);
 MODULE_API Lisp_Object vector1 (Lisp_Object);

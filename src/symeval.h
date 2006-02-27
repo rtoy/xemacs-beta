@@ -277,7 +277,7 @@ DECLARE_LRECORD (symbol_value_varalias,	struct symbol_value_varalias);
    DEFUN ("name, Fname, ...); // at top level in foo.c
    DEFSUBR (Fname);           // in syms_of_foo();
 */
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 MODULE_API void defsubr (Lisp_Subr *);
 #define DEFSUBR_MC_ALLOC(Fname)						\
   S##Fname= (struct Lisp_Subr *) mc_alloc (sizeof (struct Lisp_Subr));	\
@@ -309,7 +309,7 @@ do {						\
   defsubr_macro (S##Fname);			\
 } while (0)
 
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 /* To define a Lisp primitive function using a C function `Fname', do this:
    DEFUN ("name, Fname, ...); // at top level in foo.c
    DEFSUBR (Fname);           // in syms_of_foo();
@@ -323,7 +323,7 @@ MODULE_API void defsubr (Lisp_Subr *);
 */
 MODULE_API void defsubr_macro (Lisp_Subr *);
 #define DEFSUBR_MACRO(Fname) defsubr_macro (&S##Fname)
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
 MODULE_API void defsymbol_massage_name (Lisp_Object *location,
 					const char *name);
@@ -396,7 +396,7 @@ MODULE_API void deferror_massage_name_and_message (Lisp_Object *symbol,
 MODULE_API void defvar_magic (const char *symbol_name,
 			      const struct symbol_value_forward *magic);
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define DEFVAR_SYMVAL_FWD(lname, c_location, forward_type, magic_fun)	\
 do									\
 {									\
@@ -413,7 +413,7 @@ do									\
 									\
   defvar_magic ((lname), I_hate_C);					\
 } while (0)
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 #define DEFVAR_SYMVAL_FWD(lname, c_location, forward_type, magicfun)	\
 do									\
 {									\
@@ -439,7 +439,7 @@ do									\
   };									\
   defvar_magic ((lname), &I_hate_C);					\
 } while (0)
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 #define DEFVAR_SYMVAL_FWD_INT(lname, c_location, forward_type, magicfun) \
 do									 \
 {									 \

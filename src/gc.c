@@ -632,15 +632,15 @@ lispdesc_block_size_1 (const void *obj, Bytecount size,
 }
 #endif /* defined (USE_KKCC) || defined (PDUMP) */
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 #define GC_CHECK_NOT_FREE(lheader)			\
       gc_checking_assert (! LRECORD_FREE_P (lheader));
-#else /* MC_ALLOC */
+#else /* not NEW_GC */
 #define GC_CHECK_NOT_FREE(lheader)					\
       gc_checking_assert (! LRECORD_FREE_P (lheader));			\
       gc_checking_assert (LHEADER_IMPLEMENTATION (lheader)->basic_p ||	\
 			  ! ((struct old_lcrecord_header *) lheader)->free)
-#endif /* MC_ALLOC */
+#endif /* not NEW_GC */
 
 #ifdef USE_KKCC
 /* The following functions implement the new mark algorithm. 
@@ -1147,13 +1147,13 @@ kkcc_marking (
 		   though. */
 		if (EQ (*stored_obj, Qnull_pointer))
 		  break;
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 		mark_object_maybe_checking_free (*stored_obj, 0, level, pos);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 		mark_object_maybe_checking_free
 		  (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT,
 		   level, pos);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 		break;
 	      }
 	    case XD_LISP_OBJECT_ARRAY:
@@ -1169,14 +1169,14 @@ kkcc_marking (
 
 		    if (EQ (*stored_obj, Qnull_pointer))
 		      break;
-#ifdef MC_ALLOC
+#ifdef NEW_GC
 		    mark_object_maybe_checking_free 
 		      (*stored_obj, 0, level, pos);
-#else /* not MC_ALLOC */
+#else /* not NEW_GC */
 		    mark_object_maybe_checking_free
 		      (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT,
 		       level, pos);
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 		  }
 		break;
 	      }
@@ -1392,6 +1392,76 @@ run_post_gc_actions (void)
     }
 }
 
+#ifdef NEW_GC
+/* Asynchronous finalization. */
+typedef struct finalize_elem
+{
+  Lisp_Object obj;
+  struct finalize_elem *next;
+} finalize_elem;
+
+finalize_elem *Vall_finalizable_objs;
+Lisp_Object Vfinalizers_to_run;
+
+void
+add_finalizable_obj (Lisp_Object obj)
+{
+  finalize_elem *next = Vall_finalizable_objs;
+  Vall_finalizable_objs =
+    (finalize_elem *) xmalloc_and_zero (sizeof (finalize_elem));
+  Vall_finalizable_objs->obj = obj;
+  Vall_finalizable_objs->next = next;
+}
+
+void
+register_for_finalization (void)
+{
+  finalize_elem *rest = Vall_finalizable_objs;
+
+  if (!rest) 
+    return;
+
+  while (!marked_p (rest->obj))
+    {
+      finalize_elem *temp = rest;
+      Vfinalizers_to_run = Fcons (rest->obj, Vfinalizers_to_run);
+      Vall_finalizable_objs = rest->next;
+      xfree (temp, finalize_elem *);
+      rest = Vall_finalizable_objs;
+    }
+
+  while (rest->next)
+    {
+      if (LRECORDP (rest->next->obj)
+	  && !marked_p (rest->next->obj))
+	{
+	  finalize_elem *temp = rest->next;
+	  Vfinalizers_to_run = Fcons (rest->next->obj, Vfinalizers_to_run);
+	  rest->next = rest->next->next;
+	  xfree (temp, finalize_elem *);
+	}
+      else
+	{
+	  rest = rest->next;
+	}
+    }
+  /* Keep objects alive that need to be finalized by marking
+     Vfinalizers_to_run transitively. */
+  kkcc_gc_stack_push_lisp_object (Vfinalizers_to_run, 0, -1);
+  kkcc_marking (0);
+}
+
+void
+run_finalizers (void)
+{
+  Lisp_Object rest;
+  for (rest = Vfinalizers_to_run; !NILP (rest); rest = XCDR (rest))
+    {
+      MC_ALLOC_CALL_FINALIZER (XPNTR (XCAR (rest)));
+    }
+  Vfinalizers_to_run = Qnil;
+}
+#endif /* not NEW_GC */
 
 
 /************************************************************************/
@@ -1514,7 +1584,7 @@ gc_prepare (void)
   gc_in_progress = 1;
 #ifndef NEW_GC
   inhibit_non_essential_conversion_operations = 1;
-#endif /* NEW_GC */
+#endif /* not NEW_GC */
 
 #if MAX_SAVE_STACK > 0
 
@@ -1596,14 +1666,14 @@ gc_mark_root_set (
 	**p++;
   }
 
-#ifdef MC_ALLOC
+#ifdef NEW_GC
   { /* mcpro () */
     Lisp_Object *p = Dynarr_begin (mcpros);
     Elemcount count;
     for (count = Dynarr_length (mcpros); count; count--)
       mark_object (*p++);
   }
-#endif /* MC_ALLOC */
+#endif /* NEW_GC */
 
   { /* GCPRO() */
     struct gcpro *tail;
@@ -1708,7 +1778,7 @@ void
 gc_finalize (void)
 {
   GC_SET_PHASE (FINALIZE);
-  mc_finalize ();
+  register_for_finalization ();
 }
 
 void
@@ -1769,12 +1839,12 @@ gc_finish (void)
 	}
     }
 
-#ifndef MC_ALLOC
+#ifndef NEW_GC
   if (!breathing_space)
     {
       breathing_space = malloc (4096 - MALLOC_OVERHEAD);
     }
-#endif /* not MC_ALLOC */
+#endif /* not NEW_GC */
 
   need_to_signal_post_gc = 1;
   funcall_allocation_flag = 1;
@@ -1887,12 +1957,12 @@ gc_1 (int incremental)
 	if (!gc_resume_mark (incremental))
 	  return; /* suspend gc */
       gc_finish_mark ();
+    case FINISH_MARK:
+      gc_finalize ();
       kkcc_gc_stack_free ();
 #ifdef DEBUG_XEMACS
       kkcc_bt_free ();
 #endif
-    case FINISH_MARK:
-      gc_finalize ();
     case FINALIZE:
       gc_sweep ();
     case SWEEP:
@@ -2023,12 +2093,16 @@ common_init_gc_early (void)
 #ifdef NEW_GC
   gc_cons_incremental_threshold = GC_CONS_INCREMENTAL_THRESHOLD;
   gc_incremental_traversal_threshold = GC_INCREMENTAL_TRAVERSAL_THRESHOLD;
-#endif /* not NEW_GC */
+#endif /* NEW_GC */
 }
 
 void
 init_gc_early (void)
 {
+#ifdef NEW_GC
+  /* Reset the finalizers_to_run list after pdump_load. */
+  Vfinalizers_to_run = Qnil;
+#endif /* NEW_GC */
 }
 
 void
@@ -2174,6 +2248,9 @@ by `gc-message'.
 *incremental garbage collection, the garbage collector then only does
 *full collects (even if (gc-incremental) is called).
 */ );
+
+  Vfinalizers_to_run = Qnil;
+  staticpro_nodump (&Vfinalizers_to_run);
 #endif /* NEW_GC */
 }
 
