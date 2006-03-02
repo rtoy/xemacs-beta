@@ -1,3 +1,15 @@
+2006-03-02  Marcus Crestani  <crestani@xemacs.org>
+
+	* gc.c (show_gc_cursor_and_message): New.
+	* gc.c (remove_gc_cursor_and_message): New.
+	* gc.c (gc_prepare): Move mouse pointer code to
+	show_gc_cursor_and_message.
+	* gc.c (gc_finish): Move mouse pointer code to
+	remove_gc_cursor_and_message.
+	* gc.c (gc): Call show/remove_gc_cursor_and_message.
+	* gc.c (garbage_collect_1): Call
+	show/remove_gc_cursor_and_message.
+
 2006-02-22  Marcus Crestani  <crestani@xemacs.org>
 
 	Asynchronous finalization:

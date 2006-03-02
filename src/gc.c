@@ -1499,24 +1499,11 @@ struct backtrace backtrace;
 #endif
 
 void
-gc_prepare (void)
+show_gc_cursor_and_message (void) 
 {
-#if MAX_SAVE_STACK > 0
-  char stack_top_variable;
-  extern char *stack_bottom;
-#endif
-
-#ifdef NEW_GC
-  GC_STAT_START_NEW_GC;
-  GC_SET_PHASE (INIT_GC);
-#endif /* NEW_GC */
-
-  do_backtrace = profiling_active || backtrace_with_internal_sections;
-
-  assert (!gc_in_progress);
-  assert (!in_display || gc_currently_forbidden);
-
-  PROFILE_RECORD_ENTERING_SECTION (QSin_garbage_collection);
+  /* Now show the GC cursor/message. */
+  pre_gc_cursor = Qnil;
+  cursor_changed = 0;
 
   /* We used to call selected_frame() here.
 
@@ -1533,18 +1520,6 @@ gc_prepare (void)
     f = XFRAME (frame);
   }
 
-  pre_gc_cursor = Qnil;
-  cursor_changed = 0;
-
-  need_to_signal_post_gc = 0;
-  recompute_funcall_allocation_flag ();
-
-  if (!gc_hooks_inhibited)
-    run_hook_trapping_problems
-      (Qgarbage_collecting, Qpre_gc_hook,
-       INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
-
-  /* Now show the GC cursor/message. */
   if (!noninteractive)
     {
       if (FRAME_WIN_P (f))
@@ -1578,6 +1553,65 @@ gc_prepare (void)
 	    }
 	}
     }
+}
+
+void
+remove_gc_cursor_and_message (void)
+{
+  /* Now remove the GC cursor/message */
+  if (!noninteractive)
+    {
+      if (cursor_changed)
+	Fset_frame_pointer (wrap_frame (f), pre_gc_cursor);
+      else if (!FRAME_STREAM_P (f))
+	{
+	  /* Show "...done" only if the echo area would otherwise be empty. */
+	  if (NILP (clear_echo_area (selected_frame (),
+				     Qgarbage_collecting, 0)))
+	    {
+	      if (garbage_collection_messages)
+		{
+		  Lisp_Object args[2], whole_msg;
+		  args[0] = (STRINGP (Vgc_message) ? Vgc_message :
+			     build_msg_string (gc_default_message));
+		  args[1] = build_msg_string ("... done");
+		  whole_msg = Fconcat (2, args);
+		  echo_area_message (selected_frame (), (Ibyte *) 0,
+				     whole_msg, 0, -1,
+				     Qgarbage_collecting);
+		}
+	    }
+	}
+    }
+}
+
+void
+gc_prepare (void)
+{
+#if MAX_SAVE_STACK > 0
+  char stack_top_variable;
+  extern char *stack_bottom;
+#endif
+
+#ifdef NEW_GC
+  GC_STAT_START_NEW_GC;
+  GC_SET_PHASE (INIT_GC);
+#endif /* NEW_GC */
+
+  do_backtrace = profiling_active || backtrace_with_internal_sections;
+
+  assert (!gc_in_progress);
+  assert (!in_display || gc_currently_forbidden);
+
+  PROFILE_RECORD_ENTERING_SECTION (QSin_garbage_collection);
+
+  need_to_signal_post_gc = 0;
+  recompute_funcall_allocation_flag ();
+
+  if (!gc_hooks_inhibited)
+    run_hook_trapping_problems
+      (Qgarbage_collecting, Qpre_gc_hook,
+       INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 
   /***** Now we actually start the garbage collection. */
 
@@ -1813,32 +1847,6 @@ gc_finish (void)
 
   /******* End of garbage collection ********/
 
-  /* Now remove the GC cursor/message */
-  if (!noninteractive)
-    {
-      if (cursor_changed)
-	Fset_frame_pointer (wrap_frame (f), pre_gc_cursor);
-      else if (!FRAME_STREAM_P (f))
-	{
-	  /* Show "...done" only if the echo area would otherwise be empty. */
-	  if (NILP (clear_echo_area (selected_frame (),
-				     Qgarbage_collecting, 0)))
-	    {
-	      if (garbage_collection_messages)
-		{
-		  Lisp_Object args[2], whole_msg;
-		  args[0] = (STRINGP (Vgc_message) ? Vgc_message :
-			     build_msg_string (gc_default_message));
-		  args[1] = build_msg_string ("... done");
-		  whole_msg = Fconcat (2, args);
-		  echo_area_message (selected_frame (), (Ibyte *) 0,
-				     whole_msg, 0, -1,
-				     Qgarbage_collecting);
-		}
-	    }
-	}
-    }
-
 #ifndef NEW_GC
   if (!breathing_space)
     {
@@ -1984,7 +1992,11 @@ void gc (int incremental)
      have infinite GC recursion. */
   speccount = begin_gc_forbidden ();
 
+  show_gc_cursor_and_message ();
+
   gc_1 (incremental);
+
+  remove_gc_cursor_and_message ();
 
   /* now stop inhibiting GC */
   unbind_to (speccount);
@@ -2045,6 +2057,8 @@ void garbage_collect_1 (void)
      have infinite GC recursion. */
   speccount = begin_gc_forbidden ();
 
+  show_gc_cursor_and_message ();
+
   gc_prepare ();
 #ifdef USE_KKCC
   kkcc_gc_stack_init();
@@ -2065,6 +2079,8 @@ void garbage_collect_1 (void)
 #endif /* USE_KKCC */
   gc_sweep_1 ();
   gc_finish ();
+
+  remove_gc_cursor_and_message ();
 
   /* now stop inhibiting GC */
   unbind_to (speccount);
