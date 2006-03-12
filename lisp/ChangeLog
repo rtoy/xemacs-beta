@@ -1,3 +1,7 @@
+2006-03-12  Marcus Crestani  <crestani@xemacs.org>
+
+	* diagnose.el (show-memory-usage): Fix regexp.
+
 2006-02-26  Mike Sperber  <mike@xemacs.org>
 
 	* lisp-mode.el (lisp-send-defun): Remove this function; the

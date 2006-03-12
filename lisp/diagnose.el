@@ -142,7 +142,7 @@
 	    (princ "\n")
 	    (map-plist #'(lambda (stat num)
 			   (when (string-match 
-				  "\\(.*\\)-storage\\$"
+				  "\\(.*\\)-storage$"
 				  (symbol-name stat))
 			     (incf total num)
 			     (princ (format fmt
