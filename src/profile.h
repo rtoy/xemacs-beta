@@ -113,6 +113,7 @@ do						\
   RETURN_EXIT_PROFILING (tag, Lisp_Object, expr)
   
 #define RETURN_UNGCPRO_EXIT_PROFILING(tag, expr)	\
+do							\
 {							\
   Lisp_Object ret_ungc_val = (expr);			\
   UNGCPRO;						\
