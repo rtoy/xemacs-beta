@@ -6,7 +6,11 @@
 
 INSTALL_DIR=c:\Program Files\XEmacs\XEmacs-$(XEMACS_VERSION_STRING)
 
-PACKAGE_PREFIX=c:\Program Files\XEmacs
+# PACKAGE_PREFIX is root of the installed package hierarchies.
+# This corresponds to the configure option --with-late-packages.
+# See 'Package Hierarchies' in the info for more documentation.
+# If you don't set this, XEmacs will attempt to find the packages at runtime.
+#PACKAGE_PREFIX=c:\Program Files\XEmacs
 
 ############################################################################
 #                      Compiled-in features: basic                         #

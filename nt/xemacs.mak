@@ -440,17 +440,11 @@ INSTALL_DIR=c:\Program Files\Infodock\Infodock-$(INFODOCK_VERSION_STRING)
 INSTALL_DIR=c:\Program Files\XEmacs\XEmacs-$(XEMACS_VERSION_STRING)
 ! endif
 !endif
-!if !defined(PACKAGE_PATH)
-! if !defined(PACKAGE_PREFIX)
-PACKAGE_PREFIX=c:\Program Files\XEmacs
-! endif
-! if $(MULE)
-PACKAGE_PATH=~\.xemacs;;$(PACKAGE_PREFIX)\site-packages;$(PACKAGE_PREFIX)\mule-packages;$(PACKAGE_PREFIX)\xemacs-packages
-! else
-PACKAGE_PATH=~\.xemacs;;$(PACKAGE_PREFIX)\site-packages;$(PACKAGE_PREFIX)\xemacs-packages
-! endif
+
+# If PACKAGE_PREFIX was defined, use it to generate a package path.
+!if defined(PACKAGE_PREFIX)
+PATH_LATE_PACKAGE_DIRECTORIES="$(PACKAGE_PREFIX:\=\\)"
 !endif
-PATH_PACKAGEPATH="$(PACKAGE_PATH:\=\\)"
 
 !if $(INFODOCK)
 PATH_PREFIX=../..
@@ -805,8 +799,10 @@ TEMACS_CPP_FLAGS_NO_CFLAGS=-c $(CPLUSPLUS_COMPILE_FLAGS) \
 !if defined(xemacs_extra_name)
  -DXEMACS_EXTRA_NAME=\"$(xemacs_extra_name:"=)\" \
 !endif
- -DEMACS_CONFIGURATION=\"$(EMACS_CONFIGURATION)\" \
- -DPATH_PACKAGEPATH=\"$(PATH_PACKAGEPATH)\"
+!if defined(PATH_LATE_PACKAGE_DIRECTORIES)
+ -DPATH_LATE_PACKAGE_DIRECTORIES=\"$(PATH_LATE_PACKAGE_DIRECTORIES)\" \
+!endif
+ -DEMACS_CONFIGURATION=\"$(EMACS_CONFIGURATION)\"
 TEMACS_CPP_FLAGS=$(CFLAGS) $(TEMACS_CPP_FLAGS_NO_CFLAGS)
 TEMACS_CPP_CDECL_FLAGS=$(CFLAGS_CDECL) $(TEMACS_CPP_FLAGS_NO_CFLAGS)
 
@@ -1067,8 +1063,10 @@ CONFIG_VALUES = $(BLDLIB_SRC)\config.values
 !endif
 !if [echo LISPDIR>>$(CONFIG_VALUES) && echo "\\$(LISP:\=\\)">>$(CONFIG_VALUES)]
 !endif
-# PATH_PACKAGEPATH is already a quoted string.
-!if [echo PACKAGE_PATH>>$(CONFIG_VALUES) && echo $(PATH_PACKAGEPATH)>>$(CONFIG_VALUES)]
+!if defined(PATH_LATE_PACKAGE_DIRECTORIES)
+# PATH_LATE_PACKAGE_DIRECTORIES is already a quoted string.
+! if [echo PATH_LATE_PACKAGE_DIRECTORIES>>$(CONFIG_VALUES) && echo $(PATH_LATE_PACKAGE_DIRECTORIES)>>$(CONFIG_VALUES)]
+! endif
 !endif
 
 LINK_DEPENDENCY_ARGS = -Fe$@ -Fd$* $** -link $(DEBUG_FLAGS_LINK)
@@ -1141,7 +1139,9 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
   Compiling as C++.
 !endif
   Installing XEmacs in "$(INSTALL_DIR:\=\\)".
-  Package path is $(PATH_PACKAGEPATH).
+!if defined(PATH_LATE_PACKAGE_DIRECTORIES)
+  Package path is $(PATH_LATE_PACKAGE_DIRECTORIES).
+!endif
 !if $(INFODOCK)
   Building InfoDock.
 !endif
@@ -1672,6 +1672,7 @@ install:	all
 	@$(COPYDIR) $(SRCROOT)\etc  "$(INSTALL_DIR)\etc\"
 	@$(COPYDIR) $(SRCROOT)\info "$(INSTALL_DIR)\info\"
 	@$(COPYDIR) $(SRCROOT)\lisp "$(INSTALL_DIR)\lisp\"
+!if defined(PACKAGE_PREFIX)
 	@echo Making skeleton package tree in $(PACKAGE_PREFIX) ...
 	@$(COPY) PlaceHolder "$(PACKAGE_PREFIX)\site-packages\"
 	-$(DEL) "$(PACKAGE_PREFIX)\site-packages\PlaceHolder"
@@ -1679,6 +1680,7 @@ install:	all
 	-$(DEL) "$(PACKAGE_PREFIX)\mule-packages\PlaceHolder"
 	@$(COPY) PlaceHolder "$(PACKAGE_PREFIX)\xemacs-packages\"
 	-$(DEL) "$(PACKAGE_PREFIX)\xemacs-packages\PlaceHolder"
+!endif
 	-$(DEL) PlaceHolder
 
 ########################### clean

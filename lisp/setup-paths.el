@@ -102,12 +102,19 @@ installation roots."
    ;; in-place or windows-nt
    (and
     (paths-file-readable-directory-p (paths-construct-path (list directory "lisp")))
-    (paths-file-readable-directory-p (paths-construct-path (list directory "etc"))))))
+    (paths-file-readable-directory-p (paths-construct-path (list directory "etc"))))
 
-(defun paths-find-emacs-root (invocation-directory invocation-name)
-  "Find the run-time root of XEmacs.
+   ;; searching for a package directory
+   (and
+    (string-match "win32" system-configuration)
+    (paths-file-readable-directory-p (paths-construct-path (list directory
+								 "xemacs-packages"))))))
+
+(defun paths-find-invocation-roots (invocation-directory invocation-name root-p)
+  "Find the list of run-time roots of XEmacs.
 INVOCATION-DIRECTORY is a directory containing the XEmacs executable.
-INVOCATION-NAME is the name of the executable itself."
+INVOCATION-NAME is the name of the executable itself
+ROOT-P is a function that tests whether a root is plausible."
   (let* ((executable-file-name (paths-chase-symlink
 				(concat invocation-directory
 					invocation-name)))
@@ -116,10 +123,9 @@ INVOCATION-NAME is the name of the executable itself."
 			(paths-construct-path '("..") executable-directory)))
 	 (maybe-root-2 (file-name-as-directory
 			(paths-construct-path '(".." "..") executable-directory))))
-    (or (and (paths-emacs-root-p maybe-root-1)
-	     maybe-root-1)
-	(and (paths-emacs-root-p maybe-root-2)
-	     maybe-root-2))))
+
+    (paths-filter root-p
+		  (list maybe-root-1 maybe-root-2))))
 
 (defun paths-find-emacs-roots (invocation-directory
 			       invocation-name
@@ -129,11 +135,10 @@ This is a list of plausible directories in which to search for the important
 directories used by XEmacs at run-time, for example `exec-directory',
 `data-directory' and `lisp-directory'.
 ROOT-P is a function that tests whether a root is plausible."
-  (let* ((potential-invocation-root
-	  (paths-find-emacs-root invocation-directory invocation-name))
-	 (invocation-roots
-	  (and potential-invocation-root
-	       (list potential-invocation-root)))
+  (let* ((invocation-roots
+	  (paths-find-invocation-roots invocation-directory
+				       invocation-name
+				       root-p))
 	 (potential-installation-roots
 	  (paths-uniq-append
 	   (and configure-exec-prefix-directory

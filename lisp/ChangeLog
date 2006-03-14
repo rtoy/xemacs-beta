@@ -1,3 +1,10 @@
+2006-02-26  Vin Shelton  <acs@xemacs.org>
+
+	* setup-paths.el (paths-emacs-data-root-p): Add search for package
+	root.
+	(paths-find-invocation-roots): Add root-p parameter to test
+	plausibility of the roots.
+
 2006-03-12  Marcus Crestani  <crestani@xemacs.org>
 
 	* diagnose.el (show-memory-usage): Fix regexp.

@@ -1,3 +1,9 @@
+2006-02-27  Vin Shelton  <acs@xemacs.org>
+
+	* config.inc.samp: Comment out PACKAGE_PREFIX.
+	* xemacs.mak: Convert PACKAGE_PREFIX input from config.inc to
+	PATH_LATE_PACKAGE_DIRECTORIES.  Do not use PACKAGE_PATH.
+
 2006-02-22  Marcus Crestani  <crestani@xemacs.org>
 
 	* xemacs.mak: Remove mc-alloc, replace with newgc, adjust output.
