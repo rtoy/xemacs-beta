@@ -652,26 +652,6 @@ comment markers."
     (goto-char beg)
     (setq end (copy-marker end))
 
-    ;; XEmacs: Add the following clause
-
-    ;; if user didn't specify how many comments to remove, be smart
-    ;; and remove the minimal number that all lines have.  that way,
-    ;; comments in a region of Elisp code that gets commented out will
-    ;; get put back correctly.
-    (if (null arg)
- 	(let ((min-comments 999999))
- 	  (while (not (eobp))
- 	    (let ((this-comments 0))
- 	      (while (looking-at (regexp-quote comment-start))
- 		(incf this-comments)
- 		(forward-char (length comment-start)))
- 	      (if (and (> this-comments 0) (< this-comments min-comments))
- 		  (setq min-comments this-comments))
- 	      (forward-line 1)))
- 	  (if (< min-comments 999999)
- 	      (setq arg (list min-comments)))
- 	  (goto-char beg)))
-
     (let* ((numarg (prefix-numeric-value arg))
            (ccs comment-continue)
            (srei (comment-padright ccs 're))

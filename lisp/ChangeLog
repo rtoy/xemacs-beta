@@ -1,5 +1,11 @@
 2006-03-15  Jerry James  <james@xemacs.org>
 
+	* newcomment.el (uncomment-region): Remove old code that breaks
+	uncomment-region on C files.  Thanks to Christian Podlasly for the
+	report.
+
+2006-03-15  Jerry James  <james@xemacs.org>
+
 	* register.el (describe-register-1): Use set-text-properties
 	instead of the nonexistent remove-list-of-text-properties.
 
