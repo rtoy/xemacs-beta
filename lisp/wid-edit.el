@@ -324,6 +324,13 @@ menu will be used, otherwise the minibuffer is used."
       (setq tail (cdr tail)))
     (nreverse result)))
 
+(defun widget-move-and-invoke (event)
+  "Move to where you click, and if it is an active field, invoke it."
+  (interactive "e")
+  (mouse-set-point event)
+  (let ((pos (event-point event)))
+    (if (and pos (get-char-property pos 'button))
+        (widget-button-click event))))
 
 ;;; Widget text specifications.
 ;;

@@ -1,3 +1,7 @@
+2006-03-14  Jerry James  <james@xemacs.org>
+
+	* wid-edit.el (widget-move-and-invoke): New function, used by Gnus.
+
 2006-02-26  Vin Shelton  <acs@xemacs.org>
 
 	* setup-paths.el (paths-emacs-data-root-p): Add search for package
