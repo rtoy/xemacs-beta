@@ -794,7 +794,6 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
   struct device *d = XDEVICE (f->device);
   Display *dpy = DEVICE_X_DISPLAY (d);
   Extbyte *nameext;
-  char* xlfd;
 
   /* #### restructure this so that we return a valid truename at the end,
      and otherwise only return when we return something desperate that
@@ -827,9 +826,7 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
   if (NILP (FONT_INSTANCE_TRUENAME (f))
       && FONT_INSTANCE_X_FONT (f))
     {
-      nameext = &xlfd[0];
-      LISP_STRING_TO_EXTERNAL (f->name, nameext, Qx_font_name_encoding);
-
+      nameext = NEW_LISP_STRING_TO_EXTERNAL (f->name, Qx_font_name_encoding);
       FONT_INSTANCE_TRUENAME (f) =
 	x_font_truename (dpy, nameext, FONT_INSTANCE_X_FONT (f));
     }
