@@ -1251,138 +1251,6 @@ do {						\
     }								\
 } while (0)
 
-/* ------------------------ dynamic arrays ------------------- */
-
-#ifndef NEW_GC
-#ifdef ERROR_CHECK_STRUCTURES
-#define Dynarr_declare(type)	\
-  type *base;			\
-  int locked;			\
-  int elsize;			\
-  int cur;			\
-  int largest;			\
-  int max
-#else
-#define Dynarr_declare(type)	\
-  type *base;			\
-  int elsize;			\
-  int cur;			\
-  int largest;			\
-  int max
-#endif /* ERROR_CHECK_STRUCTURES */
-
-typedef struct dynarr
-{
-  Dynarr_declare (void);
-} Dynarr;
-
-MODULE_API void *Dynarr_newf (int elsize);
-MODULE_API void Dynarr_resize (void *dy, Elemcount size);
-MODULE_API void Dynarr_insert_many (void *d, const void *el, int len, int start);
-MODULE_API void Dynarr_delete_many (void *d, int start, int len);
-MODULE_API void Dynarr_free (void *d);
-
-#define Dynarr_new(type) ((type##_dynarr *) Dynarr_newf (sizeof (type)))
-#define Dynarr_new2(dynarr_type, type) \
-  ((dynarr_type *) Dynarr_newf (sizeof (type)))
-#define Dynarr_at(d, pos) ((d)->base[pos])
-#define Dynarr_atp(d, pos) (&Dynarr_at (d, pos))
-#define Dynarr_begin(d) Dynarr_atp (d, 0)
-#define Dynarr_end(d) Dynarr_atp (d, Dynarr_length (d) - 1)
-#define Dynarr_sizeof(d) ((d)->cur * (d)->elsize)
-
-#ifdef ERROR_CHECK_STRUCTURES
-DECLARE_INLINE_HEADER (
-Dynarr *
-Dynarr_verify_1 (void *d, const Ascbyte *file, int line)
-)
-{
-  Dynarr *dy = (Dynarr *) d;
-  assert_at_line (dy->cur >= 0 && dy->cur <= dy->largest &&
-		  dy->largest <= dy->max, file, line);
-  return dy;
-}
-
-DECLARE_INLINE_HEADER (
-Dynarr *
-Dynarr_verify_mod_1 (void *d, const Ascbyte *file, int line)
-)
-{
-  Dynarr *dy = (Dynarr *) d;
-  assert_at_line (!dy->locked, file, line);
-  assert_at_line (dy->cur >= 0 && dy->cur <= dy->largest &&
-		  dy->largest <= dy->max, file, line);
-  return dy;
-}
-
-#define Dynarr_verify(d) Dynarr_verify_1 (d, __FILE__, __LINE__)
-#define Dynarr_verify_mod(d) Dynarr_verify_mod_1 (d, __FILE__, __LINE__)
-#define Dynarr_lock(d) (Dynarr_verify_mod (d)->locked = 1)
-#define Dynarr_unlock(d) ((d)->locked = 0)
-#else
-#define Dynarr_verify(d) (d)
-#define Dynarr_verify_mod(d) (d)
-#define Dynarr_lock(d)
-#define Dynarr_unlock(d)
-#endif /* ERROR_CHECK_STRUCTURES */
-
-#define Dynarr_length(d) (Dynarr_verify (d)->cur)
-#define Dynarr_largest(d) (Dynarr_verify (d)->largest)
-#define Dynarr_reset(d) (Dynarr_verify_mod (d)->cur = 0)
-#define Dynarr_add_many(d, el, len) Dynarr_insert_many (d, el, len, (d)->cur)
-#define Dynarr_insert_many_at_start(d, el, len)	\
-  Dynarr_insert_many (d, el, len, 0)
-#define Dynarr_add_literal_string(d, s) Dynarr_add_many (d, s, sizeof (s) - 1)
-#define Dynarr_add_lisp_string(d, s, codesys)			\
-do {								\
-  Lisp_Object dyna_ls_s = (s);					\
-  Lisp_Object dyna_ls_cs = (codesys);				\
-  Extbyte *dyna_ls_eb;						\
-  Bytecount dyna_ls_bc;						\
-								\
-  LISP_STRING_TO_SIZED_EXTERNAL (dyna_ls_s, dyna_ls_eb,		\
-				 dyna_ls_bc, dyna_ls_cs);	\
-  Dynarr_add_many (d, dyna_ls_eb, dyna_ls_bc);			\
-} while (0)
-
-#define Dynarr_add(d, el) (						     \
-  Dynarr_verify_mod (d)->cur >= (d)->max ? Dynarr_resize ((d), (d)->cur+1) : \
-      (void) 0,								     \
-  ((d)->base)[(d)->cur++] = (el),					     \
-  (d)->cur > (d)->largest ? (d)->largest = (d)->cur : (int) 0)
-
-/* The following defines will get you into real trouble if you aren't
-   careful.  But they can save a lot of execution time when used wisely. */
-#define Dynarr_increment(d) (Dynarr_verify_mod (d)->cur++)
-#define Dynarr_set_size(d, n) (Dynarr_verify_mod (d)->cur = n)
-
-#define Dynarr_pop(d)					\
-  (assert ((d)->cur > 0), Dynarr_verify_mod (d)->cur--,	\
-   Dynarr_at (d, (d)->cur))
-#define Dynarr_delete(d, i) Dynarr_delete_many (d, i, 1)
-#define Dynarr_delete_by_pointer(d, p) \
-  Dynarr_delete_many (d, (p) - ((d)->base), 1)
-
-#define Dynarr_delete_object(d, el)		\
-do						\
-{						\
-  REGISTER int i;				\
-  for (i = Dynarr_length (d) - 1; i >= 0; i--)	\
-    {						\
-      if (el == Dynarr_at (d, i))		\
-	Dynarr_delete_many (d, i, 1);		\
-    }						\
-} while (0)
-
-#ifdef MEMORY_USAGE_STATS
-struct overhead_stats;
-Bytecount Dynarr_memory_usage (void *d, struct overhead_stats *stats);
-#endif
-
-void *stack_like_malloc (Bytecount size);
-void stack_like_free (void *val);
-#endif /* not NEW_GC */
-
 /************************************************************************/
 /**                 Definitions of more complex types                  **/
 /************************************************************************/
@@ -1467,93 +1335,6 @@ typedef struct Lisp_Color_Instance Lisp_Color_Instance; /* objects-impl.h */
 typedef struct Lisp_Font_Instance Lisp_Font_Instance; /* objects-impl.h */
 typedef struct Lisp_Image_Instance Lisp_Image_Instance; /* glyphs.h */
 typedef struct Lisp_Gui_Item Lisp_Gui_Item;
-
-#ifndef NEW_GC
-/* ------------------------------- */
-/*         Dynarr typedefs         */
-/* ------------------------------- */
-
-/* Dynarr typedefs -- basic types first */
-
-typedef struct
-{
-  Dynarr_declare (Ibyte);
-} Ibyte_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (Extbyte);
-} Extbyte_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (Ichar);
-} Ichar_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (char);
-} char_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (char *);
-} char_ptr_dynarr;
-
-typedef unsigned char unsigned_char;
-typedef struct
-{
-  Dynarr_declare (unsigned char);
-} unsigned_char_dynarr;
-
-typedef unsigned long unsigned_long;
-typedef struct
-{
-  Dynarr_declare (unsigned long);
-} unsigned_long_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (int);
-} int_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (Charbpos);
-} Charbpos_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (Bytebpos);
-} Bytebpos_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (Charcount);
-} Charcount_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (Bytecount);
-} Bytecount_dynarr;
-
-/* Dynarr typedefs -- more complex types */
-
-typedef struct
-{
-  Dynarr_declare (struct face_cachel);
-} face_cachel_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (struct glyph_cachel);
-} glyph_cachel_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (struct console_type_entry);
-} console_type_entry_dynarr;
-#endif /* not NEW_GC */
 
 /* ------------------------------- */
 /*          enum typedefs          */
@@ -1670,20 +1451,6 @@ enum Lisp_Type
 
 #define XPNTR(x) ((void *) XPNTRVAL(x))
 
-#ifndef NEW_GC
-/* WARNING WARNING WARNING.  You must ensure on your own that proper
-   GC protection is provided for the elements in this array. */
-typedef struct
-{
-  Dynarr_declare (Lisp_Object);
-} Lisp_Object_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (Lisp_Object *);
-} Lisp_Object_ptr_dynarr;
-#endif /* not NEW_GC */
-
 /* Close your eyes now lest you vomit or spontaneously combust ... */
 
 #define HACKEQ_UNSAFE(obj1, obj2)				\
@@ -1713,9 +1480,9 @@ END_C_DECLS
 
 BEGIN_C_DECLS
 
-#ifdef NEW_GC
 /* ------------------------ dynamic arrays ------------------- */
 
+#ifdef NEW_GC
 #ifdef ERROR_CHECK_STRUCTURES
 #define Dynarr_declare(type)				\
   struct lrecord_header header;				\
@@ -1736,6 +1503,26 @@ BEGIN_C_DECLS
   int largest;						\
   int max
 #endif /* ERROR_CHECK_STRUCTURES */
+#else /* not NEW_GC */
+#ifdef ERROR_CHECK_STRUCTURES
+#define Dynarr_declare(type)				\
+  struct lrecord_header header;				\
+  type *base;						\
+  int locked;						\
+  int elsize;						\
+  int cur;						\
+  int largest;						\
+  int max
+#else
+#define Dynarr_declare(type)				\
+  struct lrecord_header header;				\
+  type *base;						\
+  int elsize;						\
+  int cur;						\
+  int largest;						\
+  int max
+#endif /* ERROR_CHECK_STRUCTURES */
+#endif /* not NEW_GC */
 
 typedef struct dynarr
 {
@@ -1748,6 +1535,7 @@ MODULE_API void Dynarr_insert_many (void *d, const void *el, int len, int start)
 MODULE_API void Dynarr_delete_many (void *d, int start, int len);
 MODULE_API void Dynarr_free (void *d);
 
+#ifdef NEW_GC
 MODULE_API void *Dynarr_lisp_newf (int elsize,
 				   const struct lrecord_implementation 
 				   *dynarr_imp,
@@ -1757,6 +1545,7 @@ MODULE_API void *Dynarr_lisp_newf (int elsize,
   ((type##_dynarr *) Dynarr_lisp_newf (sizeof (type), dynarr_imp, imp))
 #define Dynarr_lisp_new2(dynarr_type, type, dynarr_imp, imp)	\
   ((dynarr_type *) Dynarr_lisp_newf (sizeof (type)), dynarr_imp, imp)
+#endif /* NEW_GC */
 #define Dynarr_new(type) ((type##_dynarr *) Dynarr_newf (sizeof (type)))
 #define Dynarr_new2(dynarr_type, type) \
   ((dynarr_type *) Dynarr_newf (sizeof (type)))
@@ -1820,7 +1609,7 @@ do {								\
   Dynarr_add_many (d, dyna_ls_eb, dyna_ls_bc);			\
 } while (0)
 
-#if 1
+#ifdef NEW_GC
 #define Dynarr_add(d, el)					\
 do {								\
   if (Dynarr_verify_mod (d)->cur >= (d)->max)			\
@@ -1836,13 +1625,13 @@ do {								\
   if ((d)->cur > (d)->largest)					\
     (d)->largest = (d)->cur;					\
 } while (0)
-#else
+#else /* not NEW_GC */
 #define Dynarr_add(d, el) (						     \
   Dynarr_verify_mod (d)->cur >= (d)->max ? Dynarr_resize ((d), (d)->cur+1) : \
       (void) 0,								     \
   ((d)->base)[(d)->cur++] = (el),					     \
   (d)->cur > (d)->largest ? (d)->largest = (d)->cur : (int) 0)
-#endif  
+#endif /* not NEW_GC */
     
 
 /* The following defines will get you into real trouble if you aren't
@@ -1951,6 +1740,7 @@ typedef struct
   Dynarr_declare (struct face_cachel);
 } face_cachel_dynarr;
 
+#ifdef NEW_GC
 DECLARE_LRECORD (face_cachel_dynarr, face_cachel_dynarr);
 #define XFACE_CACHEL_DYNARR(x) \
   XRECORD (x, face_cachel_dynarr, face_cachel_dynarr)
@@ -1958,12 +1748,14 @@ DECLARE_LRECORD (face_cachel_dynarr, face_cachel_dynarr);
 #define FACE_CACHEL_DYNARRP(x) RECORDP (x, face_cachel_dynarr)
 #define CHECK_FACE_CACHEL_DYNARR(x) CHECK_RECORD (x, face_cachel_dynarr)
 #define CONCHECK_FACE_CACHEL_DYNARR(x) CONCHECK_RECORD (x, face_cachel_dynarr)
+#endif /* NEW_GC */
 
 typedef struct
 {
   Dynarr_declare (struct glyph_cachel);
 } glyph_cachel_dynarr;
 
+#ifdef NEW_GC
 DECLARE_LRECORD (glyph_cachel_dynarr, glyph_cachel_dynarr);
 #define XGLYPH_CACHEL_DYNARR(x) \
   XRECORD (x, glyph_cachel_dynarr, glyph_cachel_dynarr)
@@ -1972,6 +1764,7 @@ DECLARE_LRECORD (glyph_cachel_dynarr, glyph_cachel_dynarr);
 #define CHECK_GLYPH_CACHEL_DYNARR(x) CHECK_RECORD (x, glyph_cachel_dynarr)
 #define CONCHECK_GLYPH_CACHEL_DYNARR(x) \
   CONCHECK_RECORD (x, glyph_cachel_dynarr)
+#endif /* NEW_GC */
 
 typedef struct
 {
@@ -1989,7 +1782,6 @@ typedef struct
 {
   Dynarr_declare (Lisp_Object *);
 } Lisp_Object_ptr_dynarr;
-#endif /* NEW_GC */
 
 /*------------------------------ unbound -------------------------------*/
 
