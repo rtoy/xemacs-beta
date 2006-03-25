@@ -1,3 +1,8 @@
+2006-03-21  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* regex.c: Bump INIT_FAILURE_ALLOC and re_max_failures to the
+	current values found in GNU Emacs.
+
 2006-03-20  Marcus Crestani  <crestani@xemacs.org>
 
 	* dynarr.c (Dynarr_realloc): Malloc correct size.
