@@ -1,3 +1,10 @@
+2006-03-20  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* next-error.el: Rename functions that clash with the next-error
+	family in compile.el
+	* occur.el (occur-next-error): Use new names
+	* occur.el (multi-occur): Fix compiler warnings.
+
 2006-03-15  Jerry James  <james@xemacs.org>
 
 	* newcomment.el (uncomment-region): Remove old code that breaks
