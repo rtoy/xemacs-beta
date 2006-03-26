@@ -2288,13 +2288,14 @@ encode_decode_coding_region (Lisp_Object start, Lisp_Object end,
   }
 }
 
-DEFUN ("decode-coding-region", Fdecode_coding_region, 3, 4, 0, /*
+DEFUN ("decode-coding-region", Fdecode_coding_region, 3, 4,
+       "*r\nzDecode from coding system: \ni", /*
 Decode the text between START and END which is encoded in CODING-SYSTEM.
 This is useful if you've read in encoded text from a file without decoding
 it (e.g. you read in a JIS-formatted file but used the `binary' or
 `no-conversion' coding system, so that it shows up as "^[$B!<!+^[(B").
 Return length of decoded text.
-BUFFER defaults to the current buffer if unspecified.
+BUFFER defaults to the current buffer if unspecified, and when interactive.
 */
        (start, end, coding_system, buffer))
 {
@@ -2302,11 +2303,12 @@ BUFFER defaults to the current buffer if unspecified.
 				      CODING_DECODE);
 }
 
-DEFUN ("encode-coding-region", Fencode_coding_region, 3, 4, 0, /*
+DEFUN ("encode-coding-region", Fencode_coding_region, 3, 4,
+       "*r\nzEncode to coding system: \ni", /*
 Encode the text between START and END using CODING-SYSTEM.
 This will, for example, convert Japanese characters into stuff such as
-"^[$B!<!+^[(B" if you use the JIS encoding.  Return length of encoded
-text.  BUFFER defaults to the current buffer if unspecified.
+"^[$B!<!+^[(B" if you use the JIS encoding.  Return length of encoded text.
+BUFFER defaults to the current buffer if unspecified, and when interactive.
 */
        (start, end, coding_system, buffer))
 {
