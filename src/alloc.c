@@ -2500,6 +2500,7 @@ make_uninit_string (Bytecount length)
   XSET_STRING_ASCII_BEGIN (wrap_string (s), 0);
 
 #ifdef NEW_GC
+  set_lispstringp_direct (s);
   STRING_DATA_OBJECT (s) = 
     wrap_string_direct_data (alloc_lrecord (fullsize, 
 					    &lrecord_string_direct_data));

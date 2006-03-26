@@ -2475,6 +2475,7 @@ DECLARE_MODULE_API_LRECORD (string, Lisp_String);
 
 /* Operations on Lisp_String *'s; only ones left */
 #ifdef NEW_GC
+#define set_lispstringp_direct(s) ((s)->indirect = 0)
 #define set_lispstringp_indirect(s) ((s)->indirect = 1)
 #define set_lispstringp_length(s, len) XSET_STRING_DATA_SIZE (s, len)
 #define set_lispstringp_data(s, ptr) XSET_STRING_DATA_DATA (s, ptr)
