@@ -27,6 +27,8 @@ Boston, MA 02111-1307, USA.  */
 
 BEGIN_C_DECLS
 
+/* Set to 1 if memory becomes short. */
+extern EMACS_INT memory_shortage;
 
 
 /* Internal Allocator Functions: */

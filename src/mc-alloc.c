@@ -411,6 +411,8 @@ mc_allocator_globals_type mc_allocator_globals;
 /*                           MC Allocator                               */
 /************************************************************************/
 
+/* Set to 1 if memory becomes short. */
+EMACS_INT memory_shortage;
 
 /*--- misc functions ---------------------------------------------------*/
 
@@ -1136,9 +1138,12 @@ expand_heap (EMACS_INT needed_pages)
   void *real_start;
 
   /* determine number of pages the heap should grow */
-  n_pages = needed_pages + (HEAP_SIZE / (PAGE_SIZE * HEAP_GROWTH_DIVISOR));
-  if (n_pages < MIN_HEAP_INCREASE)
-    n_pages = MIN_HEAP_INCREASE;
+  if (memory_shortage)
+    n_pages = needed_pages;
+  else
+    n_pages = max (MIN_HEAP_INCREASE, 
+		   needed_pages
+		   + (HEAP_SIZE / (PAGE_SIZE * HEAP_GROWTH_DIVISOR)));
 
   /* get the real values */
   real_size = (n_pages * PAGE_SIZE) + PAGE_SIZE;

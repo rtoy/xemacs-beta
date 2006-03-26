@@ -1,5 +1,16 @@
 2006-03-26  Marcus Crestani  <crestani@xemacs.org>
 
+	* alloc.c (malloc_warning): Move function into scope of
+	MALLOC_END, add MALLOC_END.
+	* alloc.c (memory_full): Add memory shortage indication, adjust
+	error messages.
+	* mc-alloc.c: Add memory_shortage.
+	* mc-alloc.c (expand_heap): If memory is short, allocate only the
+	needed pages, not more.
+	* mc-alloc.h: Add memory_shortage.
+
+2006-03-26  Marcus Crestani  <crestani@xemacs.org>
+
 	* alloc.c (make_uninit_string): Use set_lispstringp_direct.
 	* lisp.h (set_lispstringp_direct): New.
 

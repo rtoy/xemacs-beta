@@ -231,46 +231,6 @@ release_breathing_space (void)
 }
 #endif /* not NEW_GC */
 
-/* malloc calls this if it finds we are near exhausting storage */
-void
-malloc_warning (const char *str)
-{
-  if (ignore_malloc_warnings)
-    return;
-
-  warn_when_safe
-    (Qmemory, Qemergency,
-     "%s\n"
-     "Killing some buffers may delay running out of memory.\n"
-     "However, certainly by the time you receive the 95%% warning,\n"
-     "you should clean up, kill this Emacs, and start a new one.",
-     str);
-}
-
-/* Called if malloc returns zero */
-DOESNT_RETURN
-memory_full (void)
-{
-  fprintf (stderr, "##### M E M O R Y   F U L L #####\n");
-  /* Force a GC next time eval is called.
-     It's better to loop garbage-collecting (we might reclaim enough
-     to win) than to loop beeping and barfing "Memory exhausted"
-   */
-  consing_since_gc = gc_cons_threshold + 1;
-  recompute_need_to_garbage_collect ();
-#ifndef NEW_GC
-  release_breathing_space ();
-#endif /* not NEW_GC */
-
-  /* Flush some histories which might conceivably contain garbalogical
-     inhibitors.  */
-  if (!NILP (Fboundp (Qvalues)))
-    Fset (Qvalues, Qnil);
-  Vcommand_history = Qnil;
-
-  out_of_memory ("Memory exhausted", Qunbound);
-}
-
 static void
 set_alloc_mins_and_maxes (void *val, Bytecount size)
 {
@@ -352,6 +312,66 @@ malloc_after (void *val, Bytecount size)
   if (!val && size != 0)
     memory_full ();
   set_alloc_mins_and_maxes (val, size);
+}
+
+/* malloc calls this if it finds we are near exhausting storage */
+void
+malloc_warning (const char *str)
+{
+  if (ignore_malloc_warnings)
+    return;
+
+  /* Remove the malloc lock here, because warn_when_safe may allocate
+     again.  It is safe to remove the malloc lock here, because malloc
+     is already finished (malloc_warning is called via
+     after_morecore_hook -> check_memory_limits -> save_warn_fun ->
+     malloc_warning). */
+  MALLOC_END ();
+
+  warn_when_safe
+    (Qmemory, Qemergency,
+     "%s\n"
+     "Killing some buffers may delay running out of memory.\n"
+     "However, certainly by the time you receive the 95%% warning,\n"
+     "you should clean up, kill this Emacs, and start a new one.",
+     str);
+}
+
+/* Called if malloc returns zero */
+DOESNT_RETURN
+memory_full (void)
+{
+  /* Force a GC next time eval is called.
+     It's better to loop garbage-collecting (we might reclaim enough
+     to win) than to loop beeping and barfing "Memory exhausted"
+   */
+  consing_since_gc = gc_cons_threshold + 1;
+  recompute_need_to_garbage_collect ();
+#ifdef NEW_GC
+  /* Put mc-alloc into memory shortage mode.  This may keep XEmacs
+     alive until the garbage collector can free enough memory to get
+     us out of the memory exhaustion.  If already in memory shortage
+     mode, we are in a loop and hopelessly lost. */
+  if (memory_shortage) 
+    {
+      fprintf (stderr, "Memory full, cannot recover.\n");
+      ABORT ();
+    }
+  fprintf (stderr, 
+	   "Memory full, try to recover.\n"
+	   "You should clean up, kill this Emacs, and start a new one.\n");
+  memory_shortage++;
+#else /* not NEW_GC */
+  release_breathing_space ();
+#endif /* not NEW_GC */
+
+  /* Flush some histories which might conceivably contain garbalogical
+     inhibitors.  */
+  if (!NILP (Fboundp (Qvalues)))
+    Fset (Qvalues, Qnil);
+  Vcommand_history = Qnil;
+
+  out_of_memory ("Memory exhausted", Qunbound);
 }
 
 /* like malloc, calloc, realloc, free but:
