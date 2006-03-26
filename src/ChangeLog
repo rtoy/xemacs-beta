@@ -1,3 +1,20 @@
+2006-03-21  Marcus Crestani  <crestani@xemacs.org>
+
+	* mc-alloc.c (visit_all_used_page_headers):
+	* mc-alloc.c (finalize_page_for_disksave):
+	* mc-alloc.c (mc_finalize_for_disksave):
+	* mc-alloc.c (sweep_page):
+	* mc-alloc.c (mc_sweep):
+	* mc-alloc.c (protect_heap_page):
+	* mc-alloc.c (protect_heap_pages):
+	* mc-alloc.c (unprotect_heap_page):
+	* mc-alloc.c (unprotect_heap_pages):
+	* mc-alloc.h: Return number of pages processed.
+	* vdb.c (vdb_start_dirty_bits_recording): Adjust size of
+	page_fault_table to its upper bound (= number of pages that
+	contain BLACK objects) in advance, to avoid malloc in the signal
+	handler.
+
 2006-03-24  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* file-coding.c (decode-coding-region, encode-coding-region):

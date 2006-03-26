@@ -105,11 +105,12 @@ EMACS_INT get_mark_bit (void *ptr);
 
 /* The finalizer of every not marked object is called.  The macro
    MC_ALLOC_CALL_FINALIZER has to be defined and call the finalizer of
-   the object. */
-void mc_finalize (void);
+   the object.  Returns number of processed pages. */
+EMACS_INT mc_finalize (void);
 
-/* All not marked objects of the used heap are freed. */
-void mc_sweep (void);
+/* All not marked objects of the used heap are freed.  Returns number
+   of processed pages. */
+EMACS_INT mc_sweep (void);
 
 
 
@@ -117,8 +118,9 @@ void mc_sweep (void);
 
 /* The finalizer for disksave of every object is called to shrink the
    dump image.  The macro MC_ALLOC_CALL_FINALIZER_FOR_DISKSAVE has to
-   be defined and call the finalizer for disksave of the object. */
-void mc_finalize_for_disksave (void);
+   be defined and call the finalizer for disksave of the object.
+   Returns number of processed pages. */
+EMACS_INT mc_finalize_for_disksave (void);
 
 
 
@@ -141,12 +143,13 @@ EMACS_INT mc_get_page_size (void);
 /* Is the fault at ptr on a protected page? */
 EMACS_INT fault_on_protected_page (void *ptr);
 
-/* Remove protection (if there) of heap page of given page header
-   ph. */
-void protect_heap_pages (void);
+/* Remove protection (if there) of heap page of given page header ph.
+   Returns number of processed pages. */
+EMACS_INT protect_heap_pages (void);
 
-/* Remove protection for all heap pages which are protected. */
-void unprotect_heap_pages (void);
+/* Remove protection for all heap pages which are protected.  Returns
+   number of processed pages. */
+EMACS_INT unprotect_heap_pages (void);
 
 /* Remove protection and mark page dirty. */
 void unprotect_page_and_mark_dirty (void *ptr);

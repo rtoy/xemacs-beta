@@ -38,8 +38,9 @@ void_ptr_dynarr *page_fault_table;
 void
 vdb_start_dirty_bits_recording (void)
 {
+  Elemcount protected_pages = (Elemcount) protect_heap_pages ();
   page_fault_table = Dynarr_new2 (void_ptr_dynarr, void *);
-  protect_heap_pages ();
+  Dynarr_resize (page_fault_table, protected_pages);
 }
 
 /* Remove heap protection. */

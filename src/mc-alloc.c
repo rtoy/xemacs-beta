@@ -430,10 +430,11 @@ deadbeef_memory (void *ptr, Bytecount size)
 
 /* Visits all pages (page_headers) hooked into the used heap pages
    list and executes f with the current page header as
-   argument. Needed for sweep. */
-static void
-visit_all_used_page_headers (void (*f) (page_header *ph))
+   argument. Needed for sweep.  Returns number of processed pages. */
+static EMACS_INT
+visit_all_used_page_headers (EMACS_INT (*f) (page_header *ph))
 {
+  EMACS_INT number_of_pages_processed = 0;
   EMACS_INT i;
   for (i = 0; i < N_USED_PAGE_LISTS; i++)
     if (PLH_FIRST (USED_HEAP_PAGES (i)))
@@ -442,11 +443,12 @@ visit_all_used_page_headers (void (*f) (page_header *ph))
         while (PH_NEXT (ph))
           {
             page_header *next = PH_NEXT (ph); /* in case f removes the page */
-            f (ph);
+            number_of_pages_processed += f (ph);
             ph = next;
           }
-        f (ph);
+        number_of_pages_processed += f (ph);
       }
+  return number_of_pages_processed;
 }
 
 
@@ -1485,8 +1487,9 @@ mark_free_list (page_header *ph)
    object's finalizer for disksave. Therefore, you have to define the
    macro MC_ALLOC_CALL_FINALIZER_FOR_DISKSAVE(ptr). This macro should
    do nothing else then test if there is a finalizer and call it on
-   the given argument, which is the heap address of the object. */
-static void
+   the given argument, which is the heap address of the object.
+   Returns number of processed pages. */
+static EMACS_INT
 finalize_page_for_disksave (page_header *ph)
 {
   EMACS_INT heap_space = (EMACS_INT) PH_HEAP_SPACE (ph);
@@ -1499,21 +1502,24 @@ finalize_page_for_disksave (page_header *ph)
       EMACS_INT ptr = (heap_space + (heap_space_step * mark_bit));
       MC_ALLOC_CALL_FINALIZER_FOR_DISKSAVE ((void *) ptr);
     }
+  return 1;
 }
 
 
-/* Finalizes the heap for disksave. */
-void
+/* Finalizes the heap for disksave.  Returns number of processed
+   pages. */
+EMACS_INT
 mc_finalize_for_disksave (void)
 {
-  visit_all_used_page_headers (finalize_page_for_disksave);
+  return visit_all_used_page_headers (finalize_page_for_disksave);
 }
 
 
-/* Sweeps a page: all the non-marked cells are freed. If the page is empty
-   in the end, it is removed. If some cells are free, it is moved to the
-   front of its page header list. Full pages stay where they are. */
-static void
+/* Sweeps a page: all the non-marked cells are freed. If the page is
+   empty in the end, it is removed. If some cells are free, it is
+   moved to the front of its page header list. Full pages stay where
+   they are.  Returns number of processed pages.*/
+static EMACS_INT
 sweep_page (page_header *ph)
 {
   Rawbyte *heap_space = (Rawbyte *) PH_HEAP_SPACE (ph);
@@ -1533,7 +1539,7 @@ sweep_page (page_header *ph)
 	  {
 	    zero_mark_bits (ph);
 	    PH_BLACK_BIT (ph) = 0;
-	    return;
+	    return 1;
 	  }
       }
 
@@ -1552,14 +1558,16 @@ sweep_page (page_header *ph)
     remove_page_from_used_list (ph);
   else if (PH_CELLS_USED (ph) < PH_CELLS_ON_PAGE (ph))
     move_page_header_to_front (ph);
+
+  return 1;
 }
 
 
-/* Sweeps the heap. */
-void
+/* Sweeps the heap.  Returns number of processed pages. */
+EMACS_INT
 mc_sweep (void)
 {
-  visit_all_used_page_headers (sweep_page);
+  return visit_all_used_page_headers (sweep_page);
 }
 
 
@@ -1860,8 +1868,8 @@ fault_on_protected_page (void *ptr)
 
 
 /* Protect the heap page of given page header ph if black objects are
-   on the page. */
-static void
+   on the page.  Returns number of processed pages. */
+static EMACS_INT
 protect_heap_page (page_header *ph)
 {
   if (PH_BLACK_BIT (ph))
@@ -1870,20 +1878,23 @@ protect_heap_page (page_header *ph)
       EMACS_INT heap_space_size = PH_N_PAGES (ph) * PAGE_SIZE;
       vdb_protect ((void *) heap_space, heap_space_size);
       PH_PROTECTION_BIT (ph) = 1;
+      return 1;
     }
+  return 0;
 }
 
-/* Protect all heap pages with black objects. */
-void
+/* Protect all heap pages with black objects.  Returns number of
+   processed pages.*/
+EMACS_INT
 protect_heap_pages (void)
 {
-  visit_all_used_page_headers (protect_heap_page);
+  return visit_all_used_page_headers (protect_heap_page);
 }
 
 
 /* Remove protection (if there) of heap page of given page header
-   ph. */
-static void
+   ph.  Returns number of processed pages. */
+static EMACS_INT
 unprotect_heap_page (page_header *ph)
 {
   if (PH_PROTECTION_BIT (ph))
@@ -1892,14 +1903,17 @@ unprotect_heap_page (page_header *ph)
       EMACS_INT heap_space_size = PH_N_PAGES (ph) * PAGE_SIZE;
       vdb_unprotect (heap_space, heap_space_size);
       PH_PROTECTION_BIT (ph) = 0;
+      return 1;
     }
+  return 0;
 }
 
-/* Remove protection for all heap pages which are protected. */
-void
+/* Remove protection for all heap pages which are protected.  Returns
+   number of processed pages. */
+EMACS_INT
 unprotect_heap_pages (void)
 {
-  visit_all_used_page_headers (unprotect_heap_page);
+  return visit_all_used_page_headers (unprotect_heap_page);
 }
 
 /* Remove protection and mark page dirty. */
