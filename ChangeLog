@@ -1,3 +1,7 @@
+2006-03-27  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Repair ALSA detection.
+
 2006-03-24  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Autodetect ALSA support and report it if detected.

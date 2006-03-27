@@ -5131,7 +5131,7 @@ fi
 
 dnl ALSA sound support
 if test "$enable_sound_alsa" != "no"; then
-  AC_CHECK_HEADER([alsa/pcm.h], [
+  AC_CHECK_HEADER([alsa/input.h], [
     AC_CHECK_LIB(asound, snd_pcm_open, have_alsa_sound=yes)])
   if test "$have_alsa_sound" = "yes"; then
     enable_sound_alsa=yes
