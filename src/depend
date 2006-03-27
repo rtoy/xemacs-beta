@@ -106,6 +106,7 @@ extw-Xt.o: $(CONFIG_H) extw-Xlib.h extw-Xt.h
 abbrev.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h commands.h insdel.h redisplay.h scrollbar.h syntax.h window.h
 alloc.o: $(LISP_H) backtrace.h buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h coding-system-slots.h conslots.h console-impl.h console-stream.h console.h device.h elhash.h events.h extents-impl.h extents.h file-coding.h frame-impl.h frame.h frameslots.h glyphs.h lstream.h opaque.h process.h profile.h redisplay.h scrollbar.h specifier.h sysdep.h sysfile.h systime.h window-impl.h window.h winslots.h
 alloca.o: $(LISP_H)
+alsaplay.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h sound.h sysfile.h
 blocktype.o: $(LISP_H) blocktype.h
 buffer.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h commands.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h elhash.h extents.h faces.h file-coding.h frame-impl.h frame.h frameslots.h insdel.h intl-auto-encap-win32.h lstream.h ndir.h process.h redisplay.h scrollbar.h select.h specifier.h syntax.h sysdir.h sysfile.h syswindows.h window.h
 bytecode.o: $(LISP_H) backtrace.h buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h opaque.h redisplay.h scrollbar.h syntax.h window.h
