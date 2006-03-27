@@ -118,7 +118,7 @@ vdb_install_signal_handler (void)
     }
 
 #ifdef USE_SIGACTION
-  memset(&act, sizeof(struct sigaction), 0);
+  memset(&act, 0, sizeof(struct sigaction));
   act.sa_sigaction = vdb_fault_handler;
   sigemptyset (&act.sa_mask);
   act.sa_flags = SA_SIGINFO;

@@ -1,3 +1,7 @@
+2006-03-27  Mike Fabian  <mfabian@suse.de>
+
+	* vdb-posix.c (vdb_install_signal_handler): Correct memset.
+
 2006-03-26  Marcus Crestani  <crestani@xemacs.org>
 
 	* alloc.c (malloc_warning): Move function into scope of
