@@ -1090,13 +1090,14 @@ Sound options
 -------------
 
   --with-sound=TYPE       Compile with sound support. Valid types are
-                          `native', `nas' and `esd'. Prefix a type with 'no'
-                          to disable. The first type can be `none' or `all'.
-                          `none' means `nonative,nonas,noesd'. `all' means
-                          `native,nas,esd'. Later options override earlier
-                          ones for the same TYPE. The default is to autodetect
-                          all sound support except for ESD which defaults to
-                          off.
+                          `native', `alsa', `nas' and `esd'. Prefix a type
+                          with 'no' to disable. The first type can be `none'
+                          or `all'. `none' means
+                          `nonative,noalsa,nonas,noesd'. `all' means
+                          `native,alsa,nas,esd'. Later options override
+                          earlier ones for the same TYPE. The default is to
+                          autodetect all sound support except for ESD which
+                          defaults to off.
   --with-native-sound-lib Path to sound library (for systems with name
                           conflicts).
 
@@ -2926,10 +2927,11 @@ fi;
 
 _sound_notfirst=""
 _sound_native_default=""
+_sound_alsa_default=""
 _sound_nas_default=""
 _sound_esd_default=no
-_sound_types="native nas esd"
-_sound_default="native,nas,noesd"
+_sound_types="native alsa nas esd"
+_sound_default="native,alsa,nas,noesd"
 
 # If --with-sound or --without-sound were given then copy the value to the
 # equivalent enable_sound variable.
@@ -34968,9 +34970,9 @@ fi
 
 
 
-
 { echo "$as_me:$LINENO: checking for sound support..." >&5
 echo "$as_me: checking for sound support..." >&6;}
+
 test -n "$with_native_sound_lib" && enable_sound_native=yes
 
 if test "$enable_sound_native" != "no"; then
@@ -35579,6 +35581,234 @@ if test "$enable_sound_native" = "yes"; then
 _ACEOF
 
   test -n "$with_native_sound_lib" && LIBS="$with_native_sound_lib $LIBS" &&  if test "$verbose" = "yes"; then echo "    Prepending \"$with_native_sound_lib\" to \$LIBS"; fi
+fi
+
+if test "$enable_sound_alsa" != "no"; then
+  if test "${ac_cv_header_alsa_pcm_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for alsa/pcm.h" >&5
+echo $ECHO_N "checking for alsa/pcm.h... $ECHO_C" >&6
+if test "${ac_cv_header_alsa_pcm_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_alsa_pcm_h" >&5
+echo "${ECHO_T}$ac_cv_header_alsa_pcm_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking alsa/pcm.h usability" >&5
+echo $ECHO_N "checking alsa/pcm.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <alsa/pcm.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking alsa/pcm.h presence" >&5
+echo $ECHO_N "checking alsa/pcm.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <alsa/pcm.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: alsa/pcm.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: alsa/pcm.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: alsa/pcm.h: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: alsa/pcm.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: alsa/pcm.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: alsa/pcm.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: alsa/pcm.h:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: alsa/pcm.h:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: alsa/pcm.h: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: alsa/pcm.h: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: alsa/pcm.h:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: alsa/pcm.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: alsa/pcm.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: alsa/pcm.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: alsa/pcm.h: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: alsa/pcm.h: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------- ##
+## Report this to xemacs-beta@xemacs.org ##
+## ------------------------------------- ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for alsa/pcm.h" >&5
+echo $ECHO_N "checking for alsa/pcm.h... $ECHO_C" >&6
+if test "${ac_cv_header_alsa_pcm_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_alsa_pcm_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_alsa_pcm_h" >&5
+echo "${ECHO_T}$ac_cv_header_alsa_pcm_h" >&6
+
+fi
+if test $ac_cv_header_alsa_pcm_h = yes; then
+
+    echo "$as_me:$LINENO: checking for snd_pcm_open in -lasound" >&5
+echo $ECHO_N "checking for snd_pcm_open in -lasound... $ECHO_C" >&6
+if test "${ac_cv_lib_asound_snd_pcm_open+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lasound  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char snd_pcm_open ();
+int
+main ()
+{
+snd_pcm_open ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_asound_snd_pcm_open=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_asound_snd_pcm_open=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_asound_snd_pcm_open" >&5
+echo "${ECHO_T}$ac_cv_lib_asound_snd_pcm_open" >&6
+if test $ac_cv_lib_asound_snd_pcm_open = yes; then
+  have_alsa_sound=yes
+fi
+
+fi
+
+
+  if test "$have_alsa_sound" = "yes"; then
+    enable_sound_alsa=yes
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_ALSA_SOUND 1
+_ACEOF
+
+    extra_objs="$extra_objs alsaplay.o" &&  if test "$verbose" = "yes"; then
+   echo "    xemacs will be linked with \"alsaplay.o\""
+ fi
+    LIBS="-lasound $LIBS" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lasound\" to \$LIBS"; fi
+  else
+    test "$enable_sound_alsa" = "yes" && \
+      { echo "Error:" "Required ALSA sound support cannot be provided." >&2; exit 1; }
+    enable_sound_alsa=no
+  fi
 fi
 
 if test "$enable_sound_nas" != "no"; then
@@ -39401,6 +39631,7 @@ test "$with_xface" = yes && echo "  Compiling in support for X-Face message head
 echo "
 Sound:"
 test "$enable_sound_native" = yes && echo "  Compiling in support for sound (native)."
+test "$enable_sound_alsa" = yes && echo "  Compiling in support for ALSA (Advanced Linux Sound Architecture)."
 test "$enable_sound_nas" = yes && echo "  Compiling in support for NAS (network audio system)."
 test "$old_nas" = yes && echo "    - NAS library lacks error trapping; will play synchronously."
 test "$enable_sound_esd" = yes && echo "  Compiling in support for ESD (Enlightened Sound Daemon)."

@@ -70,10 +70,23 @@ Boston, MA 02111-1307, USA.  */
 #define USED_IF_HAVE_ANY(decl) UNUSED (decl)
 #endif
 
+#ifdef HAVE_ALSA_SOUND
+extern int alsa_play_sound_file (const Extbyte *file, int vol);
+extern int alsa_play_sound_data (const Binbyte *data, int length, int vol);
+# define DEVICE_CONNECTED_TO_ALSA_P(x) 1 /* #### better check */
+#endif
+
 #ifdef HAVE_ESD_SOUND
 extern int esd_play_sound_file (Extbyte *file, int vol);
 extern int esd_play_sound_data (Binbyte *data, size_t length, int vol);
 # define DEVICE_CONNECTED_TO_ESD_P(x) 1 /* #### better check */
+#endif
+
+#ifdef HAVE_NAS_SOUND
+extern int nas_play_sound_file (Extbyte *name, int volume);
+extern int nas_play_sound_data (Binbyte *data, int length, int volume);
+extern int nas_wait_for_sounds (void);
+extern Extbyte *nas_init_play (Display *);
 #endif
 
 Fixnum bell_volume;
@@ -83,14 +96,6 @@ Lisp_Object Vsynchronous_sounds;
 Lisp_Object Vnative_sound_only_on_console;
 Lisp_Object Q_volume, Q_pitch, Q_duration, Q_sound;
 Lisp_Object Qsound_error;
-
-
-#ifdef HAVE_NAS_SOUND
-extern int nas_play_sound_file (Extbyte *name, int volume);
-extern int nas_play_sound_data (Binbyte *data, int length, int volume);
-extern int nas_wait_for_sounds (void);
-extern Extbyte *nas_init_play (Display *);
-#endif
 
 DOESNT_RETURN
 report_sound_error (const Ascbyte *string, Lisp_Object data)
@@ -110,8 +115,8 @@ Windows the sound file must be in WAV format.
 {
   /* This function can call lisp */
   int vol;
-#if defined (HAVE_NATIVE_SOUND) || defined (HAVE_NAS_SOUND) \
-       || defined (HAVE_ESD_SOUND)
+#if defined (HAVE_NATIVE_SOUND) || defined (HAVE_ALSA_SOUND) || \
+  defined (HAVE_NAS_SOUND) || defined (HAVE_ESD_SOUND)
   struct device *d = decode_device (device);
 #endif
   struct gcpro gcpro1;
@@ -147,6 +152,18 @@ Windows the sound file must be in WAV format.
 	}
     }
   UNGCPRO;
+
+#ifdef HAVE_ALSA_SOUND
+  if (DEVICE_CONNECTED_TO_ALSA_P (d))
+    {
+      Extbyte *fileext;
+
+      LISP_STRING_TO_EXTERNAL (file, fileext, Qfile_name);
+      /* #### ALSA code should allow specification of a device. */
+      if (alsa_play_sound_file (fileext, vol))
+	return Qnil;
+    }
+#endif
 
 #ifdef HAVE_NAS_SOUND
   if (DEVICE_CONNECTED_TO_NAS_P (d))
@@ -355,10 +372,24 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
   pit = (INT_OR_FLOATP (pitch)    ? (int) XFLOATINT (pitch)    : -1);
   dur = (INT_OR_FLOATP (duration) ? (int) XFLOATINT (duration) : -1);
 
-  /* If the sound is a string, and we're connected to Nas, do that.
-     Else if the sound is a string, and we're on console, play it natively.
-     Else just beep.
+  /* If the sound is a string, and we're connected to ALSA, NAS, or ESD, do
+     that.  Else if the sound is a string, and we're on console, play it
+     natively.  Else just beep.
    */
+#ifdef HAVE_ALSA_SOUND
+  if (DEVICE_CONNECTED_TO_ALSA_P (d) && STRINGP (sound))
+    {
+      Binbyte *soundext;
+      Bytecount soundextlen;
+
+      TO_EXTERNAL_FORMAT (LISP_STRING, sound,
+			  ALLOCA, (soundext, soundextlen),
+			  Qbinary);
+      if (alsa_play_sound_data (soundext, soundextlen, vol))
+	return Qnil;
+    }
+#endif /* HAVE_ALSA_SOUND */
+
 #ifdef HAVE_NAS_SOUND
   if (DEVICE_CONNECTED_TO_NAS_P (d) && STRINGP (sound))
     {
@@ -423,6 +454,10 @@ Return t if DEVICE is able to play sound.  Defaults to selected device.
 */
        (USED_IF_HAVE_NATIVE_OR_NAS (device)))
 {
+#ifdef HAVE_ALSA_SOUND
+  if (DEVICE_CONNECTED_TO_ALSA_P (decode_device (device)))
+    return Qt;
+#endif
 #ifdef HAVE_NAS_SOUND
   if (DEVICE_CONNECTED_TO_NAS_P (decode_device (device)))
     return Qt;
@@ -654,6 +689,9 @@ syms_of_sound (void)
 void
 vars_of_sound (void)
 {
+#ifdef HAVE_ALSA_SOUND
+  Fprovide (intern ("alsa-sound"));
+#endif
 #ifdef HAVE_NATIVE_SOUND
   Fprovide (intern ("native-sound"));
 #endif

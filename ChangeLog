@@ -1,3 +1,7 @@
+2006-03-24  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Autodetect ALSA support and report it if detected.
+
 2006-02-22  Marcus Crestani  <crestani@xemacs.org>
 
 	* configure.ac: Remove mc-alloc, replace it with newgc, adjust

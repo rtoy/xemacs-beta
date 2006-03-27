@@ -796,6 +796,9 @@ things are arranged in config.h.in.  In particular:
 /* Native sound may be provided via soundcard.h, in various directories */
 #undef SOUNDCARD_H_FILE
 
+/* Compile in support for ALSA (Advanced Linux Sound Architecture) */
+#undef HAVE_ALSA_SOUND
+
 /* Compile in support for NAS (Network Audio System)?
    NAS_NO_ERROR_JUMP means that the NAS libraries don't include some
    error handling changes. */

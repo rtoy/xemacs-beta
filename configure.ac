@@ -791,16 +791,18 @@ dnl
 XE_HELP_SUBSECTION([Sound options])
 XE_COMPLEX_ARG([sound],
 	AC_HELP_STRING([--enable-sound=TYPE],[Compile with sound support.
-                        Valid types are `native', `nas' and `esd'.
+                        Valid types are `native', `alsa', `nas' and `esd'.
                         Prefix a type with 'no' to disable.
                         The first type can be `none' or `all'.  `none' means
-                        `nonative,nonas,noesd'.  `all' means `native,nas,esd'.
-                        Later options override earlier ones for the same TYPE.
-                        The default is to autodetect all sound support except 
-                        for ESD which defaults to off.]),
+                        `nonative,noalsa,nonas,noesd'.  `all' means
+                        `native,alsa,nas,esd'.  Later options override earlier
+                        ones for the same TYPE.  The default is to autodetect
+                        all sound support except for ESD which defaults to
+                        off.]),
 	[],
 	[enable_sound_nas=""],
 	[XE_COMPLEX_OPTION([native],[""]),
+	 XE_COMPLEX_OPTION([alsa],[""]),
 	 XE_COMPLEX_OPTION([nas],[""]),
 	 XE_COMPLEX_OPTION([esd],[no])])
 XE_MERGED_ARG([native-sound-lib],
@@ -5006,9 +5008,9 @@ dnl Check for nlist.h
 AC_CHECK_HEADER(nlist.h, AC_DEFINE(NLIST_STRUCT), )
 
 dnl Check for sound of various sorts.
+AC_CHECKING([for sound support])
 
 dnl Autodetect native sound
-AC_CHECKING([for sound support])
 test -n "$with_native_sound_lib" && enable_sound_native=yes
 
 if test "$enable_sound_native" != "no"; then
@@ -5125,6 +5127,22 @@ fi
 if test "$enable_sound_native" = "yes"; then
   AC_DEFINE(HAVE_NATIVE_SOUND)
   test -n "$with_native_sound_lib" && XE_PREPEND($with_native_sound_lib, LIBS)
+fi
+
+dnl ALSA sound support
+if test "$enable_sound_alsa" != "no"; then
+  AC_CHECK_HEADER([alsa/pcm.h], [
+    AC_CHECK_LIB(asound, snd_pcm_open, have_alsa_sound=yes)])
+  if test "$have_alsa_sound" = "yes"; then
+    enable_sound_alsa=yes
+    AC_DEFINE(HAVE_ALSA_SOUND)
+    XE_ADD_OBJS(alsaplay.o)
+    XE_PREPEND(-lasound, LIBS)
+  else
+    test "$enable_sound_alsa" = "yes" && \
+      XE_DIE("Required ALSA sound support cannot be provided.")
+    enable_sound_alsa=no
+  fi
 fi
 
 dnl NAS Sound support
@@ -6053,6 +6071,7 @@ test "$with_xface" = yes && echo "  Compiling in support for X-Face message head
 echo "
 Sound:"
 test "$enable_sound_native" = yes && echo "  Compiling in support for sound (native)."
+test "$enable_sound_alsa" = yes && echo "  Compiling in support for ALSA (Advanced Linux Sound Architecture)."
 test "$enable_sound_nas" = yes && echo "  Compiling in support for NAS (network audio system)."
 test "$old_nas" = yes && echo "    - NAS library lacks error trapping; will play synchronously."
 test "$enable_sound_esd" = yes && echo "  Compiling in support for ESD (Enlightened Sound Daemon)."
