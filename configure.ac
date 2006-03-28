@@ -497,7 +497,7 @@ dnl Boilerplate help string for complex options.
 dnl #### This doesn't read so well for alternative libraries like sound.
 dnl
 define([XE_COMPLEX_OPTION_HELP_STRING],
-[AC_HELP_STRING([$1],[Compile with support for $2. Components that can use
+[AS_HELP_STRING([$1],[Compile with support for $2. Components that can use
 $3 are $4. Prefix component with `no' to disable its use of $3. Requires
 $5 support. Default is $6.])])dnl
 dnl
@@ -528,7 +528,7 @@ XE_APPEND(lib-src, INSTALL_ARCH_DEP_SUBDIR)
 with_dragndrop_default="no"
 dnl -------------------------------------------------------------------------
 dnl Command line argument processing.
-dnl Note that AC_HELP_STRING compresses whitespace, wraps, and indents the
+dnl Note that AS_HELP_STRING compresses whitespace, wraps, and indents the
 dnl string to fit the --help display; there's no need to preformat.
 dnl
 dnl I think these will be caught by autoconf internal checks,
@@ -549,123 +549,123 @@ dnl
 dnl parse flags
 XE_HELP_SUBSECTION([Compilation options])
 XE_MERGED_ARG([compiler],
-	AC_HELP_STRING([--with-compiler],[C compiler to use]),
+	AS_HELP_STRING([--with-compiler],[C compiler to use]),
 	[], [])
 XE_MERGED_ARG([xemacs-compiler],
-	AC_HELP_STRING([--with-xemacs-compiler],
+	AS_HELP_STRING([--with-xemacs-compiler],
 	[compiler to use to compile just the xemacs executable and C modules.
 			If you want to compile XEmacs as C++, use e.g.
 			`--with-xemacs-compiler=g++'.  This turns on a lot of
 			additional error-checking.]),
 	[], [])
 XE_MERGED_ARG([gcc],
-	AC_HELP_STRING([--with-gcc],[Use GCC to compile XEmacs.]),
+	AS_HELP_STRING([--with-gcc],[Use GCC to compile XEmacs.]),
 	[], [])
 XE_MERGED_ARG([cflags],
-	AC_HELP_STRING([--with-cflags=FLAGS],
+	AS_HELP_STRING([--with-cflags=FLAGS],
 	[Compiler flags.  These flags will be placed after any flags inserted for warnings, debugging or optimization; setting this does not disable the insertion of those flags.  Use configure settings such as `--with-optimization=no' or `enable-debug=no' to turn them off, or override them with `--with-cflags-optimization', `--with-cflags-debugging', or `with-cflags-warning'.]),
 	[], [])
 XE_MERGED_ARG([cflags-warning],
-	AC_HELP_STRING([--with-cflags-warning=FLAGS],[Override compiler flags used to control warnings.
+	AS_HELP_STRING([--with-cflags-warning=FLAGS],[Override compiler flags used to control warnings.
                         Normally, don't set this, as XEmacs already turns on
                         the maximum safe warning level.]),
 	[], [])
 XE_MERGED_ARG([optimization],
-	AC_HELP_STRING([--with-optimization],[Control whether compilation is optimized.  By default, optimization is on in release versions and off in beta versions, since it can interfere with proper stack backtraces.]),
+	AS_HELP_STRING([--with-optimization],[Control whether compilation is optimized.  By default, optimization is on in release versions and off in beta versions, since it can interfere with proper stack backtraces.]),
 	[], [])
 XE_MERGED_ARG([cflags-optimization],
-	AC_HELP_STRING([--with-cflags-optimization=FLAGS],
+	AS_HELP_STRING([--with-cflags-optimization=FLAGS],
 	[Override compiler flags used to control optimization.  If blank, forces no optimization; if non-blank, forces optimization.  Normally, don't set this; XEmacs automatically sets the maximum safe optimization flags appropriate for the compiler being invoked.  If you just want to turn optimization on or off, use `with-optimization' instead.]),
 	[], [])
 XE_MERGED_ARG([cflags-debugging],
-	AC_HELP_STRING([--with-cflags-debugging=FLAGS],
+	AS_HELP_STRING([--with-cflags-debugging=FLAGS],
 	[Override compiler flags used to add debugging information to the executable.  Normally, debugging information is added whenever possible (i.e. unless optimization is turned on and the compiler does not permit debugging and optimization simultaneously).]),
 	[], [])
 XE_MERGED_ARG([cpp],
-	AC_HELP_STRING([--with-cpp],[C preprocessor to use (e.g. /usr/ccs/lib/cpp or cc -E)]),
+	AS_HELP_STRING([--with-cpp],[C preprocessor to use (e.g. /usr/ccs/lib/cpp or cc -E)]),
 	[CPP="$with_cpp"], [])
 XE_MERGED_ARG([cppflags],
-	AC_HELP_STRING([--with-cppflags],[C preprocessor flags (e.g. -I/foo or -Dfoo=bar)]),
+	AS_HELP_STRING([--with-cppflags],[C preprocessor flags (e.g. -I/foo or -Dfoo=bar)]),
 	[CPPFLAGS="$with_cppflags"], [])
 XE_MERGED_ARG([libs=LIBS],
-	AC_HELP_STRING([--with-libs],[Additional libraries (e.g. -lfoo)]),
+	AS_HELP_STRING([--with-libs],[Additional libraries (e.g. -lfoo)]),
 	[LIBS="$with_libs"], [])
 XE_MERGED_ARG([ldflags=FLAGS],
-	AC_HELP_STRING([--with-ldflags],[Additional linker flags (e.g. -L/foo)]),
+	AS_HELP_STRING([--with-ldflags],[Additional linker flags (e.g. -L/foo)]),
 	[LDFLAGS="$with_ldflags"], [])
 XE_MERGED_ARG([site-includes],
-	AC_HELP_STRING([--with-site-includes=PATHS],[Prepend to include search path.]),
+	AS_HELP_STRING([--with-site-includes=PATHS],[Prepend to include search path.]),
 	[], [])
 XE_MERGED_ARG([site-libraries],
-	AC_HELP_STRING([--with-site-libraries=PATHS],[Prepend to library search path.]),
+	AS_HELP_STRING([--with-site-libraries=PATHS],[Prepend to library search path.]),
 	[], [])
 XE_MERGED_ARG([site-prefixes],
-	AC_HELP_STRING([--with-site-prefixes=PATHS],[Prepend to include and library search paths, with /include and /lib added.  Comes after site-includes and site-libraries, if any.]),
+	AS_HELP_STRING([--with-site-prefixes=PATHS],[Prepend to include and library search paths, with /include and /lib added.  Comes after site-includes and site-libraries, if any.]),
 	[], [])
 XE_MERGED_ARG([site-runtime-libraries],
-	AC_HELP_STRING([--with-site-runtime-libraries=PATHS],[Prepend to the runtime library search path]),
+	AS_HELP_STRING([--with-site-runtime-libraries=PATHS],[Prepend to the runtime library search path]),
 	[], [])
 XE_MERGED_ARG([dynamic],
-	AC_HELP_STRING([--with-dynamic],[Link dynamically if supported by system.  'No' forces static linking.]),
+	AS_HELP_STRING([--with-dynamic],[Link dynamically if supported by system.  'No' forces static linking.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Installation options])
 XE_MERGED_ARG([prefix],
-	AC_HELP_STRING([--with-prefix=no],[Don't compile the value for `prefix' into the executable.]),
+	AS_HELP_STRING([--with-prefix=no],[Don't compile the value for `prefix' into the executable.]),
 	[true], [with_prefix=yes])
 XE_MERGED_ARG([netinstall],
-	AC_HELP_STRING([--with-netinstall],[Support for installation over the internet.
+	AS_HELP_STRING([--with-netinstall],[Support for installation over the internet.
                         Only functional on the MS Windows platforms.]),
 	[], [with_netinstall="no"])
 XE_MERGED_ARG([statedir],
-	AC_HELP_STRING([--with-statedir=DIR],[]),
+	AS_HELP_STRING([--with-statedir=DIR],[]),
 	[], [with_statedir='${prefix}/lib'])
 XE_MERGED_ARG([lispdir],
-	AC_HELP_STRING([--with-lispdir=DIR],[]),
+	AS_HELP_STRING([--with-lispdir=DIR],[]),
 	[AC_DEFINE(LISPDIR_USER_DEFINED)], [with_lispdir='${datadir}/${instvardir}/lisp'])
 XE_MERGED_ARG([archlibdir],
-	AC_HELP_STRING([--with-archlibdir=DIR],[]),
+	AS_HELP_STRING([--with-archlibdir=DIR],[]),
 	[AC_DEFINE(ARCHLIBDIR_USER_DEFINED)], [with_archlibdir='${libdir}/${instvardir}/${configuration}'])
 XE_MERGED_ARG([moduledir],
-	AC_HELP_STRING([--with-moduledir=DIR],[]),
+	AS_HELP_STRING([--with-moduledir=DIR],[]),
 	[AC_DEFINE(MODULEDIR_USER_DEFINED)], [with_moduledir='${libdir}/${instvardir}/${configuration}/modules'])
 XE_MERGED_ARG([etcdir],
-	AC_HELP_STRING([--with-etcdir=DIR],[]),
+	AS_HELP_STRING([--with-etcdir=DIR],[]),
 	[AC_DEFINE(ETCDIR_USER_DEFINED)], [with_etcdir='${datadir}/${instvardir}/etc'])
 XE_MERGED_ARG([docdir],
-	AC_HELP_STRING([--with-docdir=DIR],[]),
+	AS_HELP_STRING([--with-docdir=DIR],[]),
 	[AC_DEFINE(DOCDIR_USER_DEFINED)], [with_docdir='${archlibdir}'])
 dnl
 XE_HELP_SUBSECTION([Run-time path-searching options])
 XE_MERGED_ARG([site-lisp],
-	AC_HELP_STRING([--with-site-lisp=no],[Allow for a site-lisp directory in the XEmacs hierarchy searched before the installation packages.]),
+	AS_HELP_STRING([--with-site-lisp=no],[Allow for a site-lisp directory in the XEmacs hierarchy searched before the installation packages.]),
 	[true], [with_site_lisp=no])
 XE_MERGED_ARG([site-modules],
-	AC_HELP_STRING([--with-site-modules=no],[Disable site-modules directory in the XEmacs hierarchy, which is searched before the installation modules.]),
+	AS_HELP_STRING([--with-site-modules=no],[Disable site-modules directory in the XEmacs hierarchy, which is searched before the installation modules.]),
 	[], [])
 XE_MERGED_ARG([early-packages],
-	AC_HELP_STRING([--with-early-packages=DIR],[Specify location of early/user packages (instead of ~/.xemacs; same as --with-user-packages).]),
+	AS_HELP_STRING([--with-early-packages=DIR],[Specify location of early/user packages (instead of ~/.xemacs; same as --with-user-packages).]),
 	[AC_DEFINE(EARLY_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
 XE_MERGED_ARG([user-packages],
-	AC_HELP_STRING([--with-user-packages=DIR],[Specify location of early/user packages (instead of ~/.xemacs; same as --with-early-packages).]),
+	AS_HELP_STRING([--with-user-packages=DIR],[Specify location of early/user packages (instead of ~/.xemacs; same as --with-early-packages).]),
 	[AC_DEFINE(EARLY_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
 XE_MERGED_ARG([late-packages],
-	AC_HELP_STRING([--with-late-packages=DIR],[Specify location of late/system packages (instead of default location; same as --with-system-packages).]),
+	AS_HELP_STRING([--with-late-packages=DIR],[Specify location of late/system packages (instead of default location; same as --with-system-packages).]),
 	[AC_DEFINE(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
 XE_MERGED_ARG([system-packages],
-	AC_HELP_STRING([--with-late-packages=DIR],[Specify location of late/system packages (instead of default location; same as --with-late-packages).]),
+	AS_HELP_STRING([--with-late-packages=DIR],[Specify location of late/system packages (instead of default location; same as --with-late-packages).]),
 	[AC_DEFINE(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
 XE_MERGED_ARG([last-packages],
-	AC_HELP_STRING([--with-last-packages=DIR],[Specify location of last/legacy packages (instead of default location; same as --with-legacy-packages).]),
+	AS_HELP_STRING([--with-last-packages=DIR],[Specify location of last/legacy packages (instead of default location; same as --with-legacy-packages).]),
 	[AC_DEFINE(LAST_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
 XE_MERGED_ARG([legacy-packages],
-	AC_HELP_STRING([--with-late-packages=DIR],[Specify location of late/legacy packages (instead of default location; same as --with-late-packages).]),
+	AS_HELP_STRING([--with-late-packages=DIR],[Specify location of late/legacy packages (instead of default location; same as --with-late-packages).]),
 	[AC_DEFINE(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
 XE_MERGED_ARG([package-path],
-	AC_HELP_STRING([--with-package-path=PATH],[Search path for package directories.]),
+	AS_HELP_STRING([--with-package-path=PATH],[Search path for package directories.]),
 	[AC_DEFINE(PACKAGE_PATH_USER_DEFINED)], [])
 XE_MERGED_ARG([infopath],
-	AC_HELP_STRING([--with-infopath=PATH],[Location of info directories]),
+	AS_HELP_STRING([--with-infopath=PATH],[Location of info directories]),
 	[AC_DEFINE(INFOPATH_USER_DEFINED)], [])
 dnl
 XE_HELP_SUBSECTION([Window-system options])
@@ -683,57 +683,57 @@ XE_COMPLEX_ARG([xft],
 	XE_COMPLEX_OPTION([tabs],[no]),
 	XE_COMPLEX_OPTION([gauges],[no])])
 XE_MERGED_ARG([gtk],
-	AC_HELP_STRING([--with-gtk],[Support GTK on the X Window System. (EXPERIMENTAL)]),
+	AS_HELP_STRING([--with-gtk],[Support GTK on the X Window System. (EXPERIMENTAL)]),
 	[true], [with_gtk=no])
 XE_MERGED_ARG([gnome],
-	AC_HELP_STRING([--with-gnome],[Support GNOME on the X Window System. (EXPERIMENTAL)]),
+	AS_HELP_STRING([--with-gnome],[Support GNOME on the X Window System. (EXPERIMENTAL)]),
 	[true], [with_gnome=no])
 XE_MERGED_ARG([msw],
-	AC_HELP_STRING([--with-msw],[Support MS Windows as a window system (only under Cygwin and MinGW).  `--with-msw=no' may be needed on *nix systems with Wine installed.]),
+	AS_HELP_STRING([--with-msw],[Support MS Windows as a window system (only under Cygwin and MinGW).  `--with-msw=no' may be needed on *nix systems with Wine installed.]),
 	[], [])
 XE_MERGED_ARG([toolbars],
-	AC_HELP_STRING([--enable-toolbars],[Enable toolbar support. Default: yes.]),
+	AS_HELP_STRING([--enable-toolbars],[Enable toolbar support. Default: yes.]),
 	[], [])
 XE_MERGED_ARG([wmcommand],
-	AC_HELP_STRING([--with-wmcommand],[Compile without realized leader window which will
+	AS_HELP_STRING([--with-wmcommand],[Compile without realized leader window which will
                         keep the WM_COMMAND property.]),
 	[], [])
 XE_KEYWORD_ARG([athena],
-	AC_HELP_STRING([--with-athena=TYPE],[Use TYPE Athena widgets (`xaw', `3d', `next', `95', or `xpm').]),
+	AS_HELP_STRING([--with-athena=TYPE],[Use TYPE Athena widgets (`xaw', `3d', `next', `95', or `xpm').]),
 [],[],[xaw,3d,next,95,xpm])dnl
 XE_KEYWORD_ARG([menubars],
-	AC_HELP_STRING([--enable-menubars=TYPE],[Use TYPE menubars ('yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').  The Lucid
+	AS_HELP_STRING([--enable-menubars=TYPE],[Use TYPE menubars ('yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').  The Lucid
                         widgets emulate Motif (mostly) but are faster.
                         *WARNING*  The Motif menubar is currently broken.
                         Lucid menubars are the default.]),
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 XE_KEYWORD_ARG([scrollbars],
-	AC_HELP_STRING([--enable-scrollbars=TYPE],[Use TYPE scrollbars 'yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').
+	AS_HELP_STRING([--enable-scrollbars=TYPE],[Use TYPE scrollbars 'yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').
                         Lucid scrollbars are the default.]),
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 XE_KEYWORD_ARG([dialogs],
-	AC_HELP_STRING([--enable-dialogs=TYPE],[Use TYPE dialog boxes 'yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').
+	AS_HELP_STRING([--enable-dialogs=TYPE],[Use TYPE dialog boxes 'yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').
                         There are no true Lucid dialogs; Motif dialogs will be
                         used if Motif can be found, else Athena is used.]),
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 XE_KEYWORD_ARG([widgets],
-	AC_HELP_STRING([--enable-widgets=TYPE],[Use TYPE native widgets ('yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').
+	AS_HELP_STRING([--enable-widgets=TYPE],[Use TYPE native widgets ('yes', '`no', `lucid', `motif', `athena', `gtk', or `msw').
                         Other widget types are currently unsupported.
                         There are no true Lucid widgets; Motif widgets will be
                         used if Motif can be found, else Athena is used.]),
 	[], [],[yes,no,lucid,motif,athena,gtk,msw])
 XE_MERGED_ARG([dragndrop],
-	AC_HELP_STRING([--with-dragndrop],[Compile in the generic drag and drop API. This is automatically added if one of the drag and drop
+	AS_HELP_STRING([--with-dragndrop],[Compile in the generic drag and drop API. This is automatically added if one of the drag and drop
                         protocols is found (currently CDE, OffiX, MSWindows,
                         and GTK).
                         *WARNING*  The Drag'n'drop support is under development
                                    and is considered experimental.]),
 	[], [])
 XE_MERGED_ARG([cde],
-	AC_HELP_STRING([--with-cde],[Compile in support for CDE drag and drop.]),
+	AS_HELP_STRING([--with-cde],[Compile in support for CDE drag and drop.]),
 	[], [])
 XE_MERGED_ARG([offix],
-	AC_HELP_STRING([--with-offix],[Compile in support for OffiX drag and drop.
+	AS_HELP_STRING([--with-offix],[Compile in support for OffiX drag and drop.
                         *WARNING*  If you compile in OffiX, you may not be
                                    able to use multiple X displays success-
                                    fully.  If the two servers are from
@@ -741,56 +741,56 @@ XE_MERGED_ARG([offix],
                                    unpredictable.]),
 	[], [])
 XE_MERGED_ARG([xmu],
-	AC_HELP_STRING([--with-xmu],[Use Xmu utilities. Default: yes.]),
+	AS_HELP_STRING([--with-xmu],[Use Xmu utilities. Default: yes.]),
 	[], [])
 XE_MERGED_ARG([external-widget],
-	AC_HELP_STRING([--enable-external-widget],[Support XEmacs server for text widgets in other applications.]),
+	AS_HELP_STRING([--enable-external-widget],[Support XEmacs server for text widgets in other applications.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([TTY (character terminal) options])
 XE_MERGED_ARG([tty],
-	AC_HELP_STRING([--with-tty],[Enable TTY support. Default: yes.]),
+	AS_HELP_STRING([--with-tty],[Enable TTY support. Default: yes.]),
 	[], [])
 XE_MERGED_ARG([ncurses],
-	AC_HELP_STRING([--with-ncurses],[Use the ncurses library for tty support.]),
+	AS_HELP_STRING([--with-ncurses],[Use the ncurses library for tty support.]),
 	[], [])
 XE_MERGED_ARG([gpm],
-	AC_HELP_STRING([--with-gpm],[Compile in GPM mouse support for ttys.]),
+	AS_HELP_STRING([--with-gpm],[Compile in GPM mouse support for ttys.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Image options])
 XE_MERGED_ARG([xpm],
-	AC_HELP_STRING([--with-xpm],[Compile with support for XPM images.  PRACTICALLY
+	AS_HELP_STRING([--with-xpm],[Compile with support for XPM images.  PRACTICALLY
                         REQUIRED.  Although this library is nonstandard and
                         a real hassle to build, many basic things (e.g.
                         toolbars) depend on it, and you will run into
                         many problems without it.]),
 	[], [])
 XE_MERGED_ARG([png],
-	AC_HELP_STRING([--with-png],[Compile with support for PNG images.  Recommended
+	AS_HELP_STRING([--with-png],[Compile with support for PNG images.  Recommended
                         because the images on the About page are not viewable
                         without it.]),
 	[], [])
 XE_MERGED_ARG([jpeg],
-	AC_HELP_STRING([--with-jpeg],[Compile with support for JPEG images.  Useful if
+	AS_HELP_STRING([--with-jpeg],[Compile with support for JPEG images.  Useful if
                         you are using a mail, news reader, or web browser
                         in XEmacs, so that JPEG images can be displayed.]),
 	[], [])
 XE_MERGED_ARG([tiff],
-	AC_HELP_STRING([--with-tiff],[Compile with support for TIFF images.  Possibly
+	AS_HELP_STRING([--with-tiff],[Compile with support for TIFF images.  Possibly
                         useful, for the same reason as JPEG images.]),
 	[], [])
 XE_MERGED_ARG([xface],
-	AC_HELP_STRING([--with-xface],[Compile with support for X-Face mail headers.
+	AS_HELP_STRING([--with-xface],[Compile with support for X-Face mail headers.
                         Requires the compface package.]),
 	[], [])
 XE_MERGED_ARG([gif],
-	AC_HELP_STRING([--with-gif],[Compile without the (builtin) support for GIF images.]),
+	AS_HELP_STRING([--with-gif],[Compile without the (builtin) support for GIF images.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Sound options])
 XE_COMPLEX_ARG([sound],
-	AC_HELP_STRING([--enable-sound=TYPE],[Compile with sound support.
+	AS_HELP_STRING([--enable-sound=TYPE],[Compile with sound support.
                         Valid types are `native', `alsa', `nas' and `esd'.
                         Prefix a type with 'no' to disable.
                         The first type can be `none' or `all'.  `none' means
@@ -806,53 +806,53 @@ XE_COMPLEX_ARG([sound],
 	 XE_COMPLEX_OPTION([nas],[""]),
 	 XE_COMPLEX_OPTION([esd],[no])])
 XE_MERGED_ARG([native-sound-lib],
-	AC_HELP_STRING([--with-native-sound-lib],[Path to sound library (for systems with name conflicts).]),
+	AS_HELP_STRING([--with-native-sound-lib],[Path to sound library (for systems with name conflicts).]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Internationalization options])
 XE_MERGED_ARG([mule],
-	AC_HELP_STRING([--enable-mule],[Compile with Mule (Multi-Lingual Emacs) support,
+	AS_HELP_STRING([--enable-mule],[Compile with Mule (Multi-Lingual Emacs) support,
                         needed to support non-Latin-1 (including Asian)
                         languages.]),
 	[], [])
 XE_KEYWORD_ARG([xim],
-	AC_HELP_STRING([--with-xim==TYPE],[Enable XIM support.  TYPE is `yes', `no', `xlib', or `motif']),
+	AS_HELP_STRING([--with-xim==TYPE],[Enable XIM support.  TYPE is `yes', `no', `xlib', or `motif']),
 	[],[],[yes,no,xlib,motif])dnl
 XE_MERGED_ARG([canna],
-	AC_HELP_STRING([--with-canna],[Support the Canna Japanese input method. Requires Mule.]),
+	AS_HELP_STRING([--with-canna],[Support the Canna Japanese input method. Requires Mule.]),
 	[], [])
 XE_MERGED_ARG([wnn],
-	AC_HELP_STRING([--with-wnn],[Support the Wnn Asian language input
+	AS_HELP_STRING([--with-wnn],[Support the Wnn Asian language input
                         method. Requires Mule.]),
 	[], [])
 XE_MERGED_ARG([wnn6],
-	AC_HELP_STRING([--with-wnn6],[Support the Wnn6 Asian language input
+	AS_HELP_STRING([--with-wnn6],[Support the Wnn6 Asian language input
                         method (proprietary). Requires Mule.]),
 	[], [])
 XE_MERGED_ARG([xfs],
-	AC_HELP_STRING([--with-xfs],[Enable XFontSet support for internationalized
+	AS_HELP_STRING([--with-xfs],[Enable XFontSet support for internationalized
                         menubar.  Incompatible with `--with-xim=motif' and `--with-xft'.
                         `--enable-menubars=lucid' (the default) is desirable.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([File-related options])
 XE_MERGED_ARG([default-eol-detection],
-	AC_HELP_STRING([--enable-default-eol-detection],[Turns on by default auto-detection of end-of-line type
+	AS_HELP_STRING([--enable-default-eol-detection],[Turns on by default auto-detection of end-of-line type
 			when reading a file.  Applies to those platforms where
 			auto-detection is off by default (non-Mule Unix).  Has
 			no effect otherwise.]),
 	[], [])
 XE_MERGED_ARG([clash-detection],
-	AC_HELP_STRING([--enable-clash-detection],[Disable use of lock files to detect multiple edits
+	AS_HELP_STRING([--enable-clash-detection],[Disable use of lock files to detect multiple edits
 			of the same file.]),
 	[], [])
 XE_MERGED_ARG([zlib],
-	AC_HELP_STRING([--with-zlib],[Support inflate (de)compression internally.]),
+	AS_HELP_STRING([--with-zlib],[Support inflate (de)compression internally.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Database options])
 XE_COMPLEX_ARG([database],
-	AC_HELP_STRING([--enable-database=TYPE],[Compile with database support.  Valid types are
+	AS_HELP_STRING([--enable-database=TYPE],[Compile with database support.  Valid types are
                         `no' or a comma-separated list of one or more
                         of `berkdb' and either `dbm' or `gnudbm'.]),
 	[
@@ -866,72 +866,72 @@ fi
  XE_COMPLEX_OPTION([dbm],[""]),
  XE_COMPLEX_OPTION([gdbm],[""])])
 XE_MERGED_ARG([ldap],
-	AC_HELP_STRING([--with-ldap],[Support the LDAP protocol.]),
+	AS_HELP_STRING([--with-ldap],[Support the LDAP protocol.]),
 	[], [])
 XE_MERGED_ARG([postgresql],
-	AC_HELP_STRING([--with-postgresql],[Support the PostgreSQL RDBMS.]),
+	AS_HELP_STRING([--with-postgresql],[Support the PostgreSQL RDBMS.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Mail options])
 XE_KEYWORD_ARG([mail-locking],
-	AC_HELP_STRING([--with-mail-locking=TYPE],[Specify the locking to be used by movemail to prevent
+	AS_HELP_STRING([--with-mail-locking=TYPE],[Specify the locking to be used by movemail to prevent
                         concurrent updates of mail spool files. Valid types
                         are `lockf', `flock', `file', `locking', `mmdf' or `pop'.]),
 [],[],[lockf,flock,file,locking,mmdf,pop])dnl
 XE_MERGED_ARG([pop],
-	AC_HELP_STRING([--with-pop],[Support POP for mail retrieval.]),
+	AS_HELP_STRING([--with-pop],[Support POP for mail retrieval.]),
 	[], [])
 XE_MERGED_ARG([kerberos],
-	AC_HELP_STRING([--with-kerberos],[Support Kerberos-authenticated POP.]),
+	AS_HELP_STRING([--with-kerberos],[Support Kerberos-authenticated POP.]),
 	[], [])
 XE_MERGED_ARG([hesiod],
-	AC_HELP_STRING([--with-hesiod],[Support Hesiod to get the POP server host.]),
+	AS_HELP_STRING([--with-hesiod],[Support Hesiod to get the POP server host.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Networking options])
 XE_MERGED_ARG([tooltalk],
-	AC_HELP_STRING([--with-tooltalk],[Support the ToolTalk IPC protocol.]),
+	AS_HELP_STRING([--with-tooltalk],[Support the ToolTalk IPC protocol.]),
 	[], [])
 XE_MERGED_ARG([socks],
-	AC_HELP_STRING([--with-socks],[Compile with support for SOCKS (an Internet proxy).]),
+	AS_HELP_STRING([--with-socks],[Compile with support for SOCKS (an Internet proxy).]),
 	[], [])
 XE_MERGED_ARG([dnet],
-	AC_HELP_STRING([--with-dnet],[Compile with support for DECnet.]),
+	AS_HELP_STRING([--with-dnet],[Compile with support for DECnet.]),
 	[], [])
 XE_MERGED_ARG([ipv6-cname],
-	AC_HELP_STRING([--with-ipv6-cname],[Try IPv6 information first when canonicalizing host names.  This option has no effect unless system supports getaddrinfo(3) and getnameinfo(3).]),
+	AS_HELP_STRING([--with-ipv6-cname],[Try IPv6 information first when canonicalizing host names.  This option has no effect unless system supports getaddrinfo(3) and getnameinfo(3).]),
 	[], [with_ipv6_cname="no"])
 dnl
 XE_HELP_SUBSECTION([Memory allocation options])
 XE_MERGED_ARG([rel-alloc],
-	AC_HELP_STRING([--with-rel-alloc],[Enable the relocating allocator.]),
+	AS_HELP_STRING([--with-rel-alloc],[Enable the relocating allocator.]),
 	[], [with_rel_alloc='default'])
 XE_MERGED_ARG([dlmalloc],
-	AC_HELP_STRING([--with-dlmalloc],[Use Doug Lea's malloc implementation.]),
+	AS_HELP_STRING([--with-dlmalloc],[Use Doug Lea's malloc implementation.]),
 	[], [with_dlmalloc='default'])
 XE_MERGED_ARG([system-malloc],
-	AC_HELP_STRING([--with-system-malloc],[Use the system malloc, not the one distributed with XEmacs.]),
+	AS_HELP_STRING([--with-system-malloc],[Use the system malloc, not the one distributed with XEmacs.]),
 	[], [with_system_malloc='default'])
 XE_MERGED_ARG([debug-malloc],
-	AC_HELP_STRING([--with-debug-malloc],[Use a debugging malloc.]),
+	AS_HELP_STRING([--with-debug-malloc],[Use a debugging malloc.]),
 	[], [])
 XE_MERGED_ARG([pdump],
-	AC_HELP_STRING([--enable-pdump],[Enable portable LISP preloader.]),
+	AS_HELP_STRING([--enable-pdump],[Enable portable LISP preloader.]),
 	[], [])
 XE_MERGED_ARG([dump-in-exec],
-	AC_HELP_STRING([--enable-dump-in-exec],[Enable dumping into executable (enabled by default
+	AS_HELP_STRING([--enable-dump-in-exec],[Enable dumping into executable (enabled by default
 			for `pdump', not enabled by default in combination 
 			with `newgc').]),
 	[], [])
 XE_MERGED_ARG([kkcc],
-	AC_HELP_STRING([--enable-kkcc],[Enable experimental new GC mark algorithms.]),
+	AS_HELP_STRING([--enable-kkcc],[Enable experimental new GC mark algorithms.]),
 	[], [enable_kkcc=yes])
 
 XE_MERGED_ARG([newgc],
-	AC_HELP_STRING([--enable-newgc],[Enable new incremental garbage collector and new allocator.]),
+	AS_HELP_STRING([--enable-newgc],[Enable new incremental garbage collector and new allocator.]),
 	[], [])
 XE_COMPLEX_ARG([vdb],
-	AC_HELP_STRING([--enable-vdb=TYPE],[Override auto-detection of 
+	AS_HELP_STRING([--enable-vdb=TYPE],[Override auto-detection of 
 			virtual-dirty-bit write-barrier implementation for the
 			new garbage collector. TYPE must be one of "auto" (for 
 			auto-detection), "posix", "win32", "mach", or "fake" 
@@ -942,33 +942,33 @@ XE_COMPLEX_ARG([vdb],
 dnl
 XE_HELP_SUBSECTION([Emacs Lisp options])
 XE_MERGED_ARG([modules],
-	AC_HELP_STRING([--enable-modules],[Compile in experimental support for dynamically
+	AS_HELP_STRING([--enable-modules],[Compile in experimental support for dynamically
                         loaded libraries (Dynamic Shared Objects).]),
 	[], [])
 XE_KEYWORD_ARG([bignum],
-	AC_HELP_STRING([--enable-bignum=TYPE],[Compile in support for bignums, ratios, or bigfloats
+	AS_HELP_STRING([--enable-bignum=TYPE],[Compile in support for bignums, ratios, or bigfloats
                         using library support.  TYPE must be one of "gmp"
                         (for GNU MP), "mp" (for BSD MP), or "no" (disabled).]),
 	[], [enable_bignum="no"],[no,gmp,mp])
 dnl
 XE_HELP_SUBSECTION([Platform Specific options])
 XE_MERGED_ARG([workshop],
-	AC_HELP_STRING([--with-workshop],[Support the Sun WorkShop (formerly Sparcworks)
+	AS_HELP_STRING([--with-workshop],[Support the Sun WorkShop (formerly Sparcworks)
                         development environment.]),
 	[], [])
 XE_MERGED_ARG([sparcworks],
-	AC_HELP_STRING([--with-sparcworks],[Alias for --with-workshop]),
+	AS_HELP_STRING([--with-sparcworks],[Alias for --with-workshop]),
 	[], [])
 XE_MERGED_ARG([infodock],
-	AC_HELP_STRING([--with-infodock],[Support the Infodock version of XEmacs.  Infodock is a SourceForge project).]),
+	AS_HELP_STRING([--with-infodock],[Support the Infodock version of XEmacs.  Infodock is a SourceForge project).]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Debugging options])
 XE_MERGED_ARG([debug],
-	AC_HELP_STRING([--enable-debug],[Enable additional debugging information.  No time cost.]),
+	AS_HELP_STRING([--enable-debug],[Enable additional debugging information.  No time cost.]),
 	[], [])
 XE_COMPLEX_ARG([error-checking],
-	AC_HELP_STRING([--enable-error-checking=TESTS],[Compile with internal error-checking added.
+	AS_HELP_STRING([--enable-error-checking=TESTS],[Compile with internal error-checking added.
                         Causes noticeable loss of speed.  Valid TESTS
                         are `extents', `bufpos', `malloc', `gc', `types', `text', `byte_code', `glyphs', `display', `structures'.]),
 	[], [],
@@ -982,13 +982,13 @@ XE_COMPLEX_ARG([error-checking],
  XE_COMPLEX_OPTION([display],[""]),
  XE_COMPLEX_OPTION([structures],[""])])
 XE_MERGED_ARG([assertions],
-	AC_HELP_STRING([--enable-assertions],[Compile in runtime assertions.]),
+	AS_HELP_STRING([--enable-assertions],[Compile in runtime assertions.]),
 	[], [])
 XE_MERGED_ARG([memory-usage-stats],
-	AC_HELP_STRING([--enable-memory-usage-stats],[Enable LISP memory usage API.]),
+	AS_HELP_STRING([--enable-memory-usage-stats],[Enable LISP memory usage API.]),
 	[], [])
 XE_MERGED_ARG([quick-build],
-	AC_HELP_STRING([--enable-quick-build],[Speed up the build cycle by leaving out steps where
+	AS_HELP_STRING([--enable-quick-build],[Speed up the build cycle by leaving out steps where
                         XEmacs will still work (more or less) without them.
                         Potentially dangerous if you don't know what you're
                         doing. This (1) doesn't garbage-collect after loading
@@ -1000,13 +1000,13 @@ XE_MERGED_ARG([quick-build],
                         to be rebuilt.]),
 	[], [])
 XE_MERGED_ARG([union-type],
-	AC_HELP_STRING([--enable-union-type],[Use union definition of Lisp_Object type.  Known to trigger bugs in some compilers.]),
+	AS_HELP_STRING([--enable-union-type],[Use union definition of Lisp_Object type.  Known to trigger bugs in some compilers.]),
 	[], [])
 XE_MERGED_ARG([quantify],
-	AC_HELP_STRING([--with-quantify],[Support performance debugging using Quantify.]),
+	AS_HELP_STRING([--with-quantify],[Support performance debugging using Quantify.]),
 	[], [])
 XE_MERGED_ARG([purify],
-	AC_HELP_STRING([--with-purify],[Support memory debugging using Purify.]),
+	AS_HELP_STRING([--with-purify],[Support memory debugging using Purify.]),
 	[], [])
 dnl -------------------------------------------------------------------------
 dnl Final command line argument checks.
@@ -1925,12 +1925,12 @@ dnl We want feature macros defined here *and* in config.h.in, so that
 dnl the compilation environment at configure time and compile time agree.
 
 AC_MSG_CHECKING(for GNU libc)
-AC_TRY_COMPILE([#include <features.h>],[
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <features.h>],[
 #if ! (defined __GLIBC__ || defined __GNU_LIBRARY__)
 #error Not a GNU libc system :-(
 ******* ======= ******** &&&&&&&&
 #endif
-], have_glibc=yes, have_glibc=no)
+])], have_glibc=yes, have_glibc=no)
 AC_MSG_RESULT($have_glibc)
 dnl I'm tired of pop being broken with GLIBC -slb
 dnl Well. then why not fix fucking pop?
@@ -2184,10 +2184,11 @@ dnl Some versions of SCO native compiler need -Kalloca
 if test "$__USLC__" = yes; then
   AC_MSG_CHECKING(for whether the -Kalloca compiler flag is needed)
   need_kalloca=no
-  AC_TRY_LINK([], [void *x = alloca(4);], [:], [
+  AC_LINK_IFELSE([AC_LANG_SOURCE([void *x = alloca(4);])], [:], [
     xe_save_c_switch_system="$c_switch_system"
     c_switch_system="$c_switch_system -Kalloca"
-    AC_TRY_LINK([], [void *x = alloca(4);], [ need_kalloca=yes ])
+    AC_LINK_IFELSE([AC_LANG_SOURCE([void *x = alloca(4);])],
+      [ need_kalloca=yes ])
     c_switch_system="$xe_save_c_switch_system"])
   AC_MSG_RESULT($need_kalloca)
   test "$need_kalloca" = "yes" && XE_APPEND(-Kalloca,c_switch_system)
@@ -2439,7 +2440,7 @@ dnl a usage message, that's often good enough.  Please report it, though.
 dnl #### Should make this Solaris-friendly.
 dnl Link with -z nocombreloc for now.
 if test "$enable_pdump" != "yes"; then
-  AC_MSG_CHECKING(for \"-z nocombreloc\" linker flag)
+  AC_MSG_CHECKING([for "-z nocombreloc" linker flag])
   case "`ld --help 2>&1`" in
     *-z\ nocombreloc* ) AC_MSG_RESULT(yes)
       XE_PREPEND(-z nocombreloc, ld_switch_site) ;;
@@ -2738,7 +2739,7 @@ fi
 if test "$add_runtime_path" = "yes"; then
   dnl Try to autodetect runtime library flag (usually -R),
   dnl and whether it works (or at least does no harm)
-  AC_MSG_CHECKING("for runtime libraries flag")
+  AC_MSG_CHECKING([for runtime libraries flag])
   case "$opsys" in
     sol2 ) dash_r="-R" ;;
     decosf* | linux* | irix*) dash_r="-rpath " ;;
@@ -2747,13 +2748,13 @@ if test "$add_runtime_path" = "yes"; then
       for try_dash_r in "-R" "-R " "-rpath "; do
         xe_check_libs="${try_dash_r}/no/such/file-or-directory"
         XE_PROTECT_LINKER_FLAGS(xe_check_libs)
-        AC_TRY_LINK(, , dash_r="$try_dash_r")
+        AC_LINK_IFELSE([], dash_r="$try_dash_r")
         xe_check_libs=""
         test -n "$dash_r" && break
       done ;;
   esac
   if test -n "$dash_r";
-    then AC_MSG_RESULT("\"${dash_r}\"")
+    then AC_MSG_RESULT(["${dash_r}"])
     else AC_MSG_RESULT(NONE)
   fi
 fi
@@ -2786,7 +2787,8 @@ fi
 after_morecore_hook_exists=yes
 AC_CHECK_FUNC(malloc_set_state, ,doug_lea_malloc=no)
 AC_MSG_CHECKING(whether __after_morecore_hook exists)
-AC_TRY_LINK([extern void (* __after_morecore_hook)();],[__after_morecore_hook = 0],
+AC_LINK_IFELSE([AC_LANG_PROGRAM([extern void (* __after_morecore_hook)();],
+  [__after_morecore_hook = 0])],
   [AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
    after_morecore_hook_exists=no])
@@ -2846,7 +2848,6 @@ AC_CHECK_HEADERS(dnl
   elf.h dnl
   cygwin/version.h dnl
   fcntl.h dnl
-  inttypes.h dnl
   libgen.h dnl
   locale.h dnl
   wchar.h dnl
@@ -2860,7 +2861,6 @@ AC_CHECK_HEADERS(dnl
   sys/un.h dnl
   sys/vlimit.h dnl
   ulimit.h dnl
-  unistd.h dnl
 )
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDC
@@ -2881,9 +2881,9 @@ dnl Some systems have utime.h but do not declare the struct anyplace,
 dnl so we use a more sophisticated test for utime than AC_CHECK_FUNCS.
 dnl ----------------------------------------------------------------
 AC_MSG_CHECKING(for utime)
-AC_TRY_COMPILE([#include <sys/types.h>
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/types.h>
 #include <utime.h>],
-[struct utimbuf x; x.actime = x.modtime = 0; utime ("/", &x);],
+[struct utimbuf x; x.actime = x.modtime = 0; utime ("/", &x);])],
   [AC_MSG_RESULT(yes)
    AC_DEFINE(HAVE_UTIME)],
   [AC_MSG_RESULT(no)
@@ -2904,30 +2904,30 @@ AC_CHECK_TYPE(ssize_t, int)
 dnl not AC_CHECK_TYPE; lisp.h does hairy conditional typedef
 if test "$ac_cv_header_inttypes_h" != "yes"; then
 AC_MSG_CHECKING(for intptr_t in sys/types.h)
-AC_TRY_COMPILE([#include <sys/types.h>
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([#include <sys/types.h>
 intptr_t x;
-],[],[AC_MSG_RESULT(yes)
+])],[AC_MSG_RESULT(yes)
       AC_DEFINE(HAVE_INTPTR_T_IN_SYS_TYPES_H,1)],
      [AC_MSG_RESULT(no)])
 fi
 
 dnl check for Unix98 socklen_t
 AC_MSG_CHECKING(for socklen_t)
-AC_TRY_COMPILE([#include <sys/types.h>
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([#include <sys/types.h>
 #include <sys/socket.h>
 socklen_t x;
-],[],[AC_MSG_RESULT(yes)],[
-AC_TRY_COMPILE([#include <sys/types.h>
+])],[AC_MSG_RESULT(yes)],[
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([#include <sys/types.h>
 #include <sys/socket.h>
 int accept (int, struct sockaddr *, size_t *);
-],[],[
+])],[
 AC_MSG_RESULT(size_t)
 AC_DEFINE(socklen_t,size_t)], [
 AC_MSG_RESULT(int)
 AC_DEFINE(socklen_t,int)])])
 
 AC_MSG_CHECKING(for struct timeval)
-AC_TRY_COMPILE([#ifdef TIME_WITH_SYS_TIME
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#ifdef TIME_WITH_SYS_TIME
 #include <sys/time.h>
 #include <time.h>
 #else
@@ -2936,7 +2936,7 @@ AC_TRY_COMPILE([#ifdef TIME_WITH_SYS_TIME
 #else
 #include <time.h>
 #endif
-#endif], [static struct timeval x; x.tv_sec = x.tv_usec;],
+#endif], [static struct timeval x; x.tv_sec = x.tv_usec;])],
   [AC_MSG_RESULT(yes)
   HAVE_TIMEVAL=yes
   AC_DEFINE(HAVE_TIMEVAL)],
@@ -2976,15 +2976,16 @@ AC_SYS_LONG_FILE_NAMES
 dnl -lm is required for floating point support, among other things
 AC_CHECK_FUNC(sin, ,AC_CHECK_LIB(m, sin))
 
-AC_TRY_LINK([#include <math.h>],
-  [return atanh(1.0) + asinh(1.0) + acosh(1.0); ],
+AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <math.h>],
+  [return atanh(1.0) + asinh(1.0) + acosh(1.0); ])],
   AC_DEFINE(HAVE_INVERSE_HYPERBOLIC))
 
 dnl See if mkstemp is available
 AC_CHECK_FUNCS(mkstemp)
 
 dnl Determine type of mail locking from configure args and s&m headers
-AC_CHECKING([type of mail spool file locking])
+AC_MSG_CHECKING([type of mail spool file locking])
+AC_MSG_RESULT()
 AC_CHECK_FUNCS(lockf flock)
 dnl The mail_use_xxx variables are set according to the s&m headers.
 test -z "$with_mail_locking" -a "$mail_use_flock" = "yes" && with_mail_locking=flock
@@ -3034,7 +3035,7 @@ fi
 dnl Link with "-z ignore" on Solaris if supported
 if test "$opsys" = "sol2"; then
   if test "$os_release" -ge 506; then
-    AC_MSG_CHECKING(for \"-z ignore\" linker flag)
+    AC_MSG_CHECKING([for "-z ignore" linker flag])
     case "`ld -h 2>&1`" in
       *-z\ ignore\|record* ) AC_MSG_RESULT(yes)
         XE_PREPEND(-z ignore, ld_switch_site) ;;
@@ -3047,7 +3048,8 @@ dnl ----------------------
 dnl Choose a window system
 dnl ----------------------
 
-AC_CHECKING([for specified window system])
+AC_MSG_CHECKING([for specified window system])
+AC_MSG_RESULT()
 
 dnl Autodetection of Gdk libraries and includes
 dnl -------------------------------------------
@@ -3307,7 +3309,8 @@ if test "$with_x11" = "yes"; then
   test ! -z "$bitmapdirs" && AC_DEFINE_UNQUOTED(BITMAPDIR, "$bitmapdirs")
 
   dnl Autodetect defines extracted from X config by xmkmf, e.g. NARROWPROTO
-  AC_CHECKING([for X defines extracted by xmkmf])
+  AC_MSG_CHECKING([for X defines extracted by xmkmf])
+  AC_MSG_RESULT()
   rm -fr conftestdir
   if mkdir conftestdir; then
     cd conftestdir
@@ -3385,12 +3388,12 @@ dnl Avoid re-AC_DEFINE-ing xmkmf symbols we've already defined above.
   dnl XFree86 has a non-standard prototype for this X11R6 function
   AC_CHECK_FUNCS(XRegisterIMInstantiateCallback)
   AC_MSG_CHECKING(for standard XRegisterIMInstantiateCallback prototype)
-  AC_TRY_COMPILE([
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #define NeedFunctionPrototypes 1
 #include <X11/Xlib.h>
 extern Bool XRegisterIMInstantiateCallback(
    Display*, struct _XrmHashBucketRec*, char*, char*, XIMProc, XPointer*);
-], [],
+])],
   [AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
    AC_DEFINE(XREGISTERIMINSTANTIATECALLBACK_NONSTANDARD_PROTOTYPE)])
@@ -3428,7 +3431,7 @@ extern Bool XRegisterIMInstantiateCallback(
   dnl #### need to check for includes here (especially, freetype.h for v.2)
 
   if test "$with_xft_emacs" = "yes"; then
-    AC_CHECKING([for Xrender, fontconfig, and Xft])
+    AC_MSG_CHECKING([for Xrender, fontconfig, and Xft])
     xft_includes_found=no
     AC_CHECK_HEADERS([freetype/config/ftheader.h],
 		     [xft_includes_found=yes],
@@ -3439,7 +3442,7 @@ extern Bool XRegisterIMInstantiateCallback(
 				  "/usr/include/freetype2"
       do
 	if test -d $freetype_include_top; then
-	  AC_CHECKING([in ${freetype_include_top}/freetype2])
+	  AC_MSG_CHECKING([in ${freetype_include_top}/freetype2])
 	  dnl disable autoconf's fucking cache; why these fuckheads think it
 	  dnl is better to be broken than to be slow, I don't know!
 	  dnl #### there's gotta be a better-looking way to do this!!
@@ -3470,7 +3473,8 @@ extern Bool XRegisterIMInstantiateCallback(
 fi dnl $with_x11 = yes
 
 if test "$with_msw" != "no"; then
-  AC_CHECKING([for MS-Windows])
+  AC_MSG_CHECKING([for MS-Windows])
+  AC_MSG_RESULT()
   AC_CHECK_LIB(gdi32,main,with_msw=yes)
   if test "$with_msw" = "yes"; then
     AC_DEFINE(HAVE_MS_WINDOWS)
@@ -3583,10 +3587,13 @@ case "$x_libraries" in *X11R4* )
 esac
 
 dnl Enable or disable proper handling of WM_COMMAND
-AC_CHECKING([for WM_COMMAND option])
+AC_MSG_CHECKING([for WM_COMMAND option])
 dnl if test "$with_wmcommand" = "yes"; then
 if test "$with_wmcommand" != "no"; then
   AC_DEFINE(HAVE_WMCOMMAND)
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
 fi
 
 dnl Autodetect Xauth
@@ -3619,7 +3626,8 @@ AC_SUBST(LIBSTDCPP)
 
 dnl This must come before the detection code for anything that is in a module
 if test "$enable_modules" != "no"; then
-  AC_CHECKING([for module support])
+  AC_MSG_CHECKING([for module support])
+  AC_MSG_RESULT()
 
   case "$opsys" in
     mingw* | cygwin* ) have_dl=yes ;;
@@ -3630,19 +3638,19 @@ if test "$enable_modules" != "no"; then
       dnl Check for the ELFish dlopen()
       AC_CHECK_HEADER(dlfcn.h, [
 	AC_MSG_CHECKING([for dlopen in -lc])
-	AC_TRY_LINK([#include <dlfcn.h>],dnl
-	 [dlopen ("", 0);], [ have_dl=yes ; AC_MSG_RESULT($have_dl)], [
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dlfcn.h>],
+	 [dlopen ("", 0);])], [ have_dl=yes ; AC_MSG_RESULT($have_dl)], [
 	  AC_MSG_RESULT([no])
 	  AC_MSG_CHECKING([for dlopen in -ldl])
 	  ac_save_LIBS="$LIBS"
 	  LIBS="$LIBS -ldl"
-	  AC_TRY_LINK([#include <dlfcn.h>],dnl
-	   [dlopen ("", 0);], [ have_dl=yes; AC_MSG_RESULT($have_dl)], [
+	  AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dlfcn.h>],
+	   [dlopen ("", 0);])], [ have_dl=yes; AC_MSG_RESULT($have_dl)], [
 	    AC_MSG_RESULT([no])
 	    AC_MSG_CHECKING([for dlopen in -lsvld])
 	    LIBS="$ac_save_LIBS -lsvld"
-	    AC_TRY_LINK([#include <dlfcn.h>],dnl
-	     [dlopen ("", 0);], [ have_dl=yes; AC_MSG_RESULT($have_dl) ],
+	    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dlfcn.h>],
+	     [dlopen ("", 0);])], [ have_dl=yes; AC_MSG_RESULT($have_dl) ],
 	     [LIBS="$ac_save_LIBS" ; AC_MSG_RESULT([no])])])])])
       if test "$have_dl" = "yes"; then
 	AC_DEFINE(HAVE_DLOPEN)
@@ -3650,14 +3658,14 @@ if test "$enable_modules" != "no"; then
 	dnl Check for HP/UX shl_load
 	AC_CHECK_HEADER(dl.h, [
 	  AC_MSG_CHECKING([for shl_load in -lc])
-	  AC_TRY_LINK([#include <dl.h>],dnl
-	   [shl_load ("", 0, 0);], [have_dl=yes; AC_MSG_RESULT($have_dl)], [
+	  AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dl.h>],
+	   [shl_load ("", 0, 0);])], [have_dl=yes; AC_MSG_RESULT($have_dl)], [
 	    AC_MSG_RESULT([no])
 	    AC_MSG_CHECKING([for shl_load in -ldl])
 	    ac_save_LIBS="$LIBS"
 	    LIBS="$LIBS -ldld"
-	    AC_TRY_LINK([#include <dl.h>],dnl
-	     [shl_load ("", 0, 0);], [have_dl=yes],
+	    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dl.h>],
+	     [shl_load ("", 0, 0);])], [have_dl=yes],
 	     [LIBS="$ac_save_LIBS"; AC_MSG_RESULT([no])])])])
 	if test "$have_dl" = "yes"; then
 	  AC_DEFINE(HAVE_SHL_LOAD) 
@@ -3667,8 +3675,8 @@ if test "$enable_modules" != "no"; then
 	    AC_MSG_CHECKING([for lt_dlinit in -lltdl])
 	    ac_save_LIBS="$LIBS"
 	    LIBS="$LIBS -lltdl"
-	    AC_TRY_LINK([#include <ltdl.h>],dnl
-	     [lt_dlinit ();], [have_dl=yes], [LIBS="$ac_save_LIBS"])])
+	    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <ltdl.h>],
+	     [lt_dlinit ();])], [have_dl=yes], [LIBS="$ac_save_LIBS"])])
 	  AC_MSG_RESULT($have_dl)
 	  if test "$have_dl" = "yes"; then
 	    AC_DEFINE(HAVE_LTDL)
@@ -3766,7 +3774,7 @@ test -z "$with_cde" && { AC_CHECK_HEADER(Dt/Dt.h,               , with_cde=no) }
 test -z "$with_cde" && { AC_CHECK_LIB(DtSvc, DtDndDragStart, [:], with_cde=no) }
 if test "$with_dragndrop" = "no" ; then
   if test "$with_cde" = "yes" ; then
-    AC_MSG_WARN([--with-cde forced to \`no'; no generic Drag'n'Drop support])
+    AC_MSG_WARN([--with-cde forced to `no'; no generic Drag'n'Drop support])
   fi
   with_cde=no
 fi
@@ -3787,19 +3795,19 @@ dnl is in use, we now disable it by default -slb 07/10/1998.
 test "$window_system" != "x11" && with_offix=no
 if test "$with_xmu" != yes -a "$with_x11" = yes; then
   if test "$with_offix" = "yes" ; then
-    AC_MSG_WARN([--with-offix forced to \`no'; no real Xmu support])
+    AC_MSG_WARN([--with-offix forced to `no'; no real Xmu support])
   fi
   with_offix=no
 fi
 if test "$with_dragndrop" = no; then
   if test "$with_offix" = "yes" ; then
-    AC_MSG_WARN([--with-offix forced to \`no'; no generic Drag'n'Drop support])
+    AC_MSG_WARN([--with-offix forced to `no'; no generic Drag'n'Drop support])
   fi
   with_offix=no
 fi
 if test "$with_cde" = yes; then
   if test "$with_offix" = "yes" ; then
-    AC_MSG_WARN([--with-offix forced to \`no'; CDE already found])
+    AC_MSG_WARN([--with-offix forced to `no'; CDE already found])
   fi
   with_offix=no
 fi
@@ -3829,7 +3837,8 @@ if test "$with_dragndrop" != "no" ; then
 fi
 
 dnl Autodetect LDAP
-AC_CHECKING([for LDAP])
+AC_MSG_CHECKING([for LDAP])
+AC_MSG_RESULT()
 ldap_libs=
 test -z "$with_ldap" && { AC_CHECK_HEADER(ldap.h, ,with_ldap=no) }
 test -z "$with_ldap" && { AC_CHECK_HEADER(lber.h, ,with_ldap=no) }
@@ -3879,7 +3888,8 @@ dnl (such as the default /usr/local/pgsql when building from source),
 dnl that prefix must be specified using the --with-site-prefixes flag.
 postgresql_libs=
 if test "$with_postgresql" != "no"; then
-  AC_CHECKING([for PostgreSQL])
+  AC_MSG_CHECKING([for PostgreSQL])
+  AC_MSG_RESULT()
 
 dnl Look for these standard header file locations, known to be used on Linux
   for header_dir in "" "pgsql/" "postgresql/"; do
@@ -3928,7 +3938,8 @@ dnl Graphics libraries
 dnl ----------------------
 
 if test "$window_system" != "none"; then
-  AC_CHECKING([for graphics libraries])
+  AC_MSG_CHECKING([for graphics libraries])
+  AC_MSG_RESULT()
 
   dnl add special code to handle xpm-nox on Cygwin (csw)
   dnl   -- should only happen if CYGWIN && WITH_XPM && WITH_MSW && !WITH_X
@@ -4001,9 +4012,9 @@ if test "$window_system" != "none"; then
     XE_PREPEND(-lXpm, libs_x)
     XE_PREPEND("$incpath_xpm", CFLAGS)
     XE_PREPEND("$incpath_xpm", XE_CFLAGS)
-    AC_MSG_CHECKING(for \"FOR_MSW\" xpm)
+    AC_MSG_CHECKING([for "FOR_MSW" xpm])
     xe_check_libs=-lXpm
-    AC_TRY_LINK(, [XpmCreatePixmapFromData()],
+    AC_LINK_IFELSE([AC_LANG_SOURCE([XpmCreatePixmapFromData()])],
     [xpm_for_msw=no],
     [xpm_for_msw=yes])
     xe_check_libs=
@@ -4110,13 +4121,13 @@ if test "$with_gtk" = "yes"; then
   fi
 fi
 
-
 dnl ----------------------
 dnl X-Specific Graphics libraries
 dnl ----------------------
 
 if test "$with_x11" = "yes"; then
-  AC_CHECKING([for X11 graphics libraries])
+  AC_MSG_CHECKING([for X11 graphics libraries])
+  AC_MSG_RESULT()
 fi
 
 case "$enable_widgets" in
@@ -4129,7 +4140,8 @@ case "$enable_dialogs" in
 esac
 
 if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
-  AC_CHECKING([for the Athena widgets])
+  AC_MSG_CHECKING([for the Athena widgets])
+  AC_MSG_RESULT()
 
   dnl What in heck did the user actually want?
   case "$with_athena" in
@@ -4461,17 +4473,17 @@ canna_libs=
 wnn_libs=
 
 if test "$enable_mule" = "yes" ; then
-  AC_CHECKING([for Mule-related features])
+  AC_MSG_CHECKING([for Mule-related features])
   AC_DEFINE(MULE)
 
   dnl Use -lintl to get internationalized strerror for Mule
   AC_CHECK_HEADERS(libintl.h)
   AC_CHECK_LIB(intl, strerror)
 
-  AC_CHECKING([for Mule input methods])
+  AC_MSG_CHECKING([for Mule input methods])
   dnl Do we have the XmIm* routines?  And if so, do we want to use them?
   case "$with_xim" in "" | "yes" )
-    AC_CHECKING([for XIM])
+    AC_MSG_CHECKING([for XIM])
     AC_CHECK_LIB(X11, XOpenIM, with_xim=xlib, with_xim=no)
     dnl XIM + Lesstif is not (yet?) usable
     dnl Only use Motif if linking Motif anyway, or don't have xlib XIM
@@ -4501,7 +4513,7 @@ if test "$enable_mule" = "yes" ; then
 
   dnl "with_xfs" = "yes"
   if test "$with_xfs" = "yes" ; then
-    AC_CHECKING([for XFontSet])
+    AC_MSG_CHECKING([for XFontSet])
     AC_CHECK_LIB(X11, XmbDrawString, [:], with_xfs=no)
     if test "$with_xfs" = "yes" && test "$enable_menubars" = "lucid"; then
       AC_DEFINE(USE_XFONTSET)
@@ -4711,15 +4723,15 @@ fi
 
 dnl If netdb.h does not declare h_errno, we must declare it by hand.
 AC_MSG_CHECKING(whether netdb declares h_errno)
-AC_TRY_LINK([#include <netdb.h>],
-  [return h_errno;],
+AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <netdb.h>],
+  [return h_errno;])],
   [AC_MSG_RESULT(yes)
    AC_DEFINE(HAVE_H_ERRNO)],
   [AC_MSG_RESULT(no)])
 
 AC_MSG_CHECKING(for sigsetjmp)
-AC_TRY_COMPILE([#include <setjmp.h>],
-	[sigjmp_buf bar; sigsetjmp (bar, 0);],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <setjmp.h>],
+	[sigjmp_buf bar; sigsetjmp (bar, 0);])],
   [AC_MSG_RESULT(yes)
    AC_DEFINE(HAVE_SIGSETJMP)],
   [AC_MSG_RESULT(no)])
@@ -4773,7 +4785,7 @@ fi
 
 if test "$HAVE_TIMEVAL" = "yes"; then
 AC_MSG_CHECKING(whether gettimeofday accepts one or two arguments)
-AC_TRY_LINK([
+AC_LINK_IFELSE([AC_LANG_PROGRAM([
 #ifdef TIME_WITH_SYS_TIME
 #include <sys/time.h>
 #include <time.h>
@@ -4788,7 +4800,7 @@ AC_TRY_LINK([
   [
   struct timeval time;
   gettimeofday (&time, 0);
-],
+])],
   [AC_MSG_RESULT(two)],
   [AC_MSG_RESULT(one)
    AC_DEFINE(GETTIMEOFDAY_ONE_ARGUMENT)])
@@ -4800,8 +4812,10 @@ test "$ac_cv_c_inline" != "no" -a "$GCC" = "yes" && XE_ADD_OBJS(inline.o)
 
 dnl check for the typeof extension
 AC_MSG_CHECKING(for typeof)
-AC_TRY_COMPILE(, [int i; __typeof__(i) j;], typeofname="__typeof__",
-  [AC_TRY_COMPILE(, [int i; typeof(i) j;], typeofname="typeof",
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([int i; __typeof__(i) j;])],
+  typeofname="__typeof__",
+  [AC_COMPILE_IFELSE([AC_LANG_SOURCE([int i; typeof(i) j;])],
+   typeofname="typeof",
    typeofname=no)])
 AC_MSG_RESULT($typeofname)
 if test "$typeofname" != "no"; then
@@ -4950,12 +4964,13 @@ if test "$with_rel_alloc $have_mmap" = "default yes"; then
   if test "$doug_lea_malloc" = "yes"; then
     dnl Check if malloc() calls mmap(), making rel_alloc pointless.
     AC_MSG_CHECKING(for M_MMAP_THRESHOLD)
-    AC_TRY_COMPILE([#include <malloc.h>],[
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <malloc.h>],[
 #ifndef M_MMAP_THRESHOLD
 #error No M_MMAP_THRESHOLD :-(
 !@+$%^&*_)(_ - unlikely to compile...
 #endif
-], [with_rel_alloc=no; AC_MSG_RESULT(yes);], [with_rel_alloc=yes; AC_MSG_RESULT(no);])
+])], [with_rel_alloc=no; AC_MSG_RESULT(yes);],
+     [with_rel_alloc=yes; AC_MSG_RESULT(no);])
   else
     with_rel_alloc=yes
   fi
@@ -4976,21 +4991,21 @@ AC_CHECK_FUNC(socket,
  [AC_CHECK_HEADER(netinet/in.h,
    [AC_CHECK_HEADER(arpa/inet.h, [
   AC_DEFINE(HAVE_SOCKETS)
-      AC_MSG_CHECKING("for sun_len member in struct sockaddr_un")
-      AC_TRY_LINK([
+      AC_MSG_CHECKING([for sun_len member in struct sockaddr_un])
+      AC_LINK_IFELSE([AC_LANG_PROGRAM([
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
       ],
-      [static struct sockaddr_un x; x.sun_len = 1;],
+      [static struct sockaddr_un x; x.sun_len = 1;])],
       [AC_MSG_RESULT(yes); AC_DEFINE(HAVE_SOCKADDR_SUN_LEN)],
       [AC_MSG_RESULT(no)])
-      AC_MSG_CHECKING("for ip_mreq struct in netinet/in.h")
-      AC_TRY_LINK([
+      AC_MSG_CHECKING([for ip_mreq struct in netinet/in.h])
+      AC_LINK_IFELSE([AC_LANG_PROGRAM([
 #include <sys/types.h>
 #include <netinet/in.h>
       ],
-      [static struct ip_mreq x;],
+      [static struct ip_mreq x;])],
       [AC_MSG_RESULT(yes); AC_DEFINE(HAVE_MULTICAST)],
       [AC_MSG_RESULT(no)])])])])
 
@@ -5008,7 +5023,8 @@ dnl Check for nlist.h
 AC_CHECK_HEADER(nlist.h, AC_DEFINE(NLIST_STRUCT), )
 
 dnl Check for sound of various sorts.
-AC_CHECKING([for sound support])
+AC_MSG_CHECKING([for sound support])
+AC_MSG_RESULT()
 
 dnl Autodetect native sound
 test -n "$with_native_sound_lib" && enable_sound_native=yes
@@ -5197,7 +5213,8 @@ dnl ---------------------
 test -z "$with_tty" && with_tty=yes
 
 if test "$with_tty" = "yes"  ; then
-  AC_CHECKING([for TTY-related features])
+  AC_MSG_CHECKING([for TTY-related features])
+  AC_MSG_RESULT()
   AC_DEFINE(HAVE_TTY)
 
   dnl Autodetect ncurses.
@@ -5282,7 +5299,8 @@ dnl On FreeBSD, both DB and DBM are part of libc.
 dnl By default, we check for DBM support in libgdbm, then libc, then libdbm.
 
 test "$enable_database_gdbm $enable_database_dbm $enable_database_berkdb" \
-  != "no no no" && AC_CHECKING([for database support])
+  != "no no no" && AC_MSG_CHECKING([for database support]) && \
+  AC_MSG_RESULT()
 
 dnl Check for ndbm.h, required for either kind of DBM support.
 if test "$enable_database_gdbm $enable_database_dbm" != "no no"; then
@@ -5322,7 +5340,7 @@ dnl Check for Berkeley DB.
 if test "$enable_database_berkdb" != "no"; then
   AC_MSG_CHECKING(for Berkeley db.h)
   for header in "db/db.h" "db.h"; do
-    AC_TRY_COMPILE([
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <stdlib.h>
 #if !(defined __GLIBC__ && __GLIBC_MINOR__ >= 1)
 #ifdef HAVE_INTTYPES_H
@@ -5337,7 +5355,7 @@ typedef uint64_t u_int64_t;
 #endif
 #endif
 #include <$header>
-],[], db_h_file="$header"; break)
+])], db_h_file="$header"; break)
   done
   if test -z "$db_h_file"
   then AC_MSG_RESULT(no); enable_database_berkdb=no

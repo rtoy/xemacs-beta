@@ -42,7 +42,8 @@ ld_dynamic_link_flags=
 xehost=$ac_cv_build
 xealias=$ac_cv_build_alias
 
-AC_CHECKING([how to build dynamic libraries for ${xehost}])
+AC_MSG_CHECKING([how to build dynamic libraries for ${xehost}])
+AC_MSG_RESULT()
 # Transform *-*-linux* to *-*-linux-gnu*, to support old configure scripts.
 case "$xehost" in
 *-*-linux-gnu*) ;;
@@ -184,7 +185,7 @@ if test -n "$dll_cflags"; then
   AC_MSG_CHECKING([if PIC flag ${dll_cflags} really works])
   save_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $dll_cflags -DPIC"
-  AC_TRY_COMPILE(,[int x=0;],[
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([int x=0;])],[
     # On HP-UX, the stripped-down bundled CC doesn't accept +Z, but also
     # reports no error.  So, we need to grep stderr for (Bundled).
     if grep '(Bundled)' config.log >/dev/null; then
@@ -300,12 +301,13 @@ if test -n "$xcldf"; then
   LDFLAGS="$xcldf $LDFLAGS"
   LIBS=
   xe_libs=
-  ac_link='${CC-cc} -o conftest $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' 1>&AC_FD_CC'
-  AC_TRY_LINK(,[int x=0;],cc_produces_so=yes,cc_produces_so=no)
+  ac_link='${CC-cc} -o conftest $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' 1>&AS_MESSAGE_LOG_FD'
+  AC_LINK_IFELSE([AC_LANG_SOURCE([int x=0;])],
+    [cc_produces_so=yes],[cc_produces_so=no])
   LDFLAGS=$save_LDFLAGS
   LIBS=$save_LIBS
   xe_libs=$save_xe_libs
-  ac_link='${CC-cc} -o conftest $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' 1>&AC_FD_CC'
+  ac_link='${CC-cc} -o conftest $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' 1>&AS_MESSAGE_LOG_FD'
 else
   cc_produces_so=no
 fi

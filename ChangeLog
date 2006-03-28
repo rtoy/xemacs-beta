@@ -1,5 +1,11 @@
 2006-03-27  Jerry James  <james@xemacs.org>
 
+	* aclocal.m4: Updates for autoconf 2.59.
+	* configure.ac: Ditto.  Also, don't bother checking for inttypes.h
+	and unistd.h explicitly, since AC_HEADER_STDC does that.
+
+2006-03-27  Jerry James  <james@xemacs.org>
+
 	* configure.ac: Repair ALSA detection.
 
 2006-03-24  Jerry James  <james@xemacs.org>
