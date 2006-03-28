@@ -1,3 +1,15 @@
+2006-03-26  Marcus Crestani  <crestani@xemacs.org>
+
+	* gc.c: Remove functions for explicitly-freed statistics
+	(the need to explicitly free went away with the asynchronous
+	finalization patch).
+	* gc.c (struct gc_state): EMACS_INT -> double, remove
+	explicitly-freed statistics.
+	* gc.c (Fgc_stats): Remove explicitly-freed statistics.
+	* gc.c (PL): Use make_float.
+	* gc.h: Remove prototypes and macros for explicitly-freed
+	statistics.
+
 2006-03-24  Jerry James  <james@xemacs.org>
 
 	* alsaplay.c: New file providing support for sound with ALSA.

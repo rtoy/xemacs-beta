@@ -1,3 +1,9 @@
+2006-03-26  Marcus Crestani  <crestani@xemacs.org>
+
+	* diagnose.el (show-gc-stats): Adjust format string, remove
+	explicitly-freed statistics (the need to explicitly free went away
+	with the asynchronous finalization patch).
+
 2006-03-20  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* next-error.el: Rename functions that clash with the next-error

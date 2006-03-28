@@ -125,17 +125,15 @@ enum gc_stat_id
 struct
 {
   enum gc_phase phase;
-  EMACS_INT n_gc[GC_STAT_COUNT];
-  EMACS_INT n_cycles[GC_STAT_COUNT];
-  EMACS_INT enqueued[GC_STAT_COUNT];
-  EMACS_INT dequeued[GC_STAT_COUNT];
-  EMACS_INT repushed[GC_STAT_COUNT];
-  EMACS_INT enqueued2[GC_STAT_COUNT];
-  EMACS_INT dequeued2[GC_STAT_COUNT];
-  EMACS_INT finalized[GC_STAT_COUNT];
-  EMACS_INT freed[GC_STAT_COUNT];
-  EMACS_INT explicitly_freed;
-  EMACS_INT explicitly_tried_freed;
+  double n_gc[GC_STAT_COUNT];
+  double n_cycles[GC_STAT_COUNT];
+  double enqueued[GC_STAT_COUNT];
+  double dequeued[GC_STAT_COUNT];
+  double repushed[GC_STAT_COUNT];
+  double enqueued2[GC_STAT_COUNT];
+  double dequeued2[GC_STAT_COUNT];
+  double finalized[GC_STAT_COUNT];
+  double freed[GC_STAT_COUNT];
 } gc_state;
 #endif /* ERROR_CHECK_GC */
 
@@ -226,54 +224,6 @@ gc_stat_freed (void)
   GC_STAT_TICK (freed);
 }
 
-void
-gc_stat_explicitly_freed (void)
-{
-  gc_state.explicitly_freed++;
-}
-
-void
-gc_stat_explicitly_tried_freed (void)
-{
-  gc_state.explicitly_tried_freed++;
-}
-
-#define GC_STAT_PRINT_ONE(stat)				\
-  printf (" | %9s %10d %10d %10d %10d %10d\n",		\
-	  #stat,					\
-	  (int) gc_state.stat[GC_STAT_TOTAL],		\
-	  (int) gc_state.stat[GC_STAT_IN_LAST_GC],	\
-	  (int) gc_state.stat[GC_STAT_IN_THIS_GC],	\
-	  (int) gc_state.stat[GC_STAT_IN_LAST_CYCLE],	\
-	  (int) gc_state.stat[GC_STAT_IN_THIS_CYCLE])
-
-void
-gc_stat_print_stats (void)
-{
-  printf (" | PHASE %d   TOTAL_GC %d\n",
-              (int) GC_PHASE,
-              (int) gc_state.n_gc[GC_STAT_TOTAL]);
-  printf (" | %9s %10s %10s %10s %10s %10s\n",
-	      "stat", "total", "last_gc", "this_gc",
-              "last_cycle", "this_cycle");
-  printf (" | %9s %10d %10d %10d \n",
-	      "cycle", (int) gc_state.n_cycles[GC_STAT_TOTAL],
-	      (int) gc_state.n_cycles[GC_STAT_IN_LAST_GC],
-	      (int) gc_state.n_cycles[GC_STAT_IN_THIS_GC]);
-
-  GC_STAT_PRINT_ONE (enqueued);
-  GC_STAT_PRINT_ONE (dequeued);
-  GC_STAT_PRINT_ONE (repushed);
-  GC_STAT_PRINT_ONE (enqueued2);
-  GC_STAT_PRINT_ONE (dequeued2);
-  GC_STAT_PRINT_ONE (finalized);
-  GC_STAT_PRINT_ONE (freed);
-
-  printf (" | explicitly freed %d   tried %d\n", 
-	  (int) gc_state.explicitly_freed, 
-	  (int) gc_state.explicitly_tried_freed);
-}
-
 DEFUN("gc-stats", Fgc_stats, 0, 0 ,"", /*
 Return statistics about garbage collection cycles in a property list.
 */
@@ -281,10 +231,8 @@ Return statistics about garbage collection cycles in a property list.
 {
   Lisp_Object pl = Qnil;
 #define PL(name,value) \
-  pl = cons3 (intern (name), make_int ((int) gc_state.value), pl)
+  pl = cons3 (intern (name), make_float (gc_state.value), pl)
 
-  PL ("explicitly-tried-freed", explicitly_tried_freed);
-  PL ("explicitly-freed", explicitly_freed);
   PL ("freed-in-this-cycle", freed[GC_STAT_IN_THIS_CYCLE]);
   PL ("freed-in-this-gc", freed[GC_STAT_IN_THIS_GC]);
   PL ("freed-in-last-cycle", freed[GC_STAT_IN_LAST_CYCLE]);

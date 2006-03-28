@@ -34,17 +34,11 @@ BEGIN_C_DECLS
 void gc_stat_print_stats (void);
 void gc_stat_finalized (void);
 void gc_stat_freed (void);
-void gc_stat_explicitly_freed (void);
-void gc_stat_explicitly_tried_freed (void);
 # define GC_STAT_FINALIZED gc_stat_finalized ()
 # define GC_STAT_FREED gc_stat_freed ()
-# define GC_STAT_EXPLICITLY_FREED gc_stat_explicitly_freed ()
-# define GC_STAT_EXPLICITLY_TRIED_FREED gc_stat_explicitly_tried_freed ()
 #else /* not ERROR_CHECK_GC */
 # define GC_STAT_FINALIZED
 # define GC_STAT_FREED
-# define GC_STAT_EXPLICITLY_FREED
-# define GC_STAT_EXPLICITLY_TRIED_FREED 
 #endif /* not ERROR_CHECK_GC */
 #endif /* not NEW_GC */
 

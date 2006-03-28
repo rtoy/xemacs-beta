@@ -398,10 +398,12 @@
   (interactive)
   (let ((buffer "*garbage collection statistics*")
 	(plist (gc-stats))
-	(fmt "%-9s %10s %10s %10s %10s %10s\n"))
+	(fmt "%-9s %16s %12s %12s %12s %12s\n"))
     (flet ((plist-get-stat (category field)
-	     (or (plist-get plist (intern (concat category field)))
-		 "-"))
+	     (let ((stat (plist-get plist (intern (concat category field)))))
+	       (if stat
+		   (format "%.0f" stat)
+		 "-")))
 	   (show-stats (category)
 	     (princ (format fmt category
 			    (plist-get-stat category "-total")
@@ -412,12 +414,12 @@
       (with-output-to-temp-buffer buffer
 	(save-excursion
 	  (set-buffer buffer)
-	  (princ (format "%s %s\n" "Current phase" (plist-get plist 'phase)))
-	  (princ (make-string 64 ?-))
+	  (princ (format "%s %g\n" "Current phase" (plist-get plist 'phase)))
+	  (princ (make-string 78 ?-))
 	  (princ "\n")
 	  (princ (format fmt "stat" "total" "last-gc" "this-gc" 
 			 "last-cycle" "this-cylce"))
-	  (princ (make-string 64 ?-))
+	  (princ (make-string 78 ?-))
 	  (princ "\n")
 	  (show-stats "n-gc")
 	  (show-stats "n-cycles")
@@ -428,13 +430,4 @@
 	  (show-stats "dequeued2")
 	  (show-stats "finalized")
 	  (show-stats "freed")
-	  (princ (make-string 64 ?-))
-	  (princ "\n")
-	  (princ (format fmt "explicitly"
-			 "freed:"
-			 (plist-get-stat "explicitly" "-freed")
-			 "tried:"
-			 (plist-get-stat "explicitly" "-tried-freed")
-			 "")))
-
-	(plist-get plist 'n-gc-total)))))
+	(plist-get plist 'n-gc-total))))))
