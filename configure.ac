@@ -4014,7 +4014,7 @@ if test "$window_system" != "none"; then
     XE_PREPEND("$incpath_xpm", XE_CFLAGS)
     AC_MSG_CHECKING([for "FOR_MSW" xpm])
     xe_check_libs=-lXpm
-    AC_LINK_IFELSE([AC_LANG_SOURCE([XpmCreatePixmapFromData()])],
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([],[XpmCreatePixmapFromData();])],
     [xpm_for_msw=no],
     [xpm_for_msw=yes])
     xe_check_libs=

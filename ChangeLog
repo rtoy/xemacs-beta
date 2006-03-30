@@ -1,3 +1,7 @@
+2006-03-30  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Fix FOR_MSW XPM test, broken by previous update.
+
 2006-03-27  Jerry James  <james@xemacs.org>
 
 	* aclocal.m4: Updates for autoconf 2.59.
