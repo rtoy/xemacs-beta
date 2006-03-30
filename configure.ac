@@ -2184,10 +2184,10 @@ dnl Some versions of SCO native compiler need -Kalloca
 if test "$__USLC__" = yes; then
   AC_MSG_CHECKING(for whether the -Kalloca compiler flag is needed)
   need_kalloca=no
-  AC_LINK_IFELSE([AC_LANG_SOURCE([void *x = alloca(4);])], [:], [
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([], [void *x = alloca(4);])], [:], [
     xe_save_c_switch_system="$c_switch_system"
     c_switch_system="$c_switch_system -Kalloca"
-    AC_LINK_IFELSE([AC_LANG_SOURCE([void *x = alloca(4);])],
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [void *x = alloca(4);])],
       [ need_kalloca=yes ])
     c_switch_system="$xe_save_c_switch_system"])
   AC_MSG_RESULT($need_kalloca)
