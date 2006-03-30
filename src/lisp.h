@@ -1612,14 +1612,14 @@ do {								\
 #ifdef NEW_GC
 #define Dynarr_add(d, el)					\
 do {								\
+  const struct lrecord_implementation *imp = (d)->lisp_imp;	\
   if (Dynarr_verify_mod (d)->cur >= (d)->max)			\
     Dynarr_resize ((d), (d)->cur+1);				\
   ((d)->base)[(d)->cur] = (el);					\
 								\
-  if ((d)->lisp_imp)						\
+  if (imp)							\
     set_lheader_implementation					\
-     ((struct lrecord_header *)&(((d)->base)[(d)->cur]),	\
-      (d)->lisp_imp);						\
+     ((struct lrecord_header *)&(((d)->base)[(d)->cur]), imp);	\
 								\
   (d)->cur++;							\
   if ((d)->cur > (d)->largest)					\

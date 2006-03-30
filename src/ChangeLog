@@ -1,3 +1,8 @@
+2006-03-30  Adrian Aichner  <adrian@xemacs.org>
+
+	* lisp.h (Dynarr_add): Add local variable imp to avoid VC6
+	internal compiler error.
+
 2006-03-26  Marcus Crestani  <crestani@xemacs.org>
 
 	* gc.c: Remove functions for explicitly-freed statistics
