@@ -1,3 +1,7 @@
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.26 "endive" is released.
+
 2006-03-31  Marcus Crestani  <marcus.crestani@ub.uni-tuebingen.de>
 
 	* diagnose.el (show-mc-alloc-memory-usage): Rename buffer to

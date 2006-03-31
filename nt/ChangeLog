@@ -1,3 +1,7 @@
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.26 "endive" is released.
+
 2006-02-27  Vin Shelton  <acs@xemacs.org>
 
 	* config.inc.samp: Comment out PACKAGE_PREFIX.
