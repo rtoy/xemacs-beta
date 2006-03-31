@@ -1,3 +1,9 @@
+2006-03-31  Marcus Crestani  <marcus.crestani@ub.uni-tuebingen.de>
+
+	* diagnose.el (show-mc-alloc-memory-usage): Rename buffer to
+	"mc-alloc memory usage" to avoid name clash with
+	show-memory-usage.
+
 2006-03-26  Marcus Crestani  <crestani@xemacs.org>
 
 	* diagnose.el (show-gc-stats): Adjust format string, remove

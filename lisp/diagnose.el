@@ -252,7 +252,7 @@
 	 (free-plhs (fourth stats))
 	 (globals (fifth stats))
 	 (mc-malloced-bytes (sixth stats)))
-    (with-output-to-temp-buffer "*memory usage*"
+    (with-output-to-temp-buffer "*mc-alloc memory usage*"
       (flet ((print-used-plhs (text plhs)
 	       (let ((sum-n-pages 0)
 		     (sum-used-n-cells 0)
