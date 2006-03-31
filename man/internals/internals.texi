@@ -476,6 +476,7 @@ Multilingual Support
 * CCL::                         
 * Microsoft Windows-Related Multilingual Issues::  
 * Modules for Internationalization::  
+* The Great Mule Merge of March 2002::
 
 Encodings
 
@@ -521,6 +522,21 @@ Microsoft Windows-Related Multilingual Issues
 * The golden rules of writing Unicode-safe code::  
 * The format of the locale in setlocale()::  
 * Random other Windows I18N docs::  
+
+The Great Mule Merge of March 2002
+
+* List of changed files in new Mule workspace::
+* Changes to the MULE subsystems::
+* Pervasive changes throughout XEmacs sources::
+* Changes to specific subsystems::
+* Mule changes by theme::
+* File-coding rewrite::
+* General User-Visible Changes::
+* General Lisp-Visible Changes::
+* User documentation::
+* General internal changes::
+* Ben's TODO list::                                Probably obsolete.
+* Ben's README::                                   Probably obsolete.
 
 Consoles; Devices; Frames; Windows
 
@@ -577,12 +593,17 @@ Lstreams
 * Lstream Functions::           Functions for working with lstreams.
 * Lstream Methods::             Creating new lstream types.
 
+Subprocesses
+
+* Ben's separate stderr notes:: Probably obsolete.
+
 Interface to MS Windows
 
 * Different kinds of Windows environments::  
 * Windows Build Flags::         
 * Windows I18N Introduction::   
 * Modules for Interfacing with MS Windows::  
+* CHANGES from 21.4-windows branch::                  Probably obsolete.
 
 Interface to the X Window System
 
@@ -10373,6 +10394,7 @@ representation is that it's compact and is compatible with ASCII.
 * CCL::                         
 * Microsoft Windows-Related Multilingual Issues::  
 * Modules for Internationalization::  
+* The Great Mule Merge of March 2002::
 @end menu
 
 @node Introduction to Multilingual Issues #1, Introduction to Multilingual Issues #2, Multilingual Support, Multilingual Support
@@ -14080,7 +14102,7 @@ string of either regular or wide chars, which is to say this string may be
 prepended with an L (causing it to be a wide string) depending on
 XEUNICODE_P.
 
-@node Modules for Internationalization,  , Microsoft Windows-Related Multilingual Issues, Multilingual Support
+@node Modules for Internationalization,  The Great Mule Merge of March 2002, Microsoft Windows-Related Multilingual Issues, Multilingual Support
 @section Modules for Internationalization
 @cindex modules for internationalization
 @cindex internationalization, modules for
@@ -14159,6 +14181,2987 @@ method.  None of this code is currently working.
 
 This contains leftover code from an earlier implementation of
 Asian-language support, and is not currently used.
+
+
+@c
+@c DO NOT CHANGE THE NAME OF THIS NODE; ChangeLogs refer to it.
+@c Well, of course you're welcome to seek them out and fix them, too.
+@c
+
+@node The Great Mule Merge of March 2002,  , Modules for Internationalization, Multilingual Support
+@section The Great Mule Merge of March 2002
+@cindex The Great Mule Merge
+@cindex Mule Merge, The Great
+
+In March 2002, just after the release of XEmacs 21.5 beta 5, Ben Wing
+merged what was nominally a very large refactoring of the ``Mule''
+multilingual support code into the mainline.  This merge added robust
+support for Unicode on all platforms, and by providing support for Win32
+Unicode APIs made the Mule support on the Windows platform a reality.
+This merge also included a large number of other changes and
+improvements, not necessarily related to internationalization.
+
+This node basically amounts to the ChangeLog for 2002-03-12.
+
+Some effort has been put into proper markup for code and file names, and
+some reorganization according to themes of revision.  However, much
+remains to be done.
+
+@menu
+* List of changed files in new Mule workspace::
+* Changes to the MULE subsystems::
+* Pervasive changes throughout XEmacs sources::
+* Changes to specific subsystems::
+* Mule changes by theme::
+* File-coding rewrite::
+* General User-Visible Changes::
+* General Lisp-Visible Changes::
+* User documentation::
+* General internal changes::
+* Ben's TODO list::                                Probably obsolete.
+* Ben's README::                                   Probably obsolete.
+@end menu
+
+
+@node List of changed files in new Mule workspace, Changes to the MULE subsystems, , The Great Mule Merge of March 2002
+@subsection List of changed files in new Mule workspace
+
+This node lists the files that were touched in the Great Mule Merge.
+
+@heading Deleted files
+
+@example
+src/iso-wide.h
+src/mule-charset.h
+src/mule.c
+src/ntheap.h
+src/syscommctrl.h
+lisp/files-nomule.el
+lisp/help-nomule.el
+lisp/mule/mule-help.el
+lisp/mule/mule-init.el
+lisp/mule/mule-misc.el
+nt/config.h
+@end example
+
+@heading Other deleted files
+
+These files were all zero-width and accidentally present.
+
+@example
+src/events-mod.h
+tests/Dnd/README.OffiX
+tests/Dnd/dragtest.el
+netinstall/README.xemacs
+lib-src/srcdir-symlink.stamp
+@end example
+
+@heading New files
+
+@example
+CHANGES-ben-mule
+README.ben-mule-21-5
+README.ben-separate-stderr
+TODO.ben-mule-21-5
+etc/TUTORIAL.@{cs,es,nl,sk,sl@}
+etc/unicode/*
+lib-src/make-mswin-unicode.pl
+lisp/code-init.el
+lisp/resize-minibuffer.el
+lisp/unicode.el
+lisp/mule/china-util.el
+lisp/mule/cyril-util.el
+lisp/mule/devan-util.el
+lisp/mule/devanagari.el
+lisp/mule/ethio-util.el
+lisp/mule/indian.el
+lisp/mule/japan-util.el
+lisp/mule/korea-util.el
+lisp/mule/lao-util.el
+lisp/mule/lao.el
+lisp/mule/mule-locale.txt
+lisp/mule/mule-msw-init.el
+lisp/mule/thai-util.el
+lisp/mule/thai.el
+lisp/mule/tibet-util.el
+lisp/mule/tibetan.el
+lisp/mule/viet-util.el
+src/charset.h
+src/intl-auto-encap-win32.c
+src/intl-auto-encap-win32.h
+src/intl-encap-win32.c
+src/intl-win32.c
+src/intl-x.c
+src/mule-coding.c
+src/text.c
+src/text.h
+src/unicode.c
+src/s/win32-common.h
+src/s/win32-native.h
+@end example
+
+@heading Changed files
+
+``Too numerous to mention.''  (Ben didn't write that, I did, but it's a
+good guess that's the intent....)
+
+
+@node Changes to the MULE subsystems, Pervasive changes throughout XEmacs sources, List of changed files in new Mule workspace, The Great Mule Merge of March 2002
+@subsection Changes to the MULE subsystems
+
+@heading configure changes
+
+@itemize
+@item
+file-coding always compiled in.  eol detection is off by default on
+unix, non-mule, but can be enabled with configure option
+@code{--with-default-eol-detection} or command-line flag @code{-eol}.
+
+@item
+code that selects which files are compiled is mostly moved to
+@file{Makefile.in.in}.  see comment in @file{Makefile.in.in}.
+
+@item
+vestigial i18n3 code deleted.
+
+@item
+new cygwin mswin libs imm32 (input methods), mpr (user name
+enumeration).
+
+@item
+check for @code{link}, @code{symlink}.
+
+@item
+@code{vfork}-related code deleted.
+
+@item
+fix @file{configure.usage}.  (delete @code{--with-file-coding},
+@code{--no-doc-file}, add @code{--with-default-eol-detection},
+@code{--quick-build}).
+
+@item
+@file{nt/config.h} has been eliminated and everything in it merged into
+@file{config.h.in} and @file{s/windowsnt.h}.  see @file{config.h.in} for
+more info.
+
+@item
+massive rewrite of @file{s/windowsnt.h}, @file{m/windowsnt.h},
+@file{s/cygwin32.h}, @file{s/mingw32.h}.  common code moved into
+@file{s/win32-common.h}, @file{s/win32-native.h}.
+
+@item
+in @file{nt/xemacs.mak}, @file{nt/config.inc.samp}, variable is called
+@code{MULE}, not @code{HAVE_MULE}, for consistency with sources.
+
+@item
+define @code{TABDLY}, @code{TAB3} in @file{freebsd.h} (#### from where?)
+@end itemize
+
+
+@node Pervasive changes throughout XEmacs sources, Changes to specific subsystems, Changes to the MULE subsystems, The Great Mule Merge of March 2002
+@subsection Pervasive changes throughout XEmacs sources
+
+@itemize
+@item
+all @code{#ifdef FILE_CODING} statements removed from code.
+@end itemize
+
+@heading Changes to string processing
+
+@itemize
+@item
+new @samp{qxe()} string functions that accept @code{Intbyte *} as
+arguments.  These work exactly like the standard @code{strcmp()},
+@code{strcpy()}, @code{sprintf()}, etc. except for the argument
+declaration differences.  We use these whenever we have @code{Intbyte *}
+strings, which is quite often.
+
+@item
+new fun @code{build_intstring()} takes an @code{Intbyte *}.  also new
+funs @code{build_msg_intstring} (like @code{build_intstring()}) and
+@code{build_msg_string} (like @code{build_string()}) to do a
+@code{GETTEXT()} before building the string.  (elimination of old
+@code{build_translated_string()}, replaced by
+@code{build_msg_string()}).
+
+@item
+function @code{intern_int()} for @code{Intbyte *} arguments, like
+@code{intern()}.
+
+@item
+numerous places throughout code where @code{char *} replaced with
+something else, e.g. @code{Char_ASCII *}, @code{Intbyte *},
+@code{Char_Binary *}, etc.  same with unsigned @code{char *}, going to
+@code{UChar_Binary *}, etc.
+@end itemize
+
+
+@node Changes to specific subsystems, Mule changes by theme, Pervasive changes throughout XEmacs sources, The Great Mule Merge of March 2002
+@subsection Changes to specific subsystems
+
+@heading Changes to the init code
+
+@itemize
+@item
+lots of init code rewritten to be mule-correct.
+@end itemize
+
+@heading Changes to processes
+
+@itemize
+@item
+always call @code{egetenv()}, never @code{getenv()}, for mule
+correctness.
+@end itemize
+
+@heading command line (@file{startup.el}, @file{emacs.c})
+
+@itemize
+@item
+new option @code{-eol} to enable auto EOL detection under non-mule unix.
+
+@item
+new option @code{-nuni} (@code{--no-unicode-lib-calls}) to force use of
+non-Unicode API's under Windows NT, mostly for debugging purposes.
+@end itemize
+
+
+@node Mule changes by theme, File-coding rewrite, Changes to specific subsystems, The Great Mule Merge of March 2002
+@subsection Mule changes by theme
+
+@itemize
+@item
+the code that handles the details of processing multilingual text has
+been consolidated to make it easier to extend it.  it has been yanked
+out of various files (@file{buffer.h}, @file{mule-charset.h},
+@file{lisp.h}, @file{insdel.c}, @file{fns.c}, @file{file-coding.c},
+etc.) and put into @file{text.c} and @file{text.h}.
+@file{mule-charset.h} has also been renamed @file{charset.h}.  all long
+comments concerning the representations and their processing have been
+consolidated into @file{text.c}.
+
+@item
+major rewriting of file-coding.  it's mostly abstracted into coding
+systems that are defined by methods (similar to devices and specifiers),
+with the ultimate aim being to allow non-i18n coding systems such as
+gzip.  there is a ``chain'' coding system that allows multiple coding
+systems to be chained together.  (it doesn't yet have the concept that
+either end of a coding system can be bytes or chars; this needs to be
+added.)
+
+@item
+large amounts of code throughout the code base have been Mule-ized, not
+just Windows code.
+
+@item
+total rewriting of OS locale code.  it notices your locale at startup
+and sets the language environment accordingly, and calls
+@code{setlocale()} and sets @code{LANG} when you change the language
+environment.  new language environment properties @code{locale},
+@code{mswindows-locale}, @code{cygwin-locale},
+@code{native-coding-system}, to determine langenv from locale and
+vice-versa; fix all language environments (lots of language files).
+langenv startup code rewritten.  many new functions to convert between
+locales, language environments, etc.
+
+@item
+major overhaul of the way default values for the various coding system
+variables are handled.  all default values are collected into one
+location, a new file @file{code-init.el}, which provides a unified
+mechanism for setting and querying what i call ``basic coding system
+variables'' (which may be aliases, parts of conses, etc.) and a
+mechanism of different configurations (Windows w/Mule, Windows w/o Mule,
+Unix w/Mule, Unix w/o Mule, unix w/o Mule but w/auto EOL), each of which
+specifies a set of default values.  we determine the configuration at
+startup and set all the values in one place.  (@file{code-init.el},
+@file{code-files.el}, @file{coding.el}, ...)
+
+@item
+i copied the remaining language-specific files from fsf.  i made some
+minor changes in certain cases but for the most part the stuff was just
+copied and may not work.
+
+@item
+ms windows mule support, with full unicode support.  required font,
+redisplay, event, other changes.  ime support from ikeyama.
+@end itemize
+
+@heading Lisp-Visible Changes:
+
+@itemize
+@item
+ensure that @code{escape-quoted} works correctly even without Mule
+support and use it for all auto-saves.  (@file{auto-save.el},
+@file{fileio.c}, @file{coding.el}, @file{files.el})
+
+@item
+new var @code{buffer-file-coding-system-when-loaded} specifies the
+actual coding system used when the file was loaded
+(@code{buffer-file-coding-system} is usually the same, but may be
+changed because it controls how the file is written out).  use it in
+revert-buffer (@file{files.el}, @file{code-files.el}) and in new submenu
+File->Revert Buffer with Specified Encoding (@file{menubar-items.el}).
+
+@item
+improve docs on how the coding system is determined when a file is read
+in; improved docs are in both @code{find-file} and
+@code{insert-file-contents} and a reference to where to find them is in
+@code{buffer-file-coding-system-for-read}.  (@file{files.el},
+@file{code-files.el})
+
+@item
+new (brain-damaged) FSF way of calling post-read-conversion (only one
+arg, not two) is supported, along with our two-argument way, as best we
+can.  (@file{code-files.el})
+
+@item
+add inexplicably missing var @code{default-process-coding-system}.  use
+it.  get rid of former hacked-up way of setting these defaults using
+@code{comint-exec-hook}.  also fun
+@code{set-buffer-process-coding-system}.  (@file{code-process.el},
+@file{code-cmds.el}, @file{process.c})
+
+@item
+remove function @code{set-default-coding-systems}; replace with
+@code{set-default-output-coding-systems}, which affects only the output
+defaults (@code{buffer-file-coding-system}, output half of
+@code{default-process-coding-system}).  the input defaults should not be
+set by this because they should always remain @code{undecided} in normal
+circumstances.  fix @code{prefer-coding-system} to use the new function
+and correct its docs.
+
+@item
+fix bug in @code{coding-system-change-eol-conversion}
+(@file{code-cmds.el})
+
+@item
+recognize all eol types in @code{prefer-coding-system}
+(@file{code-cmds.el})
+
+@item
+rewrite @code{coding-system-category} to be correct (@file{coding.el})
+@end itemize
+
+@heading Internal Changes
+
+@itemize
+@item
+major improvements to eistring code, fleshing out of missing funs.
+@end itemize
+
+@itemize
+@item
+Separate encoding and decoding lstreams have been combined into a single
+coding lstream.  Functions@samp{ make_encoding_*_stream} and
+@samp{make_decoding_*_stream} have been combined into
+@samp{make_coding_*_stream}, which takes an argument specifying whether
+encode or decode is wanted.
+
+@item
+remove last vestiges of I18N3, I18N4 code.
+
+@item
+ascii optimization for strings: we keep track of the number of ascii
+chars at the beginning and use this to optimize byte<->char conversion
+on strings.
+
+@item
+@file{mule-misc.el}, @file{mule-init.el} deleted; code in there either
+deleted, rewritten, or moved to another file.
+
+@item
+@file{mule.c} deleted.
+
+@item
+move non-Mule-specific code out of @file{mule-cmds.el} into
+@file{code-cmds.el}.  (@code{coding-system-change-text-conversion};
+remove duplicate @code{coding-system-change-eol-conversion})
+
+@item
+remove duplicate @code{set-buffer-process-coding-system}
+(@file{code-cmds.el})
+
+@item
+add some commented-out code from FSF @file{mule-cmds.el}
+(@code{find-coding-systems-region-subset-p},
+@code{find-coding-systems-region}, @code{find-coding-systems-string},
+@code{find-coding-systems-for-charsets},
+@code{find-multibyte-characters}, @code{last-coding-system-specified},
+@code{select-safe-coding-system}, @code{select-message-coding-system})
+(@file{code-cmds.el})
+
+@item
+remove obsolete alias @code{pathname-coding-system}, function
+@code{set-pathname-coding-system} (@file{coding.el})
+
+@item
+remove coding-system property @code{doc-string}; split into
+@code{description} (short, for menu items) and @code{documentation}
+(long); correct coding system defns (@file{coding.el},
+@file{file-coding.c}, lots of language files)
+
+@item
+move coding-system-base into C and make use of internal info
+(@file{coding.el}, @file{file-coding.c})
+
+@item
+move @code{undecided} defn into C (@file{coding.el},
+@file{file-coding.c})
+
+@item
+use @code{define-coding-system-alias}, not @code{copy-coding-system}
+(@file{coding.el})
+
+@item
+new coding system @code{iso-8859-6} for arabic
+
+@item
+delete windows-1251 support from @file{cyrillic.el}; we do it
+automatically
+
+@item
+remove @samp{setup-*-environment} as per FSF 21
+
+@item
+rewrite @file{european.el} with lang envs for each language, so we can
+specify the locale
+
+@item
+fix corruption in @file{greek.el}
+
+@item
+sync @file{japanese.el} with FSF 20.6
+
+@item
+fix warnings in @file{mule-ccl.el}
+
+@item
+move FSF compat Mule fns from @file{obsolete.el} to
+@file{mule-charset.el}
+
+@item
+eliminate unused @samp{truncate-string@{-to-width@}}
+
+@item
+@code{make-coding-system} accepts (but ignores) the additional
+properties present in the fsf version, for compatibility.
+
+@item
+i fixed the iso2022 handling so it will correctly read in files
+containing unknown charsets, creating a ``temporary'' charset which can
+later be overwritten by the real charset when it's defined.  this allows
+iso2022 elisp files with literals in strange languages to compile
+correctly under mule.  i also added a hack that will correctly read in
+and write out the emacs-specific ``composition'' escape sequences,
+i.e. @samp{ESC 0} through @samp{ESC 4}.  this means that my workspace
+correctly compiles the new file @file{devanagari.el} that i added.
+
+@item
+elimination of @code{string-to-char-list} (use @code{string-to-list})
+
+@item
+elimination of junky @code{define-charset}
+@end itemize
+
+@heading Selection
+
+@itemize
+@item
+fix msw selection code for Mule.  proper encoding for
+@code{RegisterClipboardFormat}.  store selection as
+@code{CF_UNICODETEXT}, which will get converted to the other formats.
+don't respond to destroy messages from @code{EmptyClipboard()}.
+@end itemize
+
+@heading Menubar
+
+@itemize
+@item
+new items @samp{Open With Specified Encoding},
+@samp{Revert Buffer with Specified Encoding}
+
+@item
+split Mule menu into @samp{Encoding} (non-Mule-specific; includes new
+item to control EOL auto-detection) and @samp{International} submenus on
+@samp{Options}, @samp{International} on @samp{Help}
+
+@end itemize
+
+@heading Unicode support:
+
+@itemize
+@item
+translation tables added in @file{etc/unicode}
+
+@item
+new files @file{unicode.c}, @file{unicode.el} containing unicode coding
+systems and support; old code ripped out of @file{file-coding.c}
+
+@item
+translation tables read in at startup (NEEDS WORK TO MAKE IT MORE
+EFFICIENT)
+
+@item
+support @code{CF_TEXT}, @code{CF_UNICODETEXT} in @file{select.el}
+
+@item
+encapsulation code added so that we can support both Windows 9x and NT
+in a single executable, determining at runtime whether to call the
+Unicode or non-Unicode API.  encapsulated routines in
+@file{intl-encap-win32.c} (non-auto-generated) and
+@file{intl-auto-encap-win32.[ch]} (auto-generated).  code generator in
+@file{lib-src/make-mswin-unicode.pl}.  changes throughout the code to
+use the wide structures (W suffix) and call the encapsulated Win32 API
+routines (@samp{qxe} prefix).  calling code needs to do proper
+conversion of text using new coding systems @code{Qmswindows_tstr},
+@code{Qmswindows_unicode}, or @code{Qmswindows_multibyte}.  (the first
+points to one of the other two.)
+@end itemize
+
+
+@node File-coding rewrite, General User-Visible Changes, Mule changes by theme, The Great Mule Merge of March 2002
+@subsection File-coding rewrite
+
+The coding system code has been majorly rewritten.  It's abstracted into
+coding systems that are defined by methods (similar to devices and
+specifiers).  The types of conversions have also been generalized.
+Formerly, decoding always converted bytes to characters and encoding the
+reverse (these are now called ``text file converters''), but conversion
+can now happen either to or from bytes or characters.  This allows
+coding systems such as @code{gzip} and @code{base64} to be written.
+When specifying such a coding system to an operation that expects a text
+file converter (such as reading in or writing out a file), the
+appropriate coding systems to convert between bytes and characters are
+automatically inserted into the conversion chain as necessary.  To
+facilitate creating such chains, a special coding system called
+``chain'' has been created, which chains together two or more coding
+systems.
+
+Encoding detection has also been abstracted.  Detectors are logically
+separate from coding systems, and each detector defines one or more
+categories.  (For example, the detector for Unicode defines categories
+such as UTF-8, UTF-16, UCS-4, and UTF-7.) When a particular detector is
+given a piece of text to detect, it determines likeliness values (seven
+of them, from 3 [most likely] to -3 [least likely]; specific criteria
+are defined for each possible value).  All detectors are run in parallel
+on a particular piece of text, and the results tabulated together to
+determine the actual encoding of the text.
+
+Encoding and decoding are now completely parallel operations, and the
+former ``encoding'' and ``decoding'' lstreams have been combined into a
+single ``coding'' lstream.  Coding system methods that were formerly
+split in such a fashion have also been combined.
+
+
+@node General User-Visible Changes, General Lisp-Visible Changes, File-coding rewrite, The Great Mule Merge of March 2002
+@subsection General User-Visible Changes
+
+@heading Search
+
+@itemize
+@item
+make regex routines reentrant, since they're sometimes called
+reentrantly.  (see @file{regex.c} for a description of how.)  all global
+variables used by the regex routines get pushed onto a stack by the
+callers before being set, and are restored when finished.  redo the
+preprocessor flags controlling @code{REL_ALLOC} in conjunction with
+this.
+@end itemize
+
+@heading Menubar
+
+@itemize
+@item
+move menu-splitting code (@code{menu-split-long-menu}, etc.) from
+@file{font-menu.el} to @file{menubar-items.el} and redo its algorithm;
+use in various items with long generated menus; rename to remove
+@samp{font-} from beginning of functions but keep old names as aliases
+
+@item
+new fn @code{menu-sort-menu}
+
+@item
+redo items @samp{Grep All Files in Current Directory @{and Below@}}
+using stuff from sample @file{init.el}
+
+@item
+@samp{Debug on Error} and friends now affect current session only; not
+saved
+
+@item
+@code{maybe-add-init-button} -> @code{init-menubar-at-startup} and call
+explicitly from @file{startup.el}
+
+@item
+don't use @code{charset-registry} in @file{msw-font-menu.el}; it's only
+for X
+@end itemize
+
+@heading Changes to key bindings
+
+These changes are primarily found in @file{keymap.c}, @file{keydefs.el},
+and @file{help.el}, but are found in many other files.
+
+@itemize
+@item
+@kbd{M-home}, @kbd{M-end} now move forward and backward in buffers; with
+@key{Shift}, stay within current group (e.g. all C files; same grouping
+as the gutter tabs).  (bindings
+@samp{switch-to-@{next/previous@}-buffer[-in-group]} in @file{files.el})
+
+needed to move code from @file{gutter-items.el} to @file{buff-menu.el}
+that's used by these bindings, since @file{gutter-items.el} is loaded
+only when the gutter is active and these bindings (and hence the code)
+is not (any more) gutter specific.
+
+@item
+new global vars global-tty-map and global-window-system-map specify key
+bindings for use only on TTY's or window systems, respectively.  this is
+used to make @kbd{ESC ESC} be keyboard-quit on window systems, but
+@kbd{ESC ESC ESC} on TTY's, where @key{Meta + arrow} keys may appear as
+@kbd{ESC ESC O A} or whatever.  @kbd{C-z} on window systems is now
+@code{zap-up-to-char}, and @code{iconify-frame} is moved to @kbd{C-Z}.
+@kbd{ESC ESC} is @code{isearch-quit}.  (@file{isearch-mode.el})
+
+@item
+document @samp{global-@{tty,window-system@}-map} in various places;
+display them when you do @kbd{C-h b}.
+
+@item
+fix up function documentation in general for keyboard primitives.
+e.g. key-bindings now contains a detailed section on the steps prior to
+looking up in keymaps, i.e. @code{function-key-map},
+@code{keyboard-translate-table}. etc.  @code{define-key} and other
+obvious starting points indicate where to look for more info.
+
+@item
+eliminate use and mention of grody @code{advertised-undo} and
+@code{deprecated-help}.  (@file{simple.el}, @file{startup.el},
+@file{picture.el}, @file{menubar-items.el})
+@end itemize
+
+
+@node General Lisp-Visible Changes, User documentation, General User-Visible Changes, The Great Mule Merge of March 2002
+@subsection General Lisp-Visible Changes
+
+@heading gzip support
+
+The gzip protocol is now partially supported as a coding system.
+
+@itemize
+@item
+new coding system @code{gzip} (bytes -> bytes); unfortunately, not quite
+working yet because it handles only the raw zlib format and not the
+higher-level gzip format (the zlib library is brain-damaged in that it
+provides low-level, stream-oriented API's only for raw zlib, and for
+gzip you have only high-level API's, which aren't useful for xemacs).
+
+@item
+configure support (@code{--with-zlib}).
+@end itemize
+
+
+@node User documentation, General internal changes, General Lisp-Visible Changes, The Great Mule Merge of March 2002
+@subsection User documentation
+
+@heading Tutorial
+
+@itemize
+@item
+massive rewrite; sync to FSF 21.0.106, switch focus to window systems,
+new sections on terminology and multiple frames, lots of fixes for
+current xemacs idioms.
+
+@item
+german version from Adrian mostly matching my changes.
+
+@item
+copy new tutorials from FSF (Spanish, Dutch, Slovak, Slovenian, Czech);
+not updated yet though.
+
+@item
+eliminate @file{help-nomule.el} and @file{mule-help.el}; merge into one
+single tutorial function, fix lots of problems, put back in
+@file{help.el} where it belongs.  (there was some random junk in
+@file{help-nomule.el}, @code{string-width} and @code{make-char}.
+@code{string-width} is now in @file{subr.el} with a single definition,
+and @code{make-char} in @file{text.c}.)
+@end itemize
+
+@heading Sample init file
+
+@itemize
+@item
+remove forward/backward buffer code, since it's now standard.
+
+@item
+when disabling @kbd{C-x C-c}, make it display a message saying how to
+exit, not just beep and complain ``undefined''.
+@end itemize
+
+
+@node General internal changes, Ben's TODO list, User documentation, The Great Mule Merge of March 2002
+@subsection General internal changes
+
+@heading Changes to gnuclient and gnuserv
+
+@itemize
+@item
+clean up headers a bit.
+
+@item
+use proper ms win idiom for checking for temp directory (@code{TEMP} or
+@code{TMP}, not @code{TMPDIR}).
+@end itemize
+
+@heading Process changes
+
+@itemize
+@item
+Move @code{setenv} from packages; synch @code{setenv}/@code{getenv} with
+21.0.105
+@end itemize
+
+@heading Changes to I/O internals
+
+@itemize
+@item
+use @code{PATH_MAX} consistently instead of @code{MAXPATHLEN},
+@code{MAX_PATH}, etc.
+
+@item
+all code that does preprocessor games with C lib I/O functions (open,
+read) has been removed.  The code has been changed to call the correct
+function directly.  Functions that accept @code{Intbyte *} arguments for
+filenames and such and do automatic conversion to or from external
+format will be prefixed @samp{qxe...()}.  Functions that are retrying in
+case of @code{EINTR} are prefixed @samp{retry_...()}.
+@code{DONT_ENCAPSULATE} is long-gone.
+
+@item
+never call @code{getcwd()} any more.  use our shadowed value always.
+@end itemize
+
+@heading Changes to string processing
+
+@itemize
+@item
+the @file{doprnt.c} external entry points have been completely rewritten
+to be more useful and have more sensible names.  We now have, for
+example, versions that work exactly like @code{sprintf()} but return a
+@code{malloc()}ed string.
+
+@item
+code in @file{print.c} that handles @code{stdout}, @code{stderr}
+rewritten.
+
+@item
+places that print to @code{stderr} directly replaced with
+@code{stderr_out()}.
+
+@item
+new convenience functions @code{write_fmt_string()},
+@code{write_fmt_string_lisp()}, @code{stderr_out_lisp()},
+@code{write_string()}.
+@end itemize
+
+@heading Changes to Allocation, Objects, and the Lisp Interpreter
+
+@itemize
+@item
+automatically use ``managed lcrecord'' code when allocating.  any
+lcrecord can be put on a free list with @code{free_lcrecord()}.
+
+@item
+@code{record_unwind_protect()} returns the old spec depth.
+
+@item
+@code{unbind_to()} now takes only one arg.  use @code{unbind_to_1()} if
+you want the 2-arg version, with GC protection of second arg.
+
+@item
+new funs to easily inhibit GC.  (@code{@{begin,end@}_gc_forbidden()})
+use them in places where gc is currently being inhibited in a more ugly
+fashion.  also, we disable GC in certain strategic places where string
+data is often passed in, e.g. @samp{dfc} functions, @samp{print}
+functions.
+
+@item
+@code{make_buffer()} -> @code{wrap_buffer()} for consistency with other
+objects; same for @code{make_frame()} ->@code{ wrap_frame()} and
+@code{make_console()} -> @code{wrap_console()}.
+
+@item
+better documentation in condition-case.
+
+@item
+new convenience funs @code{record_unwind_protect_freeing()} and
+@code{record_unwind_protect_freeing_dynarr()} for conveniently setting
+up an unwind-protect to @code{xfree()} or @code{Dynarr_free()} a
+pointer.
+@end itemize
+
+@heading s/m files:
+
+@itemize
+@item
+removal of unused @code{DATA_END}, @code{TEXT_END},
+@code{SYSTEM_PURESIZE_EXTRA}, @code{HAVE_ALLOCA} (automatically
+determined)
+
+@item
+removal of @code{vfork} references (we no longer use @code{vfork})
+@end itemize
+
+@heading @file{make-docfile}:
+
+@itemize
+@item
+clean up headers a bit.
+
+@item
+allow @file{.obj} to mean equivalent @file{.c}, just like for @file{.o}.
+
+@item
+allow specification of a ``response file'' (a command-line argument
+beginning with @@, specifying a file containing further command-line
+arguments) -- a standard mswin idiom to avoid potential command-line
+limits and to simplify makefiles.  use this in @file{xemacs.mak}.
+@end itemize
+
+@heading debug support
+
+@itemize
+@item
+(@file{cmdloop.el}) new var breakpoint-on-error, which breaks into the C
+debugger when an unhandled error occurs noninteractively.  useful when
+debugging errors coming out of complicated make scripts, e.g. package
+compilation, since you can set this through an env var.
+
+@item
+(@file{startup.el}) new env var @code{XEMACSDEBUG}, specifying a Lisp
+form executed early in the startup process; meant to be used for turning
+on debug flags such as @code{breakpoint-on-error} or
+@code{stack-trace-on-error}, to track down noninteractive errors.
+
+@item
+(@file{cmdloop.el}) removed non-working code in @code{command-error} to
+display a backtrace on @code{debug-on-error}.  use
+@code{stack-trace-on-error} instead to get this.
+
+@item
+(@file{process.c}) new var @code{debug-process-io} displays data sent to
+and received from a process.
+
+@item
+(@file{alloc.c}) staticpros have name stored with them for easier
+debugging.
+
+@item
+(@file{emacs.c}) code that handles fatal errors consolidated and
+rewritten.  much more robust and correctly handles all fatal exits on
+mswin (e.g. aborts, not previously handled right).
+@end itemize
+
+@heading @file{startup.el}
+
+@itemize
+@item
+move init routines from @code{before-init-hook} or
+@code{after-init-hook}; just call them directly
+(@code{init-menubar-at-startup}, @code{init-mule-at-startup}).
+
+@item
+help message fixed up (divided into sections), existing problem causing
+incomplete output fixed, undocumented options documented.
+@end itemize
+
+@heading @file{frame.el}
+
+@itemize
+@item
+delete old commented-out code.
+@end itemize
+
+
+@node Ben's TODO list, Ben's README, General internal changes, The Great Mule Merge of March 2002
+@subsection Ben's TODO list (probably obsolete)
+
+These notes substantially overlap those in @ref{Ben's README}.  They
+should probably be combined.
+
+@heading April 11, 2002
+
+Priority:
+
+@enumerate
+@item
+Finish checking in current mule ws.
+
+@item
+Start working on bugs reported by others and noticed by me:
+
+  @itemize
+  @item
+  problems cutting and pasting binary data, e.g. from byte-compiler
+  instructions
+
+  @item
+  test suite failures
+
+  @item
+  process i/o problems w.r.t. eol: |uniq (e.g.) leaves ^M's at end of
+  line; running "bash" as shell-file-name doesn't work because it doesn't
+  like the extra ^M's.
+  @end itemize
+@end enumerate
+
+@heading March 20, 2002
+
+bugs:
+
+@itemize
+@item
+TTY-mode problem.  When you start up in TTY mode, XEmacs goes through
+the loadup process and appears to be working -- you see the startup
+screen pulsing through the different screens, and it appears to be
+listening (hitting a key stops the screen motion), but it's frozen --
+the screen won't get off the startup, key commands don't cause anything
+to happen. STATUS: In progress.
+
+@item
+Memory ballooning in some cases.  Not yet understood.
+
+@item
+other test suite failures?
+
+@item
+need to review the handling of sounds.  seems that not everything is
+documented, not everything is consistently used where it's supposed to,
+some sounds are ugly, etc.  add sounds to `completer' as well.
+
+@item
+redo with-trapping-errors so that the backtrace is stored away and only
+outputted when an error actually occurs (i.e. in the condition-case
+handler).  test. (use ding of various sorts as a helpful way of checking
+out what's going on.)
+
+@item
+problems with process input: |uniq (for example) leaves ^M's at end of
+line.
+
+@item
+carefully review looking up of fonts by charset, esp. wrt the last
+element of a font spec.
+
+@item
+add package support to ignore certain files -- *-util.el for languages.
+
+@item
+review use of escape-quoted in auto_save_1() vs. the buffer's own coding
+system.
+
+@item
+figure out how to get the total amount of data memory (i.e. everything
+but the code, or even including the code if can't distinguish) used by
+the process on each different OS, and use it in a new algorithm for
+triggering GC: trigger only when a certain % of the data size has been
+consed up; in addition, have a minimum.
+
+@item
+fixed bugs???
+
+  @itemize
+  @item
+  Occasional crash when freeing display structures.  The problem seems to
+  be this: A window has a "display line dynarr"; each display line has a
+  "display block dynarr".  Sometimes this display block dynarr is getting
+  freed twice.  It appears from looking at the code that sometimes a
+  display line from somewhere in the dynarr gets added to the end -- hence
+  two pointers to the same display block dynarr.  need to review this
+  code.
+  @end itemize
+@end itemize
+
+@heading August 29, 2001
+
+This is the most current list of priorities in `ben-mule-21-5'.
+Updated often.
+
+high-priority:
+
+@table @strong
+
+@item [input]
+
+@itemize
+@item
+support for WM_IME_CHAR.  IME input can work under -nuni if we use
+WM_IME_CHAR.  probably we should always be using this, instead of
+snarfing input using WM_COMPOSITION.  i'll check this out.
+
+@item
+Russian C-x problem.  see above.
+@end itemize
+
+@item [clean-up]
+
+@itemize
+@item
+make sure it compiles and runs under non-mule.  remember that some
+code needs the unicode support, or at least a simple version of it.
+
+@item
+make sure it compiles and runs under pdump.  see below.
+
+@item
+make sure it compiles and runs under cygwin.  see below.
+
+@item
+clean up mswindows-multibyte, TSTR_TO_C_STRING.  expand dfc
+optimizations to work across chain.
+
+@item
+eliminate last vestiges of codepage<->charset conversion and similar
+stuff.
+@end itemize
+
+@item [other]
+
+@itemize
+@item
+test the "file-coding is binary only on Unix, no-Mule" stuff.
+
+@item
+test that things work correctly in -nuni if the system environment
+is set to e.g. japanese -- i should get japanese menus, japanese
+file names, etc.  same for russian, hebrew ...
+
+@item
+cut and paste.  see below.
+
+@item
+misc issues with handling lang environments.  see also August 25,
+"finally: working on the @kbd{C-x} in ...".
+
+  @itemize
+  @item
+  when switching lang env, needs to set keyboard layout.
+
+  @item
+  user var to control whether, when moving into text of a
+  particular language, we set the appropriate keyboard layout.  we
+  would need to have a lisp api for retrieving and setting the
+  keyboard layout, set text properties to indicate the layout of
+  text, and have a way of dealing with text with no property on
+  it. (e.g. saved text has no text properties on it.) basically,
+  we need to get a keyboard layout from a charset; getting a
+  language would do.  Perhaps we need a table that maps charsets
+  to language environments.
+
+  @item
+  test that the lang env is properly set at startup.  test that
+  switching the lang env properly sets the C locale (call
+  @code{setlocale()}, set @code{LANG}, etc.) -- a spawned subprogram
+  should have the new locale in its environment.
+  @end itemize
+
+@item
+look through everything below and see if anything is missed in this
+priority list, and if so add it.  create a separate file for the
+priority list, so it can be updated as appropriate.
+@end itemize
+@end table
+
+mid-priority:
+
+@itemize
+@item
+clean up the chain coding system.  its list should specify decode
+order, not encode; i now think this way is more logical.  it should
+check the endpoints to make sure they make sense.  it should also
+allow for the specification of "reverse-direction coding systems":
+use the specified coding system, but invert the sense of decode and
+encode.
+
+@item
+along with that, places that take an arbitrary coding system and
+expect the ends to be anything specific need to check this, and add
+the appropriate conversions from byte->char or char->byte.
+
+@item
+get some support for arabic, thai, vietnamese, japanese jisx 0212:
+at least get the unicode information in place and make sure we have
+things tied together so that we can display them.  worry about r2l
+some other time.
+
+@item
+check the handling of @kbd{C-c}.  can XEmacs itself be interrupted with
+@kbd{C-c}?  is that impossible now that we are a window, not a console,
+app?  at least we should work something out with @file{i} so that if it
+receives a @kbd{C-c} or @kbd{C-break}, it interrupts XEmacs, too.  check
+out how process groups work and if they apply only to console apps.
+also redo the way that XEmacs sends @kbd{C-c} to other apps.  the
+business of injecting code should be last resort.  we should try
+@kbd{C-c} first, and if that doesn't work, then the next time we try to
+interrupt the same process, use the injection method.
+@end itemize
+
+@node Ben's README, , Ben's TODO list, The Great Mule Merge of March 2002
+@subsection Ben's README (probably obsolete)
+
+These notes substantially overlap those in @ref{Ben's TODO list}.  They
+should probably be combined.
+
+This may be of some historical interest as a record of Ben at work.
+There may also be some useful suggestions as yet unimplemented.
+
+@heading oct 27, 2001
+
+-------- proposal for better buffer-switching commands:
+
+implement what VC++ currently has.  you have a single "switch" command
+like @kbd{CTRL-TAB}, which as long as you hold the @key{CTRL} button
+down, brings successive buffers that are "next in line" into the current
+position, bumping the rest forward.  once you release the @key{CTRL}
+key, the chain is broken, and further @kbd{CTRL-TAB}s will start from
+the beginning again.  this way, frequently used buffers naturally move
+toward the front of the chain, and you can switch back and forth between
+two buffers using @kbd{CTRL-TAB}.  the only thing about @kbd{CTRL-TAB}
+is it's a bit awkward.  the way to implement is to have modifier-up
+strokes fire off a hook, like modifier-up-hook.  this is driven by event
+dispatch, so there are no synchronization issues.  when @kbd{C-tab} is
+pressed, the binding function does something like set a one-shot handler
+on the modifier-up-hook (perhaps separate hooks for separate
+modifiers?).
+
+to do this, we'd also want to change the buffer tabs so that they maintain
+their own order.  in particular, they start out synched to the regular
+order, but as you make changes, you don't want the tabs to change
+order. (in fact, they may already do this.) selecting a particular buffer
+from the buffer tabs DOES make the buffer go to the head of the line.  the
+invariant is that if the tabs are displaying X items, those X items are the
+first X items in the standard buffer list, but may be in a different
+order. (it looks like the tabs may already implement all of this.)
+
+@heading oct 26, 2001
+
+necessary testing/changes:
+
+@itemize
+@item
+test all eol detection stuff under windows w/ and w/o mule, unix w/ and
+w/o mule. (test configure flag, command-line flag, menu option) may need
+a way of pretending to be unix under cygwin.
+
+@item
+test under windows w/ and w/o mule, cygwin w/ and w/o mule, cygwin x
+windows w/ and w/o mule.
+
+@item
+test undecided-dos/unix/mac.
+
+@item
+check @kbd{ESC ESC} works as @code{isearch-quit} under TTY's.
+
+@item
+test @code{coding-system-base} and all its uses (grep for them).
+
+@item
+menu item to revert to most recent auto save.
+
+@item
+consider renaming @code{build_string} -> @code{build_intstring} and
+@code{build_c_string} to @code{build_string}. (consistent with
+@code{build_msg_string} et al; many more @code{build_c_string} than
+@code{build_string})
+@end itemize
+
+@heading oct 20, 2001
+
+fixed problem causing crash due to invalid internal-format data, fixed
+an existing bug in @code{valid_char_p}, and added checks to more quickly
+catch when invalid chars are generated.  still need to investigate why
+@code{mswindows-multibyte} is being detected.
+
+i now see why -- we only process 65536 bytes due to a constant
+@code{MAX_BYTES_PROCESSED_FOR_DETECTION}.  instead, we should have no
+limit as long as we have a seekable stream.  we also need to write
+@code{stderr_out_lisp()}, used in the debug info routines i wrote.
+
+check once more about @code{DEBUG_XEMACS}.  i think debugging info
+should be ON by default.  make sure it is.  check that nothing untoward
+will result in a production system, e.g. presumably @code{assert()}s
+should not really @code{abort()}.  (!! Actually, this should be runtime
+settable!  Use a variable for this, and it can be set using the same
+@code{XEMACSDEBUG} method.  In fact, now that I think of it, I'm sure
+that debugging info should be on always, with runtime ways of turning on
+or off any funny behavior.)
+
+@heading oct 19, 2001
+
+fixed various bugs preventing packages from being able to be built.
+still another bug, with @file{psgml/etc/cdtd/docbook}, which contains
+some strange characters starting around char pos 110,000.  It gets
+detected as @code{mswindows-multibyte} (wrong! why?) and then invalid
+internal-format data is generated.  need to fix
+@code{mswindows-multibyte} (and possibly add something that signals an
+error as well; need to work on this error-signalling mechanism) and
+figure out why it's getting detected as such.  what i should do is add a
+debug var that outputs blow-by-blow info of the detection process.
+
+@heading oct 9, 2001
+
+the stuff with @code{global-window-system-map} doesn't appear to work.  in any
+case it needs better documentation. [DONE]
+
+@kbd{M-home}, @kbd{M-end} do work, but cause cl-macs to get loaded.  why?
+
+@heading oct 8, 2001
+
+finished the coding system changes and they finally work!
+
+need to implement undecided-unix/dos/mac.  they should be easy to do; it
+should be enough to specify an eol-type but not do-eol, but check this.
+
+consider making the standard naming be foo-lf/crlf/cr, with unix/dos/mac as
+aliases.
+
+print methods for coding systems should include some of the generic
+properties. (also then fix print_..._within_print_method). [DONE]
+
+in a little while, go back and delete the
+@code{text-file-wrapper-coding-system} code. (it'll be in CVS if
+necessary to get at it.) [DONE]
+
+need to verify at some point that non-text-file coding systems work
+properly when specified.  when gzip is working, this would be a good test
+case. (and consider creating base64 as well!)
+
+remove extra crap from @code{coding-system-category} that checks for
+chain coding systems. [DONE]
+
+perhaps make a primitive that gets at
+@code{coding-system-canonical}. [DONE]
+
+need to test cygwin, compiling the mule packages, get unix-eol stuff
+working.  frank from germany says he doesn't see a lisp backtrace when he
+gets an error during temacs?  verify that this actually gets outputted.
+
+consider putting the current language on the modeline, mousable so it can
+be switched.  also consider making the coding system be mousable and the
+line number (pick a line) and the percentage (pick a percentage).
+
+@heading oct 6, 2001
+
+added code so that @code{debug_print()} will output a newline to the
+mswindows debugging output, not just the console.  need to test. [DONE]
+
+working on problem where all files are being detected as binary.  the
+problem may be that the undecided coding system is getting wrapped with
+an auto-eol coding system, which it shouldn't be -- but even in this
+situation, we should get the right results!  check the
+canonicalize-after-coding methods.  also,
+@code{determine_real_coding_system} appears to be getting called even
+when we're not detecting encoding.  also, undecided needs a print method
+to show its params, and chain needs to be updated to show
+@code{canonicalize_after_coding}.  check others as well. [DONE]
+
+@heading oct 5, 2001
+
+finished up coding system changes, testing.
+
+errors byte-compiling files in @code{iso-2022-7-bit}.  perhaps it's not
+correctly detecting the encoding?
+
+noticed a problem in the dfc macros: we call
+@code{get_coding_system_for_text_file} with @code{eol_wrap == 1}, to
+allow for auto-detection of the eol type; but this defeats the check and
+short-circuit for unicode.
+
+still need to implement calling @code{determine_real_coding_system()}
+for non-seekable streams.  to implement correctly, we need to do our own
+buffering. [DONE, BUT WITHOUT BUFFERING]
+
+@heading oct 4, 2001
+
+implemented most stuff below.
+
+need to finish up changes to @code{make_coding_system_1}. (i changed the
+way internal coding systems were handled; i need to create subsidiaries
+for all types of coding systems, not just text ones.) there's a nasty
+@code{xfree()} crash i was hitting; perhaps it'll go away once all stuff
+has been rewritten.
+
+check under cygwin to make sure that when an error occurs during loadup, a
+backtrace is output.
+
+as soon as andy releases his new setup, we should put it onto various
+standard windows software repositories.
+
+@heading oct 3, 2001
+
+added @code{global-tty-map} and @code{global-window-system-map}.  add
+some stuff to the maps, e.g. @kbd{C-x ESC} for repeat vs. @kbd{C-x ESC
+ESC} on TTY's, and of course @kbd{ESC ESC} on window systems
+vs. @kbd{ESC ESC ESC} on TTY's. [TEST]
+
+was working on integrating the two @code{help-for-tutorial} versions (mule,
+non-mule). [DONE, but test under non-Mule]
+
+was working on the file-coding changes.  need to think more about
+@code{text-file-wrapper}.  conclusion i think is that
+@code{get_coding_system_for_text_file} should wrap using a special
+coding system type called a @code{text-file-wrapper}, which inherits
+from chain, and implements @code{canonicalize-after-decoding} to just
+return the unwrapped coding system.  We need to implement inheritance of
+coding systems, which will certainly come in extremely useful when
+coding systems get implemented in Lisp, which should happen at some
+point. (see existing docs about this.)  essentially, we have a way of
+declaring that we inherit from some system, and the appropriate data
+structures get created, perhaps just an extra inheritance pointer.  but
+when we create the coding system, the extra data needs to be a stretchy
+array of offsets, pointing to the type-specific data for the coding
+system type and all its parents.  that means that in the methods
+structure for a coding system (which perhaps should be expanded beyond
+method, it's just a "class structure") is the index in these arrays of
+offsets.  @code{CODING_SYSTEM_DATA()} can take any of the coding system
+classes (rename type to class!) that make up this class.  similarly, a
+coding system class inherits its methods from the class above unless
+specifying its own method, and can call the superclass method at any
+point by either just invoking its name, or conceivably by some macro
+like
+
+@samp{CALL_SUPER (method, (args))}
+
+similar mods would have to be made to coding stream structures.
+
+perhaps for the immediate we can just sort of fake things like we currently
+do with undecided calling some stuff from chain.
+
+@heading oct 2, 2001
+
+need to implement support for iso-8859-15, i.e. iso-8859-1 + euro symbol.
+figure out how to fall back to iso-8859-1 as necessary.
+
+leave the current bindings the way they are for the moment, but bump off
+@kbd{M-home} and @kbd{M-end} (hardly used), and substitute my buffer
+movement stuff there. [DONE, but test]
+
+there's something to be said for combining block of 6 and paragraph,
+esp. if we make the definition of "paragraph" be so that it skips by 6 when
+within code.  hmm.
+
+eliminate @code{advertised-undo} crap, and similar hacks. [DONE]
+
+think about obsolete stuff to be eliminated.  think about eliminating or
+dimming obsolete items from @code{hyper-apropos} and something similar
+in completion buffers.
+
+@heading sep 30, 2001
+
+synched up the tutorials with FSF 21.0.105.  was rewriting them to favor
+the cursor keys over the older @kbd{C-p}, etc. keys.
+
+Got thinking about key bindings again.
+
+@enumerate
+@item
+I think that @kbd{M-up/down} and @kbd{M-C-up/down} should be reversed.  I use
+scroll-up/down much more often than motion by paragraph.
+
+@item
+Should we eliminate move by block (of 6) and subsitute it for paragraph?
+This would have the advantage that I could make bindings for buffer
+change (forward/back buffer, perhaps @kbd{M-C-up/down}.  with shift,
+@kbd{M-C-S-up/down} only goes within the same type (C files, etc.).
+alternatively, just bump off @code{beginning-of-defun} from
+@kbd{C-M-home}, since it's on @kbd{C-M-a} already.
+@end enumerate
+
+need someone to go over the other tutorials (five new ones, from FSF
+21.0.105) and fix them up to correspond to the english one.
+
+shouldn't shift-motion work with @kbd{C-a} and such as well as arrows?
+
+@heading sep 29, 2001
+
+@code{charcount_to_bytecount} can also be made to scream -- as can
+@code{scan_buffer}, @code{buffer_mule_signal_inserted_region}, others?
+we should start profiling though before going too far down this line.
+
+Debug code that causes no slowdown should in general remain in the
+executable even in the release version because it may be useful
+(e.g. for people to see the event output).  so @code{DEBUG_XEMACS}
+should be rethought.  things like use of @file{msvcrtd.dll} should be
+controlled by error_checking on.  maybe @code{DEBUG_XEMACS} controls
+general debug code (e.g. use of @file{msvcrtd.dll}, asserts abort, error
+checking), and the actual debugging code should remain always, or be
+conditonalized on something else (e.g. @samp{DEBUGGING_FUNS_PRESENT}).
+
+doc strings in dumped files are displayed with an extra blank line between
+each line.  presumably this is recent?  i assume either the change to
+detect-coding-region or the double-wrapping mentioned below.
+
+error with @code{coding-system-property} on @code{iso-2022-jp-dos}.
+problem is that that coding system is wrapped, so its type shows up as
+@code{chain}, not @code{iso-2022}.  this is a general problem, and i
+think the way to fix it is to in essence do late canonicalization --
+similar in spirit to what was done long ago,
+@code{canonicalize_when_code}, except that the new coding system (the
+wrapper) is created only once, either when the original cs is created or
+when first needed.  this way, operations on the coding system work like
+expected, and you get the same results as currently when
+decoding/encoding.  the only thing tricky is handling
+@code{canonicalize-after-coding} and the ever-tricky double-wrapping
+problem mentioned below.  i think the proper solution is to move the
+autodetection of eol into the main autodetect type.  it can be asked to
+autodetect eol, coding, or both.  for just coding, it does like it
+currently does.  for just eol, it does similar to what it currently does
+but runs the detection code that @code{convert-eol} currently does, and
+selects the appropriate @code{convert-eol} system.  when it does both
+eol and coding, it does something on the order of creating two more
+autodetect coding systems, one for eol only and one for coding only, and
+chains them together.  when each has detected the appropriate value, the
+results are combined.  this automatically eliminates the double-wrapping
+problem, removes the need for complicated
+@code{canonicalize-after-coding} stuff in chain, and fixes the problem
+of autodetect not having a seekable stream because hidden inside of a
+chain. (we presume that in the both-eol-and-coding case, the various
+autodetect coding streams can communicate with each other
+appropriately.)
+
+also, we should solve the problem of internal coding systems floating
+around and clogging up the list simply by having an "internal" property
+on cs's and an internal param to @code{coding-system-list} (optional; if
+not given, you don't get the internal ones). [DONE]
+
+we should try to reduce the size of the from-unicode tables (the dominant
+memory hog in the tables).  one obvious thing is to not store a whole
+emchar as the mapped-to value, but a short that encodes the octets. [DONE]
+
+@heading sep 28, 2001
+
+need to merge up to latest in trunk.
+
+add unicode charsets for all non-translatable unicode chars; probably
+want to extend the concept of charsets to allow for dimension 3 and
+dimension 4 charsets.  for the moment we should stick with just
+dimension 3 charsets; otherwise we run past the current maximum of 4
+bytes per emchar. (most code would work automatically since it
+uses@code{ MAX_EMCHAR_LEN}; the trickiness is in certain code that has
+intimate knowledge of the representation.
+e.g. @code{bufpos_to_bytind()} has to multiply or divide by 1, 2, 3, or
+4, and has special ways of handling each number.  with 5 or 6 bytes per
+char, we'd have to change that code in various ways.) 96x96x96 = 884,000
+or so, so with two 96x96x96 charsets, we could tackle all Unicode values
+representable by UTF-16 and then some -- and only these codepoints will
+ever have assigned chars, as far as we know.
+
+need an easy way of showing the current language environment.  some menus
+need to have the current one checked or whatever. [DONE]
+
+implement unicode surrogates.
+
+implement @code{buffer-file-coding-system-when-loaded} -- make sure
+@code{find-file}, @code{revert-file}, etc. set the coding system [DONE]
+
+verify all the menu stuff [DONE]
+
+implemented the entirely-ascii check in buffers.  not sure how much gain
+it'll get us as we already have a known range inside of which is
+constant time, and with pure-ascii files the known range spans the whole
+buffer.  improved the comment about how @code{bufpos-to-bytind} and
+vice-versa work. [DONE]
+
+fix double-wrapping of @code{convert-eol}: when undecided converts
+itself to something with a non-autodetect eol, it needs to tell the
+adjacent @code{convert-eol} to reduce itself to nothing.
+
+need menu item for find file with specified encoding. [DONE]
+
+renamed coding systems mswindows-### to windows-### to follow the standard
+in rfc1345. [DONE]
+
+implemented @code{coding-system-subsidiary-parent} [DONE]
+@code{HAVE_MULE} -> @code{MULE} in files in @file{nt/} so that depend
+checking works [DONE]
+
+need to take the smarter @code{search-all-files-in-dir} stuff from my
+sample init file and put it on the grep menu [DONE]
+
+added item for revert w/specified encoding; mostly works, but needs
+fixes.  in particular, you get the correct results, but
+@code{buffer-file-coding-system} does not reflect things right.  also,
+there are too many entries.  need to split into submenus.  there is
+already split code out there; see if it's generalized and if not make it
+so.  it should only split when there's more than a specified number, and
+when splitting, split into groups of a specified size, not into a
+specified number of groups. [DONE]
+
+too many entries in the langenv menus; need to split. [DONE]
+
+@heading sep 27, 2001
+
+NOTE: @kbd{M-x grep} for make-string causes crash now.  something
+definitely to do with string changes.  check very carefully the diffs
+and put in those sledgehammer checks. [DONE]
+
+fix font-lock bug i introduced. [DONE]
+
+added optimization to strings (keeps track of # of bytes of ascii at the
+beginning of a string).  perhaps should also keep an all-ascii flag to deal
+with really large (> 2 MB) strings.  rewrite code to count ascii-begin to
+use the 4-or-8-at-a-time stuff in @code{bytecount_to_charcount}.
+
+Error: @kbd{M-q} is causing Invalid Regexp error on the above paragraph.
+It's not in working.  I assume it's a side effect of the string stuff.
+VERIFY!  Write sledgehammer checks for strings. [DONE]
+
+revamped the locale/init stuff so that it tries much harder to get things
+right.  should test a bit more.  in particular, test out Describe Language
+on the various created environments and make sure everything looks right.
+
+should change the menus: move the submenus on @samp{Edit->Mule} directly
+under @samp{Edit}.  add a menu entry on @samp{File} to say "Reload with
+specified encoding ->".  [DONE]
+
+Also @samp{Find File} with specified encoding -> Also entry to change
+the EOL settings for Unix, and implement it.
+
+@code{decode-coding-region} isn't working because it needs to insert a
+binary (char->byte) converter. [DONE]
+
+chain should be rearranged to be in decoding order; similar for
+source/sink-type, other things?
+
+the detector should check for a magic cookie even without a seekable input.
+(currently its input is not seekable, because it's hidden within a chain.
+#### See what we can do about this.)
+
+provide a way to display various settings, e.g. the current category
+mappings and priority (see mule-diag; get this working so it's in the
+path); also a way to print out the likeliness results from a detection,
+perhaps a debug flag.
+
+problem with `env', which causes path issues due to `env' in packages.
+move env code to process, sync with fsf 21.0.105, check that the autoloads
+in `env' don't cause problems. [DONE]
+
+8-bit iso2022 detection appears broken; or at least, mule-canna.c is not so
+detected.
+
+@heading sep 25, 2001
+
+something else to do is review the font selection and fix it so that (e.g.) 
+JISX-0212 can be displayed.
+
+also, text in widgets needs to be drawn by us so that the correct fonts
+will be displayed even in multi-lingual text.
+
+@heading sep 24, 2001
+
+the detection system is now properly abstracted.  the detectors have been
+rewritten to include multiple levels of abstraction.  now we just need
+detectors for ascii, binary, and latin-x, as well as more sophisticated
+detectors in general and further review of the general algorithm for doing
+detection. (#### Is this written up anywhere?) after that, consider adding
+error-checking to decoding (VERY IMPORTANT) and verifying the binary
+correctness of things under unix no-mule.
+
+@heading sep 23, 2001
+
+began to fix the detection system -- adding multiple levels of likelihood
+and properly abstracting the detectors.  the system is in place except for
+the abstraction of the detector-specific data out of the struct
+detection_state.  we should get things working first before tackling that
+(which should not be too hard).  i'm rewriting algorithms here rather than
+just converting code, so it's harder.  mostly done with everything, but i
+need to review all detectors except iso2022 and make them properly follow
+the new way.  also write a no-conversion detector.  also need to look into
+the `recode' package and see how (if?) they handle detection, and maybe
+copy some of the algorithms.  also look at recent FSF 21.0 and see if their
+algorithms have improved.
+
+@heading sep 22, 2001
+
+@itemize
+@item
+fixed gc bugs from yesterday.
+
+@item
+fixed truename bug.
+
+@item
+close/finalize stuff works.
+
+@item
+eliminated notyet stuff in syswindows.h.
+
+@item
+eliminated special code in tstr_to_c_string.
+
+@item
+fixed pdump problems. (many of them, mostly latent bugs, ugh)
+
+@item
+fixed cygwin @code{sscanf} problems in
+@code{parse-unicode-translation-table}. (NOT a @code{sscanf} bug, but
+subtly different behavior w.r.t. whitespace in the format string,
+combined with a debugger that sucks ROCKS!! and consistently outputs
+garbage for variable values.)
+@end itemize
+
+main stuff to test is the handling of EOF recognition vs. binary
+(i.e. check what the default settings are under Unix).  then we may have
+something that WORKS on all platforms!!!  (Also need to test Windows
+non-Mule)
+
+@heading sep 21, 2001
+
+finished redoing the close/finalize stuff in the lstream code.  but i
+encountered again the nasty bug mentioned on sep 15 that disappeared on
+its own then.  the problem seems to be that the finalize method of some
+of the lstreams is calling @code{Lstream_delete()}, which calls
+@code{free_managed_lcrecord()}, which is a no-no when we're inside of
+garbage-collection and the object passed to
+@code{free_managed_lcrecord()} is unmarked, and about to be released by
+the gc mechanism -- the free lists will end up with @code{xfree()}d
+objects on them, which is very bad.  we need to modify
+@code{free_managed_lcrecord()} to check if we're in gc and the object is
+unmarked, and ignore it rather than move it to the free list. [DONE]
+
+(#### What we really need to do is do what Java and C# do w.r.t. their
+finalize methods: For objects with finalizers, when they're about to be
+freed, leave them marked, run the finalizer, and set another bit on them
+indicating that the finalizer has run.  Next GC cycle, the objects will
+again come up for freeing, and this time the sweeper notices that the
+finalize method has already been called, and frees them for good (provided
+that a finalize method didn't do something to make the object alive
+again).)
+
+@heading sep 20, 2001
+
+redid the lstream code so there is only one coding stream.  combined the
+various doubled coding stream methods into one; i'm a little bit unsure
+of this last part, though, as the results of combining the two together
+seem unclean.  got it to compile, but it crashes in loadup.  need to go
+through and rehash the close vs. finalize stuff, as the problem was
+stuff getting freed too quickly, before the canonicalize-after-decoding
+was run.  should eliminate entirely @code{CODING_STATE_END} and use a
+different method (close coding stream).  rewrite to use these two.  make
+sure they're called in the right places.  @code{Lstream_close} on a
+stream should *NOT* do finalizing.  finalize only on delete. [DONE]
+
+in general i'd like to see the flags eliminated and converted to
+bit-fields.  also, rewriting the methods to take advantage of rejecting
+should make it possible to eliminate much of the state in the various
+methods, esp. including the flags.  need to test this is working, though --
+reduce the buffer size down very low and try files with only CRLF's in
+them, with one offset by a byte from the other, and see if we correctly
+handle rejection.
+
+still have the problem with incorrectly truenaming files.
+
+
+@heading sep 19, 2001
+
+bug reported: crash while closing lstreams.
+
+the lstream/coding system close code needs revamping.  we need to document
+that order of closing lstreams is very important, and make sure we're
+consistent.  furthermore, chain and undecided lstreams need to close their
+underneath lstreams when they receive the EOF signal (there may be data in
+the underneath streams waiting to come out), not when they themselves are
+closed. [DONE]
+
+(if only we had proper inheritance.  i think in any case we should
+simulate it for the chain coding stream -- write things in such a way that
+undecided can use the chain coding stream and not have to duplicate
+anything itself.)
+
+in general we need to carefully think through the closing process to make
+sure everything always works correctly and in the right order.  also check
+very carefully to make sure there are no dangling pointers to deleted
+objects floating around.
+
+move the docs for the lstream functions to the functions themselves, not
+the header files.  document more carefully what exactly
+@code{Lstream_delete()} means and how it's used, what the connections
+are between @code{Lstream_close(}), @code{Lstream_delete()},
+@code{Lstream_flush()}, @code{lstream_finalize}, etc. [DONE]
+
+additional error-checking: consider deadbeefing the memory in objects
+stored in lcrecord free lists; furthermore, consider whether lifo or
+fifo is correct; under error-checking, we should perhaps be doing fifo,
+and setting a minimum number of objects on the lists that's quite large
+so that it's highly likely that any erroneous accesses to freed objects
+will go into such deadbeefed memory and cause crashes.  also, at the
+earliest available opportunity, go through all freed memory and check
+for any consistency failures (overwrites of the deadbeef), crashing if
+so.  perhaps we could have some sort of id for each block, to easier
+trace where the offending block came from.  (all of these ideas are
+present in the debug system malloc from VC++, plus more stuff.)  there's
+similar code i wrote sitting somewhere (in @file{free-hook.c}? doesn't
+appear so.  we need to delete the blocking stuff out of there!).  also
+look into using the debug system malloc from VC++, which has lots of
+cool stuff in it.  we even have the sources.  that means compiling under
+pdump, which would be a good idea anyway.  set it as the default. (but
+then, we need to remove the requirement that Xpm be a DLL, which is
+extremely annoying.  look into this.)
+
+test the windows code page coding systems recently created.
+
+problems reading my mail files -- 1personal appears to hang, others come up
+with lots of ^M's.  investigate.
+
+test the enum functions i just wrote, and finish them.
+
+still pdump problems.
+
+@heading sep 18, 2001
+
+critical-quit broken sometime after aug 25.
+
+@itemize
+@item
+fixed critical quit.
+
+@item
+fixed process problems.
+
+@item
+print routines work. (no routine for ccl, though)
+
+@item
+can read and write unicode files, and they can still be read by some
+other program
+
+@item
+defaults should come up correctly -- mswindows-multibyte is general.
+@end itemize
+
+still need to test matej's stuff.
+seems ok with multibyte stuff but needs more testing.
+
+@heading sep 17, 2001
+
+!!!!! something broken with processes !!!!! cannot send mail anymore.  must
+investigate.
+
+@heading sep 17, 2001
+
+on mon/wed nights, stop *BEFORE* 11pm.  Otherwise i just start getting
+woozy and can't concentrate.
+
+just finished getting assorted fixups to the main branch committed, so it
+will compile under C++ (Andy committed some code that broke C++ builds).
+cup'd the code into the fixtypes workspace, updated the tags appropriately.
+i've created the appropriate log message, sitting in fixtypes.txt in
+/src/xemacs; perhaps it should go into a README.  now i just have to build
+on everything (it's currently building), verify it's ok, run patcher-mail,
+commit, send.
+
+my mule ws is also very close.  need to:
+
+@itemize
+@item
+test the new print routines.
+
+@item
+test it can read and write unicode files, and they can still be read by
+some other program.
+
+@item
+try to see if unicode can be auto-detected properly.
+
+@item
+test it can read and write multibyte files in a few different formats.
+currently can't recognize them, but if you set the cs right, it should
+work.
+
+@item
+examine the test files sent by matej and see if we can handle them.
+@end itemize
+
+@heading sep 15, 2001
+
+more eol fixing.  this stuff is utter crap.
+
+currently we wrap coding systems with @code{convert-eol-autodetect} when we create
+them in @code{make_coding_system_1}.  i had a feeling that this would be a
+problem, and indeed it is -- when autodetecting with `undecided', for
+example, we end up with multiple layers of eol conversion.  to avoid this,
+we need to do the eol wrapping *ONLY* when we actually retrieve a coding
+system in places such as @code{insert-file-contents}.  these places are
+@code{insert-file-contents}, load, process input, @code{call-process-internal},
+@samp{encode/decode/detect-coding-region}, database input, ...
+
+(later) it's fixed, and things basically work.  NOTE: for some reason,
+adding code to wrap coding systems with @code{convert-eol-lf} when
+@code{eol-type == lf} results in crashing during garbage collection in
+some pretty obscure place -- an lstream is free when it shouldn't be.
+this is a bad sign.  i guess something might be getting initialized too
+early?
+
+we still need to fix the canonicalization-after-decoding code to avoid
+problems with coding systems like `internal-7' showing up.  basically,
+when @code{eol==lf} is detected, nil should be returned, and the callers
+should handle it appropriately, eliding when necessary.  chain needs to
+recognize when it's got only one (or even 0) items in the chain, and
+elide out the chain.
+
+@heading sep 11, 2001: the day that will live in infamy
+
+rewrite of sep 9 entry about formats:
+
+when calling @samp{make-coding-system}, the name can be a cons of @samp{(format1 .
+format2)}, specifying that it decodes @samp{format1->format2} and encodes the other
+way.  if only one name is given, that is assumed to be @samp{format1}, and the
+other is either `external' or `internal' depending on the end type.
+normally the user when decoding gives the decoding order in formats, but
+can leave off the last one, `internal', which is assumed.  a multichain
+might look like gzip|multibyte|unicode, using the coding systems named
+`gzip', `(unicode . multibyte)' and `unicode'.  the way this actually works
+is by searching for gzip->multibyte; if not found, look for gzip->external
+or gzip->internal. (In general we automatically do conversion between
+internal and external as necessary: thus gzip|crlf does the expected, and
+maps to gzip->external, external->internal, crlf->internal, which when
+fully specified would be gzip|external:external|internal:crlf|internal --
+see below.)  To forcibly fit together two converters that have explicitly
+specified and incompatible names (say you have unicode->multibyte and
+iso8859-1->ebcdic and you know that the multibyte and iso8859-1 in this
+case are compatible), you can force-cast using :, like this:
+ebcdic|iso8859-1:multibyte|unicode. (again, if you force-cast between
+internal and external formats, the conversion happens automatically.)
+
+
+@heading sep 10, 2001
+
+moved the autodetection stuff (both codesys and eol) into particular coding
+systems -- `undecided' and `convert-eol' (type == `autodetect').  needs
+lots of work.  still need to search through the rest of the code and find
+any remaining auto-detect code and move it into the undecided coding
+system.  need to modify make-coding-system so that it spits out
+auto-detecting versions of all text-file coding systems unless we say not
+to.  need eliminate entirely the EOF flag from both the stream info and the
+coding system; have only the original-eof flag.  in
+coding_system_from_mask, need to check that the returned value is not of
+type `undecided', falling back to no-conversion if so.  also need to make
+sure we wrap everything appropriate for text-files -- i removed the
+wrapping on set-coding-category-list or whatever (need to check all those
+files to make sure all wrapping is removed).  need to review carefully the
+new code in `undecided' to make sure it works are preserves the same logic
+as previously.  need to review the closing and rewinding behavior of chain
+and undecided (same -- should really consolidate into helper routines, so
+that any coding system can embed a chain in it) -- make sure the dynarr's
+are getting their data flushed out as necessary, rewound/closed in the
+right order, no missing steps, etc.
+
+also split out mule stuff into @file{mule-coding.c}.  work done on
+@file{configure}/@file{xemacs.mak}/@file{Makefile}s not done yet.  work
+on @file{emacs.c}/@file{symsinit.h} to interface with the new init
+functions not done yet.
+
+also put in a few declarations of the way i think the abstracted detection
+stuff ought to go.  DON'T WORK ON THIS MORE UNTIL THE REST IS DEALT WITH
+AND WE HAVE A WORKING XEMACS AGAIN WITH ALL EOL ISSUES NAILED.
+
+really need a version of @file{cvs-mods} that reports only the current
+directory.  WRITE THIS!  use it to implement a better
+@file{cvs-checkin}.
+
+@heading sep 9, 2001
+
+implemented a gzip coding system.  unfortunately, doesn't quite work right
+because it doesn't handle the gzip headers -- it just reads and writes raw
+zlib data.  there's no function in the library to skip past the header, but
+we do have some code out of the library that we can snarf that implements
+header parsing.  we need to snarf that, store it, and output it again at
+the beginning when encoding.  in the process, we should create a "get next
+byte" macro that bails out when there are no more.  using this, we set up a
+nice way of doing most stuff statelessly -- if we have to bail, we reject
+everything back to the sync point.  also need to fix up the autodetection
+of zlib in configure.in.
+
+BIG problems with eol.  finished up everything i thought i would need to
+get eol stuff working, but no -- when you have mswindows-unicode, with its
+eol set to autodetect, the detection routines themselves do the autodetect
+(first), and fail (they report CR on CRLF because of the NULL byte between
+the CR and the LF) since they're not looking at ascii data.  with a chain
+it's similarly bad. for mswindows-multibyte, for example, which is a chain
+unicode->unicode-to-multibyte, autodetection happens inside of the chain,
+both when unicode and unicode-to-multibyte are active.  we could twiddle
+around with the eol flags to try to deal with this, but it's gonna be a
+big mess, which is exactly what we're trying to avoid.  what we
+basically want is to entirely rip out all EOL settings from either the
+coding system or the stream (yes, there are two!  one might saw
+autodetect, and then the stream contains the actual detected value).
+instead, we simply create an eol-autodetect coding system -- or rather,
+it's part of the convert-eol coding system.  convert-eol, type =
+autodetect, does autodetection the first time it gets data sent to it to
+decode, and thereafter sets a stream parameter indicating the actual eol
+type for this stream.  this means that all autodetect coding systems, as
+created by @code{make-coding-system}, really are chains with a
+convert-eol at the beginning.  only subsidiary xxx-unix has no wrapping
+at all.  this should allow eof detection of gzip, unicode, etc.  for
+that matter, general autodetection should be entirely encapsulated
+inside of the `autodetect' coding system, with no eol-autodetection --
+the chain becomes convert-eol (autodetect) -> autodetect or perhaps
+backwards.  the generic autodetect similarly has a coding-system in its
+stream methods, and needs somehow or other to insert the detected
+coding-system into the chain.  either it contains a chain inside of it
+(perhaps it *IS* a chain), or there's some magic involving
+canonicalization-type switcherooing in the middle of a decode.  either
+way, once everything is good and done and we want to save the coding
+system so it can be used later, we need to do another sort of
+canonicalization -- converting auto-detect-type coding systems into the
+detected systems.  again, a coding-system method, with some magic
+currently so that subsidiaries get properly used rather than something
+that's new but equivalent to subsidiaries. (#### perhaps we could use a
+hash table to avoid recreating coding systems when not necessary.  but
+that would require that coding systems be immutable from external, and
+i'm not sure that's the case.)
+
+i really think, after all, that i should reverse the naming of everything
+in chain and source-sink-type -- they should be decoding-centric.  later
+on, if/when we come up with the proper way to make it totally symmetrical,
+we'll be fine whether before then we were encoding or decoding centric.
+
+
+@heading sep 9, 2001
+
+investigated eol parameter.
+
+implemented handling in @code{make-coding-system} of @code{eol-cr} and
+@code{eol-crlf}.  fixed calls everywhere to @code{Fget_coding_system} /
+@code{Ffind_coding_system} to reject non-char->byte coding systems.
+
+still need to handle "query eol type using coding-system-property" so it
+magically returns the right type by parsing the chain.
+
+no work done on formats, as mentioned below.  we should consider using :
+instead of || to indicate casting.
+
+@heading early sep 9, 2001
+
+renamed some codesys properties: `list' in chain -> chain; `subtype' in
+unicode -> type.  everything compiles again and sort of works; some CRLF
+problems that may resolve themselves when i finish the convert-eol stuff.
+the stuff to create subsidiaries has been rewritten to use chains; but i
+still need to investigate how the EOL type parameter is used.  also, still
+need to implement this: when a coding system is created, and its eol type
+is not autodetect or lf, a chain needs to be created and returned.  i think
+that what needs to happen is that the eol type can only be set to
+autodetect or lf; later on this should be changed to simply be either
+autodetect or not (but that would require ripping out the eol converting
+stuff in the various coding systems), and eventually we will do the work on
+the detection mechanism so it can do chain detection; then we won't need an
+eol autodetect setting at all.  i think there's a way to query the eol type
+of a coding system; this should check to see if the coding system is a
+chain and there's a convert-eol at the front; if so, the eol type comes
+from the type of the convert-eol.
+
+also check out everywhere that @code{Fget_coding_system} or
+@code{Ffind_coding_system} is called, and see whether anything but a
+char->byte system can be tolerated.  create a new function for all the
+places that only want char->byte, something like
+@samp{get_coding_system_char_to_byte_only}.
+
+think about specifying formats in make-coding-system.  perhaps the name can
+be a cons of (format1, format2), specifying that it encodes
+format1->format2 and decodes the other way.  if only one name is given,
+that is assumed to be format2, and the other is either `byte' or `char'
+depending on the end type.  normally the user when decoding gives the
+decoding order in formats, but can leave off the last one, `char', which is
+assumed.  perhaps we should say `internal' instead of `char' and `external'
+instead of byte.  a multichain might look like gzip|multibyte|unicode,
+using the coding systems named `gzip', `(unicode . multibyte)' and
+`unicode'.  we would have to allow something where one format is given only
+as generic byte/char or internal/external to fit with any of the same
+byte/char type.  when forcibly fitting together two converters that have
+explicitly specified and incompatible names (say you have
+unicode->multibyte and iso8859-1->ebcdic and you know that the multibyte
+and iso8859-1 in this case are compatible), you can force-cast using ||,
+like this: ebcdic|iso8859-1||multibyte|unicode.  this will also force
+external->internal translation as necessary:
+unicode|multibyte||crlf|internal does unicode->multibyte,
+external->internal, crlf->internal.  perhaps you'd need to put in the
+internal translation, like this: unicode|multibyte|internal||crlf|internal,
+which means unicode->multibyte, external->internal (multibyte is compatible
+with external); force-cast to crlf format and convert crlf->internal.
+
+@heading even later: Sep 8, 2001
+
+chain doesn't need to set character mode, that happens automatically when
+the coding systems are created.  fixed chain to return correct source/sink
+type for itself and to check the compatibility of source/sink types in its
+chain.  fixed decode/encode-coding-region to check the source and sink
+types of the coding system performing the conversion and insert appropriate
+byte->char/char->byte converters (aka "binary" coding system).  fixed
+set-coding-category-system to only accept the traditional
+encode-char-to-byte types of coding systems.
+
+still need to extend chain to specify the parameters mentioned below,
+esp. "reverse".  also need to extend the print mechanism for chain so it
+prints out the chain.  probably this should be general: have a new method
+to return all properties, and output those properties.  you could also
+implement a read syntax for coding systems this way.
+
+still need to implement @code{convert-eol} and finish up the rest of the
+eol stuff mentioned below.
+
+@heading later September 7, 2001 (more like Sep 8)
+
+moved many @code{Lisp_Coding_System *} params to @code{Lisp_Object}.  In
+general this is the way to go, and if we ever implement a copying GC, we
+will never want to be passing direct pointers around.  With no
+error-checking, we lose no cycles using @code{Lisp_Object}s in place of
+pointers -- the @code{Lisp_Object} itself is nothing but a pointer, and
+so all the casts and "dereferences" boil down to nothing.
+
+Clarified and cleaned up the "character mode" on streams, and documented
+who (caller or object itself) has the right to be setting character mode
+on a stream, depending on whether it's a read or write stream.  changed
+@code{conversion_end_type} method and @code{enum source_sink_type} to
+return encoding-centric values, rather than decoding-centric.  for the
+moment, we're going to be entirely encoding-centric in everything; we
+can rethink later.  fixed coding systems so that the decode and encode
+methods are guaranteed to receive only full characters, if that's the
+source type of the data, as per conversion_end_type.
+
+still need to fix the chain method so that it correctly sets the
+character mode on all the lstreams in it and checks the source/sink
+types to be compatible.  also fix @code{decode-coding-string} and
+friends to put the appropriate byte->character
+(i.e. @code{no-conversion}) coding systems on the ends as necessary so
+that the final ends are both character.  also add to chain a parameter
+giving the ability to switch the direction of conversion of any
+particular item in the chain (i.e. swap encoding and decoding).  i think
+what we really want to do is allow for arbitrary parameters to be put
+onto a particular coding system in the chain, of which the only one so
+far is swap-encode-decode.  don't need too much codage here for that,
+but make the design extendable.
+
+
+
+@heading September 7, 2001
+
+just added a return value from the decode and encode methods of a coding
+system, so that some of the data can get rejected.  fixed the calling
+routines to handle this.  need to investigate when and whether the coding
+lstream is set to character mode, so that the decode/encode methods only
+get whole characters.  if not, we should do so, according to the source
+type of these methods.  also need to implement the convert_eol coding
+system, and fix the subsidiary coding systems (and in general, any coding
+system where the eol type is specified and is not LF) to be chains
+involving convert_eol.
+
+after everything is working, need to remove eol handling from encode/decode
+methods and eventually consider rewriting (simplifying) them given the
+reject ability.
+
+@heading September 5, 2001
+
+@itemize
+@item
+need to organize this.  get everything below into the TODO list.
+CVS the TODO list frequently so i can delete old stuff.  prioritize
+it!!!!!!!!!
+
+@item
+move @file{README.ben-mule...} to @file{STATUS.ben-mule...}; use
+@file{README} for intro, overview of what's new, what's broken, how to
+use the features, etc.
+
+@item
+need a global and local @samp{coding-category-precedence} list, which
+get merged.
+
+@item
+finished the BOM support.  also finished something not listed below,
+expansion to the auto-generator of Unicode-encapsulation to support
+bracketing code with @samp{#if ... #endif}, for Cygwin and MINGW
+problems, e.g.  This is tested; appears to work.
+
+@item
+need to add more multibyte coding systems now that we have various
+properties to specify them.  need to add DEFUN's for mac-code-page
+and ebcdic-code-page for completeness.  need to rethink the whole
+way that the priority list works.  it will continue to be total
+junk until multiple levels of likeliness get implemented.
+
+@item
+need to finish up the stuff about the various defaults. [need to
+investigate more generally where all the different default values
+are that control encoding. (there are six places or so.) need to
+list them in @code{make-coding-system} docs and put pointers
+elsewhere. [[[[#### what interface to specify that this default
+should be unicode?  a "Unicode" language environment seems too
+drastic, as the language environment controls much more.]]]] even
+skipping the Unicode stuff here, we need to survey and list the
+variables that control coding page behavior and determine how they
+need to be set for various possible scenarios:
+
+  @itemize
+  @item
+  total binary: no detection at all.
+
+  @item
+  raw-text only: wants only autodetection of line endings, nothing else.
+
+  @item
+  "standard Windows environment": tries for Unicode, falls back on
+  code page encoding.
+
+  @item
+  some sort of East European environment, and Russian.
+
+  @item
+  some sort of standard Japanese Windows environment.
+
+  @item
+  standard Chinese Windows environments (traditional and simplified)
+
+  @item
+  various Unix environments (European, Japanese, Russian, etc.)
+
+  @item
+  Unicode support in all of these when it's reasonable
+  @end itemize
+@end itemize
+
+These really require multiple likelihood levels to be fully
+implementable.  We should see what can be done ("gracefully fall
+back") with single likelihood level.  need lots of testing.
+
+@itemize
+@item
+need to fix the truename problem.
+
+@item
+lots of testing: need to test all of the stuff above and below that's
+recently been implemented.
+@end itemize
+
+
+@heading September 4, 2001
+
+mostly everything compiles.  currently there is a crash in
+@code{parse-unicode-translation-table}, and Cygwin/Mule won't run.  it
+may well be a bug in the @code{sscanf()} in Cygwin.
+
+working on today:
+
+@itemize
+@item
+adding BOM support for Unicode coding systems.  mostly there, but
+need to finish adding BOM support to the detection routines.  then test.
+
+@item
+adding properties to @code{unicode-to-multibyte} to specify the coding
+system in various flexible ways, e.g. directly specified code page or
+ansi or oem code page of specified locale, current locale, user-default
+or system-default locale.  need to test.
+
+@item
+creating a `multibyte' coding system, with the same parameters as
+unicode-to-multibyte and which resolves at coding-system-creation
+time to the appropriate chain.  creating the underlying mechanism
+to allow such under-the-scenes switcheroo.  need to test.
+
+@item
+set default-value of @code{buffer-file-coding-system} to
+mswindows-multibyte, as Matej said it should be.  need to test.
+need to investigate more generally where all the different default
+values are that control encoding. (there are six places or so.) 
+need to list them in make-coding-system docs and put pointers
+elsewhere. #### what interface to specify that this default should
+be unicode?  a "Unicode" language environment seems too drastic, as
+the language environment controls much more.
+
+@item
+thinking about adding multiple levels of certainty to the detection
+schemes, instead of just a mask.  eventually, we need to totally
+abstract things, but that can easier be done in many steps. (we
+need multiple levels of likelihood to more reasonably support a
+Windows environment with code-page type files.  currently, in order
+to get them detected, we have to put them first, because they can
+look like lots of other things; but then, other encodings don't get
+detected.  with multiple levels of likelihood, we still put the
+code-page categories first, but they will return low levels of
+likelihood.  Lower-down encodings may be able to return higher
+levels of likelihood, and will get taken preferentially.)
+
+@item
+making it so you cannot disable file-coding, but you get an
+equivalent default on Unix non-Mule systems where all defaults are
+`binary'.  need to test!!!!!!!!!
+@end itemize
+
+Matej (mostly, + some others) notes the following problems, and here
+are possible solutions:
+
+@itemize
+@item
+he wants the defaults to work right. [figure out what those
+defaults are.  i presume they are auto-detection of data in current
+code page and in unicode, and new files have current code page set
+as their output encoding.]
+
+@item
+too easy to lose data with incorrect encodings. [need to set up an
+error system for encoding/decoding.  extremely important but a
+little tricky to implement so let's deal with other issues now.]
+
+@item
+EOL isn't always detected correctly. [#### ?? need examples]
+
+@item
+truename isn't working: @file{c:\t.txt} and @file{c:\tmp.txt} have the
+same truename.  [should be easy to fix]
+
+@item
+unicode files lose the BOM mark. [working on this]
+
+@item
+command-line utilities use OEM. [actually it seems more
+complicated.  it seems they use the codepage of the console.  we
+may be able to set that, e.g. to UTF8, before we invoke a command.
+need to investigate.]
+
+@item
+no way to handle unicode characters not recognized as charsets. [we
+need to create something like 8 private 2-dimensional charsets to
+handle all BMP Unicode chars.  Obviously this is a stopgap
+solution.  Switching to Unicode internal will ultimately make life
+far easier and remove the BMP limitation.  but for now it will
+work.  we translate all characters where we have charsets into
+chars in those charsets, and the remainder in a unicode charset.
+that way we can save them out again and guarantee no data loss with
+unicode.  this creates font problems, though ...]
+
+@item
+problems with xemacs font handling. [xemacs font handling is not
+sophisticated enough.  it goes on a charset granularity basis and
+only looks for a font whose name contains the corresponding windows
+charset in it.  with unicode this fails in various ways.  for one
+the granularity needs to be single character, so that those unicode
+charsets mentioned above work; and it needs to query the font to
+see what unicode ranges it supports, rather than just looking at
+the charset ending.]
+@end itemize
+
+
+@heading August 28, 2001
+
+working on getting everything to compile again: Cygwin, non-MULE,
+pdump.  not there yet.
+
+@code{mswindows-multibyte} is now defined using chain, and works.
+removed most vestiges of the @code{mswindows-multibyte} coding system
+type.
+
+file-coding is on by default; should default to binary only on Unix.
+Need to test. (Needs to compile first :-)
+
+@heading August 26, 2001
+
+I've fixed the issue of inputting non-ASCII text under -nuni, and done
+some of the work on the Russian @key{C-x} problem -- we now compute the
+other possibilities.  We still need to fix the key-lookup code, though,
+and that code is unfortunately a bit ugly.  the best way, it seems, is
+to expand the command-builder structure so you can specify different
+interpretations for keys. (if we do find an alternative binding, though,
+we need to mess with both the command builder and this-command-keys, as
+does the function-key stuff.  probably need to abstract that munging
+code.)
+
+high-priority:
+
+@table @strong
+
+@item [currently doing]
+
+@itemize
+@item
+support for @code{WM_IME_CHAR}.  IME input can work under @code{-nuni}
+if we use @code{WM_IME_CHAR}.  probably we should always be using this,
+instead of snarfing input using @code{WM_COMPOSITION}.  i'll check this
+out.
+
+@item
+Russian @key{C-x} problem.  see above.
+@end itemize
+
+@item [clean-up]
+
+@itemize
+@item
+make sure it compiles and runs under non-mule.  remember that some
+code needs the unicode support, or at least a simple version of it.
+
+@item
+make sure it compiles and runs under pdump.  see below.
+
+@item
+clean up @code{mswindows-multibyte}, @code{TSTR_TO_C_STRING}.  see
+below. [DONE]
+
+@item
+eliminate last vestiges of codepage<->charset conversion and similar stuff.
+@end itemize
+
+@item [other]
+
+@itemize
+@item
+cut and paste.  see below.
+@item
+misc issues with handling lang environments.  see also August 25,
+"finally: working on the C-x in ...".
+  @itemize
+  @item
+  when switching lang env, needs to set keyboard layout.
+  @item
+  user var to control whether, when moving into text of a
+  particular language, we set the appropriate keyboard layout.  we
+  would need to have a lisp api for retrieving and setting the
+  keyboard layout, set text properties to indicate the layout of
+  text, and have a way of dealing with text with no property on
+  it. (e.g. saved text has no text properties on it.) basically,
+  we need to get a keyboard layout from a charset; getting a
+  language would do.  Perhaps we need a table that maps charsets
+  to language environments.
+  @item
+  test that the lang env is properly set at startup.  test that
+  switching the lang env properly sets the C locale (call
+  setlocale(), set LANG, etc.) -- a spawned subprogram should have
+  the new locale in its environment.
+  @end itemize
+@item
+look through everything below and see if anything is missed in this
+priority list, and if so add it.  create a separate file for the
+priority list, so it can be updated as appropriate.
+@end itemize
+@end table
+
+mid-priority:
+
+@itemize
+@item
+clean up the chain coding system.  its list should specify decode
+order, not encode; i now think this way is more logical.  it should
+check the endpoints to make sure they make sense.  it should also
+allow for the specification of "reverse-direction coding systems":
+use the specified coding system, but invert the sense of decode and
+encode.
+
+@item
+along with that, places that take an arbitrary coding system and
+expect the ends to be anything specific need to check this, and add
+the appropriate conversions from byte->char or char->byte.
+
+@item
+get some support for arabic, thai, vietnamese, japanese jisx 0212:
+at least get the unicode information in place and make sure we have
+things tied together so that we can display them.  worry about r2l
+some other time.
+@end itemize
+
+@heading August 25, 2001
+
+There is actually more non-Unicode-ized stuff, but it's basically
+inconsequential. (See previous note.) You can check using the file
+nmkun.txt (#### RENAME), which is just a list of all the routines that
+have been split. (It was generated from the output of `nmake
+unicode-encapsulate', after removing everything from the output but
+the function names.) Use something like
+
+@example
+fgrep -f ../nmkun.txt -w [a-hj-z]*.[ch]  |m
+@end example
+
+in the source directory, which does a word match and skips
+@file{intl-unicode-win32.[ch]} and @file{intl-win32.[ch]}, which have a
+whole lot of references to these, unavoidably.  It effectively detects
+what needs to be changed because changed versions either begin
+@samp{qxe...} or end with A or W, and in each case there's no whole-word
+match.
+
+The nasty bug has been fixed below.  The @code{-nuni} option now works
+-- all specially-written code to handle the encapsulation has been
+tested by some operation (fonts by loadup and checking the output of
+@code{(list-fonts "")}; devmode by printing; dragdrop tests other
+stuff).
+
+NOTE: for @code{-nuni} (Win 95), areas need work:
+
+@itemize
+@item
+cut and paste.  we should be able to receive Unicode text if it's there,
+and we should be able to receive it even in Win 95 or @code{-nuni}.  we
+should just check in all circumstances.  also, under 95, when we put
+some text in the clipboard, it may or may not also be automatically
+enumerated as unicode.  we need to test this out and/or just go ahead
+and manually do the unicode enumeration.
+
+@item
+receiving keyboard input.  we get only a single byte, but we should
+be able to correlate the language of the keyboard layout to a
+particular code page, so we can then decode it correctly.
+
+@item
+@code{mswindows-multibyte}.  still implemented as its own thing.  should
+be done as a chain of (encoding) unicode | unicode-to-multibyte.  need
+to turn this on, get it working, and look into optimizations in the dfc
+stuff. (#### perhaps there's a general way to do these optimizations???
+something like having a method on a coding system that can specify
+whether a pure-ASCII string gets rendered as pure-ASCII bytes and
+vice-versa.)
+@end itemize
+
+ALSO:
+
+@itemize
+@item
+we have special macros @code{TSTR_TO_C_STRING} and such because formerly
+the @samp{DFC} macros didn't know about external stuff that was Unicode
+encoded and would call @code{strlen()} on them.  this is fixed, so now
+we should undo the special macros, make em normal, removal the comments
+about this, and make sure it works. [DONE]
+
+
+@item
+finally: working on the @kbd{C-x} in Russian key layout problem.  in the
+process will probably end up doing work on cleaning up the handling
+of keyboard layouts, integrating or deleting the FSF stuff, adding
+code to change the keyboard layout as we move in and out of text in
+different languages (implemented as a post-command-hook; we need
+something like internal-post-command-hook if not already there, for
+internal stuff that doesn't want to get mixed up with the regular
+post-command-hook; similar for pre-command-hook).  also, when
+langenv changes, ways to set the keyboard layout appropriately.
+
+@item
+i think the stuff above is higher priority than the other stuff
+mentioned below.  what i'm aiming for is to be able to input and
+work with multiple languages without weird glitches, both under 95
+and NT.  the problems above are all basic impediments to such work.
+we assume for the moment that the user can make use of the existing
+file i/o conversion stuff, and put that lower in priority, after
+the basic input is working.
+
+@item
+i should get my modem connected and write up what's going on and
+send it to the lists; also cvs commit my workspaces and get more
+testers.
+@end itemize
+
+August 24, 2001:
+
+All code has been Unicode-ized except for some stuff in console-msw.c
+that deals with console output.  Much of the Unicode-encapsulation
+stuff, particularly the hand-written stuff, really needs testing.  I
+added a new command-line option, @code{-nuni}, to force use of all ANSI
+calls -- @code{XE_UNICODEP} evaluates to false in this case.
+
+There is a nasty bug that appeared recently, probably when the event
+code got Unicode-ized -- bad interactions with OS sticky modifiers.
+Hold the shift key down and release it, then instead of affecting the
+next char only, it gets permanently stuck on (until you do a regular
+shift+char stroke).  This needs to be debugged.
+
+Other things on agenda:
+
+@itemize
+@item
+go through and prioritize what's listed below.
+
+@item
+make sure the pdump code can compile and work.  for the moment we
+just don't try to dump any Unicode tables and load them up each
+time.  this is certainly fast but ...
+
+@item
+there's the problem that XEmacs can't be run in a directory with
+non-ASCII/Latin-1 chars in it, since it will be doing Unicode processing
+before we've had a chance to load the tables.  In fact, even finding the
+tables in such a situation is problematic using the normal commands.  my
+idea is to eventually load the stuff extremely extremely early, at the
+same time as the pdump data gets loaded.  in fact, the unicode table
+data (stored in an efficient binary format) can even be stuck into the
+pdump file (which would mean as a resource to the executable, for
+windows).  we'd need to extend pdump a bit: to allow for attaching extra
+data to the pdump file. (something like @code{pdump_attach_extra_data
+(addr, length)} returns a number of some sort, an index into the file,
+which you can then retrieve with @code{pdump_load_extra_data()}, which
+returns an addr (@code{mmap()}ed or loaded), and later you
+@code{pdump_unload_extra_data()} when finished.  we'd probably also need
+@code{pdump_attach_extra_data_append()}, which appends data to the data
+just written out with @code{pdump_attach_extra_data()}.  this way,
+multiple tables in memory can be written out into one contiguous
+table. (we'd use the tar-like trick of allowing new blocks to be written
+without going back to change the old blocks -- we just rely on the end
+of file/end of memory.) this same mechanism could be extracted out of
+pdump and used to handle the non-pdump situation (or alternatively, we
+could just dump either the memory image of the tables themselves or the
+compressed binary version).  in the case of extra unicode tables not
+known about at compile time that get loaded before dumping, we either
+just dump them into the image (pdump and all) or extract them into the
+compressed binary format, free the original tables, and treat them like
+all other tables.
+
+@item
+@kbd{C-x b} when using a Russian keyboard layout.  XEmacs currently
+tries to interpret @samp{C+cyrillic char}, which causes an error.  We
+want @kbd{C-x b} to still work even when the keyboard normally generates
+Cyrillic.  What we should do is expand the keyboard event structure so
+that it contains not only the actual char, but what the char would have
+been in various other keyboard layouts, and in contexts where only
+certain keystrokes make sense (creating control chars, and looking up in
+keymaps), we proceed in order, processing each of them until we get
+something.  order should be something like: current keyboard layout;
+layout of the current language environment; layout of the user's default
+language; layout of the system default language; layout of US English.
+
+@item
+reading and writing Unicode files.  multiple problems:
+
+  @itemize
+  @item
+  EOL's aren't handled right.  for the moment, just fix the
+  Unicode coding systems; later on, create EOL-only coding
+  systems:
+
+    @enumerate
+    @item
+    they would be character->character and operate next to the
+    internal data; this means that coding systems need to be able
+    to handle ends of lines that are either CR, LF, or CRLF.
+    usually this isn't a problem, as they are just characters
+    like any other and get encoded appropriately.  however,
+    coding systems that are line-oriented need to recognize any
+    of the three as line endings.
+
+    @item
+    we'd also have to complete the stuff that handles coding
+    systems where either end can be byte or char (four
+    possibilities total; use a single enum such as
+    @code{ENCODES_CHAR_TO_BYTE}, @code{ENCODES_BYTE_TO_BYTE}, etc.).
+
+    @item
+    we'd need ways of specifying the chaining of coding systems.
+    e.g. when reading a coding system, a user can specify more
+    than one with a | symbol between them.  when a context calls
+    for a coding system and a chain is needed, the `chain' coding
+    system is useful; but we should really expand the contexts
+    where a list of coding systems can be given, and whenever
+    possible try to inline the chain instead of using a
+    surrounding @code{chain} coding system.
+
+    @item
+    the @code{chain} needs some work so that it passes all sorts of
+    lstream commands down to the chain inside it -- it should be
+    entirely transparent and the fact that there's actually a
+    surrounding coding system should be invisible.  more general
+    coding system methods might need to be created.
+
+    @item
+    important: we need a way of specifying how detecting works
+    when we have more than one coding system.  we might need more
+    than a single priority list.  need to think about this.
+    @end enumerate
+
+  @item
+  Unicode files beginning with the BOM are not recognized as such.
+  we need to fix this; but to make things sensible, we really need
+  to add the idea of different levels of confidence regarding
+  what's detected.  otherwise, Unicode says "yes this is me" but
+  others higher up do too.  in the process we should probably
+  finish abstracting the detection system and fix up some
+  stupidities in it.
+
+  @item
+  When writing a file, we need error detection; otherwise somebody
+  will create a Unicode file without realizing the coding system
+  of the buffer is Raw, and then lose all the non-ASCII/Latin-1
+  text when it's written out.  We need two levels
+
+    @enumerate
+    @item
+    first, a "safe-charset" level that checks before any actual
+    encoding to see if all characters in the document can safely
+    be represented using the given coding system.  FSF has a
+    "safe-charset" property of coding systems, but it's stupid
+    because this information can be automatically derived from
+    the coding system, at least the vast majority of the time.
+    What we need is some sort of
+    alternative-coding-system-precedence-list, langenv-specific,
+    where everything on it can be checked for safe charsets and
+    then the user given a list of possibilities.  When the user
+    does "save with specified encoding", they should see the same
+    precedence list.  Again like with other precedence lists,
+    there's also a global one, and presumably all coding systems
+    not on other list get appended to the end (and perhaps not
+    checked at all when doing safe-checking?).  safe-checking
+    should work something like this: compile a list of all
+    charsets used in the buffer, along with a count of chars
+    used.  that way, "slightly unsafe" charsets can perhaps be
+    presented at the end, which will lose only a few characters
+    and are perhaps what the users were looking for.
+
+    @item
+    when actually writing out, we need error checking in case an
+    individual char in a charset can't be written even though the
+    charsets are safe.  again, the user gets the choice of other
+    reasonable coding systems.
+
+    @item
+    same thing (error checking, list of alternatives, etc.) needs
+    to happen when reading!  all of this will be a lot of work!
+    @end enumerate
+  @end itemize
+@end itemize
+
+
+
+@heading Announcement, August 20, 2001:
+
+I'm looking for testers.  There is a complete and fast implementation
+in C of Unicode conversion, translations for almost all of the
+standardly-defined charsets that load up automatically and
+instantaneously at runtime, coding systems supporting the common
+external representations of Unicode [utf-16, ucs-4, utf-8,
+little-endian versions of utf-16 and ucs-4; utf-7 is sitting there
+with abort[]s where the coding routines should go, just waiting for
+somebody to implement], and a nice set of primitives for translating
+characters<->codepoints and setting the priority lists used to control
+codepoint->char lookup.
+
+It's so far hooked into one place: the Windows IME.  Currently I can
+select the Japanese IME from the thing on my tray pad in the lower
+right corner of the screen, and type Japanese into XEmacs, and you get
+Japanese in XEmacs -- regardless of whether you set either your
+current or global system locale to Japanese,and regardless of whether
+you set your XEmacs lang env as Japanese.  This should work for many
+other languages, too -- Cyrillic, Chinese either Traditional or
+Simplified, and many others, but YMMV.  There may be some lurking
+bugs (hardly surprising for something so raw).
+
+To get at this, checkout using `ben-mule-21-5', NOT the simpler
+*`mule-21-5'.  For example
+
+cvs -d :pserver:xemacs@@cvs.xemacs.org:/usr/CVSroot checkout -r ben-mule-21-5  xemacs
+
+or you get the idea.  the `-r ben-mule-21-5' is important.
+
+I keep track of my progress in a file called README.ben-mule-21-5 in
+the root directory of the source tree.
+
+WARNING: Pdump might not work. Will be fixed rsn.
+
+@heading August 20, 2001
+
+@itemize
+@item
+still need to sort out demand loading, binary format, etc.  figure
+out what the goals are and how we're going to achieve them.  for
+the moment let's just say that running XEmacs in a directory with
+Japanese or other weird characters in the name is likely to cause
+problems under MS Windows, but once XEmacs is initialized (and
+before processing init files), all Unicode support is there.
+
+@item
+wrote the size computation routines, although not yet tested.
+
+@item
+lots more abstraction of coding systems; almost done.
+
+@item
+UNICODE WORKS!!!!!
+@end itemize
+
+@heading August 19, 2001
+
+Still needed on the Unicode support:
+
+@itemize
+@item
+demand loading: load the Unicode table data the first time a
+conversion needs to be done.
+
+@item
+maybe: table size computation: figure out how big the in-memory
+tables actually are.
+
+@item
+maybe: create a space-efficient binary format for the data, and a
+way to dump out an existing charset's data into this binary format.
+it should allow for many such groups of data to be appended
+together in one file, such that you can just append the new data
+onto the end and not have to go back and modify anything
+previously. (like how tar archives work, and how the UFS? for
+CD-R's and CD-RW's works.)
+
+@item
+maybe: figure out how to be able to access the Unicode tables at
+@code{init_intl()} time, before we know how to get at data-directory;
+that way we can handle the need for unicode conversions that come up
+very early, for example if XEmacs is run from a directory containing
+Japanese in it.  Presumably we'd want to generalize the stuff in
+@file{pdump.c} that deals with the dumper file, so that it can handle
+other files -- putting the file either in the directory of the
+executable or in a resource, maybe actually attached to the pdump file
+itself -- or maybe we just dump the data into the actual executable.
+With pdump we could extend pdump to allow for data that's in the pdump
+file but not actually mapped at startup, separate from the data that
+does get mapped -- and then at runtime the pointer gets restored not
+with a real pointer but an offset into the file; another pdump call and
+we get some way to access the data. (tricky because it might be in a
+resource, not a file.  we might have to just tell pdump to mmap or
+whatever the data in, and then tell pdump to release it.)
+
+@item
+fix multibyte to use unicode.  at first, just reverse
+@code{mswindows-multibyte-to-unicode} to be @code{unicode-to-multibyte};
+later implement something in chain to allow for reversal, for declaring
+the ends of the coding systems, etc.
+
+@item
+actually make sure that the IME stuff is working!!!
+@end itemize
+
+Other things before announcing:
+
+@itemize
+@item
+change so that the Unicode tables are not pdumped.  This means we need
+to free any table data out there.  Make sure that pdump compiles and try
+to finish the pretty-much-already-done stuff already with
+@code{XD_STRUCT_ARRAY} and dynamic size computation; just need to see
+what's going on with @code{LO_LINK}.
+@end itemize
+
+@heading August 14, 2001
+
+To do a diff between this workspace and the mainline, use the most recent sync tags, currently:
+
+@example
+cvs diff -r main-branch-ben-mule-21-5-aug-11-2001-sync -r ben-mule-21-5-post-aug-11-2001-sync
+@end example
+
+Unicode support:
+
+Unicode support is important for supporting many languages under
+Windows, such as Cyrillic, without resorting to translation tables for
+particular Windows-specific code pages.  Internally, all characters in
+Windows can be represented in two encodings: code pages and Unicode.
+With Unicode support, we can seamlessly support all Windows
+characters.  Currently, the test in the drive to support Unicode is if
+IME input works properly, since it is being converted from Unicode.
+
+Unicode support also requires that the various Windows API's be
+"Unicode-encapsulated", so that they automatically call the ANSI or
+Unicode version of the API call appropriately and handle the size
+differences in structures.  What this means is:
+
+@itemize
+@item
+first, note that Windows already provides a sort of encapsulation
+of all API's that deal with text.  All such API's are underlyingly
+provided in two versions, with an A or W suffix (ANSI or "wide"
+i.e. Unicode), and the compile-time constant UNICODE controls which
+is selected by the unsuffixed API.  Same thing happens with
+structures.  Unfortunately, this is compile-time only, not
+run-time, so not sufficient. (Creating the necessary run-time
+encoding is not conceptually difficult, but very time-consuming to
+write.  It adds no significant overhead, and the only reason it's
+not standard in Windows is conscious marketing attempts by
+Microsoft to cripple Windows 95.  FUCK MICROSOFT!  They even
+describe in a KnowledgeBase article exactly how to create such an
+API [although we don't exactly follow their procedure], and point
+out its usefulness; the procedure is also described more generally
+in Nadine Kano's book on Win32 internationalization -- written SIX
+YEARS AGO!  Obviously Microsoft has such an API available
+internally.)
+
+@item
+what we do is provide an encapsulation of each standard Windows API
+call that is split into A and W versions.  current theory is to
+avoid all preprocessor games; so we name the function with a prefix
+-- "qxe" currently -- and require callers to use the prefixed name.
+Callers need to explicitly use the W version of all structures, and
+convert text themselves using @code{Qmswindows_tstr}.  the qxe
+encapsulated version will automatically call the appropriate A or W
+version depending on whether we're running on 9x or NT, and copy
+data between W and A versions of the structures as necessary.
+
+@item
+We require the caller to handle the actual translation of text to
+avoid possible overflow when dealing with fixed-size Windows
+structures.  There are no such problems when copying data between
+the A and W versions because ANSI text is never larger than its
+equivalent Unicode representation.
+
+@item
+We allow for incremental creation of the encapsulated routines by using
+the coding system @code{Qmswindows_tstr_notyet}.  This is an alias for
+@code{Qmswindows_multibyte}, i.e. it always converts to ANSI; but it
+indicates that it will be changed to @code{Qmswindows_tstr} when we have
+a qxe version of the API call that the data is being passed to and
+change the code to use the new function.
+@end itemize
+
+Besides creating the encapsulation, the following needs to be done for
+Unicode support:
+
+@itemize
+@item
+No actual translation tables are fed into XEmacs.  We need to
+provide glue code to read the tables in @file{etc/unicode}.  See
+@file{etc/unicode/README} for the interface to implement.
+
+@item
+Fix pdump.  The translation tables for Unicode characters function as
+unions of structures with different numbers of indirection levels, in
+order to be efficient.  pdump doesn't yet support such unions.
+@file{charset.h} has a general description of how the translation tables
+work, and the pdump code has constants added for the new required data
+types, and descriptions of how these should work.
+
+@item
+ultimately, there's no end to additional work (composition, bidi
+reordering, glyph shaping/ordering, etc.), but the above is enough
+to get basic translation working.
+@end itemize
+
+Merging this workspace into the trunk requires some work.  ChangeLogs
+have not yet been created.  Also, there is a lot of additional code in
+this workspace other than just Windows and Unicode stuff.  Some of the
+changes have been somewhat disruptive to the code base, in particular:
+
+@itemize
+@item
+the code that handles the details of processing multilingual text has
+been consolidated to make it easier to extend it.  it has been yanked
+out of various files (@file{buffer.h}, @file{mule-charset.h},
+@file{lisp.h}, @file{insdel.c}, @file{fns.c}, @file{file-coding.c},
+etc.) and put into @file{text.c} and @file{text.h}.
+@file{mule-charset.h} has also been renamed @file{charset.h}.  all long
+comments concerning the representations and their processing have been
+consolidated into @file{text.c}.
+
+@item
+@file{nt/config.h} has been eliminated and everything in it merged into
+@file{config.h.in} and @file{s/windowsnt.h}.  see @file{config.h.in} for
+more info.
+
+@item
+@file{s/windowsnt.h} has been completely rewritten, and
+@file{s/cygwin32.h} and @file{s/mingw32.h} have been largely rewritten.
+tons of dead weight has been removed, and stuff common to more than one
+file has been isolated into @file{s/win32-common.h} and
+@file{s/win32-native.h}, similar to what's already done for usg
+variants.
+
+@item
+large amounts of code throughout the code base have been Mule-ized,
+not just Windows code.
+
+@item
+@file{file-coding.c/.h} have been largely rewritten (although still
+mostly syncable); see below.
+@end itemize
+
+
+@heading June 26, 2001
+
+ben-mule-21-5
+
+this contains all the mule work i've been doing.  this includes mostly
+work done to get mule working under ms windows, but in the process
+i've [of course] fixed a whole lot of other things as well, mostly
+mule issues.  the specifics:
+
+@itemize
+@item
+it compiles and runs under windows and should basically work.  the
+stuff remaining to do is (a) improved unicode support (see below)
+and (b) smarter handling of keyboard layouts.  in particular, it
+should (1) set the right keyboard layout when you change your
+language environment; (2) optionally (a user var) set the
+appropriate keyboard layout as you move the cursor into text in a
+particular language.
+
+@item
+i added a bunch of code to better support OS locales.  it tries to
+notice your locale at startup and set the language environment
+accordingly (this more or less works), and call setlocale() and set
+LANG when you change the language environment (may or may not work).
+
+@item
+major rewriting of file-coding.  it's mostly abstracted into coding
+systems that are defined by methods (similar to devices and
+specifiers), with the ultimate aim being to allow non-i18n coding
+systems such as gzip.  there is a "chain" coding system that allows
+multiple coding systems to be chained together. (it doesn't yet
+have the concept that either end of a coding system can be bytes or
+chars; this needs to be added.)
+
+@item
+unicode support.  very raw.  a few days ago i wrote a complete and
+efficient implementation of unicode translation.  it should be very
+fast, and fairly memory-efficient in its tables.  it allows for
+charset priority lists, which should be language-environment
+specific (but i haven't yet written the glue code).  it works in
+preliminary testing, but obviously needs more testing and work.
+as of yet there is no translation data added for the standard charsets.
+the tables are in etc/unicode, and all we need is a bit of glue code
+to process them.  see etc/unicode/README for the interface to
+implement.
+
+@item
+support for unicode in windows is partly there.  this will work even
+on windows 95.  the basic model is implemented but it needs finishing
+up.
+
+@item
+there is a preliminary implementation of windows ime support courtesy
+of ikeyama.
+
+@item
+if you want to get cyrillic working under windows (it appears to "work"
+but the wrong chars currently appear), the best way is to add unicode
+support for iso-8859-5 and use it in redisplay-msw.c.  we are already
+passing unicode codepoints to the text-draw routine (ExtTextOutW).
+(ExtTextOutW and GetTextExtentPoint32W are implemented on both 95 and NT.)
+
+@item
+i fixed the iso2022 handling so it will correctly read in files
+containing unknown charsets, creating a "temporary" charset which can
+later be overwritten by the real charset when it's defined.  this allows
+iso2022 elisp files with literals in strange languages to compile
+correctly under mule.  i also added a hack that will correctly read in
+and write out the emacs-specific "composition" escape sequences,
+i.e. @samp{ESC 0} through @samp{ESC 4}.  this means that my workspace correctly
+compiles the new file @file{devanagari.el} that i added (see below).
+
+@item
+i copied the remaining language-specific files from fsf.  i made
+some minor changes in certain cases but for the most part the stuff
+was just copied and may not work.
+
+@item
+i fixed @code{post-read-conversion} in coding systems to follow fsf
+conventions. (i also support our convention, for the moment.  a
+kludge, of course.)
+
+@item
+@code{make-coding-system} accepts (but ignores) the additional properties
+present in the fsf version, for compatibility.
+@end itemize
+
 
 
 @node Consoles; Devices; Frames; Windows, The Redisplay Mechanism, Multilingual Support, Top
@@ -17400,6 +20403,42 @@ The name of the terminal that the subprocess is using,
 or @code{nil} if it is using pipes.
 @end table
 
+@menu
+* Ben's separate stderr notes::                Probably obsolete.
+@end menu
+
+
+@node Ben's separate stderr notes, , , Subprocesses
+@subsection Ben's separate stderr notes (probably obsolete)
+
+This node contains some notes that Ben kept on his separate subprocess
+workspace.  These notes probably describe changes and features that have
+already been included in XEmacs 21.5; somebody should check and/or ask
+Ben.
+
+@heading ben-separate-stderr-improved-error-trapping
+
+this is an old workspace, very close to being done, containing
+
+@itemize
+@item
+subprocess stderr output can be read separately; needed to fully
+implement call-process with asynch. subprocesses.
+
+@item
+huge improvements to the internal error-trapping routines (i.e. the
+routines that call Lisp code and trap errors); Lisp code can now be
+called from within redisplay.
+
+@item
+cleanup and simplification of C-g handling; some things work now
+that never used to.
+
+@item
+see the ChangeLogs in the workspace.
+@end itemize
+
+
 @node Interface to MS Windows, Interface to the X Window System, Subprocesses, Top
 @chapter Interface to MS Windows
 @cindex MS Windows, interface to
@@ -17410,6 +20449,7 @@ or @code{nil} if it is using pipes.
 * Windows Build Flags::         
 * Windows I18N Introduction::   
 * Modules for Interfacing with MS Windows::  
+* CHANGES from 21.4-windows branch::                  Probably obsolete.
 @end menu
 
 @node Different kinds of Windows environments, Windows Build Flags, Interface to MS Windows, Interface to MS Windows
@@ -17875,7 +20915,7 @@ string of either regular or wide chars, which is to say this string may be
 prepended with an L (causing it to be a wide string) depending on
 XEUNICODE_P.
 
-@node Modules for Interfacing with MS Windows,  , Windows I18N Introduction, Interface to MS Windows
+@node Modules for Interfacing with MS Windows, CHANGES from 21.4-windows branch, Windows I18N Introduction, Interface to MS Windows
 @section Modules for Interfacing with MS Windows
 @cindex modules for interfacing with MS Windows
 @cindex interfacing with MS Windows, modules for
@@ -17936,6 +20976,195 @@ Auto-generated Unicode encapsulation functions
 @item intl-auto-encap-win32.h
 Auto-generated Unicode encapsulation headers
 @end table
+
+
+@node CHANGES from 21.4-windows branch, , Modules for Interfacing with MS Windows, Interface to MS Windows
+@section CHANGES from 21.4-windows branch (probably obsolete)
+
+This node contains the @file{CHANGES-msw} log that Andy Piper kept while
+he was maintaining the Windows branch of 21.4.  These changes have
+(presumably) long since been merged to both 21.4 and 21.5, but let's not
+throw the list away yet.
+
+@heading CHANGES-msw
+
+This file briefly describes all mswindows-specific changes to XEmacs
+in the OXYMORON series of releases. The mswindows release branch
+contains additional changes on top of the mainline XEmacs
+release. These changes are deemed necessary for XEmacs to be fully
+functional under mswindows. It is not intended that these changes
+cause problems on UNIX systems, but they have not been tested on UNIX
+platforms. Caveat Emptor.
+
+See the file @file{CHANGES-release} for a full list of mainline changes.
+
+@heading to XEmacs 21.4.9 "Informed Management (Windows)"
+
+@itemize
+@item
+Fix layout of widgets so that the search dialog works.
+
+@item
+Fix focus capture of widgets under X.
+@end itemize
+
+@heading to XEmacs 21.4.8 "Honest Recruiter (Windows)"
+
+@itemize
+@item
+All changes from 21.4.6 and 21.4.7.
+
+@item
+Make sure revert temporaries are not visiting files. Suggested by
+Mike Alexander.
+
+@item
+File renaming fix from Mathias Grimmberger.
+
+@item
+Fix printer metrics on windows 95 from Jonathan Harris.
+
+@item
+Fix layout of widgets so that the search dialog works.
+
+@item
+Fix focus capture of widgets under X.
+
+@item
+Buffers tab doc fixes from John Palmieri.
+
+@item
+Sync with FSF custom @code{:set-after} behavior.
+
+@item
+Virtual window manager freeze fix from Rick Rankin.
+
+@item
+Fix various printing problems.
+
+@item
+Enable windows printing on cygwin.
+@end itemize
+
+@heading to XEmacs 21.4.7 "Economic Science (Windows)"
+
+@itemize
+@item
+All changes from 21.4.6.
+
+@item
+Fix problems with auto-revert with noconfirm.
+
+@item
+Undo autoconf 2.5x changes.
+
+@item
+Undo 21.4.7 process change.
+@end itemize
+
+to XEmacs 21.4.6 "Common Lisp (Windows)"
+
+@itemize
+@item
+Made native registry entries match the installer.
+
+@item
+Fixed mousewheel lockups.
+
+@item
+Frame iconifcation fix from Adrian Aichner.
+
+@item
+Fixed some printing problems.
+
+@item
+Netinstaller updated to support kit revisions.
+
+@item
+Fixed customize popup menus.
+
+@item
+Fixed problems with too many dialog popups.
+
+@item
+Netinstaller fixed to correctly upgrade shortcuts when upgrading
+core XEmacs.
+
+@item
+Fix for virtual window managers from Adrian Aichner.
+
+@item
+Installer registers all C++ file types.
+
+@item
+Short-filename fix from Peter Arius.
+
+@item
+Fix for GC assertions from Adrian Aichner.
+
+@item
+Winclient DDE client from Alastair Houghton.
+
+@item
+Fix event assert from Mike Alexander.
+
+@item
+Warning removal noticed by Ben Wing.
+
+@item
+Redisplay glyph height fix from Ben Wing.
+
+@item
+Printer margin fix from Jonathan Harris.
+
+@item
+Error dialog fix suggested by Thomas Vogler.
+
+@item
+Fixed revert-buffer to not revert in the case that there is
+nothing to be done.
+
+@item
+Glyph-baseline fix from Nix.
+
+@item
+Fixed clipping of wide glyphs in non-zero-length extents.
+
+@item
+Windows build fixes.
+
+@item
+Fixed @code{:initial-focus} so that it works.
+@end itemize
+
+@heading to XEmacs 21.4.5 "Civil Service (Windows)"
+
+@itemize
+@item
+Fixed a scrollbar problem when selecting the frame with focus.
+
+@item
+Fixed @code{mswindows-shell-execute} under cygwin.
+
+@item
+Added a new function @code{mswindows-cygwin-to-win32-path} for JDE.
+
+@item
+Added support for dialog-based directory selection.
+
+@item
+The installer version has been updated to the 21.5 netinstaller. The 21.5
+installer now does proper dde file association and adds uninstall
+capability.
+
+@item
+Handle leak fix from Mike Alexander.
+
+@item
+New release build script.
+@end itemize
+
+
 
 @node Interface to the X Window System, Dumping, Interface to MS Windows, Top
 @chapter Interface to the X Window System

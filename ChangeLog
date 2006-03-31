@@ -1,3 +1,37 @@
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Miscellaneous doc cleanup, parts 2-4: move CHANGES-msw,
+	TODO.ben-mule-21-5, README.ben-mule-21-5, and
+	README.ben-separate-stderr to Internals Manual.
+
+	* CHANGES-msw: Removed.
+	* TODO.ben-mule-21-5: Removed.
+	* README.ben-mule-21-5: Removed.
+	* README.ben-separate-stderr: Removed.
+
+2006-03-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Miscellaneous doc cleanup, part 1: move CHANGES-ben-mule to
+	Internals Manual.
+
+	* CHANGES-ben-mule: Removed.
+
+	* ChangeLog:
+	* lib-src/ChangeLog:
+	* lisp/ChangeLog:
+	* lwlib/ChangeLog:
+	* man/ChangeLog:
+	* man/internals/internals.texi:
+	* modules/ChangeLog:
+	* netinstall/ChangeLog:
+	* nt/ChangeLog:
+	* nt/installer/Wise/ChangeLog:
+	* src/ChangeLog:
+	* tests/ChangeLog:
+	Update the Great Mule Merge placeholders to point to Internals
+	Manual node "The Great Mule Merge of March 2002".
+	N.B. Self-referencing log entries were *not* added to other logs.
+	
 2006-03-30  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Fix for -Kalloca detection, also broken by the
@@ -1564,7 +1598,8 @@
 
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
-	* The Great Mule Merge: See CHANGES-ben-mule.
+	* The Great Mule Merge of March 2002:
+	see node by that name in the Internals Manual.
 
 2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
 

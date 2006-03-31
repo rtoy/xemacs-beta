@@ -1,3 +1,31 @@
+2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Miscellaneous doc cleanup, parts 2-4: move CHANGES-msw,
+	TODO.ben-mule-21-5, README.ben-mule-21-5, and
+	README.ben-separate-stderr to Internals Manual.
+
+	* internals/internals.texi (Ben's TODO list): 
+	(CHANGES from 21.4-windows branch):
+	(Ben's README):
+	(Ben's separate stderr notes):
+	New nodes.
+
+	(Subprocesses): Add "Ben's separate stderr notes" to menu.
+	(The Great Mule Merge of March 2002): Add "Ben's TODO list" and
+	"Ben's README" to menu.
+	(Interface to MS Windows): Add "CHANGES from 21.4-windows branch"
+	to menu.
+
+	(Top): Update detailmenu.
+
+2006-03-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Miscellaneous doc cleanup, part 1: move CHANGES-ben-mule to
+	Internals Manual.
+
+	* internals/internals.texi (The Great Mule Merge of March 2002):
+	Insert CHANGES-ben-mule here, and reformat for Texinfo.
+
 2006-02-26  Mike Sperber  <mike@xemacs.org>
 
 	* xemacs/building.texi (External Lisp): Document that `run-lisp'
@@ -2855,7 +2883,8 @@
 
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
-	* The Great Mule Merge: placeholder.
+	* The Great Mule Merge of March 2002:
+	see node by that name in the Internals Manual.
 
 2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
