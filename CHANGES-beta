@@ -1,3 +1,48 @@
+to 21.5.26 "endive"
+
+Major Features and Backward Incompatible Changes
+
+-- Improve: search for package roots on Windows. -- Vin Shelton
+-- Improve: support asynchronous finalization, remove explicit finalizers, and support for statistics for explicitly finalized objects. -- Marcus Crestani, Adrian Aichner
+-- New: support ALSA sound on Linux. -- Jerry James
+
+User-Visible Bug Fixes and Minor Improvements
+
+-- Fix: GC cursor display in mc-alloc. -- Marcus Crestani
+-- Fix: next-error.el vs. compile.el name clashes. -- Malcolm Purvis
+-- Fix: restore memory usage stats (fix regexp). -- Marcus Crestani
+-- Fix: synch widget-move-and-invoke, used by Gnus. -- Jerry James
+-- Fix: uncomment-region in C files. -- Jerry James
+-- Fix: use set-text-properties, not remove-list-of-text-properties. -- Jerry James
+-- Improve: convert decode-coding-region, encode-coding-region to interactive commands. -- Stephen Turnbull
+-- Improve: synch regex failure limits with GNU Emacs, avoiding asserts. -- Malcolm Purvis
+
+Build Infrastructure
+
+-- Fix: eliminate configure idioms obsolete in Autoconf 2.59. -- Jerry James, Ilya Golubev
+-- Improve: merge mc-alloc features into --with-newgc. -- Marcus Crestani
+
+Documentation
+
+-- Fix: document dependence of `run-lisp' on os-utils package. -- Mike Sperber
+-- Improve: move historical READMEs, etc, to internals.texi. -- Stephen Turnbull
+
+Lisp API
+
+-- Improve: remove dead API (lisp-send-defun). -- Mike Sperber
+
+Internal API and Implementation
+
+-- Fix: add missing do to RETURN_UNGCPRO_EXIT_PROFILING. -- Jerry James
+-- Fix: avoid malloc in vdb signal handler. -- Marcus Crestani
+-- Fix: broken use of memset in vdb_install_signal_handler. -- Mike Fabian
+-- Fix: eliminate bogus pointer to nowhere. -- Stephen Turnbull, Jerry James
+-- Fix: malloc size in Dynarr_realloc. -- Marcus Crestani
+-- Improve: add internal API to zero uninitialized string. -- Marcus Crestani
+-- Improve: dynamic array cleanup, remove duplicate code. -- Marcus Crestani
+-- Improve: handle memory shortage in mc-alloc properly. -- Marcus Crestani
+-- Improve: mc-alloc APIs now return number of pages processed. -- Marcus Crestani
+
 to 21.5.25 "eggplant"
 
 Major Features and Backward Incompatible Changes
