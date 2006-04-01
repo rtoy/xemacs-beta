@@ -1545,10 +1545,13 @@ unix_send_process (Lisp_Object proc, struct lstream *lstream)
 	    }
 	  while (Lstream_was_blocked_p (XLSTREAM (p->pipe_outstream)))
 	    {
-	      /* Buffer is full.  Wait, accepting input;
-		 that may allow the program
-		 to finish doing output and read more.  */
-	      Faccept_process_output (Qnil, make_int (1), Qnil);
+	      /* Buffer is full.  Wait 10ms, accepting input; that may
+		 allow the program to finish doing output and read more.
+		 Used to be 1s, but that's excruciating.  nt_send_process
+		 uses geometrically increasing timeouts (up to 1s).  This
+		 might be a good idea here.
+	         N.B. timeout_secs = Qnil is faster than Qzero. */
+	      Faccept_process_output (Qnil, Qnil, make_int (10));
 	      /* It could have *really* finished, deleting the process */
 	      if (NILP(p->pipe_outstream))
 		return;

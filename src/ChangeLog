@@ -1,3 +1,10 @@
+2006-03-23  Tony Bennett  <tbennett@nvidia.com>
+
+	* process-unix.c (unix_send_process): Reduce timeout for
+	Faccept_process_output to 10ms.  This dramatically speeds up many
+	functions that read from processes, eg, inferior interpreter
+	processes as in ilisp or python-mode.
+
 2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.26 "endive" is released.
