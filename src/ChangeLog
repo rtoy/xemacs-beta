@@ -1,3 +1,7 @@
+2006-04-10  Jerry James  <james@xemacs.org>
+
+	* alsaplay.c: Support pre-1.0.10 versions of the ALSA library.
+
 2006-03-23  Tony Bennett  <tbennett@nvidia.com>
 
 	* process-unix.c (unix_send_process): Reduce timeout for

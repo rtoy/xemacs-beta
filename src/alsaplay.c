@@ -41,6 +41,8 @@ Boston, MA 02111-1307, USA.  */
 #include <alsa/control.h>
 #include <alsa/mixer.h>
 
+#define ALSA_VERSION(major,minor,sub) (((major)<<16) | ((minor)<<8)| (sub))
+
 struct mixer_state
 {
   snd_mixer_t *mixer;
@@ -51,22 +53,26 @@ struct mixer_state
   int reset_front_center;
   int reset_front_right;
   int reset_rear_left;
-  int reset_rear_center;
   int reset_rear_right;
+  int reset_woofer;
+#if SND_LIB_VERSION >= ALSA_VERSION (1, 0, 10)
+  int reset_rear_center;
   int reset_side_left;
   int reset_side_right;
-  int reset_woofer;
+#endif
 
   /* Old volumes for the channels */
   long front_left_vol;
   long front_center_vol;
   long front_right_vol;
   long rear_left_vol;
-  long rear_center_vol;
   long rear_right_vol;
+  long woofer_vol;
+#if SND_LIB_VERSION >= ALSA_VERSION (1, 0, 10)
+  long rear_center_vol;
   long side_left_vol;
   long side_right_vol;
-  long woofer_vol;
+#endif
 };
 
 /* Assemble a machine half-word in little-endian order */
@@ -227,9 +233,13 @@ set_volume (struct mixer_state *mix, int volume)
     }
 
   /* Translate the Lisp volume range to the device volume range */
+#if SND_LIB_VERSION < ALSA_VERSION (1, 0, 10)
+  snd_mixer_selem_get_playback_volume_range (mix->vol_ctl, &min_vol, &max_vol);
+#else
   if (snd_mixer_selem_get_playback_volume_range (mix->vol_ctl, &min_vol,
 						 &max_vol) < 0)
     return;
+#endif
 
   dev_vol = volume * (max_vol - min_vol) / 100 + min_vol;
 
@@ -251,12 +261,17 @@ set_volume (struct mixer_state *mix, int volume)
     mix->reset_rear_left = 1;
 
   if (snd_mixer_selem_get_playback_volume
-      (mix->vol_ctl, SND_MIXER_SCHN_REAR_CENTER, &mix->rear_center_vol) >= 0)
-    mix->reset_rear_center = 1;
-
-  if (snd_mixer_selem_get_playback_volume
       (mix->vol_ctl, SND_MIXER_SCHN_REAR_RIGHT, &mix->rear_right_vol) >= 0)
     mix->reset_rear_right = 1;
+
+  if (snd_mixer_selem_get_playback_volume
+      (mix->vol_ctl, SND_MIXER_SCHN_WOOFER, &mix->woofer_vol) >= 0)
+    mix->reset_woofer = 1;
+
+#if SND_LIB_VERSION >= ALSA_VERSION (1, 0, 10)
+  if (snd_mixer_selem_get_playback_volume
+      (mix->vol_ctl, SND_MIXER_SCHN_REAR_CENTER, &mix->rear_center_vol) >= 0)
+    mix->reset_rear_center = 1;
 
   if (snd_mixer_selem_get_playback_volume
       (mix->vol_ctl, SND_MIXER_SCHN_SIDE_LEFT, &mix->side_left_vol) >= 0)
@@ -265,10 +280,7 @@ set_volume (struct mixer_state *mix, int volume)
   if (snd_mixer_selem_get_playback_volume
       (mix->vol_ctl, SND_MIXER_SCHN_SIDE_RIGHT, &mix->side_right_vol) >= 0)
     mix->reset_side_right = 1;
-
-  if (snd_mixer_selem_get_playback_volume
-      (mix->vol_ctl, SND_MIXER_SCHN_WOOFER, &mix->woofer_vol) >= 0)
-    mix->reset_woofer = 1;
+#endif
 
   /* Set the volume */
   snd_mixer_selem_set_playback_volume_all (mix->vol_ctl, dev_vol);
@@ -293,13 +305,18 @@ reset_volume (const struct mixer_state *mix)
     snd_mixer_selem_set_playback_volume
       (mix->vol_ctl, SND_MIXER_SCHN_REAR_LEFT, mix->rear_left_vol);
 
-  if (mix->reset_rear_center)
-    snd_mixer_selem_set_playback_volume
-      (mix->vol_ctl, SND_MIXER_SCHN_REAR_CENTER, mix->rear_center_vol);
-
   if (mix->reset_rear_right)
     snd_mixer_selem_set_playback_volume
       (mix->vol_ctl, SND_MIXER_SCHN_REAR_RIGHT, mix->rear_right_vol);
+
+  if (mix->reset_woofer)
+    snd_mixer_selem_set_playback_volume
+      (mix->vol_ctl, SND_MIXER_SCHN_WOOFER, mix->woofer_vol);
+
+#if SND_LIB_VERSION >= ALSA_VERSION (1, 0, 10)
+  if (mix->reset_rear_center)
+    snd_mixer_selem_set_playback_volume
+      (mix->vol_ctl, SND_MIXER_SCHN_REAR_CENTER, mix->rear_center_vol);
 
   if (mix->reset_side_left)
     snd_mixer_selem_set_playback_volume
@@ -308,10 +325,7 @@ reset_volume (const struct mixer_state *mix)
   if (mix->reset_side_right)
     snd_mixer_selem_set_playback_volume
       (mix->vol_ctl, SND_MIXER_SCHN_SIDE_RIGHT, mix->side_right_vol);
-
-  if (mix->reset_woofer)
-    snd_mixer_selem_set_playback_volume
-      (mix->vol_ctl, SND_MIXER_SCHN_WOOFER, mix->woofer_vol);
+#endif
 
   snd_mixer_close (mix->mixer);
 }
