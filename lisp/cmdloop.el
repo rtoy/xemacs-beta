@@ -542,12 +542,15 @@ Legitimate radix values are 8, 10 and 16."
   :group 'editing-basics)
 
 (defun read-quoted-char (&optional prompt)
+  ;; XEmacs change; description of the character code input
   "Like `read-char', but do not allow quitting.
-Also, if the first character read is an octal digit,
-we read any number of octal digits and return the
-specified character code.  Any nondigit terminates the sequence.
-If the terminator is RET, it is discarded;
-any other terminator is used itself as input.
+
+Also, if the first character read is a digit of base (the value of)
+`read-quoted-char-radix', we read as many of such digits as are
+typed and return a character with the corresponding Unicode code
+point.  Any input that not a digit (in the base used) terminates the
+sequence.  If the terminator is RET, it is discarded; any other
+terminator is used itself as input.
 
 The optional argument PROMPT specifies a string to use to prompt the user.
 The variable `read-quoted-char-radix' controls which radix to use
@@ -558,13 +561,20 @@ for numeric input."
 	)
     (while (not done)
       (let ((inhibit-quit first)
-	    ;; Don't let C-h get the help message--only help function keys.
+	    ;; Don't let C-h get the help message--only help
+	    ;; function keys. 
+	    ;; XEmacs: we don't support the help function keys as of
+	    ;; 2006-04-16. GNU have a Vhelp_event_list in addition
+	    ;; to help-char in src/keyboard.c, and it's only useful
+	    ;; to set help-form while help-char is nil when that
+	    ;; functionality is available.
 	    (help-char nil)
-	    (help-form
+	    (help-form (format 
 	     "Type the special character you want to use,
-or the octal character code.
+or the character code, base %d (the value of `read-quoted-char-radix')
 RET terminates the character code and is discarded;
-any other non-digit terminates the character code and is then used as input."))
+any other non-digit terminates the character code and is then used as input."
+	     read-quoted-char-radix)))
 	(and prompt (display-message 'prompt (format "%s-" prompt)))
 	(setq event (next-command-event)
 	      char (or (event-to-character event)
@@ -605,7 +615,8 @@ any other non-digit terminates the character code and is then used as input."))
 	    (t (setq code (char-to-int char)
 		     done t)))
       (setq first nil))
-    (int-to-char code)))
+    ;; XEmacs change; unicode-to-char instead of int-to-char
+    (unicode-to-char code)))
 
 ;; in passwd.el.
 ; (defun read-passwd (prompt &optional confirm default)

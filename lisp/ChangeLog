@@ -1,3 +1,14 @@
+2006-04-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cmdloop.el (read-quoted-char): Use unicode-to-char instead of
+	int-to-char for converting code points to characters; document
+	this usage. This is compatible with previously documented
+	behaviour, since the mapping from number to character was only
+	stable and well-defined for ISO-8859-1. Thank you Pete Forman!
+
+	Document some help subsystem incompatibility with GNU that seems
+	to have been ignored during the last sync.
+
 2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.26 "endive" is released.
