@@ -548,8 +548,8 @@ Legitimate radix values are 8, 10 and 16."
 Also, if the first character read is a digit of base (the value of)
 `read-quoted-char-radix', we read as many of such digits as are
 typed and return a character with the corresponding Unicode code
-point.  Any input that not a digit (in the base used) terminates the
-sequence.  If the terminator is RET, it is discarded; any other
+point.  Any input that is not a digit (in the base used) terminates
+the sequence.  If the terminator is RET, it is discarded; any other
 terminator is used itself as input.
 
 The optional argument PROMPT specifies a string to use to prompt the user.
