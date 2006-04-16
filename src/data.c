@@ -216,6 +216,11 @@ Return t if OBJECT is nil.
 
 DEFUN ("consp", Fconsp, 1, 1, 0, /*
 Return t if OBJECT is a cons cell.  `nil' is not a cons cell.
+
+A cons cell is a Lisp object (an area in memory) comprising two pointers
+called the CAR and the CDR.  Each of these pointers can point to any other
+Lisp object.  The common Lisp data type, the list, is a specially-structured
+series of cons cells.
 */
        (object))
 {
@@ -232,6 +237,10 @@ Return t if OBJECT is not a cons cell.  `nil' is not a cons cell.
 
 DEFUN ("listp", Flistp, 1, 1, 0, /*
 Return t if OBJECT is a list.  `nil' is a list.
+
+A list is implemented as a series of cons cells structured such that the CDR
+of each cell either points to another cons cell or to `nil', the special
+Lisp value for both Boolean false and the empty list.
 */
        (object))
 {
@@ -256,6 +265,9 @@ Return t if OBJECT is an acyclic, nil-terminated (ie, not dotted), list.
 
 DEFUN ("symbolp", Fsymbolp, 1, 1, 0, /*
 Return t if OBJECT is a symbol.
+
+A symbol is a Lisp object with a name. It can optionally have any and all of
+a value, a property list and an associated function. 
 */
        (object))
 {
@@ -600,19 +612,21 @@ Return a symbol representing the type of OBJECT.
 /* Extract and set components of lists */
 
 DEFUN ("car", Fcar, 1, 1, 0, /*
-Return the car of LIST.  If arg is nil, return nil.
-Error if arg is not nil and not a cons cell.  See also `car-safe'.
+Return the car of CONS.  If CONS is nil, return nil.
+The car of a list or a dotted pair is its first element.
+
+Error if CONS is not nil and not a cons cell.  See also `car-safe'.
 */
-       (list))
+       (cons))
 {
   while (1)
     {
-      if (CONSP (list))
-	return XCAR (list);
-      else if (NILP (list))
+      if (CONSP (cons))
+	return XCAR (cons);
+      else if (NILP (cons))
 	return Qnil;
       else
-	list = wrong_type_argument (Qlistp, list);
+	cons = wrong_type_argument (Qlistp, cons);
     }
 }
 
@@ -625,19 +639,22 @@ Return the car of OBJECT if it is a cons cell, or else nil.
 }
 
 DEFUN ("cdr", Fcdr, 1, 1, 0, /*
-Return the cdr of LIST.  If arg is nil, return nil.
+Return the cdr of CONS.  If CONS is nil, return nil.
+The cdr of a list is the list without its first element.  The cdr of a
+dotted pair (A . B) is the second element, B.
+
 Error if arg is not nil and not a cons cell.  See also `cdr-safe'.
 */
-       (list))
+       (cons))
 {
   while (1)
     {
-      if (CONSP (list))
-	return XCDR (list);
-      else if (NILP (list))
+      if (CONSP (cons))
+	return XCDR (cons);
+      else if (NILP (cons))
 	return Qnil;
       else
-	list = wrong_type_argument (Qlistp, list);
+	cons = wrong_type_argument (Qlistp, cons);
     }
 }
 
@@ -651,6 +668,7 @@ Return the cdr of OBJECT if it is a cons cell, else nil.
 
 DEFUN ("setcar", Fsetcar, 2, 2, 0, /*
 Set the car of CONS-CELL to be NEWCAR.  Return NEWCAR.
+The car of a list or a dotted pair is its first element.
 */
        (cons_cell, newcar))
 {
@@ -663,6 +681,8 @@ Set the car of CONS-CELL to be NEWCAR.  Return NEWCAR.
 
 DEFUN ("setcdr", Fsetcdr, 2, 2, 0, /*
 Set the cdr of CONS-CELL to be NEWCDR.  Return NEWCDR.
+The cdr of a list is the list without its first element.  The cdr of a
+dotted pair (A . B) is the second element, B.
 */
        (cons_cell, newcdr))
 {
@@ -986,7 +1006,12 @@ The arguments may be numbers, characters or markers.
 
 DEFUN ("<", Flss, 1, MANY, 0, /*
 Return t if the sequence of arguments is monotonically increasing.
-The arguments may be numbers, characters or markers.
+
+(That is, if there is a second argument, it must be numerically greater than
+the first.  If there is a third, it must be numerically greater than the
+second, and so on.)  At least one argument is required.
+
+The arguments may be numbers, characters or markers.  
 */
        (int nargs, Lisp_Object *args))
 {
@@ -995,6 +1020,11 @@ The arguments may be numbers, characters or markers.
 
 DEFUN (">", Fgtr, 1, MANY, 0, /*
 Return t if the sequence of arguments is monotonically decreasing.
+
+(That is, if there is a second argument, it must be numerically less than
+the first.  If there is a third, it must be numerically less than the
+second, and so forth.)  At least one argument is required.
+
 The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))

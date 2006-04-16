@@ -1,3 +1,14 @@
+2006-04-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el (incf):
+	* cl.el (decf):
+	* cl.el (pop):
+	* cl.el (push):
+	* cl.el (pushnew):
+	Docstring clarifications; drop non-standard formatting for incf,
+	decf, pop, move to GNU's parameter names for push, pushnew since
+	they make it much easier to remember the right order.  
+	
 2006-04-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cmdloop.el (read-quoted-char): Use unicode-to-char instead of

@@ -132,7 +132,7 @@ Floating-point numbers of equal value are `eql', but they may not be `eq'."
 ;;; can safely be used in .emacs files.
 
 (defmacro incf (place &optional x)
-  "(incf PLACE [X]): increment PLACE by X (1 by default).
+  "Increment PLACE by X (1 by default).
 PLACE may be a symbol, or any generalized variable allowed by `setf'.
 The return value is the incremented value of PLACE."
   (if (symbolp place)
@@ -142,7 +142,7 @@ The return value is the incremented value of PLACE."
     (list 'callf '+ place (or x 1))))
 
 (defmacro decf (place &optional x)
-  "(decf PLACE [X]): decrement PLACE by X (1 by default).
+  "Decrement PLACE by X (1 by default).
 PLACE may be a symbol, or any generalized variable allowed by `setf'.
 The return value is the decremented value of PLACE."
   (if (symbolp place)
@@ -150,7 +150,7 @@ The return value is the decremented value of PLACE."
     (list 'callf '- place (or x 1))))
 
 (defmacro pop (place)
-  "(pop PLACE): remove and return the head of the list stored in PLACE.
+  "Remove and return the head of the list stored in PLACE.
 Analogous to (prog1 (car PLACE) (setf PLACE (cdr PLACE))), though more
 careful about evaluating each argument only once and in the right order.
 PLACE may be a symbol, or any generalized variable allowed by `setf'."
@@ -158,21 +158,22 @@ PLACE may be a symbol, or any generalized variable allowed by `setf'."
       `(car (prog1 ,place (setq ,place (cdr ,place))))
     (cl-do-pop place)))
 
-(defmacro push (x place)
-  "(push X PLACE): insert X at the head of the list stored in PLACE.
-Analogous to (setf PLACE (cons X PLACE)), though more careful about
-evaluating each argument only once and in the right order.  PLACE may
+(defmacro push (newelt listname)
+  "Add NEWELT to the list stored in LISTNAME.
+Analogous to (setf LISTNAME (cons NEWELT LISTNAME)), though more careful about
+evaluating each argument only once and in the right order.  LISTNAME may
 be a symbol, or any generalized variable allowed by `setf'."
-  (if (symbolp place) `(setq ,place (cons ,x ,place))
-    (list 'callf2 'cons x place)))
+  (if (symbolp listname) `(setq ,listname (cons ,newelt ,listname))
+    (list 'callf2 'cons newelt listname)))
 
-(defmacro pushnew (x place &rest keys)
-  "(pushnew X PLACE): insert X at the head of the list if not already there.
-Like (push X PLACE), except that the list is unmodified if X is `eql' to
-an element already on the list.
+(defmacro pushnew (newelt listname &rest keys)
+  "Add NEWELT to the list stored in LISTNAME, unless it's already there. 
+Like (push NEWELT LISTNAME), except that the list is unmodified if NEWELT is
+`eql' to an element already on the list.
 Keywords supported:  :test :test-not :key"
-  (if (symbolp place) (list 'setq place (list* 'adjoin x place keys))
-    (list* 'callf2 'adjoin x place keys)))
+  (if (symbolp listname) (list 'setq listname 
+			       (list* 'adjoin newelt listname keys))
+    (list* 'callf2 'adjoin newelt listname keys)))
 
 (defun cl-set-elt (seq n val)
   (if (listp seq) (setcar (nthcdr n seq) val) (aset seq n val)))

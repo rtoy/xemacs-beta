@@ -1,3 +1,20 @@
+2006-04-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (Fconsp):
+	* data.c (Fsymbolp):
+	* data.c (Fcar):
+	* data.c (Flistp):
+	* data.c (Fsetcar):
+	* data.c (Fsetcdr):
+	* data.c (Flss):
+	* data.c (Fgtr):
+	Short docstring clarifications to make life easier for people who
+	are learning Lisp; explain what a cons is in the consp docstring,
+	what a symbol is in the symbolp docstring, and so forth. Thank you
+	Alan Mackenzie on emacs-devel. 
+	Expand on "monotonically increasing" and "monotonically
+	decreasing" in the Flss and Fgtr docstrings.
+	
 2006-04-10  Jerry James  <james@xemacs.org>
 
 	* alsaplay.c: Support pre-1.0.10 versions of the ALSA library.
