@@ -30,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
 /* We can't just include <alsa/asoundlib.h> because it tries to redefine
  * several symbols defined by the previous header files.
  */
+#include <alsa/version.h>
 #include <alsa/input.h>
 #include <alsa/output.h>
 #include <alsa/conf.h>

@@ -1,3 +1,8 @@
+2006-04-18  Jerry James  <james@xemacs.org>
+
+	* alsaplay.c: Explicitly include ALSA's version.h for older
+	versions of the library.  Thanks to Ilya Golubev.
+
 2006-04-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c (Fconsp):
