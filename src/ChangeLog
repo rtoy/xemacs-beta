@@ -1,3 +1,7 @@
+2006-04-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* unicode.c: Improve comment on to/from_unicode table design.
+
 2006-04-18  Jerry James  <james@xemacs.org>
 
 	* alsaplay.c: Explicitly include ALSA's version.h for older

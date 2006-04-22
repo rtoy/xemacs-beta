@@ -202,11 +202,10 @@ Lisp_Object Qutf_8_bom;
 
 #ifdef MULE 
 
-/* #### Using ints for to_unicode is OK (as long as they are >= 32 bits).
-   However, shouldn't the shorts below be unsigned?
-
-   Answer: Doesn't matter because the values being converted to are only
-   96x96. */
+/* Using ints for to_unicode is OK (as long as they are >= 32 bits).
+   In from_unicode, we're converting from Mule characters, which means
+   that the values being converted to are only 96x96, and we can save
+   space by using shorts (signedness doesn't matter). */
 static int *to_unicode_blank_1;
 static int **to_unicode_blank_2;
 
