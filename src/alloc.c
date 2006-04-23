@@ -1255,7 +1255,16 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("cons", cons,
 				     Lisp_Cons);
 
 DEFUN ("cons", Fcons, 2, 2, 0, /*
-Create a new cons, give it CAR and CDR as components, and return it.
+Create a new cons cell, give it CAR and CDR as components, and return it.
+
+A cons cell is a Lisp object (an area in memory) made up of two pointers
+called the CAR and the CDR.  Each of these pointers can point to any other
+Lisp object.  The common Lisp data type, the list, is a specially-structured
+series of cons cells.
+
+The pointers are accessed from Lisp with `car' and `cdr', and mutated with
+`setcar' and `setcdr' respectively.  For historical reasons, the aliases
+`rplaca' and `rplacd' (for `setcar' and `setcdr') are supported.
 */
        (car, cdr))
 {

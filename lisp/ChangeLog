@@ -1,3 +1,10 @@
+2006-04-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.el (push):
+	* cl.el (pushnew):
+	Take on board Stephen's criticism of my last changes to the CL
+	docstrings.
+	
 2006-04-24  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* dumped-lisp.el (fontconfig): Load only with Xft.

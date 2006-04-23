@@ -1,3 +1,13 @@
+2006-04-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c:
+	* data.c:
+	* data.c (Fconsp):
+	* data.c (Flistp):
+	Take on board feedback from Stephen on my last change; move the
+	explanation of what a cons is to the cons docstring, add cross
+	references to that from the consp and atomp docstrings. 
+	
 2006-04-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* Makefile.in.in (x_objs): Change xft-fonts.o to font-mgr.o.

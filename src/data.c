@@ -217,10 +217,8 @@ Return t if OBJECT is nil.
 DEFUN ("consp", Fconsp, 1, 1, 0, /*
 Return t if OBJECT is a cons cell.  `nil' is not a cons cell.
 
-A cons cell is a Lisp object (an area in memory) comprising two pointers
-called the CAR and the CDR.  Each of these pointers can point to any other
-Lisp object.  The common Lisp data type, the list, is a specially-structured
-series of cons cells.
+See the documentation for `cons' or the Lisp manual for more details on what
+a cons cell is.
 */
        (object))
 {
@@ -229,6 +227,9 @@ series of cons cells.
 
 DEFUN ("atom", Fatom, 1, 1, 0, /*
 Return t if OBJECT is not a cons cell.  `nil' is not a cons cell.
+
+See the documentation for `cons' or the Lisp manual for more details on what
+a cons cell is.
 */
        (object))
 {
@@ -238,9 +239,9 @@ Return t if OBJECT is not a cons cell.  `nil' is not a cons cell.
 DEFUN ("listp", Flistp, 1, 1, 0, /*
 Return t if OBJECT is a list.  `nil' is a list.
 
-A list is implemented as a series of cons cells structured such that the CDR
-of each cell either points to another cons cell or to `nil', the special
-Lisp value for both Boolean false and the empty list.
+A list is either the Lisp object nil (a symbol), interpreted as the empty
+list in this context, or a cons cell whose CDR refers to either nil or a
+cons cell.  A "proper list" contains no cycles.
 */
        (object))
 {

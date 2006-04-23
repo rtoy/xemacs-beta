@@ -159,15 +159,17 @@ PLACE may be a symbol, or any generalized variable allowed by `setf'."
     (cl-do-pop place)))
 
 (defmacro push (newelt listname)
-  "Add NEWELT to the list stored in LISTNAME.
-Analogous to (setf LISTNAME (cons NEWELT LISTNAME)), though more careful about
-evaluating each argument only once and in the right order.  LISTNAME may
-be a symbol, or any generalized variable allowed by `setf'."
+  "Add NEWELT at the beginning of the list stored in LISTNAME.
+Analogous to (setf LISTNAME (cons NEWELT LISTNAME)), though more careful
+about evaluating each argument only once and in the right order.  LISTNAME
+may be a symbol, or any generalized variable allowed by `setf'; that is, it
+does not necessarily have to be a list, though `push' is most often used on
+lists.  "
   (if (symbolp listname) `(setq ,listname (cons ,newelt ,listname))
     (list 'callf2 'cons newelt listname)))
 
 (defmacro pushnew (newelt listname &rest keys)
-  "Add NEWELT to the list stored in LISTNAME, unless it's already there. 
+  "Add NEWELT at the beginning of LISTNAME, unless it's already in LISTNAME.
 Like (push NEWELT LISTNAME), except that the list is unmodified if NEWELT is
 `eql' to an element already on the list.
 Keywords supported:  :test :test-not :key"
