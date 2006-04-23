@@ -346,15 +346,15 @@ or if you change your font path, you can call this to re-initialize the menus."
 
 (defun x-font-menu-load-font-xft (family weight size slant resolution)
   (let ((pattern (make-fc-pattern)))
-    (fc-pattern-add pattern fc-font-name-property-family family)
+    (fc-pattern-add-family pattern family)
     (if weight 
-	(fc-pattern-add pattern fc-font-name-property-weight
-			 (fc-font-weight-translate-from-string weight)))
+	(fc-pattern-add-weight pattern
+			       (fc-font-weight-translate-from-string weight)))
     (if size
-	(fc-pattern-add pattern fc-font-name-property-size size))
+	(fc-pattern-add-size pattern size))
     (if slant
-	(fc-pattern-add pattern fc-font-name-property-slant
-			 (fc-font-slant-translate-from-string slant)))
+	(fc-pattern-add-slant pattern
+			      (fc-font-slant-translate-from-string slant)))
     (make-font-instance (fc-name-unparse pattern))))
 
 (defun x-font-menu-load-font-core (family weight size slant resolution)

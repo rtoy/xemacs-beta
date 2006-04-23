@@ -1,3 +1,7 @@
+2006-04-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac: Add stubs for fontconfig configuration.
+
 2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.26 "endive" is released.

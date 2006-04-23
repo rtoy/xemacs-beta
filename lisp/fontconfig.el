@@ -105,10 +105,11 @@
 ;; constructor function `fc-pattern-create'.  #### It might make sense
 ;; to generalize `make-fc-pattern' by allowing a plist of properties
 ;; as an optional argument.  We also provide accessors
-;; `fc-pattern-get-PROPERTY' and mutators `fc-pattern-add-PROPERTY'
-;; for each of the standard properties used by Xft, which overlap
-;; substantially with the properties defined by X11.  #### We probably
-;; should provide `fc-pattern-delete-PROPERTY', too.
+;; `fc-pattern-get-PROPERTY' and mutators `fc-pattern-add-PROPERTY' and
+;; `fc-pattern-del-PROPERTY' for each of the standard properties used by
+;; Xft, which overlap substantially with the properties defined by X11.
+
+(require 'font-mgr)
 
 (defalias 'make-fc-pattern 'fc-pattern-create)
 
@@ -117,10 +118,10 @@
 
 A font property is a key in a fontconfig pattern and is associated with
 one or more values of a given type.  This macro creates wrappers around
-`fc-pattern-get' and `fc-pattern-add' for PROPERTY.  Wrappers are
-preferred to use of primitives with a string as the OBJECT argument because
-typos in wrappers result in \"not fboundp\" errors, while a typo in a string
-produces a silent null return.
+`fc-pattern-get', `fc-pattern-add', and `fc-pattern-del' for PROPERTY.
+\(Wrappers are preferred to use of primitives with a string as the OBJECT
+argument because typos in wrappers result in \"not fboundp\" errors, while
+a typo in a string produces a silent null return.)
 
 PROPERTY is a string.
 TYPE is a symbol indicating the type of the property value.  It is used only
@@ -140,7 +141,10 @@ different properties as being linked to each other in some way.
 A mutator `fc-pattern-add-PROPERTY' which takes a fontconfig pattern object
 and a value as arguments, and adds the value to the property with the next
 id.  The type of the value is recognized by `fc-pattern-add', and the id
-is chosen by the fontconfig implementation."
+is chosen by the fontconfig implementation.
+
+A mutator `fc-pattern-del-PROPERTY' which takes a fontconfig pattern object,
+and deletes all values of that property from the pattern."
 
   `(progn
     (defsubst ,(intern (concat "fc-pattern-get-" property))
@@ -179,6 +183,20 @@ See `fc-pattern-add' for documentation of patterns, values, and error returns."
 		 "")
 	       type)
       (fc-pattern-add pattern ,property value))
+
+    (defsubst ,(intern (concat "fc-pattern-del-" property))
+      (pattern)
+      ,(format "\
+Delete all values of the %s property of fontconfig pattern PATTERN.%s
+
+This function is a convenience wrapper for `fc-pattern-del'.
+See `fc-pattern-del' for documentation of patterns and error returns."
+	       property
+	       (if obsolete-p "
+\(Obsolete, only available on systems using Xft version 1.)"
+		 "")
+	       type)
+      (fc-pattern-del pattern ,property))
     ,property))
 
 ;; define the standard properties for Xft v.2 here
@@ -202,67 +220,25 @@ See `fc-pattern-add' for documentation of patterns, values, and error returns."
 (fc-define-property "weight" integer "the weight")
 (fc-define-property "xlfd" string "the XLFD (full name in X11)")
 
-;; Xft v.1 properties (marked as obsolete)
+;; Xft v.1 properties (generally marked as obsolete)
+;; had different semantics from XLFD "encoding"
 (fc-define-property "encoding" string "the encoding" t)
-(fc-define-property "charwidth" integer "the average character width" t)
+;; also used by X11 XLFDs, so not obsolete
+(fc-define-property "charwidth" integer "the average character width")
 (fc-define-property "charheight" integer "the average character height" t)
 (fc-define-property "core" boolean "represents a core font" t)
 (fc-define-property "render" boolean "represents a render (Xft) font" t)
 
+;; X11 XLFD and other standard properties
+(fc-define-property "x11-swidth" string "the 'set' width")
+(fc-define-property "x11-adstyle" string "any additional style")
+(fc-define-property "x11-resx" string "the horizontal design resolution")
+(fc-define-property "x11-resy" string "the vertical design resolution")
+;; use "charwidth" instead of "x11-avgwidth"
+(fc-define-property "x11-registry" string "the encoding registry")
+;; "x11-encoding" has different semantics from Xft v.1 "encoding"
+(fc-define-property "x11-encoding" string "the encoding index")
 
-(defconst fc-font-name-property-family "family")
-(defconst fc-font-name-property-style "style")
-(defconst fc-font-name-property-slant "slant")
-(defconst fc-font-name-property-weight "weight")
-(defconst fc-font-name-property-size "size")
-(defconst fc-font-name-property-pixelsize "pixelsize")
-(defconst fc-font-name-property-spacing "spacing")
-(defconst fc-font-name-property-foundry "foundry")
-(defconst fc-font-name-property-antialias "antialias")
-(defconst fc-font-name-property-xlfd "xlfd")
-(defconst fc-font-name-property-file "file")
-(defconst fc-font-name-property-index "index")
-(defconst fc-font-name-property-rasterizer "rasterizer")
-(defconst fc-font-name-property-outline "outline")
-(defconst fc-font-name-property-scalable "scalable")
-(defconst fc-font-name-property-rgba "rgba")
-(defconst fc-font-name-property-minspace "minspace")
-(defconst fc-font-name-property-dpi "dpi")
-
-;; Xft version 1 only
-;;(defconst fc-font-name-property-encoding "encoding")
-;;(defconst fc-font-name-property-charwidth "charwidth")
-;;(defconst fc-font-name-property-charheight "charheight")
-;;(defconst fc-font-name-property-core "core")
-;;(defconst fc-font-name-property-render "render")
-
-
-(defconst fc-pattern-selector-mapping
-  `((,fc-font-name-property-family        . fc-pattern-get-family)
-    (,fc-font-name-property-style         . fc-pattern-get-style)
-    (,fc-font-name-property-slant         . fc-pattern-get-slant)
-    (,fc-font-name-property-weight        . fc-pattern-get-weight)
-    (,fc-font-name-property-size          . fc-pattern-get-size)
-    (,fc-font-name-property-pixelsize     . fc-pattern-get-pixelsize)
-    (,fc-font-name-property-spacing       . fc-pattern-get-spacing)
-    (,fc-font-name-property-foundry       . fc-pattern-get-foundry)
-    (,fc-font-name-property-antialias     . fc-pattern-get-antialias)
-    (,fc-font-name-property-xlfd          . fc-pattern-get-xlfd)
-    (,fc-font-name-property-file          . fc-pattern-get-file)
-    (,fc-font-name-property-index         . fc-pattern-get-index)
-    (,fc-font-name-property-rasterizer    . fc-pattern-get-rasterizer)
-    (,fc-font-name-property-outline       . fc-pattern-get-outline)
-    (,fc-font-name-property-scalable      . fc-pattern-get-scalable)
-    (,fc-font-name-property-rgba          . fc-pattern-get-rgba)
-    (,fc-font-name-property-minspace      . fc-pattern-get-minspace)
-    (,fc-font-name-property-dpi           . fc-pattern-get-dpi)
-    ;; Xft version 1 only
-    ;; (,fc-font-name-property-encoding      . fc-pattern-get-encoding)
-    ;; (,fc-font-name-property-charwidth     . fc-pattern-get-char-width)
-    ;; (,fc-font-name-property-charheight    . fc-pattern-get-char-height)
-    ;; (,fc-font-name-property-core          . fc-pattern-get-core)
-    ;; (,fc-font-name-property-render        . fc-pattern-get-render)
-    ))
 
 (defvar fc-find-available-font-families-fc-fonts-only t
   "If `fc-find-available-font-families-fc-fonts-only' is set to `t',
@@ -415,7 +391,33 @@ A new object is allocated and returned."
 ;;
 ;;   fc-name-parse
 ;;   fc-name-unparse
-;;   xft-name-unparse
+;;   xft-name-unparse (nonfunctional and presumably obsolete)
+;;
+;; For interfacing with various font rendering systems, we need to be able
+;; to convert the fontconfig patterns to names, and vice versa.  The high-
+;; level API is
+;;
+;;   font-default-name-syntax
+;;     variable naming the default naming syntax
+;;     maybe this could be a list to try in order?
+;;
+;;   font-name-to-pattern NAME &optional SYNTAX
+;;     returns a fontconfig pattern, or nil if the name could not be parsed
+;;     NAME is a string
+;;     SYNTAX is a name syntax symbol
+;;
+;;   font-pattern-to-name PATTERN &optional SYNTAX
+;;     returns a string
+;;     PATTERN is a fontconfig pattern
+;;     SYNTAX is a name syntax symbol
+;;
+;; A "name syntax symbol" is a symbol for a font naming syntax.  This may be
+;; a rendering engine syntax or a font manager syntax.  Initially, 'x and
+;; 'fontconfig will be supported.  Patterns may be unambiguous (one value for
+;; each specified property) or ambiguous (multiple values are allowed for
+;; some specified properties).  `font-name-to-pattern' should be unambiguous,
+;; but `font-pattern-to-name' may not be an exact conversion for some
+;; syntaxes, especially for ambiguous patterns.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -429,6 +431,29 @@ A new object is allocated and returned."
 ;;   fc-list-fonts-pattern-objects
 ;;   fc-font-sort
 ;;   fc-font-real-pattern
+;;
+;; The high-level API is
+;;
+;;   font-list &optional PATTERN DEVICE ATTRIBUTE-LIST OPTION-LIST
+;;     returns a list of patterns matching pattern
+;;     PATTERN is an ambiguous pattern, defaulting to the empty pattern
+;;     DEVICE is the display device to query (default: selected device)
+;;     ATTRIBUTE-LIST is a list of font attributes to restrict the patterns
+;;       in the returned list to; other attributes will not be present in
+;;       the patterns, and duplicates will be removed after pruning unwanted
+;;       attributes; ATTRIBUTE-LIST has no necessary relation to the active
+;;       attributes in PATTERN, both subset and superset make sense; if nil,
+;;       the active attributes in PATTERN is used
+;;     OPTION-LIST is a list of presentation options, such as sort order
+;;       and refresh-cache (if any).
+;;
+;;   font-match PATTERN &optional DEVICE
+;;     returns a pattern representing the platform match for PATTERN,
+;;       which should unambiguously select the same font
+;;     PATTERN is an ambiguous pattern
+;;     DEVICE is the display device to query (default: selected device)
+;;
+;; Maybe these APIs should get an error-behavior argument?
 
 ;; #### it might make sense to generalize `fc-try-font' by having a
 ;; global variable that contains a list of font name parsers.  They are
@@ -446,15 +471,17 @@ selected device."
 				   (fc-name-parse font))
 				 nil))
 
+;; for example, we'd like these next two to be implementable as
+;; (font-list (fc-create-pattern) device '("family" "style")) and
+;; (font-list (let ((p (fc-create-pattern))) (fc-pattern-add "family" family))
+;;            device
+;;            '("weight"))
+
 (defun fc-find-available-font-families (&optional device filter-fun)
   "Find all available font families."
   (let ((device (or device (default-x-device)))
 	(pattern (make-fc-pattern))
 	(objectset '("family" "style")))
-;     Xft2: does not work anymore
-;     (if (not fc-find-available-font-families-fc-fonts-only)
-; 	(fc-pattern-add pattern fc-font-name-property-core t))
-;     (fc-objectset-add objectset fc-font-name-property-encoding)
     (let* ((all-fonts
 	    (fc-list-fonts-pattern-objects device pattern objectset)))
       (fc-delete-duplicates
@@ -465,24 +492,14 @@ selected device."
 	    (fc-filter all-fonts filter-fun)
 	  all-fonts))))))
 
-; Xft2: does not work anymore
-; (defun fc-find-available-font-families-non-mule (&optional device)
-;   (fc-find-available-font-families
-;    device
-;    '(lambda (pattern)
-;       (let ((encodings (fc-pattern-get-all-attributes 
-; 			pattern 'fc-pattern-get-encoding)))
-; 	;; Be sure that the font support ISO-8859-1
-; 	(member "iso8859-1" encodings)))))
-
 (defun fc-find-available-weights-for-family (family &optional style device)
   "Find available weights for font FAMILY."
   (let* ((device (or device (default-x-device)))
 	 (pattern (make-fc-pattern))
 	 (objectset '("weight")))
-    (fc-pattern-add pattern fc-font-name-property-family family)
+    (fc-pattern-add-family pattern family)
     (if style
-	(fc-pattern-add pattern fc-font-name-property-style style))
+	(fc-pattern-add-style pattern style))
     (mapcar
      '(lambda (pattern)
 	(let ((fc-weight-constant (fc-pattern-get-weight pattern 0)))

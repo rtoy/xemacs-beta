@@ -66,7 +66,19 @@
  '(x-get-resource-and-maybe-bogosity-check
    x-get-resource x-init-pointer-shape))
 
-(require 'fontconfig)
+(if (featurep 'xft-fonts)
+    (require 'fontconfig)
+  (globally-declare-boundp
+   '(fc-font-name-weight-bold     fc-font-name-weight-black
+     fc-font-name-weight-demibold fc-font-name-weight-medium
+     fc-font-name-slant-oblique   fc-font-name-slant-italic
+     fc-font-name-slant-roman))
+  (globally-declare-fboundp
+    '(fc-font-real-pattern  fc-pattern-get-size  fc-copy-pattern-partial
+      fc-pattern-del-weight fc-pattern-del-style fc-pattern-duplicate
+      fc-pattern-add-weight fc-try-font          fc-pattern-add-size
+      fc-name-unparse       fc-pattern-del-slant fc-pattern-add-slant
+      fc-pattern-del-size   fc-pattern-get-pixelsize)))
 
 (defconst x-font-regexp nil)
 (defconst x-font-regexp-head nil)
@@ -186,32 +198,28 @@ If it fails, it returns nil."
 		  font (or device (default-x-device)))))
     (if pattern
 	(let ((size (fc-pattern-get-size pattern 0))
-	      (copy (fc-copy-pattern-partial 
-		     pattern (list fc-font-name-property-family))))
-	  (fc-pattern-del copy fc-font-name-property-weight)
-	  (fc-pattern-del copy fc-font-name-property-style)
+	      (copy (fc-copy-pattern-partial pattern (list "family"))))
+	  (fc-pattern-del-weight copy)
+	  (fc-pattern-del-style copy)
 	  (when copy
 	    (or 
 	     ;; try bold font
 	     (let ((copy-2 (fc-pattern-duplicate copy)))
-	       (fc-pattern-add copy-2 fc-font-name-property-weight
-				fc-font-name-weight-bold)
+	       (fc-pattern-add-weight copy-2 fc-font-name-weight-bold)
 	       (when (fc-try-font copy-2 device)
-		 (fc-pattern-add copy-2 fc-font-name-property-size size)
+		 (fc-pattern-add-size copy-2 size)
 		 (fc-name-unparse copy-2)))
 	     ;; try black font
 	     (let ((copy-2 (fc-pattern-duplicate copy)))
-	       (fc-pattern-add copy-2 fc-font-name-property-weight
-				fc-font-name-weight-black)
+	       (fc-pattern-add-weight copy-2 fc-font-name-weight-black)
 	       (when (fc-try-font copy-2 device)
-		 (fc-pattern-add copy-2 fc-font-name-property-size size)
+		 (fc-pattern-add-size copy-2 size)
 		 (fc-name-unparse copy-2)))
 	     ;; try demibold font
 	     (let ((copy-2 (fc-pattern-duplicate copy)))
-	       (fc-pattern-add copy-2 fc-font-name-property-weight
-				fc-font-name-weight-demibold)
+	       (fc-pattern-add-weight copy-2 fc-font-name-weight-demibold)
 	       (when (fc-try-font copy-2 device)
-		 (fc-pattern-add copy-2 fc-font-name-property-size size)
+		 (fc-pattern-add-size copy-2 size)
 		 (fc-name-unparse copy-2)))))))))
   
 (defun x-make-font-bold-core (font &optional device)
@@ -233,9 +241,8 @@ If it fails, it returns nil."
   (let ((pattern (fc-font-real-pattern 
 		  font (or device (default-x-device)))))
     (when pattern
-      (fc-pattern-del pattern fc-font-name-property-weight)
-      (fc-pattern-add pattern fc-font-name-property-weight
-		       fc-font-name-weight-medium)
+      (fc-pattern-del-weight pattern)
+      (fc-pattern-add-weight pattern fc-font-name-weight-medium)
       (if (fc-try-font pattern device)
 	  (fc-name-unparse pattern)))))
 
@@ -265,39 +272,37 @@ If it fails, it returns nil."
 		  font (or device (default-x-device)))))
     (if pattern
       (let ((size (fc-pattern-get-size pattern 0))
-	    (copy (fc-copy-pattern-partial
-		   pattern (list fc-font-name-property-family))))
+	    (copy (fc-copy-pattern-partial pattern (list "family"))))
 	(when copy
-	  (fc-pattern-del copy fc-font-name-property-slant)
-	  (fc-pattern-del copy fc-font-name-property-style)
+	  (fc-pattern-del-slant copy)
+	  (fc-pattern-del-style copy)
+	  ;; #### can't we do this with one ambiguous pattern?
 	  (let ((pattern-oblique (fc-pattern-duplicate copy))
 		(pattern-italic (fc-pattern-duplicate copy)))
-	    (fc-pattern-add pattern-oblique fc-font-name-property-slant
-			     fc-font-name-slant-oblique)
-	    (fc-pattern-add pattern-italic fc-font-name-property-slant
-			     fc-font-name-slant-italic)
+	    (fc-pattern-add-slant pattern-oblique fc-font-name-slant-oblique)
+	    (fc-pattern-add-slant pattern-italic fc-font-name-slant-italic)
 	    (let ((have-oblique (fc-try-font pattern-oblique device))
 		  (have-italic (fc-try-font pattern-italic device)))
 	      (if try-oblique-before-italic-fonts
 		  (if have-oblique
 		      (progn 
 			(if size
-			    (fc-pattern-add pattern-oblique fc-font-name-property-size size))
+			    (fc-pattern-add-size pattern-oblique size))
 			(fc-name-unparse pattern-oblique))
 		    (if have-italic
 			(progn
 			  (if size
-			      (fc-pattern-add pattern-italic fc-font-name-property-size size))
+			      (fc-pattern-add-size pattern-italic size))
 			  (fc-name-unparse pattern-italic))))
 		(if have-italic
 		    (progn
 		      (if size
-			  (fc-pattern-add pattern-italic fc-font-name-property-size size))
+			  (fc-pattern-add-size pattern-italic size))
 		      (fc-name-unparse pattern-italic))
 		  (if have-oblique
 		      (progn
 			(if size
-			    (fc-pattern-add pattern-oblique fc-font-name-property-size size))
+			    (fc-pattern-add-size pattern-oblique size))
 			(fc-name-unparse pattern-oblique))))))))))))
   
 (defun x-make-font-italic-core (font &optional device)
@@ -320,9 +325,8 @@ If it fails, it returns nil."
   (let ((pattern (fc-font-real-pattern 
 		  font (or device (default-x-device)))))
     (when pattern
-      (fc-pattern-del pattern fc-font-name-property-slant)
-      (fc-pattern-add pattern fc-font-name-property-slant
-		       fc-font-name-slant-roman)
+      (fc-pattern-del-slant pattern)
+      (fc-pattern-add-slant pattern fc-font-name-slant-roman)
       (if (fc-try-font pattern device)
 	  (fc-name-unparse pattern)))))
 
@@ -523,9 +527,8 @@ Otherwise, it returns the next smaller version of this font that is defined."
       (let ((size (fc-pattern-get-size pattern 0)))
 	(if (floatp size)
 	    (let ((copy (fc-pattern-duplicate pattern)))
-	      (fc-pattern-del copy fc-font-name-property-size)
-	      (fc-pattern-add copy fc-font-name-property-size 
-			       (funcall new-size-proc size))
+	      (fc-pattern-del-size copy)
+	      (fc-pattern-add-size copy (funcall new-size-proc size))
 	      (if (fc-try-font font device)
 		  (fc-name-unparse copy))))))))
 

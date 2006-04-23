@@ -46,7 +46,7 @@ Boston, MA 02111-1307, USA.  */
 #include "objects-x.h"
 #include "objects-x-impl.h"
 #include "hash.h"
-#include "xft-fonts.h"
+#include "font-mgr.h"
 
 /* #### TO DO ####
    . The "x-xft-*" and "x_xft_*" nomenclature is mostly redundant, especially
@@ -218,22 +218,6 @@ Unparse an fc pattern object to a string.
   return res;
   }
 }
-
-#if 0
-/* #### This seems to not work? */
-DEFUN("xft-name-unparse", Fxft_name_unparse, 1, 1, 0, /*
-Unparse an fc pattern object to a string (using the Xft API).
-*/
-      (pattern))
-{
-  char temp[FCSTRLEN];
-  Bool res;
-
-  CHECK_FCPATTERN(pattern);
-  res = XftNameUnparse(XFCPATTERN_PTR(pattern), temp, FCSTRLEN-1);
-  return res ? build_ext_string (temp, Qxft_font_name_encoding) : Qnil;
-}
-#endif
 
 DEFUN("fc-pattern-duplicate", Ffc_pattern_duplicate, 1, 1, 0, /* 
 Make a copy of the fc pattern object PATTERN and return it.
@@ -639,7 +623,7 @@ Check whether the string FONTNAME is a XLFD font name. */
 /* FcPatternPrint: there is no point in having wrappers fc-pattern-print,
    Ffc_pattern_print since this function prints to stdout. */
 
-/* Initialization of xft-fonts */
+/* Initialization of font-mgr */
 
 #define XE_XLFD_SEPARATOR	"-"
       /* XLFD specifies ISO 8859-1 encoding, but we can't handle non-ASCII
@@ -750,7 +734,7 @@ string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os)
 }
 
 void
-syms_of_xft_fonts (void)
+syms_of_font_mgr (void)
 {
   INIT_LRECORD_IMPLEMENTATION(fc_pattern);
 
@@ -766,9 +750,6 @@ syms_of_xft_fonts (void)
   DEFSUBR(Ffc_pattern_create);
   DEFSUBR(Ffc_name_parse);
   DEFSUBR(Ffc_name_unparse);
-#if 0
-  DEFSUBR(Fxft_name_unparse);	/* URK! */
-#endif
   DEFSUBR(Ffc_pattern_duplicate);
   DEFSUBR(Ffc_pattern_add);
   DEFSUBR(Ffc_pattern_del);
@@ -781,8 +762,10 @@ syms_of_xft_fonts (void)
 }
 
 void
-vars_of_xft_fonts (void)
+vars_of_font_mgr (void)
 {
+  /* #### These two variables need to go somewhere else. */
+
   /* #### I know, but the right fix is use the generic debug facility. */
   DEFVAR_INT ("xft-debug-level", &debug_xft /*
 Level of debugging messages to issue to stderr for Xft.
@@ -801,7 +784,7 @@ The major version number of the Xft library being used.
 }
 
 void
-complex_vars_of_xft_fonts (void)
+complex_vars_of_font_mgr (void)
 {
   DEFVAR_LISP("xft-xlfd-font-regexp", &Vxlfd_font_name_regexp /*
 The regular expression used to match XLFD font names. */			       
@@ -810,7 +793,7 @@ The regular expression used to match XLFD font names. */
 }
 
 void
-reinit_vars_of_xft_fonts (void)
+reinit_vars_of_font_mgr (void)
 {
   int i, size = (int) countof (fc_standard_properties);
   

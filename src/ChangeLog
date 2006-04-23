@@ -1,3 +1,36 @@
+2006-04-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Makefile.in.in (x_objs): Change xft-fonts.o to font-mgr.o.
+
+2006-04-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* config.h.in: New symbol HAVE_FONTCONFIG.
+
+2006-04-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Rename xft-fonts.{c,h} to font-mgr.{c,h}.
+
+	* font-mgr.c:
+	* emacs.c:
+	* symsinit.h:
+	(syms_of_font_mgr):
+	(vars_of_font_mgr):
+	(reinit_vars_of_font_mgr):
+	(complex_vars_of_font_mgr):
+	Renamed from *_xft_fonts versions.
+
+	* font-mgr.c:
+	* inline.c:
+	* objects-x.c:
+	Update #includes and comments to refer to font-mgr.h.
+	N.B. The feature provided by objects-x.c is still "xft-fonts",
+	which is separate from the font management by fontconfig (from
+	font-mgr.*).
+
+2006-04-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* console-x.h (<X11/Xft/Xft.h>): Don't cater to Xft v.1.
+
 2006-04-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* unicode.c: Improve comment on to/from_unicode table design.

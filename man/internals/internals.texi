@@ -311,7 +311,7 @@ Similar but generates a general subsection.
 * XEmacs from the Perspective of Building::  
 * Build-Time Dependencies::     
 * The Modules of XEmacs::       
-* The Build Configuration System::
+* The Build Configuration System::  
 * Rules When Writing New C Code::  
 * Regression Testing XEmacs::   
 * CVS Techniques::              
@@ -361,12 +361,26 @@ A History of Emacs
 The Modules of XEmacs
 
 * A Summary of the Various XEmacs Modules::  
+* Modules for Building XEmacs::  
 * Low-Level Modules::           
 * Basic Lisp Modules::          
 * Modules for Standard Editing Operations::  
 * Modules for Interfacing with the File System::  
 * Modules for Other Aspects of the Lisp Interpreter and Object System::  
 * Modules for Interfacing with the Operating System::  
+
+Modules for Building XEmacs
+
+* Modules for Build Configuration::  
+* Modules for Compiling XEmacs::  
+* Modules for Preloading Lisp::  
+
+The Build Configuration System
+
+* The version.sh Script::       
+* Adding Configurable Features::  
+* The configure Script::        
+* The Makefile Precursors::     
 
 Rules When Writing New C Code
 
@@ -393,7 +407,7 @@ Regression Testing XEmacs
 
 CVS Techniques
 
-* Creating a Branch::  
+* Creating a Branch::           
 * Merging a Branch into the Trunk::  
 
 Low-Level Allocation
@@ -471,12 +485,12 @@ Multilingual Support
 * Encodings::                   
 * Internal Mule Encodings::     
 * Byte/Character Types; Buffer Positions; Other Typedefs::  
-* Internal Text APIs::         
+* Internal Text APIs::          
 * Coding for Mule::             
 * CCL::                         
 * Microsoft Windows-Related Multilingual Issues::  
 * Modules for Internationalization::  
-* The Great Mule Merge of March 2002::
+* The Great Mule Merge of March 2002::  
 
 Encodings
 
@@ -525,18 +539,18 @@ Microsoft Windows-Related Multilingual Issues
 
 The Great Mule Merge of March 2002
 
-* List of changed files in new Mule workspace::
-* Changes to the MULE subsystems::
-* Pervasive changes throughout XEmacs sources::
-* Changes to specific subsystems::
-* Mule changes by theme::
-* File-coding rewrite::
-* General User-Visible Changes::
-* General Lisp-Visible Changes::
-* User documentation::
-* General internal changes::
-* Ben's TODO list::                                Probably obsolete.
-* Ben's README::                                   Probably obsolete.
+* List of changed files in new Mule workspace::  
+* Changes to the MULE subsystems::  
+* Pervasive changes throughout XEmacs sources::  
+* Changes to specific subsystems::  
+* Mule changes by theme::       
+* File-coding rewrite::         
+* General User-Visible Changes::  
+* General Lisp-Visible Changes::  
+* User documentation::          
+* General internal changes::    
+* Ben's TODO list::             Probably obsolete.
+* Ben's README::                Probably obsolete.
 
 Consoles; Devices; Frames; Windows
 
@@ -544,6 +558,7 @@ Consoles; Devices; Frames; Windows
 * Point::                       
 * Window Hierarchy::            
 * The Window Object::           
+* Creating a New Console/Device/Frame Type::  
 * Modules for the Basic Displayable Lisp Objects::  
 
 The Redisplay Mechanism
@@ -595,7 +610,7 @@ Lstreams
 
 Subprocesses
 
-* Ben's separate stderr notes:: Probably obsolete.
+* Ben's separate stderr notes::  Probably obsolete.
 
 Interface to MS Windows
 
@@ -603,7 +618,7 @@ Interface to MS Windows
 * Windows Build Flags::         
 * Windows I18N Introduction::   
 * Modules for Interfacing with MS Windows::  
-* CHANGES from 21.4-windows branch::                  Probably obsolete.
+* CHANGES from 21.4-windows branch::  Probably obsolete.
 
 Interface to the X Window System
 
@@ -661,7 +676,7 @@ Future Work
 * Future Work -- Display Tables::  
 * Future Work -- Making Elisp Function Calls Faster::  
 * Future Work -- Lisp Engine Replacement::  
-* Future Work -- Better Rendering Support::
+* Future Work -- Better Rendering Support::  
 
 Future Work -- Toolbars
 
@@ -696,6 +711,20 @@ Future Work -- Lisp Engine Replacement
 * Future Work -- Lisp Engine Discussion::  
 * Future Work -- Lisp Engine Replacement -- Implementation::  
 * Future Work -- Startup File Modification by Packages::  
+
+Future Work -- Better Rendering Support
+
+* Better Rendering Support -- Review Criteria::  
+* Better Rendering Support -- Implementation::  
+* Better Rendering Support -- Current Status::  
+* Better Rendering Support -- Configuration with the Interim Patches::  
+* Better Rendering Support -- Modern Font Support::  
+
+Better Rendering Support -- Modern Font Support
+
+* Modern Font Support -- Font Concepts::  GUI devices, fonts, glyphs, rendering.
+* Modern Font Support -- fontconfig::  Querying and selecting fonts.
+* Modern Font Support -- Xft::  Rendering fonts on X11.
 
 Future Work Discussion
 
@@ -2737,7 +2766,7 @@ error.  (Currently this is only needed for @file{make-docfile.el}.)
 
 @menu
 * A Summary of the Various XEmacs Modules::  
-* Modules for Building XEmacs::       
+* Modules for Building XEmacs::  
 * Low-Level Modules::           
 * Basic Lisp Modules::          
 * Modules for Standard Editing Operations::  
@@ -3247,9 +3276,9 @@ The following table contains cross-references from each module in XEmacs
 @cindex building XEmacs, modules for
 
 @menu
-* Modules for Build Configuration:: 
-* Modules for Compiling XEmacs:: 
-* Modules for Preloading Lisp:: 
+* Modules for Build Configuration::  
+* Modules for Compiling XEmacs::  
+* Modules for Preloading Lisp::  
 @end menu
 
 
@@ -3288,7 +3317,7 @@ Makefiles, and I guess cross-references to ellcc etc.
 
 
 
-@node Modules for Preloading Lisp, , Modules for Compiling XEmacs, Modules for Building XEmacs
+@node Modules for Preloading Lisp,  , Modules for Compiling XEmacs, Modules for Building XEmacs
 @subsection Modules for Preloading Lisp
 @cindex modules for preloading lisp
 @cindex preloading lisp, modules for
@@ -4357,10 +4386,10 @@ where they are located is the responsibility of the build configuration
 system.
 
 @menu
-* The version.sh Script::
+* The version.sh Script::       
 * Adding Configurable Features::  
-* The configure Script::  
-* The Makefile Precursors::  
+* The configure Script::        
+* The Makefile Precursors::     
 @end menu
 
 
@@ -4836,7 +4865,7 @@ found then an error is generated.
 
 
 
-@node The Makefile Precursors, , The configure Script, The Build Configuration System
+@node The Makefile Precursors,  , The configure Script, The Build Configuration System
 @section The Makefile Precursors
 @cindex Makefile precursors
 @cindex precursors, Makefile
@@ -6603,7 +6632,7 @@ XEmacs facilities.  @xref{Regression Testing XEmacs}.
 @cindex CVS techniques
 
 @menu
-* Creating a Branch::  
+* Creating a Branch::           
 * Merging a Branch into the Trunk::  
 @end menu
 
@@ -10389,12 +10418,12 @@ representation is that it's compact and is compatible with ASCII.
 * Encodings::                   
 * Internal Mule Encodings::     
 * Byte/Character Types; Buffer Positions; Other Typedefs::  
-* Internal Text APIs::         
+* Internal Text APIs::          
 * Coding for Mule::             
 * CCL::                         
 * Microsoft Windows-Related Multilingual Issues::  
 * Modules for Internationalization::  
-* The Great Mule Merge of March 2002::
+* The Great Mule Merge of March 2002::  
 @end menu
 
 @node Introduction to Multilingual Issues #1, Introduction to Multilingual Issues #2, Multilingual Support, Multilingual Support
@@ -14102,7 +14131,7 @@ string of either regular or wide chars, which is to say this string may be
 prepended with an L (causing it to be a wide string) depending on
 XEUNICODE_P.
 
-@node Modules for Internationalization,  The Great Mule Merge of March 2002, Microsoft Windows-Related Multilingual Issues, Multilingual Support
+@node Modules for Internationalization, The Great Mule Merge of March 2002, Microsoft Windows-Related Multilingual Issues, Multilingual Support
 @section Modules for Internationalization
 @cindex modules for internationalization
 @cindex internationalization, modules for
@@ -14208,22 +14237,22 @@ some reorganization according to themes of revision.  However, much
 remains to be done.
 
 @menu
-* List of changed files in new Mule workspace::
-* Changes to the MULE subsystems::
-* Pervasive changes throughout XEmacs sources::
-* Changes to specific subsystems::
-* Mule changes by theme::
-* File-coding rewrite::
-* General User-Visible Changes::
-* General Lisp-Visible Changes::
-* User documentation::
-* General internal changes::
-* Ben's TODO list::                                Probably obsolete.
-* Ben's README::                                   Probably obsolete.
+* List of changed files in new Mule workspace::  
+* Changes to the MULE subsystems::  
+* Pervasive changes throughout XEmacs sources::  
+* Changes to specific subsystems::  
+* Mule changes by theme::       
+* File-coding rewrite::         
+* General User-Visible Changes::  
+* General Lisp-Visible Changes::  
+* User documentation::          
+* General internal changes::    
+* Ben's TODO list::             Probably obsolete.
+* Ben's README::                Probably obsolete.
 @end menu
 
 
-@node List of changed files in new Mule workspace, Changes to the MULE subsystems, , The Great Mule Merge of March 2002
+@node List of changed files in new Mule workspace, Changes to the MULE subsystems, The Great Mule Merge of March 2002, The Great Mule Merge of March 2002
 @subsection List of changed files in new Mule workspace
 
 This node lists the files that were touched in the Great Mule Merge.
@@ -15307,7 +15336,7 @@ business of injecting code should be last resort.  we should try
 interrupt the same process, use the injection method.
 @end itemize
 
-@node Ben's README, , Ben's TODO list, The Great Mule Merge of March 2002
+@node Ben's README,  , Ben's TODO list, The Great Mule Merge of March 2002
 @subsection Ben's README (probably obsolete)
 
 These notes substantially overlap those in @ref{Ben's TODO list}.  They
@@ -17176,6 +17205,7 @@ present in the fsf version, for compatibility.
 * Point::                       
 * Window Hierarchy::            
 * The Window Object::           
+* Creating a New Console/Device/Frame Type::  
 * Modules for the Basic Displayable Lisp Objects::  
 @end menu
 
@@ -17345,7 +17375,7 @@ is @code{nil} but the @code{prev} points to itself. (#### This is an
 artifact that should be fixed.)
 @end enumerate
 
-@node The Window Object, Modules for the Basic Displayable Lisp Objects, Window Hierarchy, Consoles; Devices; Frames; Windows
+@node The Window Object, Creating a New Console/Device/Frame Type, Window Hierarchy, Consoles; Devices; Frames; Windows
 @section The Window Object
 @cindex window object, the
 @cindex object, the window
@@ -17452,7 +17482,144 @@ holds the mark position that made one end of that region.  Otherwise,
 this field is @code{nil}.
 @end table
 
-@node Modules for the Basic Displayable Lisp Objects,  , The Window Object, Consoles; Devices; Frames; Windows
+
+@node Creating a New Console/Device/Frame Type, Modules for the Basic Displayable Lisp Objects, The Window Object, Consoles; Devices; Frames; Windows
+@section Creating a New Console, Device, or Frame Type
+@cindex creating a new console type
+@cindex console type, creating a new
+@cindex creating a new device type
+@cindex device type, creating a new
+@cindex creating a new frame type
+@cindex frame type, creating a new
+
+Unfortunately, at the present time, only the console abstraction is at
+all well-maintained.  Device and frame internals are referred to from
+many places in the redisplay and console code.  The best that can be
+done therefore is to create a whole new console type, even though much
+code will be shared.  (Ben Wing has complained about the code
+duplication in the GTK+ v1 console, and probably would not be happy with
+the unpublished Qt console or Andrew Choi's Carbon console, but it's
+hard to see how those consoles could have been done better without
+fixing the abstractions in the X (actually Xt), MS Windows, and tty
+consoles as well as doing a complete refactoring of the console, device,
+and frame code.)
+
+What is desireable is sharing console, device, and frame methods across
+platforms in a more general way, reducing the amount of duplicated code
+by pulling it back into the redisplay engine proper or the Lisp modules
+as appropriate.  For example, we should be able to use
+@samp{make-frame-on-device} to share a single X connection among GTK, X,
+and Xft frames.  Xft is partially implemented, but GTK would be much
+harder (impossible?) because it has its own event loop.  (Xft shares the
+Xt event loop with the X console.)
+
+The way all methods get added to the console type is uncool.  A console
+should be a composite, which indicates a collection of I/O resources
+``used together.''  It should indicate where operations that change
+``focus'' search for targets, @emph{i.e.}, by default new frames are
+created on the selected device of the console where the input that
+invoked the command was received, @samp{pop-to-buffer-other-window} only
+considers existing windows on the same device of the same console,
+@emph{etc.}  But it should be possible to assemble consoles out of
+component input channels, imaging devices, and multimedia (audio)
+channels.
+
+The following notes may provide some guidance to those who wish to
+create new console types (@emph{i.e.}, port the redisplay code to a new
+platform).  They are based on an unsuccessful attempt to refactor the
+Xft code into a new console type while sharing most routines with the X
+console.  (For clarification or suggestions, feel free to write
+@email{stephen@@xemacs.org,Stephen Turnbull}.)
+
+The first thing to realize is that the naming of many modules obscures
+their relationship to the console abstraction.  For example, the
+@file{objects-@var{console-type}}, @file{redisplay-@var{console-type}},
+and @file{glyphs-@var{console-type}} series of modules have nothing to
+do with Lisp objects and little to do with redisplay, respectively.
+Rather they implement abstractions used for rendering on each console
+type, such as fonts and colors (@file{objects}) and string and graphics
+drawing primitives (@file{rendering}).  These modules are conceptually
+part of the console implementations, not part of redisplay or Lisp.
+
+Public methods of a console are implemented as C functions declared
+@code{static}, following a rigid naming convention:
+@samp{@var{console-type}_@var{method-name}}.  Methods are bound to the
+console type in the @samp{console_type_create_@var{file}} functions for
+each console component (console, device, and frame) using the
+@samp{CONSOLE_HAS_METHOD} family of macros.  Methods for displaying
+images are bound using the @samp{IIFORMAT_HAS_DEVMETHOD} family of
+macros.  Methods are invoked using the @samp{CONMETH}, @samp{DEVMETH},
+and @samp{FRAMEMETH} families of macros, which look up the relevant
+methods in the object's table of methods.
+
+@strong{N.B.} All of the object tables are actually references to
+console method tables.  To create a variant of an existing console,
+there is a @samp{CONSOLE_INHERITS_METHOD} constructor, but this actually
+constructs the name of the parent's method pointer and stores in the
+derived console type's method table.  Of course this is time-efficient,
+and since there are few console types it is a neglible waste of space.
+However in practice this may have contributed to breaking the various
+abstractions, and the variant console must be coded in the same file as
+the parent (because the methods are static).  Another minor symptom of
+the incompleteness of the abstraction is the fact that the API for
+inheritance of device methods for image formats is named
+@samp{IIFORMAT_HAS_SHARED_METHOD}, although the semantics are identical.
+
+One problem encountered in attempting to create an Xft console type as a
+derivative of the X console type was that there is no support for such
+union types in the consistency-checking code, whether for the
+fundamental Lisp consistency checks (the @samp{CHECK_SOMETHING} family
+of macros) or for the error-checking variants of many functions.  These
+APIs all simply check for the apparent console type, which is a single
+symbol (or enumerator).
+
+To create a new console with mostly new methods, it's probably best to
+copy all of the @file{@var{function}-@var{console-type}} files from a
+similar console (or several, if the new console type seems like a
+combination of several existing console types), renaming the files by
+substituting @var{new-console-type} for @var{console-type}.  Then
+proceed in the obvious way by renaming methods from
+@samp{@var{console-type}_@var{method-name}} to
+@samp{@var{new-console-type}_@var{method-name}}, and implementing them.
+
+Once you've done that, then the fun starts.  Insert the initialization
+functions (@samp{syms_of_@var{file}}, @samp{vars_of_@var{file}},
+@samp{console_type_create_@var{file}}, @emph{etc.}) in @samp{main_1} in
+@file{emacs.c}.
+
+Add a device creation function @samp{make-@var{console-type}-device} in
+@file{device.el}.  Add the device type to the calls to
+@samp{Face-frob-property} in @file{faces.el}, as well as calls to the
+device initializer functions for devices and frames, and ``additional
+frobbing'' in that file.
+
+You may wish to add an option to force the initial frame to that device
+type to @file{emacs.c}.  Don't forget to document it in the command help
+function in @file{startup.el}.
+
+You may need to add support for your console type in
+@samp{init_event_stream} in @file{event-stream.c}.
+
+If your console has a different UI for fonts or colors, or adds new
+capability, you may need to add a @file{@var{console-type}-faces.el}
+file, or add code to the @file{@var{parent-type}-faces.el} file, to
+support new font or color capability.  Probably initialization code in
+@file{faces.c} will be needed too.
+
+A check for the console type is probably needed in @samp{init_redisplay}
+in @file{redisplay.c}.
+
+Ditto for the @file{@var{console-type}-init.el} file.
+
+Don't forget that Emacs windows are console-dependent, too.  At least a
+@samp{WINDOW_@var{console-type}_P}-checking macro should be added in
+@file{window-impl.h}.
+
+Note that this project failed; there are probably many other details to
+be implemented that I didn't get to.  But don't let that stop you!
+
+
+@node Modules for the Basic Displayable Lisp Objects,  , Creating a New Console/Device/Frame Type, Consoles; Devices; Frames; Windows
 @section Modules for the Basic Displayable Lisp Objects
 @cindex modules for the basic displayable Lisp objects
 @cindex displayable Lisp objects, modules for the basic
@@ -17601,6 +17768,7 @@ about the frame; no child windows or anything are used for XEmacs
 windows), there is no device-type-specific code here; all of that code
 is part of the redisplay mechanism or the code for particular object
 types such as scrollbars.
+
 
 @node The Redisplay Mechanism, Extents, Consoles; Devices; Frames; Windows, Top
 @chapter The Redisplay Mechanism
@@ -20404,11 +20572,11 @@ or @code{nil} if it is using pipes.
 @end table
 
 @menu
-* Ben's separate stderr notes::                Probably obsolete.
+* Ben's separate stderr notes::  Probably obsolete.
 @end menu
 
 
-@node Ben's separate stderr notes, , , Subprocesses
+@node Ben's separate stderr notes,  , Subprocesses, Subprocesses
 @subsection Ben's separate stderr notes (probably obsolete)
 
 This node contains some notes that Ben kept on his separate subprocess
@@ -20449,7 +20617,7 @@ see the ChangeLogs in the workspace.
 * Windows Build Flags::         
 * Windows I18N Introduction::   
 * Modules for Interfacing with MS Windows::  
-* CHANGES from 21.4-windows branch::                  Probably obsolete.
+* CHANGES from 21.4-windows branch::  Probably obsolete.
 @end menu
 
 @node Different kinds of Windows environments, Windows Build Flags, Interface to MS Windows, Interface to MS Windows
@@ -20978,7 +21146,7 @@ Auto-generated Unicode encapsulation headers
 @end table
 
 
-@node CHANGES from 21.4-windows branch, , Modules for Interfacing with MS Windows, Interface to MS Windows
+@node CHANGES from 21.4-windows branch,  , Modules for Interfacing with MS Windows, Interface to MS Windows
 @section CHANGES from 21.4-windows branch (probably obsolete)
 
 This node contains the @file{CHANGES-msw} log that Andy Piper kept while
@@ -26741,7 +26909,7 @@ probably not worth doing on the first pass.)
 
 @end itemize
 
-@node Future Work -- Lisp Engine Replacement,  Future Work -- Better Rendering Support, Future Work -- Making Elisp Function Calls Faster, Future Work
+@node Future Work -- Lisp Engine Replacement, Future Work -- Better Rendering Support, Future Work -- Making Elisp Function Calls Faster, Future Work
 @section Future Work -- Lisp Engine Replacement
 @cindex future work, lisp engine replacement
 @cindex lisp engine replacement, future work
@@ -27354,7 +27522,7 @@ could "just work".
 
 
 
-@node Future Work -- Better Rendering Support, , Future Work -- Lisp Engine Replacement,  Future Work
+@node Future Work -- Better Rendering Support,  , Future Work -- Lisp Engine Replacement, Future Work
 @section Future Work -- Better Rendering Support
 @cindex future work, better rendering support
 @cindex better rendering support, future work
@@ -27387,15 +27555,15 @@ this point a (private) CVS branch is available for Stephen's patch
 one may be made available for the Knauel-Matthias patch soon.
 
 @menu
-* Better Rendering Support -- Review Criteria::
-* Better Rendering Support -- Implementation::
-* Better Rendering Support -- Current Status::
-* Better Rendering Support -- Configuration with the Interim Patches::
-* Better Rendering Support -- Modern Font Support::
+* Better Rendering Support -- Review Criteria::  
+* Better Rendering Support -- Implementation::  
+* Better Rendering Support -- Current Status::  
+* Better Rendering Support -- Configuration with the Interim Patches::  
+* Better Rendering Support -- Modern Font Support::  
 @end menu
 
 
-@node Better Rendering Support -- Review Criteria, Better Rendering Support -- Implementation, , Future Work -- Better Rendering Support
+@node Better Rendering Support -- Review Criteria, Better Rendering Support -- Implementation, Future Work -- Better Rendering Support, Future Work -- Better Rendering Support
 @subsection Better Rendering Support -- Review Criteria
 @cindex better rendering support, issues
 @cindex issues, better rendering support
@@ -27738,7 +27906,7 @@ rechecked on Linux, where it was observed.)
 
 
 
-@node Better Rendering Support -- Modern Font Support, , Better Rendering Support -- Configuration with the Interim Patches, Future Work -- Better Rendering Support
+@node Better Rendering Support -- Modern Font Support,  , Better Rendering Support -- Configuration with the Interim Patches, Future Work -- Better Rendering Support
 @subsection Better Rendering Support -- Modern Font Support
 
 @c Maybe eventually all these @cindexes should be spread about?
@@ -27784,12 +27952,12 @@ minimal configuration} is defined that ensures that at least
 available on all @file{fontconfig} systems.
 
 @menu
-* Modern Font Support -- Font Concepts:: GUI devices, fonts, glyphs, rendering.
-* Modern Font Support -- fontconfig::    Querying and selecting fonts.
-* Modern Font Support -- Xft::           Rendering fonts on X11.
+* Modern Font Support -- Font Concepts::  GUI devices, fonts, glyphs, rendering.
+* Modern Font Support -- fontconfig::  Querying and selecting fonts.
+* Modern Font Support -- Xft::  Rendering fonts on X11.
 @end menu
 
-@node Modern Font Support -- Font Concepts, Modern Font Support -- fontconfig, , Better Rendering Support -- Modern Font Support
+@node Modern Font Support -- Font Concepts, Modern Font Support -- fontconfig, Better Rendering Support -- Modern Font Support, Better Rendering Support -- Modern Font Support
 @subsubsection Modern Font Support -- Font Concepts
 
 In modern systems, displays are invariably @dfn{raster graphic devices},
@@ -28201,7 +28369,7 @@ Regular expression matching XLFD font names.
 
 
 
-@node Modern Font Support -- Xft, , Modern Font Support -- fontconfig, Better Rendering Support -- Modern Font Support
+@node Modern Font Support -- Xft,  , Modern Font Support -- fontconfig, Better Rendering Support -- Modern Font Support
 @subsubsection Modern Font Support -- fontconfig
 
 IIRC, we don't really provide any @file{Xft} APIs at the LISP level yet.

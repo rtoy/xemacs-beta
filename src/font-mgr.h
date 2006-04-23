@@ -39,8 +39,8 @@ Boston, MA 02111-1307, USA.  */
 */
 
 
-#ifndef INCLUDED_xft_fonts_h_
-#define INCLUDED_xft_fonts_h_
+#ifndef INCLUDED_font_mgr_h_
+#define INCLUDED_font_mgr_h_
 
 #include "../lwlib/lwlib-fonts.h"
 #include "../lwlib/lwlib-colors.h"
@@ -68,4 +68,4 @@ DECLARE_LRECORD(fc_pattern, struct fc_pattern);
 #define CONCHECK_FCPATTERN(x) CONCHECK_RECORD (x, fc_pattern)
 #define XFCPATTERN_PTR(x) (XFCPATTERN(x)->fcpatPtr)
 
-#endif /* INCLUDED_xft_fonts_h_ */
+#endif /* INCLUDED_font_mgr_h_ */

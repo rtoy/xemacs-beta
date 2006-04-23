@@ -1620,7 +1620,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif /* HAVE_XIM */
 
 #ifdef USE_XFT
-      syms_of_xft_fonts();
+      syms_of_font_mgr();
 #endif
 
 #endif /* HAVE_X_WINDOWS */
@@ -2205,7 +2205,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
 
 #ifdef USE_XFT
-      vars_of_xft_fonts ();
+      vars_of_font_mgr ();
 #endif
 
 #endif /* HAVE_X_WINDOWS */
@@ -2335,7 +2335,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       reinit_vars_of_gui_x ();
 #endif
 #ifdef USE_XFT
-      reinit_vars_of_xft_fonts ();
+      reinit_vars_of_font_mgr ();
 #endif
 #endif /* HAVE_X_WINDOWS */
 
@@ -2407,7 +2407,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef USE_XFT
       /* This uses coding systems.  Must be done before faces are init'ed. */
       /* not in xft reloaded #3 */
-      complex_vars_of_xft_fonts ();
+      complex_vars_of_font_mgr ();
 #endif
 
       /* Depends on specifiers. */

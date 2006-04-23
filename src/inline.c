@@ -101,7 +101,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_X_WINDOWS
 #include "glyphs-x.h"
 #ifdef USE_XFT
-#include "xft-fonts.h"
+#include "font-mgr.h"
 #endif
 #endif
 

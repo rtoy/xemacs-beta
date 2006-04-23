@@ -669,6 +669,11 @@ XE_MERGED_ARG([infopath],
 	[AC_DEFINE(INFOPATH_USER_DEFINED)], [])
 dnl
 XE_HELP_SUBSECTION([Window-system options])
+dnl Enable when fontconfig support is factored out of Xft.
+dnl XE_MERGED_ARG([fontconfig],
+dnl	AS_HELP_STRING([--with-fontconfig],
+dnl		       [Use fontconfig library to configure fonts.],
+dnl		       [],[])
 dnl if you change defaults, make sure to fix arg 6 of the OPTION_HELP macro.
 XE_COMPLEX_ARG([xft],
 	[XE_COMPLEX_OPTION_HELP_STRING([--with-xft],
@@ -3463,6 +3468,9 @@ extern Bool XRegisterIMInstantiateCallback(
           [XE_DIE(["Unable to find libfontconfig for --with-xft"])])
       AC_CHECK_LIB(Xft, XftFontOpen, XE_PREPEND(-lXft, libs_x),
           [XE_DIE(["Unable to find libXft for --with-xft"])])
+      dnl #### detect fontconfig properly!!!!
+      with_fontconfig=yes
+      AC_DEFINE(HAVE_FONTCONFIG)
       AC_DEFINE(USE_XFT)
       dnl Due to interactions with other libraries, must postpone AC_DEFINE
       dnl of USE_XFT_MENUBARS, USE_XFT_TABS, and USE_XFT_GAUGE.
@@ -5976,6 +5984,9 @@ if test "$with_x11" = "yes"; then
   fi
   if test "$with_wmcommand" != no; then
     echo "    - Handling WM_COMMAND properly."
+  fi
+  if test "$with_fontconfig" = "yes"; then
+    echo "    - Using fontconfig to manage fonts."
   fi
   if test "$with_xft_emacs" = "yes"; then
     echo "    - Compiling in support for Xft antialiased fonts (EXPERIMENTAL)."

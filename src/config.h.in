@@ -206,6 +206,9 @@ things are arranged in config.h.in.  In particular:
 /* Compile in support for the X window system? */
 #undef HAVE_X_WINDOWS
 
+/* Compile with support for fontconfig? */
+#undef HAVE_FONTCONFIG
+
 /* Compile with support for Xft? */
 #undef USE_XFT
 /* Per-widget stuff will go away? */

@@ -39,7 +39,7 @@ Boston, MA 02111-1307, USA.  */
 #include "objects-x-impl.h"
 
 #ifdef USE_XFT
-#include "xft-fonts.h"
+#include "font-mgr.h"
 #endif
 
 int x_handle_non_fully_specified_fonts;
@@ -206,7 +206,7 @@ x_color_list (void)
 /************************************************************************/
 
 #ifdef USE_XFT
-/* #### all these #defines should probably move to xft-fonts.h */
+/* #### all these #defines should probably move to font-mgr.h */
 
 /*
   The format of a fontname (as returned by fontconfig) is not well-documented,

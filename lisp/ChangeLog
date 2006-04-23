@@ -1,3 +1,35 @@
+2006-04-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* dumped-lisp.el (fontconfig): Load only with Xft.
+
+	* x-faces.el (fontconfig): Require only with Xft.
+
+2006-04-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* font-mgr.el: New file.  Provides Lisp emulation of fontconfig.
+
+	* fontconfig.el: Require 'font-mgr.
+
+2006-04-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* fontconfig.el:
+	Add some comments on proposed generic APIs.
+	Remove some unused and probably broken code.
+	Use `fc-define-property' to define new X11 XLFD standard
+	properties: x11-swidth, x11-adstyle, x11-resx, x11-resy,
+	x11-registry, and x11-encoding.
+	Delete fc-font-name-property-PROPERTY constants.
+	(fc-define-property):
+	Add `fc-pattern-del-PROPERTY'.
+
+	* x-faces.el (x-make-font-bold-xft):
+	(x-make-font-unbold-xft):
+	(x-make-font-italic-xft):
+	(x-make-font-unitalic-xft):
+	(x-find-xft-font-of-size): 
+	* x-font-menu.el (x-font-menu-load-font-xft):
+	Use property-specific APIs instead of defconsts for property names.
+
 2006-04-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl.el (incf):

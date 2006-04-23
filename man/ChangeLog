@@ -1,3 +1,8 @@
+2006-04-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi:  Run texinfo-master-menu.
+	(Creating a New Console/Device/Frame Type): New node.
+
 2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.26 "endive" is released.
