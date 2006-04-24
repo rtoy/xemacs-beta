@@ -1,3 +1,7 @@
+2006-04-22  Jerry James  <james@xemacs.org>
+
+	* event-stream.c (copy_command_builder): Also copy the console.
+
 2006-04-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* alloc.c:

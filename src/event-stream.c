@@ -429,6 +429,8 @@ copy_command_builder (struct command_builder *collapsing,
   if (!new_buildings)
     new_buildings = XCOMMAND_BUILDER (allocate_command_builder (Qnil, 0));
 
+  new_buildings->console = collapsing->console;
+
   new_buildings->self_insert_countdown = collapsing->self_insert_countdown;
 
   deallocate_event_chain (new_buildings->current_events);
