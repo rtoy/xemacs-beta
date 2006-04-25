@@ -35,7 +35,6 @@
 (require 'font-menu)
 
 (when (featurep 'xft-fonts)
-  (require 'xft)
   (require 'fontconfig))
 
 (globally-declare-boundp
@@ -276,6 +275,7 @@ or if you change your font path, you can call this to re-initialize the menus."
        (x-font-menu-font-data-core face dcache))))
 
 (defun x-font-menu-font-data-xft (face dcache name domain)
+  ;; DOMAIN is expected to be a device.
   (let* ((truename (font-instance-truename
 		    (face-font-instance face domain
 					(if (featurep 'mule) 'ascii))))
@@ -284,7 +284,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 	(progn
 	  nil)
       (progn
-	(let* ((pattern (fc-font-real-pattern name domain))
+	(let* ((pattern (fc-font-match domain (fc-name-parse name)))
 	       (family (and pattern
 			    (fc-pattern-get-family pattern 0))))
 	  (if (fc-pattern-get-successp family)

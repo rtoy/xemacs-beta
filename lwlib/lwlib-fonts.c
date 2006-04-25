@@ -36,7 +36,9 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "device-impl.h"
 #include "console-x-impl.h"
+#ifdef HAVE_FONTCONFIG
 #include "font-mgr.h"
+#endif
 #endif
 
 /*

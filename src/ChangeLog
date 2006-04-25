@@ -1,3 +1,21 @@
+2006-04-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Repair busted commit, plus some gratuitous doc improvements.
+
+	* emacs.c (main_1): Initialize display_use to NULL for clarity.
+
+	* objects-x.c (x_color_list):
+	(x_initialize_font_instance):
+	(x_font_instance_truename):
+	(x_find_charset_font):
+	* font-mgr.h (Qfc_font_name_encoding):
+	Qxft_font_name_encoding -> Qfc_font_name_encoding.
+
+	* console.h (header comment):
+	* font-mgr.c (vars_of_font_mgr):
+	* redisplay.c (Vwindow_system):
+	Improve comments.
+
 2006-04-22  Jerry James  <james@xemacs.org>
 
 	* event-stream.c (copy_command_builder): Also copy the console.

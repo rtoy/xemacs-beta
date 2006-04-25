@@ -32,8 +32,6 @@ Boston, MA 02111-1307, USA.  */
 /* This module provides the Lisp interface to fonts in X11, including Xft,
    but (at least at first) not GTK+ or Qt.
 
-   It should be renamed to fonts-x.h.
-
    Sealevel code should be in ../lwlib/lwlib-fonts.c or
    ../lwlib/lwlib-colors.c.
 */
@@ -69,7 +67,7 @@ Boston, MA 02111-1307, USA.  */
    . Fontconfig fontnames are encoded in UTF-8.
 */
 
-Lisp_Object Qxft_font;
+Lisp_Object Qfont_mgr;
 Lisp_Object Qfc_patternp;
 Lisp_Object Qfc_fontsetp;
 /* Lisp_Object Qfc_result_match; */ 	/* FcResultMatch */
@@ -122,9 +120,11 @@ static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
    is a Lisp string.
 */
 #define extract_fcapi_string(str) \
-  ((FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL ((str), Qnative))
+  ((FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL ((str), Qfc_font_name_encoding))
 
-/* fontconfig assumes that objects (property names) are statically allocated,
+/* #### This homebrew lashup should be replaced with FcConstants.
+
+   fontconfig assumes that objects (property names) are statically allocated,
    and you will get bizarre results if you pass Lisp string data or strings
    allocated on the stack as objects.  fontconfig _does_ copy values, so we
    (I hope) don't have to worry about that member.
@@ -135,12 +135,20 @@ static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
 
    I suspect that using symbol names or even keywords does not provide
    assurance that the string won't move in memory.  So we hash them
-   ourselves; hash.c hashtables do not interpret the value pointers. */
-static FcChar8 *fc_standard_properties[] = {
-  "antialias", "aspect", "autohint", "charset", "dpi", "family", "file",
+   ourselves; hash.c hashtables do not interpret the value pointers.
+
+   This array should be FcChar8**, but GCC 4.x bitches about signedness. */
+static Extbyte *fc_standard_properties[] = {
+  /* treated specially, ordered first */
+  "family", "size",
+  /* remaining are alphabetized by group */
+  /* standard properties in fontconfig and Xft v.2 */
+  "antialias", "aspect", "autohint", "charset", "dpi", "file",
   "foundry", "ftface", "globaladvance", "hinting", "index", "lang",
   "minspace", "outline", "pixelsize", "rasterizer", "rgba", "scalable",
-  "scale", "size", "slant", "spacing", "style", "verticallayout", "weight",
+  "scale", "slant", "spacing", "style", "verticallayout", "weight",
+  /* common in modern fonts */
+  "fontformat", "fontversion",
   /* obsolete after Xft v. 1 */
   "charwidth", "charheight", "core", "encoding", "render"
 };
@@ -213,7 +221,7 @@ Unparse an fc pattern object to a string.
   CHECK_FCPATTERN(pattern);
   {
   FcChar8 *temp = FcNameUnparse(XFCPATTERN_PTR(pattern));
-  Lisp_Object res = build_ext_string (temp, Qxft_font_name_encoding);
+  Lisp_Object res = build_ext_string (temp, Qfc_font_name_encoding);
   free (temp);
   return res;
   }
@@ -419,7 +427,7 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
 	case FcTypeString:
 	  return ((!NILP (type) && !EQ (type, Qstring))
 		  ? Qfc_result_type_mismatch
-		  : build_ext_string (fc_value.u.s, Qxft_font_name_encoding));
+		  : build_ext_string (fc_value.u.s, Qfc_font_name_encoding));
 	case FcTypeBool:
 	  return ((!NILP (type) && !EQ (type, Qboolean))
 		  ? Qfc_result_type_mismatch : fc_value.u.b ? Qt : Qnil);
@@ -457,7 +465,6 @@ given pattern, or an error code.  Possible error codes are
 `fc-result-no-match' and `fc-result-no-id'. */
       (device, pattern))
 {
-  Display *dpy;
   FcResult res;
 
   struct fc_pattern *res_fcpat =
@@ -469,11 +476,15 @@ given pattern, or an error code.  Possible error codes are
   if (!DEVICE_LIVE_P(XDEVICE(device)))
     return Qnil;
 
-  dpy = DEVICE_X_DISPLAY(XDEVICE(device));
-  /* More Xft vs fontconfig brain damage? */
-  res_fcpat->fcpatPtr = XftFontMatch(dpy, DefaultScreen (dpy),
-				     XFCPATTERN_PTR(pattern), &res);
-  
+  {
+    FcPattern *p = XFCPATTERN_PTR(pattern);
+    FcConfig *fcc = FcConfigGetCurrent ();
+
+    FcConfigSubstitute (fcc, p, FcMatchPattern);
+    FcDefaultSubstitute (p);
+    res_fcpat->fcpatPtr = FcFontMatch (fcc, p, &res);
+  }
+
   if (res_fcpat->fcpatPtr == NULL)
     switch (res) {
     case FcResultNoMatch:
@@ -574,41 +585,6 @@ match other font-listing APIs. */
 
     return fontset_to_list (fontset);
   }
-}
-
-/* #### this actually is an Xft function, should split those out
-   or get rid of them entirely? */
-/* #### be consistent about argument order. */
-DEFUN("fc-font-real-pattern", Ffc_font_real_pattern, 2, 2, 0, /*
-Temporarily open FONTNAME (a string) and return the actual
-fc pattern matched by the Fc library.	*/
-      (fontname, xdevice))
-{
-  FcPattern *copy;
-  Display *dpy;
-  XftFont *font;
-  struct fc_pattern *fcpat =
-    ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
-
-  CHECK_STRING (fontname);	/* #### MEMORY LEAK?!  maybe not ... */
-  if (NILP(xdevice))
-    return Qnil;
-  CHECK_X_DEVICE (xdevice);
-  if (!DEVICE_LIVE_P(XDEVICE(xdevice)))
-    return Qnil;
-
-  /* #### these gymnastics should be unnecessary, just use FcFontMatch */
-  dpy = DEVICE_X_DISPLAY (XDEVICE (xdevice));
-  font = XftFontOpenName (dpy, DefaultScreen(dpy),
-			  extract_fcapi_string (fontname));
-  if (font == NULL)
-    return Qnil;
-  copy = FcPatternDuplicate(font->pattern);
-  XftFontClose(dpy, font);  
-  if (copy == NULL)
-    return Qnil;
-  fcpat->fcpatPtr = copy;
-  return wrap_fcpattern(fcpat);
 }
 
 DEFUN("xlfd-font-name-p", Fxlfd_font_name_p, 1, 1, 0, /*
@@ -744,7 +720,7 @@ syms_of_font_mgr (void)
   DEFSYMBOL(Qfc_result_no_match);
   DEFSYMBOL(Qfc_result_no_id);
   DEFSYMBOL(Qfc_internal_error);
-  DEFSYMBOL(Qxft_font);
+  DEFSYMBOL(Qfont_mgr);
 
   DEFSUBR(Ffc_pattern_p);
   DEFSUBR(Ffc_pattern_create);
@@ -757,14 +733,13 @@ syms_of_font_mgr (void)
   DEFSUBR(Ffc_list_fonts_pattern_objects);
   DEFSUBR(Ffc_font_sort);
   DEFSUBR(Ffc_font_match);
-  DEFSUBR(Ffc_font_real_pattern);
   DEFSUBR(Fxlfd_font_name_p);
 }
 
 void
 vars_of_font_mgr (void)
 {
-  /* #### These two variables need to go somewhere else. */
+  /* #### The next two functions belong somewhere else. */
 
   /* #### I know, but the right fix is use the generic debug facility. */
   DEFVAR_INT ("xft-debug-level", &debug_xft /*
@@ -780,7 +755,7 @@ The major version number of the Xft library being used.
 */ );
   Vxft_version = make_int(XFT_VERSION);
 
-  Fprovide (intern ("xft"));
+  Fprovide (intern ("font-mgr"));
 }
 
 void

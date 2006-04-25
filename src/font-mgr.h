@@ -48,7 +48,7 @@ Boston, MA 02111-1307, USA.  */
 extern Fixnum debug_xft;
 
 /* Standard for fontconfig.  Use a macro to show we're not guessing. */
-#define Qxft_font_name_encoding Qutf_8
+#define Qfc_font_name_encoding Qutf_8
 
 #define XE_XLFD_MAKE_LISP_STRING(s) (make_string(s, strlen(s)))
 

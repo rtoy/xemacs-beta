@@ -1,3 +1,21 @@
+2006-04-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Repair busted commit and gratuitous doc improvements.
+
+	* startup.el (command-line-do-help): Document options for forcing
+	initial from on a given window-system.
+
+	* faces.el (Face-frob-property): Give informative error if device
+	type has no mapper function.
+
+	* x-font-menu.el (x-font-menu-font-data-xft):
+	* x-faces.el (globally-declare-fboundp):
+	Eliminate references to `fc-font-real-pattern'.
+
+	* fontconfig.el (section header comments):
+	* x-init.el (x-init-toolbar-from-resources):
+	Improve comments.
+
 2006-04-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl.el (push):

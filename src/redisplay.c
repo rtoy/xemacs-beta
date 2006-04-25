@@ -470,9 +470,12 @@ Lisp_Object Vvisible_bell;	/* If true and the terminal will support it
    where one page is used for Emacs and another for all else. */
 int no_redraw_on_reenter;
 
-Lisp_Object Vwindow_system;	/* nil or a symbol naming the window system
+Lisp_Object Vwindow_system;	/* #### this variable is deprecated
+				   nil or a symbol naming the window system
 				   under which emacs is running
-				   (`x' is the only current possibility) */
+				   (`x', `gtk', `mswindows', and `tty' are
+				   supported -- yes, TTYs are window systems
+				   for this purpose. */
 Lisp_Object Vinitial_window_system;
 
 Lisp_Object Vglobal_mode_string;

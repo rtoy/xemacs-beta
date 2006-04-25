@@ -255,7 +255,7 @@ x_color_list (void)
     DECLARE_EISTRING (eistrpxft_name);				\
     FcChar8 *name = FcNameUnparse (pattern);			\
 								\
-    eicpy_ext(eistrpxft_name, name, Qxft_font_name_encoding);	\
+    eicpy_ext(eistrpxft_name, name, Qfc_font_name_encoding);	\
     DEBUG_XFT1 (level, format, eidata(eistrpxft_name));		\
     free (name);						\
   } while (0)
@@ -267,7 +267,7 @@ x_color_list (void)
 #define CHECKING_LANG(level,font,lang)					\
   do {									\
     DECLARE_EISTRING (eistrcl_name);					\
-    eicpy_ext(eistrcl_name, font, Qxft_font_name_encoding);		\
+    eicpy_ext(eistrcl_name, font, Qfc_font_name_encoding);		\
     DEBUG_XFT2 (level, "checking if %s handles %s\n",			\
 			eidata(eistrcl_name), lang);			\
   } while (0)
@@ -295,7 +295,7 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object UNUSED (name),
      The problem is that the fontconfig/Xft functions work much too hard
      to ensure that something is returned; but that something need not be
      at all close to what we asked for. */
-  LISP_STRING_TO_EXTERNAL (f->name, extname, Qxft_font_name_encoding);
+  LISP_STRING_TO_EXTERNAL (f->name, extname, Qfc_font_name_encoding);
   rf = xft_open_font_by_name (dpy, extname);
 #endif
   LISP_STRING_TO_EXTERNAL (f->name, extname, Qx_font_name_encoding);
@@ -808,7 +808,7 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
       if (res)
 	{
 	  FONT_INSTANCE_TRUENAME (f) = 
-	    build_ext_string (res, Qxft_font_name_encoding); 
+	    build_ext_string (res, Qfc_font_name_encoding); 
 	  free (res);
 	  return FONT_INSTANCE_TRUENAME (f);
 	}
@@ -1218,7 +1218,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
       DECLARE_EISTRING (eistr_longname);  /* omit FC_LANG and FC_CHARSET */
       DECLARE_EISTRING (eistr_fullname);  /* everything */
 
-      LISP_STRING_TO_EXTERNAL (font, patternext, Qxft_font_name_encoding);
+      LISP_STRING_TO_EXTERNAL (font, patternext, Qfc_font_name_encoding);
       fcc = FcConfigGetCurrent ();
 
       /* parse the name, do the substitutions, and match the font */
@@ -1251,7 +1251,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 
 	/* full name, including language coverage and repertoire */
 	name = FcNameUnparse (p);
-	eicpy_ext (eistr_fullname, name, Qxft_font_name_encoding);
+	eicpy_ext (eistr_fullname, name, Qfc_font_name_encoding);
 	free (name);
 
 	/* long name, omitting coverage and repertoire, plus a number
@@ -1268,7 +1268,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	FcPatternDel (p, FC_SCALE);
 	FcPatternDel (p, FC_FONTVERSION);
 	name = FcNameUnparse (p);
-	eicpy_ext (eistr_longname, name, Qxft_font_name_encoding);
+	eicpy_ext (eistr_longname, name, Qfc_font_name_encoding);
 	free (name);
 
 	/* nickname, just family and size, but
@@ -1282,7 +1282,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	FcPatternDel (p, FC_SCALABLE);
 	FcPatternDel (p, FC_DPI);
 	name = FcNameUnparse (p);
-	eicpy_ext (eistr_shortname, name, Qxft_font_name_encoding);
+	eicpy_ext (eistr_shortname, name, Qfc_font_name_encoding);
 	free (name);
 
 	FcPatternDestroy (p);

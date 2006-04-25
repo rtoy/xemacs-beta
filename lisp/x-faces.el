@@ -1,6 +1,6 @@
 ;;; x-faces.el --- X-specific face frobnication, aka black magic.
 
-;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1992-1994, 1997, 2006 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 2002, 2004 Ben Wing.
 
 ;; Author: Jamie Zawinski <jwz@jwz.org>
@@ -74,11 +74,11 @@
      fc-font-name-slant-oblique   fc-font-name-slant-italic
      fc-font-name-slant-roman))
   (globally-declare-fboundp
-    '(fc-font-real-pattern  fc-pattern-get-size  fc-copy-pattern-partial
-      fc-pattern-del-weight fc-pattern-del-style fc-pattern-duplicate
-      fc-pattern-add-weight fc-try-font          fc-pattern-add-size
-      fc-name-unparse       fc-pattern-del-slant fc-pattern-add-slant
-      fc-pattern-del-size   fc-pattern-get-pixelsize)))
+    '(fc-pattern-del-size   fc-pattern-get-size   fc-pattern-add-size
+      fc-pattern-del-style  fc-pattern-duplicate  fc-copy-pattern-partial
+      fc-pattern-add-weight fc-pattern-del-weight fc-try-font          
+      fc-pattern-del-slant  fc-pattern-add-slant  fc-name-unparse
+      fc-pattern-get-pixelsize)))
 
 (defconst x-font-regexp nil)
 (defconst x-font-regexp-head nil)
@@ -194,8 +194,8 @@ If it fails, it returns nil."
     (x-make-font-bold-core font device)))
 
 (defun x-make-font-bold-xft (font &optional device)
-  (let ((pattern (fc-font-real-pattern 
-		  font (or device (default-x-device)))))
+  (let ((pattern (fc-font-match (or device (default-x-device))
+				(fc-name-parse font))))
     (if pattern
 	(let ((size (fc-pattern-get-size pattern 0))
 	      (copy (fc-copy-pattern-partial pattern (list "family"))))
@@ -238,8 +238,8 @@ If it fails, it returns nil."
     (x-make-font-unbold-core font device)))
   
 (defun x-make-font-unbold-xft (font &optional device)
-  (let ((pattern (fc-font-real-pattern 
-		  font (or device (default-x-device)))))
+  (let ((pattern (fc-font-match (or device (default-x-device))
+				(fc-name-parse font))))
     (when pattern
       (fc-pattern-del-weight pattern)
       (fc-pattern-add-weight pattern fc-font-name-weight-medium)
@@ -268,8 +268,8 @@ If it fails, it returns nil."
     (x-make-font-italic-core font device)))
 
 (defun x-make-font-italic-xft (font &optional device)
-  (let ((pattern (fc-font-real-pattern 
-		  font (or device (default-x-device)))))
+  (let ((pattern (fc-font-match (or device (default-x-device))
+				(fc-name-parse font))))
     (if pattern
       (let ((size (fc-pattern-get-size pattern 0))
 	    (copy (fc-copy-pattern-partial pattern (list "family"))))
@@ -322,8 +322,8 @@ If it fails, it returns nil."
     (x-make-font-unitalic-core font device)))
   
 (defun x-make-font-unitalic-xft (font &optional device)
-  (let ((pattern (fc-font-real-pattern 
-		  font (or device (default-x-device)))))
+  (let ((pattern (fc-font-match (or device (default-x-device))
+				(fc-name-parse font))))
     (when pattern
       (fc-pattern-del-slant pattern)
       (fc-pattern-add-slant pattern fc-font-name-slant-roman)
@@ -389,11 +389,11 @@ X fonts can be specified (by the user) in either pixels or 10ths of points,
 
 ;; this is unbelievable &*@#
 (defun x-font-size-xft (font)
-  (let ((pattern (fc-font-real-pattern 
-		  font (default-x-device))))
+  (let ((pattern (fc-font-match (default-x-device)
+				(fc-name-parse font))))
     (when pattern
       (let ((pixelsize (fc-pattern-get-pixelsize pattern 0)))
-	(if (floatp pixelsize) (round pixelsize))))))
+	(if (floatp pixelsize) (round pixelsize) pixelsize)))))
 
 (defun x-font-size-core (font)
   (if (font-instance-p font) (setq font (font-instance-name font)))
@@ -521,8 +521,8 @@ Otherwise, it returns the next smaller version of this font that is defined."
     (x-find-smaller-font-core font device)))
 
 (defun x-find-xft-font-of-size (font new-size-proc &optional device)
-  (let* ((pattern (fc-font-real-pattern 
-		   font (or device (default-x-device)))))
+  (let* ((pattern (fc-font-match (or device (default-x-device))
+				 (fc-name-parse font))))
     (when pattern
       (let ((size (fc-pattern-get-size pattern 0)))
 	(if (floatp size)

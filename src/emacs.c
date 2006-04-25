@@ -911,7 +911,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif /* not SYSTEM_MALLOC or HAVE_LIBMCHECK or DOUG_LEA_MALLOC */
 
   noninteractive = 0;
-  display_use = 0;
+  display_use = NULL;
   inhibit_non_essential_conversion_operations = 1;
 
 #ifdef NEW_GC

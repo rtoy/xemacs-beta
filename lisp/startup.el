@@ -174,7 +174,7 @@ Otherwise, XEmacs will offer migration to the init directory.")
 (defvar load-user-init-file-p t
   "Non-nil if XEmacs should load the user's init file.")
 
-;; #### called `site-run-file' in FSFmacs
+;; #### called `site-run-file' in GNU Emacs
 
 (defvar site-start-file "site-start"
   "File containing site-wide run-time initializations.
@@ -285,6 +285,11 @@ Display options:
                         -t is given.  Otherwise, a TTY frame is created.
   -unmapped             Do not display the initial frame.  Useful to create
                         a \"server\" that can accept `gnuclient' connections.
+  -tty                  Create the initial frame on the given window system.
+  -x                    (Requesting an unsupported window system, or giving
+  -gtk                  conflicting window systems, is a fatal error.)
+  -gnome
+  -msw
 
 Noninteractive options:
 
@@ -569,7 +574,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
       ;;      ;; Modify the initial frame based on what the init file puts into
       ;;      ;; ...-frame-alist.
       (frame-notice-user-settings)
-      ;;      ;;####FSFmacs junk
+      ;;      ;;#### GNU Emacs junk
       ;;      ;; Now we know the user's default font, so add it to the menu.
       ;;      (if (fboundp 'font-menu-add-default)
       ;;	  (font-menu-add-default))
@@ -583,7 +588,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 
     (if load-user-init-file-p
 	(maybe-migrate-user-init-file))
-    ;; FSF calls precompute-menubar-bindings.  We don't mix menubars
+    ;; GNU calls precompute-menubar-bindings.  We don't mix menubars
     ;; and keymaps.
     ))
 
@@ -606,7 +611,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 	       (string= vc "simple"))
 	   (setq version-control 'never))))
 
-  ;;####FSFmacs
+  ;;#### GNU Emacs
   ;;  (if (let ((ctype
   ;;	     ;; Use the first of these three envvars that has a nonempty value.
   ;;	     (or (let ((string (getenv "LC_ALL")))

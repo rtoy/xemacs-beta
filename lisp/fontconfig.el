@@ -89,9 +89,8 @@
 ;;
 ;; The fontconfig pattern API
 ;;
-;; The basic interfaces are defined as API wrappers in C in xft-font.c
-;; #### which should be renamed to fontconfig.c.  These are prefixed
-;; with "fc-pattern-".  These are
+;; The basic interfaces are defined as API wrappers in C in font-mgr.c.
+;; These are prefixed with "fc-pattern-".  These are
 ;;
 ;;   fc-pattern-p
 ;;   fc-pattern-create
@@ -385,13 +384,11 @@ A new object is allocated and returned."
 ;;
 ;; The fontconfig fontname UI
 ;;
-;; The basic interfaces are defined as API wrappers in C in xft-font.c
-;; #### which should be renamed to fontconfig.c.  These are prefixed
-;; with "fc-name-".  These are
+;; The basic interfaces are defined as API wrappers in C in font-mgr.c
+;; These are prefixed with "fc-name-".  These are
 ;;
 ;;   fc-name-parse
 ;;   fc-name-unparse
-;;   xft-name-unparse (nonfunctional and presumably obsolete)
 ;;
 ;; For interfacing with various font rendering systems, we need to be able
 ;; to convert the fontconfig patterns to names, and vice versa.  The high-
@@ -423,14 +420,12 @@ A new object is allocated and returned."
 ;;
 ;; The fontconfig font API
 ;;
-;; The basic interfaces are defined as API wrappers in C in xft-font.c
-;; #### which should be renamed to fontconfig.c.  These are prefixed
-;; with "fc-font-".  These are
+;; The basic interfaces are defined as API wrappers in C in font-mgr.c.
+;; These are prefixed with "fc-font-".  These are
 ;;
 ;;   fc-font-match
 ;;   fc-list-fonts-pattern-objects
 ;;   fc-font-sort
-;;   fc-font-real-pattern
 ;;
 ;; The high-level API is
 ;;

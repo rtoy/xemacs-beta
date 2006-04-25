@@ -796,10 +796,12 @@ The type may be the strings \"px\", \"pix\", or \"pixel\" (pixels), \"pt\" or
   "A list of font family mappings on Xft devices.")
 
 (defun xft-font-create-object (fontname &optional device)
-  "Return a font descriptor object for FONTNAME, appropriate for Xft."
+  "Return a font descriptor object for FONTNAME, appropriate for Xft.
+
+Optional DEVICE defaults to `default-x-device'."
   (let* ((name fontname)
 	 (device (or device (default-x-device)))
-	 (pattern (fc-font-real-pattern name device))
+	 (pattern (fc-font-match device (fc-name-parse name)))
 	 (font-obj (make-font))
 	 (family (fc-pattern-get-family pattern 0))
 	 (size (fc-pattern-get-size pattern 0))

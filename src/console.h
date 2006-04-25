@@ -28,20 +28,25 @@ Boston, MA 02111-1307, USA.  */
 /* Devices and consoles are similar entities.  The idea is that
    a console represents a physical keyboard/mouse/other-input-source
    while a device represents a display where frames appear on.
+   Nowadays "multi-headed" displays with multiple physical screens
+   are becoming familiar; in the XEmacs nomenclature, this maps to a
+   "console" supporting multiple "devices".
+
    In the X world, a console is a "Display" while a device is a
    "Screen".  Implementationally, it can sometimes get confusing:
    under X, multiple devices on a single console are different
    "Display" connections to what is in reality the same Display on
-   the same server.  Because of this, input comes from the device
-   and not from the console.  This is OK because events are basically
-   always tagged to a particular X window (i.e. frame),
-   which exists on only one screen; therefore the event won't be
-   reported multiple times even if there are multiple devices on
-   the same physical display.  This is an implementation detail
-   specific to X consoles (e.g. under NeXTstep or Windows, this
-   could be different, and input would come directly from the console).
-*/
+   the same server.  Furthermore, in the X model input comes from the
+   device and not from the console.  This causes no confusion because
+   events are basically always tagged to a particular X window (i.e.
+   frame), which exists on only one screen; therefore the event won't
+   be reported multiple times even if there are multiple devices on
+   the same physical display.
 
+   This is an implementation detail specific to X consoles (e.g. under
+   NeXTstep or Windows, this could be different, and input would come
+   directly from the console).
+*/
 
 /* GCC does not like forward enum declaration. This needs to be
    defined here. What a disgust! */

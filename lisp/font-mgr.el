@@ -234,16 +234,6 @@ stable.
 match other font-listing APIs."
   (error 'unimplemented "font-mgr library is experimental and incomplete"))
 
-(when nil
-  ;; #### this actually is an Xft function, should split those out
-  ;; or get rid of them entirely?
-  ;; #### be consistent about argument order.
-(defun fc-font-real-pattern (fontname xdevice)
-  "Temporarily open FONTNAME (a string) and return the actual
-fc pattern matched by the Fc library."
-  (error 'unimplemented "font-mgr library is experimental and incomplete"))
-)
-
 (defun xlfd-font-name-p (fontname)
   "Check whether the string FONTNAME is a XLFD font name."
   (save-match-data

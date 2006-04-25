@@ -271,7 +271,7 @@ based on Unicode.  "
 	(fill-paragraph nil))))))
 
 
-;; Moved from x-toolbar.el, since InfoDock doesn't dump a x-toolbar.el.
+;; Moved from x-toolbar.el, since InfoDock doesn't dump x-toolbar.el.
 (defun x-init-toolbar-from-resources (locale)
   (loop for (specifier . resname) in
     `((   ,top-toolbar-height       .    "topToolBarHeight")

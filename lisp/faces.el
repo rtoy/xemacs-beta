@@ -990,8 +990,10 @@ multi-charset environments."
 				  locale tag-set devtype-spec ffpdev)
 		   ;; devtype may be nil if it fails to match DEVTYPE-SPEC
 		   if devtype
-		   if (let* ((mapper (if (functionp frob-mapping) frob-mapping
-				       (plist-get frob-mapping devtype)))
+		   if (let* ((mapper
+			      (cond ((functionp frob-mapping) frob-mapping)
+				    ((plist-get frob-mapping devtype))
+				    (t (error 'unimplemented "mapper" devtype))))
 			     (result
 			      (cond
 			       ;; if a vector ...

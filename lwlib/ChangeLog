@@ -1,6 +1,7 @@
-2006-04-22  Stephen J. Turnbull  <stephen@xemacs.org>
+2006-04-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
-	* lwlib-fonts.c: Rename xft-fonts.h to font-mgr.h.
+	* lwlib-fonts.c: Change #include to "font-mgr.h".  Make
+	conditional on HAVE_FONTCONFIG, not USE_XFT.
 
 2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
 
