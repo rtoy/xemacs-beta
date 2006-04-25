@@ -899,10 +899,14 @@ to get different commands to edit and resubmit."
 ;; next-complete-history-element
 ;; previous-complete-history-element
 
-(defun goto-line (line)
-  "Goto line LINE, counting from line 1 at beginning of buffer."
+(defun goto-line (line &optional buffer)
+  "Goto line LINE, counting from line 1 at beginning of BUFFER."
   (interactive "NGoto line: ")
   (setq line (prefix-numeric-value line))
+  (if buffer
+      (let ((window (get-buffer-window buffer)))
+	(if window (select-window window)
+	  (switch-to-buffer-other-window buffer))))
   (save-restriction
     (widen)
     (goto-char 1)
@@ -1964,11 +1968,10 @@ scroll-down-command"
   :type 'boolean
   :group 'editing-basics)
 
-;;; After 8 years of waiting ... -sb
-(defcustom next-line-add-newlines nil  ; XEmacs
+(defcustom next-line-add-newlines nil
   "*If non-nil, `next-line' inserts newline when the point is at end of buffer.
-This behavior used to be the default, and is still default in FSF Emacs.
-We think it is an unnecessary and unwanted side-effect."
+This behavior used to be the default, but is now considered an unnecessary and
+unwanted side-effect."
   :type 'boolean
   :group 'editing-basics)
 

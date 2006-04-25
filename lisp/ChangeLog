@@ -1,3 +1,9 @@
+2006-04-23  Ville Skyttä  <scop@xemacs.org>
+
+	* simple.el (goto-line): Add optional `buffer' argument, from
+	GNU Emacs CVS.
+	(next-line-add-newlines): Remove obsolete comments from the docs.
+
 2006-04-25  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Repair busted commit and gratuitous doc improvements.
