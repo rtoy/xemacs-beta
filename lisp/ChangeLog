@@ -1,5 +1,10 @@
 2006-04-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/ethio-util.el (ethio-fidel-to-java-buffer):
+	"\u" -> "\\u" as it should have been in the first place. 
+	
+2006-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* dumped-lisp.el (preloaded-file-list):
 	Move loadhist earlier in the preloaded-file list. 
 	* help.el:
