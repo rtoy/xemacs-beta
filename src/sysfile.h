@@ -447,8 +447,6 @@ const char *strerror (int);
      separator.
 */
 
-#ifdef emacs
-
 /* We used to put some of this stuff in the s+m files for the various
    types of MS Windows, but that's disingenuous.  The various definitions
    above were specifically created for MS Windows, and the "if not, then
@@ -518,6 +516,12 @@ DECLARE_INLINE_HEADER (int IS_ANY_SEP (Ichar c))
 #define IS_ANY_SEP(c) IS_DIRECTORY_SEP (c)
 
 #endif /* WIN32_ANY */
+
+/* How long can a source filename be in DOC (including "\037S" at the start
+   and "\n" at the end) ? */
+#define DOC_MAX_FILENAME_LENGTH 2048
+
+#ifdef emacs
 
 #if defined (WIN32_NATIVE)
 #define PATHNAME_RESOLVE_LINKS(path, pathout)		\

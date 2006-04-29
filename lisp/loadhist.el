@@ -41,9 +41,15 @@
   "Return the input source from which SYM was loaded.
 This is a file name, or nil if the source was a buffer with no associated file."
   (interactive "SFind source file for symbol: ") ; XEmacs
-  (dolist (entry load-history)
-    (when (memq sym (cdr entry))
-      (return (car entry)))))
+  (block look-up-symbol-file
+    (dolist (entry load-history)
+      (when (memq sym (cdr entry))
+	(return-from look-up-symbol-file (car entry))))
+    (when (or (and (boundp sym) (built-in-variable-type sym))
+	      (and (fboundp sym) (subrp (symbol-function sym))))
+      (let ((built-in-file (built-in-symbol-file sym)))
+	(if built-in-file
+	    (concat build-root "/src/" built-in-file))))))
 
 (defun feature-symbols (feature)
   "Return the file and list of symbols associated with a given FEATURE."

@@ -92,6 +92,8 @@ in dumped-lisp.el and is not itself listed.")
 				;  `emacs-user-extension-dir'
        "misc"
        ;; (pureload "profile")
+       "loadhist"		; Must be dumped before loaddefs is loaded
+				; Used by help. 
        "help"
        ;; (pureload "hyper-apropos")  Soon...
        "files"
@@ -308,7 +310,6 @@ in dumped-lisp.el and is not itself listed.")
         ;;     "sun-eos-debugger"
         ;;     "sun-eos-debugger-extra"
         ;;     "sun-eos-menubar"))
-       "loadhist"		; Must be dumped before loaddefs is loaded
        "loaddefs"		; <=== autoloads get loaded here
 	))
 

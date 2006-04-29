@@ -1,4 +1,4 @@
-;;; help.el --- help commands for XEmacs.
+;; help.el --- help commands for XEmacs.
 
 ;; Copyright (C) 1985, 1986, 1992-4, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 2001, 2002, 2003 Ben Wing.
@@ -40,6 +40,8 @@
 ;; Get the macro make-help-screen when this is compiled,
 ;; or run interpreted, but not when the compiled code is loaded.
 (eval-when-compile (require 'help-macro))
+
+(require 'loadhist) ;; For symbol-file. 
 
 (defgroup help nil
   "Support for on-line help systems."
@@ -153,6 +155,8 @@ Commands:
 (define-key help-mode-map "c" 'customize-variable)
 (define-key help-mode-map [tab] 'help-next-symbol)
 (define-key help-mode-map [(shift tab)] 'help-prev-symbol)
+(define-key help-mode-map [return] 'help-find-source-or-scroll-up)
+(define-key help-mode-map [button2] 'help-mouse-find-source-or-track)
 (define-key help-mode-map "n" 'help-next-section)
 (define-key help-mode-map "p" 'help-prev-section)
 
@@ -1091,14 +1095,14 @@ unless the function is autoloaded."
   :type 'boolean
   :group 'help-appearance)
 
-(defun describe-symbol-find-file (symbol)
-  (loop for (file . load-data) in load-history
-    do (when (memq symbol load-data)
-	 (return file))))
+(define-obsolete-function-alias
+  ;; Moved to using the version in loadhist.el
+  'describe-function-find-symbol
+  'symbol-file)
 
 (define-obsolete-function-alias
   'describe-function-find-file
-  'describe-symbol-find-file)
+  'symbol-file)
 
 (defun describe-function (function)
   "Display the full documentation of FUNCTION (a symbol).
@@ -1340,6 +1344,7 @@ part of the documentation of internal subroutines."
 	  (when (or var fun)
 	    (let ((ex (make-extent b e)))
 	      (require 'hyper-apropos)
+
 	      (set-extent-property ex 'mouse-face 'highlight)
 	      (set-extent-property ex 'help-symbol sym)
 	      (set-extent-property ex 'face 'hyper-apropos-hyperlink)
@@ -1421,10 +1426,21 @@ part of the documentation of internal subroutines."
     (if autoload-file
 	(princ (format "  -- autoloads from \"%s\"\n" autoload-file)))
     (or file-name
-	(setq file-name (describe-symbol-find-file function)))
-    (if file-name
-	(princ (format "  -- loaded from \"%s\"\n" file-name)))
-;;     (terpri)
+	(setq file-name (symbol-file function)))
+    (when file-name
+	(princ "  -- loaded from \"")
+	(if (not (bufferp standard-output))
+	    (princ file-name)
+	  (let ((opoint (point standard-output))
+		e)
+	    (require 'hyper-apropos)
+	    (princ file-name)
+	    (setq e (make-extent opoint (point standard-output)
+				 standard-output))
+	    (set-extent-property e 'face 'hyper-apropos-hyperlink)
+	    (set-extent-property e 'mouse-face 'highlight)
+	    (set-extent-property e 'find-function-symbol function)))
+	(princ "\"\n"))
     (if describe-function-show-arglist
 	(let ((arglist (function-arglist function)))
 	  (when arglist
@@ -1468,7 +1484,6 @@ part of the documentation of internal subroutines."
 		 (unless (or (equal doc "")
 			     (eq ?\n (aref doc (1- (length doc)))))
 		   (terpri)))))))))
-
 
 ;;; [Obnoxious, whining people who complain very LOUDLY on Usenet
 ;;; are binding this to keys.]
@@ -1590,11 +1605,22 @@ there is no variable around that point, nil is returned."
 	     (princ (format "%s" aliases)))
 	 (princ (built-in-variable-doc variable))
 	 (princ ".\n")
-	 (let ((file-name (describe-symbol-find-file variable)))
-	   (if file-name
-	       (princ (format "  -- loaded from \"%s\"\n" file-name))))
-	 (princ "\nValue: ")
 	 (require 'hyper-apropos)
+	 (let ((file-name (symbol-file variable))
+	       opoint e)
+	   (when file-name
+	       (princ "  -- loaded from \"")
+	       (if (not (bufferp standard-output))
+		   (princ file-name)
+		 (setq opoint (point standard-output))
+		 (princ file-name)
+		 (setq e (make-extent opoint (point standard-output)
+				      standard-output))
+		 (set-extent-property e 'face 'hyper-apropos-hyperlink)
+		 (set-extent-property e 'mouse-face 'highlight)
+		 (set-extent-property e 'find-variable-symbol variable))
+	       (princ"\"\n")))
+	 (princ "\nValue: ")
     	 (if (not (boundp variable))
 	     (Help-princ-face "void\n" 'hyper-apropos-documentation)
 	   (Help-prin1-face (symbol-value variable)
@@ -1778,5 +1804,29 @@ after the listing is made.)"
     (if (stringp string)
 	(with-displaying-help-buffer
 	 (insert string)))))
+
+(defun help-find-source-or-scroll-up (&optional pos)
+  "Follow any cross reference to source code; if none, scroll up.  "
+  (interactive "d")
+  (let ((e (extent-at pos nil 'find-function-symbol)))
+    (if e
+	(find-function (extent-property e 'find-function-symbol))
+      (setq e (extent-at pos nil 'find-variable-symbol))
+      (if e 
+	  (find-variable (extent-property e 'find-variable-symbol))
+	(view-scroll-lines-up 1)))))
+
+(defun help-mouse-find-source-or-track (event)
+  "Follow any cross reference to source code under the mouse; 
+if none, call mouse-track.  "
+  (interactive "e")
+  (mouse-set-point event)
+  (let ((e (extent-at (point) nil 'find-function-symbol)))
+    (if e
+	(find-function (extent-property e 'find-function-symbol))
+      (setq e (extent-at (point) nil 'find-variable-symbol))
+      (if e 
+	  (find-variable (extent-property e 'find-variable-symbol))
+	(mouse-track event)))))
 
 ;;; help.el ends here

@@ -44,6 +44,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include <sysfile.h>
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,6 +59,7 @@ Boston, MA 02111-1307, USA.  */
   ('0' <= c && c <= '9') ||			\
   (c == '_'))
 
+static void put_filename (const char *filename);
 static int scan_file (const char *filename);
 static int read_c_string (FILE *, int, int);
 static void write_c_args (FILE *out, const char *func, char *buf, int minargs,
@@ -261,6 +263,30 @@ main (int argc, char **argv)
   exit (err_count > 0);
 #endif /* VMS */
   return err_count > 0;
+}
+
+/* Add a source file name boundary in the output file.  */
+static void
+put_filename (const char *filename)
+{
+  const char *tmp;
+
+  /* Why are we cutting this off? */
+  for (tmp = filename; *tmp; tmp++)
+    {
+      if (IS_DIRECTORY_SEP(*tmp))
+	filename = tmp + 1;
+    }
+
+  /* <= because sizeof includes the nul byte at the end. Not quite right,
+     because it should include the length of the symbol + "\037[VF]" instead
+     of simply 10. */
+  assert(sizeof("\037S\n") + strlen(filename) + 10 
+	 <= DOC_MAX_FILENAME_LENGTH);
+
+  putc (037, outfile);
+  putc ('S', outfile);
+  fprintf (outfile, "%s\n", filename);
 }
 
 /* Read file FILENAME and output its doc strings to outfile.  */
@@ -864,11 +890,14 @@ scan_c_file (const char *filename, const char *mode)
       if (defunflag || defvarflag || c == '"')
 	{
 	  /* XEmacs change: the original code is in the "else" clause */
+	  /* XXX Must modify the documentation file name code to handle
+	     ELLCCs */
 	  if (ellcc)
 	    fprintf (outfile, "  CDOC%s(\"%s\", \"\\\n",
 		     defvarflag ? "SYM" : "SUBR", globalbuf);
 	  else
 	    {
+	      put_filename (filename);	/* XEmacs addition */
 	      putc (037, outfile);
 	      putc (defvarflag ? 'V' : 'F', outfile);
 	      fprintf (outfile, "%s\n", globalbuf);
@@ -963,6 +992,10 @@ scan_c_file (const char *filename, const char *mode)
  The NAME and DOCSTRING are output.
  NAME is preceded by `F' for a function or `V' for a variable.
  An entry is output only if DOCSTRING has \ newline just after the opening "
+
+ Adds the filename a symbol or function was found in before its docstring;
+ there's no need for this with the load-history available, but we do it for
+ consistency with the C parsing code. 
  */
 
 static void
@@ -1356,6 +1389,7 @@ scan_lisp_file (const char *filename, const char *mode)
 	 In the latter case, the opening quote (and leading
 	 backslash-newline) have already been read.  */
 
+      put_filename (filename);	/* XEmacs addition */
       putc ('\n', outfile);	/* XEmacs addition */
       putc (037, outfile);
       putc (type, outfile);

@@ -1,3 +1,12 @@
+2006-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.c:
+	* make-docfile.c (put_filename):
+	* make-docfile.c (scan_c_file):
+	* make-docfile.c (scan_lisp_file):
+	Record file name information for built-in symbols. Based on the
+	FSF's implementation of same. 
+	
 2006-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.26 "endive" is released.

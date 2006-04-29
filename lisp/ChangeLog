@@ -1,3 +1,22 @@
+2006-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Move loadhist earlier in the preloaded-file list. 
+	* help.el:
+	* help.el (help-mode-map): Add bindings to find the source code of
+	a function, notably when that function's in C. 
+	* help.el (describe-function-find-file, describe-symbol-find-file):
+	Removed. Use symbol-file from loadhist.el instead. 
+	* help.el (frob-help-extents):
+	* help.el (describe-function-1):
+	Allow built-in function file names to be hyperlinks. 
+	* help.el (describe-variable):
+	* help.el (help-find-source-or-scroll-up): New.
+	* help.el (help-mouse-find-source-or-track): New.
+	Make describe-function a bit more mouse-friendly, basically. 
+	* loadhist.el (symbol-file):
+	Support looking up builtin symbols using built-in-symbol-file. 
+	
 2006-04-23  Ville Skyttä  <scop@xemacs.org>
 
 	* simple.el (goto-line): Add optional `buffer' argument, from

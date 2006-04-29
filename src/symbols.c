@@ -719,6 +719,18 @@ Associates the function with the current load file, if any.
   return newdef;
 }
 
+DEFUN ("subr-name", Fsubr_name, 1, 1, 0, /*
+Return name of function SUBR.
+SUBR must be a built-in function.  
+*/
+       (subr))
+{
+  const char *name;
+  if (!SUBRP (subr))
+    wrong_type_argument (Qsubrp, subr);
+  name = XSUBR (subr)->name;
+  return make_string (name, strlen (name));
+}
 
 DEFUN ("setplist", Fsetplist, 2, 2, 0, /*
 Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
@@ -3706,6 +3718,7 @@ syms_of_symbols (void)
   DEFSUBR (Ffset);
   DEFSUBR (Fdefine_function);
   Ffset (intern ("defalias"), intern ("define-function"));
+  DEFSUBR (Fsubr_name);
   DEFSUBR (Fsetplist);
   DEFSUBR (Fsymbol_value_in_buffer);
   DEFSUBR (Fsymbol_value_in_console);

@@ -39,10 +39,127 @@ Lisp_Object Vinternal_doc_file_name;
 
 Lisp_Object QSsubstitute;
 
-/* Read and return doc string or instructions from open file descriptor FD
-   at position POSITION.  Does not close the file.  Returns string; or if
-   error, returns a cons holding the error data to pass to Fsignal.
-   NAME_NONRELOC and NAME_RELOC are only used for the error messages. */
+/* Work out what source file a function or variable came from, taking the
+   information from the documentation file. */
+
+static Lisp_Object
+extract_object_file_name (int fd, EMACS_INT doc_pos,
+			  Ibyte *name_nonreloc, Lisp_Object name_reloc,
+			  int standard_doc_file)
+{
+  Ibyte buf[DOC_MAX_FILENAME_LENGTH];
+  Ibyte *buffer = buf;
+  int buffer_size = sizeof (buf), space_left;
+  Ibyte *from, *to;
+  REGISTER Ibyte *p = buffer;
+  Lisp_Object return_me;
+  Lisp_Object fdstream = Qnil, instream = Qnil;
+  struct gcpro gcpro1, gcpro2;
+  EMACS_INT position, seenS = 0;
+
+  GCPRO2 (fdstream, instream);
+
+  position = doc_pos > DOC_MAX_FILENAME_LENGTH  ? 
+    doc_pos - DOC_MAX_FILENAME_LENGTH : 0; 
+
+  if (0 > lseek (fd, position, 0))
+    {
+      if (name_nonreloc)
+	name_reloc = build_intstring (name_nonreloc);
+      return_me = list3 (build_msg_string
+			 ("Position out of range in doc string file"),
+			  name_reloc, make_int (position));
+      goto done;
+    }
+
+  fdstream = make_filedesc_input_stream (fd, 0, -1, 0);
+  Lstream_set_buffering (XLSTREAM (fdstream), LSTREAM_UNBUFFERED, 0);
+  instream =
+    make_coding_input_stream
+      (XLSTREAM (fdstream), standard_doc_file ? Qescape_quoted : Qbinary,
+       CODING_DECODE, 0);
+  Lstream_set_buffering (XLSTREAM (instream), LSTREAM_UNBUFFERED, 0);
+
+  space_left = buffer_size - (p - buffer);
+  while (space_left > 0)
+    {
+      int nread;
+
+      nread = Lstream_read (XLSTREAM (instream), p, space_left);
+      if (nread < 0)
+	{
+	  return_me = list1 (build_msg_string
+			     ("Read error on documentation file"));
+	  goto done;
+	}
+
+      p[nread] = 0;
+
+      if (!nread)
+	break;
+
+      p += nread;
+      space_left = buffer_size - (p - buffer);
+    }
+
+  /* First, search backward for the "\037S" that marks the beginning of the
+     file name, then search forward from that to the newline or to the end
+     of the buffer. */
+  from = p; 
+
+  while (from > buf)
+    {
+      --from;
+      if (seenS)
+	{
+	  if ('\037' == *from) 
+	    {
+	      /* Got a file name; adjust `from' to point to it, break out of
+		 the loop.  */
+	      from += 2;
+	      break; 
+	    }
+	}
+      /* Is *from 'S' ? */
+      seenS = ('S' == *from);
+    }
+
+  if (buf == from)
+    {
+      /* We've scanned back to the beginning of the buffer without hitting
+	 the file name. Either the file name plus the symbol name is longer
+	 than DOC_MAX_FILENAME_LENGTH--which shouldn't happen, because it'll
+	 trigger an assertion failure in make-docfile, the DOC file is
+	 corrupt, or it was produced by a version of make-docfile that
+	 doesn't store the file name with the symbol name and docstring.  */ 
+      return_me = list1 (build_msg_string
+			 ("Object file name not stored in doc file"));
+      goto done;
+    }
+
+  to = from;
+  /* Search for the end of the file name. */
+  while (++to < p)
+    {
+      if ('\n' == *to || '\037' == *to)
+	{
+	  break;
+	}
+    }
+
+  /* Don't require the file name to end in a newline. */
+  return_me = make_string (from, to - from);
+
+ done:
+  if (!NILP (instream))
+    {
+      Lstream_delete (XLSTREAM (instream));
+      Lstream_delete (XLSTREAM (fdstream));
+    }
+
+  UNGCPRO;
+  return return_me;
+}
 
 Lisp_Object
 unparesseuxify_doc_string (int fd, EMACS_INT position,
@@ -287,6 +404,150 @@ read_doc_string (Lisp_Object filepos)
   return Fread (string);
 }
 
+static Lisp_Object
+get_object_file_name (Lisp_Object filepos)
+{
+  REGISTER int fd;
+  REGISTER Ibyte *name_nonreloc = 0;
+  EMACS_INT position;
+  Lisp_Object file, tem;
+  Lisp_Object name_reloc = Qnil;
+  int standard_doc_file = 0;
+
+  if (INTP (filepos))
+    {
+      file = Vinternal_doc_file_name;
+      standard_doc_file = 1;
+      position = XINT (filepos);
+    }
+  else if (CONSP (filepos) && INTP (XCDR (filepos)))
+    {
+      file = XCAR (filepos);
+      position = XINT (XCDR (filepos));
+      if (position < 0)
+	position = - position;
+    }
+  else
+    return Qnil;
+
+  if (!STRINGP (file))
+    return Qnil;
+
+  /* Put the file name in NAME as a C string.
+     If it is relative, combine it with Vdoc_directory.  */
+
+  tem = Ffile_name_absolute_p (file);
+  if (NILP (tem))
+    {
+      Bytecount minsize;
+      /* XEmacs: Move this check here.  OK if called during loadup to
+	 load byte code instructions. */
+      if (!STRINGP (Vdoc_directory))
+	return Qnil;
+
+      minsize = XSTRING_LENGTH (Vdoc_directory);
+      /* sizeof ("../lib-src/") == 12 */
+      if (minsize < 12)
+	minsize = 12;
+      name_nonreloc = alloca_ibytes (minsize + XSTRING_LENGTH (file) + 8);
+      string_join (name_nonreloc, Vdoc_directory, file);
+    }
+  else
+    name_reloc = file;
+
+  fd = qxe_open (name_nonreloc ? name_nonreloc :
+		 XSTRING_DATA (name_reloc), O_RDONLY | OPEN_BINARY, 0);
+  if (fd < 0)
+    {
+      if (purify_flag)
+	{
+	    /* sizeof ("../lib-src/") == 12 */
+	  name_nonreloc = alloca_ibytes (12 + XSTRING_LENGTH (file) + 8);
+	  /* Preparing to dump; DOC file is probably not installed.
+	     So check in ../lib-src. */
+	  qxestrcpy_ascii (name_nonreloc, "../lib-src/");
+	  qxestrcat (name_nonreloc, XSTRING_DATA (file));
+
+	  fd = qxe_open (name_nonreloc, O_RDONLY | OPEN_BINARY, 0);
+	}
+
+      if (fd < 0)
+	report_file_error ("Cannot open doc string file",
+			   name_nonreloc ? build_intstring (name_nonreloc) :
+			   name_reloc);
+    }
+
+  tem = extract_object_file_name (fd, position, name_nonreloc, name_reloc,
+			      standard_doc_file);
+  retry_close (fd);
+
+  if (!STRINGP (tem))
+    signal_error_1 (Qinvalid_byte_code, tem);
+
+  return tem;
+}
+
+
+static void
+weird_doc (Lisp_Object sym, const CIbyte *weirdness, const CIbyte *type,
+	   int pos)
+{
+  if (!strcmp (weirdness, GETTEXT ("duplicate"))) return;
+  message ("Note: Strange doc (%s) for %s %s @ %d",
+           weirdness, type, XSTRING_DATA (XSYMBOL (sym)->name), pos);
+}
+
+DEFUN ("built-in-symbol-file", Fbuilt_in_symbol_file, 1, 1, 0, /*
+Return the C source file built-in symbol SYM comes from. 
+Don't use this.  Use the more general `symbol-file' (q.v.) instead. 
+*/
+       (symbol))
+{
+  /* This function can GC */
+  Lisp_Object fun;
+  Lisp_Object filename = Qnil;
+
+  if (EQ(Ffboundp(symbol), Qt))
+    {
+      fun = Findirect_function (symbol);
+
+      if (SUBRP (fun))
+	{
+	  if (XSUBR (fun)->doc == 0)
+	    return Qnil;
+
+	  if ((EMACS_INT) XSUBR (fun)->doc >= 0)
+	    {
+	      weird_doc (symbol, "No file info available for function",
+			 GETTEXT("function"), 0);
+	      return Qnil;
+	    }
+	  else
+	    filename = get_object_file_name 
+	      (make_int (- (EMACS_INT) XSUBR (fun)->doc));
+	}
+    }
+  else if (EQ(Fboundp(symbol), Qt))
+    {
+      Lisp_Object doc_offset = Fget (symbol, Qvariable_documentation, Qnil);
+
+      if (!NILP(doc_offset)) 
+	{
+	  if (INTP(doc_offset))
+	    {
+	      filename = get_object_file_name 
+		(XINT (doc_offset) > 0 ? doc_offset
+		 : make_int (- XINT (doc_offset)));
+	    }
+	  else if (CONSP(doc_offset))
+	    {
+	      filename = get_object_file_name(doc_offset);
+	    }
+	}
+    }
+  return filename;
+}
+
 DEFUN ("documentation", Fdocumentation, 1, 2, 0, /*
 Return the documentation string of FUNCTION.
 Unless a non-nil second argument RAW is given, the
@@ -419,14 +680,6 @@ translation.
   return doc;
 }
 
-static void
-weird_doc (Lisp_Object sym, const CIbyte *weirdness, const CIbyte *type,
-	   int pos)
-{
-  if (!strcmp (weirdness, GETTEXT ("duplicate"))) return;
-  message ("Note: Strange doc (%s) for %s %s @ %d",
-           weirdness, type, XSTRING_DATA (XSYMBOL (sym)->name), pos);
-}
 
 DEFUN ("Snarf-documentation", Fsnarf_documentation, 1, 1, 0, /*
 Used during Emacs initialization, before dumping runnable Emacs,
@@ -1008,6 +1261,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 void
 syms_of_doc (void)
 {
+  DEFSUBR (Fbuilt_in_symbol_file);
   DEFSUBR (Fdocumentation);
   DEFSUBR (Fdocumentation_property);
   DEFSUBR (Fsnarf_documentation);
