@@ -1,3 +1,10 @@
+2006-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c:
+	* lread.c (read_escape):
+	Support \uABCD and \U00ABCDEF for specifying characters by their
+	Unicode code point. 
+	
 2006-04-25  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Repair busted commit, plus some gratuitous doc improvements.

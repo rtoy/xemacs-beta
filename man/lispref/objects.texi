@@ -510,6 +510,21 @@ with the legitimate @sc{iso}-8859-1 interpretation of the character code.
 For example, character code 193 is a lowercase @samp{a} with an acute
 accent, in @sc{iso}-8859-1.)
 
+@cindex unicode character escape
+   From version 21.5.25 onwards, XEmacs provides a syntax for specifying
+characters by their Unicode code points.  @samp{?\uABCD} will give you
+an XEmacs character that maps to the code point @samp{U+ABCD} in
+Unicode-based representations (UTF-8 text files, Unicode-oriented fonts,
+etc.)  Just as in the C# language, there is a slightly different syntax
+for specifying characters with code points above @samp{#xFFFF};
+@samp{\U00ABCDEF} will give you an XEmacs character that maps to the
+code point @samp{U+ABCDEF} in Unicode-based representations, if such an
+XEmacs character exists. 
+
+  Unlike in C#, while this syntax is available for character literals,
+and (see later) in strings, it is not available elsewhere in your Lisp
+source code.
+
 @ignore @c None of this crap applies to XEmacs.
   For use in strings and buffers, you are limited to the control
 characters that exist in @sc{ascii}, but for keyboard input purposes,
@@ -614,6 +629,7 @@ bit values are 2**22 for alt, 2**23 for super and 2**24 for hyper.
 @cindex backslash in character constant
 @cindex octal character code
 @cindex hexadecimal character code
+
   Finally, there are two read syntaxes involving character codes.
 It is not possible to represent multibyte or wide characters in this
 way; the permissible range of codes is from 0 to 255 (@emph{i.e.},

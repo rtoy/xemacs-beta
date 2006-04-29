@@ -1,3 +1,9 @@
+2006-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (Character Type):
+	Document the Unicode syntax for characters in characters and
+	strings. 
+
 2006-04-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi:  Run texinfo-master-menu.

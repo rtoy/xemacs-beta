@@ -208,6 +208,8 @@ static int saved_doc_string_position;
 static int locate_file_open_or_access_file (Ibyte *fn, int access_mode);
 EXFUN (Fread_from_string, 3);
 
+EXFUN (Funicode_to_char, 2);  /* In unicode.c.  */
+
 /* When errors are signaled, the actual readcharfun should not be used
    as an argument if it is an lstream, so that lstreams don't escape
    to the Lisp level.  */
@@ -1675,6 +1677,9 @@ read_escape (Lisp_Object readcharfun)
 {
   /* This function can GC */
   Ichar c = readchar (readcharfun);
+  /* \u allows up to four hex digits, \U up to eight. Default to the
+     behaviour for \u, and change this value in the case that \U is seen. */
+  int unicode_hex_count = 4;
 
   if (c < 0)
     signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
@@ -1763,7 +1768,7 @@ read_escape (Lisp_Object readcharfun)
 	      }
 	  }
 	if (i >= 0400)
-	  syntax_error ("Attempt to create non-ASCII/ISO-8859-1 character",
+	  syntax_error ("Non-ISO-8859-1 character specified with octal escape",
 			make_int (i));
 	return i;
       }
@@ -1791,11 +1796,51 @@ read_escape (Lisp_Object readcharfun)
 	  }
 	return i;
       }
+    case 'U':
+      /* Post-Unicode-2.0: Up to eight hex chars */
+      unicode_hex_count = 8;
+    case 'u':
 
+      /* A Unicode escape, as in C# (though we only permit them in strings
+	 and characters, not arbitrarily in the source code.) */
+      {
+	REGISTER Ichar i = 0;
+	REGISTER int count = 0;
+	Lisp_Object lisp_char;
+	while (++count <= unicode_hex_count)
+	  {
+	    c = readchar (readcharfun);
+	    /* Remember, can't use isdigit(), isalpha() etc. on Ichars */
+	    if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
+	    else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
+            else if (c >= 'A' && c <= 'F')  i = (i << 4) + (c - 'A') + 10;
+	    else
+	      {
+		syntax_error ("Non-hex digit used for Unicode escape",
+			      make_char (c));
+		break;
+	      }
+	  }
+
+	lisp_char = Funicode_to_char(make_int(i), Qnil);
+
+	if (EQ(Qnil, lisp_char))
+	  {
+	    /* This is ugly and horrible and trashes the user's data, but
+	       it's what unicode.c does. In the future, unicode-to-char
+	       should not return nil.  */
 #ifdef MULE
-      /* #### need some way of reading an extended character with
-	 an escape sequence. */
+	    i = make_ichar (Vcharset_japanese_jisx0208, 34 + 128, 46 + 128);
+#else
+	    i = '~';
 #endif
+            return i;
+	  }
+	else
+	  {
+	    return XCHAR(lisp_char);
+	  }
+      }
 
     default:
 	return c;
