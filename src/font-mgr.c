@@ -704,7 +704,6 @@ string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os)
 
       CHECK_STRING (elt);
       s = fc_intern (elt);
-      fprintf (stderr, "%s\n", s);
       FcObjectSetAdd (os, s);
     }
 }
