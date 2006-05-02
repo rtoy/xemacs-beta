@@ -847,8 +847,8 @@ lw_debug_print_class_resources (WidgetClass class_)
 	if (!strcmp (rl[i].resource_class, "International"))
 	  {
 	    fprintf (stderr, "  Class has an International resource.\n");
-	    fprintf (stderr, "    International resource is %d.\n",
-		     (int) rl[i].default_addr);
+	    fprintf (stderr, "    International resource is %p.\n",
+		     rl[i].default_addr);
 	  }
       }
     class_ = class_->core_class.superclass;

@@ -333,8 +333,8 @@ string_width (XlwMenuWidget mw,
 # else
 #ifdef USE_XFT_MENUBARS
   XGlyphInfo glyphinfo;
-  XftTextExtents8 (XtDisplay (mw), mw->menu.renderFont, s, strlen (s),
-		   &glyphinfo);
+  XftTextExtents8 (XtDisplay (mw), mw->menu.renderFont, (FcChar8 *) s,
+		   strlen (s), &glyphinfo);
   return glyphinfo.xOff;
 #else
   XCharStruct xcs;
@@ -424,8 +424,8 @@ string_width_u (XlwMenuWidget mw,
   return rl.width;
 # else /* ! USE_XFONTSET */
 #ifdef USE_XFT_MENUBARS
-  XftTextExtents8 (XtDisplay (mw), mw->menu.renderFont, newchars, j, 
-		   &glyphinfo);
+  XftTextExtents8 (XtDisplay (mw), mw->menu.renderFont, (FcChar8 *) newchars,
+		   j, &glyphinfo);
   return glyphinfo.xOff;
 #else
   XTextExtents (mw->menu.font, newchars, j, &drop, &drop, &drop, &xcs);
@@ -756,7 +756,7 @@ x_xft_text_width (Display *dpy, XftFont *xft_font, char *run, int len)
 
   XftTextExtents8 (dpy,
 		   xft_font,
-		   run, len, &glyphinfo);
+		   (FcChar8 *) run, len, &glyphinfo);
   return glyphinfo.xOff;
 }
 #endif
@@ -801,8 +801,8 @@ string_draw (XlwMenuWidget mw,
 	       x_xft_text_width (display, renderFont, string, strlen (string)),
 	       renderFont->ascent + renderFont->descent);  /* XXX */
   /* draw text */
-  XftDrawString8 (xftDraw, color, renderFont,
-		  x, y + mw->menu.font_ascent, string, strlen (string));
+  XftDrawString8 (xftDraw, color, renderFont, x, y + mw->menu.font_ascent,
+		  (FcChar8 *) string, strlen (string));
   XftDrawDestroy (xftDraw);
 # else
 #  ifdef USE_XFONTSET
@@ -890,10 +890,10 @@ string_draw_range (
 	    /* draw text */
 	    XftDrawString8 (xftDraw, color, renderFont,
 			    x, y + mw->menu.font_ascent,
-			    &string[start], end - start);
+			    (FcChar8 *) &string[start], end - start);
 	    
-	    XftTextExtents8 (display, renderFont, &string[start], end - start,
-			     &glyphinfo);
+	    XftTextExtents8 (display, renderFont, (FcChar8 *) &string[start],
+			     end - start, &glyphinfo);
 
 	    /* #### should use parent frame's .xftDraw */
 	    XftDrawDestroy (xftDraw);

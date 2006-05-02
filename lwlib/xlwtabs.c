@@ -1708,8 +1708,8 @@ DrawTab(TabsWidget tw, Widget child, Bool labels)
 	      XGlyphInfo glyphinfo;
 	      XftColor colorDBG;
 	      XftColorAllocName (dpy, visual, cmap, "wheat", &colorDBG);
-	      XftTextExtents8 (dpy, renderFont, lbl, (int) strlen (lbl),
-			       &glyphinfo);
+	      XftTextExtents8 (dpy, renderFont, (FcChar8 *) lbl,
+			       (int) strlen (lbl), &glyphinfo);
 	      /* #### unnecessary? for the moment, give visual extent */
 	      /* draw background rect */
 #if 1
@@ -1754,7 +1754,7 @@ DrawTab(TabsWidget tw, Widget child, Bool labels)
 		}
 	      XftDrawString8 (xftDraw, &color, renderFont,
 			      x+tab->tabs.l_x, y+tab->tabs.l_y,
-			      lbl, (int) strlen (lbl));
+			      (FcChar8 *) lbl, (int) strlen (lbl));
 	      XftDrawDestroy (xftDraw);
 #else
 	      XDrawString(dpy,win,gc,
@@ -1988,7 +1988,8 @@ TabWidth(Widget w)
 	{
 #ifdef USE_XFT_TABS
 	  tab->tabs.width += x_xft_text_width (XtDisplay(tw), font,
-						 lbl, (int)strlen(lbl)) + iw;
+					       (FcChar8 *) lbl,
+					       (int)strlen(lbl)) + iw;
 	  tab->tabs.l_y = (tw->tabs.tab_height
 			   + tw->tabs.renderFont->ascent
 			   /* #### how can this subtraction be correct? */

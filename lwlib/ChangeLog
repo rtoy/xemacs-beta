@@ -1,3 +1,13 @@
+2006-04-24  Jerry James  <james@xemacs.org>
+
+	* lwlib-Xaw.c (lw_debug_print_class_resources): Casting from a
+	pointer to an int throws away half of the bits on an x86_64
+	platform.  Print as a pointer instead.
+	* xlwgauge.c (XawGaugeSetValue): Use NULL instead of 0 as the
+	sentinel to quiet gcc warnings.
+	* xlwmenu.c: Cast to FcChar8 * as necessary to quiet warnings.
+	* xlwtabs.c: Ditto.
+
 2006-04-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lwlib-fonts.c: Change #include to "font-mgr.h".  Make

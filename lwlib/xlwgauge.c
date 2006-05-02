@@ -838,7 +838,7 @@ XawGaugeSetValue (Widget   w,
 	if(( gw->gauge.autoScaleUp && (int) value > gw->gauge.v1) ||
 	   (gw->gauge.autoScaleDown && (int) value < gw->gauge.v1/3 ))
 	{
-	  XtVaSetValues(w, XtNvalue, value, 0) ;
+	  XtVaSetValues(w, XtNvalue, value, NULL) ;
 	  return ;
 	}
 
