@@ -467,6 +467,7 @@ const char *strerror (int);
 #define SEPCHAR ';'
 #define DEFAULT_DIRECTORY_SEP '\\'
 
+#ifdef emacs
 DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 {
   if (!CHARP (Vdirectory_sep_char)
@@ -484,6 +485,13 @@ DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 }
 #define DIRECTORY_SEP sysfile_get_directory_sep()
 
+#else /* emacs */
+
+/* The above Lisp variables are not available to make-docfile, etc. */
+#define DIRECTORY_SEP DEFAULT_DIRECTORY_SEP
+
+#endif /* emacs */
+
 #else /* not WIN32_NATIVE */
 
 #define SEPCHAR ':'
@@ -499,6 +507,8 @@ DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 
 #define IS_DEVICE_SEP(c) ((c) == DEVICE_SEP)
 
+#ifdef emacs
+
 DECLARE_INLINE_HEADER (int IS_DIRECTORY_SEP (Ichar c))
 {
   return (c == '/' || c == '\\');
@@ -508,6 +518,22 @@ DECLARE_INLINE_HEADER (int IS_ANY_SEP (Ichar c))
 {
   return (c == '/' || c == '\\' || c == ':');
 }
+
+#else /* emacs */
+
+/* The Ichar typedef is not available to make-docfile, etc. */
+
+DECLARE_INLINE_HEADER (int IS_DIRECTORY_SEP (int c))
+{
+  return (c == '/' || c == '\\');
+}
+
+DECLARE_INLINE_HEADER (int IS_ANY_SEP (int c))
+{
+  return (c == '/' || c == '\\' || c == ':');
+}
+
+#endif
 
 #else /* not WIN32_ANY */
 

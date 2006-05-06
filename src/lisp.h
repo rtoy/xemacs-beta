@@ -2676,6 +2676,8 @@ struct Lisp_Subr
   struct lrecord_header lheader;
   short min_args;
   short max_args;
+  /* #### We should make these const Ascbyte * or const Ibyte *, not const
+     char *. */
   const char *prompt;
   const char *doc;
   const char *name;

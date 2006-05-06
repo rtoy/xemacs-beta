@@ -729,7 +729,7 @@ SUBR must be a built-in function.
   if (!SUBRP (subr))
     wrong_type_argument (Qsubrp, subr);
   name = XSUBR (subr)->name;
-  return make_string (name, strlen (name));
+  return make_string ((const Ibyte *)name, strlen (name));
 }
 
 DEFUN ("setplist", Fsetplist, 2, 2, 0, /*

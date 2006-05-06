@@ -1,3 +1,13 @@
+2006-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (struct Lisp_Subr):
+	Document that prompt, doc, and name should not be char *. 
+	* symbols.c (Fsubr_name):
+	Cast name to const Ibyte * before returning it. 
+	* sysfile.h:
+	Make versions of DIRECTORY_SEP, IS_DIRECTORY_SEP and IS_ANY_SEP
+	available to make-docfile and other non-emacs processes on win32. 
+	
 2006-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* font-mgr.c (string_list_to_fcobjectset): Remove debugging output.
