@@ -1,3 +1,29 @@
+2006-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Move geometry management from EmacsFrameResize to x_set_frame_size.
+	Should fix "metacity maximization" bug.
+	Provide (deprecated, temporary) backward compatibility option.
+
+	* EmacsFrame.c (EmacsFrameResize):
+	* frame-x.c (x_set_frame_size):
+	Move call of EmacsManagerChangeSize.
+	Don't bogusly notify WM about size changes the WM asked for.
+
+	* console-x.c (wedge-metacity): New builtin Boolean Lisp variable.
+	* console-x-impl.h (wedge_metacity): Declare C variable.
+	* console-x.c (vars_of_console_x): New function to initialize it.
+	* symsinit.h (vars_of_console_x): declare it.
+	* emacs.c (main_1): Call vars_of_console_x.
+
+	* EmacsFrameP.h (struct EmacsFrame):
+	* EmacsManager.c (EmacsManagerChangeSize):
+	* EmacsShell-sub.c (SuperClassRootGeometryManager):
+	* console-x-impl.h (wedge_metacity):
+	Various comments, some improved documentation, mostly sad comments
+	on the state of the art of Xt programming.
+
+	* frame-x.c (defi): #undef it.  (Random code cleanliness.)
+
 2006-05-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h (struct Lisp_Subr):

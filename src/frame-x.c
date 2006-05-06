@@ -507,6 +507,7 @@ init_x_prop_symbols (void)
   defi(Qtop, XtNy);
 
 #undef def
+#undef defi
 }
 
 static Lisp_Object
@@ -2307,6 +2308,17 @@ static void
 x_set_frame_size (struct frame *f, int cols, int rows)
 {
   EmacsFrameSetCharSize (FRAME_X_TEXT_WIDGET (f), cols, rows);
+
+  if (!wedge_metacity)		/* cf. EmacsFrameResize */
+    {
+      /* Kick the manager so that it knows we've changed size. */
+      XtWidgetGeometry req, repl;
+      req.request_mode = 0;
+      XtQueryGeometry (FRAME_X_CONTAINER_WIDGET (f), &req, &repl);
+      EmacsManagerChangeSize (FRAME_X_CONTAINER_WIDGET (f),
+			      repl.width, repl.height);
+    }
+
 #if 0
     /* this is not correct.  x_set_frame_size() is called from
        Fset_frame_size(), which may or may not have been called

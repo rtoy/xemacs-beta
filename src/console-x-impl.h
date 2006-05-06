@@ -40,6 +40,8 @@ Boston, MA 02111-1307, USA.  */
 
 DECLARE_CONSOLE_TYPE (x);
 
+extern int wedge_metacity;
+
 struct x_device
 {
 #ifdef NEW_GC
@@ -234,7 +236,8 @@ DECLARE_LRECORD (x_device, Lisp_X_Device);
 
 /* The maximum number of widgets that can be displayed above the text
    area at one time.  Currently no more than 3 will ever actually be
-   displayed (menubar, psheet, debugger panel). */
+   displayed (menubar, psheet, debugger panel).
+   #### Are "psheet" and "debugger panel" relevant any more? */
 #define MAX_CONCURRENT_TOP_WIDGETS 8
 
 struct x_frame
@@ -243,12 +246,17 @@ struct x_frame
   struct lrecord_header header;
 #endif /* NEW_GC */
 
-  /* The widget of this frame.  This is an EmacsShell or an
-     ExternalShell. */
+  /* The widget of this frame.
+     This is an EmacsShell or an ExternalShell.
+     It negotiates with the window manager or containing app on behalf of
+     the container widget.  Should be (but isn't) invisible to Emacs. */
   Widget widget;
 
   /* The parent of the EmacsFrame, the menubar, and the scrollbars.
-     This is an EmacsManager. */
+     This is an EmacsManager.
+     It is responsible for managing the geometry of the frame.  This is what
+     Emacs mostly talks to.  Anything that affects its geometry will be
+     reflected in the Shell widget, and thus cause WM interaction. */
   Widget container;
 
   /* The widget of the menubar, of whatever widget class it happens to be. */

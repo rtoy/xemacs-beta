@@ -241,6 +241,12 @@ EmacsManagerChangeSize (Widget w, Dimension width, Dimension height)
   if (height == 0)
     height = w->core.height;
 
+  /* #### AFAICT this gets called in two places.  One is in ChangeManaged(),
+     above.  The other is in EmacsFrameResize().  Perhaps ChangeManaged()
+     should initiate resize requests, but EmacsFrameResize() should not.
+     Unfortunately, I've tried making this conditional on whether we're
+     called from EmacsFrameResize() or not, but that results in an infloop
+     via the callback to x_layout_widgets() in Resize().  Whee! */
   /* do nothing if we're already that size */
   if (w->core.width != width || w->core.height != height)
     {

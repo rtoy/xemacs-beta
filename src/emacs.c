@@ -2186,6 +2186,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_BALLOON_HELP
       vars_of_balloon_x ();
 #endif
+      vars_of_console_x ();
       vars_of_device_x ();
 #ifdef HAVE_X_DIALOGS
       vars_of_dialog_x ();

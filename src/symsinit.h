@@ -306,6 +306,7 @@ void reinit_vars_of_console (void);
 void vars_of_console_stream (void);
 void vars_of_console_mswindows (void);
 void vars_of_console_tty (void);
+void vars_of_console_x (void);
 void vars_of_data (void);
 void vars_of_database (void);
 void vars_of_debug (void);

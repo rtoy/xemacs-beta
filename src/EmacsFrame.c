@@ -360,19 +360,32 @@ EmacsFrameResize (Widget widget)
   pixel_to_char_size (f, ew->core.width, ew->core.height, &columns, &rows);
   change_frame_size (f, rows, columns, 0);
 
-  /* Now we tell the EmacsShell that we've changed the size of the non-fixed
-     portion of the frame.  Note that, if we the resize occurred as a result
-     of EmacsFrameSetCharSize(), this information will be stored twice.
-     This is not a big deal, as storing this information doesn't actually
-     do anything until the next resize. */
-  if (FRAME_X_TOP_LEVEL_FRAME_P (f))
-    x_wm_set_variable_size (FRAME_X_SHELL_WIDGET (f), columns, rows);
+  /* The code below is just plain wrong.  If the EmacsShell or EmacsManager
+     needs to know, they should just ask.  If needed information is being
+     updated here, then we should set a dirty flag and have it updated on an
+     as-needed basis.
+     For now, conditionalize so people can get work done if this breaks
+     something. */
+  if (wedge_metacity)		/* cf. x_set_frame_size */
+    {
+      /* Now we tell the EmacsShell that we've changed the size of the
+	 non-fixed portion of the frame.  Note that, if the resize occurred
+	 as a result of EmacsFrameSetCharSize(), this information will be
+	 stored twice.  This is not a big deal, as storing this information
+	 doesn't actually do anything until the next resize. */
+      if (FRAME_X_TOP_LEVEL_FRAME_P (f))
+	x_wm_set_variable_size (FRAME_X_SHELL_WIDGET (f), columns, rows);
 
-  /* Kick the manager so that it knows we've changed size. */
-  req.request_mode = 0;
-  XtQueryGeometry (FRAME_X_CONTAINER_WIDGET (f), &req, &repl);
-  EmacsManagerChangeSize (FRAME_X_CONTAINER_WIDGET (f), repl.width,
-			  repl.height);
+      /* Kick the manager so that it knows we've changed size.
+	 #### No, no, no!  If this does anything at all, it will involve
+	 changing the manager's size.  That's not something that a child
+	 widget should initialize as part of a purely informational
+	 method!! */
+      req.request_mode = 0;
+      XtQueryGeometry (FRAME_X_CONTAINER_WIDGET (f), &req, &repl);
+      EmacsManagerChangeSize (FRAME_X_CONTAINER_WIDGET (f),
+			      repl.width, repl.height);
+    }
 }
 
 static Boolean

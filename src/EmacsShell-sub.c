@@ -278,7 +278,8 @@ SuperClassRootGeometryManager (Widget gw,
   GenericClassExtRec *gcer;
 
   /* find the shell extension record that specifies the
-     root geometry manager method */
+     root geometry manager method
+     #### We could use XtGetClassExtension here. */
   for (gcer = (GenericClassExtRec *) swc->shell_class.extension;
        gcer;
        gcer = (GenericClassExtRec *) gcer->next_extension)
@@ -287,6 +288,9 @@ SuperClassRootGeometryManager (Widget gw,
 	break;
     }
 
+  /* #### The R11.6.4 Xt specification says if we don't find NULLQUARK here,
+     we should assume root_geometry_manager = XtInheritRootGeometryManager.
+     Is that actually callable? */
   if (!gcer)
     ABORT ();
 

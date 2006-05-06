@@ -41,6 +41,8 @@ Boston, MA 02111-1307, USA.  */
 
 DEFINE_CONSOLE_TYPE (x);
 
+int wedge_metacity;	/* nonzero means update WM_HINTS always */
+
 extern void x_has_keysym (KeySym, Lisp_Object, int);
 
 static int
@@ -399,6 +401,22 @@ console_type_create_x (void)
   CONSOLE_HAS_METHOD (x, perhaps_init_unseen_key_defaults);
 }
 
+
+void
+vars_of_console_x (void)
+{
+  DEFVAR_BOOL ("wedge-metacity", &wedge_metacity /*
+When non-nil, frame geometry management is backward-compatible.
+This is known to create inflooping window jitter in metacity, et al.
+It also does not conform to Xt conventions for geometry management.
+Specifically, all frame resizes, XEmacs-initiated or not, update WM_HINTS.
+Furthermore, geometry changes occur in the widget resize method.
+
+The default is nil.  This probably gives correct behavior regardless of the
+window manager used.
+This variable is deprecated and will be removed.
+*/ );
+}
 
 void
 reinit_console_type_create_x (void)
