@@ -14,6 +14,16 @@
 
 2006-04-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* symbols.c (Fsubr_name): New. 
+	Taken from the FSF. Needed to find the real name of a possibly
+	aliased subr, in order to get its docstring.
+	* sysfile.h:
+	Make various file name primitives available to make-docfile and
+	other non-emacs environments; define a constant that says how long
+	a source filename can be in lib-src/DOC. 
+	
+2006-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* doc.c:
 	* doc.c (extract_object_file_name):
 	* doc.c (get_object_file_name):
