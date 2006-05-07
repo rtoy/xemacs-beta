@@ -47,7 +47,7 @@ extract_object_file_name (int fd, EMACS_INT doc_pos,
 			  Ibyte *name_nonreloc, Lisp_Object name_reloc,
 			  int standard_doc_file)
 {
-  Ibyte buf[DOC_MAX_FILENAME_LENGTH];
+  Ibyte buf[DOC_MAX_FILENAME_LENGTH+1];
   Ibyte *buffer = buf;
   int buffer_size = sizeof (buf), space_left;
   Ibyte *from, *to;
