@@ -1,3 +1,9 @@
+2006-05-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* EmacsShell-sub.c (RootGeometryManager):
+	Change garbage to useful messages under DEBUG_GEOMETRY_MANAGEMENT.
+	Based on a suggestion by Francois L'Archeveque.
+
 2006-05-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* doc.c (extract_object_file_name): Fix buffer overrun.
