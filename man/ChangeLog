@@ -1,5 +1,13 @@
 2006-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* beta.texi (Building Beta XEmacs): Rename 'Compiling' -> 'Building'.
+	(Reporting Problems): Improve it, make it a top-level node, add
+	some vertical spacing to make node breaks more visible.
+	(Getting the Source): Flesh it out a bit and move it to the
+	Building Beta XEmacs node.
+
+2006-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* xemacs/custom.texi (Xft Font Customization): New node.
 	(Faces): Create menu, add new node.
 	* xemacs/xemacs.texi (Top): add new node to detail menu.
