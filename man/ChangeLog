@@ -1,3 +1,9 @@
+2006-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/custom.texi (Xft Font Customization): New node.
+	(Faces): Create menu, add new node.
+	* xemacs/xemacs.texi (Top): add new node to detail menu.
+
 2006-04-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/objects.texi (Character Type):

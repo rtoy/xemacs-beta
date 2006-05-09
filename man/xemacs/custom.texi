@@ -1,4 +1,6 @@
 
+@c FIXME -- we demand a detail menu!
+
 @node Customization, Quitting, Emulation, Top
 @chapter Customization
 @cindex customization
@@ -2034,6 +2036,14 @@ attributes when its buffer is viewed from a different X window.
 The display attributes of faces may be specified either in Lisp or through
 the X resource manager.
 
+Basic Xft support has been merged into the mainline, and it looks pretty
+good.  However, customization UI and documentation still leaves a lot to
+be desired.  Here's a first cut, as a separate node.
+
+@menu
+* Xft Font Customization::
+@end menu
+
 @subsection Customizing Faces
 
 You can change the face of an extent with the functions in
@@ -2214,6 +2224,406 @@ You can set underline the specified @var{face} with the function
 to make underlining an attribute of the face or not. If the optional
 @var{frame} argument is provided, the face is changed only in that
 frame; otherwise, it is changed in all frames.
+
+
+@node Xft Font Customization, , , Faces
+@section Xft Font Customization
+
+This section was written by @email{stephen@@xemacs.org,Stephen Turnbull},
+and is very much a work in progress.  I've tried to provide pointers to
+as much of the relevant information as possible, but many of the APIs
+and UIs are in flux, so it seemed more work than it was worth to
+completely translate the tables of constants, and so on.  Feel free to
+ask for clarifications, @emph{etc.}  Please Cc
+@email{xemacs-beta@@xemacs.org,the XEmacs Beta Testers' mailing list},
+as that is the issue tracking channel of record, and there are a few
+others who can answer the questions or improve documentation when I'm
+not able to respond quickly.
+
+@c Don't blame Ben (or Eric and Matthias, for that matter).  Feel free to
+@c add, edit, and share the blame, everybody!
+
+@c #### Make these @urlref's!!
+As of mid-2005, we have added support for the
+@file{Xft} library, which provides a more robust @emph{font
+configuration} mechanism via Keith Packard's @file{fontconfig} library;
+improved glyph rendering, including antialiasing, via the
+@file{freetype} library; and client-side rendering (saving bandwidth and
+server memory) via the @file{XRender extension}.
+
+@c #### Describe Alexey Gladkov and Yury Konovalov's work.
+
+@subheading Font configuration
+
+In XEmacs, font configuration is handled via @emph{faces}.  Currently
+XEmacs uses a special type of @emph{font specifier} to map XEmacs
+locales to font names.  Especially under X11, this can cause annoying
+problems because of the unreliability of X servers' mappings from
+@samp{XLFD} names to X11 fonts, over which XEmacs has no influence
+whatsoever.  However, the @file{fontconfig} library which is used with
+@file{Xft} provides much more reliable mapping, along with a more
+reliably parsable naming scheme similar to that used by TrueType fonts
+on MS Windows and the Macintosh.
+
+@subheading fontconfig
+
+Fontconfig is dramatically different from the X model in several ways.
+In particular, when queried for a font @emph{fontconfig always returns a
+font}, whereas X queries may return ``not found.''  However, the font
+returned need not be anything like the desired font.  This is not really
+a problem in practice, because users generally have a pretty good idea
+of what fonts are available on their display.  However, users should be
+aware that as of XEmacs 21.5.26 the font selection internals have not
+been revised to account for this radically different model, so some
+surprising results are possible.
+
+From the user's point of view, @file{fontconfig} provides a naming
+convention which is @emph{precise}, @emph{accurate}, and
+@emph{convenient}.  Precision means that all properties available in the
+programming API can be individually specified.  Accuracy means that the
+truename of the font is exactly the list of all properties specified by
+the font.  Thus, the anomolies that occur with XLFDs on many servers
+(including modern Linux distributions with XFree86 or X.org servers)
+cannot occur.  Convenience is subjective, of course.  However,
+@file{fontconfig} provides a configuration system which (1) explicitly
+specifies the defaults and substitutions that will be made in processing
+user queries, (2) allows the user to specify search configuration,
+abbreviations, substitutions, and defaults that override the system's,
+in the same format as used by system files, and (3) allows flexible
+aliases that can resolve to any of several actual fonts depending on
+which fonts are installed.
+
+Further, a @dfn{standard minimal configuration} is defined that ensures
+that at least the @emph{serif}, @emph{sans-serif}, and @emph{monospace}
+font aliases are available on all @file{fontconfig} systems.
+
+@subheading fontconfig font names
+
+@file{fontconfig} font names are very regular, and constitute a precise
+and extensible specification of a font's properties.
+
+The basic @file{fontconfig} font name has three components: the font
+family name, the size, and a list of named attribute fields.  All
+attribute names and values are strings encoded in Unicode UTF-8, or
+decimal numbers with optional decimal point and fraction.  The
+characters @samp{-}, @samp{:}, @samp{,}, @samp{=}, and @samp{\} are
+syntactically significant to @file{fontconfig}.  They may be used in
+font name components by the familiar mechanism of backslash escaping.
+This simply removes any special meaning from the following character.
+It is always safe to use an escape even if it is not needed.
+
+Most string values are case-insensitive, but this is attribute-specific.
+
+The @dfn{font family name} is an arbitrary string, which may contain any
+character, including spaces, hyphens, and commas.  Don't forget to
+escape hyphens, colons, commas, and backslashes!
+
+The @dfn{size} is a decimal number with optional decimal point and
+fractional part.  It is interpreted as point size.
+
+A @dfn{named attribute field} is a key-value pair separated by an equal
+sign.  Some attributes have predefined semantics.  (These include such
+familiar attributes as @samp{slant} and @samp{dpi} -- note that
+@file{fontconfig} does not distinguish between vertical and horizontal
+resolution!
+
+The basic syntax of a font name is simple and regular.  The @emph{font
+family name} comes first, followed by a hyphen and the @emph{size},
+followed by a list of @emph{named attribute fields}, each introduced by
+a colon:
+
+@example
+@var{font family name}-@var{size}:@var{key1}=@var{value1}:@var{key2}=@var{value2}...
+@end example
+
+There are four extensions to the basic syntax.  First, all of the
+fields are optional.  If size is omitted, the hyphen should be omitted
+as well.  There should never be a trailing colon.  Note that
+@file{fontconfig} does @emph{not} interpret an omitted field as
+``default to current.''  @file{fontconfig} does not have access to that
+context.  Instead, omitted fields are filled in according to a set of
+defaults specified in the system @file{fonts.conf} file and in the
+user's @file{.fonts.cont} file.  The user's configuration gets
+precedence, of course.
+
+The second is that the @emph{font family name}, the @emph{size}, and the
+@emph{value} component of a @emph{named attribute field} may be a
+comma-separated list of values.  This is called a @dfn{pattern}.  In
+queries, @file{fontconfig} tries to match each entry in the list in
+order.  (I suspect that order of attributes is also significant.
+@emph{I.e.}, font family always gets highest precedence, followed by
+size, followed by the remaining named attributes.  Testing and reports
+to the @email{xemacs-beta@@xemacs.org,XEmacs Beta Testers mailing list}
+are very welcome!)
+
+The third is the definition of @dfn{constants} to represent numerical
+values.  For example, both @samp{slant} and @samp{weight} are defined as
+integer attributes, but the magnitudes are arbitrary; only the ordering
+and relative distances are useful.  (``Relative distance'' is used to
+implement the concept that although strictly speaking @emph{italic} and
+@emph{oblique} are different faces, most users don't know the
+difference, and even professional typographers would agree that they are
+much closer to each other than either is to @emph{roman}.)  So
+@emph{constants} like @samp{roman} (0) and @samp{italic} (100) are
+defined for @samp{slant}, and @samp{medium} (100) and @samp{bold} (200)
+are defined for @samp{weight}.
+
+The fourth is that a @dfn{style} may be defined as an alias for an
+instance of a @emph{named attribute field}, that is, specifying both key
+and value.  The @emph{styles} @samp{bold}, an alias for
+@samp{weight=200}, and @samp{italic}, an alias for @samp{slant=100}, are
+commonly used.
+
+Styles and constants can be defined by the application.  XEmacs
+currently defines none, but suggestions are welcome if some convenient
+alias is lacking from @file{fontconfig}.  Note that we will not provide
+additional aliases where standard ones exist, @emph{e.g.}, @samp{heavy}
+as an additional alias for @samp{bold} would almost certainly be
+rejected.  These cause more confusion than they are worth, and would
+decrease portability of user specifications to other applications.
+
+(Attributes can also be defined, but they must be implemented by the
+fonts to be useful.  Until XEmacs provides its own fonts with
+non-standardized attributes, this is not useful.)
+
+Here are some examples of font names and query patterns:
+
+@example
+Times-12                    12-point Times Roman
+Times-12:bold               12-point Times Bold
+Courier:italic              Courier Italic in the default size
+Monospace:matrix=1 .1 0 1   The user's preferred monospace font
+                            with artificial obliquing
+Mikachan\-PB-16             16-point Mikachan-PB
+LucidaTypewriter,Courier-9  9-point LucidaTypewriter if available,
+                            otherwise 9-point Courier
+@end example
+
+Note how @emph{styles} are used in the second and third examples, how
+@samp{matrix} has a complex value containing spaces, and the
+escaped hyphen in the font family name @samp{Mikachan\-PB}.
+
+@c #### FIXME here and also in fontconfig.texi (in general-docs package).
+Here is a (somewhat outdated) list of current standard named attributes:
+
+@example
+Property        CPP symbol      Type    Description
+
+family          FC_FAMILY       String  Font family name
+style           FC_STYLE        String  Font style. Overrides weight and slant
+slant           FC_SLANT        Int     Italic, oblique or roman
+weight          FC_WEIGHT       Int     Light, medium, demibold, bold or black
+size            FC_SIZE         Double  Point size
+aspect          FC_ASPECT       Double  Stretch glyphs horizontally, then hint
+pixelsize       FC_PIXEL_SIZE   Double  Pixel size
+spacing         FC_SPACING      Int     Proportional, monospace or charcell
+foundry         FC_FOUNDRY      String  Font foundry name
+antialias       FC_ANTIALIAS    Bool    Should glyphs be antialiased?
+hinting         FC_HINTING      Bool    Should the rasterizer use hinting?
+verticallayout  FC_VERTICAL_LAYOUT Bool Use vertical layout
+autohint        FC_AUTOHINT     Bool    Use autohinter instead of normal hinter
+globaladvance   FC_GLOBAL_ADVANCE Bool  Use font global advance data
+file            FC_FILE         String  The filename holding the font
+index           FC_INDEX        Int     The index of the font within the file
+ftface          FC_FT_FACE      FT_Face Use the specified FreeType face object
+rasterizer      FC_RASTERIZER   String  Which rasterizer is in use
+outline         FC_OUTLINE      Bool    Whether the glyphs are outlines
+scalable        FC_SCALABLE     Bool    Whether glyphs can be scaled
+scale           FC_SCALE        Double  Point->pixel conversion scale factor
+dpi             FC_DPI          Double  Target dots per inch
+rgba            FC_RGBA         Int     unknown, rgb, bgr, vrgb, vbgr, none
+                                        - subpixel geometry
+source		FC_SOURCE	String  X11, freetype
+minspace        FC_MINSPACE     Bool    Eliminate leading from line spacing
+charset         FC_CHARSET      CharSet Unicode chars encoded by the font
+lang            FC_LANG         String  List of RFC-3066-style languages
+                                        this font supports
+fontversion	FC_FONTVERSION  Int     From 'head' table
+@end example
+
+Here is a list of current standard constants:
+
+@example
+Constant        Property        CPP symbol
+
+light           weight          FC_WEIGHT_LIGHT
+medium          weight          FC_WEIGHT_MEDIUM
+demibold        weight          FC_WEIGHT_DEMIBOLD
+bold            weight          FC_WEIGHT_BOLD
+black           weight          FC_WEIGHT_BLACK
+roman           slant           FC_SLANT_ROMAN
+italic          slant           FC_SLANT_ITALIC
+oblique         slant           FC_SLANT_OBLIQUE
+proportional    spacing         FC_PROPORTIONAL
+mono            spacing         FC_MONO
+charcell        spacing         FC_CHARCELL
+unknown         rgba            FC_RGBA_UNKNOWN
+rgb             rgba            FC_RGBA_RGB
+bgr             rgba            FC_RGBA_BGR
+vrgb            rgba            FC_RGBA_VRGB
+vbgr            rgba            FC_RGBA_VBGR
+none            rgba            FC_RGBA_NONE
+@end example
+
+Note that this is the @file{fontconfig} API list; you can expect that
+XEmacs will define corresponding keywords by substituting @samp{:} for
+the leading @samp{FC_}, @samp{-} for @samp{_}, removing the key of the
+attribute if present, and lowercasing the name.  Thus
+@samp{FC_WEIGHT_BOLD} becomes @samp{:bold}.
+@kbd{M-x apropos RET fc-.*-mapping} will give a list of variables each
+of which lists such keywords and their meanings.
+
+@subheading Font menus
+
+The @samp{Options->Font} and @samp{Options->Font Sizes} menus are
+broken, by design, not just by @file{Xft}.  The problem is that many
+fonts are unavailable because they don't match the current size---which
+is very strange, since @file{Xft} fonts are of course scalable.  But the
+whole idea of requiring that the font match the size is strange.  And
+the @samp{Options->Font Weights} menu is just disabled, and has been for
+eons.
+
+@subheading X resources
+
+Currently there are @emph{four} treatments of font resources.  There are
+the @samp{XEmacs.@var{face}.attributeFont} resources used to set a
+single global font specification.  In the widgets, some (still) have a
+@samp{font} resource using the automatic @file{Xt} resource conversion
+to X's @samp{FontStruct}, some have separate @samp{font} and @samp{xftFont}
+resources with the former automatically converted to @samp{FontStruct}
+by @file{Xt} and the latter left as a string, to be converted to a
+fontconfig @samp{FcPattern} by
+@samp{FcParseName} later, and some have a single @samp{font} resource
+which is converted to @samp{FontStruct} by @file{Xt} or the latter left
+as a string, depending on whether @file{Xft} was enabled by
+@samp{configure} or not.
+
+Eventually these should be converted to use the face
+approach, perhaps with some way to set specifications for individual
+widgets, frames, or buffers.  This will require some careful design work
+to incorporate face support in the widgets.  Stephen's current thinking
+is that XEmacs should just accept any
+or all of @samp{font}, @samp{fontSet}, and @samp{fontList} resources,
+treat them all as lists of font names, either @samp{XLFD}- or
+@file{fontconfig}-style, parse them ourselves (ie, not use the @file{Xt}
+resource manager), and add them to font specifiers as appropriate.  But
+this will require a bit of thought to obey POLA vis-a-vis usual @file{Xt}
+conventions.
+
+@subheading Specifiers, charsets, and languages
+
+Traditionally Mule uses a rather rigid and low-level abstraction, the
+@emph{charset}, to characterize font repertoires.  Unfortunately,
+support for a given charset is generally neither necessary nor
+sufficient to support a language.  Worse, in XEmacs's current
+implementation Xft doesn't help much.  Instead you need to add the fonts
+for different charsets to the font specifier in the right order.
+
+There currently is no explicit way to specify that a particular font be
+used only for a given language.  However, since many fonts support only
+a limited repertoire such as ISO 8859/1, you can use the precedence of
+specifications for a given specifier locale to get something of this
+effect for non-Latin character sets.  This will normally work rather
+poorly for multiple Latin character sets, however, because the
+repertoires tend to have large amounts of overlap.  Support for
+specifying font by @emph{language} as well as by character set is
+planned.
+
+Because fonts supporting other languages tend to support English as
+well, if you want to use one font for English and another for the other
+language, you must use the @code{append} method when adding font
+specifications for the @emph{other} language.
+
+However, this simple method leaves you with a problem if you want to
+change the other language's font: you have to remove the existing
+specification so it won't shadow the new one when you append.
+
+In order to provide a convenient way to change ``other-language fonts'',
+I use @code{remove-tag-set-append} and @code{define-specifier-tag} like
+this:
+
+@example
+(define-specifier-tag 'lang-ja)
+;; No, I don't try to do real work with this font!  But it makes it
+;; obvious that I got the requested font.  :-)
+(set-face-font 'default "AirCut-14")
+(set-face-font 'default "Kochi Mincho-14" nil '(lang-ja) 'append)
+;; Oops, too sober.  Try something to match AirCut.
+(set-face-font 'default "Mikachan-14"
+               nil '(lang-ja) 'remove-tag-set-append)
+@end example
+
+The only way to configure widget fonts at the present time is to use X
+resources (or hack the source and rebuild).  Currently supported widgets
+are
+@itemize
+@item
+menubars
+@item
+tab controls
+@end itemize
+
+Here are the resources I use.  @strong{Warning:} @emph{This interface
+will change.  Pay attention to beta announcements, and complain loudly
+if changes aren't documented here!}  The tab control and menubar have
+separate Font and XftFont resources, and use the X resource manager to
+instantiate a FontStruct from the Font resource.  There is no converter
+facility for XftFont yet, and creating one that handles both FontStruct
+and XftFont depending on XEmacs's configuration and the font name seems
+error-prone at best.  Probably we will use a simple string
+representation for this resource, and convert to a face in XEmacs rather
+than a font in Xt/Xft.
+@example
+XEmacs*Tabs.xftFont: Bitstream Vera Sans-16
+XEmacs*menubar*xftFont: Bitstream Vera Sans-16
+XEmacs.modeline.attributeFont: Bitstream Charter-16
+XEmacs.default.attributeFont: Bitstream Vera Sans Mono-16
+@end example
+I highly recommend use of a proportional font in the modeline because it
+allows a lot more text to fit there.
+@c Previously the font sizes were quite varied, and there was a comment
+@c that this weirdness gave good balance.  This isn't true on my main
+@c platform, Mac OS X, and needs to be rechecked on Linux, where it was
+@c observed.
+
+@subheading Known Problems
+
+@table @code
+@item Options->Font
+@itemx Options->Font Size
+These menus don't work.  All fonts are greyed out.  All sizes are
+available, but many (most?) faces don't change size, in particular,
+@samp{default} does not.
+
+@item Antialiased text bleeding outside of reported extent
+This is most obvious with the underscore character in that
+font, and with cursors.  The bottom of the underscore is antialiased,
+and insertions or deletions in the same line before the underscore leave
+a series of "phantom" underlines.
+
+I think this is probably an Xft bug, but I'm not sure.
+@end table
+
+@subheading Variables Used with Xft and Fontconfig
+
+@defvar xft-debug-level
+
+Level of debugging messages to issue to stderr for @var{Xft}.
+A nonnegative integer.  Set to 0 to suppress all warnings.
+Default is 1 to ensure a minimum of debugging output at initialization.
+Higher levels give more information.
+@end defvar
+
+@defvar xft-version
+
+The major version number of the Xft library compiled with.
+@end defvar
+
+@defvar xft-xlfd-font-regexp
+
+Regular expression matching XLFD font names.
+@end defvar
+
 
 @node Frame Components
 @section Frame Components

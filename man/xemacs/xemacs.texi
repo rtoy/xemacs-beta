@@ -605,6 +605,10 @@ The Init File
 * Init Examples::   How to do some things with an init file.
 * Terminal Init::   Each terminal type can have an init file.
 
+Faces
+
+* Xft Font Customization::  Configuring the next generation of fonts.
+
 Dealing with XEmacs Trouble
 
 * Stuck Recursive::    `[...]' in mode line around the parentheses.
