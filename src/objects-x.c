@@ -309,6 +309,12 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object UNUSED (name),
       return 0;
     }
 
+  if (rf && fs)
+    {
+      XFreeFont (dpy, fs);
+      fs = NULL;		/* we don' need no steenkin' X font */
+    }
+
   if (fs && !fs->max_bounds.width)
     {
       /* yes, this has been known to happen. */
@@ -316,8 +322,7 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object UNUSED (name),
       fs = NULL;
       maybe_signal_error (Qgui_error, "X font is too small", f->name, Qfont,
 			  errb);
-      if (!rf)
-	return 0;
+      return 0;
     }
 
   /* Now that we're sure that we will succeed, we can allocate data without
@@ -353,11 +358,12 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object UNUSED (name),
       f->height = rf->height;
       f->proportional_p = 1; 	/* we can't recognize monospaced fonts! */
 
-      DEBUG_XFT4 (0, "initialized metrics ascent %d descent %d width %d height %d\n",
-		    f->ascent, f->descent, f->width, f->height);
-      /* we also output on initialization of any font below */
-      DEBUG_XFT1 (2, "initialized Xft font %s\n", XSTRING_DATA(f->name));
-      fs = NULL;		/* we don' need no steenkin' X font */
+      /* #### This message appears wa-a-ay too often!
+	 We probably need to cache truenames or something?
+	 Even if Xft does it for us, we cons too many font instances. */
+      DEBUG_XFT4 (0,
+	"initialized metrics ascent %d descent %d width %d height %d\n",
+	f->ascent, f->descent, f->width, f->height);
     } 
   else
     {

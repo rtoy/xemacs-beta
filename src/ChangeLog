@@ -1,3 +1,10 @@
+2006-03-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_initialize_font_instance):
+	Ensure that duplicative X font gets freed if we have an Xft font.
+	Remove some redundant debug output.
+	Comment on frequency of calls to this function.
+
 2006-05-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* EmacsShell-sub.c (RootGeometryManager):
