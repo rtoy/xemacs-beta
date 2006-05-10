@@ -408,9 +408,9 @@ Return the canonical form of NUMBER.
     number = make_bignum_bg (XRATIO_NUMERATOR (number));
 #endif
 #ifdef HAVE_BIGNUM
-  if (BIGNUMP (number) && bignum_fits_int_p (XBIGNUM_DATA (number)))
+  if (BIGNUMP (number) && bignum_fits_emacs_int_p (XBIGNUM_DATA (number)))
     {
-      int n = bignum_to_int (XBIGNUM_DATA (number));
+      EMACS_INT n = bignum_to_emacs_int (XBIGNUM_DATA (number));
       if (NUMBER_FITS_IN_AN_EMACS_INT (n))
 	number = make_int (n);
     }

@@ -100,6 +100,16 @@ DECLARE_LRECORD (bignum, Lisp_Bignum);
   return Fcanonicalize_number (retval);				\
 } while (0)
 
+#if SIZEOF_EMACS_INT == SIZEOF_LONG
+# define bignum_fits_emacs_int_p(b) bignum_fits_long_p(b)
+# define bignum_to_emacs_int(b) bignum_to_long(b)
+#elif SIZEOF_EMACS_INT == SIZEOF_INT
+# define bignum_fits_emacs_int_p(b) bignum_fits_int_p(b)
+# define bignum_to_emacs_int(b) bignum_to_int(b)
+#else
+# error Bignums currently do not work with long long Emacs integers.
+#endif
+
 extern Lisp_Object make_bignum (long);
 extern Lisp_Object make_bignum_bg (bignum);
 extern bignum scratch_bignum, scratch_bignum2;
