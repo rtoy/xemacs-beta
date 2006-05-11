@@ -2927,7 +2927,20 @@ iso2022_detect (struct detection_state *st, const UExtbyte *src,
     }
   else if (data->odd_high_byte_groups > 0 &&
 	   data->even_high_byte_groups > 0)
-    SET_DET_RESULTS (st, iso2022, DET_SOMEWHAT_UNLIKELY);
+    {
+      /* Well, this could be a Latin-1 text, with most high-byte
+	 characters single, but sometimes two are together, though
+	 this happens not as often. This is common for Western
+	 European languages like German, French, Danish, Swedish, etc.
+	 Then we would either have a rather small file and
+	 even_high_byte_groups would be low.
+	 Or we would have a larger file and the ratio of odd to even
+	 groups would be very high. */
+      SET_DET_RESULTS (st, iso2022, DET_SOMEWHAT_UNLIKELY);
+      if (data->even_high_byte_groups <= 3 ||
+	  data->odd_high_byte_groups >= 10 * data->even_high_byte_groups)
+	DET_RESULT (st, iso_8_1) = DET_SOMEWHAT_LIKELY;
+    }
   else
     SET_DET_RESULTS (st, iso2022, DET_AS_LIKELY_AS_UNLIKELY);
 }      

@@ -1,3 +1,8 @@
+2006-02-27  Joachim Schrod  <jschrod@acm.org>
+
+	* mule-coding.c (iso2022_detect): Handle Latin-1 encoded files
+	that have several high-byte chars in a row.
+
 2006-05-08  Jerry James  <james@xemacs.org>
 
 	* number.c (Fcanonicalize_number): Use EMACS_INT instead of int,
