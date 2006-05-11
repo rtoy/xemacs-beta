@@ -270,7 +270,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 	     ;; #### this call to x-font-menu-font-data-core originally
 	     ;; had 4 args, and that's probably the right way to go
 	     (x-font-menu-font-data-core face dcache)
-	   (x-font-menu-font-data-xft face dcache name domain))
+	   (x-font-menu-font-data-xft face dcache name (selected-device)))
        ;; #### this one, too
        (x-font-menu-font-data-core face dcache))))
 
