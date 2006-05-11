@@ -1,3 +1,7 @@
+2006-04-06  Jerry James  <james@xemacs.org>
+
+	* COPYING: Update to latest upstream version.
+
 2006-04-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac: Add stubs for fontconfig configuration.
