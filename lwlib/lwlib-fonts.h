@@ -48,9 +48,11 @@ Boston, MA 02111-1307, USA.  */
 #ifdef USE_XFT
 #ifndef XtNxftFont
 #define XtNxftFont "xftFont"
-#endif
-#ifndef XtCXftFont
 #define XtCXftFont "XftFont"
+#endif
+#ifndef XtNfcFont
+#define XtNfcFontName "fcFontName"
+#define XtCFcFontName "FcFontName"
 #endif
 #endif /* USE_XFT */
 

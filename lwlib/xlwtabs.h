@@ -44,16 +44,18 @@
  Name		     Class		RepType		Default Value
  ----		     -----		-------		-------------
  font		     Font		XFontStruct*	XtDefaultFont
- internalWidth	     Width		Dimension	4	*1
- internalHeight	     Height		Dimension	2	*1
- topWidget	     TopWidget		Widget			*2
- callback	     Callback		XtCallbackList	NULL	*3
- popdownCallback     Callback		XtCallbackList	NULL	*4
- selectInsensitive   SelectInsensitive	Boolean		True	*5
- beNiceToColormap    BeNiceToColormap	Boolean		False	*6
+ fcFontName          FcFontName         String          AirCut-16 *0
+ xftFont             XftFont            XtPointer       NULL      *8
+ internalWidth	     Width		Dimension	4	  *1
+ internalHeight	     Height		Dimension	2	  *1
+ topWidget	     TopWidget		Widget			  *2
+ callback	     Callback		XtCallbackList	NULL	  *3
+ popdownCallback     Callback		XtCallbackList	NULL	  *4
+ selectInsensitive   SelectInsensitive	Boolean		True	  *5
+ beNiceToColormap    BeNiceToColormap	Boolean		False	  *6
  topShadowContrast   TopShadowContrast	int		20
  bottomShadowContrast BottomShadowContrast int		40
- insensitiveContrast InsensitiveContrast int		33	*7
+ insensitiveContrast InsensitiveContrast int		33	  *7
 
  background	     Background		Pixel		XtDefaultBackground
  border		     BorderColor	Pixel		XtDefaultForeground
@@ -70,6 +72,7 @@
 
  Notes:
 
+ 0 this is a joke, it will be changed.
  1 internalWidth, internalHeight specify the margins around the text
    in the tabs.
  2 topWidget identifies the widget which is currently visible.
@@ -82,7 +85,8 @@
    be selected anyway.
  6 BeNiceToColormap causes the Tabs widget to use fewer colors.
  7 InsensitiveContrast sets the contrast used for labels of insensitive widgets.
-
+ 8 fcFontName and xftFont are separate resources because there is not yet
+   registered representation and converter for XftFonts.
 */
 
 /* Constraint parameters:

@@ -74,8 +74,8 @@ typedef struct {
     /* resources */
     XFontStruct	*font ;
 #ifdef USE_XFT_TABS
-    String renderFontSpec;
-    XftFont *renderFont;
+    XftFont	*renderFont;
+    String	fcFontName;
 #endif
     Dimension   internalHeight, internalWidth ;
     Widget	topWidget ;
@@ -122,7 +122,7 @@ typedef struct _TabsRec {
 
 /****************************************************************
  *
- * constraint record declaration
+ * Constraint record declaration
  *
  ****************************************************************/
 

@@ -1,3 +1,23 @@
+2006-05-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Make fcFontName and xftFont separate resources.
+
+	* lwlib-fonts.h (XtNfcFontName, XtCFcFontName): New macros.
+	(XtNxftFont, XtCXftFont): Coalesce the conditional definitions.
+
+	* xlwmenuP.h (XlwMenuPart):
+	* xlwtabsP.h (TabsPart):
+	Rename renderFontSpec member to fcFontName.
+
+	* xlwmenu.c (XlwMenuResources):
+	* xlwtabs.c (resources):
+	Add a record for fcFontName.
+
+	* xlwtabs.c (TabsInit): Use the fcFontName resource, not xftFont.
+
+	* xlwtabs.c (DrawTab,TabLayout,TabsGeometryManager): Improve
+	diagnostics.
+
 2006-04-24  Jerry James  <james@xemacs.org>
 
 	* lwlib-Xaw.c (lw_debug_print_class_resources): Casting from a

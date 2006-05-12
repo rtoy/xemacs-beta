@@ -93,9 +93,13 @@ xlwMenuResources[] =
   {XtNfont,  XtCFont, XtRFontStruct, sizeof(XFontStruct *),
      offset(menu.font), XtRString, (XtPointer) "XtDefaultFont"},
 #ifdef USE_XFT_MENUBARS
-  {XtNxftFont,  XtCXftFont, XtRString, sizeof (String),
-   offset(menu.renderFontSpec), 
+  {XtNfcFontName,  XtCFcFontName, XtRString, sizeof (String),
+   offset(menu.fcFontName), 
    XtRString, (XtPointer) "Helvetica-12:bold"},
+  /* #### This needs to be fixed to give a proper type and converter for
+     XftFonts.  See also xlwtabs.c. */
+  {XtNxftFont, XtCXftFont, XtRPointer, sizeof(XtPointer),
+	offset(menu.renderFont), XtRPointer, (XtPointer) NULL },
 #endif
 # ifdef USE_XFONTSET
   /* #### Consider using the same method as for Motif; see the comment in
@@ -3241,7 +3245,7 @@ XlwMenuInitialize (Widget UNUSED (request), Widget new_, ArgList UNUSED (args),
      conversion function
   */
   mw->menu.renderFont =
-    xft_open_font_by_name (XtDisplay (mw), mw->menu.renderFontSpec);
+    xft_open_font_by_name (XtDisplay (mw), mw->menu.fcFontName);
 #endif
 
   make_drawing_gcs     (mw);

@@ -150,10 +150,14 @@ static XtResource resources[] = {
   {XtNfont, XtCFont, XtRFontStruct, sizeof(XFontStruct *),
 	offset(font), XtRString, (XtPointer) XtDefaultFont},
 #ifdef USE_XFT_TABS
-  /* #### Maybe use "-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1" here? */
-  {XtNxftFont, XtCXftFont, XtRString, sizeof (String),
-	offset(renderFontSpec), XtRString,
-        (XtPointer) "AirCut-16" /* XtDefaultFont */},
+  /* #### Maybe use "-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1" here?
+     or XtDefaultFont? */
+  {XtNfcFontName, XtCFcFontName, XtRString, sizeof(String),
+	offset(fcFontName), XtRString, (XtPointer) "AirCut-16" },
+  /* #### This needs to be fixed to give a proper type and converter for
+     XftFonts.  See also xlwmenu.c. */
+  {XtNxftFont, XtCXftFont, XtRPointer, sizeof(XtPointer),
+	offset(renderFont), XtRPointer, (XtPointer) NULL },
 #endif
   {XtNinternalWidth, XtCWidth, XtRDimension, sizeof(Dimension),
 	offset(internalWidth), XtRImmediate, (XtPointer)4 },
@@ -481,7 +485,7 @@ TabsInit(Widget request, Widget new_, ArgList UNUSED (args),
     */
     newTw->tabs.renderFont =
       xft_open_font_by_name (XtDisplay ((Widget) newTw),
-			     newTw->tabs.renderFontSpec);
+			     newTw->tabs.fcFontName);
     if (newTw->tabs.renderFont != NULL) 
 #if XFT_USE_HEIGHT_NOT_ASCENT_DESCENT
       newTw->tabs.tab_height += newTw->tabs.renderFont->height;
@@ -1089,7 +1093,7 @@ do {									\
 		 get triggered forever after */
 	      int n = control->composite.num_children;
 	      ah = control->tabs.tab_height;
-	      if (debug_tabs > 0)
+	      if (debug_tabs > 1)
 		fprintf (stderr, "Kludging around %d != 1 rows,"
 			 " #children = %d, total height %d, using %d.\n",
 			 check_nrows, n, th, ah);
@@ -1616,7 +1620,7 @@ DrawTab(TabsWidget tw, Widget child, Bool labels)
 	GC	gc ;
 	int	x,y ;
 
-	if (debug_tabs > 1) fprintf (stderr, "DrawTab called.\n");
+	if (debug_tabs > 2) fprintf (stderr, "DrawTab called.\n");
 
  	if( !XtIsRealized((Widget)tw))
  	  return ;
@@ -1712,7 +1716,6 @@ DrawTab(TabsWidget tw, Widget child, Bool labels)
 			       (int) strlen (lbl), &glyphinfo);
 	      /* #### unnecessary? for the moment, give visual extent */
 	      /* draw background rect */
-#if 1
 	      if (debug_tabs > 2)
 		{
 		  fprintf (stderr, "background color:  pixel=%08lx, r=%04x,"
@@ -1725,19 +1728,16 @@ DrawTab(TabsWidget tw, Widget child, Bool labels)
  			   glyphinfo.x, glyphinfo.y, glyphinfo.xOff,
  			   glyphinfo.yOff, glyphinfo.width, glyphinfo.height);
  		}
-	      XftDrawRect (xftDraw, &colorDBG,
-			   /* left, top, width, height */
-			   x+tab->tabs.l_x-glyphinfo.x,
-			   y+tab->tabs.l_y-glyphinfo.y,
-			   glyphinfo.width, glyphinfo.height);
-#endif
-	      /* draw text */
 	      if (debug_tabs > 2)
+		XftDrawRect (xftDraw, &colorDBG,
+			     /* left, top, width, height */
+			     x+tab->tabs.l_x-glyphinfo.x,
+			     y+tab->tabs.l_y-glyphinfo.y,
+			     glyphinfo.width, glyphinfo.height);
+
+	      /* draw text */
+	      if (debug_tabs > 1)
 		{
-		  FcValue name;
-		  FcValue size;
-		  FcPatternGet (renderFont->pattern, FC_FAMILY, 0, &name);
-		  FcPatternGet (renderFont->pattern, FC_SIZE, 0, &size);
 		  fprintf (stderr, "label:             %s.\n", lbl);
 		  fprintf (stderr, "foreground color:  pixel=%08lx, r=%04x,"
 				   " g=%04x, b=%04x, alpha=%04x.\n",
@@ -1747,6 +1747,13 @@ DrawTab(TabsWidget tw, Widget child, Bool labels)
 				   " yOffset=%d, height=%d, width=%d.\n",
 			   glyphinfo.x, glyphinfo.y, glyphinfo.xOff,
 			   glyphinfo.yOff, glyphinfo.height, glyphinfo.width);
+		}
+	      if (debug_tabs > 0)
+		{
+		  FcValue name;
+		  FcValue size;
+		  FcPatternGet (renderFont->pattern, FC_FAMILY, 0, &name);
+		  FcPatternGet (renderFont->pattern, FC_SIZE, 0, &size);
 		  fprintf (stderr, "font:              name=%s-%.1f,"
 				   " height=%d, ascent=%d, descent=%d.\n",
 			   name.u.s, size.u.d, renderFont->height,
@@ -2065,11 +2072,11 @@ TabLayout(TabsWidget tw,
 	  /* If wid or hgt is 0, we want to guess our own dimensions.
 	     Currently the guessing functions are broken....
 	     #### When PreferredSize*() get fixed, fix this too. */
-	  if (debug_tabs > 0)
+	  if (debug_tabs > 1)
 	    fprintf (stderr, "arg=%d,", wid);
 	  wid = (wid ? wid : tw->core.width) - INDENT ;
 	  hgt = hgt ? hgt : tw->core.height;
-	  if (debug_tabs > 0)
+	  if (debug_tabs > 1)
 	    fprintf (stderr, "wid=%d: x,w,y=", wid);
 	  for(i=num_children, childP=tw->composite.children; --i >= 0; ++childP)
 	    if( XtIsManaged(*childP) )
@@ -2077,7 +2084,7 @@ TabLayout(TabsWidget tw,
 	      tab = (TabsConstraints) (*childP)->core.constraints ;
 	      w = tab->tabs.width ;
 
-	      if (debug_tabs > 0)
+	      if (debug_tabs > 1)
 		fprintf (stderr, "%d,%d,%d;", x, w, y);
 	      if( x + w > wid ) {			/* new row */
 		/* #### algorithm is not robust to wid < child's width */
@@ -2100,7 +2107,7 @@ TabLayout(TabsWidget tw,
 		tab->tabs.visible = 1;
 
 	    }
-	  if (debug_tabs > 0)
+	  if (debug_tabs > 1)
 	    fprintf (stderr, "\n");
 	  /* If there was only one row, increase the height by TABDELTA */
 	  if( ++display_rows == 1 )
@@ -2127,7 +2134,7 @@ TabLayout(TabsWidget tw,
 	  tw->tabs.realRows = row;
 	}
 
-	if (debug_tabs > 0 && (row > 1 || display_rows > 1))
+	if (debug_tabs > 1 && (row > 1 || display_rows > 1))
 	  fprintf (stderr, "tab: %d display rows, #children = %d,"
 		   " total height %d, total rows %d%s.\n",
 		   display_rows, num_children, y, row,

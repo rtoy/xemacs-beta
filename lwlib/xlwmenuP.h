@@ -34,8 +34,7 @@ typedef struct _XlwMenu_part
 #else
   XFontStruct *	font;
 #ifdef USE_XFT_MENUBARS
-  /* #### Fix naming convention here */
-  String renderFontSpec;
+  String fcFontName;
   XftFont *renderFont;
 #endif
 # ifdef USE_XFONTSET
