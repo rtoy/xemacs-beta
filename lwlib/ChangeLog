@@ -1,3 +1,7 @@
+2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.27 "fiddleheads" is released.
+
 2006-05-12  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Make fcFontName and xftFont separate resources.

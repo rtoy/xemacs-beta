@@ -19711,6 +19711,11 @@ else
   { echo "Error:" "Unable to find libXft for --with-xft" >&2; exit 1; }
 fi
 
+            with_fontconfig=yes
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_FONTCONFIG 1
+_ACEOF
+
       cat >>confdefs.h <<\_ACEOF
 #define USE_XFT 1
 _ACEOF
@@ -39470,6 +39475,9 @@ if test "$with_x11" = "yes"; then
   fi
   if test "$with_wmcommand" != no; then
     echo "    - Handling WM_COMMAND properly."
+  fi
+  if test "$with_fontconfig" = "yes"; then
+    echo "    - Using fontconfig to manage fonts."
   fi
   if test "$with_xft_emacs" = "yes"; then
     echo "    - Compiling in support for Xft antialiased fonts (EXPERIMENTAL)."
