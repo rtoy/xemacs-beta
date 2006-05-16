@@ -1,3 +1,9 @@
+2006-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q2.2.3): New node.
+	(Q2.2.2, Q2.3.1): Fix navigation references.
+	(Top, Installation): Add to menus.
+
 2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.27 "fiddleheads" is released.

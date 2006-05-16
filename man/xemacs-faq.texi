@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/12/27 18:51:21 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2006/05/16 15:36:16 $
 @sp 1
 @author Ben Wing <ben@@xemacs.org>
 @author Tony Rossini <rossini@@u.washington.edu>
@@ -293,6 +293,7 @@ library directory>/info/}. For example in
 2.2: Unix/Mac OS X Installation (Also Relevant to Cygwin, MinGW)
 * Q2.2.1::    Libraries in non-standard locations
 * Q2.2.2::    Why can't I strip XEmacs?
+* Q2.2.3::    X11/bitmaps/gray (or other X11-related file) not found.
 
 2.3: Windows Installation (Windows, Cygwin, MinGW)
 * Q2.3.1::    What exactly are all the different ways to build XEmacs under Windows?
@@ -3089,6 +3090,7 @@ section is devoted to Installation, Maintenance and Troubleshooting.
 2.2: Unix/Mac OS X Installation (Also Relevant to Cygwin, MinGW)
 * Q2.2.1::    Libraries in non-standard locations
 * Q2.2.2::    Why can't I strip XEmacs?
+* Q2.2.3::    X11/bitmaps/gray (or other X11-related file) not found.
 
 2.3: Windows Installation (Windows, Cygwin, MinGW)
 * Q2.3.1::    What exactly are all the different ways to build XEmacs under Windows?
@@ -3584,7 +3586,7 @@ or for 21.5:
 --with-site-prefixes=WHATEVER
 @end example
 
-@node Q2.2.2, Q2.3.1, Q2.2.1, Installation
+@node Q2.2.2, Q2.2.3, Q2.2.1, Installation
 @unnumberedsubsec Q2.2.2: Why can't I strip XEmacs?
 
 @email{cognot@@fronsac.ensg.u-nancy.fr, Richard Cognot} writes:
@@ -3639,9 +3641,20 @@ cp lib-src/DOC-19.16-XEmacs
 @end enumerate
 @end quotation
 
+@node Q2.2.3, Q2.3.1, Q2.2.2, Installation
+@unnumberedsubsec Q2.2.3: X11/bitmaps/gray (or other X11-related file) not found.
+
+The X11R6 distribution was monolithic, but the X11R7 distribution is
+much more modular.  Many OS distributions omit these bitmaps (assuming
+nobody uses them, evidently).  Your OS distribution should have a
+developer's package containing these files, probably with a name
+containing the string "bitmap".  Known package names (you may need to
+add an extension such as .deb or .rpm) include x11/xbitmaps (Ubuntu)
+and xorg-x11-xbitmaps (Fedora Core 5).
+
 @unnumberedsec 2.3: Windows Installation (Windows, Cygwin, MinGW)
 
-@node Q2.3.1, Q2.3.2, Q2.2.2, Installation
+@node Q2.3.1, Q2.3.2, Q2.2.3, Installation
 @unnumberedsubsec Q2.3.1: What exactly are all the different ways to build XEmacs under Windows?
 
 XEmacs can be built in several ways in the MS Windows environment.

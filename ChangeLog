@@ -1,3 +1,7 @@
+2006-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* PROBLEMS: X11R7 loses x11/bitmaps/gray.
+
 2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.27 "fiddleheads" is released.
