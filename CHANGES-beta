@@ -1,3 +1,56 @@
+to 21.5.27 "fiddlesticks"
+
+Major Features and Backward Incompatible Changes
+
+-- fix: better autodetect of ISO 8859 vs. Big5 -- Joachim Schrod
+-- fix: shell widget geometry management (metacity maximize bug) -- Stephen J. Turnbull
+-- new: read multibyte characters as Unicode instead of Mule -- Aidan Kehoe, Pete Forman
+
+User-Visible Bug Fixes and Minor Improvements
+
+-- fix: separate resources for fcFontName and xftFont, fixes "can't change buffers-tabs font" bug -- Stephen J. Turnbull
+-- improve: speed up read of process output -- Tony Bennett
+-- improve: support more ALSA versions -- Jerry James
+-- new: document Xft font customization in User Guide -- Stephen J. Turnbull
+-- new: record load file name information for built-in symbols. -- Aidan Kehoe
+
+Build Infrastructure
+
+-- fix: update MS VC project files -- Adrian Aichner
+-- improve: configure.ac: Add stubs for fontconfig configuration. -- Stephen J. Turnbull
+
+Documentation
+
+-- fix: remove obsolete comment at next-line-add-newlines -- Ville Skyttä
+-- fix: COPYING: Update to latest upstream version. -- Jerry James
+-- improve: comments in fontconfig.el, x-init.el -- Stephen J. Turnbull
+-- improve: diagnostics for tab controls -- Stephen J. Turnbull
+-- improve: docstrings for CL functions -- Aidan Kehoe
+-- improve: geometry diagnostics in RootGeometryManager -- Stephen J. Turnbull,  Francois L'Archeveque
+-- improve: reorganize beta.texi -- Stephen J. Turnbull
+-- new: internals node for creating new device types -- Stephen J. Turnbull
+-- new: read multibyte characters as Unicode in User Guide -- Aidan Kehoe
+
+Lisp API
+
+-- fix: pass a device to x-font-menu-font-data-xft. -- Jerry James
+-- fix: typo in code -- Aidan Kehoe
+-- improve: GNU sync of goto-line -- Ville Skyttä
+-- improve: error and usage messages -- Stephen J. Turnbull
+-- improve: fontconfig refactoring  -- Stephen J. Turnbull
+
+Internal API and Implementation
+
+-- fix: 64-bit cleanliness in number.c -- Jerry James
+-- fix: 64-bit cleanliness in printing lwlib resources -- Jerry James
+-- fix: copy_command_builder left console uninitialized -- Jerry James
+-- fix: memory leak in font initialization -- Stephen J. Turnbull
+-- fix: remove spurious diagnostics in FcPattern creation -- Stephen J. Turnbull
+-- fix: signedness warnings in lwlib -- Jerry James
+-- fix: use of char-like types -- Aidan Kehoe
+-- fix: we don't support Xft v.1, remove pretense -- Stephen J. Turnbull
+-- improve: fontconfig refactoring -- Stephen J. Turnbull
+
 to 21.5.26 "endive"
 
 Major Features and Backward Incompatible Changes
