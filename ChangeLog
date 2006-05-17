@@ -1,3 +1,7 @@
+2006-05-17  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* PROBLEMS: Add entry concerning X errors when using ssh.
+
 2006-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* PROBLEMS: X11R7 loses x11/bitmaps/gray.

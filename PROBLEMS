@@ -1015,6 +1015,12 @@ you still have the problem after doing that, perhaps your version of X is
 too old.  There is a copy of the MIT X11R6 XKeysymDB file in the emacs `etc'
 directory.  Try using that one.
 
+*** Lots of warnings generated when displaying via ssh X forwarding.
+
+If you are seeing a significant number of X11 warnings (in particular
+BadWindow errors) when using XEmacs via ssh X forwarding try using a
+trusted x11 connection instead (for openssh, use -Y instead of -X).
+
 *** My X resources used to work, and now some of them are being ignored.
 
 Check the resources in .../etc/Emacs.ad (which is the same as the file
