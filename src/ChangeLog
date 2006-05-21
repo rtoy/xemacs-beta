@@ -1,3 +1,13 @@
+2006-05-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (extract_object_file_name):
+	* doc.c (unparesseuxify_doc_string):
+	Leave sufficient space for the '\0' sentinel when reading into the
+	buffer.  The bug in unparesseuxify_doc_string had been there for
+	ten years at least, but it was Fabrice Popineau's investigation of
+	the code on the same model in extract_object_file_name that
+	provoked its discovery.  Thank you Fabrice!
+	
 2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.27 "fiddleheads" is released.

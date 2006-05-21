@@ -49,7 +49,7 @@ extract_object_file_name (int fd, EMACS_INT doc_pos,
 {
   Ibyte buf[DOC_MAX_FILENAME_LENGTH+1];
   Ibyte *buffer = buf;
-  int buffer_size = sizeof (buf), space_left;
+  int buffer_size = sizeof (buf) - 1, space_left;
   Ibyte *from, *to;
   REGISTER Ibyte *p = buffer;
   Lisp_Object return_me;
@@ -59,8 +59,8 @@ extract_object_file_name (int fd, EMACS_INT doc_pos,
 
   GCPRO2 (fdstream, instream);
 
-  position = doc_pos > DOC_MAX_FILENAME_LENGTH  ? 
-    doc_pos - DOC_MAX_FILENAME_LENGTH : 0; 
+  position = doc_pos > buffer_size  ? 
+    doc_pos - buffer_size : 0; 
 
   if (0 > lseek (fd, position, 0))
     {
@@ -168,7 +168,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
 {
   Ibyte buf[512 * 32 + 1];
   Ibyte *buffer = buf;
-  int buffer_size = sizeof (buf);
+  int buffer_size = sizeof (buf) - 1;
   Ibyte *from, *to;
   REGISTER Ibyte *p = buffer;
   Lisp_Object return_me;
@@ -215,13 +215,15 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
       if (space_left == 0)
 	{
           Ibyte *old_buffer = buffer;
+	  buffer_size *= 2;
+
 	  if (buffer == buf)
 	    {
-	      buffer = xnew_ibytes (buffer_size *= 2);
+	      buffer = xnew_ibytes (buffer_size + 1);
 	      memcpy (buffer, old_buffer, p - old_buffer);
 	    }
 	  else
-            XREALLOC_ARRAY (buffer, Ibyte, buffer_size *= 2);
+            XREALLOC_ARRAY (buffer, Ibyte, buffer_size + 1);
           p += buffer - old_buffer;
 	  space_left = buffer_size - (p - buffer);
 	}
