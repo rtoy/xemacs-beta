@@ -745,7 +745,14 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
   Bool y_position_specified_p = False;
   Bool internal_border_width_specified = False;
   Lisp_Object tail;
-  Widget w = FRAME_X_TEXT_WIDGET (f);
+  Widget w;
+
+  /* We can be called after the X IO error handler has seen a broken pipe on
+     the relevant display. Don't do anything in that case.  */
+  if (!FRAME_LIVE_P (f) || DEVICE_X_BEING_DELETED (XDEVICE (FRAME_DEVICE (f))))
+    return;
+
+  w = FRAME_X_TEXT_WIDGET (f);
 
   for (tail = plist; !NILP (tail); tail = Fcdr (Fcdr (tail)))
     {

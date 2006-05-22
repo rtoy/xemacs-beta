@@ -1,3 +1,10 @@
+2006-05-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* frame-x.c (x_set_frame_properties):
+	Check that the frame is live and that the device is not being
+	deleted before attempting anything.  Avoids calling X code if
+	x_IO_error_handler has seen a broken pipe. 
+	
 2006-05-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c (output_bytes_in_ascii_and_hex):
