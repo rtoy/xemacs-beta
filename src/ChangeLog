@@ -1,3 +1,9 @@
+2006-05-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c (output_bytes_in_ascii_and_hex):
+	Pass stderr_out internally-formatted data, don't use an external
+	format. 
+
 2006-05-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doc.c (extract_object_file_name):

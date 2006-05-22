@@ -3370,6 +3370,8 @@ output_bytes_in_ascii_and_hex (const UExtbyte *src, Bytecount n)
   UExtbyte *ascii = alloca_array (UExtbyte, n + 1);
   UExtbyte *hex = alloca_array (UExtbyte, 3 * n + 1);
   int i;
+  DECLARE_EISTRING (eistr_ascii);
+  DECLARE_EISTRING (eistr_hex);
 
   for (i = 0; i < n; i++)
     {
@@ -3384,7 +3386,11 @@ output_bytes_in_ascii_and_hex (const UExtbyte *src, Bytecount n)
     }
   ascii[i] = '\0';
   hex[3 * i - 1] = '\0';
-  stderr_out ("%s  %s", ascii, hex);
+
+  eicpy_ext(eistr_hex, hex, Qbinary);
+  eicpy_ext(eistr_ascii, ascii, Qbinary);
+
+  stderr_out ("%s  %s", eidata(eistr_ascii), eidata(eistr_hex));
 }
 
 #endif /* DEBUG_XEMACS */
