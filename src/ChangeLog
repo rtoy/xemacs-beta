@@ -1,3 +1,8 @@
+2006-05-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c (output_bytes_in_ascii_and_hex):
+	Fix a Win32 build failure introduced by my last commit. 
+	
 2006-05-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* .gdbinit.in: Moved to etc.

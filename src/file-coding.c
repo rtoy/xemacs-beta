@@ -3390,7 +3390,8 @@ output_bytes_in_ascii_and_hex (const UExtbyte *src, Bytecount n)
   eicpy_ext(eistr_hex, hex, Qbinary);
   eicpy_ext(eistr_ascii, ascii, Qbinary);
 
-  stderr_out ("%s  %s", eidata(eistr_ascii), eidata(eistr_hex));
+  stderr_out ("%s  %s", (const CIbyte *)(eidata(eistr_ascii)), 
+	      (const CIbyte *)eidata(eistr_hex));
 }
 
 #endif /* DEBUG_XEMACS */
