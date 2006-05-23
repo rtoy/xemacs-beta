@@ -1,3 +1,9 @@
+2006-05-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* code-cmds.el: Update FSF copyright; improve header comment.
+	(coding-system-change-eol-conversion): Clarify, add sanity check.
+	Fix keyword mismatch between function arg and subsidiary accessor.
+
 2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.27 "fiddleheads" is released.
