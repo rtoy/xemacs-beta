@@ -236,7 +236,7 @@ sysdep.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h
 sysdll.o: $(LISP_H) intl-auto-encap-win32.h sysdll.h sysfile.h syswindows.h
 termcap.o: $(LISP_H) console.h device.h
 terminfo.o: $(CONFIG_H)
-tests.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h elhash.h lstream.h opaque.h
+tests.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h elhash.h file-coding.h lstream.h opaque.h
 text.o: $(LISP_H) backtrace.h buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h file-coding.h lstream.h profile.h
 toolbar-common.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h charset.h conslots.h console-gtk-impl.h console-gtk.h console-impl.h console-x-impl.h console-x.h console.h device-impl.h device.h devslots.h faces.h frame-impl.h frame.h frameslots.h glyphs.h redisplay.h scrollbar.h specifier.h toolbar-common.h toolbar.h window-impl.h window.h winslots.h xintrinsic.h
 toolbar.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h frame-impl.h frame.h frameslots.h glyphs.h redisplay.h scrollbar.h specifier.h toolbar.h window-impl.h window.h winslots.h
