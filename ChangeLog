@@ -1,3 +1,9 @@
+2006-05-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac: Look for debugger init file templates in etc/, not
+	src/.  Debugger init files depend on config.h; recreate on every
+	configure.  Support XCOMM convention.  Update FSF copyright.
+
 2006-05-17  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* PROBLEMS: Add entry concerning X errors when using ssh.

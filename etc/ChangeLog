@@ -1,3 +1,11 @@
+2006-05-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gdbinit.in:
+	* dbxrc.in:
+	Moved from src/.  Update FSF address.  Improve comments.
+
+	* gdbinit.in: Use XCOMM for "don't edit" comment and copyright.
+
 2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.27 "fiddleheads" is released.

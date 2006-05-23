@@ -34,9 +34,7 @@ AC_COPYRIGHT(
 [Configuration script for XEmacs.  Largely divergent from FSF.
 Guess values for system-dependent variables and create Makefiles.
 
-Copyright (C) 1992, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
-Copyright (C) 1997, 1998, 1999, 2001, 2002 Free Software Foundation, Inc.
-Copyright (C) 2003, 2004, 2005 Free Software Foundation, Inc.
+Copyright (C) 1992-1999, 2001-2006 Free Software Foundation, Inc.
 Copyright (C) 1993, 1994, 1995 Board of Trustees, University of Illinois.
 Copyright (C) 1996, 1997 Sun Microsystems, Inc.
 Copyright (C) 1995, 1996, 2002, 2003, 2004 Ben Wing.
@@ -5576,16 +5574,18 @@ dnl ----------------------------------------------
 dnl Create some auxiliary files for developers.
 dnl ----------------------------------------------
 
+dnl Unlike TAGS, debugger init files depend on config.h.
+dnl Regenerate them locally on every configure.
 dnl Create a .gdbinit useful for debugging XEmacs
-if test -f "$srcdir/src/.gdbinit.in" -a ! -f "src/.gdbinit.in"; then
+if test -f "$srcdir/etc/gdbinit.in"; then
   test "$verbose" = "yes" && echo "creating src/.gdbinit.in"
-  echo "source $srcdir/src/.gdbinit.in" > "src/.gdbinit.in"
+  cp $srcdir/etc/gdbinit.in src/.gdbinit.in
 fi
 
 dnl Create a .dbxrc useful for debugging XEmacs
-if test -f "$srcdir/src/.dbxrc.in" -a ! -f "src/.dbxrc.in"; then
+if test -f "$srcdir/etc/dbxrc.in"; then
   test "$verbose" = "yes" && echo "creating src/.dbxrc.in"
-  echo ". $srcdir/src/.dbxrc.in" > "src/.dbxrc.in"
+  echo ". $srcdir/etc/dbxrc.in" > "src/.dbxrc.in"
 fi
 
 dnl Create a useful TAGS file
@@ -6235,6 +6235,11 @@ dnl two brackets become one, but inside of a macro definition you need
 dnl more, or something -- I don't understand, but Martin probably does.
 dnl We put the brackets back later.
 dnl [ben]
+dnl To insert comments that will remain in the generated file, we use the
+dnl imake XCOMM convention.  Lines beginning with "XCOMM " exactly (no
+dnl leading whitespace, one trailing ASCII space, case sensitive) will be
+dnl transformed to shell/make/gdb comments in the generated file.
+dnl [sjt]
 
 dnl MAKE_JUNK_C(filename):
 dnl Copy a .in file to junk.c in preparation for passing through the
@@ -6283,7 +6288,9 @@ dnl Restore lines quoted above to original contents.
 	s/\\\([[\"]]\)/\1/g
 	s/^[[ TAB]]*\"//
 	s/\"[[ TAB]]*$//
-}' > Makefile.new
+}'				\
+dnl Convert comments -- must come after the unquoting operations
+	-e 's/^XCOMM /\# /' > Makefile.new
     chmod 444 Makefile.new
     mv -f Makefile.new $2
 ])dnl CPP_MAKEFILE
@@ -6295,7 +6302,8 @@ AC_CONFIG_COMMANDS([default],
 
 dnl Create a GNUmakefile and Makefile from Makefile.in.
 dnl Create xemacs.def from xemacs.def.in in the same fashion,
-dnl if it exists (i.e. in the src/ directory).
+dnl if it exists (i.e. in the src/ directory).  Ditto for the
+dnl debugger init files (in the src/ directory).
     MAKE_JUNK_C(Makefile.in)
     CPP_MAKEFILE(,Makefile)
     CPP_MAKEFILE(-DUSE_GNU_MAKE,GNUmakefile)

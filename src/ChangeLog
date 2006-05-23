@@ -1,3 +1,8 @@
+2006-05-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* .gdbinit.in: Moved to etc.
+	* .dbxrc.in: Moved to etc.
+
 2006-05-20  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* tests.c (Ftest_data_format_conversion): Fix no-mule autodetect
