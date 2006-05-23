@@ -1,6 +1,7 @@
 /* C support for testing XEmacs - see tests/automated/c-tests.el
    Copyright (C) 2000 Martin Buchholz
    Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2006 The Free Software Foundation, Inc.
 
 This file is part of XEmacs.
 
@@ -32,6 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 #include "elhash.h"
 #include "opaque.h"
+#include "file-coding.h"	/* XCODING_SYSTEM_EOL_TYPE and its values */
 
 static Lisp_Object Vtest_function_list;
 
@@ -63,6 +65,8 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   Lisp_Object opaque_latin  = make_opaque (ext_latin,  sizeof (ext_latin) - 1);
   Lisp_Object opaque0_latin = make_opaque (ext_latin,  sizeof (ext_latin));
   Lisp_Object string_latin1 = make_string (int_latin1, sizeof (int_latin1) - 1);
+  int autodetect_eol_p =
+    !NILP (Fsymbol_value (intern ("eol-detection-enabled-p")));
 
   /* Check for expected strings before and after conversion.
      Conversions depend on whether MULE is defined. */
@@ -86,14 +90,24 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
     DFC_CHECK_DATA_NUL (ptr, len, constant_string_non_mule)
 #endif
 
+  /* These now only apply to base coding systems, and
+     need to test `eol-detection-enabled-p' at runtime. */
 #define DFC_CHECK_DATA_COND_EOL(ptr,len,			\
-				 constant_string_eol,		\
-				 constant_string_non_eol)	\
-    DFC_CHECK_DATA (ptr, len, constant_string_eol)
+				constant_string_eol,		\
+				constant_string_non_eol) do {	\
+    if (autodetect_eol_p)					\
+      DFC_CHECK_DATA (ptr, len, constant_string_eol);		\
+    else							\
+      DFC_CHECK_DATA (ptr, len, constant_string_non_eol);	\
+  } while (0)
 #define DFC_CHECK_DATA_COND_EOL_NUL(ptr,len,			\
-				     constant_string_eol,	\
-				     constant_string_non_eol)	\
-    DFC_CHECK_DATA_NUL (ptr, len, constant_string_eol)
+				    constant_string_eol,	\
+				    constant_string_non_eol) do {	\
+    if (autodetect_eol_p)					\
+      DFC_CHECK_DATA_NUL (ptr, len, constant_string_eol);	\
+    else							\
+      DFC_CHECK_DATA_NUL (ptr, len, constant_string_non_eol);	\
+  } while (0)
 
   /* Check for expected strings before and after conversion. */
 #define DFC_CHECK_DATA(ptr,len, constant_string) do {	\
@@ -311,58 +325,111 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   DFC_CHECK_DATA_COND_MULE_NUL (XSTRING_DATA (string),
 				XSTRING_LENGTH (string), int_latin1, ext_latin);
 
-
+  /* This next group used to use the COND_EOL macros, but with the new Mule,
+     they all specify an EOL convention, and all XEmacsen can grok them. */
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_foo, sizeof (int_foo)),
 		      MALLOC, (ptr, len),
 		      Qbinary);
-  DFC_CHECK_DATA_COND_EOL_NUL (ptr, len, ext_unix, int_foo);
+  DFC_CHECK_DATA_NUL (ptr, len, ext_unix);
   xfree (ptr, void *);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_foo, sizeof (int_foo) - 1),
 		      LISP_OPAQUE, opaque,
 		      intern ("raw-text-mac"));
-  DFC_CHECK_DATA_COND_EOL (XOPAQUE_DATA (opaque),
-			   XOPAQUE_SIZE (opaque), ext_mac, int_foo);
+  DFC_CHECK_DATA (XOPAQUE_DATA (opaque), XOPAQUE_SIZE (opaque), ext_mac);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (LISP_STRING, string_foo,
 		      ALLOCA, (ptr, len),
 		      intern ("raw-text-dos"));
-  DFC_CHECK_DATA_COND_EOL (ptr, len, ext_dos, int_foo);
+  DFC_CHECK_DATA (ptr, len, ext_dos);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_foo, sizeof (int_foo) - 1),
 		      ALLOCA, (ptr, len),
 		      intern ("raw-text-unix"));
-  DFC_CHECK_DATA_COND_EOL (ptr, len, ext_unix, int_foo);
+  DFC_CHECK_DATA (ptr, len, ext_unix);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (LISP_STRING, string_foo,
 		      MALLOC, (ptr, len),
 		      intern ("no-conversion-mac"));
-  DFC_CHECK_DATA_COND_EOL (ptr, len, ext_mac, int_foo);
+  DFC_CHECK_DATA (ptr, len, ext_mac);
   xfree (ptr, void *);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_foo, sizeof (int_foo) - 1),
 		      ALLOCA, (ptr, len),
 		      intern ("no-conversion-dos"));
-  DFC_CHECK_DATA_COND_EOL (ptr, len, ext_dos, int_foo);
+  DFC_CHECK_DATA (ptr, len, ext_dos);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_foo, sizeof (int_foo)),
 		      ALLOCA, (ptr, len),
 		      intern ("no-conversion-unix"));
-  DFC_CHECK_DATA_COND_EOL_NUL (ptr, len, ext_unix, int_foo);
+  DFC_CHECK_DATA_NUL (ptr, len, ext_unix);
 
+  /* Oh, Lawdy, Lawdy, Lawdy, this done broke mah heart!
+
+     I tried using the technique
+
+     Fget_coding_system (call2
+			 (intern ("coding-system-change-eol-conversion"),
+			  intern ("undecided"), $EOL_TYPE));
+     XCODING_SYSTEM_EOL_TYPE (cs_to_use) = $EOL_DETECT_TYPE;
+
+     with EOL_TYPE = Qlf (for no-detect) and Qnil (for auto-detect),
+     and with EOL_DETECT_TYPE = EOL_LF and EOL_AUTODETECT
+     respectively, but this doesn't seem to work on the `undecided'
+     coding system.  The coding-system-eol-type attribute on the
+     coding system itself needs to be changed, too.  I'm not sure at
+     the moment how `set-eol-detection' works its magic, but the code
+     below gives correct test results without default EOL detection,
+     with default EOL detection, and with Mule.  Ship it!
+
+     Mule.  You'll envy the dead.
+  */
+
+  {
+    /* Check eol autodetection doesn't happen when disabled -- cheat. */
+    Lisp_Object cs_to_use = Fget_coding_system (intern ("undecided-unix"));
+    TO_INTERNAL_FORMAT (LISP_OPAQUE, opaque_dos,
+			LISP_BUFFER, Fcurrent_buffer(),
+			cs_to_use);
+    DFC_CHECK_DATA (BUF_BYTE_ADDRESS (current_buffer, BUF_PT (current_buffer)),
+		    sizeof (ext_dos) - 1, ext_dos);
+
+    /* Check eol autodetection works when enabled -- honest. */
+    cs_to_use =
+      Fget_coding_system (call2
+			  (intern ("coding-system-change-eol-conversion"),
+			  intern ("undecided"), Qnil));
+    XCODING_SYSTEM_EOL_TYPE (cs_to_use) = EOL_AUTODETECT;
+    TO_INTERNAL_FORMAT (LISP_OPAQUE, opaque_dos,
+			LISP_BUFFER, Fcurrent_buffer(),
+			cs_to_use);
+    DFC_CHECK_DATA (BUF_BYTE_ADDRESS (current_buffer, BUF_PT (current_buffer)),
+		    sizeof (int_foo) - 1, int_foo);
+    /* reset to default */
+    XCODING_SYSTEM_EOL_TYPE (cs_to_use) =
+      autodetect_eol_p ? EOL_AUTODETECT : EOL_LF;
+  }
+
+  /* Does eol-detection-enabled-p reflect the actual state of affairs?
+     This probably could be tested in Lisp somehow.  Should it? */
   TO_INTERNAL_FORMAT (LISP_OPAQUE, opaque_dos,
 		      LISP_BUFFER, Fcurrent_buffer(),
 		      intern ("undecided"));
-  /* &&#### needs some 8-bit work here */
-  DFC_CHECK_DATA (BUF_BYTE_ADDRESS (current_buffer, BUF_PT (current_buffer)),
-		  sizeof (int_foo) - 1, int_foo);
+  if (autodetect_eol_p)
+    DFC_CHECK_DATA (BUF_BYTE_ADDRESS (current_buffer,
+				      BUF_PT (current_buffer)),
+		    sizeof (int_foo) - 1, int_foo);
+  else
+    DFC_CHECK_DATA (BUF_BYTE_ADDRESS (current_buffer,
+				      BUF_PT (current_buffer)),
+		    sizeof (ext_dos) - 1, ext_dos);
 
   TO_INTERNAL_FORMAT (DATA, (ext_mac, sizeof (ext_mac) - 1),
 		      LISP_STRING, string,

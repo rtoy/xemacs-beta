@@ -1,3 +1,8 @@
+2006-05-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* tests.c (Ftest_data_format_conversion): Fix no-mule autodetect
+	bugs.  Update FSF copyright.
+
 2006-05-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* frame-x.c (x_set_frame_properties):
