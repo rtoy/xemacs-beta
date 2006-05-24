@@ -1215,6 +1215,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
     stderr_out ("Failed fontconfig initialization\n");
   else
     {
+      struct charset_reporter *cr;
       FcPattern *fontxft;	/* long-lived, freed at end of this block */
       FcResult fcresult;
       FcConfig *fcc;
@@ -1302,7 +1303,6 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	 Optimization:  cache the generated FcCharSet in the Mule charset.
          Don't forget to destroy it if the Mule charset gets deallocated. */
 
-      struct charset_reporter *cr;
       for (cr = charset_table;
 	   cr->charset && !EQ (*(cr->charset), charset);
 	   cr++)
