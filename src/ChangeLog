@@ -1,3 +1,11 @@
+2006-05-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c (output_bytes_in_ascii_and_hex):
+	I installed GCC 4.0 (which may not even have been necesssary,
+	-pedantic might have done it) and it showed me that the problem my
+	last commit intended to address was in eistr_ext rather than
+	stderr_out.
+
 2006-05-16  Andrey Slusar  <anrays@gmail.com>
 
 	* objects-x.c (x_find_charset_font): Fix build with gcc 2.95.

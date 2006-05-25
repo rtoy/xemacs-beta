@@ -3367,15 +3367,15 @@ hex_digit_to_char (int digit)
 static void
 output_bytes_in_ascii_and_hex (const UExtbyte *src, Bytecount n)
 {
-  UExtbyte *ascii = alloca_array (UExtbyte, n + 1);
-  UExtbyte *hex = alloca_array (UExtbyte, 3 * n + 1);
+  Extbyte *ascii = alloca_array (Extbyte, n + 1);
+  Extbyte *hex = alloca_array (Extbyte, 3 * n + 1);
   int i;
   DECLARE_EISTRING (eistr_ascii);
   DECLARE_EISTRING (eistr_hex);
 
   for (i = 0; i < n; i++)
     {
-      UExtbyte c = src[i];
+      Extbyte c = src[i];
       if (c < 0x20)
 	ascii[i] = '.';
       else
@@ -3390,8 +3390,7 @@ output_bytes_in_ascii_and_hex (const UExtbyte *src, Bytecount n)
   eicpy_ext(eistr_hex, hex, Qbinary);
   eicpy_ext(eistr_ascii, ascii, Qbinary);
 
-  stderr_out ("%s  %s", (const CIbyte *)(eidata(eistr_ascii)), 
-	      (const CIbyte *)eidata(eistr_hex));
+  stderr_out ("%s  %s", eidata(eistr_ascii), eidata(eistr_hex));
 }
 
 #endif /* DEBUG_XEMACS */
