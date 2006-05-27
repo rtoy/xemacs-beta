@@ -11,9 +11,7 @@
 # Configuration script for XEmacs.  Largely divergent from FSF.
 # Guess values for system-dependent variables and create Makefiles.
 #
-# Copyright (C) 1992, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
-# Copyright (C) 1997, 1998, 1999, 2001, 2002 Free Software Foundation, Inc.
-# Copyright (C) 2003, 2004, 2005 Free Software Foundation, Inc.
+# Copyright (C) 1992-1999, 2001-2006 Free Software Foundation, Inc.
 # Copyright (C) 1993, 1994, 1995 Board of Trustees, University of Illinois.
 # Copyright (C) 1996, 1997 Sun Microsystems, Inc.
 # Copyright (C) 1995, 1996, 2002, 2003, 2004 Ben Wing.
@@ -1356,9 +1354,7 @@ gives unlimited permission to copy, distribute and modify it.
 Configuration script for XEmacs.  Largely divergent from FSF.
 Guess values for system-dependent variables and create Makefiles.
 
-Copyright (C) 1992, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
-Copyright (C) 1997, 1998, 1999, 2001, 2002 Free Software Foundation, Inc.
-Copyright (C) 2003, 2004, 2005 Free Software Foundation, Inc.
+Copyright (C) 1992-1999, 2001-2006 Free Software Foundation, Inc.
 Copyright (C) 1993, 1994, 1995 Board of Trustees, University of Illinois.
 Copyright (C) 1996, 1997 Sun Microsystems, Inc.
 Copyright (C) 1995, 1996, 2002, 2003, 2004 Ben Wing.
@@ -38995,14 +38991,14 @@ if test "$verbose" = "yes"; then
 fi
 
 
-if test -f "$srcdir/src/.gdbinit.in" -a ! -f "src/.gdbinit.in"; then
+if test -f "$srcdir/etc/gdbinit.in"; then
   test "$verbose" = "yes" && echo "creating src/.gdbinit.in"
-  echo "source $srcdir/src/.gdbinit.in" > "src/.gdbinit.in"
+  cp $srcdir/etc/gdbinit.in src/.gdbinit.in
 fi
 
-if test -f "$srcdir/src/.dbxrc.in" -a ! -f "src/.dbxrc.in"; then
+if test -f "$srcdir/etc/dbxrc.in"; then
   test "$verbose" = "yes" && echo "creating src/.dbxrc.in"
-  echo ". $srcdir/src/.dbxrc.in" > "src/.dbxrc.in"
+  echo ". $srcdir/etc/dbxrc.in" > "src/.dbxrc.in"
 fi
 
 if test -f "$srcdir/TAGS" -a ! -f "TAGS"; then
@@ -41088,7 +41084,8 @@ $CPP -I. -I${srcdir}/src  junk.c \
 	s/\\\([\"]\)/\1/g
 	s/^[ TAB]*\"//
 	s/\"[ TAB]*$//
-}' > Makefile.new
+}'				\
+	-e 's/^XCOMM /\# /' > Makefile.new
     chmod 444 Makefile.new
     mv -f Makefile.new Makefile
 
@@ -41102,7 +41099,8 @@ $CPP -I. -I${srcdir}/src -DUSE_GNU_MAKE junk.c \
 	s/\\\([\"]\)/\1/g
 	s/^[ TAB]*\"//
 	s/\"[ TAB]*$//
-}' > Makefile.new
+}'				\
+	-e 's/^XCOMM /\# /' > Makefile.new
     chmod 444 Makefile.new
     mv -f Makefile.new GNUmakefile
 
@@ -41133,7 +41131,8 @@ $CPP -I. -I${srcdir}/src  junk.c \
 	s/\\\([\"]\)/\1/g
 	s/^[ TAB]*\"//
 	s/\"[ TAB]*$//
-}' > Makefile.new
+}'				\
+	-e 's/^XCOMM /\# /' > Makefile.new
     chmod 444 Makefile.new
     mv -f Makefile.new .gdbinit
 
@@ -41165,7 +41164,8 @@ $CPP -I. -I${srcdir}/src  junk.c \
 	s/\\\([\"]\)/\1/g
 	s/^[ TAB]*\"//
 	s/\"[ TAB]*$//
-}' > Makefile.new
+}'				\
+	-e 's/^XCOMM /\# /' > Makefile.new
     chmod 444 Makefile.new
     mv -f Makefile.new .dbxrc
 
@@ -41183,7 +41183,8 @@ $CPP -I. -I${srcdir}/src  junk.c \
 	s/\\\([\"]\)/\1/g
 	s/^[ TAB]*\"//
 	s/\"[ TAB]*$//
-}' > Makefile.new
+}'				\
+	-e 's/^XCOMM /\# /' > Makefile.new
     chmod 444 Makefile.new
     mv -f Makefile.new xemacs.def
 
