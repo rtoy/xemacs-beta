@@ -1,3 +1,8 @@
+2006-05-24  Jerry James  <james@xemacs.org>
+
+	* autoload.el (batch-update-autoloads): Only write to
+	generated-autoload-file.
+
 2006-05-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* code-cmds.el: Update FSF copyright; improve header comment.

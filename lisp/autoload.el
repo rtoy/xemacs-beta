@@ -1154,7 +1154,8 @@ The directory to which the auto-autoloads.el file must be the first parameter
 on the command line."
   (unless noninteractive
     (error "batch-update-autoloads is to be used only with -batch"))
-  (update-autoload-files command-line-args-left autoload-feature-prefix nil t)
+  (update-autoload-files command-line-args-left autoload-feature-prefix
+			 generated-autoload-file t)
   (kill-emacs 0))
 
 ;; Declare obsolescence
