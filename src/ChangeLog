@@ -1,3 +1,8 @@
+2006-05-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_find_charset_font): Keep local names local; wrap
+	the spurious declaration in a block, don't move it.
+
 2006-05-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c (output_bytes_in_ascii_and_hex):

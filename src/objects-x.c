@@ -1215,7 +1215,6 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
     stderr_out ("Failed fontconfig initialization\n");
   else
     {
-      struct charset_reporter *cr;
       FcPattern *fontxft;	/* long-lived, freed at end of this block */
       FcResult fcresult;
       FcConfig *fcc;
@@ -1303,34 +1302,40 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	 Optimization:  cache the generated FcCharSet in the Mule charset.
          Don't forget to destroy it if the Mule charset gets deallocated. */
 
-      for (cr = charset_table;
-	   cr->charset && !EQ (*(cr->charset), charset);
-	   cr++)
-	;
+      {
+	/* This block possibly should be a function, but it generates
+	   multiple values.  I find the "pass an address to return the
+	   value in" idiom opaque, so prefer a block. */
+	struct charset_reporter *cr;
+	for (cr = charset_table;
+	     cr->charset && !EQ (*(cr->charset), charset);
+	     cr++)
+	  ;
 
-      if (cr->rfc3066)
-	{
-	  DECLARE_DEBUG_FONTNAME (name);
-	  CHECKING_LANG (0, eidata(name), cr->language);
-	  lang = cr->rfc3066;
-	}
-      else if (cr->charset)
-	{
-	  /* what the hey, build 'em on the fly */
-	  /* #### in the case of error this could return NULL! */
-	  fccs = mule_to_fc_charset (charset);
-	  lang = XSTRING_DATA (XSYMBOL (XCHARSET_NAME (charset))-> name);
-	}
-      else
-	{
-	  /* OK, we fell off the end of the table */
-	  warn_when_safe_lispobj (intern ("xft"), intern ("alert"),
-				  list2 (build_string ("unchecked charset"),
-					 charset));
+	if (cr->rfc3066)
+	  {
+	    DECLARE_DEBUG_FONTNAME (name);
+	    CHECKING_LANG (0, eidata(name), cr->language);
+	    lang = cr->rfc3066;
+	  }
+	else if (cr->charset)
+	  {
+	    /* what the hey, build 'em on the fly */
+	    /* #### in the case of error this could return NULL! */
+	    fccs = mule_to_fc_charset (charset);
+	    lang = XSTRING_DATA (XSYMBOL (XCHARSET_NAME (charset))-> name);
+	  }
+	else
+	  {
+	    /* OK, we fell off the end of the table */
+	    warn_when_safe_lispobj (intern ("xft"), intern ("alert"),
+				    list2 (build_string ("unchecked charset"),
+					   charset));
+	  }
 	  /* default to "en"
 	     #### THIS IS WRONG, WRONG, WRONG!!
 	     It is why we never fall through to XLFD-checking. */
-	}
+      }
 
       ASSERT_ASCTEXT_ASCII(lang);
 
