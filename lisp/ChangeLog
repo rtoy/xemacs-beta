@@ -1,3 +1,9 @@
+2006-06-03  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Welcome
+	nl.xemacs.org and Thanks!
+	* package-get.el (package-get-pre-release-download-sites): Ditto.
+
 2006-05-24  Jerry James  <james@xemacs.org>
 
 	* autoload.el (batch-update-autoloads): Only write to
