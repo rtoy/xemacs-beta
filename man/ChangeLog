@@ -1,3 +1,10 @@
+2006-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/mule.texi (CCL Syntax):
+	* lispref/mule.texi (CCL Statements):
+	Describe the mule-to-unicode and unicode-to-mule statements;
+	rename the section they are described in.
+	
 2006-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs-faq.texi (Q2.2.3): New node.

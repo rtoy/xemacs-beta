@@ -34,6 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 #include "opaque.h"
 #include "profile.h"
+#include "charset.h"	/* For Funicode_to_char. */
 
 #include "sysfile.h"
 #include "sysfloat.h"
@@ -207,8 +208,6 @@ static int saved_doc_string_position;
 
 static int locate_file_open_or_access_file (Ibyte *fn, int access_mode);
 EXFUN (Fread_from_string, 3);
-
-EXFUN (Funicode_to_char, 2);  /* In unicode.c.  */
 
 /* When errors are signaled, the actual readcharfun should not be used
    as an argument if it is an lstream, so that lstreams don't escape

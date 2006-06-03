@@ -229,6 +229,11 @@ struct Lisp_Charset
   /* Which half of font to be used to display this character set */
   int graphic;
 
+  /* If set, this charset should be written out in ISO-2022-based coding
+     systems using the escape sequence for UTF-8, not using our internal
+     representation and the associated real ISO 2022 designation. */
+  unsigned int encode_as_utf_8 :1;
+
   /* If set, this is a "temporary" charset created when we encounter
      an unknown final.  This is so that we can successfully compile
      and load such files.  We allow a real charset to be created on top
@@ -261,6 +266,7 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define CHARSET_REP_BYTES(cs)	 ((cs)->rep_bytes)
 #define CHARSET_COLUMNS(cs)	 ((cs)->columns)
 #define CHARSET_GRAPHIC(cs)	 ((cs)->graphic)
+#define CHARSET_ENCODE_AS_UTF_8(cs)	 ((cs)->encode_as_utf_8)
 #define CHARSET_TYPE(cs)	 ((cs)->type)
 #define CHARSET_DIRECTION(cs)	 ((cs)->direction)
 #define CHARSET_FINAL(cs)	 ((cs)->final)
@@ -284,6 +290,7 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define XCHARSET_REP_BYTES(cs)	  CHARSET_REP_BYTES    (XCHARSET (cs))
 #define XCHARSET_COLUMNS(cs)	  CHARSET_COLUMNS      (XCHARSET (cs))
 #define XCHARSET_GRAPHIC(cs)      CHARSET_GRAPHIC      (XCHARSET (cs))
+#define XCHARSET_ENCODE_AS_UTF_8(cs) CHARSET_ENCODE_AS_UTF_8 (XCHARSET (cs))
 #define XCHARSET_TYPE(cs)	  CHARSET_TYPE         (XCHARSET (cs))
 #define XCHARSET_DIRECTION(cs)	  CHARSET_DIRECTION    (XCHARSET (cs))
 #define XCHARSET_FINAL(cs)	  CHARSET_FINAL        (XCHARSET (cs))
@@ -547,6 +554,25 @@ breakup_ichar_1 (Ichar c, Lisp_Object *charset, int *c1, int *c2)
 void get_charset_limits (Lisp_Object charset, int *low, int *high);
 int ichar_to_unicode (Ichar chr);
 
+EXFUN (Fcharset_name, 1);
+
 #endif /* MULE */
+
+/* ISO 10646 UTF-16, UCS-4, UTF-8, UTF-7, etc. */
+
+enum unicode_type
+{
+  UNICODE_UTF_16,
+  UNICODE_UTF_8,
+  UNICODE_UTF_7,
+  UNICODE_UCS_4
+};
+
+void encode_unicode_char (Lisp_Object USED_IF_MULE (charset), int h,
+			  int USED_IF_MULE (l), unsigned_char_dynarr *dst,
+			  enum unicode_type type, unsigned int little_endian);
+
+EXFUN (Funicode_to_char, 2);
+EXFUN (Fchar_to_unicode, 1); 
 
 #endif /* INCLUDED_charset_h_ */

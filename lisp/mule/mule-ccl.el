@@ -5,20 +5,20 @@
 
 ;; Keywords: CCL, mule, multilingual, character set, coding-system
 
-;; This file is part of X Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
+;; XEmacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
+;; XEmacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -48,7 +48,7 @@
   [if branch loop break repeat write-repeat write-read-repeat
       read read-if read-branch write call end
       read-multibyte-character write-multibyte-character
-      translate-character
+      translate-character mule-to-unicode unicode-to-mule
       iterate-multiple-map map-multiple map-single]
   "Vector of CCL commands (symbols).")
 
@@ -100,7 +100,9 @@
    write-multibyte-character
    translate-character
    translate-character-const-tbl
-   nil nil nil nil nil nil nil nil nil nil nil nil ; 0x04-0x0f
+   mule-to-unicode
+   unicode-to-mule
+   nil nil nil nil nil nil nil nil nil nil ; 0x06-0x0f
    iterate-multiple-map
    map-multiple
    map-single
@@ -830,6 +832,29 @@
 	   (ccl-embed-extended-command 'translate-character rrr RRR Rrr))))
   nil)
 
+;; Compile mule-to-unicode
+(defun ccl-compile-mule-to-unicode (cmd)
+  (if (/= (length cmd) 3)
+      (error "CCL: Invalid number of arguments: %s" cmd))
+  (let ((RRR (nth 1 cmd))
+	(rrr (nth 2 cmd)))
+    (ccl-check-register RRR cmd)
+    (ccl-check-register rrr cmd)
+    (ccl-embed-extended-command 'mule-to-unicode RRR rrr 0))
+  nil)
+
+;; Given a Unicode code point in register rrr, write the charset ID of the
+;; corresponding character in RRR, and the Mule-CCL form of its code in rrr.
+(defun ccl-compile-unicode-to-mule (cmd)
+  (if (/= (length cmd) 3)
+      (error "CCL: Invalid number of arguments: %s" cmd))
+  (let ((rrr (nth 1 cmd))
+	(RRR (nth 2 cmd)))
+    (ccl-check-register rrr cmd)
+    (ccl-check-register RRR cmd)
+    (ccl-embed-extended-command 'unicode-to-mule rrr RRR 0))
+  nil)
+
 (defun ccl-compile-iterate-multiple-map (cmd)
   (ccl-compile-multiple-map-function 'iterate-multiple-map cmd)
   nil)
@@ -1188,6 +1213,12 @@
   (let ((tbl (ccl-get-next-code)))
     (insert (format "translation table(%S) r%d r%d\n" tbl RRR rrr))))
 
+(defun ccl-dump-mule-to-unicode (rrr RRR Rrr)
+  (insert (format "change chars in r%d and r%d to unicode\n" RRR rrr)))
+
+(defun ccl-dump-unicode-to-mule (rrr RRR Rrr)
+  (insert (format "converter UCS code %d to a Mule char\n" rrr)))
+
 (defun ccl-dump-iterate-multiple-map (rrr RRR Rrr)
   (let ((notbl (ccl-get-next-code))
 	(i 0) id)
@@ -1359,9 +1390,13 @@ WRITE :=
 ;; Call CCL program whose name is ccl-program-name.
 CALL := (call ccl-program-name)
 
-TRANSLATE := ;; Not implemented under XEmacs.
-	(translate-character REG(table) REG(charset) REG(codepoint))
-	| (translate-character SYMBOL REG(charset) REG(codepoint))
+TRANSLATE := ;; Not implemented under XEmacs, except mule-to-unicode and
+	     ;; unicode-to-mule.
+	     (translate-character REG(table) REG(charset) REG(codepoint)) 
+	     | (translate-character SYMBOL REG(charset) REG(codepoint)) 
+	     | (mule-to-unicode REG(charset) REG(codepoint))
+	     | (unicode-to-mule REG(unicode,code) REG(CHARSET))
+
 MAP :=
      (iterate-multiple-map REG REG MAP-IDs)
      | (map-multiple REG REG (MAP-SET))
@@ -1373,8 +1408,8 @@ MAP-ID := INT-OR-CHAR
 ;; Terminate the CCL program.
 END := (end)
 
-;; CCL registers. These can contain any integer value.  As r7 is used by CCL
-;; interpreter itself, its value change unexpectedly.
+;; CCL registers. These can contain any integer value.  As r7 is used by the
+;; CCL interpreter itself, its value can change unexpectedly.
 REG := r0 | r1 | r2 | r3 | r4 | r5 | r6 | r7
 
 ARG := REG | INT-OR-CHAR

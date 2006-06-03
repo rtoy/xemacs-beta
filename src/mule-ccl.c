@@ -461,6 +461,16 @@ Lisp_Object Vccl_program_table;
 					       1:ExtendedCOMMNDRrrRRRrrrXXXXX
 					       2:ARGUMENT(Translation Table ID)
 					    */
+/* Translate a character whose code point is reg[rrr] and charset ID is
+   reg[RRR], into its Unicode code point, which will be written into
+   reg[rrr]. */
+
+#define CCL_MuleToUnicode	0x04 
+
+/* Translate a Unicode code point, in reg[rrr], into a Mule character,
+   writing the charset ID into reg[RRR] and the code point into reg[Rrr]. */
+
+#define CCL_UnicodeToMule	0x05 
 
 /* Iterate looking up MAPs for reg[rrr] starting from the Nth (N =
    reg[RRR]) MAP until some value is found.
@@ -577,7 +587,6 @@ Lisp_Object Vccl_program_table;
 					 ...
 					 N:SEPARATOR_z (< 0)
 				      */
-
 #define MAX_MAP_SET_LEVEL 30
 
 typedef struct
@@ -837,26 +846,41 @@ static int stack_idx_of_map_multiple;
    CODE to that invalid byte.  */
 
 /* On XEmacs, TranslateCharacter is not supported.  Thus, this
-   macro is not used.  */
-#if 0
+   macro is only used in the MuleToUnicode transformation.  */
 #define CCL_MAKE_CHAR(charset, code, c)				\
   do {								\
-    if ((charset) == CHARSET_ASCII)				\
-      (c) = (code) & 0xFF;						\
-    else if (CHARSET_DEFINED_P (charset)			\
-	     && ((code) & 0x7F) >= 32				\
-	     && ((code) < 256 || ((code >> 7) & 0x7F) >= 32))	\
+    if ((charset) == LEADING_BYTE_ASCII)			\
       {								\
-	int c1 = (code) & 0x7F, c2 = 0;				\
+	c = (code) & 0xFF;					\
+      }								\
+    else if ((charset) == LEADING_BYTE_CONTROL_1)		\
+      {								\
+	c = ((code) & 0xFF) - 0xA0;				\
+      }								\
+    else if (!NILP(charset_by_leading_byte(charset))		\
+	     && ((code) >= 32)					\
+	     && ((code) < 256 || ((code >> 8) & 0x7F) >= 32))	\
+      {								\
+	int c1, c2 = 0;						\
 								\
-	if ((code) >= 256)					\
-	  c2 = c1, c1 = ((code) >> 7) & 0x7F;			\
-	(c) = make_ichar (charset, c1, c2);			\
+	if ((code) < 256)					\
+	  {							\
+	    c1 = (code) & 0x7F;					\
+	    c2 = 0;						\
+	  }							\
+	else							\
+	  {							\
+	    c1 = ((code) >> 8) & 0x7F;				\
+	    c2 = (code) & 0x7F;					\
+	  }							\
+	c = make_ichar (charset_by_leading_byte(charset),	\
+			  c1, c2);				\
       }								\
     else							\
-      (c) = (code) & 0xFF;						\
-  } while (0)
-#endif
+      {								\
+	c = (code) & 0xFF;					\
+      }								\
+  } while (0) 
 
 
 /* Execute CCL code on SRC_BYTES length text at SOURCE.  The resulting
@@ -1392,9 +1416,9 @@ ccl_driver (struct ccl_program *ccl,
 
 	    case CCL_TranslateCharacter:
 #if 0
-	      /* XEmacs does not have translate_char, and its
-		 equivalent nor.  We do nothing on this operation. */
-	      CCL_MAKE_CHAR (reg[RRR], reg[rrr], i);
+	      /* XEmacs does not have translate_char, nor an
+		 equivalent.  We do nothing on this operation. */
+	      CCL_MAKE_CHAR(reg[RRR], reg[rrr], op);
 	      op = translate_char (GET_TRANSLATION_TABLE (reg[Rrr]),
 				   i, -1, 0, 0);
 	      SPLIT_CHAR (op, reg[RRR], i, j);
@@ -1420,6 +1444,56 @@ ccl_driver (struct ccl_program *ccl,
 	      reg[rrr] = i;
 #endif
 	      break;
+
+	    case CCL_MuleToUnicode:
+	      {
+		Lisp_Object ucs;
+
+		CCL_MAKE_CHAR(reg[rrr], reg[RRR], op);
+		ucs = Fchar_to_unicode(make_char(op));
+
+		if (NILP(ucs))
+		  {
+		    /* Uhh, char-to-unicode doesn't return nil at the
+		       moment, only ever -1. */
+		    reg[rrr] = 0xFFFD; /* REPLACEMENT CHARACTER */
+		  }
+		else
+		  {
+		    reg[rrr] = XINT(ucs);
+		    if (-1 == reg[rrr])
+		      {
+			reg[rrr] = 0xFFFD; /* REPLACEMENT CHARACTER */
+		      }
+		  }
+		break;
+	      }
+
+	    case CCL_UnicodeToMule:
+	      {
+		Lisp_Object scratch;
+
+		scratch = Funicode_to_char(make_int(reg[rrr]), Qnil);
+
+		if (!NILP(scratch))
+		  {
+		    op = XCHAR(scratch);
+		    BREAKUP_ICHAR (op, scratch, i, j);
+		    reg[RRR] = XCHARSET_ID(scratch);
+
+		    if (j != 0)
+		      {
+			i = (i << 8) | j;
+		      }
+
+		    reg[rrr] = i;
+		  }
+		else 
+		  {
+		    reg[rrr] = reg[RRR] = 0;
+		  }
+		break;
+	      }
 
 	    case CCL_IterateMultipleMap:
 	      {

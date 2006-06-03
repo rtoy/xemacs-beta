@@ -247,7 +247,7 @@
       (when (and (not (get (intern sym-string) 'character-of-keysym))
 		 (string-match "^U[0-9A-F]+$" sym-string))
 	(pushnew (concat sym-string " ") unknown-code-points :test 'equal)))
-    (when unknown-code-points
+    (when (and (featurep 'mule) unknown-code-points)
       (lwarn 'key-mapping 'info
       "Undefined Unicode key mappings.
 Your keyboard has, among many others, the following keysyms defined:

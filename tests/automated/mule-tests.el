@@ -78,6 +78,38 @@ the Assert macro checks for correctness."
 ;; once compiled, for no good reason.
 (test-chars t)
 
+(defun unicode-code-point-to-utf-8-string (code-point)
+  "Convert a Unicode code point to the equivalent UTF-8 string. 
+This is a naive implementation in Lisp.  "
+  (check-argument-type 'natnump code-point)
+  (check-argument-range code-point 0 #x1fffff)
+  (if (< code-point #x80)
+      (format "%c" code-point)
+    (if (< code-point #x800)
+	(format "%c%c" 
+		;; ochars[0] = 0xC0 | (input & ~(0xFFFFF83F)) >> 6;
+		(logior #xc0 (lsh (logand code-point #x7c0) -6))
+		;; ochars[1] = 0x80 | input & ~(0xFFFFFFC0);
+		(logior #x80 (logand code-point #x3f)))
+      (if (< code-point #x00010000)
+	  (format "%c%c%c" 
+		  ;; ochars[0] = 0xE0 | (input >> 12) & ~(0xFFFFFFF0); 
+		  (logior #xe0 (logand (lsh code-point -12) #x0f))
+		  ;; ochars[1] = 0x80 | (input >> 6) & ~(0xFFFFFFC0); 
+		  (logior #x80 (logand (lsh code-point -6) #x3f))
+		  ;; ochars[2] = 0x80 | input & ~(0xFFFFFFC0); 
+		  (logior #x80 (logand code-point #x3f)))
+	(if (< code-point #x200000)
+	    (format "%c%c%c%c" 
+		    ;; ochars[0] = 0xF0 | (input >> 18) & ~(0xFFFFFFF8)
+		    (logior #xF0 (logand (lsh code-point -18) #x7))
+		    ;; ochars[1] = 0x80 | (input >> 12) & ~(0xFFFFFFC0);
+		    (logior #x80 (logand (lsh code-point -12) #x3f))
+		    ;; ochars[2] = 0x80 | (input >> 6) & ~(0xFFFFFFC0); 
+		    (logior #x80 (logand (lsh code-point -6) #x3f))
+		    ;; ochars[3] = 0x80 | input & ~(0xFFFFFFC0); 
+		    (logior #x80 (logand code-point #x3f))))))))
+
 ;;-----------------------------------------------------------------
 ;; Test string modification functions that modify the length of a char.
 ;;-----------------------------------------------------------------
@@ -335,6 +367,37 @@ the Assert macro checks for correctness."
 	(Assert (eq scaron (unicode-to-char code '(latin-iso8859-2))))))
   
     (Check-Error wrong-type-argument (set-unicode-conversion scaron -10000)))
+
+  (dolist (utf-8-char 
+	   '("\xc6\x92"		  ;; U+0192 LATIN SMALL LETTER F WITH HOOK
+	     "\xe2\x81\x8a"	  ;; U+204A TIRONIAN SIGN ET
+	     "\xe2\x82\xae"	  ;; U+20AE TUGRIK SIGN
+	     "\xf0\x9d\x92\xbd"	  ;; U+1D4BD MATHEMATICAL SCRIPT SMALL H
+	     "\xf0\x9d\x96\x93"   ;; U+1D593 MATHEMATICAL BOLD FRAKTUR SMALL N
+	     "\xf0\xaf\xa8\x88"   ;; U+2FA08 CJK COMPATIBILITY FOR U+4BCE
+	     "\xf4\x8f\xbf\xbd")) ;; U+10FFFD <Plane 16 Private Use, Last>
+    (let* ((xemacs-character (car (append 
+				  (decode-coding-string utf-8-char 'utf-8) 
+				  nil)))
+	   (xemacs-charset (car (split-char xemacs-character))))
+
+      ;; Trivial test of the UTF-8 support of the escape-quoted character set. 
+      (Assert (equal (decode-coding-string utf-8-char 'utf-8)
+		     (decode-coding-string (concat "\033%G" utf-8-char)
+					   'escape-quoted)))
+
+      ;; Check that the reverse mapping holds. 
+      (Assert (equal (unicode-code-point-to-utf-8-string 
+		      (encode-char xemacs-character 'ucs))
+		     utf-8-char))
+
+      ;; Check that, if this character has been JIT-allocated, it is encoded
+      ;; in escape-quoted using the corresponding UTF-8 escape. 
+      (when (charset-property xemacs-charset 'encode-as-utf-8)
+	(Assert (equal (concat "\033%G" utf-8-char)
+		       (encode-coding-string xemacs-character 'escape-quoted)))
+	(Assert (equal (concat "\033%G" utf-8-char)
+		       (encode-coding-string xemacs-character 'ctext))))))
 
   ;;---------------------------------------------------------------
   ;; Test charset-in-* functions

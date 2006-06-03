@@ -1,3 +1,13 @@
+2006-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Add checks that several Unicode characters, expressed as
+	UTF-8-encoded strings, are handled correctly by the UTF-8 support
+	of the escape-quoted character set. 
+	* automated/mule-tests.el (unicode-code-point-to-utf-8-string): New.
+	Convert a Unicode code point to the equivalent UTF-8 string. 
+	This is a naive implementation in Lisp. 
+
 2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.27 "fiddleheads" is released.

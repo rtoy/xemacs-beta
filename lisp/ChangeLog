@@ -1,3 +1,21 @@
+2006-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-ccl.el:
+	"X Emacs" -> "XEmacs"
+	* mule/mule-ccl.el (ccl-compile-mule-to-unicode): New.
+	* mule/mule-ccl.el (ccl-compile-unicode-to-mule): New.
+	* mule/mule-ccl.el (ccl-dump-mule-to-unicode): New.
+	* mule/mule-ccl.el (ccl-dump-unicode-to-mule): New.
+	* mule/mule-ccl.el (define-ccl-program):
+	Add two new CCL commands, and commands to describe them; document
+	them. 
+
+2006-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el:
+	* unicode.el (featurep):
+	* x-init.el (x-initialize-keyboard):
+
 2006-06-03  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el (package-get-download-sites): Welcome

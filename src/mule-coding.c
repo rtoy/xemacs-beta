@@ -96,6 +96,42 @@ byte_shift_jis_katakana_p (int c)
   return c >= 0xA1 && c <= 0xDF;
 }
 
+inline static void
+dynarr_add_2022_one_dimension (Lisp_Object charset, Ibyte c, 
+			       unsigned char charmask, 
+			       unsigned_char_dynarr *dst)
+{
+  if (XCHARSET_ENCODE_AS_UTF_8 (charset)) 
+    {
+      encode_unicode_char (charset, c & charmask, 0,	
+			   dst, UNICODE_UTF_8, 0);		
+    } 
+  else							
+    {							
+      Dynarr_add (dst, c & charmask);			
+    }							
+}
+
+inline static void 
+dynarr_add_2022_two_dimensions (Lisp_Object charset, Ibyte c, 
+				unsigned int ch, 
+				unsigned char charmask, 
+				unsigned_char_dynarr *dst)
+{
+  if (XCHARSET_ENCODE_AS_UTF_8 (charset))			
+    {							
+      encode_unicode_char (charset,				
+			   ch & charmask,			
+			   c & charmask, dst,		
+			   UNICODE_UTF_8, 0);		
+    }							
+  else							
+    {							
+      Dynarr_add (dst, ch & charmask);			
+      Dynarr_add (dst, c & charmask);			
+    }							
+}
+
 /* Convert Shift-JIS data to internal format. */
 
 static Bytecount
@@ -671,6 +707,10 @@ enum iso_esc_flag
   ISO_ESC_2_4,		/* We've seen ESC $.  This indicates
 			   that we're designating a multi-byte, rather
 			   than a single-byte, character set. */
+  ISO_ESC_2_5,		/* We've seen ESC %. This indicates an escape to a
+			   Unicode coding system; the only one of these
+			   we're prepared to deal with is UTF-8, which has
+			   the next character as G. */
   ISO_ESC_2_8,		/* We've seen ESC 0x28, i.e. ESC (.
 			   This means designate a 94-character
 			   character set into G0. */
@@ -752,11 +792,15 @@ enum iso_error
    character constructed by overstriking two or more characters). */
 #define ISO_STATE_COMPOSITE	(1 << 5)
 
+/* If set, we're processing UTF-8 encoded data within ISO-2022
+   processing. */
+#define ISO_STATE_UTF_8		(1 << 6)
+
 /* ISO_STATE_LOCK is the mask of flags that remain on until explicitly
    turned off when in the ISO2022 encoder/decoder.  Other flags are turned
    off at the end of processing each character or escape sequence. */
 # define ISO_STATE_LOCK \
-  (ISO_STATE_COMPOSITE | ISO_STATE_R2L)
+  (ISO_STATE_COMPOSITE | ISO_STATE_R2L | ISO_STATE_UTF_8)
 
 typedef struct charset_conversion_spec
 {
@@ -922,6 +966,9 @@ struct iso2022_coding_stream
   Lisp_Object current_charset;
   int current_half;
   int current_char_boundary;
+
+  /* Used for handling UTF-8. */
+  unsigned char counter;  
 };
 
 static const struct memory_description ccs_description_1[] =
@@ -1344,6 +1391,15 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_coding_stream *iso,
 	}
 
     case ISO_ESC:
+
+      /* The only available ISO 2022 sequence in UTF-8 mode is ESC % @, to
+	 exit from it. If we see any other escape sequence, pass it through
+	 in the error handler.  */
+      if (*flags & ISO_STATE_UTF_8 && '%' != c)
+	{
+	  return 0;
+	}
+
       switch (c)
 	{
 	  /**** single shift ****/
@@ -1411,6 +1467,10 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_coding_stream *iso,
 	  iso->esc = ISO_ESC_2_4;
 	  goto not_done;
 
+	case '%':	/* Prefix to an escape to or from Unicode. */
+	  iso->esc = ISO_ESC_2_5;
+	  goto not_done; 
+
 	default:
 	  if (0x28 <= c && c <= 0x2F)
 	    {
@@ -1433,8 +1493,30 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_coding_stream *iso,
 	  goto error;
 	}
 
-
-
+      /* ISO-IR 196 UTF-8 support. */
+    case ISO_ESC_2_5:
+      if ('G' == c)
+	{
+	  /* Activate UTF-8 mode. */
+	  *flags &= ISO_STATE_LOCK;
+	  *flags |= ISO_STATE_UTF_8;
+	  iso->esc = ISO_ESC_NOTHING;
+	  return 1;
+	}
+      else if ('@' == c)
+	{
+	  /* Deactive UTF-8 mode. */
+	  *flags &= ISO_STATE_LOCK;
+	  *flags &= ~(ISO_STATE_UTF_8);
+	  iso->esc = ISO_ESC_NOTHING;
+	  return 1;
+	}
+      else 
+	{
+	  /* Oops, we don't support the other UTF-? coding systems within
+	     ISO 2022, only in their own context. */
+	  goto error;
+	}
       /**** directionality ****/
 
     case ISO_ESC_5_11:		/* ISO6429 direction control */
@@ -1822,6 +1904,87 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	    }
 	  ch = 0;
 	}
+      else if (flags & ISO_STATE_UTF_8)
+	{
+	  unsigned char counter = data->counter; 
+	  Ibyte work[MAX_ICHAR_LEN];
+	  int len;
+	  Lisp_Object chr;
+
+	  if (ISO_CODE_ESC == c)
+	    {
+	      /* Allow the escape sequence parser to end the UTF-8 state. */
+	      flags |= ISO_STATE_ESCAPE;
+	      data->esc = ISO_ESC;
+	      data->esc_bytes_index = 1;
+	      continue;
+	    }
+
+	  switch (counter)
+	    {
+	    case 0:
+	      if (c >= 0xfc)
+		{
+		  ch = c & 0x01;
+		  counter = 5;
+		}
+	      else if (c >= 0xf8)
+		{
+		  ch = c & 0x03;
+		  counter = 4;
+		}
+	      else if (c >= 0xf0)
+		{
+		  ch = c & 0x07;
+		  counter = 3;
+		}
+	      else if (c >= 0xe0)
+		{
+		  ch = c & 0x0f;
+		  counter = 2;
+		}
+	      else if (c >= 0xc0)
+		{
+		  ch = c & 0x1f;
+		  counter = 1;
+		}
+	      else
+		/* ASCII, or the lower control characters. */
+		Dynarr_add (dst, c);
+
+	      break;
+	    case 1:
+	      ch = (ch << 6) | (c & 0x3f);
+	      chr = Funicode_to_char(make_int(ch), Qnil);			
+
+	      if (!NILP (chr))						
+		{								
+		  assert(CHARP(chr));					
+		  len = set_itext_ichar (work, XCHAR(chr));		
+		  Dynarr_add_many (dst, work, len);			
+		}								
+	      else							
+		{								
+		  /* Shouldn't happen, this code should only be enabled in
+		     XEmacsen with support for all of Unicode. */
+		  Dynarr_add (dst, LEADING_BYTE_JAPANESE_JISX0208);	
+		  Dynarr_add (dst, 34 + 128);				
+		  Dynarr_add (dst, 46 + 128);				
+		}								
+
+	      ch = 0;
+	      counter = 0;
+	      break;
+	    default:
+	      ch = (ch << 6) | (c & 0x3f);
+	      counter--;
+	    }
+
+	  if (str->eof)
+	    DECODE_OUTPUT_PARTIAL_CHAR (ch, dst);
+
+	  data->counter = counter;
+	}
       else if (byte_c0_p (c) || byte_c1_p (c))
 	{ /* Control characters */
 
@@ -2010,6 +2173,7 @@ iso2022_designate (Lisp_Object charset, int reg,
   }
 
   Dynarr_add (dst, ISO_CODE_ESC);
+
   switch (type)
     {
     case CHARSET_TYPE_94:
@@ -2102,6 +2266,14 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	{		/* Processing ASCII character */
 	  ch = 0;
 
+	  if (flags & ISO_STATE_UTF_8)
+	    {
+	      Dynarr_add (dst, ISO_CODE_ESC);
+	      Dynarr_add (dst, '%');
+	      Dynarr_add (dst, '@');
+	      flags &= ~(ISO_STATE_UTF_8);
+	    }
+
 	  restore_left_to_right_direction (codesys, dst, &flags, 0);
 
 	  /* Make sure G0 contains ASCII */
@@ -2145,17 +2317,42 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	  Dynarr_add (dst, c);
 	  char_boundary = 1;
 	}
-
       else if (ibyte_leading_byte_p (c) || ibyte_leading_byte_p (ch))
 	{ /* Processing Leading Byte */
 	  ch = 0;
 	  charset = charset_by_leading_byte (c);
 	  if (leading_byte_prefix_p (c))
-	    ch = c;
+	    {
+	      ch = c;
+	    }
+	  else if (XCHARSET_ENCODE_AS_UTF_8 (charset))
+	    {
+	      assert (!EQ (charset, Vcharset_control_1)
+		      && !EQ (charset, Vcharset_composite));
+
+	      /* If the character set is to be encoded as UTF-8, the escape
+		 is always the same. */
+	      if (!(flags & ISO_STATE_UTF_8)) 
+		{
+		  Dynarr_add (dst, ISO_CODE_ESC);
+		  Dynarr_add (dst, '%');
+		  Dynarr_add (dst, 'G');
+		  flags |= ISO_STATE_UTF_8;
+		}
+	    }
 	  else if (!EQ (charset, Vcharset_control_1)
 		   && !EQ (charset, Vcharset_composite))
 	    {
 	      int reg;
+
+	      /* End the UTF-8 state. */
+	      if (flags & ISO_STATE_UTF_8)
+		{
+		  Dynarr_add (dst, ISO_CODE_ESC);
+		  Dynarr_add (dst, '%');
+		  Dynarr_add (dst, '@');
+		  flags &= ~(ISO_STATE_UTF_8);
+		}
 
 	      ensure_correct_direction (XCHARSET_DIRECTION (charset),
 					codesys, dst, &flags, 0);
@@ -2274,12 +2471,14 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 	      switch (XCHARSET_REP_BYTES (charset))
 		{
 		case 2:
-		  Dynarr_add (dst, c & charmask);
+		  dynarr_add_2022_one_dimension (charset, c,
+						 charmask, dst);
 		  break;
 		case 3:
 		  if (XCHARSET_PRIVATE_P (charset))
 		    {
-		      Dynarr_add (dst, c & charmask);
+		      dynarr_add_2022_one_dimension (charset, c,
+						     charmask, dst);
 		      ch = 0;
 		    }
 		  else if (ch)
@@ -2287,6 +2486,9 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 #ifdef ENABLE_COMPOSITE_CHARS
 		      if (EQ (charset, Vcharset_composite))
 			{
+			  /* #### Hasn't been written to handle composite
+			     characters yet. */
+			  assert(!XCHARSET_ENCODE_AS_UTF_8 (charset))
 			  if (in_composite)
 			    {
 			      /* #### Bother! We don't know how to
@@ -2310,8 +2512,8 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		      else
 #endif /* ENABLE_COMPOSITE_CHARS */
 			{
-			  Dynarr_add (dst, ch & charmask);
-			  Dynarr_add (dst, c & charmask);
+			  dynarr_add_2022_two_dimensions (charset, c, ch,
+							  charmask, dst);
 			}
 		      ch = 0;
 		    }
@@ -2324,8 +2526,8 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		case 4:
 		  if (ch)
 		    {
-		      Dynarr_add (dst, ch & charmask);
-		      Dynarr_add (dst, c & charmask);
+		      dynarr_add_2022_two_dimensions (charset, c, ch,
+						      charmask, dst);
 		      ch = 0;
 		    }
 		  else

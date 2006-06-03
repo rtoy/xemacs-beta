@@ -321,6 +321,10 @@ Lisp_Object Vdefault_unicode_precedence_list;
 
 Lisp_Object Qignore_first_column;
 
+Lisp_Object Vcurrent_jit_charset;
+Lisp_Object Qlast_allocated_character;
+Lisp_Object Qccl_encode_to_ucs_2;
+
 
 /************************************************************************/
 /*                        Unicode implementation                        */
@@ -1001,12 +1005,72 @@ ichar_to_unicode (Ichar chr)
 }
 
 static Ichar
+get_free_codepoint(Lisp_Object charset)
+{
+  Lisp_Object name = Fcharset_name(charset);
+  Lisp_Object zeichen = Fget(name, Qlast_allocated_character, Qnil);
+  Ichar res;
+
+  /* Only allow this with the 96x96 character sets we are using for
+     temporary Unicode support. */
+  assert(2 == XCHARSET_DIMENSION(charset) && 96 == XCHARSET_CHARS(charset));
+
+  if (!NILP(zeichen))
+    {
+      int c1, c2;
+
+      BREAKUP_ICHAR(XCHAR(zeichen), charset, c1, c2);
+
+      if (127 == c1 && 127 == c2)
+	{
+	  /* We've already used the hightest-numbered character in this
+	     set--tell our caller to create another. */
+	  return -1;
+	}
+
+      if (127 == c2)
+	{
+	  ++c1;
+	  c2 = 0x20;
+	}
+      else
+	{
+	  ++c2;
+	}
+
+      res = make_ichar(charset, c1, c2);
+      Fput(name, Qlast_allocated_character, make_char(res));
+    }
+  else
+    {
+      res = make_ichar(charset, 32, 32);
+      Fput(name, Qlast_allocated_character, make_char(res));
+    }
+  return res;
+}
+
+/* The just-in-time creation of XEmacs characters that correspond to unknown
+   Unicode code points happens when: 
+
+   1. The lookup would otherwise fail. 
+
+   2. The charsets array is the nil or the default. 
+
+   If there are no free code points in the just-in-time Unicode character
+   set, and the charsets array is the default unicode precedence list,
+   create a new just-in-time Unicode character set, add it at the end of the
+   unicode precedence list, create the XEmacs character in that character
+   set, and return it. */
+
+static Ichar
 unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 {
   int u1, u2, u3, u4;
   int code_levels;
   int i;
   int n = Dynarr_length (charsets);
+  static int number_of_jit_charsets;
+  static Ascbyte last_jit_charset_final;
 
   type_checking_assert (code >= 0);
   /* This shortcut depends on the representation of an Ichar, see text.c.
@@ -1040,8 +1104,64 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 	    return make_ichar (charset, retval >> 8, retval & 0xFF);
 	}
     }
+  
+  /* Only do the magic just-in-time assignment if we're using the default
+     list. */ 
+  if (unicode_precedence_dynarr == charsets) 
+    {
+      if (NILP (Vcurrent_jit_charset) || 
+	  (-1 == (i = get_free_codepoint(Vcurrent_jit_charset))))
+	{
+	  Ascbyte setname[32]; 
+	  Lisp_Object charset_descr = build_string
+	    ("Mule charset for otherwise unknown Unicode code points.");
+	  Lisp_Object charset_regr = build_string("iso10646-1");
 
-  return (Ichar) -1;
+	  struct gcpro gcpro1, gcpro2;
+
+	  if ('\0' == last_jit_charset_final)
+	    {
+	      /* This final byte shit is, umm, not that cool. */
+	      last_jit_charset_final = 0x30;
+	    }
+
+	  snprintf(setname, sizeof(setname), 
+		   "jit-ucs-charset-%d", number_of_jit_charsets++);
+
+	  /* Aside: GCPROing here would be overkill according to the FSF's
+	     philosophy. make-charset cannot currently GC, but is intended
+	     to be called from Lisp, with its arguments protected by the
+	     Lisp reader. We GCPRO in case it GCs in the future and no-one
+	     checks all the C callers.  */
+
+	  GCPRO2 (charset_descr, charset_regr);
+	  Vcurrent_jit_charset = Fmake_charset 
+	    (intern(setname), charset_descr, 
+	     /* Set encode-as-utf-8 to t, to have this character set written
+		using UTF-8 escapes in escape-quoted and ctext. This
+		sidesteps the fact that our internal character -> Unicode
+		mapping is not stable from one invocation to the next.  */
+	     nconc2 (list2(Qencode_as_utf_8, Qt),
+		     nconc2 (list6(Qcolumns, make_int(1), Qchars, make_int(96),
+				   Qdimension, make_int(2)),
+			     list6(Qregistry, charset_regr,
+				   Qfinal, make_char(last_jit_charset_final++),
+				   /* This CCL program is initialised in
+				      unicode.el. */
+				   Qccl_program, Qccl_encode_to_ucs_2))));
+	  UNGCPRO;
+
+	  i = get_free_codepoint(Vcurrent_jit_charset);
+	} 
+
+      if (-1 != i)
+	{
+	  set_unicode_conversion((Ichar)i, code);
+	  /* No need to add the charset to the end of the list; it's done
+	     automatically. */
+	}
+    }
+  return (Ichar) i;
 }
 
 /* Add charsets to precedence list.
@@ -1284,37 +1404,13 @@ When there is no international support (i.e. the `mule' feature is not
 present), this function simply does `int-to-char' and ignores the CHARSETS
 argument.
 
-Note that the current XEmacs internal encoding has no mapping for many
-Unicode code points, and if you use characters that are vaguely obscure with
-XEmacs' Unicode coding systems, you will lose data.
-
-To add support for some desired code point in the short term--note that our
-intention is to move to a Unicode-compatible internal encoding soon, for
-some value of soon--if you are a distributor, add something like the
-following to `site-start.el.'
-
-(make-charset 'distro-name-private 
-	      "Private character set for DISTRO"
-	      '(dimension 1
-		chars 96
-		columns 1
-		final ?5 ;; Change this--see docs for make-charset
-		long-name "Private charset for some Unicode char support."
-		short-name "Distro-Private"))
-
-(set-unicode-conversion 
- (make-char 'distro-name-private #x20) #x263A) ;; WHITE SMILING FACE
-
-(set-unicode-conversion 
- (make-char 'distro-name-private #x21) #x3030) ;; WAVY DASH
-
-;; ... 
-;;; Repeat as necessary. 
-
-Redisplay will work on the sjt-xft branch, but not with server-side X11
-fonts as is the default.  However, data read in will be preserved when they
-are written out again.
-
+If the CODE would not otherwise be converted to an XEmacs character, and the
+list of character sets to be consulted is nil or the default, a new XEmacs
+character will be created for it in one of the `jit-ucs-charset' Mule
+character sets, and that character will be returned.  There is scope for
+tens of thousands of separate Unicode code points in every session using
+this technique, so despite XEmacs' internal encoding not being based on
+Unicode, your data won't be trashed.
 */
        (code, USED_IF_MULE (charsets)))
 {
@@ -1558,16 +1654,6 @@ Unicode tables or in the charset:
 /*                         Unicode coding system                        */
 /************************************************************************/
 
-/* ISO 10646 UTF-16, UCS-4, UTF-8, UTF-7, etc. */
-
-enum unicode_type
-{
-  UNICODE_UTF_16,
-  UNICODE_UTF_8,
-  UNICODE_UTF_7,
-  UNICODE_UCS_4
-};
-
 struct unicode_coding_system
 {
   enum unicode_type type;
@@ -1728,7 +1814,9 @@ encode_unicode_char_1 (int code, unsigned_char_dynarr *dst,
     }
 }
 
-static void
+/* Also used in mule-coding.c for UTF-8 handling in ISO 2022-oriented
+   encodings. */
+void
 encode_unicode_char (Lisp_Object USED_IF_MULE (charset), int h,
 		     int USED_IF_MULE (l), unsigned_char_dynarr *dst,
 		     enum unicode_type type, unsigned int little_endian)
@@ -2444,6 +2532,8 @@ syms_of_unicode (void)
 
   DEFSUBR (Fload_unicode_mapping_table);
 
+  DEFSYMBOL (Qccl_encode_to_ucs_2);
+  DEFSYMBOL (Qlast_allocated_character);
   DEFSYMBOL (Qignore_first_column);
 #endif /* MULE */
 
@@ -2518,6 +2608,9 @@ vars_of_unicode (void)
 			    &lisp_object_dynarr_description);
 
   init_blank_unicode_tables ();
+
+  staticpro (&Vcurrent_jit_charset);
+  Vcurrent_jit_charset = Qnil;
 
   /* Note that the "block" we are describing is a single pointer, and hence
      we could potentially use dump_add_root_block_ptr().  However, given

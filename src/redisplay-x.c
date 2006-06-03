@@ -230,6 +230,10 @@ separate_textual_runs (unsigned char *text_storage,
 	}
 #endif /* MULE */
       *text_storage++ = (unsigned char) byte1;
+      /* This dimension stuff is broken if you want to use a two-dimensional
+	 X11 font to display a single-dimensional character set, as is
+	 appropriate for the IPA (use one of the -iso10646-1 fonts) or some
+	 of the other non-standard character sets. */
       if (dimension == 2)
 	*text_storage++ = (unsigned char) byte2;
 #else /* USE_XFT */

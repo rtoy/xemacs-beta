@@ -1,3 +1,90 @@
+2006-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* charset.h:
+	* charset.h (struct Lisp_Charset):
+	* charset.h (CHARSET_ENCODE_AS_UTF_8):
+	* charset.h (XCHARSET_ENCODE_AS_UTF_8):
+	Add a flag `encode-as-utf-8' to the Mule charset structure; if
+	set, it's an indication to ISO 2022-oriented coding systems that
+	the characters of that charset should be encoded using the ISO-IR
+	196 UTF-8 escape syntax, since they're not members of any other
+	well-known character set we're aware of.
+
+	Make enum unicode_type, encode_unicode_char and Funicode_to_char
+	available outside of unicode.c
+	
+	* lread.c:
+	* event-xlike-inc.c:
+	Use the charset.h declaration of Funicode_to_char, don't declare
+	it ourselves. 
+
+	My XFree86 installation has taken to passing me ASCII characters
+	using the Unicode keysyms; accept them too. 
+	
+	* general-slots.h:
+	Make `ccl-program' and `encode-as-utf-8' available as symbols
+	generally. 
+
+	* mule-ccl.c:
+	Add CCL_MuleToUnicode, CCL_UnicodeToMule, implement them, enable
+	and debug CCL_MAKE_CHAR, have CCL_WriteMultibyteChar2 segfault
+	less, fix some grammar. 
+
+	* mule-charset.c (make_charset):
+	* mule-charset.c (Fmake_charset):
+	* mule-charset.c (Fcharset_property):
+	* mule-charset.c (complex_vars_of_mule_charset):
+	Require the encode_as_utf_8 property when calling make_charset ();
+	accept it when creating a charset from Lisp in Fmake_charset. 
+
+	* mule-coding.c:
+	* mule-coding.c (dynarr_add_2022_one_dimension):
+	* mule-coding.c (dynarr_add_2022_two_dimensions):
+	Add two convenience functions for iso2022_decode, to abstract out
+	writing UTF-8 a little. 
+	
+	* mule-coding.c (enum iso_esc_flag):
+	Add one more state to reflect the existence of the UTF-8 escape. 
+
+	* mule-coding.c (struct iso2022_coding_stream):
+	Add a counter variable to the state to permit handling
+	variable-length UTF-8. 
+	
+	* mule-coding.c (parse_iso2022_esc):
+	Update the function to work with ISO_STATE_UTF_8; only the ESC % @
+	escape is processed in that state, everything else is ignored and
+	passed through by the error handler. 
+	
+	* mule-coding.c (iso2022_decode):
+	* mule-coding.c (iso2022_designate):
+	* mule-coding.c (iso2022_encode):
+	Handle the UTF-8 escape sequences in reading and in writing ISO
+	2022. 
+	
+	* redisplay-x.c (separate_textual_runs):
+	Add a comment to the effect that the dimension stuff breaks when
+	using CCL programs and registries to map to a bigger charset. 
+	
+	* unicode.c:
+	Add support for creating new characters on the fly as unknown
+	Unicode code points are encountered. 
+
+	* unicode.c (get_free_codepoint): New.
+	* unicode.c (unicode_to_ichar): Reworked to create new code points
+	on the fly. 
+	* unicode.c (Funicode_to_char): Update the docstring. 
+	* unicode.c (struct unicode_coding_system):
+	Move enum unicode_type into charset.h. 
+
+	* unicode.c (encode_unicode_char):
+	encode_unicode_char isn't static any longer, mule-coding.c uses
+	it. 
+	* unicode.c (syms_of_unicode):
+	Make a couple of symbols available to unicode.c
+	* unicode.c (vars_of_unicode):
+	Tell the garbage collector about current_jit_charset, initialise
+	it. 
+
 2006-05-25  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* objects-x.c (x_find_charset_font): Keep local names local; wrap
