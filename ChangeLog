@@ -1,3 +1,7 @@
+2006-06-05  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Change "if -z" to "if test -z".
+
 2006-05-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac: Look for debugger init file templates in etc/, not

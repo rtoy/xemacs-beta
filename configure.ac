@@ -2220,7 +2220,7 @@ if test -z "$with_optimization"; then
   # If user set --with-cflags-optimization, use it to unilaterally
   # determine whether optimization should be enabled.
   if test "$cflags_optimization_specified" = "yes" ; then
-    if -z "$with_cflags_optimization" ; then
+    if test -z "$with_cflags_optimization" ; then
       with_optimization=no
     else
       with_optimization=yes
