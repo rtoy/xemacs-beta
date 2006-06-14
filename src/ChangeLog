@@ -1,3 +1,12 @@
+2006-06-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-ccl.c:
+	Don't declare ccl-program as a symbol here, leave that to
+	general-slots.h. 
+	* unicode.c (unicode_to_ichar):
+	Use qxesprintf, not snprintf, change some types to allow
+	complilation on Win32. 
+	
 2006-06-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* charset.h:

@@ -1112,7 +1112,7 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
       if (NILP (Vcurrent_jit_charset) || 
 	  (-1 == (i = get_free_codepoint(Vcurrent_jit_charset))))
 	{
-	  Ascbyte setname[32]; 
+	  Ibyte setname[32]; 
 	  Lisp_Object charset_descr = build_string
 	    ("Mule charset for otherwise unknown Unicode code points.");
 	  Lisp_Object charset_regr = build_string("iso10646-1");
@@ -1125,8 +1125,12 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 	      last_jit_charset_final = 0x30;
 	    }
 
-	  snprintf(setname, sizeof(setname), 
-		   "jit-ucs-charset-%d", number_of_jit_charsets++);
+	  /* Assertion added partly because our Win32 layer doesn't
+	     support snprintf; with this, we're sure it won't overflow
+	     the buffer.  */
+	  assert(100 > number_of_jit_charsets);
+
+	  qxesprintf(setname, "jit-ucs-charset-%d", number_of_jit_charsets++);
 
 	  /* Aside: GCPROing here would be overkill according to the FSF's
 	     philosophy. make-charset cannot currently GC, but is intended
@@ -1136,7 +1140,7 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 
 	  GCPRO2 (charset_descr, charset_regr);
 	  Vcurrent_jit_charset = Fmake_charset 
-	    (intern(setname), charset_descr, 
+	    (intern((const CIbyte *)setname), charset_descr, 
 	     /* Set encode-as-utf-8 to t, to have this character set written
 		using UTF-8 escapes in escape-quoted and ctext. This
 		sidesteps the fact that our internal character -> Unicode

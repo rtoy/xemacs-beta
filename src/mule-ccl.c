@@ -39,8 +39,9 @@ Lisp_Object Vcode_conversion_map_vector;
 Lisp_Object Vfont_ccl_encoder_alist;
 
 /* This symbol is a property which associates with ccl program vector.
-   Ex: (get 'ccl-big5-encoder 'ccl-program) returns ccl program vector.  */
-Lisp_Object Qccl_program;
+   Ex: (get 'ccl-big5-encoder 'ccl-program) returns ccl program vector. 
+   Moved to general-slots.h. */
+/* Lisp_Object Qccl_program; */
 
 /* These symbols are properties which associate with code conversion
    map and their ID respectively.  */
