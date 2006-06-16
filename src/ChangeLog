@@ -1,3 +1,8 @@
+2006-06-13  Jerry James  <james@xemacs.org>
+
+	* lisp-union.h: Cast away bit restrictions on values retrieved
+	from the Lisp_Object union.
+
 2006-06-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-ccl.c:
