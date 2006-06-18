@@ -231,6 +231,8 @@
 (define-key compose-diaeresis-map [e]	[(?\353)])
 (define-key compose-diaeresis-map [i]	[(?\357)])
 (define-key compose-diaeresis-map [o]	[(?\366)])
+;; Not strictly a diaeresis, but close enough for government work. 
+(define-key compose-diaeresis-map [s]	[(?\337)])
 (define-key compose-diaeresis-map [u]	[(?\374)])
 (define-key compose-diaeresis-map [y]	[(?\377)])
 

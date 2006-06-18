@@ -1,3 +1,9 @@
+2006-06-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-compose.el (compose-diaeresis-map):
+	Add an entry to map dead_diaeresis + s to ß (LATIN SMALL LETTER
+	SHARP S).
+
 2006-06-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-ccl.el:
