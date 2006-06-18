@@ -1,3 +1,10 @@
+2006-06-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-xlike-inc.c:
+	Add support for three publishing keysyms with clear Unicode
+	mappings. They would have been included in my commit of 2005-06-26
+	had Markus Kuhn known about them. 
+	
 2006-06-13  Jerry James  <james@xemacs.org>
 
 	* lisp-union.h: Cast away bit restrictions on values retrieved

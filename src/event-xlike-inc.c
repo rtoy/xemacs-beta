@@ -352,9 +352,9 @@ static UINT_16_BIT const PUBLISHING[] =
     0x0,	/* #x0AB9 */
     0x0,	/* #x0ABA */
     0x2012,	/* #x0ABB FIGURE DASH	Publish */
-    0x0,	/* #x0ABC LEFT ANGLE BRACKET	Publish */
-    0x0,	/* #x0ABD DECIMAL POINT	Publish */
-    0x0,	/* #x0ABE RIGHT ANGLE BRACKET	Publish */
+    0x3008,	/* #x0ABC LEFT ANGLE BRACKET	Publish */
+    0x002E,	/* #x0ABD DECIMAL POINT	Publish */
+    0x3009,	/* #x0ABE RIGHT ANGLE BRACKET	Publish */
     0x0,	/* #x0ABF MARKER	Publish */
     0x0,	/* #x0AC0 */
     0x0,	/* #x0AC1 */
