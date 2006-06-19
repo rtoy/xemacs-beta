@@ -1,3 +1,8 @@
+2006-06-19  Jerry James  <james@xemacs.org>
+
+	* frame-x.c (x_set_frame_properties): Remove casts to silence GCC
+	warnings about a missing sentinel.
+
 2006-06-16  Jerry James  <james@xemacs.org>
 
 	* dgif_lib.c (DGifCloseFile): Do not dereference GifFile before

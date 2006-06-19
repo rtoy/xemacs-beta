@@ -783,12 +783,12 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 			     /* !!#### Verify this + 1 and document
 				as zero-termination */
 			     XtRString, extval, extvallen + 1,
-			     (XtArgVal) NULL);
+			     NULL);
 	    }
 	  else
 	    XtVaSetValues (w, XtVaTypedArg, extprop, XtRInt,
 			   XINT (val), sizeof (int),
-			   (XtArgVal) NULL);
+			   NULL);
 	}
       else if (SYMBOLP (prop))
 	{
@@ -887,7 +887,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 			     /* !!#### Verify this + 1 and document
 				as zero-termination */
 			     XtRString, extval, extvallen + 1,
-			     (XtArgVal) NULL);
+			     NULL);
 	    }
 
 #ifdef HAVE_SCROLLBARS
