@@ -508,8 +508,7 @@ static struct
   int instances_in_use;
   int bytes_in_use;
   int bytes_in_use_including_overhead;
-} lrecord_stats [countof (lrecord_implementations_table)
-		 + MODULE_DEFINABLE_TYPE_COUNT];
+} lrecord_stats [countof (lrecord_implementations_table)];
 
 void
 init_lrecord_stats ()
@@ -554,8 +553,7 @@ lrecord_stats_heap_size (void)
 {
   int i;
   int size = 0;
-  for (i = 0; i < (countof (lrecord_implementations_table)
-		   + MODULE_DEFINABLE_TYPE_COUNT); i++)
+  for (i = 0; i < countof (lrecord_implementations_table); i++)
     size += lrecord_stats[i].bytes_in_use;
   return size;
 }
@@ -3433,8 +3431,7 @@ static struct
   int instances_freed;
   int bytes_freed;
   int instances_on_free_list;
-} lcrecord_stats [countof (lrecord_implementations_table)
-		  + MODULE_DEFINABLE_TYPE_COUNT];
+} lcrecord_stats [countof (lrecord_implementations_table)];
 
 static void
 tick_lcrecord_stats (const struct lrecord_header *h, int free_p)
@@ -4428,8 +4425,7 @@ object_memory_usage_stats (int set_total_gc_usage)
 
 #ifdef NEW_GC
   
-  for (i = 0; i < (countof (lrecord_implementations_table)
-		   + MODULE_DEFINABLE_TYPE_COUNT); i++)
+  for (i = 0; i < countof (lrecord_implementations_table); i++)
     {
       if (lrecord_stats[i].instances_in_use != 0)
         {

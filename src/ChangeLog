@@ -1,3 +1,9 @@
+2006-06-16  Jerry James  <james@xemacs.org>
+
+	* alloc.c: Don't add MODULE_DEFINABLE_TYPE_COUNT to
+	countof (lrecord_implementations_table); the latter is already big
+	enough.
+
 2006-06-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-xlike-inc.c:
