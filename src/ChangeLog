@@ -1,5 +1,23 @@
 2006-06-16  Jerry James  <james@xemacs.org>
 
+	* dgif_lib.c (DGifCloseFile): Do not dereference GifFile before
+	checking if it is NULL.  Also fix a memory leak.
+	* fileio.c (Finsert_file_contents_internal): Remove dead code.
+	* input-method-xlib.c (XIM_SetGeometry): Do not dereference f or
+	xic before checking if they are NULL.
+	* md5.c (Fmd5): Check whether Lstream_read encountered an error.
+	* nas.c (Err): Fix a memory leak.
+	* scrollbar-x.c (x_free_scrollbar_instance): Do not dereference
+	instance->scrollbar_data before checking if it is NULL.
+	* text.c (eicmp_1): Move assertions to before the point where they
+	must be true for correctness.
+	* vdb-posix.c (vdb_fault_handler): Guard against a return from
+	ABORT().
+	* window.c (change_window_height): Skip always true comparison in
+	the expansion of CURCHARSIZE.
+
+2006-06-16  Jerry James  <james@xemacs.org>
+
 	* alloc.c: Don't add MODULE_DEFINABLE_TYPE_COUNT to
 	countof (lrecord_implementations_table); the latter is already big
 	enough.

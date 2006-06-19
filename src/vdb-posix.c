@@ -73,7 +73,7 @@ vdb_fault_handler (FAULT_HANDLER_ARGUMENTS)
     }
   else  /* default sigsegv handler */
     {
-      char *signal_name;
+      char *signal_name = "";
       if (signum == SIGSEGV)
 	signal_name = "SIGSEGV";
       else if (signum == SIGBUS)

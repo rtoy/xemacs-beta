@@ -1,3 +1,10 @@
+2006-06-16  Jerry James  <james@xemacs.org>
+
+	* lwlib-Xlw.c (xlw_scrollbar_callback): Do not dereference
+	instance before checking whether it is NULL.
+	* xlwmenu.c (xlw_map_menu): Prevent uninitialized access to root
+	and waste.
+
 2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.27 "fiddleheads" is released.

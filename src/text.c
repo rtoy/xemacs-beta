@@ -2138,7 +2138,11 @@ eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
 	 Bytecount len, Charcount charlen, const Ibyte *data,
 	 const Eistring *ei2, int is_ascii, int fold_case)
 {
+  assert ((data == 0) != (ei == 0)); 
+  assert ((is_ascii != 0) == (data != 0));
+  assert (fold_case >= 0 && fold_case <= 2);
   assert ((off < 0) != (charoff < 0));
+
   if (off < 0)
     {
       off = charcount_to_bytecount (ei->data_, charoff);
@@ -2152,9 +2156,6 @@ eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
 
   assert (off >= 0 && off <= ei->bytelen_);
   assert (len >= 0 && off + len <= ei->bytelen_);
-  assert ((data == 0) != (ei == 0)); 
-  assert ((is_ascii != 0) == (data != 0));
-  assert (fold_case >= 0 && fold_case <= 2);
 
   {
     Bytecount dstlen;

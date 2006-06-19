@@ -366,10 +366,11 @@ void DGifGetExtensionNext(GifFileType *GifFile, GifByteType **Extension)
 ******************************************************************************/
 int DGifCloseFile(GifFileType *GifFile)
 {
-    GifFilePrivateType *Private = (GifFilePrivateType *)GifFile->Private;
+    GifFilePrivateType *Private;
 
     if (GifFile == NULL) return -1;
 
+    Private = (GifFilePrivateType *)GifFile->Private;
     if (!IS_READABLE(Private))
     {
 	/* This file was NOT open for reading: */
@@ -929,8 +930,10 @@ ColorMapObject *MakeMapObject(int ColorCount, GifColorType *ColorMap)
 	return((ColorMapObject *)NULL);
 
     Object->Colors = (GifColorType *)calloc(ColorCount, sizeof(GifColorType));
-    if (Object->Colors == (GifColorType *)NULL)
+    if (Object->Colors == (GifColorType *)NULL) {
+	free(Object);
 	return((ColorMapObject *)NULL);
+    }
 
     Object->ColorCount = ColorCount;
     Object->BitsPerPixel = BitSize(ColorCount);

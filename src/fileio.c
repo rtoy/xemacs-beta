@@ -2855,7 +2855,6 @@ under Mule, is very difficult.)
 
   if (qxe_stat (XSTRING_DATA (filename), &st) < 0)
     {
-      if (fd >= 0) retry_close (fd);
     badopen:
       if (NILP (visit))
 	report_file_error ("Opening input file", filename);
