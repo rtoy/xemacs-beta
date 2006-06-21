@@ -1,5 +1,19 @@
 2006-06-19  Jerry James  <james@xemacs.org>
 
+	* device-x.c (x_IO_error_handler): Do not dereference d if it is
+	NULL.
+	* dialog-x.c (dbox_selection_callback): Ensure f is non-NULL, then
+	dereference it, not the other way around.
+	* emacs.c (main_1): restart is always 0 here.
+	* extents.c (detach_all_extents): Call extent_list_delete_all with
+	a non-NULL parameter only.
+	* glyphs-widget.c (widget_query_geometry): Guard against possibly
+	NULL width and height.
+	* window.c (change_window_height): Restore use of CURCHARSIZE
+	removed by 2006-06-16 change, to preserve the abstraction.
+
+2006-06-19  Jerry James  <james@xemacs.org>
+
 	* frame-x.c (x_set_frame_properties): Remove casts to silence GCC
 	warnings about a missing sentinel.
 

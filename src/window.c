@@ -4380,7 +4380,7 @@ change_window_height (Lisp_Object window, int delta, Lisp_Object horizontalp,
 	    {
 	      int new_pixsize;
 	      sizep = &CURSIZE (w);
-	      dim = window_char_width (w, 0);
+	      dim = CURCHARSIZE (w);
 	      new_pixsize = inpixels?(*sizep + delta):(dim+delta);
 	      set_window_pixsize (window, new_pixsize, 0, 0);
 	      return;

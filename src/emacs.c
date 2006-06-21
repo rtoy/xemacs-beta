@@ -1395,7 +1395,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       inhibit_site_modules   = inhibit_site_modules_save;
 
       if (initialized)
-	run_temacs_argc = restart ? -2 : -1;
+	run_temacs_argc = -1;
       else
 	purify_flag = 1;
     }
