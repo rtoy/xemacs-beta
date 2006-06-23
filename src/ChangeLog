@@ -1,3 +1,24 @@
+2006-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* font-mgr.c (extract_fcapi_string):
+	(fc_intern):
+	(Ffc_name_parse):
+	(Ffc_name_unparse):
+	(Ffc_pattern_add):
+	(Ffc_pattern_del):
+	(Ffc_pattern_get):
+	(string_list_to_fcobjectset):
+	fc_intern and extract_fcapi_string should return
+	[const] Extbyte *.  Make it so, update callers.
+
+2006-05-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-x.c (x_initialize_font_instance):
+	(x_font_instance_truename):
+	(charset_table):
+	(x_find_charset_font):
+	Pander to GCC4 signed character paranoia.
+
 2006-06-19  Jerry James  <james@xemacs.org>
 
 	* device-x.c (x_IO_error_handler): Do not dereference d if it is

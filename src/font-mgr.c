@@ -120,7 +120,7 @@ static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
    is a Lisp string.
 */
 #define extract_fcapi_string(str) \
-  ((FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL ((str), Qfc_font_name_encoding))
+  (NEW_LISP_STRING_TO_EXTERNAL ((str), Qfc_font_name_encoding))
 
 /* #### This homebrew lashup should be replaced with FcConstants.
 
@@ -158,20 +158,20 @@ static struct hash_table *fc_property_name_hash_table;
 /* #### Maybe fc_intern should be exposed to LISP?  The idea is that
    fc-pattern-add could warn or error if the property isn't interned. */
 
-static FcChar8 *
+static const Extbyte *
 fc_intern (Lisp_Object property)
 {
   const void *dummy;
-  FcChar8 *prop = extract_fcapi_string (property);
+  const Extbyte *prop = extract_fcapi_string (property);
   const void *val = gethash (prop, fc_property_name_hash_table, &dummy);
 
   /* extract_fcapi_string returns something alloca'd
      so we can just drop the old value of prop on the floor */
   if (val)
-    prop = (FcChar8 *) val;
+    prop = (const Extbyte *) val;
   else
     {
-      prop = FcStrCopy (prop);
+      prop = (const Extbyte *) FcStrCopy ((FcChar8 *) prop);
       puthash (prop, NULL, fc_property_name_hash_table);
     }
   return prop;
@@ -207,7 +207,7 @@ Parse an Fc font name and return its representation as a fc pattern object.
 
   CHECK_STRING(name);		/* #### MEMORY LEAK!!  maybe not ... */
 
-  fcpat->fcpatPtr = FcNameParse (extract_fcapi_string (name));
+  fcpat->fcpatPtr = FcNameParse ((FcChar8 *) extract_fcapi_string (name));
   return wrap_fcpattern(fcpat);
 }
 
@@ -220,10 +220,10 @@ Unparse an fc pattern object to a string.
 {
   CHECK_FCPATTERN(pattern);
   {
-  FcChar8 *temp = FcNameUnparse(XFCPATTERN_PTR(pattern));
-  Lisp_Object res = build_ext_string (temp, Qfc_font_name_encoding);
-  free (temp);
-  return res;
+    Extbyte *temp = (Extbyte *) FcNameUnparse(XFCPATTERN_PTR(pattern));
+    Lisp_Object res = build_ext_string (temp, Qfc_font_name_encoding);
+    free (temp);
+    return res;
   }
 }
 
@@ -250,7 +250,7 @@ will be added as an FcChar8[], int, double, or FcBool respectively.
       (pattern, property, value))
 {
   Bool res = 0;
-  Extbyte *obj;
+  const Extbyte *obj;
   FcPattern *fcpat;
 
   CHECK_FCPATTERN(pattern);
@@ -291,8 +291,7 @@ Remove attribute PROPERTY from fc pattern object OBJECT.
   CHECK_FCPATTERN(pattern);
   CHECK_STRING(property);
 
-  res = FcPatternDel(XFCPATTERN_PTR(pattern), 
-		     extract_fcapi_string (property));
+  res = FcPatternDel(XFCPATTERN_PTR(pattern), extract_fcapi_string (property));
   return res ? Qt : Qnil;
 }
 
@@ -375,7 +374,7 @@ The following properties which were standard in Xft v.1 are obsolete in
 Xft v.2:  encoding, charwidth, charheight, core, and render. */
       (pattern, property, id, type))
 {
-  FcChar8 *fc_property;		/* UExtbyte * */
+  Extbyte *fc_property;
   FcResult fc_result;
   FcValue fc_value;
 
@@ -390,7 +389,7 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
 #endif
   if (STRINGP (property))
     {
-      fc_property = (FcChar8 *) extract_fcapi_string (property);
+      fc_property = extract_fcapi_string (property);
     }
   else
     {
@@ -427,7 +426,8 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
 	case FcTypeString:
 	  return ((!NILP (type) && !EQ (type, Qstring))
 		  ? Qfc_result_type_mismatch
-		  : build_ext_string (fc_value.u.s, Qfc_font_name_encoding));
+		  : build_ext_string ((Extbyte *) fc_value.u.s,
+				      Qfc_font_name_encoding));
 	case FcTypeBool:
 	  return ((!NILP (type) && !EQ (type, Qboolean))
 		  ? Qfc_result_type_mismatch : fc_value.u.b ? Qt : Qnil);
@@ -700,7 +700,7 @@ string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os)
 {
   EXTERNAL_LIST_LOOP_2 (elt, list)
     {
-      FcChar8 *s;
+      const Extbyte *s;
 
       CHECK_STRING (elt);
       s = fc_intern (elt);

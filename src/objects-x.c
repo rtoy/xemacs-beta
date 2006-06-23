@@ -253,7 +253,7 @@ x_color_list (void)
 #define PRINT_XFT_PATTERN(level,format,pattern)			\
   do {								\
     DECLARE_EISTRING (eistrpxft_name);				\
-    FcChar8 *name = FcNameUnparse (pattern);			\
+    Extbyte *name = (Extbyte *) FcNameUnparse (pattern);	\
 								\
     eicpy_ext(eistrpxft_name, name, Qfc_font_name_encoding);	\
     DEBUG_XFT1 (level, format, eidata(eistrpxft_name));		\
@@ -267,7 +267,7 @@ x_color_list (void)
 #define CHECKING_LANG(level,font,lang)					\
   do {									\
     DECLARE_EISTRING (eistrcl_name);					\
-    eicpy_ext(eistrcl_name, font, Qfc_font_name_encoding);		\
+    eicpy_ext(eistrcl_name, (Extbyte *) font, Qfc_font_name_encoding);	\
     DEBUG_XFT2 (level, "checking if %s handles %s\n",			\
 			eidata(eistrcl_name), lang);			\
   } while (0)
@@ -347,7 +347,7 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object UNUSED (name),
 	   cell size for estimating window dimensions.  The test_string8
 	   is an  ASCII string whose characters should approximate the
 	   distribution of widths expected in real text.  */
-	static const char test_string8[] = "Mmneei";
+	static const FcChar8 test_string8[] = "Mmneei";
 	static const int len = sizeof (test_string8) - 1;
 	XGlyphInfo glyphinfo;
 
@@ -814,7 +814,7 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
       if (res)
 	{
 	  FONT_INSTANCE_TRUENAME (f) = 
-	    build_ext_string (res, Qfc_font_name_encoding); 
+	    build_ext_string ((Extbyte *) res, Qfc_font_name_encoding); 
 	  free (res);
 	  return FONT_INSTANCE_TRUENAME (f);
 	}
@@ -1120,7 +1120,8 @@ struct charset_reporter {
   Lisp_Object *charset;
   /* This is a debug facility, require ASCII. */
   Extbyte *language;		/* ASCII, please */
-  FcChar8 *rfc3066;		/* ASCII, please */
+  /* Technically this is FcChar8, but fsckin' GCC 4 bitches. */
+  Extbyte *rfc3066;		/* ASCII, please */
 };
 
 static struct charset_reporter charset_table[] =
@@ -1218,7 +1219,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
       FcPattern *fontxft;	/* long-lived, freed at end of this block */
       FcResult fcresult;
       FcConfig *fcc;
-      FcChar8 *lang = "en";	/* #### fix this bogus hack! */
+      FcChar8 *lang = (FcChar8 *) "en";	/* #### fix this bogus hack! */
       FcCharSet *fccs = NULL;
       DECLARE_EISTRING (eistr_shortname); /* user-friendly nickname */
       DECLARE_EISTRING (eistr_longname);  /* omit FC_LANG and FC_CHARSET */
@@ -1230,7 +1231,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
       /* parse the name, do the substitutions, and match the font */
 
       {
-	FcPattern *p = FcNameParse (patternext);
+	FcPattern *p = FcNameParse ((FcChar8 *) patternext);
 	PRINT_XFT_PATTERN (3, "FcNameParse'ed name is %s\n", p);
 	/* #### Next two return FcBool, but what does the return mean? */
 	/* The order is correct according the fontconfig docs. */
@@ -1257,7 +1258,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 
 	/* full name, including language coverage and repertoire */
 	name = FcNameUnparse (p);
-	eicpy_ext (eistr_fullname, name, Qfc_font_name_encoding);
+	eicpy_ext (eistr_fullname, (Extbyte *) name, Qfc_font_name_encoding);
 	free (name);
 
 	/* long name, omitting coverage and repertoire, plus a number
@@ -1274,7 +1275,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	FcPatternDel (p, FC_SCALE);
 	FcPatternDel (p, FC_FONTVERSION);
 	name = FcNameUnparse (p);
-	eicpy_ext (eistr_longname, name, Qfc_font_name_encoding);
+	eicpy_ext (eistr_longname, (Extbyte *) name, Qfc_font_name_encoding);
 	free (name);
 
 	/* nickname, just family and size, but
@@ -1288,7 +1289,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	FcPatternDel (p, FC_SCALABLE);
 	FcPatternDel (p, FC_DPI);
 	name = FcNameUnparse (p);
-	eicpy_ext (eistr_shortname, name, Qfc_font_name_encoding);
+	eicpy_ext (eistr_shortname, (Extbyte *) name, Qfc_font_name_encoding);
 	free (name);
 
 	FcPatternDestroy (p);
@@ -1316,14 +1317,15 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	  {
 	    DECLARE_DEBUG_FONTNAME (name);
 	    CHECKING_LANG (0, eidata(name), cr->language);
-	    lang = cr->rfc3066;
+	    lang = (FcChar8 *) cr->rfc3066;
 	  }
 	else if (cr->charset)
 	  {
 	    /* what the hey, build 'em on the fly */
 	    /* #### in the case of error this could return NULL! */
 	    fccs = mule_to_fc_charset (charset);
-	    lang = XSTRING_DATA (XSYMBOL (XCHARSET_NAME (charset))-> name);
+	    lang = (FcChar8 *) XSTRING_DATA (XSYMBOL
+					     (XCHARSET_NAME (charset))-> name);
 	  }
 	else
 	  {
@@ -1331,13 +1333,13 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	    warn_when_safe_lispobj (intern ("xft"), intern ("alert"),
 				    list2 (build_string ("unchecked charset"),
 					   charset));
+	    /* default to "en"
+	       #### THIS IS WRONG, WRONG, WRONG!!
+	       It is why we never fall through to XLFD-checking. */
 	  }
-	  /* default to "en"
-	     #### THIS IS WRONG, WRONG, WRONG!!
-	     It is why we never fall through to XLFD-checking. */
-      }
 
-      ASSERT_ASCTEXT_ASCII(lang);
+	ASSERT_ASCTEXT_ASCII((Extbyte *) lang);
+      }
 
       if (fccs)
 	{
