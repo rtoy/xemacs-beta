@@ -43,10 +43,12 @@
   ;; Using active regions
   (let ((zmacs-regions t)
         (first-buffer (current-buffer)))
-    (insert (buffer-name))
+    (Silence-Message
+     (insert (buffer-name)))
     (Assert (not (region-exists-p)))
     (Assert (not (region-active-p)))
-    (mark-whole-buffer)
+    (Silence-Message
+     (mark-whole-buffer))
     (Assert (region-exists-p))
     (Assert (region-active-p))
     ;; Turn off active regions
@@ -62,7 +64,8 @@
     ;; Region is active again
     (Assert (region-active-p))
     (with-temp-buffer
-      (insert (buffer-name))
+      (Silence-Message
+       (insert (buffer-name)))
       ;; Region exists in first buffer, not this second one
       (Assert (not (region-exists-p)))
       ;; Region not active in this second temp buffer
@@ -70,7 +73,8 @@
       ;; Region still active in first temp buffer
       (Assert (eq (zmacs-region-buffer) first-buffer))
       ;; Activate region in second temp buffer
-      (mark-whole-buffer)
+      (Silence-Message
+       (mark-whole-buffer))
       ;; Region exists in second temp buffer
       (Assert (region-exists-p))
       ;; Region active in second temp buffer

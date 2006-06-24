@@ -38,6 +38,14 @@
 ;;; Implementation-Incomplete-Expect-Failure wrapper macros to mark them.
 ;;; A lot of the tests we run push limits; suppress Ebola message with the
 ;;; Ignore-Ebola wrapper macro.
+;;; Some noisy code will call `message'.  Output from `message' can be
+;;; suppressed with the Silence-Message macro.  Functions that are known to
+;;; issue messages include `write-region', `find-tag', `tag-loop-continue',
+;;; `insert', and `mark-whole-buffer'.  N.B. The Silence-Message macro
+;;; currently does not suppress the newlines printed by `message'.
+;;; Definitely do not use Silence-Message with Check-Message.
+;;; In general it should probably only be used on code that prepares for a
+;;; test, not on tests.
 ;;; 
 ;;; You run the tests using M-x test-emacs-test-file,
 ;;; or $(EMACS) -batch -l .../test-harness.el -f batch-test-emacs file ...
@@ -291,7 +299,7 @@ BODY is a sequence of expressions and may contain several tests."
 			     ,quoted-body ',expected-error error-info)
 	      (incf wrong-error-failures)))))
 
-
+      ;; Do not use this with Silence-Message.
       (defmacro Check-Message (expected-message-regexp &rest body)
 	(Skip-Test-Unless (fboundp 'defadvice)
 			  "can't defadvice"
@@ -322,6 +330,10 @@ BODY is a sequence of expressions and may contain several tests."
 				 ,quoted-body error-info)
 		  (incf other-failures)))
 	       (ad-unadvise 'message)))))
+
+      ;; #### Perhaps this should override `message' itself, too?
+      (defmacro Silence-Message (&rest body)
+	`(flet ((append-message (&rest args) ())) ,@body))
 
       (defmacro Ignore-Ebola (&rest body)
 	`(let ((debug-issue-ebola-notices -42)) ,@body))

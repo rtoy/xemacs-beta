@@ -340,18 +340,18 @@ This is a naive implementation in Lisp.  "
 	    'iso-8859-2))
 	 )
     ;; This is how you suppress output from `message', called by `write-region'
-    (flet ((append-message (&rest args) ()))
-      (Assert (not (equal name1 name2)))
-      (Assert (not (file-exists-p name1)))
-      (write-region (point-min) (point-max) name1)
-      (Assert (file-exists-p name1))
-      (when (fboundp 'make-symbolic-link)
-	(make-symbolic-link name1 name2)
-	(Assert (file-exists-p name2))
-	(Assert (equal (file-truename name2) name1))
-	(Assert (equal (file-truename name1) name1)))
+    (Assert (not (equal name1 name2)))
+    (Assert (not (file-exists-p name1)))
+    (Silence-Message
+     (write-region (point-min) (point-max) name1))
+    (Assert (file-exists-p name1))
+    (when (fboundp 'make-symbolic-link)
+      (make-symbolic-link name1 name2)
+      (Assert (file-exists-p name2))
+      (Assert (equal (file-truename name2) name1))
+      (Assert (equal (file-truename name1) name1)))
 
-      (ignore-file-errors (delete-file name1) (delete-file name2))))
+      (ignore-file-errors (delete-file name1) (delete-file name2)))
 
   ;; Add many more file operation tests here...
 

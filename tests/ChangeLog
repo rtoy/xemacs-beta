@@ -1,5 +1,12 @@
 2006-06-24  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* automated/test-harness.el (Silence-Message): New macro.
+	* automated/mule-tests.el: Use it.
+	* automated/region-tests.el: Use it.
+	* automated/tag-tests.el: Use it.
+
+2006-06-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* automated/test-harness.el: Improve handling of unexpected errors.
 
 2006-06-03  Aidan Kehoe  <kehoea@parhasard.net>
