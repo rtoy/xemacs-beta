@@ -1,3 +1,7 @@
+2006-06-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el: Improve handling of unexpected errors.
+
 2006-06-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el:
