@@ -577,10 +577,9 @@ any other non-digit terminates the character code and is then used as input."
 	     read-quoted-char-radix)))
 	(and prompt (display-message 'prompt (format "%s-" prompt)))
 	(setq event (next-command-event)
-	      char (or (event-to-character event)
-		       (signal 'error
-			       (list "key read cannot be inserted in a buffer"
-				     event))))
+	      ;; If event-to-character fails, this is fine, we handle that
+	      ;; with the (null char) cond branch below.
+	      char (event-to-character event))
 	(if inhibit-quit (setq quit-flag nil)))
       ;; Translate TAB key into control-I ASCII character, and so on.
       (and char

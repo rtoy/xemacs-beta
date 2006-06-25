@@ -1,3 +1,9 @@
+2006-06-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cmdloop.el (read-quoted-char):
+	Don't error on non-character keys, accept them as terminating the
+	sequence. 
+	
 2006-06-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* x-compose.el (compose-diaeresis-map):
