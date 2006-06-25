@@ -234,42 +234,7 @@
 	   (x-win-init-sun))
           ((string-match "XFree86" vendor)
            ;; Those XFree86 people do some weird keysym stuff, too.
-	   (x-win-init-xfree86))))
-  ;; Perhaps tell people that some keys won't work. 
-  ;;
-  ;; If they remap while XEmacs is running and this problem arises, they
-  ;; won't see the messages. Which should be okay, assuming the length of
-  ;; time before we get a Unicode-compatible internal encoding is relatively
-  ;; short.
-  (let (unknown-code-points sym-string)
-    (dolist (x-keysym (hash-table-key-list (x-keysym-hash-table)))
-      (setq sym-string (if (stringp x-keysym) x-keysym (symbol-name x-keysym)))
-      (when (and (not (get (intern sym-string) 'character-of-keysym))
-		 (string-match "^U[0-9A-F]+$" sym-string))
-	(pushnew (concat sym-string " ") unknown-code-points :test 'equal)))
-    (when (and (featurep 'mule) unknown-code-points)
-      (lwarn 'key-mapping 'info
-      "Undefined Unicode key mappings.
-Your keyboard has, among many others, the following keysyms defined:
-
-%s
-The standards say that applications should interpret these keysyms as
-representing the corresponding Unicode code points (e.g. U2720 should
-represent MALTESE CROSS), but unfortunately the current version of XEmacs
-has no support for many of those characters in its internal encoding, and
-when it encounters the keysyms corresponding to those characters, they
-remain unbound.
-
-See the documentation for `unicode-to-char' for one technique if you have an
-urgent need for support for one of those characters--you probably don't,
-most of the widely-used characters have mappings in the internal XEmacs
-encoding--otherwise, wait until we ship a version with an internal encoding
-based on Unicode.  "
-      (with-string-as-buffer-contents (apply 'concat "    " 
-					     unknown-code-points)
-	(setq fill-prefix "    ")
-	(fill-paragraph nil))))))
-
+	   (x-win-init-xfree86)))))
 
 ;; Moved from x-toolbar.el, since InfoDock doesn't dump x-toolbar.el.
 (defun x-init-toolbar-from-resources (locale)

@@ -1,5 +1,11 @@
 2006-06-25  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* x-init.el (x-initialize-keyboard):
+	No longer warn about Unicode keysyms without a mapping, since we
+	now have valid mappings for all Unicode keysyms. 
+	
+2006-06-25  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cmdloop.el (read-quoted-char):
 	Don't error on non-character keys, accept them as terminating the
 	sequence. 
@@ -26,7 +32,12 @@
 
 	* unicode.el:
 	* unicode.el (featurep):
+	Define a CCL program to translate characters to Unicode, for use
+	in redisplay with the fall-back Unicode charsets. 
 	* x-init.el (x-initialize-keyboard):
+	Only warn about unknown Unicode keysyms if Mule is available; we
+	assume that people who've chosen non-Mule are okay with losing
+	data. 
 
 2006-06-03  Adrian Aichner  <adrian@xemacs.org>
 
