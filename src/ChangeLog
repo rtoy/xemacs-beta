@@ -1,3 +1,12 @@
+2006-06-22  Jerry James  <james@xemacs.org>
+
+	* redisplay-gtk.c (gtk_output_display_block): Fix a Dynarr leak.
+	Don't create the buffer if there is nothing to do.
+	* redisplay-msw.c (mswindows_output_display_block): Ditto.
+	* redisplay-output.c (redisplay_output_layout): Ditto.
+	* redisplay-tty.c (tty_output_display_block): Ditto.
+	* redisplay-x.c (x_output_display_block): Ditto.
+
 2006-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* font-mgr.c (extract_fcapi_string):

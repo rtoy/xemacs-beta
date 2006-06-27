@@ -907,7 +907,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 				int cursor_width, int cursor_height)
 {
   struct frame *f = XFRAME (w->frame);
-  Ichar_dynarr *buf = Dynarr_new (Ichar);
+  Ichar_dynarr *buf;
   Lisp_Object window;
 
   struct display_block *db = Dynarr_atp (dl->display_blocks, block);
@@ -934,7 +934,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 
   if (end < 0)
     end = Dynarr_length (rba);
-  Dynarr_reset (buf);
+  buf = Dynarr_new (Ichar);
 
   while (elt < end)
     {

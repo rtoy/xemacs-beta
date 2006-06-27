@@ -1407,7 +1407,7 @@ redisplay_output_layout (Lisp_Object domain,
 {
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
   Lisp_Object rest, window = DOMAIN_WINDOW (domain);
-  Ichar_dynarr *buf = Dynarr_new (Ichar);
+  Ichar_dynarr *buf;
   struct window *w = XWINDOW (window);
   struct device *d = DOMAIN_XDEVICE (domain);
   int layout_height, layout_width;
@@ -1423,6 +1423,8 @@ redisplay_output_layout (Lisp_Object domain,
   /* This makes the glyph area fit into the display area. */
   if (!redisplay_normalize_glyph_area (db, dga))
     return;
+
+  buf = Dynarr_new (Ichar);
 
   /* Highly dodgy optimization. We want to only output the whole
      layout if we really have to. */

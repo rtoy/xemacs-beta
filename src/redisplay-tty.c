@@ -206,7 +206,7 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 			  int UNUSED (cursor_height))
 {
   struct frame *f = XFRAME (w->frame);
-  Ichar_dynarr *buf = Dynarr_new (Ichar);
+  Ichar_dynarr *buf;
 
   struct display_block *db = Dynarr_atp (dl->display_blocks, block);
   rune_dynarr *rba = db->runes;
@@ -232,7 +232,7 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
   if (end < 0)
     end = Dynarr_length (rba);
 
-  Dynarr_reset (buf);
+  buf = Dynarr_new (Ichar);
 
   while (elt < end && Dynarr_atp (rba, elt)->xpos < start_pixpos)
     {
