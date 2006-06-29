@@ -1,3 +1,8 @@
+2006-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (Build Makefile.in's from Makefile.in.in's):
+	Create $srcdir/src/depend if it's missing.
+
 2006-06-05  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Change "if -z" to "if test -z".

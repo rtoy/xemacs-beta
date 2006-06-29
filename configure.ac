@@ -6218,6 +6218,14 @@ dnl src/Makefile.in will have src/depend appended to it;
 dnl module Makefiles will have the common text in
 dnl modules/common/Makefile.common appended.
 
+dnl this actually should be conditional on having perl (ie, effectively
+dnl unconditional on sane systems)
+if test -r $srcdir/src/depend; then :;
+else
+  echo "creating $srcdir/src/depend"
+  perl $srcdir/src/make-src-depend > $srcdir/src/depend
+fi
+
 for file in $internal_makefile_list; do
   case $file in
     src/Makefile.in ) file="src/Makefile.in:src/Makefile.in.in:src/depend" ;;
