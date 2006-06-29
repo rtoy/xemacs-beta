@@ -56,14 +56,16 @@ gtk_inhibit_scrollbar_slider_size_change (void)
 static void
 gtk_free_scrollbar_instance (struct scrollbar_instance *instance)
 {
-  if (SCROLLBAR_GTK_WIDGET (instance))
-    {
-      gtk_widget_hide_all (SCROLLBAR_GTK_WIDGET (instance));
-      gtk_widget_destroy (SCROLLBAR_GTK_WIDGET (instance));
-    }
-
   if (instance->scrollbar_data)
-    xfree (instance->scrollbar_data, void *);
+    {
+      if (SCROLLBAR_GTK_WIDGET (instance))
+	{
+	  gtk_widget_hide_all (SCROLLBAR_GTK_WIDGET (instance));
+	  gtk_widget_destroy (SCROLLBAR_GTK_WIDGET (instance));
+	}
+
+      xfree (instance->scrollbar_data, void *);
+    }
 }
 
 /* A device method. */

@@ -90,17 +90,19 @@ mswindows_create_scrollbar_instance (struct frame *f, int vertical,
 static void
 mswindows_free_scrollbar_instance (struct scrollbar_instance *sb)
 {
-  void *opaque =
-    (void *) qxeGetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA);
-  Lisp_Object ptr;
-
-  ptr = VOID_TO_LISP (opaque);
-  assert (OPAQUE_PTRP (ptr));
-  ptr = Fremhash (ptr, Vmswindows_scrollbar_instance_table);
-  assert (!NILP (ptr));
-  DestroyWindow (SCROLLBAR_MSW_HANDLE (sb));
   if (sb->scrollbar_data)
-    xfree (sb->scrollbar_data, void *);
+    {
+      void *opaque =
+	(void *) qxeGetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA);
+      Lisp_Object ptr;
+
+      ptr = VOID_TO_LISP (opaque);
+      assert (OPAQUE_PTRP (ptr));
+      ptr = Fremhash (ptr, Vmswindows_scrollbar_instance_table);
+      assert (!NILP (ptr));
+      DestroyWindow (SCROLLBAR_MSW_HANDLE (sb));
+      xfree (sb->scrollbar_data, void *);
+    }
 }
 
 static void

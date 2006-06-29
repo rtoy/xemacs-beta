@@ -1,3 +1,10 @@
+2006-06-29  Jerry James  <james@xemacs.org>
+
+	* scrollbar-gtk.c (gtk_free_scrollbar_instance): Compare
+	instance->scrollbar_data against NULL before using it.
+	* scrollbar-msw.c (mswindows_free_scrollbar_instance): Compare
+	sb->scrollbar_data against NULL before using it.
+
 2006-06-22  Jerry James  <james@xemacs.org>
 
 	* redisplay-gtk.c (gtk_output_display_block): Fix a Dynarr leak.
