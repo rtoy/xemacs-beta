@@ -1,3 +1,7 @@
+2006-06-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gc.c (gc_mark_root_set): Quiet GCC 4 whining about unused values.
+
 2006-06-29  Jerry James  <james@xemacs.org>
 
 	* scrollbar-gtk.c (gtk_free_scrollbar_instance): Compare

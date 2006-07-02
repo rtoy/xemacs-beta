@@ -1623,29 +1623,25 @@ gc_mark_root_set (
   { /* staticpro() */
     Lisp_Object **p = Dynarr_begin (staticpros);
     Elemcount count;
-    for (count = Dynarr_length (staticpros); count; count--)
+    for (count = Dynarr_length (staticpros); count; count--, p++)
       /* Need to check if the pointer in the staticpro array is not
 	 NULL. A gc can occur after variable is added to the staticpro
 	 array and _before_ it is correctly initialized. In this case
 	 its value is NULL, which we have to catch here. */
       if (*p)
-	mark_object (**p++);
-      else
-	**p++;
+	mark_object (**p);
   }
 
   { /* staticpro_nodump() */
     Lisp_Object **p = Dynarr_begin (staticpros_nodump);
     Elemcount count;
-    for (count = Dynarr_length (staticpros_nodump); count; count--)
+    for (count = Dynarr_length (staticpros_nodump); count; count--, p++)
       /* Need to check if the pointer in the staticpro array is not
 	 NULL. A gc can occur after variable is added to the staticpro
 	 array and _before_ it is correctly initialized. In this case
 	 its value is NULL, which we have to catch here. */
       if (*p)
-	mark_object (**p++);
-      else
-	**p++;
+	mark_object (**p);
   }
 
 #ifdef NEW_GC
