@@ -359,8 +359,8 @@ In either case, the output is inserted after point (leaving mark after it)."
 	  ;; Command ending with ampersand means asynchronous.
 	  (progn
 	    (if-fboundp 'background
-		(background (substring command 0
-				       (match-beginning 0)))
+		(background (substring command 0 (match-beginning 0))
+			    output-buffer)
 	      (error
 	       'unimplemented
 	       "backgrounding a shell command requires package `background'")))

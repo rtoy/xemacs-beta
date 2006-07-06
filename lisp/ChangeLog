@@ -1,3 +1,8 @@
+2006-06-30  Jerry James  <james@xemacs.org>
+
+	* process.el (shell-command): If a specific output buffer was
+	requested, use it.
+
 2006-06-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* x-init.el (x-initialize-keyboard):
