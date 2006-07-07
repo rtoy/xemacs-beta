@@ -1,3 +1,11 @@
+2006-07-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi (Internal String Encoding):
+	Mention that UTF-8 would be a reasonable alternative encoding. 
+	* internals/internals.texi (Internal Character Encoding):
+	Re-arrange the description of characters to deal with 21-bit
+	characters. 
+
 2006-06-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/mule.texi (CCL Syntax):

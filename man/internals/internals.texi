@@ -11335,10 +11335,12 @@ were encoded in a one-byte-per-character fashion rather than
 the actual multi-byte encoding.
 @end enumerate
 
-  None of the standard non-modal encodings meet all of these
+  None of the pre-Unciode standard non-modal encodings meet all of these
 conditions.  For example, EUC satisfies only (2) and (3), while
-Shift-JIS and Big5 (not yet described) satisfy only (2). (All
-non-modal encodings must satisfy (2), in order to be unambiguous.)
+Shift-JIS and Big5 (not yet described) satisfy only (2). (All non-modal
+encodings must satisfy (2), in order to be unambiguous.)  UTF-8,
+however, meets all three, and we are considering moving to it as an
+internal encoding.
 
 @node Internal Character Encoding,  , Internal String Encoding, Internal Mule Encodings
 @subsection Internal Character Encoding
@@ -11346,16 +11348,16 @@ non-modal encodings must satisfy (2), in order to be unambiguous.)
 @cindex character encoding, internal
 @cindex encoding, internal character
 
-  One 19-bit word represents a single character.  The word is
+  One 21-bit word represents a single character.  The word is
 separated into three fields:
 
 @example
-Bit number:     18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
-                <------------> <------------------> <------------------>
-Field:                1                  2                    3
+Bit number:     20 19 18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
+                <------------------> <------------------> <------------------>
+Field:                    1                    2                    3
 @end example
 
-  Note that fields 2 and 3 hold 7 bits each, while field 1 holds 5 bits.
+  Note that each field holds 7 bits. 
 
 @example
 Character set           Field 1         Field 2         Field 3
@@ -11370,12 +11372,12 @@ Dimension-1 private        0            LB - 0x80         PC1
    range:                                    (20 - 6F)      (20 - 7F)
 Dimension-2 official    LB - 0x8F         PC1             PC2
    range:                    (01 - 0A)       (20 - 7F)      (20 - 7F)
-Dimension-2 private     LB - 0xE1         PC1             PC2
+Dimension-2 private     LB - 0x80         PC1             PC2
    range:                    (0F - 1E)       (20 - 7F)      (20 - 7F)
 Composite                 0x1F             ?               ?
 @end example
 
-Note that character codes 0 - 255 are the same as the ``binary
+Note also that character codes 0 - 255 are the same as the ``binary
 encoding'' described above.
 
 Most of the code in XEmacs knows nothing of the representation of a
@@ -11607,7 +11609,7 @@ the same as the representation of that same character in a string; thus,
 you cannot do the standard C trick of passing a pointer to a character
 to a function that expects a string.
 
-An Ichar takes up 19 bits of representation and (for code compatibility
+An Ichar takes up 21 bits of representation and (for code compatibility
 and such) is compatible with an int.  This representation is visible on
 the Lisp level.  The important characteristics of the Ichar
 representation are

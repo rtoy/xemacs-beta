@@ -140,8 +140,8 @@ enum LEADING_BYTE_OFFICIAL_2
 #define PRE_LEADING_BYTE_PRIVATE_2	0x9F	/* 2-byte char-set */
 
 #define MIN_LEADING_BYTE_PRIVATE_1	0xA0
-#define MAX_LEADING_BYTE_PRIVATE_1	0xEF
-#define MIN_LEADING_BYTE_PRIVATE_2	0xF0
+#define MAX_LEADING_BYTE_PRIVATE_1	0xC0
+#define MIN_LEADING_BYTE_PRIVATE_2	0xC1
 #define MAX_LEADING_BYTE_PRIVATE_2	0xFF
 
 #define NUM_LEADING_BYTES 129
@@ -354,9 +354,9 @@ charset_by_attributes (int type, int final, int dir)
 /************************************************************************/
 
 /* The bit fields of character are divided into 3 parts:
-   FIELD1(5bits):FIELD2(7bits):FIELD3(7bits) */
+   FIELD1(7bits):FIELD2(7bits):FIELD3(7bits) */
 
-#define ICHAR_FIELD1_MASK (0x1F << 14)
+#define ICHAR_FIELD1_MASK (0x7F << 14)
 #define ICHAR_FIELD2_MASK (0x7F << 7)
 #define ICHAR_FIELD3_MASK 0x7F
 
@@ -376,7 +376,7 @@ charset_by_attributes (int type, int final, int dir)
 #define FIELD2_TO_PRIVATE_LEADING_BYTE  0x80
 
 #define FIELD1_TO_OFFICIAL_LEADING_BYTE (MIN_LEADING_BYTE_OFFICIAL_2 - 1)
-#define FIELD1_TO_PRIVATE_LEADING_BYTE  0xE1
+#define FIELD1_TO_PRIVATE_LEADING_BYTE  0x80
 
 /* Minimum and maximum allowed values for the fields. */
 
@@ -406,7 +406,7 @@ charset_by_attributes (int type, int final, int dir)
 #define MIN_CHAR_PRIVATE_TYPE9N     (MIN_ICHAR_FIELD2_PRIVATE  <<  7)
 #define MIN_CHAR_OFFICIAL_TYPE9NX9N (MIN_ICHAR_FIELD1_OFFICIAL << 14)
 #define MIN_CHAR_PRIVATE_TYPE9NX9N  (MIN_ICHAR_FIELD1_PRIVATE  << 14)
-#define MIN_CHAR_COMPOSITION        (0x1F << 14)
+#define MIN_CHAR_COMPOSITION        (0x7F << 14)
 
 /* Leading byte of a character.
 
