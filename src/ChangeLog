@@ -1,3 +1,10 @@
+2006-07-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* config.h.in:
+	Don't declare inline macros as `extern' if we're building a
+	standalone program, because their extern definitions in inline.c
+	are unlikely to be included.
+
 2006-06-24  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* gc.c (gc_mark_root_set): Quiet GCC 4 whining about unused values.
