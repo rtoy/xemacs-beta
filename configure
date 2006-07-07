@@ -8324,11 +8324,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 int main () {
-#if __GNUC__ >= 3
-return 11;
-#else
-return 0;
-#endif
+return __GNUC__;
 }
 _ACEOF
 rm -f conftest$ac_exeext
@@ -8349,12 +8345,51 @@ echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 ( exit $ac_status )
-case "$?" in
-  11) echo "You appear to be using GCC version 3 or above."; __GCC3=yes ;;
-esac
+__GCC="$?"
 fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
+if test "$cross_compiling" = yes; then
+  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&5
+echo "$as_me: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+int main () {
+return __GNUC_MINOR__;
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  :
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+__GCC_MINOR="$?"
+fi
+rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+__GCC_VERSION=$__GCC"."$__GCC_MINOR
+echo "You appear to be using GCC version" $__GCC_VERSION
 fi
 
 
@@ -9209,13 +9244,16 @@ if test "$cflags_warning_specified" = "no"; then
     with_cflags_warning="-Wall -Wno-switch -Wundef"
 
                 with_cflags_warning="$with_cflags_warning -Wsign-compare -Wno-char-subscripts"
-    test "$__GCC3" = "yes" && with_cflags_warning="$with_cflags_warning -Wpacked"
+    test "$__GCC" -ge 3 && with_cflags_warning="$with_cflags_warning -Wpacked"
             test "$have_glibc" != "yes" && \
       with_cflags_warning="$with_cflags_warning -Wpointer-arith"
                                         if test "$with_xemacs_compiler" = "g++"; then
       xe_cflags_warning="$with_cflags_warning -Weffc++"
-    elif test "$__GCC3" = "yes"; then
+    elif test "$__GCC" -ge 3; then
       xe_cflags_warning="$with_cflags_warning -Wunused-parameter"
+      if test "$__GCC" -gt 3 || test "$__GCC_MINOR" -ge 4; then
+        with_cflags_warning="$with_cflags_warning -Wdeclaration-after-statement"
+      fi
     fi
     with_cflags_warning="$with_cflags_warning -Wshadow -Wmissing-declarations"
     with_cflags_warning="$with_cflags_warning -Wmissing-prototypes -Wstrict-prototypes"
@@ -39695,6 +39733,12 @@ test -n "$prefix" &&
 test -n "$exec_prefix" &&
   exec_prefix=`echo '' "$exec_prefix" | sed -e 's:^ ::' -e 's,\([^/]\)/*$,\1,'`
 
+
+if test -r $srcdir/src/depend; then :;
+else
+  echo "creating $srcdir/src/depend"
+  perl $srcdir/src/make-src-depend > $srcdir/src/depend
+fi
 
 for file in $internal_makefile_list; do
   case $file in

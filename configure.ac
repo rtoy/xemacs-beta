@@ -1883,15 +1883,13 @@ CFLAGS="$xe_save_CFLAGS"
 dnl Determine GCC version.
 if test "$GCC" = "yes"; then
 AC_RUN_IFELSE([AC_LANG_SOURCE([int main () {
-#if __GNUC__ >= 3
-return 11;
-#else
-return 0;
-#endif
-}])], [:],
-[case "$?" in
-  11) echo "You appear to be using GCC version 3 or above."; __GCC3=yes ;;
-esac])
+return __GNUC__;
+}])], [:], [__GCC="$?"])
+AC_RUN_IFELSE([AC_LANG_SOURCE([int main () {
+return __GNUC_MINOR__;
+}])], [:], [__GCC_MINOR="$?"])
+__GCC_VERSION=$__GCC"."$__GCC_MINOR
+echo "You appear to be using GCC version" $__GCC_VERSION
 fi
 
 dnl Support for using a different compiler for xemacs itself.
@@ -2311,7 +2309,7 @@ if test "$cflags_warning_specified" = "no"; then
     dnl Warnings about char subscripts are pretty pointless, though,
     dnl and we use them in various places.
     with_cflags_warning="$with_cflags_warning -Wsign-compare -Wno-char-subscripts"
-    test "$__GCC3" = "yes" && with_cflags_warning="$with_cflags_warning -Wpacked"
+    test "$__GCC" -ge 3 && with_cflags_warning="$with_cflags_warning -Wpacked"
     dnl glibc is intentionally not `-Wpointer-arith'-clean.
     dnl Ulrich Drepper has rejected patches to fix the glibc header files.
     test "$have_glibc" != "yes" && \
@@ -2327,8 +2325,11 @@ if test "$cflags_warning_specified" = "no"; then
     dnl some very ugly code changes.
     if test "$with_xemacs_compiler" = "g++"; then
       xe_cflags_warning="$with_cflags_warning -Weffc++"
-    elif test "$__GCC3" = "yes"; then
+    elif test "$__GCC" -ge 3; then
       xe_cflags_warning="$with_cflags_warning -Wunused-parameter"
+      if test "$__GCC" -gt 3 || test "$__GCC_MINOR" -ge 4; then
+        with_cflags_warning="$with_cflags_warning -Wdeclaration-after-statement"
+      fi
     fi
     with_cflags_warning="$with_cflags_warning -Wshadow -Wmissing-declarations"
     with_cflags_warning="$with_cflags_warning -Wmissing-prototypes -Wstrict-prototypes"
