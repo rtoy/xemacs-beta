@@ -1,5 +1,16 @@
 2006-07-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* lisp.h:
+	* redisplay.c (add_octal_runes):
+	* syntax.h:
+	* text.c
+	Change some comments to reflect a 21-bit character space. 
+	* text.c (non_ascii_valid_ichar_p):
+	Check that no character value is greater than 2^^21, not
+	2^^19. This fixes the Mule build when error-checking is turned on.
+
+2006-07-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* symbols.c (Fsubr_name):
 	Use the CHECK_SUBR macro instead of the GNU code's explicit if
 	statement.

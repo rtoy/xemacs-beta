@@ -149,7 +149,7 @@ WORD_SYNTAX_P (Lisp_Object table, Ichar c)
   the tag and the comment bits.
 
   Clearly, such a scheme will not work for Mule, because the matching
-  paren could be any character and as such requires 19 bits, which
+  paren could be any character and as such requires 21 bits, which
   we don't got.
 
   Remember that under Mule we use char tables instead of vectors.

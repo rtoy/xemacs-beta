@@ -399,7 +399,7 @@ typedef signed char SChbyte;
 
 /* To the user, a buffer is made up of characters.  In the non-Mule world,
    characters and Ibytes are equivalent, restricted to the range 0 - 255.
-   In the Mule world, many more characters are possible (19 bits worth,
+   In the Mule world, many more characters are possible (21 bits worth,
    more or less), and a character requires (typically) 1 to 4 Ibytes for
    its representation in a buffer or string.  Note that the representation
    of a character by itself, in a variable, is very different from its

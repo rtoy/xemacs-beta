@@ -215,13 +215,11 @@ Boston, MA 02111-1307, USA.  */
       this to 2048, and further shrinkage would become uncomfortable.
       No such problems exist in XEmacs.
 
-      Composite characters could be represented as 0x8D C1 C2 C3,
-      where each C[1-3] is in the range 0xA0 - 0xFF.  This allows
-      for slightly under 2^20 (one million) composite characters
-      over the XEmacs process lifetime, and you only need to
-      increase the size of a Mule character from 19 to 21 bits.
-      Or you could use 0x8D C1 C2 C3 C4, allowing for about
-      85 million (slightly over 2^26) composite characters.
+      Composite characters could be represented as 0x8D C1 C2 C3, where each
+      C[1-3] is in the range 0xA0 - 0xFF.  This allows for slightly under
+      2^20 (one million) composite characters over the XEmacs process
+      lifetime. Or you could use 0x8D C1 C2 C3 C4, allowing for about 85
+      million (slightly over 2^26) composite characters.
 
    ==========================================================================
                                10. Internal API's
@@ -4695,8 +4693,8 @@ non_ascii_valid_ichar_p (Ichar ch)
 {
   int f1, f2, f3;
 
-  /* Must have only lowest 19 bits set */
-  if (ch & ~0x7FFFF)
+  /* Must have only lowest 21 bits set */
+  if (ch & ~0x1FFFFF)
     return 0;
 
   f1 = ichar_field1 (ch);

@@ -1428,7 +1428,7 @@ add_octal_runes (pos_data *data)
   if (data->ch >= 0x100)
     {
       /* If the character is an extended Mule character, it could have
-	 up to 19 bits.  For the moment, we treat it as a seven-digit
+	 up to 21 bits.  For the moment, we treat it as a seven-digit
 	 octal number.  This is not that pretty, but whatever. */
       data->ch = (7 & (orig_char >> 18)) + '0';
       ADD_NEXT_OCTAL_RUNE_CHAR;
