@@ -1,5 +1,11 @@
 2006-07-08  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* symbols.c (Fsubr_name):
+	Use the CHECK_SUBR macro instead of the GNU code's explicit if
+	statement.
+
+2006-07-08  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* charset.h:
 	Move to 7 bits instead of 5 for the first field of a character.
 

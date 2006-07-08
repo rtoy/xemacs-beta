@@ -726,8 +726,8 @@ SUBR must be a built-in function.
        (subr))
 {
   const char *name;
-  if (!SUBRP (subr))
-    wrong_type_argument (Qsubrp, subr);
+  CHECK_SUBR (subr);
+
   name = XSUBR (subr)->name;
   return make_string ((const Ibyte *)name, strlen (name));
 }
