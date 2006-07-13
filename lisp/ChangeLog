@@ -1,3 +1,9 @@
+2006-07-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (decode-char):
+	* unicode.el (encode-char):
+	Specify the SHOW-ARGS properly in a couple of assertions. 
+	
 2006-06-30  Jerry James  <james@xemacs.org>
 
 	* process.el (shell-command): If a specific output buffer was

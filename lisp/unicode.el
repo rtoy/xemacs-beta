@@ -307,14 +307,14 @@ Standard encoding for representing UTF-8 under MS Windows."
 (defun decode-char (quote-ucs code &optional restriction) 
   "FSF compatibility--return Mule character with Unicode codepoint `code'.
 The second argument must be 'ucs, the third argument is ignored.  "
-  (assert (eq quote-ucs 'ucs) 
+  (assert (eq quote-ucs 'ucs) t
 	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
   (unicode-to-char code))
 
 (defun encode-char (char quote-ucs &optional restriction)
   "FSF compatibility--return the Unicode code point of `char'.
 The second argument must be 'ucs, the third argument is ignored.  "
-  (assert (eq quote-ucs 'ucs)
+  (assert (eq quote-ucs 'ucs) t
 	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
   (char-to-unicode char))
 
