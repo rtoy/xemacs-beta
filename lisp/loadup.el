@@ -47,19 +47,30 @@
 (when (fboundp 'error)
   (error "loadup.el already loaded!"))
 
-(defvar running-xemacs t
+(defconst running-xemacs t
   "Non-nil when the current emacs is XEmacs.")
+
+;; Can't make this constant for now because it causes an error in
+;; update-elc.el. 
+(defvar source-lisp (file-name-directory (expand-file-name
+					  (nth 2 command-line-args)))
+  "Root of tree containing the Lisp source code for the current build. 
+Differs from `lisp-directory' if this XEmacs has been installed. ")
+
+(defconst build-directory (expand-file-name ".." invocation-directory)
+  "Root of tree containing object files and executables produced by build. 
+Differs from `source-directory' if configured with --srcdir option, a practice 
+recommended for developers.")
+
+(defconst source-directory (expand-file-name ".." source-lisp)
+  "Root of tree containing source code for the current build. 
+Used during loadup and for documenting source of symbols defined in C.")
+
 (defvar preloaded-file-list nil
   "List of files preloaded into the XEmacs binary image.")
 
 (defvar Installation-string nil
   "Description of XEmacs installation.")
-
-(defvar build-root (expand-file-name ".." invocation-directory))
-(defvar source-lisp (file-name-directory (expand-file-name
-					  (nth 2 command-line-args))))
-(defvar source-root (expand-file-name ".." source-lisp))
-;(defvar build-lib-src (expand-file-name "lib-src" build-root))
 
 ;(start-profiling)
 
@@ -88,13 +99,14 @@
 		;; format-decode without checking if it's defined.
 		(fset 'format-decode #'(lambda (f l &optional v) l))
 		(insert-file-contents-internal
-		 (expand-file-name "Installation" build-root))
+		 (expand-file-name "Installation" build-directory))
 		(fmakunbound 'format-decode)
 		(prog1 (buffer-substring)
 		  (kill-buffer (current-buffer)))))
 
 	(setq load-path (list source-lisp))
-	(setq module-load-path (list (expand-file-name "modules" build-root)))
+	(setq module-load-path (list 
+				(expand-file-name "modules" build-directory)))
 
 	;; message not defined yet ...
 	(external-debugging-output (format "\nUsing load-path %s" load-path))
@@ -163,7 +175,7 @@
 	;; appropriate charsets are loaded yet.
 	(when (and (featurep 'mule)
 		   load-unicode-tables-at-dump-time)
-	  (let ((data-directory (expand-file-name "etc" source-root)))
+	  (let ((data-directory (expand-file-name "etc" source-directory)))
 	    (load-unicode-tables)))
 
 	(packages-load-package-dumped-lisps late-package-load-path)

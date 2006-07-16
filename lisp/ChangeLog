@@ -1,3 +1,25 @@
+2006-07-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* loadhist.el (symbol-file):
+	Use `source-directory,' not `build-root' for the full pathnames of
+	C files. 
+	* loadup.el:
+	* update-elc.el:
+	Rename `build-root', `source-root' to `build-directory',
+	`source-directory' respectively, the latter for compatibility with
+	the FSF; give them and `source-lisp' docstrings, change the
+	defvars to defconsts where possible. 
+
+	* make-docfile.el (build-root): Removed.
+	* make-docfile.el (build-directory): New.
+	Rename build-root. 
+	
+	* update-elc.el (build-root): Removed.
+	* update-elc.el (build-directory): New.
+	* update-elc.el (source-root): Removed.
+	* update-elc.el (source-directory): New.
+	Rename build-root, source-root. 
+
 2006-07-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.el (decode-char):

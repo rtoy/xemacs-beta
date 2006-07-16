@@ -49,7 +49,7 @@ This is a file name, or nil if the source was a buffer with no associated file."
 	      (and (fboundp sym) (subrp (symbol-function sym))))
       (let ((built-in-file (built-in-symbol-file sym)))
 	(if built-in-file
-	    (concat build-root "/src/" built-in-file))))))
+	    (concat source-directory "/src/" built-in-file))))))
 
 (defun feature-symbols (feature)
   "Return the file and list of symbols associated with a given FEATURE."

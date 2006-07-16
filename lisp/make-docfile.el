@@ -45,8 +45,8 @@
 (defvar site-file-list nil)
 (defvar docfile-out-of-date nil)
 
-(defvar build-root (expand-file-name ".." invocation-directory))
-(defvar build-lib-src (expand-file-name "lib-src" build-root))
+(defvar build-directory (expand-file-name ".." invocation-directory))
+(defvar build-lib-src (expand-file-name "lib-src" build-directory))
 (defvar source-lisp (file-name-directory (expand-file-name
 					  (nth 2 command-line-args))))
 (defvar source-src (expand-file-name "../src" source-lisp))
