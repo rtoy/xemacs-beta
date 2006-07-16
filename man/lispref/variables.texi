@@ -1045,6 +1045,12 @@ buffer-local bindings for the buffer that holds the file within XEmacs.
 @node Creating Buffer-Local
 @subsection Creating and Deleting Buffer-Local Bindings
 
+  Besides the functions mentioned here, buffer-local variables are also
+created when file-local variables are set.  @xref{Auto Major Mode}
+.  There is no way (outside of `eval' lines, which are normally disabled)
+to set the global value of a variable from the file local variable 
+specifications.  
+
 @deffn Command make-local-variable variable
 This function creates a buffer-local binding in the current buffer for
 @var{variable} (a symbol).  Other buffers are not affected.  The value

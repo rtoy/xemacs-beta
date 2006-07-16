@@ -774,10 +774,10 @@ the case of:
 @cindex local variables in files
 
   A file can contain a @dfn{local variables list}, which specifies the
-values to use for certain Emacs variables when that file is edited.
-Visiting the file checks for a local variables list and makes each variable
-in the list local to the buffer in which the file is visited, with the
-value specified in the file.
+buffer-local values to use for certain Emacs variables when that file is
+edited.  Visiting the file checks for a local variables list and makes
+each variable in the list local to the buffer in which the file is
+visited, with the value specified in the file.
 
   A local variables list goes near the end of the file, in the last page.
 (It is often best to put it on a page by itself.)  The local variables list
@@ -2184,7 +2184,7 @@ not sure what's available, you can wildcard some of the fields usually
 specified, too.  Here's our example font in XLFD syntax:
 @code{"-*-courier-bold-r-*-*-*-140-*-*-*-*-iso8859-*"}.
 The XLFD syntax is also used for GTK+ version 1.  XLFD names must be
-encoding in ISO-8859-1.
+encoded in ISO-8859-1.
 
 @item Xft
 The Xft syntax is defined by the @file{fontconfig} library

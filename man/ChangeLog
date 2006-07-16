@@ -1,3 +1,16 @@
+2006-07-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/custom.texi (File Variables):
+	Make it clearer that file variables are buffer-local. 
+	* xemacs/custom.texi (Faces):
+	"must be encoding" -> "must be encoded". 
+	
+2006-07-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/variables.texi (Creating Buffer-Local):
+	Mention that buffer-local variables are created when file local
+	variables are set. 
+	
 2006-07-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* internals/internals.texi (Internal String Encoding):
