@@ -2378,7 +2378,7 @@ DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
 
 
 static const struct memory_description string_direct_data_description[] = {
-  { XD_BYTECOUNT,       offsetof (Lisp_String_Indirect_Data, size) },
+  { XD_BYTECOUNT,       offsetof (Lisp_String_Direct_Data, size) },
   { XD_END }
 };
 

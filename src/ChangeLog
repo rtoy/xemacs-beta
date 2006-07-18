@@ -1,3 +1,7 @@
+2006-07-18  Marcus Crestani  <crestani@xemacs.org>
+
+	* alloc.c: Fix typo in string_direct_data_description.
+
 2006-07-07  Jerry James  <james@xemacs.org>
 
 	* sound.c (init_native_sound): Make the target of a strcpy be
