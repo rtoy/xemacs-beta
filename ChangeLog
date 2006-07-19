@@ -1,3 +1,8 @@
+2006-07-18  Marcus Crestani  <crestani@xemacs.org>
+
+	* configure.ac: Intel-based Macs can use POSIX-style write
+	barrier.  Use $machine to determine this.
+
 2006-07-20  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (system-packages,legacy-packages): Fix help strings.

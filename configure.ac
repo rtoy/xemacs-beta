@@ -1767,7 +1767,10 @@ fi
 if test "$enable_newgc" = "yes"; then
   if test "$enable_vdb" = "auto"; then
     case "$opsys" in
-      darwin )  AC_DEFINE(VDB_MACH)  have_vdb_mach=yes ;;
+      darwin )  case "$machine" in
+		  i686 ) check_vdb_posix=yes ;;
+		  * ) AC_DEFINE(VDB_MACH)  have_vdb_mach=yes ;;
+		esac ;;
       cygwin* ) AC_DEFINE(VDB_WIN32) have_vdb_win32=yes ;;
       linux* )  check_vdb_posix=yes ;;
       freebsd ) check_vdb_posix=yes ;;
