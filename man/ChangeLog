@@ -1,3 +1,10 @@
+2006-07-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* new-users-guide/edit.texi (Insert): Document bogosity in
+	vendor labeling of DEL key.
+	(Numeric Argument): Remove spurious RETs from keystroke examples.
+	Thanks to Michael C. Wescott <wescott@sc.rr.com>.
+
 2006-07-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* xemacs/custom.texi (File Variables):
