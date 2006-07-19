@@ -649,9 +649,9 @@ kkcc_backtrace (void)
 	  stderr_out (" %s",
 		      XRECORD_LHEADER_IMPLEMENTATION (obj)->name);
 	}
-      stderr_out (" (addr: 0x%x, desc: 0x%x, ",
-		  (int) kkcc_bt[i].obj,
-		  (int) kkcc_bt[i].desc);
+      stderr_out (" (addr: %p, desc: %p, ",
+		  (void *) kkcc_bt[i].obj,
+		  (void *) kkcc_bt[i].desc);
       if (kkcc_bt[i].pos >= 0)
 	stderr_out ("pos: %d)\n", kkcc_bt[i].pos);
       else

@@ -80,8 +80,8 @@ vdb_fault_handler (FAULT_HANDLER_ARGUMENTS)
 	signal_name = "SIGBUS";
       else 
 	ABORT (); /* something weird happened: wrong signal caught */
-      fprintf (stderr, "\n\nFatal Error: Received %s (%d) for address 0x%x\n",
-	       signal_name, signum, (int) GET_FAULT_ADDRESS);
+      fprintf (stderr, "\n\nFatal Error: Received %s (%d) for address %p\n",
+	       signal_name, signum, (void *) GET_FAULT_ADDRESS);
 #ifdef FAULT_HANDLER_CALL_PREVIOUS_HANDLER
       if (signum == SIGSEGV)
 	segv_oact (signum);
