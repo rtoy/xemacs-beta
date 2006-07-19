@@ -31,4 +31,6 @@ dump-size
 xemacs.def
 xemacs.def.in
 .dbxrc
+.dbxrc.in
 .gdbinit
+.gdbinit.in

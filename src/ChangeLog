@@ -1,5 +1,9 @@
 2006-07-18  Marcus Crestani  <crestani@xemacs.org>
 
+	* .cvsignore: Add .dbxrc.in and .gdbinit.in.
+
+2006-07-18  Marcus Crestani  <crestani@xemacs.org>
+
 	* gc.c (kkcc_backtrace): Print adresses as pointers.
 	* vdb-posix.c (vdb_fault_handler): Print adresses as pointers.
 
