@@ -1,3 +1,7 @@
+2006-07-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etags.c: Sync to pot_etags_version 17.19.
+
 2006-07-07  Jerry James  <james@xemacs.org>
 
 	* config.values.in: Regenerate.

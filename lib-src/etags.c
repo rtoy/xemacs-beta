@@ -1,7 +1,7 @@
 /* Tags file maker to go with GNU Emacs           -*- coding: latin-1 -*-
    Copyright (C) 1984, 1987, 1988, 1989, 1993, 1994, 1995,
                  1998, 1999, 2000, 2001, 2002, 2003, 2004,
-                 2005 Free Software Foundation, Inc. and Ken Arnold
+                 2005, 2006 Free Software Foundation, Inc. and Ken Arnold
 
  This file is not considered part of GNU Emacs.
 
@@ -41,7 +41,7 @@
  * configuration file containing regexp definitions for etags.
  */
 
-char pot_etags_version[] = "@(#) pot revision number is 17.15";
+char pot_etags_version[] = "@(#) pot revision number is 17.19";
 
 #define	TRUE	1
 #define	FALSE	0
@@ -59,12 +59,10 @@ char pot_etags_version[] = "@(#) pot revision number is 17.15";
   /* On some systems, Emacs defines static as nothing for the sake
      of unexec.  We don't want that here since we don't use unexec. */
 # undef static
-# define ETAGS_REGEXPS		/* use the regexp features */
-# define LONG_OPTIONS		/* accept long options */
-# ifndef PTR			/* for XEmacs */
+# ifndef PTR			/* for Xemacs */
 #   define PTR void *
 # endif
-# ifndef __P			/* for XEmacs */
+# ifndef __P			/* for Xemacs */
 #   define __P(args) args
 # endif
 #else  /* no config.h */
@@ -82,14 +80,7 @@ char pot_etags_version[] = "@(#) pot revision number is 17.15";
 # define _GNU_SOURCE 1		/* enables some compiler checks on GNU */
 #endif
 
-#ifdef LONG_OPTIONS
-#  undef LONG_OPTIONS
-#  define LONG_OPTIONS TRUE
-#else
-#  define LONG_OPTIONS  FALSE
-#endif
-
-/* WIN32_NATIVE is for XEmacs.
+/* WIN32_NATIVE is for Xemacs.
    MSDOS, WINDOWSNT, DOS_NT are for Emacs. */
 #ifdef WIN32_NATIVE
 # undef MSDOS
@@ -167,25 +158,25 @@ char pot_etags_version[] = "@(#) pot revision number is 17.15";
 # define S_ISREG(m)	(((m) & S_IFMT) == S_IFREG)
 #endif
 
-#if LONG_OPTIONS
-# include <getopt.h>
-#else
+#ifdef NO_LONG_OPTIONS		/* define this if you don't have GNU getopt */
+# define NO_LONG_OPTIONS TRUE
 # define getopt_long(argc,argv,optstr,lopts,lind) getopt (argc, argv, optstr)
   extern char *optarg;
   extern int optind, opterr;
-#endif /* LONG_OPTIONS */
+#else
+# define NO_LONG_OPTIONS FALSE
+# include <getopt.h>
+#endif /* NO_LONG_OPTIONS */
 
-#ifdef ETAGS_REGEXPS
-# ifndef HAVE_CONFIG_H		/* this is a standalone compilation */
-#   ifdef __CYGWIN__         	/* compiling on Cygwin */
+#ifndef HAVE_CONFIG_H		/* this is a standalone compilation */
+# ifdef __CYGWIN__         	/* compiling on Cygwin */
 			     !!! NOTICE !!!
  the regex.h distributed with Cygwin is not compatible with etags, alas!
 If you want regular expression support, you should delete this notice and
 	      arrange to use the GNU regex.h and regex.c.
-#   endif
 # endif
-# include <regex.h>
-#endif /* ETAGS_REGEXPS */
+#endif
+#include <regex.h>
 
 /* Define CTAGS to make the program "ctags" compatible with the usual one.
  Leave it undefined to make the program "etags", which makes emacs-style
@@ -312,7 +303,6 @@ typedef struct
   char *what;			/* the argument itself */
 } argument;
 
-#ifdef ETAGS_REGEXPS
 /* Structure defining a regular expression. */
 typedef struct regexp
 {
@@ -327,7 +317,6 @@ typedef struct regexp
   bool ignore_case;		/* ignore case when matching */
   bool multi_line;		/* do a multi-line match on the whole file */
 } regexp;
-#endif /* ETAGS_REGEXPS */
 
 
 /* Many compilers barf on this:
@@ -375,11 +364,9 @@ static long readline_internal __P((linebuffer *, FILE *));
 static bool nocase_tail __P((char *));
 static void get_tag __P((char *, char **));
 
-#ifdef ETAGS_REGEXPS
 static void analyse_regex __P((char *));
 static void free_regexps __P((void));
 static void regex_tag_multiline __P((void));
-#endif /* ETAGS_REGEXPS */
 static void error __P((const char *, const char *));
 static void suggest_asking_for_help __P((void));
 void fatal __P((char *, char *));
@@ -477,17 +464,17 @@ static bool cplusplus;		/* .[hc] means C++, not C */
 static bool ignoreindent;	/* -I: ignore indentation in C */
 static bool packages_only;	/* --packages-only: in Ada, only tag packages*/
 
+/* STDIN is defined in LynxOS system headers */
+#ifdef STDIN
+# undef STDIN
+#endif
+
 #define STDIN 0x1001		/* returned by getopt_long on --parse-stdin */
 static bool parsing_stdin;	/* --parse-stdin used */
 
-#ifdef ETAGS_REGEXPS
 static regexp *p_head;		/* list of all regexps */
 static bool need_filebuf;	/* some regexes are multi-line */
-#else
-# define need_filebuf FALSE
-#endif /* ETAGS_REGEXPS */
 
-#if LONG_OPTIONS
 static struct option longopts[] =
 {
   { "append",		  no_argument,	     NULL,	     	 'a'   },
@@ -502,11 +489,9 @@ static struct option longopts[] =
   { "members",		  no_argument,	     &members, 	     	 TRUE  },
   { "no-members",	  no_argument,	     &members, 	     	 FALSE },
   { "output",		  required_argument, NULL,	     	 'o'   },
-#ifdef ETAGS_REGEXPS
   { "regex",		  required_argument, NULL,	     	 'r'   },
   { "no-regex",		  no_argument,	     NULL,	     	 'R'   },
   { "ignore-case-regex",  required_argument, NULL,	     	 'c'   },
-#endif /* ETAGS_REGEXPS */
   { "parse-stdin",        required_argument, NULL,               STDIN },
   { "version",		  no_argument,	     NULL,     	     	 'V'   },
 
@@ -528,7 +513,6 @@ static struct option longopts[] =
 #endif
   { NULL }
 };
-#endif /* LONG_OPTIONS */
 
 static compressor compressors[] =
 {
@@ -676,13 +660,15 @@ static char *Objc_suffixes [] =
 static char Objc_help [] =
 "In Objective C code, tags include Objective C definitions for classes,\n\
 class categories, methods and protocols.  Tags for variables and\n\
-functions in classes are named `CLASS::VARIABLE' and `CLASS::FUNCTION'.";
+functions in classes are named `CLASS::VARIABLE' and `CLASS::FUNCTION'.\n\
+(Use --help --lang=c --lang=objc --lang=java for full help.)";
 
 static char *Pascal_suffixes [] =
   { "p", "pas", NULL };
 static char Pascal_help [] =
 "In Pascal code, the tags are the functions and procedures defined\n\
 in the file.";
+/* " // this is for working around an Emacs highlighting bug... */
 
 static char *Perl_suffixes [] =
   { "pl", "pm", NULL };
@@ -853,7 +839,7 @@ static void
 print_version ()
 {
   printf ("%s (%s %s)\n", (CTAGS) ? "ctags" : "etags", EMACS_NAME, VERSION);
-  puts ("Copyright (C) 2002 Free Software Foundation, Inc. and Ken Arnold");
+  puts ("Copyright (C) 2006 Free Software Foundation, Inc. and Ken Arnold");
   puts ("This program is distributed under the same terms as Emacs");
 
   exit (EXIT_SUCCESS);
@@ -880,11 +866,11 @@ print_help (argbuffer)
   printf ("Usage: %s [options] [[regex-option ...] file-name] ...\n\
 \n\
 These are the options accepted by %s.\n", progname, progname);
-  if (LONG_OPTIONS)
-    puts ("You may use unambiguous abbreviations for the long option names.");
+  if (NO_LONG_OPTIONS)
+    puts ("WARNING: long option names do not work with this executable,\n\
+as it is not linked with GNU getopt.");
   else
-    puts ("Long option names do not work with this executable, as it is not\n\
-linked with GNU getopt.");
+    puts ("You may use unambiguous abbreviations for the long option names.");
   puts ("  A - as file name means read names from stdin (one per line).\n\
 Absolute names are stored in the output file as they are.\n\
 Relative ones are stored relative to the output file's directory.\n");
@@ -944,7 +930,6 @@ Relative ones are stored relative to the output file's directory.\n");
   puts ("--members\n\
 	Create tag entries for members of structures in some languages.");
 
-#ifdef ETAGS_REGEXPS
   puts ("-r REGEXP, --regex=REGEXP or --regex=@regexfile\n\
         Make a tag for each line matching a regular expression pattern\n\
 	in the following files.  {LANGUAGE}REGEXP uses REGEXP for LANGUAGE\n\
@@ -959,7 +944,6 @@ Relative ones are stored relative to the output file's directory.\n");
 	causes dot to match any character, including newline.");
   puts ("-R, --no-regex\n\
         Don't create tags from regexps for the following files.");
-#endif /* ETAGS_REGEXPS */
   puts ("-I, --ignore-indentation\n\
         In C and C++ do not assume that a closing brace in the first\n\
         column is the final brace of a function or structure definition.");
@@ -1189,14 +1173,8 @@ main (argc, argv)
 
   /* When the optstring begins with a '-' getopt_long does not rearrange the
      non-options arguments to be at the end, but leaves them alone. */
-  optstring = "-";
-#ifdef ETAGS_REGEXPS
-  optstring = "-r:Rc:";
-#endif /* ETAGS_REGEXPS */
-  if (!LONG_OPTIONS)
-    optstring += 1;		/* remove the initial '-' */
-  optstring = concat (optstring,
-		      "aCf:Il:o:SVhH",
+  optstring = concat (NO_LONG_OPTIONS ? "" : "-",
+		      "ac:Cf:Il:o:r:RSVhH",
 		      (CTAGS) ? "BxdtTuvw" : "Di:");
 
   while ((opt = getopt_long (argc, argv, optstring, longopts, NULL)) != EOF)
@@ -1370,11 +1348,9 @@ main (argc, argv)
 	case at_language:
 	  lang = argbuffer[i].lang;
 	  break;
-#ifdef ETAGS_REGEXPS
 	case at_regexp:
 	  analyse_regex (argbuffer[i].what);
 	  break;
-#endif
 	case at_filename:
 #ifdef VMS
 	  while ((this_file = gfnames (argbuffer[i].what, &got_err)) != NULL)
@@ -1414,9 +1390,7 @@ main (argc, argv)
 	}
     }
 
-#ifdef ETAGS_REGEXPS
   free_regexps ();
-#endif /* ETAGS_REGEXPS */
   free (lb.buffer);
   free (filebuf.buffer);
   free (token_name.buffer);
@@ -1974,9 +1948,7 @@ find_entries (inf)
 
   parser (inf);
 
-#ifdef ETAGS_REGEXPS
   regex_tag_multiline ();
-#endif /* ETAGS_REGEXPS */
 }
 
 
@@ -2452,6 +2424,7 @@ extern,		0,			st_C_extern
 enum,		0,			st_C_enum
 typedef,	0,			st_C_typedef
 define,		0,			st_C_define
+undef,		0,			st_C_define
 operator,	C_PLPL,			st_C_operator
 template,	0,			st_C_template
 # DEFUN used in emacs, the next three used in glibc (SYSCALL only for mach).
@@ -2470,10 +2443,10 @@ and replace lines between %< and %> with its output, then:
 /*%<*/
 /* C code produced by gperf version 3.0.1 */
 /* Command-line: gperf -m 5  */
-/* Computed positions: -k'1-2' */
+/* Computed positions: -k'2-3' */
 
 struct C_stab_entry { char *name; int c_ext; enum sym_type type; };
-/* maximum key range = 31, duplicates = 0 */
+/* maximum key range = 33, duplicates = 0 */
 
 #ifdef __GNUC__
 __inline
@@ -2489,34 +2462,45 @@ hash (str, len)
 {
   static unsigned char asso_values[] =
     {
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34,  1, 34, 34, 34, 14, 14,
-      34, 34, 34, 34, 34, 34, 34, 34, 13, 34,
-      13, 34, 34, 12, 34, 34, 34, 34, 34, 11,
-      34, 34, 34, 34, 34,  8, 34, 11, 34, 12,
-      11,  0,  1, 34,  7,  0, 34, 34, 11,  9,
-       0,  4,  0, 34,  7,  4, 14, 21, 34, 15,
-       0,  2, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34, 34, 34, 34, 34,
-      34, 34, 34, 34, 34, 34
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 15,
+      14, 35, 35, 35, 35, 35, 35, 35, 14, 35,
+      35, 35, 35, 12, 13, 35, 35, 35, 35, 12,
+      35, 35, 35, 35, 35,  1, 35, 16, 35,  6,
+      23,  0,  0, 35, 22,  0, 35, 35,  5,  0,
+       0, 15,  1, 35,  6, 35,  8, 19, 35, 16,
+       4,  5, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35, 35, 35, 35, 35,
+      35, 35, 35, 35, 35, 35
     };
-  return len + asso_values[(unsigned char)str[1]] + asso_values[(unsigned char)str[0]];
+  register int hval = len;
+
+  switch (hval)
+    {
+      default:
+        hval += asso_values[(unsigned char)str[2]];
+      /*FALLTHROUGH*/
+      case 2:
+        hval += asso_values[(unsigned char)str[1]];
+        break;
+    }
+  return hval;
 }
 
 static struct C_stab_entry *
@@ -2526,46 +2510,48 @@ in_word_set (str, len)
 {
   enum
     {
-      TOTAL_KEYWORDS = 31,
+      TOTAL_KEYWORDS = 32,
       MIN_WORD_LENGTH = 2,
       MAX_WORD_LENGTH = 15,
-      MIN_HASH_VALUE = 3,
-      MAX_HASH_VALUE = 33
+      MIN_HASH_VALUE = 2,
+      MAX_HASH_VALUE = 34
     };
 
   static struct C_stab_entry wordlist[] =
     {
-      {""}, {""}, {""},
+      {""}, {""},
       {"if",		0,			st_C_ignore},
-      {"enum",		0,			st_C_enum},
+      {""},
       {"@end",		0,			st_C_objend},
+      {"union",		0,			st_C_struct},
+      {"define",		0,			st_C_define},
+      {"import",		(C_JAVA & !C_PLPL),	st_C_ignore},
+      {"template",	0,			st_C_template},
+      {"operator",	C_PLPL,			st_C_operator},
+      {"@interface",	0,			st_C_objprot},
+      {"implements",	(C_JAVA & !C_PLPL),	st_C_javastruct},
+      {"friend",		C_PLPL,			st_C_ignore},
+      {"typedef",	0,			st_C_typedef},
+      {"return",		0,			st_C_ignore},
+      {"@implementation",0,			st_C_objimpl},
+      {"@protocol",	0,			st_C_objprot},
+      {"interface",	(C_JAVA & !C_PLPL),	st_C_struct},
       {"extern",		0,			st_C_extern},
       {"extends",	(C_JAVA & !C_PLPL),	st_C_javastruct},
-      {"for",		0,			st_C_ignore},
-      {"interface",	(C_JAVA & !C_PLPL),	st_C_struct},
-      {"@protocol",	0,			st_C_objprot},
-      {"@interface",	0,			st_C_objprot},
-      {"operator",	C_PLPL,			st_C_operator},
-      {"return",		0,			st_C_ignore},
-      {"friend",		C_PLPL,			st_C_ignore},
-      {"import",		(C_JAVA & !C_PLPL),	st_C_ignore},
-      {"@implementation",0,			st_C_objimpl},
-      {"define",		0,			st_C_define},
-      {"package",	(C_JAVA & !C_PLPL),	st_C_ignore},
-      {"implements",	(C_JAVA & !C_PLPL),	st_C_javastruct},
-      {"namespace",	C_PLPL,			st_C_struct},
-      {"domain",		C_STAR,			st_C_struct},
-      {"template",	0,			st_C_template},
-      {"typedef",	0,			st_C_typedef},
       {"struct",		0,			st_C_struct},
+      {"domain",		C_STAR,			st_C_struct},
       {"switch",		0,			st_C_ignore},
-      {"union",		0,			st_C_struct},
-      {"while",		0,			st_C_ignore},
+      {"enum",		0,			st_C_enum},
+      {"for",		0,			st_C_ignore},
+      {"namespace",	C_PLPL,			st_C_struct},
       {"class",		0,			st_C_class},
+      {"while",		0,			st_C_ignore},
+      {"undef",		0,			st_C_define},
+      {"package",	(C_JAVA & !C_PLPL),	st_C_ignore},
       {"__attribute__",	0,			st_C_attribute},
       {"SYSCALL",	0,			st_C_gnumacro},
-      {"PSEUDO",		0,			st_C_gnumacro},
       {"ENTRY",		0,			st_C_gnumacro},
+      {"PSEUDO",		0,			st_C_gnumacro},
       {"DEFUN",		0,			st_C_gnumacro}
     };
 
@@ -4538,6 +4524,7 @@ Perl_functions (inf)
 		    lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
 	}
     }
+  free (package);
 }
 
 
@@ -5436,6 +5423,8 @@ Prolog_functions (inf)
 	  last[len] = '\0';
 	}
     }
+  if (last != NULL)
+    free (last);
 }
 
 
@@ -5592,7 +5581,11 @@ Erlang_functions (inf)
       else if (cp[0] == '-') 	/* attribute, e.g. "-define" */
 	{
 	  erlang_attribute (cp);
-	  last = NULL;
+	  if (last != NULL)
+	    {
+	      free (last);
+	      last = NULL;
+	    }
 	}
       else if ((len = erlang_func (cp, last)) > 0)
 	{
@@ -5609,6 +5602,8 @@ Erlang_functions (inf)
 	  last[len] = '\0';
 	}
     }
+  if (last != NULL)
+    free (last);
 }
 
 
@@ -5707,8 +5702,6 @@ erlang_atom (s)
 }
 
 
-#ifdef ETAGS_REGEXPS
-
 static char *scan_separators __P((char *));
 static void add_regex __P((char *, language *));
 static char *substitute __P((char *, char *, struct re_registers *));
@@ -6113,8 +6106,6 @@ regex_tag_multiline ()
     }
 }
 
-#endif /* ETAGS_REGEXPS */
-
 
 static bool
 nocase_tail (cp)
@@ -6377,7 +6368,6 @@ readline (lbp, stream)
 	}
     } /* if #line directives should be considered */
 
-#ifdef ETAGS_REGEXPS
   {
     int match;
     regexp *rp;
@@ -6434,7 +6424,6 @@ readline (lbp, stream)
 	    }
 	}
   }
-#endif /* ETAGS_REGEXPS */
 }
 
 
@@ -6595,7 +6584,7 @@ static void
 suggest_asking_for_help ()
 {
   fprintf (stderr, "\tTry `%s %s' for a complete list of options.\n",
-	   progname, LONG_OPTIONS ? "--help" : "-h");
+	   progname, NO_LONG_OPTIONS ? "-h" : "--help");
   exit (EXIT_FAILURE);
 }
 
@@ -6772,8 +6761,11 @@ absolute_filename (file, dir)
       slashp = etags_strchr (slashp + 1, '/');
     }
 
-  if (res[0] == '\0')
-    return savestr ("/");
+  if (res[0] == '\0')		/* just a safety net: should never happen */
+    {
+      free (res);
+      return savestr ("/");
+    }
   else
     return res;
 }
@@ -6882,7 +6874,6 @@ xrealloc (ptr, size)
 
 /*
  * Local Variables:
- * c-indentation-style: gnu
  * indent-tabs-mode: t
  * tab-width: 8
  * fill-column: 79

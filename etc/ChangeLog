@@ -1,3 +1,8 @@
+2006-07-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etags.1: Sync to pot_etags_version 17.19.
+	Thanks to Morgon Kanter <morgon@surgo.net>.
+
 2006-05-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* gdbinit.in:
