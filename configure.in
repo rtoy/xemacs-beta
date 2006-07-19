@@ -1,4 +1,0 @@
-# XEmacs now uses autoconf 2.59.  Please use configure.ac.
-
-AC_PREREQ(2.59)
-

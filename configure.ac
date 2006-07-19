@@ -651,13 +651,13 @@ XE_MERGED_ARG([late-packages],
 	AS_HELP_STRING([--with-late-packages=DIR],[Specify location of late/system packages (instead of default location; same as --with-system-packages).]),
 	[AC_DEFINE(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
 XE_MERGED_ARG([system-packages],
-	AS_HELP_STRING([--with-late-packages=DIR],[Specify location of late/system packages (instead of default location; same as --with-late-packages).]),
+	AS_HELP_STRING([--with-system-packages=DIR],[Specify location of late/system packages (instead of default location; same as --with-late-packages).]),
 	[AC_DEFINE(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
 XE_MERGED_ARG([last-packages],
 	AS_HELP_STRING([--with-last-packages=DIR],[Specify location of last/legacy packages (instead of default location; same as --with-legacy-packages).]),
 	[AC_DEFINE(LAST_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
 XE_MERGED_ARG([legacy-packages],
-	AS_HELP_STRING([--with-late-packages=DIR],[Specify location of late/legacy packages (instead of default location; same as --with-late-packages).]),
+	AS_HELP_STRING([--with-legacy-packages=DIR],[Specify location of late/legacy packages (instead of default location; same as --with-last-packages).]),
 	[AC_DEFINE(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)], [])
 XE_MERGED_ARG([package-path],
 	AS_HELP_STRING([--with-package-path=PATH],[Search path for package directories.]),

@@ -1,3 +1,10 @@
+2006-07-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (system-packages,legacy-packages): Fix help strings.
+
+	* configure.in: cvs remove.
+	* configure.usage: cvs remove.
+
 2006-06-20  Jerry James  <james@xemacs.org>
 
 	* configure.ac: When gcc is used, capture the values of __GNUC__
