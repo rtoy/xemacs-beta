@@ -1,3 +1,7 @@
+2006-07-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etags.c: XEmacs -> Xemacs.
+
 2006-07-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* etags.c: Sync to pot_etags_version 17.19.

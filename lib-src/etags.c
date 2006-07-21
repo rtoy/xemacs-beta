@@ -59,10 +59,10 @@ char pot_etags_version[] = "@(#) pot revision number is 17.19";
   /* On some systems, Emacs defines static as nothing for the sake
      of unexec.  We don't want that here since we don't use unexec. */
 # undef static
-# ifndef PTR			/* for Xemacs */
+# ifndef PTR			/* for XEmacs */
 #   define PTR void *
 # endif
-# ifndef __P			/* for Xemacs */
+# ifndef __P			/* for XEmacs */
 #   define __P(args) args
 # endif
 #else  /* no config.h */
@@ -80,7 +80,7 @@ char pot_etags_version[] = "@(#) pot revision number is 17.19";
 # define _GNU_SOURCE 1		/* enables some compiler checks on GNU */
 #endif
 
-/* WIN32_NATIVE is for Xemacs.
+/* WIN32_NATIVE is for XEmacs.
    MSDOS, WINDOWSNT, DOS_NT are for Emacs. */
 #ifdef WIN32_NATIVE
 # undef MSDOS
