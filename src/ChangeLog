@@ -1,3 +1,17 @@
+2006-08-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* syntax.c (Fsyntax_table_p):
+	Make the docstring better reflect the code. 
+	* syntax.c (define_standard_syntax):
+	Take a const UExtbyte * as the first argument, not a const char *
+
+	* syntax.c (complex_vars_of_syntax):
+	Use a macro instead of repeating code; don't redundantly set the
+	syntax of the alphanumeric characters to ?w; define syntax for
+	Latin 1 characters here instead of in Lisp; guillemets are string
+	delimiters, not parentheses.
+
+
 2006-07-18  Marcus Crestani  <crestani@xemacs.org>
 
 	* .cvsignore: Add .dbxrc.in and .gdbinit.in.

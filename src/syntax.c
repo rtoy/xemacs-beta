@@ -146,7 +146,6 @@ find_defun_start (struct buffer *buf, Charbpos pos)
 
 DEFUN ("syntax-table-p", Fsyntax_table_p, 1, 1, 0, /*
 Return t if OBJECT is a syntax table.
-Any vector of 256 elements will do.
 */
        (object))
 {
@@ -2451,7 +2450,7 @@ Non-nil means `forward-word', etc., should treat escape chars part of words.
 }
 
 static void
-define_standard_syntax (const char *p, enum syntaxcode syn)
+define_standard_syntax (const UExtbyte *p, enum syntaxcode syn)
 {
   for (; *p; p++)
     Fput_char_table (make_char (*p), make_int (syn), Vstandard_syntax_table);
@@ -2461,10 +2460,19 @@ void
 complex_vars_of_syntax (void)
 {
   Ichar i;
-  const char *p;
-  /* Set this now, so first buffer creation can refer to it. */
-  /* Make it nil before calling copy-syntax-table
-     so that copy-syntax-table will know not to try to copy from garbage */
+  const UExtbyte *p; /* Latin-1, not internal format. */
+
+#define SET_RANGE_SYNTAX(start, end, syntax)				\
+  do {									\
+    for (i = start; i <= end; i++)					\
+      Fput_char_table(make_char(i), make_int(syntax),			\
+		      Vstandard_syntax_table);				\
+  } while (0)
+
+  /* Set this now, so first buffer creation can refer to it. 
+
+     Make it nil before calling copy-syntax-table so that copy-syntax-table
+     will know not to try to copy from garbage */
   Vstandard_syntax_table = Qnil;
   Vstandard_syntax_table = Fcopy_syntax_table (Qnil);
   staticpro (&Vstandard_syntax_table);
@@ -2476,19 +2484,18 @@ complex_vars_of_syntax (void)
 							Smax);
   staticpro (&Vsyntax_designator_chars_string);
 
+  /* Default character syntax is word. */
   set_char_table_default (Vstandard_syntax_table, make_int (Sword));
 
-  for (i = 0; i <= 32; i++)	/* Control 0 plus SPACE */
-    Fput_char_table (make_char (i), make_int (Swhitespace),
-		     Vstandard_syntax_table);
-  for (i = 127; i <= 159; i++)	/* DEL plus Control 1 */
-    Fput_char_table (make_char (i), make_int (Swhitespace),
-		     Vstandard_syntax_table);
+  /* Control 0; treat as punctuation */
+  SET_RANGE_SYNTAX(0, 32, Spunct);
 
-  define_standard_syntax ("abcdefghijklmnopqrstuvwxyz"
-			  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-			  "0123456789"
-			  "$%", Sword);
+  /* The whitespace--overwriting some of the above changes. */
+  define_standard_syntax(" \t\015\014", Swhitespace);
+
+  /* DEL plus Control 1 */
+  SET_RANGE_SYNTAX(127, 159, Spunct);
+
   define_standard_syntax ("\"", Sstring);
   define_standard_syntax ("\\", Sescape);
   define_standard_syntax ("_-+*/&|<>=", Ssymbol);
@@ -2503,4 +2510,18 @@ complex_vars_of_syntax (void)
 		       Fcons (make_int (Sclose), make_char (p[0])),
 		       Vstandard_syntax_table);
     }
+
+  /* Latin 1 "symbols." This contrasts with the FSF, where they're word
+     constituents. */
+  SET_RANGE_SYNTAX(0240, 0277, Ssymbol); 
+
+  /* The guillemets. These are not parentheses, in contrast to what the old
+     code did. */
+  define_standard_syntax("\253\273", Sstring);
+
+  /* The inverted exclamation mark, and the multiplication and division
+     signs. */
+  define_standard_syntax("\241\327\367", Spunct);
+
+#undef SET_RANGE_SYNTAX  
 }
