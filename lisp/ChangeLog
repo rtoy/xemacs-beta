@@ -1,3 +1,9 @@
+2006-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.el (forward-sexp):
+	Handle raw strings specially just as we do structures. Fixes
+	problems evaluating them in *scratch*. 
+
 2006-08-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* iso8859-1.el:

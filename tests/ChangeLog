@@ -1,3 +1,10 @@
+2006-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	New file, imported from Martin Kuehl's SXEmacs commit; test the
+	new raw string syntax, including the Unicode escapes, which
+	SXEmacs doesn't have. 
+
 2006-06-24  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/test-harness.el (Silence-Message): New macro.

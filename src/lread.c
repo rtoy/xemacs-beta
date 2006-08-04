@@ -1670,15 +1670,56 @@ read0 (Lisp_Object readcharfun)
 
   return val;
 }
+
+/* A Unicode escape, as in C# (though we only permit them in strings
+   and characters, not arbitrarily in the source code.) */
+static Ichar
+read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
+{
+  REGISTER Ichar i = 0, c;
+  REGISTER int count = 0;
+  Lisp_Object lisp_char;
+  while (++count <= unicode_hex_count)
+    {
+      c = readchar (readcharfun);
+      /* Remember, can't use isdigit(), isalpha() etc. on Ichars */
+      if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
+      else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
+      else if (c >= 'A' && c <= 'F')  i = (i << 4) + (c - 'A') + 10;
+      else
+	{
+	  syntax_error ("Non-hex digit used for Unicode escape",
+			make_char (c));
+	  break;
+	}
+    }
+
+  lisp_char = Funicode_to_char(make_int(i), Qnil);
+
+  if (EQ(Qnil, lisp_char))
+    {
+      /* This is ugly and horrible and trashes the user's data, but
+	 it's what unicode.c does. In the future, unicode-to-char
+	 should not return nil.  */
+#ifdef MULE
+      i = make_ichar (Vcharset_japanese_jisx0208, 34 + 128, 46 + 128);
+#else
+      i = '~';
+#endif
+      return i;
+    }
+  else
+    {
+      return XCHAR(lisp_char);
+    }
+}
+
 
 static Ichar
 read_escape (Lisp_Object readcharfun)
 {
   /* This function can GC */
   Ichar c = readchar (readcharfun);
-  /* \u allows up to four hex digits, \U up to eight. Default to the
-     behaviour for \u, and change this value in the case that \U is seen. */
-  int unicode_hex_count = 4;
 
   if (c < 0)
     signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
@@ -1797,49 +1838,10 @@ read_escape (Lisp_Object readcharfun)
       }
     case 'U':
       /* Post-Unicode-2.0: Up to eight hex chars */
-      unicode_hex_count = 8;
+      return read_unicode_escape(readcharfun, 8);
     case 'u':
-
-      /* A Unicode escape, as in C# (though we only permit them in strings
-	 and characters, not arbitrarily in the source code.) */
-      {
-	REGISTER Ichar i = 0;
-	REGISTER int count = 0;
-	Lisp_Object lisp_char;
-	while (++count <= unicode_hex_count)
-	  {
-	    c = readchar (readcharfun);
-	    /* Remember, can't use isdigit(), isalpha() etc. on Ichars */
-	    if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
-	    else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
-            else if (c >= 'A' && c <= 'F')  i = (i << 4) + (c - 'A') + 10;
-	    else
-	      {
-		syntax_error ("Non-hex digit used for Unicode escape",
-			      make_char (c));
-		break;
-	      }
-	  }
-
-	lisp_char = Funicode_to_char(make_int(i), Qnil);
-
-	if (EQ(Qnil, lisp_char))
-	  {
-	    /* This is ugly and horrible and trashes the user's data, but
-	       it's what unicode.c does. In the future, unicode-to-char
-	       should not return nil.  */
-#ifdef MULE
-	    i = make_ichar (Vcharset_japanese_jisx0208, 34 + 128, 46 + 128);
-#else
-	    i = '~';
-#endif
-            return i;
-	  }
-	else
-	  {
-	    return XCHAR(lisp_char);
-	  }
-      }
+      /* Unicode-2.0 and before; four hex chars. */
+      return read_unicode_escape(readcharfun, 4);
 
     default:
 	return c;
@@ -2270,6 +2272,113 @@ list2_pure (int pure, Lisp_Object a, Lisp_Object b)
 }
 #endif
 
+static Lisp_Object
+read_string (Lisp_Object readcharfun, Ichar delim, int raw, 
+	     int honor_unicode)
+{
+#ifdef I18N3
+  /* #### If the input stream is translating, then the string
+     should be marked as translatable by setting its
+     `string-translatable' property to t.  .el and .elc files
+     normally are translating input streams.  See Fgettext()
+     and print_internal(). */
+#endif
+  Ichar c;
+  int cancel = 0;
+
+  Lstream_rewind(XLSTREAM(Vread_buffer_stream));
+  while ((c = readchar(readcharfun)) >= 0 && c != delim)
+    {
+    if (c == '\\') 
+      {
+	if (raw) 
+	  {
+	    c = readchar(readcharfun);
+	    if (honor_unicode && ('u' == c || 'U' == c))
+	      {
+		c = read_unicode_escape(readcharfun,
+					'U' == c ? 8 : 4);
+	      }
+	    else
+	      {
+		/* For raw strings, insert the
+		   backslash and the next char, */
+		Lstream_put_ichar(XLSTREAM
+				  (Vread_buffer_stream),
+				  '\\');
+	      }
+	  } 
+	else
+	  /* otherwise, backslash escapes the next char. */
+	  c = read_escape(readcharfun);
+      }
+    /* c is -1 if \ newline has just been seen */
+    if (c == -1) 
+      {
+	if (Lstream_byte_count
+	  (XLSTREAM(Vread_buffer_stream)) ==
+	  0)
+	  cancel = 1;
+      } 
+    else
+      Lstream_put_ichar(XLSTREAM
+			 (Vread_buffer_stream),
+			 c);
+    QUIT;
+    }
+  if (c < 0)
+    return Fsignal(Qend_of_file,
+		   list1(READCHARFUN_MAYBE(readcharfun)));
+
+  /* If purifying, and string starts with \ newline,
+     return zero instead.  This is for doc strings
+     that we are really going to find in lib-src/DOC.nn.nn  */
+  if (purify_flag && NILP(Vinternal_doc_file_name)
+      && cancel)
+    return Qzero;
+
+  Lstream_flush(XLSTREAM(Vread_buffer_stream));
+  return make_string(resizing_buffer_stream_ptr
+		     (XLSTREAM(Vread_buffer_stream)),
+		     Lstream_byte_count(XLSTREAM(Vread_buffer_stream)));
+}
+
+static Lisp_Object
+read_raw_string (Lisp_Object readcharfun)
+{
+  Ichar c;
+  Ichar permit_unicode = 0; 
+
+  do {
+    c = reader_nextchar(readcharfun);
+    switch (c) {
+      /* #r:engine"my sexy raw string" -- raw string w/ flags*/
+      /* case ':': */
+      /* #ru"Hi there\u20AC \U000020AC" -- raw string, honouring Unicode. */
+    case 'u':
+    case 'U':
+      permit_unicode = c; 
+      continue;
+
+      /* #r"my raw string" -- raw string */
+    case '\"':
+      return read_string(readcharfun, '\"', 1, permit_unicode);
+      /* invalid syntax */
+    default:
+      {
+	if (permit_unicode)
+	  {
+	    unreadchar(readcharfun, permit_unicode);
+	  }
+	unreadchar(readcharfun, c);
+	return Fsignal(Qinvalid_read_syntax,
+		       list1(build_string
+			     ("unrecognized raw string syntax")));
+      }
+    }
+  } while (1);
+}
+
 /* Read the next Lisp object from the stream READCHARFUN and return it.
    If the return value is a cons whose car is Qunbound, then read1()
    encountered a misplaced token (e.g. a right bracket, right paren,
@@ -2509,6 +2618,8 @@ retry:
 	  case 'x': return read_integer (readcharfun, 16);
             /* #b010 => 2 -- binary constant syntax */
 	  case 'b': return read_integer (readcharfun, 2);
+	    /* #r"raw\stringt" -- raw string syntax */
+	  case 'r': return read_raw_string(readcharfun);
             /* #s(foobar key1 val1 key2 val2) -- structure syntax */
 	  case 's': return read_structure (readcharfun);
 	  case '<':
@@ -2654,48 +2765,8 @@ retry:
       }
 
     case '\"':
-      {
-	/* String */
-#ifdef I18N3
-	/* #### If the input stream is translating, then the string
-	   should be marked as translatable by setting its
-	   `string-translatable' property to t.  .el and .elc files
-	   normally are translating input streams.  See Fgettext()
-	   and print_internal(). */
-#endif
-	int cancel = 0;
-
-	Lstream_rewind (XLSTREAM (Vread_buffer_stream));
-	while ((c = readchar (readcharfun)) >= 0
-	       && c != '\"')
-	  {
-	    if (c == '\\')
-	      c = read_escape (readcharfun);
-	    /* c is -1 if \ newline has just been seen */
-	    if (c == -1)
-	      {
-		if (Lstream_byte_count (XLSTREAM (Vread_buffer_stream)) == 0)
-		  cancel = 1;
-	      }
-	    else
-	      Lstream_put_ichar (XLSTREAM (Vread_buffer_stream), c);
-	    QUIT;
-	  }
-	if (c < 0)
-	  return Fsignal (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
-
-	/* If purifying, and string starts with \ newline,
-	   return zero instead.  This is for doc strings
-	   that we are really going to find in lib-src/DOC.nn.nn  */
-	if (purify_flag && NILP (Vinternal_doc_file_name) && cancel)
-	  return Qzero;
-
-	Lstream_flush (XLSTREAM (Vread_buffer_stream));
-	return
-	  make_string
-	  (resizing_buffer_stream_ptr (XLSTREAM (Vread_buffer_stream)),
-	   Lstream_byte_count (XLSTREAM (Vread_buffer_stream)));
-      }
+      /* String */
+      return read_string(readcharfun, '\"', 0, 1);
 
     default:
       {

@@ -1,3 +1,9 @@
+2006-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/objects.texi (String Type):
+	Give details of the raw string syntax, taken from SXEmacs and
+	Python. 
+
 2006-07-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* new-users-guide/edit.texi (Insert): Document bogosity in

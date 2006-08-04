@@ -1,3 +1,18 @@
+2006-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read_unicode_escape):
+	Refactor this code out from read_escape, since it's now called
+	from read_string as well. 
+	* lread.c (read_escape):
+	Call read_unicode_escape instead of using inline code, 
+	* lread.c (read_string):
+	Refactor out from read1, provide raw and honor_unicode options. 
+	* lread.c (read_raw_string):
+	Added, a function that calls read_string with the correct
+	arguments for a raw string. 
+	* lread.c (read1):
+	Pass raw strings to read_raw_string; pass strings to read_string.
+
 2006-08-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-tty.c (emacs_tty_next_event):

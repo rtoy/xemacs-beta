@@ -60,19 +60,20 @@ move backward across N balanced expressions."
   (interactive "_p")
   (or arg (setq arg 1))
   ;; XEmacs: evil hack! The other half of the evil hack below.
-  (if (and (> arg 0) (looking-at "#s("))
-      (goto-char (+ (point) 2)))
+  (if (and (> arg 0) (looking-at "#s(\\|#r[uU]\\{0,1\\}\""))
+    (goto-char (1+ (- (point) (- (match-end 0) (match-beginning 0))))))
   (goto-char (or (scan-sexps (point) arg) (buffer-end arg)))
-  (if (< arg 0) (backward-prefix-chars))
-  ;; XEmacs: evil hack! Skip back over #s so that structures are read
-  ;; properly.  the current cheesified syntax tables just aren't up to
-  ;; this.
-  (if (and (< arg 0)
-	   (eq (char-after (point)) ?\()
-	   (>= (- (point) (point-min)) 2)
-	   (eq (char-after (- (point) 1)) ?s)
-	   (eq (char-after (- (point) 2)) ?#))
-      (goto-char (- (point) 2))))
+  (when (< arg 0) 
+    (backward-prefix-chars)
+    ;; XEmacs: evil hack! Skip back over #[sr] so that structures and raw
+    ;; strings are read properly.  the current cheesified syntax tables just
+    ;; aren't up to this.
+    (let* ((diff (- (point) (point-min)))
+	   (subject (buffer-substring (- (point) (min diff 3))
+				      (1+ (point))))
+	   (matched (string-match "#s(\\|#r[uU]\\{0,1\\}\"" subject)))
+      (if matched
+	(goto-char (1+ (- (point) (- (length subject) matched))))))))
 
 (defun backward-sexp (&optional arg)
   "Move backward across one balanced expression (sexp).
