@@ -113,6 +113,16 @@ emacs_tty_next_event (Lisp_Event *emacs_event)
       EMACS_TIME time_to_block;
       EMACS_SELECT_TIME select_time_to_block, *pointer_to_this;
 
+      if (!NILP (dispatch_event_queue))
+	{
+	  Lisp_Object event, event2;
+	  event2 = wrap_event (emacs_event);
+	  event = dequeue_dispatch_event ();
+	  Fcopy_event (event, event2);
+	  Fdeallocate_event (event);
+	  return;
+	}
+
       if (!get_low_level_timeout_interval (tty_timer_queue, &time_to_block))
 	/* no timer events; block indefinitely */
  	pointer_to_this = 0;

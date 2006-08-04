@@ -1,5 +1,12 @@
 2006-08-04  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* event-tty.c (emacs_tty_next_event):
+	Check dispatch_event_queue for pending events, since we add to
+	that in drain_tty_devices(). Fixes dropped key sequences on TTY
+	builds.
+
+2006-08-04  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* syntax.c (Fsyntax_table_p):
 	Make the docstring better reflect the code. 
 	* syntax.c (define_standard_syntax):
