@@ -1,5 +1,11 @@
 2006-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* syntax.c (complex_vars_of_syntax):
+	String literals are char[], not unsigned char[]. Cast them when
+	passing to a function that takes UExtbyte *. 
+	
+2006-08-05  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* lread.c (read_unicode_escape):
 	Refactor this code out from read_escape, since it's now called
 	from read_string as well. 

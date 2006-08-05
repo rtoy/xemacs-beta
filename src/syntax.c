@@ -2490,18 +2490,20 @@ complex_vars_of_syntax (void)
   /* Control 0; treat as punctuation */
   SET_RANGE_SYNTAX(0, 32, Spunct);
 
-  /* The whitespace--overwriting some of the above changes. */
-  define_standard_syntax(" \t\015\014", Swhitespace);
+  /* The whitespace--overwriting some of the above changes.
+
+     String literals are const char *s, not const unsigned char *s. */
+  define_standard_syntax((const UExtbyte *)" \t\015\014", Swhitespace);
 
   /* DEL plus Control 1 */
   SET_RANGE_SYNTAX(127, 159, Spunct);
 
-  define_standard_syntax ("\"", Sstring);
-  define_standard_syntax ("\\", Sescape);
-  define_standard_syntax ("_-+*/&|<>=", Ssymbol);
-  define_standard_syntax (".,;:?!#@~^'`", Spunct);
+  define_standard_syntax ((const UExtbyte *)"\"", Sstring);
+  define_standard_syntax ((const UExtbyte *)"\\", Sescape);
+  define_standard_syntax ((const UExtbyte *)"_-+*/&|<>=", Ssymbol);
+  define_standard_syntax ((const UExtbyte *)".,;:?!#@~^'`", Spunct);
 
-  for (p = "()[]{}"; *p; p+=2)
+  for (p = (const UExtbyte *)"()[]{}"; *p; p+=2)
     {
       Fput_char_table (make_char (p[0]),
 		       Fcons (make_int (Sopen), make_char (p[1])),
@@ -2517,11 +2519,11 @@ complex_vars_of_syntax (void)
 
   /* The guillemets. These are not parentheses, in contrast to what the old
      code did. */
-  define_standard_syntax("\253\273", Sstring);
+  define_standard_syntax((const UExtbyte *)"\253\273", Sstring);
 
   /* The inverted exclamation mark, and the multiplication and division
      signs. */
-  define_standard_syntax("\241\327\367", Spunct);
+  define_standard_syntax((const UExtbyte *)"\241\327\367", Spunct);
 
 #undef SET_RANGE_SYNTAX  
 }
