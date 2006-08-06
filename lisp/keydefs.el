@@ -183,7 +183,7 @@ Keymap for characters following C-c.")
 
 ;; FSFmacs keyboard.c
 
-(define-key global-tty-map "\C-z" 'suspend-emacs)
+(define-key global-tty-map "\C-z" 'suspend-or-iconify-emacs)
 (define-key global-window-system-map "\C-z" 'zap-up-to-char)
 (define-key global-window-system-map '(control Z) 'iconify-frame)
 (define-key global-map "\C-x\C-z" 'suspend-or-iconify-emacs)

@@ -1548,7 +1548,12 @@ all frames that were visible, and iconify all frames that were not."
     (setq iconification-data (cdr iconification-data))))
 
 (defun suspend-or-iconify-emacs ()
-  "Call iconify-emacs if using a window system, otherwise suspend Emacs."
+  "Call iconify-emacs if using a window system, otherwise suspend.
+
+`suspend' here can mean different things; if the current TTY console was
+created by gnuclient, that console is suspended, and the related devices and
+frames are removed from the display.  Otherwise the Emacs process as a whole
+is suspended--that is, the traditional Unix suspend takes place.  "
   (interactive)
   (cond ((device-on-window-system-p)
 	 (iconify-emacs))
@@ -1564,7 +1569,12 @@ all frames that were visible, and iconify all frames that were not."
 ;; different things depending on window-system.  We can't do the same,
 ;; because we allow simultaneous X and TTY consoles.
 (defun suspend-emacs-or-iconify-frame ()
-  "Iconify the selected frame if using a window system, otherwise suspend Emacs."
+  "Iconify the selected frame if using a window system, otherwise suspend.
+
+`suspend' here can mean different things; if the current TTY console was
+created by gnuclient, the console is suspended, and the related devices and
+frames are removed from the display.  Otherwise the Emacs process as a whole
+is suspended--that is, the traditional Unix suspend takes place.  "
   (interactive)
   (cond ((device-on-window-system-p)
 	 (iconify-frame))
