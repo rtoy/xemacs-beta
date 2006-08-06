@@ -1,3 +1,10 @@
+2006-08-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fsnarf_documentation):
+	Add an assertion and a comment, rather than crashing in the
+	76584th call of hash_string when someone's using a DOC file that
+	doesn't match the format. 
+	
 2006-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* syntax.c (complex_vars_of_syntax):
