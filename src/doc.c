@@ -742,8 +742,8 @@ when doc strings are referred to in the dumped Emacs.
       if (p != end)
 	{
 	  end = qxestrchr (p, '\n');
-	  /* If you trigger a failure with of this assertion, you probably
-	     configured with --quick-build and need to to rebuild your DOC
+	  /* If you trigger a failure with this assertion, you probably
+	     configured with --quick-build and need to rebuild your DOC
 	     file. */
 	  assert((end - p - 2) > -1);
 	  sym = oblookup (Vobarray, p + 2, end - p - 2);
