@@ -3754,6 +3754,8 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	      Lisp_Key_Data *new_ = xnew_array (Lisp_Key_Data, size);
 	      memcpy ((void *)new_, (const void *)c->keys_so_far,
 		      c->keys_so_far_total_size * sizeof (Lisp_Key_Data));
+	      xfree (c->keys_so_far, Lisp_Key_Data);
+	      c->keys_so_far = new_;
 	    }
 	  else
 	    XREALLOC_ARRAY (c->keys_so_far, Lisp_Key_Data, size);
