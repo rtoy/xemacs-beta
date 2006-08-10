@@ -928,6 +928,9 @@ TYPE should be `list' or `vector'."
   "Return a list of characters in STRING."
   (mapcar #'identity string))
 
+;; < 21.5 compatibility, eg. https://bugzilla.redhat.com/201524#c2
+(define-obsolete-function-alias 'string-to-char-list 'string-to-list)
+
 (defun string-to-vector (string)
   "Return a vector of characters in STRING."
   (mapvector #'identity string))
