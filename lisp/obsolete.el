@@ -357,6 +357,9 @@ because its `find-charset-string' ignores ASCII charset."
 (make-obsolete 'find-non-ascii-charset-region
 	       "use (delq 'ascii (charsets-in-region START END)) instead.")
 
+;; < 21.5 compatibility, eg. https://bugzilla.redhat.com/201524#c2
+(define-obsolete-function-alias 'string-to-char-list 'string-to-list)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; window-system objects
 
 ;; the functionality of column.el has been moved into C

@@ -1,3 +1,10 @@
+2006-08-10  Vin Shelton  <acs@xemacs.org>
+
+	* subr.el: Move string-to-char-list to obsolete.el.
+
+	* obsolete.el (string-to-char-list): Move obsolete definition
+	here, so dumping can succeed.
+
 2006-08-07  Ville Skyttä  <scop@xemacs.org>
 
 	* subr.el (string-to-char-list): New backwards compatibility alias
