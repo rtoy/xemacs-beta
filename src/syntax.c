@@ -2519,7 +2519,7 @@ complex_vars_of_syntax (void)
 
   /* The guillemets. These are not parentheses, in contrast to what the old
      code did. */
-  define_standard_syntax((const UExtbyte *)"\253\273", Sstring);
+  define_standard_syntax((const UExtbyte *)"\253\273", Spunct);
 
   /* The inverted exclamation mark, and the multiplication and division
      signs. */

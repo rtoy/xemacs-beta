@@ -1,3 +1,10 @@
+2006-08-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* syntax.c (complex_vars_of_syntax):
+	Guillemets are now punctuation, not parentheses. AucTeX does this,
+	and it's infinitely less annoying if you're dealing with German
+	text or mixed German and French. 
+
 2006-08-03  Jerry James  <james@xemacs.org>
 
 	* keymap.c (where_is_recursive_mapper): Use the freshly allocated
