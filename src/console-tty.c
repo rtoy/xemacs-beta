@@ -158,6 +158,10 @@ tty_init_console (struct console *con, Lisp_Object props)
   tty_con->terminal_type = terminal_type;
   tty_con->controlling_process = controlling_process;
 
+  /* Defaults to 1 with Mule, 0 without. In the latter case the attribute is
+     read-only from Lisp. */
+  tty_con->multiple_width = CONSOLE_TTY_SUPPORTS_MULTIPLE_WIDTH(c); 
+
   if (NILP (CONSOLE_NAME (con)))
     CONSOLE_NAME (con) = Ffile_name_nondirectory (tty);
   {
@@ -319,6 +323,51 @@ CODESYS defaults to the value of `terminal-coding-system'.
   return Qnil;
 }
 
+DEFUN ("console-tty-multiple-width", Fconsole_tty_multiple_width,
+       0, 1, 0, /*
+Return whether CONSOLE treats East Asian double-width chars as such. 
+
+CONSOLE defaults to the selected console.  Without XEmacs support for
+double-width characters, this always gives nil.
+*/
+       (console))
+{
+  return CONSOLE_TTY_MULTIPLE_WIDTH (decode_tty_console(console)) 
+    ? Qt : Qnil;
+}
+
+DEFUN ("set-console-tty-multiple-width", Fset_console_tty_multiple_width,
+       0, 2, 0, /*
+Set whether CONSOLE treats East Asian double-width characters as such.
+
+CONSOLE defaults to the selected console, and VALUE defaults to nil.
+Without XEmacs support for double-width characters, this throws an error if
+VALUE is non-nil.
+*/
+       (console, value))
+{
+  struct console *c = decode_tty_console (console);
+
+  /* So people outside of East Asia can put (set-console-tty-multiple-width
+     (selected-console) nil) in their init files, independent of whether
+     Mule is enabled. */
+  if (!CONSOLE_TTY_MULTIPLE_WIDTH (c) && NILP(value))
+    {
+      return Qnil;
+    }
+
+  if (!CONSOLE_TTY_SUPPORTS_MULTIPLE_WIDTH (c))
+    {
+      invalid_change 
+	("No console support for double-width chars",
+	 Fmake_symbol(CONSOLE_NAME(c)));
+    }
+
+  CONSOLE_TTY_DATA(c)->multiple_width = NILP(value) ? 0 : 1;
+
+  return Qnil;
+}
+
 /* #### Move this function to lisp */
 DEFUN ("set-console-tty-coding-system", Fset_console_tty_coding_system,
        0, 2, 0, /*
@@ -431,6 +480,8 @@ syms_of_console_tty (void)
   DEFSUBR (Fconsole_tty_input_coding_system);
   DEFSUBR (Fset_console_tty_input_coding_system);
   DEFSUBR (Fset_console_tty_coding_system);
+  DEFSUBR (Fconsole_tty_multiple_width);
+  DEFSUBR (Fset_console_tty_multiple_width);
 }
 
 void

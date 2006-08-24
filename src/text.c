@@ -1998,20 +1998,26 @@ find_charsets_in_ichar_string (unsigned char *charsets,
 #endif
 }
 
+/* A couple of these functions should only be called on a non-Mule build. */
+#ifdef MULE
+#define ASSERT_BUILT_WITH_MULE() assert(1)
+#else /* MULE */
+#define ASSERT_BUILT_WITH_MULE() assert(0)
+#endif /* MULE */
+
 int
 ibyte_string_displayed_columns (const Ibyte *str, Bytecount len)
 {
   int cols = 0;
   const Ibyte *end = str + len;
+  Ichar ch;
+
+  ASSERT_BUILT_WITH_MULE();
 
   while (str < end)
     {
-#ifdef MULE
-      Ichar ch = itext_ichar (str);
+      ch = itext_ichar (str);
       cols += XCHARSET_COLUMNS (ichar_charset (ch));
-#else
-      cols++;
-#endif
       INC_IBYTEPTR (str);
     }
 
@@ -2019,19 +2025,17 @@ ibyte_string_displayed_columns (const Ibyte *str, Bytecount len)
 }
 
 int
-ichar_string_displayed_columns (const Ichar *USED_IF_MULE (str), Charcount len)
+ichar_string_displayed_columns (const Ichar * USED_IF_MULE(str), Charcount len)
 {
-#ifdef MULE
   int cols = 0;
   int i;
+
+  ASSERT_BUILT_WITH_MULE();
 
   for (i = 0; i < len; i++)
     cols += XCHARSET_COLUMNS (ichar_charset (str[i]));
 
   return cols;
-#else  /* not MULE */
-  return len;
-#endif
 }
 
 Charcount

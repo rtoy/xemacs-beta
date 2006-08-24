@@ -1,3 +1,31 @@
+2006-08-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* console-tty-impl.h (struct tty_console):
+	New flag; multiple_width, specifying whether East Asian characters
+	take up two columns on this terminal. The macro to access it
+	expands to a constant under non-Mule, so anything conditionalising
+	on it will be optimised away. 
+
+	* console-tty.c:
+	* console-tty.c (tty_init_console):
+	Initialise tty_con->multiple_width; zero on non-Mule, one on Mule.
+
+	* console-tty.c (Fconsole_tty_multiple_width): New.
+	* console-tty.c (Fset_console_tty_multiple_width): New. 
+	* console-tty.c (syms_of_console_tty): Make them available outside
+	console-tty.c.
+
+	* redisplay-tty.c (tty_text_width):
+	* redisplay-tty.c (tty_output_ibyte_string):
+	Check that the relevant console has multiple-width characters
+	before using something other than the number of characters in a
+	string for the text width of that string. 
+
+	* text.c:
+	* text.c (ibyte_string_displayed_columns):
+	* text.c (ichar_string_displayed_columns):
+	Remove some Mule conditionals; add some sanity-checking. 
+	
 2006-08-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* syntax.c (complex_vars_of_syntax):
