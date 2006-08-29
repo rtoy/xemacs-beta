@@ -1,3 +1,13 @@
+2006-08-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* eval.c (Fcatch): Correct syntax of `throw' in docstring.
+
+	* cmds.c (Fforward_line): Document that return can be negative.
+
+2006-08-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* frame.c (mouse-motion-handler): Document relation to hooks.
+
 2006-08-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* console-tty-impl.h (struct tty_console):

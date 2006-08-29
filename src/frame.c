@@ -3838,8 +3838,17 @@ Legal values are:
   Vadjust_frame_function = Qnil;
 
   DEFVAR_LISP ("mouse-motion-handler", &Vmouse_motion_handler /*
-Handler for motion events.  One arg, the event.
+Handler for motion events.  Must be a function taking one argument, the event.
 For most applications, you should use `mode-motion-hook' instead of this.
+The default value is `default-mouse-motion-handler'.
+
+Note that this is NOT a hook variable, so there is no standard way to remove
+actions from it.  Instead, when adding a new kind of action, a hook variable
+should be defined and initialized to the current value of this variable, then
+this variable set to a function that runs the new hook.  To disable the new
+actions, use `remove-hook' rather than setting `mouse-motion-handler'.
+
+`mouse-motion-hook' in the balloon-help library exemplifies this pattern.
 */ );
   Vmouse_motion_handler = Qnil;
 

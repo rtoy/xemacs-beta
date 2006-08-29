@@ -1472,7 +1472,7 @@ check_proper_critical_section_lisp_protection (void)
 DEFUN ("catch", Fcatch, 1, UNEVALLED, 0, /*
 \(catch TAG BODY...): eval BODY allowing nonlocal exits using `throw'.
 TAG is evalled to get the tag to use.  Then the BODY is executed.
-Within BODY, (throw TAG) with same (`eq') tag exits BODY and this `catch'.
+Within BODY, (throw TAG VAL) with same (`eq') tag exits BODY and this `catch'.
 If no throw happens, `catch' returns the value of the last BODY form.
 If a throw happens, it specifies the value to return from `catch'.
 */
