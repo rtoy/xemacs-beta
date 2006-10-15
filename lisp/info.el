@@ -3117,7 +3117,7 @@ The locations are of the format used in Info-history, i.e.
 \(FILENAME NODENAME BUFFERPOS\)."
   (let ((where '())
 	(cmd-desc (concat "^\\* " (regexp-quote (symbol-name command))
-			  ":\\s *\\(.*\\)\\.$")))
+			  ":\\s *\\(.*\\)\\.")))
     (save-excursion
       (Info-find-node "XEmacs" "Command Index")
       ;; Take the index node off the Info history.
