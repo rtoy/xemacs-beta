@@ -1,3 +1,10 @@
+2006-10-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fileio.c (Finsert_file_contents_internal) : Clarify that we
+	follow a more correct but more expensive design for buffers where
+	the on-disk representation doesn't correspond directly to the
+	XEmacs internal representation. 
+
 2006-08-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* eval.c (Fcatch): Correct syntax of `throw' in docstring.

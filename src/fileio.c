@@ -2948,6 +2948,13 @@ under Mule, is very difficult.)
      reasonable maximum file size on the files.  Is any of this worth it?
      --ben
 
+
+       It's probably not worth it, and despite what you might take from the
+       above, we don't do it currently; that is, for non-"binary" coding
+       systems, we don't try to implement replace-mode at all. See the
+       do_speedy_insert variable above. The upside of this is that our API
+       is consistent and not buggy. -- Aidan Kehoe, Fri Oct 27 21:02:30 CEST
+       2006
      */
 
   if (!NILP (replace))

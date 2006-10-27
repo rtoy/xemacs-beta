@@ -3521,7 +3521,10 @@ Return nil if identical, and the new buffer if different."
 	      after-change-function
 	      after-change-functions
 	      before-change-function
-	      before-change-functions)
+	      before-change-functions
+	      ;; #### b-f-c-s is _not necessarily_ the coding system that
+	      ;; was used to read in the file. See its docstring.
+	      (coding-system-for-read buffer-file-coding-system))
 	  (if revert-buffer-insert-file-contents-function
 	      (funcall revert-buffer-insert-file-contents-function
 		       file-name nil)
