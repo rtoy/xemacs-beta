@@ -1,3 +1,9 @@
+2006-10-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-xlike-inc.c:
+	Rework the X11 keysym support to allow the use of Cyrillic keysyms
+	that are not in ISO-8859-5.
+	
 2006-10-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fileio.c (Finsert_file_contents_internal) : Clarify that we
