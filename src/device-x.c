@@ -665,8 +665,10 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
        does not override resources defined elsewhere */
     const Extbyte *data_dir;
     Extbyte *path;
+    Extbyte *format;
     XrmDatabase db = XtDatabase (dpy); /* #### XtScreenDatabase(dpy) ? */
-    const Extbyte *locale = XrmLocaleOfDatabase (db);
+    Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
+    Extbyte *locale_end;
 
     if (STRINGP (Vx_app_defaults_directory) &&
 	XSTRING_LENGTH (Vx_app_defaults_directory) > 0)
@@ -674,18 +676,42 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
 	LISP_STRING_TO_EXTERNAL (Vx_app_defaults_directory, data_dir,
 				 Qfile_name);
 	path = alloca_extbytes (strlen (data_dir) + strlen (locale) + 7);
-	sprintf (path, "%s%s/Emacs", data_dir, locale);
-	if (!access (path, R_OK))
-	  XrmCombineFileDatabase (path, &db, False);
+	format = "%s%s/Emacs";
       }
     else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
 	LISP_STRING_TO_EXTERNAL (Vdata_directory, data_dir, Qfile_name);
 	path = alloca_extbytes (strlen (data_dir) + 13 + strlen (locale) + 7);
-	sprintf (path, "%sapp-defaults/%s/Emacs", data_dir, locale);
-	if (!access (path, R_OK))
-	  XrmCombineFileDatabase (path, &db, False);
+	format = "%sapp-defaults/%s/Emacs";
       }
+
+    /*
+     * The general form for $LANG is <language>_<country>.<encoding>.  Try
+     * that form, <language>_<country> and <language> and load for first
+     * app-defaults file found.
+     */
+
+    sprintf (path, format, data_dir, locale);
+    if (!access (path, R_OK))
+      XrmCombineFileDatabase (path, &db, False);
+
+    if ((locale_end = strchr(locale, '.'))) {
+      *locale_end = '\0';
+      sprintf (path, format, data_dir, locale);
+
+      if (!access (path, R_OK))
+	XrmCombineFileDatabase (path, &db, False);
+    }
+
+    if ((locale_end = strchr(locale, '_'))) {
+      *locale_end = '\0';
+      sprintf (path, format, data_dir, locale);
+
+      if (!access (path, R_OK))
+	XrmCombineFileDatabase (path, &db, False);
+    }
+
+    xfree (locale, Extbyte*);
  }
 #endif /* MULE */
 
