@@ -1,3 +1,10 @@
+2006-10-30  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* startup.el (display-splash-screen):  No longer bring buffer the
+	front.  Fixes problems with -unmapped.
+	* startup.el (xemacs-splash-buffer): Pop splash buffer to the
+	front here instead.
+
 2006-10-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* files.el (revert-buffer-internal):

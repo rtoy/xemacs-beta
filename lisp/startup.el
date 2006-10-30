@@ -1365,8 +1365,6 @@ Copyright (C) 1995-2004 Ben Wing.")
     (let* ((after-change-functions nil) ; no font-lock, thank you
 	   (elements (cond (tty (splash-screen-tty-body))
 			   (t (splash-screen-window-body)))))
-      (pop-to-buffer (current-buffer))
-      (delete-other-windows)
       (splash-screen-present elements)
       (set-buffer-modified-p nil))))
 
@@ -1377,6 +1375,8 @@ Copyright (C) 1995-2004 Ben Wing.")
     (set-buffer buffer)
     (setq buffer-read-only nil)
     (erase-buffer buffer)
+    (pop-to-buffer buffer)
+    (delete-other-windows)
     (display-splash-screen)))
 
 ;;  (let ((present-file
