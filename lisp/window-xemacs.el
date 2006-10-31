@@ -107,6 +107,15 @@ buffer appears in it currently)."
 
 ;; Window configurations
 
+(defcustom window-configuration-includes-position nil
+  "*Whether restoring window configurations will restore positions too.
+If nil, only the size of windows will be restored.
+
+Note that setting this value to t may have counterintuitive consequences,
+if a window manager employing virtual desktops is in use."
+:type 'boolean
+:group 'windows)
+
 (defstruct saved-window
   currentp minibufferp minibuffer-scrollp
   buffer mark-marker
@@ -128,7 +137,11 @@ buffer appears in it currently)."
 
 (defun window-configuration-equal (conf-1 conf-2)
   "Returns a boolean indicating whether the two given configurations
-are identical."
+are identical.
+
+Window configurations containing windows with different window
+positions are not identical iff `window-configuration-includes-position'
+is t."
   (or (eq conf-1 conf-2)
       (and (eq (window-configuration-frame conf-1)
 	       (window-configuration-frame conf-2))
@@ -136,10 +149,12 @@ are identical."
 	      (window-configuration-frame-pixel-width conf-2))
 	   (= (window-configuration-frame-pixel-height conf-1)
 	      (window-configuration-frame-pixel-height conf-2))
-	   (equal (window-configuration-frame-top conf-1)
-		  (window-configuration-frame-top conf-2))
-	   (equal (window-configuration-frame-left conf-1)
-		  (window-configuration-frame-left conf-2))
+	   (if window-configuration-includes-position
+               (and (equal (window-configuration-frame-top conf-1)
+                           (window-configuration-frame-top conf-2))
+                    (equal (window-configuration-frame-left conf-1)
+                           (window-configuration-frame-left conf-2)))
+             t)
 	   (eq (window-configuration-current-buffer conf-1)
 	       (window-configuration-current-buffer conf-2))
 	   (saved-window-equal (window-configuration-saved-root-window conf-1)
@@ -294,12 +309,13 @@ by `current-window-configuration'."
 
   ; avoid setting these if they're already up-to-date
   ; This also avoids potential inaccuracies in these settings --Mike
-  (let ((left (window-configuration-frame-left configuration))
-	(top (window-configuration-frame-top configuration)))
-    (if (not (equal left (frame-property frame 'left)))
-	(set-frame-property frame 'left left))
-    (if (not (equal top (frame-property frame 'top)))
-	(set-frame-property frame 'top top))) 
+  (when window-configuration-includes-position
+    (let ((left (window-configuration-frame-left configuration))
+          (top (window-configuration-frame-top configuration)))
+      (if (not (equal left (frame-property frame 'left)))
+          (set-frame-property frame 'left left))
+      (if (not (equal top (frame-property frame 'top)))
+          (set-frame-property frame 'top top))))
 
   ;; these may have changed because of the delete
   (let ((root-window (frame-root-window frame)))

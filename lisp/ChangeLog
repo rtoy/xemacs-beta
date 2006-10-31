@@ -1,3 +1,11 @@
+2006-10-28  Nix  <nix@esperi.org.uk>
+
+	* window-xemacs.el (window-configuration-includes-position): New.
+	* window-xemacs.el (window-configuration-equal): Use it: window
+	configurations with distinct positions are equal by default.
+	* window-xemacs.el (really-set-window-configuration): Do not
+	restore window positions unless requested.
+
 2006-10-30  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* startup.el (display-splash-screen):  No longer bring buffer the
