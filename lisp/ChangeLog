@@ -1,3 +1,8 @@
+2006-10-28  Adrian Aichner  <adrian@xemacs.org>
+
+	* simple.el (raw-append-message): Implement minibuffer resizing
+	based on requirements filled echo area content.
+
 2006-10-28  Nix  <nix@esperi.org.uk>
 
 	* window-xemacs.el (window-configuration-includes-position): New.
@@ -15122,7 +15127,7 @@ Sat Apr 24 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* info.el (Info-exit): `toolbar-info-frame' doesn't necessarily exist.
 
-1998-4-20  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+1998-04-20  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
 
 	* package-get.el (package-get-all):  add `\n' separator to
 	interactive specification so that both variables are read
