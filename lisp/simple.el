@@ -4301,7 +4301,16 @@ you should just use (message nil)."
 (defun raw-append-message (message &optional frame stdout-p)
   (unless (equal message "")
     (let ((inhibit-read-only t))
-      (insert-string message " *Echo Area*")
+      (with-current-buffer " *Echo Area*"
+	(insert-string message)
+	;; (fill-region (point-min) (point-max))
+	(enlarge-window
+	 (- 
+	  (ceiling
+	   (/ (- (point-max) (point-min)) 
+	      (- (window-width (minibuffer-window)) 1.0)))
+	  (window-height (minibuffer-window)))
+	 nil (minibuffer-window)))
       ;; Conditionalizing on the device type in this way is not that clean,
       ;; but neither is having a device method, as I originally implemented
       ;; it: all non-stream devices behave in the same way.  Perhaps

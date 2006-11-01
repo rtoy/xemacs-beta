@@ -1,7 +1,7 @@
 2006-10-28  Adrian Aichner  <adrian@xemacs.org>
 
 	* simple.el (raw-append-message): Implement minibuffer resizing
-	based on requirements filled echo area content.
+	based on requirements of echo area content.
 
 2006-10-28  Nix  <nix@esperi.org.uk>
 
