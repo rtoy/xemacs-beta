@@ -4376,7 +4376,7 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 	script. You give a colon or space separated list of prefixes, and
 	subdirectories include/ and lib/ will be added with -I and -L.
 
-1997-11-05  Martin Buchholz  <Martin Buchholz <martin@xemacs.org>>
+1997-11-05  Martin Buchholz <martin@xemacs.org>
 
 	* configure.in: AIX + gcc fixes.
 	  - Don't wrap -B. aixflags changed to start_flags.
