@@ -397,11 +397,20 @@ Given a Unix syntax file name, returns a string ending in slash.
 
       if (wd)
 	{
+	  int size;
 	  qxestrcat (res, wd);
-	  if (!IS_DIRECTORY_SEP (res[qxestrlen (res) - 1]))
-	    qxestrcat (res, (Ibyte *) "/");
+	  size = qxestrlen (res);
+	  if (!IS_DIRECTORY_SEP (res[size - 1]))
+	    {
+	      res[size] = DIRECTORY_SEP;
+	      res[size + 1] = '\0';
+	    }
 	  beg = res;
 	  p = beg + qxestrlen (beg);
+	}
+      else
+	{
+	  return Qnil;
 	}
       if (wd)
 	xfree (wd, Ibyte *);

@@ -1,3 +1,17 @@
+2006-11-01  Adrian Aichner  <adrian@xemacs.org>
+
+	* sysdep.c (wcslen): Check for NULL pointer.
+	* sysdep.c (strlwr): Ditto.
+	* nt.c (mswindows_getdcwd): Ditto (actual cause of reported
+	crash).
+	* intl-win32.c (wcscmp): Ditto.
+	* intl-win32.c (wcslen): Ditto.
+	* intl-win32.c (wcsncpy): Ditto.
+	* intl-win32.c (wcscpy): Ditto.
+	* intl-win32.c (wcsdup): Ditto.
+	* fileio.c (Ffile_name_directory): Return Qnil when
+	mswindows_getdcwd returns NULL working directory.
+
 2006-10-30  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* device-x.c (x_init_device):  Look in more directories when
@@ -42828,7 +42842,7 @@ Mon Mar 09 13:00:55 1998  Andy Piper  <andyp@parallax.co.uk>
 	angle brackets.
 	Use RTLD_GLOBAL as an open flag if it exists.
 
-1998-03-09  Martin Buchholz  <Martin Buchholz <martin@xemacs.org>>
+1998-03-09  Martin Buchholz <martin@xemacs.org>
 
 	* eldap.c (Fldap_search_internal): call garbage_collect_1 instead
 	of Fgarbage_collect.  The two are identical except the latter
@@ -42995,7 +43009,7 @@ Wed Mar 04 08:55:12 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* editfns.c (Ftemp_directory): Use build_ext_string.
 
-1998-03-02  Martin Buchholz  <Martin Buchholz <martin@xemacs.org>>
+1998-03-02  Martin Buchholz <martin@xemacs.org>
 
 	* symsinit.h: add prototype for syms_of_dlopen
 
@@ -45520,7 +45534,7 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 	* events.c (Fevent_modeline_position): Return nil if event is not
 	over modeline, as the docstring says.
 
-1997-11-05  Martin Buchholz  <Martin Buchholz <martin@xemacs.org>>
+1997-11-05  Martin Buchholz <martin@xemacs.org>
 
 	* s/aix3-1.h: Remove ^L character wich confuses AIX make.
 

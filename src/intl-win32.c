@@ -1569,6 +1569,7 @@ mswindows_current_locale (void)
 int
 wcscmp (const wchar_t *s1, const wchar_t *s2)
 {
+  if (s1 == NULL || s2 == NULL) return NULL;
   while (*s1 != '\0' && *s1 == *s2)
     {
       s1++;
@@ -1585,6 +1586,7 @@ wcscmp (const wchar_t *s1, const wchar_t *s2)
 size_t
 wcslen (const wchar_t *str)
 {
+  if (str == NULL) return NULL;
   const wchar_t *start = str;
 
   while (*str)
@@ -1598,6 +1600,7 @@ wcslen (const wchar_t *str)
 wchar_t *
 wcsncpy (wchar_t *dst0, const wchar_t *src0, size_t count)
 {
+  if (dst0 == NULL || src0 == NULL) return NULL;
   wchar_t *dscan;
   const wchar_t *sscan;
 
@@ -1618,6 +1621,7 @@ wcsncpy (wchar_t *dst0, const wchar_t *src0, size_t count)
 wchar_t *
 wcscpy (wchar_t *dst0, const wchar_t *src0)
 {
+  if (dst0 == NULL || src0 == NULL) return NULL;
   wchar_t *s = dst0;
 
   while ((*dst0++ = *src0++))
@@ -1629,6 +1633,7 @@ wcscpy (wchar_t *dst0, const wchar_t *src0)
 wchar_t *
 wcsdup (const wchar_t *str)
 {
+  if (str == NULL) return NULL;
   int len = wcslen (str) + 1;
   wchar_t *val = xnew_array (wchar_t, len);
 

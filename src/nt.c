@@ -1819,6 +1819,7 @@ mswindows_getdcwd (int drivelet)
     cwdext = (Extbyte *) _wgetdcwd (drivelet, NULL, 0);
   else
     cwdext = _getdcwd (drivelet, NULL, 0);
+  if (cwdext == NULL) return NULL;
   TSTR_TO_C_STRING_MALLOC (cwdext, cwd);
   xfree (cwdext, Extbyte *);
   return cwd;
