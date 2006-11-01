@@ -1,3 +1,8 @@
+2006-08-11  Jerry James  <james@xemacs.org>
+
+	* pop.h: Sync with Emacs.
+	* pop.c: Ditto.
+
 2006-08-08  Jerry James  <james@xemacs.org>
 
 	* gnuslib.c (disconnect_from_server): shutdown() has been fine on
