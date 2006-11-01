@@ -272,9 +272,9 @@ zeigt:
 
 >> Bewege den Textzeiger mittels <Down> oder <Up> auf die mittlere Zeile
    der obigen Tabelle. Dann zentriere das Diagramm mittels C-l im
-   Bildschirmfenster.  (Bitte erinnere Dich, daß TTY Benutzer,wenn
-   nötig, die entsprechenden TTY-Befehle benutzen sollten.  In diesem
-   Fall sind dies C-n und C-p.)
+   Bildschirmfenster.  (Zur Erinnerung: TTY Benutzer sollten, wenn
+   nötig, die entsprechenden TTY-Befehle benutzen.  In diesem Fall
+   sind dies C-n und C-p.)
 
 Bitte beachte die mnemonische Bedeutung der TTY-Befehle (im
 Englischen): P für previous, N für next, B für backward und F für
