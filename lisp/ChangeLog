@@ -1,3 +1,13 @@
+2006-11-02  Adrian Aichner  <adrian@xemacs.org>
+
+	* font-lock.el: Sync font-lock-add-keywords and
+	font-lock-remove-keywords from GNU Emacs.
+	* font-lock.el (font-lock-keywords-alist): New.
+	* font-lock.el (font-lock-removed-keywords-alist): New.
+	* font-lock.el (font-lock-add-keywords): New.
+	* font-lock.el (font-lock-update-removed-keyword-alist): New.
+	* font-lock.el (font-lock-remove-keywords): New.
+
 2006-10-28  Adrian Aichner  <adrian@xemacs.org>
 
 	* simple.el (raw-append-message): Implement minibuffer resizing
