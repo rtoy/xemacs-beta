@@ -40,6 +40,14 @@ Boston, MA 02111-1307, USA.  */
 /* sigh */
 #include <gdk/gdkx.h>
 
+/* XListFonts doesn't allocate memory unconditionally based on this. (For
+   XFree86 in 2005, at least. */
+#define MAX_FONT_COUNT INT_MAX
+
+#ifdef DEBUG_XEMACS 
+Fixnum debug_x_objects;
+#endif /* DEBUG_XEMACS */
+
 
 /************************************************************************/
 /*                          color instances                             */
@@ -379,66 +387,9 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object UNUSED (device),
   return (__gtk_font_list_internal (patternext));
 }
 
-#ifdef MULE
-
-static int
-gtk_font_spec_matches_charset (struct device *UNUSED (d), Lisp_Object charset,
-			       const Ibyte *nonreloc, Lisp_Object reloc,
-			       Bytecount offset, Bytecount length,
-			       int stage)
-{
-  if (stage)
-    return 0;
-
-  if (UNBOUNDP (charset))
-    return 1;
-  /* Hack! Short font names don't have the registry in them,
-     so we just assume the user knows what they're doing in the
-     case of ASCII.  For other charsets, you gotta give the
-     long form; sorry buster.
-     */
-  if (EQ (charset, Vcharset_ascii))
-    {
-      const Ibyte *the_nonreloc = nonreloc;
-      int i;
-      Bytecount the_length = length;
-
-      if (!the_nonreloc)
-	the_nonreloc = XSTRING_DATA (reloc);
-      fixup_internal_substring (nonreloc, reloc, offset, &the_length);
-      the_nonreloc += offset;
-      if (!memchr (the_nonreloc, '*', the_length))
-	{
-	  for (i = 0;; i++)
-	    {
-	      const Ibyte *new_nonreloc = (const Ibyte *)
-		memchr (the_nonreloc, '-', the_length);
-	      if (!new_nonreloc)
-		break;
-	      new_nonreloc++;
-	      the_length -= new_nonreloc - the_nonreloc;
-	      the_nonreloc = new_nonreloc;
-	    }
-
-	  /* If it has less than 5 dashes, it's a short font.
-	     Of course, long fonts always have 14 dashes or so, but short
-	     fonts never have more than 1 or 2 dashes, so this is some
-	     sort of reasonable heuristic. */
-	  if (i < 5)
-	    return 1;
-	}
-    }
-
-  return (fast_string_match (XCHARSET_REGISTRY (charset),
-			     nonreloc, reloc, offset, length, 1,
-			     ERROR_ME, 0) >= 0);
-}
-
-/* find a font spec that matches font spec FONT and also matches
-   (the registry of) CHARSET. */
-static Lisp_Object gtk_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset, int stage);
-
-#endif /* MULE */
+/* Include the charset support, shared, for the moment, with X11.  */
+#define THIS_IS_GTK
+#include "objects-xlike-inc.c"
 
 
 /************************************************************************/
@@ -479,62 +430,13 @@ console_type_create_objects_gtk (void)
 void
 vars_of_objects_gtk (void)
 {
+#ifdef DEBUG_XEMACS
+  DEFVAR_INT ("debug-x-objects", &debug_x_objects /*
+If non-zero, display debug information about X objects
+*/ );
+  debug_x_objects = 0;
+#endif
 }
-
-/* #### BILL!!! Try to make this go away eventually */
-/* X Specific stuff */
-#include <X11/Xatom.h>
-
-#define MAX_FONT_COUNT INT_MAX
-
-#ifdef MULE
-/* find a font spec that matches font spec FONT and also matches
-   (the registry of) CHARSET. */
-static Lisp_Object
-gtk_find_charset_font (Lisp_Object device, Lisp_Object font,
-		       Lisp_Object charset, int stage)
-{
-  char **names;
-  int count = 0;
-  Lisp_Object result = Qnil;
-  const char *patternext;
-  int i;
-
-  if (stage)
-    return Qnil;
-
-  TO_EXTERNAL_FORMAT (LISP_STRING, font, C_STRING_ALLOCA, patternext, Qbinary);
-
-  names = XListFonts (GDK_DISPLAY (),
-		      patternext, MAX_FONT_COUNT, &count);
-  /* #### This code seems awfully bogus -- mrb */
-  for (i = 0; i < count; i ++)
-    {
-      const Ibyte *intname;
-      Bytecount intlen;
-
-      TO_INTERNAL_FORMAT (C_STRING, names[i], ALLOCA, (intname, intlen),
-			  Qctext);
-      if (gtk_font_spec_matches_charset (XDEVICE (device), charset,
-					 intname, Qnil, 0, -1, 0))
-	{
-	  result = make_string (intname, intlen);
-	  break;
-	}
-    }
-
-  if (names)
-    XFreeFontNames (names);
-
-  /* Check for a short font name. */
-  if (NILP (result)
-      && gtk_font_spec_matches_charset (XDEVICE (device), charset, 0,
-					font, 0, -1, 0))
-    return font;
-
-  return result;
-}
-#endif /* MULE */
 
 static int
 valid_font_name_p (Display *dpy, char *name)

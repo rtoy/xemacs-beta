@@ -146,8 +146,8 @@
       (name plane final)
       (make-charset
        name (concat "CNS 11643 Plane " plane " (Chinese traditional)")
-       `(registry 
-         ,(concat "CNS11643[.-]\\(.*[.-]\\)?" plane "$")
+       `(registries 
+         ,(vector (concat "cns11643.1992-" plane ))
          dimension 2
          chars 94
          final ,final
@@ -171,7 +171,7 @@
 (make-charset ;; not in FSF 21.1
  'chinese-isoir165
  "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"
- `(registry "isoir165"
+ `(registries ["isoir165-0"]
    dimension 2
    chars 94
    final ?E
@@ -185,7 +185,7 @@
 	      '(dimension
 		1
 		;; XEmacs addition: second half of registry spec
-		registry "sisheng_cwnn\\|OMRON_UDC_ZH"
+		registries ["omron_udc_zh-0" "sisheng_cwnn-0"]
 		chars 94
 		columns 1
 		direction l2r

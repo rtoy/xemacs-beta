@@ -34,7 +34,7 @@
 (make-charset 'ipa "IPA (International Phonetic Association)"
 	      '(dimension
 		1
-		registry "MuleIPA"
+		registries ["MuleIPA"]
 		chars 96
 		columns 1
 		direction l2r

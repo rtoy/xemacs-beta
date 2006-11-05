@@ -37,7 +37,7 @@
 (make-charset 'vietnamese-viscii-lower "VISCII1.1 lower-case"
 	      '(dimension
 		1
-		registry "VISCII1.1"
+		registries ["VISCII1.1"]
 		chars 96
 		columns 1
 		direction l2r
@@ -50,7 +50,7 @@
 (make-charset 'vietnamese-viscii-upper "VISCII1.1 upper-case"
 	      '(dimension
 		1
-		registry "VISCII1.1"
+		registries ["VISCII1.1"]
 		chars 96
 		columns 1
 		direction l2r

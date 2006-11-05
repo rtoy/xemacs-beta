@@ -32,7 +32,7 @@
 (make-charset 'ethiopic "Ethiopic characters"
 	      '(dimension
 		2
-		registry "Ethiopic-Unicode"
+		registries ["Ethiopic-Unicode"]
 		chars 94
 		columns 2
 		direction l2r
@@ -82,5 +82,8 @@
 	      (features ethio-util)
 	      (sample-text . "$(3$Q#U!.(B")
 	      (documentation . t)))
+
+;; In a more ideal world, we could set the default face fallback from here
+;; to use one of the misc-fixed sizes that handles Ethiopic.
 
 ;;; ethiopic.el ends here

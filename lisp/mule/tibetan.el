@@ -87,7 +87,7 @@
 (make-charset 'tibetan-1-column "Tibetan 1 column glyph"
 	      '(dimension
 		2
-		registry "MuleTibetan-1"
+		registries ["MuleTibetan-1"]
 		chars 94
 		columns 1
 		direction l2r
@@ -101,7 +101,7 @@
 (make-charset 'tibetan "Tibetan characters"
 	      '(dimension
 		2
-		registry "MuleTibetan-2"
+		registries ["MuleTibetan-2"]
 		chars 94
 		columns 2
 		direction l2r

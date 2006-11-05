@@ -2623,6 +2623,13 @@ set_bit_vector_bit (Lisp_Bit_Vector *v, Elemcount n, int value)
 #define BIT_VECTOR_LONG_STORAGE(len) \
   (((len) + LONGBITS_POWER_OF_2 - 1) >> LONGBITS_LOG2)
 
+/* For when we want to include a bit vector in another structure, and we
+   know it's of a fixed size. */
+#define DECLARE_INLINE_LISP_BIT_VECTOR(numbits) struct {	\
+  struct LCRECORD_HEADER lheader;				\
+  Elemcount size;						\
+  unsigned long bits[BIT_VECTOR_LONG_STORAGE(numbits)];		\
+}
 
 /*------------------------------ symbol --------------------------------*/
 
@@ -5601,7 +5608,7 @@ extern Lisp_Object Qprint_string_length, Qprinting_unreadable_object;
 extern Lisp_Object Qprogn, Qquit, Qquote, Qrange_error;
 extern Lisp_Object Qread_char, Qread_from_minibuffer;
 extern Lisp_Object Qreally_early_error_handler, Qregion_beginning;
-extern Lisp_Object Qregion_end, Qregistry, Qreverse_direction_charset;
+extern Lisp_Object Qregion_end, Qregistries, Qreverse_direction_charset;
 extern Lisp_Object Qrun_hooks, Qsans_modifiers, Qsave_buffers_kill_emacs;
 extern Lisp_Object Qself_insert_command, Qself_insert_defer_undo, Qsequencep;
 extern Lisp_Object Qset, Qsetting_constant, Qshort_name, Qsingularity_error;

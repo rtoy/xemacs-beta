@@ -323,8 +323,11 @@ print_font_instance (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_fmt_string_lisp (printcharfun, "#<font-instance %S", 1, f->name);
   write_fmt_string_lisp (printcharfun, " on %s", 1, f->device);
   if (!NILP (f->device))
-    MAYBE_DEVMETH (XDEVICE (f->device), print_font_instance,
-		   (f, printcharfun, escapeflag));
+    {
+      MAYBE_DEVMETH (XDEVICE (f->device), print_font_instance,
+		     (f, printcharfun, escapeflag));
+
+    }
   write_fmt_string (printcharfun, " 0x%x>", f->header.uid);
 }
 
@@ -776,7 +779,7 @@ static int
 font_spec_matches_charset (struct device *d, Lisp_Object charset,
 			   const Ibyte *nonreloc, Lisp_Object reloc,
 			   Bytecount offset, Bytecount length,
-			   int stage)
+			   enum font_specifier_matchspec_stages stage)
 {
   return DEVMETH_OR_GIVEN (d, font_spec_matches_charset,
 			   (d, charset, nonreloc, reloc, offset, length,
@@ -789,6 +792,21 @@ font_validate_matchspec (Lisp_Object matchspec)
 {
   CHECK_CONS (matchspec);
   Fget_charset (XCAR (matchspec));
+
+  do
+    {
+      if (EQ(XCDR(matchspec), Qinitial))
+	{
+	  break;
+	}
+      if (EQ(XCDR(matchspec), Qfinal))
+	{
+	  break;
+	}
+
+      invalid_argument("Invalid font matchspec stage",
+		       XCDR(matchspec));
+    } while (0);
 }
 
 void
@@ -836,12 +854,23 @@ font_instantiate (Lisp_Object UNUSED (specifier),
   Lisp_Object instance;
   Lisp_Object charset = Qnil;
 #ifdef MULE
-  int stage = 0;
+  enum font_specifier_matchspec_stages stage = initial;
 
   if (!UNBOUNDP (matchspec))
     {
       charset = Fget_charset (XCAR (matchspec));
-      stage = NILP (XCDR (matchspec)) ? 0 : 1;
+
+#define FROB(new_stage) if (EQ(Q##new_stage, XCDR(matchspec)))	\
+	    {							\
+	      stage = new_stage;				\
+	    }
+
+	  FROB(initial)
+	  else FROB(final)
+	  else assert(0);
+
+#undef FROB
+
     }
 #endif
 
@@ -864,6 +893,7 @@ font_instantiate (Lisp_Object UNUSED (specifier),
   if (STRINGP (instantiator))
     {
 #ifdef MULE
+      /* #### rename these caches. */
       Lisp_Object cache = stage ? d->charset_font_cache_stage_2 :
         d->charset_font_cache_stage_1;
 #else
@@ -921,10 +951,22 @@ font_instantiate (Lisp_Object UNUSED (specifier),
     }
   else if (VECTORP (instantiator))
     {
+      Lisp_Object match_inst = Qunbound;
       assert (XVECTOR_LENGTH (instantiator) == 1);
-      return (face_property_matching_instance
-	      (Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
-	       charset, domain, ERROR_ME, 0, depth));
+
+      match_inst = face_property_matching_instance
+	(Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
+	 charset, domain, ERROR_ME, 0, depth, initial);
+
+      if (UNBOUNDP(match_inst)) 
+	{
+	  match_inst = face_property_matching_instance
+	    (Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
+	     charset, domain, ERROR_ME, 0, depth, final);
+	}
+
+      return match_inst;
+
     }
   else if (NILP (instantiator))
     return Qunbound;

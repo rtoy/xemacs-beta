@@ -167,7 +167,7 @@ This function does nothing if I18N3 was not enabled when Emacs was compiled.
 void
 init_intl (void)
 {
-  /* This function can GC */
+  /* This function cannot GC, because it explicitly prevents it. */
   if (initialized)
     {
       int count = begin_gc_forbidden ();

@@ -1,3 +1,61 @@
+2006-11-05  Aidan Kehoe  <kehoea@parhasard.net>
+        
+	* mule/arabic.el (arabic-digit):  
+	* mule/arabic.el (arabic-1-column):  
+	* mule/arabic.el (arabic-2-column):  
+	* mule/chinese.el (make-chinese-cns11643-charset):  
+	* mule/chinese.el (chinese-sisheng):  
+	* mule/english.el (ascii-right-to-left):  
+	* mule/ethiopic.el (ethiopic):  
+	* mule/european.el (latin-iso8859-14):  
+	* mule/european.el (latin-iso8859-16):  
+	* mule/indian.el (indian-is13194):  
+	* mule/indian.el (indian-1-column):  
+	* mule/indian.el (indian-2-column):  
+	* mule/japanese.el (japanese-jisx0213-1):  
+	* mule/japanese.el (japanese-jisx0213-2):  
+	* mule/lao.el (lao):  
+	* mule/misc-lang.el (ipa):  
+	* mule/mule-charset.el:  
+	* mule/thai-xtis.el (thai-xtis):  
+	* mule/tibetan.el (tibetan-1-column):  
+	* mule/tibetan.el (tibetan):  
+	* mule/vietnamese.el (vietnamese-viscii-lower):  
+	* mule/vietnamese.el (vietnamese-viscii-upper):  
+	Stop using the `registry' charset property; use `registries'  
+	instead. The difference is that registries is an ordered vector of  
+	X11 registries and encodings rather than a regexp; this means we  
+	can leave the matching to the X11 server, avoiding transferring  
+	huge amounts of data (perhaps across the network!) in order to do  
+	a regexp search on it.  
+	* mule/mule-charset.el (charset-registries): New.  
+	charset-registries returns the registries of a charset;  
+	* mule/mule-charset.el (set-charset-registry): Moved here from C.
+
+2006-11-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* faces.el (face-property-matching-instance): 
+	Simplify.  
+	* faces.el (face-font-instance): 
+	Document CHARSET.  
+	* faces.el (set-face-font): 
+	Give more details on common values for font instantiators,  
+	LOCALEs. 
+	* unicode.el: 
+	Remove a few comments that were only relevant to GNU Emacs. 
+	* unicode.el (decode-char): 
+	* unicode.el (encode-char): 
+	Document CODE, CHAR using uppercase, since they're
+	parameters. Update commentary on GNU's mule-unicode charsets and
+	how we've solved the same problem. 
+	* x-faces.el (x-init-face-from-resources): 
+	Retain some of the fallbacks in the generated default face, since 
+	it doesn't make sense to try Andale Mono's ISO-10646-1 encoding 
+	for Amharic or Thai.  
+	* x-font-menu.el (charset-registries): 
+	* x-font-menu.el (x-reset-device-font-menus-core): 
+	Use charset-registries instead of charset-registry.  
+
 2006-11-02  Adrian Aichner  <adrian@xemacs.org>
 
 	* font-lock.el: Sync font-lock-add-keywords and

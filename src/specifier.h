@@ -535,6 +535,7 @@ int unlock_ghost_specifiers_protected (void);
 void cleanup_specifiers (void);
 void prune_specifiers (void);
 void setup_device_initial_specifier_tags (struct device *d);
+void setup_charset_initial_specifier_tags (Lisp_Object charset);
 void kill_specifier_buffer_locals (Lisp_Object buffer);
 
 DECLARE_SPECIFIER_TYPE (generic);
@@ -566,5 +567,19 @@ DECLARE_SPECIFIER_TYPE (display_table);
 #define DISPLAYTABLE_SPECIFIERP(x) SPECIFIER_TYPEP (x, display_table)
 #define CHECK_DISPLAYTABLE_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, display_table)
 #define CONCHECK_DISPLAYTABLE_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, display_table)
+
+/* The various stages of font instantiation; initial means "find a font for
+   CHARSET that matches the charset's registries" and final means "find a
+   font for CHARSET that matches iso10646-1, since we haven't found a font
+   that matches its registry."  */
+enum font_specifier_matchspec_stages {
+  initial, 
+  final,
+  impossible, 
+};
+
+Lisp_Object define_specifier_tag(Lisp_Object tag,
+				 Lisp_Object device_predicate, 
+				 Lisp_Object charset_predicate);
 
 #endif /* INCLUDED_specifier_h_ */

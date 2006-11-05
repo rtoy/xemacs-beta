@@ -367,7 +367,8 @@ tty_font_spec_matches_charset (struct device *UNUSED (d), Lisp_Object charset,
    (the registry of) CHARSET. */
 static Lisp_Object
 tty_find_charset_font (Lisp_Object device, Lisp_Object font,
-		       Lisp_Object charset, int stage)
+		       Lisp_Object charset, 
+		       enum font_specifier_matchspec_stages stage)
 {
   Ibyte *fontname = XSTRING_DATA (font);
 

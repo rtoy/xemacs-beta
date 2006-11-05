@@ -29,53 +29,18 @@
 
 ;;; Code:
 
-; ;; Subsets of Unicode.
+;; GNU Emacs has the charsets: 
 
-; #### what is this bogosity ... "chars 96, final ?2" !!?!
-; (make-charset 'mule-unicode-2500-33ff 
-; 	      "Unicode characters of the range U+2500..U+33FF."
-; 	      '(dimension
-; 		2
-; 		registry "ISO10646-1"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?2
-; 		graphic 0
-; 		short-name "Unicode subset 2"
-; 		long-name "Unicode subset (U+2500..U+33FF)"
-; 		))
+;;     mule-unicode-2500-33ff
+;;     mule-unicode-e000-ffff
+;;     mule-unicode-0100-24ff
 
-
-; (make-charset 'mule-unicode-e000-ffff 
-; 	      "Unicode characters of the range U+E000..U+FFFF."
-; 	      '(dimension
-; 		2
-; 		registry "ISO10646-1"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?3
-; 		graphic 0
-; 		short-name "Unicode subset 3"
-; 		long-name "Unicode subset (U+E000+FFFF)"
-; 		))
-
-
-; (make-charset 'mule-unicode-0100-24ff 
-; 	      "Unicode characters of the range U+0100..U+24FF."
-; 	      '(dimension
-; 		2
-; 		registry "ISO10646-1"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?1
-; 		graphic 0
-; 		short-name "Unicode subset"
-; 		long-name "Unicode subset (U+0100..U+24FF)"
-; 		))
-
+;; built-in.  This is hack--and an incomplete hack at that--against the
+;; spirit and the letter of standard ISO 2022 character sets.  Instead of
+;; this, we have the jit-ucs-charset-N Mule character sets, created in
+;; unicode.c on encountering a Unicode code point that we don't recognise,
+;; and saved in ISO 2022 coding systems using the UTF-8 escape described in
+;; ISO-IR 196.
 
 ;; accessed in loadup.el, mule-cmds.el; see discussion in unicode.c
 (defvar load-unicode-tables-at-dump-time (eq system-type 'windows-nt)
@@ -305,50 +270,18 @@ Standard encoding for representing UTF-8 under MS Windows."
    need-bom t))
 
 (defun decode-char (quote-ucs code &optional restriction) 
-  "FSF compatibility--return Mule character with Unicode codepoint `code'.
+  "FSF compatibility--return Mule character with Unicode codepoint CODE.
 The second argument must be 'ucs, the third argument is ignored.  "
   (assert (eq quote-ucs 'ucs) t
 	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
   (unicode-to-char code))
 
 (defun encode-char (char quote-ucs &optional restriction)
-  "FSF compatibility--return the Unicode code point of `char'.
+  "FSF compatibility--return the Unicode code point of CHAR.
 The second argument must be 'ucs, the third argument is ignored.  "
   (assert (eq quote-ucs 'ucs) t
 	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
   (char-to-unicode char))
-
-(when (featurep 'mule)
-  ;; This CCL program is used for displaying the fallback UCS character set,
-  ;; and can be repurposed to lao and the IPA, all going well.
-  ;;
-  ;; define-ccl-program is available after mule-ccl is loaded, much later
-  ;; than this file in the build process. The below is the result of 
-  ;;
-  ;;   (macroexpand 
-  ;;    '(define-ccl-program ccl-encode-to-ucs-2
-  ;;      `(1
-  ;;        ((r1 = (r1 << 8))
-  ;; 	     (r1 = (r1 | r2))
-  ;; 	     (mule-to-unicode r0 r1)
-  ;; 	     (r1 = (r0 >> 8))
-  ;; 	     (r2 = (r0 & 255))))
-  ;;      "CCL program to transform Mule characters to UCS-2."))
-  ;;
-  ;; and it should occasionally be confirmed that the correspondence still
-  ;; holds.
-
-  (let ((prog [1 10 131127 8 98872 65823 147513 8 82009 255 22]))
-    (defconst ccl-encode-to-ucs-2 prog 
-      "CCL program to transform Mule characters to UCS-2.")
-    (put (quote ccl-encode-to-ucs-2) (quote ccl-program-idx) 
-	 (register-ccl-program (quote ccl-encode-to-ucs-2) prog)) nil))
-
-;; Won't do this just yet, though. 
-;; (set-charset-registry 'lao "iso10646-1")
-;; (set-charset-ccl-program 'lao 'ccl-encode-to-ucs-2)
-;; (set-charset-registry 'ipa "iso10646-1")
-;; (set-charset-ccl-program 'ipa 'ccl-encode-to-ucs-2)
 
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version
@@ -358,8 +291,7 @@ The second argument must be 'ucs, the third argument is ignored.  "
 ;  'utf-7 'unicode
 ;  "UTF-7"
 ;  '(mnemonic "UTF7"
-;    documentation
-;    "UTF-7 Unicode encoding -- 7-bit-ASCII modal Internet-mail-compatible
+;    documentation;    "UTF-7 Unicode encoding -- 7-bit-ASCII modal Internet-mail-compatible
 ; encoding especially designed for headers, with the following
 ; properties:
 

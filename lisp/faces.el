@@ -250,19 +250,9 @@ matching process."
 
   (setq face (get-face face))
   (let ((value (get face property)))
-    (if (specifierp value)
-	(setq value (if (or (charsetp matchspec)
-			    (and (symbolp matchspec)
-				 (find-charset matchspec)))
-			(or
-			 (specifier-matching-instance
-			  value (cons matchspec nil) domain default
-			  no-fallback)
-			 (specifier-matching-instance
-			  value (cons matchspec t) domain default
-			  no-fallback))
-		      (specifier-matching-instance value matchspec domain
-						   default no-fallback))))
+    (when (specifierp value)
+      (setq value (specifier-matching-instance value matchspec domain
+					       default no-fallback)))
     value))
 
 (defun set-face-property (face property value &optional locale tag-set
@@ -473,25 +463,40 @@ Normally DOMAIN will be a window or nil (meaning the selected window),
   and an instance object describing how the font appears in that
   particular window and buffer will be returned.
 
+CHARSET is a Mule charset (meaning return the font used for that charset) or
+nil (meaning return the font used for ASCII.)
+
 See `face-property-instance' for more information."
-  (if charset
-      (face-property-matching-instance face 'font charset domain)
-    (face-property-instance face 'font domain)))
+  (if (null charset)
+      (face-property-instance face 'font domain)
+    (let (matchspec)
+      ;; get-charset signals an error if its argument doesn't have an
+      ;; associated charset.
+      (setq charset (get-charset charset)
+	    matchspec (cons charset nil))
+      (or (null (setcdr matchspec 'initial))
+	  (face-property-matching-instance 
+	   face 'font matchspec domain)
+	  (null (setcdr matchspec 'final))
+	  (face-property-matching-instance
+	   face 'font matchspec domain)))))
 
 (defun set-face-font (face font &optional locale tag-set how-to-add)
   "Change the font of FACE to FONT in LOCALE.
 
 FACE may be either a face object or a symbol representing a face.
 
-FONT should be an instantiator (see `make-font-specifier'), a list of
-  instantiators, an alist of specifications (each mapping a
-  locale to an instantiator list), or a font specifier object.
+FONT should be an instantiator (see `make-font-specifier'; a common
+  instantiator is a platform-dependent string naming the font), a list
+  of instantiators, an alist of specifications (each mapping a locale
+  to an instantiator list), or a font specifier object.
 
-If FONT is an alist, LOCALE must be omitted.  If FONT is a
-  specifier object, LOCALE can be a locale, a locale type, `all',
-  or nil; see `copy-specifier' for its semantics.  Otherwise LOCALE
-  specifies the locale under which the specified instantiator(s)
-  will be added, and defaults to `global'.
+If FONT is an alist, LOCALE must be omitted.  If FONT is a specifier
+  object, LOCALE can be a locale, a locale type, `all', or nil; see
+  `copy-specifier' for its semantics.  Common LOCALEs are buffer
+  objects, window objects, device objects and `global'.  Otherwise
+  LOCALE specifies the locale under which the specified
+  instantiator(s) will be added, and defaults to `global'.
 
 See `set-face-property' for more information."
   (interactive (face-interactive "font"))

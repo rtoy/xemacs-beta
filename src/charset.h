@@ -58,6 +58,8 @@ Boston, MA 02111-1307, USA.  */
   (byte1) = (ch);					\
   (byte2) = 0;						\
 } while (0)
+#define XCHARSET_CCL_PROGRAM(cs) Qnil
+#define XCHARSET_NAME(cs) Qascii
 
 #else /* MULE */
 
@@ -186,7 +188,7 @@ struct Lisp_Charset
   int id;
   Lisp_Object name;
   Lisp_Object doc_string;
-  Lisp_Object registry;
+  Lisp_Object registries;
   Lisp_Object short_name;
   Lisp_Object long_name;
 
@@ -271,7 +273,7 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define CHARSET_DIRECTION(cs)	 ((cs)->direction)
 #define CHARSET_FINAL(cs)	 ((cs)->final)
 #define CHARSET_DOC_STRING(cs)	 ((cs)->doc_string)
-#define CHARSET_REGISTRY(cs)	 ((cs)->registry)
+#define CHARSET_REGISTRIES(cs)	 ((cs)->registries)
 #define CHARSET_CCL_PROGRAM(cs)  ((cs)->ccl_program)
 #define CHARSET_DIMENSION(cs)	 ((cs)->dimension)
 #define CHARSET_CHARS(cs)	 ((cs)->chars)
@@ -279,7 +281,6 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define CHARSET_TO_UNICODE_TABLE(cs) ((cs)->to_unicode_table)
 #define CHARSET_FROM_UNICODE_TABLE(cs) ((cs)->from_unicode_table)
 #define CHARSET_FROM_UNICODE_LEVELS(cs) ((cs)->from_unicode_levels)
-
 
 #define CHARSET_PRIVATE_P(cs) leading_byte_private_p (CHARSET_LEADING_BYTE (cs))
 
@@ -295,11 +296,12 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define XCHARSET_DIRECTION(cs)	  CHARSET_DIRECTION    (XCHARSET (cs))
 #define XCHARSET_FINAL(cs)	  CHARSET_FINAL        (XCHARSET (cs))
 #define XCHARSET_DOC_STRING(cs)	  CHARSET_DOC_STRING   (XCHARSET (cs))
-#define XCHARSET_REGISTRY(cs)	  CHARSET_REGISTRY     (XCHARSET (cs))
+#define XCHARSET_REGISTRIES(cs)	  CHARSET_REGISTRIES     (XCHARSET (cs))
 #define XCHARSET_LEADING_BYTE(cs) CHARSET_LEADING_BYTE (XCHARSET (cs))
 #define XCHARSET_CCL_PROGRAM(cs)  CHARSET_CCL_PROGRAM  (XCHARSET (cs))
 #define XCHARSET_DIMENSION(cs)	  CHARSET_DIMENSION    (XCHARSET (cs))
 #define XCHARSET_CHARS(cs)	  CHARSET_CHARS        (XCHARSET (cs))
+
 #define XCHARSET_PRIVATE_P(cs)	  CHARSET_PRIVATE_P    (XCHARSET (cs))
 #define XCHARSET_REVERSE_DIRECTION_CHARSET(cs) \
   CHARSET_REVERSE_DIRECTION_CHARSET (XCHARSET (cs))

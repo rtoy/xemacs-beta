@@ -2182,7 +2182,8 @@ mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 
 static Lisp_Object
 mswindows_find_charset_font (Lisp_Object device, Lisp_Object font,
-			     Lisp_Object charset, int stage)
+			     Lisp_Object charset,
+			     enum font_specifier_matchspec_stages stage)
 {
   Lisp_Object fontlist, fonttail;
 

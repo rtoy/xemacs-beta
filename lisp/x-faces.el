@@ -782,7 +782,28 @@ Otherwise, it returns the next larger version of this font that is defined."
 	;; globally.  This means we should override global
 	;; defaults for all X device classes.
 	(remove-specifier (face-font face) locale x-tag-set nil))
-      (set-face-font face fn locale 'x append))
+      (set-face-font face fn locale 'x append)
+      ;
+      ; (debug-print "the face is %s, locale %s, specifier %s"
+      ;	       face locale (face-font face))
+      ;
+      ;; And retain some of the fallbacks in the generated default face,
+      ;; since we don't want to try andale-mono's ISO-10646-1 encoding for
+      ;; Amharic or Thai. This is fragile; it depends on the code in
+      ;; faces.c.
+      (dolist (assocked '((x encode-as-utf-8 initial)
+			  (x two-dimensional initial)
+			  (x one-dimensional final)
+			  (x two-dimensional final)))
+	(when (and (specifierp (face-font face))
+		   (consp (specifier-fallback (face-font face)))
+		   (setq assocked 
+			 (assoc assocked 
+				(specifier-fallback
+				 (face-font face)))))
+	  (set-face-font face (cdr assocked) locale
+			 (nreverse (car assocked)) append))))
+		     
     ;; Kludge-o-rooni.  Set the foreground and background resources for
     ;; X devices only -- otherwise things tend to get all messed up
     ;; if you start up an X frame and then later create a TTY frame.

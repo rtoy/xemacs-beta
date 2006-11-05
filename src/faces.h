@@ -25,6 +25,7 @@ Boston, MA 02111-1307, USA.  */
 #define INCLUDED_faces_h_
 
 #include "charset.h" /* for NUM_LEADING_BYTES */
+#include "specifier.h"
 
 /* a Lisp_Face is the C object corresponding to a face.  There is one
    of these per face.  It basically contains all of the specifiers for
@@ -181,8 +182,8 @@ struct face_cachel
 
   /* Used when merging to tell if the above field represents an actual
      value of this face or a fallback value. */
-  /* #### Of course we should use a bit array or something. */
-  unsigned char font_specified[NUM_LEADING_BYTES];
+  DECLARE_INLINE_LISP_BIT_VECTOR(NUM_LEADING_BYTES) font_specified;
+
   unsigned int foreground_specified :1;
   unsigned int background_specified :1;
   unsigned int display_table_specified :1;
@@ -223,8 +224,13 @@ struct face_cachel
      storing a "blank font" if the instantiation fails. */
   unsigned int dirty :1;
   unsigned int updated :1;
-  /* #### Of course we should use a bit array or something. */
-  unsigned char font_updated[NUM_LEADING_BYTES];
+
+  DECLARE_INLINE_LISP_BIT_VECTOR(NUM_LEADING_BYTES) font_updated; 
+
+  /* Whether the font for the charset in question was determined in the
+     "final stage"; that is, the last stage Lisp code could specify it,
+     after the initial stage and before the fallback. */ 
+  DECLARE_INLINE_LISP_BIT_VECTOR(NUM_LEADING_BYTES) font_final_stage; 
 };
 
 #ifdef NEW_GC
@@ -303,6 +309,13 @@ void default_face_height_and_width_1 (Lisp_Object domain,
 #define FACE_CACHEL_FONT(cachel, charset) \
   (cachel->font[XCHARSET_LEADING_BYTE (charset) - MIN_LEADING_BYTE])
 
+#define FACE_CACHEL_FONT_UPDATED(x)			\
+  ((struct Lisp_Bit_Vector *)(&((x)->font_updated)))
+#define FACE_CACHEL_FONT_SPECIFIED(x)			\
+  ((struct Lisp_Bit_Vector *)(&((x)->font_specified)))
+#define FACE_CACHEL_FONT_FINAL_STAGE(x)			\
+  ((struct Lisp_Bit_Vector *)(&((x)->font_final_stage)))
+
 #define WINDOW_FACE_CACHEL(window, index) \
   Dynarr_atp ((window)->face_cachels, index)
 
@@ -352,13 +365,15 @@ void default_face_height_and_width_1 (Lisp_Object domain,
   FACE_PROPERTY_INSTANCE_1 (face, property, domain, ERROR_ME_DEBUG_WARN, \
 			    no_fallback, depth)
 
-Lisp_Object face_property_matching_instance (Lisp_Object face,
-					     Lisp_Object property,
-					     Lisp_Object charset,
-					     Lisp_Object domain,
-					     Error_Behavior errb,
-					     int no_fallback,
-					     Lisp_Object depth);
+Lisp_Object face_property_matching_instance
+			(Lisp_Object face,
+			 Lisp_Object property,
+			 Lisp_Object charset,
+			 Lisp_Object domain,
+			 Error_Behavior errb,
+			 int no_fallback,
+			 Lisp_Object depth,
+			 enum font_specifier_matchspec_stages stages);
 
 #define FACE_PROPERTY_SPEC_LIST(face, property, locale)			\
   Fspecifier_spec_list (FACE_PROPERTY_SPECIFIER (face, property),	\
@@ -373,7 +388,8 @@ Lisp_Object face_property_matching_instance (Lisp_Object face,
   FACE_PROPERTY_INSTANCE (face, Qbackground, domain, 0, Qzero)
 #define FACE_FONT(face, domain, charset)				\
   face_property_matching_instance (face, Qfont, charset, domain,	\
-				   ERROR_ME_DEBUG_WARN, 0, Qzero)
+				   ERROR_ME_DEBUG_WARN, 0, Qzero,	\
+				   initial)
 #define FACE_DISPLAY_TABLE(face, domain)				\
   FACE_PROPERTY_INSTANCE (face, Qdisplay_table, domain, 0, Qzero)
 #define FACE_BACKGROUND_PIXMAP(face, domain)				\

@@ -36,7 +36,7 @@
 	      "ASCII (left half of ISO 8859-1) with right-to-left direction"
 	      '(dimension
 		1
-		registry "ISO8859-1"
+		registries ["ISO8859-1"]
 		chars 94
 		columns 1
 		direction r2l

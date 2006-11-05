@@ -37,12 +37,17 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-x-impl.h"
 #include "objects-x-impl.h"
+#include "elhash.h"
 
 #ifdef USE_XFT
 #include "font-mgr.h"
 #endif
 
 int x_handle_non_fully_specified_fonts;
+
+#ifdef DEBUG_XEMACS 
+Fixnum debug_x_objects;
+#endif /* DEBUG_XEMACS */
 
 
 /************************************************************************/
@@ -205,74 +210,6 @@ x_color_list (void)
 /*                           font instances                             */
 /************************************************************************/
 
-#ifdef USE_XFT
-/* #### all these #defines should probably move to font-mgr.h */
-
-/*
-  The format of a fontname (as returned by fontconfig) is not well-documented,
-  But the character repertoire is represented in an ASCII-compatible way.  See
-  fccharset.c (FcCharSetUnparse).  So we can use UTF-8 for long names.
-
-  Currently we have a hack where different versions of the unparsed name are
-  used in different contexts fairly arbitrarily.  I don't think this is close
-  to coherency; even without the charset and lang properties fontconfig names
-  are too unwieldy to use.  We need to rethink the approach here.  I think
-  probably Lisp_Font_Instance.name should contain the font name as specified
-  to Lisp (almost surely much shorter than shortname, even, and most likely
-  wildcarded), while Lisp_Font_Instance.truename should contain the longname.
-  For now, I'm going to #ifdef the return values defaulting to short. -- sjt
-*/
-
-/*                DEBUGGING STUFF                */
-
-/* print message to stderr: one internal-format string argument */
-#define DEBUG_XFT0(level,s)		\
-  if (debug_xft > level) stderr_out (s)
-
-/* print message to stderr: one formatted argument */
-#define DEBUG_XFT1(level,format,x1)		\
-  if (debug_xft > level) stderr_out (format, x1)
-
-/* print message to stderr: two formatted arguments */
-#define DEBUG_XFT2(level,format,x1,x2)			\
-  if (debug_xft > level) stderr_out (format, x1, x2)
-
-/* print message to stderr: three formatted arguments */
-#define DEBUG_XFT3(level,format,x1,x2,x3)			\
-  if (debug_xft > level) stderr_out (format, x1, x2, x3)
-
-/* print message to stderr: four formatted arguments */
-#define DEBUG_XFT4(level,format,x1,x2,x3,x4)			\
-  if (debug_xft > level) stderr_out (format, x1, x2, x3, x4)
-
-/* print an Xft pattern to stderr
-   LEVEL is the debug level (to compare to debug_xft)
-   FORMAT is a newline-terminated printf format with one %s for the pattern
-     and must be internal format (eg, pure ASCII)
-   PATTERN is an FcPattern *. */
-#define PRINT_XFT_PATTERN(level,format,pattern)			\
-  do {								\
-    DECLARE_EISTRING (eistrpxft_name);				\
-    Extbyte *name = (Extbyte *) FcNameUnparse (pattern);	\
-								\
-    eicpy_ext(eistrpxft_name, name, Qfc_font_name_encoding);	\
-    DEBUG_XFT1 (level, format, eidata(eistrpxft_name));		\
-    free (name);						\
-  } while (0)
-
-/* print a progress message
-   LEVEL is the debug level (to compare to debug_xft)
-   FONT is the Xft font name in UTF-8 (the native encoding of Xft)
-   LANG is the language being checked for support (must be ASCII). */
-#define CHECKING_LANG(level,font,lang)					\
-  do {									\
-    DECLARE_EISTRING (eistrcl_name);					\
-    eicpy_ext(eistrcl_name, (Extbyte *) font, Qfc_font_name_encoding);	\
-    DEBUG_XFT2 (level, "checking if %s handles %s\n",			\
-			eidata(eistrcl_name), lang);			\
-  } while (0)
-
-#endif /* USE_XFT */
 
 static int
 x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object UNUSED (name),
@@ -299,6 +236,12 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object UNUSED (name),
   rf = xft_open_font_by_name (dpy, extname);
 #endif
   LISP_STRING_TO_EXTERNAL (f->name, extname, Qx_font_name_encoding);
+  /* With XFree86 4.0's fonts, XListFonts returns an entry for
+     -isas-fangsong ti-medium-r-normal--16-160-72-72-c-160-gb2312.1980-0 but
+     an XLoadQueryFont on the corresponding XLFD returns NULL.
+
+     XListFonts is not trustworthy (of course, this is news to exactly
+     no-one used to reading XEmacs source.) */
   fs = XLoadQueryFont (dpy, extname);
       
   if (!fs && !rf)
@@ -461,9 +404,13 @@ x_print_font_instance (Lisp_Font_Instance *f,
 		       Lisp_Object printcharfun,
 		       int UNUSED (escapeflag))
 {
+  /* We should print information here about initial vs. final stages; we
+     can't rely on the device charset stage cache for that,
+     unfortunately. */
   if (FONT_INSTANCE_X_FONT (f))
-    write_fmt_string (printcharfun, " font id: 0x%lx",
-		      (unsigned long) FONT_INSTANCE_X_FONT (f)->fid);
+      write_fmt_string (printcharfun, " font id: 0x%lx,",
+			(unsigned long) FONT_INSTANCE_X_FONT (f)->fid);
+
 #ifdef USE_XFT
   /* #### What should we do here?  For now, print the address. */
   if (FONT_INSTANCE_X_XFTFONT (f))
@@ -944,534 +891,9 @@ x_font_list (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
   return result;
 }
 
-#ifdef MULE
-
-static int
-x_font_spec_matches_charset (struct device * USED_IF_XFT (d),
-			     Lisp_Object charset,
-			     const Ibyte *nonreloc, Lisp_Object reloc,
-			     Bytecount offset, Bytecount length,
-			     int stage)
-{
-  if (stage)
-#ifdef USE_XFT
-    {
-      Display *dpy = DEVICE_X_DISPLAY (d);
-      Extbyte *extname;
-      XftFont *rf;
-      const Ibyte *the_nonreloc;
-
-      if (!NILP(reloc))
-	{
-	  the_nonreloc = XSTRING_DATA (reloc);
-	  LISP_STRING_TO_EXTERNAL (reloc, extname, Qx_font_name_encoding);
-	  rf = xft_open_font_by_name (dpy, extname);
-	  return 0;	 /* #### maybe this will compile and run ;) */
-	}
-    }
-#else
-    return 0;
-#endif
-
-  if (UNBOUNDP (charset))
-    return 1;
-  /* Hack! Short font names don't have the registry in them,
-     so we just assume the user knows what they're doing in the
-     case of ASCII.  For other charsets, you gotta give the
-     long form; sorry buster.
-     #### FMH: this screws fontconfig/Xft?
-     STRATEGY: use fontconfig's ability to hack languages and character
-     sets (lang and charset properties).
-     #### Maybe we can use the fontconfig model to eliminate the difference
-     between faces and fonts?  No - it looks like that would be an abuse
-     (fontconfig doesn't know about colors, although Xft does).
-     */
-  if (EQ (charset, Vcharset_ascii))
-    {
-      const Ibyte *the_nonreloc = nonreloc;
-      int i;
-      Bytecount the_length = length;
-
-      if (!the_nonreloc)
-	the_nonreloc = XSTRING_DATA (reloc);
-      fixup_internal_substring (nonreloc, reloc, offset, &the_length);
-      the_nonreloc += offset;
-      if (!memchr (the_nonreloc, '*', the_length))
-	{
-	  for (i = 0;; i++)
-	    {
-	      const Ibyte *new_nonreloc = (const Ibyte *)
-		memchr (the_nonreloc, '-', the_length);
-	      if (!new_nonreloc)
-		break;
-	      new_nonreloc++;
-	      the_length -= new_nonreloc - the_nonreloc;
-	      the_nonreloc = new_nonreloc;
-	    }
-
-	  /* If it has less than 5 dashes, it's a short font.
-	     Of course, long fonts always have 14 dashes or so, but short
-	     fonts never have more than 1 or 2 dashes, so this is some
-	     sort of reasonable heuristic. */
-	  if (i < 5)
-	    return 1;
-	}
-    }
-
-  return (fast_string_match (XCHARSET_REGISTRY (charset),
-			     nonreloc, reloc, offset, length, 1,
-			     ERROR_ME, 0) >= 0);
-}
-
-#ifdef USE_XFT
-/* #### debug functions: find a better place for us */
-const char *FcResultToString (FcResult r);
-const char *
-FcResultToString (FcResult r)
-{
-  static char buffer[256];
-  switch (r)
-    {
-    case FcResultMatch:
-      return "FcResultMatch";
-    case FcResultNoMatch:
-      return "FcResultNoMatch";
-    case FcResultTypeMismatch:
-      return "FcResultTypeMismatch";
-    case FcResultNoId:
-      return "FcResultNoId";
-    default:
-      snprintf (buffer, 255, "FcResultUndocumentedValue (%d)", r);
-      return buffer;
-    }
-}
-
-const char *FcTypeOfValueToString (FcValue v);
-const char *
-FcTypeOfValueToString (FcValue v)
-{
-  static char buffer[256];
-  switch (v.type)
-    {
-    case FcTypeMatrix:
-      return "FcTypeMatrix";
-    case FcTypeString:
-      return "FcTypeString";
-    case FcTypeVoid:
-      return "FcTypeVoid";
-    case FcTypeDouble:
-      return "FcTypeDouble";
-    case FcTypeInteger:
-      return "FcTypeInteger";
-    case FcTypeBool:
-      return "FcTypeBool";
-    case FcTypeCharSet:
-      return "FcTypeCharSet";
-    case FcTypeLangSet:
-      return "FcTypeLangSet";
-    /* #### There is no union member of this type, but there are void* and
-       FcPattern* members, as of fontconfig.h FC_VERSION 10002 */
-    case FcTypeFTFace:
-      return "FcTypeFTFace";
-    default:
-      snprintf (buffer, 255, "FcTypeUndocumentedType (%d)", v.type);
-      return buffer;
-    }
-}
-
-static FcCharSet *
-mule_to_fc_charset (Lisp_Object cs)
-{
-  int ucode, i, j;
-  FcCharSet *fccs;
-
-  CHECK_CHARSET (cs);
-  fccs = FcCharSetCreate ();
-  /* #### do we also need to deal with 94 vs. 96 charsets?
-     ie, how are SP and DEL treated in ASCII?  non-graphic should return -1 */
-  if (1 == XCHARSET_DIMENSION (cs))
-    /* Unicode tables are indexed by offsets from ASCII SP, not by ASCII */
-    for (i = 0; i < 96; i++)
-      {
-	ucode = ((int *) XCHARSET_TO_UNICODE_TABLE (cs))[i];
-	if (ucode >= 0)
-	  /* #### should check for allocation failure */
-	  FcCharSetAddChar (fccs, (FcChar32) ucode);
-      }
-  else if (2 == XCHARSET_DIMENSION (cs))
-    /* Unicode tables are indexed by offsets from ASCII SP, not by ASCII */
-    for (i = 0; i < 96; i++)
-      for (j = 0; j < 96; j++)
-      {
-	ucode = ((int **) XCHARSET_TO_UNICODE_TABLE (cs))[i][j];
-	if (ucode >= 0)
-	  /* #### should check for allocation failure */
-	  FcCharSetAddChar (fccs, (FcChar32) ucode);
-      }
-  else
-    {
-      FcCharSetDestroy (fccs);
-      fccs = NULL;
-    }
-  return fccs;
-}
-
-struct charset_reporter {
-  Lisp_Object *charset;
-  /* This is a debug facility, require ASCII. */
-  Extbyte *language;		/* ASCII, please */
-  /* Technically this is FcChar8, but fsckin' GCC 4 bitches. */
-  Extbyte *rfc3066;		/* ASCII, please */
-};
-
-static struct charset_reporter charset_table[] =
-  {
-    /* #### It's my branch, my favorite charsets get checked first!
-       That's a joke, Son.
-       Ie, I don't know what I'm doing, so my charsets first is as good as
-       any other arbitrary order.  If you have a better idea, speak up! */
-    { &Vcharset_ascii, "English", "en" },
-    { &Vcharset_japanese_jisx0208, "Japanese", "ja" },
-    { &Vcharset_japanese_jisx0212, "Japanese", "ja" },
-    { &Vcharset_katakana_jisx0201, "Japanese", "ja" },
-    { &Vcharset_latin_jisx0201, "Japanese", "ja" },
-    { &Vcharset_japanese_jisx0208_1978, "Japanese", "ja" },
-    { &Vcharset_greek_iso8859_7, "Greek", "el" },
-    /* #### all the Chinese need checking
-       Damn the blood-sucking ISO anyway. */
-    { &Vcharset_chinese_gb2312, "simplified Chinese", "zh-CN" },
-    { &Vcharset_korean_ksc5601, "Korean", "ko" },
-    { &Vcharset_chinese_cns11643_1, "traditional Chinese", "zh-TW" },
-    { &Vcharset_chinese_cns11643_2, "traditional Chinese", "zh-TW" },
-    { &Vcharset_latin_iso8859_1, NULL, NULL },
-    { &Vcharset_latin_iso8859_2, NULL, NULL },
-    { &Vcharset_latin_iso8859_3, NULL, NULL },
-    { &Vcharset_latin_iso8859_4, NULL, NULL },
-    { &Vcharset_latin_iso8859_9, NULL, NULL },
-    { &Vcharset_latin_iso8859_15, NULL, NULL },
-    { &Vcharset_thai_tis620, NULL, NULL },
-    { &Vcharset_arabic_iso8859_6, NULL, NULL },
-    { &Vcharset_hebrew_iso8859_8, "Hebrew", "he" },
-    { &Vcharset_cyrillic_iso8859_5, NULL, NULL },
-    /* #### these probably are not quite right */
-    { &Vcharset_chinese_big5_1, "traditional Chinese", "zh-TW" },
-    { &Vcharset_chinese_big5_2, "traditional Chinese", "zh-TW" },
-    { NULL, NULL, NULL }
-  };
-
-/* Choose appropriate font name for debug messages.
-   Use only in the top half of next function (enforced with #undef). */
-#define DECLARE_DEBUG_FONTNAME(__xemacs_name)          \
-  Eistring *__xemacs_name;                             \
-  do                                                   \
-    {	       					       \
-      __xemacs_name = debug_xft > 2 ? eistr_fullname   \
-                      : debug_xft > 1 ? eistr_longname \
-                      : eistr_shortname;               \
-    } while (0)
-
-#endif /* USE_XFT */
-
-/* find a font spec that matches font spec FONT and also matches
-   (the registry of) CHARSET. */
-static Lisp_Object
-x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
-		     int stage)
-{
-  Extbyte **names;
-  int count = 0;
-  const Extbyte *patternext;
-  Lisp_Object result = Qnil;
-  int i;
-
-  /* #### with Xft need to handle second stage here -- sjt
-     Hm.  Or maybe not.  That would be cool. :-) */
-  if (stage)
-    return Qnil;
-
-#ifdef USE_XFT
-  /* Fontconfig converts all FreeType names to UTF-8 before passing them
-     back to callers---see fcfreetype.c (FcFreeTypeQuery).
-     I don't believe this is documented.  */
-
-  DEBUG_XFT1 (1, "confirming charset for font instance %s\n", 
-	      XSTRING_DATA(font));
-
-  /* #### this looks like a fair amount of work, but the basic design
-     has never been rethought, and it should be
-
-     what really should happen here is that we use FcFontSort (FcFontList?)
-     to get a list of matching fonts, then pick the first (best) one that
-     gives language or repertoire coverage.
-  */
-
-  FcInit ();			/* No-op if already initialized.
-				   In fontconfig 2.3.2, this cannot return
-				   failure, but that looks like a bug.  We
-				   check for it with FcGetCurrentConfig(),
-				   which *can* fail. */
-  if (!FcConfigGetCurrent())	/* #### We should expose FcInit* interfaces
-				   to LISP and decide when to reinitialize
-				   intelligently. */
-    stderr_out ("Failed fontconfig initialization\n");
-  else
-    {
-      FcPattern *fontxft;	/* long-lived, freed at end of this block */
-      FcResult fcresult;
-      FcConfig *fcc;
-      FcChar8 *lang = (FcChar8 *) "en";	/* #### fix this bogus hack! */
-      FcCharSet *fccs = NULL;
-      DECLARE_EISTRING (eistr_shortname); /* user-friendly nickname */
-      DECLARE_EISTRING (eistr_longname);  /* omit FC_LANG and FC_CHARSET */
-      DECLARE_EISTRING (eistr_fullname);  /* everything */
-
-      LISP_STRING_TO_EXTERNAL (font, patternext, Qfc_font_name_encoding);
-      fcc = FcConfigGetCurrent ();
-
-      /* parse the name, do the substitutions, and match the font */
-
-      {
-	FcPattern *p = FcNameParse ((FcChar8 *) patternext);
-	PRINT_XFT_PATTERN (3, "FcNameParse'ed name is %s\n", p);
-	/* #### Next two return FcBool, but what does the return mean? */
-	/* The order is correct according the fontconfig docs. */
-	FcConfigSubstitute (fcc, p, FcMatchPattern);
-	PRINT_XFT_PATTERN (2, "FcConfigSubstitute'ed name is %s\n", p);
-	FcDefaultSubstitute (p);
-	PRINT_XFT_PATTERN (3, "FcDefaultSubstitute'ed name is %s\n", p);
-	/* #### check fcresult of following match? */
-	fontxft = FcFontMatch (fcc, p, &fcresult);
-	/* this prints the long fontconfig name */
-	PRINT_XFT_PATTERN (1, "FcFontMatch'ed name is %s\n", fontxft);
-	FcPatternDestroy (p);
-      }
-
-      /* heuristic to give reasonable-length names for debug reports
-
-         I considered #ifdef SUPPORT_FULL_FONTCONFIG_NAME etc but that's
-	 pointless.  We're just going to remove this code once the font/
-	 face refactoring is done, but until then it could be very useful.
-      */
-      {
-	FcPattern *p = FcFontRenderPrepare (fcc, fontxft, fontxft);
-	FcChar8 *name;
-
-	/* full name, including language coverage and repertoire */
-	name = FcNameUnparse (p);
-	eicpy_ext (eistr_fullname, (Extbyte *) name, Qfc_font_name_encoding);
-	free (name);
-
-	/* long name, omitting coverage and repertoire, plus a number
-	   of rarely useful properties */
-	FcPatternDel (p, FC_CHARSET);
-	FcPatternDel (p, FC_LANG);
-	FcPatternDel (p, FC_WIDTH);
-	FcPatternDel (p, FC_SPACING);
-	FcPatternDel (p, FC_HINTING);
-	FcPatternDel (p, FC_VERTICAL_LAYOUT);
-	FcPatternDel (p, FC_AUTOHINT);
-	FcPatternDel (p, FC_GLOBAL_ADVANCE);
-	FcPatternDel (p, FC_INDEX);
-	FcPatternDel (p, FC_SCALE);
-	FcPatternDel (p, FC_FONTVERSION);
-	name = FcNameUnparse (p);
-	eicpy_ext (eistr_longname, (Extbyte *) name, Qfc_font_name_encoding);
-	free (name);
-
-	/* nickname, just family and size, but
-	   "family" names usually have style, slant, and weight */
-	FcPatternDel (p, FC_FOUNDRY);
-	FcPatternDel (p, FC_STYLE);
-	FcPatternDel (p, FC_SLANT);
-	FcPatternDel (p, FC_WEIGHT);
-	FcPatternDel (p, FC_PIXEL_SIZE);
-	FcPatternDel (p, FC_OUTLINE);
-	FcPatternDel (p, FC_SCALABLE);
-	FcPatternDel (p, FC_DPI);
-	name = FcNameUnparse (p);
-	eicpy_ext (eistr_shortname, (Extbyte *) name, Qfc_font_name_encoding);
-	free (name);
-
-	FcPatternDestroy (p);
-      }
-
-      /* The language approach may better in the long run, but we can't use
-	 it based on Mule charsets; fontconfig doesn't provide a way to test
-	 for unions of languages, etc.  That will require support from the
-	 text module.
-
-	 Optimization:  cache the generated FcCharSet in the Mule charset.
-         Don't forget to destroy it if the Mule charset gets deallocated. */
-
-      {
-	/* This block possibly should be a function, but it generates
-	   multiple values.  I find the "pass an address to return the
-	   value in" idiom opaque, so prefer a block. */
-	struct charset_reporter *cr;
-	for (cr = charset_table;
-	     cr->charset && !EQ (*(cr->charset), charset);
-	     cr++)
-	  ;
-
-	if (cr->rfc3066)
-	  {
-	    DECLARE_DEBUG_FONTNAME (name);
-	    CHECKING_LANG (0, eidata(name), cr->language);
-	    lang = (FcChar8 *) cr->rfc3066;
-	  }
-	else if (cr->charset)
-	  {
-	    /* what the hey, build 'em on the fly */
-	    /* #### in the case of error this could return NULL! */
-	    fccs = mule_to_fc_charset (charset);
-	    lang = (FcChar8 *) XSTRING_DATA (XSYMBOL
-					     (XCHARSET_NAME (charset))-> name);
-	  }
-	else
-	  {
-	    /* OK, we fell off the end of the table */
-	    warn_when_safe_lispobj (intern ("xft"), intern ("alert"),
-				    list2 (build_string ("unchecked charset"),
-					   charset));
-	    /* default to "en"
-	       #### THIS IS WRONG, WRONG, WRONG!!
-	       It is why we never fall through to XLFD-checking. */
-	  }
-
-	ASSERT_ASCTEXT_ASCII((Extbyte *) lang);
-      }
-
-      if (fccs)
-	{
-	  /* check for character set coverage */
-	  int i = 0;
-	  FcCharSet *v;
-	  FcResult r = FcPatternGetCharSet (fontxft, FC_CHARSET, i, &v);
-
-	  if (r == FcResultTypeMismatch)
-	    {
-	      DEBUG_XFT0 (0, "Unexpected type return in charset value\n");
-	      result = Qnil;
-	    }
-	  else if (r == FcResultMatch && FcCharSetIsSubset (fccs, v))
-	    {
-	      /* The full pattern with the bitmap coverage is massively
-		 unwieldy, but the shorter names are's just *wrong*.  We
-		 should have the full thing internally as truename, and
-		 filter stuff the client doesn't want to see on output.
-		 Should we just store it into the truename right here? */
-	      DECLARE_DEBUG_FONTNAME (name);
-	      DEBUG_XFT2 (0, "Xft font %s supports %s\n",
-			  eidata(name), lang);
-#ifdef RETURN_LONG_FONTCONFIG_NAMES
-	      result = eimake_string(eistr_fullname);
-#else
-	      result = eimake_string(eistr_longname);
-#endif
-	    }
-	  else
-	    {
-	      DECLARE_DEBUG_FONTNAME (name);
-	      DEBUG_XFT2 (0, "Xft font %s doesn't support %s\n",
-			  eidata(name), lang);
-	      result = Qnil;
-	    }
-
-	  /* clean up */
-	  FcCharSetDestroy (fccs);
-	}
-      else
-	{
-	  /* check for language coverage */
-	  int i = 0;
-	  FcValue v;
-	  /* the main event */
-	  FcResult r = FcPatternGet (fontxft, FC_LANG, i, &v);
-
-	  if (r == FcResultMatch)
-	    {
-	      if (v.type != FcTypeLangSet) /* excessive paranoia */
-		{
-		  ASSERT_ASCTEXT_ASCII(FcTypeOfValueToString(v));
-		  /* Urk!  Fall back and punt to core font. */
-		  DEBUG_XFT1 (0, "Unexpected type of lang value (%s)\n",
-			       FcTypeOfValueToString (v));
-		  result = Qnil;
-		}
-	      else if (FcLangSetHasLang (v.u.l, lang) != FcLangDifferentLang)
-		{
-		  DECLARE_DEBUG_FONTNAME (name);
-		  DEBUG_XFT2 (0, "Xft font %s supports %s\n",
-			      eidata(name), lang);
-#ifdef RETURN_LONG_FONTCONFIG_NAMES
-		  result = eimake_string(eistr_fullname);
-#else
-		  result = eimake_string(eistr_longname);
-#endif
-		}
-	      else
-		{
-		  DECLARE_DEBUG_FONTNAME (name);
-		  DEBUG_XFT2 (0, "Xft font %s doesn't support %s\n",
-			      eidata(name), lang);
-		  result = Qnil;
-		}
-	    }
-	  else
-	    {
-	      ASSERT_ASCTEXT_ASCII(FcResultToString(r));
-	      DEBUG_XFT1 (0, "Getting lang: unexpected result=%s\n",
-			  FcResultToString (r));
-	      result = Qnil;
-	    }
-	}
-
-      /* clean up and maybe return */
-      FcPatternDestroy (fontxft);
-      if (!UNBOUNDP (result))
-	return result;
-    }
-
-  DEBUG_XFT1 (0, "shit happens, try X11 charset match for %s\n", 
-	      XSTRING_DATA(font));
-#undef DECLARE_DEBUG_FONTNAME
-#endif /* USE_XFT */
-
-  LISP_STRING_TO_EXTERNAL (font, patternext, Qx_font_name_encoding);
-  names = XListFonts (DEVICE_X_DISPLAY (XDEVICE (device)),
-		      patternext, MAX_FONT_COUNT, &count);
-  /* #### This code seems awfully bogus -- mrb */
-  /* #### fontconfig does it better -- sjt */
-  for (i = 0; i < count; i ++)
-    {
-      const Ibyte *intname;
-      Bytecount intlen;
-
-      TO_INTERNAL_FORMAT (C_STRING, names[i],
-			  ALLOCA, (intname, intlen),
-			  Qx_font_name_encoding);
-      if (x_font_spec_matches_charset (XDEVICE (device), charset,
-				       intname, Qnil, 0, -1, 0))
-	{
-	  result = build_ext_string ((const Extbyte *) intname, 
-				     Qx_font_name_encoding); 
-	  break;
-	}
-    }
-
-  if (names)
-    XFreeFontNames (names);
-
-  /* Check for a short font name. */
-  if (NILP (result)
-      && x_font_spec_matches_charset (XDEVICE (device), charset, 0,
-				      font, 0, -1, 0))
-    return font;
-
-  return result;
-}
-
-#endif /* MULE */
+/* Include the charset support, shared, for the moment, with GTK.  */
+#define THIS_IS_X
+#include "objects-xlike-inc.c"
 
 
 /************************************************************************/
@@ -1512,6 +934,13 @@ console_type_create_objects_x (void)
 void
 vars_of_objects_x (void)
 {
+#ifdef DEBUG_XEMACS
+  DEFVAR_INT ("debug-x-objects", &debug_x_objects /*
+If non-zero, display debug information about X objects
+*/ );
+  debug_x_objects = 0;
+#endif
+
   DEFVAR_BOOL ("x-handle-non-fully-specified-fonts",
 	       &x_handle_non_fully_specified_fonts /*
 If this is true then fonts which do not have all characters specified

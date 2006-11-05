@@ -41,9 +41,8 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "window.h"
 
-#ifdef MULE
 #include "mule-ccl.h"
-#endif
+#include "charset.h"
 
 #include "console-x-impl.h"
 #include "glyphs-x.h"
@@ -154,138 +153,148 @@ struct textual_run
 static int
 separate_textual_runs (unsigned char *text_storage,
 		       struct textual_run *run_storage,
-		       const Ichar *str, Charcount len)
+		       const Ichar *str, Charcount len,
+		       struct face_cachel *cachel)
 {
   Lisp_Object prev_charset = Qunbound; /* not Qnil because that is a
 					  possible valid charset when
 					  MULE is not defined */
-  int runs_so_far = 0;
-  int i;
-#ifdef MULE
+  int runs_so_far = 0, i;
+  Ibyte charset_leading_byte = LEADING_BYTE_ASCII;
+  int dimension = 1, graphic = 0, need_ccl_conversion = 0;
+  Lisp_Object ccl_prog;
   struct ccl_program char_converter;
-  int need_ccl_conversion = 0;
-#endif
+
+#ifdef	USE_XFT
+#define translate_to_ucs_2 1	/* Translate to UTF-16 unconditionally. */
+#define MAYBE_ASSIGN_TRANSLATE_TO_UCS_2(arg) (void)(arg) /* Empty, 
+							      may avoid some 
+							      warnings. */
+#else	/* USE_XFT */
+#ifndef MULE
+#define translate_to_ucs_2 0	/* We don't support falling back to
+				   iso10646-1 without MULE */
+#define MAYBE_ASSIGN_TRANSLATE_TO_UCS_2(arg) (void)(arg)
+#else	/* if MULE */
+  int translate_to_ucs_2 = 0;
+#define MAYBE_ASSIGN_TRANSLATE_TO_UCS_2(arg) translate_to_ucs_2 = (arg)
+#endif	/* MULE */
+#endif	/* !USE_XFT */
 
   for (i = 0; i < len; i++)
     {
       Ichar ch = str[i];
       Lisp_Object charset;
-      int byte1, byte2;		/* #### why aren't these UExtbytes? */
-      int dimension;
-      int graphic;
-
+      int byte1, byte2;		/* Not UExbytes because BREAKUP_ICHAR takes
+				   the addresses of its arguments and
+				   dereferences those addresses as integer
+				   pointers. */
       BREAKUP_ICHAR (ch, charset, byte1, byte2);
-      dimension = XCHARSET_DIMENSION (charset);
-      graphic   = XCHARSET_GRAPHIC   (charset);
 
       if (!EQ (charset, prev_charset))
 	{
 	  run_storage[runs_so_far].ptr       = text_storage;
 	  run_storage[runs_so_far].charset   = charset;
-#ifdef USE_XFT
-	  run_storage[runs_so_far].dimension = 2;
-#else
-	  run_storage[runs_so_far].dimension = dimension;
-#endif
 
 	  if (runs_so_far)
 	    {
 	      run_storage[runs_so_far - 1].len =
 		text_storage - run_storage[runs_so_far - 1].ptr;
-	      if (run_storage[runs_so_far - 1].dimension == 2)
-		run_storage[runs_so_far - 1].len >>= 1;
+	      /* Checks the value for dimension from the previous run. */
+	      if (2 == dimension) run_storage[runs_so_far - 1].len >>= 1;
 	    }
-	  runs_so_far++;
-	  prev_charset = charset;
-#ifdef MULE
-	  {
-	    Lisp_Object ccl_prog = XCHARSET_CCL_PROGRAM (charset);
-	    if ((!NILP (ccl_prog))
-		  && (setup_ccl_program (&char_converter, ccl_prog) >= 0))
-	      need_ccl_conversion = 1;
-	  }
-#endif
-	}
 
-#ifndef USE_XFT
-      if (graphic == 0)
+	  charset_leading_byte = XCHARSET_LEADING_BYTE(charset);
+
+	  MAYBE_ASSIGN_TRANSLATE_TO_UCS_2
+	    (bit_vector_bit(FACE_CACHEL_FONT_FINAL_STAGE
+			    (cachel), 
+			    charset_leading_byte - MIN_LEADING_BYTE));
+
+	  if (translate_to_ucs_2)
+	    {
+	      dimension = 2;
+	      run_storage[runs_so_far].dimension = 2;
+	    }
+	  else
+	    {
+	      dimension = XCHARSET_DIMENSION (charset);
+	      run_storage[runs_so_far].dimension = dimension;
+#ifdef MULE
+	      ccl_prog = XCHARSET_CCL_PROGRAM (charset);
+	      if ((!NILP (ccl_prog))
+		  && (setup_ccl_program (&char_converter, ccl_prog) >= 0))
+		{
+		  need_ccl_conversion = 1;
+		}
+	      else 
+		{
+		  /* The graphic property is only relevant if we're neither
+		     doing the CCL conversion nor doing the UTF-16
+		     conversion; it's irrelevant otherwise. */
+		  graphic   = XCHARSET_GRAPHIC (charset);
+		  need_ccl_conversion = 0;
+		}
+#endif /* MULE */
+	    }
+	  prev_charset = charset;
+
+	  runs_so_far++;
+	} 
+
+      if (translate_to_ucs_2)
 	{
-	  byte1 &= 0x7F;
-	  byte2 &= 0x7F;
-	}
-      else if (graphic == 1)
-	{
-	  byte1 |= 0x80;
-	  byte2 |= 0x80;
+	  UINT_16_BIT ucs2;
+	  int ucs = ichar_to_unicode(ch);
+
+	  /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
+	     REPLACMENT CHARACTER. */
+	  ucs2 = (ucs & ~0xFFFF) ? 0xFFFD : ucs;
+
+	  /* Ignoring the "graphic" handling. */
+#ifdef USE_XFT
+	  byte1 = ((unsigned char *) (&ucs2))[0];
+	  byte2 = ((unsigned char *) (&ucs2))[1];
+#else
+	  byte1 = ((unsigned char *) (&ucs2))[1];
+	  byte2 = ((unsigned char *) (&ucs2))[0];
+#endif /* USE_XFT */
 	}
 #ifdef MULE
-      if (need_ccl_conversion)
+      else if (need_ccl_conversion)
 	{
-	  char_converter.reg[0] = XCHARSET_ID (charset);
+	  char_converter.reg[0] = charset_leading_byte;
 	  char_converter.reg[1] = byte1;
 	  char_converter.reg[2] = byte2;
 	  ccl_driver (&char_converter, 0, 0, 0, 0, CCL_MODE_ENCODING);
 	  byte1 = char_converter.reg[1];
 	  byte2 = char_converter.reg[2];
 	}
+      else if (graphic == 0)
+	{
+	  byte1 &= 0x7F;
+	  byte2 &= 0x7F;
+	}
+      else
+	{
+	  byte1 |= 0x80;
+	  byte2 |= 0x80;
+	}
 #endif /* MULE */
-      *text_storage++ = (unsigned char) byte1;
-      /* This dimension stuff is broken if you want to use a two-dimensional
-	 X11 font to display a single-dimensional character set, as is
-	 appropriate for the IPA (use one of the -iso10646-1 fonts) or some
-	 of the other non-standard character sets. */
-      if (dimension == 2)
-	*text_storage++ = (unsigned char) byte2;
-#else /* USE_XFT */
-      /* #### This is bogus as hell.  XftChar16, aka FcChar16, is actually
-	 unsigned short, and therefore is not suitable for indexing matrix
-	 fonts such as the JIS fonts supplied with X11.  But if this were
-	 consistent, the XftDraw*8 and XftDraw*16 functions are pretty
-	 incoherent, as then we not should allow anything but ISO 8859/1
-	 (ie, the first 256 code points of Unicode) in XftDraw*8.  So it
-	 looks like this depends on the font, not the charset. */
-      {
-	XftChar16 xftchar16 = 0xFFFD; /* unsigned short */
-#ifndef MULE
-	int unicode = ch;
-#else
-	int unicode = ichar_to_unicode (ch);
-	if (unicode < 0)
-	  /* abort(); */	  /* #### serious error, tables are corrupt
-	     Unfortunately, not a valid assumption; this can happen with
-	     composite characters.  Fake it. */
-	  unicode = 0xFFFD; /* REPLACEMENT CHARACTER, can't represent */
-	else if (need_ccl_conversion)
-	  /* #### maybe we should just ignore this and hope the font wins? */
-	  unicode = 0xFFFD; /* REPLACEMENT CHARACTER, can't represent */
-	else if (unicode > 65535)
-	  unicode = 0xFFFD; /* REPLACEMENT CHARACTER, can't represent */
-	else
-#endif
-	  xftchar16 = (XftChar16) unicode;
-	/* #### endianness dependency?  No,
-	   apparently xft handles endianness for us;
-	   the "big-endian" code works on Intel and PPC */
-#if 1
-	/* big-endian or auto-endian */
-	byte1 = ((unsigned char *) (&xftchar16))[0];
-	byte2 = ((unsigned char *) (&xftchar16))[1];
-#else
-	/* little-endian */
-	byte1 = ((unsigned char *) (&xftchar16))[1];
-	byte2 = ((unsigned char *) (&xftchar16))[0];
-#endif
-      }
-      *text_storage++ = (unsigned char) byte1;
-      *text_storage++ = (unsigned char) byte2;      
-#endif /* USE_XFT */
+
+      *text_storage++ = (unsigned char)byte1;
+
+      /* dimension can be two in non-Mule if we're translating to
+	 Unicode.  */
+      if (2 == dimension) *text_storage++ = (unsigned char)byte2;
     }
 
   if (runs_so_far)
     {
       run_storage[runs_so_far - 1].len =
 	text_storage - run_storage[runs_so_far - 1].ptr;
-      if (run_storage[runs_so_far - 1].dimension == 2)
+      /* Dimension retains the relevant value for the run before it. */
+      if (2 == dimension)
 	run_storage[runs_so_far - 1].len >>= 1;
     }
 
@@ -361,7 +370,8 @@ x_text_width (struct frame *f, struct face_cachel *cachel,
   int nruns;
   int i;
 
-  nruns = separate_textual_runs (text_storage, runs, str, len);
+  nruns = separate_textual_runs (text_storage, runs, str, len, 
+				 cachel);
 
   for (i = 0; i < nruns; i++)
     width_so_far += x_text_width_single_run (f, cachel, runs + i);
@@ -1014,7 +1024,7 @@ x_output_string (struct window *w, struct display_line *dl,
     }
 
   nruns = separate_textual_runs (text_storage, runs, Dynarr_atp (buf, 0),
-				 Dynarr_length (buf));
+				 Dynarr_length (buf), cachel);
 
   for (i = 0; i < nruns; i++)
     {

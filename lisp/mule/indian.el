@@ -99,7 +99,7 @@
 	      "Generic Indian charset for data exchange with IS 13194"
 	      '(dimension
 		1
-		registry "IS13194-Devanagari"
+		registries ["IS13194-Devanagari"]
 		chars 94
 		columns 2
 		direction l2r
@@ -114,7 +114,7 @@
 	      "Indian charset for 2-column width glyphs"
 	      '(dimension
 		2
-		registry "MuleIndian-1"
+		registries ["MuleIndian-1"]
 		chars 94
 		columns 1
 		direction l2r
@@ -129,7 +129,7 @@
 	      "Indian charset for 2-column width glyphs"
 	      '(dimension
 		2
-		registry "MuleIndian-2"
+		registries ["MuleIndian-2"]
 		chars 94
 		columns 2
 		direction l2r

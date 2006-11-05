@@ -26,6 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #define INCLUDED_console_impl_h_
 
 #include "console.h"
+#include "specifier.h"
 
 extern const struct sized_memory_description cted_description;
 extern const struct sized_memory_description console_methods_description;
@@ -212,17 +213,13 @@ struct console_methods
   Lisp_Object (*font_list_method) (Lisp_Object pattern,
 				    Lisp_Object device,
 				    Lisp_Object maxnumber);
-  Lisp_Object (*find_charset_font_method) (Lisp_Object device,
-					   Lisp_Object font,
-					   Lisp_Object charset,
-					   int stage);
-  int (*font_spec_matches_charset_method) (struct device *d,
-					   Lisp_Object charset,
-					   const Ibyte *nonreloc,
-					   Lisp_Object reloc,
-					   Bytecount offset,
-					   Bytecount length,
-					   int stage);
+  Lisp_Object (*find_charset_font_method) 
+    (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
+     enum font_specifier_matchspec_stages stage); 
+  int (*font_spec_matches_charset_method)
+    (struct device *d, Lisp_Object charset, const Ibyte *nonreloc,
+     Lisp_Object reloc, Bytecount offset, Bytecount length,
+     enum font_specifier_matchspec_stages stage);
 
   /* image methods */
   void (*mark_image_instance_method) (Lisp_Image_Instance *);

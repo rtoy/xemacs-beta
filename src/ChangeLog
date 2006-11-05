@@ -1,3 +1,136 @@
+2006-11-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* charset.h: 
+	Prefer the charset-registries property to the charset-registry 
+	property; accept the latter for compatibility, warning when its 
+	regexp functionality is used.  
+	 
+	* charset.h (XCHARSET_CCL_PROGRAM): 
+	* charset.h (XCHARSET_NAME): 
+	Make dummy versions of these available in non-Mule. 
+ 
+	* console-impl.h: 
+	* console-impl.h (struct console_methods): 
+	Rename the last parameter to a couple of methods; reformat their 
+	declarations.  
+	 
+	* faces.c: 
+	* faces.c (face_property_matching_instance): 
+	* faces.c (ensure_face_cachel_contains_charset): 
+	* faces.c (merge_face_cachel_data): 
+	* faces.c (reset_face_cachel): 
+	* faces.c (mark_face_cachels_as_not_updated): 
+	* faces.c (syms_of_faces): 
+	* faces.c (vars_of_faces): 
+	* faces.c (complex_vars_of_faces): 
+	Provide a DEBUG_FACES macro; use it to make debugging output 
+	available in debug builds. 
+	Implement multi-stage font lookup, assigning the stages names, not 
+	numbers. 
+	Re-implement the cachel->font_specified cache using the 
+	infrastructure for Lisp bit vectors.  
+	 
+	* faces.h: 
+	* faces.h (struct face_cachel): 
+	* faces.h (FACE_CACHEL_FONT_UPDATED): 
+	* faces.h (FACE_FONT): 
+	Re-implement the cachel->font_specified cache using the 
+	infrastructure for Lisp bit vectors.  
+ 
+	* font-mgr.h: 
+	Move some XFT debug macros here from objects-x.c.  
+ 
+	* general-slots.h: 
+	Provide a few new symbols for the multi-stage font resolution 
+	process.  
+
+	* intl.c (init_intl): 
+	Correct a comment.  
+	 
+	* lisp.h: 
+	Provide a macro to declare an inline lisp bit vector where the 
+	size is fixed. 
+	Make Qregistries available all over, not Qregistry.  
+	 
+	* mule-charset.c: 
+	* mule-charset.c (mark_charset): 
+	* mule-charset.c (print_charset): 
+	* mule-charset.c (make_charset): 
+	* mule-charset.c (Fmake_charset): 
+	* mule-charset.c (Fcharset_property): 
+	* mule-charset.c (Fset_charset_ccl_program): 
+	* mule-charset.c (syms_of_mule_charset): 
+	* mule-charset.c (complex_vars_of_mule_charset): 
+	* mule-charset.c (CHINESE_CNS_PLANE): 
+	Prefer the charset-registries property to the charset-registry 
+	property; accept the latter for compatibility, warning when its 
+	regexp functionality is used.  
+ 
+	* objects-gtk.c: 
+	* objects-gtk.c (gtk_font_spec_matches_charset): 
+	* objects-gtk.c (gtk_find_charset_font): 
+	* objects-msw.c (mswindows_find_charset_font): 
+	* objects-tty.c (tty_find_charset_font): 
+	Redeclare various functions to work with the multi-stage lookup 
+	process. Include objects-xlike-inc.
+ 
+	* objects-x.c: 
+	Provide a DEBUG_OBJECTS macro; use it to make debugging output 
+	available in debug builds. 
+
+	* objects-x.c (x_initialize_font_instance): 
+	* objects-x.c (x_print_font_instance): 
+	* objects-x.c (xlistfonts_checking_charset): 
+	* objects-x.c (vars_of_objects_x): 
+	Don't regex match on the output of XListFonts; instead, use the 
+	fixed strings of the charset-registries to comparatively limit the 
+	IPC that will happen.  Include objects-xlike-inc.c
+	 
+	* objects-xlike-inc.c:
+	* objects-xlike-inc.c (count_hyphens):
+	New. How many ASCII minus characters in a string?  
+
+	* objects-xlike-inc.c (xlistfonts_checking_charset):
+	* objects-xlike-inc.c (mule_to_fc_charset):
+	* objects-xlike-inc.c (xft_find_charset_font):
+	* objects-x.c (x_find_charset_font): 
+	Move some methods here to share them with GTK. 
+
+	* objects.c (print_font_instance): 
+	* objects.c (font_spec_matches_charset): 
+	* objects.c (font_validate_matchspec): 
+	* objects.c (font_instantiate): 
+	Redeclare some methods to take enums rather than numeric stages.  
+ 
+	* objects.h (EXFUN): 
+	Make Fregexp_quote available to mule-charset.c 
+	 
+	* redisplay-x.c: 
+	* redisplay-x.c (separate_textual_runs): 
+	Make this slightly faster, cleaner. Make it accept a face cachel 
+	pointer argument, and check it as to whether a given charset 
+	should be translated to UCS-2 before redisplay.  
+	 
+	* specifier.c: 
+	* specifier.c (charset_matches_specifier_tag_set_p): 
+	* specifier.c (define_specifier_tag): 
+	* specifier.c (Fdefine_specifier_tag): 
+	* specifier.c (setup_device_initial_specifier_tags): 
+	* specifier.c (setup_charset_initial_specifier_tags): 
+	* specifier.c (specifier_instance_from_inst_list): 
+	* specifier.c (syms_of_specifier): 
+	* specifier.c (vars_of_specifier): 
+	* specifier.h: 
+	Extend specifiers to allow limiting their applicability by using 
+	charset predicates. Document this.  
+	Run indent-region on the file, at Stephen's suggestion. 
+	
+	* unicode.c (unicode_to_ichar): 
+	* unicode.c (syms_of_unicode): 
+	* unicode.c (vars_of_unicode): 
+	Use unicode-registries, a dumped vector, as the charset-registries 
+	of the on-the-fly JIT charsets.  
+
 2006-11-01  Adrian Aichner  <adrian@xemacs.org>
 
 	* sysdep.c (wcslen): Check for NULL pointer.

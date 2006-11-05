@@ -760,7 +760,7 @@ tab_char_width (struct window *w)
 static int
 space_width (struct window *w)
 {
-  /* While tabs are traditional composed of spaces, for variable-width
+  /* While tabs are traditionally composed of spaces, for variable-width
      fonts the space character tends to give too narrow a value.  So
      we use 'n' instead.  Except that we don't.  We use the default
      character width for the default face.  If this is actually

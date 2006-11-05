@@ -76,4 +76,8 @@ void set_font_attached_to (Lisp_Object obj, Lisp_Object face,
 void set_face_boolean_attached_to (Lisp_Object obj, Lisp_Object face,
 				   Lisp_Object property);
 
+/* Defined in search.c, used in mule-charset.c; slightly ugly to declare it
+   here, but oh well.  */
+EXFUN (Fregexp_quote, 1);
+
 #endif /* INCLUDED_objects_h_ */

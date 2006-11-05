@@ -35,12 +35,12 @@
 ;;; Code:
 
 (make-charset 'thai-xtis "Precomposed Thai (XTIS by Virach)."
-	      '(registry "xtis-0"
-			 dimension 2
-			 columns 1
-			 chars 94
-			 final ??
-			 graphic 0))
+	      '(registries ["xtis-0"]
+		dimension 2
+		columns 1
+		chars 94
+		final ??
+		graphic 0))
 
 (define-category ?x "Precomposed Thai character.")
 (modify-category-entry 'thai-xtis ?x)

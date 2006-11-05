@@ -121,7 +121,7 @@
 	      "Right-Hand Part of Latin Alphabet 8 (ISO/IEC 8859-14)"
 	      '(dimension
 		1
-		registry "ISO8859-14"
+		registries ["ISO8859-14"]
 		chars 96
 		columns 1
 		direction l2r
@@ -135,7 +135,7 @@
 	      "Right-Hand Part of Latin Alphabet 10 (ISO/IEC 8859-16)"
 	      '(dimension
 		1
-		registry "ISO8859-16"
+		registries ["ISO8859-16"]
 		chars 96
 		columns 1
 		direction l2r

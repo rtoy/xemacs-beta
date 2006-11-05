@@ -47,9 +47,8 @@
 ;; Others are of direction right-to-left and of width 1-column or
 ;; 2-column.
 (make-charset 'arabic-digit "Arabic digit"
-	      '(dimension
-		1
-		registry "MuleArabic-0"
+	      '(dimension 1
+		registries ["MuleArabic-0"]
 		chars 94
 		columns 1
 		direction l2r
@@ -62,7 +61,7 @@
 (make-charset 'arabic-1-column "Arabic 1-column"
 	      '(dimension
 		1
-		registry "MuleArabic-1"
+		registries ["MuleArabic-1"]
 		chars 94
 		columns 1
 		direction r2l
@@ -75,7 +74,7 @@
 (make-charset 'arabic-2-column "Arabic 2-column"
 	      '(dimension
 		1
-		registry "MuleArabic-2"
+		registries ["MuleArabic-2"]
 		chars 94
 		columns 2
 		direction r2l

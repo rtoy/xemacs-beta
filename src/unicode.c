@@ -1115,9 +1115,8 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 	  Ibyte setname[32]; 
 	  Lisp_Object charset_descr = build_string
 	    ("Mule charset for otherwise unknown Unicode code points.");
-	  Lisp_Object charset_regr = build_string("iso10646-1");
 
-	  struct gcpro gcpro1, gcpro2;
+	  struct gcpro gcpro1;
 
 	  if ('\0' == last_jit_charset_final)
 	    {
@@ -1138,7 +1137,7 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 	     Lisp reader. We GCPRO in case it GCs in the future and no-one
 	     checks all the C callers.  */
 
-	  GCPRO2 (charset_descr, charset_regr);
+	  GCPRO1 (charset_descr);
 	  Vcurrent_jit_charset = Fmake_charset 
 	    (intern((const CIbyte *)setname), charset_descr, 
 	     /* Set encode-as-utf-8 to t, to have this character set written
@@ -1148,7 +1147,7 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 	     nconc2 (list2(Qencode_as_utf_8, Qt),
 		     nconc2 (list6(Qcolumns, make_int(1), Qchars, make_int(96),
 				   Qdimension, make_int(2)),
-			     list6(Qregistry, charset_regr,
+			     list6(Qregistries, Qunicode_registries,
 				   Qfinal, make_char(last_jit_charset_final++),
 				   /* This CCL program is initialised in
 				      unicode.el. */
@@ -2539,6 +2538,8 @@ syms_of_unicode (void)
   DEFSYMBOL (Qccl_encode_to_ucs_2);
   DEFSYMBOL (Qlast_allocated_character);
   DEFSYMBOL (Qignore_first_column);
+
+  DEFSYMBOL (Qunicode_registries);
 #endif /* MULE */
 
   DEFSUBR (Fchar_to_unicode);
@@ -2611,6 +2612,8 @@ vars_of_unicode (void)
   dump_add_root_block_ptr (&unicode_precedence_dynarr,
 			    &lisp_object_dynarr_description);
 
+  
+  
   init_blank_unicode_tables ();
 
   staticpro (&Vcurrent_jit_charset);
@@ -2636,5 +2639,16 @@ vars_of_unicode (void)
 		       from_unicode_level_3_desc_1);
   dump_add_root_block (&from_unicode_blank_4, sizeof (void *),
 		       from_unicode_level_4_desc_1);
+
+  DEFVAR_LISP ("unicode-registries", &Qunicode_registries /*
+Vector describing the X11 registries searched when using fallback fonts.
+
+"Fallback fonts" here includes by default those fonts used by redisplay when
+displaying charsets for which the `encode-as-utf-8' property is true, and
+those used when no font matching the charset's registries property has been
+found (that is, they're probably Mule-specific charsets like Ethiopic or
+IPA.)
+*/ );
+  Qunicode_registries = vector1(build_string("iso10646-1"));
 #endif /* MULE */
 }
