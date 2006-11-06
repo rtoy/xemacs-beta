@@ -1,3 +1,11 @@
+2006-11-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-charset.c (Fmake_charset):
+	* objects-msw.c (mswindows_font_spec_matches_charset):
+	* specifier.c (syms_of_specifier):
+	Three changes to prevent the build dying with MSVC and with
+	DEBUG_XEMACS turned off--thank you Vin. 
+	
 2006-11-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* charset.h: 

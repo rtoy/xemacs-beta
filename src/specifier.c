@@ -3809,7 +3809,9 @@ syms_of_specifier (void)
   DEFSUBR (Fcanonicalize_tag_set);
   DEFSUBR (Fdevice_matches_specifier_tag_set_p);
   DEFSUBR (Fdefine_specifier_tag);
+#ifdef DEBUG_XEMACS
   DEFSUBR (Fdevice_matching_specifier_tag_list);
+#endif /* DEBUG_XEMACS */
   DEFSUBR (Fspecifier_tag_list);
   DEFSUBR (Fspecifier_tag_device_predicate);
   DEFSUBR (Fspecifier_tag_charset_predicate);

@@ -554,7 +554,7 @@ character set.  Recognized properties are:
 
 	    CHECK_STRING (value);
 	    quoted_registry = Fregexp_quote(value);
-	    if (strcmp(XSTRING_DATA(quoted_registry),
+	    if (qxestrcmp(XSTRING_DATA(quoted_registry),
 		       XSTRING_DATA(value)))
 	      {
 		warn_when_safe 
