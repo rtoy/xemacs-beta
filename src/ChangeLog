@@ -1,3 +1,9 @@
+2006-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-charset.c:
+	Take the Qfinal declaration out of mule-charset.c; fixes the MSVC
+	build. Sorry Vin!
+	
 2006-11-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-charset.c (Fmake_charset):

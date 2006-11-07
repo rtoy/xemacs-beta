@@ -79,8 +79,8 @@ static const struct sized_memory_description charset_lookup_description = {
 
 Lisp_Object Qcharsetp;
 
-/* Qdoc_string, Qdimension, Qchars defined in general.c */
-Lisp_Object Qregistries, Qfinal, Qgraphic, Qregistry;
+/* Qdoc_string, Qdimension, Qchars, Qfinal defined in general.c */
+Lisp_Object Qregistries, Qgraphic, Qregistry;
 Lisp_Object Qdirection;
 Lisp_Object Qreverse_direction_charset;
 Lisp_Object Qshort_name, Qlong_name;
