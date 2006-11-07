@@ -283,6 +283,32 @@ The second argument must be 'ucs, the third argument is ignored.  "
 	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
   (char-to-unicode char))
 
+(when (featurep 'mule)
+  ;; This CCL program is used for displaying the fallback UCS character set,
+  ;; and can be repurposed to lao and the IPA, all going well.
+  ;;
+  ;; define-ccl-program is available after mule-ccl is loaded, much later
+  ;; than this file in the build process. The below is the result of 
+  ;;
+  ;;   (macroexpand 
+  ;;    '(define-ccl-program ccl-encode-to-ucs-2
+  ;;      `(1
+  ;;        ((r1 = (r1 << 8))
+  ;; 	     (r1 = (r1 | r2))
+  ;; 	     (mule-to-unicode r0 r1)
+  ;; 	     (r1 = (r0 >> 8))
+  ;; 	     (r2 = (r0 & 255))))
+  ;;      "CCL program to transform Mule characters to UCS-2."))
+  ;;
+  ;; and it should occasionally be confirmed that the correspondence still
+  ;; holds.
+
+  (let ((prog [1 10 131127 8 98872 65823 147513 8 82009 255 22]))
+    (defconst ccl-encode-to-ucs-2 prog 
+      "CCL program to transform Mule characters to UCS-2.")
+    (put (quote ccl-encode-to-ucs-2) (quote ccl-program-idx) 
+	 (register-ccl-program (quote ccl-encode-to-ucs-2) prog)) nil))
+
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version
 ;; 2.0, but I don't know its licensing characteristics.

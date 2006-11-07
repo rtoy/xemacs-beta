@@ -1,3 +1,9 @@
+2006-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el:
+	Re-introduce ccl-encode-to-ucs-2; it's still being used by the
+	JIT-UCS charsets, despite what I thought. Thank you Ilya. 
+
 2006-11-05  Aidan Kehoe  <kehoea@parhasard.net>
         
 	* mule/arabic.el (arabic-digit):  
