@@ -1720,9 +1720,6 @@ read_escape (Lisp_Object readcharfun)
 {
   /* This function can GC */
   Ichar c = readchar (readcharfun);
-  /* \u allows up to four hex digits, \U up to eight. Default to the
-     behaviour for \u, and change this value in the case that \U is seen. */
-  int unicode_hex_count = 4;
 
   if (c < 0)
     signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
