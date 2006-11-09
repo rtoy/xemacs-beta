@@ -1,3 +1,9 @@
+2006-11-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.c (specifier_instance_from_inst_list):
+	Accept symbols as well as charset objects as the cons of a
+	font-related specifier matchspec. Thank you Ilya. 
+	
 2006-11-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-charset.c:

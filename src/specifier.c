@@ -2829,7 +2829,7 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
     specbind (Qinhibit_quit, Qt);
 
 #ifdef MULE
-  if (CONSP(matchspec) && (CHARSETP(XCAR(matchspec))))
+  if (CONSP(matchspec) && (CHARSETP(Ffind_charset(XCAR(matchspec)))))
     {
       charset = Ffind_charset(XCAR(matchspec));
 
