@@ -1372,17 +1372,15 @@ setup_charset_initial_specifier_tags (Lisp_Object charset)
     = charset_tag_list;
 }
 
-#ifdef DEBUG_XEMACS
-
-/* Nothing's calling this, I see no reason to keep it in the production
-   builds. */
+/* VM calls this, in vm-multiple-frames-possible-p, in the event that you're
+   considering taking it out. */
 
 DEFUN ("device-matching-specifier-tag-list",
        Fdevice_matching_specifier_tag_list,
        0, 1, 0, /*
-		  Return a list of all specifier tags matching DEVICE.
-		  DEVICE defaults to the selected device if omitted.
-		*/
+Return a list of all specifier tags matching DEVICE.
+DEVICE defaults to the selected device if omitted.
+*/
        (device))
 {
   struct device *d = decode_device (device);
@@ -1403,8 +1401,6 @@ DEFUN ("device-matching-specifier-tag-list",
 
   RETURN_UNGCPRO (list);
 }
-
-#endif /* DEBUG_XEMACS */
 
 DEFUN ("specifier-tag-list", Fspecifier_tag_list, 0, 0, 0, /*
 Return a list of all currently-defined specifier tags.
@@ -1457,8 +1453,8 @@ Return the device predicate for the given specifier tag.
 
 DEFUN ("specifier-tag-charset-predicate", Fspecifier_tag_charset_predicate,
        1, 1, 0, /*
-		  Return the charset predicate for the given specifier tag.
-		*/
+Return the charset predicate for the given specifier tag.
+*/
        (tag))
 {
   /* The return value of this function must be GCPRO'd. */
@@ -3809,9 +3805,8 @@ syms_of_specifier (void)
   DEFSUBR (Fcanonicalize_tag_set);
   DEFSUBR (Fdevice_matches_specifier_tag_set_p);
   DEFSUBR (Fdefine_specifier_tag);
-#ifdef DEBUG_XEMACS
   DEFSUBR (Fdevice_matching_specifier_tag_list);
-#endif /* DEBUG_XEMACS */
+
   DEFSUBR (Fspecifier_tag_list);
   DEFSUBR (Fspecifier_tag_device_predicate);
   DEFSUBR (Fspecifier_tag_charset_predicate);

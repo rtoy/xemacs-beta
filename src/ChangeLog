@@ -1,3 +1,10 @@
+2006-11-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.c:
+	VM calls device-matching-specifier-tag-list; my taking it out of
+	non-debug builds was misjudged, this change puts it back in.  I've
+	also reverted a couple of incidental and wrong whitespace changes.
+
 2006-11-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* specifier.c (specifier_instance_from_inst_list):
