@@ -10,9 +10,9 @@
 
 A specifier is an object used to keep track of a property whose value
 should vary according to @emph{display context}, a window, a frame, or
-device.  The value of many built-in properties, such as the font,
-foreground, background, and such properties of a face and variables
-such as @code{modeline-shadow-thickness} and
+device, or a Mule character set.  The value of many built-in properties,
+such as the font, foreground, background, and such properties of a face
+and variables such as @code{modeline-shadow-thickness} and
 @code{top-toolbar-height}, is actually a specifier object.  The
 specifier object, in turn, is ``instantiated'' in a particular situation
 to yield the real value of the property in the current context.
@@ -213,7 +213,7 @@ Mule.  On non-Mule XEmacsen, just use @code{specifier-specs}.)
 @end example
 
 In this case, @code{specifier-instance} returns an opaque object;
-programs can't work on it, they can only pass it around.  Worse, in some
+Lisp programs can't work on it, they can only pass it around.  Worse, in some
 environments the instantiation will fail, resulting in a different value
 (when another instantiation succeeds), or worse yet, an error, if all
 attempts to instantiate the specifier fail.  @code{specifier-instance} is
@@ -361,29 +361,54 @@ and an @dfn{instantiator} (the allowed form of this varies depending on
 the type of specifier).  In a given specification, there may be more
 than one inst-pair with the same tag set; this is unlike for locales.
 
-The tag set is used to restrict the sorts of devices over which the
-instantiator is valid and to uniquely identify instantiators added by a
-particular application, so that different applications can work on the
-same specifier and not interfere with each other.  Each tag can have a
-@dfn{predicate} associated with it, which is a function of one argument
-(a device) that specifies whether the tag matches that particular
-device. (If a tag does not have a predicate, it matches all devices.)
-All tags in a tag set must match a device for the associated inst-pair
-to be instantiable over that device.  (A null tag set is perfectly
-valid, and trivially matches all devices.)
+The tag set is used to restrict the sorts of devices and character sets
+over which the instantiator is valid and to uniquely identify
+instantiators added by a particular application, so that different
+applications can work on the same specifier and not interfere with each
+other.
 
-The valid device types (normally @code{x}, @code{tty}, @code{stream},
-@code{mswindows}, @code{msprinter}, and possibly @code{carbon}) and
-device classes (normally @code{color}, @code{grayscale}, and
-@code{mono}) can always be used as tags, and match devices of the
-associated type or class (@pxref{Consoles and Devices}).  User-defined
-tags may be defined, with an optional predicate specified.  An
-application can create its own tag, use it to mark all its
-instantiators, and be fairly confident that it will not interfere with
-other applications that modify the same specifier---Functions that add
-a specification to a specifier usually only overwrite existing
-inst-pairs with the same tag set as was given, and a particular tag or
-tag set can be specified when removing instantiators.
+Each tag can have a @dfn{device-predicate} associated with it, which is
+a function of one argument (a device) that specifies whether the tag
+matches that particular device. (If a tag does not have a predicate, it
+matches all devices.)  All tags in a tag set must match a device for the
+associated inst-pair to be instantiable over that device.  (A null tag
+set is perfectly valid, and trivially matches all devices.)
+
+Each tag can also have a @dfn{charset-predicate} associated with it;
+this is a function that takes one charset argument, and specifies
+whether that tag matches that particular charset.  When instantiating a
+face over a given domain with a given charset, the
+@code{charset-predicate} attribute of a tag is consulted@footnote{Not
+quite the case; the result of the functions are pre-calculated and
+cached whenever @code{define-specifier-tag} or @code{make-charset} is
+called.} to decide whether this inst-pair matches the charset.  If the
+@code{charset-predicate} function of a tag is unspecified, that tag
+defaults to matching all charsets. 
+
+When @code{charset-predicate}s are being taken into account, the
+matching process becomes two-stage.  The first stage pays attention to
+the charset predicates and the device predicates; only if there is no
+match does the second stage take place, in which charset predicates are
+ignored, and only the device predicates are relevant.
+
+The valid device types in a build (normally @code{x}, @code{tty},
+@code{stream}, @code{mswindows}, @code{msprinter}, and possibly
+@code{carbon}) and device classes (normally @code{color},
+@code{grayscale}, and @code{mono}) can always be used as tags, and match
+devices of the associated type or class (@pxref{Consoles and Devices}).
+There are also built-in tags related to font instantiation and
+translation to Unicode; they are identical to the symbols used with
+@code{specifier-matching-instance}, see the documentation of that
+function for their names.
+
+User-defined tags may be defined, with optional device and charset
+predicates specified.  An application can create its own tag, use it to
+mark all its instantiators, and be fairly confident that it will not
+interfere with other applications that modify the same
+specifier---functions that add a specification to a specifier usually
+only overwrite existing inst-pairs with the same tag set as was given,
+and a particular tag or tag set can be specified when removing
+instantiators.
 
 When a specifier is instantiated in a domain, both the locale and the tag
 set can be viewed as specifying necessary conditions that must apply in
@@ -1141,16 +1166,24 @@ defined by @code{define-specifier-tag}.) It is called a ``tag set'' (as
 opposed to a list) because the order of the tags or the number of times
 a particular tag occurs does not matter.
 
-Each tag has a predicate associated with it, which specifies whether
+Each tag has a device predicate associated with it, which specifies whether
 that tag applies to a particular device.  The tags which are device
 types and classes match devices of that type or class.  User-defined
-tags can have any predicate, or none (meaning that all devices match).
+tags can have any device predicate, or none (meaning that all devices match).
 When attempting to instantiate a specifier, a particular instantiator is
 only considered if the device of the domain being instantiated over matches
 all tags in the tag set attached to that instantiator.
 
+Each tag can also have a charset predicate, specifying whether that tag
+applies to a particular charset. There are a few tags with predefined
+charset predicates created to allow sensible fallbacks in the face
+code---see the output of @code{(specifier-fallback (face-font
+'default))} for these. 
+
 Most of the time, a tag set is not specified, and the instantiator gets
-a null tag set, which matches all devices.
+a null tag set, which matches all devices and all character sets (when
+possible; fonts with an inappropriate repertoire will not match, for
+example).
 
 @defun valid-specifier-tag-p tag
 This function returns non-@code{nil} if @var{tag} is a valid specifier
@@ -1175,11 +1208,15 @@ tag set @var{tag-set}.  This means that @var{device} matches each tag in
 the tag set.
 @end defun
 
-@defun define-specifier-tag tag &optional predicate
-This function defines a new specifier tag.  If @var{predicate} is
+@defun define-specifier-tag tag &optional device-predicate charset-predicate
+This function defines a new specifier tag.  If @var{device-predicate} is
 specified, it should be a function of one argument (a device) that
 specifies whether the tag matches that particular device.  If
-@var{predicate} is omitted, the tag matches all devices.
+@var{device-predicate} is omitted, the tag matches all devices.
+
+If @var{charset-predicate} is specified, it should be a function taking
+one character set argument that specifies whether the tag matches that
+particular character set. 
 
 You can redefine an existing user-defined specifier tag.  However, you
 cannot redefine the built-in specifier tags (the device types and
@@ -1197,8 +1234,12 @@ This function returns a list of all currently-defined specifier tags.
 This includes the built-in ones (the device types and classes).
 @end defun
 
-@defun specifier-tag-predicate tag
-This function returns the predicate for the given specifier tag.
+@defun specifier-tag-device-predicate tag
+This function returns the device predicate for the given specifier tag.
+@end defun
+
+@defun specifier-tag-charset-predicate tag
+This function returns the charset predicate for the given specifier tag.
 @end defun
 
 @node Specifier Instantiation Functions
@@ -1280,13 +1321,29 @@ display table is not there. (Chartable specifiers are not yet
 implemented.)
 @item
 For font specifiers, @var{matchspec} should be a list (@var{charset}
-. @var{second-stage-p}), and the specification (a font string) must have
-a registry that matches the charset's registry.  (This only makes sense
-with Mule support.)  This makes it easy to choose a font that can
-display a particular character.  (This is what redisplay does, in fact.)
-@var{second-stage-p} means to ignore the font's registry and instead
-look at the characters in the font to see if the font can support the
-charset.  This currently only makes sense under MS Windows.
+. @var{stage}).  On X11 the specification (a font string) should, for
+clarity, have a registry that matches the charset's registry, but the
+redisplay code will specify the XLFD CHARSET_REGISTRY and
+CHARSET_ENCODING fields itself.  This makes minimal sense without Mule
+support.  @var{stage} can be one of the symbols @code{'initial} and
+@code{'final}; on X11, @code{'initial} means ``search for fonts using
+the charset registry of this charset'' and @code{'final} means ``search
+for fonts using `iso10646-1' as their charset registries, with the
+expectation that characters will be translated to Unicode at
+redisplay.''  Their meanings are similar on MS Windows, with the
+difference that the actual repertoire of the font is checked when
+deciding if a matchspec with @code{'final} matches. 
+
+For example, the following code emulates what redisplay does when
+deciding what font to use for ethiopic with the default face (ignoring,
+for the moment, fallbacks): 
+@example
+(or
+ (specifier-matching-instance (face-font 'default) 
+			      (cons 'ethiopic 'initial))
+ (specifier-matching-instance (face-font 'default)
+			      (cons 'ethiopic 'final)))
+@end example
 @end itemize
 @end defun
 

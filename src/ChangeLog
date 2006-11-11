@@ -1,6 +1,12 @@
 2006-11-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* specifier.c:
+	Update the specifier-matching-instance documentation to reflect
+	the new format of font-specifier MATCHSPECs. 
+	
+2006-11-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.c:
 	VM calls device-matching-specifier-tag-list; my taking it out of
 	non-debug builds was misjudged, this change puts it back in.  I've
 	also reverted a couple of incidental and wrong whitespace changes.

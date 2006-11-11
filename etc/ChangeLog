@@ -1,3 +1,9 @@
+2006-11-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* NEWS:
+	Add information on set-charset-registries, and the change to
+	define-specifier-tag. 
+	
 2006-10-08  Adrian Aichner  <adrian@xemacs.org>
 
 	* TUTORIAL.de: Small rephrasing as suggested by hroptatyr on

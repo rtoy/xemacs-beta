@@ -1,3 +1,17 @@
+2006-11-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/faces.texi (Face Convenience Functions):
+	Add information on how to specify a face's font for a given Mule
+	charset. 
+	
+	* lispref/specifiers.texi (Specifiers):
+	* lispref/specifiers.texi (Simple Specifier Usage):
+	* lispref/specifiers.texi (Specifiers In-Depth):
+	* lispref/specifiers.texi (Specifier Tag Functions):
+	* lispref/specifiers.texi (Specifier Instantiation Functions):
+	Update the documentation of specifiers to reflect the new support
+	for Mule character sets and associating tags with them. 
+
 2006-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/objects.texi (String Type):

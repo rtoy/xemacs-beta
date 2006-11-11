@@ -67,6 +67,19 @@ event-to-character no longer takes note of this argument, since the specific
 type of mapping between characters and keysyms that it affected is no longer
 in place. 
 
+** The set-charset-registry function is deprecated.
+
+set-charset-registries replaces it; this function takes a vector of X11
+CHARSET_REGISTRY and CHARSET_ENCODINGs, and doesn't support regexp or XLFD
+wildcarding. It improves lookup performance (especially failures) for those
+X servers with large numbers of fonts. 
+
+** define-specifier-tag now has an optional CHARSET-PREDICATE parameter. 
+
+This allows you to create specifier tags that match over Mule character sets
+when instantiating fonts, finally making it possible to explicitly set a
+font for a charset in given face with set-face-font. 
+
 
 * Changes in XEmacs 21.4
 ========================

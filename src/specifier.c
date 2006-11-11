@@ -3241,14 +3241,21 @@ dependent on the particular type of specifier.  Here are some examples:
    display table is not there. (Chartable specifiers are not yet
    implemented.)
 
--- For font specifiers, MATCHSPEC should be a list (CHARSET . SECOND-STAGE-P),
-   and the specification (a font string) must have a registry that matches
-   the charset's registry.  (This only makes sense with Mule support.) This
-   makes it easy to choose a font that can display a particular
-   character. (This is what redisplay does, in fact.) SECOND-STAGE-P means
-   to ignore the font's registry and instead look at the characters in the
-   font to see if the font can support the charset.  This currently only makes
-   sense under MS Windows.
+-- For font specifiers, MATCHSPEC should be a cons (CHARSET . STAGE).  
+   The defined stages are currently `initial' and `final'.  On X11, 'initial
+   is used when the font matching process is looking for fonts that match
+   the desired registries of the charset--see the `charset-registries'
+   function.  If that match process fails, then the 'final stage comes into
+   play; this means that a more general lookup is desired, and that a font
+   doesn't necessarily have to match the desired XLFD for the face, just the
+   charset repertoire for this charset.  It also means that the charset
+   registry and encoding used will be `iso10646-1', and the characters will
+   be converted to display using that registry.
+
+   See `define-specifier-tag' for details on how to create a tag that
+   specifies a given character set and stage combination.  You can supply
+   such a tag to `set-face-font' in order to set a face's font for that
+   character set and stage combination.
 */
        (specifier, matchspec, domain, default_, no_fallback))
 {

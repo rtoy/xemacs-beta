@@ -404,6 +404,11 @@ contained in @var{file}. This is just a simplified version of
 This function sets the font of face @var{face}.  The argument @var{font}
 should be a string or a font object as returned by @code{make-font}
 (@pxref{Fonts}).
+
+If you want to set a face's font for a given Mule character set, you
+need to include some tags in @var{tag-set} that match that character
+set.  See the documentation of @code{define-specifier-tag} and its
+@code{charset-predicate} argument.
 @end deffn
 
 @deffn Command set-face-underline-p face underline-p &optional locale tag-set how-to-add
@@ -453,8 +458,10 @@ This function return the background-pixmap glyph object of face
 @var{face}.
 @end defun
 
-@defun face-font-instance face &optional domain
-This function returns the font specifier of face @var{face}.
+@defun face-font-instance face &optional domain charset
+This function returns the font specifier of face @var{face} in domain
+@var{domain} (defaulting to the selected device) with Mule charset
+@var{charset} (defaulting to ASCII).
 @xref{Fonts}.
 @end defun
 
