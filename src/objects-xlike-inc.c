@@ -764,6 +764,92 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 					    charset, stage);
     }
 
+  /* In the event that the charset is ASCII and we haven't matched
+     anything up to now, even with a pattern of "*", add "iso8859-1"
+     to the charset's registry and try again. Not returning a result
+     for ASCII means our frame geometry calculations are
+     inconsistent, and that we may crash. */
+
+  if (1 == xlfd_length && EQ(charset, Vcharset_ascii) && NILP(result)
+      && ('*' == eigetch(ei_xlfd_without_registry, 0)))
+
+    {
+      int have_latin1 = 0;
+
+      /* Set this to, for example, is08859-1 if you want to see the
+	 error behaviour. */
+
+#define FALLBACK_ASCII_REGISTRY "iso8859-1" 
+
+      for (j = 0; j < registries_len; ++j)
+	{
+	  if (0 == qxestrcasecmp(XSTRING_DATA(XVECTOR_DATA(registries)[j]),
+				 FALLBACK_ASCII_REGISTRY))
+	    {
+	      have_latin1 = 1;
+	      break;
+	    }
+	}
+
+      if (!have_latin1)
+	{
+	  Lisp_Object new_registries = make_vector(registries_len + 1, Qnil);
+
+	  warn_when_safe (Qface, Qwarning,
+			  "Your ASCII charset registries contain  nothing "
+			  "sensible.  Adding `" FALLBACK_ASCII_REGISTRY "'.");
+
+	  XVECTOR_DATA(new_registries)[0]
+	    = build_string(FALLBACK_ASCII_REGISTRY);
+
+	  memcpy(XVECTOR_DATA(new_registries) + 1,
+		 XVECTOR_DATA(registries),
+		 sizeof XVECTOR_DATA(registries)[0] * 
+		 XVECTOR_LENGTH(registries));
+
+	  /* Calling set_charset_registries instead of overwriting the
+	     value directly, to allow the charset font caches to be
+	     invalidated and a change to the default face to be
+	     noted.  */
+	  set_charset_registries(charset, new_registries);
+
+	  /* And recurse. */
+	  result = 
+	    DEVMETH_OR_GIVEN (XDEVICE (device), find_charset_font,
+			      (device, font, charset, stage),
+			      result);
+	}
+      else
+	{
+	  DECLARE_EISTRING (ei_connection_name);
+
+	  /* We preserve a copy of the connection name for the error message
+	     after the device is deleted. */
+	  eicpy_lstr (ei_connection_name, 
+		      DEVICE_CONNECTION (XDEVICE(device)));
+
+	  stderr_out ("Cannot find a font for ASCII, deleting device on %s\n",
+		      eidata (ei_connection_name));
+
+	  io_error_delete_device (device);
+
+	  /* Do a normal warning in the event that we have other, non-X
+	     frames available. (If we don't, io_error_delete_device will
+	     have exited.) */
+	  warn_when_safe 
+	    (Qface, Qerror,
+	     "Cannot find a font for ASCII, deleting device on %s.\n"
+	     "\n"
+	     "Your X server fonts appear to be inconsistent; fix them, or\n"
+	     "the next frame you create on that DISPLAY will crash this\n"
+	     "XEmacs.   At a minimum, provide one font with an XLFD ending\n"
+	     "in `" FALLBACK_ASCII_REGISTRY "', so we can work out what size\n"
+	     "a frame should be. ",
+	     eidata (ei_connection_name));
+	}
+
+    }
+
   /* This function used to return the font spec, in the case where a font
      didn't exist on the X server but it did match the charset. We're not
      doing that any more, because none of the other platform code does, and

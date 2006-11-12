@@ -574,6 +574,8 @@ void encode_unicode_char (Lisp_Object USED_IF_MULE (charset), int h,
 			  int USED_IF_MULE (l), unsigned_char_dynarr *dst,
 			  enum unicode_type type, unsigned int little_endian);
 
+void set_charset_registries(Lisp_Object charset, Lisp_Object registries);
+
 EXFUN (Funicode_to_char, 2);
 EXFUN (Fchar_to_unicode, 1); 
 

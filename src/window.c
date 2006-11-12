@@ -4250,7 +4250,7 @@ window_pixel_width_to_char_width (struct window *w, int pixel_width,
 				  int include_margins_p)
 {
   int avail_width;
-  int char_width;
+  int char_width = 0;
   int defheight, defwidth;
   Lisp_Object window = wrap_window (w);
 
@@ -4263,7 +4263,8 @@ window_pixel_width_to_char_width (struct window *w, int pixel_width,
 
   default_face_height_and_width (window, &defheight, &defwidth);
 
-  char_width = (avail_width / defwidth);
+  if (defwidth) 
+    char_width = (avail_width / defwidth);
 
   /* It's the calling function's responsibility to check these values
      and make sure they're not out of range.

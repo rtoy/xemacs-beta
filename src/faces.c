@@ -1162,7 +1162,7 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
     /* Lookup the face again, this time allowing the fallback. If this
        succeeds, it'll give a font intended for the script in question,
        which is preferable to translating to ISO10646-1 and using the
-       fixed-with fallback.  */
+       fixed-width fallback.  */
     new_val = face_property_matching_instance (face, Qfont,
 					       charset, domain,
 					       ERROR_ME_DEBUG_WARN, 0,
@@ -1840,6 +1840,9 @@ static void
 update_EmacsFrame (Lisp_Object frame, Lisp_Object name)
 {
   struct frame *frm = XFRAME (frame);
+
+  if (!FRAME_LIVE_P(frm))
+    return;
 
   if (EQ (name, Qfont))
     MARK_FRAME_SIZE_SLIPPED (frm);

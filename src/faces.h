@@ -386,6 +386,10 @@ Lisp_Object face_property_matching_instance
   FACE_PROPERTY_INSTANCE (face, Qforeground, domain, 0, Qzero)
 #define FACE_BACKGROUND(face, domain)					\
   FACE_PROPERTY_INSTANCE (face, Qbackground, domain, 0, Qzero)
+
+/* Calling this function on the default face with the ASCII character set
+   may delete any X11 frames; see the code at the end of
+   x_find_charset_font. */
 #define FACE_FONT(face, domain, charset)				\
   face_property_matching_instance (face, Qfont, charset, domain,	\
 				   ERROR_ME_DEBUG_WARN, 0, Qzero,	\

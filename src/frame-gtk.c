@@ -1430,6 +1430,17 @@ gtk_update_frame_external_traits (struct frame* frm, Lisp_Object name)
    {
      Lisp_Object font = FACE_FONT (Vdefault_face, frame, Vcharset_ascii);
 
+     /* It may be that instantiating the font has deleted the frame (will
+	happen if the user has specified a charset registry for ASCII that
+	isn't available on the server, and our fallback of iso8859-1 isn't
+	available; something vanishingly rare.) In that case, return from
+	this function. */
+
+     if (!FRAME_LIVE_P(frm))
+       {
+	 return;
+       }
+
      if (!EQ (font, Vthe_null_font_instance))
      {
 	 /* #### BILL!!! The X code set the XtNfont property of the

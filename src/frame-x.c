@@ -2734,6 +2734,17 @@ x_update_frame_external_traits (struct frame *frm, Lisp_Object name)
    {
      Lisp_Object font = FACE_FONT (Vdefault_face, frame, Vcharset_ascii);
 
+     /* It may be that instantiating the font has deleted the frame (will
+	happen if the user has specified a charset registry for ASCII that
+	isn't available on the server, and our fallback of iso8859-1 isn't
+	available; something vanishingly rare.) In that case, return from
+	this function without further manipulation of the dead frame. */
+
+     if (!FRAME_LIVE_P(frm))
+       {
+	 return;
+       }
+
      /* #### what to do about Xft?  I don't think the font is actually used
 	to compute cell size for computing frame pixel dimensions (see call
 	to EmacsFrameRecomputeCellSize() below); where is it used? -- sjt

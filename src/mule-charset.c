@@ -883,6 +883,14 @@ Set the `ccl-program' property of CHARSET to CCL-PROGRAM.
   return Qnil;
 }
 
+void
+set_charset_registries(Lisp_Object charset, Lisp_Object registries)
+{
+  XCHARSET_REGISTRIES (charset) = registries;
+  invalidate_charset_font_caches (charset);
+  face_property_was_changed (Vdefault_face, Qfont, Qglobal);
+}
+
 DEFUN ("set-charset-registries", Fset_charset_registries, 2, 2, 0, /*
 Set the `registries' property of CHARSET to REGISTRIES.
 
@@ -913,11 +921,19 @@ would be:
 	  invalid_argument("Not an X11 REGISTRY-ENCODING combination", 
 			   XVECTOR_DATA(registries)[i]);
 	}
+
+      if (qxestrchr(XSTRING_DATA(XVECTOR_DATA(registries)[i]), '*') ||
+	  qxestrchr(XSTRING_DATA(XVECTOR_DATA(registries)[i]), '?'))
+	{
+	  invalid_argument
+	    ("XLFD wildcards not allowed in charset-registries", 
+	     XVECTOR_DATA(registries)[i]);
+
+	}
     }
 
-  XCHARSET_REGISTRIES (charset) = registries;
-  invalidate_charset_font_caches (charset);
-  face_property_was_changed (Vdefault_face, Qfont, Qglobal);
+  set_charset_registries(charset, registries);
+
   return Qnil;
 }
 

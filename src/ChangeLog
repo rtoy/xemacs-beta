@@ -1,3 +1,43 @@
+2006-11-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* charset.h:
+	* mule-charset.c (set_charset_registries):
+	Provide a C-accessible version of set-charset-registries that
+	doesn't error. Called from x_find_charset_font. 
+
+	* faces.c (ensure_face_cachel_contains_charset):
+	Correct my spelling. 
+	
+	* faces.c (update_EmacsFrame):
+	Don't update the frame if it isn't live. 
+	
+	* faces.h:
+	Add some documentation on FACE_FONT. 
+
+	* frame-gtk.c (gtk_update_frame_external_traits):
+	* frame-x.c (x_update_frame_external_traits):
+	In the event that FACE_FONT has deleted the frame, don't
+	manipulate it further in update_frame_external_traits.
+
+	* mule-charset.c:
+
+	* mule-charset.c (Fset_charset_registries):
+	Don't allow XLFD wildcards in charset registries. Call the
+	factored-out C-callable version instead of implementing the guts
+	of the function here. 
+
+	* objects-gtk.c:
+	#include "charset.h"
+
+	* objects-xlike-inc.c (x_find_charset_font,
+	gtk_find_charset_font): In the event that the charset is ASCII and
+	we haven't matched anything up to now, even with a pattern of "*",
+	add "iso8859-1" to the charset's registry and try again.
+	
+	* window.c (window_pixel_width_to_char_width):
+	The default width of a face may be zero; only divide by it if it's
+	nonzero. 
+	
 2006-11-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* specifier.c:
