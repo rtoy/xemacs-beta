@@ -1154,9 +1154,9 @@ define_specifier_tag(Lisp_Object tag, Lisp_Object device_predicate,
 
 	  if (!NILP(charset_predicate))
 	    {
-	      static int line_1147_calls;
-	      ++line_1147_calls;
+	      struct gcpro gcpro1; 
 	      charpres = make_vector(impossible, Qnil); 
+	      GCPRO1 (charpres);
 
 	      /* If you want to extend the number of stages available, here
 		 in setup_charset_initial_specifier_tags, and in specifier.h
@@ -1198,6 +1198,7 @@ define_specifier_tag(Lisp_Object tag, Lisp_Object device_predicate,
 
 #undef DEFINE_SPECIFIER_TAG_FROB
 
+	      UNGCPRO;
 	    }
 
 	  if (!NILP(assoc))

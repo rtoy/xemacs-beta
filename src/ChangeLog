@@ -1,3 +1,14 @@
+2006-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* objects-xlike-inc.c (x_find_charset_font):
+	Move the warn_when_safe call to where GCing is irrelevant; as
+	things are it doesn't GC, but I'm more comfortable without that
+	being relevant. 
+	* specifier.c (define_specifier_tag):
+	Remove a couple of lines added for the sake of debugging; add a
+	GCPRO1 for the allocated vector, since the call_trapping_problems
+	can GC. 
+
 2006-11-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* charset.h:

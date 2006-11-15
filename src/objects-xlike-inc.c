@@ -795,10 +795,6 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	{
 	  Lisp_Object new_registries = make_vector(registries_len + 1, Qnil);
 
-	  warn_when_safe (Qface, Qwarning,
-			  "Your ASCII charset registries contain  nothing "
-			  "sensible.  Adding `" FALLBACK_ASCII_REGISTRY "'.");
-
 	  XVECTOR_DATA(new_registries)[0]
 	    = build_string(FALLBACK_ASCII_REGISTRY);
 
@@ -812,6 +808,10 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
 	     invalidated and a change to the default face to be
 	     noted.  */
 	  set_charset_registries(charset, new_registries);
+
+	  warn_when_safe (Qface, Qwarning,
+			  "Your ASCII charset registries contain nothing "
+			  "sensible.  Adding `" FALLBACK_ASCII_REGISTRY "'.");
 
 	  /* And recurse. */
 	  result = 
