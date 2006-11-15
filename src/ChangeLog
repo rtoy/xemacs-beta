@@ -1,3 +1,9 @@
+2006-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-charset.c:
+	* mule-charset.c (Fcharsets_in_region):
+	Added a charsets-in-region implementation in C. 
+
 2006-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* objects-xlike-inc.c (x_find_charset_font):

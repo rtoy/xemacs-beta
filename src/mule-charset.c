@@ -937,6 +937,39 @@ would be:
   return Qnil;
 }
 
+DEFUN ("charsets-in-region", Fcharsets_in_region, 2, 3, 0, /*
+Return a list of the charsets in the region between START and END.
+BUFFER defaults to the current buffer if omitted.
+*/
+       (start, end, buffer))
+{
+  /* This function can GC */
+  struct buffer *buf = decode_buffer (buffer, 1);
+  Charbpos pos, stop;	/* Limits of the region. */
+  Lisp_Object res = Qnil;
+  int charsets[NUM_LEADING_BYTES];
+  Ibyte lb;
+  struct gcpro gcpro1;
+
+  memset(charsets, 0, sizeof(charsets));
+  get_buffer_range_char (buf, start, end, &pos, &stop, 0);
+
+  GCPRO1 (res);
+  while (pos < stop)
+    {
+      lb = ichar_leading_byte(BUF_FETCH_CHAR (buf, pos));
+      if (0 == charsets[lb - MIN_LEADING_BYTE])
+	{
+	  charsets[lb - MIN_LEADING_BYTE] = 1;
+	  res = Fcons (XCHARSET_NAME(charset_by_leading_byte(lb)), res);
+	}
+      ++pos;
+    }
+  UNGCPRO;
+
+  return res;
+} 
+
 
 /************************************************************************/
 /*                            memory usage                              */
@@ -1029,6 +1062,7 @@ syms_of_mule_charset (void)
   DEFSUBR (Fcharset_id);
   DEFSUBR (Fset_charset_ccl_program);
   DEFSUBR (Fset_charset_registries);
+  DEFSUBR (Fcharsets_in_region);
 
 #ifdef MEMORY_USAGE_STATS
   DEFSUBR (Fcharset_memory_usage);

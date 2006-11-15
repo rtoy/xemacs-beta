@@ -38,42 +38,16 @@
 
 ;;;; Classifying text according to charsets
 
-;; the old version was broken in a couple of ways
-;; this is one of several versions, I tried a hash as well as the
-;; `prev-charset' cache used in the old version, but this was definitely
-;; faster than the hash version and marginally faster than the prev-charset
-;; version
-;; #### this really needs to be moved into C
-(defun charsets-in-region (start end &optional buffer)
-  "Return a list of the charsets in the region between START and END.
-BUFFER defaults to the current buffer if omitted."
-  (let (list)
-    (save-excursion
-      (if buffer
-	  (set-buffer buffer))
-      (save-restriction
-	(narrow-to-region start end)
-	(goto-char (point-min))
-	(while (not (eobp))
-	  ;; the first test will usually succeed on testing the
-	  ;; car of the list; don't waste time let-binding.
-	  (or (memq (char-charset (char-after (point))) list)
-	      (setq list (cons (char-charset (char-after (point))) list)))
-	  (forward-char))))
-    list))
-
 (defun charsets-in-string (string)
   "Return a list of the charsets in STRING."
-  (let (list)
-    (mapc (lambda (ch)
-	    ;; the first test will usually succeed on testing the
-	    ;; car of the list; don't waste time let-binding.
-	    (or (memq (char-charset ch) list)
-		(setq list (cons (char-charset ch) list))))
-	  string)
-    list))
+  (let (res)
+    (with-string-as-buffer-contents string
+      ;; charsets-in-region now in C. 
+      (setq res (charsets-in-region (point-min) (point-max))))
+    res))
 
 (defalias 'find-charset-string 'charsets-in-string)
+
 (defalias 'find-charset-region 'charsets-in-region)
 
 

@@ -1,3 +1,11 @@
+2006-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-charset.el:
+	* mule/mule-charset.el (charsets-in-string):
+	Implement it in terms of charsets-in-region.
+	* mule/mule-charset.el (charsets-in-region): Removed. It's now in
+	C.
+
 2006-11-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.el:
