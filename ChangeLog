@@ -1,3 +1,7 @@
+2006-10-30  Malcolm Purvis  <malcolmp@xemacs.org>
+	* configure.ac (XE_CDR): m4_cdr differs in autoconf 2.59 and 2.60.
+	(XE_EXPAND_COMPLEX_OPTIONS): Use XE_CDR, not m4_cdr.
+
 2006-07-18  Marcus Crestani  <crestani@xemacs.org>
 
 	* configure.ac: Intel-based Macs can use POSIX-style write

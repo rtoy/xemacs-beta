@@ -22,8 +22,6 @@ dnl
 dnl Due to a dependence on the implementation of certain internal autoconf
 dnl macros, die if any version other than 2.59 is used.
 AC_PREREQ(2.59)dnl
-m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]), [2.59]), 1,
-	[m4_fatal([This script can only be generated with autoconf 2.59])], [])dnl
 AC_INIT([XEmacs],[21.5],[xemacs-beta@xemacs.org])dnl
 AC_CONFIG_SRCDIR(src/lisp.h)dnl
 dnl
@@ -231,6 +229,13 @@ T=""
 for W in $2; do if test -z "$T"; then T="$W"; else T="$T $W"; fi; done
 $1="$T"
 ])dnl XE_SPACE
+dnl Autoconf 2.59 and 2.60 have slightly different versions of m4_cdr that
+dnl return different values for an empty list.  XE_CDR is a copy of the 2.60
+dnl version which will be used with both versions.
+define([XE_CDR],
+[m4_if([$#], 0, [m4_fatal([$0: cannot be called without arguments])],
+       [$#], 1, [],
+       [m4_dquote(m4_shift($@))])])dnl
 dnl
 dnl XE_MERGED_ARG(FEATURE, HELP-STRING, [ACTION-IF-TRUE], [ACTION-IF-FALSE])
 dnl ------------------------------------------------------------------------
@@ -379,9 +384,9 @@ dnl
 dnl Internal macro to recursively expand all the options in the option list.
 dnl
 define([XE_EXPAND_COMPLEX_OPTIONS],
-[m4_if([$2], [[]], [],
+[m4_if([$2], [], [],
        [XE_EXPAND_COMPLEX_OPTION([$1], m4_fst($2))[]dnl
-XE_EXPAND_COMPLEX_OPTIONS([$1], m4_cdr($2))])])dnl
+XE_EXPAND_COMPLEX_OPTIONS([$1], XE_CDR($2))])])dnl
 dnl
 dnl XE_INIT_COMPLEX_OPTION(prefix, option_list)
 dnl -------------------------------------------
