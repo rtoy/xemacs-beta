@@ -1,3 +1,11 @@
+2006-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi
+	(Better Rendering Support -- Configuration with the Interim Patches):
+	Fix examples of configuration via X resources.
+	(Better Rendering Support -- Implementation): Fix description of
+	xftFont resources, introduce fcFontName resource.
+
 2006-11-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/faces.texi (Face Convenience Functions):

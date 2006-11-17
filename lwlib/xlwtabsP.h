@@ -76,6 +76,7 @@ typedef struct {
 #ifdef USE_XFT_TABS
     XftFont	*renderFont;
     String	fcFontName;
+    String	xftFontName;
 #endif
     Dimension   internalHeight, internalWidth ;
     Widget	topWidget ;

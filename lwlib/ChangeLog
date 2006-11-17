@@ -1,3 +1,18 @@
+2006-11-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwmenu.c (xlwMenuResources):
+	* xlwmenu.c (XlwMenuInitialize):
+	* xlwmenuP.h (_XlwMenu_part):
+	* xlwtabs.c (resources):
+	* xlwtabs.c (TabsInit):
+	* xlwtabsP.h (TabsPart):
+	New xftFontName member in each widget part struct, corresponds to
+	xftFont String resource.
+	Initialize renderFont private member from fcFontName if non-NULL,
+	otherwise initialize from xftFontName.
+
+	* xlwtabs.h: Update parameter table.
+
 2006-06-16  Jerry James  <james@xemacs.org>
 
 	* lwlib-Xlw.c (xlw_scrollbar_callback): Do not dereference

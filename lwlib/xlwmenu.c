@@ -95,11 +95,11 @@ xlwMenuResources[] =
 #ifdef USE_XFT_MENUBARS
   {XtNfcFontName,  XtCFcFontName, XtRString, sizeof (String),
    offset(menu.fcFontName), 
-   XtRString, (XtPointer) "Helvetica-12:bold"},
+   XtRString, (XtPointer) NULL},
   /* #### This needs to be fixed to give a proper type and converter for
      XftFonts.  See also xlwtabs.c. */
-  {XtNxftFont, XtCXftFont, XtRPointer, sizeof(XtPointer),
-	offset(menu.renderFont), XtRPointer, (XtPointer) NULL },
+  {XtNxftFont, XtCXftFont, XtRString, sizeof(XtPointer),
+	offset(menu.xftFontName), XtRString, (XtPointer) "Helvetica-12:bold" },
 #endif
 # ifdef USE_XFONTSET
   /* #### Consider using the same method as for Motif; see the comment in
@@ -3241,6 +3241,9 @@ XlwMenuInitialize (Widget UNUSED (request), Widget new_, ArgList UNUSED (args),
 #endif
 
 #ifdef USE_XFT_MENUBARS
+  /* #### kludge for name change */
+  if (!mw->menu.fcFontName)
+    mw->menu.fcFontName = mw->menu.xftFontName;
   /* to do this right, we should add a new Xt Resource type +
      conversion function
   */

@@ -153,11 +153,11 @@ static XtResource resources[] = {
   /* #### Maybe use "-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1" here?
      or XtDefaultFont? */
   {XtNfcFontName, XtCFcFontName, XtRString, sizeof(String),
-	offset(fcFontName), XtRString, (XtPointer) "AirCut-16" },
+	offset(fcFontName), XtRString, (XtPointer) NULL },
   /* #### This needs to be fixed to give a proper type and converter for
      XftFonts.  See also xlwmenu.c. */
-  {XtNxftFont, XtCXftFont, XtRPointer, sizeof(XtPointer),
-	offset(renderFont), XtRPointer, (XtPointer) NULL },
+  {XtNxftFont, XtCXftFont, XtRString, sizeof(String),
+	offset(xftFontName), XtRString, (XtPointer) "Helvetica-12" },
 #endif
   {XtNinternalWidth, XtCWidth, XtRDimension, sizeof(Dimension),
 	offset(internalWidth), XtRImmediate, (XtPointer)4 },
@@ -479,10 +479,12 @@ TabsInit(Widget request, Widget new_, ArgList UNUSED (args),
     newTw->tabs.tab_height = 2 * newTw->tabs.internalHeight + SHADWID ;
 
 #ifdef USE_XFT_TABS
+    /* #### kludge for name change */
+    if (!newTw->tabs.fcFontName)
+      newTw->tabs.fcFontName = newTw->tabs.xftFontName;
     /* must get font here
-       to do this right, we should add a new Xt Resource type +
-       conversion function
-    */
+       #### to do this right, we should add a new Xt Resource type +
+       conversion function */
     newTw->tabs.renderFont =
       xft_open_font_by_name (XtDisplay ((Widget) newTw),
 			     newTw->tabs.fcFontName);

@@ -35,6 +35,7 @@ typedef struct _XlwMenu_part
   XFontStruct *	font;
 #ifdef USE_XFT_MENUBARS
   String fcFontName;
+  String xftFontName;
   XftFont *renderFont;
 #endif
 # ifdef USE_XFONTSET

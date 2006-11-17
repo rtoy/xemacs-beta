@@ -44,8 +44,8 @@
  Name		     Class		RepType		Default Value
  ----		     -----		-------		-------------
  font		     Font		XFontStruct*	XtDefaultFont
- fcFontName          FcFontName         String          AirCut-16 *0
- xftFont             XftFont            XtPointer       NULL      *8
+ fcFontName          FcFontName         String          NULL      *0
+ xftFont             XftFont            String          Helvetica-12 *8
  internalWidth	     Width		Dimension	4	  *1
  internalHeight	     Height		Dimension	2	  *1
  topWidget	     TopWidget		Widget			  *2

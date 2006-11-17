@@ -27629,12 +27629,16 @@ of @file{Xft}'s rendering functionality should be separated from use of
 
 @item fontconfig
 Fontconfig is dramatically different from the X model in several ways.
-In particular, @emph{fontconfig always returns a font}.  However, the
+In particular, for the convenient interface @emph{fontconfig always
+returns a font}.  However, the
 font returned need not be anything like the desired font.  This means
 that XEmacs must adopt a strategy of delegating the search to
 fontconfig, then sanity-checking the return, rather than trying to use
 the fontconfig API to search using techniques appropriate for the X11
-core font API.
+core font API.  (This isn't actually true.  fontconfig has more complex
+interfaces which allow listing a subset of fonts that match a pattern,
+and don't go out of their may to return something no matter what.  But
+the original patches didn't use this approach.)
 
 @item Font menus
 The @samp{Options->Font} and @samp{Options->Font Sizes} menus are
@@ -27647,17 +27651,20 @@ the size is strange.  And the @samp{Options->Font Weights} menu is just
 disabled, and has been for eons.
 
 @item X resources
-Currently in Stephen's patch there are @emph{four} treatments of font
+Currently in Stephen's patch there are @emph{five} treatments of font
 resources.  There are the @samp{XEmacs.@var{face}.attributeFont}
 resources used to set a single global font specification.  In the
 widgets, some (still) have a @samp{font} resource using the automatic
 @file{Xt} resource conversion to @samp{FontStruct}, some have separate
-@samp{font} and @samp{xftFont} resources with the former automatically
+@samp{font} and @samp{fcFontName} resources with the former automatically
 converted to @samp{FontStruct} by @file{Xt} and the latter left as a
-string, to be converted by @samp{XftParseName} later, and some have a
+string, to be converted by @samp{FcParseName} later, and some have a
 single @samp{font} resource which is converted to @samp{FontStruct} by
 @file{Xt} or the latter left as a string, depending on whether
-@file{Xft} was enabled by @samp{configure} or not.
+@file{Xft} was enabled by @samp{configure} or not.  There is also the
+@samp{xftFont} resource which may be retargeted to use an Xt converter
+function, but currently simply just an alias for the @samp{fcFontName}
+resource.
 
 Stephen thinks that all of these should be converted to use the face
 approach, perhaps with some way to set specifications for individual
@@ -27894,8 +27901,12 @@ at best.  Probably we will should to a simple string representation for
 this resource, and convert to a face in XEmacs rather than a font in
 Xt/Xft.
 @example
-XEmacs*Tabs.xftFont: Bitstream Vera Sans-16
-XEmacs*menubar*xftFont: Bitstream Vera Sans-16
+! DEPRECATED resource xftFont.
+! To be retargeted to an Xt converter which returns a font.
+!XEmacs*Tabs.xftFont: Bitstream Vera Sans-16
+!XEmacs*menubar*xftFont: Bitstream Vera Sans-16
+XEmacs*Tabs.fcFontName: Bitstream Vera Sans-16
+XEmacs*menubar*fcFontName: Bitstream Vera Sans-16
 XEmacs.modeline.attributeFont: Bitstream Charter-16
 XEmacs.default.attributeFont: Bitstream Vera Sans Mono-16
 @end example
@@ -27903,7 +27914,14 @@ I highly recommend use of a proportional font in the modeline because it
 allows a lot more text to fit there.  (Previously the font sizes were
 quite varied, and there was a comment that this weirdness gave good
 balance.  This isn't true on my main platform, Mac OS X, and needs to be
-rechecked on Linux, where it was observed.)
+rechecked on Linux, where it was observed.)  Note that you can probably
+specify a particular Japanese font with something like
+@example
+XEmacs.default.attributeFont: Bitstream Vera Sans Mono,Sazanami Mincho-16
+@end example
+Order is important; Japanese fonts will support English, but Sazanami's
+Roman characters are not very pretty compared to the Bitstream font.
+@strong{Note:} @emph{This is untested, but should work in theory.}
 @end itemize
 
 
