@@ -1,3 +1,8 @@
+2006-11-18  Mike Sperber  <mike@xemacs.org>
+
+	* window.c (window_pixel_height_to_char_height): Cater to the
+	possibility that defheight may be 0.
+
 2006-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-charset.c:

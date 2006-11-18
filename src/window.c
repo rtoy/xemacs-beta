@@ -4107,7 +4107,7 @@ window_pixel_height_to_char_height (struct window *w, int pixel_height,
 {
   int avail_height;
   int defheight, defwidth;
-  int char_height;
+  int char_height = 0;
   Lisp_Object window = wrap_window (w);
 
 
@@ -4118,7 +4118,8 @@ window_pixel_height_to_char_height (struct window *w, int pixel_height,
 
   default_face_height_and_width (window, &defheight, &defwidth);
 
-  char_height = avail_height / defheight;
+  if (defheight)
+    char_height = avail_height / defheight;
 
   /* It's the calling function's responsibility to check these values
      and make sure they're not out of range.
