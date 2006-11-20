@@ -400,6 +400,48 @@ This is a naive implementation in Lisp.  "
 		       (encode-coding-string xemacs-character 'ctext))))))
 
   ;;---------------------------------------------------------------
+  ;; Regression test for a couple of CCL-related bugs. 
+  ;;---------------------------------------------------------------
+
+  (let ((ccl-vector [0 0 0 0 0 0 0 0 0]))
+    (define-ccl-program ccl-write-two-control-1-chars 
+      `(1 
+	((r0 = ,(charset-id 'control-1))
+	 (r1 = 0) 
+	 (write-multibyte-character r0 r1) 
+	 (r1 = 31) 
+	 (write-multibyte-character r0 r1))) 
+      "CCL program that writes two control-1 multibyte characters.") 
+ 
+    (Assert (equal 
+	     (ccl-execute-on-string 'ccl-write-two-control-1-chars  
+				    ccl-vector "") 
+	     (format "%c%c" (make-char 'control-1 0) 
+		     (make-char 'control-1 31))))
+
+    (define-ccl-program ccl-unicode-two-control-1-chars 
+      `(1 
+	((r0 = ,(charset-id 'control-1))
+	 (r1 = 31) 
+	 (mule-to-unicode r0 r1) 
+	 (r4 = r0) 
+	 (r3 = ,(charset-id 'control-1))
+	 (r2 = 0) 
+	 (mule-to-unicode r3 r2))) 
+      "CCL program that writes two control-1 UCS code points in r3 and r4")
+
+    ;; Re-initialise the vector, mainly to clear the instruction counter,
+    ;; which is its last element.
+    (setq ccl-vector [0 0 0 0 0 0 0 0 0])
+ 
+    (ccl-execute-on-string 'ccl-unicode-two-control-1-chars ccl-vector "") 
+ 
+    (Assert (and (eq (aref ccl-vector 3)  
+                   (encode-char (make-char 'control-1 0) 'ucs)) 
+               (eq (aref ccl-vector 4)  
+                   (encode-char (make-char 'control-1 31) 'ucs)))))
+
+  ;;---------------------------------------------------------------
   ;; Test charset-in-* functions
   ;;---------------------------------------------------------------
   (with-temp-buffer

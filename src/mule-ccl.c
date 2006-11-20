@@ -850,13 +850,17 @@ static int stack_idx_of_map_multiple;
    macro is only used in the MuleToUnicode transformation.  */
 #define CCL_MAKE_CHAR(charset, code, c)				\
   do {								\
+                                                                \
+    if (!POSSIBLE_LEADING_BYTE_P(charset))                      \
+      CCL_INVALID_CMD;                                          \
+                                                                \
     if ((charset) == LEADING_BYTE_ASCII)			\
       {								\
 	c = (code) & 0xFF;					\
       }								\
     else if ((charset) == LEADING_BYTE_CONTROL_1)		\
       {								\
-	c = ((code) & 0xFF) - 0xA0;				\
+	c = ((code) & 0x1F) + 0x80;				\
       }								\
     else if (!NILP(charset_by_leading_byte(charset))		\
 	     && ((code) >= 32)					\
@@ -1390,7 +1394,7 @@ ccl_driver (struct ccl_program *ccl,
 	      if (i == LEADING_BYTE_ASCII) 
 		i = reg[rrr] & 0xFF;
 	      else if (LEADING_BYTE_CONTROL_1 == i)
-		i = ((reg[rrr] & 0xFF) - 0xA0);
+		i = ((reg[rrr] & 0x1F) + 0x80);
 	      else if (POSSIBLE_LEADING_BYTE_P(i) &&
 		       !NILP(charset_by_leading_byte(i)))
 		{

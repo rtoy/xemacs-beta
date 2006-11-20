@@ -1,3 +1,12 @@
+2006-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-ccl.c (CCL_MAKE_CHAR):
+	* mule-ccl.c (ccl_driver):
+	Eliminate a CCL bug with control-1 chars and
+	write-multibyte-character--thank you for the report, Ilya--and
+	eliminate a crash when a non-existent charset ID is specified for
+	a mule-to-unicode call.
+
 2006-11-18  Mike Sperber  <mike@xemacs.org>
 
 	* window.c (window_pixel_height_to_char_height): Cater to the

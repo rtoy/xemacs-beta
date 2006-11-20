@@ -1,3 +1,9 @@
+2006-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep):
+	Add tests to make sure the fixes to the CCL bugs I just checked in
+	don't regress.
+
 2006-08-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-reader-tests.el:
