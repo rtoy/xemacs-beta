@@ -1,3 +1,10 @@
+2006-11-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* buffer.c (buffer-file-name): Document invariant.
+	(buffer-file-truename): Sync wording to buffer-file-name.
+	Thanks to Nelson Ferreira <nelson.ferreira@ieee.org> for report
+	and discussion.
+
 2006-11-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-ccl.c (CCL_MAKE_CHAR):

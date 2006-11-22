@@ -1,3 +1,11 @@
+2006-11-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* info.el (Info-find-file-node, Info-insert-dir)
+	(Info-read-subfile, Info-insert-file-contents): Maintain invariant
+	`(equal buffer-file-truename (file-truename buffer-file-name))'.
+	Thanks to Nelson Ferreira <nelson.ferreira@ieee.org> for report
+	and discussion.
+
 2006-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-charset.el:
