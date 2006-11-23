@@ -245,8 +245,11 @@ separate_textual_runs (unsigned char *text_storage,
       if (translate_to_ucs_2)
 	{
 	  UINT_16_BIT ucs2;
+#ifdef MULE
 	  int ucs = ichar_to_unicode(ch);
-
+#else
+	  int ucs = ch;
+#endif
 	  /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
 	     REPLACMENT CHARACTER. */
 	  ucs2 = (ucs & ~0xFFFF) ? 0xFFFD : ucs;

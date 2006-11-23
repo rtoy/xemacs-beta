@@ -22,6 +22,11 @@
 
 2006-11-18  Mike Sperber  <mike@xemacs.org>
 
+	* redisplay-x.c (separate_textual_runs): Don't try to call
+	ichar_to_unicode on non-MULE.
+
+2006-11-18  Mike Sperber  <mike@xemacs.org>
+
 	* window.c (window_pixel_height_to_char_height): Cater to the
 	possibility that defheight may be 0.
 
