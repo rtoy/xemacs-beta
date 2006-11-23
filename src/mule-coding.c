@@ -1949,8 +1949,11 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 		  counter = 1;
 		}
 	      else
-		/* ASCII, or the lower control characters. */
-		Dynarr_add (dst, c);
+		/* ASCII, or the lower control characters.
+                   
+                   Perhaps we should signal an error if the character is in
+                   the range 0x80-0xc0; this is illegal UTF-8. */
+                Dynarr_add (dst, (c & 0x7f));
 
 	      break;
 	    case 1:

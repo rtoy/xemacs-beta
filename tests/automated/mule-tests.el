@@ -441,6 +441,12 @@ This is a naive implementation in Lisp.  "
                (eq (aref ccl-vector 4)  
                    (encode-char (make-char 'control-1 31) 'ucs)))))
 
+  ;; This used to crash, at least in debug builds:
+
+  (Assert (decode-coding-string 
+           (string ?\33 ?\45 ?\107 ?\306 ?\222 ?\215 ?\306)
+           'iso-2022-jp))
+
   ;;---------------------------------------------------------------
   ;; Test charset-in-* functions
   ;;---------------------------------------------------------------

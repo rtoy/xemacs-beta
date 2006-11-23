@@ -1,3 +1,9 @@
+2006-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep):
+	Add a test that ISO/IR 196 escape handling in ISO-2022-based
+	charsets don't choke on invalid bytes in UTF-8 text. 
+
 2006-11-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el (featurep):

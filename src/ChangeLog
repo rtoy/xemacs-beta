@@ -1,3 +1,9 @@
+2006-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-coding.c (iso2022_decode):
+	Only take the lower seven bits of any eight-bit character that
+	would be illegal in UTF-8, when handling ISO/IR 196 escapes. 
+
 2006-11-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* buffer.c (buffer-file-name): Document invariant.
