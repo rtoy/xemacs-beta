@@ -1,3 +1,9 @@
+2004-06-28  Nix  <nix@esperi.org.uk>
+
+	* cmdloop.el (truncate-command-history-for-gc): Delay
+        execution of all things that look up variable bindings,
+        via `enqueue-eval-event'.
+
 2006-11-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* info.el (Info-find-file-node, Info-insert-dir)
