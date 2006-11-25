@@ -3491,8 +3491,8 @@ qxe_ctime (const time_t *t)
 size_t
 wcslen (const wchar_t *s)
 {
-  if (s == NULL) return NULL;
   const wchar_t *p = s;
+  if (s == NULL) return NULL;
 
   while (*p++)
     ;
@@ -3509,8 +3509,8 @@ wcslen (const wchar_t *s)
 char *
 strlwr (char *s)
 {
-  if (s == NULL) return NULL;
   REGISTER char *c;
+  if (s == NULL) return NULL;
 
   for (c = s; *c; c++)
     {

@@ -1,3 +1,8 @@
+2006-11-23  Robert Pluim  <rpluim@gmail.com>
+
+	* sysdep.c (strlwr): Don't intermix declarations and code.
+	(wcslen): ditto
+
 2006-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-coding.c (iso2022_decode):
