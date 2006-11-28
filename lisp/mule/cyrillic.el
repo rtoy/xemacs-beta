@@ -176,6 +176,7 @@
 (set-language-info-alist
  "Cyrillic-KOI8" '((charset cyrillic-iso8859-5)
 		   (coding-system koi8-r)
+		   (native-coding-system koi8-r)
 		   (coding-priority koi8-r)
 		   (input-method . "cyrillic-yawerty")
 		   (features cyril-util)
@@ -282,6 +283,7 @@
 (set-language-info-alist
  "Cyrillic-ALT" '((charset cyrillic-iso8859-5)
 		  (coding-system alternativnyj)
+		  (native-coding-system alternativnyj)
 		  (coding-priority alternativnyj)
 		  (input-method . "cyrillic-yawerty")
 		  (features cyril-util)

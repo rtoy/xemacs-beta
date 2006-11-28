@@ -1,3 +1,46 @@
+2006-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/cyrillic.el ("Cyrillic-KOI8"):
+	* mule/cyrillic.el ("Cyrillic-ALT"):
+	Add information on the native coding system of the machine to the
+	language environment definition for Cyrillic. 
+
+	* mule/general-late.el:
+	New file, for dumped Mule code that needs to be run after the
+	language support has been loaded. 
+
+	* mule/mule-cmds.el:
+	* mule/mule-cmds.el (set-language-info-alist):
+	Return the new language environment name instead of nil. 
+
+	* mule/mule-cmds.el (langenv-to-locale-hash): Removed.
+	This was relevant because coding_system_of_xrm_database called
+	get-language-environment-from-locale 1307 times on startup, so the
+	hash table made a difference. I've changed c_s_o_x_d to normally
+	not call Lisp, and that makes this caching unnecessary.
+
+	* mule/mule-cmds.el (posix-charset-to-coding-system-hash): New.
+	A map from charsets as found in POSIX locales, with
+	non-alphanumeric character stripped, to XEmacs coding systems. 
+	* mule/mule-cmds.el (parse-posix-locale-string): New.
+	Parse a POSIX locale string into a language, region, charset,
+	modifiers quad. 
+	* mule/mule-cmds.el (create-variant-language-environment): New.
+	Create a version of a language environment which differs in its
+	name and in the associated coding systems from a given language
+	environment. 
+	* mule/mule-cmds.el (get-language-environment-from-locale):
+	Rework to better pay attention to the POSIX locale, and to create
+	language environments on the fly if the coding system of a given
+	language differs from that available in the environment.
+	* mule/mule-cmds.el (set-language-environment-coding-systems):
+	Update a comment. 
+
+2006-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Load mule/general-late when we're in a Mule build. 
+
 2004-06-28  Nix  <nix@esperi.org.uk>
 
 	* cmdloop.el (truncate-command-history-for-gc): Delay

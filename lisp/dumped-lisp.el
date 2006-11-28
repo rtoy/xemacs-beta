@@ -239,6 +239,9 @@ in dumped-lisp.el and is not itself listed.")
        (when (and (featurep 'mule) (valid-console-type-p 'mswindows))
 	 "mule/mule-msw-init-late")
 
+       (when (featurep 'mule)
+	 "mule/general-late")
+
 ;;; mule-load.el ends here
 
 ;; preload InfoDock stuff.  should almost certainly not be here if

@@ -1,5 +1,17 @@
 2006-11-28  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* device-x.c:
+	* device-x.c (coding_system_of_xrm_database):
+	Cache the last db argument and resulting coding system, and return
+	them--instead of calling Lisp--if the DB is the same pointer
+	arument as last time. 
+	* faces.c (default_face_font_info):
+	* window.c (window_displayed_height):
+	Behave more gracefully if called when we have no information about
+	the dimensions of the default face and window. 
+
+2006-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* doprnt.c (emacs_doprnt_1):
 	Ibyte -> Ascbyte, for the sake of the MSVC build. Thank you Vin. 
 

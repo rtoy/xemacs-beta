@@ -4223,7 +4223,8 @@ window_displayed_height (struct window *w)
       default_face_height_and_width (window, &defheight, &defwidth);
       /* #### This probably needs to know about the clipping area once a
          final definition is decided on. */
-      num_lines += ((ypos2 - ypos1) / defheight);
+      if (defheight)
+        num_lines += ((ypos2 - ypos1) / defheight);
     }
   else
     {

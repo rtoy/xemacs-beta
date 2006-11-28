@@ -719,6 +719,8 @@ default_face_font_info (Lisp_Object domain, int *ascent, int *descent,
 			int *height, int *width, int *proportional_p)
 {
   Lisp_Object font_instance;
+  struct face_cachel *cachel;
+  struct window *w = NULL;
 
   if (noninteractive)
     {
@@ -735,16 +737,16 @@ default_face_font_info (Lisp_Object domain, int *ascent, int *descent,
       return;
     }
 
-  /* We use ASCII here.  This is probably reasonable because the
-     people calling this function are using the resulting values to
-     come up with overall sizes for windows and frames. */
-  if (WINDOWP (domain))
-    {
-      struct face_cachel *cachel;
-      struct window *w = XWINDOW (domain);
+  /* We use ASCII here.  This is reasonable because the people calling this
+     function are using the resulting values to come up with overall sizes
+     for windows and frames. 
 
-      /* #### It's possible for this function to get called when the
-	 face cachels have not been initialized.  I don't know why. */
+     It's possible for this function to get called when the face cachels
+     have not been initialized--put a call to debug-print in
+     init-locale-at-early-startup to see it happen. */
+
+  if (WINDOWP (domain) && (w = XWINDOW (domain)) && w->face_cachels)
+    {
       if (!Dynarr_length (w->face_cachels))
         reset_face_cachels (w);
       cachel = WINDOW_FACE_CACHEL (w, DEFAULT_INDEX);
@@ -753,6 +755,11 @@ default_face_font_info (Lisp_Object domain, int *ascent, int *descent,
   else
     {
       font_instance = FACE_FONT (Vdefault_face, domain, Vcharset_ascii);
+    }
+
+  if (UNBOUNDP (font_instance))
+    {
+      return;
     }
 
   if (height)

@@ -35,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "events.h"
 #include "faces.h"
+#include "file-coding.h"
 #include "frame-impl.h"
 #include "process.h"		/* for egetenv */
 #include "redisplay.h"
@@ -192,9 +193,27 @@ static Lisp_Object
 coding_system_of_xrm_database (XrmDatabase USED_IF_MULE (db))
 {
 #ifdef MULE
-  const Extbyte *locale = XrmLocaleOfDatabase (db);
-  Lisp_Object localestr = build_ext_string (locale, Qbinary);
-  return call1 (Qget_coding_system_from_locale, localestr);
+  const Extbyte *locale;
+  Lisp_Object localestr;
+  static XrmDatabase last_xrm_db; 
+
+  /* This will always be zero, nil or an actual coding system object, so no
+     need to worry about GCPROing it--it'll be protected from garbage
+     collection by means of Vcoding_system_hash_table in file-coding.c. */
+  static Lisp_Object last_coding_system; 
+
+  if (db == last_xrm_db)
+    {
+      return last_coding_system; 
+    }
+
+  last_xrm_db = db;
+
+  locale = XrmLocaleOfDatabase (db);
+  localestr = build_ext_string (locale, Qbinary);
+  last_coding_system = call1 (Qget_coding_system_from_locale, localestr);
+
+  return last_coding_system;
 #else
   return Qbinary;
 #endif

@@ -242,7 +242,8 @@ ALIST is an alist of properties and values.  See the documentation of
   ;; appropriately.  We just use a filter.
   (while alist
     (set-language-info lang-env (car (car alist)) (cdr (car alist)))
-    (setq alist (cdr alist))))
+    (setq alist (cdr alist)))
+  lang-env)
 
 (defun read-language-name (key prompt &optional default)
   "Read a language environment name which has information for KEY.
@@ -1012,29 +1013,115 @@ when the language environment is made current."
 ;; auto-language-alist deleted.  We have a more sophisticated system,
 ;; with the locales stored in the language data.
 
-(defconst langenv-to-locale-hash (make-hash-table :test 'equal))
+;; Initialised with an eval-when-compile in mule/general-late.el, which is
+;; compiled after all the language support--and, thus, minority Chinese
+;; coding systems and so on--has been loaded.
+(defvar posix-charset-to-coding-system-hash nil
+  "A map from the POSIX locale charset versions of the defined coding
+systems' names, with all alpha-numeric characters removed, to the actual
+coding system names.  Used at startup when working out which coding system
+should be the default for the locale.  ")
+
+(defun parse-posix-locale-string (locale-string)
+  "Return values \(LANGUAGE REGION CHARSET MODIFIERS\) given LOCALE-STRING.
+
+LOCALE-STRING should be a POSIX locale.  If it cannot be parsed as such, this
+function returns nil. "
+  (let (language region charset modifiers locinfo)
+    (setq locale-string (downcase locale-string))
+    (cond ((string-match
+	    #r"^\([a-z0-9]\{2,2\}\)\(_[a-z0-9]\{2,2\}\)?\(\.[^@]*\)?\(@.*\)?$"
+	    locale-string)
+	   (setq language (match-string 1 locale-string)
+		 region (match-string 2 locale-string)
+		 charset (match-string 3 locale-string)
+		 modifiers (match-string 4 locale-string)
+		 region (and region (replace-in-string region "^_" ""))
+		 charset (and charset (replace-in-string charset #r"^\." ""))
+		 modifiers (and modifiers
+				(replace-in-string modifiers "^@" "")))
+	   (when (and modifiers (equal modifiers "euro") (null charset))
+	     ;; Not ideal for Latvian, say, but I don't have any locales
+	     ;; where the @euro modifier doesn't mean ISO-8859-15 in the 956
+	     ;; I have.
+	     (setq charset "iso-8859-15"))
+	   (values language region charset modifiers))
+	  ((and (string-match "^[a-z0-9]+$" locale-string)
+		(assoc-ignore-case locale-string language-info-alist))
+	   (setq language (get-language-info locale-string 'locale)
+		 language (if (listp language) (car language) language))
+	   (values language region charset modifiers))
+	  ((string-match #r"^\([a-z0-9]+\)\.\([a-z0-9]+\)$" locale-string)
+	   (when (assoc-ignore-case
+		  (setq locinfo (match-string 1 locale-string))
+		  language-info-alist)
+	     (setq language (get-language-info locinfo 'locale)
+		   language (if (listp language) (car language) language)))
+	   (setq charset (match-string 2 locale-string))
+	   (values language region charset modifiers)))))
+
+(defun create-variant-language-environment (langenv coding-system)
+  "Create a variant of LANGENV with CODING-SYSTEM as its coding systems.
+
+The coding systems in question are those described in the
+`set-language-info' docstring with the property names of
+`native-coding-system' and `coding-system'.  The name of the new language
+environment is the name of the old language environment, followed by
+CODING-SYSTEM in parentheses.  Returns the name of the new language
+environment.  "
+  (check-coding-system coding-system)
+  (if (symbolp langenv) (setq langenv (symbol-name langenv)))
+  (unless (setq langenv
+		(assoc-ignore-case langenv language-info-alist))
+    (error 'wrong-type-argument "Not a known language environment"))
+  (set-language-info-alist
+   (if (string-match " ([^)]+)$" (car langenv))
+       (replace-match (format " (%s)" 
+                              (upcase (symbol-name
+                                       (coding-system-name coding-system))))
+                      nil nil langenv)
+     (format "%s (%s)" (car langenv)
+             (upcase (symbol-name (coding-system-name coding-system)))))
+   (destructive-plist-to-alist 
+    (plist-put (plist-put (alist-to-plist (cdr langenv)) 'native-coding-system
+			  coding-system) 'coding-system
+			  (cons coding-system
+				(cdr (assoc 'coding-system (cdr langenv))))))))
 
 (defun get-language-environment-from-locale (locale)
   "Convert LOCALE into a language environment.
 LOCALE is a C library locale string, as returned by `current-locale'.
 Uses the `locale' property of the language environment."
-  (or (gethash locale langenv-to-locale-hash)
-      (let ((retval
-	     (block langenv
-	       (dolist (langcons language-info-alist)
-		 (let* ((lang (car langcons))
-			(locs (get-language-info lang 'locale))
-			(case-fold-search t))
-		   (dolist (loc (if (listp locs) locs (list locs)))
-		     (if (cond ((functionp loc)
-				(funcall loc locale))
-			       ((stringp loc)
-				(string-match
-				 (concat "^" loc "\\([^A-Za-z0-9]\\|$\\)")
-				 locale)))
-			 (return-from langenv lang))))))))
-	(puthash locale retval langenv-to-locale-hash)
-	retval)))
+  (block langenv
+    (multiple-value-bind (language region charset modifiers)
+	(parse-posix-locale-string locale)
+      (let ((case-fold-search t)
+	    (desired-coding-system
+	     (and charset (gethash (replace-in-string charset "[^a-z0-9]" "")
+                                   posix-charset-to-coding-system-hash)))
+	    lang locs)
+	(dolist (langcons language-info-alist)
+	  (setq lang (car langcons)
+		locs (get-language-info lang 'locale))
+	  (dolist (loc (if (listp locs) locs (list locs)))
+	    (cond ((functionp loc)
+		   (if (funcall loc locale)
+		       (return-from langenv lang)))
+		  ((stringp loc)
+		   (when (or (equal loc language)
+			     (string-match
+			      (format "^%s\\([^A-Za-z0-9]\\|$\\)" loc)
+			      locale))
+		     (if (or (null desired-coding-system)
+			     (and desired-coding-system
+				  (eq desired-coding-system
+				      (get-language-info
+				       lang
+				       'native-coding-system))))
+			 (return-from langenv lang)
+		       (return-from langenv
+			 (create-variant-language-environment
+			  lang desired-coding-system))))))))))))
 
 (defun mswindows-get-language-environment-from-locale (ms-locale)
   "Convert MS-LOCALE (an MS Windows locale) into a language environment.
@@ -1250,11 +1337,19 @@ of buffer-file-coding-system set by this function."
       ;; set the default buffer coding system from the first element of the
       ;; list in the `coding-priority' property, under Unix.  Under Windows, it
       ;; should stay at `mswindows-multibyte', which will reference the current
-      ;; code page. (#### Does it really make sense the set the Unix default
+      ;; code page. ([Does it really make sense to set the Unix default
       ;; that way?  NOTE also that it's not the same as the native coding
       ;; system for the locale, which is correct -- the form we choose for text
-      ;; files should not necessarily have any relevant to whether we're in a
-      ;; Shift-JIS, EUC-JP, JIS, or other Japanese locale.)
+      ;; files should not necessarily have any relevance to whether we're in a
+      ;; Shift-JIS, EUC-JP, JIS, or other Japanese locale.])
+      ;;
+      ;;     On Unix--with the exception of Mac OS X--there is no way to
+      ;;     know for certain what coding system to use for file names, and
+      ;;     the environment is the best guess. If a particular user's
+      ;;     preferences differ from this, then that particular user needs
+      ;;     to edit ~/.xemacs/init.el. Aidan Kehoe, Sun Nov 26 18:11:31 CET
+      ;;     2006. OS X uses an almost-normal-form version of UTF-8. 
+
       (unless (memq system-type '(windows-nt cygwin32))
 	(set-default-buffer-file-coding-system
 	 (maybe-change-coding-system-with-eol default-coding eol-type))))
