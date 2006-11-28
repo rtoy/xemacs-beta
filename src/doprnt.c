@@ -776,9 +776,9 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 #endif /* HAVE_BIGFLOAT */
 	  else
 	    {
-	      Ibyte *text_to_print = alloca_array (char, 350);
-	      Ibyte constructed_spec[100];
-	      Ibyte *p = constructed_spec;
+	      Ascbyte *text_to_print = alloca_array (char, 350);
+	      Ascbyte constructed_spec[100];
+	      Ascbyte *p = constructed_spec;
 
 	      /* Mostly reconstruct the spec and use sprintf() to
 		 format the string. */

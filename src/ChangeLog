@@ -1,6 +1,11 @@
 2006-11-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doprnt.c (emacs_doprnt_1):
+	Ibyte -> Ascbyte, for the sake of the MSVC build. Thank you Vin. 
+
+2006-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (emacs_doprnt_1):
 	Integrate Sebastian Freundt's SXEmacs bug fix for cases where a
 	format specifier overflows the allocated buffer with a float
 	format string. 
