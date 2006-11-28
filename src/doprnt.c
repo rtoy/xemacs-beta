@@ -776,16 +776,9 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 #endif /* HAVE_BIGFLOAT */
 	  else
 	    {
-	      /* ASCII Decimal representation uses 2.4 times as many
-		 bits as machine binary.  */
-	      char *text_to_print =
-		alloca_array (char, 32 +
-			      max (spec->minwidth,
-				   (int) max (sizeof (double),
-				              sizeof (long)) * 3 +
-				   max (spec->precision, 0)));
-	      char constructed_spec[100];
-	      char *p = constructed_spec;
+	      Ibyte *text_to_print = alloca_array (char, 350);
+	      Ibyte constructed_spec[100];
+	      Ibyte *p = constructed_spec;
 
 	      /* Mostly reconstruct the spec and use sprintf() to
 		 format the string. */
