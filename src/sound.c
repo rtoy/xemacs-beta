@@ -590,7 +590,7 @@ init_nas_sound (struct device *d)
 static void
 init_native_sound (struct device *d)
 {
-  if (DEVICE_TTY_P (d) || DEVICE_STREAM_P (d) || DEVICE_MSWINDOWS_P(d))
+  if (!(DEVICE_X_P(d) || DEVICE_GTK_P(dev)))
     DEVICE_ON_CONSOLE_P (d) = 1;
 #ifdef HAVE_X_WINDOWS
   else

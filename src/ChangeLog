@@ -1,3 +1,10 @@
+2006-11-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sound.c (init_native_sound):
+	Only X11 and GTK devices can possibly not be on the console of the
+	associated machine. Fixes a crash when init_native_sound is called
+	on a msprinter device. 
+
 2006-11-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* device-x.c:
