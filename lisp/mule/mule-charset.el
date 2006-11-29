@@ -82,13 +82,13 @@ Only left-to-right is currently implemented."
 
 ;; Not in GNU Emacs/Mule
 (defun charset-registry (charset)
-  "Return the registry of CHARSET.
-This is a regular expression matching the registry field of fonts
-that can display the characters in CHARSET."
+  "Obsolete; use charset-registries instead. "
   (lwarn 'xintl 'warning 
     "charset-registry is obsolete--use charset-registries instead. ")
   (when (charset-property charset 'registries)
     (elt (charset-property charset 'registries) 0)))
+
+(make-obsolete 'charset-registry 'charset-registries)
 
 (defun charset-registries (charset)
   "Return the registries of CHARSET."
@@ -105,6 +105,8 @@ that can display the characters in CHARSET."
   (set-charset-registries 
    charset 
    (apply 'vector registry (append (charset-registries charset) nil))))
+
+(make-obsolete 'set-charset-registry 'set-charset-registries)
 
 (defun charset-ccl-program (charset)
   "Return the CCL program of CHARSET.
@@ -124,6 +126,7 @@ See `make-charset'."
 
 (defsetf charset-registry    set-charset-registry)
 (defsetf charset-ccl-program set-charset-ccl-program)
+(defsetf charset-registries  set-charset-registries)
 
 ;;; FSF compatibility functions
 (defun charset-after (&optional pos)

@@ -1,3 +1,12 @@
+2006-11-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-charset.el:
+	* mule/mule-charset.el (charset-registry):
+	* mule/mule-charset.el (set-charset-registry):
+	* mule/mule-charset.el (charset-registries): New.
+	Make set-charset-registry, charset-registry obsolete; define a
+	setf for charset-registries. 
+
 2006-11-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/cyrillic.el ("Cyrillic-KOI8"):
