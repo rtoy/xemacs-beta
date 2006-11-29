@@ -1,3 +1,11 @@
+2006-11-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/custom.texi (Face Resources):
+	Mention that the user should use full XLFD forms for specifying
+	fonts, and that Mule builds reject the short forms by
+	default. Also mention the work-around to the latter design choice
+	that was implemented for Ilya. 
+
 2006-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi

@@ -891,7 +891,7 @@ set_charset_registries(Lisp_Object charset, Lisp_Object registries)
   face_property_was_changed (Vdefault_face, Qfont, Qglobal);
 }
 
-DEFUN ("set-charset-registries", Fset_charset_registries, 2, 2, 0, /*
+DEFUN ("set-charset-registries", Fset_charset_registries, 2, 3, 0, /*
 Set the `registries' property of CHARSET to REGISTRIES.
 
 REGISTRIES is an ordered vector of strings that describe the X11
@@ -906,8 +906,22 @@ would be:
 
 (set-charset-registries 'ascii ["jisx0201.1976-0"])
 
+If optional argument FORCE is non-nil, avoid sanity-checking the elements of
+REGISTRIES. Normally the strings are checked to make sure they contain no
+XLFD wild cards and that they contain at least one hyphen; the only context
+in which one might want not to do this is in order to use a font which
+doesn't have a full XLFD--and thus, an effective
+CHARSET_REGISTRY-CHARSET_ENCODING of ""--to display ASCII.
+
+We recommend strongly that you specify a full XLFD, since this makes
+multilingual and variant font handling work much better. To get the full
+XLFD of any font, start xfd with the short name as the pattern argument:
+
+    xfd -fn 8x16kana
+
+and use the text that appears at the top of the window. 
 */
-       (charset, registries))
+       (charset, registries, force))
 {
   int i; 
   charset = Fget_charset (charset);
@@ -916,6 +930,12 @@ would be:
   for (i = 0; i < XVECTOR_LENGTH(registries); ++i)
     {
       CHECK_STRING (XVECTOR_DATA(registries)[i]);
+
+      if (!NILP(force))
+        {
+          continue;
+        }
+
       if (NULL == qxestrchr(XSTRING_DATA(XVECTOR_DATA(registries)[i]), '-'))
 	{
 	  invalid_argument("Not an X11 REGISTRY-ENCODING combination", 

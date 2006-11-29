@@ -3035,6 +3035,10 @@ Description) format, which looks like
 @end example
 @noindent
 
+All X fonts can be referred to via XLFD-style names, and you should use
+those forms.  See the man pages for @samp{X(1)}, @samp{xlsfonts(1)}, and
+@samp{xfontsel(1)}.
+
 If you use any of the other, less strict font name formats, some of which
 look like
 
@@ -3045,9 +3049,14 @@ fixed
 @end example
 
 then XEmacs won't be able to guess the names of the bold and italic
-versions.  All X fonts can be referred to via XLFD-style names, so you
-should use those forms.  See the man pages for @samp{X(1)},
-@samp{xlsfonts(1)}, and @samp{xfontsel(1)}.
+versions, and on a build with internationalization support, it will
+refuse to use them.  (Since only the XLFD form includes information as
+to which character set the font coverage.)
+
+If it is very important to you to use the short form names, you can
+override this for ASCII, and for ASCII alone, by passing the
+@samp{FORCE} argument to @samp{set-charset-registries}, and specifying
+an empty string as one of the charset registries. 
 
 @node Widgets
 @subsection Widgets

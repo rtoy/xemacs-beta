@@ -1,5 +1,13 @@
 2006-11-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule-charset.c (Fset_charset_registries):
+	Add an optional argument FORCE, to allow specifying badly-formed
+	CHARSET_REGISTRY-CHARSET_ENCODING combinations. Re-enables the
+	sort of hacks described in 96wt67fa3f.fsf@mo.msk.ru from Ilya
+	Golubev. 
+
+2006-11-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* sound.c (init_native_sound):
 	Only X11 and GTK devices can possibly not be on the console of the
 	associated machine. Fixes a crash when init_native_sound is called
