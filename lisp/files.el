@@ -3512,7 +3512,10 @@ Revert only if they differ."
 Return nil if identical, and the new buffer if different."
 
   (let* ((newbuf (get-buffer-create " *revert*"))
-	 bmin bmax)
+	 bmin bmax
+	 ;; #### b-f-c-s is _not necessarily_ the coding system that
+	 ;; was used to read in the file. See its docstring.
+	 (coding-system buffer-file-coding-system))
     (save-excursion
       (set-buffer newbuf)
       (with-obsolete-variable '(before-change-function after-change-function)
@@ -3522,9 +3525,8 @@ Return nil if identical, and the new buffer if different."
 	      after-change-functions
 	      before-change-function
 	      before-change-functions
-	      ;; #### b-f-c-s is _not necessarily_ the coding system that
-	      ;; was used to read in the file. See its docstring.
-	      (coding-system-for-read buffer-file-coding-system))
+	      (coding-system-for-read coding-system)
+	      )
 	  (if revert-buffer-insert-file-contents-function
 	      (funcall revert-buffer-insert-file-contents-function
 		       file-name nil)
