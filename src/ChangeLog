@@ -1,3 +1,13 @@
+2006-12-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* ChangeLog:
+	* sysdir.h (DIRENTRY_NONEMPTY):
+
+2006-11-29  Dr. Volker Zell  <Dr.Volker.Zell@oracle.com>
+
+	* sysdir.h: Revert workaround missing d_ino field from 'struct
+	dirent' for Cygwin as it's back in again.
+
 2006-11-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-charset.c (Fset_charset_registries):
