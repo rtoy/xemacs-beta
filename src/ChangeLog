@@ -1,3 +1,9 @@
+2006-11-30  Mike Sperber  <mike@xemacs.org>
+
+	* fileio.c (Finsert_file_contents_internal): Don't call the
+	file-name handler for `insert-file-contents' from here, which is
+	too late.  Instead, do it from Lisp.SSper
+
 2006-11-29  Dr. Volker Zell  <Dr.Volker.Zell@oracle.com>
 
 	* sysdir.h: Revert workaround missing d_ino field from 'struct

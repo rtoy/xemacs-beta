@@ -2844,16 +2844,6 @@ under Mule, is very difficult.)
 
   filename = Fexpand_file_name (filename, Qnil);
 
-  /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (filename, Qinsert_file_contents);
-  if (!NILP (handler))
-    {
-      val = call6 (handler, Qinsert_file_contents, filename,
-		   visit, start, end, replace);
-      goto handled;
-    }
-
   if (!NILP (used_codesys))
     CHECK_SYMBOL (used_codesys);
 
