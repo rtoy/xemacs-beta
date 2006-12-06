@@ -1,3 +1,9 @@
+2006-12-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.c (Fsplit_char):
+	Make split-char available on non-Mule builds, taking out a
+	superfluous call to get-charset to make that possible. 
+
 2006-11-30  Mike Sperber  <mike@xemacs.org>
 
 	* fileio.c (Finsert_file_contents_internal): Don't call the

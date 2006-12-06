@@ -5000,6 +5000,8 @@ N defaults to 0 if omitted.
     invalid_constant ("Octet number must be 0 or 1", n);
 }
 
+#endif /* MULE */
+
 DEFUN ("split-char", Fsplit_char, 1, 1, 0, /*
 Return list of charset and one or two position-codes of CHAR.
 */
@@ -5016,7 +5018,7 @@ Return list of charset and one or two position-codes of CHAR.
 
   BREAKUP_ICHAR (XCHAR (character), charset, c1, c2);
 
-  if (XCHARSET_DIMENSION (Fget_charset (charset)) == 2)
+  if (XCHARSET_DIMENSION (charset) == 2)
     {
       rc = list3 (XCHARSET_NAME (charset), make_int (c1), make_int (c2));
     }
@@ -5028,8 +5030,6 @@ Return list of charset and one or two position-codes of CHAR.
 
   return rc;
 }
-
-#endif /* MULE */
 
 
 /************************************************************************/
@@ -5128,11 +5128,11 @@ void
 syms_of_text (void)
 {
   DEFSUBR (Fmake_char);
+  DEFSUBR (Fsplit_char);
 
 #ifdef MULE
   DEFSUBR (Fchar_charset);
   DEFSUBR (Fchar_octet);
-  DEFSUBR (Fsplit_char);
 
 #ifdef ENABLE_COMPOSITE_CHARS
   DEFSUBR (Fmake_composite_char);

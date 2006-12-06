@@ -783,7 +783,10 @@ See also `line-number'."
 	(- (buffer-size) (forward-line (buffer-size)))))))
 
 (defun what-cursor-position ()
-  "Print info on cursor position (on screen and within buffer)."
+  "Print info on cursor position (on screen and within buffer).
+Also describe the character after point, giving its UCS code point and Mule
+charset and codes; for ASCII characters, give its code in octal, decimal and
+hex."
   ;; XEmacs change
   (interactive "_")
   (let* ((char (char-after (point))) ; XEmacs
@@ -798,21 +801,29 @@ See also `line-number'."
 	 (hscroll (if (= (window-hscroll) 0)
 		      ""
 		    (format " Hscroll=%d" (window-hscroll))))
-	 (col (+ (current-column) (if column-number-start-at-one 1 0))))
+	 (col (+ (current-column) (if column-number-start-at-one 1 0)))
+         (unicode (and char (encode-char char 'ucs)))
+         (unicode-string (and unicode (natnump unicode)
+                              (format (if (> unicode #xFFFF) "U+%06X" "U+%04X")
+                                      unicode)))
+         (narrowed-details (if (or (/= beg 1) (/= end (1+ total)))
+                               (format " <%d - %d>" beg end)
+                             "")))
+         
     (if (= pos end)
-	(if (or (/= beg 1) (/= end (1+ total)))
-	    (message "point=%d of %d(%d%%) <%d - %d>  column %d %s"
-		     pos total percent beg end col hscroll)
-	  (message "point=%d of %d(%d%%)  column %d %s"
-		   pos total percent col hscroll))
-      ;; XEmacs: don't use single-key-description
-      (if (or (/= beg 1) (/= end (1+ total)))
-	  (message "Char: %s (0%o, %d, 0x%x)  point=%d of %d(%d%%) <%d - %d>  column %d %s"
-		   (text-char-description char) char char char pos total
-		   percent beg end col hscroll)
-	(message "Char: %s (0%o, %d, 0x%x)  point=%d of %d(%d%%)  column %d %s"
-		 (text-char-description char) char char char pos total
-		 percent col hscroll)))))
+        (message "point=%d of %d(%d%%)%s column %d %s"
+                 pos total percent narrowed-details col hscroll)
+      ;; XEmacs: don't use single-key-description, treat non-ASCII
+      ;; characters differently.
+      (if (< char ?\x80)
+          (message "Char: %s (0%o, %d, %x) point=%d of %d(%d%%)%s column %d %s"
+                       (text-char-description char) char char char pos total
+                       percent narrowed-details col hscroll)
+        (message "Char: %s (%s %s) point=%d of %d(%d%%)%s column %d %s"
+                 (text-char-description char) unicode-string
+                 (mapconcat (lambda (arg) (format "%S" arg)) (split-char char) " ")
+                 pos total
+                 percent narrowed-details col hscroll)))))
 
 (defun fundamental-mode ()
   "Major mode not specialized for anything in particular.

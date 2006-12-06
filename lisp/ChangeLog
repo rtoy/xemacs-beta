@@ -1,3 +1,10 @@
+2006-12-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (what-cursor-position):
+	For non-ASCII characters, give details on what a character maps to
+	in Unicode, and its Mule charsets and codes, instead of simply its
+	integer code point in this XEmacs.
+
 2006-11-30  Mike Sperber  <mike@xemacs.org>
 
 	* code-files.el (insert-file-contents): Call the file-name handler
