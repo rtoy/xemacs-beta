@@ -18704,7 +18704,7 @@ if test "$ac_x_libraries" = no; then
   # See if we find them without any special options.
   # Don't add to $LIBS permanently.
   ac_save_LIBS=$LIBS
-  LIBS="-lXt $LIBS"
+  LIBS="-lX11 $LIBS"
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -26637,6 +26637,7 @@ echo "${ECHO_T}" >&6; }
 
       libpath_xpm=
   incpath_xpm=
+  libname_xpm="-lXpm"
   case "$opsys" in
     cygwin*)
       cygwin_top=`eval gcc -print-search-dirs | sed -ne s'/install: //p'`
@@ -26645,6 +26646,7 @@ echo "${ECHO_T}" >&6; }
                 x11)  ;;
                 msw) libpath_xpm="-L${cygwin_top}/lib/noX"
              incpath_xpm="-I${cygwin_top}/include/noX"
+             libname_xpm="-lXpm-noX"
               ;;
                 gtk)  ;;
                 none) ;;
@@ -26660,7 +26662,7 @@ echo "${ECHO_T}" >&6; }
     LDFLAGS=""$libpath_xpm" $LDFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$libpath_xpm"\" to \$LDFLAGS"; fi
     { echo "$as_me:$LINENO: checking for Xpm - no older than 3.4f" >&5
 echo $ECHO_N "checking for Xpm - no older than 3.4f... $ECHO_C" >&6; }
-    xe_check_libs=-lXpm
+    xe_check_libs="$libname_xpm"
     if test "$cross_compiling" = yes; then
   { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
 See \`config.log' for more details." >&5
@@ -26741,12 +26743,12 @@ echo "${ECHO_T}$with_xpm" >&6; }
 _ACEOF
 
     LDFLAGS=""$libpath_xpm" $LDFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$libpath_xpm"\" to \$LDFLAGS"; fi
-    libs_x="-lXpm $libs_x" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lXpm\" to \$libs_x"; fi
+    libs_x=""$libname_xpm" $libs_x" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$libname_xpm"\" to \$libs_x"; fi
     CFLAGS=""$incpath_xpm" $CFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$incpath_xpm"\" to \$CFLAGS"; fi
     XE_CFLAGS=""$incpath_xpm" $XE_CFLAGS" &&  if test "$verbose" = "yes"; then echo "    Prepending \""$incpath_xpm"\" to \$XE_CFLAGS"; fi
     { echo "$as_me:$LINENO: checking for \"FOR_MSW\" xpm" >&5
 echo $ECHO_N "checking for \"FOR_MSW\" xpm... $ECHO_C" >&6; }
-    xe_check_libs=-lXpm
+    xe_check_libs="$libname_xpm"
     cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF

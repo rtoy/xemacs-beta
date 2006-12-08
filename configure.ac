@@ -3960,6 +3960,7 @@ if test "$window_system" != "none"; then
   dnl   -- should only happen if CYGWIN && WITH_XPM && WITH_MSW && !WITH_X
   libpath_xpm=
   incpath_xpm=
+  libname_xpm="-lXpm"
   case "$opsys" in 
     cygwin*)
       cygwin_top=`eval gcc -print-search-dirs | sed -ne s'/install: //p'`
@@ -3970,6 +3971,7 @@ if test "$window_system" != "none"; then
         dnl hardcode "standard" non-X11 xpm lib/inc dirs
         msw) libpath_xpm="-L${cygwin_top}/lib/noX"
              incpath_xpm="-I${cygwin_top}/include/noX"
+             libname_xpm="-lXpm-noX"
               ;;
         dnl not supported on cygwin (yet?)
         gtk)  ;;
@@ -3989,7 +3991,7 @@ if test "$window_system" != "none"; then
     XE_PREPEND("$incpath_xpm", XE_CFLAGS)
     XE_PREPEND("$libpath_xpm", LDFLAGS)
     AC_MSG_CHECKING(for Xpm - no older than 3.4f)
-    xe_check_libs=-lXpm
+    xe_check_libs="$libname_xpm"
     AC_RUN_IFELSE([AC_LANG_SOURCE([#define XPM_NUMBERS
 #include <X11/xpm.h>
     int main(int c, char **v) {
@@ -4024,11 +4026,11 @@ if test "$window_system" != "none"; then
     dnl #### but doesn't actually verify this assumption.
     AC_DEFINE(HAVE_XPM)
     XE_PREPEND("$libpath_xpm", LDFLAGS)
-    XE_PREPEND(-lXpm, libs_x)
+    XE_PREPEND("$libname_xpm", libs_x)
     XE_PREPEND("$incpath_xpm", CFLAGS)
     XE_PREPEND("$incpath_xpm", XE_CFLAGS)
     AC_MSG_CHECKING([for "FOR_MSW" xpm])
-    xe_check_libs=-lXpm
+    xe_check_libs="$libname_xpm"
     AC_LINK_IFELSE([AC_LANG_PROGRAM([],[XpmCreatePixmapFromData();])],
     [xpm_for_msw=no],
     [xpm_for_msw=yes])
