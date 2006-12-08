@@ -100,6 +100,10 @@ begin-unicode-encapsulation-script
 
 // dir c:\Program Files\Microsoft Visual Studio\VC98\Include\
 
+file ACLAPI.h
+
+yes GetNamedSecurityInfo
+
 file WINBASE.H
 
 yes GetBinaryType

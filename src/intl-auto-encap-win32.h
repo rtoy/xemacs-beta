@@ -3,84 +3,6 @@
 */
 
 
-/* Processing file WINCON.H */
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef PeekConsoleInput
-#define PeekConsoleInput error_use_qxePeekConsoleInput_or_PeekConsoleInputA_and_PeekConsoleInputW
-#endif
-BOOL qxePeekConsoleInput (HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ReadConsoleInput
-#define ReadConsoleInput error_use_qxeReadConsoleInput_or_ReadConsoleInputA_and_ReadConsoleInputW
-#endif
-BOOL qxeReadConsoleInput (HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WriteConsoleInput
-#define WriteConsoleInput error_use_qxeWriteConsoleInput_or_WriteConsoleInputA_and_WriteConsoleInputW
-#endif
-BOOL qxeWriteConsoleInput (HANDLE hConsoleInput, CONST INPUT_RECORD * lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ReadConsoleOutput
-#define ReadConsoleOutput error_use_qxeReadConsoleOutput_or_ReadConsoleOutputA_and_ReadConsoleOutputW
-#endif
-BOOL qxeReadConsoleOutput (HANDLE hConsoleOutput, PCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpReadRegion);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WriteConsoleOutput
-#define WriteConsoleOutput error_use_qxeWriteConsoleOutput_or_WriteConsoleOutputA_and_WriteConsoleOutputW
-#endif
-BOOL qxeWriteConsoleOutput (HANDLE hConsoleOutput, CONST CHAR_INFO * lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpWriteRegion);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ReadConsoleOutputCharacter
-#define ReadConsoleOutputCharacter error_use_qxeReadConsoleOutputCharacter_or_ReadConsoleOutputCharacterA_and_ReadConsoleOutputCharacterW
-#endif
-BOOL qxeReadConsoleOutputCharacter (HANDLE hConsoleOutput, Extbyte * lpCharacter, DWORD nLength, COORD dwReadCoord, LPDWORD lpNumberOfCharsRead);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WriteConsoleOutputCharacter
-#define WriteConsoleOutputCharacter error_use_qxeWriteConsoleOutputCharacter_or_WriteConsoleOutputCharacterA_and_WriteConsoleOutputCharacterW
-#endif
-BOOL qxeWriteConsoleOutputCharacter (HANDLE hConsoleOutput, const Extbyte * lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
-
-#undef FillConsoleOutputCharacter
-#define FillConsoleOutputCharacter error_split_CHAR
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ScrollConsoleScreenBuffer
-#define ScrollConsoleScreenBuffer error_use_qxeScrollConsoleScreenBuffer_or_ScrollConsoleScreenBufferA_and_ScrollConsoleScreenBufferW
-#endif
-BOOL qxeScrollConsoleScreenBuffer (HANDLE hConsoleOutput, CONST SMALL_RECT * lpScrollRectangle, CONST SMALL_RECT * lpClipRectangle, COORD dwDestinationOrigin, CONST CHAR_INFO * lpFill);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef GetConsoleTitle
-#define GetConsoleTitle error_use_qxeGetConsoleTitle_or_GetConsoleTitleA_and_GetConsoleTitleW
-#endif
-DWORD qxeGetConsoleTitle (Extbyte * lpConsoleTitle, DWORD nSize);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef SetConsoleTitle
-#define SetConsoleTitle error_use_qxeSetConsoleTitle_or_SetConsoleTitleA_and_SetConsoleTitleW
-#endif
-BOOL qxeSetConsoleTitle (const Extbyte * lpConsoleTitle);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ReadConsole
-#define ReadConsole error_use_qxeReadConsole_or_ReadConsoleA_and_ReadConsoleW
-#endif
-BOOL qxeReadConsole (HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID lpReserved);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WriteConsole
-#define WriteConsole error_use_qxeWriteConsole_or_WriteConsoleA_and_WriteConsoleW
-#endif
-BOOL qxeWriteConsole (HANDLE hConsoleOutput, CONST VOID * lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-
-
 /* Processing file SHELLAPI.H */
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
@@ -487,145 +409,6 @@ BOOL qxeEnumPrinters (DWORD Flags, Extbyte * Name, DWORD Level, LPBYTE pPrinterE
 #if defined (HAVE_MS_WINDOWS)
 #undef GetPrinterHTMLView
 #define GetPrinterHTMLView error_not_used__complicated_interface_with_split_structures
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-
-/* Processing file WINNETWK.H */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetAddConnection
-#define WNetAddConnection error_use_qxeWNetAddConnection_or_WNetAddConnectionA_and_WNetAddConnectionW
-#endif
-DWORD  qxeWNetAddConnection (const Extbyte * lpRemoteName, const Extbyte * lpPassword, const Extbyte * lpLocalName);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetAddConnection2
-#define WNetAddConnection2 error_use_qxeWNetAddConnection2_or_WNetAddConnection2A_and_WNetAddConnection2W
-#endif
-DWORD  qxeWNetAddConnection2 (LPNETRESOURCEW lpNetResource, const Extbyte * lpPassword, const Extbyte * lpUserName, DWORD dwFlags);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetAddConnection3
-#define WNetAddConnection3 error_use_qxeWNetAddConnection3_or_WNetAddConnection3A_and_WNetAddConnection3W
-#endif
-DWORD  qxeWNetAddConnection3 (HWND hwndOwner, LPNETRESOURCEW lpNetResource, const Extbyte * lpPassword, const Extbyte * lpUserName, DWORD dwFlags);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetCancelConnection
-#define WNetCancelConnection error_use_qxeWNetCancelConnection_or_WNetCancelConnectionA_and_WNetCancelConnectionW
-#endif
-DWORD  qxeWNetCancelConnection (const Extbyte * lpName, BOOL fForce);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetCancelConnection2
-#define WNetCancelConnection2 error_use_qxeWNetCancelConnection2_or_WNetCancelConnection2A_and_WNetCancelConnection2W
-#endif
-DWORD  qxeWNetCancelConnection2 (const Extbyte * lpName, DWORD dwFlags, BOOL fForce);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetGetConnection
-#define WNetGetConnection error_use_qxeWNetGetConnection_or_WNetGetConnectionA_and_WNetGetConnectionW
-#endif
-DWORD  qxeWNetGetConnection (const Extbyte * lpLocalName, Extbyte * lpRemoteName, LPDWORD lpnLength);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetUseConnection
-#define WNetUseConnection error_use_qxeWNetUseConnection_or_WNetUseConnectionA_and_WNetUseConnectionW
-#endif
-DWORD  qxeWNetUseConnection (HWND hwndOwner, LPNETRESOURCEW lpNetResource, const Extbyte * lpUserID, const Extbyte * lpPassword, DWORD dwFlags, Extbyte * lpAccessName, LPDWORD lpBufferSize, LPDWORD lpResult);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetConnectionDialog1
-#define WNetConnectionDialog1 error_use_qxeWNetConnectionDialog1_or_WNetConnectionDialog1A_and_WNetConnectionDialog1W
-#endif
-DWORD  qxeWNetConnectionDialog1 (LPCONNECTDLGSTRUCTW lpConnDlgStruct);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetDisconnectDialog1
-#define WNetDisconnectDialog1 error_use_qxeWNetDisconnectDialog1_or_WNetDisconnectDialog1A_and_WNetDisconnectDialog1W
-#endif
-DWORD  qxeWNetDisconnectDialog1 (LPDISCDLGSTRUCTW lpConnDlgStruct);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetOpenEnum
-#define WNetOpenEnum error_use_qxeWNetOpenEnum_or_WNetOpenEnumA_and_WNetOpenEnumW
-#endif
-DWORD  qxeWNetOpenEnum (DWORD dwScope, DWORD dwType, DWORD dwUsage, LPNETRESOURCEW lpNetResource, LPHANDLE lphEnum);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetEnumResource
-#define WNetEnumResource error_use_qxeWNetEnumResource_or_WNetEnumResourceA_and_WNetEnumResourceW
-#endif
-DWORD  qxeWNetEnumResource (HANDLE hEnum, LPDWORD lpcCount, LPVOID lpBuffer, LPDWORD lpBufferSize);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetGetUniversalName
-#define WNetGetUniversalName error_use_qxeWNetGetUniversalName_or_WNetGetUniversalNameA_and_WNetGetUniversalNameW
-#endif
-DWORD  qxeWNetGetUniversalName (const Extbyte * lpLocalPath, DWORD dwInfoLevel, LPVOID lpBuffer, LPDWORD lpBufferSize);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetGetUser
-#define WNetGetUser error_use_qxeWNetGetUser_or_WNetGetUserA_and_WNetGetUserW
-#endif
-DWORD  qxeWNetGetUser (const Extbyte * lpName, Extbyte * lpUserName, LPDWORD lpnLength);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetGetProviderName
-#define WNetGetProviderName error_use_qxeWNetGetProviderName_or_WNetGetProviderNameA_and_WNetGetProviderNameW
-#endif
-DWORD  qxeWNetGetProviderName (DWORD dwNetType, Extbyte * lpProviderName, LPDWORD lpBufferSize);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetGetNetworkInformation
-#define WNetGetNetworkInformation error_use_qxeWNetGetNetworkInformation_or_WNetGetNetworkInformationA_and_WNetGetNetworkInformationW
-#endif
-DWORD  qxeWNetGetNetworkInformation (const Extbyte * lpProvider, LPNETINFOSTRUCT lpNetInfoStruct);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef WNetGetLastError
-#define WNetGetLastError error_use_qxeWNetGetLastError_or_WNetGetLastErrorA_and_WNetGetLastErrorW
-#endif
-DWORD  qxeWNetGetLastError (LPDWORD lpError, Extbyte * lpErrorBuf, DWORD nErrorBufSize, Extbyte * lpNameBuf, DWORD nNameBufSize);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef MultinetGetConnectionPerformance
-#define MultinetGetConnectionPerformance error_use_qxeMultinetGetConnectionPerformance_or_MultinetGetConnectionPerformanceA_and_MultinetGetConnectionPerformanceW
-#endif
-DWORD  qxeMultinetGetConnectionPerformance (LPNETRESOURCEW lpNetResource, LPNETCONNECTINFOSTRUCT lpNetConnectInfoStruct);
 #endif /* defined (HAVE_MS_WINDOWS) */
 
 
@@ -1306,6 +1089,488 @@ BOOL qxeSystemParametersInfo (UINT uiAction, UINT uiParam, PVOID pvParam, UINT f
 #define GetAltTabInfo error_NT_5_0__only
 
 
+/* Processing file IME.H */
+
+#undef SendIMEMessageEx
+#define SendIMEMessageEx error_obsolete__no_docs_available
+
+
+/* Processing file IMM.H */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmInstallIME
+#define ImmInstallIME error_use_qxeImmInstallIME_or_ImmInstallIMEA_and_ImmInstallIMEW
+#endif
+HKL qxeImmInstallIME (const Extbyte * lpszIMEFileName, const Extbyte * lpszLayoutText);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmGetDescription
+#define ImmGetDescription error_use_qxeImmGetDescription_or_ImmGetDescriptionA_and_ImmGetDescriptionW
+#endif
+UINT qxeImmGetDescription (HKL arg1, Extbyte * arg2, UINT uBufLen);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmGetIMEFileName
+#define ImmGetIMEFileName error_use_qxeImmGetIMEFileName_or_ImmGetIMEFileNameA_and_ImmGetIMEFileNameW
+#endif
+UINT qxeImmGetIMEFileName (HKL arg1, Extbyte * arg2, UINT uBufLen);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmGetCompositionString
+#define ImmGetCompositionString error_use_qxeImmGetCompositionString_or_ImmGetCompositionStringA_and_ImmGetCompositionStringW
+#endif
+LONG qxeImmGetCompositionString (HIMC arg1, DWORD arg2, LPVOID arg3, DWORD arg4);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+/* Skipping ImmSetCompositionString because different prototypes in VC6 and VC7 */
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmGetCandidateListCount
+#define ImmGetCandidateListCount error_use_qxeImmGetCandidateListCount_or_ImmGetCandidateListCountA_and_ImmGetCandidateListCountW
+#endif
+DWORD qxeImmGetCandidateListCount (HIMC arg1, LPDWORD lpdwListCount);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmGetCandidateList
+#define ImmGetCandidateList error_use_qxeImmGetCandidateList_or_ImmGetCandidateListA_and_ImmGetCandidateListW
+#endif
+DWORD qxeImmGetCandidateList (HIMC arg1, DWORD deIndex, LPCANDIDATELIST arg3, DWORD dwBufLen);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmGetGuideLine
+#define ImmGetGuideLine error_use_qxeImmGetGuideLine_or_ImmGetGuideLineA_and_ImmGetGuideLineW
+#endif
+DWORD qxeImmGetGuideLine (HIMC arg1, DWORD dwIndex, Extbyte * arg3, DWORD dwBufLen);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+/* Skipping ImmGetCompositionFont because split-sized LOGFONT */
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+/* Skipping ImmSetCompositionFont because split-sized LOGFONT */
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmConfigureIME
+#define ImmConfigureIME error_use_qxeImmConfigureIME_or_ImmConfigureIMEA_and_ImmConfigureIMEW
+#endif
+BOOL qxeImmConfigureIME (HKL arg1, HWND arg2, DWORD arg3, LPVOID arg4);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmEscape
+#define ImmEscape error_use_qxeImmEscape_or_ImmEscapeA_and_ImmEscapeW
+#endif
+LRESULT qxeImmEscape (HKL arg1, HIMC arg2, UINT arg3, LPVOID arg4);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmGetConversionList
+#define ImmGetConversionList error_use_qxeImmGetConversionList_or_ImmGetConversionListA_and_ImmGetConversionListW
+#endif
+DWORD qxeImmGetConversionList (HKL arg1, HIMC arg2, const Extbyte * arg3, LPCANDIDATELIST arg4, DWORD dwBufLen, UINT uFlag);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmIsUIMessage
+#define ImmIsUIMessage error_use_qxeImmIsUIMessage_or_ImmIsUIMessageA_and_ImmIsUIMessageW
+#endif
+BOOL qxeImmIsUIMessage (HWND arg1, UINT arg2, WPARAM arg3, LPARAM arg4);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmRegisterWord
+#define ImmRegisterWord error_use_qxeImmRegisterWord_or_ImmRegisterWordA_and_ImmRegisterWordW
+#endif
+BOOL qxeImmRegisterWord (HKL arg1, const Extbyte * lpszReading, DWORD arg3, const Extbyte * lpszRegister);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmUnregisterWord
+#define ImmUnregisterWord error_use_qxeImmUnregisterWord_or_ImmUnregisterWordA_and_ImmUnregisterWordW
+#endif
+BOOL qxeImmUnregisterWord (HKL arg1, const Extbyte * lpszReading, DWORD arg3, const Extbyte * lpszUnregister);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#undef ImmGetRegisterWordStyle
+#define ImmGetRegisterWordStyle error_split_sized_STYLEBUF
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmEnumRegisterWord
+#define ImmEnumRegisterWord error_use_qxeImmEnumRegisterWord_or_ImmEnumRegisterWordA_and_ImmEnumRegisterWordW
+#endif
+UINT qxeImmEnumRegisterWord (HKL arg1, REGISTERWORDENUMPROCW arg2, const Extbyte * lpszReading, DWORD arg4, const Extbyte * lpszRegister, LPVOID arg6);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#undef ImmGetImeMenuItems
+#define ImmGetImeMenuItems error_split_sized_IMEMENUITEMINFO
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+
+/* Processing file MMSYSTEM.H */
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef sndPlaySound
+#define sndPlaySound error_use_qxesndPlaySound_or_sndPlaySoundA_and_sndPlaySoundW
+#endif
+BOOL qxesndPlaySound (const Extbyte * pszSound, UINT fuSound);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef PlaySound
+#define PlaySound error_use_qxePlaySound_or_PlaySoundA_and_PlaySoundW
+#endif
+BOOL qxePlaySound (const Extbyte * pszSound, HMODULE hmod, DWORD fdwSound);
+
+#undef waveOutGetDevCaps
+#define waveOutGetDevCaps error_split_sized_LPWAVEOUTCAPS
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef waveOutGetErrorText
+#define waveOutGetErrorText error_use_qxewaveOutGetErrorText_or_waveOutGetErrorTextA_and_waveOutGetErrorTextW
+#endif
+MMRESULT qxewaveOutGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText);
+
+#undef waveInGetDevCaps
+#define waveInGetDevCaps error_split_sized_LPWAVEINCAPS
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef waveInGetErrorText
+#define waveInGetErrorText error_use_qxewaveInGetErrorText_or_waveInGetErrorTextA_and_waveInGetErrorTextW
+#endif
+MMRESULT qxewaveInGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText);
+
+#undef midiOutGetDevCaps
+#define midiOutGetDevCaps error_split_sized_LPMIDIOUTCAPS
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef midiOutGetErrorText
+#define midiOutGetErrorText error_use_qxemidiOutGetErrorText_or_midiOutGetErrorTextA_and_midiOutGetErrorTextW
+#endif
+MMRESULT qxemidiOutGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText);
+
+#undef midiInGetDevCaps
+#define midiInGetDevCaps error_split_sized_LPMIDIOUTCAPS
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef midiInGetErrorText
+#define midiInGetErrorText error_use_qxemidiInGetErrorText_or_midiInGetErrorTextA_and_midiInGetErrorTextW
+#endif
+MMRESULT qxemidiInGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText);
+
+#undef auxGetDevCaps
+#define auxGetDevCaps error_split_sized_LPAUXCAPS
+
+#undef mixerGetDevCaps
+#define mixerGetDevCaps error_split_sized_LPMIXERCAPS
+
+#undef mixerGetLineInfo
+#define mixerGetLineInfo error_split_sized_LPMIXERLINE
+
+#undef mixerGetLineControls
+#define mixerGetLineControls error_split_sized_LPMIXERCONTROL
+
+#undef mixerGetControlDetails
+#define mixerGetControlDetails error_split_sized_LPMIXERCONTROL_in_LPMIXERLINECONTROLS_in_LPMIXERCONTROLDETAILS
+
+#undef joyGetDevCaps
+#define joyGetDevCaps error_split_sized_LPJOYCAPS
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef mmioStringToFOURCC
+#define mmioStringToFOURCC error_use_qxemmioStringToFOURCC_or_mmioStringToFOURCCA_and_mmioStringToFOURCCW
+#endif
+FOURCC qxemmioStringToFOURCC (const Extbyte * sz, UINT uFlags);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef mmioInstallIOProc
+#define mmioInstallIOProc error_use_qxemmioInstallIOProc_or_mmioInstallIOProcA_and_mmioInstallIOProcW
+#endif
+LPMMIOPROC qxemmioInstallIOProc (FOURCC fccIOProc, LPMMIOPROC pIOProc, DWORD dwFlags);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef mmioOpen
+#define mmioOpen error_use_qxemmioOpen_or_mmioOpenA_and_mmioOpenW
+#endif
+HMMIO qxemmioOpen (Extbyte * pszFileName, LPMMIOINFO pmmioinfo, DWORD fdwOpen);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef mmioRename
+#define mmioRename error_use_qxemmioRename_or_mmioRenameA_and_mmioRenameW
+#endif
+MMRESULT qxemmioRename (const Extbyte * pszFileName, const Extbyte * pszNewFileName, LPCMMIOINFO pmmioinfo, DWORD fdwRename);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef mciSendCommand
+#define mciSendCommand error_use_qxemciSendCommand_or_mciSendCommandA_and_mciSendCommandW
+#endif
+MCIERROR qxemciSendCommand (MCIDEVICEID mciId, UINT uMsg, DWORD dwParam1, DWORD dwParam2);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef mciSendString
+#define mciSendString error_use_qxemciSendString_or_mciSendStringA_and_mciSendStringW
+#endif
+MCIERROR qxemciSendString (const Extbyte * lpstrCommand, Extbyte * lpstrReturnString, UINT uReturnLength, HWND hwndCallback);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef mciGetDeviceID
+#define mciGetDeviceID error_use_qxemciGetDeviceID_or_mciGetDeviceIDA_and_mciGetDeviceIDW
+#endif
+MCIDEVICEID qxemciGetDeviceID (const Extbyte * pszDevice);
+
+#if !defined (MINGW)
+#undef mciGetDeviceIDFromElementID
+#define mciGetDeviceIDFromElementID error_missing_from_Win98se_version_of_ADVAPI32_dll
+#endif /* !defined (MINGW) */
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef mciGetErrorString
+#define mciGetErrorString error_use_qxemciGetErrorString_or_mciGetErrorStringA_and_mciGetErrorStringW
+#endif
+BOOL qxemciGetErrorString (MCIERROR mcierr, Extbyte * pszText, UINT cchText);
+
+
+/* Processing file WINCON.H */
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef PeekConsoleInput
+#define PeekConsoleInput error_use_qxePeekConsoleInput_or_PeekConsoleInputA_and_PeekConsoleInputW
+#endif
+BOOL qxePeekConsoleInput (HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ReadConsoleInput
+#define ReadConsoleInput error_use_qxeReadConsoleInput_or_ReadConsoleInputA_and_ReadConsoleInputW
+#endif
+BOOL qxeReadConsoleInput (HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WriteConsoleInput
+#define WriteConsoleInput error_use_qxeWriteConsoleInput_or_WriteConsoleInputA_and_WriteConsoleInputW
+#endif
+BOOL qxeWriteConsoleInput (HANDLE hConsoleInput, CONST INPUT_RECORD * lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ReadConsoleOutput
+#define ReadConsoleOutput error_use_qxeReadConsoleOutput_or_ReadConsoleOutputA_and_ReadConsoleOutputW
+#endif
+BOOL qxeReadConsoleOutput (HANDLE hConsoleOutput, PCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpReadRegion);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WriteConsoleOutput
+#define WriteConsoleOutput error_use_qxeWriteConsoleOutput_or_WriteConsoleOutputA_and_WriteConsoleOutputW
+#endif
+BOOL qxeWriteConsoleOutput (HANDLE hConsoleOutput, CONST CHAR_INFO * lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpWriteRegion);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ReadConsoleOutputCharacter
+#define ReadConsoleOutputCharacter error_use_qxeReadConsoleOutputCharacter_or_ReadConsoleOutputCharacterA_and_ReadConsoleOutputCharacterW
+#endif
+BOOL qxeReadConsoleOutputCharacter (HANDLE hConsoleOutput, Extbyte * lpCharacter, DWORD nLength, COORD dwReadCoord, LPDWORD lpNumberOfCharsRead);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WriteConsoleOutputCharacter
+#define WriteConsoleOutputCharacter error_use_qxeWriteConsoleOutputCharacter_or_WriteConsoleOutputCharacterA_and_WriteConsoleOutputCharacterW
+#endif
+BOOL qxeWriteConsoleOutputCharacter (HANDLE hConsoleOutput, const Extbyte * lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
+
+#undef FillConsoleOutputCharacter
+#define FillConsoleOutputCharacter error_split_CHAR
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ScrollConsoleScreenBuffer
+#define ScrollConsoleScreenBuffer error_use_qxeScrollConsoleScreenBuffer_or_ScrollConsoleScreenBufferA_and_ScrollConsoleScreenBufferW
+#endif
+BOOL qxeScrollConsoleScreenBuffer (HANDLE hConsoleOutput, CONST SMALL_RECT * lpScrollRectangle, CONST SMALL_RECT * lpClipRectangle, COORD dwDestinationOrigin, CONST CHAR_INFO * lpFill);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef GetConsoleTitle
+#define GetConsoleTitle error_use_qxeGetConsoleTitle_or_GetConsoleTitleA_and_GetConsoleTitleW
+#endif
+DWORD qxeGetConsoleTitle (Extbyte * lpConsoleTitle, DWORD nSize);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef SetConsoleTitle
+#define SetConsoleTitle error_use_qxeSetConsoleTitle_or_SetConsoleTitleA_and_SetConsoleTitleW
+#endif
+BOOL qxeSetConsoleTitle (const Extbyte * lpConsoleTitle);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ReadConsole
+#define ReadConsole error_use_qxeReadConsole_or_ReadConsoleA_and_ReadConsoleW
+#endif
+BOOL qxeReadConsole (HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID lpReserved);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WriteConsole
+#define WriteConsole error_use_qxeWriteConsole_or_WriteConsoleA_and_WriteConsoleW
+#endif
+BOOL qxeWriteConsole (HANDLE hConsoleOutput, CONST VOID * lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
+
+
+/* Processing file WINNETWK.H */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetAddConnection
+#define WNetAddConnection error_use_qxeWNetAddConnection_or_WNetAddConnectionA_and_WNetAddConnectionW
+#endif
+DWORD  qxeWNetAddConnection (const Extbyte * lpRemoteName, const Extbyte * lpPassword, const Extbyte * lpLocalName);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetAddConnection2
+#define WNetAddConnection2 error_use_qxeWNetAddConnection2_or_WNetAddConnection2A_and_WNetAddConnection2W
+#endif
+DWORD  qxeWNetAddConnection2 (LPNETRESOURCEW lpNetResource, const Extbyte * lpPassword, const Extbyte * lpUserName, DWORD dwFlags);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetAddConnection3
+#define WNetAddConnection3 error_use_qxeWNetAddConnection3_or_WNetAddConnection3A_and_WNetAddConnection3W
+#endif
+DWORD  qxeWNetAddConnection3 (HWND hwndOwner, LPNETRESOURCEW lpNetResource, const Extbyte * lpPassword, const Extbyte * lpUserName, DWORD dwFlags);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetCancelConnection
+#define WNetCancelConnection error_use_qxeWNetCancelConnection_or_WNetCancelConnectionA_and_WNetCancelConnectionW
+#endif
+DWORD  qxeWNetCancelConnection (const Extbyte * lpName, BOOL fForce);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetCancelConnection2
+#define WNetCancelConnection2 error_use_qxeWNetCancelConnection2_or_WNetCancelConnection2A_and_WNetCancelConnection2W
+#endif
+DWORD  qxeWNetCancelConnection2 (const Extbyte * lpName, DWORD dwFlags, BOOL fForce);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetGetConnection
+#define WNetGetConnection error_use_qxeWNetGetConnection_or_WNetGetConnectionA_and_WNetGetConnectionW
+#endif
+DWORD  qxeWNetGetConnection (const Extbyte * lpLocalName, Extbyte * lpRemoteName, LPDWORD lpnLength);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetUseConnection
+#define WNetUseConnection error_use_qxeWNetUseConnection_or_WNetUseConnectionA_and_WNetUseConnectionW
+#endif
+DWORD  qxeWNetUseConnection (HWND hwndOwner, LPNETRESOURCEW lpNetResource, const Extbyte * lpUserID, const Extbyte * lpPassword, DWORD dwFlags, Extbyte * lpAccessName, LPDWORD lpBufferSize, LPDWORD lpResult);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetConnectionDialog1
+#define WNetConnectionDialog1 error_use_qxeWNetConnectionDialog1_or_WNetConnectionDialog1A_and_WNetConnectionDialog1W
+#endif
+DWORD  qxeWNetConnectionDialog1 (LPCONNECTDLGSTRUCTW lpConnDlgStruct);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetDisconnectDialog1
+#define WNetDisconnectDialog1 error_use_qxeWNetDisconnectDialog1_or_WNetDisconnectDialog1A_and_WNetDisconnectDialog1W
+#endif
+DWORD  qxeWNetDisconnectDialog1 (LPDISCDLGSTRUCTW lpConnDlgStruct);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetOpenEnum
+#define WNetOpenEnum error_use_qxeWNetOpenEnum_or_WNetOpenEnumA_and_WNetOpenEnumW
+#endif
+DWORD  qxeWNetOpenEnum (DWORD dwScope, DWORD dwType, DWORD dwUsage, LPNETRESOURCEW lpNetResource, LPHANDLE lphEnum);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetEnumResource
+#define WNetEnumResource error_use_qxeWNetEnumResource_or_WNetEnumResourceA_and_WNetEnumResourceW
+#endif
+DWORD  qxeWNetEnumResource (HANDLE hEnum, LPDWORD lpcCount, LPVOID lpBuffer, LPDWORD lpBufferSize);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetGetUniversalName
+#define WNetGetUniversalName error_use_qxeWNetGetUniversalName_or_WNetGetUniversalNameA_and_WNetGetUniversalNameW
+#endif
+DWORD  qxeWNetGetUniversalName (const Extbyte * lpLocalPath, DWORD dwInfoLevel, LPVOID lpBuffer, LPDWORD lpBufferSize);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetGetUser
+#define WNetGetUser error_use_qxeWNetGetUser_or_WNetGetUserA_and_WNetGetUserW
+#endif
+DWORD  qxeWNetGetUser (const Extbyte * lpName, Extbyte * lpUserName, LPDWORD lpnLength);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetGetProviderName
+#define WNetGetProviderName error_use_qxeWNetGetProviderName_or_WNetGetProviderNameA_and_WNetGetProviderNameW
+#endif
+DWORD  qxeWNetGetProviderName (DWORD dwNetType, Extbyte * lpProviderName, LPDWORD lpBufferSize);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetGetNetworkInformation
+#define WNetGetNetworkInformation error_use_qxeWNetGetNetworkInformation_or_WNetGetNetworkInformationA_and_WNetGetNetworkInformationW
+#endif
+DWORD  qxeWNetGetNetworkInformation (const Extbyte * lpProvider, LPNETINFOSTRUCT lpNetInfoStruct);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef WNetGetLastError
+#define WNetGetLastError error_use_qxeWNetGetLastError_or_WNetGetLastErrorA_and_WNetGetLastErrorW
+#endif
+DWORD  qxeWNetGetLastError (LPDWORD lpError, Extbyte * lpErrorBuf, DWORD nErrorBufSize, Extbyte * lpNameBuf, DWORD nNameBufSize);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+#if defined (HAVE_MS_WINDOWS)
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef MultinetGetConnectionPerformance
+#define MultinetGetConnectionPerformance error_use_qxeMultinetGetConnectionPerformance_or_MultinetGetConnectionPerformanceA_and_MultinetGetConnectionPerformanceW
+#endif
+DWORD  qxeMultinetGetConnectionPerformance (LPNETRESOURCEW lpNetResource, LPNETCONNECTINFOSTRUCT lpNetConnectInfoStruct);
+#endif /* defined (HAVE_MS_WINDOWS) */
+
+
 /* Processing file DDEML.H */
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
@@ -1321,237 +1586,6 @@ UINT qxeDdeInitialize (LPDWORD pidInst, PFNCALLBACK pfnCallback, DWORD afCmd, DW
 #define DdeQueryString error_use_qxeDdeQueryString_or_DdeQueryStringA_and_DdeQueryStringW
 #endif
 DWORD qxeDdeQueryString (DWORD idInst, HSZ hsz, Extbyte * psz, DWORD cchMax, int iCodePage);
-
-
-/* Processing file WINREG.H */
-
-/* Skipping RegConnectRegistry because error in Cygwin prototype */
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegCreateKey
-#define RegCreateKey error_use_qxeRegCreateKey_or_RegCreateKeyA_and_RegCreateKeyW
-#endif
-LONG
- qxeRegCreateKey (HKEY hKey, const Extbyte * lpSubKey, PHKEY phkResult);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegCreateKeyEx
-#define RegCreateKeyEx error_use_qxeRegCreateKeyEx_or_RegCreateKeyExA_and_RegCreateKeyExW
-#endif
-LONG
- qxeRegCreateKeyEx (HKEY hKey, const Extbyte * lpSubKey, DWORD Reserved, Extbyte * lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegDeleteKey
-#define RegDeleteKey error_use_qxeRegDeleteKey_or_RegDeleteKeyA_and_RegDeleteKeyW
-#endif
-LONG
- qxeRegDeleteKey (HKEY hKey, const Extbyte * lpSubKey);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegDeleteValue
-#define RegDeleteValue error_use_qxeRegDeleteValue_or_RegDeleteValueA_and_RegDeleteValueW
-#endif
-LONG
- qxeRegDeleteValue (HKEY hKey, const Extbyte * lpValueName);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegEnumKey
-#define RegEnumKey error_use_qxeRegEnumKey_or_RegEnumKeyA_and_RegEnumKeyW
-#endif
-LONG
- qxeRegEnumKey (HKEY hKey, DWORD dwIndex, Extbyte * lpName, DWORD cbName);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegEnumKeyEx
-#define RegEnumKeyEx error_use_qxeRegEnumKeyEx_or_RegEnumKeyExA_and_RegEnumKeyExW
-#endif
-LONG
- qxeRegEnumKeyEx (HKEY hKey, DWORD dwIndex, Extbyte * lpName, LPDWORD lpcbName, LPDWORD lpReserved, Extbyte * lpClass, LPDWORD lpcbClass, PFILETIME lpftLastWriteTime);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegEnumValue
-#define RegEnumValue error_use_qxeRegEnumValue_or_RegEnumValueA_and_RegEnumValueW
-#endif
-LONG
- qxeRegEnumValue (HKEY hKey, DWORD dwIndex, Extbyte * lpValueName, LPDWORD lpcbValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegLoadKey
-#define RegLoadKey error_use_qxeRegLoadKey_or_RegLoadKeyA_and_RegLoadKeyW
-#endif
-LONG
- qxeRegLoadKey (HKEY hKey, const Extbyte * lpSubKey, const Extbyte * lpFile);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegOpenKey
-#define RegOpenKey error_use_qxeRegOpenKey_or_RegOpenKeyA_and_RegOpenKeyW
-#endif
-LONG
- qxeRegOpenKey (HKEY hKey, const Extbyte * lpSubKey, PHKEY phkResult);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegOpenKeyEx
-#define RegOpenKeyEx error_use_qxeRegOpenKeyEx_or_RegOpenKeyExA_and_RegOpenKeyExW
-#endif
-LONG
- qxeRegOpenKeyEx (HKEY hKey, const Extbyte * lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegQueryInfoKey
-#define RegQueryInfoKey error_use_qxeRegQueryInfoKey_or_RegQueryInfoKeyA_and_RegQueryInfoKeyW
-#endif
-LONG
- qxeRegQueryInfoKey (HKEY hKey, Extbyte * lpClass, LPDWORD lpcbClass, LPDWORD lpReserved, LPDWORD lpcSubKeys, LPDWORD lpcbMaxSubKeyLen, LPDWORD lpcbMaxClassLen, LPDWORD lpcValues, LPDWORD lpcbMaxValueNameLen, LPDWORD lpcbMaxValueLen, LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegQueryValue
-#define RegQueryValue error_use_qxeRegQueryValue_or_RegQueryValueA_and_RegQueryValueW
-#endif
-LONG
- qxeRegQueryValue (HKEY hKey, const Extbyte * lpSubKey, Extbyte * lpValue, PLONG lpcbValue);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegQueryMultipleValues
-#define RegQueryMultipleValues error_use_qxeRegQueryMultipleValues_or_RegQueryMultipleValuesA_and_RegQueryMultipleValuesW
-#endif
-LONG
- qxeRegQueryMultipleValues (HKEY hKey, PVALENTW val_list, DWORD num_vals, Extbyte * lpValueBuf, LPDWORD ldwTotsize);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegQueryValueEx
-#define RegQueryValueEx error_use_qxeRegQueryValueEx_or_RegQueryValueExA_and_RegQueryValueExW
-#endif
-LONG
- qxeRegQueryValueEx (HKEY hKey, const Extbyte * lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegReplaceKey
-#define RegReplaceKey error_use_qxeRegReplaceKey_or_RegReplaceKeyA_and_RegReplaceKeyW
-#endif
-LONG
- qxeRegReplaceKey (HKEY hKey, const Extbyte * lpSubKey, const Extbyte * lpNewFile, const Extbyte * lpOldFile);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegRestoreKey
-#define RegRestoreKey error_use_qxeRegRestoreKey_or_RegRestoreKeyA_and_RegRestoreKeyW
-#endif
-LONG
- qxeRegRestoreKey (HKEY hKey, const Extbyte * lpFile, DWORD dwFlags);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegSaveKey
-#define RegSaveKey error_use_qxeRegSaveKey_or_RegSaveKeyA_and_RegSaveKeyW
-#endif
-LONG
- qxeRegSaveKey (HKEY hKey, const Extbyte * lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegSetValue
-#define RegSetValue error_use_qxeRegSetValue_or_RegSetValueA_and_RegSetValueW
-#endif
-LONG
- qxeRegSetValue (HKEY hKey, const Extbyte * lpSubKey, DWORD dwType, const Extbyte * lpData, DWORD cbData);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegSetValueEx
-#define RegSetValueEx error_use_qxeRegSetValueEx_or_RegSetValueExA_and_RegSetValueExW
-#endif
-LONG
- qxeRegSetValueEx (HKEY hKey, const Extbyte * lpValueName, DWORD Reserved, DWORD dwType, CONST BYTE* lpData, DWORD cbData);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef RegUnLoadKey
-#define RegUnLoadKey error_use_qxeRegUnLoadKey_or_RegUnLoadKeyA_and_RegUnLoadKeyW
-#endif
-LONG
- qxeRegUnLoadKey (HKEY hKey, const Extbyte * lpSubKey);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef InitiateSystemShutdown
-#define InitiateSystemShutdown error_use_qxeInitiateSystemShutdown_or_InitiateSystemShutdownA_and_InitiateSystemShutdownW
-#endif
-BOOL
- qxeInitiateSystemShutdown (Extbyte * lpMachineName, Extbyte * lpMessage, DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef AbortSystemShutdown
-#define AbortSystemShutdown error_use_qxeAbortSystemShutdown_or_AbortSystemShutdownA_and_AbortSystemShutdownW
-#endif
-BOOL
- qxeAbortSystemShutdown (Extbyte * lpMachineName);
-
-
-/* Processing file WINNLS.H */
-
-#undef GetCPInfoEx
-#define GetCPInfoEx error_not_used__not_examined_yet
-
-#undef CompareString
-#define CompareString error_not_used__not_examined_yet
-
-#undef LCMapString
-#define LCMapString error_not_used__not_examined_yet
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef GetLocaleInfo
-#define GetLocaleInfo error_use_qxeGetLocaleInfo_or_GetLocaleInfoA_and_GetLocaleInfoW
-#endif
-int qxeGetLocaleInfo (LCID Locale, LCTYPE LCType, Extbyte * lpLCData, int cchData);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef SetLocaleInfo
-#define SetLocaleInfo error_use_qxeSetLocaleInfo_or_SetLocaleInfoA_and_SetLocaleInfoW
-#endif
-BOOL qxeSetLocaleInfo (LCID Locale, LCTYPE LCType, const Extbyte * lpLCData);
-
-#undef GetTimeFormat
-#define GetTimeFormat error_not_used__not_examined_yet
-
-#undef GetDateFormat
-#define GetDateFormat error_not_used__not_examined_yet
-
-#undef GetNumberFormat
-#define GetNumberFormat error_not_used__not_examined_yet
-
-#undef GetCurrencyFormat
-#define GetCurrencyFormat error_not_used__not_examined_yet
-
-#undef EnumCalendarInfo
-#define EnumCalendarInfo error_not_used__not_examined_yet
-
-#undef EnumCalendarInfoEx
-#define EnumCalendarInfoEx error_not_used__not_examined_yet
-
-#undef EnumTimeFormats
-#define EnumTimeFormats error_not_used__not_examined_yet
-
-#undef EnumDateFormats
-#define EnumDateFormats error_not_used__not_examined_yet
-
-#undef EnumDateFormatsEx
-#define EnumDateFormatsEx error_not_used__not_examined_yet
-
-#undef GetStringTypeEx
-#define GetStringTypeEx error_not_used__not_examined_yet
-
-#undef GetStringType
-#define GetStringType error_no_such_fun__A_and_W_versions_have_different_nos__of_args
-
-#undef FoldString
-#define FoldString error_not_used__not_examined_yet
-
-#undef EnumSystemLocales
-#define EnumSystemLocales error_not_used__not_examined_yet
-
-#undef EnumSystemCodePages
-#define EnumSystemCodePages error_not_used__not_examined_yet
-
-
-/* Processing file IME.H */
-
-#undef SendIMEMessageEx
-#define SendIMEMessageEx error_obsolete__no_docs_available
 
 
 /* Processing file WINGDI.H */
@@ -1784,19 +1818,229 @@ int qxeEnumICMProfiles (HDC arg1, ICMENUMPROCW arg2, LPARAM arg3);
 #define wglUseFontOutlines error_causes_link_error
 
 
-/* Processing file SHLOBJ.H */
+/* Processing file WINNLS.H */
+
+#undef GetCPInfoEx
+#define GetCPInfoEx error_not_used__not_examined_yet
+
+#undef CompareString
+#define CompareString error_not_used__not_examined_yet
+
+#undef LCMapString
+#define LCMapString error_not_used__not_examined_yet
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef SHGetPathFromIDList
-#define SHGetPathFromIDList error_use_qxeSHGetPathFromIDList_or_SHGetPathFromIDListA_and_SHGetPathFromIDListW
+#undef GetLocaleInfo
+#define GetLocaleInfo error_use_qxeGetLocaleInfo_or_GetLocaleInfoA_and_GetLocaleInfoW
 #endif
-BOOL qxeSHGetPathFromIDList (LPCITEMIDLIST pidl, Extbyte * pszPath);
+int qxeGetLocaleInfo (LCID Locale, LCTYPE LCType, Extbyte * lpLCData, int cchData);
 
-/* Skipping SHGetSpecialFolderPath because error in Cygwin prototype, missing from Cygwin libraries */
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef SetLocaleInfo
+#define SetLocaleInfo error_use_qxeSetLocaleInfo_or_SetLocaleInfoA_and_SetLocaleInfoW
+#endif
+BOOL qxeSetLocaleInfo (LCID Locale, LCTYPE LCType, const Extbyte * lpLCData);
 
-/* Skipping SHBrowseForFolder because need to intercept callback for SendMessage */
+#undef GetTimeFormat
+#define GetTimeFormat error_not_used__not_examined_yet
 
-/* Skipping SHGetDataFromIDList because split-sized WIN32_FIND_DATA or split-simple NETRESOURCE, missing from Cygwin libraries */
+#undef GetDateFormat
+#define GetDateFormat error_not_used__not_examined_yet
+
+#undef GetNumberFormat
+#define GetNumberFormat error_not_used__not_examined_yet
+
+#undef GetCurrencyFormat
+#define GetCurrencyFormat error_not_used__not_examined_yet
+
+#undef EnumCalendarInfo
+#define EnumCalendarInfo error_not_used__not_examined_yet
+
+#undef EnumCalendarInfoEx
+#define EnumCalendarInfoEx error_not_used__not_examined_yet
+
+#undef EnumTimeFormats
+#define EnumTimeFormats error_not_used__not_examined_yet
+
+#undef EnumDateFormats
+#define EnumDateFormats error_not_used__not_examined_yet
+
+#undef EnumDateFormatsEx
+#define EnumDateFormatsEx error_not_used__not_examined_yet
+
+#undef GetStringTypeEx
+#define GetStringTypeEx error_not_used__not_examined_yet
+
+#undef GetStringType
+#define GetStringType error_no_such_fun__A_and_W_versions_have_different_nos__of_args
+
+#undef FoldString
+#define FoldString error_not_used__not_examined_yet
+
+#undef EnumSystemLocales
+#define EnumSystemLocales error_not_used__not_examined_yet
+
+#undef EnumSystemCodePages
+#define EnumSystemCodePages error_not_used__not_examined_yet
+
+
+/* Processing file WINREG.H */
+
+/* Skipping RegConnectRegistry because error in Cygwin prototype */
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegCreateKey
+#define RegCreateKey error_use_qxeRegCreateKey_or_RegCreateKeyA_and_RegCreateKeyW
+#endif
+LONG
+ qxeRegCreateKey (HKEY hKey, const Extbyte * lpSubKey, PHKEY phkResult);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegCreateKeyEx
+#define RegCreateKeyEx error_use_qxeRegCreateKeyEx_or_RegCreateKeyExA_and_RegCreateKeyExW
+#endif
+LONG
+ qxeRegCreateKeyEx (HKEY hKey, const Extbyte * lpSubKey, DWORD Reserved, Extbyte * lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegDeleteKey
+#define RegDeleteKey error_use_qxeRegDeleteKey_or_RegDeleteKeyA_and_RegDeleteKeyW
+#endif
+LONG
+ qxeRegDeleteKey (HKEY hKey, const Extbyte * lpSubKey);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegDeleteValue
+#define RegDeleteValue error_use_qxeRegDeleteValue_or_RegDeleteValueA_and_RegDeleteValueW
+#endif
+LONG
+ qxeRegDeleteValue (HKEY hKey, const Extbyte * lpValueName);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegEnumKey
+#define RegEnumKey error_use_qxeRegEnumKey_or_RegEnumKeyA_and_RegEnumKeyW
+#endif
+LONG
+ qxeRegEnumKey (HKEY hKey, DWORD dwIndex, Extbyte * lpName, DWORD cbName);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegEnumKeyEx
+#define RegEnumKeyEx error_use_qxeRegEnumKeyEx_or_RegEnumKeyExA_and_RegEnumKeyExW
+#endif
+LONG
+ qxeRegEnumKeyEx (HKEY hKey, DWORD dwIndex, Extbyte * lpName, LPDWORD lpcbName, LPDWORD lpReserved, Extbyte * lpClass, LPDWORD lpcbClass, PFILETIME lpftLastWriteTime);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegEnumValue
+#define RegEnumValue error_use_qxeRegEnumValue_or_RegEnumValueA_and_RegEnumValueW
+#endif
+LONG
+ qxeRegEnumValue (HKEY hKey, DWORD dwIndex, Extbyte * lpValueName, LPDWORD lpcbValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegLoadKey
+#define RegLoadKey error_use_qxeRegLoadKey_or_RegLoadKeyA_and_RegLoadKeyW
+#endif
+LONG
+ qxeRegLoadKey (HKEY hKey, const Extbyte * lpSubKey, const Extbyte * lpFile);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegOpenKey
+#define RegOpenKey error_use_qxeRegOpenKey_or_RegOpenKeyA_and_RegOpenKeyW
+#endif
+LONG
+ qxeRegOpenKey (HKEY hKey, const Extbyte * lpSubKey, PHKEY phkResult);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegOpenKeyEx
+#define RegOpenKeyEx error_use_qxeRegOpenKeyEx_or_RegOpenKeyExA_and_RegOpenKeyExW
+#endif
+LONG
+ qxeRegOpenKeyEx (HKEY hKey, const Extbyte * lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegQueryInfoKey
+#define RegQueryInfoKey error_use_qxeRegQueryInfoKey_or_RegQueryInfoKeyA_and_RegQueryInfoKeyW
+#endif
+LONG
+ qxeRegQueryInfoKey (HKEY hKey, Extbyte * lpClass, LPDWORD lpcbClass, LPDWORD lpReserved, LPDWORD lpcSubKeys, LPDWORD lpcbMaxSubKeyLen, LPDWORD lpcbMaxClassLen, LPDWORD lpcValues, LPDWORD lpcbMaxValueNameLen, LPDWORD lpcbMaxValueLen, LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegQueryValue
+#define RegQueryValue error_use_qxeRegQueryValue_or_RegQueryValueA_and_RegQueryValueW
+#endif
+LONG
+ qxeRegQueryValue (HKEY hKey, const Extbyte * lpSubKey, Extbyte * lpValue, PLONG lpcbValue);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegQueryMultipleValues
+#define RegQueryMultipleValues error_use_qxeRegQueryMultipleValues_or_RegQueryMultipleValuesA_and_RegQueryMultipleValuesW
+#endif
+LONG
+ qxeRegQueryMultipleValues (HKEY hKey, PVALENTW val_list, DWORD num_vals, Extbyte * lpValueBuf, LPDWORD ldwTotsize);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegQueryValueEx
+#define RegQueryValueEx error_use_qxeRegQueryValueEx_or_RegQueryValueExA_and_RegQueryValueExW
+#endif
+LONG
+ qxeRegQueryValueEx (HKEY hKey, const Extbyte * lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegReplaceKey
+#define RegReplaceKey error_use_qxeRegReplaceKey_or_RegReplaceKeyA_and_RegReplaceKeyW
+#endif
+LONG
+ qxeRegReplaceKey (HKEY hKey, const Extbyte * lpSubKey, const Extbyte * lpNewFile, const Extbyte * lpOldFile);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegRestoreKey
+#define RegRestoreKey error_use_qxeRegRestoreKey_or_RegRestoreKeyA_and_RegRestoreKeyW
+#endif
+LONG
+ qxeRegRestoreKey (HKEY hKey, const Extbyte * lpFile, DWORD dwFlags);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegSaveKey
+#define RegSaveKey error_use_qxeRegSaveKey_or_RegSaveKeyA_and_RegSaveKeyW
+#endif
+LONG
+ qxeRegSaveKey (HKEY hKey, const Extbyte * lpFile, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegSetValue
+#define RegSetValue error_use_qxeRegSetValue_or_RegSetValueA_and_RegSetValueW
+#endif
+LONG
+ qxeRegSetValue (HKEY hKey, const Extbyte * lpSubKey, DWORD dwType, const Extbyte * lpData, DWORD cbData);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegSetValueEx
+#define RegSetValueEx error_use_qxeRegSetValueEx_or_RegSetValueExA_and_RegSetValueExW
+#endif
+LONG
+ qxeRegSetValueEx (HKEY hKey, const Extbyte * lpValueName, DWORD Reserved, DWORD dwType, CONST BYTE* lpData, DWORD cbData);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegUnLoadKey
+#define RegUnLoadKey error_use_qxeRegUnLoadKey_or_RegUnLoadKeyA_and_RegUnLoadKeyW
+#endif
+LONG
+ qxeRegUnLoadKey (HKEY hKey, const Extbyte * lpSubKey);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef InitiateSystemShutdown
+#define InitiateSystemShutdown error_use_qxeInitiateSystemShutdown_or_InitiateSystemShutdownA_and_InitiateSystemShutdownW
+#endif
+BOOL
+ qxeInitiateSystemShutdown (Extbyte * lpMachineName, Extbyte * lpMessage, DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef AbortSystemShutdown
+#define AbortSystemShutdown error_use_qxeAbortSystemShutdown_or_AbortSystemShutdownA_and_AbortSystemShutdownW
+#endif
+BOOL
+ qxeAbortSystemShutdown (Extbyte * lpMachineName);
 
 
 /* Processing file COMMDLG.H */
@@ -1848,137 +2092,19 @@ HWND   qxeReplaceText (LPFINDREPLACEW arg1);
 /* Skipping PageSetupDlg because LPPAGESETUPDLG with split-sized DEVMODE handle */
 
 
-/* Processing file IMM.H */
+/* Processing file SHLOBJ.H */
 
-#if defined (HAVE_MS_WINDOWS)
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmInstallIME
-#define ImmInstallIME error_use_qxeImmInstallIME_or_ImmInstallIMEA_and_ImmInstallIMEW
+#undef SHGetPathFromIDList
+#define SHGetPathFromIDList error_use_qxeSHGetPathFromIDList_or_SHGetPathFromIDListA_and_SHGetPathFromIDListW
 #endif
-HKL qxeImmInstallIME (const Extbyte * lpszIMEFileName, const Extbyte * lpszLayoutText);
-#endif /* defined (HAVE_MS_WINDOWS) */
+BOOL qxeSHGetPathFromIDList (LPCITEMIDLIST pidl, Extbyte * pszPath);
 
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmGetDescription
-#define ImmGetDescription error_use_qxeImmGetDescription_or_ImmGetDescriptionA_and_ImmGetDescriptionW
-#endif
-UINT qxeImmGetDescription (HKL arg1, Extbyte * arg2, UINT uBufLen);
-#endif /* defined (HAVE_MS_WINDOWS) */
+/* Skipping SHGetSpecialFolderPath because error in Cygwin prototype, missing from Cygwin libraries */
 
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmGetIMEFileName
-#define ImmGetIMEFileName error_use_qxeImmGetIMEFileName_or_ImmGetIMEFileNameA_and_ImmGetIMEFileNameW
-#endif
-UINT qxeImmGetIMEFileName (HKL arg1, Extbyte * arg2, UINT uBufLen);
-#endif /* defined (HAVE_MS_WINDOWS) */
+/* Skipping SHBrowseForFolder because need to intercept callback for SendMessage */
 
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmGetCompositionString
-#define ImmGetCompositionString error_use_qxeImmGetCompositionString_or_ImmGetCompositionStringA_and_ImmGetCompositionStringW
-#endif
-LONG qxeImmGetCompositionString (HIMC arg1, DWORD arg2, LPVOID arg3, DWORD arg4);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmGetCandidateListCount
-#define ImmGetCandidateListCount error_use_qxeImmGetCandidateListCount_or_ImmGetCandidateListCountA_and_ImmGetCandidateListCountW
-#endif
-DWORD qxeImmGetCandidateListCount (HIMC arg1, LPDWORD lpdwListCount);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmGetCandidateList
-#define ImmGetCandidateList error_use_qxeImmGetCandidateList_or_ImmGetCandidateListA_and_ImmGetCandidateListW
-#endif
-DWORD qxeImmGetCandidateList (HIMC arg1, DWORD deIndex, LPCANDIDATELIST arg3, DWORD dwBufLen);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmGetGuideLine
-#define ImmGetGuideLine error_use_qxeImmGetGuideLine_or_ImmGetGuideLineA_and_ImmGetGuideLineW
-#endif
-DWORD qxeImmGetGuideLine (HIMC arg1, DWORD dwIndex, Extbyte * arg3, DWORD dwBufLen);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-/* Skipping ImmGetCompositionFont because split-sized LOGFONT */
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-/* Skipping ImmSetCompositionFont because split-sized LOGFONT */
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmConfigureIME
-#define ImmConfigureIME error_use_qxeImmConfigureIME_or_ImmConfigureIMEA_and_ImmConfigureIMEW
-#endif
-BOOL qxeImmConfigureIME (HKL arg1, HWND arg2, DWORD arg3, LPVOID arg4);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmEscape
-#define ImmEscape error_use_qxeImmEscape_or_ImmEscapeA_and_ImmEscapeW
-#endif
-LRESULT qxeImmEscape (HKL arg1, HIMC arg2, UINT arg3, LPVOID arg4);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmGetConversionList
-#define ImmGetConversionList error_use_qxeImmGetConversionList_or_ImmGetConversionListA_and_ImmGetConversionListW
-#endif
-DWORD qxeImmGetConversionList (HKL arg1, HIMC arg2, const Extbyte * arg3, LPCANDIDATELIST arg4, DWORD dwBufLen, UINT uFlag);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmIsUIMessage
-#define ImmIsUIMessage error_use_qxeImmIsUIMessage_or_ImmIsUIMessageA_and_ImmIsUIMessageW
-#endif
-BOOL qxeImmIsUIMessage (HWND arg1, UINT arg2, WPARAM arg3, LPARAM arg4);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmRegisterWord
-#define ImmRegisterWord error_use_qxeImmRegisterWord_or_ImmRegisterWordA_and_ImmRegisterWordW
-#endif
-BOOL qxeImmRegisterWord (HKL arg1, const Extbyte * lpszReading, DWORD arg3, const Extbyte * lpszRegister);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmUnregisterWord
-#define ImmUnregisterWord error_use_qxeImmUnregisterWord_or_ImmUnregisterWordA_and_ImmUnregisterWordW
-#endif
-BOOL qxeImmUnregisterWord (HKL arg1, const Extbyte * lpszReading, DWORD arg3, const Extbyte * lpszUnregister);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#undef ImmGetRegisterWordStyle
-#define ImmGetRegisterWordStyle error_split_sized_STYLEBUF
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef ImmEnumRegisterWord
-#define ImmEnumRegisterWord error_use_qxeImmEnumRegisterWord_or_ImmEnumRegisterWordA_and_ImmEnumRegisterWordW
-#endif
-UINT qxeImmEnumRegisterWord (HKL arg1, REGISTERWORDENUMPROCW arg2, const Extbyte * lpszReading, DWORD arg4, const Extbyte * lpszRegister, LPVOID arg6);
-#endif /* defined (HAVE_MS_WINDOWS) */
-
-#if defined (HAVE_MS_WINDOWS)
-#undef ImmGetImeMenuItems
-#define ImmGetImeMenuItems error_split_sized_IMEMENUITEMINFO
-#endif /* defined (HAVE_MS_WINDOWS) */
+/* Skipping SHGetDataFromIDList because split-sized WIN32_FIND_DATA or split-simple NETRESOURCE, missing from Cygwin libraries */
 
 
 /* Processing file WINBASE.H */
@@ -2219,6 +2345,12 @@ HRSRC qxeFindResource (HMODULE hModule, const Extbyte * lpName, const Extbyte * 
 #define FindResourceEx error_use_qxeFindResourceEx_or_FindResourceExA_and_FindResourceExW
 #endif
 HRSRC qxeFindResourceEx (HMODULE hModule, const Extbyte * lpType, const Extbyte * lpName, WORD wLanguage);
+
+/* Skipping EnumResourceTypes because different prototypes in VC6 and VC7 */
+
+/* Skipping EnumResourceNames because different prototypes in VC6 and VC7 */
+
+/* Skipping EnumResourceLanguages because different prototypes in VC6 and VC7 */
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef BeginUpdateResource
@@ -2771,124 +2903,11 @@ BOOL qxeCreateProcessAsUser (HANDLE hToken, const Extbyte * lpApplicationName, E
 #define OpenJobObject error_NT_5_0__only
 
 
-/* Processing file MMSYSTEM.H */
+/* Processing file ACLAPI.h */
 
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef sndPlaySound
-#define sndPlaySound error_use_qxesndPlaySound_or_sndPlaySoundA_and_sndPlaySoundW
+#undef GetNamedSecurityInfo
+#define GetNamedSecurityInfo error_use_qxeGetNamedSecurityInfo_or_GetNamedSecurityInfoA_and_GetNamedSecurityInfoW
 #endif
-BOOL qxesndPlaySound (const Extbyte * pszSound, UINT fuSound);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef PlaySound
-#define PlaySound error_use_qxePlaySound_or_PlaySoundA_and_PlaySoundW
-#endif
-BOOL qxePlaySound (const Extbyte * pszSound, HMODULE hmod, DWORD fdwSound);
-
-#undef waveOutGetDevCaps
-#define waveOutGetDevCaps error_split_sized_LPWAVEOUTCAPS
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef waveOutGetErrorText
-#define waveOutGetErrorText error_use_qxewaveOutGetErrorText_or_waveOutGetErrorTextA_and_waveOutGetErrorTextW
-#endif
-MMRESULT qxewaveOutGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText);
-
-#undef waveInGetDevCaps
-#define waveInGetDevCaps error_split_sized_LPWAVEINCAPS
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef waveInGetErrorText
-#define waveInGetErrorText error_use_qxewaveInGetErrorText_or_waveInGetErrorTextA_and_waveInGetErrorTextW
-#endif
-MMRESULT qxewaveInGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText);
-
-#undef midiOutGetDevCaps
-#define midiOutGetDevCaps error_split_sized_LPMIDIOUTCAPS
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef midiOutGetErrorText
-#define midiOutGetErrorText error_use_qxemidiOutGetErrorText_or_midiOutGetErrorTextA_and_midiOutGetErrorTextW
-#endif
-MMRESULT qxemidiOutGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText);
-
-#undef midiInGetDevCaps
-#define midiInGetDevCaps error_split_sized_LPMIDIOUTCAPS
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef midiInGetErrorText
-#define midiInGetErrorText error_use_qxemidiInGetErrorText_or_midiInGetErrorTextA_and_midiInGetErrorTextW
-#endif
-MMRESULT qxemidiInGetErrorText (MMRESULT mmrError, Extbyte * pszText, UINT cchText);
-
-#undef auxGetDevCaps
-#define auxGetDevCaps error_split_sized_LPAUXCAPS
-
-#undef mixerGetDevCaps
-#define mixerGetDevCaps error_split_sized_LPMIXERCAPS
-
-#undef mixerGetLineInfo
-#define mixerGetLineInfo error_split_sized_LPMIXERLINE
-
-#undef mixerGetLineControls
-#define mixerGetLineControls error_split_sized_LPMIXERCONTROL
-
-#undef mixerGetControlDetails
-#define mixerGetControlDetails error_split_sized_LPMIXERCONTROL_in_LPMIXERLINECONTROLS_in_LPMIXERCONTROLDETAILS
-
-#undef joyGetDevCaps
-#define joyGetDevCaps error_split_sized_LPJOYCAPS
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef mmioStringToFOURCC
-#define mmioStringToFOURCC error_use_qxemmioStringToFOURCC_or_mmioStringToFOURCCA_and_mmioStringToFOURCCW
-#endif
-FOURCC qxemmioStringToFOURCC (const Extbyte * sz, UINT uFlags);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef mmioInstallIOProc
-#define mmioInstallIOProc error_use_qxemmioInstallIOProc_or_mmioInstallIOProcA_and_mmioInstallIOProcW
-#endif
-LPMMIOPROC qxemmioInstallIOProc (FOURCC fccIOProc, LPMMIOPROC pIOProc, DWORD dwFlags);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef mmioOpen
-#define mmioOpen error_use_qxemmioOpen_or_mmioOpenA_and_mmioOpenW
-#endif
-HMMIO qxemmioOpen (Extbyte * pszFileName, LPMMIOINFO pmmioinfo, DWORD fdwOpen);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef mmioRename
-#define mmioRename error_use_qxemmioRename_or_mmioRenameA_and_mmioRenameW
-#endif
-MMRESULT qxemmioRename (const Extbyte * pszFileName, const Extbyte * pszNewFileName, LPCMMIOINFO pmmioinfo, DWORD fdwRename);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef mciSendCommand
-#define mciSendCommand error_use_qxemciSendCommand_or_mciSendCommandA_and_mciSendCommandW
-#endif
-MCIERROR qxemciSendCommand (MCIDEVICEID mciId, UINT uMsg, DWORD dwParam1, DWORD dwParam2);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef mciSendString
-#define mciSendString error_use_qxemciSendString_or_mciSendStringA_and_mciSendStringW
-#endif
-MCIERROR qxemciSendString (const Extbyte * lpstrCommand, Extbyte * lpstrReturnString, UINT uReturnLength, HWND hwndCallback);
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef mciGetDeviceID
-#define mciGetDeviceID error_use_qxemciGetDeviceID_or_mciGetDeviceIDA_and_mciGetDeviceIDW
-#endif
-MCIDEVICEID qxemciGetDeviceID (const Extbyte * pszDevice);
-
-#if !defined (MINGW)
-#undef mciGetDeviceIDFromElementID
-#define mciGetDeviceIDFromElementID error_missing_from_Win98se_version_of_ADVAPI32_dll
-#endif /* !defined (MINGW) */
-
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
-#undef mciGetErrorString
-#define mciGetErrorString error_use_qxemciGetErrorString_or_mciGetErrorStringA_and_mciGetErrorStringW
-#endif
-BOOL qxemciGetErrorString (MCIERROR mcierr, Extbyte * pszText, UINT cchText);
+DWORD qxeGetNamedSecurityInfo (IN  Extbyte * pObjectName, IN  SE_OBJECT_TYPE ObjectType, IN  SECURITY_INFORMATION SecurityInfo, OUT PSID                 * ppsidOowner, OUT PSID                 * ppsidGroup, OUT PACL                 * ppDacl, OUT PACL                 * ppSacl, OUT PSECURITY_DESCRIPTOR * ppSecurityDescriptor);
 

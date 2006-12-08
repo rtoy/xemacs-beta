@@ -1,3 +1,8 @@
+2006-11-24  Benson Margulies  <benson@dchbk.us>
+
+	* make-mswin-unicode.pl: allow for lower case header file names in
+	the current platform SDK.
+
 2006-08-11  Jerry James  <james@xemacs.org>
 
 	* pop.h: Sync with Emacs.

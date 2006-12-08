@@ -107,7 +107,7 @@ if (!$dir)
     $dir=$ENV{"MSVCDIR"} or die "Environment variable MSVCDIR undefined - run vcvars32.bat from your MSVC installation";
     $dir.='/include';
   }
-die "Can't find MSVC include files in \"$dir\"" unless (-f $dir.'/WINDOWS.H');
+die "Can't find MSVC include files in \"$dir\"" unless ((-f $dir.'/WINDOWS.H') || (-f $dir.'/windows.h'));
 
 open (COUT, ">$cout") or die "Can't open C output file $cout: $!";
 open (HOUT, ">$hout") or die "Can't open C output file $hout: $!";

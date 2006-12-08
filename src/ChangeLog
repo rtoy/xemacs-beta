@@ -1,3 +1,18 @@
+2006-12-07  Vin Shelton  <acs@xemacs.org>
+
+	* fileio.c: Added cast to qxeGetNamedSecurityInfofix call to fix
+	VC6 build.
+
+2006-11-24  Benson Margulies  <benson@dchbk.us>
+
+	* fileio.c: Change check_writable to use the full Win32 mechanism
+	to check access.
+	* intl-auto-encap-win32.c: Add GetNamedSecurityInfo
+	* intl-auto-encap-win32.h: Add GetNamedSecurityInfo
+	* intl-auto-encap-win32.h Add qxeGetNamedSecurityInfo.
+	* intl-encap-win32.c: Add aclapi.h : GetNamedSecurityInfo
+	* syswindows.h: Add aclapi.h
+
 2006-12-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.c (Fsplit_char):

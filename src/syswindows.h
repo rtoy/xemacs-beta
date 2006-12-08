@@ -88,6 +88,8 @@ END_C_DECLS
 #define OEMRESOURCE /* Define OCR_ and friend constants */
 #include <windows.h>
 
+#include <aclapi.h>
+
 #if defined (WIN32_LEAN_AND_MEAN)
 # ifdef HAVE_X_WINDOWS
 /* Christ almighty.  The problems you get when combining two large code bases,
@@ -932,6 +934,7 @@ void cygwin_win32_to_posix_path_list (const char *, char *);
 int cygwin_win32_to_posix_path_list_buf_size (const char *);
 void cygwin_posix_to_win32_path_list (const char *, char *);
 int cygwin_posix_to_win32_path_list_buf_size (const char *);
+extern int cygwin_conv_to_full_win32_path (const char *, char *);
 
 END_C_DECLS
 
