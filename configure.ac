@@ -1051,7 +1051,20 @@ then
 else
   AC_DEFINE(EXEC_PREFIX_USER_DEFINED)
 fi
-if test "x$datadir" != 'x${prefix}/share'
+
+define([XE_EXPAND_VARIABLE],
+[$2=[$]$1
+while true; do
+  case "[$]$2" in
+    *\[$]* ) eval "$2=[$]$2" ;;
+    *) break ;;
+  esac
+done])dnl XE_EXPAND_VARIABLE
+
+XE_EXPAND_VARIABLE(prefix,prefix_expanded)
+XE_EXPAND_VARIABLE(datadir,datadir_expanded)
+
+if test "x$datadir_expanded" != "x$prefix_expanded/share"
 then
   AC_DEFINE(INFODIR_USER_DEFINED)
   AC_DEFINE(LISPDIR_USER_DEFINED)
@@ -1062,15 +1075,25 @@ then
 else
   datadir='${prefix}/lib'
 fi
-if test "x$libdir" != 'x${exec_prefix}/lib'
+
+XE_EXPAND_VARIABLE(exec_prefix,exec_prefix_expanded)
+XE_EXPAND_VARIABLE(libdir,libdir_expanded)
+
+if test "x$libdir_expanded" != "x$exec_prefix_expanded/lib"
 then
   AC_DEFINE(ARCHLIBDIR_USER_DEFINED)
 fi
-if test "x$mandir" = 'x${prefix}/man'
+
+XE_EXPAND_VARIABLE(mandir,mandir_expanded)
+
+if test "x$mandir_expanded" = "x$prefix_expanded/man"
 then
   mandir='${prefix}/man/man1'
 fi
-if test "x$infodir" != 'x${prefix}/info'
+
+XE_EXPAND_VARIABLE(infodir,infodir_expanded)
+
+if test "x$infodir_expanded" != "x${prefix_expanded}/info"
 then
   AC_DEFINE(INFODIR_USER_DEFINED)
 else
@@ -5662,148 +5685,70 @@ AC_SUBST(EXEC_PREFIX)
 
 AC_SUBST(infodir)
 AC_SUBST(INFODIR_USER_DEFINED)
-INFODIR=$infodir
-while true; do
-  case "$INFODIR" in
-    *\$* ) eval "INFODIR=$INFODIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(infodir,INFODIR)
 AC_SUBST(INFODIR)
 
 AC_SUBST(infopath,$with_infopath)
 AC_SUBST(INFOPATH_USER_DEFINED)
-INFOPATH=$with_infopath
-while true; do
-  case "$INFOPATH" in
-    *\$* ) eval "INFOPATH=$INFOPATH" ;;
-    *) break ;;
-  esac
-done
-AC_SUBST(INFOPATH)
+XE_EXPAND_VARIABLE(with_info_path,INFOPATH)
 
 test -n "$with_user_packages" && with_early_packages=$with_user_packages
 AC_SUBST(early_packages,$with_early_packages)
 AC_SUBST(EARLY_PACKAGE_DIRECTORIES_USER_DEFINED)
-EARLY_PACKAGE_DIRECTORIES=$with_early_packages
-while true; do
-  case "$EARLY_PACKAGE_DIRECTORIES" in
-    *\$* ) eval "EARLY_PACKAGE_DIRECTORIES=$EARLY_PACKAGE_DIRECTORIES" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_early_packages,EARLY_PACKAGE_DIRECTORIES)
 AC_SUBST(EARLY_PACKAGE_DIRECTORIES)
 
 test -n "$with_system_packages" && with_late_packages=$with_system_packages
 AC_SUBST(late_packages,$with_late_packages)
 AC_SUBST(LATE_PACKAGE_DIRECTORIES_USER_DEFINED)
-LATE_PACKAGE_DIRECTORIES=$with_late_packages
-while true; do
-  case "$LATE_PACKAGE_DIRECTORIES" in
-    *\$* ) eval "LATE_PACKAGE_DIRECTORIES=$LATE_PACKAGE_DIRECTORIES" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_late_packages,LATE_PACKAGE_DIRECTORIES)
 AC_SUBST(LATE_PACKAGE_DIRECTORIES)
 
 test -n "$with_legacy_packages" && with_last_packages=$with_legacy_packages
 AC_SUBST(last_packages,$with_last_packages)
 AC_SUBST(LAST_PACKAGE_DIRECTORIES_USER_DEFINED)
-LAST_PACKAGE_DIRECTORIES=$with_last_packages
-while true; do
-  case "$LAST_PACKAGE_DIRECTORIES" in
-    *\$* ) eval "LAST_PACKAGE_DIRECTORIES=$LAST_PACKAGE_DIRECTORIES" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_last_packages,LAST_PACKAGE_DIRECTORIES)
 AC_SUBST(LAST_PACKAGE_DIRECTORIES)
 
 AC_SUBST(package_path,$with_package_path)
 AC_SUBST(PACKAGE_PATH_USER_DEFINED)
-PACKAGE_PATH=$with_package_path
-while true; do
-  case "$PACKAGE_PATH" in
-    *\$* ) eval "PACKAGE_PATH=$PACKAGE_PATH" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_package_path,PACKAGE_PATH)
 AC_SUBST(PACKAGE_PATH)
 
 AC_SUBST(lispdir, $with_lispdir)
 AC_SUBST(LISPDIR_USER_DEFINED)
-LISPDIR=$with_lispdir
-while true; do
-  case "$LISPDIR" in
-    *\$* ) eval "LISPDIR=$LISPDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_lispdir,LISPDIR)
 AC_SUBST(LISPDIR)
 
 AC_SUBST(moduledir,$with_moduledir)
 AC_SUBST(MODULEDIR_USER_DEFINED)
-MODULEDIR=$with_moduledir
-while true; do
-  case "$MODULEDIR" in
-    *\$* ) eval "MODULEDIR=$MODULEDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_moduledir,MODULEDIR)
 AC_SUBST(MODULEDIR)
 
 AC_SUBST(sitelispdir,$with_sitelispdir)
 AC_SUBST(SITELISPDIR_USER_DEFINED)
-SITELISPDIR=$sitelispdir
-while true; do
-  case "$SITELISPDIR" in
-    *\$* ) eval "SITELISPDIR=$SITELISPDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(sitelispdir,SITELISPDIR)
 AC_SUBST(SITELISPDIR)
 
 AC_SUBST(sitemoduledir)
 AC_SUBST(SITEMODULEDIR_USER_DEFINED)
-SITEMODULEDIR=$sitemoduledir
-while true; do
-  case "$SITEMODULEDIR" in
-    *\$* ) eval "SITEMODULEDIR=$SITEMODULEDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(sitemoduledir,SITEMODULEDIR)
 AC_SUBST(SITEMODULEDIR)
 
 AC_SUBST(etcdir,$with_etcdir)
 AC_SUBST(ETCDIR_USER_DEFINED)
-ETCDIR=$with_etcdir
-while true; do
-  case "$ETCDIR" in
-    *\$* ) eval "ETCDIR=$ETCDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_etcdir,ETCDIR)
 AC_SUBST(ETCDIR)
 
 AC_SUBST(archlibdir,$with_archlibdir)
 AC_SUBST(ARCHLIBDIR_USER_DEFINED)
 ARCHLIBDIR=$with_archlibdir
-while true; do
-  case "$ARCHLIBDIR" in
-    *\$* ) eval "ARCHLIBDIR=$ARCHLIBDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_archlibdir,ARCHLIBDIR)
 AC_SUBST(ARCHLIBDIR)
 
 AC_SUBST(docdir,$with_docdir)
 AC_SUBST(DOCDIR_USER_DEFINED)
-DOCDIR=$with_docdir
-while true; do
-  case "$DOCDIR" in
-    *\$* ) eval "DOCDIR=$DOCDIR" ;;
-    *) break ;;
-  esac
-done
+XE_EXPAND_VARIABLE(with_docdir,DOCDIR)
 AC_SUBST(DOCDIR)
 
 AC_SUBST(docdir)
