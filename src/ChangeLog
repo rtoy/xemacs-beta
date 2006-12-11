@@ -1,3 +1,11 @@
+2006-12-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* glyphs-eimage.c (png_warning_func): 
+	* glyphs-eimage.c (png_instantiate): 
+	* glyphs-eimage.c (tiff_warning_func): 
+	Decode external binary data as such before passing it to 
+	warn_when_safe().  
+
 2006-12-09  Vin Shelton  <acs@xemacs.org>
 
 	* sound.c (init_native_sound): Fix typo in call to GTK_DEVICE

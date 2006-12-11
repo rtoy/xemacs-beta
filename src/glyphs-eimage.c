@@ -827,7 +827,10 @@ png_error_func (png_structp UNUSED (png_ptr), png_const_charp msg)
 static void
 png_warning_func (png_structp UNUSED (png_ptr), png_const_charp msg)
 {
-  warn_when_safe (Qpng, Qinfo, "%s", msg);
+  DECLARE_EISTRING (eimsg);
+
+  eicpy_ext(eimsg, msg, Qbinary);  
+  warn_when_safe (Qpng, Qinfo, "%s", eidata(eimsg));
 }
 
 struct png_unwind_data
@@ -1018,16 +1021,21 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
        unobtrusive. */
     {
       int i;
+      DECLARE_EISTRING (key);
+      DECLARE_EISTRING (text);
 
       for (i = 0 ; i < info_ptr->num_text ; i++)
 	{
 	  /* How paranoid do I have to be about no trailing NULLs, and
 	     using (int)info_ptr->text[i].text_length, and strncpy and a temp
 	     string somewhere? */
+          eireset(key);
+          eireset(text);
+          eicpy_ext(key, info_ptr->text[i].key, Qbinary);
+          eicpy_ext(text, info_ptr->text[i].text, Qbinary);
 
 	  warn_when_safe (Qpng, Qinfo, "%s - %s",
-			  info_ptr->text[i].key,
-			  info_ptr->text[i].text);
+			  eidata(key), eidata(text));
 	}
     }
 #endif
@@ -1221,6 +1229,8 @@ tiff_warning_func (const char *module, const char *fmt, ...)
 #else
   char warn_str[1024];
 #endif
+  DECLARE_EISTRING (eimodule);
+  DECLARE_EISTRING (eiwarnstr);
 
   va_start (vargs, fmt);
 #ifdef HAVE_VSNPRINTF
@@ -1229,8 +1239,13 @@ tiff_warning_func (const char *module, const char *fmt, ...)
   vsprintf (warn_str, fmt, vargs);
 #endif
   va_end (vargs);
+
+  eicpy_ext(eimodule, module, Qbinary);  
+  eicpy_ext(eiwarnstr, warn_str, Qbinary);  
+
   warn_when_safe (Qtiff, Qinfo, "%s - %s",
-		  module, warn_str);
+                  eidata(eimodule), 
+                  eidata(eiwarnstr));
 }
 
 static void
