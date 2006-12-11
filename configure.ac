@@ -4335,7 +4335,7 @@ dnl Not all toolkits support all widgets
 
 dnl Avoid using Motif :-(
 case "$opsys" in
-  *linux* | *darwin* | *bsd* )  lucid_prefers_motif="no"  ;;
+  *linux* | *darwin* | *bsd* | *cygwin* )  lucid_prefers_motif="no"  ;;
   * )        lucid_prefers_motif="yes" ;;
 esac
 

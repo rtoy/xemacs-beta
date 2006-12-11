@@ -1,3 +1,7 @@
+2006-12-06  Dr. Volker Zell  <Dr.Volker.Zell@oracle.com> 
+ 
+	* configure.ac: Avoid using Motif for cygwin. 
+
 2006-11-23  Mike Sperber  <mike@xemacs.org>
 
 	* configure.ac (XE_EXPAND_VARIABLE): Fully expand the various
