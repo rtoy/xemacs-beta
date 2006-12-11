@@ -997,12 +997,16 @@ charset_matches_specifier_tag_set_p (Lisp_Object charset,
       Lisp_Object tag = XCAR (rest);
       Lisp_Object assoc;
 
-      /* This function will not ever be called with a charset for which the
-	 relevant information hasn't been calculated (the information is
-	 calculated with the creation of every charset).  */
-      assert (!NILP(XVECTOR_DATA
-		    (Vcharset_tag_lists)[XCHARSET_LEADING_BYTE(charset) 
-					 - MIN_LEADING_BYTE]));
+      /* In the event that, during the creation of a charset, no specifier
+         tags exist for which CHARSET-PREDICATE has been specified, then
+         that charset's entry in Vcharset_tag_lists will be nil, and this
+         charset shouldn't match. */
+
+      if (NILP (XVECTOR_DATA(Vcharset_tag_lists)[XCHARSET_LEADING_BYTE(charset) 
+                                                 - MIN_LEADING_BYTE]))
+        {
+          return 0;
+        }
 
       /* Now, find out what the pre-calculated value is. */
       assoc = assq_no_quit(tag,

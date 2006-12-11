@@ -1,3 +1,11 @@
+2006-12-08  Aidan Kehoe  <kehoea@parhasard.net> 
+ 
+	* specifier.c (charset_matches_specifier_tag_set_p): 
+	A charset's entry in Vcharset_tag_lists may be nil, if, when that 
+	charset was created, no tags with associated charset predicates 
+	existed. Accept this possibility, treat it as the tag not matching 
+	that charset.  
+
 2006-12-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-tty.c: 
