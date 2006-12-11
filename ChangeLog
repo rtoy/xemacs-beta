@@ -1,3 +1,7 @@
+2006-12-06  Dr. Volker Zell  <Dr.Volker.Zell@oracle.com>
+
+	* configure.ac: Check for u_int*_t typedefs.
+
 2006-12-06  Dr. Volker Zell  <Dr.Volker.Zell@oracle.com> 
  
 	* configure.ac: Avoid using Motif for cygwin. 

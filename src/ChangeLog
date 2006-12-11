@@ -1,3 +1,9 @@
+2006-12-06  Dr. Volker Zell  <Dr.Volker.Zell@oracle.com>
+
+	* config.h.in: New HAVE_U_INT*_T defines.
+	* database.c: Only use u_int*_t typedefs if not already
+	defined.
+
 2006-12-08  Aidan Kehoe  <kehoea@parhasard.net> 
  
 	* specifier.c (charset_matches_specifier_tag_set_p): 

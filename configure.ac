@@ -5376,6 +5376,9 @@ test "$enable_database_gdbm" = "yes" -o \
      "$enable_database_dbm"  = "yes" && \
   AC_DEFINE(HAVE_DBM)
 
+dnl Check for u_int*_t typedefs.
+AC_CHECK_TYPES([u_int8_t, u_int16_t, u_int32_t])
+
 dnl Check for Berkeley DB.
 if test "$enable_database_berkdb" != "no"; then
   AC_MSG_CHECKING(for Berkeley db.h)
@@ -5386,11 +5389,19 @@ if test "$enable_database_berkdb" != "no"; then
 #ifdef HAVE_INTTYPES_H
 #define __BIT_TYPES_DEFINED__
 #include <inttypes.h>
+#if !HAVE_U_INT8_T
 typedef uint8_t  u_int8_t;
+#endif
+#if !HAVE_U_INT16_T
 typedef uint16_t u_int16_t;
+#endif
+#if !HAVE_U_INT32_T
 typedef uint32_t u_int32_t;
+#endif
 #ifdef WE_DONT_NEED_QUADS
+#if !HAVE_U_INT64_T
 typedef uint64_t u_int64_t;
+#endif
 #endif
 #endif
 #endif
