@@ -1079,7 +1079,7 @@ environment.  "
        (replace-match (format " (%s)" 
                               (upcase (symbol-name
                                        (coding-system-name coding-system))))
-                      nil nil langenv)
+                      nil nil (car langenv))
      (format "%s (%s)" (car langenv)
              (upcase (symbol-name (coding-system-name coding-system)))))
    (destructive-plist-to-alist 

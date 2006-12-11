@@ -1,3 +1,10 @@
+2006-12-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el (create-variant-language-environment):
+	Avoid an error when creating a modified lang environment; use the
+	old environment's string name rather than its value when calling
+	replace-in-string.
+
 2006-12-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el (what-cursor-position):
