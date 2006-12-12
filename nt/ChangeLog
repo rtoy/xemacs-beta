@@ -1,3 +1,9 @@
+2006-12-11  Vin Shelton  <acs@xemacs.org>
+
+	* config.inc.samp: Added BUILD_FOR_SETUP_KIT.
+	* xemacs.mak: Use BUILD_FOR_SETUP_KIT to define
+	OK_TO_USE_MSVCRTD.
+
 2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.27 "fiddleheads" is released.

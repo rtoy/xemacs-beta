@@ -196,6 +196,12 @@ DEBUG_XEMACS=0
 SUPPORT_EDIT_AND_CONTINUE=0
 !endif
 
+!if !defined(BUILD_FOR_SETUP_KIT) || "$(BUILD_FOR_SETUP_KIT)" == "0"
+OK_TO_USE_MSVCRTD=1
+!else
+OK_TO_USE_MSVCRTD=0
+!endif
+
 !if !defined(ERROR_CHECK_ALL)
 !if "$(emacs_is_beta)" != ""
 ERROR_CHECK_ALL=1
@@ -711,13 +717,13 @@ BROWSERFLAGS=
 !endif
 
 !if $(USE_CRTDLL)
-! if $(DEBUG_XEMACS)
+!  if $(DEBUG_XEMACS) && "$(OK_TO_USE_MSVCRTD)" == "1"
 C_LIBFLAG=-MDd
 LIBC_LIB=msvcrtd.lib
-! else
+!  else
 C_LIBFLAG=-MD
 LIBC_LIB=msvcrt.lib
-! endif
+!  endif
 !else
 C_LIBFLAG=-ML
 LIBC_LIB=libc.lib
