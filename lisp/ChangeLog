@@ -1,3 +1,9 @@
+2006-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-faces.el (x-init-face-from-resources):
+	Only retain the fallbacks for the default face if we're not
+	running on XFT. 
+
 2006-12-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-cmds.el (create-variant-language-environment):

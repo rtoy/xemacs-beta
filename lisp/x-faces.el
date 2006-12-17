@@ -791,18 +791,19 @@ Otherwise, it returns the next larger version of this font that is defined."
       ;; since we don't want to try andale-mono's ISO-10646-1 encoding for
       ;; Amharic or Thai. This is fragile; it depends on the code in
       ;; faces.c.
-      (dolist (assocked '((x encode-as-utf-8 initial)
-			  (x two-dimensional initial)
-			  (x one-dimensional final)
-			  (x two-dimensional final)))
-	(when (and (specifierp (face-font face))
-		   (consp (specifier-fallback (face-font face)))
-		   (setq assocked 
-			 (assoc assocked 
-				(specifier-fallback
-				 (face-font face)))))
-	  (set-face-font face (cdr assocked) locale
-			 (nreverse (car assocked)) append))))
+      (unless (featurep 'xft-fonts)
+        (dolist (assocked '((x encode-as-utf-8 initial)
+                            (x two-dimensional initial)
+                            (x one-dimensional final)
+                            (x two-dimensional final)))
+          (when (and (specifierp (face-font face))
+                     (consp (specifier-fallback (face-font face)))
+                     (setq assocked 
+                           (assoc assocked 
+                                  (specifier-fallback
+                                   (face-font face)))))
+            (set-face-font face (cdr assocked) locale
+                           (nreverse (car assocked)) append)))))
 		     
     ;; Kludge-o-rooni.  Set the foreground and background resources for
     ;; X devices only -- otherwise things tend to get all messed up

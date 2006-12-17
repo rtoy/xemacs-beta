@@ -2307,16 +2307,21 @@ complex_vars_of_faces (void)
 
     define_specifier_tag (Qencode_as_utf_8, Qnil,
 			  intern("specifier-tag-encode-as-utf-8-p"));
-
 #endif /* MULE */
 
+#ifdef USE_XFT
+    for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
+      inst_list = Fcons (Fcons (list1 (device_symbol),
+				build_string (*fontptr)),
+			 inst_list);
+
+#else /* !USE_XFT */
     inst_list =
       Fcons 
       (Fcons
        (list1 (device_symbol), 
 	build_string ("*")),
        inst_list);
-
 #ifdef MULE 
 
     /* For Han characters and Ethiopic, we want the misc-fixed font used to
@@ -2388,6 +2393,8 @@ complex_vars_of_faces (void)
        (list1 (device_symbol), 
 	build_string ("-*-lucidatypewriter-medium-r-*-*-*-120-*-*-*-*-*-*")),
        inst_list);
+
+#endif /* !USE_XFT */
 
 #endif /* HAVE_X_WINDOWS || HAVE_GTK */
 
