@@ -1,5 +1,11 @@
 2006-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/greek.el:
+	Support case tables for greek-iso8859-7; make different choices on
+	the relevant syntax. 
+
+2006-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* x-faces.el (x-init-face-from-resources):
 	Only retain the fallbacks for the default face if we're not
 	running on XFT. 

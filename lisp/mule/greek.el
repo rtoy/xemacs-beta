@@ -29,52 +29,85 @@
 
 ;;; Code:
 
-; (make-charset 'greek-iso8859-7 
-; 	      "Right-Hand Part of Latin/Greek Alphabet (ISO/IEC 8859-7): ISO-IR-126"
-; 	      '(dimension
-; 		1
-; 		registry "ISO8859-7"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?F
-; 		graphic 1
-; 		short-name "RHP of ISO8859/7"
-; 		long-name "RHP of Greek (ISO 8859-7): ISO-IR-126"
-; 		))
+(loop
+  for (upper lower)
+  in '((#xdb #xfb) ;; UPSILON WITH DIALYTIKA
+       (#xda #xfa) ;; IOTA WITH DIALYTIKA
+       (#xd9 #xf9) ;; OMEGA
+       (#xd8 #xf8) ;; PSI
+       (#xd7 #xf7) ;; CHI
+       (#xd6 #xf6) ;; PHI
+       (#xd5 #xf5) ;; UPSILON
+       (#xd4 #xf4) ;; TAU
+       (#xd3 #xf3) ;; SIGMA
+       (#xd1 #xf1) ;; RHO
+       (#xd0 #xf0) ;; PI
+       (#xcf #xef) ;; OMICRON
+       (#xce #xee) ;; XI
+       (#xcd #xed) ;; NU
+       (#xcc #xec) ;; MU
+       (#xcb #xeb) ;; LAMDA
+       (#xca #xea) ;; KAPPA
+       (#xc9 #xe9) ;; IOTA
+       (#xc8 #xe8) ;; THETA
+       (#xc7 #xe7) ;; ETA
+       (#xc6 #xe6) ;; ZETA
+       (#xc5 #xe5) ;; EPSILON
+       (#xc4 #xe4) ;; DELTA
+       (#xc3 #xe3) ;; GAMMA
+       (#xc2 #xe2) ;; BETA
+       (#xc1 #xe1) ;; ALPHA
+       (#xbf #xfe) ;; OMEGA WITH TONOS
+       (#xbe #xfd) ;; UPSILON WITH TONOS
+       (#xbc #xfc) ;; OMICRON WITH TONOS
+       (#xba #xdf) ;; IOTA WITH TONOS
+       (#xb9 #xde) ;; ETA WITH TONOS
+       (#xb8 #xdd) ;; EPSILON WITH TONOS
+       (#xb6 #xdc) ;; ALPHA WITH TONOS
+       (#xD3 #xF2)) ;; FINAL SIGMA 
+       ;; No case mappings for: 
+       ;;
+       ;; (#xE0 "GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS")
+       ;; (#xC0 "GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS")
+       ;;
+  with case-table = (standard-case-table)
+  do
+  (put-case-table-pair (make-char 'greek-iso8859-7 upper)
+                       (make-char 'greek-iso8859-7 lower) case-table))
 
-;; For syntax of Greek
-(loop for c from 54 to 126
-      do (modify-syntax-entry (make-char 'greek-iso8859-7 c) "w"))
-(modify-syntax-entry (make-char 'greek-iso8859-7 32) "w") ; no-break space
-(modify-syntax-entry ?,F7(B ".")
-(modify-syntax-entry ?,F;(B ".")
-(modify-syntax-entry ?,F=(B ".")
+;; Now, syntax.
+(dolist (code '(#xA1    ;; LEFT SINGLE QUOTATION MARK
+                #xA2	;; RIGHT SINGLE QUOTATION MARK
+                #xA3	;; POUND SIGN
+                #xA6	;; BROKEN BAR
+                #xA7	;; SECTION SIGN
+                #xA8	;; DIAERESIS
+                #xA9	;; COPYRIGHT SIGN
+                #xAB	;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+                #xAC	;; NOT SIGN
+                #xAD	;; SOFT HYPHEN
+                #xAF	;; HORIZONTAL BAR
+                #xB0	;; DEGREE SIGN
+                #xB1	;; PLUS-MINUS SIGN
+                #xB7	;; MIDDLE DOT
+                #xBB))  ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+  (modify-syntax-entry (make-char 'greek-iso8859-7 code) "."))
 
+;; NO-BREAK SPACE
+(modify-syntax-entry (make-char 'greek-iso8859-7 #xA0) " ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GREEK
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-;; (make-coding-system
-;;  'greek-iso-8bit 2 ?7
-;;  "ISO 2022 based 8-bit encoding for Greek (MIME:ISO-8859-7)"
-;;  '(ascii greek-iso8859-7 nil nil
-;;    nil nil nil nil nil nil nil)
-;;  '((safe-charsets ascii greek-iso8859-7)
-;;    (mime-charset . iso-8859-7)))
-
-;; (define-coding-system-alias 'iso-8859-7 'greek-iso-8bit)
-
 (make-coding-system
  'iso-8859-7 'iso2022 "ISO-8859-7 (Greek)"
  '(charset-g0 ascii
    charset-g1 greek-iso8859-7
    charset-g2 t
    charset-g3 t
-   mnemonic "Grk"
-   ))
+   mnemonic "Grk"))
 
 (set-language-info-alist
  "Greek" '((charset greek-iso8859-7)
