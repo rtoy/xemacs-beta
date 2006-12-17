@@ -33,31 +33,75 @@
 
 ;;; Code:
 
-;; Cyrillic syntax
-(modify-syntax-entry 'cyrillic-iso8859-5 "w")
-(modify-syntax-entry ?,L-(B ".")
-(modify-syntax-entry ?,Lp(B ".")
-(modify-syntax-entry ?,L}(B ".")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CYRILLIC
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; ISO-8859-5
 
-; (make-charset 'cyrillic-iso8859-5 
-; 	      "Right-Hand Part of Latin/Cyrillic Alphabet (ISO/IEC 8859-5): ISO-IR-144"
-; 	      '(dimension
-; 		1
-; 		registry "ISO8859-5"
-; 		chars 96
-; 		columns 1
-; 		direction l2r
-; 		final ?L
-; 		graphic 1
-; 		short-name "RHP of ISO8859/5"
-; 		long-name "RHP of Cyrillic (ISO 8859-5): ISO-IR-144"
-; 		))
+(loop
+  for (upper lower)
+  in '((#xcf #xef) ; YA
+       (#xce #xee) ; YU
+       (#xcd #xed) ; E
+       (#xcc #xec) ; SOFT SIGN
+       (#xcb #xeb) ; YERU
+       (#xca #xea) ; HARD SIGN
+       (#xc9 #xe9) ; SHCHA
+       (#xc8 #xe8) ; SHA
+       (#xc7 #xe7) ; CHE
+       (#xc6 #xe6) ; TSE
+       (#xc5 #xe5) ; HA
+       (#xc4 #xe4) ; EF
+       (#xc3 #xe3) ; U
+       (#xc2 #xe2) ; TE
+       (#xc1 #xe1) ; ES
+       (#xc0 #xe0) ; ER
+       (#xbf #xdf) ; PE
+       (#xbe #xde) ; O
+       (#xbd #xdd) ; EN
+       (#xbc #xdc) ; EM
+       (#xbb #xdb) ; EL
+       (#xba #xda) ; KA
+       (#xb9 #xd9) ; SHORT I
+       (#xb8 #xd8) ; I
+       (#xb7 #xd7) ; ZE
+       (#xb6 #xd6) ; ZHE
+       (#xb5 #xd5) ; IE
+       (#xb4 #xd4) ; DE
+       (#xb3 #xd3) ; GHE
+       (#xb2 #xd2) ; VE
+       (#xb1 #xd1) ; BE
+       (#xb0 #xd0) ; A
+       (#xaf #xff) ; DZHE
+       (#xae #xfe) ; SHORT U
+       (#xac #xfc) ; KJE
+       (#xab #xfb) ; TSHE
+       (#xaa #xfa) ; NJE
+       (#xa9 #xf9) ; LJE
+       (#xa8 #xf8) ; JE
+       (#xa7 #xf7) ; YI
+       (#xa6 #xf6) ; BYELORUSSIAN-UKRAINIAN I
+       (#xa5 #xf5) ; DZE
+       (#xa4 #xf4) ; UKRAINIAN IE
+       (#xa3 #xf3) ; GJE
+       (#xa2 #xf2) ; DJE
+       (#xa1 #xf1)) ; IO
+  with case-table = (standard-case-table)
+  do
+  (put-case-table-pair (make-char 'cyrillic-iso8859-5 upper)
+		       (make-char 'cyrillic-iso8859-5 lower)
+		       case-table))
+
+;; The default character syntax is now word. Pay attention to the
+;; exceptions in ISO-8859-5. 
+(dolist (code '(#xAD	;; SOFT HYPHEN
+		#xF0	;; NUMERO SIGN
+		#xFD))  ;; SECTION SIGN
+  (modify-syntax-entry (make-char 'cyrillic-iso8859-5 code) "."))
+
+;; NO-BREAK SPACE
+(modify-syntax-entry (make-char 'cyrillic-iso8859-5 #xA0) " ")
 
 (make-coding-system
  'iso-8859-5 'iso2022
