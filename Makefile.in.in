@@ -261,14 +261,14 @@ dist: all
 
 ## Convenience target for XEmacs maintainers
 ## Updates some rarely generated files:
-## - configure from configure.in
+## - configure from configure.ac
 ## - config.values.in from configure
 ## - src/depend from src/*.[ch]
 .PHONY: config configure depend
 config: configure depend
 configure: ${srcdir}/configure ${srcdir}/lib-src/config.values.in
 
-${srcdir}/configure : ${srcdir}/configure.in
+${srcdir}/configure : ${srcdir}/configure.ac
 	cd ${srcdir} && autoconf
 
 ${srcdir}/lib-src/config.values.in : ${srcdir}/configure

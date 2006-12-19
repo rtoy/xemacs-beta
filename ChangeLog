@@ -1,3 +1,7 @@
+2006-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Makefile.in.in (${srcdir}/configure): Generated from configure.ac.
+
 2006-12-06  Dr. Volker Zell  <Dr.Volker.Zell@oracle.com>
 
 	* configure.ac: Check for u_int*_t typedefs.
