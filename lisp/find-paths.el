@@ -126,7 +126,7 @@ to EXPAND-FILE-NAME."
 
 (defun paths-construct-emacs-directory (root suffix base)
   "Construct a directory name within the XEmacs hierarchy.
-ROOT must be a an installation root.
+ROOT must be an installation root.
 SUFFIX is the subdirectory from there.
 BASE is the base to look for."
   (file-name-as-directory
@@ -211,7 +211,7 @@ the directory."
   "Iterate over the site-specific directories in the XEmacs hierarchy.
 FUNC is a function that called for each directory, with the directory
 as the only argument.
-ROOT must be a an installation root.
+ROOTS must be a list of installation roots.
 BASE is the base to look for.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
@@ -227,7 +227,7 @@ DEFAULT is the preferred value."
 
 (defun paths-find-site-directory (roots base &optional envvar default)
   "Find a site-specific directory in the XEmacs hierarchy.
-ROOT must be a an installation root.
+ROOTS must be a list of installation roots.
 BASE is the base to look for.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
@@ -240,7 +240,7 @@ DEFAULT is the preferred value."
 
 (defun paths-find-site-directories (roots base &optional envvar default)
   "Find a list of site-specific directories in the XEmacs hierarchy.
-ROOT must be a an installation root.
+ROOTS must be a list of installation roots.
 BASE is the base to look for.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
@@ -257,7 +257,7 @@ DEFAULT is the preferred value."
   "Iterate over version-specific directories in the XEmacs hierarchy.
 FUNC is a function that called for each directory, with the directory
 as the only argument.
-ROOT must be a an installation root.
+ROOTS must be a list of installation roots.
 BASE is the base to look for.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
@@ -275,7 +275,7 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
 (defun paths-find-version-directory (roots base
 				     &optional envvar default enforce-version)
   "Find a version-specific directory in the XEmacs hierarchy.
-ROOT must be a an installation root.
+ROOTS must be a list of installation roots.
 BASE is the base to look for.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
@@ -290,7 +290,7 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
 (defun paths-find-version-directories (roots base
 				       &optional envvar default enforce-version)
   "Find a list of version-specific directories in the XEmacs hierarchy.
-ROOT must be a an installation root.
+ROOTS must be a list of installation roots.
 BASE is the base to look for.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
@@ -305,7 +305,7 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
 
 (defun paths-find-architecture-directory (roots base &optional envvar default)
   "Find an architecture-specific directory in the XEmacs hierarchy.
-ROOT must be a an installation root.
+ROOTS must be a list of installation roots.
 BASE is the base to look for.
 ENVVAR is the name of the environment variable that might also
 specify the directory.

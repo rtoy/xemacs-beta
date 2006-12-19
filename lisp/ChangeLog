@@ -1,3 +1,15 @@
+2006-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* find-paths.el (paths-construct-emacs-directory):
+	(paths-for-each-emacs-directory):
+	(paths-find-site-directory):
+	(paths-find-site-directories):
+	(paths-for-each-version-directory):
+	(paths-find-version-directory):
+	(paths-find-version-directories):
+	(paths-find-architecture-directory):
+	Document ROOT(S) argument correctly.
+
 2006-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/cyrillic.el:
