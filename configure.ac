@@ -5815,6 +5815,9 @@ if test "$with_site_modules" = "no"; then
 fi
 
 XE_SPACE(ac_configure_args, $ac_configure_args)
+dnl Put back the leading space to work around problems with
+dnl 'config.status --recheck' under autoconf 2.60 and 2.61.
+ac_configure_args=" $ac_configure_args"
 AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION, "$ac_cv_build")
 AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "$ac_configure_args")
 

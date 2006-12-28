@@ -39561,6 +39561,7 @@ T=""
 for W in $ac_configure_args; do if test -z "$T"; then T="$W"; else T="$T $W"; fi; done
 ac_configure_args="$T"
 
+ac_configure_args=" $ac_configure_args"
 cat >>confdefs.h <<_ACEOF
 #define EMACS_CONFIGURATION "$ac_cv_build"
 _ACEOF

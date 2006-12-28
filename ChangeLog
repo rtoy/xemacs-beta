@@ -1,3 +1,9 @@
+2006-12-28  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.ac: Ensure ac_configure_args contains a leading space
+	to work around problems with 'config.status --recheck' under
+	autoconf 2.60 and 2.61.
+
 2006-12-27  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* configure.ac (XE_MERGED_ARG): Register --enable and --with forms
