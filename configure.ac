@@ -252,6 +252,10 @@ Optional Features:
   --without-FEATURE       do not use FEATURE (same as --with-FEATURE=no)
   --disable-FEATURE       alias for --without-FEATURE]])dnl
 m4_divert_once([HELP_ENABLE], m4_bpatsubst([[$2]],[--enable\([^ ]+\) ],[--with\1   ]))dnl
+dnl Register both forms with the option checking list.
+dnl Options are only checked with autoconf > 2.61.
+m4_append_uniq([_AC_USER_OPTS], [enable_]m4_bpatsubst([$1], -, _), [:])dnl
+m4_append_uniq([_AC_USER_OPTS], [with_]m4_bpatsubst([$1], -, _), [:])dnl
 # If --with-$1 or --without-$1 were given then copy the value to the
 # equivalent enable_$1 variable.
 if test "[${with_]m4_bpatsubst([$1], -, _)+set}" = set; then

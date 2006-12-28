@@ -1,3 +1,8 @@
+2006-12-27  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.ac (XE_MERGED_ARG): Register --enable and --with forms
+	with the option checking list.
+
 2006-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* Makefile.in.in (${srcdir}/configure): Generated from configure.ac.
