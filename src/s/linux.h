@@ -206,3 +206,8 @@ Boston, MA 02111-1307, USA.  */
 /* XEmacs: removed setpgrp() definition because we use setpgid() when
    it's available, and autodetect it. */
 
+/* The in-built malloc does not work on PPC64 or Alpha, so use the system
+   malloc for now. */
+#if defined(__powerpc64__) || defined(__alpha__) || defined(__ia64__)
+#define SYSTEM_MALLOC
+#endif
