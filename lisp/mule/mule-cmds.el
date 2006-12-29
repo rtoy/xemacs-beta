@@ -1068,6 +1068,9 @@ The coding systems in question are those described in the
 `native-coding-system' and `coding-system'.  The name of the new language
 environment is the name of the old language environment, followed by
 CODING-SYSTEM in parentheses.  Returns the name of the new language
+environment.  
+
+This function also modifies the `coding-priority' of a language
 environment.  "
   (check-coding-system coding-system)
   (if (symbolp langenv) (setq langenv (symbol-name langenv)))
@@ -1083,10 +1086,15 @@ environment.  "
      (format "%s (%s)" (car langenv)
              (upcase (symbol-name (coding-system-name coding-system)))))
    (destructive-plist-to-alist 
-    (plist-put (plist-put (alist-to-plist (cdr langenv)) 'native-coding-system
-			  coding-system) 'coding-system
-			  (cons coding-system
-				(cdr (assoc 'coding-system (cdr langenv))))))))
+    (plist-put
+     (plist-put
+      (plist-put (alist-to-plist (cdr langenv))
+                 'native-coding-system
+                 coding-system)
+      'coding-system (cons coding-system
+                           (cdr (assoc 'coding-system (cdr langenv)))))
+     'coding-priority (cons (coding-system-category coding-system)
+                           (cdr (assq 'coding-priority (cdr langenv))))))))
 
 (defun get-language-environment-from-locale (locale)
   "Convert LOCALE into a language environment.
@@ -1099,7 +1107,7 @@ Uses the `locale' property of the language environment."
 	    (desired-coding-system
 	     (and charset (gethash (replace-in-string charset "[^a-z0-9]" "")
                                    posix-charset-to-coding-system-hash)))
-	    lang locs)
+	    lang locs given-coding-system)
 	(dolist (langcons language-info-alist)
 	  (setq lang (car langcons)
 		locs (get-language-info lang 'locale))
@@ -1114,10 +1122,14 @@ Uses the `locale' property of the language environment."
 			      locale))
 		     (if (or (null desired-coding-system)
 			     (and desired-coding-system
-				  (eq desired-coding-system
-				      (get-language-info
-				       lang
-				       'native-coding-system))))
+                                  (or (eq desired-coding-system
+                                          (setq given-coding-system
+                                                (get-language-info
+                                                 lang
+                                                 'native-coding-system)))
+                                      (and (listp given-coding-system)
+                                           (memq desired-coding-system
+                                                 given-coding-system)))))
 			 (return-from langenv lang)
 		       (return-from langenv
 			 (create-variant-language-environment

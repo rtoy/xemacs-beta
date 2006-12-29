@@ -1310,7 +1310,7 @@ The following additional properties are recognized if TYPE is `chain':
 
 The following additional properties are recognized if TYPE is `unicode':
 
-`type'
+`unicode-type'
      One of `utf-16', `utf-8', `ucs-4', or `utf-7' (the latter is not
      yet implemented).  `utf-16' is the basic two-byte encoding;
      `ucs-4' is the four-byte encoding; `utf-8' is an ASCII-compatible

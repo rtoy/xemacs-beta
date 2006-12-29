@@ -1,10 +1,12 @@
-;;; latin.el --- Support for Latin charsets. -*- coding: iso-2022-7bit; -*-
+;;; latin.el --- Roman-alphabet languages -*- coding: iso-2022-7bit; -*-
 
-;; Copyright (C) 2001, 2005 Free Software Foundation, Inc.
+;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
+;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2002, 2005, 2006 Free Software Foundation
 
-;; Author: Hrvoje Niksic <hniksic@xemacs.org>
-;; Maintainer: XEmacs Development Team
-;; Keywords: multilingual, European, dumped
+;; Keywords: multilingual, latin, dumped
 
 ;; This file is part of XEmacs.
 
@@ -25,12 +27,9 @@
 
 ;;; Commentary:
 
-;; This file is meant to provide support for Latin character sets.
-;; The place for that used to be `european.el', but I am hesitant to
-;; change that file, as it is full of old cruft that I hope to phase
-;; out.  Currently this file provides only the case table setup.
+;; For Roman-alphabet-using Europeans, eight coded character sets,
+;; ISO8859-1,2,3,4,9,14,15,16 are supported.
 
-
 ;;; Code:
 
 ;; Case table setup.  We set up all the case tables using
@@ -39,344 +38,691 @@
 ;; updated by Erik Naggum.
 
 (defun setup-case-pairs (charset pairs)
-  (let ((tbl (standard-case-table)))
-    (loop for (uc lc) in pairs do
-      (put-case-table-pair (make-char charset uc) (make-char charset lc) tbl))))
-
-;; Latin 1.
-
-(setup-case-pairs
- 'latin-iso8859-1
- '((192 224)				;latin letter a with grave
-   (193 225)				;latin letter a with acute
-   (194 226)				;latin letter a with circumflex
-   (195 227)				;latin letter a with tilde
-   (196 228)				;latin letter a with diaeresis
-   (197 229)				;latin letter a with ring above
-   (198 230)				;latin letter ae
-   (199 231)				;latin letter c with cedilla
-   (200 232)				;latin letter e with grave
-   (201 233)				;latin letter e with acute
-   (202 234)				;latin letter e with circumflex
-   (203 235)				;latin letter e with diaeresis
-   (204 236)				;latin letter i with grave
-   (205 237)				;latin letter i with acute
-   (206 238)				;latin letter i with circumflex
-   (207 239)				;latin letter i with diaeresis
-   (208 240)				;latin letter eth
-   (209 241)				;latin letter n with tilde
-   (210 242)				;latin letter o with grave
-   (211 243)				;latin letter o with acute
-   (212 244)				;latin letter o with circumflex
-   (213 245)				;latin letter o with tilde
-   (214 246)				;latin letter o with diaeresis
-   (216 248)				;latin letter o with stroke
-   (217 249)				;latin letter u with grave
-   (218 250)				;latin letter u with acute
-   (219 251)				;latin letter u with circumflex
-   (220 252)				;latin letter u with diaeresis
-   (221 253)				;latin letter y with acute
-   (222 254)				;latin letter thorn
-   ))
-
-;; Latin 2.
-
-(setup-case-pairs
- 'latin-iso8859-2
- '((161 177)				;latin letter a with ogonek
-   (163 179)				;latin letter l with stroke
-   (165 181)				;latin letter l with caron
-   (166 182)				;latin letter s with acute
-   (169 185)				;latin letter s with caron
-   (170 186)				;latin letter s with cedilla
-   (171 187)				;latin letter t with caron
-   (172 188)				;latin letter z with acute
-   (174 190)				;latin letter z with caron
-   (175 191)				;latin letter z with dot above
-   (192 224)				;latin letter r with acute
-   (193 225)				;latin letter a with acute
-   (194 226)				;latin letter a with circumflex
-   (195 227)				;latin letter a with breve
-   (196 228)				;latin letter a with diaeresis
-   (197 229)				;latin letter l with acute
-   (198 230)				;latin letter c with acute
-   (199 231)				;latin letter c with cedilla
-   (200 232)				;latin letter c with caron
-   (201 233)				;latin letter e with acute
-   (202 234)				;latin letter e with ogonek
-   (203 235)				;latin letter e with diaeresis
-   (204 236)				;latin letter e with caron
-   (205 237)				;latin letter i with acute
-   (206 238)				;latin letter i with circumflex
-   (207 239)				;latin letter d with caron
-   (208 240)				;latin letter d with stroke
-   (209 241)				;latin letter n with acute
-   (210 242)				;latin letter n with caron
-   (211 243)				;latin letter o with acute
-   (212 244)				;latin letter o with circumflex
-   (213 245)				;latin letter o with double acute
-   (214 246)				;latin letter o with diaeresis
-   (216 248)				;latin letter r with caron
-   (217 249)				;latin letter u with ring above
-   (218 250)				;latin letter u with acute
-   (219 251)				;latin letter u with double acute
-   (220 252)				;latin letter u with diaeresis
-   (221 253)				;latin letter y with acute
-   (222 254)				;latin letter t with cedilla
-   ))
-
-;; Latin 3.
-
-(setup-case-pairs
- 'latin-iso8859-3
- '((161 177)				;latin letter h with stroke
-   (166 182)				;latin letter h with circumflex
-   (170 186)				;latin letter s with cedilla
-   (171 187)				;latin letter g with breve
-   (172 188)				;latin letter j with circumflex
-   (175 191)				;latin letter z with dot above
-   (192 224)				;latin letter a with grave
-   (193 225)				;latin letter a with acute
-   (194 226)				;latin letter a with circumflex
-   (196 228)				;latin letter a with diaeresis
-   (197 229)				;latin letter c with dot above
-   (198 230)				;latin letter c with circumflex
-   (199 231)				;latin letter c with cedilla
-   (200 232)				;latin letter e with grave
-   (201 233)				;latin letter e with acute
-   (202 234)				;latin letter e with circumflex
-   (203 235)				;latin letter e with diaeresis
-   (204 236)				;latin letter i with grave
-   (205 237)				;latin letter i with acute
-   (206 238)				;latin letter i with circumflex
-   (207 239)				;latin letter i with diaeresis
-   (209 241)				;latin letter n with tilde
-   (210 242)				;latin letter o with grave
-   (211 243)				;latin letter o with acute
-   (212 244)				;latin letter o with circumflex
-   (213 245)				;latin letter g with dot above
-   (214 246)				;latin letter o with diaeresis
-   (216 248)				;latin letter g with circumflex
-   (217 249)				;latin letter u with grave
-   (218 250)				;latin letter u with acute
-   (219 251)				;latin letter u with circumflex
-   (220 252)				;latin letter u with diaeresis
-   (221 253)				;latin letter u with breve
-   (222 254)				;latin letter s with circumflex
-   ))
-
-;; Latin 4.
-
-(setup-case-pairs
- 'latin-iso8859-4
- '((161 177)				;latin letter a with ogonek
-   (163 179)				;latin letter r with cedilla
-   (165 181)				;latin letter i with tilde
-   (166 182)				;latin letter l with cedilla
-   (169 185)				;latin letter s with caron
-   (170 186)				;latin letter e with macron
-   (171 187)				;latin letter g with cedilla
-   (172 188)				;latin letter t with stroke
-   (174 190)				;latin letter z with caron
-   (189 191)				;eng
-   (192 224)				;latin letter a with macron
-   (193 225)				;latin letter a with acute
-   (194 226)				;latin letter a with circumflex
-   (195 227)				;latin letter a with tilde
-   (196 228)				;latin letter a with diaeresis
-   (197 229)				;latin letter a with ring above
-   (198 230)				;latin letter ae
-   (199 231)				;latin letter i with ogonek
-   (200 232)				;latin letter c with caron
-   (201 233)				;latin letter e with acute
-   (202 234)				;latin letter e with ogonek
-   (203 235)				;latin letter e with diaeresis
-   (204 236)				;latin letter e with dot above
-   (205 237)				;latin letter i with acute
-   (206 238)				;latin letter i with circumflex
-   (207 239)				;latin letter i with macron
-   (208 240)				;latin letter d with stroke
-   (209 241)				;latin letter n with cedilla
-   (210 242)				;latin letter o with macron
-   (211 243)				;latin letter k with cedilla
-   (212 244)				;latin letter o with circumflex
-   (213 245)				;latin letter o with tilde
-   (214 246)				;latin letter o with diaeresis
-   (216 248)				;latin letter o with stroke
-   (217 249)				;latin letter u with ogonek
-   (218 250)				;latin letter u with acute
-   (219 251)				;latin letter u with circumflex
-   (220 252)				;latin letter u with diaeresis
-   (221 253)				;latin letter u with tilde
-   (222 254)				;latin letter u with macron
-   ))
-
-;; Latin 5.  Currently unsupported.
-
-;(setup-case-pairs
-; 'latin-iso8859-5
-; '((192 224)				;latin letter a with grave
-;   (193 225)				;latin letter a with acute
-;   (194 226)				;latin letter a with circumflex
-;   (195 227)				;latin letter a with tilde
-;   (196 228)				;latin letter a with diaeresis
-;   (197 229)				;latin letter a with ring above
-;   (198 230)				;latin letter ae
-;   (199 231)				;latin letter c with cedilla
-;   (200 232)				;latin letter e with grave
-;   (201 233)				;latin letter e with acute
-;   (203 235)				;latin letter e with diaeresis
-;   (205 237)				;latin letter i with acute
-;   (206 238)				;latin letter i with circumflex
-;   (208 240)				;latin letter g with breve
-;   (209 241)				;latin letter n with tilde
-;   (210 242)				;latin letter o with grave
-;   (211 243)				;latin letter o with acute
-;   (212 244)				;latin letter o with circumflex
-;   (213 245)				;latin letter o with tilde
-;   (214 246)				;latin letter o with diaeresis
-;   (216 248)				;latin letter o with stroke
-;   (217 249)				;latin letter u with grave
-;   (218 250)				;latin letter u with acute
-;   (219 251)				;latin letter u with circumflex
-;   (220 252)				;latin letter u with diaeresis
-;   (222 254)				;latin letter s with cedilla
-;   ))
-
-;; Latin 9. 
-(setup-case-pairs
- 'latin-iso8859-15
- '((166 168)				;latin letter s with caron *
-   (180 184)				;latin letter z with caron *
-   (188 189)				;latin ligature oe *
-   (190 255)				;latin letter y with diaeresis *
-   (192 224)				;latin letter a with grave
-   (193 225)				;latin letter a with acute
-   (194 226)				;latin letter a with circumflex
-   (195 227)				;latin letter a with tilde
-   (196 228)				;latin letter a with diaeresis
-   (197 229)				;latin letter a with ring above
-   (198 230)				;latin letter ae
-   (199 231)				;latin letter c with cedilla
-   (200 232)				;latin letter e with grave
-   (201 233)				;latin letter e with acute
-   (202 234)				;latin letter e with circumflex
-   (203 235)				;latin letter e with diaeresis
-   (204 236)				;latin letter i with grave
-   (205 237)				;latin letter i with acute
-   (206 238)				;latin letter i with circumflex
-   (207 239)				;latin letter i with diaeresis
-   (208 240)				;latin letter eth
-   (209 241)				;latin letter n with tilde
-   (210 242)				;latin letter o with grave
-   (211 243)				;latin letter o with acute
-   (212 244)				;latin letter o with circumflex
-   (213 245)				;latin letter o with tilde
-   (214 246)				;latin letter o with diaeresis
-   (216 248)				;latin letter o with stroke
-   (217 249)				;latin letter u with grave
-   (218 250)				;latin letter u with acute
-   (219 251)				;latin letter u with circumflex
-   (220 252)				;latin letter u with diaeresis
-   (221 253)				;latin letter y with acute
-   (222 254)				;latin letter thorn
-   ))
-
-;; ISO 8859-14, not in FSF, our mapping.
-(setup-case-pairs
- 'latin-iso8859-14
- '((161 162)				;latin letter b with dot above
-   (164 165)				;latin letter c with dot above
-   (166 171)				;latin letter d with dot above
-   (168 184)				;latin letter w with grave
-   (170 186)				;latin letter w with acute
-   (172 188)				;latin letter y with grave
-   (175 255)				;latin letter y with diaeresis
-   (176 177)				;latin letter f with dot above
-   (178 179)				;latin letter g with dot above
-   (180 181)				;latin letter m with dot above
-   (183 185)				;latin letter p with dot above
-   (187 191)				;latin letter s with dot above
-   (189 190)				;latin letter w with diaeresis
-   (192 224)				;latin letter a with grave
-   (193 225)				;latin letter a with acute
-   (194 226)				;latin letter a with circumflex
-   (195 227)				;latin letter a with tilde
-   (196 228)				;latin letter a with diaeresis
-   (197 229)				;latin letter a with ring above
-   (198 230)				;latin letter ae
-   (199 231)				;latin letter c with cedilla
-   (200 232)				;latin letter e with grave
-   (201 233)				;latin letter e with acute
-   (202 234)				;latin letter e with circumflex
-   (203 235)				;latin letter e with diaeresis
-   (204 236)				;latin letter i with grave
-   (205 237)				;latin letter i with acute
-   (206 238)				;latin letter i with circumflex
-   (207 239)				;latin letter i with diaeresis
-   (208 240)				;latin letter w with circumflex
-   (209 241)				;latin letter n with tilde
-   (210 242)				;latin letter o with grave
-   (211 243)				;latin letter o with acute
-   (212 244)				;latin letter o with circumflex
-   (213 245)				;latin letter o with tilde
-   (214 246)				;latin letter o with diaeresis
-   (215 247)				;latin letter t with dot above
-   (216 248)				;latin letter o with stroke
-   (217 249)				;latin letter u with grave
-   (218 250)				;latin letter u with acute
-   (219 251)				;latin letter u with circumflex
-   (220 252)				;latin letter u with diaeresis
-   (221 253)				;latin letter y with acute
-   (222 254)				;latin letter y with circumflex
-   ))
-
-;; ISO 8859-16, not in FSF, our mapping. 
-(setup-case-pairs
- 'latin-iso8859-16
- '((161 162)				;latin letter a with ogonek
-   (163 179)				;latin letter l with stroke
-   (166 168)				;latin letter s with caron
-   (170 186)				;latin letter s with comma below
-   (172 174)				;latin letter z with acute
-   (175 191)				;latin letter z with dot above
-   (178 185)				;latin letter c with caron
-   (180 184)				;latin letter z with caron
-   (190 255)				;latin letter y with diaeresis
-   (192 224)				;latin letter a with grave
-   (193 225)				;latin letter a with acute
-   (194 226)				;latin letter a with circumflex
-   (195 227)				;latin letter a with breve
-   (196 228)				;latin letter a with diaeresis
-   (197 229)				;latin letter c with acute
-   (198 230)				;latin letter ae
-   (199 231)				;latin letter c with cedilla
-   (200 232)				;latin letter e with grave
-   (201 233)				;latin letter e with acute
-   (202 234)				;latin letter e with circumflex
-   (203 235)				;latin letter e with diaeresis
-   (204 236)				;latin letter i with grave
-   (205 237)				;latin letter i with acute
-   (206 238)				;latin letter i with circumflex
-   (207 239)				;latin letter i with diaeresis
-   (208 240)				;latin letter d with stroke
-   (209 241)				;latin letter n with acute
-   (210 242)				;latin letter o with grave
-   (211 243)				;latin letter o with acute
-   (212 244)				;latin letter o with circumflex
-   (213 245)				;latin letter o with double acute
-   (214 246)				;latin letter o with diaeresis
-   (215 247)				;latin letter s with acute
-   (216 248)				;latin letter u with double acute
-   (217 249)				;latin letter u with grave
-   (218 250)				;latin letter u with acute
-   (219 251)				;latin letter u with circumflex
-   (220 252)				;latin letter u with diaeresis
-   (221 253)				;latin letter e with ogonek
-   (222 254)				;latin letter t with comma below
-   ))
+  (loop 
+    for (uc lc) in pairs 
+    with table = (standard-case-table)
+    do (put-case-table-pair
+        (make-char charset uc) (make-char charset lc) table)))
+
+;; Latin-1's case is dealt with in iso8859-1.el, which see. Its syntax is
+;; initialised in syntax.c:complex_vars_of_syntax.
 
 
-;; This is our utility function; we don't want it in the dumped XEmacs.
+;; Latin-2 (ISO-8859-2). Central Europe; Czech, Slovak, Hungarian, Polish,
+;; Croatian, other languages.
+;;
+;; (Yes, it really is Central European. German written in Latin 2 and using
+;; only Umlaute and the sharp S in its non-ASCII repertoire is bit-for-bit
+;; identical with the same text in Latin-1.)
+
+;; The default character syntax is now word. Pay attention to the
+;; exceptions in ISO-8859-2, copying them from ISO-8859-1. 
+(loop
+  for (latin-2 latin-1) 
+  in '((#xA0 #xA0) ;; NO BREAK SPACE
+       (#xA2 #xB4) ;; BREVE, ACUTE ACCENT
+       (#xA4 #xA4) ;; CURRENCY SIGN
+       (#xA7 #xA7) ;; SECTION SIGN
+       (#xA8 #xA8) ;; DIAERESIS
+       (#xAD #xAD) ;; SOFT HYPHEN
+       (#xB0 #xB0) ;; DEGREE SIGN
+       (#xB2 #xB4) ;; OGONEK, ACUTE ACCENT
+       (#xB4 #xB4) ;; ACUTE ACCENT
+       (#xB7 #xB4) ;; CARON, ACUTE ACCENT
+       (#xB8 #xB8) ;; CEDILLA
+       (#xBD #xB4) ;; DOUBLE ACUTE ACCENT, ACUTE ACCENT
+       (#xD7 #xD7) ;; MULTIPLICATION SIGN
+       (#xF7 #xF7) ;; DIVISION SIGN
+       (#xFF #xB4)) ;; DOT ABOVE, ACUTE ACCENT
+  with syntax-table = (standard-syntax-table)
+  do (modify-syntax-entry
+      (make-char 'latin-iso8859-2 latin-2)
+      (string (char-syntax (make-char 'latin-iso8859-1 latin-1)))
+      syntax-table))
+
+;; Case. 
+(setup-case-pairs
+ 'latin-iso8859-2
+ '((#xA1 #xB1) ;; A WITH OGONEK
+   (#xA3 #xB3) ;; L WITH STROKE
+   (#xA5 #xB5) ;; L WITH CARON
+   (#xA6 #xB6) ;; S WITH ACUTE
+   (#xA9 #xB9) ;; S WITH CARON
+   (#xAA #xBA) ;; S WITH CEDILLA
+   (#xAB #xBB) ;; T WITH CARON
+   (#xAC #xBC) ;; Z WITH ACUTE
+   (#xAE #xBE) ;; Z WITH CARON
+   (#xAF #xBF) ;; Z WITH DOT ABOVE
+   (#xC0 #xE0) ;; R WITH ACUTE
+   (#xC1 #xE1) ;; A WITH ACUTE
+   (#xC2 #xE2) ;; A WITH CIRCUMFLEX
+   (#xC3 #xE3) ;; A WITH BREVE
+   (#xC4 #xE4) ;; A WITH DIAERESIS
+   (#xC5 #xE5) ;; L WITH ACUTE
+   (#xC6 #xE6) ;; C WITH ACUTE
+   (#xC7 #xE7) ;; C WITH CEDILLA
+   (#xC8 #xE8) ;; C WITH CARON
+   (#xC9 #xE9) ;; E WITH ACUTE
+   (#xCA #xEA) ;; E WITH OGONEK
+   (#xCB #xEB) ;; E WITH DIAERESIS
+   (#xCC #xEC) ;; E WITH CARON
+   (#xCD #xED) ;; I WITH ACUTE
+   (#xCE #xEE) ;; I WITH CIRCUMFLEX
+   (#xCF #xEF) ;; D WITH CARON
+   (#xD0 #xF0) ;; D WITH STROKE
+   (#xD1 #xF1) ;; N WITH ACUTE
+   (#xD2 #xF2) ;; N WITH CARON
+   (#xD3 #xF3) ;; O WITH ACUTE
+   (#xD4 #xF4) ;; O WITH CIRCUMFLEX
+   (#xD5 #xF5) ;; O WITH DOUBLE ACUTE
+   (#xD6 #xF6) ;; O WITH DIAERESIS
+   (#xD8 #xF8) ;; R WITH CARON
+   (#xD9 #xF9) ;; U WITH RING ABOVE
+   (#xDA #xFA) ;; U WITH ACUTE
+   (#xDB #xFB) ;; U WITH DOUBLE ACUTE
+   (#xDC #xFC) ;; U WITH DIAERESIS
+   (#xDD #xFD) ;; Y WITH ACUTE
+   (#xDE #xFE))) ;; T WITH CEDILLA
+
+(make-coding-system
+ 'iso-8859-2 'iso2022 "ISO-8859-2 (Latin-2)"
+ '(charset-g0 ascii
+   charset-g1 latin-iso8859-2
+   charset-g2 t
+   charset-g3 t
+   mnemonic "MIME/Ltn-2"))
+
+
+;; 
+;; Latin-3 (ISO-8859-3). Esperanto, Maltese and Turkish. Obsolescent.
+
+;; Initialise the non-word syntax codes in ISO-8859-3, copying them from
+;; ISO-8859-1.
+(loop
+  for (latin-3 latin-1) 
+  in '((#xA0 #xA0) ;; NO BREAK SPACE
+       (#xA2 #xB4) ;; BREVE, ACUTE ACCENT
+       (#xA3 #xA3) ;; POUND SIGN
+       (#xA4 #xA4) ;; CURRENCY SIGN
+       (#xA7 #xA7) ;; SECTION SIGN
+       (#xA8 #xA8) ;; DIAERESIS
+       (#xAD #xAD) ;; SOFT HYPHEN
+       (#xB0 #xB0) ;; DEGREE SIGN
+       (#xB2 #xB2) ;; SUPERSCRIPT TWO
+       (#xB3 #xB3) ;; SUPERSCRIPT THREE
+       (#xB4 #xB4) ;; ACUTE ACCENT
+       (#xB5 #xB5) ;; MICRO SIGN
+       (#xB7 #xB7) ;; MIDDLE DOT
+       (#xB8 #xB8) ;; CEDILLA
+       (#xBD #xBD) ;; VULGAR FRACTION ONE HALF
+       (#xD7 #xD7) ;; MULTIPLICATION SIGN
+       (#xF7 #xF7) ;; DIVISION SIGN
+       (#xFF #xB4)) ;; DOT ABOVE, ACUTE ACCENT
+  with syntax-table = (standard-syntax-table)
+  do (modify-syntax-entry
+      (make-char 'latin-iso8859-3 latin-3)
+      (string (char-syntax (make-char 'latin-iso8859-1 latin-1)))
+      syntax-table))
+
+;; Case. 
+(setup-case-pairs
+ 'latin-iso8859-3
+ '((#xA1 #xB1) ;; H WITH STROKE
+   (#xA6 #xB6) ;; H WITH CIRCUMFLEX
+   (#xAA #xBA) ;; S WITH CEDILLA
+   (#xAB #xBB) ;; G WITH BREVE
+   (#xAC #xBC) ;; J WITH CIRCUMFLEX
+   (#xAF #xBF) ;; Z WITH DOT ABOVE
+   (#xC0 #xE0) ;; A WITH GRAVE
+   (#xC1 #xE1) ;; A WITH ACUTE
+   (#xC2 #xE2) ;; A WITH CIRCUMFLEX
+   (#xC4 #xE4) ;; A WITH DIAERESIS
+   (#xC5 #xE5) ;; C WITH DOT ABOVE
+   (#xC6 #xE6) ;; C WITH CIRCUMFLEX
+   (#xC7 #xE7) ;; C WITH CEDILLA
+   (#xC8 #xE8) ;; E WITH GRAVE
+   (#xC9 #xE9) ;; E WITH ACUTE
+   (#xCA #xEA) ;; E WITH CIRCUMFLEX
+   (#xCB #xEB) ;; E WITH DIAERESIS
+   (#xCC #xEC) ;; I WITH GRAVE
+   (#xCD #xED) ;; I WITH ACUTE
+   (#xCE #xEE) ;; I WITH CIRCUMFLEX
+   (#xCF #xEF) ;; I WITH DIAERESIS
+   (#xD1 #xF1) ;; N WITH TILDE
+   (#xD2 #xF2) ;; O WITH GRAVE
+   (#xD3 #xF3) ;; O WITH ACUTE
+   (#xD4 #xF4) ;; O WITH CIRCUMFLEX
+   (#xD5 #xF5) ;; G WITH DOT ABOVE
+   (#xD6 #xF6) ;; O WITH DIAERESIS
+   (#xD8 #xF8) ;; G WITH CIRCUMFLEX
+   (#xD9 #xF9) ;; U WITH GRAVE
+   (#xDA #xFA) ;; U WITH ACUTE
+   (#xDB #xFB) ;; U WITH CIRCUMFLEX
+   (#xDC #xFC) ;; U WITH DIAERESIS
+   (#xDD #xFD) ;; U WITH BREVE
+   (#xDE #xFE))) ;; S WITH CIRCUMFLEX
+
+(make-coding-system
+ 'iso-8859-3 'iso2022 "ISO-8859-3 (Latin-3)"
+ '(charset-g0 ascii
+   charset-g1 latin-iso8859-3
+   charset-g2 t
+   charset-g3 t
+   mnemonic "MIME/Ltn-3"))
+
+
+;; Latin-4 (ISO-8859-4)
+
+;; Estonian, Latvian, Lithuanian, Greenlandic, and Sami. Obsolescent.
+
+;; The default character syntax is now word. Pay attention to the
+;; exceptions in ISO-8859-4, copying them from ISO-8859-1. 
+(loop
+  for (latin-4 latin-1) 
+  in '((#xA0 #xA0) ;; NO BREAK SPACE
+       (#xA4 #xA4) ;; CURRENCY SIGN
+       (#xA7 #xA7) ;; SECTION SIGN
+       (#xA8 #xA8) ;; DIAERESIS
+       (#xAD #xAD) ;; SOFT HYPHEN
+       (#xB0 #xB0) ;; DEGREE SIGN
+       (#xB2 #xB4) ;; OGONEK, ACUTE ACCENT
+       (#xB4 #xB4) ;; ACUTE ACCENT
+       (#xB7 #xB4) ;; CARON, ACUTE ACCENT
+       (#xB8 #xB8) ;; CEDILLA
+       (#xD7 #xD7) ;; MULTIPLICATION SIGN
+       (#xF7 #xF7) ;; DIVISION SIGN
+       (#xFF #xB4)) ;; DOT ABOVE, ACUTE ACCENT
+  with syntax-table = (standard-syntax-table)
+  do (modify-syntax-entry
+      (make-char 'latin-iso8859-4 latin-4)
+      (string (char-syntax (make-char 'latin-iso8859-1 latin-1)))
+      syntax-table))
+
+;; Case. 
+(setup-case-pairs
+ 'latin-iso8859-4
+ '((#xA1 #xB1) ;; A WITH OGONEK
+   (#xA3 #xB3) ;; R WITH CEDILLA
+   (#xA5 #xB5) ;; I WITH TILDE
+   (#xA6 #xB6) ;; L WITH CEDILLA
+   (#xA9 #xB9) ;; S WITH CARON
+   (#xAA #xBA) ;; E WITH MACRON
+   (#xAB #xBB) ;; G WITH CEDILLA
+   (#xAC #xBC) ;; T WITH STROKE
+   (#xAE #xBE) ;; Z WITH CARON
+   (#xBD #xBF) ;; ENG
+   (#xC0 #xE0) ;; A WITH MACRON
+   (#xC1 #xE1) ;; A WITH ACUTE
+   (#xC2 #xE2) ;; A WITH CIRCUMFLEX
+   (#xC3 #xE3) ;; A WITH TILDE
+   (#xC4 #xE4) ;; A WITH DIAERESIS
+   (#xC5 #xE5) ;; A WITH RING ABOVE
+   (#xC6 #xE6) ;; AE
+   (#xC7 #xE7) ;; I WITH OGONEK
+   (#xC8 #xE8) ;; C WITH CARON
+   (#xC9 #xE9) ;; E WITH ACUTE
+   (#xCA #xEA) ;; E WITH OGONEK
+   (#xCB #xEB) ;; E WITH DIAERESIS
+   (#xCC #xEC) ;; E WITH DOT ABOVE
+   (#xCD #xED) ;; I WITH ACUTE
+   (#xCE #xEE) ;; I WITH CIRCUMFLEX
+   (#xCF #xEF) ;; I WITH MACRON
+   (#xD0 #xF0) ;; D WITH STROKE
+   (#xD1 #xF1) ;; N WITH CEDILLA
+   (#xD2 #xF2) ;; O WITH MACRON
+   (#xD3 #xF3) ;; K WITH CEDILLA
+   (#xD4 #xF4) ;; O WITH CIRCUMFLEX
+   (#xD5 #xF5) ;; O WITH TILDE
+   (#xD6 #xF6) ;; O WITH DIAERESIS
+   (#xD8 #xF8) ;; O WITH STROKE
+   (#xD9 #xF9) ;; U WITH OGONEK
+   (#xDA #xFA) ;; U WITH ACUTE
+   (#xDB #xFB) ;; U WITH CIRCUMFLEX
+   (#xDC #xFC) ;; U WITH DIAERESIS
+   (#xDD #xFD) ;; U WITH TILDE
+   (#xDE #xFE))) ;; U WITH MACRON
+
+(make-coding-system
+ 'iso-8859-4 'iso2022 "ISO-8859-4 (Latin-4)"
+ '(charset-g0 ascii
+   charset-g1 latin-iso8859-4
+   charset-g2 t
+   charset-g3 t
+   mnemonic "MIME/Ltn-4"))
+
+
+;; Latin-8 (ISO 8859-14) Celtic.
+
+;; Never widely used. Current-orthography Gaelic, both Irish and Scots, is
+;; easily written with Latin-1. Wikipedia says the same about Welsh.
+
+(make-charset 'latin-iso8859-14 
+	      "Right-Hand Part of Latin Alphabet 8 (ISO/IEC 8859-14)"
+	      '(dimension 1
+		registries ["ISO8859-14"]
+		chars 96
+		columns 1
+		direction l2r
+		final ?_
+		graphic 1
+		short-name "RHP of Latin-8"
+		long-name "RHP of Latin-8 (ISO 8859-14)"))
+
+;; 
+;; Character syntax defaults to word. The exceptions here shared with Latin-1.
+(dolist (code '(#xa0	;; NO BREAK SPACE
+		#xa3	;; POUND SIGN
+		#xa7	;; SECTION SIGN
+		#xa9	;; COPYRIGHT
+		#xad	;; SOFT HYPHEN
+		#xae	;; REGISTERED
+		#xb6))	;; PILCROW SIGN
+  (modify-syntax-entry (make-char 'latin-iso8859-14 code)
+                       (string (char-syntax (make-char 'latin-iso8859-1 code)))
+                       (standard-syntax-table)))
+;; Case. 
+(setup-case-pairs
+ 'latin-iso8859-14
+ '((#xA1 #xA2) ;; B WITH DOT ABOVE
+   (#xA4 #xA5) ;; C WITH DOT ABOVE
+   (#xA6 #xAB) ;; D WITH DOT ABOVE
+   (#xA8 #xB8) ;; W WITH GRAVE
+   (#xAA #xBA) ;; W WITH ACUTE
+   (#xAC #xBC) ;; Y WITH GRAVE
+   (#xAF #xFF) ;; Y WITH DIAERESIS
+   (#xB0 #xB1) ;; F WITH DOT ABOVE
+   (#xB2 #xB3) ;; G WITH DOT ABOVE
+   (#xB4 #xB5) ;; M WITH DOT ABOVE
+   (#xB7 #xB9) ;; P WITH DOT ABOVE
+   (#xBB #xBF) ;; S WITH DOT ABOVE
+   (#xBD #xBE) ;; W WITH DIAERESIS
+   (#xC0 #xE0) ;; A WITH GRAVE
+   (#xC1 #xE1) ;; A WITH ACUTE
+   (#xC2 #xE2) ;; A WITH CIRCUMFLEX
+   (#xC3 #xE3) ;; A WITH TILDE
+   (#xC4 #xE4) ;; A WITH DIAERESIS
+   (#xC5 #xE5) ;; A WITH RING ABOVE
+   (#xC6 #xE6) ;; AE
+   (#xC7 #xE7) ;; C WITH CEDILLA
+   (#xC8 #xE8) ;; E WITH GRAVE
+   (#xC9 #xE9) ;; E WITH ACUTE
+   (#xCA #xEA) ;; E WITH CIRCUMFLEX
+   (#xCB #xEB) ;; E WITH DIAERESIS
+   (#xCC #xEC) ;; I WITH GRAVE
+   (#xCD #xED) ;; I WITH ACUTE
+   (#xCE #xEE) ;; I WITH CIRCUMFLEX
+   (#xCF #xEF) ;; I WITH DIAERESIS
+   (#xD0 #xF0) ;; W WITH CIRCUMFLEX
+   (#xD1 #xF1) ;; N WITH TILDE
+   (#xD2 #xF2) ;; O WITH GRAVE
+   (#xD3 #xF3) ;; O WITH ACUTE
+   (#xD4 #xF4) ;; O WITH CIRCUMFLEX
+   (#xD5 #xF5) ;; O WITH TILDE
+   (#xD6 #xF6) ;; O WITH DIAERESIS
+   (#xD7 #xF7) ;; T WITH DOT ABOVE
+   (#xD8 #xF8) ;; O WITH STROKE
+   (#xD9 #xF9) ;; U WITH GRAVE
+   (#xDA #xFA) ;; U WITH ACUTE
+   (#xDB #xFB) ;; U WITH CIRCUMFLEX
+   (#xDC #xFC) ;; U WITH DIAERESIS
+   (#xDD #xFD) ;; Y WITH ACUTE
+   (#xDE #xFE))) ;; Y WITH CIRCUMFLEX
+
+
+;; The syntax table code for ISO 8859-15 and ISO 8859-16 requires that the
+;; guillemets not have parenthesis syntax, which they used to have in the
+;; past. See syntax.c:complex_vars_of_syntax.
+(assert (not (memq (char-syntax (make-char 'latin-iso8859-1 #xAB)) '(?\( ?\))))
+        t "This code assumes \xAB does not have parenthesis syntax.  ")
+
+(assert (not (memq (char-syntax (make-char 'latin-iso8859-1 #xBB)) '(?\( ?\))))
+        t "This code assumes \xBB does not have parenthesis syntax.  ")
+
+
+;; Latin-9 (ISO-8859-15)
+;;
+;; Latin-1 plus Euro, plus a few accented characters for the sake of correct
+;; Finnish and French orthography. Only ever widely used on Unix. 
+
+;; 
+;; Based on Latin-1 and differences therefrom.
+;; 
+;; First, initialise the syntax from the corresponding Latin-1 characters. 
+(loop
+  for c from #xa0 to #xff
+  with syntax-table = (standard-syntax-table)
+  do (modify-syntax-entry 
+      (make-char 'latin-iso8859-15 c)
+      (string (char-syntax (make-char 'latin-iso8859-1 c)))
+      syntax-table))
+
+;; Now, the exceptions. The Euro sign retains the syntax of CURRENCY SIGN.
+(loop
+  for c in '(?,b&(B ?,b((B ?,b4(B ?,b8(B ?,b<(B ?,b=(B ?,b>(B)
+  with syntax-table = (standard-syntax-table)
+  do (modify-syntax-entry c "w" syntax-table))
+
+;; Case. 
+(setup-case-pairs
+ 'latin-iso8859-15
+ '((#xA6 #xA8) ;; S WITH CARON *
+   (#xB4 #xB8) ;; Z WITH CARON *
+   (#xBC #xBD) ;; LATIN LIGATURE OE *
+   (#xBE #xFF) ;; Y WITH DIAERESIS *
+   (#xC0 #xE0) ;; A WITH GRAVE
+   (#xC1 #xE1) ;; A WITH ACUTE
+   (#xC2 #xE2) ;; A WITH CIRCUMFLEX
+   (#xC3 #xE3) ;; A WITH TILDE
+   (#xC4 #xE4) ;; A WITH DIAERESIS
+   (#xC5 #xE5) ;; A WITH RING ABOVE
+   (#xC6 #xE6) ;; AE
+   (#xC7 #xE7) ;; C WITH CEDILLA
+   (#xC8 #xE8) ;; E WITH GRAVE
+   (#xC9 #xE9) ;; E WITH ACUTE
+   (#xCA #xEA) ;; E WITH CIRCUMFLEX
+   (#xCB #xEB) ;; E WITH DIAERESIS
+   (#xCC #xEC) ;; I WITH GRAVE
+   (#xCD #xED) ;; I WITH ACUTE
+   (#xCE #xEE) ;; I WITH CIRCUMFLEX
+   (#xCF #xEF) ;; I WITH DIAERESIS
+   (#xD0 #xF0) ;; ETH
+   (#xD1 #xF1) ;; N WITH TILDE
+   (#xD2 #xF2) ;; O WITH GRAVE
+   (#xD3 #xF3) ;; O WITH ACUTE
+   (#xD4 #xF4) ;; O WITH CIRCUMFLEX
+   (#xD5 #xF5) ;; O WITH TILDE
+   (#xD6 #xF6) ;; O WITH DIAERESIS
+   (#xD8 #xF8) ;; O WITH STROKE
+   (#xD9 #xF9) ;; U WITH GRAVE
+   (#xDA #xFA) ;; U WITH ACUTE
+   (#xDB #xFB) ;; U WITH CIRCUMFLEX
+   (#xDC #xFC) ;; U WITH DIAERESIS
+   (#xDD #xFD) ;; Y WITH ACUTE
+   (#xDE #xFE))) ;; THORN
+
+(make-coding-system
+ 'iso-8859-15 'iso2022
+  "ISO 4873 conforming 8-bit code (ASCII + Latin 9; aka Latin-1 with Euro)"
+  `(mnemonic "MIME/Ltn-9"		; bletch
+    eol-type nil
+    charset-g0 ascii
+    charset-g1 latin-iso8859-15
+    charset-g2 t
+    charset-g3 t))
+
+;; end of ISO 8859-15. 
+
+;;
+;; Latin-10 (ISO 8859-16).
+;;
+;; "South-Eastern European." Not, to my knowledge, ever widely used. 
+
+(make-charset 'latin-iso8859-16
+	      "Right-Hand Part of Latin Alphabet 10 (ISO/IEC 8859-16)"
+	      '(dimension 1
+		registries ["ISO8859-16"]
+		chars 96
+		columns 1
+		direction l2r
+		final ?f			; octet 06/06; cf ISO-IR 226
+		graphic 1
+		short-name "RHP of Latin-10"
+		long-name "RHP of Latin-10 (ISO 8859-16)"))
+
+;; Copy over the non-word syntax this charset has in common with Latin 1.
+(dolist (code '(#xa0	;; NO BREAK SPACE
+		#xa7	;; SECTION SIGN
+		#xa9	;; COPYRIGHT
+                #xab    ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+		#xad	;; SOFT HYPHEN
+		#xb0	;; DEGREE
+		#xb1	;; PLUS-MINUS SIGN
+		#xb6	;; PILCROW SIGN
+		#xb7    ;; MIDDLE DOT 
+                #xbb))  ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+  (modify-syntax-entry (make-char 'latin-iso8859-16 code)
+                       (string (char-syntax (make-char 'latin-iso8859-1 code)))
+                       (standard-syntax-table)))
+
+;; EURO SIGN. Take its syntax from the pound sign. 
+(modify-syntax-entry (make-char 'latin-iso8859-16 #xa4)
+                     (string (char-syntax (make-char 'latin-iso8859-1 #xa3)))
+                     (standard-syntax-table))
+
+;; Take DOUBLE LOW-9 QUOTATION MARK's syntax from that of LEFT-POINTING
+;; DOUBLE ANGLE QUOTATION MARK.
+(modify-syntax-entry (make-char 'latin-iso8859-16 #xa5) 
+                     (string (char-syntax (make-char 'latin-iso8859-1 #xab)))
+                     (standard-syntax-table))
+
+;; Take RIGHT DOUBLE QUOTATION MARK's syntax from that of RIGHT-POINTING
+;; DOUBLE ANGLE QUOTATION MARK.
+(modify-syntax-entry (make-char 'latin-iso8859-16 #xb5)
+                     (string (char-syntax (make-char 'latin-iso8859-1 #xbb)))
+                     (standard-syntax-table))
+
+;; Case. 
+(setup-case-pairs
+ 'latin-iso8859-16
+ '((#xA1 #xA2) ;; A WITH OGONEK
+   (#xA3 #xB3) ;; L WITH STROKE
+   (#xA6 #xA8) ;; S WITH CARON
+   (#xAA #xBA) ;; S WITH COMMA BELOW
+   (#xAC #xAE) ;; Z WITH ACUTE
+   (#xAF #xBF) ;; Z WITH DOT ABOVE
+   (#xB2 #xB9) ;; C WITH CARON
+   (#xB4 #xB8) ;; Z WITH CARON
+   (#xBE #xFF) ;; Y WITH DIAERESIS
+   (#xC0 #xE0) ;; A WITH GRAVE
+   (#xC1 #xE1) ;; A WITH ACUTE
+   (#xC2 #xE2) ;; A WITH CIRCUMFLEX
+   (#xC3 #xE3) ;; A WITH BREVE
+   (#xC4 #xE4) ;; A WITH DIAERESIS
+   (#xC5 #xE5) ;; C WITH ACUTE
+   (#xC6 #xE6) ;; AE
+   (#xC7 #xE7) ;; C WITH CEDILLA
+   (#xC8 #xE8) ;; E WITH GRAVE
+   (#xC9 #xE9) ;; E WITH ACUTE
+   (#xCA #xEA) ;; E WITH CIRCUMFLEX
+   (#xCB #xEB) ;; E WITH DIAERESIS
+   (#xCC #xEC) ;; I WITH GRAVE
+   (#xCD #xED) ;; I WITH ACUTE
+   (#xCE #xEE) ;; I WITH CIRCUMFLEX
+   (#xCF #xEF) ;; I WITH DIAERESIS
+   (#xD0 #xF0) ;; D WITH STROKE
+   (#xD1 #xF1) ;; N WITH ACUTE
+   (#xD2 #xF2) ;; O WITH GRAVE
+   (#xD3 #xF3) ;; O WITH ACUTE
+   (#xD4 #xF4) ;; O WITH CIRCUMFLEX
+   (#xD5 #xF5) ;; O WITH DOUBLE ACUTE
+   (#xD6 #xF6) ;; O WITH DIAERESIS
+   (#xD7 #xF7) ;; S WITH ACUTE
+   (#xD8 #xF8) ;; U WITH DOUBLE ACUTE
+   (#xD9 #xF9) ;; U WITH GRAVE
+   (#xDA #xFA) ;; U WITH ACUTE
+   (#xDB #xFB) ;; U WITH CIRCUMFLEX
+   (#xDC #xFC) ;; U WITH DIAERESIS
+   (#xDD #xFD) ;; E WITH OGONEK
+   (#xDE #xFE))) ;; T WITH COMMA BELOW
+
+;; Add a coding system for ISO 8859-16.
+(make-coding-system
+ 'iso-8859-16 'iso2022 "MIME ISO-8859-16"
+ '(charset-g0 ascii
+   charset-g1 latin-iso8859-16
+   charset-g2 t			; grrr
+   charset-g3 t			; grrr
+   mnemonic "MIME/Ltn-10"))
+
+;; end of ISO 8859-16. 
+
+
+(provide 'romanian)
+
+;; Czech support originally from czech.el
+;; Author: Milan Zamazal <pdm@zamazal.org>
+;; Maintainer (FSF): Pavel Jan,Am(Bk <Pavel@Janik.cz>
+;; Maintainer (for XEmacs): David Sauer <davids@penguin.cz>
+
+(provide 'czech)
+
+;; Slovak support originally from slovak.el
+;; Authors:    Tibor ,B)(Bimko <tibor.simko@fmph.uniba.sk>,
+;;             Milan Zamazal <pdm@fi.muni.cz>
+;; Maintainer: Milan Zamazal <pdm@fi.muni.cz>
+
+(provide 'slovenian)
+
+;; Latin-5 (ISO-8859-9)
+
+;; Turkish (more generally Turkic.) This is identical to Latin-1, with the
+;; exception that the Icelandic-specific letters have been replaced by
+;; Turkish-specific letters. As such, we can simply copy the Latin-1 syntax
+;; table. 
+
+(loop
+  for i from #xA0 to #xFF
+  with syntax-table = (standard-syntax-table)
+  do (modify-syntax-entry
+      (make-char 'latin-iso8859-9 i)
+      (string (char-syntax (make-char 'latin-iso8859-1 i)))
+      syntax-table))
+
+;; Case. #### Bug: this doesn't handle I WITH DOT ABOVE. 
+(setup-case-pairs
+ 'latin-iso8859-9
+ '((#xC0 #xE0) ;; A WITH GRAVE
+   (#xC1 #xE1) ;; A WITH ACUTE
+   (#xC2 #xE2) ;; A WITH CIRCUMFLEX
+   (#xC3 #xE3) ;; A WITH TILDE
+   (#xC4 #xE4) ;; A WITH DIAERESIS
+   (#xC5 #xE5) ;; A WITH RING ABOVE
+   (#xC6 #xE6) ;; AE
+   (#xC7 #xE7) ;; C WITH CEDILLA
+   (#xC8 #xE8) ;; E WITH GRAVE
+   (#xC9 #xE9) ;; E WITH ACUTE
+   (#xCB #xEB) ;; E WITH DIAERESIS
+   (#xCD #xED) ;; I WITH ACUTE
+   (#xCE #xEE) ;; I WITH CIRCUMFLEX
+   (#xD0 #xF0) ;; G WITH BREVE
+   (#xD1 #xF1) ;; N WITH TILDE
+   (#xD2 #xF2) ;; O WITH GRAVE
+   (#xD3 #xF3) ;; O WITH ACUTE
+   (#xD4 #xF4) ;; O WITH CIRCUMFLEX
+   (#xD5 #xF5) ;; O WITH TILDE
+   (#xD6 #xF6) ;; O WITH DIAERESIS
+   (#xD8 #xF8) ;; O WITH STROKE
+   (#xD9 #xF9) ;; U WITH GRAVE
+   (#xDA #xFA) ;; U WITH ACUTE
+   (#xDB #xFB) ;; U WITH CIRCUMFLEX
+   (#xDC #xFC) ;; U WITH DIAERESIS
+   (#xDE #xFE))) ;; S WITH CEDILLA
+
+(make-coding-system
+ 'iso-8859-9 'iso2022 "ISO-8859-9 (Latin-5)"
+ '(charset-g0 ascii
+   charset-g1 latin-iso8859-9
+   charset-g2 t
+   charset-g3 t
+   mnemonic "MIME/Ltn-5"))
+
+;; end of ISO-8859-9
+
+;; This is a utility function; we don't want it in the dumped XEmacs.
 
 (fmakunbound 'setup-case-pairs)
+
+
+;; Language environments. 
+(loop 
+  for ((charset codesys default-input nice-charset-1 nice-charset-2
+                ;; supported-langs is a list if the doc string is replaced
+                ;; entirely
+                supported-langs) 
+       langenvs) in
+  '(((latin-iso8859-1 iso-8859-1 "latin-1-prefix" "Latin-1" "ISO-8859-1"
+" Danish, Dutch, English, Faeroese, Finnish, French, German, Icelandic,
+ Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish.")
+     (("Danish" "da")
+      ("Dutch" "nl" "TUTORIAL.nl")
+      ("Faeroese")
+      ("Finnish" "fi")
+      ("French" "fr" "TUTORIAL.fr" "Bonjour, ,Ag(Ba va?")
+      ("German" "de" "TUTORIAL.de" "\
+German (Deutsch Nord)	Guten Tag
+German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
+       "german-postfix")
+      ("Icelandic" "is")
+      ("Irish" "ga")
+      ("Italian" "it")
+      ("Norwegian" "no" "TUTORIAL.no")
+      ("Portuguese" "pt" nil "Bem-vindo! Tudo bem?")
+      ("Spanish" "es" "TUTORIAL.es" ",A!(BHola!")
+      ("Swedish" "sv" "TUTORIAL.se" "Hej!")))
+    ((latin-iso8859-15 iso-8859-15 "latin-1-prefix" ;; #### FIXME
+		       "Latin-9" "ISO-8859-15")
+     ())
+    ((latin-iso8859-2 iso-8859-2 "latin-2-prefix" "Latin-2" "ISO-8859-2"
+" Albanian, Czech, English, German, Hungarian, Polish, Romanian,
+ Serbian, Croatian, Slovak, Slovene, Sorbian (upper and lower),
+ and Swedish.") ;; " added because fontification got screwed up, CVS-20061203.
+     (("Albanian" nil)
+      ("Croatian" ("hrvatski" "hr") "TUTORIAL.hr")
+      ("Czech" ("cs" "cz") "TUTORIAL.cs" "P,Bx(Bejeme v,Ba(Bm hezk,B}(B den!"
+       "latin-2-postfix")
+      ("Hungarian" ("hungarian" "hu"))
+      ("Polish" "po" "TUTORIAL.pl")
+      ("Romanian" "ro" "TUTORIAL.ro" "Bun,Bc(B ziua, bine a,B~(Bi venit!"
+       "latin-2-postfix")
+      ("Serbian" "sr")
+      ("Slovak" "sk" "TUTORIAL.sk" "Prajeme V,Ba(Bm pr,Bm(Bjemn,B}(B de,Br(B!"
+       "latin-2-postfix")
+      ("Slovenian" "sl" "TUTORIAL.sl" ",B.(Belimo vam uspe,B9(Ben dan!"
+       "latin-2-postfix")
+      ("Sorbian" nil)))
+    ((latin-iso8859-3 iso-8859-3 "latin-3-prefix" "Latin-3" "ISO-8859-3"
+" Afrikaans, Catalan, Dutch, English, Esperanto, French, Galician,
+ German, Italian, Maltese, Spanish, and Turkish.")
+     (("Afrikaans" "af")
+      ("Catalan" ("catalan" "ca"))
+      ("Esperanto")
+      ("Galician")
+      ("Maltese")))
+    ((latin-iso8859-4 iso-8859-4 "latin-4-prefix" "Latin-4" "ISO-8859-4"
+" Danish, English, Estonian, Finnish, German, Greenlandic, Lappish,
+ Latvian, Lithuanian, and Norwegian.")
+     (("Estonian" "et")
+      ("Greenlandic")
+      ("Lappish")
+      ("Latvian" "lv")
+      ("Lithuanian" "li")))
+    ((latin-iso8859-5 iso-8859-9 "latin-5-prefix" "Latin-5" "ISO-8859-9")
+     (("Turkish" "tr"))))
+  do
+  (set-language-info-alist
+   nice-charset-1
+   `((charset ascii ,charset)
+     (coding-system ,codesys)
+     (coding-priority ,codesys)
+     (native-coding-system ,codesys)
+     (documentation . ,(if (listp supported-langs) (car supported-langs)
+			 (format "\
+Generic language environment for %s (%s)." nice-charset-1 nice-charset-2))))
+   '("European"))
+  (loop for (name locale tutorial sample-text input-method) in langenvs
+    do
+    (set-language-info-alist
+     name
+     `((charset ascii ,charset)
+       (coding-system ,codesys)
+       (coding-priority ,codesys)
+       (native-coding-system ,codesys)
+       ,@(if locale `((locale . ,locale)))
+       ,@(if tutorial `((tutorial . ,tutorial)))
+       ,@(if sample-text `((sample-text . ,sample-text)))
+       (input-method . ,(or input-method default-input))
+       (documentation . ,(format "\
+This language environment supports %s. " name)))
+     '("European"))))
+
+;;; latin.el ends here

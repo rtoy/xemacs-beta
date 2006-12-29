@@ -52,4 +52,10 @@
       (cons (assoc "English" language-info-alist)
 	    (remassoc "English" language-info-alist)))
 
+;; At this point in the dump, all the charsets have been loaded. Now, load
+;; their Unicode mappings.
+(if load-unicode-tables-at-dump-time
+    (let ((data-directory (expand-file-name "etc" source-directory)))
+      (load-unicode-tables)))
+
 ;;; general-late.el ends here

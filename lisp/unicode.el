@@ -148,7 +148,7 @@ Setting this at run-time does nothing.")
  'utf-16 'unicode
  "UTF-16"
  '(mnemonic "UTF-16"
-   documentation
+   documentation 
    "UTF-16 Unicode encoding -- the standard (almost-) fixed-width
 two-byte encoding, with surrogates.  It will be fixed-width if all
 characters are in the BMP (Basic Multilingual Plane -- first 65536
@@ -156,7 +156,7 @@ codepoints).  Cannot represent characters with codepoints above
 0x10FFFF (a little more than 1,000,000).  Unicode and ISO guarantee
 never to encode any characters outside this range -- all the rest are
 for private, corporate or internal use."
-   type utf-16))
+   unicode-type utf-16))
 
 (define-coding-system-alias 'utf-16-be 'utf-16) 
 
@@ -164,7 +164,7 @@ for private, corporate or internal use."
  'utf-16-bom 'unicode
  "UTF-16 w/BOM"
  '(mnemonic "UTF16-BOM"
-   documentation
+   documentation 
    "UTF-16 Unicode encoding with byte order mark (BOM) at the beginning.
 The BOM is Unicode character U+FEFF -- i.e. the first two bytes are
 0xFE and 0xFF, respectively, or reversed in a little-endian
@@ -184,7 +184,7 @@ and is suitable as a byte-order marker because:
 
 This coding system will insert a BOM at the beginning of a stream when
 writing and strip it off when reading."
-   type utf-16
+   unicode-type utf-16
    need-bom t))
 
 (make-coding-system
@@ -194,7 +194,7 @@ writing and strip it off when reading."
    documentation
    "Little-endian version of UTF-16 Unicode encoding.
 See `utf-16' coding system."
-   type utf-16
+   unicode-type utf-16
    little-endian t))
 
 (define-coding-system-alias 'utf-16-le 'utf-16-little-endian) 
@@ -207,7 +207,7 @@ See `utf-16' coding system."
    "Little-endian version of UTF-16 Unicode encoding, with byte order mark.
 Standard encoding for representing Unicode under MS Windows.  See
 `utf-16-bom' coding system."
-   type utf-16
+   unicode-type utf-16
    little-endian t
    need-bom t))
 
@@ -217,7 +217,7 @@ Standard encoding for representing Unicode under MS Windows.  See
  '(mnemonic "UCS4"
    documentation
    "UCS-4 Unicode encoding -- fully fixed-width four-byte encoding."
-   type ucs-4))
+   unicode-type ucs-4))
 
 (make-coding-system
  'ucs-4-little-endian 'unicode
@@ -227,15 +227,15 @@ Standard encoding for representing Unicode under MS Windows.  See
    ;; #### I don't think this is permitted by ISO 10646, only Unicode.
    ;; Call it UTF-32 instead?
    "Little-endian version of UCS-4 Unicode encoding.  See `ucs-4' coding system."
-   type ucs-4
+   unicode-type ucs-4
    little-endian t))
 
 (make-coding-system
  'utf-8 'unicode
  "UTF-8"
  '(mnemonic "UTF8"
-   documentation
-   "UTF-8 Unicode encoding -- ASCII-compatible 8-bit variable-width encoding
+   documentation "
+UTF-8 Unicode encoding -- ASCII-compatible 8-bit variable-width encoding
 sharing the following principles with the Mule-internal encoding:
 
   -- All ASCII characters (codepoints 0 through 127) are represented
@@ -256,7 +256,7 @@ sharing the following principles with the Mule-internal encoding:
   -- Given only the leading byte, you know how many following bytes
      are present.
 "
-   type utf-8))
+   unicode-type utf-8))
 
 (make-coding-system
  'utf-8-bom 'unicode
@@ -265,7 +265,7 @@ sharing the following principles with the Mule-internal encoding:
    documentation
    "UTF-8 Unicode encoding, with byte order mark.
 Standard encoding for representing UTF-8 under MS Windows."
-   type utf-8
+   unicode-type utf-8
    little-endian t
    need-bom t))
 
@@ -344,4 +344,4 @@ The second argument must be 'ucs, the third argument is ignored.  "
 
 ; For more information, see Appendix A.1 of The Unicode Standard 2.0, or
 ; wherever it is in v3.0."
-;    type utf-7))
+;    unicode-type utf-7))

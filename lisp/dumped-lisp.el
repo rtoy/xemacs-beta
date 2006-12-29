@@ -205,7 +205,6 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/cyrillic"
 	   "mule/english"
 	   "mule/ethiopic"
-	   "mule/european"
 	   "mule/greek"
 	   "mule/hebrew"
 	   "mule/indian"

@@ -171,13 +171,6 @@ Used during loadup and for documenting source of symbols defined in C.")
 	    (defun toolbar-specifier-p (obj) "No toolbar support." nil))
 	  (fmakunbound 'pureload))
 
-	;; We cannot do this in mule-cmds.el because not all the
-	;; appropriate charsets are loaded yet.
-	(when (and (featurep 'mule)
-		   load-unicode-tables-at-dump-time)
-	  (let ((data-directory (expand-file-name "etc" source-directory)))
-	    (load-unicode-tables)))
-
 	(packages-load-package-dumped-lisps late-package-load-path)
 
 	)) ;; end of call-with-condition-handler

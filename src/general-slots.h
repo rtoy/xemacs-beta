@@ -289,6 +289,7 @@ SYMBOL (Qundecided);
 SYMBOL (Qundefined);
 SYMBOL (Qunimplemented);
 SYMBOL (Qunicode_registries);
+SYMBOL (Qunicode_type);
 SYMBOL (Quser_default);
 SYMBOL_KEYWORD (Q_value);
 SYMBOL (Qvalue_assoc);

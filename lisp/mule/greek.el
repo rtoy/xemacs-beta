@@ -4,7 +4,7 @@
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
 
-;; Keywords: multilingual, Greek
+;; Keywords: multilingual, Greek, dumped
 
 ;; This file is part of XEmacs.
 
@@ -29,6 +29,7 @@
 
 ;;; Code:
 
+;; Case table:
 (loop
   for (upper lower)
   in '((#xdb #xfb) ;; UPSILON WITH DIALYTIKA
@@ -75,32 +76,48 @@
   (put-case-table-pair (make-char 'greek-iso8859-7 upper)
                        (make-char 'greek-iso8859-7 lower) case-table))
 
-;; Now, syntax.
-(dolist (code '(#xA1    ;; LEFT SINGLE QUOTATION MARK
-                #xA2	;; RIGHT SINGLE QUOTATION MARK
-                #xA3	;; POUND SIGN
-                #xA6	;; BROKEN BAR
-                #xA7	;; SECTION SIGN
-                #xA8	;; DIAERESIS
-                #xA9	;; COPYRIGHT SIGN
-                #xAB	;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-                #xAC	;; NOT SIGN
-                #xAD	;; SOFT HYPHEN
-                #xAF	;; HORIZONTAL BAR
-                #xB0	;; DEGREE SIGN
-                #xB1	;; PLUS-MINUS SIGN
-                #xB7	;; MIDDLE DOT
-                #xBB))  ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
-  (modify-syntax-entry (make-char 'greek-iso8859-7 code) "."))
+;; Now, syntax. Copy from appropriate characters in Latin 1. 
 
-;; NO-BREAK SPACE
-(modify-syntax-entry (make-char 'greek-iso8859-7 #xA0) " ")
+;; This code requires that the guillemets not have parenthesis syntax.
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; GREEK
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(assert (not (memq (char-syntax (make-char 'latin-iso8859-1 #xAB)) '(?\( ?\))))
+        t "This code assumes \xAB does not have parenthesis syntax.  ")
 
-
+(assert (not (memq (char-syntax (make-char 'latin-iso8859-1 #xBB)) '(?\( ?\))))
+        t "This code assumes \xBB does not have parenthesis syntax.  ")
+
+(loop
+  for (greek latin-1) 
+  in '((#xA0 #xA0)  ;; NO BREAK SPACE
+       (#xA1 #xAB)  ;; LEFT SINGLE QUOTATION MARK, LEFT DOUBLE ANGLE QUOTE
+       (#xA2 #xBB)  ;; RIGHT SINGLE QUOTATION MARK, RIGHT DOUBLE ANGLE QUOTE
+       (#xA3 #xA3)  ;; POUND SIGN
+       (#xA4 #xA3)  ;; EURO SIGN, POUND SIGN
+       (#xA5 #xA3)  ;; DRACHMA SIGN, POUND SIGN
+       (#xA6 #xA6)  ;; BROKEN BAR
+       (#xA7 #xA7)  ;; SECTION SIGN
+       (#xA8 #xA8)  ;; DIAERESIS
+       (#xA9 #xA9)  ;; COPYRIGHT SIGN
+       (#xAA #xB4)  ;; GREEK YPOGEGRAMMENI (iota subscript), ACUTE ACCENT
+       (#xAB #xAB)  ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+       (#xAC #xAC)  ;; NOT SIGN
+       (#xAD #xAD)  ;; SOFT HYPHEN
+       (#xAF #xA6)  ;; HORIZONTAL BAR, BROKEN BAR
+       (#xB0 #xB0)  ;; DEGREE SIGN
+       (#xB1 #xB1)  ;; PLUS-MINUS SIGN
+       (#xB2 #xB2)  ;; SUPERSCRIPT TWO
+       (#xB3 #xB3)  ;; SUPERSCRIPT THREE
+       (#xB4 #xB4)  ;; GREEK TONOS, ACUTE ACCENT
+       (#xB5 #xB4)  ;; GREEK DIALYTIKA TONOS, ACUTE ACCENT
+       (#xB7 #xB7)  ;; MIDDLE DOT
+       (#xBB #xBB)  ;; RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+       (#xBD #xBD))  ;; VULGAR FRACTION ONE HALF
+  with syntax-table = (standard-syntax-table)
+  do (modify-syntax-entry
+      (make-char 'greek-iso8859-7 greek)
+      (string (char-syntax (make-char 'latin-iso8859-1 latin-1)))
+      syntax-table))
+
 (make-coding-system
  'iso-8859-7 'iso2022 "ISO-8859-7 (Greek)"
  '(charset-g0 ascii

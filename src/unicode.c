@@ -2438,7 +2438,7 @@ unicode_rewind_coding_stream (struct coding_stream *str)
 static int
 unicode_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 {
-  if (EQ (key, Qtype))
+  if (EQ (key, Qunicode_type))
     {
       enum unicode_type type;
 
@@ -2467,7 +2467,7 @@ unicode_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
 static Lisp_Object
 unicode_getprop (Lisp_Object coding_system, Lisp_Object prop)
 {
-  if (EQ (prop, Qtype))
+  if (EQ (prop, Qunicode_type))
     {
       switch (XCODING_SYSTEM_UNICODE_TYPE (coding_system))
 	{
@@ -2489,7 +2489,8 @@ static void
 unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
 	       int UNUSED (escapeflag))
 {
-  write_fmt_string_lisp (printcharfun, "(%s", 1, unicode_getprop (cs, Qtype));
+  write_fmt_string_lisp (printcharfun, "(%s", 1,
+                         unicode_getprop (cs, Qunicode_type));
   if (XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (cs))
     write_c_string (printcharfun, ", little-endian");
   if (XCODING_SYSTEM_UNICODE_NEED_BOM (cs))

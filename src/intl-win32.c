@@ -783,7 +783,7 @@ LOCALE should a language string, or a cons (LANG . SUBLANG).
 If SUBLANG is omitted, "SUBLANG_DEFAULT" is used.
 
 Recognized language names are
-(some may not be recognized if the compiler is older than VC++ 6.0)
+\(some may not be recognized if the compiler is older than VC++ 6.0)
 
 "AFRIKAANS"
 "ALBANIAN"
@@ -858,7 +858,7 @@ Recognized language names are
 "VIETNAMESE"
 
 Recognized sub-language names are
-(some may not be recognized if the compiler is older than VC++ 6.0)
+\(some may not be recognized if the compiler is older than VC++ 6.0)
 
 "ARABIC_ALGERIA"
 "ARABIC_BAHRAIN"
@@ -2358,7 +2358,7 @@ complex_vars_of_intl_win32 (void)
 "This encoding is equivalent to standard UTF16, little-endian."
 ),
 		    Qmnemonic, build_string ("MSW-U")),
-	     list4 (Qtype, Qutf_16,
+	     list4 (Qunicode_type, Qutf_16,
 		    Qlittle_endian, Qt)));
 
 #ifdef MULE

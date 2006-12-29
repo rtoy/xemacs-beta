@@ -1,3 +1,8 @@
+2006-12-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode/unicode-consortium/8859-7.TXT:
+	Update the mapping to the 2003 version of ISO 8859-7. 
+
 2006-11-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* NEWS:

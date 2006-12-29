@@ -1,3 +1,23 @@
+2006-12-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c:
+	Update the make-coding-system docstring to reflect unicode-type
+	* general-slots.h:
+	New symbol, unicode-type, since 'type was being overridden when
+	accessing a coding system's Unicode subtype. 
+	* intl-win32.c:
+	Backslash a few parentheses, to help fontification along. 
+	* intl-win32.c (complex_vars_of_intl_win32):
+	Use the 'unicode-type symbol, not 'type, when creating the
+	Microsoft Unicode coding system. 
+	* unicode.c (unicode_putprop):
+	* unicode.c (unicode_getprop):
+	* unicode.c (unicode_print):
+	Using 'type as the property name when working out what Unicode
+	subtype a given coding system is was broken, since there's a
+	general coding system property called 'type. Change the former to
+	use 'unicode-type instead. 
+
 2006-12-27  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* s/linux.h: Enable SYSTEM_MALLOC on ppc64, alpha and ia64

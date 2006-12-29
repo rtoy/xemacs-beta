@@ -761,7 +761,7 @@ selective-display are excluded from the line count.
 
 NOTE: The expression to return the current line number is not obvious:
 
-(1+ (count-lines 1 (point-at-bol)))
+\(1+ \(count-lines 1 \(point-at-bol)))
 
 See also `line-number'."
   (save-excursion
@@ -821,7 +821,8 @@ hex."
                        percent narrowed-details col hscroll)
         (message "Char: %s (%s %s) point=%d of %d(%d%%)%s column %d %s"
                  (text-char-description char) unicode-string
-                 (mapconcat (lambda (arg) (format "%S" arg)) (split-char char) " ")
+                 (mapconcat (lambda (arg) (format "%S" arg))
+                            (split-char char) " ")
                  pos total
                  percent narrowed-details col hscroll)))))
 

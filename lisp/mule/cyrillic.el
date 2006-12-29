@@ -29,16 +29,19 @@
 ;; The character set ISO8859-5 is supported.  KOI-8 and ALTERNATIVNYJ are
 ;; converted to ISO8859-5 internally.
 
-;; Windows-1251 support deleted because XEmacs has automatic support.
+;; [Windows-1251 support deleted because XEmacs has automatic support.]
+
+;; #### We only have automatic support on Windows; that needs to be put
+;; back. Also, the Russian Wikipedia articles on KOI-8 list several other
+;; related encodings--KOI8-U (Ukrainian), KOI8-RU (simultaneous support for
+;; Russian, Belorussian, and Ukrainian), KOI8-C (for languages of the
+;; Caucasus), KOI8-O (Old Church Slavonic)--and it would be nice to have
+;; them. Beyond that, we're currently trashing lots of code points with
+;; KOI-8 R; it would be nice to leverage the Unicode support to not do that. 
 
 ;;; Code:
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; CYRILLIC
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; ISO-8859-5
-
+;; Case table:
 (loop
   for (upper lower)
   in '((#xcf #xef) ; YA
@@ -94,14 +97,22 @@
 		       case-table))
 
 ;; The default character syntax is now word. Pay attention to the
-;; exceptions in ISO-8859-5. 
-(dolist (code '(#xAD	;; SOFT HYPHEN
-		#xF0	;; NUMERO SIGN
-		#xFD))  ;; SECTION SIGN
-  (modify-syntax-entry (make-char 'cyrillic-iso8859-5 code) "."))
-
-;; NO-BREAK SPACE
-(modify-syntax-entry (make-char 'cyrillic-iso8859-5 #xA0) " ")
+;; exceptions in ISO-8859-5, copying them from ISO-8859-1. 
+(loop
+  for (latin-1 cyrillic) 
+  in '((#xAD #xAD)  ;; SOFT HYPHEN
+       (#xA7 #xFD)  ;; SECTION SIGN
+       (#xA0 #xA0)) ;; NO BREAK SPACE
+  with syntax-table = (standard-syntax-table)
+  do (modify-syntax-entry
+      (make-char 'cyrillic-iso8859-5 cyrillic)
+      (string (char-syntax (make-char 'latin-iso8859-1 latin-1)))
+      syntax-table))
+  
+;; Take NUMERO SIGN's syntax from #. 
+(modify-syntax-entry (make-char 'cyrillic-iso8859-5 #xF0)
+                     (string (char-syntax ?\# (standard-syntax-table)))
+                     (standard-syntax-table))
 
 (make-coding-system
  'iso-8859-5 'iso2022
@@ -110,8 +121,7 @@
    charset-g1 cyrillic-iso8859-5
    charset-g2 t
    charset-g3 t
-   mnemonic "ISO8/Cyr"
-   ))
+   mnemonic "ISO8/Cyr"))
 
 (set-language-info-alist
  "Cyrillic-ISO" '((charset cyrillic-iso8859-5)
@@ -155,12 +165,10 @@
       (let* ((ch (aref cyrillic-koi8-r-decode-table i))
 	     (split (split-char ch)))
 	(cond ((eq (car split) 'cyrillic-iso8859-5)
-	       (aset table (logior (nth 1 split) 128) i)
-	       )
+	       (aset table (logior (nth 1 split) 128) i))
 	      ((eq ch 32))
 	      ((eq (car split) 'ascii)
-	       (aset table ch i)
-	       )))
+	       (aset table ch i))))
       (setq i (1+ i)))
     table)
   "Cyrillic KOI8-R encoding table.")
