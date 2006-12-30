@@ -1093,7 +1093,7 @@ environment.  "
                  coding-system)
       'coding-system (cons coding-system
                            (cdr (assoc 'coding-system (cdr langenv)))))
-     'coding-priority (cons (coding-system-category coding-system)
+     'coding-priority (cons coding-system
                            (cdr (assq 'coding-priority (cdr langenv))))))))
 
 (defun get-language-environment-from-locale (locale)

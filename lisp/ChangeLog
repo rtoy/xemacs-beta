@@ -1,3 +1,15 @@
+2006-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/cyrillic.el ("Cyrillic-ISO"):
+	* mule/english.el ("English"):
+	* mule/greek.el ("Greek"):
+	Specify a native-coding-system for each of these language
+	environments--since that is what is examined and relevant when
+	sniffing the locale at startup. 
+	* mule/mule-cmds.el (create-variant-language-environment):
+	A language environment's coding-priority is a list of coding
+	systems, not coding categories. Treat it as such. 
+
 2006-12-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/cyrillic.el:
@@ -54,7 +66,7 @@
 	Unicode tables loaded at dump time are now in
 	mule/general-late.el. 
 	* simple.el (count-lines):
-	Add some backslashes to to parentheses in docstrings to help
+	Add some backslashes to parentheses in docstrings to help
 	fontification along. 
 	* simple.el (what-cursor-position):
 	Wrap a line to fit in 80 characters. 

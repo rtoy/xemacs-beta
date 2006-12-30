@@ -130,6 +130,7 @@
  "Greek" '((charset greek-iso8859-7)
 	   (coding-system iso-8859-7)
 	   (coding-priority iso-8859-7)
+	   (native-coding-system iso-8859-7)
 	   (locale "el_GR.iso88597" "el_GR.greek8" "el_GR" "greek" "el")
 	   (input-method . "greek")
 	   (sample-text . "Greek (,FGkk]mija(B)	,FCei\(B ,Fsar(B")

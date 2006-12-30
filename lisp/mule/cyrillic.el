@@ -127,6 +127,7 @@
  "Cyrillic-ISO" '((charset cyrillic-iso8859-5)
 		  (tutorial . "TUTORIAL.ru")
 		  (coding-system iso-8859-5)
+		  (native-coding-system iso-8859-5)
 		  (coding-priority iso-8859-5)
 		  (input-method . "cyrillic-yawerty")
 		  (features cyril-util)

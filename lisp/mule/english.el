@@ -50,6 +50,9 @@
  "English" '((tutorial . "TUTORIAL")
 	     (locale "en" "C")
 	     (charset ascii)
+             (coding-system iso-8859-1)
+             (coding-priority iso-8859-1)
+             (native-coding-system iso-8859-1)
 	     (sample-text . "Hello!, Hi!, How are you?")
 	     (documentation . "\
 Nothing special is needed to handle English.")
