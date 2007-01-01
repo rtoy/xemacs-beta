@@ -1,3 +1,8 @@
+2006-11-07  Robert Pluim  <rpluim@gmail.com>
+
+	* lispref/os.texi (User Identification): The code uses HOMEPATH,
+	not HOMEDIR.
+
 2006-11-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* xemacs/custom.texi (Face Resources):
