@@ -16610,7 +16610,7 @@ unicode-encapsulate', after removing everything from the output but
 the function names.) Use something like
 
 @example
-fgrep -f ../nmkun.txt -w [a-hj-z]*.[ch]  |m
+grep -F -f ../nmkun.txt -w [a-hj-z]*.[ch]  |m
 @end example
 
 in the source directory, which does a word match and skips

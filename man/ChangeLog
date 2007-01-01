@@ -1,3 +1,8 @@
+2007-01-01  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* internals/internals.texi (Ben's README): Use 'grep -F' instead
+	of fgrep.
+
 2006-11-07  Robert Pluim  <rpluim@gmail.com>
 
 	* lispref/os.texi (User Identification): The code uses HOMEPATH,

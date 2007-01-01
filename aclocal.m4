@@ -355,7 +355,7 @@ if test -z "$LTLD"; then
         # Check to see if the program is GNU ld.  I'd rather use --version,
         # but apparently some GNU ld's only accept -v.
         # Break only if it was the GNU/non-GNU ld that we prefer.
-        if "$LTLD" -v 2>&1 < /dev/null | egrep '(GNU|with BFD)' > /dev/null; then
+        if "$LTLD" -v 2>&1 < /dev/null | $EGREP '(GNU|with BFD)' > /dev/null; then
           xe_gnu_ld=yes
         else
           xe_gnu_ld=no
@@ -385,7 +385,7 @@ ld_dynamic_link_flags=
 # Check to see if it really is or isn't GNU ld.
 AC_MSG_CHECKING([if the linker is GNU ld])
 # I'd rather use --version here, but apparently some GNU ld's only accept -v.
-if $LTLD -v 2>&1 </dev/null | egrep '(GNU|with BFD)' 1>&5; then
+if $LTLD -v 2>&1 </dev/null | $EGREP '(GNU|with BFD)' 1>&5; then
   xe_gnu_ld=yes
 else
   xe_gnu_ld=no
@@ -425,7 +425,7 @@ else
   can_build_shared=yes
   if test "$xe_gnu_ld" = yes && test "$gnu_ld_acts_native" != yes; then
     # See if GNU ld supports shared libraries.
-    if $LTLD --help 2>&1 | egrep ': supported targets:.* elf' > /dev/null; then
+    if $LTLD --help 2>&1 | $EGREP ': supported targets:.* elf' > /dev/null; then
       dll_ld=$CC
       dll_ldflags="-shared"
       ld_shlibs=yes
