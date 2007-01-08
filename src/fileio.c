@@ -2311,8 +2311,8 @@ check_writable (const Ibyte *filename)
 	PRIVILEGE_SET PrivilegeSet;
     DWORD dwPrivSetSize = sizeof( PRIVILEGE_SET );
     BOOL fAccessGranted = FALSE;
-	DWORD dwAccessAllowed;
-  Extbyte *fnameext;
+    DWORD dwAccessAllowed;
+    Extbyte *fnameext;
 
 #ifdef CYGWIN
     cygwin_conv_to_full_win32_path(filename, filename_buffer);
@@ -2320,12 +2320,18 @@ check_writable (const Ibyte *filename)
 #endif
 
     C_STRING_TO_TSTR(filename, fnameext);
+
+    // First check for a normal file with the old-style readonly bit
+    attributes = qxeGetFileAttributes(fnameext);
+    if (FILE_ATTRIBUTE_READONLY == (attributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_READONLY)))
+      return 0;
+
 	/* Win32 prototype lacks const. */
 	error = qxeGetNamedSecurityInfo(fnameext, SE_FILE_OBJECT, 
-		DACL_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|OWNER_SECURITY_INFORMATION,
-		&psidOwner, &psidGroup, &pDacl, &pSacl, &pDesc);
+                                    DACL_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|OWNER_SECURITY_INFORMATION,
+                                    &psidOwner, &psidGroup, &pDacl, &pSacl, &pDesc);
 	if(error != ERROR_SUCCESS) { // FAT?
-		attributes = qxeGetFileAttributes((Extbyte *)filename);
+		attributes = qxeGetFileAttributes(fnameext);
 		return (attributes & FILE_ATTRIBUTE_DIRECTORY) || (0 == (attributes & FILE_ATTRIBUTE_READONLY));
 	}
 
