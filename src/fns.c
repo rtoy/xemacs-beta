@@ -3582,6 +3582,13 @@ is not loaded; so load the file FILENAME.
 If FILENAME is omitted, the printname of FEATURE is used as the file name.
 If optional third argument NOERROR is non-nil, then return nil if the file
 is not found instead of signaling an error.
+Normally the return value is FEATURE.
+The normal messages at start and end of loading FILENAME are suppressed.
+
+In order to make it possible for a required package to provide macros to be
+expanded at byte-compilation time, top level calls of `require' are
+evaluated both at byte-compile time and at run time.  That is, any top-level
+call to `require' is wrapped in an implicit \(eval-and-compile ...\) block.
 */
        (feature, filename, noerror))
 {

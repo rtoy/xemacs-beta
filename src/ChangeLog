@@ -1,3 +1,12 @@
+2007-01-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c:
+	Document in more detail what happens with byte-compilation,
+	`function', and `quote'. 
+	* fns.c:
+	Mention that `require' is evaluated both at byte-compile time and
+	at runtime. 
+
 2007-01-06  Vin Shelton  <acs@xemacs.org>
 
 	* fileio.c (check_writable): Check old-style readonly bit first.
