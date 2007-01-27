@@ -2258,7 +2258,7 @@ complex_vars_of_faces (void)
     Lisp_Object device_symbol = Qx;
 #endif
 
-#ifdef MULE
+    const Ascbyte **fontptr;
 
     const Ascbyte *fonts[] =
     {
@@ -2287,7 +2287,8 @@ complex_vars_of_faces (void)
       "-*-*-medium-r-*-*-*-170-*-*-c-*-*-*",
 #endif
     };
-    const Ascbyte **fontptr;
+
+#ifdef MULE
 
     /* Define some specifier tags for classes of character sets. Combining
        these allows for distinct fallback fonts for distinct dimensions of

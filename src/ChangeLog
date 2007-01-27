@@ -1,3 +1,8 @@
+2007-01-27  Mike Sperber  <mike@xemacs.org>
+
+	* faces.c (complex_vars_of_faces): Move declarations of fontptr
+	and fonts out of #ifdef MULE, unbreaking the non-MULE Xft build.
+
 2007-01-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c:
