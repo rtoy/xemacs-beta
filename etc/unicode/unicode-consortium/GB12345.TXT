@@ -7,21 +7,17 @@
 #	Author:           Glenn Adams <glenn@metis.com>
 #                     John H. Jenkins <John_Jenkins@taligent.com>
 #
-#	Copyright (c) 1991-1994 Unicode, Inc.  All Rights reserved.
+#	The Name above appears to be inaccurate; this is in fact the
+#	table for the 1990 revision of GB12345.
 #
-#	This file is provided as-is by Unicode, Inc. (The Unicode Consortium).
-#	No claims are made as to fitness for any particular purpose.  No
-#	warranties of any kind are expressed or implied.  The recipient
-#	agrees to determine applicability of information provided.  If this
-#	file has been provided on magnetic media by Unicode, Inc., the sole
-#	remedy for any claim will be exchange of defective media within 90
-#	days of receipt.
-#
-#	Recipient is granted the right to make copies in any form for
-#	internal distribution and to freely use the information supplied
-#	in the creation of products supporting Unicode.  Unicode, Inc.
-#	specifically excludes the right to re-distribute this file directly
-#	to third parties or other organizations whether for profit or not.
+#	This file was copied into XEmacs from
+#	http://examples.oreilly.com/cjkvinfo/unicode/gb12345-90.txt
+#	and is covered by the O'Reilly Associates copying policy in
+#	http://www.oreilly.com/pub/a/oreilly/ask_tim/2001/codepolicy.html.
+#	A copy of that notice is in oreilly.html in this directory.  This
+#	data file is an appendix to the book *Chinese, Japanese, Korean,
+#	and Vietnamese Information Processing* by Ken Lunde, published by
+#	O'Reilly Associates (ISBN-13 978-1565922242).
 #
 #	General notes:
 #

@@ -1,3 +1,28 @@
+2007-01-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Thanks to Mike Fabian <mfabian@suse.de> for bringing the issue
+	to my attention.
+
+	* unicode/unicode-consortium/COPYING:
+	* unicode/unicode-consortium/oreilly.html
+	* unicode/unicode-consortium/unicode-consortium.html
+	New files clarifying copying conditions for mapping tables.
+
+	* unicode/unicode-consortium/GB12345.TXT
+	* unicode/unicode-consortium/BIG5.TXT
+	* unicode/unicode-consortium/CNS11643.TXT
+	* unicode/unicode-consortium/HANGUL.TXT
+	* unicode/unicode-consortium/JIS0201.TXT
+	* unicode/unicode-consortium/JIS0208.TXT
+	* unicode/unicode-consortium/JIS0212.TXT
+	* unicode/unicode-consortium/JOHAB.TXT
+	* unicode/unicode-consortium/KSC5601.TXT
+	* unicode/unicode-consortium/KSX1001.TXT
+	* unicode/unicode-consortium/OLD5601.TXT
+	* unicode/unicode-consortium/SHIFTJIS.TXT
+	Mapping tables downloaded from a Unicode, Inc. URL with
+	permissive conditions.
+
 2006-12-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode/unicode-consortium/8859-7.TXT:

@@ -4,8 +4,6 @@
 #	Table version:    0.0d2
 #	Table format:     Format A
 #	Date:             6 December 1993
-#	Authors:          Glenn Adams <glenn@metis.com>
-#                     John H. Jenkins <John_Jenkins@taligent.com>
 #
 #	Copyright (c) 1991-1994 Unicode, Inc.  All Rights reserved.
 #
@@ -25,8 +23,22 @@
 #
 #	General notes:
 #
-#	This table contains the data Taligent and Metis currently have on how
-#       KSC5601 characters map into Unicode.
+#
+# This table contains one set of mappings from KSC5601 into Unicode.
+# Note that these data are *possible* mappings only and may not be the
+# same as those used by actual products, nor may they be the best suited
+# for all uses.  For more information on the mappings between various code
+# pages incorporating the repertoire of KSC5601 and Unicode, consult the
+# VENDORS mapping data.  Normative information on the mapping between
+# KSC5601 and Unicode may be found in the Unihan.txt file in the
+# latest Unicode Character Database.
+#
+# If you have carefully considered the fact that the mappings in
+# this table are only one possible set of mappings between KSC5601 and
+# Unicode and have no normative status, but still feel that you
+# have located an error in the table that requires fixing, you may
+# report any such error to errata@unicode.org.
+#
 #
 #	A number of alternative mappings have been suggested by a
 #	reviewer.  They are as follows:

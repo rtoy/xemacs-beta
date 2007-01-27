@@ -4,7 +4,6 @@
 #	Table version:    0.0d1
 #	Table format:     Format A
 #	Date:             21 October 1994
-#	Author:           John H. Jenkins <John_Jenkins@taligent.com>
 #
 #	Copyright (c) 1991-1994 Unicode, Inc.  All Rights reserved.
 #
@@ -24,8 +23,22 @@
 #
 #	General notes:
 #
-#	This table contains the data currently has on how
-#       CNS 11643-1986 characters map into Unicode.
+#
+# This table contains one set of mappings from CNS 11643-1986 into Unicode.
+# Note that these data are *possible* mappings only and may not be the
+# same as those used by actual products, nor may they be the best suited
+# for all uses.  For more information on the mappings between various code
+# pages incorporating the repertoire of CNS 11643-1986 and Unicode, consult the
+# VENDORS mapping data.  Normative information on the mapping between
+# CNS 11643-1986 and Unicode may be found in the Unihan.txt file in the
+# latest Unicode Character Database.
+#
+# If you have carefully considered the fact that the mappings in
+# this table are only one possible set of mappings between CNS 11643-1986 and
+# Unicode and have no normative status, but still feel that you
+# have located an error in the table that requires fixing, you may
+# report any such error to errata@unicode.org.
+#
 #
 #	WARNING!  It is currently impossible to provide round-trip compatibility
 #		between CNS 11643-1986 and Unicode.  
@@ -42,7 +55,7 @@
 #       duplicate versions of some ideographs which are included in Unicode only
 #       once.  They include the following:
 #
-#       0x1243E through 0x12440, HANGZHOU NUMERAL TEN, TWENTY, and THIRTY         
+#       0x1243E through 0x12440, HANGZHOU NUMERAL TEN, TWENTY, and THIRTY
 #       0x12721 through 0x12939, KangXi radical set
 #
 #   Entries for these characters are not included in this table.
@@ -50,32 +63,28 @@
 #	Notes:
 #
 #	1.  There is an uncertainty in the mapping of the CNS 11643-1986 character
-#		0x1256D.  This character occurs within the CNS 11643-1986 block of tone marks
-#		for bopomofo and is intended to be the tone mark for the first tone in
-#		Mandarin Chinese.  We have selected the mapping U+02C9 MODIFIER LETTER
-#		MACRON (Mandarin Chinese first tone) to reflect this semantic.  
-#		However, because bopomofo uses the absense of a tone mark to indicate
-#		the first Mandarin tone, most implementations of CNS 11643-1986 represent
-#		this character with a blank space, and so a mapping such as U+2003 EM SPACE
-#		might be preferred.  
-#		
-#			
+#	0x1256D.  This character occurs within the CNS 11643-1986 block of tone marks
+#	for bopomofo and is intended to be the tone mark for the first tone in
+#	Mandarin Chinese.  We have selected the mapping U+02C9 MODIFIER LETTER
+#	MACRON (Mandarin Chinese first tone) to reflect this semantic.  
+#	However, because bopomofo uses the absense of a tone mark to indicate
+#	the first Mandarin tone, most implementations of CNS 11643-1986
+#	represent this character with a blank space, and so a mapping such as
+#	U+2003 EM SPACE might be preferred.  
 #
 #	Format:  Three tab-separated columns
 #		 Column #1 is the CNS 11643-1986 code (in hex as 0xXXXXX)
 #		 Column #2 is the Unicode (in hex as 0xXXXX)
 #		 Column #3  is the Unicode name (follows a comment sign, '#')
-#					The official names for Unicode characters U+4E00
-#					to U+9FA5, inclusive, is "CJK UNIFIED IDEOGRAPH-XXXX",
-#					where XXXX is the code point.  Including all these
-#					names in this file increases its size substantially
-#					and needlessly.  The token "<CJK>" is used for the
-#					name of these characters.  If necessary, it can be
-#					expanded algorithmically by a parser or editor.
+#			The official names for Unicode characters U+4E00
+#			to U+9FA5, inclusive, is "CJK UNIFIED IDEOGRAPH-XXXX",
+#			where XXXX is the code point.  Including all these
+#			names in this file increases its size substantially
+#			and needlessly.  The token "<CJK>" is used for the
+#			name of these characters.  If necessary, it can be
+#			expanded algorithmically by a parser or editor.
 #
 #	The entries are in CNS 11643-1986 order
-#
-#	Any comments or problems, contact <John_Jenkins@taligent.com>
 #
 #
 0x12121	0x3000	#	IDEOGRAPHIC SPACE
