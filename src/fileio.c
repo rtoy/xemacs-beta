@@ -2886,7 +2886,7 @@ under Mule, is very difficult.)
   Charcount inserted = 0;
   int speccount;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-  Lisp_Object handler = Qnil, val;
+  Lisp_Object val;
   int total;
   Ibyte read_buf[READ_BUF_SIZE];
   int mc_count;
@@ -2909,7 +2909,7 @@ under Mule, is very difficult.)
 
   curbuf = wrap_buffer (buf);
 
-  GCPRO5 (filename, val, visit, handler, curbuf);
+  GCPRO4 (filename, val, visit, curbuf);
 
   mc_count = (NILP (replace)) ?
     begin_multiple_change (buf, BUF_PT  (buf), BUF_PT (buf)) :
@@ -3230,31 +3230,25 @@ under Mule, is very difficult.)
     {
       if (!EQ (buf->undo_list, Qt))
 	buf->undo_list = Qnil;
-      if (NILP (handler))
-	{
-	  buf->modtime = st.st_mtime;
-	  buf->filename = filename;
-	  /* XEmacs addition: */
-	  /* This function used to be in C, ostensibly so that
-	     it could be called here.  But that's just silly.
-	     There's no reason C code can't call out to Lisp
-	     code, and it's a lot cleaner this way. */
-	  /*  Note: compute-buffer-file-truename is called for
-	      side-effect!  Its return value is intentionally
-	      ignored. */
-	  if (!NILP (Ffboundp (Qcompute_buffer_file_truename)))
-	    call1 (Qcompute_buffer_file_truename, wrap_buffer (buf));
-	}
+      buf->modtime = st.st_mtime;
+      buf->filename = filename;
+      /* XEmacs addition: */
+      /* This function used to be in C, ostensibly so that
+	 it could be called here.  But that's just silly.
+	 There's no reason C code can't call out to Lisp
+	 code, and it's a lot cleaner this way. */
+      /*  Note: compute-buffer-file-truename is called for
+	  side-effect!  Its return value is intentionally
+	  ignored. */
+      if (!NILP (Ffboundp (Qcompute_buffer_file_truename)))
+	call1 (Qcompute_buffer_file_truename, wrap_buffer (buf));
       BUF_SAVE_MODIFF (buf) = BUF_MODIFF (buf);
       buf->auto_save_modified = BUF_MODIFF (buf);
       buf->saved_size = make_int (BUF_SIZE (buf));
 #ifdef CLASH_DETECTION
-      if (NILP (handler))
-	{
-	  if (!NILP (buf->file_truename))
-	    unlock_file (buf->file_truename);
-	  unlock_file (filename);
-	}
+      if (!NILP (buf->file_truename))
+	unlock_file (buf->file_truename);
+      unlock_file (filename);
 #endif /* CLASH_DETECTION */
       if (not_regular)
 	RETURN_UNGCPRO (Fsignal (Qfile_error,
