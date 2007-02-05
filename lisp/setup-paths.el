@@ -55,6 +55,9 @@
 (defvar paths-mule-load-path-depth 0
   "Depth of load-path searches in Mule Lisp paths.")
 
+(defvar paths-module-load-path-depth 1
+  "Depth of load-path searches in module paths.")
+
 (defvar paths-default-info-directories
   (mapcar (function
 	   (lambda (dirlist)
@@ -243,7 +246,7 @@ only in Mule installations."
 	 (module-load-path
 	  (and module-directory
 	       (paths-find-recursive-load-path (list module-directory)
-					       paths-core-load-path-depth))))
+					       paths-module-load-path-depth))))
     (append env-module-path
 	    site-module-load-path
 	    module-load-path)))

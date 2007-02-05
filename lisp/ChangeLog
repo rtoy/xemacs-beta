@@ -1,3 +1,10 @@
+2007-01-27  Mike Sperber  <mike@xemacs.org>
+
+	* setup-paths.el (paths-module-load-path-depth): Add.
+	* setup-paths.el (paths-construct-module-load-path): For
+	`module-load-path', use `paths-module-load-path-depth', not
+	`paths-core-load-path-depth'.
+
 2006-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/cyrillic.el ("Cyrillic-ISO"):
