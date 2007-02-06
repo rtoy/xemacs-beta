@@ -1310,18 +1310,17 @@ setup_device_initial_specifier_tags (struct device *d)
       assert(3 == list_len);
 
       device_predicate = XCADR(XCAR (rest));
-      charset_predicate = XCADDR(XCAR (rest));
 					   
       if (NILP (device_predicate))
 	{
-	  XCDR (XCAR (rest2)) = list2(Qt, charset_predicate);
+	  XCDR (XCAR (rest2)) = Qt; 
 	}
       else
 	{
 	  device_predicate = !NILP (call_critical_lisp_code 
 				    (d, device_predicate, device)) 
 	    ? Qt : Qnil;
-	  XCDR (XCAR (rest2)) = list2(device_predicate, charset_predicate);
+	  XCDR (XCAR (rest2)) = device_predicate;
 	}
     }
 }

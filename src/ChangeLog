@@ -1,5 +1,12 @@
 2007-02-06  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* specifier.c (setup_device_initial_specifier_tags):
+	Fix a bug where the mswindows specifier tag was matching X11
+	devices, because the format of the DEVICE_USER_SPECIFIED_TAGS list
+	wasn't being respected correctly. 
+
+2007-02-06  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule-charset.c (complex_vars_of_mule_charset):
 	iso8859-2 is not the X11 charset registry for the iso8859-4
 	charset, my mistake. 
