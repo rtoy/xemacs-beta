@@ -1,3 +1,9 @@
+2007-02-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-charset.c (complex_vars_of_mule_charset):
+	iso8859-2 is not the X11 charset registry for the iso8859-4
+	charset, my mistake. 
+
 2007-02-05  Mike Sperber  <mike@xemacs.org>
 
 	* fileio.c (Finsert_file_contents_internal): Clean up dead

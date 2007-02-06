@@ -1217,7 +1217,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Latin-4"),
 		  build_msg_string ("ISO8859-4 (Latin-4)"),
 		  build_msg_string ("ISO8859-4 (Latin-4)"),
-		  vector1(build_string("iso8859-2")), 0, 0);
+		  vector1(build_string("iso8859-4")), 0, 0);
   staticpro (&Vcharset_thai_tis620);
   Vcharset_thai_tis620 =
     make_charset (LEADING_BYTE_THAI_TIS620, Qthai_tis620, 2,
