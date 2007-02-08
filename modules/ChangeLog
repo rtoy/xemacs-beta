@@ -1,3 +1,9 @@
+2007-02-08  Adrian Aichner  <adrian@xemacs.org>
+
+	* postgresql/postgresql.c: Update Steve L. Baur's address on his
+	request.
+	* postgresql/postgresql.h: Ditto.
+
 2006-05-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.27 "fiddleheads" is released.
