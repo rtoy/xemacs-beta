@@ -1,3 +1,8 @@
+2007-01-21  Ville Skyttä  <scop@xemacs.org>
+
+	* mule/canna-leim.el (canna-activate): Look for canna_api, not
+	canna/canna_api.
+
 2007-01-27  Mike Sperber  <mike@xemacs.org>
 
 	* setup-paths.el (paths-module-load-path-depth): Add.
