@@ -2912,25 +2912,25 @@
 	library before checking for LDAP in case LDAP requires these
 	libraries.
 
-1999-07-26  SL Baur  <steve@miho>
+1999-07-26  SL Baur  <steve@xemacs.org>
 
 	* configure.in: Rename --with-shlib to --with-modules for
 	consistency with the other two options that use that name.
 
 	* configure.usage (--with-modules): Document it.
 
-1999-07-22  SL Baur  <steve@beopen.com>
+1999-07-22  SL Baur  <steve@xemacs.org>
 
 	* configure.in: add sco7 support
 	From Bob Weiner  <weiner@beopen.com>
 
-1999-07-22  SL Baur  <steve@miho>
+1999-07-22  SL Baur  <steve@xemacs.org>
 
 	* Makefile.in.in (install-arch-dep): Install config.values into
 	docdir.
 	From Karl M. Hegbloom  <karlheg@cathcart.sysc.pdx.edu>
 
-1999-07-21  SL Baur  <steve@miho>
+1999-07-21  SL Baur  <steve@xemacs.org>
 
 	* Makefile.in.in (inststaticdir): New variable.
 	(instvardir): Ditto.
@@ -2948,7 +2948,7 @@
 	(lockdir): Ditto.
 	(archlibdir): Ditto.
 
-1999-07-14  SL Baur  <steve@beopen.com>
+1999-07-14  SL Baur  <steve@xemacs.org>
 
 	* InfoDock 4.0.8 is released
 
@@ -2956,7 +2956,7 @@
 
 	* XEmacs 21.2.18 is released
 
-1999-07-06  SL Baur  <steve@miho.m17n.org>
+1999-07-06  SL Baur  <steve@xemacs.org>
 
 	* config.guess (main): Synch with newer config.guess for HP
 	support.
@@ -2977,7 +2977,7 @@
 	* configure.in: Make sure we get motif in lwlib if we have widgets
  	and motif.
 
-1999-06-25  SL Baur  <steve@miho.m17n.org>
+1999-06-25  SL Baur  <steve@xemacs.org>
 
 	* configure.in (version): Fix --with-infodock test.
 
