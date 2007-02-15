@@ -28680,156 +28680,18 @@ _ACEOF
     fi
   fi
 
-      canna_includes_found=no
+            have_canna=no
   if test "$with_canna" != "no"; then
-    if test "${ac_cv_header_canna_jrkanji_h+set}" = set; then
-  echo "$as_me:$LINENO: checking for canna/jrkanji.h" >&5
-echo $ECHO_N "checking for canna/jrkanji.h... $ECHO_C" >&6
-if test "${ac_cv_header_canna_jrkanji_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_canna_jrkanji_h" >&5
-echo "${ECHO_T}$ac_cv_header_canna_jrkanji_h" >&6
-else
-  # Is the header compilable?
-echo "$as_me:$LINENO: checking canna/jrkanji.h usability" >&5
-echo $ECHO_N "checking canna/jrkanji.h usability... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-#include <canna/jrkanji.h>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_header_compiler=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_header_compiler=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-echo "${ECHO_T}$ac_header_compiler" >&6
-
-# Is the header present?
-echo "$as_me:$LINENO: checking canna/jrkanji.h presence" >&5
-echo $ECHO_N "checking canna/jrkanji.h presence... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <canna/jrkanji.h>
-_ACEOF
-if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
-  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null; then
-  if test -s conftest.err; then
-    ac_cpp_err=$ac_c_preproc_warn_flag
-    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
-  else
-    ac_cpp_err=
-  fi
-else
-  ac_cpp_err=yes
-fi
-if test -z "$ac_cpp_err"; then
-  ac_header_preproc=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-echo "${ECHO_T}$ac_header_preproc" >&6
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
-  yes:no: )
-    { echo "$as_me:$LINENO: WARNING: canna/jrkanji.h: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: canna/jrkanji.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: canna/jrkanji.h: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: canna/jrkanji.h: proceeding with the compiler's result" >&2;}
-    ac_header_preproc=yes
-    ;;
-  no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: canna/jrkanji.h: present but cannot be compiled" >&5
-echo "$as_me: WARNING: canna/jrkanji.h: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: canna/jrkanji.h:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: canna/jrkanji.h:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: canna/jrkanji.h: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: canna/jrkanji.h: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: canna/jrkanji.h:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: canna/jrkanji.h:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: canna/jrkanji.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: canna/jrkanji.h: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: canna/jrkanji.h: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: canna/jrkanji.h: in the future, the compiler will take precedence" >&2;}
-    (
-      cat <<\_ASBOX
-## ------------------------------------- ##
-## Report this to xemacs-beta@xemacs.org ##
-## ------------------------------------- ##
-_ASBOX
-    ) |
-      sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-esac
-echo "$as_me:$LINENO: checking for canna/jrkanji.h" >&5
-echo $ECHO_N "checking for canna/jrkanji.h... $ECHO_C" >&6
-if test "${ac_cv_header_canna_jrkanji_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_header_canna_jrkanji_h=$ac_header_preproc
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_canna_jrkanji_h" >&5
-echo "${ECHO_T}$ac_cv_header_canna_jrkanji_h" >&6
-
-fi
-if test $ac_cv_header_canna_jrkanji_h = yes; then
-  canna_includes_found=yes
-fi
-
-
-  fi
-  if test "$canna_includes_found" = "no" -a "$with_canna" != "no" -a \
-      -d "/usr/local/canna/include"; then
     save_c_switch_site="$c_switch_site"
-    c_switch_site="$c_switch_site -I/usr/local/canna/include"
-    if test "${ac_cv_header_canna_jrkanji_h+set}" = set; then
+    for canna_include_path in "" " -I/usr/local/canna/include"; do
+      for canna_wchar_aware in "" " -DCANNA_NEW_WCHAR_AWARE=1"; do
+        c_switch_site="$save_c_switch_site$canna_include_path$canna_wchar_aware"
+        # defeat autoconf's cache mechanism
+        $as_unset ac_cv_header_canna_jrkanji_h
+        $as_unset ac_cv_header_canna_RK_h
+        # using $ac_header_compiler is a hack, but autoconf doesn't let us
+        # get at this information otherwise :-(
+        if test "${ac_cv_header_canna_jrkanji_h+set}" = set; then
   echo "$as_me:$LINENO: checking for canna/jrkanji.h" >&5
 echo $ECHO_N "checking for canna/jrkanji.h... $ECHO_C" >&6
 if test "${ac_cv_header_canna_jrkanji_h+set}" = set; then
@@ -28967,17 +28829,7 @@ echo "${ECHO_T}$ac_cv_header_canna_jrkanji_h" >&6
 
 fi
 if test $ac_cv_header_canna_jrkanji_h = yes; then
-  canna_includes_found=yes
-fi
-
-
-    if test "$canna_includes_found" != "yes"; then
-      c_switch_site="$save_c_switch_site"
-      with_canna="no"
-    fi
-  fi
-
-  test -z "$with_canna" && { if test "${ac_cv_header_canna_RK_h+set}" = set; then
+  if test "${ac_cv_header_canna_RK_h+set}" = set; then
   echo "$as_me:$LINENO: checking for canna/RK.h" >&5
 echo $ECHO_N "checking for canna/RK.h... $ECHO_C" >&6
 if test "${ac_cv_header_canna_RK_h+set}" = set; then
@@ -29115,13 +28967,31 @@ echo "${ECHO_T}$ac_cv_header_canna_RK_h" >&6
 
 fi
 if test $ac_cv_header_canna_RK_h = yes; then
-  :
-else
-  with_canna=no
+  have_canna=$ac_header_compiler
 fi
 
- }
-  test -z "$with_canna" && { echo "$as_me:$LINENO: checking for RkBgnBun in -lRKC" >&5
+
+fi
+
+
+        test "$have_canna" = "yes" && break
+        { echo "$as_me:$LINENO: WARNING: You may ignore any *Present but not compiled* message
+        from autoconf.  We detect that condition and recheck, but there
+        is no way to suppress autoconf's message." >&5
+echo "$as_me: WARNING: You may ignore any *Present but not compiled* message
+        from autoconf.  We detect that condition and recheck, but there
+        is no way to suppress autoconf's message." >&2;}
+      done
+      test "$have_canna" = "yes" && break
+    done
+    if test "$have_canna" = "yes"; then
+      c_switch_site="$save_c_switch_site$canna_include_path"
+    else
+      c_switch_site="$save_c_switch_site"
+    fi
+  fi
+
+  test "$have_canna" = "yes" && { echo "$as_me:$LINENO: checking for RkBgnBun in -lRKC" >&5
 echo $ECHO_N "checking for RkBgnBun in -lRKC... $ECHO_C" >&6
 if test "${ac_cv_lib_RKC_RkBgnBun+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -29188,10 +29058,10 @@ echo "${ECHO_T}$ac_cv_lib_RKC_RkBgnBun" >&6
 if test $ac_cv_lib_RKC_RkBgnBun = yes; then
   :
 else
-  with_canna=no
+  have_canna=no
 fi
  }
-  test -z "$with_canna" && { echo "$as_me:$LINENO: checking for jrKanjiControl in -lcanna" >&5
+  test "$have_canna" = "yes" && { echo "$as_me:$LINENO: checking for jrKanjiControl in -lcanna" >&5
 echo $ECHO_N "checking for jrKanjiControl in -lcanna... $ECHO_C" >&6
 if test "${ac_cv_lib_canna_jrKanjiControl+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -29258,13 +29128,16 @@ echo "${ECHO_T}$ac_cv_lib_canna_jrKanjiControl" >&6
 if test $ac_cv_lib_canna_jrKanjiControl = yes; then
   :
 else
-  with_canna=no
+  have_canna=no
 fi
  }
-  test -z "$with_canna" && with_canna=yes
-  if test "$with_canna" = "yes"; then
+  if test "$have_canna" = "yes"; then
     cat >>confdefs.h <<\_ACEOF
 #define HAVE_CANNA 1
+_ACEOF
+
+    test -n "$canna_wchar_aware" && cat >>confdefs.h <<\_ACEOF
+#define CANNA_NEW_WCHAR_AWARE 1
 _ACEOF
 
     MAKE_SUBDIR="$MAKE_SUBDIR modules/canna" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/canna\" to \$MAKE_SUBDIR"; fi
@@ -29273,6 +29146,11 @@ _ACEOF
       INSTALL_ARCH_DEP_SUBDIR="$INSTALL_ARCH_DEP_SUBDIR modules/canna" &&  if test "$verbose" = "yes"; then echo "    Appending \"modules/canna\" to \$INSTALL_ARCH_DEP_SUBDIR"; fi
     fi
     canna_libs="-lcanna -lRKC $canna_libs" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lcanna -lRKC\" to \$canna_libs"; fi
+  elif test "$with_canna" != "no"; then
+    { echo "$as_me:$LINENO: WARNING: Canna configuration failed.  If you expected success,
+maybe you need --with-site-prefixes=/usr/local/canna?" >&5
+echo "$as_me: WARNING: Canna configuration failed.  If you expected success,
+maybe you need --with-site-prefixes=/usr/local/canna?" >&2;}
   fi
 
 
@@ -39908,7 +39786,7 @@ test "$with_xim" != no && echo "  Compiling in support for XIM (X11R5+ I18N inpu
 test "$with_xim" = motif && echo "    - Using Motif to provide XIM support."
 test "$with_xim" = xlib && echo "    - Using raw Xlib to provide XIM support."
 test "$with_xfs" = yes && echo "    - Using XFontSet to provide bilingual menubar."
-test "$with_canna" = yes && echo "  Compiling in support for Canna on Mule."
+test "$have_canna" = yes && echo "  Compiling in support for Canna on Mule."
 if test "$with_wnn" = yes; then
   echo "  Compiling in support for the WNN input method on Mule."
   test "$with_wnn6" = yes && echo "    - Using WNN version 6."

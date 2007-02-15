@@ -161,17 +161,14 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "file-coding.h"
 
-#ifdef CANNA2
+/* iroha (Canna v1) support removed as of canna_api.c r1.4.
+   #### Is the IROHA_BC #define needed? */
 #define IROHA_BC
-#define CANNA_NEW_WCHAR_AWARE
 #include "canna/jrkanji.h"
 #include "canna/RK.h"
-#else /* !CANNA2 */
-#include "iroha/jrkanji.h"
-#include "iroha/RK.h"
-#endif /* !CANNA2 */
-extern char *jrKanjiError;
 
+/* #### These shouldn't be needed any more. */
+extern char *jrKanjiError;
 extern int (*jrBeepFunc) (void);
 
 /* #### is this global really necessary? */

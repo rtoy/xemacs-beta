@@ -677,6 +677,7 @@ things are arranged in config.h.in.  In particular:
 
 /* Non-XIM input methods for use with Mule. */
 #undef HAVE_CANNA
+#undef CANNA_NEW_WCHAR_AWARE
 #undef HAVE_WNN
 #undef WNN6
 
@@ -1046,7 +1047,6 @@ extern "C" {
 #endif
 
 #ifdef HAVE_CANNA
-#  define CANNA2
 #  define CANNA_MULE
 #  define CANNA_PURESIZE 0
 #else  /* not CANNA */

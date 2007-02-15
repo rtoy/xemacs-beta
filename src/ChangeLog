@@ -1,3 +1,8 @@
+2007-02-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* config.h.in: Move CANNA_NEW_WCHAR_AWARE here from canna_api.c.
+	Remove crufty CANNA2 define, we can't support CANNA1 (IROHA).
+
 2007-02-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* specifier.c (setup_device_initial_specifier_tags):
