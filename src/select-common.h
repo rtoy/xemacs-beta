@@ -47,6 +47,10 @@ Boston, MA 02111-1307, USA.  */
 					if > 16 bits: Cons of top16, bot16
 	*	32	> 1		Vector of the above
 
+   NOTE NOTE NOTE:
+   Format == 32 means that the buffer will be C longs, which need not be
+   32-bit quantities.  See the note in select-x.c (x_get_window_property).
+
    When converting a Lisp number to C, it is assumed to be of format 16 if
    it is an integer, and of format 32 if it is a cons of two integers.
 

@@ -1,3 +1,16 @@
+2007-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Code by Mike FABIAN <mfabian@suse.de>, Takashi Iwai <tiwai@suse.de>.
+	See xemacs-beta <s3thctmf46c.fsf@magellan.suse.de>.  Thanks!
+	Documentation marshalled by me.
+
+	* select-x.c (x_get_window_property):
+	The buffer for property data in 32-bit format is an array of longs,
+	which need not be 32-bit.  Compute residual from partial reads and
+	buffer sizes correctly for sizeof(long) == 8.
+
+	* select-common.h: Refer to documentation in select-x.c.
+
 2007-02-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* config.h.in: Move CANNA_NEW_WCHAR_AWARE here from canna_api.c.

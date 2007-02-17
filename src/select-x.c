@@ -1048,7 +1048,42 @@ x_get_window_property (Display *display, Window window, Atom property,
       return;
     }
 
-  total_size = bytes_remaining + 1;
+  /* The manpage for XGetWindowProperty from X.org X11.7.2 sez:
+       nitems_return [[ our actual_size_ret ]]
+                 Returns the actual number of 8-bit, 16-bit, or 32-bit items
+                 stored in the prop_return data.
+       prop_return [[ our tmp_data ]]
+                 Returns the data in the specified format.  If the returned
+                 format is 8, the returned data is represented as a char
+                 array. If the returned format is 16, the returned data is
+                 represented as a array of short int type and should be cast
+                 to that type to obtain the elements. If the returned format
+                 is 32, the property data will be stored as an array of longs
+                 (which in a 64-bit application will be 64-bit values that are
+                 padded in the upper 4 bytes).
+       bytes_after_return [[ our bytes_remaining ]]
+                 Returns the number of bytes remaining to be read in the prop-
+                 erty if a partial read was performed.
+
+     AFAIK XEmacs does not support any platforms where the char type is other
+     than 8 bits (Cray?), or where the short type is other than 16 bits.
+     There is no such agreement on the size of long, and 64-bit platforms
+     generally make long be a 64-bit quantity while while it's 32 bits on
+     32-bit platforms.
+
+     This means that on all platforms the wire item is the same size as our
+     buffer unit when format == 8 or format == 16 or format == wordsize == 32,
+     and the buffer size can be taken as bytes_remaining plus padding.
+     However, when format == 32 and wordsize == 64, the buffer unit is twice
+     the size of the wire item.  Obviously this code below is not 128-bit
+     safe.  (We could replace the factor 2 with (sizeof(long)*8/32.)
+
+     We can hope it doesn't much matter on versions of X11 earlier than R7.
+  */
+  if (sizeof(long) == 8 && *actual_format_ret == 32)
+    total_size = 2 * bytes_remaining + 1;
+  else
+    total_size = bytes_remaining + 1;
   *data_ret = xnew_rawbytes (total_size);
 
   /* Now read, until we've gotten it all. */
@@ -1072,7 +1107,12 @@ x_get_window_property (Display *display, Window window, Atom property,
 	 reading it.  Deal with that, I guess....
        */
       if (result != Success) break;
-      *actual_size_ret *= *actual_format_ret / 8;
+      /* Again we need to compute the number of bytes in our buffer, not
+	 the number of bytes transferred for the property. */
+      if (sizeof(long) == 8 && *actual_format_ret == 32)
+	*actual_size_ret *= 8;
+      else
+	*actual_size_ret *= *actual_format_ret / 8;
       memcpy ((*data_ret) + offset, tmp_data, *actual_size_ret);
       offset += *actual_size_ret;
       XFree ((char *) tmp_data);
