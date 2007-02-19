@@ -1293,7 +1293,7 @@ setup_device_initial_specifier_tags (struct device *d)
 {
   Lisp_Object rest, rest2;
   Lisp_Object device = wrap_device (d);
-  Lisp_Object device_predicate, charset_predicate;
+  Lisp_Object device_predicate;
   int list_len;
 
   DEVICE_USER_DEFINED_TAGS (d) = Fcopy_alist (Vuser_defined_tags);
@@ -1395,7 +1395,7 @@ DEVICE defaults to the selected device if omitted.
 
   LIST_LOOP (rest, DEVICE_USER_DEFINED_TAGS (d))
     {
-      if (!NILP (XCADR (XCAR (rest))))
+      if (!NILP (XCDR (XCAR (rest))))
 	list = Fcons (XCAR (XCAR (rest)), list);
     }
 

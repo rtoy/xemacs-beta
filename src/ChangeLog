@@ -1,3 +1,11 @@
+2007-02-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* specifier.c (Fdevice_matching_specifier_tag_list):
+	Don't take XCDR of possible non-cons.  Avoids crash in VM introduced
+	or unmasked by Aidan's 2007-02-06 patch.
+
+	(setup_device_initial_specifier_tags): Nuke unused variable.
+
 2007-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Code by Mike FABIAN <mfabian@suse.de>, Takashi Iwai <tiwai@suse.de>.
