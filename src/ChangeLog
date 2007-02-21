@@ -1,3 +1,9 @@
+2007-02-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* glyphs-eimage.c (png_instantiate_unwind): Avoid recursion.
+	(png_instantiate): Initialize setjmp_buffer early, and avoid
+	recursive entry to error handler.
+
 2007-02-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* specifier.c (Fdevice_matching_specifier_tag_list):
