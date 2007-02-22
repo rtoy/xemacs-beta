@@ -267,12 +267,12 @@ dll_close (dll_handle h)
  * (http://www.opendarwin.org/projects/dlcompat).
  */
 
-static struct mach_header*
+static const struct mach_header*
 image_for_address(void *address)
 {
   unsigned long i;
   unsigned long count = _dyld_image_count();
-  struct mach_header *mh = 0;
+  const struct mach_header *mh = 0;
 
   for (i = 0; i < count; i++)
     {

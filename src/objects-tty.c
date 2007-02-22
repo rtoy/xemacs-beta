@@ -339,7 +339,7 @@ static int
 tty_font_spec_matches_charset (struct device *UNUSED (d), Lisp_Object charset,
 			       const Ibyte *nonreloc, Lisp_Object reloc,
 			       Bytecount offset, Bytecount length,
-			       int stage)
+			       enum font_specifier_matchspec_stages stage)
 {
   const Ibyte *the_nonreloc = nonreloc;
 

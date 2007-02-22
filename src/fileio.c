@@ -2885,7 +2885,7 @@ under Mule, is very difficult.)
   int saverrno = 0;
   Charcount inserted = 0;
   int speccount;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   Lisp_Object val;
   int total;
   Ibyte read_buf[READ_BUF_SIZE];

@@ -1,3 +1,14 @@
+2007-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* objects-tty.c (tty_font_spec_matches_charset): Use Aidan's enum.
+
+	* objects-xlike-inc.c (xft_find_charset_font): FC_WIDTH is obsolete
+	and may be undefined.
+
+	* sysdll.c (image_for_address): const cleanliness for Darwin.
+
+	* fileio.c (Finsert_file_contents_internal): Remove unused gcpro5.
+
 2007-02-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* glyphs-eimage.c (png_instantiate_unwind): Avoid recursion.

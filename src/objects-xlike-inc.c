@@ -465,7 +465,9 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	   of rarely useful properties */
 	FcPatternDel (p, FC_CHARSET);
 	FcPatternDel (p, FC_LANG);
+#ifdef FC_WIDTH
 	FcPatternDel (p, FC_WIDTH);
+#endif
 	FcPatternDel (p, FC_SPACING);
 	FcPatternDel (p, FC_HINTING);
 	FcPatternDel (p, FC_VERTICAL_LAYOUT);
