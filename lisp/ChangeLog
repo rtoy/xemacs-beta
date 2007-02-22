@@ -1,3 +1,11 @@
+2007-01-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* cus-face.el (custom-theme-reset-faces): Move code after docstring.
+
+2007-01-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* subr.el (lambda): Improve docstring.
+
 2007-01-21  Ville Skyttä  <scop@xemacs.org>
 
 	* mule/canna-leim.el (canna-activate): Look for canna_api, not

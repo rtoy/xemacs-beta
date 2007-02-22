@@ -1178,14 +1178,16 @@ The return value of the `setq' form is the value of the last VAL.
 DEFUN ("quote", Fquote, 1, UNEVALLED, 0, /*
 Return the argument, without evaluating it.  `(quote x)' yields `x'.
 
-There is an alternative and more used reader syntax for `quote'.  Precede
-any Lisp object with a single apostrophe, and that Lisp object will be
-returned unevaluated. 'x is thus equivalent to (quote x).
+`quote' differs from `function' in that it is a hint that an expression is
+data, not a function.  In particular, under some circumstances the byte
+compiler will compile an expression quoted with `function', but it will
+never do so for an expression quoted with `quote'.  These issues are most
+important for lambda expressions (see `lambda').
 
-Do not use `quote' or the single apostrophe for lambda expressions that you
-would prefer to be byte-compiled.  Use `function', which see, or take
-advantage of the fact that lambda expressions are self-quoting and such
-lambda expressions will be automatically byte-compiled.
+There is an alternative, more readable, reader syntax for `quote':  a Lisp
+object preceded by `''. Thus, `'x' is equivalent to `(quote x)', in all
+contexts.  A print function may use either.  Internally the expression is
+represented as `(quote x)').
 */
        (args))
 {
@@ -1193,17 +1195,20 @@ lambda expressions will be automatically byte-compiled.
 }
 
 DEFUN ("function", Ffunction, 1, UNEVALLED, 0, /*
-Like `quote', but preferred for objects which are functions.
+Return the argument, without evaluating it.  `(function x)' yields `x'.
 
-As with `quote' there is an alternative reader syntax for `function' which
-in practice is used more often.  Writing #'OBJECT is equivalent to writing
-\(function OBJECT), where OBJECT is some Lisp object.
+`function' differs from `quote' in that it is a hint that an expression is
+a function, not data.  In particular, under some circumstances the byte
+compiler will compile an expression quoted with `function', but it will
+never do so for an expression quoted with `quote'.  However, the byte
+compiler will not compile an expression buried in a data structure such as
+a vector or a list which is not syntactically a function.  These issues are
+most important for lambda expressions (see `lambda').
 
-In byte compilation, `function' causes a lambda expression argument to be
-compiled.  `quote' cannot do that.  lambda expressions are, however,
-self-quoting, and self-quoted lambda expressions will be byte-compiled.
-Only lambda expressions explicitly quoted with `quote' or that occur in
-nested data lists will not be byte-compiled.
+There is an alternative, more readable, reader syntax for `function':  a Lisp
+object preceded by `#''. Thus, #'x is equivalent to (function x), in all
+contexts.  A print function may use either.  Internally the expression is
+represented as `(function x)').
 */
        (args))
 {

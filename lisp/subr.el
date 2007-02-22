@@ -79,12 +79,24 @@ function, i.e., stored as the function value of a symbol, passed to
 funcall or mapcar, etc.
 
 ARGS should take the same form as an argument list for a `defun'.
-DOCSTRING is an optional documentation string.
- If present, it should describe how to call the function.
- But documentation strings are usually not useful in nameless functions.
-INTERACTIVE should be a call to the function `interactive', which see.
-It may also be omitted.
-BODY should be a list of lisp expressions."
+Optional DOCSTRING is a documentation string.
+If present, it should describe how to call the function.  Docstrings are
+rarely useful unless the lambda will be named, eg, using `fset'.
+Optional INTERACTIVE should be a call to the function `interactive'.
+BODY should be a list of lisp expressions.
+
+The byte-compiler treats lambda expressions specially.  If the lambda
+expression is syntactically a function to be called, it will be compiled
+unless protected by `quote'.  Conversely, quoting a lambda expression with
+`function' hints to the byte-compiler that it should compile the expression.
+\(The byte-compiler may or may not actually compile it; for example it will
+never compile lambdas nested in a data structure: `'(#'(lambda (x) x))').
+
+The byte-compiler will warn about common problems such as the form
+`(fset 'f '(lambda (x) x))' (the lambda cannot be byte-compiled; probably
+the programmer intended `#'', although leaving the lambda unquoted will
+normally suffice), but in general is it the programmer's responsibility to
+quote lambda expressions appropriately."
   `(function (lambda ,@cdr)))
 
 ;; FSF 21.2 has various basic macros here.  We don't because they're either

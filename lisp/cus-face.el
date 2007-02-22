@@ -359,7 +359,6 @@ FACE.  Nil otherwise."
 
 ;;;###autoload
 (defun custom-theme-reset-faces (theme &rest args)
-  (custom-check-theme theme)
   "Reset the value of the face to values previously defined.
 Associate this setting with THEME.
 
@@ -368,6 +367,7 @@ ARGS is a list of lists of the form
     (face to-theme)
 
 This means reset face to its value in to-theme."
+  (custom-check-theme theme)
   (mapc #'(lambda (arg)
 	    (apply #'custom-theme-reset-internal-face arg)
 	    (custom-push-theme (car arg) 'theme-face theme 'reset (cadr arg)))
