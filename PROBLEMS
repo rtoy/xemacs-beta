@@ -167,15 +167,25 @@ when attempting to link against libMagick.  The fix is to remove the old
 libz.a in the X11 binary directory.
 
 
-** Motif
+** X11 and Motif
 
 Motif is the X11 version of the Gnus torture test: if there's a way to
 crash, Motif will find it.  With the open source release of Motif, it
 seems like a good idea to collect all Motif-related issues in one
-place.
+place.  X11 itself is not all that safe, either.
 
-You should also look in your OS's section, as it may not be Motif's
-fault.
+You should also look in your OS's section, as it may not be the window
+system (toolkit's) fault.
+
+*** XEmacs and the X server crash when inserting or displaying a TAB character.
+
+If you are using the XFree86 distribution, you need an X server with
+this patch applied:
+
+https://bugs.freedesktop.org/attachment.cgi?id=2016
+
+Versions of XFree86 previous to that crashed when an app tried to draw a
+literal tab character using many fonts. 
 
 *** XEmacs crashes on exit (#1).
 
