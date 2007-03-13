@@ -1,3 +1,8 @@
+2006-12-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (ar): Sun has it but hides it; check for it.
+	(ssize_t): Use the modern check and document todo.
+
 2007-02-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (canna):

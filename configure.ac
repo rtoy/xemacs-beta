@@ -2877,6 +2877,13 @@ dnl Some other nice autoconf tests.  If you add a test here which
 dnl should make an entry in src/config.h, do not forget to add an
 dnl #undef clause to src/config.h.in for autoconf to modify.
 
+dnl Sun likes to hide these utilities.  Steve Baur asked that we make
+dnl the failure occur at configure time, not at use time.
+AC_CHECK_PROG(AR,ar,ar,not_found)
+if test "$AR" = "not_found"; then
+  XE_DIE(["ar not found -- is PATH set correctly?"])
+fi
+dnl These tests don't necessarily check that the program exists.
 AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_YACC
@@ -2937,8 +2944,13 @@ AC_TYPE_PID_T
 AC_TYPE_UID_T
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
-dnl #### deprecated 2.13-ism
-AC_CHECK_TYPE(ssize_t, int)
+dnl #### Translated from deprecated 2.13-ism.
+dnl We probably want to DTRT with #ifdef HAVE_SSIZE_T in src/config.h.in.
+dnl Specifically, we should typedef st sizeof(ssize_t) == sizeof(size_t).
+AC_CHECK_TYPE([ssize_t],,
+              [AC_DEFINE_UNQUOTED([ssize_t], [int],
+                                  [Define to `int' if
+                                   <sys/types.h> does not define.])])
 
 dnl not AC_CHECK_TYPE; lisp.h does hairy conditional typedef
 if test "$ac_cv_header_inttypes_h" != "yes"; then
