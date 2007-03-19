@@ -357,7 +357,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS inststaticdir statedir LN_S blddir build build_cpu build_vendor build_os configuration CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP start_flags ld_switch_shared start_files ld lib_gcc RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA YACC SET_MAKE GTK_CONFIG X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS install_pp libs_xauth dnd_objs LIBSTDCPP dll_ld dll_cflags dll_ldflags dll_post dll_ldo ld_dynamic_link_flags with_modules MOD_CC MODARCHDIR MAKE_DOCFILE MODCFLAGS INSTALLPATH MOD_INSTALL_PROGRAM OBJECT_TO_BUILD ldap_libs postgresql_libs lwlib_objs canna_libs ALLOCA have_esd_config SRC_SUBDIR_DEPS INSTALL_ARCH_DEP_SUBDIR MAKE_SUBDIR SUBDIR_MAKEFILES PROGNAME version instvardir srcdir extra_includes PREFIX_USER_DEFINED PREFIX EXEC_PREFIX_USER_DEFINED EXEC_PREFIX INFODIR_USER_DEFINED INFODIR infopath INFOPATH_USER_DEFINED early_packages EARLY_PACKAGE_DIRECTORIES_USER_DEFINED EARLY_PACKAGE_DIRECTORIES late_packages LATE_PACKAGE_DIRECTORIES_USER_DEFINED LATE_PACKAGE_DIRECTORIES last_packages LAST_PACKAGE_DIRECTORIES_USER_DEFINED LAST_PACKAGE_DIRECTORIES package_path PACKAGE_PATH_USER_DEFINED PACKAGE_PATH lispdir LISPDIR_USER_DEFINED LISPDIR moduledir MODULEDIR_USER_DEFINED MODULEDIR sitelispdir SITELISPDIR_USER_DEFINED SITELISPDIR sitemoduledir SITEMODULEDIR_USER_DEFINED SITEMODULEDIR etcdir ETCDIR_USER_DEFINED ETCDIR archlibdir ARCHLIBDIR_USER_DEFINED ARCHLIBDIR docdir DOCDIR_USER_DEFINED DOCDIR bitmapdir extra_objs machfile opsysfile c_switch_general c_switch_window_system c_switch_all ld_switch_general ld_switch_window_system ld_switch_all ld_libs_general ld_libs_window_system ld_libs_all RECURSIVE_MAKE_ARGS native_sound_lib sound_cflags dynodump_arch XEMACS_CC XE_CFLAGS internal_makefile_list LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS inststaticdir statedir LN_S blddir build build_cpu build_vendor build_os configuration CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP start_flags ld_switch_shared start_files ld lib_gcc AR RANLIB ac_ct_RANLIB INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA YACC SET_MAKE GTK_CONFIG X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS install_pp libs_xauth dnd_objs LIBSTDCPP dll_ld dll_cflags dll_ldflags dll_post dll_ldo ld_dynamic_link_flags with_modules MOD_CC MODARCHDIR MAKE_DOCFILE MODCFLAGS INSTALLPATH MOD_INSTALL_PROGRAM OBJECT_TO_BUILD ldap_libs postgresql_libs lwlib_objs canna_libs ALLOCA have_esd_config SRC_SUBDIR_DEPS INSTALL_ARCH_DEP_SUBDIR MAKE_SUBDIR SUBDIR_MAKEFILES PROGNAME version instvardir srcdir extra_includes PREFIX_USER_DEFINED PREFIX EXEC_PREFIX_USER_DEFINED EXEC_PREFIX INFODIR_USER_DEFINED INFODIR infopath INFOPATH_USER_DEFINED early_packages EARLY_PACKAGE_DIRECTORIES_USER_DEFINED EARLY_PACKAGE_DIRECTORIES late_packages LATE_PACKAGE_DIRECTORIES_USER_DEFINED LATE_PACKAGE_DIRECTORIES last_packages LAST_PACKAGE_DIRECTORIES_USER_DEFINED LAST_PACKAGE_DIRECTORIES package_path PACKAGE_PATH_USER_DEFINED PACKAGE_PATH lispdir LISPDIR_USER_DEFINED LISPDIR moduledir MODULEDIR_USER_DEFINED MODULEDIR sitelispdir SITELISPDIR_USER_DEFINED SITELISPDIR sitemoduledir SITEMODULEDIR_USER_DEFINED SITEMODULEDIR etcdir ETCDIR_USER_DEFINED ETCDIR archlibdir ARCHLIBDIR_USER_DEFINED ARCHLIBDIR docdir DOCDIR_USER_DEFINED DOCDIR bitmapdir extra_objs machfile opsysfile c_switch_general c_switch_window_system c_switch_all ld_switch_general ld_switch_window_system ld_switch_all ld_libs_general ld_libs_window_system ld_libs_all RECURSIVE_MAKE_ARGS native_sound_lib sound_cflags dynodump_arch XEMACS_CC XE_CFLAGS internal_makefile_list LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -10141,6 +10141,45 @@ fi
 
 
 
+# Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_AR+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="ar"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR="not_found"
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  echo "$as_me:$LINENO: result: $AR" >&5
+echo "${ECHO_T}$AR" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+if test "$AR" = "not_found"; then
+  { echo "Error:" "ar not found -- is PATH set correctly?" >&2; exit 1; }
+fi
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
 set dummy ${ac_tool_prefix}ranlib; ac_word=$2
@@ -40551,6 +40590,7 @@ s,@ld_switch_shared@,$ld_switch_shared,;t t
 s,@start_files@,$start_files,;t t
 s,@ld@,$ld,;t t
 s,@lib_gcc@,$lib_gcc,;t t
+s,@AR@,$AR,;t t
 s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
 s,@INSTALL_PROGRAM@,$INSTALL_PROGRAM,;t t
