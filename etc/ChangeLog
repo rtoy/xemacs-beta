@@ -1,3 +1,9 @@
+2007-03-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ETAGS.EBNF: Sync to pot_etags_version 17.19.
+	* etags.1: Sync to pot_etags_version 17.19.
+	* ChangeLog.etags: New.  Copy of upstream ChangeLog.
+
 2007-01-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Thanks to Mike Fabian <mfabian@suse.de> for bringing the issue
