@@ -834,13 +834,23 @@ etags --help --lang=ada.");
 #ifndef EMACS_NAME
 # define EMACS_NAME "standalone"
 #endif
-#ifndef VERSION
-# define VERSION "version"
+#ifdef EMACS_VERSION
+# ifdef XEMACS_EXTRA_NAME
+#  define E_VERSION EMACS_VERSION " " XEMACS_EXTRA_NAME
+# else
+#  define E_VERSION EMACS_VERSION
+# endif
+#elif defined(VERSION)
+# define E_VERSION VERSION
+#else
+# define E_VERSION "version"
 #endif
+
 static void
 print_version ()
 {
-  printf ("%s (%s %s)\n", (CTAGS) ? "ctags" : "etags", EMACS_NAME, VERSION);
+  printf ("%s (%s %s)\n", (CTAGS) ? "ctags" : "etags", EMACS_NAME, E_VERSION);
+  puts (pot_etags_version);
   puts ("Copyright (C) 2006 Free Software Foundation, Inc. and Ken Arnold");
   puts ("This program is distributed under the same terms as Emacs");
 
@@ -978,7 +988,7 @@ Relative ones are stored relative to the output file's directory.\n");
         Print on the standard output an index of items intended for\n\
         human consumption, similar to the output of vgrind.  The index\n\
         is sorted, and gives the page number of each item.");
-# if PRINT_UNDOCUMENTED_OPTIONS_HELP
+# ifdef PRINT_UNDOCUMENTED_OPTIONS_HELP
       puts ("-w, --no-duplicates\n\
         Do not create duplicate tag entries, for compatibility with\n\
 	traditional ctags.");
