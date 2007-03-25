@@ -1,3 +1,7 @@
+2007-03-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* chartab.c (Fcopy_char_table): Use EQ, not ==.
+
 2007-03-24  Olivier Galibert  <galibert@pobox.com>
 
 	* chartab.c (Fcopy_char_table): Simplify the mirror table

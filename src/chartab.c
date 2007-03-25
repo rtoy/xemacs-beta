@@ -698,7 +698,7 @@ as CHAR-TABLE.  The values will not themselves be copied.
 
 #endif /* MULE */
 
-  if (ct->mirror_table != Qnil)
+  if (!EQ (ct->mirror_table, Qnil))
     {
       ctnew->mirror_table = Fmake_char_table (Qgeneric);
       set_char_table_default (ctnew->mirror_table, make_int (Sword));
