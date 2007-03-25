@@ -129,6 +129,22 @@
   ;; Apply word to punctuation
   (test-syntax-table "W." 1 `(,(syntax-string-to-code "w")) 2))
 
+;; According to Ralf Angeli in
+;; http://article.gmane.org/gmane.emacs.xemacs.beta/17353:
+;; Using a fresh CVS checkout of XEmacs trunk the following snippet
+;; returns "1" when evaluated whereas it returns "5" in GNU Emacs 21.3,
+;; CVS GNU Emacs and XEmacs 21.4.15.
+;; If `set-syntax-table' is used instead of `with-syntax-table', CVS
+;; XEmacs returns "5" as well, so I suppose that there is a problem in
+;; `with-syntax-table' or a function called by it.
+
+;; Fixed 2007-03-25 Olivier Galibert <20070324221053.GA48218@dspnet.fr.eu.org>
+(with-temp-buffer
+  (with-syntax-table (make-syntax-table)
+    (insert "foo bar")
+    (backward-sexp 1)
+    (Assert (eql (point) 5))))
+
 ;; Test forward-comment at buffer boundaries
 ;; #### The second Assert fails (once interpreted, once compiled) on 21.4.9
 ;; with sjt's version of Andy's syntax-text-property-killer patch.

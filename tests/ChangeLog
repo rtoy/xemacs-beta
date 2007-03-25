@@ -1,3 +1,9 @@
+2007-03-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/syntax-tests.el: Test for regression of bug fixed by
+	Olivier Galibert <20070324221053.GA48218@dspnet.fr.eu.org>.  Test
+	by Ralf Angeli http://article.gmane.org/gmane.emacs.xemacs.beta/17353.
+
 2006-11-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/iso-ir-196-test.el:
