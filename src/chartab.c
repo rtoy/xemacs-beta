@@ -668,11 +668,12 @@ as CHAR-TABLE.  The values will not themselves be copied.
 
   CHECK_CHAR_TABLE (char_table);
   ct = XCHAR_TABLE (char_table);
+  assert(!ct->mirror_table_p);
   ctnew = ALLOC_LCRECORD_TYPE (Lisp_Char_Table, &lrecord_char_table);
   ctnew->type = ct->type;
   ctnew->parent = ct->parent;
   ctnew->default_ = ct->default_;
-  ctnew->mirror_table_p = ct->mirror_table_p;
+  ctnew->mirror_table_p = 0;
   obj = wrap_char_table (ctnew);
 
   for (i = 0; i < NUM_ASCII_CHARS; i++)
@@ -697,13 +698,17 @@ as CHAR-TABLE.  The values will not themselves be copied.
 
 #endif /* MULE */
 
-  if (!ct->mirror_table_p && CHAR_TABLEP (ct->mirror_table))
+  if (ct->mirror_table != Qnil)
     {
-      ctnew->mirror_table = Fcopy_char_table (ct->mirror_table);
+      ctnew->mirror_table = Fmake_char_table (Qgeneric);
+      set_char_table_default (ctnew->mirror_table, make_int (Sword));
       XCHAR_TABLE (ctnew->mirror_table)->mirror_table = obj;
+      XCHAR_TABLE (ctnew->mirror_table)->mirror_table_p = 1;
+      XCHAR_TABLE (ctnew->mirror_table)->dirty = 1;
     }
   else
-    ctnew->mirror_table = ct->mirror_table;
+    ctnew->mirror_table = Qnil;
+
   ctnew->next_table = Qnil;
   if (ctnew->type == CHAR_TABLE_TYPE_SYNTAX)
     {

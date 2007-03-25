@@ -1,3 +1,9 @@
+2007-03-24  Olivier Galibert  <galibert@pobox.com>
+
+	* chartab.c (Fcopy_char_table): Simplify the mirror table
+	handling: never copy a mirror table, just make a new one and mark
+	it dirty.  Fixes http://article.gmane.org/gmane.emacs.xemacs.beta/17353
+
 2007-01-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* eval.c (quote):
