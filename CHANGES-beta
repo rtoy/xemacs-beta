@@ -1,3 +1,134 @@
+Brief summary of Changes to 21.5.28 "fuki"
+
+Major Features and Backward Incompatible Changes
+
+-- fix: Buffer overflow in doc.c -- Aidan Kehoe, Fabrice Popineau
+-- fix: Buffer overrun in init_native_sound -- Jerry James
+-- fix: Check for missing dimensions for default face and window -- Aidan Kehoe, Mike Sperber
+-- fix: Crash in PNG error handler -- Stephen J. Turnbull, ????
+-- fix: Crash in device-matching-specifier-list -- Stephen J. Turnbull
+-- fix: Float formats overflow output buffer -- Aidan Kehoe
+-- fix: ISO 2022 decoding kludges -- Aidan Kehoe
+-- fix: Make snarf-documentation robust to nonconforming DOC files -- Aidan Kehoe
+-- fix: Sanity checks before accessing frame in x_set_frame_properties -- Aidan Kehoe
+-- fix: init_native_sound is called on a msprinter device -- Aidan Kehoe
+-- fix: Non-existent charset ID is specified for a mule-to-unicode call -- Aidan Kehoe
+
+User-Visible Bug Fixes and Minor Improvements
+
+-- improve: sync etags to pot version 17.26; improve version report -- Stephen J. Turnbull, Steve Youngs
+-- fix: Avoid delays in TTY-only builds by checking dispatch event queue -- Aidan Kehoe
+-- fix: Avoid looking up variable bindings during GC -- Nix
+-- fix: Buffer overruns in gnuclient and gnuslib -- Jerry James
+-- fix: Find modules correctly -- Ville Skyttä, Mike Sperber, Stephen Turnbull
+-- fix: Get X11 window property correctly on 64-bit platforms -- Stephen J. Turnbull, Mike Fabian, Takashi Iwai
+-- fix: Handle coding system in file insertion in buffer properly -- Mike Sperber
+-- fix: Info broke invariant `(equal buffer-file-truename (file-truename buffer-file-name))' -- Stephen J. Turnbull, Nelson Ferreira
+-- fix: Lots of tweaking of Windows read-only handling -- Vin Shelton, Benson Margulies
+-- fix: Make --unmapped work again -- Malcolm Purvis
+-- fix: Make copying of char tables work -- Olivier Galibert, Stephen J. Turnbull
+-- fix: Prevent C-z in a gnuclient frame from suspending the process -- Aidan Kehoe
+-- fix: Regex for finding command nodes -- Jeff Miller
+-- fix: Reversion should check buffer-file-coding-system -- Aidan Kehoe
+-- fix: Syntax of guillemets -- Aidan Kehoe
+-- fix: Window configuration should not restore window position unless requested -- Nix
+-- improve: Better version info in etags -- Stephen Turnbull, Steve Youngs
+-- improve: Case table, syntax table information for Cyrillic, Greek -- Aidan Kehoe
+-- improve: Face initialization from X resources -- Aidan Kehoe
+-- improve: Give x-compose-map an entry for sharp S -- Aidan Kehoe
+-- improve: Handling of Asian "full-width" characters on TTY -- Aidan Kehoe
+-- improve: Language environment detection from locale -- Aidan Kehoe
+-- improve: Look harder for X11 locale-specific app-defaults files -- Malcolm Purvis
+-- improve: Make read-quoted-char terminate, not error, on non-character keys -- Aidan Kehoe	
+-- improve: Support non-ISO Cyrillic keysyms -- Aidan Kehoe	
+-- improve: Try to rationalize resources of Xft in lwlib -- Stephen J. Turnbull
+-- improve: Use short list fixed string registries, not long list pruned by regexp for X11 fonts -- Aidan Kehoe
+-- improve: charsets-in-region now in C -- Aidan Kehoe
+-- improve: what-cursor-position gives Unicode and Mule information on non-ASCII -- Aidan Kehoe
+-- new: Add raw string support like SXEmacs -- Aidan Kehoe
+-- new: Find C source files for Lisp primitives -- Aidan Kehoe
+-- new: Just-in-time definition of Unicode characters and X keysyms -- Aidan Kehoe
+-- new: Minibuffer resizing in core -- Adrian Aichner
+-- update: New package download sites -- Adrian Aichner
+-- update: Sync etags to pot_etags_version 17.19 -- Stephen J. Turnbull
+-- update: Sync pop[ch] to Emacs -- Jerry James
+-- update: Update to 2003 version of ISO 8859-7 table -- Aidan Kehoe
+
+Build Infrastructure
+
+-- fix: Allow lowercase file names in mswin SDK -- Benson Margulies
+-- fix: Avoid using Motif for cygwin -- Dr. Volker Zell
+-- fix: C is not C++ -- Robert Pluim
+-- fix: Check for u_int*_t typedefs -- Dr. Volker Zell
+-- fix: Correct help strings, remove obsolete configure.* files -- Stephen J. Turnbull
+-- fix: Don't call ichar_to_unicode on non-MULE -- Mike Sperber
+-- fix: Enable SYSTEM_MALLOC on ppc64, alpha and ia64 systems -- Malcolm Purvis
+-- fix: Make user-defined directories work in configure -- Mike Sperber
+-- fix: Register --enable and --with forms with the option checking list -- Malcolm Purvis
+-- fix: Remove Autoconf 2.13-isms -- Stephen J. Turnbull
+-- fix: Revert workaround for now-fixed Cygwin bug of missing d_ino field -- Dr. Volker Zell
+-- fix: Typo in configure shell syntax -- Jerry James
+-- fix: Use $EGREP, not egrep -- Malcolm Purvis
+-- fix: Use new Cygwin XPM lib name -- Rick Rankin
+-- fix: Work around m4_cdr change -- Malcolm Purvis
+-- fix: `config.status --recheck' bug in Autoconf 2.60/2.61 -- Malcolm Purvis
+-- fix: char type correctness -- Vin Shelton, Aidan Kehoe
+-- fix: configure debugger init files correctly -- Stephen J. Turnbull
+-- improve: Conditionalize GCC warnings on version -- Jerry James
+-- improve: Create $srcdir/src/depend if missing -- Stephen J. Turnbull
+-- improve: Detect Intel Macs, use POSIX-style write barrier in NewGC -- Marcus Crestani
+-- improve: Refactor Canna detection -- Stephen J. Turnbull
+-- improve: Setup kit configuration -- Vin Shelton
+improvement -- debugger init sources can use XCOMM convention
+-- new: Check for utilities that are not on "normal" Solaris PATH -- Stephen J. Turnbul, S L Baur
+
+Documentation
+
+-- fix: Improve docstrings -- Stephen J. Turnbull, Aidan Kehoe
+-- fix: Make manual conform to reality -- Malcolm Purvis, Robert Pluim, Aidan Kehoe, Stephen J. Turnbull
+-- fix: New compatibility alias string-to-char-list -- Vin Shelton, Ville Skyttä
+-- fix: Typo fixes in manual -- Stephen J. Turnbull, Aidan Kehoe
+-- fix: Update FSF address -- Jerry James, Stephen Turnbull
+-- fix: Update copyrights -- Stephen J. Turnbull
+-- improve: Small rephrasing in TUTORIAL.de -- Adrian Aichner, hroptatyr
+-- new: Describe X errors when using ssh in PROBLEMS -- Malcolm Purvis
+-- new: Describe XFree86 crash in PROBLEMS -- Stephen J. Turnbull, Aidan Kehoe
+-- new: Describe how X11R7 loses x11/bitmaps/gray in PROBLEMS -- Stephen J. Turnbull
+-- update: Addresses in files and ChangeLogs -- Adrian Aichner, Stepohen J. Turnbull
+
+Lisp API
+
+-- fix: Catch error in cloning language environment -- Aidan Kehoe
+-- fix: Make shell-command use requested output buffer -- Jerry James
+-- improve: Make `split-char' available in no-mule -- Aidan Kehoe
+-- improve: New unicode-type property of Unicode coding systems -- Aidan Kehoe
+-- improve: Reorganize Mule lisp -- Aidan Kehoe
+-- new:	ccl-compile-mule-to-unicode, ccl-compile-unicode-to-mule, ccl-dump-mule-to-unicode, ccl-dump-unicode-to-mule -- Aidan Kehoe
+-- new: deprecate set-charset-registry, charset-registry -- Aidan Kehoe
+-- new: font-lock-keywords-alist, font-lock-removed-keywords-alist,  font-lock-add-keywords, font-lock-update-removed-keyword-alist, font-lock-remove-keywords -- Aidrian Aichner
+-- new: set-charset-registries, charset-registries -- Aidan Kehoe
+-- update: Sync font-lock-add-keywords and font-lock-remove-keywords from GNU Emacs. -- Adrian Aichner
+
+Internal API and Implementation
+
+-- fix: Dead code elimination -- Stephen J. Turnbull
+-- fix: Eliminate buffer overflows and NULL pointer references -- Jerry James, Adrian Aichner
+-- fix: Memory leaks -- Jerry James
+-- fix: Mule correctness with strings passed to warning functions -- Aidan Kehoe
+-- fix: Syntax errors -- Aidan Kehoe
+-- fix: Typo in string_direct_data_description -- Marcus Crestani
+-- fix: Use defined APIs -- Stephen J. Turnbull, Aidan Kehoe
+-- fix: Warning elimination -- Stephen J. Turnbull
+-- improve: Cache Xrm coding system -- Aidan Kehoe
+-- improve: GCPRO correctness -- Aidan Kehoe
+-- improve: NewGC fault handling -- Marcus Crestani
+-- improve: 21-bit Mule chars to support JIT charsets -- Aidan Kehoe
+-- new: Silence-Message macro in test-harness.el -- Stephen J. Turnbull
+-- new: Test for ISO-2022 decoder not choking on invalid UTF-8 -- Aidan Kehoe
+-- new: Test for copy-syntax-table bug -- Stephen Turnbull, Ralf Angeli
+-- new: Test raw strings -- Aidan Kehoe
+-- update: Get Unicode tables with permissive license -- Stephen J. Turnbull, Mike Fabian
+
 to 21.5.27 "fiddlesticks"
 
 Major Features and Backward Incompatible Changes
