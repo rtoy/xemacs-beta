@@ -1,3 +1,7 @@
+2007-03-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* diagnose.el (show-object-memory-usage-stats): Fix docstring typo.
+
 2007-01-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* cus-face.el (custom-theme-reset-faces): Move code after docstring.

@@ -169,7 +169,7 @@
 
 
 (defun show-object-memory-usage-stats ()
-  "Show statistics about object memeory usage in XEmacs."
+  "Show statistics about object memory usage in XEmacs."
   (interactive)
   (garbage-collect)
   (let ((buffer "*object memory usage statistics*")
