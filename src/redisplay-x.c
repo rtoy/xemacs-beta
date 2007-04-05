@@ -78,37 +78,21 @@ static void x_clear_frame_windows (Lisp_Object window);
 #endif /* USE_XFT */
 
 
-     /* Note: We do not use the Xmb*() functions and XFontSets.
-	Those functions are generally losing for a number of reasons:
+     /* Note: We do not use the Xmb*() functions and XFontSets, nor the
+	Motif XFontLists and CompoundStrings.
+	Those functions are generally losing for a number of reasons.
+	Most important, they only support one locale (e.g. you could
+	display Japanese and ASCII text, but not mixed Japanese/Chinese
+	text).  You could maybe call setlocale() frequently to try to deal
+	with this, but that would generally fail because an XFontSet is
+	tied to one locale and won't have the other character sets in it.
 
-	 1) They only support one locale (e.g. you could display
-	    Japanese and ASCII text, but not mixed Japanese/Chinese
-	    text).  You could maybe call setlocale() frequently
-	    to try to deal with this, but that would generally
-	    fail because an XFontSet is tied to one locale and
-	    won't have the other character sets in it.
-
-	The following aren't true any more, but that doesn't make Xmb*()
-	usable.  One wonders about Xft and Pango, etc, tho'.  Except they
-	aren't cross-platform solutions.  FMH, as jwz would say. -- sjt
-	[[
-	 2) Not all (or even very many) OS's support the useful
-	    locales.  For example, as far as I know SunOS and
-	    Solaris only support the Japanese locale if you get the
-	    special Asian-language version of the OS.  Yuck yuck
-	    yuck.  Linux doesn't support the Japanese locale at
-	    all.
-	 3) The locale support in X only exists in R5, not in R4.
-	    (Not sure how big of a problem this is: how many
-	    people are using R4?)
-	 4) Who knows if the multi-byte text format (which is locale-
-	    specific) is even the same for the same locale on
-	    different OS's?  It's not even documented anywhere that
-	    I can find what the multi-byte text format for the
-	    Japanese locale under SunOS and Solaris is, but I assume
-	    it's EUC.
-	]]
-      */
+	fontconfig (the font database for Xft) has some specifier-like
+	properties, but it's not sufficient (witness the existence of
+	Pango).  Pango might do the trick, but it's not a cross-platform
+	solution; it would need significant advantages to be worth the
+	effort.
+     */
 
 /* #### Break me out into a separate header */
 struct textual_run
@@ -122,12 +106,14 @@ struct textual_run
 /* Separate out the text in DYN into a series of textual runs of a
    particular charset.  Also convert the characters as necessary into
    the format needed by XDrawImageString(), XDrawImageString16(), et
-   al.  (This means converting to one or two byte format, possibly
-   tweaking the high bits, and possibly running a CCL program.) You
+   al.  This means converting to one or two byte format, possibly
+   tweaking the high bits, and possibly running a CCL program. You
    must pre-allocate the space used and pass it in. (This is done so
-   you can ALLOCA () the space.)  You need to allocate (2 * len) bytes
-   of TEXT_STORAGE and (len * sizeof (struct textual_run)) bytes of
-   RUN_STORAGE, where LEN is the length of the dynarr.
+   you can ALLOCA () the space.)  (sizeof(bufchar) * len) bytes must be
+   allocated for TEXT_STORAGE and (len * sizeof (struct textual_run))
+   bytes of RUN_STORAGE, where LEN is the length of the dynarr.
+
+   bufchar might not be fixed width (in the case of UTF-8).
 
    Returns the number of runs actually used. */
 
@@ -141,7 +127,6 @@ struct textual_run
    - The widechar versions of fontconfig (and therefore Xft) functions
    seem to be just bigendian Unicode.  So there's actually no need to use
    the 8-bit versions in computing runs and runes, it would seem.
-   - Mule won't "just work"; substantially more effort seems needed.
 */
 
 #if !defined(USE_XFT) && !defined(MULE)
@@ -166,6 +151,15 @@ separate_textual_runs_nomule (unsigned char *text_storage,
 #endif
 
 #if defined(USE_XFT) && !defined(MULE)
+/*
+  Note that in this configuration the "Croatian hack" of using an 8-bit,
+  non-Latin-1 font to get localized display without Mule simply isn't
+  available.  That's by design -- Unicode does not aid or abet that kind
+  of punning.
+  This means that the cast to XftChar16 gives the correct "conversion" to
+  UCS-2.
+  #### Is there an alignment issue with text_storage?
+*/
 static int
 separate_textual_runs_xft_nomule (unsigned char *text_storage,
 				  struct textual_run *run_storage,
@@ -197,7 +191,7 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
 				const Ichar *str, Charcount len,
 				struct face_cachel *UNUSED(cachel))
 {
-  Lisp_Object prev_charset = Qnil;
+  Lisp_Object prev_charset = Qunbound;
   int runs_so_far = 0, i;
 
   run_storage[0].ptr = text_storage;
@@ -207,7 +201,7 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
 
   for (i = 0; i < len; i++)
     {
-      Ichar ch = str[i];      
+      Ichar ch = str[i];
       Lisp_Object charset = ichar_charset(ch);
       int ucs = ichar_to_unicode(ch);
 
@@ -238,15 +232,23 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
 #endif
 
 #if !defined(USE_XFT) && defined(MULE)
+/*
+  This is the most complex function of this group, due to the various
+  indexing schemes used by different fonts.  For our purposes, they
+  fall into three classes.  Some fonts are indexed compatibly with ISO
+  2022; those fonts just use the Mule internal representation directly
+  (typically the high bit must be reset; this is determined by the `graphic'
+  flag).  Some fonts are indexed by Unicode, specifically by UCS-2.  These
+  are all translated using `ichar_to_unicode'.  Finally some fonts have
+  irregular indexes, and must be translated ad hoc.  In XEmacs ad hoc
+  translations are accomplished with CCL programs. */
 static int
 separate_textual_runs_mule (unsigned char *text_storage,
 			    struct textual_run *run_storage,
 			    const Ichar *str, Charcount len,
 			    struct face_cachel *cachel)
 {
-  Lisp_Object prev_charset = Qunbound; /* not Qnil because that is a
-					  possible valid charset when
-					  MULE is not defined */
+  Lisp_Object prev_charset = Qunbound;
   int runs_so_far = 0, i;
   Ibyte charset_leading_byte = LEADING_BYTE_ASCII;
   int dimension = 1, graphic = 0, need_ccl_conversion = 0;
@@ -259,42 +261,51 @@ separate_textual_runs_mule (unsigned char *text_storage,
     {
       Ichar ch = str[i];
       Lisp_Object charset;
-      int byte1, byte2;		/* Not UExbytes because BREAKUP_ICHAR takes
-				   the addresses of its arguments and
-				   dereferences those addresses as integer
-				   pointers. */
+      int byte1, byte2;		/* BREAKUP_ICHAR dereferences the addresses
+				   of its arguments as pointer to int. */
       BREAKUP_ICHAR (ch, charset, byte1, byte2);
 
       if (!EQ (charset, prev_charset))
 	{
-	  run_storage[runs_so_far].ptr       = text_storage;
-	  run_storage[runs_so_far].charset   = charset;
-
+	  /* At this point, dimension' and `prev_charset' refer to just-
+	     completed run.  `runs_so_far' and `text_storage' refer to the
+	     run about to start. */
 	  if (runs_so_far)
 	    {
+	      /* Update metadata for previous run. */
 	      run_storage[runs_so_far - 1].len =
 		text_storage - run_storage[runs_so_far - 1].ptr;
-	      /* Checks the value for dimension from the previous run. */
 	      if (2 == dimension) run_storage[runs_so_far - 1].len >>= 1;
 	    }
 
+	  /* Compute metadata for current run.
+	     First, classify font.
+	     If the font is indexed by UCS-2, set `translate_to_ucs_2'.
+	     Else if the charset has a CCL program, set `need_ccl_conversion'.
+	     Else if the font is indexed by an ISO 2022 "graphic register",
+	         set `graphic'.
+	     These flags are almost mutually exclusive, but we're sloppy
+	     about resetting "shadowed" flags.  So the flags must be checked
+	     in the proper order in computing byte1 and byte2, below. */
 	  charset_leading_byte = XCHARSET_LEADING_BYTE(charset);
-
 	  translate_to_ucs_2 =
-	    bit_vector_bit(FACE_CACHEL_FONT_FINAL_STAGE
-			   (cachel), 
-			   charset_leading_byte - MIN_LEADING_BYTE);
-
+	    bit_vector_bit (FACE_CACHEL_FONT_FINAL_STAGE (cachel),
+			    charset_leading_byte - MIN_LEADING_BYTE);
 	  if (translate_to_ucs_2)
 	    {
 	      dimension = 2;
-	      run_storage[runs_so_far].dimension = 2;
 	    }
 	  else
 	    {
 	      dimension = XCHARSET_DIMENSION (charset);
-	      run_storage[runs_so_far].dimension = dimension;
 
+	      /* Check for CCL charset.
+		 If setup_ccl_program fails, we'll get a garbaged display.
+		 This should never happen, and even if it does, it should
+		 be harmless (unless the X server has buggy handling of
+		 characters undefined in the font).  It may be marginally
+		 more useful to users and debuggers than substituting a
+		 fixed replacement character. */
 	      ccl_prog = XCHARSET_CCL_PROGRAM (charset);
 	      if ((!NILP (ccl_prog))
 		  && (setup_ccl_program (&char_converter, ccl_prog) >= 0))
@@ -303,18 +314,26 @@ separate_textual_runs_mule (unsigned char *text_storage,
 		}
 	      else 
 		{
-		  /* The graphic property is only relevant if we're neither
-		     doing the CCL conversion nor doing the UTF-16
-		     conversion; it's irrelevant otherwise. */
+		  /* The charset must have an ISO 2022-compatible font index.
+		     There are 2 "registers" (what such fonts use as index).
+		     GL (graphic == 0) has the high bit of each octet reset,
+		     GR (graphic == 1) has it set. */
 		  graphic   = XCHARSET_GRAPHIC (charset);
 		  need_ccl_conversion = 0;
 		}
 	    }
-	  prev_charset = charset;
 
+	  /* Initialize metadata for current run. */
+	  run_storage[runs_so_far].ptr       = text_storage;
+	  run_storage[runs_so_far].charset   = charset;
+	  run_storage[runs_so_far].dimension = dimension;
+
+	  /* Update loop variables. */
+	  prev_charset = charset;
 	  runs_so_far++;
 	} 
 
+      /* Must check flags in this order.  See comment above. */
       if (translate_to_ucs_2)
 	{
 	  int ucs = ichar_to_unicode(ch);
@@ -322,7 +341,6 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	     REPLACMENT CHARACTER. */
 	  ucs = (ucs & ~0xFFFF) ? 0xFFFD : ucs;
 
-	  /* Ignoring the "graphic" handling. */
 	  byte1 = ucs >> 8;
 	  byte2 = ucs;
 	}

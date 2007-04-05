@@ -1,3 +1,16 @@
+2007-04-01  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Thanks to OG for review  and Aidan Kehoe for useful comments.
+
+	* redisplay-x.c (separate_textual_runs_mule): Reorganize and document.
+
+	(separate_textual_runs):
+	(separate_textual_runs_mule):
+	(separate_textual_runs_xft_nomule):
+	Update or add "theory of operation" header comments.
+
+	(separate_textual_runs_xft_mule): Trailing whitespace removal.
+
 2007-03-30   Olivier Galibert <galibert@pobox.com>
 
 	* redisplay-x.c (separate_textual_runs_xft_mule): Create.
