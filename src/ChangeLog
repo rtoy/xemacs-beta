@@ -1,3 +1,12 @@
+2007-03-30   Olivier Galibert <galibert@pobox.com>
+
+	* redisplay-x.c (separate_textual_runs_xft_mule): Create.
+	(separate_textual_runs_xft_nomule): Create.
+	(separate_textual_runs_mule): Create.
+	(separate_textual_runs_nomule): Create.
+	(separate_textual_runs): Split the ifdef mess into 4 separate
+	functions and simplify each.
+
 2007-03-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* chartab.c (Fcopy_char_table): Use EQ, not ==.

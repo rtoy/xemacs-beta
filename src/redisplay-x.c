@@ -133,12 +133,6 @@ struct textual_run
 
 /* Notes on Xft implementation
 
-   - Xft Reloaded, v.4, uses a function like that in redisplay-msw.c to
-   handle all characters.  However, instead of using an appropriate
-   character width for each run, it just uses UTF-8 for all runs.  This
-   is not obviously a bad idea, but (for Han characters etc) the estimate
-   of TEXT_STORAGE allocation needed is (3 * len), and for characters not
-   in the BMP, it's (4 * len).
    - With Unicode, we're no longer going to have repertoires reified as
    charsets.  (Not that we ever really did, what with corporate variants,
    and so on.)  So we really should be querying the face for the desired
@@ -150,11 +144,105 @@ struct textual_run
    - Mule won't "just work"; substantially more effort seems needed.
 */
 
+#if !defined(USE_XFT) && !defined(MULE)
 static int
-separate_textual_runs (unsigned char *text_storage,
-		       struct textual_run *run_storage,
-		       const Ichar *str, Charcount len,
-		       struct face_cachel *cachel)
+separate_textual_runs_nomule (unsigned char *text_storage,
+			      struct textual_run *run_storage,
+			      const Ichar *str, Charcount len,
+			      struct face_cachel *UNUSED(cachel))
+{
+  int i;
+  if (!len)
+    return 0;
+
+  run_storage[0].ptr = text_storage;
+  run_storage[0].len = len;
+  run_storage[0].dimension = 1;
+  run_storage[0].charset = Qnil;
+
+  memcpy (text_storage, str, len);
+  return 1;
+}
+#endif
+
+#if defined(USE_XFT) && !defined(MULE)
+static int
+separate_textual_runs_xft_nomule (unsigned char *text_storage,
+				  struct textual_run *run_storage,
+				  const Ichar *str, Charcount len,
+				  struct face_cachel *UNUSED(cachel))
+{
+  int i;
+  if (!len)
+    return 0;
+
+  run_storage[0].ptr = text_storage;
+  run_storage[0].len = len;
+  run_storage[0].dimension = 2;
+  run_storage[0].charset = Qnil;
+
+  for (i = 0; i < len; i++)
+    {
+      *(XftChar16 *)text_storage = str[i];
+      text_storage += sizeof(XftChar16);
+    }
+  return 1;
+}
+#endif
+
+#if defined(USE_XFT) && defined(MULE)
+static int
+separate_textual_runs_xft_mule (unsigned char *text_storage,
+				struct textual_run *run_storage,
+				const Ichar *str, Charcount len,
+				struct face_cachel *UNUSED(cachel))
+{
+  Lisp_Object prev_charset = Qnil;
+  int runs_so_far = 0, i;
+
+  run_storage[0].ptr = text_storage;
+  run_storage[0].len = len;
+  run_storage[0].dimension = 2;
+  run_storage[0].charset = Qnil;
+
+  for (i = 0; i < len; i++)
+    {
+      Ichar ch = str[i];      
+      Lisp_Object charset = ichar_charset(ch);
+      int ucs = ichar_to_unicode(ch);
+
+      /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
+	 REPLACMENT CHARACTER. */
+      /* That means we can't handle characters outside of the BMP for now */
+      ucs = (ucs & ~0xFFFF) ? 0xFFFD : ucs;
+
+      if (!EQ (charset, prev_charset))
+	{
+	  if (runs_so_far)
+	    run_storage[runs_so_far-1].len = (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
+	  run_storage[runs_so_far].ptr = text_storage;
+	  run_storage[runs_so_far].dimension = 2;
+	  run_storage[runs_so_far].charset = charset;
+	  prev_charset = charset;
+	  runs_so_far++;
+	}
+
+      *(XftChar16 *)text_storage = ucs;
+      text_storage += sizeof(XftChar16);
+    }
+
+  if (runs_so_far)
+    run_storage[runs_so_far-1].len = (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
+  return runs_so_far;
+}
+#endif
+
+#if !defined(USE_XFT) && defined(MULE)
+static int
+separate_textual_runs_mule (unsigned char *text_storage,
+			    struct textual_run *run_storage,
+			    const Ichar *str, Charcount len,
+			    struct face_cachel *cachel)
 {
   Lisp_Object prev_charset = Qunbound; /* not Qnil because that is a
 					  possible valid charset when
@@ -165,21 +253,7 @@ separate_textual_runs (unsigned char *text_storage,
   Lisp_Object ccl_prog;
   struct ccl_program char_converter;
 
-#ifdef	USE_XFT
-#define translate_to_ucs_2 1	/* Translate to UTF-16 unconditionally. */
-#define MAYBE_ASSIGN_TRANSLATE_TO_UCS_2(arg) (void)(arg) /* Empty, 
-							      may avoid some 
-							      warnings. */
-#else	/* USE_XFT */
-#ifndef MULE
-#define translate_to_ucs_2 0	/* We don't support falling back to
-				   iso10646-1 without MULE */
-#define MAYBE_ASSIGN_TRANSLATE_TO_UCS_2(arg) (void)(arg)
-#else	/* if MULE */
   int translate_to_ucs_2 = 0;
-#define MAYBE_ASSIGN_TRANSLATE_TO_UCS_2(arg) translate_to_ucs_2 = (arg)
-#endif	/* MULE */
-#endif	/* !USE_XFT */
 
   for (i = 0; i < len; i++)
     {
@@ -206,10 +280,10 @@ separate_textual_runs (unsigned char *text_storage,
 
 	  charset_leading_byte = XCHARSET_LEADING_BYTE(charset);
 
-	  MAYBE_ASSIGN_TRANSLATE_TO_UCS_2
-	    (bit_vector_bit(FACE_CACHEL_FONT_FINAL_STAGE
-			    (cachel), 
-			    charset_leading_byte - MIN_LEADING_BYTE));
+	  translate_to_ucs_2 =
+	    bit_vector_bit(FACE_CACHEL_FONT_FINAL_STAGE
+			   (cachel), 
+			   charset_leading_byte - MIN_LEADING_BYTE);
 
 	  if (translate_to_ucs_2)
 	    {
@@ -220,7 +294,7 @@ separate_textual_runs (unsigned char *text_storage,
 	    {
 	      dimension = XCHARSET_DIMENSION (charset);
 	      run_storage[runs_so_far].dimension = dimension;
-#ifdef MULE
+
 	      ccl_prog = XCHARSET_CCL_PROGRAM (charset);
 	      if ((!NILP (ccl_prog))
 		  && (setup_ccl_program (&char_converter, ccl_prog) >= 0))
@@ -235,7 +309,6 @@ separate_textual_runs (unsigned char *text_storage,
 		  graphic   = XCHARSET_GRAPHIC (charset);
 		  need_ccl_conversion = 0;
 		}
-#endif /* MULE */
 	    }
 	  prev_charset = charset;
 
@@ -244,26 +317,15 @@ separate_textual_runs (unsigned char *text_storage,
 
       if (translate_to_ucs_2)
 	{
-	  UINT_16_BIT ucs2;
-#ifdef MULE
 	  int ucs = ichar_to_unicode(ch);
-#else
-	  int ucs = ch;
-#endif
 	  /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
 	     REPLACMENT CHARACTER. */
-	  ucs2 = (ucs & ~0xFFFF) ? 0xFFFD : ucs;
+	  ucs = (ucs & ~0xFFFF) ? 0xFFFD : ucs;
 
 	  /* Ignoring the "graphic" handling. */
-#ifdef USE_XFT
-	  byte1 = ((unsigned char *) (&ucs2))[0];
-	  byte2 = ((unsigned char *) (&ucs2))[1];
-#else
-	  byte1 = ((unsigned char *) (&ucs2))[1];
-	  byte2 = ((unsigned char *) (&ucs2))[0];
-#endif /* USE_XFT */
+	  byte1 = ucs >> 8;
+	  byte2 = ucs;
 	}
-#ifdef MULE
       else if (need_ccl_conversion)
 	{
 	  char_converter.reg[0] = charset_leading_byte;
@@ -283,12 +345,9 @@ separate_textual_runs (unsigned char *text_storage,
 	  byte1 |= 0x80;
 	  byte2 |= 0x80;
 	}
-#endif /* MULE */
 
       *text_storage++ = (unsigned char)byte1;
 
-      /* dimension can be two in non-Mule if we're translating to
-	 Unicode.  */
       if (2 == dimension) *text_storage++ = (unsigned char)byte2;
     }
 
@@ -302,6 +361,27 @@ separate_textual_runs (unsigned char *text_storage,
     }
 
   return runs_so_far;
+}
+#endif
+
+static int
+separate_textual_runs (unsigned char *text_storage,
+		       struct textual_run *run_storage,
+		       const Ichar *str, Charcount len,
+		       struct face_cachel *cachel)
+{
+#if defined(USE_XFT) && defined(MULE)
+  return separate_textual_runs_xft_mule(text_storage, run_storage, str, len, cachel);
+#endif
+#if defined(USE_XFT) && !defined(MULE)
+  return separate_textual_runs_xft_nomule(text_storage, run_storage, str, len, cachel);
+#endif
+#if !defined(USE_XFT) && defined(MULE)
+  return separate_textual_runs_mule(text_storage, run_storage, str, len, cachel);
+#endif
+#if !defined(USE_XFT) && !defined(MULE)
+  return separate_textual_runs_nomule(text_storage, run_storage, str, len, cachel);
+#endif
 }
 
 /****************************************************************************/
