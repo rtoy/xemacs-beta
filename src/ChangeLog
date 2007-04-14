@@ -1,3 +1,19 @@
+2007-04-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* font-mgr.c: Update FSF copyrights.
+
+	* font-mgr.c (print_fc_pattern): New facility for fc-pattern
+	objects.  Comment on need/implementation for equal/hash.
+
+	* font-mgr.c (build_fcapi_string): New convenience macro.
+	* font-mgr.c (Ffc_name_unparse):
+	* font-mgr.c (Ffc_pattern_get):
+	Use it.
+
+	* font-mgr.c (Ffc_name_parse):
+	* font-mgr.c (Ffc_font_match):
+	Remove incorrect comments about memory leaks.
+
 2007-04-01  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Thanks to OG for review  and Aidan Kehoe for useful comments.

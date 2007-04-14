@@ -2,13 +2,13 @@
 
 Copyright (C) 2003 Eric Knauel and Matthias Neubauer
 Copyright (C) 2005 Eric Knauel
-Copyright (C) 2004, 2005 Free Software Foundation, Inc.
+Copyright (C) 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
 
 Authors:	Eric Knauel <knauel@informatik.uni-tuebingen.de>
 		Matthias Neubauer <neubauer@informatik.uni-freiburg.de>
 		Stephen J. Turnbull <stephen@xemacs.org>
 Created:	27 Oct 2003
-Updated:	05 Mar 2005 by Stephen J. Turnbull
+Updated:	14 April 2007 by Stephen J. Turnbull
 
 This file is part of XEmacs.
 
@@ -96,14 +96,48 @@ finalize_fc_pattern (void *header, int UNUSED (for_disksave))
     }
 }
 
+static void
+print_fc_pattern (Lisp_Object obj, Lisp_Object printcharfun,
+		  int UNUSED(escapeflag))
+{
+  struct fc_pattern *c = XFCPATTERN (obj);
+  if (print_readably)
+    printing_unreadable_object ("#<fc-pattern 0x%x>", c->header.uid);
+  write_fmt_string (printcharfun, "#<fc-pattern 0x%x>", c->header.uid);
+}
+
+/* #### We really need an equal method and a hash method (required if you
+   have an equal method).  For the equal method, we can probably use one
+   or both of
+
+   -- Function: FcBool FcPatternEqual (const FcPattern *pa, const
+            FcPattern *pb);
+       Returns whether PA and PB are exactly alike.
+
+   -- Function: FcBool FcPatternEqualSubset (const FcPattern *pa, const
+            FcPattern *pb, const FcObjectSet *os)
+       Returns whether PA and PB have exactly the same values for all of
+       the objects in OS.
+
+   For the hash, we'll have to extract some subset of attributes.
+
+   #### Crap.  It's altogether unobvious what we need.  x_color_instance
+   does have a hash method, but fonts are apparently special.  I get the
+   feeling that for this to work properly we're going to need to switch
+   to fontconfig-based font specifications (although we can allow the
+   platform syntaxes, the underlying specification object will need to
+   conform to the fontconfig API, or more precisely the font-mgr API).
+
+   I think the whole `font-truename' interface needs to be dropped. */
+
 static const struct memory_description fcpattern_description [] = {
   /* #### nothing here, is this right?? */
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION("fc-pattern", fc_pattern,
-			      0, 0, 0, finalize_fc_pattern, 0, 0,
-			      fcpattern_description,
+DEFINE_LRECORD_IMPLEMENTATION("fc-pattern", fc_pattern, 0,
+			      0, print_fc_pattern, finalize_fc_pattern,
+			      0, 0, fcpattern_description,
 			      struct fc_pattern);
 
 /*
@@ -121,6 +155,9 @@ static void string_list_to_fcobjectset (Lisp_Object list, FcObjectSet *os);
 */
 #define extract_fcapi_string(str) \
   (NEW_LISP_STRING_TO_EXTERNAL ((str), Qfc_font_name_encoding))
+
+#define build_fcapi_string(str) \
+  (build_ext_string ((Extbyte *) (str), Qfc_font_name_encoding))
 
 /* #### This homebrew lashup should be replaced with FcConstants.
 
@@ -205,7 +242,7 @@ Parse an Fc font name and return its representation as a fc pattern object.
   struct fc_pattern *fcpat =
     ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
 
-  CHECK_STRING(name);		/* #### MEMORY LEAK!!  maybe not ... */
+  CHECK_STRING(name);
 
   fcpat->fcpatPtr = FcNameParse ((FcChar8 *) extract_fcapi_string (name));
   return wrap_fcpattern(fcpat);
@@ -219,12 +256,7 @@ Unparse an fc pattern object to a string.
       (pattern))
 {
   CHECK_FCPATTERN(pattern);
-  {
-    Extbyte *temp = (Extbyte *) FcNameUnparse(XFCPATTERN_PTR(pattern));
-    Lisp_Object res = build_ext_string (temp, Qfc_font_name_encoding);
-    free (temp);
-    return res;
-  }
+  return build_fcapi_string (FcNameUnparse (XFCPATTERN_PTR (pattern)));
 }
 
 DEFUN("fc-pattern-duplicate", Ffc_pattern_duplicate, 1, 1, 0, /* 
@@ -426,8 +458,7 @@ Xft v.2:  encoding, charwidth, charheight, core, and render. */
 	case FcTypeString:
 	  return ((!NILP (type) && !EQ (type, Qstring))
 		  ? Qfc_result_type_mismatch
-		  : build_ext_string ((Extbyte *) fc_value.u.s,
-				      Qfc_font_name_encoding));
+		  : build_fcapi_string (fc_value.u.s));
 	case FcTypeBool:
 	  return ((!NILP (type) && !EQ (type, Qboolean))
 		  ? Qfc_result_type_mismatch : fc_value.u.b ? Qt : Qnil);
@@ -466,16 +497,16 @@ given pattern, or an error code.  Possible error codes are
       (device, pattern))
 {
   FcResult res;
+  struct fc_pattern *res_fcpat;
 
-  struct fc_pattern *res_fcpat =
-    ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
-  CHECK_FCPATTERN(pattern);	/* #### MEMORY LEAKS!!! */
+  CHECK_FCPATTERN(pattern);
   if (NILP(device))
     return Qnil;
   CHECK_X_DEVICE(device);
   if (!DEVICE_LIVE_P(XDEVICE(device)))
     return Qnil;
 
+  res_fcpat = ALLOC_LCRECORD_TYPE (struct fc_pattern, &lrecord_fc_pattern);
   {
     FcPattern *p = XFCPATTERN_PTR(pattern);
     FcConfig *fcc = FcConfigGetCurrent ();
