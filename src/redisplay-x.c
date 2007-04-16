@@ -145,7 +145,8 @@ separate_textual_runs_nomule (unsigned char *text_storage,
   run_storage[0].dimension = 1;
   run_storage[0].charset = Qnil;
 
-  memcpy (text_storage, str, len);
+  while (len--)
+    *text_storage++ = *str++;
   return 1;
 }
 #endif

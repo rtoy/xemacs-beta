@@ -1,3 +1,8 @@
+2007-04-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* redisplay-x.c (separate_textual_runs_nomule): Oops.  We agreed
+	that memcpy didn't work, and used it anyway.  Fix it.
+
 2007-04-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* font-mgr.c: Update FSF copyrights.
