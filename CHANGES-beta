@@ -80,7 +80,7 @@ Build Infrastructure
 -- improve: Refactor Canna detection -- Stephen J. Turnbull
 -- improve: Setup kit configuration -- Vin Shelton
 improvement -- debugger init sources can use XCOMM convention
--- new: Check for utilities that are not on "normal" Solaris PATH -- Stephen J. Turnbul, S L Baur
+-- new: Check for utilities that are not on "normal" Solaris PATH -- Stephen J. Turnbull, S L Baur
 
 Documentation
 
@@ -94,7 +94,7 @@ Documentation
 -- new: Describe X errors when using ssh in PROBLEMS -- Malcolm Purvis
 -- new: Describe XFree86 crash in PROBLEMS -- Stephen J. Turnbull, Aidan Kehoe
 -- new: Describe how X11R7 loses x11/bitmaps/gray in PROBLEMS -- Stephen J. Turnbull
--- update: Addresses in files and ChangeLogs -- Adrian Aichner, Stepohen J. Turnbull
+-- update: Addresses in files and ChangeLogs -- Adrian Aichner, Stephen J. Turnbull
 
 Lisp API
 
@@ -105,7 +105,7 @@ Lisp API
 -- improve: Reorganize Mule lisp -- Aidan Kehoe
 -- new:	ccl-compile-mule-to-unicode, ccl-compile-unicode-to-mule, ccl-dump-mule-to-unicode, ccl-dump-unicode-to-mule -- Aidan Kehoe
 -- new: deprecate set-charset-registry, charset-registry -- Aidan Kehoe
--- new: font-lock-keywords-alist, font-lock-removed-keywords-alist,  font-lock-add-keywords, font-lock-update-removed-keyword-alist, font-lock-remove-keywords -- Aidrian Aichner
+-- new: font-lock-keywords-alist, font-lock-removed-keywords-alist,  font-lock-add-keywords, font-lock-update-removed-keyword-alist, font-lock-remove-keywords -- Adrian Aichner
 -- new: set-charset-registries, charset-registries -- Aidan Kehoe
 -- update: Sync font-lock-add-keywords and font-lock-remove-keywords from GNU Emacs. -- Adrian Aichner
 
@@ -257,7 +257,7 @@ Documentation
 
 -- Improve: comments. -- Aidan Kehoe, Stephen Turnbull
 -- New: node on keyboards with which one can't type Latin. -- Aidan Kehoe
--- Update: Info docs for new package-path configuratin syntax. -- Mike Sperber
+-- Update: Info docs for new package-path configuration syntax. -- Mike Sperber
 
 Lisp API
 
@@ -281,7 +281,7 @@ Internal API and Implementation
 to 21.5.24 "dandelion"
 Major features
 
--- New: Xft font support. -- Stephen J. Turnbull, Aidan Kehoe, Daniel Pittman, Clemens Fruhwirth, Eric Knauel, Matthias Neuebaur, Hrvoje Niksic, Olivier Galibert
+-- New: Xft font support. -- Stephen J. Turnbull, Aidan Kehoe, Daniel Pittman, Clemens Fruhwirth, Eric Knauel, Matthias Neubauer, Hrvoje Niksic, Olivier Galibert
 -- New: incremental garbage collector. -- Marcus Crestani
 
 User-Visible Bug Fixes and Minor Improvements
@@ -292,7 +292,7 @@ User-Visible Bug Fixes and Minor Improvements
 -- Improve: initializations depending on locale or language environment. -- Aidan Kehoe
 -- Update: etags to upstream 17.15. -- Malcolm Purvis
 -- Update: package download site list. -- Adrian Aichner
--- Update: X11 search pathes to include /usr(/local)/share/X11. -- Ville Skyttä
+-- Update: X11 search paths to include /usr(/local)/share/X11. -- Ville Skyttä
 
 Build Infrastructure
 
@@ -556,7 +556,7 @@ Documentation
 
 -- Improve: Update info/dir. -- Adrian Aichner
 -- Improve: Automate updating of release date in about.el. -- Stephen Turnbull
--- New: about.el entry for Simon Josefsson.  (Simon Joseffson
+-- New: about.el entry for Simon Josefsson.  (Simon Josefsson
 -- Fix: Typos.  (Adrian Aichner
 -- Improve: Sort memory usage report sections by usage. -- Adrian Aichner
 -- Improve: Glyphs documentation. -- Ben Wing
@@ -931,7 +931,7 @@ Internals
 -- char to Extbyte conversion in sysdll.c -- James.
 -- Return a Lisp_Object instead of a string in `dll_error' -- James.
 -- Make eval-related functions visible to modules -- James.
--- Allow specifying elisp function for waithing user input while displaying
+-- Allow specifying elisp function for waiting user input while displaying
      message while in minibuffer -- Golubev.
 -- Use OS_RELEASE=os_release_major*100+os_release_minor in s/sol2.h -- Buchholz.
 -- Add lrecord_memory_descriptions -- Crestani.
@@ -966,7 +966,7 @@ Build
 -- Add some extern "C" declarations for C++ module builds
      -- James.
 -- Add casts for C++ builds in mule-canna.c -- James.
--- Add type casts in database.c to satisy C++ compilers.
+-- Add type casts in database.c to satisfy C++ compilers.
 -- Log result summary of tests when the testsuite is running
      noninteractive -- Aichner.
 -- Add some tests for weak-lists -- Crestani, Kaltenbach.
@@ -1013,7 +1013,7 @@ Internals
 Lisp API
 
 -- New alias `apropos-customize' -> `customize-apropos' -- Aichner.
--- Remove unecessary arg from `pui-set-local-package-get-directory -- Youngs.
+-- Remove unnecessary arg from `pui-set-local-package-get-directory -- Youngs.
 -- New key bindings in mwheel.el -- Kyllingstad.
 -- Make `insert-directory' to be more like FSF version -- Sperber.
 -- Window configuration fixes in isearch code -- Sperber.
@@ -1146,7 +1146,7 @@ Documentation
 -- Updates to
 	INSTALL -- Turnbull, Wing.
 	PROBLEMS -- Turnbull, Wing.
--- Global substition of .Xresources for .Xdefaults -- Turnbull.
+-- Global substitution of .Xresources for .Xdefaults -- Turnbull.
 -- Update packages in ./etc/BETA -- Skyttä.
 -- Doc string updates -- Korytov, Turnbull, Wing.
 -- TeXinfo updates -- Aichner, Turnbull, Wing, Youngs.
@@ -1246,7 +1246,7 @@ Build
 -- Updates to test suite -- Turnbull.
 -- Use -no-autoloads with update-elc-2 -- Wing.
 -- Check for strupr and strlwr -- Sperber.
--- Delete auto-autoloads.el* & cutom-load.el* files on make clean -- Turnbull.
+-- Delete auto-autoloads.el* & custom-load.el* files on make clean -- Turnbull.
 -- Fix --srcdir processing -- Turnbull.
 -- Define DLSYM_NEEDS_UNDERSCORE on Darwin -- Turnbull.
 -- Use opsys=aix4-2 for AIX 5 and above -- Buchholz.
@@ -1369,7 +1369,7 @@ Lisp API
 -- Reorganise Help -> Info submenu -- Wing.
 -- Fix bug when end > start in text-props -- Wing.
 -- Fix walk-windows -- Wing.
--- Fix for call to set-language-unicode-precedence-list -- Nyyss~nen.
+-- Fix for call to set-language-unicode-precedence-list -- Nyyssönen.
 -- Synch up byte-optimize.el -- Wing.
 -- Include FUNLIST argument to generate-c-file-autoloads-1 -- Wing.
 
@@ -1438,7 +1438,7 @@ Documentation
 -- Typo fixes -- Yamaoka, Youngs, Turnbull, Wing.
 -- Docstring fixes -- Turnbull, Piper, Skyttä, Wing.
 -- Update description of XEmacs Patches and Design ML's -- Turnbull.
--- Incorportate ChangeLog.X into ChangeLog -- Wing.
+-- Incorporate ChangeLog.X into ChangeLog -- Wing.
 -- FAQ additions/amendments:
 	Debugging FAQ improvements -- Wing.
 	Mention union type bugs -- Turnbull.
@@ -1505,7 +1505,7 @@ Internals
 -- Update specifier code -- Sperber.
 -- Update process code -- Sperber.
 -- Move ldap/postgresql code out to DSO's -- James.
--- Normalise Ffile_truename and drive spec on cygwing to win32 format
+-- Normalise Ffile_truename and drive spec on cygwin to win32 format
      -- Piper.
 -- Use 'closesocket' instead of 'CloseHandle' in 'winsock_closer' -- Alexander.
 -- Coding system updates -- Ikiuo.
