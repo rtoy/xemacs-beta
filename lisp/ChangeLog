@@ -1,3 +1,29 @@
+2007-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cus-face.el (custom-set-face-update-spec):
+	Fix some formatting. 
+	* faces.el (reset-face):
+	reset-face resets other faces to behave like the default face--it
+	shouldn't do anything if it's handed the default face. 
+	* font-menu.el:
+	* font-menu.el (font-menu-set-font):
+	If the font was initialised from X resources (the tag-set
+	contains 'x-resource) pretend to Custom that it has
+	responsibility for those settings.
+	* x-faces.el:
+	Add a couple of fontconfig functions to the
+	globally-declare-fboundp, to eliminate a couple of byte-compile
+	warnings. 
+	* x-faces.el ('x-resource)): New specifier tag, used to mark when
+	a face's font or other attributes have been initialised from X
+	resources. 
+	* x-faces.el (x-init-face-from-resources):
+	Use the new specifier tag; also, instead of using a fragile
+	explicit list of what would incidentally be specified for the X11
+	Unicode fonts in faces.c, pay attention to the new specifier tag
+	created in that file for the specific purpose of grouping those
+	instantiators together. 
+
 2007-04-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* x-font-menu.el (x-reset-device-font-menus-core):

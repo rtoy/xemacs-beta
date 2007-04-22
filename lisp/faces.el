@@ -398,10 +398,10 @@ operation and is not undoable.
 
 The arguments LOCALE, TAG-SET and EXACT-P are the same as for
 `remove-specifier'."
-  (mapc (lambda (x)
-	  (remove-specifier (face-property face x) locale tag-set exact-p))
-	built-in-face-specifiers)
-  nil)
+  ;; Don't reset the default face. 
+  (unless (eq 'default face)
+    (dolist (x built-in-face-specifiers nil)
+      (remove-specifier (face-property face x) locale tag-set exact-p))))
 
 (defun set-face-parent (face parent &optional locale tag-set how-to-add)
   "Set the parent of FACE to PARENT, for all properties.

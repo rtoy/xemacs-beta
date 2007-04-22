@@ -365,13 +365,32 @@ or if you change your font path, you can call this to re-initialize the menus."
 			      (/ (or size from-size)
 				 (specifier-instance font-menu-size-scaling
 						     (selected-device))))
-			     "pt"))))
+			     "pt")))
+            new-spec-list)
+        ;; If the font was initialised from X resources (the tag-set
+        ;; contains 'x-resource) pretend to Custom that it has
+        ;; responsibility for those settings.
+        (map-specifier (face-font 'default)
+                       (lambda (spec locale inst-list arg)
+                         (loop
+                           for (tag-set . inst)
+                           in inst-list
+                           do (setq tag-set (delq 'x-resource tag-set)
+                                    tag-set (delq 'custom tag-set)
+                                    tag-set (cons 'custom tag-set))
+                           (push (cons tag-set inst) new-spec-list)
+                           ;; Need to return nil, else map-specifier stops
+                           finally return nil))
+                       nil nil '(x-resource))
+        (remove-specifier (face-font 'default) nil '(x-resource))
+        (when new-spec-list
+          (add-spec-list-to-specifier (face-font 'default)
+                                      (list (cons 'global new-spec-list))))
 	(custom-set-face-update-spec 'default
 				     (list (list 'type (device-type)))
 				     (list :family (or family from-family)
 					   :size fsize))))
     (message "Font %s" (face-font-name 'default))))
-
 
 ;; #### This should be called `font-menu-maybe-change-face'
 ;; I wonder if a better API wouldn't (face attribute from to)

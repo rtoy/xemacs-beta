@@ -1,3 +1,12 @@
+2007-01-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* faces.c:
+	* faces.c (syms_of_faces):
+	* faces.c (complex_vars_of_faces):
+	New symbol and corresponding specifier tag,
+	x-coverage-instantiator, used to group those fonts used for their
+	extensive coverage for obscure characters in x-faces.el. 
+
 2007-04-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* redisplay-x.c (separate_textual_runs_nomule): Oops.  We agreed

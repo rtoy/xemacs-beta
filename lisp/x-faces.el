@@ -74,11 +74,11 @@
      fc-font-name-slant-oblique   fc-font-name-slant-italic
      fc-font-name-slant-roman))
   (globally-declare-fboundp
-    '(fc-pattern-del-size   fc-pattern-get-size   fc-pattern-add-size
-      fc-pattern-del-style  fc-pattern-duplicate  fc-copy-pattern-partial
-      fc-pattern-add-weight fc-pattern-del-weight fc-try-font          
-      fc-pattern-del-slant  fc-pattern-add-slant  fc-name-unparse
-      fc-pattern-get-pixelsize)))
+    '(fc-font-match fc-pattern-del-size fc-pattern-get-size
+      fc-pattern-add-size fc-pattern-del-style fc-pattern-duplicate
+      fc-copy-pattern-partial fc-pattern-add-weight fc-pattern-del-weight
+      fc-try-font fc-pattern-del-slant fc-pattern-add-slant fc-name-parse
+      fc-name-unparse fc-pattern-get-pixelsize)))
 
 (defconst x-font-regexp nil)
 (defconst x-font-regexp-head nil)
@@ -653,6 +653,9 @@ Otherwise, it returns the next larger version of this font that is defined."
 ;;; state where signalling an error or entering the debugger would likely
 ;;; result in a crash.
 
+;; When we initialise a face from an X resource, note that we did so. 
+(define-specifier-tag 'x-resource)
+
 (defun x-init-face-from-resources (face &optional locale set-anyway)
 
   ;;
@@ -681,6 +684,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 	 ;; specs.
 	 (x-tag-set '(x default))
 	 (tty-tag-set '(tty default))
+         (our-tag-set '(x x-resource))
 	 (device-class nil)
 	 (face-sym (face-name face))
 	 (name (symbol-name face-sym))
@@ -738,7 +742,8 @@ Otherwise, it returns the next larger version of this font that is defined."
     (if device-class
 	(setq tag-set (cons device-class tag-set)
 	      x-tag-set (cons device-class x-tag-set)
-	      tty-tag-set (cons device-class tty-tag-set)))
+	      tty-tag-set (cons device-class tty-tag-set)
+              our-tag-set (cons device-class our-tag-set)))
 
     ;;
     ;; If this is the default face, then any unspecified properties should
@@ -782,28 +787,22 @@ Otherwise, it returns the next larger version of this font that is defined."
 	;; globally.  This means we should override global
 	;; defaults for all X device classes.
 	(remove-specifier (face-font face) locale x-tag-set nil))
-      (set-face-font face fn locale 'x append)
-      ;
-      ; (debug-print "the face is %s, locale %s, specifier %s"
-      ;	       face locale (face-font face))
-      ;
+      (set-face-font face fn locale our-tag-set append)
+
       ;; And retain some of the fallbacks in the generated default face,
       ;; since we don't want to try andale-mono's ISO-10646-1 encoding for
-      ;; Amharic or Thai. This is fragile; it depends on the code in
-      ;; faces.c.
-      (unless (featurep 'xft-fonts)
-        (dolist (assocked '((x encode-as-utf-8 initial)
-                            (x two-dimensional initial)
-                            (x one-dimensional final)
-                            (x two-dimensional final)))
-          (when (and (specifierp (face-font face))
-                     (consp (specifier-fallback (face-font face)))
-                     (setq assocked 
-                           (assoc assocked 
-                                  (specifier-fallback
-                                   (face-font face)))))
-            (set-face-font face (cdr assocked) locale
-                           (nreverse (car assocked)) append)))))
+      ;; Amharic or Thai.
+      (when (and (specifierp (face-font face))
+                 (consp (specifier-fallback (face-font face))))
+        (loop
+          for (tag-set . instantiator)
+          in (specifier-fallback (face-font face))
+          if (memq 'x-coverage-instantiator tag-set)
+          do (add-spec-list-to-specifier
+              (face-font face)
+              (list (cons (or locale 'global)
+                          (list (cons tag-set instantiator))))
+              append))))
 		     
     ;; Kludge-o-rooni.  Set the foreground and background resources for
     ;; X devices only -- otherwise things tend to get all messed up
@@ -814,14 +813,14 @@ Otherwise, it returns the next larger version of this font that is defined."
 							locale
 							x-tag-set)
 	(remove-specifier (face-foreground face) locale x-tag-set nil))
-      (set-face-foreground face fg locale 'x append))
+      (set-face-foreground face fg locale our-tag-set append))
     (when bg
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-background face)
 							locale
 							x-tag-set)
 	(remove-specifier (face-background face) locale x-tag-set nil))
-      (set-face-background face bg locale 'x append))
+      (set-face-background face bg locale our-tag-set append))
     (when bgp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-background-pixmap
@@ -829,7 +828,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							locale
 							x-tag-set)
 	(remove-specifier (face-background-pixmap face) locale x-tag-set nil))
-      (set-face-background-pixmap face bgp locale nil append))
+      (set-face-background-pixmap face bgp locale our-tag-set append))
     (when ulp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
@@ -838,7 +837,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							tty-tag-set)
 	(remove-specifier (face-property face 'underline) locale
 			  tty-tag-set nil))
-      (set-face-underline-p face ulp locale nil append))
+      (set-face-underline-p face ulp locale our-tag-set append))
     (when stp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
@@ -847,7 +846,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							tty-tag-set)
 	(remove-specifier (face-property face 'strikethru)
 			  locale tty-tag-set nil))
-      (set-face-strikethru-p face stp locale nil append))
+      (set-face-strikethru-p face stp locale our-tag-set append))
     (when hp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
@@ -856,7 +855,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							tty-tag-set)
 	(remove-specifier (face-property face 'highlight)
 			  locale tty-tag-set nil))
-      (set-face-highlight-p face hp locale nil append))
+      (set-face-highlight-p face hp locale our-tag-set append))
     (when dp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
@@ -864,7 +863,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							locale
 							tty-tag-set)
 	(remove-specifier (face-property face 'dim) locale tty-tag-set nil))
-      (set-face-dim-p face dp locale nil append))
+      (set-face-dim-p face dp locale our-tag-set append))
     (when bp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
@@ -873,7 +872,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							tty-tag-set)
 	(remove-specifier (face-property face 'blinking) locale
 			  tty-tag-set nil))
-      (set-face-blinking-p face bp locale nil append))
+      (set-face-blinking-p face bp locale our-tag-set append))
     (when rp
       (if device-class
 	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
@@ -882,7 +881,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							tty-tag-set)
 	(remove-specifier (face-property face 'reverse) locale
 			  tty-tag-set nil))
-      (set-face-reverse-p face rp locale nil append))
+      (set-face-reverse-p face rp locale our-tag-set append))
     ))
 
 ;; GNU Emacs compatibility. (move to obsolete.el?)

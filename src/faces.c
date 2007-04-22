@@ -2011,7 +2011,7 @@ LOCALE, TAG-SET, EXACT-P, and HOW-TO-ADD are as in `copy-specifier'.
 
 #ifdef MULE
 
-Lisp_Object Qone_dimensional, Qtwo_dimensional;
+Lisp_Object Qone_dimensional, Qtwo_dimensional, Qx_coverage_instantiator;
 
 DEFUN ("specifier-tag-one-dimensional-p", 
        Fspecifier_tag_one_dimensional_p, 
@@ -2108,6 +2108,8 @@ syms_of_faces (void)
 #ifdef MULE
   DEFSYMBOL (Qone_dimensional);
   DEFSYMBOL (Qtwo_dimensional);
+  DEFSYMBOL (Qx_coverage_instantiator);
+
   /* I would much prefer these were in Lisp. */
   DEFSUBR (Fspecifier_tag_one_dimensional_p);
   DEFSUBR (Fspecifier_tag_two_dimensional_p);
@@ -2308,6 +2310,13 @@ complex_vars_of_faces (void)
 
     define_specifier_tag (Qencode_as_utf_8, Qnil,
 			  intern("specifier-tag-encode-as-utf-8-p"));
+
+    /* This tag is used to group those instantiators made available in the
+       fallback for the sake of coverage of obscure characters, notably
+       Markus Kuhn's misc-fixed fonts. They will be copied from the fallback
+       when the default face is determined from X resources at startup.  */
+    define_specifier_tag (Qx_coverage_instantiator, Qnil, Qnil);
+
 #endif /* MULE */
 
 #ifdef USE_XFT
@@ -2334,7 +2343,7 @@ complex_vars_of_faces (void)
     inst_list = 
       Fcons
       (Fcons
-       (list3(device_symbol, Qtwo_dimensional, Qfinal), 
+       (list4(device_symbol, Qtwo_dimensional, Qfinal, Qx_coverage_instantiator), 
 	build_string 
 	("-misc-fixed-medium-r-normal--15-140-75-75-c-90-iso10646-1")),
        inst_list);
@@ -2346,7 +2355,7 @@ complex_vars_of_faces (void)
     inst_list = 
       Fcons
       (Fcons
-       (list3(device_symbol, Qone_dimensional, Qfinal), 
+       (list4(device_symbol, Qone_dimensional, Qfinal, Qx_coverage_instantiator), 
 	build_string 
 	("-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1")), 
        inst_list);
@@ -2366,7 +2375,7 @@ complex_vars_of_faces (void)
     inst_list = 
       Fcons
       (Fcons
-       (list3(device_symbol, Qencode_as_utf_8, Qinitial), 
+       (list4(device_symbol, Qencode_as_utf_8, Qinitial, Qx_coverage_instantiator), 
 	build_string 
 	("-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1")), 
        inst_list);
