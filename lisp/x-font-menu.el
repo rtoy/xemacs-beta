@@ -157,7 +157,10 @@ or if you change your font path, you can call this to re-initialize the menus."
   ;; #### - this should implement a `menus-only' option, which would
   ;; recalculate the menus from the cache w/o having to do font-list again.
   (unless x-font-regexp-ascii
-    (setq x-font-regexp-ascii (elt (charset-registries 'ascii) 0)))
+    (setq x-font-regexp-ascii 
+          (if (fboundp 'charset-registries) 
+              (elt (charset-registries 'ascii) 0)
+            "iso8859-1")))
   (setq x-font-menu-registry-encoding
 	(if (featurep 'mule) "*-*" "iso8859-1"))
   (let ((case-fold-search t)

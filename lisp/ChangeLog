@@ -1,3 +1,9 @@
+2007-04-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-font-menu.el (x-reset-device-font-menus-core):
+	Only call charset-registries in the font menu if it's
+	available. Restores font menu functionality on non-Mule. 
+	
 2007-03-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* diagnose.el (show-object-memory-usage-stats): Fix docstring typo.
