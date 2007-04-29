@@ -739,7 +739,7 @@ If we have an instance object, we fetch the instantiator that generated the obje
   ;; OK), or `window-system' -- window system device types OK.
   (cond ((not devtype-spec) devtype)
 	((eq devtype-spec 'window-system)
-	 (and (not (memq devtype '(tty stream))) devtype))
+	 (and (not (memq devtype '(msprinter tty stream))) devtype))
 	(t (and (eq devtype devtype-spec) devtype))))
 
 (defun add-tag-to-inst-list (inst-list tag-set)
@@ -815,7 +815,10 @@ DEVTYPE-SPEC."
 					devtype-spec current-device)
   "Given a tag set, try (heuristically) to get a device type from it.
 
-There are three stages that this function proceeds through, each one trying
+If CURRENT-DEVICE is supplied, then this function either returns its type,
+in the event that it matches TAG-SET, or nil.
+
+Otherwise, there are three stages that it proceeds through, each one trying
 harder than the previous to get a value.  TRY-STAGES controls how many
 stages to try.  If nil or 1, only stage 1 is done; if 2; stages 1 and 2 are
 done; if 3, stages 1-3 are done; if t, all stages are done (currently 1-3).
@@ -847,39 +850,48 @@ DEVTYPE-SPEC flag; thus, it may return nil."
   (if (eq try-stages t) (setq try-stages 3))
   (check-argument-range try-stages 1 3)
   (flet ((delete-wrong-type (x)
-	   (delete-if-not
-	    #'(lambda (y)
-		(device-type-matches-spec y devtype-spec))
-	    x)))
-    (let ((both (intersection (device-type-list)
-			      (canonicalize-tag-set tag-set))))
+           (delete-if-not
+            #'(lambda (y)
+                (device-type-matches-spec y devtype-spec))
+            x)))
+    (let ((both (intersection 
+                 (if current-device
+                     (list (device-type current-device))
+                   (device-type-list))
+                 (canonicalize-tag-set tag-set))))
       ;; shouldn't be more than one (will fail), but whatever
       (if both (first (delete-wrong-type both))
-	(and (>= try-stages 2)
-	     ;; no device types mentioned.  try the hard way,
-	     ;; i.e. check each existing device to see if it will
-	     ;; pass muster.
-	     (let ((okdevs
-		    (delete-wrong-type
-		     (delete-duplicates
-		      (mapcan
-		       #'(lambda (dev)
-			   (and (device-matches-specifier-tag-set-p
-				 dev tag-set)
-				(list (device-type dev))))
-		       (device-list)))))
-		   (devtype (cond ((or (null devtype-spec)
-				       (eq devtype-spec 'window-system))
-				   (let ((dev (derive-domain-from-locale
-					       'global devtype-spec
-					       current-device)))
-				     (and dev (device-type dev))))
-				  (t devtype-spec))))
-	       (cond ((= 1 (length okdevs)) (car okdevs))
-		     ((< try-stages 3) nil)
-		     ((null okdevs) devtype)
-		     ((memq devtype okdevs) devtype)
-		     (t (car okdevs)))))))))
+        (and (>= try-stages 2) 
+             ;; no device types mentioned.  try the hard way,
+             ;; i.e. check each existing device (or the
+             ;; supplied device) to see if it will pass muster.
+             ;; 
+             ;; Further checking is not relevant if current-device was
+             ;; supplied.
+             (not current-device)
+             (let ((okdevs
+                    (delete-wrong-type
+                     (delete-duplicates
+                      (mapcan
+                       #'(lambda (dev)
+                           (and (device-matches-specifier-tag-set-p
+                                 dev tag-set)
+                                (list (device-type dev))))
+                       (if current-device 
+                           (list current-device)
+                         (device-list))))))
+                   (devtype (cond ((or (null devtype-spec)
+                                       (eq devtype-spec 'window-system))
+                                   (let ((dev (derive-domain-from-locale
+                                               'global devtype-spec
+                                               current-device)))
+                                     (and dev (device-type dev))))
+                                  (t devtype-spec))))
+               (cond ((= 1 (length okdevs)) (car okdevs))
+                     ((< try-stages 3) nil)
+                     ((null okdevs) devtype)
+                     ((memq devtype okdevs) devtype)
+                     (t (car okdevs)))))))))
 
 ;; Sheesh, the things you do to get "intuitive" behavior.
 (defun derive-device-type-from-locale-and-tag-set (locale tag-set
@@ -895,7 +907,6 @@ device matches the tag set, use its device type, else use some valid device
 type from the tag set.
 
 DEVTYPE-SPEC and CURRENT-DEVICE as in `derive-domain-from-locale'."
-
   (cond ((valid-specifier-domain-p locale)
 	 ;; if locale is a domain, then it must match DEVTYPE-SPEC,
 	 ;; or we exit immediately with nil.

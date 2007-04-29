@@ -1,3 +1,14 @@
+2007-04-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.el (device-type-matches-spec):
+	Add `msprinter' to the type of devices that are not window
+	systems. 
+	* specifier.el (derive-device-type-from-tag-set):
+	Remove a superflous empty line. 
+	* specifier.el (derive-device-type-from-locale-and-tag-set):
+	If CURRENT-DEVICE is provided, only ever return its type (if it
+	matches TAG-SET) or nil (if it doesn't).
+
 2007-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cus-face.el (custom-set-face-update-spec):
