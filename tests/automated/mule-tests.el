@@ -446,22 +446,23 @@ This is a naive implementation in Lisp.  "
   ;;---------------------------------------------------------------
   (with-temp-buffer
     (insert-file-contents (locate-data-file "HELLO"))
-    ;; #### rewrite robustly, both assume that the tested implementation
-    ;; uses the same algorithm as was used by the version current at time
-    ;; this test was written
-    (Assert (equal (charsets-in-region (point-min) (point-max))
-		   '(korean-ksc5601 chinese-big5-1 chinese-gb2312
-		     japanese-jisx0212 katakana-jisx0201 japanese-jisx0208
-		     vietnamese-viscii-lower thai-xtis cyrillic-iso8859-5
-		     hebrew-iso8859-8 greek-iso8859-7 latin-iso8859-1
-		     latin-iso8859-2 arabic-2-column arabic-1-column
-		     ethiopic ascii)))
-    (Assert (equal (charsets-in-string (buffer-substring (point-min)
+    (Assert (equal 
+             ;; The sort is to make the algorithm of charsets-in-region
+             ;; irrelevant.
+             (sort (charsets-in-region (point-min) (point-max))
+                   'string<)
+             '(arabic-1-column arabic-2-column ascii chinese-big5-1
+               chinese-gb2312 cyrillic-iso8859-5 ethiopic greek-iso8859-7
+               hebrew-iso8859-8 japanese-jisx0208 japanese-jisx0212
+               katakana-jisx0201 korean-ksc5601 latin-iso8859-1
+               latin-iso8859-2 thai-xtis vietnamese-viscii-lower)))
+    (Assert (equal 
+             (sort (charsets-in-string (buffer-substring (point-min)
 							 (point-max)))
-		   '(korean-ksc5601 chinese-big5-1 chinese-gb2312
-		     japanese-jisx0212 katakana-jisx0201 japanese-jisx0208
-		     vietnamese-viscii-lower thai-xtis cyrillic-iso8859-5
-		     hebrew-iso8859-8 greek-iso8859-7 latin-iso8859-1
-		     latin-iso8859-2 arabic-2-column arabic-1-column
-		     ethiopic ascii))))
+                   'string<)
+             '(arabic-1-column arabic-2-column ascii chinese-big5-1
+               chinese-gb2312 cyrillic-iso8859-5 ethiopic greek-iso8859-7
+               hebrew-iso8859-8 japanese-jisx0208 japanese-jisx0212
+               katakana-jisx0201 korean-ksc5601 latin-iso8859-1
+               latin-iso8859-2 thai-xtis vietnamese-viscii-lower))))
   )

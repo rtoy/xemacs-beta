@@ -1,3 +1,11 @@
+2007-04-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep):
+	Sort the results of charsets-in-region, charsets-in-string before
+	comparing them to the previously-determined list of character
+	sets. Eliminates a dependency on the algorithm
+	charsets-in-{region,string} uses. 
+
 2007-03-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/syntax-tests.el: Test for regression of bug fixed by
