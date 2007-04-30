@@ -80,6 +80,10 @@ Lisp_Object Vxft_version;
 /* Lisp_Object Vfc_version; */		/* #### Should have this, too! */
 Fixnum debug_xft;		/* Set to 1 enables lots of obnoxious messages.
 				   Setting it to 2 or 3 enables even more. */
+#ifdef FONTCONFIG_EXPOSE_CONFIG
+Lisp_Object Qfc_configp;
+static Lisp_Object Vfc_config_weak_list;
+#endif
 
 /****************************************************************
 *                       FcPattern objects                       *
@@ -529,9 +533,10 @@ given pattern, or an error code.  Possible error codes are
     return wrap_fcpattern(res_fcpat);
 }
 
-/* NOTE NOTE NOTE This function destroys the FcFontSet passed to it. */
+enum DestroyFontsetP { DestroyNo = 0, DestroyYes = 1 };
+
 static Lisp_Object
-fontset_to_list (FcFontSet *fontset)
+fontset_to_list (FcFontSet *fontset, enum DestroyFontsetP destroyp)
 {
   int idx;
   Lisp_Object fontlist = Qnil;
@@ -548,7 +553,8 @@ fontset_to_list (FcFontSet *fontset)
       fcpat->fcpatPtr = FcPatternDuplicate (fontset->fonts[idx]);
       fontlist = Fcons (wrap_fcpattern(fcpat), fontlist);
     }
-  FcFontSetDestroy (fontset);
+  if (destroyp)
+    FcFontSetDestroy (fontset);
   return fontlist;
 }
 
@@ -578,7 +584,7 @@ match other font-listing APIs. */
   fontset = FcFontList (NULL, XFCPATTERN_PTR (pattern), os);
   FcObjectSetDestroy (os);
 
-  return fontset_to_list (fontset);
+  return fontset_to_list (fontset, DestroyYes);
 
 }
 
@@ -614,9 +620,458 @@ match other font-listing APIs. */
     FcConfigSubstitute (fcc, p, FcMatchPattern);
     fontset = FcFontSort (fcc, p, !NILP(trim), NULL, &fcresult);
 
-    return fontset_to_list (fontset);
+    return fontset_to_list (fontset, DestroyYes);
   }
 }
+
+#ifdef FONTCONFIG_EXPOSE_CONFIG
+
+/* Configuration routines --- for debugging
+   Don't depend on these routines being available in the future!
+
+   3.2.10 Initialization
+   ---------------------
+
+   An FcConfig object holds the internal representation of a configuration.
+   There is a default configuration which applications may use by passing
+   0 to any function using the data within an FcConfig.
+*/
+
+static void
+finalize_fc_config (void *header, int UNUSED (for_disksave))
+{
+  struct fc_config *p = (struct fc_config *) header;
+  if (p->fccfgPtr && p->fccfgPtr != FcConfigGetCurrent())
+    {
+      /* If we get here, all of *our* references are garbage (see comment on
+	 fc_config_create_using() for why), and the only reference that
+	 fontconfig keeps is the current FcConfig. */
+      FcConfigDestroy (p->fccfgPtr);
+    }
+  p->fccfgPtr = 0;
+}
+
+static void
+print_fc_config (Lisp_Object obj, Lisp_Object printcharfun,
+		 int UNUSED(escapeflag))
+{
+  struct fc_config *c = XFCCONFIG (obj);
+  if (print_readably)
+    printing_unreadable_object ("#<fc-config 0x%x>", c->header.uid);
+  write_fmt_string (printcharfun, "#<fc-config 0x%x>", c->header.uid);
+}
+
+static const struct memory_description fcconfig_description [] = {
+  /* #### nothing here, is this right?? */
+  { XD_END }
+};
+
+DEFINE_LRECORD_IMPLEMENTATION("fc-config", fc_config, 0,
+			      0, print_fc_config, finalize_fc_config, 0, 0,
+			      fcconfig_description,
+			      struct fc_config);
+
+/* We obviously need to be careful about garbage collecting the current
+   FcConfig.  I infer from the documentation of FcConfigDestroy that that
+   is the only reference maintained by fontconfig.
+   So we keep track of our own references on a weak list, and only cons a
+   new object if we don't already have a reference to it there. */
+
+static Lisp_Object
+fc_config_create_using (FcConfig * (*create_function) ())
+{
+  FcConfig *fc = (*create_function) ();
+  Lisp_Object configs = XWEAK_LIST_LIST (Vfc_config_weak_list);
+
+  /* Linear search: fc_configs are not going to multiply like conses. */
+  {
+    LIST_LOOP_2 (cfg, configs)
+      if (fc == XFCCONFIG_PTR (cfg))
+	return cfg;
+  }
+
+  {
+    fc_config *fccfg =
+      ALLOC_LCRECORD_TYPE (struct fc_config, &lrecord_fc_config);
+    fccfg->fccfgPtr = fc;
+    configs = Fcons (wrap_fcconfig (fccfg), configs);
+    XWEAK_LIST_LIST (Vfc_config_weak_list) = configs;
+    return wrap_fcconfig (fccfg);
+  }
+}
+
+DEFUN("fc-config-p", Ffc_config_p, 1, 1, 0, /*
+Returns t if OBJECT is of type fc-config, nil otherwise.
+*/
+      (object))
+{
+  return FCCONFIGP (object) ? Qt : Qnil;
+}
+
+DEFUN("fc-config-create", Ffc_config_create, 0, 0, 0, /*
+ -- Function: FcConfig *FcConfigCreate (void)
+     Creates an empty configuration. */
+      ())
+{
+  return fc_config_create_using (&FcConfigCreate);
+}
+
+#if 0
+/* I'm sorry, but we just don't do this in Lisp, OK?
+   Don't even think about implementing this. */
+DEFUN("fc-config-destroy", Ffc_config_destroy, 1, 1, 0, /*
+ -- Function: void FcConfigDestroy (FcConfig *config)
+     Destroys a configuration and any data associated with it.  Note
+     that calling this function with the return value from
+     FcConfigGetCurrent will place the library in an indeterminate
+     state. */
+      (config))
+{
+  signal_error (Qunimplemented, "No user-servicable parts!",
+		intern ("fc-config-destroy");
+}
+#endif
+
+DEFUN("fc-config-get-current", Ffc_config_get_current, 0, 0, 0, /*
+ -- Function: FcConfig *FcConfigGetCurrent (void)
+     Returns the current default configuration. */
+      ())
+{
+  return fc_config_create_using (&FcConfigGetCurrent);
+}
+
+DEFUN("fc-config-up-to-date", Ffc_config_up_to_date, 1, 1, 0, /*
+ -- Function: FcBool FcConfigUptoDate (FcConfig *config)
+     Checks all of the files related to 'config' and returns whether the
+     in-memory version is in sync with the disk version. */
+      (config))
+{
+  CHECK_FCCONFIG (config);
+  return FcConfigUptoDate (XFCCONFIG_PTR (config)) == FcFalse ? Qnil : Qt;
+}
+
+DEFUN("fc-config-build-fonts", Ffc_config_build_fonts, 1, 1, 0, /*
+ -- Function: FcBool FcConfigBuildFonts (FcConfig *config)
+     Builds the set of available fonts for the given configuration.
+     Note that any changes to the configuration after this call have
+     indeterminate effects.  Returns FcFalse if this operation runs out
+     of memory.
+XEmacs: signal out-of-memory, or return nil on success. */
+      (config))
+{
+  CHECK_FCCONFIG (config);
+  if (FcConfigBuildFonts (XFCCONFIG_PTR (config)) == FcFalse)
+    out_of_memory ("FcConfigBuildFonts failed", config);
+  return Qnil;
+}
+
+/* Calls its argument on `config', which must be defined by the caller. */
+
+#define FCSTRLIST_TO_LISP_USING(source) do {			\
+  FcChar8 *thing;					\
+  FcStrList *thing_list;					\
+  Lisp_Object value = Qnil;				\
+  CHECK_FCCONFIG (config);				\
+  thing_list = source (XFCCONFIG_PTR(config));		\
+  /* Yes, we need to do this check -- sheesh, Keith! */	\
+  if (!thing_list)					\
+    return Qnil;					\
+  while ((thing = FcStrListNext (thing_list)))		\
+    value = Fcons (build_fcapi_string (thing), value);	\
+  FcStrListDone (thing_list);				\
+  return value;						\
+  } while (0)
+
+DEFUN("fc-config-get-config-dirs", Ffc_config_get_config_dirs, 1, 1, 0, /*
+ -- Function: FcStrList *FcConfigGetConfigDirs (FcConfig *config)
+     Returns the list of font directories specified in the
+     configuration files for 'config'.  Does not include any
+     subdirectories. */
+      (config))
+{
+  FCSTRLIST_TO_LISP_USING (FcConfigGetConfigDirs);
+}
+
+DEFUN("fc-config-get-font-dirs", Ffc_config_get_font_dirs, 1, 1, 0, /*
+ -- Function: FcStrList *FcConfigGetFontDirs (FcConfig *config)
+     Returns the list of font directories in 'config'. This includes the
+     configured font directories along with any directories below those
+     in the filesystem. */
+      (config))
+{
+  FCSTRLIST_TO_LISP_USING (FcConfigGetFontDirs);
+}
+
+DEFUN("fc-config-get-config-files", Ffc_config_get_config_files, 1, 1, 0, /*
+ -- Function: FcStrList *FcConfigGetConfigFiles (FcConfig *config)
+     Returns the list of known configuration files used to generate
+     'config'.  Note that this will not include any configuration done
+     with FcConfigParse. */
+      (config))
+{
+ FCSTRLIST_TO_LISP_USING (FcConfigGetConfigFiles);
+}
+
+#undef FCSTRLIST_TO_LISP_USING
+
+DEFUN("fc-config-get-cache", Ffc_config_get_cache, 1, 1, 0, /*
+ -- Function: char *FcConfigGetCache (FcConfig *config)
+     Returns the name of the file used to store per-user font
+     information. */
+      (config))
+{
+  CHECK_FCCONFIG (config);
+  /* Surely FcConfigGetCache just casts an FcChar8* to char*. */
+  return build_fcapi_string ((FcChar8 *) FcConfigGetCache (XFCCONFIG_PTR (config)));
+}
+
+DEFUN("fc-config-get-fonts", Ffc_config_get_fonts, 2, 2, 0, /*
+ -- Function: FcFontSet *FcConfigGetFonts (FcConfig *config, FcSetName set)
+     Returns one of the two sets of fonts from the configuration as
+     specified by 'set'.
+     `FcSetName'
+       Specifies one of the two sets of fonts available in a
+       configuration; FcSetSystem for those fonts specified in the
+       configuration and FcSetApplication which holds fonts provided by
+       the application. */
+      (config, set))
+{
+  FcSetName name = FcSetSystem;
+  FcFontSet *fs = NULL;
+
+  CHECK_FCCONFIG (config);
+  CHECK_SYMBOL (set);
+
+  if (EQ (set, intern ("fc-set-system")))
+    name = FcSetSystem;
+  else if (EQ (set, intern ("fc-set-application")))
+    name = FcSetApplication;
+  else
+    wtaerror ("must be in (fc-set-system fc-set-application)", set);
+
+  fs = FcConfigGetFonts (XFCCONFIG_PTR (config), name);
+  return fs ? fontset_to_list (fs, DestroyNo) : Qnil;
+}
+
+DEFUN("fc-config-set-current", Ffc_config_set_current, 1, 1, 0, /*
+ -- Function: FcBool FcConfigSetCurrent (FcConfig *config)
+     Sets the current default configuration to 'config'.  Implicitly
+     calls FcConfigBuildFonts if necessary, returning FcFalse if that
+     call fails.
+XEmacs: signals out-of-memory if FcConfigBuildFonts fails, or args-out-of-range
+if the resulting FcConfig has no fonts (which would crash XEmacs if installed).
+*/
+      (config))
+{
+  CHECK_FCCONFIG (config);
+  /* *sigh* "Success" DOES NOT mean you have any fonts available.  It is
+     easy to crash fontconfig, and XEmacs with it.  Without the following
+     check, this will do it:
+       (progn
+         (fc-config-set-current (fc-config-create))
+         (set-face-font 'default "serif-12"))
+  */
+  
+  if (FcConfigBuildFonts (XFCCONFIG_PTR (config)) == FcFalse)
+    out_of_memory ("FcConfigBuildFonts failed", config);
+  /* #### We'd like to avoid this consing, and FcConfigGetFonts sometimes
+     returns NULL, but it doesn't always.  This will do for now .... */
+  if (NILP (Ffc_config_get_fonts (config, intern ("fc-set-system")))
+      && NILP (Ffc_config_get_fonts (config, intern ("fc-set-application"))))
+    signal_error (intern ("args-out-of-range"), "no fonts found", config);
+  /* Should never happen, but I don't trust Keith anymore .... */
+  if (FcConfigSetCurrent (XFCCONFIG_PTR (config)) == FcFalse)
+    out_of_memory ("FcConfigBuildFonts failed in set", config);
+  return Qnil;
+}
+
+DEFUN("fc-config-get-blanks", Ffc_config_get_blanks, 1, 1, 0, /*
+ -- Function: FcBlanks *FcConfigGetBlanks (FcConfig *config)
+     Returns the FcBlanks object associated with the given
+     configuration, if no blanks were present in the configuration,
+     this function will return 0.
+XEmacs: should convert to a chartable.
+#### Unimplemented. */
+      (config))
+{
+  CHECK_FCCONFIG (config);
+  signal_error (Qunimplemented, "no method to convert FcBlanks object",
+		intern ("fc-config-get-blanks"));
+}
+
+/* The misspelling in the fontconfig function name accurately corresponds to
+   the version of fontconfig.h I had on 2007-04-13. -- sjt */
+DEFUN("fc-config-get-rescan-interval", Ffc_config_get_rescan_interval, 1, 1, 0, /*
+ -- Function: int FcConfigGetRescanInverval (FcConfig *config)
+     Returns the interval between automatic checks of the configuration
+     (in seconds) specified in 'config'.  The configuration is checked
+     during a call to FcFontList when this interval has passed since
+     the last check. */
+      (config))
+{
+  CHECK_FCCONFIG (config);
+  return make_int (FcConfigGetRescanInverval (XFCCONFIG_PTR (config)));
+}
+
+/* The misspelling in the fontconfig function name accurately corresponds to
+   the version of fontconfig.h I had on 2007-04-13. -- sjt */
+DEFUN("fc-config-set-rescan-interval", Ffc_config_set_rescan_interval, 2, 2, 0, /*
+ -- Function: FcBool FcConfigSetRescanInverval (FcConfig *config, int
+          rescanInterval)
+     Sets the rescan interval; returns FcFalse if an error occurred.
+     XEmacs: signal such error, or return nil on success. */
+      (config, rescan_interval))
+{
+  CHECK_FCCONFIG (config);
+  CHECK_INT (rescan_interval);
+  if (FcConfigSetRescanInverval (XFCCONFIG_PTR (config),
+				 XINT (rescan_interval)) == FcFalse)
+    signal_error (Qio_error, "FcConfigSetRescanInverval barfed",
+		  intern ("fc-config-set-rescan-interval"));
+  return Qnil;
+}
+
+/* #### This might usefully be made interactive. */
+DEFUN("fc-config-app-font-add-file", Ffc_config_app_font_add_file, 2, 2, 0, /*
+ -- Function: FcBool FcConfigAppFontAddFile (FcConfig *config, const
+          char *file)
+     Adds an application-specific font to the configuration. */
+      (config, file))
+{
+  CHECK_FCCONFIG (config);
+  CHECK_STRING (file);
+  if (FcConfigAppFontAddFile
+      (XFCCONFIG_PTR (config),
+       /* #### FIXME! is this really Qnative? */
+       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL ((file), Qnative)) == FcFalse)
+    return Qnil;
+  else
+    return Qt;
+}
+
+/* #### This might usefully be made interactive. */
+DEFUN("fc-config-app-font-add-dir", Ffc_config_app_font_add_dir, 2, 2, 0, /*
+ -- Function: FcBool FcConfigAppFontAddDir (FcConfig *config, const
+          char *dir)
+     Scans the specified directory for fonts, adding each one found to
+     the application-specific set of fonts. */
+      (config, dir))
+{
+  CHECK_FCCONFIG (config);
+  CHECK_STRING (dir);
+  if (FcConfigAppFontAddDir
+      (XFCCONFIG_PTR (config),
+       /* #### FIXME! is this really Qnative? */
+       (FcChar8 *) NEW_LISP_STRING_TO_EXTERNAL ((dir), Qnative)) == FcFalse)
+    return Qnil;
+  else
+    return Qt;
+}
+
+/* #### This might usefully be made interactive. */
+DEFUN("fc-config-app-font-clear", Ffc_config_app_font_clear, 1, 1, 0, /*
+ -- Function: void FcConfigAppFontClear (FcConfig *config)
+     Clears the set of application-specific fonts. */
+      (config))
+{
+  CHECK_FCCONFIG (config);
+  FcConfigAppFontClear (XFCCONFIG_PTR (config));
+  return Qnil;
+}
+
+/* These functions provide some control over how the default
+   configuration of the library is initialized.  (This configuration is
+   normally implicitly initialized.) */
+
+DEFUN("fc-config-filename", Ffc_config_filename, 1, 1, 0, /*
+ -- Function: char *FcConfigFilename (const char *name)
+     Given the specified external entity name, return the associated
+     filename.  This provides applications a way to convert various
+     configuration file references into filename form.
+
+     A null or empty 'name' indicates that the default configuration
+     file should be used; which file this references can be overridden
+     with the FC_CONFIG_FILE environment variable.  Next, if the name
+     starts with '~', it refers to a file in the current users home
+     directory.  Otherwise if the name doesn't start with '/', it
+     refers to a file in the default configuration directory; the
+     built-in default directory can be overridden with the
+     FC_CONFIG_DIR environment variable. */
+      (name))
+{
+  char *fcname = "";
+
+  if (!NILP (name))
+    {
+      CHECK_STRING (name);
+      /* #### FIXME! is this really Qnative? */
+      fcname = NEW_LISP_STRING_TO_EXTERNAL (name, Qnative);
+    }
+  return (build_fcapi_string (FcConfigFilename ((FcChar8 *) fcname)));
+}
+
+DEFUN("fc-init-load-config", Ffc_init_load_config, 0, 0, 0, /*
+ -- Function: FcConfig *FcInitLoadConfig (void)
+     Loads the default configuration file and returns the resulting
+     configuration.  Does not load any font information. */
+      ())
+{
+  return fc_config_create_using (&FcInitLoadConfig);
+}
+
+DEFUN("fc-init-load-config-and-fonts", Ffc_init_load_config_and_fonts, 0, 0, 0, /*
+ -- Function: FcConfig *FcInitLoadConfigAndFonts (void)
+     Loads the default configuration file and builds information about
+     the available fonts.  Returns the resulting configuration. */
+      ())
+{
+  return fc_config_create_using (&FcInitLoadConfigAndFonts);
+}
+
+DEFUN("fc-init", Ffc_init, 0, 0, 0, /*
+ -- Function: FcBool FcInit (void)
+     Loads the default configuration file and the fonts referenced
+     therein and sets the default configuration to that result.
+     Returns whether this process succeeded or not.  If the default
+     configuration has already been loaded, this routine does nothing
+     and returns FcTrue. */
+      ())
+{
+  return (FcInit () == FcTrue) ? Qt : Qnil;
+}
+
+DEFUN("fc-get-version", Ffc_get_version, 0, 0, 0, /*
+ -- Function: int FcGetVersion (void)
+     Returns the version number of the library.
+     XEmacs:  No, this should NOT return a pretty string.
+     (let ((i (fc-get-version)))
+       (format "%d.%d.%d" (/ i 10000) (mod (/ i 100) 100) (mod i 100)))
+     gives the usual x.y.z format. */
+      ())
+{
+  return make_int (FcGetVersion ());
+}
+
+DEFUN("fc-init-reinitialize", Ffc_init_reinitialize, 0, 0, 0, /*
+ -- Function: FcBool FcInitReinitialize (void)
+     Forces the default configuration file to be reloaded and resets
+     the default configuration. */
+      ())
+{
+  return (FcInitReinitialize () == FcTrue) ? Qt : Qnil;
+}
+
+DEFUN("fc-init-bring-up-to-date", Ffc_init_bring_up_to_date, 0, 0, 0, /*
+ -- Function: FcBool FcInitBringUptoDate (void)
+     Checks the rescan interval in the default configuration, checking
+     the configuration if the interval has passed and reloading the
+     configuration when any changes are detected. */
+      ())
+{
+  return (FcInitBringUptoDate () == FcTrue) ? Qt : Qnil;
+}
+
+#endif /* FONTCONFIG_EXPOSE_CONFIG */
 
 DEFUN("xlfd-font-name-p", Fxlfd_font_name_p, 1, 1, 0, /*
 Check whether the string FONTNAME is a XLFD font name. */
@@ -764,6 +1219,40 @@ syms_of_font_mgr (void)
   DEFSUBR(Ffc_font_sort);
   DEFSUBR(Ffc_font_match);
   DEFSUBR(Fxlfd_font_name_p);
+
+#ifdef FONTCONFIG_EXPOSE_CONFIG
+  INIT_LRECORD_IMPLEMENTATION(fc_config);
+
+  DEFSYMBOL_MULTIWORD_PREDICATE(Qfc_configp);
+
+  DEFSUBR(Ffc_config_p);
+  DEFSUBR(Ffc_config_create);
+#if 0
+  DEFSUBR(Ffc_config_destroy);
+#endif
+  DEFSUBR(Ffc_config_set_current);
+  DEFSUBR(Ffc_config_get_current);
+  DEFSUBR(Ffc_config_up_to_date);
+  DEFSUBR(Ffc_config_build_fonts);
+  DEFSUBR(Ffc_config_get_config_dirs);
+  DEFSUBR(Ffc_config_get_font_dirs);
+  DEFSUBR(Ffc_config_get_config_files);
+  DEFSUBR(Ffc_config_get_cache);
+  DEFSUBR(Ffc_config_get_fonts);
+  DEFSUBR(Ffc_config_get_blanks);
+  DEFSUBR(Ffc_config_get_rescan_interval);
+  DEFSUBR(Ffc_config_set_rescan_interval);
+  DEFSUBR(Ffc_config_app_font_add_file);
+  DEFSUBR(Ffc_config_app_font_add_dir);
+  DEFSUBR(Ffc_config_app_font_clear);
+  DEFSUBR(Ffc_config_filename);
+  DEFSUBR(Ffc_init_load_config);
+  DEFSUBR(Ffc_init_load_config_and_fonts);
+  DEFSUBR(Ffc_init);
+  DEFSUBR(Ffc_get_version);
+  DEFSUBR(Ffc_init_reinitialize);
+  DEFSUBR(Ffc_init_bring_up_to_date);
+#endif /* FONTCONFIG_EXPOSE_CONFIG */
 }
 
 void
@@ -791,6 +1280,11 @@ The major version number of the Xft library being used.
 void
 complex_vars_of_font_mgr (void)
 {
+#ifdef FONTCONFIG_EXPOSE_CONFIG
+  Vfc_config_weak_list = make_weak_list (WEAK_LIST_SIMPLE);
+  staticpro (&Vfc_config_weak_list);
+#endif
+
   DEFVAR_LISP("xft-xlfd-font-regexp", &Vxlfd_font_name_regexp /*
 The regular expression used to match XLFD font names. */			       
 	      );

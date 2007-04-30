@@ -14,6 +14,54 @@
 
 2007-04-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* font-mgr.c (DestroyFontsetP): New enum.
+	* font-mgr.c (fontset_to_list): Add destroyp argument of that type.
+	* font-mgr.c (Ffc_font_list): Add argument.
+	* font-mgr.c (Ffc_font_sort): Add argument.
+
+	* font-mgr.h (fc_config): Declare new Lisp object type.
+	* font-mgr.c (print_fc_config):
+	* font-mgr.c (finalize_fc_config):
+	* font-mgr.c (fc_config_p):
+	* font-mgr.c (Qfc_configp):
+	 Implement it.
+	* font-mgr.c (syms_of_font_mgr):
+	* font-mgr.c (complex_vars_of_font_mgr):
+	* lrecord.h (lrecord_type_fc_config):
+	Initialize it.
+
+	* font-mgr.c (fc_config_create_using): New helper function.
+	* font-mgr.c (FCSTRLIST_TO_LISP_USING): New helper macro.
+	* font-mgr.c (Vfc_config_weak_list): Manage references to FcConfigs.
+
+	* font-mgr.c (Ffc_get_version):
+	* font-mgr.c (Ffc_config_create):
+	* font-mgr.c (Ffc_config_get_current):
+	* font-mgr.c (Ffc_config_set_current):
+	* font-mgr.c (Ffc_config_up_to_date):
+	* font-mgr.c (Ffc_config_build_fonts):
+	* font-mgr.c (Ffc_config_get_config_dirs):
+	* font-mgr.c (Ffc_config_get_font_dirs):
+	* font-mgr.c (Ffc_config_get_config_files):
+	* font-mgr.c (Ffc_config_get_cache):
+	* font-mgr.c (Ffc_config_get_rescan_interval):
+	* font-mgr.c (Ffc_config_set_rescan_interval):
+	* font-mgr.c (Ffc_config_app_font_add_file):
+	* font-mgr.c (Ffc_config_app_font_add_dir):
+	* font-mgr.c (Ffc_config_app_font_clear):
+	* font-mgr.c (Ffc_config_filename):
+	* font-mgr.c (Ffc_init_load_config):
+	* font-mgr.c (Ffc_init_load_config_and_fonts):
+	* font-mgr.c (Ffc_init):
+	* font-mgr.c (Ffc_init_reinitialize):
+	Implemented operations.
+	
+	* font-mgr.c (Ffc_config_destroy):
+	* font-mgr.c (Ffc_config_get_blanks):
+	Stub operations.
+
+2007-04-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* font-mgr.c: Update FSF copyrights.
 
 	* font-mgr.c (print_fc_pattern): New facility for fc-pattern

@@ -211,6 +211,7 @@ struct free_lcrecord_header
 };
 #endif /* not NEW_GC */
 
+/* DON'T FORGET to update .gdbinit.in if you change this list. */
 enum lrecord_type
 {
   /* Symbol value magic types come first to make SYMBOL_VALUE_MAGIC_P fast.
@@ -279,6 +280,7 @@ enum lrecord_type
   lrecord_type_image_instance,
   lrecord_type_glyph,
   lrecord_type_face,
+  lrecord_type_fc_config,
   lrecord_type_fc_pattern,
   lrecord_type_database,
   lrecord_type_tooltalk_message,

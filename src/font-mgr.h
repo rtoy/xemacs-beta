@@ -68,6 +68,27 @@ DECLARE_LRECORD(fc_pattern, struct fc_pattern);
 #define CONCHECK_FCPATTERN(x) CONCHECK_RECORD (x, fc_pattern)
 #define XFCPATTERN_PTR(x) (XFCPATTERN(x)->fcpatPtr)
 
+#define FONTCONFIG_EXPOSE_CONFIG
+#ifdef FONTCONFIG_EXPOSE_CONFIG
+
+struct fc_config
+{
+  struct LCRECORD_HEADER header;
+  FcConfig *fccfgPtr;
+};
+
+typedef struct fc_config fc_config;
+
+DECLARE_LRECORD(fc_config, struct fc_config);
+#define XFCCONFIG(x) XRECORD (x, fc_config, struct fc_config)
+#define wrap_fcconfig(p) wrap_record (p, fc_config)
+#define FCCONFIGP(x) RECORDP (x, fc_config)
+#define CHECK_FCCONFIG(x) CHECK_RECORD (x, fc_config)
+#define CONCHECK_FCCONFIG(x) CONCHECK_RECORD (x, fc_config)
+#define XFCCONFIG_PTR(x) (XFCCONFIG(x)->fccfgPtr)
+
+#endif /* FONTCONFIG_EXPOSE_CONFIG */
+
 #ifdef USE_XFT
 /*
   The format of a fontname (as returned by fontconfig) is not well-documented,
