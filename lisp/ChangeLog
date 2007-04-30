@@ -1,3 +1,21 @@
+2007-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* simple.el (raw-append-message):
+	Improve resizing of echo area --- now obeys resize-minibuffer
+	conventions.
+
+	* resize-minibuffer.el (resize-minibuffer-idle-height): New.
+	* simple.el (undisplay-echo-area-resize-window-allowed): New.
+	* simple.el (undisplay-echo-area-resize-window): New.
+	Add function to shrink echo area when idle.  (incomplete)
+
+	* simple.el (log-message-ignore-regexps):
+	* simple.el (undisplay-echo-area-function):
+	* simple.el (clear-message):
+	* simple.el (append-message):
+	* simple.el (display-message):
+	Improve docstrings.
+
 2007-04-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* specifier.el (device-type-matches-spec):

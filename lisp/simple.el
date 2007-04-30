@@ -4127,9 +4127,10 @@ as the second argument.")
   "List of regular expressions matching messages which shouldn't be logged.
 See `log-message'.
 
-Ideally, packages which generate messages which might need to be ignored
-should label them with 'progress, 'prompt, or 'no-log, so they can be
-filtered by the log-message-ignore-labels."
+Adding entries to this list slows down messaging significantly.  Wherever
+possible, messages which might need to be ignored should be labeled with
+'progress, 'prompt, or 'no-log, so they can be filtered by
+log-message-ignore-labels."
   :type '(repeat regexp)
   :group 'log-message)
 
@@ -4146,9 +4147,39 @@ See `display-message' for some common labels.  See also `log-message'."
 :group 'log-message)
 
 (defcustom undisplay-echo-area-function nil
-  "The function to call to undisplay echo area buffer."
-:type 'function
-:group 'log-message)
+  "The function to call to undisplay echo area buffer.
+WARNING: any problem with your function is likely to result in an
+uninterruptible infinite loop.  Use of custom functions is therefore not
+recommended."
+  :type '(choice (const nil)
+		 function)
+  :group 'log-message)
+
+(defvar undisplay-echo-area-resize-window-allowed t
+  "INTERNAL USE ONLY.
+Guards against `undisplay-echo-area-resize-window' infloops.
+Touch this at your own risk.")
+
+(defun undisplay-echo-area-resize-window ()
+  "Resize idle echo area window to `resize-minibuffer-idle-height'.
+If either `resize-minibuffer-idle-height' or `resize-minibuffer-mode' is nil,
+does nothing.  If `resize-minibuffer-window-exactly' is non-nil, always resize
+to this height exactly, otherwise if current height is no larger than this,
+leave it as is."
+  (when (default-value undisplay-echo-area-resize-window-allowed)
+    (setq-default undisplay-echo-area-resize-window-allowed nil)
+    (let* ((mbw (minibuffer-window))
+	   (height (window-height mbw)))
+      (with-boundp '(resize-minibuffer-idle-height)
+	(and resize-minibuffer-mode
+	     (numberp resize-minibuffer-idle-height)
+	     (> resize-minibuffer-idle-height 0)
+	     (unless (if resize-minibuffer-window-exactly
+			 (= resize-minibuffer-idle-height height)
+		       (<= resize-minibuffer-idle-height height))
+	       (enlarge-window (- resize-minibuffer-idle-height height)
+			       nil mbw))))
+      (setq-default undisplay-echo-area-resize-window-allowed t))))
 
 ;;Subsumed by view-lossage
 ;; Not really, I'm adding it back by popular demand. -slb
@@ -4235,6 +4266,9 @@ If a message remains at the head of the message-stack and NO-RESTORE
 is nil, it will be displayed.  The string which remains in the echo
 area will be returned, or nil if the message-stack is now empty.
 If LABEL is nil, the entire message-stack is cleared.
+STDOUT-P is ignored, except for output to stream devices.  For streams,
+STDOUT-P non-nil directs output to stdout, otherwise to stderr.  \(This is
+used only in case of restoring an earlier message from the stack.)
 
 Unless you need the return value or you need to specify a label,
 you should just use (message nil)."
@@ -4293,13 +4327,19 @@ you should just use (message nil)."
       (setq log (cdr log)))))
 
 (defun append-message (label message &optional frame stdout-p)
+  "Add MESSAGE to the message-stack, or append it to the existing text.
+LABEL is the class of the message.  If it is the same as that of the top of
+the message stack, MESSAGE is appended to the existing message, otherwise
+it is pushed on the stack.
+FRAME determines the minibuffer window to send the message to.
+STDOUT-P is ignored, except for output to stream devices.  For streams,
+STDOUT-P non-nil directs output to stdout, otherwise to stderr."
   (or frame (setq frame (selected-frame)))
   ;; If outputting to the terminal, make sure output from anyone else clears
   ;; the left side first, but don't do it ourselves, otherwise we won't be
   ;; able to append to an existing message.
   (if (eq 'stream (frame-type frame))
       (set-device-clear-left-side (frame-device frame) nil))
-  ;; Add a new entry to the message-stack, or modify an existing one
   (let ((top (car message-stack)))
     (if (eq label (car top))
 	(setcdr top (concat (cdr top) message))
@@ -4308,31 +4348,60 @@ you should just use (message nil)."
   (if (eq 'stream (frame-type frame))
       (set-device-clear-left-side (frame-device frame) t)))
 
-;; Really append the message to the echo area.  no fiddling with
+;; Really append the message to the echo area.  No fiddling with
 ;; message-stack.
 (defun raw-append-message (message &optional frame stdout-p)
   (unless (equal message "")
     (let ((inhibit-read-only t))
       (with-current-buffer " *Echo Area*"
 	(insert-string message)
-	;; (fill-region (point-min) (point-max))
-	(enlarge-window
-	 (- 
-	  (ceiling
-	   (/ (- (point-max) (point-min)) 
-	      (- (window-width (minibuffer-window)) 1.0)))
-	  (window-height (minibuffer-window)))
-	 nil (minibuffer-window)))
-      ;; Conditionalizing on the device type in this way is not that clean,
-      ;; but neither is having a device method, as I originally implemented
-      ;; it: all non-stream devices behave in the same way.  Perhaps
-      ;; the cleanest way is to make the concept of a "redisplayable"
-      ;; device, which stream devices are not.  Look into this more if
-      ;; we ever create another non-redisplayable device type (e.g.
-      ;; processes?  printers?).
+	;; #### This needs to be conditional; cf discussion by Stefan Monnier
+	;; et al on emacs-devel in mid-to-late April 2007.  One problem is
+	;; there is no known good way to guess whether the user wants to have
+	;; the echo area height changed on him asynchronously, especially
+	;; after message display.
+	;; There is also a problem where Lisp backtraces get sent to the echo
+	;; area, thus maxing out the window height.  Unfortunately, it doesn't
+	;; return to a reasonable size very quickly.
+	;; It is not clear that echo area and minibuffer behavior should be
+	;; linked as we do here.  It's OK for now; at least this obeys the
+	;; minibuffer resizing conventions which seem a pretty good guess
+	;; at user preference.
+	(when resize-minibuffer-mode
+	  ;; #### interesting idea, unbearable implementation
+	  ;; (fill-region (point-min) (point-max))
+	  ;;
+	  ;; #### We'd like to be able to do something like
+	  ;;
+	  ;;   (save-window-excursion
+	  ;;     (select-window (minibuffer-window frame))
+	  ;;     (resize-minibuffer-window))))
+	  ;;
+	  ;; but that can't work, because the echo area isn't a real window!
+	  ;; We should fix that, but this is an approximation, duplicating the
+	  ;; resize-minibuffer code.
+	  (let* ((mbw (minibuffer-window frame))
+		 (height (window-height mbw))
+		 (lines (ceiling (/ (- (point-max) (point-min))
+				    (- (window-width mbw) 1.0)))))
+	    (and (numberp resize-minibuffer-window-max-height)
+		 (> resize-minibuffer-window-max-height 0)
+		 (setq lines (min lines
+				  resize-minibuffer-window-max-height)))
+	    (or (if resize-minibuffer-window-exactly
+		    (= lines height)
+		  (<= lines height))
+		(enlarge-window (- lines height) nil mbw)))))
 
       ;; Don't redisplay the echo area if we are executing a macro.
       (if (not executing-kbd-macro)
+	  ;; Conditionalizing on the device type in this way isn't clean, but
+	  ;; neither is having a device method, as I originally implemented
+	  ;; it: all non-stream devices behave in the same way.  Perhaps
+	  ;; the cleanest way is to make the concept of a "redisplayable"
+	  ;; device, which stream devices are not.  Look into this more if
+	  ;; we ever create another non-redisplayable device type (e.g.
+	  ;; processes?  printers?).
 	  (if (eq 'stream (frame-type frame))
 	      (send-string-to-terminal message stdout-p (frame-device frame))
 	    (funcall redisplay-echo-area-function))))))
@@ -4341,6 +4410,8 @@ you should just use (message nil)."
   "Print a one-line message at the bottom of the frame.  First argument
 LABEL is an identifier for this message.  MESSAGE is the string to display.
 Use `clear-message' to remove a labelled message.
+STDOUT-P is ignored, except for output to stream devices.  For streams,
+STDOUT-P non-nil directs output to stdout, otherwise to stderr.
 
 Here are some standard labels (those marked with `*' are not logged
 by default--see the `log-message-ignore-labels' variable):
