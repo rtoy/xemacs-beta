@@ -17540,7 +17540,7 @@ and @file{glyphs-@var{console-type}} series of modules have nothing to
 do with Lisp objects and little to do with redisplay, respectively.
 Rather they implement abstractions used for rendering on each console
 type, such as fonts and colors (@file{objects}) and string and graphics
-drawing primitives (@file{rendering}).  These modules are conceptually
+drawing primitives (@file{redisplay}).  These modules are conceptually
 part of the console implementations, not part of redisplay or Lisp.
 
 Public methods of a console are implemented as C functions declared

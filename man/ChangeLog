@@ -1,3 +1,8 @@
+2007-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Creating a New Console/Device/Frame Type):
+	Typo fix.
+
 2007-01-01  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* internals/internals.texi (Ben's README): Use 'grep -F' instead
