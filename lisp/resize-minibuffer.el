@@ -36,7 +36,7 @@
 
 ;; This file has received maintenance by the XEmacs development team.
 
-;; $Id: resize-minibuffer.el,v 1.5 2007/04/30 16:16:51 stephent Exp $
+;; $Id: resize-minibuffer.el,v 1.6 2007/04/30 19:50:53 stephent Exp $
 
 ;; This package allows the entire contents (or as much as possible) of the
 ;; minibuffer to be visible at once when typing.  As the end of a line is
@@ -122,7 +122,6 @@ never get smaller while it is active."
   :group 'resize-minibuffer)
 
 
-;;;###autoload
 (defun resize-minibuffer-mode (&optional prefix)
   "Enable or disable resize-minibuffer mode.
 A negative prefix argument disables this mode.  A positive argument or

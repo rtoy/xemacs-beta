@@ -72,6 +72,7 @@ in dumped-lisp.el and is not itself listed.")
        "undo-stack"
        "window"		; simple needs `save-window-excursion'
        "window-xemacs"
+       "resize-minibuffer"	; simple needs `resize-minibuffer-mode'
        "simple"
        "newcomment"
        "keydefs"		; Before loaddefs so that keymap vars exist.
@@ -288,7 +289,6 @@ in dumped-lisp.el and is not itself listed.")
        "fontl-hooks"
        "auto-show"
        "paragraphs"             ; needs easy-mmode, coding
-       "resize-minibuffer"
        (when (featurep 'ldap) "ldap")
 
 ;; (when (featurep 'energize) "energize/energize-load.el")
