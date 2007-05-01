@@ -1,3 +1,11 @@
+2007-05-01  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* font-mgr.c (Qfontsetp): Remove unused declaration.
+	
+	* font-mgr.c (xft-version): Make it a DEFVAR_CONST_INT.
+
+	* font-mgr.c (fc-version): New: fontconfig.h version.
+
 2007-01-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* faces.c:

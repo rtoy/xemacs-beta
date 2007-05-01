@@ -69,15 +69,14 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Qfont_mgr;
 Lisp_Object Qfc_patternp;
-Lisp_Object Qfc_fontsetp;
 /* Lisp_Object Qfc_result_match; */ 	/* FcResultMatch */
 Lisp_Object Qfc_result_type_mismatch;	/* FcResultTypeMismatch */
 Lisp_Object Qfc_result_no_match; 	/* FcResultNoMatch */
 Lisp_Object Qfc_result_no_id;		/* FcResultNoId */
 Lisp_Object Qfc_internal_error;
 Lisp_Object Vxlfd_font_name_regexp;	/* #### Really needed? */
-Lisp_Object Vxft_version;
-/* Lisp_Object Vfc_version; */		/* #### Should have this, too! */
+Fixnum xft_version;
+Fixnum fc_version;
 Fixnum debug_xft;		/* Set to 1 enables lots of obnoxious messages.
 				   Setting it to 2 or 3 enables even more. */
 #ifdef FONTCONFIG_EXPOSE_CONFIG
@@ -1043,10 +1042,12 @@ DEFUN("fc-init", Ffc_init, 0, 0, 0, /*
 DEFUN("fc-get-version", Ffc_get_version, 0, 0, 0, /*
  -- Function: int FcGetVersion (void)
      Returns the version number of the library.
-     XEmacs:  No, this should NOT return a pretty string.
+XEmacs:  No, this should NOT return a pretty string.
      (let ((i (fc-get-version)))
        (format "%d.%d.%d" (/ i 10000) (mod (/ i 100) 100) (mod i 100)))
-     gives the usual x.y.z format. */
+gives the usual x.y.z format.  This is the version of the .so.  It can be
+checked against `fc-version', which is the version of fontconfig.h.
+It's probably not a disaster if `(> (fc-get-version) fc-version)'. */
       ())
 {
   return make_int (FcGetVersion ());
@@ -1258,7 +1259,7 @@ syms_of_font_mgr (void)
 void
 vars_of_font_mgr (void)
 {
-  /* #### The next two functions belong somewhere else. */
+  /* #### The next two DEFVARs belong somewhere else. */
 
   /* #### I know, but the right fix is use the generic debug facility. */
   DEFVAR_INT ("xft-debug-level", &debug_xft /*
@@ -1269,10 +1270,17 @@ Higher levels give even more information.
 */ );
   debug_xft = 1;
 
-  DEFVAR_LISP("xft-version", &Vxft_version /*
+  DEFVAR_CONST_INT("xft-version", &xft_version /*
 The major version number of the Xft library being used.
 */ );
-  Vxft_version = make_int(XFT_VERSION);
+  xft_version = XFT_VERSION;
+
+  DEFVAR_CONST_INT("fc-version", &fc_version /*
+The version number of fontconfig.h.  It can be checked against
+`(fc-get-version)', which is the version of the .so.
+It's probably not a disaster if `(> (fc-get-version) fc-version)'.
+*/ );
+  fc_version = FC_VERSION;
 
   Fprovide (intern ("font-mgr"));
 }
