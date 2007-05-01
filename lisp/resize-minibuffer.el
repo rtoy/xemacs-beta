@@ -36,8 +36,6 @@
 
 ;; This file has received maintenance by the XEmacs development team.
 
-;; $Id: resize-minibuffer.el,v 1.6 2007/04/30 19:50:53 stephent Exp $
-
 ;; This package allows the entire contents (or as much as possible) of the
 ;; minibuffer to be visible at once when typing.  As the end of a line is
 ;; reached, the minibuffer will resize itself.  When the user is done
