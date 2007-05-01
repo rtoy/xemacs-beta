@@ -8,5 +8,5 @@ emacs_kit_version=
 infodock_major_version=4
 infodock_minor_version=0
 infodock_build_version=8
-xemacs_extra_name="(+CVS-20070430)"
+xemacs_extra_name="(+CVS-20070501)"
 xemacs_release_date="2006-05-16"
