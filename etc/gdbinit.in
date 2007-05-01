@@ -430,16 +430,12 @@ define pobj
   if $lrecord_type == lrecord_type_fc_pattern
     pstructtype fc_pattern
   else
-  if $lrecord_type == lrecord_type_fc_objectset
-    pstructtype fc_objectset
-  else
-  if $lrecord_type == lrecord_type_fc_fontset
-    pstructtype fc_fontset
+  if $lrecord_type == lrecord_type_fc_config
+    pstructtype fc_config
   else
     echo Unknown Lisp Object type\n
     print $arg0
   ## Barf, gag, retch
-  end
   end
   end 
   end
