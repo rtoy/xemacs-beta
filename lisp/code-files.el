@@ -105,20 +105,36 @@ This overrides the more general specification in
 `buffer-file-coding-system-for-read', but is overridden by
 `coding-system-for-read'.")
 
-(defun set-buffer-file-coding-system (coding-system &optional force)
-  "Set buffer-file-coding-system of the current buffer to CODING-SYSTEM.
-If optional argument FORCE (interactively, the prefix argument) is not
-given, attempt to match the EOL type of the new coding system to
-the current value of `buffer-file-coding-system'."
-  (interactive "zFile coding system: \nP")
-  (get-coding-system coding-system) ;; correctness check
-  (if (not force)
-      (setq coding-system
+(defun set-buffer-file-coding-system (coding-system &optional force nomodify)
+  "Set the file coding-system of the current buffer to CODING-SYSTEM.
+This means that when you save the buffer, it will be converted
+according to CODING-SYSTEM.  For a list of possible values of CODING-SYSTEM,
+use \\[list-coding-systems].
+
+If CODING-SYSTEM leaves the text conversion unspecified, or if it
+leaves the end-of-line conversion unspecified, FORCE controls what to
+do.  If FORCE is nil, get the unspecified aspect (or aspects) from the
+buffer's previous `buffer-file-coding-system' value (if it is
+specified there).  Otherwise, leave it unspecified.
+
+This marks the buffer modified so that the succeeding \\[save-buffer]
+surely saves the buffer with CODING-SYSTEM.  From a program, if you
+don't want to mark the buffer modified, specify t for NOMODIFY.
+If you know exactly what coding system you want to use,
+just set the variable `buffer-file-coding-system' directly."
+  (interactive "zCoding system for saving file (default nil): \nP")
+  (check-coding-system coding-system)
+  (if (and coding-system buffer-file-coding-system (null force))
+       (setq coding-system
 	    (subsidiary-coding-system
 	     coding-system
 	     (coding-system-eol-type buffer-file-coding-system))))
-  (setq buffer-file-coding-system coding-system)
-  (redraw-modeline t))
+   (setq buffer-file-coding-system coding-system)
+  ;; XEmacs change; remove a call to ucs-set-table-for-input, which we don't
+  ;; have. 
+  (unless nomodify
+    (set-buffer-modified-p t))
+  (force-mode-line-update))
 
 (defun toggle-buffer-file-coding-system ()
   "Set EOL type of buffer-file-coding-system of the current buffer to
@@ -456,10 +472,11 @@ and `insert-file-contents-post-hook'."
 	      ;; set its eol type to what was found, if it wasn't
 	      ;; set already.
 	      (set-buffer-file-coding-system
-	       (subsidiary-coding-system buffer-file-coding-system
-					 (coding-system-eol-type coding-system)) t)
+	       (subsidiary-coding-system 
+                buffer-file-coding-system
+                (coding-system-eol-type coding-system)) t t)
 	    ;; otherwise actually set buffer-file-coding-system.
-	    (set-buffer-file-coding-system coding-system t)))
+	    (set-buffer-file-coding-system coding-system t t)))
 	;; ... and `buffer-file-coding-system-when-loaded'.  the machinations
 	;; of set-buffer-file-coding-system cause the actual coding system
 	;; object to be stored, so do that here, too.

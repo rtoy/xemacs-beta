@@ -1,3 +1,12 @@
+2007-04-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* code-files.el (set-buffer-file-coding-system):
+	Make set-buffer-file-coding-system update the buffer's modified
+	flag. Also make it accept a new flag, NOMODIFY, taken from GNU, to
+	suppress this behaviour.
+	* code-files.el (insert-file-contents):
+	Use the NOMODIFY flag when calling set-buffer-file-coding-system.
+
 2007-05-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-insert-header):
@@ -11,7 +20,7 @@
 	* dumped-lisp.el (preloaded-file-list): Move resize-minibuffer
 	before simple.
 
-	* resize-minibuffer.el: Remove CVS $Id: ChangeLog,v 1.794 2007/05/12 10:17:00 aidan Exp $ cookie..
+	* resize-minibuffer.el: Remove CVS $Id: ChangeLog,v 1.795 2007/05/12 13:12:26 aidan Exp $ cookie..
 
 	* resize-minibuffer.el (resize-minibuffer-mode): Remove autoload.
 
