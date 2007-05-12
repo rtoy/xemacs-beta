@@ -1842,10 +1842,20 @@ With argument, insert value in current buffer after the form."
 	  (save-excursion
 	    (set-buffer byte-compile-inbuffer)
 	    (goto-char (point-min))
-	    ;; mrb- There must be a better way than skip-chars-forward
-	    (skip-chars-forward (concat (char-to-string 0) "-"
-					(char-to-string 255)))
-	    (eq (point) (point-max))))
+            ;; Look for any non-Latin-1 literals or Unicode character
+            ;; escapes. Any such occurrences in a @#COUNT comment will lead
+            ;; to an escape-quoted coding cookie being inserted, but this is
+            ;; not true of ordinary comments.
+            (let ((non-latin-1-re
+                   (concat "[^\000-\377]" 
+                           #r"\|\\u[0-9a-fA-F]\{4,4\}\|\\U[0-9a-fA-F]\{8,8\}"))
+                  (case-fold-search nil))
+              (catch 'need-to-escape-quote
+                (while (re-search-forward non-latin-1-re nil t)
+                  (skip-chars-backward "^;" (point-at-bol))
+                  (if (bolp) (throw 'need-to-escape-quote nil))
+                  (forward-line 1))
+                t))))
       (setq buffer-file-coding-system 'raw-text-unix)
     (insert "(or (featurep 'mule) (error \"Loading this file requires Mule support\"))
 ;;;###coding system: escape-quoted\n")

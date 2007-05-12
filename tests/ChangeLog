@@ -1,3 +1,12 @@
+2007-05-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	* automated/mule-tests.el (bytecomp):
+	Require it, since we're testing its Unicode support. 
+	* automated/mule-tests.el (featurep):
+	Assert that the escape-quoted coding cookie is added when needed,
+	and ignored when not. 
+
 2007-04-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el (featurep):

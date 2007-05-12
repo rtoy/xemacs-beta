@@ -33,6 +33,8 @@
 ;; This file will be (read)ed by a non-mule XEmacs, so don't use
 ;; literal non-Latin1 characters.  Use (make-char) instead.
 
+(require 'bytecomp)
+
 ;;-----------------------------------------------------------------
 ;; Test whether all legal chars may be safely inserted to a buffer.
 ;;-----------------------------------------------------------------
@@ -465,4 +467,105 @@ This is a naive implementation in Lisp.  "
                hebrew-iso8859-8 japanese-jisx0208 japanese-jisx0212
                katakana-jisx0201 korean-ksc5601 latin-iso8859-1
                latin-iso8859-2 thai-xtis vietnamese-viscii-lower))))
+
+  (with-temp-buffer
+    (flet
+        ((Assert-elc-is-escape-quoted ()
+           "Assert the current buffer has an escape-quoted cookie if compiled."
+           (save-excursion
+             (let ((byte-compile-result (byte-compile-from-buffer
+                                         (current-buffer) nil nil))
+                   (temporary-file-name (make-temp-name
+                                         (expand-file-name "zjPQ2Pk"
+                                                           (temp-directory)))))
+               (byte-compile-insert-header
+                temporary-file-name
+                (current-buffer)
+                byte-compile-result)
+               (Assert (string-match "^;;;###coding system: escape-quoted"
+                                     (buffer-substring nil nil
+                                                       byte-compile-result))))))
+         (Assert-elc-has-no-specified-encoding ()
+           "Assert the current buffer has no coding cookie if compiled."
+           (save-excursion
+             (let ((byte-compile-result (byte-compile-from-buffer
+                                         (current-buffer) nil nil))
+                   (temporary-file-name (make-temp-name
+                                         (expand-file-name "zjPQ2Pk"
+                                                           (temp-directory)))))
+               (byte-compile-insert-header
+                temporary-file-name
+                (current-buffer)
+                byte-compile-result)
+               (Assert (not (string-match
+                             ";;;###coding system:"
+                             (buffer-substring nil nil byte-compile-result))))))))
+      (insert 
+       ;; Create a buffer creating the Unicode escapes. 
+       #r" (defvar testing-mule-compilation-handling 
+            (string ?\u371E   ;; kDefinition beautiful; pretty, used 
+                              ;; in girl's name
+                ?\U0002A6A9   ;; kDefinition	(Cant.) sound of shouting
+                ?\U0002A65B   ;; kDefinition	(Cant.) decayed teeth; 
+                              ;; tongue-tied
+                ?\U00010400   ;; DESERET CAPITAL LETTER LONG I
+                    ?\u3263)) ;; CIRCLED HANGUL RIEUL ")
+
+      (Assert-elc-is-escape-quoted)
+      (delete-region (point-min) (point-max))
+
+      (insert
+       ;; This time, the buffer will contain the actual characters, because of
+       ;; u flag to the #r. 
+       #ru" (defvar testing-mule-compilation-handling 
+            (string ?\u371E   ;; kDefinition beautiful; pretty, used 
+                              ;; in girl's name
+                ?\U0002A6A9   ;; kDefinition	(Cant.) sound of shouting
+                ?\U0002A65B   ;; kDefinition	(Cant.) decayed teeth; 
+                              ;; tongue-tied
+                ?\U00010400   ;; DESERET CAPITAL LETTER LONG I
+                    ?\u3263)) ;; CIRCLED HANGUL RIEUL ")
+    
+      (Assert-elc-is-escape-quoted)
+      (delete-region (point-min) (point-max))
+
+      (insert
+       ;; Just a single four character escape. 
+       #r" (defvar testing-mule-compilation-handling 
+            (string ?\u371E))   ;; kDefinition beautiful; pretty, used")
+
+      (Assert-elc-is-escape-quoted)
+      (delete-region (point-min) (point-max))
+
+      (insert
+       ;; Just a single eight character escape. 
+       #r" (defvar testing-mule-compilation-handling 
+            (string ?\U0002A65B))   ;; kDefinition (Cant.) decayed teeth;")
+
+      (Assert-elc-is-escape-quoted)
+      (delete-region (point-min) (point-max))
+
+      (insert
+       ;; A single latin-1 hex digit escape
+       #r" (defvar testing-mule-compilation-handling 
+            (string ?\xab))   ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK")
+      
+      (Assert-elc-has-no-specified-encoding)
+      (delete-region (point-min) (point-max))
+
+      (insert
+       ;; A single latin-1 character
+       #ru" (defvar testing-mule-compilation-handling 
+            (string ?\u00AB))   ;; LEFT-POINTING DOUBLE ANGLE QUOTATION MARK")
+      
+      (Assert-elc-has-no-specified-encoding)
+      (delete-region (point-min) (point-max))
+
+      (insert
+       ;; Just ASCII. 
+       #r" (defvar testing-mule-compilation-handling 
+            (string ?A))   ;; LATIN CAPITAL LETTER A")
+      
+      (Assert-elc-has-no-specified-encoding)
+      (delete-region (point-min) (point-max))))
   )

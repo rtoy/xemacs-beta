@@ -1,9 +1,17 @@
+2007-05-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el (byte-compile-insert-header):
+	Check for any Unicode escapes in the source file text when
+	deciding whether Mule support is necessary for it, and whether to
+	use escape-quoted as the .elc coding system. Thanks to Stephen for
+	the suggestion as to how to ignore appearances in comments. 
+
 2007-05-01  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* dumped-lisp.el (preloaded-file-list): Move resize-minibuffer
 	before simple.
 
-	* resize-minibuffer.el: Remove CVS $Id: ChangeLog,v 1.793 2007/05/01 14:32:50 stephent Exp $ cookie..
+	* resize-minibuffer.el: Remove CVS $Id: ChangeLog,v 1.794 2007/05/12 10:17:00 aidan Exp $ cookie..
 
 	* resize-minibuffer.el (resize-minibuffer-mode): Remove autoload.
 
