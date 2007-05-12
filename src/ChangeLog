@@ -1,3 +1,10 @@
+2007-05-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-Xt.c (x_reset_modifier_mapping):
+	* event-gtk.c (gtk_reset_modifier_mapping):
+	Zero out the device's modifier map once we've freed it, to prevent
+	a double free on a re-entrant call. 
+
 2007-05-01  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* font-mgr.c (Qfontsetp): Remove unused declaration.
