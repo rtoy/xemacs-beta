@@ -341,9 +341,9 @@ This is a naive implementation in Lisp.  "
 	      'utf-8
 	    'iso-8859-2))
 	 )
-    ;; This is how you suppress output from `message', called by `write-region'
     (Assert (not (equal name1 name2)))
     (Assert (not (file-exists-p name1)))
+    ;; This is how you suppress output from `message', called by `write-region'
     (Silence-Message
      (write-region (point-min) (point-max) name1))
     (Assert (file-exists-p name1))
@@ -401,6 +401,14 @@ This is a naive implementation in Lisp.  "
 	(Assert (equal (concat "\033%G" utf-8-char)
 		       (encode-coding-string xemacs-character 'ctext))))))
 
+  (loop
+    for (code-point encoded) 
+    in '((#x10000 "\xd8\x00\xdc\x00")
+         (#x10FFFD "\xdb\xff\xdf\xfd"))
+    do (Assert (equal (encode-coding-string 
+                       (decode-char 'ucs code-point) 'utf-16)
+                      encoded)))
+         
   ;;---------------------------------------------------------------
   ;; Regression test for a couple of CCL-related bugs. 
   ;;---------------------------------------------------------------

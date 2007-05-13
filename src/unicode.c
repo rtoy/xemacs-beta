@@ -200,6 +200,28 @@ Lisp_Object Qutf_16_little_endian_bom;
 
 Lisp_Object Qutf_8_bom;
 
+/* See the Unicode FAQ, http://www.unicode.org/faq/utf_bom.html#35 for this
+   algorithm. 
+ 
+   (They also give another, really verbose one, as part of their explanation
+   of the various planes of the encoding, but we won't use that.) */
+ 
+#define UTF_16_LEAD_OFFSET (0xD800 - (0x10000 >> 10))
+#define UTF_16_SURROGATE_OFFSET (0x10000 - (0xD800 << 10) - 0xDC00)
+
+#define utf_16_surrogates_to_code(lead, trail) \
+  (((lead) << 10) + (trail) + UTF_16_SURROGATE_OFFSET)
+
+#define CODE_TO_UTF_16_SURROGATES(codepoint, lead, trail) do {	\
+    int __ctu16s_code = (codepoint);				\
+    lead = UTF_16_LEAD_OFFSET + (__ctu16s_code >> 10);		\
+    trail = 0xDC00 + (__ctu16s_code & 0x3FF);			\
+} while (0)
+
+#define valid_utf_16_first_surrogate(ch) (((ch) & 0xFC00) == 0xD800)
+#define valid_utf_16_last_surrogate(ch) (((ch) & 0xFC00) == 0xDC00)
+#define valid_utf_16_surrogate(ch) (((ch) & 0xF800) == 0xD800)
+
 #ifdef MULE 
 
 /* Using ints for to_unicode is OK (as long as they are >= 32 bits).
@@ -1742,13 +1764,39 @@ encode_unicode_char_1 (int code, unsigned_char_dynarr *dst,
     case UNICODE_UTF_16:
       if (little_endian)
 	{
-	  Dynarr_add (dst, (unsigned char) (code & 255));
-	  Dynarr_add (dst, (unsigned char) ((code >> 8) & 255));
+	  if (code < 0x10000) {
+	    Dynarr_add (dst, (unsigned char) (code & 255));
+	    Dynarr_add (dst, (unsigned char) ((code >> 8) & 255));
+	  } else {
+	    /* Little endian; least significant byte first. */
+	    int first, second;
+
+	    CODE_TO_UTF_16_SURROGATES(code, first, second);
+
+	    Dynarr_add (dst, (unsigned char) (first & 255));
+	    Dynarr_add (dst, (unsigned char) ((first >> 8) & 255));
+
+	    Dynarr_add (dst, (unsigned char) (second & 255));
+	    Dynarr_add (dst, (unsigned char) ((second >> 8) & 255));
+	  }
 	}
       else
 	{
-	  Dynarr_add (dst, (unsigned char) ((code >> 8) & 255));
-	  Dynarr_add (dst, (unsigned char) (code & 255));
+	  if (code < 0x10000) {
+	    Dynarr_add (dst, (unsigned char) ((code >> 8) & 255));
+	    Dynarr_add (dst, (unsigned char) (code & 255));
+	  } else {
+	    /* Big endian; most significant byte first. */
+	    int first, second;
+
+	    CODE_TO_UTF_16_SURROGATES(code, first, second);
+
+	    Dynarr_add (dst, (unsigned char) ((first >> 8) & 255));
+	    Dynarr_add (dst, (unsigned char) (first & 255));
+
+	    Dynarr_add (dst, (unsigned char) ((second >> 8) & 255));
+	    Dynarr_add (dst, (unsigned char) (second & 255));
+	  }
 	}
       break;
 
@@ -1919,17 +1967,40 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 	      break;
 
 	    case UNICODE_UTF_16:
+
 	      if (little_endian)
 		ch = (c << counter) | ch;
 	      else
 		ch = (ch << 8) | c;
 	      counter += 8;
+
+	      if (counter == 16 && valid_utf_16_first_surrogate(ch))
+		break;
+
 	      if (counter == 16)
 		{
 		  int tempch = ch;
 		  ch = 0;
 		  counter = 0;
 		  decode_unicode_char (tempch, dst, data, ignore_bom);
+		}
+	      if (counter == 32)
+		{
+		  int tempch;
+		  /* #### Signalling an error may be a bit extreme. Should
+		     we try and read it in anyway? */
+		  if (!valid_utf_16_first_surrogate(ch >> 16) 
+		      || !valid_utf_16_last_surrogate(ch & 0xFFFF))
+		    {
+		      signal_error(Qtext_conversion_error, 
+				   "Invalid UTF-16 surrogate sequence", 
+				   Qunbound);
+		    }
+		  tempch = utf_16_surrogates_to_code((ch >> 16), 
+						     (ch & 0xffff));
+		  ch = 0;
+		  counter = 0;
+		  decode_unicode_char(tempch, dst, data, ignore_bom);
 		}
 	      break;
 

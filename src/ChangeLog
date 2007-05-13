@@ -1,3 +1,10 @@
+2007-04-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.c:
+	* unicode.c (encode_unicode_char_1):
+	* unicode.c (unicode_convert):
+	Support non-BMP characters in UTF-16. 
+
 2007-05-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-Xt.c (x_reset_modifier_mapping):

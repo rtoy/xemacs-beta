@@ -1,3 +1,8 @@
+2007-04-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (featurep):
+	Minimal tests of the non-BMP UTF-16 support. 
+
 2007-05-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el:
