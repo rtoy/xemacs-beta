@@ -1,3 +1,11 @@
+2007-05-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi:
+	Replace an inaccurate description of the read syntax of a Kanji
+	character with one using the recently-added Unicode escapes. Also
+	update the size of an Ichar; they're now 21-bit integers, not
+	19-bit integers. 
+
 2007-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (Creating a New Console/Device/Frame Type):

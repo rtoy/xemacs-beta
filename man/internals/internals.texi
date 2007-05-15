@@ -7526,22 +7526,12 @@ converts to a float whose value is 1.983e-4, or .0001983.
 converts to a char that represents the lowercase letter b.
 
 @example
-?^[$(B#&^[(B
+?\u5357
 @end example
 
-(where @samp{^[} actually is an @samp{ESC} character) converts to a
-particular Kanji character when using an ISO2022-based coding system for
-input. (To decode this goo: @samp{ESC} begins an escape sequence;
-@samp{ESC $ (} is a class of escape sequences meaning ``switch to a
-94x94 character set''; @samp{ESC $ ( B} means ``switch to Japanese
-Kanji''; @samp{#} and @samp{&} collectively index into a 94-by-94 array
-of characters [subtract 33 from the ASCII value of each character to get
-the corresponding index]; @samp{ESC (} is a class of escape sequences
-meaning ``switch to a 94 character set''; @samp{ESC (B} means ``switch
-to US ASCII''.  It is a coincidence that the letter @samp{B} is used to
-denote both Japanese Kanji and US ASCII.  If the first @samp{B} were
-replaced with an @samp{A}, you'd be requesting a Chinese Hanzi character
-from the GB2312 character set.)
+converts to a Han character meaning ``south, southwards''; depending on
+how your XEmacs is configured, it will be assigned to either a Japanese
+or Chinese character set (possibly even a Korean one). 
 
 @example
 "foobar"
@@ -9890,7 +9880,7 @@ we have compiled with MULE support.  If not, the Ichar integer is an
 8-bit integer with possible values from 0 - 255.  0 - 127 are the
 standard ASCII characters, while 128 - 255 are the characters from the
 ISO-8859-1 character set.  If we have compiled with MULE support, an
-Ichar is a 19-bit integer, with the various bits having meanings
+Ichar is a 21-bit integer, with the various bits having meanings
 according to a complex scheme that will be detailed later.  The
 characters numbered 0 - 255 still have the same meanings as for the
 non-MULE case, though.
@@ -9930,9 +9920,9 @@ noticeable speed penalty.)
 
   Astute readers may notice that the text in a buffer is represented as
 an array of @emph{bytes}, while (at least in the MULE case) an Ichar is
-a 19-bit integer, which clearly cannot fit in a byte.  This means (of
+a 21-bit integer, which clearly cannot fit in a byte.  This means (of
 course) that the text in a buffer uses a different representation from
-an Ichar: specifically, the 19-bit Ichar becomes a series of one to
+an Ichar: specifically, the 21-bit Ichar becomes a series of one to
 four bytes.  The conversion between these two representations is complex
 and will be described later.
 
@@ -10977,7 +10967,7 @@ this is used for representing text passed to MS Window API calls with
 arguments that need to be in Unicode format.  (mswindows-unicode is a
 coding system of type UTF-16)
 
-@item ms-windows-multi-byte
+@item mswindows-multi-byte
 this is used for representing text passed to MS Windows API calls with
 arguments that need to be in multi-byte format.  Note that there are
 very few if any examples of such calls.
@@ -10995,17 +10985,19 @@ text passed to or received from these API calls.)
 used for text sent to or read from a text terminal in the absence of a
 more specific coding system (calls to window-system specific APIs should
 use the appropriate window-specific coding system if it makes sense to
-do so.)
+do so.)  Like others here, this is a coding system alias. 
 
 @item file-name
 used when specifying the names of files in the absence of a more
-specific encoding, such as ms-windows-tstr.
+specific encoding, such as ms-windows-tstr. This is a coding system
+alias -- what it's an alias of is determined at startup. 
 
 @item native
 the most general coding system for specifying text passed to system
 calls.  This generally translates to whatever coding system is specified
 by the current locale.  This should only be used when none of the coding
-systems mentioned above are appropriate.
+systems mentioned above are appropriate. This is a coding system
+alias -- what it's an alias of is determined at startup. 
 @end table
 
 @subheading Proper Display of Multilingual Text
@@ -11274,7 +11266,7 @@ Dimension-2 Private          0xF0 - 0xFF
 There are two internal encodings for characters in XEmacs/Mule.  One is
 called @dfn{string encoding} and is an 8-bit encoding that is used for
 representing characters in a buffer or string.  It uses 1 to 4 bytes per
-character.  The other is called @dfn{character encoding} and is a 19-bit
+character.  The other is called @dfn{character encoding} and is a 21-bit
 encoding that is used for representing characters individually in a
 variable.
 
