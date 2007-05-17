@@ -1,3 +1,8 @@
+2007-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-Xaw.c (wm_delete_window): Iterate over children of shell
+	(there may be more than one) to find our widget.
+
 2006-11-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xlwmenu.c (xlwMenuResources):
