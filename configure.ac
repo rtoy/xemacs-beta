@@ -979,20 +979,21 @@ XE_HELP_SUBSECTION([Debugging options])
 XE_MERGED_ARG([debug],
 	AS_HELP_STRING([--enable-debug],[Enable additional debugging information.  No time cost.]),
 	[], [])
+dnl Keep TESTS sorted to help with syncing doc to reality.
 XE_COMPLEX_ARG([error-checking],
 	AS_HELP_STRING([--enable-error-checking=TESTS],[Compile with internal error-checking added.
                         Causes noticeable loss of speed.  Valid TESTS
-                        are `extents', `bufpos', `malloc', `gc', `types', `text', `byte_code', `glyphs', `display', `structures'.]),
+                        are `byte_code', `display', `extents', `gc', `glyphs', `malloc', `structures' `text', `types'.]),
 	[], [],
-[XE_COMPLEX_OPTION([extents],[""]),
- XE_COMPLEX_OPTION([types],[""]),
- XE_COMPLEX_OPTION([text],[""]),
- XE_COMPLEX_OPTION([gc],[""]),
- XE_COMPLEX_OPTION([malloc],[""]),
- XE_COMPLEX_OPTION([byte_code],[""]),
- XE_COMPLEX_OPTION([glyphs],[""]),
+[XE_COMPLEX_OPTION([byte_code],[""]),
  XE_COMPLEX_OPTION([display],[""]),
- XE_COMPLEX_OPTION([structures],[""])])
+ XE_COMPLEX_OPTION([extents],[""]),
+ XE_COMPLEX_OPTION([gc],[""]),
+ XE_COMPLEX_OPTION([glyphs],[""]),
+ XE_COMPLEX_OPTION([malloc],[""]),
+ XE_COMPLEX_OPTION([structures],[""])
+ XE_COMPLEX_OPTION([text],[""]),
+ XE_COMPLEX_OPTION([types],[""]),])
 XE_MERGED_ARG([assertions],
 	AS_HELP_STRING([--enable-assertions],[Compile in runtime assertions.]),
 	[], [])

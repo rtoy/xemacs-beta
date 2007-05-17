@@ -1,3 +1,7 @@
+2007-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* config.h.in (ERROR_CHECK_BYTE_CODE): Alphabetize ERROR_CHECK_*.
+
 2007-04-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.c:

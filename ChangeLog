@@ -1,3 +1,7 @@
+2007-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (error-checking): Reorder arguments and sync doctring.
+
 2007-03-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* PROBLEMS: describe crash when inserting or displaying a TAB.

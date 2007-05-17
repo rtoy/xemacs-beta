@@ -579,43 +579,46 @@ things are arranged in config.h.in.  In particular:
 
 /* Define one or more of the following if you want lots of extra checks
    (e.g. structure validation) compiled in.  These should be turned
-   on during the beta-test cycle. */
+   on during the beta-test cycle.
+
+   Keep macro names sorted to help with syncing this file to configure.ac.
+   Don't forget the ERROR_CHECK_ALL stuff at the end of this file. */
+
+/* Minor sanity checking of the bytecode interpreter.  Useful for
+   debugging the byte compiler.  */
+#undef ERROR_CHECK_BYTE_CODE
+
+/* Sanity-check the redisplay structures after each modification. */
+#undef ERROR_CHECK_DISPLAY
 
 /* Check the entire extent structure of a buffer each time an extent
    change is done, and do other extent-related checks. */
 #undef ERROR_CHECK_EXTENTS
 
-/* Turn on checks related to types -- make sure that all X... macros are
-   dereferencing the correct type, and that all XSET... macros (as much as
-   possible) are setting the correct type of structure; check any other
-   places that a specific type is expected. */
-#undef ERROR_CHECK_TYPES
+/* Attempt to catch bugs related to garbage collection (e.g. not GCPRO'ing). */
+#undef ERROR_CHECK_GC
+
+/* Minor sanity checking of glyphs, especially subwindows and
+   widgets. */
+#undef ERROR_CHECK_GLYPHS
+
+/* Attempt to catch freeing of a non-malloc()ed block, heap corruption, etc. */
+#undef ERROR_CHECK_MALLOC
+
+/* Define for any sanity checks on structures that are not handled by a
+   more specific error-checking type. */
+#undef ERROR_CHECK_STRUCTURES
 
 /* Turn on checks related to text -- check that text in strings and buffers
    is in a valid format before we use it, check that buffer positions are
    valid, etc. */
 #undef ERROR_CHECK_TEXT
 
-/* Attempt to catch bugs related to garbage collection (e.g. not GCPRO'ing). */
-#undef ERROR_CHECK_GC
-
-/* Attempt to catch freeing of a non-malloc()ed block, heap corruption, etc. */
-#undef ERROR_CHECK_MALLOC
-
-/* Minor sanity checking of the bytecode interpreter.  Useful for
-   debugging the byte compiler.  */
-#undef ERROR_CHECK_BYTE_CODE
-
-/* Minor sanity checking of glyphs, especially subwindows and
-   widgets. */
-#undef ERROR_CHECK_GLYPHS
-
-/* Sanity-check the redisplay structures after each modification. */
-#undef ERROR_CHECK_DISPLAY
-
-/* Define for any sanity checks on structures that are not handled by a
-   more specific error-checking type. */
-#undef ERROR_CHECK_STRUCTURES
+/* Turn on checks related to types -- make sure that all X... macros are
+   dereferencing the correct type, and that all XSET... macros (as much as
+   possible) are setting the correct type of structure; check any other
+   places that a specific type is expected. */
+#undef ERROR_CHECK_TYPES
 
 /* Define DEBUG_XEMACS if you want extra debugging code compiled in.
    This is mainly intended for use by developers. */
@@ -1132,16 +1135,19 @@ extern "C" {
    merge the two. */
 #define USE_C_FONT_LOCK
 
+/* Keep the #defines sorted.
+   #### Can this code ever be executed?  I guess if a developer #defines
+   ERROR_CHECK_ALL above the #include it could be useful. */
 #ifdef ERROR_CHECK_ALL
-#define ERROR_CHECK_EXTENTS
-#define ERROR_CHECK_TYPES
-#define ERROR_CHECK_TEXT
-#define ERROR_CHECK_GC
-#define ERROR_CHECK_MALLOC
 #define ERROR_CHECK_BYTE_CODE
-#define ERROR_CHECK_GLYPHS
 #define ERROR_CHECK_DISPLAY
+#define ERROR_CHECK_EXTENTS
+#define ERROR_CHECK_GC
+#define ERROR_CHECK_GLYPHS
+#define ERROR_CHECK_MALLOC
 #define ERROR_CHECK_STRUCTURES
+#define ERROR_CHECK_TEXT
+#define ERROR_CHECK_TYPES
 #endif /* ERROR_CHECK_ALL */
 
 #endif /* _SRC_CONFIG_H_ */

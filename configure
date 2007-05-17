@@ -1210,9 +1210,9 @@ Debugging options
                           cost.
   --with-error-checking=TESTS
                           Compile with internal error-checking added. Causes
-                          noticeable loss of speed. Valid TESTS are `extents',
-                          `bufpos', `malloc', `gc', `types', `text',
-                          `byte_code', `glyphs', `display', `structures'.
+                          noticeable loss of speed. Valid TESTS are
+                          `byte_code', `display', `extents', `gc', `glyphs',
+                          `malloc', `structures' `text', `types'.
   --with-assertions       Compile in runtime assertions.
   --with-memory-usage-stats
                           Enable LISP memory usage API.
@@ -3794,17 +3794,18 @@ if test "${with_debug+set}" = set; then
 
 fi;
 _error_checking_notfirst=""
-_error_checking_extents_default=""
-_error_checking_types_default=""
-_error_checking_text_default=""
-_error_checking_gc_default=""
-_error_checking_malloc_default=""
 _error_checking_byte_code_default=""
-_error_checking_glyphs_default=""
 _error_checking_display_default=""
+_error_checking_extents_default=""
+_error_checking_gc_default=""
+_error_checking_glyphs_default=""
+_error_checking_malloc_default=""
 _error_checking_structures_default=""
-_error_checking_types="extents types text gc malloc byte_code glyphs display structures"
-_error_checking_default="extents,types,text,gc,malloc,byte_code,glyphs,display,structures"
+ text
+_error_checking_types_default=""
+_error_checking__default=
+_error_checking_types="byte_code display extents gc glyphs malloc structures types "
+_error_checking_default="byte_code,display,extents,gc,glyphs,malloc,structures,types,"
 
 # If --with-error-checking or --without-error-checking were given then copy the value to the
 # equivalent enable_error-checking variable.
