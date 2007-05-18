@@ -991,9 +991,9 @@ XE_COMPLEX_ARG([error-checking],
  XE_COMPLEX_OPTION([gc],[""]),
  XE_COMPLEX_OPTION([glyphs],[""]),
  XE_COMPLEX_OPTION([malloc],[""]),
- XE_COMPLEX_OPTION([structures],[""])
+ XE_COMPLEX_OPTION([structures],[""]),
  XE_COMPLEX_OPTION([text],[""]),
- XE_COMPLEX_OPTION([types],[""]),])
+ XE_COMPLEX_OPTION([types],[""])])
 XE_MERGED_ARG([assertions],
 	AS_HELP_STRING([--enable-assertions],[Compile in runtime assertions.]),
 	[], [])

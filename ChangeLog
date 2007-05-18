@@ -1,5 +1,10 @@
 2007-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* configure.ac (error-checking): Move comma misplaced by sorting.
+	* configure: Regenerate.
+
+2007-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* configure.ac (error-checking): Reorder arguments and sync doctring.
 
 2007-03-14  Stephen J. Turnbull  <stephen@xemacs.org>
