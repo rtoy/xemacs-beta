@@ -379,26 +379,6 @@
 	* sysdep.c (strlwr): Don't intermix declarations and code.
 	(wcslen): ditto
 
-2006-08-26  Adrian Aichner  <adrian@xemacs.org>
-
-	* eval.c (condition_case_1): GCPRO barg, instead of harg, before
-	calling (*bfun) (barg).
-	GCPRO harg before calling (*hfun) (c.val, harg).
-	GCPRO Lisp_Object members of local catchtag variable.
-
-2006-08-25  Adrian Aichner  <adrian@xemacs.org>
-
-	* gc.c: Comment out globals `backtrace' and `do_backtrace'.
-	* gc.c (gc_prepare): Add PROFILE_DECLARE and
-	PROFILE_RECORD_EXITING_SECTION.
-	* gc.c (gc_finish): Add PROFILE_DECLARE and
-	PROFILE_RECORD_ENTERING_SECTION.
-	* gc.c (gc_suspend_mark_phase): Add PROFILE_DECLARE and
-	PROFILE_RECORD_ENTERING_SECTION, move
-	PROFILE_RECORD_EXITING_SECTION to end.
-	* gc.c (gc_resume_mark_phase): Add PROFILE_DECLARE and
-	PROFILE_RECORD_EXITING_SECTION.
-
 2006-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-coding.c (iso2022_decode):
