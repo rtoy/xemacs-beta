@@ -1,3 +1,14 @@
+2007-05-13  Adrian Aichner  <adrian@xemacs.org>
+
+	* abbrev.el: Sort abbrev-table-name-list entries by name.  Unlike
+	GNU Emacs we keep tables sorted internally too, not only when
+	writing them by `write-abbrev-file'.
+	* abbrev.el (define-abbrev-table): Sort abbrev-table-name-list by
+	table names, so that `insert-abbrevs', `list-abbrevs', and
+	`write-abbrev-file' all present them in the same order.
+	* abbrev.el (insert-abbrev-table-description): Removed.  Losely
+	synced to abbrev.c from GNU Emacs.
+
 2007-04-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* code-files.el (set-buffer-file-coding-system):
@@ -20,7 +31,7 @@
 	* dumped-lisp.el (preloaded-file-list): Move resize-minibuffer
 	before simple.
 
-	* resize-minibuffer.el: Remove CVS $Id: ChangeLog,v 1.795 2007/05/12 13:12:26 aidan Exp $ cookie..
+	* resize-minibuffer.el: Remove CVS $Id: ChangeLog,v 1.796 2007/05/19 18:41:56 adrian Exp $ cookie..
 
 	* resize-minibuffer.el (resize-minibuffer-mode): Remove autoload.
 

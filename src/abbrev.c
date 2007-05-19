@@ -75,6 +75,7 @@ Fixnum last_abbrev_location;
 /* Hook to run before expanding any abbrev.  */
 Lisp_Object Vpre_abbrev_expand_hook, Qpre_abbrev_expand_hook;
 
+Lisp_Object Qsystem_type, Qcount;
 
 struct abbrev_match_mapper_closure
 {
@@ -402,12 +403,169 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
   return Vlast_abbrev;
 }
 
+static void
+write_abbrev (Lisp_Object sym, Lisp_Object stream)
+{
+  Lisp_Object name, count, system_flag;
+  /* This function can GC */
+  struct buffer *buf = current_buffer;
+
+  if (INTP (XSYMBOL (sym)->plist))
+    {
+      count = XSYMBOL (sym)->plist;
+      system_flag = Qnil;
+    }
+  else
+    {
+      count = Fget (sym, Qcount, Qunbound);
+      system_flag = Fget (sym, Qsystem_type, Qunbound);
+    }
+
+  if (NILP (XSYMBOL_VALUE (sym)) || ! NILP (system_flag))
+    return;
+
+  buffer_insert_c_string (buf, "    (");
+  name = Fsymbol_name (sym);
+  Fprin1 (name, stream);
+  buffer_insert_c_string (buf, " ");
+  Fprin1 (XSYMBOL_VALUE (sym), stream);
+  buffer_insert_c_string (buf, " ");
+  Fprin1 (XSYMBOL (sym)->function, stream);
+  buffer_insert_c_string (buf, " ");
+  Fprin1 (count, stream);
+  buffer_insert_c_string (buf, ")\n");
+}
+
+static void
+describe_abbrev (Lisp_Object sym, Lisp_Object stream)
+{
+  Lisp_Object one, count, system_flag;
+  /* This function can GC */
+  struct buffer *buf = current_buffer;
+
+  if (INTP (XSYMBOL (sym)->plist))
+    {
+      count = XSYMBOL (sym)->plist;
+      system_flag = Qnil;
+    }
+  else
+    {
+      count = Fget (sym, Qcount, Qunbound);
+      system_flag = Fget (sym, Qsystem_type, Qunbound);
+    }
+
+  if (NILP (XSYMBOL_VALUE (sym)))
+    return;
+
+  one = make_int (1);
+  Fprin1 (Fsymbol_name (sym), stream);
+
+  if (!NILP (system_flag))
+    {
+      buffer_insert_c_string (buf, " (sys)");
+      Findent_to (make_int (20), one, Qnil);
+    }
+  else
+    Findent_to (make_int (15), one, Qnil);
+
+  Fprin1 (count, stream);
+  Findent_to (make_int (20), one, Qnil);
+  Fprin1 (XSYMBOL_VALUE (sym), stream);
+  if (!NILP (XSYMBOL (sym)->function))
+    {
+      Findent_to (make_int (45), one, Qnil);
+      Fprin1 (XSYMBOL (sym)->function, stream);
+    }
+  buffer_insert_c_string (buf, "\n");
+}
+
+static int
+record_symbol (Lisp_Object sym, void *arg)
+{
+  Lisp_Object closure = * (Lisp_Object *) arg;
+  XSETCDR (closure, Fcons (sym, XCDR (closure)));
+  return 0; /* Never stop */
+}
+
+DEFUN ("insert-abbrev-table-description", Finsert_abbrev_table_description,
+       1, 2, 0, /*
+Insert before point a full description of abbrev table named NAME.
+NAME is a symbol whose value is an abbrev table.
+If optional 2nd arg READABLE is non-nil, a human-readable description
+is inserted.  Otherwise the description is an expression,
+a call to `define-abbrev-table', which would
+define the abbrev table NAME exactly as it is currently defined.
+
+Abbrevs marked as "system abbrevs" are normally omitted.  However, if
+READABLE is non-nil, they are listed.  */
+       (name, readable))
+{
+  Lisp_Object table;
+  Lisp_Object symbols;
+  Lisp_Object stream;
+  /* This function can GC */
+  struct buffer *buf = current_buffer;
+
+  CHECK_SYMBOL (name);
+  table = Fsymbol_value (name);
+  CHECK_VECTOR (table);
+
+  /* FIXME: what's the XEmacs equivalent? APA */
+  /* XSETBUFFER (stream, current_buffer); */
+  /* Does not seem to work: */
+  /* Fset_buffer (stream); */
+  stream = wrap_buffer (current_buffer);
+
+  symbols = Fcons (Qnil, Qnil);
+  /* Lisp_Object closure = Fcons (Qnil, Qnil); */
+  /* struct gcpro gcpro1; */
+  /* GCPRO1 (closure); */
+  /* map_obarray (table, record_symbol, symbols); */
+  map_obarray (table, record_symbol, &symbols);
+  /* map_obarray (table, record_symbol, &closure); */
+  symbols = XCDR (symbols);
+  symbols = Fsort (symbols, Qstring_lessp);
+
+  if (!NILP (readable))
+    {
+      buffer_insert_c_string (buf, "(");
+      Fprin1 (name, stream);
+      buffer_insert_c_string (buf, ")\n\n");
+      while (! NILP (symbols))
+	{
+	  describe_abbrev (XCAR (symbols), stream);
+	  symbols = XCDR (symbols);
+	}
+
+      buffer_insert_c_string (buf, "\n\n");
+    }
+  else
+    {
+      buffer_insert_c_string (buf, "(define-abbrev-table '");
+      Fprin1 (name, stream);
+      buffer_insert_c_string (buf, " '(\n");
+      while (! NILP (symbols))
+	{
+	  write_abbrev (XCAR (symbols), stream);
+	  symbols = XCDR (symbols);
+	}
+      buffer_insert_c_string (buf, "    ))\n\n");
+    }
+
+  return Qnil;
+}
 
 void
 syms_of_abbrev (void)
 {
+  DEFSYMBOL(Qcount);
+  Qcount = intern ("count");
+  staticpro (&Qcount);
+  DEFSYMBOL(Qsystem_type);
+  Qsystem_type = intern ("system-type");
   DEFSYMBOL (Qpre_abbrev_expand_hook);
   DEFSUBR (Fexpand_abbrev);
+  DEFSUBR (Finsert_abbrev_table_description);
 }
 
 void
