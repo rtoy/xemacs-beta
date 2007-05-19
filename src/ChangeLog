@@ -1,3 +1,8 @@
+2007-05-17  Vin Shelton  <acs@xemacs.org>
+
+	* linuxplay.c (linux_play_data_or_file): Fix playing sound on
+	64-bit linux.  Pathc from Hans de Graaff.
+
 2007-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* config.h.in (ERROR_CHECK_BYTE_CODE): Alphabetize ERROR_CHECK_*.
