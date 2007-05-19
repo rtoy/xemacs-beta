@@ -2182,7 +2182,8 @@ pdump (void)
   pdump_dump_root_lisp_objects ();
 
   retry_fclose (pdump_out);
-  retry_close (pdump_fd);
+  /* pdump_fd is already closed by the preceding call to fclose.
+  retry_close (pdump_fd); */
 
   free (pdump_buf);
 

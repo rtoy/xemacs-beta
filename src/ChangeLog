@@ -1,3 +1,8 @@
+2007-05-03  Vin Shelton  <acs@xemacs.org>
+
+	* dumper.c (pdump): Don't close an already-closed file
+	descriptor.  Patch from Steve Higham.
+
 2007-05-17  Vin Shelton  <acs@xemacs.org>
 
 	* linuxplay.c (linux_play_data_or_file): Fix playing sound on
