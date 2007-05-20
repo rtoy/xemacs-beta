@@ -78,7 +78,7 @@
 	      (charset ethiopic)
 	      (coding-system iso-2022-7bit)
 	      (coding-priority iso-2022-7bit)
-	      (input-method . "ethiopic")
+	      ;; (input-method . "ethiopic")
 	      (features ethio-util)
 	      (sample-text . "$(3$Q#U!.(B")
 	      (documentation . t)))

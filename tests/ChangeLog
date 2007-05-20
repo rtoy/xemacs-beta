@@ -1,3 +1,11 @@
+2007-05-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Make the file name coding system tests work on OS X. 
+	Check various slots of the language environment structure to make
+	sure they're well formed--we've been shipping without a Turkish or
+	Latin-10 input method for years, for example, which is an error. 
+
 2007-04-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el (featurep):

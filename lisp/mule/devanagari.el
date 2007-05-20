@@ -62,7 +62,8 @@
  "Devanagari" '((charset indian-is13194 indian-2-column indian-1-column)
 		(coding-system in-is13194-devanagari)
 		(coding-priority in-is13194-devanagari)
-		(input-method . "devanagari-itrans")
+                ;; Not available in packages. 
+		; (input-method . "devanagari-itrans")
 		(features devan-util)
 		(documentation . "\
 Such languages using Devanagari script as Hindi and Marathi

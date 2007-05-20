@@ -37,13 +37,18 @@
 
 (defvar defined-category-hashtable (make-hash-table :size 50))
 
-(defun define-category (designator doc-string)
+(defun define-category (designator doc-string &optional table)
   "Make a new category whose designator is DESIGNATOR.
 DESIGNATOR should be a visible letter of ' ' thru '~'.
-STRING is a doc string for the category.
-Letters of 'a' thru 'z' are already used or kept for the system."
+DOC-STRING is a doc string for the category.
+Letters of 'a' thru 'z' are already used or kept for the system.
+The category should be defined only in category table TABLE, which defaults
+to the current buffer's category table, but this is not implemented.  "
+  ;; #### Implement the limiting of the definition. 
   (check-argument-type 'category-designator-p designator)
   (check-argument-type 'stringp doc-string)
+  (setq table (or table (category-table)))
+  (check-argument-type 'category-table-p table)
   (puthash designator doc-string defined-category-hashtable))
 
 (defun undefine-category (designator)
@@ -141,6 +146,10 @@ The categories are given by their designators."
      (unwind-protect
 	 (progn ,@body)
        (set-category-table current-category-table))))
+
+(defun make-category-table ()
+  "Construct a new and empty category table and return it."
+  (make-char-table 'category))
 
 (defun describe-category ()
   "Describe the category specifications in the category table.

@@ -327,23 +327,26 @@ This is a naive implementation in Lisp.  "
   ;;---------------------------------------------------------------
   ;; Test file-system character conversion (and, en passant, file ops)
   ;;---------------------------------------------------------------
-  (let* ((scaron (make-char 'latin-iso8859-2 57))
-	 (latin2-string (make-string 4 scaron))
+  (let* ((dstroke (make-char 'latin-iso8859-2 80))
+	 (latin2-string (make-string 4 dstroke))
 	 (prefix (concat (file-name-as-directory
 			  (file-truename (temp-directory)))
 			 latin2-string))
-	 (name1 (make-temp-name prefix))
-	 (name2 (make-temp-name prefix))
 	 (file-name-coding-system
 	  ;; 'iso-8859-X doesn't work on darwin (as of "Panther" 10.3), it
 	  ;; seems to know that file-name-coding-system is definitely utf-8
 	  (if (string-match "darwin" system-configuration)
 	      'utf-8
 	    'iso-8859-2))
-	 )
+         ;; make-temp-name does stat(), which on OS X requires that you
+         ;; normalise, where open() will normalise for you. Previously we
+         ;; used scaron as the Latin-2 character, and make-temp-name errored
+         ;; on OS X. LATIN CAPITAL LETTER D WITH STROKE does decompose.
+         (name1 (make-temp-name prefix))
+         (name2 (make-temp-name prefix)))
+    ;; This is how you suppress output from `message', called by `write-region'
     (Assert (not (equal name1 name2)))
     (Assert (not (file-exists-p name1)))
-    ;; This is how you suppress output from `message', called by `write-region'
     (Silence-Message
      (write-region (point-min) (point-max) name1))
     (Assert (file-exists-p name1))
@@ -352,8 +355,7 @@ This is a naive implementation in Lisp.  "
       (Assert (file-exists-p name2))
       (Assert (equal (file-truename name2) name1))
       (Assert (equal (file-truename name1) name1)))
-
-      (ignore-file-errors (delete-file name1) (delete-file name2)))
+    (ignore-file-errors (delete-file name1) (delete-file name2)))
 
   ;; Add many more file operation tests here...
 
@@ -475,6 +477,20 @@ This is a naive implementation in Lisp.  "
                hebrew-iso8859-8 japanese-jisx0208 japanese-jisx0212
                katakana-jisx0201 korean-ksc5601 latin-iso8859-1
                latin-iso8859-2 thai-xtis vietnamese-viscii-lower))))
+
+  ;; Language environments. 
+  (dolist (language (mapcar 'car language-info-alist))
+    (set-language-environment language)
+    (Assert (equal language current-language-environment))
+    (set-input-method (get-language-info language 'input-method))
+    (Assert (equal (get-language-info language 'input-method) 
+                   current-input-method))
+    (dolist (charset (get-language-info language 'charset))
+      (Assert (charsetp (find-charset charset))))
+    (dolist (coding-system (get-language-info language 'coding-system))
+      (Assert (coding-system-p (find-coding-system coding-system))))
+    (dolist (coding-system (get-language-info language 'coding-system))
+      (Assert (coding-system-p (find-coding-system coding-system)))))
 
   (with-temp-buffer
     (flet

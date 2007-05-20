@@ -331,7 +331,8 @@ Both tables are indexed by the position code of Vietnamese characters.")
 		(coding-system viscii vscii viqr)
 		(coding-priority viscii)
 		(locale "vietnamese" "vi")
-		(input-method . "vietnamese-viqr")
+                ;; Not available in packages. 
+		;; (input-method . "vietnamese-viqr")
 		(features viet-util)
 		(sample-text . "Vietnamese (Ti,1*(Bng Vi,1.(Bt)	Ch,1`(Bo b,1U(Bn")
 		(documentation . "\

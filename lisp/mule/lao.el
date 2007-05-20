@@ -62,7 +62,7 @@
  "Lao" '((charset lao)
 	 (coding-system lao)
 	 (coding-priority lao)
-	 (input-method . "lao")
+	 ;; (input-method . "lao")
 	 (nonascii-translation . lao)
 	 (unibyte-display . lao)
 	 (features lao-util)

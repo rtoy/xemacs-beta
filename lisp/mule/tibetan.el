@@ -136,7 +136,8 @@
  "Tibetan" '((charset tibetan tibetan-1-column)
 	     (coding-system tibetan-iso-8bit)
 	     (coding-priority iso-2022-7bit tibetan-iso-8bit)
-	     (input-method . "tibetan-wylie")
+             ;; Not available in packages. 
+	     ;; (input-method . "tibetan-wylie")
 	     (features tibet-util)
 	     (documentation . t)
 	     (sample-text 

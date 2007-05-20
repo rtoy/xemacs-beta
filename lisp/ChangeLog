@@ -1,3 +1,25 @@
+2007-05-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/devanagari.el ("Devanagari"):
+	* mule/ethiopic.el ("Ethiopic"):
+	* mule/hebrew.el ("Hebrew"):
+	* mule/lao.el ("Lao"):
+	* mule/tibetan.el ("Tibetan"):
+	* mule/vietnamese.el ("Vietnamese"):
+	The Hebrew input method we don't provide, for less than stellar
+	reasons; we should reconsider when and if we get bidi support.
+	The other input methods require changes to mule-category.el that
+	21.4 doesn't have, and as such supporting them in the packages is
+	mostly impossible. I've commented out the references to them in
+	the corresponding language environment. 
+
+	* mule/mule-category.el (define-category):
+	Add an optional argument to define-category, taken from GNU; it's
+	still only a partial implementation, though. This whole file is
+	chaos. 
+	* mule/mule-category.el (make-category-table): New.
+	Trivial implementation, for GNU compatibility. 	
+
 2007-05-20  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* gutter-items.el (progress-feedback-with-label): Clarify docstring.

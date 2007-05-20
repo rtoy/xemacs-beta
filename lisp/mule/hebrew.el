@@ -73,7 +73,8 @@
  "Hebrew" '((charset hebrew-iso8859-8)
 	    (coding-system iso-8859-8)
 	    (coding-priority iso-8859-8)
-	    (input-method . "hebrew")
+            ;; Not available in packages. 
+	    ;; (input-method . "hebrew")
 	    (sample-text . "Hebrew	[2],Hylem[0](B")
 	    (documentation . "Right-to-left writing is not yet supported.")
 	    ))
