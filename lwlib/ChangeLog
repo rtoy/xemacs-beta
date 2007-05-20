@@ -1,3 +1,16 @@
+2007-05-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Gauge values are signed integers (ints).
+	
+	* xlwgauge.h: Get rid of references to Cardinal in comment.
+	(XawGaugeGetValue): Declare return value as int.
+	(XawGaugeSetValue): Declare value as int.
+
+	* xlwgauge.c (GaugeGetValue): Declare value as int.
+	(GaugeMercury): Declare val0 and val1 as int.  Remove redundant casts.
+	(XawGaugeGetValue): Declare return value as int.
+	(XawGaugeSetValue): Declare value as int.
+
 2007-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lwlib-Xaw.c (wm_delete_window): Iterate over children of shell

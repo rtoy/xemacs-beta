@@ -132,7 +132,7 @@ static void EnableUpdate  (GaugeWidget);
 static void DisableUpdate (GaugeWidget);
 
 static void GaugeGetValue (XtPointer, XtIntervalId *);
-static void GaugeMercury (Display *, Window, GC, GaugeWidget, Cardinal, Cardinal);
+static void GaugeMercury (Display *, Window, GC, GaugeWidget, int, int);
 
 static Boolean GaugeConvert (Widget, Atom *, Atom *, Atom *,
 			     XtPointer *, unsigned long *, int *);
@@ -817,8 +817,7 @@ GaugeGetSelCB (Widget    w,
 	 */
 
 void
-XawGaugeSetValue (Widget   w,
-		  Cardinal value)
+XawGaugeSetValue (Widget w, int value)
 {
 	GaugeWidget gw = (GaugeWidget)w ;
 	int	oldvalue ;
@@ -850,7 +849,7 @@ XawGaugeSetValue (Widget   w,
 }
 
 
-Cardinal
+int
 XawGaugeGetValue (Widget w)
 {
 	GaugeWidget gw = (GaugeWidget)w ;
@@ -873,8 +872,8 @@ GaugeMercury (Display     *dpy,
 	      Window      win,
 	      GC          gc,
 	      GaugeWidget gw,
-	      Cardinal    val0,
-	      Cardinal    val1)
+	      int    val0,
+	      int    val1)
 {
 	int	v0 = gw->gauge.v0 ;
 	int	v1 = gw->gauge.v1 ;
@@ -893,10 +892,10 @@ GaugeMercury (Display     *dpy,
 
 	if( vd <= 0 ) vd = 1 ;
 
-	if( (int) val0 < v0 ) val0 = v0 ;
-	else if( (int) val0 > v1 ) val0 = v1 ;
-	if( (int) val1 < v0 ) val1 = v0 ;
-	else if( (int) val1 > v1 ) val1 = v1 ;
+	if( val0 < v0 ) val0 = v0 ;
+	else if( val0 > v1 ) val0 = v1 ;
+	if( val1 < v0 ) val1 = v0 ;
+	else if( val1 > v1 ) val1 = v1 ;
 
 	p0 = (val0-v0)*(e1-e0-1)/vd ;
 	p1 = (val1-v0)*(e1-e0-1)/vd ;
@@ -1108,7 +1107,7 @@ GaugeGetValue (XtPointer    clientData,
 	       XtIntervalId *UNUSED (intervalId))
 {
 	GaugeWidget	gw = (GaugeWidget)clientData ;
-	Cardinal	value ;
+	int	value ;
 
 	if( gw->gauge.update > 0 )
 	  EnableUpdate(gw) ;
