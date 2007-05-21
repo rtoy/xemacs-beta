@@ -1,3 +1,10 @@
+2007-05-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/latin.el:
+	The character set associated with the Turkish language environment
+	is latin-iso8859-9, not latin-iso8859-5. Who thought up the Latin
+	5 vs. ISO 8859-9 distinction anyway?
+
 2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.28 "fuki" is released.
