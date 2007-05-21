@@ -42,6 +42,7 @@ LDFLAGS=@LDFLAGS@
 ALLOCA=@ALLOCA@
 LN_S=@LN_S@
 version=@version@
+etags_xemacs_version=@verbose_version@
 
 ## This will be the name of the generated binary and is set automatically
 ## by configure.
@@ -309,7 +310,7 @@ regex.o: ${srcdir}/../src/regex.c ${top_srcdir}/src/regex.h
 	$(CC) -c $(cflags) \
 	-DINHIBIT_STRING_HEADER ${top_srcdir}/src/regex.c
 
-etags_args = $(cflags) -DEMACS_NAME='"XEmacs"' -DVERSION='"${version}"' \
+etags_args = $(cflags) -DEMACS_NAME='"XEmacs"' -DVERSION='"${etags_xemacs_version}"' \
 	${srcdir}/etags.c $(GETOPTOBJS) regex.o $(ldflags)
 etags_deps = ${srcdir}/etags.c $(GETOPTDEPS) regex.o ../src/config.h
 
@@ -322,6 +323,7 @@ ellcc_deps = ${srcdir}/ellcc.c ellcc.h ../src/config.h
 ellcc: ${ellcc_deps}
 	$(CC) ${ellcc_args} -o $@
 
+## #### we should probably do the same as for pot's etags
 ootags_args = $(cflags) -DVERSION='"${version}"' ${srcdir}/ootags.c \
 	$(GETOPTOBJS) regex.o $(ldflags)
 ootags_deps = ${srcdir}/ootags.c $(GETOPTDEPS) regex.o ../src/config.h

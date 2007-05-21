@@ -1191,8 +1191,11 @@ if test -n "$emacs_beta_version" ; then
   fi
 fi
 AC_DEFINE_UNQUOTED(XEMACS_CODENAME, "$xemacs_codename")
+dnl for etags
+verbose_version=$version
 if test "$xemacs_extra_name" != ""; then
   AC_DEFINE_UNQUOTED(XEMACS_EXTRA_NAME, "$xemacs_extra_name")
+  verbose_version="$verbose_version $xemacs_extra_name"
 fi
 if test "$xemacs_release_date" != ""; then
   AC_DEFINE_UNQUOTED(XEMACS_RELEASE_DATE, "$xemacs_release_date")
@@ -5694,6 +5697,7 @@ dnl configuration here uncanonicalized to avoid exceeding size limits.
 
 AC_SUBST(PROGNAME)
 AC_SUBST(version)
+AC_SUBST(verbose_version)
 AC_SUBST(inststaticdir)
 AC_SUBST(instvardir)
 AC_SUBST(srcdir)

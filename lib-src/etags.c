@@ -1,30 +1,69 @@
 /* Tags file maker to go with GNU Emacs           -*- coding: latin-1 -*-
-   Copyright (C) 1984, 1987, 1988, 1989, 1993, 1994, 1995,
-                 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-                 2005, 2006 Free Software Foundation, Inc. and Ken Arnold
 
- This file is not considered part of GNU Emacs.
+Copyright (C) 1984 The Regents of the University of California
 
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the
+   distribution.
+3. Neither the name of the University nor the names of its
+   contributors may be used to endorse or promote products derived
+   from this software without specific prior written permission.
 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS''
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software Foundation,
- Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. */
+
+Copyright (C) 1984, 1987, 1988, 1989, 1993, 1994, 1995, 1998, 1999,
+  2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007
+  Free Software Foundation, Inc.
+
+This file is not considered part of GNU Emacs.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. */
+
+
+/* NB To comply with the above BSD license, copyright information is
+reproduced in etc/ETAGS.README.  That file should be updated when the
+above notices are.
+
+To the best of our knowledge, this code was originally based on the
+ctags.c distributed with BSD4.2, which was copyrighted by the
+University of California, as described above. */
+
 
 /*
  * Authors:
- *	Ctags originally by Ken Arnold.
- *	Fortran added by Jim Kleckner.
- *	Ed Pelegri-Llopart added C typedefs.
- *	Gnu Emacs TAGS format and modifications by RMS?
+ * 1983	Ctags originally by Ken Arnold.
+ * 1984	Fortran added by Jim Kleckner.
+ * 1984	Ed Pelegri-Llopart added C typedefs.
+ * 1985	Emacs TAGS format by Richard Stallman.
  * 1989	Sam Kendall added C++.
  * 1992 Joseph B. Wells improved C and C++ parsing.
  * 1993	Francesco Potortì reorganised C and C++.
@@ -41,7 +80,7 @@
  * configuration file containing regexp definitions for etags.
  */
 
-char pot_etags_version[] = "@(#) pot revision number is 17.26";
+char pot_etags_version[] = "@(#) pot revision number is 17.32";
 
 #define	TRUE	1
 #define	FALSE	0
@@ -120,7 +159,14 @@ char pot_etags_version[] = "@(#) pot revision number is 17.26";
 #  include <stdlib.h>
 #  include <string.h>
 # else /* no standard C headers */
-    extern char *getenv ();
+   extern char *getenv ();
+   extern char *strcpy ();
+   extern char *strncpy ();
+   extern char *strcat ();
+   extern char *strncat ();
+   extern unsigned long strlen ();
+   extern PTR malloc ();
+   extern PTR realloc ();
 #  ifdef VMS
 #   define EXIT_SUCCESS	1
 #   define EXIT_FAILURE	0
@@ -444,7 +490,7 @@ static char
   *midtk = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz$0123456789";
 
 static bool append_to_tagfile;	/* -a: append to tags */
-/* The next four default to TRUE for etags, but to FALSE for ctags.  */
+/* The next five default to TRUE for etags, but to FALSE for ctags.  */
 static bool typedefs;		/* -t: create tags for C and Ada typedefs */
 static bool typedefs_or_cplusplus; /* -T: create tags for C typedefs, level */
 				/* 0 struct/enum/union decls, and C++ */
@@ -453,8 +499,8 @@ static bool constantypedefs;	/* -d: create tags for C #define, enum */
 				/* constants and variables. */
 				/* -D: opposite of -d.  Default under ctags. */
 static bool globals;		/* create tags for global variables */
-static bool declarations;	/* --declarations: tag them and extern in C&Co*/
 static bool members;		/* create tags for C member variables */
+static bool declarations;	/* --declarations: tag them and extern in C&Co*/
 static bool no_line_directive;	/* ignore #line directives (undocumented) */
 static bool no_duplicates;	/* no duplicate tags for ctags (undocumented) */
 static bool update;		/* -u: update tags */
@@ -577,10 +623,11 @@ static char default_C_help [] =
 definitions of `struct', `union' and `enum'.  `#define' macro\n\
 definitions and `enum' constants are tags unless you specify\n\
 `--no-defines'.  Global variables are tags unless you specify\n\
-`--no-globals'.  Use of `--no-globals' and `--no-defines'\n\
-can make the tags table file much smaller.\n\
+`--no-globals' and so are struct members unless you specify\n\
+`--no-members'.  Use of `--no-globals', `--no-defines' and\n\
+`--no-members' can make the tags table file much smaller.\n\
 You can tag function declarations and external variables by\n\
-using `--declarations', and struct members by using `--members'.";
+using `--declarations'.";
 
 static char *Cplusplus_suffixes [] =
   { "C", "c++", "cc", "cpp", "cxx", "H", "h++", "hh", "hpp", "hxx",
@@ -590,8 +637,8 @@ static char *Cplusplus_suffixes [] =
 static char Cplusplus_help [] =
 "In C++ code, all the tag constructs of C code are tagged.  (Use\n\
 --help --lang=c --lang=c++ for full help.)\n\
-In addition to C tags, member functions are also recognized, and\n\
-optionally member variables if you use the `--members' option.\n\
+In addition to C tags, member functions are also recognized.  Member\n\
+variables are recognized unless you use the `--no-members' option.\n\
 Tags for variables and functions in classes are named `CLASS::VARIABLE'\n\
 and `CLASS::FUNCTION'.  `operator' definitions have tag names like\n\
 `operator+'.";
@@ -686,8 +733,8 @@ defined in the default package is `main::SUB'.";
 static char *PHP_suffixes [] =
   { "php", "php3", "php4", NULL };
 static char PHP_help [] =
-"In PHP code, tags are functions, classes and defines.  When using\n\
-the `--members' option, vars are tags too.";
+"In PHP code, tags are functions, classes and defines.  Unless you use\n\
+the `--no-members' option, vars are tags too.";
 
 static char *plain_C_suffixes [] =
   { "pc",			/* Pro*C file */
@@ -834,25 +881,15 @@ etags --help --lang=ada.");
 #ifndef EMACS_NAME
 # define EMACS_NAME "standalone"
 #endif
-#ifdef EMACS_VERSION
-# ifdef XEMACS_EXTRA_NAME
-#  define E_VERSION EMACS_VERSION " " XEMACS_EXTRA_NAME
-# else
-#  define E_VERSION EMACS_VERSION
-# endif
-#elif defined(VERSION)
-# define E_VERSION VERSION
-#else
-# define E_VERSION "version"
+#ifndef VERSION
+# define VERSION "17.32"
 #endif
-
 static void
 print_version ()
 {
-  printf ("%s (%s %s)\n", (CTAGS) ? "ctags" : "etags", EMACS_NAME, E_VERSION);
-  puts (pot_etags_version);
-  puts ("Copyright (C) 2006 Free Software Foundation, Inc. and Ken Arnold");
-  puts ("This program is distributed under the same terms as Emacs");
+  printf ("%s (%s %s)\n", (CTAGS) ? "ctags" : "etags", EMACS_NAME, VERSION);
+  puts ("Copyright (C) 2007 Free Software Foundation, Inc.");
+  puts ("This program is distributed under the terms in ETAGS.README");
 
   exit (EXIT_SUCCESS);
 }
@@ -939,8 +976,13 @@ Relative ones are stored relative to the output file's directory.\n");
     puts ("--no-globals\n\
 	Do not create tag entries for global variables in some\n\
 	languages.  This makes the tags file smaller.");
-  puts ("--members\n\
+  if (CTAGS)
+    puts ("--members\n\
 	Create tag entries for members of structures in some languages.");
+  else
+    puts ("--no-members\n\
+	Do not create tag entries for members of structures\n\
+	in some languages.");
 
   puts ("-r REGEXP, --regex=REGEXP or --regex=@regexfile\n\
         Make a tag for each line matching a regular expression pattern\n\
@@ -988,7 +1030,7 @@ Relative ones are stored relative to the output file's directory.\n");
         Print on the standard output an index of items intended for\n\
         human consumption, similar to the output of vgrind.  The index\n\
         is sorted, and gives the page number of each item.");
-# ifdef PRINT_UNDOCUMENTED_OPTIONS_HELP
+# if PRINT_UNDOCUMENTED_OPTIONS_HELP
       puts ("-w, --no-duplicates\n\
         Do not create duplicate tag entries, for compatibility with\n\
 	traditional ctags.");
@@ -1178,13 +1220,13 @@ main (argc, argv)
 
   /*
    * If etags, always find typedefs and structure tags.  Why not?
-   * Also default to find macro constants, enum constants and
-   * global variables.
+   * Also default to find macro constants, enum constants, struct
+   * members and global variables.
    */
   if (!CTAGS)
     {
       typedefs = typedefs_or_cplusplus = constantypedefs = TRUE;
-      globals = TRUE;
+      globals = members = TRUE;
     }
 
   /* When the optstring begins with a '-' getopt_long does not rearrange the
@@ -3366,17 +3408,15 @@ C_entries (c_ext, inf)
 	case '/':
 	  if (*lp == '*')
 	    {
-	      lp++;
 	      incomm = TRUE;
-	      continue;
+	      lp++;
+	      c = ' ';
 	    }
 	  else if (/* cplpl && */ *lp == '/')
 	    {
 	      c = '\0';
-	      break;
 	    }
-	  else
-	    break;
+	  break;
 	case '%':
 	  if ((c_ext & YACC) && *lp == '%')
 	    {
@@ -6904,6 +6944,7 @@ xrealloc (ptr, size)
  * tab-width: 8
  * fill-column: 79
  * c-font-lock-extra-types: ("FILE" "bool" "language" "linebuffer" "fdesc" "node" "regexp")
+ * c-file-style: "gnu"
  * End:
  */
 
