@@ -1,3 +1,7 @@
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
 2007-05-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (error-checking): Move comma misplaced by sorting.

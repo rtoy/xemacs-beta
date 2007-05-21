@@ -1,3 +1,7 @@
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
 2006-12-11  Vin Shelton  <acs@xemacs.org>
 
 	* config.inc.samp: Added BUILD_FOR_SETUP_KIT.

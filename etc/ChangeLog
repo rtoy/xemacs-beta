@@ -1,3 +1,7 @@
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
 2007-05-01  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* gdbinit.in (pobj): Nuke fc_fontset and fc_objectset, add fc_config.

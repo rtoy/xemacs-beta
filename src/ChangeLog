@@ -1,3 +1,7 @@
+2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.28 "fuki" is released.
+
 2007-05-13  Adrian Aichner  <adrian@xemacs.org>
 
 	* abbrev.c: Sort abbreviations by name, similar to GNU Emacs.
