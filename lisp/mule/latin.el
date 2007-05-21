@@ -696,7 +696,7 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
       ("Lappish")
       ("Latvian" "lv")
       ("Lithuanian" "li")))
-    ((latin-iso8859-5 iso-8859-9 "latin-5-prefix" "Latin-5" "ISO-8859-9")
+    ((latin-iso8859-9 iso-8859-9 "latin-5-prefix" "Latin-5" "ISO-8859-9")
      (("Turkish" "tr"))))
   do
   (set-language-info-alist
