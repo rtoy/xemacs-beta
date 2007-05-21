@@ -2,24 +2,33 @@ Brief summary of Changes to 21.5.28 "fuki"
 
 Major Features and Backward Incompatible Changes
 
--- fix: Buffer overflow in doc.c -- Aidan Kehoe, Fabrice Popineau
--- fix: Buffer overrun in init_native_sound -- Jerry James
 -- fix: Check for missing dimensions for default face and window -- Aidan Kehoe, Mike Sperber
--- fix: Crash in PNG error handler -- Stephen J. Turnbull, ????
+-- fix: Crash in PNG error handler -- Stephen J. Turnbull, Ron Isaacson
 -- fix: Crash in device-matching-specifier-list -- Stephen J. Turnbull
+-- fix: Crash in gtk/x_reset_modifier_mapping -- Aidan Kehoe
+-- fix: Crash in linux_play_data_or_file on 64-bit linux -- Hans Graff, Vin Shelton
+-- fix: Crash on double-close of fd in pdump -- Steve Higham, Vin Shelton
+-- fix: Crash via buffer overflow in doc.c -- Aidan Kehoe, Fabrice Popineau
+-- fix: Crash via buffer overrun in init_native_sound -- Jerry James
+-- fix: Crash when deleting dialog via window manager -- Stephen J. Turnbull
+-- fix: Device type of msprinter is non-window-system -- Aidan Kehoe
 -- fix: Float formats overflow output buffer -- Aidan Kehoe
+-- fix: Font menu on non-Mule -- Aidan Kehoe
 -- fix: ISO 2022 decoding kludges -- Aidan Kehoe
 -- fix: Make snarf-documentation robust to nonconforming DOC files -- Aidan Kehoe
--- fix: Sanity checks before accessing frame in x_set_frame_properties -- Aidan Kehoe
--- fix: init_native_sound is called on a msprinter device -- Aidan Kehoe
 -- fix: Non-existent charset ID is specified for a mule-to-unicode call -- Aidan Kehoe
+-- fix: Sanity checks before accessing frame in x_set_frame_properties -- Aidan Kehoe
+-- fix: Type of arguments to GaugeMercury (related to progress bar crash?) -- Stephen J. Turnbull
+-- fix: init_native_sound is called on a msprinter device -- Aidan Kehoe
+-- fix: set-buffer-file-coding-system now sets buffer-modified-flag by default -- Aidan Kehoe
+-- new: Echo area resizing -- Adrian Aichner, Stephen J. Turnbull
 
 User-Visible Bug Fixes and Minor Improvements
 
--- improve: sync etags to pot version 17.26; improve version report -- Stephen J. Turnbull, Steve Youngs
 -- fix: Avoid delays in TTY-only builds by checking dispatch event queue -- Aidan Kehoe
 -- fix: Avoid looking up variable bindings during GC -- Nix
 -- fix: Buffer overruns in gnuclient and gnuslib -- Jerry James
+-- fix: Remove references to unimplemented input methods from language environments -- Aidan Kehoe
 -- fix: Find modules correctly -- Ville Skyttä, Mike Sperber, Stephen Turnbull
 -- fix: Get X11 window property correctly on 64-bit platforms -- Stephen J. Turnbull, Mike Fabian, Takashi Iwai
 -- fix: Handle coding system in file insertion in buffer properly -- Mike Sperber
@@ -39,8 +48,11 @@ User-Visible Bug Fixes and Minor Improvements
 -- improve: Handling of Asian "full-width" characters on TTY -- Aidan Kehoe
 -- improve: Language environment detection from locale -- Aidan Kehoe
 -- improve: Look harder for X11 locale-specific app-defaults files -- Malcolm Purvis
--- improve: Make read-quoted-char terminate, not error, on non-character keys -- Aidan Kehoe	
--- improve: Support non-ISO Cyrillic keysyms -- Aidan Kehoe	
+-- improve: Make read-quoted-char terminate, not error, on non-character keys -- Aidan Kehoe
+-- improve: Sort abbrev database -- Adrian Aichner
+-- improve: Support non-ISO Cyrillic keysyms -- Aidan Kehoe
+-- improve: Sync etags to pot version 17.26; improve version report -- Stephen J. Turnbull, Steve Youngs
+-- improve: Sync etags to pot version 17.32; move improved version report to configure, lose pot version report -- Stephen J. Turnbull
 -- improve: Try to rationalize resources of Xft in lwlib -- Stephen J. Turnbull
 -- improve: Use short list fixed string registries, not long list pruned by regexp for X11 fonts -- Aidan Kehoe
 -- improve: charsets-in-region now in C -- Aidan Kehoe
@@ -48,7 +60,6 @@ User-Visible Bug Fixes and Minor Improvements
 -- new: Add raw string support like SXEmacs -- Aidan Kehoe
 -- new: Find C source files for Lisp primitives -- Aidan Kehoe
 -- new: Just-in-time definition of Unicode characters and X keysyms -- Aidan Kehoe
--- new: Minibuffer resizing in core -- Adrian Aichner
 -- update: New package download sites -- Adrian Aichner
 -- update: Sync etags to pot_etags_version 17.19 -- Stephen J. Turnbull
 -- update: Sync pop[ch] to Emacs -- Jerry James
@@ -61,6 +72,7 @@ Build Infrastructure
 -- fix: C is not C++ -- Robert Pluim
 -- fix: Check for u_int*_t typedefs -- Dr. Volker Zell
 -- fix: Correct help strings, remove obsolete configure.* files -- Stephen J. Turnbull
+-- fix: Documentation of --with-error-checking options -- Stephen J. Turnbull
 -- fix: Don't call ichar_to_unicode on non-MULE -- Mike Sperber
 -- fix: Enable SYSTEM_MALLOC on ppc64, alpha and ia64 systems -- Malcolm Purvis
 -- fix: Make user-defined directories work in configure -- Mike Sperber
@@ -84,6 +96,7 @@ improvement -- debugger init sources can use XCOMM convention
 
 Documentation
 
+-- fix: Description of kanji read syntax, size of Ichar (now 21 bits) -- Aidan Kehoe
 -- fix: Improve docstrings -- Stephen J. Turnbull, Aidan Kehoe
 -- fix: Make manual conform to reality -- Malcolm Purvis, Robert Pluim, Aidan Kehoe, Stephen J. Turnbull
 -- fix: New compatibility alias string-to-char-list -- Vin Shelton, Ville Skyttä
@@ -100,18 +113,23 @@ Lisp API
 
 -- fix: Catch error in cloning language environment -- Aidan Kehoe
 -- fix: Make shell-command use requested output buffer -- Jerry James
+-- fix: xft-version is now DEVAR_CONST_INT.
+-- improve: Face initialization and specification -- Aidan Kehoe
 -- improve: Make `split-char' available in no-mule -- Aidan Kehoe
 -- improve: New unicode-type property of Unicode coding systems -- Aidan Kehoe
+-- improve; Partial sync of coding-category stuff to GNU -- Aidan Kehoe
 -- improve: Reorganize Mule lisp -- Aidan Kehoe
--- new:	ccl-compile-mule-to-unicode, ccl-compile-unicode-to-mule, ccl-dump-mule-to-unicode, ccl-dump-unicode-to-mule -- Aidan Kehoe
+-- new: Full access to FcConfig objects -- Stephen J. Turnbull
+-- new: ccl-compile-mule-to-unicode, ccl-compile-unicode-to-mule, ccl-dump-mule-to-unicode, ccl-dump-unicode-to-mule -- Aidan Kehoe
 -- new: deprecate set-charset-registry, charset-registry -- Aidan Kehoe
 -- new: font-lock-keywords-alist, font-lock-removed-keywords-alist,  font-lock-add-keywords, font-lock-update-removed-keyword-alist, font-lock-remove-keywords -- Adrian Aichner
 -- new: set-charset-registries, charset-registries -- Aidan Kehoe
+-- new: x-coverage-instantiator specifier tag identifies Unicode fallbacks -- Aidan Kehoe
 -- update: Sync font-lock-add-keywords and font-lock-remove-keywords from GNU Emacs. -- Adrian Aichner
 
 Internal API and Implementation
 
--- fix: Dead code elimination -- Stephen J. Turnbull
+-- fix: Dead code elimination in font-mgr -- Stephen J. Turnbull
 -- fix: Eliminate buffer overflows and NULL pointer references -- Jerry James, Adrian Aichner
 -- fix: Memory leaks -- Jerry James
 -- fix: Mule correctness with strings passed to warning functions -- Aidan Kehoe
@@ -122,12 +140,21 @@ Internal API and Implementation
 -- improve: Cache Xrm coding system -- Aidan Kehoe
 -- improve: GCPRO correctness -- Aidan Kehoe
 -- improve: NewGC fault handling -- Marcus Crestani
+-- improve: Reorganize and document separate_textual_runs -- Olivier Galibert, Stephen J. Turnbull
 -- improve: 21-bit Mule chars to support JIT charsets -- Aidan Kehoe
+-- update: Get Unicode tables with permissive license -- Stephen J. Turnbull, Mike Fabian
+
+Testing and Debugging
+
+-- improve: Sort results of charset-in-* before comparing to expected. -- Aidan Kehoe
+-- improve: gdbinit.in recognizes new FcConfig objects -- Stephen J. Turnbull
 -- new: Silence-Message macro in test-harness.el -- Stephen J. Turnbull
 -- new: Test for ISO-2022 decoder not choking on invalid UTF-8 -- Aidan Kehoe
 -- new: Test for copy-syntax-table bug -- Stephen Turnbull, Ralf Angeli
+-- new: Test for correct usage of escape-quoted cookie -- Aidan Kehoe
+-- new: Test for availability of input methods referenced in language environments -- Aidan Kehoe
 -- new: Test raw strings -- Aidan Kehoe
--- update: Get Unicode tables with permissive license -- Stephen J. Turnbull, Mike Fabian
+-- new: Test Unicode non-BMP support -- Aidan Kehoe
 
 to 21.5.27 "fiddlesticks"
 
