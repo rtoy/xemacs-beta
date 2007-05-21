@@ -341,7 +341,7 @@ This is a naive implementation in Lisp.  "
          ;; make-temp-name does stat(), which on OS X requires that you
          ;; normalise, where open() will normalise for you. Previously we
          ;; used scaron as the Latin-2 character, and make-temp-name errored
-         ;; on OS X. LATIN CAPITAL LETTER D WITH STROKE does decompose.
+         ;; on OS X. LATIN CAPITAL LETTER D WITH STROKE does not decompose.
          (name1 (make-temp-name prefix))
          (name2 (make-temp-name prefix)))
     ;; This is how you suppress output from `message', called by `write-region'
