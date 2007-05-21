@@ -1,3 +1,8 @@
+2007-05-21  Ville Skyttä  <scop@xemacs.org>
+
+	* internals/internals.texi: Fix corrupted/oddly encoded chars.
+	* lispref/ldap.texi: Ditto.
+
 2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.28 "fuki" is released.

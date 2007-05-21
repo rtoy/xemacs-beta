@@ -2178,8 +2178,8 @@ RMS's idea of compromise and cooperation is almost purely political
 rather than technical. The XEmacs maintainers would like to have issues
 resolved by examining them technically and deciding what makes the most
 sense from a technical prospective. RMS however, wants to proceed on a
-tit for tat kind of basis, which is to say, “If we support this feature
-of yours, we also get to support this other feature of mine.” The
+tit for tat kind of basis, which is to say, ``If we support this feature
+of yours, we also get to support this other feature of mine.'' The
 result of such a process is typically a big mess, because there is no
 overarching design but instead a great deal of incompatible things
 hodgepodged together.
@@ -13441,7 +13441,7 @@ also sets the locale to the system-default ANSI code page.
 dependent on the current locale setting, which includes the locale
 code page. (For more information, see Locale-Dependent Routines.) By
 default, all locale-dependent routines in the Microsoft run-time
-library use the code page that corresponds to the ¡ë?locale. At
+library use the code page that corresponds to the locale. At
 run-time you can change or query the locale code page in use with a
 call to setlocale.
 
@@ -13453,7 +13453,7 @@ code page with _getmbcp and _setmbcp, respectively.
 
 -- The "C" locale is defined by ANSI to correspond to the locale in
 which C programs have traditionally executed. The code page for the 
-"C" locale (¡ë?code page) corresponds to the ASCII character
+"C" locale (code page) corresponds to the ASCII character
 set. For example, in the "C" locale, islower returns true for the
 values 0x61 ?0x7A only. In another locale, islower may return true
 for these as well as other values, as defined by that locale.
@@ -29710,7 +29710,6 @@ Hrvoje Niksic wrote:
 --
 In order to save my hands, I am cutting back on my responses, especially
 to XEmacs-related mail.  You _will_ get a response, but please be patient.
-
 If you need an immediate response and it is not apparent in your message,
 please say so.  Thanks for your understanding.
 
@@ -30033,11 +30032,10 @@ ben
 ben
 
 --
-In order to save my hands, I am cutting back on my responses, especially to
-XEmacs-related mail.  You
-_will_ get a response, but please be patient.  If you need an immediate
-response and it’s not apparent in
-your message, please say so.  Thanks for your understanding.
+In order to save my hands, I am cutting back on my responses, especially
+to XEmacs-related mail.  You _will_ get a response, but please be patient.
+If you need an immediate response and it's not apparent in your message,
+please say so.  Thanks for your understanding.
 
 
 
@@ -30125,11 +30123,10 @@ Yoshiki Hayashi wrote:
 ben
 
 --
-In order to save my hands, I am cutting back on my responses, especially to
-XEmacs-related mail.  You
-_will_ get a response, but please be patient.  If you need an immediate
-response and it’s not apparent in
-your message, please say so.  Thanks for your understanding.
+In order to save my hands, I am cutting back on my responses, especially
+to XEmacs-related mail.  You _will_ get a response, but please be patient.
+If you need an immediate response and it's not apparent in your message,
+please say so.  Thanks for your understanding.
 
 
 
@@ -31577,10 +31574,8 @@ Kyle Jones wrote:
 
 --
 In order to save my hands, I am cutting back on my responses, especially
-to XEmacs-related mail.  You _will_ get a response, but please be
-patient.
+to XEmacs-related mail.  You _will_ get a response, but please be patient.
 If you need an immediate response and it is not apparent in your message,
-
 please say so.  Thanks for your understanding.
 @end example
 
