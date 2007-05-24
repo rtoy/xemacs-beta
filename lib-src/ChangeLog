@@ -1,3 +1,7 @@
+2007-05-22  Jerry James  <james@xemacs.org>
+
+	* ellcc.c (do_init_mode): Plug memory leak.
+
 2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.28 "fuki" is released.
