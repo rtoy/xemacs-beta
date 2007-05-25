@@ -1496,7 +1496,8 @@ configure-package-path: %S
   (setq lisp-directory (paths-find-lisp-directory emacs-roots))
 
   (if debug-paths
-      (princ (format "lisp-directory:\n%S\n" lisp-directory)
+      (princ (format "configure-lisp-directory and lisp-directory:\n%S\n%S\n"
+		     configure-lisp-directory lisp-directory)
 	     'external-debugging-output))
 
   (if (featurep 'mule)
@@ -1505,8 +1506,8 @@ configure-package-path: %S
 	      (paths-find-mule-lisp-directory emacs-roots
 					      lisp-directory))
 	(if debug-paths
-	    (princ (format "mule-lisp-directory:\n%S\n"
-			   mule-lisp-directory)
+	    (princ (format "configure-mule-lisp-directory and mule-lisp-directory:\n%S\n%S\n"
+			   configure-mule-lisp-directory mule-lisp-directory)
 		   'external-debugging-output)))
     (setq mule-lisp-directory '()))
 
@@ -1514,20 +1515,21 @@ configure-package-path: %S
 			    (paths-find-site-lisp-directory emacs-roots)))
 
   (if (and debug-paths (null inhibit-site-lisp))
-      (princ (format "site-directory:\n%S\n" site-directory)
+      (princ (format "configure-site-directory and site-directory:\n%S\n%S\n"
+		     configure-site-directory site-directory)
 	     'external-debugging-output))
 
   (setq load-path (startup-find-load-path inhibit-packages t))
 
   (when debug-paths
-    (princ (format "early-package-hierarchies and early-package-load-path:\n%S\n%S\n"
-		   early-package-hierarchies early-package-load-path)
+    (princ (format "configure-early-package-directories, early-package-hierarchies and early-package-load-path:\n%S\n%S\n%S\n"
+		   configure-early-package-directories early-package-hierarchies early-package-load-path)
 	   'external-debugging-output)
-    (princ (format "late-package-hierarchies and late-package-load-path:\n%S\n%S\n"
-		   late-package-hierarchies late-package-load-path)
+    (princ (format "configure-late-package-directories, late-package-hierarchies and late-package-load-path:\n%S\n%S\n"
+		   configure-late-package-directories late-package-hierarchies late-package-load-path)
 	   'external-debugging-output)
-    (princ (format "last-package-hierarchies and last-package-load-path:\n%S\n%S\n"
-		   last-package-hierarchies last-package-load-path)
+    (princ (format "configure-last-package-directories, last-package-hierarchies and last-package-load-path:\n%S\n%S\n"
+		   configure-last-package-directories last-package-hierarchies last-package-load-path)
 	   'external-debugging-output))
 
   (if debug-paths
@@ -1535,14 +1537,15 @@ configure-package-path: %S
             'external-debugging-output))
   (setq module-directory (paths-find-module-directory emacs-roots))
   (if debug-paths
-      (princ (format "module-directory:\n%S\n" module-directory)
+      (princ (format "configure-module-directory and module-directory:\n%S\n" 
+		     configure-module-directory module-directory)
 	     'external-debugging-output))
   (setq site-module-directory (and (null inhibit-site-modules)
 				   (paths-find-site-module-directory
 				    emacs-roots)))
   (if (and debug-paths (null inhibit-site-modules))
-      (princ (format "site-module-directory:\n%S\n"
-		     site-module-directory)
+      (princ (format "configure-site-module-directory and site-module-directory:\n%S\n%S\n"
+		     configure-site-module-directory site-module-directory)
 	     'external-debugging-output))
 
   (setq module-load-path (paths-construct-module-load-path
@@ -1557,13 +1560,15 @@ configure-package-path: %S
 	   early-package-hierarchies late-package-hierarchies last-package-hierarchies))
 
     (if debug-paths
-	(princ (format "Info-directory-list:\n%S\n" Info-directory-list)
+	(princ (format "configure-info-directory, configure-info-path and Info-directory-list:\n%S\n%S\n%S\n"
+		       configure-info-directory configure-info-path Info-directory-list)
 	       'external-debugging-output))
 
     (setq exec-directory (paths-find-exec-directory emacs-roots))
 
     (if debug-paths
-	(princ (format "exec-directory:\n%s\n" exec-directory)
+	(princ (format "configure-exec-directory and exec-directory:\n%S\n%S\n"
+		       configure-exec-directory exec-directory)
 	       'external-debugging-output))
 
     (setq exec-path
@@ -1578,13 +1583,15 @@ configure-package-path: %S
     (setq doc-directory (paths-find-doc-directory emacs-roots))
 
     (if debug-paths
-	(princ (format "doc-directory:\n%S\n" doc-directory)
+	(princ (format "configure-doc-directory and doc-directory:\n%S\n%S\n"
+		       configure-doc-directory doc-directory)
 	       'external-debugging-output))
     
     (setq data-directory (paths-find-data-directory emacs-roots))
     
     (if debug-paths
-	(princ (format "data-directory:\n%S\n" data-directory)
+	(princ (format "configure-data-directory and data-directory:\n%S\n%S\n"
+		       configure-data-directory data-directory)
 	       'external-debugging-output))
 
     (setq data-directory-list (paths-construct-data-directory-list

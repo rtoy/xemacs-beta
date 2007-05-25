@@ -1,3 +1,8 @@
+2007-05-25  Mike Sperber  <mike@xemacs.org>
+
+	* startup.el (startup-setup-paths): Print the configure-xxx
+	variables as well.
+
 2007-05-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/latin.el:
@@ -276,7 +281,7 @@
 	in Unicode, and its Mule charsets and codes, instead of simply its
 	integer code point in this XEmacs.
 
-2006-11-30  Mike Sperber  <mike@xemacs.org>
+2006-11-30  Mike Sperber  <mike@xemacs.org><
 
 	* code-files.el (insert-file-contents): Call the file-name handler
 	from Lisp, not from `insert-file-contents-internal', which is too late.
