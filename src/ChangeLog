@@ -1,3 +1,8 @@
+2007-05-22  Ville Skyttä  <scop@xemacs.org>
+
+	* Makefile.in.in ($(LISP)/finder-inf.el): Set lisp-directory
+	to $(LISP) to ensure we're working with the correct finder*.
+
 2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.28 "fuki" is released.

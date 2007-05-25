@@ -649,6 +649,7 @@ $(LISP)/finder-inf.el: update-elc-2
 	@echo "Building finder database ..."
 	$(RM) $(LISP)/finder-inf.el
 	$(XEMACS_BATCH)	-eval "(setq finder-compile-keywords-quiet t)" \
+		-eval "(setq lisp-directory \"$(LISP)\")" \
 		-l finder -f finder-compile-keywords
 	@echo "Building finder database ...(done)"
 
