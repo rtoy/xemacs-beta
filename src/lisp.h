@@ -250,6 +250,14 @@ typedef long intptr_t;
 typedef unsigned long uintptr_t;
 #endif
 
+#if SIZEOF_VOID_P == 8
+#define DEADBEEF_CONSTANT 0xCAFEBABEDEADBEEF
+#elif SIZEOF_VOID_P == 4
+#define DEADBEEF_CONSTANT 0xDEADBEEF
+#else
+#error "What size are your pointers, really?"
+#endif /* SIZEOF_VOID_P == 8 */
+
 /* ---------------------- definition of EMACS_INT --------------------- */
 
 /* EMACS_INT is the underlying integral type into which a Lisp_Object must fit.
@@ -1084,7 +1092,7 @@ MODULE_API void xfree_1 (void *);
 #define xfree(lvalue, type) do						\
 {									\
   xfree_1 (lvalue);							\
-  VOIDP_CAST (lvalue) = (void *) 0xDEADBEEF;				\
+  VOIDP_CAST (lvalue) = (void *) DEADBEEF_CONSTANT;                     \
 } while (0)
 #else
 #define xfree(lvalue,type) xfree_1 (lvalue)

@@ -1,3 +1,12 @@
+2007-05-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* free-hook.c (check_free):
+	* lisp.h:
+	* lisp.h (xfree):
+	Inspired by some of Sebastian Freundt's SXEmacs work, use a 64-bit
+	constant on 64-bit platforms when making sure pointers haven't
+	been freed twice. 
+
 2007-05-22  Ville Skyttä  <scop@xemacs.org>
 
 	* Makefile.in.in ($(LISP)/finder-inf.el): Set lisp-directory
