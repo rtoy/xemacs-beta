@@ -1,5 +1,13 @@
 2007-05-24  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* eval.c (Feval):
+	Small optimisations from Sebastian Freundt's SXEmacs work; don't
+	do the unnecessary book-keeping in the trivial cases, only look
+	for an indirect function if the stored function is a bound
+	symbol. 
+
+2007-05-24  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* free-hook.c (check_free):
 	* lisp.h:
 	* lisp.h (xfree):

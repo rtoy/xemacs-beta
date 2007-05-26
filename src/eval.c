@@ -3539,6 +3539,16 @@ Evaluate FORM and return its value.
   check_proper_critical_section_lisp_protection ();
 #endif
 
+  if (!CONSP (form))
+    {
+      if (SYMBOLP (form))
+        {
+          return Fsymbol_value (form);
+        }
+
+      return form;
+    }
+
   /* I think this is a pretty safe place to call Lisp code, don't you? */
   while (!in_warnings && !NILP (Vpending_warnings)
 	 /* well, perhaps not so safe after all! */
@@ -3569,14 +3579,6 @@ Evaluate FORM and return its value.
       call3 (Qdisplay_warning, class_, messij, level);
       UNGCPRO;
       unbind_to (speccount);
-    }
-
-  if (!CONSP (form))
-    {
-      if (SYMBOLP (form))
-	return Fsymbol_value (form);
-      else
-	return form;
     }
 
   QUIT;
@@ -3622,7 +3624,13 @@ Evaluate FORM and return its value.
   /* At this point, only original_fun and original_args
      have values that will be used below. */
  retry:
-  fun = indirect_function (original_fun, 1);
+  /* Optimise for no indirection.  */
+  fun = original_fun;
+  if (SYMBOLP (fun) && !EQ (fun, Qunbound)
+      && (fun = XSYMBOL (fun)->function, SYMBOLP (fun)))
+    {
+      fun = indirect_function(original_fun, 1);
+    }
 
   if (SUBRP (fun))
     {
