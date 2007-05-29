@@ -80,7 +80,7 @@ University of California, as described above. */
  * configuration file containing regexp definitions for etags.
  */
 
-char pot_etags_version[] = "@(#) pot revision number is 17.32";
+char pot_etags_version[] = "@(#) pot revision number is 17.33";
 
 #define	TRUE	1
 #define	FALSE	0
@@ -882,7 +882,7 @@ etags --help --lang=ada.");
 # define EMACS_NAME "standalone"
 #endif
 #ifndef VERSION
-# define VERSION "17.32"
+# define VERSION "17.33"
 #endif
 static void
 print_version ()
@@ -893,6 +893,10 @@ print_version ()
 
   exit (EXIT_SUCCESS);
 }
+
+#ifndef PRINT_UNDOCUMENTED_OPTIONS_HELP
+# define PRINT_UNDOCUMENTED_OPTIONS_HELP FALSE
+#endif
 
 static void
 print_help (argbuffer)
@@ -976,6 +980,11 @@ Relative ones are stored relative to the output file's directory.\n");
     puts ("--no-globals\n\
 	Do not create tag entries for global variables in some\n\
 	languages.  This makes the tags file smaller.");
+
+  if (PRINT_UNDOCUMENTED_OPTIONS_HELP)
+    puts ("--no-line-directive\n\
+        Ignore #line preprocessor directives in C and derived languages.");
+
   if (CTAGS)
     puts ("--members\n\
 	Create tag entries for members of structures in some languages.");
@@ -996,13 +1005,17 @@ Relative ones are stored relative to the output file's directory.\n");
 	MODS are optional one-letter modifiers: `i' means to ignore case,\n\
 	`m' means to allow multi-line matches, `s' implies `m' and\n\
 	causes dot to match any character, including newline.");
+
   puts ("-R, --no-regex\n\
         Don't create tags from regexps for the following files.");
+
   puts ("-I, --ignore-indentation\n\
         In C and C++ do not assume that a closing brace in the first\n\
         column is the final brace of a function or structure definition.");
+
   puts ("-o FILE, --output=FILE\n\
         Write the tags to FILE.");
+
   puts ("--parse-stdin=NAME\n\
         Read from standard input and record tags as belonging to file NAME.");
 
@@ -1030,13 +1043,16 @@ Relative ones are stored relative to the output file's directory.\n");
         Print on the standard output an index of items intended for\n\
         human consumption, similar to the output of vgrind.  The index\n\
         is sorted, and gives the page number of each item.");
-# if PRINT_UNDOCUMENTED_OPTIONS_HELP
-      puts ("-w, --no-duplicates\n\
+
+      if (PRINT_UNDOCUMENTED_OPTIONS_HELP)
+	puts ("-w, --no-duplicates\n\
         Do not create duplicate tag entries, for compatibility with\n\
 	traditional ctags.");
-      puts ("-w, --no-warn\n\
+
+      if (PRINT_UNDOCUMENTED_OPTIONS_HELP)
+	puts ("-w, --no-warn\n\
         Suppress warning messages about duplicate tag entries.");
-# endif /* PRINT_UNDOCUMENTED_OPTIONS_HELP */
+
       puts ("-x, --cxref\n\
         Like --vgrind, but in the style of cxref, rather than vgrind.\n\
         The output uses line numbers instead of page numbers, but\n\

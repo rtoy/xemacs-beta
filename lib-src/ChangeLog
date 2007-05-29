@@ -1,3 +1,9 @@
+2007-05-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etags.c: Sync to pot_etags_version 17.26.
+	Reverts part of 2007-03-24 patch: no longer displays
+	pot_etags_version in usage message.
+
 2007-05-22  Jerry James  <james@xemacs.org>
 
 	* ellcc.c (do_init_mode): Plug memory leak.
