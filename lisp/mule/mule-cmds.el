@@ -73,6 +73,14 @@
   (let ((coding-system-for-read 'iso-2022-7bit))
     (find-file-read-only (expand-file-name "HELLO" data-directory))))
 
+(defvar system-type-file-name-coding
+  '((darwin . utf-8))
+  "A map from values of `system-type' to invariant file name coding systems.
+Used if a give system type does not vary in the coding system it uses for
+file names; otherwise, `language-info-alist' is consulted for this
+information.  This affects the `file-name' coding system alias, but not the
+`file-name-coding-system' variable, which in practice is mostly ignored. ")
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;                       Language Support Functions                    ;;;
@@ -1377,7 +1385,11 @@ of buffer-file-coding-system set by this function."
 	(error
 	 (warn "Invalid native-coding-system %s in language environment %s"
 	       native language-name)))
-      (define-coding-system-alias 'file-name 'native)
+      (define-coding-system-alias 'file-name 
+        (or 
+         (let ((fncs (assq system-type system-type-file-name-coding)))
+           (and fncs (cdr fncs)))
+         'native))
       ;; Set the default keyboard and terminal coding systems to the native
       ;; coding system of the language environment. 
       ;;

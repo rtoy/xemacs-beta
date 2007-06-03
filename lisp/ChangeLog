@@ -1,3 +1,12 @@
+2007-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-cmds.el:
+	* mule/mule-cmds.el (system-type-file-name-coding): New.
+	* mule/mule-cmds.el (set-language-environment-coding-systems):
+	Check system-type-file-name-coding for an entry before making the
+	file-name coding system alias equivalent to the native coding
+	system alias. 
+
 2007-05-25  Mike Sperber  <mike@xemacs.org>
 
 	* startup.el (startup-setup-paths): Print the configure-xxx
