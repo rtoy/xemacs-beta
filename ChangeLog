@@ -2169,7 +2169,7 @@
 
 	* XEmacs 21.2.39 is released.
 
-2000-02-02   Daiki Ueno	<ueno@ueda.info.waseda.ac.jp>
+2000-02-02  Daiki Ueno  <ueno@ueda.info.waseda.ac.jp>
 
 	* configure.in: Added check if the berkdb has db_create or not.
 
@@ -2851,7 +2851,7 @@
 
 	* XEmacs 21.2.20 is released
 
-1999-09-21   Martin Buchholz  <martin@xemacs.org>
+1999-09-21  Martin Buchholz  <martin@xemacs.org>
 	* configure.in: Autodetect Unix98 PTY
 
 1999-08-30  Robert Pluim  <rpluim@bigfoot.com>
