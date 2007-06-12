@@ -53,9 +53,9 @@
 
 	* configure.ac: Check for u_int*_t typedefs.
 
-2006-12-06  Dr. Volker Zell  <Dr.Volker.Zell@oracle.com> 
- 
-	* configure.ac: Avoid using Motif for cygwin. 
+2006-12-06  Dr. Volker Zell  <Dr.Volker.Zell@oracle.com>
+
+	* configure.ac: Avoid using Motif for cygwin.
 
 2006-11-23  Mike Sperber  <mike@xemacs.org>
 
@@ -64,11 +64,11 @@
 	are user-defined.  Use XE_EPXAND_VARIABLE macro created for this
 	purpose where applicable.
 
-2006-12-07  Rick Rankin <rick.rankin@yahoo.com>
+2006-12-07  Rick Rankin  <rick.rankin@yahoo.com>
 
 	* configure.ac: Add new library name for cygwin's xpm.
 
-2006-12-07  Rick Rankin <rick.rankin@yahoo.com>
+2006-12-07  Rick Rankin  <rick.rankin@yahoo.com>
 
 	* configure.ac: Add new library name for cygwin's xpm.
 
@@ -166,7 +166,7 @@
 	Update the Great Mule Merge placeholders to point to Internals
 	Manual node "The Great Mule Merge of March 2002".
 	N.B. Self-referencing log entries were *not* added to other logs.
-	
+
 2006-03-30  Jerry James  <james@xemacs.org>
 
 	* configure.ac: Fix for -Kalloca detection, also broken by the
@@ -223,7 +223,7 @@
 
 2005-11-25  Mike Sperber  <mike@xemacs.org>
 
-	* CHANGES-beta: 
+	* CHANGES-beta:
 	* configure.ac: Zap --with-package-prefix; instead, add
 	--with-user-packages/--with-early-packages,
 	--with-system-packages/--with-late-packages, and
@@ -243,7 +243,7 @@
 
 	* configure.ac: Three typos fixed.
 
-2005-12-13 Mike Sperber <mike@xemacs.org>
+2005-12-13 Mike Sperber  <mike@xemacs.org>
 
 	* configure.ac: Move the checks for the Xft-associated
 	library out of a conditional.
@@ -400,7 +400,7 @@
 	(--enable-dialogs):
 	(--enable-widgets):
 	Fix `eval "$FEATURE=\"$val\"" bug.
-	
+
     2005-01-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* INSTALL (CONFIGURATION OPTIONS):
@@ -436,7 +436,7 @@
 2005-11-21  Marcus Crestani  <crestani@xemacs.org>
 
 	Incremental Garbage Collector
-	
+
 	* configure.ac: Add newgc option; if newgc, turn on kkcc and
 	mc-alloc.  Add checks for write barrier, determine which write
 	barrier to use.  Add vdb option to override write barrier
@@ -1006,7 +1006,7 @@
 	* configure.in: Remove detection of GNU DLD.
 	* configure: Regenerate.
 
-2003-09-20  Rodney Sparapani <rsparapa@mcw.edu>
+2003-09-20  Rodney Sparapani  <rsparapa@mcw.edu>
 
 	* PROBLEMS: Propose bash as an alternative to buggy Solaris
 	/bin/sh.
@@ -1280,7 +1280,7 @@
 
 	* etc/photos/golubev.png, etc/photos/golubevm.png: New.
 
-2003-01-12  Mike Sperber <mike@xemacs.org>
+2003-01-12  Mike Sperber  <mike@xemacs.org>
 
 	* configure.in: Check for strupr and strlwr.
 
@@ -1497,7 +1497,7 @@
 
 	* XEmacs 21.5.8 "broccoli" is released.
 
-2002-07-09  Mike Sperber <mike@xemacs.org>
+2002-07-09  Mike Sperber  <mike@xemacs.org>
 
 	* configure.usage:
 	* configure.in: Add --use-kkcc option for new GC algorithms.
@@ -1510,7 +1510,7 @@
 
 	* PROBLEMS: Add two basic configuration questions.
 
-2002-07-08  Mike Sperber <mike@xemacs.org>
+2002-07-08  Mike Sperber  <mike@xemacs.org>
 
 	* configure.in: Test for wchar.h.
 
@@ -1962,12 +1962,12 @@
 	* Makefile.in.in (finder):
 	remove autoload targets.
 
-2001-04-26  Malcolm Purvis <malcolmpurvis@optushome.com.au>
+2001-04-26  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
 
 	* configure.in: Check gtk version validity only when gtk-config
 	exists.
 
-2001-05-09  Martin Buchholz <martin@xemacs.org>
+2001-05-09  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.5.1 "anise" is released.
 
@@ -1999,7 +1999,7 @@
 	* PROBLEMS (Problems with running XEmacs):
 	Document TMPDIR lossage in gnuserv/gnuclient.
 
-2001-03-21  Martin Buchholz <martin@xemacs.org>
+2001-03-21  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.46 "Urania" is released.
 
@@ -2040,7 +2040,7 @@
 
 	* configure.in: with_netinstall is a new option. Default to off.
 
-2001-02-23  Martin Buchholz <martin@xemacs.org>
+2001-02-23  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.45 "Thelxepeia" is released.
 
@@ -2061,11 +2061,11 @@
 	Combined into one simpler test for utime.
 	Add explicit check for utimes, if utime not found.
 
-2001-02-08  Martin Buchholz <martin@xemacs.org>
+2001-02-08  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.44 "Thalia" is released.
 
-2001-01-16  Mike Sperber <mike@xemacs.org>
+2001-01-16  Mike Sperber  <mike@xemacs.org>
 
 	* configure.in: Remove bogus path variable definitions.
 	Reflect the fact that specifying --datadir also affects docdir and
@@ -2089,7 +2089,7 @@
 	* config.sub: Upgrade to offical version 2001-01-12.
 	* config.guess: Upgrade to offical version 2001-01-17.
 
-2001-01-26  Martin Buchholz <martin@xemacs.org>
+2001-01-26  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.43 "Terspichore" is released.
 
@@ -2101,7 +2101,7 @@
 
 	* README.packages: Update.
 
-2001-01-20  Martin Buchholz <martin@xemacs.org>
+2001-01-20  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.42 "Poseidon" is released.
 
@@ -2123,7 +2123,7 @@
 
 	* NEWS: document the modeline horizontal scrolling feature.
 
-2001-01-17  Martin Buchholz <martin@xemacs.org>
+2001-01-17  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.41 "Polyhymnia" is released.
 
@@ -2145,7 +2145,7 @@
 
 	* configure.in: allow --with-widgets=msw
 
-2001-01-08  Martin Buchholz <martin@xemacs.org>
+2001-01-08  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.40 is released.
 
@@ -2158,14 +2158,14 @@
 	* PROBLEMS (Linux): document Mandrake policy, how to get Meta on
 	Alt, and getaddrinfo() blocking trying to get localhost's CNAME.
 
-2000-07-20  Kazuyuki IENAGA <ienaga@xemacs.org>
+2000-07-20  Kazuyuki IENAGA  <ienaga@xemacs.org>
 
 	* configure.in: use input-method-xlib.o for USE_XFONTSET instead
 	of input-method-xfs.o.
 
 	* configure: ditto
 
-2000-12-31  Martin Buchholz <martin@xemacs.org>
+2000-12-31  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.39 is released.
 
@@ -2183,7 +2183,7 @@
 
 	* netinstall: new net installer for MS-Windows.
 
-2000-12-05  Martin Buchholz <martin@xemacs.org>
+2000-12-05  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.38 is released.
 
@@ -2195,7 +2195,7 @@
 
 	* configure.in: Autodetect elf.h.
 
-2000-11-14  Martin Buchholz <martin@xemacs.org>
+2000-11-14  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.37 is released.
 
@@ -2236,7 +2236,7 @@
 
 	* configure.in: Pretend that DEC OSF >= 5 is really DEC OSF 4.
 
-2000-10-04  Martin Buchholz <martin@xemacs.org>
+2000-10-04  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.36 is released.
 
@@ -2310,7 +2310,7 @@
 	* Makefile.in.in (configure):
 	all-elcs target now uses update-elc-2.el not update-elc.sh
 
-2000-07-19  Martin Buchholz <martin@xemacs.org>
+2000-07-19  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.35 is released.
 
@@ -2424,7 +2424,7 @@
         * configure.in:
 	Clean up configure support for cygwin and mingw.
 
-2000-06-27 Darryl Okahata <darrylo@soco.agilent.com>
+2000-06-27 Darryl Okahata  <darrylo@soco.agilent.com>
 
 	* PROBLEMS: Document broken native audio for recent patches and
 	  releases of HP-UX.
@@ -2442,7 +2442,7 @@
 	* config.guess: New version from GNU config archive.
 	* config.sub: Likewise.
 
-2000-05-28  Martin Buchholz <martin@xemacs.org>
+2000-05-28  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.34 is released.
 
@@ -2456,7 +2456,7 @@
 
 	* configure.in: Remove lockdir.
 
-2000-05-01  Martin Buchholz <martin@xemacs.org>
+2000-05-01  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.33 is released.
 
@@ -2524,7 +2524,7 @@
 
 	* configure.in: add error_check_glyphs.
 
-2000-03-20  Martin Buchholz <martin@xemacs.org>
+2000-03-20  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.32 is released.
 
@@ -2556,11 +2556,11 @@
 	* configure.in: Unconditionally define SHELL, to allow working
 	with (unreleased) autoconf 2.14.1, found on Mandrake 7.0 systems.
 
-2000-02-23  Martin Buchholz <martin@xemacs.org>
+2000-02-23  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.31 is released.
 
-2000-02-21  Martin Buchholz <martin@xemacs.org>
+2000-02-21  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.30 is released.
 
@@ -2594,7 +2594,7 @@
 
 	* configure.in: Test for arm simply using arm* instead of arm-*
 
-2000-02-16  Martin Buchholz <martin@xemacs.org>
+2000-02-16  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.29 is released.
 
@@ -2633,11 +2633,11 @@
 
 	* configure.in: check for XConvertCase.
 
-2000-02-07  Martin Buchholz <martin@xemacs.org>
+2000-02-07  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.28 is released.
 
-2000-01-27  URA Hiroshi <ura@hiru.aoba.yokohama.jp>
+2000-01-27  URA Hiroshi  <ura@hiru.aoba.yokohama.jp>
 
 	* configure.in: added getaddrinfo and getnameinfo to AC_FUNC.
 
@@ -2684,7 +2684,7 @@
 
 	* configure.in: Use /etc/ld.so.conf at link-time, if available.
 
-2000-01-18  Martin Buchholz <martin@xemacs.org>
+2000-01-18  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.27 is released.
 
@@ -2707,7 +2707,7 @@
 	- rename src/gdbinit to src/.gdbinit, so that gdb can find it.
 	- Less verbose messages when creating .sbinit, .gdbinit, TAGS.
 
-2000-01-07  Marcus Thiessel <marcus@xemacs.org>
+2000-01-07  Marcus Thiessel  <marcus@xemacs.org>
 
 	* config.sub: Upgrade to 1.169, imported from autoconf's CVS
 	* config.guess: Upgrade to 1.158, imported from autoconf's CVS
@@ -2723,11 +2723,11 @@
 	* configure.in (Installation): Report which Athena header/library
 	combo is being used.
 
-1999-12-31  Martin Buchholz <martin@xemacs.org>
+1999-12-31  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.26 is released.
 
-1999-12-24  Martin Buchholz <martin@xemacs.org>
+1999-12-24  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.25 is released.
 
@@ -2740,7 +2740,7 @@
 	* configure.in: Oops. xpm doesn't actually depend on X11.
 	I got confused by the name (like others get confused by `xemacs'?)
 
-1999-12-14  Martin Buchholz <martin@xemacs.org>
+1999-12-14  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.24 is released.
 
@@ -2766,7 +2766,7 @@
 
 	* configure.in (--with-sound): Variable with_esd was mispelled.
 
-1999-12-07  Martin Buchholz <martin@xemacs.org>
+1999-12-07  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.23 is released.
 
@@ -2792,11 +2792,11 @@
 
 	* Makefile.in.in (beta): `make beta' should rebuild info.
 
-1999-11-29  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-11-29  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.22 is released
 
-1999-11-28  Martin Buchholz <martin@xemacs.org>
+1999-11-28  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.21 is released.
 
@@ -2847,11 +2847,11 @@
 	/usr/ccs/bin/ld: illegal option -- W
 
 
-1999-11-10  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-11-10  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.20 is released
 
-1999-09-21   Martin Buchholz <martin@xemacs.org>
+1999-09-21   Martin Buchholz  <martin@xemacs.org>
 	* configure.in: Autodetect Unix98 PTY
 
 1999-08-30  Robert Pluim  <rpluim@bigfoot.com>
@@ -2930,7 +2930,7 @@
 	* configure.in: fix definitions of widget defines with various
  	toolkit options.
 
-1999-07-30  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-07-30  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.19 is released
 
@@ -2984,7 +2984,7 @@
 
 	* InfoDock 4.0.8 is released
 
-1999-07-13  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-07-13  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.18 is released
 
@@ -3024,7 +3024,7 @@
 
 	* Makefile.in (docdir): Added variable for custom DOC directory.
 
-1999-06-22  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-06-22  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.17 is released
 
@@ -3035,7 +3035,7 @@
 	Test the presence of a variety of LDAP API functions which were
 	formerly assumed to be present according to dubious heuristics
 
-1999-06-11  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-06-11  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.16 is released
 
@@ -3044,7 +3044,7 @@
 	* configure.in (CPP): Correct test for locating $site_prefix
 	include directories.
 
-1999-06-04  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-06-04  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.15 is released
 
@@ -3085,7 +3085,7 @@
 	* configure.in (quoted_arguments): Support
  	--error-checking=byte-code.
 
-1999-05-14  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-05-14  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.14 is released
 
@@ -3132,7 +3132,7 @@
 
 	* configure.in: Check for getloadavg().
 
-1999-03-12  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-03-12  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.13 is released
 
@@ -3140,7 +3140,7 @@
 
 	* Makefile.in.in (LC_ALL): Try very, very hard to build in C locale.
 
-1999-03-05  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-03-05  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.12 is released
 
@@ -3160,7 +3160,7 @@
 
 	* PROBLEMS: Document crashes on SPARC with gcc 2.8.1.
 
-1999-03-01  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-03-01  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.11 is released
 
@@ -3213,11 +3213,11 @@
 
 	* configure.in: Warn if using Motif dialog boxes on AIX 4.3.
 
-1999-02-05  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-02-05  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.10 is released
 
-1999-02-02  XEmacs Build Bot <builds@cvs.xemacs.org>
+1999-02-02  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.9 is released
 
@@ -3226,7 +3226,7 @@
 	* configure.in: make xface detection specifc to a window system in
  	general rather than just X.
 
-1999-18-10  Andy Piper <andy@xemacs.org>
+1999-18-10  Andy Piper  <andy@xemacs.org>
 
 	* configure.in: remove -O3 prevention on cygwin - current versions
  	cope ok now.  remove dll prevention on cygwin - the new module
@@ -3254,7 +3254,7 @@
 	* Makefile.in.in: Added moduledir, sitemoduledir macros.
 	- Make those directories at install time.
 
-1998-12-28  Martin Buchholz <martin@xemacs.org>
+1998-12-28  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.8 is released.
 
@@ -3262,7 +3262,7 @@
 
 	* PROBLEMS: Document Linux GNU Libc 2.0 I18N crashes.
 
-1998-12-24  Martin Buchholz <martin@xemacs.org>
+1998-12-24  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.2.7 is released.
 
@@ -3301,7 +3301,7 @@
 
 	* XEmacs 21.2.6 is released
 
-1998-12-05  XEmacs Build Bot <builds@cvs.xemacs.org>
+1998-12-05  XEmacs Build Bot  <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.5 is released
 
@@ -3444,7 +3444,7 @@
 
 	* configure.in: Fix test for InfoDock sources.
 
-1998-07-09  Oliver Graf <ograf@fga.de>
+1998-07-09  Oliver Graf  <ograf@fga.de>
 
 	* configure.usage: added warning to --with-offix
 
@@ -3457,7 +3457,7 @@
 
 	* XEmacs 21.0-pre3 is released.
 
-1998-06-20  Kazuyuki IENAGA <ienaga@jsys.co.jp>
+1998-06-20  Kazuyuki IENAGA  <ienaga@jsys.co.jp>
 
 	* configure.in: Added check if the berkdb has db_open or not.
 	(With fixes from Martin Buchholz)
@@ -3478,13 +3478,13 @@
 
 	* XEmacs 21.0-beta43 is released.
 
-1998-06-04  Oliver Graf <ograf@fga.de>
+1998-06-04  Oliver Graf  <ograf@fga.de>
 
 	* tests/Dnd/README: a step-by-step test run
 	* tests/Dnd/droptest.el: some clarifications
 	* tests/Dnd/droptest.sh: created, creates test files
 
-1998-06-01  Oliver Graf <ograf@fga.de>
+1998-06-01  Oliver Graf  <ograf@fga.de>
 
 	* configure.in (summary): added experimental to dragndrop option
 	* configure.usage: added experimental note to --with-dragndrop
@@ -3551,7 +3551,7 @@
 	* configure.in (ZSH_VERSION): zsh-3.1.2 (and zsh-3.0.4) drops core
 	on the `unset CDPATH' if running as sh.
 
-1998-05-12  Oliver Graf <ograf@fga.de>
+1998-05-12  Oliver Graf  <ograf@fga.de>
 
 	* tests/Dnd/droptest.el: some CDE adaptions (untested)
 
@@ -3582,18 +3582,18 @@
 	  hand-crafted regexps.
 	- Use standard coding conventions for modules/Makefile.in
 
-1998-05-12  Kazuyuki IENAGA <ienaga@jsys.co.jp>
+1998-05-12  Kazuyuki IENAGA  <ienaga@jsys.co.jp>
 
 	* configure.in: some people claimed that they can't stop
 	linking wnn6 library if they set --with-wnn6=no.
 
-1998-05-11  Oliver Graf <ograf@fga.de>
+1998-05-11  Oliver Graf  <ograf@fga.de>
 
 	* tests/Dnd/droptest.el: adapted to new calling conventions
 	also showing the new possibilities
 	* tests/Dnd/README: changed to new protocol
 
-1998-05-11  SAKIYAMA Nobuo <nobuo@db3.so-net.or.jp>
+1998-05-11  SAKIYAMA Nobuo  <nobuo@db3.so-net.or.jp>
 
 	* Fix for HAVE_MULTICAST check.
 
@@ -3601,7 +3601,7 @@
 
 	* XEmacs 21.0-beta39 is released.
 
-1998-05-06  Oliver Graf <ograf@fga.de>
+1998-05-06  Oliver Graf  <ograf@fga.de>
 
 	* configure.in: added autodetection for the Drag'n'Drop API
 	if some DnD protocol is found, HAVE_DRAGNDROP will be defined
@@ -3609,7 +3609,7 @@
 	* configure.usage: added with-dragndrop, added (*) to with-offix
 	* tests/Dnd/droptest.el: complete overhaul, no it's a real test
 
-1998-05-04  Oliver Graf <ograf@fga.de>
+1998-05-04  Oliver Graf  <ograf@fga.de>
 
 	* tests/Dnd/droptest.el: changed to test new protocol
 	* tests/Dnd/README.OffiX: removed
@@ -3716,7 +3716,7 @@ Fri Apr 17 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* Makefile.in: add install_pp to install incantation.
 
-1998-04-14  Itay Ben-Yaacov <pezz@www-mail.huji.ac.il>
+1998-04-14  Itay Ben-Yaacov  <pezz@www-mail.huji.ac.il>
 
 	* configure.in: Large echo split into a few smaller ones,
 	so the cygnus sh.exe does not crash.
@@ -3855,7 +3855,7 @@ Thu Apr 16 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* XEmacs 21.0-beta33 is released.
 
-1998-03-26  Didier Verna <didier@xemacs.org>
+1998-03-26  Didier Verna  <didier@xemacs.org>
 
 	* configure.in, Makefile.in: Removed infopath_user_defined---we
 	always want to propagate it.
@@ -4217,7 +4217,7 @@ Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
 
 	* XEmacs 20.5-beta14 is released.
 
-1997-12-23  Andy Piper <andyp@parallax.co.uk>
+1997-12-23  Andy Piper  <andyp@parallax.co.uk>
 
 	* configure.in: support for *-pc-cygwin32 config
 
@@ -4279,18 +4279,18 @@ Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
 	* configure.in (imagick_libs): Add autodetection for freetype
 	-lttf library.
 
-1997-12-09  SL Baur <steve@altair.xemacs.org>
+1997-12-09  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta9 is released.
 
-1997-12-06  SL Baur <steve@altair.xemacs.org>
+1997-12-06  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta8 is released.
 
 	* info/dir: update for further packaging.
 	* configure.in: remove `tree-x' from XEmacs build.
 
-1997-11-29  Jeff Miller <jmiller@smart.net>
+1997-11-29  Jeff Miller  <jmiller@smart.net>
 
 	* configure.in:  motif menubars need xlwmenu.o
 
@@ -4329,12 +4329,12 @@ Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
 	* lwlib/xlwmenu.c (display_menu): Defer incremental menus properly.
 	From Glynn Clements <glynn@sensei.co.uk>
 
-1997-11-25  Kazuyuki IENAGA <ienaga@jsys.co.jp>
+1997-11-25  Kazuyuki IENAGA  <ienaga@jsys.co.jp>
 
 	* configure.in: Improve auto detect of libraries ImageMagick rely
 	on.
 
-1997-11-23  Jeff Miller <jmiller@smart.net>
+1997-11-23  Jeff Miller  <jmiller@smart.net>
 
 	* Energize is dead.  Removed ENERGIZE ifdef's from code in lwlib
 	  and src.  Configure.in modified.  --with-energize is no longer a
@@ -4359,7 +4359,7 @@ Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
 
 	* configure.usage: Use `--' convention in "usage:" line.
 
-1997-11-20  Stephen Turnbull <turnbull@sk.tsukuba.ac.jp>
+1997-11-20  Stephen Turnbull  <turnbull@sk.tsukuba.ac.jp>
 
 	* configure.in: added `with_xfs' to list of boolean features.
 
@@ -4367,7 +4367,7 @@ Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
 
 	* XEmacs 20.3 is released for binary kit building.
 
-1997-11-19  Tor Arntsen <tor@spacetec.no>
+1997-11-19  Tor Arntsen  <tor@spacetec.no>
 
 	* PROBLEMS: Removed IRIX entry about xemacs core dumps when using
 	xemacs dumped on one machine on another. Problem was fixed by 20.3.
@@ -4398,12 +4398,12 @@ Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
 	* XEmacs 20.3-pre3 is released.
 	* XEmacs 20.5-beta5 is released.
 
-1997-11-13  Marc Paquette <marcpa@cam.org>
+1997-11-13  Marc Paquette  <marcpa@cam.org>
 
 	* nt/Todo: added a task for support of lisp packages through
 	the registry.
 
-1997-11-13  Jonathan Harris <jhar@tardis.ed.ac.uk>
+1997-11-13  Jonathan Harris  <jhar@tardis.ed.ac.uk>
 
 	* Renamed files *w32* to *msw*
 
@@ -4454,7 +4454,7 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 	script. You give a colon or space separated list of prefixes, and
 	subdirectories include/ and lib/ will be added with -I and -L.
 
-1997-11-05  Martin Buchholz <martin@xemacs.org>
+1997-11-05  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in: AIX + gcc fixes.
 	  - Don't wrap -B. aixflags changed to start_flags.
@@ -4733,7 +4733,7 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 	* XEmacs 20.3-beta23 is released.
 
-1997-09-19  SL Baur <steve@altair.xemacs.org>
+1997-09-19  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 19.16-pre3 is released.
 
@@ -5200,7 +5200,7 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 	* XEmacs 20.3-beta8 is released.
 
-1997-06-20  Olivier Galibert <Olivier.Galibert@mines.u-nancy.fr>
+1997-06-20  Olivier Galibert  <Olivier.Galibert@mines.u-nancy.fr>
 
 	* lwlib/lwlib-Xaw.c, lwlib/lwlib-Xlw.c, lwlib/lwlib-Xm.c,
 	lwlib/lwlib.c:  Make 64 bit clean.
