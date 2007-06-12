@@ -1,3 +1,16 @@
+2007-06-12  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Add mirror in Saudi
+	Arabia.
+	* package-get.el (package-get-pre-release-download-sites): Ditto.
+
+2007-05-29  Adrian Aichner  <adrian@xemacs.org>
+
+	* abbrev.el (expand-region-abbrevs): Downcase word before
+	abbreviation lookup, since `inverse-add-abbrev', `add-abbrev',
+	`define-mode-abbrev', and `define-global-abbrev' also downcase to
+	normalize abbreviations.
+
 2007-06-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-cmds.el:

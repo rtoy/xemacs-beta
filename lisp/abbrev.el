@@ -582,9 +582,9 @@ If called from a Lisp program, arguments are START END &optional NOQUERY."
 			 (<= (setq pnt (point)) (- (point-max) lim))))
 	(if (abbrev-expansion
 	     (setq string
-		   (buffer-substring
-		    (save-excursion (backward-word) (point))
-		    pnt)))
+		   (downcase (buffer-substring
+			      (save-excursion (backward-word) (point))
+			      pnt))))
 	    (if (or noquery (y-or-n-p (format "Expand `%s'? " string)))
 		(expand-abbrev)))))))
 
