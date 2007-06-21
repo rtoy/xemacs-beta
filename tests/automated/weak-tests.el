@@ -55,8 +55,8 @@
 (let* ((p (cons 3 4))
        (finalized-p nil)
        (eph1 (make-ephemeron (cons 1 2) p
-			     '(lambda (value)
-				(setq finalized-p t))))
+			     #'(lambda (value)
+                                 (setq finalized-p t))))
        (eph2 (make-ephemeron p p)))
   (Assert (eq p (ephemeron-ref (make-ephemeron (cons 1 2) p))))
   (Assert (ephemeron-p (make-ephemeron (cons 1 2) p)))
@@ -233,7 +233,7 @@
 			      (make-ephemeron inner_cons
 					      (cons 1 2)
 					      '(lambda (v) t))
-			      '(lambda (v) t))))
+			      #'(lambda (v) t))))
   (Assert (ephemeron-ref (ephemeron-ref weak1)))
   (garbage-collect)
   ;; assure the inner ephis are still there

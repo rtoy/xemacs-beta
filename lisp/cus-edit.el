@@ -2544,8 +2544,8 @@ Match frames with dark backgrounds")
   "Customize face."
   :sample-face 'custom-face-tag-face
   :help-echo "Set or reset this face"
-  :documentation-property '(lambda (face)
-			     (face-doc-string face))
+  :documentation-property #'(lambda (face)
+                              (face-doc-string face))
   :value-create 'custom-face-value-create
   :action 'custom-face-action
   :custom-category 'face

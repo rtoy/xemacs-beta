@@ -1042,9 +1042,9 @@ ARGS is a list of lists of the form
 
 This means reset VARIABLE to its value in TO-THEME."
   (custom-check-theme theme)
-  (mapcar '(lambda (arg)
-	     (apply 'custom-theme-reset-internal arg)
-	     (custom-push-theme 'theme-value (car arg) theme 'reset (cadr arg)))
+  (mapcar #'(lambda (arg)
+              (apply 'custom-theme-reset-internal arg)
+              (custom-push-theme 'theme-value (car arg) theme 'reset (cadr arg)))
 	  args))
 
 (defun custom-reset-variables (&rest args)

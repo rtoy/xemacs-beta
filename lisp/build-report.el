@@ -3,8 +3,8 @@
 ;; Copyright (C) 1997-2003 Adrian Aichner
 
 ;; Author: Adrian Aichner <adrian@xemacs.org>
-;; Date: $Date: 2005/10/21 10:34:35 $
-;; Version: $Revision: 1.14 $
+;; Date: $Date: 2007/06/21 13:39:10 $
+;; Version: $Revision: 1.15 $
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -520,7 +520,7 @@ REGEXPs in `build-report-keep-regexp' or a general MIME tag REGEXP."
   "Concatenate elements of `build-report-delete-regexp' and a general
 MIME tag REGEXP.  The result is a REGEXP string matching either of the
 REGEXPs in `build-report-delete-regexp' or a general MIME tag REGEXP."
-  (mapconcat '(lambda (item) item)
+  (mapconcat #'identity
              build-report-delete-regexp "\\|"))
 
 (defun build-report-installation-data (&optional file)

@@ -29,7 +29,7 @@ Be sure you do all of the above checking for C-g and focus, too!
 
 ; Make sure that timer handlers are run during, not after sit-for:
 (defun timer-check ()
-  (add-timeout 2 '(lambda (ignore) (message "timer ran")) nil)
+  (add-timeout 2 #'(lambda (ignore) (message "timer ran")) nil)
   (sit-for 5)
   (message "after sit-for"))
 

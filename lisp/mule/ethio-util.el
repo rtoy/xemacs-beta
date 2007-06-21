@@ -1056,10 +1056,10 @@ See also the descriptions of the variables
       (aset ethio-fidel-to-sera-map 463 "?"))
 
     (mapcar
-     '(lambda (x)
-	(aset (aref ethio-fidel-to-sera-map x)
-	      2
-	      (if ethio-W-sixth-always ?' ?u)))
+     #'(lambda (x)
+         (aset (aref ethio-fidel-to-sera-map x)
+               2
+               (if ethio-W-sixth-always ?' ?u)))
      '(77 93 141 181 197 277 440 441 442 443 444 457))
 
     (if (ethio-prefer-amharic-p)

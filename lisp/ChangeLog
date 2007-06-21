@@ -1,3 +1,23 @@
+2007-06-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/devan-util.el (devanagari-reorder-glyphs-for-composition):
+	* mule/ethio-util.el (ethio-fidel-to-sera-buffer):
+	'(lambda ...) -> #'(lambda ..), for the sake of style and the byte
+	compiler.
+
+2007-06-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* build-report.el (build-report-delete):
+	* cus-edit.el (custom-face):
+	* custom.el (custom-theme-reset-variables):
+	* fontconfig.el (fc-find-available-font-families):
+	* fontconfig.el (fc-find-available-weights-for-family):
+	* select.el (select-convert-from-integer):
+	* x-faces.el (x-find-smaller-font-xft):
+	* x-faces.el (x-find-larger-font-xft):
+	'(lambda ...) -> #'(lambda ..), for the sake of style and the byte
+	compiler.
+
 2007-06-12  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el (package-get-download-sites): Add mirror in Saudi

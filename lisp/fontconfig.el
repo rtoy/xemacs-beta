@@ -481,8 +481,8 @@ selected device."
 	    (fc-list-fonts-pattern-objects device pattern objectset)))
       (fc-delete-duplicates
        (mapcar
-	'(lambda (pattern)
-	   (fc-pattern-get-family pattern 0))
+	#'(lambda (pattern)
+            (fc-pattern-get-family pattern 0))
 	(if filter-fun
 	    (fc-filter all-fonts filter-fun)
 	  all-fonts))))))
@@ -496,10 +496,10 @@ selected device."
     (if style
 	(fc-pattern-add-style pattern style))
     (mapcar
-     '(lambda (pattern)
-	(let ((fc-weight-constant (fc-pattern-get-weight pattern 0)))
-	  (if fc-weight-constant
-	      (fc-font-weight-translate-from-constant fc-weight-constant))))
+     #'(lambda (pattern)
+         (let ((fc-weight-constant (fc-pattern-get-weight pattern 0)))
+           (if fc-weight-constant
+               (fc-font-weight-translate-from-constant fc-weight-constant))))
      (fc-list-fonts-pattern-objects device pattern objectset))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

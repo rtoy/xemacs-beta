@@ -1,3 +1,16 @@
+2007-06-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gtk/event-stream-tests.el (timer-check):
+	'(lambda ...) -> #'(lambda ..), for the sake of style and the byte
+	compiler.
+
+2007-06-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/weak-tests.el (p):
+	* automated/weak-tests.el (inner_cons):
+	'(lambda ...) -> #'(lambda ..), for the sake of style and the byte
+	compiler.
+
 2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.28 "fuki" is released.

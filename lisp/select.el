@@ -727,17 +727,17 @@ nil if this is impossible, or a suitable representation otherwise."
 
 	((listp value)			; list
 	 (if (cdr value)
-	     (mapcar '(lambda (x)
-			(select-convert-from-integer selection type x))
+	     (mapcar #'(lambda (x)
+                         (select-convert-from-integer selection type x))
 		     value)
 	   (select-convert-from-integer selection type (car value))))
 
 	((vectorp value)		; vector
 	 (if (eq (length value) 1)
 	     (select-convert-from-integer selection type (aref value 0))
-	   (mapvector '(lambda (x)
-			(select-convert-from-integer selection type x))
-		     value)))
+	   (mapvector #'(lambda (x)
+                          (select-convert-from-integer selection type x))
+                      value)))
 
 	(t nil)
 	))

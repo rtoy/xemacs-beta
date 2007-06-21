@@ -533,7 +533,7 @@ Otherwise, it returns the next smaller version of this font that is defined."
 		  (fc-name-unparse copy))))))))
 
 (defun x-find-smaller-font-xft (font &optional device)
-  (x-find-xft-font-of-size font '(lambda (old-size) (- old-size 1.0)) device))
+  (x-find-xft-font-of-size font #'(lambda (old-size) (- old-size 1.0)) device))
 
 (defun x-find-smaller-font-core (font &optional device)
   (x-frob-font-size font nil device))
@@ -550,7 +550,7 @@ Otherwise, it returns the next larger version of this font that is defined."
     (x-find-larger-font-core font device)))
 
 (defun x-find-larger-font-xft (font &optional device)
-  (x-find-xft-font-of-size font '(lambda (old-size) (+ old-size 1.0)) device))
+  (x-find-xft-font-of-size font #'(lambda (old-size) (+ old-size 1.0)) device))
 
 (defun x-find-larger-font-core (font &optional device)
   (x-frob-font-size font t device))
