@@ -3473,7 +3473,7 @@ Revert only if they differ."
 				   (coding-system-base
 				    buffer-file-coding-system-when-loaded)
 				 buffer-file-coding-system-when-loaded)
-			       (not adjust-eol))))))
+			       (not adjust-eol) t)))))
 		      (goto-char (min opoint (point-max)))
 		      ;; Recompute the truename in case changes in symlinks
 		      ;; have changed the truename.
@@ -3616,7 +3616,8 @@ Return nil if identical, and the new buffer if different."
 			      (coding-system-for-read 'escape-quoted))
 			  (erase-buffer)
 			  (insert-file-contents file-name nil)
-			  (set-buffer-file-coding-system coding-system))
+			  (set-buffer-file-coding-system coding-system
+                                                         nil t))
 			(after-find-file nil nil t)
 			(return nil))
 		       (diff

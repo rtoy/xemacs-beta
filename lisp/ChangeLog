@@ -1,3 +1,10 @@
+2007-06-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* files.el (revert-buffer):
+	* files.el (recover-file):
+	Pass NOMODIFY to set-buffer-file-coding-systems after reverting a
+	buffer and after recovering a file.
+
 2007-06-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* msw-faces.el:
