@@ -68,7 +68,9 @@
 ;; Other functions expect these regexps
 (let
     ((- 		":")
-     (fontname	"\\([a-zA-Z ]*\\)")				; 1
+     ;; What happens if a font family contains a colon? I can't find any
+     ;; documentation on that, and don't have a font editor to hand to test.
+     (fontname	"\\([^:]*\\)")				; 1
      (style	"\\(\\(?:[a-zA-Z]+\\(?: +[a-zA-Z]+\\)*\\)?\\)") ; 2
      (pointsize	"\\([0-9]*\\)")					; 3
      (effects	"\\(\\(?:[a-zA-Z]+\\(?: +[a-zA-Z]+\\)*\\)?\\)")	; 4

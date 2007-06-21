@@ -1,5 +1,12 @@
 2007-06-21  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* msw-faces.el:
+	Accept numbers, indeed anything other than a colon, as legitmate
+	in a font family as parsed by mswindows-font-regexp. Fixes the
+	problem reported in puftoj6l.fsf@isoware.de of six years ago. 
+
+2007-06-21  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule/devan-util.el (devanagari-reorder-glyphs-for-composition):
 	* mule/ethio-util.el (ethio-fidel-to-sera-buffer):
 	'(lambda ...) -> #'(lambda ..), for the sake of style and the byte
