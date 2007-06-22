@@ -26,10 +26,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include <setjmp.h>
 
-#ifndef WIN32_NATIVE
-extern char **environ;
-#endif
-
 #ifdef PDUMP
 int pdump_read_file (char **pdump_start_pos, size_t *pdump_length);
 #endif
@@ -67,6 +63,10 @@ void request_sigio (void);
 void unrequest_sigio (void);
 
 BEGIN_C_DECLS
+
+#ifndef WIN32_NATIVE
+extern char **environ;
+#endif
 
 void stop_interrupts (void);
 void start_interrupts (void);
