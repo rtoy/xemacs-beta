@@ -1,5 +1,10 @@
 2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* linuxplay.c (linux_play_data_or_file): More 64-bit tweaking, and
+	a typo fix.
+
+2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* sysdep.h (environ): Needs to be in C_DECLS for C++ build.
 
 2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>

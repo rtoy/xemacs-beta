@@ -275,8 +275,9 @@ linux_play_data_or_file(int fd, Binbyte *data,
   fmtType        ffmt;
   int            fmt,speed,tracks;
   void           *pptr, *optr, *cptr, *sptr;
-  int            wrtn,rrtn,crtn,prtn;
-  Binbyte         sndbuf[SNDBUFSZ];
+  int            wrtn, crtn;
+  size_t         prtn, rrtn;
+  Binbyte        sndbuf[SNDBUFSZ];
 
   /* We need to read at least the header information before we can start
      doing anything */
