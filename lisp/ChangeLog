@@ -1,3 +1,9 @@
+2007-06-23  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-get.el (package-get-download-sites): Add and announce
+	web and ftp mirrors in Greece.
+	* package-get.el (package-get-pre-release-download-sites): Ditto.
+
 2007-06-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* files.el (revert-buffer):

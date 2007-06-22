@@ -229,6 +229,7 @@ directory."
     ("France (mirror.cict.fr)" "mirror.cict.fr" "xemacs/packages")
     ("France (pasteur.fr)" "ftp.pasteur.fr" "pub/computing/xemacs/packages")
     ("Germany (de.xemacs.org)" "ftp.de.xemacs.org" "pub/ftp.xemacs.org/tux/xemacs/packages")
+    ("Greece (gr.xemacs.org)" "ftp.gr.xemacs.org" "mirrors/XEmacs/ftp/packages")
     ("Hong Kong (hk.xemacs.org)" "ftp.hk.xemacs.org" "pub/xemacsftp/packages")
     ("Iceland (is.xemacs.org)" "ftp.is.xemacs.org" "pub/xemacs/packages")
     ("Ireland (ie.xemacs.org)" "ftp.ie.xemacs.org" "mirrors/ftp.xemacs.org/pub/xemacs/packages")
@@ -310,6 +311,8 @@ variable actually used to specify package download sites."
      "pub/computing/xemacs/beta/experimental/packages")
     ("Germany Pre-Releases (de.xemacs.org)" "ftp.de.xemacs.org"
      "pub/ftp.xemacs.org/tux/xemacs/beta/experimental/packages")
+    ("Greece Pre-Releases (gr.xemacs.org)" "ftp.gr.xemacs.org"
+     "mirrors/XEmacs/ftp/beta/experimental/packages")
     ("Hong Kong Pre-Releases (hk.xemacs.org)" "ftp.hk.xemacs.org"
      "pub/xemacsftp/beta/experimental/packages")
     ("Iceland Pre-Releases (is.xemacs.org)" "ftp.is.xemacs.org"
