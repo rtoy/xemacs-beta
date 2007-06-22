@@ -6009,13 +6009,23 @@ restore_int (Lisp_Object cons)
   int *addr = (int *) get_opaque_ptr (opaque);
   int val;
 
+  /* In the event that a C integer will always fit in an Emacs int, we
+     haven't ever stored a C integer as an opaque pointer. This #ifdef
+     eliminates a warning on AMD 64, where EMACS_INT has 63 value bits and C
+     integers have 32 value bits.  */
+#if INT_VALBITS < INTBITS
   if (INTP (lval))
-    val = XINT (lval);
+    {
+      val = XINT (lval);
+    }
   else
     {
       val = (int) get_opaque_ptr (lval);
       free_opaque_ptr (lval);
     }
+#else /* !(INT_VALBITS < INTBITS) */
+  val = XINT(lval);
+#endif /* INT_VALBITS < INTBITS */
 
   *addr = val;
   free_opaque_ptr (opaque);
@@ -6032,10 +6042,19 @@ record_unwind_protect_restoring_int (int *addr, int val)
   Lisp_Object opaque = make_opaque_ptr (addr);
   Lisp_Object lval;
 
+  /* In the event that a C integer will always fit in an Emacs int, we don't
+     ever want to store a C integer as an opaque pointer. This #ifdef
+     eliminates a warning on AMD 64, where EMACS_INT has 63 value bits and C
+     integers have 32 value bits.  */
+#if INT_VALBITS <= INTBITS
   if (NUMBER_FITS_IN_AN_EMACS_INT (val))
     lval = make_int (val);
   else
     lval = make_opaque_ptr ((void *) val);
+#else /* !(INT_VALBITS < INTBITS) */
+  lval = make_int (val);
+#endif /* INT_VALBITS <= INTBITS */
+
   return record_unwind_protect (restore_int, noseeum_cons (opaque, lval));
 }
 

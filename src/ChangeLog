@@ -1,3 +1,12 @@
+2007-06-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (restore_int):
+	* eval.c (record_unwind_protect_restoring_int):
+	Conditionalise the munging of a C integer into a void pointer on
+	whether it's necessary at compile time, using INT_VALBITS (which
+	describes how many value bits a Lisp integer has) and INTBITS
+	(describing how many value bits a C integer has).
+
 2007-05-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c (Feval):
