@@ -1,6 +1,6 @@
 2007-05-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
-	* etags.c: Sync to pot_etags_version 17.26.
+	* etags.c: Sync to pot_etags_version 17.33.
 	Reverts part of 2007-03-24 patch: no longer displays
 	pot_etags_version in usage message.
 
