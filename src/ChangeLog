@@ -1,5 +1,11 @@
 2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* event-unixoid.c (event_stream_unixoid_create_io_streams):
+	* process-unix.c (unix_init_process_io_handles): 
+	Cast out bogus warnings about 64-bit value truncation.
+
+2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* linuxplay.c (linux_play_data_or_file): More 64-bit tweaking, and
 	a typo fix.
 

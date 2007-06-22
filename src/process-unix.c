@@ -846,8 +846,9 @@ static void
 unix_init_process_io_handles (Lisp_Process *p, void *in, void *UNUSED (out),
 			      void *err, int UNUSED (flags))
 {
-  UNIX_DATA(p)->infd = (int) in;
-  UNIX_DATA(p)->errfd = (int) err;
+  /* if sizeof(EMACS_INT) > sizeof(int) this truncates the value */
+  UNIX_DATA(p)->infd = (EMACS_INT) in;
+  UNIX_DATA(p)->errfd = (EMACS_INT) err;
 }
 
 /* Move the file descriptor FD so that its number is not less than MIN. *
