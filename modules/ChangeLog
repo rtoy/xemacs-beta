@@ -1,3 +1,9 @@
+2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ldap/eldap.h: Declare that we use deprecated API.
+	Thanks to Mats Lidell <matsl@xemacs.org> for the report & patch:
+	<871wgnqunm.fsf@spencer.lidell.homelinux.net>.
+
 2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.28 "fuki" is released.
