@@ -112,6 +112,35 @@ This is a naive implementation in Lisp.  "
 		    ;; ochars[3] = 0x80 | input & ~(0xFFFFFFC0); 
 		    (logior #x80 (logand code-point #x3f))))))))
 
+;;----------------------------------------------------------------
+;; Test that revert-buffer resets the modiff
+;; Bug reported 2007-06-20 <200706201902.32191.scop@xemacs.org>.
+;; Fixed 2007-06-22 <18043.2793.611745.734215@parhasard.net>.
+;;----------------------------------------------------------------
+
+;; #### need a temp file name but this will do for now
+(let ((test-file-name (expand-file-name "~/test-revert-buffer-resets-modiff"))
+      revert-buffer-function
+      kill-buffer-hook)		; paranoia
+  (find-file test-file-name)
+  (erase-buffer)
+  (insert "a string\n")
+  (save-buffer 0)
+  (insert "more text\n")
+  (revert-buffer t t)
+  ;; Just "find-file" with autodetect coding didn't fail for me, but it does
+  ;; fail under test harness.  Still we'll redo the test with an explicit
+  ;; coding system just in case.
+  (Assert (not (buffer-modified-p)))
+  (kill-buffer nil)
+  (when (find-coding-system 'utf-8)
+    (find-file test-file-name 'utf-8)
+    (insert "more text\n")
+    (revert-buffer t t)
+    (Assert (not (buffer-modified-p)))
+    (kill-buffer nil))
+  (delete-file test-file-name))
+
 ;;-----------------------------------------------------------------
 ;; Test string modification functions that modify the length of a char.
 ;;-----------------------------------------------------------------
