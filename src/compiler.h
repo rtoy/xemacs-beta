@@ -210,19 +210,24 @@ Boston, MA 02111-1307, USA.  */
 # endif /* GCC_VERSION >= NEED_GCC (2, 5, 0) */
 #endif /* ATTRIBUTE_CONST */
 
-/* Unused declarations; g++ and icc do not support this. */
 /*
    NOTE:  These macros MUST be named UNUSED (exactly) or something
    prefixed with USED_IF_, or DEFUN docstrings will be parsed incorrectly.
    See comments in make_docfile.c (write_c_args).  You'd think that this
    wouldn't happen, but unfortunately we do indeed have some arguments
    of DEFUNs unused for GNU compatibility or because features are missing.
+
+   #### At one time, __attribute__ ((unused)) confused G++.  We don't know
+   which versions.  Please report problems and fix conditionals.
+   #### A similar issue arose with the Intel CC.  We know that v7 didn't
+   work and v9 does.  Let us know if v8 works or not, please.
+   See <m34plsmh88.fsf@jerrypc.cs.usu.edu>.
 */
 #ifndef UNUSED_ARG
 # define UNUSED_ARG(decl) unused_##decl
 #endif
 #ifndef UNUSED
-# if defined(__GNUC__) && !defined(__cplusplus) && !defined(__INTEL_COMPILER)
+# if defined(__GNUC__) && (!defined(__INTEL_COMPILER) || __INTEL_COMPILER >= 800)
 #  define ATTRIBUTE_UNUSED __attribute__ ((unused))
 # else
 #  define ATTRIBUTE_UNUSED

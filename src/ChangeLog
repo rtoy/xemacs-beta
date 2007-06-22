@@ -1,3 +1,7 @@
+2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* compiler.h: Try to use USED with more compilers.  Thanks, Jerry!
+
 2007-06-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c (restore_int):
