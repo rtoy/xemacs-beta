@@ -894,8 +894,12 @@ variable @code{n} is no longer bound to the actual argument 2.
 
 @cindex closures not available
   Some Lisp dialects have ``closures'', objects that are like functions
-but record additional variable bindings.  XEmacs Lisp does not have
-closures.
+but record additional variable bindings.  Closures are available in
+XEmacs Lisp using the @code{lexical-let} and @code{lexical-let*}macroes,
+which are autoloaded from @file{cl-macs}.  @xref{(cl)Lexical Bindings}.
+Note that function arguments cannot be closed around using these
+macros, and that any lambda expressions returned will not be
+byte-compiled.  
 
 @node Impl of Scope
 @subsection Implementation of Dynamic Scoping

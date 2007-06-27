@@ -1,3 +1,9 @@
+2007-06-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/variables.texi (Extent):
+	Mention that lexical scope is available using lexical-let and
+	lexical-let* in cl-macs, instead of ignoring them entirely. 
+
 2007-05-21  Ville Skyttä  <scop@xemacs.org>
 
 	* internals/internals.texi: Fix corrupted/oddly encoded chars.
