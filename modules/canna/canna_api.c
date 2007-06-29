@@ -333,11 +333,12 @@ No separator will be used otherwise.
 */
        (num))
 {
-  int kugiri; /* 文節区切りをするか？ (display clause separator?) */
+  /* This is actually a Boolean! */
+  char *kugiri; /* 文節区切りをするか？ (display clause separator?) */
 
-  kugiri = NILP (num) ? 0 : 1;
+  kugiri = NILP (num) ? (char *) 0 : (char *) 1;
 
-  jrKanjiControl (0, KC_SETBUNSETSUKUGIRI, (char *) kugiri);
+  jrKanjiControl (0, KC_SETBUNSETSUKUGIRI, kugiri);
 
   return Qnil;
 }
@@ -365,19 +366,19 @@ If nil is specified for each arg, the default value will be used.
   int res;
   char **p, **q;
 
-  int kugiri; /* 文節区切りをするか？ (display clause separator?) */
+  /* This is actually a Boolean! */
+  char *kugiri; /* 文節区切りをするか？ (display clause separator?) */
 
   IRCP_context = -1;
 
   if (NILP (num))
     {
-      kugiri = 1;
+      kugiri = (char *) 1;
     }
   else
     {
       CHECK_INT (num);
-      kugiri = XINT (num);
-      kugiri = (kugiri == 1) ? 1 : 0;
+      kugiri = (XINT (num) == 1) ? (char *) 1 : (char *) 0;
     }
 
   if (NILP (server))
@@ -444,7 +445,7 @@ If nil is specified for each arg, the default value will be used.
 #endif /* CANNA_MULE */
 #endif /* KC_SETAPPNAME */
 
-      jrKanjiControl (0, KC_SETBUNSETSUKUGIRI, (char *) kugiri);
+      jrKanjiControl (0, KC_SETBUNSETSUKUGIRI, kugiri);
       jrKanjiControl (0, KC_SETWIDTH, (char *) 78);
 #ifndef CANNA_MULE
       jrKanjiControl (0, KC_INHIBITHANKAKUKANA, (char *) 1);

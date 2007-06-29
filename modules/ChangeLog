@@ -1,5 +1,11 @@
 2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* canna/canna_api.c (Fcanna_set_bunsetsu):
+	(Fcanna_initialize):
+	Suppress warnings about loss of precision on amd64.
+
+2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* ldap/eldap.h: Declare that we use deprecated API.
 	Thanks to Mats Lidell <matsl@xemacs.org> for the report & patch:
 	<871wgnqunm.fsf@spencer.lidell.homelinux.net>.
