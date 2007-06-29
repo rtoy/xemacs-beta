@@ -1,3 +1,8 @@
+2007-06-19  Ron Isaacson  <Ron.Isaacson@morganstanley.com>
+
+	* modeline.el (modeline-update-tty-frame-specifier): Don't use
+	non-existent function frame-tty-p.
+
 2007-06-23  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el (package-get-download-sites): Add and announce
