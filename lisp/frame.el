@@ -793,13 +793,9 @@ Otherwise, that variable should be nil."
   (let ((frame (selected-frame)))
     (while (> arg 0)
       (setq frame (next-frame frame 'visible-nomini))
-      (while (not (eq (frame-visible-p frame) t))
-	(setq frame (next-frame frame 'visible-nomini)))
       (setq arg (1- arg)))
     (while (< arg 0)
       (setq frame (previous-frame frame 'visible-nomini))
-      (while (not (eq (frame-visible-p frame) t))
-	(setq frame (previous-frame frame 'visible-nomini)))
       (setq arg (1+ arg)))
     (select-frame-set-input-focus frame)))
 

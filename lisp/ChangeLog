@@ -1,5 +1,9 @@
 2007-06-19  Ron Isaacson  <Ron.Isaacson@morganstanley.com>
 
+	* frame.el (other-frame): Stop other-frame cycling through all frames.
+
+2007-06-19  Ron Isaacson  <Ron.Isaacson@morganstanley.com>
+
 	* modeline.el (modeline-update-tty-frame-specifier): Don't use
 	non-existent function frame-tty-p.
 
