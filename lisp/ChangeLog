@@ -1,5 +1,11 @@
 2007-07-16  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* isearch-mode.el (isearch-exit):
+	Don't highlight matches if we're currently executing a keyboard
+	macro.
+
+2007-07-16  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* x-init.el (x-initialize-keyboard):
 	Treat Cygwin and X.org as XFree86 on startup. 
 
