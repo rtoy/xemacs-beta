@@ -232,7 +232,7 @@
 	       (string-equal "X Consortium" vendor))
            ;; Ok, we think this could be a Sun keyboard.  Run the Sun code.
 	   (x-win-init-sun))
-          ((string-match "XFree86" vendor)
+          ((string-match #r"XFree86\|Cygwin/X\|The X\.Org Foundation" vendor)
            ;; Those XFree86 people do some weird keysym stuff, too.
 	   (x-win-init-xfree86)))))
 

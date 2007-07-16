@@ -1,3 +1,8 @@
+2007-07-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-init.el (x-initialize-keyboard):
+	Treat Cygwin and X.org as XFree86 on startup. 
+
 2007-06-19  Ron Isaacson  <Ron.Isaacson@morganstanley.com>
 
 	* frame.el (other-frame): Stop other-frame cycling through all frames.
