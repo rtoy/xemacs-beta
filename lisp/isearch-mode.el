@@ -712,7 +712,7 @@ However, if this is the first command after starting incremental
 search and `search-nonincremental-instead' is non-nil, do a
 nonincremental search instead via `isearch-edit-string'."
   (interactive)
-  (if (and search-nonincremental-instead
+  (if (and (or search-nonincremental-instead executing-kbd-macro)
 	   (= 0 (length isearch-string)))
       (let ((isearch-nonincremental t)
 	    ;; Highlighting only gets in the way of nonincremental
