@@ -1357,7 +1357,7 @@ The following additional properties are recognized if TYPE is
 
 
 The following additional properties are recognized if TYPE is `undecided':
-[[ Doesn't GNU use \"detect-*\" for the following two? ]]
+\[[ Doesn't GNU use \"detect-*\" for the following two? ]]
 
 `do-eol'
      Do EOL detection.

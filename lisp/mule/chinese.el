@@ -31,109 +31,11 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'china-util))
-
-; (make-charset 'chinese-gb2312 
-; 	      "GB2312 Chinese simplified: ISO-IR-58"
-; 	      '(dimension
-; 		2
-; 		registry "GB2312.1980"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?A
-; 		graphic 0
-; 		short-name "GB2312"
-; 		long-name "GB2312: ISO-IR-58"
-; 		))
-
-; (make-charset 'chinese-cns11643-1 
-; 	      "CNS11643 Plane 1 Chinese traditional: ISO-IR-171"
-; 	      '(dimension
-; 		2
-; 		registry "CNS11643.1992-1"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?G
-; 		graphic 0
-; 		short-name "CNS11643-1"
-; 		long-name "CNS11643-1 (Chinese traditional): ISO-IR-171"
-; 		))
-
-; (make-charset 'chinese-cns11643-2 
-; 	      "CNS11643 Plane 2 Chinese traditional: ISO-IR-172"
-; 	      '(dimension
-; 		2
-; 		registry "CNS11643.1992-2"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?H
-; 		graphic 0
-; 		short-name "CNS11643-2"
-; 		long-name "CNS11643-2 (Chinese traditional): ISO-IR-172"
-; 		))
-
-; (make-charset 'chinese-big5-1 
-; 	      "Frequently used part (A141-C67F) of Big5 (Chinese traditional)"
-; 	      '(dimension
-; 		2
-; 		registry "Big5"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?0
-; 		graphic 0
-; 		short-name "Big5 (Level-1)"
-; 		long-name "Big5 (Level-1) A141-C67F"
-; 		))
-
-; (make-charset 'chinese-big5-2 
-; 	      "Less frequently used part (C940-FEFE) of Big5 (Chinese traditional)"
-; 	      '(dimension
-; 		2
-; 		registry "Big5"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?1
-; 		graphic 0
-; 		short-name "Big5 (Level-2)"
-; 		long-name "Big5 (Level-2) C940-FEFE"
-; 		))
+(eval-when-compile (progn (require 'ccl "mule-ccl") (require 'china-util)))
 
 ;; Syntax of Chinese characters.
-(modify-syntax-entry 'chinese-gb2312 "w")
 (loop for row in '(33 34 41)
       do (modify-syntax-entry `[chinese-gb2312 ,row] "."))
-;;(loop for row from 35 to  40
-;;      do (modify-syntax-entry `[chinese-gb2312 ,row] "w"))
-;;(loop for row from 42 to 126
-;;      do (modify-syntax-entry `[chinese-gb2312 ,row] "w"))
-
-(modify-syntax-entry 'chinese-cns11643-1  "w")
-(modify-syntax-entry 'chinese-cns11643-2  "w")
-(modify-syntax-entry 'chinese-big5-1 "w")
-(modify-syntax-entry 'chinese-big5-2 "w")
-
-; ;; Chinese CNS11643 Plane3 thru Plane7.  Although these are official
-; ;; character sets, the use is rare and don't have to be treated
-; ;; space-efficiently in the buffer.
-; (make-charset 'chinese-cns11643-3 
-; 	      "CNS11643 Plane 3 Chinese Traditional: ISO-IR-183"
-; 	      '(dimension
-; 		2
-; 		registry "CNS11643.1992-3"
-; 		chars 94
-; 		columns 2
-; 		direction l2r
-; 		final ?I
-; 		graphic 0
-; 		short-name "CNS11643-3"
-; 		long-name "CNS11643-3 (Chinese traditional): ISO-IR-183"
-; 		))
 
 ;; CNS11643 Plane3 thru Plane7
 ;; These represent more and more obscure Chinese characters.
@@ -378,15 +280,12 @@ of a Chinese character\"."))
     ;;      R2:position code 2
     ;; Out: R1:font code point 1
     ;;      R2:font code point 2
-    ((r2 = ((((r1 - ?\x21) * 94) + r2) - ?\x21))
+    ((r2 = ((((r1 - #x21) * 94) + r2) - #x21))
      (if (r0 == ,(charset-id 'chinese-big5-2)) (r2 += 6280))
-     (r1 = ((r2 / 157) + ?\xA1))
+     (r1 = ((r2 / 157) + #xA1))
      (r2 %= 157)
-     (if (r2 < ?\x3F) (r2 += ?\x40) (r2 += ?\x62))))
+     (if (r2 < #x3F) (r2 += #x40) (r2 += #x62))))
   "CCL program to encode a Big5 code to code point of Big5 font.")
-
-;; (setq font-ccl-encoder-alist
-;;       (cons (cons "big5" ccl-encode-big5-font) font-ccl-encoder-alist))
 
 (set-charset-ccl-program 'chinese-big5-1 'ccl-encode-big5-font)
 (set-charset-ccl-program 'chinese-big5-2 'ccl-encode-big5-font)

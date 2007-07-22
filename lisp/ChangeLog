@@ -1,3 +1,136 @@
+2007-07-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/chinese.el:
+	* mule/cyrillic.el:
+	* mule/cyrillic.el (cyrillic-koi8-r-decode-table): Removed.
+	* mule/cyrillic.el (cyrillic-koi8-r-encode-table): Removed.
+	* mule/cyrillic.el (cyrillic-alternativnyj-decode-table): Removed.
+	* mule/cyrillic.el (cyrillic-alternativnyj-encode-table): Removed.
+	* mule/cyrillic.el (cyrillic-koi8-r-to-external-code-table):
+	Removed.
+	
+	* mule/cyrillic.el (ccl-decode-koi8): Removed.
+	* mule/cyrillic.el (ccl-encode-koi8): Removed.
+	* mule/cyrillic.el (ccl-decode-alternativnyj): Removed.
+	* mule/cyrillic.el (ccl-encode-alternativnyj): Removed.
+	* mule/cyrillic.el
+	(cyrillic-alternativnyj-to-external-code-table): Removed.
+	* mule/cyrillic.el ("Cyrillic-ISO"): Langenv added.
+	* mule/cyrillic.el ("Ukrainian"): Langenv added.
+	* mule/cyrillic.el ("Bulgarian"): Langenv added.
+	* mule/cyrillic.el ("Belarusian"): Langenv added.
+
+	* mule/cyrillic.el (koi8-r):
+	* mule/cyrillic.el (koi8-ru):
+	* mule/cyrillic.el (koi8-t):
+	* mule/cyrillic.el (koi8-c):
+	* mule/english.el ("English"):
+	* mule/ethiopic.el (ccl-encode-ethio-font):
+	* mule/ethiopic.el (ethiopic):
+	* mule/japanese.el (for):
+	* mule/korean.el (for):
+	* mule/latin.el (iso-8859-15):
+	Use a normal quote; there's no need for a backquote. 
+	* mule/mule-ccl.el:
+	* mule/mule-ccl.el (ccl-command-table):
+	* mule/mule-ccl.el (ccl-extended-code-table):
+	* mule/mule-ccl.el (ccl-embed-data):
+	* mule/mule-ccl.el (ccl-compile-lookup-integer): New.
+	* mule/mule-ccl.el (ccl-compile-lookup-character): New.
+	* mule/mule-ccl.el (ccl-dump-ex-cmd):
+	* mule/mule-ccl.el (ccl-dump-lookup-int-const-tbl): New.
+	* mule/mule-ccl.el (ccl-dump-lookup-char-const-tbl): New.
+	* mule/mule-ccl.el (define-ccl-program):
+	* mule/mule-ccl.el (ccl):
+	* mule/mule-ccl.el (ccl-execute-with-args): Removed.
+	* mule/mule-charset.el:
+	* mule/mule-charset.el ('charset-columns): Removed.
+	* mule/mule-charset.el ('charset-final): Removed.
+	* mule/mule-charset.el ('charset-graphic): Removed.
+	* mule/mule-charset.el ('charset-doc-string): Removed.
+	* mule/mule-coding.el:
+	* mule/mule-coding.el (define-translation-hash-table): New.
+	* mule/mule-coding.el (make-8-bit-private-use-start): New.
+	* mule/mule-coding.el (make-8-bit-generate-helper): New.
+	* mule/mule-coding.el (make-8-bit-generate-encode-program): New.
+	* mule/mule-coding.el (make-8-bit-create-decode-encode-tables): New.
+	* mule/mule-coding.el (make-8-bit-generate-decode-program): New.
+	* mule/mule-coding.el (make-8-bit-coding-system): New.
+	* mule/viet-util.el (viet-encode-viscii-char):
+	* mule/vietnamese.el:
+	* mule/vietnamese.el (?v):
+	* mule/vietnamese.el (viscii):
+	* mule/vietnamese.el (viet-viscii-decode-table): Removed.
+	* mule/vietnamese.el (viet-viscii-encode-table): Removed.
+	* mule/vietnamese.el (viet-vscii-decode-table): Removed.
+	* mule/vietnamese.el (viet-vscii-encode-table): Removed.
+	* mule/vietnamese.el (ccl-decode-viscii): Removed.
+	* mule/vietnamese.el (leading-code-private-11): Removed.
+	* mule/vietnamese.el (ccl-encode-viscii): Removed.
+	* mule/vietnamese.el (ccl-encode-viscii-font): Removed.
+	* mule/vietnamese.el (ccl-decode-vscii): Removed.
+	* mule/vietnamese.el (ccl-encode-vscii): Removed.
+	* mule/vietnamese.el (ccl-encode-vscii-font): Removed.
+	* mule/vietnamese.el (viet-viscii-to-external-code-table):
+	Removed.
+
+	Provide make-8-bit-coding-system, a way to construct a fixed-width
+	XEmacs CCL coding system given a map from 8-bit characters to
+	Unicode. Such generated CCL coding systems do not have the Latin
+	deunification problem of iso-8859-15, for example. For most users,
+	most of the time, only a small minority of code conversions will
+	require a hash table lookup, so performance is good.
+
+	Provide a compiler macro version of same, used when
+	make-8-bit-coding-system is called with literal arguments, since
+	at dump time the unicode conversion tables are not available,
+	whereas during compilation of dumped files they are.
+
+	Rework cyrillic.el to use make-8-bit-coding-system. Add support
+	for previously trashed characters in KOI8-R, add support for
+	KOI8-u, re-add support for Windows-1251 when not building on
+	win32, add support for previously trashed characters in
+	Alternativnyj, add support for koi8-ru (unified Russian,
+	Belarusian and Ukrainian), add support for koi8-t (Tajik), koi8-c
+	\(languages of the Caucasus), koi8-o (archaic Russian, Old Church
+	Slavonic). Add language environments for Russian, Bulgarian,
+	Belarusian and Cyrillic-KOI8RU.
+
+	Remove the ascii-right-to-left charset, which never worked. 
+
+	Move to syntactic integers in CCL, when semantic integers were
+	represented by character. 
+
+	Remove superflous calls to (modify-syntax-entry [...] "w"), since
+	character syntax now defaults to word. 
+
+	Add support for lookup-integer, lookup-character in mule-ccl.el,
+	based on Dave Love's work for GNU. 
+
+	Remove ccl-execute-with-args; ccl-execute-on-string ably does the
+	same job, and no-one's using it on google.com/codesearch.
+
+	Correct the documentation for read-multibyte-character and
+	write-multibyte-character.
+
+	Rework vietnamese.el to use make-8-bit-coding-system. Remove
+	the viqr coding system, since it never worked. Don't use a CCL
+	program to display VISCII; rely on our Unicode conversion
+	instead. 
+	
+	Rework viet-encode-viscii-char, now
+	viet-viscii-to-external-code-table is no longer available. 
+
+2007-07-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dumped-lisp.el (preloaded-file-list):
+	It's not necessary to dump mule-ccl.el; the functionality from it
+	that's used in other dumped files is available in macro form. 
+	* unicode.el (ccl-encode-to-ucs-2):
+	Update ccl-encode-to-ucs-2 to reflect the changes made to
+	mule-ccl.c. NB; this change needs to be made to
+	fsf-compat-unicode.el too. 
+
 2007-07-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* isearch-mode.el (isearch-exit):

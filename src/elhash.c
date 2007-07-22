@@ -94,15 +94,6 @@ static Lisp_Object Q_size, Q_test, Q_weakness, Q_rehash_size, Q_rehash_threshold
 static Lisp_Object Qweak, Qkey_weak, Qvalue_weak, Qkey_or_value_weak;
 static Lisp_Object Qnon_weak, Q_type;
 
-typedef struct htentry
-{
-#ifdef NEW_GC
-  struct lrecord_header lheader;
-#endif /* NEW_GC */  
-  Lisp_Object key;
-  Lisp_Object value;
-} htentry;
-
 struct Lisp_Hash_Table
 {
   struct LCRECORD_HEADER header;
@@ -120,7 +111,6 @@ struct Lisp_Hash_Table
 			        hash tables.  Don't mark through this. */
 };
 
-#define HTENTRY_CLEAR_P(htentry) ((*(EMACS_UINT*)(&((htentry)->key))) == 0)
 #define CLEAR_HTENTRY(htentry)   \
   ((*(EMACS_UINT*)(&((htentry)->key)))   = 0, \
    (*(EMACS_UINT*)(&((htentry)->value))) = 0)
@@ -1126,7 +1116,7 @@ enlarge_hash_table (Lisp_Hash_Table *ht)
   resize_hash_table (ht, new_size);
 }
 
-static htentry *
+htentry *
 find_htentry (Lisp_Object key, const Lisp_Hash_Table *ht)
 {
   hash_table_test_function_t test_function = ht->test_function;

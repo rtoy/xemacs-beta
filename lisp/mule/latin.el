@@ -443,7 +443,7 @@
 (make-coding-system
  'iso-8859-15 'iso2022
   "ISO 4873 conforming 8-bit code (ASCII + Latin 9; aka Latin-1 with Euro)"
-  `(mnemonic "MIME/Ltn-9"		; bletch
+  '(mnemonic "MIME/Ltn-9"		; bletch
     eol-type nil
     charset-g0 ascii
     charset-g1 latin-iso8859-15

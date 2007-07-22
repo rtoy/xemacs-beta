@@ -41,7 +41,13 @@
 ;;;###autoload
 (defun viet-encode-viscii-char (char)
   "Return VISCII character code of CHAR if appropriate."
-  (get-char-table char viet-viscii-to-external-code-table))
+  (check-argument-type #'characterp char)
+  (if (eq char ?~)
+      char
+    (setq char (encode-coding-string char 'viscii))
+    (if (and (= 1 (length char))
+	     (not (eq (aref char 0) ?~)))
+	(aref char 0))))
 
 ;; VIQR is a menmonic encoding specification for Vietnamese.
 ;; It represents diacritical marks by ASCII characters as follows:

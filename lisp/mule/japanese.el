@@ -61,10 +61,6 @@
 		))
 
 ;;; Syntax of Japanese characters.
-(modify-syntax-entry 'katakana-jisx0201 "w")
-(modify-syntax-entry 'japanese-jisx0212 "w")
-
-(modify-syntax-entry 'japanese-jisx0208 "w")
 (loop for row in '(33 34 40)
       do (modify-syntax-entry `[japanese-jisx0208 ,row] "_"))
 (loop for char in '(?ー ?゛ ?゜ ?ヽ ?ヾ ?ゝ ?ゞ ?〃 ?仝 ?々 ?〆 ?〇)

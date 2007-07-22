@@ -31,21 +31,6 @@
 
 ;;; Code
 
-;; ASCII with right-to-left direction.
-(make-charset 'ascii-right-to-left 
-	      "ASCII (left half of ISO 8859-1) with right-to-left direction"
-	      '(dimension
-		1
-		registries ["ISO8859-1"]
-		chars 94
-		columns 1
-		direction r2l
-		final ?B
-		graphic 0
-		short-name "rev ASCII"
-		long-name "ASCII with right-to-left direction"
-		))
-
 (set-language-info-alist
  "English" '((tutorial . "TUTORIAL")
 	     (locale "en" "C")

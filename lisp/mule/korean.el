@@ -46,12 +46,8 @@
 ;; Syntax of Korean characters.
 (loop for row from 33 to  34 do
       (modify-syntax-entry `[korean-ksc5601 ,row] "."))
-(loop for row from 35 to  37 do
-      (modify-syntax-entry `[korean-ksc5601 ,row] "w"))
 (loop for row from 38 to  41 do
       (modify-syntax-entry `[korean-ksc5601 ,row] "."))
-(loop for row from 42 to 126 do
-      (modify-syntax-entry `[korean-ksc5601 ,row] "w"))
 
 ;; Setting for coding-system and quail were moved to
 ;; language/korean.el.

@@ -117,11 +117,6 @@ See `make-charset'."
   "Useless in XEmacs, returns 1."
    1)
 
-(define-obsolete-function-alias 'charset-columns 'charset-width) ;; 19990409
-(define-obsolete-function-alias 'charset-final 'charset-iso-final-char) ;; 19990409
-(define-obsolete-function-alias 'charset-graphic 'charset-iso-graphic-plane) ;; 19990409
-(define-obsolete-function-alias 'charset-doc-string 'charset-description) ;; 19990409
-
 ;;;; Define setf methods for all settable Charset properties
 
 (defsetf charset-registry    set-charset-registry)
@@ -355,7 +350,6 @@ no such translation table instead of returning nil."
 ;; arabic-2-column "MuleArabic-2"
 ;; ipa "MuleIPA"
 ;; ethiopic "Ethiopic-Unicode"
-;; ascii-right-to-left "ISO8859-1"
 ;; indian-is13194 "IS13194-Devanagari"
 ;; indian-2-column "MuleIndian-2"
 ;; indian-1-column "MuleIndian-1"

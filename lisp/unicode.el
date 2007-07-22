@@ -293,21 +293,24 @@ The second argument must be 'ucs, the third argument is ignored.  "
   ;;   (macroexpand 
   ;;    '(define-ccl-program ccl-encode-to-ucs-2
   ;;      `(1
-  ;;        ((r1 = (r1 << 8))
-  ;; 	     (r1 = (r1 | r2))
-  ;; 	     (mule-to-unicode r0 r1)
-  ;; 	     (r1 = (r0 >> 8))
-  ;; 	     (r2 = (r0 & 255))))
+  ;;        ((r1 = (r1 << 7))
+  ;;         (r1 = (r1 | r2))
+  ;;         (mule-to-unicode r0 r1)
+  ;;         (r1 = (r0 >> 8))
+  ;;         (r2 = (r0 & #xff))))
   ;;      "CCL program to transform Mule characters to UCS-2."))
   ;;
   ;; and it should occasionally be confirmed that the correspondence still
   ;; holds.
 
-  (let ((prog [1 10 131127 8 98872 65823 147513 8 82009 255 22]))
-    (defconst ccl-encode-to-ucs-2 prog 
+  (let ((prog [1 10 131127 7 98872 65823 147513 8 82009 255 22]))
+    (defconst ccl-encode-to-ucs-2
+      prog
       "CCL program to transform Mule characters to UCS-2.")
-    (put (quote ccl-encode-to-ucs-2) (quote ccl-program-idx) 
-	 (register-ccl-program (quote ccl-encode-to-ucs-2) prog)) nil))
+    (put 'ccl-encode-to-ucs-2
+         'ccl-program-idx
+         (register-ccl-program 'ccl-encode-to-ucs-2 prog))
+    nil))
 
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version

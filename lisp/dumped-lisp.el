@@ -178,7 +178,6 @@ in dumped-lisp.el and is not itself listed.")
        ;; All files after this can have extended characters in them.
        (when (featurep 'mule)
 	 '("mule/mule-category"
-	   "mule/mule-ccl"
 	   "mule/kinsoku"
 	   ))
 
@@ -212,10 +211,12 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/devanagari" ; must be loaded after indian.el
 	   "mule/japanese"
 	   "mule/korean"
-	   "mule/lao"
+	   "mule/lao" ; sucks. 
 	   "mule/latin"
 	   "mule/misc-lang"
 	   ;; "thai" #### merge thai and thai-xtis!!!
+           ;; #### Even better; take out thai-xtis! It's not even a
+           ;; standard, and no-one uses it.
 	   "mule/thai-xtis"
 	   "mule/tibetan"
 	   "mule/vietnamese"
@@ -223,17 +224,6 @@ in dumped-lisp.el and is not itself listed.")
 	    
 	;; Specialized language support
        (when (featurep 'mule) "mule/canna-leim")
-;; Egg/Its is now a package
-;	(when (featurep '(and mule wnn))
-;         '("egg-leim" "egg-kwnn-leim" "egg-cwnn-leim"))
-;	(when (featurep 'mule) "mule/egg-sj3-leim")
-;; SKK is now a package
-;	(when (featurep 'mule) "mule/skk-leim")
-
-;; Enable Mule capability for Gnus, mail, etc...
-;; Moved to sunpro-load.el - the default only for Sun.
-;;(pureload "mime-setup")
-
 	;; needs access to the charsets created by the above
 	;; language-specific files.
        (when (and (featurep 'mule) (valid-console-type-p 'mswindows))

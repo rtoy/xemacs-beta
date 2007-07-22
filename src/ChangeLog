@@ -1,3 +1,52 @@
+2007-07-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (struct Lisp_Hash_Table):
+	* elhash.c (HTENTRY_CLEAR_P):
+	* elhash.c (find_htentry):
+	* elhash.h:
+	* elhash.h (htentry):
+	Move struct Lisp_Hash_Table, HTENTRY_CLEAR_P, struct htentry to
+	elhash.h, since mule-ccl.c needs to use them. Ditto adding a
+	declaration for find_htentry to elhash.h, and removing the static
+	from its declaration in elhash.c
+
+	* file-coding.c:
+	Add a backslash at the beginning of a line starting with a
+	parenthesis, for the sake of our font lock engine. 
+	
+	* mule-ccl.c:
+	* mule-ccl.c (CCL_LookupIntConstTbl):
+	* mule-ccl.c (CCL_WRITE_STRING):
+	* mule-ccl.c (POSSIBLE_LEADING_BYTE_P):
+	Fix a bug where the charset ID of ASCII was not recognised as
+	being a possible leading byte. 
+	* mule-ccl.c (CCL_MAKE_CHAR):
+	Take Mule character arguments in the same format as GNU.
+	* mule-ccl.c (CCL_DEBUG):
+	* mule-ccl.c (ccl_driver):
+	* mule-ccl.c (resolve_symbol_ccl_program):
+	* mule-ccl.c (Fccl_execute):
+	* mule-ccl.c (vars_of_mule_ccl):
+	Add Dave Love's hash table lookup CCL code, which has been in GNU
+	for years.
+
+	Move mule-to-unicode to accept its argument in the same format as
+	write-multibyte-character.
+
+	Move to accepting characters as well as integers in lots of
+	places; with XEmacs (and even with GNU Emacs), where the
+	character-integer map is not constant from one invocation to the
+	next, it makes sense for CCL programs with character literals to
+	accept those literals as characters, not integers. 
+
+	If we're a debug build, allow access to ccl-program-table from
+	Lisp, which can make debugging things easier. 
+
+	Take out font-ccl-encoder-alist, since it was never implemented,
+	and was not ever a stellar idea.
+
+	Provide translation-hash-table-vector, as in GNU. 
+
 2007-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* event-unixoid.c (event_stream_unixoid_create_io_streams):

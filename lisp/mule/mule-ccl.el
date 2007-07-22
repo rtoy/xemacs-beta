@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
+;; Copyright (C) 2002, 2007 Free Software Foundation, Inc.
 
 ;; Keywords: CCL, mule, multilingual, character set, coding-system
 
@@ -49,7 +50,8 @@
       read read-if read-branch write call end
       read-multibyte-character write-multibyte-character
       translate-character mule-to-unicode unicode-to-mule
-      iterate-multiple-map map-multiple map-single]
+      iterate-multiple-map map-multiple map-single lookup-integer
+      lookup-character]
   "Vector of CCL commands (symbols).")
 
 ;; Put a property to each symbol of CCL commands for the compiler.
@@ -106,6 +108,8 @@
    iterate-multiple-map
    map-multiple
    map-single
+   lookup-int-const-tbl
+   lookup-char-const-tbl   
    ]
   "Vector of CCL extended compiled codes (symbols).")
 
@@ -181,8 +185,10 @@
 ;; Embed integer DATA in `ccl-program-vector' at `ccl-current-ic' and
 ;; increment it.  If IC is specified, embed DATA at IC.
 (defun ccl-embed-data (data &optional ic)
-  (if (characterp data)
-      (setq data (char-int data)))
+  ;; XEmacs: Embed characters as characters, since their integer values vary at
+  ;; runtime. 
+  ; (if (characterp data) 
+  ;  (setq data (char-int data)))
   (if ic
       (aset ccl-program-vector ic data)
     (let ((len (length ccl-program-vector)))
@@ -197,8 +203,8 @@
 
 ;; Embed pair of SYMBOL and PROP where (get SYMBOL PROP) should give
 ;; proper index number for SYMBOL.  PROP should be
-;; `translation-table-id', `code-conversion-map-id', or
-;; `ccl-program-idx'.
+;; `translation-table-id', `translation-hash-table-id'
+;; `code-conversion-map-id', or `ccl-program-idx'.
 (defun ccl-embed-symbol (symbol prop)
   (ccl-embed-data (cons symbol prop)))
 
@@ -855,6 +861,46 @@
     (ccl-embed-extended-command 'unicode-to-mule rrr RRR 0))
   nil)
 
+;; Compile lookup-integer
+(defun ccl-compile-lookup-integer (cmd)
+  (if (/= (length cmd) 4)
+      (error "CCL: Invalid number of arguments: %s" cmd))
+  (let ((Rrr (nth 1 cmd))
+	(RRR (nth 2 cmd))
+	(rrr (nth 3 cmd)))
+    (ccl-check-register RRR cmd)
+    (ccl-check-register rrr cmd)
+    (cond ((and (symbolp Rrr) (not (get Rrr 'ccl-register-number)))
+	   (ccl-embed-extended-command 'lookup-int-const-tbl
+				       rrr RRR 0)
+	   (ccl-embed-symbol Rrr 'translation-hash-table-id))
+	  (t
+	   (error "CCL: non-constant table: %s" cmd)
+	   ;; not implemented:
+	   (ccl-check-register Rrr cmd)
+	   (ccl-embed-extended-command 'lookup-int rrr RRR 0))))
+  nil)
+
+;; Compile lookup-character
+(defun ccl-compile-lookup-character (cmd)
+  (if (/= (length cmd) 4)
+      (error "CCL: Invalid number of arguments: %s" cmd))
+  (let ((Rrr (nth 1 cmd))
+	(RRR (nth 2 cmd))
+	(rrr (nth 3 cmd)))
+    (ccl-check-register RRR cmd)
+    (ccl-check-register rrr cmd)
+    (cond ((and (symbolp Rrr) (not (get Rrr 'ccl-register-number)))
+	   (ccl-embed-extended-command 'lookup-char-const-tbl
+				       rrr RRR 0)
+	   (ccl-embed-symbol Rrr 'translation-hash-table-id))
+	  (t
+	   (error "CCL: non-constant table: %s" cmd)
+	   ;; not implemented:
+	   (ccl-check-register Rrr cmd)
+	   (ccl-embed-extended-command 'lookup-char rrr RRR 0))))
+  nil)
+
 (defun ccl-compile-iterate-multiple-map (cmd)
   (ccl-compile-multiple-map-function 'iterate-multiple-map cmd)
   nil)
@@ -1194,8 +1240,8 @@
       (setq i (1+ i)))))
 
 (defun ccl-dump-ex-cmd (rrr cc)
-  (let* ((RRR (logand cc ?\x7))
-	 (Rrr (logand (ash cc -3) ?\x7))
+  (let* ((RRR (logand cc #x7))
+	 (Rrr (logand (ash cc -3) #x7))
 	 (ex-op (aref ccl-extended-code-table (logand (ash cc -6) #x3fff))))
     (insert (format "<%s> " ex-op))
     (funcall (get ex-op 'ccl-dump-function) rrr RRR Rrr)))
@@ -1212,6 +1258,14 @@
 (defun ccl-dump-translate-character-const-tbl (rrr RRR Rrr)
   (let ((tbl (ccl-get-next-code)))
     (insert (format "translation table(%S) r%d r%d\n" tbl RRR rrr))))
+
+(defun ccl-dump-lookup-int-const-tbl (rrr RRR Rrr)
+  (let ((tbl (ccl-get-next-code)))
+    (insert (format "hash table(%S) r%d r%d\n" tbl RRR rrr))))
+
+(defun ccl-dump-lookup-char-const-tbl (rrr RRR Rrr)
+  (let ((tbl (ccl-get-next-code)))
+    (insert (format "hash table(%S) r%d r%d\n" tbl RRR rrr))))
 
 (defun ccl-dump-mule-to-unicode (rrr RRR Rrr)
   (insert (format "change chars in r%d and r%d to unicode\n" RRR rrr)))
@@ -1297,7 +1351,7 @@ CCL_BLOCK := STATEMENT | (STATEMENT [STATEMENT ...])
 
 STATEMENT :=
 	SET | IF | BRANCH | LOOP | REPEAT | BREAK | READ | WRITE | CALL
-	| TRANSLATE | MAP | END
+	| TRANSLATE | MAP | LOOKUP | END
 
 SET :=	(REG = EXPRESSION)
 	| (REG ASSIGNMENT_OPERATOR EXPRESSION)
@@ -1351,7 +1405,7 @@ READ := ;; Set REG_0 to a byte read from the input text, set REG_1
 	;; Read a character from the input text, splitting it into its
 	;; multibyte representation. Set REG_0 to the charset ID of the
 	;; character, and set REG_1 to the code point of the character.  If
-	;; the dimension of charset is two, set REG_1 to ((CODE0 << 8) |
+	;; the dimension of charset is two, set REG_1 to ((CODE0 << 7) |
 	;; CODE1), where CODE0 is the first code point and CODE1 is the
 	;; second code point.
 	| (read-multibyte-character REG_0 REG_1)
@@ -1383,7 +1437,7 @@ WRITE :=
 	;; Write a multibyte representation of a character whose
 	;; charset ID is REG_0 and code point is REG_1.  If the
 	;; dimension of the charset is two, REG_1 should be ((CODE0 <<
-	;; 8) | CODE1), where CODE0 is the first code point and CODE1
+	;; 7) | CODE1), where CODE0 is the first code point and CODE1
 	;; is the second code point of the character.
 	| (write-multibyte-character REG_0 REG_1)
 
@@ -1396,6 +1450,11 @@ TRANSLATE := ;; Not implemented under XEmacs, except mule-to-unicode and
 	     | (translate-character SYMBOL REG(charset) REG(codepoint)) 
 	     | (mule-to-unicode REG(charset) REG(codepoint))
 	     | (unicode-to-mule REG(unicode,code) REG(CHARSET))
+
+LOOKUP :=
+	(lookup-character SYMBOL REG(charset) REG(codepoint))
+	| (lookup-integer SYMBOL REG(integer))
+        ;; SYMBOL refers to a table defined by `define-hash-translation-table'.
 
 MAP :=
      (iterate-multiple-map REG REG MAP-IDs)
@@ -1500,22 +1559,6 @@ register CCL-PROGRAM by name NAME, and return NAME."
 	     (register-ccl-program ,name ,ccl-program)
 	     ,name)
 	 ,ccl-program)))
-
-;;;###autoload
-(defun ccl-execute-with-args (ccl-prog &rest args)
-  "Execute CCL-PROGRAM with registers initialized by the remaining args.
-The return value is a vector of resulting CCL registers.
-
-See the documentation of `define-ccl-program' for the detail of CCL program."
-  (let ((reg (make-vector 8 0))
-	(i 0))
-    (while (and args (< i 8))
-      (if (not (integerp (car args)))
-	  (error "Arguments should be integer"))
-      (aset reg i (car args))
-      (setq args (cdr args) i (1+ i)))
-    (ccl-execute ccl-prog reg)
-    reg))
 
 (provide 'ccl)
 
