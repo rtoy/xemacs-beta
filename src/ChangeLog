@@ -1,3 +1,9 @@
+2007-07-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.c:
+	Backslash a parenthesis at the start of a line, for the sake of
+	our font lock engine. 
+
 2007-07-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* elhash.c (struct Lisp_Hash_Table):

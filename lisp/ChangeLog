@@ -1,3 +1,12 @@
+2007-07-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/general-late.el (posix-charset-to-coding-system-hash):
+	Pick up coding system aliases as well as their canonical names
+	when initialising this hash. 
+	* mule/mule-cmds.el (parse-posix-locale-string):
+	Interpret @cyrillic to mean that the coding system for a language
+	environment is Windows-1251. 
+
 2007-07-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/chinese.el:

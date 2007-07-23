@@ -245,7 +245,7 @@ variable.
 @item
 The Eistring API
 
-(This API is currently under-used) When doing simple things with
+\(This API is currently under-used) When doing simple things with
 internal text, the basic internal-format API's are enough.  But to do
 things like delete or replace a substring, concatenate various strings,
 etc. is difficult to do cleanly because of the allocation issues.

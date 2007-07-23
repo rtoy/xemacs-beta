@@ -1053,6 +1053,9 @@ function returns nil. "
 	     ;; where the @euro modifier doesn't mean ISO-8859-15 in the 956
 	     ;; I have.
 	     (setq charset "iso-8859-15"))
+	   (when (and modifiers (equal modifiers "cyrillic") (null charset))
+	     ;; Feedback wanted!
+	     (setq charset "windows-1251"))
 	   (values language region charset modifiers))
 	  ((and (string-match "^[a-z0-9]+$" locale-string)
 		(assoc-ignore-case locale-string language-info-alist))

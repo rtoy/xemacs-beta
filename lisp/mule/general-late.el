@@ -31,13 +31,16 @@
 (setq posix-charset-to-coding-system-hash
       (eval-when-compile
 	(let ((res (make-hash-table :test 'equal)))
-	  (dolist (coding-system (coding-system-list) res)
+	  ;; We want both normal and internal coding systems in order
+	  ;; to pick up coding system aliases.
+	  (dolist (coding-system (coding-system-list 'both-normal-and-internal) res)
 	    (setq coding-system
-		  (symbol-name (coding-system-name coding-system)))
-	    (unless (string-match #r"\(-unix\|-mac\|-dos\)$" coding-system)
+		  (symbol-name coding-system))
+	    (unless (or (string-match #r"\(-unix\|-mac\|-dos\)$" coding-system)
+			(string-match #r"^\(internal\|mswindows\)" coding-system))
 	      (puthash 
 	       (replace-in-string (downcase coding-system) "[^a-z0-9]" "")
-	       (intern coding-system) res)))))
+	       (coding-system-name (intern coding-system)) res)))))
 
       ;; In a thoughtless act of cultural imperialism, move English, German
       ;; and Japanese to the front of language-info-alist to make start-up a
