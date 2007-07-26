@@ -1562,10 +1562,9 @@ ccl_driver (struct ccl_program *ccl,
 
 		if (!HTENTRY_CLEAR_P(e))
 		  {
-                    op = e->value;
-		    if (!INTP (op))
+		    if (!INTP (e->value))
 		      CCL_INVALID_CMD;
-		    reg[RRR] = XCHAR_OR_INT (op);
+		    reg[RRR] = XCHAR_OR_INT (e->value);
 		    reg[7] = 1; /* r7 true for success */
 		  }
 		else

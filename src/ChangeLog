@@ -1,3 +1,10 @@
+2007-07-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-ccl.c (ccl_driver):
+	op is an integer, not a Lisp_Object; don't use it to temporarily
+	store a Lisp_Object. This change fixes the union build; thank you
+	for the report, Robert Delius Royar. 
+
 2007-07-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.c:
