@@ -222,8 +222,10 @@ directory."
     ("Canada (ca.xemacs.org)" "ftp.ca.xemacs.org" "pub/Mirror/xemacs/packages")
     ("Canada (crc.ca)" "ftp.crc.ca" "pub/packages/editors/xemacs/packages")
     ("Canada (nrc.ca)" "ftp.nrc.ca" "pub/packages/editors/xemacs/packages")
+;     ;; no anonymous ftp available:
+;     ("Chile (cl.xemacs.org)" "ftp.cl.xemacs.org" "packages")
     ("Czech Republic (cz.xemacs.org)" "ftp.cz.xemacs.org" "MIRRORS/ftp.xemacs.org/pub/xemacs/packages")
-    ("Denmark (dk.xemacs.org)" "ftp.dk.xemacs.org" "pub/emacs/xemacs/packages")
+    ("Denmark (dk.xemacs.org)" "ftp.dk.xemacs.org" "xemacs/packages")
     ("Finland (fi.xemacs.org)" "ftp.fi.xemacs.org" "pub/mirrors/ftp.xemacs.org/pub/tux/xemacs/packages")
     ("France (fr.xemacs.org)" "ftp.fr.xemacs.org" "pub/xemacs/packages")
     ("France (mirror.cict.fr)" "mirror.cict.fr" "xemacs/packages")
@@ -297,10 +299,13 @@ variable actually used to specify package download sites."
      "pub/packages/editors/xemacs/beta/experimental/packages")
     ("Canada Pre-Releases (nrc.ca)" "ftp.nrc.ca"
      "pub/packages/editors/xemacs/beta/experimental/packages")
+;     ;; no anonymous ftp available:
+;     ("Chile Pre-Releases (cl.xemacs.org)" "ftp.cl.xemacs.org"
+;      "beta/experimental/packages")
     ("Czech Republic Pre-Releases (cz.xemacs.org)" "ftp.cz.xemacs.org"
      "MIRRORS/ftp.xemacs.org/pub/xemacs/xemacs-21.5/experimental/packages")
     ("Denmark Pre-Releases (dk.xemacs.org)" "ftp.dk.xemacs.org"
-     "pub/emacs/xemacs/beta/experimental/packages")
+     "xemacs/beta/experimental/packages")
     ("Finland Pre-Releases (fi.xemacs.org)" "ftp.fi.xemacs.org"
      "pub/mirrors/ftp.xemacs.org/pub/tux/xemacs/beta/experimental/packages")
     ("France Pre-Releases (fr.xemacs.org)" "ftp.fr.xemacs.org"
