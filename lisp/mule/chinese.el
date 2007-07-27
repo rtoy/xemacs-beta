@@ -31,7 +31,7 @@
 
 ;;; Code:
 
-(eval-when-compile (progn (require 'ccl "mule-ccl") (require 'china-util)))
+(eval-when-compile (progn (require 'ccl) (require 'china-util)))
 
 ;; Syntax of Chinese characters.
 (loop for row in '(33 34 41)

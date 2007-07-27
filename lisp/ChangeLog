@@ -1,3 +1,13 @@
+2007-07-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/mule-ccl.el:
+	* mule/ccl.el: 
+	Renamed mule-ccl.el to ccl.el, for compatibility with GNU now we
+	no longer dump it. 
+	* mule/mule-coding.el (require):
+	* mule/chinese.el (progn):
+	Reflect this renaming in a couple of require calls. 
+
 2007-07-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/general-late.el (posix-charset-to-coding-system-hash):

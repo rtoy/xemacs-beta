@@ -29,7 +29,7 @@
 ;;; split off of mule.el and mostly moved to coding.el
 
 ;; Needed for make-8-bit-coding-system. 
-(eval-when-compile (require 'ccl "mule-ccl"))
+(eval-when-compile (require 'ccl))
 
 ;;; Code:
 
