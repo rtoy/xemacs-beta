@@ -1,3 +1,10 @@
+2007-07-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el:
+	Assert that the ccl-encode-to-ucs-2 vector corresponds to the
+	compiled program at byte-compile time. Display non-BMP characters
+	as U+FFFD. 
+
 2007-07-28  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-get.el (package-get-download-sites): Document Chile and

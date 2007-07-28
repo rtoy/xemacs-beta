@@ -42,6 +42,8 @@
 ;; and saved in ISO 2022 coding systems using the UTF-8 escape described in
 ;; ISO-IR 196.
 
+(eval-when-compile (when (featurep 'mule) (require 'ccl)))
+
 ;; accessed in loadup.el, mule-cmds.el; see discussion in unicode.c
 (defvar load-unicode-tables-at-dump-time (eq system-type 'windows-nt)
   "[INTERNAL] Whether to load the Unicode tables at dump time.
@@ -284,33 +286,47 @@ The second argument must be 'ucs, the third argument is ignored.  "
   (char-to-unicode char))
 
 (when (featurep 'mule)
-  ;; This CCL program is used for displaying the fallback UCS character set,
-  ;; and can be repurposed to lao and the IPA, all going well.
-  ;;
-  ;; define-ccl-program is available after mule-ccl is loaded, much later
-  ;; than this file in the build process. The below is the result of 
-  ;;
-  ;;   (macroexpand 
-  ;;    '(define-ccl-program ccl-encode-to-ucs-2
-  ;;      `(1
-  ;;        ((r1 = (r1 << 7))
-  ;;         (r1 = (r1 | r2))
-  ;;         (mule-to-unicode r0 r1)
-  ;;         (r1 = (r0 >> 8))
-  ;;         (r2 = (r0 & #xff))))
-  ;;      "CCL program to transform Mule characters to UCS-2."))
-  ;;
-  ;; and it should occasionally be confirmed that the correspondence still
-  ;; holds.
-
-  (let ((prog [1 10 131127 7 98872 65823 147513 8 82009 255 22]))
-    (defconst ccl-encode-to-ucs-2
-      prog
+  (let ((prog
+         (eval-when-compile
+           (let ((pre-existing 
+                  ;; This is the compiled CCL program from the assert
+                  ;; below. Since this file is dumped and ccl.el isn't (and
+                  ;; even when it was, it was dumped much later than this
+                  ;; one), we can't compile the program at dump time. We can
+                  ;; check at byte compile time that the program is as
+                  ;; expected, though.
+                  [1 16 131127 7 98872 65823 1307 5 -65536 65313 64833 1028 147513
+                     8 82009 255 22]))
+             (when (featurep 'mule)
+               ;; Check that the pre-existing constant reflects the intended
+               ;; CCL program.
+               (assert
+                (equal pre-existing
+                       (ccl-compile
+                        `(1 
+                          (;; mule-to-unicode's first argument is the
+                           ;; charset ID, the second its first byte
+                           ;; left shifted by 7 bits masked with its
+                           ;; second byte.
+                           (r1 = (r1 << 7)) 
+                           (r1 = (r1 | r2)) 
+                           (mule-to-unicode r0 r1) 
+                           (if (r0 & ,(lognot #xFFFF))
+                               ;; Redisplay looks in r1 and r2 for the first
+                               ;; and second bytes of the X11 font,
+                               ;; respectively. For non-BMP characters we
+                               ;; display U+FFFD.
+                               ((r1 = #xFF)
+                                (r2 = #xFD))
+                             ((r1 = (r0 >> 8)) 
+                              (r2 = (r0 & #xFF))))))))
+                       nil 
+                       "The pre-compiled CCL program appears broken. "))
+             pre-existing))))
+    (defconst ccl-encode-to-ucs-2 prog
       "CCL program to transform Mule characters to UCS-2.")
-    (put 'ccl-encode-to-ucs-2
-         'ccl-program-idx
-         (register-ccl-program 'ccl-encode-to-ucs-2 prog))
-    nil))
+    (put 'ccl-encode-to-ucs-2 'ccl-program-idx
+         (register-ccl-program 'ccl-encode-to-ucs-2 prog))))
 
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version
