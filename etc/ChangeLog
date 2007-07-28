@@ -1,3 +1,10 @@
+2007-07-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode/unicode-consortium/BIG5.TXT:
+	Don't map any characters to U+FFFD; for round trip compatibility,
+	map those that were mapped to U+FFFD to the Unicode private use
+	area.
+
 2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.28 "fuki" is released.
