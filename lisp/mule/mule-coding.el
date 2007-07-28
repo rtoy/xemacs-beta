@@ -480,8 +480,13 @@ most of them, at run time.  ")
 	  ;; it'll be something else.
 	  (setq desired-ucs (+ private-use-start desired-ucs)
 		private-use-start (+ private-use-start 1)))
-	(aset decode-table i (decode-char 'ucs desired-ucs))
-	(puthash desired-ucs (int-to-char i) encode-table)))
+	(puthash desired-ucs (int-to-char i) encode-table)
+        (setq desired-ucs (if (> desired-ucs #xFF)
+                              (decode-char 'ucs desired-ucs)
+                            ;; So we get Latin-1 when run at dump time,
+                            ;; instead of JIT-allocated characters.
+                            (int-to-char desired-ucs)))
+        (aset decode-table i desired-ucs)))
     (values decode-table encode-table)))
 
 (defun make-8-bit-generate-decode-program (decode-table)
