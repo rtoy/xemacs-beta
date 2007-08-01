@@ -315,7 +315,7 @@ message--it will not work.  ")
     (when worth-trying
       (setq other-charset-vector (make-vector 256 encode-failure-octet))
       (loop for i from charset-lower to charset-upper
-        do (aset other-charset-vector (+ #x80 i)
+        do (aset other-charset-vector i
 		 (gethash (encode-char (make-char worth-trying i)
 				       'ucs) encode-table)))
       (setq encode-program

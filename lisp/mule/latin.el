@@ -645,7 +645,7 @@
  Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish.")
      (("Danish" "da")
       ("Dutch" "nl" "TUTORIAL.nl")
-      ("Faeroese")
+      ("Faeroese" "fo")
       ("Finnish" "fi")
       ("French" "fr" "TUTORIAL.fr" "Bonjour, ,Ag(Ba va?")
       ("German" "de" "TUTORIAL.de" "\
@@ -666,7 +666,7 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
 " Albanian, Czech, English, German, Hungarian, Polish, Romanian,
  Serbian, Croatian, Slovak, Slovene, Sorbian (upper and lower),
  and Swedish.") ;; " added because fontification got screwed up, CVS-20061203.
-     (("Albanian" nil)
+     (("Albanian" "sq")
       ("Croatian" ("hrvatski" "hr") "TUTORIAL.hr")
       ("Czech" ("cs" "cz") "TUTORIAL.cs" "P,Bx(Bejeme v,Ba(Bm hezk,B}(B den!"
        "latin-2-postfix")
@@ -685,15 +685,15 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
  German, Italian, Maltese, Spanish, and Turkish.")
      (("Afrikaans" "af")
       ("Catalan" ("catalan" "ca"))
-      ("Esperanto")
-      ("Galician")
-      ("Maltese")))
+      ("Esperanto" "eo")
+      ("Galician" "gl")
+      ("Maltese" "mt")))
     ((latin-iso8859-4 iso-8859-4 "latin-4-prefix" "Latin-4" "ISO-8859-4"
 " Danish, English, Estonian, Finnish, German, Greenlandic, Lappish,
  Latvian, Lithuanian, and Norwegian.")
      (("Estonian" "et")
-      ("Greenlandic")
-      ("Lappish")
+      ("Greenlandic" "kl")
+      ("Lappish" "se")
       ("Latvian" "lv")
       ("Lithuanian" "li")))
     ((latin-iso8859-9 iso-8859-9 "latin-5-prefix" "Latin-5" "ISO-8859-9")

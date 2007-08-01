@@ -115,6 +115,8 @@
    charset-g3 t
    mnemonic "ISO8/Cyr"))
 
+;; Provide this locale; but don't allow it to be picked up from the Unix
+;; locale (it has no locale entry in the alist), we leave that to Russian.
 (set-language-info-alist
  "Cyrillic-ISO" '((charset cyrillic-iso8859-5)
                   (tutorial . "TUTORIAL.ru")
@@ -271,23 +273,26 @@ character of the opposite case). "
 
 ;; Create a corresponding language environment. 
 (set-language-info-alist
- "Cyrillic-KOI8" '((charset cyrillic-iso8859-5)
-                   (coding-system koi8-r)
-                   (native-coding-system koi8-r)
-                   (coding-priority koi8-r)
-                   (input-method . "cyrillic-yawerty")
-                   (features cyril-util)
-                   (locale "ru")
-                   (mswindows-locale . "RUSSIAN")
-                   (tutorial . "TUTORIAL.ru")
-                   (sample-text . "Russian (,L@caaZXY(B)    ,L7T`PRabRcYbU(B!")
-                   (documentation . "Support for Cyrillic KOI8-R."))
+ "Russian" '((charset cyrillic-iso8859-5)
+	     (coding-system koi8-r)
+	     (native-coding-system koi8-r)
+	     (coding-priority koi8-r)
+	     (input-method . "cyrillic-yawerty")
+	     (features cyril-util)
+	     (locale "ru")
+	     (mswindows-locale . "RUSSIAN")
+	     (tutorial . "TUTORIAL.ru")
+	     (sample-text . "Russian (,L@caaZXY(B)    ,L7T`PRabRcYbU(B!")
+	     (documentation . "Support for Russian."))
  '("Cyrillic"))
 
-;; Alias it to Russian. 
+;; Provide Cyrillic-KOI8 for old times' sake too, but don't allow it to be
+;; selected by the Unix locale. A variant language environment called
+;; "Cyrillic-KOI8 (UTF-8)" just looks too odd.
+
 (set-language-info-alist
- "Russian"
- (cdr (assoc "Cyrillic-KOI8" language-info-alist))
+ "Cyrillic-KOI8"
+ (remassq 'locale (copy-list (cdr (assoc "Russian" language-info-alist))))
  '("Cyrillic"))
 
 ;; KOI8-U, for Ukrainian. 
@@ -444,13 +449,15 @@ Russian in KOI8-R.  "))
 (set-language-info-alist
  "Ukrainian" '((coding-system koi8-u)
                (coding-priority koi8-u)
+               (locale "uk")
                (input-method . "cyrillic-ukrainian")
                (documentation
-                . "Support for Ukrainian with KOI8-U character set."))
+                . "Support for Ukrainian."))
  '("Cyrillic"))
 
-;; Windows 1251 may be provide automatically on Windows, in which case
-;; we don't need to.
+;; Windows 1251 may be provided automatically on Windows, in which case we
+;; don't need to provide it.
+;; #### (Though we should provide the CP1251 alias.)
 (unless (find-coding-system 'windows-1251) 
   (make-8-bit-coding-system 
    'windows-1251
@@ -594,18 +601,20 @@ KOI-8R and its relatives don't, and has become widely used.  "
  "Bulgarian" '((coding-system windows-1251)
                (coding-priority windows-1251)
                (input-method . "bulgarian-bds")
+               (locale "bg")
                (documentation
-                . "Support for Bulgarian with windows-1251 character set.")
+                . "Support for Bulgarian. ")
                (tutorial . "TUTORIAL.bg"))
  '("Cyrillic"))
 
 (set-language-info-alist
  "Belarusian" '((coding-system windows-1251)
                 (coding-priority windows-1251)
+                (locale "be")
                 (input-method . "belarusian")
                 (documentation
-                 . "Support for Belarusian with windows-1251 character set.
-\(The name Belarusian replaced Byelorussian in the early 1990s.)"))
+                 . "Support for Belarusian. \(The name Belarusian replaced\
+Byelorussian in the early 1990s.)"))
  '("Cyrillic"))
 
 ;;; Alternativnyj
@@ -889,17 +898,6 @@ KOI-8R and its relatives don't, and has become widely used.  "
 Also known as Windows code page 21866; has Ukrainian and Belarussian support. "
  '(mnemonic ",L@C(B"
    aliases (cp21866)))
-
-(set-language-info-alist
- "Cyrillic-KOI8RU" '((charset cyrillic-iso8859-5)
-                     (coding-system koi8-ru)
-                     (native-coding-system koi8-ru)
-                     (coding-priority koi8-ru)
-                     (input-method . "cyrillic-yawerty")
-                     (tutorial . "TUTORIAL.ru")
-                     (sample-text . "Russian (,L@caaZXY(B)  ,L7T`PRabRcYbU(B!")
-                     (documentation . "Support for Cyrillic ALTERNATIVNYJ."))
- '("Cyrillic"))
 
 ;; We should provide an input method and the corresponding language
 ;; environments for the next three coding systems. 

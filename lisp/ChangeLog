@@ -1,3 +1,25 @@
+2007-08-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/cyrillic.el:
+	* mule/cyrillic.el ("Russian"):
+	* mule/cyrillic.el ("Ukrainian"):
+	* mule/cyrillic.el ("Bulgarian"):
+	* mule/cyrillic.el ("Belarusian"):
+	Add POSIX locale information for all four languages. Remove
+	information about specific coding systems in the docstrings, since
+	this information is inaccurate if a variant language environment
+	is being used.
+	
+	* mule/greek.el:
+	* mule/latin.el (for):
+	Add POSIX locale information, provide Windows-1253 as well. 
+	
+	* mule/mule-coding.el (make-8-bit-generate-helper):
+	Fix a bug that was biting me with windows-1251. I need to include
+	tests in tests/automated/mule-tests.el that check that all the
+	coding-systems created with make-8-bit-coding-system are
+	reversible, since all of them should be.
+
 2007-07-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-coding.el (make-8-bit-create-decode-encode-tables):
