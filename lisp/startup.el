@@ -1452,7 +1452,7 @@ This function is idempotent, so call this as often as you like!"
 			     t)))
 
   (setq emacs-roots (paths-find-emacs-roots invocation-directory invocation-name
-					    #'paths-emacs-data-root-p))
+					    #'paths-emacs-root-p))
 
   (setq emacs-data-roots (paths-find-emacs-roots invocation-directory invocation-name
 						 #'paths-emacs-data-root-p))

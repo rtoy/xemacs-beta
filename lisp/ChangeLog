@@ -1,3 +1,8 @@
+2007-08-02  Mike Sperber  <mike@xemacs.org>
+
+	* startup.el (startup-setup-paths): Fix typo in init expression
+	for `emacs-roots'.
+
 2007-07-31  Mike Sperber  <mike@xemacs.org>
 
 	* find-paths.el (paths-for-each-site-directory): 
