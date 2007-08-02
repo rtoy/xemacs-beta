@@ -386,8 +386,8 @@ CONSUMER is a function that accepts the elements of LISTS as separate arguments.
 (defun packages-find-installation-package-directories (roots)
   "Find the package directories in the XEmacs installation.
 ROOTS is a list of installation roots."
-  (paths-uniq-append (paths-find-version-directories roots "" nil nil t)
-		     (paths-find-site-directories roots "")))
+  (paths-uniq-append (paths-find-version-directories roots "" nil nil nil t)
+		     (paths-find-site-directories roots "" nil)))
 
 (defun packages-find-package-hierarchies (package-directories &optional envvar default)
   "Find package hierarchies in a list of package directories.

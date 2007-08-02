@@ -1073,12 +1073,14 @@ if test "x$datadir_expanded" != "x$prefix_expanded/share"
 then
   AC_DEFINE(INFODIR_USER_DEFINED)
   AC_DEFINE(LISPDIR_USER_DEFINED)
-  AC_DEFINE(MODULEDIR_USER_DEFINED)
   AC_DEFINE(ETCDIR_USER_DEFINED)
-  AC_DEFINE(DOCDIR_USER_DEFINED)
+fi
+
+if test "x$lib_expanded" != "x$prefix_expanded/lib"
+then
+  AC_DEFINE(MODULEDIR_USER_DEFINED)
   AC_DEFINE(ARCHLIBDIR_USER_DEFINED)
-else
-  datadir='${prefix}/lib'
+  AC_DEFINE(DOCDIR_USER_DEFINED)
 fi
 
 XE_EXPAND_VARIABLE(exec_prefix,exec_prefix_expanded)
@@ -5702,6 +5704,8 @@ AC_SUBST(inststaticdir)
 AC_SUBST(instvardir)
 AC_SUBST(srcdir)
 AC_SUBST(bindir)
+dnl Shut up spurious warnings from autoconf
+AC_DEFUN([AC_DATAROOTDIR_CHECKED])
 AC_SUBST(datadir)
 AC_SUBST(statedir)
 AC_SUBST(libdir)

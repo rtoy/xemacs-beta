@@ -159,21 +159,21 @@ ROOT-P is a function that tests whether a root is plausible."
   "Find the site Lisp directory of the XEmacs hierarchy.
 ROOTS is a list of installation roots."
   (paths-find-site-directory roots "site-lisp"
-			     nil
+			     nil nil
 			     configure-site-directory))
 
 (defun paths-find-site-module-directory (roots)
   "Find the site modules directory of the XEmacs hierarchy.
 ROOTS is a list of installation roots."
   (paths-find-site-directory roots "site-modules"
-			     nil
+			     t nil
 			     configure-site-module-directory))
 
 (defun paths-find-lisp-directory (roots)
   "Find the main Lisp directory of the XEmacs hierarchy.
 ROOTS is a list of installation roots."
   (paths-find-version-directory roots "lisp"
-				nil
+				nil nil
 				configure-lisp-directory))
 
 (defun paths-find-mule-lisp-directory (roots &optional lisp-directory)
@@ -187,7 +187,7 @@ ROOTS is a list of installation roots."
 	(if (paths-file-readable-directory-p guess)
 	    guess
 	  (paths-find-version-directory roots "mule-lisp"
-					nil
+					nil nil
 					configure-mule-lisp-directory)))))
 
 (defun paths-find-module-directory (roots)
@@ -265,7 +265,7 @@ respectively."
      (append
       (let ((info-directory
 	     (paths-find-version-directory roots "info"
-					   nil
+					   nil nil
 					   configure-info-directory)))
 	(and info-directory
 	     (list info-directory)))
@@ -319,7 +319,7 @@ package hierarchy roots, respectively."
 (defun paths-find-data-directory (roots)
   "Find the data directory.
 ROOTS is the list of installation roots."
-  (paths-find-version-directory roots "etc" "EMACSDATA" configure-data-directory))
+  (paths-find-version-directory roots "etc" nil "EMACSDATA" configure-data-directory))
 
 (defun paths-construct-data-directory-list (data-directory
 					    early-package-hierarchies

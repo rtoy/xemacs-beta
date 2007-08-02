@@ -207,12 +207,13 @@ the directory."
 				    suffix base
 				    envvar default keep-suffix)))
 
-(defun paths-for-each-site-directory (func roots base &optional envvar default)
+(defun paths-for-each-site-directory (func roots base arch-dependent-p &optional envvar default)
   "Iterate over the site-specific directories in the XEmacs hierarchy.
 FUNC is a function that called for each directory, with the directory
 as the only argument.
 ROOTS must be a list of installation roots.
 BASE is the base to look for.
+ARCH-DEPENDENT-P says whether the file is architecture-specific.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
 DEFAULT is the preferred value."
@@ -220,45 +221,48 @@ DEFAULT is the preferred value."
 				  roots
 				  (file-name-as-directory
 				   (paths-construct-path (list
-							  "lib"
+							  (if arch-dependent-p "lib" "share")
 							  emacs-program-name)))
 				  base
 				  envvar default))
 
-(defun paths-find-site-directory (roots base &optional envvar default)
+(defun paths-find-site-directory (roots base arch-dependent-p &optional envvar default)
   "Find a site-specific directory in the XEmacs hierarchy.
 ROOTS must be a list of installation roots.
 BASE is the base to look for.
+ARCH-DEPENDENT-P says whether the file is architecture-specific.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
 DEFAULT is the preferred value."
   (catch 'gotcha
     (paths-for-each-site-directory #'(lambda (dir)
 				       (throw 'gotcha dir))
-				   roots base
+				   roots base arch-dependent-p
 				   envvar default)))
 
-(defun paths-find-site-directories (roots base &optional envvar default)
+(defun paths-find-site-directories (roots base arch-dependent-p &optional envvar default)
   "Find a list of site-specific directories in the XEmacs hierarchy.
 ROOTS must be a list of installation roots.
 BASE is the base to look for.
+ARCH-DEPENDENT-P says whether the file is architecture-specific.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
 DEFAULT is the preferred value."
   (let ((l '()))
     (paths-for-each-site-directory #'(lambda (dir)
 					(setq l (cons dir l)))
-				   roots base
+				   roots base arch-dependent-p
 				   envvar default)
     (reverse l)))
 
-(defun paths-for-each-version-directory (func roots base
+(defun paths-for-each-version-directory (func roots base arch-dependent-p
 					 &optional envvar default enforce-version)
   "Iterate over version-specific directories in the XEmacs hierarchy.
 FUNC is a function that called for each directory, with the directory
 as the only argument.
 ROOTS must be a list of installation roots.
 BASE is the base to look for.
+ARCH-DEPENDENT-P says whether the file is architecture-specific.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
 DEFAULT is the preferred value.
@@ -267,16 +271,17 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
 				  roots
 				  (file-name-as-directory
 				   (paths-construct-path
-				    (list "lib"
+				    (list (if arch-dependent-p "lib" "share")
 					  (construct-emacs-version-name))))
 				  base
 				  envvar default))
 
-(defun paths-find-version-directory (roots base
+(defun paths-find-version-directory (roots base arch-dependent-p
 				     &optional envvar default enforce-version)
   "Find a version-specific directory in the XEmacs hierarchy.
 ROOTS must be a list of installation roots.
 BASE is the base to look for.
+ARCH-DEPENDENT-P says whether the file is architecture-specific.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
 DEFAULT is the preferred value.
@@ -284,23 +289,24 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
   (catch 'gotcha
     (paths-for-each-version-directory #'(lambda (dir)
 					  (throw 'gotcha dir))
-				      roots base
+				      roots base arch-dependent-p
 				      envvar default)))
 
-(defun paths-find-version-directories (roots base
+(defun paths-find-version-directories (roots base arch-dependent-p
 				       &optional envvar default enforce-version)
   "Find a list of version-specific directories in the XEmacs hierarchy.
 ROOTS must be a list of installation roots.
 BASE is the base to look for.
+ARCH-DEPENDENT-P says whether the file is architecture-specific.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
 DEFAULT is the preferred value.
 If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
   (let ((l '()))
-    (paths-for-each-site-directory #'(lambda (dir)
-				       (setq l (cons dir l)))
-				   roots base
-				   envvar default)
+    (paths-for-each-version-directory #'(lambda (dir)
+					  (setq l (cons dir l)))
+				      roots base arch-dependent-p
+				      envvar default)
     (reverse l)))
 
 (defun paths-find-architecture-directory (roots base &optional envvar default)
@@ -315,12 +321,13 @@ DEFAULT is the preferred value."
    (paths-find-version-directory roots
 				 (paths-construct-path
 				  (list system-configuration base))
+				 t
 				 envvar default)
    (paths-find-version-directory roots
-				 base
+				 base t
 				 envvar)
    (paths-find-version-directory roots
-				 system-configuration
+				 system-configuration t
 				 envvar)))
 
 (defun construct-emacs-version-name ()

@@ -1,3 +1,21 @@
+2007-07-31  Mike Sperber  <mike@xemacs.org>
+
+	* find-paths.el (paths-for-each-site-directory): 
+	(paths-find-site-directory):
+	(paths-find-site-directories):
+	(paths-for-each-version-directory):
+	(paths-find-version-directory):
+	(paths-find-version-directories): Add `arch-dependent-p' argument
+	to distinguish between `lib' and `share'.
+	(paths-find-architecture-directory): Follow above change.
+	* packages.el (packages-find-installation-package-directories): Ditto.
+	* setup-paths.el (paths-find-site-lisp-directory): 
+	(paths-find-site-module-directory): 
+	(paths-find-lisp-directory): 
+	(paths-find-mule-lisp-directory): 
+	(paths-find-module-directory): 
+	(paths-find-data-directory): Ditto.
+
 2007-08-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/cyrillic.el:

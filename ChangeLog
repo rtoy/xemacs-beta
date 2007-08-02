@@ -1,3 +1,8 @@
+2007-07-31  Mike Sperber  <mike@xemacs.org>
+
+	* configure.ac: Don't divert `share' to `lib' for datadir.
+	Also, define AC_DATAROOTDIR_CHECKED to shut up autoconf.
+
 2007-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.28 "fuki" is released.
