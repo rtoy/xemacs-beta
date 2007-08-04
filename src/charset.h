@@ -567,12 +567,20 @@ enum unicode_type
   UNICODE_UTF_16,
   UNICODE_UTF_8,
   UNICODE_UTF_7,
-  UNICODE_UCS_4
+  UNICODE_UCS_4,
+  UNICODE_UTF_32
 };
 
 void encode_unicode_char (Lisp_Object USED_IF_MULE (charset), int h,
 			  int USED_IF_MULE (l), unsigned_char_dynarr *dst,
-			  enum unicode_type type, unsigned int little_endian);
+			  enum unicode_type type, unsigned int little_endian,
+                          int write_error_characters_as_such);
+
+#define UNICODE_ERROR_OCTET_RANGE_START 0x200000
+
+#define valid_utf_16_first_surrogate(ch) (((ch) & 0xFC00) == 0xD800)
+#define valid_utf_16_last_surrogate(ch) (((ch) & 0xFC00) == 0xDC00)
+#define valid_utf_16_surrogate(ch) (((ch) & 0xF800) == 0xD800)
 
 void set_charset_registries(Lisp_Object charset, Lisp_Object registries);
 

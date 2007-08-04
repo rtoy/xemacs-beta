@@ -233,6 +233,26 @@ Standard encoding for representing Unicode under MS Windows.  See
    little-endian t))
 
 (make-coding-system
+ 'utf-32 'unicode
+ "UTF-32"
+ '(mnemonic "UTF32"
+   documentation
+   "UTF-32 Unicode encoding -- fixed-width four-byte encoding,
+characters less than #x10FFFF are not supported.  "
+   unicode-type utf-32))
+
+(make-coding-system
+ 'utf-32-little-endian 'unicode
+ "UTF-32 Little Endian"
+ '(mnemonic "UTF32-LE"
+   documentation
+   "Little-endian version of UTF-32 Unicode encoding.
+
+A fixed-width four-byte encoding, characters less than #x10FFFF are not
+supported.  "
+   unicode-type ucs-4 little-endian t))
+
+(make-coding-system
  'utf-8 'unicode
  "UTF-8"
  '(mnemonic "UTF8"
@@ -274,6 +294,10 @@ Standard encoding for representing UTF-8 under MS Windows."
 (defun decode-char (quote-ucs code &optional restriction) 
   "FSF compatibility--return Mule character with Unicode codepoint CODE.
 The second argument must be 'ucs, the third argument is ignored.  "
+  ;; We're prepared to accept invalid Unicode in unicode-to-char, but not in
+  ;; this function, which is the API that should actually be used, since
+  ;; it's available in GNU and in Mule-UCS.
+  (check-argument-range code #x0 #x10FFFF)
   (assert (eq quote-ucs 'ucs) t
 	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
   (unicode-to-char code))

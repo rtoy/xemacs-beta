@@ -1694,24 +1694,26 @@ read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
 	}
     }
 
+  if (i > 0x110000 || i < 0)
+    {
+      syntax_error ("Not a Unicode code point", make_int(i));
+    }
+
   lisp_char = Funicode_to_char(make_int(i), Qnil);
 
   if (EQ(Qnil, lisp_char))
     {
-      /* This is ugly and horrible and trashes the user's data, but
-	 it's what unicode.c does. In the future, unicode-to-char
-	 should not return nil.  */
-#ifdef MULE
-      i = make_ichar (Vcharset_japanese_jisx0208, 34 + 128, 46 + 128);
-#else
-      i = '~';
-#endif
-      return i;
+      /* Will happen on non-Mule. Silent corruption is what happens
+         elsewhere, and we used to do that to be consistent, but GNU error,
+         so people writing portable code need to be able to handle that, and
+         given a choice I prefer that behaviour.
+
+         An undesirable aspect to this error is that the code point is shown
+         as a decimal integer, which is mostly unreadable. */
+      syntax_error ("Unsupported Unicode code point", make_int(i));
     }
-  else
-    {
-      return XCHAR(lisp_char);
-    }
+
+  return XCHAR(lisp_char);
 }
 
 

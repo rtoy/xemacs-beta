@@ -104,7 +104,7 @@ dynarr_add_2022_one_dimension (Lisp_Object charset, Ibyte c,
   if (XCHARSET_ENCODE_AS_UTF_8 (charset)) 
     {
       encode_unicode_char (charset, c & charmask, 0,	
-			   dst, UNICODE_UTF_8, 0);		
+			   dst, UNICODE_UTF_8, 0, 0); 
     } 
   else							
     {							
@@ -123,7 +123,7 @@ dynarr_add_2022_two_dimensions (Lisp_Object charset, Ibyte c,
       encode_unicode_char (charset,				
 			   ch & charmask,			
 			   c & charmask, dst,		
-			   UNICODE_UTF_8, 0);		
+			   UNICODE_UTF_8, 0, 0); 
     }							
   else							
     {							
@@ -969,6 +969,7 @@ struct iso2022_coding_stream
 
   /* Used for handling UTF-8. */
   unsigned char counter;  
+  unsigned char indicated_length;
 };
 
 static const struct memory_description ccs_description_1[] =
@@ -1804,6 +1805,39 @@ ensure_correct_direction (int direction, Lisp_Object codesys,
     }
 }
 
+/* Note that this name conflicts with a function in unicode.c. */
+static void
+decode_unicode_char (int ucs, unsigned_char_dynarr *dst)
+{
+  Ibyte work[MAX_ICHAR_LEN];
+  int len;
+  Lisp_Object chr;
+
+  chr = Funicode_to_char(make_int(ucs), Qnil);
+  assert (!NILP(chr));
+  len = set_itext_ichar (work, XCHAR(chr));
+  Dynarr_add_many (dst, work, len);
+}
+
+#define DECODE_ERROR_OCTET(octet, dst) \
+  decode_unicode_char ((octet) + UNICODE_ERROR_OCTET_RANGE_START, dst)
+
+static inline void
+indicate_invalid_utf_8 (unsigned char indicated_length,
+                        unsigned char counter,
+                        int ch, unsigned_char_dynarr *dst)
+{
+  Binbyte stored = indicated_length - counter; 
+  Binbyte mask = "\x00\x00\xC0\xE0\xF0\xF8\xFC"[indicated_length];
+
+  while (stored > 0)
+    {
+      DECODE_ERROR_OCTET (((ch >> (6 * (stored - 1))) & 0x3f) | mask,
+                          dst);
+      mask = 0x80, stored--;
+    }
+}
+
 /* Convert ISO2022-format data to internal format. */
 
 static Bytecount
@@ -1907,9 +1941,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
       else if (flags & ISO_STATE_UTF_8)
 	{
 	  unsigned char counter = data->counter; 
-	  Ibyte work[MAX_ICHAR_LEN];
-	  int len;
-	  Lisp_Object chr;
+          unsigned char indicated_length = data->indicated_length;
 
 	  if (ISO_CODE_ESC == c)
 	    {
@@ -1920,73 +1952,126 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	      continue;
 	    }
 
-	  switch (counter)
-	    {
-	    case 0:
-	      if (c >= 0xfc)
-		{
-		  ch = c & 0x01;
-		  counter = 5;
-		}
-	      else if (c >= 0xf8)
-		{
-		  ch = c & 0x03;
-		  counter = 4;
-		}
-	      else if (c >= 0xf0)
-		{
-		  ch = c & 0x07;
-		  counter = 3;
-		}
-	      else if (c >= 0xe0)
-		{
-		  ch = c & 0x0f;
-		  counter = 2;
-		}
-	      else if (c >= 0xc0)
-		{
-		  ch = c & 0x1f;
-		  counter = 1;
-		}
-	      else
-		/* ASCII, or the lower control characters.
-                   
-                   Perhaps we should signal an error if the character is in
-                   the range 0x80-0xc0; this is illegal UTF-8. */
-                Dynarr_add (dst, (c & 0x7f));
+          if (0 == counter)
+            {
+              if (0 == (c & 0x80))
+                {
+                  /* ASCII. */
+                  decode_unicode_char (c, dst);
+                }
+              else if (0 == (c & 0x40))
+                {
+                  /* Highest bit set, second highest not--there's
+                     something wrong. */
+                  DECODE_ERROR_OCTET (c, dst);
+                }
+              else if (0 == (c & 0x20))
+                {
+                  ch = c & 0x1f; 
+                  counter = 1;
+                  indicated_length = 2;
+                }
+              else if (0 == (c & 0x10))
+                {
+                  ch = c & 0x0f;
+                  counter = 2;
+                  indicated_length = 3;
+                }
+              else if (0 == (c & 0x08))
+                {
+                  ch = c & 0x0f;
+                  counter = 3;
+                  indicated_length = 4;
+                }
+              /* We support lengths longer than 4 here, since we want to
+                 represent UTF-8 error chars as distinct from the
+                 corresponding ISO 8859-1 characters in escape-quoted.
 
-	      break;
-	    case 1:
-	      ch = (ch << 6) | (c & 0x3f);
-	      chr = Funicode_to_char(make_int(ch), Qnil);			
+                 However, we can't differentiate UTF-8 error chars as
+                 written to disk, and UTF-8 errors in escape-quoted.  This
+                 is not a big problem;
+                 non-Unicode-chars-encoded-as-UTF-8-in-ISO-2022 is not
+                 deployed, in practice, so if such a sequence of octets
+                 occurs, XEmacs generated it.  */
+              else if (0 == (c & 0x04))
+                {
+                  ch = c & 0x03;
+                  counter = 4;
+                  indicated_length = 5;
+                }
+              else if (0 == (c & 0x02))
+                {
+                  ch = c & 0x01;
+                  counter = 5;
+                  indicated_length = 6;
+                }
+              else
+                {
+                  /* #xFF is not a valid leading byte in any form of
+                     UTF-8. */
+                  DECODE_ERROR_OCTET (c, dst);
 
-	      if (!NILP (chr))						
-		{								
-		  assert(CHARP(chr));					
-		  len = set_itext_ichar (work, XCHAR(chr));		
-		  Dynarr_add_many (dst, work, len);			
-		}								
-	      else							
-		{								
-		  /* Shouldn't happen, this code should only be enabled in
-		     XEmacsen with support for all of Unicode. */
-		  Dynarr_add (dst, LEADING_BYTE_JAPANESE_JISX0208);	
-		  Dynarr_add (dst, 34 + 128);				
-		  Dynarr_add (dst, 46 + 128);				
-		}								
+                }
+            }
+          else
+            {
+              /* counter != 0 */
+              if ((0 == (c & 0x80)) || (0 != (c & 0x40)))
+                {
+                  indicate_invalid_utf_8(indicated_length, 
+                                         counter, 
+                                         ch, dst);
+                  if (c & 0x80)
+                    {
+                      DECODE_ERROR_OCTET (c, dst);
+                    }
+                  else
+                    {
+                      /* The character just read is ASCII. Treat it as
+                         such.  */
+                      decode_unicode_char (c, dst);
+                    }
+                  ch = 0;
+                  counter = 0;
+                }
+              else 
+                {
+                  ch = (ch << 6) | (c & 0x3f);
+                  counter--;
 
-	      ch = 0;
-	      counter = 0;
-	      break;
-	    default:
-	      ch = (ch << 6) | (c & 0x3f);
-	      counter--;
-	    }
+                  /* Just processed the final byte. Emit the character. */
+                  if (!counter)
+                    {
+                      /* Don't accept over-long sequences, or surrogates. */
+                      if ((ch < 0x80) ||
+                          ((ch < 0x800) && indicated_length > 2) || 
+                          ((ch < 0x10000) && indicated_length > 3) || 
+                          /* We accept values above #x110000 in
+                             escape-quoted, though not in UTF-8. */
+                          /* (ch > 0x110000) || */
+                          valid_utf_16_surrogate(ch))
+                        {
+                          indicate_invalid_utf_8(indicated_length, 
+                                                 counter, 
+                                                 ch, dst);
+                        }
+                      else
+                        {
+                          decode_unicode_char (ch, dst);
+                        }
+                      ch = 0;
+                    }
+                }
+            }
 
-	  if (str->eof)
-	    DECODE_OUTPUT_PARTIAL_CHAR (ch, dst);
+          if (str->eof && ch)
+            {
+              DECODE_ERROR_OCTET (ch, dst);
+              ch  = 0;
+            }
 
 	  data->counter = counter;
+	  data->indicated_length = indicated_length;
 	}
       else if (byte_c0_p (c) || byte_c1_p (c))
 	{ /* Control characters */

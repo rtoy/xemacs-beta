@@ -1,3 +1,50 @@
+2007-08-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* charset.h:
+	* charset.h (enum unicode_type):
+	Add UNICODE_UTF_32. 
+	* lisp.h:
+	Add Qutf_32.
+	* lread.c (read_unicode_escape):
+	Error on an invalid Unicode escape; error on no mapping, as GNU does. 
+	
+	* mule-coding.c:
+	* mule-coding.c (dynarr_add_2022_one_dimension):
+	* mule-coding.c (dynarr_add_2022_two_dimensions):
+	* mule-coding.c (struct iso2022_coding_stream):
+	* mule-coding.c (decode_unicode_char):
+	* mule-coding.c (indicate_invalid_utf_8):
+	* mule-coding.c (iso2022_decode):
+	* unicode.c:
+	* unicode.c (struct unicode_coding_stream):
+	* unicode.c (decode_unicode_char):
+	* unicode.c (DECODE_ERROR_OCTET):
+	* unicode.c (indicate_invalid_utf_8):
+	* unicode.c (encode_unicode_char_1):
+	* unicode.c (encode_unicode_char):
+	* unicode.c (unicode_convert):
+	* unicode.c (unicode_putprop):
+	* unicode.c (unicode_getprop):
+	* unicode.c (syms_of_unicode):
+	Make UTF-8 and UTF-16 handling more robust; indicate error
+	sequences when decoding, passing the octets as distinct from the
+	corresponding ISO8859-1 characters, and (by default) writing them
+	to disk on encoding. Don't accept over-long UTF-8 sequences, codes
+	>= #x110000, or UTF-16 surrogates on reading in the utf-8 coding
+	system; represent them as error sequences.
+
+	Do accept code points above #x110000 in the ISO IR 196 handling,
+	since we decode Unicode error sequences to "Unicode" code points
+	starting at 0x200000, and will need to save them as such in
+	escape-quoted. Do not accept over-long UTF-8 sequences or UTF-16
+	surrogates in escape-quoted. 
+
+	This change means that when a non-UTF-8 file is opened as UTF-8,
+	one change made, and immediately saved, the non-ASCII characters
+	are not corrupted. In Europe, this is a distinct win. 
+
+	Add UCS-4, UTF-32 as coding systems. 
+
 2007-07-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-ccl.c (ccl_driver):

@@ -1,3 +1,13 @@
+2007-08-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el:
+	* unicode.el (utf-32):
+	* unicode.el (utf-32-little-endian):
+	Add UTF-32 coding systems. 
+	
+	* unicode.el (decode-char):
+	Only accept valid Unicode in this function. 
+
 2007-08-02  Mike Sperber  <mike@xemacs.org>
 
 	* startup.el (startup-setup-paths): Fix typo in init expression

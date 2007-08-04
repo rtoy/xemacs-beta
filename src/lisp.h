@@ -5488,7 +5488,7 @@ void init_charset_unicode_tables (Lisp_Object charset);
 void free_charset_unicode_tables (Lisp_Object charset);
 void recalculate_unicode_precedence (void);
 extern Lisp_Object Qunicode;
-extern Lisp_Object Qutf_16, Qutf_8, Qucs_4, Qutf_7;
+extern Lisp_Object Qutf_16, Qutf_8, Qucs_4, Qutf_7, Qutf_32;
 #ifdef MEMORY_USAGE_STATS
 Bytecount compute_from_unicode_table_size (Lisp_Object charset,
 					      struct overhead_stats *stats);
