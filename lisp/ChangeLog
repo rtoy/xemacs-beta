@@ -1,3 +1,11 @@
+2007-08-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* font.el (x-font-create-object):
+	When handed an XFT font name string, parse it as such. 
+	* font.el (font-xft-font-regexp):
+	Don't check for the existence of xft-font-regexp; accept escaped
+	dashes, colons and commas in font family names. 
+
 2007-08-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.el:

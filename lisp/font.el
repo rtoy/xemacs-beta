@@ -587,7 +587,13 @@ The type may be the strings \"px\", \"pix\", or \"pixel\" (pixels), \"pt\" or
   (let ((case-fold-search t))
     (if (or (not (stringp fontname))
 	    (not (string-match font-x-font-regexp fontname)))
-	(make-font)
+	(if (and (stringp fontname)
+		 (string-match font-xft-font-regexp fontname))
+	    ;; Return an XFT font. 
+	    (xft-font-create-object fontname)
+	  ;; It's unclear how to parse the font; return an unspecified
+	  ;; one.
+	  (make-font))
       (let ((family nil)
 	    (size nil)
 	    (weight  (match-string 1 fontname))
@@ -751,16 +757,15 @@ The type may be the strings \"px\", \"pix\", or \"pixel\" (pixels), \"pt\" or
 ;;; #### FIXME actually, this section should be fc-*, right?
 
 (defvar font-xft-font-regexp
-  ;; #### FIXME what the fuck?!?
-  (when (and (boundp 'xft-font-regexp) xft-font-regexp)
-    (concat "\\`"
-	    "[^:-]*"				; optional foundry and family
-						; incorrect, escaping exists
-	    "\\(-[0-9]*\\(\\.[0-9]*\\)?\\)?"	; optional size (points)
-	    "\\(:[^:]*\\)*"			; optional properties
+  (concat "\\`"
+	  #r"\(\\-\|\\:\|\\,\|[^:-]\)*"	        ; optional foundry and family
+						; (allows for escaped colons, 
+						; dashes, commas)
+	  "\\(-[0-9]*\\(\\.[0-9]*\\)?\\)?"	; optional size (points)
+	  "\\(:[^:]*\\)*"			; optional properties
 						; not necessarily key=value!!
 	    "\\'"
-	    )))
+	    ))
 
 (defvar font-xft-family-mappings
   ;; #### FIXME this shouldn't be needed or used for Xft
