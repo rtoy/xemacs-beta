@@ -3520,7 +3520,7 @@ detected_coding_system (struct detection_state *st)
 	    }
 	}
       if (NILP (retval))
-	retval = Fget_coding_system (Qraw_text);
+	retval = Fget_coding_system (Qbinary);
       return retval;
     }
   else
@@ -3869,6 +3869,9 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 		     random result when doing subprocess detection. */
 		  detect_coding_type (data->st, src, n);
 		  data->actual = detected_coding_system (data->st);
+		  /* kludge to prevent infinite recursion */
+		  if (XCODING_SYSTEM(data->actual)->methods->enumtype == undecided_coding_system)
+		    data->actual = Fget_coding_system (Qbinary);
 		}
 	    }
 	  /* We need to set the detected coding system if we actually have

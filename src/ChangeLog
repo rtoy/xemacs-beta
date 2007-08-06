@@ -1,3 +1,10 @@
+2007-07-31  Mike Sperber  <mike@xemacs.org>
+
+	* file-coding.c (undecided_convert): Kludge to prevent infinite
+	recursion.
+	* file-coding.c (detected_coding_system): Change default from
+	raw-text to binary.
+
 2007-08-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* charset.h:
