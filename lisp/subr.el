@@ -1326,7 +1326,7 @@ to ARGUMENT.  Otherwise, this function signals a non-continuable
     (let ((newsym (gensym)))
       `(let ((,newsym ,argument))
 	 (if (not (argument-in-range-p ,newsym ,min ,max))
-	     (signal-error 'args-out-of-range ,newsym ,min ,max))))))
+	     (signal-error 'args-out-of-range (list ,newsym ,min ,max)))))))
 
 (defun signal-error (error-symbol data)
   "Signal a non-continuable error.  Args are ERROR-SYMBOL, and associated DATA.

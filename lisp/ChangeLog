@@ -1,5 +1,71 @@
 2007-08-06  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/mule-coding.el (make-8-bit-coding-system): 
+	Eliminate byte compiler warnings for the generated coding systems.
+	* mule/mule-msw-init-late.el (l):
+	* mule/mule-x-init.el (x-use-halfwidth-roman-font):
+	Add a couple of declare-fboundp calls for functions we know will
+	be bound on a Windows build, to silence the byte compiler. 
+
+2007-08-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* diagnose.el (show-memory-usage):
+	* diagnose.el (show-object-memory-usage-stats):
+	* diagnose.el (show-mc-alloc-memory-usage):
+	* diagnose.el (show-gc-stats):
+	Only call sort-numeric-fields when it's bound. It will be, for
+	anyone who has any business calling these functions; it's in
+	xemacs-base.
+	* font.el:
+	Tell the byte compiler about a few more functions that are
+	available and called on an XFT build, and unavailable and not
+	called elsewhere. 
+	
+	* gtk-font-menu.el (gtk-reset-device-font-menus):
+	Improve the logic here; don't check for Mule, check whether
+	#'charset-registries is bound with an if-fboundp call.
+	
+	* gtk-iso8859-1.el (x-iso8859-1):
+	character-set-property is no longer used, on any platform.
+	* gtk.el (gtk-import-function-internal):
+	Tell the byte compiler about some functions that are available on
+	the GTK build and not elsewhere.
+	
+	* help.el (help-symbol-function-context-menu):
+	* help.el (help-symbol-variable-context-menu):
+	* help.el (help-symbol-function-and-variable-context-menu):
+	* help.el (help-find-source-or-scroll-up):
+	* help.el (help-mouse-find-source-or-track):
+	Only offer find-function, find-variable if they're available as
+	functions. 
+	
+	* iso8859-1.el:
+	This file sets the case table for Latin 1, not the syntax table. 
+	
+	* msw-font-menu.el:
+	* msw-font-menu.el (mswindows-parse-font-style):
+	Tell the byte compiler about a few functions that are available
+	and called on msw builds, and not elsewhere. 
+	
+	* occur.el (occur-engine):
+	Use Ben's (if-fboundp ...) macro when calling (or otherwise)
+	#'jit-lock-mode.
+	
+	* paragraphs.el (forward-paragraph):
+	multiple-lines is set but not used; comment it out for the sake of
+	the byte-compiler. 
+	
+	* paragraphs.el (forward-sentence):
+	Only call #'constrain-to-field if it's bound; give a more relevant
+	error message if it isn't. 
+	* subr.el (check-argument-range):
+	Call signal-error with the correct signature. 
+	* x-font-menu.el (charset-registries):
+	Make the byte compiler aware of a pile of functions that are
+	available on, and only called on, certain builds. 
+
+2007-08-06  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* font.el (x-font-create-object):
 	When handed an XFT font name string, parse it as such. 
 	* font.el (font-xft-font-regexp):

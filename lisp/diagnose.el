@@ -125,14 +125,15 @@
 						    (window-list fr t))
 						(frame-list))
 				#'window-memory-usage))
-	  (sort-numeric-fields -1
-			       (save-excursion
-				 (goto-char begin)
-				 (forward-line 3)
-				 (point))
-			       (save-excursion
-				 (forward-line -2)
-				 (point)))
+          (when-fboundp #'sort-numeric-fields
+            (sort-numeric-fields -1
+                                 (save-excursion
+                                   (goto-char begin)
+                                   (forward-line 3)
+                                   (point))
+                                 (save-excursion
+                                   (forward-line -2)
+                                   (point))))
 	  (princ "\n")
 	  (let ((total 0)
 		(fmt "%-30s%10s\n"))
@@ -155,14 +156,15 @@
 	    (princ "\n")
 	    (princ (format fmt "total" total))
 	    (incf grandtotal total))
-	  (sort-numeric-fields -1
-			       (save-excursion
-				 (goto-char begin)
-				 (forward-line 2)
-				 (point))
-			       (save-excursion
-				 (forward-line -2)
-				 (point)))
+          (when-fboundp #'sort-numeric-fields
+            (sort-numeric-fields -1
+                                 (save-excursion
+                                   (goto-char begin)
+                                   (forward-line 2)
+                                   (point))
+                                 (save-excursion
+                                   (forward-line -2)
+                                   (point))))
 
 	  (princ (format "\n\ngrand total: %s\n" grandtotal)))
 	grandtotal))))
@@ -223,14 +225,15 @@
 	  (princ (format fmt "total" 
 			 total-count total-use-overhead))
 	  (incf grandtotal total-use-overhead)
-	  (sort-numeric-fields -1
-			       (save-excursion
-				 (goto-char begin)
-				 (forward-line 2)
-				 (point))
-			       (save-excursion
-				 (forward-line -2)
-				 (point))))))
+          (when-fboundp #'sort-numeric-fields
+            (sort-numeric-fields -1
+                                 (save-excursion
+                                   (goto-char begin)
+                                   (forward-line 2)
+                                   (point))
+                                 (save-excursion
+                                   (forward-line -2)
+                                   (point)))))))
     (with-output-to-temp-buffer buffer
       (save-excursion
 	(set-buffer buffer)
@@ -245,189 +248,195 @@
   "Show statistics about memory usage of the new allocator."
   (interactive)
   (garbage-collect)
-  (let* ((stats (mc-alloc-memory-usage))
-	 (page-size (first stats))
-	 (heap-sects (second stats))
-	 (used-plhs (third stats))
-	 (free-plhs (fourth stats))
-	 (globals (fifth stats))
-	 (mc-malloced-bytes (sixth stats)))
-    (with-output-to-temp-buffer "*mc-alloc memory usage*"
-      (flet ((print-used-plhs (text plhs)
-	       (let ((sum-n-pages 0)
-		     (sum-used-n-cells 0)
-		     (sum-used-space 0)
-		     (sum-used-total 0)
-		     (sum-total-n-cells 0)
-		     (sum-total-space 0)
-		     (sum-total-total 0)
-		     (fmt "%7s%7s|%7s%9s%9s%4s|%7s%9s%9s%4s|%4s\n"))
-		 (princ (format "%-14s|%-29s|%-29s|\n"
-				text
-				"       currently in use"
-				"       total available"))
-		 (princ (format fmt "cell-sz" "#pages" 
-				"#cells" "space" "total" "% " 
-				"#cells" "space" "total" "% " "% "))
-		 (princ (make-string 79 ?-))
-		 (princ "\n")
-		 (while plhs
-		   (let* ((elem (car plhs))
-			  (cell-size (first elem))
-			  (n-pages (second elem))
-			  (used-n-cells (third elem))
-			  (used-space (fourth elem))
-			  (used-total (if (zerop cell-size)
-					  (sixth elem)
-					  (* cell-size used-n-cells)))
-			  (used-eff (floor (if (not (zerop used-total))
-					(* (/ (* used-space 1.0)
-					      (* used-total 1.0))
-					   100.0)
-				      0)))
-			  (total-n-cells (fifth elem))
-			  (total-space (if (zerop cell-size)
-					   used-space
-					 (* cell-size total-n-cells)))
-			  (total-total (sixth elem))
-			  (total-eff (floor (if (not (zerop total-total))
-						(* (/ (* total-space 1.0)
-						      (* total-total 1.0))
-						   100.0)
-					      0)))
-			  (eff (floor (if (not (zerop total-total))
-					  (* (/ (* used-space 1.0)
-						(* total-total 1.0))
-					     100.0)
-					0))))
-		     (princ (format fmt 
-				    cell-size n-pages used-n-cells used-space 
-				    used-total used-eff total-n-cells 
-				    total-space total-total total-eff eff))
-		     (incf sum-n-pages n-pages)
-		     (incf sum-used-n-cells used-n-cells)
-		     (incf sum-used-space used-space)
-		     (incf sum-used-total used-total)
-		     (incf sum-total-n-cells total-n-cells)
-		     (incf sum-total-space total-space)
-		     (incf sum-total-total total-total))
-		   (setq plhs (cdr plhs)))
-		 (let ((avg-used-eff (floor (if (not (zerop sum-used-total))
-					 (* (/ (* sum-used-space 1.0)
-					       (* sum-used-total 1.0)) 
-					    100.0)
-				       0)))
-		       (avg-total-eff (floor (if (not (zerop sum-total-total))
-					  (* (/ (* sum-total-space 1.0)
-						(* sum-total-total 1.0)) 
-					     100.0)
-					0)))
-		       (avg-eff (floor (if (not (zerop sum-total-total))
-					   (* (/ (* sum-used-space 1.0)
-						 (* sum-total-total 1.0)) 
-					      100.0)
-					 0))))
-		   (princ (format fmt "sum    " sum-n-pages sum-used-n-cells
-				  sum-used-space sum-used-total avg-used-eff
-				  sum-total-n-cells sum-total-space 
-				  sum-total-total avg-total-eff avg-eff))
-		   (princ "\n"))))
+  (if-fboundp #'mc-alloc-memory-usage
+      (let* ((stats (mc-alloc-memory-usage))
+             (page-size (first stats))
+             (heap-sects (second stats))
+             (used-plhs (third stats))
+             (free-plhs (fourth stats))
+             (globals (fifth stats))
+             (mc-malloced-bytes (sixth stats)))
+        (with-output-to-temp-buffer "*mc-alloc memory usage*"
+          (flet ((print-used-plhs (text plhs)
+                   (let ((sum-n-pages 0)
+                         (sum-used-n-cells 0)
+                         (sum-used-space 0)
+                         (sum-used-total 0)
+                         (sum-total-n-cells 0)
+                         (sum-total-space 0)
+                         (sum-total-total 0)
+                         (fmt "%7s%7s|%7s%9s%9s%4s|%7s%9s%9s%4s|%4s\n"))
+                     (princ (format "%-14s|%-29s|%-29s|\n"
+                                    text
+                                    "       currently in use"
+                                    "       total available"))
+                     (princ (format fmt "cell-sz" "#pages" 
+                                    "#cells" "space" "total" "% " 
+                                    "#cells" "space" "total" "% " "% "))
+                     (princ (make-string 79 ?-))
+                     (princ "\n")
+                     (while plhs
+                       (let* ((elem (car plhs))
+                              (cell-size (first elem))
+                              (n-pages (second elem))
+                              (used-n-cells (third elem))
+                              (used-space (fourth elem))
+                              (used-total (if (zerop cell-size)
+                                              (sixth elem)
+                                            (* cell-size used-n-cells)))
+                              (used-eff (floor (if (not (zerop used-total))
+                                                   (* (/ (* used-space 1.0)
+                                                         (* used-total 1.0))
+                                                      100.0)
+                                                 0)))
+                              (total-n-cells (fifth elem))
+                              (total-space (if (zerop cell-size)
+                                               used-space
+                                             (* cell-size total-n-cells)))
+                              (total-total (sixth elem))
+                              (total-eff (floor (if (not (zerop total-total))
+                                                    (* (/ (* total-space 1.0)
+                                                          (* total-total 1.0))
+                                                       100.0)
+                                                  0)))
+                              (eff (floor (if (not (zerop total-total))
+                                              (* (/ (* used-space 1.0)
+                                                    (* total-total 1.0))
+                                                 100.0)
+                                            0))))
+                         (princ (format fmt 
+                                        cell-size n-pages used-n-cells used-space 
+                                        used-total used-eff total-n-cells 
+                                        total-space total-total total-eff eff))
+                         (incf sum-n-pages n-pages)
+                         (incf sum-used-n-cells used-n-cells)
+                         (incf sum-used-space used-space)
+                         (incf sum-used-total used-total)
+                         (incf sum-total-n-cells total-n-cells)
+                         (incf sum-total-space total-space)
+                         (incf sum-total-total total-total))
+                       (setq plhs (cdr plhs)))
+                     (let ((avg-used-eff (floor (if (not (zerop sum-used-total))
+                                                    (* (/ (* sum-used-space 1.0)
+                                                          (* sum-used-total 1.0)) 
+                                                       100.0)
+                                                  0)))
+                           (avg-total-eff (floor (if (not (zerop sum-total-total))
+                                                     (* (/ (* sum-total-space 1.0)
+                                                           (* sum-total-total 1.0)) 
+                                                        100.0)
+                                                   0)))
+                           (avg-eff (floor (if (not (zerop sum-total-total))
+                                               (* (/ (* sum-used-space 1.0)
+                                                     (* sum-total-total 1.0)) 
+                                                  100.0)
+                                             0))))
+                       (princ (format fmt "sum    " sum-n-pages sum-used-n-cells
+                                      sum-used-space sum-used-total avg-used-eff
+                                      sum-total-n-cells sum-total-space 
+                                      sum-total-total avg-total-eff avg-eff))
+                       (princ "\n"))))
 
 
-	     (print-free-plhs (text plhs)
-	       (let ((sum-n-pages 0)
-		     (sum-n-sects 0)
-		     (sum-space 0)
-		     (sum-total 0)
-		     (fmt "%6s%10s |%7s%10s\n"))
-		 (princ (format "%s\n" text))
-		 (princ (format fmt "#pages" "space" "#sects" "total")) 
-		 (princ (make-string 35 ?-))
-		 (princ "\n")
-		 (while plhs
-		   (let* ((elem (car plhs))
-			  (n-pages (first elem))
-			  (n-sects (second elem))
-			  (space (* n-pages page-size))
-			  (total (* n-sects space)))
-		     (princ (format fmt n-pages space n-sects total))
-		     (incf sum-n-pages n-pages)
-		     (incf sum-n-sects n-sects)
-		     (incf sum-space space)
-		     (incf sum-total total))
-		   (setq plhs (cdr plhs)))
-		 (princ (make-string 35 ?=))
-		 (princ "\n")
-		 (princ (format fmt sum-n-pages sum-space 
-				sum-n-sects sum-total))
-		 (princ "\n"))))
+                 (print-free-plhs (text plhs)
+                   (let ((sum-n-pages 0)
+                         (sum-n-sects 0)
+                         (sum-space 0)
+                         (sum-total 0)
+                         (fmt "%6s%10s |%7s%10s\n"))
+                     (princ (format "%s\n" text))
+                     (princ (format fmt "#pages" "space" "#sects" "total")) 
+                     (princ (make-string 35 ?-))
+                     (princ "\n")
+                     (while plhs
+                       (let* ((elem (car plhs))
+                              (n-pages (first elem))
+                              (n-sects (second elem))
+                              (space (* n-pages page-size))
+                              (total (* n-sects space)))
+                         (princ (format fmt n-pages space n-sects total))
+                         (incf sum-n-pages n-pages)
+                         (incf sum-n-sects n-sects)
+                         (incf sum-space space)
+                         (incf sum-total total))
+                       (setq plhs (cdr plhs)))
+                     (princ (make-string 35 ?=))
+                     (princ "\n")
+                     (princ (format fmt sum-n-pages sum-space 
+                                    sum-n-sects sum-total))
+                     (princ "\n"))))
 
-	(princ (format "%-12s%10s\n\n" "PAGE_SIZE" page-size))
+            (princ (format "%-12s%10s\n\n" "PAGE_SIZE" page-size))
 	
-	(print-used-plhs "USED HEAP" used-plhs)
-	(princ "\n\n")
+            (print-used-plhs "USED HEAP" used-plhs)
+            (princ "\n\n")
 
-	(print-free-plhs "FREE HEAP" free-plhs)
-	(princ "\n\n")
+            (print-free-plhs "FREE HEAP" free-plhs)
+            (princ "\n\n")
 	
-	(let ((fmt "%-30s%10s\n"))
-	  (princ (format fmt "heap sections" ""))
-	  (princ (make-string 40 ?-))
-	  (princ "\n")
-	  (princ (format fmt "number of heap sects" 
-			 (first heap-sects)))
-	  (princ (format fmt "used size" (second heap-sects)))
-	  (princ (make-string 40 ?-))
-	  (princ "\n")
-	  (princ (format fmt "real size" (third heap-sects)))
-	  (princ (format fmt "global allocator structs" globals))
-	  (princ (make-string 40 ?-))
-	  (princ "\n")
-	  (princ (format fmt "real size + structs" 
-			 (+ (third heap-sects) globals)))
-	  (princ "\n")
-	  (princ (make-string 40 ?=))
-	  (princ "\n")
-	  (princ (format fmt "grand total" mc-malloced-bytes)))
+            (let ((fmt "%-30s%10s\n"))
+              (princ (format fmt "heap sections" ""))
+              (princ (make-string 40 ?-))
+              (princ "\n")
+              (princ (format fmt "number of heap sects" 
+                      (first heap-sects)))
+              (princ (format fmt "used size" (second heap-sects)))
+              (princ (make-string 40 ?-))
+              (princ "\n")
+              (princ (format fmt "real size" (third heap-sects)))
+              (princ (format fmt "global allocator structs" globals))
+              (princ (make-string 40 ?-))
+              (princ "\n")
+              (princ (format fmt "real size + structs" 
+                      (+ (third heap-sects) globals)))
+              (princ "\n")
+              (princ (make-string 40 ?=))
+              (princ "\n")
+              (princ (format fmt "grand total" mc-malloced-bytes)))
 	
-	(+ mc-malloced-bytes)))))
+            (+ mc-malloced-bytes))))
+    (message "mc-alloc not used in this XEmacs.")))
 
 
 (defun show-gc-stats ()
   "Show statistics about garbage collection cycles."
   (interactive)
-  (let ((buffer "*garbage collection statistics*")
-	(plist (gc-stats))
-	(fmt "%-9s %16s %12s %12s %12s %12s\n"))
-    (flet ((plist-get-stat (category field)
-	     (let ((stat (plist-get plist (intern (concat category field)))))
-	       (if stat
-		   (format "%.0f" stat)
-		 "-")))
-	   (show-stats (category)
-	     (princ (format fmt category
-			    (plist-get-stat category "-total")
-			    (plist-get-stat category "-in-last-gc")
-			    (plist-get-stat category "-in-this-gc")
-			    (plist-get-stat category "-in-last-cycle")
-			    (plist-get-stat category "-in-this-cycle")))))
-      (with-output-to-temp-buffer buffer
-	(save-excursion
-	  (set-buffer buffer)
-	  (princ (format "%s %g\n" "Current phase" (plist-get plist 'phase)))
-	  (princ (make-string 78 ?-))
-	  (princ "\n")
-	  (princ (format fmt "stat" "total" "last-gc" "this-gc" 
-			 "last-cycle" "this-cylce"))
-	  (princ (make-string 78 ?-))
-	  (princ "\n")
-	  (show-stats "n-gc")
-	  (show-stats "n-cycles")
-	  (show-stats "enqueued")
-	  (show-stats "dequeued")
-	  (show-stats "repushed")
-	  (show-stats "enqueued2")
-	  (show-stats "dequeued2")
-	  (show-stats "finalized")
-	  (show-stats "freed")
-	(plist-get plist 'n-gc-total))))))
+  (if-fboundp #'gc-stats
+      (let ((buffer "*garbage collection statistics*")
+            (plist (gc-stats))
+            (fmt "%-9s %16s %12s %12s %12s %12s\n"))
+        (flet ((plist-get-stat (category field)
+                 (let ((stat (plist-get plist
+                                        (intern (concat category field)))))
+                   (if stat
+                       (format "%.0f" stat)
+                     "-")))
+               (show-stats (category)
+                 (princ (format fmt category
+                                (plist-get-stat category "-total")
+                                (plist-get-stat category "-in-last-gc")
+                                (plist-get-stat category "-in-this-gc")
+                                (plist-get-stat category "-in-last-cycle")
+                                (plist-get-stat category "-in-this-cycle")))))
+          (with-output-to-temp-buffer buffer
+            (save-excursion
+              (set-buffer buffer)
+              (princ (format "%s %g\n" "Current phase"
+                             (plist-get plist 'phase)))
+              (princ (make-string 78 ?-))
+              (princ "\n")
+              (princ (format fmt "stat" "total" "last-gc" "this-gc" 
+                             "last-cycle" "this-cylce"))
+              (princ (make-string 78 ?-))
+              (princ "\n")
+              (show-stats "n-gc")
+              (show-stats "n-cycles")
+              (show-stats "enqueued")
+              (show-stats "dequeued")
+              (show-stats "repushed")
+              (show-stats "enqueued2")
+              (show-stats "dequeued2")
+              (show-stats "finalized")
+              (show-stats "freed")
+              (plist-get plist 'n-gc-total)))))
+    (error 'void-function "gc-stats not available.")))

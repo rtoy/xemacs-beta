@@ -49,7 +49,11 @@
    mswindows-font-regexp mswindows-canonicalize-font-name
    mswindows-parse-font-style mswindows-construct-font-style
    ;; #### perhaps we should rewrite font-warn to avoid the warning
-   font-warn))
+   ;;   Eh, now I look at the code, we definitely should. 
+   font-warn
+   fc-pattern-get-family fc-pattern-get-size fc-pattern-get-weight
+   fc-font-weight-translate-from-constant make-fc-pattern
+   fc-pattern-add-family fc-pattern-add-size))
 
 (globally-declare-boundp
  '(global-face-data

@@ -240,13 +240,13 @@ Returns the count of paragraphs left to move."
 	  ;; Search back for line that starts or separates paragraphs.
 	  (if (if fill-prefix-regexp
 		  ;; There is a fill prefix; it overrides parstart.
-		  (let (multiple-lines)
+		  (let nil ; (multiple-lines)
 		    (while (and (progn (beginning-of-line) (not (bobp)))
 				(progn (move-to-left-margin)
 				       (not (looking-at parsep)))
 				(looking-at fill-prefix-regexp))
-		      (unless (= (point) start)
-			(setq multiple-lines t))
+		      ; (unless (= (point) start)
+                      ;  (setq multiple-lines t))
 		      (forward-line -1))
 		    (move-to-left-margin)
 		    ;; This deleted code caused a long hanging-indent line
@@ -319,7 +319,11 @@ Returns the count of paragraphs left to move."
 	  (forward-char 1))
 	(if (< (point) (point-max))
 	    (goto-char start))))
-    (constrain-to-field nil opoint t)
+    (if-fboundp #'constrain-to-field
+        (constrain-to-field nil opoint t)
+      (error
+       'void-function
+       "constrain-to-field not available; is xemacs-base installed?"))
     ;; Return the number of steps that could not be done.
     arg))
 
@@ -434,7 +438,11 @@ sentences.  A paragraph boundary also terminates a sentence."
 	   (skip-chars-backward " \t\n")
 	 (goto-char par-end)))
       (setq arg (1- arg)))
-    (constrain-to-field nil opoint t)))
+    (if-fboundp #'constrain-to-field
+        (constrain-to-field nil opoint t)
+      (error
+       'void-function
+       "constrain-to-field not available; is xemacs-base installed?"))))
 
 (defun backward-sentence (&optional arg)
   "Move backward to start of sentence.  With arg, do it arg times.

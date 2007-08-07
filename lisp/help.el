@@ -1293,13 +1293,15 @@ part of the documentation of internal subroutines."
 
 (defvar help-symbol-function-context-menu
   '(["View %_Documentation" (help-symbol-run-function 'describe-function)]
-    ["Find %_Function Source" (help-symbol-run-function 'find-function)]
+    ["Find %_Function Source" (help-symbol-run-function 'find-function)
+     (fboundp #'find-function)]
     ["Find %_Tag" (help-symbol-run-function 'find-tag)]
     ))
 
 (defvar help-symbol-variable-context-menu
   '(["View %_Documentation" (help-symbol-run-function 'describe-variable)]
-    ["Find %_Variable Source" (help-symbol-run-function 'find-variable)]
+    ["Find %_Variable Source" (help-symbol-run-function 'find-variable)
+     (fboundp #'find-variable)]
     ["Find %_Tag" (help-symbol-run-function 'find-tag)]
     ))
 
@@ -1308,8 +1310,10 @@ part of the documentation of internal subroutines."
 				      'describe-function)]
     ["View Variable D%_ocumentation" (help-symbol-run-function
 				      'describe-variable)]
-    ["Find %_Function Source" (help-symbol-run-function 'find-function)]
-    ["Find %_Variable Source" (help-symbol-run-function 'find-variable)]
+    ["Find %_Function Source" (help-symbol-run-function 'find-function)
+     (fboundp #'find-function)]
+    ["Find %_Variable Source" (help-symbol-run-function 'find-variable)
+     (fboundp #'find-variable)]
     ["Find %_Tag" (help-symbol-run-function 'find-tag)]
     ))
 
@@ -1809,12 +1813,14 @@ after the listing is made.)"
   "Follow any cross reference to source code; if none, scroll up.  "
   (interactive "d")
   (let ((e (extent-at pos nil 'find-function-symbol)))
-    (if e
-	(find-function (extent-property e 'find-function-symbol))
+    (if (and-fboundp #'find-function e)
+        (with-fboundp #'find-function
+          (find-function (extent-property e 'find-function-symbol)))
       (setq e (extent-at pos nil 'find-variable-symbol))
-      (if e 
-	  (find-variable (extent-property e 'find-variable-symbol))
-	(view-scroll-lines-up 1)))))
+      (if (and-fboundp #'find-variable e)
+          (with-fboundp #'find-variable
+            (find-variable (extent-property e 'find-variable-symbol)))
+	(scroll-up 1)))))
 
 (defun help-mouse-find-source-or-track (event)
   "Follow any cross reference to source code under the mouse; 
@@ -1822,11 +1828,13 @@ if none, call mouse-track.  "
   (interactive "e")
   (mouse-set-point event)
   (let ((e (extent-at (point) nil 'find-function-symbol)))
-    (if e
-	(find-function (extent-property e 'find-function-symbol))
+    (if (and-fboundp #'find-function e)
+        (with-fboundp #'find-function
+          (find-function (extent-property e 'find-function-symbol)))
       (setq e (extent-at (point) nil 'find-variable-symbol))
-      (if e 
-	  (find-variable (extent-property e 'find-variable-symbol))
+      (if (and-fboundp #'find-variable e)
+          (with-fboundp #'find-variable
+            (find-variable (extent-property e 'find-variable-symbol)))
 	(mouse-track event)))))
 
 ;;; help.el ends here

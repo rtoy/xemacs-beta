@@ -1,4 +1,4 @@
-;;; iso8859-1.el --- Set syntax table for Latin 1
+;;; iso8859-1.el --- Set case table for Latin 1
 
 ;; Copyright (C) 1992, 1997, 2006 Free Software Foundation, Inc.
 

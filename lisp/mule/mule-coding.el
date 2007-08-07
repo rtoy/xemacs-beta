@@ -630,7 +630,7 @@ the code for tilde `~'.  "
 	    (or (plist-get props 'encode-failure-octet) (char-to-int ?~)))
 	   (aliases (plist-get props 'aliases))
 	   encode-program decode-program
-	   decode-table encode-table res)
+	   decode-table encode-table)
 
       ;; Some sanity checking. 
       (check-argument-range encode-failure-octet 0 #xFF)
@@ -652,24 +652,27 @@ the code for tilde `~'.  "
 
       ;; And return the generated code. 
       `(let ((encode-table-sym (gentemp (format "%s-encode-table" ',name)))
-             result)
+             ;; The case-fold-search bind shouldn't be necessary. If I take
+             ;; it, out, though, I get:
+             ;; 
+             ;; (invalid-read-syntax "Multiply defined symbol label" 1)
+             ;;
+             ;; when the file is byte compiled.
+             (case-fold-search t))
         (define-translation-hash-table encode-table-sym ,encode-table)
-        (setq result 
-              (make-coding-system 
-               ',name 'ccl ,description
-               (plist-put (plist-put ',props 'decode 
-                                     ,(apply #'vector decode-program))
-                          'encode 
-                          (apply #'vector
-                                 (nsublis
-                                  (list (cons
-                                         'encode-table-sym
-                                         (symbol-value 'encode-table-sym)))
-                                  ',encode-program)))))
+        (make-coding-system 
+         ',name 'ccl ,description
+         (plist-put (plist-put ',props 'decode 
+                               ,(apply #'vector decode-program))
+                    'encode
+                    (apply #'vector
+                           (nsublis
+                            (list (cons
+                                   'encode-table-sym
+                                   (symbol-value 'encode-table-sym)))
+                            ',encode-program))))
         (coding-system-put ',name 'category 'iso-8-1)
         ,(macroexpand `(loop for alias in ',aliases
                         do (define-coding-system-alias alias
                              ',name)))
-        'result))))
-    
-  
+        (find-coding-system ',name)))))

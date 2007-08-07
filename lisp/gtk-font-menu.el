@@ -92,10 +92,9 @@ or if you change your font path, you can call this to re-initialize the menus."
   ;; #### - this should implement a `menus-only' option, which would
   ;; recalculate the menus from the cache w/o having to do font-list again.
   (unless gtk-font-regexp-ascii
-    (setq gtk-font-regexp-ascii (if (featurep 'mule)
-				    (declare-fboundp
-				     (charset-registry 'ascii))
-				  "iso8859-1")))
+    (setq gtk-font-regexp-ascii (if-fboundp #'charset-registries
+                                    (aref (charset-registries 'ascii) 0)
+                                  "iso8859-1")))
   (setq gtk-font-menu-registry-encoding
 	(if (featurep 'mule) "*-*" "iso8859-1"))
   (let ((case-fold-search t)

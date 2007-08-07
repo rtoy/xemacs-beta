@@ -42,8 +42,28 @@
    x-font-regexp-foundry-and-family
    x-font-regexp-spacing))
 
-(globally-declare-fboundp
- '(charset-registries))
+(globally-declare-boundp
+ '(charset-registries
+   fc-find-available-font-families
+   fc-find-available-weights-for-family
+   fc-font-match
+   fc-font-slant-translate-from-string
+   fc-font-slant-translate-to-string
+   fc-font-weight-translate-from-string
+   fc-font-weight-translate-to-string
+   fc-name-parse
+   fc-name-unparse
+   fc-pattern-add-family
+   fc-pattern-add-size
+   fc-pattern-add-slant
+   fc-pattern-add-weight
+   fc-pattern-get-family
+   fc-pattern-get-size
+   fc-pattern-get-slant
+   fc-pattern-get-successp
+   fc-pattern-get-weight
+   make-fc-pattern
+   xlfd-font-name-p))
 
 (defvar x-font-menu-registry-encoding nil
   "Registry and encoding to use with font menu fonts.")

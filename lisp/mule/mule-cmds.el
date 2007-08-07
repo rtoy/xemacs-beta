@@ -1112,7 +1112,7 @@ environment.  "
 LOCALE is a C library locale string, as returned by `current-locale'.
 Uses the `locale' property of the language environment."
   (block langenv
-    (multiple-value-bind (language region charset modifiers)
+    (multiple-value-bind (language ignored-arg charset ignored-arg)
 	(parse-posix-locale-string locale)
       (let ((case-fold-search t)
 	    (desired-coding-system

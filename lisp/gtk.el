@@ -1,5 +1,8 @@
 (globally-declare-fboundp
- '(gtk-import-function-internal gtk-call-function gtk-type-name))
+ '(gtk-import-function-internal
+   gtk-call-function
+   gtk-type-name
+   gtk-import-function))
 
 (globally-declare-boundp
  '(gtk-enumeration-info))

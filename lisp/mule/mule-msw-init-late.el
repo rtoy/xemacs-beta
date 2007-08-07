@@ -54,7 +54,7 @@
   (while l
     (let ((charset (car (car l)))
 	  (registry (cdr (car l))))
-    (mswindows-set-charset-registry charset registry)
+    (declare-fboundp (mswindows-set-charset-registry charset registry))
     (setq l (cdr l)))))
 
 (let ((l '((ascii . 1252)
@@ -81,5 +81,5 @@
   (while l
     (let ((charset (car (car l)))
 	  (code-page (cdr (car l))))
-    (mswindows-set-charset-code-page charset code-page)
+    (declare-fboundp (mswindows-set-charset-code-page charset code-page))
     (setq l (cdr l)))))
