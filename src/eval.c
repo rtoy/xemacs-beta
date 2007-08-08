@@ -3799,7 +3799,12 @@ Evaluate FORM and return its value.
 	  goto invalid_function;
 	}
     }
-  else /* ! (SUBRP (fun) || COMPILED_FUNCTIONP (fun) || CONSP (fun)) */
+  else if (UNBOUNDP (fun))
+    {
+      val = signal_void_function_error (original_fun);
+    }
+  else /* ! (SUBRP (fun) || COMPILED_FUNCTIONP (fun) || CONSP (fun)
+             UNBOUNDP (fun)) */
     {
     invalid_function:
       val = signal_invalid_function_error (fun);

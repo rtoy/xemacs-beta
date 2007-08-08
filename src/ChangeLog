@@ -1,3 +1,12 @@
+2007-08-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (Feval): Fix, stick with original error messages instead
+	of referring to the indirected function.
+
+	From Sebastian Freundt's mail
+	nhtfy9sitjf.fsf@muck.math.tu-berlin.de , Tue Jan 30 12:30:07 UTC
+	2007; complements 18005.16378.980760.860724@parhasard.net . 
+
 2007-07-31  Mike Sperber  <mike@xemacs.org>
 
 	* file-coding.c (undecided_convert): Kludge to prevent infinite
