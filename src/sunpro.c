@@ -21,6 +21,12 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* Commentary:
+
+According to Paul Keusemann in <20070802140358.GA19566@visi.com>, this
+feature probably still works as of 2007-08-02.  However, that doesn't seem
+reliable since there doesn't seem to be a way to configure it! */
+
 #include <config.h>
 #include "lisp.h"
 
@@ -51,6 +57,7 @@ function has no effect and always returns `nil'.  See function
 #else
        (int UNUSED (nargs), Lisp_Object *UNUSED (args))
 #endif
+       )
 {
 #ifdef USAGE_TRACKING
   Lisp_Object xs;

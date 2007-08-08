@@ -1,3 +1,9 @@
+2007-08-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* sunpro.c (Fut_log_text): Fix mismatched parentheses, reorganize.
+	Thanks to Paul Keusemann (for a suggested patch) and Rob McMahon
+	for  reporting the issue.
+
 2007-08-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c (Feval): Fix, stick with original error messages instead
