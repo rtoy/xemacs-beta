@@ -11,7 +11,11 @@
 
 	From Sebastian Freundt's mail
 	nhtfy9sitjf.fsf@muck.math.tu-berlin.de , Tue Jan 30 12:30:07 UTC
-	2007; complements 18005.16378.980760.860724@parhasard.net . 
+	2007; complements 18005.16378.980760.860724@parhasard.net .
+	
+	This reverts the error message when M-: (no-such-function t) RET
+	is called to the old "Symbol's function definition is void: ..."
+	rather than the recent "Invalid function: #<INTERNAL OBJECT ..."
 
 2007-07-31  Mike Sperber  <mike@xemacs.org>
 
