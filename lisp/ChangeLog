@@ -1,3 +1,26 @@
+2007-08-07  Mike Sperber  <mike@xemacs.org>
+
+	* setup-paths.el (paths-find-doc-directory):
+	(paths-find-exec-directory):
+	(paths-find-lisp-directory):
+	(paths-find-mule-lisp-directory):
+	(paths-construct-info-path):
+	(paths-find-data-directory):
+	* packages.el (packages-find-installation-package-directories): 
+	* find-paths.el (paths-for-each-emacs-directory):
+	(paths-find-emacs-directories):
+	(paths-find-emacs-directory):
+	(paths-for-each-site-directory):
+	(paths-find-site-directory):
+	(paths-find-site-directories):
+	(paths-for-each-version-directory):
+	(paths-find-version-directories):
+	(paths-find-version-directory): Generalize to multiple bases.
+	(paths-find-architecture-directory): Use above to give roots
+	precedence over bases.  This means, for example, that a directory
+	in an in-place root will always get precedence over an installed
+	root.
+	
 2007-08-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/mule-coding.el (make-8-bit-coding-system): 

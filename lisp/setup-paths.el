@@ -158,21 +158,21 @@ ROOT-P is a function that tests whether a root is plausible."
 (defun paths-find-site-lisp-directory (roots)
   "Find the site Lisp directory of the XEmacs hierarchy.
 ROOTS is a list of installation roots."
-  (paths-find-site-directory roots "site-lisp"
+  (paths-find-site-directory roots (list "site-lisp")
 			     nil nil
 			     configure-site-directory))
 
 (defun paths-find-site-module-directory (roots)
   "Find the site modules directory of the XEmacs hierarchy.
 ROOTS is a list of installation roots."
-  (paths-find-site-directory roots "site-modules"
+  (paths-find-site-directory roots (list "site-modules")
 			     t nil
 			     configure-site-module-directory))
 
 (defun paths-find-lisp-directory (roots)
   "Find the main Lisp directory of the XEmacs hierarchy.
 ROOTS is a list of installation roots."
-  (paths-find-version-directory roots "lisp"
+  (paths-find-version-directory roots (list "lisp")
 				nil nil
 				configure-lisp-directory))
 
@@ -186,14 +186,14 @@ ROOTS is a list of installation roots."
 	      (paths-construct-path (list lisp-directory "mule")))))
 	(if (paths-file-readable-directory-p guess)
 	    guess
-	  (paths-find-version-directory roots "mule-lisp"
+	  (paths-find-version-directory roots (list "mule-lisp")
 					nil nil
 					configure-mule-lisp-directory)))))
 
 (defun paths-find-module-directory (roots)
   "Find the main modules directory of the XEmacs hierarchy.
 ROOTS is a list of installation roots."
-  (paths-find-architecture-directory roots "modules"
+  (paths-find-architecture-directory roots (list "modules")
 				     nil configure-module-directory))
 
 (defun paths-construct-load-path
@@ -264,7 +264,7 @@ respectively."
     (paths-uniq-append
      (append
       (let ((info-directory
-	     (paths-find-version-directory roots "info"
+	     (paths-find-version-directory roots (list "info")
 					   nil nil
 					   configure-info-directory)))
 	(and info-directory
@@ -282,12 +282,12 @@ respectively."
 (defun paths-find-doc-directory (roots)
   "Find the documentation directory.
 ROOTS is the list of installation roots."
-  (paths-find-architecture-directory roots "lib-src" nil configure-doc-directory))
+  (paths-find-architecture-directory roots (list "lib-src") nil configure-doc-directory))
 
 (defun paths-find-exec-directory (roots)
   "Find the binary directory.
 ROOTS is the list of installation roots."
-  (paths-find-architecture-directory roots "lib-src"
+  (paths-find-architecture-directory roots (list "lib-src")
 				     nil configure-exec-directory))
 
 (defun paths-construct-exec-path (roots exec-directory
@@ -319,7 +319,7 @@ package hierarchy roots, respectively."
 (defun paths-find-data-directory (roots)
   "Find the data directory.
 ROOTS is the list of installation roots."
-  (paths-find-version-directory roots "etc" nil "EMACSDATA" configure-data-directory))
+  (paths-find-version-directory roots (list "etc") nil "EMACSDATA" configure-data-directory))
 
 (defun paths-construct-data-directory-list (data-directory
 					    early-package-hierarchies
