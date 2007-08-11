@@ -1,3 +1,11 @@
+2007-08-09  Mike Sperber  <mike@xemacs.org>
+
+	* startup.el (migrate-user-init-file): Create backup of
+	`user-init-file' before migrating.
+	* startup.el (maybe-migrate-user-init-file): Print
+	information about backup file.
+	(maybe-create-compatibility-dot-emacs): Follow above change.
+
 2007-08-07  Mike Sperber  <mike@xemacs.org>
 
 	* setup-paths.el (paths-find-doc-directory):
