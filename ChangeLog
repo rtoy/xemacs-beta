@@ -1,3 +1,18 @@
+1999-07-08  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.4 is released
+
+1999-07-06    Vin Shelton <acs@xemacs.org>
+
+	* configure: Ran  'make config' to update configure to include
+	Jan's changes from 6/12.
+
+1999-07-06    Michael Sperber  <sperber@informatik.uni-tuebingen.de>
+
+	* configure.in: Made docdir configurable.
+
+	* Makefile.in (docdir): Added variable for custom DOC directory.
+
 1999-06-26  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.3 is released

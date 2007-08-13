@@ -1,3 +1,57 @@
+1999-07-08  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.4 is released
+
+1999-07-07    SL Baur  <steve@steve1.m17n.org>
+
+	* help-nomule.el (string-width): Make Mule compatibility alias.
+
+1999-07-06    Bob Weiner  <weiner@beopen.com>
+
+	* simple.el (indent-new-comment-line): Locally bound
+	`block-comment-start' to `comstart' or else when this is called
+	from do-auto-fill, e.g. in Lisp mode, it will insert any non-nil
+	`block-comment-start' value, ignoring any existing spacing after a
+	comment prefix in the previous line and producing ugly comments.
+
+1999-07-06    Bob Weiner  <weiner@beopen.com>
+
+	* list-mode.el (mouse-choose-completion): 
+	(choose-completion): 
+	(completion-switch-to-minibuffer): Added.
+	([Tab]): [Tab] previously switched to the minibuffer
+	but since [space] does that and since most applications in the
+	world use [Tab] to select the next item in a list, do that in the
+	*Completions* buffer too.  This will cause the least confusion
+	among the largest population of users.  -- Bob Weiner, BeOpen.com,
+	06/23/1999.
+
+1999-07-06     Bob Weiner  <weiner@beopen.com>
+
+	* list-mode.el (completion-list-mode-quit): Added and bound to {q}
+	in the completion-list-mode-map to bury the completions buffer
+	even when the minibuffer is no longer active.
+
+1999-07-06    Michael Sperber <sperber@informatik.uni-tuebingen.de>
+
+        * very-early-lisp.el (when-feature, unless-feature): Make them
+        test for the feature at runtime.
+
+1999-07-06    SL Baur  <steve@miho.m17n.org>
+
+	* menubar-items.el (default-menubar): Conditionalize the bug
+	report menu item (which may not be possible in this XEmacs).
+	Reported by: Ken'ichi Handa <handa@etl.go.jp>
+
+1999-07-06    SL Baur  <steve@miho.m17n.org>
+
+	* subr.el (with-current-buffer): DOC string fix.
+	Suggested by Bob Weiner <weiner@altrasoft.com>
+
+1999-07-06    Karl M. Hegbloom  <karlheg@debian.org>
+
+	* wid-edit.el (widget-documentation): corrected speling error.
+
 1999-06-26  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.3 is released

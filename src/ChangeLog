@@ -1,3 +1,27 @@
+1999-07-08  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.4 is released
+
+1999-07-06    Vin Shelton <acs@xemacs.org>
+
+	* config.h.in: Added #undef DOCDIR_USER_DEFINED due to Michael
+	Sperber's change to configure.in.
+
+1999-07-06    Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* tooltalk.c (init_tooltalk): save signal actions for SIGQUIT,
+	SIGINT and SIGCHLD before calling tt_open and restore the
+	afterwards. This fixes e.g. the zombie subprocesses on Solaris
+
+1999-07-06    Michael Sperber <sperber@informatik.uni-tuebingen.de>
+
+	* paths.h.in (PATH_DOC): Made doc-directory configurable.
+
+1999-07-06     SL Baur  <steve@miho.m17n.org>
+
+	* editfns.c: Document "%s" format spec.
+	Suggested by Bob Weiner <weiner@altrasoft.com>
+
 1999-06-26  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.3 is released

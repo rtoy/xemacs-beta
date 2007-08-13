@@ -85,6 +85,10 @@
 #define PATH_LOCK "@LOCKDIR@"
 #endif
 
+#ifdef DOCDIR_USER_DEFINED
+#define PATH_DOC "@DOCDIR@"
+#endif
+
 #ifdef INFODIR_USER_DEFINED
 #define PATH_INFO "@INFODIR@"
 #endif

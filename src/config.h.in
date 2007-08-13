@@ -792,6 +792,7 @@ on various systems. */
 #define MAIL_USE_LOCKF
 #endif
 
+#undef DOCDIR_USER_DEFINED
 #undef LISPDIR_USER_DEFINED
 #undef PACKAGE_PATH_USER_DEFINED
 #undef SITELISPDIR_USER_DEFINED

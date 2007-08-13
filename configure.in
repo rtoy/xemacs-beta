@@ -351,6 +351,7 @@ package_path=''
 etcdir='${datadir}/${PROGNAME}-${version}/etc'
 lockdir='${statedir}/${PROGNAME}/lock'
 archlibdir='${libdir}/${PROGNAME}-${version}/${configuration}'
+docdir='${archlibdir}'
 with_site_lisp='no'
 with_menubars=''
 with_scrollbars=''
@@ -715,6 +716,7 @@ dnl             sitelispdir ) AC_DEFINE(SITELISPDIR_USER_DEFINED) ;;
  	        AC_DEFINE(LISPDIR_USER_DEFINED)
 	        AC_DEFINE(ETCDIR_USER_DEFINED) ;;
              statedir | lockdir ) AC_DEFINE(LOCKDIR_USER_DEFINED) ;;
+	     docdir ) AC_DEFINE(DOCDIR_USER_DEFINED) ;;
              exec_prefix | libdir | archlibdir ) AC_DEFINE(ARCHLIBDIR_USER_DEFINED) ;;
            esac
 	;;
@@ -3835,6 +3837,17 @@ while true; do
   esac
 done
 AC_SUBST(LOCKDIR)
+
+AC_SUBST(docdir)
+AC_SUBST(DOCDIR_USER_DEFINED)
+DOCDIR=$docdir
+while true; do
+  case "$DOCDIR" in
+    *\$* ) eval "DOCDIR=$DOCDIR" ;;
+    *) break ;;
+  esac
+done
+AC_SUBST(DOCDIR)
 
 AC_SUBST(archlibdir)
 AC_SUBST(ARCHLIBDIR_USER_DEFINED)

@@ -146,7 +146,7 @@ nas.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h sys
 nt.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h nt.h ntheap.h symeval.h symsinit.h sysproc.h syssignal.h systime.h
 ntheap.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h ntheap.h symeval.h symsinit.h
 ntplay.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h sysfile.h
-ntproc.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h nt.h ntheap.h process.h symeval.h symsinit.h sysproc.h syssignal.h systime.h syswait.h
+ntproc.o: $(LISP_H) buffer.h bufslots.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h nt.h ntheap.h process.h symeval.h symsinit.h sysproc.h syssignal.h systime.h syswait.h
 objects-tty.o: $(LISP_H) conslots.h console-tty.h console.h device.h insdel.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h objects-tty.h objects.h specifier.h symeval.h symsinit.h syssignal.h systty.h
 objects.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h elhash.h faces.h frame.h frameslots.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h objects.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h toolbar.h window.h winslots.h
 offix.o: offix-cursors.h offix-types.h offix.h xintrinsic.h
