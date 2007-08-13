@@ -306,6 +306,17 @@ add:
 
 to their .emacs file to get version control functionality.
 
+** An experimental version of dynamic linking is supported.
+
+There is no documentation and we are making no guarantees about what
+might change in the future with the "C" level API.  Examples of how to 
+make DLLs are in the modules subdirectory of the XEmacs source
+distribution.
+
+Please note that XEmacs is a GPL'ed program and there are restrictions
+on what kinds of binaries can be distributed with it.  In particular,
+proprietary DLLs without source cannot be distributed.  See the file
+COPYING for more detail.s
 
 * Lisp and internal changes in XEmacs 21.0
 ==========================================

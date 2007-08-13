@@ -1,3 +1,92 @@
+1998-07-29  P. E. Jareth Hein  <jareth@camelot.co.jp>
+
+	* glyphs-eimage.c (png_instantiate): Add proper handling for background
+	colors taken from the default face.  Also correct a thinko in
+	transparency (not alpha) handling.
+
+1998-07-23  Martin Buchholz  <martin@xemacs.org>
+
+	* s/decosf4-0.h:  Use a perfectly ordinary link.  Nuke BSD crap.
+	* unexalpha.c: ANSI C-ize.  Clean compiler warnings.
+	* lread.c (Fload_internal):  Be very careful with printfs of
+	size_t's
+	* gui-x.c (menu_name_to_accelerator): tolower wants an `int'
+	argument.
+
+1998-07-27  Gunnar Evermann  <Gunnar.Evermann@nats.informatik.uni-hamburg.de>
+
+	* callint.c (Fcall_interactively): GCPRO prompt string before
+	passing it to Fread_key_sequence
+
+1998-07-16  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* event-Xt.c (x_to_emacs_keysym): Return nil for modifier keysyms.
+	(x_event_to_emacs_event): Let x_to_emacs_keysym check for modifier 
+	keys thus no longer considering all keysyms on a key.
+
+1998-07-27  SL Baur  <steve@altair.xemacs.org>
+
+	* keymap.c (vars_of_keymap): Initialize Vkey_translation_map and
+	Vvertical_divider_map.
+
+	* mule-canna.c (vars_of_mule_canna): Initialize every symbol to
+	Qnil or 0, none were initialized prior to this change.
+
+	Rename misnamed `V' prefixed integer variables:
+	Vcanna_empty_info, Vcanna_through_info, Vcanna_underline,
+	Vcanna_inhibit_hankakukana, Vcanna_henkan_length, Vcanna_henkan_revPos,
+	Vcanna_henkan_revLen, Vcanna_ichiran_length, Vcanna_ichiran_revPos,
+	Vcanna_ichiran_revLen.
+
+	Rename misnamed `V' prefixed integer variables and initialize
+	properly in the vars_of routine.
+	Vcanna_mode_AlphaMode, Vcanna_mode_EmptyMode, Vcanna_mode_KigoMode,
+	Vcanna_mode_YomiMode, Vcanna_mode_JishuMode, Vcanna_mode_TankouhoMode,
+	Vcanna_mode_IchiranMode, Vcanna_mode_YesNoMode, Vcanna_mode_OnOffMode,
+	Vcanna_mode_AdjustBunsetsuMode, Vcanna_mode_ChikujiYomiMode,
+	Vcanna_mode_ChikujiTanMode, Vcanna_mode_HenkanMode,
+	Vcanna_mode_HenkanNyuryokuMode, Vcanna_mode_ZenHiraHenkanMode,
+	Vcanna_mode_HanHiraHenkanMode, Vcanna_mode_ZenKataHenkanMode,
+	Vcanna_mode_HanKataHenkanMode, Vcanna_mode_HanKataHenkanMode,
+	Vcanna_mode_ZenAlphaHenkanMode, Vcanna_mode_HanAlphaHenkanMode,
+	Vcanna_mode_ZenHiraKakuteiMode, Vcanna_mode_HanHiraKakuteiMode,
+	Vcanna_mode_ZenKataKakuteiMode, Vcanna_mode_HanKataKakuteiMode,
+	Vcanna_mode_ZenAlphaKakuteiMode, Vcanna_mode_HanAlphaKakuteiMode,
+	Vcanna_mode_HexMode, Vcanna_mode_BushuMode, Vcanna_mode_ExtendMode,
+	Vcanna_mode_RussianMode, Vcanna_mode_GreekMode, Vcanna_mode_LineMode,
+	Vcanna_mode_ChangingServerMode, Vcanna_mode_HenkanMethodMode,
+	Vcanna_mode_DeleteDicMode, Vcanna_mode_TourokuMode,
+	Vcanna_mode_TourokuEmptyMode, Vcanna_mode_TourokuHinshiMode,
+	Vcanna_mode_TourokuDicMode, Vcanna_mode_QuotedInsertMode,
+	Vcanna_mode_BubunMuhenkanMode, Vcanna_mode_MountDicMode,
+	Vcanna_fn_SelfInsert, Vcanna_fn_FunctionalInsert,
+	Vcanna_fn_QuotedInsert, Vcanna_fn_JapaneseMode, Vcanna_fn_AlphaMode,
+	Vcanna_fn_HenkanNyuryokuMode, Vcanna_fn_Forward, Vcanna_fn_Backward,
+	Vcanna_fn_Next, Vcanna_fn_Prev, Vcanna_fn_BeginningOfLine,
+	Vcanna_fn_EndOfLine, Vcanna_fn_DeleteNext, Vcanna_fn_DeletePrevious,
+	Vcanna_fn_KillToEndOfLine, Vcanna_fn_Henkan, Vcanna_fn_Kakutei,
+	Vcanna_fn_Extend, Vcanna_fn_Shrink, Vcanna_fn_AdjustBunsetsu,
+	Vcanna_fn_Quit, Vcanna_fn_ConvertAsHex, Vcanna_fn_ConvertAsBushu,
+	Vcanna_fn_KouhoIchiran, Vcanna_fn_BubunMuhenkan, Vcanna_fn_Zenkaku,
+	Vcanna_fn_Hankaku, Vcanna_fn_ExtendMode, Vcanna_fn_ToUpper,
+	Vcanna_fn_Capitalize, Vcanna_fn_ToLower, Vcanna_fn_Hiragana,
+	Vcanna_fn_Katakana, Vcanna_fn_Romaji, Vcanna_fn_BaseHiragana,
+	Vcanna_fn_BaseKatakana, Vcanna_fn_BaseEisu, Vcanna_fn_BaseZenkaku,
+	Vcanna_fn_BaseHankaku, Vcanna_fn_BaseKana, Vcanna_fn_BaseKakutei,
+	Vcanna_fn_BaseHenkan, Vcanna_fn_BaseHiraKataToggle,
+	Vcanna_fn_BaseZenHanToggle, Vcanna_fn_BaseKanaEisuToggle,
+	Vcanna_fn_BaseKakuteiHenkanToggle, Vcanna_fn_BaseRotateForward,
+	Vcanna_fn_BaseRotateBackward, Vcanna_fn_Touroku, Vcanna_fn_HexMode,
+	Vcanna_fn_BushuMode, Vcanna_fn_KigouMode, Vcanna_fn_Mark,
+	Vcanna_fn_TemporalMode, Vcanna_key_Nfer, Vcanna_key_Xfer,
+	Vcanna_key_Up, Vcanna_key_Left, Vcanna_key_Right, Vcanna_key_Down,
+	Vcanna_key_Insert, Vcanna_key_Rollup, Vcanna_key_Rolldown,
+	Vcanna_key_Home, Vcanna_key_Help, Vcanna_key_KP_Key,
+	Vcanna_key_Shift_Nfer, Vcanna_key_Shift_Xfer, Vcanna_key_Shift_Up,
+	Vcanna_key_Shift_Left, Vcanna_key_Shift_Right, Vcanna_key_Shift_Down,
+	Vcanna_key_Cntrl_Nfer, Vcanna_key_Cntrl_Xfer, Vcanna_key_Cntrl_Up,
+	Vcanna_key_Cntrl_Left, Vcanna_key_Cntrl_Right, Vcanna_key_Cntrl_Down
+
 1998-07-19  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre7 is released.

@@ -167,8 +167,7 @@ copy.  Otherwise, keep it around.")
   (interactive)
   ;; Load a fresh copy
   (mapcar (lambda (pkg)
-	    (package-get-all
-	     (car pkg) nil))
+	    (package-get (car pkg) nil 'never))
           packages-package-list))
 
 ;;;###autoload
@@ -212,13 +211,15 @@ track of packages already fetched."
     ))
 
 ;;;###autoload
-(defun package-get (package &optional version conflict)
+(defun package-get (package &optional version conflict install-dir)
   "Fetch PACKAGE from remote site.
 Optional arguments VERSION indicates which version to retrieve, nil
 means most recent version.  CONFLICT indicates what happens if the
 package is already installed.  Valid values for CONFLICT are:
 'always	always retrieve the package even if it is already installed
 'never	do not retrieve the package if it is installed.
+INSTALL-DIR, if non-nil, specifies the package directory where
+fetched packages should be installed.
 
 The value of `package-get-base' is used to determine what files should 
 be retrieved.  The value of `package-get-remote' is used to determine
@@ -271,7 +272,8 @@ of the package, an error is signalled."
       (message "Retrieved package %s" filename) (sit-for 0)
       (let ((status
 	     (package-admin-add-binary-package
-	      (package-get-staging-dir filename))))
+	      (package-get-staging-dir filename)
+              install-dir)))
 	(when (not (= status 0))
 	  (message "Package failed.")
 	  (switch-to-buffer package-admin-temp-buffer)))

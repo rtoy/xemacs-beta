@@ -1,7 +1,7 @@
 @node Packages, Abbrevs, Running, Top
 @comment  node-name,  next,  previous,  up
 
-@section Introduction to XEmacs Packages
+@section Packages
 @cindex packages
 
 The XEmacs 21 distribution comes only with a very basic set of
@@ -12,16 +12,27 @@ packages to install; the actual installation process is easy.
 This gives an installer the ability to tailor an XEmacs installation for
 local needs with safe removal of unnecessary code.
 
+@menu
+* Package Terminology:: Understanding different kinds of packages.
+* Using Packages::      How to install and use packages.
+* Building Packages::   Building packages from sources.
+@end menu
+
+@node Package Terminology, Using Packages, , Packages
+@comment  node-name,  next,  previous,  up
+
 @subsection Package Flavors
 
 There are two main flavors of packages.
 
-@itemize @emph
+@itemize @bullet
 @item Regular Packages
+@cindex regular packages
 A regular package is one in which multiple files are involved and one
 may not in general safely remove any of them.
 
 @item Single-File Packages
+@cindex single-file packages
 A single-file package is an aggregate collection of thematically
 related but otherwise independent lisp files.  These files are bundled 
 together for download convenience and individual files may deleted at
@@ -37,17 +48,86 @@ are for developers and include all files necessary for rebuilding
 bytecompiled lisp and creating tarballs for distribution.
 
 @subsection Binary Packages
+@cindex binary packages
 Binary packages may be installed directly into an XEmacs package
 hierarchy.
 
 @subsection Source Packages
-
+@cindex source packages
 Source packages contain all of the Package author's (where appropriate
 in regular packages) source code plus all of the files necessary to
 build distribution tarballs (Unix Tar format files and gzipped for space
 savings).
 
-@subsection Prerequisites for building Source Packages
+@node Using Packages, Building Packages, Package Terminology, Packages
+@comment  node-name,  next,  previous,  up
+
+@subsection Getting Started
+
+When you first download XEmacs 21, you will usually first grab the
+@dfn{core distribution},
+@cindex core distribution
+a file called
+@file{xemacs-21.0.tar.gz}. (Replace the @t{21.0} by the current version
+number.)  The core distribution contains the sources of XEmacs and a
+minimal set of Emacs Lisp files, which are in the subdirectory named
+@file{lisp}.  This subdirectory used to contain all Emacs Lisp files
+distributed with XEmacs.
+
+@subsection Choosing the Packages You Need
+
+The available packages can currently be found in the same ftp directory
+where you grabbed the core distribition from, and are located in the
+subdirectory @file{binary-packages}. Package file names follow the
+naming convention @file{<package-name>-<version>-pkg.tar.gz}.
+
+The file @file{etc/PACKAGES} in the core distribution contains a list of
+the packages available at the time of the XEmacs release.  Packages are
+also listed on the @code{Options} menu under:
+
+@example
+	Options->Customize->Emacs->Packages
+@end example
+
+If you have EFS @ref{(EFS)}, installed and configured packages can be
+installed completely from the menubar.
+
+Hint to system administrators of multi-user systems: it might be a good
+idea to install all packages and not to interfer with the wishes of your
+users.
+
+@subsection Installing packages and XEmacs
+
+The easiest and most correct way to install a package is to do:
+
+@example
+M-x package-admin-add-binary-package <return>
+@end example
+
+input the location of the package tarball and XEmacs will do the rest
+for you.  If you have the EFS package installed and configured you can
+select package from the customize menu, set their state to on and then
+do:
+
+@example
+	Options->Customize->Update Packages
+@end example
+
+This will automatically retrieve the packages you have selected from the
+XEmacs ftp site and install them into XEmacs. Additionally it will
+update any packages you already have installed to the newest version.
+Note that if a package is newly installed you will have to restart
+XEmacs for the change to take effect.
+
+@node Building Packages, , Using Packages, Packages
+@comment  node-name,  next,  previous,  up
+
+Source packages are available from the @file{source-packages}
+subdirectory of your favorite XEmacs distribution site.  Alternatively,
+they are available via CVS from @file{cvs.xemacs.org}.  Look at
+@file{http://cvs.xemacs.org} for instructions.
+
+@subsection Prerequisites for Building Source Packages
 
 You must have GNU @code{cp}, GNU @code{install} (or a BSD compatible
 @code{install} program) GNU @code{make} (3.75 or later preferred),
@@ -58,7 +138,7 @@ correct directory structure.  At the top level you must have
 available from the XEmacs FTP site from the same place you obtained your
 source package distributions.
 
-@subsection What you can do with Source Packages
+@subsection What You Can Do With Source Packages
 
 NB:  A global build operation doesn't exist yet as of 13 January 1998.
 
@@ -66,7 +146,7 @@ Source packages are most useful for creating XEmacs package tarballs
 for installation into your own XEmacs installations or for
 distributing to others.
 
-Supported operations from Make are:
+Supported operations from @file{make} are:
 
 @table @code
 @item clean

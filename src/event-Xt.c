@@ -769,7 +769,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
      /* simple_p means don't try too hard (ASCII only) */
 {
   KeySym keysym = 0;
-
+  
 #ifdef HAVE_XIM
   int len;
   char buffer[64];
@@ -794,7 +794,8 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
          than passing in 0) to avoid crashes on German IRIX */
       char dummy[256];
       XLookupString (event, dummy, 200, &keysym, 0);
-      return x_keysym_to_emacs_keysym (keysym, simple_p);
+      return (IsModifierKey (keysym) || keysym == XK_Mode_switch )
+	? Qnil : x_keysym_to_emacs_keysym (keysym, simple_p);
     }
 #endif /* ! XIM_MOTIF */
 
@@ -843,7 +844,8 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
     {
     case XLookupKeySym:
     case XLookupBoth:
-      return x_keysym_to_emacs_keysym (keysym, simple_p);
+      return (IsModifierKey (keysym) || keysym == XK_Mode_switch )
+	? Qnil : x_keysym_to_emacs_keysym (keysym, simple_p);
 
     case XLookupChars:
       {
@@ -983,20 +985,16 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	  {
 	    Lisp_Object keysym;
 	    XKeyEvent *ev = &x_event->xkey;
-	    KeyCode keycode = ev->keycode;
-
-	    if (x_key_is_modifier_p (keycode, d)) /* it's a modifier key */
-	      return 0;
-
 	    /* This used to compute the frame from the given X window and
 	       store it here, but we really don't care about the frame. */
 	    emacs_event->channel = DEVICE_CONSOLE (d);
 	    keysym = x_to_emacs_keysym (&x_event->xkey, 0);
 
-	    /* If the emacs keysym is nil, then that means that the
-	       X keysym was NoSymbol, which probably means that
-	       we're in the midst of reading a Multi_key sequence,
-	       or a "dead" key prefix, or XIM input.  Ignore it. */
+	    /* If the emacs keysym is nil, then that means that the X
+	       keysym was either a Modifier or NoSymbol, which
+	       probably means that we're in the midst of reading a
+	       Multi_key sequence, or a "dead" key prefix, or XIM
+	       input. Ignore it. */
 	    if (NILP (keysym))
 	      return 0;
 

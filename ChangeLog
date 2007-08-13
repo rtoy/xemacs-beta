@@ -1,3 +1,38 @@
+1998-07-28  Kai Haberzettl  <khaberz@synnet.de>
+
+	* BETA: Update mailing-list address for build-reports
+
+1998-08-01  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (TAGS tags): Add variable `tagslisp' so a TAGS file
+	can built that includes package lisp.
+
+1998-07-28  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* configure.in (CPP): Too many spaces im run-patch flag detection.
+
+1998-07-23  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in:
+	- support multiple flavors of alpha, (XEmacs treats them identically)
+	- Fix AC_TRY_RUN so that actions have access to $?
+	- Identify DEC C compilers. Add default optimization CFLAGS and
+	  always use -std.
+	- Use an extensible method for adding support for future compilers.
+	- Have SunPro C use that same extensible method.
+	- Make sol2 always use `-R', Linux and DEC OSF always use `-rpath'
+	* src/s/decosf4-0.h:  Use a perfectly ordinary link.  Nuke BSD crap.
+	* src/unexalpha.c: ANSI C-ize.  Clean compiler warnings.
+	* src/lread.c (Fload_internal):  Be very careful with printfs of
+	size_t's
+	* src/gui-x.c (menu_name_to_accelerator): tolower wants an `int'
+	argument.
+
+1998-07-23  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (with_infodock): build directories moved 1 level
+	lower.
+
 1998-07-19  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre7 is released.

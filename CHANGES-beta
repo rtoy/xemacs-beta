@@ -1,4 +1,20 @@
 							-*- indented-text -*-
+to 21.0 pre8 "Corsican"
+-- XEmacs enhanced button courtesy of Dave Finton
+-- PNG transparency fix from Jareth Hein
+-- typo fix in configure.in from Jan Vroonhof
+-- GC bug fix from Gunnar Evermann.
+-- Miscellaneous documentation updates from Adrian Aichner and Michael 
+   Sperber.
+-- Miscellaneous Lisp bug fixes from Jan Vroonhof, Greg Klanderman and John
+   Jones.
+-- DEC OSF support from Martin Buchholz
+-- Unitialized builtin variable bug fix from Altrasoft
+-- Miscellaneous bug fixes from Altrasoft
+
+to 21.0 pre7 "Benadir"
+-- [NONE]
+
 to 21.0 pre6 "Belgian Fawn"
 -- Miscellaneous bug fixes from various people
 -- Rename MS Windows 'resource image instantiator to 'mswindows-resource

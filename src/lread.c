@@ -796,10 +796,11 @@ encoding detection or end-of-line detection.
   if (purify_flag && noninteractive)
     {
       if (EQ (last_file_loaded, file))
-	message_append (" (%d)", purespace_usage() - pure_usage);
+	message_append (" (%ld)", 
+			(unsigned long) (purespace_usage() - pure_usage));
       else
-	message ("Loading %s ...done (%d)", XSTRING_DATA (file),
-		 purespace_usage() - pure_usage);
+	message ("Loading %s ...done (%ld)", XSTRING_DATA (file),
+		 (unsigned long) (purespace_usage() - pure_usage));
     }
 /*#endif / * DEBUG_XEMACS */
 

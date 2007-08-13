@@ -1,3 +1,39 @@
+1998-07-22  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* font-lock.el (font-lock-fontify-glumped-region): Add guard
+	aginst destroyed extents
+
+1998-07-24  Greg Klanderman  <greg@alphatech.com>
+
+	* package-get.el (package-get): add `install-dir' argument.
+
+1998-07-20  John Jones  <jj@asu.edu>
+
+	* package-get.el: calls to package-get-update-all will only
+	  update packages which are already installed.
+
+1998-07-20  Colin Rafferty   <colin@xemacs.org>
+
+	* about.el (about-hackers): Correct my email.
+
+1998-07-20  Kai Haberzettl  <khaberz@synnet.de>
+
+	* about.el (about-hackers): new email-address.
+
+1998-07-25  SL Baur  <steve@altair.xemacs.org>
+
+	* minibuf.el (read-number): Don't let `input-error' condition
+	escape.
+
+1998-07-23  SL Baur  <steve@altair.xemacs.org>
+
+	* autoload.el (update-file-autoloads): Ensure autoloads buffer is
+	writable.
+
+1998-07-20  Greg Klanderman  <greg@alphatech.com>
+
+	* about.el (about-hackers): use my `email-for-life' address.
+
 1998-07-19  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre7 is released.

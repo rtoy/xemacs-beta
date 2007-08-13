@@ -1463,6 +1463,7 @@ only existing buffer names are allowed."
 		      (read-from-minibuffer
 		       prompt (if num (prin1-to-string num)) nil t
 		       t)) ;no history
+		  (input-error nil)
 		  (invalid-read-syntax nil)
 		  (end-of-file nil)))
       (or (funcall pred num) (beep)))
