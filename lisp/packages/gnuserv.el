@@ -459,7 +459,7 @@ If a flag is `view', view the files read-only."
 	    (pushnew (current-buffer) (gnuclient-buffers client))
 	    (setq gnuserv-minor-mode t)
 	    ;; Add the "Done" button to the menubar, only in this buffer.
-	    (if (boundp 'current-menubar)
+	    (if (and (featurep 'menubar) current-menubar)
 	      (progn (set-buffer-menubar current-menubar)
 	      (add-menu-button nil ["Done" gnuserv-edit t]))
 	      ))
@@ -619,7 +619,7 @@ the function will not remove the frames associated with the client."
     (run-hooks 'gnuserv-done-hook)
     (setq gnuserv-minor-mode nil)
     ;; Delete the menu button.
-    (if (boundp 'current-menubar)
+    (if (and (featurep 'menubar) current-menubar)
       (delete-menu-item '("Done")))
     (funcall (if (gnuserv-temp-file-p buffer)
 		 gnuserv-done-temp-file-function

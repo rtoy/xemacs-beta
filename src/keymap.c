@@ -3961,7 +3961,15 @@ describe_map_mapper (CONST struct key_data *key,
 	  EQ (keysym, Qbutton4) ||
 	  EQ (keysym, Qbutton5) ||
 	  EQ (keysym, Qbutton6) ||
-	  EQ (keysym, Qbutton7))))
+	  EQ (keysym, Qbutton7) ||
+	  EQ (keysym, Qbutton0up) ||
+	  EQ (keysym, Qbutton1up) ||
+	  EQ (keysym, Qbutton2up) ||
+	  EQ (keysym, Qbutton3up) ||
+	  EQ (keysym, Qbutton4up) ||
+	  EQ (keysym, Qbutton5up) ||
+	  EQ (keysym, Qbutton6up) ||
+	  EQ (keysym, Qbutton7up))))
     return;
 
   /* If this command in this map is shadowed by some other map, ignore it. */

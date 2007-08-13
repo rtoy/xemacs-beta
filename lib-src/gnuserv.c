@@ -831,7 +831,7 @@ handle_unix_request (int ls)
 #endif /* UNIX_DOMAIN_SOCKETS */
 
 
-void
+int
 main(argc,argv)
      int argc;
      char *argv[];
@@ -907,6 +907,7 @@ main(argc,argv)
 #endif /* NOT SYSV_IPC */
   } /* while */
 
+  return 0;
 } /* main */
 
 #endif /* SYSV_IPC || UNIX_DOMAIN_SOCKETS || INTERNET_DOMAIN_SOCKETS */

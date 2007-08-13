@@ -17,7 +17,7 @@ static char *magick[] = {
 "= c #d23a00000000",
 "- c #f5e900000000",
 "; c #912a912a922b",
-": c None",
+": s None c None",
 "> c #8d5e9162eb8a",
 ", c #b3c7b7cbf93d",
 "< c #d6dbd706d9dc",

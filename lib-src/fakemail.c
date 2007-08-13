@@ -25,14 +25,15 @@ Boston, MA 02111-1307, USA.  */
 
 #if defined (BSD) && !defined (BSD4_1) && !defined (USE_FAKEMAIL)
 /* This program isnot used in BSD, so just avoid loader complaints.  */
-void
+int
 main ()
 {
+  return 0;
 }
 #elif defined (LINUX)
 #include <stdio.h>
 #include <stdlib.h>
-void
+int
 main ()
 {
   /* Linux /bin/mail, if it exists, is NOT the Unix v7 mail that
@@ -42,12 +43,14 @@ main ()
   fprintf (stderr, "Make sure you have the sendmail program, and\n");
   fprintf (stderr, "set the Lisp variable `sendmail-program' to point\n");
   fprintf (stderr, "to the path of the sendmail binary.\n");
-  exit (1);
+  return 1;
 }
 #else /* not BSD 4.2 (or newer) */
 #ifdef MSDOS
+int
 main ()
 {
+  return 0;
 }
 #else /* not MSDOS */
 /* This conditional contains all the rest of the file.  */
@@ -620,7 +623,7 @@ write_header (header the_header)
   return;
 }
 
-void
+int
 main (argc, argv)
      int argc;
      char **argv;
@@ -670,7 +673,7 @@ main (argc, argv)
       put_string (buf);
     }
 
-  exit (close_the_streams ());
+  return close_the_streams ();
 }
 
 #endif /* not MSDOS */

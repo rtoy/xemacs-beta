@@ -95,7 +95,7 @@ Prompts for bug subject.  Leaves you in a mail buffer."
 	    (while (progn (move-to-column 50) (not (eobp)))
 	      (search-forward " " nil t)
 	      (insert "\n"))))
-	(let ((message-buf (get-buffer " *Message-Log*")))
+	(let ((message-buf (get-buffer-create " *Message-Log*")))
 	  (if message-buf
 	      (progn
 		(insert "\n\nRecent messages:\n")

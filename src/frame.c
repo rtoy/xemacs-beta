@@ -2169,6 +2169,8 @@ The following symbols etc. have predefined meanings:
  bottom-toolbar-height, left-toolbar-width, right-toolbar-width,
  default-toolbar-visible-p, top-toolbar-visible-p, bottom-toolbar-visible-p,
  left-toolbar-visible-p, right-toolbar-visible-p, toolbar-buttons-captioned-p,
+ top-toolbar-border-width, bottom-toolbar-border-width,
+ left-toolbar-border-width, right-toolbar-border-width,
  modeline-shadow-thickness, has-modeline-p
 		[Giving the name of any built-in specifier variable is
 		equivalent to calling `set-specifier' on the specifier,
@@ -2548,9 +2550,13 @@ frame_conversion_internal (struct frame *f, int pixel_to_char,
   egw = max (egw, cpw);
   bdr = 2 * f->internal_border_width;
   obw = FRAME_SCROLLBAR_WIDTH (f) + FRAME_THEORETICAL_LEFT_TOOLBAR_WIDTH (f) +
-    FRAME_THEORETICAL_RIGHT_TOOLBAR_WIDTH (f);
+    FRAME_THEORETICAL_RIGHT_TOOLBAR_WIDTH (f) +
+    2 * FRAME_THEORETICAL_LEFT_TOOLBAR_BORDER_WIDTH (f) +
+    2 * FRAME_THEORETICAL_RIGHT_TOOLBAR_BORDER_WIDTH (f);
   obh = FRAME_SCROLLBAR_HEIGHT (f) + FRAME_THEORETICAL_TOP_TOOLBAR_HEIGHT (f) +
-    FRAME_THEORETICAL_BOTTOM_TOOLBAR_HEIGHT (f);
+    FRAME_THEORETICAL_BOTTOM_TOOLBAR_HEIGHT (f) +
+    2 * FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH (f) +
+    2 * FRAME_THEORETICAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f);
 
   if (pixel_to_char)
     {
@@ -2654,13 +2660,17 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
      selected window, then the extra space needs to be filled in
      with rows/cols. */
   if (!FRAME_REAL_TOP_TOOLBAR_VISIBLE (f))
-    new_pixheight += FRAME_THEORETICAL_TOP_TOOLBAR_HEIGHT (f);
+    new_pixheight += FRAME_THEORETICAL_TOP_TOOLBAR_HEIGHT (f) +
+      2 * FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH (f);
   if (!FRAME_REAL_BOTTOM_TOOLBAR_VISIBLE (f))
-    new_pixheight += FRAME_THEORETICAL_BOTTOM_TOOLBAR_HEIGHT (f);
+    new_pixheight += FRAME_THEORETICAL_BOTTOM_TOOLBAR_HEIGHT (f) +
+      2 * FRAME_THEORETICAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f);
   if (!FRAME_REAL_LEFT_TOOLBAR_VISIBLE (f))
-    new_pixwidth += FRAME_THEORETICAL_LEFT_TOOLBAR_WIDTH (f);
+    new_pixwidth += FRAME_THEORETICAL_LEFT_TOOLBAR_WIDTH (f) +
+      2 * FRAME_THEORETICAL_LEFT_TOOLBAR_BORDER_WIDTH (f);
   if (!FRAME_REAL_RIGHT_TOOLBAR_VISIBLE (f))
-    new_pixwidth += FRAME_THEORETICAL_RIGHT_TOOLBAR_WIDTH (f);
+    new_pixwidth += FRAME_THEORETICAL_RIGHT_TOOLBAR_WIDTH (f) +
+      2 * FRAME_THEORETICAL_RIGHT_TOOLBAR_BORDER_WIDTH (f);
 
   /* Adjust the width for the end glyph which may be a different width
      than the default character width. */

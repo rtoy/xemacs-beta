@@ -307,7 +307,7 @@ xemacs: temacs ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
 
 FRC.update-elc.stamp :
 
-update-elc.stamp : FRC.update-elc.stamp
+update-elc.stamp : temacs FRC.update-elc.stamp
 	@touch NOBYTECOMPILE
 	${DUMPENV} ./temacs -batch -l update-elc.el
 	@if test ! -f $@ -o -f NOBYTECOMPILE; then touch $@; fi; \

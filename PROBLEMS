@@ -108,18 +108,6 @@ There are a couple of problems [with use of -rpath with Irix ld], though:
 This occurs if you use the SGI linker version 7.1.  Installing the
 patch SG0001872 fixes this problem.
 
-** On Irix 5.x and 6.x, the dumped XEmacs (xemacs) core dumps when executed 
-on another machine, or after newer SGI IRIX patches have been installed.
-
-The xemacs binary must be executed with the same "libc.so" file which
-was used when the xemacs binary was dumped.  Some SGI IRIX patches
-update this file.  Make sure that all machines using the xemacs binary
-are using the same set of IRIX patches.  If xemacs core dumps after a
-patch upgrade then you will have to redump it from temacs.
-
-We don't know what causes this tight dependency, but we hope to fix it 
-in the future.
-
 ** xemacs: can't resolve symbol '__malloc_hook'
 
 This is a Linux problem where you've compiled the XEmacs binary on a libc

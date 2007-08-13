@@ -167,9 +167,6 @@ after, and will not be true at any time before.")
 (defvar command-switch-alist
   (purecopy
    '(("-help"	. command-line-do-help)
-     ("-flags"	. command-line-do-help)
-     ("-h"	. command-line-do-help)
-     ("-?"	. command-line-do-help)
      ("-version". command-line-do-version)
      ("-V"	. command-line-do-version)
      ("-funcall". command-line-do-funcall)

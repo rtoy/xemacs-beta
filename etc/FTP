@@ -8,8 +8,7 @@ in the directory /pub/xemacs/.
 ftp.xemacs.org is the primary distribution point, but you may find
 copies of it at other sites as well.  Some sites to try include:
 
-	ftp://ftp.ai.mit.edu:/pub/xemacs/
-	ftp://ftp-digital.cern.ch:/pub/beta/xemacs-20.0/
+	ftp://ftp.jaist.ac.jp/pub/GNU/xemacs/
 	ftp://ftp.uu.net:/systems/gnu/xemacs/
 	ftp://ftp.sunet.se:/pub/gnu/xemacs/
 	ftp://ftp.cenatls.cena.dgac.fr:/pub/Emacs/xemacs/

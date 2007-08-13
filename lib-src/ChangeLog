@@ -1,3 +1,15 @@
+1997-11-18  Colin Rafferty  <craffert@ml.com>
+
+	* update-elc.sh (prune_vc): Made it ignore any directory that
+	starts with a period.
+
+1997-11-16  SL Baur  <steve@altair.xemacs.org>
+
+	* gnuserv.c (main): make return type int.
+	Suggested by Andreas Jaeger <aj@arthur.rhein-neckar.de>
+
+	* fakemail.c (main): Ditto.
+
 1997-11-13  SL Baur  <steve@altair.xemacs.org>
 
 	* pop.c: Add includes from movemail.c so standard functions get

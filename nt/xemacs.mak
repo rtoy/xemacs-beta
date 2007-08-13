@@ -6,6 +6,7 @@ HAVE_X=0
 HAVE_MSW=1
 
 HAVE_MULE=0
+HAVE_IMAGEMAGICK=0
 
 OPT=-Od -Zi
 #OPT=-O2 -G5 -Zi
@@ -13,12 +14,19 @@ OPT=-Od -Zi
 #------------------------------------------------------------------------------
 
 !if $(HAVE_X)
+
+X11R6=h:\utils\X11R6
+
+!if $(HAVE_IMAGEMAGICK)
 MAGICK=e:\utils\ImageMagick
-X11R6=e:\utils\X11R6
+
+MAGICK_INCLUDES=-I$(MAGICK)\Magick
+MAGICK_LIBS=Magick.dll.lib
+!endif
 
 X_DEFINES=-DHAVE_X_WINDOWS
-X_INCLUDES=-I$(X11R6)\include -I$(MAGICK)\Magick
-X_LIBS=Magick.dll.lib Xaw.lib Xmu.lib Xt.lib SM.lib ICE.lib Xext.lib X11.lib
+X_INCLUDES=-I$(X11R6)\include $(MAGICK_INCLUDES)
+X_LIBS=$(MAGICK_LIBS) Xaw.lib Xmu.lib Xt.lib SM.lib ICE.lib Xext.lib X11.lib
 !endif
 
 !if $(HAVE_MSW)
@@ -31,6 +39,7 @@ MULE_DEFINES=-DMULE
 
 !include "..\version.sh"
 
+# Nothing should need to be edited below this point.
 #------------------------------------------------------------------------------
 
 # Generic variables
@@ -69,7 +78,7 @@ LASTFILE_FLAGS=-nologo -w $(OPT) $(INCLUDES) -Fo$@ -c
 LASTFILE_OBJS= \
 	$(OUTDIR)\lastfile.obj
 
-$(LASTFILE): $(LASTFILE_OBJS)
+$(LASTFILE): $(XEMACS_INCLUDES) $(LASTFILE_OBJS)
 	link.exe -lib -nologo -out:$@ $(LASTFILE_OBJS)
 
 $(OUTDIR)\lastfile.obj:	$(LASTFILE_SRC)\lastfile.c
@@ -96,7 +105,7 @@ LWLIB_OBJS= \
 	$(OUTDIR)\xlwmenu.obj \
 	$(OUTDIR)\xlwscrollbar.obj
 
-$(LWLIB): $(XEMACS_INCLUDES) $(LWLIB_OBJS)
+$(LWLIB): $(LWLIB_OBJS)
 	link.exe -lib -nologo -debugtype:both -out:$@ $(LWLIB_OBJS)
 
 $(OUTDIR)\lwlib-config.obj:	$(LWLIB_SRC)\lwlib-config.c
@@ -485,6 +494,7 @@ $(TEMACS): $(TEMACS_INCLUDES) $(TEMACS_OBJS)
 	link.exe @<<
   $(TEMACS_LFLAGS) $(TEMACS_OBJS) $(TEMACS_LIBS)
 <<
+	!$(TEMACS) -batch -l update-elc.el
 
 # MSDEV Source Broswer file. "*.sbr" is too inclusive but this is harmless
 $(TEMACS_BROWSE): $(TEMACS_OBJS)
@@ -499,7 +509,7 @@ $(TEMACS_BROWSE): $(TEMACS_OBJS)
 LOADPATH=$(LISP)
 
 $(DOC): $(LOADPATH)\startup.elc $(LIB_SRC)\make-docfile.exe
-	del $(DOC)
+	-del $(DOC)
 	!$(TEMACS) -batch -l make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC1)
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC2)
@@ -509,9 +519,6 @@ $(DOC): $(LOADPATH)\startup.elc $(LIB_SRC)\make-docfile.exe
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC6)
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC7)
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC8)
-
-$(LOADPATH)\startup.elc: $(LOADPATH)\startup.el
-	!$(TEMACS) -batch -l update-elc.el
 
 update-elc: $(LOADPATH)\startup.el
 	!$(TEMACS) -batch -l update-elc.el
@@ -544,6 +551,7 @@ distclean:
 	cd ..\$(TEMACS_DIR)
 	del config.h
 	del paths.h
+	del Emacs.ad.h
 	del *.bak
 	del *.orig
 	del *.rej

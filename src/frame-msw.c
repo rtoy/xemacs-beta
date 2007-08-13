@@ -68,10 +68,17 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   update_frame_face_values (f);
 }
 
-/* Called just before frame's properties are set */
+/* Called just before frame's properties are set, size is 10x10 or something */
 static void
 mswindows_init_frame_2 (struct frame *f, Lisp_Object props)
 {
+  int x, y;
+  Lisp_Object frame, window;
+
+  XSETFRAME (frame, f);
+  default_face_height_and_width (frame, &x, &y);
+  FRAME_PIXWIDTH(f) = x * FRAME_WIDTH(f);
+  FRAME_PIXHEIGHT(f) = y * FRAME_HEIGHT(f);
 }
 
 /* Called after frame's properties are set */

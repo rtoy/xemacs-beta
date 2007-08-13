@@ -202,15 +202,18 @@ struct window
   Lisp_Object toolbar[4];
   /* Toolbar size for each of the four positions. */
   Lisp_Object toolbar_size[4];
+  /* Toolbar border width for each of the four positions. */
+  Lisp_Object toolbar_border_width[4];
   /* Toolbar visibility status for each of the four positions. */
   Lisp_Object toolbar_visible_p[4];
   /* Caption status of toolbar. */
   Lisp_Object toolbar_buttons_captioned_p;
-  /* The following four don't really need to be cached except
+  /* The following five don't really need to be cached except
      that we need to know when they've changed. */
   Lisp_Object default_toolbar;
   Lisp_Object default_toolbar_width, default_toolbar_height;
   Lisp_Object default_toolbar_visible_p;
+  Lisp_Object default_toolbar_border_width;
 #endif /* HAVE_TOOLBARS */
   Lisp_Object left_margin_width, right_margin_width;
   Lisp_Object minimum_line_ascent, minimum_line_descent;

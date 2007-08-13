@@ -54,52 +54,116 @@
 ;;; Fill in missing parts of a font spec. This is primarily intended as a
 ;;; helper function for the functions below.
 ;;; mswindows fonts look like:
-;;;	fontname[:[weight ][style][:pointsize[:effects[:charset]]]]
+;;;	fontname[:[weight][ style][:pointsize[:effects[:charset]]]]
 ;;; A minimal mswindows font spec looks like:
 ;;;	Courier New
 ;;; A maximal mswindows font spec looks like:
 ;;;	Courier New:Bold Italic:10:underline strikeout:ansi
 ;;; Missing parts of the font spec should be filled in with these values:
 ;;;	Courier New:Normal:10::ansi
-(defun mswindows-canicolize-font (font &optional device)
-  "Given a mswindows font specification, this converts it to canonical form."
-  nil)
+(defun mswindows-font-canicolize-name (font)
+  "Given a mswindows font specification, this returns its name in canonical
+form."
+  (cond ((font-instance-p font)
+	 (let ((name (font-instance-name font)))
+	   (cond ((string-match
+		   "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*:[a-zA-Z 0-9]*$"
+		   name) name)
+		 ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*$"
+				name) (concat name ":ansi"))
+		 ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+$" name)
+		  (concat name "::ansi"))
+		 ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*$" name)
+		  (concat name "10::ansi"))
+		 ((string-match "^[a-zA-Z ]+$" name)
+		  (concat name ":Normal:10::ansi"))
+		 (t "Courier New:Normal:10::ansi"))))
+	(t "Courier New:Normal:10::ansi")))
 
 (defun mswindows-make-font-bold (font &optional device)
   "Given a mswindows font specification, this attempts to make a bold font.
 If it fails, it returns nil."
-  nil)
+  (if (font-instance-p font)
+      (let ((name (mswindows-font-canicolize-name font)))
+	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
+	(make-font-instance (concat
+			     (substring name 0 (match-beginning 1))
+			     "Bold" (substring name (match-end 1)))
+			    device t))))
 
 (defun mswindows-make-font-unbold (font &optional device)
   "Given a mswindows font specification, this attempts to make a non-bold font.
 If it fails, it returns nil."
-  nil)
+  (if (font-instance-p font)
+      (let ((name (mswindows-font-canicolize-name font)))
+	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
+	(make-font-instance (concat
+			     (substring name 0 (match-beginning 1))
+			     "Normal" (substring name (match-end 1)))
+			    device t))))
 
 (defun mswindows-make-font-italic (font &optional device)
-  "Given a mswindows font specification, this attempts to make an `italic' font.
-If it fails, it returns nil."
-  nil)
+  "Given a mswindows font specification, this attempts to make an `italic'
+font. If it fails, it returns nil."
+  (if (font-instance-p font)
+      (let ((name (mswindows-font-canicolize-name font)))
+	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
+	(make-font-instance (concat
+			     (substring name 0 (match-beginning 1))
+			     "Italic" (substring name (match-end 1)))
+			    device t))))
 
 (defun mswindows-make-font-unitalic (font &optional device)
-  "Given a mswindows font specification, this attempts to make a non-italic font.
-If it fails, it returns nil."
-  nil)
+  "Given a mswindows font specification, this attempts to make a non-italic
+font. If it fails, it returns nil."
+  (if (font-instance-p font)
+      (let ((name (mswindows-font-canicolize-name font)))
+	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
+	(make-font-instance (concat
+			     (substring name 0 (match-beginning 1))
+			     "Normal" (substring name (match-end 1)))
+			    device t))))
 
 (defun mswindows-make-font-bold-italic (font &optional device)
   "Given a mswindows font specification, this attempts to make a `bold-italic'
 font. If it fails, it returns nil."
-  nil)
+  (if (font-instance-p font)
+      (let ((name (mswindows-font-canicolize-name font)))
+	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
+	(make-font-instance (concat
+			     (substring name 0 (match-beginning 1))
+			     "Bold Italic" (substring name (match-end 1)))
+			    device t))))
 
 (defun mswindows-find-smaller-font (font &optional device)
   "Loads a new, version of the given font (or font name).
 Returns the font if it succeeds, nil otherwise.
 If scalable fonts are available, this returns a font which is 1 point smaller.
 Otherwise, it returns the next smaller version of this font that is defined."
-  nil)
+  (if (font-instance-p font)
+      (let (old-size (name (mswindows-font-canicolize-name font)))
+	(string-match "^[a-zA-Z ]+:[a-zA-Z ]*:\\([0-9]+\\):" name)
+	(setq old-size (string-to-int
+			(substring name (match-beginning 1) (match-end 1))))
+	(if (> old-size 0)
+	    (make-font-instance (concat
+				 (substring name 0 (match-beginning 1))
+				 (int-to-string (- old-size 1))
+				 (substring name (match-end 1)))
+				device t)))))
 
 (defun mswindows-find-larger-font (font &optional device)
   "Loads a new, slightly larger version of the given font (or font name).
 Returns the font if it succeeds, nil otherwise.
 If scalable fonts are available, this returns a font which is 1 point larger.
 Otherwise, it returns the next larger version of this font that is defined."
-  nil)
+  (if (font-instance-p font)
+      (let (old-size (name (mswindows-font-canicolize-name font)))
+	(string-match "^[a-zA-Z ]+:[a-zA-Z ]*:\\([0-9]+\\):" name)
+	(setq old-size (string-to-int
+			(substring name (match-beginning 1) (match-end 1))))
+	(make-font-instance (concat
+			     (substring name 0 (match-beginning 1))
+			     (int-to-string (+ old-size 1))
+			     (substring name (match-end 1)))
+			    device t))))

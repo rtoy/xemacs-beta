@@ -67,7 +67,7 @@ echo "          with $REAL..."
 
 $EMACS -batch -vanilla -l `pwd`/lisp/prim/cleantree -f batch-remove-old-elc lisp
 
-prune_vc="( -name SCCS -o -name RCS -o -name CVS ) -prune -o"
+prune_vc="( -name '.*' -o -name SCCS -o -name RCS -o -name CVS ) -prune -o"
 
 # $els  is a list of all .el  files
 # $elcs is a list of all .elc files

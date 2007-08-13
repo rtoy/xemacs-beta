@@ -1,4 +1,4 @@
-.TH XEMACS 1 "1997 January 1"
+.TH XEMACS 1 "1997 November 19"
 .UC 4
 .SH NAME
 xemacs \- Emacs: The Next Generation
@@ -142,6 +142,18 @@ Do not load the site-specific init file (site-init.el).
 .B \-q, \-no\-init\-file
 Do not load an init file.
 .TP
+.B \-no-packages
+Do not process the package path.
+.TP
+.B \-vanilla
+Load no extra files at startup.  Equivalent to the combination of
+.B \-q
+,
+.B \-no-site-file
+, and
+.B \-no-packages
+\.
+.TP
 .BI \-u " user, " \-user " user"
 Load
 .IR user 's
@@ -156,7 +168,7 @@ Go to the line specified by
 .I number
 (do not insert a space between the "+" sign and the number).
 .TP
-.B \-help, \-flags, \-?
+.B \-help
 Print a help message and exit.
 .TP
 .B \-V, \-version,

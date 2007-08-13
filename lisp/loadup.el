@@ -185,6 +185,7 @@
 (when (member "run-temacs" command-line-args)
   (message "\nBootstrapping from temacs...")
   (setq purify-flag nil)
+  (setq inhibit-package-init t)
   ;; Remove all args up to and including "run-temacs"
   (apply #'run-emacs-from-temacs (cdr (member "run-temacs" command-line-args)))
   ;; run-emacs-from-temacs doesn't actually return anyway.

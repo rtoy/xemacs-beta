@@ -2,13 +2,34 @@
 
 ;; Author: Gary D. Foster <Gary.Foster@corp.sun.com>
 ;; Created: 01 Mar 1996
-;; Version: $Revision: 1.7 $
+;; Version: 1.26
 ;; Keywords: emulations brief crisp
 ;; X-Modified-by:
-;;	$Log: crisp.el,v $
-;;	Revision 1.7  1997/11/12 07:09:59  steve
-;;	Patches to beta4
-;;	
+;;	crisp.el,v
+;;	Revision 1.26  1997/11/18 05:41:02  gfoster
+;;	Added several new keybindings:
+;;		C-home	top of window
+;;		C-end	bottom of window
+;;		M-home	beginning of line
+;;		M-end	end-of-line
+;;		C-F	format region
+;;		M-l	mark line
+;;		M-m	set mark
+;;	Added crisp-version function
+;;
+;;	Revision 1.25  1997/11/18 04:19:09  gfoster
+;;	Shortened the version numbering, removed the release-version tracking
+;;
+;;	Revision 1.24  1997/11/18 04:15:54  gfoster
+;;	Added `crisp-submit-bug-report' (shamelessly cribbed from Barry's
+;;	cc-mode.  Thanks Barry!)
+;;
+;;	Bound the above to C-c b
+;;
+;;	Changed the behavior of `crisp-(kill|copy)-line' so (kill|copy)ing
+;;	works on the region from point to eol instead of the entire line, when
+;;	a region is not highlighted.
+;;
 ;;	Revision 1.23  1997/11/11 19:47:02  gfoster
 ;;	Merged changes suggested by Hrvoje Niksic
 ;;	   make crisp-mode-map a sparse keymap parented from current-global-map
@@ -131,8 +152,11 @@ does not load the scroll-lock package.")
 (defvar crisp-load-hook nil
   "Hooks to run after loading the CRiSP emulator package.")
 
-(defconst crisp-version "crisp.el release 1.1/$Revision: 1.7 $"
-  "The release number and RCS version for the CRiSP emulator.")
+(defconst crisp-version "1.26"
+  "The version of the CRiSP emulator.")
+
+(defconst crisp-mode-help-address "gfoster@suzieq.ragesoft.com, Gary.Foster@corp.Sun.COM"
+  "The email address of the CRiSP mode author/maintainer.")
 
 ;; Silence the byte-compiler.
 (defvar last-last-command)
@@ -153,23 +177,23 @@ does not load the scroll-lock package.")
 
 (define-key crisp-mode-map [(f5)]           'search-forward-regexp)
 (define-key crisp-mode-map [(f19)]          'search-forward-regexp)
-(define-key crisp-mode-map [(meta f5)]       'search-backward-regexp)
+(define-key crisp-mode-map [(meta f5)]      'search-backward-regexp)
 
 (define-key crisp-mode-map [(f6)]           'query-replace)
 
 (define-key crisp-mode-map [(f7)]           'start-kbd-macro)
-(define-key crisp-mode-map [(meta f7)]       'end-kbd-macro)
+(define-key crisp-mode-map [(meta f7)]      'end-kbd-macro)
 
 (define-key crisp-mode-map [(f8)]           'call-last-kbd-macro)
 (define-key crisp-mode-map [(meta f8)]      'save-kbd-macro)
 
 (define-key crisp-mode-map [(f9)]           'find-file)
-(define-key crisp-mode-map [(meta f9)]       'load-library)
+(define-key crisp-mode-map [(meta f9)]      'load-library)
 
 (define-key crisp-mode-map [(f10)]          'execute-extended-command)
-(define-key crisp-mode-map [(meta f10)]      'compile)
+(define-key crisp-mode-map [(meta f10)]     'compile)
 
-(define-key crisp-mode-map [(SunF37)]          'kill-buffer)
+(define-key crisp-mode-map [(SunF37)]       'kill-buffer)
 (define-key crisp-mode-map [(kp-add)]       'crisp-copy-line)
 (define-key crisp-mode-map [(kp-subtract)]  'crisp-kill-line)
 (define-key crisp-mode-map [(insert)]       'x-yank-clipboard-selection)
@@ -177,38 +201,82 @@ does not load the scroll-lock package.")
 (define-key crisp-mode-map [(f20)]          'x-kill-primary-selection) ; cut on Sun5 kbd 
 (define-key crisp-mode-map [(f18)]          'x-yank-clipboard-selection) ; paste on Sun5 kbd
 
-(define-key crisp-mode-map [(meta d)]       (lambda () (interactive) (beginning-of-line) (kill-line)))
+(define-key crisp-mode-map [(control f)]    'fill-paragraph-or-region)
+(define-key crisp-mode-map [(meta d)]       (lambda ()
+					      (interactive)
+					      (beginning-of-line) (kill-line)))
 (define-key crisp-mode-map [(meta e)]       'find-file)
 (define-key crisp-mode-map [(meta g)]       'goto-line)
 (define-key crisp-mode-map [(meta h)]       'help)
 (define-key crisp-mode-map [(meta i)]       'overwrite-mode)
 (define-key crisp-mode-map [(meta j)]       'bookmark-jump)
+(define-key crisp-mode-map [(meta l)]       'crisp-mark-line)
+(define-key crisp-mode-map [(meta m)]       'set-mark-command)
 (define-key crisp-mode-map [(meta n)]       'bury-buffer)
 (define-key crisp-mode-map [(meta p)]       'crisp-unbury-buffer)
 (define-key crisp-mode-map [(meta u)]       'advertised-undo)
 (define-key crisp-mode-map [(f14)]          'advertised-undo)
 (define-key crisp-mode-map [(meta w)]       'save-buffer)
 (define-key crisp-mode-map [(meta x)]       'crisp-meta-x-wrapper)
-(define-key crisp-mode-map [(meta ?0)]      (lambda () (interactive) (bookmark-set "0")))
-(define-key crisp-mode-map [(meta ?1)]      (lambda () (interactive) (bookmark-set "1")))
-(define-key crisp-mode-map [(meta ?2)]      (lambda () (interactive) (bookmark-set "2")))
-(define-key crisp-mode-map [(meta ?3)]      (lambda () (interactive) (bookmark-set "3")))
-(define-key crisp-mode-map [(meta ?4)]      (lambda () (interactive) (bookmark-set "4")))
-(define-key crisp-mode-map [(meta ?5)]      (lambda () (interactive) (bookmark-set "5")))
-(define-key crisp-mode-map [(meta ?6)]      (lambda () (interactive) (bookmark-set "6")))
-(define-key crisp-mode-map [(meta ?7)]      (lambda () (interactive) (bookmark-set "7")))
-(define-key crisp-mode-map [(meta ?8)]      (lambda () (interactive) (bookmark-set "8")))
-(define-key crisp-mode-map [(meta ?9)]      (lambda () (interactive) (bookmark-set "9")))
+(define-key crisp-mode-map [(meta ?0)]      (lambda ()
+					      (interactive)
+					      (bookmark-set "0")))
+(define-key crisp-mode-map [(meta ?1)]      (lambda ()
+					      (interactive)
+					      (bookmark-set "1")))
+(define-key crisp-mode-map [(meta ?2)]      (lambda ()
+					      (interactive)
+					      (bookmark-set "2")))
+(define-key crisp-mode-map [(meta ?3)]      (lambda ()
+					      (interactive)
+					      (bookmark-set "3")))
+(define-key crisp-mode-map [(meta ?4)]      (lambda ()
+					      (interactive)
+					      (bookmark-set "4")))
+(define-key crisp-mode-map [(meta ?5)]      (lambda ()
+					      (interactive)
+					      (bookmark-set "5")))
+(define-key crisp-mode-map [(meta ?6)]      (lambda ()
+					      (interactive)
+					      (bookmark-set "6")))
+(define-key crisp-mode-map [(meta ?7)]      (lambda ()
+					      (interactive)
+					      (bookmark-set "7")))
+(define-key crisp-mode-map [(meta ?8)]      (lambda ()
+					      (interactive)
+					      (bookmark-set "8")))
+(define-key crisp-mode-map [(meta ?9)]      (lambda ()
+					      (interactive)
+					      (bookmark-set "9")))
 
-(define-key crisp-mode-map [(shift right)]  'fkey-forward-word)
-(define-key crisp-mode-map [(shift left)]   'fkey-backward-word)
-(define-key crisp-mode-map [(shift delete)] 'kill-word)
+(define-key crisp-mode-map [(shift right)]     'fkey-forward-word)
+(define-key crisp-mode-map [(shift left)]      'fkey-backward-word)
+(define-key crisp-mode-map [(shift delete)]    'kill-word)
 (define-key crisp-mode-map [(shift backspace)] 'backward-kill-word)
-(define-key crisp-mode-map [(control left)] 'backward-word)
-(define-key crisp-mode-map [(control right)] 'forward-word)
+(define-key crisp-mode-map [(control left)]    'backward-word)
+(define-key crisp-mode-map [(control right)]   'forward-word)
 
-(define-key crisp-mode-map [(home)] 'crisp-home)
-(define-key crisp-mode-map [(end)] 'crisp-end)
+(define-key crisp-mode-map [(home)]            'crisp-home)
+(define-key crisp-mode-map [(control home)]    (lambda ()
+						 (interactive)
+						 (move-to-window-line 0)))
+(define-key crisp-mode-map [(meta home)]       'beginning-of-line)
+(define-key crisp-mode-map [(end)]             'crisp-end)
+(define-key crisp-mode-map [(control end)]     (lambda ()
+						 (interactive)
+						 (move-to-window-line -1)))
+(define-key crisp-mode-map [(meta end)]        'end-of-line)
+
+(define-key crisp-mode-map [(control c) (b)]   'crisp-submit-bug-report)
+
+(defun crisp-version (&optional arg)
+  "Version number of the CRiSP emulator package.
+If ARG, insert results at point."
+  (interactive "P")
+  (let ((foo (concat "CRiSP version " crisp-version)))
+    (if arg
+	(insert (message foo))
+      (message foo))))
 
 (defun crisp-mark-line (arg)
   "Put mark at the end of line.  Arg works as in `end-of-line'."
@@ -217,23 +285,23 @@ does not load the scroll-lock package.")
 
 (defun crisp-kill-line (arg)
   "Mark and kill line(s).
-Marks the entire current line (honoring prefix arguments), copies the
-region to the kill ring and clipboard, and then deletes it."
+Marks from point to end of the current line (honoring prefix arguments),
+copies the region to the kill ring and clipboard, and then deletes it."
   (interactive "*p")
   (if zmacs-region-active-p
       (x-kill-primary-selection)
-    (beginning-of-line)
     (crisp-mark-line arg)
     (x-kill-primary-selection)))
 
 (defun crisp-copy-line (arg)
-  "Mark and copy entire current line (honoring prefix arguments), copies the
-region to the kill ring and clipboard, and then deactivates the region."
+  "Mark and copy line(s).
+Marks from point to end of the current line (honoring prefix arguments),
+copies the region to the kill ring and clipboard, and then deactivates
+the region."
   (interactive "*p")
   (let ((curpos (point)))
     (if zmacs-region-active-p
 	(x-copy-primary-selection)
-      (beginning-of-line)
       (crisp-mark-line arg)
       (x-copy-primary-selection)
       (goto-char curpos))))
@@ -283,6 +351,31 @@ normal CRiSP binding) and when it is nil M-x will run
   (if crisp-override-meta-x
       (save-buffers-kill-emacs)
     (call-interactively 'execute-extended-command)))
+
+;; bug reporter
+
+(defun crisp-submit-bug-report ()
+  "Submit via mail a bug report on CC Mode."
+  (interactive)
+  (require 'cc-vars)
+  ;; load in reporter
+  (let ((reporter-prompt-for-summary-p t)
+	(reporter-dont-compact-list '(c-offsets-alist))
+	(style c-indentation-style)
+	(hook c-special-indent-hook)
+	(c-features c-emacs-features))
+    (and
+     (if (y-or-n-p "Do you want to submit a report on CRiSP Mode? ")
+	 t (message "") nil)
+     (require 'reporter)
+     (reporter-submit-bug-report
+      crisp-mode-help-address
+      (concat "CRiSP Mode [" crisp-version "]")
+      nil
+      nil
+      nil
+      "Dear Gary,"
+      ))))
 
 ;; Now enable the mode
 

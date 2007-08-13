@@ -217,10 +217,12 @@ Mail readers known by default are vm, gnus, rmail, mh, pine, elm,
 (defun toolbar-mail ()
   "Run mail in a separate frame."
   (interactive)
-  (let ((command (assq toolbar-mail-reader toolbar-mail-commands-alist)))
+  (let ((command (cdr (assq toolbar-mail-reader toolbar-mail-commands-alist))))
     (if (not command)
 	(error "Uknown mail reader %s" toolbar-mail-reader))
-    (funcall (cdr command))))
+    (if (symbolp command)
+	(call-interactively command)
+      (eval command))))
 
 ;;
 ;; toolbar info variables and defuns
@@ -473,6 +475,18 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
    '("leftToolBarWidth" . "LeftToolBarWidth"))
   (x-init-specifier-from-resources
    right-toolbar-width 'natnum locale
-   '("rightToolBarWidth" . "RightToolBarWidth")))
+   '("rightToolBarWidth" . "RightToolBarWidth"))
+  (x-init-specifier-from-resources
+   top-toolbar-border-width 'natnum locale
+   '("topToolBarBorderWidth" . "TopToolBarBorderWidth"))
+  (x-init-specifier-from-resources
+   bottom-toolbar-border-width 'natnum locale
+   '("bottomToolBarBorderWidth" . "BottomToolBarBorderWidth"))
+  (x-init-specifier-from-resources
+   left-toolbar-border-width 'natnum locale
+   '("leftToolBarBorderWidth" . "LeftToolBarBorderWidth"))
+  (x-init-specifier-from-resources
+   right-toolbar-border-width 'natnum locale
+   '("rightToolBarBorderWidth" . "RightToolBarBorderWidth")))
 
 ;;; x-toolbar.el ends here

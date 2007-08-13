@@ -52,6 +52,7 @@
 @SET_MAKE@
 RECURSIVE_MAKE=@RECURSIVE_MAKE@
 SHELL = /bin/sh
+LANG = C
 RM = rm -f
 pwd = /bin/pwd
 
@@ -268,13 +269,17 @@ custom-loads:
 	MAKE='$(MAKE)' sh ${srcdir}/lib-src/update-custom.sh
 
 finder: src
+	@echo "Building finder database"
 	@(cd lisp/utils; \
 		${blddir}/src/xemacs -batch -q -no-site-file \
+		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
 
 lisp/utils/finder-inf.el:
+	@echo "Building finder database"
 	@(cd lisp/utils; \
 		${blddir}/src/xemacs -batch -q -no-site-file \
+		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
 
 ## We force the rebuilding of src/paths.h because the user might give

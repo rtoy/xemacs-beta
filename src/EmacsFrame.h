@@ -87,6 +87,34 @@ Boston, MA 02111-1307, USA.  */
 #define XtCRightToolBarWidth "RightToolBarWidth"
 #endif
 
+#ifndef XtNtopToolBarBorderWidth
+#define XtNtopToolBarBorderWidth "topToolBarBorderWidth"
+#endif
+#ifndef XtCTopToolBarBorderWidth
+#define XtCTopToolBarBorderWidth "TopToolBarBorderWidth"
+#endif
+
+#ifndef XtNbottomToolBarBorderWidth
+#define XtNbottomToolBarBorderWidth "bottomToolBarBorderWidth"
+#endif
+#ifndef XtCBottomToolBarBorderWidth
+#define XtCBottomToolBarBorderWidth "BottomToolBarBorderWidth"
+#endif
+
+#ifndef XtNleftToolBarBorderWidth
+#define XtNleftToolBarBorderWidth "leftToolBarBorderWidth"
+#endif
+#ifndef XtCLeftToolBarBorderWidth
+#define XtCLeftToolBarBorderWidth "LeftToolBarBorderWidth"
+#endif
+
+#ifndef XtNrightToolBarBorderWidth
+#define XtNrightToolBarBorderWidth "rightToolBarBorderWidth"
+#endif
+#ifndef XtCRightToolBarBorderWidth
+#define XtCRightToolBarBorderWidth "RightToolBarBorderWidth"
+#endif
+
 #ifndef XtNtopToolBarShadowColor
 #define XtNtopToolBarShadowColor "topToolBarShadowColor"
 #endif
@@ -158,6 +186,13 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #ifndef XtCForeground
 #define XtCForeground "Foreground"
+#endif
+
+#ifndef XtNbackground
+#define XtNbackground "background"
+#endif
+#ifndef XtCBackground
+#define XtCBackground "Background"
 #endif
 
 #ifndef XtNiconic

@@ -309,8 +309,7 @@ MATCH-ANCHORED should be of the form:
 
  (MATCHER PRE-MATCH-FORM POST-MATCH-FORM MATCH-HIGHLIGHT ...)
 
-Where MATCHER is as for MATCH-HIGHLIGHT with one exception.  The limit of the
-search is currently guaranteed to be (no greater than) the end of the line.
+Where MATCHER is as for MATCH-HIGHLIGHT with one exception; see below.
 PRE-MATCH-FORM and POST-MATCH-FORM are evaluated before the first, and after
 the last, instance MATCH-ANCHORED's MATCHER is used.  Therefore they can be
 used to initialise before, and cleanup after, MATCHER is used.  Typically,
@@ -328,6 +327,13 @@ For example, an element of the form highlights (if not already highlighted):
  initially searched for starting from the end of the match of \"anchor\", and
  searching for subsequent instance of \"anchor\" resumes from where searching
  for \"item\" concluded.)
+
+The above-mentioned exception is as follows.  The limit of the MATCHER search
+defaults to the end of the line after PRE-MATCH-FORM is evaluated.
+However, if PRE-MATCH-FORM returns a position greater than the position after
+PRE-MATCH-FORM is evaluated, that position is used as the limit of the search.
+It is generally a bad idea to return a position greater than the end of the
+line, i.e., cause the MATCHER search to span lines.
 
 Note that the MATCH-ANCHORED feature is experimental; in the future, we may
 replace it with other ways of providing this functionality.
@@ -1135,12 +1141,15 @@ HIGHLIGHT should be of the form MATCH-HIGHLIGHT, see `font-lock-keywords'."
 
 (defsubst font-lock-fontify-anchored-keywords (keywords limit)
   "Fontify according to KEYWORDS until LIMIT.
-KEYWORDS should be of the form MATCH-ANCHORED, see `font-lock-keywords'."
-  (let ((matcher (nth 0 keywords)) (lowdarks (nthcdr 3 keywords)) highlights)
-    ;; Until we come up with a cleaner solution, we make LIMIT the end of line.
-    (save-excursion (end-of-line) (setq limit (min limit (point))))
-    ;; Evaluate PRE-MATCH-FORM.
-    (eval (nth 1 keywords))
+KEYWORDS should be of the form MATCH-ANCHORED, see `font-lock-keywords',
+LIMIT can be modified by the value of its PRE-MATCH-FORM."
+  (let ((matcher (nth 0 keywords)) (lowdarks (nthcdr 3 keywords)) highlights
+	;; Evaluate PRE-MATCH-FORM.
+	(pre-match-value (eval (nth 1 keywords))))
+    ;; Set LIMIT to value of PRE-MATCH-FORM or the end of line.
+    (if (and (numberp pre-match-value) (> pre-match-value (point)))
+	(setq limit pre-match-value)
+      (save-excursion (end-of-line) (setq limit (point))))
     (save-match-data
       ;; Find an occurrence of `matcher' before `limit'.
       (while (if (stringp matcher)

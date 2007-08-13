@@ -31,8 +31,8 @@
 ! `rgb.txt', usually found in /usr/lib/X11/ or /usr/openwin/lib/X11/.
 
 ! Set the modeline colors.
-Emacs.modeline*attributeForeground:	Black
-Emacs.modeline*attributeBackground:	Gray75
+!Emacs.modeline*attributeForeground:	Black
+!Emacs.modeline*attributeBackground:	Gray75
 
 ! Set the color of the text cursor.
 Emacs.text-cursor*attributeBackground:	Red3
@@ -47,7 +47,7 @@ Emacs.text-cursor*attributeBackground:	Red3
 ! Set the menubar colors.  This overrides the default foreground and
 ! background colors specified above.
 *menubar*Foreground:			Gray30
-*menubar*Background:			Gray75
+*menubar*Background:			Gray80
 ! This is for buttons in the menubar.  
 ! Yellow would be better, but that would map to white on monochrome.
 *menubar*buttonForeground:		Blue
@@ -58,7 +58,7 @@ Emacs.text-cursor*attributeBackground:	Red3
 
 ! Specify the colors of popup menus.
 *popup*Foreground:			Black
-*popup*Background:			Gray75
+*popup*Background:			Gray80
 
 ! Specify the colors of the various sub-widgets of the dialog boxes.
 *dialog*Foreground:			Black
@@ -73,9 +73,9 @@ Emacs.text-cursor*attributeBackground:	Red3
 
 ! Xlw Scrollbar colors
 *XlwScrollBar*Foreground:		Gray30
-*XlwScrollBar*Background:		Gray75
+*XlwScrollBar*Background:		Gray80
 *XmScrollBar*Foreground:		Gray30
-*XmScrollBar*Background:		Gray75
+*XmScrollBar*Background:		Gray80
 
 !
 ! The Lucid Scrollbar supports two added resources, SliderStyle is either
@@ -103,7 +103,7 @@ Emacs.text-cursor*attributeBackground:	Red3
 
 !*topToolBarShadowColor:			Gray90
 !*bottomToolBarShadowColor:		Gray40
-*backgroundToolBarColor:		Gray75
+*backgroundToolBarColor:		Gray80
 *toolBarShadowThickness:		2
 
 

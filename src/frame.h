@@ -107,6 +107,8 @@ struct frame
   Lisp_Object toolbar_size[4];
   /* Visibility of the toolbars.  This acts as a valve for toolbar_size. */
   Lisp_Object toolbar_visible_p[4];
+  /* Thickness of the border around the toolbar. */
+  Lisp_Object toolbar_border_width[4];
 #endif
 
   /* A structure of auxiliary data specific to the device type.
@@ -403,9 +405,12 @@ extern int frame_changed;
   (!NILP ((f)->toolbar_visible_p[pos]))
 #define FRAME_RAW_THEORETICAL_TOOLBAR_SIZE(f, pos) \
   (XINT ((f)->toolbar_size[pos]))
+#define FRAME_RAW_THEORETICAL_TOOLBAR_BORDER_WIDTH(f, pos) \
+  (XINT ((f)->toolbar_border_width[pos]))
 #else
 #define FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE(f, pos) 0
 #define FRAME_RAW_THEORETICAL_TOOLBAR_SIZE(f, pos) 0
+#define FRAME_RAW_THEORETICAL_TOOLBAR_BORDER_WIDTH(f, pos) 0
 #endif
 
 #define FRAME_THEORETICAL_TOOLBAR_SIZE(f, pos)		\
@@ -422,6 +427,20 @@ extern int frame_changed;
 #define FRAME_THEORETICAL_RIGHT_TOOLBAR_WIDTH(f) \
   FRAME_THEORETICAL_TOOLBAR_SIZE (f, RIGHT_TOOLBAR)
 
+#define FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH(f, pos)		\
+  (FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE (f, pos)	\
+   ? FRAME_RAW_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, pos)	\
+   : 0)
+
+#define FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH(f) \
+  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, TOP_TOOLBAR)
+#define FRAME_THEORETICAL_BOTTOM_TOOLBAR_BORDER_WIDTH(f) \
+  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, BOTTOM_TOOLBAR)
+#define FRAME_THEORETICAL_LEFT_TOOLBAR_BORDER_WIDTH(f) \
+  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, LEFT_TOOLBAR)
+#define FRAME_THEORETICAL_RIGHT_TOOLBAR_BORDER_WIDTH(f) \
+  FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, RIGHT_TOOLBAR)
+
 /* This returns the window-local value rather than the frame-local value;
    that tells you about what's actually visible rather than what should
    be used when computing the frame size. */
@@ -429,12 +448,15 @@ extern int frame_changed;
 #ifdef HAVE_TOOLBARS
 #define FRAME_RAW_REAL_TOOLBAR_VISIBLE(f, pos) \
   (!NILP (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_visible_p[pos]))
+#define FRAME_RAW_REAL_TOOLBAR_BORDER_WIDTH(f, pos) \
+  (XINT (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_border_width[pos]))
 #define FRAME_RAW_REAL_TOOLBAR_SIZE(f, pos) \
   (XINT (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_size[pos]))
 #define FRAME_REAL_TOOLBAR(f, pos) \
   (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar[pos])
 #else
 #define FRAME_RAW_REAL_TOOLBAR_VISIBLE(f, pos) 0
+#define FRAME_RAW_REAL_TOOLBAR_BORDER_WIDTH(f, pos) 0
 #define FRAME_RAW_REAL_TOOLBAR_SIZE(f, pos) 0
 #define FRAME_REAL_TOOLBAR(f, pos) Qnil
 #endif
@@ -467,6 +489,11 @@ extern int frame_changed;
    && !NILP (FRAME_REAL_TOOLBAR (f, pos))	\
    ? FRAME_RAW_REAL_TOOLBAR_SIZE (f, pos)	\
    : 0)
+#define FRAME_REAL_TOOLBAR_BORDER_WIDTH(f, pos)		\
+  (FRAME_RAW_REAL_TOOLBAR_VISIBLE (f, pos)		\
+   && !NILP (FRAME_REAL_TOOLBAR (f, pos))		\
+   ? FRAME_RAW_REAL_TOOLBAR_BORDER_WIDTH (f, pos)	\
+   : 0)
 
 #define FRAME_REAL_TOP_TOOLBAR_HEIGHT(f) \
   FRAME_REAL_TOOLBAR_SIZE (f, TOP_TOOLBAR)
@@ -477,6 +504,15 @@ extern int frame_changed;
 #define FRAME_REAL_RIGHT_TOOLBAR_WIDTH(f) \
   FRAME_REAL_TOOLBAR_SIZE (f, RIGHT_TOOLBAR)
 
+#define FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH(f) \
+  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, TOP_TOOLBAR)
+#define FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH(f) \
+  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, BOTTOM_TOOLBAR)
+#define FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH(f) \
+  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, LEFT_TOOLBAR)
+#define FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH(f) \
+  FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, RIGHT_TOOLBAR)
+
 #define FRAME_REAL_TOP_TOOLBAR_VISIBLE(f) \
   FRAME_REAL_TOOLBAR_VISIBLE (f, TOP_TOOLBAR)
 #define FRAME_REAL_BOTTOM_TOOLBAR_VISIBLE(f) \
@@ -486,25 +522,32 @@ extern int frame_changed;
 #define FRAME_REAL_RIGHT_TOOLBAR_VISIBLE(f) \
   FRAME_REAL_TOOLBAR_VISIBLE (f, RIGHT_TOOLBAR)
 
-#define FRAME_TOP_BORDER_START(f) (FRAME_REAL_TOP_TOOLBAR_HEIGHT (f))
+#define FRAME_TOP_BORDER_START(f)					\
+  (FRAME_REAL_TOP_TOOLBAR_HEIGHT (f) +					\
+   2 * FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH (f))
 #define FRAME_TOP_BORDER_END(f)						\
   (FRAME_TOP_BORDER_START (f) + FRAME_BORDER_HEIGHT (f))
 
 #define FRAME_BOTTOM_BORDER_START(f)					\
   (FRAME_PIXHEIGHT (f) - FRAME_BORDER_HEIGHT (f) -			\
-   FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f))
+   FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f) -				\
+   2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f))
 #define FRAME_BOTTOM_BORDER_END(f)					\
-  (FRAME_PIXHEIGHT (f) - FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f))
+  (FRAME_PIXHEIGHT (f) - FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f) -		\
+   2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f))
 
-#define FRAME_LEFT_BORDER_START(f) (FRAME_REAL_LEFT_TOOLBAR_WIDTH (f))
+#define FRAME_LEFT_BORDER_START(f)					\
+  (FRAME_REAL_LEFT_TOOLBAR_WIDTH (f) +					\
+   2 * FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH (f))
 #define FRAME_LEFT_BORDER_END(f)					\
   (FRAME_LEFT_BORDER_START (f) + FRAME_BORDER_WIDTH (f))
 
 #define FRAME_RIGHT_BORDER_START(f)					\
   (FRAME_PIXWIDTH (f) - FRAME_BORDER_WIDTH (f) -			\
-   FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f))
+   2 * FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f))
 #define FRAME_RIGHT_BORDER_END(f)					\
-  (FRAME_PIXWIDTH (f) - FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f))
+  (FRAME_PIXWIDTH (f) - FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f) -		\
+   2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH(f))
 
 /* Equivalent in FSF Emacs:
 

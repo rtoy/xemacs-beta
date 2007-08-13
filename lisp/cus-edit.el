@@ -1164,6 +1164,7 @@ item in another window.\n\n"))
 		   :custom-state 'unknown
 		   :tag (custom-unlispify-tag-name group)
 		   :value group))
+  (widget-add-change)
   (goto-char (point-min)))
 
 (define-widget 'custom-browse-visibility 'item

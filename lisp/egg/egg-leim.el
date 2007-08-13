@@ -37,6 +37,11 @@
       (require 'egg)
     (error "Wnn is not built into this XEmacs"))
   (setq inactivate-current-input-method-function 'egg-inactivate)
+  (require 'egg-wnn)
+  (let ((func (get 'japanese 'set-egg-environ)))
+    (when func
+      (funcall func)))
+  (egg-mode)
   (toggle-egg-mode))
 
 (defun egg-inactivate ()

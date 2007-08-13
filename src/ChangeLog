@@ -1,3 +1,177 @@
+1997-11-19  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* Emacs.ad: Change uses of Gray75 to Gray80.
+	  Don't set modeline colors here.
+
+	* EmacsFrame.c: Fetch "background" resource for use by
+	  the toolbar initialization code; default this fetched
+	  value to -1 if it is unspecified, which is different
+	  from what is found in ef->core.background_pixel in that
+	  case.
+
+	* EmacsFrame.h: Define macros for "Background" and
+	  "background" resource strings.
+
+	* EmacsFrameP.h: Added background_pixel field to
+	  EmascFrmaePart struct.
+
+	* toolbar-x.c (x_initialize_frame_toolbar_gcs): Added
+	  code to use the global background resource as the
+	  toolbar background color if it is sepcified. Otherwise
+	  fall back to the backgroundToolBarColor resource.
+
+1997-11-17  Marc Paquette  <marcpa@cam.org>
+
+	* callproc.c (Fcall_process_internal): Fix for bug in 
+	CRLF -> LF conversion.
+
+1997-11-19  Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* redisplay-msw.c: Calls GdiFlush() in _ouput_end, _clear_frame and
+	_redraw_exposed_area
+
+	* frame-msw.c: mswindows_init_frame_2
+	  Sets frame's pixel width and height
+
+1997-11-19  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* callproc.c (call_process_cleanup): Actaully wait
+	  for the process, rather than not doing it and saying we
+	  did.
+
+1997-11-20  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* callproc.c (Fcall_process_internal): Close fd_error.
+
+1997-11-19  Didier Verna  <verna@inf.enst.fr>
+
+	* emacs.c (main_1): Added the missing argmatch call to check
+ 	for the '-h' option.
+
+1997-11-18  SL Baur  <steve@altair.xemacs.org>
+
+	* mule-coding.h: Replace freshly broken ENCODE_SJIS and
+	DECODE_SJIS macros with working versions from beta4.
+
+1997-11-17  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* frame-x.c (x_init_frame_1): Set frame visibility
+	  flag to 1 immediately so that echo area message are
+	  displayed in it promptly.
+
+	* redisplay.c (Fredisplay_echo_area): If frame has
+	  changed, clear it to avoid garbled messages.
+
+	* window.c (set_window_pixsize): Restore the bail out
+	  if no size change, but do it after the loop that recomputers
+	  major child corner coordinates.
+
+	* keymap.c (describe_map_mapper): Recognize the
+	  buttonXup keysyms as mouse bindings.
+
+1997-11-17  Tor Arntsen <tor@spacetec.no>
+
+	* Makefile.in.in (update-elc.stamp): Add temacs to dependency.
+
+1997-11-16  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* Added suport for toolbar borders.
+
+	* EmacsFrame.c: Added X resources for new toolbar
+	   borders.
+
+	   (EmacsFrameSetValues): Added Fadd_spec_to_specifier
+	   calls to move resourced toolbar border width data
+	   into the speciifers.
+
+	* EmacsFrame.h: Defined X resource strings for
+	   toolbar border width resources.
+
+	* EmacsFrameP.h: Added toolbar border width fields
+	   to the EmacsFramePart struct.
+
+	* console.h: Added toolbar_border_width_changed_in_frame_method
+	   field to struct console.
+
+	* events.c (event_x_y_pixel_internal):  Factor the
+	   toolbar border into pixel offset.
+
+	* frame.c: Document new toolbar border width
+	   speciifer as being usable as frame properties.
+
+	   (frame_conversion_internal): Factor the toolbar border 
+	   widths into the geometry calculations.
+
+	   (change_frame_size_1): Ditto.
+
+	* frame.h: Added field to struct frame for toolbar
+	   border widths.  Modified geomtry macros and created
+	   others in support of the new toolbar border widths.
+
+	* frameslot.h: Added a default_toolbar_border_width
+	   slot.
+
+	* redisplay-x.c (x_clear_frame): Factor the toolbar
+	   border widths into the geometry calculations.
+
+	* toolbar-x.c (x_draw_blank_toolbar_button): Add
+	   support for drawing a border along with the blank
+	   button.  Accept border_width and vertical args.
+
+	   (x_output_toolbar_button): Added support for drawing a 
+	   border along with the button.
+
+	   (X_OUTPUT_BUTTONS_LOOP): Pass border_width and vert
+	   args to x_draw_blank_toolbar_button.  Set vertical and 
+	   border_width fields in toolbar button.
+
+	   (x_output_toolbar): Support toolbar border widths.
+
+	   (x_toolbar_size_changed_in_frame_1): Mark all toolbar
+	   buttons in the change toolbar as dirty so that they
+	   are refreshed if had been painted over.
+
+	   New function: x_toolbar_border_width_changed_in_frame.
+	   Used it as a console method.
+
+	* toolbar.c: New function: mark_frame_toolbar_buttons_dirty.
+
+	   New function: toolbar_border_width_changed_in_frame.
+	   Used it as a specifier frame slot change method.
+
+	   (get_toolbar_coords): Factor the toolbar border
+	   widths into the geometry calculations.
+
+	   (Fset_default_toolbar_position): Update the fallback
+	   border width specifiers for the affected toolbar
+	   positions.
+
+	   (specifier_vars_of_toolbar): Added specifiers for the
+	   toolbar border widths.
+
+	* toolbar.h: Added vertical and border_width field
+	   to the toolbar button struct.
+
+	* window.h: Added default_toolbar_border_width slot
+	   to window struct, along with four slots for the four
+	   window local toolbar border width values.
+
+1997-11-16  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* frame-x.c: Fixed typo in the documentation of the
+	  top-toolbar-shadow-color frame property.
+
+1997-11-16  Skip Montanaro  <skip@calendar.com>
+
+	* redisplay.c: suppress buffer computation in several places if
+	MULE is not defined.
+
+1997-11-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* events.c (print_event): Use `event-x-pixel' and `event-y-pixel', 
+	to be consistent with `make-event' and `event-properties'.
+	(Fmake_event): Allow nil dnd-data.
+
 1997-11-15  Jonathan Harris  <jhar@tardis.ed.ac.uk>
 
 	* console.h
@@ -646,20 +820,20 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 1997-10-27  Martin Buchholz  <mrb@eng.sun.com>
 
-	* src/m/ibmrs6000.h:
-	* src/s/aix3-2.h: C_SWITCH_SYSTEM ==> configure.in
-	* src/s/aix4-1.h: -li18n ==> configure.in
-	* src/s/aix4.h: Always include strings.h
-	* src/config.h.in: Add AIXV3 define, suggested by xmkmf. Remove
+	* m/ibmrs6000.h:
+	* s/aix3-2.h: C_SWITCH_SYSTEM ==> configure.in
+	* s/aix4-1.h: -li18n ==> configure.in
+	* s/aix4.h: Always include strings.h
+	* config.h.in: Add AIXV3 define, suggested by xmkmf. Remove
 	AIX_SMT_EXP.
-	* src/unexaix.c: Fix nested comments compiler warning
+	* unexaix.c: Fix nested comments compiler warning
 
 1997-10-27  Kyle Jones  <kyle_jones@wonderworks.com>
 
-	* src/profile.c (sigprof_handler): Don't call XUNMARK on
+	* profile.c (sigprof_handler): Don't call XUNMARK on
 	  fun, it isn't needed.
 
-	* src/faces.c (face_property_matching_instance): Check
+	* faces.c (face_property_matching_instance): Check
 	  for charset == Qunbound, which it can be if the
 	  character set is unspecified.
 
@@ -1599,7 +1773,7 @@ Sun Sep 21 14:14:44 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 	* s/*.h:
 	* m/*.h:
 	* config.h.in:
-	* src/emacs.c:
+	* emacs.c:
 	* version.sh:
 	* configure.in: Another rewrite.
 	- support powerpcle (Solaris on ppc)
@@ -1679,10 +1853,10 @@ Sat Jun 14 21:55:27 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 
 Fri Jun 13 00:38:29 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 
-	* src/console.c (Fsuspend_console):
+	* console.c (Fsuspend_console):
 	  Disable input on ttys.  Hide unhidden frames.
 
-	* src/console.c (Fresume_console):
+	* console.c (Fresume_console):
 	  Enable input on ttys.  Raise the device selected frame.
 
 Fri Jun 13 00:25:46 1997  Kyle Jones  <kyle_jones@wonderworks.com>
@@ -1792,7 +1966,7 @@ Sat Jun  7 22:07:41 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 	
 Sat Jun  7 22:00:54 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 
-	* src/device-x.c (x_delete_device):
+	* device-x.c (x_delete_device):
 	  Add an EQ check so that we don't set Vdefault_x_device
 	  back to the device we're deleting.
 
@@ -1920,7 +2094,7 @@ Thu May 29 03:00:16 1997  Kyle Jones  <kyle@crystal.wonderworks.com>
 
 Wed May 21 11:58:17 1997  Kyle Jones  <kyle@crystal.wonderworks.com>
 
-	* src/insdel.c (signal_first_change):
+	* insdel.c (signal_first_change):
           record the current buffer for the unwind instead of the 
           buffer that's about to become the current buffer.
 
@@ -1930,17 +2104,17 @@ Tue May 20 23:23:39 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 Mon May 19 03:40:46 1997  Kyle Jones  <kyle@crystal.WonderWorks.COM>
 
-	* src/redisplay.c: (window_line_number)
+	* redisplay.c: (window_line_number)
 	  don't prefer buffer point value over window point
 	  value unless window, frame, device and console are
 	  all selected.
 
-	* src/redisplay.c: (redisplay_window)
+	* redisplay.c: (redisplay_window)
 	  don't prefer buffer point value over window point
 	  value unless window, frame, device and console are
 	  all selected.
 
-	* src/redisplay.c: (create_text_block)
+	* redisplay.c: (create_text_block)
 	  don't prefer buffer point value over window point
 	  value unless window, frame, device and console are
 	  all selected.
@@ -1951,7 +2125,7 @@ Sun May 18 13:03:50 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 Sun May 11 13:38:46 1997  Kyle Jones  <kyle@crystal.WonderWorks.COM>
 
-	* src/frame.c (change_frame_size_1):
+	* frame.c (change_frame_size_1):
 	  return without doing anything if the frame has benn
 	  initialized and the new frame size is same as the
 	  current frame size.
@@ -2037,15 +2211,15 @@ Tue Apr 22 11:54:02 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 Tue Apr 22 01:32:00 1997  Kyle Jones  <kyle@crystal.WonderWorks.COM>
 
-	* src/menubar-x.c (pre_activate_hook):
+	* menubar-x.c (pre_activate_hook):
 	  set in_menu_callback around call to call to
           menu_item_descriptor_to_widget_value.
 
-	* src/event-stream.c (Fnext_event):
+	* event-stream.c (Fnext_event):
 	  signal error if in_menu_callback non-nil to avoid
 	  reentering the menubar code and causing a crash later.
 
-	* src/cmdloop.c (command_loop_3):
+	* cmdloop.c (command_loop_3):
 	  signal error if in_menu_callback non-nil to avoid
 	  inflooping calling Fnext_event, which will signal an
 	  error if the situation is not caught earlier.
@@ -2728,7 +2902,7 @@ Tue Jan 21 20:38:58 1997  Axel Seibert  <aseibert@cybernet-ag.net>
 
 Mon Jan 20 21:12:57 1997  Martin Buchholz  <mrb@eng.sun.com>
 
-	* src/event-Xt.c (emacs_Xt_handle_magic_event):
+	* event-Xt.c (emacs_Xt_handle_magic_event):
 	(frame-totally-visible-p) sometimes incorrectly returned nil.
 
 Thu Jan 16 17:24:29 1997  Joel Peterson  <tarzan@aosi.com>

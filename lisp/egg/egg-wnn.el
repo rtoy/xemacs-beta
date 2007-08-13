@@ -22,6 +22,7 @@
 
 ;;; Commentary:
 
+;;;  Modified to provide english strings as well by Jareth Hein (jareth@camelot-soft.com)
 ;;;  Modified for Wnn V4 and Wnn6 by Satoru Tomura(tomura@etl.go.jp)
 ;;;  Modified for Wnn6 by OMRON
 ;;;  Written by Toshiaki Shingu (shingu@cpr.canon.co.jp)
@@ -35,7 +36,8 @@
 
 ;;;  修正メモ
 
-;;;  97/2/4   Modified for use with XEmacs by J.Hein <jhod@po.iijnet.or.jp>
+;;;  97/10/27 Help system modification by J.Hein
+;;;  97/2/4   Modified for use with XEmacs by J.Hein <jareth@camelot-soft.com>
 ;;;           (mostly changes regarding extents and markers)
 ;;;  94/2/3   kWnn support by H.Kuribayashi
 ;;;  93/11/24 henkan-select-kouho: bug fixed
@@ -324,14 +326,14 @@ Conversion commands
   \\[henkan-first-bunsetu]\t先頭文節\t\\[henkan-last-bunsetu]\t後尾文節  
   \\[henkan-backward-bunsetu]\t直前文節\t\\[henkan-forward-bunsetu]\t直後文節
 変換変更
-  大文節次候補    \\[henkan-next-kouho-dai]\t小文節次候補    \\[henkan-next-kouho-sho]
-  前候補    \\[henkan-previous-kouho]  \t次候補    \\[henkan-next-kouho]
-  大文節伸し  \\[henkan-bunsetu-nobasi-dai]  \t大文節縮め  \\[henkan-bunsetu-chijime-dai]
-  小文節伸し  \\[henkan-bunsetu-nobasi-sho]  \t小文節縮め  \\[henkan-bunsetu-chijime-sho]
-  大文節変換候補選択  \\[henkan-select-kouho-dai]  \t小文節変換候補選択  \\[henkan-select-kouho-sho]
+  \\[henkan-next-kouho-dai]\t大文節次候補\t\\[henkan-next-kouho-sho]\t小文節次候補
+  \\[henkan-previous-kouho]\t前候補\t\\[henkan-next-kouho]\t次候補    
+  \\[henkan-bunsetu-nobasi-dai]\t大文節伸し\t\\[henkan-bunsetu-chijime-dai]\t大文節縮め  
+  \\[henkan-bunsetu-nobasi-sho]\t小文節伸し\t\\[henkan-bunsetu-chijime-sho]\t小文節縮め  
+  \\[henkan-select-kouho-dai]\t大文節変換候補選択\t\\[henkan-select-kouho-sho]\t小文節変換候補選択  
 変換確定
-  全文節確定  \\[henkan-kakutei]  \t直前文節まで確定  \\[henkan-kakutei-before-point]
-変換中止    \\[henkan-quit]
+  \\[henkan-kakutei]\t全文節確定\t\\[henkan-kakutei-before-point]\t直前文節まで確定  
+  \\[henkan-quit]\t変換中止    
 ")
       (hinsimei "品詞名:")
       (jishotouroku-yomi "辞書登録『%s』  読み :")
@@ -388,15 +390,15 @@ Conversion commands
   \\[henkan-first-bunsetu]\t先头词组\t\\[henkan-last-bunsetu]\t结尾词组
   \\[henkan-backward-bunsetu]\t前一个词组\t\\[henkan-forward-bunsetu]\t下一个词组
 变换变更
-  词组次侯选    \\[henkan-next-kouho-dai]\t单词次侯选    \\[henkan-next-kouho-sho]
-  前侯选    \\[henkan-previous-kouho]  \t次侯选    \\[henkan-next-kouho]
-  词组扩展  \\[henkan-bunsetu-nobasi-dai]  \t词组收缩  \\[henkan-bunsetu-chijime-dai]
-  单词扩展  \\[henkan-bunsetu-nobasi-sho]  \t单词收缩   \\[henkan-bunsetu-chijime-sho]
-  词组变换候补的选择  \\[henkan-select-kouho-dai]  \t单词变换候补的选择  \\[henkan-select-kouho-sho]
-  变换候补的选择  \\[henkan-select-kouho-dai]
+  \\[henkan-next-kouho-dai]\t词组次侯选\t\\[henkan-next-kouho-sho]\t单词次侯选
+  \\[henkan-previous-kouho]\t前侯选\t\\[henkan-next-kouho]\t次侯选
+  \\[henkan-bunsetu-nobasi-dai]\t词组扩展\t\\[henkan-bunsetu-chijime-dai]\t词组收缩
+  \\[henkan-bunsetu-nobasi-sho]\t单词扩展\t\\[henkan-bunsetu-chijime-sho]\t单词收缩
+  \\[henkan-select-kouho-dai]\t词组变换候补的选择\t\\[henkan-select-kouho-sho]\t单词变换候补的选择
+  \\[henkan-select-kouho-dai]\t变换候补的选择
 变换确定
-  全文确定  \\[henkan-kakutei]  \t上一词组为止的确定  \\[henkan-kakutei-before-point]
-停止变换    \\[henkan-quit]
+  \\[henkan-kakutei]\t全文确定\t\\[henkan-kakutei-before-point]\t上一词组为止的确定
+  \\[henkan-quit]\t停止变换
 ")
       (hinsimei "词性名:")
       (jishotouroku-yomi "辞典登录『%s』拼法 :")
@@ -454,14 +456,14 @@ Conversion commands
   \\[henkan-first-bunsetu]\t先頭 文節\t\\[henkan-last-bunsetu]\t後尾 文節  
   \\[henkan-backward-bunsetu]\t直前 文節\t\\[henkan-forward-bunsetu]\t直後 文節
 變換 變更
-  大文節 다음 候補    \\[henkan-next-kouho-dai]\t小文節 다음 候補    \\[henkan-next-kouho-sho]
-  前 候補    \\[henkan-previous-kouho]  \t다음 候補    \\[henkan-next-kouho]
-  大文節 擴大  \\[henkan-bunsetu-nobasi-dai]  \t大文節 縮小  \\[henkan-bunsetu-chijime-dai]
-  小文節 擴大  \\[henkan-bunsetu-nobasi-sho]  \t小文節 縮小  \\[henkan-bunsetu-chijime-sho]
-  大文節 變換 다음 候補  \\[henkan-select-kouho-dai]  \t小文節 變換 다음 候補  \\[henkan-select-kouho-sho]
+  \\[henkan-next-kouho-dai]\t大文節 다음 候補\t\\[henkan-next-kouho-sho]\t小文節 다음 候補    
+  \\[henkan-previous-kouho]\t前 候補\t\\[henkan-next-kouho]\t다음 候補
+  \\[henkan-bunsetu-nobasi-dai]\t大文節 擴大\t\\[henkan-bunsetu-chijime-dai]\t大文節 縮小
+  \\[henkan-bunsetu-nobasi-sho]\t小文節 擴大\t\\[henkan-bunsetu-chijime-sho]\t小文節 縮小
+  \\[henkan-select-kouho-dai]\t大文節 變換 다음 候補\t\\[henkan-select-kouho-sho]\t小文節 變換 다음 候補
 變換 確定
-  全文節 確定  \\[henkan-kakutei]  \t直前 文節까지 確定  \\[henkan-kakutei-before-point]
-變換 中止    \\[henkan-quit]
+  \\[henkan-kakutei]\t全文節 確定\t\\[henkan-kakutei-before-point]\t直前 文節까지 確定
+  \\[henkan-quit]\t變換 中止
 ")
       (hinsimei "品詞名: ")
       (jishotouroku-yomi "辭典 登錄『%s』 한글: ")
@@ -692,7 +694,7 @@ Currently very broken."
   (let ((wnn-server-type 'jserver)) (close-wnn))
   (setq jserver-list
 	(make-host-list
-	 name (or jserver-list (list (or wnn-host-name (getenv "JSERVER")))))))
+	 name (or jserver-list (list (or wnn-host-name (getenv "JSERVER") "localhost"))))))
 
 (fset 'set-jserver-host-name (symbol-function 'set-wnn-host-name))
 
@@ -702,7 +704,7 @@ Currently very broken."
   (let ((wnn-server-type 'cserver)) (close-wnn))
   (setq cserver-list
 	(make-host-list
-	 name (or cserver-list (list (or cwnn-host-name (getenv "CSERVER")))))))
+	 name (or cserver-list (list (or cwnn-host-name (getenv "CSERVER") "localhost"))))))
 
 (fset 'set-cserver-host-name (symbol-function 'set-cwnn-host-name))
 
@@ -712,7 +714,7 @@ Currently very broken."
   (let ((wnn-server-type 'kserver)) (close-wnn))
   (setq kserver-list
 	(make-host-list
-	 name (or kserver-list (list (or kwnn-host-name (getenv "KSERVER")))))))
+	 name (or kserver-list (list (or kwnn-host-name (getenv "KSERVER") "localhost"))))))
 
 (fset 'set-kserver-host-name (symbol-function 'set-kwnn-host-name))
 
@@ -721,13 +723,13 @@ Currently very broken."
       (let ((hostlist
 	     (cond ((eq wnn-server-type 'jserver)
 		    (or jserver-list
-			(list (or wnn-host-name (getenv "JSERVER")))))
+			(list (or wnn-host-name (getenv "JSERVER") "localhost"))))
 		   ((eq wnn-server-type 'cserver)
 		    (or cserver-list
-			(list (or cwnn-host-name (getenv "CSERVER")))))
+			(list (or cwnn-host-name (getenv "CSERVER") "localhost"))))
 		   ((eq wnn-server-type 'kserver)
 		    (or kserver-list
-			(list (or kwnn-host-name (getenv "KSERVER")))))))
+			(list (or kwnn-host-name (getenv "KSERVER") "localhost"))))))
 	    (loginname (user-login-name)))
 	(catch 'succ
 	  (while hostlist
@@ -1560,7 +1562,6 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
 (define-key henkan-mode-map "\C-e" 'henkan-last-bunsetu)
 (define-key henkan-mode-map "\C-f" 'henkan-forward-bunsetu)
 (define-key henkan-mode-map "\C-g" 'henkan-quit)
-(define-key henkan-mode-map "\C-h" 'henkan-help-command)
 (define-key henkan-mode-map "\C-i" 'henkan-bunsetu-chijime-dai)
 (define-key henkan-mode-map "\C-k" 'henkan-kakutei-before-point)
 (define-key henkan-mode-map "\C-l" 'henkan-kakutei)
@@ -1576,7 +1577,8 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
 (define-key henkan-mode-map "\C-z" 'henkan-next-kouho-sho)
 (define-key henkan-mode-map "\177" 'henkan-quit)
 (define-key henkan-mode-map [delete] 'henkan-quit)
-(define-key henkan-mode-map [backspace] 'henkan-quit)
+(define-key henkan-mode-map 'backspace 'henkan-quit)
+(define-key henkan-mode-map '(control h) 'henkan-help-command)
 (define-key henkan-mode-map [right] 'henkan-forward-bunsetu)
 (define-key henkan-mode-map [left] 'henkan-backward-bunsetu)
 (define-key henkan-mode-map [down] 'henkan-next-kouho)

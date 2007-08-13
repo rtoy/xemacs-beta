@@ -53,6 +53,10 @@ typedef struct {
   int		bottom_toolbar_height;	/* height of bottom toolbar */
   int		left_toolbar_width;	/* width of left toolbar */
   int		right_toolbar_width;	/* width of right toolbar */
+  int		top_toolbar_border_width;	/* border width */
+  int		bottom_toolbar_border_width;	/* ... of bottom toolbar */
+  int		left_toolbar_border_width;	/* ... of left toolbar */
+  int		right_toolbar_border_width;	/* ... of right toolbar */
   Pixel		top_toolbar_shadow_pixel;
   Pixel		bottom_toolbar_shadow_pixel;
   Pixel		background_toolbar_pixel;
@@ -64,6 +68,7 @@ typedef struct {
 
   XFontStruct*	font;			/* font */
   Pixel		foreground_pixel;	/* foreground */
+  Pixel		background_pixel;	/* background */
 
   Pixel		cursor_color;		/* text cursor color */
   Boolean	bar_cursor;		/* 1 if bar, 0 if block */

@@ -187,8 +187,12 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case pointer_motion_event:
       {
 	char buf[64];
-	sprintf (buf, "#<motion-event %d, %d",
-		 XEVENT (obj)->event.motion.x, XEVENT (obj)->event.motion.y);
+	Lisp_Object Vx, Vy;
+	Vx = Fevent_x_pixel (obj);
+	assert (INTP (Vx));
+	Vy = Fevent_y_pixel (obj);
+	assert (INTP (Vy));
+	sprintf (buf, "#<motion-event %d, %d", XINT (Vx), XINT (Vy));
 	write_c_string (buf, printcharfun);
 	break;
       }
@@ -406,28 +410,30 @@ PLIST is a property list, the properties being compatible to those
  allowed:
 
  channel	-- The event channel, a frame or a console.  For
-		   button-press, button-release and motion events, this
-		   must be a frame.  For key-press events, it must be a
-		   console.  If channel is unspecified, it will be set to
-		   the selected frame or selected console, as appropriate.
+		   button-press, button-release, motion and dnd-drop
+		   events, this must be a frame.  For key-press
+		   events, it must be a console.  If channel is
+		   unspecified, it will be set to the selected frame
+		   or selected console, as appropriate.
  key		-- The event key, a symbol or character.  Allowed only for
 		   keypress events.
- button		-- The event button, integer 1, 2 or 3.  Allowed only for
-		   button-press and button-release events.
+ button		-- The event button, integer 1, 2 or 3.  Allowed for
+		   button-press, button-release and dnd-drag events.
  modifiers	-- The event modifiers, a list of modifier symbols.  Allowed
-		   for key-press, button-press, button-release and motion
-		   events.
+		   for key-press, button-press, button-release, motion and
+		   dnd-drop events.
  x		-- The event X coordinate, an integer.  This is relative
 		   to the left of CHANNEL's root window.  Allowed for
-		   motion, button-press and button-release events.
+		   motion, button-press, button-release and dnd-drop events.
  y		-- The event Y coordinate, an integer.  This is relative
 		   to the top of CHANNEL's root window.  Allowed for
-		   motion, button-press and button-release events.
+		   motion, button-press, button-release and dnd-drop events.
  dnd-data	-- The event DND data, a list of (INTEGER DATA).  Allowed
 		   for dnd-drop events, if support for DND has been
 		   compiled into XEmacs.
  timestamp	-- The event timestamp, a non-negative integer.  Allowed for
-		   all types of events.
+		   all types of events.  If unspecified, it will be set to 0
+		   by default.
 
 For event type `empty', PLIST must be nil.
  `button-release', or `motion'.  If TYPE is left out, it defaults to
@@ -608,19 +614,26 @@ WARNING: the event object returned may be a reused one; see the function
       else if (EQ (keyword, Qdnd_data))
 	{
 	  Lisp_Object dnd_tail;
-	  /* Value is a list of (INT DATA).  Data is a list. */
-	  CHECK_CONS (value);
-	  /* Oliver, change this to accept symbols, when the time is
-             ripe!  */
-	  CHECK_NATNUM (XCAR (value));
-	  CHECK_CONS (XCDR (value));
-	  if (!NILP (XCDR (XCDR (value))))
-	    wrong_type_argument (Qlistp, XCDR (value));
-	  /* Check the list validity. */
-	  EXTERNAL_LIST_LOOP (dnd_tail, XCAR (XCDR (value)))
-	    ;
-	  /* And now, copy it all. */
-	  e->event.dnd_drop.data = Fcopy_tree (value, Qnil);
+	  /* Value is either nil, or a list of (TYPE DATA).  TYPE is
+             an integer.  DATA is a list. */
+	  if (!NILP (value))
+	    {
+	      CHECK_CONS (value);
+	      /* To be changed to CHECK_SYMBOL. */
+	      CHECK_NATNUM (XCAR (value));
+	      CHECK_CONS (XCDR (value));
+	      if (XINT (Flength (value)) != 2)
+		signal_simple_error ("`dnd-data' should be a two-element list",
+				     XINT (Flength (value)));
+	      /* Check validity of DATA. */
+	      EXTERNAL_LIST_LOOP (dnd_tail, XCAR (XCDR (value)))
+		{
+		  /* Every element must be a string. */
+		  CHECK_STRING (XCAR (dnd_tail));
+		}
+	      /* And now, copy it all. */
+	      e->event.dnd_drop.data = Fcopy_tree (value, Qnil);
+	    }
 	}
 #endif /* HAVE_OFFIX_DND */
       else
@@ -691,12 +704,7 @@ WARNING: the event object returned may be a reused one; see the function
 	       "button-release"
 #endif
 	       );
-#ifdef HAVE_OFFIX_DND
-      if ((e->event_type == dnd_drop_event) &&
-	  NILP (e->event.dnd_drop.data))
-	error ("Unspecified data for dnd-drop event");
       break;
-#endif
     default:
       break;
     }
@@ -1605,8 +1613,10 @@ event_x_y_pixel_internal (Lisp_Object event, int *x, int *y, int relative)
     }
   else
     {
-      *y -= FRAME_REAL_TOP_TOOLBAR_HEIGHT (f);
-      *x -= FRAME_REAL_LEFT_TOOLBAR_WIDTH (f);
+      *y -= FRAME_REAL_TOP_TOOLBAR_HEIGHT (f) -
+	FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH (f);
+      *x -= FRAME_REAL_LEFT_TOOLBAR_WIDTH (f) -
+	FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH (f);
     }
 
   return 1;

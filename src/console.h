@@ -200,6 +200,9 @@ struct console_methods
   void (*toolbar_size_changed_in_frame_method) (struct frame *f,
 						enum toolbar_pos pos,
 						Lisp_Object oldval);
+  void (*toolbar_border_width_changed_in_frame_method) (struct frame *f,
+							enum toolbar_pos pos,
+							Lisp_Object oldval);
   void (*toolbar_visible_p_changed_in_frame_method) (struct frame *f,
 						     enum toolbar_pos pos,
 						     Lisp_Object oldval);

@@ -137,9 +137,11 @@ they can be perused for their useful information."
   ;; Source directory may not be initialized yet.
   ;; (print (prin1-to-string load-path))
   (if (null source-directory)
-      (setq source-directory (concat (car load-path) "/./")))
+      (setq source-directory (concat (car load-path) "./")))
   (let ((files (directory-files (file-name-as-directory source-directory) t ".*"))
 	file autolist)
+    ;; (print (prin1-to-string source-directory))
+    ;; (print (prin1-to-string files))
     (while (setq file (car-safe files))
       (if (and (file-directory-p file)
 	       (file-exists-p (concat file "/" autoload-file-name)))
@@ -149,13 +151,16 @@ they can be perused for their useful information."
     autolist))
 
 ;; The following function is called from temacs
-(defun packages-find-packages-1 (package path-only user-package)
+(defun packages-find-packages-1 (package path-only append-p user-package)
   "Search the supplied directory for associated directories.
 The top level is assumed to look like:
 info/           Contain texinfo files for lisp installed in this hierarchy
 etc/            Contain data files for lisp installled in this hiearchy
 lisp/           Contain directories which either have straight lisp code
                 or are self-contained packages of their own.
+
+If the argument `append-p' is non-nil, the found directories will be
+appended to the paths, otherwise, they will be prepended.
 
 This is an internal function.  Do not call it after startup."
   ;; Info files
@@ -166,7 +171,9 @@ This is an internal function.  Do not call it after startup."
   ;; Data files
   (if (and (null path-only) (file-directory-p (concat package "/etc")))
       (setq data-directory-list
-	    (cons (concat package "/etc/") data-directory-list)))
+	    (if append-p
+		(append data-directory-list (list (concat package "/etc/")))
+	      (cons (concat package "/etc/") data-directory-list))))
   ;; Lisp files
   (if (file-directory-p (concat package "/lisp"))
       (progn
@@ -174,7 +181,10 @@ This is an internal function.  Do not call it after startup."
 ;		       (if user-package "[USER]" "")
 ;		       package
 ;		       "/lisp/"))
-	(setq load-path (cons (concat package "/lisp/") load-path))
+	(setq load-path
+	      (if append-p
+		  (append load-path (list (concat package "/lisp/")))
+		(cons (concat package "/lisp/") load-path)))
 	(if user-package
 	    (condition-case nil
 		(load (concat package "/lisp/"
@@ -186,7 +196,10 @@ This is an internal function.  Do not call it after startup."
 	  (while dirs
 	    (setq dir (car dirs))
 ;	    (print (concat "DIR: " dir "/"))
-	    (setq load-path (cons (concat dir "/") load-path))
+	    (setq load-path
+		  (if append-p
+		      (append load-path (list (concat dir "/")))
+		    (cons (concat dir "/") load-path)))
 	    (if user-package
 		(condition-case nil
 		    (progn
@@ -197,8 +210,29 @@ This is an internal function.  Do not call it after startup."
 		       (concat dir "/"
 			       (file-name-sans-extension autoload-file-name))))
 		  (t nil)))
-	    (packages-find-packages-1 dir path-only user-package)
+	    (packages-find-packages-1 dir path-only append-p user-package)
 	    (setq dirs (cdr dirs)))))))
+
+;; The following function is called from temacs
+(defun packages-find-packages-2 (path path-only append-p suppress-user)
+  "Search the supplied path for associated directories.
+If the argument `append-p' is non-nil, the found directories will be
+appended to the paths, otherwise, they will be prepended.
+
+This is an internal function.  Do not call it after startup."
+  (let (dir)
+    (while path
+      (setq dir (car path))
+      ;; (prin1 (concat "Find: " (expand-file-name dir) "\n"))
+      (if (null (and (or suppress-user inhibit-package-init)
+		     (string-match "^~" dir)))
+	  (progn
+	    ;; (print dir)
+	    (packages-find-packages-1 (expand-file-name dir)
+				      path-only
+				      append-p
+				      (string-match "^~" dir))))
+      (setq path (cdr path)))))
 
 ;; The following function is called from temacs
 (defun packages-find-packages (pkg-path path-only &optional suppress-user)
@@ -210,19 +244,13 @@ otherwise data directories and info directories will be added.
 If the optional argument `suppress-user' is non-nil, package directories
 rooted in a user login directory (like ~/.xemacs) will not be searched.
 This is used at dump time to suppress the builder's local environment."
-  (let ((path (reverse pkg-path))
-	dir)
-    (while path
-      (setq dir (car path))
-      ;; (prin1 (concat "Find: " (expand-file-name dir) "\n"))
-      (if (null (and (or suppress-user inhibit-package-init)
-		     (string-match "^~" dir)))
-	  (progn
-	    ;; (print dir)
-	    (packages-find-packages-1 (expand-file-name dir)
-				      path-only
-				      (string-match "^~" dir))))
-      (setq path (cdr path)))))
+  (let ((prefix-path nil))
+    (while (and pkg-path (car pkg-path))
+      (setq prefix-path (cons (car pkg-path) prefix-path)
+	    pkg-path (cdr pkg-path)))
+    (packages-find-packages-2 (cdr pkg-path) path-only t suppress-user)
+    (packages-find-packages-2 prefix-path path-only nil suppress-user)))
+
 
 ;; Data-directory is really a list now.  Provide something to search it for
 ;; directories.
@@ -237,6 +265,24 @@ If no DIR-LIST is supplied, it defaults to `data-directory-list'."
       (setq found (concat (car dir-list) name "/")
 	    found-dir (file-directory-p found))
       (or found-dir
+	  (setq found nil))
+      (setq dir-list (cdr dir-list)))
+    found))
+
+;; Data-directory is really a list now.  Provide something to search it for
+;; files.
+
+(defun locate-data-file (name &optional dir-list)
+  "Locate a file in a search path DIR-LIST (a list of directories).
+If no DIR-LIST is supplied, it defaults to `data-directory-list'."
+  (unless dir-list
+    (setq dir-list data-directory-list))
+  (let (found found-file)
+    (while (and (null found-file) dir-list)
+      (setq found (concat (car dir-list) name)
+	    found-file (and (file-exists-p found)
+			    (not (file-directory-p found))))
+      (or found-file
 	  (setq found nil))
       (setq dir-list (cdr dir-list)))
     found))

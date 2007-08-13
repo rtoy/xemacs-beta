@@ -2926,16 +2926,16 @@ set_window_pixsize (Lisp_Object window, int new_pixsize, int nodelete,
   else if (!NILP (major_kid))
     {
       int last_pos, last_old_pos, pos, old_pos, first;
+      int pixel_adj_left = new_pixsize - old_pixsize;
       int div_val = old_pixsize << 1;
 
       /*
        * Previously we bailed out here if there was no size change.
-       * But this broke toolbar updates.  If a toolbar appears or
-       * disappears, windows may not change size, but their top and
-       * left coordinates need to be updated.
+       * (pixel_adj_left == 0) But this broke toolbar updates.  If a
+       * toolbar appears or disappears, windows may not change size,
+       * but their top and left coordinates need to be updated.
        *
-       * if (!pixel_adj_left)
-       *   return;
+       * So we don't bail until after the loop below.
        */
 
       last_pos = first = (set_height ? WINDOW_TOP (w) : WINDOW_LEFT (w));
@@ -2968,6 +2968,11 @@ set_window_pixsize (Lisp_Object window, int new_pixsize, int nodelete,
 	  last_pos = pos + first;
 	  last_old_pos = old_pos;
 	}
+
+      /* Sometimes we may get called with our old size.  In that case
+         we don't need to do anything else. */
+      if (!pixel_adj_left)
+	return;
 
       /* Now delete any children that became too small.  */
       if (!nodelete)

@@ -285,6 +285,10 @@ then this key deactivates the region without beeping."
     ;(if (fboundp 'unlock-buffer) (unlock-buffer))
     (kill-all-local-variables)
     (setq buffer-read-only nil)
+    ;; don't let read only text yanked into the minibuffer
+    ;; permanently wedge it.
+    (make-local-variable 'inhibit-read-only)
+    (setq inhibit-read-only t)
     (erase-buffer)
     ;(setq default-directory nil)
     (setq buffer-file-name nil)

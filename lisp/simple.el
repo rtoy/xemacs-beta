@@ -163,6 +163,14 @@ In Auto Fill mode, if no numeric arg, break the preceding line if it's long."
 	(move-to-left-margin nil t)))
   nil)
 
+(defun set-hard-newline-properties (from to)
+  (let ((sticky (get-text-property from 'rear-nonsticky)))
+    (put-text-property from to 'hard 't)
+    ;; If rear-nonsticky is not "t", add 'hard to rear-nonsticky list
+    (if (and (listp sticky) (not (memq 'hard sticky)))
+	(put-text-property from (point) 'rear-nonsticky
+			   (cons 'hard sticky)))))
+
 (defun open-line (arg)
   "Insert a newline and leave point before it.
 If there is a fill prefix and/or a left-margin, insert them on the new line
@@ -3478,7 +3486,7 @@ See `display-message' for some common labels.  See also `log-message'."
 (defun show-message-log ()
   "Show the \" *Message-Log*\" buffer, which contains old messages and errors."
   (interactive)
-  (pop-to-buffer " *Message-Log*"))
+  (pop-to-buffer (get-buffer-create " *Message-Log*")))
 
 (defvar log-message-filter-function 'log-message-filter
   "Value must be a function of two arguments: a symbol (label) and 

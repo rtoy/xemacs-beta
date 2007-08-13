@@ -2165,13 +2165,17 @@ x_clear_frame (struct frame *f)
 
   x = FRAME_LEFT_BORDER_START (f);
   width = (FRAME_PIXWIDTH (f) - FRAME_REAL_LEFT_TOOLBAR_WIDTH (f) -
-	   FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f));
+	   FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f) -
+	   2 * FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH (f) -
+	   2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH (f));
   /* #### This adjustment by 1 should be being done in the macros.
      There is some small differences between when the menubar is on
      and off that we still need to deal with. */
   y = FRAME_TOP_BORDER_START (f) - 1;
   height = (FRAME_PIXHEIGHT (f) - FRAME_REAL_TOP_TOOLBAR_HEIGHT (f) -
-	    FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f)) + 1;
+	    FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f) -
+	    2 * FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH (f) -
+	    2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f)) + 1;
 
   XClearArea (dpy, x_win, x, y, width, height, False);
 

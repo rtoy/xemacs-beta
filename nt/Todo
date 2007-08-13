@@ -27,18 +27,15 @@
        implementation is broken and can cause the same timeout to go
        off twice (especially during mouse drags?), which makes XEmacs abort.
        Windows95 doesn't appear to provide any one-shot timers (NT does).
-    2. XEmacs starts-up with "Arithmetic error".
-    3. It might be a good idea if someone sanity-checked my (jhar) changes to
-       faces.el.
-    4. w32-make-font-foo in w32/w32-faces.el need to be written.
-    5. Calling mouse_[enter|leave]_frame_hook.
-    6. Eliminate resizing funnies
-    7. Scrollbar
-    8. Menubar
-    9. Palette handling
-   10. Middle mouse button emulation. Dragging off-frame.
-   11. Images
-   12. Toolbar
+    2. Random face colors.
+    3. Calling mouse_[enter|leave]_frame_hook.
+    4. Eliminate resizing funnies
+    5. Scrollbar
+    6. Menubar
+    7. Palette handling
+    8. Middle mouse button emulation. Dragging off-frame.
+    9. Images
+   10. Toolbar
 
 Old Issues. 
 

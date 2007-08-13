@@ -325,12 +325,12 @@ datadir='${prefix}/lib'
 statedir='${prefix}/lib'
 libdir='${exec_prefix}/lib'
 mandir='${prefix}/man/man1'
-infodir='${prefix}/lib/xemacs-${version}/info'
+infodir='${datadir}/xemacs-${version}/info'
 infodir_user_defined='no'
 dnl BETA NOTE: ! Will you please add to this list?  Nonexistent dirs
 dnl are dropped from the list at runtime, so it is safe to add
 dnl directories to this list that you don't have at home.
-infopath='/usr/info:/usr/local/info:/usr/lib/texmf/doc/info:/usr/local/lib/texmf/doc/info'
+infopath='/usr/local/info:/usr/info:/usr/local/lib/texmf/doc/info:/usr/lib/texmf/doc/info'
 infopath_user_defined='no'
 lispdir='${datadir}/xemacs-${version}/lisp'
 lispdir_user_defined='no'
@@ -363,236 +363,6 @@ with_toolbars=""
 with_tty=""
 use_union_type="no"
 with_dnet=""
-
-dnl Usage message (get it via -help)
-usage="Usage: $progname CONFIGURATION [[-OPTION[=VALUE] ...]]
-
-Set compilation and installation parameters for XEmacs, and report.
-CONFIGURATION specifies the machine and operating system to build for.
-
-Note that for most of the following options, you can explicitly enable
-them using \`--OPTION=yes' and explicitly disable them using \`--OPTION=no'.
-This is especially useful for auto-detected options.
-
-Options marked with a (*) are autodetected.
-
-Use colons (or quoted spaces) to separate directory names in option
-values which are PATHs (i.e. lists of directories).
-
-General options:
-
---help			Issue this usage message.
---verbose		Display the results of configure tests.
---extra-verbose		Display even more information, useful for debugging.
-
-
-Compilation options:
-
---compiler=XXXX		Specify compiler.  Overrides environment variable CC.
---with-gcc (*)		Use GCC to compile XEmacs.
---with-gcc=no		Don't use GCC to compile XEmacs.
---with-gnu-make		Write the Makefiles to take advantage of
-			special features of GNU Make. (GNU Make
-			works fine on the Makefiles even without this
-			option.  This just allows for simultaneous
-			in-place and --srcdir building.)
---cflags=FLAGS		Compiler flags. Overrides environment variable CFLAGS.
---site-includes=PATH	List of directories to search first for header files.
---site-libraries=PATH	List of directories to search first for libraries.
---site-prefixes=PATH    List of directories to search for include/ and lib/ 
-                        subdirectories, just after 'site-includes' and 
-                        'site-libraries'.
---site-runtime-libraries=PATH
-			List of ALL directories to search for dynamically
-			linked libraries at run time.
---dynamic=yes		Link dynamically if supported by system.
---dynamic=no		Force static linking on systems where dynamic
-			linking is the default.
---srcdir=DIR		Look for the XEmacs source files in DIR.
-			See also --with-gnu-make.
---const-is-losing=no	Allow the use of const in the source code.
-
-
-Installation options:
-
---prefix=DIR		Install files below DIR.  Defaults to \`$prefix'.
-
-
-Window-system options:
-
---with-x11 (*)		Support the X Window System.
---with-x11=no		Don't support X.
---x-includes=DIR 	Search for X header files in DIR.
---x-libraries=DIR	Search for X libraries in DIR.
---with-toolbars=no	Don't compile with any toolbar support.
---with-session=no	Compile without realized leader window which will
-			keep the WM_COMMAND property. Required for proper
-			session-management.
---with-menubars=TYPE	Use TYPE menubars (lucid, motif, or no).  The Lucid
-			widgets emulate Motif (mostly) but are faster.
-			*WARNING*  The Motif menubar is currently broken.
---with-scrollbars=TYPE	Use TYPE scrollbars
-			(lucid, motif, athena, athena3d, or no).
---with-dialogs=TYPE	Use TYPE dialog boxes (motif, athena, athena3d, or no).
-			Lucid menubars and scrollbars are the default.
-			Motif dialog boxes will be used if Motif can be found.
---with-cde (*)		Compile in support for CDE drag and drop.
---with-offix (*)	Compile in support for OffiX drag and drop.
---with-xmu=no (*)	For those unfortunates whose vendors don't ship Xmu.
---external-widget	Compile with external widget support.
---with-gif		Compile with support for GIF image conversion.
-			This support is built-in and defaults to \`yes'.
---with-xpm (*)		Compile with support for XPM files.
-			It is highly recommended that you obtain XPM
-			(version 3.4h or better) if you don't already
-			have it.  Get it from the XEmacs FTP site.
---with-xface (*)	Compile with support for X-Face mail header
-	  		conversion.  Requires the compface library.
-			Get it from the XEmacs FTP site.
---with-imagick (*)	Compile with support for ImageMagick image conversion.
-			Requires ImageMagick from wizards.dupont.com and
-			libraries for whatever image types you wish to have
-			supported.
-			Get it from the XEmacs FTP site.
-
-
-TTY options:
-
---with-tty=no		Don't support TTY-s.
---with-ncurses (*)	Use the ncurses library for tty support.
---with-gpm (*) 		Compile in support for General Purpose Mouse.
-
-
-Additional features:
-
---with-tooltalk (*)	Support the ToolTalk IPC protocol.
---with-workshop		Support the Sun WorkShop (formerly Sparcworks)
-			development environment.
---with-energize		Support the Lucid Energize development environment.
-			This doesn't currently work.
---with-socks		Compile with support for SOCKS (an Internet proxy).
---with-term		Compile with support for TERM (a way to multiplex
-			serial lines and provide vaguely Internet-like
-			functionality over a simple dialup connection,
-			used on Linux and other systems.  NOTE: We can't
-			guarantee that our TERM support coexists well
-			with standard Internet connections).
---with-database=type (*) Compile with database support.  Valid types are
-			\`no' or a comma-separated list of one or more
-			of \`dbm', \`gnudbm', or \`berkdb'.
---with-sound=native (*)	Compile with native sound support.
---with-sound=nas	Compile with network sound support.
---with-sound=both	Compile with native and network sound support.
---native-sound-lib=LIB	Native sound support library.  Needed on Suns
-			with --with-sound=both because both sound libraries
-			are called libaudio.
---with-pop		support POP for mail retrieval
---with-kerberos		support Kerberos-authenticated POP
---with-hesiod		support Hesiod to get the POP server host
---with-dnet (*)		Compile with support for DECnet.
---mail-locking=TYPE (*)	Specify the locking to be used by movemail to prevent
-			concurrent updates of mail spool files. Valid types
-			are \`lockf', \`flock', and \`file'.
---package-path=PATH     Directories to search for packages to dump with xemacs.
-                        Defaults to \`$prefix/lib/xemacs/packages:~/.xemacs'.
---infodir=dir		Directory to install the XEmacs Info manuals and dir in.
-    Defaults to: \`$info_dir'.
---infopath=PATH		Directories to search for Info documents, info dir
-			and localdir files.  This is used to initialize
-			\`Info-default-directory-list' at dump time.
-			Directories on this path that do not exist in the
-			filesystem will be dropped by the startup code at
-			runtime, so it is safe to specify directories that do
-			not exist in the compilation environment, or that won't
-			exist in the runtime environment. The \"dir\"
-			file in the first existing directory in this list will
-			become the (dir)Top node of the Info tree.
-    Defaults to the value of \`INFOPATH', or:
-    \`$infopath'.
-
-Internationalization options:
-
---with-mule		Compile with Mule (MUlti-Lingual Emacs) support,
-			needed to suport non-Latin-1 (including Asian) languages.
---with-xim=xlib		Compile with support for X input methods,
---with-xim=motif (*)	Used in conjunction with Mule support.
-			Use either raw Xlib to provide XIM support, or
-			the Motif XmIm* routines (when available).
-			NOTE:  On some systems bugs in X11's XIM support
-			will cause XEmacs to crash, so by default,
-			no XIM support is compiled in, unless running
-			on Solaris and the XmIm* routines are detected.
---with-canna (*)	Compile with support for Canna (a Japanese input method
-			used in conjunction with Mule support).
---with-wnn (*)		Compile with support for WNN (a multi-language input method
-			used in conjunction with Mule support).
-			This is beta level code.
---with-wnn6 (*)		Compile with support for WNN version 6
-			This is alpha level code.
---with-i18n3		Compile with I18N level 3 (support for message
-			translation).  This doesn't currently work.
---with-xfs		Compile with XFontSet support for bilingual menubar.
-			Can't use this option with --with-xim=motif or xlib.
-			And should have --with-menubars=lucid.
-
-
-Debugging options:
-
---debug			Compile with support for debugging XEmacs.
-			(Causes code-size increase and little loss of speed.)
---error-checking=TYPE[[,TYPE]]...
-			Compile with internal error-checking added.
-			Causes noticeable loss of speed.  Valid types
-			are extents, bufpos, malloc, gc, typecheck.
---error-checking=none	Disable all internal error-checking (the default).
---error-checking=all	Enable all internal error-checking.
---memory-usage-stats 	Compile with additional code to allow you to
-			determine what XEmacs's memory is being used
-		        for.  Causes a small code increase but no loss
-			of speed.  Normally enabled when --debug is given.
---no-doc-file		Don't rebuild the DOC file unless it's explicitly
-			deleted.  Only use during development. (It speeds
-			up the compile-run-test cycle.)
---use-union-type	Enable or disable use of a union, instead of an
-			int, for the fundamental Lisp_Object type; this
-			provides stricter type-checking.  Only works with
-			some systems and compilers.
-
-
-Other options:
-
---puresize=VALUE	Override default amount of space for pure Lisp code.
---rel-alloc		Use the relocating allocator (default for this option
-  			is system-dependent).
---with-clash-detection	Use lock files to detect multiple edits of the same file.
-			The default is to not do clash detection.
---lockdir=dir		The directory to put clash detection files in, such as
-			\`/var/lock/emacs'.
-    Defaults to \`$lockdir'.
---with-system-malloc	Force use of the system malloc, rather than GNU malloc.
---with-debug-malloc	Use the debugging malloc package.
-
-You may also specify any of the \`path' variables found in
-Makefile.in, including --bindir, --libdir, --lispdir, --datadir, and
-so on.  Note that we recommend against explicitly setting any of these
-variables.  See the INSTALL file for a complete list plus the reasons
-we advise not changing them.
-
-If successful, $progname leaves its status in config.status.  If
-unsuccessful after disturbing the status quo, it removes config.status.
-
-The configure build process also used the following environment variables:
-CC        C compiler to use (but configure flags take precedence)
-CPP       C preprocessor to use (such as /usr/ccs/lib/cpp or cc -E)
-CFLAGS    C compiler compilation flags (such as -O)
-CPPFLAGS  Additional compilation flags (such as -I/foo) used only by the preprocessor
-LDFLAGS   Additional linker flags (such as -L/foo)
-LIBS      Additional libraries (such as -lfoo)
-
-INFOPATH  Path to search for Info documentation.
-
-For more details on the install process, consult the INSTALL file.
-"
 
 dnl ------------------
 dnl Options Processing
@@ -688,6 +458,7 @@ while test $# != 0; do
 	with_quantify	| \
 	with_toolbars	| \
 	with_tty	| \
+	with_xfs	| \
 	with_i18n3	| \
 	with_mule	| \
 	with_canna	| \
@@ -924,7 +695,7 @@ while test $# != 0; do
 	"no_create" ) ;;
 
 	dnl Has the user asked for some help?
-	"usage" | "help" ) echo "$usage" | ${PAGER-more}; exit 0 ;;
+	"usage" | "help" ) ${PAGER-more} ${srcdir}/configure.usage; exit 0 ;;
 
 	dnl Has the user specified what toolkit to use for the menubars,
 	dnl scrollbar or dialogs?
@@ -2483,7 +2254,7 @@ esac
 
 dnl Enable or disable proper session-management
 AC_CHECKING(for session-management option);
-if test "$with_session" != "no"; then
+if test "$with_session" = "yes"; then
   AC_DEFINE(HAVE_SESSION)
 fi
 
@@ -2756,17 +2527,20 @@ if test "$with_mule" = "yes" ; then
       need_motif=yes
       XE_ADD_OBJS(input-method-motif.o)
     fi
-    if test "$with_xfs" = "yes"; then
+    if test "$with_xim" = "motif"; then
       with_xfs=no
     fi
-  else dnl "with_xim" = "no"
-    case "$with_xfs" in  "yes" )
-      AC_CHECKING(for XFontSet)
-      AC_CHECK_LIB(X11, XmbDrawString, [:], with_xfs=no)
-    esac
+  fi
+
+  dnl "with_xim" = "yes"
+  if test "$with_xfs" = "yes" ; then
+    AC_CHECKING(for XFontSet)
+    AC_CHECK_LIB(X11, XmbDrawString, [:], with_xfs=no)
     if test "$with_xfs" = "yes" && test "$with_menubars" = "lucid"; then
       AC_DEFINE(USE_XFONTSET)
-      XE_ADD_OBJS(input-method-xfs.o)
+      if test "$with_xim" = "no" ; then
+        XE_ADD_OBJS(input-method-xfs.o)
+      fi
     fi
   fi dnl with_xim
 

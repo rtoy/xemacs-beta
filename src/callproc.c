@@ -131,6 +131,8 @@ call_process_cleanup (Lisp_Object fdpid)
     /* #### "c-G" -- need non-consing Single-key-description */
     message ("Waiting for process to die...(type C-g again to kill it instantly)");
 
+    wait_for_termination (pid);
+
     /* "Discard" the unwind protect.  */
     XCAR (fdpid) = Qnil;
     XCDR (fdpid) = Qnil;
@@ -486,6 +488,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     else if (logging_on)
       cadillac_start_logging ();
 #endif
+    if (fd_error >= 0)
+      close (fd_error);
 
 #endif /* not MSDOS */
 #endif /* not WINDOWSNT */
@@ -589,9 +593,9 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	  make_decoding_input_stream(), we do the following which is
 	  less elegant. --marcpa */
        {
-	 int lf_count;
+	 int lf_count = 0;
 	 if (NILP (Vbinary_process_output)) {
-	   nread = nread - crlf_to_lf(nread, bufptr, &lf_count);
+	   nread = crlf_to_lf(nread, bufptr, &lf_count);
          }
        }
 #endif

@@ -41,11 +41,13 @@ Boston, MA 02111-1307, USA.  */
 
 static void
 x_draw_blank_toolbar_button (struct frame *f, int x, int y, int width,
-			     int height, int threed)
+			     int height, int threed, int border_width,
+			     int vertical)
 {
   struct device *d = XDEVICE (f->device);
   EmacsFrame ef = (EmacsFrame) FRAME_X_TEXT_WIDGET (f);
   int shadow_thickness = ef->emacs_frame.toolbar_shadow_thickness;
+  int sx = x, sy = y, swidth = width, sheight = height;
 
   Display *dpy = DEVICE_X_DISPLAY (d);
   Window x_win = XtWindow (FRAME_X_TEXT_WIDGET (f));
@@ -64,14 +66,35 @@ x_draw_blank_toolbar_button (struct frame *f, int x, int y, int width,
       bottom_shadow_gc = background_gc;
     }
 
+  if (vertical)
+    {
+      sx += border_width;
+      swidth -= 2 * border_width;
+    }
+  else
+    {
+      sy += border_width;
+      sheight -= 2 * border_width;
+    }
+
   /* Draw the outline. */
-  x_output_shadows (f, x, y, width, height, top_shadow_gc,
+  x_output_shadows (f, sx, sy, swidth, sheight, top_shadow_gc,
 		    bottom_shadow_gc, background_gc, shadow_thickness);
 
   /* Blank the middle. */
-  XFillRectangle (dpy, x_win, background_gc, x + shadow_thickness,
-		  y + shadow_thickness, width - shadow_thickness * 2,
-		  height - shadow_thickness * 2);
+  XFillRectangle (dpy, x_win, background_gc, sx + shadow_thickness,
+		  sy + shadow_thickness, swidth - shadow_thickness * 2,
+		  sheight - shadow_thickness * 2);
+
+  /* Do the border */
+  XFillRectangle (dpy, x_win, background_gc, x, y,
+		  (vertical ? border_width : width),
+		  (vertical ? height : border_width));
+  XFillRectangle (dpy, x_win, background_gc,
+		  (vertical ? sx + swidth : x),
+		  (vertical ? y : sy + sheight),
+		  (vertical ? border_width : width),
+		  (vertical ? height : border_width));
 }
 
 static void
@@ -80,6 +103,7 @@ x_output_toolbar_button (struct frame *f, Lisp_Object button)
   struct device *d = XDEVICE (f->device);
   EmacsFrame ef = (EmacsFrame) FRAME_X_TEXT_WIDGET (f);
   int shadow_thickness = ef->emacs_frame.toolbar_shadow_thickness;
+  int x_adj, y_adj, width_adj, height_adj;
 
   Display *dpy = DEVICE_X_DISPLAY (d);
   Window x_win = XtWindow (FRAME_X_TEXT_WIDGET (f));
@@ -88,6 +112,23 @@ x_output_toolbar_button (struct frame *f, Lisp_Object button)
   struct toolbar_button *tb = XTOOLBAR_BUTTON (button);
   struct Lisp_Image_Instance *p;
   struct window *w;
+  int vertical = tb->vertical;
+  int border_width = tb->border_width;
+
+  if (vertical)
+    {
+      x_adj = border_width;
+      width_adj = - 2 * border_width;
+      y_adj = 0;
+      height_adj = 0;
+    }
+  else
+    {
+      x_adj = 0;
+      width_adj = 0;
+      y_adj = border_width;
+      height_adj = - 2 * border_width;
+    }
 
   XSETFRAME (frame, f);
   window = FRAME_LAST_NONMINIBUF_WINDOW (f);
@@ -116,13 +157,27 @@ x_output_toolbar_button (struct frame *f, Lisp_Object button)
   background_gc = FRAME_X_TOOLBAR_BLANK_BACKGROUND_GC (f);
 
   /* Draw the outline. */
-  x_output_shadows (f, tb->x, tb->y, tb->width, tb->height, top_shadow_gc,
+  x_output_shadows (f, tb->x + x_adj, tb->y + y_adj,
+		    tb->width + width_adj, tb->height + height_adj,
+		    top_shadow_gc,
 		    bottom_shadow_gc, background_gc, shadow_thickness);
 
   /* Clear the pixmap area. */
-  XFillRectangle (dpy, x_win, background_gc, tb->x + shadow_thickness,
-		  tb->y + shadow_thickness, tb->width - shadow_thickness * 2,
-		  tb->height - shadow_thickness * 2);
+  XFillRectangle (dpy, x_win, background_gc, tb->x + x_adj + shadow_thickness,
+		  tb->y + y_adj + shadow_thickness,
+		  tb->width + width_adj - shadow_thickness * 2,
+		  tb->height + height_adj - shadow_thickness * 2);
+
+  /* Do the border. */
+  XFillRectangle (dpy, x_win, background_gc, tb->x, tb->y,
+		  (vertical ? border_width : tb->width),
+		  (vertical ? tb->height : border_width));
+
+  XFillRectangle (dpy, x_win, background_gc,
+		  (vertical ? tb->x + tb->width - border_width : tb->x),
+		  (vertical ? tb->y : tb->y + tb->height - border_width),
+		  (vertical ? border_width : tb->width),
+		  (vertical ? tb->height : border_width));
 
   background_gc = FRAME_X_TOOLBAR_PIXMAP_BACKGROUND_GC (f);
 
@@ -135,10 +190,10 @@ x_output_toolbar_button (struct frame *f, Lisp_Object button)
 
   if (IMAGE_INSTANCEP (instance))
     {
-      int width = tb->width - shadow_thickness * 2;
-      int height = tb->height - shadow_thickness * 2;
-      int x_offset = shadow_thickness;
-      int y_offset = shadow_thickness;
+      int width = tb->width + width_adj - shadow_thickness * 2;
+      int height = tb->height + height_adj - shadow_thickness * 2;
+      int x_offset = x_adj + shadow_thickness;
+      int y_offset = y_adj + shadow_thickness;
 
       p = XIMAGE_INSTANCE (instance);
 
@@ -299,12 +354,15 @@ x_get_button_size (struct frame *f, Lisp_Object window,
 		tb->y = y;						\
 		tb->width = width;					\
 		tb->height = height;					\
+	        tb->border_width = border_width;			\
+	        tb->vertical = vert;					\
 									\
                 if (tb->blank || NILP (tb->up_glyph))			\
 		  {							\
 		    int threed = (EQ (Qt, tb->up_glyph) ? 1 : 0);	\
 		    x_draw_blank_toolbar_button (f, x, y, width,	\
-						 height, threed);	\
+						 height, threed,	\
+						 border_width, vert);	\
 		  }							\
 	        else							\
 		  x_output_toolbar_button (f, button);			\
@@ -350,15 +408,35 @@ x_output_toolbar (struct frame *f, enum toolbar_pos pos)
   struct device *d = XDEVICE (f->device);
   int x, y, bar_width, bar_height, vert;
   int max_pixpos, right_size, right_start, blank_size;
+  int border_width = FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, pos);
   Lisp_Object button, window;
+  Display *dpy = DEVICE_X_DISPLAY (d);
+  Window x_win = XtWindow (FRAME_X_TEXT_WIDGET (f));
+  GC background_gc = FRAME_X_TOOLBAR_BLANK_BACKGROUND_GC (f);
 
   get_toolbar_coords (f, pos, &x, &y, &bar_width, &bar_height, &vert, 1);
   window = FRAME_LAST_NONMINIBUF_WINDOW (f);
 
+  /* Do the border */
+  XFillRectangle (dpy, x_win, background_gc, x, y,
+		  (vert ? bar_width : border_width),
+		  (vert ? border_width : bar_height));
+  XFillRectangle (dpy, x_win, background_gc,
+		  (vert ? x : x + bar_width - border_width),
+		  (vert ? y + bar_height - border_width : y),
+		  (vert ? bar_width : border_width),
+		  (vert ? border_width : bar_height));
+
   if (vert)
-    max_pixpos = y + bar_height;
+    {
+      max_pixpos = y + bar_height - border_width;
+      y += border_width;
+    }
   else
-    max_pixpos = x + bar_width;
+    {
+      max_pixpos = x + bar_width - border_width;
+      x += border_width;
+    }
 
   button = FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons;
   right_size = 0;
@@ -406,7 +484,13 @@ x_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	  height = bar_height;
 	}
 
-      x_draw_blank_toolbar_button (f, x, y, width, height, 1);
+      /*
+       * Use a 3D pushright separator only if there isn't a toolbar
+       * border.  A flat separator meshes with the border and looks
+       * better.
+       */
+      x_draw_blank_toolbar_button (f, x, y, width, height, !border_width,
+				   border_width, vert);
 
       if (vert)
 	y += height;
@@ -634,7 +718,10 @@ x_toolbar_size_changed_in_frame_1 (struct frame *f, enum toolbar_pos pos,
 	f->toolbar_visible_p[pos] = new_visibility;
 
       if (change < 0)
-	x_clear_toolbar (f, pos, change);
+	{
+	  x_clear_toolbar (f, pos, change);
+	  mark_frame_toolbar_buttons_dirty (f, pos);
+	}
       if (pos == LEFT_TOOLBAR || pos == RIGHT_TOOLBAR)
 	repl.width += change;
       else
@@ -664,11 +751,103 @@ x_toolbar_visible_p_changed_in_frame (struct frame *f, enum toolbar_pos pos,
 }
 
 static void
+x_toolbar_border_width_changed_in_frame (struct frame *f, enum toolbar_pos pos,
+					 Lisp_Object lispoldval)
+{
+  XtWidgetGeometry req, repl;
+  int newval, oldval;
+
+  if (NILP (f->toolbar_visible_p[pos]) || ZEROP (f->toolbar_size[pos]))
+    {
+      return;
+    }
+  else if (!f->init_finished && !INTP (f->toolbar_border_width[pos]))
+    /* the size might not be set at all if we're in the process of
+       creating the frame.  Otherwise it better be, and we'll crash
+       out if not. */
+    {
+      newval = 0;
+    }
+  else
+    {
+      Lisp_Object frame;
+
+      XSETFRAME (frame, f);
+      newval = XINT (Fspecifier_instance (Vtoolbar_border_width[pos],
+					  frame, Qzero, Qnil));
+    }
+
+  if (INTP (lispoldval))
+    oldval = XINT (lispoldval);
+  else
+    oldval = 0;
+
+  if (oldval == newval)
+    return;
+
+  /* We want the text area to stay the same size.  So, we query the
+     current size and then adjust it for the change in the toolbar
+     size. */
+
+  in_specifier_change_function++;
+  if (!in_resource_setting)
+    /* mirror the value in the frame resources, unless already done. */
+    {
+      Arg al [1];
+      XtSetArg (al [0],
+		pos ==    TOP_TOOLBAR ? XtNtopToolBarBorderWidth    :
+		pos == BOTTOM_TOOLBAR ? XtNbottomToolBarBorderWidth :
+		pos ==   LEFT_TOOLBAR ? XtNleftToolBarBorderWidth    :
+		XtNrightToolBarBorderWidth,
+		newval);
+      XtSetValues (FRAME_X_TEXT_WIDGET (f), al, 1);
+    }
+  if (XtIsRealized (FRAME_X_CONTAINER_WIDGET (f)))
+    {
+      int change = 2 * (newval - oldval);
+
+      req.request_mode = 0;
+
+      /*
+       * We want the current size, not the future size, so briefly
+       * reset the border width value so the query method returns
+       * the correct value.
+       */
+      f->toolbar_border_width[pos] = make_int (oldval);
+      XtQueryGeometry (FRAME_X_CONTAINER_WIDGET (f), &req, &repl);
+      f->toolbar_border_width[pos] = make_int (newval);
+
+      if (change < 0)
+	{
+	  x_clear_toolbar (f, pos, change);
+	  mark_frame_toolbar_buttons_dirty (f, pos);
+	}
+      if (pos == LEFT_TOOLBAR || pos == RIGHT_TOOLBAR)
+	repl.width += change;
+      else
+	repl.height += change;
+
+      MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
+      EmacsManagerChangeSize (FRAME_X_CONTAINER_WIDGET (f), repl.width,
+			      repl.height);
+    }
+  in_specifier_change_function--;
+}
+
+static void
 x_initialize_frame_toolbar_gcs (struct frame *f)
 {
   EmacsFrame ef = (EmacsFrame) FRAME_X_TEXT_WIDGET (f);
   XGCValues gcv;
   unsigned long flags = (GCForeground | GCBackground | GCGraphicsExposures);
+
+  /*
+   * If the user specified the global background resource, use it.
+   * Otherwise use the backgroundToolBarColor resource.
+   */
+  if (ef->emacs_frame.background_pixel != -1)
+    ef->emacs_frame.background_toolbar_pixel =
+      ef->emacs_frame.background_pixel;
 
   gcv.foreground = ef->emacs_frame.background_toolbar_pixel;
   gcv.background = ef->core.background_pixel;
@@ -791,5 +970,6 @@ console_type_create_toolbar_x (void)
   CONSOLE_HAS_METHOD (x, redraw_exposed_toolbars);
   CONSOLE_HAS_METHOD (x, redraw_frame_toolbars);
   CONSOLE_HAS_METHOD (x, toolbar_size_changed_in_frame);
+  CONSOLE_HAS_METHOD (x, toolbar_border_width_changed_in_frame);
   CONSOLE_HAS_METHOD (x, toolbar_visible_p_changed_in_frame);
 }

@@ -64,14 +64,21 @@
 ; last master version
 ;;; (defvar egg-version "3.09" "Version number of this version of Egg. ")
 ;;; Last modified date: Fri Sep 25 12:59:00 1992
-(defvar egg-version "3.09 xemacs" "Version number of this version of Egg. ")
-;;; Last modified date: Wed Feb 05 20:45:00 1997
+(defvar egg-version "3.10 xemacs" "Version number of this version of Egg. ")
+;;; Last modified date: Wed Nov 29 20:45:00 1997
 
 ;;;;  修正要求リスト
 
 ;;;;  read-hiragana-string, read-kanji-string で使用する平仮名入力マップを roma-kana に固定しないで欲しい．
 
 ;;;;  修正メモ
+
+;;; 97.10.29 modified by J.Hein <jareth@camelot-soft.com>
+;;; fix to get rid of problem with C-h/backspace fuckage when in fence mode. Note
+;;; that the entire egg-read-event thing is a hack and really needs to be re-implemented.
+;;; I REALLY don't like the bandaids there...
+;;; Also added the egg-mode function, and modified the behavior so that just loading
+;;; egg will not change the user's state.
 
 ;;; 97.2.05 modified by J.Hein <jhod@po.iijnet.or.jp>
 ;;; Lots of mods to make it XEmacs workable. Most fixes revolve around the fact that
@@ -406,7 +413,8 @@ unread-command-events to facilitate translation from Mule-2.3"
 	ch key)
     (next-command-event event)
     (setq key (event-key event))
-    (if (key-press-event-p event)
+    (if (and (key-press-event-p event) 
+	     (not (event-matches-key-specifier-p event 'backspace)))
 	(if (eq 0 (event-modifier-bits event))
 	    (setq ch (or (event-to-character event) key))
 	  (if (eq 1 (event-modifier-bits event))
@@ -2177,10 +2185,6 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 	  egg:*input-mode* (default-value 'egg:*input-mode*)
 	  egg:*in-fence-mode* (default-value 'egg:*in-fence-mode*))))
   
-(if (boundp 'select-window-hook)
-    (add-hook 'select-window-hook 'egg:select-window-hook)
-  (add-hook 'minibuffer-exit-hook 'egg:minibuffer-exit-hook)
-  (add-hook 'minibuffer-entry-hook 'egg:minibuffer-entry-hook))
 
 ;;;
 ;;;
@@ -2188,36 +2192,7 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 
 (defvar its:*reset-modeline-format* nil)
 
-(if its:*reset-modeline-format*
-    (setq-default modeline-format
-		  (cdr modeline-format)))
 
-(if (not (egg:find-symbol-in-tree 'mode-line-egg-mode modeline-format))
-    (setq-default 
-     modeline-format
-     (cons (list 'display-minibuffer-mode-in-minibuffer
-		 ;;; minibuffer mode in minibuffer
-		 (list 
-		  (list 'its:*previous-map* "<" "[")
-		  'mode-line-egg-mode
-		  (list 'its:*previous-map* ">" "]")
-		  )
-		       ;;;; minibuffer mode in mode line
-		 (list 
-		  (list 'minibuffer-window-selected
-			(list 'display-minibuffer-mode
-			      "m"
-			      " ")
-			" ")
-		  (list 'its:*previous-map* "<" "[")
-		  (list 'minibuffer-window-selected
-			(list 'display-minibuffer-mode
-			      'mode-line-egg-mode-in-minibuffer
-			      'mode-line-egg-mode)
-			'mode-line-egg-mode)
-		  (list 'its:*previous-map* ">" "]")
-		  ))
-	   modeline-format)))
 
 ;;;
 ;;; minibuffer でのモード表示をするために nemacs 4 で定義された 
@@ -2246,7 +2221,6 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 	  mode-line-egg-mode str))
   (redraw-modeline t))
 
-(mode-line-egg-mode-update mode-line-egg-mode)
 
 ;;;
 ;;; egg mode line display
@@ -2583,6 +2557,7 @@ FACE は nil でなければ、フェンス区間の表示にそれを使う。\n\
        (detach-extent egg:*fence-extent*) ))
 
 (defun enter-fence-mode ()
+
   ;; XEmacs change:
 ;  (buffer-disable-undo (current-buffer))
   (undo-boundary)
@@ -2704,8 +2679,9 @@ FACE は nil でなければ、フェンス区間の表示にそれを使う。\n\
 ;; jhod: This seems bogus to me, as it should be called either after each
 ;; egg-self-insert, or after accepting input, but not both. Otherwise, I can't
 ;; really think of a use for it.
-(defvar egg-insert-after-hook nil "Hook to run when egg inserts a character
-in the buffer")
+(defvar egg-insert-after-hook nil
+  "Hook to run when egg inserts a character in the buffer")
+
 (make-variable-buffer-local 'egg-insert-after-hook)
 
 (defvar egg-exit-hook nil
@@ -2780,14 +2756,12 @@ correspoding to character position.")
   (egg:mode-line-display))
 
 (defun fence-mode-help-command ()
-  "Display documentation for fence-mode."
-  (interactive)
-  (let ((buf "*Help*"))
-    (if (eq (get-buffer buf) (current-buffer))
-	(henkan-quit)
-      (with-output-to-temp-buffer buf
-	(princ (substitute-command-keys "The keys that are defined for the fence mode here are:\\{fence-mode-map}"))
-	(print-help-return-message)))))
+  "Display fence mode help"
+  (interactive "_")
+  (let ((w (selected-window)))
+    (describe-function 'egg-mode)
+    (ding)
+    (select-window w)))
 
 (defvar fence-mode-map (make-keymap))
 
@@ -2815,7 +2789,6 @@ correspoding to character position.")
 (define-key fence-mode-map "\C-e" 'fence-end-of-line)
 (define-key fence-mode-map "\C-f" 'fence-forward-char)
 (define-key fence-mode-map "\C-g" 'fence-cancel-input)
-(define-key fence-mode-map "\C-h" 'fence-mode-help-command)
 (define-key fence-mode-map "\C-k" 'fence-kill-line)
 (define-key fence-mode-map "\C-l" 'fence-exit-mode)
 (define-key fence-mode-map "\C-m" 'fence-exit-mode)  ;;; RET
@@ -2828,7 +2801,8 @@ correspoding to character position.")
 (define-key fence-mode-map "\C-_" 'jis-code-input)
 (define-key fence-mode-map "\177" 'fence-backward-delete-char)
 (define-key fence-mode-map [delete] 'fence-backward-delete-char)
-(define-key fence-mode-map [backspace] 'fence-backward-delete-char)
+(define-key fence-mode-map 'backspace 'fence-backward-delete-char)
+(define-key fence-mode-map '(control h) 'fence-mode-help-command)
 (define-key fence-mode-map [right] 'fence-forward-char)
 (define-key fence-mode-map [left] 'fence-backward-char)
 
@@ -2886,46 +2860,85 @@ correspoding to character position.")
 	 ((consp code) (eval code))
 	 )))
 
-(define-key global-map "\C-^"  'special-symbol-input)
 
 (autoload 'busyu-input "egg-busyu" nil t)
 (autoload 'kakusuu-input "egg-busyu" nil t)
 
-;; put us into all existing buffer's modelines
-(if (not (featurep 'egg))
-    (mapc-internal
-     (lambda (buf) 
-       (save-excursion
-	 (set-buffer buf)
-	 (setq modeline-format (cons (list 'display-minibuffer-mode-in-minibuffer
+(defun egg-mode ()
+  "The keys that are defined for the fence mode in egg are:\\{fence-mode-map}"
+  (interactive)
+  (define-key global-map "\C-^"  'special-symbol-input)
+  (if (not (egg:find-symbol-in-tree 'mode-line-egg-mode modeline-format))
+      (setq-default 
+       modeline-format
+       (cons (list 'display-minibuffer-mode-in-minibuffer
 		 ;;; minibuffer mode in minibuffer
-					   (list 
-					    (list 'its:*previous-map* "<" "[")
-					    'mode-line-egg-mode
-					    (list 'its:*previous-map* ">" "]")
-					    )
+		   (list 
+		    (list 'its:*previous-map* "<" "[")
+		    'mode-line-egg-mode
+		    (list 'its:*previous-map* ">" "]")
+		    )
 		       ;;;; minibuffer mode in mode line
-					   (list 
-					    (list 'minibuffer-window-selected
-						  (list 'display-minibuffer-mode
-							"m"
-							" ")
-						  " ")
-					    (list 'its:*previous-map* "<" "[")
-					    (list 'minibuffer-window-selected
-						  (list 'display-minibuffer-mode
-							'mode-line-egg-mode-in-minibuffer
-							'mode-line-egg-mode)
-						  'mode-line-egg-mode)
-					    (list 'its:*previous-map* ">" "]")
-					    ))
-				     modeline-format))))
-     (buffer-list)))
+		   (list 
+		    (list 'minibuffer-window-selected
+			  (list 'display-minibuffer-mode
+				"m"
+				" ")
+			  " ")
+		    (list 'its:*previous-map* "<" "[")
+		    (list 'minibuffer-window-selected
+			  (list 'display-minibuffer-mode
+				'mode-line-egg-mode-in-minibuffer
+				'mode-line-egg-mode)
+			  'mode-line-egg-mode)
+		    (list 'its:*previous-map* ">" "]")
+		    ))
+	     modeline-format)))
+  ;; put us into the modeline of all existing buffers
+  (mapc (lambda (buf)
+	  (save-excursion
+	    (set-buffer buf)
+	    (if (not (egg:find-symbol-in-tree 'mode-line-egg-mode modeline-format))
+		(setq modeline-format
+		      (cons (list 'display-minibuffer-mode-in-minibuffer
+		 ;;; minibuffer mode in minibuffer
+				  (list 
+				   (list 'its:*previous-map* "<" "[")
+				   'mode-line-egg-mode
+				   (list 'its:*previous-map* ">" "]")
+				   )
+		       ;;;; minibuffer mode in mode line
+				  (list 
+				   (list 'minibuffer-window-selected
+					 (list 'display-minibuffer-mode
+					       "m"
+					       " ")
+					 " ")
+				   (list 'its:*previous-map* "<" "[")
+				   (list 'minibuffer-window-selected
+					 (list 'display-minibuffer-mode
+					       'mode-line-egg-mode-in-minibuffer
+					       'mode-line-egg-mode)
+					 'mode-line-egg-mode)
+				   (list 'its:*previous-map* ">" "]")
+				   ))
+			    modeline-format)))))
+	(buffer-list))
+  (if (boundp 'select-window-hook)
+      (add-hook 'select-window-hook 'egg:select-window-hook)
+    (add-hook 'minibuffer-exit-hook 'egg:minibuffer-exit-hook)
+    (add-hook 'minibuffer-entry-hook 'egg:minibuffer-entry-hook))
+  (mode-line-egg-mode-update mode-line-egg-mode)
+  (if its:*reset-modeline-format*
+      (setq-default modeline-format
+		    (cdr modeline-format)))
+
+  ;; if set-lang-environment has already been called,
+  ;; call egg-lang-switch-callback
+  (if (not (null current-language-environment))
+      (egg-lang-switch-callback))
+  )
 
 (provide 'egg)
-
-;; if set-lang-environment has already been called, call egg-lang-switch-callback
-(if (not (null current-language-environment))
-    (egg-lang-switch-callback))
 
 ;;; egg.el ends here

@@ -1,6 +1,98 @@
+1997-11-18  Colin Rafferty  <craffert@ml.com>
+
+	* packages.el (packages-find-packages): Modified to allow `nil'
+ 	entry in the `package-path'.  All entries before the nil will be
+ 	prepended to the paths (as before).  All entries after nil will be
+ 	appended.
+
+	* packages.el (locate-data-file): Implemented similar to
+ 	locate-data-directory.
+
+1997-11-20  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lisp/x-faces.el: Add expression to xpm-color-symbols to
+	  look for the global background resource when supporting
+	  the backgroundToolBarColor XPM symbolic name.
+
+1997-11-17 Marc Paquette   <marcpa@cam.org>
+
+	* efs/dired.el: Removed special case for windows-nt in
+	dired-get-filename(); no longer needed because we now do 
+	CRLF->LF conversion upstream.
+
+1997-11-18  Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* msw-faces.el: Actually does something.
+
+1997-11-18  Christoph Wedler  <wedler@fmi.uni-passau.de>
+
+	* packages/font-lock.el (font-lock-fontify-anchored-keywords):
+	Sync'd with FSF 20.2.
+	(font-lock-keywords): Docstring partly sync'd with FSF 20.2.
+
+1997-11-18  SL Baur  <steve@altair.xemacs.org>
+
+	* egg/egg-leim.el (egg-activate): Call normal language setup
+	function.
+	- Call egg-mode
+	- require egg-wnn
+
+	* egg/egg-wnn.el (set-wnn-host-name): Use localhost as a fallback.
+	(set-cwnn-host-name): Ditto.
+	(set-kwnn-host-name): Ditto.
+	(open-wnn-if-disconnected): Ditto.
+
+1997-11-18  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/about.el (about-maintainer-info): Corrected typo.
+
+	* x-toolbar.el (toolbar-mail): Use `eval' to evaluate forms.
+
+	* cus-edit.el (customize-browse): Call `widget-add-change'.
+
+1997-11-18  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/uniquify.el (uniquify-buffer-name-style): Fix typo.
+	Suggested by: Michael Sperber <sperber@informatik.uni-tuebingen.de>
+
+1997-11-18  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/about.el (about-news): Announce a way to leave the buffer.
+
+1997-11-17  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lisp/x-toolbar.el (x-init-toolbar-from-resources):
+	  Initialize the toolbar border width specifiers.
+
+1997-11-17  SL Baur  <steve@altair.xemacs.org>
+
+	* lisp/mule/mule-files.el: Add TUTORIAL.pl to
+	`file-coding-system-alist'.
+	* lisp/language/european.el: Add Polish language environment.
+
+	* lisp/loadup.el: set inhibit-package-init when running from temacs.
+
+1997-11-16  SL Baur  <steve@altair.xemacs.org>
+
+	* lisp/prim/options.el: Fix comment typo.
+	From Peter Pezaris <pez@dwwc.com>
+
+1997-11-16  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lisp/prim/minibuf.el (reset-buffer): Make inhibit-read-only
+	  local to the current buffer and set it to t to prevent
+	  read-only text from permanently wedging the minibuffer.
+
+1997-11-16  SL Baur  <steve@altair.xemacs.org>
+
+	* packages/emacsbug.el (report-xemacs-bug): Handle case where
+	` *Message-Log*' buffer has not already been created.
+	* prim/help.el (view-lossage): Ditto.
+	* prim/simple.el (show-message-log): Ditto.
+
 1997-11-15  SL Baur  <steve@altair.xemacs.org>
 
-	* packages.el (list-autoloads): Fix typo (I hope). [Doesn't work]
+	* packages.el (list-autoloads): Fix doubleslash problem.
 
 1997-11-14  Hrvoje Niksic  <hniksic@srce.hr>
 

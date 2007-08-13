@@ -228,6 +228,8 @@ Does not modify STR.  Returns the encoded string on successful conversion."
 ;; compatibility for old XEmacsen (don't use it)
 (copy-coding-system 'undecided 'automatic-conversion)
 
+(copy-coding-system 'no-conversion 'raw-text)
+
 (make-coding-system
  'ctext 'iso2022
  "Coding-system used in X as Compound Text Encoding."

@@ -57,12 +57,8 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 
 #ifdef HAVE_IMAGEMAGICK
-#define HAVE_X11_MAGICK_IMAGE_H
-#endif /* HAVE_IMAGEMAGICK */
-
-#ifdef HAVE_X11_MAGICK_IMAGE_H
-#include <magick/magick.h>
-/* #include <image.h> */
+#include <magick.h>
+/*#include <image.h>*/
 #include <assert.h>
 #endif
 
@@ -1735,8 +1731,6 @@ imagick_instantiate_unwind (Lisp_Object unwind_obj)
 	return Qnil;
 }
 
-static void XDitherImage(Image *image,XImage *ximage);
-
 static void
 imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 					 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
@@ -1789,6 +1783,10 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		signal_simple_error ("Unable to read image.",instantiator);
 	}
 
+#if 1
+	DescribeImage(unwind.image,stderr,1);
+#endif
+
 	unwind.ximage = XCreateImage(dpy, DefaultVisualOfScreen (scr),
 								 depth,
 								 (depth == 1) ? XYPixmap : ZPixmap,
@@ -1819,9 +1817,83 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	** WMP 10/30/97
 	*/
 
+	{
+		int i,j,x;
+		unsigned int bytes_per_pixel, scanline_pad;
+		unsigned char *q;
+		RunlengthPacket *p;
+		XColor color;
+
+		unwind.npixels = unwind.image->total_colors;
+		unwind.pixels = xmalloc(unwind.npixels * sizeof(unsigned long));
+		q = (unsigned char *) unwind.ximage->data;
+		x  = 0;
+		memset(unwind.pixels,0,unwind.npixels * sizeof(unsigned long));
+		p = unwind.image->pixels;
+		scanline_pad = unwind.ximage->bytes_per_line -
+			((unwind.ximage->width * unwind.ximage->bits_per_pixel) >> 3);
+
+		/* Convert to multi-byte color-mapped X image. */
+		bytes_per_pixel=unwind.ximage->bits_per_pixel >> 3;
+
+#if 1
+          for (i=0; i < unwind.image->packets; i++)
+          {
+			  color.red = p->red;
+			  color.green = p->green;
+			  color.blue = p->blue;
+			  color.flags = DoRed | DoGreen | DoBlue;
+			  allocate_nearest_color (dpy, DefaultColormapOfScreen (scr), &color);
+			  unwind.pixels[i] = color.pixel;
+
+			  for (j=0; j <= ((int) p->length); j++)
+			  {
+				  *q++=(unsigned char) color.pixel;
+				  x++;
+				  if (x == unwind.ximage->width)
+				  {
+					  x=0;
+					  q+=scanline_pad;
+				  }
+			  }
+			  p++;
+          }
+#else
+		for (i=0; i < unwind.image->packets; i++)
+		{
+			pixel = unwind.pixels[p->index];
+			for (k=0; k < bytes_per_pixel; k++)
+			{
+				channel[k]=(unsigned char) pixel;
+				pixel>>=8;
+			}
+			for (j=0; j <= ((int) p->length); j++)
+			{
+				for (k=0; k < bytes_per_pixel; k++)
+					*q++=channel[k];
+				x++;
+				if (x == unwind.ximage->width)
+				{
+					x=0;
+					q+=scanline_pad;
+				}
+			}
+			p++;
+		}
+#endif
+	}
+
 	init_image_instance_from_x_image (ii, unwind.ximage, dest_mask,
 									  unwind.pixels, unwind.npixels,
 									  instantiator);
+
+	/* And we are done!
+	** Now that we've succeeded, we don't want the pixels
+	** freed right now.  They're kept around in the image instance
+	** structure until it's destroyed.
+	*/
+	unwind.npixels = 0;
+	unbind_to (speccount, Qnil);
 }
 
 #endif /* HAVE_IMAGEMAGICK */

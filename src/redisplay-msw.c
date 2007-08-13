@@ -597,7 +597,10 @@ mswindows_redraw_exposed_area (struct frame *f, int x, int y, int width, int hei
      necessary but it can't hurt. */
 
   if (!f->window_face_cache_reset)
-    mswindows_redraw_exposed_windows (f->root_window, x, y, width, height);
+	{
+	  mswindows_redraw_exposed_windows (f->root_window, x, y, width, height);
+	  GdiFlush();
+	}
   else
     MARK_FRAME_CHANGED (f);
 }
@@ -694,6 +697,7 @@ mswindows_output_begin (struct device *d)
 static void
 mswindows_output_end (struct device *d)
 {
+  GdiFlush();
 }
 
 static int
@@ -1155,9 +1159,11 @@ mswindows_clear_to_window_end (struct window *w, int ypos1, int ypos2)
 }
 
 
+/* XXX Implement me! */
 static void
 mswindows_clear_frame (struct frame *f)
 {
+  GdiFlush();
 }
 
 

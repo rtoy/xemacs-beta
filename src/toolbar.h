@@ -86,6 +86,10 @@ struct toolbar_button
   int x, y;
   int width, height;
   int dirty;
+  /* is this button in a left or right toolbar? */
+  int vertical;
+  /* border_width when this button was layed out */
+  int border_width;
 };
 
 DECLARE_LRECORD (toolbar_button, struct toolbar_button);
@@ -111,9 +115,11 @@ DECLARE_SPECIFIER_TYPE (toolbar);
 #define DEFAULT_TOOLBAR_HEIGHT	37
 #define DEFAULT_TOOLBAR_WIDTH	40
 #define DEFAULT_TOOLBAR_BLANK_SIZE	8
+#define DEFAULT_TOOLBAR_BORDER_WIDTH	0
 #define MINIMUM_SHADOW_THICKNESS	1
 
 extern Lisp_Object Vtoolbar_size[4];
+extern Lisp_Object Vtoolbar_border_width[4];
 void update_frame_toolbars (struct frame *f);
 void init_frame_toolbars (struct frame *f);
 void init_device_toolbars (struct device *d);
@@ -121,6 +127,7 @@ void init_global_toolbars (struct device *d);
 void free_frame_toolbars (struct frame *f);
 Lisp_Object get_toolbar_button_glyph (struct window *w,
 				      struct toolbar_button *tb);
+void mark_frame_toolbar_buttons_dirty (struct frame *f, enum toolbar_pos pos);
 
 #endif /* HAVE_TOOLBARS */
 

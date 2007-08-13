@@ -102,6 +102,18 @@ static XtResource resources[] = {
      offset (left_toolbar_width), XtRImmediate, (XtPointer)-1},
   {XtNrightToolBarWidth, XtCRightToolBarWidth, XtRInt, sizeof (int),
      offset (right_toolbar_width), XtRImmediate, (XtPointer)-1},
+  {XtNtopToolBarBorderWidth, XtCTopToolBarBorderWidth, XtRInt,
+     sizeof (int),
+     offset (top_toolbar_border_width), XtRImmediate, (XtPointer)-1},
+  {XtNbottomToolBarBorderWidth, XtCBottomToolBarBorderWidth, XtRInt,
+     sizeof (int),
+     offset (bottom_toolbar_border_width), XtRImmediate, (XtPointer)-1},
+  {XtNleftToolBarBorderWidth, XtCLeftToolBarBorderWidth, XtRInt,
+     sizeof (int),
+     offset (left_toolbar_border_width), XtRImmediate, (XtPointer)-1},
+  {XtNrightToolBarBorderWidth, XtCRightToolBarBorderWidth, XtRInt,
+     sizeof (int),
+     offset (right_toolbar_border_width), XtRImmediate, (XtPointer)-1},
   {XtNtopToolBarShadowColor, XtCTopToolBarShadowColor, XtRPixel, sizeof(Pixel),
      offset(top_toolbar_shadow_pixel), XtRString, "#000000"},
   {XtNbottomToolBarShadowColor, XtCBottomToolBarShadowColor, XtRPixel,
@@ -130,6 +142,8 @@ static XtResource resources[] = {
   },
   {XtNforeground, XtCForeground, XtRPixel, sizeof(Pixel),
      offset(foreground_pixel), XtRString, "XtDefaultForeground"},
+  {XtNbackground, XtCBackground, XtRPixel, sizeof(Pixel),
+     offset(background_pixel), XtRImmediate, (XtPointer)-1},
   {XtNcursorColor, XtCForeground, XtRPixel, sizeof(Pixel),
      offset(cursor_color), XtRString, "XtDefaultForeground"},
   {XtNbarCursor, XtCBarCursor, XtRBoolean, sizeof (Boolean),
@@ -424,6 +438,30 @@ EmacsFrameSetValues (Widget cur_widget, Widget req_widget, Widget new_widget,
 	Fadd_spec_to_specifier
 	  (Vtoolbar_size[RIGHT_TOOLBAR],
 	   make_int (new->emacs_frame.right_toolbar_width),
+	   frame, Qnil, Qnil);
+      if (cur->emacs_frame.top_toolbar_border_width !=
+	  new->emacs_frame.top_toolbar_border_width)
+	Fadd_spec_to_specifier
+	  (Vtoolbar_border_width[TOP_TOOLBAR],
+	   make_int (new->emacs_frame.top_toolbar_border_width),
+	   frame, Qnil, Qnil);
+      if (cur->emacs_frame.bottom_toolbar_border_width !=
+	  new->emacs_frame.bottom_toolbar_border_width)
+	Fadd_spec_to_specifier
+	  (Vtoolbar_border_width[BOTTOM_TOOLBAR],
+	   make_int (new->emacs_frame.bottom_toolbar_border_width),
+	   frame, Qnil, Qnil);
+      if (cur->emacs_frame.left_toolbar_border_width !=
+	  new->emacs_frame.left_toolbar_border_width)
+	Fadd_spec_to_specifier
+	  (Vtoolbar_border_width[LEFT_TOOLBAR],
+	   make_int (new->emacs_frame.left_toolbar_border_width),
+	   frame, Qnil, Qnil);
+      if (cur->emacs_frame.right_toolbar_border_width !=
+	  new->emacs_frame.right_toolbar_border_width)
+	Fadd_spec_to_specifier
+	  (Vtoolbar_border_width[RIGHT_TOOLBAR],
+	   make_int (new->emacs_frame.right_toolbar_border_width),
 	   frame, Qnil, Qnil);
 #endif /* HAVE_TOOLBARS */
     }

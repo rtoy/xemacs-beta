@@ -1,3 +1,55 @@
+1997-11-20  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.4-beta6 is released.
+
+1997-11-21  Stephen Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* configure.usage: Use `--' convention in "usage:" line.
+
+1997-11-20  Stephen Turnbull <turnbull@sk.tsukuba.ac.jp>
+
+	* configure.in: added `with_xfs' to list of boolean features.
+
+1997-11-20  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3 is released.
+
+1997-11-19  Tor Arntsen <tor@spacetec.no>
+
+	* PROBLEMS: Removed IRIX entry about xemacs core dumps when using
+	xemacs dumped on one machine on another. Problem was fixed by 20.3.
+
+1997-11-19  SL Baur  <steve@altair.xemacs.org>
+
+	* etc/xemacs.1: Document -no-packages, -vanilla.
+	Document -h.
+
+1997-11-18  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.usage: New file.
+
+	* configure.in: Use it instead of monster 10k shell variable.
+
+1997-11-17  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-pre4 is released.
+
+1997-11-17  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* configure.in (infopath): List "/usr/local/" dirs before "/usr/"
+	dirs.
+
+1997-11-17  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Initialize infodir off of datadir.
+
+	* Makefile.in: Force LANG = C for building.
+
+1997-11-15  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-pre3 is released.
+	* XEmacs 20.4-beta5 is released.
+
 1997-11-13  Marc Paquette <marcpa@cam.org>
 
 	* nt/Todo: added a task for support of lisp packages through
@@ -21,6 +73,10 @@
 
 	* Deleted w32 build directory since nt build directory now handles
 	  X and native mswindows builds.
+
+1997-11-11  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.4-beta4 is released.
 
 1997-11-10  SL Baur  <steve@altair.xemacs.org>
 

@@ -7809,6 +7809,18 @@ Ensure that all minibuffers are correctly showing the echo area.
 	  if (FRAME_REPAINT_P (f) && FRAME_HAS_MINIBUF_P (f))
 	    {
 	      Lisp_Object window = FRAME_MINIBUF_WINDOW (f);
+	      /*
+	       * If the frame has changed, there may be random chud
+	       * on the screen left from previous messages because
+	       * redisplay_frame hasn't been called yet.  Clear the
+	       * screen to get rid of the potential mess.
+	       *
+	       * It would be nice if a way could be found not to
+	       * have to do this for every message until the next
+	       * full redisplay.
+	       */
+	      if (f->frame_changed)
+		DEVMETH (d, clear_frame, (f));
 	      redisplay_window (window, 0);
 	      call_redisplay_end_triggers (XWINDOW (window), 0);
 	    }

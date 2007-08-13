@@ -669,7 +669,7 @@ The number of messages shown is controlled by `view-lossage-message-count'."
      ;; XEmacs addition
      (princ "\n\n\nRecent minibuffer messages (most recent first):\n\n")
      (save-excursion
-       (let ((buffer (get-buffer " *Message-Log*"))
+       (let ((buffer (get-buffer-create " *Message-Log*"))
 	     (count 0)
 	     oldpoint)
 	 (set-buffer buffer)

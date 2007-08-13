@@ -8,12 +8,12 @@
 @titlepage
 @title XEmacs FAQ
 @subtitle Frequently asked questions about XEmacs
-@subtitle Last Modified:  1997-11-10
+@subtitle Last Modified: 1997-11-18 23:08:35 EET
 @sp 1
 @author Tony Rossini <arossini@@stat.sc.edu>
 @author Ben Wing <wing@@666.com>
-@author Chuck Thompson <cthomp@@cs.uiuc.edu>
-@author Steve Baur <steve@@miranova.com>
+@author Chuck Thompson <cthomp@@xemacs.org>
+@author Steve Baur <steve@@xemacs.org>
 @author Andreas Kaempf <andreas@@sccon.com>
 @page
 @end titlepage
@@ -146,6 +146,7 @@ Customization and Options
 * Q3.0.6::      Can I force the output of @code{(face-list)} to a buffer?
 * Q3.0.7::      Font selections don't get saved after @code{Save Options}. 
 * Q3.0.8::      How do I make a single minibuffer frame?
+* Q3.0.9::      @code{Customize}.
 
 X Window System & Resources:
 * Q3.1.1::      Where is a list of X resources?
@@ -420,22 +421,13 @@ track changes to GNU Emacs while also working to add new features.
 @node Q1.0.2, Q1.0.3, Q1.0.1, Introduction
 @section What is the current version of XEmacs?
 
-There are currently two released versions of XEmacs:
+The current stable version of XEmacs is 20.3, released in November,
+1997.
 
-The current stable International version of XEmacs is 20.2, released in
-May, 1997.  The next feature release will XEmacs 20.3.
+The next feature release will be XEmacs 20.4.
 
-The current version of XEmacs without international language support is
-XEmacs 19.16 and is the last release of v19. This version was released
-in November, 1997.
-
-We also run a patch-page with official bugfixes for 19.15 at:
-
-@example
-<URL:http://www.xemacs.org/xemacs-19.15-patches/patch-page.html>
-@end example
-
-The page is maintained by Vinnie Shelton @code{<acs@@acm.org>}.  
+XEmacs 19.16 was the last release of v19, released in November, 1997,
+which was also the last version without international language support.
 
 @node Q1.0.3, Q1.0.4, Q1.0.2, Introduction
 @section Where can I find it?
@@ -584,26 +576,26 @@ Screen snapshots are available in the WWW version of the FAQ.
 @node Q1.0.10, Q1.0.11, Q1.0.9, Introduction
 @section Is there a port of XEmacs to Microsoft ('95 or NT)?
 
-Altrasoft is actively seeking corporate and government sponsors to help
-fund a fully native port of XEmacs to Windows 95 and NT using full-time,
-senior-level staff working under a professionally managed project
-structure.  See <URL:http://www.altrasoft.com/> for more details or
-contact Altrasoft directly at 1-888-ALTSOFT.
+Thanks to efforts of many people, coordinated by David Hobley
+<davidh@@wr.com.au> and Marc Paquette <marcpa@@cam.org>, beta versions
+of XEmacs now run on 32-bit Windows platforms (NT and 95).  The current
+betas require having an X server to run XEmacs; however, a native NT/95
+port is in alpha, thanks to Jonathan Harris <jhar@@tardis.ed.ac.uk>.
 
-A private effort is being put forth by David Hobley 
-<URL:http://www.angelfire.com/wa/hobley>. 
+The NT development is now coordinated by a mailing list at
+<xemacs-nt@@xemacs.org>.  If you are willing to contribute or want to
+follow the progress, mail to <xemacs-nt-request@@xemacs.org> to
+subscribe.
 
-He can be reached at the following email addresses: 
-@example
-<davidh@@wr.com.au> (home)
-@end example
+Furthermore, Altrasoft is seeking corporate and government sponsors to
+help fund a fully native port of XEmacs to Windows 95 and NT using
+full-time, senior-level staff working under a professionally managed
+project structure.  See <URL:http://www.altrasoft.com/> for more details
+or contact Altrasoft directly at 1-888-ALTSOFT.
 
-@example
-<david_hobley@@optusvision.com.au> (work)
-@end example
- 
-The closest is @dfn{Win-Emacs}, which is based on Lucid Emacs 19.6.
-Available from <URL:http://www.pearlsoft.com/>.
+
+The closest existing port is @dfn{Win-Emacs}, which is based on Lucid
+Emacs 19.6.  Available from <URL:http://www.pearlsoft.com/>.
 
 There's a port of GNU Emacs (not XEmacs) at
 @example
@@ -753,7 +745,7 @@ The following people contributed valuable suggestions to building this
 version of the FAQ (listed in alphabetical order):
 
 @itemize @bullet
-@item Steven L Baur <steve@@miranova.com>
+@item SL Baur <steve@@xemacs.org>
 
 @item Hrvoje Niksic <hniksic@@srce.hr>
 
@@ -804,10 +796,71 @@ crash some time ago.
 
 XEmacs v20 is the version of XEmacs that includes MULE (Asian-language)
 support.  XEmacs 20.0 was released in February 1997, followed by XEmacs
-20.2 in May.  When compiled without MULE support 20.2 is currently very
-similar to 19.16 (except for some changes to the byte-code format, some
-new primitive types including @code{char}, @code{char-table}, and
-@code{range-table}) and equally stable.
+20.2 in May and XEmacs 20.3 in November.  When compiled without MULE
+support, 20.3 is approximately as stable as 19.16, and probably faster
+(due to additional optimization work.)
+
+As of XEmacs 20.3, version 20 is @emph{the} supported version of
+XEmacs.  This means that 19.16 will optionally receive stability fixes
+(if any), but that all the real development work will be done on the v20 
+tree.
+
+The incompatible changes in XEmacs 20 include the additional byte-codes,
+new primitive data types (@code{character}, @code{char-table}, and
+@code{range-table}).  This means that the character-integer equivalence
+inherent to all the previous Emacs and XEmacs releases no longer
+applies.
+
+However, to avoid breaking old code, many functions that should normally
+accept characters work with integers, and vice versa.  For more
+information, see the Lisp reference manual.  Here is a relevant excerpt, 
+for your convenience.
+
+@quotation
+  In XEmacs version 19, and in all versions of FSF GNU Emacs, a
+@dfn{character} in XEmacs Lisp is nothing more than an integer.
+This is yet another holdover from XEmacs Lisp's derivation from
+vintage-1980 Lisps; modern versions of Lisp consider this equivalence
+a bad idea, and have separate character types.  In XEmacs version 20,
+the modern convention is followed, and characters are their own
+primitive types. (This change was necessary in order for @sc{MULE},
+i.e. Asian-language, support to be correctly implemented.)
+
+  Even in XEmacs version 20, remnants of the equivalence between
+characters and integers still exist; this is termed the @dfn{char-int
+confoundance disease}.  In particular, many functions such as @code{eq},
+@code{equal}, and @code{memq} have equivalent functions (@code{old-eq},
+@code{old-equal}, @code{old-memq}, etc.) that pretend like characters
+are integers are the same.  Byte code compiled under any version 19
+Emacs will have all such functions mapped to their @code{old-} equivalents
+when the byte code is read into XEmacs 20.  This is to preserve
+compatibility -- Emacs 19 converts all constant characters to the equivalent
+integer during byte-compilation, and thus there is no other way to preserve
+byte-code compatibility even if the code has specifically been written
+with the distinction between characters and integers in mind.
+
+  Every character has an equivalent integer, called the @dfn{character
+code}.  For example, the character @kbd{A} is represented as the
+@w{integer 65}, following the standard @sc{ASCII} representation of
+characters.  If XEmacs was not compiled with @sc{MULE} support, the
+range of this integer will always be 0 to 255 -- eight bits, or one
+byte. (Integers outside this range are accepted but silently truncated;
+however, you should most decidedly @emph{not} rely on this, because it
+will not work under XEmacs with @sc{MULE} support.)  When @sc{MULE}
+support is present, the range of character codes is much
+larger. (Currently, 19 bits are used.)
+
+  FSF GNU Emacs uses kludgy character codes above 255 to represent
+keyboard input of @sc{ASCII} characters in combination with certain
+modifiers.  XEmacs does not use this (a more general mechanism is
+used that does not distinguish between @sc{ASCII} keys and other
+keys), so you will never find character codes above 255 in a
+non-@sc{MULE} XEmacs.
+
+  Individual characters are not often used in programs.  It is far more
+common to work with @emph{strings}, which are sequences composed of
+characters.  @xref{String Type}.
+@end quotation
 
 @node Q1.3.2, Q1.3.3, Q1.3.1, Introduction
 @section What is the status of Asian-language support, aka MULE?
@@ -1461,7 +1514,7 @@ the Perl @samp{-i} option will cause unwanted side-effects if applied to
 a symbolic link.
 @end quotation
 
-Steve L. Baur <steve@@miranova.com> writes:
+SL Baur <steve@@xemacs.org> writes:
 
 @quotation
 If you build against a recent libc-5.4 (late enough to have caused
@@ -2345,7 +2398,7 @@ some other strange cases.
 Movemail used to work fine in 19.14 but has stopped working in 19.15
 and 20.x.  I am using Linux.
 
-Steven L Baur <steve@@miranova.com> writes:
+SL Baur <steve@@xemacs.org> writes:
 
 @quotation
 Movemail on Linux used to default to using flock file locking.  With
@@ -2374,6 +2427,7 @@ Customization---Emacs Lisp and @file{.emacs}:
 * Q3.0.6::      Can I force the output of @code{(face-list)} to a buffer?
 * Q3.0.7::      Font selections don't get saved after @code{Save Options}. 
 * Q3.0.8::      How do I make a single minibuffer frame?
+* Q3.0.9::      @code{Customize}.
 
 X Window System & Resources:
 * Q3.1.1::      Where is a list of X resources?
@@ -2578,7 +2632,7 @@ Implement the above as well as set the following in your @file{.emacs}
 (setq options-save-faces t)
 @end lisp
 
-@node Q3.0.8, Q3.1.1, Q3.0.7, Customization
+@node Q3.0.8, Q3.0.9, Q3.0.7, Customization
 @section How do I get a single minibuffer frame?
 
 Vin Shelton <acs@@acm.org> writes:
@@ -2604,7 +2658,21 @@ Vin Shelton <acs@@acm.org> writes:
 taste, and there any number of other XEmacs options settings that may
 make it difficult or inconvenient to use.
 
-@node Q3.1.1, Q3.1.2, Q3.0.8, Customization
+@node Q3.0.9, Q3.1.1, Q3.0.8, Customization
+@section @code{Customize}.
+
+Strating with XEmacs 20.2 there is new system 'Customize' for customizing
+XEmacs options.
+
+You can access @code{Customize} from the @code{Options} menu
+or invoking one of customize commands byt typing eg.
+@kbd{M-x customize}, @kbd{M-x customize-face},
+@kbd{M-x customize-variable} or @kbd{M-x customize-apropos}.
+
+Strating with XEmacs 20.3 there is also new `browser' mode for Customize.
+Try it out with @kbd{M-x customize-browse}
+
+@node Q3.1.1, Q3.1.2, Q3.0.9, Customization
 @section Where is a list of X resources?
 
 Search through the @file{NEWS} file for @samp{X Resources}.  A fairly
@@ -2882,21 +2950,33 @@ Add the following line to your @file{.emacs} file to display the
 line number:
 
 @lisp
-(setq line-number-mode t)
+(line-number-mode 1)
 @end lisp
 
 Use the following to display the column number:
 
 @lisp
-(display-column-mode)
+(column-number-mode 1)
 @end lisp
+
+Or select from the @code{Options} menu
+ @code{Customize->Emacs->Editing->Basics->Line Number Mode}
+and/or
+ @code{Customize->Emacs->Editing->Basics->Column Number Mode}
+
+Or type @kbd{M-x customize RET editing-basics RET}.
 
 @node Q3.3.3, Q3.3.4, Q3.3.2, Customization
 @section How do I get XEmacs to put the time of day on the modeline?
 
+Add the following line to your @file{.emacs} file to display the
+time:
+
 @lisp
 (display-time)
 @end lisp
+
+See @code{Customize} from the @code{Options} menu for customization.
 
 @node Q3.3.4, Q3.3.5, Q3.3.3, Customization
 @section How do I turn off current chapter from AUC TeX modeline?
@@ -3083,13 +3163,15 @@ than the default.  How does one do this?
 @end lisp
 
 However, some modes explicitly bind @kbd{Delete}, so you would need to
-add a hook that does @code{local-set-key} for them.  If what you want to
+add a hook that does @code{local-set-key} for them. If what you want to
 do is make the Backspace and Delete keys work more PC/Motif-like, then
-take a look at the @file{delbackspace.el} package.
+take a look at the @file{delbs.el} package.
 
 New in XEmacs 19.14 is a variable called @code{key-translation-map}
-which makes it easier to bind @kbd{Delete}.  @file{delbackspace.el} is a
+which makes it easier to bind @kbd{Delete}. @file{delbs.el} is a
 good example of how to do this correctly.
+
+Also @xref{Q3.5.10}.
 
 @node Q3.5.5, Q3.5.6, Q3.5.4, Customization
 @section Scrolling one line at a time.
@@ -3120,6 +3202,11 @@ keys (i.e. @kbd{C-n} and @kbd{C-p}):
 @lisp
 (setq scroll-step 1)
 @end lisp
+
+You can change this also with Customize.
+Select from the @code{Options} menu
+@code{Customize->Emacs->Environment->Windows->Scroll Step...}
+or type @kbd{M-x customize RET windows RET}.
 
 @node Q3.5.6, Q3.5.7, Q3.5.5, Customization
 @section How to map @kbd{Help} key alone on Sun type4 keyboard?
@@ -3193,6 +3280,11 @@ This will give you the functions @code{delbs-enable-delete-forward} to
 set things up, and @code{delbs-disable-delete-forward} to revert to
 ``normal'' behavior.
 
+You can change this also with Customize.
+Select from the @code{Options} menu
+@code{Customize->Emacs->Editing->Basics->Delete Key Deletes Forward}
+or type @kbd{M-x customize RET editing-basics RET}.
+
 Also @xref{Q3.5.4}.
 
 @node Q3.5.10, Q3.6.1, Q3.5.9, Customization
@@ -3228,6 +3320,11 @@ For a 2 pixel bar cursor, use:
 (setq bar-cursor 'anything-else)
 @end lisp
 
+You can also change these with Customize.
+Select from the @code{Options} menu
+@code{Customize->Emacs->Environment->Display->Bar Cursor...}
+or type @kbd{M-x customize RET display RET}.
+
 You can use a color to make it stand out better:
 
 @example
@@ -3240,6 +3337,11 @@ Emacs*cursorColor:	Red
 @lisp
 (setq bar-cursor nil)
 @end lisp
+
+You can also change this with Customize.
+Select from the @code{Options} menu
+@code{Customize->Emacs->Environment->Display->Bar Cursor...}
+or type @kbd{M-x customize RET display RET}.
 
 @node Q3.6.3, Q3.7.1, Q3.6.2, Customization
 @section Can I make the cursor blink?
@@ -3563,6 +3665,11 @@ following line to your @file{.emacs} file:
 (setq zmacs-regions nil)
 @end lisp
 
+You can also change these with Customize.
+Select from the @code{Options} menu
+@code{Customize->Emacs->->Editing->Basics->Zmacs Regions}
+or type @kbd{M-x customize RET editing-basics RET}.
+
 To change the face for selection, look at @code{Options->Customize} on
 the menubar.
 
@@ -3580,7 +3687,7 @@ Usually backspace kills the selected region.
 To get this behavior, add the following line to your @file{.emacs}:
 
 @lisp
-(require 'pending-del)
+(turn-on-pending-delete)
 @end lisp
 
 Note that this will work with both Backspace and Delete.
@@ -3597,6 +3704,9 @@ Put the following in your @file{.emacs}:
 (setq isearch-highlight nil)
 @end lisp
 
+You can also change these with Customize.
+Type @kbd{M-x customize-variable RET isearch-highlight RET}.
+
 Note also that isearch-highlight affects query-replace and ispell.
 Instead of disabling isearch-highlight you may find that a better
 solution consists of customizing the @code{isearch} face.
@@ -3611,6 +3721,8 @@ Put this in your @code{.emacs}:
 @end lisp
 
 @strong{Warning: This command turns off all region highlighting.}
+
+Also @xref{Q3.10.1}.
 
 @node Q3.10.5,  , Q3.10.4, Customization
 @section The region disappears when I hit the end of buffer while scrolling.
@@ -3937,7 +4049,7 @@ Yes, and much more.  W3, as distributed with the latest XEmacs is a
 full-featured web browser.
 
 @node Q4.2.1, Q4.2.2, Q4.1.3, Subsystems
-@section GNUS, (ding) Gnus, Gnus 5, September Gnus, Red Gnus, Mamey Sapote Gnus, argh!
+@section GNUS, (ding) Gnus, Gnus 5, September Gnus, Red Gnus, Quassia Gnus, argh!
 
 The Gnus numbering issues are not meant for mere mortals to know them.
 If you feel you @emph{must} enter the muddy waters of Gnus, visit the
@@ -3945,6 +4057,11 @@ excellent FAQ, maintained by Justin Sheehy, at:
 
 @example
 <URL:http://www.ccs.neu.edu/software/gnus/>
+@end example
+
+See also Gnus home page
+@example
+<URL:http://www.gnus.org/>
 @end example
 
 @node Q4.2.2, Q4.2.3, Q4.2.1, Subsystems
@@ -4480,6 +4597,9 @@ automatically start it by adding lines like:
 to your @file{.emacs}.  See the file @file{etc/sample.emacs} for more
 examples.
 
+See also @code{Syntax Highlighting} from the @code{Options} menu.
+Remember to save options.
+
 @node Q5.0.2, Q5.0.3, Q5.0.1, Miscellaneous
 @section I do not like cc-mode.  How do I use the old c-mode?
 
@@ -4523,6 +4643,9 @@ like this:
 
 It will work for C, C++ and Lisp.
 
+See also @code{Syntax Highlighting} from the @code{Options} menu.
+Remember to save options.
+
 @node Q5.0.4, Q5.0.5, Q5.0.3, Miscellaneous
 @section How can I enable auto-indent?
 
@@ -4540,6 +4663,11 @@ standard with XEmacs.  Put this into your @file{.emacs}:
 (add-hook 'text-mode-hook    'turn-on-filladapt-mode)
 ;;; and others ...
 @end lisp
+
+You can customize filling and adaptive filling with Customize.
+Select from the @code{Options} menu
+@code{Customize->Emacs->->Editing->Fill->Fill...}
+or type @kbd{M-x customize RET fill RET}.
 
 Note that well-behaving text-lookalike modes will run
 @code{text-mode-hook} by default (e.g. that's what Message does).  For
@@ -5596,10 +5724,13 @@ considered unstable.
 @node Q6.0.2, Q6.0.3, Q6.0.1, Current Events
 @section What is new in 20.3?
 
-XEmacs release 20.3 is planned for november 1997.  It will contain many
+XEmacs 20.3 will be released in November 1997.  It will contain many
 bugfixes, and a number of new features, including Autoconf 2 based
 configuration, multiple TTY frames, further customizations, synches with
 GNU Emacs 20, advanced Perl-like regexp features, and more.
+
+XEmacs 20.3 will be the first non-beta v20 release, and will be the
+basis for all further development.
 
 @node Q6.0.3,  , Q6.0.2, Current Events
 @section Procedural changes in XEmacs development.
@@ -5613,13 +5744,17 @@ instead of being handled by hand.  Send a mail message to
 the list.  Please note this is a developers mailing list for people who
 have an active interest in the development process.
 
+The discussion of NT XEmacs development is taking place on a separate
+mailing list.  Send mail to <xemacs-nt-request@@xemacs.org> to
+subscribe.
+
 @item
 Due to the long development cycle in between releases, it has been
 decided that intermediate versions will be made available in source only
 form for the truly interested.
 
-XEmacs 19.16 will be the last 19 release, basically consisting of 19.15
-plus the collected bugfixes.
+XEmacs 19.16 was the last 19 release, basically consisting of 19.15 plus
+the collected bugfixes.
 
 @item
 As of December 1996, Steve Baur <steve@@altair.xemacs.org> has become

@@ -138,13 +138,18 @@ Quail is a simple key-translation system that allows users to input
 any multilingual text from normal ASCII keyboard.  This means that
 XEmacs with Mule now supports a number of European languages.
 
-** XEmacs runs on Windows NT.
+** More Windows NT support.
 
-Thanks to David Hobley <davidh@wr.com.au> and Marc Paquette
-<marcpa@cam.org>, XEmacs now runs on Windows NT.
+Thanks to efforts of many people, coordinated by David Hobley
+<davidh@wr.com.au> and Marc Paquette <marcpa@cam.org>, beta versions
+of XEmacs now run on 32-bit Windows platforms (Windows NT and Windows
+95).  The current betas require having an X server to run XEmacs;
+however, a native NT/95 port is in alpha, thanks to Jonathan Harris
+<jhar@tardis.ed.ac.uk>.
 
-There are plans to hire contractors to do a native, professional
-port.  This might be over for the 20.3 final release.
+The NT development is now coordinated by a mailing list at
+<xemacs-nt@xemacs.org>.  Mail to <xemacs-nt-request@xemacs.org> to
+subscribe.
 
 ** Multiple TTY frames are now available.
 

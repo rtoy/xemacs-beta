@@ -373,8 +373,10 @@ Otherwise, it returns the next larger version of this font that is defined."
 	   (purecopy '("foreground" (face-foreground 'default)))
 	   (purecopy '("background" (face-background 'default)))
 	   (purecopy '("backgroundToolBarColor"
-		       (x-get-resource "backgroundToolBarColor"
-				       "BackgroundToolBarColor" 'string)))
+		       (or
+			(x-get-resource "background" "Background" 'string)
+			(x-get-resource "backgroundToolBarColor"
+					"BackgroundToolBarColor" 'string))))
 	   )))
 
 ;;; internal routines

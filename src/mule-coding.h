@@ -408,31 +408,34 @@ enum coding_category_type
 #define CODING_CATEGORY_NOT_FINISHED_MASK \
   (1 << 30)
 
-/* Macros to decode or encode a character of JISX0208 in SJIS.  S1 and
-   S2 are the 1st and 2nd position-codes of JISX0208 in SJIS coding
-   system.  C1 and C2 are the 1st and 2nd position codes of Emacs'
-   internal format.  */
+/* Convert shift-JIS code (sj1, sj2) into internal string
+   representation (c1, c2). (The leading byte is assumed.) */
 
-#define DECODE_SJIS(s1, s2, c1, c2)		  	\
-  do {						  	\
-    if (s2 >= 0x9F)				  	\
-      c1 = s1 * 2 - (s1 >= 0xE0 ? 0x160 : 0xE0),  	\
-      c2 = s2 - 0x7E;				  	\
-    else					  	\
-      c1 = s1 * 2 - ((s1 >= 0xE0) ? 0x161 : 0xE1),	\
-      c2 = s2 - ((s2 >= 0x7F) ? 0x20 : 0x1F);	  	\
-  } while (0)
+#define DECODE_SJIS(sj1, sj2, c1, c2)			\
+do {							\
+  int I1 = sj1, I2 = sj2;				\
+  if (I2 >= 0x9f)					\
+    c1 = (I1 << 1) - ((I1 >= 0xe0) ? 0xe0 : 0x60),	\
+    c2 = I2 + 2;					\
+  else							\
+    c1 = (I1 << 1) - ((I1 >= 0xe0) ? 0xe1 : 0x61),	\
+    c2 = I2 + ((I2 >= 0x7f) ? 0x60 : 0x61);		\
+} while (0)
 
-#define ENCODE_SJIS(c1, c2, s1, s2)			\
-  do {							\
-    if ((c1) & 1)						\
-      s1 = (c1) / 2 + (((c1) < 0x5F) ? 0x71 : 0xB1),	\
-      s2 = (c2) + (((c2) >= 0x60) ? 0x20 : 0x1F);		\
-    else						\
-      s1 = (c1) / 2 + (((c1) < 0x5F) ? 0x70 : 0xB0),	\
-      s2 = (c2) + 0x7E;					\
-  } while (0)
+/* Convert the internal string representation of a Shift-JIS character
+   (c1, c2) into Shift-JIS code (sj1, sj2).  The leading byte is
+   assumed. */
 
+#define ENCODE_SJIS(c1, c2, sj1, sj2)			\
+do {							\
+  int I1 = c1, I2 = c2;					\
+  if (I1 & 1)						\
+    sj1 = (I1 >> 1) + ((I1 < 0xdf) ? 0x31 : 0x71),	\
+    sj2 = I2 - ((I2 >= 0xe0) ? 0x60 : 0x61);		\
+  else							\
+    sj1 = (I1 >> 1) + ((I1 < 0xdf) ? 0x30 : 0x70),	\
+    sj2 = I2 - 2;					\
+} while (0)
 
 extern Lisp_Object make_decoding_input_stream (Lstream *stream,
 					       Lisp_Object codesys);

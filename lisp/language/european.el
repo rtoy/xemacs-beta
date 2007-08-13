@@ -215,6 +215,19 @@ These languages are supported with the Latin-2 (ISO-8859-2) character set:
  Serbian or Croatian, Slovak, Slovene, and Swedish.
 " . describe-european-environment-map))
 	      ))
+
+(set-language-info-alist
+ "Polish" '((setup-function . (setup-latin2-environment
+				. setup-european-environment-map))
+	      (charset . (ascii latin-iso8859-2))
+	      (tutorial . "TUTORIAL.pl")
+	      (coding-system . (iso-8859-2))
+	      (documentation . ("\
+These languages are supported with the Latin-2 (ISO-8859-2) character set:
+ Albanian, Czech, English, German, Hungarian, Polish, Romanian,
+ Serbian or Croatian, Slovak, Slovene, and Swedish.
+" . describe-european-environment-map))
+	      ))
 
 ;; Latin-3 (ISO-8859-3)
 

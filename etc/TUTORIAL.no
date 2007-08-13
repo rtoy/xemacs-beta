@@ -9,10 +9,10 @@ Dette er den norske brukerveiledningen til Emacs.
 
 Emacs-kommandoer inkluderer ofte bruk av CONTROL-tasten (noen ganger
 merket CTRL eller CTL) eller META-tasten.  På noen tastaturer er
-META-tasten merket ALT eller EDIT eller noe annet (på Sun-tastaturer 
+META-tasten merket ALT eller EDIT eller noe annet (på Sun-tastaturer
 for eksempel, er det "ruter"-tasten til venstre for mellomromstasten).
-Hvis du ikke har noen META-tast kan du bruke ESC.  Istedenfor å skrive META
-eller CONTROL vil vi her bruke følgende forkortelser:
+Hvis du ikke har noen META-tast kan du bruke ESC.  Istedenfor å skrive
+META eller CONTROL vil vi her bruke følgende forkortelser:
 
  C-<chr>  betyr at du skal holde nede CONTROL-tasten mens du trykker
 	  bokstaven <chr>.  Dermed vil C-f bety: hold nede
@@ -86,7 +86,7 @@ vises disse fire kommandoene og i hvilken retning de flytter markøren:
 Dette er sikkert litt enklere å huske hvis du tenker på disse
 forkortelsene: P (engelsk previous) for forrige, N for neste, B for
 bakover og F for framover.  Dette er de grunnleggende kommandoene for
-å flytte markøren, og du kommer sikkert til å bruke dem hele tiden, så 
+å flytte markøren, og du kommer sikkert til å bruke dem hele tiden, så
 det vil være en stor fordel om du lærer dem nå.
 
 >> Gjør noen C-n slik at du kommer ned til denne linjen.
@@ -124,7 +124,7 @@ og M-b flytter den ett ord bakover.
 >> Utfør noen M-f og M-b.
 
 Hvis markøren står midt i et ord vil M-f flytte markøren til slutten
-av ordet.  Hvis du står midt mellom to ord vil M-f flytte markøren til 
+av ordet.  Hvis du står midt mellom to ord vil M-f flytte markøren til
 slutten av det kommende ordet.  M-b fungerer på samme måte, bare i
 motsatt retning.
 
@@ -132,7 +132,7 @@ motsatt retning.
    og C-b slik at du ser hvordan M-f og M-b oppfører seg ved
    forskjellig plassering av markøren både i og mellom ord.
 
-Legg merke til parallellen mellom C-f og C-b på en side, og M-f og M-b 
+Legg merke til parallellen mellom C-f og C-b på en side, og M-f og M-b
 på den andre.  Ofte er Meta-kommandoer brukt til operasjoner relatert
 til enheter definert av språket (ord, setninger, avsnitt), mens
 Control-kommandoer blir brukt på grunnleggende enheter som er
@@ -171,12 +171,12 @@ kommandoene, inkludert ord- og setningsforflyttnings-kommandoene:
 >> Prøv ut alle disse kommandoene noen ganger, bare for trening.
    Dette er de mest brukte kommandoene.
 
-To andre viktige markørbevegelses-kommandoer er M-< (Meta Mindre-enn), 
+To andre viktige markørbevegelses-kommandoer er M-< (Meta Mindre-enn),
 som flytter markøren til begynnelsen av teksten, og M-> (Meta
 større-enn), som flytter den til slutten av teksten.
 
 På noen tastaturer er ">" plassert over komma, så man må bruke shift
-for å få den fram.  På disse tastaturene må man også bruke shift for å 
+for å få den fram.  På disse tastaturene må man også bruke shift for å
 taste M-<.  Uten shift-tasten vil det bli M-komma.
 
 >> Prøv M-< nå for å flytte markøren til begynnelsen av veiledningen.
@@ -200,7 +200,7 @@ de fleste av kommandoene vil dette si repetert utførelse.  Måten du
 gir en kommando et slikt argument er at du trykker C-u og deretter
 tallet, før du taster kommandoen.  Hvis du har en META- (eller EDIT-
 eller ALT-) tast så finnes det et annet alternativ for å gi numeriske
-argumenter:  Trykk ned tallet mens du holder META-tasten nede.  Vi
+argumenter: Trykk ned tallet mens du holder META-tasten nede.  Vi
 anbefaler at du bruker C-u fordi det fungerer på alle slags
 terminaler.
 
@@ -237,11 +237,11 @@ også bruker for å forflytte deg innenfor teksten.
 ----------------------------------
 
 Hvis du sitter på en X-terminal vil du sansynligvis finne det mye
-enklere å bruke piltastene for å bevege markøren.  Venstre-, høyre-, opp-
-og ned-pilene beveger markøren i ønsket retning.  De fungerer på samme
-måte som C-b, C-f, C-p og C-n, men er enklere å taste og huske.  Du
-kan også bruke C-venstre og C-høyre for å bevege den innenfor ord, og
-C-opp og C-ned for å bevege den innenfor blokker (For eksempel
+enklere å bruke piltastene for å bevege markøren.  Venstre-, høyre-,
+opp- og ned-pilene beveger markøren i ønsket retning.  De fungerer på
+samme måte som C-b, C-f, C-p og C-n, men er enklere å taste og huske.
+Du kan også bruke C-venstre og C-høyre for å bevege den innenfor ord,
+og C-opp og C-ned for å bevege den innenfor blokker (For eksempel
 avsnitt hvis du redigerer tekst).  Hvis du har tastene merket HOME
 (eller BEGIN) og END kan du bruke disse for å gå til henholdsvis
 begynnelsen av linjen og slutten av linjen, og C-HOME og C-END vil gå
@@ -260,11 +260,11 @@ tastetrykkene.
 * HVIS EMACS HENGER
 -------------------
 
-Hvis Emacs slutter å reagere på kommandoer kan du trygt stoppe den ved 
+Hvis Emacs slutter å reagere på kommandoer kan du trygt stoppe den ved
 å trykke C-g.  Du kan også bruke C-g for å stoppe en kommando som tar
 for lang tid å utføre.
 
-Det er også mulig å bruke C-g for å avbryte et numerisk argument eller 
+Det er også mulig å bruke C-g for å avbryte et numerisk argument eller
 begynnelsen på en kommando du ikke ønsker å utføre.
 
 >> Tast C-u 100 for å lage et numerisk argument på 100 og trykk C-g.
@@ -282,12 +282,12 @@ Enkelte av Emacs-kommandoene er "utilgjengelige" slik at nybegynnere
 ikke kan bruke dem uten at de ønsker det.
 
 Hvis du prøver en av disse utilgjengelige kommandoene vil Emacs komme
-med en melding som forteller hvilken kommando det er, og vil spørre om 
+med en melding som forteller hvilken kommando det er, og vil spørre om
 du virkelig vil fortsette å utføre denne kommandoen.
 
-Hvis du virkelig ønsker å prøve denne kommandoen trykker du mellomromstast
-som svar på spørsmålet.  Normalt, hvis du ikke ønsker å kjøre denne
-kommandoen, svarer du "n" på spørsmålet.
+Hvis du virkelig ønsker å prøve denne kommandoen trykker du
+mellomromstast som svar på spørsmålet.  Normalt, hvis du ikke ønsker å
+kjøre denne kommandoen, svarer du "n" på spørsmålet.
 
 >> Tast `C-x n p' (som er en utilgjengelig kommando),
    tast n som svar på spørsmålet.
@@ -299,12 +299,12 @@ kommandoen, svarer du "n" på spørsmålet.
 Emacs kan ha flere vinduer, og hver av dem kan vise sin egen tekst.
 Legg merke til at "vinduer" i Emacs ikke refererer til separate
 overlappende vinduer i vindus-systemet, men til separate buffer
-innenfor et enkelt X-vindu.  (Emacs kan også ha flere X-vinduer, eller 
+innenfor et enkelt X-vindu.  (Emacs kan også ha flere X-vinduer, eller
 "rammer" i Emacs-terminologi.  Dette blir beskrevet senere.)
 
 Akkurat nå er det best at vi ikke går inn på teknikker for å bruke
 flere vinduer, men du trenger å vite hvordan du blir kvitt ekstra
-vinduer som kan dukke opp for å vise hjelp, eller utskrift fra enkelte 
+vinduer som kan dukke opp for å vise hjelp, eller utskrift fra enkelte
 kommandoer.  Det er enkelt:
 
 	C-x 1	Ett vindu (dvs. gjem alle andre vinduer).
@@ -315,11 +315,11 @@ andre vinduer.
 
 >> Flytt markøren til denne linjen og trykk C-u 0 C-l.
 
-(Husk at C-l renser skjermen og midtstiller linjen der markøren
-står.  Hvis du gir et numerisk argument til denne kommandoen betyr det 
-"rensk skjermen og legg linjen der markøren står på linjen angitt av
-argumentet"  Derfor betyr C-u 0 C-l at skjermen skal renskes og
-linjen der markøren står plasseres øverst.)
+(Husk at C-l renser skjermen og midtstiller linjen der markøren står.
+Hvis du gir et numerisk argument til denne kommandoen betyr det "rensk
+skjermen og legg linjen der markøren står på linjen angitt av
+argumentet" Derfor betyr C-u 0 C-l at skjermen skal renskes og linjen
+der markøren står plasseres øverst.)
 
 >> Tast Control-x 2.
    Se hvordan vinduet krympes og et nytt dukker opp med samme
@@ -464,14 +464,14 @@ repetisjon oppheve enda en utført kommando.
 
 Men det er to unntak her.  Kommandoer som ikke forandrer i teksten
 teller ikke (dette inkluderer markørbevegelser og flytte-kommandoer),
-og inntastede enkeltbokstaver blir vanligvis gruppert i grupper på opp 
+og inntastede enkeltbokstaver blir vanligvis gruppert i grupper på opp
 til 20 tegn.  (Dette er for å redusere antall C-x u'er som trengs for
 å angre inntastet tekst.)
 
 >> "Kill" denne linjen med C-k.  C-x u vil få den tilbake igjen.
 
 C-_ er en alternativ angre-kommando.  Den fungerer på samme måte som
-C-x u, men er enklere å taste flere ganger på rad.  Ulempen med C-_ er 
+C-x u, men er enklere å taste flere ganger på rad.  Ulempen med C-_ er
 at den er vanskelig å finne fram til på enkelte tastaturer.  Det er
 derfor vi i tillegg har C-x u.  På enkelte terminaler kan du få fram
 C-_ ved å trykke / mens CTRL er holdt nede.
@@ -532,7 +532,7 @@ Når du er ferdig med å skrive filnavnet trykker du <Return> for å
 fullføre kommandoen.  Da vil C-x C-f kommandoen begynne å lete fram
 filen.  Minibuffret forsvinner når C-x C-f kommandoen er ferdig.
 
-Om en liten stund vil filen komme inn i skjermbildet og du kan begynne 
+Om en liten stund vil filen komme inn i skjermbildet og du kan begynne
 å redigere innholdet.  Når du ønsker å lagre filen kan du bruke denne
 kommandoen
 
@@ -544,7 +544,7 @@ navn slik at den ikke går tapt.  Det nye filnavnet blir laget ved at
 det blir lagt til en "~" i slutten av det originale filnavnet.
 
 Når lagringen er utført vil Emacs skrive ut navnet på filen som ble
-lagret.  Du bør lagre ofte slik at du ikke mister så mye om det skulle 
+lagret.  Du bør lagre ofte slik at du ikke mister så mye om det skulle
 oppstå en system-krasj.
 
 >> Trykk C-x C-s for å lagre en kopi av denne veiledningen.
@@ -553,18 +553,18 @@ oppstå en system-krasj.
 
 NB: På noen systemer vil C-x C-s føre til at skjermen "fryses" og du
 vil ikke være istand til å utføre noen flere kommandoer.  Dette
-indikerer at en operativsystem-egenskap kalt "flytkontroll" har
-fanget opp C-s'en og ikke sendt den videre til Emacs.  For å fortsette
-må du trykke C-q.  Se da i avsnittet "Spontaneous Entry to Incremental
+indikerer at en operativsystem-egenskap kalt "flytkontroll" har fanget
+opp C-s'en og ikke sendt den videre til Emacs.  For å fortsette må du
+trykke C-q.  Se da i avsnittet "Spontaneous Entry to Incremental
 Search" i Emacs-manualen for råd om hvordan dette kan avverges.
 
-Du kan finne en eksisterende fil, enten for å forandre den eller for å 
+Du kan finne en eksisterende fil, enten for å forandre den eller for å
 se på den.  Du kan også finne en fil som ikke eksisterer.  Dette er
-måten du lager nye filer med Emacs: finn filen, som er tom til å begynne
-med, og start å skrive teksten som skal inn i denne filen.  Først når du
-lagrer filen vil Emacs virkelig opprette filen med den teksten du har
-skrevet.  Fra nå av kan du betrakte deg selv som om du skriver i en
-fil som allerede eksisterer.
+måten du lager nye filer med Emacs: finn filen, som er tom til å
+begynne med, og start å skrive teksten som skal inn i denne filen.
+Først når du lagrer filen vil Emacs virkelig opprette filen med den
+teksten du har skrevet.  Fra nå av kan du betrakte deg selv som om du
+skriver i en fil som allerede eksisterer.
 
 
 * BUFFER
@@ -596,13 +596,13 @@ C-b.  All teksten du ser i et Emacs-vindu tilhører et buffer.
 
 >> Tast C-x 1 for å bli kvitt buffer-listen.
 
-Hvis du gjør forandringer i en av filene og åpner en ny fil så vil ikke
-den første filen bli lagret, men forandringene vil fortsatt være i
-buffret.  Oppretting eller redigering av en ny fil vil ikke påvirke den 
-første filens buffer.  Dette er nyttig, men betyr også at du trenger
-en passende måte å lagre den første filens buffer.  Det vil bli alt
-for omstendig å skifte tilbake til det forrige buffret med C-x C-f for 
-så å lagre filen med C-x C-s.  Derfor har vi kommandoen
+Hvis du gjør forandringer i en av filene og åpner en ny fil så vil
+ikke den første filen bli lagret, men forandringene vil fortsatt være
+i buffret.  Oppretting eller redigering av en ny fil vil ikke påvirke
+den første filens buffer.  Dette er nyttig, men betyr også at du
+trenger en passende måte å lagre den første filens buffer.  Det vil
+bli alt for omstendig å skifte tilbake til det forrige buffret med C-x
+C-f for så å lagre filen med C-x C-s.  Derfor har vi kommandoen
 
 	C-x s   Lagre noen buffer
 
@@ -657,10 +657,10 @@ er tilgjengelig i skjermbildet.  Hvis du for eksempel går inn i Info
 (on-line dokumentasjonen til Emacs) ved å bruke C-h i, eller "Help"-
 menyen, kan du følge linkene ved å trykke den midterste musknappen.
 Og hvis du skriver inn et filnavn (For eksempel "Find File"), og
-trykker TAB for å få fram en fillisting, så kan du komplettere filnavnet
-ved å trykke den midterste musknappen på filnavnet.
+trykker TAB for å få fram en fillisting, så kan du komplettere
+filnavnet ved å trykke den midterste musknappen på filnavnet.
 
-Ved å trykke høyre musknapp vil du få fram en popup-meny.  Innholdet i 
+Ved å trykke høyre musknapp vil du få fram en popup-meny.  Innholdet i
 denne menyen er avhengig av hvilken modus du er inne i, og vanligvis
 inneholder den et par av de mest brukte kommandoene slik at de blir
 lett tilgjengelige.
@@ -673,7 +673,7 @@ Du er nødt til å holde knappen nede for at menyen skal vises.
 * UTVIDING AV KOMMANDOSETTET
 ----------------------------
 
-Det finnes mange flere Emacs-kommandoer enn det som er mulig å tilegne 
+Det finnes mange flere Emacs-kommandoer enn det som er mulig å tilegne
 control- eller meta-taster.  For å komme rundt dette har Emacs en "X"-
 (eXtend) kommando.  Denne kommer i to utgaver:
 
@@ -698,8 +698,8 @@ skallene kan du få tilbake Emacs med kommandoen `fg', eller `%xemacs'.
 
 På systemer som ikke har implementert denne egenskapen vil C-z
 opprette et skall som kjører under Emacs, og som gir deg sjansen til å
-kjøre andre programmer og så returnere til Emacs etterpå.  Den gir ingen
-eksakt avslutning av Emacs.  I slike tilfeller vil vanligvis
+kjøre andre programmer og så returnere til Emacs etterpå.  Den gir
+ingen eksakt avslutning av Emacs.  I slike tilfeller vil vanligvis
 kommandoen `exit' returnere fra skallet og tilbake til Emacs.
 
 C-x C-c benyttes når du skal avslutte Emacs.  Det er også fornuftig å
@@ -745,22 +745,22 @@ avslutte begge argumentene med <Return>.
 Når du har gjort forandringer i en fil, men ikke lagret den, vil det
 gå tapt hvis maskinen krasjer.  Som en beskyttelse mot dette vil Emacs
 periodisk lagre en "autosave"-fil for hver av filene du redigerer.
-Denne filen har en # i begynnelsen og slutten av filnavnet.  Hvis du 
+Denne filen har en # i begynnelsen og slutten av filnavnet.  Hvis du
 for eksempel har en fil med navnet "hallo.c" så vil navnet på
 "autosave"-filen bli "#hallo.c#".  Når du lagrer filen på vanlig måte
 vil Emacs slette unna "autosave"-filen.
 
-Hvis maskinen krasjer kan du gjenvinne "autosave"-filene ved å
-finne filen på vanlig måte (filen du redigerte på, ikke "auto-save"-
-filen) og trykke M-x recover file<Return>.  Når Emacs vil ha
-bekreftelse svarer du  yes<Return> for å gjenvinne "autosave"-filen.
+Hvis maskinen krasjer kan du gjenvinne "autosave"-filene ved å finne
+filen på vanlig måte (filen du redigerte på, ikke "auto-save"- filen)
+og trykke M-x recover file<Return>.  Når Emacs vil ha bekreftelse
+svarer du yes<Return> for å gjenvinne "autosave"-filen.
 
 
 * ECHO-OMRÅDE
 -------------
 
-Hvis Emacs ser at du skriver kommandoene langsomt så vil den vise dem på
-den nederste linjen i skjermbildet i et område som blir kalt "echo
+Hvis Emacs ser at du skriver kommandoene langsomt så vil den vise dem
+på den nederste linjen i skjermbildet i et område som blir kalt "echo
 area".  Dette området inneholder den nederste linjen i skjermbildet.
 
 
@@ -784,7 +784,7 @@ ser på en fil der hele teksten passer inn på en side vil det stå
 --All--.
 
 Stjernene i begynnelsen av linjen forteller at det er blitt foretatt
-endringer i filen siden den sist ble lagret.  Når du nettopp har åpnet 
+endringer i filen siden den sist ble lagret.  Når du nettopp har åpnet
 en fil vil det ikke stå noe her, bare minustegn.
 
 Den delen av moduslinjen som står inne i parenteser forteller hvilken
@@ -797,8 +797,8 @@ for eksempel Lisp mode, Text mode, ol.  Det kan bare være en
 hovedmodus om gangen, og modusnavnet vil alltid stå der det står
 Fundamental nå.
 
-Hver hovedmodus gjør at endel kommandoer oppfører seg annerledes.
-Det finnes for eksempel kommandoer for å sette inn kommentarer i
+Hver hovedmodus gjør at endel kommandoer oppfører seg annerledes.  Det
+finnes for eksempel kommandoer for å sette inn kommentarer i
 programkode, og siden hvert programmeringsspråk har forskjellige måter
 å angi kommentarer på må de ulike hovedmodusene sette inn disse
 kommentarene på forskjellige måter.  Hver hovedmodus har en kommando
@@ -815,8 +815,8 @@ særlig grad.  Men du kan legge merke til at M-f og M-b nå behandler
 apostrofer som en del av ordet.  Tidligere, i Fundamental mode,
 behandlet M-f og M-b apostrofene som ordskillere.
 
-Hver hovedmodus gjør vanligvis små forandringer slik som denne, og de 
-fleste kommandoene gjør det samme i hver hovedmodus, de fungerer bare 
+Hver hovedmodus gjør vanligvis små forandringer slik som denne, og de
+fleste kommandoene gjør det samme i hver hovedmodus, de fungerer bare
 litt annerledes.
 
 For å få fram dokumentasjonen på den hovedmodusen du er inne i nå kan
@@ -839,9 +839,9 @@ Fill mode".  Når denne er slått på vil Emacs dele linjene automatisk
 hvis linjen blir for lang for å passe inn på ett skjermbilde.
 
 Du kan slå på Auto Fill mode ved å utføre en M-x
-auto-fill-mode<Return>.   Når denne modusen er på kan du slå den av
-igjen ved å utføre en ny M-x auto-fill-mode<Return>.  Denne 
-kommandoen bytter mellom av og på, også kalt "toggle the mode".
+auto-fill-mode<Return>.  Når denne modusen er på kan du slå den av
+igjen ved å utføre en ny M-x auto-fill-mode<Return>.  Denne kommandoen
+bytter mellom av og på, også kalt "toggle the mode".
 
 >> Trykk M-x auto-fill-mode<Return> nå.  Skriv så inn en linje med
    "aoeu " inntil linjen deler seg.  Du er nødt til å putte inn
@@ -873,8 +873,8 @@ tekststrengen opptrer.
 
 Søkemetoden til Emacs er litt forskjellig fra andre søkemetoder
 implementert i de fleste andre redigeringsprogrammer på den måten at
-den er inkrementell.  Dette betyr at søket foregår mens du taster
-inn tekststrengen du skal søke etter.
+den er inkrementell.  Dette betyr at søket foregår mens du taster inn
+tekststrengen du skal søke etter.
 
 Kommandoen for å innlede et søk er C-s for å søke framover, og C-r for 
 å søke bakover.  MEN VENT!  Ikke prøv dem enda.
@@ -900,29 +900,29 @@ det slik at du ser hvor den er.  For å gå til neste forekomst av ordet
 forekomster vil Emacs komme med et pip og en melding om at søket
 midlertidig har feilet.  C-g vil også avbryte søket.
 
-NB:  På noen systemer vil C-s føre til at skjermen "fryses" og du
-vil ikke være istand til å utføre noen flere kommandoer.  Dette
-indikerer at en operativsystem-egenskap kalt "flytkontroll" har
-fanget opp C-s'en og ikke sendt den videre til Emacs.  For å fortsette 
-må trykke C-q.  Se da i avsnittet "Spontaneous Entry to Incremental
-Search" i Emacs-manualen for råd om hvordan dette kan avverges.
+NB: På noen systemer vil C-s føre til at skjermen "fryses" og du vil
+ikke være istand til å utføre noen flere kommandoer.  Dette indikerer
+at en operativsystem-egenskap kalt "flytkontroll" har fanget opp
+C-s'en og ikke sendt den videre til Emacs.  For å fortsette må trykke
+C-q.  Se da i avsnittet "Spontaneous Entry to Incremental Search" i
+Emacs-manualen for råd om hvordan dette kan avverges.
 
-Hvis du er inne i et inkrementellt søk og trykker <Delete> vil du legge
-merke til at den siste bokstaven i søkestrengen blir slettet og søket
-hopper tilbake til den forrige forekomsten fra søket.  Hvis du for 
-eksempel taster "m" for å søke etter den første forekomsten av "m", og
-så trykker "a" så vil markøren bevege seg til første forekomst av "ma".
-Trykk nå <Delete>.  Dette fjerner "a" fra søkestrengen, og markøren
-beveger seg tilbake til den første forekomsten av "m".
+Hvis du er inne i et inkrementellt søk og trykker <Delete> vil du
+legge merke til at den siste bokstaven i søkestrengen blir slettet og
+søket hopper tilbake til den forrige forekomsten fra søket.  Hvis du
+for eksempel taster "m" for å søke etter den første forekomsten av
+"m", og så trykker "a" så vil markøren bevege seg til første forekomst
+av "ma".  Trykk nå <Delete>.  Dette fjerner "a" fra søkestrengen, og
+markøren beveger seg tilbake til den første forekomsten av "m".
 
-Hvis du er midt i et søk og trykker en control- eller meta-kombinasjon 
+Hvis du er midt i et søk og trykker en control- eller meta-kombinasjon
 (med et par unntak: tegn som blir brukt under søkingen, slik som C-s
 og C-r), vil søket avbrytes.
 
 C-s starter et søk som leter etter enhver forekomst av søkestrengen
-ETTER markørposisjonen.  Hvis du skal søke etter en streng tidligere
-i teksten må du bruke C-r.  Alt vi har fortalt om C-s fungerer også
-for C-r, bortsett fra at retningen på søket er i motsatt retning.
+ETTER markørposisjonen.  Hvis du skal søke etter en streng tidligere i
+teksten må du bruke C-r.  Alt vi har fortalt om C-s fungerer også for
+C-r, bortsett fra at retningen på søket er i motsatt retning.
 
 
 * FLERE VINDUER
@@ -962,14 +962,13 @@ samme vinduet hele tiden og du kan bruke C-M-v for å flytte deg i det
 andre vinduet.
 
 C-M-v er et eksempel på en CONTROL-META-kombinasjon.  Hvis du har
-META-tast holder du både CTRL og META nedtrykt mens du trykker v.
-Det er ikke nøye hvilken av tastene CTRL og META som trykkes først,
-fordi begge fungerer slik at de "modifiserer" de andre tastene du
-trykker.
+META-tast holder du både CTRL og META nedtrykt mens du trykker v.  Det
+er ikke nøye hvilken av tastene CTRL og META som trykkes først, fordi
+begge fungerer slik at de "modifiserer" de andre tastene du trykker.
 
 Hvis du ikke har META-tasten, og bruker ESC isteden, er rekkefølgen
 viktig.  Du må trykke ESC etterfulgt av CTRL-v, CTRL-ESC v vil ikke
-fungere.  Dette er fordi ESC er et tegn for seg selv, og fungerer ikke 
+fungere.  Dette er fordi ESC er et tegn for seg selv, og fungerer ikke
 som "modifikator".
 
 >> Tast C-x 1 (i det øverste vinduet) for å bli kvitt det nederste
@@ -990,7 +989,7 @@ filer:
    Den nye filen vil da dukke opp i det nederste vinduet.  Markøren
    blir også flyttet dit.
 
->> Tast C-x o for å gå tilbake til det øverste vinduet, og C-x 1 for å 
+>> Tast C-x o for å gå tilbake til det øverste vinduet, og C-x 1 for å
    bli kvitt det nederste igjen.
 
 
@@ -1026,7 +1025,7 @@ Disse "hjelp"-kommandoene starter med tastekombinasjonen Control-h,
 som blir kalt "the Help character".
 
 For å bruke denne hjelpen taster du C-h etterfulgt av et tegn som
-forklarer hva du vil ha hjelp om.  Hvis du virkelig har rotet deg bort 
+forklarer hva du vil ha hjelp om.  Hvis du virkelig har rotet deg bort
 kan du taste C-h ? for at Emacs skal vise hvilken hjelp som er
 tilgjengelig.  Hvis du har tastet C-h og bestemmer deg for at du ikke
 vil ha noen hjelp så kan du taste C-g for å avbryte.
@@ -1058,7 +1057,7 @@ for C-h c.
 
 >> Tast C-h k Control-p.
 
-Dette vil komme med en dokumentasjon på funksjonen og navnet i et eget 
+Dette vil komme med en dokumentasjon på funksjonen og navnet i et eget
 vindu.  For å avslutte hjelpvinduet kan du trykke q.
 
 Her er flere nyttige C-h opsjoner:
@@ -1086,8 +1085,8 @@ variabel.  Trykk `q' for å avslutte.
 -----------
 
 Husk at C-x C-c vil avslutte Emacs permanent.  For å gå midlertidig
-til et skall, slik at du senere kan komme tilbake igjen, bruker du C-z.
-(Under X vil dette minimere Emacs.)
+til et skall, slik at du senere kan komme tilbake igjen, bruker du
+C-z.  (Under X vil dette minimere Emacs.)
 
 Denne veiledningen er laget for at den skal være forståelig for nye
 brukere, så hvis det er noe som er uklart holder det ikke å synes synd

@@ -794,7 +794,7 @@ format \(INDEX . VECTOR), as described above."
 Each argument is a list of KEY and TRANSLATION.
 KEY is a string meaning a sequence of keystrokes to be translated.
 TRANSLATION is a character, a string, a vector, a Quail map, or a function.
-It it is a character, it is the sole translation of KEY.
+If it is a character, it is the sole translation of KEY.
 If it is a string, each character is a candidate for the translation.
 If it is a vector, each element (string or character) is a candidate
   for the translation.
@@ -1514,7 +1514,7 @@ or in a newly created frame (if the selected frame has no other windows)."
 	    win)
 	(while win-list
 	  (setq win (car win-list) win-list (cdr win-list))
-	  (if (eq win (minibuffer-window))
+	  (if (window-minibuffer-p win)
 	      ;; We are using echo area for the guidance buffer.
 	      ;; Vacate it to the deepest minibuffer.
 	      (set-window-buffer win

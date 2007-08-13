@@ -625,9 +625,7 @@ main_1 (int argc, char **argv, char **envp)
 
   /* Partially handle the -version and -help switches: they imply -batch,
      but are not removed from the list. */
-  if (argmatch (argv, argc, "-help", "--help",   3, NULL, &skip_args) ||
-      argmatch (argv, argc, "-?",     0,         2, NULL, &skip_args) ||
-      argmatch (argv, argc, "-flags", "--flags", 6, NULL, &skip_args))
+  if (argmatch (argv, argc, "-help", "--help",   3, NULL, &skip_args))
     noninteractive = 1, skip_args--;
 
   if (argmatch (argv, argc, "-version", "--version", 3, NULL, &skip_args) ||
@@ -1510,9 +1508,6 @@ static struct standard_args standard_args[] =
   { "-nw", "--no-windows", 90, 0 },
   { "-batch", "--batch", 85, 0 },
   { "-help", "--help", 80, 0 },
-  { "-flags", "--flags", 80, 0 },
-  { "-h", 0, 80, 0 },
-  { "-?", 0, 80, 0 },
   { "-version", "--version", 75, 0 },
   { "-V", 0, 75, 0 },
   { "-d", "--display", 80, 1 },

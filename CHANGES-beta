@@ -1,4 +1,20 @@
 							-*- indented-text -*-
+to 20.4 beta6 "Angora"
+-- New package-path syntax.  A null package indicates where the default lisp
+   should go.  This allows specifying packages that must be appended to the
+   package path.  Courtesy of Colin Rafferty
+-- `-flags' and `-?' are no longer command flags
+-- MS Windows updates from David Hobley, Jonathon Harris, and Marc Paquette
+-- Mule/enriched.el update courtesy of MORIOKA Tomohiko
+-- FAQ updates courtesy of Hrvoje Niksic and Aki Vehtari
+-- crisp.el-1.26 courtesy of Gary Foster
+-- Egg update courtesy of Jareth Hein
+-- Update to Norwegian TUTORIAL courtesy of Stig Bjørlykke
+-- Polish translation of the TUTORIAL courtesy of Remek Trzaska, update and
+   corrections courtesy of Rysiek Kubiak.
+-- Toolbar improvements courtesy of Kyle Jones
+-- Miscellaneous bug fixes
+
 to 20.4 beta5 "Anglo-Nubian"
 -- CCL synched with Emacs 20.2 courtesy of Olivier Galibert
 -- various updates from Hrvoje Niksic and Kyle Jones

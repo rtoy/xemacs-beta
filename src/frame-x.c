@@ -2036,14 +2036,17 @@ x_init_frame_1 (struct frame *f, Lisp_Object props)
 			       device, popup);
     }
 
-  if (NILP (DEVICE_SELECTED_FRAME (d)))
-    {
-      /* This means that this is the first frame on the device.
-	 So short-ciruit the delay in processing the initial MapNotify
-	 event so that output on the first frame shows up right
-	 away... */
-      f->visible = 1;
-    }
+  /*
+   * Previously we set this only if NILP (DEVICE_SELECTED_FRAME (d))
+   * to make sure that messages were displayed as soon as possible
+   * if we're creating the first frame on a device.  But it is
+   * better to just set this all the time, so that when a new frame
+   * is created that covers the selected frame, echo area status
+   * messages can still be seen.  f->visible is reset later if the
+   * initially-unmapped property is found to be non-nil in the
+   * frame properties.
+   */
+  f->visible = 1;
 
   allocate_x_frame_struct (f);
   x_create_widgets (f, lisp_window_id, popup);
@@ -2646,7 +2649,7 @@ set at any time, except as otherwise noted):
   bottom-toolbar-shadow-color	Color of bottom shadows on toolbars.
 				(*Not* specific to the bottom-toolbar.)
   top-toolbar-shadow-color	Color of top shadows on toolbars.
-				(*Not* specifier to the top-toolbar.)
+				(*Not* specific to the top-toolbar.)
   internal-border-width		Width of internal border around text area.
   border-width			Width of external border around text area.
   top				Y position (in pixels) of the upper-left

@@ -1,3 +1,8 @@
+Tue November 18 21:45:06 1997 davidh
+
+	* xemacs.mak updated to remove dependency on startup.elc
+	  HAVE_IMAGEMAGICK added for X build.
+
 Thu September 25 23:06:44 1997 davidh
 
 	* xemacs.mak updated to make the build as simple as typing

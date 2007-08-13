@@ -295,7 +295,9 @@ Richard Mlynarik.\n\n")
 
 ;; View news
 (defun about-news (&rest ignore)
-  (view-emacs-news))
+  (view-emacs-news)
+  (message "%s" (substitute-command-keys
+		 "Press \\[kill-buffer] to exit this buffer")))
 
 (defun about-collaboration (&rest ignore)
   (unless (about-get-buffer "*About Collaboration*")
@@ -657,7 +659,7 @@ unfounded.\n"))
 Jamie Zawinski was primarily to blame for Lucid Emacs from its
 inception in 1991, to 1994 when Lucid Inc. finally died.  He is now to
 be found at Netscape Communications, hacking on Netscape Navigator (he
-did the first Unix version and the mail and new reader).  Thankfully
+did the first Unix version and the mail and news reader).  Thankfully
 his extensive sleep deprivation experiments conducted during 1994 and
 1995 are now a thing of the past, but his predilection for dark,
 Gothic music remains unabated.
@@ -1221,6 +1223,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Mike Battaglia" "mbattagl@dsccc.com")
        (print-short "Neal Becker" "neal@ctd.comsat.com")
        (print-short "Paul Bibilo" "peb@delcam.com")
+       (print-short "Leonard Blanks" "ltb@haruspex.demon.co.uk")
        (print-short "Jan Borchers" "job@tk.uni-linz.ac.at")
        (print-short "Mark Borges" "mdb@cdc.noaa.gov")
        (print-short "David P. Boswell" "daveb@tau.space.thiokol.com")
@@ -1265,6 +1268,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Noah Friedman" "friedman@splode.com")
        (print-short "Kazuyoshi Furutaka" "furutaka@Flux.tokai.jaeri.go.jp")
        (print-short "Lew Gaiter III" "lew@StarFire.com")
+       (print-short "Olivier Galibert" "Olivier.Galibert@mines.u-nancy.fr")
        (print-short "Itay Gat" "itay@cs.huji.ac.il")
        (print-short "Tim Geisler" "Tim.Geisler@informatik.uni-muenchen.de")
        (print-short "Dave Gillespie" "daveg@synaptics.com")
@@ -1400,6 +1404,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Stephen Turnbull" "turnbull@sk.tsukuba.ac.jp")
        (print-short "John Turner" "turner@xdiv.lanl.gov")
        (print-short "UENO Fumihiro" "7m2vej@ritp.ye.IHI.CO.JP")
+       (print-short "Aki Vehtari" "Aki.Vehtari@hut.fi")
        (print-short "Juan E. Villacis" "jvillaci@cs.indiana.edu")
        (print-short "Jan Vroonhof" "vroonhof@math.ethz.ch")
        (print-short "Vladimir Vukicevic" "vladimir@intrepid.com")
