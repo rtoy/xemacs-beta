@@ -752,6 +752,7 @@ on various systems. */
 #define new   c_new
 #define this  c_this
 #define catch c_catch
+#define not   c_not
 #endif /* C++ */
 
 /* Strictly speaking, only int or unsigned int are valid types in a

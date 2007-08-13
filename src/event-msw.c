@@ -452,7 +452,7 @@ init_slurp_stream (void)
 #define NTPIPE_SHOVE_STREAM_DATA(stream) \
   LSTREAM_TYPE_DATA (stream, ntpipe_shove)
 
-#define MAX_SHOVE_BUFFER_SIZE 128
+#define MAX_SHOVE_BUFFER_SIZE 512
      
 struct ntpipe_shove_stream
 {
@@ -485,15 +485,18 @@ shove_thread (LPVOID vparam)
       InterlockedIncrement (&s->idle_p);
       WaitForSingleObject (s->hev_thread, INFINITE);
 
-      if (s->die_p)
-	break;
-
-      /* Write passed buffer */
-      if (!WriteFile (s->hpipe, s->buffer, s->size, &bytes_written, NULL)
-	  || bytes_written != s->size)
+      /* Write passed buffer if any */
+      if (s->size > 0)
 	{
-	  s->error_p = TRUE;
-	  InterlockedIncrement (&s->die_p);
+	  if (!WriteFile (s->hpipe, s->buffer, s->size, &bytes_written, NULL)
+	      || bytes_written != s->size)
+	    {
+	      s->error_p = TRUE;
+	      InterlockedIncrement (&s->die_p);
+	    }
+	  /* Set size to zero so we won't write it again if the closer sets
+	     die_p and kicks us */
+	  s->size = 0;
 	}
 
       if (s->die_p)
@@ -522,6 +525,15 @@ make_ntpipe_output_stream (HANDLE hpipe, LPARAM param)
 			     CREATE_SUSPENDED, &thread_id_unused);
   if (s->hthread == NULL)
     {
+      Lstream_delete (lstr);
+      return Qnil;
+    }
+
+  /* Set the priority of the thread higher so we don't end up waiting
+     on it to send things. */
+  if (!SetThreadPriority (s->hthread, THREAD_PRIORITY_HIGHEST))
+    {
+      CloseHandle (s->hthread);
       Lstream_delete (lstr);
       return Qnil;
     }
@@ -583,14 +595,18 @@ ntpipe_shove_closer (Lstream *stream)
   /* Force thread stop */
   InterlockedIncrement (&s->die_p);
 
-  /* Close pipe handle, possibly breaking it */
-  CloseHandle (s->hpipe);
-
-  /* Thread will end upon unblocking */
+  /* Thread will end upon unblocking.  If it's already unblocked this will
+     do nothing, but the thread won't look at die_p until it's written any
+     pending output. */
   SetEvent (s->hev_thread);
 
   /* Wait while thread terminates */
   WaitForSingleObject (s->hthread, INFINITE);
+
+  /* Close pipe handle, possibly breaking it */
+  CloseHandle (s->hpipe);
+
+  /* Close the thread handle */
   CloseHandle (s->hthread);
 
   /* Destroy the event */

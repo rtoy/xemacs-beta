@@ -433,7 +433,7 @@ the search will still be done on `buffer-file-name'.
 */
        (filename))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC.  GC checked and fixed 7-11-2000 ben. */
   REGISTER Lisp_Object tail, buf, tem;
   struct gcpro gcpro1;
 
@@ -468,8 +468,11 @@ the search will still be done on `buffer-file-name'.
 	  dn = Ffile_name_directory (filename);
 	  fn = Ffile_truename (dn, Qnil);
 	  if (! NILP (fn)) dn = fn;
-	  fn = Fexpand_file_name (Ffile_name_nondirectory (filename),
-				  dn);
+	  /* Formerly the two calls below were combined, but that is
+	     not GC-safe because the first call returns unprotected
+	     data and the second call can GC. --ben */
+	  fn = Ffile_name_nondirectory (filename);
+	  fn = Fexpand_file_name (fn, dn);
 	}
       filename = fn;
       NUNGCPRO;
@@ -526,6 +529,7 @@ delete_from_buffer_alist (Lisp_Object buf)
 Lisp_Object
 get_truename_buffer (REGISTER Lisp_Object filename)
 {
+  /* This function can GC.  GC correct 7-11-00 ben */
   /* FSFmacs has its own code here and doesn't call get-file-buffer.
      That's because their equivalent of find-file-compare-truenames
      (find-file-existing-other-name) isn't looked at in get-file-buffer.

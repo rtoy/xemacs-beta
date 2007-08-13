@@ -277,9 +277,11 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       HMENU submenu;
       struct gui_item gui_item;
       struct gcpro gcpro1;
+      struct gcpro ngcpro1;
 
       gui_item_init (&gui_item);
       GCPRO_GUI_ITEM (&gui_item);
+      NGCPRO1 (path);
 
       menu_parse_submenu_keywords (item, &gui_item);
 
@@ -287,7 +289,11 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 	signal_simple_error ("Menu name (first element) must be a string", item);
 
       if (!gui_item_included_p (&gui_item, Vmenubar_configuration))
-	return;
+	{
+	  NUNGCPRO;
+	  UNGCPRO;
+	  return;
+	}
 
       if (!gui_item_active_p (&gui_item))
 	item_info.fState = MFS_GRAYED;
@@ -319,6 +325,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 	  /* Fputhash GCPRO'es PATH */
 	  Fputhash (hmenu_to_lisp_object (submenu), path, hash_tab);
 	}
+      NUNGCPRO;
       UNGCPRO; /* gui_item */
     } 
   else if (VECTORP (item))
@@ -393,9 +400,11 @@ populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
   struct gcpro gcpro1;
   unsigned long checksum;
   struct gui_item gui_item;
+  struct gcpro ngcpro1;
 
   gui_item_init (&gui_item);
   GCPRO_GUI_ITEM (&gui_item);
+  NGCPRO1 (desc);
 
   /* We are sometimes called with the menubar unchanged, and with changed
      right flush. We have to update the menubar in ths case,
@@ -458,6 +467,7 @@ populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
 	  SetMenuDefaultItem (menu, 0, MF_BYPOSITION);
 	}
     }
+  NUNGCPRO;
   UNGCPRO; /* gui_item */
   return checksum;
 }
@@ -483,6 +493,10 @@ update_frame_menubar_maybe (struct frame* f)
   Lisp_Object desc = (!NILP (w->menubar_visible_p)
 		      ? symbol_value_in_buffer (Qcurrent_menubar, w->buffer)
 		      : Qnil);
+  struct gcpro gcpro1;
+
+  GCPRO1 (desc); /* it's safest to do this, just in case some filter
+		    or something changes the value of current-menubar */
 
   top_level_menu = menubar;
 
@@ -493,6 +507,7 @@ update_frame_menubar_maybe (struct frame* f)
       SetMenu (FRAME_MSWINDOWS_HANDLE (f), NULL);
       DestroyMenu (menubar);
       DrawMenuBar (FRAME_MSWINDOWS_HANDLE (f));
+      UNGCPRO;
       return;
     }
 
@@ -506,12 +521,16 @@ update_frame_menubar_maybe (struct frame* f)
   if (NILP (desc))
     {
       /* We did not have the bar and are not going to */
+      UNGCPRO;
       return;
     }
 
   /* Now we bail out if the menubar has not changed */
   if (FRAME_MSWINDOWS_MENU_CHECKSUM(f) == checksum_menu (desc))
-    return;
+    {
+      UNGCPRO;
+      return;
+    }
 
 populate:
   /* Come with empty hash table */
@@ -528,6 +547,8 @@ populate:
   DrawMenuBar (FRAME_MSWINDOWS_HANDLE (f));
 
   FRAME_MSWINDOWS_MENU_CHECKSUM(f) = checksum_menu (desc);
+
+  UNGCPRO;
 }
 
 static void
@@ -535,6 +556,8 @@ prune_menubar (struct frame *f)
 {
   HMENU menubar = GetMenu (FRAME_MSWINDOWS_HANDLE (f));
   Lisp_Object desc = current_frame_menubar (f);
+  struct gcpro gcpro1;
+
   if (menubar == NULL)
     return;
 
@@ -546,6 +569,7 @@ prune_menubar (struct frame *f)
     /* abort(); */
     return;
 
+  GCPRO1 (desc); /* just to be safe -- see above */
   /* We do the trick by removing all items and re-populating top level */
   empty_menu (menubar, 0);
 
@@ -556,6 +580,7 @@ prune_menubar (struct frame *f)
 	    FRAME_MSWINDOWS_MENU_HASHTABLE(f));
   populate_menu (menubar, Qnil, desc, 
 		 FRAME_MSWINDOWS_MENU_HASHTABLE(f), 1);
+  UNGCPRO;
 }
 
 /*
@@ -736,6 +761,9 @@ mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   HMENU menu;
   POINT pt;
   int ok;
+  struct gcpro gcpro1;
+
+  GCPRO1 (menu_desc); /* to be safe -- see above */
 
   if (!NILP (event))
     {
@@ -796,6 +824,7 @@ mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
     signal_simple_error ("Cannot track popup menu while in menu",
 			 menu_desc);
   }
+  UNGCPRO;
 }
 
 

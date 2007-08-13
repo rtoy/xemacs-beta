@@ -53,9 +53,7 @@ char c;
 static int InNewline=0;
 
 static int
-nextcharin(infile, PortableNewlines)
-FILE *infile;
-int PortableNewlines;
+nextcharin (FILE *infile, int PortableNewlines)
 {
     int c;
 

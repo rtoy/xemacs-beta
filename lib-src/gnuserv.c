@@ -832,9 +832,7 @@ handle_unix_request (int ls)
 
 
 int
-main(argc,argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
   int chan;			/* temporary channel number */
 #ifdef SYSV_IPC

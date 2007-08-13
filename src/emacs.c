@@ -2093,7 +2093,7 @@ main (int argc, char **argv, char **envp)
 
 	 06/20/96 robertl@dgii.com */
       {
-	extern char *_environ;
+	extern char **_environ;
 	if ((unsigned) environ == 0)
 	  environ=_environ;
       }

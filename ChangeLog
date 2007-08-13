@@ -1,3 +1,25 @@
+2000-07-17  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.11 is released
+
+2000-06-01  Andreas Jaeger  <aj@suse.de>
+
+	* configure.in: Recognize s390.
+
+	* config.guess: Recognize ia64 and s390.
+	* config.sub: Likewise.
+
+2000-07-12  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: Rewrite xmkmf symbol detection to avoid
+	redefinition of symbols we've already defined.
+	Also, handle xmkmf symbols with values other than 1.
+
+2000-06-27 Darryl Okahata <darrylo@soco.agilent.com>
+
+	* PROBLEMS: Document broken native audio for recent patches and
+	  releases of HP-UX.
+
 2000-05-06  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.10 is released

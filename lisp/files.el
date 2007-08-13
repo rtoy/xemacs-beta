@@ -884,6 +884,7 @@ find-file-hooks, etc.
   (let ((file-name-handler-alist nil)
 	(format-alist nil)
 	(after-insert-file-functions nil)
+	(coding-system-for-read 'binary)
 	(find-buffer-file-type-function
 	 (if (fboundp 'find-buffer-file-type)
 	     (symbol-function 'find-buffer-file-type)

@@ -1047,6 +1047,7 @@ case "$canonical" in
   m68*-sony-*      ) machine=news ;;
   mips-sony-*      ) machine=news-risc ;;
   clipper-*        ) machine=clipper ;;
+  s390-*           ) machine=s390 ;;
 esac
 
 dnl Straightforward OS determination
@@ -2379,10 +2380,19 @@ EOF
     cd ..
     rm -fr conftestdir
     for word in $xmkmf_defines; do
-      case "$word" in
-	-D*=* ) ;;
-	-D* ) word=`echo '' $word | sed -e 's:^ *-D::'`
-	      AC_DEFINE_UNQUOTED($word) ;;
+      case "$word" in -D* )
+	sym=`echo '' $word | sed -e 's:^ *-D::' -e 's:=.*::'`
+	case "$word" in
+	  -D*=* ) val=`echo '' $word | sed -e 's:^.*=::'` ;;
+	  *     ) val=1 ;;
+	esac
+dnl Avoid re-AC_DEFINE-ing xmkmf symbols we've already defined above.
+	if grep "^#define $sym " confdefs.h >/dev/null; then :; else
+	  if test "$val" = "1"
+	    then AC_DEFINE_UNQUOTED($sym)
+	    else AC_DEFINE_UNQUOTED($sym,$val)
+	  fi
+	fi  ;;
       esac
     done
   fi

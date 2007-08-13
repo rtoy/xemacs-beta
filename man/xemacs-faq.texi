@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2000/03/04 17:13:15 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2000/07/15 00:44:56 $
 @sp 1
 @author Tony Rossini <arossini@@stat.sc.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -1004,7 +1004,7 @@ enable it, add to your @file{Emacs} file entries like this:
 @example
 Emacs*XlwMenu.resourceLabels:			True
 Emacs*XlwMenu.file.labelString:	        	Fichier
-Emacs*XlwMenu.openInOtherWindow.labelString: 	In anderem Fenster offnen
+Emacs*XlwMenu.openInOtherWindow.labelString: 	In anderem Fenster oeffnen
 @end example
 
 The name of the resource is derived from the non-localized entry by

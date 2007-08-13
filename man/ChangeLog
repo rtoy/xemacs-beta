@@ -1,3 +1,28 @@
+2000-07-17  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.11 is released
+
+2000-06-11  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* info.texi: Fix trivial typos.
+	* make-stds.texi: Ditto.
+	* standards.texi: Ditto.
+	* xemacs-faq.texi: Ditto.
+	* internals/internals.texi: Ditto.
+	* new-users-guide/edit.texi: Ditto.
+	* new-users-guide/modes.texi: Ditto.
+	* new-users-guide/region.texi: Ditto.
+
+	* xemacs/buffers.texi: Fix trivial typos.
+	* xemacs/building.texi: Ditto.
+	* xemacs/glossary.texi: Ditto.
+	* xemacs/gnu.texi: Ditto. 
+	* xemacs/help.texi: Ditto. 
+	* xemacs/keystrokes.texi: Ditto. 
+	* xemacs/programs.texi: Ditto. 
+	* xemacs/search.texi: Ditto. 
+	* xemacs/sending.texi: Ditto. 
+
 2000-05-06  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.10 is released

@@ -31,7 +31,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defgroup pui nil
-  "Conventient interface to the package system."
+  "Convenient interface to the package system."
   :group 'package-tools
   :tag "Package User interface"
   :prefix "pui-")
@@ -309,7 +309,7 @@ and whether or not it is up-to-date."
 	      (delete pkg-sym pui-deleted-packages))
       (setq pui-deleted-packages
 	    (cons pkg-sym pui-deleted-packages))
-      (setq pui-seleted-packages
+      (setq pui-selected-packages
 	    (delete pkg-sym pui-selected-packages)))
     (pui-update-package-display extent pkg-sym)
     ))
@@ -535,7 +535,7 @@ Designed to be called interactively (from a keypress)."
     (set-buffer (event-buffer event))
     (goto-char (event-point event))
     (popup-menu pui-menu event)
-    ;; I agreee with dired.el this is seriously bogus.
+    ;; I agree with dired.el this is seriously bogus.
     (while (popup-menu-up-p)
       (dispatch-event (next-event)))))
 

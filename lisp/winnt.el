@@ -106,8 +106,8 @@ See also `auto-save-file-name-p'."
   '(("^.?.?sh\\." . nt-quote-args-double-quote))
   "An alist for determining proper argument quoting given executable file name.
 Car of each cons must be a string, a regexp against which a file name sans 
-directory is matched.  Cdr is a function symbol.  The list is mathced in
-forward order, and mathcing entry cdr's funcrion is called with a list of
+directory is matched.  Cdr is a function symbol.  The list is matched in
+forward order, and matching entry cdr's function is called with a list of
 strings, process arguments.  It must return a string which is passed to
 the newly created process.
 

@@ -1,3 +1,47 @@
+2000-07-17  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.11 is released
+
+2000-07-16  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* toolbar-items.el (toolbar-gnus): Switch to `gnus-group-buffer'.
+
+2000-07-17  Vin Shelton  <acs@xemacs.org>
+
+	* auto-autoloads.el: Updated.
+	* custom-load.el: Updated.
+
+2000-06-27 Charles G Waldman  <cgw@alum.mit.edu>
+
+	* cl-macs.el:  fix cl-transform-function-property kludge
+	so that it does not require a random feature.
+
+2000-06-08  Mike Alexander  <mta@arbortext.com>
+
+	* code-process.el (call-process-region): If there is no coding
+	system for the process on process-coding-system-alist use the
+	coding system of the buffer containing the region.
+
+2000-06-01  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* winnt.el (nt-quote-args-functions-alist): Fix docstring.
+
+2000-06-12  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* files.el (insert-file-contents-literally): Set coding system to
+	binary. Long overdue minimal change for 21.1
+
+	* package-get.el (package-get-update-base):	
+	(package-get): Use insert-file-contents-literally always.
+	(package-get-maybe-save-index):
+	Force coding system for writing to binary.
+
+2000-06-21 Charles G Waldman  <cgw@alum.mit.edu>
+
+	* package-ui.el (defgroup pui):  Correct a misspelling
+	(pui-toggle-package-delete):  Change `seleted' to `selected'
+	(pui-popup-context-sensitive):  Fix a typo in a comment
+	
 2000-05-06  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.10 is released

@@ -611,11 +611,28 @@ child_setup (int in, int out, int err, char **new_argv,
     nice (- emacs_priority);
 #endif
 
+  /* Under Windows, we are not in a child process at all, so we should
+     not close handles inherited from the parent -- we are the parent
+     and doing so will screw up all manner of things!  Similarly, most
+     of the rest of the cleanup done in this function is not done
+     under Windows.
+
+     #### This entire child_setup() function is an utter and complete
+     piece of shit.  I would rewrite it, at the very least splitting
+     out the Windows and non-Windows stuff into two completely
+     different functions; but instead I'm trying to make it go away
+     entirely, using the Lisp definition in process.el.  What's left
+     is to fix up the routines in event-msw.c (and in event-Xt.c and
+     event-tty.c) to allow for stream devices to be handled correctly.
+     There isn't much to do, in fact, and I'll fix it shortly.  That
+     way, the Lisp definition can be used non-interactively too. */
 #if !defined (NO_SUBPROCESSES) && !defined (WINDOWSNT)
   /* Close Emacs's descriptors that this process should not have.  */
   close_process_descs ();
 #endif /* not NO_SUBPROCESSES */
+#ifndef WINDOWSNT
   close_load_descs ();
+#endif
 
   /* Note that use of alloca is always safe here.  It's obvious for systems
      that do not have true vfork or that have true (stack) alloca.

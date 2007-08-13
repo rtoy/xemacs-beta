@@ -512,6 +512,7 @@ EOF
 				    s/ .*//
 				    p'`
         case "$ld_supported_emulations" in
+         *ia64)       echo "${UNAME_MACHINE}-unknown-linux"         ; exit 0 ;;
 	  i?86linux)  echo "${UNAME_MACHINE}-pc-linux-gnuaout"      ; exit 0 ;;
 	  i?86coff)   echo "${UNAME_MACHINE}-pc-linux-gnucoff"      ; exit 0 ;;
 	  sparclinux) echo "${UNAME_MACHINE}-unknown-linux-gnuaout" ; exit 0 ;;
@@ -585,6 +586,8 @@ main(argc, argv)
 EOF
 	  ${CC-cc} dummy.c -o dummy 2>/dev/null && ./dummy "${UNAME_MACHINE}" && rm dummy.c dummy && exit 0
 	  rm -f dummy.c dummy
+        elif test "${UNAME_MACHINE}" = "s390"; then
+          echo s390-ibm-linux && exit 0
 	else
 	  # Either a pre-BFD a.out linker (linux-gnuoldld)
 	  # or one that does not give us useful --help.

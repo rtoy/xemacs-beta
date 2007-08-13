@@ -411,11 +411,15 @@ OBARRAY defaults to the value of `obarray'.
 */
        (function, obarray))
 {
+  struct gcpro gcpro1;
+
   if (NILP (obarray))
     obarray = Vobarray;
   obarray = check_obarray (obarray);
 
+  GCPRO1 (obarray);
   map_obarray (obarray, mapatoms_1, &function);
+  UNGCPRO;
   return Qnil;
 }
 
@@ -457,14 +461,17 @@ Return list of symbols found.
        (regexp, predicate))
 {
   struct appropos_mapper_closure closure;
+  struct gcpro gcpro1;
 
   CHECK_STRING (regexp);
 
   closure.regexp = regexp;
   closure.predicate = predicate;
   closure.accumulation = Qnil;
+  GCPRO1 (closure.accumulation);
   map_obarray (Vobarray, apropos_mapper, &closure);
   closure.accumulation = Fsort (closure.accumulation, Qstring_lessp);
+  UNGCPRO;
   return closure.accumulation;
 }
 

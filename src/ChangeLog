@@ -1,3 +1,93 @@
+2000-07-17  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.11 is released
+
+2000-07-17  Ben Wing <ben@666.com>
+
+	* menubar-msw.c (populate_menu_add_item): Add GC protection.
+	*               (populate_or_checksum_helper): Add GC protection.
+	*               (update_frame_menubar_maybe): Add GC protection.
+	*               (prune_menubar): Add GC protection.
+	*               (mswindows): Add GC protection.
+
+2000-07-15  Vin Shelton  <acs@xemacs.org>
+
+	* event-msw.c (ntpipe_shove_writer): Remove call to
+	SwitchToThread() for Win 9x machines, per Ben's instructions.
+
+2000-07-15  Ben Wing <ben@666.com>
+
+	* buffer.c (Fget_file_buffer): protect against GC.
+	* fileio.c: protect against GC.
+
+2000-07-02  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* s/freebsd.h (INTERRUPTIBLE_OPEN): open *is* interruptible on
+	FreeBSD 4.0.
+
+2000-06-01  Andreas Jaeger  <aj@suse.de>
+
+	* m/s390.h: Support for S390, based on a patch by Martin
+	Schwidefsky <schwidefsky@de.ibm.com>.
+
+2000-07-14 Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* process-nt.c: Backup Mike Alexander's previous fix.
+
+2000-07-12  Martin Buchholz  <martin@xemacs.org>
+
+	* s/decosf4-0.h: No special compiler flags needed or desired.
+	In particular, undefine _BSD for DEC OSF 4.0.
+
+2000-07-04  Ben Wing  <ben@xemacs.org>
+
+	* symbols.c (Fmapatoms): gcpro obarray, may be new (debug-continue).
+ 	(Fapropos_internal): consing + call1 = must gcpro.
+
+1999-11-15  MORIOKA Tomohiko  <tomo@urania.m17n.org>
+
+	* data.c (Fstring_to_number): Don't recognize floating point if
+	base is not 10.
+
+2000-06-08  Mike Alexander  <mta@arbortext.com>
+
+	(MAX_SHOVE_BUFFER_SIZE): Change to 512 to match stream buffer size
+	(shove_thread): Don't write the same output twice
+	(make_ntpipe_output_stream): Increase priority of shove thread
+	(ntpipe_shove_writer): Call SwitchToThread to give shove thread a
+	chance to run
+	(ntpipe_shove_closer): Don't delete the pipe until we're done with
+	it.
+
+2000-07-09  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* eval.c: Remove references to M-x edit-options in DEFUNs for
+	`defvar' and `defconst'.
+
+2000-06-05  Ben Wing  <ben@xemacs.org>
+
+	* callproc.c (child_setup): Don't do close_load_descs() under
+	MS Windows.  Put in a comment explaining why.
+
+2000-07-13  Martin Buchholz  <martin@xemacs.org>
+
+	* emacs.c (main): Use correct type for _environ on SCO5.
+
+2000-07-09  Martin Buchholz  <martin@xemacs.org>
+
+	* unexalpha.c: Use full prototypes.
+	* config.h.in: `not' is also a C++ keyword.
+
+2000-06-18  Martin Buchholz  <martin@xemacs.org>
+
+	* s/decosf4-0.h (_etext): Use portable _etext instead of etext.
+	* s/decosf4-0.h (_edata): Use portable _edata instead of edata.
+
+2000-06-17  Martin Buchholz  <martin@xemacs.org>
+
+	* s/decosf4-0.h: Never #include "/usr/include/FOO.h" because this
+	conflicts with gcc's fixincluded version of FOO.h.
+
 2000-05-06  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.10 is released

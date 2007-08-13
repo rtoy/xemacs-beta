@@ -772,7 +772,7 @@ See also the function `substitute-in-file-name'.
 */
        (name, default_directory))
 {
-  /* This function can GC */
+  /* This function can GC.  GC-checked 7-11-00 ben */
   Bufbyte *nm;
 
   Bufbyte *newdir, *p, *o;
@@ -789,6 +789,10 @@ See also the function `substitute-in-file-name'.
 #ifdef __CYGWIN32__
   char *user;
 #endif
+  struct gcpro gcpro1, gcpro2;
+
+  /* both of these get set below */
+  GCPRO2 (name, default_directory);
 
   CHECK_STRING (name);
 
@@ -796,8 +800,11 @@ See also the function `substitute-in-file-name'.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (name, Qexpand_file_name);
   if (!NILP (handler))
-    return call3_check_string (handler, Qexpand_file_name, name,
-			       default_directory);
+    {
+      UNGCPRO;
+      return call3_check_string (handler, Qexpand_file_name, name,
+				 default_directory);
+    }
 
   /* Use the buffer's default-directory if DEFAULT_DIRECTORY is omitted.  */
   if (NILP (default_directory))
@@ -809,7 +816,10 @@ See also the function `substitute-in-file-name'.
     {
       handler = Ffind_file_name_handler (default_directory, Qexpand_file_name);
       if (!NILP (handler))
-	return call3 (handler, Qexpand_file_name, name, default_directory);
+	{
+	  UNGCPRO;
+	  return call3 (handler, Qexpand_file_name, name, default_directory);
+	}
     }
 
   o = XSTRING_DATA (default_directory);
@@ -841,13 +851,8 @@ See also the function `substitute-in-file-name'.
       && ! (IS_DIRECTORY_SEP (o[0]))
 #endif /* not WINDOWSNT */
       )
-    {
-      struct gcpro gcpro1;
 
-      GCPRO1 (name);
-      default_directory = Fexpand_file_name (default_directory, Qnil);
-      UNGCPRO;
-    }
+    default_directory = Fexpand_file_name (default_directory, Qnil);
 
 #ifdef FILE_SYSTEM_CASE
   name = FILE_SYSTEM_CASE (name);
@@ -950,11 +955,11 @@ See also the function `substitute-in-file-name'.
 	      XSTRING_DATA (name)[0] = DRIVE_LETTER (drive);
 	      XSTRING_DATA (name)[1] = ':';
 	    }
-	  return name;
+	  RETURN_UNGCPRO (name);
 #else /* not WINDOWSNT */
 	  if (nm == XSTRING_DATA (name))
-	    return name;
-	  return build_string ((char *) nm);
+	    RETURN_UNGCPRO (name);
+	  RETURN_UNGCPRO (build_string ((char *) nm));
 #endif /* not WINDOWSNT */
 	}
     }
@@ -1261,7 +1266,7 @@ See also the function `substitute-in-file-name'.
   CORRECT_DIR_SEPS (target);
 #endif /* WINDOWSNT */
 
-  return make_string (target, o - target);
+  RETURN_UNGCPRO (make_string (target, o - target));
 }
 
 #if 0 /* FSFmacs */
@@ -2220,7 +2225,7 @@ See also `file-readable-p' and `file-attributes'.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can call lisp; GC checked 7-11-00 ben */
   Lisp_Object abspath;
   Lisp_Object handler;
   struct stat statbuf;
@@ -2247,7 +2252,7 @@ For a directory, this means you can access files in that directory.
        (filename))
 
 {
-  /* This function can GC.  GC checked 1997.04.10. */
+  /* This function can GC.  GC checked 07-11-2000 ben. */
   Lisp_Object abspath;
   Lisp_Object handler;
   struct gcpro gcpro1;
@@ -3145,7 +3150,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   int failure;
   int save_errno = 0;
   struct stat st;
-  Lisp_Object fn;
+  Lisp_Object fn = Qnil;
   int speccount = specpdl_depth ();
   int visiting_other = STRINGP (visit);
   int visiting = (EQ (visit, Qt) || visiting_other);
@@ -3154,12 +3159,23 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   Lisp_Object annotations = Qnil;
   struct buffer *given_buffer;
   Bufpos start1, end1;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+  struct gcpro ngcpro1, ngcpro2;
+  Lisp_Object curbuf;
 
-  /* #### dmoore - if Fexpand_file_name or handlers kill the buffer,
+  XSETBUFFER (curbuf, current_buffer);
+
+  /* start, end, visit, and append are never modified in this fun
+     so we don't protect them. */
+  GCPRO5 (visit_file, filename, codesys, lockname, annotations);
+  NGCPRO2 (curbuf, fn);
+
+  /* [[ dmoore - if Fexpand_file_name or handlers kill the buffer,
      we should signal an error rather than blissfully continuing
      along.  ARGH, this function is going to lose lose lose.  We need
      to protect the current_buffer from being destroyed, but the
-     multiple return points make this a pain in the butt. */
+     multiple return points make this a pain in the butt. ]] we do
+     protect curbuf now. --ben */
 
 #ifdef FILE_CODING
   codesys = Fget_coding_system (codesys);
@@ -3173,9 +3189,6 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 
   {
     Lisp_Object handler;
-    struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-
-    GCPRO5 (start, filename, visit, visit_file, lockname);
 
     if (visiting_other)
       visit_file = Fexpand_file_name (visit, Qnil);
@@ -3183,11 +3196,11 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
       visit_file = filename;
     filename = Fexpand_file_name (filename, Qnil);
 
-    UNGCPRO;
-
     if (NILP (lockname))
       lockname = visit_file;
 
+    /* We used to UNGCPRO here.  BAD!  visit_file is used below after
+       more Lisp calling. */
     /* If the file name has special constructs in it,
        call the corresponding file handler.  */
     handler = Ffind_file_name_handler (filename, Qwrite_region);
@@ -3206,21 +3219,15 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 	    current_buffer->filename = visit_file;
 	    MARK_MODELINE_CHANGED;
 	  }
+	NUNGCPRO;
+	UNGCPRO;
 	return val;
       }
   }
 
 #ifdef CLASH_DETECTION
   if (!auto_saving)
-    {
-      Lisp_Object curbuf;
-      struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-
-      XSETBUFFER (curbuf, current_buffer);
-      GCPRO5 (start, filename, visit_file, lockname, curbuf);
-      lock_file (lockname);
-      UNGCPRO;
-    }
+    lock_file (lockname);
 #endif /* CLASH_DETECTION */
 
   /* Special kludge to simplify auto-saving.  */
@@ -3266,9 +3273,9 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   {
     Lisp_Object desc_locative = Fcons (make_int (desc), Qnil);
     Lisp_Object instream = Qnil, outstream = Qnil;
-    struct gcpro gcpro1, gcpro2;
+    struct gcpro nngcpro1, nngcpro2;
     /* need to gcpro; QUIT could happen out of call to write() */
-    GCPRO2 (instream, outstream);
+    NNGCPRO2 (instream, outstream);
 
     record_unwind_protect (close_file_unwind, desc_locative);
 
@@ -3326,7 +3333,6 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 	save_errno = errno;
       }
     Lstream_close (XLSTREAM (instream));
-    UNGCPRO;
 
 #ifdef HAVE_FSYNC
     /* Note fsync appears to change the modtime on BSD4.2 (both vax and sun).
@@ -3370,6 +3376,8 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
        as necessary). */
     XCAR (desc_locative) = Qnil;
     unbind_to (speccount, Qnil);
+
+    NNUNGCPRO;
   }
 
   /*
@@ -3403,6 +3411,8 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     }
   else if (quietly)
     {
+      NUNGCPRO;
+      UNGCPRO;
       return Qnil;
     }
 
@@ -3412,19 +3422,21 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
         message ("Wrote %s", XSTRING_DATA (visit_file));
       else
 	{
-	  struct gcpro gcpro1;
 	  Lisp_Object fsp;
-	  GCPRO1 (fn);
+	  struct gcpro nngcpro1;
 
+	  NNGCPRO1 (fsp);
 	  fsp = Ffile_symlink_p (fn);
 	  if (NILP (fsp))
 	    message ("Wrote %s", XSTRING_DATA (fn));
 	  else
 	    message ("Wrote %s (symlink to %s)",
 		     XSTRING_DATA (fn), XSTRING_DATA (fsp));
-	  UNGCPRO;
+	  NNUNGCPRO;
 	}
     }
+  NUNGCPRO;
+  UNGCPRO;
   return Qnil;
 }
 
@@ -3670,7 +3682,7 @@ This means that the file has not been changed since it was visited or saved.
 */
        (buf))
 {
-  /* This function can call lisp */
+  /* This function can call lisp; GC checked 7-11-00 ben */
   struct buffer *b;
   struct stat st;
   Lisp_Object handler;

@@ -117,7 +117,7 @@ general.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h
 getloadavg.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h sysfile.h
 gif_io.o: gifrlib.h
 glyphs-eimage.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h faces.h file-coding.h frame.h frameslots.h gifrlib.h glyphs.h imgproc.h insdel.h lisp-disunion.h lisp-union.h lrecord.h lstream.h mule-charset.h objects.h opaque.h scrollbar.h specifier.h symeval.h symsinit.h sysfile.h toolbar.h
-glyphs.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h elhash.h faces.h frame.h frameslots.h glyphs.h insdel.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h objects.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h toolbar.h window.h winslots.h
+glyphs.o: $(LISP_H) buffer.h bufslots.h chartab.h conslots.h console.h device.h elhash.h faces.h frame.h frameslots.h glyphs.h insdel.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h objects.h rangetab.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h toolbar.h window.h winslots.h
 gmalloc.o: config.h getpagesize.h
 gpmevent.o: $(LISP_H) conslots.h console-tty.h console.h device.h events-mod.h events.h gpmevent.h lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h sysdep.h syssignal.h systime.h systty.h
 gui.o: $(LISP_H) bytecode.h gui.h lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h
@@ -170,7 +170,7 @@ sgiplay.o: $(LISP_H) libst.h lisp-disunion.h lisp-union.h lrecord.h symeval.h sy
 sheap.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h sheap-adjust.h symeval.h symsinit.h
 signal.o: $(LISP_H) conslots.h console.h device.h events.h frame.h frameslots.h lisp-disunion.h lisp-union.h lrecord.h scrollbar.h specifier.h symeval.h symsinit.h sysdep.h syssignal.h systime.h toolbar.h
 sound.o: $(LISP_H) buffer.h bufslots.h commands.h conslots.h console-x.h console.h device.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h redisplay.h symeval.h symsinit.h sysdep.h xintrinsic.h
-specifier.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h frame.h frameslots.h glyphs.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h opaque.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h toolbar.h window.h winslots.h
+specifier.o: $(LISP_H) buffer.h bufslots.h chartab.h conslots.h console.h device.h frame.h frameslots.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h opaque.h rangetab.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h toolbar.h window.h winslots.h
 strcat.o: config.h
 strcmp.o: config.h
 strcpy.o: config.h

@@ -7019,7 +7019,7 @@ this is the code executed to handle any stuff that needs to be done
 other encoded/decoded data has been written out.  This is not used for
 charset CCL programs.
 
-REGISTER: 0..7  -- refered by RRR or rrr
+REGISTER: 0..7  -- referred by RRR or rrr
 
 OPERATOR BIT FIELD (27-bit): XXXXXXXXXXXXXXX RRR TTTTT
         TTTTT (5-bit): operator type
@@ -7405,7 +7405,7 @@ Furthermore, there is logically a @dfn{selected console},
 @dfn{selected display}, @dfn{selected frame}, and @dfn{selected window}.
 Each of these objects is distinguished in various ways, such as being the
 default object for various functions that act on objects of that type.
-Note that every containing object rememembers the ``selected'' object
+Note that every containing object remembers the ``selected'' object
 among the objects that it contains: e.g. not only is there a selected
 window, but every frame remembers the last window in it that was
 selected, and changing the selected frame causes the remembered window

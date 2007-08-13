@@ -1071,7 +1071,7 @@ If SYMBOL is buffer-local, its default value is what is set;
  buffer-local values are not affected.
 INITVALUE and DOCSTRING are optional.
 If DOCSTRING starts with *, this variable is identified as a user option.
- This means that M-x set-variable and M-x edit-options recognize it.
+ This means that M-x set-variable recognizes it.
 If INITVALUE is missing, SYMBOL's value is not set.
 
 In lisp-interaction-mode defvar is treated as defconst.
@@ -1122,7 +1122,7 @@ If SYMBOL is buffer-local, its default value is what is set;
  buffer-local values are not affected.
 DOCSTRING is optional.
 If DOCSTRING starts with *, this variable is identified as a user option.
- This means that M-x set-variable and M-x edit-options recognize it.
+ This means that M-x set-variable recognizes it.
 
 Note: do not use `defconst' for user options in libraries that are not
  normally loaded, since it is useful for users to be able to specify
