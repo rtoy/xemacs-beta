@@ -735,7 +735,8 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		 (cond ((eq symtype 'lambda)
 			(princ (or (nth 1 newsym) "()")))
 		       ((eq symtype 'bytecode)
-			(princ (or (aref newsym 0) "()")))
+			(princ (or (compiled-function-arglist newsym)
+				   "()")))
 		       ((and (eq symtype 'subr)
 			     (string-match
 			      "[\n\t ]*\narguments: ?\\((.*)\\)\n?\\'"

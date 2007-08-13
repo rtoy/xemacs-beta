@@ -47,16 +47,17 @@ static char rcsid [] = "!Header: gnuclient.c,v 2.2 95/12/12 01:39:21 wing nene !
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif /* HAVE_STRING_H */
-#include <sys/types.h>
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-#include <signal.h>
 
-int read_line(int, char *);
+#include <signal.h>
 
 #if !defined(SYSV_IPC) && !defined(UNIX_DOMAIN_SOCKETS) && \
     !defined(INTERNET_DOMAIN_SOCKETS)

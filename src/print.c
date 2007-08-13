@@ -84,6 +84,9 @@ int print_gensym;
 Lisp_Object Qprint_escape_newlines;
 Lisp_Object Qprint_readably;
 
+Lisp_Object Qdisplay_error;
+Lisp_Object Qprint_message_label;
+
 /* Force immediate output of all printed data.  Used for debugging. */
 int print_unbuffered;
 
@@ -593,14 +596,17 @@ Output stream is STREAM, or value of `standard-output' (which see).
 }
 
 #include "emacsfns.h"
-/* Synched with Emacs 19.34 */
+
+/* Synched with Emacs 19.34 -- underlying implementation (incarnated
+   in print_error_message) is completely divergent, though.  */
 DEFUN ("error-message-string", Ferror_message_string, 1, 1, 0, /*
 Convert an error value (ERROR-SYMBOL . DATA) to an error message.
 */
   (data))
 {
+  /* This function can GC */
   struct buffer *pbuf;
-  Lisp_Object original, printcharfun, value;
+  Lisp_Object value;
   struct gcpro gcpro1;
 
   print_error_message (data, Vprin1_to_string_buffer);
@@ -616,56 +622,110 @@ Convert an error value (ERROR-SYMBOL . DATA) to an error message.
   return value;
 }
 
-/* Print an error message for the error DATA
-   onto Lisp output stream STREAM (suitable for the print functions).  */
+/* Print an error message for the error DATA onto Lisp output stream
+   STREAM (suitable for the print functions).
 
-static void print_error_message (Lisp_Object data, Lisp_Object stream)
+   This is a complete implementation of `display-error', which used to
+   be in Lisp (see prim/cmdloop.el).  It was ported to C so we can use
+   it in Ferror_message_string.  Fdisplay_error and
+   Ferror_message_string are trivial wrappers to this function.  */
+static void
+print_error_message (Lisp_Object error_object, Lisp_Object stream)
 {
-  Lisp_Object errname, errmsg, file_error, tail;
+  /* This function can GC */
+  Lisp_Object type;
+  Lisp_Object method = Qnil;
+  Lisp_Object tail = Qnil;
   struct gcpro gcpro1;
-  int i;
 
-  errname = Fcar (data);
-
-  if (EQ (errname, Qerror))
-    {
-      data = Fcdr (data);
-      if (!CONSP (data)) data = Qnil;
-      errmsg = Fcar (data);
-      file_error = Qnil;
-    }
-  else
-    {
-      errmsg = Fget (errname, Qerror_message, Qnil);
-      file_error = Fmemq (Qfile_error,
-			  Fget (errname, Qerror_conditions, Qnil));
-    }
-
-  /* Print an error message including the data items.  */
-
-  tail = Fcdr_safe (data);
   GCPRO1 (tail);
 
-  /* For file-error, make error message by concatenating
-     all the data items.  They are all strings.  */
-  if (!NILP (file_error) && !NILP (tail))
-    errmsg = XCONS (tail)->car, tail = XCONS (tail)->cdr;
+  type = Fcar_safe (error_object);
 
-  if (STRINGP (errmsg))
-    Fprinc (errmsg, stream);
-  else
-    write_string_1 ((CONST Bufbyte *)"Peculiar error", 14, stream);
+  if (! (CONSP (error_object) && SYMBOLP (type)
+	 && CONSP (Fget (type, Qerror_conditions, Qnil))))
+    goto error_throw;
 
-  for (i = 0; CONSP (tail); tail = Fcdr (tail), i++)
+  tail = XCDR (error_object);
+  while (!NILP (tail))
     {
-      write_string_1 ((CONST Bufbyte *)(i ? ", " : ": "), 2, stream);
-      if (!NILP (file_error))
-	Fprinc (Fcar (tail), stream);
+      if (CONSP (tail))
+	tail = XCDR (tail);
       else
-	Fprin1 (Fcar (tail), stream);
+	goto error_throw;
     }
+  tail = Fget (type, Qerror_conditions, Qnil);
+  while (!NILP (tail))
+    {
+      if (!(CONSP (tail) && SYMBOLP (XCAR (tail))))
+	goto error_throw;
+      else if (!NILP (Fget (XCAR (tail), Qdisplay_error, Qnil)))
+	{
+	  method = Fget (XCAR (tail), Qdisplay_error, Qnil);
+	  goto error_throw;
+	}
+      else
+	tail = XCDR (tail);
+    }
+  /* Default method */
+  {
+    int first = 1;
+    Lisp_Object printcharfun = canonicalize_printcharfun (stream);
+    int speccount = specpdl_depth ();
+
+    specbind (Qprint_message_label, Qerror);
+    tail = Fcdr (error_object);
+    if (EQ (type, Qerror))
+      {
+	Fprinc (Fcar (tail), stream);
+	tail = Fcdr (tail);
+      }
+    else
+      {
+	Lisp_Object errmsg = Fget (type, Qerror_message, Qnil);
+	if (NILP (errmsg))
+	  Fprinc (type, stream);
+	else
+	  Fprinc (errmsg, stream);
+      }
+    while (!NILP (tail))
+      {
+	write_c_string (first ? ": " : ", ", printcharfun);
+	Fprin1 (Fcar (tail), stream);
+	tail = Fcdr (tail);
+	first = 0;
+      }
+    unbind_to (speccount, Qnil);
+    UNGCPRO;
+    return;
+    /* Unreached */
+  }
+
+ error_throw:
   UNGCPRO;
+  if (NILP (method))
+    {
+      write_c_string ("Peculiar error ",
+		      canonicalize_printcharfun (stream));
+      Fprin1 (error_object, stream);
+      return;
+    }
+  else
+    {
+      call2 (method, error_object, stream);
+    }
 }
+
+DEFUN ("display-error", Fdisplay_error, 2, 2, 0, /*
+Display an error message for ERROR-OBJECT to STREAM.
+*/
+       (error_object, stream))
+{
+  /* This function can GC */
+  print_error_message (error_object, stream);
+  return Qnil;
+}
+
 
 #ifdef LISP_FLOAT_TYPE
 
@@ -1509,11 +1569,16 @@ syms_of_print (void)
   defsymbol (&Qprint_length, "print-length");
 
   defsymbol (&Qprint_string_length, "print-string-length");
+
+  defsymbol (&Qdisplay_error, "display-error");
+  defsymbol (&Qprint_message_label, "print-message-label");
+
   DEFSUBR (Fprin1);
   DEFSUBR (Fprin1_to_string);
   DEFSUBR (Fprinc);
   DEFSUBR (Fprint);
   DEFSUBR (Ferror_message_string);
+  DEFSUBR (Fdisplay_error);
   DEFSUBR (Fterpri);
   DEFSUBR (Fwrite_char);
   DEFSUBR (Falternate_debugging_output);

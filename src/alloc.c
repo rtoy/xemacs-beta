@@ -181,11 +181,11 @@ static long pureptr;
 
 #define PURIFIED(ptr)							\
    ((uintptr_t) (ptr) <					\
-    (uintptr_t) (PUREBEG + PURESIZE) &&			\
+    (uintptr_t) (PUREBEG + get_PURESIZE()) &&			\
     (uintptr_t) (ptr) >=					\
     (uintptr_t) PUREBEG)
 
-/* Non-zero if pureptr > PURESIZE; accounts for excess purespace needs. */
+/* Non-zero if pureptr > get_PURESIZE(); accounts for excess purespace needs. */
 static long pure_lossage;
 
 #ifdef ERROR_CHECK_TYPECHECK
@@ -216,7 +216,7 @@ check_purespace (EMACS_INT size)
       pure_lossage += size;
       return (0);
     }
-  else if (pureptr + size > PURESIZE)
+  else if (pureptr + size > get_PURESIZE())
     {
       /* This can cause recursive bad behavior, we'll yell at the end */
       /* when we're done. */
@@ -2520,7 +2520,7 @@ alloc_pure_lrecord (int size, struct lrecord_implementation *implementation)
 {
   struct lrecord_header *header = (void *) (PUREBEG + pureptr);
 
-  if (pureptr + size > PURESIZE)
+  if (pureptr + size > get_PURESIZE())
     pure_storage_exhausted ();
 
   set_lheader_implementation (header, implementation);
@@ -2629,20 +2629,20 @@ report_pure_usage (int report_impurities,
       message ("\n****\tPure Lisp storage exhausted!\n"
 "\tPurespace usage: %ld of %ld\n"
  "****",
-               PURESIZE+pure_lossage, (long) PURESIZE);
+               get_PURESIZE()+pure_lossage, (long) get_PURESIZE());
       if (die_if_pure_storage_exceeded) {
-	PURESIZE_h(PURESIZE + pure_lossage);
+	PURESIZE_h(get_PURESIZE() + pure_lossage);
 	rc = -1;
       }
     }
   else
     {
-      int lost = (PURESIZE - pureptr) / 1024;
+      int lost = (get_PURESIZE() - pureptr) / 1024;
       char buf[200];
 
       sprintf (buf, "Purespace usage: %ld of %ld (%d%%",
-               pureptr, (long) PURESIZE,
-               (int) (pureptr / (PURESIZE / 100.0) + 0.5));
+               pureptr, (long) get_PURESIZE(),
+               (int) (pureptr / (get_PURESIZE() / 100.0) + 0.5));
       if (lost > 2) {
         sprintf (buf + strlen (buf), " -- %dk wasted", lost);
 	if (die_if_pure_storage_exceeded) {
@@ -2739,7 +2739,7 @@ report_pure_usage (int report_impurities,
 				/* not know how to restart itself. */
 				/* --marcpa */ 
 #ifndef WINDOWSNT
-    fatal ("Pure size adjusted, will restart `make'");
+    fatal ("Pure size adjusted, Don't Panic!  I will restart the `make'");
 #endif
   } else if (pure_lossage && die_if_pure_storage_exceeded) {
     fatal ("Pure storage exhausted");
@@ -3917,7 +3917,7 @@ disksave_object_finalization (void)
   /* Zero out the unused portion of purespace */
   if (!pure_lossage)
     memset (  (char *) (PUREBEG + pureptr), 0,
-	    (((char *) (PUREBEG + PURESIZE)) -
+	    (((char *) (PUREBEG + get_PURESIZE())) -
 	     ((char *) (PUREBEG + pureptr))));
 
   /* Zero out the uninitialized (really, unused) part of the containers

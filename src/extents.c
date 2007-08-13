@@ -2979,9 +2979,17 @@ print_extent_1 (char *buf, Lisp_Object extent_obj)
 
   for (; !NILP (tail); tail = Fcdr (Fcdr (tail)))
     {
-      struct Lisp_String *k = XSYMBOL (XCAR (tail))->name;
+      struct Lisp_String *k;
       Lisp_Object v = XCAR (XCDR (tail));
       if (NILP (v)) continue;
+      if (!SYMBOLP (XCAR (tail)))
+	{
+	  /* ### Fix this! */
+	  strcpy (bp, "non-symbol ");
+	  bp += 11;
+	  continue;
+	}
+      k = XSYMBOL (XCAR (tail))->name;
       memcpy (bp, (char *) string_data (k), string_length (k));
       bp += string_length (k);
       *bp++ = ' ';
@@ -4049,7 +4057,6 @@ whose value for that property is `eq' to VALUE will be visited.
 
   if (!NILP (property))
     {
-      CHECK_SYMBOL (property);
       if (!NILP (value))
 	value =	canonicalize_extent_property (property, value);
     }
@@ -4194,7 +4201,6 @@ Thus, this function may be used to walk a tree of extents in a buffer:
 
   if (!NILP (property))
     {
-      CHECK_SYMBOL (property);
       if (!NILP (value))
 	value =	canonicalize_extent_property (property, value);
     }
@@ -4388,7 +4394,6 @@ you should use `map-extents', which gives you more control.
 
   object = decode_buffer_or_string (object);
   position = get_buffer_or_string_pos_byte (object, pos, GB_NO_ERROR_IF_BAD);
-  CHECK_SYMBOL (property);
   if (NILP (before))
     before_extent = 0;
   else
@@ -5161,7 +5166,6 @@ The following symbols have predefined meanings:
 {
   /* This function can GC if property is `keymap' */
   EXTENT e = decode_extent (extent, 0);
-  CHECK_SYMBOL (property);
 
   if (EQ (property, Qread_only))
     set_extent_read_only (e, value);
@@ -5243,7 +5247,6 @@ See `set-extent-property' for the built-in property names.
        (extent, property, defalt))
 {
   EXTENT e = decode_extent (extent, 0);
-  CHECK_SYMBOL (property);
 
   if      (EQ (property, Qdetached))
     return (extent_detached_p (e) ? Qt : Qnil);
@@ -5860,7 +5863,6 @@ get_text_property_1 (Lisp_Object pos, Lisp_Object prop, Lisp_Object object,
 
   object = decode_buffer_or_string (object);
   position = get_buffer_or_string_pos_byte (object, pos, GB_NO_ERROR_IF_BAD);
-  CHECK_SYMBOL (prop);
 
   /* We canonicalize the start/end-open/closed properties to the
      non-default version -- "adding" the default property really
@@ -6244,7 +6246,6 @@ defaults to the current buffer.
 
   object = decode_buffer_or_string (object);
   get_buffer_or_string_range_byte (object, start, end, &s, &e, 0);
-  CHECK_SYMBOL (prop);
   put_text_prop (s, e, object, prop, value, 1);
   return prop;
 }
@@ -6265,7 +6266,6 @@ defaults to the current buffer.
 
   object = decode_buffer_or_string (object);
   get_buffer_or_string_range_byte (object, start, end, &s, &e, 0);
-  CHECK_SYMBOL (prop);
   put_text_prop (s, e, object, prop, value, 0);
   return prop;
 }
@@ -6290,7 +6290,6 @@ any property was changed, nil otherwise.
     {
       Lisp_Object prop = XCAR (props);
       Lisp_Object value = Fcar (XCDR (props));
-      CHECK_SYMBOL (prop);
       changed |= put_text_prop (s, e, object, prop, value, 1);
     }
   return (changed ? Qt : Qnil);
@@ -6319,7 +6318,6 @@ any property was changed, nil otherwise.
     {
       Lisp_Object prop = XCAR (props);
       Lisp_Object value = Fcar (XCDR (props));
-      CHECK_SYMBOL (prop);
       changed |= put_text_prop (s, e, object, prop, value, 0);
     }
   return (changed ? Qt : Qnil);
@@ -6344,7 +6342,6 @@ defaults to the current buffer.
   for (; !NILP (props); props = Fcdr (Fcdr (props)))
     {
       Lisp_Object prop = XCAR (props);
-      CHECK_SYMBOL (prop);
       changed |= put_text_prop (s, e, object, prop, Qnil, 1);
     }
   return (changed ? Qt : Qnil);
@@ -6428,7 +6425,6 @@ If two or more extents with conflicting non-nil values for PROP overlap
       blim = get_buffer_or_string_pos_char (object, limit, 0);
       limit_was_nil = 0;
     }
-  CHECK_SYMBOL (prop);
 
   extent = Fextent_at (make_int (bpos), object, prop, Qnil, Qnil);
   if (!NILP (extent))
@@ -6496,8 +6492,6 @@ If two or more extents with conflicting non-nil values for PROP overlap
       blim = get_buffer_or_string_pos_char (object, limit, 0);
       limit_was_nil = 0;
     }
-
-  CHECK_SYMBOL (prop);
 
   /* extent-at refers to the character AFTER bpos, but we want the
      character before bpos.  Thus the - 1.  extent-at simply

@@ -38,7 +38,7 @@
 
 (defvar packages-hardcoded-lisp
   '("cl-defs"
-    "startup"
+    ;; "startup"
     )
   "Lisp packages that are always dumped with XEmacs")
 

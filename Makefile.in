@@ -523,6 +523,7 @@ distclean: FRC.distclean
 realclean: FRC.realclean
 	for d in $(SUBDIR); do (cd $$d && $(MAKE) $(MFLAGS) $@); done
 	-${top_distclean}
+	$(RM) TAGS
 
 ## This doesn't actually appear in the coding standards, but Karl
 ## says GCC supports it, and that's where the configuration part of

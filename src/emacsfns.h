@@ -550,7 +550,7 @@ extern int suppress_early_backtrace;
 
 extern Lisp_Object Qsave_buffers_kill_emacs;
 extern Lisp_Object Qkill_emacs_hook;
-extern Lisp_Object Frunning_temacs_p(void);
+extern Lisp_Object Frunning_temacs_p (void);
 
 /* Defined in eval.c */
 extern Lisp_Object Qautoload, Qexit, Qinteractive, Qcommandp, Qdefun, Qmacro;

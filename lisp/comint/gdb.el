@@ -214,6 +214,29 @@ window for repective \\[gdb-display-frame] commands."
 			     (not gdb-display-mode)
 			   (> (prefix-numeric-value arg) 0))))
 
+;; Using cc-mode's syntax table is broken.
+(defvar gdb-mode-syntax-table nil
+  "Syntax table for GDB mode.")
+
+;; This is adapted from CC Mode 5.11.
+(unless gdb-mode-syntax-table
+  (setq gdb-mode-syntax-table (make-syntax-table))
+  ;; DO NOT TRY TO SET _ (UNDERSCORE) TO WORD CLASS!
+  (modify-syntax-entry ?_  "_" gdb-mode-syntax-table)
+  (modify-syntax-entry ?\\ "\\" gdb-mode-syntax-table)
+  (modify-syntax-entry ?+  "." gdb-mode-syntax-table)
+  (modify-syntax-entry ?-  "." gdb-mode-syntax-table)
+  (modify-syntax-entry ?=  "." gdb-mode-syntax-table)
+  (modify-syntax-entry ?%  "." gdb-mode-syntax-table)
+  (modify-syntax-entry ?<  "." gdb-mode-syntax-table)
+  (modify-syntax-entry ?>  "." gdb-mode-syntax-table)
+  (modify-syntax-entry ?&  "." gdb-mode-syntax-table)
+  (modify-syntax-entry ?|  "." gdb-mode-syntax-table)
+  (modify-syntax-entry ?\' "\"" gdb-mode-syntax-table)
+  ;; add extra comment syntax
+  (modify-syntax-entry ?/  ". 14"  gdb-mode-syntax-table)
+  (modify-syntax-entry ?*  ". 23"  gdb-mode-syntax-table))
+
 
 (defun gdb-mode ()
   "Major mode for interacting with an inferior Gdb process.
@@ -243,9 +266,7 @@ C-x SPACE sets break point at current line."
   (interactive)
   (comint-mode)
   (use-local-map gdb-mode-map)
-  (when (not c-mode-syntax-table)
-    (require 'cc-lang))
-  (set-syntax-table c-mode-syntax-table)
+  (set-syntax-table gdb-mode-syntax-table)
   (make-local-variable 'gdb-last-frame-displayed-p)
   (make-local-variable 'gdb-last-frame)
   (make-local-variable 'gdb-delete-prompt-marker)

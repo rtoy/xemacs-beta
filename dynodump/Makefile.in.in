@@ -22,6 +22,7 @@
 ## Synched up with: Not synched with FSF.
 
 SHELL = /bin/sh
+RM = rm -f
 
 ## ==================== Things "configure" will edit ====================
 
@@ -68,20 +69,13 @@ _relocate.o: ${srcdir}/$(ARCH)/_relocate.c
 uninit.o: ${srcdir}/$(ARCH)/uninit.c
 	$(CC) -c $(ALL_CFLAGS) ${srcdir}/$(ARCH)/uninit.c
 
+.PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:
-	-rm -f *.o \#*
-
+	$(RM) *.o *.i core
 clean: mostlyclean
-	-rm -f *.so *.so.1
-
+	$(RM) *.so *.so.1
 distclean: clean
-	-rm -f Makefile Makefile.in
-
+	$(RM) Makefile Makefile.in TAGS
 realclean: distclean
-	rm -f TAGS
-
-versionclean:
-	true
-
 extraclean: realclean
-	-rm -f *~ \#*
+	$(RM) *~ \#*

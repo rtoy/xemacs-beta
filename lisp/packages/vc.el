@@ -1827,6 +1827,7 @@ default directory."
 	  ;; `rcs2log' will find the relevant RCS or CVS files
 	  ;; relative to the curent directory if none supplied.
 	  nil)))
+  (require 'add-log)	; XEmacs change
   (let ((odefault default-directory)
 	(full-name (or add-log-full-name
 		       (user-full-name)

@@ -350,19 +350,6 @@ rel_alloc='default'
 use_system_malloc='default'
 energize_version=''
 native_sound_lib=''
-dnl make normal error-checking be the default in alpha and beta versions, so
-dnl that bugs get noticed.  Change this for released versions.
-error_check_default="yes"
-error_check_extents=$error_check_default
-error_check_typecheck=$error_check_default
-error_check_bufpos=$error_check_default
-error_check_gc=$error_check_default
-error_check_malloc=$error_check_default
-dnl debug=yes must be set when error checking is present.  This should be
-dnl fixed up.
-debug=$error_check_default
-dnl Default to --extra-verbose when debugging
-extra_verbose=$error_check_default
 dnl use-assertions should be 'yes' by default.  Too many people in this
 dnl world have core dumps turned off by default or \"cannot find where the
 dnl core file went\".  At least we should get some useful output ...
@@ -374,11 +361,6 @@ with_toolbars=""
 with_tty=""
 use_union_type="no"
 with_dnet=""
-
-dnl On Sun systems, people sometimes set up the variable CPP
-dnl with a value that is a directory, not an executable at all.
-dnl Detect that case, and ignore that value.
-test -n "$CPP" -a -d "$CPP" && CPP=
 
 dnl Usage message (get it via -help)
 usage="Usage: $progname CONFIGURATION [[-OPTION[=VALUE] ...]]
@@ -1053,6 +1035,45 @@ vpath %.s $(srcdir)\
 vpath %.in $(srcdir)'
 fi
 
+dnl ----------------------------------------
+dnl Find out which version of XEmacs this is
+dnl ----------------------------------------
+. "$srcdir/version.sh" || exit 1;
+version="${emacs_major_version}.${emacs_minor_version}"
+AC_DEFINE_UNQUOTED(EMACS_MAJOR_VERSION, $emacs_major_version)
+AC_DEFINE_UNQUOTED(EMACS_MINOR_VERSION, $emacs_minor_version)
+if test -n "$emacs_beta_version"; then
+  version="${version}-b${emacs_beta_version}"
+  AC_DEFINE_UNQUOTED(EMACS_BETA_VERSION, $emacs_beta_version)
+fi
+AC_DEFINE_UNQUOTED(XEMACS_CODENAME, "$xemacs_codename")
+AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
+canonical_version=`echo ${version}_${canonical} | sed 'y/.-/__/'`
+AC_DEFINE_UNQUOTED(CANONICAL_VERSION, $canonical_version)
+
+dnl ----------------------------------
+dnl Error checking and debugging flags
+dnl ----------------------------------
+dnl Error checking default to "yes" in beta versions, to "no" in releases.
+dnl Same goes for --debug and --extra-verbosity.
+if test -n "$emacs_beta_version"; then beta=yes; else beta=no; fi
+test "${error_check_extents=$beta}"   = yes && AC_DEFINE(ERROR_CHECK_EXTENTS)
+test "${error_check_typecheck=$beta}" = yes && AC_DEFINE(ERROR_CHECK_TYPECHECK)
+test "${error_check_bufpos=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_BUFPOS)
+test "${error_check_gc=$beta}"        = yes && AC_DEFINE(ERROR_CHECK_GC)
+test "${error_check_malloc=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_MALLOC)
+: "${extra_verbose=$beta}"
+dnl debug=yes must be set when error checking is present.  This should be
+dnl fixed up.
+dnl debug implies other options
+if test "${debug=beta}" = "yes"; then
+  use_assertions=yes memory_usage_stats=yes
+  XE_ADD_OBJS(debug.o)
+  AC_DEFINE(DEBUG_XEMACS)
+fi
+test "$use_assertions"     = "yes" && AC_DEFINE(USE_ASSERTIONS)
+test "$memory_usage_stats" = "yes" && AC_DEFINE(MEMORY_USAGE_STATS)
+
 dnl ------------------------------
 dnl Determine the s&m files to use
 dnl ------------------------------
@@ -1566,12 +1587,6 @@ dnl --------------------------------------------------
 dnl Determine the compiler, set up for feature testing
 dnl --------------------------------------------------
 
-dnl debug implies other options
-if test "$debug" = "yes"; then
-  use_assertions=yes memory_usage_stats=yes
-  XE_ADD_OBJS(debug.o)
-fi
-
 dnl Sun Development environment support
 test "$with_sparcworks" = "yes" && with_workshop=yes # compatibility alias
 if test "$with_workshop" = "yes"; then
@@ -1604,6 +1619,13 @@ elif test "$with_gcc" = "yes" -a "$GCC" != "yes" ; then
   AC_PROG_CC
 fi
 CFLAGS="$xe_save_CFLAGS"
+
+dnl Figure out what C preprocessor to use.
+
+dnl On Sun systems, people sometimes set up the variable CPP
+dnl with a value that is a directory, not an executable at all.
+dnl Detect that case, and ignore that value.
+test -n "$CPP" -a -d "$CPP" && CPP=
 
 test -n "$NON_GNU_CPP" -a "$GCC" != "yes" -a -z "$CPP" && CPP="$NON_GNU_CPP"
 
@@ -2866,28 +2888,6 @@ for f in "/usr/lpp/X11/bin/smt.exp" "/usr/bin/X11/smt.exp" ; do
   if test -r $f; then AC_DEFINE_UNQUOTED(AIX_SMT_EXP, -bI:$f) break; fi
 done
 
-dnl Find out which version of XEmacs this is.
-. "$srcdir/version.sh" || exit 1;
-#version=`sed -ne 's/^(defconst emacs-version "\(.*\)".*/\1/p' "$file"`
-#if test  -z "$version"; then
-#  echo "$progname: can't find current emacs version in \"$file\"." >&2
-#  exit 1
-#fi
-#beta=`sed -ne 's/^.*beta.*(beta\([[0-9]][[0-9]]*\)).*$/\1/p' "$file"`
-#test -n "$beta" && version="${version}-b${beta}"
-version="${emacs_major_version}.${emacs_minor_version}"
-AC_DEFINE_UNQUOTED(EMACS_MAJOR_VERSION, $emacs_major_version)
-AC_DEFINE_UNQUOTED(EMACS_MINOR_VERSION, $emacs_minor_version)
-if test -n "$emacs_beta_version"; then
-  version="${version}-b${emacs_beta_version}"
-  AC_DEFINE_UNQUOTED(EMACS_BETA_VERSION, $emacs_beta_version)
-fi
-AC_DEFINE_UNQUOTED(XEMACS_CODENAME, "$xemacs_codename")
-AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
-canonical_version=`echo ${version}_${canonical} | sed 'y/.-/__/'`
-AC_DEFINE_UNQUOTED(CANONICAL_VERSION, $canonical_version)
-
-
 dnl Check for sound of various sorts.
 
 dnl Autodetect native sound
@@ -3321,19 +3321,10 @@ test "$external_widget"    = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
 test "$with_gnu_make"      = "yes" && AC_DEFINE(USE_GNU_MAKE)
 test "$no_doc_file"        = "yes" && AC_DEFINE(NO_DOC_FILE)
 test "$const_is_losing"    = "yes" && AC_DEFINE(CONST_IS_LOSING)
-test "$use_assertions"     = "yes" && AC_DEFINE(USE_ASSERTIONS)
-test "$debug"              = "yes" && AC_DEFINE(DEBUG_XEMACS)
 test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
-test "$memory_usage_stats" = "yes" && AC_DEFINE(MEMORY_USAGE_STATS)
 test "$with_pop"           = "yes" && AC_DEFINE(MAIL_USE_POP)
 test "$with_kerberos"      = "yes" && AC_DEFINE(KERBEROS)
 test "$with_hesiod"        = "yes" && AC_DEFINE(HESIOD)
-
-test "$error_check_extents"   = "yes" && AC_DEFINE(ERROR_CHECK_EXTENTS)
-test "$error_check_typecheck" = "yes" && AC_DEFINE(ERROR_CHECK_TYPECHECK)
-test "$error_check_bufpos"    = "yes" && AC_DEFINE(ERROR_CHECK_BUFPOS)
-test "$error_check_gc"        = "yes" && AC_DEFINE(ERROR_CHECK_GC)
-test "$error_check_malloc"    = "yes" && AC_DEFINE(ERROR_CHECK_MALLOC)
 
 test "$use_union_type" != yes && AC_DEFINE(NO_UNION_TYPE)
 

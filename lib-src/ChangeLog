@@ -1,3 +1,12 @@
+1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (cc-mode): Don't give cc-mode special treatment.
+
+	* update-autoloads.sh (cc-mode): Don't give cc-mode special
+	treatment.
+
+	* rcs2log: Synch with Emacs/Mule zeta.
+
 1997-07-03  Steven L Baur  <steve@altair.xemacs.org>
 
 	* update-elc.sh (make_special_commands): Fix building of ilisp so

@@ -164,53 +164,54 @@ or go back to just one window (by deleting all but the selected window)."
 
 ;;;; Object-oriented programming at its finest
 
-(defun display-error (error-object stream) ;(defgeneric report-condition ...)
-  "Display `error-object' on `stream' in a user-friendly way."
-  (funcall (or (let ((type (car-safe error-object)))
-                 (catch 'error
-                   (and (consp error-object)
-                        (symbolp type)
-                        ;;(stringp (get type 'error-message))
-			(consp (get type 'error-conditions))
-                        (let ((tail (cdr error-object)))
-                          (while (not (null tail))
-                            (if (consp tail)
-                                (setq tail (cdr tail))
-                                (throw 'error nil)))
-                          t)
-                        ;; (check-type condition condition)
-                        (get type 'error-conditions)
-                        ;; Search class hierarchy
-                        (let ((tail (get type 'error-conditions)))
-                          (while (not (null tail))
-                            (cond ((not (and (consp tail)
-                                             (symbolp (car tail))))
-                                   (throw 'error nil))
-                                  ((get (car tail) 'display-error)
-                                   (throw 'error (get (car tail)
-                                                      'display-error)))
-                                  (t
-                                   (setq tail (cdr tail)))))
-                          ;; Default method
-                          #'(lambda (error-object stream)
-                              (let ((type (car error-object))
-                                    (tail (cdr error-object))
-                                    (first t)
-				    (print-message-label 'error))
-                                (if (eq type 'error)
-                                    (progn (princ (car tail) stream)
-                                           (setq tail (cdr tail)))
-				  (princ (or (gettext (get type 'error-message)) type)
-					 stream))
-                                (while tail
-                                  (princ (if first ": " ", ") stream)
-                                  (prin1 (car tail) stream)
-                                  (setq tail (cdr tail)
-                                        first nil))))))))
-	       #'(lambda (error-object stream)
-                   (princ (gettext "Peculiar error ") stream)
-                   (prin1 error-object stream)))
-           error-object stream))
+;; Now in src/print.c; used by Ferror_message_string and others
+;(defun display-error (error-object stream) ;(defgeneric report-condition ...)
+;  "Display `error-object' on `stream' in a user-friendly way."
+;  (funcall (or (let ((type (car-safe error-object)))
+;                 (catch 'error
+;                   (and (consp error-object)
+;                        (symbolp type)
+;                        ;;(stringp (get type 'error-message))
+;			(consp (get type 'error-conditions))
+;                        (let ((tail (cdr error-object)))
+;                          (while (not (null tail))
+;                            (if (consp tail)
+;                                (setq tail (cdr tail))
+;                                (throw 'error nil)))
+;                          t)
+;                        ;; (check-type condition condition)
+;                        (get type 'error-conditions)
+;                        ;; Search class hierarchy
+;                        (let ((tail (get type 'error-conditions)))
+;                          (while (not (null tail))
+;                            (cond ((not (and (consp tail)
+;                                             (symbolp (car tail))))
+;                                   (throw 'error nil))
+;                                  ((get (car tail) 'display-error)
+;                                   (throw 'error (get (car tail)
+;                                                      'display-error)))
+;                                  (t
+;                                   (setq tail (cdr tail)))))
+;                          ;; Default method
+;                          #'(lambda (error-object stream)
+;                              (let ((type (car error-object))
+;                                    (tail (cdr error-object))
+;                                    (first t)
+;				    (print-message-label 'error))
+;                                (if (eq type 'error)
+;                                    (progn (princ (car tail) stream)
+;                                           (setq tail (cdr tail)))
+;				  (princ (or (gettext (get type 'error-message)) type)
+;					 stream))
+;                                (while tail
+;                                  (princ (if first ": " ", ") stream)
+;                                  (prin1 (car tail) stream)
+;                                  (setq tail (cdr tail)
+;                                        first nil))))))))
+;	       #'(lambda (error-object stream)
+;                   (princ (gettext "Peculiar error ") stream)
+;                   (prin1 error-object stream)))
+;           error-object stream))
 
 (put 'file-error 'display-error
      #'(lambda (error-object stream)

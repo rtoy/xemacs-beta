@@ -7,7 +7,7 @@
 ;;             1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@python.org
 ;; Created:    22-Apr-1997 (split from cc-mode.el)
-;; Version:    5.11
+;; Version:    5.12
 ;; Keywords:   c languages oop
 
 ;; This file is part of GNU Emacs.
@@ -27,19 +27,7 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-(eval-when-compile
-  (load-file "./cc-engine.el"))
-
 
-;; Utilities
-(defsubst c-update-modeline ()
-  ;; set the c-auto-hungry-string for the correct designation on the modeline
-  (setq c-auto-hungry-string
-	(if c-auto-newline
-	    (if c-hungry-delete-key "/ah" "/a")
-	  (if c-hungry-delete-key "/h" nil)))
-  (force-mode-line-update))
-
 (defun c-calculate-state (arg prevstate)
   ;; Calculate the new state of PREVSTATE, t or nil, based on arg. If
   ;; arg is nil or zero, toggle the state. If arg is negative, turn
@@ -49,7 +37,6 @@
       (not prevstate)
     (> arg 0)))
 
-
 ;; Auto-newline and hungry-delete
 (defun c-toggle-auto-state (arg)
   "Toggle auto-newline feature.
@@ -206,7 +193,7 @@ the brace is inserted inside a literal."
 	    blink-paren-function
 	    (insertion-point (point))
 	    delete-temp-newline
-	    (preserve-p (= 32 (char-syntax (preceding-char))))
+	    (preserve-p (eq 32 (char-syntax (char-before))))
 	    ;; shut this up too
 	    (c-echo-syntactic-information-p nil)
 	    (syntax (progn
@@ -245,7 +232,7 @@ the brace is inserted inside a literal."
 		(save-restriction
 		  (narrow-to-region here (point))
 		  (if (and (c-safe (progn (backward-up-list -1) t))
-			   (memq (preceding-char) '(?\) ?}))
+			   (memq (char-before) '(?\) ?}))
 			   (progn (widen)
 				  (c-safe (progn (forward-sexp -1) t))))
 		      (setq c-state-cache
@@ -304,20 +291,20 @@ the brace is inserted inside a literal."
 	  ;; clean up empty defun braces
 	  (if (and c-auto-newline
 		   (memq 'empty-defun-braces c-cleanup-list)
-		   (= last-command-char ?\})
+		   (eq last-command-char ?\})
 		   (c-intersect-lists '(defun-close class-close inline-close)
 				      syntax)
 		   (progn
 		     (forward-char -1)
 		     (skip-chars-backward " \t\n")
-		     (= (preceding-char) ?\{))
+		     (eq (char-before) ?\{))
 		   ;; make sure matching open brace isn't in a comment
 		   (not (c-in-literal)))
 	      (delete-region (point) (1- here)))
 	  ;; clean up brace-else-brace
 	  (if (and c-auto-newline
 		   (memq 'brace-else-brace c-cleanup-list)
-		   (= last-command-char ?\{)
+		   (eq last-command-char ?\{)
 		   (re-search-backward "}[ \t\n]*else[ \t\n]*{" nil t)
 		   (progn
 		     (setq mbeg (match-beginning 0)
@@ -330,7 +317,7 @@ the brace is inserted inside a literal."
 	  ;; clean up brace-elseif-brace
 	  (if (and c-auto-newline
 		   (memq 'brace-elseif-brace c-cleanup-list)
-		   (= last-command-char ?\{)
+		   (eq last-command-char ?\{)
 		   (re-search-backward "}[ \t\n]*else[ \t\n]+if[ \t\n]*" nil t)
 		   (save-excursion
 		     (goto-char (match-end 0))
@@ -351,11 +338,11 @@ the brace is inserted inside a literal."
 	      (newline)
 	      ;; update on c-state-cache
 	      (let* ((bufpos (- (point) 2))
-		     (which (if (= (char-after bufpos) ?{) 'open 'close))
+		     (which (if (eq (char-after bufpos) ?{) 'open 'close))
 		     (c-state-cache (c-hack-state bufpos which c-state-cache)))
 		(c-indent-line))))
 	;; blink the paren
-	(and (= last-command-char ?\})
+	(and (eq last-command-char ?\})
 	     old-blink-paren
 	     (save-excursion
 	       (c-backward-syntactic-ws safepos)
@@ -370,8 +357,8 @@ If numeric ARG is supplied or point is inside a literal, indentation
 is inhibited."
   (interactive "P")
   (let ((indentp (and (not arg)
-		      (= (preceding-char) ?/)
-		      (= last-command-char ?/)
+		      (eq (char-before) ?/)
+		      (eq last-command-char ?/)
 		      (not (c-in-literal))))
 	;; shut this up
 	(c-echo-syntactic-information-p nil))
@@ -391,11 +378,11 @@ is inhibited."
   ;; current line, unless this star introduces a comment-only line.
   (if (and (not arg)
 	   (memq (c-in-literal) '(c))
-	   (= (preceding-char) ?*)
+	   (eq (char-before) ?*)
 	   (save-excursion
 	     (forward-char -1)
 	     (skip-chars-backward "*")
-	     (if (= (preceding-char) ?/)
+	     (if (eq (char-before) ?/)
 		 (forward-char -1))
 	     (skip-chars-backward " \t")
 	     (bolp)))
@@ -432,15 +419,15 @@ non-whitespace characters on the line following the semicolon."
 	;; clean ups
 	(let ((pos (- (point-max) (point))))
 	  (if (and (or (and
-			(= last-command-char ?,)
+			(eq last-command-char ?,)
 			(memq 'list-close-comma c-cleanup-list))
 		       (and
-			(= last-command-char ?\;)
+			(eq last-command-char ?\;)
 			(memq 'defun-close-semi c-cleanup-list)))
 		   (progn
 		     (forward-char -1)
 		     (skip-chars-backward " \t\n")
-		     (= (preceding-char) ?}))
+		     (eq (char-before) ?}))
 		   ;; make sure matching open brace isn't in a comment
 		   (not (c-in-literal lim)))
 	      (delete-region (point) here))
@@ -493,13 +480,13 @@ value of `c-cleanup-list'."
 	    (here (point)))
 	(if (and c-auto-newline
 		 (memq 'scope-operator c-cleanup-list)
-		 (= (preceding-char) ?:)
+		 (eq (char-before) ?:)
 		 (progn
 		   (forward-char -1)
 		   (skip-chars-backward " \t\n")
-		   (= (preceding-char) ?:))
+		   (eq (char-before) ?:))
 		 (not (c-in-literal))
-		 (not (= (char-after (- (point) 2)) ?:)))
+		 (not (eq (char-after (- (point) 2)) ?:)))
 	    (delete-region (point) (1- here)))
 	(goto-char (- (point-max) pos)))
       ;; lets do some special stuff with the colon character
@@ -550,7 +537,7 @@ The line will also not be re-indented if a numeric argument is
 supplied, or point is inside a literal."
   (interactive "P")
   (let ((indentp (and (not arg)
-		      (= (preceding-char) last-command-char)
+		      (eq (char-before) last-command-char)
 		      (not (c-in-literal))))
 	;; shut this up
 	(c-echo-syntactic-information-p nil))
@@ -905,13 +892,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       ;; whitespace. failing that, try to find any
 		       ;; opening brace on the current line
 		       (skip-chars-forward " \t\n")
-		       (if (memq (following-char) '(?\( ?\[ ?\{))
+		       (if (memq (char-after) '(?\( ?\[ ?\{))
 			   (point)
 			 (let ((state (parse-partial-sexp (point)
 							  (c-point 'eol))))
 			   (and (nth 1 state)
 				(goto-char (nth 1 state))
-				(memq (following-char) '(?\( ?\[ ?\{))
+				(memq (char-after) '(?\( ?\[ ?\{))
 				(point)))))))
 	  ;; find balanced expression end
 	  (setq end (and (c-safe (progn (forward-sexp 1) t))
@@ -951,7 +938,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
     ;; if we're sitting at b-o-b, it might be because there was no
     ;; least enclosing brace and we were sitting on the defun's open
     ;; brace.
-    (if (and (bobp) (not (= (following-char) ?\{)))
+    (if (and (bobp) (not (eq (char-after) ?\{)))
 	(goto-char here))
     ;; if defun-prompt-regexp is non-nil, b-o-d might not leave us at
     ;; the open brace. I consider this an Emacs bug.
@@ -1051,6 +1038,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (setq fence (point))))))
 	(set-marker endmark nil)
 	(c-progress-fini 'c-indent-region)
+	(c-echo-parsing-error)
 	))))
 
 (defun c-mark-function ()
@@ -1067,7 +1055,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (goto-char (cdr brace))
 	(goto-char brace))
       (setq state (cdr state)))
-    (if (= (following-char) ?{)
+    (if (eq (char-after) ?{)
 	(progn
 	  (forward-line -1)
 	  (while (not (or (bobp)
@@ -1151,7 +1139,7 @@ command to conveniently insert and align the necessary backslashes."
       (if (not delete-flag)
           (while (< (point) to)
             (end-of-line)
-            (if (= (preceding-char) ?\\)
+            (if (eq (char-before) ?\\)
                 (progn (forward-char -1)
                        (skip-chars-backward " \t")))
             (setq column (max column (1+ (current-column))))
@@ -1181,8 +1169,7 @@ command to conveniently insert and align the necessary backslashes."
 
 (defun c-append-backslash (column)
   (end-of-line)
-  ;; Note that "\\\\" is needed to get one backslash.
-  (if (= (preceding-char) ?\\)
+  (if (eq (char-before) ?\\)
       (progn (forward-char -1)
              (delete-horizontal-space)
              (indent-to column))
@@ -1292,8 +1279,8 @@ Optional prefix ARG means justify paragraph as well."
 			      ;; kludge alert, watch out for */, in
 			      ;; which case fill-prefix should *not*
 			      ;; be "*"!
-			      (if (and (= (following-char) ?/)
-				       (= (preceding-char) ?*))
+			      (if (and (eq (char-after) ?/)
+				       (eq (char-before) ?*))
 				  (forward-char -1))
 			      (point)))
 

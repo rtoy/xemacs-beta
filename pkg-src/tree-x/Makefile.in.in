@@ -51,9 +51,9 @@ objs = draw.o tree.o input.o dissolve.o dbl.o intf.o $(usleep_objs)
 all : xoobr
 
 xoobr: $(objs)
-	$(CC) $(objs) $(ldflags) -o $@
+	$(CC) $(CFLAGS) $(objs) $(ldflags) -o $@
 
-cflags  = $(CFLAGS) -DHAVE_CONFIG_H -I${build_top}/src $(CPPFLAGS) $(c_switch_all)
+cflags  = $(CFLAGS) -I${build_top}/src $(CPPFLAGS) $(c_switch_all)
 ldflags = $(LDFLAGS) $(ld_switch_all) -lXaw $(ld_libs_all)
 
 .c.o :
@@ -65,8 +65,19 @@ install: $(progs)
 	  (cd ../.. && $(INSTALL_PROGRAM) pkg-src/tree-x/$${file} ${archlibdir}/$${file}) ; \
 	done
 
-clean:
-	$(RM) $(progs) *.o *.i *.orig *.rej core *~
+.PHONY: mostlyclean clean distclean realclean extraclean
+mostlyclean:
+	$(RM) *.o *.i core
+clean: mostlyclean
+	$(RM) $(progs)
+distclean: clean
+	$(RM) Makefile Makefile.in TAGS
+realclean: distclean
+extraclean: distclean
+	$(RM) *~ \#*
+
+distclean: clean
+	$(RM) Makefile.in Makefile
 
 size:
 	wc *.c *.h
@@ -74,7 +85,7 @@ size:
 ## Dependencies
 dbl.o: 		dbl.h 
 dissolve.o:	dissolve.h
-draw.o: 	defs.h tree.h dbl.h intf.h
-input.o: 	defs.h tree.h input.h
-intf.o: 	defs.h tree.h dbl.h intf.h rsrc.h input.h help.h
-tree.o: 	defs.h tree.h intf.h
+draw.o: 	dissolve.h defs.h tree.h dbl.h intf.h
+input.o: 	defs.h tree.h input.h dbl.h intf.h
+intf.o: 	defs.h tree.h dbl.h intf.h rsrc.h input.h help.h dissolve.h
+tree.o: 	defs.h tree.h dbl.h intf.h

@@ -111,10 +111,10 @@ definition suitably augmented."
 				    (compiled-function-instructions nfun)
 				    (compiled-function-constants nfun)
 				    (compiled-function-stack-depth nfun)
-				    ndoc-str)
-			      (if (compiled-function-interactive nfun)
-				  (list (compiled-function-interactive nfun))
-				nil))))
+				    ndoc-str)))
+		   spec)
+	       (if (setq spec (compiled-function-interactive nfun))
+		   (setq new-code (nconc new-code (list (nth 1 spec)))))
 	       (fset new (apply 'make-byte-code new-code))))))))
 
 

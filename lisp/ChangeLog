@@ -1,3 +1,205 @@
+Tue Jul  8 23:47:47 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/Release 5.12
+
+Mon Jul  7 23:47:02 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-styles.el, cc-mode/cc-mode.el, cc-mode/cc-menus.el,
+	cc-mode/cc-langs.el, cc-mode/cc-engine.el, cc-mode/cc-compat.el,
+	cc-mode/cc-cmds.el, cc-mode/cc-align.el:
+	Reorganization to support byte-recompile-directory.
+
+	* cc-mode/Release: Don't put release number in tar file
+
+Thu Jul  3 22:54:03 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-langs.el (c-mode-base-map):
+	Proper binding of c-electric-backspace and
+	c-electric-delete, based on the policy of the various maintainers.
+	Thank goodness for delete-key-deletes-forward!
+
+	* cc-mode/cc-vars.el (c-tab-always-indent, c-hanging-braces-alist):
+	Minor changes to the cutomize format.
+
+	* cc-mode/cc-mode-19.el: Initial revision
+
+	* cc-mode/cc-menus.el, cc-mode/cc-engine.el, cc-mode/cc-compat.el,
+	cc-mode/cc-cmds.el, cc-mode/cc-align.el:
+	Major Ebola eradication.
+
+Wed Jul  2 21:33:04 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-engine.el (c-crosses-statement-barrier-p,
+	c-guess-basic-syntax): Ebola eradication.
+
+	* cc-mode/cc-cmds.el (c-indent-region):
+	Call c-echo-parsing-error to echo last parsing
+	error that may have occurred.
+
+	* cc-mode/cc-engine.el (c-echo-parsing-error): New function.
+
+	* cc-mode/cc-engine.el (c-parsing-error): new variable
+
+	(c-parse-state): When an unbalanced close brace is discovered, don't
+	raise an error (prevents insertion of character).  Insert the
+	character, display a warning message, and set c-parsing-error so
+	syntax echoing will be disabled.
+
+	(c-show-syntactic-information, c-indent-line): Suppress syntax echoing
+	if c-parsing-error is non-nil.
+
+	* cc-styles.el: Added require of cl to pick up definition of copy-tree.
+
+Mon Jun 30 21:41:00 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-langs.el, cc-mode/cc-mode.el (c-mode-map,
+	c++-mode-map, objc-mode-map, java-mode-map):
+	Moved
+	defvars from cc-langs.el to cc-mode.el for use in c-mode, c++-mode,
+	objc-mode, and java-mode docstrings.  Actual population of these mode
+	maps remains in cc-langs.el.
+
+	* cc-mode/cc-mode.el:
+	Require cc-langs at top level, so as to get the definitions for
+	c-mode-map, et al. that are used in the *-mode docstrings.
+
+Fri Jun 27 17:33:32 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-langs.el (c-mode-syntax-table):
+	Added autoload cookie for gdb-mode.
+
+Thu Jun 26 21:12:56 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-engine.el (c-guess-basic-syntax):
+	CASE 5H: Whack one ebola infection (e.g. using
+	memq with the results of following-char in XEmacs 20).
+
+	* cc-mode/cc-styles.el:
+	Added two require's that make autoload call of (c-set-style) work.
+
+Sun Jun 22 16:40:30 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-cmds.el (c-electric-delete):
+	Don't call c-electric-backspace interactively.
+
+Fri Jun 20 20:40:33 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-mode.el (c-mode, c++-mode, objc-mode, java-mode):
+	Make sure to call
+	c-update-modeline after the hooks are run, so that the modeline
+	accurately reflects auto-newline and delete-key minor modes if the
+	hooks set c-hungry-delete-key or c-auto-newline directly.
+
+	* cc-align.el (c-lineup-java-throws): Fixed some regressions.
+1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/func-menu.el: Don't enable Makefile mode function menu
+	by default.
+	From Martin Buchholz <mrb@Eng.Sun.COM>
+
+	* x11/x-menubar.el (file-menu-filter): Delete Frame should be
+	active when multiple frames span multiple devices.
+	From Aki Vehtari <Aki.Vehtari@hut.fi>
+
+1997-07-08  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/gnuserv.el: Remove RCS ID keywords.
+
+	* utils/savehist.el: Cosmetic changes.  Hopefully, not
+	user-visible.
+
+	* prim/debug.el (debug-convert-byte-code): Use compiled-function
+	accessor functions.
+
+1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* modes/hideif.el (hide-ifdef-mode): Include modemap in call to
+	`add-minor-mode'.
+
+1997-07-08  Tomasz Cholewo  <tjchol01@mecca.spd.louisville.edu>
+
+	* packages/add-log.el: Require add-log for accessing
+	add-log-mailing-address and add-log-full-name variables.
+
+1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* bytecomp/disass.el (disassemble-1): Use functional interface
+	instead of indexing into vector.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* prim/startup.el (emacs-user-extension-dir): New variable.
+	(load-user-init-file): Use it.  .xemacs and .xemacs-custom are
+	moved into `emacs-user-extension-dir' and renamed to init.el and
+	options.el respectively.
+
+	* prim/packages.el (packages-hardcoded-lisp): Remove "startup"
+	since it is mentioned in dumped-lisp.el.
+
+	* cl/cl-macs.el (keymap-name): New defsetf.
+	(keymap-prompt): Ditto.
+	(keymap-default-binding): Ditto.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+1997-07-07  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/dabbrev.el: replace `buffer-substring' with
+	`buffer-substring-no-properties' so that unwanted text
+	properties (like read-only) are stripped from inserted
+	dabbrev expansions.
+
+1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* comint/comint.el (comint-replace-by-expanded-history): Change
+	buggy history test regexp.
+	From Simon Marshall  <simon@spiff.gnu.ai.mit.edu> (Emacs/Mule zeta)
+
+1997-07-07  Steven L Baur  <steve@altair.xemacs.org>
+
+	* oobr/br-clos-ft.el (clos-scan-routine-arglist): Don't reference
+	bytecode object as vector.
+
+	* hypberbole/hact.el (action:commandp): Don't reference bytecode
+	objects as vectors.
+	(action:params): Ditto.
+	
+	* hyperbole/hypb.el (hypb:function-copy): Don't reference byte
+	code objects as vectors.
+	(hypb:function-symbol-replace): Document as broken.  The
+	substition cannot be done without some thinking I'm not in the
+	mood for.
+
+	* efs/efs-ovwrt.el (efs-overwrite-fn): Attempt to correctly deal
+	with the interactive spec.
+
+	* packages/apropos.el (apropos-safe-documentation): Use
+	`compiled-function-doc-string' instead of referencing a bytecode
+	object as an array.
+
+	* prim/subr.el (buffer-substring-no-properties): Undo previous
+	change removing extents.  set-text-properties works now.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* packages/hyper-apropos.el (hyper-apropos-get-doc): Get the
+	argument list through a function instead of indexing into
+	bytecode.
+
+	* utils/easymenu.el (easy-menu-add): Oops, wrong sense in
+	comparison.
+
+	* comint/gdb.el (gdb-mode-syntax-table): New variable.  Initialize 
+	with the logic currently in CC Mode 5.11.
+	(gdb-mode): Use it.
+
+	* modes/hideif.el (hide-ifdef-mode-submap): Correctly specify the
+	current local map.
+
+1997-07-08  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/english.el: Add quail-british for British.
+
+	* language/european.el: Register input-method for various non
+	quail-latin-1 methods.
+
 1997-07-06  Steven L Baur  <steve@altair.xemacs.org>
 
 	* prim/cmdloop.el (errors-deactivate-region): Default to no error

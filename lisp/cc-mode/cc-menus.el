@@ -1,4 +1,4 @@
-;;; cc-menus.el --- menu and imenu support for CC Mode
+;;; cc-menus.el --- imenu support for CC Mode
 
 ;; Copyright (C) 1985,87,92,93,94,95,96,97 Free Software Foundation, Inc.
 
@@ -7,7 +7,7 @@
 ;;             1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@python.org
 ;; Created:    22-Apr-1997 (split from cc-mode.el)
-;; Version:    5.11
+;; Version:    5.12
 ;; Keywords:   c languages oop
 
 ;; This file is part of GNU Emacs.
@@ -97,45 +97,6 @@
        "[,a-zA-Z_1-9\n \t]*{"               
        )) 6)))
   "Imenu generic expression for Java mode.  See `imenu-generic-expression'.")
-
-
-;; menu support for both XEmacs and Emacs.  If you don't have easymenu
-;; with your version of Emacs, you are incompatible!
-(require 'easymenu)
-
-(defvar c-c-menu nil)
-(defvar c-c++-menu nil)
-(defvar c-objc-menu nil)
-(defvar c-java-menu nil)
-
-(defun c-mode-menu (modestr)
-  (let ((m
-	 '(["Comment Out Region"     comment-region (mark)]
-	   ["Macro Expand Region"    c-macro-expand (mark)]
-	   ["Backslashify"           c-backslash-region (mark)]
-	   ["Indent Expression"      c-indent-exp
-	    (memq (following-char) '(?\( ?\[ ?\{))]
-	   ["Indent Line"            c-indent-command t]
-	   ["Fill Comment Paragraph" c-fill-paragraph t]
-	   ["Up Conditional"         c-up-conditional t]
-	   ["Backward Conditional"   c-backward-conditional t]
-	   ["Forward Conditional"    c-forward-conditional t]
-	   ["Backward Statement"     c-beginning-of-statement t]
-	   ["Forward Statement"      c-end-of-statement t]
-	   )))
-    (cons modestr m)))
-
-(eval-when-compile
-  (load-file "./cc-langs.el"))
-
-(easy-menu-define c-c-menu c-mode-map "C Mode Commands"
-		  (c-mode-menu "C"))
-(easy-menu-define c-c++-menu c++-mode-map "C++ Mode Commands"
-		  (c-mode-menu "C++"))
-(easy-menu-define c-objc-menu objc-mode-map "ObjC Mode Commands"
-		  (c-mode-menu "ObjC"))
-(easy-menu-define c-java-menu java-mode-map "Java Mode Commands"
-		  (c-mode-menu "Java"))
 
 
 (provide 'cc-menus)

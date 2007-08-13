@@ -95,19 +95,18 @@ ez_dialog:
 	cd energize && $(MAKE) $(MFLAGS)
 #endif
 
-.PHONY : mostlyclean clean distclean realclean extraclean
-FRC.mostlyclean:
-mostlyclean: FRC.mostlyclean
-	$(RM) liblw.a liblw_pure_*.a *.o *.i
+.PHONY: mostlyclean clean distclean realclean extraclean
+mostlyclean:
+	$(RM) liblw.a liblw_pure_*.a *.o *.i core
 clean: mostlyclean
 #ifdef ENERGIZE
 	cd energize && $(MAKE) $(MFLAGS) clean
 #endif
 distclean: clean
-	$(RM) Makefile Makefile.in config.h .pure
+	$(RM) Makefile Makefile.in config.h TAGS
 realclean: distclean
 extraclean: distclean
-	$(RM) *~ \#* m/?*~ s/?*~
+	$(RM) *~ \#*
 
 CONFIG_H = ../src/config.h config.h
 

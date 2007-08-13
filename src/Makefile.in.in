@@ -595,28 +595,24 @@ hpplay.o: ${srcdir}/hpplay.c
 ## ${other_files}, $(objects_system) and $(objects_machine)
 ## select which of these should be compiled.  */
 
-.PHONY : mostlyclean clean distclean realclean versionclean extraclean
-
+.PHONY: mostlyclean clean distclean realclean versionclean extraclean
 mostlyclean:
-	$(RM) temacs puremacs quantmacs prefix-args core depend.* \#* *.o *.i
-clean: mostlyclean
-	$(RM) xemacs libextcli* ${libsrc}DOC
+	$(RM) temacs puremacs quantmacs prefix-args depend.* *.o *.i core
+clean: mostlyclean versionclean
+	$(RM) libextcli*
 ## This is used in making a distribution.
 ## Do not use it on development directories!
-distclean: clean versionclean
+distclean: clean
 	$(RM) config.h paths.h puresize_adjust.h Emacs.ad.h \
-	  Makefile Makefile.in .pure xemacs-version.h
+	  Makefile Makefile.in TAGS
 realclean: distclean
-	$(RM) TAGS
 versionclean:
 	$(RM) xemacs ${libsrc}DOC
 extraclean: realclean
-	$(RM) *~ \#* m/?*~ s/?*~
+	$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#*
 
-## The rule for the [sm] files has to be written a little funny to
-## avoid looking like a C comment to CPP.
 .PHONY : lock unlock
-SOURCES = *.[chm] *.pswm [sm]/?* COPYING paths.h.in Makefile.in.in \
+SOURCES = *.[chm] *.pswm [sm]/* COPYING paths.h.in Makefile.in.in \
 	config.h.in README COPYING ChangeLog
 unlock:
 	chmod u+w $(SOURCES)
@@ -946,7 +942,7 @@ alloc.o: extents.h
 alloc.o: frame.h
 alloc.o: frameslots.h
 alloc.o: glyphs.h
-alloc.o: puresize.h puresize_adjust.h
+alloc.o: puresize.h
 alloc.o: redisplay.h
 alloc.o: scrollbar.h
 alloc.o: specifier.h

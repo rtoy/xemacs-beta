@@ -75,7 +75,7 @@ if test "$mule_p" = nil ; then
 else
 	make_special auctex autoloads MULE_EL=tex-jp.elc
 fi
-make_special cc-mode autoloads
+#make_special cc-mode autoloads
 make_special efs autoloads
 #make_special eos autoloads # EOS doesn't have custom or autoloads
 #make_special gnus autoloads

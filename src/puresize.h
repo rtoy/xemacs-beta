@@ -171,15 +171,7 @@ Boston, MA 02111-1307, USA.  */
 		      (SUNPRO_PURESIZE_EXTRA))
   
 #endif /* !RAW_PURESIZE */
-  
-/* Current build process on NT does not generate a puresize_adjust.h */
-/* file. --marcpa */  
-#ifdef WINDOWSNT
-# define PURESIZE_ADJUSTMENT 1000000
-#else
-# include <puresize_adjust.h>
-#endif
-#define PURESIZE ((RAW_PURESIZE) + (PURESIZE_ADJUSTMENT))
 
+extern long int get_PURESIZE(void);
 
 #endif /* PURESIZE_H */

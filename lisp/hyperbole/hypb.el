@@ -227,8 +227,22 @@ Second arg VECP causes vectors to be copied, too.  Strings are not copied."
 	      ((subrp func) (error "(hypb:function-copy): `%s' is a primitive; can't copy body."
 				   func-symbol))
 	      ((and (hypb:v19-byte-code-p func) (fboundp 'make-byte-code))
-	       (let ((new-code (append func nil))) ; turn it into a list
-		 (apply 'make-byte-code new-code)))
+	       (if (not (fboundp 'compiled-function-arglist))
+		   ;; This is evil -slb
+		   (let ((new-code (append func nil))) ; turn it into a list
+		     (apply 'make-byte-code new-code))
+		 ;; Can't reference bytecode objects as vectors in modern
+		 ;; XEmacs.
+		 (let ((new-code (nconc
+				  (list (compiled-function-arglist func)
+					(compiled-function-instructions func)
+					(compiled-function-constants func)
+					(compiled-function-stack-depth func)
+					(compiled-function-doc-string func))))
+		       spec)
+		   (if (setq spec (compiled-function-interactive func))
+		       (setq new-code (nconc new-code (list (nth 1 spec)))))
+		   (apply 'make-byte-code new-code))))
 	      (t (error "(hypb:function-copy): Can't copy function body: %s" func))
 	      ))
     (error "(hypb:function-copy): `%s' symbol is not bound to a function."
@@ -261,6 +275,7 @@ Second arg VECP causes vectors to be copied, too.  Strings are not copied."
 		  (append new-forms old-func-call)
 		(append old-func-call new-forms)))))))
 
+;; #### FIXME -- This code is highly broken in XEmacs 20.3
 (defun hypb:function-symbol-replace (func-sym sym-to-replace replace-with-sym)
   "Replaces in body of FUNC-SYM SYM-TO-REPLACE with REPLACE-WITH-SYM.
 All occurrences within lists are replaced.  Returns body of modified FUNC-SYM."
@@ -277,7 +292,9 @@ All occurrences within lists are replaced.  Returns body of modified FUNC-SYM."
 					arg-vector)))
 			       body))))
       ;; assume V19 byte compiler   (eq (compiled-function-p body) t)
-      (setq arg (aref body 2)
+      (setq arg (if (fboundp 'compiled-function-arglist)
+		    (compiled-function-arglist body)
+		  (aref body 2))
 	    arg-vector (if (vectorp arg) arg))
       )
     (if arg-vector

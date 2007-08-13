@@ -2859,8 +2859,8 @@ Optional EVENT is the location for the menu."
 
 ;;; The `custom-save-all' Function.
 ;;;###autoload
-(defcustom custom-file (if (featurep 'xemacs)
-			   "~/.xemacs-custom"
+(defcustom custom-file (if (boundp 'emacs-user-extension-dir)
+			   (concat emacs-user-extension-dir "options.el")
 			 "~/.emacs")
   "File used for storing customization information.
 If you change this from the default \"~/.emacs\" you need to

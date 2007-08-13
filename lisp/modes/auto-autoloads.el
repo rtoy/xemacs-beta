@@ -503,7 +503,7 @@ with no args, if that value is non-nil." t nil)
 
 ;;;### (autoloads (hide-ifdef-mode) "hideif" "modes/hideif.el")
 
-(add-minor-mode 'hide-ifdef-mode " Ifdef")
+(add-minor-mode 'hide-ifdef-mode " Ifdef" 'hide-ifdef-mode-map)
 
 (autoload 'hide-ifdef-mode "hideif" "\
 Toggle Hide-Ifdef mode.  This is a minor mode, albeit a large one.
@@ -680,7 +680,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.3 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.4 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -2037,7 +2037,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.3 $
+vhdl-mode $Revision: 1.4 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

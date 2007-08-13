@@ -960,15 +960,14 @@ If non-nil, the return value will be a list whose first element is
 
 DEFUN ("compiled-function-doc-string", Fcompiled_function_doc_string, 1, 1, 0, /*
 Return the doc string of the compiled-function object, if available.
+Functions that had their doc strings snarfed into the DOC file will have
+an integer returned instead of a string.
 */
        (function))
 {
   CHECK_COMPILED_FUNCTION (function);
-  if (!XCOMPILED_FUNCTION (function)->flags.interactivep)
-    return Qnil;
-  return (list2 (Qinteractive,
-		 compiled_function_interactive
-		 (XCOMPILED_FUNCTION (function))));
+
+  return compiled_function_documentation (XCOMPILED_FUNCTION (function));
 }
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
@@ -1286,8 +1285,7 @@ Floating point numbers always use base 10.
     {
       CHECK_INT (base);
       b = XINT (base);
-      if (b < 2 || b > 16)
-	Fsignal (Qargs_out_of_range, Fcons (base, Qnil));
+      check_int_range (b, 2, 16);
     }
 
   p = (char *) XSTRING_DATA (string);
@@ -1302,7 +1300,7 @@ Floating point numbers always use base 10.
     return make_float (atof (p));
 #endif /* LISP_FLOAT_TYPE */
 
-  if (XINT(base) == 10)
+  if (b == 10)
     {
       /* Use the system-provided functions for base 10. */
       Lisp_Object value;

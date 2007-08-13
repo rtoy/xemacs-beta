@@ -103,5 +103,7 @@ You can use English both with enable-multibyte-characters t and nil.")
 
 (register-input-method "English"
 		       '("quail-dvorak" quail-use-package "quail/latin"))
+(register-input-method "British"
+		       '("quail-british" quail-use-package "quail/latin"))
 
 ;;; english.el ends here

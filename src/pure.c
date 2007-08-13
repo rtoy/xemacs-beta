@@ -21,6 +21,23 @@ Boston, MA 02111-1307, USA.  */
 #include "puresize.h"
 #include "lisp.h"
 
+/* Moved from puresize.h to here so alloc.c does not get recompiled */
+
+/* Current build process on NT does not generate a puresize_adjust.h */
+/* file. --marcpa */  
+#ifdef WINDOWSNT
+# define PURESIZE_ADJUSTMENT 1000000
+#else
+# include <puresize_adjust.h>
+#endif
+#define PURESIZE ((RAW_PURESIZE) + (PURESIZE_ADJUSTMENT))
+
+long int
+get_PURESIZE(void)
+{
+  return PURESIZE;
+}
+
 Lisp_Object pure[PURESIZE / sizeof (Lisp_Object)]
      /* Force linker to put it into data space! */
 #ifdef NO_UNION_TYPE

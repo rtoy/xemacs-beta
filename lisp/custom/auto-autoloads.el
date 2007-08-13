@@ -99,7 +99,7 @@ that option." nil nil)
 (autoload 'customize-browse "cus-edit" "\
 Create a tree browser for the customize hierarchy." t nil)
 
-(defcustom custom-file (if (featurep 'xemacs) "~/.xemacs-custom" "~/.emacs") "File used for storing customization information.\nIf you change this from the default \"~/.emacs\" you need to\nexplicitly load that file for the settings to take effect." :type 'file :group 'customize)
+(defcustom custom-file (if (boundp 'emacs-user-extension-dir) (concat emacs-user-extension-dir "options.el") "~/.emacs") "File used for storing customization information.\nIf you change this from the default \"~/.emacs\" you need to\nexplicitly load that file for the settings to take effect." :type 'file :group 'customize)
 
 (autoload 'customize-save-customized "cus-edit" "\
 Save all user options which have been set in this session." t nil)

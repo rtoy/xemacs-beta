@@ -7,7 +7,7 @@
 ;;             1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@python.org
 ;; Created:    22-Apr-1997 (split from cc-mode.el)
-;; Version:    5.11
+;; Version:    5.12
 ;; Keywords:   c languages oop
 
 ;; This file is part of GNU Emacs.
@@ -26,9 +26,6 @@
 ;; along with GNU Emacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
-
-(eval-when-compile
-  (load-file "./cc-styles.el"))
 
 
 ;; Regular expressions and other values which must be parameterized on
@@ -189,9 +186,17 @@
 For use with the variable `java-mode-hook'."
   (c-set-style "java"))
 
+(defvar c-styles-are-initialized nil)
+
 (defun c-common-init ()
-  ;; Common initializations for c++-mode and c-mode.
-  ;;
+  ;; Common initializations for all modes.
+  (if c-styles-are-initialized
+      nil
+    (require 'cc-styles)
+    (c-initialize-builtin-style)
+    (if c-style-variables-are-local-p
+	(c-make-styles-buffer-local))
+    (setq c-styles-are-initialized t))
   ;; these variables should always be buffer local; they do not affect
   ;; indentation style.
   (make-local-variable 'paragraph-start)
@@ -343,11 +348,22 @@ it finds in `c-file-offsets'."
   (define-key c-mode-base-map "\C-c\C-p"  'c-backward-conditional)
   (define-key c-mode-base-map "\C-c\C-u"  'c-up-conditional)
   (define-key c-mode-base-map "\t"        'c-indent-command)
-  ;; In XEmacs 19 and Emacs 19, this binds both the BackSpace and
-  ;; Delete keysyms to c-electric-backspace.  In XEmacs 20 it binds
-  ;; only BackSpace, so we now bind them individually
-  (define-key c-mode-base-map [delete]    'c-electric-delete)
-  (define-key c-mode-base-map [backspace] 'c-electric-backspace)
+  ;; Caution!  Enter here at your own risk.  We are trying to support
+  ;; several behaviors and it gets disgusting. :-(
+  ;;
+  ;; In XEmacs 19, Emacs 19, and Emacs 20, we use this to bind
+  ;; backwards deletion behavior to DEL, which both Delete and
+  ;; Backspace get translated to.  There's no way to separate this
+  ;; behavior in a clean way, so deal with it!  Besides, it's been
+  ;; this way since the dawn of BOCM.
+  (if (not (boundp 'delete-key-deletes-forward))
+      (define-key c-mode-base-map "\177" 'c-electric-backspace)
+    ;; However, XEmacs 20 actually achieved enlightenment.  It is
+    ;; possible to sanely define both backward and forward deletion
+    ;; behavior under X separately (TTYs are forever beyond hope, but
+    ;; who cares?  XEmacs 20 does the right thing with these too).
+    (define-key c-mode-base-map [delete]    'c-electric-delete)
+    (define-key c-mode-base-map [backspace] 'c-electric-backspace))
   ;; these are new keybindings, with no counterpart to BOCM
   (define-key c-mode-base-map ","         'c-electric-semi&comma)
   (define-key c-mode-base-map "*"         'c-electric-star)
@@ -366,6 +382,32 @@ it finds in `c-file-offsets'."
   ;; conflicts with OOBR
   ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)
   )
+
+;; menu support for both XEmacs and Emacs.  If you don't have easymenu
+;; with your version of Emacs, you are incompatible!
+(require 'easymenu)
+
+(defvar c-c-menu nil)
+(defvar c-c++-menu nil)
+(defvar c-objc-menu nil)
+(defvar c-java-menu nil)
+
+(defun c-mode-menu (modestr)
+  (let ((m
+	 '(["Comment Out Region"     comment-region (mark)]
+	   ["Macro Expand Region"    c-macro-expand (mark)]
+	   ["Backslashify"           c-backslash-region (mark)]
+	   ["Indent Expression"      c-indent-exp
+	    (memq (char-after) '(?\( ?\[ ?\{))]
+	   ["Indent Line"            c-indent-command t]
+	   ["Fill Comment Paragraph" c-fill-paragraph t]
+	   ["Up Conditional"         c-up-conditional t]
+	   ["Backward Conditional"   c-backward-conditional t]
+	   ["Forward Conditional"    c-forward-conditional t]
+	   ["Backward Statement"     c-beginning-of-statement t]
+	   ["Forward Statement"      c-end-of-statement t]
+	   )))
+    (cons modestr m)))
 
 
 
@@ -403,6 +445,8 @@ global and affect all future `c-mode' buffers."
   (c-setup-dual-comments c-mode-syntax-table)
   (setq-default c-C-comment-start-regexp c-C++-comment-start-regexp))
 
+(easy-menu-define c-c-menu c-mode-map "C Mode Commands"
+		  (c-mode-menu "C"))
 
 
 ;; Support for C++
@@ -439,6 +483,8 @@ global and affect all future `c-mode' buffers."
   ;;(modify-syntax-entry ?: "_" c++-mode-syntax-table)
   )
 
+(easy-menu-define c-c++-menu c++-mode-map "C++ Mode Commands"
+		  (c-mode-menu "C++"))
 
 
 ;; Support for Objective-C
@@ -467,6 +513,8 @@ global and affect all future `c-mode' buffers."
   (modify-syntax-entry ?@ "_" objc-mode-syntax-table)
   )
 
+(easy-menu-define c-objc-menu objc-mode-map "ObjC Mode Commands"
+		  (c-mode-menu "ObjC"))
 
 
 ;; Support for Java
@@ -495,6 +543,8 @@ global and affect all future `c-mode' buffers."
   (modify-syntax-entry ?@ "_" java-mode-syntax-table)
   )
 
+(easy-menu-define c-java-menu java-mode-map "Java Mode Commands"
+		  (c-mode-menu "Java"))
 
 
 (provide 'cc-langs)

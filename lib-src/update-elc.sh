@@ -113,7 +113,7 @@ if test "$mule_p" = nil ; then
 else
 	make_special auctex some MULE_ELC=tex-jp.elc
 fi
-make_special cc-mode all
+#make_special cc-mode all
 make_special efs x20
 make_special eos -k		# not strictly necessary...
 make_special gnus  some

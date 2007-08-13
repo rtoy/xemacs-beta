@@ -819,13 +819,14 @@ Make a ring that can contain SIZE elements." nil nil)
 ;;;### (autoloads (savehist-save savehist-load) "savehist" "utils/savehist.el")
 
 (autoload 'savehist-load "savehist" "\
-Load the histories saved to `savehist-file'.
-Unless PREFIX is non-nil, the function will also add the save function to
-`kill-emacs-hook'.
+Load the minibuffer histories from `savehist-file'.
+Unless NO-HOOK is specified, the function will also add the save function
+to `kill-emacs-hook', thus ensuring that the minibuffer contents will be
+saved before leaving Emacs.
 
 This function should be normally used from your Emacs init file.  Since it
-removes your current minibuffer histories (if any), it is unwise to call it
-at any other time." t nil)
+removes your current minibuffer histories, it is unwise to call it at any
+other time." t nil)
 
 (autoload 'savehist-save "savehist" "\
 Save the histories from `savehist-history-variables' to `savehist-file'.

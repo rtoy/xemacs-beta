@@ -179,4 +179,85 @@ installed.")
     (register-input-method (car languages) val)
     (setq languages (cdr languages))))
 
+(register-input-method "Esperanto"
+		       '("quail-esperanto" quail-use-package "quail/latin"))
+
+(mapcar (function
+	 (lambda (method)
+	   (register-input-method "Italian"
+				  (cons method
+					'(quail-use-package "quail/latin")))
+	   ))
+	'("quail-italian" "quail-itln"))
+
+(mapcar (function
+	 (lambda (method)
+	   (register-input-method "Spanish"
+				  (cons method
+					'(quail-use-package "quail/latin")))
+	   ))
+	'("quail-spanish" "quail-spnsh"))
+
+(mapcar (function
+	 (lambda (method)
+	   (register-input-method "French"
+				  (cons method
+					'(quail-use-package "quail/latin")))
+	   ))
+	'("quail-french" "quail-frnch" "quail-azerty"))
+
+(mapcar (function
+	 (lambda (method)
+	   (register-input-method "German"
+				  (cons method
+					'(quail-use-package "quail/latin")))
+	   ))
+	'("quail-german" "quail-grmn"))
+
+(register-input-method "Scandinavian"
+		       '("quail-scandinavian" quail-use-package "quail/latin"))
+
+(mapcar (function
+	 (lambda (method)
+	   (register-input-method "Icelandic"
+				  (cons method
+					'(quail-use-package "quail/latin")))
+	   ))
+	'("quail-icelandic" "quail-iclndc"))
+
+(mapcar (function
+	 (lambda (method)
+	   (register-input-method "Danish"
+				  (cons method
+					'(quail-use-package "quail/latin")))
+	   ))
+	'("quail-danish" "quail-dnsh"))
+
+(mapcar (function
+	 (lambda (method)
+	   (register-input-method "Norwegian"
+				  (cons method
+					'(quail-use-package "quail/latin")))
+	   ))
+	'("quail-norwegian" "quail-nrwgn"))
+
+(mapcar (function
+	 (lambda (method)
+	   (register-input-method "Swedish"
+				  (cons method
+					'(quail-use-package "quail/latin")))
+	   ))
+	'("quail-swedish" "quail-swdsh"))
+
+(mapcar (function
+	 (lambda (method)
+	   (register-input-method "Finish"
+				  (cons method
+					'(quail-use-package "quail/latin")))
+	   ))
+	'("quail-finnish" "quail-fnnsh"))
+
+(register-input-method "Turkish"
+		       '("quail-turkish" quail-use-package "quail/latin"))
+
 ;;; european.el ends here

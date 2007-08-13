@@ -208,14 +208,15 @@ extern char *progname;
 #define CONN_IPC      2
 
 /* function declarations */
-extern int make_connection (char *hostarg, int portarg, int *s);
+int make_connection (char *hostarg, int portarg, int *s);
 #ifdef SYSV_IPC
-extern void disconnect_from_ipc_server();
+void disconnect_from_ipc_server();
 #endif
 #if defined(INTERNET_DOMAIN_SOCKETS) || defined(UNIX_DOMAIN_SOCKETS)
-extern void send_string (int s, CONST char *msg);
-extern void disconnect_from_server (int s, int echo);
+void send_string (int s, CONST char *msg);
+void disconnect_from_server (int s, int echo);
+int read_line (int s, char *dest);
 #endif
 #ifdef INTERNET_DOMAIN_SOCKETS
-extern int internet_addr (char *host);
+int internet_addr (char *host);
 #endif

@@ -55,8 +55,10 @@ e.g. to inhibit actions.")
 		(error "(action:commandp): Autoload not supported: %s" function))
 	       (t function))))
     (if (hypb:v19-byte-code-p action)
-	(if (commandp action)
-	    (list 'interactive (aref action 5)))
+	(cond ((fboundp 'compiled-function-interactive)
+	       (compiled-function-interactive action))
+	      ((commandp action)
+	       (list 'interactive (aref action 5))))
       (commandp action))))
 
 (defun action:create (param-list body)
@@ -80,8 +82,10 @@ e.g. to inhibit actions.")
 	     (error "(action:params): Autoload not supported: %s" action)
 	   (car (cdr action))))
 	((hypb:v19-byte-code-p action)
-	 ;; Turn into a list for extraction
-	 (car (cdr (cons nil (append action nil)))))))
+	 (if (fboundp 'compiled-function-arglist)
+	     (compiled-function-arglist action)
+	   ;; Turn into a list for extraction
+	   (car (cdr (cons nil (append action nil))))))))
 
 (defun action:param-list (action)
   "Returns list of actual ACTION parameters (removes '&' special forms)."

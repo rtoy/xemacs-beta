@@ -836,7 +836,7 @@ by func-menu, then do something along the lines of the following:
 (defvar fume-function-name-regexp-make
   "^\\(\\(\\$\\s(\\)?\\(\\w\\|\\.\\)+\\(:sh\\)?\\(\\s)\\)?\\)\\s *\\(::?\\|\\+?=\\)"
   "Expression to get makefile target names")
-(add-hook 'makefile-mode-hook 'fume-add-menubar-entry)
+;;(add-hook 'makefile-mode-hook 'fume-add-menubar-entry)
 
 ;;; Directory Listings
 ;;;

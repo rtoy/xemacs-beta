@@ -14,18 +14,6 @@ It will setup BibTeX to store keys in an auto file." nil nil)
 
 ;;;***
 
-;;;### (autoloads (japanese-latex-mode japanese-plain-tex-mode) "tex-jp" "auctex/tex-jp.el")
-
-(autoload 'japanese-plain-tex-mode "tex-jp" "\
-Major mode for editing files of input for Japanese plain TeX.
-Set japanese-TeX-mode to t, and enters plain-tex-mode." t nil)
-
-(autoload 'japanese-latex-mode "tex-jp" "\
-Major mode for editing files of input for Japanese plain TeX.
-Set japanese-TeX-mode to t, and enters latex-mode." t nil)
-
-;;;***
-
 ;;;### (autoloads (TeX-submit-bug-report TeX-insert-quote TeX-auto-generate-global TeX-auto-generate ams-tex-mode) "tex" "auctex/tex.el")
 
 (autoload 'ams-tex-mode "tex" "\

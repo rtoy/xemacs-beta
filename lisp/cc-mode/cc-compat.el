@@ -5,7 +5,7 @@
 ;; Author:     1994-1997 Barry A. Warsaw
 ;; Maintainer: cc-mode-help@python.org
 ;; Created:    August 1994, split from cc-mode.el
-;; Version:    5.11
+;; Version:    5.12
 ;; Keywords:   c languages oop
 
 ;; This file is part of GNU Emacs.
@@ -40,8 +40,8 @@
 ;;; Code:
 
 (eval-when-compile
-  (load-file "./cc-styles.el")
-  (load-file "./cc-engine.el"))
+  (require 'cc-styles)
+  (require 'cc-engine))
 
 
 ;; In case c-mode.el isn't loaded
@@ -88,7 +88,7 @@ This is in addition to c-continued-statement-offset.")
   ;; taken directly from calculate-c-indent confusion
   (save-excursion
     (c-backward-syntactic-ws)
-    (if (= (preceding-char) ?{)
+    (if (eq (char-before) ?{)
 	(forward-char -1)
       (goto-char (cdr langelem)))
     (let* ((curcol (save-excursion 
@@ -113,7 +113,7 @@ This is in addition to c-continued-statement-offset.")
 	      ;; move to the beginning of that; possibly a different
 	      ;; line
 	      (progn
-		(if (eq (preceding-char) ?\))
+		(if (eq (char-before) ?\))
 		    (forward-sexp -1))
 		;; Get initial indentation of the line we are on.
 		(current-indentation)))))
@@ -129,7 +129,7 @@ This is in addition to c-continued-statement-offset.")
 		     (current-column)))
 	   (bocm-lossage (progn
 			   (goto-char (cdr langelem))
-			   (if (= (following-char) ?{)
+			   (if (eq (char-after) ?{)
 			       (setq bracep t)
 			     (goto-char here)
 			     (beginning-of-line)

@@ -1,3 +1,17 @@
+1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* hact.el (action:commandp): Don't reference bytecode objects as
+	vectors.
+	(action:params): Ditto.
+
+1997-07-07  Steven L Baur  <steve@altair.xemacs.org>
+
+	* hypb.el (hypb:function-copy): Don't reference bytecode objects
+	as vectors.
+	(hypb:function-symbol-replace): Document as broken.  The
+	substition cannot be done without some thinking I'm not in the
+	mood for.
+
 1997-07-03  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile: Add autoloads dependencies.

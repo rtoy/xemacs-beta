@@ -483,19 +483,22 @@ If argument is nil or an empty string, cancel for all functions."
 (defun debug-convert-byte-code (function)
   (let ((defn (symbol-function function)))
     (if (not (consp defn))
-	;; Assume a compiled code object.
-	(let* ((contents (append defn nil))
-	       (body
-		(list (list 'byte-code (nth 1 contents)
-			    (nth 2 contents) (nth 3 contents)))))
-	  (if (nthcdr 5 contents)
-	      (setq body (cons (list 'interactive (nth 5 contents)) body)))
-	  (if (nth 4 contents)
+	;; Assume a compiled-function object.
+	(let* ((body
+		(list (list 'byte-code
+			    (compiled-function-instructions defn)
+			    (compiled-function-constants defn)
+			    (compiled-function-stack-depth defn)))))
+	  (if (compiled-function-interactive defn)
+	      (setq body (cons (compiled-function-interactive defn) body)))
+	  (if (compiled-function-doc-string defn)
 	      ;; Use `documentation' here, to get the actual string,
 	      ;; in case the compiled function has a reference
 	      ;; to the .elc file.
 	      (setq body (cons (documentation function) body)))
-	  (fset function (cons 'lambda (cons (car contents) body)))))))
+	  (fset function (cons 'lambda (cons
+					(compiled-function-arglist defn)
+					body)))))))
 
 (defun debug-on-entry-1 (function defn flag)
   (if (subrp defn)

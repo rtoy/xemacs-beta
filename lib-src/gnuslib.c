@@ -223,9 +223,7 @@ void send_string(s,msg)
 /*
   read_line -- read a \n terminated line from a socket
 */
-int read_line(s,dest)
-     int s;
-     char *dest;
+int read_line(int s, char *dest)
 {
   char *index = NULL;
   int length;

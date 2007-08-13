@@ -1,11 +1,18 @@
 							-*- indented-text -*-
+to 20.3 beta12 "Helsinki"
+-- cc-mode-5.12.
+-- ~/.xemacs --> ~/.xemacs/init.el
+-- ~/.xemacs-custom -> ~/.xemacs/options.el
+-- Fix lossage in lwlib-Xm.c
+-- Miscellaneous bug fixes
+
 to 20.3 beta11 "Stockholm"
 -- Try #2 with LOSING_BYTECODE disabled.
--- Interface change: value of `system-type' is provided as a feature.
+-- Interface change: value of `system-type' is provided as a feature
 -- Gnus-5.4.62
 -- W3-3.0.93
 -- Custom-1.9946
--- New user variable `errors-deactivate-region'.
+-- New user variable `errors-deactivate-region'
 -- Miscellaneous bug fixes.
 -- iso-acc.el-1.15  (Mule fixes)
 -- autoloads/custom loads generation in build updated
@@ -22,7 +29,7 @@ to 20.3 beta10 "Athens"
 -- Restore Show Message Log in Edit menu.
 -- `make autoloads' updated and should now work without Mule [untested].
 -- New boolean variable `x-seppuku-on-epipe' to handle case of X Server going
-   away and XEmacs not exiting.  Set to `t' to force immediate exit.
+   away and XEmacs not exiting.  Set to `t' to force immediate exit
 -- custom-1.9940
 -- gnuserv.el-3.6
 -- speedbar-0.5 courtesy of Eric Ludlam

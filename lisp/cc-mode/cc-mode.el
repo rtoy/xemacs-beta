@@ -7,7 +7,7 @@
 ;;             1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@python.org
 ;; Created:    a long, long, time ago. adapted from the original c-mode.el
-;; Version:    5.11
+;; Version:    5.12
 ;; Keywords:   c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -85,120 +85,11 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'cc-menus))
+(require 'cc-defs)
 
 
-;; Figure out what features this Emacs has
-(defconst c-emacs-features
-  (let ((infodock-p (boundp 'infodock-version))
-	(comments
-	 ;; XEmacs 19 and beyond use 8-bit modify-syntax-entry flags.
-	 ;; Emacs 19 uses a 1-bit flag.  We will have to set up our
-	 ;; syntax tables differently to handle this.
-	 (let ((table (copy-syntax-table))
-	       entry)
-	   (modify-syntax-entry ?a ". 12345678" table)
-	   (cond
-	    ;; XEmacs 19, and beyond Emacs 19.34
-	    ((arrayp table)
-	     (setq entry (aref table ?a))
-	     ;; In Emacs, table entries are cons cells
-	     (if (consp entry) (setq entry (car entry))))
-	    ;; XEmacs 20
-	    ((fboundp 'get-char-table) (setq entry (get-char-table ?a table)))
-	    ;; before and including Emacs 19.34
-	    ((and (fboundp 'char-table-p)
-		  (char-table-p table))
-	     (setq entry (car (char-table-range table [?a]))))
-	    ;; incompatible
-	    (t (error "CC Mode is incompatible with this version of Emacs")))
-	   (if (= (logand (lsh entry -16) 255) 255)
-	       '8-bit
-	     '1-bit))))
-    (if infodock-p
-	(list comments 'infodock)
-      (list comments)))
-  "A list of features extant in the Emacs you are using.
-There are many flavors of Emacs out there, each with different
-features supporting those needed by CC Mode.  Here's the current
-supported list, along with the values for this variable:
-
- XEmacs 19:                  (8-bit)
- XEmacs 20:                  (8-bit)
- Emacs 19:                   (1-bit)
-
-Infodock (based on XEmacs) has an additional symbol on this list:
-'infodock.")
-
-
-
-;; important macros and subroutines
-(defsubst c-point (position)
-  ;; Returns the value of point at certain commonly referenced POSITIONs.
-  ;; POSITION can be one of the following symbols:
-  ;; 
-  ;; bol  -- beginning of line
-  ;; eol  -- end of line
-  ;; bod  -- beginning of defun
-  ;; boi  -- back to indentation
-  ;; ionl -- indentation of next line
-  ;; iopl -- indentation of previous line
-  ;; bonl -- beginning of next line
-  ;; bopl -- beginning of previous line
-  ;; 
-  ;; This function does not modify point or mark.
-  (let ((here (point)))
-    (cond
-     ((eq position 'bol)  (beginning-of-line))
-     ((eq position 'eol)  (end-of-line))
-     ((eq position 'bod)
-      (beginning-of-defun)
-      ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at
-      ;; the open brace.
-      (and defun-prompt-regexp
-	   (looking-at defun-prompt-regexp)
-	   (goto-char (match-end 0)))
-      )
-     ((eq position 'boi)  (back-to-indentation))
-     ((eq position 'bonl) (forward-line 1))
-     ((eq position 'bopl) (forward-line -1))
-     ((eq position 'iopl)
-      (forward-line -1)
-      (back-to-indentation))
-     ((eq position 'ionl)
-      (forward-line 1)
-      (back-to-indentation))
-     (t (error "unknown buffer position requested: %s" position))
-     )
-    (prog1
-	(point)
-      (goto-char here))))
-
-(defmacro c-safe (&rest body)
-  ;; safely execute BODY, return nil if an error occurred
-  (` (condition-case nil
-	 (progn (,@ body))
-       (error nil))))
-
-(defsubst c-keep-region-active ()
-  ;; Do whatever is necessary to keep the region active in XEmacs.
-  ;; Ignore byte-compiler warnings you might see.  This is not needed
-  ;; for Emacs.
-  (and (boundp 'zmacs-region-stays)
-       (setq zmacs-region-stays t)))
-
-
-
-(defsubst c-load-all ()
-  ;; make sure all necessary components of CC Mode are loaded in.
-  (require 'cc-vars)
-  (require 'cc-engine)
-  (require 'cc-langs)
-  (require 'cc-menus)
-  (require 'cc-align)
-  (require 'cc-styles)
-  (require 'cc-cmds))
-  
-
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
@@ -368,7 +259,7 @@ Key bindings:
 
 
 ;; defuns for submitting bug reports
-(defconst c-version "5.11"
+(defconst c-version "5.12"
   "CC Mode version number.")
 
 (defconst c-mode-help-address

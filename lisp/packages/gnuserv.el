@@ -1,7 +1,7 @@
 ;;; gnuserv.el --- Lisp interface code between Emacs and gnuserv
 ;; Copyright (C) 1989-1997 Free Software Foundation, Inc.
 
-;; Version: 3.6
+;; Version: 3.7
 ;; Author: Andy Norman (ange@hplb.hpl.hp.com), originally based on server.el
 ;;         Hrvoje Niksic <hniksic@srce.hr>
 ;; Maintainer: Jan Vroonhof <vroonhof@math.ethz.ch>,
@@ -79,9 +79,6 @@
 
 ;;; Code:
 
-(defconst gnuserv-rcs-version
-  "$Id: gnuserv.el,v 1.12 1997/06/29 23:13:06 steve Exp $")
-
 (defgroup gnuserv nil
   "The gnuserv suite of programs to talk to Emacs from outside."
   :group 'environment
@@ -89,7 +86,6 @@
   :group 'terminals)
 
 
-
 ;; Provide the old variables as aliases, to avoid breaking .emacs
 ;; files.  However, they are obsolete and should be converted to the
 ;; new forms.  This ugly crock must be before the variable

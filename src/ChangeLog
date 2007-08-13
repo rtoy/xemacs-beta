@@ -1,4 +1,40 @@
+1997-07-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* extents.c: Allow non-symbol properties of extents.
+
+1997-07-08  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* data.c (Fstring_to_number): Use `check_int_range'.
+	(Fstring_to_number): Would bug out on wrong type check.
+
+1997-07-07  Steven L Baur  <steve@altair.xemacs.org>
+
+	* data.c (Fcompiled_function_doc_string): Implement correctly.
+	Was forgotten cut & paste identical clone to
+	Fcompiled_function_interactive?
+
+	* Makefile.in.in (alloc.o): Remove dependency on puresize_adjust.h 
+	so alloc.c need not be recompiled when puresize changes.
+
+	* alloc.c (PURIFIED): Use get_PURESIZE() instead of constant.
+	(check_purespace): Ditto.
+	(alloc_pure_lrecord): Ditto.
+	(report_pure_usage): Ditto.
+	(disksave_object_finalization): Ditto.
+	(report_pure_usage): Modify message reported when Build is
+	restarted due to change in PURESIZE_ADJUSTMENT.
+
+	* puresize.h: Remove dependency on puresize_adjust.h.
+	(get_PURESIZE): New function -- declare it.
+
+	* pure.c: Move final PURESIZE computation and include of
+	puresize_adjust.h into here so alloc.c need not be recompiled each 
+	time the puresize is adjusted.
+	(get_PURESIZE): New function.
+
 1997-07-06  Steven L Baur  <steve@altair.xemacs.org>
+
+	* data.c (Fstring_to_number): Wrong parameter was being checked.
 
 	* emacs.c (vars_of_emacs): Fprovide the system type as a feature.
 

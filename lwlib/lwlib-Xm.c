@@ -797,3 +797,1265 @@ xm_update_one_widget (widget_instance* instance, Widget widget,
     {
       xm_update_pushbutton (instance, widget, val);
     }
+#ifdef MENUBARS_MOTIF
+  else if (class == xmCascadeButtonWidgetClass)
+    {
+      xm_update_cascadebutton (instance, widget, val);
+    }
+#endif
+  else if (class == xmToggleButtonWidgetClass
+	   || class == xmToggleButtonGadgetClass)
+    {
+      xm_update_toggle (instance, widget, val);
+    }
+  else if (class == xmRowColumnWidgetClass)
+    {
+      Boolean radiobox = 0;
+
+      XtSetArg (al [0], XmNradioBehavior, &radiobox);
+      XtGetValues (widget, al, 1);
+      
+      if (radiobox)
+	xm_update_radiobox (instance, widget, val);
+#ifdef MENUBARS_MOTIF
+      else
+	xm_update_menu (instance, widget, val, deep_p);
+#endif
+    }
+#ifdef DIALOGS_MOTIF
+  else if (class == xmTextWidgetClass)
+    {
+      xm_update_text (instance, widget, val);
+    }
+  else if (class == xmTextFieldWidgetClass)
+    {
+      xm_update_text_field (instance, widget, val);
+    }
+#endif
+  else if (class == xmListWidgetClass)
+    {
+      xm_update_list (instance, widget, val);
+    }
+#ifdef SCROLLBARS_MOTIF
+  else if (class == xmScrollBarWidgetClass)
+    {
+      xm_update_scrollbar (instance, widget, val);
+    }
+#endif
+}
+
+/* getting the value back */
+void
+xm_update_one_value (widget_instance* instance, Widget widget,
+		     widget_value* val)
+{
+  WidgetClass class = XtClass (widget);
+  widget_value *old_wv;
+
+  /* copy the call_data slot into the "return" widget_value */
+  for (old_wv = instance->info->val->contents; old_wv; old_wv = old_wv->next)
+    if (!strcmp (val->name, old_wv->name))
+      {
+	val->call_data = old_wv->call_data;
+	break;
+      }
+  
+  if (class == xmToggleButtonWidgetClass || class == xmToggleButtonGadgetClass)
+    {
+      Arg al [1];
+      XtSetArg (al [0], XmNset, &val->selected);
+      XtGetValues (widget, al, 1);
+      val->edited = True;
+    }
+#ifdef DIALOGS_MOTIF
+  else if (class == xmTextWidgetClass)
+    {
+      if (val->value)
+	free (val->value);
+      val->value = XmTextGetString (widget);
+      val->edited = True;
+    }
+  else if (class == xmTextFieldWidgetClass)
+    {
+      if (val->value)
+	free (val->value);
+      val->value = XmTextFieldGetString (widget);
+      val->edited = True;
+    }
+#endif
+  else if (class == xmRowColumnWidgetClass)
+    {
+      Boolean radiobox = 0;
+      {
+	Arg al [1];
+	XtSetArg (al [0], XmNradioBehavior, &radiobox);
+	XtGetValues (widget, al, 1);
+      }
+
+      if (radiobox)
+	{
+	  CompositeWidget radio = (CompositeWidget)widget;
+	  int i;
+	  for (i = 0; i < radio->composite.num_children; i++)
+	    {
+	      int set = False;
+	      Widget toggle = radio->composite.children [i];
+	      Arg al [1];
+
+	      XtSetArg (al [0], XmNset, &set);
+	      XtGetValues (toggle, al, 1);
+	      if (set)
+		{
+		  if (val->value)
+		    free (val->value);
+		  val->value = safe_strdup (XtName (toggle));
+		}
+	    }
+	  val->edited = True;
+	}
+    }
+  else if (class == xmListWidgetClass)
+    {
+      int pos_cnt;
+      int* pos_list;
+      if (XmListGetSelectedPos (widget, &pos_list, &pos_cnt))
+	{
+	  int i;
+	  widget_value* cur;
+	  for (cur = val->contents, i = 0; cur; cur = cur->next)
+	    if (cur->value)
+	      {
+		int j;
+		cur->selected = False;
+		i += 1;
+		for (j = 0; j < pos_cnt; j++)
+		  if (pos_list [j] == i)
+		    {
+		      cur->selected = True;
+		      val->value = safe_strdup (cur->name);
+		    }
+	      }
+	  val->edited = 1;
+	  XtFree ((char *) pos_list);
+	}
+    }
+#ifdef SCROLLBARS_MOTIF
+  else if (class == xmScrollBarWidgetClass)
+    {
+      /* This function is not used by the scrollbar. */
+      return;
+    }
+#endif
+}
+
+
+/* This function is for activating a button from a program.  It's wrong because
+   we pass a NULL argument in the call_data which is not Motif compatible.
+   This is used from the XmNdefaultAction callback of the List widgets to
+   have a dble-click put down a dialog box like the button woudl do. 
+   I could not find a way to do that with accelerators.
+ */
+static void
+activate_button (Widget widget, XtPointer closure, XtPointer call_data)
+{
+  Widget button = (Widget)closure;
+  XtCallCallbacks (button, XmNactivateCallback, NULL);
+}
+
+/* creation functions */
+
+#ifdef DIALOGS_MOTIF
+
+/* dialogs */
+
+#if (XmVersion >= 1002)
+# define ARMANDACTIVATE_KLUDGE
+# define DND_KLUDGE
+#endif
+
+#ifdef ARMANDACTIVATE_KLUDGE
+ /* We want typing Return at a dialog box to select the default button; but
+    we're satisfied with having it select the leftmost button instead.
+
+    In Motif 1.1.5 we could do this by putting this resource in the
+    app-defaults file:
+
+	*dialog*button1.accelerators:#override\
+	<KeyPress>Return: ArmAndActivate()\n\
+	<KeyPress>KP_Enter: ArmAndActivate()\n\
+	Ctrl<KeyPress>m: ArmAndActivate()\n
+
+    but that doesn't work with 1.2.1 and I don't understand why. However,
+    doing the equivalent C code does work, with the notable disadvantage that
+    the user can't override it.  So that's what we do until we figure out
+    something better....
+  */
+static char button_trans[] = "\
+<KeyPress>Return: ArmAndActivate()\n\
+<KeyPress>KP_Enter: ArmAndActivate()\n\
+Ctrl<KeyPress>m: ArmAndActivate()\n";
+
+#endif /* ARMANDACTIVATE_KLUDGE */
+
+
+#ifdef DND_KLUDGE
+ /* This is a kludge to disable drag-and-drop in dialog boxes.  The symptom
+    was a segv down in libXm somewhere if you used the middle button on a
+    dialog box to begin a drag; when you released the button to make a drop
+    things would lose if you were not over the button where you started the 
+    drag (canceling the operation).  This was probably due to the fact that
+    the dialog boxes were not set up to handle a drag but were trying to do
+    so anyway for some reason.
+
+    So we disable drag-and-drop in dialog boxes by turning off the binding for
+    Btn2Down which, by default, initiates a drag.  Clearly this is a shitty
+    solution as it only works in default configurations, but...
+  */
+static char disable_dnd_trans[] = "<Btn2Down>: ";
+#endif /* DND_KLUDGE */
+
+
+static Widget
+make_dialog (char* name, Widget parent, Boolean pop_up_p,
+	     CONST char* shell_title, CONST char* icon_name,
+	     Boolean text_input_slot, Boolean radio_box, Boolean list,
+	     int left_buttons, int right_buttons)
+{
+  Widget result;
+  Widget form;
+  Widget row;
+  Widget icon;
+  Widget icon_separator;
+  Widget message;
+  Widget value = 0;
+  Widget separator;
+  Widget button = 0;
+  Widget children [16];		/* for the final XtManageChildren */
+  int	n_children;
+  Arg 	al[64];			/* Arg List */
+  int 	ac;			/* Arg Count */
+  int 	i;
+  
+#ifdef DND_KLUDGE
+  XtTranslations dnd_override = XtParseTranslationTable (disable_dnd_trans);
+# define DO_DND_KLUDGE(widget) XtOverrideTranslations ((widget), dnd_override)
+#else  /* ! DND_KLUDGE */
+# define DO_DND_KLUDGE(widget)
+#endif /* ! DND_KLUDGE */
+
+  if (pop_up_p)
+    {
+      ac = 0;
+      XtSetArg(al[ac], XmNtitle, shell_title);		ac++;
+      XtSetArg(al[ac], XtNallowShellResize, True);	ac++;
+      XtSetArg(al[ac], XmNdeleteResponse, XmUNMAP);	ac++;
+      result = XmCreateDialogShell (parent, "dialog", al, ac);
+
+      XtSetArg(al[ac], XmNautoUnmanage, FALSE);		ac++;
+/*      XtSetArg(al[ac], XmNautoUnmanage, TRUE); ac++; */ /* ####is this ok? */
+      XtSetArg(al[ac], XmNnavigationType, XmTAB_GROUP); ac++;
+      form = XmCreateForm (result, (char *) shell_title, al, ac);
+    }
+  else
+    {
+      ac = 0;
+      XtSetArg(al[ac], XmNautoUnmanage, FALSE);		ac++;
+      XtSetArg(al[ac], XmNnavigationType, XmTAB_GROUP); ac++;
+      form = XmCreateForm (parent, (char *) shell_title, al, ac);
+      result = form;
+    }
+
+  ac = 0;
+  XtSetArg(al[ac], XmNpacking, XmPACK_COLUMN);		ac++;
+  XtSetArg(al[ac], XmNorientation, XmVERTICAL);		ac++;
+  XtSetArg(al[ac], XmNnumColumns, left_buttons + right_buttons + 1); ac++;
+  XtSetArg(al[ac], XmNmarginWidth, 0);			ac++;
+  XtSetArg(al[ac], XmNmarginHeight, 0);			ac++;
+  XtSetArg(al[ac], XmNspacing, 13);			ac++;
+  XtSetArg(al[ac], XmNadjustLast, False);		ac++;
+  XtSetArg(al[ac], XmNalignment, XmALIGNMENT_CENTER);	ac++;
+  XtSetArg(al[ac], XmNisAligned, True);			ac++;
+  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_NONE);	ac++;
+  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_FORM);	ac++;
+  XtSetArg(al[ac], XmNbottomOffset, 13);		ac++;
+  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM);	ac++;
+  XtSetArg(al[ac], XmNleftOffset, 13);			ac++;
+  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);	ac++;
+  XtSetArg(al[ac], XmNrightOffset, 13);			ac++;
+  row = XmCreateRowColumn (form, "row", al, ac);
+  
+  n_children = 0;
+  for (i = 0; i < left_buttons; i++)
+    {
+      char button_name [16];
+      sprintf (button_name, "button%d", i + 1);
+      ac = 0;
+      if (i == 0)
+	{
+	  XtSetArg(al[ac], XmNhighlightThickness, 1); ac++;
+	  XtSetArg(al[ac], XmNshowAsDefault, TRUE);   ac++;
+	}
+      XtSetArg(al[ac], XmNnavigationType, XmTAB_GROUP); ac++;
+      children [n_children] = XmCreatePushButton (row, button_name, al, ac);
+      DO_DND_KLUDGE (children [n_children]);
+
+      if (i == 0)
+	{
+	  button = children [n_children];
+	  ac = 0;
+	  XtSetArg(al[ac], XmNdefaultButton, button); ac++;
+	  XtSetValues (row, al, ac);
+
+#ifdef ARMANDACTIVATE_KLUDGE	/* See comment above */
+	  {
+	    XtTranslations losers = XtParseTranslationTable (button_trans);
+	    XtOverrideTranslations (button, losers);
+	    XtFree ((char *) losers);
+	  }
+#endif /* ARMANDACTIVATE_KLUDGE */
+	}
+
+      n_children++;
+    }
+
+  /* invisible seperator button */
+  ac = 0;
+  XtSetArg (al[ac], XmNmappedWhenManaged, FALSE); ac++;
+  children [n_children] = XmCreateLabel (row, "separator_button",
+					 al, ac);
+  DO_DND_KLUDGE (children [n_children]);
+  n_children++;
+  
+  for (i = 0; i < right_buttons; i++)
+    {
+      char button_name [16];
+      sprintf (button_name, "button%d", left_buttons + i + 1);
+      ac = 0;
+      XtSetArg(al[ac], XmNnavigationType, XmTAB_GROUP); ac++;
+      children [n_children] = XmCreatePushButton (row, button_name, al, ac);
+      DO_DND_KLUDGE (children [n_children]);
+      if (! button) button = children [n_children];
+      n_children++;
+    }
+  
+  XtManageChildren (children, n_children);
+  
+  ac = 0;
+  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_NONE);		ac++;
+  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);	ac++;
+  XtSetArg(al[ac], XmNbottomOffset, 13);			ac++;
+  XtSetArg(al[ac], XmNbottomWidget, row);			ac++;
+  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM);		ac++;
+  XtSetArg(al[ac], XmNleftOffset, 0);				ac++;
+  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);		ac++;
+  XtSetArg(al[ac], XmNrightOffset, 0);				ac++;
+  separator = XmCreateSeparator (form, "", al, ac);
+
+  ac = 0;
+  XtSetArg(al[ac], XmNlabelType, XmPIXMAP);			ac++;
+  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_FORM);		ac++;
+  XtSetArg(al[ac], XmNtopOffset, 13);				ac++;
+  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_NONE);		ac++;
+  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM);		ac++;
+  XtSetArg(al[ac], XmNleftOffset, 13);				ac++;
+  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_NONE);		ac++;
+  icon = XmCreateLabel (form, (char *) icon_name, al, ac);
+  DO_DND_KLUDGE (icon);
+
+  ac = 0;
+  XtSetArg(al[ac], XmNmappedWhenManaged, FALSE);		ac++;
+  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET);		ac++;
+  XtSetArg(al[ac], XmNtopOffset, 6);				ac++;
+  XtSetArg(al[ac], XmNtopWidget, icon);				ac++;
+  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);	ac++;
+  XtSetArg(al[ac], XmNbottomOffset, 6);				ac++;
+  XtSetArg(al[ac], XmNbottomWidget, separator);			ac++;
+  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_NONE);		ac++;
+  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_NONE);		ac++;
+  icon_separator = XmCreateLabel (form, "", al, ac);
+  DO_DND_KLUDGE (icon_separator);
+
+  if (text_input_slot)
+    {
+      ac = 0;
+      XtSetArg(al[ac], XmNcolumns, 50);				ac++;
+      XtSetArg(al[ac], XmNtopAttachment, XmATTACH_NONE);	ac++;
+      XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);	ac++;
+      XtSetArg(al[ac], XmNbottomOffset, 13);			ac++;
+      XtSetArg(al[ac], XmNbottomWidget, separator);		ac++;
+      XtSetArg(al[ac], XmNleftAttachment, XmATTACH_WIDGET);	ac++;
+      XtSetArg(al[ac], XmNleftOffset, 13);			ac++;
+      XtSetArg(al[ac], XmNleftWidget, icon); 			ac++;
+      XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);	ac++;
+      XtSetArg(al[ac], XmNrightOffset, 13);			ac++;
+      value = XmCreateTextField (form, "value", al, ac);
+      DO_DND_KLUDGE (value);
+    }
+  else if (radio_box)
+    {
+      Widget radio_butt;
+      ac = 0;
+      XtSetArg(al[ac], XmNmarginWidth, 0);			ac++;
+      XtSetArg(al[ac], XmNmarginHeight, 0);			ac++;
+      XtSetArg(al[ac], XmNspacing, 13);				ac++;
+      XtSetArg(al[ac], XmNalignment, XmALIGNMENT_CENTER);	ac++;
+      XtSetArg(al[ac], XmNorientation, XmHORIZONTAL);		ac++;
+      XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);	ac++;
+      XtSetArg(al[ac], XmNbottomOffset, 13);			ac++;
+      XtSetArg(al[ac], XmNbottomWidget, separator);		ac++;
+      XtSetArg(al[ac], XmNleftAttachment, XmATTACH_WIDGET);	ac++;
+      XtSetArg(al[ac], XmNleftOffset, 13);			ac++;
+      XtSetArg(al[ac], XmNleftWidget, icon);			ac++;
+      XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);	ac++;
+      XtSetArg(al[ac], XmNrightOffset, 13);			ac++;
+      value = XmCreateRadioBox (form, "radiobutton1", al, ac);
+      ac = 0;
+      i = 0;
+      radio_butt = XmCreateToggleButtonGadget (value, "radio1", al, ac);
+      children [i++] = radio_butt;
+      radio_butt = XmCreateToggleButtonGadget (value, "radio2", al, ac);
+      children [i++] = radio_butt;
+      radio_butt = XmCreateToggleButtonGadget (value, "radio3", al, ac);
+      children [i++] = radio_butt;
+      XtManageChildren (children, i);
+    }
+  else if (list)
+    {
+      ac = 0;
+      XtSetArg(al[ac], XmNvisibleItemCount, 5);			ac++;
+      XtSetArg(al[ac], XmNtopAttachment, XmATTACH_NONE);	ac++;
+      XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);	ac++;
+      XtSetArg(al[ac], XmNbottomOffset, 13);			ac++;
+      XtSetArg(al[ac], XmNbottomWidget, separator);		ac++;
+      XtSetArg(al[ac], XmNleftAttachment, XmATTACH_WIDGET);	ac++;
+      XtSetArg(al[ac], XmNleftOffset, 13);			ac++;
+      XtSetArg(al[ac], XmNleftWidget, icon);			ac++;
+      XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);	ac++;
+      XtSetArg(al[ac], XmNrightOffset, 13);			ac++;
+      value = XmCreateScrolledList (form, "list", al, ac);
+
+      /* this is the easiest way I found to have the dble click in the
+	 list activate the default button */
+      XtAddCallback (value, XmNdefaultActionCallback, activate_button, button);
+    }
+  
+  ac = 0;
+  XtSetArg(al[ac], XmNalignment, XmALIGNMENT_BEGINNING);	ac++;
+  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_FORM);		ac++;
+  XtSetArg(al[ac], XmNtopOffset, 13);				ac++;
+  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);	ac++;
+  XtSetArg(al[ac], XmNbottomOffset, 13);			ac++;
+  XtSetArg(al[ac], XmNbottomWidget,
+	   text_input_slot || radio_box || list ? value : separator); ac++;
+  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_WIDGET);		ac++;
+  XtSetArg(al[ac], XmNleftOffset, 13);				ac++;
+  XtSetArg(al[ac], XmNleftWidget, icon);			ac++;
+  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);		ac++;
+  XtSetArg(al[ac], XmNrightOffset, 13);				ac++;
+  message = XmCreateLabel (form, "message", al, ac);
+  DO_DND_KLUDGE (message);
+  
+  if (list)
+    XtManageChild (value);
+
+  i = 0;
+  children [i] = row; i++;
+  children [i] = separator; i++;
+  if (text_input_slot || radio_box)
+    {
+      children [i] = value; i++;
+    }
+  children [i] = message; i++;
+  children [i] = icon; i++;
+  children [i] = icon_separator; i++;
+  XtManageChildren (children, i);
+  
+  if (text_input_slot || list)
+    {
+      XtInstallAccelerators (value, button);
+      XmProcessTraversal(value, XmTRAVERSE_CURRENT);
+    }
+  else
+    {
+      XtInstallAccelerators (form, button);
+      XmProcessTraversal(value, XmTRAVERSE_CURRENT);
+    }
+  
+#ifdef DND_KLUDGE
+  XtFree ((char *) dnd_override);
+#endif
+#undef DO_DND_KLUDGE
+
+  return result;
+}
+
+static destroyed_instance*
+find_matching_instance (widget_instance* instance)
+{
+  destroyed_instance*	cur;
+  destroyed_instance*	prev;
+  char*	type = instance->info->type;
+  char*	name = instance->info->name;
+
+  for (prev = NULL, cur = all_destroyed_instances;
+       cur;
+       prev = cur, cur = cur->next)
+    {
+      if (!strcmp (cur->name, name)
+	  && !strcmp (cur->type, type)
+	  && cur->parent == instance->parent
+	  && cur->pop_up_p == instance->pop_up_p)
+	{
+	  if (prev)
+	    prev->next = cur->next;
+	  else
+	    all_destroyed_instances = cur->next;
+	  return cur;
+	}
+      /* do some cleanup */
+      else if (!cur->widget)
+	{
+	  if (prev)
+	    prev->next = cur->next;
+	  else
+	    all_destroyed_instances = cur->next;
+	  free_destroyed_instance (cur);
+	  cur = prev ? prev : all_destroyed_instances;
+	}
+    }
+  return NULL;
+}
+
+static void
+mark_dead_instance_destroyed (Widget widget, XtPointer closure,
+			      XtPointer call_data)
+{
+  destroyed_instance* instance = (destroyed_instance*)closure;
+  instance->widget = NULL;
+}
+
+static void
+recenter_widget (Widget widget)
+{
+  Widget parent = XtParent (widget);
+  Screen* screen = XtScreen (widget);
+  Dimension screen_width = WidthOfScreen (screen);
+  Dimension screen_height = HeightOfScreen (screen);
+  Dimension parent_width = 0;
+  Dimension parent_height = 0;
+  Dimension child_width = 0;
+  Dimension child_height = 0;
+  Position x;
+  Position y;
+  Arg al [2];
+
+  XtSetArg (al [0], XtNwidth,  &child_width);
+  XtSetArg (al [1], XtNheight, &child_height);
+  XtGetValues (widget, al, 2);
+
+  XtSetArg (al [0], XtNwidth,  &parent_width);
+  XtSetArg (al [1], XtNheight, &parent_height);
+  XtGetValues (parent, al, 2);
+
+  x = (Position) ((parent_width  - child_width)  / 2);
+  y = (Position) ((parent_height - child_height) / 2);
+  
+  XtTranslateCoords (parent, x, y, &x, &y);
+
+  if ((Dimension) (x + child_width) > screen_width)
+    x = screen_width - child_width;
+  if (x < 0)
+    x = 0;
+
+  if ((Dimension) (y + child_height) > screen_height)
+    y = screen_height - child_height;
+  if (y < 0)
+    y = 0;
+
+  XtSetArg (al [0], XtNx, x);
+  XtSetArg (al [1], XtNy, y);
+  XtSetValues (widget, al, 2);
+}
+
+static Widget
+recycle_instance (destroyed_instance* instance)
+{
+  Widget widget = instance->widget;
+
+  /* widget is NULL if the parent was destroyed. */
+  if (widget)
+    {
+      Widget focus;
+      Widget separator;
+
+      /* Remove the destroy callback as the instance is not in the list
+	 anymore */
+      XtRemoveCallback (instance->parent, XtNdestroyCallback,
+			mark_dead_instance_destroyed,
+			(XtPointer)instance);
+
+      /* Give the focus to the initial item */
+      focus = XtNameToWidget (widget, "*value");
+      if (!focus)
+	focus = XtNameToWidget (widget, "*button1");
+      if (focus)
+	XmProcessTraversal(focus, XmTRAVERSE_CURRENT);
+
+      /* shrink the separator label back to their original size */
+      separator = XtNameToWidget (widget, "*separator_button");
+      if (separator)
+	{
+	  Arg al [2];
+	  XtSetArg (al [0], XtNwidth,  5);
+	  XtSetArg (al [1], XtNheight, 5);
+	  XtSetValues (separator, al, 2);
+	}
+
+      /* Center the dialog in its parent */
+      recenter_widget (widget);
+    }
+  free_destroyed_instance (instance);
+  return widget;
+}
+
+Widget
+xm_create_dialog (widget_instance* instance)
+{
+  char* 	name = instance->info->type;
+  Widget 	parent = instance->parent;
+  Widget	widget;
+  Boolean 	pop_up_p = instance->pop_up_p;
+  CONST char*	shell_name = 0;
+  CONST char* 	icon_name = 0;
+  Boolean	text_input_slot = False;
+  Boolean	radio_box = False;
+  Boolean	list = False;
+  int		total_buttons;
+  int		left_buttons = 0;
+  int		right_buttons = 1;
+  destroyed_instance*	dead_one;
+
+  /* try to find a widget to recycle */
+  dead_one = find_matching_instance (instance);
+  if (dead_one)
+    {
+      Widget recycled_widget = recycle_instance (dead_one);
+      if (recycled_widget)
+	return recycled_widget;
+    }
+
+  switch (name [0]){
+  case 'E': case 'e':
+    icon_name = "dbox-error";
+    shell_name = "Error";
+    break;
+
+  case 'I': case 'i':
+    icon_name = "dbox-info";
+    shell_name = "Information";
+    break;
+
+  case 'L': case 'l':
+    list = True;
+    icon_name = "dbox-question";
+    shell_name = "Prompt";
+    break;
+
+  case 'P': case 'p':
+    text_input_slot = True;
+    icon_name = "dbox-question";
+    shell_name = "Prompt";
+    break;
+
+  case 'Q': case 'q':
+    icon_name = "dbox-question";
+    shell_name = "Question";
+    break;
+  }
+  
+  total_buttons = name [1] - '0';
+
+  if (name [3] == 'T' || name [3] == 't')
+    {
+      text_input_slot = False;
+      radio_box = True;
+    }
+  else if (name [3])
+    right_buttons = name [4] - '0';
+  
+  left_buttons = total_buttons - right_buttons;
+  
+  widget = make_dialog (name, parent, pop_up_p,
+			shell_name, icon_name, text_input_slot, radio_box,
+			list, left_buttons, right_buttons);
+
+  XtAddCallback (widget, XmNpopdownCallback, xm_nosel_callback,
+		 (XtPointer) instance);
+  return widget;
+}
+
+#endif /* DIALOGS_MOTIF */
+
+#ifdef MENUBARS_MOTIF
+static Widget
+make_menubar (widget_instance* instance)
+{
+  Arg al[10];
+  int ac = 0;
+
+  XtSetArg(al[ac], XmNmarginHeight, 0);	   ac++;
+  XtSetArg(al[ac], XmNshadowThickness, 3); ac++;
+
+  return XmCreateMenuBar (instance->parent, instance->info->name, al, ac);
+}
+
+static void
+remove_grabs (Widget shell, XtPointer closure, XtPointer call_data)
+{
+  Widget menu = (Widget) closure;
+  XmRemoveFromPostFromList (menu, XtParent (XtParent ((Widget) menu)));
+}
+
+static Widget
+make_popup_menu (widget_instance* instance)
+{
+  Widget parent = instance->parent;
+  Window parent_window = parent->core.window;
+  Widget result;
+
+  /* sets the parent window to 0 to fool Motif into not generating a grab */
+  parent->core.window = 0;
+  result = XmCreatePopupMenu (parent, instance->info->name, NULL, 0);
+  XtAddCallback (XtParent (result), XmNpopdownCallback, remove_grabs,
+		 (XtPointer)result);
+  parent->core.window = parent_window;
+  return result;
+}
+#endif /* MENUBARS_MOTIF */
+
+#ifdef SCROLLBARS_MOTIF
+static Widget
+make_scrollbar (widget_instance *instance, int vertical)
+{
+  Arg al[20];
+  int ac = 0;
+  static XtCallbackRec callbacks[2] =
+  { {xm_scrollbar_callback, NULL}, {NULL, NULL} };
+
+  callbacks[0].closure  = (XtPointer) instance;
+  
+  XtSetArg (al[ac], XmNminimum,       1); ac++;
+  XtSetArg (al[ac], XmNmaximum, INT_MAX); ac++;
+  XtSetArg (al[ac], XmNincrement,     1); ac++;
+  XtSetArg (al[ac], XmNpageIncrement, 1); ac++;
+  XtSetArg (al[ac], XmNborderWidth,   0); ac++;
+  XtSetArg (al[ac], XmNorientation, vertical ? XmVERTICAL : XmHORIZONTAL); ac++;
+
+  XtSetArg (al[ac], XmNdecrementCallback,	callbacks); ac++;
+  XtSetArg (al[ac], XmNdragCallback,		callbacks); ac++;
+  XtSetArg (al[ac], XmNincrementCallback,	callbacks); ac++;
+  XtSetArg (al[ac], XmNpageDecrementCallback,	callbacks); ac++;
+  XtSetArg (al[ac], XmNpageIncrementCallback,	callbacks); ac++;
+  XtSetArg (al[ac], XmNtoBottomCallback,	callbacks); ac++;
+  XtSetArg (al[ac], XmNtoTopCallback,		callbacks); ac++;
+  XtSetArg (al[ac], XmNvalueChangedCallback,	callbacks); ac++;
+
+  return XmCreateScrollBar (instance->parent, instance->info->name, al, ac);
+}
+
+static Widget
+make_vertical_scrollbar (widget_instance *instance)
+{
+  return make_scrollbar (instance, 1);
+}
+
+static Widget
+make_horizontal_scrollbar (widget_instance *instance)
+{
+  return make_scrollbar (instance, 0);
+}
+
+#endif /* SCROLLBARS_MOTIF */
+
+/* Table of functions to create widgets */
+
+#ifdef ENERGIZE
+
+/* interface with the XDesigner generated functions */
+typedef Widget (*widget_maker) (Widget);
+extern Widget create_project_p_sheet (Widget parent);
+extern Widget create_debugger_p_sheet (Widget parent);
+extern Widget create_breaklist_p_sheet (Widget parent);
+extern Widget create_le_browser_p_sheet (Widget parent);
+extern Widget create_class_browser_p_sheet (Widget parent);
+extern Widget create_call_browser_p_sheet (Widget parent);
+extern Widget create_build_dialog (Widget parent);
+extern Widget create_editmode_dialog (Widget parent);
+extern Widget create_search_dialog (Widget parent);
+extern Widget create_project_display_dialog (Widget parent);
+
+static Widget
+make_one (widget_instance* instance, widget_maker fn)
+{
+  Widget result;
+  Arg 	al [64];
+  int 	ac = 0;
+
+  if (instance->pop_up_p)
+    {
+      XtSetArg (al [ac], XmNallowShellResize, TRUE); ac++;
+      result = XmCreateDialogShell (instance->parent, "dialog", NULL, 0);
+      XtAddCallback (result, XmNpopdownCallback, &xm_nosel_callback,
+		     (XtPointer) instance);
+      (*fn) (result);
+    }
+  else
+    {
+      result = (*fn) (instance->parent);
+      XtRealizeWidget (result);
+    }
+  return result;
+}
+
+static Widget
+make_project_p_sheet (widget_instance* instance)
+{
+  return make_one (instance, create_project_p_sheet);
+}
+
+static Widget
+make_debugger_p_sheet (widget_instance* instance)
+{
+  return make_one (instance, create_debugger_p_sheet);
+}
+
+static Widget
+make_breaklist_p_sheet (widget_instance* instance)
+{
+  return make_one (instance, create_breaklist_p_sheet);
+}
+
+static Widget
+make_le_browser_p_sheet (widget_instance* instance)
+{
+  return make_one (instance, create_le_browser_p_sheet);
+}
+
+static Widget
+make_class_browser_p_sheet (widget_instance* instance)
+{
+  return make_one (instance, create_class_browser_p_sheet);
+}
+
+static Widget
+make_call_browser_p_sheet (widget_instance* instance)
+{
+  return make_one (instance, create_call_browser_p_sheet);
+}
+
+static Widget
+make_build_dialog (widget_instance* instance)
+{
+  return make_one (instance, create_build_dialog);
+}
+
+static Widget
+make_editmode_dialog (widget_instance* instance)
+{
+  return make_one (instance, create_editmode_dialog);
+}
+
+static Widget
+make_search_dialog (widget_instance* instance)
+{
+  return make_one (instance, create_search_dialog);
+}
+
+static Widget
+make_project_display_dialog (widget_instance* instance)
+{
+  return make_one (instance, create_project_display_dialog);
+}
+
+#endif /* ENERGIZE */
+
+widget_creation_entry
+xm_creation_table [] = 
+{
+#ifdef MENUBARS_MOTIF
+  {"menubar", 			make_menubar},
+  {"popup",			make_popup_menu},
+#endif
+#ifdef SCROLLBARS_MOTIF
+  {"vertical-scrollbar",	make_vertical_scrollbar},
+  {"horizontal-scrollbar",	make_horizontal_scrollbar},
+#endif
+#ifdef ENERGIZE
+  {"project_p_sheet",		make_project_p_sheet},
+  {"debugger_p_sheet",		make_debugger_p_sheet},
+  {"breaklist_psheet",		make_breaklist_p_sheet},
+  {"leb_psheet",       		make_le_browser_p_sheet},
+  {"class_browser_psheet",	make_class_browser_p_sheet},
+  {"ctree_browser_psheet",	make_call_browser_p_sheet},
+  {"build",			make_build_dialog},
+  {"editmode",			make_editmode_dialog},
+  {"search",			make_search_dialog},
+  {"project_display",		make_project_display_dialog},
+#endif /* ENERGIZE */
+  {NULL, NULL}
+};
+
+/* Destruction of instances */
+void
+xm_destroy_instance (widget_instance* instance)
+{
+#ifdef DIALOGS_MOTIF
+  /* It appears that this is used only for dialog boxes. */
+  Widget widget = instance->widget;
+  /* recycle the dialog boxes */
+  /* Disable the recycling until we can find a way to have the dialog box
+     get reasonable layout after we modify its contents. */
+  if (0
+      && XtClass (widget) == xmDialogShellWidgetClass)
+    {
+      destroyed_instance* dead_instance =
+	make_destroyed_instance (instance->info->name,
+				 instance->info->type,
+				 instance->widget,
+				 instance->parent,
+				 instance->pop_up_p);
+      dead_instance->next = all_destroyed_instances;
+      all_destroyed_instances = dead_instance;
+      XtUnmanageChild (first_child (instance->widget));
+      XFlush (XtDisplay (instance->widget));
+      XtAddCallback (instance->parent, XtNdestroyCallback,
+		     mark_dead_instance_destroyed, (XtPointer)dead_instance);
+    }
+  else
+    {
+      /* This might not be necessary now that the nosel is attached to
+	 popdown instead of destroy, but it can't hurt. */
+      XtRemoveCallback (instance->widget, XtNdestroyCallback,
+			xm_nosel_callback, (XtPointer)instance);
+
+      XtDestroyWidget (instance->widget);
+    }
+#endif /* DIALOGS_MOTIF */
+}
+
+/* popup utility */
+#ifdef MENUBARS_MOTIF
+
+void
+xm_popup_menu (Widget widget, XEvent *event)
+{
+  if (event->type == ButtonPress || event->type == ButtonRelease)
+    {
+      /* This is so totally ridiculous: there's NO WAY to tell Motif
+	 that *any* button can select a menu item.  Only one button
+	 can have that honor.
+       */
+      char *trans = 0;
+      if      (event->xbutton.state & Button5Mask) trans = "<Btn5Down>";
+      else if (event->xbutton.state & Button4Mask) trans = "<Btn4Down>";
+      else if (event->xbutton.state & Button3Mask) trans = "<Btn3Down>";
+      else if (event->xbutton.state & Button2Mask) trans = "<Btn2Down>";
+      else if (event->xbutton.state & Button1Mask) trans = "<Btn1Down>";
+      if (trans)
+	{
+	  Arg al [1];
+	  XtSetArg (al [0], XmNmenuPost, trans);
+	  XtSetValues (widget, al, 1);
+	}
+      XmMenuPosition (widget, (XButtonPressedEvent *) event);
+    }
+  XtManageChild (widget);
+}
+
+#endif
+
+#ifdef DIALOGS_MOTIF
+
+static void
+set_min_dialog_size (Widget w)
+{
+  short width;
+  short height;
+  Arg al [2];
+
+  XtSetArg (al [0], XmNwidth,  &width);
+  XtSetArg (al [1], XmNheight, &height);
+  XtGetValues (w, al, 2);
+
+  XtSetArg (al [0], XmNminWidth,  width);
+  XtSetArg (al [1], XmNminHeight, height);
+  XtSetValues (w, al, 2);
+}
+
+#endif
+
+void
+xm_pop_instance (widget_instance* instance, Boolean up)
+{
+  Widget widget = instance->widget;
+
+#ifdef DIALOGS_MOTIF
+  if (XtClass (widget) == xmDialogShellWidgetClass)
+    {
+      Widget widget_to_manage = first_child (widget);
+      if (up)
+	{
+	  XtManageChild (widget_to_manage);
+	  set_min_dialog_size (widget);
+	  XmProcessTraversal(widget, XmTRAVERSE_CURRENT);
+	}
+      else
+	XtUnmanageChild (widget_to_manage);
+    }
+  else
+#endif
+    {
+      if (up)
+	XtManageChild (widget);
+      else
+	XtUnmanageChild (widget);	
+    }
+}
+
+
+/* motif callback */ 
+
+enum do_call_type { pre_activate, selection, no_selection, post_activate };
+
+static void
+do_call (Widget widget, XtPointer closure, enum do_call_type type)
+{
+  XtPointer user_data;
+  widget_instance* instance = (widget_instance*)closure;
+  Widget instance_widget;
+  LWLIB_ID id;
+  Arg al [1];
+
+  if (!instance)
+    return;
+  if (widget->core.being_destroyed)
+    return;
+
+  instance_widget = instance->widget;
+  if (!instance_widget)
+    return;
+
+  id = instance->info->id;
+  user_data = NULL;
+  XtSetArg(al [0], XmNuserData, &user_data);
+  XtGetValues (widget, al, 1);
+  switch (type)
+    {
+    case pre_activate:
+      if (instance->info->pre_activate_cb)
+	instance->info->pre_activate_cb (widget, id, user_data);
+      break;
+    case selection:
+      if (instance->info->selection_cb)
+	instance->info->selection_cb (widget, id, user_data);
+      break;
+    case no_selection:
+      if (instance->info->selection_cb)
+	instance->info->selection_cb (widget, id, (XtPointer) -1);
+      break;
+    case post_activate:
+      if (instance->info->post_activate_cb)
+	instance->info->post_activate_cb (widget, id, user_data);
+      break;
+    default:
+      abort ();
+    }
+}
+
+/* Like lw_internal_update_other_instances except that it does not do
+   anything if its shell parent is not managed.  This is to protect 
+   lw_internal_update_other_instances to dereference freed memory
+   if the widget was ``destroyed'' by caching it in the all_destroyed_instances
+   list */
+static void
+xm_internal_update_other_instances (Widget widget, XtPointer closure,
+				    XtPointer call_data)
+{
+  Widget parent;
+  for (parent = widget; parent; parent = XtParent (parent))
+    if (XtIsShell (parent))
+      break;
+    else if (!XtIsManaged (parent))
+      return;
+   lw_internal_update_other_instances (widget, closure, call_data);
+}
+
+static void
+xm_generic_callback (Widget widget, XtPointer closure, XtPointer call_data)
+{
+#if !defined (ENERGIZE) && (defined (MENUBARS_MOTIF) || defined (DIALOGS_MOTIF))
+  /* We want the selected status to change only when we decide it
+     should change.  Yuck but correct. */
+  if (XtClass (widget) == xmToggleButtonWidgetClass
+      || XtClass (widget) == xmToggleButtonGadgetClass)
+    {
+      Boolean check;
+      Arg al [1];
+
+      XtSetArg (al [0], XmNset, &check);
+      XtGetValues (widget, al, 1);
+
+      XtSetArg (al [0], XmNset, !check);
+      XtSetValues (widget, al, 1);
+    }
+#endif 
+  lw_internal_update_other_instances (widget, closure, call_data);
+  do_call (widget, closure, selection);
+}
+
+#ifdef DIALOGS_MOTIF
+
+static void
+xm_nosel_callback (Widget widget, XtPointer closure, XtPointer call_data)
+{
+  /* This callback is only called when a dialog box is dismissed with the wm's
+     destroy button (WM_DELETE_WINDOW.)  We want the dialog box to be destroyed
+     in that case, not just unmapped, so that it releases its keyboard grabs.
+     But there are problems with running our callbacks while the widget is in
+     the process of being destroyed, so we set XmNdeleteResponse to XmUNMAP
+     instead of XmDESTROY and then destroy it ourself after having run the
+     callback.
+   */
+  do_call (widget, closure, no_selection);
+  XtDestroyWidget (widget);
+}
+
+#endif
+
+#ifdef MENUBARS_MOTIF
+
+static void
+xm_pull_down_callback (Widget widget, XtPointer closure, XtPointer call_data)
+{
+#if 0
+  if (call_data)
+    {
+      /* new behavior for incremental menu construction */
+      
+    }
+  else
+#endif 
+    do_call (widget, closure, pre_activate);
+}
+
+#if 0
+static void
+xm_pop_down_callback (Widget widget, XtPointer closure, XtPointer call_data)
+{
+  do_call (widget, closure, post_activate);
+}
+#endif /* 0 */
+
+#endif /* MENUBARS_MOTIF */
+
+#ifdef SCROLLBARS_MOTIF
+static void
+xm_scrollbar_callback (Widget widget, XtPointer closure, XtPointer call_data)
+{
+  widget_instance *instance = (widget_instance *) closure;
+  LWLIB_ID id;
+  XmScrollBarCallbackStruct *data =
+    (XmScrollBarCallbackStruct *) call_data;
+  scroll_event event_data;
+  scrollbar_values *val =
+    (scrollbar_values *) instance->info->val->scrollbar_data;
+  double percent;
+
+  if (!instance || widget->core.being_destroyed)
+    return;
+
+  id = instance->info->id;
+
+  percent = (double) (data->value - 1) / (double) (INT_MAX - 1);
+  event_data.slider_value =
+    (int) (percent * (double) (val->maximum - val->minimum)) + val->minimum;
+
+  if (event_data.slider_value > (val->maximum - val->slider_size))
+    event_data.slider_value = val->maximum - val->slider_size;
+  else if (event_data.slider_value < 1)
+    event_data.slider_value = 1;
+
+  if (data->event)
+    {
+      switch (data->event->xany.type)
+	{
+	case KeyPress:
+	case KeyRelease:
+	  event_data.time = data->event->xkey.time;
+	  break;
+	case ButtonPress:
+	case ButtonRelease:
+	  event_data.time = data->event->xbutton.time;
+	  break;
+	case MotionNotify:
+	  event_data.time = data->event->xmotion.time;
+	  break;
+	case EnterNotify:
+	case LeaveNotify:
+	  event_data.time = data->event->xcrossing.time;
+	  break;
+	default:
+	  event_data.time = 0;
+	  break;
+	}
+    }
+  else
+    event_data.time = 0;
+
+  switch (data->reason)
+    {
+    case XmCR_DECREMENT:
+      event_data.action = SCROLLBAR_LINE_UP;
+      break;
+    case XmCR_INCREMENT:
+      event_data.action = SCROLLBAR_LINE_DOWN;
+      break;
+    case XmCR_PAGE_DECREMENT:
+      event_data.action = SCROLLBAR_PAGE_UP;
+      break;
+    case XmCR_PAGE_INCREMENT:
+      event_data.action = SCROLLBAR_PAGE_DOWN;
+      break;
+    case XmCR_TO_TOP:
+      event_data.action = SCROLLBAR_TOP;
+      break;
+    case XmCR_TO_BOTTOM:
+      event_data.action = SCROLLBAR_BOTTOM;
+      break;
+    case XmCR_DRAG:
+      event_data.action = SCROLLBAR_DRAG;
+      break;
+    case XmCR_VALUE_CHANGED:
+      event_data.action = SCROLLBAR_CHANGE;
+      break;
+    default:
+      event_data.action = SCROLLBAR_CHANGE;
+      break;
+    }
+
+  if (instance->info->pre_activate_cb)
+    instance->info->pre_activate_cb (widget, id, (XtPointer) &event_data);
+}
+#endif /* SCROLLBARS_MOTIF */
+
+
+/* set the keyboard focus */
+void
+xm_set_keyboard_focus (Widget parent, Widget w)
+{
+  XmProcessTraversal (w, XmTRAVERSE_CURRENT);
+  /* At some point we believed that it was necessary to use XtSetKeyboardFocus
+     instead of XmProcessTraversal when using Motif >= 1.2.1, but that's bogus.
+     Presumably the problem was elsewhere, and is now gone...
+   */
+}

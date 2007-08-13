@@ -7,7 +7,7 @@
 ;;             1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@python.org
 ;; Created:    22-Apr-1997 (split from cc-mode.el)
-;; Version:    5.11
+;; Version:    5.12
 ;; Keywords:   c languages oop
 
 ;; This file is part of GNU Emacs.
@@ -66,7 +66,7 @@ Note: indentation of lines containing only comments is also controlled
 by the `c-comment-only-line-offset' variable."
   :type '(radio
 	  :extra-offset 8
-	  :format "%{Tab Always Indent%}:\n   The TAB key\n%v"
+	  :format "%{C Tab Always Indent%}:\n   The TAB key:\n%v"
 	  (const :tag "always indents, never inserts TAB" t)
 	  (const :tag "indents in left margin, otherwise inserts TAB" nil)
 	  (const :tag "inserts TAB in literals, otherwise indent" other))
@@ -189,10 +189,11 @@ syntactic context for the brace line."
 			(const brace-list-open) (const brace-list-close)
 			(const brace-list-intro) (const brace-list-entry))
 		(choice :tag "Action"
-			(set :format "%v"
-			     :extra-offset 8
-			     (const before) (const after))
-			(function :format "%v" :value c-)
+			(set :format "Insert a newline %v"
+			     :extra-offset 38
+			     (const :tag "before brace" before)
+			     (const :tag "after brace" after))
+			(function :format "Run function %v" :value c-)
 			)))
   :group 'c)
 

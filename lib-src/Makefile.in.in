@@ -230,26 +230,21 @@ uninstall:
 	(cd ${archlibdir} && \
 	 $(RM) ${UTILITIES} ${INSTALLABLES} ${SCRIPTS} ${INSTALLABLE_SCRIPTS})
 
-.PHONY : mostlyclean clean distclean realclean extraclean unlock relock check
+.PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:
-	$(RM) core *.o *.i
-
+	$(RM) *.o *.i core
 clean: mostlyclean
 	$(RM) ${INSTALLABLES} ${UTILITIES}
-
 distclean: clean
 	$(RM) DOC *.tab.c *.tab.h aixcc.c TAGS
 	$(RM) Makefile Makefile.in blessmail
-
 realclean: distclean
-	@true
-
-extraclean: realclean
+extraclean: distclean
 	$(RM) *~ \#*
 
+.PHONY: unlock relock check
 unlock:
 	chmod u+w $(SOURCES)
-
 relock:
 	chmod u-w $(SOURCES)
 

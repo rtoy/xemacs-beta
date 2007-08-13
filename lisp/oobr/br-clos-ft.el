@@ -238,8 +238,10 @@ defined, else return nil."
 				  'compiled-function-p
 				'byte-code-function-p)
 			      aliased-function)
-		     ;; Turn into a list for extraction
-		     (car (cdr (cons nil (append aliased-function nil)))))))
+		     (if (fboundp 'compiled-function-arglist)
+			 (compiled-function-arglist aliased-function)
+		       ;; Turn into a list for extraction
+		       (car (cdr (cons nil (append aliased-function nil))))))))
 	(if arg-list (prin1-to-string arg-list))))))
 
 (defun clos-sort-features (feature-list)

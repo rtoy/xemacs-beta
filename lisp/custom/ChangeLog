@@ -1,3 +1,8 @@
+1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* cus-edit.el (custom-file): Rename .xemacs-custom to something
+	more general.
+
 1997-06-28  Steven L Baur  <steve@altair.xemacs.org>
 
 	* cus-edit.el (customize-customized): Trap errors.

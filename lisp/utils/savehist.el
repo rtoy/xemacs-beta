@@ -4,7 +4,7 @@
 
 ;; Author: Hrvoje Niksic <hniksic@srce.hr>
 ;; Keywords: minibuffer
-;; Version: 0.3
+;; Version: 0.4
 
 ;; This file is part of XEmacs.
 
@@ -45,7 +45,8 @@
 ;; load-path, and byte-compile it.
 
 ;; This code should work on XEmacs 19.14 and later, as well as GNU
-;; Emacs 19.34 and later.
+;; Emacs 19.34 and later.  It requires the Customize library, however
+;; (shipped with XEmacs 19.15 and later, and with GNU Emacs 20.x).
 
 
 ;;; Code:
@@ -124,7 +125,8 @@ If set to nil, the length is unlimited."
   :group 'savehist)
 
 (defcustom savehist-modes 384
-  "*Default permissions of the history file."
+  "*Default permissions of the history file.
+This is decimal, not octal.  The default is 384 (0600 in octal)."
   :type 'integer
   :group 'savehist)
 
@@ -132,16 +134,17 @@ If set to nil, the length is unlimited."
 ;; Functions
 
 ;;;###autoload
-(defun savehist-load (&optional prefix)
-  "Load the histories saved to `savehist-file'.
-Unless PREFIX is non-nil, the function will also add the save function to
-`kill-emacs-hook'.
+(defun savehist-load (&optional no-hook)
+  "Load the minibuffer histories from `savehist-file'.
+Unless NO-HOOK is specified, the function will also add the save function
+to `kill-emacs-hook', thus ensuring that the minibuffer contents will be
+saved before leaving Emacs.
 
 This function should be normally used from your Emacs init file.  Since it
-removes your current minibuffer histories (if any), it is unwise to call it
-at any other time."
+removes your current minibuffer histories, it is unwise to call it at any
+other time."
   (interactive "P")
-  (unless prefix
+  (unless no-hook
     (add-hook 'kill-emacs-hook 'savehist-save))
   (load savehist-file t))
 
@@ -166,14 +169,18 @@ A variable will be saved if it is bound and non-nil."
 	     " or when\n"
 	     ";; exiting Emacs.\n"
 	     ";; Do not edit.  Unless you really want to, that is.\n\n")
-	    (dolist (sym savehist-history-variables)
-	      (when (and (boundp sym)
-			 (symbol-value sym))
-		(prin1
-		 `(setq ,sym (quote ,(savehist-delimit (symbol-value sym)
-						       savehist-length)))
-		 (current-buffer))
-		(insert ?\n)))
+	    (let ((print-length nil)
+		  (print-string-length nil)
+		  (print-level nil)
+		  (print-readably t))
+	      (dolist (sym savehist-history-variables)
+		(when (and (boundp sym)
+			   (symbol-value sym))
+		  (prin1
+		   `(setq ,sym (quote ,(savehist-delimit (symbol-value sym)
+							 savehist-length)))
+		   (current-buffer))
+		  (insert ?\n))))
 	    (save-buffer)
 	    (set-file-modes savehist-file savehist-modes))
 	(or buffer-exists-p

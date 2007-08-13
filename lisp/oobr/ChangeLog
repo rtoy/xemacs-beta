@@ -1,3 +1,8 @@
+1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* br-clos-ft.el (clos-scan-routine-arglist): Don't reference
+	bytecode object as vector.
+
 Fri Feb 21 16:45:14 1997  Bob Weiner  <weiner@infodock.com>
 
 * br-c-tags (etags): 

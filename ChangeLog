@@ -1,3 +1,38 @@
+1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta12 is released.
+
+1997-07-08  Martin Buchholz  <mrb@eng.sun.com>
+
+	* configure.in: Set options differently, depending on beta-ness of 
+	build tree.
+	* *Makefile*: Clean up *clean: targets, esp. Steven's beloved
+	distclean.
+
+1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* pkg-src/tree-x/Makefile.in.in (xoobr): Pass CFLAGS to the
+	linker.
+	From Olivier Galibert <Olivier.Galibert@mines.u-nancy.fr>
+
+1997-07-07  Steven L Baur  <steve@altair.xemacs.org>
+
+	* pkg-src/tree-x/Makefile.in.in (distclean): Add target.
+
+1997-07-06  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lwlib/lwlib-Xm.c (xm_update_one_value): Hand application of mrb
+	fix.  Restoration of lossage from beta10->beta11 upgrade.
+
+	* XEmacs 20.3-beta11 is released.
+
+1997-07-08  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/language/english.el: Add quail-british for British.
+
+	* lisp/language/european.el: Register input-method for various non
+	quail-latin-1 methods.
+
 1997-07-05  Martin Buchholz  <mrb@eng.sun.com>
 
 	* lib-src/getopt*.c: Don't redefine const - let configure do that.

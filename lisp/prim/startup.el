@@ -547,7 +547,8 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 	    (setq term (substring term 0 hyphend))
 	  (setq term nil))))))
 
-
+(defconst emacs-user-extension-dir "/.xemacs/"
+  "Directory where user initialization and user-installed packages may go.")
 
 (defun load-user-init-file (init-file-user)
   "This function actually reads the init files.
@@ -556,23 +557,25 @@ First try .xemacs, then try .emacs, but only load one of the two."
     (setq user-init-file
 	  (cond
 	   ((eq system-type 'ms-dos)
-	    (concat "~" init-file-user "/_xemacs"))
-	   ((eq system-type 'vax-vms)
-	    "sys$login:.xemacs")
+	    (concat "~" init-file-user emacs-user-extension-dir "init.el"))
 	   (t
-	    (concat "~" init-file-user "/.xemacs"))))
+	    (concat "~" init-file-user emacs-user-extension-dir "init.el"))))
     (unless (file-exists-p (expand-file-name user-init-file))
       (setq user-init-file
 	    (cond
 	     ((eq system-type 'ms-dos)
 	      (concat "~" init-file-user "/_emacs"))
-	     ((eq system-type 'vax-vms)
-	      "sys$login:.emacs")
 	     (t
 	      (concat "~" init-file-user "/.emacs")))))
     (load user-init-file t t t)
-    (when (string= custom-file (concat "~" init-file-user "/.xemacs-custom"))
-      (load (concat "~" init-file-user "/.xemacs-custom") t t))
+    (when (string= custom-file (concat "~"
+				       init-file-user
+				       emacs-user-extension-dir
+				       "options.el"))
+      (load (concat "~"
+		    init-file-user
+		    emacs-user-extension-dir
+		    "options.el") t t))
     (unless inhibit-default-init
       (let ((inhibit-startup-message nil))
 	;; Users are supposed to be told their rights.
