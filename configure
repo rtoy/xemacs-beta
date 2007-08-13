@@ -1139,7 +1139,7 @@ case "${canonical}" in
       ;;
     esac
 
-    if [ $opsys = hpux10 ]; then
+    if test $opsys = hpux10 ; then
       NON_GNU_CC="cc -Ae"
       NON_GNU_CPP="cc -Ae -E"
     fi
@@ -1601,7 +1601,7 @@ if test "${extra_verbose}" = "yes"  ; then
 fi
 
 #### Choose a compiler.
-if test "x$CC" != x  ; then
+if test "x$CC" = x  ; then
   cc_specified=1
 fi
 
