@@ -25,3 +25,12 @@
  * This should probably be set by configure.
  */
 #define HAVE_UINTPTR_T 1
+
+/* R. Cognot 09/24/97
+ * This may be needed for other ABIs, but at least I'm sure it is
+ * is needed on n32, as purify reports UMRs in siglongjmp and 
+ * xemacs dumps core every once in a while...
+ */
+#if (_MIPS_SIM==_MIPS_SIM_ABIN32)
+#undef HAVE_SIGSETJMP
+#endif

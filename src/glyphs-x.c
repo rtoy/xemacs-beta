@@ -1213,7 +1213,8 @@ our_skip_input_data (j_decompress_ptr cinfo, long num_bytes) {
   if (!src) {
     return;
   } else if (num_bytes > src->bytes_in_buffer) {
-    num_bytes = (long)src->bytes_in_buffer;
+    ERREXIT(cinfo, JERR_INPUT_EOF);
+    /*NOTREACHED*/
   }
 
   src->bytes_in_buffer -= num_bytes;

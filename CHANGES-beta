@@ -1,4 +1,10 @@
 							-*- indented-text -*-
+to 19.16 pre5 -- "Staten Island"
+-- Irix 6 build problem fixed
+-- `directory-files' stack overrun fixed
+-- jpeg detection corrected
+-- image autodetection and jpeg load fix synched with 20.3
+
 to 19.16 pre4 -- "Bronx"
 -- etc/Joke files restored
 -- Various build patches from Darrell Kindred

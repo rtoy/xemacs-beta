@@ -590,6 +590,8 @@ A timeline for Emacs 20 is
 @itemize @bullet
 @item
 version 20.1 released September 17, 1997.
+@item
+version 20.2 released September 20, 1997.
 @end itemize
 
 @node XEmacs

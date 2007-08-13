@@ -58,16 +58,17 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
   Bytecount dirname_length;
   Lisp_Object list, name, dirfilename = Qnil;
   Lisp_Object handler;
+  Lisp_Object errstring;
   struct re_pattern_buffer *bufp;
 
-  char statbuf [MAXNAMLEN+2];
+  char statbuf [4096];			/* BOGUS -- fixed in 20.3 */
   char *statbuf_tail;
   Lisp_Object tail_cons = Qnil;
-  char slashfilename[MAXNAMLEN+2];
+  char slashfilename[4096];		/* BOGUS -- fixed in 20.3 */
   char *filename = slashfilename;
 
-  struct gcpro gcpro1, gcpro2, gcpro3;
-  GCPRO3 (dirname, dirfilename, tail_cons);
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  GCPRO4 (dirname, dirfilename, tail_cons, errstring);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -92,6 +93,10 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
     /* XEmacs: this should come before the opendir() because it might error. */
     Lisp_Object name_as_dir = Ffile_name_as_directory (dirname);
     CHECK_STRING (name_as_dir);
+    if (XSTRING_LENGTH(name_as_dir) >= sizeof (statbuf))
+      {
+	report_file_error("Directory name too long", list1(name_as_dir));
+      }
     memcpy (statbuf, ((char *) XSTRING_DATA (name_as_dir)),
            XSTRING_LENGTH (name_as_dir));
     statbuf_tail = statbuf + XSTRING_LENGTH (name_as_dir);
@@ -136,6 +141,12 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
   if (dirname_length == 0
       || !IS_ANY_SEP (XSTRING_BYTE (dirname, dirname_length - 1)))
   {
+    if ((filename - slashfilename) >= (sizeof (slashfilename) - 1))
+      {
+	closedir(d);
+	errstring = make_string(statbuf, 255);
+	report_file_error("Directory name too long", list1(errstring));
+      }
     *filename++ = DIRECTORY_SEP;
     dirname_length++;
   }
@@ -153,6 +164,13 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
 	{
 	  int result;
 	  Lisp_Object oinhibit_quit = Vinhibit_quit;
+	  if (((filename - slashfilename) + len) >=
+	      (sizeof (slashfilename) - 1))
+	    {
+	      closedir(d);
+	      errstring = make_string(slashfilename, 255);
+	      report_file_error("Directory name too long", list1(errstring));
+	    }
 	  strncpy (filename, dp->d_name, len);
 	  filename[len] = 0;
 	  /* re_search can now QUIT, so prevent it to avoid
@@ -168,6 +186,14 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
 		  int dir_p;
 		  struct stat st;
 
+		  if (((statbuf_tail - statbuf) + len) >=
+		      (sizeof (statbuf) - 1))
+		    {
+		      closedir(d);
+		      errstring = make_string(statbuf, 255);
+		      report_file_error("Directory name too long",
+					list1(errstring));
+		    }
 		  memcpy (statbuf_tail, filename, len);
 		  statbuf_tail [len] = 0;
 
