@@ -1,7 +1,7 @@
 ;;; url-ns.el --- Various netscape-ish functions for proxy definitions
 ;; Author: wmperry
-;; Created: 1997/04/08 21:18:23
-;; Version: 1.2
+;; Created: 1997/06/29 22:51:33
+;; Version: 1.3
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -24,6 +24,8 @@
 ;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'url-gw)
 
 (defun isPlainHostName (host)
   (not (string-match "\\." host)))

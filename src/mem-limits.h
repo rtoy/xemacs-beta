@@ -23,6 +23,14 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_MEM_LIMITS_H_
 #define _XEMACS_MEM_LIMITS_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef HAVE_ULIMIT_H
+#include <ulimit.h>
+#endif
+
 #ifdef MSDOS
 #include <dpmi.h>
 #endif
@@ -123,8 +131,6 @@ get_lim_data (void)
 static void
 get_lim_data (void)
 {
-  extern long ulimit ();
-    
   lim_data = -1;
 
   /* Use the ulimit call, if we seem to have it.  */

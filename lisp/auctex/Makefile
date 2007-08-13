@@ -72,7 +72,7 @@ REMOVE =  ltx-help.el
 MINMAPSRC = auc-menu.el maniac.el outln-18.el all.el multi-prompt.el
 
 ## MULE_ELC is set by update-elc.sh if bytecompiling for XEmacs/Mule
-CONTRIB = bib-cite.el font-latex.el custom-load.el
+CONTRIB = bib-cite.el $(MULE_EL) font-latex.el custom-load.el
 CONTRIBELC = bib-cite.elc $(MULE_ELC) font-latex.elc custom-load.elc
 
 AUCSRC = auc-old.el tex.el tex-buf.el latex.el tex-info.el multi-prompt.el
@@ -219,3 +219,11 @@ min-map:
 	-cvs add $(MINMAPSRC) 
 	cvs commit -m "Update"
 	cp $(MINMAPSRC) doc/math-ref.tex $(FTPDIR) 
+
+autoloads: auto-autoloads.el
+
+auto-autoloads.el: $(AUCSRC) $(CONTRIB)
+	$(EMACS) -batch -q -no-site-file \
+		-eval '(setq autoload-target-directory "'`pwd`'/")' \
+		-l autoload \
+		-f batch-update-autoloads $?

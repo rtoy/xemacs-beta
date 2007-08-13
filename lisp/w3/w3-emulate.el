@@ -1,7 +1,7 @@
 ;;; w3-emulate.el --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/04/04 14:24:19
-;; Version: 1.13
+;; Created: 1997/06/30 05:29:44
+;; Version: 1.14
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -140,9 +140,9 @@
 ;; http://www.crl.com/~subir/lynx/lynx_help/keystroke_commands/keystroke_help.htm
 
 ;; Movement
-(define-key w3-lynx-emulation-minor-mode-map [up]   'w3-widget-backward)
-(define-key w3-lynx-emulation-minor-mode-map [down] 'w3-widget-forward)
-(define-key w3-lynx-emulation-minor-mode-map [right] 'w3-follow-link)
+(define-key w3-lynx-emulation-minor-mode-map [up]   'widget-backward)
+(define-key w3-lynx-emulation-minor-mode-map [down] 'widget-forward)
+(define-key w3-lynx-emulation-minor-mode-map [right] 'widget-button-press)
 (define-key w3-lynx-emulation-minor-mode-map [left] 'w3-history-backward)
 
 ;; Scrolling
@@ -184,7 +184,7 @@
 (define-key w3-lynx-emulation-minor-mode-map "/"   'w3-search-forward)
 (define-key w3-lynx-emulation-minor-mode-map "v"   'w3-show-hotlist)
 (define-key w3-lynx-emulation-minor-mode-map "V"   'w3-show-hotlist)
-(define-key w3-lynx-emulation-minor-mode-map "x"   'w3-follow-link)
+(define-key w3-lynx-emulation-minor-mode-map "x"   'widget-button-press)
 (define-key w3-lynx-emulation-minor-mode-map "z"   'keyboard-quit)
 (define-key w3-lynx-emulation-minor-mode-map "="   'w3-document-information)
 (define-key w3-lynx-emulation-minor-mode-map "\\"  'w3-source-document)

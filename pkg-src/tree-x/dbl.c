@@ -31,7 +31,7 @@ DBLcreate_double_buffer (Display *display,
 			 XColor  *colors,
 			 int      num_colors)
 {
-   int i, j, k, l, m, offset, mask, size;
+   int i, j, k, l, offset, mask, size;
    int max_planes;
 
    char         *string;
@@ -44,7 +44,7 @@ DBLcreate_double_buffer (Display *display,
 
    if ((db = (DoubleBuffer *)calloc(1, sizeof(DoubleBuffer))) == 0) {
       printf("DBLopen_double_buffer : memory allocation error\n");
-      return (NULL);
+      return NULL;
    }
 
 /* note the display */
@@ -143,7 +143,7 @@ DBLcreate_double_buffer (Display *display,
          else {
             printf("DBLcreate_double_buffer : memory allocation error\n");
             DBLdelete_double_buffer(db);
-            return(NULL);
+            return NULL;
          }
 
          surface->offset     = offset + i * (db->num_planes >> 1);
@@ -245,7 +245,7 @@ DBLcreate_double_buffer (Display *display,
 
    DBLbegin_frame(db);
    DBLend_frame(db, 1);
-   return (db);
+   return db;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -288,9 +288,9 @@ unsigned long
 DBLinq_background(DoubleBuffer *db)
 {
    if (db->num_surfaces > 0)
-      return(db->surface[0]->color[0].pixel);
+      return db->surface[0]->color[0].pixel;
    else
-      return(WhitePixelOfScreen(db->screen));
+      return WhitePixelOfScreen(db->screen);
 }
 
 /* ------------------------------------------------------------------------- */

@@ -91,26 +91,6 @@
 	    (forward-line (window-height))
 	    (emacspeak-speak-region start (point ))))))
 
-(defadvice w3-follow-link (around emacspeak pre act)
-  "Provide feedback on what you did. "
-  (let ((data (emacspeak-w3-extract-form-field-information))
-        (form-field-p nil)
-        (this-zone nil)
-        (opoint nil))
-    (if data
-	(setq form-field-p t 
-	      opoint (point)))
-    ad-do-it
-    (when form-field-p
-      (w3-speak-summarize-form-field)
-      (case (w3-form-element-type data)
-	((radio checkbox)
-	 (emacspeak-auditory-icon 'button))
-	;; fill in any others here
-	(otherwise
-	 nil)))
-    ad-return-value))
-
 (defadvice w3-revert-form (after emacspeak pre act)
   "Announce that you cleared the form. "
   (dtk-speak "Cleared the form. "))

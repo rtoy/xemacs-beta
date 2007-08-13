@@ -1859,14 +1859,14 @@ regex_grow_registers (int num_regs)
 {
   if (num_regs > regs_allocated_size)
     {
-      RETALLOC_IF (regstart,	 num_regs, CONST char *);
-      RETALLOC_IF (regend,	 num_regs, CONST char *);
-      RETALLOC_IF (old_regstart, num_regs, CONST char *);
-      RETALLOC_IF (old_regend,	 num_regs, CONST char *);
-      RETALLOC_IF (best_regstart, num_regs, CONST char *);
-      RETALLOC_IF (best_regend,	 num_regs, CONST char *);
-      RETALLOC_IF (reg_info,	 num_regs, register_info_type);
-      RETALLOC_IF (reg_dummy,	 num_regs, CONST char *);
+      RETALLOC_IF (regstart,	   num_regs, CONST char *);
+      RETALLOC_IF (regend,	   num_regs, CONST char *);
+      RETALLOC_IF (old_regstart,   num_regs, CONST char *);
+      RETALLOC_IF (old_regend,	   num_regs, CONST char *);
+      RETALLOC_IF (best_regstart,  num_regs, CONST char *);
+      RETALLOC_IF (best_regend,	   num_regs, CONST char *);
+      RETALLOC_IF (reg_info,	   num_regs, register_info_type);
+      RETALLOC_IF (reg_dummy,	   num_regs, CONST char *);
       RETALLOC_IF (reg_info_dummy, num_regs, register_info_type);
 
       regs_allocated_size = num_regs;

@@ -1,3 +1,8 @@
+1997-07-03  Steven L Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (make_special_commands): Fix building of ilisp so
+	custom-load.elc gets built.
+
 1997-06-27  Steven L Baur  <steve@altair.xemacs.org>
 
 	* update-autoloads.sh:  Major rework.  Avoid looking at MULE

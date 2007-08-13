@@ -48,3 +48,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef WSTOPSIG
 #define WSTOPSIG(s) ((s) >> 8)
 #endif
+#ifndef WRETCODE
+#define WRETCODE(s) ((s) >> 8)
+#endif
+

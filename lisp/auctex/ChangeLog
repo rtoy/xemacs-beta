@@ -1,3 +1,8 @@
+1997-07-02  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile (autoloads): New targets to automatically rebuild
+	autoloads and custom-loads.
+
 1997-06-27  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile (CONTRIBELC): Remove hardcoded dependency on

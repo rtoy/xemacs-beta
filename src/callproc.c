@@ -186,8 +186,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   int bufsize = 16384;
   int speccount = specpdl_depth ();
   struct gcpro gcpro1;
-  char **new_argv
-    = (char **) alloca ((max (2, nargs - 2)) * sizeof (char *));
+  char **new_argv = (char **) alloca ((max (2, nargs - 2)) * sizeof (char *));
   
   /* File to use for stderr in the child.
      t means use same as standard output.  */
@@ -216,14 +215,14 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
      can't just have the child check for an error when it does the
      chdir, since it's in a vfork. */
   {
-    struct gcpro gcpro1, gcpro2;
+    struct gcpro ngcpro1, ngcpro2;
     /* Do this test before building new_argv because GC in Lisp code 
      *  called by various filename-hacking routines might relocate strings */
     /* Make sure that the child will be able to chdir to the current
        buffer's current directory.  We can't just have the child check
        for an error when it does the chdir, since it's in a vfork.  */
 
-    GCPRO2 (current_dir, path);   /* Caller gcprotects args[] */
+    NGCPRO2 (current_dir, path);   /* Caller gcprotects args[] */
     current_dir = current_buffer->directory;
     current_dir = Funhandled_file_name_directory (current_dir);
     current_dir = expand_and_dir_to_file (current_dir, Qnil);
@@ -235,15 +234,15 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       report_file_error ("Setting current directory",
                          Fcons (current_buffer->directory, Qnil));
 #endif /* 0 */
-    UNGCPRO;
+    NUNGCPRO;
   }
 
   if (nargs >= 2 && ! NILP (args[1]))
     {
-      struct gcpro gcpro1;
-      GCPRO1 (current_buffer->directory);
+      struct gcpro ngcpro1;
+      NGCPRO1 (current_buffer->directory);
       infile = Fexpand_file_name (args[1], current_buffer->directory);
-      UNGCPRO;
+      NUNGCPRO;
       CHECK_STRING (infile);
     }
   else
@@ -453,7 +452,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
     fork_error = Qnil;
 #ifdef WINDOWSNT
-    pid = child_setup (filefd, fd1, fd_error, new_argv, current_dir);
+    pid = child_setup (filefd, fd1, fd_error, new_argv, 
+                       (char *) XSTRING_DATA (current_dir));
 #else  /* not WINDOWSNT */
     pid = fork ();
 
@@ -517,7 +517,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     int first = 1;
     int total_read = 0;
     Lisp_Object instream;
-    struct gcpro gcpro1;
+    struct gcpro ngcpro1;
 
     /* Enable sending signal if user quits below.  */
     call_process_exited = 0;
@@ -544,7 +544,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	 Fget_coding_system (Vcoding_system_for_read));
     Lstream_set_character_mode (XLSTREAM (instream));
 #endif /* MULE */
-    GCPRO1 (instream);
+    NGCPRO1 (instream);
     while (1)
       {
 	QUIT;
@@ -596,7 +596,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       }
   give_up:
     Lstream_close (XLSTREAM (instream));
-    UNGCPRO;
+    NUNGCPRO;
 
     QUIT;
 #ifndef MSDOS

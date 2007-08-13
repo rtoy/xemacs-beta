@@ -1580,10 +1580,12 @@ if test "$with_workshop" = "yes"; then
   with_tooltalk=yes
 fi
 
-dnl Choose a compiler.
-test -n "$CC" && cc_specified=yes
-
-if test -n "$compiler"; then CC="$compiler"; fi
+dnl Choose a compiler from (in order)
+dnl --compiler, env var CC, with_gcc=no && ${NON_GNU_CC:-cc}, AC_PROG_CC
+test -n "$compiler" && CC="$compiler"
+if test "$with_gcc" = "no"; then dnl Try to find a non-gcc compiler
+  case "$CC" in "" | *gcc* ) CC="${NON_GNU_CC-cc}" ;; esac
+fi
 
 dnl If we don't set CFLAGS here, AC_PROG_CC will set it.
 dnl But we know better what's good for us, so we do our own
@@ -1591,21 +1593,19 @@ dnl computation of real CFLAGS later.
 test "$cflags" != "UNSPECIFIED" && CFLAGS="$cflags"
 xe_save_CFLAGS="$CFLAGS"
 
-dnl Some systems specify a CPP or CC to use unless we are using GCC.
-test -n "$NON_GNU_CC"  -a "$with_gcc" = "no" -a -z "$CC"  && CC="$NON_GNU_CC"
-AC_PROG_CC
+AC_PROG_CC dnl Autoconf has its own magic for compiler autodetection
 
-if   test "$with_gcc" = "no"  -a "$ac_cv_prog_gcc" = "yes"; then
+dnl Retry using random guesswork if AC_PROG_CC got it wrong...
+if   test "$with_gcc" = "no"  -a "$GCC" = "yes"; then
   CC=${NON_GNU_CC-cc}
   AC_PROG_CC
-elif test "$with_gcc" = "yes" -a "$ac_cv_prog_gcc" = "no" ; then
+elif test "$with_gcc" = "yes" -a "$GCC" != "yes" ; then
   CC=gcc
   AC_PROG_CC
 fi
 CFLAGS="$xe_save_CFLAGS"
 
-if test "$GCC" = "yes"; then with_gcc=yes; else with_gcc=no; fi
-test -n "$NON_GNU_CPP" -a "$with_gcc" = "no" -a -z "$CPP" && CPP="$NON_GNU_CPP"
+test -n "$NON_GNU_CPP" -a "$GCC" != "yes" -a -z "$CPP" && CPP="$NON_GNU_CPP"
 
 AC_PROG_CPP
 
@@ -1843,7 +1843,7 @@ test -n "$ld_text_start_addr" && start_flags="-T $ld_text_start_addr -e __start"
 AC_SUBST(start_flags)
 if test "$ordinary_link" = "no" -a "$GCC" = "yes"; then
  test -z "$linker" &&  linker='$(CC) -nostdlib'
- test -z "$lib_gcc" && lib_gcc='`$(CC) -print-lib-gcc-file-name`'
+ test -z "$lib_gcc" && lib_gcc='`$(CC) -print-lib-gccfile-name`'
 fi
 test "$GCC" != "yes" && lib_gcc=
 AC_SUBST(ld)
@@ -2012,7 +2012,7 @@ AC_PROG_YACC
 
 dnl checks for header files
 AC_CHECK_HEADERS(mach/mach.h sys/stropts.h sys/timeb.h sys/time.h unistd.h)
-AC_CHECK_HEADERS(utime.h locale.h libgen.h fcntl.h)
+AC_CHECK_HEADERS(utime.h locale.h libgen.h fcntl.h ulimit.h)
 AC_CHECK_HEADERS(linux/version.h kstat.h sys/pstat.h inttypes.h limits.h)
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDC
@@ -2267,11 +2267,8 @@ EOF
   AC_CHECK_LIB(Xext, XShapeSelectInput, XE_PREPEND(-lXext, libs_x))
 
   dnl Require -lXt
-  case "$opsys" in dnl SunOS4 bug workaround
-   sunos4* ) XE_PREPEND(-u _XtToolkitInitialize -lXt, libs_x) ;;
-   * ) AC_CHECK_LIB(Xt, XtOpenDisplay, XE_PREPEND(-lXt, libs_x),
-        [AC_MSG_ERROR("Unable to find X11 libraries.")]) ;;
-  esac
+  AC_CHECK_LIB(Xt, XtOpenDisplay, XE_PREPEND(-lXt, libs_x),
+    AC_MSG_ERROR("Unable to find X11 libraries."))
 
   AC_MSG_CHECKING(the version of X11 being used)
   AC_TRY_RUN([#include <X11/Intrinsic.h>
@@ -2285,7 +2282,7 @@ EOF
   dnl remove this - we should avoid checking for specific OS
   AC_MSG_CHECKING(for XFree86)
   if test -d "/usr/X386/include" -o \
-          -f "/etc/XF86Config" -o \
+          -f "/etc/XF86Config"    -o \
 	  -f "/etc/X11/XF86Config" -o \
 	  -f "/usr/X11R6/lib/X11/XF86Config"; then
     AC_MSG_RESULT(yes)
@@ -2295,17 +2292,12 @@ EOF
   fi
 
   dnl autodetect -lXmu
-  case "$opsys" in dnl SunOS4 bug workaround
-    sunos4* ) XE_PREPEND(-u _get_applicationShellWidgetClass -lXmu, libs_x) ;;
-    * ) if test -z "$with_xmu"; then
-	  AC_CHECK_LIB(Xmu, XmuConvertStandardSelection, with_xmu=yes, with_xmu=no)
-	fi
-	if test "$with_xmu" = "no"; then
-	  XE_ADD_OBJS(xmu.o)
-	else
-	  XE_PREPEND(-lXmu, libs_x)
-	fi ;;
-  esac
+  test -z "$with_xmu" && { AC_CHECK_LIB(Xmu, XmuReadBitmapDataFromFile,
+                           with_xmu=yes, with_xmu=no) }
+  if test "$with_xmu" = "no"
+  then XE_ADD_OBJS(xmu.o)
+  else XE_PREPEND(-lXmu, libs_x)
+  fi
 
   dnl Autodetect -lXbsd
   dnl #### Someone, please add a better function than main
@@ -2671,7 +2663,7 @@ if test "$need_motif" = "yes" ; then
   XE_COMPUTE_RUNPATH()
 fi
 
-AC_CHECK_FUNCS(acosh asinh atanh cbrt closedir dup2 eaccess fmod fpathconf frexp ftime gethostname getpagesize gettimeofday getcwd getwd logb lrand48 matherr mkdir mktime perror poll random rename res_init rint rmdir select setitimer setpgid setlocale setsid sigblock sighold sigprocmask strcasecmp strerror tzset usleep utimes waitpid)
+AC_CHECK_FUNCS(acosh asinh atanh cbrt closedir dup2 eaccess fmod fpathconf frexp ftime gethostname getpagesize gettimeofday getcwd getwd logb lrand48 matherr mkdir mktime perror poll random rename res_init rint rmdir select setitimer setpgid setlocale setsid sigblock sighold sigprocmask strcasecmp strerror tzset ulimit usleep utimes waitpid)
 
 dnl realpath is buggy on linux, decosf and aix4
 
@@ -2948,7 +2940,7 @@ if test "$with_native_sound" != "no"; then
       if test -n "$native_sound_lib"; then
         sound_found=yes
         XE_ADD_OBJS(hpplay.o)
-        if test "$with_gcc" = "yes" # Kludge city
+        if test "$GCC" = "yes" # Kludge city
           then sound_cflags="-Dconst= -Dvolatile= -I/usr/audio/examples"
           else sound_cflags="+e -I/usr/audio/examples"
         fi
@@ -3323,7 +3315,7 @@ if   test "$GNU_MALLOC"        = "yes"; then AC_DEFINE(GNU_MALLOC)
 elif test "$use_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
 fi
 test "$with_i18n3"         = "yes" && AC_DEFINE(I18N3)
-test "$with_gcc"           = "yes" && AC_DEFINE(USE_GCC)
+test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
 test "$with_term"          = "yes" && AC_DEFINE(HAVE_TERM)
 test "$external_widget"    = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
 test "$with_gnu_make"      = "yes" && AC_DEFINE(USE_GNU_MAKE)

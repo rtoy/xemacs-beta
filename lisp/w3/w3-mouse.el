@@ -1,7 +1,7 @@
 ;;; w3-menu.el --- Mouse specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/06/20 18:56:21
-;; Version: 1.12
+;; Created: 1997/06/27 15:41:35
+;; Version: 1.13
 ;; Keywords: mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -83,7 +83,7 @@ the mouse click, opening it in another frame."
       (define-key w3-netscape-emulation-minor-mode-map
 	(vector w3-mouse-button2) 'w3-follow-mouse-other-frame)))
 
-(if w3-running-FSF19
+(if (not w3-running-xemacs)
     (progn
       (define-key w3-mode-map [mouse-movement] 'w3-mouse-handler)
       (if w3-popup-menu-on-mouse-3

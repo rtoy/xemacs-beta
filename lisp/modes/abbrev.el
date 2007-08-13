@@ -140,7 +140,7 @@ To undefine an abbrev, define it with an expansion of `nil'."
   (interactive "sDefine mode abbrev: \nsExpansion for %s: ")
   (define-abbrev (or local-abbrev-table
                      (error "Major mode has no abbrev table"))
-		 (downcase name) expansion 0))
+		 (downcase name) expansion nil 0))
 
 (defun abbrev-symbol (abbrev &optional table)
   "Return the symbol representing abbrev named ABBREV.

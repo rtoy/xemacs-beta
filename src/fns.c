@@ -192,7 +192,7 @@ check_losing_bytecode (CONST char *function, Lisp_Object seq)
   if (COMPILED_FUNCTIONP (seq))
     error_with_frob
       (seq,
-       "As of 19.14, `%s' no longer works with compiled-function objects",
+       "As of 20.3, `%s' no longer works with compiled-function objects",
        function);
 }
 
@@ -514,35 +514,24 @@ with the original.
    */
   if (CONSP (arg))
     {
-      Lisp_Object rest = arg;
-      Lisp_Object head, tail;
-      tail = Qnil;
-      while (CONSP (rest))
+      Lisp_Object head = Fcons (XCAR (arg), XCDR (arg));
+      Lisp_Object tail = head;
+
+      for (arg = XCDR (arg); CONSP (arg); arg = XCDR (arg))
 	{
-	  Lisp_Object new = Fcons (XCAR (rest), XCDR (rest));
-	  if (NILP (tail))
-	    head = tail = new;
-	  else
-	    XCDR (tail) = new, tail = new;
-	  rest = XCDR (rest);
+	  XCDR (tail) = Fcons (XCAR (arg), XCDR (arg));
+	  tail = XCDR (tail);
 	  QUIT;
 	}
-      if (!NILP (tail))
-	XCDR (tail) = rest;
       return head;
     }
-  else if (STRINGP (arg))
-    return concat (1, &arg, c_string, 0);
-  else if (VECTORP (arg))
-    return concat (1, &arg, c_vector, 0);
-  else if (BIT_VECTORP (arg))
-    return concat (1, &arg, c_bit_vector, 0);
-  else
-    {
-      check_losing_bytecode ("copy-sequence", arg);
-      arg = wrong_type_argument (Qsequencep, arg);
-      goto again;
-    }
+  if (STRINGP     (arg)) return concat (1, &arg, c_string,     0);
+  if (VECTORP     (arg)) return concat (1, &arg, c_vector,     0);
+  if (BIT_VECTORP (arg)) return concat (1, &arg, c_bit_vector, 0);
+
+  check_losing_bytecode ("copy-sequence", arg);
+  arg = wrong_type_argument (Qsequencep, arg);
+  goto again;
 }
 
 struct merge_string_extents_struct

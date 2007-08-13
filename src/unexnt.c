@@ -42,11 +42,17 @@ typedef struct file_data {
     unsigned char *file_base;
 } file_data;
 
+enum {
+  HEAP_UNINITIALIZED = 1,
+  HEAP_UNLOADED,
+  HEAP_LOADED
+};
+
 /* Basically, our "initialized" flag.  */
-BOOL need_to_recreate_heap = FALSE;
+int heap_state = HEAP_UNINITIALIZED;
 
 /* So we can find our heap in the file to recreate it.  */
-unsigned long heap_index_in_executable = 0;
+unsigned long heap_index_in_executable = UNINIT_LONG;
 
 void open_input_file (file_data *p_file, char *name);
 void open_output_file (file_data *p_file, char *name, unsigned long size);
@@ -57,13 +63,13 @@ void copy_executable_and_dump_data_section (file_data *, file_data *);
 void dump_bss_and_heap (file_data *p_infile, file_data *p_outfile);
 
 /* Cached info about the .data section in the executable.  */
-PUCHAR data_start_va = 0;
-DWORD  data_start_file = 0;
-DWORD  data_size = 0;
+PUCHAR data_start_va = UNINIT_PTR;
+DWORD  data_start_file = UNINIT_LONG;
+DWORD  data_size = UNINIT_LONG;
 
 /* Cached info about the .bss section in the executable.  */
-PUCHAR bss_start = 0;
-DWORD  bss_size = 0;
+PUCHAR bss_start = UNINIT_PTR;
+DWORD  bss_size = UNINIT_LONG;
 
 #ifdef HAVE_NTGUI
 HINSTANCE hinst = NULL;
@@ -89,7 +95,7 @@ _start (void)
      start up.  (WARNING:  Do not put any code before this section
      that relies upon malloc () and runs in the dumped version.  It
      won't work.)  */
-  if (need_to_recreate_heap) 
+  if (heap_state == HEAP_UNLOADED) 
     {
       char executable_path[MAX_PATH];
 
@@ -98,7 +104,7 @@ _start (void)
 	  exit (1);
 	}
       recreate_heap (executable_path);
-      need_to_recreate_heap = FALSE;
+      heap_state = HEAP_LOADED;
     }
 
   /* The default behavior is to treat files as binary and patch up
@@ -164,7 +170,7 @@ unexec (char *new_name, char *old_name, void *start_data, void *start_bss,
   open_output_file (&out_file, out_filename, size);
 
   /* Set the flag (before dumping).  */
-  need_to_recreate_heap = TRUE;
+  heap_state = HEAP_UNLOADED;
 
   copy_executable_and_dump_data_section (&in_file, &out_file);
   dump_bss_and_heap (&in_file, &out_file);
@@ -392,7 +398,7 @@ get_section_info (file_data *p_infile)
       section++;
     }
 
-  if (!bss_start && !bss_size)
+  if (bss_start == UNINIT_PTR && bss_size == UNINIT_LONG)
     {
       /* Starting with MSVC 4.0, the .bss section has been eliminated
 	 and appended virtually to the end of the .data section.  Our

@@ -342,7 +342,7 @@ show_help (XtPointer data, XtIntervalId* id)
   int shape;
   XPoint border[ 3 ];
 
-  if (id == NULL || (id && b_timer) && b_text)
+  if (id == NULL || ((id && b_timer) && b_text))
     {
       b_timer = None;
 

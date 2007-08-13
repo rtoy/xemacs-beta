@@ -287,6 +287,11 @@ Each minibuffer output is added with
        (cons STRING (symbol-value minibuffer-history-variable)))")
 (defvar minibuffer-history-position)
 
+;; Added by hniksic:
+(defvar initial-minibuffer-history-position)
+(defvar current-minibuffer-contents)
+(defvar current-minibuffer-point)
+
 (defcustom minibuffer-history-minimum-string-length 3
   "*If this variable is non-nil, a string will not be added to the
 minibuffer history if its length is less than that value."
@@ -376,6 +381,11 @@ See also the variable completion-highlight-first-word-only for control over
            (setq default-directory dir)
            (make-local-variable 'print-escape-newlines)
            (setq print-escape-newlines t)
+	   (make-local-variable 'current-minibuffer-contents)
+	   (make-local-variable 'current-minibuffer-point)
+	   (make-local-variable 'initial-minibuffer-history-position)
+	   (setq current-minibuffer-contents ""
+		 current-minibuffer-point 1)
 	   (if (not minibuffer-smart-completion-tracking-behavior)
 	       nil
 	     (make-local-variable 'mode-motion-hook)
@@ -394,8 +404,12 @@ See also the variable completion-highlight-first-word-only for control over
                (if (consp initial-contents)
                    (progn
                      (insert (car initial-contents))
-                     (goto-char (1+ (cdr initial-contents))))
-                   (insert initial-contents)))
+                     (goto-char (1+ (cdr initial-contents)))
+		     (setq current-minibuffer-contents (car initial-contents)
+			   current-minibuffer-point (cdr initial-contents)))
+		 (insert initial-contents)
+		 (setq current-minibuffer-contents initial-contents
+		       current-minibuffer-point (point))))
            (use-local-map (or keymap minibuffer-local-map))
            (let ((mouse-grabbed-buffer
 		  (and minibuffer-smart-completion-tracking-behavior
@@ -413,6 +427,8 @@ See also the variable completion-highlight-first-word-only for control over
                                                     (t
                                                      0)))
                  (minibuffer-scroll-window owindow))
+	     (setq initial-minibuffer-history-position
+		   minibuffer-history-position)
 	     (if abbrev-table
 		 (setq local-abbrev-table abbrev-table
 		       abbrev-mode t))
@@ -1174,7 +1190,7 @@ If N is negative, find the next or Nth next match."
    (let ((enable-recursive-minibuffers t)
 	 (minibuffer-history-sexp-flag nil))
      (if (eq 't (symbol-value minibuffer-history-variable))
-	 (error "history is not being recorded in this context"))
+	 (error "History is not being recorded in this context"))
      (list (read-from-minibuffer "Previous element matching (regexp): "
 				 (car minibuffer-history-search-history)
 				 minibuffer-local-map
@@ -1185,7 +1201,7 @@ If N is negative, find the next or Nth next match."
 	prevpos
 	(pos minibuffer-history-position))
     (if (eq history t)
-	(error "history is not being recorded in this context"))
+	(error "History is not being recorded in this context"))
     (while (/= n 0)
       (setq prevpos pos)
       (setq pos (min (max 1 (+ pos (if (< n 0) -1 1))) (length history)))
@@ -1200,6 +1216,8 @@ If N is negative, find the next or Nth next match."
                             (nth (1- pos) history)))
 	  (setq n (+ n (if (< n 0) 1 -1)))))
     (setq minibuffer-history-position pos)
+    (setq current-minibuffer-contents (buffer-string)
+	  current-minibuffer-point (point))
     (erase-buffer)
     (let ((elt (nth (1- pos) history)))
       (insert (if minibuffer-history-sexp-flag
@@ -1220,7 +1238,7 @@ If N is negative, find the previous or Nth previous match."
    (let ((enable-recursive-minibuffers t)
 	 (minibuffer-history-sexp-flag nil))
      (if (eq t (symbol-value minibuffer-history-variable))
-	 (error "history is not being recorded in this context"))
+	 (error "History is not being recorded in this context"))
      (list (read-from-minibuffer "Next element matching (regexp): "
 				 (car minibuffer-history-search-history)
 				 minibuffer-local-map
@@ -1233,32 +1251,36 @@ If N is negative, find the previous or Nth previous match."
   "Insert the next element of the minibuffer history into the minibuffer."
   (interactive "p")
   (if (eq 't (symbol-value minibuffer-history-variable))
-      (error "history is not being recorded in this context"))
-  (or (zerop n)
-      (let ((narg (min (max 1 (- minibuffer-history-position n))
-		       (length (symbol-value minibuffer-history-variable)))))
-	(if (or (zerop narg)
-		(= minibuffer-history-position narg))
-	    (error (if (>= n 0) ;; rewritten for I18N3 snarfing
-		       (format "No following item in %s"
-			       minibuffer-history-variable)
-		     (format "No preceding item in %s"
-			     minibuffer-history-variable)))
-	  (erase-buffer)
-	  (setq minibuffer-history-position narg)
-	  (let ((elt (nth (1- minibuffer-history-position)
-			  (symbol-value minibuffer-history-variable))))
-	    (insert
-	     (if (not (stringp elt))
-		 (let ((print-level nil))
-		   (condition-case nil
-		       (let ((print-readably t)
-			     (print-escape-newlines t))
-			 (prin1-to-string elt))
-		     (error (prin1-to-string elt))))
-	       elt)))
-	  ;; FSF has point-min here.
-	  (goto-char (point-max))))))
+      (error "History is not being recorded in this context"))
+  (unless (zerop n)
+    (when (eq minibuffer-history-position
+	      initial-minibuffer-history-position)
+      (setq current-minibuffer-contents (buffer-string)
+	    current-minibuffer-point (point)))
+    (let ((narg (- minibuffer-history-position n)))
+      (cond ((< narg 0)
+	     (error "No following item in %s" minibuffer-history-variable))
+	    ((> narg (length (symbol-value minibuffer-history-variable)))
+	     (error "No preceding item in %s" minibuffer-history-variable)))
+      (erase-buffer)
+      (setq minibuffer-history-position narg)
+      (if (eq narg initial-minibuffer-history-position)
+	  (progn
+	    (insert current-minibuffer-contents)
+	    (goto-char current-minibuffer-point))
+	(let ((elt (nth (1- minibuffer-history-position)
+			(symbol-value minibuffer-history-variable))))
+	  (insert
+	   (if (not (stringp elt))
+	       (let ((print-level nil))
+		 (condition-case nil
+		     (let ((print-readably t)
+			   (print-escape-newlines t))
+		       (prin1-to-string elt))
+		   (error (prin1-to-string elt))))
+	     elt)))
+	;; FSF has point-min here.
+	(goto-char (point-max))))))
 
 (defun previous-history-element (n)
   "Inserts the previous element of the minibuffer history into the minibuffer."

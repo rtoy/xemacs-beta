@@ -39,8 +39,7 @@ extern int errno;
 
 char *prog_name;
 
-static int touchy_mkdir (path)
-     char *path;
+static int touchy_mkdir (char *path)
 {
   struct stat buf;
 
@@ -62,9 +61,7 @@ static int touchy_mkdir (path)
 }
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char *argv[])
 {
   prog_name = *argv;
 

@@ -619,7 +619,7 @@ CountNodes(Tree *tree)
     FOREACH_CHILD(child, tree)
       num_nodes += CountNodes(child);
   }
-  return (num_nodes);
+  return num_nodes;
 }
 
 
@@ -790,20 +790,20 @@ SearchTree(Tree *tree, int x, int y, Tree **node)
   Tree *child;
 
   if (tree == NULL)
-    return (FALSE);
+    return FALSE;
 
   if (PT_IN_RECT(x, y, tree->pos.x, tree->pos.y,
 		 tree->pos.x + tree->width,
 		 tree->pos.y + tree->height)) {
     *node = tree;
-    return (TRUE);
+    return TRUE;
   }
   if (tree->child && (PT_IN_EXTENT(x, y, tree->subextent)))
     FOREACH_CHILD(child, tree) {
       if (SearchTree(child, x, y, node))
-	return (TRUE);
+	return TRUE;
     }
-  return (FALSE);
+  return FALSE;
 }
 
 

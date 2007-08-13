@@ -1374,10 +1374,6 @@ See also the function `substitute-in-file-name'.
 another older version of expand-file-name;
 #endif
 
-/* not a full declaration because realpath() is typed differently
-   on different systems */
-extern char *realpath ();
-
 DEFUN ("file-truename", Ffile_truename, 1, 2, 0, /*
 Return the canonical name of the given FILE.
 Second arg DEFAULT is directory to start with if FILE is relative
@@ -2036,7 +2032,7 @@ Delete a directory.  One argument, a file name or directory name string.
 
   GCPRO1 (dirname);
   dirname = Fexpand_file_name (dirname, Qnil);
-  dirname =  Fdirectory_file_name (dirname);
+  dirname = Fdirectory_file_name (dirname);
 
   handler = Ffind_file_name_handler (dirname, Qdelete_directory);
   UNGCPRO;
@@ -4468,12 +4464,12 @@ Non-nil second argument means save only current buffer.
 		 pointers into buffers which may get blown away by
 		 handlers. */
 	      {
-		struct gcpro gcpro1, gcpro2;
-		GCPRO2 (buf, tail);
+		struct gcpro ngcpro1, ngcpro2;
+		NGCPRO2 (buf, tail);
 		condition_case_1 (Qt,
 				  auto_save_1, Qnil,
 				  auto_save_error, Qnil);
-		UNGCPRO;
+		NUNGCPRO;
 	      }
 	      /* Handler killed our saved current-buffer!  Pick any. */
 	      if (!BUFFER_LIVE_P (XBUFFER (old)))

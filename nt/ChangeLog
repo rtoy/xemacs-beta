@@ -1,3 +1,27 @@
+Thu June 31 21:16:21 1997 davidh
+
+	* nt/TODO created.
+
+	* nt/X11.patch created to help with the X build.
+	
+	* August Hill provided:
+ 	  a patch to fix the _WRETCODE undefined symbol,
+	  a patch to fix a problem with dired
+
+	  and generally helped clarify the build instructions.
+
+ 	* Synced with 20.3b10 (Athens).
+
+	* Made DIRECTORY_SEP be '\\'. Until I can change all code to
+          use the macro, I decided this would be easiest.
+
+	* Modified src/fileio.c to only open files in O_BINARY. This
+	  causes files to be opened and written without automatically 
+	  writing ^M 's to the end of each line. MULE ought to sort this
+          in theory, but I am less than convinced.
+
+	* Updated the nt/README to provide a little more help.
+
 Thu May 29 23:11:21 1997 davidh
 
 	* Synced with 20.3b2.

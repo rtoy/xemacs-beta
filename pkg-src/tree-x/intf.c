@@ -105,23 +105,16 @@ char          PauseAfterStep    = FALSE;
 static Tree *PopupNode;		/* node selected for popup */
 static NodePosition NodePos;
 
-static Widget mainWindow;
-static Widget topForm;
-
-static Widget statusLabel;
 static Widget statusText;
 
 static Widget scrolledWindow;
 
 static Widget helpShell;
 static Widget helpForm;
-static Widget helpScrollWindow;
 static Widget helpText;
 static Widget helpDoneButton;
 static Widget helpTitle;
-static Widget helpFrame;
 
-static Widget treeMenubar;
 static Widget treeMenus[NUM_MENUS];
 static Widget treeMenuBtns[NUM_MENUS - 1];   /* don't need button for */
 					     /* node popup menu       */
@@ -392,64 +385,53 @@ Pause(void)
 static void
 BuildPopupMenus(Widget parent)
 {
-  Arg      args[2];
-  String   xstr;
+  Arg al[2];
 
   labelStr[STR_NODE_COLLAPSE] = "Collapse Node";
   labelStr[STR_NODE_EXPAND]   = "Expand Node";
 
-  treeMenus[NODE_MENU] = XtVaCreatePopupShell("nodeMenu",
-					      simpleMenuWidgetClass,
-					      parent,
-					      XtNlabel, " ",
-					      NULL);
+  XtSetArg (al [0], XtNlabel, " ");
+  treeMenus[NODE_MENU] =
+    XtCreatePopupShell("nodeMenu", simpleMenuWidgetClass, parent, al, 1);
 
-  (void)  XtVaCreateManagedWidget("nodeMenuAddChild", smeLineObjectClass,
-				  treeMenus[NODE_MENU],
-				  NULL);
+  XtCreateManagedWidget("nodeMenuAddChild", smeLineObjectClass,
+			treeMenus[NODE_MENU], NULL, 0);
 
+  XtSetArg (al [0], XtNlabel, "Add Child");
   nodeMenuItems[NODE_MENU_ADD_CHILD] =
-    XtVaCreateManagedWidget("nodeMenuAddChild", smeBSBObjectClass,
-			    treeMenus[NODE_MENU],
-			    XtNlabel, "Add Child",
-			    NULL);
+    XtCreateManagedWidget("nodeMenuAddChild", smeBSBObjectClass,
+			  treeMenus[NODE_MENU], al, 1);
   XtAddCallback(nodeMenuItems[NODE_MENU_ADD_CHILD],
 		XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_ADD_CHILD);
 
+  XtSetArg (al [0], XtNlabel, "Add Sibling Before");
   nodeMenuItems[NODE_MENU_ADD_BEFORE] =
-    XtVaCreateManagedWidget("nodeMenuAddSiblingBefore", smeBSBObjectClass,
-			    treeMenus[NODE_MENU],
-			    XtNlabel, "Add Sibling Before",
-			    NULL);
+    XtCreateManagedWidget("nodeMenuAddSiblingBefore", smeBSBObjectClass,
+			  treeMenus[NODE_MENU], al, 1);
   XtAddCallback(nodeMenuItems[NODE_MENU_ADD_BEFORE],
-		 XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_ADD_BEFORE);
+		XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_ADD_BEFORE);
 
-   nodeMenuItems[NODE_MENU_ADD_AFTER] =
-       XtVaCreateManagedWidget("nodeMenuAddSiblingAfter", smeBSBObjectClass,
-			       treeMenus[NODE_MENU],
-			       XtNlabel, "Add Sibling After",
-			       NULL);
-   XtAddCallback(nodeMenuItems[NODE_MENU_ADD_AFTER],
-		 XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_ADD_AFTER);
+  XtSetArg (al [0], XtNlabel, "Add Sibling After");
+  nodeMenuItems[NODE_MENU_ADD_AFTER] =
+    XtCreateManagedWidget("nodeMenuAddSiblingAfter", smeBSBObjectClass,
+			  treeMenus[NODE_MENU], al, 1);
+  XtAddCallback(nodeMenuItems[NODE_MENU_ADD_AFTER],
+		XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_ADD_AFTER);
 
-   nodeMenuItems[NODE_MENU_ELISION] =
-       XtVaCreateManagedWidget("nodeMenuElision", smeBSBObjectClass,
-			       treeMenus[NODE_MENU],
-			       XtNlabel, labelStr[STR_NODE_COLLAPSE],
-			       NULL);
-   XtAddCallback(nodeMenuItems[NODE_MENU_ELISION],
-		 XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_ELISION);
+  XtSetArg (al [0], XtNlabel, labelStr[STR_NODE_COLLAPSE]);
+  nodeMenuItems[NODE_MENU_ELISION] =
+    XtCreateManagedWidget("nodeMenuElision", smeBSBObjectClass,
+			  treeMenus[NODE_MENU], al, 1);
+  XtAddCallback(nodeMenuItems[NODE_MENU_ELISION],
+		XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_ELISION);
 
 
-   nodeMenuItems[NODE_MENU_DELETE] =
-       XtVaCreateManagedWidget("nodeMenuDeleteNode", smeBSBObjectClass,
-			       treeMenus[NODE_MENU],
-			       XtNlabel, "Delete Node",
-			       NULL);
-   XtAddCallback(nodeMenuItems[NODE_MENU_DELETE],
-		 XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_DELETE);
-
-
+  XtSetArg (al [0], XtNlabel, "Delete Node");
+  nodeMenuItems[NODE_MENU_DELETE] =
+    XtCreateManagedWidget("nodeMenuDeleteNode", smeBSBObjectClass,
+			    treeMenus[NODE_MENU], al, 1);
+  XtAddCallback(nodeMenuItems[NODE_MENU_DELETE],
+		XtNcallback, NodeMenu_CB, (XtPointer) NODE_MENU_DELETE);
 }
 
 /* ----------------------------------------------------------------------------
@@ -463,155 +445,128 @@ BuildPopupMenus(Widget parent)
 static void
 BuildMenubar(Widget parent)
 {
-   Arg al[4];
-   int i;
-   Widget box;
+  Arg al[4];
+  Widget box;
 
-   XtSetArg (al [0], XtNshowGrip, FALSE);
-   XtSetArg (al [1], XtNborderWidth, 0);
-   box = XtCreateManagedWidget("menuBox",
-			       boxWidgetClass,
-			       parent,
-			       al, 2);
+  XtSetArg (al [0], XtNshowGrip, FALSE);
+  XtSetArg (al [1], XtNborderWidth, 0);
+  box = XtCreateManagedWidget("menuBox", boxWidgetClass, parent, al, 2);
 
-   /* menu button widgets */
-   XtSetArg (al [0], XtNmenuName, "treeMenu");
-   treeMenuBtns[TREE_MENU] =
-     XtCreateManagedWidget("treeMenuBtn",
-			   menuButtonWidgetClass,
-			   box, al, 1);
-   XtSetArg (al [0], XtNmenuName, "layoutMenu");
-   treeMenuBtns[LAYOUT_MENU] =
-     XtCreateManagedWidget("layoutMenuBtn",
-			   menuButtonWidgetClass,
-			   box, al, 1);
+  /* menu button widgets */
+  XtSetArg (al [0], XtNmenuName, "treeMenu");
+  treeMenuBtns[TREE_MENU] =
+    XtCreateManagedWidget("treeMenuBtn", menuButtonWidgetClass, box, al, 1);
+  XtSetArg (al [0], XtNmenuName, "layoutMenu");
+  treeMenuBtns[LAYOUT_MENU] =
+    XtCreateManagedWidget("layoutMenuBtn", menuButtonWidgetClass, box, al, 1);
 
-   helpBtn = XtCreateManagedWidget("helpBtn",
-				   commandWidgetClass,
-				   box, NULL, 0);
+  helpBtn = XtCreateManagedWidget("helpBtn", commandWidgetClass, box, NULL, 0);
 
-   XtAddCallback(helpBtn, XtNcallback, Help_CB, NULL);
+  XtAddCallback(helpBtn, XtNcallback, Help_CB, NULL);
 
-   /* create pulldown menus */
+  /* create pulldown menus */
 
-   treeMenus[TREE_MENU] = XtCreatePopupShell("treeMenu",
-					     simpleMenuWidgetClass,
-					     treeMenuBtns[TREE_MENU],
-					     NULL, 0);
+  treeMenus[TREE_MENU] =
+    XtCreatePopupShell("treeMenu", simpleMenuWidgetClass,
+		       treeMenuBtns[TREE_MENU], NULL, 0);
 
-   treeMenus[LAYOUT_MENU] = XtCreatePopupShell("layoutMenu",
-					       simpleMenuWidgetClass,
-					       treeMenuBtns[LAYOUT_MENU],
-					       NULL, 0);
+  treeMenus[LAYOUT_MENU] =
+    XtCreatePopupShell("layoutMenu", simpleMenuWidgetClass,
+		       treeMenuBtns[LAYOUT_MENU], NULL, 0);
 
 
-   /* adding menu entries */
+  /* adding menu entries */
 
-   /* Tree menu */
+  /* Tree menu */
 
-   treeMenuItems[TREE_MENU_NEW] =
-     XtCreateManagedWidget("treeMenuNew", smeBSBObjectClass,
-			   treeMenus[TREE_MENU], NULL, 0);
-   XtAddCallback(treeMenuItems[TREE_MENU_NEW],
-		 XtNcallback, TreeMenu_CB, TREE_MENU_NEW);
+  treeMenuItems[TREE_MENU_NEW] =
+    XtCreateManagedWidget("treeMenuNew", smeBSBObjectClass,
+			  treeMenus[TREE_MENU], NULL, 0);
+  XtAddCallback(treeMenuItems[TREE_MENU_NEW],
+		XtNcallback, TreeMenu_CB, TREE_MENU_NEW);
 
-   treeMenuItems[TREE_MENU_LOAD] =
-       XtVaCreateManagedWidget("treeMenuLoad", smeBSBObjectClass,
-			       treeMenus[TREE_MENU],
-			       NULL);
-   XtAddCallback(treeMenuItems[TREE_MENU_LOAD],
-		 XtNcallback, TreeMenu_CB, (XtPointer) TREE_MENU_LOAD);
+  treeMenuItems[TREE_MENU_LOAD] =
+    XtCreateManagedWidget("treeMenuLoad", smeBSBObjectClass,
+			  treeMenus[TREE_MENU], NULL, 0);
+  XtAddCallback(treeMenuItems[TREE_MENU_LOAD],
+		XtNcallback, TreeMenu_CB, (XtPointer) TREE_MENU_LOAD);
 
-   treeMenuItems[TREE_MENU_SAVE] =
-       XtVaCreateManagedWidget("treeMenuSave", smeBSBObjectClass,
-			       treeMenus[TREE_MENU],
-			       NULL);
-   XtAddCallback(treeMenuItems[TREE_MENU_SAVE],
-		 XtNcallback, TreeMenu_CB, (XtPointer) TREE_MENU_SAVE);
+  treeMenuItems[TREE_MENU_SAVE] =
+    XtCreateManagedWidget("treeMenuSave", smeBSBObjectClass,
+			  treeMenus[TREE_MENU], NULL, 0);
+  XtAddCallback(treeMenuItems[TREE_MENU_SAVE],
+		XtNcallback, TreeMenu_CB, (XtPointer) TREE_MENU_SAVE);
 
-   treeMenuItems[TREE_MENU_SEP1] =
-       XtVaCreateManagedWidget("treeMenuSep1", smeLineObjectClass,
-			       treeMenus[TREE_MENU],
-			       NULL);
+  treeMenuItems[TREE_MENU_SEP1] =
+    XtCreateManagedWidget("treeMenuSep1", smeLineObjectClass,
+			  treeMenus[TREE_MENU], NULL, 0);
 
 #ifdef COMMENT
-   treeMenuItems[TREE_MENU_STATS] =
-       XtVaCreateManagedWidget("treeMenuStats", smeBSBObjectClass,
-			       treeMenus[TREE_MENU],
-			       XtNlabel, labelStr[STR_SHOW_STATS],
-			       NULL);
+  XtSetArg (al [0], XtNlabel, labelStr[STR_SHOW_STATS]);
+  treeMenuItems[TREE_MENU_STATS] =
+    XtCreateManagedWidget("treeMenuStats", smeBSBObjectClass,
+			  treeMenus[TREE_MENU], al, 1);
+  XtAddCallback(treeMenuItems[TREE_MENU_STATS],
+		XtNcallback, TreeMenu_CB, (XtPointer) TREE_MENU_STATS);
+  XtSetSensitive(treeMenuItems[TREE_MENU_STATS], FALSE);
 
-   XtAddCallback(treeMenuItems[TREE_MENU_STATS],
-		 XtNcallback, TreeMenu_CB, (XtPointer) TREE_MENU_STATS);
-
-   XtSetSensitive(treeMenuItems[TREE_MENU_STATS], FALSE);
-
-   treeMenuItems[TREE_MENU_SEP2] =
-       XtVaCreateManagedWidget("treeMenuSep2", smeLineObjectClass,
-			       treeMenus[TREE_MENU],
-			       NULL);
+  treeMenuItems[TREE_MENU_SEP2] =
+    XtCreateManagedWidget("treeMenuSep2", smeLineObjectClass,
+			  treeMenus[TREE_MENU], NULL, 0);
 #endif /* COMMENT */
 
-   treeMenuItems[TREE_MENU_QUIT] =
-       XtVaCreateManagedWidget("treeMenuQuit", smeBSBObjectClass,
-			       treeMenus[TREE_MENU],
-			       NULL);
-   XtAddCallback(treeMenuItems[TREE_MENU_QUIT],
-		 XtNcallback, TreeMenu_CB, (XtPointer) TREE_MENU_QUIT);
+  treeMenuItems[TREE_MENU_QUIT] =
+    XtCreateManagedWidget("treeMenuQuit", smeBSBObjectClass,
+			  treeMenus[TREE_MENU], NULL, 0);
+  XtAddCallback(treeMenuItems[TREE_MENU_QUIT],
+		XtNcallback, TreeMenu_CB, (XtPointer) TREE_MENU_QUIT);
 
 
 
-   /* Layout menu */
+  /* Layout menu */
 
 #ifdef COMMENT
-   treeMenuItems[LAYOUT_MENU_FIXED] =
-       XtVaCreateManagedWidget("layoutMenuFixed", smeBSBObjectClass,
-			       treeMenus[LAYOUT_MENU],
-			       XtNleftMargin, 18,
-			       NULL);
+  XtSetArg (al [0], XtNleftMargin, 18);
+  treeMenuItems[LAYOUT_MENU_FIXED] =
+    XtCreateManagedWidget("layoutMenuFixed", smeBSBObjectClass,
+			  treeMenus[LAYOUT_MENU], al, 1);
 
-   XtAddCallback(treeMenuItems[LAYOUT_MENU_FIXED],
-		 XtNcallback, LayoutMenu_CB, (XtPointer) LAYOUT_MENU_FIXED);
+  XtAddCallback(treeMenuItems[LAYOUT_MENU_FIXED],
+		XtNcallback, LayoutMenu_CB, (XtPointer) LAYOUT_MENU_FIXED);
 
-   treeMenuItems[LAYOUT_MENU_VARIABLE] =
-       XtVaCreateManagedWidget("layoutMenuVariable", smeBSBObjectClass,
-			       treeMenus[LAYOUT_MENU],
-			       XtNleftMargin, 18,
-			       NULL);
+  XtSetArg (al [0], XtNleftMargin, 18);
+  treeMenuItems[LAYOUT_MENU_VARIABLE] =
+    XtCreateManagedWidget("layoutMenuVariable", smeBSBObjectClass,
+			  treeMenus[LAYOUT_MENU], al, 1);
 
-   XtAddCallback(treeMenuItems[LAYOUT_MENU_VARIABLE],
-		 XtNcallback, LayoutMenu_CB, (XtPointer) LAYOUT_MENU_VARIABLE);
+  XtAddCallback(treeMenuItems[LAYOUT_MENU_VARIABLE],
+		XtNcallback, LayoutMenu_CB, (XtPointer) LAYOUT_MENU_VARIABLE);
 
 
-   treeMenuItems[LAYOUT_MENU_SEP1] =
-       XtVaCreateManagedWidget("layoutSep1", smeLineObjectClass,
-			       treeMenus[LAYOUT_MENU],
-			       NULL);
+  treeMenuItems[LAYOUT_MENU_SEP1] =
+    XtCreateManagedWidget("layoutSep1", smeLineObjectClass,
+			  treeMenus[LAYOUT_MENU], NULL, 0)
 #endif /* COMMENT */
 
-   treeMenuItems[LAYOUT_MENU_SPACING] =
-       XtVaCreateManagedWidget("layoutMenuSpacing", smeBSBObjectClass,
-			       treeMenus[LAYOUT_MENU],
-			       XtNleftMargin, 18,
-			       NULL);
-   XtAddCallback(treeMenuItems[LAYOUT_MENU_SPACING],
-		 XtNcallback, LayoutMenu_CB, (XtPointer) LAYOUT_MENU_SPACING);
+  XtSetArg (al [0], XtNleftMargin, 18);
+  treeMenuItems[LAYOUT_MENU_SPACING] =
+    XtCreateManagedWidget("layoutMenuSpacing", smeBSBObjectClass,
+			    treeMenus[LAYOUT_MENU], al, 1);
+  XtAddCallback(treeMenuItems[LAYOUT_MENU_SPACING],
+		XtNcallback, LayoutMenu_CB, (XtPointer) LAYOUT_MENU_SPACING);
 
-   treeMenuItems[LAYOUT_MENU_SEP2] =
-       XtVaCreateManagedWidget("layoutMenuSep2", smeLineObjectClass,
-			       treeMenus[LAYOUT_MENU],
-			       NULL);
+  treeMenuItems[LAYOUT_MENU_SEP2] =
+    XtCreateManagedWidget("layoutMenuSep2", smeLineObjectClass,
+			  treeMenus[LAYOUT_MENU], NULL, 0);
 
-   /* the following is a toggle button - we hack it using a bitmap */
-   treeMenuItems[LAYOUT_MENU_ALIGN_NODES] =
-       XtVaCreateManagedWidget("layoutMenuAlignNodes", smeBSBObjectClass,
-			       treeMenus[LAYOUT_MENU],
-			       XtNleftMargin, 18,
-			       NULL);
-   XtAddCallback(treeMenuItems[LAYOUT_MENU_ALIGN_NODES],
-		 XtNcallback, LayoutMenu_CB,
-		 (XtPointer) LAYOUT_MENU_ALIGN_NODES);
-
+  /* the following is a toggle button - we hack it using a bitmap */
+  XtSetArg (al [0], XtNleftMargin, 18);
+  treeMenuItems[LAYOUT_MENU_ALIGN_NODES] =
+    XtCreateManagedWidget("layoutMenuAlignNodes", smeBSBObjectClass,
+			  treeMenus[LAYOUT_MENU], al, 1);
+  XtAddCallback(treeMenuItems[LAYOUT_MENU_ALIGN_NODES],
+		XtNcallback, LayoutMenu_CB,
+		(XtPointer) LAYOUT_MENU_ALIGN_NODES);
 }
 
 /* ----------------------------------------------------------------------------
@@ -624,7 +579,7 @@ BuildMenubar(Widget parent)
 static void
 BuildDialogs (Widget parent)
 {
-  int	i;
+  Arg al [20]; int ac;
   Widget
     tmpwidget, dlgForm, dlgValue,
     dlgLevelLabel, dlgSiblingLabel,
@@ -642,18 +597,14 @@ BuildDialogs (Widget parent)
   errStr[ERR_MANYROOT] = "Input file has more than one root label.";
 
 
-  dialog[DLG_NEW] = XtVaCreatePopupShell("dlgNewTree",
-					 transientShellWidgetClass,
-					 parent,
-					 XtNresizable, TRUE,
-					 NULL);
+  XtSetArg (al [0], XtNresizable, TRUE);
+  dialog[DLG_NEW] = XtCreatePopupShell("dlgNewTree", transientShellWidgetClass,
+				       parent, al, 1);
 
-  tmpwidget = XtVaCreateManagedWidget("dlgNewTreeForm",
-				      dialogWidgetClass,
-				      dialog[DLG_NEW],
-				      XtNresizable, TRUE,
-				      XtNvalue, "",
-				      NULL);
+  XtSetArg (al [0], XtNresizable, TRUE);
+  XtSetArg (al [1], XtNvalue, "");
+  tmpwidget = XtCreateManagedWidget("dlgNewTreeForm", dialogWidgetClass,
+				    dialog[DLG_NEW], al, 2);
 
   XawDialogAddButton(tmpwidget, "dlgNewTreeOk", NewTree_CB,
 		     (XtPointer) TRUE);
@@ -667,19 +618,15 @@ BuildDialogs (Widget parent)
      ("<Key>Return:dlg_activate(dlgNewTreeOk)\n"));
 
 
-  dialog[DLG_NODE_NAME] = XtVaCreatePopupShell("dlgNodeName",
-					       transientShellWidgetClass,
-					       TreeTopLevel,
-					       XtNresizable, TRUE,
-					       NULL);
+  XtSetArg (al [0], XtNresizable, TRUE);
+  dialog[DLG_NODE_NAME] = XtCreatePopupShell("dlgNodeName",
+					     transientShellWidgetClass,
+					     TreeTopLevel, al, 1);
 
-
-  tmpwidget= XtVaCreateManagedWidget("dlgNodeNameForm",
-				     dialogWidgetClass,
-				     dialog[DLG_NODE_NAME],
-				     XtNresizable, TRUE,
-				     XtNvalue, "",
-				     NULL);
+  XtSetArg (al [0], XtNresizable, TRUE);
+  XtSetArg (al [1], XtNvalue, "");
+  tmpwidget= XtCreateManagedWidget("dlgNodeNameForm", dialogWidgetClass,
+				   dialog[DLG_NODE_NAME], al, 2);
 
   XawDialogAddButton(tmpwidget, "dlgNodeNameOk", NodeLabel_CB,
 		     (XtPointer) TRUE);
@@ -693,20 +640,17 @@ BuildDialogs (Widget parent)
      ("<Key>Return: dlg_activate(dlgNodeNameOk)\n"));
 
 
-  dialog[DLG_FILE] = XtVaCreatePopupShell("dlgFile",
-					  transientShellWidgetClass,
-					  TreeTopLevel,
-					  XtNresizable, TRUE,
-					  NULL);
+  XtSetArg (al [0], XtNresizable, TRUE);
+  dialog[DLG_FILE] = XtCreatePopupShell("dlgFile",
+					transientShellWidgetClass,
+					TreeTopLevel, al, 1);
 
-  tmpwidget = XtVaCreateManagedWidget("dlgFileForm",
-				      dialogWidgetClass,
-				      dialog[DLG_FILE],
-				      XtNresizable, TRUE,
-				      XtNvalue, "",
-				      NULL);
+  XtSetArg (al [0], XtNresizable, TRUE);
+  XtSetArg (al [1], XtNvalue, "");
+  tmpwidget = XtCreateManagedWidget("dlgFileForm", dialogWidgetClass,
+				    dialog[DLG_FILE], al, 2);
 
-  XawDialogAddButton(tmpwidget, "dlgFileOk", File_CB, (XtPointer) TRUE);
+  XawDialogAddButton(tmpwidget, "dlgFileOk",     File_CB, (XtPointer) TRUE);
   XawDialogAddButton(tmpwidget, "dlgFileCancel", File_CB, (XtPointer) FALSE);
 
   dlgValue = XtNameToWidget(tmpwidget, "value");
@@ -716,95 +660,88 @@ BuildDialogs (Widget parent)
      ("<Key>Return:dlg_activate(dlgFileOk)\n"));
 
 
-  dialog[DLG_INFO] = XtVaCreatePopupShell("dlgInfo",
-					  transientShellWidgetClass,
-					  TreeTopLevel,
-					  XtNresizable, TRUE,
-					  NULL);
+  XtSetArg (al [0], XtNresizable, TRUE);
+  dialog[DLG_INFO] = XtCreatePopupShell("dlgInfo",
+					transientShellWidgetClass,
+					TreeTopLevel, al, 1);
 
-  tmpwidget = XtVaCreatePopupShell("dlgInfoForm",
-				   dialogWidgetClass,
-				   dialog[DLG_INFO],
-				   XtNresizable, TRUE,
-				   XtNvalue, "",
-				   NULL);
+  XtSetArg (al [0], XtNresizable, TRUE);
+  XtSetArg (al [1], XtNvalue, "");
+  tmpwidget = XtCreatePopupShell("dlgInfoForm",
+				 dialogWidgetClass,
+				 dialog[DLG_INFO], al, 2);
 
   XawDialogAddButton(tmpwidget, "dlgInfoButton", Popdown_CB,
 		     (XtPointer) dialog[DLG_INFO]);
 
 
-  dialog[DLG_ERROR] = XtVaCreatePopupShell("dlgError",
-					   transientShellWidgetClass,
-					   TreeTopLevel,
-					   XtNresizable, TRUE,
-					   NULL);
+  XtSetArg (al [0], XtNresizable, TRUE);
+  dialog[DLG_ERROR] = XtCreatePopupShell("dlgError",
+					 transientShellWidgetClass,
+					 TreeTopLevel, al, 1);
 
-  tmpwidget = XtVaCreateManagedWidget("dlgErrorForm",
+  XtSetArg (al [0], XtNresizable, TRUE);
+  XtSetArg (al [1], XtNvalue, "");
+  tmpwidget = XtCreateManagedWidget("dlgErrorForm",
 				      dialogWidgetClass,
-				      dialog[DLG_ERROR],
-				      XtNresizable, TRUE,
-				      XtNvalue, "",
-				      NULL);
+				      dialog[DLG_ERROR], al, 2);
 
   XawDialogAddButton(tmpwidget, "dlgErrorButton", Popdown_CB,
 		     (XtPointer) dialog[DLG_ERROR]);
 
 
-  dialog[DLG_SPACING] = XtVaCreatePopupShell("dlgSpacing",
-					     transientShellWidgetClass,
-					     TreeTopLevel,
-					     XtNresizable, FALSE,
-					     NULL);
-  dlgForm = XtVaCreateManagedWidget("dlgSpacingForm",
-				    formWidgetClass,
-				    dialog[DLG_SPACING],
-				    XtNresizable, FALSE,
-				    NULL);
+  XtSetArg (al [0], XtNresizable, FALSE);
+  dialog[DLG_SPACING] = XtCreatePopupShell("dlgSpacing",
+					   transientShellWidgetClass,
+					   TreeTopLevel, al, 1);
 
-  dlgLevelLabel = XtVaCreateManagedWidget("dlgLevelLabel",
-					  labelWidgetClass,
-					  dlgForm,
-					  XtNfromVert, NULL,
-					  XtNfromHoriz, NULL,
-					  XtNtop, XawChainTop,
-					  XtNbottom, XawChainTop,
-					  XtNleft, XawChainLeft,
-					  XtNright, XawChainLeft,
-					  XtNborderWidth, 0,
-					  NULL);
+  XtSetArg (al [0], XtNresizable, FALSE);
+  dlgForm = XtCreateManagedWidget("dlgSpacingForm",
+				  formWidgetClass,
+				  dialog[DLG_SPACING], al, 1);
 
-  dlgLevelValuator = XtVaCreateManagedWidget("dlgLevelValuator",
-					     labelWidgetClass,
-					     dlgForm,
-					     XtNfromVert, NULL,
-					     XtNfromHoriz, dlgLevelLabel,
-					     XtNtop, XawChainTop,
-					     XtNbottom, XawChainTop,
-					     XtNleft, XawChainLeft,
-					     XtNright, XawChainLeft,
-					     XtNlabel, "   ",
-					     NULL);
+  ac = 0;
+  XtSetArg (al [ac], XtNfromVert,  NULL);      ac++;
+  XtSetArg (al [ac], XtNfromHoriz, NULL);      ac++;
+  XtSetArg (al [ac], XtNtop,    XawChainTop);  ac++;
+  XtSetArg (al [ac], XtNbottom, XawChainTop);  ac++;
+  XtSetArg (al [ac], XtNleft,   XawChainLeft); ac++;
+  XtSetArg (al [ac], XtNright,  XawChainLeft); ac++;
+  XtSetArg (al [ac], XtNborderWidth, 0);       ac++;
+  dlgLevelLabel = XtCreateManagedWidget("dlgLevelLabel", labelWidgetClass,
+					dlgForm, al, ac);
 
+  ac = 0;
+  XtSetArg (al [ac], XtNfromVert,  NULL);          ac++;
+  XtSetArg (al [ac], XtNfromHoriz, dlgLevelLabel); ac++;
+  XtSetArg (al [ac], XtNtop,    XawChainTop);      ac++;
+  XtSetArg (al [ac], XtNbottom, XawChainTop);      ac++;
+  XtSetArg (al [ac], XtNleft,   XawChainLeft);     ac++;
+  XtSetArg (al [ac], XtNright,  XawChainLeft);     ac++;
+  XtSetArg (al [ac], XtNlabel, "   ");             ac++;
+  dlgLevelValuator = XtCreateManagedWidget("dlgLevelValuator",
+					   labelWidgetClass,
+					   dlgForm, al, ac);
 
-  dlgLevelScale = XtVaCreateManagedWidget("dlgLevelScale",
-					  pannerWidgetClass,
-					  dlgForm,
-					  XtNfromVert, dlgLevelLabel,
-					  XtNfromHoriz, NULL,
-					  XtNtop, XawChainTop,
-					  XtNbottom, XawChainTop,
-					  XtNleft, XawChainLeft,
-					  XtNright, XawChainLeft,
-					  XtNcanvasWidth, 110,
-					  XtNdefaultScale, 1,
-					  XtNinternalSpace, 1,
-					  XtNrubberBand, FALSE,
-					  XtNshadowThickness, 0,
-					  XtNallowOff, FALSE,
-					  XtNwidth, 200,
-					  XtNsliderWidth, 10,
-					  XtNheight, 15,
-					  NULL);
+  ac = 0;
+  XtSetArg (al [ac], XtNfromVert,  dlgLevelLabel); ac++;
+  XtSetArg (al [ac], XtNfromHoriz, NULL);          ac++;
+  XtSetArg (al [ac], XtNtop,    XawChainTop);      ac++;
+  XtSetArg (al [ac], XtNbottom, XawChainTop);      ac++;
+  XtSetArg (al [ac], XtNleft,   XawChainLeft);     ac++;
+  XtSetArg (al [ac], XtNright,  XawChainLeft);     ac++;
+  XtSetArg (al [ac], XtNcanvasWidth, 110);         ac++;
+  XtSetArg (al [ac], XtNdefaultScale, 1);          ac++;
+  XtSetArg (al [ac], XtNinternalSpace, 1);         ac++;
+  XtSetArg (al [ac], XtNrubberBand, FALSE);        ac++;
+  XtSetArg (al [ac], XtNshadowThickness, 0);       ac++;
+  XtSetArg (al [ac], XtNallowOff, FALSE);          ac++;
+  XtSetArg (al [ac], XtNwidth, 200);               ac++;
+  XtSetArg (al [ac], XtNsliderWidth, 10);          ac++;
+  XtSetArg (al [ac], XtNheight, 15);               ac++;
+  dlgLevelScale = XtCreateManagedWidget("dlgLevelScale",
+					pannerWidgetClass,
+					dlgForm, al, ac);
 
   XtOverrideTranslations(dlgLevelScale, XtParseTranslationTable("\
 <Btn2Down>:		start()\n\
@@ -817,48 +754,49 @@ BuildDialogs (Widget parent)
   XtAddCallback(dlgLevelScale, XtNreportCallback, levelvalue_CB,
 		(XtPointer) &dlgLevelValue);
 
-  dlgSiblingLabel = XtVaCreateManagedWidget("dlgSiblingLabel",
-					    labelWidgetClass,
-					    dlgForm,
-					    XtNfromVert, dlgLevelScale,
-					    XtNfromHoriz, NULL,
-					    XtNtop, XawChainTop,
-					    XtNbottom, XawChainTop,
-					    XtNleft, XawChainLeft,
-					    XtNright, XawChainLeft,
-					    XtNborderWidth, 0,
-					    NULL);
+  ac = 0;
+  XtSetArg (al [ac], XtNfromVert,  dlgLevelScale); ac++;
+  XtSetArg (al [ac], XtNfromHoriz, NULL);          ac++;
+  XtSetArg (al [ac], XtNtop,    XawChainTop);      ac++;
+  XtSetArg (al [ac], XtNbottom, XawChainTop);      ac++;
+  XtSetArg (al [ac], XtNleft,   XawChainLeft);     ac++;
+  XtSetArg (al [ac], XtNright,  XawChainLeft);     ac++;
+  XtSetArg (al [ac], XtNborderWidth, 0);           ac++;
+  dlgSiblingLabel = XtCreateManagedWidget("dlgSiblingLabel",
+					  labelWidgetClass,
+					  dlgForm, al, ac);
 
-  dlgSiblingValuator = XtVaCreateManagedWidget("dlgLevelValuator",
-					       labelWidgetClass,
-					       dlgForm,
-					       XtNfromVert, dlgLevelScale,
-					       XtNfromHoriz, dlgSiblingLabel,
-					       XtNtop, XawChainTop,
-					       XtNbottom, XawChainTop,
-					       XtNleft, XawChainLeft,
-					       XtNright, XawChainLeft,
-					       XtNlabel, "   ",
-					       NULL);
-  dlgSiblingScale = XtVaCreateManagedWidget("dlgSiblingScale",
-					    pannerWidgetClass,
-					    dlgForm,
-					    XtNfromVert, dlgSiblingLabel,
-					    XtNfromHoriz, NULL,
-					    XtNtop, XawChainTop,
-					    XtNbottom, XawChainTop,
-					    XtNleft, XawChainLeft,
-					    XtNright, XawChainLeft,
-					    XtNcanvasWidth, 110,
-					    XtNdefaultScale, 1,
-					    XtNinternalSpace, 1,
-					    XtNrubberBand, FALSE,
-					    XtNshadowThickness, 0,
-					    XtNallowOff, FALSE,
-					    XtNwidth, 200,
-					    XtNsliderWidth, 10,
-					    XtNheight, 15,
-					    NULL);
+  ac = 0;
+  XtSetArg (al [ac], XtNfromVert,  dlgLevelScale);   ac++;
+  XtSetArg (al [ac], XtNfromHoriz, dlgSiblingLabel); ac++;
+  XtSetArg (al [ac], XtNtop,    XawChainTop);        ac++;
+  XtSetArg (al [ac], XtNbottom, XawChainTop);        ac++;
+  XtSetArg (al [ac], XtNleft,   XawChainLeft);       ac++;
+  XtSetArg (al [ac], XtNright,  XawChainLeft);       ac++;
+  XtSetArg (al [ac], XtNlabel, "   ");               ac++;
+  dlgSiblingValuator = XtCreateManagedWidget("dlgLevelValuator",
+					     labelWidgetClass,
+					     dlgForm, al, ac);
+  
+  ac = 0;
+  XtSetArg (al [ac], XtNfromVert,  dlgSiblingLabel); ac++;
+  XtSetArg (al [ac], XtNfromHoriz, NULL);            ac++;
+  XtSetArg (al [ac], XtNtop,    XawChainTop);        ac++;
+  XtSetArg (al [ac], XtNbottom, XawChainTop);        ac++;
+  XtSetArg (al [ac], XtNleft,   XawChainLeft);       ac++;
+  XtSetArg (al [ac], XtNright,  XawChainLeft);       ac++;
+  XtSetArg (al [ac], XtNcanvasWidth, 110);           ac++;
+  XtSetArg (al [ac], XtNdefaultScale, 1);            ac++;
+  XtSetArg (al [ac], XtNinternalSpace, 1);           ac++;
+  XtSetArg (al [ac], XtNrubberBand, FALSE);          ac++;
+  XtSetArg (al [ac], XtNshadowThickness, 0);         ac++;
+  XtSetArg (al [ac], XtNallowOff, FALSE);            ac++;
+  XtSetArg (al [ac], XtNwidth, 200);                 ac++;
+  XtSetArg (al [ac], XtNsliderWidth, 10);            ac++;
+  XtSetArg (al [ac], XtNheight, 15);                 ac++;
+  dlgSiblingScale = XtCreateManagedWidget("dlgSiblingScale",
+					  pannerWidgetClass,
+					  dlgForm, al, ac);
 
   XtOverrideTranslations(dlgSiblingScale, XtParseTranslationTable("\
 <Btn2Down>:		start()\n\
@@ -871,29 +809,29 @@ BuildDialogs (Widget parent)
   XtAddCallback(dlgSiblingScale, XtNreportCallback, siblingvalue_CB,
 		(XtPointer) &dlgSiblingValue);
 
-  dlgOkButton = XtVaCreateManagedWidget("dlgOkButton",
-					commandWidgetClass,
-					dlgForm,
-					XtNfromVert, dlgSiblingScale,
-					XtNfromHoriz, NULL,
-					XtNtop, XawChainTop,
-					XtNbottom, XawChainTop,
-					XtNleft, XawChainLeft,
-					XtNright, XawChainLeft,
-					NULL);
+  ac = 0;
+  XtSetArg (al [ac], XtNfromVert,  dlgSiblingLabel); ac++;
+  XtSetArg (al [ac], XtNfromHoriz, NULL);            ac++;
+  XtSetArg (al [ac], XtNtop,    XawChainTop);        ac++;
+  XtSetArg (al [ac], XtNbottom, XawChainTop);        ac++;
+  XtSetArg (al [ac], XtNleft,   XawChainLeft);       ac++;
+  XtSetArg (al [ac], XtNright,  XawChainLeft);       ac++;
+  XtSetArg (al [ac], XtNlabel, "   ");               ac++;
+  dlgOkButton = XtCreateManagedWidget("dlgOkButton", commandWidgetClass,
+				      dlgForm, al, ac);
 
-  dlgCancelButton = XtVaCreateManagedWidget("dlgCancelButton",
-					    commandWidgetClass,
-					    dlgForm,
-					    XtNfromVert, dlgSiblingScale,
-					    XtNfromHoriz, dlgOkButton,
-					    XtNtop, XawChainTop,
-					    XtNbottom, XawChainTop,
-					    XtNleft, XawChainLeft,
-					    XtNright, XawChainLeft,
-					    NULL);
+  ac = 0;
+  XtSetArg (al [ac], XtNfromVert,  dlgSiblingScale); ac++;
+  XtSetArg (al [ac], XtNfromHoriz, dlgOkButton);     ac++;
+  XtSetArg (al [ac], XtNtop,    XawChainTop);        ac++;
+  XtSetArg (al [ac], XtNbottom, XawChainTop);        ac++;
+  XtSetArg (al [ac], XtNleft,   XawChainLeft);       ac++;
+  XtSetArg (al [ac], XtNright,  XawChainLeft);       ac++;
+  dlgCancelButton = XtCreateManagedWidget("dlgCancelButton",
+					  commandWidgetClass,
+					  dlgForm, al, ac);
 
-  XtAddCallback(dlgOkButton, XtNcallback, Scale_CB, (XtPointer) TRUE);
+  XtAddCallback(dlgOkButton,     XtNcallback, Scale_CB, (XtPointer) TRUE);
   XtAddCallback(dlgCancelButton, XtNcallback, Scale_CB, (XtPointer) FALSE);
 }
 
@@ -909,63 +847,58 @@ BuildDialogs (Widget parent)
 static void
 BuildHelpWindow(Widget parent)
 {
-  int	i;
+  Arg al [20]; int ac;
+  
+  helpShell = XtCreatePopupShell("helpShell", transientShellWidgetClass,
+				   parent, NULL, 0);
 
-  helpShell = XtVaCreatePopupShell("helpShell", transientShellWidgetClass,
-				   parent,
-				   NULL);
+  helpForm = XtCreateManagedWidget("helpForm", formWidgetClass,
+				   helpShell, NULL, 0);
 
-  helpForm = XtVaCreateManagedWidget("helpForm",
-				     formWidgetClass,
-				     helpShell,
-				     NULL);
-
-  helpDoneButton = XtVaCreateManagedWidget("helpDoneButton",
-					   commandWidgetClass,
-					   helpForm,
-					   XtNfromVert, NULL,
-					   XtNfromHoriz, NULL,
-					   XtNtop, XawChainTop,
-					   XtNbottom, XawChainTop,
-					   XtNleft, XawChainLeft,
-					   XtNright, XawChainLeft,
-					   NULL);
+  ac = 0;
+  XtSetArg (al [ac], XtNfromVert,  NULL);      ac++;
+  XtSetArg (al [ac], XtNfromHoriz, NULL);      ac++;
+  XtSetArg (al [ac], XtNtop,    XawChainTop);  ac++;
+  XtSetArg (al [ac], XtNbottom, XawChainTop);  ac++;
+  XtSetArg (al [ac], XtNleft,   XawChainLeft); ac++;
+  XtSetArg (al [ac], XtNright,  XawChainLeft); ac++;
+  helpDoneButton = XtCreateManagedWidget("helpDoneButton",
+					 commandWidgetClass,
+					 helpForm, al, ac);
 
   XtAddCallback(helpDoneButton, XtNcallback, Popdown_CB,
 		(XtPointer) helpShell);
 
-  helpTitle = XtVaCreateManagedWidget("helpTitle",
-				      labelWidgetClass,
-				      helpForm,
-				      XtNfromVert, NULL,
-				      XtNfromHoriz, helpDoneButton,
-				      XtNtop, XawChainTop,
-				      XtNbottom, XawChainTop,
-				      XtNleft, XawChainLeft,
-				      XtNright, XawChainLeft,
-				      XtNborderWidth, 0,
-				      XtNlabel, "",
-				      NULL);
+  ac = 0;
+  XtSetArg (al [ac], XtNfromVert,  NULL);           ac++;
+  XtSetArg (al [ac], XtNfromHoriz, helpDoneButton); ac++;
+  XtSetArg (al [ac], XtNtop,    XawChainTop);       ac++;
+  XtSetArg (al [ac], XtNbottom, XawChainTop);       ac++;
+  XtSetArg (al [ac], XtNleft,   XawChainLeft);      ac++;
+  XtSetArg (al [ac], XtNright,  XawChainLeft);      ac++;
+  XtSetArg (al [ac], XtNborderWidth, 0);            ac++;
+  XtSetArg (al [ac], XtNlabel, "   ");              ac++;
+  helpTitle = XtCreateManagedWidget("helpTitle", labelWidgetClass,
+				    helpForm, al, ac);
 
-  helpText = XtVaCreateManagedWidget("helpText",
-				     asciiTextWidgetClass,
-				     helpForm,
-				     XtNfromVert, helpDoneButton,
-				     XtNfromHoriz, NULL,
-				     XtNtop, XawChainTop,
-				     XtNbottom, XawChainBottom,
-				     XtNleft, XawChainLeft,
-				     XtNright, XawChainRight,
-				     XtNeditType, XawtextRead,
-				     XtNdisplayCaret, FALSE,
-				     XtNscrollVertical, XawtextScrollAlways,
-				     XtNscrollHorizontal,
-				     XawtextScrollWhenNeeded,
-				     XtNuseStringInPlace, TRUE,
-				     XtNstring, help_text,
-				     XtNwidth, 530,
-				     XtNheight, 650,
-				     NULL);
+  
+  ac = 0;
+  XtSetArg (al [ac], XtNfromVert,  helpDoneButton); ac++;
+  XtSetArg (al [ac], XtNfromHoriz, NULL);           ac++;
+  XtSetArg (al [ac], XtNtop,    XawChainTop);       ac++;
+  XtSetArg (al [ac], XtNbottom, XawChainBottom);    ac++;
+  XtSetArg (al [ac], XtNleft,   XawChainLeft);      ac++;
+  XtSetArg (al [ac], XtNright,  XawChainRight);     ac++;
+  XtSetArg (al [ac], XtNeditType, XawtextRead);     ac++;
+  XtSetArg (al [ac], XtNdisplayCaret, FALSE);       ac++;
+  XtSetArg (al [ac], XtNuseStringInPlace, TRUE);    ac++;
+  XtSetArg (al [ac], XtNstring, help_text);         ac++;
+  XtSetArg (al [ac], XtNwidth,  530);               ac++;
+  XtSetArg (al [ac], XtNheight, 650);               ac++;
+  XtSetArg (al [ac], XtNscrollVertical,   XawtextScrollAlways);     ac++;
+  XtSetArg (al [ac], XtNscrollHorizontal, XawtextScrollWhenNeeded); ac++;
+  helpText = XtCreateManagedWidget("helpText", asciiTextWidgetClass,
+				   helpForm, al, ac);
 }
 
 /* ----------------------------------------------------------------------------
@@ -981,36 +914,29 @@ BuildHelpWindow(Widget parent)
 static void
 BuildApplicationWindow(Widget parent)
 {
-  Widget	topPane, box;
+  Widget topPane;
+  Arg al [20]; int ac;
 
-  topPane = XtVaCreateManagedWidget("topPane",
-				    panedWidgetClass,
-				    parent,
-				    XtNorientation, XtorientVertical,
-				    NULL);
+  XtSetArg (al [0], XtNorientation, XtorientVertical);
+  topPane = XtCreateManagedWidget("topPane", panedWidgetClass, parent, al, 1);
 
   BuildMenubar(topPane);
 
-  statusText = XtVaCreateManagedWidget("statusText",
-				       labelWidgetClass,
-				       topPane,
-				       XtNborderWidth, 0,
-				       NULL);
+  XtSetArg (al [0], XtNborderWidth, 0);
+  statusText = XtCreateManagedWidget("statusText", labelWidgetClass,
+				     topPane, al, 1);
 
-  scrolledWindow = XtVaCreateManagedWidget("scrolledWindow",
-					   viewportWidgetClass,
-					   topPane,
-					   XtNshowGrip, FALSE,
-					   XtNallowHoriz, TRUE,
-					   XtNallowVert, TRUE,
-					   XtNuseBottom, TRUE,
-					   XtNuseRight, TRUE,
-					   NULL);
+  ac = 0;
+  XtSetArg (al [ac], XtNshowGrip,   FALSE); ac++;
+  XtSetArg (al [ac], XtNallowHoriz, TRUE);  ac++;
+  XtSetArg (al [ac], XtNallowVert,  TRUE);  ac++;
+  XtSetArg (al [ac], XtNuseBottom,  TRUE);  ac++;
+  XtSetArg (al [ac], XtNuseRight,   TRUE);  ac++;
+  scrolledWindow = XtCreateManagedWidget("scrolledWindow", viewportWidgetClass,
+					 topPane, al, ac);
 
-  TreeDrawingArea = XtVaCreateManagedWidget("treeDrawingArea",
-					    simpleWidgetClass,
-					    scrolledWindow,
-					    NULL);
+  TreeDrawingArea = XtCreateManagedWidget("treeDrawingArea", simpleWidgetClass,
+					  scrolledWindow, NULL, 0);
 }
 
 /* ----------------------------------------------------------------------------
@@ -1077,11 +1003,11 @@ InitializeInterface(int *argc, char *argv[])
         XtSetLanguageProc(NULL, NULL, NULL);
   */
 
-  TreeTopLevel = XtVaAppInitialize(&app, "Xoobr",
-				   NULL, 0,
-				   argc, argv,
-				   fallback_resources,
-				   NULL);
+  TreeTopLevel = XtAppInitialize(&app, "Xoobr",
+				 NULL, 0,
+				 argc, argv,
+				 fallback_resources,
+				 NULL, 0);
 
   ASSERT(TreeTopLevel, "failed to open connection to X server");
 
@@ -1134,7 +1060,7 @@ InitializeInterface(int *argc, char *argv[])
 
   XtSetArg (al [0], XtNbackground, applRsrcsPtr->background_color);
   XtSetValues(TreeDrawingArea, al, 1);
-  
+
   XtRealizeWidget(TreeTopLevel);
 
   XtOverrideTranslations
@@ -1440,7 +1366,6 @@ File_CB(Widget w, XtPointer client_data, XtPointer call_data)
   char *fname;
   Tree *tree;
   ErrCode error;
-  Arg args[1];
   int menuItem;
 
   if (client_data == (XtPointer) TRUE) {
@@ -1484,8 +1409,7 @@ File_CB(Widget w, XtPointer client_data, XtPointer call_data)
 static void
 Scale_CB(Widget w, XtPointer client_data, XtPointer call_data)
 {
-  int	level_value, sibling_value;
-  float	tmp;
+  int level_value, sibling_value;
 
   XtPopdown(dialog[DLG_SPACING]);
 
@@ -1551,7 +1475,6 @@ static void
 select_action(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
   Tree		*node;
-  int		height;
   Boolean	edit = FALSE;
 
   if ((*num_params > 0) &&
@@ -1586,9 +1509,9 @@ static void
 menu_popup_action(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
   char *strargs[] = {"nodeMenu", NULL};
-  Widget menu = XtNameToWidget(TreeTopLevel, params[0]);
-  Boolean popup;
-  ShellWidget shell_widget = (ShellWidget) menu;
+  /* Widget menu = XtNameToWidget(TreeTopLevel, params[0]); */
+  /* Boolean popup; */
+  /* ShellWidget shell_widget = (ShellWidget) menu; */
 
   if (nodeFound) {
 

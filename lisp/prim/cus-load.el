@@ -30,6 +30,8 @@
 
 ;;; Code:
 
+(fset 'custom-put 'put)
+
 (let ((dir load-path))
   (while dir
     (condition-case nil

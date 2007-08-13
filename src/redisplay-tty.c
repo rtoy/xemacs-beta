@@ -425,12 +425,12 @@ tty_output_vertical_divider (struct window *w, int clear)
   struct frame *f = XFRAME (w->frame);
   struct console *c = XCONSOLE (FRAME_CONSOLE (f));
   int line;
-  int y1 = WINDOW_TEXT_TOP (w);
-  int y2 = WINDOW_TEXT_BOTTOM (w);
+  int y_top = WINDOW_TEXT_TOP (w);
+  int y_bot = WINDOW_TEXT_BOTTOM (w);
   unsigned char divv = '|';
 
   tty_turn_on_face (w, MODELINE_INDEX);
-  for (line = y1; line < y2; line++)
+  for (line = y_top; line < y_bot; line++)
     {
       cmgoto (f, line, WINDOW_TEXT_LEFT (w) - 1);
       send_string_to_tty_console (c, &divv, 1);
@@ -438,7 +438,7 @@ tty_output_vertical_divider (struct window *w, int clear)
     }
 
   /* Draw the divider in the modeline. */
-  cmgoto (f, y2, WINDOW_TEXT_LEFT (w) - 1);
+  cmgoto (f, y_bot, WINDOW_TEXT_LEFT (w) - 1);
   send_string_to_tty_console (c, &divv, 1);
   TTY_INC_CURSOR_X (c, 1);
   tty_turn_off_face (w, MODELINE_INDEX);

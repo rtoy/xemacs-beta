@@ -8,8 +8,6 @@ CMD = -f batch-byte-compile
 
 PRELOADS = -l ./cc-vars.el -l ./cc-mode.el -l ./cc-menus.el -l ./cc-langs.el
 
-SPECIAL_ELCS = custom-load.elc
-
 .el.elc:
 	$(EMACS) $(OPTS) $(PRELOADS) $(CMD) $<
 
@@ -18,10 +16,15 @@ ALL_ELCS = \
 	cc-engine.elc cc-langs.elc cc-menus.elc cc-mode.elc \
 	cc-styles.elc cc-vars.elc
 
-all: $(ALL_ELCS) $(SPECIAL_ELCS)
-
-custom-load.elc: custom-load.el
-	$(EMACS) $(OPTS) $(CMD) $<
+all: $(ALL_ELCS)
 
 clean:
 	-rm $(ALL_ELCS)
+
+autoloads: auto-autoloads.el
+
+auto-autoloads.el: $(ALL_ELC:.elc=.el)
+	$(EMACS) -batch -q -no-site-file \
+		-eval '(setq autoload-target-directory "'`pwd`'/")' \
+		-l autoload \
+		-f batch-update-autoloads $?

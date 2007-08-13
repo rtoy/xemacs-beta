@@ -1,7 +1,7 @@
 ;;; w3-hot.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/06/10 05:42:43
-;; Version: 1.15
+;; Created: 1997/06/27 15:41:38
+;; Version: 1.16
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -239,12 +239,12 @@
 	    (beginning-of-line)
 	    (delete-region (point) (progn (forward-line 2) (point)))
 	    (insert (format "%s %s\n%s\n" (nth 1 obj) (current-time-string)
-			       new))
+			    new))
 	    (setq w3-hotlist (cons (list new (nth 1 obj))
 				   (w3-delete-from-alist title w3-hotlist)))
 	    (write-file w3-hotlist-file)
 	    (kill-buffer (current-buffer))
-	    (if (and w3-running-FSF19 (not (eq 'tty (device-type))))
+	    (if (not w3-running-xemacs)
 		(progn
 		  (delete-menu-item '("Go"))
 		  (w3-build-FSF19-menu))))

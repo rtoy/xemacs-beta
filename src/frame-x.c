@@ -1104,7 +1104,7 @@ Start a CDE drag from a buffer.
   return Qnil;
 }
 
-void
+static void
 x_cde_transfer_callback (Widget widget, XtPointer clientData,
 			 XtPointer callData)
 {
@@ -2372,7 +2372,7 @@ x_focus_on_frame (struct frame *f)
 {
   XWindowAttributes xwa;
   Widget shell_widget;
-  int viewable;
+  int viewable = 0;
 
   assert (FRAME_X_P (f));
 
@@ -2398,8 +2398,8 @@ x_focus_on_frame (struct frame *f)
 			    &xwa))
     /* JV: it is bad to change the visibility like this, so we don't for the
        moment, at least change_frame_visibility should be called
-       Note also that under fvwm a frame can me Viewable (and thus Mapped)
-       but still X-invisible 
+       Note also that under fvwm a frame can be Viewable (and thus Mapped)
+       but still X-invisible
     f->visible = xwa.map_state == IsViewable; */
     viewable = xwa.map_state == IsViewable;
 

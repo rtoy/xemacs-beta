@@ -97,6 +97,12 @@ or go back to just one window (by deleting all but the selected window)."
 (defvar last-error nil
   "#### Document me.")
 
+;; #### Provisionally turned on for XEmacs 20.3beta.
+(defcustom errors-deactivate-region nil
+  "*Non-nil means that errors will cause the region to be deactivated."
+  :type 'boolean
+  :group 'editing-basics)
+
 (defun command-error (error-object)
   (let ((inhibit-quit t)
 	(debug-on-error nil)
@@ -105,7 +111,8 @@ or go back to just one window (by deleting all but the selected window)."
     (setq standard-output t)
     (setq standard-input t)
     (setq executing-kbd-macro nil)
-;    (zmacs-deactivate-region)
+    (and errors-deactivate-region
+	 (zmacs-deactivate-region))
     (discard-input)
 
     (setq last-error error-object)

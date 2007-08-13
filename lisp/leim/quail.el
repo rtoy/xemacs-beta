@@ -257,7 +257,9 @@ LEIM is available from the same ftp directory as Emacs."))
 (if (local-variable-p 'minor-mode-map-alist nil)
     (let ((map (default-value 'minor-mode-map-alist)))
       (or (assq 'quail-mode map)
-	  (set-default 'minor-mode-map-alist (cons 'quail-mode map)))))
+	  ;; (set-default 'minor-mode-map-alist (cons 'quail-mode map)))))
+	  (set-default 'minor-mode-map-alist
+		       (cons (cons 'quail-mode quail-mode-map) map)))))
 
 (defvar quail-translation-keymap
   (let ((map (make-keymap))
@@ -504,15 +506,23 @@ The command \\[describe-input-method] describes the current Quail package."
     ;; Let's turn on Quail mode.
     ;; At first, be sure that quail-mode is at the first element of
     ;; minor-mode-map-alist.
-    (or (eq (car minor-mode-map-alist) 'quail-mode)
-	(let ((l minor-mode-map-alist))
-	  (while (cdr l)
-	    (if (eq (car (cdr l)) 'quail-mode)
-		(progn
-		  (setcdr l (cdr (cdr l)))
-		  (setq l nil))
-	      (setq l (cdr l))))
-	  (setq minor-mode-map-alist (cons 'quail-mode minor-mode-map-alist))))
+    ;; The following code removed by slb because it corrupts the XEmacs
+    ;; minor-mode-map-alist
+;    (or (eq (car minor-mode-map-alist) 'quail-mode)
+;	(let ((l minor-mode-map-alist))
+;	  (while (cdr l)
+;	    (if (eq (car (cdr l)) 'quail-mode)
+;		(progn
+;		  (setcdr l (cdr (cdr l)))
+;		  (setq l nil))
+;	      (setq l (cdr l))))
+;	  (setq minor-mode-map-alist (cons 'quail-mode minor-mode-map-alist))))
+    ;; End bogus code removal.
+    (delete-if (lambda (item) (eq (car item) 'quail-mode))
+	       minor-mode-map-alist)
+    (setq minor-mode-map-alist
+	  (cons (cons 'quail-mode quail-mode-map) minor-mode-map-alist))
+
     (if (null quail-current-package)
 	;; Quail package is not yet selected.  Select one now.
 	(let (name)

@@ -118,6 +118,8 @@ make_special efs x20
 make_special eos -k		# not strictly necessary...
 make_special gnus  some
 make_special hyperbole elc
+# We're not ready for the following, yet.
+#make_special ilisp XEmacsELC=custom-load.elc elc
 make_special ilisp elc
 make_special oobr HYPB_ELC='' elc
 make_special w3 xemacs-w3

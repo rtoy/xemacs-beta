@@ -1,9 +1,6 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (not (featurep 'vm-autoloads))
     (progn
-
-(provide 'vm-autoloads)
-))
 
 ;;;### (autoloads (vm-easy-menu-create-keymaps vm-easy-menu-define) "vm-easymenu" "vm/vm-easymenu.el")
 
@@ -74,3 +71,6 @@ is a list of menu items, as above." nil 'macro)
 (autoload 'vm-easy-menu-create-keymaps "vm-easymenu" nil nil nil)
 
 ;;;***
+
+(provide 'vm-autoloads)
+))

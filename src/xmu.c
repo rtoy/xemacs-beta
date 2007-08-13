@@ -535,11 +535,10 @@ int XmuSimpleErrorHandler (Display *dpy, XErrorEvent *errorp)
 
 void XmuCopyISOLatin1Lowered(char *dst, char *src)
 {
-    unsigned char *dest, *source;
+    unsigned char *dest   = (unsigned char *) dst;
+    unsigned char *source = (unsigned char *) src;
 
-    for (dest = (unsigned char *)dst, source = (unsigned char *)src;
-         *source;
-         source++, dest++)
+    for ( ; *source; source++, dest++)
     {
         if ((*source >= XK_A) && (*source <= XK_Z))
             *dest = *source + (XK_a - XK_A);

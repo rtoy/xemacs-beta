@@ -61,10 +61,10 @@ MakeNode(void)
    NumNodes++;
 
    if (node == NULL)
-      return (NULL);
+      return NULL;
    else {
      memset((char *) node, 0, sizeof(Tree));
-     return (node);
+     return node;
    }
 }
 
@@ -91,7 +91,7 @@ MakeBridge(Polyline *line1, int x1, int y1, Polyline *line2, int x2, int y2)
    r = MakeLine(dx, dy, line2->link);
    line1->link = MakeLine(0, y2 + line2->dy - dy - y1, r);
 
-   return (r);
+   return r;
 }
 
 /* ----------------------------------------------------------------------------
@@ -203,7 +203,7 @@ Merge(Polygon *c1, Polygon *c2)
    }
    c1->lower.head = c2->lower.head;
 
-   return (total);
+   return total;
 }
 
 /* ----------------------------------------------------------------------------
@@ -684,9 +684,6 @@ ComputeTreeSize(Tree *tree,
 void
 PetrifyTree(Tree *tree, int x, int y)
 {
-   int width, height;
-   int x_offset, y_offset;
-
    tree->old_pos = tree->pos;	/* used by AnimateTree */
 
    /* fix position of each node */

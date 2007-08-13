@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/06/25 14:30:16
-;; Version: 1.189
+;; Created: 1997/07/01 15:54:50
+;; Version: 1.192
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -158,7 +158,12 @@
   (save-excursion
     (goto-char (or (symbol-value 'cur-viewing-pos) (point-min)))
     (cond
-     (w3-running-FSF19
+     (w3-running-xemacs
+      (if (and (not (sit-for 0)) (input-pending-p))
+	  (condition-case ()
+	      (dispatch-event (next-command-event))
+	    (error nil))))
+     (t
       (if (and (not (sit-for 0)) (input-pending-p))
 	  (condition-case ()
 	      (progn
@@ -167,13 +172,7 @@
 		(case (symbol-value 'cur-viewing-pos)
 		  ((w3-quit w3-leave-buffer) nil)
 		  (otherwise (call-interactively (symbol-value 'cur-viewing-pos)))))
-	    (error nil))))
-     (w3-running-xemacs
-      (if (and (not (sit-for 0)) (input-pending-p))
-	  (condition-case ()
-	      (dispatch-event (next-command-event))
-	    (error nil))))
-     (t (sit-for 0)))
+	    (error nil)))))
     (set 'cur-viewing-pos (point))))
 
 (defmacro w3-get-pad-string (len)
@@ -384,7 +383,7 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 	    nil 'move)
       (replace-match " "))
     (goto-char w3-scratch-start-point)
-    (if (and (memq (preceding-char) '(?  ?\t ?\r ?\n))
+    (if (and (memq (char-before) '(?  ?\t ?\r ?\n))
 	     (looking-at "[ \t\r\n]"))
 	(delete-region (point)
 		       (progn

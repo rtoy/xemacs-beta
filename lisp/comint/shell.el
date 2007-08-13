@@ -283,7 +283,8 @@ Thus, this does not include the shell's current directory.")
       ;; who use directory aliases ...  someone shoot me if they
       ;; don't like this binding.  Another possibility is C-c C-s
       ;; but that's way awkward.
-      (define-key map "\M-\C-m" 'shell-resync-dirs)
+      ;; July-5-1997, Bang! -slb
+      #-infodock (define-key map "\M-\C-m" 'shell-resync-dirs)
       (setq shell-mode-map map)))
 
 (defcustom shell-mode-hook nil

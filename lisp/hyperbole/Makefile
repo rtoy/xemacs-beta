@@ -167,7 +167,7 @@ install-v18:
 	@ echo $< >> $(ELISP_TO_COMPILE)
 
 # Compile all recorded .el files.
-elc: elc-init hsite.el $(ELC_KOTL) $(ELC_COMPILE)
+elc: elc-init hsite.el $(ELC_KOTL) $(ELC_COMPILE) $(XEMACS_COMPILE)
 	@- \test ! -f $(ELISP_TO_COMPILE) \
             || (echo "These files will be compiled: " \
                  && echo "`cat $(ELISP_TO_COMPILE)`" \
@@ -258,3 +258,11 @@ dist: version elc info
 distclean: clean
 	-$(RM) TAGS hsite.el* kotl/TO-DO* $(mandir)/hyperbole.dvi \
           $(mandir)/hyperbole.??
+
+autoloads: auto-autoloads.el
+
+auto-autoloads.el: $(EL_SRC) $(EL_COMPILE) $(EL_KOTL)
+	$(EMACS) -batch -q -no-site-file \
+		-eval '(setq autoload-target-directory "'`pwd`'/")' \
+		-l autoload \
+		-f batch-update-autoloads $?

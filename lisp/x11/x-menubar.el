@@ -847,7 +847,7 @@ This function changes the sensitivity of these Edit menu items:
       (mapcar
        #'(lambda (bmk)
 	   (vector bmk `(bookmark-jump ',bmk) t)) (bookmark-all-names))
-    (list "No Bookmarks Set")))
+    '(["No Bookmarks Set" nil nil])))
 
 (defun bookmark-delete-filter (menu-items)
   "*Build the bookmark delete submenu dynamically from all defined bookmarks."
@@ -855,7 +855,7 @@ This function changes the sensitivity of these Edit menu items:
       (mapcar
        #'(lambda (bmk)
 	   (vector bmk `(bookmark-delete ',bmk) t)) (bookmark-all-names))
-    (list "No Bookmarks Set")))
+    '(["No Bookmarks Set" nil nil])))
 
 ;;; The Buffers menu
 

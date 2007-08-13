@@ -1,7 +1,7 @@
 ;;; socks.el --- A Socks v5 Client for Emacs
 ;; Author: wmperry
-;; Created: 1997/01/10 00:13:05
-;; Version: 1.3
+;; Created: 1997/06/25 16:25:12
+;; Version: 1.4
 ;; Keywords: comm, firewalls
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -201,7 +201,7 @@
 	  (set-process-filter proc nil)
 	  (if (and auth-func (fboundp auth-func)
 		   (funcall auth-func proc))
-	      (message "Successfully authenticated using: %s" auth-desc)
+	      nil			; We succeeded!
 	    (delete-process proc)
 	    (error "Failed to use auth method: %s (%d)"
 		   (or auth-desc "Unknown") auth-type))
@@ -325,11 +325,8 @@
 ;; Authentication modules go here
 
 ;; Basic username/password authentication, ala RFC 1929
-;; To enable username/password authentication, uncomment the following
-;; lines:
-;;
-;; (socks-register-authentication-method 2 "Username/Password"
-;;			      'socks-username/password-auth)
+(socks-register-authentication-method 2 "Username/Password"
+				      'socks-username/password-auth)
 
 (defconst socks-username/password-auth-version 1)
 

@@ -47,18 +47,6 @@
 # define CONST const
 #endif /* CONST */
 
-#if __STDC__ || defined(STDC_HEADERS)	       /* warning suppression */
-extern int audio__setplayhdr();
-extern int audio__setgain();
-extern int audio__flush();
-extern int audio_decode_filehdr();
-extern int audio_read_filehdr();
-extern int audio_cmp_hdr();
-extern int audio_enc_to_str();
-extern int audio_drain();
-#endif
-
-
 #ifdef emacs
 # include <config.h>
 # include "lisp.h"

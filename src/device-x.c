@@ -278,10 +278,12 @@ x_init_device (struct device *d, Lisp_Object props)
     CONST char *locale = XrmLocaleOfDatabase (db);
     
     if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
-      GET_C_STRING_FILENAME_DATA_ALLOCA (Vdata_directory, data_dir);
-    sprintf (path, "%sapp-defaults/%s/%s", data_dir, locale, app_class);
-    if (!access (path, R_OK))
-      XrmCombineFileDatabase (path, &db, False);
+      {
+	GET_C_STRING_FILENAME_DATA_ALLOCA (Vdata_directory, data_dir);
+	sprintf (path, "%sapp-defaults/%s/%s", data_dir, locale, app_class);
+	if (!access (path, R_OK))
+	  XrmCombineFileDatabase (path, &db, False);
+      }
   }
 #endif /* MULE */
 

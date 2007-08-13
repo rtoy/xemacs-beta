@@ -14,6 +14,9 @@
 
 # Note: this makefile assumes GNU make
 
+# Updated for XEmacs autoloads builds, but unused at present since no
+#  autoloads are generated, and this package hasn't been customized.
+
 #==============================================================================
 # Various Variables
 
@@ -58,7 +61,7 @@ LoadFiles = ilisp-def.elc ilisp-el.elc ilisp-sym.elc \
 compile:
 	$(EMACS) -batch -l ilisp-mak.el
 
-elc: $(LoadFiles)
+elc: $(LoadFiles) $(XEmacsELC)
 
 $(LoadFiles) :
 	$(EMACS) -batch -l ilisp-mak.el
@@ -101,5 +104,15 @@ uuencoding: ../$(Ilisp_tar_dir).tar.gz
 	(cd $(Ilisp_src_dir)/.. ;                                           \
          uuencode $(Ilisp_tar_dir).tar.gz $(Ilisp_tar_dir).tar.gz > il.uue)
 
+#autoloads: auto-autoloads.el
+
+#custom-load.elc: custom-load.el
+#	$(EMACS) -batch -q -no-site-file -f batch-byte-compile $?
+
+#auto-autoloads.el: $(LoadFiles:.elc=.el)
+#	$(EMACS) -batch -q -no-site-file \
+#		-eval '(setq autoload-target-directory "'`pwd`'/")' \
+#		-l autoload \
+#		-f batch-update-autoloads $?
 
 # end of file -- Makefile --

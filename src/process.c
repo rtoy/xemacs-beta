@@ -1382,7 +1382,7 @@ Fourth arg SERVICE is name of the service desired, or an integer
   Lisp_Object proc;
   struct sockaddr_in address;
   int s, outch, inch;
-  int port;
+  volatile int port;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   volatile int retry = 0;
   int retval;

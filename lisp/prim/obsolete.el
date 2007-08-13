@@ -347,11 +347,12 @@ See `set-frame-properties' for built-in property names."
 (make-obsolete 'add-menu-item 'add-menu-button)
 
 (defun add-menu (menu-path menu-name menu-items &optional before)
-  "Obsolete.  See the function `add-submenu'."
+  "See the function `add-submenu'."
   (or menu-name (error (gettext "must specify a menu name")))
   (or menu-items (error (gettext "must specify some menu items")))
   (add-submenu menu-path (cons menu-name menu-items) before))
-(make-obsolete 'add-menu 'add-submenu)
+;; Can't make this obsolete.  easymenu depends on it.
+(make-compatible 'add-menu 'add-submenu)
 
 (define-obsolete-function-alias 'popup-menu-up-p 'popup-up-p)
 

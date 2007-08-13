@@ -78,9 +78,9 @@ open_font (Display* dpy, CONST char* font_name)
 static void
 init (void)
 {
-  static int init;
+  static int init_p = 0;
 
-  if (!init)
+  if (!init_p)
     {
       Pixel fg, bg, shine, shadow;
       XFontStruct* font;
@@ -95,7 +95,7 @@ init (void)
       font = open_font (dpy, "-adobe-helvetica-medium-r-normal--12-*");
 
       balloon_help_create (dpy, bg, fg, shine, shadow, font);
-      init = 1;
+      init_p = 1;
     }
 }
 

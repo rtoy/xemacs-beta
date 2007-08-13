@@ -118,6 +118,8 @@ typedef int pid_t;
 #define DIRECTORY_SEP XINT (Vdirectory_sep_char)
 #endif
 
+#define DIRECTORY_SEP '\\'
+
 /* Define this to be the separator between devices and paths */
 #define DEVICE_SEP ':'
 

@@ -148,6 +148,8 @@
 ;;;     comint-completion-autolist  - boolean      behavior
 ;;;     comint-completion-recexact  - boolean      ...
 
+(require 'easymenu)
+
 (defgroup comint nil
   "General command interpreter in a window stuff."
   :group 'processes)
@@ -405,6 +407,61 @@ This is to work around a bug in Emacs process signalling.")
 (put 'comint-scroll-show-maximum-output 'permanent-local t)
 (put 'comint-ptyp 'permanent-local t)
 
+(defvar comint-1-menubar-menu nil)
+(defconst comint-1-menubar-menu-1
+  (purecopy
+   '("Comint1"
+     ["Previous Matching Current Input"
+      comint-previous-matching-input-from-input t]
+     ["Next Matching Current Input" comint-next-matching-input-from-input t]
+     ["Previous Input" comint-previous-input t]
+     ["Next Input" comint-next-input t]
+     ["Previous Input Matching Regexp..." comint-previous-matching-input t]
+     ["Next Input Matching Regexp..." comint-next-matching-input t]
+     ["Backward Matching Input..." comint-backward-matching-input t]
+     ["Forward Matching Input..." comint-forward-matching-input t]
+     "---"
+     ["Copy Old Input" comint-copy-old-input t]
+     ["Kill Current Input" comint-kill-input t]
+     ["Show Current Output Group" comint-show-output t]
+     ["Show Maximum Output" comint-show-maximum-output t]
+     ["Goto Previous Prompt" comint-previous-prompt t]
+     ["Goto Next Prompt" comint-next-prompt t]
+     ["Kill Command Output" comint-kill-output t]
+     )))
+
+(defvar comint-2-menubar-menu nil)
+(defconst comint-2-menubar-menu-1
+  (purecopy
+   '("Comint2"
+     ["Complete Before Point" comint-dynamic-complete t]
+     ["Complete File Name" comint-dynamic-complete-filename t]
+     ["File Completion Listing" comint-dynamic-list-filename-completions t]
+     ["Expand File Name" comint-replace-by-expanded-filename t]
+     ;; this is cheesy but the easiest way to get this.
+     ["Complete Env. Variable Name" shell-dynamic-complete-environment-variable
+      :active t :included (eq 'shell-mode major-mode)]
+     ["Expand Directory Reference" shell-replace-by-expanded-directory
+      :active t :included (eq 'shell-mode major-mode)]
+     "---"
+     ["Send INT"  comint-interrupt-subjob t]
+     ["Send STOP" comint-stop-subjob t]
+     ["Send CONT" comint-continue-subjob t]
+     ["Send QUIT" comint-quit-subjob t]
+     ["Send KILL" comint-kill-subjob t]
+     ["Send EOF"  comint-send-eof t]
+     )))
+
+(defvar comint-history-menubar-menu nil)
+(defconst comint-history-menubar-menu-1
+  (purecopy
+   '("History"
+     :filter comint-history-menu-filter
+     ["Expand History Before Point" comint-replace-by-expanded-history
+				    comint-input-autoexpand]
+     ["List Input History" comint-dynamic-list-input-ring t]
+     "---"
+     )))
 
 
 (defun comint-mode ()
@@ -491,10 +548,22 @@ Entry to this mode runs the hooks on `comint-mode-hook'."
       (progn
 	;; make a local copy of the menubar, so our modes don't
 	;; change the global menubar
-	(set-buffer-menubar current-menubar)
-	(add-submenu nil comint-1-menubar-menu)
-	(add-submenu nil comint-2-menubar-menu)
-	(add-submenu nil comint-history-menubar-menu)))
+	;; (set-buffer-menubar current-menubar)
+	;; (add-submenu nil comint-1-menubar-menu)
+	(unless comint-1-menubar-menu
+	  (easy-menu-define comint-1-menubar-menu nil ""
+			    comint-1-menubar-menu-1))
+	(easy-menu-add comint-1-menubar-menu)
+	;; (add-submenu nil comint-2-menubar-menu)
+	(unless comint-2-menubar-menu
+	  (easy-menu-define comint-2-menubar-menu nil ""
+			    comint-2-menubar-menu-1))
+	(easy-menu-add comint-2-menubar-menu)
+	;; (add-submenu nil comint-history-menubar-menu)))
+	(unless comint-history-menubar-menu
+	  (easy-menu-define comint-history-menubar-menu nil ""
+			    comint-history-menubar-menu-1))
+	(easy-menu-add comint-history-menubar-menu)))
   (run-hooks 'comint-mode-hook))
 
 (if comint-mode-map
@@ -553,88 +622,35 @@ Entry to this mode runs the hooks on `comint-mode-hook'."
   #-infodock (define-key comint-mode-map 'button3 'comint-popup-menu)
   )
 
-(defconst comint-1-menubar-menu
-  (purecopy
-   '("Comint1"
-     ["Previous Matching Current Input"
-      comint-previous-matching-input-from-input t]
-     ["Next Matching Current Input" comint-next-matching-input-from-input t]
-     ["Previous Input" comint-previous-input t]
-     ["Next Input" comint-next-input t]
-     ["Previous Input Matching Regexp..." comint-previous-matching-input t]
-     ["Next Input Matching Regexp..." comint-next-matching-input t]
-     ["Backward Matching Input..." comint-backward-matching-input t]
-     ["Forward Matching Input..." comint-forward-matching-input t]
-     "---"
-     ["Copy Old Input" comint-copy-old-input t]
-     ["Kill Current Input" comint-kill-input t]
-     ["Show Current Output Group" comint-show-output t]
-     ["Show Maximum Output" comint-show-maximum-output t]
-     ["Goto Previous Prompt" comint-previous-prompt t]
-     ["Goto Next Prompt" comint-next-prompt t]
-     ["Kill Command Output" comint-kill-output t]
-     )))
-
-(defconst comint-2-menubar-menu
-  (purecopy
-   '("Comint2"
-     ["Complete Before Point" comint-dynamic-complete t]
-     ["Complete File Name" comint-dynamic-complete-filename t]
-     ["File Completion Listing" comint-dynamic-list-filename-completions t]
-     ["Expand File Name" comint-replace-by-expanded-filename t]
-     ;; this is cheesy but the easiest way to get this.
-     ["Complete Env. Variable Name" shell-dynamic-complete-environment-variable
-      :active t :included (eq 'shell-mode major-mode)]
-     ["Expand Directory Reference" shell-replace-by-expanded-directory
-      :active t :included (eq 'shell-mode major-mode)]
-     "---"
-     ["Send INT"  comint-interrupt-subjob t]
-     ["Send STOP" comint-stop-subjob t]
-     ["Send CONT" comint-continue-subjob t]
-     ["Send QUIT" comint-quit-subjob t]
-     ["Send KILL" comint-kill-subjob t]
-     ["Send EOF"  comint-send-eof t]
-     )))
-
-(defconst comint-history-menubar-menu
-  (purecopy
-   '("History"
-     :filter comint-history-menu-filter
-     ["Expand History Before Point" comint-replace-by-expanded-history
-				    comint-input-autoexpand]
-     ["List Input History" comint-dynamic-list-input-ring t]
-     "---"
-     )))
-
-(defconst comint-popup-menu
-  '("Command Interpreter Commands"
-    ["Kill Command Output" comint-kill-output t]
-    ["Goto Next Prompt" comint-next-prompt t]
-    ["Goto Previous Prompt" comint-previous-prompt t]
-    ["Kill Input" comint-kill-input t]
-    "----"
-    ["Previous Input" comint-previous-matching-input-from-input t]
-    ["Next Input" comint-next-matching-input-from-input t]
-    ["Previous Input matching Regexp..." 'comint-previous-matching-input t]
-    ["Next Input matching Regexp..." 'comint-next-matching-input t]
-    ["List Command History" comint-dynamic-list-input-ring t]
-    "----"
-    ["Send INT"  comint-interrupt-subjob t]
-    ["Send STOP" comint-stop-subjob t]
-    ["Send CONT" comint-continue-subjob t]
-    ["Send QUIT" comint-quit-subjob t]
-    ["Send KILL" comint-kill-subjob t]
-    ["Send EOF"  comint-send-eof t]
-    ))
+;;(defconst comint-popup-menu
+;;  '("Command Interpreter Commands"
+;;    ["Kill Command Output" comint-kill-output t]
+;;    ["Goto Next Prompt" comint-next-prompt t]
+;;    ["Goto Previous Prompt" comint-previous-prompt t]
+;;    ["Kill Input" comint-kill-input t]
+;;    "----"
+;;    ["Previous Input" comint-previous-matching-input-from-input t]
+;;    ["Next Input" comint-next-matching-input-from-input t]
+;;    ["Previous Input matching Regexp..." 'comint-previous-matching-input t]
+;;    ["Next Input matching Regexp..." 'comint-next-matching-input t]
+;;    ["List Command History" comint-dynamic-list-input-ring t]
+;;    "----"
+;;    ["Send INT"  comint-interrupt-subjob t]
+;;    ["Send STOP" comint-stop-subjob t]
+;;    ["Send CONT" comint-continue-subjob t]
+;;    ["Send QUIT" comint-quit-subjob t]
+;;    ["Send KILL" comint-kill-subjob t]
+;;    ["Send EOF"  comint-send-eof t]
+;;    ))
 
 (defun comint-popup-menu (event)
   "Display the comint-mode menu."
   (interactive "@e")
   (let ((history (comint-make-history-menu)))
     (popup-menu (if history
-		    (append comint-popup-menu
+		    (append mode-popup-menu
 			    (list "---" (cons "Command History" history)))
-		  comint-popup-menu))))
+		  mode-popup-menu))))
 
 (defcustom comint-history-menu-max 40
   "*Maximum number of entries to display on the Comint command-history menu."

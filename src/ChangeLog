@@ -1,3 +1,39 @@
+1997-07-06  Steven L Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (vars_of_emacs): Fprovide the system type as a feature.
+
+1997-07-03  Steven L Baur  <steve@altair.xemacs.org>
+
+	* data.c (Fstring_to_number): Fix typo.  base isn't an integer.
+
+1997-07-01  Steven L Baur  <steve@altair.xemacs.org>
+
+	* data.c, emacsfns.h:  This is the port of GNU Emacs capability.
+	I am still not sure what this buys us, but I guess it doesn't hurt
+	to have it.
+	From Hrvoje Niksic <hniksic@srce.hr>
+	
+	* glyphs.c (make_string_from_file): Use
+	insert-file-contents-literally instead of
+	insert-file-contents-internal.
+
+1997-06-30  Steven L Baur  <steve@altair.xemacs.org>
+
+	* fns.c (check_losing_bytecode): Correct reported version.
+
+	* Makefile.in.in (${libsrc}DOC): Break up line length for stupid
+	make programs.
+
+1997-06-29  Steven L Baur  <steve@altair.xemacs.org>
+
+	* emacsfns.h: Put void in prototype.
+	Suggested by Ben Wing.
+
+1997-07-01  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* glyphs.c (make_string_from_file): must protect from
+	`format-alist'.
+
 1997-06-28  Steven L Baur  <steve@altair.xemacs.org>
 
 	* config.h.in: Back out previous change to LOSING_BYTECODE.  It's

@@ -1175,10 +1175,10 @@ run `normal-mode' explicitly."
     ("\\.mss\\'" . scribe-mode)
     ("\\.m\\([mes]\\|an\\)\\'" . nroff-mode)
     ("\\.icn\\'" . icon-mode)
-    ("\\.[ck]?sh\\'\\|\\.shar\\'\\|/\\.z?profile\\'" . sh-mode)
-    ("/\\.\\(bash_profile\\|z?login\\|bash_login\\|z?logout\\)\\'" . sh-mode)
-    ("/\\.\\(bash_logout\\|[kz]shrc\\|bashrc\\|t?cshrc\\|esrc\\)\\'" . sh-mode)
-    ("/\\.\\([kz]shenv\\|xinitrc\\|startxrc\\|xsession\\)\\'" . sh-mode)
+    ("\\.\\([ckz]?sh\\|shar\\)\\'" . sh-mode)
+    ("/\\.\\(bash_\\|z\\)?\\(profile\\|login\||logout\\)\\'" . sh-mode)
+    ("/\\.\\([ckz]sh\\|bash\\|tcsh\\|es\\|xinit\\|startx\\)rc\\'" . sh-mode)
+    ("/\\.\\([kz]shenv\\|xsession\\)\\'" . sh-mode)
 ;;; The following should come after the ChangeLog pattern
 ;;; for the sake of ChangeLog.1, etc.
 ;;; and after the .scm.[0-9] pattern too.
@@ -1226,7 +1226,6 @@ run `normal-mode' explicitly."
     ("\\.[Jj][Pp][Ee]?[Gg]\\'" . image-mode)
     ("\\.[Pp][Nn][Gg]\\'" . image-mode)
     ("\\.[Gg][Ii][Ff]\\'" . image-mode)
-    ("\\.xpm\\'" . image-mode)
     )
 "Alist of filename patterns vs. corresponding major mode functions.
 Each element looks like (REGEXP . FUNCTION) or (REGEXP FUNCTION NON-NIL).

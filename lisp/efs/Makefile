@@ -2,7 +2,7 @@
 #
 # File:         Makefile
 # Release:      $efs release: 1.15 $
-# Version:      $Revision: 1.7 $
+# Version:      $Revision: 1.8 $
 # RCS:
 # Description:  Makefile for byte-compiling efs and dired.
 # Author:       Andy Norman, HPLabs, Bristol, UK.
@@ -301,5 +301,13 @@ diff_xemacs:
 install_all: install_src install
 clean:
 	rm -f $(OBJS)
+
+autoloads: auto-autoloads.el
+
+auto-autoloads.el: $(EFSSRC) $(DSRC) efs-x19.15.el $(XESRC) $(MULESRC)
+	$(EMACS) -batch -q -no-site-file \
+		-eval '(setq autoload-target-directory "'`pwd`'/")' \
+		-l autoload \
+		-f batch-update-autoloads $?
 
 ## end of Makefile ##

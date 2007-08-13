@@ -1,7 +1,7 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/06/25 15:58:53
-;; Version: 1.143
+;; Created: 1997/07/02 17:41:53
+;; Version: 1.145
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -34,7 +34,7 @@
 (require 'wid-edit)			; For `widget-keymap'
 
 (defconst w3-version-number
-  (let ((x "p3.0.92"))
+  (let ((x "p3.0.93"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -42,7 +42,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/06/25 15:58:53"))
+(defconst w3-version-date (let ((x "1997/07/02 17:41:53"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -78,10 +78,6 @@ in later garbage collections taking more time.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-running-xemacs (string-match "XEmacs\\|Lucid" emacs-version)
   "*Got XEmacs?.")
-
-(defvar w3-running-FSF19 (and (string-match "^19" emacs-version)
-			      (not w3-running-xemacs))
-  "*Got Emacs 19?")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Store the database of HTML general entities.

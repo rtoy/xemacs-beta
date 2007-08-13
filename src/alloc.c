@@ -2629,7 +2629,7 @@ report_pure_usage (int report_impurities,
       message ("\n****\tPure Lisp storage exhausted!\n"
 "\tPurespace usage: %ld of %ld\n"
  "****",
-               PURESIZE+pure_lossage, PURESIZE);
+               PURESIZE+pure_lossage, (long) PURESIZE);
       if (die_if_pure_storage_exceeded) {
 	PURESIZE_h(PURESIZE + pure_lossage);
 	rc = -1;

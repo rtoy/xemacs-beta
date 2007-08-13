@@ -21,14 +21,10 @@
 #endif
 #endif
 
-void
-main (argc, argv)
-     int argc;
-     char **argv;
+int
+main (int argc, char *argv[])
 {
   int period = 60;
-  time_t when;
-  struct tm *tp;
 
   if (argc > 1)
     period = atoi (argv[1]);
@@ -37,13 +33,15 @@ main (argc, argv)
     {
       /* Make sure wakeup stops when Emacs goes away.  */
       if (getppid () == 1)
-	exit (0);
+	return 0;
       printf ("Wake up!\n");
       fflush (stdout);
       /* If using a period of 60, produce the output when the minute
 	 changes. */
       if (period == 60)
 	{
+	  time_t when;
+	  struct tm *tp;
 	  time (&when);
 	  tp = localtime (&when);
 	  sleep (60 - tp->tm_sec);

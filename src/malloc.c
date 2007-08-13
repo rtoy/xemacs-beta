@@ -171,6 +171,10 @@ what you give them.   Help stamp out software-hoarding!  */
 /* Define getpagesize () if the system does not.  */
 #include "getpagesize.h"
 
+#ifdef HAVE_ULIMIT_H
+#include <ulimit.h>
+#endif
+
 #ifndef BSD4_2
 #ifndef USG
 #include <sys/vlimit.h>		/* warn the user when near the end */
@@ -301,7 +305,7 @@ static int gotpool;
 
 char *_malloc_base;
 
-static void getpool ();
+static void getpool (void);
 
 /* Cause reinitialization based on job parameters;
   also declare where the end of pure storage is. */
@@ -447,7 +451,7 @@ morecore (nu)			/* ask system for more memory */
 }
 
 static void
-getpool ()
+getpool (void)
 {
   int nu;
   char *cp = sbrk (0);
@@ -798,8 +802,6 @@ malloc_mem_free ()
 static void
 get_lim_data ()
 {
-  extern long ulimit ();
-    
 #ifdef ULIMIT_BREAK_VALUE
   lim_data = ULIMIT_BREAK_VALUE;
 #else

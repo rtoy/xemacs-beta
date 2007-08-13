@@ -332,7 +332,7 @@ Lisp_Object Felt (Lisp_Object seq, Lisp_Object idx);
 
 Lisp_Object Fzerop (Lisp_Object);
 Lisp_Object Fnumber_to_string (Lisp_Object num);
-Lisp_Object Fstring_to_number (Lisp_Object str);
+Lisp_Object Fstring_to_number (Lisp_Object str, Lisp_Object base);
 Lisp_Object Fsubr_min_args (Lisp_Object subr);
 Lisp_Object Fsubr_max_args (Lisp_Object subr);
 
@@ -503,6 +503,11 @@ extern Lisp_Object Qpoint, Qmark, Qregion_beginning, Qregion_end;
 extern Lisp_Object Qformat;
 
 
+/* Defined in emacsfns.c */
+Lisp_Object save_current_buffer_restore (Lisp_Object buffer);
+
+
+
 /* Defined in elhash.c */
 Lisp_Object Fhashtablep (Lisp_Object obj);
 Lisp_Object Fmake_hashtable (Lisp_Object size, Lisp_Object test_fun);
@@ -545,7 +550,7 @@ extern int suppress_early_backtrace;
 
 extern Lisp_Object Qsave_buffers_kill_emacs;
 extern Lisp_Object Qkill_emacs_hook;
-extern Lisp_Object Frunning_temacs_p();
+extern Lisp_Object Frunning_temacs_p(void);
 
 /* Defined in eval.c */
 extern Lisp_Object Qautoload, Qexit, Qinteractive, Qcommandp, Qdefun, Qmacro;

@@ -362,7 +362,7 @@ and KILLP is t if a prefix arg was specified."
        (save-excursion (insert-char ?\  arg))))
 
 (defcustom delete-key-deletes-forward nil
-  "If non-nil, the DEL key will erase one character forwards.
+  "*If non-nil, the DEL key will erase one character forwards.
 If nil, the DEL key will erase one character backwards."
   :type 'boolean
   :group 'editing-basics)
@@ -3278,22 +3278,18 @@ filtered by the log-message-ignore-labels.")
   "List of symbols indicating labels of messages which shouldn't be logged.
 See `display-message' for some common labels.  See also `log-message'.")
 
-;Subsumed by view-lossage
-;(defun show-message-log ()
-;  "Show the \" *Message-Log*\" buffer, which contains old messages and errors."
-;  (interactive)
-;  (pop-to-buffer " *Message-Log*"))
+;;Subsumed by view-lossage
+;; Not really, I'm adding it back by popular demand. -slb
+(defun show-message-log ()
+  "Show the \" *Message-Log*\" buffer, which contains old messages and errors."
+  (interactive)
+  (pop-to-buffer " *Message-Log*"))
 
 (defvar log-message-filter-function 'log-message-filter
   "Value must be a function of two arguments: a symbol (label) and 
 a string (message).  It should return non-nil to indicate a message
 should be logged.  Possible values include 'log-message-filter and
 'log-message-filter-errors-only.")
-
-(defun show-message-log ()
-  "Show the \" *Message-Log*\" buffer, which contains old messages and errors."
-  (interactive)
-  (pop-to-buffer " *Message-Log*"))
 
 (defun log-message-filter (label message)
   "Default value of log-message-filter-function.
@@ -3362,6 +3358,7 @@ you should just use (message nil)."
   (let ((clear-stream (and message-stack (eq 'stream (frame-type frame)))))
     (remove-message label frame)
     (let ((buffer (get-buffer " *Echo Area*"))
+	  (inhibit-read-only t)
 	  (zmacs-region-stays zmacs-region-stays)) ; preserve from change
       (erase-buffer buffer))
     (if clear-stream
@@ -3400,7 +3397,8 @@ you should just use (message nil)."
 	(error (setq remove-message-hook nil)
 	       (message "remove-message-hook error: %s" e)
 	       (sit-for 2)
-	       (erase-buffer (get-buffer " *Echo Area*"))
+	       (let ((inhibit-read-only t))
+		 (erase-buffer (get-buffer " *Echo Area*")))
 	       (signal (car e) (cdr e))))
       (setq log (cdr log)))))
 
@@ -3420,7 +3418,8 @@ you should just use (message nil)."
 	  (zmacs-region-stays zmacs-region-stays)) ; preserve from change
       (save-excursion
 	(set-buffer buffer)
-	(insert message))
+	(let ((inhibit-read-only t))
+	  (insert message)))
       ;; Conditionalizing on the device type in this way is not that clean,
       ;; but neither is having a device method, as I originally implemented
       ;; it: all non-stream devices behave in the same way.  Perhaps

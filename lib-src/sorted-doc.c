@@ -53,8 +53,7 @@ struct docstr			/* Allocated thing for an entry. */
 /* Print error message.  `s1' is printf control string, `s2' is arg for it. */
 
 static void
-error (s1, s2)
-     char *s1, *s2;
+error (char *s1, char *s2)
 {
   fprintf (stderr, "sorted-doc: ");
   fprintf (stderr, s1, s2);
@@ -64,8 +63,7 @@ error (s1, s2)
 /* Print error message and exit.  */
 
 static void
-fatal (s1, s2)
-     char *s1, *s2;
+fatal (char *s1, char *s2)
 {
   error (s1, s2);
   exit (1);
@@ -74,8 +72,7 @@ fatal (s1, s2)
 /* Like malloc but get fatal error if memory is exhausted.  */
 
 static void *
-xmalloc (size)
-     int size;
+xmalloc (int size)
 {
   char *result = malloc ((unsigned)size);
   if (result == NULL)
@@ -113,7 +110,7 @@ CONST char *states[] =
 };
     
 int
-main ()
+main (int argc, char *argv[])
 {
   register DOCSTR *dp = NULL;	/* allocated DOCSTR */
   register LINE *lp = NULL;	/* allocated line */

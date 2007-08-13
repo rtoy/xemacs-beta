@@ -503,6 +503,7 @@ The following commands are available:
    "n" gnus-browse-next-group
    "p" gnus-browse-prev-group
    "\177" gnus-browse-prev-group
+   [delete] gnus-browse-prev-group
    "N" gnus-browse-next-group
    "P" gnus-browse-prev-group
    "\M-n" gnus-browse-next-group
@@ -661,7 +662,7 @@ buffer.
   "(Un)subscribe to the next ARG groups."
   (interactive "p")
   (when (eobp)
-    (error "No group at current line."))
+    (error "No group at current line"))
   (let ((ward (if (< arg 0) -1 1))
 	(arg (abs arg)))
     (while (and (> arg 0)

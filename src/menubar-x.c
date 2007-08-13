@@ -311,8 +311,8 @@ menu_item_descriptor_to_widget_value (Lisp_Object desc,
 #ifdef LWLIB_MENUBARS_LUCID
 int in_menu_callback;
 
-Lisp_Object
-restore_in_menu_callback(Lisp_Object val)
+static Lisp_Object
+restore_in_menu_callback (Lisp_Object val)
 {
     in_menu_callback = XINT(val);
     return Qnil;

@@ -43,7 +43,6 @@ GetNextToken(FILE *fp, char **lexeme)
   register char *curbuf = lexbuf;
   register int   charct = 0;
   register int   c;
-  int done = FALSE;
 
   prevTokDepth = tokDepth;
   tokDepth = 0;
@@ -63,11 +62,11 @@ GetNextToken(FILE *fp, char **lexeme)
       switch (c)
 	{
 	case EOF:
-	  return (TOKEN_EOF);
+	  return TOKEN_EOF;
 	case '\n':
 	  *curbuf = '\0';
 	  *lexeme = strdup(lexbuf);
-	  return (TOKEN_LABEL);
+	  return TOKEN_LABEL;
 	default:
 	  *curbuf++ = c;
 	  charct++;
@@ -82,7 +81,7 @@ GetNextToken(FILE *fp, char **lexeme)
 		c = getc(fp);
 	      if (c == EOF)
 		ungetc(c, fp);
-	      return (TOKEN_LABEL);
+	      return TOKEN_LABEL;
 	    }
 	  else
 	    c = getc(fp);
@@ -150,7 +149,7 @@ ReadTreeFromFile(char *fname, ErrCode *error)
   if (infile == NULL)
     {
       *error = ERR_OPENFAIL;
-      return (NULL);
+      return NULL;
     }
 
   /* first line of file is Envir file name, save */
@@ -159,7 +158,7 @@ ReadTreeFromFile(char *fname, ErrCode *error)
     {
       *error = ERR_EMPTYFILE;
       fclose(infile);
-      return (NULL);
+      return NULL;
     }
   else if (token == TOKEN_LABEL)
     {
@@ -167,7 +166,7 @@ ReadTreeFromFile(char *fname, ErrCode *error)
 	{
 	  *error = ERR_MEMALLOC;
 	  fclose(infile);
-	  return (NULL);
+	  return NULL;
 	}
       EnvNm = strdup(label);
     }
@@ -178,7 +177,7 @@ ReadTreeFromFile(char *fname, ErrCode *error)
     {
       *error = ERR_EMPTYFILE;
       fclose(infile);
-      return (NULL);
+      return NULL;
     }
   else if (token == TOKEN_LABEL)
     {
@@ -186,7 +185,7 @@ ReadTreeFromFile(char *fname, ErrCode *error)
 	{
 	  *error = ERR_MEMALLOC;
 	  fclose(infile);
-	  return (NULL);
+	  return NULL;
 	}
       tree = MakeNode();
       if (tree == NULL)
@@ -194,7 +193,7 @@ ReadTreeFromFile(char *fname, ErrCode *error)
 	  *error = ERR_MEMALLOC;
 	  fclose(infile);
 	  free(label);
-	  return(NULL);
+	  return NULL;
 	}
       SetNodeLabelAndValue(tree, label);
       tree->parent = NULL;
@@ -204,7 +203,7 @@ ReadTreeFromFile(char *fname, ErrCode *error)
     {
       *error = ERR_NOROOT;
       fclose(infile);
-      return (NULL);
+      return NULL;
     }
 
   /* add children and siblings */
@@ -225,7 +224,7 @@ ReadTreeFromFile(char *fname, ErrCode *error)
 	  {
 	    *error = ERR_NOBEGIN;
 	    fclose(infile);
-	    return (tree);
+	    return tree;
 	  }
 	else
 	  while (tokDepth < inside_list)
@@ -239,14 +238,14 @@ ReadTreeFromFile(char *fname, ErrCode *error)
 	{
 	  *error = ERR_MEMALLOC;
 	  fclose(infile);
-	  return (tree);
+	  return tree;
 	}
       if (parent == NULL)
 	{
 	  *error = ERR_MANYROOT;
 	  fclose(infile);
 	  free(label);
-	  return (tree);
+	  return tree;
 	}
       else
 	{
@@ -256,7 +255,7 @@ ReadTreeFromFile(char *fname, ErrCode *error)
 	      *error = ERR_MEMALLOC;
 	      fclose(infile);
 	      free(label);
-	      return (tree);
+	      return tree;
 	    }
 	  SetNodeLabelAndValue(new_node, label);
 	  new_node->parent = parent;
@@ -277,7 +276,7 @@ ReadTreeFromFile(char *fname, ErrCode *error)
 	}
     }
   fclose(infile);
-  return (tree);
+  return tree;
 }
 
 
@@ -297,7 +296,7 @@ SaveTreeToFile(Tree *tree, char *fname)
 
   outfile = fopen(fname, "w");
   if (outfile == NULL)
-    return (FALSE);
+    return FALSE;
 
   fprintf(outfile, "%s\n", EnvNm);   /* Save Env File Name */
   fprintf(outfile, "%s\n", tree->label.text);
@@ -305,7 +304,7 @@ SaveTreeToFile(Tree *tree, char *fname)
     SaveSubtree(tree->child, 0, outfile);
 
   fclose(outfile);
-  return (TRUE);
+  return TRUE;
 }
 
 

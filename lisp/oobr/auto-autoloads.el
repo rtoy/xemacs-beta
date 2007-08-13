@@ -1,5 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (not (featurep 'oobr-autoloads))
+(if (not (featurep '-autoloads))
     (progn
 
 ;;;### (autoloads (br-env-load br-env-browse) "br-env" "oobr/br-env.el")
@@ -131,5 +131,5 @@ Environment file name.  See also the file \"br-help\"." t nil)
 
 ;;;***
 
-(provide 'oobr-autoloads)
+(provide '-autoloads)
 ))

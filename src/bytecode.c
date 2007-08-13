@@ -943,13 +943,9 @@ If the third argument is incorrect, Emacs may crash.
 	  break;
 
 	case Bsave_current_buffer:
-	  {
-	    Lisp_Object save_current_buffer_restore (Lisp_Object);
-
-	    record_unwind_protect (save_current_buffer_restore,
-				   Fcurrent_buffer ());
-	    break;
-	  }
+	  record_unwind_protect (save_current_buffer_restore,
+				 Fcurrent_buffer ());
+	  break;
 
 	case Binteractive_p:
 	  PUSH (Finteractive_p ());

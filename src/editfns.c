@@ -491,7 +491,7 @@ even in case of abnormal exit (throw or error).
 }
 
 Lisp_Object
-save_current_buffer_restore(Lisp_Object buffer)
+save_current_buffer_restore (Lisp_Object buffer)
 {
   struct buffer *buf = XBUFFER (buffer);
   if (!BUFFER_LIVE_P (buf))
@@ -504,7 +504,7 @@ DEFUN ("save-current-buffer", Fsave_current_buffer, 0, UNEVALLED, 0, /*
 Save the current buffer; execute BODY; restore the current buffer.
 Executes BODY just like `progn'.
 */
-  (args))
+       (args))
 {
   /* This function can GC */
   int speccount = specpdl_depth ();

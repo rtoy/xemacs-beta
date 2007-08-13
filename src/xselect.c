@@ -367,7 +367,7 @@ hack_motif_clipboard_selection (Atom selection_atom,
       int dataid;	/* 1.2 wants long, but 1.1.5 wants int... */
 #endif
       XmString fmh;
-      String encoding = (String) "STRING";
+      String encoding = "STRING";
       Extbyte *data  = XSTRING_DATA   (selection_value);
       Extcount bytes = XSTRING_LENGTH (selection_value);
 
@@ -396,21 +396,17 @@ hack_motif_clipboard_selection (Atom selection_atom,
 	    break;
 	  }
 
-	switch (chartypes)
+	if (chartypes == LATIN_1)
+	  GET_STRING_BINARY_DATA_ALLOCA (selection_value, data, bytes);
+	else if (chartypes == WORLD)
 	  {
-	  case LATIN_1:
-	    GET_STRING_BINARY_DATA_ALLOCA (selection_value, data, bytes);
-	    break;
-	  case WORLD:
 	    GET_STRING_CTEXT_DATA_ALLOCA (selection_value, data, bytes);
-	    encoding = (String) "COMPOUND_TEXT";
-	    break;
+	    encoding = "COMPOUND_TEXT";
 	  }
       }
 #endif /* MULE */
 
-      fmh = XmStringCreateLtoR ((String) "Clipboard",
-				XmSTRING_DEFAULT_CHARSET);
+      fmh = XmStringCreateLtoR ("Clipboard", XmSTRING_DEFAULT_CHARSET);
       while (ClipboardSuccess !=
 	     XmClipboardStartCopy (display, selecting_window, fmh, thyme,
 #ifdef MOTIF_INCREMENTAL_CLIPBOARDS_WORK
@@ -1997,11 +1993,10 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
       break;
     }
 
-  switch (chartypes)
-    {
-    case LATIN_1: GET_STRING_BINARY_DATA_ALLOCA (string, data, bytes); break;
-    case WORLD:   GET_STRING_CTEXT_DATA_ALLOCA  (string, data, bytes); break;
-    }
+  if (chartypes == LATIN_1)
+    GET_STRING_BINARY_DATA_ALLOCA (string, data, bytes);
+  else if (chartypes == WORLD)
+    GET_STRING_CTEXT_DATA_ALLOCA  (string, data, bytes);
 #endif /* MULE */
   
   bytes_remaining = bytes;

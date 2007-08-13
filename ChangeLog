@@ -1,5 +1,46 @@
+1997-07-05  Martin Buchholz  <mrb@eng.sun.com>
+
+	* lib-src/getopt*.c: Don't redefine const - let configure do that.
+
+	* configure.in: Better behavior for `configure --with-gcc=no'
+	- Autodetect ulimit.h
+	- Remove broken SunOS4 kludge for libXmu
+	- Autodetect usleep
+
+	* src/s/sol2.h: Support gcc on various Solaris releases.
+	
+	* lib-src/*.c: Ansify prototypes.
+
+	* lisp/prim/files.el: Optimize auto-mode-alist.
+
+	* pkg-src/tree-x/Makefile.in.in: `make distclean' now works
+	- `make install' now works.
+	- dependencies updated.
+
+	* pkg-src/tree-x/*.[ch]: Fix compile warnings.
+	- Replace uses of XtVa* with non-varargs variants.
+
+1997-07-01  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/modes/image-mode.el: Add `image-maybe-restore' to
+	`change-major-mode-hook'.
+
+	* lisp/modes/image-mode.el (image-maybe-restore): New function.
+
+	* src/glyphs.c (make_string_from_file): must protect from
+	`format-alist'.
+
+1997-06-30  Steven L Baur  <steve@altair.xemacs.org>
+
+	* pkg-src/tree-x/Makefile.in.in (INSTALL): Add configure written
+	variable.
+
 1997-06-29  Steven L Baur  <steve@altair.xemacs.org>
 
+	* configure.in (CPP): Correct typo `print-lib-gcc-file-name'
+	should be `print-libgcc-file-name'
+	From Katsumi Yamaoka <yamaoka@ga.sony.co.jp>
+	
 	* XEmacs 20.3-beta10 is released.
 
 1997-06-29  MORIOKA Tomohiko  <morioka@jaist.ac.jp>

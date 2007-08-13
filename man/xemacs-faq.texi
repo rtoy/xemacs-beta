@@ -8,10 +8,10 @@
 @titlepage
 @title XEmacs FAQ
 @subtitle Frequently asked questions about XEmacs
-@subtitle Last Modified:  1997-06-18
+@subtitle Last Modified:  1997-07-02
 @sp 1
 @author Tony Rossini <arossini@@stat.sc.edu>
-@author Ben Wing <wing@@netcom.com>
+@author Ben Wing <wing@@666.com>
 @author Chuck Thompson <cthomp@@cs.uiuc.edu>
 @author Steve Baur <steve@@miranova.com>
 @author Andreas Kaempf <andreas@@sccon.com>
@@ -4893,15 +4893,10 @@ abbrevs (@kbd{C-h i m XEmacs RET m Abbrevs RET}), and then come back and
 read this question/answer again.
 @end quotation
 
-Hrvoje Niksic <hniksic@@srce.hr> writes:
-
-@quotation
-I consider this a bug.  I may attempt to fix it one day (and add a
-variable to revert to the current behavior).
-
-If many people wants to see this fixed, send me mails---they will move
-me to start hacking sooner.
-@end quotation
+Newsflash: this restriction has been lifted, starting with XEmacs 20.3,
+which is currently in beta.  Hrvoje Niksic <hniksic@@srce.hr> will
+appreciate it if you download a beta, try out whether abbreviations work 
+like you expect them to, and let him know.
 
 @node Q5.3.10, Q5.3.11, Q5.3.9, Miscellaneous
 @section How can I get those oh-so-neat X-Face lines?

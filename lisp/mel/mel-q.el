@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/6/25
-;; Version: $Id: mel-q.el,v 1.3 1997/06/06 00:57:14 steve Exp $
+;; Version: $Id: mel-q.el,v 1.4 1997/07/07 00:52:59 steve Exp $
 ;; Keywords: MIME, Quoted-Printable, Q-encoding
 
 ;; This file is part of MEL (MIME Encoding Library).
@@ -259,7 +259,7 @@ MODE allows `text', `comment', `phrase' or nil.  Default value is
 			   ))))
     (mapconcat (function
 		(lambda (chr)
-		  (cond ((eq chr 32) "_")
+		  (cond ((eq chr ? ) "_")
 			((or (< chr 32) (< 126 chr)
 			     (memq chr specials)
 			     )

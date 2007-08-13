@@ -317,7 +317,7 @@ are used."
 	  (when (< output-end (point))
 	    (setq output-end (point-marker)))
 	  (while (< (point) output-end)
-	    (let ((beg (point)))
+	    ;; (let ((beg (point)))
 	      (end-of-line)
 	      ;; Emacs -- I still haven't figured this one out.
 	      ;; (if (> (- (point) beg) 900)
@@ -325,7 +325,7 @@ are used."
 		    ;; (message "A line is too long--over 900 characters")
 		    ;; (sleep-for 2)
 		    ;; (goto-char output-end)))
-	      )
+	      ;; )
 	    (forward-line 1))
 	  (goto-char output-end)
 	  (insert generate-autoload-section-trailer)))
@@ -359,6 +359,8 @@ Unless you are an XEmacs maintainr, it is probably unwise to change this.")
 		    data-directory)
   "*File `update-file-autoloads' puts customization into.")
 
+(defvar customized-symbols nil)
+
 ;; Written by Per Abrahamsen
 (defun autoload-snarf-defcustom (file)
   "Snarf all customizations in the current buffer."
@@ -376,53 +378,62 @@ Unless you are an XEmacs maintainr, it is probably unwise to change this.")
 		  (when (and (listp expr)
 			     (memq (car expr) '(defcustom defface defgroup)))
 		    (eval expr)
-		    (put (nth 1 expr) 'custom-where name)))))
+		    (put (nth 1 expr) 'custom-where name)
+		    (pushnew (nth 1 expr) customized-symbols)))))
 	  (error nil)))
       (unless (buffer-modified-p)
 	(kill-buffer (current-buffer))))))
 
+(defvar autoload-do-custom-save nil)
+
 ;;;###autoload
 (defun update-file-autoloads (file)
   "Update the autoloads for FILE in `generated-autoload-file'
-\(which FILE might bind in its local variables)."
+\(which FILE might bind in its local variables).
+This functions refuses to update autolaods files and custom loads."
   (interactive "fUpdate autoloads for file: ")
   (setq file (expand-file-name file))
-  (let ((load-name (replace-in-string (file-name-nondirectory file)
-				      "\\.elc?$"
-				      ""))
-	(trim-name (autoload-trim-file-name file))
-	section-begin form)
-    (save-excursion
-      (let ((find-file-hooks nil))
-	(set-buffer (or (get-file-buffer generated-autoload-file)
-			(find-file-noselect generated-autoload-file))))
-      ;; First delete all sections for this file.
-      (goto-char (point-min))
-      (while (search-forward generate-autoload-section-header nil t)
-	(setq section-begin (match-beginning 0))
-	(setq form (read (current-buffer)))
-	(when (string= (nth 2 form) load-name)
-	  (search-forward generate-autoload-section-trailer)
-	  (delete-region section-begin (point))))
+  (when (and (file-newer-than-file-p file generated-autoload-file)
+	     (not (member (file-name-nondirectory file)
+			  (list autoload-file-name cusload-file-name))))
 
-      ;; Now find insertion point for new section
-      (block find-insertion-point
+    (setq autoload-do-custom-save t)
+    (let ((load-name (replace-in-string (file-name-nondirectory file)
+					"\\.elc?$"
+					""))
+	  (trim-name (autoload-trim-file-name file))
+	  section-begin form)
+      (save-excursion
+	(let ((find-file-hooks nil))
+	  (set-buffer (or (get-file-buffer generated-autoload-file)
+			  (find-file-noselect generated-autoload-file))))
+	;; First delete all sections for this file.
 	(goto-char (point-min))
 	(while (search-forward generate-autoload-section-header nil t)
+	  (setq section-begin (match-beginning 0))
 	  (setq form (read (current-buffer)))
-	  (when (string< trim-name (nth 3 form))
-	    ;; Found alphabetically correct insertion point
-	    (goto-char (match-beginning 0))
-	    (return-from find-insertion-point))
-	  (search-forward generate-autoload-section-trailer))
-	(when (eq (point) (point-min))	; No existing entries?
-	  (goto-char (point-max))))	; Append.
+	  (when (string= (nth 2 form) load-name)
+	    (search-forward generate-autoload-section-trailer)
+	    (delete-region section-begin (point))))
 
-      ;; Add in new sections for file
-      (generate-file-autoloads file)
-      (autoload-snarf-defcustom file))
+	;; Now find insertion point for new section
+	(block find-insertion-point
+	  (goto-char (point-min))
+	  (while (search-forward generate-autoload-section-header nil t)
+	    (setq form (read (current-buffer)))
+	    (when (string< trim-name (nth 3 form))
+	      ;; Found alphabetically correct insertion point
+	      (goto-char (match-beginning 0))
+	      (return-from find-insertion-point))
+	    (search-forward generate-autoload-section-trailer))
+	  (when (eq (point) (point-min))	; No existing entries?
+	    (goto-char (point-max))))	; Append.
 
-    (when (interactive-p) (save-buffer))))
+	;; Add in new sections for file
+	(generate-file-autoloads file)
+	(autoload-snarf-defcustom file))
+
+      (when (interactive-p) (save-buffer)))))
 
 ;;;###autoload
 (defun update-autoloads-here ()
@@ -480,6 +491,7 @@ Unless you are an XEmacs maintainr, it is probably unwise to change this.")
 This runs `update-file-autoloads' on each .el file in DIR.
 Obsolete autoload entries for files that no longer exist are deleted."
   (interactive "DUpdate autoloads for directory: ")
+  (setq autoload-do-custom-save nil)
   (setq dir (expand-file-name dir))
   (let ((simple-dir (file-name-as-directory
 		     (file-name-nondirectory
@@ -515,29 +527,40 @@ Obsolete autoload entries for files that no longer exist are deleted."
     (erase-buffer)
     (insert
      (with-output-to-string
-      (mapatoms (lambda (symbol)
-		  (let ((members (condition-case nil
-				     (get symbol 'custom-group)
-				   (t (progn
-					(message "Bad plist in %s"
-						 (symbol-name symbol)))
-				      nil)))
-			item where found)
-		    (when members
-		      (princ "(put '")
-		      (princ symbol)
-		      (princ " 'custom-loads '(")
-		      (while members
-			(setq item (car (car members))
-			      members (cdr members)
-			      where (get item 'custom-where))
-			(unless (or (null where)
-				    (member where found))
-			  (when found
-			    (princ " "))
-			  (prin1 where)
-			  (push where found)))
-		      (princ "))\n")))))))))
+      (mapcar (lambda (symbol)
+		(let ((members (condition-case nil
+				   (get symbol 'custom-group)
+				 (t (progn
+				      (message "Bad plist in %s"
+					       (symbol-name symbol)))
+				    nil)))
+		      item where
+		      (found (condition-case nil
+				 (get symbol 'custom-loads)
+			       (t nil)))
+		      )
+		  (when (or members found)
+		    (princ "(custom-put '")
+		    (princ symbol)
+		    (princ " 'custom-loads '(")
+		    (when found
+		      ;; (message "found = `%s'" found)
+		      (insert (mapconcat 'prin1-to-string found " ")))
+		    (while members
+		      (setq item (car (car members))
+			    members (cdr members)
+			    where (get item 'custom-where))
+		      (unless (or (null where)
+				  (member where found))
+			;; (message "where = `%s', found = `%s'" where found)
+			(when found
+			  (princ " "))
+			(prin1 where)
+			(push where found)))
+		    (princ "))\n"))))
+	      customized-symbols)))
+    (when (= (point-min) (point-max))
+      (set-buffer-modified-p nil))))
 
 ;;;###autoload
 (defun batch-update-autoloads ()
@@ -545,12 +568,20 @@ Obsolete autoload entries for files that no longer exist are deleted."
 Runs `update-file-autoloads' on files and `update-directory-autoloads'
 on directories.  Must be used only with -batch, and kills Emacs on completion.
 Each file will be processed even if an error occurred previously.
-For example, invoke `xemacs -batch -f batch-update-autoloads *.el'."
+For example, invoke `xemacs -batch -f batch-update-autoloads *.el'.
+The directory to which the auto-autoloads.el and custom-load.el files must
+be the first parameter on the command line."
   (unless noninteractive
     (error "batch-update-autoloads is to be used only with -batch"))
   (let ((defdir default-directory)
 	(enable-local-eval nil))	; Don't query in batch mode.
-    (message "Updating autoloads in %s..." generated-autoload-file)
+    (when (file-exists-p generated-custom-file)
+      (flet ((custom-put (symbol property value)
+			  (progn
+			    (put symbol property value)
+			    (pushnew symbol customized-symbols))))
+	(load generated-custom-file nil t)))
+    ;; (message "Updating autoloads in %s..." generated-autoload-file)
     (dolist (arg command-line-args-left)
       (setq arg (expand-file-name arg defdir))
       (cond
@@ -560,9 +591,12 @@ For example, invoke `xemacs -batch -f batch-update-autoloads *.el'."
        ((file-exists-p arg)
 	(update-file-autoloads arg))
        (t (error "No such file or directory: %s" arg))))
-    (autoload-save-customization)
+    (when autoload-do-custom-save
+      (autoload-save-customization))
+    (fixup-autoload-buffer (concat (file-name-nondirectory defdir)
+				   "-autoloads"))
     (save-some-buffers t)
-    (message "Done")
+    ;; (message "Done")
     (kill-emacs 0)))
 
 (defun fixup-autoload-buffer (sym)
@@ -584,23 +618,34 @@ For example, invoke `xemacs -batch -f batch-update-autoloads *.el'."
 Runs `update-file-autoloads' on each file in the given directory, and must
 be used only with -batch, and kills XEmacs on completion."
   (unless noninteractive
-    (error "batch-update-autoloads is to be used only with -batch"))
+    (error "batch-update-directory is to be used only with -batch"))
   (let ((defdir default-directory)
 	(enable-local-eval nil))	; Don't query in batch mode.
     (dolist (arg command-line-args-left)
       (setq arg (expand-file-name arg defdir))
       (let ((generated-autoload-file (concat arg "/" autoload-file-name))
 	    (generated-custom-file (concat arg "/" cusload-file-name)))
+	(when (file-exists-p generated-custom-file)
+	  (flet ((custom-put (symbol property value)
+			      (progn
+				(put symbol property value)
+				;; (message "Loading %s = %s"
+					 ;; (symbol-name symbol)
+					 ;; (prin1-to-string value))
+				(pushnew symbol customized-symbols))))
+	    (load generated-custom-file nil t)))
 	(cond
 	 ((file-directory-p arg)
 	  (message "Updating autoloads in directory %s..." arg)
 	  (update-autoloads-from-directory arg))
 	 (t (error "No such file or directory: %s" arg)))
-	(autoload-save-customization)
+	(when autoload-do-custom-save
+	  (autoload-save-customization)
+	  (setq customized-symbols nil))
 	(fixup-autoload-buffer (concat (file-name-nondirectory arg)
-				       "-autoloads"))
+				"-autoloads"))
 	(save-some-buffers t))
-      (message "Done")
+      ;; (message "Done")
       ;; (kill-emacs 0)
       )
     (setq command-line-args-left nil)))

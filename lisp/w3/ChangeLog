@@ -2,7 +2,59 @@ Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 * Makefile (xemacs-w3): Special target for XEmacs Build.
 
+Wed Jul  2 10:39:30 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs/W3 3.0.93 released
+
+Tue Jul  1 08:54:40 1997  William M. Perry  <wmperry@aventail.com>
+
+* lisp/w3-display.el (w3-handle-string-content): EBOLA vaccination
+
+Sun Jun 29 22:26:43 1997  William M. Perry  <wmperry@aventail.com>
+
+* lisp/w3-emulate.el: Make sure we call widget-button-press not w3-follow-link
+
+* configure.in: New --enable-site-install option to control whether init
+  code goes in user's .emacs file or default.el
+
+* Makefile.in (dotemacs): New target for modifying the user's .emacs file
+  or the sitewide default init.
+  (html): New target for building html versions of the manuals.
+
+Fri Jun 27 21:08:24 1997  William M. Perry  <wmperry@aventail.com>
+
+* texi/Makefile.in (%.html): Added targets for making HTML versions of the
+  info files.
+
+1997-06-27  William M. Perry  <wmperry@aventail.com>
+
+* lisp/w3.el: In non-XEmacs, the version-specific stuff is loaded from
+  (format "w3-e%d" emacs-major-version), in case we need to do anything
+  special for Emacs 20.x with Mule support.
+
+* Only use one conditionalization variable - w3-running-xemacs
+
+1997-06-26  William M. Perry  <wmperry@aventail.com>
+
+* Makefile.in: Make sure we recursively make usin $(MAKE), not
+  vanilla 'make'.
+
+* lisp/w3.el (w3-insert-formatted-url): Works again, forgot to update it
+  to use the new widget properties.
+  (w3-maybe-follow-link): Ditto.
+  (w3-view-this-url): Ditto.
+  (w3-follow-link): Ditto.
+  (w3-complete-link): Ditto.
+
 Wed Jun 25 07:29:46 1997  William M. Perry  <wmperry@aventail.com>
+
+* lisp/w3.el (w3-find-default-stylesheets): Added more directories to the
+  stylesheet search path.
+
+* Emacs/W3 3.0.92 released
+
+* Moved lisp stuff into its own subdirectory, integrated into configure,
+  make, and install procedures.
 
 * Makefile.in (Makefile): Ditto
 
@@ -14,6 +66,8 @@ Wed Jun 25 07:29:46 1997  William M. Perry  <wmperry@aventail.com>
   edges for ascii borders on tables.
 
 Tue Jun 24 14:35:05 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs/W3 3.0.91 Released
 
 * Moved texinfo stuff into its own subdirectory, integrated into
   configure, make, and install procedures.

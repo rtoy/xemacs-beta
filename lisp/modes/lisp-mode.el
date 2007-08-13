@@ -30,6 +30,8 @@
 ;; The base major mode for editing Lisp code (used also for Emacs Lisp).
 ;; This mode is documented in the Emacs manual
 
+;; July/05/97 slb Converted to use easymenu.
+
 ;;; Code:
 
 (defvar lisp-mode-syntax-table nil "")
@@ -37,8 +39,9 @@
 (defvar lisp-mode-abbrev-table nil "")
 
 ;; XEmacs change
-(defvar lisp-interaction-mode-popup-menu
-  (purecopy '("Lisp Interaction Menu"
+(defvar lisp-interaction-mode-popup-menu nil)
+(defvar lisp-interaction-mode-popup-menu-1
+  (purecopy '("Lisp-Interaction"
 	      ["Evaluate Last S-expression" eval-last-sexp      t]
 	      ["Evaluate Entire Buffer"     eval-current-buffer t]
 	      ["Evaluate Region"	eval-region	(region-exists-p)]
@@ -60,22 +63,24 @@
 	       :style toggle :selected debug-on-quit]
 	      )))
 
-(defvar emacs-lisp-mode-popup-menu
+(defvar emacs-lisp-mode-popup-menu nil)
+(defvar emacs-lisp-mode-popup-menu-1
   (purecopy
    (nconc
-    '("Emacs-Lisp Menu"
+    '("Emacs-Lisp"
       ["Byte-compile This File" emacs-lisp-byte-compile t]
       ["Byte-recompile Directory..." byte-recompile-directory t]
       "---")
-    (cdr lisp-interaction-mode-popup-menu))))
+    (cdr lisp-interaction-mode-popup-menu-1))))
 
 ;Don't have a menubar entry in Lisp Interaction mode.  Otherwise, the
 ;*scratch* buffer has a Lisp menubar item!  Very confusing.
 ;(defvar lisp-interaction-mode-menubar-menu
 ;  (purecopy (cons "Lisp" (cdr lisp-interaction-mode-popup-menu))))
 
-(defvar emacs-lisp-mode-menubar-menu
-  (purecopy (cons "Lisp" (cdr emacs-lisp-mode-popup-menu))))
+(defvar emacs-lisp-mode-menubar-menu nil)
+(defvar emacs-lisp-mode-menubar-menu-1
+  (purecopy (cons "Lisp" (cdr emacs-lisp-mode-popup-menu-1))))
 
 (if (not emacs-lisp-mode-syntax-table)
     (let ((i 0))
@@ -259,15 +264,19 @@ if that value is non-nil."
   (set-syntax-table emacs-lisp-mode-syntax-table)
   ;; XEmacs changes
   (setq major-mode 'emacs-lisp-mode
-	mode-popup-menu emacs-lisp-mode-popup-menu
+	;; mode-popup-menu emacs-lisp-mode-popup-menu
 	mode-name "Emacs-Lisp")
-  (if (and (featurep 'menubar)
-           current-menubar)
-      (progn
+  ;; (if (and (featurep 'menubar)
+           ;; current-menubar)
+      ;; (progn
 	;; make a local copy of the menubar, so our modes don't
 	;; change the global menubar
-	(set-buffer-menubar current-menubar)
-	(add-submenu nil emacs-lisp-mode-menubar-menu)))
+	;; (set-buffer-menubar current-menubar)
+	;; (add-submenu nil emacs-lisp-mode-menubar-menu)))
+  (unless emacs-lisp-mode-popup-menu
+    (easy-menu-define emacs-lisp-mode-popup-menu emacs-lisp-mode-map ""
+		      emacs-lisp-mode-popup-menu-1))
+  (easy-menu-add emacs-lisp-mode-popup-menu)
   (lisp-mode-variables nil)
   (run-hooks 'emacs-lisp-mode-hook))
 
@@ -346,7 +355,14 @@ if that value is non-nil."
   (setq major-mode 'lisp-interaction-mode)
   (setq mode-name "Lisp Interaction")
   ;; XEmacs change
-  (setq mode-popup-menu lisp-interaction-mode-popup-menu)
+  ;; (setq mode-popup-menu lisp-interaction-mode-popup-menu)
+  (unless lisp-interaction-mode-popup-menu
+    (easy-menu-define lisp-interaction-mode-popup-menu
+		      lisp-interaction-mode-map
+		      ""
+		      lisp-interaction-mode-popup-menu-1))
+  (easy-menu-add lisp-interaction-mode-popup-menu)
+
   (set-syntax-table emacs-lisp-mode-syntax-table)
   (lisp-mode-variables nil)
   (run-hooks 'lisp-interaction-mode-hook))

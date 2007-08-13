@@ -1,11 +1,11 @@
 ;;; easymenu.el - Easy menu support for Emacs 19 and XEmacs.
 ;; 
-;; $Id: easymenu.el,v 1.4 1997/05/23 01:36:43 steve Exp $
+;; $Id: easymenu.el,v 1.5 1997/07/07 00:53:20 steve Exp $
 ;;
 ;; LCD Archive Entry:
 ;; easymenu|Per Abrahamsen|abraham@iesd.auc.dk|
 ;; Easy menu support for XEmacs|
-;; $Date: 1997/05/23 01:36:43 $|$Revision: 1.4 $|~/misc/easymenu.el.gz|
+;; $Date: 1997/07/07 00:53:20 $|$Revision: 1.5 $|~/misc/easymenu.el.gz|
 
 ;; Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
 
@@ -78,7 +78,7 @@
 
 ;;; Code:
 
-;;;###autoload
+;; ;;;###autoload
 (defmacro easy-menu-define (symbol maps doc menu)
   "Define a menu bar submenu in maps MAPS, according to MENU.
 The arguments SYMBOL and DOC are ignored; they are present for
@@ -169,8 +169,10 @@ is a list of menu items, as above."
   (if (featurep 'menubar)
       (progn
 	(pushnew menu easy-menu-all-popups)
-	(setq mode-popup-menu (cons (easy-menu-title)
-				    (reverse easy-menu-all-popups)))
+	(setq mode-popup-menu (if (< (length easy-menu-all-popups) 1)
+				  (cons (easy-menu-title)
+					(reverse easy-menu-all-popups))
+				(car easy-menu-all-popups)))
 
 	(cond ((null current-menubar)
 	       ;; Don't add it to a non-existing menubar.
@@ -191,8 +193,11 @@ is a list of menu items, as above."
   (if (featurep 'menubar)
       (progn
 	(setq easy-menu-all-popups (delq menu easy-menu-all-popups)
-	      mode-popup-menu (cons (easy-menu-title)
-				    (reverse easy-menu-all-popups)))
+	      mode-popup-menu (if (< (length easy-menu-all-popups) 1)
+				  (cons (easy-menu-title)
+					(reverse easy-menu-all-popups))
+				(car easy-menu-all-popups)))
+
 	(and current-menubar
 	     (assoc (car menu) current-menubar)
 	     (delete-menu-item (list (car menu)))))))

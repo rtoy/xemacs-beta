@@ -1,4 +1,12 @@
 ;;; All the autoloads for emacs-w3
+;; Bare essentials
+(autoload 'w3-open-local "w3" nil t)
+(autoload 'w3-find-file "w3" nil t)
+(autoload 'w3-fetch "w3" nil t)
+(autoload 'w3-fetch-other-frame "w3" nil t)
+(autoload 'w3-follow-url-at-point "w3" nil t)
+(autoload 'w3-preview-this-buffer "w3" nil t)
+(autoload 'w3 "w3" nil t)
 
 ;; About pages
 (autoload 'w3-about "w3-about")

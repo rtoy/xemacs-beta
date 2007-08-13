@@ -1,3 +1,131 @@
+1997-07-06  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/cmdloop.el (errors-deactivate-region): Default to no error
+	behavior for beta testing.
+
+	* prim/dumped-lisp.el (dumped-lisp-packages): Reenable dumping
+	winnt.elc with MS Windows NT version of XEmacs.
+
+1997-07-05  Steven L Baur  <steve@altair.xemacs.org>
+
+	* comint/shell.el ((not shell-mode-map)): M-RET conflicts with
+	Hyperbole binding.
+
+	* comint/comint.el (comint-mode): Use easymenu for making menus.
+	(comint-popup-menu): Use mode-popup menu instead of private menu.
+
+	* efs/dired.el (toplevel): Do not string test version against
+	"Lucid".
+
+	* prim/obsolete.el (add-menu): Don't make obsolete.
+
+	* utils/easymenu.el (easy-menu-remove): Do something neater when
+	only one buffer menu is in effect.
+	(easy-menu-add): Ditto.
+
+	* prim/dumped-lisp.el (dumped-lisp-packages): easymenu will be
+	dumped with XEmacs.
+
+	* utils/easymenu.el (easy-menu-define): Don't autoload.
+
+	* modes/lisp-mode.el (toplevel): Rename menu descriptors.
+	(emacs-lisp-mode): Use easy-menu-define/easy-menu-add to add menus.
+	(lisp-interaction-mode): Ditto.
+
+1997-07-04  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/cmdloop.el (errors-deactivate-region): Default to existing
+	behavior.
+
+	* leim/quail.el (quail-mode): Correct addition of quail minor mode 
+	info to minor-mode-map-alist.
+	(top-level):  Ditto.
+
+1997-06-30  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* modes/abbrev.el (define-mode-abbrev): Call `define-abbrev' with
+	correct arguments.
+
+1997-07-04  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/minibuf.el (read-from-minibuffer): Initialize
+	`current-minibuffer-contents', `current-minibuffer-point', and
+	`initial-minibuffer-history-position'.
+	(next-history-element): Use them.
+	(previous-matching-history-element): Ditto.
+
+1997-07-04  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/cus-load.el (custom-put): New alias for overloadable
+	function.
+
+1997-07-03  Steven L Baur  <steve@altair.xemacs.org>
+
+	* utils/autoload.el (batch-update-directory): Fix typo.
+	(update-autoloads-from-directory): Avoid scanning custom-load.el
+	and auto-autoload.el files.
+	(batch-update-autoloads): Remove duplicate status message.
+	(autoload-snarf-defcustom): Keep track of what symbols we have
+	attached property lists to.
+
+	* ilisp/Makefile (autoloads): Add autoloads dependencies.
+
+	* hyperbole/Makefile: Add autoloads dependencies.
+
+	* utils/autoload.el (batch-update-autoloads): Load custom-load
+	prior to updating autoloads.
+
+	* cc-mode/Makefile (autoloads): New targets to automatically
+	rebuild autoloads and custom-loads.
+
+1997-07-02  Steven L Baur  <steve@altair.xemacs.org>
+
+	* auctex/Makefile (autoloads): New targets to automatically
+	rebuild autoloads and custom-loads.
+
+	* utils/autoload.el (batch-update-autoloads): Add new parameter,
+	update DOC string.
+
+	* comint/gdb.el (gdb-mode): Semantics of c-mode-syntax-table have
+	changed.
+
+1997-07-01  Steven L Baur  <steve@altair.xemacs.org>
+
+	* x11/x-menubar.el: bookmark submenu beautification -- This will
+	make it look better (and will prevent some consing, but that's
+	being anal).
+	From Hrvoje Niksic <hniksic@srce.hr>
+	
+	* prim/simple.el (delete-key-deletes-forward): Mark docstring as
+	an user option.
+	From Gary D. Foster <Gary.Foster@Corp.Sun.COM>
+
+	* mel/mel-q.el (q-encoding-encode-string): Fix Ebola-ified
+ 	comparison.
+
+	* efs/efs-ovwrt.el (efs-overwrite-fn): efs is manufacturing its
+	own byte code.  Whee.
+	* utils/advice.el (ad-interactive-form): Don't treat bytecode as a 
+	vector if it can be avoided.
+	From Kyle Jones <kyle_jones@wonderworks.com>
+	
+1997-06-30  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files.el (auto-mode-alist): Don't set image-mode by default
+	on xpms.
+
+Sun Jun 29 20:57:15 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* prim/simple.el: bind inhibit-read-only to t before 
+	  trying to erase or otherwise modify the echo area buffer.
+
+1997-07-01  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* modes/image-mode.el: Add `image-maybe-restore' to
+	`change-major-mode-hook'.
+
+	* modes/image-mode.el (image-maybe-restore): New function.
+
 1997-06-29  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* modes/abbrev.el (define-mode-abbrev): Would ignore EXPANSION.

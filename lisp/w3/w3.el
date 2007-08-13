@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/06/24 22:38:28
-;; Version: 1.130
+;; Created: 1997/06/30 05:29:38
+;; Version: 1.134
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -697,7 +697,7 @@ under point."
      (p
       (setq p (widget-at (point)))
       (or p (error "No url under point"))
-      (setq str (format "<a href=\"%s\">%s</a>" (widget-get p 'href)
+      (setq str (format "<a href=\"%s\">%s</a>" (widget-get p :href)
 			(read-string "Link text: "
 				     (buffer-substring
                                       (widget-get p :from)
@@ -764,10 +764,10 @@ url-get-url-at-point"
   (require 'w3)
   (if (not w3-setup-done) (w3-do-setup))
   (let* ((widget (widget-at (point)))
-         (url1 (and widget (widget-get widget 'href)))
+         (url1 (and widget (widget-get widget :href)))
          (url2 (url-get-url-at-point)))
     (cond
-      (url1 (w3-follow-link))
+      (url1 (widget-button-press))
       ((and url2 (string-match url-nonrelative-link url2)) (w3-fetch url2))
       (t (message "No URL could be found!")))))
 
@@ -1338,9 +1338,8 @@ ftp.w3.org:/pub/www/doc."
    ((and w3-running-xemacs (eq system-type 'ms-windows))
     (error "WinEmacs no longer supported."))
    (w3-running-xemacs (require 'w3-xemac))
-   (w3-running-FSF19  (require 'w3-e19))
-   (t
-    (error "Unable to determine the capabilities of this emacs.")))
+   (t					; Assume we are the FSF variant
+    (require (intern (format "w3-e%d" emacs-major-version)))))
   (if (featurep 'emacspeak)
       (condition-case ()
 	  (progn
@@ -1691,8 +1690,8 @@ cached and in local mode."
   (interactive)
   (let* ((widget (widget-at (point)))
 	 (parent (and widget (widget-get widget :parent)))
-	 (href (or (and widget (widget-get widget 'href))
-		   (and parent (widget-get parent 'href)))))
+	 (href (or (and widget (widget-get widget :href))
+		   (and parent (widget-get parent :href)))))
     (cond
      ((and no-show href)
       href)
@@ -1921,8 +1920,12 @@ BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
 		       (concat data-directory "w3/")
 		       (expand-file-name "../../w3" data-directory)
 		       (file-name-directory (locate-library "w3"))
+		       (expand-file-name "../" (file-name-directory
+						(locate-library "w3")))
 		       (expand-file-name "../w3" (file-name-directory
 						  (locate-library "w3")))
+		       (expand-file-name "../etc" (file-name-directory
+						   (locate-library "w3")))
 		       w3-configuration-directory))
 	 (total-found 0)
 	 (possible (append
@@ -2154,7 +2157,7 @@ With prefix-arg P, ignore viewers and dump the link straight
 to disk."
   (interactive "P")
   (let* ((widget (widget-at (point)))
-	 (href (and widget (widget-get widget 'href))))
+	 (href (and widget (widget-get widget :href))))
     (cond
      ((null href) nil)
      ((or p w3-dump-to-disk)
@@ -2184,7 +2187,7 @@ With optional ARG, move across that many fields."
     (setq link-at-point (widget-at (point))
 	  link-at-point (and
 			 link-at-point
-			 (widget-get link-at-point 'href)
+			 (widget-get link-at-point :href)
 			 (widget-get link-at-point :from)
 			 (widget-get link-at-point :to)
 			 (w3-fix-spaces
@@ -2201,7 +2204,7 @@ With optional ARG, move across that many fields."
 					      (buffer-substring-no-properties
 					       (widget-get widget :from)
 					       (widget-get widget :to)))
-					     (widget-get widget 'href))
+					     (widget-get widget :href))
 					    links-alist))))))
     (if (not links-alist) (error "No links in current document."))
     (setq links-alist (sort links-alist (function

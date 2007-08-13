@@ -2886,16 +2886,16 @@ Return non-nil if OBJECT is a boolean specifier.
 
 DEFINE_SPECIFIER_TYPE (display_table);
 
-void
-display_table_validate(instantiator)
-Lisp_Object instantiator;
+static void
+display_table_validate (Lisp_Object instantiator)
 {
   if (!NILP(instantiator) &&
       (!VECTORP (instantiator) ||
        XVECTOR (instantiator)->size != DISP_TABLE_SIZE))
-    dead_wrong_type_argument(display_table_specifier_methods->predicate_symbol, instantiator);
-  return;
+    dead_wrong_type_argument (display_table_specifier_methods->predicate_symbol,
+			      instantiator);
 }
+
 DEFUN ("display-table-specifier-p", Fdisplay_table_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is an display-table specifier.
 */

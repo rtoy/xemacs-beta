@@ -32,10 +32,15 @@ SOURCES = \
 	sun-eos-debugger.el sun-eos-editor.el sun-eos-init.el \
 	sun-eos-menubar.el sun-eos-toolbar.el sun-eos-load.el
 
+EXTRA = custom-load.elc
+
 all:	$(OBJECTS)
 
 clean:
 	rm -f $(OBJECTS)
+
+custom-load.elc: auto-autoloads.el
+	${EMACS} ${BATCHFLAGS} -f batch-byte-compile custom-load.el
 
 sun-eos-browser.elc: sun-eos-browser.el $(CORE)
 	${EMACS} ${BATCHFLAGS} -f batch-byte-compile sun-eos-browser.el
@@ -63,5 +68,13 @@ sun-eos-init.elc: sun-eos-init.el
 
 sun-eos-load.elc: sun-eos-load.el
 	${EMACS} ${BATCHFLAGS} -f batch-byte-compile sun-eos-load.el
+
+autoloads: custom-load.el
+
+custom-load.el: $(SOURCES)
+	$(EMACS) -batch -q -no-site-file \
+		-eval '(setq autoload-target-directory "'`pwd`'/")' \
+		-l autoload \
+		-f batch-update-autoloads $?
 
 ### Makefile ends here

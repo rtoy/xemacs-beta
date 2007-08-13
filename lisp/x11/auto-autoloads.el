@@ -1,9 +1,6 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (not (featurep 'x11-autoloads))
     (progn
-
-(provide 'x11-autoloads)
-))
 
 ;;;### (autoloads (font-menu-weight-constructor font-menu-size-constructor font-menu-family-constructor reset-device-font-menus) "x-font-menu" "x11/x-font-menu.el")
 
@@ -31,3 +28,6 @@ or if you change your font path, you can call this to re-initialize the menus." 
 (autoload 'font-menu-weight-constructor "x-font-menu" nil nil nil)
 
 ;;;***
+
+(provide 'x11-autoloads)
+))

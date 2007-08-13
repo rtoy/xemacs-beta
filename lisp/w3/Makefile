@@ -106,3 +106,11 @@ w3-display.elc: w3-display.el css.elc font.elc w3-imap.elc
 css.elc: css.el font.elc
 w3.elc: css.elc w3-vars.elc w3.el
 dsssl.elc: dsssl.el dsssl-flow.elc
+
+autoloads: auto-autoloads.el
+
+auto-autoloads.el: $(SOURCES)
+	$(EMACS) -batch -q -no-site-file \
+		-eval '(setq autoload-target-directory "'`pwd`'/")' \
+		-l autoload \
+		-f batch-update-autoloads $?

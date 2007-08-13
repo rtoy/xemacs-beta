@@ -80,11 +80,11 @@ round_to_next (unsigned char *address, unsigned long align)
 }
 
 /* Info for keeping track of our heap.  */
-unsigned char *data_region_base = NULL;
-unsigned char *data_region_end = NULL;
-unsigned char *real_data_region_end = NULL;
-unsigned long  data_region_size = 0;
-unsigned long  reserved_heap_size = 0;
+unsigned char *data_region_base = UNINIT_PTR;
+unsigned char *data_region_end = UNINIT_PTR;
+unsigned char *real_data_region_end = UNINIT_PTR;
+unsigned long  data_region_size = UNINIT_LONG;
+unsigned long  reserved_heap_size = UNINIT_LONG;
 
 /* The start of the data segment.  */
 unsigned char *
@@ -143,6 +143,7 @@ allocate_heap (void)
   unsigned long end  = 1 << VALBITS; /* 256MB */
   void *ptr = NULL;
 
+#define NTHEAP_PROBE_BASE 1
 #if NTHEAP_PROBE_BASE /* This is never normally defined */
   /* Try various addresses looking for one the kernel will let us have.  */
   while (!ptr && (base < end))
@@ -174,7 +175,7 @@ sbrk (unsigned long increment)
   long size = (long) increment;
   
   /* Allocate our heap if we haven't done so already.  */
-  if (!data_region_base) 
+  if (data_region_base == UNINIT_PTR) 
     {
       data_region_base = allocate_heap ();
       if (!data_region_base)

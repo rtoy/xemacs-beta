@@ -2608,7 +2608,10 @@ will clear the cache."
   ;;"Returns the interactive form of DEFINITION."
   (cond ((ad-compiled-p definition)
 	 (and (commandp definition)
-	      (list 'interactive (aref (ad-compiled-code definition) 5))))
+	      ;; XEmacs: we have an accessor function so don't use aref.
+	      (if (fboundp 'compiled-function-interactive)
+		  (compiled-function-interactive (ad-compiled-code definition))
+	      (list 'interactive (aref (ad-compiled-code definition) 5)))))
 	((or (ad-advice-p definition)
 	     (ad-lambda-p definition))
 	 (commandp (ad-lambda-expression definition)))))

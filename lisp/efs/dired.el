@@ -75,7 +75,9 @@ Don't forget to mention this when reporting bugs to:
 (require 'backquote) ; For macros.
 
 ;; Compatibility requirements for the file-name-handler-alist.
-(let ((lucid-p (string-match "Lucid" emacs-version))
+;; Testing against the string `Lucid' breaks InfoDock.  How many years has
+;; it been since Lucid went away?
+(let ((lucid-p (string-match "XEmacs" emacs-version))
       ver subver)
   (or (string-match "^\\([0-9]+\\)\\.\\([0-9]+\\)" emacs-version)
       (error "dired does not work with emacs version %s" emacs-version))
@@ -108,7 +110,7 @@ Buffer local.")
 Will use the variable default-directory-function if it non-nil."
   (if default-directory-function
       (funcall default-directory-function)
-    (if (string-match "Lucid" emacs-version)
+    (if (string-match "XEmacs" emacs-version)
 	(abbreviate-file-name default-directory t)
       (abbreviate-file-name default-directory))))
 
@@ -6373,7 +6375,7 @@ With prefix does apropos help for dired variables." t)
 ;;;; Multi-flavour Emacs support
 ;;;; --------------------------------------------------------------
 
-(let ((lucid-p (string-match "Lucid" emacs-version))
+(let ((lucid-p (string-match "XEmacs" emacs-version))
       ver)
   (or (string-match "^\\([0-9]+\\)\\." emacs-version)
       (error "Weird emacs version %s" emacs-version))

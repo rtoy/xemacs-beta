@@ -1,9 +1,6 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (not (featurep 'apel-autoloads))
     (progn
-
-(provide 'apel-autoloads)
-))
 
 ;;;### (autoloads (module-installed-p exec-installed-p file-installed-p get-latest-path add-latest-path add-path) "file-detect" "apel/file-detect.el")
 
@@ -61,3 +58,6 @@ If PATHS is omitted, `load-path' is used." nil nil)
 (autoload 'richtext-decode "richtext" nil nil nil)
 
 ;;;***
+
+(provide 'apel-autoloads)
+))

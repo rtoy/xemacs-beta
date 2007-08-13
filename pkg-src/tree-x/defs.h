@@ -11,7 +11,7 @@
 
 #define NASSERT(x, msg) \
    if ((x) == NULL) { fprintf(stderr, "%s: %s\n", ProgramName, msg); \
-		      return (NULL); }
+		      return NULL; }
 
 #define WARN(msg) \
    fprintf(stderr, "%s: %s\n", ProgramName, msg)

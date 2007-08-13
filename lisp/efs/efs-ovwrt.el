@@ -102,10 +102,19 @@ definition suitably augmented."
 		 (setcar ndoc-cdr (format efs-overwrite-fmt package)))))
 	    (t
 	     ;; it's an emacs19 compiled-code object
-	     (let ((new-code (append nfun nil))) ; turn it into a list
-	       (if (nthcdr 4 new-code)
-		   (setcar (nthcdr 4 new-code) ndoc-str)
-		 (setcdr (nthcdr 3 new-code) (cons ndoc-str nil)))
+	     ;;
+	     ;; XEmacs: can't use append on a compiled function
+	     ;; as the latter is no longer a vector.  Use the
+	     ;; accessor functions instead.
+	     (let ((new-code (nconc
+			      (list (compiled-function-arglist nfun)
+				    (compiled-function-instructions nfun)
+				    (compiled-function-constants nfun)
+				    (compiled-function-stack-depth nfun)
+				    ndoc-str)
+			      (if (compiled-function-interactive nfun)
+				  (list (compiled-function-interactive nfun))
+				nil))))
 	       (fset new (apply 'make-byte-code new-code))))))))
 
 

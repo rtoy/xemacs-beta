@@ -1,4 +1,16 @@
 							-*- indented-text -*-
+to 20.3 beta11 "Stockholm"
+-- Try #2 with LOSING_BYTECODE disabled.
+-- Interface change: value of `system-type' is provided as a feature.
+-- Gnus-5.4.62
+-- W3-3.0.93
+-- Custom-1.9946
+-- New user variable `errors-deactivate-region'.
+-- Miscellaneous bug fixes.
+-- iso-acc.el-1.15  (Mule fixes)
+-- autoloads/custom loads generation in build updated
+-- Fix for frozen messages in message area from Kyle Jones.
+
 to 20.3 beta10 "Athens"
 -- Linuxdoc-sgml.el courtesy of Arun Sharma.
 -- rewritten abbreviations from Hrvoje Niksic

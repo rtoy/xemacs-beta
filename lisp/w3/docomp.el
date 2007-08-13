@@ -70,9 +70,4 @@
 (require 'w3-vars)
 (require 'url)
 (require 'mm)
-(and w3-running-FSF19
-     (< emacs-minor-version 29)
-     (require 'font))
-
 (require 'w3-sysdp)
-(provide 'ange-ftp)

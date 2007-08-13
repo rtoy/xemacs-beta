@@ -1244,18 +1244,54 @@ NUM may be an integer or a floating point number.
   return build_string (buffer);
 }
 
-DEFUN ("string-to-number", Fstring_to_number, 1, 1, 0, /*
+static int
+digit_to_number (int character, int base)
+{
+  int digit;
+
+  if (character >= '0' && character <= '9')
+    digit = character - '0';
+  else if (character >= 'a' && character <= 'z')
+    digit = character - 'a' + 10;
+  else if (character >= 'A' && character <= 'Z')
+    digit = character - 'A' + 10;
+  else
+    return -1;
+
+  if (digit >= base)
+    return -1;
+  else
+    return digit;
+}
+
+DEFUN ("string-to-number", Fstring_to_number, 1, 2, 0, /*
 Convert STRING to a number by parsing it as a decimal number.
 This parses both integers and floating point numbers.
 It ignores leading spaces and tabs.
+
+If BASE, interpret STRING as a number in that base.  If BASE isn't
+present, base 10 is used.  BASE must be between 2 and 16 (inclusive).
+Floating point numbers always use base 10.
 */
-       (string))
+       (string, base))
 {
-  Lisp_Object value;
   char *p;
+  int b;
+
   CHECK_STRING (string);
 
+  if (NILP (base))
+    b = 10;
+  else
+    {
+      CHECK_INT (base);
+      b = XINT (base);
+      if (b < 2 || b > 16)
+	Fsignal (Qargs_out_of_range, Fcons (base, Qnil));
+    }
+
   p = (char *) XSTRING_DATA (string);
+
   /* Skip any whitespace at the front of the number.  Some versions of
      atoi do this anyway, so we might as well make Emacs lisp consistent.  */
   while (*p == ' ' || *p == '\t')
@@ -1266,13 +1302,39 @@ It ignores leading spaces and tabs.
     return make_float (atof (p));
 #endif /* LISP_FLOAT_TYPE */
 
-  if (sizeof (int) == sizeof (EMACS_INT))
-    XSETINT (value, atoi (p));
-  else if (sizeof (long) == sizeof (EMACS_INT))
-    XSETINT (value, atol (p));
+  if (XINT(base) == 10)
+    {
+      /* Use the system-provided functions for base 10. */
+      Lisp_Object value;
+      if (sizeof (int) == sizeof (EMACS_INT))
+	XSETINT (value, atoi (p));
+      else if (sizeof (long) == sizeof (EMACS_INT))
+	XSETINT (value, atol (p));
+      else
+	abort ();
+      return value;
+    }
   else
-    abort ();
-  return value;
+    {
+      int digit, negative = 1;
+      EMACS_INT v = 0;
+
+      if (*p == '-')
+	{
+	  negative = -1;
+	  p++;
+	}
+      else if (*p == '+')
+	p++;  
+      while (1)
+	{
+	  digit = digit_to_number (*p++, b);
+	  if (digit < 0)
+	    break;
+	  v = v * b + digit;
+	}
+      return make_int (negative * v);
+    }
 }
   
 enum arithop

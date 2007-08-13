@@ -2005,12 +2005,6 @@ m2w (unsigned char *mp, w_char *wp)
 }
 
 void
-_xp (int x)
-{
-  printf ("%x\n", x); fflush (stdout);
-}
-
-void
 w2y (w_char *w)
 {
   letter		pbuf[5000], ybuf[5000];

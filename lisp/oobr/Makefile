@@ -292,3 +292,11 @@ distclean:
 	-cd tree-x; $(RM) .*~ *~ *\# *.orig *.rej *.o xoobr .nfs*
 	-cd tree-nx; $(RM) -r .*~ *~ *\# *.orig *.rej obj* TreeView.app .nfs*
 	-cd $(tar_mandir); $(RM) oo-browser.?? oo-browser.dvi .*~ *~ *\# *.orig *.rej .nfs*
+
+autoloads: auto-autoloads.el
+
+auto-autoloads.el: $(EL_COMPILE)
+	$(EMACS) -batch -q -no-site-file \
+		-eval '(setq autoload-target-directory "'`pwd`'/")' \
+		-l autoload \
+		-f batch-update-autoloads $?

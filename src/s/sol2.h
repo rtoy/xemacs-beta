@@ -1,34 +1,48 @@
 /* Synched up with: FSF 19.31. */
 
-#define __EXTENSIONS__ 1
 #define SOLARIS2 1
 #define POSIX 1
-#if 1
+
 #ifndef USG
 #define USG
 #endif
+
 #ifndef USG5_4
 #define USG5_4
 #endif
-#if 0
-#undef  SYSTEM_TYPE
-#define SYSTEM_TYPE "solaris"
-#endif
-#undef  _POSIX_C_SOURCE
-#if 0
-#define _POSIX_C_SOURCE 199506L
-#endif
-#undef  _XOPEN_SOURCE
-#undef  _XOPEN_SOURCE_EXTENDED
-#if OS_RELEASE >= 55
-#define _XOPEN_SOURCE 1
-#define _XOPEN_SOURCE_EXTENDED 1
-#endif /* >= SunOS 5.5 */
-#endif
 
-#if 1 /* mrb */
+#define __EXTENSIONS__ 1
+
+#undef  _POSIX_C_SOURCE
+
+/* Solaris 2.4 math.h doesn't respect __EXTENSIONS__ */
+#ifndef NOT_C_CODE
+
+#if OS_RELEASE <= 54
+#include <math.h>
+#endif /* <= Solaris 2.4 */
+
+/* Fix understandable GCC lossage on Solaris 2.6 */
+#if OS_RELEASE >= 56
+#ifdef __GNUC__
+#define __GNUC_VA_LIST
+#define _VA_LIST_
+#define _VA_LIST va_list
+typedef void *__gnuc_va_list;
+typedef __gnuc_va_list va_list;
+#endif /* GCC */
+#endif /* >= Solaris 2.6 */
+
+#endif /* C code */
+
+#undef  _XOPEN_SOURCE
+#define _XOPEN_SOURCE 1
+
+#undef  _XOPEN_SOURCE_EXTENDED
+#define _XOPEN_SOURCE_EXTENDED 1
+
 #include "usg5-4-2.h"	/* XEmacs change from 5-4 to 5-4-2 */
-#endif
+#undef PC /* Defined in x86 /usr/include/sys/reg.h */
 
 /* SIGIO seems to be working under Solaris and it makes ^G work better... */
 #undef BROKEN_SIGIO
@@ -90,27 +104,41 @@
 #define BROKEN_SIGCHLD
 #endif
 
-#if OS_RELEASE == 55
-/* Solaris 2.5 is the first Solaris that has getpagesize(), srandom()
-   and random(), but they forgot to add prototypes to the header
-   files. */
-int getpagesize (void);
-long random (void);
-void srandom (unsigned int seed);
-#endif /* SunOS 5.5 */
-
 #if OS_RELEASE < 55
 /* Missing prototype, added in Solaris 2.5 */
 extern void *__builtin_alloca(size_t);
 #endif /* before SunOS 5.5 */
+
+#if OS_RELEASE == 55
+/* The following functions were added in Solaris 2.5,
+   but they forgot to add prototypes to the system header files. */
+int getpagesize (void);
+long random (void);
+void srandom (unsigned int seed);
+int usleep(unsigned int useconds);
+#endif /* SunOS 5.5 */
 
 #if OS_RELEASE < 56
 /* Missing prototypes, added in Solaris 2.6 */
 struct timeval;
 int utimes (char *file, struct timeval *tvp);
 int gethostname(char *name, int namelen);
-int usleep(unsigned int useconds);
 #endif /* before SunOS 5.6 */
+
+#if defined(__GNUC__) && OS_RELEASE >= 56
+/* Missing prototypes for functions added in Solaris 2.6 */
+struct msghdr;
+struct sockaddr;
+extern int __xnet_bind(int, const struct sockaddr *, size_t);
+extern int __xnet_listen(int, int);
+extern int __xnet_connect(int, const struct sockaddr *, size_t);
+extern ssize_t __xnet_recvmsg(int, struct msghdr *, int);
+extern ssize_t __xnet_sendmsg(int, const struct msghdr *, int);
+extern ssize_t __xnet_sendto(int, const void *, size_t, int, const struct sockaddr *, size_t);
+extern int __xnet_socket(int, int, int);
+extern int __xnet_socketpair(int, int, int, int *);
+extern int __xnet_getsockopt(int, int, int, void *, size_t *);
+#endif /* GCC && >= SunOS 5.6 */
 
 #include <sys/utsname.h> /* warning: macro redefined: SYS_NMLN */
 

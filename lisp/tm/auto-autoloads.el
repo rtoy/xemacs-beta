@@ -1,9 +1,6 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (not (featurep 'tm-autoloads))
     (progn
-
-(provide 'tm-autoloads)
-))
 
 ;;;### (autoloads (mime/editor-mode) "tm-edit" "tm/tm-edit.el")
 
@@ -147,3 +144,6 @@ User customizable variables (not documented all of them):
 (defalias 'edit-mime 'mime/editor-mode)
 
 ;;;***
+
+(provide 'tm-autoloads)
+))

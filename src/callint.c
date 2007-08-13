@@ -145,30 +145,30 @@ You may use any of `@', `*' and `_' at the beginning of the string;
   return Qnil;
 }
 
-/* Quotify EXP: if EXP is constant, return it.
-   If EXP is not constant, return (quote EXP).  */
+/* Quotify EXPR: if EXPR is constant, return it.
+   If EXPR is not constant, return (quote EXPR).  */
 static Lisp_Object
-quotify_arg (Lisp_Object exp)
+quotify_arg (Lisp_Object expr)
 {
-  if (!INTP (exp) && !CHARP (exp) && !STRINGP (exp)
-      && !NILP (exp) && !EQ (exp, Qt))
-    return Fcons (Qquote, Fcons (exp, Qnil));
-
-  return exp;
+  return (INTP    (expr) ||
+	  CHARP   (expr) ||
+	  STRINGP (expr) ||
+	  NILP    (expr) ||
+	  EQ (Qt, expr)) ? expr : Fcons (Qquote, Fcons (expr, Qnil));
 }
 
-/* Modify EXP by quotifying each element (except the first).  */
+/* Modify EXPR by quotifying each element (except the first).  */
 static Lisp_Object
-quotify_args (Lisp_Object exp)
+quotify_args (Lisp_Object expr)
 {
   REGISTER Lisp_Object tail;
   REGISTER struct Lisp_Cons *ptr;
-  for (tail = exp; CONSP (tail); tail = ptr->cdr)
+  for (tail = expr; CONSP (tail); tail = ptr->cdr)
     {
       ptr = XCONS (tail);
       ptr->car = quotify_arg (ptr->car);
     }
-  return exp;
+  return expr;
 }
 
 static Bufpos

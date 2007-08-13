@@ -5,8 +5,8 @@
 ;; Author: Johan Vromans
 ;; Maintainer: Alexandre Oliva <oliva@dcc.unicamp.br>
 ;; Keywords: i18n
-;; $Revision: 1.5 $
-;; $Date: 1997/05/29 23:49:45 $
+;; $Revision: 1.6 $
+;; $Date: 1997/07/07 00:52:57 $
 
 ;; This file is part of GNU Emacs.
 
@@ -71,8 +71,12 @@
 ;; multiple Emacs versions compatibility section
 
 (if (fboundp 'make-char)
-    (defalias 'iso-make-char 'make-char)
-  (defun iso-make-char (charset) 128))
+    (defun iso-make-char (charset char)
+      (cond
+       ((integerp char) (make-char charset char))
+       ((and (char-or-string-p char) (not (stringp char))) char)
+       (t (error "invalid character"))))
+  (defun iso-make-char (charset char) "Returns its second argument" char))
 
 (if (fboundp 'read-event)
     (defalias 'iso-read-event 'read-event)
@@ -96,12 +100,6 @@
 	(setq this-command (not (this-command-keys)))
 	(this-command-keys))
     (defun this-single-command-keys () (this-command-keys))))
-
-(defvar iso-accents-insert-offset
-  (if (boundp 'nonascii-insert-offset)
-      nonascii-insert-offset
-    0)
-  "*Offset added by ISO Accents mode to character codes 0200 and above.")
 
 ;; end of compatibility section
 
@@ -284,6 +282,9 @@ Change it with the `iso-accents-customize' function.")
 (defvar iso-accents-list nil
   "Association list for ISO accent combinations, for the chosen language.")
 
+(defvar iso-accents-charset 'latin-iso8859-1
+  "Charset that will be used for generated characters.")
+
 (defvar iso-accents-mode nil
   "*Non-nil enables ISO Accents mode.
 Setting this variable makes it local to the current buffer.
@@ -311,6 +312,7 @@ the language you choose).")
 (defun iso-accents-compose (prompt)
   (let* ((first-char last-input-char)
 	 (list (assq first-char iso-accents-list))
+	 (charset iso-accents-charset)
 	 ;; Wait for the second key and look up the combination.
 	 (second-char (if (or prompt
 			      (not (eq (key-binding "a")
@@ -329,14 +331,13 @@ the language you choose).")
 			  (delete-region (1- (point)) (point)))))
 	 (entry (cdr (assq second-char list))))
     (if entry
+	(progn
+	  (if (and (consp entry) (symbolp (car entry)))
+	      (setq charset (car entry)
+		    entry (cdr entry)))
 	;; Found it: return the mapped char
-        (vector
-	 (iso-char-to-event
-	  (if (and (boundp 'enable-multibyte-characters)
-		   enable-multibyte-characters
-		   (>= entry ?\200))
-	      (+ iso-accents-insert-offset entry)
-	    entry)))
+	  (vector
+	   (iso-char-to-event (iso-make-char charset entry))))
       ;; Otherwise, advance and schedule the second key for execution.
       (setq unread-command-events (cons (iso-char-list-to-event
 					 (list second-char))
@@ -396,11 +397,9 @@ It selects the customization based on the specifications in the
 	tail)
     (if (not table)
 	(error "Unknown language `%s'" language)
-      (setq iso-accents-insert-offset (- (iso-make-char
-					  (if (symbolp (car table))
-					      (car table)
-					    'latin-iso8859-1))
-					  128))
+      (setq iso-accents-charset (if (symbolp (car table))
+				    (car table)
+				  'latin-iso8859-1))
       (if (symbolp (car table))
 	  (setq table (cdr table)))
       (setq iso-language language

@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1997/6/27
-;; Version: $Id: image-mode.el,v 1.1 1997/06/29 23:12:55 steve Exp $
+;; Version: image-mode.el,v 20.3.1.2 1997/07/01 17:29:44 morioka Exp
 ;; Keywords: image, graphics
 
 ;; This file is part of XEmacs.
@@ -122,6 +122,24 @@ It uses `image-external-viewer' as external image viewer."
   (interactive)
   (kill-buffer (current-buffer))
   )
+
+(defun image-maybe-restore ()
+  "Restore buffer from file if it is decoded as `buffer-file-format'."
+  (when (and buffer-file-format
+	     buffer-file-name)
+    (setq buffer-read-only nil)
+    (erase-buffer)
+    (map-extents (function
+		  (lambda (extent maparg)
+		    (delete-extent extent)
+		    )) nil (point-min)(point-min))
+    (setq buffer-file-format nil)
+    (insert-file-contents-literally buffer-file-name)
+    (set-buffer-modified-p nil)
+    ))
+
+(add-hook 'change-major-mode-hook 'image-maybe-restore)
+
 
 ;;;###autoload
 (defun image-mode (&optional arg)

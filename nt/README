@@ -1,34 +1,27 @@
-		      Building and Installing XEmacs
- 			      on Windows NT
+	     Building and Installing XEmacs on Windows NT
 
-	    David Hobley <david_hobley@optusvision.com.au>
-                         <davidh@wr.com.au>
-		    Marc Paquette <marcpa@cam.org>
+			     David Hobley
+			    Marc Paquette
 
-You need a compiler package to build and install XEmacs on NT or Win95.
-Microsoft Visual C++ 4.2 has been successfuly used to build it on NT: we 
-recommend this specific version (VC++ 4.1 has trouble with some macro 
-definitions in XEmacs sources).
+Currently XEmacs for NT is in an early stage of development. Only X support
+works at the moment, although native GUI/terminal support will be added at a
+later date. If anyone wants to help with this, please contact us.
 
-This is an extremely early release. Any help we can provide we will do
-so.  Note however that, as of XEmacs 20.3 beta4, only X is supported
-and some things might not work well at first.
+The port was made much easier by the groundbreaking work of Geoff Voelker
+and others who worked on the GNU Emacs port to NT. Their version is available
+from http://www.cs.washington.edu/homes/voelker/ntemacs.html
 
-Two methods to try it: jumpstart with pre-compiled X libraries (NT4
-for Intel) or the long route with X11R6.3 re-compiled from scratch.
-The jumpstart method is not in place yet, but the files will probably
-appear somewhere at ftp.xemacs.org.  Here are some instructions for
-recompiling X:
+To get it working you will need:
 
-1. Get X11R6.3 (Note: you need *a lots* of free space on your drive).
-Modify its Win32.cf and site.def configuration files 
-to use the single-threaded, statically linked C run-time library
-(libc.lib instead of msvcrt.dll).  Samples Win32.cf and site.def are
-provided in the XEmacs nt/ directory.
-2. Build X11R6.3 and install it.
-3. Apply the following patch to include/X11/Xmd.h in the installed
-directory.  Note: this could conceivably be better done before
-compiling X, but this is the order I (marcpa) used.
+1. An X server. MI/X is available on the Internet for free; It is 
+   available from:  http://www.microimages.com/www/html/freestuf/mixdlfrm.htm
+2. The MIT X11R6.3 libraries available from: ftp.x.org
+3. You'll need to compile the MIT libraries without multi-thread support.
+   To do this, there is an example Win32.cf and site.def provided which
+   set the relevant flags. You will also need to apply the patch in 
+   nt/X11.patch in the xc/lib/X11 directory which will fix the DLL definition
+   file. Once compiled and installed, you will need to apply the following
+   patch to Xmd.h. This is messy and better solutions would be appreciated. 
 
 --- Xmd.h~	Thu Jun 08 23:20:40 1995
 +++ Xmd.h	Sun Mar 16 13:09:10 1997
@@ -41,32 +34,34 @@ compiling X, but this is the order I (marcpa) used.
 -
 +#endif
 
+4. You will need Visual C++ V4.2 or later to compile everything. Personally we
+   have tested V4.2 and V5.0.
+5. Grab the latest XEmacs beta from ftp.xemacs.org if necessary. All nt
+   support is in the nt/ subdirectory.
+6. Edit the xemacs.mak file and ensure variables point to the correct place.
+   Note that Visual C++ assumes a couple of environment variables INCLUDE and
+   LIB to be set which specify the location of the includes and libraries.
+7. Copy the files Emacs.ad.h, config.h and paths.h from nt/ to src/.
+   Note, to rebuild Emacs.ad.h a sed script is run. SED for NT is available
+   from the Virtually Unix site: http://www.itribe.net/virtunix
+   This is not required however in normal operation.
+8. Run make. I simply use nmake -f xemacs.mak.
+9. Change directory to the src/ directory and run the temacs executable
+   manually:
+                temacs -batch -l loadup.el dump
+   This will produce an xemacs.exe which can be run in conjunction with your
+   X server.
 
-4. Edit the xemacs.mak Makefile and ensure variables point to the
-correct place.
-5. copy the files ad2c.sed, config.h, paths.h and xemacs.mak from nt/
-into src/. 
-6. Run nmake using xemacs.mak (nmake -f xemacs.mak) while in src/.
-7. Manually run the resulting temacs executable to create xemacs:
-temacs.exe -batch -l loadup.el dump
-8. You should be able to use MSDEV to run and debug temacs.exe: open a
- workspace by specifying "Executable files", select "temacs.exe", set
-the debug "Program arguments" settings (Build->Settings->Debug) to "-batch -l
-loadup.el run-temacs" and run it.  You should be able to open any
-source file and set a breakpoint in it.
+Known Problems:
+Please look at the TODO list for the current list of problems and people 
+working on them.
 
-Problems:
-- Haven't got rid of some symbol problems which may be causing problems.
-- Still seems to use fork, which fails without /force option on link. I am
-  trying to work out where it should be removed.
-- To make it work on X, usage of XtAppAddInput had to be commented out.  
-  This is expected to break some parts of XEmacs, so beware.
+Any other problems you need clarified, please email us and we will endeavour
+to provide any assistance we can:
 
-Any problems/questions, mail us:
+David Hobley   david_hobley@optusvision.com.au -- work email.
+               davidh@wr.com.au                -- home account.
 
-David Hobley
-david_hobley@optusvision.com.au -- work email.
-davidh@wr.com.au -- home account.
+Marc Paquette  marcpa@cam.org                  -- home account.
 
-Marc Paquette
-marcpa@cam.org -- home account.
+August Hill    awhill@inlink.com

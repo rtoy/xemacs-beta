@@ -2289,6 +2289,7 @@ The value is simply the program name if that directory's name is not known.
 Value is symbol indicating type of operating system you are using.
 */ );
   Vsystem_type = intern (SYSTEM_TYPE);
+  Fprovide (intern(SYSTEM_TYPE));
 
 #ifndef EMACS_CONFIGURATION
 # define EMACS_CONFIGURATION "UNKNOWN"

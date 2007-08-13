@@ -1219,7 +1219,7 @@ event_stream_disable_wakeup (int id, int async_p)
     }
 }
 
-int
+static int
 event_stream_wakeup_pending_p (int id, int async_p)
 {
   struct timeout *timeout;
@@ -3150,8 +3150,7 @@ command_builder_find_leaf (struct command_builder *builder,
           || (CHAR_OR_CHAR_INTP (key->keysym)
               && ((c = XCHAR_OR_CHAR_INT (key->keysym)), c >= 'A' && c <= 'Z')))
         {
-          struct Lisp_Event terminal_copy;
-          terminal_copy = *XEVENT (terminal);
+          struct Lisp_Event terminal_copy = *XEVENT (terminal);
           
           if (key->modifiers & MOD_SHIFT)
             key->modifiers &= (~ MOD_SHIFT);
@@ -3160,7 +3159,7 @@ command_builder_find_leaf (struct command_builder *builder,
 
           result = command_builder_find_leaf (builder, allow_misc_user_events_p);
           if (!NILP (result))
-            return (result);
+            return result;
           /* If there was no match with the lower-case version either,
              then put back the upper-case event for the error
              message.  But make sure that function-key-map didn't

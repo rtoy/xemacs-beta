@@ -68,7 +68,8 @@ Boston, MA 02111-1307, USA.  */
 /* This will be removed in 19.15. */
 /* Hah!  Try 20.3 ... */
 /* Hah!  Try never ... */
-#define LOSING_BYTECODE
+/* If at first you don't succeed, try, try again. */
+/* #define LOSING_BYTECODE */
 
 /* Does XEmacs support floating-point numbers? */
 #undef LISP_FLOAT_TYPE
@@ -148,6 +149,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_LIBGEN_H
 #undef HAVE_LOCALE_H
 #undef HAVE_FCNTL_H
+#undef HAVE_ULIMIT_H
 #undef HAVE_X11_XLOCALE_H
 #undef HAVE_LINUX_VERSION_H
 #undef HAVE_INTTYPES_H
@@ -250,6 +252,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_STRCASECMP
 #undef HAVE_STRERROR
 #undef HAVE_TZSET
+#undef HAVE_ULIMIT
 #undef HAVE_USLEEP
 #undef HAVE_UTIMES
 #undef HAVE_WAITPID

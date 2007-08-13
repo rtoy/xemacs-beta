@@ -1,0 +1,18 @@
+# List of problems with XEmacs. If anyone wants to work on these, please
+# mail me and I'll update the table below.
+
+1. vfork references
+2. provide working select which supports handles as well as sockets
+3. make "Save Options" actually save options to home directory. Currently I get
+   it trying to save in g:\home\davidh\~davidh
+4. build a binary distribution (just install temacs and get user to _easily_
+   build an xemacs.exe on their system. This will ensure heap problems do not
+   occur)
+5. provide option for dired to use dir/attrib on Win32 platforms
+6. verify MULE supports CRLF correctly
+7. get subprocesses working
+
+
+Issue - Person
+2	David Hobley
+3	August Hill

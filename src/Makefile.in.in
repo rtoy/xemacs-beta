@@ -321,11 +321,12 @@ dynodump_deps = ../dynodump/dynodump.so
 	cd ../dynodump && ${MAKE} ${MFLAGS}
 #endif /* DYNODUMP */
 
-${libsrc}DOC: ../lib-src/make-docfile FRC.DOC
+${libsrc}DOC: temacs
 #ifdef NO_DOC_FILE
 	if test -f $@; then touch $@ && exit 0; fi; \
 #endif
-	-${DUMPENV} ./temacs -batch -l ../prim/make-docfile.el -- \
+	$(RM) ${libsrc}DOC; \
+	${DUMPENV} ./temacs -batch -l ../prim/make-docfile.el -- \
 		-o ${libsrc}DOC -d ${srcdir} -i ${libsrc}../site-packages \
 		${obj_src} ${mallocdocsrc} ${rallocdocsrc}
 

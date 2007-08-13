@@ -45,9 +45,13 @@ extern unsigned char *get_data_end();
 extern unsigned long  data_region_size;
 extern unsigned long  reserved_heap_size;
 extern SYSTEM_INFO    sysinfo_cache;
-extern BOOL   	      need_to_recreate_heap;
 extern int    	      nt_major_version;
 extern int    	      nt_minor_version;
+
+/* To prevent zero-initialized variables from being placed into the bss
+   section, use non-zero values to represent an uninitialized state.  */
+#define UNINIT_PTR ((void *) 0xF0A0F0A0)
+#define UNINIT_LONG (0xF0A0F0A0L)
 
 /* Emulation of Unix sbrk().  */
 extern void *sbrk (unsigned long size);
